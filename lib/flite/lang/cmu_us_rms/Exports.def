@@ -1,0 +1,7 @@
+LIBRARY	"cmu_us_rms"
+EXPORTS
+	cmu_us_rms_cg_db DATA
+	cmu_us_rms_cg DATA
+	register_cmu_us_rms
+	unregister_cmu_us_rms
+	

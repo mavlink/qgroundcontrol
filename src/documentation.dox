@@ -1,0 +1,66 @@
+/*=====================================================================
+ 
+PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+ 
+(c) 2009 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+ 
+This file is part of the PIXHAWK project
+ 
+    PIXHAWK is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+ 
+    PIXHAWK is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+ 
+    You should have received a copy of the GNU General Public License
+    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+ 
+======================================================================*/
+ 
+/**
+ * @file
+ *   @brief Brief Description
+ *
+ *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *
+ */
+
+
+/** 
+ * @mainpage PIXHAWK API Documentation
+ * 
+ * @section intro_sec Introduction
+ * 
+ * This <a href="http://en.wikipedia.org/wiki/API" target="_blank">API</a> documentation covers the groundstation
+ * code portion of the <a href="http://pixhawk.ethz.ch" target="_blank">PIXHAWK</a> project.
+ * In case you have generated this documentation locally, the most recent version (generated on every commit)
+ * is also publicly available on the internet.
+ *
+ * @sa http://pixhawk.ethz.ch/api/embedded/ - Embedded / Computer Vision API docs
+ * @sa http://pixhawk.ethz.ch/api/groundstation/ - Groundstation code base
+ * @sa http://pixhawk.ethz.ch/api/flight/ - Flight board (ARM MCU) code base
+ * @sa http://pixhawk.ethz.ch/api/blmc/ - Brushless motor controller API docs
+ *
+ * @section further_sec Further Information
+ *
+ * How to run our software and a general overview of the software architecture is documented in the project
+ * wiki pages.
+ *
+ * @sa http://pixhawk.ethz.ch/wiki/software/groundstation/ - Groundstation main page
+ * @sa http://pixhawk.ethz.ch/wiki/software/ - The software architecture
+ * @sa http://pixhawk.ethz.ch/wiki/software/run - How to run the software
+ *
+ * See the <a href="http://pixhawk.ethz.ch" target="_blank">PIXHAWK website</a> for more information.
+ * 
+ * @section usage_sec Doxygen Usage
+ *
+ * You can exclude files from being parsed into this Doxygen documentation 
+ * by adding them to the EXCLUDE list in the file in embedded/cmake/doc/api/doxy.config.in.
+ *
+ *
+ *
+ **/

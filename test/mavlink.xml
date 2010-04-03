@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<messages>
+ 
+   <message name="HEARTBEAT" id="0">
+     <field name="type" type="uint8">Type of the MAV (quadrotor, helicopter, etc.)</field>
+   </message>
+ 
+   <message name="BOOT" id="1">
+     <field name="version" type="uint32">The onboard software version</field>
+   </message>
+ 
+   <message name="RAW_SENSOR" id="100">
+     <field name="xacc"  type="uint32">X acceleration (mg raw)</field>
+     <field name="yacc"  type="uint32">Y acceleration (mg raw)</field>
+     <field name="zacc"  type="uint32">Z acceleration (mg raw)</field>
+     <field name="xgyro" type="uint32">Angular speed around X axis (adc units)</field>
+     <field name="ygyro" type="uint32">Angular speed around Y axis (adc units)</field>
+     <field name="zgyro" type="uint32">Angular speed around Z axis (adc units)</field>
+     <field name="xmag"  type="uint32">X Magnetic field (milli tesla)</field>
+     <field name="ymag"  type="uint32">Y Magnetic field (milli tesla)</field>
+     <field name="zmag"  type="uint32">Z Magnetic field (milli tesla)</field>
+     <field name="baro"  type="int32">Barometric pressure (hecto Pascal)</field>
+     <field name="gdist" type="uint32">Ground distance (meters)</field>
+     <field name="temp"  type="int32">Temperature (degrees celcius)</field>
+   </message>
+ 
+   <message name="ATTITUDE" id="90">
+     <field name="roll"  type="float">Roll angle (rad)</field>
+     <field name="pitch" type="float">Pitch angle (rad)</field>
+     <field name="yaw"   type="float">Yaw angle (rad)</field>
+     <field name="rollspeed"  type="float">Roll angular speed (rad/s)</field>
+     <field name="pitchspeed" type="float">Pitch angular speed (rad/s)</field>
+     <field name="yawspeed"   type="float">Yaw angular speed (rad/s)</field>
+   </message>
+ 
+</messages>

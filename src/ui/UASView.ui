@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>UASView</class>
+ <widget class="QWidget" name="UASView">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>362</width>
+    <height>116</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string>QWidget#colorIcon {}
+
+QWidget {
+background-color: #252528;
+color: #DDDDDF;
+border-color: #EEEEEE;
+background-clip: margin;
+}
+
+QGroupBox {
+	border: 1px solid #EEEEEE;
+	border-radius: 5px;
+	padding: 0px 0px 0px 0px;
+	margin: 0px;
+}
+
+ QGroupBox::title {
+     subcontrol-origin: margin;
+     subcontrol-position: top center; /* position at the top center */
+     margin: 0 3px 0px 3px;
+     padding: 0 3px 0px 0px;
+     font: bold 8px;
+ }
+
+QGroupBox#heartbeatIcon {
+	background-color: red;
+}
+
+QToolButton {
+	font-weight: bold;
+	font-size: 12px;
+	border: 1px solid #999999;
+	border-radius: 5px;
+	min-width:44px;
+	max-width: 44px;
+	min-height: 44px;
+	max-height: 44px;
+	padding: 0px;
+	background-color: none;
+}
+
+QPushButton {
+	font-weight: bold;
+	font-size: 12px;
+	border: 1px solid #999999;
+	border-radius: 10px;
+	min-width:12px;
+	max-width: 40px;
+	min-height: 16px;
+	max-height: 16px;
+	padding: 2px;
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777777, stop: 1 #555555);
+}
+
+QPushButton:pressed {
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #444444, stop: 1 #555555);
+}
+
+QPushButton#landButton {
+	color: #000000;
+	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                             stop:0 #ffee01, stop:1 #ae8f00) url(&quot;ICONDIR/control/emergency-button.png&quot;);
+}
+
+QPushButton:pressed#landButton {
+	color: #000000;
+	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                             stop:0 #bbaa00, stop:1 #a05b00) url(&quot;ICONDIR/control/emergency-button.png&quot;);
+}
+
+QPushButton#killButton {
+	color: #000000;
+	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                             stop:0 #ffb917, stop:1 #b37300) url(&quot;ICONDIR/control/emergency-button.png&quot;);
+}
+
+QPushButton:pressed#killButton {
+	color: #000000;
+	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                             stop:0 #bb8500, stop:1 #903000) url(&quot;ICONDIR/control/emergency-button.png&quot;);
+}
+
+QProgressBar {
+	border: 1px solid white;
+	border-radius: 4px;
+	text-align: center;
+	padding: 2px;
+	color: white;
+	background-color: #111111;
+}
+
+QProgressBar:horizontal {
+	height: 12px;
+}
+
+QProgressBar QLabel {
+	font-size: 8px;
+}
+
+QProgressBar:vertical {
+	width: 12px;
+}
+
+QProgressBar::chunk {
+	background-color: #656565;
+}
+
+QProgressBar::chunk#batteryBar {
+	background-color: green;
+}
+
+QProgressBar::chunk#speedBar {
+	background-color: yellow;
+}
+
+QProgressBar::chunk#thrustBar {
+	background-color: orange;
+}</string>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <property name="margin">
+    <number>6</number>
+   </property>
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>350</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="title">
+      <string/>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <property name="horizontalSpacing">
+       <number>6</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>2</number>
+      </property>
+      <property name="margin">
+       <number>6</number>
+      </property>
+      <item row="0" column="0" rowspan="5" colspan="2">
+       <widget class="QToolButton" name="typeButton">
+        <property name="minimumSize">
+         <size>
+          <width>46</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>46</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="baseSize">
+         <size>
+          <width>30</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../mavground.qrc">
+          <normaloff>:/images/mavs/unknown.svg</normaloff>:/images/mavs/unknown.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>42</width>
+          <height>42</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2" rowspan="8">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>6</width>
+          <height>88</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="0" column="3" colspan="3">
+       <widget class="QLabel" name="nameLabel">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>UAS001</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6" colspan="2">
+       <widget class="QLabel" name="lastStatusLabel">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Waiting for first update..</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3" rowspan="3">
+       <widget class="QLabel" name="timeRemainingLabel">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>00:00:00</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="4" rowspan="3" colspan="2">
+       <widget class="QLabel" name="timeElapsedLabel">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>00:00:00</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="6" rowspan="2">
+       <widget class="QProgressBar" name="loadBar">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="7" rowspan="2">
+       <widget class="QProgressBar" name="thrustBar">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QLabel" name="groundDistanceLabel">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>00.00 m</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="4" colspan="2">
+       <widget class="QLabel" name="altitudeLabel">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>00.00 m</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0" rowspan="3">
+       <widget class="QGroupBox" name="heartbeatIcon">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>18</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>18</width>
+          <height>40</height>
+         </size>
+        </property>
+        <property name="title">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1" rowspan="3">
+       <widget class="QProgressBar" name="batteryBar">
+        <property name="minimumSize">
+         <size>
+          <width>18</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>18</width>
+          <height>40</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>6</pointsize>
+         </font>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="3" rowspan="2" colspan="2">
+       <widget class="QLabel" name="stateLabel">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>UNINIT</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="5" rowspan="3">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>5</width>
+          <height>5</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="7" column="3" colspan="2">
+       <widget class="QLabel" name="waypointLabel">
+        <property name="font">
+         <font>
+          <pointsize>20</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>WPX</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="6">
+       <widget class="QLabel" name="positionLabel">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>12</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>12</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>00.0  00.0  00.0 m</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="7">
+       <widget class="QLabel" name="gpsLabel">
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>12</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>12</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>00 00 00 N  00 00 00 E</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="6" colspan="2">
+       <widget class="QLabel" name="statusTextLabel">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>12</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Unknown status</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="6" rowspan="2" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <property name="spacing">
+         <number>4</number>
+        </property>
+        <property name="sizeConstraint">
+         <enum>QLayout::SetDefaultConstraint</enum>
+        </property>
+        <item>
+         <widget class="QPushButton" name="liftoffButton">
+          <property name="minimumSize">
+           <size>
+            <width>18</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../mavground.qrc">
+            <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="haltButton">
+          <property name="minimumSize">
+           <size>
+            <width>18</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../mavground.qrc">
+            <normaloff>:/images/actions/media-playback-pause.svg</normaloff>:/images/actions/media-playback-pause.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="continueButton">
+          <property name="minimumSize">
+           <size>
+            <width>18</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../mavground.qrc">
+            <normaloff>:/images/actions/media-playback-start.svg</normaloff>:/images/actions/media-playback-start.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="returnButton">
+          <property name="minimumSize">
+           <size>
+            <width>18</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../mavground.qrc">
+            <normaloff>:/images/control/land.svg</normaloff>:/images/control/land.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="shutdownButton">
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../mavground.qrc">
+            <normaloff>:/images/actions/go-home.svg</normaloff>:/images/actions/go-home.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="landButton">
+          <property name="minimumSize">
+           <size>
+            <width>18</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../mavground.qrc">
+            <normaloff>:/images/actions/media-playback-stop.svg</normaloff>:/images/actions/media-playback-stop.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="killButton">
+          <property name="minimumSize">
+           <size>
+            <width>18</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="../../mavground.qrc">
+            <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../mavground.qrc"/>
+ </resources>
+ <connections/>
+</ui>

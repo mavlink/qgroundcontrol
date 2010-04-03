@@ -1,0 +1,37 @@
+
+typedef struct __heartbeat2_t 
+{
+	uint8 type; ///< Type of the MAV (quadrotor, helicopter, etc.)
+
+} heartbeat2_t;
+
+typedef struct __boot2_t 
+{
+	uint32 version; ///< The onboard software version
+
+} boot2_t;
+
+typedef struct __sensraw2_t 
+{
+	uint32 xacc; ///< X acceleration (mg raw)
+	uint32 yacc; ///< Y acceleration (mg raw)
+	uint32 zacc; ///< Z acceleration (mg raw)
+	uint32 xgyro; ///< Angular speed around X axis (adc units)
+	uint32 ygyro; ///< Angular speed around Y axis (adc units)
+	uint32 zgyro; ///< Angular speed around Z axis (adc units)
+	uint32 xmag; ///< 
+	uint32 ymag; ///< 
+	uint32 zmag; ///< 
+	int32 baro; ///< 
+	uint32 gdist; ///< 
+	int32 temp; ///< 
+
+} sensraw2_t;
+
+typedef struct __attitude2_t 
+{
+	float roll; ///< Roll angle (rad)
+	float pitch; ///< Pitch angle (rad)
+	float yaw; ///< Yaw angle (rad)
+
+} attitude2_t;

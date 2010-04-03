@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>uasControl</class>
+ <widget class="QWidget" name="uasControl">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>395</width>
+    <height>215</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,20,0" columnstretch="0,0,0,0,20">
+   <property name="margin">
+    <number>20</number>
+   </property>
+   <item row="0" column="0" colspan="4">
+    <widget class="QLabel" name="controlStatusLabel">
+     <property name="text">
+      <string>UNCONNECTED</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="4" rowspan="7">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>0</width>
+       <height>172</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="1" column="0" colspan="4">
+    <widget class="QPushButton" name="controlButton">
+     <property name="text">
+      <string>Activate Engine</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="4">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::MinimumExpanding</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>218</width>
+       <height>6</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="3" column="0">
+    <widget class="QPushButton" name="liftoffButton">
+     <property name="text">
+      <string>Liftoff</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../mavground.qrc">
+       <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="3">
+    <widget class="QComboBox" name="modeComboBox"/>
+   </item>
+   <item row="3" column="3">
+    <widget class="QPushButton" name="shutdownButton">
+     <property name="text">
+      <string>Halt</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../mavground.qrc">
+       <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="3">
+    <widget class="QPushButton" name="setModeButton">
+     <property name="text">
+      <string>Set Mode</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../mavground.qrc">
+       <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="4">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="3" column="1" colspan="2">
+    <widget class="QPushButton" name="landButton">
+     <property name="text">
+      <string>Land</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../mavground.qrc">
+       <normaloff>:/images/control/land.svg</normaloff>:/images/control/land.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="4">
+    <widget class="QLabel" name="lastActionLabel">
+     <property name="text">
+      <string>No actions executed so far</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../mavground.qrc"/>
+ </resources>
+ <connections/>
+</ui>

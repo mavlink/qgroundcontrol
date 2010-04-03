@@ -1,0 +1,178 @@
+#!/bin/sh
+###########################################################################
+##                                                                       ##
+##                  Language Technologies Institute                      ##
+##                     Carnegie Mellon University                        ##
+##                        Copyright (c) 2004                             ##
+##                        All Rights Reserved.                           ##
+##                                                                       ##
+##  Permission is hereby granted, free of charge, to use and distribute  ##
+##  this software and its documentation without restriction, including   ##
+##  without limitation the rights to use, copy, modify, merge, publish,  ##
+##  distribute, sublicense, and/or sell copies of this work, and to      ##
+##  permit persons to whom this work is furnished to do so, subject to   ##
+##  the following conditions:                                            ##
+##   1. The code must retain the above copyright notice, this list of    ##
+##      conditions and the following disclaimer.                         ##
+##   2. Any modifications must be clearly marked as such.                ##
+##   3. Original authors' names are not deleted.                         ##
+##   4. The authors' names are not used to endorse or promote products   ##
+##      derived from this software without specific prior written        ##
+##      permission.                                                      ##
+##                                                                       ##
+##  CARNEGIE MELLON UNIVERSITY AND THE CONTRIBUTORS TO THIS WORK         ##
+##  DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING      ##
+##  ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT   ##
+##  SHALL CARNEGIE MELLON UNIVERSITY NOR THE CONTRIBUTORS BE LIABLE      ##
+##  FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES    ##
+##  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN   ##
+##  AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,          ##
+##  ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF       ##
+##  THIS SOFTWARE.                                                       ##
+##                                                                       ##
+###########################################################################
+##                                                                       ##
+##  Make the files from the Festival Released version                    ##
+##                                                                       ##
+###########################################################################
+
+if [ "x$FLITEDIR" == "x" ]
+then
+   FLITEDIR=`pwd`/../..
+fi
+
+if [ $# = 0 ]
+then
+   $0 setup
+   $0 lts
+   $0 lex
+   $0 compresslex
+   $0 install
+   exit
+fi
+
+if [ "$1" = "setup" ]
+then
+   tar zxvf festlex_CMU.tar.gz
+   cp -p $FESTVOXDIR/src/lts/build_lts festival/lib/dicts/cmu
+   cp -p $FESTVOXDIR/src/lts/build_lts_rules festival/lib/dicts/cmu
+   mkdir festival/lib/dicts/cmu/c
+   mkdir festival/lib/dicts/cmu/wfst
+   mkdir festival/lib/dicts/cmu/lts_scratch
+fi
+
+if [ "$1" = "lts" ]
+then
+  (cd festival/lib/dicts/cmu;
+   festival --heap 10000000 -b allowables.scm '(dump-flat-entries-all "cmudict-0.4.out" "lts_scratch/lex_entries.out")'
+   ./build_lts cummulate
+   ./build_lts align
+   ./build_lts build
+   ./build_lts merge
+   ./build_lts test
+   festival --heap 10000000 -b $FLITEDIR/tools/make_lts_wfst.scm lts_scratch/lex_lts_rules.scm '(lts_to_rg_to_wfst lex_lts_rules "wfst/")';
+   festival --heap 10000000 -b $FLITEDIR/tools/make_lts.scm lts_scratch/lex_lts_rules.scm '(ltsregextoC "cmu" lex_lts_rules "wfst/" "c")';
+   )
+fi
+
+if [ "$1" = "lex" ]
+then
+   ( cd festival/lib/dicts/cmu;
+     # Find the words to prune from the built lexicon
+     # We will prune words that aren't homographs and the LTS gets correct
+     # Use the lts_test.log to find the failed entries and only
+     # include them in the list 
+     festival -b cmulex.scm ~/projects/flite/tools/make_lex.scm '(remove_predictable_entries "cmudict-0.4.out" "pruned_lex.scm" "lex_lts_rules.scm")'
+     festival --heap 10000000 -b '(lex.compile "pruned_lex.scm" "pruned_lex.out")'
+     festival --heap 10000000 -b $FLITEDIR/tools/make_lex.scm '(lextoC "cmu" "pruned_lex.out" "c")' ;
+   )
+fi
+
+if [ "$1" = "lex2" ]
+then
+   # experiment: put Letter_Phone(s) together as things to compress
+   # does give much smaller result, though needs to be less than 256 symbols
+   # not fully implemented
+   ( cd festival/lib/dicts/cmu;
+     # Use the lts_test.log to find the failed entries and only
+     # include them in the list 
+     # this needs festival-1.96 or later to get the pos from the lts_test.log
+     grep "^failed " lts_test.log |
+     sed 's/(/( /g;s/)/ )/g' |
+     awk '{printf("( \"");
+           for (i=3; $i != ")"; i++)
+               printf("%s",$i);
+           i++;
+           printf("\" %s ( ",$i);
+           i++; i++
+           for ( ; $i != ")"; i++)
+              if ($i != "#")
+                 printf("%s ",$i);
+           printf("))\n");
+         }' |
+     tr -d '()"' |
+     awk '{if ($2 == "nil") 
+              printf("0_start ");
+           else
+              printf("%s_start ",$2);
+           for (i=1; i<=length($1); i++)
+              printf("%s_%s ",substr($1,i,1),$(i+2));
+           printf("\n");}' >pruned_lex2.data
+#     festival --heap 10000000 -b $FLITEDIR/tools/make_lex.scm '(lextoC "cmu" "pruned_lex.out" "c")' ;
+   )
+fi
+
+if [ "$1" = "compresslex" ]
+then
+   # Compress the entries and phone strings by finding best ngrams 
+   ( cd festival/lib/dicts/cmu/c;
+     $FLITEDIR/tools/huff_table phones cmu_lex_data cmu_lex_phones_huff_table.c
+     $FLITEDIR/tools/huff_table entries cmu_lex_data cmu_lex_entries_huff_table.c
+     paste huff.entries.compressed huff.phones.compressed huff.tmp.corpus | 
+     tr -d " " |
+     awk 'BEGIN {pcount = 1;
+                 printf("/* index to compressed data */\n");
+                }
+          function unenoctal(x)
+          {
+             y = ((substr(x,1,1)+0)*64) + ((substr(x,2,1)+0)*8) + (substr(x,3,1)+0);
+             return y;
+          }
+          {printf("   ");
+           for (i=length($2)-3; i>0; i-=4)
+           {
+              printf("%d,",unenoctal(substr($2,i+1,3)));
+              pcount++;
+           }
+           pcount++;
+           printf(" 255, /* %d %s */ ",pcount,$3);
+           for (i=1; i<length($1); i+=4)
+           {
+              printf("%d,",unenoctal(substr($1,i+1,3)));
+              pcount++;
+           }
+           printf("0,\n");
+           pcount++;
+          }
+        END { printf("/* num_bytes = %d */\n",pcount);}' >cmu_lex_data_compressed.c
+     grep "num_bytes = " cmu_lex_data_compressed.c |
+     awk '{print $4}' >cmu_lex_num_bytes_compressed.c
+   )
+fi
+
+if [ "$1" = "install" ]
+then
+   cp -p festival/lib/dicts/cmu/c/cmu_lex_data.c .
+   cp -p festival/lib/dicts/cmu/c/cmu_lex_data_compressed.c cmu_lex_data_raw.c
+   cp -p festival/lib/dicts/cmu/c/cmu_lex_phones_huff_table.c .
+   cp -p festival/lib/dicts/cmu/c/cmu_lex_entries_huff_table.c .
+   cp -p festival/lib/dicts/cmu/c/cmu_lex_entries.c .
+   cp -p festival/lib/dicts/cmu/c/cmu_lex_num_bytes_compressed.c cmu_lex_num_bytes.c
+
+   cp -p festival/lib/dicts/cmu/c/cmu_lts_model.c .
+   cp -p festival/lib/dicts/cmu/c/cmu_lts_model.h .
+   cp -p festival/lib/dicts/cmu/c/cmu_lts_rules.c .
+
+fi
+
+

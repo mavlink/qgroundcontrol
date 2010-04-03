@@ -1,0 +1,251 @@
+QWidget#colorIcon {}
+
+QWidget {
+background-color: #151518;
+color: #DDDDDF;
+background-clip: border;
+font-size: 11px;
+}
+
+QGroupBox {
+border: 1px solid #777777;
+border-radius: 3px;
+padding: 10px 0px 0px 0px;
+margin-top: 1ex; /* leave space at the top for the title */
+}
+
+QCheckBox {
+/*background-color: #252528;*/
+color: #DDDDDF;
+}
+
+QCheckBox::indicator {
+    border: 1px solid #777777;
+    border-radius: 2px;
+    color: #DDDDDF;
+         width: 10px;
+     height: 10px;
+}
+
+QLineEdit {
+border: 1px solid #777777;
+    border-radius: 2px;
+}
+
+QTextEdit {
+border: 1px solid #777777;
+    border-radius: 2px;
+}
+
+QPlainTextEdit {
+border: 1px solid #777777;
+    border-radius: 2px;
+}
+
+QComboBox {
+border: 1px solid #777777;
+    border-radius: 2px;
+    }
+
+ QCheckBox::indicator:checked {
+     background-color: #555555;
+ }
+
+ QCheckBox::indicator:checked:hover {
+     background-color: #555555;
+ }
+
+ QCheckBox::indicator:checked:pressed {
+     background-color: #555555;
+ }
+
+ QCheckBox::indicator:indeterminate:hover {
+     image: url(:/images/checkbox_indeterminate_hover.png);
+ }
+
+ QCheckBox::indicator:indeterminate:pressed {
+     image: url(:/images/checkbox_indeterminate_pressed.png);
+ }
+
+ QGroupBox::title {
+     subcontrol-origin: margin;
+     subcontrol-position: top center; /* position at the top center */
+     margin: 0 3px 0px 3px;
+     padding: 0 3px 0px 0px;
+     font: bold 8px;
+     color: #DDDDDF;
+ }
+ 
+ QDockWidget {
+	font: bold;
+    border: 1px solid #32345E;
+}
+
+QDockWidget::close-button, QDockWidget::float-button {
+	background-color: #181820;
+	color: #EEEEEE;
+}
+
+QDockWidget::title {
+    text-align: left;
+    background: #222224;
+    padding-left: 5px;
+    height: 10px;
+	border-bottom: 1px solid #555555;
+}
+
+QSeparator {
+    color: #EEEEEE;
+    }
+
+
+QSpinBox {
+	min-height: 12 px;
+}
+
+QPushButton {
+	font-weight: bold;
+	min-height: 18px;
+	max-height: 32px;
+	border: 1px solid #EEEEEE;
+	border-radius: 5px;
+	padding-left: 10px;
+	padding-right: 10px;
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #303030, stop: 1 #202020);
+}
+
+QPushButton:checked {
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #101010, stop: 1 #404040);
+}
+
+QPushButton:pressed {
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
+}
+
+QToolButton {
+	font-weight: bold;
+	min-height: 16px;
+	min-width: 24px;
+	max-height: 32px;
+	border: 1px solid #EEEEEE;
+	border-radius: 5px;
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #303030, stop: 1 #202020);
+}
+
+QToolButton:pressed {
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
+}
+
+QPushButton#forceLandButton {
+	font-weight: bold;
+	min-height: 30px;
+	color: #000000;
+	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                             stop:0 #ffee01, stop:1 #ae8f00) url("ICONDIR/control/emergency-button.png");
+	background-clip: border;
+	border-width: 1px;
+	border-color: #555555;
+	border-radius: 5px;
+}
+
+QPushButton:pressed#forceLandButton {
+	font-weight: bold;
+	min-height: 30px;
+	color: #000000;
+	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                             stop:0 #bbaa00, stop:1 #a05b00) url("ICONDIR/control/emergency-button.png");
+	background-clip: border;
+	border-width: 1px;
+	border-color: #555555;
+	border-radius: 5px;
+}
+
+QPushButton#killButton {
+	font-weight: bold;
+	min-height: 30px;
+	color: #000000;
+	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                             stop:0 #ffb917, stop:1 #b37300) url("ICONDIR/control/emergency-button.png");
+	background-clip: border;
+	border-width: 1px;
+	border-color: #555555;
+	border-radius: 5px;
+}
+
+QPushButton:pressed#killButton {
+	font-weight: bold;
+	min-height: 30px;
+	color: #000000;
+	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                             stop:0 #bb8500, stop:1 #903000) url("ICONDIR/control/emergency-button.png");
+	background-clip: border;
+	border-width: 1px;
+	border-color: #555555;
+	border-radius: 5px;
+}
+
+QPushButton#controlButton {
+    min-height: 25px;
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #b76f11, stop: 1 #e1a718);
+}
+
+QPushButton:checked#controlButton {
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #b76f11, stop: 1 #e1a718);
+}
+
+QProgressBar {
+	border: 1px solid white;
+	border-radius: 4px;
+	text-align: center;
+	padding: 2px;
+	color: white;
+	background-color: #111111;
+}
+
+QProgressBar:horizontal {
+    height 12px;
+}
+
+QProgressBar:vertical {
+    width 12px;
+}
+
+QProgressBar::chunk {
+	background-color: #656565;
+}
+
+QProgressBar::chunk#batteryBar {
+	background-color: green;
+}
+
+QProgressBar::chunk#speedBar {
+	background-color: yellow;
+}
+
+QProgressBar::chunk#thrustBar {
+	background-color: orange;
+}
+
+QProgressBar::chunk#bandwidthBar {
+	background-color: orange;
+}
+QProgressBar::chunk#loadBar {
+	background-color: yellow;
+}
+
+QProgressBar::chunk#topRotorBar {
+	background-color: yellow;
+}
+
+QProgressBar::chunk#botRotorBar {
+	background-color: yellow;
+}
+
+QProgressBar::chunk#leftServoBar {
+	background-color: #99BFDD;
+}
+
+QProgressBar::chunk#rightServoBar
+{
+	background-color: blue;
+}
