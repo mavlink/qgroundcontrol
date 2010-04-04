@@ -53,9 +53,12 @@ public slots:
     void cycleContextButton();
     /** @brief Set the operation mode of the MAV */
     void setMode(int mode);
+    /** @brief Transmit the operation mode **/
+    void transmitMode();
 
 protected:
     UASInterface* uas;
+    int uasMode;
 
 private:
     Ui::uasControl ui;

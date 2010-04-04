@@ -190,7 +190,7 @@ void HUD::updateValue(UASInterface* uas, QString name, double value, quint64 mse
         lastUpdate.insert(name, msec);
     //}
 
-        qDebug() << __FILE__ << __LINE__ << "VALUE:" << value << "MEAN:" << mean << "DOT:" << dot << "COUNT:" << meanCount;
+        //qDebug() << __FILE__ << __LINE__ << "VALUE:" << value << "MEAN:" << mean << "DOT:" << dot << "COUNT:" << meanCount;
     }
 }
 

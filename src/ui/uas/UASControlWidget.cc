@@ -64,13 +64,9 @@ void UASControlWidget::setUAS(UASInterface* uas)
         disconnect(ui.controlButton, SIGNAL(clicked()), uas, SLOT(enable_motors()));
         disconnect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
         disconnect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
-        //disconnect(ui.haltButton, SIGNAL(clicked()), uas, SLOT(halt()));
-        //disconnect(ui.continueButton, SIGNAL(clicked()), uas, SLOT(go()));
-        //disconnect(ui.forceLandButton, SIGNAL(clicked()), uas, SLOT(emergencySTOP()));
         disconnect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-        //disconnect(uas, SIGNAL(autoModeChanged(bool)), ui.autoButton, SLOT(setChecked(bool)));
-        //disconnect(ui.autoButton, SIGNAL(clicked(bool)), uas, SLOT(setAutoMode(bool)));
-        //disconnect(ui.motorsStopButton, SIGNAL(clicked()), uas, SLOT(disable_motors()));
+        disconnect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
+        disconnect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
     }
     else
     {
@@ -78,14 +74,9 @@ void UASControlWidget::setUAS(UASInterface* uas)
         connect(ui.controlButton, SIGNAL(clicked()), this, SLOT(cycleContextButton()));
         connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
         connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
-        //connect(ui.haltButton, SIGNAL(clicked()), uas, SLOT(halt()));
-        //connect(ui.continueButton, SIGNAL(clicked()), uas, SLOT(go()));
-        //connect(ui.forceLandButton, SIGNAL(clicked()), uas, SLOT(emergencySTOP()));
         connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-        //connect(ui.autoButton, SIGNAL(clicked(bool)), uas, SLOT(setAutoMode(bool)));
-        //connect(uas, SIGNAL(autoModeChanged(bool)), ui.autoButton, SLOT(setChecked(bool)));
-        //connect(ui.motorsStopButton, SIGNAL(clicked()), uas, SLOT(disable_motors()));
         connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
+        connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
         ui.modeComboBox->insertItem(0, "Select..");
 
         ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
@@ -100,6 +91,7 @@ UASControlWidget::~UASControlWidget() {
 
 void UASControlWidget::setMode(int mode)
 {
+    // Adapt context button mode
     switch (mode)
     {
         case MAV_MODE_LOCKED:
@@ -119,7 +111,17 @@ void UASControlWidget::setMode(int mode)
     }
 
     // Set mode on system
-    if (mode >= MAV_MODE_LOCKED && mode <= MAV_MODE_TEST3) this->uas->setMode(mode);
+    if (mode >= MAV_MODE_LOCKED && mode <= MAV_MODE_TEST3)
+    {
+        uasMode = mode;
+        ui.modeComboBox->setCurrentIndex(mode);
+    }
+    qDebug() << "SET MODE REQUESTED" << mode;
+}
+
+void UASControlWidget::transmitMode()
+{
+    this->uas->setMode(uasMode);
 }
 
 void UASControlWidget::cycleContextButton()

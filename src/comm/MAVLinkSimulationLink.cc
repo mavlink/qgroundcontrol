@@ -484,7 +484,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         status.mode = MAV_MODE_AUTO;
                         break;
                         case MAV_ACTION_RETURN:
-
+                        status.status = MAV_STATE_LANDING;
                         break;
                         case MAV_ACTION_MOTORS_START:
                         status.status = MAV_STATE_ACTIVE;
@@ -497,6 +497,10 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         case MAV_ACTION_EMCY_KILL:
                         status.status = MAV_STATE_EMERGENCY;
                         status.mode = MAV_MODE_MANUAL;
+                        break;
+                        case MAV_ACTION_SHUTDOWN:
+                        status.status = MAV_STATE_POWEROFF;
+                        status.mode = MAV_MODE_LOCKED;
                         break;
                     }
                 }

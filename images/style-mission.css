@@ -88,7 +88,8 @@ QDockWidget::close-button, QDockWidget::float-button {
 
 QDockWidget::title {
     text-align: left;
-    background: #222224;
+    background: #121214;
+    color: #4A4A4F;
     padding-left: 5px;
     height: 10px;
 	border-bottom: 1px solid #555555;
@@ -194,24 +195,24 @@ QPushButton:checked#controlButton {
 }
 
 QProgressBar {
-	border: 1px solid #EEEEEE;
+	border: 1px solid #4A4A4F;
 	border-radius: 4px;
 	text-align: center;
 	padding: 2px;
-	color: white;
+	color: #DDDDDF;
 	background-color: #111118;
 }
 
 QProgressBar:horizontal {
-    height 12px;
+    height: 9px;
 }
 
 QProgressBar:vertical {
-    width 12px;
+    width: 9px;
 }
 
 QProgressBar::chunk {
-	background-color: #656565;
+	background-color: #3C7B9E;
 }
 
 QProgressBar::chunk#batteryBar {
@@ -224,28 +225,4 @@ QProgressBar::chunk#speedBar {
 
 QProgressBar::chunk#thrustBar {
 	background-color: orange;
-}
-
-QProgressBar::chunk#bandwidthBar {
-	background-color: orange;
-}
-QProgressBar::chunk#loadBar {
-	background-color: yellow;
-}
-
-QProgressBar::chunk#topRotorBar {
-	background-color: yellow;
-}
-
-QProgressBar::chunk#botRotorBar {
-	background-color: yellow;
-}
-
-QProgressBar::chunk#leftServoBar {
-	background-color: #99BFDD;
-}
-
-QProgressBar::chunk#rightServoBar
-{
-	background-color: blue;
 }
