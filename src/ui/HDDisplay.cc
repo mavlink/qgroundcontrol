@@ -31,13 +31,14 @@ This file is part of the PIXHAWK project
 
 #include <QFile>
 #include <QGLWidget>
+#include <QStringList>
 #include "UASManager.h"
 #include "HDDisplay.h"
 #include "ui_HDDisplay.h"
 
 #include <QDebug>
 
-HDDisplay::HDDisplay(QWidget *parent) :
+HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
         QWidget(parent),
         uas(NULL),
         values(QMap<QString, float>()),
@@ -45,6 +46,10 @@ HDDisplay::HDDisplay(QWidget *parent) :
         valuesMean(QMap<QString, float>()),
         valuesCount(QMap<QString, int>()),
         lastUpdate(QMap<QString, quint64>()),
+        minValues(),
+        maxValues(),
+        goodRanges(),
+        critRanges(),
         xCenterOffset(0.0f),
         yCenterOffset(0.0f),
         vwidth(80.0f),
@@ -62,6 +67,7 @@ HDDisplay::HDDisplay(QWidget *parent) :
         strongStrokeWidth(1.5f),
         normalStrokeWidth(1.0f),
         fineStrokeWidth(0.5f),
+        acceptList(plotList),
         m_ui(new Ui::HDDisplay)
 {
     //m_ui->setupUi(this);
@@ -82,7 +88,7 @@ HDDisplay::HDDisplay(QWidget *parent) :
     if (font.family() != fontFamilyName) qDebug() << "ERROR! Font not loaded: " << fontFamilyName;
 
     // Connect with UAS
-    //connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     //start();
 }
 
@@ -93,7 +99,6 @@ HDDisplay::~HDDisplay()
 
 void HDDisplay::paintEvent(QPaintEvent * event)
 {
-
     paintGL();
 }
 
@@ -108,13 +113,36 @@ void HDDisplay::paintGL()
     if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
 
     QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing);
-    const float gaugeWidth = 15.0f;
+    const int columns = 3;
+    const float spacing = 0.4f; // 40% of width
+    const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.1f));
     const QColor gaugeColor = QColor(200, 200, 200);
-    drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
-    drawGauge(10.0f, 10.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
-    drawGauge(10.0f+gaugeWidth*1.7f, 10.0f, gaugeWidth/2.0f, 0, 10.0f, "altitude", values.value("altitude", 0.0f), gaugeColor, &painter, qMakePair(1.0f, 2.5f), qMakePair(0.0f, 0.5f), true);
+    //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
+    //drawGauge(15.0f, 15.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
+    //drawGauge(15.0f+gaugeWidth*1.7f, 15.0f, gaugeWidth/2.0f, 0, 10.0f, "altitude", values.value("altitude", 0.0f), gaugeColor, &painter, qMakePair(1.0f, 2.5f), qMakePair(0.0f, 0.5f), true);
+
+    // Left spacing from border / other gauges, measured from left edge to center
+    float leftSpacing = gaugeWidth * spacing;
+    float xCoord = leftSpacing + gaugeWidth/2.0f;
+
+    float topSpacing = leftSpacing;
+    float yCoord = topSpacing + gaugeWidth/2.0f;
+
+    for (int i = 0; i < acceptList->size(); ++i)
+    {
+        QString value = acceptList->at(i);
+        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, 0.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
+        xCoord += gaugeWidth + leftSpacing;
+        // Move one row down if necessary
+        if (xCoord + gaugeWidth > vwidth)
+        {
+            yCoord += topSpacing + gaugeWidth;
+            xCoord = leftSpacing + gaugeWidth/2.0f;
+        }
+    }
 }
 
 void HDDisplay::start()
@@ -133,7 +161,7 @@ void HDDisplay::stop()
  */
 void HDDisplay::setActiveUAS(UASInterface* uas)
 {
-    qDebug() << "ATTEMPTING TO SET UAS";
+    //qDebug() << "ATTEMPTING TO SET UAS";
     if (this->uas != NULL && this->uas != uas)
     {
         // Disconnect any previously connected active MAV
@@ -144,7 +172,7 @@ void HDDisplay::setActiveUAS(UASInterface* uas)
 
     //if (this->uas != uas)
     // {
-    qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
+    //qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
     // Setup communication
     connect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
     //}
@@ -349,11 +377,8 @@ void HDDisplay::drawSystemIndicator(float xRef, float yRef, int maxNum, float ma
         float height = 1.5f;
         const float hspacing = 0.6f;
 
-        // TODO ensure that instrument stays smaller than maxWidth and maxHeight
-
-
         int i = 0;
-        while (value.hasNext() && i < maxNum)
+        while (value.hasNext() && i < maxNum && x < maxWidth && y < maxHeight)
         {
             value.next();
             QBrush brush(Qt::SolidPattern);

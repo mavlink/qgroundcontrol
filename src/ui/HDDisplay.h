@@ -36,6 +36,8 @@ This file is part of the PIXHAWK project
 #include <QColor>
 #include <QTimer>
 #include <QFontDatabase>
+#include <QMap>
+#include <QPair>
 #include <cmath>
 
 #include "UASInterface.h"
@@ -47,7 +49,7 @@ namespace Ui {
 class HDDisplay : public QWidget {
     Q_OBJECT
 public:
-    HDDisplay(QWidget *parent = 0);
+    HDDisplay(QStringList* plotList, QWidget *parent = 0);
     ~HDDisplay();
 
 public slots:
@@ -84,6 +86,10 @@ protected:
     QMap<QString, float> valuesMean; ///< Mean since system startup for this variable
     QMap<QString, int> valuesCount; ///< Number of values received so far
     QMap<QString, quint64> lastUpdate; ///< The last update time for this variable
+    QMap<QString, float> minValues; ///< The minimum value this variable is assumed to have
+    QMap<QString, float> maxValues; ///< The maximum value this variable is assumed to have
+    QMap<QString, QPair<float, float> > goodRanges; ///< The range of good values
+    QMap<QString, QPair<float, float> > critRanges; ///< The range of critical values
     double scalingFactor; ///< Factor used to scale all absolute values to screen coordinates
     float xCenterOffset, yCenterOffset; ///< Offset from center of window in mm coordinates
     float vwidth; ///< Virtual width of this window, 200 mm per default. This allows to hardcode positions and aspect ratios. This virtual image plane is then scaled to the window size.
@@ -113,6 +119,8 @@ protected:
     float strongStrokeWidth;   ///< Strong line stroke width, used throughout the HUD
     float normalStrokeWidth;   ///< Normal line stroke width, used throughout the HUD
     float fineStrokeWidth;     ///< Fine line stroke width, used throughout the HUD
+
+    QStringList* acceptList;   ///< Variable names to plot
 
 private:
     Ui::HDDisplay *m_ui;

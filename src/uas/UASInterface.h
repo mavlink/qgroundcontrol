@@ -1,7 +1,6 @@
 /*=====================================================================
 
 PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-Please see our website at <http://pixhawk.ethz.ch>
 
 (c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
 
@@ -159,6 +158,8 @@ public slots:
       * @param autoMode true for autonomous operation, false for manual control
       */
     virtual void setAutoMode(bool autoMode) = 0;
+
+    virtual void setMode(int mode) = 0;
     /** Stops the robot system. If it is an MAV, the robot starts the emergency landing procedure **/
     virtual void emergencySTOP() = 0;
     /** Kills the robot. All systems are immediately shut down (e.g. the main power line is cut). This might lead to a crash **/
@@ -210,6 +211,8 @@ signals:
      * @param description longer textual description. Should be however limited to a short text, e.g. 200 chars.
      */
     void statusChanged(UASInterface* uas, QString status, QString description);
+    /** @brief Robot mode has changed */
+    void modeChanged(int sysId, QString status, QString description);
     /** @brief A command has been issued **/
     void commandSent(int command);
     /** @brief The connection status has changed **/

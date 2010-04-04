@@ -1,14 +1,14 @@
 QWidget#colorIcon {}
 
 QWidget {
-background-color: #151518;
+background-color: #050508;
 color: #DDDDDF;
 background-clip: border;
 font-size: 11px;
 }
 
 QGroupBox {
-border: 1px solid #777777;
+border: 1px solid #66666B;
 border-radius: 3px;
 padding: 10px 0px 0px 0px;
 margin-top: 1ex; /* leave space at the top for the title */
@@ -107,11 +107,11 @@ QPushButton {
 	font-weight: bold;
 	min-height: 18px;
 	max-height: 32px;
-	border: 1px solid #EEEEEE;
+	border: 2px solid #4A4A4F;
 	border-radius: 5px;
 	padding-left: 10px;
 	padding-right: 10px;
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #303030, stop: 1 #202020);
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
 }
 
 QPushButton:checked {
@@ -186,7 +186,7 @@ QPushButton:pressed#killButton {
 
 QPushButton#controlButton {
     min-height: 25px;
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #b76f11, stop: 1 #e1a718);
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #A0AE00, stop: 1 #909E00);
 }
 
 QPushButton:checked#controlButton {
@@ -194,12 +194,12 @@ QPushButton:checked#controlButton {
 }
 
 QProgressBar {
-	border: 1px solid white;
+	border: 1px solid #EEEEEE;
 	border-radius: 4px;
 	text-align: center;
 	padding: 2px;
 	color: white;
-	background-color: #111111;
+	background-color: #111118;
 }
 
 QProgressBar:horizontal {

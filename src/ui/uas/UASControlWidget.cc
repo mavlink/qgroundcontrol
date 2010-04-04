@@ -117,6 +117,9 @@ void UASControlWidget::setMode(int mode)
         case MAV_MODE_TEST3:
         break;
     }
+
+    // Set mode on system
+    if (mode >= MAV_MODE_LOCKED && mode <= MAV_MODE_TEST3) this->uas->setMode(mode);
 }
 
 void UASControlWidget::cycleContextButton()

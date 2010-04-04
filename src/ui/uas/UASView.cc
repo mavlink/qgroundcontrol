@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Display the airstrip of one unmanned vehicle in the UAS list
+ *   @brief Implementation of one airstrip
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -43,6 +43,8 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         timeRemaining(0),
         state("UNKNOWN"),
         stateDesc(tr("Unknown system state")),
+        mode("MAV_MODE_UNKNOWN"),
+        thrust(0),
         m_ui(new Ui::UASView)
 {
     this->uas = uas;
@@ -58,6 +60,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString,QString)));
+    connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
     connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateLoad(UASInterface*, double)));
     //connect(uas, SIGNAL(waypointUpdated(int,int,double,double,double,double,bool,bool)), this, SLOT(setWaypoint(int,int,double,double,double,double,bool,bool)));
     connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int,int)));
@@ -102,6 +105,11 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 UASView::~UASView()
 {
     delete m_ui;
+}
+
+void UASView::updateMode(int sysId, QString status, QString description)
+{
+    if (sysId == this->uas->getUASID()) m_ui->modeLabel->setText(status);
 }
 
 void UASView::mouseDoubleClickEvent (QMouseEvent * event)
@@ -269,7 +277,8 @@ void UASView::refresh()
 
     // Battery
     m_ui->batteryBar->setValue(static_cast<int>(this->chargeLevel));
-    m_ui->loadBar->setValue(static_cast<int>(this->load));
+    //m_ui->loadBar->setValue(static_cast<int>(this->load));
+    m_ui->thrustBar->setValue(this->thrust);
 
     if(this->timeRemaining > 1 && this->timeRemaining < MG::MAX_FLIGHT_TIME)
     {

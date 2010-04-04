@@ -114,6 +114,9 @@ public slots:
     void addLink();
     void configure();
     void UASCreated(UASInterface* uas);
+    void startVideoCapture();
+    void stopVideoCapture();
+    void saveScreen();
 
     /** @brief Load view for pilot */
     void loadPilotView();
@@ -154,6 +157,8 @@ protected:
 
 
     LogCompressor* comp;
+    QString screenFileName;
+    QTimer* videoTimer;
 
 private:
     Ui::MGMainWindow ui;

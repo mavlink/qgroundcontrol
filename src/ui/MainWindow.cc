@@ -96,10 +96,19 @@ MGMainWindow::MGMainWindow(QWidget *parent) : QMainWindow(parent)
     protocol->setVisible(false);
     parameters = new ParameterInterface(this);
     parameters->setVisible(false);
-    /*headDown1 = new HDDisplay(this);
+
+    QStringList* acceptList = new QStringList();
+    acceptList->append("roll IMU");
+    acceptList->append("pitch IMU");
+    acceptList->append("yaw IMU");
+    headDown1 = new HDDisplay(acceptList, this);
     headDown1->setVisible(false);
-    headDown2 = new HDDisplay(this);
-    headDown2->setVisible(false);*/
+
+    QStringList* acceptList2 = new QStringList();
+    acceptList2->append("Battery");
+    acceptList2->append("Pressure");
+    headDown2 = new HDDisplay(acceptList2, this);
+    headDown2->setVisible(false);
     centerStack->addWidget(map);
     centerStack->addWidget(hud);
     setCentralWidget(centerStack);
@@ -107,7 +116,8 @@ MGMainWindow::MGMainWindow(QWidget *parent) : QMainWindow(parent)
     // Get IPs
     QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
 
-    QString windowname = qApp->applicationName() + qApp->applicationVersion();
+    QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
+    /*
     windowname.append(" (" + QHostInfo::localHostName() + ": ");
     bool prevAddr = false;
     for (int i = 0; i < hostAddresses.size(); i++)
@@ -122,6 +132,7 @@ MGMainWindow::MGMainWindow(QWidget *parent) : QMainWindow(parent)
     }
 
     windowname.append(")");
+    */
 
     setWindowTitle(windowname);
 #ifndef Q_WS_MAC
@@ -155,7 +166,8 @@ MGMainWindow::MGMainWindow(QWidget *parent) : QMainWindow(parent)
     ui.menuNetwork->addAction(commWidget->getAction());
     udpLink->connect();
 
-    simulationLink = new MAVLinkSimulationLink();
+    simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
+    connect(simulationLink, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
     LinkManager::instance()->addProtocol(simulationLink, mavlink);
     //CommConfigurationWindow* simulationWidget = new CommConfigurationWindow(simulationLink, mavlink, this);
     //ui.menuNetwork->addAction(commWidget->getAction());
@@ -175,6 +187,40 @@ QStatusBar* MGMainWindow::createStatusBar()
     /* Enable resize grip in the bottom right corner */
     bar->setSizeGripEnabled(true);
     return bar;
+}
+
+void MGMainWindow::startVideoCapture()
+{
+    QString format = "bmp";
+    QString initialPath = QDir::currentPath() + tr("/untitled.") + format;
+
+    QString screenFileName = QFileDialog::getSaveFileName(this, tr("Save As"),
+                                                          initialPath,
+                                                          tr("%1 Files (*.%2);;All Files (*)")
+                                                          .arg(format.toUpper())
+                                                          .arg(format));
+    delete videoTimer;
+    videoTimer = new QTimer(this);
+    videoTimer->setInterval(40);
+    connect(videoTimer, SIGNAL(timeout()), this, SLOT(saveScreen()));
+}
+
+void MGMainWindow::stopVideoCapture()
+{
+    videoTimer->stop();
+
+    // TODO Convert raw images to PNG
+}
+
+void MGMainWindow::saveScreen()
+{
+    QPixmap window = QPixmap::grabWindow(this->winId());
+    QString format = "bmp";
+
+    if (!screenFileName.isEmpty())
+    {
+        window.save(screenFileName, format.toAscii());
+    }
 }
 
 void MGMainWindow::reloadStylesheet()
@@ -313,18 +359,19 @@ void MGMainWindow::loadPilotView()
     // HEAD UP DISPLAY
     centerStack->setCurrentWidget(hud);
     hud->start();
-    /*headDown1->start();
-    headDown2->start();
 
     //connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), pfd, SLOT(setActiveUAS(UASInterface*)));
-    QDockWidget* container1 = new QDockWidget(tr("Main Instruments"), this);
+    QDockWidget* container1 = new QDockWidget(tr("Primary Flight Display"), this);
     container1->setWidget(headDown1);
     addDockWidget(Qt::RightDockWidgetArea, container1);
 
-        QDockWidget* container2 = new QDockWidget(tr("Auxiliary Instruments"), this);
+    QDockWidget* container2 = new QDockWidget(tr("Payload Status"), this);
     container2->setWidget(headDown2);
     addDockWidget(Qt::RightDockWidgetArea, container2);
-    */
+
+    headDown1->start();
+    headDown2->start();
+
 
     this->show();
 }

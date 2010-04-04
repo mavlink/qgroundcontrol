@@ -38,12 +38,14 @@ This file is part of the PIXHAWK project
 #include <QQueue>
 #include <QMutex>
 #include <inttypes.h>
-#include <LinkInterface.h>
+#include <mavlink.h>
+#include "LinkInterface.h"
 
 class MAVLinkSimulationLink : public LinkInterface
 {
+    Q_OBJECT
 public:
-    MAVLinkSimulationLink(QFile* readFile=NULL, QFile* writeFile=NULL, int rate=5);
+    MAVLinkSimulationLink(QString readFile="", QString writeFile="", int rate=5);
     ~MAVLinkSimulationLink();
     bool isConnected();
     qint64 bytesAvailable();
@@ -94,7 +96,6 @@ protected:
     /** File which contains the input data (simulated robot messages) **/
     QFile* simulationFile;
     QString simulationHeader;
-    int lineCounter = 0;
     /** File where the commands sent by the groundstation are stored **/
     QFile* receiveFile;
     QTextStream stream;
@@ -112,9 +113,15 @@ protected:
 
     int id;
     QString name;
+    qint64 timeOffset;
+    sys_status_t status;
 
     void setMaximumTimeNoise(int milliseconds);
     void addTimeNoise();
+    void enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg);
+
+    signals:
+    void valueChanged(int uasId, QString curve, double value, quint64 usec);
 
 };
 

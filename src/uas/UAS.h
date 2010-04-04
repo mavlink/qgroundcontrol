@@ -115,7 +115,7 @@ protected:
     bool controlPitchManual; ///< status flag, true if pitch is controlled manually
     bool controlYawManual;   ///< status flag, true if yaw is controlled manually
     bool controlThrustManual;///< status flag, true if thrust is controlled manually
-    enum MAV_MODE mode; ///< The current mode of the MAV
+    int mode; ///< The current mode of the MAV
     quint64 onboardTimeOffset;
 
     /** @brief Set the current battery type */
@@ -178,7 +178,7 @@ public slots:
     void setSelected();
 
     /** @brief Set current mode of operation, e.g. auto or manual */
-    void setMode(enum MAV_MODE mode);
+    void setMode(int mode);
 
 signals:
 

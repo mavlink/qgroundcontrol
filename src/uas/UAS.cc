@@ -113,6 +113,50 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit statusChanged(this, uasState, stateDescription);
             onboardTimeOffset = 0; // Reset offset measurement
             break;
+        case MAVLINK_MSG_ID_SYS_STATUS:
+            {
+                sys_status_t state;
+                message_sys_status_decode(&message, &state);
+                getStatusForCode((int)state.status, uasState, stateDescription);
+                emit statusChanged(this, uasState, stateDescription);
+
+                QString mode;
+
+                switch (state.mode)
+                {
+                case MAV_MODE_LOCKED:
+                    mode = "MAV_MODE_LOCKED";
+                    break;
+                case MAV_MODE_MANUAL:
+                    mode = "MAV_MODE_MANUAL";
+                    break;
+                case MAV_MODE_AUTO:
+                    mode = "MAV_MODE_AUTO";
+                    break;
+                case MAV_MODE_TEST1:
+                    mode = "MAV_MODE_TEST1";
+                    break;
+                case MAV_MODE_TEST2:
+                    mode = "MAV_MODE_TEST2";
+                    break;
+                case MAV_MODE_TEST3:
+                    mode = "MAV_MODE_TEST3";
+                    break;
+                default:
+                    mode = "MAV_MODE_UNINIT";
+                    break;
+                }
+
+                emit modeChanged(this->getUASID(), mode, "");
+                currentVoltage = state.vbat;
+                filterVoltage(currentVoltage);
+                if (startVoltage == 0) startVoltage = currentVoltage;
+                timeRemaining = calculateTimeRemaining();
+                //qDebug() << "Voltage: " << currentVoltage << " Chargelevel: " << getChargeLevel() << " Time remaining " << timeRemaining;
+                emit batteryChanged(this, filterVoltage(), getChargeLevel(), timeRemaining);
+                emit voltageChanged(message.sysid, state.vbat/1000.0f);
+            }
+            break;
             /*
         case MAVLINK_MSG_ID_SYSTEM:
             //        std::cerr << std::endl;
@@ -198,9 +242,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             //std::cerr << "BYTES RESSOURCE RECEIVED" << std::endl;
             emit imageDataReceived(message_bytestream_get_rid(message.payload), message_bytestream_get_data(message.payload), message_bytestream_get_length(message.payload), message_bytestream_get_index(message.payload));
             break;
-        case MAVLINK_MSG_ID_SENSRAW:
+            */
+        case MAVLINK_MSG_ID_RAW_IMU:
             {
-                quint64 time = message_sensraw_get_usec(message.payload);
+                raw_imu_t raw;
+                message_raw_imu_decode(&message, &raw);
+                quint64 time = raw.msec;
                 if (time == 0)
                 {
                     time = MG::TIME::getGroundTimeNow();
@@ -214,21 +261,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     time += onboardTimeOffset;
                 }
 
-                emit valueChanged(uasId, "Accel. X", message_sensraw_get_xacc(message.payload), time);
-                emit valueChanged(uasId, "Accel. Y", message_sensraw_get_yacc(message.payload), time);
-                emit valueChanged(uasId, "Accel. Z", message_sensraw_get_zacc(message.payload), time);
-                emit valueChanged(uasId, "Gyro Phi", message_sensraw_get_xgyro(message.payload), time);
-                emit valueChanged(uasId, "Gyro Theta", message_sensraw_get_ygyro(message.payload), time);
-                emit valueChanged(uasId, "Gyro Psi", message_sensraw_get_zgyro(message.payload), time);
-                emit valueChanged(uasId, "Mag. X", message_sensraw_get_xmag(message.payload), time);
-                emit valueChanged(uasId, "Mag. Y", message_sensraw_get_ymag(message.payload), time);
-                emit valueChanged(uasId, "Mag. Z", message_sensraw_get_zmag(message.payload), time);
-                emit valueChanged(uasId, "Ground Dist.", message_sensraw_get_gdist(message.payload), time);
-                emit valueChanged(uasId, "Pressure", message_sensraw_get_baro(message.payload), time);
-                emit valueChanged(uasId, "Temperature", message_sensraw_get_temp(message.payload), time);
+                emit valueChanged(uasId, "Accel. X", raw.xacc, time);
+                emit valueChanged(uasId, "Accel. Y", raw.yacc, time);
+                emit valueChanged(uasId, "Accel. Z", raw.zacc, time);
+                emit valueChanged(uasId, "Gyro Phi", raw.xgyro, time);
+                emit valueChanged(uasId, "Gyro Theta", raw.ygyro, time);
+                emit valueChanged(uasId, "Gyro Psi", raw.zgyro, time);
+                emit valueChanged(uasId, "Mag. X", raw.xmag, time);
+                emit valueChanged(uasId, "Mag. Y", raw.ymag, time);
+                emit valueChanged(uasId, "Mag. Z", raw.zmag, time);
             }
             break;
-            */
         case MAVLINK_MSG_ID_ATTITUDE:
             //std::cerr << std::endl;
             //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << message_attitude_get_roll(message.payload) << " pitch: " << message_attitude_get_pitch(message.payload) << " yaw: " << message_attitude_get_yaw(message.payload) << std::endl;
@@ -338,12 +381,15 @@ void UAS::setAutoMode(bool autoMode)
     }
 }
 
-void UAS::setMode(enum MAV_MODE mode)
+void UAS::setMode(int mode)
 {
-    this->mode = mode;
-    mavlink_message_t msg;
-    message_set_mode_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, getUASID(), (unsigned char)mode);
-    sendMessage(msg);
+    if (mode >= MAV_MODE_LOCKED && mode <= MAV_MODE_TEST3)
+    {
+        this->mode = mode;
+        mavlink_message_t msg;
+        message_set_mode_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, getUASID(), (unsigned char)mode);
+        sendMessage(msg);
+    }
 }
 
 void UAS::sendMessage(mavlink_message_t message)

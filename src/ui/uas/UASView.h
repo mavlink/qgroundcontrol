@@ -1,7 +1,6 @@
 /*=====================================================================
 
 PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-Please see our website at <http://pixhawk.ethz.ch>
 
 (c) 2009 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
 
@@ -24,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Display the airstrip of one unmanned vehicle in the UAS list
+ *   @brief Definition of one airstrip
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -57,6 +56,8 @@ public slots:
     void updateGlobalPosition(UASInterface*, double lon, double lat, double alt, quint64 usec);
     void updateSpeed(UASInterface*, double x, double y, double z, quint64 usec);
     void updateState(UASInterface*, QString uasState, QString stateDescription);
+    /** @brief Update the MAV mode */
+    void updateMode(int sysId, QString status, QString description);
     void updateLoad(UASInterface* uas, double load);
     void receiveValue(int uasid, QString id, double value, quint64 time);
     void refresh();
@@ -78,6 +79,8 @@ protected:
     double load;
     QString state;
     QString stateDesc;
+    QString mode;
+    double thrust;
 
     void mouseDoubleClickEvent (QMouseEvent * event);
     /** @brief Mouse enters the widget */

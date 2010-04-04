@@ -78,7 +78,7 @@ HEADERS += src/MG.h \
     src/configuration.h \
     src/ui/uas/UASView.h \
     src/ui/CameraView.h \
-    src/comm/MavlinkSimulationLink.h \
+    src/comm/MAVLinkSimulationLink.h \
     src/comm/UDPLink.h \
     src/ui/ParameterInterface.h \
     src/ui/WaypointList.h \
@@ -129,7 +129,7 @@ SOURCES += src/main.cc \
     src/ui/linechart/ScrollZoomer.cc \
     src/ui/uas/UASView.cc \
     src/ui/CameraView.cc \
-    src/comm/MavlinkSimulationLink.cc \
+    src/comm/MAVLinkSimulationLink.cc \
     src/comm/UDPLink.cc \
     src/ui/ParameterInterface.cc \
     src/ui/WaypointList.cc \

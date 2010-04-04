@@ -1,26 +1,26 @@
 /*=====================================================================
- 
+
 PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
- 
+
 (c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
- 
+
 This file is part of the PIXHAWK project
- 
+
     PIXHAWK is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
- 
+
     PIXHAWK is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
- 
+
 ======================================================================*/
- 
+
 /**
  * @file
  *   @brief Implementation of simulated system link
@@ -53,17 +53,18 @@ This file is part of the PIXHAWK project
  * @param writeFile The received messages are written to that file
  * @param rate The rate at which the messages are sent (in intervals of milliseconds)
  **/
-MAVLinkSimulationLink::MAVLinkSimulationLink(QFile* readFile, QFile* writeFile, int rate) :
-        readyBytes(0)
+MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate) :
+        readyBytes(0),
+        timeOffset(0)
 {
     this->id = getNextLinkId();
     LinkManager::instance()->add(this);
     this->rate = rate;
     _isConnected = false;
 
-    if (readFile != NULL)
+    if (readFile != "")
     {
-        this->name = "Simulation: " + readFile->fileName();
+        this->name = "Simulation: " + readFile;
     }
     else
     {
@@ -72,19 +73,17 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QFile* readFile, QFile* writeFile, 
 
     // Comments on the variables can be found in the header file
 
-    simulationFile = readFile;
-    simulationHeader = readFile->readLine();
-    receiveFile = writeFile;
+    simulationFile = new QFile(readFile, this);
+    if (simulationFile->exists() && simulationFile->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        simulationHeader = simulationFile->readLine();
+    }
+    receiveFile = new QFile(writeFile, this);
     lastSent = MG::TIME::getGroundTimeNow();
 
     // Initialize the pseudo-random number generator
     srand(QTime::currentTime().msec());
     maxTimeNoise = 0;
-
-    //    timer = new QTimer(this);
-    //    QObject::connect(timer, SIGNAL(timeout()), this, SLOT(mainloop()));
-    //    _isConnected = false;
-    //    this->rate = rate;
 
 }
 
@@ -97,6 +96,13 @@ MAVLinkSimulationLink::~MAVLinkSimulationLink()
 
 void MAVLinkSimulationLink::run()
 {
+
+    status.mode = MAV_MODE_UNINIT;
+    status.status = MAV_STATE_UNINIT;
+    status.vbat = 0;
+    status.motor_block = 1;
+    status.packet_drop = 0;
+
     forever
     {
 
@@ -116,72 +122,41 @@ void MAVLinkSimulationLink::run()
     }
 }
 
+void MAVLinkSimulationLink::enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg)
+{
+    // Allocate buffer with packet data
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    unsigned int bufferlength = message_to_send_buffer(buf, msg);
+    //add data into datastream
+    memcpy(stream+(*index),buf, bufferlength);
+    (*index) += bufferlength;
+}
+
 void MAVLinkSimulationLink::mainloop()
 {
 
     // Test for encoding / decoding packets
 
     // Test data stream
-    const int streamlength = 1024;
+    const int streamlength = 4096;
     int streampointer = 0;
     //const int testoffset = 0;
-    uint8_t stream[streamlength];
+    uint8_t stream[streamlength] = {};
 
     // Fake system values
     uint8_t systemId = 220;
     uint8_t componentId = 0;
     uint16_t version = 1000;
 
-    // Fake sensor values
-    uint32_t xacc = 0;
-    uint32_t yacc = 0;
-    uint32_t zacc = 9810;
-
-    uint32_t xgyro = 10;
-    uint32_t ygyro = 5;
-    uint32_t zgyro = 100;
-
-    uint32_t xmag = 0;
-    uint32_t ymag = 1000;
-    uint32_t zmag = 500;
-
-    uint32_t pressure = 20000;
-    uint32_t grounddist = 500;
-    uint32_t temp = 20000;
-
     static float fullVoltage = 4.2 * 3;
     static float emptyVoltage = 3.35 * 3;
     static float voltage = fullVoltage;
     static float drainRate = 0.0025; // x.xx% of the capacity is linearly drained per second
-//    uint32_t chan1 = 1500;
-//    uint32_t chan2 = 1500;
-//    uint32_t chan3 = 1500;
-//    uint32_t chan4 = 1500;
-//    uint32_t chan5 = 1500;
 
-    float act1 = 0.1;
-    float act2 = 0.2;
-    float act3 = 0.3;
-    float act4 = 0.4;
-
-    // Fake coordinates
-
-    float roll = 0.0f;
-    float pitch = 10.0f;
-    float yaw = 60.5f;
-
-
-    // Fake Marker positions
-
-    uint32_t markerId = 20;
-    float confidence = 100.0f;
-    float posX = -1.0f;
-    float posY = 1.0f;
-    float posZ = 2.5f;
-
-    // Fake timestamp
-
-    unsigned int usec = MG::TIME::getGroundTimeNow();
+    attitude_t attitude;
+    raw_aux_t rawAuxValues;
+    raw_imu_t rawImuValues;
+    raw_sensor_t rawSensorValues;
 
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     int bufferlength;
@@ -200,31 +175,11 @@ void MAVLinkSimulationLink::mainloop()
     voltage = voltage - ((fullVoltage - emptyVoltage) * drainRate / rate);
     if (voltage < 3.550 * 3) voltage = 3.550 * 3;
 
-    //uint8_t msgbuffer[COMM_MAX_PACKET_LEN];
+    static int state = 0;
 
-    // 100 HZ TASKS
-    if (rate50hzCounter == 1000 / rate / 100)
-    {
-        // Read values
-        char buf[1024];
-        qint64 lineLength = simulationFile->readLine(buf, sizeof(buf));
-        if (lineLength != -1)
-        {
-            // Data is available
-        }
-        else
-        {
-            // We reached the end of the file, start from scratch
-            file.reset();
-            //simulationHeader
-        }
-    }
-
-    // 1 HZ TASKS
-    if (rate1hzCounter == 1000 / rate / 1)
+    if (state == 0)
     {
         // BOOT
-
         // Pack message and get size of encoded byte string
         messageSize = message_boot_pack(systemId, componentId, &msg, version);
         // Allocate buffer with packet data
@@ -232,48 +187,226 @@ void MAVLinkSimulationLink::mainloop()
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
+        state++;
+    }
 
-        // HEARTBEAT
+
+    // 50 HZ TASKS
+    if (rate50hzCounter == 1000 / rate / 40)
+    {
+        if (simulationFile->isOpen())
+        {
+            if (simulationFile->atEnd())
+            {
+                // We reached the end of the file, start from scratch
+                simulationFile->reset();
+                simulationHeader = simulationFile->readLine();
+            }
+
+            // Data was made available, read one line
+            // first entry is the timestamp
+            QString values = QString(simulationFile->readLine());
+            QStringList parts = values.split("\t");
+            QStringList keys = simulationHeader.split("\t");
+            //qDebug() << simulationHeader;
+            //qDebug() << values;
+            bool ok;
+            static quint64 lastTime = 0;
+            static quint64 baseTime = 0;
+            quint64 time = QString(parts.first()).toLongLong(&ok, 10);
+
+            if (ok)
+            {
+                if (timeOffset == 0)
+                {
+                    timeOffset = time;
+                    baseTime = time;
+                }
+
+                if (lastTime > time)
+                {
+                    // We have wrapped around in the logfile
+                    // Add the measurement time interval to the base time
+                    baseTime += lastTime - timeOffset;
+                }
+                lastTime = time;
+
+                time = time - timeOffset + baseTime;
+
+                // Gather individual measurement values
+                for (int i = 1; i < (parts.size() - 1); ++i)
+                {
+                    // Get one data field
+                    bool res;
+                    double d = QString(parts.at(i)).toDouble(&res);
+                    if (!res) d = 0;
+
+                    //qDebug() << "TIME" << time << "VALUE" << d;
+                    //emit valueChanged(220, keys.at(i), d, MG::TIME::getGroundTimeNow());
+
+                    if (keys.value(i, "") == "Accel._X")
+                    {
+                        rawImuValues.xacc = d;
+                    }
+
+                    if (keys.value(i, "") == "Accel._Y")
+                    {
+                        rawImuValues.yacc = d;
+                    }
+
+                    if (keys.value(i, "") == "Accel._Z")
+                    {
+                        rawImuValues.zacc = d;
+                    }
+                    if (keys.value(i, "") == "Gyro_Phi")
+                    {
+                        rawImuValues.xgyro = d;
+                    }
+
+                    if (keys.value(i, "") == "Gyro_Theta")
+                    {
+                        rawImuValues.ygyro = d;
+                    }
+
+                    if (keys.value(i, "") == "Gyro_Psi")
+                    {
+                        rawImuValues.zgyro = d;
+                    }
+
+                    if (keys.value(i, "") == "Pressure")
+                    {
+                        rawAuxValues.baro = d;
+                    }
+
+                    if (keys.value(i, "") == "Battery")
+                    {
+                        rawAuxValues.vbat = d;
+                    }
+
+                    if (keys.value(i, "") == "roll_IMU")
+                    {
+                        attitude.roll = d;
+                    }
+
+                    if (keys.value(i, "") == "pitch_IMU")
+                    {
+                        attitude.pitch = d;
+                    }
+
+                    if (keys.value(i, "") == "yaw_IMU")
+                    {
+                        attitude.yaw = d;
+                    }
+
+                    //Accel._X	Accel._Y	Accel._Z	Battery	Bottom_Rotor	CPU_Load	Ground_Dist.	Gyro_Phi	Gyro_Psi	Gyro_Theta	Left_Servo	Mag._X	Mag._Y	Mag._Z	Pressure	Right_Servo	Temperature	Top_Rotor	pitch_IMU	roll_IMU	yaw_IMU
+
+                }
+                // Send out packets
+
+
+                // ATTITUDE
+                attitude.msec = time;
+                // Pack message and get size of encoded byte string
+                message_attitude_encode(systemId, componentId, &msg, &attitude);
+                // Allocate buffer with packet data
+                bufferlength = message_to_send_buffer(buffer, &msg);
+                //add data into datastream
+                memcpy(stream+streampointer,buffer, bufferlength);
+                streampointer += bufferlength;
+
+                // IMU
+                rawImuValues.msec = time;
+                rawImuValues.xmag = 0;
+                rawImuValues.ymag = 0;
+                rawImuValues.zmag = 0;
+                // Pack message and get size of encoded byte string
+                message_raw_imu_encode(systemId, componentId, &msg, &rawImuValues);
+                // Allocate buffer with packet data
+                bufferlength = message_to_send_buffer(buffer, &msg);
+                //add data into datastream
+                memcpy(stream+streampointer,buffer, bufferlength);
+                streampointer += bufferlength;
+
+                //qDebug() << "ATTITUDE" << "BUF LEN" << bufferlength << "POINTER" << streampointer;
+
+                //qDebug() << "REALTIME" << MG::TIME::getGroundTimeNow() << "ONBOARDTIME" << attitude.msec << "ROLL" << attitude.roll;
+
+            }
+
+        }
+
+        rate50hzCounter = 1;
+    }
+
+
+    // 10 HZ TASKS
+    if (rate10hzCounter == 1000 / rate / 9)
+    {
+        rate10hzCounter = 1;
+    }
+
+    // 1 HZ TASKS
+    if (rate1hzCounter == 1000 / rate / 1)
+    {
+        // STATE
+        static int statusCounter = 0;
+        if (statusCounter == 100)
+        {
+            status.mode = (status.mode + 1) % MAV_MODE_TEST3;
+            statusCounter = 0;
+        }
+        statusCounter++;
+
+        status.vbat = voltage;
 
         // Pack message and get size of encoded byte string
-        messageSize = message_heartbeat_pack(systemId, componentId, &msg, MAV_GENERIC);
+        messageSize = message_sys_status_encode(systemId, componentId, &msg, &status);
         // Allocate buffer with packet data
         bufferlength = message_to_send_buffer(buffer, &msg);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
-        readyBufferMutex.lock();
-        for (int i = 0; i < streampointer; i++)
-        {
-            readyBuffer.enqueue(*(stream + i));
-        }
-        readyBufferMutex.unlock();
+        /*
+        // Pack message and get size of encoded byte string
+        messageSize = message_boot_pack(systemId, componentId, &msg, version);
+        // Allocate buffer with packet data
+        bufferlength = message_to_send_buffer(buffer, &msg);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;*/
+
+        // HEARTBEAT
+
+        static int typeCounter = 0;
+        uint8_t mavType = typeCounter % (OCU);
+        typeCounter++;
+
+        // Pack message and get size of encoded byte string
+        messageSize = message_heartbeat_pack(systemId, componentId, &msg, mavType);
+        // Allocate buffer with packet data
+        bufferlength = message_to_send_buffer(buffer, &msg);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+
+        //qDebug() << "BOOT" << "BUF LEN" << bufferlength << "POINTER" << streampointer;
+
+        // AUX STATUS
+        rawAuxValues.vbat = voltage;
 
         rate1hzCounter = 1;
-    }
-
-    // 10 HZ TASKS
-    if (rate10hzCounter == 1000 / rate / 10)
-    {
-
-        readyBufferMutex.lock();
-        for (int i = 0; i < streampointer; i++)
-        {
-            readyBuffer.enqueue(*(stream + i));
-        }
-        readyBufferMutex.unlock();
-        rate10hzCounter = 1;
     }
 
     // FULL RATE TASKS
     // Default is 50 Hz
 
+    /*
     // 50 HZ TASKS
     if (rate50hzCounter == 1000 / rate / 50)
     {
 
-        streampointer = 0;
+        //streampointer = 0;
 
         // Attitude
 
@@ -286,7 +419,7 @@ void MAVLinkSimulationLink::mainloop()
         streampointer += bufferlength;
 
         rate50hzCounter = 1;
-    }
+    }*/
 
     readyBufferMutex.lock();
     for (int i = 0; i < streampointer; i++)
@@ -317,14 +450,69 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
     // Increase write counter
     //bitsSentTotal += size * 8;
 
+    // Parse bytes
+    mavlink_message_t msg;
+    mavlink_status_t comm;
+
     // Output all bytes as hex digits
     int i;
     for (i=0; i<size; i++)
     {
+        if (mavlink_parse_char(this->id, data[i], &msg, &comm))
+        {
+            // MESSAGE RECEIVED!
+
+            switch (msg.msgid)
+            {
+                // SET THE SYSTEM MODE
+            case MAVLINK_MSG_ID_SET_MODE:
+                {
+                    set_mode_t mode;
+                    message_set_mode_decode(&msg, &mode);
+                    // Set mode indepent of mode.target
+                    status.mode = mode.mode;
+                }
+                // EXECUTE OPERATOR ACTIONS
+            case MAVLINK_MSG_ID_ACTION:
+                {
+                    action_t action;
+                    message_action_decode(&msg, &action);
+                    switch (action.action)
+                    {
+                        case MAV_ACTION_LAUNCH:
+                        status.status = MAV_STATE_ACTIVE;
+                        status.mode = MAV_MODE_AUTO;
+                        break;
+                        case MAV_ACTION_RETURN:
+
+                        break;
+                        case MAV_ACTION_MOTORS_START:
+                        status.status = MAV_STATE_ACTIVE;
+                        status.mode = MAV_MODE_LOCKED;
+                        break;
+                        case MAV_ACTION_MOTORS_STOP:
+                        status.status = MAV_STATE_STANDBY;
+                        status.mode = MAV_MODE_LOCKED;
+                        break;
+                        case MAV_ACTION_EMCY_KILL:
+                        status.status = MAV_STATE_EMERGENCY;
+                        status.mode = MAV_MODE_MANUAL;
+                        break;
+                    }
+                }
+                break;
+            }
+
+
+        }
         unsigned char v=data[i];
         fprintf(stderr,"%02x ", v);
     }
     fprintf(stderr,"\n");
+
+    // Update comm status
+    status.packet_drop = comm.packet_rx_drop_count;
+
 }
 
 

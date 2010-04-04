@@ -31,6 +31,7 @@ This file is part of the PIXHAWK project
 
 #include <QDebug>
 #include <cmath>
+#include <limits>
 
 #include "UASManager.h"
 #include "HUD.h"
@@ -40,6 +41,20 @@ This file is part of the PIXHAWK project
 #ifndef GL_MULTISAMPLE
 #define GL_MULTISAMPLE  0x809D
 #endif
+
+template<typename T>
+inline bool isnan(T value)
+{
+return value != value;
+
+}
+
+// requires #include <limits>
+template<typename T>
+inline bool isinf(T value)
+{
+    return std::numeric_limits<T>::has_infinity && (value == std::numeric_limits<T>::infinity() || (-1*value) == std::numeric_limits<T>::infinity());
+}
 
 /**
  * @warning The HUD widget will not start painting its content automatically
@@ -158,16 +173,25 @@ void HUD::updateValue(UASInterface* uas, QString name, double value, quint64 mse
 {
    // if (this->uas == uas)
     //{
+    if (!isnan(value) && !isinf(value))
+    {
         // Update mean
         const float oldMean = valuesMean.value(name, 0.0f);
         const int meanCount = valuesCount.value(name, 0);
-        valuesMean.insert(name, (oldMean * meanCount +  value) / (meanCount + 1));
+        double mean = (oldMean * meanCount +  value) / (meanCount + 1);
+        if (isnan(mean) || isinf(mean)) mean = 0.0;
+        valuesMean.insert(name, mean);
         valuesCount.insert(name, meanCount + 1);
         // Two-value sliding average
-        valuesDot.insert(name, (valuesDot.value(name) + (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f))/2.0f);
+        double dot = (valuesDot.value(name) + (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f))/2.0f;
+        if (isnan(dot) || isinf(dot)) dot = 0.0;
+        valuesDot.insert(name, dot);
         values.insert(name, value);
         lastUpdate.insert(name, msec);
     //}
+
+        qDebug() << __FILE__ << __LINE__ << "VALUE:" << value << "MEAN:" << mean << "DOT:" << dot << "COUNT:" << meanCount;
+    }
 }
 
 /**
@@ -477,9 +501,9 @@ void HUD::paintRollPitchStrips()
 void HUD::paintGL()
 {
     // Read out most important values to limit hash table lookups
-    const float roll = values.value("roll", 0.0f);
-    const float pitch = values.value("pitch", 0.0f);
-    const float yaw = values.value("yaw", 0.0f);
+    static float roll = roll * 0.5 + 0.5 * values.value("roll", 0.0f);
+    static float pitch = pitch * 0.5 + 0.5 * values.value("pitch", 0.0f);
+    static float yaw = yaw * 0.5 + 0.5 * values.value("yaw", 0.0f);
 
     //qDebug() << __FILE__ << __LINE__ << "ROLL:" << roll << "PITCH:" << pitch << "YAW:" << yaw;
 
@@ -616,20 +640,15 @@ void HUD::paintGL()
 
     // MOVING PARTS
 
-    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(2.0f));
+
 
     // Translate for yaw
-    const float maxYawTrans = 100.0f;
+    const float maxYawTrans = 60.0f;
     float yawDiff = valuesDot.value("yaw", 0.0f);
-    while (yawDiff > M_PI)
-    {
-        yawDiff = yawDiff - M_PI;
-    }
+    if (isinf(yawDiff)) yawDiff = 0.0f;
+    if (yawDiff > M_PI) yawDiff = yawDiff - M_PI;
 
-    while (yawDiff < -M_PI)
-    {
-        yawDiff = yawDiff + M_PI;
-    }
+    if (yawDiff < -M_PI) yawDiff = yawDiff + M_PI;
 
     yawInt += yawDiff;
 
@@ -641,6 +660,8 @@ void HUD::paintGL()
     //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw << "asin(yawInt)" << asinYaw;
 
     painter.translate(refToScreenX(yawTrans), 0);
+
+    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(2.0f));
 
     // Rotate view and draw all roll-dependent indicators
     painter.rotate((roll/M_PI)* -180.0f);
