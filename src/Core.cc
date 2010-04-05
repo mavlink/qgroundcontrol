@@ -69,7 +69,7 @@ MGCore::MGCore(int &argc, char* argv[]) : QApplication(argc, argv)
     QFontDatabase fontDatabase = QFontDatabase();
     const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
     const QString fontFamilyName = "Bitstream Vera Sans";
-    if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!", fontFileName);
+    if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toAscii().data());
     fontDatabase.addApplicationFont(fontFileName);
     setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
 
@@ -89,9 +89,6 @@ MGCore::MGCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Start audio output
     AudioOutput* audio = new AudioOutput();
     audio->say("Ground Control Station started", 1);
-
-    tarsus = new ViconTarsusProtocol();
-    tarsus->start();
 
     // Start the user interface
     splashScreen->showMessage(tr("Starting User Interface"));
