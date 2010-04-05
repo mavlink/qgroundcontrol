@@ -30,15 +30,15 @@ This file is part of the PIXHAWK project
  */
 
 
-#ifndef _MGCORE_H_
-#define _MGCORE_H_
+#ifndef _CORE_H_
+#define _CORE_H_
 
 #include <QApplication>
 
 #include "MainWindow.h"
 #include "UASManager.h"
 #include "LinkManager.h"
-#include "ViconTarsusProtocol.h"
+/*#include "ViconTarsusProtocol.h" */
 
 /**
  * @brief The main application and management class.
@@ -47,13 +47,13 @@ This file is part of the PIXHAWK project
  * the central management unit of the groundstation application.
  *
  **/
-class MGCore : public QApplication
+class Core : public QApplication
 {
 	Q_OBJECT
 
 public:
-	MGCore(int &argc, char* argv[]);
-	~MGCore();
+        Core(int &argc, char* argv[]);
+        ~Core();
 
 protected:
 	void startLinkManager();
@@ -68,9 +68,9 @@ protected:
         void startUI();
 
 private:
-	MGMainWindow* mainWindow;
-        ViconTarsusProtocol* tarsus;
+        MainWindow* mainWindow;
+        //ViconTarsusProtocol* tarsus;
 
 };
 
-#endif // _MGCORE_H_
+#endif /* _CORE_H_ */

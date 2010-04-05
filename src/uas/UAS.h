@@ -1,7 +1,6 @@
 /*=====================================================================
 
 PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-Please see our website at <http://pixhawk.ethz.ch>
 
 (c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
 
@@ -33,7 +32,6 @@ This file is part of the PIXHAWK project
 #ifndef _UAS_H_
 #define _UAS_H_
 
-#include <QDebug>
 #include "UASInterface.h"
 #include "MG.h"
 #include <mavlink.h>
@@ -67,7 +65,7 @@ public:
     /* MANAGEMENT */
 
     /** @brief The name of the robot */
-    QString getUASName();
+    QString getUASName(void);
     /** @brief Get the unique system id */
     int getUASID();
     /** @brief The time interval the robot is switched on */
@@ -83,13 +81,13 @@ public:
 
 protected:
     int type;
-    quint64 startTime; ///< The time the UAS was switched on
-    CommStatus commStatus; ///< Communication status
-    int uasId; ///< Unique system ID
-    QString name; ///< Human-friendly name of the vehicle, e.g. bravo
+    quint64 startTime;            ///< The time the UAS was switched on
+    CommStatus commStatus;        ///< Communication status
+    int uasId;                    ///< Unique system ID
+    QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
-    BatteryType batteryType; ///< The battery type
-    int cells; ///< Number of cells
+    BatteryType batteryType;      ///< The battery type
+    int cells;                    ///< Number of cells
 
     QList<double> actuatorValues;
     QList<QString> actuatorNames;
@@ -97,26 +95,29 @@ protected:
     QList<double> motorValues;
     QList<QString> motorNames;
 
-    double thrustSum; ///< Sum of forward/up thrust of all thrust actuators
+    double thrustSum;           ///< Sum of forward/up thrust of all thrust actuators, in Newtons
+    double thrustMax;           ///< Maximum forward/up thrust of this vehicle, in Newtons
 
     // Battery stats
-    double fullVoltage; ///< Voltage of the fully charged battery (100%)
-    double emptyVoltage; ///< Voltage of the empty battery (0%)
-    double startVoltage; ///< Voltage at system start
-    double currentVoltage; ///< Voltage currently measured
-    float lpVoltage;       ///< Low-pass filtered voltage
-    int timeRemaining; ///< Remaining time calculated based on previous and current
-    double manualRollAngle;  ///< Roll angle set by human pilot (radians)
-    double manualPitchAngle; ///< Pitch angle set by human pilot (radians)
-    double manualYawAngle;   ///< Yaw angle set by human pilot (radians)
-    double manualThrust;     ///< Thrust set by human pilot (radians)
-
-    bool controlRollManual;  ///< status flag, true if roll is controlled manually
-    bool controlPitchManual; ///< status flag, true if pitch is controlled manually
-    bool controlYawManual;   ///< status flag, true if yaw is controlled manually
-    bool controlThrustManual;///< status flag, true if thrust is controlled manually
-    int mode; ///< The current mode of the MAV
+    double fullVoltage;         ///< Voltage of the fully charged battery (100%)
+    double emptyVoltage;        ///< Voltage of the empty battery (0%)
+    double startVoltage;        ///< Voltage at system start
+    double currentVoltage;      ///< Voltage currently measured
+    float lpVoltage;            ///< Low-pass filtered voltage
+    int timeRemaining;          ///< Remaining time calculated based on previous and current
+    int mode;                   ///< The current mode of the MAV
+    int status;                 ///< The current status of the MAV
     quint64 onboardTimeOffset;
+
+    bool controlRollManual;     ///< status flag, true if roll is controlled manually
+    bool controlPitchManual;    ///< status flag, true if pitch is controlled manually
+    bool controlYawManual;      ///< status flag, true if yaw is controlled manually
+    bool controlThrustManual;   ///< status flag, true if thrust is controlled manually
+
+    double manualRollAngle;     ///< Roll angle set by human pilot (radians)
+    double manualPitchAngle;    ///< Pitch angle set by human pilot (radians)
+    double manualYawAngle;      ///< Yaw angle set by human pilot (radians)
+    double manualThrust;        ///< Thrust set by human pilot (radians)
 
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
@@ -147,8 +148,6 @@ public slots:
     /** @brief Shut the system cleanly down. Will shut down any onboard computers **/
     void shutdown();
 
-    /** @brief Set the auto mode. **/
-    void setAutoMode(bool autoMode);
     void requestWaypoints();
     void clearWaypointList();
     /** @brief Enable the motors */
@@ -161,9 +160,7 @@ public slots:
     /** @brief Receive a button pressed event from an input device, e.g. joystick */
     void receiveButton(int buttonIndex);
 
-    /**
-          * @brief Add a link associated with this robot
-          */
+    /** @brief Add a link associated with this robot */
     void addLink(LinkInterface* link);
 
     /** @brief Receive a message from one of the communication links. */

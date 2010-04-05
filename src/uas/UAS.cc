@@ -39,6 +39,7 @@ This file is part of the PIXHAWK project
 #include "LinkInterface.h"
 #include "UASManager.h"
 #include "MG.h"
+#include "GAudioOutput.h"
 #include "mavlink.h"
 
 UAS::UAS(int id=0) :
@@ -47,19 +48,21 @@ UAS::UAS(int id=0) :
         name(""),
         links(new QList<LinkInterface*>()),
         thrustSum(0),
+        thrustMax(10),
         startVoltage(0),
-        manualRollAngle(0),
-        manualPitchAngle(0),
-        manualYawAngle(0),
-        manualThrust(0),
+        currentVoltage(0.0f),
+        lpVoltage(0.0f),
+        mode(MAV_MODE_UNINIT),
+        status(MAV_STATE_UNINIT),
+        onboardTimeOffset(0),
         controlRollManual(true),
         controlPitchManual(true),
         controlYawManual(true),
-        currentVoltage(0.0f),
         controlThrustManual(true),
-        lpVoltage(0.0f),
-        mode(MAV_MODE_UNINIT),
-        onboardTimeOffset(0)
+        manualRollAngle(0),
+        manualPitchAngle(0),
+        manualYawAngle(0),
+        manualThrust(0)
 {
     uasId = id;
     setBattery(LIPOLY, 3);
@@ -94,7 +97,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         QString uasState;
         QString stateDescription;
         QString patternPath;
-        bool uasIsAuto;
         switch (message.msgid)
         {
         case MAVLINK_MSG_ID_HEARTBEAT:
@@ -107,8 +109,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
         case MAVLINK_MSG_ID_BOOT:
-            //std::cerr << "Boot detected, software v." << std::dec << message_boot_get_version(message.payload) << " time: " << MG::TIME::getGroundTimeNow() << std::endl;
-            //emit valueChanged(uasId, "Software version", message_boot_get_version(message.payload), MG::TIME::getGroundTimeNow());
             getStatusForCode((int)MAV_STATE_BOOT, uasState, stateDescription);
             emit statusChanged(this, uasState, stateDescription);
             onboardTimeOffset = 0; // Reset offset measurement
@@ -117,37 +117,56 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 sys_status_t state;
                 message_sys_status_decode(&message, &state);
-                getStatusForCode((int)state.status, uasState, stateDescription);
-                emit statusChanged(this, uasState, stateDescription);
 
-                QString mode;
+                QString audiostring = "System " + QString::number(this->getUASID());
+                QString stateAudio = "";
+                QString modeAudio = "";
+                bool statechanged = false;
+                bool modechanged = false;
 
-                switch (state.mode)
+                if (state.status != this->status)
                 {
-                case MAV_MODE_LOCKED:
-                    mode = "MAV_MODE_LOCKED";
-                    break;
-                case MAV_MODE_MANUAL:
-                    mode = "MAV_MODE_MANUAL";
-                    break;
-                case MAV_MODE_AUTO:
-                    mode = "MAV_MODE_AUTO";
-                    break;
-                case MAV_MODE_TEST1:
-                    mode = "MAV_MODE_TEST1";
-                    break;
-                case MAV_MODE_TEST2:
-                    mode = "MAV_MODE_TEST2";
-                    break;
-                case MAV_MODE_TEST3:
-                    mode = "MAV_MODE_TEST3";
-                    break;
-                default:
-                    mode = "MAV_MODE_UNINIT";
-                    break;
+                    statechanged = true;
+                    this->status = state.status;
+                    getStatusForCode((int)state.status, uasState, stateDescription);
+                    emit statusChanged(this, uasState, stateDescription);
+                    stateAudio = "changed status to " + uasState;
                 }
 
-                emit modeChanged(this->getUASID(), mode, "");
+                if (static_cast<int>(this->mode) != static_cast<int>(state.mode))
+                {
+                    modechanged = true;
+                    this->mode = state.mode;
+                    QString mode;
+
+                    switch (state.mode)
+                    {
+                    case MAV_MODE_LOCKED:
+                        mode = "LOCKED MODE";
+                        break;
+                    case MAV_MODE_MANUAL:
+                        mode = "MANUAL MODE";
+                        break;
+                    case MAV_MODE_AUTO:
+                        mode = "AUTO MODE";
+                        break;
+                    case MAV_MODE_TEST1:
+                        mode = "TEST1 MODE";
+                        break;
+                    case MAV_MODE_TEST2:
+                        mode = "TEST2 MODE";
+                        break;
+                    case MAV_MODE_TEST3:
+                        mode = "TEST3 MODE";
+                        break;
+                    default:
+                        mode = "UNINIT MODE";
+                        break;
+                    }
+
+                    emit modeChanged(this->getUASID(), mode, "");
+                    modeAudio = " is now in " + mode;
+                }
                 currentVoltage = state.vbat;
                 filterVoltage(currentVoltage);
                 if (startVoltage == 0) startVoltage = currentVoltage;
@@ -155,6 +174,27 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 //qDebug() << "Voltage: " << currentVoltage << " Chargelevel: " << getChargeLevel() << " Time remaining " << timeRemaining;
                 emit batteryChanged(this, filterVoltage(), getChargeLevel(), timeRemaining);
                 emit voltageChanged(message.sysid, state.vbat/1000.0f);
+
+                // Output audio
+                if (modechanged && statechanged)
+                {
+                    // Output both messages
+                    audiostring += modeAudio + " and " + stateAudio;
+                }
+                else
+                {
+                    // Output the one message
+                    audiostring += modeAudio + stateAudio;
+                }
+                if (state.status == (int)MAV_STATE_CRITICAL || state.status == (int)MAV_STATE_EMERGENCY)
+                {
+                    GAudioOutput::instance()->startEmergency();
+                }
+                else if (modechanged || statechanged)
+                {
+                    GAudioOutput::instance()->stopEmergency();
+                    GAudioOutput::instance()->say(audiostring);
+                }
             }
             break;
         case MAVLINK_MSG_ID_RAW_IMU:
@@ -212,40 +252,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit attitudeChanged(this, message_attitude_get_roll(&message), message_attitude_get_pitch(&message), message_attitude_get_yaw(&message), time);
             }
             break;
+        //case MAVLINK_MSG_ID_DEBUG:
+        //    emit valueChanged(uasId, QString("debug ") + QString::number(message_debug_get_index(message.payload)), message_debug_get_value(message.payload), MG::TIME::getGroundTimeNow());
+        //    break;
             /*
-        case MAVLINK_MSG_ID_DEBUG:
-            emit valueChanged(uasId, QString("debug ") + QString::number(message_debug_get_index(message.payload)), message_debug_get_value(message.payload), MG::TIME::getGroundTimeNow());
-            break;
-        case MAVLINK_MSG_ID_MODE:
-            {
-                switch(static_cast<int>(message_mode_get_mode(message.payload)))
-                {
-                case (int)MAV_MODE_MANUAL:
-                    {
-                        uasIsAuto = false;
-                    }
-                    break;
-                case (int)MAV_MODE_AUTO:
-                    {
-                        uasIsAuto = true;
-                    }
-                    break;
-                default:
-                    {
-                        uasIsAuto = false;
-                    }
-                    break;
-                }
-
-                emit autoModeChanged(mode);
-                emit valueChanged(uasId, "auto mode", static_cast<int>(message_mode_get_mode(message.payload)), MG::TIME::getGroundTimeNow());
-                //qDebug() << "UAS MODE CHANGED TO AUTO, UAS MODE CHANGED TO AUTO, UAS MODE CHANGED TO AUTO, UAS MODE CHANGED TO AUTO, UAS MODE CHANGED TO AUTO, UAS MODE CHANGED TO AUTO, UAS MODE CHANGED TO AUTO:" << uasIsAuto;
-            }
-            break;
-        case MAVLINK_MSG_ID_EMITWAYPT:
+        case MAVLINK_MSG_ID_WP:
             emit waypointUpdated(this->getUASID(), message_emitwaypoint_get_id(message.payload), message_emitwaypoint_get_x(message.payload), message_emitwaypoint_get_y(message.payload), message_emitwaypoint_get_z(message.payload), message_emitwaypoint_get_yaw(message.payload), (message_emitwaypoint_get_autocontinue(message.payload) == 1 ? true : false), (message_emitwaypoint_get_active(message.payload) == 1 ? true : false));
             break;
-        case MAVLINK_MSG_ID_GOTOWAYPT:
+        case MAVLINK_MSG_ID_SET_POSITION:
             emit valueChanged(uasId, "WP X", message_gotowaypoint_get_x(message.payload), MG::TIME::getGroundTimeNow());
             emit valueChanged(uasId, "WP Y", message_gotowaypoint_get_y(message.payload), MG::TIME::getGroundTimeNow());
             emit valueChanged(uasId, "WP Z", message_gotowaypoint_get_z(message.payload), MG::TIME::getGroundTimeNow());
@@ -258,40 +272,18 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             qDebug() << "WAYPOINT REACHED";
             emit waypointReached(this, message_wp_reached_get_id(message.payload));
             break;
-        case MAVLINK_MSG_ID_DETECTION:
-            patternPath = QString(message_detection_get_patternpath(message.payload));
+        case MAVLINK_MSG_ID_OBJ_DETECTED:
+            //patternPath = QString(message_detection_get_patternpath(message.payload));
             //qDebug() << "OBJECT DETECTED";
-            emit detectionReceived(uasId, patternPath, 0, 0, 0, 0, 0, 0, 0, 0, message_detection_get_confidence(message.payload), (message_detection_get_detected(message.payload) == 1 ? true : false ));
+            //emit detectionReceived(uasId, patternPath, 0, 0, 0, 0, 0, 0, 0, 0, message_detection_get_confidence(message.payload), (message_detection_get_detected(message.payload) == 1 ? true : false ));
             break;
+            */
         default:
-            std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.acid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
+            GAudioOutput::instance()->say("COMM ERROR: UNABLE TO DECODE MESSAGE WITH ID" + QString::number(message.msgid) + "FROM SYSTEM " + QString::number(message.sysid));
+            std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.sysid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
             //qDebug() << std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.acid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
             break;
-        */
         }
-    }
-
-    //    virtual void attitudeChanged(int uasId, double roll, double pitch, double yaw, quint64 usec);
-    //    virtual void localPositionChanged(int uasId, double x, double y, double z, quint64 usec);
-    //    virtual void globalPositionChanged(int uasId, double lon, double lat, double alt, quint64 usec);
-    // virtual void actuatorsChanged(int uasId, double actuator1, double actuator2, double actuator3, double actuator4, double actuator5);
-    // virtual void voltageChanged(int uasId, double voltage);
-}
-
-void UAS::setAutoMode(bool autoMode)
-{
-    mavlink_message_t msg;
-    if (autoMode)
-    {
-        message_set_mode_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, getUASID(), (unsigned char)MAV_MODE_AUTO);
-        mode = MAV_MODE_AUTO;
-        sendMessage(msg);
-    }
-    else
-    {
-        message_set_mode_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, getUASID(), (unsigned char)MAV_MODE_MANUAL);
-        mode = MAV_MODE_MANUAL;
-        sendMessage(msg);
     }
 }
 
@@ -501,10 +493,10 @@ void UAS::receiveButton(int buttonIndex)
     switch (buttonIndex)
     {
     case 0:
-        setAutoMode(false);
+
         break;
     case 1:
-        setAutoMode(true);
+
         break;
     default:
 
@@ -631,7 +623,7 @@ void UAS::shutdown()
 /**
  * @return The name of this system as string in human-readable form
  */
-QString UAS::getUASName()
+QString UAS::getUASName(void)
 {
     QString result;
     if (name == "")

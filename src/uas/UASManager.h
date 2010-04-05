@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Central manager for all connected aerial vehicles
+ *   @brief Definition of central manager for all connected aerial vehicles
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
@@ -153,9 +153,8 @@ public slots:
      */
     void configureActiveUAS();
 
+    /** @brief Shut down the onboard operating system down */
     bool shutdownActiveUAS();
-
-    bool setActiveUASAuto(bool autoMode);
 
 
 protected:
@@ -163,9 +162,6 @@ protected:
     QMap<int, UASInterface*> systems;
     UASInterface* activeUAS;
     QMutex activeUASMutex;
-
-private:
-    static UASManager* _instance;
 
 signals:
     void UASCreated(UASInterface* UAS);

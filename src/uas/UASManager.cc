@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Central manager for all connected aerial vehicles
+ *   @brief Implementation of central manager for all connected aerial vehicles
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
@@ -41,8 +41,8 @@ UASManager* UASManager::instance() {
     if(_instance == 0) {
         _instance = new UASManager();
 
-        /* Set the application as parent to ensure that this object
-                 * will be destroyed when the main application exits */
+        // Set the application as parent to ensure that this object
+        // will be destroyed when the main application exits
         _instance->setParent(qApp);
     }
     return _instance;
@@ -144,12 +144,6 @@ bool UASManager::shutdownActiveUAS()
     return (activeUAS);
 }
 
-bool UASManager::setActiveUASAuto(bool autoMode)
-{
-    if (getActiveUAS()) activeUAS->setAutoMode(autoMode);
-    return (activeUAS);
-}
-
 void UASManager::configureActiveUAS()
 {
     UASInterface* actUAS = getActiveUAS();
@@ -165,14 +159,17 @@ UASInterface* UASManager::getUASForId(int id)
     return systems.value(id, NULL);
 }
 
-void UASManager::setActiveUAS(UASInterface* UAS)
+void UASManager::setActiveUAS(UASInterface* uas)
 {
-    activeUASMutex.lock();
-    activeUAS = UAS;
-    activeUASMutex.unlock();
+    if (uas != NULL)
+    {
+        activeUASMutex.lock();
+        activeUAS = uas;
+        activeUASMutex.unlock();
 
-    qDebug() << __FILE__ << ":" << __LINE__ << " ACTIVE UAS SET TO: " << UAS->getUASName();
+        qDebug() << __FILE__ << ":" << __LINE__ << " ACTIVE UAS SET TO: " << uas->getUASName();
 
-    emit activeUASSet(UAS);
+        emit activeUASSet(uas);
+    }
 }
 

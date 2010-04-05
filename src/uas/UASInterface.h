@@ -110,8 +110,7 @@ public:
         {
             ///> Color map for plots, includes 20 colors
             ///> Map will start from beginning when the first 20 colors are exceeded
-            colors.append(QColor(242,255,128));
-            colors.append(QColor(230,126,23));
+
             colors.append(QColor(203,254,121));
             colors.append(QColor(231,72,28));
             colors.append(QColor(161,252,116));
@@ -129,6 +128,8 @@ public:
             colors.append(QColor(81,183,244));
             colors.append(QColor(104,64,240));
             colors.append(QColor(75,133,243));
+            colors.append(QColor(242,255,128));
+            colors.append(QColor(230,126,23));
             nextColor++;
         }
         return colors[nextColor++];
@@ -153,12 +154,7 @@ public slots:
     virtual void halt() = 0;
     /** @brief Start/continue the current robot action */
     virtual void go() = 0;
-    /** @brief Set robot into auto mode
-      *
-      * @param autoMode true for autonomous operation, false for manual control
-      */
-    virtual void setAutoMode(bool autoMode) = 0;
-
+    /** @brief Set the current mode of operation */
     virtual void setMode(int mode) = 0;
     /** Stops the robot system. If it is an MAV, the robot starts the emergency landing procedure **/
     virtual void emergencySTOP() = 0;

@@ -48,9 +48,7 @@ UDPLink::UDPLink(QHostAddress host, quint16 port)
 
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
-
-    name = tr("UDP link ") + QString::number(getId()) + tr(" (unconfigured)");
-
+    this->name = tr("UDP link ") + QString::number(getId());
     LinkManager::instance()->add(this);
 }
 
