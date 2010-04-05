@@ -38,7 +38,6 @@ This file is part of the PIXHAWK project
 #include "MainWindow.h"
 #include "UASManager.h"
 #include "LinkManager.h"
-#include "ViconTarsusProtocol.h"
 
 /**
  * @brief The main application and management class.
@@ -69,8 +68,6 @@ protected:
 
 private:
 	MGMainWindow* mainWindow;
-        ViconTarsusProtocol* tarsus;
-
 };
 
 #endif // _MGCORE_H_

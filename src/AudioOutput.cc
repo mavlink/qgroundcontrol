@@ -1,11 +1,16 @@
 #include "AudioOutput.h"
-#include <flite.h>
 
-#include <phonon/mediaobject.h>
-#include <QTemporaryFile>
+#ifndef Q_OS_MAC
+	#include <flite.h>
+	#include <phonon/mediaobject.h>
+	#include <QTemporaryFile>
+#else
+	#include <ApplicationServices/ApplicationServices.h>
+#endif
 
 #include <QDebug>
 
+#ifndef Q_OS_MAC
 extern "C" {
 #include <cmu_us_awb/voxdefs.h>
     //#include <cmu_us_slt/voxdefs.h>
@@ -18,12 +23,13 @@ extern "C" {
     cst_voice *register_cmu_us_rms(const char *voxdir);
     void unregister_cmu_us_rms(cst_voice *vox);
 };
+#endif
 
 AudioOutput::AudioOutput(QString voice, QObject* parent) : QObject(parent),
 voice(NULL),
 voiceIndex(0)
 {
-#ifndef _WIN32
+#if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
     flite_init();
 #endif
 
@@ -63,7 +69,12 @@ voiceIndex(0)
 bool AudioOutput::say(QString text, int severity)
 {
     // Only give speech output on Linux and MacOS
-#ifndef _WIN32
+#if defined(Q_OS_WIN32)
+    qDebug() << "Synthesized: " << text << ", NO OUTPUT SUPPORT ON WINDOWS!";
+#elif defined(Q_OS_MAC)
+	SpeakString((const unsigned char*)text.toAscii().data());
+	qDebug() << "Synthesized: " << text;
+#else
     QTemporaryFile file;
     file.setFileTemplate("XXXXXX.wav");
     if (file.open())
@@ -77,8 +88,6 @@ bool AudioOutput::say(QString text, int severity)
         music->play();
         qDebug() << "Synthesized: " << text << ", tmp file:" << file.fileName().toStdString().c_str();
     }
-#else
-    qDebug() << "Synthesized: " << text << ", NO OUTPUT SUPPORT ON WINDOWS!";
 #endif
     return true;
 }
@@ -103,14 +112,14 @@ bool AudioOutput::stopEmergency()
 
 void AudioOutput::selectFemaleVoice()
 {
-#ifndef _WIN32
+#if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
     this->voice = register_cmu_us_slt(NULL);
 #endif
 }
 
 void AudioOutput::selectMaleVoice()
 {
-#ifndef _WIN32
+#if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
     this->voice = register_cmu_us_rms(NULL);
 #endif
 }
@@ -118,7 +127,7 @@ void AudioOutput::selectMaleVoice()
 
 void AudioOutput::selectNeutralVoice()
 {
-#ifndef _WIN32
+#if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
     this->voice = register_cmu_us_awb(NULL);
 #endif
 }
@@ -134,7 +143,7 @@ extern "C" {
         const cst_val *v;
         QStringList l;
 
-#ifndef _WIN32
+#if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
         /*
         printf("Voices available: ");
         for (v=flite_voice_list; v; v=val_cdr(v))
