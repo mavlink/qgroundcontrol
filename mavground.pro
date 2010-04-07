@@ -99,13 +99,7 @@ HEADERS += src/MG.h \
     src/ui/MAVLinkSettingsWidget.h \
     src/ui/AudioOutputWidget.h \
     src/AudioOutput.h \
-    src/LogCompressor.h \
-    src/comm/ViconTarsusProtocol.h \
-    src/comm/TarsusField.h \
-    src/comm/TarsusFieldDescriptor.h \
-    src/comm/TarsusFieldTriplet.h \
-    src/comm/TarsusRigidBody.h \
-    src/comm/TarsusStream.h
+    src/LogCompressor.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -150,6 +144,5 @@ SOURCES += src/main.cc \
     src/ui/MAVLinkSettingsWidget.cc \
     src/ui/AudioOutputWidget.cc \
     src/AudioOutput.cc \
-    src/LogCompressor.cc \
-    src/comm/ViconTarsusProtocol.cc
+    src/LogCompressor.cc
 RESOURCES = mavground.qrc

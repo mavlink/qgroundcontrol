@@ -61,25 +61,19 @@ macx {
 
     message(Building for Mac OS X)
 
-    QT += phonon
-    
+	CONFIG += x86_64 cocoa
+	CONFIG -= static
+
     DESTDIR = $$BASEDIR/bin/mac
-    INCLUDEPATH += /opt/local/include/boost \
-                   /opt/local/include/SDL
-    
+    INCLUDEPATH += -framework SDL \
+		/Users/hugo/Projects/PixHawkGroundControl/MAVLink/src
+
     LIBS += -framework IOKit \
-        -L/opt/local/lib \
-        -L$$BASEDIR/lib/flite/mac32 \
-        -lm \
-        -lflite_cmu_us_awb \
-        -lflite_cmu_us_rms \
-        -lflite_cmu_us_slt \
-        -lflite_usenglish \
-        -lflite_cmulex \
-        -lflite \
-        -L/opt/local/lib/SDL \
-        -lSDL \
-        -lSDLmain
+		-framework SDL \
+		-framework CoreFoundation \
+		-framework ApplicationServices \
+        -lm
+
     DEFINES += _TTY_POSIX_
     
     #ICON = $$BASEDIR/img/icons/empty.png
