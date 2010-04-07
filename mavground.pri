@@ -69,13 +69,12 @@ macx {
     }
 
     DESTDIR = $$BASEDIR/bin/mac
-    INCLUDEPATH += -framework SDL \
-                $$BASEDIR/MAVLink/src
+    INCLUDEPATH += -framework SDL
 
     LIBS += -framework IOKit \
-		-framework SDL \
-		-framework CoreFoundation \
-		-framework ApplicationServices \
+        -framework SDL \
+        -framework CoreFoundation \
+        -framework ApplicationServices \
         -lm
 
     DEFINES += _TTY_POSIX_
@@ -132,25 +131,17 @@ linux-g++ {
 }
 
 
-# Windows (32bit)
+# Windows (32bit/64bit)
 win32 { 
 
     message(Building for Windows Platform (32/64bit))
     
     # Special settings for debug
-        #CONFIG += CONSOLE
+    #CONFIG += CONSOLE
     LIBS += -L$$BASEDIR\lib\sdl\win32 \
         -lmingw32 -lSDLmain -lSDL -mwindows
     
     INCLUDEPATH += $$BASEDIR/lib/sdl/include/SDL
-    
-    #LIBS += -L$$BASEDIR\lib\qextserialport\win32 \
-    #    -lqextserialport \
-    #    -lsetupapi
-    #    -L$$BASEDIR/lib/openjaus/libjaus/lib/win32 \
-    #    -ljaus \
-    #    -L$$BASEDIR/lib/openjaus/libopenJaus/lib/win32 \
-    #    -lopenjaus
     
     DEFINES += _TTY_WIN_
 
