@@ -61,12 +61,16 @@ macx {
 
     message(Building for Mac OS X)
 
-	CONFIG += x86_64 cocoa
+    CONFIG += x86
+
+    contains ( DEFINES, QT_MAC_USE_COCOA ) {
+        CONFIG += x86_64 cocoa
 	CONFIG -= static
+    }
 
     DESTDIR = $$BASEDIR/bin/mac
     INCLUDEPATH += -framework SDL \
-		/Users/hugo/Projects/PixHawkGroundControl/MAVLink/src
+                $$BASEDIR/MAVLink/src
 
     LIBS += -framework IOKit \
 		-framework SDL \
@@ -94,10 +98,6 @@ linux-g++ {
         DESTDIR = $$BASEDIR
     }
     INCLUDEPATH += /usr/include/SDL
-    #               /usr/include/qwt-qt4
-
-    #-L$$BASEDIR/lib/qwt/linux \
-
 
     DEFINES += _TTY_POSIX_
 
