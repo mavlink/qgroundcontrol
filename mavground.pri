@@ -52,21 +52,22 @@ INCLUDEPATH += $$BASEDIR/lib/flite/include \
 #               $$BASEDIR/lib/openjaus/libjaus/include \
 #               $$BASEDIR/lib/openjaus/libopenJaus/include
 
-message(Qt version> $$[QMAKESPEC])
+message(Qt version $$[QT_VERSION])
 
 
 
 # MAC OS X
 macx { 
+	message(Building for Mac OS X)
 
-    message(Building for Mac OS X)
+	CONFIG += x86_64
+	CONFIG -= x86 static
 
-	CONFIG += x86_64 cocoa
-	CONFIG -= static
+	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 
     DESTDIR = $$BASEDIR/bin/mac
     INCLUDEPATH += -framework SDL \
-		/Users/hugo/Projects/PixHawkGroundControl/MAVLink/src
+                $$BASEDIR/MAVLink/src
 
     LIBS += -framework IOKit \
 		-framework SDL \
@@ -76,7 +77,7 @@ macx {
 
     DEFINES += _TTY_POSIX_
     
-    #ICON = $$BASEDIR/img/icons/empty.png
+    ICON = $$BASEDIR/images/icons/macx.icns
 }
 
 # GNU/Linux
@@ -94,10 +95,6 @@ linux-g++ {
         DESTDIR = $$BASEDIR
     }
     INCLUDEPATH += /usr/include/SDL
-    #               /usr/include/qwt-qt4
-
-    #-L$$BASEDIR/lib/qwt/linux \
-
 
     DEFINES += _TTY_POSIX_
 

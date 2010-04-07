@@ -3,7 +3,14 @@
 
 #include <QObject>
 #include <QStringList>
-#include <flite.h>
+
+/* Foward declarations of speech/voice structure */
+#ifdef Q_OS_MAC
+	struct SpeechChannelRecord;
+	typedef SpeechChannelRecord *SpeechChannel;
+#else
+	struct cst_voice;
+#endif
 
 class AudioOutput : public QObject
 {
@@ -28,10 +35,14 @@ public:
     void selectMaleVoice();
     /** @brief Select neutral voice */
     void selectNeutralVoice();
-    protected:
-    cst_voice* voice;
-    int voiceIndex;
 
+protected:
+#ifdef Q_OS_MAC
+	SpeechChannel *voice;
+#else
+    cst_voice *voice;
+#endif
+	int voiceIndex;
 };
 
 #endif // AUDIOOUTPUT_H
