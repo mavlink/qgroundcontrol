@@ -45,8 +45,9 @@ UI_HEADERS_DIR = src/ui/generated
 
 
 # Add external libraries
-INCLUDEPATH += $$BASEDIR/lib/flite/include \
-    $$BASEDIR/lib/flite/lang
+INCLUDEPATH += $$BASEDIR/lib/SDL/include \
+               $$BASEDIR/lib/flite/include \
+               $$BASEDIR/lib/flite/lang
 
 #$$BASEDIR/lib/qextserialport/include
 #               $$BASEDIR/lib/openjaus/libjaus/include \
@@ -64,8 +65,6 @@ macx {
     QT += phonon
     
     DESTDIR = $$BASEDIR/bin/mac
-    INCLUDEPATH += /opt/local/include/boost \
-                   /opt/local/include/SDL
     
     LIBS += -framework IOKit \
         -L/opt/local/lib \
@@ -77,7 +76,7 @@ macx {
         -lflite_usenglish \
         -lflite_cmulex \
         -lflite \
-        -L/opt/local/lib/SDL \
+        -L/lib/mac32/SDL \
         -lSDL \
         -lSDLmain
     DEFINES += _TTY_POSIX_

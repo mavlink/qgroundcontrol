@@ -87,7 +87,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     startUASManager();
 
     // Start audio output
-    GAudioOutput::instance()->say("Ground Control Station started", 1);
+    //GAudioOutput::instance()->say("Ground Control Station started", 1);
 
     //tarsus = new ViconTarsusProtocol();
     //tarsus->start();
