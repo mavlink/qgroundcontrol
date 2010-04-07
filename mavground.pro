@@ -17,7 +17,9 @@ DEPENDPATH += . \
     lib/QMapControl/src
 INCLUDEPATH += . \
     lib/QMapControl \
-    ../mavlink/src
+    ../mavlink/src \
+    MAVLink/src \
+    mavlink/src
 
 # Input
 FORMS += src/ui/MainWindow.ui \
