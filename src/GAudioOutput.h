@@ -38,6 +38,12 @@ This file is part of the PIXHAWK project
 #include <flite.h>
 #include <Phonon>
 
+/* For Snow leopard and later
+#ifdef Q_OS_MAC
+#include <NSSpeechSynthesizer.h>
+#endif
+   */
+
 /**
  * @brief Audio Output (speech synthesizer and "beep" output)
  * This class follows the singleton design pattern
@@ -71,6 +77,9 @@ public slots:
     void beep();
 
 protected:
+    #ifdef Q_OS_MAC
+    //NSSpeechSynthesizer
+#endif
     cst_voice* voice; ///< The flite voice object
     int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
     Phonon::MediaObject* m_media; ///< The output object for audio

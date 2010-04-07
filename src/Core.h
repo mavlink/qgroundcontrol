@@ -70,7 +70,6 @@ protected:
 private:
         MainWindow* mainWindow;
         //ViconTarsusProtocol* tarsus;
-
 };
 
 #endif /* _CORE_H_ */

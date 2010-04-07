@@ -8,7 +8,8 @@ include(src/lib/qextserialport/qextserialport.pri)
 include(src/lib/qwt/qwt.pri)
 
 # Include FLITE audio synthesizer library
-# include(src/lib/flite/flite.pri)
+#include(src/lib/flite/flite.pri)
+
 # Include QMapControl map library
 include(lib/QMapControl/QMapControl.pri)
 DEPENDPATH += . \
@@ -17,8 +18,8 @@ DEPENDPATH += . \
 INCLUDEPATH += . \
     lib/QMapControl \
     ../mavlink/src \
-    mavlink/src \
-    src/mavlink
+    MAVLink/src \
+    mavlink/src
 
 # Input
 FORMS += src/ui/MainWindow.ui \

@@ -32,13 +32,19 @@ This file is part of the PIXHAWK project
 #include <QApplication>
 #include "GAudioOutput.h"
 #include "MG.h"
-#include <flite.h>
 
+#ifdef Q_OS_MAC
+#include <ApplicationServices/ApplicationServices.h>
+#endif
+#ifdef Q_OS_LINUX
+#include <flite.h>
+#endif
 #include <Phonon>
 #include <QTemporaryFile>
 
 #include <QDebug>
 
+#ifndef Q_OS_MAC
 extern "C" {
 #include <cmu_us_awb/voxdefs.h>
     //#include <cmu_us_slt/voxdefs.h>
@@ -51,6 +57,7 @@ extern "C" {
     cst_voice *register_cmu_us_rms(const char *voxdir);
     void unregister_cmu_us_rms(cst_voice *vox);
 };
+#endif
 
 /**
  * This class follows the singleton design pattern
@@ -76,14 +83,14 @@ voice(NULL),
 voiceIndex(0),
 emergency(false)
 {
-#ifndef _WIN32
+#if Q_OS_LINUX
     flite_init();
+#endif
     m_media = new Phonon::MediaObject(this);
     Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
     createPath(m_media, audioOutput);
     emergencyTimer = new QTimer();
     connect(emergencyTimer, SIGNAL(timeout()), this, SLOT(beep()));
-#endif
 
     switch (voiceIndex)
     {
@@ -97,27 +104,6 @@ emergency(false)
         selectNeutralVoice();
         break;
     }
-
-    /*
-    // List available voices
-    QStringList voices = listVoices();
-    foreach (QString s, voices)
-    {
-        qDebug() << "VOICE: " << s;
-    }
-
-    if (voice.length() > 0)
-    {
-        //this->voice = flite_voice_select(voice.toStdString().c_str());
-    }
-    else
-    {
-        // Take default voice
-        //this->voice = flite_voice_select("awb");
-    }
-    */
-
-
 }
 
 bool GAudioOutput::say(QString text, int severity)
@@ -126,7 +112,7 @@ bool GAudioOutput::say(QString text, int severity)
     if (!emergency)
     {
         // Only give speech output on Linux and MacOS
-#ifndef _WIN32
+#ifdef Q_OS_LINUX
         QTemporaryFile file;
         file.setFileTemplate("XXXXXX.wav");
         if (file.open())
@@ -140,7 +126,20 @@ bool GAudioOutput::say(QString text, int severity)
             qDebug() << "Synthesized: " << text << ", tmp file:" << file.fileName().toStdString().c_str();
             res = true;
         }
-#else
+#endif
+
+#ifdef Q_OS_MAC
+        // Slashes necessary to have the right start to the sentence
+        // copying data prevents SpeakString from reading additional chars
+        text = "\\" + text;
+        QStdWString str = text.toStdWString();
+        unsigned char str2[1024] = {};
+        memcpy(str2, text.toAscii().data(), str.length());
+        SpeakString(str2);
+        qDebug() << "Synthesized: " << text.toAscii();
+#endif
+
+#ifdef Q_OS_WIN32
         qDebug() << "Synthesized: " << text << ", NO OUTPUT SUPPORT ON WINDOWS!";
 #endif
     }
@@ -212,14 +211,14 @@ void GAudioOutput::beep()
 
 void GAudioOutput::selectFemaleVoice()
 {
-#ifndef _WIN32
+#ifdef Q_OS_LINUX
     this->voice = register_cmu_us_slt(NULL);
 #endif
 }
 
 void GAudioOutput::selectMaleVoice()
 {
-#ifndef _WIN32
+#ifdef Q_OS_LINUX
     this->voice = register_cmu_us_rms(NULL);
 #endif
 }
@@ -227,7 +226,7 @@ void GAudioOutput::selectMaleVoice()
 
 void GAudioOutput::selectNeutralVoice()
 {
-#ifndef _WIN32
+#ifdef Q_OS_LINUX
     this->voice = register_cmu_us_awb(NULL);
 #endif
 }
