@@ -25,7 +25,7 @@
 #
 #-------------------------------------------------
 
-QT       += network opengl svg xml
+QT       += network opengl svg xml phonon
 
 TEMPLATE = app
 TARGET = opengroundcontrol
@@ -62,23 +62,23 @@ macx {
 
     message(Building for Mac OS X)
 
-    QT += phonon
-    
+    CONFIG += x86
+
+    contains ( DEFINES, QT_MAC_USE_COCOA ) {
+        CONFIG += x86_64 cocoa
+	CONFIG -= static
+    }
+
     DESTDIR = $$BASEDIR/bin/mac
-    
+
+    INCLUDEPATH += -framework SDL
+
     LIBS += -framework IOKit \
-        -L/opt/local/lib \
-        -L$$BASEDIR/lib/flite/mac32 \
-        -lm \
-        -lflite_cmu_us_awb \
-        -lflite_cmu_us_rms \
-        -lflite_cmu_us_slt \
-        -lflite_usenglish \
-        -lflite_cmulex \
-        -lflite \
-        -L/lib/mac32/SDL \
-        -lSDL \
-        -lSDLmain
+        -framework SDL \
+        -framework CoreFoundation \
+        -framework ApplicationServices \
+        -lm
+
     DEFINES += _TTY_POSIX_
     
     #ICON = $$BASEDIR/img/icons/empty.png
@@ -88,8 +88,6 @@ macx {
 linux-g++ { 
 
     message(Building for GNU/Linux)
-
-    QT += phonon
     
     debug {
         DESTDIR = $$BASEDIR
@@ -99,10 +97,6 @@ linux-g++ {
         DESTDIR = $$BASEDIR
     }
     INCLUDEPATH += /usr/include/SDL
-    #               /usr/include/qwt-qt4
-
-    #-L$$BASEDIR/lib/qwt/linux \
-
 
     DEFINES += _TTY_POSIX_
 
@@ -137,25 +131,17 @@ linux-g++ {
 }
 
 
-# Windows (32bit)
+# Windows (32bit/64bit)
 win32 { 
 
     message(Building for Windows Platform (32/64bit))
     
     # Special settings for debug
-        #CONFIG += CONSOLE
+    #CONFIG += CONSOLE
     LIBS += -L$$BASEDIR\lib\sdl\win32 \
         -lmingw32 -lSDLmain -lSDL -mwindows
     
     INCLUDEPATH += $$BASEDIR/lib/sdl/include/SDL
-    
-    #LIBS += -L$$BASEDIR\lib\qextserialport\win32 \
-    #    -lqextserialport \
-    #    -lsetupapi
-    #    -L$$BASEDIR/lib/openjaus/libjaus/lib/win32 \
-    #    -ljaus \
-    #    -L$$BASEDIR/lib/openjaus/libopenJaus/lib/win32 \
-    #    -lopenjaus
     
     DEFINES += _TTY_WIN_
 

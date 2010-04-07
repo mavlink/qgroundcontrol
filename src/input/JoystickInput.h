@@ -35,7 +35,7 @@ This file is part of the PIXHAWK project
 
 #include <QThread>
 #include <QList>
-#include <SDL.h>
+#include <SDL/SDL.h>
 
 #include "UASInterface.h"
 
