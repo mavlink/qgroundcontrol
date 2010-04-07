@@ -54,7 +54,7 @@ class GAudioOutput : public QObject
     Q_OBJECT
 public:
     /** @brief Get the singleton instance */
-    static GAudioOutput* GAudioOutput::instance();
+    static GAudioOutput* instance();
     /** @brief List available voices */
     QStringList listVoices(void);
 
