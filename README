@@ -2,4 +2,11 @@ PIXHAWK Open Source Groundstation
 
 http://pixhawk.ethz.ch
 
+To build on Mac OS X (10.5 or later):
+1) Install http://www.libsdl.org/release/SDL-1.2.14.dmg
+2) Install Qt 4.6.2 with Cocoa http://get.qt.nokia.com/qt/source/qt-mac-cocoa-opensource-4.6.2.dmg
+3) Run qmake
+4) Run "xcodebuild -configuration Release" or open "opengroundcontrol.xcodeproj" in Xcode and build.
+
+
 
