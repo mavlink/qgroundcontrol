@@ -85,8 +85,6 @@ void UAS::setSelected()
 
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
-
-
     if (!links->contains(link))
     {
         addLink(link);

@@ -79,7 +79,8 @@ public slots:
     void updateLocalPosition(UASInterface*,double,double,double,quint64);
     void updateGlobalPosition(UASInterface*,double,double,double,quint64);
     void updateSpeed(UASInterface*,double,double,double,quint64);
-    void updateState(UASInterface*,QString,QString);
+    void updateState(UASInterface*,QString);
+    void updateMode(UASInterface*,QString);
     void updateLoad(UASInterface*, double);
     void selectWaypoint(UASInterface* uas, int id);
 
