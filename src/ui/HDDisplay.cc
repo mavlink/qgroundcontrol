@@ -134,7 +134,7 @@ void HDDisplay::paintGL()
     for (int i = 0; i < acceptList->size(); ++i)
     {
         QString value = acceptList->at(i);
-        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, 0.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
+        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
         xCoord += gaugeWidth + leftSpacing;
         // Move one row down if necessary
         if (xCoord + gaugeWidth > vwidth)
@@ -511,8 +511,8 @@ float HDDisplay::refLineWidthToPen(float line)
 
 void HDDisplay::updateValue(UASInterface* uas, QString name, double value, quint64 msec)
 {
-    if (this->uas == uas)
-    {
+    //if (this->uas == uas)
+    //{
         // Update mean
         const float oldMean = valuesMean.value(name, 0.0f);
         const int meanCount = valuesCount.value(name, 0);
@@ -521,7 +521,7 @@ void HDDisplay::updateValue(UASInterface* uas, QString name, double value, quint
         valuesDot.insert(name, (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f));
         values.insert(name, value);
         lastUpdate.insert(name, msec);
-    }
+    //}
 }
 
 /**
