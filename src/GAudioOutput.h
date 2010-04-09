@@ -35,8 +35,16 @@ This file is part of the PIXHAWK project
 #include <QObject>
 #include <QTimer>
 #include <QStringList>
-#include <flite.h>
+#ifdef Q_OS_MAC
 #include <Phonon>
+#endif
+#ifdef Q_OS_LINUX
+#include <flite.h>
+#include <phonon>
+#endif
+#ifdef Q_OS_WIN
+#include <Phonon>
+#endif
 
 /* For Snow leopard and later
 #ifdef Q_OS_MAC
@@ -77,10 +85,12 @@ public slots:
     void beep();
 
 protected:
-    #ifdef Q_OS_MAC
+#ifdef Q_OS_MAC
     //NSSpeechSynthesizer
 #endif
+#ifdef Q_OS_LINUX
     cst_voice* voice; ///< The flite voice object
+#endif
     int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
     Phonon::MediaObject* m_media; ///< The output object for audio
     Phonon::AudioOutput* m_audioOutput;
