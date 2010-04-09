@@ -82,7 +82,7 @@ voice(NULL),
 voiceIndex(0),
 emergency(false)
 {
-#if Q_OS_LINUX
+#ifdef Q_OS_LINUX
     flite_init();
 #endif
     m_media = new Phonon::MediaObject(this);
