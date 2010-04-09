@@ -36,10 +36,7 @@ This file is part of the PIXHAWK project
 #ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
 #endif
-#ifdef Q_OS_LINUX
-#include <flite.h>
-#endif
-#include <Phonon>
+
 #include <QTemporaryFile>
 
 #include <QDebug>
@@ -79,7 +76,9 @@ GAudioOutput* GAudioOutput::instance()
 }
 
 GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
+#ifdef Q_OS_LINUX
 voice(NULL),
+#endif
 voiceIndex(0),
 emergency(false)
 {
@@ -236,13 +235,12 @@ extern "C" {
 #endif /* __cplusplus */
     QStringList GAudioOutput::listVoices(void)
     {
-
-
+        QStringList l;
+#ifdef Q_OS_LINUX
         cst_voice *voice;
         const cst_val *v;
-        QStringList l;
 
-#ifndef _WIN32
+
         /*
         printf("Voices available: ");
         for (v=flite_voice_list; v; v=val_cdr(v))
