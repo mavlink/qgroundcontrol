@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Definition of joystick interface
+ *   @brief Definition of joystick widget
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
@@ -57,14 +57,23 @@ public:
      * @param yHat hat vector in left-right direction, -1 left, 0 center, +1 right
      */
     void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);
+    /** @brief Throttle lever */
     void setThrottle(float thrust);
+    /** @brief Back/forth movement */
     void setX(float x);
+    /** @brief Left/right movement */
     void setY(float y);
+    /** @brief Wrist rotation */
+    void setZ(float z);
+    /** @brief Hat switch position */
+    void setHat(float x, float y);
+    /** @brief Joystick keys, as labeled on the joystick */
     void pressKey(int key);
 
 protected:
+    /** @brief UI change event */
     virtual void changeEvent(QEvent *e);
-    JoystickInput* joystick;
+    JoystickInput* joystick;  ///< Reference to the joystick
 
 private:
     Ui::JoystickWidget *m_ui;

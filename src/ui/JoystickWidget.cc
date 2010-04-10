@@ -27,7 +27,9 @@ void JoystickWidget::updateJoystick(double roll, double pitch, double yaw, doubl
 {
     setX(roll);
     setY(pitch);
+    setZ(yaw);
     setThrottle(thrust);
+    setHat(xHat, yHat);
 }
 
 void JoystickWidget::changeEvent(QEvent *e)
@@ -46,16 +48,29 @@ void JoystickWidget::setThrottle(float thrust)
 {
     m_ui->thrust->setValue(thrust*100);
 }
+
 void JoystickWidget::setX(float x)
 {
     m_ui->xSlider->setValue(x*100);
     m_ui->xValue->display(x*100);
 }
+
 void JoystickWidget::setY(float y)
 {
     m_ui->ySlider->setValue(y*100);
     m_ui->yValue->display(y*100);
 }
+
+void JoystickWidget::setZ(float z)
+{
+    m_ui->dial->setValue(z*100);
+}
+
+void JoystickWidget::setHat(float x, float y)
+{
+    qDebug() << __FILE__ << __LINE__ << "HAT X:" << x << "HAT Y:" << y;
+}
+
 void JoystickWidget::pressKey(int key)
 {
     QString colorstyle;
@@ -64,5 +79,5 @@ void JoystickWidget::pressKey(int key)
                                     heartbeatColor.red(), heartbeatColor.green(), heartbeatColor.blue());
     m_ui->button0Label->setStyleSheet(colorstyle);
     m_ui->button0Label->setAutoFillBackground(true);
-    qDebug() << "KEY" << key << " pressed on joystick";
+    qDebug() << __FILE__ << __LINE__ << "KEY" << key << " pressed on joystick";
 }
