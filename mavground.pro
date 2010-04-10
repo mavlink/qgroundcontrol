@@ -11,7 +11,9 @@ include(src/lib/qwt/qwt.pri)
 #include(src/lib/flite/flite.pri)
 
 # Include QMapControl map library
-include(lib/QMapControl/QMapControl.pri)
+include(src/lib/qmapcontrol/qmapcontrol.pri)
+#include(lib/QMapControl/QMapControl.pri)
+
 DEPENDPATH += . \
     lib/QMapControl \
     lib/QMapControl/src

@@ -28,7 +28,7 @@
 QT       += network opengl svg xml phonon
 
 TEMPLATE = app
-TARGET = opengroundcontrol
+TARGET = qgroundcontrol
 
 BASEDIR = .
 BUILDDIR = build
@@ -38,6 +38,7 @@ LANGUAGE = C++
 #CONFIG += static release console
 CONFIG += static debug_and_release console
 QMAKE_CFLAGS += -j8
+QMAKE_CXXFLAGS += -j8
 
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
@@ -60,14 +61,11 @@ message(Qt version> $$[QMAKESPEC])
 # MAC OS X
 macx { 
 
-    message(Building for Mac OS X)
+    message(Building for Mac OS X 32/64bit)
 
-    CONFIG += x86
-
-    contains ( DEFINES, QT_MAC_USE_COCOA ) {
-        CONFIG += x86_64 cocoa
-	CONFIG -= static
-    }
+    #CONFIG += x86
+    CONFIG += x86_64 cocoa
+    CONFIG -= static
 
     DESTDIR = $$BASEDIR/bin/mac
 
@@ -79,7 +77,11 @@ macx {
         -framework ApplicationServices \
         -lm
 
-    DEFINES += _TTY_POSIX_
+    # Enable function-profiling with the OS X saturn tool
+    debug {
+        #QMAKE_CXXFLAGS += -finstrument-functions
+        #LIBS += -lSaturn
+    }
     
     #ICON = $$BASEDIR/img/icons/empty.png
 }
@@ -97,8 +99,6 @@ linux-g++ {
         DESTDIR = $$BASEDIR
     }
     INCLUDEPATH += /usr/include/SDL
-
-    DEFINES += _TTY_POSIX_
 
     HARDWARE_PLATFORM = $$system(uname -a)
     contains( HARDWARE_PLATFORM, x86_64 ) {
@@ -142,8 +142,6 @@ win32 {
         -lmingw32 -lSDLmain -lSDL -mwindows
     
     INCLUDEPATH += $$BASEDIR/lib/sdl/include/SDL
-    
-    DEFINES += _TTY_WIN_
 
     debug {
         DESTDIR = $$BASEDIR/bin

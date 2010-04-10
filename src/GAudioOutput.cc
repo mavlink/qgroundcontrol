@@ -30,16 +30,21 @@ This file is part of the PIXHAWK project
  */
 
 #include <QApplication>
+#include <QTemporaryFile>
 #include "GAudioOutput.h"
 #include "MG.h"
+
+#include <QDebug>
 
 #ifdef Q_OS_MAC
 #include <ApplicationServices/ApplicationServices.h>
 #endif
 
-#include <QTemporaryFile>
-
-#include <QDebug>
+#ifdef Q_OS_WINDOWS
+#include <windows.h>
+using System;
+using System.Speech.Synthesis;
+#endif
 
 #ifndef Q_OS_MAC
 extern "C" {
@@ -110,7 +115,13 @@ bool GAudioOutput::say(QString text, int severity)
     bool res = false;
     if (!emergency)
     {
-        // Only give speech output on Linux and MacOS
+
+#ifdef Q_OS_WINDOWS
+        SpeechSynthesizer synth = new SpeechSynthesizer();
+        synth.SelectVoice("Microsoft Anna");
+        synth.SpeakText("Hello, world!");
+#endif
+
 #ifdef Q_OS_LINUX
         QTemporaryFile file;
         file.setFileTemplate("XXXXXX.wav");
