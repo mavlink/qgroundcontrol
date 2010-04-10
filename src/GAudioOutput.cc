@@ -46,7 +46,7 @@ using System;
 using System.Speech.Synthesis;
 #endif
 
-#ifndef Q_OS_MAC
+#ifdef Q_OS_LINUX
 extern "C" {
 #include <cmu_us_awb/voxdefs.h>
     //#include <cmu_us_slt/voxdefs.h>
