@@ -63,8 +63,8 @@ macx {
 
     message(Building for Mac OS X 32/64bit)
 
-    #CONFIG += x86
-    CONFIG += x86_64 cocoa
+    CONFIG += x86 cocoa
+    #CONFIG += x86_64 cocoa
     CONFIG -= static
 
     DESTDIR = $$BASEDIR/bin/mac
