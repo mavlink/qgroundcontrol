@@ -58,9 +58,10 @@ This file is part of the PIXHAWK project
 
 Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 {
-    this->setApplicationName("OpenMAV Ground Control Station");
+    this->setApplicationName("QGroundControl");
     this->setApplicationVersion("v. 0.0.5");
-    this->setOrganizationName(QLatin1String("OpenMAV Association"));
+    this->setOrganizationName(QLatin1String("PIXHAWK Project"));
+    this->setOrganizationDomain("http://pixhawk.ethz.ch");
     QSettings::setDefaultFormat(QSettings::IniFormat);
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
@@ -79,21 +80,16 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     splashScreen->show();
 
     // Start the comm link manager
-    splashScreen->showMessage(tr("Starting Communication Links"));
+    splashScreen->showMessage(tr("QGroundControl (c) 2009-") + QString(QDate::currentDate().year()) + "PIXHAWK PROJECT", Qt::AlignLeft | Qt::AlignBottom);
     startLinkManager();
 
     // Start the UAS Manager
-    splashScreen->showMessage(tr("Starting UAS Manager"));
     startUASManager();
-
-    // Start audio output
-    //GAudioOutput::instance()->say("Ground Control Station started", 1);
 
     //tarsus = new ViconTarsusProtocol();
     //tarsus->start();
 
     // Start the user interface
-    splashScreen->showMessage(tr("Starting User Interface"));
     startUI();
 
     // Remove splash screen
