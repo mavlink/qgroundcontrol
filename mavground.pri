@@ -61,6 +61,12 @@ macx {
         # x86 Mac OS X Leopard 10.5 and earlier
         CONFIG += x86 cocoa phonon
         message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
+
+		# Enable function-profiling with the OS X saturn tool
+		debug {
+			QMAKE_CXXFLAGS += -finstrument-functions
+			LIBS += -lSaturn
+		}
     } else {
         # x64 Mac OS X Snow Leopard 10.6 and later
         CONFIG += x86_64 cocoa
@@ -79,12 +85,6 @@ macx {
         -framework CoreFoundation \
         -framework ApplicationServices \
         -lm
-
-    # Enable function-profiling with the OS X saturn tool
-    debug {
-        QMAKE_CXXFLAGS += -finstrument-functions
-        LIBS += -lSaturn
-    }
     
     ICON = $$BASEDIR/images/icons/macx.icns
 }
