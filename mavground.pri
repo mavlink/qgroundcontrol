@@ -1,8 +1,8 @@
 #-------------------------------------------------
 #
-# MAVGround - Micro Air Vehicle Groundstation
+# QGroundControl - Micro Air Vehicle Groundstation
 # 
-# Please see our website at <http://pixhawk.ethz.ch>
+# Please see our website at <http://qgroundcontrol.org>
 #
 # Original Author:
 # Lorenz Meier <mavteam@student.ethz.ch>
@@ -37,8 +37,6 @@ LANGUAGE = C++
 #CONFIG += static debug
 #CONFIG += static release console
 CONFIG += static debug_and_release console
-QMAKE_CFLAGS += -j8
-QMAKE_CXXFLAGS += -j8
 
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
@@ -46,29 +44,37 @@ UI_HEADERS_DIR = src/ui/generated
 
 
 # Add external libraries
-INCLUDEPATH += $$BASEDIR/lib/SDL/include \
-               $$BASEDIR/lib/flite/include \
+INCLUDEPATH += $$BASEDIR/lib/flite/include \
                $$BASEDIR/lib/flite/lang
 
 #$$BASEDIR/lib/qextserialport/include
 #               $$BASEDIR/lib/openjaus/libjaus/include \
 #               $$BASEDIR/lib/openjaus/libopenJaus/include
 
-message(Qt version> $$[QMAKESPEC])
+message(Qt version $$[QT_VERSION])
 
 
 
 # MAC OS X
 macx { 
 
-    message(Building for Mac OS X 32/64bit)
+    HARDWARE_PLATFORM = $$system(uname -a)
+    contains( HARDWARE_PLATFORM, x86_64 ) {
+        # x64 Mac OS X Snow Leopard 10.6 and later
+        CONFIG += x86_64 cocoa
+        CONFIG -= x86 static phonon
+        message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
+    } else {
+        # x86 Mac OS X Leopard 10.5 and earlier
+        CONFIG += x86 cocoa static phonon
+        message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
+    }
 
-    CONFIG += x86 cocoa #x86_64 cocoa
-    CONFIG -= static
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 
     DESTDIR = $$BASEDIR/bin/mac
-
-    INCLUDEPATH += -framework SDL
+    INCLUDEPATH += -framework SDL \
+        $$BASEDIR/../mavlink/src
 
     LIBS += -framework IOKit \
         -framework SDL \
@@ -82,13 +88,11 @@ macx {
         LIBS += -lSaturn
     }
     
-    #ICON = $$BASEDIR/img/icons/empty.png
+    ICON = $$BASEDIR/images/icons/macx.icns
 }
 
 # GNU/Linux
 linux-g++ { 
-
-    message(Building for GNU/Linux)
     
     debug {
         DESTDIR = $$BASEDIR
@@ -97,27 +101,21 @@ linux-g++ {
     release {
         DESTDIR = $$BASEDIR
     }
-    INCLUDEPATH += /usr/include/SDL
+    INCLUDEPATH += /usr/include
 
     HARDWARE_PLATFORM = $$system(uname -a)
     contains( HARDWARE_PLATFORM, x86_64 ) {
         # 64-bit Linux
-    LIBS += \
-        -L$$BASEDIR/lib/flite/linux64 \
-        -lm \
-        -lflite_cmu_us_awb \
-        -lflite_cmu_us_rms \
-        -lflite_cmu_us_slt \
-        -lflite_usenglish \
-        -lflite_cmulex \
-        -lflite \
-        -lSDL \
-        -lSDLmain
+        LIBS += \
+            -L$$BASEDIR/lib/flite/linux64
+        message(Building for GNU/Linux 64bit/x64)
     } else {
         # 32-bit Linux
-    LIBS += \
-        -L$$BASEDIR/lib/flite/linux32 \
-        -lm \
+        LIBS += \
+           -L$$BASEDIR/lib/flite/linux32
+        message(Building for GNU/Linux 32bit/i386)
+    }
+    LIBS += -lm \
         -lflite_cmu_us_awb \
         -lflite_cmu_us_rms \
         -lflite_cmu_us_slt \
@@ -126,7 +124,6 @@ linux-g++ {
         -lflite \
         -lSDL \
         -lSDLmain
-    }
 }
 
 
@@ -140,7 +137,7 @@ win32 {
     LIBS += -L$$BASEDIR\lib\sdl\win32 \
         -lmingw32 -lSDLmain -lSDL -mwindows
     
-    INCLUDEPATH += $$BASEDIR/lib/sdl/include/SDL
+    INCLUDEPATH += $$BASEDIR/lib/sdl/include
 
     debug {
         DESTDIR = $$BASEDIR/bin
@@ -151,4 +148,5 @@ win32 {
     }
         
 }
+
 

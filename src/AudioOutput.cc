@@ -1,11 +1,11 @@
 #include "AudioOutput.h"
 
-#ifndef Q_OS_MAC
+#ifdef Q_OS_MAC
+	#include <ApplicationServices/ApplicationServices.h>
+#else
 	#include <flite.h>
 	#include <phonon/mediaobject.h>
 	#include <QTemporaryFile>
-#else
-	#include <ApplicationServices/ApplicationServices.h>
 #endif
 
 #include <QDebug>
@@ -25,9 +25,10 @@ extern "C" {
 };
 #endif
 
-AudioOutput::AudioOutput(QString voice, QObject* parent) : QObject(parent),
-voice(NULL),
-voiceIndex(0)
+AudioOutput::AudioOutput(QString voice, QObject* parent) 
+	: QObject(parent),
+	  voice(NULL),
+	  voiceIndex(0)
 {
 #if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
     flite_init();
@@ -72,6 +73,7 @@ bool AudioOutput::say(QString text, int severity)
 #if defined(Q_OS_WIN32)
     qDebug() << "Synthesized: " << text << ", NO OUTPUT SUPPORT ON WINDOWS!";
 #elif defined(Q_OS_MAC)
+	// FIXME, copy string, set callback to free the copy
 	SpeakString((const unsigned char*)text.toAscii().data());
 	qDebug() << "Synthesized: " << text;
 #else
@@ -137,13 +139,11 @@ extern "C" {
 #endif /* __cplusplus */
     QStringList AudioOutput::listVoices(void)
     {
-
-
+        QStringList l;
+#if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
         cst_voice *voice;
         const cst_val *v;
-        QStringList l;
 
-#if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
         /*
         printf("Voices available: ");
         for (v=flite_voice_list; v; v=val_cdr(v))
@@ -157,8 +157,7 @@ extern "C" {
         printf("\n");
 */
 #endif
-        return l;
-
+		return l;
     }
 #ifdef __cplusplus
 }

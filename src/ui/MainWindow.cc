@@ -60,6 +60,9 @@ This file is part of the PIXHAWK project
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
 
+    this->hide();
+    this->setVisible(false);
+
     // Quick hack
     //comp = new LogCompressor("/home/pixhawk/Desktop/test.txt");
 
@@ -142,10 +145,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // Add status bar
     setStatusBar(createStatusBar());
-    // Load widgets
-    loadWidgets();
-    // Adjust the size
-    adjustSize();
 
     // Create actions
     connectActions();
@@ -173,6 +172,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     //CommConfigurationWindow* simulationWidget = new CommConfigurationWindow(simulationLink, mavlink, this);
     //ui.menuNetwork->addAction(commWidget->getAction());
     simulationLink->connect();
+
+    // Load widgets and show application window
+    loadWidgets();
+
+    // Adjust the size
+    adjustSize();
 }
 
 MainWindow::~MainWindow()
