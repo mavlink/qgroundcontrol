@@ -2,7 +2,7 @@
 #
 # MAVGround - Micro Air Vehicle Groundstation
 # 
-# Please see our website at <http://pixhawk.ethz.ch>
+# Please see our website at <http://qgroundcontrol.org>
 #
 # Original Author:
 # Lorenz Meier <mavteam@student.ethz.ch>
@@ -37,8 +37,6 @@ LANGUAGE = C++
 #CONFIG += static debug
 #CONFIG += static release console
 CONFIG += static debug_and_release console
-#QMAKE_CFLAGS += -j8
-#QMAKE_CXXFLAGS += -j8
 
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
@@ -60,14 +58,16 @@ message(Qt version $$[QT_VERSION])
 # MAC OS X
 macx { 
 
-	message(Building for Mac OS X)
-	config -= static
-
-    HARDWARE_PLATFORM = $$system(g++ -dumpspecs)
-    contains( HARDWARE_PLATFORM, m64 ) {
-        message(Building as 64-bit)
-        CONFIG += x86_64
-        CONFIG -= x86
+    HARDWARE_PLATFORM = $$system(uname -a)
+    contains( HARDWARE_PLATFORM, x86_64 ) {
+        # x64 Mac OS X Snow Leopard 10.6 and later
+        CONFIG += x86_64 cocoa
+        CONFIG -= x86 static phonon
+        message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
+    } else {
+        # x86 Mac OS X Leopard 10.5 and earlier
+        CONFIG += x86 cocoa static phonon
+        message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
     }
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
@@ -84,8 +84,8 @@ macx {
 
     # Enable function-profiling with the OS X saturn tool
     debug {
-        #QMAKE_CXXFLAGS += -finstrument-functions
-        #LIBS += -lSaturn
+        QMAKE_CXXFLAGS += -finstrument-functions
+        LIBS += -lSaturn
     }
     
     ICON = $$BASEDIR/images/icons/macx.icns
@@ -101,9 +101,9 @@ linux-g++ {
     release {
         DESTDIR = $$BASEDIR
     }
-    INCLUDEPATH += /usr/include/SDL
+    INCLUDEPATH += /usr/include
 
-    HARDWARE_PLATFORM = $$system(uname -p)
+    HARDWARE_PLATFORM = $$system(uname -a)
     contains( HARDWARE_PLATFORM, x86_64 ) {
         # 64-bit Linux
         LIBS += \
@@ -137,7 +137,7 @@ win32 {
     LIBS += -L$$BASEDIR\lib\sdl\win32 \
         -lmingw32 -lSDLmain -lSDL -mwindows
     
-    INCLUDEPATH += $$BASEDIR/lib/sdl/include/SDL
+    INCLUDEPATH += $$BASEDIR/lib/sdl/include
 
     debug {
         DESTDIR = $$BASEDIR/bin
@@ -148,5 +148,6 @@ win32 {
     }
         
 }
+
 
 
