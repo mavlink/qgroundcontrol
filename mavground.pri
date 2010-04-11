@@ -60,19 +60,14 @@ message(Qt version $$[QT_VERSION])
 # MAC OS X
 macx { 
 
-    CONFIG += x86 #x86_64
-    CONFIG -= static phonon
+	message(Building for Mac OS X)
+	config -= static
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
-        # x64 Mac OS X Snow Leopard 10.6 and later
+    HARDWARE_PLATFORM = $$system(g++ -dumpspecs)
+    contains( HARDWARE_PLATFORM, m64 ) {
+        message(Building as 64-bit)
         CONFIG += x86_64
-        CONFIG -= x86 static phonon
-        message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
-    } else {
-        # x86 Mac OS X Leopard 10.5 and earlier
-        CONFIG += x86 static phonon
-        message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
+        CONFIG -= x86
     }
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
@@ -108,7 +103,7 @@ linux-g++ {
     }
     INCLUDEPATH += /usr/include/SDL
 
-    HARDWARE_PLATFORM = $$system(uname -a)
+    HARDWARE_PLATFORM = $$system(uname -p)
     contains( HARDWARE_PLATFORM, x86_64 ) {
         # 64-bit Linux
         LIBS += \
