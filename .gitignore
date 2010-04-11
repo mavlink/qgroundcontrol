@@ -15,6 +15,5 @@ qrc_*.cpp
 tmp
 debug
 release
-opengroundcontrol.xcodeproj/**
-opengroundcontrol
+qgroundcontrol.xcodeproj/**
 qgroundcontrol
