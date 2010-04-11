@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Main class
+ *   @brief Implementation of main class
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -43,7 +43,7 @@ This file is part of the PIXHAWK project
 #include <Core.h>
 #include <MG.h>
 #include <MainWindow.h>
-#include "AudioOutput.h"
+#include "GAudioOutput.h"
 
 
 /**
@@ -56,7 +56,7 @@ This file is part of the PIXHAWK project
  * @param argv The string array of parameters
  **/
 
-MGCore::MGCore(int &argc, char* argv[]) : QApplication(argc, argv)
+Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 {
     this->setApplicationName("OpenMAV Ground Control Station");
     this->setApplicationVersion("v. 0.0.5");
@@ -74,7 +74,7 @@ MGCore::MGCore(int &argc, char* argv[]) : QApplication(argc, argv)
     setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
 
     // Show splash screen
-    QPixmap splashImage(MG::DIR::getIconDirectory() + "/groundstation-splash.png");
+    QPixmap splashImage(":images/splash.png");
     QSplashScreen* splashScreen = new QSplashScreen(splashImage, Qt::WindowStaysOnTopHint);
     splashScreen->show();
 
@@ -87,8 +87,10 @@ MGCore::MGCore(int &argc, char* argv[]) : QApplication(argc, argv)
     startUASManager();
 
     // Start audio output
-    AudioOutput* audio = new AudioOutput();
-    audio->say("Ground Control Station started", 1);
+    //GAudioOutput::instance()->say("Ground Control Station started", 1);
+
+    //tarsus = new ViconTarsusProtocol();
+    //tarsus->start();
 
     // Start the user interface
     splashScreen->showMessage(tr("Starting User Interface"));
@@ -104,7 +106,7 @@ MGCore::MGCore(int &argc, char* argv[]) : QApplication(argc, argv)
  * @brief Destructor for the groundstation. It destroys all loaded instances.
  *
  **/
-MGCore::~MGCore()
+Core::~Core()
 {
     // Delete singletons
     delete LinkManager::instance();
@@ -117,7 +119,7 @@ MGCore::~MGCore()
  * The link manager keeps track of all communication links and provides the global
  * packet queue. It is the main communication hub
  **/
-void MGCore::startLinkManager()
+void Core::startLinkManager()
 {
     LinkManager::instance();
 }
@@ -126,7 +128,7 @@ void MGCore::startLinkManager()
  * @brief Start the Unmanned Air System Manager
  *
  **/
-void MGCore::startUASManager()
+void Core::startUASManager()
 {
     UASManager::instance();
 }
@@ -134,10 +136,10 @@ void MGCore::startUASManager()
 /**
  * @brief Start and show the user interface.
  **/
-void MGCore::startUI()
+void Core::startUI()
 {
     // Start UI
-    mainWindow = new MGMainWindow();
+    mainWindow = new MainWindow();
     // Make UI visible
     mainWindow->show();
 }

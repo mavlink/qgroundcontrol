@@ -48,6 +48,6 @@ This file is part of the PIXHAWK project
 int main(int argc, char *argv[])
 {
 
-    MGCore core(argc, argv);
+    Core core(argc, argv);
     return core.exec();
 }

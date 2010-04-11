@@ -11,7 +11,9 @@ include(src/lib/qwt/qwt.pri)
 #include(src/lib/flite/flite.pri)
 
 # Include QMapControl map library
-include(lib/QMapControl/QMapControl.pri)
+include(src/lib/qmapcontrol/qmapcontrol.pri)
+#include(lib/QMapControl/QMapControl.pri)
+
 DEPENDPATH += . \
     lib/QMapControl \
     lib/QMapControl/src
@@ -100,7 +102,7 @@ HEADERS += src/MG.h \
     src/ui/HDDisplay.h \
     src/ui/MAVLinkSettingsWidget.h \
     src/ui/AudioOutputWidget.h \
-    src/AudioOutput.h \
+    src/GAudioOutput.h \
     src/LogCompressor.h
 SOURCES += src/main.cc \
     src/Core.cc \
@@ -145,6 +147,6 @@ SOURCES += src/main.cc \
     src/ui/HDDisplay.cc \
     src/ui/MAVLinkSettingsWidget.cc \
     src/ui/AudioOutputWidget.cc \
-    src/AudioOutput.cc \
+    src/GAudioOutput.cc \
     src/LogCompressor.cc
 RESOURCES = mavground.qrc

@@ -29,14 +29,55 @@
    <string>QWidget#colorIcon {}
 
 QWidget {
-background-color: #252528;
+background-color: none;
 color: #DDDDDF;
 border-color: #EEEEEE;
 background-clip: margin;
 }
 
+QLabel#nameLabel {
+	font: bold 16px;
+	color: #3C7B9E;
+}
+
+QLabel#modeLabel {
+	font: 12px;
+}
+
+QLabel#stateLabel {
+	font: 12px;
+}
+
+QLabel#gpsLabel {
+	font: 8px;
+}
+
+QLabel#positionLabel {
+	font: 8px;
+}
+
+QLabel#timeElapsedLabel {
+	font: 8px;
+}
+
+QLabel#groundDistanceLabel {
+	font: 8px;
+}
+
+QLabel#speedLabel {
+	font: 8px;
+}
+
+QLabel#timeRemainingLabel {
+	font: 8px;
+}
+
+QLabel#waypointLabel {
+	font: 24px;
+}
+
 QGroupBox {
-	border: 1px solid #EEEEEE;
+	border: 1px solid #4A4A4F;
 	border-radius: 5px;
 	padding: 0px 0px 0px 0px;
 	margin: 0px;
@@ -67,6 +108,19 @@ QToolButton {
 	background-color: none;
 }
 
+QToolButton#typeButton {
+	font-weight: bold;
+	font-size: 12px;
+	border: 2px solid #999999;
+	border-radius: 5px;
+	min-width:44px;
+	max-width: 44px;
+	min-height: 44px;
+	max-height: 44px;
+	padding: 0px;
+	background-color: none;
+}
+
 QPushButton {
 	font-weight: bold;
 	font-size: 12px;
@@ -84,41 +138,38 @@ QPushButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #444444, stop: 1 #555555);
 }
 
-QPushButton#landButton {
-	color: #000000;
+QPushButton#abortButton {
 	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffee01, stop:1 #ae8f00) url(&quot;ICONDIR/control/emergency-button.png&quot;);
+                             stop:0 #ffee01, stop:1 #ae8f00);
 }
 
-QPushButton:pressed#landButton {
-	color: #000000;
+QPushButton:pressed#abortButton {
 	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bbaa00, stop:1 #a05b00) url(&quot;ICONDIR/control/emergency-button.png&quot;);
+                             stop:0 #bbaa00, stop:1 #a05b00);
 }
 
 QPushButton#killButton {
-	color: #000000;
 	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffb917, stop:1 #b37300) url(&quot;ICONDIR/control/emergency-button.png&quot;);
+                             stop:0 #ffb917, stop:1 #b37300);
 }
 
 QPushButton:pressed#killButton {
-	color: #000000;
 	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bb8500, stop:1 #903000) url(&quot;ICONDIR/control/emergency-button.png&quot;);
+                             stop:0 #bb8500, stop:1 #903000);
 }
 
+
 QProgressBar {
-	border: 1px solid white;
+	border: 1px solid #4A4A4F;
 	border-radius: 4px;
 	text-align: center;
 	padding: 2px;
-	color: white;
-	background-color: #111111;
+	color: #DDDDDF;
+	background-color: #111118;
 }
 
 QProgressBar:horizontal {
-	height: 12px;
+	height: 10px;
 }
 
 QProgressBar QLabel {
@@ -180,14 +231,14 @@ QProgressBar::chunk#thrustBar {
        <widget class="QToolButton" name="typeButton">
         <property name="minimumSize">
          <size>
-          <width>46</width>
-          <height>46</height>
+          <width>48</width>
+          <height>48</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>46</width>
-          <height>46</height>
+          <width>48</width>
+          <height>48</height>
          </size>
         </property>
         <property name="baseSize">
@@ -234,8 +285,9 @@ QProgressBar::chunk#thrustBar {
         </property>
         <property name="font">
          <font>
-          <pointsize>14</pointsize>
+          <pointsize>-1</pointsize>
           <weight>75</weight>
+          <italic>false</italic>
           <bold>true</bold>
          </font>
         </property>
@@ -254,8 +306,9 @@ QProgressBar::chunk#thrustBar {
         </property>
         <property name="font">
          <font>
-          <pointsize>14</pointsize>
+          <pointsize>-1</pointsize>
           <weight>50</weight>
+          <italic>false</italic>
           <bold>false</bold>
          </font>
         </property>
@@ -268,7 +321,10 @@ QProgressBar::chunk#thrustBar {
        <widget class="QLabel" name="timeRemainingLabel">
         <property name="font">
          <font>
-          <pointsize>8</pointsize>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
@@ -280,7 +336,10 @@ QProgressBar::chunk#thrustBar {
        <widget class="QLabel" name="timeElapsedLabel">
         <property name="font">
          <font>
-          <pointsize>8</pointsize>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
@@ -304,7 +363,10 @@ QProgressBar::chunk#thrustBar {
        <widget class="QLabel" name="groundDistanceLabel">
         <property name="font">
          <font>
-          <pointsize>8</pointsize>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
@@ -313,14 +375,17 @@ QProgressBar::chunk#thrustBar {
        </widget>
       </item>
       <item row="4" column="4" colspan="2">
-       <widget class="QLabel" name="altitudeLabel">
+       <widget class="QLabel" name="speedLabel">
         <property name="font">
          <font>
-          <pointsize>8</pointsize>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
-         <string>00.00 m</string>
+         <string>00.0 m/s</string>
         </property>
        </widget>
       </item>
@@ -380,9 +445,10 @@ QProgressBar::chunk#thrustBar {
        <widget class="QLabel" name="stateLabel">
         <property name="font">
          <font>
-          <pointsize>10</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
@@ -394,13 +460,17 @@ QProgressBar::chunk#thrustBar {
        <widget class="QLabel" name="waypointLabel">
         <property name="font">
          <font>
-          <pointsize>20</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
          <string>WPX</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
         </property>
        </widget>
       </item>
@@ -420,7 +490,10 @@ QProgressBar::chunk#thrustBar {
         </property>
         <property name="font">
          <font>
-          <pointsize>8</pointsize>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
@@ -444,7 +517,10 @@ QProgressBar::chunk#thrustBar {
         </property>
         <property name="font">
          <font>
-          <pointsize>8</pointsize>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
          </font>
         </property>
         <property name="text">
@@ -530,7 +606,7 @@ QProgressBar::chunk#thrustBar {
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="returnButton">
+         <widget class="QPushButton" name="landButton">
           <property name="minimumSize">
            <size>
             <width>18</width>
@@ -553,12 +629,12 @@ QProgressBar::chunk#thrustBar {
           </property>
           <property name="icon">
            <iconset resource="../../mavground.qrc">
-            <normaloff>:/images/actions/go-home.svg</normaloff>:/images/actions/go-home.svg</iconset>
+            <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="landButton">
+         <widget class="QPushButton" name="abortButton">
           <property name="minimumSize">
            <size>
             <width>18</width>

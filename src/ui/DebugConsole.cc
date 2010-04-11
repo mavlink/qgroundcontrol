@@ -108,10 +108,14 @@ DebugConsole::~DebugConsole()
     delete m_ui;
 }
 
+/**
+ * Add a link to the debug console output
+ */
 void DebugConsole::addLink(LinkInterface* link)
 {
     // Add link to link list
     links.insert(link->getId(), link);
+
     m_ui->linkComboBox->insertItem(link->getId(), link->getName());
     // Set new item as current
     m_ui->linkComboBox->setCurrentIndex(qMax(0, links.size() - 1));

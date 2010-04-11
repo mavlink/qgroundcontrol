@@ -80,23 +80,23 @@ protected:
     void drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter);
     void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
 
-    UASInterface* uas; ///< The uas currently monitored
-    QMap<QString, float> values; ///< The variables this HUD displays
-    QMap<QString, float> valuesDot; ///< First derivative of the variable
-    QMap<QString, float> valuesMean; ///< Mean since system startup for this variable
-    QMap<QString, int> valuesCount; ///< Number of values received so far
+    UASInterface* uas;                 ///< The uas currently monitored
+    QMap<QString, float> values;       ///< The variables this HUD displays
+    QMap<QString, float> valuesDot;    ///< First derivative of the variable
+    QMap<QString, float> valuesMean;   ///< Mean since system startup for this variable
+    QMap<QString, int> valuesCount;    ///< Number of values received so far
     QMap<QString, quint64> lastUpdate; ///< The last update time for this variable
-    QMap<QString, float> minValues; ///< The minimum value this variable is assumed to have
-    QMap<QString, float> maxValues; ///< The maximum value this variable is assumed to have
+    QMap<QString, float> minValues;    ///< The minimum value this variable is assumed to have
+    QMap<QString, float> maxValues;    ///< The maximum value this variable is assumed to have
     QMap<QString, QPair<float, float> > goodRanges; ///< The range of good values
     QMap<QString, QPair<float, float> > critRanges; ///< The range of critical values
-    double scalingFactor; ///< Factor used to scale all absolute values to screen coordinates
+    double scalingFactor;      ///< Factor used to scale all absolute values to screen coordinates
     float xCenterOffset, yCenterOffset; ///< Offset from center of window in mm coordinates
-    float vwidth; ///< Virtual width of this window, 200 mm per default. This allows to hardcode positions and aspect ratios. This virtual image plane is then scaled to the window size.
-    float vheight; ///< Virtual height of this window, 150 mm per default
+    float vwidth;              ///< Virtual width of this window, 200 mm per default. This allows to hardcode positions and aspect ratios. This virtual image plane is then scaled to the window size.
+    float vheight;             ///< Virtual height of this window, 150 mm per default
 
-    int xCenter; ///< Center of the HUD instrument in pixel coordinates. Allows to off-center the whole instrument in its OpenGL window, e.g. to fit another instrument
-    int yCenter; ///< Center of the HUD instrument in pixel coordinates. Allows to off-center the whole instrument in its OpenGL window, e.g. to fit another instrument
+    int xCenter;               ///< Center of the HUD instrument in pixel coordinates. Allows to off-center the whole instrument in its OpenGL window, e.g. to fit another instrument
+    int yCenter;               ///< Center of the HUD instrument in pixel coordinates. Allows to off-center the whole instrument in its OpenGL window, e.g. to fit another instrument
 
     // HUD colors
     QColor backgroundColor;    ///< Background color

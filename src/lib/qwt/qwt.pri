@@ -77,7 +77,7 @@ HEADERS += $$QWTSRCDIR/qwt.h \
            $$QWTSRCDIR/qwt_thermo.h \
            $$QWTSRCDIR/qwt_valuelist.h \
            $$QWTSRCDIR/qwt_wheel.h
-SOURCES += qwt_abstract_scale.cpp \
+SOURCES += $$QWTSRCDIR/qwt_abstract_scale.cpp \
            $$QWTSRCDIR/qwt_abstract_scale_draw.cpp \
            $$QWTSRCDIR/qwt_abstract_slider.cpp \
            $$QWTSRCDIR/qwt_analog_clock.cpp \

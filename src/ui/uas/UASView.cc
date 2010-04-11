@@ -73,8 +73,8 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(m_ui->liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
     connect(m_ui->haltButton, SIGNAL(clicked()), uas, SLOT(halt()));
     connect(m_ui->continueButton, SIGNAL(clicked()), uas, SLOT(go()));
-    connect(m_ui->returnButton, SIGNAL(clicked()), uas, SLOT(home()));
-    connect(m_ui->landButton, SIGNAL(clicked()), uas, SLOT(emergencySTOP()));
+    connect(m_ui->landButton, SIGNAL(clicked()), uas, SLOT(home()));
+    connect(m_ui->abortButton, SIGNAL(clicked()), uas, SLOT(emergencySTOP()));
     connect(m_ui->killButton, SIGNAL(clicked()), uas, SLOT(emergencyKILL()));
     connect(m_ui->shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
 
@@ -95,6 +95,15 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     //m_ui->speedBar->setMinimum(0);
     //m_ui->speedBar->setMaximum(15);
 
+    // UAS color
+    QColor uasColor = uas->getColor();
+    uasColor = uasColor.darker(475);
+    QString colorstyle;
+    colorstyle = colorstyle.sprintf("QGroupBox { border: 2px solid #4A4A4F; border-radius: 5px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",
+                                    uasColor.red(), uasColor.green(), uasColor.blue());
+    m_ui->groupBox->setStyleSheet(colorstyle);
+    //m_ui->groupBox->setAutoFillBackground(true);
+
 
     // Heartbeat fade
     refreshTimer = new QTimer(this);
@@ -105,6 +114,11 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 UASView::~UASView()
 {
     delete m_ui;
+}
+
+void UASView::setUASasActive(bool)
+{
+    UASManager::instance()->setActiveUAS(this->uas);
 }
 
 void UASView::updateMode(int sysId, QString status, QString description)
@@ -182,13 +196,6 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
             break;
         }
     }
-    //        MAV_GENERIC = 0,
-    //        MAV_FIXED_WING,
-    //        MAV_QUADROTOR,
-    //        MAV_COAXIAL,
-    //        MAV_HELICOPTER,
-    //        MAV_GROUND,
-    //        OCU
 }
 
 void UASView::updateLocalPosition(UASInterface* uas, double x, double y, double z, quint64 usec)

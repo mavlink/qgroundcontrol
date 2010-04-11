@@ -45,6 +45,7 @@ This file is part of the PIXHAWK project
 #include "WaypointList.h"
 #include "MainWindow.h"
 #include "JoystickWidget.h"
+#include "GAudioOutput.h"
 
 
 #include "LogCompressor.h"
@@ -56,7 +57,7 @@ This file is part of the PIXHAWK project
 *
 * @see QMainWindow::show()
 **/
-MGMainWindow::MGMainWindow(QWidget *parent) : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
 
     // Quick hack
@@ -167,20 +168,20 @@ MGMainWindow::MGMainWindow(QWidget *parent) : QMainWindow(parent)
     udpLink->connect();
 
     simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
-    connect(simulationLink, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
+    //connect(simulationLink, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
     LinkManager::instance()->addProtocol(simulationLink, mavlink);
     //CommConfigurationWindow* simulationWidget = new CommConfigurationWindow(simulationLink, mavlink, this);
     //ui.menuNetwork->addAction(commWidget->getAction());
     simulationLink->connect();
 }
 
-MGMainWindow::~MGMainWindow()
+MainWindow::~MainWindow()
 {
     delete statusBar;
     statusBar = NULL;
 }
 
-QStatusBar* MGMainWindow::createStatusBar()
+QStatusBar* MainWindow::createStatusBar()
 {
     QStatusBar* bar = new QStatusBar();
     /* Add status fields and messages */
@@ -189,7 +190,7 @@ QStatusBar* MGMainWindow::createStatusBar()
     return bar;
 }
 
-void MGMainWindow::startVideoCapture()
+void MainWindow::startVideoCapture()
 {
     QString format = "bmp";
     QString initialPath = QDir::currentPath() + tr("/untitled.") + format;
@@ -205,14 +206,14 @@ void MGMainWindow::startVideoCapture()
     connect(videoTimer, SIGNAL(timeout()), this, SLOT(saveScreen()));
 }
 
-void MGMainWindow::stopVideoCapture()
+void MainWindow::stopVideoCapture()
 {
     videoTimer->stop();
 
     // TODO Convert raw images to PNG
 }
 
-void MGMainWindow::saveScreen()
+void MainWindow::saveScreen()
 {
     QPixmap window = QPixmap::grabWindow(this->winId());
     QString format = "bmp";
@@ -223,7 +224,7 @@ void MGMainWindow::saveScreen()
     }
 }
 
-void MGMainWindow::reloadStylesheet()
+void MainWindow::reloadStylesheet()
 {
     // Load style sheet
     //QFile styleSheet(MG::DIR::getSupportFilesDirectory() + "/images/style-mission.css");
@@ -237,17 +238,17 @@ void MGMainWindow::reloadStylesheet()
     }
 }
 
-void MGMainWindow::showStatusMessage(const QString& status, int timeout)
+void MainWindow::showStatusMessage(const QString& status, int timeout)
 {
     statusBar->showMessage(status, timeout);
 }
 
-void MGMainWindow::setLastAction(QString status)
+void MainWindow::setLastAction(QString status)
 {
     showStatusMessage(status, 5);
 }
 
-void MGMainWindow::setLinkStatus(QString status)
+void MainWindow::setLinkStatus(QString status)
 {
     showStatusMessage(status, 15);
 }
@@ -256,7 +257,7 @@ void MGMainWindow::setLinkStatus(QString status)
 * @brief Create all actions associated to the main window
 *
 **/
-void MGMainWindow::connectActions()
+void MainWindow::connectActions()
 {
     // Connect actions from ui
     connect(ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(addLink()));
@@ -283,12 +284,12 @@ void MGMainWindow::connectActions()
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
 }
 
-void MGMainWindow::configure()
+void MainWindow::configure()
 {
     joystickWidget = new JoystickWidget(joystick, this);
 }
 
-void MGMainWindow::addLink()
+void MainWindow::addLink()
 {
     SerialLink* link = new SerialLink();
     // TODO This should be only done in the dialog itself
@@ -304,13 +305,19 @@ void MGMainWindow::addLink()
     // TODO Implement the link removal!
 }
 
-void MGMainWindow::UASCreated(UASInterface* uas)
+void MainWindow::UASCreated(UASInterface* uas)
 {
     // Connect the UAS to the full user interface
-    ui.menuConnected_Systems->addAction(QIcon(":/actions/linechart.svg"), tr("View ") + uas->getUASName(), uas, SLOT(setSelected()));
+    ui.menuConnected_Systems->addAction(QIcon(":/images/mavs/generic.svg"), tr("View ") + uas->getUASName(), uas, SLOT(setSelected()));
 
     // Line chart
-    connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)), Qt::QueuedConnection);
+    // FIXME DO THIS ONLY FOR THE FIRST CONNECTED SYSTEM
+    static bool sysPresent = false;
+    if (!sysPresent)
+    {
+        connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)), Qt::QueuedConnection);
+        sysPresent = true;
+    }
 
     // Health / System status indicator
     info->addUAS(uas);
@@ -326,12 +333,12 @@ void MGMainWindow::UASCreated(UASInterface* uas)
     reloadStylesheet();
 }
 
-void MGMainWindow::clearView()
+void MainWindow::clearView()
 { 
     // Halt HUD
     hud->stop();
-    /*headDown1->stop();
-    headDown2->stop();*/
+    headDown1->stop();
+    headDown2->stop();
 
     // Remove all dock widgets
     QList<QObject*> list = this->children();
@@ -352,9 +359,10 @@ void MGMainWindow::clearView()
     }
 }
 
-void MGMainWindow::loadPilotView()
+void MainWindow::loadPilotView()
 {
     clearView();
+    GAudioOutput::instance()->say("Switched to Pilot View");
 
     // HEAD UP DISPLAY
     centerStack->setCurrentWidget(hud);
@@ -376,9 +384,11 @@ void MGMainWindow::loadPilotView()
     this->show();
 }
 
-void MGMainWindow::loadOperatorView()
+void MainWindow::loadOperatorView()
 {
     clearView();
+
+    GAudioOutput::instance()->say("Switched to Operator View");
 
     // LINE CHART
     centerStack->setCurrentWidget(map);
@@ -416,9 +426,11 @@ void MGMainWindow::loadOperatorView()
     this->show();
 }
 
-void MGMainWindow::loadSettingsView()
+void MainWindow::loadSettingsView()
 {
     clearView();
+
+    GAudioOutput::instance()->say("Switched to Settings View");
 
     // LINE CHART
     centerStack->setCurrentWidget(linechart);
@@ -434,10 +446,12 @@ void MGMainWindow::loadSettingsView()
     addDockWidget(Qt::RightDockWidgetArea, container6);
 }
 
-void MGMainWindow::loadEngineerView()
+void MainWindow::loadEngineerView()
 {
     clearView();
     // Engineer view, used in EMAV2009
+
+    GAudioOutput::instance()->say("Switched to Engineer View");
 
     // LINE CHART
     centerStack->setCurrentWidget(linechart);
@@ -470,7 +484,7 @@ void MGMainWindow::loadEngineerView()
     this->show();
 }
 
-void MGMainWindow::loadWidgets()
+void MainWindow::loadWidgets()
 {
     loadOperatorView();
     //loadEngineerView();
@@ -478,32 +492,32 @@ void MGMainWindow::loadWidgets()
 }
 
 /*
-void MGMainWindow::removeCommConfAct(QAction* action)
+void MainWindow::removeCommConfAct(QAction* action)
 {
     ui.menuNetwork->removeAction(action);
 }*/
 
-//void MGMainWindow::startUAS()
+//void MainWindow::startUAS()
 //{
 //    UASManager::instance()->getActiveUAS()->launch();
 //}
 //
-//void MGMainWindow::returnUAS()
+//void MainWindow::returnUAS()
 //{
 //   UASManager::instance()->getActiveUAS()->home();
 //}
 //
-//void MGMainWindow::stopUAS()
+//void MainWindow::stopUAS()
 //{
 //    UASManager::instance()->getActiveUAS()->emergencySTOP();
 //}
 //
-//void MGMainWindow::killUAS()
+//void MainWindow::killUAS()
 //{
 //    UASManager::instance()->getActiveUAS()->emergencyKILL();
 //}
 
-void MGMainWindow::runTests()
+void MainWindow::runTests()
 {
     // TODO Remove after debugging: Add fake data
     static double testvalue = 0.0f;
