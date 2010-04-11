@@ -37,8 +37,8 @@ LANGUAGE = C++
 #CONFIG += static debug
 #CONFIG += static release console
 CONFIG += static debug_and_release console
-QMAKE_CFLAGS += -j8
-QMAKE_CXXFLAGS += -j8
+#QMAKE_CFLAGS += -j8
+#QMAKE_CXXFLAGS += -j8
 
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
@@ -60,10 +60,20 @@ message(Qt version $$[QT_VERSION])
 # MAC OS X
 macx { 
 
-    message(Building for Mac OS X 64bit)
+    CONFIG += x86 #x86_64
+    CONFIG -= static phonon
 
-    CONFIG += x86_64
-    CONFIG -= x86 static phonon
+    HARDWARE_PLATFORM = $$system(uname -a)
+    contains( HARDWARE_PLATFORM, x86_64 ) {
+        # x64 Mac OS X Snow Leopard 10.6 and later
+        CONFIG += x86_64
+        CONFIG -= x86 static phonon
+        message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
+    } else {
+        # x86 Mac OS X Leopard 10.5 and earlier
+        CONFIG += x86 static phonon
+        message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
+    }
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 
@@ -88,8 +98,6 @@ macx {
 
 # GNU/Linux
 linux-g++ { 
-
-    message(Building for GNU/Linux)
     
     debug {
         DESTDIR = $$BASEDIR
@@ -105,10 +113,12 @@ linux-g++ {
         # 64-bit Linux
         LIBS += \
             -L$$BASEDIR/lib/flite/linux64
+        message(Building for GNU/Linux 64bit/x64)
     } else {
         # 32-bit Linux
         LIBS += \
            -L$$BASEDIR/lib/flite/linux32
+        message(Building for GNU/Linux 32bit/i386)
     }
     LIBS += -lm \
         -lflite_cmu_us_awb \

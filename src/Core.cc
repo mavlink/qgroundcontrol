@@ -61,6 +61,14 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     this->setApplicationName("OpenMAV Ground Control Station");
     this->setApplicationVersion("v. 0.0.5");
     this->setOrganizationName(QLatin1String("OpenMAV Association"));
+    this->setOrganizationDomain("http://qgroundcontrol.org");
+
+    // Show splash screen
+    QPixmap splashImage(":images/splash.png");
+    QSplashScreen* splashScreen = new QSplashScreen(splashImage, Qt::WindowStaysOnTopHint);
+    splashScreen->show();
+    splashScreen->showMessage(tr("Loading application fonts"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
+
     QSettings::setDefaultFormat(QSettings::IniFormat);
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
@@ -73,17 +81,12 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     fontDatabase.addApplicationFont(fontFileName);
     setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
 
-    // Show splash screen
-    QPixmap splashImage(":images/splash.png");
-    QSplashScreen* splashScreen = new QSplashScreen(splashImage, Qt::WindowStaysOnTopHint);
-    splashScreen->show();
-
     // Start the comm link manager
-    splashScreen->showMessage(tr("Starting Communication Links"));
+    splashScreen->showMessage(tr("Starting Communication Links"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     startLinkManager();
 
     // Start the UAS Manager
-    splashScreen->showMessage(tr("Starting UAS Manager"));
+    splashScreen->showMessage(tr("Starting UAS Manager"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     startUASManager();
 
     // Start audio output
@@ -93,7 +96,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     //tarsus->start();
 
     // Start the user interface
-    splashScreen->showMessage(tr("Starting User Interface"));
+    splashScreen->showMessage(tr("Starting User Interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     startUI();
 
     // Remove splash screen
@@ -140,7 +143,5 @@ void Core::startUI()
 {
     // Start UI
     mainWindow = new MainWindow();
-    // Make UI visible
-    mainWindow->show();
 }
 
