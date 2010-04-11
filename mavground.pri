@@ -34,9 +34,7 @@ BASEDIR = .
 BUILDDIR = build
 LANGUAGE = C++
 
-#CONFIG += static debug
-#CONFIG += static release console
-CONFIG += static debug_and_release console
+CONFIG += debug_and_release console
 
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
@@ -62,11 +60,11 @@ macx {
     contains( HARDWARE_PLATFORM, x86_64 ) {
         # x64 Mac OS X Snow Leopard 10.6 and later
         CONFIG += x86_64 cocoa
-        CONFIG -= x86 static phonon
+        CONFIG -= x86 phonon
         message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
     } else {
         # x86 Mac OS X Leopard 10.5 and earlier
-        CONFIG += x86 cocoa static phonon
+        CONFIG += x86 cocoa phonon
         message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
     }
 
