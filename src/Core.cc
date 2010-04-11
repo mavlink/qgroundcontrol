@@ -58,7 +58,7 @@ This file is part of the PIXHAWK project
 
 Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 {
-    this->setApplicationName("OpenMAV Ground Control Station");
+    this->setApplicationName("QGroundControl");
     this->setApplicationVersion("v. 0.0.5");
     this->setOrganizationName(QLatin1String("OpenMAV Association"));
     this->setOrganizationDomain("http://qgroundcontrol.org");
@@ -88,9 +88,6 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     // Start the UAS Manager
     splashScreen->showMessage(tr("Starting UAS Manager"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     startUASManager();
-
-    // Start audio output
-    //GAudioOutput::instance()->say("Ground Control Station started", 1);
 
     //tarsus = new ViconTarsusProtocol();
     //tarsus->start();

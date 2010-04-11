@@ -193,7 +193,9 @@ bool GAudioOutput::startEmergency()
     if (!emergency)
     {
         emergency = true;
-        emergencyTimer->start(1600);
+        // Beep immediately and then start timer
+        beep();
+        emergencyTimer->start(1500);
     }
     return true;
 }
@@ -216,7 +218,9 @@ bool GAudioOutput::stopEmergency()
 
 void GAudioOutput::beep()
 {
-    m_media->setCurrentSource(Phonon::MediaSource(QString("alert.wav").toStdString().c_str()));
+    // Use QFile to transform path for all OS
+    QFile f(MG::DIR::getSupportFilesDirectory()+QString("/audio/alert.wav"));
+    m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
     m_media->play();
 }
 
