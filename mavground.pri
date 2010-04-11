@@ -57,15 +57,15 @@ message(Qt version $$[QT_VERSION])
 macx { 
 
     HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
+    contains( HARDWARE_PLATFORM, 9.8.0 ) {
+        # x86 Mac OS X Leopard 10.5 and earlier
+        CONFIG += x86 cocoa phonon
+        message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
+    } else {
         # x64 Mac OS X Snow Leopard 10.6 and later
         CONFIG += x86_64 cocoa
         CONFIG -= x86 phonon
         message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
-    } else {
-        # x86 Mac OS X Leopard 10.5 and earlier
-        CONFIG += x86 cocoa phonon
-        message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
     }
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
