@@ -63,8 +63,7 @@ macx {
 
     message(Building for Mac OS X 32/64bit)
 
-    #CONFIG += x86
-    CONFIG += x86_64 cocoa
+    CONFIG += x86 cocoa #x86_64 cocoa
     CONFIG -= static
 
     DESTDIR = $$BASEDIR/bin/mac
@@ -79,8 +78,8 @@ macx {
 
     # Enable function-profiling with the OS X saturn tool
     debug {
-        #QMAKE_CXXFLAGS += -finstrument-functions
-        #LIBS += -lSaturn
+        QMAKE_CXXFLAGS += -finstrument-functions
+        LIBS += -lSaturn
     }
     
     #ICON = $$BASEDIR/img/icons/empty.png
