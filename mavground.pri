@@ -25,10 +25,10 @@
 #
 #-------------------------------------------------
 
-QT       += network opengl svg xml
+QT       += network opengl svg xml phonon
 
 TEMPLATE = app
-TARGET = opengroundcontrol
+TARGET = qgroundcontrol
 
 BASEDIR = .
 BUILDDIR = build
@@ -38,6 +38,7 @@ LANGUAGE = C++
 #CONFIG += static release console
 CONFIG += static debug_and_release console
 QMAKE_CFLAGS += -j8
+QMAKE_CXXFLAGS += -j8
 
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
@@ -46,7 +47,7 @@ UI_HEADERS_DIR = src/ui/generated
 
 # Add external libraries
 INCLUDEPATH += $$BASEDIR/lib/flite/include \
-    $$BASEDIR/lib/flite/lang
+               $$BASEDIR/lib/flite/lang
 
 #$$BASEDIR/lib/qextserialport/include
 #               $$BASEDIR/lib/openjaus/libjaus/include \
@@ -58,16 +59,17 @@ message(Qt version $$[QT_VERSION])
 
 # MAC OS X
 macx { 
-    message(Building for Mac OS X)
+
+    message(Building for Mac OS X 64bit)
 
     CONFIG += x86_64
-    CONFIG -= x86 static
+    CONFIG -= x86 static phonon
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 
     DESTDIR = $$BASEDIR/bin/mac
     INCLUDEPATH += -framework SDL \
-                $$BASEDIR/MAVLink/src
+        $$BASEDIR/MAVLink/src
 
     LIBS += -framework IOKit \
         -framework SDL \
@@ -75,7 +77,11 @@ macx {
         -framework ApplicationServices \
         -lm
 
-    DEFINES += _TTY_POSIX_
+    # Enable function-profiling with the OS X saturn tool
+    debug {
+        #QMAKE_CXXFLAGS += -finstrument-functions
+        #LIBS += -lSaturn
+    }
     
     ICON = $$BASEDIR/images/icons/macx.icns
 }
@@ -84,8 +90,6 @@ macx {
 linux-g++ { 
 
     message(Building for GNU/Linux)
-
-    QT += phonon
     
     debug {
         DESTDIR = $$BASEDIR
@@ -95,8 +99,6 @@ linux-g++ {
         DESTDIR = $$BASEDIR
     }
     INCLUDEPATH += /usr/include/SDL
-
-    DEFINES += _TTY_POSIX_
 
     HARDWARE_PLATFORM = $$system(uname -a)
     contains( HARDWARE_PLATFORM, x86_64 ) {
@@ -131,8 +133,6 @@ win32 {
         -lmingw32 -lSDLmain -lSDL -mwindows
     
     INCLUDEPATH += $$BASEDIR/lib/sdl/include/SDL
-    
-    DEFINES += _TTY_WIN_
 
     debug {
         DESTDIR = $$BASEDIR/bin
@@ -143,4 +143,5 @@ win32 {
     }
         
 }
+
 

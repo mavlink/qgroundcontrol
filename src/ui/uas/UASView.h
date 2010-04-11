@@ -67,6 +67,8 @@ public slots:
     void selectWaypoint(int uasId, int id);
     /** @brief Set the current system type */
     void setSystemType(UASInterface* uas, unsigned int systemType);
+    /** @brief Set the current UAS as the globally active system */
+    void setUASasActive(bool);
 
 protected:
     void changeEvent(QEvent *e);

@@ -180,9 +180,10 @@ bool MAVLinkXMLParser::generate()
     QDateTime now = QDateTime::currentDateTime().toUTC();
     QString dateFormat = "dddd, MMMM d yyyy, hh:mm UTC";
     QString date = now.toString(dateFormat);
-    QString mainHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef MAVLINK_H\n#define MAVLINK_H\n\n#include \"protocol.h\"\n\n\n").arg(date); // The main header includes all messages
+    QString mainHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef MAVLINK_H\n#define MAVLINK_H\n\n").arg(date); // The main header includes all messages
     // Mark all code as C code
-    mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n";
+    mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n";
+    mainHeader += "\n#include \"protocol.h\"\n";
     QString includeLine = "#include \"%1\"\n";
     QString mainHeaderName = "mavlink.h";
     QString messagesDirName = "generated";
@@ -200,6 +201,8 @@ bool MAVLinkXMLParser::generate()
 
     mainHeader += "#ifdef __cplusplus\n}\n#endif\n";
     mainHeader += "#endif";
+    // Newline to make compiler happy
+    mainHeader += "\n";
 
     // Write main header
     QFile rawHeader(outputDirName + "/" + mainHeaderName);

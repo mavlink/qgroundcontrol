@@ -57,19 +57,8 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
         readyBytes(0),
         timeOffset(0)
 {
-    this->id = getNextLinkId();
-    LinkManager::instance()->add(this);
     this->rate = rate;
     _isConnected = false;
-
-    if (readFile != "")
-    {
-        this->name = "Simulation: " + readFile;
-    }
-    else
-    {
-        this->name = "MAVLink simulation link";
-    }
 
     // Comments on the variables can be found in the header file
 
@@ -81,10 +70,20 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     receiveFile = new QFile(writeFile, this);
     lastSent = MG::TIME::getGroundTimeNow();
 
+    if (simulationFile->exists())
+    {
+        this->name = "Simulation: " + QFileInfo(simulationFile->fileName()).fileName();
+    }
+    else
+    {
+        this->name = "MAVLink simulation link";
+    }
+
     // Initialize the pseudo-random number generator
     srand(QTime::currentTime().msec());
     maxTimeNoise = 0;
-
+    this->id = getNextLinkId();
+    LinkManager::instance()->add(this);
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
@@ -390,6 +389,32 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
+
+        /*
+        // HEARTBEAT VEHICLE 2
+
+        // Pack message and get size of encoded byte string
+        messageSize = message_heartbeat_pack(42, componentId, &msg, MAV_FIXED_WING);
+        // Allocate buffer with packet data
+        bufferlength = message_to_send_buffer(buffer, &msg);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+
+        // STATUS VEHICLE 2
+        sys_status_t status2;
+        status2.mode = MAV_MODE_LOCKED;
+        status2.vbat = voltage;
+        status2.status = MAV_STATE_STANDBY;
+
+        // Pack message and get size of encoded byte string
+        messageSize = message_sys_status_encode(systemId, componentId, &msg, &status);
+        // Allocate buffer with packet data
+        bufferlength = message_to_send_buffer(buffer, &msg);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+        */
         //qDebug() << "BOOT" << "BUF LEN" << bufferlength << "POINTER" << streampointer;
 
         // AUX STATUS

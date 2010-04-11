@@ -8,7 +8,6 @@ obj
 bin/*.exe
 bin/*.txt
 bin/mac
-mavground
 *pro.user
 qrc_*.cpp
 *.Debug
@@ -17,4 +16,5 @@ tmp
 debug
 release
 opengroundcontrol.xcodeproj/**
-
+opengroundcontrol
+qgroundcontrol

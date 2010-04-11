@@ -67,12 +67,12 @@ This file is part of the PIXHAWK project
  * @brief Main Application Window
  *
  **/
-class MGMainWindow : public QMainWindow {
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    MGMainWindow(QWidget *parent = 0);
-    ~MGMainWindow();
+    MainWindow(QWidget *parent = 0);
+    ~MainWindow();
 
     UASControlWidget* control;
     LinechartWidget* linechart;
@@ -161,7 +161,7 @@ protected:
     QTimer* videoTimer;
 
 private:
-    Ui::MGMainWindow ui;
+    Ui::MainWindow ui;
 };
 
 #endif /* _MAINWINDOW_H_ */

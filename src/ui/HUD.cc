@@ -45,7 +45,7 @@ This file is part of the PIXHAWK project
 template<typename T>
 inline bool isnan(T value)
 {
-return value != value;
+    return value != value;
 
 }
 
@@ -65,48 +65,48 @@ inline bool isinf(T value)
  * @param parent
  */
 HUD::HUD(int width, int height, QWidget* parent)
-        : QGLWidget(parent),
-        uas(NULL),
-        values(QMap<QString, float>()),
-        valuesDot(QMap<QString, float>()),
-        valuesMean(QMap<QString, float>()),
-        valuesCount(QMap<QString, int>()),
-        lastUpdate(QMap<QString, quint64>()),
-        yawInt(0.0f),
-        mode(tr("UNKNOWN MODE")),
-        state(tr("UNKNOWN STATE")),
-        fuelStatus(tr("00.0V (00m:00s)")),
-        xCenterOffset(0.0f),
-        yCenterOffset(0.0f),
-        vwidth(200.0f),
-        vheight(150.0f),
-        vGaugeSpacing(50.0f),
-        vPitchPerDeg(6.0f), ///< 4 mm y translation per degree)
-        rawBuffer1(NULL),
-        rawBuffer2(NULL),
-        rawImage(NULL),
-        rawLastIndex(0),
-        rawExpectedBytes(0),
-        bytesPerLine(1),
-        imageStarted(false),
-        receivedDepth(8),
-        receivedChannels(1),
-        receivedWidth(640),
-        receivedHeight(480),
-        defaultColor(QColor(70, 200, 70)),
-        setPointColor(QColor(200, 20, 200)),
-        warningColor(Qt::yellow),
-        criticalColor(Qt::red),
-        infoColor(QColor(20, 200, 20)),
-        fuelColor(criticalColor),
-        warningBlinkRate(5),
-        refreshTimer(new QTimer(this)),
-        noCamera(true),
-        hardwareAcceleration(true),
-        strongStrokeWidth(1.5f),
-        normalStrokeWidth(1.0f),
-        fineStrokeWidth(0.5f),
-        waypointName("")
+    : QGLWidget(parent),
+    uas(NULL),
+    values(QMap<QString, float>()),
+    valuesDot(QMap<QString, float>()),
+    valuesMean(QMap<QString, float>()),
+    valuesCount(QMap<QString, int>()),
+    lastUpdate(QMap<QString, quint64>()),
+    yawInt(0.0f),
+    mode(tr("UNKNOWN MODE")),
+    state(tr("UNKNOWN STATE")),
+    fuelStatus(tr("00.0V (00m:00s)")),
+    xCenterOffset(0.0f),
+    yCenterOffset(0.0f),
+    vwidth(200.0f),
+    vheight(150.0f),
+    vGaugeSpacing(50.0f),
+    vPitchPerDeg(6.0f), ///< 4 mm y translation per degree)
+    rawBuffer1(NULL),
+    rawBuffer2(NULL),
+    rawImage(NULL),
+    rawLastIndex(0),
+    rawExpectedBytes(0),
+    bytesPerLine(1),
+    imageStarted(false),
+    receivedDepth(8),
+    receivedChannels(1),
+    receivedWidth(640),
+    receivedHeight(480),
+    defaultColor(QColor(70, 200, 70)),
+    setPointColor(QColor(200, 20, 200)),
+    warningColor(Qt::yellow),
+    criticalColor(Qt::red),
+    infoColor(QColor(20, 200, 20)),
+    fuelColor(criticalColor),
+    warningBlinkRate(5),
+    refreshTimer(new QTimer(this)),
+    noCamera(true),
+    hardwareAcceleration(true),
+    strongStrokeWidth(1.5f),
+    normalStrokeWidth(1.0f),
+    fineStrokeWidth(0.5f),
+    waypointName("")
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -171,8 +171,9 @@ void HUD::stop()
 
 void HUD::updateValue(UASInterface* uas, QString name, double value, quint64 msec)
 {
-   // if (this->uas == uas)
+    // if (this->uas == uas)
     //{
+
     if (!isnan(value) && !isinf(value))
     {
         // Update mean
@@ -184,11 +185,14 @@ void HUD::updateValue(UASInterface* uas, QString name, double value, quint64 mse
         valuesCount.insert(name, meanCount + 1);
         // Two-value sliding average
         double dot = (valuesDot.value(name) + (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f))/2.0f;
-        if (isnan(dot) || isinf(dot)) dot = 0.0;
+        if (isnan(dot) || isinf(dot))
+        {
+            dot = 0.0;
+        }
         valuesDot.insert(name, dot);
         values.insert(name, value);
         lastUpdate.insert(name, msec);
-    //}
+        //}
 
         //qDebug() << __FILE__ << __LINE__ << "VALUE:" << value << "MEAN:" << mean << "DOT:" << dot << "COUNT:" << meanCount;
     }
@@ -211,7 +215,8 @@ void HUD::setActiveUAS(UASInterface* uas)
         disconnect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
-        disconnect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString,QString)));
+        disconnect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
+        disconnect(uas, SIGNAL(modeChanged(UASInterface*,QString,QString)), this, SLOT(updateMode(UASInterface*,QString)));
         disconnect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateLoad(UASInterface*, double)));
         disconnect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeThrustSetPoint(UASInterface*,double,double,double,double,quint64)));
         disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
@@ -247,6 +252,7 @@ void HUD::updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double
 
 void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
 {
+    //qDebug() << __FILE__ << __LINE__ << "ROLL" << roll;
     updateValue(uas, "roll", roll, timestamp);
     updateValue(uas, "pitch", pitch, timestamp);
     updateValue(uas, "yaw", yaw, timestamp);
@@ -307,14 +313,21 @@ void HUD::updateSpeed(UASInterface* uas,double x,double y,double z,quint64 times
  *
  * @param uas the system the state message originates from
  * @param state short state text, displayed in HUD
- * @param description longer state text, currently unused
  */
-void HUD::updateState(UASInterface* uas,QString state, QString description)
+void HUD::updateState(UASInterface* uas,QString state)
 {
-    if (this->uas == uas)
-    {
-        this->state = state;
-    }
+    this->state = state;
+}
+
+/**
+ * Updates the current system mode, but only if the uas matches the currently monitored uas.
+ *
+ * @param uas the system the state message originates from
+ * @param mode short mode text, displayed in HUD
+ */
+void HUD::updateMode(UASInterface* uas,QString mode)
+{
+    this->mode = mode;
 }
 
 void HUD::updateLoad(UASInterface* uas, double load)
@@ -501,9 +514,9 @@ void HUD::paintRollPitchStrips()
 void HUD::paintGL()
 {
     // Read out most important values to limit hash table lookups
-    static float roll = roll * 0.5 + 0.5 * values.value("roll", 0.0f);
-    static float pitch = pitch * 0.5 + 0.5 * values.value("pitch", 0.0f);
-    static float yaw = yaw * 0.5 + 0.5 * values.value("yaw", 0.0f);
+    float roll = roll * 0.5 + 0.5 * values.value("roll", 0.0f);
+    float pitch = pitch * 0.5 + 0.5 * values.value("pitch", 0.0f);
+    float yaw = yaw * 0.5 + 0.5 * values.value("yaw", 0.0f);
 
     //qDebug() << __FILE__ << __LINE__ << "ROLL:" << roll << "PITCH:" << pitch << "YAW:" << yaw;
 
@@ -557,7 +570,8 @@ void HUD::paintGL()
     // Position the coordinate frame according to the setup
 
     QPainter painter(this);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
     // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
@@ -566,8 +580,10 @@ void HUD::paintGL()
     // Draw all fixed indicators
     // MODE
     paintText(mode, infoColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 10, &painter);
+    // STATE
+    paintText(state, infoColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 15, &painter);
     // BATTERY
-    paintText(fuelStatus, fuelColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 15, &painter);
+    paintText(fuelStatus, fuelColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 20, &painter);
     // Waypoint
     paintText(waypointName, defaultColor, 2.0f, (-vwidth/3.0) + 10, +vheight/3.0 + 15, &painter);
 
@@ -659,12 +675,16 @@ void HUD::paintGL()
     yawInt *= 0.6f;
     //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw << "asin(yawInt)" << asinYaw;
 
+    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(2.0f));
+
     painter.translate(refToScreenX(yawTrans), 0);
 
-    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(2.0f));
+
 
     // Rotate view and draw all roll-dependent indicators
     painter.rotate((roll/M_PI)* -180.0f);
+
+    qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 
     // CENTER
 

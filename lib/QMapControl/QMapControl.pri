@@ -1,7 +1,5 @@
 DEPENDPATH += src
 INCLUDEPATH += src
-MOC_DIR = tmp
-OBJECTS_DIR = obj
 
 # Input
 HEADERS += curve.h \
@@ -52,5 +50,3 @@ SOURCES += curve.cpp \
            openaerialmapadapter.cpp \
 	   fixedimageoverlay.cpp \
 	   emptymapadapter.cpp
-
-QT += network

@@ -2,7 +2,7 @@
  
 PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
  
-(c) 2009 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
  
 This file is part of the PIXHAWK project
  
