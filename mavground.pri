@@ -37,8 +37,6 @@ LANGUAGE = C++
 #CONFIG += static debug
 #CONFIG += static release console
 CONFIG += static debug_and_release console
-QMAKE_CFLAGS += -j8
-QMAKE_CXXFLAGS += -j8
 
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
@@ -98,7 +96,7 @@ linux-g++ {
     release {
         DESTDIR = $$BASEDIR
     }
-    INCLUDEPATH += /usr/include/SDL
+    INCLUDEPATH += /usr/include
 
     HARDWARE_PLATFORM = $$system(uname -a)
     contains( HARDWARE_PLATFORM, x86_64 ) {
@@ -132,7 +130,7 @@ win32 {
     LIBS += -L$$BASEDIR\lib\sdl\win32 \
         -lmingw32 -lSDLmain -lSDL -mwindows
     
-    INCLUDEPATH += $$BASEDIR/lib/sdl/include/SDL
+    INCLUDEPATH += $$BASEDIR/lib/sdl/include
 
     debug {
         DESTDIR = $$BASEDIR/bin
