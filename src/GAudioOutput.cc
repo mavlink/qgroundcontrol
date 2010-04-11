@@ -48,7 +48,8 @@ using System.Speech.Synthesis;
 
 #ifdef Q_OS_LINUX
 extern "C" {
-#include <cmu_us_awb/voxdefs.h>
+    #include <flite.h>
+    #include <cmu_us_awb/voxdefs.h>
     //#include <cmu_us_slt/voxdefs.h>
     //cst_voice *REGISTER_VOX(const char *voxdir);
     //void UNREGISTER_VOX(cst_voice *vox);
@@ -222,14 +223,14 @@ void GAudioOutput::beep()
 void GAudioOutput::selectFemaleVoice()
 {
 #ifdef Q_OS_LINUX
-    this->voice = register_cmu_us_slt(NULL);
+    //this->voice = register_cmu_us_slt(NULL);
 #endif
 }
 
 void GAudioOutput::selectMaleVoice()
 {
 #ifdef Q_OS_LINUX
-    this->voice = register_cmu_us_rms(NULL);
+    //this->voice = register_cmu_us_rms(NULL);
 #endif
 }
 
@@ -237,7 +238,7 @@ void GAudioOutput::selectMaleVoice()
 void GAudioOutput::selectNeutralVoice()
 {
 #ifdef Q_OS_LINUX
-    this->voice = register_cmu_us_awb(NULL);
+    //this->voice = register_cmu_us_awb(NULL);
 #endif
 }
 
