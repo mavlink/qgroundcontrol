@@ -101,22 +101,14 @@ linux-g++ {
     HARDWARE_PLATFORM = $$system(uname -a)
     contains( HARDWARE_PLATFORM, x86_64 ) {
         # 64-bit Linux
-    LIBS += \
-        -L$$BASEDIR/lib/flite/linux64 \
-        -lm \
-        -lflite_cmu_us_awb \
-        -lflite_cmu_us_rms \
-        -lflite_cmu_us_slt \
-        -lflite_usenglish \
-        -lflite_cmulex \
-        -lflite \
-        -lSDL \
-        -lSDLmain
+        LIBS += \
+            -L$$BASEDIR/lib/flite/linux64
     } else {
         # 32-bit Linux
-    LIBS += \
-        -L$$BASEDIR/lib/flite/linux32 \
-        -lm \
+        LIBS += \
+           -L$$BASEDIR/lib/flite/linux32
+    }
+    LIBS += -lm \
         -lflite_cmu_us_awb \
         -lflite_cmu_us_rms \
         -lflite_cmu_us_slt \
@@ -125,7 +117,6 @@ linux-g++ {
         -lflite \
         -lSDL \
         -lSDLmain
-    }
 }
 
 
