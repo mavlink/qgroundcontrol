@@ -15,5 +15,6 @@ qrc_*.cpp
 tmp
 debug
 release
+qgroundcontrol*.wav
 qgroundcontrol.xcodeproj/**
-qgroundcontrolT*.wav
+
