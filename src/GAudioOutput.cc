@@ -40,8 +40,9 @@ This file is part of the PIXHAWK project
 #include <ApplicationServices/ApplicationServices.h>
 #endif
 
-#ifdef Q_OS_WINDOWS
-#include <windows.h>
+#ifdef _WIN32
+//#include <windows.h>
+#include <sapi.h>
 using System;
 using System.Speech.Synthesis;
 #endif
@@ -117,7 +118,7 @@ bool GAudioOutput::say(QString text, int severity)
     if (!emergency)
     {
 
-#ifdef Q_OS_WINDOWS
+#ifdef _WIN32
         SpeechSynthesizer synth = new SpeechSynthesizer();
         synth.SelectVoice("Microsoft Anna");
         synth.SpeakText("Hello, world!");
