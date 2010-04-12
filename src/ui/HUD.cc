@@ -449,7 +449,11 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
 
 void HUD::initializeGL()
 {
+<<<<<<< HEAD:src/ui/HUD.cc
     bool antialiasing = true;
+=======
+    bool antialiasing = false;
+>>>>>>> 9bd7957ab32b1fd759fd81c2214455325bc5a569:src/ui/HUD.cc
 
     // Antialiasing setup
     if(antialiasing)
@@ -467,9 +471,9 @@ void HUD::initializeGL()
     }
     else
     {
-        glDisable(GL_BLEND);
-        glDisable(GL_POINT_SMOOTH);
-        glDisable(GL_LINE_SMOOTH);
+        //glDisable(GL_BLEND);
+        //glDisable(GL_POINT_SMOOTH);
+        //glDisable(GL_LINE_SMOOTH);
     }
 }
 
@@ -603,6 +607,8 @@ void HUD::paintGL()
     painter.setPen(defaultColor);
     painter.drawPolyline(yawIndicator);
 
+    // CENTER
+
     // HEADING INDICATOR
     //
     //    __      __
@@ -622,6 +628,23 @@ void HUD::paintGL()
     hIndicator.setPoint(6, QPoint(refToScreenX(0.0f+hIndicatorWidth/2.0f), refToScreenY(hIndicatorY)));
     painter.setPen(defaultColor);
     painter.drawPolyline(hIndicator);
+
+
+    // SETPOINT
+    const float centerWidth = 4.0f;
+    painter.setPen(defaultColor);
+    painter.setBrush(Qt::NoBrush);
+    // TODO
+    //painter.drawEllipse(QPointF(refToScreenX(qMin(10.0f, values.value("roll desired", 0.0f) * 10.0f)), refToScreenY(qMin(10.0f, values.value("pitch desired", 0.0f) * 10.0f))), refToScreenX(centerWidth/2.0f), refToScreenX(centerWidth/2.0f));
+
+    const float centerCrossWidth = 10.0f;
+    // left
+    painter.drawLine(QPointF(refToScreenX(-centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(-centerCrossWidth / 2.0f), refToScreenY(0.0f)));
+    // right
+    painter.drawLine(QPointF(refToScreenX(centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(centerCrossWidth / 2.0f), refToScreenY(0.0f)));
+    // top
+    painter.drawLine(QPointF(refToScreenX(0.0f), refToScreenY(-centerWidth / 2.0f)), QPointF(refToScreenX(0.0f), refToScreenY(-centerCrossWidth / 2.0f)));
+
 
 
     // COMPASS
@@ -701,7 +724,6 @@ void HUD::paintGL()
     painter.rotate((roll/M_PI)* -180.0f);
 
     //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
-
 
     // PITCH
 
