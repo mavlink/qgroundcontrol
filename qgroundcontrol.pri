@@ -40,11 +40,6 @@ OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
 
-
-# Add external libraries
-INCLUDEPATH += $$BASEDIR/lib/flite/include \
-               $$BASEDIR/lib/flite/lang
-
 #$$BASEDIR/lib/qextserialport/include
 #               $$BASEDIR/lib/openjaus/libjaus/include \
 #               $$BASEDIR/lib/openjaus/libopenJaus/include
@@ -99,7 +94,10 @@ linux-g++ {
     release {
         DESTDIR = $$BASEDIR
     }
-    INCLUDEPATH += /usr/include
+    INCLUDEPATH += /usr/include \
+               $$BASEDIR/lib/flite/include \
+               $$BASEDIR/lib/flite/lang
+
 
     HARDWARE_PLATFORM = $$system(uname -a)
     contains( HARDWARE_PLATFORM, x86_64 ) {
@@ -114,7 +112,6 @@ linux-g++ {
         message(Building for GNU/Linux 32bit/i386)
     }
     LIBS += -lm \
-        -lflite_cmu_us_awb \
         -lflite_cmu_us_rms \
         -lflite_cmu_us_slt \
         -lflite_usenglish \

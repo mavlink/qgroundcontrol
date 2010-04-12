@@ -65,6 +65,10 @@ public:
     static GAudioOutput* instance();
     /** @brief List available voices */
     QStringList listVoices(void);
+    enum {
+        VOICE_MALE = 0,
+        VOICE_FEMALE
+    } QGVoice;
 
 public slots:
     /** @brief Say this text if current output priority matches */
@@ -79,8 +83,6 @@ public slots:
     void selectFemaleVoice();
     /** @brief Select male voice */
     void selectMaleVoice();
-    /** @brief Select neutral voice */
-    void selectNeutralVoice();
     /** @brief Play emergency sound */
     void beep();
 
