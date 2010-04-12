@@ -513,6 +513,7 @@ void HUD::paintRollPitchStrips()
 
 void HUD::paintGL()
 {
+
     // Read out most important values to limit hash table lookups
     float roll = roll * 0.5 + 0.5 * values.value("roll", 0.0f);
     float pitch = pitch * 0.5 + 0.5 * values.value("pitch", 0.0f);
@@ -527,7 +528,7 @@ void HUD::paintGL()
     double scalingFactorH = this->height()/vheight;
     if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
 
-    makeCurrent();
+    //makeCurrent();
     glClear(GL_COLOR_BUFFER_BIT);
     //if(!noCamera) glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
     glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits()); // FIXME Remove after testing
@@ -536,7 +537,7 @@ void HUD::paintGL()
     // Blue / Brown background
     if (noCamera) paintCenterBackground(roll, pitch, yaw);
 
-    glFlush();
+    //glFlush();
 
     // Draw instruments
     // TESTING THIS SHOULD BE MOVED INTO A QGRAPHICSVIEW
@@ -684,7 +685,7 @@ void HUD::paintGL()
     // Rotate view and draw all roll-dependent indicators
     painter.rotate((roll/M_PI)* -180.0f);
 
-    qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
+    //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 
     // CENTER
 
