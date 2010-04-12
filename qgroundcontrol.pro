@@ -1,5 +1,5 @@
 # Include general settings for MAVGround
-include(mavground.pri)
+include(qgroundcontrol.pri)
 
 # Include serial port library
 include(src/lib/qextserialport/qextserialport.pri)
