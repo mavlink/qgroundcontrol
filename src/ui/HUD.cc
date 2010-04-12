@@ -449,7 +449,7 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
 
 void HUD::initializeGL()
 {
-    glEnable(GL_MULTISAMPLE);
+    //glEnable(GL_MULTISAMPLE);
 
     bool antialiasing = true;
 
