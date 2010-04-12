@@ -449,13 +449,12 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
 
 void HUD::initializeGL()
 {
-    glEnable(GL_MULTISAMPLE);
-
     bool antialiasing = true;
 
     // Antialiasing setup
     if(antialiasing)
     {
+        glEnable(GL_MULTISAMPLE);
         glEnable(GL_BLEND);
 
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -468,9 +467,9 @@ void HUD::initializeGL()
     }
     else
     {
-        glDisable(GL_BLEND);
-        glDisable(GL_POINT_SMOOTH);
-        glDisable(GL_LINE_SMOOTH);
+        //glDisable(GL_BLEND);
+        //glDisable(GL_POINT_SMOOTH);
+        //glDisable(GL_LINE_SMOOTH);
     }
 }
 
@@ -513,6 +512,7 @@ void HUD::paintRollPitchStrips()
 
 void HUD::paintGL()
 {
+
     // Read out most important values to limit hash table lookups
     float roll = roll * 0.5 + 0.5 * values.value("roll", 0.0f);
     float pitch = pitch * 0.5 + 0.5 * values.value("pitch", 0.0f);
@@ -527,7 +527,7 @@ void HUD::paintGL()
     double scalingFactorH = this->height()/vheight;
     if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
 
-    makeCurrent();
+    //makeCurrent();
     glClear(GL_COLOR_BUFFER_BIT);
     //if(!noCamera) glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
     glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits()); // FIXME Remove after testing
@@ -536,22 +536,7 @@ void HUD::paintGL()
     // Blue / Brown background
     if (noCamera) paintCenterBackground(roll, pitch, yaw);
 
-    glFlush();
-
-    // Draw instruments
-    // TESTING THIS SHOULD BE MOVED INTO A QGRAPHICSVIEW
-    /*
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing);
-    const float gaugeWidth = 15.0f;
-    const QColor gaugeColor = QColor(200, 200, 200);
-    drawSystemIndicator(vwidth+10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
-    drawGauge(vwidth+10.0f, 50.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
-    drawGauge(vwidth+10.0f+gaugeWidth*1.7f, 50.0f, gaugeWidth/2.0f, 0, 10.0f, "altitude", values.value("altitude", 0.0f), gaugeColor, &painter, qMakePair(1.0f, 2.5f), qMakePair(0.0f, 0.5f), true);
-*/
-    // END TESTING
-
-
+    //glFlush();
 
     //    // Store current GL model view
     //    glMatrixMode(GL_MODELVIEW);
@@ -571,7 +556,7 @@ void HUD::paintGL()
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    //painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
     // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
@@ -603,6 +588,8 @@ void HUD::paintGL()
     painter.setPen(defaultColor);
     painter.drawPolyline(yawIndicator);
 
+    // CENTER
+
     // HEADING INDICATOR
     //
     //    __      __
@@ -622,6 +609,23 @@ void HUD::paintGL()
     hIndicator.setPoint(6, QPoint(refToScreenX(0.0f+hIndicatorWidth/2.0f), refToScreenY(hIndicatorY)));
     painter.setPen(defaultColor);
     painter.drawPolyline(hIndicator);
+
+
+    // SETPOINT
+    const float centerWidth = 4.0f;
+    painter.setPen(defaultColor);
+    painter.setBrush(Qt::NoBrush);
+    // TODO
+    //painter.drawEllipse(QPointF(refToScreenX(qMin(10.0f, values.value("roll desired", 0.0f) * 10.0f)), refToScreenY(qMin(10.0f, values.value("pitch desired", 0.0f) * 10.0f))), refToScreenX(centerWidth/2.0f), refToScreenX(centerWidth/2.0f));
+
+    const float centerCrossWidth = 10.0f;
+    // left
+    painter.drawLine(QPointF(refToScreenX(-centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(-centerCrossWidth / 2.0f), refToScreenY(0.0f)));
+    // right
+    painter.drawLine(QPointF(refToScreenX(centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(centerCrossWidth / 2.0f), refToScreenY(0.0f)));
+    // top
+    painter.drawLine(QPointF(refToScreenX(0.0f), refToScreenY(-centerWidth / 2.0f)), QPointF(refToScreenX(0.0f), refToScreenY(-centerCrossWidth / 2.0f)));
+
 
 
     // COMPASS
@@ -656,8 +660,6 @@ void HUD::paintGL()
 
     // MOVING PARTS
 
-
-
     // Translate for yaw
     const float maxYawTrans = 60.0f;
     float yawDiff = valuesDot.value("yaw", 0.0f);
@@ -675,7 +677,7 @@ void HUD::paintGL()
     yawInt *= 0.6f;
     //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw << "asin(yawInt)" << asinYaw;
 
-    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(2.0f));
+    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(1.8));
 
     painter.translate(refToScreenX(yawTrans), 0);
 
@@ -684,25 +686,7 @@ void HUD::paintGL()
     // Rotate view and draw all roll-dependent indicators
     painter.rotate((roll/M_PI)* -180.0f);
 
-    qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
-
-    // CENTER
-
-    // SETPOINT
-    const float centerWidth = 4.0f;
-    painter.setPen(defaultColor);
-    painter.setBrush(Qt::NoBrush);
-    // TODO
-    //painter.drawEllipse(QPointF(refToScreenX(qMin(10.0f, values.value("roll desired", 0.0f) * 10.0f)), refToScreenY(qMin(10.0f, values.value("pitch desired", 0.0f) * 10.0f))), refToScreenX(centerWidth/2.0f), refToScreenX(centerWidth/2.0f));
-
-    const float centerCrossWidth = 10.0f;
-    // left
-    painter.drawLine(QPointF(refToScreenX(-centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(-centerCrossWidth / 2.0f), refToScreenY(0.0f)));
-    // right
-    painter.drawLine(QPointF(refToScreenX(centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(centerCrossWidth / 2.0f), refToScreenY(0.0f)));
-    // top
-    painter.drawLine(QPointF(refToScreenX(0.0f), refToScreenY(-centerWidth / 2.0f)), QPointF(refToScreenX(0.0f), refToScreenY(-centerCrossWidth / 2.0f)));
-
+    //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 
     // PITCH
 
