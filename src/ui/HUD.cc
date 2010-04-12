@@ -449,11 +449,7 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
 
 void HUD::initializeGL()
 {
-<<<<<<< HEAD:src/ui/HUD.cc
     bool antialiasing = true;
-=======
-    bool antialiasing = false;
->>>>>>> 9bd7957ab32b1fd759fd81c2214455325bc5a569:src/ui/HUD.cc
 
     // Antialiasing setup
     if(antialiasing)
@@ -541,21 +537,6 @@ void HUD::paintGL()
     if (noCamera) paintCenterBackground(roll, pitch, yaw);
 
     //glFlush();
-
-    // Draw instruments
-    // TESTING THIS SHOULD BE MOVED INTO A QGRAPHICSVIEW
-    /*
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing);
-    const float gaugeWidth = 15.0f;
-    const QColor gaugeColor = QColor(200, 200, 200);
-    drawSystemIndicator(vwidth+10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
-    drawGauge(vwidth+10.0f, 50.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
-    drawGauge(vwidth+10.0f+gaugeWidth*1.7f, 50.0f, gaugeWidth/2.0f, 0, 10.0f, "altitude", values.value("altitude", 0.0f), gaugeColor, &painter, qMakePair(1.0f, 2.5f), qMakePair(0.0f, 0.5f), true);
-*/
-    // END TESTING
-
-
 
     //    // Store current GL model view
     //    glMatrixMode(GL_MODELVIEW);
@@ -675,27 +656,9 @@ void HUD::paintGL()
     // Right speed gauge
     drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, values.value("xSpeed", 0.0f), defaultColor, &painter, false);
 
-        // CENTER
-
-    // SETPOINT
-    const float centerWidth = 4.0f;
-    painter.setPen(defaultColor);
-    painter.setBrush(Qt::NoBrush);
-    // TODO
-    //painter.drawEllipse(QPointF(refToScreenX(qMin(10.0f, values.value("roll desired", 0.0f) * 10.0f)), refToScreenY(qMin(10.0f, values.value("pitch desired", 0.0f) * 10.0f))), refToScreenX(centerWidth/2.0f), refToScreenX(centerWidth/2.0f));
-
-    const float centerCrossWidth = 10.0f;
-    // left
-    painter.drawLine(QPointF(refToScreenX(-centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(-centerCrossWidth / 2.0f), refToScreenY(0.0f)));
-    // right
-    painter.drawLine(QPointF(refToScreenX(centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(centerCrossWidth / 2.0f), refToScreenY(0.0f)));
-    // top
-    painter.drawLine(QPointF(refToScreenX(0.0f), refToScreenY(-centerWidth / 2.0f)), QPointF(refToScreenX(0.0f), refToScreenY(-centerCrossWidth / 2.0f)));
 
 
     // MOVING PARTS
-
-
 
     // Translate for yaw
     const float maxYawTrans = 60.0f;
