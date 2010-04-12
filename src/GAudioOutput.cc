@@ -48,13 +48,13 @@ using System.Speech.Synthesis;
 
 #ifdef Q_OS_LINUX
 extern "C" {
-    #include <flite.h>
-    #include <cmu_us_awb/voxdefs.h>
+#include <flite.h>
+#include <cmu_us_awb/voxdefs.h>
     //#include <cmu_us_slt/voxdefs.h>
     //cst_voice *REGISTER_VOX(const char *voxdir);
     //void UNREGISTER_VOX(cst_voice *vox);
-    cst_voice *register_cmu_us_awb(const char *voxdir);
-    void unregister_cmu_us_awb(cst_voice *vox);
+    //cst_voice *register_cmu_us_awb(const char *voxdir);
+    //void unregister_cmu_us_awb(cst_voice *vox);
     cst_voice *register_cmu_us_slt(const char *voxdir);
     void unregister_cmu_us_slt(cst_voice *vox);
     cst_voice *register_cmu_us_rms(const char *voxdir);
@@ -91,9 +91,12 @@ emergency(false)
 #ifdef Q_OS_LINUX
     flite_init();
 #endif
+    // Initialize audio output
     m_media = new Phonon::MediaObject(this);
     Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
     createPath(m_media, audioOutput);
+
+    // Prepare regular emergency signal, will be fired off on calling startEmergency()
     emergencyTimer = new QTimer();
     connect(emergencyTimer, SIGNAL(timeout()), this, SLOT(beep()));
 
@@ -102,11 +105,8 @@ emergency(false)
     case 0:
         selectFemaleVoice();
         break;
-    case 1:
-        selectMaleVoice();
-        break;
     default:
-        selectNeutralVoice();
+        selectMaleVoice();
         break;
     }
 }
@@ -132,7 +132,6 @@ bool GAudioOutput::say(QString text, int severity)
             // file.fileName() returns the unique file name
             cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
             m_media->setCurrentSource(Phonon::MediaSource(file.fileName().toStdString().c_str()));
-            qDebug() << "TYPE:" << m_media->currentSource().type();
             m_media->play();
             qDebug() << "Synthesized: " << text << ", tmp file:" << file.fileName().toStdString().c_str();
             res = true;
@@ -148,10 +147,6 @@ bool GAudioOutput::say(QString text, int severity)
         memcpy(str2, text.toAscii().data(), str.length());
         SpeakString(str2);
         qDebug() << "Synthesized: " << text.toAscii();
-#endif
-
-#ifdef Q_OS_WIN32
-        qDebug() << "Synthesized: " << text << ", NO OUTPUT SUPPORT ON WINDOWS!";
 #endif
     }
     return res;
@@ -227,52 +222,46 @@ void GAudioOutput::beep()
 void GAudioOutput::selectFemaleVoice()
 {
 #ifdef Q_OS_LINUX
-    //this->voice = register_cmu_us_slt(NULL);
+    this->voice = register_cmu_us_slt(NULL);
 #endif
 }
 
 void GAudioOutput::selectMaleVoice()
 {
 #ifdef Q_OS_LINUX
-    //this->voice = register_cmu_us_rms(NULL);
+    this->voice = register_cmu_us_rms(NULL);
 #endif
 }
 
-
+/*
 void GAudioOutput::selectNeutralVoice()
 {
 #ifdef Q_OS_LINUX
-    //this->voice = register_cmu_us_awb(NULL);
+    this->voice = register_cmu_us_awb(NULL);
 #endif
-}
+}*/
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-    QStringList GAudioOutput::listVoices(void)
-    {
-        QStringList l;
+QStringList GAudioOutput::listVoices(void)
+{
+    QStringList l;
 #ifdef Q_OS_LINUX
-        cst_voice *voice;
-        const cst_val *v;
+    cst_voice *voice;
+    const cst_val *v;
 
 
-        /*
-        printf("Voices available: ");
-        for (v=flite_voice_list; v; v=val_cdr(v))
-        {
-            voice = val_voice(val_car(v));
-            QString s;
-            s.sprintf("%s",voice->name);
-            printf("%s",voice->name);
-            l.append(s);
-        }
-        printf("\n");
-*/
-#endif
-        return l;
 
+    printf("Voices available: ");
+    for (v=flite_voice_list; v; v=val_cdr(v))
+    {
+        voice = val_voice(val_car(v));
+        QString s;
+        s.sprintf("%s",voice->name);
+        printf("%s",voice->name);
+        l.append(s);
     }
-#ifdef __cplusplus
+    printf("\n");
+
+#endif
+    return l;
+
 }
-#endif /* __cplusplus */

@@ -16,4 +16,4 @@ tmp
 debug
 release
 qgroundcontrol.xcodeproj/**
-qgroundcontrol
+qgroundcontrolT*.wav
