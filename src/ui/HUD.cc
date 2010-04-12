@@ -449,13 +449,12 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
 
 void HUD::initializeGL()
 {
-    //glEnable(GL_MULTISAMPLE);
-
     bool antialiasing = true;
 
     // Antialiasing setup
     if(antialiasing)
     {
+        glEnable(GL_MULTISAMPLE);
         glEnable(GL_BLEND);
 
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -572,7 +571,7 @@ void HUD::paintGL()
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    //painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
     // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
@@ -653,6 +652,22 @@ void HUD::paintGL()
     // Right speed gauge
     drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, values.value("xSpeed", 0.0f), defaultColor, &painter, false);
 
+        // CENTER
+
+    // SETPOINT
+    const float centerWidth = 4.0f;
+    painter.setPen(defaultColor);
+    painter.setBrush(Qt::NoBrush);
+    // TODO
+    //painter.drawEllipse(QPointF(refToScreenX(qMin(10.0f, values.value("roll desired", 0.0f) * 10.0f)), refToScreenY(qMin(10.0f, values.value("pitch desired", 0.0f) * 10.0f))), refToScreenX(centerWidth/2.0f), refToScreenX(centerWidth/2.0f));
+
+    const float centerCrossWidth = 10.0f;
+    // left
+    painter.drawLine(QPointF(refToScreenX(-centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(-centerCrossWidth / 2.0f), refToScreenY(0.0f)));
+    // right
+    painter.drawLine(QPointF(refToScreenX(centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(centerCrossWidth / 2.0f), refToScreenY(0.0f)));
+    // top
+    painter.drawLine(QPointF(refToScreenX(0.0f), refToScreenY(-centerWidth / 2.0f)), QPointF(refToScreenX(0.0f), refToScreenY(-centerCrossWidth / 2.0f)));
 
 
     // MOVING PARTS
@@ -676,7 +691,7 @@ void HUD::paintGL()
     yawInt *= 0.6f;
     //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw << "asin(yawInt)" << asinYaw;
 
-    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(2.0f));
+    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(1.8));
 
     painter.translate(refToScreenX(yawTrans), 0);
 
@@ -686,23 +701,6 @@ void HUD::paintGL()
     painter.rotate((roll/M_PI)* -180.0f);
 
     //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
-
-    // CENTER
-
-    // SETPOINT
-    const float centerWidth = 4.0f;
-    painter.setPen(defaultColor);
-    painter.setBrush(Qt::NoBrush);
-    // TODO
-    //painter.drawEllipse(QPointF(refToScreenX(qMin(10.0f, values.value("roll desired", 0.0f) * 10.0f)), refToScreenY(qMin(10.0f, values.value("pitch desired", 0.0f) * 10.0f))), refToScreenX(centerWidth/2.0f), refToScreenX(centerWidth/2.0f));
-
-    const float centerCrossWidth = 10.0f;
-    // left
-    painter.drawLine(QPointF(refToScreenX(-centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(-centerCrossWidth / 2.0f), refToScreenY(0.0f)));
-    // right
-    painter.drawLine(QPointF(refToScreenX(centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(centerCrossWidth / 2.0f), refToScreenY(0.0f)));
-    // top
-    painter.drawLine(QPointF(refToScreenX(0.0f), refToScreenY(-centerWidth / 2.0f)), QPointF(refToScreenX(0.0f), refToScreenY(-centerCrossWidth / 2.0f)));
 
 
     // PITCH
