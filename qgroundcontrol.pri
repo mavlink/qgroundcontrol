@@ -40,10 +40,6 @@ OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
 
-#$$BASEDIR/lib/qextserialport/include
-#               $$BASEDIR/lib/openjaus/libjaus/include \
-#               $$BASEDIR/lib/openjaus/libopenJaus/include
-
 message(Qt version $$[QT_VERSION])
 
 
