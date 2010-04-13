@@ -119,7 +119,7 @@ bool GAudioOutput::say(QString text, int severity)
     {
 
         // Speech synthesis is only supported with MSVC compiler
-#if _MSC_VER
+#ifdef _MSC_VER
         SpeechSynthesizer synth = new SpeechSynthesizer();
         synth.SelectVoice("Microsoft Anna");
         synth.SpeakText("Hello, world!");
