@@ -1,18 +1,29 @@
+# Include QMapControl map library
+
+# prefer version from external directory /
+# from http://github.com/pixhawk/qmapcontrol/
+# over bundled version in lib directory
+
+# Version from GIT repository is preferred
+#include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
+    # Include bundled version if necessary
+    include(lib/QMapControl/QMapControl.pri)
+    message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
+#}
+
 # Include general settings for MAVGround
+# necessary as last include to override any non-acceptable settings
+# done by the plugins above
 include(qgroundcontrol.pri)
+
+
+# QWT plot and QExtSerial depend on paths set by qgroundcontrol.pri
 
 # Include serial port library
 include(src/lib/qextserialport/qextserialport.pri)
 
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
-
-# Include FLITE audio synthesizer library
-#include(src/lib/flite/flite.pri)
-
-# Include QMapControl map library
-include(src/lib/qmapcontrol/qmapcontrol.pri)
-#include(lib/QMapControl/QMapControl.pri)
 
 DEPENDPATH += . \
     lib/QMapControl \
