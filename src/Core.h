@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Main class
+ *   @brief Definition of main class
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -64,8 +64,6 @@ protected:
          * The robot manager keeps track of the configured robots.
          **/
         void startUASManager();
-
-        void startUI();
 
 private:
         MainWindow* mainWindow;

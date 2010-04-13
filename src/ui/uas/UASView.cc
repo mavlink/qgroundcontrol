@@ -45,6 +45,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         stateDesc(tr("Unknown system state")),
         mode("MAV_MODE_UNKNOWN"),
         thrust(0),
+        isActive(false),
         m_ui(new Ui::UASView)
 {
     this->uas = uas;
@@ -67,7 +68,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
 
     // Setup UAS selection
-    connect(m_ui->groupBox, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
+    connect(m_ui->uasViewFrame, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
 
     // Setup user interaction
     connect(m_ui->liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
@@ -90,20 +91,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         m_ui->nameLabel->setText(uas->getUASName());
     }
 
-    // Get min/max values from UAS
-    // TODO get these values from UAS
-    //m_ui->speedBar->setMinimum(0);
-    //m_ui->speedBar->setMaximum(15);
-
-    // UAS color
-    QColor uasColor = uas->getColor();
-    uasColor = uasColor.darker(475);
-    QString colorstyle;
-    colorstyle = colorstyle.sprintf("QGroupBox { border: 2px solid #4A4A4F; border-radius: 5px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",
-                                    uasColor.red(), uasColor.green(), uasColor.blue());
-    m_ui->groupBox->setStyleSheet(colorstyle);
-    //m_ui->groupBox->setAutoFillBackground(true);
-
+    setBackgroundColor();
 
     // Heartbeat fade
     refreshTimer = new QTimer(this);
@@ -116,9 +104,35 @@ UASView::~UASView()
     delete m_ui;
 }
 
-void UASView::setUASasActive(bool)
+/**
+ * Set the background color based on the MAV color. If the MAV is selected as the
+ * currently actively controlled system, the frame color is highlighted
+ */
+void UASView::setBackgroundColor()
+{
+    // UAS color
+    QColor uasColor = uas->getColor();
+    QString colorstyle;
+    QString borderColor = "#4A4A4F";
+    if (isActive)
+    {
+        borderColor = "#FA4A4F";
+        uasColor = uasColor.darker(475);
+    }
+    else
+    {
+        uasColor = uasColor.darker(675);
+    }
+    colorstyle = colorstyle.sprintf("QGroupBox { border-radius: 5px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X; border: 2px solid %s; }",
+                                    uasColor.red(), uasColor.green(), uasColor.blue(), borderColor.toStdString().c_str());
+    m_ui->uasViewFrame->setStyleSheet(colorstyle);
+}
+
+void UASView::setUASasActive(bool active)
 {
     UASManager::instance()->setActiveUAS(this->uas);
+    this->isActive = active;
+    setBackgroundColor();
 }
 
 void UASView::updateMode(int sysId, QString status, QString description)

@@ -94,11 +94,11 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 
     // Start the user interface
     splashScreen->showMessage(tr("Starting User Interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
-    startUI();
+    // Start UI
+    mainWindow = new MainWindow();
 
     // Remove splash screen
     splashScreen->finish(mainWindow);
-
 
 }
 
@@ -133,12 +133,4 @@ void Core::startUASManager()
     UASManager::instance();
 }
 
-/**
- * @brief Start and show the user interface.
- **/
-void Core::startUI()
-{
-    // Start UI
-    mainWindow = new MainWindow();
-}
 

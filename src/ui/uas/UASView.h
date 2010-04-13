@@ -69,6 +69,8 @@ public slots:
     void setSystemType(UASInterface* uas, unsigned int systemType);
     /** @brief Set the current UAS as the globally active system */
     void setUASasActive(bool);
+    /** @brief Set the background color for the widget */
+    void setBackgroundColor();
 
 protected:
     void changeEvent(QEvent *e);
@@ -82,7 +84,8 @@ protected:
     QString state;
     QString stateDesc;
     QString mode;
-    double thrust;
+    double thrust; ///< Current vehicle thrust: 0 - 1.0 for 100% thrust
+    bool isActive; ///< Is this MAV selected by the user?
 
     void mouseDoubleClickEvent (QMouseEvent * event);
     /** @brief Mouse enters the widget */
