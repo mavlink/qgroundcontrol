@@ -40,6 +40,10 @@ OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
 
+#$$BASEDIR/lib/qextserialport/include
+#               $$BASEDIR/lib/openjaus/libjaus/include \
+#               $$BASEDIR/lib/openjaus/libopenJaus/include
+
 message(Qt version $$[QT_VERSION])
 
 
@@ -128,8 +132,8 @@ win32 {
     LIBS += -L$$BASEDIR\lib\sdl\win32 \
         -lmingw32 -lSDLmain -lSDL -mwindows
     
-    INCLUDEPATH += $$BASEDIR/lib/sdl/include \
-                   "C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
+    INCLUDEPATH += $$BASEDIR/lib/sdl/include #\
+                   #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
 
     debug {
         DESTDIR = $$BASEDIR/bin
