@@ -171,7 +171,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     LinkManager::instance()->addProtocol(simulationLink, mavlink);
     //CommConfigurationWindow* simulationWidget = new CommConfigurationWindow(simulationLink, mavlink, this);
     //ui.menuNetwork->addAction(commWidget->getAction());
-    simulationLink->connect();
+    //simulationLink->connect();
 
     // Load widgets and show application window
     loadWidgets();
