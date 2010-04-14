@@ -265,7 +265,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "Mag. Y", raw.ymag, time);
                 emit valueChanged(uasId, "Mag. Z", raw.zmag, time);
                 emit valueChanged(uasId, "Pressure", raw.baro, time);
-                emit valueChanged(uasId, "Temperature", raw.baro, time);
+                emit valueChanged(uasId, "Temperature", raw.temp, time);
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
