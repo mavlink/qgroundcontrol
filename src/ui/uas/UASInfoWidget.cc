@@ -1,26 +1,26 @@
 /*=====================================================================
- 
+
 PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
- 
+
 (c) 2009 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
- 
+
 This file is part of the PIXHAWK project
- 
+
     PIXHAWK is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
- 
+
     PIXHAWK is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
- 
+
 ======================================================================*/
- 
+
 /**
  * @file
  *   @brief Brief Description
@@ -83,14 +83,14 @@ void UASInfoWidget::addUAS(UASInterface* uas)
 {
     if (uas != NULL)
     {
-    //    connect(uas, SIGNAL(voltageChanged(int, double)), this, SLOT(setVoltage(int, double)));
-    connect(uas, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBattery(UASInterface*,double,double,int)));
-    connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(valueChanged(int,QString,double,quint64)));
-    connect(uas, SIGNAL(actuatorChanged(UASInterface*,int,double)), this, SLOT(actuatorChanged(UASInterface*,int,double)));
-    connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateCPULoad(UASInterface*,double)));
+        //    connect(uas, SIGNAL(voltageChanged(int, double)), this, SLOT(setVoltage(int, double)));
+        connect(uas, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBattery(UASInterface*,double,double,int)));
+        connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(valueChanged(int,QString,double,quint64)));
+        connect(uas, SIGNAL(actuatorChanged(UASInterface*,int,double)), this, SLOT(actuatorChanged(UASInterface*,int,double)));
+        connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateCPULoad(UASInterface*,double)));
 
-    // Set this UAS as active if it is the first one
-    if (activeUAS == 0) activeUAS = uas;
+        // Set this UAS as active if it is the first one
+        if (activeUAS == 0) activeUAS = uas;
     }
 }
 
@@ -99,16 +99,7 @@ void UASInfoWidget::setActiveUAS(UASInterface* uas)
     activeUAS = uas;
 }
 
-void UASInfoWidget::addInstrument(QString key, double min, double max, double initial, QString unit)
-{
-
-}
-
-void UASInfoWidget::valueChanged(int uasid, QString key, double value,quint64 time)
-{
-
-}
-
+/*
 void UASInfoWidget::actuatorChanged(UASInterface* uas, int actId, double value)
 {
     if (activeUAS == uas)
@@ -133,7 +124,7 @@ void UASInfoWidget::actuatorChanged(UASInterface* uas, int actId, double value)
             break;
         }
     }
-}
+}*/
 
 void UASInfoWidget::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
@@ -142,12 +133,21 @@ void UASInfoWidget::updateBattery(UASInterface* uas, double voltage, double perc
     setTimeRemaining(uas, seconds);
 }
 
+/**
+ *
+ */
 void UASInfoWidget::updateCPULoad(UASInterface* uas, double load)
 {
     if (activeUAS == uas)
     {
-        this->load = load;
+        this->load = load*100.0f;
     }
+}
+
+void UASInfoWidget::updateDropRate(int sysId, float receiveDrop, float sendDrop)
+{
+    ui.receiveLossBar->setValue(receiveDrop * 100.0f);
+    ui.sendLossBar->setValue(sendDrop * 100.0f);
 }
 
 //void UASInfoWidget::setBattery(int uasid, BatteryType type, int cells)
@@ -230,19 +230,19 @@ void UASInfoWidget::refresh()
     ui.loadLabel->setText(QString::number(this->load, 'f', loadDecimals));
     ui.loadBar->setValue(static_cast<int>(this->load));
 
-//    if(this->timeRemaining > 1 && this->timeRemaining < MG::MAX_FLIGHT_TIME)
-//    {
-//        // Filter output to get a higher stability
-//        static int filterTime = static_cast<int>(this->timeRemaining);
-//        //filterTime = 0.8 * filterTime + 0.2 * static_cast<int>(this->timeRemaining);
-//
-//        int hours = filterTime % (60 * 60);
-//        int min = (filterTime - hours * 60) % 60;
-//        int sec = (filterTime - hours * 60 - min * 60);
-//        QString timeText;
-//        timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
-//        ui.voltageTimeEstimateLabel->setText(timeText);
-//    } else {
-//        ui.voltageTimeEstimateLabel->setText(tr("Calculating"));
-//    }
+    //    if(this->timeRemaining > 1 && this->timeRemaining < MG::MAX_FLIGHT_TIME)
+    //    {
+    //        // Filter output to get a higher stability
+    //        static int filterTime = static_cast<int>(this->timeRemaining);
+    //        //filterTime = 0.8 * filterTime + 0.2 * static_cast<int>(this->timeRemaining);
+    //
+    //        int hours = filterTime % (60 * 60);
+    //        int min = (filterTime - hours * 60) % 60;
+    //        int sec = (filterTime - hours * 60 - min * 60);
+    //        QString timeText;
+    //        timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
+    //        ui.voltageTimeEstimateLabel->setText(timeText);
+    //    } else {
+    //        ui.voltageTimeEstimateLabel->setText(tr("Calculating"));
+    //    }
 }

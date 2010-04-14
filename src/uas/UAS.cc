@@ -62,7 +62,9 @@ UAS::UAS(int id=0) :
         manualRollAngle(0),
         manualPitchAngle(0),
         manualYawAngle(0),
-        manualThrust(0)
+        manualThrust(0),
+        receiveDropRate(0),
+        sendDropRate(0)
 {
     uasId = id;
     setBattery(LIPOLY, 3);
@@ -173,7 +175,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit batteryChanged(this, filterVoltage(), getChargeLevel(), timeRemaining);
                 emit voltageChanged(message.sysid, state.vbat/1000.0f);
 
-                // Output audio
+                // COMMUNICATIONS DROP RATE
+                emit dropRateChanged(this->getUASID(), this->receiveDropRate, this->sendDropRate);
+
+                // AUDIO
                 if (modechanged && statechanged)
                 {
                     // Output both messages
@@ -195,6 +200,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
             break;
+        case MAVLINK_MSG_ID_AUX_STATUS:
+        {
+            aux_status_t status;
+            message_aux_status_decode(&message, &status);
+            emit loadChanged(this, status.load/100.0f);
+            emit valueChanged(this, "Load", status.load/1000.0f, MG::TIME::getGroundTimeNow());
+        }
+        break;
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 raw_imu_t raw;
@@ -224,10 +237,43 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "Mag. Z", raw.zmag, time);
             }
             break;
+        case MAVLINK_MSG_ID_RAW_SENSOR:
+            {
+                raw_sensor_t raw;
+                message_raw_imu_decode(&message, &raw);
+                quint64 time = raw.msec;
+                if (time == 0)
+                {
+                    time = MG::TIME::getGroundTimeNow();
+                }
+                else
+                {
+                    if (onboardTimeOffset == 0)
+                    {
+                        onboardTimeOffset = MG::TIME::getGroundTimeNow() - time;
+                    }
+                    time += onboardTimeOffset;
+                }
+
+                emit valueChanged(uasId, "Accel. X", raw.xacc, time);
+                emit valueChanged(uasId, "Accel. Y", raw.yacc, time);
+                emit valueChanged(uasId, "Accel. Z", raw.zacc, time);
+                emit valueChanged(uasId, "Gyro Phi", raw.xgyro, time);
+                emit valueChanged(uasId, "Gyro Theta", raw.ygyro, time);
+                emit valueChanged(uasId, "Gyro Psi", raw.zgyro, time);
+                emit valueChanged(uasId, "Mag. X", raw.xmag, time);
+                emit valueChanged(uasId, "Mag. Y", raw.ymag, time);
+                emit valueChanged(uasId, "Mag. Z", raw.zmag, time);
+                emit valueChanged(uasId, "Pressure", raw.baro, time);
+                emit valueChanged(uasId, "Temperature", raw.baro, time);
+            }
+            break;
         case MAVLINK_MSG_ID_ATTITUDE:
             //std::cerr << std::endl;
             //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << message_attitude_get_roll(message.payload) << " pitch: " << message_attitude_get_pitch(message.payload) << " yaw: " << message_attitude_get_yaw(message.payload) << std::endl;
             {
+                attitude_t attitude;
+                message_attitude_decode(&message, &attitude);
                 quint64 time = message_attitude_get_msec(&message);
                 if (time == 0)
                 {
@@ -247,6 +293,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(this, "roll IMU", message_attitude_get_roll(&message), time);
                 emit valueChanged(this, "pitch IMU", message_attitude_get_pitch(&message), time);
                 emit valueChanged(this, "yaw IMU", message_attitude_get_yaw(&message), time);
+                emit valueChanged(uasId, "rollspeed IMU", attitude.rollspeed, time);
+                emit valueChanged(uasId, "pitchspeed IMU", attitude.pitchspeed, time);
+                emit valueChanged(uasId, "yawspeed IMU", attitude.yawspeed, time);
                 emit attitudeChanged(this, message_attitude_get_roll(&message), message_attitude_get_pitch(&message), message_attitude_get_yaw(&message), time);
             }
             break;

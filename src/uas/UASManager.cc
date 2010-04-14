@@ -91,7 +91,7 @@ UASInterface* UASManager::getActiveUAS()
     if(!activeUAS)
     {
         QMessageBox msgBox;
-        msgBox.setText(tr("No Unmanned System loaded. Please add one first."));
+        msgBox.setText(tr("No Micro Air Vehicle connected. Please connect one first."));
         msgBox.exec();
     }
     return activeUAS; ///< Return zero pointer if no UAS has been loaded

@@ -118,6 +118,8 @@ protected:
     double manualPitchAngle;    ///< Pitch angle set by human pilot (radians)
     double manualYawAngle;      ///< Yaw angle set by human pilot (radians)
     double manualThrust;        ///< Thrust set by human pilot (radians)
+    float receiveDropRate;      ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
+    float sendDropRate;         ///< Percentage of packets that were not received from the MAV by the GCS
 
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);

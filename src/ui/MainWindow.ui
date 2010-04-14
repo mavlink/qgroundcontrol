@@ -35,7 +35,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -43,7 +43,6 @@
      <string>File</string>
     </property>
     <addaction name="actionJoystickSettings"/>
-    <addaction name="actionSettings"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -65,11 +64,6 @@
     <addaction name="actionAdd_Link"/>
     <addaction name="separator"/>
    </widget>
-   <widget class="QMenu" name="menuConnected_Systems">
-    <property name="title">
-     <string>Systems</string>
-    </property>
-   </widget>
    <widget class="QMenu" name="menuWindow">
     <property name="title">
      <string>Window</string>
@@ -84,7 +78,6 @@
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
    <addaction name="menuUnmanned_System"/>
-   <addaction name="menuConnected_Systems"/>
    <addaction name="menuWindow"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">

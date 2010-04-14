@@ -313,7 +313,7 @@ void MainWindow::addLink()
 void MainWindow::UASCreated(UASInterface* uas)
 {
     // Connect the UAS to the full user interface
-    ui.menuConnected_Systems->addAction(QIcon(":/images/mavs/generic.svg"), tr("View ") + uas->getUASName(), uas, SLOT(setSelected()));
+    //ui.menuConnected_Systems->addAction(QIcon(":/images/mavs/generic.svg"), tr("View ") + uas->getUASName(), uas, SLOT(setSelected()));
 
     // Line chart
     // FIXME DO THIS ONLY FOR THE FIRST CONNECTED SYSTEM

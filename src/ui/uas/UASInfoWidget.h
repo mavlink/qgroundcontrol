@@ -49,15 +49,6 @@ public:
     UASInfoWidget(QWidget *parent = 0, QString name = "");
     ~UASInfoWidget();
 
-//    enum BatteryType {
-//        NICD = 0,
-//        NIMH = 1,
-//        LIION = 2,
-//        LIPOLY = 3,
-//        LIFE = 4,
-//        AGZN = 5
-//           };
-
 public slots:
     void addUAS(UASInterface* uas);
 
@@ -65,16 +56,15 @@ public slots:
 
     void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
     void updateCPULoad(UASInterface* uas, double load);
+    void updateDropRate(int sysId, float receiveDrop, float sendDrop);
 
     void setVoltage(UASInterface* uas, double voltage);
     void setChargeLevel(UASInterface* uas, double chargeLevel);
     void setTimeRemaining(UASInterface* uas, double seconds);
 //    void setBattery(int uasid, BatteryType type, int cells);
 
-    void addInstrument(QString key, double min, double max, double initial, QString unit="");
-    void valueChanged(int uasid, QString key, double value,quint64 time);
-    void actuatorChanged(UASInterface* uas, int actId, double value);
-//    double calculateTimeRemaining();
+//    void valueChanged(int uasid, QString key, double value,quint64 time);
+//    void actuatorChanged(UASInterface* uas, int actId, double value);
     void refresh();
 
 protected:
