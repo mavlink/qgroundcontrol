@@ -47,7 +47,8 @@ This file is part of the PIXHAWK project
  * This interface is abstract and thus cannot be instantiated. It serves only as type definition.
  * It represents an unmanned aerial vehicle, e.g. a micro air vehicle.
  **/
-class UASInterface : public QObject {
+class UASInterface : public QObject
+{
     Q_OBJECT
 public:
     UASInterface() :
@@ -207,6 +208,14 @@ signals:
      * @param description longer textual description. Should be however limited to a short text, e.g. 200 chars.
      */
     void statusChanged(UASInterface* uas, QString status, QString description);
+    /**
+     * @brief Drop rate of communication link updated
+     *
+     * @param systemId id of the air system
+     * @param receiveDrop drop rate of packets this MAV receives (send from GCS or other MAVs)
+     * @param sendDrop drop rate of packets this MAV sends (received on GCS)
+     */
+    void dropRateChanged(int systemId,  float receiveDrop, float sendDrop);
     /** @brief Robot mode has changed */
     void modeChanged(int sysId, QString status, QString description);
     /** @brief A command has been issued **/
