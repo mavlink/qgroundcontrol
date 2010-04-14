@@ -240,7 +240,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_RAW_SENSOR:
             {
                 raw_sensor_t raw;
-                message_raw_imu_decode(&message, &raw);
+                message_raw_sensor_decode(&message, &raw);
                 quint64 time = raw.msec;
                 if (time == 0)
                 {
