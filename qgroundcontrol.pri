@@ -73,7 +73,7 @@ macx {
 
     DESTDIR = $$BASEDIR/bin/mac
     INCLUDEPATH += -framework SDL \
-        $$BASEDIR/../mavlink/src
+        $$BASEDIR/../mavlink/include
 
     LIBS += -framework IOKit \
         -framework SDL \
