@@ -181,6 +181,7 @@ protected:
     float fineStrokeWidth;     ///< Fine line stroke width, used throughout the HUD
 
     QString waypointName;      ///< Waypoint name displayed in HUD
+    void paintEvent(QPaintEvent *event);
 
 };
 
