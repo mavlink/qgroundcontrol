@@ -250,9 +250,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit attitudeChanged(this, message_attitude_get_roll(&message), message_attitude_get_pitch(&message), message_attitude_get_yaw(&message), time);
             }
             break;
-        //case MAVLINK_MSG_ID_DEBUG:
-        //    emit valueChanged(uasId, QString("debug ") + QString::number(message_debug_get_index(message.payload)), message_debug_get_value(message.payload), MG::TIME::getGroundTimeNow());
-        //    break;
+        case MAVLINK_MSG_ID_DEBUG:
+            emit valueChanged(uasId, QString("debug ") + QString::number(message_debug_get_ind(&message)), message_debug_get_value(&message), MG::TIME::getGroundTimeNow());
+            break;
             /*
         case MAVLINK_MSG_ID_WP:
             emit waypointUpdated(this->getUASID(), message_emitwaypoint_get_id(message.payload), message_emitwaypoint_get_x(message.payload), message_emitwaypoint_get_y(message.payload), message_emitwaypoint_get_z(message.payload), message_emitwaypoint_get_yaw(message.payload), (message_emitwaypoint_get_autocontinue(message.payload) == 1 ? true : false), (message_emitwaypoint_get_active(message.payload) == 1 ? true : false));
