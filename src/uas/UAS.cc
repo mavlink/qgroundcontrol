@@ -113,6 +113,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit statusChanged(this, uasState, stateDescription);
             onboardTimeOffset = 0; // Reset offset measurement
             break;
+        case MAVLINK_MSG_ID_STATUSTEXT:
+            {
+                statustext_t status;
+                message_statustext_decode(&message, &status);
+                qDebug() << status.text;
+            }
+            break;
         case MAVLINK_MSG_ID_SYS_STATUS:
             {
                 sys_status_t state;

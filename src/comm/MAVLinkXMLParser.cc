@@ -119,12 +119,37 @@ bool MAVLinkXMLParser::generate()
                             QString fieldName = e2.attribute("name", "");
                             QString fieldText = e2.text();
 
-                            packParameters += ", " + fieldType + " " + fieldName;
-                            packArguments += ", " + messageName + "->" + fieldName;
+                            // Send arguments are the same for integral types and arrays
                             sendArguments += ", " + fieldName;
-                            cStructLines += QString("\t%1 %2; ///< %3\n").arg(fieldType, fieldName, fieldText);
-                            packLines += QString("\ti += put_%1_by_index(%2, i, msg->payload); //%3\n").arg(fieldType, fieldName, e2.text());
-                            decodeLines += QString("\t%1->%2 = message_%1_get_%2(msg);\n").arg(messageName, fieldName);
+
+                            // Array handling is different from simple types
+                            if (fieldType.startsWith("array"))
+                            {
+                                int arrayLength = QString(fieldType.split("[").at(1).split("]").first()).toInt();
+                                QString arrayType = fieldType.split("[").first();
+                                packParameters += QString(", const ") + QString("int8_t*") + " " + fieldName;
+                                packArguments += ", " + messageName + "->" + fieldName;
+
+                                // Add field to C structure
+                                cStructLines += QString("\t%1 %2[%3]; ///< %4\n").arg("int8_t", fieldName, QString::number(arrayLength), fieldText);
+                                // Add pack line to message_xx_pack function
+                                packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); //%4\n").arg(arrayType, fieldName, QString::number(arrayLength), e2.text());
+                                // Add decode function for this type
+                                decodeLines += QString("\tmessage_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
+                            }
+                            else
+                                // Handle simple types like integers and floats
+                            {
+                                packParameters += ", " + fieldType + " " + fieldName;
+                                packArguments += ", " + messageName + "->" + fieldName;
+
+                                // Add field to C structure
+                                cStructLines += QString("\t%1 %2; ///< %3\n").arg(fieldType, fieldName, fieldText);
+                                // Add pack line to message_xx_pack function
+                                packLines += QString("\ti += put_%1_by_index(%2, i, msg->payload); //%3\n").arg(fieldType, fieldName, e2.text());
+                                // Add decode function for this type
+                                decodeLines += QString("\t%1->%2 = message_%1_get_%2(msg);\n").arg(messageName, fieldName);
+                            }
                             commentLines += commentEntry.arg(fieldName, fieldText);
                             QString unpackingComment = QString("/**\n * @brief Get field %1 from %2 message\n *\n * @return %3\n */\n").arg(fieldName, messageName, fieldText);
                             //
@@ -150,14 +175,26 @@ bool MAVLinkXMLParser::generate()
                             {
                                 unpackingCode = QString("\tgeneric_32bit r;\n\tr.b[3] = (msg->payload%1)[0];\n\tr.b[2] = (msg->payload%1)[1];\n\tr.b[1] = (msg->payload%1)[2];\n\tr.b[0] = (msg->payload%1)[3];\n\treturn (%2)r.f;").arg(prepends).arg(fieldType);
                             }
-                            else if (fieldType.startsWith("string"))
+                            else if (fieldType.startsWith("array"))
                             {  // fieldtype formatis string[n] where n is the number of bytes, extract n from field type string
-                                unpackingCode = QString("\n\tmemcpy(r, msg->payload%1, %2);").arg(prepends, fieldType.split("[").at(1).split("]").first());
+                                unpackingCode = QString("\n\tmemcpy(r_data, msg->payload%1, %2);\n\treturn %2;").arg(prepends, fieldType.split("[").at(1).split("]").first());
                             }
 
-                            unpacking += unpackingComment + QString("static inline %1 message_%2_get_%3(const mavlink_message_t* msg)\n{\n%4\n}\n\n").arg(fieldType, messageName, fieldName, unpackingCode);
-                            decodeLines += "";
-                            prepends += "+sizeof(" + e2.attribute("type", "void") + ")";
+                            // Generate the message decoding function
+                            // Array handling is different from simple types
+                            if (fieldType.startsWith("array"))
+                            {
+                                unpacking += unpackingComment + QString("static inline uint16_t message_%1_get_%2(const mavlink_message_t* msg, int8_t* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, unpackingCode);
+                                decodeLines += "";
+                                QString arrayLength = QString(fieldType.split("[").at(1).split("]").first());
+                                prepends += "+" + arrayLength;
+                            }
+                            else
+                            {
+                                unpacking += unpackingComment + QString("static inline %1 message_%2_get_%3(const mavlink_message_t* msg)\n{\n%4\n}\n\n").arg(fieldType, messageName, fieldName, unpackingCode);
+                                decodeLines += "";
+                                prepends += "+sizeof(" + e2.attribute("type", "void") + ")";
+                            }
                         }
                         f = f.nextSibling();
                     }
