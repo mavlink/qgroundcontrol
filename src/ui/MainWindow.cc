@@ -146,9 +146,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // Add status bar
     setStatusBar(createStatusBar());
 
-    // Create actions
-    connectActions();
-
     // Set the application style (not the same as a style sheet)
     // Set the style to Plastique
     qApp->setStyle("plastique");
@@ -167,11 +164,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     udpLink->connect();
 
     simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
-    //connect(simulationLink, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
+    connect(simulationLink, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
     LinkManager::instance()->addProtocol(simulationLink, mavlink);
     //CommConfigurationWindow* simulationWidget = new CommConfigurationWindow(simulationLink, mavlink, this);
     //ui.menuNetwork->addAction(commWidget->getAction());
     //simulationLink->connect();
+
+    // Create actions
+    connectActions();
 
     // Load widgets and show application window
     loadWidgets();
@@ -287,6 +287,7 @@ void MainWindow::connectActions()
 
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
+    connect(ui.actionSimulate, SIGNAL(triggered(bool)), simulationLink, SLOT(connectLink(bool)));
 }
 
 void MainWindow::configure()
@@ -338,6 +339,9 @@ void MainWindow::UASCreated(UASInterface* uas)
     reloadStylesheet();
 }
 
+/**
+ * Clears the current view completely
+ */
 void MainWindow::clearView()
 { 
     // Halt HUD
@@ -501,26 +505,6 @@ void MainWindow::removeCommConfAct(QAction* action)
 {
     ui.menuNetwork->removeAction(action);
 }*/
-
-//void MainWindow::startUAS()
-//{
-//    UASManager::instance()->getActiveUAS()->launch();
-//}
-//
-//void MainWindow::returnUAS()
-//{
-//   UASManager::instance()->getActiveUAS()->home();
-//}
-//
-//void MainWindow::stopUAS()
-//{
-//    UASManager::instance()->getActiveUAS()->emergencySTOP();
-//}
-//
-//void MainWindow::killUAS()
-//{
-//    UASManager::instance()->getActiveUAS()->emergencyKILL();
-//}
 
 void MainWindow::runTests()
 {
