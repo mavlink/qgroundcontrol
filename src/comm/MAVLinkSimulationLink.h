@@ -84,6 +84,7 @@ public slots:
     void writeBytes(const char* data, qint64 size);
     void readBytes(char* const data, qint64 maxLength);
     void mainloop();
+    bool connectLink(bool connect);
 
 
 protected:
@@ -116,11 +117,9 @@ protected:
     qint64 timeOffset;
     sys_status_t status;
 
-    void setMaximumTimeNoise(int milliseconds);
-    void addTimeNoise();
     void enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg);
 
-    signals:
+signals:
     void valueChanged(int uasId, QString curve, double value, quint64 usec);
 
 };

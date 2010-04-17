@@ -65,7 +65,7 @@ inline bool isinf(T value)
  * @param parent
  */
 HUD::HUD(int width, int height, QWidget* parent)
-    : QGLWidget(parent),
+    : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     uas(NULL),
     values(QMap<QString, float>()),
     valuesDot(QMap<QString, float>()),
@@ -127,7 +127,7 @@ HUD::HUD(int width, int height, QWidget* parent)
 
     // Refresh timer
     refreshTimer->setInterval(40); // 25 Hz
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(repaint()));
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
 
     // Resize to correct size and fill with image
     resize(fill.size());
@@ -171,8 +171,8 @@ void HUD::stop()
 
 void HUD::updateValue(UASInterface* uas, QString name, double value, quint64 msec)
 {
-    // if (this->uas == uas)
-    //{
+    // UAS is not needed
+    Q_UNUSED(uas);
 
     if (!isnan(value) && !isinf(value))
     {
@@ -316,6 +316,8 @@ void HUD::updateSpeed(UASInterface* uas,double x,double y,double z,quint64 times
  */
 void HUD::updateState(UASInterface* uas,QString state)
 {
+    // Only one UAS is connected at a time
+    Q_UNUSED(uas);
     this->state = state;
 }
 
@@ -327,6 +329,8 @@ void HUD::updateState(UASInterface* uas,QString state)
  */
 void HUD::updateMode(UASInterface* uas,QString mode)
 {
+    // Only one UAS is connected at a time
+    Q_UNUSED(uas);
     this->mode = mode;
 }
 
@@ -467,9 +471,9 @@ void HUD::initializeGL()
     }
     else
     {
-        //glDisable(GL_BLEND);
-        //glDisable(GL_POINT_SMOOTH);
-        //glDisable(GL_LINE_SMOOTH);
+        glDisable(GL_BLEND);
+        glDisable(GL_POINT_SMOOTH);
+        glDisable(GL_LINE_SMOOTH);
     }
 }
 
@@ -510,18 +514,16 @@ void HUD::paintRollPitchStrips()
 }
 
 
-void HUD::paintGL()
-{
-}
-
 void HUD::paintEvent(QPaintEvent *event)
 {
+    // Event is not needed
+    Q_UNUSED(event);
 
+    // Read out most important values to limit hash table lookups
     static float roll = 0.0;
     static float pitch = 0.0;
     static float yaw = 0.0;
 
-    // Read out most important values to limit hash table lookups
     roll = roll * 0.5 + 0.5 * values.value("roll", 0.0f);
     pitch = pitch * 0.5 + 0.5 * values.value("pitch", 0.0f);
     yaw = yaw * 0.5 + 0.5 * values.value("yaw", 0.0f);
@@ -536,22 +538,29 @@ void HUD::paintEvent(QPaintEvent *event)
 
 
     // OPEN GL PAINTING
+    // Store model view matrix to be able to reset it to the previous state
     makeCurrent();
-    //setupViewport(width(), height());
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Blue / Brown background
     if (noCamera) paintCenterBackground(roll, pitch, yaw);
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    // END OF OPENGL PAINTING
 
 
+
+    //glEnable(GL_MULTISAMPLE);
 
     // QT PAINTING
+    makeCurrent();
     QPainter painter;
     painter.begin(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-
     painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    //painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
 
@@ -687,11 +696,10 @@ void HUD::paintEvent(QPaintEvent *event)
     // PITCH
 
     paintPitchLines((pitch/M_PI)*180.0f, &painter);
-
     painter.end();
+    //glDisable(GL_MULTISAMPLE);
 
-
-    glFlush();
+    //glFlush();
 }
 
 /*
@@ -1379,7 +1387,7 @@ void HUD::finishImage()
 
 void HUD::commitRawDataToGL()
 {
-    //qDebug() << __FILE__ << __LINE__ << "Copying raw data to GL buffer:" << rawImage << receivedWidth << receivedHeight << image->format();
+    qDebug() << __FILE__ << __LINE__ << "Copying raw data to GL buffer:" << rawImage << receivedWidth << receivedHeight << image->format();
     if (image != NULL)
     {
         QImage::Format format = image->format();
@@ -1410,7 +1418,7 @@ void HUD::commitRawDataToGL()
             //qDebug() << "Now buffer 1";
         }
     }
-    updateGL();
+    update();
 }
 
 void HUD::saveImage(QString fileName)
