@@ -47,6 +47,7 @@ This file is part of the PIXHAWK project
 #include "CameraView.h"
 #include "UASListWidget.h"
 #include "MAVLinkProtocol.h"
+#include "MAVLinkSimulationLink.h"
 #include "AS4Protocol.h"
 #include "ObjectDetectionView.h"
 #include "HUD.h"
@@ -142,7 +143,7 @@ protected:
     MAVLinkProtocol* mavlink;
     AS4Protocol* as4link;
 
-    LinkInterface* simulationLink;
+    MAVLinkSimulationLink* simulationLink;
     LinkInterface* udpLink;
 
     QDockWidget* controlDock;

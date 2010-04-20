@@ -58,7 +58,7 @@ public:
 
 public slots:
     void initializeGL();
-    void paintGL();
+    //void paintGL();
 
     /** @brief Start updating the view at 30Hz */
     void start();
