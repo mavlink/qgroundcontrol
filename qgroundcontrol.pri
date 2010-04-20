@@ -59,8 +59,8 @@ macx {
 
 		# Enable function-profiling with the OS X saturn tool
 		debug {
-			QMAKE_CXXFLAGS += -finstrument-functions
-			LIBS += -lSaturn
+                        #QMAKE_CXXFLAGS += -finstrument-functions
+                        #LIBS += -lSaturn
 		}
     } else {
         # x64 Mac OS X Snow Leopard 10.6 and later

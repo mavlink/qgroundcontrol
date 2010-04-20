@@ -504,26 +504,26 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                     message_action_decode(&msg, &action);
                     switch (action.action)
                     {
-                        case MAV_ACTION_LAUNCH:
+                    case MAV_ACTION_LAUNCH:
                         status.status = MAV_STATE_ACTIVE;
                         status.mode = MAV_MODE_AUTO;
                         break;
-                        case MAV_ACTION_RETURN:
+                    case MAV_ACTION_RETURN:
                         status.status = MAV_STATE_LANDING;
                         break;
-                        case MAV_ACTION_MOTORS_START:
+                    case MAV_ACTION_MOTORS_START:
                         status.status = MAV_STATE_ACTIVE;
                         status.mode = MAV_MODE_LOCKED;
                         break;
-                        case MAV_ACTION_MOTORS_STOP:
+                    case MAV_ACTION_MOTORS_STOP:
                         status.status = MAV_STATE_STANDBY;
                         status.mode = MAV_MODE_LOCKED;
                         break;
-                        case MAV_ACTION_EMCY_KILL:
+                    case MAV_ACTION_EMCY_KILL:
                         status.status = MAV_STATE_EMERGENCY;
                         status.mode = MAV_MODE_MANUAL;
                         break;
-                        case MAV_ACTION_SHUTDOWN:
+                    case MAV_ACTION_SHUTDOWN:
                         status.status = MAV_STATE_POWEROFF;
                         status.mode = MAV_MODE_LOCKED;
                         break;
@@ -580,48 +580,6 @@ void MAVLinkSimulationLink::readBytes(char* const data, qint64 maxLength) {
 }
 
 /**
- * Set the maximum time deviation noise. This amount (in milliseconds) is
- * the maximum time offset (+/-) from the specified message send rate.
- *
- * @param milliseconds The maximum time offset (in milliseconds)
- *
- * @bug The current implementation might induce one milliseconds additional
- * 		 discrepancy, this will be fixed by multithreading
- **/
-void MAVLinkSimulationLink::setMaximumTimeNoise(int milliseconds) {
-    maxTimeNoise = milliseconds;
-}
-
-
-/**
- * Add or subtract a pseudo random time offset. The maximum time offset is
- * defined by setMaximumTimeNoise().
- *
- * @see setMaximumTimeNoise()
- **/
-void MAVLinkSimulationLink::addTimeNoise() {
-    /* Calculate the time deviation */
-    if(maxTimeNoise == 0) {
-        /* Don't do expensive calculations if no noise is desired */
-        timer->setInterval(rate);
-    } else {
-        /* Calculate random time noise (gauss distribution):
-                 *
-                 * (1) (2 * rand()) / RAND_MAX: Number between 0 and 2
-                 * (induces numerical noise through floating point representation,
-                 * ignored here)
-                 *
-                 * (2) ((2 * rand()) / RAND_MAX) - 1: Number between -1 and 1
-                 *
-                 * (3) Complete term: Number between -maxTimeNoise and +maxTimeNoise
-                 */
-        double timeDeviation = (((2 * rand()) / RAND_MAX) - 1) * maxTimeNoise;
-        timer->setInterval(static_cast<int>(rate + floor(timeDeviation)));
-    }
-
-}
-
-/**
  * Disconnect the connection.
  *
  * @return True if connection has been disconnected, false if connection
@@ -636,7 +594,7 @@ bool MAVLinkSimulationLink::disconnect() {
 
         emit disconnected();
 
-        exit();
+        //exit();
     }
 
     return true;
@@ -654,6 +612,25 @@ bool MAVLinkSimulationLink::connect()
 
     start(LowPriority);
     //    timer->start(rate);
+    return true;
+}
+
+/**
+ * Connect the link.
+ *
+ * @param connect true connects the link, false disconnects it
+ * @return True if connection has been established, false if connection
+ * couldn't be established.
+ **/
+bool MAVLinkSimulationLink::connectLink(bool connect)
+{
+    _isConnected = connect;
+
+    if(connect)
+    {
+        this->connect();
+    }
+
     return true;
 }
 
