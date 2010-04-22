@@ -31,7 +31,7 @@ This file is part of the PIXHAWK project
 
 
 /** 
- * @mainpage PIXHAWK API Documentation
+ * @mainpage QGroundControl API Documentation
  * 
  * @section intro_sec Introduction
  * 
@@ -40,17 +40,17 @@ This file is part of the PIXHAWK project
  * In case you have generated this documentation locally, the most recent version (generated on every commit)
  * is also publicly available on the internet.
  *
- * @sa http://pixhawk.ethz.ch/api/embedded/ - Embedded / Computer Vision API docs
- * @sa http://pixhawk.ethz.ch/api/groundstation/ - Groundstation code base
- * @sa http://pixhawk.ethz.ch/api/flight/ - Flight board (ARM MCU) code base
- * @sa http://pixhawk.ethz.ch/api/blmc/ - Brushless motor controller API docs
+ * @sa http://pixhawk.ethz.ch/api/qgroundcontrol/ - (this) Groundstation code base
+ * @sa http://pixhawk.ethz.ch/api/mavlink - the MAVLink communication protocol
+ * @sa http://pixhawk.ethz.ch/api/imu_autopilot/ - Flight board (ARM MCU) code base
+ * @sa http://pixhawk.ethz.ch/api/ai_vision - Computer Vision / AI API docs
  *
  * @section further_sec Further Information
  *
  * How to run our software and a general overview of the software architecture is documented in the project
  * wiki pages.
  *
- * @sa http://pixhawk.ethz.ch/wiki/software/groundstation/ - Groundstation main page
+ * @sa http://qgroundcontrol.org/ - Groundstation main page
  * @sa http://pixhawk.ethz.ch/wiki/software/ - The software architecture
  * @sa http://pixhawk.ethz.ch/wiki/software/run - How to run the software
  *

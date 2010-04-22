@@ -64,7 +64,8 @@ UAS::UAS(int id=0) :
         manualYawAngle(0),
         manualThrust(0),
         receiveDropRate(0),
-        sendDropRate(0)
+        sendDropRate(0),
+        unknownPackets()
 {
     uasId = id;
     setBattery(LIPOLY, 3);
@@ -113,13 +114,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit statusChanged(this, uasState, stateDescription);
             onboardTimeOffset = 0; // Reset offset measurement
             break;
-        case MAVLINK_MSG_ID_STATUSTEXT:
-            {
-                statustext_t status;
-                message_statustext_decode(&message, &status);
-                qDebug() << status.text;
-            }
-            break;
         case MAVLINK_MSG_ID_SYS_STATUS:
             {
                 sys_status_t state;
@@ -156,6 +150,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                         break;
                     case MAV_MODE_AUTO:
                         mode = "AUTO MODE";
+                        break;
+                    case MAV_MODE_READY:
+                        mode = "READY";
                         break;
                     case MAV_MODE_TEST1:
                         mode = "TEST1 MODE";
@@ -208,13 +205,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
         case MAVLINK_MSG_ID_AUX_STATUS:
-        {
-            aux_status_t status;
-            message_aux_status_decode(&message, &status);
-            emit loadChanged(this, status.load/100.0f);
-            emit valueChanged(this, "Load", status.load/1000.0f, MG::TIME::getGroundTimeNow());
-        }
-        break;
+            {
+                aux_status_t status;
+                message_aux_status_decode(&message, &status);
+                emit loadChanged(this, status.load/100.0f);
+                emit valueChanged(this, "Load", status.load/1000.0f, MG::TIME::getGroundTimeNow());
+            }
+            break;
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 raw_imu_t raw;
@@ -306,6 +303,37 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit attitudeChanged(this, message_attitude_get_roll(&message), message_attitude_get_pitch(&message), message_attitude_get_yaw(&message), time);
             }
             break;
+        case MAVLINK_MSG_ID_POSITION:
+            //std::cerr << std::endl;
+            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << message_attitude_get_roll(message.payload) << " pitch: " << message_attitude_get_pitch(message.payload) << " yaw: " << message_attitude_get_yaw(message.payload) << std::endl;
+            {
+                position_t pos;
+                message_position_decode(&message, &pos);
+                quint64 time = pos.msec;
+                if (time == 0)
+                {
+                    time = MG::TIME::getGroundTimeNow();
+                }
+                else
+                {
+                    if (onboardTimeOffset == 0)
+                    {
+                        onboardTimeOffset = MG::TIME::getGroundTimeNow() - time;
+                    }
+                    time += onboardTimeOffset;
+                }
+                emit valueChanged(uasId, "x", pos.x, time);
+                emit valueChanged(uasId, "y", pos.y, time);
+                emit valueChanged(uasId, "z", pos.z, time);
+                //emit valueChanged(this, "roll IMU", message_attitude_get_roll(&message), time);
+                //emit valueChanged(this, "pitch IMU", message_attitude_get_pitch(&message), time);
+                //emit valueChanged(this, "yaw IMU", message_attitude_get_yaw(&message), time);
+                emit valueChanged(uasId, "vx", pos.vx, time);
+                emit valueChanged(uasId, "vy", pos.vy, time);
+                emit valueChanged(uasId, "vz", pos.vz, time);
+                emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+            }
+            break;
         case MAVLINK_MSG_ID_DEBUG:
             emit valueChanged(uasId, QString("debug ") + QString::number(message_debug_get_ind(&message)), message_debug_get_value(&message), MG::TIME::getGroundTimeNow());
             break;
@@ -326,16 +354,40 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             qDebug() << "WAYPOINT REACHED";
             emit waypointReached(this, message_wp_reached_get_id(message.payload));
             break;
-        case MAVLINK_MSG_ID_OBJ_DETECTED:
-            //patternPath = QString(message_detection_get_patternpath(message.payload));
-            //qDebug() << "OBJECT DETECTED";
-            //emit detectionReceived(uasId, patternPath, 0, 0, 0, 0, 0, 0, 0, 0, message_detection_get_confidence(message.payload), (message_detection_get_detected(message.payload) == 1 ? true : false ));
-            break;
             */
+            case MAVLINK_MSG_ID_STATUSTEXT:
+            {
+                QByteArray b;
+                b.resize(256);
+                message_statustext_get_text(&message, (int8_t*)b.data());
+                //b.append('\0');
+                QString text = QString(b);
+                int severity = message_statustext_get_severity(&message);
+                qDebug() << "RECEIVED STATUS:" << text;
+                //emit statusTextReceived(severity, text);
+            }
+            break;
+        case MAVLINK_MSG_ID_PATTERN_DETECTED:
+            {
+                QByteArray b;
+                b.resize(256);
+                message_pattern_detected_get_file(&message, (int8_t*)b.data());
+                b.append('\0');
+                QString path = QString(b);
+                bool detected (message_pattern_detected_get_detected(&message) == 1 ? true : false );
+                emit detectionReceived(uasId, path, 0, 0, 0, 0, 0, 0, 0, 0, message_pattern_detected_get_confidence(&message), detected);
+            }
+            break;
         default:
-            GAudioOutput::instance()->say("COMM ERROR: UNABLE TO DECODE MESSAGE WITH ID" + QString::number(message.msgid) + "FROM SYSTEM " + QString::number(message.sysid));
-            std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.sysid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
-            //qDebug() << std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.acid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
+            {
+                if (!unknownPackets.contains(message.msgid))
+                {
+                    unknownPackets.append(message.msgid);
+                    GAudioOutput::instance()->say("UNABLE TO DECODE MESSAGE WITH ID " + QString::number(message.msgid) + " FROM SYSTEM " + QString::number(message.sysid));
+                    std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.sysid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
+                    //qDebug() << std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.acid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
+                }
+            }
             break;
         }
     }
@@ -415,35 +467,39 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
 {
     switch (statusCode)
     {
-            case MAV_STATE_UNINIT:
+    case MAV_STATE_UNINIT:
         uasState = tr("UNINIT");
         stateDescription = tr("Not initialized");
         break;
-                                case MAV_STATE_BOOT:
+    case MAV_STATE_BOOT:
         uasState = tr("BOOT");
         stateDescription = tr("Booting system, please wait..");
         break;
-                                case MAV_STATE_CALIBRATING:
+    case MAV_STATE_CALIBRATING:
         uasState = tr("CALIBRATING");
         stateDescription = tr("Calibrating sensors..");
         break;
-                                case MAV_STATE_ACTIVE:
+    case MAV_STATE_ACTIVE:
         uasState = tr("ACTIVE");
         stateDescription = tr("Normal operation mode");
         break;
-                                case MAV_STATE_CRITICAL:
+    case MAV_STATE_STANDBY:
+        uasState = tr("STANDBY");
+        stateDescription = tr("Standby, operational");
+        break;
+    case MAV_STATE_CRITICAL:
         uasState = tr("CRITICAL");
         stateDescription = tr("Failure occured!");
         break;
-                                case MAV_STATE_EMERGENCY:
+    case MAV_STATE_EMERGENCY:
         uasState = tr("EMERGENCY");
         stateDescription = tr("EMERGENCY: Please land");
         break;
-                                case MAV_STATE_POWEROFF:
+    case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");
         stateDescription = tr("Powering off system");
         break;
-                                default:
+    default:
         uasState = tr("UNKNOWN");
         stateDescription = tr("FAILURE: Unknown system state");
         break;
@@ -718,19 +774,19 @@ void UAS::setBattery(BatteryType type, int cells)
     this->cells = cells;
     switch (batteryType)
     {
-            case NICD:
+    case NICD:
         break;
-            case NIMH:
+    case NIMH:
         break;
-            case LIION:
+    case LIION:
         break;
-            case LIPOLY:
+    case LIPOLY:
         fullVoltage = this->cells * UAS::lipoFull;
         emptyVoltage = this->cells * UAS::lipoEmpty;
         break;
-            case LIFE:
+    case LIFE:
         break;
-            case AGZN:
+    case AGZN:
         break;
     }
 }
