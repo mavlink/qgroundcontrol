@@ -2,6 +2,11 @@ QGroundControl Open Source Micro Air Vehicle Ground Control Station
 
 http://pixhawk.ethz.ch
 
+**********************************************************************************************
+* PLEASE NOTE: YOU NEED TO DOWNLOAD THE MAVLINK LIBRARY IN ORDER TO COMPILE THIS APPLICATION *
+**********************************************************************************************
+
+
 To build on Mac OS X (10.5 or later):
 1) Install http://www.libsdl.org/release/SDL-1.2.14.dmg
 2) Install Qt 4.6.2 with Cocoa http://get.qt.nokia.com/qt/source/qt-mac-cocoa-opensource-4.6.2.dmg
