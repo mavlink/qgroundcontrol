@@ -34,6 +34,7 @@ This file is part of the PIXHAWK project
 #include "ObjectDetectionView.h"
 #include "ui_ObjectDetectionView.h"
 #include "UASManager.h"
+#include "GAudioOutput.h"
 
 #include <QDebug>
 
@@ -81,13 +82,18 @@ void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, i
     {
         if (patternList.contains(patternPath))
         {
+            qDebug() << "REDETECTED";
+
             QList<QAction*> actions = m_ui->listWidget->actions();
             // Find action and update it
             foreach (QAction* act, actions)
             {
+                qDebug() << "ACTION";
                 if (act->text().trimmed().split(separator).first() == patternPath)
                 {
-                    act->setText(patternPath + separator + "(#" + QString::number(patternCount.value(patternPath)) + ")" + separator + QString::number(confidence));
+                    int count = patternCount.value(patternPath);
+                    patternCount.insert(patternPath, count);
+                    act->setText(patternPath + separator + "(#" + QString::number(count) + ")" + separator + QString::number(confidence));
                 }
             }
             QPixmap image = QPixmap(patternFolder + "/" + patternPath);
@@ -101,6 +107,9 @@ void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, i
         }
         else
         {
+            // Emit audio message on detection
+            if (detected) GAudioOutput::instance()->say("System " + QString::number(uasId) + " detected pattern " + QString(patternPath.split("/").last()).split(".").first());
+
             patternList.insert(patternPath, confidence);
             patternCount.insert(patternPath, 1);
             QPixmap image = QPixmap(patternFolder + "/" + patternPath);

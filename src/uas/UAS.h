@@ -94,6 +94,7 @@ protected:
 
     QList<double> motorValues;
     QList<QString> motorNames;
+    QList<int> unknownPackets;  ///< Packet IDs which are unknown and have been received
 
     double thrustSum;           ///< Sum of forward/up thrust of all thrust actuators, in Newtons
     double thrustMax;           ///< Maximum forward/up thrust of this vehicle, in Newtons
