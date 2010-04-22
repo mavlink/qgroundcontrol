@@ -524,9 +524,9 @@ void HUD::paintEvent(QPaintEvent *event)
     static float pitch = 0.0;
     static float yaw = 0.0;
 
-    roll = roll * 0.5 + 0.5 * values.value("roll", 0.0f);
-    pitch = pitch * 0.5 + 0.5 * values.value("pitch", 0.0f);
-    yaw = yaw * 0.5 + 0.5 * values.value("yaw", 0.0f);
+    roll = roll * 0.3 + 0.7 * values.value("roll", 0.0f);
+    pitch = pitch * 0.3 + 0.7 * values.value("pitch", 0.0f);
+    yaw = yaw * 0.3 + 0.7 * values.value("yaw", 0.0f);
 
 
     // Update scaling factor
@@ -684,7 +684,7 @@ void HUD::paintEvent(QPaintEvent *event)
 
     painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(1.8));
 
-    painter.translate(refToScreenX(yawTrans), 0);
+    //painter.translate(refToScreenX(yawTrans), 0);
 
 
 
