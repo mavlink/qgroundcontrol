@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 #include "UASManager.h"
 #include "HDDisplay.h"
 #include "ui_HDDisplay.h"
+#include "MG.h"
 
 #include <QDebug>
 
@@ -68,14 +69,17 @@ HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
         normalStrokeWidth(1.0f),
         fineStrokeWidth(0.5f),
         acceptList(plotList),
+        lastPaintTime(0),
         m_ui(new Ui::HDDisplay)
 {
     //m_ui->setupUi(this);
 
+    this->setMinimumHeight(125);
+    this->setMinimumWidth(100);
 
     // Refresh timer
-    refreshTimer->setInterval(60);
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(repaint()));
+    refreshTimer->setInterval(100);
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintGL()));
 
     fontDatabase = QFontDatabase();
@@ -99,11 +103,27 @@ HDDisplay::~HDDisplay()
 
 void HDDisplay::paintEvent(QPaintEvent * event)
 {
-    paintGL();
+    //paintGL();
+    static quint64 interval = 0;
+    //qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
+    interval = MG::TIME::getGroundTimeNow();
+    paintDisplay();
 }
 
 void HDDisplay::paintGL()
 {
+}
+
+void HDDisplay::paintDisplay()
+{
+    int refreshInterval = 100;
+    quint64 currTime = MG::TIME::getGroundTimeNow();
+    if (currTime - lastPaintTime < refreshInterval)
+    {
+        // FIXME Need to find the source of the spurious paint events
+        //return;
+    }
+    lastPaintTime = currTime;
     // Draw instruments
     // TESTING THIS SHOULD BE MOVED INTO A QGRAPHICSVIEW
     // Update scaling factor

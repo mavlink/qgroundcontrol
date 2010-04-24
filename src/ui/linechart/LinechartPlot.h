@@ -225,6 +225,8 @@ public slots:
     void appendData(QString dataname, quint64 ms, double value);
     void hideCurve(QString id);
     void showCurve(QString id);
+    /** @brief Enable auto-refreshing of plot */
+    void setActive(bool active);
 
     // Functions referring to the currently active plot
     void setVisible(QString id, bool visible);

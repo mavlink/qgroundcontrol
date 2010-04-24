@@ -77,6 +77,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // Initialize views, NOT show them yet, only initialize model and controller
     centerStack = new QStackedWidget(this);
     linechart = new LinechartWidget(this);
+    linechart->setActive(false);
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), linechart, SLOT(setActivePlot(UASInterface*)));
     centerStack->addWidget(linechart);
     control = new UASControlWidget(this);
@@ -346,6 +347,7 @@ void MainWindow::clearView()
 { 
     // Halt HUD
     hud->stop();
+    linechart->setActive(false);
     headDown1->stop();
     headDown2->stop();
 
@@ -399,7 +401,7 @@ void MainWindow::loadOperatorView()
 
     GAudioOutput::instance()->say("Switched to Operator View");
 
-    // LINE CHART
+    // MAP
     centerStack->setCurrentWidget(map);
 
     // UAS CONTROL
@@ -442,6 +444,7 @@ void MainWindow::loadSettingsView()
     GAudioOutput::instance()->say("Switched to Settings View");
 
     // LINE CHART
+    linechart->setActive(true);
     centerStack->setCurrentWidget(linechart);
 
     // COMM XML
@@ -463,6 +466,7 @@ void MainWindow::loadEngineerView()
     GAudioOutput::instance()->say("Switched to Engineer View");
 
     // LINE CHART
+    linechart->setActive(true);
     centerStack->setCurrentWidget(linechart);
 
     // UAS CONTROL

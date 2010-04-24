@@ -80,7 +80,7 @@ public slots:
     void updateGlobalPosition(UASInterface*,double,double,double,quint64);
     void updateSpeed(UASInterface*,double,double,double,quint64);
     void updateState(UASInterface*,QString);
-    void updateMode(UASInterface*,QString);
+    void updateMode(int id,QString mode, QString description);
     void updateLoad(UASInterface*, double);
     void selectWaypoint(UASInterface* uas, int id);
 
@@ -98,6 +98,7 @@ protected slots:
     void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
     /** @brief Setup the OpenGL view for drawing a sub-component of the HUD */
     void setupGLView(float referencePositionX, float referencePositionY, float referenceWidth, float referenceHeight);
+    void paintHUD();
     void paintPitchLinePos(QString text, float refPosX, float refPosY, QPainter* painter);
     void paintPitchLineNeg(QString text, float refPosX, float refPosY, QPainter* painter);
 

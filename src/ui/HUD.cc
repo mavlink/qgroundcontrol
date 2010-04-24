@@ -126,8 +126,9 @@ HUD::HUD(int width, int height, QWidget* parent)
     glImage = QGLWidget::convertToGLFormat(fill);
 
     // Refresh timer
-    refreshTimer->setInterval(40); // 25 Hz
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
+    refreshTimer->setInterval(50); // 20 Hz
+    //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
 
     // Resize to correct size and fill with image
     resize(fill.size());
@@ -216,7 +217,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         disconnect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         disconnect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
-        disconnect(uas, SIGNAL(modeChanged(UASInterface*,QString,QString)), this, SLOT(updateMode(UASInterface*,QString)));
+        disconnect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateLoad(UASInterface*, double)));
         disconnect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeThrustSetPoint(UASInterface*,double,double,double,double,quint64)));
         disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
@@ -229,8 +230,10 @@ void HUD::setActiveUAS(UASInterface* uas)
     qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
     // Setup communication
     connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
-    //connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
-    //connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+    connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+    connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
+    connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+    connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
     //connect(uas, SIGNAL(thrustChanged(UASInterface*, double)), this, SLOT(updateThrust(UASInterface*, double)));
     //connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
     //connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
@@ -263,6 +266,8 @@ void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int s
     updateValue(uas, "voltage", voltage, MG::TIME::getGroundTimeNow());
     updateValue(uas, "time remaining", seconds, MG::TIME::getGroundTimeNow());
     updateValue(uas, "charge level", percent, MG::TIME::getGroundTimeNow());
+
+    fuelStatus.sprintf("BAT [%02.0f \%% | %05.2fV] (%02dm:%02ds)", percent, voltage, seconds/60, seconds%60);
 
     if (percent < 20.0f)
     {
@@ -327,10 +332,11 @@ void HUD::updateState(UASInterface* uas,QString state)
  * @param uas the system the state message originates from
  * @param mode short mode text, displayed in HUD
  */
-void HUD::updateMode(UASInterface* uas,QString mode)
+void HUD::updateMode(int id,QString mode, QString description)
 {
     // Only one UAS is connected at a time
-    Q_UNUSED(uas);
+    Q_UNUSED(id);
+    Q_UNUSED(description);
     this->mode = mode;
 }
 
@@ -365,7 +371,6 @@ float HUD::refToScreenY(float y)
  */
 void HUD::paintCenterBackground(float roll, float pitch, float yaw)
 {
-
     // Center indicator is 100 mm wide
     float referenceWidth = 70.0;
     float referenceHeight = 70.0;
@@ -422,7 +427,6 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
     glVertex2f(-300,0);
 
     glEnd();
-
 }
 
 /**
@@ -522,16 +526,26 @@ void HUD::paintRollPitchStrips()
 void HUD::paintEvent(QPaintEvent *event)
 {
     // Event is not needed
+    // the event is ignored as this widget
+    // is refreshed automatically
     Q_UNUSED(event);
+}
+
+void HUD::paintHUD()
+{
+//    static quint64 interval = 0;
+//    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
+//    interval = MG::TIME::getGroundTimeNow();
 
     // Read out most important values to limit hash table lookups
-    static float roll = 0.0;
-    static float pitch = 0.0;
-    static float yaw = 0.0;
+    static float roll = 0.0f;
+    static float pitch = 0.0f;
+    static float yaw = 0.0f;
 
-    roll = roll * 0.3 + 0.7 * values.value("roll", 0.0f);
-    pitch = pitch * 0.3 + 0.7 * values.value("pitch", 0.0f);
-    yaw = yaw * 0.3 + 0.7 * values.value("yaw", 0.0f);
+    // Low-pass roll, pitch and yaw
+    roll = roll * 0.2f + 0.8f * values.value("roll", 0.0f);
+    pitch = pitch * 0.2f + 0.8f * values.value("pitch", 0.0f);
+    yaw = yaw * 0.2f + 0.8f * values.value("yaw", 0.0f);
 
     // Translate for yaw
     const float maxYawTrans = 60.0f;
@@ -554,8 +568,6 @@ void HUD::paintEvent(QPaintEvent *event)
     float yawTrans = yawInt * (double)maxYawTrans;
     yawInt *= 0.6f;
     //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw << "asin(yawInt)" << asinYaw;
-
-
 
     // Update scaling factor
     // adjust scaling to fit both horizontally and vertically
@@ -1304,6 +1316,8 @@ void HUD::resizeGL(int w, int h)
     glOrtho(0, w, 0, h, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glPolygonMode(GL_FRONT, GL_FILL);
+    //FIXME
+    paintHUD();
 }
 
 void HUD::selectWaypoint(UASInterface* uas, int id)
