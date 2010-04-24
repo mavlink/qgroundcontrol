@@ -155,7 +155,6 @@ void MAVLinkSimulationLink::mainloop()
     attitude_t attitude;
     raw_aux_t rawAuxValues;
     raw_imu_t rawImuValues;
-    raw_sensor_t rawSensorValues;
 
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     int bufferlength;
