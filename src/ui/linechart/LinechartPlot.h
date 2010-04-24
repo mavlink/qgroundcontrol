@@ -281,6 +281,7 @@ protected:
     bool automaticScrollActive;
     QTime lastMaxTimeAdded;
     int plotid;
+    bool m_active; ///< Decides wether the plot is active or not
 
     // Methods
     void addCurve(QString id);

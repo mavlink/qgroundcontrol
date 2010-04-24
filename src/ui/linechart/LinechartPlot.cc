@@ -56,7 +56,8 @@ maxInterval(MAX_STORAGE_INTERVAL),
 timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
 automaticScrollActive(false),
 d_data(NULL),
-d_curve(NULL)
+d_curve(NULL),
+m_active(true)
 {
     this->plotid = plotid;
     this->plotInterval = interval;
@@ -187,6 +188,11 @@ void LinechartPlot::setRefreshRate(int ms)
 {
     updateTimer->setInterval(ms);
 }
+
+//void LinechartPlot::setActive(bool active)
+//{
+
+//}
 
 /**
  * @brief Set the zero (center line) value
@@ -585,7 +591,10 @@ void LinechartPlot::paintRealtime()
     canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, directPaint);
 #endif
 
-    replot();
+    if (m_active)
+    {
+        replot();
+    }
 
 #ifndef _WIN32
     canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, oldDirectPaint);
