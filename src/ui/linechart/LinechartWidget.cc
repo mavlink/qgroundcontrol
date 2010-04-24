@@ -384,6 +384,14 @@ LinechartPlot* LinechartWidget::getPlot(int plotid) {
     return plots.value(plotid);
 }
 
+void LinechartWidget::setActive(bool active)
+{
+    if (activePlot)
+    {
+        activePlot->setActive(active);
+    }
+}
+
 void LinechartWidget::setActivePlot(UASInterface* uas)
 {
     setActivePlot(uas->getUASID());

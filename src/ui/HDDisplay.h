@@ -61,6 +61,7 @@ public slots:
 
     protected slots:
     void paintGL();
+    void paintDisplay();
 
 protected:
     void changeEvent(QEvent *e);
@@ -121,6 +122,8 @@ protected:
     float fineStrokeWidth;     ///< Fine line stroke width, used throughout the HUD
 
     QStringList* acceptList;   ///< Variable names to plot
+
+    quint64 lastPaintTime;     ///< Last time this widget was refreshed
 
 private:
     Ui::HDDisplay *m_ui;

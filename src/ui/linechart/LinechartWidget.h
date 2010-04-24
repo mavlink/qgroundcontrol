@@ -81,6 +81,7 @@ public slots:
     void setPlotInterval(quint64 interval);
     void setActivePlot(int uasid);
     void setActivePlot(UASInterface* uas);
+    void setActive(bool active);
     /** @brief Set the number of values to average over */
     void setAverageWindow(int windowSize);
 

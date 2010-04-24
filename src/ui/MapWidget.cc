@@ -153,12 +153,10 @@ void MapWidget::keyPressEvent(QKeyEvent *event)
     }
 }
 
-void MapWidget::resizeEvent(QResizeEvent * event )
+void MapWidget::resizeEvent(QResizeEvent* event )
 {
-    if (event->isAccepted())
-    {
-        mc->resize(this->size());
-    }
+    Q_UNUSED(event);
+    mc->resize(this->size());
 }
 
 

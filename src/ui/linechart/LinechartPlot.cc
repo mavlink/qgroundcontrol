@@ -189,10 +189,10 @@ void LinechartPlot::setRefreshRate(int ms)
     updateTimer->setInterval(ms);
 }
 
-//void LinechartPlot::setActive(bool active)
-//{
-
-//}
+void LinechartPlot::setActive(bool active)
+{
+    m_active = active;
+}
 
 /**
  * @brief Set the zero (center line) value
@@ -497,7 +497,6 @@ void LinechartPlot::setPlotInterval(int interval)
         TimeSeriesData* d = data.value(j.key());
         d->setInterval(interval);
     }
-    paintRealtime();
 }
 
 /**
@@ -552,56 +551,56 @@ void LinechartPlot::setAverageWindow(int windowSize)
  **/
 void LinechartPlot::paintRealtime()
 {
-    // Update plot window value to new max time if the last time was also the max time
-    windowLock.lock();
-    if (automaticScrollActive) {
-        if (MG::TIME::getGroundTimeNow() > maxTime && abs(MG::TIME::getGroundTimeNow() - maxTime) < 5000000)
-        {
-            plotPosition = MG::TIME::getGroundTimeNow();
-        }
-        else
-        {
-            plotPosition = maxTime;// + lastMaxTimeAdded.msec();
-        }
-        setAxisScale(QwtPlot::xBottom, plotPosition - plotInterval, plotPosition, timeScaleStep);
-        /* Notify about change. Even if the window position was not changed
-         * itself, the relative position of the window to the interval must
-         * have changed, as the interval likely increased in length */
-        emit windowPositionChanged(getWindowPosition());
-    }
-
-    windowLock.unlock();
-
-    // Defined both on windows 32- and 64 bit
-#ifndef _WIN32
-
-    //    const bool cacheMode =
-    //            canvas()->testPaintAttribute(QwtPlotCanvas::PaintCached);
-    const bool oldDirectPaint =
-            canvas()->testAttribute(Qt::WA_PaintOutsidePaintEvent);
-
-    const QPaintEngine *pe = canvas()->paintEngine();
-    bool directPaint = pe->hasFeature(QPaintEngine::PaintOutsidePaintEvent);
-    if ( pe->type() == QPaintEngine::X11 )
-    {
-        // Even if not recommended by TrollTech, Qt::WA_PaintOutsidePaintEvent
-        // works on X11. This has an tremendous effect on the performance..
-        directPaint = true;
-    }
-    canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, directPaint);
-#endif
-
     if (m_active)
     {
-        replot();
-    }
+        // Update plot window value to new max time if the last time was also the max time
+        windowLock.lock();
+        if (automaticScrollActive) {
+            if (MG::TIME::getGroundTimeNow() > maxTime && abs(MG::TIME::getGroundTimeNow() - maxTime) < 5000000)
+            {
+                plotPosition = MG::TIME::getGroundTimeNow();
+            }
+            else
+            {
+                plotPosition = maxTime;// + lastMaxTimeAdded.msec();
+            }
+            setAxisScale(QwtPlot::xBottom, plotPosition - plotInterval, plotPosition, timeScaleStep);
+            /* Notify about change. Even if the window position was not changed
+         * itself, the relative position of the window to the interval must
+         * have changed, as the interval likely increased in length */
+            emit windowPositionChanged(getWindowPosition());
+        }
 
+        windowLock.unlock();
+
+        // Defined both on windows 32- and 64 bit
 #ifndef _WIN32
-    canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, oldDirectPaint);
+
+        //    const bool cacheMode =
+        //            canvas()->testPaintAttribute(QwtPlotCanvas::PaintCached);
+        const bool oldDirectPaint =
+                canvas()->testAttribute(Qt::WA_PaintOutsidePaintEvent);
+
+        const QPaintEngine *pe = canvas()->paintEngine();
+        bool directPaint = pe->hasFeature(QPaintEngine::PaintOutsidePaintEvent);
+        if ( pe->type() == QPaintEngine::X11 )
+        {
+            // Even if not recommended by TrollTech, Qt::WA_PaintOutsidePaintEvent
+            // works on X11. This has an tremendous effect on the performance..
+            directPaint = true;
+        }
+        canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, directPaint);
 #endif
 
 
-    /*
+        replot();
+
+#ifndef _WIN32
+        canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, oldDirectPaint);
+#endif
+
+
+        /*
         QMap<QString, QwtPlotCurve*>::iterator i;
         for(i = curves.begin(); i != curves.end(); ++i) {
                 const bool cacheMode = canvas()->testPaintAttribute(QwtPlotCanvas::PaintCached);
@@ -610,7 +609,13 @@ void LinechartPlot::paintRealtime()
                 canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, cacheMode);
         }*/
 
-
+//        static quint64 timestamp = 0;
+//
+//
+//        qDebug() << "PLOT INTERVAL:" << MG::TIME::getGroundTimeNow() - timestamp;
+//
+//        timestamp = MG::TIME::getGroundTimeNow();
+    }
 }
 
 /**
