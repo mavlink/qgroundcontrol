@@ -172,11 +172,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     modeAudio = " is now in " + mode;
                 }
                 currentVoltage = state.vbat;
-                filterVoltage(currentVoltage);
+                lpVoltage = filterVoltage(currentVoltage);
                 if (startVoltage == 0) startVoltage = currentVoltage;
                 timeRemaining = calculateTimeRemaining();
                 //qDebug() << "Voltage: " << currentVoltage << " Chargelevel: " << getChargeLevel() << " Time remaining " << timeRemaining;
-                emit batteryChanged(this, filterVoltage(), getChargeLevel(), timeRemaining);
+                emit batteryChanged(this, lpVoltage, getChargeLevel(), timeRemaining);
                 emit voltageChanged(message.sysid, state.vbat/1000.0f);
 
                 // COMMUNICATIONS DROP RATE
@@ -241,11 +241,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "Mag. Z", raw.zmag, time);
             }
             break;
-        case MAVLINK_MSG_ID_RAW_SENSOR:
+        case MAVLINK_MSG_ID_RAW_AUX:
             {
-                raw_sensor_t raw;
-                message_raw_sensor_decode(&message, &raw);
-                quint64 time = raw.msec;
+                raw_aux_t raw;
+                message_raw_aux_decode(&message, &raw);
+                quint64 time = MG::TIME::getGroundTimeNow();//raw.msec;
                 if (time == 0)
                 {
                     time = MG::TIME::getGroundTimeNow();
@@ -258,16 +258,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     }
                     time += onboardTimeOffset;
                 }
-
-                emit valueChanged(uasId, "Accel. X", raw.xacc, time);
-                emit valueChanged(uasId, "Accel. Y", raw.yacc, time);
-                emit valueChanged(uasId, "Accel. Z", raw.zacc, time);
-                emit valueChanged(uasId, "Gyro Phi", raw.xgyro, time);
-                emit valueChanged(uasId, "Gyro Theta", raw.ygyro, time);
-                emit valueChanged(uasId, "Gyro Psi", raw.zgyro, time);
-                emit valueChanged(uasId, "Mag. X", raw.xmag, time);
-                emit valueChanged(uasId, "Mag. Y", raw.ymag, time);
-                emit valueChanged(uasId, "Mag. Z", raw.zmag, time);
                 emit valueChanged(uasId, "Pressure", raw.baro, time);
                 emit valueChanged(uasId, "Temperature", raw.temp, time);
             }
@@ -435,16 +425,12 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
     }
 }
 
-float UAS::filterVoltage()
-{
-    return lpVoltage;
-}
-
 /**
  * @param value battery voltage
  */
-float UAS::filterVoltage(float value)
+const float UAS::filterVoltage(float value)
 {
+    return lpVoltage * 0.8f + value * 0.2f;
     /*
     currentVoltage = value;
     static QList<float> voltages<float>(20);
@@ -460,7 +446,6 @@ float UAS::filterVoltage(float value)
     {
         lpVoltage += v;
     }*/
-    return currentVoltage;
 }
 
 void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDescription)

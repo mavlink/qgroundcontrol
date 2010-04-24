@@ -72,10 +72,8 @@ public:
     quint64 getUptime();
     /** @brief Get the status flag for the communication */
     int getCommunicationStatus();
-    /** @brief Get low-passed voltage */
-    float filterVoltage();
     /** @brief Add one measurement and get low-passed voltage */
-    float filterVoltage(float value);
+    const float filterVoltage(float value);
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
