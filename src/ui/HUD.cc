@@ -388,12 +388,17 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
 
     // Move to the center of the window
     glTranslatef(referenceWidth/2.0f,referenceHeight/2.0f,0);
+
+    // Move based on the yaw difference
+    glTranslatef(yaw, 0.0f, 0.0f);
+
     // Rotate based on the bank
-    glRotatef((roll/M_PI)*180.0f, 0, 0, 1);
+    glRotatef((roll/M_PI)*180.0f, 0.0f, 0.0f, 1.0f);
 
     // Translate in the direction of the rotation based
     // on the pitch. On the 777, a pitch of 1 degree = 2 mm
-    glTranslatef(0, ((-pitch/M_PI)*180.0f * vPitchPerDeg), 0);
+    //glTranslatef(0, ((-pitch/M_PI)*180.0f * vPitchPerDeg), 0);
+    glTranslatef(0.0f, (pitch * vPitchPerDeg * 16.5f), 0.0f);
 
     // Ground
     glColor3ub(179,102,0);
@@ -528,6 +533,29 @@ void HUD::paintEvent(QPaintEvent *event)
     pitch = pitch * 0.3 + 0.7 * values.value("pitch", 0.0f);
     yaw = yaw * 0.3 + 0.7 * values.value("yaw", 0.0f);
 
+    // Translate for yaw
+    const float maxYawTrans = 60.0f;
+    static float yawDiff = 0.0f;
+    float newYawDiff = valuesDot.value("yaw", 0.0f);
+    if (isinf(newYawDiff)) newYawDiff = yawDiff;
+    if (newYawDiff > M_PI) newYawDiff = newYawDiff - M_PI;
+
+    if (newYawDiff < -M_PI) newYawDiff = newYawDiff + M_PI;
+
+    newYawDiff = yawDiff * 0.8 + newYawDiff * 0.2;
+
+    yawDiff = newYawDiff;
+
+    yawInt += newYawDiff;
+
+    if (yawInt > M_PI) yawInt = M_PI;
+    if (yawInt < -M_PI) yawInt = -M_PI;
+
+    float yawTrans = yawInt * (double)maxYawTrans;
+    yawInt *= 0.6f;
+    //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw << "asin(yawInt)" << asinYaw;
+
+
 
     // Update scaling factor
     // adjust scaling to fit both horizontally and vertically
@@ -545,7 +573,7 @@ void HUD::paintEvent(QPaintEvent *event)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Blue / Brown background
-    if (noCamera) paintCenterBackground(roll, pitch, yaw);
+    if (noCamera) paintCenterBackground(roll, pitch, yawTrans);
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
@@ -556,11 +584,11 @@ void HUD::paintEvent(QPaintEvent *event)
     //glEnable(GL_MULTISAMPLE);
 
     // QT PAINTING
-    makeCurrent();
+    //makeCurrent();
     QPainter painter;
     painter.begin(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
-    //painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
 
@@ -665,37 +693,19 @@ void HUD::paintEvent(QPaintEvent *event)
 
     // MOVING PARTS
 
-    // Translate for yaw
-    const float maxYawTrans = 60.0f;
-    float yawDiff = valuesDot.value("yaw", 0.0f);
-    if (isinf(yawDiff)) yawDiff = 0.0f;
-    if (yawDiff > M_PI) yawDiff = yawDiff - M_PI;
 
-    if (yawDiff < -M_PI) yawDiff = yawDiff + M_PI;
-
-    yawInt += yawDiff;
-
-    if (yawInt > M_PI) yawInt = M_PI;
-    if (yawInt < -M_PI) yawInt = -M_PI;
-
-    float yawTrans = yawInt * (double)maxYawTrans;
-    yawInt *= 0.6f;
-    //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw << "asin(yawInt)" << asinYaw;
-
-    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(1.8));
-
-    //painter.translate(refToScreenX(yawTrans), 0);
-
-
+    painter.translate(refToScreenX(yawTrans), 0);
 
     // Rotate view and draw all roll-dependent indicators
     painter.rotate((roll/M_PI)* -180.0f);
+
+    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(1.8));
 
     //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 
     // PITCH
 
-    paintPitchLines((pitch/M_PI)*180.0f, &painter);
+    paintPitchLines(pitch, &painter);
     painter.end();
     //glDisable(GL_MULTISAMPLE);
 

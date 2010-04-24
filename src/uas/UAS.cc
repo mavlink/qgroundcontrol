@@ -430,7 +430,7 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
  */
 const float UAS::filterVoltage(float value)
 {
-    return lpVoltage * 0.8f + value * 0.2f;
+    return lpVoltage * 0.7f + value * 0.3f;
     /*
     currentVoltage = value;
     static QList<float> voltages<float>(20);
