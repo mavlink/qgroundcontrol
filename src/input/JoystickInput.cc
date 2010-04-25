@@ -104,7 +104,7 @@ void JoystickInput::init()
     // Wait for joysticks if none is connected
     while (numJoysticks == 0)
     {
-        msleep(200);
+        MG::SLEEP::msleep(200);
         // INITIALIZE SDL Joystick support
         if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0)
         {
@@ -276,7 +276,7 @@ void JoystickInput::run()
         }
 
         // Sleep, update rate of joystick is approx. 50 Hz (1000 ms / 50 = 20 ms)
-        msleep(20);
+        MG::SLEEP::msleep(20);
 
     }
 
