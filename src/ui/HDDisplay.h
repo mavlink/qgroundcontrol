@@ -59,9 +59,10 @@ public slots:
     void stop();
     void setActiveUAS(UASInterface* uas);
 
-    protected slots:
+protected slots:
     void paintGL();
     void paintDisplay();
+    void triggerUpdate();
 
 protected:
     void changeEvent(QEvent *e);

@@ -1,4 +1,7 @@
+#include <QTreeWidget>
+
 #include "ParameterInterface.h"
+#include "ParamTreeModel.h"
 #include "UASManager.h"
 #include "ui_ParameterInterface.h"
 
@@ -8,6 +11,19 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
 {
     m_ui->setupUi(this);
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+
+    // FIXME Testing TODO
+
+    QString testData = "IMU\n ROLL_K_P\t0.527\n ROLL_K_I\t1.255\n PITCH_K_P\t0.621\n PITCH_K_I\t2.5545\n";
+
+    ParamTreeModel* model = new ParamTreeModel(testData);
+
+    QTreeView* tree = new QTreeView();
+    tree->setModel(model);
+
+    QStackedWidget* stack = m_ui->stackedWidget;
+    stack->addWidget(tree);
+    stack->setCurrentWidget(tree);
 }
 
 ParameterInterface::~ParameterInterface()

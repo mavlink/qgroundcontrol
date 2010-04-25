@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>349</width>
+    <width>350</width>
     <height>545</height>
    </rect>
   </property>
@@ -17,7 +17,7 @@
    <item row="1" column="0">
     <widget class="QGroupBox" name="groupBox">
      <property name="title">
-      <string>Extended Output</string>
+      <string>Activate Extended Output</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
       <property name="margin">
@@ -37,13 +37,27 @@
         </property>
        </widget>
       </item>
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="checkBox">
+        <property name="text">
+         <string>Send RC-values</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="checkBox_2">
+        <property name="text">
+         <string>Send raw controller outputs</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
    <item row="2" column="0">
     <widget class="QGroupBox" name="groupBox_3">
      <property name="title">
-      <string>Calibration</string>
+      <string>Calibration Wizards</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <property name="margin">
@@ -52,7 +66,7 @@
       <item row="0" column="0">
        <widget class="QPushButton" name="gyroCalButton">
         <property name="text">
-         <string>Start gyro calibration</string>
+         <string>Start dynamic calibration</string>
         </property>
        </widget>
       </item>
@@ -66,26 +80,12 @@
       <item row="1" column="0">
        <widget class="QPushButton" name="magCalButton">
         <property name="text">
-         <string>Start mag. calibration</string>
+         <string>Start static calibration</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
        <widget class="QLabel" name="magCalLabel">
-        <property name="text">
-         <string>Date unknown</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QPushButton" name="accCalButton">
-        <property name="text">
-         <string>Start ACC calibration</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="accCalLabel">
         <property name="text">
          <string>Date unknown</string>
         </property>
@@ -113,47 +113,33 @@
       <item row="0" column="2" colspan="2">
        <widget class="QComboBox" name="vehicleComboBox"/>
       </item>
-      <item row="1" column="0" colspan="2">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Component</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2" colspan="2">
-       <widget class="QComboBox" name="componentComboBox"/>
-      </item>
-      <item row="2" column="0" colspan="4">
-       <widget class="QStackedWidget" name="stackedWidget">
-        <widget class="QWidget" name="page">
-         <layout class="QHBoxLayout" name="horizontalLayout">
-          <item>
-           <widget class="QListWidget" name="listWidget"/>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="page_2"/>
-       </widget>
-      </item>
-      <item row="3" column="0">
+      <item row="2" column="0">
        <widget class="QPushButton" name="readParamsButton">
         <property name="text">
          <string>Read</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1" colspan="2">
+      <item row="2" column="1" colspan="2">
        <widget class="QPushButton" name="writeParamsButton">
         <property name="text">
          <string>Write permanently</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="3">
+      <item row="2" column="3">
        <widget class="QPushButton" name="backupParamsButton">
         <property name="text">
          <string>Backup</string>
         </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="4">
+       <widget class="QStackedWidget" name="stackedWidget">
+        <widget class="QWidget" name="page">
+         <layout class="QVBoxLayout" name="verticalLayout"/>
+        </widget>
+        <widget class="QWidget" name="page_2"/>
        </widget>
       </item>
      </layout>

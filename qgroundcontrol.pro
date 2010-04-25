@@ -1,30 +1,25 @@
 # Include QMapControl map library
-
 # prefer version from external directory /
 # from http://github.com/pixhawk/qmapcontrol/
 # over bundled version in lib directory
-
 # Version from GIT repository is preferred
-#include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
-    # Include bundled version if necessary
-    include(lib/QMapControl/QMapControl.pri)
-    message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
-#}
+# include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
+# Include bundled version if necessary
+include(lib/QMapControl/QMapControl.pri)
+message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
 
+# }
 # Include general settings for MAVGround
 # necessary as last include to override any non-acceptable settings
 # done by the plugins above
 include(qgroundcontrol.pri)
 
-
 # QWT plot and QExtSerial depend on paths set by qgroundcontrol.pri
-
 # Include serial port library
 include(src/lib/qextserialport/qextserialport.pri)
 
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
-
 DEPENDPATH += . \
     lib/QMapControl \
     lib/QMapControl/src
@@ -64,7 +59,8 @@ INCLUDEPATH += src \
     include/ui \
     src/input \
     src/lib/qmapcontrol \
-    src/ui/mavlink
+    src/ui/mavlink \
+    src/ui/param
 HEADERS += src/MG.h \
     src/Core.h \
     src/uas/UASInterface.h \
@@ -114,7 +110,9 @@ HEADERS += src/MG.h \
     src/ui/MAVLinkSettingsWidget.h \
     src/ui/AudioOutputWidget.h \
     src/GAudioOutput.h \
-    src/LogCompressor.h
+    src/LogCompressor.h \
+    src/ui/param/ParamTreeItem.h \
+    src/ui/param/ParamTreeModel.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -159,5 +157,7 @@ SOURCES += src/main.cc \
     src/ui/MAVLinkSettingsWidget.cc \
     src/ui/AudioOutputWidget.cc \
     src/GAudioOutput.cc \
-    src/LogCompressor.cc
+    src/LogCompressor.cc \
+    src/ui/param/ParamTreeItem.cc \
+    src/ui/param/ParamTreeModel.cc
 RESOURCES = mavground.qrc
