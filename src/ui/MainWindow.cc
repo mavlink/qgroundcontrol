@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Implementation of main application window
+ *   @brief Implementation of class MainWindow
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
@@ -208,8 +208,9 @@ void MainWindow::startVideoCapture()
                                                           .arg(format));
     delete videoTimer;
     videoTimer = new QTimer(this);
-    videoTimer->setInterval(40);
-    connect(videoTimer, SIGNAL(timeout()), this, SLOT(saveScreen()));
+    //videoTimer->setInterval(40);
+    //connect(videoTimer, SIGNAL(timeout()), this, SLOT(saveScreen()));
+    //videoTimer->stop();
 }
 
 void MainWindow::stopVideoCapture()
@@ -390,7 +391,6 @@ void MainWindow::loadPilotView()
 
     headDown1->start();
     headDown2->start();
-
 
     this->show();
 }

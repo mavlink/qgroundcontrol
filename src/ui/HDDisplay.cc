@@ -78,8 +78,8 @@ HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
     this->setMinimumWidth(100);
 
     // Refresh timer
-    refreshTimer->setInterval(100);
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
+    refreshTimer->setInterval(150); // 200 Hz/5 ms
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(triggerUpdate()));
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintGL()));
 
     fontDatabase = QFontDatabase();
@@ -101,11 +101,18 @@ HDDisplay::~HDDisplay()
     delete m_ui;
 }
 
+void HDDisplay::triggerUpdate()
+{
+    // Only repaint the regions necessary
+    QRect r = geometry();
+    update(r);
+}
+
 void HDDisplay::paintEvent(QPaintEvent * event)
 {
     //paintGL();
     static quint64 interval = 0;
-    //qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
+    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
     interval = MG::TIME::getGroundTimeNow();
     paintDisplay();
 }
