@@ -116,7 +116,7 @@ void MAVLinkSimulationLink::run()
             }
             last = MG::TIME::getGroundTimeNow();
         }
-        msleep((rate / 20));
+        MG::SLEEP::msleep(2);
 
     }
 }
