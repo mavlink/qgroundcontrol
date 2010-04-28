@@ -209,6 +209,16 @@ signals:
      */
     void statusChanged(UASInterface* uas, QString status, QString description);
     /**
+     * @brief Received a plain text message from the robot
+     * This signal should NOT be used for standard communication, but rather for VERY IMPORTANT
+     * messages like critical errors.
+     *
+     * @param uasid ID of the sending system
+     * @param text the status text
+     * @param severity The severity of the message, 0 for plain debug messages, 10 for very critical messages
+     */
+    void textMessageReceived(int uasid, int severity, QString text);
+    /**
      * @brief Drop rate of communication link updated
      *
      * @param systemId id of the air system
