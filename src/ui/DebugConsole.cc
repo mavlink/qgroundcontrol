@@ -161,6 +161,11 @@ void DebugConsole::setAutoHold(bool hold)
     autoHold = hold;
 }
 
+void DebugConsole::receiveTextMessage(int id, int severity, QString text)
+{
+    m_ui->receiveText->appendHtml(QString("<b color=\"red\">(MAV" + QString::number(id) + QString(":") + QString::number(severity) + QString(") ") + text + QString("</b>")));
+}
+
 void DebugConsole::updateTrafficMeasurements()
 {
     lowpassDataRate = lowpassDataRate * 0.9f + (0.1f * ((float)snapShotBytes / (float)snapShotInterval) * 1000.0f);

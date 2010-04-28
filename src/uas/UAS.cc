@@ -353,8 +353,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 //b.append('\0');
                 QString text = QString(b);
                 int severity = message_statustext_get_severity(&message);
-                qDebug() << "RECEIVED STATUS:" << text;
+                //qDebug() << "RECEIVED STATUS:" << text;
                 //emit statusTextReceived(severity, text);
+                emit textMessageReceived(uasId, severity, text);
             }
             break;
         case MAVLINK_MSG_ID_PATTERN_DETECTED:
