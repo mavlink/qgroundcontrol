@@ -171,7 +171,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     emit modeChanged(this->getUASID(), mode, "");
                     modeAudio = " is now in " + mode;
                 }
-                currentVoltage = state.vbat;
+                currentVoltage = state.vbat/1000.0f;
                 lpVoltage = filterVoltage(currentVoltage);
                 if (startVoltage == 0) startVoltage = currentVoltage;
                 timeRemaining = calculateTimeRemaining();
