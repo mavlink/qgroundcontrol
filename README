@@ -2,19 +2,54 @@ QGroundControl Open Source Micro Air Vehicle Ground Control Station
 
 http://pixhawk.ethz.ch
 
+Mac OS X
+========
+
+To build on Mac OS X (10.5 or later):
+
+Install SDL
+-----------
+1) Download SDL from:  <http://www.libsdl.org/release/SDL-1.2.14.dmg>
+
+2) From the SDL disk image, copy the `sdl.framework` bundle to `/Library/Frameworks` directory (if you are not an admin copy to `~/Library/Framewroks`)
+
+Install QT with Cocoa
+----------------------
+1) Download Qt 4.6.2 with Cocoa from `http://get.qt.nokia.com/qt/source/qt-mac-cocoa-opensource-4.6.2.dmg` 
+
+2) Double click the package installer
+
+Get the MAVLINK Library
+-----------------------
+1) Clone the MAVLINK repository : `git clone git@pixhawk.ethz.ch:mavlink.git` (You need to have emailed  your ssh key). **NOTE:** Make sure that the mavlink directory is in the same directory as groundcontrol. QGround control will look for mavlink library in ../mavlink
+
+Build QGroundControl
+--------------------
+1) From the terminal go to the `groundcontrol` directory
+
+2) Run `qmake`
+
+3) Run `xcodebuild -configuration Release` or open `qgroundcontrol.xcodeproj` in Xcode and build.
+
+
+Linux 
+=====
+
 **********************************************************************************************
 * PLEASE NOTE: YOU NEED TO DOWNLOAD THE MAVLINK LIBRARY IN ORDER TO COMPILE THIS APPLICATION *
 **********************************************************************************************
 
 
-To build on Mac OS X (10.5 or later):
-1) Install http://www.libsdl.org/release/SDL-1.2.14.dmg
-2) Install Qt 4.6.2 with Cocoa http://get.qt.nokia.com/qt/source/qt-mac-cocoa-opensource-4.6.2.dmg
-3) Run "qmake"
-4) Run "xcodebuild -configuration Release" or open "qgroundcontrol.xcodeproj" in Xcode and build.
-
 To build on Linux:
 <instructions to be written>
+
+Windows
+=======
+
+**********************************************************************************************
+* PLEASE NOTE: YOU NEED TO DOWNLOAD THE MAVLINK LIBRARY IN ORDER TO COMPILE THIS APPLICATION *
+**********************************************************************************************
+
 
 To build on Windows:
 <instructions to be written>
