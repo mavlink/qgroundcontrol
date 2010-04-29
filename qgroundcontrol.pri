@@ -97,27 +97,28 @@ linux-g++ {
         DESTDIR = $$BASEDIR
     }
     INCLUDEPATH += /usr/include \
-               $$BASEDIR/lib/flite/include \
-               $$BASEDIR/lib/flite/lang
+              # $$BASEDIR/lib/flite/include \
+              # $$BASEDIR/lib/flite/lang
 
 
     HARDWARE_PLATFORM = $$system(uname -a)
     contains( HARDWARE_PLATFORM, x86_64 ) {
         # 64-bit Linux
-        LIBS += \
-            -L$$BASEDIR/lib/flite/linux64
+        #LIBS += \
+            #-L$$BASEDIR/lib/flite/linux64
         message(Building for GNU/Linux 64bit/x64)
     } else {
         # 32-bit Linux
-        LIBS += \
-           -L$$BASEDIR/lib/flite/linux32
+        #LIBS += \
+           #-L$$BASEDIR/lib/flite/linux32
         message(Building for GNU/Linux 32bit/i386)
     }
     LIBS += -lm \
-        -lflite_cmu_us_rms \
-        -lflite_cmu_us_slt \
+        #-lflite_cmu_us_rms \
+        #-lflite_cmu_us_slt \
         -lflite_usenglish \
         -lflite_cmulex \
+        -lflite_cmu_us_kal16 \
         -lflite \
         -lSDL \
         -lSDLmain
