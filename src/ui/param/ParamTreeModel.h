@@ -42,6 +42,7 @@ class ParamTreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
+    ParamTreeModel::ParamTreeModel(QObject *parent = 0);
     ParamTreeModel(const QString &data, QObject *parent = 0);
     ~ParamTreeModel();
 
@@ -54,6 +55,9 @@ public:
     QModelIndex parent(const QModelIndex &index) const;
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
+
+public slots:
+    void appendParam(int id, QString name, float value);
 
 private:
     void setupModelData(const QStringList &lines, ParamTreeItem *parent);
