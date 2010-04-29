@@ -32,6 +32,15 @@ This file is part of the PIXHAWK project
 
 #include "ParamTreeItem.h"
 
+ParamTreeItem::ParamTreeItem(int id, QString name, float value, ParamTreeItem* parent)
+{
+    parentItem = parent;
+    itemData = QList<QVariant>();
+    itemData.append(id);
+    itemData.append(name);
+    itemData.append(value);
+}
+
 ParamTreeItem::ParamTreeItem(const QList<QVariant> &data, ParamTreeItem *parent)
 {
     parentItem = parent;

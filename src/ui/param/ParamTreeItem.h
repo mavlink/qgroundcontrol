@@ -40,6 +40,7 @@ This file is part of the PIXHAWK project
 class ParamTreeItem
 {
 public:
+    ParamTreeItem(int id, QString name, float value, ParamTreeItem* parent = 0);
     ParamTreeItem(const QList<QVariant> &data, ParamTreeItem *parent = 0);
     ~ParamTreeItem();
 

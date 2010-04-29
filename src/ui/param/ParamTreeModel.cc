@@ -33,6 +33,15 @@ This file is part of the PIXHAWK project
 #include "ParamTreeItem.h"
 #include "ParamTreeModel.h"
 
+ParamTreeModel::ParamTreeModel(QObject *parent)
+    : QAbstractItemModel(parent)
+{
+    QList<QVariant> rootData;
+    rootData << tr("ID") << tr("Parameter") << tr("Value");
+    rootItem = new ParamTreeItem(rootData);
+    //setupModelData(data.split(QString("\n")), rootItem);
+}
+
 ParamTreeModel::ParamTreeModel(const QString &data, QObject *parent)
     : QAbstractItemModel(parent)
 {
