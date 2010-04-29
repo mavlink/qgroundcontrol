@@ -68,6 +68,8 @@ public slots:
     void hold(bool hold);
     /** @brief Enable auto-freeze mode if traffic intensity is too high to display */
     void setAutoHold(bool hold);
+    /** @brief Receive plain text message to output to the user */
+    void receiveTextMessage(int id, int severity, QString text);
 
     protected slots:
     /** @brief Draw information overlay */

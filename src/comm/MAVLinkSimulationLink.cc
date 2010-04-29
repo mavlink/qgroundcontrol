@@ -365,6 +365,15 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
+        // Pack debug text message
+        statustext_t text;
+        text.severity = 0;
+        strcpy((char*)(text.text), "DEBUG MESSAGE TEXT");
+        message_statustext_encode(systemId, componentId, &msg, &text);
+        bufferlength = message_to_send_buffer(buffer, &msg);
+        memcpy(stream+streampointer, buffer, bufferlength);
+        streampointer += bufferlength;
+
         /*
         // Pack message and get size of encoded byte string
         messageSize = message_boot_pack(systemId, componentId, &msg, version);
@@ -527,6 +536,14 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         status.mode = MAV_MODE_LOCKED;
                         break;
                     }
+                }
+                break;
+
+            case MAVLINK_MSG_ID_MANUAL_CONTROL:
+                {
+                    manual_control_t control;
+                    message_manual_control_decode(&msg, &control);
+                    qDebug() << "\n" << "ROLL:" << control.roll << "PITCH:" << control.pitch;
                 }
                 break;
             }

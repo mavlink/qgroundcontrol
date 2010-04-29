@@ -327,6 +327,9 @@ void MainWindow::UASCreated(UASInterface* uas)
         sysPresent = true;
     }
 
+    // FIXME Should be not inside the mainwindow
+    connect(uas, SIGNAL(textMessageReceived(int,int,QString)), debugConsole, SLOT(receiveTextMessage(int,int,QString)));
+
     // Health / System status indicator
     info->addUAS(uas);
 
