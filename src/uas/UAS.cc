@@ -44,6 +44,7 @@ This file is part of the PIXHAWK project
 #include <mavlink.h>
 
 UAS::UAS(MAVLinkProtocol* protocol, int id) :
+        uasId(id),
         startTime(MG::TIME::getGroundTimeNow()),
         commStatus(COMM_DISCONNECTED),
         name(""),
@@ -68,7 +69,6 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) :
         sendDropRate(0),
         unknownPackets()
 {
-    uasId = id;
     setBattery(LIPOLY, 3);
     mavlink = protocol;
 }
@@ -78,7 +78,7 @@ UAS::~UAS()
     delete links;
 }
 
-int UAS::getUASID()
+int UAS::getUASID() const
 {
     return uasId;
 }
@@ -326,6 +326,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
             }
             break;
+            case MAVLINK_MSG_ID_PARAM_VALUE:
+                {
+                    param_value_t value;
+                    message_param_value_decode(&message, &value);
+                    emit parameterChanged(uasId, message.compid, QString((char*)value.param_id), value.param_value);
+                }
+                break;
         case MAVLINK_MSG_ID_DEBUG:
             emit valueChanged(uasId, QString("debug ") + QString::number(message_debug_get_ind(&message)), message_debug_get_value(&message), MG::TIME::getGroundTimeNow());
             break;
@@ -431,7 +438,7 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
 /**
  * @param value battery voltage
  */
-const float UAS::filterVoltage(float value)
+float UAS::filterVoltage(float value) const
 {
     return lpVoltage * 0.7f + value * 0.3f;
     /*
@@ -503,7 +510,7 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
  * @return The uptime in milliseconds
  *
  **/
-quint64 UAS::getUptime()
+quint64 UAS::getUptime() const
 {
     if(startTime == 0) {
         return 0;
@@ -512,7 +519,7 @@ quint64 UAS::getUptime()
     }
 }
 
-int UAS::getCommunicationStatus()
+int UAS::getCommunicationStatus() const
 {
     return commStatus;
 }
@@ -528,7 +535,8 @@ void UAS::requestWaypoints()
 void UAS::requestParameters()
 {
     mavlink_message_t msg;
-    message_param_request_read_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, 0);
+    message_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg);
+    sendMessage(msg);
 }
 
 /**
@@ -727,7 +735,7 @@ void UAS::shutdown()
 /**
  * @return The name of this system as string in human-readable form
  */
-QString UAS::getUASName(void)
+QString UAS::getUASName(void) const
 {
     QString result;
     if (name == "")

@@ -138,13 +138,13 @@ QString MAVLinkProtocol::getName()
 }
 
 /** @return System id of this application */
-int getSystemId()
+int MAVLinkProtocol::getSystemId()
 {
     return MG::SYSTEM::ID;
 }
 
 /** @return Component id of this application */
-int getComponentId()
+int MAVLinkProtocol::getComponentId()
 {
     return MG::SYSTEM::COMPID;
 }

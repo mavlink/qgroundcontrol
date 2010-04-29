@@ -86,6 +86,8 @@ macx {
 
 # GNU/Linux
 linux-g++ { 
+
+    CONFIG += debug
     
     debug {
         DESTDIR = $$BASEDIR

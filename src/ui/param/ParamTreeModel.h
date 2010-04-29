@@ -58,7 +58,7 @@ public:
 
 public slots:
     /** @brief Add a new parameter */
-    void appendParam(int componentId, int id, QString name, float value);
+    void appendParam(int componentId, QString name, float value);
     /** @brief Add a new component for this system */
     void appendComponent(int componentId, QString name);
 

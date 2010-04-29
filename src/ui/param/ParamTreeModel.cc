@@ -38,7 +38,7 @@ ParamTreeModel::ParamTreeModel(QObject *parent)
     components()
 {
     QList<QVariant> rootData;
-    rootData << tr("ID") << tr("Parameter") << tr("Value");
+    rootData << tr("Parameter") << tr("Value");
     rootItem = new ParamTreeItem(rootData);
     //setupModelData(data.split(QString("\n")), rootItem);
 }
@@ -153,12 +153,12 @@ void ParamTreeModel::appendComponent(int componentId, QString name)
 {
     if (!components.contains(componentId))
     {
-        ParamTreeItem* item = new ParamTreeItem(componentId, name, 0, rootItem);
+        ParamTreeItem* item = new ParamTreeItem(name + QString("(") + QString::number(componentId) + QString(")"), 0, rootItem);
         components.insert(componentId, item);
     }
 }
 
-void ParamTreeModel::appendParam(int componentId, int id, QString name, float value)
+void ParamTreeModel::appendParam(int componentId, QString name, float value)
 {
     ParamTreeItem* comp = components.value(componentId);
     // If component does not exist yet
@@ -168,7 +168,8 @@ void ParamTreeModel::appendParam(int componentId, int id, QString name, float va
         comp = components.value(componentId);
     }
     // FIXME Children may be double here
-    comp->appendChild(new ParamTreeItem(id, name, value, comp));
+    comp->appendChild(new ParamTreeItem(name, value, comp));
+    qDebug() << __FILE__ << __LINE__ << "Added param" << name << value << "for component" << comp->getParamName();
 }
 
 void ParamTreeModel::setupModelData(const QStringList &lines, ParamTreeItem *parent)
