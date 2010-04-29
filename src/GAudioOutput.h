@@ -77,6 +77,8 @@ public slots:
     bool alert(QString text);
     /** @brief Start emergency sound */
     bool startEmergency();
+    /** @brief Start emergency sound */
+    bool startEmergency(QString);
     /** @brief Stop emergency sound */
     bool stopEmergency();
     /** @brief Select female voice */

@@ -121,6 +121,7 @@ protected:
     double manualThrust;        ///< Thrust set by human pilot (radians)
     float receiveDropRate;      ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;         ///< Percentage of packets that were not received from the MAV by the GCS
+    bool lowBattAlarm;          ///< Switch if battery is low
 
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
@@ -136,7 +137,9 @@ protected:
 public slots:
     /** @brief Launches the system **/
     void launch();
+    /** @brief Write this waypoint to the list of waypoints */
     void setWaypoint(Waypoint* wp);
+    /** @brief Set currently active waypoint */
     void setWaypointActive(int id);
     /** @brief Order the robot to return home / to land on the runway **/
     void home();
@@ -150,6 +153,9 @@ public slots:
 
     /** @brief Shut the system cleanly down. Will shut down any onboard computers **/
     void shutdown();
+
+    void startLowBattAlarm();
+    void stopLowBattAlarm();
 
     void requestWaypoints();
     void requestParameters();

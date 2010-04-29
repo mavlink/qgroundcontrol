@@ -67,7 +67,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) :
         manualThrust(0),
         receiveDropRate(0),
         sendDropRate(0),
-        unknownPackets()
+        unknownPackets(),
+        lowBattAlarm(false)
 {
     setBattery(LIPOLY, 3);
     mavlink = protocol;
@@ -180,6 +181,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 //qDebug() << "Voltage: " << currentVoltage << " Chargelevel: " << getChargeLevel() << " Time remaining " << timeRemaining;
                 emit batteryChanged(this, lpVoltage, getChargeLevel(), timeRemaining);
                 emit voltageChanged(message.sysid, state.vbat/1000.0f);
+
+                // LOW BATTERY ALARM
+                float chargeLevel = getChargeLevel();
+                if (chargeLevel <= 10.0f)
+                {
+                    startLowBattAlarm();
+                }
+                else
+                {
+                    stopLowBattAlarm();
+                }
 
                 // COMMUNICATIONS DROP RATE
                 emit dropRateChanged(this->getUASID(), this->receiveDropRate, this->sendDropRate);
@@ -806,9 +818,30 @@ int UAS::calculateTimeRemaining()
     return remaining;
 }
 
+/**
+ * @return charge level in percent - 0 - 100
+ */
 double UAS::getChargeLevel()
 {
     return 100.0f * ((lpVoltage - emptyVoltage)/(fullVoltage - emptyVoltage));
+}
+
+void UAS::startLowBattAlarm()
+{
+    if (!lowBattAlarm)
+    {
+        GAudioOutput::instance()->startEmergency("BATTERY");
+        lowBattAlarm = true;
+    }
+}
+
+void UAS::stopLowBattAlarm()
+{
+    if (lowBattAlarm)
+    {
+        GAudioOutput::instance()->stopEmergency();
+        lowBattAlarm = false;
+    }
 }
 
 void UAS::clearWaypointList()

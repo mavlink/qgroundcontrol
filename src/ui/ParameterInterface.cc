@@ -14,10 +14,6 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
     m_ui->setupUi(this);
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
 
-    // FIXME Testing TODO
-
-    QString testData = "IMU\n ROLL_K_P\t0.527\n ROLL_K_I\t1.255\n PITCH_K_P\t0.621\n PITCH_K_I\t2.5545\n";
-
     tree = new ParamTreeModel();
 
     treeView = new QTreeView();
@@ -76,11 +72,10 @@ void ParameterInterface::addComponent(UASInterface* uas, int component, QString 
 void ParameterInterface::receiveParameter(int uas, int component, QString parameterName, float value)
 {
     Q_UNUSED(uas);
-    qDebug() << "RECEIVED PARAMETER" << component << parameterName << value;
     // Insert parameter into map
     tree->appendParam(component, parameterName, value);
     // Refresh view
-    treeView->setModel(tree);
+    treeView->update();
 }
 
 /**
