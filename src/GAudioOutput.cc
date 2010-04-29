@@ -47,21 +47,23 @@ using System;
 using System.Speech.Synthesis;
 #endif
 
-#ifdef Q_OS_LINUX
-extern "C" {
-#include <flite.h>
-#include <cmu_us_awb/voxdefs.h>
+//#ifdef Q_OS_LINUX
+//extern "C" {
+//#include <flite/flite.h>
+//#include <cmu_us_awb/voxdefs.h>
     //#include <cmu_us_slt/voxdefs.h>
     //cst_voice *REGISTER_VOX(const char *voxdir);
     //void UNREGISTER_VOX(cst_voice *vox);
     //cst_voice *register_cmu_us_awb(const char *voxdir);
     //void unregister_cmu_us_awb(cst_voice *vox);
-    cst_voice *register_cmu_us_slt(const char *voxdir);
-    void unregister_cmu_us_slt(cst_voice *vox);
-    cst_voice *register_cmu_us_rms(const char *voxdir);
-    void unregister_cmu_us_rms(cst_voice *vox);
-};
-#endif
+    //cst_voice *register_cmu_us_slt(const char *voxdir);
+    //void unregister_cmu_us_slt(cst_voice *vox);
+    //cst_voice *register_cmu_us_rms(const char *voxdir);
+    //void unregister_cmu_us_rms(cst_voice *vox);
+//};
+//#endif
+
+
 
 /**
  * This class follows the singleton design pattern
@@ -84,7 +86,7 @@ GAudioOutput* GAudioOutput::instance()
 
 GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
 #ifdef Q_OS_LINUX
-voice(NULL),
+//voice(NULL),
 #endif
 voiceIndex(0),
 emergency(false)
@@ -125,12 +127,13 @@ bool GAudioOutput::say(QString text, int severity)
         synth.SpeakText("Hello, world!");
 #endif
 
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_LINUX2
         QTemporaryFile file;
         file.setFileTemplate("XXXXXX.wav");
         if (file.open())
         {
-            cst_wave* wav = flite_text_to_wave(text.toStdString().c_str(), this->voice);
+            cst_voice* v = register_cmu_us_kal16(NULL);
+            cst_wave* wav = flite_text_to_wave(text.toStdString().c_str(), v);
             // file.fileName() returns the unique file name
             cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
             m_media->setCurrentSource(Phonon::MediaSource(file.fileName().toStdString().c_str()));
@@ -236,14 +239,14 @@ void GAudioOutput::beep()
 void GAudioOutput::selectFemaleVoice()
 {
 #ifdef Q_OS_LINUX
-    this->voice = register_cmu_us_slt(NULL);
+    //this->voice = register_cmu_us_slt(NULL);
 #endif
 }
 
 void GAudioOutput::selectMaleVoice()
 {
 #ifdef Q_OS_LINUX
-    this->voice = register_cmu_us_rms(NULL);
+    //this->voice = register_cmu_us_rms(NULL);
 #endif
 }
 
@@ -258,7 +261,7 @@ void GAudioOutput::selectNeutralVoice()
 QStringList GAudioOutput::listVoices(void)
 {
     QStringList l;
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_LINUX2
     cst_voice *voice;
     const cst_val *v;
 

@@ -39,7 +39,7 @@ This file is part of the PIXHAWK project
 #include <Phonon>
 #endif
 #ifdef Q_OS_LINUX
-#include <flite.h>
+#include <flite/flite.h>
 #include <phonon>
 #endif
 #ifdef Q_OS_WIN
@@ -51,6 +51,14 @@ This file is part of the PIXHAWK project
 #include <NSSpeechSynthesizer.h>
 #endif
    */
+
+#ifdef Q_OS_LINUX
+extern "C" {
+    cst_voice *REGISTER_VOX(const char *voxdir);
+    void UNREGISTER_VOX(cst_voice *vox);
+cst_voice* register_cmu_us_kal16(const char *voxdir);
+}
+#endif
 
 /**
  * @brief Audio Output (speech synthesizer and "beep" output)
@@ -93,7 +101,7 @@ protected:
     //NSSpeechSynthesizer
 #endif
 #ifdef Q_OS_LINUX
-    cst_voice* voice; ///< The flite voice object
+    //cst_voice* voice; ///< The flite voice object
 #endif
     int voiceIndex;   ///< The index of the flite voice to use (awb, slt, rms)
     Phonon::MediaObject* m_media; ///< The output object for audio
