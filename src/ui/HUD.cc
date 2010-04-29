@@ -1390,6 +1390,7 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
 
 void HUD::startImage(int imgid, int width, int height, int depth, int channels)
 {
+    Q_UNUSED(imgid);
     //qDebug() << "HUD: starting image (" << width << "x" << height << ", " << depth << "bits) with " << channels << "channels";
 
     // Copy previous image to screen if it hasn't been finished properly
@@ -1459,6 +1460,7 @@ void HUD::saveImage()
 
 void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int startIndex)
 {
+    Q_UNUSED(imgid);
     //    qDebug() << "at" << __FILE__ << __LINE__ << ": Received startindex" << startIndex << "and length" << length << "(" << startIndex+length << "of" << rawExpectedBytes << "bytes)";
 
     if (imageStarted)

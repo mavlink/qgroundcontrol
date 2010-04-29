@@ -146,6 +146,7 @@ void UASInfoWidget::updateCPULoad(UASInterface* uas, double load)
 
 void UASInfoWidget::updateDropRate(int sysId, float receiveDrop, float sendDrop)
 {
+    Q_UNUSED(sysId);
     ui.receiveLossBar->setValue(receiveDrop * 100.0f);
     ui.sendLossBar->setValue(sendDrop * 100.0f);
 }
@@ -187,6 +188,7 @@ void UASInfoWidget::updateDropRate(int sysId, float receiveDrop, float sendDrop)
 
 void UASInfoWidget::setVoltage(UASInterface* uas, double voltage)
 {
+    Q_UNUSED(uas);
     this->voltage = voltage;
 }
 

@@ -66,23 +66,23 @@ public:
     /* MANAGEMENT */
 
     /** @brief The name of the robot */
-    QString getUASName(void);
+    QString getUASName(void) const;
     /** @brief Get the unique system id */
-    int getUASID();
+    int getUASID() const;
     /** @brief The time interval the robot is switched on */
-    quint64 getUptime();
+    quint64 getUptime() const;
     /** @brief Get the status flag for the communication */
-    int getCommunicationStatus();
+    int getCommunicationStatus() const;
     /** @brief Add one measurement and get low-passed voltage */
-    const float filterVoltage(float value);
+    float filterVoltage(float value) const;
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
 protected:
-    int type;
+    int uasId;                    ///< Unique system ID
+    int type;                     ///< UAS type (from type enum)
     quint64 startTime;            ///< The time the UAS was switched on
     CommStatus commStatus;        ///< Communication status
-    int uasId;                    ///< Unique system ID
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance

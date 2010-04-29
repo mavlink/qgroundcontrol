@@ -32,13 +32,11 @@ This file is part of the PIXHAWK project
 
 #include "ParamTreeItem.h"
 
-ParamTreeItem::ParamTreeItem(int id, QString name, float value, ParamTreeItem* parent)
+ParamTreeItem::ParamTreeItem(QString name, float value, ParamTreeItem* parent)
 {
     parentItem = parent;
-    itemData = QList<QVariant>();
-    itemData.append(id);
-    itemData.append(name);
-    itemData.append(value);
+    paramName = name;
+    paramValue = value;
 }
 
 ParamTreeItem::ParamTreeItem(const QList<QVariant> &data, ParamTreeItem *parent)
@@ -69,12 +67,35 @@ int ParamTreeItem::childCount() const
 
 int ParamTreeItem::columnCount() const
 {
-    return itemData.count();
+    return 2;// itemData.count();
+}
+
+QString ParamTreeItem::getParamName()
+{
+    return paramName;
+}
+
+float ParamTreeItem::getParamValue()
+{
+    return paramValue;
 }
 
 QVariant ParamTreeItem::data(int column) const
 {
-    return itemData.value(column);
+    QVariant ret;
+    switch (column)
+    {
+    case 0:
+        ret.setValue(paramName);
+        break;
+    case 1:
+        ret.setValue(paramValue);
+        break;
+    default:
+        ret.setValue(QString(""));
+        break;
+    }
+    //return itemData.value(column);
 }
 
 ParamTreeItem *ParamTreeItem::parent()

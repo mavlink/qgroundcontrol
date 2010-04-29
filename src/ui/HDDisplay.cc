@@ -538,6 +538,7 @@ float HDDisplay::refLineWidthToPen(float line)
 
 void HDDisplay::updateValue(UASInterface* uas, QString name, double value, quint64 msec)
 {
+    Q_UNUSED(uas);
     //if (this->uas == uas)
     //{
         // Update mean

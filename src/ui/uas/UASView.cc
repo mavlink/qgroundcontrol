@@ -137,11 +137,13 @@ void UASView::setUASasActive(bool active)
 
 void UASView::updateMode(int sysId, QString status, QString description)
 {
+    Q_UNUSED(description);
     if (sysId == this->uas->getUASID()) m_ui->modeLabel->setText(status);
 }
 
 void UASView::mouseDoubleClickEvent (QMouseEvent * event)
 {
+    Q_UNUSED(event);
     UASManager::instance()->setActiveUAS(uas);
     qDebug() << __FILE__ << __LINE__ << "DOUBLECLICKED";
 }
@@ -214,6 +216,7 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
 
 void UASView::updateLocalPosition(UASInterface* uas, double x, double y, double z, quint64 usec)
 {
+    Q_UNUSED(usec);
     if (uas == this->uas)
     {
         QString position;

@@ -5,9 +5,11 @@
 #include "UASManager.h"
 #include "ui_ParameterInterface.h"
 
+#include <QDebug>
+
 ParameterInterface::ParameterInterface(QWidget *parent) :
-    QWidget(parent),
-    m_ui(new Ui::parameterWidget)
+        QWidget(parent),
+        m_ui(new Ui::parameterWidget)
 {
     m_ui->setupUi(this);
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
@@ -16,14 +18,15 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
 
     QString testData = "IMU\n ROLL_K_P\t0.527\n ROLL_K_I\t1.255\n PITCH_K_P\t0.621\n PITCH_K_I\t2.5545\n";
 
-    ParamTreeModel* model = new ParamTreeModel(testData);
+    tree = new ParamTreeModel();
 
-    QTreeView* tree = new QTreeView();
-    tree->setModel(model);
+    treeView = new QTreeView();
+    treeView->setModel(tree);
 
     QStackedWidget* stack = m_ui->stackedWidget;
-    stack->addWidget(tree);
-    stack->setCurrentWidget(tree);
+    stack->addWidget(treeView);
+    stack->setCurrentWidget(treeView);
+
 }
 
 ParameterInterface::~ParameterInterface()
@@ -38,10 +41,18 @@ ParameterInterface::~ParameterInterface()
 void ParameterInterface::addUAS(UASInterface* uas)
 {
     m_ui->vehicleComboBox->addItem(uas->getUASName());
+
+    mav = uas;
+
+    // Setup UI connections
+    connect(m_ui->readParamsButton, SIGNAL(clicked()), this, SLOT(requestParameterList()));
+
+    // Connect signals
+    connect(uas, SIGNAL(parameterChanged(int,int,QString,float)), this, SLOT(receiveParameter(int,int,QString,float)));
     //if (!paramViews.contains(uas))
     //{
-        //uasViews.insert(uas, new UASView(uas, this));
-        //listLayout->addWidget(uasViews.value(uas));
+    //uasViews.insert(uas, new UASView(uas, this));
+    //listLayout->addWidget(uasViews.value(uas));
 
     //}
 }
@@ -59,14 +70,17 @@ void ParameterInterface::requestParameterList()
  */
 void ParameterInterface::addComponent(UASInterface* uas, int component, QString componentName)
 {
-
+    Q_UNUSED(uas);
 }
 
-void ParameterInterface::receiveParameter(UASInterface* uas, int component, QString parameterName, float value)
+void ParameterInterface::receiveParameter(int uas, int component, QString parameterName, float value)
 {
-  // Insert parameter into map
-
-  // Refresh view
+    Q_UNUSED(uas);
+    qDebug() << "RECEIVED PARAMETER" << component << parameterName << value;
+    // Insert parameter into map
+    tree->appendParam(component, parameterName, value);
+    // Refresh view
+    treeView->setModel(tree);
 }
 
 /**
@@ -77,7 +91,7 @@ void ParameterInterface::receiveParameter(UASInterface* uas, int component, QStr
  */
 void ParameterInterface::setParameter(UASInterface* uas, int component, QString parameterName, float value)
 {
-
+    Q_UNUSED(uas);
 }
 
 /**

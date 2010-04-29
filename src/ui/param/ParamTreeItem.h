@@ -40,11 +40,13 @@ This file is part of the PIXHAWK project
 class ParamTreeItem
 {
 public:
-    ParamTreeItem(int id, QString name, float value, ParamTreeItem* parent = 0);
+    ParamTreeItem(QString name, float value, ParamTreeItem* parent = 0);
     ParamTreeItem(const QList<QVariant> &data, ParamTreeItem *parent = 0);
     ~ParamTreeItem();
 
     void appendChild(ParamTreeItem *child);
+    QString getParamName();
+    float getParamValue();
 
     ParamTreeItem *child(int row);
     int childCount() const;
@@ -52,6 +54,10 @@ public:
     QVariant data(int column) const;
     int row() const;
     ParamTreeItem *parent();
+
+    protected:
+    QString paramName;
+    float paramValue;
 
 private:
     QList<ParamTreeItem*> childItems;

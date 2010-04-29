@@ -143,9 +143,6 @@ void MAVLinkSimulationLink::mainloop()
     uint8_t stream[streamlength] = {};
 
     // Fake system values
-    uint8_t systemId = 220;
-    uint8_t componentId = 0;
-    uint16_t version = 1000;
 
     static float fullVoltage = 4.2 * 3;
     static float emptyVoltage = 3.35 * 3;
@@ -487,6 +484,12 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
     mavlink_message_t msg;
     mavlink_status_t comm;
 
+    uint8_t stream[2048];
+    int streampointer = 0;
+    mavlink_message_t ret;
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    int bufferlength = 0;
+
     // Output all bytes as hex digits
     int i;
     for (i=0; i<size; i++)
@@ -546,6 +549,21 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                     qDebug() << "\n" << "ROLL:" << control.roll << "PITCH:" << control.pitch;
                 }
                 break;
+            case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
+                {
+                    param_request_list_t read;
+                    message_param_request_list_decode(&msg, &read);
+                    // Output all params
+
+                    // Pack message and get size of encoded byte string
+                    message_param_value_pack(systemId, componentId, &msg, (int8_t*)"ROLL_K_P", 0.5f);
+                    // Allocate buffer with packet data
+                    bufferlength = message_to_send_buffer(buffer, &msg);
+
+                    //add data into datastream
+                    memcpy(stream+streampointer,buffer, bufferlength);
+                    streampointer+=bufferlength;
+                }
             }
 
 
@@ -554,6 +572,13 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
         fprintf(stderr,"%02x ", v);
     }
     fprintf(stderr,"\n");
+
+    readyBufferMutex.lock();
+    for (int i = 0; i < streampointer; i++)
+    {
+        readyBuffer.enqueue(*(stream + i));
+    }
+    readyBufferMutex.unlock();
 
     // Update comm status
     status.packet_drop = comm.packet_rx_drop_count;

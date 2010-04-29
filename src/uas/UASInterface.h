@@ -60,13 +60,13 @@ public:
     /* MANAGEMENT */
 
     /** @brief The name of the robot **/
-    virtual QString getUASName() = 0;
+    virtual QString getUASName() const = 0;
     //virtual QColor getColor() = 0;
-    virtual int getUASID() = 0; ///< Get the ID of the connected UAS
+    virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
-    virtual quint64 getUptime() = 0;
+    virtual quint64 getUptime() const = 0;
     /** @brief Get the status flag for the communication **/
-    virtual int getCommunicationStatus() = 0;
+    virtual int getCommunicationStatus() const = 0;
 
     /* COMMUNICATION FLAGS */
 
@@ -259,6 +259,7 @@ signals:
     void waypointSelected(int uasId, int id);
     void waypointReached(UASInterface* uas, int id);
     void autoModeChanged(bool autoMode);
+    void parameterChanged(int uas, int component, QString parameterName, float value);
     void detectionReceived(int uasId, QString patternPath, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, double confidence, bool detected);
     /**
      * @brief The battery status has been updated
