@@ -112,7 +112,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
                 // it's first messages.
 
                 // First create new UAS object
-                uas = new UAS(message.sysid);
+                uas = new UAS(this, message.sysid);
                 // Make UAS aware that this link can be used to communicate with the actual robot
                 uas->addLink(link);
                 // Connect this robot to the UAS object
@@ -135,6 +135,18 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
 QString MAVLinkProtocol::getName()
 {
     return QString(tr("MAVLink protocol"));
+}
+
+/** @return System id of this application */
+int getSystemId()
+{
+    return MG::SYSTEM::ID;
+}
+
+/** @return Component id of this application */
+int getComponentId()
+{
+    return MG::SYSTEM::COMPID;
 }
 
 /**

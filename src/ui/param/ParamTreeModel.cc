@@ -34,7 +34,8 @@ This file is part of the PIXHAWK project
 #include "ParamTreeModel.h"
 
 ParamTreeModel::ParamTreeModel(QObject *parent)
-    : QAbstractItemModel(parent)
+    : QAbstractItemModel(parent),
+    components()
 {
     QList<QVariant> rootData;
     rootData << tr("ID") << tr("Parameter") << tr("Value");
@@ -43,7 +44,8 @@ ParamTreeModel::ParamTreeModel(QObject *parent)
 }
 
 ParamTreeModel::ParamTreeModel(const QString &data, QObject *parent)
-    : QAbstractItemModel(parent)
+    : QAbstractItemModel(parent),
+    components()
 {
     QList<QVariant> rootData;
     rootData << tr("Parameter") << tr("Value");
@@ -86,7 +88,7 @@ Qt::ItemFlags ParamTreeModel::flags(const QModelIndex &index) const
 }
 
 QVariant ParamTreeModel::headerData(int section, Qt::Orientation orientation,
-                               int role) const
+                                    int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
         return rootItem->data(section);
@@ -95,7 +97,7 @@ QVariant ParamTreeModel::headerData(int section, Qt::Orientation orientation,
 }
 
 QModelIndex ParamTreeModel::index(int row, int column, const QModelIndex &parent)
-            const
+        const
 {
     if (!hasIndex(row, column, parent))
         return QModelIndex();
@@ -140,6 +142,33 @@ int ParamTreeModel::rowCount(const QModelIndex &parent) const
         parentItem = static_cast<ParamTreeItem*>(parent.internalPointer());
 
     return parentItem->childCount();
+}
+
+ParamTreeItem* ParamTreeModel::getNodeForComponentId(int id)
+{
+    return components.value(id);
+}
+
+void ParamTreeModel::appendComponent(int componentId, QString name)
+{
+    if (!components.contains(componentId))
+    {
+        ParamTreeItem* item = new ParamTreeItem(componentId, name, 0, rootItem);
+        components.insert(componentId, item);
+    }
+}
+
+void ParamTreeModel::appendParam(int componentId, int id, QString name, float value)
+{
+    ParamTreeItem* comp = components.value(componentId);
+    // If component does not exist yet
+    if (comp == NULL)
+    {
+        appendComponent(componentId, name);
+        comp = components.value(componentId);
+    }
+    // FIXME Children may be double here
+    comp->appendChild(new ParamTreeItem(id, name, value, comp));
 }
 
 void ParamTreeModel::setupModelData(const QStringList &lines, ParamTreeItem *parent)

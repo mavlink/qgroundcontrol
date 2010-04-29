@@ -167,14 +167,12 @@ public slots:
      * Works only if already landed and will cleanly shut down all onboard computers.
      */
     virtual void shutdown() = 0;
-    /**
-     * @brief Request the list of stored waypoints from the robot
-     */
+    /** @brief Request the list of stored waypoints from the robot */
     virtual void requestWaypoints() = 0;
-    /**
-     * @brief Clear all existing waypoints on the robot
-     */
+    /** @brief Clear all existing waypoints on the robot */
     virtual void clearWaypointList() = 0;
+    /** @brief Request all onboard parameters of all components */
+    virtual void requestParameters() = 0;
 
     /**
      * @brief Add a link to the list of current links

@@ -46,6 +46,11 @@ void ParameterInterface::addUAS(UASInterface* uas)
     //}
 }
 
+void ParameterInterface::requestParameterList()
+{
+    mav->requestParameters();
+}
+
 /**
  *
  * @param uas System which has the component

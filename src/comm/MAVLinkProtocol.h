@@ -56,6 +56,10 @@ public:
     void run();
     /** @brief Get the human-friendly name of this protocol */
     QString getName();
+    /** @brief Get the system id of this application */
+    int getSystemId();
+    /** @brief Get the component id of this application */
+    int getComponentId();
     /** @brief The auto heartbeat emission rate in Hertz */
     int getHeartbeatRate();
     /** @brief Get heartbeat state */

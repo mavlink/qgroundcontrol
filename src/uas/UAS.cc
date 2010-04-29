@@ -40,9 +40,10 @@ This file is part of the PIXHAWK project
 #include "UASManager.h"
 #include "MG.h"
 #include "GAudioOutput.h"
-#include "mavlink.h"
+#include "MAVLinkProtocol.h"
+#include <mavlink.h>
 
-UAS::UAS(int id=0) :
+UAS::UAS(MAVLinkProtocol* protocol, int id) :
         startTime(MG::TIME::getGroundTimeNow()),
         commStatus(COMM_DISCONNECTED),
         name(""),
@@ -69,6 +70,7 @@ UAS::UAS(int id=0) :
 {
     uasId = id;
     setBattery(LIPOLY, 3);
+    mavlink = protocol;
 }
 
 UAS::~UAS()
@@ -521,6 +523,12 @@ void UAS::requestWaypoints()
     //messagePackGetWaypoints(MG::SYSTEM::ID, &message); FIXME
     sendMessage(message);
     qDebug() << "UAS Request WPs";
+}
+
+void UAS::requestParameters()
+{
+    mavlink_message_t msg;
+    message_param_request_read_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, 0);
 }
 
 /**
