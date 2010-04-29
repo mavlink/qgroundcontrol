@@ -16,8 +16,8 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
 
     tree = new ParamTreeModel();
 
-    treeView = new QTreeView();
-    treeView->setModel(tree);
+    treeView = new QTreeView(this);
+    //treeView->setModel(tree);
 
     QStackedWidget* stack = m_ui->stackedWidget;
     stack->addWidget(treeView);
