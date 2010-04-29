@@ -42,7 +42,7 @@ class ParamTreeModel : public QAbstractItemModel
     Q_OBJECT
 
 public:
-    ParamTreeModel::ParamTreeModel(QObject *parent = 0);
+    ParamTreeModel(QObject *parent = 0);
     ParamTreeModel(const QString &data, QObject *parent = 0);
     ~ParamTreeModel();
 
@@ -57,7 +57,15 @@ public:
     int columnCount(const QModelIndex &parent = QModelIndex()) const;
 
 public slots:
-    void appendParam(int id, QString name, float value);
+    /** @brief Add a new parameter */
+    void appendParam(int componentId, int id, QString name, float value);
+    /** @brief Add a new component for this system */
+    void appendComponent(int componentId, QString name);
+
+protected:
+    ParamTreeItem* getNodeForComponentId(int id);
+
+    QMap<int, ParamTreeItem*> components;
 
 private:
     void setupModelData(const QStringList &lines, ParamTreeItem *parent);

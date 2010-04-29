@@ -19,11 +19,14 @@ public slots:
     void addUAS(UASInterface* uas);
     void addComponent(UASInterface* uas, int component, QString componentName);
     void receiveParameter(UASInterface* uas, int component, QString parameterName, float value);
+    void requestParameterList();
     void setParameter(UASInterface* uas, int component, QString parameterName, float value);
     void commitParameter(UASInterface* uas, int component, QString parameterName, float value);
 
 protected:
     virtual void changeEvent(QEvent *e);
+
+    UASInterface* mav;
 
 private:
     Ui::parameterWidget *m_ui;

@@ -34,6 +34,7 @@ This file is part of the PIXHAWK project
 
 #include "UASInterface.h"
 #include "MG.h"
+#include <MAVLinkProtocol.h>
 #include <mavlink.h>
 
 /**
@@ -47,7 +48,7 @@ This file is part of the PIXHAWK project
 class UAS : public UASInterface {
     Q_OBJECT
 public:
-    UAS(int id);
+    UAS(MAVLinkProtocol* protocol, int id = 0);
     ~UAS();
 
     enum BatteryType {
@@ -84,6 +85,7 @@ protected:
     int uasId;                    ///< Unique system ID
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
+    MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     BatteryType batteryType;      ///< The battery type
     int cells;                    ///< Number of cells
 
@@ -150,6 +152,7 @@ public slots:
     void shutdown();
 
     void requestWaypoints();
+    void requestParameters();
     void clearWaypointList();
     /** @brief Enable the motors */
     void enable_motors();

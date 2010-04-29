@@ -162,7 +162,27 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     LinkManager::instance()->addProtocol(udpLink, mavlink);
     CommConfigurationWindow* commWidget = new CommConfigurationWindow(udpLink, mavlink, this);
     ui.menuNetwork->addAction(commWidget->getAction());
-    udpLink->connect();
+
+    // Check if link could be connected
+    if (!udpLink->connect())
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Could not connect UDP port. Is already an instance of " + qAppName() + " running?");
+        msgBox.setInformativeText("Do you want to close the application?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        int ret = msgBox.exec();
+
+        // Close the message box shortly after the click to prevent accidental clicks
+        QTimer::singleShot(5000, &msgBox, SLOT(reject()));
+
+        // Exit application
+        if (ret == QMessageBox::Yes)
+        {
+            qApp->exit(EXIT_SUCCESS);
+        }
+    }
 
     simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
     connect(simulationLink, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
