@@ -198,6 +198,18 @@ bool GAudioOutput::startEmergency()
 }
 
 /**
+ * The emergency sound will be played continously during the emergency.
+ * call stopEmergency() to disable it again. No speech synthesis or other
+ * audio output is available during the emergency.
+ *
+ * @return true if the emergency could be started, false else
+ */
+bool GAudioOutput::startEmergency(QString message)
+{
+    return startEmergency();
+}
+
+/**
  * Stops the continous emergency sound. Use startEmergency() to start
  * the emergency sound.
  *

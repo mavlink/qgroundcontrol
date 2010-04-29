@@ -61,6 +61,8 @@ public slots:
     void appendParam(int componentId, QString name, float value);
     /** @brief Add a new component for this system */
     void appendComponent(int componentId, QString name);
+    /** @brief Add a new component for this system */
+    void appendComponent(int componentId);
 
 protected:
     ParamTreeItem* getNodeForComponentId(int id);
