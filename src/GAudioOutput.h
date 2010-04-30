@@ -39,7 +39,7 @@ This file is part of the PIXHAWK project
 #include <Phonon>
 #endif
 #ifdef Q_OS_LINUX
-#include <flite/flite.h>
+//#include <flite/flite.h>
 #include <phonon>
 #endif
 #ifdef Q_OS_WIN
@@ -52,7 +52,7 @@ This file is part of the PIXHAWK project
 #endif
    */
 
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_LINUX2
 extern "C" {
     cst_voice *REGISTER_VOX(const char *voxdir);
     void UNREGISTER_VOX(cst_voice *vox);

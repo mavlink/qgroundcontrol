@@ -91,7 +91,7 @@ GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
 voiceIndex(0),
 emergency(false)
 {
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_LINUX2
     flite_init();
 #endif
     // Initialize audio output
