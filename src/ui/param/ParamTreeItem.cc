@@ -107,9 +107,14 @@ QVariant ParamTreeItem::data(int column) const
     }
 }
 
-ParamTreeItem *ParamTreeItem::parent()
+ParamTreeItem *ParamTreeItem::parent() const
 {
     return parentItem;
+}
+
+const QList<ParamTreeItem*>* ParamTreeItem::children() const
+{
+    return &childItems;
 }
 
 int ParamTreeItem::row() const

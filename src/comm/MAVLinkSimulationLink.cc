@@ -147,7 +147,7 @@ void MAVLinkSimulationLink::mainloop()
     static float fullVoltage = 4.2 * 3;
     static float emptyVoltage = 3.35 * 3;
     static float voltage = fullVoltage;
-    static float drainRate = 0.0025; // x.xx% of the capacity is linearly drained per second
+    static float drainRate = 0.025; // x.xx% of the capacity is linearly drained per second
 
     attitude_t attitude;
     raw_aux_t rawAuxValues;
@@ -352,7 +352,7 @@ void MAVLinkSimulationLink::mainloop()
         }
         statusCounter++;
 
-        status.vbat = voltage;
+        status.vbat = voltage * 1000; // millivolts
 
         // Pack message and get size of encoded byte string
         messageSize = message_sys_status_encode(systemId, componentId, &msg, &status);

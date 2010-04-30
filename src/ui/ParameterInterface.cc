@@ -16,12 +16,20 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
 
     tree = new ParamTreeModel();
 
-    treeView = new QTreeView(this);
-    treeView->setModel(tree);
+    //treeView = new QTreeView(this);
+    //treeView->setModel(tree);
+
+    treeWidget = new QTreeWidget(this);
+    QStringList headerItems;
+    headerItems.append("Parameter");
+    headerItems.append("Value");
+    treeWidget->setHeaderLabels(headerItems);
 
     QStackedWidget* stack = m_ui->stackedWidget;
-    stack->addWidget(treeView);
-    stack->setCurrentWidget(treeView);
+    //stack->addWidget(treeView);
+    //stack->setCurrentWidget(treeView);
+    stack->addWidget(treeWidget);
+    stack->setCurrentWidget(treeWidget);
 
 }
 
@@ -56,6 +64,8 @@ void ParameterInterface::addUAS(UASInterface* uas)
 void ParameterInterface::requestParameterList()
 {
     mav->requestParameters();
+    // Clear view
+    treeWidget->clear();
 }
 
 /**
@@ -73,9 +83,11 @@ void ParameterInterface::receiveParameter(int uas, int component, QString parame
 {
     Q_UNUSED(uas);
     // Insert parameter into map
-    tree->appendParam(component, parameterName, value);
-    // Refresh view
-    treeView->update();
+    //tree->appendParam(component, parameterName, value);
+    QStringList list;
+    list.append(parameterName);
+    list.append(QString::number(value));
+    treeWidget->addTopLevelItem(new QTreeWidgetItem(list));
 }
 
 /**
