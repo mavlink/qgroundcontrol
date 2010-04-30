@@ -40,8 +40,9 @@ ParamTreeModel::ParamTreeModel(QObject *parent)
     QList<QVariant> rootData;
     rootData << tr("Parameter") << tr("Value");
     rootItem = new ParamTreeItem(rootData);
-    QString data = "IMU\n ROLL_K_I\t1.255\n PITCH_K_P\t0.621\n PITCH_K_I\t2.5545\n";
-    setupModelData(data.split(QString("\n")), rootItem);
+
+    //String data = "IMU\n ROLL_K_I\t1.255\n PITCH_K_P\t0.621\n PITCH_K_I\t2.5545\n";
+    //setupModelData(data.split(QString("\n")), rootItem);
 }
 
 ParamTreeModel::ParamTreeModel(const QString &data, QObject *parent)
@@ -80,12 +81,17 @@ QVariant ParamTreeModel::data(const QModelIndex &index, int role) const
     return item->data(index.column());
 }
 
+bool ParamTreeModel::setData (const QModelIndex & index, const QVariant & value, int role)
+{
+
+}
+
 Qt::ItemFlags ParamTreeModel::flags(const QModelIndex &index) const
 {
     if (!index.isValid())
         return 0;
 
-    return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+    return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
 }
 
 QVariant ParamTreeModel::headerData(int section, Qt::Orientation orientation,

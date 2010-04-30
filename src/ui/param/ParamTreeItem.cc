@@ -37,6 +37,8 @@ ParamTreeItem::ParamTreeItem(QString name, float value, ParamTreeItem* parent)
     parentItem = parent;
     paramName = name;
     paramValue = value;
+    // Initialize empty itemData
+    itemData = QList<QVariant>();
 }
 
 ParamTreeItem::ParamTreeItem(const QList<QVariant> &data, ParamTreeItem *parent)
@@ -82,20 +84,27 @@ float ParamTreeItem::getParamValue()
 
 QVariant ParamTreeItem::data(int column) const
 {
-    QVariant ret;
-    switch (column)
+    if (itemData.empty())
     {
-    case 0:
-        ret.setValue(paramName);
-        break;
-    case 1:
-        ret.setValue(paramValue);
-        break;
-    default:
-        ret.setValue(QString(""));
-        break;
+        QVariant ret;
+        switch (column)
+        {
+        case 0:
+            ret.setValue(paramName);
+            break;
+        case 1:
+            ret.setValue(paramValue);
+            break;
+        default:
+            ret.setValue(QString(""));
+            break;
+        }
+        return ret;
     }
-    //return itemData.value(column);
+    else
+    {
+        return itemData.value(column, QVariant(QString("")));
+    }
 }
 
 ParamTreeItem *ParamTreeItem::parent()
