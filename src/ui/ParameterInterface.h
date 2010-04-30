@@ -3,6 +3,7 @@
 
 #include <QtGui/QWidget>
 #include <QtGui/QTreeView>
+#include <QtGui/QTreeWidget>
 #include "ui_ParameterInterface.h"
 #include "UASInterface.h"
 #include "ParamTreeModel.h"
@@ -31,6 +32,7 @@ protected:
     UASInterface* mav;
     ParamTreeModel* tree;
     QTreeView* treeView;
+    QTreeWidget* treeWidget;
 
 private:
     Ui::parameterWidget *m_ui;

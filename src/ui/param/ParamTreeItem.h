@@ -53,7 +53,8 @@ public:
     int columnCount() const;
     QVariant data(int column) const;
     int row() const;
-    ParamTreeItem *parent();
+    ParamTreeItem *parent() const;
+    const QList<ParamTreeItem*>* children() const;
 
     protected:
     QString paramName;
