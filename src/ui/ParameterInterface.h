@@ -4,6 +4,7 @@
 #include <QtGui/QWidget>
 #include <QtGui/QTreeView>
 #include <QtGui/QTreeWidget>
+#include <QtGui/QTreeWidgetItem>
 #include "ui_ParameterInterface.h"
 #include "UASInterface.h"
 #include "ParamTreeModel.h"
@@ -20,7 +21,7 @@ public:
 
 public slots:
     void addUAS(UASInterface* uas);
-    void addComponent(UASInterface* uas, int component, QString componentName);
+    void addComponent(int uas, int component, QString componentName);
     void receiveParameter(int uas, int component, QString parameterName, float value);
     void requestParameterList();
     void setParameter(UASInterface* uas, int component, QString parameterName, float value);
@@ -33,6 +34,7 @@ protected:
     ParamTreeModel* tree;
     QTreeView* treeView;
     QTreeWidget* treeWidget;
+    QMap<int, QTreeWidgetItem*>* components;
 
 private:
     Ui::parameterWidget *m_ui;

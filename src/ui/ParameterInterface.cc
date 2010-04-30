@@ -14,6 +14,7 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
     m_ui->setupUi(this);
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
 
+    components = new QMap<int, QTreeWidgetItem*>();
     tree = new ParamTreeModel();
 
     //treeView = new QTreeView(this);
@@ -74,9 +75,17 @@ void ParameterInterface::requestParameterList()
  * @param component id of the component
  * @param componentName human friendly name of the component
  */
-void ParameterInterface::addComponent(UASInterface* uas, int component, QString componentName)
+void ParameterInterface::addComponent(int uas, int component, QString componentName)
 {
     Q_UNUSED(uas);
+    QStringList list;
+    list.append(componentName);
+    list.append(QString::number(component));
+    QTreeWidgetItem* comp = new QTreeWidgetItem(list);
+    bool updated = false;
+    if (components->contains(component)) updated = true;
+    components->insert(component, comp);
+    if (!updated) treeWidget->addTopLevelItem(comp);
 }
 
 void ParameterInterface::receiveParameter(int uas, int component, QString parameterName, float value)
@@ -84,10 +93,18 @@ void ParameterInterface::receiveParameter(int uas, int component, QString parame
     Q_UNUSED(uas);
     // Insert parameter into map
     //tree->appendParam(component, parameterName, value);
-    QStringList list;
-    list.append(parameterName);
-    list.append(QString::number(value));
-    treeWidget->addTopLevelItem(new QTreeWidgetItem(list));
+    QStringList plist;
+    plist.append(parameterName);
+    plist.append(QString::number(value));
+    QTreeWidgetItem* item = new QTreeWidgetItem(plist);
+
+    // Get component
+    if (!components->contains(component))
+    {
+        addComponent(uas, component, "Component #" + QString::number(component));
+    }
+    components->value(component)->addChild(item);
+    //treeWidget->addTopLevelItem(new QTreeWidgetItem(list));
 }
 
 /**
