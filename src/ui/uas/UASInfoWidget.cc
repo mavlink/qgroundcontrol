@@ -83,10 +83,8 @@ void UASInfoWidget::addUAS(UASInterface* uas)
 {
     if (uas != NULL)
     {
-        //    connect(uas, SIGNAL(voltageChanged(int, double)), this, SLOT(setVoltage(int, double)));
         connect(uas, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBattery(UASInterface*,double,double,int)));
-        connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(valueChanged(int,QString,double,quint64)));
-        connect(uas, SIGNAL(actuatorChanged(UASInterface*,int,double)), this, SLOT(actuatorChanged(UASInterface*,int,double)));
+        connect(uas, SIGNAL(dropRateChanged(int,float,float)), this, SLOT(updateDropRate(int,float,float)));
         connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateCPULoad(UASInterface*,double)));
 
         // Set this UAS as active if it is the first one
@@ -98,33 +96,6 @@ void UASInfoWidget::setActiveUAS(UASInterface* uas)
 {
     activeUAS = uas;
 }
-
-/*
-void UASInfoWidget::actuatorChanged(UASInterface* uas, int actId, double value)
-{
-    if (activeUAS == uas)
-    {
-        switch (actId)
-        {
-        case 0:
-            ui.topRotorLabel->setText(QString::number(value*3300, 'f', 2));
-            ui.topRotorBar->setValue(value * 100);
-            break;
-        case 1:
-            ui.botRotorLabel->setText(QString::number(value*3300, 'f', 2));
-            ui.botRotorBar->setValue(value * 100);
-            break;
-        case 2:
-            ui.leftServoLabel->setText(QString::number(value*57.2957795f, 'f', 2));
-            ui.leftServoBar->setValue((value * 50.0f) + 50);
-            break;
-        case 3:
-            ui.rightServoLabel->setText(QString::number(value*57.2957795f, 'f', 2));
-            ui.rightServoBar->setValue((value * 50.0f) + 50);
-            break;
-        }
-    }
-}*/
 
 void UASInfoWidget::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
@@ -147,66 +118,17 @@ void UASInfoWidget::updateCPULoad(UASInterface* uas, double load)
 void UASInfoWidget::updateDropRate(int sysId, float receiveDrop, float sendDrop)
 {
     Q_UNUSED(sysId);
-    ui.receiveLossBar->setValue(receiveDrop * 100.0f);
-    ui.sendLossBar->setValue(sendDrop * 100.0f);
+    ui.receiveLossBar->setValue(receiveDrop);
+    ui.receiveLossLabel->setText(QString::number(receiveDrop) + "%");
+    ui.sendLossBar->setValue(sendDrop);
+    ui.sendLossLabel->setText(QString::number(receiveDrop) + "%");
 }
-
-//void UASInfoWidget::setBattery(int uasid, BatteryType type, int cells)
-//{
-//    this->batteryType = type;
-//    this->cells = cells;
-//    switch (batteryType)
-//    {
-//            case NICD:
-//        break;
-//            case NIMH:
-//        break;
-//            case LIION:
-//        break;
-//            case LIPOLY:
-//        fullVoltage = this->cells * 4.18;
-//        emptyVoltage = this->cells * 3.4;
-//        break;
-//            case LIFE:
-//        break;
-//            case AGZN:
-//        break;
-//    }
-//}
-
-//double UASInfoWidget::calculateTimeRemaining() {
-//    quint64 dt = MG::TIME::getGroundTimeNow() - startTime;
-//    double seconds = dt / 1000.0f;
-//    double voltDifference = startVoltage - currentVoltage;
-//    if (voltDifference <= 0) voltDifference = 0.00000000001f;
-//    double dischargePerSecond = voltDifference / seconds;
-//    double remaining = (currentVoltage - emptyVoltage) / dischargePerSecond;
-//    // Can never be below 0
-//    if (remaining <= 0) remaining = 0.0000000000001f;
-//    return remaining;
-//}
 
 void UASInfoWidget::setVoltage(UASInterface* uas, double voltage)
 {
     Q_UNUSED(uas);
     this->voltage = voltage;
 }
-
-//void UASInfoWidget::setVoltage(int uasid, double voltage)
-//{
-//    // Read and update data
-//    currentVoltage = voltage;
-//    if (startVoltage == 0) startVoltage = currentVoltage;
-//    // This is a low pass filter to get smoother results: (0.8 * lastChargeLevel) + (0.2 * chargeLevel)
-//    double chargeLevel = (currentVoltage - emptyVoltage)/(fullVoltage - emptyVoltage);
-//    lastChargeLevel = (0.6 * lastChargeLevel) + (0.4 * chargeLevel);
-//
-//    lastRemainingTime = calculateTimeRemaining();
-//
-//    ui.voltageLabel->setText(QString::number(currentVoltage, 'f', voltageDecimals));
-//    setChargeLevel(0, lastChargeLevel * 100);
-//    setTimeRemaining(0, lastRemainingTime);
-//}
 
 void UASInfoWidget::setChargeLevel(UASInterface* uas, double chargeLevel)
 {
@@ -231,20 +153,4 @@ void UASInfoWidget::refresh()
 
     ui.loadLabel->setText(QString::number(this->load, 'f', loadDecimals));
     ui.loadBar->setValue(static_cast<int>(this->load));
-
-    //    if(this->timeRemaining > 1 && this->timeRemaining < MG::MAX_FLIGHT_TIME)
-    //    {
-    //        // Filter output to get a higher stability
-    //        static int filterTime = static_cast<int>(this->timeRemaining);
-    //        //filterTime = 0.8 * filterTime + 0.2 * static_cast<int>(this->timeRemaining);
-    //
-    //        int hours = filterTime % (60 * 60);
-    //        int min = (filterTime - hours * 60) % 60;
-    //        int sec = (filterTime - hours * 60 - min * 60);
-    //        QString timeText;
-    //        timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
-    //        ui.voltageTimeEstimateLabel->setText(timeText);
-    //    } else {
-    //        ui.voltageTimeEstimateLabel->setText(tr("Calculating"));
-    //    }
 }

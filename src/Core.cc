@@ -40,10 +40,13 @@ This file is part of the PIXHAWK project
 #include <QStyleFactory>
 #include <QAction>
 
-#include <Core.h>
-#include <MG.h>
-#include <MainWindow.h>
+#include "Core.h"
+#include "MG.h"
+#include "MainWindow.h"
 #include "GAudioOutput.h"
+
+#include "UDPLink.h"
+#include "MAVLinkSimulationLink.h"
 
 
 /**
@@ -99,6 +102,43 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 
     // Remove splash screen
     splashScreen->finish(mainWindow);
+
+    // Connect links
+    // to make sure that all components are initialized when the
+    // first messages arrive
+    UDPLink* udpLink = new UDPLink(QHostAddress::Any, 14550);
+    mainWindow->addLink(udpLink);
+
+    // Check if link could be connected
+    if (!udpLink->connect())
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Could not connect UDP port. Is already an instance of " + qAppName() + " running?");
+        msgBox.setInformativeText("You will not be able to receive data via UDP. Do you want to close the application?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        int ret = msgBox.exec();
+
+        // Close the message box shortly after the click to prevent accidental clicks
+        QTimer::singleShot(5000, &msgBox, SLOT(reject()));
+
+        // Exit application
+        if (ret == QMessageBox::Yes)
+        {
+            qDebug() << "EXITING";
+            mainWindow->close();
+            this->exit(EXIT_SUCCESS);
+        }
+    }
+
+    MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
+    mainWindow->addLink(simulationLink);
+
+    //CommConfigurationWindow* simulationWidget = new CommConfigurationWindow(simulationLink, mavlink, this);
+    //ui.menuNetwork->addAction(commWidget->getAction());
+    //simulationLink->connect();
+
 
 }
 

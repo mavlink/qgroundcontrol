@@ -155,42 +155,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     joystick = new JoystickInput();
 
-    // HAS TO BE THE LAST ACTION
-    // to make sure that all components are initialized when the
-    // first messages arrive
-    udpLink = new UDPLink(QHostAddress::Any, 14550);
-    LinkManager::instance()->addProtocol(udpLink, mavlink);
-    CommConfigurationWindow* commWidget = new CommConfigurationWindow(udpLink, mavlink, this);
-    ui.menuNetwork->addAction(commWidget->getAction());
-
-    // Check if link could be connected
-    if (!udpLink->connect())
-    {
-        QMessageBox msgBox;
-        msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Could not connect UDP port. Is already an instance of " + qAppName() + " running?");
-        msgBox.setInformativeText("Do you want to close the application?");
-        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-        msgBox.setDefaultButton(QMessageBox::Cancel);
-        int ret = msgBox.exec();
-
-        // Close the message box shortly after the click to prevent accidental clicks
-        QTimer::singleShot(5000, &msgBox, SLOT(reject()));
-
-        // Exit application
-        if (ret == QMessageBox::Yes)
-        {
-            qApp->exit(EXIT_SUCCESS);
-        }
-    }
-
-    simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
-    connect(simulationLink, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
-    LinkManager::instance()->addProtocol(simulationLink, mavlink);
-    //CommConfigurationWindow* simulationWidget = new CommConfigurationWindow(simulationLink, mavlink, this);
-    //ui.menuNetwork->addAction(commWidget->getAction());
-    //simulationLink->connect();
-
     // Create actions
     connectActions();
 
@@ -309,7 +273,6 @@ void MainWindow::connectActions()
 
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
-    connect(ui.actionSimulate, SIGNAL(triggered(bool)), simulationLink, SLOT(connectLink(bool)));
 }
 
 void MainWindow::configure()
@@ -331,6 +294,21 @@ void MainWindow::addLink()
     commWidget->show();
 
     // TODO Implement the link removal!
+}
+
+void MainWindow::addLink(LinkInterface *link)
+{
+    CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
+    ui.menuNetwork->addAction(commWidget->getAction());
+    LinkManager::instance()->addProtocol(link, mavlink);
+
+    // Special case for simulationlink
+    MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
+    if (sim)
+    {
+        connect(sim, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
+        connect(ui.actionSimulate, SIGNAL(triggered(bool)), sim, SLOT(connectLink(bool)));
+    }
 }
 
 void MainWindow::UASCreated(UASInterface* uas)
