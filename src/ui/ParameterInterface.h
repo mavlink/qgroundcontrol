@@ -2,9 +2,7 @@
 #define PARAMETERINTERFACE_H
 
 #include <QtGui/QWidget>
-#include <QtGui/QTreeView>
-#include <QtGui/QTreeWidget>
-#include <QtGui/QTreeWidgetItem>
+
 #include "ui_ParameterInterface.h"
 #include "UASInterface.h"
 #include "ParamTreeModel.h"
@@ -23,11 +21,6 @@ public:
 public slots:
     void addUAS(UASInterface* uas);
     void selectUAS(int index);
-    void addComponent(int uas, int component, QString componentName);
-    void addParameter(int uas, int component, QString parameterName, float value);
-    void requestParameterList();
-    void setParameter(UASInterface* uas, int component, QString parameterName, float value);
-    void commitParameter(UASInterface* uas, int component, QString parameterName, float value);
 
 protected:
     virtual void changeEvent(QEvent *e);

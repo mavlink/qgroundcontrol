@@ -110,31 +110,10 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="2" colspan="2">
+      <item row="0" column="1" colspan="2">
        <widget class="QComboBox" name="vehicleComboBox"/>
       </item>
-      <item row="2" column="0">
-       <widget class="QPushButton" name="readParamsButton">
-        <property name="text">
-         <string>Read</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1" colspan="2">
-       <widget class="QPushButton" name="writeParamsButton">
-        <property name="text">
-         <string>Write permanently</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QPushButton" name="backupParamsButton">
-        <property name="text">
-         <string>Backup</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" colspan="4">
+      <item row="1" column="0" colspan="3">
        <widget class="QStackedWidget" name="stackedWidget">
         <widget class="QWidget" name="page">
          <layout class="QVBoxLayout" name="verticalLayout"/>

@@ -173,6 +173,15 @@ public slots:
     virtual void clearWaypointList() = 0;
     /** @brief Request all onboard parameters of all components */
     virtual void requestParameters() = 0;
+    /** @brief Write parameter to permanent storage */
+    virtual void writeParameters() = 0;
+    /** @brief Set a system parameter
+     * @param component ID of the system component to write the parameter to
+     * @param id String identifying the parameter
+     * @warning The length of the ID string is limited by the MAVLink format! Take care to not exceed it
+     * @param value Value of the parameter, IEEE 754 single precision floating point
+     */
+    virtual void setParameter(int component, QString id, float value) = 0;
 
     /**
      * @brief Add a link to the list of current links

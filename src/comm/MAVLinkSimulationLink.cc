@@ -550,6 +550,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                 break;
             case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
                 {
+                    qDebug() << "GCS REQUESTED PARAM LIST FROM SIMULATION";
                     mavlink_param_request_list_t read;
                     mavlink_msg_param_request_list_decode(&msg, &read);
                     if (read.target_system == systemId)
@@ -579,6 +580,8 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         //add data into datastream
                         memcpy(stream+streampointer,buffer, bufferlength);
                         streampointer+=bufferlength;
+
+                        qDebug() << "SIMULATION SENT PARAMETERS TO GCS";
                     }
                 }
             }
