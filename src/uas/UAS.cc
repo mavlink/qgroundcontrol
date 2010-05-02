@@ -106,9 +106,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_HEARTBEAT:
             emit heartbeat(this);
             // Set new type if it has changed
-            if (this->type != message_heartbeat_get_type(&message))
+            if (this->type != mavlink_msg_heartbeat_get_type(&message))
             {
-                this->type = message_heartbeat_get_type(&message);
+                this->type = mavlink_msg_heartbeat_get_type(&message);
                 emit systemTypeSet(this, type);
             }
             break;
@@ -119,8 +119,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_SYS_STATUS:
             {
-                sys_status_t state;
-                message_sys_status_decode(&message, &state);
+                mavlink_sys_status_t state;
+                mavlink_msg_sys_status_decode(&message, &state);
 
                 QString audiostring = "System " + QString::number(this->getUASID());
                 QString stateAudio = "";
@@ -220,16 +220,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_AUX_STATUS:
             {
-                aux_status_t status;
-                message_aux_status_decode(&message, &status);
+                mavlink_aux_status_t status;
+                mavlink_msg_aux_status_decode(&message, &status);
                 emit loadChanged(this, status.load/100.0f);
                 emit valueChanged(this, "Load", status.load/1000.0f, MG::TIME::getGroundTimeNow());
             }
             break;
         case MAVLINK_MSG_ID_RAW_IMU:
             {
-                raw_imu_t raw;
-                message_raw_imu_decode(&message, &raw);
+                mavlink_raw_imu_t raw;
+                mavlink_msg_raw_imu_decode(&message, &raw);
                 quint64 time = raw.msec;
                 if (time == 0)
                 {
@@ -257,8 +257,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_RAW_AUX:
             {
-                raw_aux_t raw;
-                message_raw_aux_decode(&message, &raw);
+                mavlink_raw_aux_t raw;
+                mavlink_msg_raw_aux_decode(&message, &raw);
                 quint64 time = MG::TIME::getGroundTimeNow();//raw.msec;
                 if (time == 0)
                 {
@@ -278,11 +278,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
             //std::cerr << std::endl;
-            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << message_attitude_get_roll(message.payload) << " pitch: " << message_attitude_get_pitch(message.payload) << " yaw: " << message_attitude_get_yaw(message.payload) << std::endl;
+            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
             {
-                attitude_t attitude;
-                message_attitude_decode(&message, &attitude);
-                quint64 time = message_attitude_get_msec(&message);
+                mavlink_attitude_t attitude;
+                mavlink_msg_attitude_decode(&message, &attitude);
+                quint64 time = mavlink_msg_attitude_get_msec(&message);
                 if (time == 0)
                 {
                     time = MG::TIME::getGroundTimeNow();
@@ -295,24 +295,24 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     }
                     time += onboardTimeOffset;
                 }
-                emit valueChanged(uasId, "roll IMU", message_attitude_get_roll(&message), time);
-                emit valueChanged(uasId, "pitch IMU", message_attitude_get_pitch(&message), time);
-                emit valueChanged(uasId, "yaw IMU", message_attitude_get_yaw(&message), time);
-                emit valueChanged(this, "roll IMU", message_attitude_get_roll(&message), time);
-                emit valueChanged(this, "pitch IMU", message_attitude_get_pitch(&message), time);
-                emit valueChanged(this, "yaw IMU", message_attitude_get_yaw(&message), time);
+                emit valueChanged(uasId, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
+                emit valueChanged(uasId, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
+                emit valueChanged(uasId, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
+                emit valueChanged(this, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
+                emit valueChanged(this, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
+                emit valueChanged(this, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
                 emit valueChanged(uasId, "rollspeed IMU", attitude.rollspeed, time);
                 emit valueChanged(uasId, "pitchspeed IMU", attitude.pitchspeed, time);
                 emit valueChanged(uasId, "yawspeed IMU", attitude.yawspeed, time);
-                emit attitudeChanged(this, message_attitude_get_roll(&message), message_attitude_get_pitch(&message), message_attitude_get_yaw(&message), time);
+                emit attitudeChanged(this, mavlink_msg_attitude_get_roll(&message), mavlink_msg_attitude_get_pitch(&message), mavlink_msg_attitude_get_yaw(&message), time);
             }
             break;
         case MAVLINK_MSG_ID_POSITION:
             //std::cerr << std::endl;
-            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << message_attitude_get_roll(message.payload) << " pitch: " << message_attitude_get_pitch(message.payload) << " yaw: " << message_attitude_get_yaw(message.payload) << std::endl;
+            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
             {
-                position_t pos;
-                message_position_decode(&message, &pos);
+                mavlink_position_t pos;
+                mavlink_msg_position_decode(&message, &pos);
                 quint64 time = pos.msec;
                 if (time == 0)
                 {
@@ -329,9 +329,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "x", pos.x, time);
                 emit valueChanged(uasId, "y", pos.y, time);
                 emit valueChanged(uasId, "z", pos.z, time);
-                //emit valueChanged(this, "roll IMU", message_attitude_get_roll(&message), time);
-                //emit valueChanged(this, "pitch IMU", message_attitude_get_pitch(&message), time);
-                //emit valueChanged(this, "yaw IMU", message_attitude_get_yaw(&message), time);
+                //emit valueChanged(this, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
+                //emit valueChanged(this, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
+                //emit valueChanged(this, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
                 emit valueChanged(uasId, "vx", pos.vx, time);
                 emit valueChanged(uasId, "vy", pos.vy, time);
                 emit valueChanged(uasId, "vz", pos.vz, time);
@@ -340,40 +340,40 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
             case MAVLINK_MSG_ID_PARAM_VALUE:
                 {
-                    param_value_t value;
-                    message_param_value_decode(&message, &value);
+                    mavlink_param_value_t value;
+                    mavlink_msg_param_value_decode(&message, &value);
                     emit parameterChanged(uasId, message.compid, QString((char*)value.param_id), value.param_value);
                 }
                 break;
         case MAVLINK_MSG_ID_DEBUG:
-            emit valueChanged(uasId, QString("debug ") + QString::number(message_debug_get_ind(&message)), message_debug_get_value(&message), MG::TIME::getGroundTimeNow());
+            emit valueChanged(uasId, QString("debug ") + QString::number(mavlink_msg_debug_get_ind(&message)), mavlink_msg_debug_get_value(&message), MG::TIME::getGroundTimeNow());
             break;
             /*
         case MAVLINK_MSG_ID_WP:
-            emit waypointUpdated(this->getUASID(), message_emitwaypoint_get_id(message.payload), message_emitwaypoint_get_x(message.payload), message_emitwaypoint_get_y(message.payload), message_emitwaypoint_get_z(message.payload), message_emitwaypoint_get_yaw(message.payload), (message_emitwaypoint_get_autocontinue(message.payload) == 1 ? true : false), (message_emitwaypoint_get_active(message.payload) == 1 ? true : false));
+            emit waypointUpdated(this->getUASID(), mavlink_msg_emitwaypoint_get_id(message.payload), mavlink_msg_emitwaypoint_get_x(message.payload), mavlink_msg_emitwaypoint_get_y(message.payload), mavlink_msg_emitwaypoint_get_z(message.payload), mavlink_msg_emitwaypoint_get_yaw(message.payload), (message_emitwaypoint_get_autocontinue(message.payload) == 1 ? true : false), (message_emitwaypoint_get_active(message.payload) == 1 ? true : false));
             break;
         case MAVLINK_MSG_ID_SET_POSITION:
-            emit valueChanged(uasId, "WP X", message_gotowaypoint_get_x(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP Y", message_gotowaypoint_get_y(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP Z", message_gotowaypoint_get_z(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP speed X", message_gotowaypoint_get_speedX(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP speed Y", message_gotowaypoint_get_speedY(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP speed Z", message_gotowaypoint_get_speedZ(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP yaw", message_gotowaypoint_get_yaw(message.payload)/M_PI*180.0f, MG::TIME::getGroundTimeNow());
+            emit valueChanged(uasId, "WP X", mavlink_msg_gotowaypoint_get_x(message.payload), MG::TIME::getGroundTimeNow());
+            emit valueChanged(uasId, "WP Y", mavlink_msg_gotowaypoint_get_y(message.payload), MG::TIME::getGroundTimeNow());
+            emit valueChanged(uasId, "WP Z", mavlink_msg_gotowaypoint_get_z(message.payload), MG::TIME::getGroundTimeNow());
+            emit valueChanged(uasId, "WP speed X", mavlink_msg_gotowaypoint_get_speedX(message.payload), MG::TIME::getGroundTimeNow());
+            emit valueChanged(uasId, "WP speed Y", mavlink_msg_gotowaypoint_get_speedY(message.payload), MG::TIME::getGroundTimeNow());
+            emit valueChanged(uasId, "WP speed Z", mavlink_msg_gotowaypoint_get_speedZ(message.payload), MG::TIME::getGroundTimeNow());
+            emit valueChanged(uasId, "WP yaw", mavlink_msg_gotowaypoint_get_yaw(message.payload)/M_PI*180.0f, MG::TIME::getGroundTimeNow());
             break;
         case MAVLINK_MSG_ID_WP_REACHED:
             qDebug() << "WAYPOINT REACHED";
-            emit waypointReached(this, message_wp_reached_get_id(message.payload));
+            emit waypointReached(this, mavlink_msg_wp_reached_get_id(message.payload));
             break;
             */
             case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
                 b.resize(256);
-                message_statustext_get_text(&message, (int8_t*)b.data());
+                mavlink_msg_statustext_get_text(&message, (int8_t*)b.data());
                 //b.append('\0');
                 QString text = QString(b);
-                int severity = message_statustext_get_severity(&message);
+                int severity = mavlink_msg_statustext_get_severity(&message);
                 //qDebug() << "RECEIVED STATUS:" << text;
                 //emit statusTextReceived(severity, text);
                 emit textMessageReceived(uasId, severity, text);
@@ -383,11 +383,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 QByteArray b;
                 b.resize(256);
-                message_pattern_detected_get_file(&message, (int8_t*)b.data());
+                mavlink_msg_pattern_detected_get_file(&message, (int8_t*)b.data());
                 b.append('\0');
                 QString path = QString(b);
-                bool detected (message_pattern_detected_get_detected(&message) == 1 ? true : false );
-                emit detectionReceived(uasId, path, 0, 0, 0, 0, 0, 0, 0, 0, message_pattern_detected_get_confidence(&message), detected);
+                bool detected (mavlink_msg_pattern_detected_get_detected(&message) == 1 ? true : false );
+                emit detectionReceived(uasId, path, 0, 0, 0, 0, 0, 0, 0, 0, mavlink_msg_pattern_detected_get_confidence(&message), detected);
             }
             break;
         default:
@@ -411,7 +411,7 @@ void UAS::setMode(int mode)
     {
         this->mode = mode;
         mavlink_message_t msg;
-        message_set_mode_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, getUASID(), (unsigned char)mode);
+        mavlink_msg_set_mode_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, getUASID(), (unsigned char)mode);
         sendMessage(msg);
     }
 }
@@ -438,7 +438,7 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
     // Create buffer
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Write message into buffer, prepending start sign
-    int len = message_to_send_buffer(buffer, &message);
+    int len = mavlink_msg_to_send_buffer(buffer, &message);
     // If link is connected
     if (link->isConnected())
     {
@@ -547,7 +547,7 @@ void UAS::requestWaypoints()
 void UAS::requestParameters()
 {
     mavlink_message_t msg;
-    message_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg);
+    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg);
     sendMessage(msg);
 }
 
@@ -559,7 +559,7 @@ void UAS::launch()
 {
     mavlink_message_t message;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    message_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(),(int)MAV_ACTION_LAUNCH);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(),(int)MAV_ACTION_LAUNCH);
     sendMessage(message);
     qDebug() << "UAS LAUNCHED!";
     //emit commandSent(LAUNCH);
@@ -573,7 +573,7 @@ void UAS::enable_motors()
 {
     mavlink_message_t message;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    message_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(),(int)MAV_ACTION_MOTORS_START);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(),(int)MAV_ACTION_MOTORS_START);
     sendMessage(message);
 }
 
@@ -585,7 +585,7 @@ void UAS::disable_motors()
 {
     mavlink_message_t message;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    message_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(),(int)MAV_ACTION_MOTORS_STOP);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(),(int)MAV_ACTION_MOTORS_STOP);
     sendMessage(message);
 }
 
@@ -604,7 +604,7 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     if(mode == MAV_MODE_MANUAL)
     {
         mavlink_message_t message;
-        message_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
+        mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
         sendMessage(message);
         qDebug() << __FILE__ << __LINE__ << ": SENT MANUAL CONTROL MESSAGE: roll" << manualRollAngle << " pitch: " << manualPitchAngle << " yaw: " << manualYawAngle << " thrust: " << manualThrust;
 
@@ -654,7 +654,7 @@ void UAS::halt()
 {
     mavlink_message_t message;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    message_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_HALT);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_HALT);
     sendMessage(message);
 }
 
@@ -662,7 +662,7 @@ void UAS::go()
 {
     mavlink_message_t message;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    message_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_CONTINUE);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_CONTINUE);
     sendMessage(message);
 }
 
@@ -671,7 +671,7 @@ void UAS::home()
 {
     mavlink_message_t message;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    message_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_RETURN);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_RETURN);
     sendMessage(message);
 }
 
@@ -683,7 +683,7 @@ void UAS::emergencySTOP()
 {
     mavlink_message_t message;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    message_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_EMCY_LAND);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_EMCY_LAND);
 }
 
 /**
@@ -711,7 +711,7 @@ bool UAS::emergencyKILL()
     {
         mavlink_message_t message;
         // TODO Replace MG System ID with static function call and allow to change ID in GUI
-        message_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_EMCY_KILL);
+        mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_EMCY_KILL);
         sendMessage(message);
         result = true;
     }
@@ -738,7 +738,7 @@ void UAS::shutdown()
         // If the active UAS is set, execute command
         mavlink_message_t message;
         // TODO Replace MG System ID with static function call and allow to change ID in GUI
-        message_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_SHUTDOWN);
+        mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->getUASID(), (int)MAV_ACTION_SHUTDOWN);
         sendMessage(message);
         result = true;
     }

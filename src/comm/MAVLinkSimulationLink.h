@@ -115,7 +115,7 @@ protected:
     int id;
     QString name;
     qint64 timeOffset;
-    sys_status_t status;
+    mavlink_sys_status_t status;
 
     void enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg);
 

@@ -112,7 +112,8 @@ HEADERS += src/MG.h \
     src/GAudioOutput.h \
     src/LogCompressor.h \
     src/ui/param/ParamTreeItem.h \
-    src/ui/param/ParamTreeModel.h
+    src/ui/param/ParamTreeModel.h \
+    src/ui/QGCParamWidget.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -159,5 +160,6 @@ SOURCES += src/main.cc \
     src/GAudioOutput.cc \
     src/LogCompressor.cc \
     src/ui/param/ParamTreeItem.cc \
-    src/ui/param/ParamTreeModel.cc
+    src/ui/param/ParamTreeModel.cc \
+    src/ui/QGCParamWidget.cc
 RESOURCES = mavground.qrc

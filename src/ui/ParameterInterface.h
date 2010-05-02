@@ -8,6 +8,7 @@
 #include "ui_ParameterInterface.h"
 #include "UASInterface.h"
 #include "ParamTreeModel.h"
+#include "QGCParamWidget.h"
 
 namespace Ui {
     class ParameterInterface;
@@ -21,20 +22,17 @@ public:
 
 public slots:
     void addUAS(UASInterface* uas);
+    void selectUAS(int index);
     void addComponent(int uas, int component, QString componentName);
-    void receiveParameter(int uas, int component, QString parameterName, float value);
+    void addParameter(int uas, int component, QString parameterName, float value);
     void requestParameterList();
     void setParameter(UASInterface* uas, int component, QString parameterName, float value);
     void commitParameter(UASInterface* uas, int component, QString parameterName, float value);
 
 protected:
     virtual void changeEvent(QEvent *e);
-
-    UASInterface* mav;
-    ParamTreeModel* tree;
-    QTreeView* treeView;
-    QTreeWidget* treeWidget;
-    QMap<int, QTreeWidgetItem*>* components;
+    QMap<int, QGCParamWidget*>* paramWidgets;
+    int curr;
 
 private:
     Ui::parameterWidget *m_ui;

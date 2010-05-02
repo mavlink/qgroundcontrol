@@ -174,7 +174,7 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
     // Create buffer
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Write message into buffer, prepending start sign
-    int len = message_to_send_buffer(buffer, &message);
+    int len = mavlink_msg_to_send_buffer(buffer, &message);
     // If link is connected
     if (link->isConnected())
     {
@@ -193,7 +193,7 @@ void MAVLinkProtocol::sendHeartbeat()
     if (m_heartbeatsEnabled)
     {
         mavlink_message_t beat;
-        message_heartbeat_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID,&beat, OCU);
+        mavlink_msg_heartbeat_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID,&beat, OCU);
         sendMessage(beat);
     }
 }

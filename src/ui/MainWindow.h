@@ -113,6 +113,7 @@ public slots:
     void setLastAction(QString status);
     void setLinkStatus(QString status);
     void addLink();
+    void addLink(LinkInterface* link);
     void configure();
     void UASCreated(UASInterface* uas);
     void startVideoCapture();
