@@ -154,6 +154,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     case MAV_MODE_AUTO:
                         mode = "AUTO MODE";
                         break;
+                    case MAV_MODE_GUIDED:
+                        mode = "GUIDED MODE";
+                        break;
                     case MAV_MODE_READY:
                         mode = "READY";
                         break;
@@ -547,7 +550,31 @@ void UAS::requestWaypoints()
 void UAS::requestParameters()
 {
     mavlink_message_t msg;
-    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg);
+    mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0);
+    sendMessage(msg);
+}
+
+void UAS::writeParameters()
+{
+    mavlink_message_t msg;
+
+}
+
+void UAS::setParameter(int component, QString id, float value)
+{
+    mavlink_message_t msg;
+    mavlink_param_set_t p;
+    p.param_value = value;
+    p.target_system = uasId;
+    p.target_component = component;
+
+    // Copy string into buffer, ensuring not to exceed the buffer size
+    char* s = (char*)id.toStdString().c_str();
+    for (int i = 0; (i < id.length() && i < sizeof(p.param_id)); i++)
+    {
+        p.param_id[i] = *s;
+    }
+    mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
     sendMessage(msg);
 }
 

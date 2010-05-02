@@ -132,14 +132,9 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
         }
     }
 
-    MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
+   // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
+    MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
     mainWindow->addLink(simulationLink);
-
-    //CommConfigurationWindow* simulationWidget = new CommConfigurationWindow(simulationLink, mavlink, this);
-    //ui.menuNetwork->addAction(commWidget->getAction());
-    //simulationLink->connect();
-
-
 }
 
 /**

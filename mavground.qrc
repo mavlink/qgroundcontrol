@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/" >
+    <qresource prefix="/">
         <file>images/control/launch.svg</file>
         <file>images/status/dialog-error.svg</file>
         <file>images/status/dialog-warning.svg</file>
@@ -78,8 +78,9 @@
         <file>images/style-mission.css</file>
         <file>images/splash.png</file>
         <file>audio/alert.wav</file>
+        <file>demo-log.txt</file>
     </qresource>
-    <qresource prefix="/general" >
-        <file alias="vera.ttf" >images/Vera.ttf</file>
+    <qresource prefix="/general">
+        <file alias="vera.ttf">images/Vera.ttf</file>
     </qresource>
 </RCC>

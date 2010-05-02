@@ -51,7 +51,8 @@ public:
     UAS(MAVLinkProtocol* protocol, int id = 0);
     ~UAS();
 
-    enum BatteryType {
+    enum BatteryType
+    {
         NICD = 0,
         NIMH = 1,
         LIION = 2,
@@ -186,6 +187,12 @@ public slots:
 
     /** @brief Set current mode of operation, e.g. auto or manual */
     void setMode(int mode);
+
+    /** @brief Set a system parameter */
+    void setParameter(int component, QString id, float value);
+
+    /** @brief Write parameters to permanent storage */
+    void writeParameters();
 
 signals:
 

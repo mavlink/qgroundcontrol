@@ -91,6 +91,7 @@ bool MAVLinkXMLParser::generate()
                     QString commentContainer = "/**\n * @brief Send a %1 message\n *\n%2 * @return length of the message in bytes (excluding serial stream start sign)\n */\n";
                     QString commentEntry = " * @param %1 %2\n";
                     QString idDefine = QString("#define MAVLINK_MSG_ID_%1 %2").arg(messageName.toUpper(), QString::number(messageId));
+                    QString arrayDefines = "";
                     QString cStructName = QString("mavlink_%1_t").arg(messageName);
                     QString cStruct = "typedef struct __%1 \n{\n%2\n} %1;";
                     QString cStructLines = "";
@@ -137,6 +138,7 @@ bool MAVLinkXMLParser::generate()
                                 packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); //%4\n").arg(arrayType, fieldName, QString::number(arrayLength), e2.text());
                                 // Add decode function for this type
                                 decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
+                                arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
                             }
                             else
                                 // Handle simple types like integers and floats
@@ -206,7 +208,7 @@ bool MAVLinkXMLParser::generate()
                     encode = encode.arg(messageName).arg(cStructName).arg(packArguments);
                     decode = decode.arg(messageName).arg(cStructName).arg(decodeLines);
                     compactSend = compactSend.arg(channelType, messageType, messageName, sendArguments, packParameters);
-                    QString cFile = "// MESSAGE " + messageName.toUpper() + " PACKING\n\n" + idDefine + "\n\n" + cStruct + "\n\n" + commentContainer.arg(messageName.toLower(), commentLines) + pack + encode + "\n" + compactSend + "\n" + "// MESSAGE " + messageName.toUpper() + " UNPACKING\n\n" + unpacking + decode;
+                    QString cFile = "// MESSAGE " + messageName.toUpper() + " PACKING\n\n" + idDefine + "\n\n" + cStruct + "\n\n" + arrayDefines + "\n\n" + commentContainer.arg(messageName.toLower(), commentLines) + pack + encode + "\n" + compactSend + "\n" + "// MESSAGE " + messageName.toUpper() + " UNPACKING\n\n" + unpacking + decode;
                     cFiles.append(qMakePair(QString("mavlink_msg_%1.h").arg(messageName), cFile));
                 }
             }
