@@ -37,8 +37,10 @@ This file is part of the PIXHAWK project
 #include <QTextStream>
 #include <QQueue>
 #include <QMutex>
+#include <QMap>
 #include <inttypes.h>
 #include <mavlink.h>
+
 #include "LinkInterface.h"
 
 class MAVLinkSimulationLink : public LinkInterface
@@ -116,6 +118,7 @@ protected:
     QString name;
     qint64 timeOffset;
     mavlink_sys_status_t status;
+    QMap<QString, float> onboardParams;
 
     void enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg);
 

@@ -198,9 +198,13 @@ public slots:
      * @brief Set the current robot as focused in the user interface
      */
     virtual void setSelected() = 0;
-    // TODO EMAV REMOVE
-    //virtual void sendMessage(LinkInterface* link, mavlink_message_t message) = 0;
-    //virtual void sendMessage(mavlink_message_t message) = 0;
+
+    virtual void enableAllDataTransmission(bool enabled) = 0;
+    virtual void enableRawSensorDataTransmission(bool enabled) = 0;
+    virtual void enableExtendedSystemStatusTransmission(bool enabled) = 0;
+    virtual void enableRCChannelDataTransmission(bool enabled) = 0;
+    virtual void enableRawControllerDataTransmission(bool enabled) = 0;
+    virtual void enableRawSensorFusionTransmission(bool enabled) = 0;
 
 protected:
     QColor color;

@@ -35,7 +35,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -105,7 +105,8 @@
   <action name="actionSettings">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
+     <normaloff>:/images/categories/preferences-system.svg</normaloff>
+     <normalon>:/images/categories/preferences-system.svg</normalon>:/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
     <string>Settings</string>
@@ -117,7 +118,8 @@
   <action name="actionLiftoff">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
+     <normaloff>:/images/control/launch.svg</normaloff>
+     <normalon>:/images/control/launch.svg</normalon>:/images/control/launch.svg</iconset>
    </property>
    <property name="text">
     <string>Liftoff</string>
