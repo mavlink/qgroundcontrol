@@ -556,8 +556,74 @@ void UAS::requestParameters()
 
 void UAS::writeParameters()
 {
-    mavlink_message_t msg;
+    //mavlink_message_t msg;
+    qDebug() << __FILE__ << __LINE__ << __func__ << "IS NOT IMPLEMENTED!";
+}
 
+void UAS::enableAllDataTransmission(bool enabled)
+{
+    // Buffers to write data to
+    mavlink_message_t msg;
+    mavlink_request_stream_t stream;
+    // Select the message to request from now on
+    // 0 is a magic ID and will enable/disable the standard message set except for heartbeat
+    stream.req_message_id = 0;
+    // Select the update rate in Hz the message should be send
+    // All messages will be send with their default rate
+    stream.req_message_rate = 0;
+    // Start / stop the message
+    stream.start_stop = (enabled) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    sendMessage(msg);
+}
+
+void UAS::enableRawSensorDataTransmission(bool enabled)
+{
+    // Buffers to write data to
+    mavlink_message_t msg;
+    mavlink_request_stream_t stream;
+    // Select the message to request from now on
+    stream.req_message_id = MAVLINK_MSG_ID_RAW_IMU;
+    // Select the update rate in Hz the message should be send
+    stream.req_message_rate = 200;
+    // Start / stop the message
+    stream.start_stop = (enabled) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    sendMessage(msg);
+}
+
+void UAS::enableExtendedSystemStatusTransmission(bool enabled)
+{
+    // FIXME
+    qDebug() << __FILE__ << __LINE__ << __func__ << "IS NOT IMPLEMENTED!";
+}
+
+void UAS::enableRCChannelDataTransmission(bool enabled)
+{
+    // FIXME
+    qDebug() << __FILE__ << __LINE__ << __func__ << "IS NOT IMPLEMENTED!";
+}
+
+void UAS::enableRawControllerDataTransmission(bool enabled)
+{
+    // FIXME
+    qDebug() << __FILE__ << __LINE__ << __func__ << "IS NOT IMPLEMENTED!";
+}
+
+void UAS::enableRawSensorFusionTransmission(bool enabled)
+{
+    // FIXME
+    qDebug() << __FILE__ << __LINE__ << __func__ << "IS NOT IMPLEMENTED!";
 }
 
 void UAS::setParameter(int component, QString id, float value)
@@ -570,9 +636,23 @@ void UAS::setParameter(int component, QString id, float value)
 
     // Copy string into buffer, ensuring not to exceed the buffer size
     char* s = (char*)id.toStdString().c_str();
-    for (int i = 0; (i < id.length() && i < sizeof(p.param_id)); i++)
+    for (int i = 0; i < sizeof(p.param_id); i++)
     {
-        p.param_id[i] = *s;
+        // String characters
+        if (i < id.length() && i < (sizeof(p.param_id) - 1))
+        {
+            p.param_id[i] = s[i];
+        }
+        // Null termination at end of string or end of buffer
+        else if (i == id.length() || i == (sizeof(p.param_id) - 1))
+        {
+            p.param_id[i] = '\0';
+        }
+        // Zero fill
+        else
+        {
+            p.param_id[i] = 0;
+        }
     }
     mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
     sendMessage(msg);

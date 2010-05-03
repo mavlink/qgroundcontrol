@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCSensorSettingsWidget</class>
+ <widget class="QWidget" name="QGCSensorSettingsWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>350</width>
+    <height>545</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_4">
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Activate Extended Output</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <property name="margin">
+       <number>6</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="sendRawCheckBox">
+        <property name="text">
+         <string>Send RAW Sensor data</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="sendExtendedCheckBox">
+        <property name="text">
+         <string>Send extended status</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="sendRCCheckBox">
+        <property name="text">
+         <string>Send RC-values</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="sendControllerCheckBox">
+        <property name="text">
+         <string>Send raw controller outputs</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>Calibration Wizards</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <property name="margin">
+       <number>6</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QPushButton" name="gyroCalButton">
+        <property name="text">
+         <string>Start dynamic calibration</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="gyroCalDate">
+        <property name="text">
+         <string>Date unknown</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="magCalButton">
+        <property name="text">
+         <string>Start static calibration</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="magCalLabel">
+        <property name="text">
+         <string>Date unknown</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

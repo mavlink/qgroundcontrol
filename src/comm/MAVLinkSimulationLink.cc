@@ -60,6 +60,14 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     this->rate = rate;
     _isConnected = false;
 
+    onboardParams = QMap<QString, float>();
+    onboardParams.insert("ROLL_K_P", 0.5f);
+    onboardParams.insert("PITCH_K_P", 0.5f);
+    onboardParams.insert("YAW_K_P", 0.5f);
+    onboardParams.insert("XY_K_P", 0.5f);
+    onboardParams.insert("ALT_K_P", 0.5f);
+    onboardParams.insert("SYSTEM_TYPE", 1);
+
     // Comments on the variables can be found in the header file
 
     simulationFile = new QFile(readFile, this);
@@ -91,6 +99,7 @@ MAVLinkSimulationLink::~MAVLinkSimulationLink()
     //TODO Check destructor
     //    fileStream->flush();
     //    outStream->flush();
+    delete simulationFile;
 }
 
 void MAVLinkSimulationLink::run()
@@ -482,7 +491,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 
     // Parse bytes
     mavlink_message_t msg;
-    mavlink_status_t comm = {0};
+    mavlink_status_t comm;
 
     uint8_t stream[2048];
     int streampointer = 0;
@@ -519,7 +528,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         status.mode = MAV_MODE_AUTO;
                         break;
                     case MAV_ACTION_RETURN:
-                        status.status = MAV_STATE_LANDING;
+                        status.status = MAV_STATE_ACTIVE;
                         break;
                     case MAV_ACTION_MOTORS_START:
                         status.status = MAV_STATE_ACTIVE;
@@ -556,7 +565,21 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                     if (read.target_system == systemId)
                     {
                         // Output all params
+                        // Iterate through all components, through all parameters and emit them
+                        QMap<QString, float>::iterator i;
+                        // Iterate through all components / subsystems
+                        for (i = onboardParams.begin(); i != onboardParams.end(); ++i)
+                        {
+                            // Pack message and get size of encoded byte string
+                            mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)i.key().toStdString().c_str(), i.value());
+                            // Allocate buffer with packet data
+                            bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+                            //add data into datastream
+                            memcpy(stream+streampointer,buffer, bufferlength);
+                            streampointer+=bufferlength;
+                        }
 
+                        /*
                         // Pack message and get size of encoded byte string
                         mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)"ROLL_K_P", 0.5f);
                         // Allocate buffer with packet data
@@ -579,11 +602,28 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
                         //add data into datastream
                         memcpy(stream+streampointer,buffer, bufferlength);
-                        streampointer+=bufferlength;
+                        streampointer+=bufferlength;*/
 
                         qDebug() << "SIMULATION SENT PARAMETERS TO GCS";
                     }
                 }
+                break;
+            case MAVLINK_MSG_ID_PARAM_SET:
+                {
+                    qDebug() << "SIMULATION RECEIVED COMMAND TO SET PARAMETER";
+                    mavlink_param_set_t set;
+                    mavlink_msg_param_set_decode(&msg, &set);
+                    if (set.target_system == systemId)
+                    {
+                        QString key = QString((char*)set.param_id);
+                        if (onboardParams.contains(key))
+                        {
+                            onboardParams.remove(key);
+                            onboardParams.insert(key, set.param_value);
+                        }
+                    }
+                }
+                break;
             }
 
 

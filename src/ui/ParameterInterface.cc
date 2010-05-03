@@ -4,6 +4,7 @@
 #include "ParamTreeModel.h"
 #include "UASManager.h"
 #include "ui_ParameterInterface.h"
+#include "QGCSensorSettingsWidget.h"
 
 #include <QDebug>
 
@@ -30,6 +31,7 @@ ParameterInterface::~ParameterInterface()
 void ParameterInterface::selectUAS(int index)
 {
     m_ui->stackedWidget->setCurrentIndex(index);
+    m_ui->sensorSettings->setCurrentIndex(index);
     curr = index;
 }
 
@@ -44,11 +46,17 @@ void ParameterInterface::addUAS(UASInterface* uas)
     QGCParamWidget* param = new QGCParamWidget(uas, this);
     paramWidgets->insert(uas->getUASID(), param);
     m_ui->stackedWidget->addWidget(param);
+
+
+    QGCSensorSettingsWidget* sensor = new QGCSensorSettingsWidget(uas, this);
+    m_ui->sensorSettings->addWidget(sensor);
+
+    // Set widgets as default
     if (curr == -1)
     {
+        m_ui->sensorSettings->setCurrentWidget(param);
         m_ui->stackedWidget->setCurrentWidget(param);
         curr = uas->getUASID();
-        qDebug() << "first widget";
     }
 }
 

@@ -194,6 +194,13 @@ public slots:
     /** @brief Write parameters to permanent storage */
     void writeParameters();
 
+    void enableAllDataTransmission(bool enabled);
+    void enableRawSensorDataTransmission(bool enabled);
+    void enableExtendedSystemStatusTransmission(bool enabled);
+    void enableRCChannelDataTransmission(bool enabled);
+    void enableRawControllerDataTransmission(bool enabled);
+    void enableRawSensorFusionTransmission(bool enabled);
+
 signals:
 
     /** @brief The main/battery voltage has changed/was updated */

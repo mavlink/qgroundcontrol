@@ -48,7 +48,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/XMLCommProtocolWidget.ui \
     src/ui/HDDisplay.ui \
     src/ui/MAVLinkSettingsWidget.ui \
-    src/ui/AudioOutputWidget.ui
+    src/ui/AudioOutputWidget.ui \
+    src/ui/QGCSensorSettingsWidget.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -113,7 +114,8 @@ HEADERS += src/MG.h \
     src/LogCompressor.h \
     src/ui/param/ParamTreeItem.h \
     src/ui/param/ParamTreeModel.h \
-    src/ui/QGCParamWidget.h
+    src/ui/QGCParamWidget.h \
+    src/ui/QGCSensorSettingsWidget.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -161,5 +163,6 @@ SOURCES += src/main.cc \
     src/LogCompressor.cc \
     src/ui/param/ParamTreeItem.cc \
     src/ui/param/ParamTreeModel.cc \
-    src/ui/QGCParamWidget.cc
+    src/ui/QGCParamWidget.cc \
+    src/ui/QGCSensorSettingsWidget.cc
 RESOURCES = mavground.qrc

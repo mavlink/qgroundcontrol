@@ -13,108 +13,28 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_4">
-   <item row="1" column="0">
-    <widget class="QGroupBox" name="groupBox">
-     <property name="title">
-      <string>Activate Extended Output</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <property name="margin">
-       <number>6</number>
-      </property>
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="sendRawCheckBox">
-        <property name="text">
-         <string>Send RAW Sensor data</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="sendExtendedCheckBox">
-        <property name="text">
-         <string>Send extended status</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="checkBox">
-        <property name="text">
-         <string>Send RC-values</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="checkBox_2">
-        <property name="text">
-         <string>Send raw controller outputs</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QGroupBox" name="groupBox_3">
-     <property name="title">
-      <string>Calibration Wizards</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <property name="margin">
-       <number>6</number>
-      </property>
-      <item row="0" column="0">
-       <widget class="QPushButton" name="gyroCalButton">
-        <property name="text">
-         <string>Start dynamic calibration</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="gyroCalDate">
-        <property name="text">
-         <string>Date unknown</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="magCalButton">
-        <property name="text">
-         <string>Start static calibration</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLabel" name="magCalLabel">
-        <property name="text">
-         <string>Date unknown</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
+  <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Vehicle</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="vehicleComboBox"/>
+   </item>
+   <item row="1" column="0" colspan="2">
     <widget class="QGroupBox" name="groupBox_2">
      <property name="title">
       <string>Onboard Parameters</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_3">
-      <property name="margin">
-       <number>6</number>
-      </property>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Vehicle</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1" colspan="2">
-       <widget class="QComboBox" name="vehicleComboBox"/>
-      </item>
-      <item row="1" column="0" colspan="3">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
        <widget class="QStackedWidget" name="stackedWidget">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
         <widget class="QWidget" name="page">
          <layout class="QVBoxLayout" name="verticalLayout"/>
         </widget>
@@ -122,6 +42,17 @@
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QStackedWidget" name="sensorSettings">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="page_3">
+      <layout class="QVBoxLayout" name="verticalLayout_2"/>
+     </widget>
+     <widget class="QWidget" name="page_4"/>
     </widget>
    </item>
   </layout>
