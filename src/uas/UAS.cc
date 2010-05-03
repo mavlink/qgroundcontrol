@@ -631,8 +631,8 @@ void UAS::setParameter(int component, QString id, float value)
     mavlink_message_t msg;
     mavlink_param_set_t p;
     p.param_value = value;
-    p.target_system = uasId;
-    p.target_component = component;
+    p.target_system = (uint8_t)uasId;
+    p.target_component = (uint8_t)component;
 
     // Copy string into buffer, ensuring not to exceed the buffer size
     char* s = (char*)id.toStdString().c_str();

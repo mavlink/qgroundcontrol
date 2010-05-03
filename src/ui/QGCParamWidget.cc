@@ -153,8 +153,9 @@ void QGCParamWidget::setParameters()
             }
         }
     }
+    clear();
+    //mav->requestParameters();
     qDebug() << __FILE__ << __LINE__ << "SETTING ALL PARAMETERS";
-    requestParameterList();
 }
 
 void QGCParamWidget::writeParameters()

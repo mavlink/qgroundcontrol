@@ -620,6 +620,14 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         {
                             onboardParams.remove(key);
                             onboardParams.insert(key, set.param_value);
+
+                            // Pack message and get size of encoded byte string
+                            mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)key.toStdString().c_str(), set.param_value);
+                            // Allocate buffer with packet data
+                            bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+                            //add data into datastream
+                            memcpy(stream+streampointer,buffer, bufferlength);
+                            streampointer+=bufferlength;
                         }
                     }
                 }
