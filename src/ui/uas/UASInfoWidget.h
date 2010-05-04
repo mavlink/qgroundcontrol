@@ -56,6 +56,7 @@ public slots:
 
     void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
     void updateCPULoad(UASInterface* uas, double load);
+    void updateReceiveLoss(float receiveLoss);
     void updateDropRate(int sysId, float receiveDrop, float sendDrop);
 
     void setVoltage(UASInterface* uas, double voltage);

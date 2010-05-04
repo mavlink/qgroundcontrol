@@ -59,6 +59,15 @@ MAVLinkProtocol::MAVLinkProtocol() :
     // Start heartbeat timer, emitting a heartbeat at the configured rate
     connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
     heartbeatTimer->start(1000/heartbeatRate);
+    totalReceiveCounter = 0;
+    totalLossCounter = 0;
+    for (int i = 0; i < 256; i++)
+    {
+        for (int j = 0; j < 256; j++)
+        {
+            lastIndex[i][j] = -1;
+        }
+    }
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()
@@ -120,6 +129,40 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
                 // Now add UAS to "official" list, which makes the whole application aware of it
                 UASManager::instance()->addUAS(uas);
             }
+            // Increase receive counter
+            totalReceiveCounter++;
+            qint64 lastLoss = totalLossCounter;
+            // Update last packet index
+            if (lastIndex[message.sysid][message.compid] == -1)
+            {
+                lastIndex[message.sysid][message.compid] = message.seq;
+            }
+            else
+            {
+                int safeguard = 0;
+                while(lastIndex[message.sysid][message.compid]+1 != message.seq && safeguard < 100)
+                {
+                    lastIndex[message.sysid][message.compid] += 1;
+                    totalLossCounter++;
+                    safeguard++;
+                }
+            }
+//            if (lastIndex.contains(message.sysid))
+//            {
+//                QMap<int, int>* lastCompIndex = lastIndex.value(message.sysid);
+//                if (lastCompIndex->contains(message.compid))
+//                while (lastCompIndex->value(message.compid, 0)+1 )
+//            }
+            //if ()
+            if (lastLoss != totalLossCounter)
+            {
+                // Calculate new loss ratio
+                // Receive loss
+                float receiveLoss = (double)totalLossCounter/(double)(totalReceiveCounter+totalLossCounter);
+                receiveLoss *= 100.0f;
+                emit receiveLossChanged(receiveLoss);
+            }
+
             // The packet is emitted as a whole, as it is only 255 - 261 bytes short
             // kind of inefficient, but no issue for a groundstation pc.
             // It buys as reentrancy for the whole code over all threads

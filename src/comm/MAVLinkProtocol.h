@@ -37,6 +37,7 @@ This file is part of the PIXHAWK project
 #include <QMutex>
 #include <QString>
 #include <QTimer>
+#include <QMap>
 #include <QByteArray>
 #include "ProtocolInterface.h"
 #include "LinkInterface.h"
@@ -86,6 +87,9 @@ protected:
     int heartbeatRate;       ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
     QMutex receiveMutex;     ///< Mutex to protect receiveBytes function
+    qint64 lastIndex[256][256];
+    int totalReceiveCounter;
+    int totalLossCounter;
 
 signals:
     /** @brief Message received and directly copied via signal */
