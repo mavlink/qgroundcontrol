@@ -57,7 +57,7 @@ public slots:
     void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
     void updateCPULoad(UASInterface* uas, double load);
     void updateReceiveLoss(float receiveLoss);
-    void updateDropRate(int sysId, float receiveDrop, float sendDrop);
+    void updateSendLoss(float sendLoss);
 
     void setVoltage(UASInterface* uas, double voltage);
     void setChargeLevel(UASInterface* uas, double chargeLevel);
@@ -83,6 +83,8 @@ protected:
     double chargeLevel;
     double timeRemaining;
     double load;
+    float receiveLoss;
+    float sendLoss;
     QTimer* updateTimer;
     QString name;
     quint64 startTime;

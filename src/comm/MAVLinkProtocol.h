@@ -87,7 +87,7 @@ protected:
     int heartbeatRate;       ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
     QMutex receiveMutex;     ///< Mutex to protect receiveBytes function
-    qint64 lastIndex[256][256];
+    int lastIndex[256][256];
     int totalReceiveCounter;
     int totalLossCounter;
 
