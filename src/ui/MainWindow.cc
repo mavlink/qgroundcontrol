@@ -164,6 +164,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // Adjust the size
     adjustSize();
+
+    //
+    connect(mavlink, SIGNAL(receiveLossChanged(float)), info, SLOT(updateReceiveLoss(float)));
 }
 
 MainWindow::~MainWindow()

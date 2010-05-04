@@ -115,6 +115,12 @@ void UASInfoWidget::updateCPULoad(UASInterface* uas, double load)
     }
 }
 
+void UASInfoWidget::updateReceiveLoss(float receiveLoss)
+{
+    ui.receiveLossBar->setValue(receiveLoss);
+    ui.receiveLossLabel->setText(QString::number(receiveLoss,'f', 2));
+}
+
 void UASInfoWidget::updateDropRate(int sysId, float receiveDrop, float sendDrop)
 {
     Q_UNUSED(sysId);
