@@ -139,20 +139,37 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
             }
             else
             {
-                int safeguard = 0;
-                while(lastIndex[message.sysid][message.compid]+1 != message.seq && safeguard < 100)
+                if (lastIndex[message.sysid][message.compid] == 255)
                 {
-                    lastIndex[message.sysid][message.compid] += 1;
+                    lastIndex[message.sysid][message.compid] = 0;
+                }
+                else
+                {
+                    lastIndex[message.sysid][message.compid]++;
+                }
+
+                int safeguard = 0;
+                //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "LASTINDEX" << lastIndex[message.sysid][message.compid] << "SEQ" << message.seq;
+                while(lastIndex[message.sysid][message.compid] != message.seq && safeguard < 1)
+                {
+                    if (lastIndex[message.sysid][message.compid] == 255)
+                    {
+                        lastIndex[message.sysid][message.compid] = 0;
+                    }
+                    else
+                    {
+                        lastIndex[message.sysid][message.compid]++;
+                    }
                     totalLossCounter++;
                     safeguard++;
                 }
             }
-//            if (lastIndex.contains(message.sysid))
-//            {
-//                QMap<int, int>* lastCompIndex = lastIndex.value(message.sysid);
-//                if (lastCompIndex->contains(message.compid))
-//                while (lastCompIndex->value(message.compid, 0)+1 )
-//            }
+            //            if (lastIndex.contains(message.sysid))
+            //            {
+            //                QMap<int, int>* lastCompIndex = lastIndex.value(message.sysid);
+            //                if (lastCompIndex->contains(message.compid))
+            //                while (lastCompIndex->value(message.compid, 0)+1 )
+            //            }
             //if ()
             if (lastLoss != totalLossCounter)
             {
@@ -160,6 +177,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
                 // Receive loss
                 float receiveLoss = (double)totalLossCounter/(double)(totalReceiveCounter+totalLossCounter);
                 receiveLoss *= 100.0f;
+                qDebug() << "LOSS" << receiveLoss;
                 emit receiveLossChanged(receiveLoss);
             }
 

@@ -67,6 +67,8 @@ UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
     this->voltage = 0;
     this->chargeLevel = 0;
     this->load = 0;
+    receiveLoss = 0;
+    sendLoss = 0;
 
     updateTimer = new QTimer(this);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -117,17 +119,12 @@ void UASInfoWidget::updateCPULoad(UASInterface* uas, double load)
 
 void UASInfoWidget::updateReceiveLoss(float receiveLoss)
 {
-    ui.receiveLossBar->setValue(receiveLoss);
-    ui.receiveLossLabel->setText(QString::number(receiveLoss,'f', 2));
+    this->receiveLoss = this->receiveLoss * 0.8f + receiveLoss * 0.2f;
 }
 
-void UASInfoWidget::updateDropRate(int sysId, float receiveDrop, float sendDrop)
+void UASInfoWidget::updateSendLoss(float sendLoss)
 {
-    Q_UNUSED(sysId);
-    ui.receiveLossBar->setValue(receiveDrop);
-    ui.receiveLossLabel->setText(QString::number(receiveDrop) + "%");
-    ui.sendLossBar->setValue(sendDrop);
-    ui.sendLossLabel->setText(QString::number(receiveDrop) + "%");
+    this->sendLoss = this->sendLoss * 0.8f + sendLoss * 0.2f;
 }
 
 void UASInfoWidget::setVoltage(UASInterface* uas, double voltage)
@@ -159,4 +156,10 @@ void UASInfoWidget::refresh()
 
     ui.loadLabel->setText(QString::number(this->load, 'f', loadDecimals));
     ui.loadBar->setValue(static_cast<int>(this->load));
+
+    ui.receiveLossBar->setValue(receiveLoss);
+    ui.receiveLossLabel->setText(QString::number(receiveLoss,'f', 2));
+
+    ui.sendLossBar->setValue(sendLoss);
+    ui.sendLossLabel->setText(QString::number(sendLoss, 'f', 2));
 }
