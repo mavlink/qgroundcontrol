@@ -1,3 +1,34 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL/PIXHAWK PROJECT
+<http://www.qgroundcontrol.org>
+<http://pixhawk.ethz.ch>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Implementation of class QGCParamWidget
+ *   @author Lorenz Meier <mail@qgroundcontrol.org>
+ */
+
 #include <QGridLayout>
 #include <QPushButton>
 
@@ -5,6 +36,10 @@
 #include "UASInterface.h"
 #include <QDebug>
 
+/**
+ * @param uas MAV to set the parameters on
+ * @param parent Parent widget
+ */
 QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
         QWidget(parent),
         mav(uas),
@@ -51,6 +86,10 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(parameterChanged(int,int,QString,float)), this, SLOT(addParameter(int,int,QString,float)));
 }
 
+/**
+ * @return The MAV of this widget. Unless the MAV object has been destroyed, this
+ *         pointer is never zero.
+ */
 UASInterface* QGCParamWidget::getUAS()
 {
     return mav;
@@ -106,6 +145,10 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     tree->update();
 }
 
+/**
+ * Send a request to deliver the list of onboard parameters
+ * to the MAV.
+ */
 void QGCParamWidget::requestParameterList()
 {
     // Clear view and request param list
@@ -120,9 +163,12 @@ void QGCParamWidget::requestParameterList()
  */
 void QGCParamWidget::setParameter(int component, QString parameterName, float value)
 {
-
+    emit parameterChanged(component, parameterName, value);
 }
 
+/**
+ * Set all parameter in the parameter tree on the MAV
+ */
 void QGCParamWidget::setParameters()
 {
     //mav->setParameter(component, parameterName, value);
@@ -140,7 +186,7 @@ void QGCParamWidget::setParameters()
             // First column is name, second column value
             bool ok = true;
             QString key = param->data(0, Qt::DisplayRole).toString();
-            float value = param->data(1, Qt::DisplayRole).toFloat(&ok);
+            float value = param->data(1, Qt::DisplayRole).toDouble(&ok);
             // Send parameter to MAV
             if (ok)
             {
@@ -158,11 +204,18 @@ void QGCParamWidget::setParameters()
     qDebug() << __FILE__ << __LINE__ << "SETTING ALL PARAMETERS";
 }
 
+/**
+ * Write the current onboard parameters from RAM into
+ * permanent storage, e.g. EEPROM or harddisk
+ */
 void QGCParamWidget::writeParameters()
 {
     mav->writeParameters();
 }
 
+/**
+ * Clear all data in the parameter widget
+ */
 void QGCParamWidget::clear()
 {
     tree->clear();
