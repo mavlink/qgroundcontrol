@@ -149,7 +149,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
                 }
 
                 int safeguard = 0;
-                //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "LASTINDEX" << lastIndex[message.sysid][message.compid] << "SEQ" << message.seq;
+                //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "MSGID" << message.msgid << "LASTINDEX" << lastIndex[message.sysid][message.compid] << "SEQ" << message.seq;
                 while(lastIndex[message.sysid][message.compid] != message.seq && safeguard < 1)
                 {
                     if (lastIndex[message.sysid][message.compid] == 255)
@@ -171,13 +171,12 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
             //                while (lastCompIndex->value(message.compid, 0)+1 )
             //            }
             //if ()
-            if (lastLoss != totalLossCounter)
+            if (lastLoss != totalLossCounter || (totalReceiveCounter / 64) == 0)
             {
                 // Calculate new loss ratio
                 // Receive loss
                 float receiveLoss = (double)totalLossCounter/(double)(totalReceiveCounter+totalLossCounter);
                 receiveLoss *= 100.0f;
-                qDebug() << "LOSS" << receiveLoss;
                 emit receiveLossChanged(receiveLoss);
             }
 
