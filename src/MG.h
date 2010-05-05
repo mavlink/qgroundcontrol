@@ -303,6 +303,24 @@ namespace MG
             return static_cast<quint64>(milliseconds + time.time().msec());
         }
 
+        /**
+         * @brief Convenience method to get the milliseconds time stamp for now
+         *
+         * The timestamp is created at the instant of calling this method. It is
+         * defined as the number of milliseconds since unix epoch, which is
+         * 1.1.1970, 00:00 UTC.
+         *
+         * @return The number of milliseconds elapsed since unix epoch
+         * @deprecated Will the replaced by time helper class
+         **/
+        static quint64 getGroundTimeNowUsecs() {
+            QDateTime time = QDateTime::currentDateTime();
+            time = time.toUTC();
+            /* Return seconds and milliseconds, in milliseconds unit */
+            quint64 microseconds = time.toTime_t() * static_cast<quint64>(1000000);
+            return static_cast<quint64>(microseconds + (time.time().msec()*1000));
+        }
+
         /*tatic quint64 getMissionTimeUsecs()
         {
             ;
