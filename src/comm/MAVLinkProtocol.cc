@@ -61,6 +61,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
     heartbeatTimer->start(1000/heartbeatRate);
     totalReceiveCounter = 0;
     totalLossCounter = 0;
+    currReceiveCounter = 0;
+    currLossCounter = 0;
     for (int i = 0; i < 256; i++)
     {
         for (int j = 0; j < 256; j++)
@@ -131,6 +133,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
             }
             // Increase receive counter
             totalReceiveCounter++;
+            currReceiveCounter++;
             qint64 lastLoss = totalLossCounter;
             // Update last packet index
             if (lastIndex[message.sysid][message.compid] == -1)
@@ -150,7 +153,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
 
                 int safeguard = 0;
                 //qDebug() << "SYSID" << message.sysid << "COMPID" << message.compid << "MSGID" << message.msgid << "LASTINDEX" << lastIndex[message.sysid][message.compid] << "SEQ" << message.seq;
-                while(lastIndex[message.sysid][message.compid] != message.seq && safeguard < 1)
+                while(lastIndex[message.sysid][message.compid] != message.seq && safeguard < 255)
                 {
                     if (lastIndex[message.sysid][message.compid] == 255)
                     {
@@ -161,6 +164,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
                         lastIndex[message.sysid][message.compid]++;
                     }
                     totalLossCounter++;
+                    currLossCounter++;
                     safeguard++;
                 }
             }
@@ -171,12 +175,17 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
             //                while (lastCompIndex->value(message.compid, 0)+1 )
             //            }
             //if ()
-            if (lastLoss != totalLossCounter || (totalReceiveCounter / 64) == 0)
+
+            // If a new loss was detected or we just hit one 128th packet step
+            if (lastLoss != totalLossCounter || (totalReceiveCounter & 0b1111111) == 0)
             {
                 // Calculate new loss ratio
                 // Receive loss
-                float receiveLoss = (double)totalLossCounter/(double)(totalReceiveCounter+totalLossCounter);
+                float receiveLoss = (double)currLossCounter/(double)(currReceiveCounter+currLossCounter);
                 receiveLoss *= 100.0f;
+               // qDebug() << "LOSSCHANGED" << receiveLoss;
+                currLossCounter = 0;
+                currReceiveCounter = 0;
                 emit receiveLossChanged(receiveLoss);
             }
 

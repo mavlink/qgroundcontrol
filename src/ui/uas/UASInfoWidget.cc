@@ -113,7 +113,7 @@ void UASInfoWidget::updateCPULoad(UASInterface* uas, double load)
 {
     if (activeUAS == uas)
     {
-        this->load = load*100.0f;
+        this->load = load;
     }
 }
 
