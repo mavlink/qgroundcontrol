@@ -225,15 +225,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_aux_status_t status;
                 mavlink_msg_aux_status_decode(&message, &status);
-                emit loadChanged(this, status.load/100.0f);
-                emit valueChanged(this, "Load", status.load/1000.0f, MG::TIME::getGroundTimeNow());
+                emit loadChanged(this, status.load/10.0f);
+                emit valueChanged(this, "Load", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
             }
             break;
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 mavlink_raw_imu_t raw;
                 mavlink_msg_raw_imu_decode(&message, &raw);
-                quint64 time = raw.msec;
+                quint64 time = raw.msec/1000;
                 if (time == 0)
                 {
                     time = MG::TIME::getGroundTimeNow();
@@ -285,7 +285,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
-                quint64 time = mavlink_msg_attitude_get_msec(&message);
+                quint64 time = mavlink_msg_attitude_get_msec(&message)/1000;
                 if (time == 0)
                 {
                     time = MG::TIME::getGroundTimeNow();
@@ -316,7 +316,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_position_t pos;
                 mavlink_msg_position_decode(&message, &pos);
-                quint64 time = pos.msec;
+                quint64 time = pos.msec/1000;
                 if (time == 0)
                 {
                     time = MG::TIME::getGroundTimeNow();

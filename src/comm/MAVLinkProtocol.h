@@ -90,6 +90,8 @@ protected:
     int lastIndex[256][256];
     int totalReceiveCounter;
     int totalLossCounter;
+    int currReceiveCounter;
+    int currLossCounter;
 
 signals:
     /** @brief Message received and directly copied via signal */
