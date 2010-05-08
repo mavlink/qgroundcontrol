@@ -76,7 +76,7 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
         simulationHeader = simulationFile->readLine();
     }
     receiveFile = new QFile(writeFile, this);
-    lastSent = MG::TIME::getGroundTimeNow();
+    lastSent = MG::TIME::getGroundTimeNow() * 1000;
 
     if (simulationFile->exists())
     {
@@ -218,6 +218,8 @@ void MAVLinkSimulationLink::mainloop()
             static quint64 lastTime = 0;
             static quint64 baseTime = 0;
             quint64 time = QString(parts.first()).toLongLong(&ok, 10);
+	    // FIXME Remove multiplicaton by 1000
+	    time *= 1000;
 
             if (ok)
             {
