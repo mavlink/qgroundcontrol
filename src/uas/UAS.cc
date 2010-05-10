@@ -316,7 +316,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_position_t pos;
                 mavlink_msg_position_decode(&message, &pos);
-                quint64 time = pos.msec/1000;
+                quint64 time = pos.usec/1000;
                 if (time == 0)
                 {
                     time = MG::TIME::getGroundTimeNow();
