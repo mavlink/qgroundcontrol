@@ -255,7 +255,7 @@ bool MAVLinkXMLParser::generate()
     QString messagesDirName = "generated";
     QDir dir(outputDirName + "/" + messagesDirName);
     // Create directory if it doesn't exist, report result in success
-    if (!dir.exists()) success = success && dir.mkdir(outputDirName);
+    if (!dir.exists()) success = success && dir.mkpath(outputDirName + "/" + messagesDirName);
     for (int i = 0; i < cFiles.size(); i++)
     {
         QFile rawFile(dir.filePath(cFiles.at(i).first));
