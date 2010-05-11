@@ -389,15 +389,15 @@ quint64 UAS::getUnixTime(quint64 time)
     {
         if (onboardTimeOffset == 0)
         {
-            onboardTimeOffset = MG::TIME::getGroundTimeNow() - time;
+            onboardTimeOffset = MG::TIME::getGroundTimeNow() - time/1000;
         }
-        return time + onboardTimeOffset;
+        return time/1000 + onboardTimeOffset;
     }
     else
     {
         // Time is not zero and larger than 40 years -> has to be
         // a Unix epoch timestamp. Do nothing.
-        return time;
+        return time/1000;
     }
 }
 
