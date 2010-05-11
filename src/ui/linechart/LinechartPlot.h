@@ -53,9 +53,12 @@ class TimeScaleDraw: public QwtScaleDraw
 {
 public:
 
-    virtual QwtText label(double v) const {
+    virtual QwtText label(double v) const
+    {
         QDateTime time = MG::TIME::msecToQDateTime(static_cast<quint64>(v));
         return time.toString("hh:mm:ss"); // was hh:mm:ss:zzz
+        // Show seconds since system startup
+        //return QString::number(static_cast<int>(v)/1000000);
     }
 
 };
