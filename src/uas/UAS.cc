@@ -233,19 +233,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_raw_imu_t raw;
                 mavlink_msg_raw_imu_decode(&message, &raw);
-                quint64 time = raw.msec/1000;
-                if (time == 0)
-                {
-                    time = MG::TIME::getGroundTimeNow();
-                }
-                else
-                {
-                    if (onboardTimeOffset == 0)
-                    {
-                        onboardTimeOffset = MG::TIME::getGroundTimeNow() - time;
-                    }
-                    time += onboardTimeOffset;
-                }
+                quint64 time = getUnixTime(raw.msec);
 
                 emit valueChanged(uasId, "Accel. X", raw.xacc, time);
                 emit valueChanged(uasId, "Accel. Y", raw.yacc, time);
@@ -262,19 +250,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_raw_aux_t raw;
                 mavlink_msg_raw_aux_decode(&message, &raw);
-                quint64 time = MG::TIME::getGroundTimeNow();//raw.msec;
-                if (time == 0)
-                {
-                    time = MG::TIME::getGroundTimeNow();
-                }
-                else
-                {
-                    if (onboardTimeOffset == 0)
-                    {
-                        onboardTimeOffset = MG::TIME::getGroundTimeNow() - time;
-                    }
-                    time += onboardTimeOffset;
-                }
+                quint64 time = getUnixTime(0);
                 emit valueChanged(uasId, "Pressure", raw.baro, time);
                 emit valueChanged(uasId, "Temperature", raw.temp, time);
             }
@@ -285,19 +261,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
-                quint64 time = mavlink_msg_attitude_get_msec(&message)/1000;
-                if (time == 0)
-                {
-                    time = MG::TIME::getGroundTimeNow();
-                }
-                else
-                {
-                    if (onboardTimeOffset == 0)
-                    {
-                        onboardTimeOffset = MG::TIME::getGroundTimeNow() - time;
-                    }
-                    time += onboardTimeOffset;
-                }
+                quint64 time = getUnixTime(attitude.msec);
                 emit valueChanged(uasId, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
                 emit valueChanged(uasId, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
                 emit valueChanged(uasId, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
@@ -310,44 +274,41 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit attitudeChanged(this, mavlink_msg_attitude_get_roll(&message), mavlink_msg_attitude_get_pitch(&message), mavlink_msg_attitude_get_yaw(&message), time);
             }
             break;
+        case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE:
+            {
+                mavlink_vision_position_estimate_t pos;
+                mavlink_msg_vision_position_estimate_decode(&message, &pos);
+                emit valueChanged(uasId, "vis. roll", pos.roll, pos.usec);
+                emit valueChanged(uasId, "vis. pitch", pos.pitch, pos.usec);
+                emit valueChanged(uasId, "vis. yaw", pos.yaw, pos.usec);
+                emit valueChanged(uasId, "vis. x", pos.x, pos.usec);
+                emit valueChanged(uasId, "vis. y", pos.y, pos.usec);
+                emit valueChanged(uasId, "vis. z", pos.z, pos.usec);
+            }
+            break;
         case MAVLINK_MSG_ID_POSITION:
             //std::cerr << std::endl;
             //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
             {
                 mavlink_position_t pos;
                 mavlink_msg_position_decode(&message, &pos);
-                quint64 time = pos.msec/1000;
-                if (time == 0)
-                {
-                    time = MG::TIME::getGroundTimeNow();
-                }
-                else
-                {
-                    if (onboardTimeOffset == 0)
-                    {
-                        onboardTimeOffset = MG::TIME::getGroundTimeNow() - time;
-                    }
-                    time += onboardTimeOffset;
-                }
+                quint64 time = getUnixTime(pos.usec);
                 emit valueChanged(uasId, "x", pos.x, time);
                 emit valueChanged(uasId, "y", pos.y, time);
                 emit valueChanged(uasId, "z", pos.z, time);
-                //emit valueChanged(this, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
-                //emit valueChanged(this, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
-                //emit valueChanged(this, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
                 emit valueChanged(uasId, "vx", pos.vx, time);
                 emit valueChanged(uasId, "vy", pos.vy, time);
                 emit valueChanged(uasId, "vz", pos.vz, time);
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
             }
             break;
-            case MAVLINK_MSG_ID_PARAM_VALUE:
-                {
-                    mavlink_param_value_t value;
-                    mavlink_msg_param_value_decode(&message, &value);
-                    emit parameterChanged(uasId, message.compid, QString((char*)value.param_id), value.param_value);
-                }
-                break;
+        case MAVLINK_MSG_ID_PARAM_VALUE:
+            {
+                mavlink_param_value_t value;
+                mavlink_msg_param_value_decode(&message, &value);
+                emit parameterChanged(uasId, message.compid, QString((char*)value.param_id), value.param_value);
+            }
+            break;
         case MAVLINK_MSG_ID_DEBUG:
             emit valueChanged(uasId, QString("debug ") + QString::number(mavlink_msg_debug_get_ind(&message)), mavlink_msg_debug_get_value(&message), MG::TIME::getGroundTimeNow());
             break;
@@ -355,21 +316,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_WP:
             emit waypointUpdated(this->getUASID(), mavlink_msg_emitwaypoint_get_id(message.payload), mavlink_msg_emitwaypoint_get_x(message.payload), mavlink_msg_emitwaypoint_get_y(message.payload), mavlink_msg_emitwaypoint_get_z(message.payload), mavlink_msg_emitwaypoint_get_yaw(message.payload), (message_emitwaypoint_get_autocontinue(message.payload) == 1 ? true : false), (message_emitwaypoint_get_active(message.payload) == 1 ? true : false));
             break;
-        case MAVLINK_MSG_ID_SET_POSITION:
-            emit valueChanged(uasId, "WP X", mavlink_msg_gotowaypoint_get_x(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP Y", mavlink_msg_gotowaypoint_get_y(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP Z", mavlink_msg_gotowaypoint_get_z(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP speed X", mavlink_msg_gotowaypoint_get_speedX(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP speed Y", mavlink_msg_gotowaypoint_get_speedY(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP speed Z", mavlink_msg_gotowaypoint_get_speedZ(message.payload), MG::TIME::getGroundTimeNow());
-            emit valueChanged(uasId, "WP yaw", mavlink_msg_gotowaypoint_get_yaw(message.payload)/M_PI*180.0f, MG::TIME::getGroundTimeNow());
-            break;
         case MAVLINK_MSG_ID_WP_REACHED:
             qDebug() << "WAYPOINT REACHED";
             emit waypointReached(this, mavlink_msg_wp_reached_get_id(message.payload));
             break;
             */
-            case MAVLINK_MSG_ID_STATUSTEXT:
+        case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
                 b.resize(256);
@@ -408,6 +360,47 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
     }
 }
 
+quint64 UAS::getUnixTime(quint64 time)
+{
+    if (time == 0)
+    {
+        return MG::TIME::getGroundTimeNow();
+    }
+    // Check if time is smaller than 40 years,
+    // assuming no system without Unix timestamp
+    // runs longer than 40 years continuously without
+    // reboot. In worst case this will add/subtract the
+    // communication delay between GCS and MAV,
+    // it will never alter the timestamp in a safety
+    // critical way.
+    //
+    // Calculation:
+    // 40 years
+    // 365 days
+    // 24 hours
+    // 60 minutes
+    // 60 seconds
+    // 1000 milliseconds
+    // 1000 microseconds
+
+    // THIS CALCULATION IS EXPANDED BY THE PREPROCESSOR/COMPILER ONE-TIME,
+    // NO NEED TO MULTIPLY MANUALLY!
+    else if (time < 40 * 365 * 24 * 60 * 60 * 1000 * 1000)
+    {
+        if (onboardTimeOffset == 0)
+        {
+            onboardTimeOffset = MG::TIME::getGroundTimeNow() - time;
+        }
+        return time + onboardTimeOffset;
+    }
+    else
+    {
+        // Time is not zero and larger than 40 years -> has to be
+        // a Unix epoch timestamp. Do nothing.
+        return time;
+    }
+}
+
 void UAS::setMode(int mode)
 {
     if (mode >= MAV_MODE_LOCKED && mode <= MAV_MODE_TEST3)
@@ -421,23 +414,16 @@ void UAS::setMode(int mode)
 
 void UAS::sendMessage(mavlink_message_t message)
 {
-    qDebug() << "In send message";
     // Emit message on all links that are currently connected
     QList<LinkInterface*>::iterator i;
-    qDebug() << "LINKS: " << links->length();
     for (i = links->begin(); i != links->end(); ++i)
     {
-        //        if (i != NULL)
-        //        {
-        qDebug() << "UAS::sendMessage()";
         sendMessage(*i, message);
-
     }
 }
 
 void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
 {
-    qDebug() << "UAS::sendMessage(link, message)";
     // Create buffer
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Write message into buffer, prepending start sign
@@ -456,21 +442,6 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
 float UAS::filterVoltage(float value) const
 {
     return lpVoltage * 0.7f + value * 0.3f;
-    /*
-    currentVoltage = value;
-    static QList<float> voltages<float>(20);
-    const int dropPercent = 20;
-    voltages.takeFirst();
-    voltages.append(value);
-    // Drop top and bottom xx percent of values
-    QList<float> v(voltages);
-    qSort(v);
-    v = QList::mid(v.size()/dropPercent, v.size() - v.size()/dropPercent);
-    lpVoltage = 0.0f;
-    foreach (float value, v)
-    {
-        lpVoltage += v;
-    }*/
 }
 
 void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDescription)

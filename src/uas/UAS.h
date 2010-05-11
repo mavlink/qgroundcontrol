@@ -214,6 +214,10 @@ signals:
     void loadChanged(UASInterface* uas, double load);
     /** @brief Propagate a heartbeat received from the system */
     void heartbeat(UASInterface* uas);
+
+    protected:
+    /** @brief Get the UNIX timestamp in microseconds */
+    quint64 getUnixTime(quint64 time);
 };
 
 
