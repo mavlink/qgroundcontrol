@@ -278,12 +278,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_vision_position_estimate_t pos;
                 mavlink_msg_vision_position_estimate_decode(&message, &pos);
-                emit valueChanged(uasId, "vis. roll", pos.roll, pos.usec);
-                emit valueChanged(uasId, "vis. pitch", pos.pitch, pos.usec);
-                emit valueChanged(uasId, "vis. yaw", pos.yaw, pos.usec);
-                emit valueChanged(uasId, "vis. x", pos.x, pos.usec);
-                emit valueChanged(uasId, "vis. y", pos.y, pos.usec);
-                emit valueChanged(uasId, "vis. z", pos.z, pos.usec);
+                quint64 time = getUnixTime(pos.usec);
+                emit valueChanged(uasId, "vis. roll", pos.roll, time);
+                emit valueChanged(uasId, "vis. pitch", pos.pitch, time);
+                emit valueChanged(uasId, "vis. yaw", pos.yaw, time);
+                emit valueChanged(uasId, "vis. x", pos.x, time);
+                emit valueChanged(uasId, "vis. y", pos.y, time);
+                emit valueChanged(uasId, "vis. z", pos.z, time);
             }
             break;
         case MAVLINK_MSG_ID_POSITION:
