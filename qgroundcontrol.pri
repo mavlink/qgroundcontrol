@@ -146,6 +146,7 @@ win32 {
         DESTDIR = $$BASEDIR/bin
     }
         
+    RC_FILE = $$BASEDIR/qgroundcontrol.rc
 }
 
 
