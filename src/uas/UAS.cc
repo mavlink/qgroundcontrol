@@ -714,6 +714,7 @@ void UAS::setWaypoint(Waypoint* wp)
     mavlink_message_t message;
     // FIXME
     //messagePackSetWaypoint(MG::SYSTEM::ID, &message, wp->id, wp->x, wp->y, wp->z, wp->yaw, (wp->autocontinue ? 1 : 0));
+   // mavlink_msg_waypoint_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, wp->name, wp->id,wp->x, wp->y, wp->z, wp->yaw, (wp->autocontinue ? 1 : 0));
     sendMessage(message);
     qDebug() << "UAS SENT Waypoint " << wp->id;
 }
