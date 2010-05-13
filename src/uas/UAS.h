@@ -86,6 +86,7 @@ protected:
     CommStatus commStatus;        ///< Communication status
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
+        QList<int> unknownPackets;  ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     BatteryType batteryType;      ///< The battery type
     int cells;                    ///< Number of cells
@@ -95,7 +96,6 @@ protected:
 
     QList<double> motorValues;
     QList<QString> motorNames;
-    QList<int> unknownPackets;  ///< Packet IDs which are unknown and have been received
 
     double thrustSum;           ///< Sum of forward/up thrust of all thrust actuators, in Newtons
     double thrustMax;           ///< Maximum forward/up thrust of this vehicle, in Newtons
