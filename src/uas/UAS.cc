@@ -313,15 +313,21 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_DEBUG:
             emit valueChanged(uasId, QString("debug ") + QString::number(mavlink_msg_debug_get_ind(&message)), mavlink_msg_debug_get_value(&message), MG::TIME::getGroundTimeNow());
             break;
-            /*
-        case MAVLINK_MSG_ID_WP:
-            emit waypointUpdated(this->getUASID(), mavlink_msg_emitwaypoint_get_id(message.payload), mavlink_msg_emitwaypoint_get_x(message.payload), mavlink_msg_emitwaypoint_get_y(message.payload), mavlink_msg_emitwaypoint_get_z(message.payload), mavlink_msg_emitwaypoint_get_yaw(message.payload), (message_emitwaypoint_get_autocontinue(message.payload) == 1 ? true : false), (message_emitwaypoint_get_active(message.payload) == 1 ? true : false));
+            case MAVLINK_MSG_ID_WAYPOINT:
+            {
+                mavlink_waypoint_t wp;
+                mavlink_msg_waypoint_decode(&message, &wp);
+                // FIXME
+                emit waypointUpdated(uasId, wp.id, wp.x, wp.y, wp.z, wp.yaw, wp.autocontinue, true);
+            }
             break;
-        case MAVLINK_MSG_ID_WP_REACHED:
-            qDebug() << "WAYPOINT REACHED";
-            emit waypointReached(this, mavlink_msg_wp_reached_get_id(message.payload));
+            case MAVLINK_MSG_ID_WAYPOINT_REACHED:
+            {
+                mavlink_waypoint_reached_t wp;
+                mavlink_msg_waypoint_reached_decode(&message, &wp);
+                emit waypointReached(this, wp.id);
+            }
             break;
-            */
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
@@ -788,9 +794,20 @@ void UAS::receiveButton(int buttonIndex)
 void UAS::setWaypoint(Waypoint* wp)
 {
     mavlink_message_t msg;
-    // FIXME
-    //messagePackSetWaypoint(MG::SYSTEM::ID, &message, wp->id, wp->x, wp->y, wp->z, wp->yaw, (wp->autocontinue ? 1 : 0));
-   // mavlink_msg_waypoint_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, wp->name, wp->id,wp->x, wp->y, wp->z, wp->yaw, (wp->autocontinue ? 1 : 0));
+    mavlink_waypoint_set_t set;
+    set.id = wp->id;
+    QString name = wp->name;
+    // FIXME Check if this works properly
+    name.truncate(MAVLINK_MSG_WAYPOINT_SET_FIELD_NAME_LEN);
+    strcpy((char*)set.name, name.toStdString().c_str());
+    set.autocontinue = wp->autocontinue;
+    set.target_component = 0;
+    set.target_system = uasId;
+    set.x = wp->x;
+    set.y = wp->y;
+    set.z = wp->z;
+    set.yaw = wp->yaw;
+    mavlink_msg_waypoint_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &set);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
@@ -799,8 +816,11 @@ void UAS::setWaypoint(Waypoint* wp)
 void UAS::setWaypointActive(int id)
 {
     mavlink_message_t msg;
-    // FIXME
-    //messagePackChooseWaypoint(MG::SYSTEM::ID, &message, id);
+    mavlink_waypoint_set_active_t active;
+    active.id = id;
+    active.target_system = uasId;
+    active.target_component = 0; // FIXME
+    mavlink_msg_waypoint_set_active_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &active);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
