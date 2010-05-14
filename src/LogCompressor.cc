@@ -81,6 +81,11 @@ void LogCompressor::run()
         QString time = parts.first();
         QString field = parts.at(2);
         QString value = parts.at(3);
+        // Enforce NaN if no value is present
+        if (value.length() == 0 || value == "" || value == " " || value == "\t" || value == "\n")
+        {
+            value = "NaN";
+        }
         // Get matching output line
         quint64 index = times->indexOf(time);
         QString outLine = outLines->at(index);
