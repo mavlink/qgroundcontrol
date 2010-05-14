@@ -15,6 +15,9 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
         m_ui(new Ui::parameterWidget)
 {
     m_ui->setupUi(this);
+    // Make sure the combo box is empty
+    // because else indices get messed up
+    m_ui->vehicleComboBox->clear();
 
     // Setup UI connections
     connect(m_ui->vehicleComboBox, SIGNAL(activated(int)), this, SLOT(selectUAS(int)));
@@ -54,7 +57,7 @@ void ParameterInterface::addUAS(UASInterface* uas)
     // Set widgets as default
     if (curr == -1)
     {
-        m_ui->sensorSettings->setCurrentWidget(param);
+        m_ui->sensorSettings->setCurrentWidget(sensor);
         m_ui->stackedWidget->setCurrentWidget(param);
         curr = uas->getUASID();
     }
