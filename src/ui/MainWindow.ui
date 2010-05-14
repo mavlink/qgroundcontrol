@@ -74,6 +74,7 @@
     <addaction name="actionOperatorView"/>
     <addaction name="actionSettingsView"/>
     <addaction name="separator"/>
+    <addaction name="actionShow_full_view"/>
     <addaction name="actionStyleConfig"/>
    </widget>
    <addaction name="menuMGround"/>
@@ -241,6 +242,15 @@
    </property>
    <property name="toolTip">
     <string>Simulate one vehicle to test and evaluate this application</string>
+   </property>
+  </action>
+  <action name="actionShow_full_view">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/network-transmit-receive.svg</normaloff>:/images/status/network-transmit-receive.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Show full view</string>
    </property>
   </action>
  </widget>

@@ -20,3 +20,5 @@ qgroundcontrol
 qgroundcontrol.xcodeproj/**
 doc/html
 doc/doxy.log
+deploy/mac
+deploy/linux
