@@ -58,19 +58,13 @@ This file is part of the QGROUNDCONTROL project
 *
 * @see QMainWindow::show()
 **/
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
+    settings()
 {
-
     this->hide();
     this->setVisible(false);
 
-    // Quick hack
-    //comp = new LogCompressor("/home/pixhawk/Desktop/test.txt");
-
     mavlink = new MAVLinkProtocol();
-    //as4link = new AS4Protocol();
-
-    //    MG::DISPLAY::setPixelSize(0.224f);
 
     // Setup user interface
     ui.setupUi(this);
@@ -107,6 +101,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     acceptList->append("roll IMU");
     acceptList->append("pitch IMU");
     acceptList->append("yaw IMU");
+    acceptList->append("vx");
+    acceptList->append("vy");
+    acceptList->append("vz");
     headDown1 = new HDDisplay(acceptList, this);
     headDown1->setVisible(false);
 
@@ -500,6 +497,11 @@ void MainWindow::loadEngineerView()
     addDockWidget(Qt::BottomDockWidgetArea, container7);
 
     this->show();
+}
+
+void MainWindow::loadAllView()
+{
+
 }
 
 void MainWindow::loadWidgets()

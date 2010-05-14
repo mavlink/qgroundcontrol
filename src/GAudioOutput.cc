@@ -165,10 +165,11 @@ bool GAudioOutput::alert(QString text)
     if (!emergency)
     {
         // Play alert sound
-        m_media->setCurrentSource(Phonon::MediaSource(QString("alert.wav").toStdString().c_str()));
+        QString alertFile = QCoreApplication::applicationDirPath() + "alert.wav";
+        m_media->setCurrentSource(Phonon::MediaSource(alertFile.toStdString().c_str()));
         qDebug() << "FILENAME:" << m_media->currentSource().fileName();
         qDebug() << "TYPE:" << m_media->currentSource().type();
-        qDebug() << QString("alert.wav").toStdString().c_str();
+        qDebug() << alertFile.toStdString().c_str();
         m_media->play();
         m_media->setCurrentSource(Phonon::MediaSource(QString("alert.wav").toStdString().c_str()));
         m_media->play();
