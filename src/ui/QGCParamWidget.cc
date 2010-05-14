@@ -43,7 +43,8 @@ This file is part of the QGROUNDCONTROL project
 QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
         QWidget(parent),
         mav(uas),
-        components(new QMap<int, QTreeWidgetItem*>())
+        components(new QMap<int, QTreeWidgetItem*>()),
+        changedValues()//QMap<int, QMap<QString, float>* >())
 {
     // Create tree widget
     tree = new QTreeWidget(this);
@@ -140,6 +141,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     {
         addComponent(uas, component, "Component #" + QString::number(component));
     }
+    // TODO Replace old value
     components->value(component)->addChild(item);
     item->setFlags(item->flags() | Qt::ItemIsEditable);
     //connect(item, SIGNAL())
@@ -158,12 +160,29 @@ void QGCParamWidget::requestParameterList()
     mav->requestParameters();
 }
 
-void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* prev, QTreeWidgetItem* curr)
+void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
 {
     int key;
-    if (!changedValues->contains(key))
+    if (!changedValues.contains(key))
     {
-
+        changedValues.insert(key, new QMap<QString, float>());
+    }
+    QMap<QString, float>* map = changedValues.value(key, NULL);
+    if (map)
+    {
+        bool ok;
+        QString str = current->data(0, Qt::DisplayRole).toString();
+        float value = current->data(1, Qt::DisplayRole).toDouble(&ok);
+        // Send parameter to MAV
+        if (ok)
+        {
+            float oldvalue = current->data(1, Qt::DisplayRole).toDouble(&ok);
+            if (ok && (oldvalue != value))
+            {
+                qDebug() << "PARAM CHANGED: KEY:" << str << "VALUE:" << value;
+                map->insert(str, value);
+            }
+        }
     }
 }
 
@@ -210,6 +229,9 @@ void QGCParamWidget::setParameters()
             }
         }
     }
+
+    // TODO Instead of clearing, keep parameter list and wait for individual update messages
+
     clear();
     //mav->requestParameters();
     qDebug() << __FILE__ << __LINE__ << "SETTING ALL PARAMETERS";
