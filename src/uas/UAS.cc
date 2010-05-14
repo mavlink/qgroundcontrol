@@ -543,7 +543,6 @@ void UAS::requestParameters()
     mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0);
     // Send message twice to increase chance of reception
     sendMessage(msg);
-    sendMessage(msg);
 }
 
 void UAS::writeParameters()
