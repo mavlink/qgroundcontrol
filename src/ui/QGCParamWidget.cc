@@ -150,6 +150,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
         QString key = child->data(0, Qt::DisplayRole).toString();
         if (key == parameterName)
         {
+            qDebug() << "UPDATED CHILD";
             child->setData(1, Qt::DisplayRole, value);
             found = true;
         }
@@ -241,43 +242,7 @@ void QGCParamWidget::setParameters()
         }
     }
 
-
-
-    /*
-    //mav->setParameter(component, parameterName, value);
-    // Iterate through all components, through all parameters and emit them
-    QMap<int, QTreeWidgetItem*>::iterator i;
-    // Iterate through all components / subsystems
-    for (i = components->begin(); i != components->end(); ++i)
-    {
-        // Get all parameters of this component
-        int compid = i.key();
-        QTreeWidgetItem* item = i.value();
-        for (int j = 0; j < item->childCount(); ++j)
-        {
-            QTreeWidgetItem* param = item->child(j);
-            // First column is name, second column value
-            bool ok = true;
-            QString key = param->data(0, Qt::DisplayRole).toString();
-            float value = param->data(1, Qt::DisplayRole).toDouble(&ok);
-            // Send parameter to MAV
-            if (ok)
-            {
-                emit parameterChanged(compid, key, value);
-                qDebug() << " SET PARAM: KEY:" << key << "VALUE:" << value;
-            }
-            else
-            {
-                qDebug() << __FILE__ << __LINE__ << "CONVERSION ERROR!";
-            }
-        }
-    }
-
-    // TODO Instead of clearing, keep parameter list and wait for individual update messages
-
-    clear();
-    */
-    //mav->requestParameters();
+    changedValues.clear();
     qDebug() << __FILE__ << __LINE__ << "SETTING ALL PARAMETERS";
 }
 
