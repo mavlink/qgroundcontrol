@@ -33,8 +33,9 @@ ParameterInterface::~ParameterInterface()
 
 void ParameterInterface::selectUAS(int index)
 {
-    m_ui->stackedWidget->setCurrentIndex(index);
-    m_ui->sensorSettings->setCurrentIndex(index);
+    // FIXME plus 2 shouldn't be there
+    m_ui->stackedWidget->setCurrentIndex(index+2);
+    m_ui->sensorSettings->setCurrentIndex(index+2);
     curr = index;
 }
 
@@ -57,9 +58,10 @@ void ParameterInterface::addUAS(UASInterface* uas)
     // Set widgets as default
     if (curr == -1)
     {
+        // Clear
         m_ui->sensorSettings->setCurrentWidget(sensor);
         m_ui->stackedWidget->setCurrentWidget(param);
-        curr = uas->getUASID();
+        curr = 0;
     }
 }
 
