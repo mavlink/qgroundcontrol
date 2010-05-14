@@ -120,7 +120,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
 
     QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
-    /*
+
     windowname.append(" (" + QHostInfo::localHostName() + ": ");
     bool prevAddr = false;
     for (int i = 0; i < hostAddresses.size(); i++)
@@ -135,7 +135,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     }
 
     windowname.append(")");
-    */
 
     setWindowTitle(windowname);
 #ifndef Q_WS_MAC
