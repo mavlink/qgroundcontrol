@@ -82,6 +82,8 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
 
     // Connect signals/slots
     connect(this, SIGNAL(parameterChanged(int,QString,float)), mav, SLOT(setParameter(int,QString,float)));
+    connect(tree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(parameterItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
+
     // New parameters from UAS
     connect(uas, SIGNAL(parameterChanged(int,int,QString,float)), this, SLOT(addParameter(int,int,QString,float)));
 }
@@ -154,6 +156,15 @@ void QGCParamWidget::requestParameterList()
     // Clear view and request param list
     clear();
     mav->requestParameters();
+}
+
+void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* prev, QTreeWidgetItem* curr)
+{
+    int key;
+    if (!changedValues->contains(key))
+    {
+
+    }
 }
 
 /**
