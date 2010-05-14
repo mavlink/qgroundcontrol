@@ -162,6 +162,7 @@ void QGCParamWidget::requestParameterList()
 
 void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
 {
+    /*
     int key;
     if (!changedValues.contains(key))
     {
@@ -183,7 +184,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, QTreeWidgetI
                 map->insert(str, value);
             }
         }
-    }
+    }*/
 }
 
 /**
