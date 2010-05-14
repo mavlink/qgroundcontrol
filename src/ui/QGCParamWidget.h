@@ -67,10 +67,13 @@ public slots:
     void writeParameters();
     /** @brief Clear the parameter list */
     void clear();
+    /** @brief Update when user changes parameters */
+    void parameterItemChanged(QTreeWidgetItem* prev, int column);
 protected:
     UASInterface* mav;  ///< The MAV this widget is controlling
     QTreeWidget* tree;  ///< The parameter tree
     QMap<int, QTreeWidgetItem*>* components; ///< The list of components
+    QMap<int, QMap<QString, float>* > changedValues; ///< Changed values
 
 };
 

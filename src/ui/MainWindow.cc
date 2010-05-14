@@ -120,7 +120,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
 
     QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
-    /*
+
     windowname.append(" (" + QHostInfo::localHostName() + ": ");
     bool prevAddr = false;
     for (int i = 0; i < hostAddresses.size(); i++)
@@ -135,7 +135,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     }
 
     windowname.append(")");
-    */
 
     setWindowTitle(windowname);
 #ifndef Q_WS_MAC
@@ -216,18 +215,28 @@ void MainWindow::saveScreen()
     }
 }
 
+/**
+ * Reload the style sheet from disk. The function tries to load "qgroundcontrol.css" from the application
+ * directory (which by default does not exist). If it fails, it will load the bundled default CSS
+ * from memory.
+ * To customize the application, just create a qgroundcontrol.css file in the application directory
+ */
 void MainWindow::reloadStylesheet()
 {
     // Load style sheet
-    //QFile styleSheet(MG::DIR::getSupportFilesDirectory() + "/images/style-mission.css");
-    QFile styleSheet(":/images/style-mission.css");
-    if (styleSheet.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QString style = QString(styleSheet.readAll());
-        style.replace("ICONDIR", MG::DIR::getIconDirectory());
+    QFile* styleSheet = new QFile(QCoreApplication::applicationDirPath() + "/qgroundcontrol.css");
+    if (!styleSheet->exists())
+    {
+        styleSheet = new QFile(":/images/style-mission.css");
+    }
+    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QString style = QString(styleSheet->readAll());
+        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "/images/");
         qApp->setStyleSheet(style);
     } else {
-        qDebug() << "Style not set:" << styleSheet.fileName() << "opened: " << styleSheet.isOpen();
+        qDebug() << "Style not set:" << styleSheet->fileName() << "opened: " << styleSheet->isOpen();
     }
+    delete styleSheet;
 }
 
 void MainWindow::showStatusMessage(const QString& status, int timeout)
@@ -235,14 +244,9 @@ void MainWindow::showStatusMessage(const QString& status, int timeout)
     statusBar->showMessage(status, timeout);
 }
 
-void MainWindow::setLastAction(QString status)
+void MainWindow::showStatusMessage(const QString& status)
 {
-    showStatusMessage(status, 5);
-}
-
-void MainWindow::setLinkStatus(QString status)
-{
-    showStatusMessage(status, 15);
+    statusBar->showMessage(status, 5);
 }
 
 /**
@@ -270,6 +274,7 @@ void MainWindow::connectActions()
     connect(ui.actionEngineerView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionOperatorView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionSettingsView, SIGNAL(triggered()), this, SLOT(loadSettingsView()));
+    connect(ui.actionShow_full_view, SIGNAL(triggered()), this, SLOT(loadAllView()));
     connect(ui.actionStyleConfig, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
 
     // Joystick configuration
@@ -501,28 +506,65 @@ void MainWindow::loadEngineerView()
 
 void MainWindow::loadAllView()
 {
+    clearView();
+    GAudioOutput::instance()->say("Loaded complete view");
 
+    QDockWidget* containerPFD = new QDockWidget(tr("Primary Flight Display"), this);
+    containerPFD->setWidget(headDown1);
+    addDockWidget(Qt::RightDockWidgetArea, containerPFD);
+
+    QDockWidget* containerPayload = new QDockWidget(tr("Payload Status"), this);
+    containerPayload->setWidget(headDown2);
+    addDockWidget(Qt::RightDockWidgetArea, containerPayload);
+
+    headDown1->start();
+    headDown2->start();
+
+    // UAS CONTROL
+    QDockWidget* containerControl = new QDockWidget(tr("Control"), this);
+    containerControl->setWidget(control);
+    addDockWidget(Qt::LeftDockWidgetArea, containerControl);
+
+    // UAS LIST
+    QDockWidget* containerUASList = new QDockWidget(tr("Unmanned Systems"), this);
+    containerUASList->setWidget(list);
+    addDockWidget(Qt::BottomDockWidgetArea, containerUASList);
+
+    // UAS STATUS
+    QDockWidget* containerStatus = new QDockWidget(tr("Status Details"), this);
+    containerStatus->setWidget(info);
+    addDockWidget(Qt::LeftDockWidgetArea, containerStatus);
+
+    // WAYPOINT LIST
+    QDockWidget* containerWaypoints = new QDockWidget(tr("Waypoint List"), this);
+    containerWaypoints->setWidget(waypoints);
+    addDockWidget(Qt::BottomDockWidgetArea, containerWaypoints);
+
+    // DEBUG CONSOLE
+    QDockWidget* containerComm = new QDockWidget(tr("Communication Console"), this);
+    containerComm->setWidget(debugConsole);
+    addDockWidget(Qt::BottomDockWidgetArea, containerComm);
+
+    // OBJECT DETECTION
+    QDockWidget* containerObjRec = new QDockWidget(tr("Object Recognition"), this);
+    containerObjRec->setWidget(detection);
+    addDockWidget(Qt::RightDockWidgetArea, containerObjRec);
+
+    // LINE CHART
+    linechart->setActive(true);
+    centerStack->setCurrentWidget(linechart);
+
+    // ONBOARD PARAMETERS
+    QDockWidget* containerParams = new QDockWidget(tr("Onboard Parameters"), this);
+    containerParams->setWidget(parameters);
+    addDockWidget(Qt::RightDockWidgetArea, containerParams);
+
+    this->show();
 }
 
 void MainWindow::loadWidgets()
 {
-    loadOperatorView();
-    //loadEngineerView();
+    //loadOperatorView();
+    loadEngineerView();
     //loadPilotView();
 }
-
-/*
-void MainWindow::removeCommConfAct(QAction* action)
-{
-    ui.menuNetwork->removeAction(action);
-}*/
-
-void MainWindow::runTests()
-{
-    // TODO Remove after debugging: Add fake data
-    static double testvalue = 0.0f;
-    testvalue += 0.01f;
-    linechart->appendData(126, "test data", testvalue, MG::TIME::getGroundTimeNow());
-}
-
-

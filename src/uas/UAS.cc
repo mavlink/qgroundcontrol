@@ -285,6 +285,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "vis. x", pos.x, time);
                 emit valueChanged(uasId, "vis. y", pos.y, time);
                 emit valueChanged(uasId, "vis. z", pos.z, time);
+                // FIXME Only for testing for now
+                emit valueChanged(uasId, "vis. rot r1", pos.r1, time);
+                emit valueChanged(uasId, "vis. rot r2", pos.r2, time);
+                emit valueChanged(uasId, "vis. rot r3", pos.r3, time);
+                emit valueChanged(uasId, "vis. rot r4", pos.r4, time);
+                emit valueChanged(uasId, "vis. rot r5", pos.r5, time);
+                emit valueChanged(uasId, "vis. rot r6", pos.r6, time);
+                emit valueChanged(uasId, "vis. rot r7", pos.r7, time);
+                emit valueChanged(uasId, "vis. rot r8", pos.r8, time);
+                emit valueChanged(uasId, "vis. rot r9", pos.r9, time);
             }
             break;
         case MAVLINK_MSG_ID_POSITION:
@@ -532,7 +542,6 @@ void UAS::requestParameters()
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0);
     // Send message twice to increase chance of reception
-    sendMessage(msg);
     sendMessage(msg);
 }
 
