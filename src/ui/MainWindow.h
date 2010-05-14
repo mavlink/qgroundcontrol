@@ -76,32 +76,6 @@ public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    QSettings settings;
-    UASControlWidget* control;
-    LinechartWidget* linechart;
-    UASInfoWidget* info;
-    CameraView* camera;
-    UASListWidget* list;
-    WaypointList* waypoints;
-    ObjectDetectionView* detection;
-    HUD* hud;
-    PFD* pfd;
-    GaugePanel* gaugePanel;
-
-    // Popup widgets
-    JoystickWidget* joystickWidget;
-
-    JoystickInput* joystick;
-
-    /** User interface actions **/
-    QAction* connectUASAct;
-    QAction* disconnectUASAct;
-    QAction* startUASAct;
-    QAction* returnUASAct;
-    QAction* stopUASAct;
-    QAction* killUASAct;
-    QAction* simulateUASAct;
-
 public slots:
     /**
      * @brief Shows a status message on the bottom status bar
@@ -112,8 +86,15 @@ public slots:
      * @param timeout how long the status should be displayed
      */
     void showStatusMessage(const QString& status, int timeout);
-    void setLastAction(QString status);
-    void setLinkStatus(QString status);
+    /**
+     * @brief Shows a status message on the bottom status bar
+     *
+     * The status message will be overwritten if a new message is posted to this function.
+     * it will be automatically hidden after 5 seconds.
+     *
+     * @param status message text
+     */
+    void showStatusMessage(const QString& status);
     void addLink();
     void addLink(LinkInterface* link);
     void configure();
@@ -133,10 +114,8 @@ public slots:
     /** @brief Load view with all widgets */
     void loadAllView();
 
+    /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
-
-    void runTests();
-
 protected:
     QStatusBar* statusBar;
     QStatusBar* createStatusBar();
@@ -151,16 +130,39 @@ protected:
     MAVLinkSimulationLink* simulationLink;
     LinkInterface* udpLink;
 
-    QDockWidget* controlDock;
-    QStackedWidget* centerStack;
-
+    QSettings settings;
+    UASControlWidget* control;
+    LinechartWidget* linechart;
+    UASInfoWidget* info;
+    CameraView* camera;
+    UASListWidget* list;
+    WaypointList* waypoints;
+    ObjectDetectionView* detection;
+    HUD* hud;
     DebugConsole* debugConsole;
     MapWidget* map;
     ParameterInterface* parameters;
     XMLCommProtocolWidget* protocol;
     HDDisplay* headDown1;
     HDDisplay* headDown2;
+    GaugePanel* gaugePanel;
 
+    // Popup widgets
+    JoystickWidget* joystickWidget;
+
+    JoystickInput* joystick;
+
+    /** User interface actions **/
+    QAction* connectUASAct;
+    QAction* disconnectUASAct;
+    QAction* startUASAct;
+    QAction* returnUASAct;
+    QAction* stopUASAct;
+    QAction* killUASAct;
+    QAction* simulateUASAct;
+
+    QDockWidget* controlDock;
+    QStackedWidget* centerStack;
 
     LogCompressor* comp;
     QString screenFileName;
