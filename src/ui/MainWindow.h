@@ -34,6 +34,7 @@ This file is part of the PIXHAWK project
 #include <QtGui/QMainWindow>
 #include <QStatusBar>
 #include <QStackedWidget>
+#include <QSettings>
 
 #include "ui_MainWindow.h"
 #include "LinkManager.h"
@@ -75,6 +76,7 @@ public:
     MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    QSettings settings;
     UASControlWidget* control;
     LinechartWidget* linechart;
     UASInfoWidget* info;
@@ -128,6 +130,8 @@ public slots:
     void loadOperatorView();
     /** @brief Load view for general settings */
     void loadSettingsView();
+    /** @brief Load view with all widgets */
+    void loadAllView();
 
     void reloadStylesheet();
 
