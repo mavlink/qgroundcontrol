@@ -33,6 +33,7 @@ ParameterInterface::~ParameterInterface()
 
 void ParameterInterface::selectUAS(int index)
 {
+    qDebug() << "SELECTING INDEX " << index << "SIZE:" << m_ui->stackedWidget->count();
     m_ui->stackedWidget->setCurrentIndex(index);
     m_ui->sensorSettings->setCurrentIndex(index);
     curr = index;
@@ -59,7 +60,7 @@ void ParameterInterface::addUAS(UASInterface* uas)
     {
         m_ui->sensorSettings->setCurrentWidget(sensor);
         m_ui->stackedWidget->setCurrentWidget(param);
-        curr = uas->getUASID();
+        curr = 0;
     }
 }
 
