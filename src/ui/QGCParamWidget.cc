@@ -83,7 +83,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
 
     // Connect signals/slots
     connect(this, SIGNAL(parameterChanged(int,QString,float)), mav, SLOT(setParameter(int,QString,float)));
-    connect(tree, SIGNAL(currentItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)), this, SLOT(parameterItemChanged(QTreeWidgetItem*,QTreeWidgetItem*)));
+    connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
 
     // New parameters from UAS
     connect(uas, SIGNAL(parameterChanged(int,int,QString,float)), this, SLOT(addParameter(int,int,QString,float)));
@@ -141,9 +141,25 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     {
         addComponent(uas, component, "Component #" + QString::number(component));
     }
-    // TODO Replace old value
-    components->value(component)->addChild(item);
-    item->setFlags(item->flags() | Qt::ItemIsEditable);
+
+    bool found = false;
+    QTreeWidgetItem* parent = components->value(component);
+    for (int i = 0; i < parent->childCount(); i++)
+    {
+        QTreeWidgetItem* child = parent->child(i);
+        QString key = child->data(0, Qt::DisplayRole).toString();
+        if (key == parameterName)
+        {
+            child->setData(1, Qt::DisplayRole, value);
+            found = true;
+        }
+    }
+
+    if (!found)
+    {
+        components->value(component)->addChild(item);
+        item->setFlags(item->flags() | Qt::ItemIsEditable);
+    }
     //connect(item, SIGNAL())
     tree->expandAll();
     tree->update();
@@ -160,31 +176,38 @@ void QGCParamWidget::requestParameterList()
     mav->requestParameters();
 }
 
-void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
 {
-    /*
-    int key;
-    if (!changedValues.contains(key))
+    if (current && column > 0)
     {
-        changedValues.insert(key, new QMap<QString, float>());
-    }
-    QMap<QString, float>* map = changedValues.value(key, NULL);
-    if (map)
-    {
-        bool ok;
-        QString str = current->data(0, Qt::DisplayRole).toString();
-        float value = current->data(1, Qt::DisplayRole).toDouble(&ok);
-        // Send parameter to MAV
-        if (ok)
+        QTreeWidgetItem* parent = current->parent();
+        while (parent->parent() != NULL)
         {
-            float oldvalue = current->data(1, Qt::DisplayRole).toDouble(&ok);
-            if (ok && (oldvalue != value))
+            parent = parent->parent();
+        }
+        // Parent is now top-level component
+        int key = components->key(parent);
+        if (!changedValues.contains(key))
+        {
+            changedValues.insert(key, new QMap<QString, float>());
+        }
+        QMap<QString, float>* map = changedValues.value(key, NULL);
+        if (map)
+        {
+            bool ok;
+            QString str = current->data(0, Qt::DisplayRole).toString();
+            float value = current->data(1, Qt::DisplayRole).toDouble(&ok);
+            // Send parameter to MAV
+            if (ok)
             {
-                qDebug() << "PARAM CHANGED: KEY:" << str << "VALUE:" << value;
-                map->insert(str, value);
+                if (ok)
+                {
+                    qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
+                    map->insert(str, value);
+                }
             }
         }
-    }*/
+    }
 }
 
 /**
@@ -202,6 +225,25 @@ void QGCParamWidget::setParameter(int component, QString parameterName, float va
  */
 void QGCParamWidget::setParameters()
 {
+    // Iterate through all components, through all parameters and emit them
+    QMap<int, QMap<QString, float>*>::iterator i;
+    for (i = changedValues.begin(); i != changedValues.end(); ++i)
+    {
+        // Iterate through the parameters of the component
+        int compid = i.key();
+        QMap<QString, float>* comp = i.value();
+        {
+            QMap<QString, float>::iterator j;
+            for (j = comp->begin(); j != comp->end(); ++j)
+            {
+                emit parameterChanged(compid, j.key(), j.value());
+            }
+        }
+    }
+
+
+
+    /*
     //mav->setParameter(component, parameterName, value);
     // Iterate through all components, through all parameters and emit them
     QMap<int, QTreeWidgetItem*>::iterator i;
@@ -222,7 +264,7 @@ void QGCParamWidget::setParameters()
             if (ok)
             {
                 emit parameterChanged(compid, key, value);
-                qDebug() << "KEY:" << key << "VALUE:" << value;
+                qDebug() << " SET PARAM: KEY:" << key << "VALUE:" << value;
             }
             else
             {
@@ -234,6 +276,7 @@ void QGCParamWidget::setParameters()
     // TODO Instead of clearing, keep parameter list and wait for individual update messages
 
     clear();
+    */
     //mav->requestParameters();
     qDebug() << __FILE__ << __LINE__ << "SETTING ALL PARAMETERS";
 }
