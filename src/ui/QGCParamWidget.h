@@ -68,7 +68,7 @@ public slots:
     /** @brief Clear the parameter list */
     void clear();
     /** @brief Update when user changes parameters */
-    void parameterItemChanged(QTreeWidgetItem* prev, QTreeWidgetItem* curr);
+    void parameterItemChanged(QTreeWidgetItem* prev, int column);
 protected:
     UASInterface* mav;  ///< The MAV this widget is controlling
     QTreeWidget* tree;  ///< The parameter tree
