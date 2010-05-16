@@ -133,7 +133,7 @@ public:
     /** @brief Get the short-term median */
     double getMedian();
     /** @brief Get the current value */
-    double TimeSeriesData::getCurrentValue();
+    double getCurrentValue();
     void setZeroValue(double zeroValue);
     void setInterval(quint64 ms);
     void setAverageWindowSize(int windowSize);
