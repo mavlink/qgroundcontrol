@@ -46,9 +46,9 @@ This file is part of the PIXHAWK project
 #include <QLabel>
 #include <QReadWriteLock>
 #include <QToolButton>
+#include <QTimer>
 #include <qwt_plot_curve.h>
 
-#include "LinechartContainer.h"
 #include "LinechartPlot.h"
 #include "UASInterface.h"
 #include "ui_Linechart.h"
@@ -63,81 +63,62 @@ class LinechartWidget : public QWidget {
     Q_OBJECT
 
 public:
-    LinechartWidget(QWidget *parent = 0);
+    LinechartWidget(int systemid, QWidget *parent = 0);
     ~LinechartWidget();
-
-    LinechartPlot* getPlot(int uasId);
 
     static const int MIN_TIME_SCROLLBAR_VALUE = 0; ///< The minimum scrollbar value
     static const int MAX_TIME_SCROLLBAR_VALUE = 16383; ///< The maximum scrollbar value
 
 public slots:
-    void addCurve(int uasid, QString curve);
-    void removeCurve(int uasid, QString curve);
-    void appendData(int uasid, QString curve, double data, quint64 usec);
+    void addCurve(QString curve);
+    void removeCurve(QString curve);
+    void appendData(int sysId, QString curve, double data, quint64 usec);
     void takeButtonClick(bool checked);
     void setPlotWindowPosition(int scrollBarValue);
     void setPlotWindowPosition(quint64 position);
     void setPlotInterval(quint64 interval);
-    void setActivePlot(int uasid);
-    void setActivePlot(UASInterface* uas);
     void setActive(bool active);
     /** @brief Set the number of values to average over */
     void setAverageWindow(int windowSize);
-
     /** @brief Start logging to file */
     void startLogging();
     /** @brief Stop logging to file */
     void stopLogging();
+    /** @brief Refresh the view */
+    void refresh();
 
 protected:
 
-    // The plot part (right side)
-
-    /** The widget which contains all or the single plot **/
-    QMap<int, LinechartPlot*> plots;
-    LinechartPlot* activePlot;
-    /** A lock (mutex) for the concurrent access on the curves **/
-    QReadWriteLock* curvesLock;
-    /** A lock (mutex) for the concurrent access on the window position **/
-    QReadWriteLock plotWindowLock;
-
-    QMap<QString, QLabel*>* curveLabels; ///< References to the curve labels
-    QMap<QString, QLabel*>* curveMeans; ///< References to the curve means
-    QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
-
-    // The combo box curve selection part (left side)
-
-    QWidget* curvesWidget; ///< The QWidget containing the curve selection button
-    QVBoxLayout* curvesWidgetLayout; ///< The layout for the curvesWidget QWidget
-    QScrollBar* scrollbar; ///< The plot window scroll bar
-    QSpinBox* averageSpinBox; ///< Spin box to setup average window filter size
-
     void addCurveToList(QString curve);
     void removeCurveFromList(QString curve);
-    QWidget* createCurveItem(LinechartPlot* plot, QString curve);
+    QToolButton* createButton(QWidget* parent);
+    QWidget* createCurveItem(QString curve);
+    void createLayout();
 
-    QAction* setScalingLogarithmic; ///< Set logarithmic scaling
-    QAction* setScalingLinear; ///< Set linear scaling
-    QAction* addNewCurve; ///< Add curve candidate to the active curves
+    int sysid;                            ///< ID of the unmanned system this plot belongs to
+    LinechartPlot* activePlot;            ///< Plot for this system
+    QReadWriteLock* curvesLock;           ///< A lock (mutex) for the concurrent access on the curves
+    QReadWriteLock plotWindowLock;        ///< A lock (mutex) for the concurrent access on the window position
 
-    /** Order index of curves **/
     int curveListIndex;
+    int curveListCounter;                 ///< Counter of curves in curve list
+    QList<QString>* listedCurves;         ///< Curves listed
+    QMap<QString, QLabel*>* curveLabels;  ///< References to the curve labels
+    QMap<QString, QLabel*>* curveMeans;   ///< References to the curve means
+    QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
 
-    /** Counter of curves in curve list **/
-    int curveListCounter;
+    QWidget* curvesWidget;                ///< The QWidget containing the curve selection button
+    QVBoxLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
+    QScrollBar* scrollbar;                ///< The plot window scroll bar
+    QSpinBox* averageSpinBox;             ///< Spin box to setup average window filter size
+
+    QAction* setScalingLogarithmic;       ///< Set logarithmic scaling
+    QAction* setScalingLinear;            ///< Set linear scaling
+    QAction* addNewCurve;                 ///< Add curve candidate to the active curves
 
     QMenu* curveMenu;
-    QList<QString>* listedCurves;
     QGridLayout* mainLayout;
 
-    void createLayout();
-    void setPlot(int uasId);
-
-    /* Factory methods */
-
-    LinechartContainer* plotContainer;
-    QToolButton* createButton(QWidget* parent);
     QToolButton* scalingLinearButton;
     QToolButton* scalingLogButton;
     QToolButton* logButton;
@@ -145,6 +126,7 @@ protected:
     QFile* logFile;
     unsigned int logindex;
     bool logging;
+    QTimer* updateTimer;
     LogCompressor* compressor;
 
     static const int MAX_CURVE_MENUITEM_NUMBER = 8;

@@ -83,6 +83,7 @@ void UASManager::addUAS(UASInterface* uas)
     {
         activeUAS = uas;
         emit activeUASSet(uas);
+        emit activeUASSet(uas->getUASID());
     }
 }
 
@@ -170,6 +171,7 @@ void UASManager::setActiveUAS(UASInterface* uas)
         qDebug() << __FILE__ << ":" << __LINE__ << " ACTIVE UAS SET TO: " << uas->getUASName();
 
         emit activeUASSet(uas);
+        emit activeUASSet(uas->getUASID());
     }
 }
 
