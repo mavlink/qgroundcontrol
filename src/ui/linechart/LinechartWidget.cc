@@ -49,19 +49,22 @@ This file is part of the PIXHAWK project
 #include "MG.h"
 
 
-LinechartWidget::LinechartWidget(QWidget *parent) : QWidget(parent),
+LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent),
+sysid(systemid),
+activePlot(NULL),
 curvesLock(new QReadWriteLock()),
+plotWindowLock(),
 curveListIndex(0),
 curveListCounter(0),
-activePlot(NULL),
-curveMenu(new QMenu(this)),
 listedCurves(new QList<QString>()),
 curveLabels(new QMap<QString, QLabel*>()),
 curveMeans(new QMap<QString, QLabel*>()),
 curveMedians(new QMap<QString, QLabel*>()),
+curveMenu(new QMenu(this)),
 logFile(new QFile()),
 logindex(1),
-logging(false)
+logging(false),
+updateTimer(new QTimer())
 {
     // Add elements defined in Qt Designer
     ui.setupUi(this);
@@ -78,26 +81,22 @@ logging(false)
 
     // Add and customize plot elements (right side)
 
-    // Instantiate the actual plot for multiple vehicles
-    plots = QMap<int, LinechartPlot*>();
-
     // Create the layout
     createLayout();
     
     // Add the last actions
     connect(this, SIGNAL(plotWindowPositionUpdated(int)), scrollbar, SLOT(setValue(int)));
     connect(scrollbar, SIGNAL(sliderMoved(int)), this, SLOT(setPlotWindowPosition(int)));
+
+    updateTimer->setInterval(100);
+    connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+    updateTimer->start();
 }
 
 LinechartWidget::~LinechartWidget() {
     stopLogging();
     delete listedCurves;
     listedCurves = NULL;
-}
-
-void LinechartWidget::setPlot(int uasId)
-{
-    setActivePlot(uasId);
 }
 
 void LinechartWidget::createLayout()
@@ -112,13 +111,15 @@ void LinechartWidget::createLayout()
     layout->setMargin(2);
 
     // Create plot container widget
-    plotContainer = new LinechartContainer(ui.diagramGroupBox);
+    activePlot = new LinechartPlot(this, sysid);
+    // Activate automatic scrolling
+    activePlot->setAutoScroll(true);
 
     // TODO Proper Initialization needed
     //    activePlot = getPlot(0);
     //    plotContainer->setPlot(activePlot);
 
-    layout->addWidget(plotContainer, 0, 0, 1, 5);
+    layout->addWidget(activePlot, 0, 0, 1, 5);
     layout->setRowStretch(0, 10);
     layout->setRowStretch(1, 0);
 
@@ -167,39 +168,78 @@ void LinechartWidget::createLayout()
     layout->setColumnStretch(4, 10);
 
     ui.diagramGroupBox->setLayout(layout);
+
+    // Add actions
+    averageSpinBox->setValue(activePlot->getAverageWindow());
+
+    // Connect notifications from the user interface to the plot
+    connect(this, SIGNAL(curveRemoved(QString)), activePlot, SLOT(hideCurve(QString)));
+    connect(this, SIGNAL(curveSet(QString, int)), activePlot, SLOT(showCurve(QString, int)));
+
+    // Connect notifications from the plot to the user interface
+    connect(activePlot, SIGNAL(curveAdded(QString)), this, SLOT(addCurve(QString)));
+    connect(activePlot, SIGNAL(curveRemoved(QString)), this, SLOT(removeCurve(QString)));
+
+    // Scrollbar
+
+    // Update scrollbar when plot window changes (via translator method setPlotWindowPosition()
+    connect(activePlot, SIGNAL(windowPositionChanged(quint64)), this, SLOT(setPlotWindowPosition(quint64)));
+
+    // Update plot when scrollbar is moved (via translator method setPlotWindowPosition()
+    connect(this, SIGNAL(plotWindowPositionUpdated(quint64)), activePlot, SLOT(setWindowPosition(quint64)));
+
+    // Set scaling
+    connect(scalingLinearButton, SIGNAL(clicked()), activePlot, SLOT(setLinearScaling()));
+    connect(scalingLogButton, SIGNAL(clicked()), activePlot, SLOT(setLogarithmicScaling()));
 }
 
 void LinechartWidget::appendData(int uasId, QString curve, double value, quint64 usec)
 {
     // Order matters here, first append to plot, then update curve list
-    LinechartPlot* currPlot = getPlot(uasId);
-    currPlot->appendData(curve, usec, value);
-    if(activePlot == NULL) setActivePlot(uasId);
-    QString str;
-    str.sprintf("%+.2f", value);
+    activePlot->appendData(curve, usec, value);
+    // Store data
     QLabel* label = curveLabels->value(curve, NULL);
     // Make sure the curve will be created if it does not yet exist
     if(!label)
     {
-        addCurve(uasId, curve);
+        addCurve(curve);
     }
-    // Value
-    curveLabels->value(curve)->setText(str);
-    // Mean
-    str.sprintf("%+.2f", currPlot->getMean(curve));
-    curveMeans->value(curve)->setText(str);
-    // Median
-    str.sprintf("%+.2f", currPlot->getMedian(curve));
-    curveMedians->value(curve)->setText(str);
 
     // Log data
     if (logging)
     {
-        if (currPlot->isVisible(curve))
+        if (activePlot->isVisible(curve))
         {
             logFile->write(QString(QString::number(usec) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
             logFile->flush();
         }
+    }
+}
+
+void LinechartWidget::refresh()
+{
+    QString str;
+
+    QMap<QString, QLabel*>::iterator i;
+    for (i = curveLabels->begin(); i != curveLabels->end(); ++i)
+    {
+        str.sprintf("%+.2f", activePlot->getCurrentValue(i.key()));
+        // Value
+        i.value()->setText(str);
+    }
+    // Mean
+    QMap<QString, QLabel*>::iterator j;
+    for (j = curveMeans->begin(); j != curveMeans->end(); ++j)
+    {
+        str.sprintf("%+.2f", activePlot->getMean(j.key()));
+        j.value()->setText(str);
+    }
+    QMap<QString, QLabel*>::iterator k;
+    for (k = curveMedians->begin(); k != curveMedians->end(); ++k)
+    {
+        // Median
+        str.sprintf("%+.2f", activePlot->getMedian(k.key()));
+        k.value()->setText(str);
     }
 }
 
@@ -219,10 +259,6 @@ void LinechartWidget::startLogging()
         logButton->setText(tr("Stop logging"));
         disconnect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
         connect(logButton, SIGNAL(clicked()), this, SLOT(stopLogging()));
-
-        // Write file header
-        //logFile->write(QString("MILLISECONDS\tID\t\"NAME\"\tVALUE\n").toLatin1());
-        //logFile->flush();
     }
     else
     {
@@ -268,13 +304,14 @@ void LinechartWidget::createActions()
  * @param curve The id-string of the curve
  * @see removeCurve()
  **/
-void LinechartWidget::addCurve(int uasid, QString curve)
+void LinechartWidget::addCurve(QString curve)
 {
-    curvesWidgetLayout->addWidget(createCurveItem(getPlot(uasid), curve));
+    curvesWidgetLayout->addWidget(createCurveItem(curve));
 }
 
-QWidget* LinechartWidget::createCurveItem(LinechartPlot* plot, QString curve)
+QWidget* LinechartWidget::createCurveItem(QString curve)
 {
+    LinechartPlot* plot = activePlot;
     QWidget* form = new QWidget(this);
     QHBoxLayout *horizontalLayout;
     QCheckBox *checkBox;
@@ -366,22 +403,10 @@ QWidget* LinechartWidget::createCurveItem(LinechartPlot* plot, QString curve)
  * @param curve The curve to remove
  * @see addCurve()
  **/
-void LinechartWidget::removeCurve(int uasid, QString curve)
+void LinechartWidget::removeCurve(QString curve)
 {
     //TODO @todo Ensure that the button for a curve gets deleted when the original curve is deleted
-}
-
-/**
- * @brief Get the plot widget.
- *
- * @return The plot widget
- **/
-LinechartPlot* LinechartWidget::getPlot(int plotid) {
-    if(!plots.contains(plotid))
-    {
-        plots.insert(plotid, new LinechartPlot(ui.diagramGroupBox, plotid));
-    }
-    return plots.value(plotid);
+    // Remove name
 }
 
 void LinechartWidget::setActive(bool active)
@@ -390,67 +415,13 @@ void LinechartWidget::setActive(bool active)
     {
         activePlot->setActive(active);
     }
-}
-
-void LinechartWidget::setActivePlot(UASInterface* uas)
-{
-    setActivePlot(uas->getUASID());
-}
-
-void LinechartWidget::setActivePlot(int uasId)
-{   
-    if (!activePlot || uasId != activePlot->getPlotId())
+    if (active)
     {
-        // Make sure there is an active plot, else the next
-        // if clause will access a null pointer
-        if (!activePlot)
-        {
-            // Get plot, if it does not exist yet it will be automatically created
-            activePlot = getPlot(uasId);
-        }
-
-        // Remove current plot
-        disconnect(this, SIGNAL(curveRemoved(QString)), activePlot, SLOT(hideCurve(QString)));
-        disconnect(this, SIGNAL(curveSet(QString, int)), activePlot, SLOT(showCurve(QString, int)));
-        disconnect(activePlot, SIGNAL(curveAdded(int, QString)), this, SLOT(addCurve(int, QString)));
-        disconnect(activePlot, SIGNAL(curveRemoved(int, QString)), this, SLOT(removeCurve(int, QString)));
-        disconnect(activePlot, SIGNAL(windowPositionChanged(quint64)), this, SLOT(setPlotWindowPosition(quint64)));
-        disconnect(this, SIGNAL(plotWindowPositionUpdated(quint64)), activePlot, SLOT(setWindowPosition(quint64)));
-        disconnect(scalingLinearButton, SIGNAL(clicked()), activePlot, SLOT(setLinearScaling()));
-        disconnect(scalingLogButton, SIGNAL(clicked()), activePlot, SLOT(setLogarithmicScaling()));
-
-        // Get plot, if it does not exist yet it will be automatically created
-        activePlot = getPlot(uasId);
-
-        plotContainer->setPlot(activePlot);
-
-        qDebug() << "LinechartWidget::setPlot(): Setting plot to UAS ID:" << uasId;
-
-        // Activate automatic scrolling
-        activePlot->setAutoScroll(true);
-
-        // Add actions
-        averageSpinBox->setValue(activePlot->getAverageWindow());
-
-        // Connect notifications from the user interface to the plot
-        connect(this, SIGNAL(curveRemoved(QString)), activePlot, SLOT(hideCurve(QString)));
-        connect(this, SIGNAL(curveSet(QString, int)), activePlot, SLOT(showCurve(QString, int)));
-
-        // Connect notifications from the plot to the user interface
-        connect(activePlot, SIGNAL(curveAdded(int, QString)), this, SLOT(addCurve(int, QString)));
-        connect(activePlot, SIGNAL(curveRemoved(int, QString)), this, SLOT(removeCurve(int, QString)));
-
-        // Scrollbar
-
-        // Update scrollbar when plot window changes (via translator method setPlotWindowPosition()
-        connect(activePlot, SIGNAL(windowPositionChanged(quint64)), this, SLOT(setPlotWindowPosition(quint64)));
-
-        // Update plot when scrollbar is moved (via translator method setPlotWindowPosition()
-        connect(this, SIGNAL(plotWindowPositionUpdated(quint64)), activePlot, SLOT(setWindowPosition(quint64)));
-
-        // Set scaling
-        connect(scalingLinearButton, SIGNAL(clicked()), activePlot, SLOT(setLinearScaling()));
-        connect(scalingLogButton, SIGNAL(clicked()), activePlot, SLOT(setLogarithmicScaling()));
+        updateTimer->start();
+    }
+    else
+    {
+        updateTimer->stop();
     }
 }
 

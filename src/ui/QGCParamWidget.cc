@@ -130,7 +130,15 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
 {
     Q_UNUSED(uas);
     // Insert parameter into map
-    //tree->appendParam(component, parameterName, value);
+
+    QString splitToken = "_";
+    // Check if auto-grouping can work
+    /*
+    if (parameterName.contains(splitToken))
+    {
+        QString parent = parameterName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
+        QString children = parameterName.section(splitToken, 1, -1, QString::SectionSkipEmpty);
+    }*/
     QStringList plist;
     plist.append(parameterName);
     plist.append(QString::number(value));

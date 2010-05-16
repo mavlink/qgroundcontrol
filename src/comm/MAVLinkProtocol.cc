@@ -122,6 +122,13 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
                 // of its existence, as it only then can send and receive
                 // it's first messages.
 
+                // FIXME Current debugging
+                // check if the UAS has the same id like this system
+                if (message.sysid == getSystemId())
+                {
+                    qDebug() << "WARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\n\n RECEIVED MESSAGE FROM THIS SYSTEM WITH ID" << message.msgid << "FROM COMPONENT" << message.compid;
+                }
+
                 // First create new UAS object
                 uas = new UAS(this, message.sysid);
                 // Make UAS aware that this link can be used to communicate with the actual robot

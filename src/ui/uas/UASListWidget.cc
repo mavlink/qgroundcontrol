@@ -87,7 +87,11 @@ void UASListWidget::addUAS(UASInterface* uas)
 
 void UASListWidget::activeUAS(UASInterface* uas)
 {
-    //uasViews.value(uas)->setUASasActive(true);
+    UASView* view = uasViews.value(uas, NULL);
+    if (view)
+    {
+        view->setUASasActive(true);
+    }
 }
 
 void UASListWidget::removeUAS(UASInterface* uas)

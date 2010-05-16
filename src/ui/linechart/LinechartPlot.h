@@ -132,6 +132,8 @@ public:
     double getMean();
     /** @brief Get the short-term median */
     double getMedian();
+    /** @brief Get the current value */
+    double TimeSeriesData::getCurrentValue();
     void setZeroValue(double zeroValue);
     void setInterval(quint64 ms);
     void setAverageWindowSize(int windowSize);
@@ -203,6 +205,8 @@ public:
     double getMean(QString id);
     /** @brief Get the short-term median of a curve */
     double getMedian(QString id);
+    /** @brief Get the last inserted value */
+    double getCurrentValue(QString id);
 
     static const int SCALE_ABSOLUTE = 0;
     static const int SCALE_BEST_FIT = 1;
@@ -303,20 +307,20 @@ signals:
          *
          * @param color The curve color in the diagram
          **/
-    void curveAdded(int uasid, QString idstring);
+    void curveAdded(QString idstring);
     /**
          * @brief This signal is emitted when a curve gets assigned a color
          *
          * @param idstring The id-string of the curve
          * @param color The curve color in the diagram
          **/
-    void colorSet(int uasid, QString idstring, QColor color);
+    void colorSet(QString idstring, QColor color);
     /**
          * @brief This signal is emitted when a curve is removed
          *
          * @param name The id-string of the curve
          **/
-    void curveRemoved(int uasid, QString name);
+    void curveRemoved(QString name);
     /**
          * @brief This signal is emitted when the plot window position changes
          *
