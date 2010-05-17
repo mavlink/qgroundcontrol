@@ -83,20 +83,22 @@ public:
 public slots:
     /** @brief Say this text if current output priority matches */
     bool say(QString text, int severity=1);
-    /** @brief Play alert sound */
+    /** @brief Play alert sound and say notification message */
     bool alert(QString text);
     /** @brief Start emergency sound */
     bool startEmergency();
-    /** @brief Start emergency sound */
-    bool startEmergency(QString);
     /** @brief Stop emergency sound */
     bool stopEmergency();
     /** @brief Select female voice */
     void selectFemaleVoice();
     /** @brief Select male voice */
     void selectMaleVoice();
-    /** @brief Play emergency sound */
+    /** @brief Play emergency sound once */
     void beep();
+    /** @brief Notify about positive event */
+    void notifyPositive();
+    /** @brief Notify about negative event */
+    void notifyNegative();
 
 protected:
 #ifdef Q_OS_MAC

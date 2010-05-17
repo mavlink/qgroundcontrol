@@ -47,21 +47,12 @@ using System;
 using System.Speech.Synthesis;
 #endif
 
-//#ifdef Q_OS_LINUX
-//extern "C" {
-//#include <flite/flite.h>
-//#include <cmu_us_awb/voxdefs.h>
-    //#include <cmu_us_slt/voxdefs.h>
-    //cst_voice *REGISTER_VOX(const char *voxdir);
-    //void UNREGISTER_VOX(cst_voice *vox);
-    //cst_voice *register_cmu_us_awb(const char *voxdir);
-    //void unregister_cmu_us_awb(cst_voice *vox);
-    //cst_voice *register_cmu_us_slt(const char *voxdir);
-    //void unregister_cmu_us_slt(cst_voice *vox);
-    //cst_voice *register_cmu_us_rms(const char *voxdir);
-    //void unregister_cmu_us_rms(cst_voice *vox);
-//};
-//#endif
+#ifdef Q_OS_LINUX
+extern "C" {
+#include <flite/flite.h>
+    cst_voice* register_cmu_us_kal(const char* voxdir);
+};
+#endif
 
 
 
@@ -85,13 +76,10 @@ GAudioOutput* GAudioOutput::instance()
 }
 
 GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
-#ifdef Q_OS_LINUX
-//voice(NULL),
-#endif
 voiceIndex(0),
 emergency(false)
 {
-#ifdef Q_OS_LINUX2
+#ifdef Q_OS_LINUX
     flite_init();
 #endif
     // Initialize audio output
@@ -124,21 +112,21 @@ bool GAudioOutput::say(QString text, int severity)
 #ifdef _MSC_VER
         SpeechSynthesizer synth = new SpeechSynthesizer();
         synth.SelectVoice("Microsoft Anna");
-        synth.SpeakText("Hello, world!");
+        synth.SpeakText(text.toStdString().c_str());
+        res = true;
 #endif
 
-#ifdef Q_OS_LINUX2
+#ifdef Q_OS_LINUX
         QTemporaryFile file;
         file.setFileTemplate("XXXXXX.wav");
         if (file.open())
         {
-            cst_voice* v = register_cmu_us_kal16(NULL);
+            cst_voice* v = register_cmu_us_kal(NULL);
             cst_wave* wav = flite_text_to_wave(text.toStdString().c_str(), v);
             // file.fileName() returns the unique file name
             cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
             m_media->setCurrentSource(Phonon::MediaSource(file.fileName().toStdString().c_str()));
             m_media->play();
-            qDebug() << "Synthesized: " << text << ", tmp file:" << file.fileName().toStdString().c_str();
             res = true;
         }
 #endif
@@ -151,7 +139,7 @@ bool GAudioOutput::say(QString text, int severity)
         unsigned char str2[1024] = {};
         memcpy(str2, text.toAscii().data(), str.length());
         SpeakString(str2);
-        qDebug() << "Synthesized: " << text.toAscii();
+        res = true;
 #endif
     }
     return res;
@@ -165,21 +153,31 @@ bool GAudioOutput::alert(QString text)
     if (!emergency)
     {
         // Play alert sound
-        QString alertFile = QCoreApplication::applicationDirPath() + "alert.wav";
-        m_media->setCurrentSource(Phonon::MediaSource(alertFile.toStdString().c_str()));
-        qDebug() << "FILENAME:" << m_media->currentSource().fileName();
-        qDebug() << "TYPE:" << m_media->currentSource().type();
-        qDebug() << alertFile.toStdString().c_str();
-        m_media->play();
-        m_media->setCurrentSource(Phonon::MediaSource(QString("alert.wav").toStdString().c_str()));
-        m_media->play();
+        beep();
         // Say alert message
-        return true;//say(text, 2);
+        say(text, 2);
+        return true;
     }
     else
     {
         return false;
     }
+}
+
+void GAudioOutput::notifyPositive()
+{
+    // Use QFile to transform path for all OS
+    QFile f(QCoreApplication::applicationDirPath()+QString("/audio/double_notify.wav"));
+    m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
+    m_media->play();
+}
+
+void GAudioOutput::notifyNegative()
+{
+    // Use QFile to transform path for all OS
+    QFile f(QCoreApplication::applicationDirPath()+QString("/audio/flat_notify.wav"));
+    m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
+    m_media->play();
 }
 
 /**
@@ -202,18 +200,6 @@ bool GAudioOutput::startEmergency()
 }
 
 /**
- * The emergency sound will be played continously during the emergency.
- * call stopEmergency() to disable it again. No speech synthesis or other
- * audio output is available during the emergency.
- *
- * @return true if the emergency could be started, false else
- */
-bool GAudioOutput::startEmergency(QString message)
-{
-    return startEmergency();
-}
-
-/**
  * Stops the continous emergency sound. Use startEmergency() to start
  * the emergency sound.
  *
@@ -232,7 +218,7 @@ bool GAudioOutput::stopEmergency()
 void GAudioOutput::beep()
 {
     // Use QFile to transform path for all OS
-    QFile f(MG::DIR::getSupportFilesDirectory()+QString("/audio/alert.wav"));
+    QFile f(QCoreApplication::applicationDirPath()+QString("/audio/alert.wav"));
     m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
     m_media->play();
 }

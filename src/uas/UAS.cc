@@ -50,6 +50,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) :
         name(""),
         links(new QList<LinkInterface*>()),
         unknownPackets(),
+        mavlink(protocol),
         thrustSum(0),
         thrustMax(10),
         startVoltage(0),
@@ -68,10 +69,13 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) :
         manualThrust(0),
         receiveDropRate(0),
         sendDropRate(0),
-        lowBattAlarm(false)
+        lowBattAlarm(false),
+        positionLock(false),
+        statusTimeout(new QTimer(this))
 {
     setBattery(LIPOLY, 3);
-    mavlink = protocol;
+    statusTimeout->setInterval(500);
+    connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
 }
 
 UAS::~UAS()
@@ -82,6 +86,23 @@ UAS::~UAS()
 int UAS::getUASID() const
 {
     return uasId;
+}
+
+void UAS::updateState()
+{
+    // Position lock is set by the MAVLink message handler
+    // if no position lock is available, indicate an error
+    if (positionLock)
+    {
+        positionLock = false;
+    }
+    else
+    {
+        if (mode > MAV_MODE_LOCKED && positionLock)
+        {
+            GAudioOutput::instance()->notifyNegative();
+        }
+    }
 }
 
 void UAS::setSelected()
@@ -295,6 +316,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "vis. rot r7", pos.r7, time);
                 emit valueChanged(uasId, "vis. rot r8", pos.r8, time);
                 emit valueChanged(uasId, "vis. rot r9", pos.r9, time);
+                // Set internal state
+                if (!positionLock)
+                {
+                    // If position was not locked before, notify positive
+                    GAudioOutput::instance()->notifyPositive();
+                }
+                positionLock = true;
             }
             break;
         case MAVLINK_MSG_ID_POSITION:
@@ -399,10 +427,7 @@ quint64 UAS::getUnixTime(quint64 time)
     // 60 seconds
     // 1000 milliseconds
     // 1000 microseconds
-
-    // THIS CALCULATION IS EXPANDED BY THE PREPROCESSOR/COMPILER ONE-TIME,
-    // NO NEED TO MULTIPLY MANUALLY!
-    else if (time < (quint64)(40 * 365 * 24 * 60 * 60 * 1000 * 1000))
+    else if (time < 1261440000000000LLU)
     {
         if (onboardTimeOffset == 0)
         {
@@ -1031,7 +1056,8 @@ void UAS::startLowBattAlarm()
 {
     if (!lowBattAlarm)
     {
-        GAudioOutput::instance()->startEmergency("BATTERY");
+        GAudioOutput::instance()->alert("LOW BATTERY");
+        QTimer::singleShot(2000, GAudioOutput::instance(), SLOT(startEmergency()));
         lowBattAlarm = true;
     }
 }
