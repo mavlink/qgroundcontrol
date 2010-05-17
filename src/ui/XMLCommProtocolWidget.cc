@@ -1,6 +1,7 @@
 #include <QFileDialog>
 #include <QTextBrowser>
 #include <QMessageBox>
+#include <QSettings>
 
 #include "XMLCommProtocolWidget.h"
 #include "ui_XMLCommProtocolWidget.h"
@@ -23,10 +24,12 @@ XMLCommProtocolWidget::XMLCommProtocolWidget(QWidget *parent) :
 
 void XMLCommProtocolWidget::selectXMLFile()
 {
-    qDebug() << "OPENING XML FILE";
-
     //QString fileName = QFileDialog::getOpenFileName(this, tr("Load Protocol Definition File"), ".", "*.xml");
+    QSettings settings;
+    const QString mavlinkXML = "MAVLINK_XML_FILE";
+    QString dirPath = settings.value(mavlinkXML, QCoreApplication::applicationDirPath() + "../").toString();
     QFileDialog dialog;
+    dialog.setDirectory(dirPath);
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setFilter(tr("MAVLink XML (*.xml)"));
     dialog.setViewMode(QFileDialog::Detail);
@@ -40,6 +43,8 @@ void XMLCommProtocolWidget::selectXMLFile()
     {
         m_ui->fileNameLabel->setText(fileNames.first());
         QFile file(fileNames.first());
+        // Store filename for next time
+        settings.setValue(mavlinkXML, fileNames.first());
         if (file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             const QString instanceText(QString::fromUtf8(file.readAll()));
@@ -80,7 +85,11 @@ void XMLCommProtocolWidget::setXML(const QString& xml)
 
 void XMLCommProtocolWidget::selectOutputDirectory()
 {
+    QSettings settings;
+    const QString mavlinkOutputDir = "MAVLINK_OUTPUT_DIR";
+    QString dirPath = settings.value(mavlinkOutputDir, QCoreApplication::applicationDirPath() + "../").toString();
     QFileDialog dialog;
+    dialog.setDirectory(dirPath);
     dialog.setFileMode(QFileDialog::Directory);
     dialog.setFilter(tr("MAVLink XML (*.xml)"));
     dialog.setViewMode(QFileDialog::Detail);
@@ -93,6 +102,8 @@ void XMLCommProtocolWidget::selectOutputDirectory()
     if (fileNames.size() > 0)
     {
         m_ui->outputDirNameLabel->setText(fileNames.first());
+        // Store directory for next time
+        settings.setValue(mavlinkOutputDir, fileNames.first());
         //QFile file(fileName);
     }
 }

@@ -225,23 +225,31 @@ void UASView::updateLocalPosition(UASInterface* uas, double x, double y, double 
     }
 }
 
-void UASView::updateGlobalPosition(UASInterface*, double lon, double lat, double alt, quint64 usec)
+void UASView::updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(usec);
+    QString position;
+    position = position.sprintf("%02.2f %02.2f %02.2f m", lon, lat, alt);
+    m_ui->positionLabel->setText(position);
 }
 
 void UASView::updateSpeed(UASInterface*, double x, double y, double z, quint64 usec)
 {
-    //    double totalSpeed = sqrt((pow(x, 2) + pow(y, 2) + pow(z, 2)));
-    //    m_ui->speedBar->setValue(totalSpeed);
-}
-
-void UASView::receiveValue(int uasid, QString id, double value, quint64 time)
-{
-
+    Q_UNUSED(usec);
+    double totalSpeed = sqrt((pow(x, 2) + pow(y, 2) + pow(z, 2)));
+    QString speed;
+    speed = speed.sprintf("%02.2f m/s", totalSpeed);
+    m_ui->speedLabel->setText(speed);
 }
 
 void UASView::setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current)
 {
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    Q_UNUSED(z);
+    Q_UNUSED(yaw);
+    Q_UNUSED(autocontinue);
     if (uasId == this->uas->getUASID())
     {
         if (current)
@@ -269,6 +277,7 @@ void UASView::updateThrust(UASInterface* uas, double thrust)
 
 void UASView::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
+    Q_UNUSED(voltage);
     if (this->uas == uas)
     {
         timeRemaining = seconds;

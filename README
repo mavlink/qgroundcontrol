@@ -46,11 +46,12 @@ To build on Linux:
 Windows
 =======
 
-**********************************************************************************************
-* PLEASE NOTE: YOU NEED TO DOWNLOAD THE MAVLINK LIBRARY IN ORDER TO COMPILE THIS APPLICATION *
-**********************************************************************************************
+Windows XP:
 
+1) Download and install the QT SDK for Windows from http://qt.nokia.com/downloads/.
 
-To build on Windows:
-<instructions to be written>
+2) Open qgroundcontrol.pro with QT to open the project.
+
+3) Once the indexing is complete, you may build the project, which will compile and run the debug build.
+
 

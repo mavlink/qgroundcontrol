@@ -42,7 +42,7 @@ This file is part of the PIXHAWK project
 #include "UASInterface.h"
 #include "UASManager.h"
 #include "UASControlWidget.h"
-#include "LinechartWidget.h"
+#include "Linecharts.h"
 #include "UASInfoWidget.h"
 #include "WaypointList.h"
 #include "CameraView.h"
@@ -132,7 +132,7 @@ protected:
 
     QSettings settings;
     UASControlWidget* control;
-    LinechartWidget* linechart;
+    Linecharts* linechart;
     UASInfoWidget* info;
     CameraView* camera;
     UASListWidget* list;

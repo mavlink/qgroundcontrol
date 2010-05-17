@@ -143,6 +143,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_sys_status_t state;
                 mavlink_msg_sys_status_decode(&message, &state);
 
+                // FIXME
+                qDebug() << "SYSTEM NAV MODE:" << state.nav_mode;
+
                 QString audiostring = "System " + QString::number(this->getUASID());
                 QString stateAudio = "";
                 QString modeAudio = "";
@@ -158,13 +161,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     stateAudio = " changed status to " + uasState;
                 }
 
-                if (static_cast<int>(this->mode) != static_cast<int>(state.mode))
+                if (static_cast<unsigned int>(this->mode) != static_cast<unsigned int>(state.mode))
                 {
                     modechanged = true;
                     this->mode = state.mode;
                     QString mode;
 
-                    switch (state.mode)
+                    switch ((unsigned int)(state.mode))
                     {
                     case MAV_MODE_LOCKED:
                         mode = "LOCKED MODE";
@@ -449,8 +452,9 @@ void UAS::setMode(int mode)
     {
         this->mode = mode;
         mavlink_message_t msg;
-        mavlink_msg_set_mode_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, getUASID(), (unsigned char)mode);
+        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, (unsigned char)mode);
         sendMessage(msg);
+        qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << mode;
     }
 }
 
