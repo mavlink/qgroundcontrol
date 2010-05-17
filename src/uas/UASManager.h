@@ -166,6 +166,7 @@ protected:
 signals:
     void UASCreated(UASInterface* UAS);
     void activeUASSet(UASInterface* UAS);
+    void activeUASSet(int systemId);
 
 };
 

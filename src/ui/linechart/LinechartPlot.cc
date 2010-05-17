@@ -55,9 +55,9 @@ maxTime(QUINT64_MIN),
 maxInterval(MAX_STORAGE_INTERVAL),
 timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
 automaticScrollActive(false),
+m_active(true),
 d_data(NULL),
-d_curve(NULL),
-m_active(true)
+d_curve(NULL)
 {
     this->plotid = plotid;
     this->plotInterval = interval;
@@ -156,6 +156,14 @@ LinechartPlot::~LinechartPlot()
 int LinechartPlot::getPlotId()
 {
     return this->plotid;
+}
+
+/**
+ * @param id curve identifier
+ */
+double LinechartPlot::getCurrentValue(QString id)
+{
+    return data.value(id)->getCurrentValue();
 }
 
 /**
@@ -280,7 +288,7 @@ void LinechartPlot::addCurve(QString id)
     data.insert(id, dataset);
 
     // Notify connected components about new curve
-    emit curveAdded(plotid, id);
+    emit curveAdded(id);
 }
 
 QColor LinechartPlot::getNextColor()
@@ -337,7 +345,7 @@ void LinechartPlot::setCurveColor(QString id, QColor color)
     QwtPlotCurve* curve = curves.value(id);
     curve->setPen(color);
 
-    emit colorSet(plotid, id, color);
+    emit colorSet(id, color);
 }
 
 /**
@@ -635,7 +643,7 @@ void LinechartPlot::removeAllData()
         curve = NULL;
 
         // Notify connected components about the removal
-        emit curveRemoved(plotid, i.key());
+        emit curveRemoved(i.key());
     }
 
     // Delete data
@@ -812,6 +820,11 @@ double TimeSeriesData::getMean()
 double TimeSeriesData::getMedian()
 {
     return median;
+}
+
+double TimeSeriesData::getCurrentValue()
+{
+    return ms.last();
 }
 
 /**

@@ -71,9 +71,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
 
     // Initialize views, NOT show them yet, only initialize model and controller
     centerStack = new QStackedWidget(this);
-    linechart = new LinechartWidget(this);
+    linechart = new Linecharts(this);
     linechart->setActive(false);
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), linechart, SLOT(setActivePlot(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), linechart, SLOT(addSystem(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(int)), linechart, SLOT(selectSystem(int)));
     centerStack->addWidget(linechart);
     control = new UASControlWidget(this);
     //controlDock = new QDockWidget(this);
@@ -312,7 +313,7 @@ void MainWindow::addLink(LinkInterface *link)
     MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
     if (sim)
     {
-        connect(sim, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
+        //connect(sim, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
         connect(ui.actionSimulate, SIGNAL(triggered(bool)), sim, SLOT(connectLink(bool)));
     }
 }
@@ -321,15 +322,6 @@ void MainWindow::UASCreated(UASInterface* uas)
 {
     // Connect the UAS to the full user interface
     //ui.menuConnected_Systems->addAction(QIcon(":/images/mavs/generic.svg"), tr("View ") + uas->getUASName(), uas, SLOT(setSelected()));
-
-    // Line chart
-    // FIXME DO THIS ONLY FOR THE FIRST CONNECTED SYSTEM
-    static bool sysPresent = false;
-    if (!sysPresent)
-    {
-        connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)), Qt::QueuedConnection);
-        sysPresent = true;
-    }
 
     // FIXME Should be not inside the mainwindow
     connect(uas, SIGNAL(textMessageReceived(int,int,QString)), debugConsole, SLOT(receiveTextMessage(int,int,QString)));

@@ -83,7 +83,6 @@ HEADERS += src/MG.h \
     src/ui/uas/UASInfoWidget.h \
     src/ui/HUD.h \
     src/ui/linechart/LinechartWidget.h \
-    src/ui/linechart/LinechartContainer.h \
     src/ui/linechart/LinechartPlot.h \
     src/ui/linechart/Scrollbar.h \
     src/ui/linechart/ScrollZoomer.h \
@@ -115,7 +114,8 @@ HEADERS += src/MG.h \
     src/ui/param/ParamTreeItem.h \
     src/ui/param/ParamTreeModel.h \
     src/ui/QGCParamWidget.h \
-    src/ui/QGCSensorSettingsWidget.h
+    src/ui/QGCSensorSettingsWidget.h \
+    src/ui/linechart/Linecharts.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -133,7 +133,6 @@ SOURCES += src/main.cc \
     src/ui/uas/UASInfoWidget.cc \
     src/ui/HUD.cc \
     src/ui/linechart/LinechartWidget.cc \
-    src/ui/linechart/LinechartContainer.cc \
     src/ui/linechart/LinechartPlot.cc \
     src/ui/linechart/Scrollbar.cc \
     src/ui/linechart/ScrollZoomer.cc \
@@ -164,5 +163,6 @@ SOURCES += src/main.cc \
     src/ui/param/ParamTreeItem.cc \
     src/ui/param/ParamTreeModel.cc \
     src/ui/QGCParamWidget.cc \
-    src/ui/QGCSensorSettingsWidget.cc
+    src/ui/QGCSensorSettingsWidget.cc \
+    src/ui/linechart/Linecharts.cc
 RESOURCES = mavground.qrc
