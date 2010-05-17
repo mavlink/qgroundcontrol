@@ -86,7 +86,7 @@ protected:
     CommStatus commStatus;        ///< Communication status
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
-        QList<int> unknownPackets;  ///< Packet IDs which are unknown and have been received
+    QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     BatteryType batteryType;      ///< The battery type
     int cells;                    ///< Number of cells
@@ -123,6 +123,8 @@ protected:
     float receiveDropRate;      ///< Percentage of packets that were dropped on the MAV's receiving link (from GCS and other MAVs)
     float sendDropRate;         ///< Percentage of packets that were not received from the MAV by the GCS
     bool lowBattAlarm;          ///< Switch if battery is low
+    bool positionLock;          ///< Status if position information is available or not
+    QTimer* statusTimeout;      ///< Timer for various status timeouts
 
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
@@ -200,6 +202,9 @@ public slots:
     void enableRCChannelDataTransmission(bool enabled);
     void enableRawControllerDataTransmission(bool enabled);
     void enableRawSensorFusionTransmission(bool enabled);
+
+    /** @brief Update the system state */
+    void updateState();
 
 signals:
 

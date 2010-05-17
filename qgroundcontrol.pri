@@ -114,13 +114,15 @@ linux-g++ {
            #-L$$BASEDIR/lib/flite/linux32
         message(Building for GNU/Linux 32bit/i386)
     }
-    LIBS += -lm \
+    LIBS += \
+        -L/usr/lib \
+        -lm \
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
-        #-lflite_cmu_us_kal16 \
-        #-lflite_usenglish \
-        #-lflite_cmulex \
-        #-lflite \
+        -lflite_cmu_us_kal16 \
+        -lflite_usenglish \
+        -lflite_cmulex \
+        -lflite \
         -lSDL \
         -lSDLmain
 }
