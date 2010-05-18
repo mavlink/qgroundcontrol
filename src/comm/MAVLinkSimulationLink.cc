@@ -523,6 +523,9 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                 {
                     mavlink_action_t action;
                     mavlink_msg_action_decode(&msg, &action);
+
+                    qDebug() << "SIM" << "received action" << action.action << "for system" << action.target;
+
                     switch (action.action)
                     {
                     case MAV_ACTION_LAUNCH:

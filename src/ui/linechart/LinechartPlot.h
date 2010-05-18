@@ -149,9 +149,10 @@ protected:
     quint64 plotCount;
     QString friendlyName;
 
-    double minValue;
-    double maxValue;
-    double zeroValue;
+    double lastValue; ///< The last inserted value
+    double minValue;  ///< The smallest value in the dataset
+    double maxValue;  ///< The largest value in the dataset
+    double zeroValue; ///< The expected value in the dataset
 
     QMutex dataMutex;
 
