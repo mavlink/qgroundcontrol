@@ -115,7 +115,10 @@ HEADERS += src/MG.h \
     src/ui/param/ParamTreeModel.h \
     src/ui/QGCParamWidget.h \
     src/ui/QGCSensorSettingsWidget.h \
-    src/ui/linechart/Linecharts.h
+    src/ui/linechart/Linecharts.h \
+    src/uas/SlugsMAV.h \
+    src/uas/PxQuadMAV.h \
+    src/uas/ArduPilotMAV.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -164,5 +167,8 @@ SOURCES += src/main.cc \
     src/ui/param/ParamTreeModel.cc \
     src/ui/QGCParamWidget.cc \
     src/ui/QGCSensorSettingsWidget.cc \
-    src/ui/linechart/Linecharts.cc
+    src/ui/linechart/Linecharts.cc \
+    src/uas/SlugsMAV.cc \
+    src/uas/PxQuadMAV.cc \
+    src/uas/ArduPilotMAV.cc
 RESOURCES = mavground.qrc
