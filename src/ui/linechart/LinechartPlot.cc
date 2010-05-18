@@ -715,6 +715,7 @@ void TimeSeriesData::append(quint64 ms, double value)
     }
     this->ms[count] = ms;
     this->value[count] = value;
+    this->lastValue = value;
     this->mean = 0;
     QList<double> medianList = QList<double>();
     for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i)
@@ -824,7 +825,7 @@ double TimeSeriesData::getMedian()
 
 double TimeSeriesData::getCurrentValue()
 {
-    return ms.last();
+    return lastValue;
 }
 
 /**

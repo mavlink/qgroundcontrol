@@ -834,10 +834,10 @@ void UAS::setWaypoint(Waypoint* wp)
     mavlink_message_t msg;
     mavlink_waypoint_set_t set;
     set.id = wp->id;
-    QString name = wp->name;
+    //QString name = wp->name;
     // FIXME Check if this works properly
-    name.truncate(MAVLINK_MSG_WAYPOINT_SET_FIELD_NAME_LEN);
-    strcpy((char*)set.name, name.toStdString().c_str());
+    //name.truncate(MAVLINK_MSG_WAYPOINT_SET_FIELD_NAME_LEN);
+    //strcpy((char*)set.name, name.toStdString().c_str());
     set.autocontinue = wp->autocontinue;
     set.target_component = 0;
     set.target_system = uasId;
