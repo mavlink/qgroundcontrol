@@ -1,5 +1,7 @@
 #include "SlugsMAV.h"
 
+#include <QDebug>
+
 SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
         UAS(mavlink, id)//,
         // Place other initializers here
@@ -9,15 +11,19 @@ SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
 
 void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
+    // Let UAS handle the default message set
+    UAS::receiveMessage(link, message);
+
+    // Handle your special messages
     switch (message.msgid)
     {
     case MAVLINK_MSG_ID_HEARTBEAT:
         {
-            printf("RECEIVED HEARTBEAT");
+            qDebug() << "RECEIVED HEARTBEAT";
             break;
         }
     default:
-        printf("\nSLUGS RECEIVED MESSAGE WITH ID %d", message.msgid);
+        qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
         break;
     }
 }

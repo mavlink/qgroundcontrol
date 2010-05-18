@@ -5,6 +5,7 @@
 
 class PxQuadMAV : public UAS
 {
+    Q_OBJECT
 public:
     PxQuadMAV(MAVLinkProtocol* mavlink, int id);
 };

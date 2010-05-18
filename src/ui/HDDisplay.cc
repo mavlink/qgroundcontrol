@@ -110,6 +110,7 @@ void HDDisplay::triggerUpdate()
 
 void HDDisplay::paintEvent(QPaintEvent * event)
 {
+    Q_UNUSED(event);
     //paintGL();
     static quint64 interval = 0;
     qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
@@ -123,7 +124,7 @@ void HDDisplay::paintGL()
 
 void HDDisplay::paintDisplay()
 {
-    int refreshInterval = 100;
+    quint64 refreshInterval = 100;
     quint64 currTime = MG::TIME::getGroundTimeNow();
     if (currTime - lastPaintTime < refreshInterval)
     {

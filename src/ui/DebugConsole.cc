@@ -196,7 +196,7 @@ void DebugConsole::updateTrafficMeasurements()
 
 void DebugConsole::paintEvent(QPaintEvent *event)
 {
-
+    Q_UNUSED(event);
     // Update bandwidth
     if (holdOn)
     {

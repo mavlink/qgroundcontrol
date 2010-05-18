@@ -78,6 +78,14 @@ void ObjectDetectionView::setUAS(UASInterface* uas)
 
 void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, double confidence, bool detected)
 {
+    Q_UNUSED(x1);
+    Q_UNUSED(y1);
+    Q_UNUSED(x2);
+    Q_UNUSED(y2);
+    Q_UNUSED(x3);
+    Q_UNUSED(y3);
+    Q_UNUSED(x4);
+    Q_UNUSED(y4);
     if (detected)
     {
         if (patternList.contains(patternPath))

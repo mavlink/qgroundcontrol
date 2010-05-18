@@ -111,8 +111,6 @@ HEADERS += src/MG.h \
     src/ui/AudioOutputWidget.h \
     src/GAudioOutput.h \
     src/LogCompressor.h \
-    src/ui/param/ParamTreeItem.h \
-    src/ui/param/ParamTreeModel.h \
     src/ui/QGCParamWidget.h \
     src/ui/QGCSensorSettingsWidget.h \
     src/ui/linechart/Linecharts.h \
@@ -163,8 +161,6 @@ SOURCES += src/main.cc \
     src/ui/AudioOutputWidget.cc \
     src/GAudioOutput.cc \
     src/LogCompressor.cc \
-    src/ui/param/ParamTreeItem.cc \
-    src/ui/param/ParamTreeModel.cc \
     src/ui/QGCParamWidget.cc \
     src/ui/QGCSensorSettingsWidget.cc \
     src/ui/linechart/Linecharts.cc \

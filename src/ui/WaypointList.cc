@@ -115,8 +115,7 @@ void WaypointList::setWaypoint(int uasId, int id, double x, double y, double z, 
 
 void WaypointList::waypointReached(UASInterface* uas, int waypointId)
 {
-    qDebug() << "ENTERING WAYPOINT REACHED";
-
+    Q_UNUSED(uas);
     if (waypoints.size() > waypointId)
     {
         if (waypoints[waypointId]->autocontinue == true)
