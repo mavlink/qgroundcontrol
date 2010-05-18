@@ -144,7 +144,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_sys_status_decode(&message, &state);
 
                 // FIXME
-                qDebug() << "SYSTEM NAV MODE:" << state.nav_mode;
+                //qDebug() << "SYSTEM NAV MODE:" << state.nav_mode;
 
                 QString audiostring = "System " + QString::number(this->getUASID());
                 QString stateAudio = "";
