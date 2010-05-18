@@ -42,6 +42,7 @@ This file is part of the PIXHAWK project
 #include "UASManager.h"
 #include "UASInterface.h"
 #include "UAS.h"
+#include "SlugsMAV.h" /* FIXME REMOVE */
 #include "configuration.h"
 #include "LinkManager.h"
 #include <mavlink.h>
@@ -131,6 +132,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
 
                 // First create new UAS object
                 uas = new UAS(this, message.sysid);
+                //uas = new SlugsMAV(this, message.sysid);
+
+
                 // Make UAS aware that this link can be used to communicate with the actual robot
                 uas->addLink(link);
                 // Connect this robot to the UAS object

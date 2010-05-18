@@ -5,6 +5,7 @@
 
 class ArduPilotMAV : public UAS
 {
+    Q_OBJECT
 public:
     ArduPilotMAV(MAVLinkProtocol* mavlink, int id = 0);
 };
