@@ -1,7 +1,6 @@
 #include <QTreeWidget>
 
 #include "ParameterInterface.h"
-#include "ParamTreeModel.h"
 #include "UASManager.h"
 #include "ui_ParameterInterface.h"
 #include "QGCSensorSettingsWidget.h"

@@ -5,7 +5,6 @@
 
 #include "ui_ParameterInterface.h"
 #include "UASInterface.h"
-#include "ParamTreeModel.h"
 #include "QGCParamWidget.h"
 
 namespace Ui {
