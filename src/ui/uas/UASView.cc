@@ -171,7 +171,8 @@ void UASView::receiveHeartbeat(UASInterface* uas)
                                         heartbeatColor.red(), heartbeatColor.green(), heartbeatColor.blue());
         m_ui->heartbeatIcon->setStyleSheet(colorstyle);
         m_ui->heartbeatIcon->setAutoFillBackground(true);
-        refreshTimer->start(50);
+        refreshTimer->stop();
+        refreshTimer->start(100);
     }
 }
 
@@ -219,9 +220,9 @@ void UASView::updateLocalPosition(UASInterface* uas, double x, double y, double 
     Q_UNUSED(usec);
     if (uas == this->uas)
     {
-        QString position;
-        position = position.sprintf("%02.2f %02.2f %02.2f m", x, y, z);
-        m_ui->positionLabel->setText(position);
+        this->x = x;
+        this->y = y;
+        this->z = z;
     }
 }
 
@@ -229,18 +230,15 @@ void UASView::updateGlobalPosition(UASInterface* uas, double lon, double lat, do
 {
     Q_UNUSED(uas);
     Q_UNUSED(usec);
-    QString position;
-    position = position.sprintf("%02.2f %02.2f %02.2f m", lon, lat, alt);
-    m_ui->positionLabel->setText(position);
+    this->lon = lon;
+    this->lat = lat;
+    this->alt = alt;
 }
 
 void UASView::updateSpeed(UASInterface*, double x, double y, double z, quint64 usec)
 {
     Q_UNUSED(usec);
-    double totalSpeed = sqrt((pow(x, 2) + pow(y, 2) + pow(z, 2)));
-    QString speed;
-    speed = speed.sprintf("%02.2f m/s", totalSpeed);
-    m_ui->speedLabel->setText(speed);
+    totalSpeed = sqrt((pow(x, 2) + pow(y, 2) + pow(z, 2)));
 }
 
 void UASView::setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current)
@@ -271,7 +269,7 @@ void UASView::updateThrust(UASInterface* uas, double thrust)
 {
     if (this->uas == uas)
     {
-        m_ui->thrustBar->setValue(thrust * 100);
+        this->thrust = thrust;
     }
 }
 
@@ -312,6 +310,22 @@ void UASView::refresh()
     m_ui->batteryBar->setValue(static_cast<int>(this->chargeLevel));
     //m_ui->loadBar->setValue(static_cast<int>(this->load));
     m_ui->thrustBar->setValue(this->thrust);
+
+    // Position
+    //QString position;
+    position = position.sprintf("%02.2f %02.2f %02.2f m", x, y, z);
+    m_ui->positionLabel->setText(position);
+    QString globalPosition;
+    globalPosition = globalPosition.sprintf("%02.2f %02.2f %02.2f m", lon, lat, alt);
+    m_ui->gpsLabel->setText(globalPosition);
+
+    // Speed
+        QString speed;
+    speed = speed.sprintf("%02.2f m/s", totalSpeed);
+    m_ui->speedLabel->setText(speed);
+
+    // Thrust
+    m_ui->thrustBar->setValue(thrust * 100);
 
     if(this->timeRemaining > 1 && this->timeRemaining < MG::MAX_FLIGHT_TIME)
     {
