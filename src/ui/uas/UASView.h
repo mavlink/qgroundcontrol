@@ -78,14 +78,22 @@ protected:
     QColor heartbeatColor;
     quint64 startTime;
     int timeRemaining;
-    double chargeLevel;
+    float chargeLevel;
     UASInterface* uas;
-    double load;
+    float load;
     QString state;
     QString stateDesc;
     QString mode;
     double thrust; ///< Current vehicle thrust: 0 - 1.0 for 100% thrust
     bool isActive; ///< Is this MAV selected by the user?
+    float x;
+    float y;
+    float z;
+    float totalSpeed;
+    float lat;
+    float lon;
+    float alt;
+
 
     void mouseDoubleClickEvent (QMouseEvent * event);
     /** @brief Mouse enters the widget */

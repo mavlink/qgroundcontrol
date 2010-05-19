@@ -312,7 +312,7 @@ void UASView::refresh()
     m_ui->thrustBar->setValue(this->thrust);
 
     // Position
-    //QString position;
+    QString position;
     position = position.sprintf("%02.2f %02.2f %02.2f m", x, y, z);
     m_ui->positionLabel->setText(position);
     QString globalPosition;
@@ -320,7 +320,7 @@ void UASView::refresh()
     m_ui->gpsLabel->setText(globalPosition);
 
     // Speed
-        QString speed;
+    QString speed;
     speed = speed.sprintf("%02.2f m/s", totalSpeed);
     m_ui->speedLabel->setText(speed);
 
