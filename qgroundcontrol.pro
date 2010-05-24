@@ -49,7 +49,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/HDDisplay.ui \
     src/ui/MAVLinkSettingsWidget.ui \
     src/ui/AudioOutputWidget.ui \
-    src/ui/QGCSensorSettingsWidget.ui
+    src/ui/QGCSensorSettingsWidget.ui \
+    src/ui/watchdog/WatchdogControl.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -116,7 +117,8 @@ HEADERS += src/MG.h \
     src/uas/SlugsMAV.h \
     src/uas/PxQuadMAV.h \
     src/uas/ArduPilotMAV.h \
-    src/comm/MAVLinkSyntaxHighlighter.h
+    src/comm/MAVLinkSyntaxHighlighter.h \
+    src/ui/watchdog/WatchdogControl.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -166,5 +168,6 @@ SOURCES += src/main.cc \
     src/uas/SlugsMAV.cc \
     src/uas/PxQuadMAV.cc \
     src/uas/ArduPilotMAV.cc \
-    src/comm/MAVLinkSyntaxHighlighter.cc
+    src/comm/MAVLinkSyntaxHighlighter.cc \
+    src/ui/watchdog/WatchdogControl.cc
 RESOURCES = mavground.qrc
