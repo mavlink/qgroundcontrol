@@ -1053,7 +1053,20 @@ int UAS::calculateTimeRemaining()
  */
 double UAS::getChargeLevel()
 {
-    return 100.0f * ((lpVoltage - emptyVoltage)/(fullVoltage - emptyVoltage));
+    float chargeLevel;
+    if (lpVoltage < emptyVoltage)
+    {
+        chargeLevel = 0.0f;
+    }
+    else if (lpVoltage > fullVoltage)
+    {
+        chargeLevel = 100.0f;
+    }
+    else
+    {
+        chargeLevel = 100.0f * ((lpVoltage - emptyVoltage)/(fullVoltage - emptyVoltage));
+    }
+    return chargeLevel;
 }
 
 void UAS::startLowBattAlarm()

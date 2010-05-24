@@ -3,6 +3,7 @@
 
 #include <QtGui/QWidget>
 #include "DomModel.h"
+#include "MAVLinkSyntaxHighlighter.h"
 
 namespace Ui {
     class XMLCommProtocolWidget;
@@ -31,6 +32,7 @@ protected slots:
     void save();
 
 protected:
+    MAVLinkSyntaxHighlighter* highlighter;
     DomModel* model;
     void changeEvent(QEvent *e);
 

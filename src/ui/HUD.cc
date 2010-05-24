@@ -444,8 +444,10 @@ void HUD::paintText(QString text, QColor color, float fontSize, float refX, floa
     float pPositionX = refToScreenX(refX) - (fontSize*scalingFactor*0.072f);
     float pPositionY = refToScreenY(refY) - (fontSize*scalingFactor*0.212f);
 
-    //QFont font("Bitstream Vera Sans");
-    font.setPixelSize((int)(fontSize*scalingFactor*1.26f));
+    QFont font("Bitstream Vera Sans");
+    // Enforce minimum font size of 5 pixels
+    int fSize = qMax(1, (int)(fontSize*scalingFactor*1.26f));
+    font.setPixelSize(fSize);
 
     QFontMetrics metrics = QFontMetrics(font);
     int border = qMax(4, metrics.leading());

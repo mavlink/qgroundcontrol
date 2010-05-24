@@ -6,6 +6,7 @@
 #include "XMLCommProtocolWidget.h"
 #include "ui_XMLCommProtocolWidget.h"
 #include "MAVLinkXMLParser.h"
+#include "MAVLinkSyntaxHighlighter.h"
 
 #include <QDebug>
 #include <iostream>
@@ -15,6 +16,9 @@ XMLCommProtocolWidget::XMLCommProtocolWidget(QWidget *parent) :
         m_ui(new Ui::XMLCommProtocolWidget)
 {
     m_ui->setupUi(this);
+
+    // Now set syntax highlighter
+    highlighter = new MAVLinkSyntaxHighlighter(m_ui->xmlTextView->document());
 
     connect(m_ui->selectFileButton, SIGNAL(clicked()), this, SLOT(selectXMLFile()));
     connect(m_ui->selectOutputButton, SIGNAL(clicked()), this, SLOT(selectOutputDirectory()));
@@ -66,11 +70,11 @@ void XMLCommProtocolWidget::setXML(const QString& xml)
 
     if (doc.setContent(xml))
     {
-        m_ui->validXMLLabel->setText(tr("Valid XML file"));
+        m_ui->validXMLLabel->setText(tr("<font color=\"green\">Valid XML file</font>"));
     }
     else
     {
-        m_ui->validXMLLabel->setText(tr("File is NOT valid XML, please fix in editor"));
+        m_ui->validXMLLabel->setText(tr("<font color=\"red\">File is NOT valid XML, please fix in editor</font>"));
     }
 
     if (model != NULL)
@@ -112,8 +116,11 @@ void XMLCommProtocolWidget::generate()
 {
     // First save file
     save();
-    MAVLinkXMLParser parser(m_ui->fileNameLabel->text().trimmed(), m_ui->outputDirNameLabel->text().trimmed());
-    bool result = parser.generate();
+    // Clean log
+    m_ui->compileLog->clear();
+    MAVLinkXMLParser* parser = new MAVLinkXMLParser(m_ui->fileNameLabel->text().trimmed(), m_ui->outputDirNameLabel->text().trimmed());
+    connect(parser, SIGNAL(parseState(QString)), m_ui->compileLog, SLOT(appendHtml(QString)));
+    bool result = parser->generate();
     if (result)
     {
         QMessageBox msgBox;
@@ -122,8 +129,9 @@ void XMLCommProtocolWidget::generate()
     }
     else
     {
-        QMessageBox::critical(this, tr("Could not write files"), QString("The C code / headers could not be written to folder\n%1").arg(m_ui->outputDirNameLabel->text().trimmed()), QMessageBox::Ok);
+        QMessageBox::critical(this, tr("C code generation failed, please see the compile log for further information"), QString("The C code / headers could not be written to folder\n%1").arg(m_ui->outputDirNameLabel->text().trimmed()), QMessageBox::Ok);
     }
+    delete parser;
 }
 
 void XMLCommProtocolWidget::save()

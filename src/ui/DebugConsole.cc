@@ -163,7 +163,7 @@ void DebugConsole::setAutoHold(bool hold)
 
 void DebugConsole::receiveTextMessage(int id, int severity, QString text)
 {
-    m_ui->receiveText->appendHtml(QString("<b color=\"red\">(MAV" + QString::number(id) + QString(":") + QString::number(severity) + QString(") ") + text + QString("</b>")));
+    m_ui->receiveText->appendHtml(QString("<font color=\"yellow\">(MAV" + QString::number(id) + QString(":") + QString::number(severity) + QString(") ") + text + QString("</font>")));
 }
 
 void DebugConsole::updateTrafficMeasurements()

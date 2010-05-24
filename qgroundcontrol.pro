@@ -99,7 +99,6 @@ HEADERS += src/MG.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
     src/ui/PFD.h \
-    src/ui/GaugePanel.h \
     src/ui/DebugConsole.h \
     src/ui/MapWidget.h \
     src/ui/XMLCommProtocolWidget.h \
@@ -116,7 +115,8 @@ HEADERS += src/MG.h \
     src/ui/linechart/Linecharts.h \
     src/uas/SlugsMAV.h \
     src/uas/PxQuadMAV.h \
-    src/uas/ArduPilotMAV.h
+    src/uas/ArduPilotMAV.h \
+    src/comm/MAVLinkSyntaxHighlighter.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -149,7 +149,6 @@ SOURCES += src/main.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
     src/ui/PFD.cc \
-    src/ui/GaugePanel.cc \
     src/ui/DebugConsole.cc \
     src/ui/MapWidget.cc \
     src/ui/XMLCommProtocolWidget.cc \
@@ -166,5 +165,6 @@ SOURCES += src/main.cc \
     src/ui/linechart/Linecharts.cc \
     src/uas/SlugsMAV.cc \
     src/uas/PxQuadMAV.cc \
-    src/uas/ArduPilotMAV.cc
+    src/uas/ArduPilotMAV.cc \
+    src/comm/MAVLinkSyntaxHighlighter.cc
 RESOURCES = mavground.qrc
