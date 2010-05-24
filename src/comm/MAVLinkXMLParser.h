@@ -17,9 +17,14 @@ public slots:
     /** @brief Parse XML and generate C files */
     bool generate();
 
+signals:
+    /** @brief Status message on the parsing */
+    void parseState(QString message);
+
 protected:
     QDomDocument* doc;
     QString outputDirName;
+    QString fileName;
 };
 
 #endif // MAVLINKXMLPARSER_H
