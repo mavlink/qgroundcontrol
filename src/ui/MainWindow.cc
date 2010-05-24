@@ -95,6 +95,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     map->setVisible(false);
     protocol = new XMLCommProtocolWidget(this);
     protocol->setVisible(false);
+    centerStack->addWidget(protocol);
     parameters = new ParameterInterface(this);
     parameters->setVisible(false);
 
@@ -276,6 +277,7 @@ void MainWindow::connectActions()
     connect(ui.actionOperatorView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.actionSettingsView, SIGNAL(triggered()), this, SLOT(loadSettingsView()));
     connect(ui.actionShow_full_view, SIGNAL(triggered()), this, SLOT(loadAllView()));
+    connect(ui.actionShow_MAVLink_view, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
     connect(ui.actionStyleConfig, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
 
     // Joystick configuration
@@ -446,10 +448,11 @@ void MainWindow::loadSettingsView()
     linechart->setActive(true);
     centerStack->setCurrentWidget(linechart);
 
+    /*
     // COMM XML
     QDockWidget* container1 = new QDockWidget(tr("MAVLink XML to C Code Generator"), this);
     container1->setWidget(protocol);
-    addDockWidget(Qt::LeftDockWidgetArea, container1);
+    addDockWidget(Qt::LeftDockWidgetArea, container1);*/
 
     // ONBOARD PARAMETERS
     QDockWidget* container6 = new QDockWidget(tr("Onboard Parameters"), this);
@@ -494,6 +497,12 @@ void MainWindow::loadEngineerView()
     addDockWidget(Qt::BottomDockWidgetArea, container7);
 
     this->show();
+}
+
+void MainWindow::loadMAVLinkView()
+{
+    clearView();
+    centerStack->setCurrentWidget(protocol);
 }
 
 void MainWindow::loadAllView()

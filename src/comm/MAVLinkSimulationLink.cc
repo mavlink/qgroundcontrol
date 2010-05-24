@@ -311,7 +311,7 @@ void MAVLinkSimulationLink::mainloop()
 
 
                 // ATTITUDE
-                attitude.msec = time;
+                attitude.usec = time;
                 // Pack message and get size of encoded byte string
                 mavlink_msg_attitude_encode(systemId, componentId, &msg, &attitude);
                 // Allocate buffer with packet data
@@ -398,7 +398,7 @@ void MAVLinkSimulationLink::mainloop()
         typeCounter++;
 
         // Pack message and get size of encoded byte string
-        messageSize = mavlink_msg_heartbeat_pack(systemId, componentId, &msg, mavType);
+        messageSize = mavlink_msg_heartbeat_pack(systemId, componentId, &msg, mavType, MAV_AUTOPILOT_PIXHAWK);
         // Allocate buffer with packet data
         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
         //add data into datastream

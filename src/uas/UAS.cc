@@ -285,7 +285,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
-                quint64 time = getUnixTime(attitude.msec);
+                quint64 time = getUnixTime(attitude.usec);
                 emit valueChanged(uasId, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
                 emit valueChanged(uasId, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
                 emit valueChanged(uasId, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);

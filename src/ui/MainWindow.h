@@ -113,6 +113,8 @@ public slots:
     void loadSettingsView();
     /** @brief Load view with all widgets */
     void loadAllView();
+    /** @brief Load MAVLink XML generator view */
+    void loadMAVLinkView();
 
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();

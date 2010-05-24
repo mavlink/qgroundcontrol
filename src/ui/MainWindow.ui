@@ -35,7 +35,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -74,6 +74,7 @@
     <addaction name="actionOperatorView"/>
     <addaction name="actionSettingsView"/>
     <addaction name="separator"/>
+    <addaction name="actionShow_MAVLink_view"/>
     <addaction name="actionShow_full_view"/>
     <addaction name="actionStyleConfig"/>
    </widget>
@@ -251,6 +252,15 @@
    </property>
    <property name="text">
     <string>Show full view</string>
+   </property>
+  </action>
+  <action name="actionShow_MAVLink_view">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Show MAVLink view</string>
    </property>
   </action>
  </widget>

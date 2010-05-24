@@ -17,14 +17,36 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     // Let UAS handle the default message set
     UAS::receiveMessage(link, message);
+    mavlink_message_t* msg = &message;
 
     // Handle your special messages
-    switch (message.msgid)
+    switch (msg->msgid)
     {
-    case MAVLINK_MSG_ID_HEARTBEAT:
+    case MAVLINK_MSG_ID_WATCHDOG_HEARTBEAT:
         {
-            break;
+            mavlink_watchdog_heartbeat_t payload;
+            mavlink_msg_watchdog_heartbeat_decode(msg, &payload);
+            
+            emit watchdogReceived(this->uasId, payload.watchdog_id, payload.process_count);
         }
+        break;
+        
+    case MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO:
+        {
+            mavlink_watchdog_process_info_t payload;
+            mavlink_msg_watchdog_process_info_decode(msg, &payload);
+            
+            emit processReceived(this->uasId, payload.watchdog_id, payload.process_id, QString((const char*)payload.name), QString((const char*)payload.arguments), payload.timeout);
+        }
+        break;
+        
+    case MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS:
+        {
+            mavlink_watchdog_process_status_t payload;
+            mavlink_msg_watchdog_process_status_decode(msg, &payload);
+            emit processChanged(this->uasId, payload.watchdog_id, payload.process_id, payload.state, (payload.muted == 1) ? true : false, payload.crashes, payload.pid);
+        }
+        break;
     default:
         // Do nothing
         break;
