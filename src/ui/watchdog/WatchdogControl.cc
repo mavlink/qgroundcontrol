@@ -4,7 +4,7 @@
 
 #include <QDebug>
 
-WatchdogControl::WatchdogControl(UASInterface* uas, QWidget *parent) :
+WatchdogControl::WatchdogControl(QWidget *parent) :
         QWidget(parent),
         mav(NULL),
         ui(new Ui::WatchdogControl)
@@ -19,7 +19,7 @@ WatchdogControl::~WatchdogControl()
 
 void WatchdogControl::setUAS(UASInterface* uas)
 {
-    PxQuadMAV* qmav = dynamic_cast<PxQuadMAV>(uas);
+    PxQuadMAV* qmav = dynamic_cast<PxQuadMAV*>(uas);
 
     if (qmav)
     {
