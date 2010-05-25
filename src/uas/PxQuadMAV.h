@@ -11,6 +11,8 @@ public:
 public slots:
     /** @brief Receive a MAVLink message from this MAV */
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
+    /** @brief Send a command to an onboard process */
+    void sendProcessCommand(int watchdogId, int processId, unsigned int command);
 signals:
     void watchdogReceived(int systemId, int watchdogId, int processCount);
     void processReceived(int systemId, int watchdogId, int processId, QString name, QString arguments, int timeout);

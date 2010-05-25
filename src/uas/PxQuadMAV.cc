@@ -52,3 +52,16 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
         break;
     }
 }
+
+void PxQuadMAV::sendProcessCommand(int watchdogId, int processId, unsigned int command)
+{
+    mavlink_watchdog_command_t payload;
+    payload.target_system_id = uasId;
+    payload.watchdog_id = watchdogId;
+    payload.process_id = processId;
+    payload.command_id = (uint8_t)command;
+
+    mavlink_message_t msg;
+    mavlink_msg_watchdog_command_encode(sysid, compid, &msg, &payload);
+    sendMessage(msg);
+}

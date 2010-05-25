@@ -1,12 +1,16 @@
 #ifndef WATCHDOGCONTROL_H
 #define WATCHDOGCONTROL_H
 
+#include <inttypes.h>
+
 #include <QWidget>
 #include <QTimer>
 
 #include <map>
 #include <string>
 #include <sstream>
+
+#include "UASInterface.h"
 
 namespace Ui {
     class WatchdogControl;
@@ -30,7 +34,7 @@ public:
 
             RequestInfo   = 254,
             RequestStatus = 255
-        };
+                        };
     };
 
     ///! This struct represents a process on the watchdog. Used to store all values.
@@ -46,7 +50,7 @@ public:
                 Stopped       = 2,
                 Stopped_OK    = 3,
                 Stopped_ERROR = 4
-            };
+                            };
         };
 
         ///! Constructor - initialize the values
@@ -62,8 +66,8 @@ public:
         uint16_t crashes_;      ///< The number of crashes
         int32_t pid_;           ///< The PID of the process
 
-    //    Timer requestTimer_;    ///< Internal timer, used to repeat status and info requests after some time (in case of packet loss)
-    //    Timer updateTimer_;     ///< Internal timer, used to measure the time since the last update (used only for graphics)
+        //    Timer requestTimer_;    ///< Internal timer, used to repeat status and info requests after some time (in case of packet loss)
+        //    Timer updateTimer_;     ///< Internal timer, used to measure the time since the last update (used only for graphics)
     };
 
     ///! This struct identifies a watchdog. It's a combination of system-ID and watchdog-ID. implements operator< to be used as key in a std::map
@@ -77,7 +81,7 @@ public:
 
         ///! Comparison operator which is used by std::map
         inline bool operator<(const WatchdogID& other) const
-            { return (this->system_id_ != other.system_id_) ? (this->system_id_ < other.system_id_) : (this->watchdog_id_ < other.watchdog_id_); }
+        { return (this->system_id_ != other.system_id_) ? (this->system_id_ < other.system_id_) : (this->watchdog_id_ < other.watchdog_id_); }
 
     };
 
@@ -90,7 +94,7 @@ public:
         QTimer* timeoutTimer_;                    ///< Internal timer, used to measure the time since the last heartbeat message
     };
 
-    WatchdogControl(QWidget *parent = 0);
+    WatchdogControl(UASInterface* uas, QWidget *parent = 0);
     ~WatchdogControl();
 
     static const uint16_t ALL         = (uint16_t)-1;   ///< A magic value for a process-ID which addresses "all processes"
@@ -102,8 +106,13 @@ public slots:
     void addProcess(int systemId, int watchdogId, int processId, QString name, QString arguments, int timeout);
     void updateProcess(int systemId, int watchdogId, int processId, int state, bool muted, int crashed, int pid);
 
+signals:
+    void sendProcessCommand(int watchdogId, int processId, unsigned int command);
+
 protected:
     void changeEvent(QEvent *e);
+
+    UASInterface* mav;
 
 private:
     Ui::WatchdogControl *ui;
@@ -120,9 +129,9 @@ private:
 
 ///! Convert a value to std::string
 template <class T>
-std::string convertToString(T value)
+        std::string convertToString(T value)
 {
-std::ostringstream oss;
-oss << value;
-return oss.str();
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
 }
