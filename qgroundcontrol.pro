@@ -62,7 +62,8 @@ INCLUDEPATH += src \
     src/input \
     src/lib/qmapcontrol \
     src/ui/mavlink \
-    src/ui/param
+    src/ui/param \
+    src/ui/watchdog
 HEADERS += src/MG.h \
     src/Core.h \
     src/uas/UASInterface.h \

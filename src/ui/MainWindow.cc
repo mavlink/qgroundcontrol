@@ -98,6 +98,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     centerStack->addWidget(protocol);
     parameters = new ParameterInterface(this);
     parameters->setVisible(false);
+    watchdogControl = new WatchdogControl(this);
 
     QStringList* acceptList = new QStringList();
     acceptList->append("roll IMU");
