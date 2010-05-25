@@ -1,10 +1,12 @@
 #include "WatchdogControl.h"
 #include "ui_WatchdogControl.h"
+#include "PxQuadMAV.h"
 
 #include <QDebug>
 
-WatchdogControl::WatchdogControl(QWidget *parent) :
+WatchdogControl::WatchdogControl(UASInterface* uas, QWidget *parent) :
         QWidget(parent),
+        mav(NULL),
         ui(new Ui::WatchdogControl)
 {
     ui->setupUi(this);
@@ -13,6 +15,16 @@ WatchdogControl::WatchdogControl(QWidget *parent) :
 WatchdogControl::~WatchdogControl()
 {
     delete ui;
+}
+
+void WatchdogControl::setUAS(UASInterface* uas)
+{
+    PxQuadMAV* qmav = dynamic_cast<PxQuadMAV>(uas);
+
+    if (qmav)
+    {
+        connect(qmav, SIGNAL(processReceived(int,int,int,QString,QString,int)), this, SLOT(addProcess(int,int,int,QString,QString,int)));
+    }
 }
 
 void WatchdogControl::updateWatchdog(int systemId, int watchdogId, unsigned int processCount)
@@ -101,17 +113,7 @@ WatchdogControl::ProcessInfo& WatchdogControl::WatchdogInfo::getProcess(uint16_t
 */
 void WatchdogControl::sendCommand(const WatchdogID& w_id, uint16_t p_id, Command::Enum command)
 {
-    /*
-    mavlink_watchdog_command_t payload;
-    payload.target_system_id = w_id.system_id_;
-    payload.watchdog_id = w_id.watchdog_id_;
-    payload.process_id = p_id;
-    payload.command_id = (uint8_t)command;
-
-    mavlink_message_t msg;
-    mavlink_msg_watchdog_command_encode(sysid, compid, &msg, &payload);
-    mavlink_message_t_publish(this->lcm_, "MAVLINK", &msg);*/
-//std::cout << "--> sent mavlink_watchdog_command_t " << payload.target_system_id << " / " << payload.watchdog_id << " / " << payload.process_id << " / " << (int)payload.command_id << std::endl;
+    emit sendProcessCommand(w_id.watchdog_id_, p_id, command);
 }
 
 void WatchdogControl::changeEvent(QEvent *e)

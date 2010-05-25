@@ -53,7 +53,6 @@ This file is part of the PIXHAWK project
 #include "ObjectDetectionView.h"
 #include "HUD.h"
 #include "PFD.h"
-#include "GaugePanel.h"
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
 #include "DebugConsole.h"
@@ -147,7 +146,6 @@ protected:
     XMLCommProtocolWidget* protocol;
     HDDisplay* headDown1;
     HDDisplay* headDown2;
-    GaugePanel* gaugePanel;
 
     // Popup widgets
     JoystickWidget* joystickWidget;

@@ -16,6 +16,7 @@ tmp
 debug
 release
 qgroundcontrol
+mavlinkgen
 *.wav
 qgroundcontrol.xcodeproj/**
 doc/html
