@@ -94,7 +94,7 @@ public:
         QTimer* timeoutTimer_;                    ///< Internal timer, used to measure the time since the last heartbeat message
     };
 
-    WatchdogControl(UASInterface* uas, QWidget *parent = 0);
+    WatchdogControl(QWidget *parent = 0);
     ~WatchdogControl();
 
     static const uint16_t ALL         = (uint16_t)-1;   ///< A magic value for a process-ID which addresses "all processes"
@@ -105,6 +105,7 @@ public slots:
     void updateWatchdog(int systemId, int watchdogId, unsigned int processCount);
     void addProcess(int systemId, int watchdogId, int processId, QString name, QString arguments, int timeout);
     void updateProcess(int systemId, int watchdogId, int processId, int state, bool muted, int crashed, int pid);
+    void setUAS(UASInterface* uas);
 
 signals:
     void sendProcessCommand(int watchdogId, int processId, unsigned int command);
