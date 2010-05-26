@@ -35,7 +35,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -257,7 +257,7 @@
   <action name="actionShow_MAVLink_view">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+     <normaloff>:/images/devices/network-wired.svg</normaloff>:/images/devices/network-wired.svg</iconset>
    </property>
    <property name="text">
     <string>Show MAVLink view</string>

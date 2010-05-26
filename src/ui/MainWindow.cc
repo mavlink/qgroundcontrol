@@ -99,6 +99,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
     parameters = new ParameterInterface(this);
     parameters->setVisible(false);
     watchdogControl = new WatchdogControl(this);
+    watchdogControl->setVisible(false);
 
     QStringList* acceptList = new QStringList();
     acceptList->append("roll IMU");
@@ -459,6 +460,7 @@ void MainWindow::loadSettingsView()
     QDockWidget* container6 = new QDockWidget(tr("Onboard Parameters"), this);
     container6->setWidget(parameters);
     addDockWidget(Qt::RightDockWidgetArea, container6);
+    this->show();
 }
 
 void MainWindow::loadEngineerView()
@@ -504,6 +506,7 @@ void MainWindow::loadMAVLinkView()
 {
     clearView();
     centerStack->setCurrentWidget(protocol);
+    this->show();
 }
 
 void MainWindow::loadAllView()
