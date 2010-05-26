@@ -152,6 +152,7 @@ void WaypointList::transmit()
     m_ui->transmitButton->setEnabled(false);
     emit clearWaypointList();
     waypointNames.clear();
+    emit
     for(int i = 0; i < waypoints.size(); i++)
     {
         Waypoint* wp = waypoints[i];
