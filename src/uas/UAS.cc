@@ -714,6 +714,94 @@ void UAS::enableRawSensorFusionTransmission(bool enabled)
     sendMessage(msg);
 }
 
+void UAS::enablePositionTransmission(bool enabled)
+{
+    // Buffers to write data to
+    mavlink_message_t msg;
+    mavlink_request_data_stream_t stream;
+    // Select the message to request from now on
+    stream.req_stream_id = 6;
+    // Select the update rate in Hz the message should be send
+    stream.req_message_rate = 200;
+    // Start / stop the message
+    stream.start_stop = (enabled) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
+}
+
+void UAS::enableExtra1Transmission(bool enabled)
+{
+    // Buffers to write data to
+    mavlink_message_t msg;
+    mavlink_request_data_stream_t stream;
+    // Select the message to request from now on
+    stream.req_stream_id = 7;
+    // Select the update rate in Hz the message should be send
+    stream.req_message_rate = 200;
+    // Start / stop the message
+    stream.start_stop = (enabled) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
+}
+
+void UAS::enableExtra2Transmission(bool enabled)
+{
+    // Buffers to write data to
+    mavlink_message_t msg;
+    mavlink_request_data_stream_t stream;
+    // Select the message to request from now on
+    stream.req_stream_id = 8;
+    // Select the update rate in Hz the message should be send
+    stream.req_message_rate = 200;
+    // Start / stop the message
+    stream.start_stop = (enabled) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
+}
+
+void UAS::enableExtra3Transmission(bool enabled)
+{
+    // Buffers to write data to
+    mavlink_message_t msg;
+    mavlink_request_data_stream_t stream;
+    // Select the message to request from now on
+    stream.req_stream_id = 9;
+    // Select the update rate in Hz the message should be send
+    stream.req_message_rate = 200;
+    // Start / stop the message
+    stream.start_stop = (enabled) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
+}
+
 void UAS::setParameter(int component, QString id, float value)
 {
     mavlink_message_t msg;

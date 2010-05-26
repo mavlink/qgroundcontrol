@@ -12,6 +12,10 @@ QGCSensorSettingsWidget::QGCSensorSettingsWidget(UASInterface* uas, QWidget *par
     connect(ui->sendControllerCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableRawControllerDataTransmission(bool)));
     connect(ui->sendExtendedCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtendedSystemStatusTransmission(bool)));
     connect(ui->sendRCCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableRCChannelDataTransmission(bool)));
+    connect(ui->sendPositionCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enablePositionTransmission(bool)));
+    connect(ui->sendExtra1CheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtra1Transmission(bool)));
+    connect(ui->sendExtra2CheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtra2Transmission(bool)));
+    connect(ui->sendExtra3CheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtra3Transmission(bool)));
 }
 
 QGCSensorSettingsWidget::~QGCSensorSettingsWidget()
