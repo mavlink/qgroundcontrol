@@ -1,7 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <author/>
- <comment/>
- <exportmacro/>
  <class>WatchdogControl</class>
  <widget class="QWidget" name="WatchdogControl">
   <property name="geometry">
@@ -15,7 +13,19 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="100,0">
+   <item>
+    <widget class="QWidget" name="mainWidget" native="true"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="processInfoLabel">
+     <property name="text">
+      <string>0 Processes  Core 1: 0%  Core 2: 0%</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
- <pixmapfunction/>
+ <resources/>
  <connections/>
 </ui>

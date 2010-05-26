@@ -2,6 +2,8 @@
 #include "ui_WatchdogControl.h"
 #include "PxQuadMAV.h"
 
+#include "UASManager.h"
+
 #include <QDebug>
 
 WatchdogControl::WatchdogControl(QWidget *parent) :
@@ -10,6 +12,7 @@ WatchdogControl::WatchdogControl(QWidget *parent) :
         ui(new Ui::WatchdogControl)
 {
     ui->setupUi(this);
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
 }
 
 WatchdogControl::~WatchdogControl()
@@ -24,6 +27,8 @@ void WatchdogControl::setUAS(UASInterface* uas)
     if (qmav)
     {
         connect(qmav, SIGNAL(processReceived(int,int,int,QString,QString,int)), this, SLOT(addProcess(int,int,int,QString,QString,int)));
+        connect(qmav, SIGNAL(watchdogReceived(int,int,int)), this, SLOT(updateWatchdog(int,int,uint)));
+        connect(qmav, SIGNAL(processChanged(int,int,int,int,bool,int,int)), this, SLOT(updateProcess(int,int,int,int,bool,int,int)));
     }
 }
 
@@ -38,6 +43,7 @@ void WatchdogControl::updateWatchdog(int systemId, int watchdogId, unsigned int 
 
     // start the timeout timer
     //watchdog.timeoutTimer_.reset();
+    qDebug() << "WATCHDOG RECEIVED";
     //qDebug() << "<-- received mavlink_watchdog_heartbeat_t " << msg->sysid << " / " << payload.watchdog_id << " / " << payload.process_count << std::endl;
 }
 
@@ -51,6 +57,7 @@ void WatchdogControl::addProcess(int systemId, int watchdogId, int processId, QS
     process.name_ = name.toStdString();
     process.arguments_ = arguments.toStdString();
     process.timeout_ = timeout;
+    qDebug() << "PROCESS RECEIVED";
     //qDebug() << "<-- received mavlink_watchdog_process_info_t " << msg->sysid << " / " << (const char*)payload.name << " / " << (const char*)payload.arguments << " / " << payload.timeout << std::endl;
 }
 
@@ -67,6 +74,7 @@ void WatchdogControl::updateProcess(int systemId, int watchdogId, int processId,
     process.crashes_ = crashes;
     process.pid_ = pid;
 
+    qDebug() << "PROCESS UPDATED";
     //process.updateTimer_.reset();
     //qDebug() << "<-- received mavlink_watchdog_process_status_t " << msg->sysid << " / " << payload.state << " / " << payload.muted << " / " << payload.crashes << " / " << payload.pid << std::endl;
 }

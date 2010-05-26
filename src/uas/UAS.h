@@ -202,6 +202,10 @@ public slots:
     void enableRCChannelDataTransmission(bool enabled);
     void enableRawControllerDataTransmission(bool enabled);
     void enableRawSensorFusionTransmission(bool enabled);
+    void enablePositionTransmission(bool enabled);
+    void enableExtra1Transmission(bool enabled);
+    void enableExtra2Transmission(bool enabled);
+    void enableExtra3Transmission(bool enabled);
 
     /** @brief Update the system state */
     void updateState();

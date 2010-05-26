@@ -60,6 +60,7 @@ This file is part of the PIXHAWK project
 #include "ParameterInterface.h"
 #include "XMLCommProtocolWidget.h"
 #include "HDDisplay.h"
+#include "WatchdogControl.h"
 
 #include "LogCompressor.h"
 
@@ -146,6 +147,7 @@ protected:
     XMLCommProtocolWidget* protocol;
     HDDisplay* headDown1;
     HDDisplay* headDown2;
+    WatchdogControl* watchdogControl;
 
     // Popup widgets
     JoystickWidget* joystickWidget;
