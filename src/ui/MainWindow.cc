@@ -59,7 +59,7 @@ This file is part of the QGROUNDCONTROL project
 * @see QMainWindow::show()
 **/
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
-    settings()
+settings()
 {
     this->hide();
     this->setVisible(false);
@@ -437,6 +437,10 @@ void MainWindow::loadOperatorView()
     container6->setWidget(detection);
     addDockWidget(Qt::RightDockWidgetArea, container6);
 
+    // PROCESS CONTROL
+    QDockWidget* pControl = new QDockWidget(tr("Process Control"), this);
+    pControl->setWidget(watchdogControl);
+    addDockWidget(Qt::RightDockWidgetArea, pControl);
     this->show();
 }
 
