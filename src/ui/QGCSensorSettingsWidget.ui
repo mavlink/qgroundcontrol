@@ -54,6 +54,34 @@
         </property>
        </widget>
       </item>
+      <item row="4" column="0">
+       <widget class="QCheckBox" name="sendPositionCheckBox">
+        <property name="text">
+         <string>Send position setpoint and estimate</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QCheckBox" name="sendExtra1CheckBox">
+        <property name="text">
+         <string>Send Extra1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QCheckBox" name="sendExtra2CheckBox">
+        <property name="text">
+         <string>Send Extra2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QCheckBox" name="sendExtra3CheckBox">
+        <property name="text">
+         <string>Send Extra3</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
