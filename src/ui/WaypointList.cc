@@ -99,15 +99,16 @@ void WaypointList::setUAS(UASInterface* uas)
 
 void WaypointList::setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current)
 {
-    transmitDelay->start(1000);
-    QString string = "New waypoint";
-
-    if (waypointNames.contains(id))
-    {
-        string = waypointNames.value(id);
-    }
     if (uasId == this->uas->getUASID())
     {
+        transmitDelay->start(1000);
+        QString string = "New waypoint";
+
+        if (waypointNames.contains(id))
+        {
+            string = waypointNames.value(id);
+        }
+
         Waypoint* wp = new Waypoint(string, id, x, y, z, yaw, autocontinue, current);
         addWaypoint(wp);
     }
@@ -152,7 +153,6 @@ void WaypointList::transmit()
     m_ui->transmitButton->setEnabled(false);
     emit clearWaypointList();
     waypointNames.clear();
-    emit
     for(int i = 0; i < waypoints.size(); i++)
     {
         Waypoint* wp = waypoints[i];
@@ -186,7 +186,13 @@ void WaypointList::add()
 
 void WaypointList::addWaypoint(Waypoint* wp)
 {
+    if (waypoints.contains(wp))
+    {
+        removeWaypoint(wp);
+    }
+
     waypoints.insert(wp->id, wp);
+
     if (!wpViews.contains(wp))
     {
         WaypointView* wpview = new WaypointView(wp, this);
