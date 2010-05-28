@@ -174,7 +174,8 @@ void LinechartWidget::createLayout()
 
     // Connect notifications from the user interface to the plot
     connect(this, SIGNAL(curveRemoved(QString)), activePlot, SLOT(hideCurve(QString)));
-    connect(this, SIGNAL(curveSet(QString, int)), activePlot, SLOT(showCurve(QString, int)));
+    //connect(this, SIGNAL(curveSet(QString, int)), activePlot, SLOT(showshowCurveCurve(QString, int)));
+    // FIXME
 
     // Connect notifications from the plot to the user interface
     connect(activePlot, SIGNAL(curveAdded(QString)), this, SLOT(addCurve(QString)));
