@@ -9,6 +9,7 @@
 WatchdogControl::WatchdogControl(QWidget *parent) :
         QWidget(parent),
         mav(NULL),
+        updateInterval(2000000),
         ui(new Ui::WatchdogControl)
 {
     ui->setupUi(this);
@@ -43,14 +44,20 @@ void WatchdogControl::setUAS(UASInterface* uas)
 void WatchdogControl::updateWatchdog(int systemId, int watchdogId, unsigned int processCount)
 {
     // request the watchdog with the given ID
+    // Get the watchdog and request the info for it
     WatchdogInfo& watchdog = this->getWatchdog(systemId, watchdogId);
 
     // if the proces count doesn't match, the watchdog is either new or has changed - create a new vector with new (and empty) ProcessInfo structs.
     if (watchdog.processes_.size() != processCount)
+    {
         watchdog.processes_ = std::vector<ProcessInfo>(processCount);
+        // Create new UI widget
+        //WatchdogView* view = new Watch
+    }
 
     // start the timeout timer
     //watchdog.timeoutTimer_.reset();
+
     qDebug() << "WATCHDOG RECEIVED";
     //qDebug() << "<-- received mavlink_watchdog_heartbeat_t " << msg->sysid << " / " << payload.watchdog_id << " / " << payload.process_count << std::endl;
 }

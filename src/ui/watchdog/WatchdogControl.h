@@ -67,6 +67,7 @@ public:
         uint16_t crashes_;      ///< The number of crashes
         int32_t pid_;           ///< The PID of the process
 
+        //quint64_t requestTimeout;
         //    Timer requestTimer_;    ///< Internal timer, used to repeat status and info requests after some time (in case of packet loss)
         //    Timer updateTimer_;     ///< Internal timer, used to measure the time since the last update (used only for graphics)
     };
@@ -92,6 +93,7 @@ public:
         ProcessInfo& getProcess(uint16_t index);
 
         std::vector<ProcessInfo> processes_;    ///< A vector containing all processes running on this watchdog
+        uint64_t timeout;
         QTimer* timeoutTimer_;                    ///< Internal timer, used to measure the time since the last heartbeat message
     };
 
@@ -116,6 +118,7 @@ protected:
 
     UASInterface* mav;
     QVBoxLayout* listLayout;
+    uint64_t updateInterval;
 
 private:
     Ui::WatchdogControl *ui;
