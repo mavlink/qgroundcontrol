@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Brief Description
+ *   @brief Implementation of class UASInfoWidget
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -86,7 +86,7 @@ void UASInfoWidget::addUAS(UASInterface* uas)
     if (uas != NULL)
     {
         connect(uas, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBattery(UASInterface*,double,double,int)));
-        connect(uas, SIGNAL(dropRateChanged(int,float,float)), this, SLOT(updateDropRate(int,float,float)));
+        connect(uas, SIGNAL(dropRateChanged(int,float)), this, SLOT(updateReceiveLoss(int,float)));
         connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateCPULoad(UASInterface*,double)));
 
         // Set this UAS as active if it is the first one

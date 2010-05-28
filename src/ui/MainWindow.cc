@@ -166,7 +166,7 @@ settings()
     adjustSize();
 
     //
-    connect(mavlink, SIGNAL(receiveLossChanged(float)), info, SLOT(updateReceiveLoss(float)));
+    connect(mavlink, SIGNAL(receiveLossChanged(float)), info, SLOT(updateSendLoss(float)));
 }
 
 MainWindow::~MainWindow()
@@ -377,7 +377,6 @@ void MainWindow::clearView()
 void MainWindow::loadPilotView()
 {
     clearView();
-    GAudioOutput::instance()->say("Switched to Pilot View");
 
     // HEAD UP DISPLAY
     centerStack->setCurrentWidget(hud);
@@ -401,8 +400,6 @@ void MainWindow::loadPilotView()
 void MainWindow::loadOperatorView()
 {
     clearView();
-
-    GAudioOutput::instance()->say("Switched to Operator View");
 
     // MAP
     centerStack->setCurrentWidget(map);
@@ -448,8 +445,6 @@ void MainWindow::loadSettingsView()
 {
     clearView();
 
-    GAudioOutput::instance()->say("Switched to Settings View");
-
     // LINE CHART
     linechart->setActive(true);
     centerStack->setCurrentWidget(linechart);
@@ -471,8 +466,6 @@ void MainWindow::loadEngineerView()
 {
     clearView();
     // Engineer view, used in EMAV2009
-
-    GAudioOutput::instance()->say("Switched to Engineer View");
 
     // LINE CHART
     linechart->setActive(true);
@@ -516,7 +509,6 @@ void MainWindow::loadMAVLinkView()
 void MainWindow::loadAllView()
 {
     clearView();
-    GAudioOutput::instance()->say("Loaded complete view");
 
     QDockWidget* containerPFD = new QDockWidget(tr("Primary Flight Display"), this);
     containerPFD->setWidget(headDown1);

@@ -14,11 +14,11 @@ WatchdogControl::WatchdogControl(QWidget *parent) :
     ui->setupUi(this);
 
     // UI is initialized, setup layout
-    listLayout = new QVBoxLayout(m_ui->listWidget);
+    listLayout = new QVBoxLayout(ui->mainWidget);
     listLayout->setSpacing(6);
     listLayout->setMargin(0);
     listLayout->setAlignment(Qt::AlignTop);
-    m_ui->listWidget->setLayout(listLayout);
+    ui->mainWidget->setLayout(listLayout);
 
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
 }

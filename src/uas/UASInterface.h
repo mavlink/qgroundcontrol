@@ -233,10 +233,9 @@ signals:
      * @brief Drop rate of communication link updated
      *
      * @param systemId id of the air system
-     * @param receiveDrop drop rate of packets this MAV receives (send from GCS or other MAVs)
-     * @param sendDrop drop rate of packets this MAV sends (received on GCS)
+     * @param receiveDrop drop rate of packets this MAV receives (sent from GCS or other MAVs)
      */
-    void dropRateChanged(int systemId,  float receiveDrop, float sendDrop);
+    void dropRateChanged(int systemId,  float receiveDrop);
     /** @brief Robot mode has changed */
     void modeChanged(int sysId, QString status, QString description);
     /** @brief A command has been issued **/

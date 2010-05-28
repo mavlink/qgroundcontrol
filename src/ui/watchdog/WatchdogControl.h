@@ -5,7 +5,7 @@
 
 #include <QWidget>
 #include <QTimer>
-#include <QHBoxLayout>
+#include <QVBoxLayout>
 
 #include <map>
 #include <string>
@@ -115,7 +115,7 @@ protected:
     void changeEvent(QEvent *e);
 
     UASInterface* mav;
-    QHBoxLayout* mainWidgetLayout;
+    QVBoxLayout* listLayout;
 
 private:
     Ui::WatchdogControl *ui;
