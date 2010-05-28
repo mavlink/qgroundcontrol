@@ -5,6 +5,7 @@
 
 #include <QWidget>
 #include <QTimer>
+#include <QHBoxLayout>
 
 #include <map>
 #include <string>
@@ -114,6 +115,7 @@ protected:
     void changeEvent(QEvent *e);
 
     UASInterface* mav;
+    QHBoxLayout* mainWidgetLayout;
 
 private:
     Ui::WatchdogControl *ui;

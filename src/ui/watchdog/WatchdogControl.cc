@@ -12,6 +12,14 @@ WatchdogControl::WatchdogControl(QWidget *parent) :
         ui(new Ui::WatchdogControl)
 {
     ui->setupUi(this);
+
+    // UI is initialized, setup layout
+    listLayout = new QVBoxLayout(m_ui->listWidget);
+    listLayout->setSpacing(6);
+    listLayout->setMargin(0);
+    listLayout->setAlignment(Qt::AlignTop);
+    m_ui->listWidget->setLayout(listLayout);
+
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
 }
 
@@ -27,7 +35,7 @@ void WatchdogControl::setUAS(UASInterface* uas)
     if (qmav)
     {
         connect(qmav, SIGNAL(processReceived(int,int,int,QString,QString,int)), this, SLOT(addProcess(int,int,int,QString,QString,int)));
-        connect(qmav, SIGNAL(watchdogReceived(int,int,int)), this, SLOT(updateWatchdog(int,int,uint)));
+        connect(qmav, SIGNAL(watchdogReceived(int,int,uint)), this, SLOT(updateWatchdog(int,int,uint)));
         connect(qmav, SIGNAL(processChanged(int,int,int,int,bool,int,int)), this, SLOT(updateProcess(int,int,int,int,bool,int,int)));
     }
 }

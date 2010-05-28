@@ -14,7 +14,7 @@ public slots:
     /** @brief Send a command to an onboard process */
     void sendProcessCommand(int watchdogId, int processId, unsigned int command);
 signals:
-    void watchdogReceived(int systemId, int watchdogId, int processCount);
+    void watchdogReceived(int systemId, int watchdogId, unsigned int processCount);
     void processReceived(int systemId, int watchdogId, int processId, QString name, QString arguments, int timeout);
     void processChanged(int systemId, int watchdogId, int processId, int state, bool muted, int crashed, int pid);
 };
