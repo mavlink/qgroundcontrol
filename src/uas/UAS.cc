@@ -221,7 +221,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
 
                 // COMMUNICATIONS DROP RATE
-                emit dropRateChanged(this->getUASID(), this->receiveDropRate, this->sendDropRate);
+                emit dropRateChanged(this->getUASID(), state.packet_drop);
+                qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;
 
                 // AUDIO
                 if (modechanged && statechanged)
