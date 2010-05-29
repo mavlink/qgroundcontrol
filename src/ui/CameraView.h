@@ -71,6 +71,8 @@ protected:
     int receivedChannels;
     int receivedWidth;
     int receivedHeight;
+    QMap<int, QImage*> images; ///< Reference to the received images
+    int imageId; ///< ID of the currently displayed image
 
     void commitRawDataToGL();
 };

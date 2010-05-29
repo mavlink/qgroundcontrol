@@ -67,7 +67,9 @@ void UDPLink::run()
 
 void UDPLink::setAddress(QString address)
 {
-    // TODO Implement address
+    Q_UNUSED(address);
+    // FIXME TODO Implement address
+    //socket->setLocalAddress(QHostAddress(address));
 }
 
 void UDPLink::setPort(quint16 port)

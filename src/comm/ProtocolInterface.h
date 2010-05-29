@@ -56,7 +56,8 @@ public slots:
     virtual void receiveBytes(LinkInterface *link) = 0;
 
 signals:
-    void receiveLossChanged(float loss);
+    /** @brief Update the packet loss from one system */
+    void receiveLossChanged(int uasId, float loss);
 
 };
 

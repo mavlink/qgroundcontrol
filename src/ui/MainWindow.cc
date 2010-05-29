@@ -166,7 +166,7 @@ settings()
     adjustSize();
 
     //
-    connect(mavlink, SIGNAL(receiveLossChanged(float)), info, SLOT(updateSendLoss(float)));
+    connect(mavlink, SIGNAL(receiveLossChanged(int, float)), info, SLOT(updateSendLoss(int, float)));
 }
 
 MainWindow::~MainWindow()
