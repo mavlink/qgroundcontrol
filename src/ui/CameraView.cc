@@ -44,8 +44,9 @@ CameraView::CameraView(int width, int height, int depth, int channels, QWidget* 
     //setImageSize(width, height, depth, channels);
     receivedWidth = width;
     receivedHeight = height;
-    receivedDepth = 8;
-    receivedChannels = 1;
+    receivedDepth = depth;
+    receivedChannels = channels;
+    imageId = -1;
 
     // Fill with black background
     QImage fill = QImage(width, height, QImage::Format_Indexed8);
@@ -139,6 +140,7 @@ void CameraView::setImageSize(int width, int height, int depth, int channels)
 
 void CameraView::startImage(int imgid, int width, int height, int depth, int channels)
 {
+    this->imageId = imgid;
     //qDebug() << "CameraView: starting image (" << width << "x" << height << ", " << depth << "bits) with " << channels << "channels";
 
     // Copy previous image to screen if it hasn't been finished properly
@@ -208,6 +210,10 @@ void CameraView::saveImage()
 
 void CameraView::setPixels(int imgid, const unsigned char* imageData, int length, unsigned int startIndex)
 {
+    // FIXME imgid can be used to receive and then display multiple images
+    // the image buffer should be converted into a n image buffer.
+    Q_UNUSED(imgid);
+
     //    qDebug() << "at" << __FILE__ << __LINE__ << ": Received startindex" << startIndex << "and length" << length << "(" << startIndex+length << "of" << rawExpectedBytes << "bytes)";
 
     if (imageStarted)

@@ -117,13 +117,19 @@ void UASInfoWidget::updateCPULoad(UASInterface* uas, double load)
     }
 }
 
-void UASInfoWidget::updateReceiveLoss(float receiveLoss)
+void UASInfoWidget::updateReceiveLoss(int uasId, float receiveLoss)
 {
+    Q_UNUSED(uasId);
     this->receiveLoss = this->receiveLoss * 0.8f + receiveLoss * 0.2f;
 }
 
-void UASInfoWidget::updateSendLoss(float sendLoss)
+/**
+  The send loss is typically calculated on the GCS based on packets
+  that were received scrambled from the MAV
+ */
+void UASInfoWidget::updateSendLoss(int uasId, float sendLoss)
 {
+    Q_UNUSED(uasId);
     this->sendLoss = this->sendLoss * 0.8f + sendLoss * 0.2f;
 }
 
