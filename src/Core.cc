@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Implementation of main class
+ *   @brief Implementation of class Core
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -115,7 +115,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not connect UDP port. Is already an instance of " + qAppName() + " running?");
-        msgBox.setInformativeText("You will not be able to receive data via UDP. Do you want to close the application?");
+        msgBox.setInformativeText("You will not be able to receive data via UDP. Please check that you're running the right executable and then re-start " + qAppName() + ". Do you want to close the application?");
         msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Cancel);
         int ret = msgBox.exec();
@@ -126,9 +126,8 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
         // Exit application
         if (ret == QMessageBox::Yes)
         {
-            qDebug() << "EXITING";
-            mainWindow->close();
-            this->exit(EXIT_SUCCESS);
+            //mainWindow->close();
+            QTimer::singleShot(200, mainWindow, SLOT(close()));
         }
     }
 

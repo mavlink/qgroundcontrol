@@ -258,7 +258,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_raw_imu_t raw;
                 mavlink_msg_raw_imu_decode(&message, &raw);
-                quint64 time = getUnixTime(raw.msec);
+                quint64 time = getUnixTime(raw.usec);
 
                 emit valueChanged(uasId, "Accel. X", raw.xacc, time);
                 emit valueChanged(uasId, "Accel. Y", raw.yacc, time);
@@ -330,12 +330,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 positionLock = true;
             }
             break;
-        case MAVLINK_MSG_ID_POSITION:
+        case MAVLINK_MSG_ID_LOCAL_POSITION:
             //std::cerr << std::endl;
             //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
             {
-                mavlink_position_t pos;
-                mavlink_msg_position_decode(&message, &pos);
+                mavlink_local_position_t pos;
+                mavlink_msg_local_position_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.usec);
                 emit valueChanged(uasId, "x", pos.x, time);
                 emit valueChanged(uasId, "y", pos.y, time);
@@ -344,6 +344,38 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "vy", pos.vy, time);
                 emit valueChanged(uasId, "vz", pos.vz, time);
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+            }
+            break;
+        case MAVLINK_MSG_ID_GLOBAL_POSITION:
+            //std::cerr << std::endl;
+            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
+            {
+                mavlink_global_position_t pos;
+                mavlink_msg_global_position_decode(&message, &pos);
+                quint64 time = getUnixTime(pos.usec);
+                emit valueChanged(uasId, "lat", pos.lat, time);
+                emit valueChanged(uasId, "lon", pos.lon, time);
+                emit valueChanged(uasId, "alt", pos.alt, time);
+                emit valueChanged(uasId, "g-vx", pos.vx, time);
+                emit valueChanged(uasId, "g-vy", pos.vy, time);
+                emit valueChanged(uasId, "g-vz", pos.vz, time);
+                emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
+            }
+            break;
+        case MAVLINK_MSG_ID_GPS_RAW:
+            //std::cerr << std::endl;
+            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
+            {
+                mavlink_gps_raw_t pos;
+                mavlink_msg_gps_raw_decode(&message, &pos);
+                quint64 time = getUnixTime(pos.usec);
+                emit valueChanged(uasId, "lat", pos.lat, time);
+                emit valueChanged(uasId, "lon", pos.lon, time);
+                emit valueChanged(uasId, "alt", pos.alt, time);
+                emit valueChanged(uasId, "g-vx", pos.vx, time);
+                emit valueChanged(uasId, "g-vy", pos.vy, time);
+                emit valueChanged(uasId, "g-vz", pos.vz, time);
+                emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
             }
             break;
         case MAVLINK_MSG_ID_PARAM_VALUE:

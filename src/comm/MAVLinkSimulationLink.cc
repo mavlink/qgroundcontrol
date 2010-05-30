@@ -321,7 +321,7 @@ void MAVLinkSimulationLink::mainloop()
                 streampointer += bufferlength;
 
                 // IMU
-                rawImuValues.msec = time;
+                rawImuValues.usec = time;
                 rawImuValues.xmag = 0;
                 rawImuValues.ymag = 0;
                 rawImuValues.zmag = 0;
