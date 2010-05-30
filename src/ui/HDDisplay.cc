@@ -316,7 +316,8 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     circlePen.setColor(color);
     painter->setBrush(Qt::NoBrush);
     painter->setPen(circlePen);
-    drawCircle(xRef, yRef+nameHeight, radius, 0.0f, 170.0f, 1.0f, color, painter);
+    drawCircle(xRef, yRef+nameHeight, radius, 0.0f, color, painter);
+    //drawCircle(xRef, yRef+nameHeight, radius, 0.0f, 170.0f, 1.0f, color, painter);
 
     QString label;
     label.sprintf("%05.1f", value);
@@ -466,7 +467,8 @@ void HDDisplay::drawChangeIndicatorGauge(float xRef, float yRef, float radius, f
     circlePen.setColor(defaultColor);
     painter->setBrush(Qt::NoBrush);
     painter->setPen(circlePen);
-    drawCircle(xRef, yRef, radius, 200.0f, 170.0f, 1.0f, color, painter);
+    drawCircle(xRef, yRef, radius, 200.0f, color, painter);
+    //drawCircle(xRef, yRef, radius, 200.0f, 170.0f, 1.0f, color, painter);
 
     QString label;
     label.sprintf("%05.1f", value);
@@ -582,7 +584,7 @@ void HDDisplay::drawLine(float refX1, float refY1, float refX2, float refY2, flo
     painter->drawLine(QPoint(refToScreenX(refX1), refToScreenY(refY1)), QPoint(refToScreenX(refX2), refToScreenY(refY2)));
 }
 
-void HDDisplay::drawEllipse(float refX, float refY, float radiusX, float radiusY, float startDeg, float endDeg, float lineWidth, const QColor& color, QPainter* painter)
+void HDDisplay::drawEllipse(float refX, float refY, float radiusX, float radiusY, float lineWidth, const QColor& color, QPainter* painter)
 {
     QPen pen(painter->pen().style());
     pen.setWidth(refLineWidthToPen(lineWidth));
@@ -591,9 +593,9 @@ void HDDisplay::drawEllipse(float refX, float refY, float radiusX, float radiusY
     painter->drawEllipse(QPointF(refToScreenX(refX), refToScreenY(refY)), refToScreenX(radiusX), refToScreenY(radiusY));
 }
 
-void HDDisplay::drawCircle(float refX, float refY, float radius, float startDeg, float endDeg, float lineWidth, const QColor& color, QPainter* painter)
+void HDDisplay::drawCircle(float refX, float refY, float radius, float lineWidth, const QColor& color, QPainter* painter)
 {
-    drawEllipse(refX, refY, radius, radius, startDeg, endDeg, lineWidth, color, painter);
+    drawEllipse(refX, refY, radius, radius, lineWidth, color, painter);
 }
 
 void HDDisplay::changeEvent(QEvent *e)

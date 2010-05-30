@@ -104,6 +104,8 @@ emergency(false)
 
 bool GAudioOutput::say(QString text, int severity)
 {
+    // TODO Add severity filter
+    Q_UNUSED(severity);
     bool res = false;
     if (!emergency)
     {
