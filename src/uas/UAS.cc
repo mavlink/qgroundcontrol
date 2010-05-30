@@ -375,7 +375,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "g-vx", pos.vx, time);
                 emit valueChanged(uasId, "g-vy", pos.vy, time);
                 emit valueChanged(uasId, "g-vz", pos.vz, time);
-                emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
             }
             break;
         case MAVLINK_MSG_ID_PARAM_VALUE:
