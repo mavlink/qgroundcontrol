@@ -117,7 +117,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         addLink(link);
     }
 
-    qDebug() << "UAS RECEIVED" << message.sysid << message.compid << message.msgid;
+    //qDebug() << "UAS RECEIVED" << message.sysid << message.compid << message.msgid;
 
     if (message.sysid == uasId)
     {
