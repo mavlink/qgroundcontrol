@@ -74,7 +74,7 @@ MapWidget::MapWidget(QWidget *parent) :
     QPushButton* zoomout = new QPushButton(QIcon(":/images/actions/list-remove.svg"), "", this);
     followgps = new QPushButton(QIcon(":/images/actions/system-lock-screen.svg"), "", this);
     followgps->setCheckable(true);
-    //gpsposition = new QLabel();
+   // gpsposition = new QLabel();
     zoomin->setMaximumWidth(50);
     zoomout->setMaximumWidth(50);
     followgps->setMaximumWidth(50);
@@ -114,6 +114,7 @@ MapWidget::~MapWidget()
 void MapWidget::addUAS(UASInterface* uas)
 {
     mav = uas;
+    connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
 }
 
 void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
@@ -123,7 +124,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
     QList<Point*> points;
     // Points with a circle
     // A QPen can be used to customize the
-    QPen* pointpen = new QPen(QColor(0,255,0));
+    QPen* pointpen = new QPen(uas->getColor());
     pointpen->setWidth(3);
     points.append(new CirclePoint(lat, lon, alt, uas->getUASName(), Point::Middle, pointpen));
 //    points.append(new CirclePoint(8.275145, 50.016992, 15, "Wiesbaden-Mainz-Kastel, Johannes-Goßner-Straße", Point::Middle, pointpen));
@@ -156,7 +157,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 
 void MapWidget::updatePosition(float time, double lat, double lon)
 {
-    gpsposition->setText(QString::number(time) + " / " + QString::number(lat) + " / " + QString::number(lon));
+    //gpsposition->setText(QString::number(time) + " / " + QString::number(lat) + " / " + QString::number(lon));
     if (followgps->isChecked())
     {
         mc->setView(QPointF(lat, lon));
