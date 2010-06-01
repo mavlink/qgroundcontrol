@@ -117,6 +117,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         addLink(link);
     }
 
+    qDebug() << "UAS RECEIVED" << message.sysid << message.compid << message.msgid;
+
     if (message.sysid == uasId)
     {
         QString uasState;
@@ -368,13 +370,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_gps_raw_t pos;
                 mavlink_msg_gps_raw_decode(&message, &pos);
-                quint64 time = getUnixTime(pos.usec);
+               // quint64 time = getUnixTime(pos.usec);
+                quint64 time = MG::TIME::getGroundTimeNow();
                 emit valueChanged(uasId, "lat", pos.lat, time);
                 emit valueChanged(uasId, "lon", pos.lon, time);
                 emit valueChanged(uasId, "alt", pos.alt, time);
                 emit valueChanged(uasId, "g-vx", pos.vx, time);
                 emit valueChanged(uasId, "g-vy", pos.vy, time);
                 emit valueChanged(uasId, "g-vz", pos.vz, time);
+                qDebug() << "GOT GPS RAW";
+                emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
             }
             break;
         case MAVLINK_MSG_ID_PARAM_VALUE:
