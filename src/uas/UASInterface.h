@@ -289,7 +289,7 @@ signals:
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
     void attitudeThrustSetPointChanged(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
-    void globalPositionChanged(UASInterface*, double lon, double lat, double alt, quint64 usec);
+    void globalPositionChanged(UASInterface*, double lat, double lon, double alt, quint64 usec);
     void speedChanged(UASInterface*, double x, double y, double z, quint64 usec);
     void imageStarted(int imgid, int width, int height, int depth, int channels);
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);
