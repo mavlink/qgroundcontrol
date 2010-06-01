@@ -19,6 +19,9 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
     UAS::receiveMessage(link, message);
     mavlink_message_t* msg = &message;
 
+        qDebug() << "PX RECEIVED" << msg->sysid << msg->compid << msg->msgid;
+
+
     // Handle your special messages
     switch (msg->msgid)
     {
