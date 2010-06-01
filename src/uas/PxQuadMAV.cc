@@ -55,8 +55,8 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit valueChanged(uasId, str+".x", vect.x, MG::TIME::getGroundTimeNow());
             emit valueChanged(uasId, str+".y", vect.y, MG::TIME::getGroundTimeNow());
             emit valueChanged(uasId, str+".z", vect.z, MG::TIME::getGroundTimeNow());
-            break;
         }
+        break;
     default:
         // Do nothing
         break;

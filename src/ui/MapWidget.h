@@ -34,6 +34,7 @@ This file is part of the PIXHAWK project
 
 #include <QtGui/QWidget>
 #include "qmapcontrol.h"
+#include "UASInterface.h"
 
 namespace Ui {
     class MapWidget;
@@ -48,7 +49,9 @@ public:
     ~MapWidget();
 
 public slots:
-    void updatePosition(float time, QPointF coordinate);
+    void addUAS(UASInterface* uas);
+    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
+    void updatePosition(float time, double lat, double lon);
 
 protected:
     void changeEvent(QEvent* e);
@@ -67,6 +70,8 @@ protected:
     GoogleSatMapAdapter* gSatAdapter;
     Layer* osmLayer;
     Layer* gSatLayer;
+
+    UASInterface* mav;
 
 private:
     Ui::MapWidget *m_ui;

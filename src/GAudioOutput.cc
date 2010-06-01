@@ -197,6 +197,7 @@ bool GAudioOutput::startEmergency()
         // Beep immediately and then start timer
         beep();
         emergencyTimer->start(1500);
+        QTimer::singleShot(5000, this, SLOT(stopEmergency()));
     }
     return true;
 }

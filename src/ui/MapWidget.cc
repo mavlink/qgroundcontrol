@@ -31,6 +31,8 @@ This file is part of the PIXHAWK project
 
 #include "MapWidget.h"
 #include "ui_MapWidget.h"
+#include "UASInterface.h"
+#include "UASManager.h"
 
 MapWidget::MapWidget(QWidget *parent) :
         QWidget(parent),
@@ -54,7 +56,7 @@ MapWidget::MapWidget(QWidget *parent) :
     //GoogleSatMapAdapter* gSatAdapter = new GoogleSatMapAdapter();
 
     // create a layer with the mapadapter and type MapLayer
-    Layer* osmLayer = new Layer("Custom Layer", osmAdapter, Layer::MapLayer);
+    osmLayer = new Layer("Custom Layer", osmAdapter, Layer::MapLayer);
     //Layer* gSatLayer = new Layer("Custom Layer", gSatAdapter, Layer::MapLayer);
 
     // add Layer to the MapControl
@@ -97,20 +99,67 @@ MapWidget::MapWidget(QWidget *parent) :
     //gm->start();
 
     mc->setZoom(3);
+
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
 }
 
 MapWidget::~MapWidget()
 {
     delete m_ui;
 }
-
-
-void MapWidget::updatePosition(float time, QPointF coordinate)
+/**
+ *
+ * @param uas the UAS/MAV to monitor/display with the HUD
+ */
+void MapWidget::addUAS(UASInterface* uas)
 {
-    gpsposition->setText(QString::number(time) + " / " + QString::number(coordinate.x()) + " / " + QString::number(coordinate.y()));
+    mav = uas;
+}
+
+void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
+{
+    Q_UNUSED(usec);
+    // create a LineString
+    QList<Point*> points;
+    // Points with a circle
+    // A QPen can be used to customize the
+    QPen* pointpen = new QPen(QColor(0,255,0));
+    pointpen->setWidth(3);
+    points.append(new CirclePoint(lat, lon, alt, uas->getUASName(), Point::Middle, pointpen));
+//    points.append(new CirclePoint(8.275145, 50.016992, 15, "Wiesbaden-Mainz-Kastel, Johannes-Goßner-Straße", Point::Middle, pointpen));
+//    points.append(new CirclePoint(8.270476, 50.021426, 15, "Wiesbaden-Mainz-Kastel, Ruthof", Point::Middle, pointpen));
+//    // "Blind" Points
+//    points.append(new Point(8.266445, 50.025913, "Wiesbaden-Mainz-Kastel, Mudra Kaserne"));
+//    points.append(new Point(8.260378, 50.030345, "Wiesbaden-Mainz-Amoneburg, Dyckerhoffstraße"));
+
+    // A QPen also can use transparency
+    QPen* linepen = new QPen(QColor(0, 0, 255, 100));
+    linepen->setWidth(5);
+    // Add the Points and the QPen to a LineString
+    LineString* ls = new LineString(points, "Path", linepen);
+
+    // Add the LineString to the layer
+    osmLayer->addGeometry(ls);
+
+    // Connect click events of the layer to this object
+    //connect(osmLayer, SIGNAL(geometryClicked(Geometry*, QPoint)),
+    //                  this, SLOT(geometryClicked(Geometry*, QPoint)));
+
+    // Sets the view to the interesting area
+    //QList<QPointF> view;
+    //view.append(QPointF(8.24764, 50.0319));
+    //view.append(QPointF(8.28412, 49.9998));
+   // mc->setView(view);
+    updatePosition(0, lat, lon);
+}
+
+
+void MapWidget::updatePosition(float time, double lat, double lon)
+{
+    gpsposition->setText(QString::number(time) + " / " + QString::number(lat) + " / " + QString::number(lon));
     if (followgps->isChecked())
     {
-        mc->setView(coordinate);
+        mc->setView(QPointF(lat, lon));
     }
 }
 
