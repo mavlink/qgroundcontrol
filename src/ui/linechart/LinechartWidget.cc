@@ -119,7 +119,7 @@ void LinechartWidget::createLayout()
     //    activePlot = getPlot(0);
     //    plotContainer->setPlot(activePlot);
 
-    layout->addWidget(activePlot, 0, 0, 1, 5);
+    layout->addWidget(activePlot, 0, 0, 1, 6);
     layout->setRowStretch(0, 10);
     layout->setRowStretch(1, 0);
 
@@ -156,6 +156,7 @@ void LinechartWidget::createLayout()
     QToolButton* timeButton = new QToolButton(this);
     timeButton->setText(tr("Ground Time"));
     timeButton->setCheckable(true);
+    timeButton->setChecked(false);
     layout->addWidget(timeButton, 1, 4);
     layout->setColumnStretch(4, 0);
     connect(timeButton, SIGNAL(clicked(bool)), activePlot, SLOT(enforceGroundTime(bool)));
@@ -172,8 +173,8 @@ void LinechartWidget::createLayout()
 
 
     // Add scroll bar to layout and make sure it gets all available space
-    layout->addWidget(scrollbar, 1, 4);
-    layout->setColumnStretch(4, 10);
+    layout->addWidget(scrollbar, 1, 5);
+    layout->setColumnStretch(5, 10);
 
     ui.diagramGroupBox->setLayout(layout);
 
