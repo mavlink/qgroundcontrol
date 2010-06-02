@@ -241,6 +241,9 @@ public slots:
     //void showCurve(QString id, int position);
     void setCurveColor(QString id, QColor color);
 
+    /** @brief Enforce the use of the receive timestamp */
+    void enforceGroundTime(bool enforce);
+
     // General interaction
     void setWindowPosition(quint64 end);
     void setPlotInterval(int interval);
@@ -292,6 +295,7 @@ protected:
     QTime lastMaxTimeAdded;
     int plotid;
     bool m_active; ///< Decides wether the plot is active or not
+    bool m_groundTime; ///< Enforce the use of the receive timestamp instead of the data timestamp
 
     // Methods
     void addCurve(QString id);
