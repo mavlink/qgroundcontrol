@@ -51,6 +51,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) :
         links(new QList<LinkInterface*>()),
         unknownPackets(),
         mavlink(protocol),
+        waypointManager(*this),
         thrustSum(0),
         thrustMax(10),
         startVoltage(0),
@@ -394,8 +395,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_WAYPOINT:
             {
-//                mavlink_waypoint_t wp;
-//                mavlink_msg_waypoint_decode(&message, &wp);
+                mavlink_waypoint_t wp;
+                mavlink_msg_waypoint_decode(&message, &wp);
 //                emit waypointUpdated(uasId, wp.id, wp.x, wp.y, wp.z, wp.yaw, wp.autocontinue, wp.active);
             }
             break;
@@ -945,7 +946,7 @@ void UAS::receiveButton(int buttonIndex)
 }
 
 
-void UAS::requestWaypoints()
+/*void UAS::requestWaypoints()
 {
 //    mavlink_message_t msg;
 //    mavlink_msg_waypoint_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 25);
@@ -1001,7 +1002,7 @@ void UAS::clearWaypointList()
 //    mavlink_msg_waypoint_clear_list_encode(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, &clist);
 //    sendMessage(msg);
 //    qDebug() << "UAS clears Waypoints!";
-}
+}*/
 
 
 void UAS::halt()

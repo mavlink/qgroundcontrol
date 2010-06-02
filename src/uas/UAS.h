@@ -59,7 +59,7 @@ public:
         LIPOLY = 3,
         LIFE = 4,
         AGZN = 5
-           }; ///< The type of battery used
+    }; ///< The type of battery used
 
     static const int lipoFull = 4.2f;  ///< 100% charged voltage
     static const int lipoEmpty = 3.5f; ///< Discharged voltage
@@ -90,6 +90,8 @@ protected:
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
     BatteryType batteryType;      ///< The battery type
     int cells;                    ///< Number of cells
+
+    UASWaypointManager waypointManager;
 
     QList<double> actuatorValues;
     QList<QString> actuatorNames;
@@ -137,13 +139,16 @@ protected:
     /** @brief Check if vehicle is in autonomous mode */
     bool isAuto();
 
+public:
+    UASWaypointManager &getWaypointManager(void) { return waypointManager; }
+
 public slots:
     /** @brief Launches the system **/
     void launch();
     /** @brief Write this waypoint to the list of waypoints */
-    void setWaypoint(Waypoint* wp);
+    //void setWaypoint(Waypoint* wp); FIXME tbd
     /** @brief Set currently active waypoint */
-    void setWaypointActive(int id);
+    //void setWaypointActive(int id); FIXME tbd
     /** @brief Order the robot to return home / to land on the runway **/
     void home();
     void halt();
@@ -160,9 +165,9 @@ public slots:
     void startLowBattAlarm();
     void stopLowBattAlarm();
 
-    void requestWaypoints();
+    //void requestWaypoints();  FIXME tbd
+    //void clearWaypointList();   FIXME tbd
     void requestParameters();
-    void clearWaypointList();
     /** @brief Enable the motors */
     void enable_motors();
     /** @brief Disable the motors */
