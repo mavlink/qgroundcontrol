@@ -39,7 +39,7 @@ This file is part of the PIXHAWK project
 
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
-#include "Waypoint.h"
+#include "UASWaypointManager.h"
 
 /**
  * @brief Interface for all robots.
@@ -67,6 +67,9 @@ public:
     virtual quint64 getUptime() const = 0;
     /** @brief Get the status flag for the communication **/
     virtual int getCommunicationStatus() const = 0;
+
+    /** @brief Get reference to the waypoint manager **/
+    virtual UASWaypointManager &getWaypointManager(void) = 0;
 
     /* COMMUNICATION FLAGS */
 
