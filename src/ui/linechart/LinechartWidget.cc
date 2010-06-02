@@ -152,6 +152,14 @@ void LinechartWidget::createLayout()
     layout->setColumnStretch(3, 0);
     connect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
 
+    // Ground time button
+    QToolButton* timeButton = new QToolButton(this);
+    timeButton->setText(tr("Ground Time"));
+    timeButton->setCheckable(true);
+    layout->addWidget(timeButton, 1, 4);
+    layout->setColumnStretch(4, 0);
+    connect(timeButton, SIGNAL(clicked(bool)), activePlot, SLOT(enforceGroundTime(bool)));
+
     // Create the scroll bar
     scrollbar = new QScrollBar(Qt::Horizontal, ui.diagramGroupBox);
     scrollbar->setMinimum(MIN_TIME_SCROLLBAR_VALUE);

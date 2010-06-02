@@ -56,6 +56,7 @@ maxInterval(MAX_STORAGE_INTERVAL),
 timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
 automaticScrollActive(false),
 m_active(true),
+m_groundTime(false),
 d_data(NULL),
 d_curve(NULL)
 {
@@ -232,7 +233,16 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     TimeSeriesData* dataset = data.value(dataname);
 
     // Append data
-    dataset->append(ms, value);
+    if (m_groundTime)
+    {
+        // Use the current (receive) time
+        dataset->append(MG::TIME::getGroundTimeNow(), value);
+    }
+    else
+    {
+        // Use timestamp from dataset
+        dataset->append(ms, value);
+    }
 
     // Scaling values
     if(ms < minTime) minTime = ms;
@@ -251,6 +261,14 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     //    qDebug() << "mintime" << minTime << "maxtime" << maxTime << "last max time" << "window position" << getWindowPosition();
 
     datalock.unlock();
+}
+
+/**
+ * @param enforce true to reset the data timestamp with the receive / ground timestamp
+ */
+void LinechartPlot::enforceGroundTime(bool enforce)
+{
+    m_groundTime = enforce;
 }
 
 void LinechartPlot::addCurve(QString id)
