@@ -224,7 +224,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 // COMMUNICATIONS DROP RATE
                 emit dropRateChanged(this->getUASID(), state.packet_drop);
-                qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;
+                //qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;
 
                 // AUDIO
                 if (modechanged && statechanged)
@@ -237,7 +237,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     // Output the one message
                     audiostring += modeAudio + stateAudio;
                 }
-                if (state.status == (int)MAV_STATE_CRITICAL || state.status == (int)MAV_STATE_EMERGENCY)
+                if ((int)state.status == (int)MAV_STATE_CRITICAL || state.status == (int)MAV_STATE_EMERGENCY)
                 {
                     GAudioOutput::instance()->startEmergency();
                 }
