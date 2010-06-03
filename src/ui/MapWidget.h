@@ -33,6 +33,7 @@ This file is part of the PIXHAWK project
 #define MAPWIDGET_H
 
 #include <QtGui/QWidget>
+#include <QMap>
 #include "qmapcontrol.h"
 #include "UASInterface.h"
 
@@ -71,7 +72,9 @@ protected:
     Layer* osmLayer;
     Layer* gSatLayer;
 
+    QMap<int, CirclePoint*> uasIcons;
     UASInterface* mav;
+    quint64 lastUpdate;
 
 private:
     Ui::MapWidget *m_ui;
