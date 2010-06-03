@@ -34,6 +34,8 @@ This file is part of the PIXHAWK project
 #include "UASInterface.h"
 #include "UASManager.h"
 
+#include "MG.h"
+
 MapWidget::MapWidget(QWidget *parent) :
         QWidget(parent),
         zoomLevel(0),
@@ -47,6 +49,8 @@ MapWidget::MapWidget(QWidget *parent) :
     mc = new MapControl(QSize(320, 240));
     mc->showScale(true);
     mc->enablePersistentCache();
+
+    uasIcons = QMap<int, CirclePoint*>();
 
     //QSize(480,640)
     //      ImageManager::instance()->setProxy("www-cache", 8080);
@@ -74,7 +78,7 @@ MapWidget::MapWidget(QWidget *parent) :
     QPushButton* zoomout = new QPushButton(QIcon(":/images/actions/list-remove.svg"), "", this);
     followgps = new QPushButton(QIcon(":/images/actions/system-lock-screen.svg"), "", this);
     followgps->setCheckable(true);
-   // gpsposition = new QLabel();
+    // gpsposition = new QLabel();
     zoomin->setMaximumWidth(50);
     zoomout->setMaximumWidth(50);
     followgps->setMaximumWidth(50);
@@ -120,27 +124,44 @@ void MapWidget::addUAS(UASInterface* uas)
 void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
+    quint64 currTime = MG::TIME::getGroundTimeNow();
+    if (currTime - lastUpdate > 100)
+    {
+        lastUpdate = currTime;
     // create a LineString
-    QList<Point*> points;
+    //QList<Point*> points;
     // Points with a circle
     // A QPen can be used to customize the
     QPen* pointpen = new QPen(uas->getColor());
-    pointpen->setWidth(3);
-    points.append(new CirclePoint(lat, lon, alt, uas->getUASName(), Point::Middle, pointpen));
-//    points.append(new CirclePoint(8.275145, 50.016992, 15, "Wiesbaden-Mainz-Kastel, Johannes-Goßner-Straße", Point::Middle, pointpen));
-//    points.append(new CirclePoint(8.270476, 50.021426, 15, "Wiesbaden-Mainz-Kastel, Ruthof", Point::Middle, pointpen));
-//    // "Blind" Points
-//    points.append(new Point(8.266445, 50.025913, "Wiesbaden-Mainz-Kastel, Mudra Kaserne"));
-//    points.append(new Point(8.260378, 50.030345, "Wiesbaden-Mainz-Amoneburg, Dyckerhoffstraße"));
+    //pointpen->setWidth(3);
+    //points.append(new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen));
 
-    // A QPen also can use transparency
-    QPen* linepen = new QPen(QColor(0, 0, 255, 100));
-    linepen->setWidth(5);
-    // Add the Points and the QPen to a LineString
-    LineString* ls = new LineString(points, "Path", linepen);
+    if (!uasIcons.contains(uas->getUASID()))
+    {
+        CirclePoint* p = new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen);
+        uasIcons.insert(uas->getUASID(), p);
+        osmLayer->addGeometry(p);
+    }
+    else
+    {
+        CirclePoint* p = uasIcons.value(uas->getUASID());
+        p->setCoordinate(QPointF(lat, lon));
+    }
 
-    // Add the LineString to the layer
-    osmLayer->addGeometry(ls);
+    //    points.append(new CirclePoint(8.275145, 50.016992, 15, "Wiesbaden-Mainz-Kastel, Johannes-Goßner-Straße", Point::Middle, pointpen));
+    //    points.append(new CirclePoint(8.270476, 50.021426, 15, "Wiesbaden-Mainz-Kastel, Ruthof", Point::Middle, pointpen));
+    //    // "Blind" Points
+    //    points.append(new Point(8.266445, 50.025913, "Wiesbaden-Mainz-Kastel, Mudra Kaserne"));
+    //    points.append(new Point(8.260378, 50.030345, "Wiesbaden-Mainz-Amoneburg, Dyckerhoffstraße"));
+
+//    // A QPen also can use transparency
+//    QPen* linepen = new QPen(QColor(0, 0, 255, 100));
+//    linepen->setWidth(5);
+//    // Add the Points and the QPen to a LineString
+//    LineString* ls = new LineString(points, "Path", linepen);
+//
+//    // Add the LineString to the layer
+//    osmLayer->addGeometry(ls);
 
     // Connect click events of the layer to this object
     //connect(osmLayer, SIGNAL(geometryClicked(Geometry*, QPoint)),
@@ -150,8 +171,9 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
     //QList<QPointF> view;
     //view.append(QPointF(8.24764, 50.0319));
     //view.append(QPointF(8.28412, 49.9998));
-   // mc->setView(view);
+    // mc->setView(view);
     updatePosition(0, lat, lon);
+}
 }
 
 
