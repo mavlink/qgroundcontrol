@@ -254,6 +254,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_aux_status_t status;
                 mavlink_msg_aux_status_decode(&message, &status);
                 emit loadChanged(this, status.load/10.0f);
+                emit errCountChanged(uasId, "IMU", "I2C0", status.i2c0_err_count);
+                emit errCountChanged(uasId, "IMU", "I2C1", status.i2c1_err_count);
+                emit errCountChanged(uasId, "IMU", "SPI0", status.spi0_err_count);
+                emit errCountChanged(uasId, "IMU", "SPI1", status.spi1_err_count);
+                emit errCountChanged(uasId, "IMU", "UART", status.uart_total_err_count);
                 emit valueChanged(this, "Load", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
             }
             break;
@@ -300,37 +305,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "pitchspeed IMU", attitude.pitchspeed, time);
                 emit valueChanged(uasId, "yawspeed IMU", attitude.yawspeed, time);
                 emit attitudeChanged(this, mavlink_msg_attitude_get_roll(&message), mavlink_msg_attitude_get_pitch(&message), mavlink_msg_attitude_get_yaw(&message), time);
-            }
-            break;
-        case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE:
-            {
-                mavlink_vision_position_estimate_t pos;
-                mavlink_msg_vision_position_estimate_decode(&message, &pos);
-                quint64 time = getUnixTime(pos.usec);
-                emit valueChanged(uasId, "vis. time", pos.usec, time);
-                emit valueChanged(uasId, "vis. roll", pos.roll, time);
-                emit valueChanged(uasId, "vis. pitch", pos.pitch, time);
-                emit valueChanged(uasId, "vis. yaw", pos.yaw, time);
-                emit valueChanged(uasId, "vis. x", pos.x, time);
-                emit valueChanged(uasId, "vis. y", pos.y, time);
-                emit valueChanged(uasId, "vis. z", pos.z, time);
-                // FIXME Only for testing for now
-                emit valueChanged(uasId, "vis. rot r1", pos.r1, time);
-                emit valueChanged(uasId, "vis. rot r2", pos.r2, time);
-                emit valueChanged(uasId, "vis. rot r3", pos.r3, time);
-                emit valueChanged(uasId, "vis. rot r4", pos.r4, time);
-                emit valueChanged(uasId, "vis. rot r5", pos.r5, time);
-                emit valueChanged(uasId, "vis. rot r6", pos.r6, time);
-                emit valueChanged(uasId, "vis. rot r7", pos.r7, time);
-                emit valueChanged(uasId, "vis. rot r8", pos.r8, time);
-                emit valueChanged(uasId, "vis. rot r9", pos.r9, time);
-                // Set internal state
-                if (!positionLock)
-                {
-                    // If position was not locked before, notify positive
-                    GAudioOutput::instance()->notifyPositive();
-                }
-                positionLock = true;
             }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION:
