@@ -73,6 +73,7 @@ protected:
     Layer* gSatLayer;
 
     QMap<int, CirclePoint*> uasIcons;
+    QMap<int, LineString*> uasTrails;
     UASInterface* mav;
     quint64 lastUpdate;
 
