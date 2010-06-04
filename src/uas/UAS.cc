@@ -393,11 +393,20 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_DEBUG:
             emit valueChanged(uasId, QString("debug ") + QString::number(mavlink_msg_debug_get_ind(&message)), mavlink_msg_debug_get_value(&message), MG::TIME::getGroundTimeNow());
             break;
+
+        case MAVLINK_MSG_ID_WAYPOINT_COUNT:
+            {
+                mavlink_waypoint_count_t wpc;
+                mavlink_msg_waypoint_count_decode(&message, &wpc);
+                waypointManager.handleWaypointCount(message.sysid, message.compid, wpc.count);
+            }
+            break;
+
         case MAVLINK_MSG_ID_WAYPOINT:
             {
                 mavlink_waypoint_t wp;
                 mavlink_msg_waypoint_decode(&message, &wp);
-//                emit waypointUpdated(uasId, wp.id, wp.x, wp.y, wp.z, wp.yaw, wp.autocontinue, wp.active);
+                waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
             }
             break;
         case MAVLINK_MSG_ID_WAYPOINT_REACHED:
@@ -952,7 +961,8 @@ void UAS::receiveButton(int buttonIndex)
 //    mavlink_msg_waypoint_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 25);
 //    // Send message twice to increase chance of reception
 //    sendMessage(msg);
-//    qDebug() << "UAS Request WPs";
+    waypointManager.requestWaypoints();
+    qDebug() << "UAS Request WPs";
 }
 
 void UAS::setWaypoint(Waypoint* wp)
