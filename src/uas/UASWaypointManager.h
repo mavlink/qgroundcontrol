@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include "Waypoint.h"
+#include <mavlink.h>
 class UAS;
 
 class UASWaypointManager : public QObject
@@ -21,6 +22,7 @@ public:
     UASWaypointManager(UAS&);
 
     void handleWaypointCount(quint8 systemId, quint8 compId, quint16 count);
+    void handleWaypoint(quint8 systemId, quint8 compId, mavlink_waypoint_t *wp);
 
 private:
     void getWaypoint(quint16 seq);
@@ -31,6 +33,9 @@ public slots:
     void removeWaypointId(int);
     void requestWaypoints();
     void clearWaypointList();
+
+signals:
+    void waypointUpdated(int,int,double,double,double,double,bool,bool);
 
 private:
     UAS &uas;
