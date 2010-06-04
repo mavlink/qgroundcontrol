@@ -149,9 +149,9 @@ public slots:
     /** @brief Launches the system/Liftof **/
     virtual void launch() = 0;
     /** @brief Set a new waypoint **/
-    virtual void setWaypoint(Waypoint* wp) = 0;
+    //virtual void setWaypoint(Waypoint* wp) = 0;
     /** @brief Set this waypoint as next waypoint to fly to */
-    virtual void setWaypointActive(int wp) = 0;
+    //virtual void setWaypointActive(int wp) = 0;
     /** @brief Order the robot to return home / to land on the runway **/
     virtual void home() = 0;
     /** @brief Halt the system */
@@ -171,9 +171,9 @@ public slots:
      */
     virtual void shutdown() = 0;
     /** @brief Request the list of stored waypoints from the robot */
-    virtual void requestWaypoints() = 0;
+    //virtual void requestWaypoints() = 0;
     /** @brief Clear all existing waypoints on the robot */
-    virtual void clearWaypointList() = 0;
+    //virtual void clearWaypointList() = 0;
     /** @brief Request all onboard parameters of all components */
     virtual void requestParameters() = 0;
     /** @brief Write parameter to permanent storage */
