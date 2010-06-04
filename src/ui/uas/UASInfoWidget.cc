@@ -110,7 +110,7 @@ void UASInfoWidget::updateBattery(UASInterface* uas, double voltage, double perc
 
 void UASInfoWidget::updateErrorCount(int uasid, QString component, QString device, int count)
 {
-    qDebug() << __FILE__ << __LINE__ << activeUAS->getUASID() << "=" << uasid;
+    //qDebug() << __FILE__ << __LINE__ << activeUAS->getUASID() << "=" << uasid;
     if (activeUAS->getUASID() == uasid)
     {
         errors.remove(component + ":" + device);
@@ -182,5 +182,16 @@ void UASInfoWidget::refresh()
     ui.sendLossLabel->setText(QString::number(sendLoss, 'f', 2));
 
     QString errorString;
-   // ui.
+    QMapIterator<QString, int> i(errors);
+    while (i.hasNext())
+    {
+        i.next();
+        errorString += QString(i.key() + ": %1 ").arg(i.value());
+
+        // FIXME
+        errorString.replace("IMU:", "");
+
+
+    }
+    ui.errorLabel->setText(errorString);
 }
