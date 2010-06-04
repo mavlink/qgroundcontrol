@@ -79,6 +79,7 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
+friend class UASWaypointManager;
 protected:
     int uasId;                    ///< Unique system ID
     int type;                     ///< UAS type (from type enum)
