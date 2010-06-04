@@ -1,4 +1,5 @@
 #include "PxQuadMAV.h"
+#include "GAudioOutput.h"
 
 PxQuadMAV::PxQuadMAV(MAVLinkProtocol* mavlink, int id) :
         UAS(mavlink, id)
@@ -58,6 +59,31 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit valueChanged(uasId, str+".x", vect.x, MG::TIME::getGroundTimeNow());
             emit valueChanged(uasId, str+".y", vect.y, MG::TIME::getGroundTimeNow());
             emit valueChanged(uasId, str+".z", vect.z, MG::TIME::getGroundTimeNow());
+        }
+        break;
+    case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE:
+        {
+            mavlink_vision_position_estimate_t pos;
+            mavlink_msg_vision_position_estimate_decode(&message, &pos);
+            quint64 time = getUnixTime(pos.usec);
+            emit valueChanged(uasId, "vis. time", pos.usec, time);
+            emit valueChanged(uasId, "vis. roll", pos.roll, time);
+            emit valueChanged(uasId, "vis. pitch", pos.pitch, time);
+            emit valueChanged(uasId, "vis. yaw", pos.yaw, time);
+            emit valueChanged(uasId, "vis. x", pos.x, time);
+            emit valueChanged(uasId, "vis. y", pos.y, time);
+            emit valueChanged(uasId, "vis. z", pos.z, time);
+            emit valueChanged(uasId, "vis. vx", pos.vx, time);
+            emit valueChanged(uasId, "vis. vy", pos.vy, time);
+            emit valueChanged(uasId, "vis. vz", pos.vz, time);
+            emit valueChanged(uasId, "vis. vyaw", pos.vyaw, time);
+            // Set internal state
+            if (!positionLock)
+            {
+                // If position was not locked before, notify positive
+                GAudioOutput::instance()->notifyPositive();
+            }
+            positionLock = true;
         }
         break;
     default:

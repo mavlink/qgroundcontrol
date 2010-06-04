@@ -60,6 +60,8 @@ public slots:
     void updateReceiveLoss(int uasId, float receiveLoss);
     /** @brief Set the loss rate of packets sent from the MAV */
     void updateSendLoss(int uasId, float sendLoss);
+    /** @brief Update the error count */
+    void updateErrorCount(int uasid, QString component, QString device, int count);
 
     void setVoltage(UASInterface* uas, double voltage);
     void setChargeLevel(UASInterface* uas, double chargeLevel);
@@ -90,6 +92,7 @@ protected:
     QTimer* updateTimer;
     QString name;
     quint64 startTime;
+    QMap<QString, int> errors;
 //    double lastRemainingTime;
 //    double lastChargeLevel;
 //    double startVoltage;
