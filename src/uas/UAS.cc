@@ -253,6 +253,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_aux_status_t status;
                 mavlink_msg_aux_status_decode(&message, &status);
                 emit loadChanged(this, status.load/10.0f);
+                emit errCountChanged(uasId, "IMU", "I2C0", status.i2c0_err_count);
+                emit errCountChanged(uasId, "IMU", "I2C1", status.i2c1_err_count);
+                emit errCountChanged(uasId, "IMU", "SPI0", status.spi0_err_count);
+                emit errCountChanged(uasId, "IMU", "SPI1", status.spi1_err_count);
+                emit errCountChanged(uasId, "IMU", "UART", status.uart_total_err_count);
                 emit valueChanged(this, "Load", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
             }
             break;

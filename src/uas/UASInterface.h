@@ -230,6 +230,21 @@ signals:
      */
     void textMessageReceived(int uasid, int severity, QString text);
     /**
+     * @brief Update the error count of a device
+     *
+     * The error count indicates how many errors occured during the use of a device.
+     * Usually a random error from time to time is acceptable, e.g. through electromagnetic
+     * interferences on device lines like I2C and SPI. A constantly and rapidly increasing
+     * error count however can help to identify broken cables or misbehaving drivers.
+     *
+     * @param uasid System ID
+     * @param component Name of the component, e.g. "IMU"
+     * @param device Name of the device, e.g. "SPI0" or "I2C1"
+     * @param count Errors occured since system startup
+     */
+    void errCountChanged(int uasid, QString component, QString device, int count);
+
+    /**
      * @brief Drop rate of communication link updated
      *
      * @param systemId id of the air system

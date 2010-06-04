@@ -61,7 +61,7 @@ UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
 
     // Set default values
     /** Set two voltage decimals and zero charge level decimals **/
-    this->voltageDecimals     = 2;
+    this->voltageDecimals = 2;
     this->loadDecimals = 2;
 
     this->voltage = 0;
@@ -69,6 +69,7 @@ UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
     this->load = 0;
     receiveLoss = 0;
     sendLoss = 0;
+    errors = QMap<QString, int>();
 
     updateTimer = new QTimer(this);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -88,6 +89,7 @@ void UASInfoWidget::addUAS(UASInterface* uas)
         connect(uas, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBattery(UASInterface*,double,double,int)));
         connect(uas, SIGNAL(dropRateChanged(int,float)), this, SLOT(updateReceiveLoss(int,float)));
         connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateCPULoad(UASInterface*,double)));
+        connect(uas, SIGNAL(errCountChanged(int,QString,QString,int)), this, SLOT(updateErrorCount(int,QString,QString,int)));
 
         // Set this UAS as active if it is the first one
         if (activeUAS == 0) activeUAS = uas;
@@ -104,6 +106,16 @@ void UASInfoWidget::updateBattery(UASInterface* uas, double voltage, double perc
     setVoltage(uas, voltage);
     setChargeLevel(uas, percent);
     setTimeRemaining(uas, seconds);
+}
+
+void UASInfoWidget::updateErrorCount(int uasid, QString component, QString device, int count)
+{
+    qDebug() << __FILE__ << __LINE__ << activeUAS->getUASID() << "=" << uasid;
+    if (activeUAS->getUASID() == uasid)
+    {
+        errors.remove(component + ":" + device);
+        errors.insert(component + ":" + device, count);
+    }
 }
 
 /**
@@ -168,4 +180,7 @@ void UASInfoWidget::refresh()
 
     ui.sendLossBar->setValue(sendLoss);
     ui.sendLossLabel->setText(QString::number(sendLoss, 'f', 2));
+
+    QString errorString;
+   // ui.
 }

@@ -39,6 +39,8 @@ This file is part of the PIXHAWK project
 MapWidget::MapWidget(QWidget *parent) :
         QWidget(parent),
         zoomLevel(0),
+        uasIcons(),
+        uasTrails(),
         m_ui(new Ui::MapWidget)
 {
     m_ui->setupUi(this);
@@ -50,7 +52,7 @@ MapWidget::MapWidget(QWidget *parent) :
     mc->showScale(true);
     mc->enablePersistentCache();
 
-    uasIcons = QMap<int, CirclePoint*>();
+    //uasIcons = QMap<int, CirclePoint*>();
 
     //QSize(480,640)
     //      ImageManager::instance()->setProxy("www-cache", 8080);
@@ -125,55 +127,66 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 {
     Q_UNUSED(usec);
     quint64 currTime = MG::TIME::getGroundTimeNow();
-    if (currTime - lastUpdate > 100)
+    if (currTime - lastUpdate > 90)
     {
         lastUpdate = currTime;
-    // create a LineString
-    //QList<Point*> points;
-    // Points with a circle
-    // A QPen can be used to customize the
-    QPen* pointpen = new QPen(uas->getColor());
-    //pointpen->setWidth(3);
-    //points.append(new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen));
+        // create a LineString
+        //QList<Point*> points;
+        // Points with a circle
+        // A QPen can be used to customize the
+        //pointpen->setWidth(3);
+        //points.append(new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen));
 
-    if (!uasIcons.contains(uas->getUASID()))
-    {
-        CirclePoint* p = new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen);
-        uasIcons.insert(uas->getUASID(), p);
-        osmLayer->addGeometry(p);
+        if (!uasIcons.contains(uas->getUASID()))
+        {
+            // Get the UAS color
+            QColor uasColor = uas->getColor();
+
+            // Icon
+            QPen* pointpen = new QPen(uasColor);
+            CirclePoint* p = new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen);
+            uasIcons.insert(uas->getUASID(), p);
+            osmLayer->addGeometry(p);
+
+            // Line
+            // A QPen also can use transparency
+
+            QList<Point*> points;
+            points.append(new Point(lat, lon, QString("lat: %1 lon: %2").arg(lat, lon)));
+            QPen* linepen = new QPen(uasColor.darker());
+            linepen->setWidth(2);
+            // Add the Points and the QPen to a LineString
+            LineString* ls = new LineString(points, uas->getUASName(), linepen);
+            uasTrails.insert(uas->getUASID(), ls);
+
+            // Add the LineString to the layer
+            osmLayer->addGeometry(ls);
+        }
+        else
+        {
+            CirclePoint* p = uasIcons.value(uas->getUASID());
+            p->setCoordinate(QPointF(lat, lon));
+            // Extend trail
+            uasTrails.value(uas->getUASID())->addPoint(new Point(lat, lon, QString("lat: %1 lon: %2").arg(lat, lon)));
+        }
+
+        //    points.append(new CirclePoint(8.275145, 50.016992, 15, "Wiesbaden-Mainz-Kastel, Johannes-Goßner-Straße", Point::Middle, pointpen));
+        //    points.append(new CirclePoint(8.270476, 50.021426, 15, "Wiesbaden-Mainz-Kastel, Ruthof", Point::Middle, pointpen));
+        //    // "Blind" Points
+        //    points.append(new Point(8.266445, 50.025913, "Wiesbaden-Mainz-Kastel, Mudra Kaserne"));
+        //    points.append(new Point(8.260378, 50.030345, "Wiesbaden-Mainz-Amoneburg, Dyckerhoffstraße"));
+
+        // Connect click events of the layer to this object
+        //connect(osmLayer, SIGNAL(geometryClicked(Geometry*, QPoint)),
+        //                  this, SLOT(geometryClicked(Geometry*, QPoint)));
+
+        // Sets the view to the interesting area
+        //QList<QPointF> view;
+        //view.append(QPointF(8.24764, 50.0319));
+        //view.append(QPointF(8.28412, 49.9998));
+        // mc->setView(view);
+        updatePosition(0, lat, lon);
     }
-    else
-    {
-        CirclePoint* p = uasIcons.value(uas->getUASID());
-        p->setCoordinate(QPointF(lat, lon));
-    }
-
-    //    points.append(new CirclePoint(8.275145, 50.016992, 15, "Wiesbaden-Mainz-Kastel, Johannes-Goßner-Straße", Point::Middle, pointpen));
-    //    points.append(new CirclePoint(8.270476, 50.021426, 15, "Wiesbaden-Mainz-Kastel, Ruthof", Point::Middle, pointpen));
-    //    // "Blind" Points
-    //    points.append(new Point(8.266445, 50.025913, "Wiesbaden-Mainz-Kastel, Mudra Kaserne"));
-    //    points.append(new Point(8.260378, 50.030345, "Wiesbaden-Mainz-Amoneburg, Dyckerhoffstraße"));
-
-//    // A QPen also can use transparency
-//    QPen* linepen = new QPen(QColor(0, 0, 255, 100));
-//    linepen->setWidth(5);
-//    // Add the Points and the QPen to a LineString
-//    LineString* ls = new LineString(points, "Path", linepen);
-//
-//    // Add the LineString to the layer
-//    osmLayer->addGeometry(ls);
-
-    // Connect click events of the layer to this object
-    //connect(osmLayer, SIGNAL(geometryClicked(Geometry*, QPoint)),
-    //                  this, SLOT(geometryClicked(Geometry*, QPoint)));
-
-    // Sets the view to the interesting area
-    //QList<QPointF> view;
-    //view.append(QPointF(8.24764, 50.0319));
-    //view.append(QPointF(8.28412, 49.9998));
-    // mc->setView(view);
-    updatePosition(0, lat, lon);
-}
 }
 
 
