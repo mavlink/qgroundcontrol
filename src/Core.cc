@@ -131,7 +131,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
         }
     }
 
-   // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
+    // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
     mainWindow->addLink(simulationLink);
 }
@@ -164,7 +164,42 @@ void Core::startLinkManager()
  **/
 void Core::startUASManager()
 {
-    UASManager::instance();
+    // Load UAS plugins
+    QDir pluginsDir = QDir(qApp->applicationDirPath());
+
+#if defined(Q_OS_WIN)
+    if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
+        pluginsDir.cdUp();
+#elif defined(Q_OS_LINUX)
+    if (pluginsDir.dirName().toLower() == "debug" || pluginsDir.dirName().toLower() == "release")
+        pluginsDir.cdUp();
+#elif defined(Q_OS_MAC)
+    if (pluginsDir.dirName() == "MacOS")
+    {
+        pluginsDir.cdUp();
+        pluginsDir.cdUp();
+        pluginsDir.cdUp();
+    }
+#endif
+    pluginsDir.cd("plugins");
+
+    UASManager* m = UASManager::instance();
+
+    // Load plugins
+
+    QStringList pluginFileNames;
+
+    foreach (QString fileName, pluginsDir.entryList(QDir::Files))
+    {
+        QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
+        QObject *plugin = loader.instance();
+        if (plugin)
+        {
+            //populateMenus(plugin);
+            pluginFileNames += fileName;
+            printf(QString("Loaded plugin from " + fileName + "\n").toStdString().c_str());
+        }
+    }
 }
 
 
