@@ -1,14 +1,15 @@
-#ifndef PXQUADMAV_H
-#define PXQUADMAV_H
+#ifndef PXMAV_H
+#define PXMAV_H
 
 #include "UAS.h"
 
-class PxQuadMAV : public UAS
+class PxMAV : public UAS
 {
     Q_OBJECT
     Q_INTERFACES(UASInterface)
 public:
-    PxQuadMAV(MAVLinkProtocol* mavlink, int id);
+    PxMAV(MAVLinkProtocol* mavlink, int id);
+    PxMAV();
 public slots:
     /** @brief Receive a MAVLink message from this MAV */
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
@@ -20,4 +21,4 @@ signals:
     void processChanged(int systemId, int watchdogId, int processId, int state, bool muted, int crashed, int pid);
 };
 
-#endif // PXQUADMAV_H
+#endif // PXMAV_H
