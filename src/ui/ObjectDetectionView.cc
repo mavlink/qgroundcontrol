@@ -38,6 +38,8 @@ This file is part of the PIXHAWK project
 
 #include <QDebug>
 
+#include "MG.h"
+
 ObjectDetectionView::ObjectDetectionView(QString folder, QWidget *parent) :
         QWidget(parent),
         patternList(),
@@ -90,8 +92,9 @@ void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, i
     {
         if (patternList.contains(patternPath))
         {
-            qDebug() << "REDETECTED";
+            //qDebug() << "REDETECTED";
 
+            /*
             QList<QAction*> actions = m_ui->listWidget->actions();
             // Find action and update it
             foreach (QAction* act, actions)
@@ -112,6 +115,7 @@ void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, i
 
             // Set name and label
             m_ui->nameLabel->setText(patternName);
+            */
         }
         else
         {
@@ -120,7 +124,11 @@ void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, i
 
             patternList.insert(patternPath, confidence);
             patternCount.insert(patternPath, 1);
-            QPixmap image = QPixmap(patternFolder + "/" + patternPath);
+
+            QString filePath = MG::DIR::getSupportFilesDirectory() + "/" + patternFolder + "/" + patternPath.split("/").last();
+
+            qDebug() << "Loading:" << filePath;
+            QPixmap image = QPixmap(filePath);
             QIcon ico(image);
             QAction* act = new QAction(ico, patternPath + separator + "(#" + QString::number(1) + ")" + separator + QString::number(confidence), this);
             connect(act, SIGNAL(triggered()), this, SLOT(takeAction()));
