@@ -48,7 +48,7 @@ class ObjectDetectionView : public QWidget {
     Q_OBJECT
     Q_DISABLE_COPY(ObjectDetectionView)
         public:
-            explicit ObjectDetectionView(QString folder="test", QWidget *parent = 0);
+            explicit ObjectDetectionView(QString folder="patterns", QWidget *parent = 0);
     virtual ~ObjectDetectionView();
 
     /** @brief Resize widget contents */
