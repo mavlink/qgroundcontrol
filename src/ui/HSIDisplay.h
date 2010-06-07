@@ -45,19 +45,58 @@ class HSIDisplay : public HDDisplay {
     Q_OBJECT
 public:
     HSIDisplay(QWidget *parent = 0);
-   // ~HSIDisplay();
+    // ~HSIDisplay();
 
 public slots:
     void setActiveUAS(UASInterface* uas);
+    void paintEvent(QPaintEvent * event);
 
 protected slots:
     void paintDisplay();
-	void drawGPS();
-	void drawObjects();
-	void drawBaseLines(float xRef, float yRef, float radius, float yaw, const QColor& color, QPainter* painter, bool solid);
-	
+    void drawGPS();
+    void drawObjects();
+    void drawBaseLines(float xRef, float yRef, float radius, float yaw, const QColor& color, QPainter* painter, bool solid);
+
 
 protected:
+    void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
+    static QColor getColorForSNR(float snr);
+
+    /**
+     * @brief Private data container class to be used within the HSI widget
+     */
+    class GPSSatellite
+    {
+    public:
+        GPSSatellite(int id, float azimuth, float direction, float snr, bool used) :
+            id(id),
+            azimuth(azimuth),
+            direction(direction),
+            snr(snr),
+            used(used)
+        {
+
+        }
+
+        void update(int id, float azimuth, float direction, float snr, bool used)
+        {
+            this->id = id;
+            this->azimuth = azimuth;
+            this->direction = direction;
+            this->snr = snr;
+            this->used = used;
+        }
+
+        int id;
+        float azimuth;
+        float direction;
+        float snr;
+        bool used;
+
+        friend class HSIDisplay;
+    };
+
+    QVector<GPSSatellite*> gpsSatellites;
 
 private:
 };

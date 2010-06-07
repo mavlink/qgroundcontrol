@@ -304,6 +304,8 @@ signals:
     void attitudeThrustSetPointChanged(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
     void globalPositionChanged(UASInterface*, double lat, double lon, double alt, quint64 usec);
+    /** @brief Update the status of one satellite used for localization */
+    void gpsSatelliteStatusChanged(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     void speedChanged(UASInterface*, double x, double y, double z, quint64 usec);
     void imageStarted(int imgid, int width, int height, int depth, int channels);
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);

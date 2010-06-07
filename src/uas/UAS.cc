@@ -250,19 +250,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
             break;
-        case MAVLINK_MSG_ID_AUX_STATUS:
-            {
-                mavlink_aux_status_t status;
-                mavlink_msg_aux_status_decode(&message, &status);
-                emit loadChanged(this, status.load/10.0f);
-                emit errCountChanged(uasId, "IMU", "I2C0", status.i2c0_err_count);
-                emit errCountChanged(uasId, "IMU", "I2C1", status.i2c1_err_count);
-                emit errCountChanged(uasId, "IMU", "SPI0", status.spi0_err_count);
-                emit errCountChanged(uasId, "IMU", "SPI1", status.spi1_err_count);
-                emit errCountChanged(uasId, "IMU", "UART", status.uart_total_err_count);
-                emit valueChanged(this, "Load", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
-            }
-            break;
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 mavlink_raw_imu_t raw;
@@ -351,11 +338,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "lat", pos.lat, time);
                 emit valueChanged(uasId, "lon", pos.lon, time);
                 emit valueChanged(uasId, "alt", pos.alt, time);
-                emit valueChanged(uasId, "g-vx", pos.vx, time);
-                emit valueChanged(uasId, "g-vy", pos.vy, time);
-                emit valueChanged(uasId, "g-vz", pos.vz, time);
+                emit valueChanged(uasId, "speed", pos.v, time);
                 qDebug() << "GOT GPS RAW";
                 emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
+            }
+            break;
+        case MAVLINK_MSG_ID_GPS_STATUS:
+            {
+                mavlink_gps_status_t pos;
+                mavlink_msg_gps_status_decode(&message, &pos);
+                for(int i = 0; i < pos.satellites_visible && i < sizeof(pos.satellite_used); i++)
+                {
+                    emit gpsSatelliteStatusChanged(uasId, i, pos.satellite_azimuth[i], pos.satellite_direction[i], pos.satellite_snr[i], static_cast<bool>(pos.satellite_used[i]));
+                }
             }
             break;
         case MAVLINK_MSG_ID_PARAM_VALUE:
