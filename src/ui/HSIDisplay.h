@@ -44,8 +44,8 @@ This file is part of the PIXHAWK project
 class HSIDisplay : public HDDisplay {
     Q_OBJECT
 public:
-    HSIDisplay(QStringList* plotList, QWidget *parent = 0);
-    ~HSIDisplay();
+    HSIDisplay(QWidget *parent = 0);
+   // ~HSIDisplay();
 
 public slots:
     void setActiveUAS(UASInterface* uas);
