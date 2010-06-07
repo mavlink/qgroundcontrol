@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 
 #include <QDebug>
 #include <QTime>
+#include <QApplication>
 
 #include "MG.h"
 #include "MAVLinkProtocol.h"
@@ -56,7 +57,9 @@ This file is part of the PIXHAWK project
 MAVLinkProtocol::MAVLinkProtocol() :
         heartbeatTimer(new QTimer(this)),
         heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
-        m_heartbeatsEnabled(false)
+        m_heartbeatsEnabled(false),
+        m_loggingEnabled(false),
+        m_logfile(NULL)
 {
     start(QThread::LowPriority);
     // Start heartbeat timer, emitting a heartbeat at the configured rate
@@ -83,6 +86,7 @@ MAVLinkProtocol::~MAVLinkProtocol()
 
 void MAVLinkProtocol::run()
 {
+
 }
 
 /**
@@ -316,9 +320,29 @@ void MAVLinkProtocol::enableHeartbeats(bool enabled)
     emit heartbeatChanged(enabled);
 }
 
+void MAVLinkProtocol::enableLogging(bool enabled)
+{
+    if (enabled && !m_loggingEnabled)
+    {
+       m_logfile = new QFile(QCoreApplication::applicationDirPath()+"mavlink.log");
+    }
+    else
+    {
+       m_logfile->close();
+       delete m_logfile;
+       m_logfile = NULL;
+    }
+    m_loggingEnabled = enabled;
+}
+
 bool MAVLinkProtocol::heartbeatsEnabled(void)
 {
     return m_heartbeatsEnabled;
+}
+
+bool MAVLinkProtocol::loggingEnabled(void)
+{
+    return m_loggingEnabled;
 }
 
 /**

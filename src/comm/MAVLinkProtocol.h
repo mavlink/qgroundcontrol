@@ -37,6 +37,7 @@ This file is part of the PIXHAWK project
 #include <QMutex>
 #include <QString>
 #include <QTimer>
+#include <QFile>
 #include <QMap>
 #include <QByteArray>
 #include "ProtocolInterface.h"
@@ -65,6 +66,8 @@ public:
     int getHeartbeatRate();
     /** @brief Get heartbeat state */
     bool heartbeatsEnabled(void);
+    /** @brief Get logging state */
+    bool loggingEnabled(void);
 
 public slots:
     /** @brief Receive bytes from a communication interface */
@@ -79,14 +82,19 @@ public slots:
     /** @brief Enable / disable the heartbeat emission */
     void enableHeartbeats(bool enabled);
 
+    /** @brief Enable/disable binary packet logging */
+    void enableLogging(bool enabled);
+
     /** @brief Send an extra heartbeat to all connected units */
     void sendHeartbeat();
 
 protected:
-    QTimer* heartbeatTimer;  ///< Timer to emit heartbeats
-    int heartbeatRate;       ///< Heartbeat rate, controls the timer interval
+    QTimer* heartbeatTimer;    ///< Timer to emit heartbeats
+    int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
-    QMutex receiveMutex;     ///< Mutex to protect receiveBytes function
+    bool m_loggingEnabled;     ///< Enable/disable packet logging
+    QFile* m_logfile;           ///< Logfile
+    QMutex receiveMutex;       ///< Mutex to protect receiveBytes function
     int lastIndex[256][256];
     int totalReceiveCounter;
     int totalLossCounter;
@@ -98,6 +106,8 @@ signals:
     void messageReceived(LinkInterface* link, mavlink_message_t message);
     /** @brief Emitted if heartbeat emission mode is changed */
     void heartbeatChanged(bool heartbeats);
+    /** @brief Emitted if logging is started / stopped */
+    void loggingChanged(bool enabled);
 };
 
 #endif // MAVLINKPROTOCOL_H_

@@ -94,7 +94,6 @@ void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, i
         {
             //qDebug() << "REDETECTED";
 
-            /*
             QList<QAction*> actions = m_ui->listWidget->actions();
             // Find action and update it
             foreach (QAction* act, actions)
@@ -107,7 +106,9 @@ void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, i
                     act->setText(patternPath + separator + "(#" + QString::number(count) + ")" + separator + QString::number(confidence));
                 }
             }
-            QPixmap image = QPixmap(patternFolder + "/" + patternPath);
+            QString filePath = MG::DIR::getSupportFilesDirectory() + "/" + patternFolder + "/" + patternPath.split("/").last();
+            qDebug() << "Loading:" << filePath;
+            QPixmap image = QPixmap(filePath);
             image = image.scaledToWidth(m_ui->imageLabel->width());
             m_ui->imageLabel->setPixmap(image);
             QString patternName = patternPath.split("//").last(); // Remove preceding folder names
@@ -115,7 +116,6 @@ void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, i
 
             // Set name and label
             m_ui->nameLabel->setText(patternName);
-            */
         }
         else
         {
