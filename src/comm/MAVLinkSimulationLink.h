@@ -98,6 +98,7 @@ protected:
     QTimer* timer;
     /** File which contains the input data (simulated robot messages) **/
     QFile* simulationFile;
+    QFile* mavlinkLogFile;
     QString simulationHeader;
     /** File where the commands sent by the groundstation are stored **/
     QFile* receiveFile;

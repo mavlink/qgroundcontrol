@@ -69,7 +69,7 @@ public:
     /** @brief Get logging state */
     bool loggingEnabled(void);
     /** @brief Get the name of the packet log file */
-    QString getLogfileName();
+    static QString getLogfileName();
 
 public slots:
     /** @brief Receive bytes from a communication interface */
