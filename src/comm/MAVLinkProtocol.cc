@@ -80,6 +80,11 @@ MAVLinkProtocol::MAVLinkProtocol() :
 
 MAVLinkProtocol::~MAVLinkProtocol()
 {
+    if (m_logfile)
+    {
+        m_logfile->close();
+        delete m_logfile;
+    }
 }
 
 
@@ -87,6 +92,11 @@ MAVLinkProtocol::~MAVLinkProtocol()
 void MAVLinkProtocol::run()
 {
 
+}
+
+QString MAVLinkProtocol::getLogfileName()
+{
+    return QCoreApplication::applicationDirPath()+"/mavlink.log";
 }
 
 /**
@@ -115,6 +125,15 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
 
         if (decodeState == 1)
         {
+            // Log data
+            if (m_loggingEnabled)
+            {
+                uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+                mavlink_msg_to_send_buffer(buf, &message);
+                m_logfile->write((const char*) buf);
+                qDebug() << "WROTE LOGFILE";
+            }
+
             // ORDER MATTERS HERE!
             // If the matching UAS object does not yet exist, it has to be created
             // before emitting the packetReceived signal
@@ -324,7 +343,8 @@ void MAVLinkProtocol::enableLogging(bool enabled)
 {
     if (enabled && !m_loggingEnabled)
     {
-       m_logfile = new QFile(QCoreApplication::applicationDirPath()+"mavlink.log");
+       m_logfile = new QFile(getLogfileName());
+       m_logfile->open(QIODevice::WriteOnly | QIODevice::Append);
     }
     else
     {
