@@ -1,0 +1,5 @@
+moc_*
+*.o
+Makefile
+Makefile.Debug
+Makefile.Release

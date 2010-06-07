@@ -43,7 +43,7 @@ This file is part of the PIXHAWK project
 #include "MAVLinkProtocol.h"
 #include <mavlink.h>
 
-UAS::UAS(MAVLinkProtocol* protocol, int id) :
+UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         uasId(id),
         startTime(MG::TIME::getGroundTimeNow()),
         commStatus(COMM_DISCONNECTED),
@@ -74,6 +74,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) :
         positionLock(false),
         statusTimeout(new QTimer(this))
 {
+    color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
     statusTimeout->setInterval(500);
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));

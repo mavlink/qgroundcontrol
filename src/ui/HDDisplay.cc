@@ -74,6 +74,12 @@ HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
 {
     //m_ui->setupUi(this);
 
+        // Check if acceptlist exists
+    if (!acceptList)
+    {
+        acceptList = new QStringList();
+    }
+
     this->setMinimumHeight(125);
     this->setMinimumWidth(100);
 
@@ -146,7 +152,7 @@ void HDDisplay::paintDisplay()
     painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
     const int columns = 3;
     const float spacing = 0.4f; // 40% of width
-    const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.1f));
+    const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.5f));
     const QColor gaugeColor = QColor(200, 200, 200);
     //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
     //drawGauge(15.0f, 15.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);

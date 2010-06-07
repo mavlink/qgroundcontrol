@@ -8,6 +8,22 @@
 include(lib/QMapControl/QMapControl.pri)
 message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
 
+
+QT       += network opengl svg xml phonon
+
+TEMPLATE = app
+TARGET = qgroundcontrol
+
+BASEDIR = .
+BUILDDIR = build
+LANGUAGE = C++
+
+CONFIG += debug_and_release console
+
+OBJECTS_DIR = $$BUILDDIR/obj
+MOC_DIR = $$BUILDDIR/moc
+UI_HEADERS_DIR = src/ui/generated
+
 # }
 # Include general settings for MAVGround
 # necessary as last include to override any non-acceptable settings
@@ -22,7 +38,8 @@ include(src/lib/qextserialport/qextserialport.pri)
 include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
     lib/QMapControl \
-    lib/QMapControl/src
+    lib/QMapControl/src \
+    plugins
 INCLUDEPATH += . \
     lib/QMapControl \
     ../mavlink/include \
@@ -124,7 +141,8 @@ HEADERS += src/MG.h \
     src/ui/watchdog/WatchdogControl.h \
     src/ui/watchdog/WatchdogProcessView.h \
     src/ui/watchdog/WatchdogView.h \
-    src/uas/UASWaypointManager.h
+    src/uas/UASWaypointManager.h \
+    src/ui/HSIDisplay.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -178,5 +196,6 @@ SOURCES += src/main.cc \
     src/ui/watchdog/WatchdogControl.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
     src/ui/watchdog/WatchdogView.cc \
-    src/uas/UASWaypointManager.cc
+    src/uas/UASWaypointManager.cc \
+    src/ui/HSIDisplay.cc
 RESOURCES = mavground.qrc
