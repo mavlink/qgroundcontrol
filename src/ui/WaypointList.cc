@@ -85,8 +85,8 @@ void WaypointList::setUAS(UASInterface* uas)
     if (this->uas == NULL && uas != NULL)
     {
         this->uas = uas;
-        connect(uas, SIGNAL(waypointUpdated(int,int,double,double,double,double,bool,bool)), this, SLOT(setWaypoint(int,int,double,double,double,double,bool,bool)));
-        connect(uas, SIGNAL(waypointReached(UASInterface*,int)), this, SLOT(waypointReached(UASInterface*,int)));
+        connect(&uas->getWaypointManager(), SIGNAL(waypointUpdated(int,int,double,double,double,double,bool,bool)), this, SLOT(setWaypoint(int,int,double,double,double,double,bool,bool)));
+        connect(&uas->getWaypointManager(), SIGNAL(waypointReached(UASInterface*,int)), this, SLOT(waypointReached(UASInterface*,int)));
         connect(this, SIGNAL(waypointChanged(Waypoint*)), &uas->getWaypointManager(), SLOT(setWaypoint(Waypoint*)));
         connect(this, SIGNAL(currentWaypointChanged(int)), &uas->getWaypointManager(), SLOT(setWaypointActive(int)));
         // This slot is not implemented in UAS: connect(this, SIGNAL(removeWaypointId(int)), uas, SLOT(removeWaypoint(Waypoint*)));
@@ -315,7 +315,7 @@ void WaypointList::setCurrentWaypoint(Waypoint* wp)
         {
             waypoints[i]->current = true;
             // Retransmit waypoint
-            uas->setWaypointActive(i);
+            //uas->getWaypointManager().setWaypointActive(i);
         }
         else
         {

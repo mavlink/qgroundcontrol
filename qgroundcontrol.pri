@@ -25,21 +25,6 @@
 #
 #-------------------------------------------------
 
-QT       += network opengl svg xml phonon
-
-TEMPLATE = app
-TARGET = qgroundcontrol
-
-BASEDIR = .
-BUILDDIR = build
-LANGUAGE = C++
-
-CONFIG += debug_and_release console
-
-OBJECTS_DIR = $$BUILDDIR/obj
-MOC_DIR = $$BUILDDIR/moc
-UI_HEADERS_DIR = src/ui/generated
-
 #$$BASEDIR/lib/qextserialport/include
 #               $$BASEDIR/lib/openjaus/libjaus/include \
 #               $$BASEDIR/lib/openjaus/libopenJaus/include

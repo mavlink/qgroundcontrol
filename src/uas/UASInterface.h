@@ -51,10 +51,6 @@ class UASInterface : public QObject
 {
     Q_OBJECT
 public:
-    UASInterface() :
-            color(UASInterface::getNextColor())
-    {
-    }
     virtual ~UASInterface() {}
 
     /* MANAGEMENT */
@@ -314,5 +310,7 @@ signals:
     /** @brief Emit the new system type */
     void systemTypeSet(UASInterface* uas, unsigned int type);
 };
+
+Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0");
 
 #endif // _UASINTERFACE_H_
