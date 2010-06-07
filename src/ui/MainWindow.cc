@@ -356,6 +356,7 @@ void MainWindow::clearView()
     linechart->setActive(false);
     headDown1->stop();
     headDown2->stop();
+    hsi->stop();
 
     // Remove all dock widgets
     QList<QObject*> list = this->children();
@@ -426,9 +427,10 @@ void MainWindow::loadOperatorView()
     container5->setWidget(waypoints);
     addDockWidget(Qt::BottomDockWidgetArea, container5);
 
-    // DEBUG CONSOLE
-    QDockWidget* container7 = new QDockWidget(tr("Communication Console"), this);
-    container7->setWidget(debugConsole);
+    // HORIZONTAL SITUATION INDICATOR
+    QDockWidget* container7 = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+    container7->setWidget(hsi);
+    hsi->start();
     addDockWidget(Qt::BottomDockWidgetArea, container7);
 
     // OBJECT DETECTION
