@@ -100,6 +100,8 @@ settings()
     parameters->setVisible(false);
     watchdogControl = new WatchdogControl(this);
     watchdogControl->setVisible(false);
+    hsi = new HSIDisplay(this);
+    hsi->setVisible(false);
 
     QStringList* acceptList = new QStringList();
     acceptList->append("roll IMU");

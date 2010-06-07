@@ -31,14 +31,15 @@ This file is part of the PIXHAWK project
 
 #include <QFile>
 #include <QStringList>
+#include <QPainter>
 #include "UASManager.h"
 #include "HSIDisplay.h"
 #include "MG.h"
 
 #include <QDebug>
 
-HSIDisplay::HSIDisplay(QStringList* plotList, QWidget *parent) :
-        HDDisplay(plotList, parent),
+HSIDisplay::HSIDisplay(QWidget *parent) :
+        HDDisplay(NULL, parent)
 {
     
 }
@@ -68,7 +69,7 @@ void HSIDisplay::paintDisplay()
     const int columns = 3;
     const float spacing = 0.4f; // 40% of width
     const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.1f));
-    const QColor gaugeColor = QColor(200, 200, 200);
+    const QColor ringColor = QColor(200, 200, 200);
     //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
     //drawGauge(15.0f, 15.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
     //drawGauge(15.0f+gaugeWidth*1.7f, 15.0f, gaugeWidth/2.0f, 0, 10.0f, "altitude", values.value("altitude", 0.0f), gaugeColor, &painter, qMakePair(1.0f, 2.5f), qMakePair(0.0f, 0.5f), true);
@@ -140,11 +141,10 @@ void HSIDisplay::drawBaseLines(float xRef, float yRef, float radius, float yaw, 
     drawCircle(xRef, yRef, radius, 200.0f, color, painter);
     //drawCircle(xRef, yRef, radius, 200.0f, 170.0f, 1.0f, color, painter);
 
-    QString label;
-    label.sprintf("%05.1f", value);
-
-    // Draw the value
-    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
+//    // Draw the value
+//    QString label;
+//    label.sprintf("%05.1f", value);
+//    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
 
     // Draw the needle
     // Scale the rotation so that the gauge does one revolution
@@ -171,16 +171,4 @@ void HSIDisplay::drawBaseLines(float xRef, float yRef, float radius, float yaw, 
     painter->setPen(defaultColor);
     painter->setBrush(indexBrush);
     drawPolygon(p, painter);
-}
-
-void HDDisplay::changeEvent(QEvent *e)
-{
-    QWidget::changeEvent(e);
-    switch (e->type()) {
-    case QEvent::LanguageChange:
-        m_ui->retranslateUi(this);
-        break;
-    default:
-        break;
-    }
 }

@@ -140,7 +140,8 @@ HEADERS += src/MG.h \
     src/comm/MAVLinkSyntaxHighlighter.h \
     src/ui/watchdog/WatchdogControl.h \
     src/ui/watchdog/WatchdogProcessView.h \
-    src/ui/watchdog/WatchdogView.h
+    src/ui/watchdog/WatchdogView.h \
+    src/ui/HSIDisplay.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -193,5 +194,6 @@ SOURCES += src/main.cc \
     src/comm/MAVLinkSyntaxHighlighter.cc \
     src/ui/watchdog/WatchdogControl.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
-    src/ui/watchdog/WatchdogView.cc
+    src/ui/watchdog/WatchdogView.cc \
+    src/ui/HSIDisplay.cc
 RESOURCES = mavground.qrc
