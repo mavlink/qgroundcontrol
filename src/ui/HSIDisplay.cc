@@ -39,9 +39,20 @@ This file is part of the PIXHAWK project
 #include <QDebug>
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
-        HDDisplay(NULL, parent)
+        HDDisplay(NULL, parent),
+        gpsSatellites()
 {
     
+}
+
+void HSIDisplay::paintEvent(QPaintEvent * event)
+{
+    Q_UNUSED(event);
+    //paintGL();
+    static quint64 interval = 0;
+    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
+    interval = MG::TIME::getGroundTimeNow();
+    paintDisplay();
 }
 
 void HSIDisplay::paintDisplay()
@@ -69,7 +80,20 @@ void HSIDisplay::paintDisplay()
     const int columns = 3;
     const float spacing = 0.4f; // 40% of width
     const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.1f));
-    const QColor ringColor = QColor(200, 200, 200);
+    const QColor ringColor = QColor(200, 250, 200);
+
+    const int ringCount = 2;
+    const float margin = 0.1f;  // 10% margin of total width on each side
+
+    for (int i = 0; i < ringCount; i++)
+    {
+        float radius = (vwidth - vwidth * 2.0f * margin) / (2.0f * i+1) / 2.0f;
+        drawCircle(vwidth/2.0f, vheight/2.0f, radius, 0.1f, ringColor, &painter);
+    }
+
+    drawGPS();
+
+
     //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
     //drawGauge(15.0f, 15.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
     //drawGauge(15.0f+gaugeWidth*1.7f, 15.0f, gaugeWidth/2.0f, 0, 10.0f, "altitude", values.value("altitude", 0.0f), gaugeColor, &painter, qMakePair(1.0f, 2.5f), qMakePair(0.0f, 0.5f), true);
@@ -119,9 +143,64 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     //}
 }
 
+void HSIDisplay::updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used)
+{
+    Q_UNUSED(uasid);
+    // If slot is empty, insert object
+    if (gpsSatellites.at(satid) == NULL)
+    {
+        gpsSatellites.insert(satid, new GPSSatellite(satid, azimuth, direction, snr, used));
+    }
+    else
+    {
+        // Satellite exists, update it
+        gpsSatellites.at(satid)->update(satid, azimuth, direction, snr, used);
+    }
+}
+
+QColor HSIDisplay::getColorForSNR(float snr)
+{
+    return QColor(200, 250, 200);
+}
+
 void HSIDisplay::drawGPS()
 {
-	
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+
+    // Max satellite circle radius
+
+    const float margin = 0.2f;  // 20% margin of total width on each side
+    float radius = (vwidth - vwidth * 2.0f * margin) / 2.0f;
+
+    for (int i = 0; i < gpsSatellites.size(); i++)
+    {
+        GPSSatellite* sat = gpsSatellites.at(i);
+        if (sat)
+        {
+            // Draw satellite
+            QBrush brush;
+            QColor color = getColorForSNR(sat->snr);
+            brush.setColor(color);
+            if (sat->used)
+            {
+                brush.setStyle(Qt::SolidPattern);
+            }
+            else
+            {
+                brush.setStyle(Qt::NoBrush);
+            }
+            painter.setPen(Qt::SolidLine);
+            painter.setPen(color);
+            painter.setBrush(brush);
+
+            float xPos = sin(sat->direction) * sat->azimuth * radius;
+            float yPos = cos(sat->direction) * sat->azimuth * radius;
+
+            drawCircle(xPos, yPos, vwidth/10.0f, 1.0f, color, &painter);
+        }
+    }
 }
 
 void HSIDisplay::drawObjects()
