@@ -92,10 +92,10 @@ void HSIDisplay::paintDisplay()
         drawCircle(vwidth/2.0f, vheight/2.0f, radius, 0.1f, ringColor, &painter);
     }
 
-    drawGPS();
-
     // Draw center indicator
     drawCircle(vwidth/2.0f, vheight/2.0f, 1.0f, 0.1f, ringColor, &painter);
+
+    drawGPS();
 
 
     //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
