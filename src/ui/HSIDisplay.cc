@@ -146,7 +146,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     //}
 }
 
-void HSIDisplay::updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used)
+void HSIDisplay::updateSatellite(int uasid, int satid, float elevation, float azimuth, float snr, bool used)
 {
     Q_UNUSED(uasid);
     //qDebug() << "UPDATED SATELLITE";
@@ -159,12 +159,12 @@ void HSIDisplay::updateSatellite(int uasid, int satid, float azimuth, float dire
 
     if (gpsSatellites.at(satid) == NULL)
     {
-        gpsSatellites.insert(satid, new GPSSatellite(satid, azimuth, direction, snr, used));
+        gpsSatellites.insert(satid, new GPSSatellite(satid, elevation, azimuth, snr, used));
     }
     else
     {
         // Satellite exists, update it
-        gpsSatellites.at(satid)->update(satid, azimuth, direction, snr, used);
+        gpsSatellites.at(satid)->update(satid, elevation, azimuth, snr, used);
     }
 }
 
@@ -230,8 +230,8 @@ void HSIDisplay::drawGPS()
             painter.setPen(color);
             painter.setBrush(brush);
 
-            float xPos = xCenter + sin(sat->direction/180.0f * M_PI) * (sat->azimuth/180.0f * M_PI) * radius;
-            float yPos = yCenter + cos(sat->direction/180.0f * M_PI) * (sat->azimuth/180.0f * M_PI) * radius;
+            float xPos = xCenter + sin(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * (sat->elevation/180.0f * M_PI) * radius;
+            float yPos = yCenter + cos(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * (sat->elevation/180.0f * M_PI) * radius;
 
             drawCircle(xPos, yPos, vwidth*0.02f, 1.0f, color, &painter);
         }

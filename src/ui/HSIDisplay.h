@@ -68,28 +68,28 @@ protected:
     class GPSSatellite
     {
     public:
-        GPSSatellite(int id, float azimuth, float direction, float snr, bool used) :
+        GPSSatellite(int id, float elevation, float azimuth, float snr, bool used) :
                 id(id),
+                elevation(elevation),
                 azimuth(azimuth),
-                direction(direction),
                 snr(snr),
                 used(used)
         {
 
         }
 
-        void update(int id, float azimuth, float direction, float snr, bool used)
+        void update(int id, float elevation, float azimuth, float snr, bool used)
         {
             this->id = id;
+            this->elevation = elevation;
             this->azimuth = azimuth;
-            this->direction = direction;
             this->snr = snr;
             this->used = used;
         }
 
         int id;
+        float elevation;
         float azimuth;
-        float direction;
         float snr;
         bool used;
 
