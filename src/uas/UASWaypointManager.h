@@ -23,16 +23,18 @@ public:
 
     void handleWaypointCount(quint8 systemId, quint8 compId, quint16 count);
     void handleWaypoint(quint8 systemId, quint8 compId, mavlink_waypoint_t *wp);
+    void handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_waypoint_request_t *wpr);
 
 private:
     void getWaypoint(quint16 seq);
 
 public slots:
-    void waypointChanged(Waypoint*);
+    void clearWaypointList();
     void currentWaypointChanged(int);
     void removeWaypointId(int);
     void requestWaypoints();
-    void clearWaypointList();
+    void sendWaypoints(void);
+    void waypointChanged(Waypoint*);
 
 signals:
     void waypointUpdated(int,int,double,double,double,double,bool,bool);
