@@ -85,7 +85,7 @@ settings()
     waypoints->setVisible(false);
     info = new UASInfoWidget(this);
     info->setVisible(false);
-    detection = new ObjectDetectionView("test", this);
+    detection = new ObjectDetectionView("patterns", this);
     detection->setVisible(false);
     hud = new HUD(640, 480, this);
     hud->setVisible(false);
@@ -107,9 +107,9 @@ settings()
     acceptList->append("roll IMU");
     acceptList->append("pitch IMU");
     acceptList->append("yaw IMU");
-    acceptList->append("vx");
-    acceptList->append("vy");
-    acceptList->append("vz");
+    acceptList->append("rollspeed IMU");
+    acceptList->append("pitchspeed IMU");
+    acceptList->append("yawspeed IMU");
     headDown1 = new HDDisplay(acceptList, this);
     headDown1->setVisible(false);
 

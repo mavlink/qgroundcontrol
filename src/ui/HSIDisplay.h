@@ -40,6 +40,7 @@ This file is part of the PIXHAWK project
 #include <cmath>
 
 #include "HDDisplay.h"
+#include "MG.h"
 
 class HSIDisplay : public HDDisplay {
     Q_OBJECT
@@ -49,6 +50,7 @@ public:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
+    void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     void paintEvent(QPaintEvent * event);
 
 protected slots:
@@ -59,7 +61,6 @@ protected slots:
 
 
 protected:
-    void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     static QColor getColorForSNR(float snr);
 
     /**
@@ -68,35 +69,39 @@ protected:
     class GPSSatellite
     {
     public:
-        GPSSatellite(int id, float azimuth, float direction, float snr, bool used) :
-            id(id),
-            azimuth(azimuth),
-            direction(direction),
-            snr(snr),
-            used(used)
+        GPSSatellite(int id, float elevation, float azimuth, float snr, bool used) :
+                id(id),
+                elevation(elevation),
+                azimuth(azimuth),
+                snr(snr),
+                used(used),
+                lastUpdate(MG::TIME::getGroundTimeNowUsecs())
         {
 
         }
 
-        void update(int id, float azimuth, float direction, float snr, bool used)
+        void update(int id, float elevation, float azimuth, float snr, bool used)
         {
             this->id = id;
+            this->elevation = elevation;
             this->azimuth = azimuth;
-            this->direction = direction;
             this->snr = snr;
             this->used = used;
+            this->lastUpdate = MG::TIME::getGroundTimeNowUsecs();
         }
 
         int id;
+        float elevation;
         float azimuth;
-        float direction;
         float snr;
         bool used;
+        quint64 lastUpdate;
 
         friend class HSIDisplay;
     };
 
-    QVector<GPSSatellite*> gpsSatellites;
+    QMap<int, GPSSatellite*> gpsSatellites;
+    unsigned int satellitesUsed;
 
 private:
 };
