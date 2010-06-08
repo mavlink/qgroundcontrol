@@ -40,6 +40,7 @@ This file is part of the PIXHAWK project
 #include <cmath>
 
 #include "HDDisplay.h"
+#include "MG.h"
 
 class HSIDisplay : public HDDisplay {
     Q_OBJECT
@@ -73,7 +74,8 @@ protected:
                 elevation(elevation),
                 azimuth(azimuth),
                 snr(snr),
-                used(used)
+                used(used),
+                lastUpdate(MG::TIME::getGroundTimeNowUsecs())
         {
 
         }
@@ -85,6 +87,7 @@ protected:
             this->azimuth = azimuth;
             this->snr = snr;
             this->used = used;
+            this->lastUpdate = MG::TIME::getGroundTimeNowUsecs();
         }
 
         int id;
@@ -92,11 +95,12 @@ protected:
         float azimuth;
         float snr;
         bool used;
+        quint64 lastUpdate;
 
         friend class HSIDisplay;
     };
 
-    QVector<GPSSatellite*> gpsSatellites;
+    QMap<int, GPSSatellite*> gpsSatellites;
     unsigned int satellitesUsed;
 
 private:
