@@ -94,6 +94,9 @@ void HSIDisplay::paintDisplay()
 
     drawGPS();
 
+    // Draw center indicator
+    drawCircle(vwidth/2.0f, vheight/2.0f, 1.0f, 0.1f, ringColor, &painter);
+
 
     //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
     //drawGauge(15.0f, 15.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
@@ -151,37 +154,34 @@ void HSIDisplay::updateSatellite(int uasid, int satid, float elevation, float az
     Q_UNUSED(uasid);
     //qDebug() << "UPDATED SATELLITE";
     // If slot is empty, insert object
-    if (gpsSatellites.size() <= satid)
+    if (gpsSatellites.contains(satid))
     {
-        gpsSatellites.resize(satid+1);
-//        gpsSatellites.insert(satid, new GPSSatellite(satid, azimuth, direction, snr, used));
-    }
-
-    if (gpsSatellites.at(satid) == NULL)
-    {
-        gpsSatellites.insert(satid, new GPSSatellite(satid, elevation, azimuth, snr, used));
+        gpsSatellites.value(satid)->update(satid, elevation, azimuth, snr, used);
     }
     else
     {
-        // Satellite exists, update it
-        gpsSatellites.at(satid)->update(satid, elevation, azimuth, snr, used);
+        gpsSatellites.insert(satid, new GPSSatellite(satid, elevation, azimuth, snr, used));
     }
 }
 
 QColor HSIDisplay::getColorForSNR(float snr)
 {
     QColor color;
-    if (snr < 10)
+    if (snr > 0 && snr < 30)
     {
-        color = QColor(250, 200, 200);
+        color = QColor(250, 10, 10);
     }
-    else if (snr > 20)
+    else if (snr >= 30 && snr < 35)
     {
-        color = QColor(200, 250, 200);
+        color = QColor(230, 230, 10);
     }
-    else if (snr > 30)
+    else if (snr >= 35 && snr < 40)
     {
-        color = QColor(100, 250, 100);
+        color = QColor(90, 200, 90);
+    }
+    else if (snr >= 40)
+    {
+        color = QColor(20, 200, 20);
     }
     else
     {
@@ -200,18 +200,37 @@ void HSIDisplay::drawGPS()
 
     // Max satellite circle radius
 
-    const float margin = 0.2f;  // 20% margin of total width on each side
-    float radius = (vwidth - vwidth * 2.0f * margin) / 4.0f;
-    radius = radius;
+    const float margin = 0.15f;  // 20% margin of total width on each side
+    float radius = (vwidth - vwidth * 2.0f * margin) / 2.0f;
+    quint64 currTime = MG::TIME::getGroundTimeNowUsecs();
 
     // Draw satellite labels
     //    QString label;
     //    label.sprintf("%05.1f", value);
     //    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
 
-    for (int i = 0; i < gpsSatellites.size(); i++)
+    QMapIterator<int, GPSSatellite*> i(gpsSatellites);
+    while (i.hasNext())
     {
-        GPSSatellite* sat = gpsSatellites.at(i);
+        i.next();
+        GPSSatellite* sat = i.value();
+
+        // Check if update is not older than 5 seconds, else delete satellite
+        if (sat->lastUpdate + 1000000 < currTime)
+        {
+            // Delete and go to next satellite
+            gpsSatellites.remove(i.key());
+            if (i.hasNext())
+            {
+                i.next();
+                sat = i.value();
+            }
+            else
+            {
+                continue;
+            }
+        }
+
         if (sat)
         {
             // Draw satellite
@@ -230,10 +249,11 @@ void HSIDisplay::drawGPS()
             painter.setPen(color);
             painter.setBrush(brush);
 
-            float xPos = xCenter + sin(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * (sat->elevation/180.0f * M_PI) * radius;
-            float yPos = yCenter + cos(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * (sat->elevation/180.0f * M_PI) * radius;
+            float xPos = xCenter + (sin(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * cos(sat->elevation/180.0f * M_PI)) * radius;
+            float yPos = yCenter - (cos(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * cos(sat->elevation/180.0f * M_PI)) * radius;
 
             drawCircle(xPos, yPos, vwidth*0.02f, 1.0f, color, &painter);
+            paintText(QString::number(sat->id), QColor(255, 255, 255), 2.9f, xPos+1.7f, yPos+2.0f, &painter);
         }
     }
 }
