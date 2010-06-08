@@ -40,9 +40,10 @@ This file is part of the PIXHAWK project
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
         HDDisplay(NULL, parent),
-        gpsSatellites()
+        gpsSatellites(),
+        satellitesUsed(0)
 {
-    
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 }
 
 void HSIDisplay::paintEvent(QPaintEvent * event)
@@ -91,6 +92,9 @@ void HSIDisplay::paintDisplay()
         drawCircle(vwidth/2.0f, vheight/2.0f, radius, 0.1f, ringColor, &painter);
     }
 
+    // Draw center indicator
+    drawCircle(vwidth/2.0f, vheight/2.0f, 1.0f, 0.1f, ringColor, &painter);
+
     drawGPS();
 
 
@@ -133,6 +137,8 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
         //disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
     }
 
+    connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
+
     // Now connect the new UAS
 
     //if (this->uas != uas)
@@ -143,40 +149,88 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     //}
 }
 
-void HSIDisplay::updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used)
+void HSIDisplay::updateSatellite(int uasid, int satid, float elevation, float azimuth, float snr, bool used)
 {
     Q_UNUSED(uasid);
+    //qDebug() << "UPDATED SATELLITE";
     // If slot is empty, insert object
-    if (gpsSatellites.at(satid) == NULL)
+    if (gpsSatellites.contains(satid))
     {
-        gpsSatellites.insert(satid, new GPSSatellite(satid, azimuth, direction, snr, used));
+        gpsSatellites.value(satid)->update(satid, elevation, azimuth, snr, used);
     }
     else
     {
-        // Satellite exists, update it
-        gpsSatellites.at(satid)->update(satid, azimuth, direction, snr, used);
+        gpsSatellites.insert(satid, new GPSSatellite(satid, elevation, azimuth, snr, used));
     }
 }
 
 QColor HSIDisplay::getColorForSNR(float snr)
 {
-    return QColor(200, 250, 200);
+    QColor color;
+    if (snr > 0 && snr < 30)
+    {
+        color = QColor(250, 10, 10);
+    }
+    else if (snr >= 30 && snr < 35)
+    {
+        color = QColor(230, 230, 10);
+    }
+    else if (snr >= 35 && snr < 40)
+    {
+        color = QColor(90, 200, 90);
+    }
+    else if (snr >= 40)
+    {
+        color = QColor(20, 200, 20);
+    }
+    else
+    {
+        color = QColor(180, 180, 180);
+    }
+    return color;
 }
 
 void HSIDisplay::drawGPS()
 {
+    float xCenter = vwidth/2.0f;
+    float yCenter = vwidth/2.0f;
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
 
     // Max satellite circle radius
 
-    const float margin = 0.2f;  // 20% margin of total width on each side
+    const float margin = 0.15f;  // 20% margin of total width on each side
     float radius = (vwidth - vwidth * 2.0f * margin) / 2.0f;
+    quint64 currTime = MG::TIME::getGroundTimeNowUsecs();
 
-    for (int i = 0; i < gpsSatellites.size(); i++)
+    // Draw satellite labels
+    //    QString label;
+    //    label.sprintf("%05.1f", value);
+    //    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
+
+    QMapIterator<int, GPSSatellite*> i(gpsSatellites);
+    while (i.hasNext())
     {
-        GPSSatellite* sat = gpsSatellites.at(i);
+        i.next();
+        GPSSatellite* sat = i.value();
+
+        // Check if update is not older than 5 seconds, else delete satellite
+        if (sat->lastUpdate + 1000000 < currTime)
+        {
+            // Delete and go to next satellite
+            gpsSatellites.remove(i.key());
+            if (i.hasNext())
+            {
+                i.next();
+                sat = i.value();
+            }
+            else
+            {
+                continue;
+            }
+        }
+
         if (sat)
         {
             // Draw satellite
@@ -195,10 +249,11 @@ void HSIDisplay::drawGPS()
             painter.setPen(color);
             painter.setBrush(brush);
 
-            float xPos = sin(sat->direction) * sat->azimuth * radius;
-            float yPos = cos(sat->direction) * sat->azimuth * radius;
+            float xPos = xCenter + (sin(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * cos(sat->elevation/180.0f * M_PI)) * radius;
+            float yPos = yCenter - (cos(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * cos(sat->elevation/180.0f * M_PI)) * radius;
 
-            drawCircle(xPos, yPos, vwidth/10.0f, 1.0f, color, &painter);
+            drawCircle(xPos, yPos, vwidth*0.02f, 1.0f, color, &painter);
+            paintText(QString::number(sat->id), QColor(255, 255, 255), 2.9f, xPos+1.7f, yPos+2.0f, &painter);
         }
     }
 }

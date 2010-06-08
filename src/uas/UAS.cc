@@ -267,15 +267,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "Mag. Z", raw.zmag, time);
             }
             break;
-        case MAVLINK_MSG_ID_RAW_AUX:
-            {
-                mavlink_raw_aux_t raw;
-                mavlink_msg_raw_aux_decode(&message, &raw);
-                quint64 time = getUnixTime(0);
-                emit valueChanged(uasId, "Pressure", raw.baro, time);
-                emit valueChanged(uasId, "Temperature", raw.temp, time);
-            }
-            break;
         case MAVLINK_MSG_ID_ATTITUDE:
             //std::cerr << std::endl;
             //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
@@ -339,7 +330,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "lon", pos.lon, time);
                 emit valueChanged(uasId, "alt", pos.alt, time);
                 emit valueChanged(uasId, "speed", pos.v, time);
-                qDebug() << "GOT GPS RAW";
+                //qDebug() << "GOT GPS RAW";
                 emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
             }
             break;
@@ -347,9 +338,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_gps_status_t pos;
                 mavlink_msg_gps_status_decode(&message, &pos);
-                for(int i = 0; i < pos.satellites_visible && i < sizeof(pos.satellite_used); i++)
+                for(int i = 0; i < (int)pos.satellites_visible; i++)
                 {
-                    emit gpsSatelliteStatusChanged(uasId, i, pos.satellite_azimuth[i], pos.satellite_direction[i], pos.satellite_snr[i], static_cast<bool>(pos.satellite_used[i]));
+                    emit gpsSatelliteStatusChanged(uasId, (unsigned char)pos.satellite_prn[i], (unsigned char)pos.satellite_elevation[i], (unsigned char)pos.satellite_azimuth[i], (unsigned char)pos.satellite_snr[i], static_cast<bool>(pos.satellite_used[i]));
                 }
             }
             break;
@@ -406,17 +397,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 //qDebug() << "RECEIVED STATUS:" << text;false
                 //emit statusTextReceived(severity, text);
                 emit textMessageReceived(uasId, severity, text);
-            }
-            break;
-        case MAVLINK_MSG_ID_PATTERN_DETECTED:
-            {
-                QByteArray b;
-                b.resize(256);
-                mavlink_msg_pattern_detected_get_file(&message, (int8_t*)b.data());
-                b.append('\0');
-                QString path = QString(b);
-                bool detected (mavlink_msg_pattern_detected_get_detected(&message) == 1 ? true : false );
-                emit detectionReceived(uasId, path, 0, 0, 0, 0, 0, 0, 0, 0, mavlink_msg_pattern_detected_get_confidence(&message), detected);
             }
             break;
         default:

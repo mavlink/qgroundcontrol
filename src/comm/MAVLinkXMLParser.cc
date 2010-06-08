@@ -73,6 +73,8 @@ bool MAVLinkXMLParser::generate()
     QList< QPair<QString, QString> > cFiles;
     QString lcmStructDefs = "";
 
+    QString pureFileName;
+
     // Run through root children
     while(!n.isNull())
     {
@@ -103,6 +105,7 @@ bool MAVLinkXMLParser::generate()
                             {
                                 QFileInfo rInfo(this->fileName);
                                 fileName = rInfo.absoluteDir().canonicalPath() + "/" + fileName;
+                                pureFileName = rInfo.baseName().split(".").first();
                             }
 
                             QFile file(fileName);
@@ -365,6 +368,7 @@ bool MAVLinkXMLParser::generate()
     // Mark all code as C code
     mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n";
     mainHeader += "\n#include \"protocol.h\"\n";
+    mainHeader += "\n#define MAVLINK_ENABLED_" + pureFileName.toUpper() + "\n\n";
     QString includeLine = "#include \"%1\"\n";
     QString mainHeaderName = "mavlink.h";
     QString messagesDirName = "generated";
