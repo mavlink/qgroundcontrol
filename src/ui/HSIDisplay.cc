@@ -40,7 +40,8 @@ This file is part of the PIXHAWK project
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
         HDDisplay(NULL, parent),
-        gpsSatellites()
+        gpsSatellites(),
+        satellitesUsed(0)
 {
     
 }
@@ -173,6 +174,11 @@ void HSIDisplay::drawGPS()
 
     const float margin = 0.2f;  // 20% margin of total width on each side
     float radius = (vwidth - vwidth * 2.0f * margin) / 2.0f;
+
+    // Draw satellite labels
+    //    QString label;
+    //    label.sprintf("%05.1f", value);
+    //    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
 
     for (int i = 0; i < gpsSatellites.size(); i++)
     {
