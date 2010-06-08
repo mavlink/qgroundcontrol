@@ -107,9 +107,9 @@ settings()
     acceptList->append("roll IMU");
     acceptList->append("pitch IMU");
     acceptList->append("yaw IMU");
-    acceptList->append("vx");
-    acceptList->append("vy");
-    acceptList->append("vz");
+    acceptList->append("rollspeed IMU");
+    acceptList->append("pitchspeed IMU");
+    acceptList->append("yawspeed IMU");
     headDown1 = new HDDisplay(acceptList, this);
     headDown1->setVisible(false);
 
