@@ -87,11 +87,13 @@ void WaypointList::setUAS(UASInterface* uas)
         this->uas = uas;
         connect(&uas->getWaypointManager(), SIGNAL(waypointUpdated(int,int,double,double,double,double,bool,bool)), this, SLOT(setWaypoint(int,int,double,double,double,double,bool,bool)));
         connect(&uas->getWaypointManager(), SIGNAL(waypointReached(UASInterface*,int)), this, SLOT(waypointReached(UASInterface*,int)));
-        connect(this, SIGNAL(waypointChanged(Waypoint*)), &uas->getWaypointManager(), SLOT(setWaypoint(Waypoint*)));
-        connect(this, SIGNAL(currentWaypointChanged(int)), &uas->getWaypointManager(), SLOT(setWaypointActive(int)));
+        connect(this, SIGNAL(waypointChanged(Waypoint*)),   &uas->getWaypointManager(), SLOT(setWaypoint(Waypoint*)));
+        connect(this, SIGNAL(currentWaypointChanged(int)),  &uas->getWaypointManager(), SLOT(setWaypointActive(int)));
+        connect(this, SIGNAL(requestWaypoints()),           &uas->getWaypointManager(), SLOT(requestWaypoints()));
+        connect(this, SIGNAL(clearWaypointList()),          &uas->getWaypointManager(), SLOT(clearWaypointList()));
+
         // This slot is not implemented in UAS: connect(this, SIGNAL(removeWaypointId(int)), uas, SLOT(removeWaypoint(Waypoint*)));
-        connect(this, SIGNAL(requestWaypoints()), &uas->getWaypointManager(), SLOT(requestWaypoints()));
-        connect(this, SIGNAL(clearWaypointList()), &uas->getWaypointManager(), SLOT(clearWaypointList()));
+
         qDebug() << "Requesting waypoints";
         emit requestWaypoints();
     }

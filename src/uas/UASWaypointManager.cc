@@ -11,39 +11,6 @@ UASWaypointManager::UASWaypointManager(UAS &_uas)
 {
 }
 
-void UASWaypointManager::waypointChanged(Waypoint*)
-{
-}
-
-void UASWaypointManager::currentWaypointChanged(int)
-{
-}
-
-void UASWaypointManager::removeWaypointId(int)
-{
-}
-
-void UASWaypointManager::requestWaypoints()
-{
-    if(current_state == WP_IDLE)
-    {
-        qDebug() << "handleWaypointCount";
-        mavlink_message_t message;
-        mavlink_waypoint_request_list_t wprl;
-
-        wprl.target_system = uas.getUASID();
-        wprl.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
-
-        current_state = WP_GETLIST;
-        current_wp_id = 0;
-        current_partner_systemid = uas.getUASID();
-        current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
-
-        mavlink_msg_waypoint_request_list_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wprl);
-        uas.sendMessage(message);
-    }
-}
-
 void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, quint16 count)
 {
     if (current_state == WP_GETLIST && systemId == current_partner_systemid && compId == current_partner_compid)
@@ -95,6 +62,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
             }
             else
             {
+                // all waypoints retrieved, change state to idle
                 current_state = WP_IDLE;
                 current_count = 0;
                 current_wp_id = 0;
@@ -104,9 +72,67 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
         }
         else
         {
-            //FIXME error handling
+            //TODO: error handling
         }
     }
+}
+
+void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_waypoint_request_t *wpr)
+{
+    if (systemId == current_partner_systemid && compId == current_partner_compid && current_state == WP_SENDLIST && wpr->seq == current_wp_id)
+    {
+        qDebug() << "handleWaypointRequest";
+
+        if (wpr->seq < 0)
+        {
+            //TODO: send waypoint
+        }
+        else
+        {
+            //TODO: Error message or something
+        }
+    }
+}
+
+void UASWaypointManager::clearWaypointList()
+{
+
+}
+
+void UASWaypointManager::currentWaypointChanged(int)
+{
+
+}
+
+void UASWaypointManager::removeWaypointId(int)
+{
+
+}
+
+void UASWaypointManager::requestWaypoints()
+{
+    if(current_state == WP_IDLE)
+    {
+        qDebug() << "requestWaypoints";
+        mavlink_message_t message;
+        mavlink_waypoint_request_list_t wprl;
+
+        wprl.target_system = uas.getUASID();
+        wprl.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+
+        current_state = WP_GETLIST;
+        current_wp_id = 0;
+        current_partner_systemid = uas.getUASID();
+        current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
+
+        mavlink_msg_waypoint_request_list_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wprl);
+        uas.sendMessage(message);
+    }
+}
+
+void UASWaypointManager::sendWaypoints(void)
+{
+
 }
 
 void UASWaypointManager::getWaypoint(quint16 seq)
@@ -114,6 +140,7 @@ void UASWaypointManager::getWaypoint(quint16 seq)
 
 }
 
-void UASWaypointManager::clearWaypointList()
+void UASWaypointManager::waypointChanged(Waypoint*)
 {
+
 }

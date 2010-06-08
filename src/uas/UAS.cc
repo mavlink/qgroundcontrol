@@ -379,6 +379,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
             }
             break;
+
+        case MAVLINK_MSG_ID_WAYPOINT_REQUEST:
+            {
+                mavlink_waypoint_request_t wpr;
+                mavlink_msg_waypoint_request_decode(&message, &wpr);
+                waypointManager.handleWaypointRequest(message.sysid, message.compid, &wpr);
+            }
+            break;
+
         case MAVLINK_MSG_ID_WAYPOINT_REACHED:
             {
 //                mavlink_waypoint_reached_t wp;
