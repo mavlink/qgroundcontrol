@@ -38,6 +38,7 @@ This file is part of the PIXHAWK project
 #include <QDebug>
 #include "MG.h"
 #include "LinkManager.h"
+#include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
 // MAVLINK includes
 #include <mavlink.h>
@@ -92,6 +93,10 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     maxTimeNoise = 0;
     this->id = getNextLinkId();
     LinkManager::instance()->add(this);
+
+    // Open packet log
+    mavlinkLogFile = new QFile(MAVLinkProtocol::getLogfileName());
+    mavlinkLogFile->open(QIODevice::ReadOnly);
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
@@ -121,6 +126,21 @@ void MAVLinkSimulationLink::run()
             if (_isConnected)
             {
                 mainloop();
+
+                // FIXME Hacky code to read from packet log file
+//                readyBufferMutex.lock();
+//                for (int i = 0; i < streampointer; i++)
+//                {
+//                    readyBuffer.enqueue(*(stream + i));
+//                }
+//                readyBufferMutex.unlock();
+
+
+
+
+
+
+
                 emit bytesReady(this);
             }
             last = MG::TIME::getGroundTimeNow();

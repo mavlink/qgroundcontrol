@@ -338,7 +338,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "lon", pos.lon, time);
                 emit valueChanged(uasId, "alt", pos.alt, time);
                 emit valueChanged(uasId, "speed", pos.v, time);
-                qDebug() << "GOT GPS RAW";
+                //qDebug() << "GOT GPS RAW";
                 emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
             }
             break;
@@ -346,7 +346,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_gps_status_t pos;
                 mavlink_msg_gps_status_decode(&message, &pos);
-                for(int i = 0; i < pos.satellites_visible && i < sizeof(pos.satellite_used); i++)
+                //qDebug() << "GOT GPS STATUS FOR "<< pos.satellites_visible << "SATELLITES";
+                for(int i = 0; i < (int)pos.satellites_visible; i++)
                 {
                     emit gpsSatelliteStatusChanged(uasId, i, pos.satellite_azimuth[i], pos.satellite_direction[i], pos.satellite_snr[i], static_cast<bool>(pos.satellite_used[i]));
                 }

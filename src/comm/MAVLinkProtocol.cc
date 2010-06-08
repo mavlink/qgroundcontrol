@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 
 #include <QDebug>
 #include <QTime>
+#include <QApplication>
 
 #include "MG.h"
 #include "MAVLinkProtocol.h"
@@ -56,7 +57,9 @@ This file is part of the PIXHAWK project
 MAVLinkProtocol::MAVLinkProtocol() :
         heartbeatTimer(new QTimer(this)),
         heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
-        m_heartbeatsEnabled(false)
+        m_heartbeatsEnabled(false),
+        m_loggingEnabled(false),
+        m_logfile(NULL)
 {
     start(QThread::LowPriority);
     // Start heartbeat timer, emitting a heartbeat at the configured rate
@@ -77,12 +80,23 @@ MAVLinkProtocol::MAVLinkProtocol() :
 
 MAVLinkProtocol::~MAVLinkProtocol()
 {
+    if (m_logfile)
+    {
+        m_logfile->close();
+        delete m_logfile;
+    }
 }
 
 
 
 void MAVLinkProtocol::run()
 {
+
+}
+
+QString MAVLinkProtocol::getLogfileName()
+{
+    return QCoreApplication::applicationDirPath()+"/mavlink.log";
 }
 
 /**
@@ -111,6 +125,15 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
 
         if (decodeState == 1)
         {
+            // Log data
+            if (m_loggingEnabled)
+            {
+                uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+                mavlink_msg_to_send_buffer(buf, &message);
+                m_logfile->write((const char*) buf);
+                qDebug() << "WROTE LOGFILE";
+            }
+
             // ORDER MATTERS HERE!
             // If the matching UAS object does not yet exist, it has to be created
             // before emitting the packetReceived signal
@@ -316,9 +339,30 @@ void MAVLinkProtocol::enableHeartbeats(bool enabled)
     emit heartbeatChanged(enabled);
 }
 
+void MAVLinkProtocol::enableLogging(bool enabled)
+{
+    if (enabled && !m_loggingEnabled)
+    {
+       m_logfile = new QFile(getLogfileName());
+       m_logfile->open(QIODevice::WriteOnly | QIODevice::Append);
+    }
+    else
+    {
+       m_logfile->close();
+       delete m_logfile;
+       m_logfile = NULL;
+    }
+    m_loggingEnabled = enabled;
+}
+
 bool MAVLinkProtocol::heartbeatsEnabled(void)
 {
     return m_heartbeatsEnabled;
+}
+
+bool MAVLinkProtocol::loggingEnabled(void)
+{
+    return m_loggingEnabled;
 }
 
 /**

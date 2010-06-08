@@ -85,7 +85,7 @@ settings()
     waypoints->setVisible(false);
     info = new UASInfoWidget(this);
     info->setVisible(false);
-    detection = new ObjectDetectionView("test", this);
+    detection = new ObjectDetectionView("patterns", this);
     detection->setVisible(false);
     hud = new HUD(640, 480, this);
     hud->setVisible(false);

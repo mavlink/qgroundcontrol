@@ -49,6 +49,7 @@ public:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
+    void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     void paintEvent(QPaintEvent * event);
 
 protected slots:
@@ -59,7 +60,6 @@ protected slots:
 
 
 protected:
-    void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     static QColor getColorForSNR(float snr);
 
     /**
@@ -69,11 +69,11 @@ protected:
     {
     public:
         GPSSatellite(int id, float azimuth, float direction, float snr, bool used) :
-            id(id),
-            azimuth(azimuth),
-            direction(direction),
-            snr(snr),
-            used(used)
+                id(id),
+                azimuth(azimuth),
+                direction(direction),
+                snr(snr),
+                used(used)
         {
 
         }

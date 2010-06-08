@@ -43,7 +43,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         gpsSatellites(),
         satellitesUsed(0)
 {
-    
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 }
 
 void HSIDisplay::paintEvent(QPaintEvent * event)
@@ -134,6 +134,8 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
         //disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
     }
 
+    connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
+
     // Now connect the new UAS
 
     //if (this->uas != uas)
@@ -147,7 +149,14 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
 void HSIDisplay::updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used)
 {
     Q_UNUSED(uasid);
+    //qDebug() << "UPDATED SATELLITE";
     // If slot is empty, insert object
+    if (gpsSatellites.size() <= satid)
+    {
+        gpsSatellites.resize(satid+1);
+//        gpsSatellites.insert(satid, new GPSSatellite(satid, azimuth, direction, snr, used));
+    }
+
     if (gpsSatellites.at(satid) == NULL)
     {
         gpsSatellites.insert(satid, new GPSSatellite(satid, azimuth, direction, snr, used));
@@ -161,11 +170,30 @@ void HSIDisplay::updateSatellite(int uasid, int satid, float azimuth, float dire
 
 QColor HSIDisplay::getColorForSNR(float snr)
 {
-    return QColor(200, 250, 200);
+    QColor color;
+    if (snr < 10)
+    {
+        color = QColor(250, 200, 200);
+    }
+    else if (snr > 20)
+    {
+        color = QColor(200, 250, 200);
+    }
+    else if (snr > 30)
+    {
+        color = QColor(100, 250, 100);
+    }
+    else
+    {
+        color = QColor(180, 180, 180);
+    }
+    return color;
 }
 
 void HSIDisplay::drawGPS()
 {
+    float xCenter = vwidth/2.0f;
+    float yCenter = vwidth/2.0f;
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
@@ -173,7 +201,8 @@ void HSIDisplay::drawGPS()
     // Max satellite circle radius
 
     const float margin = 0.2f;  // 20% margin of total width on each side
-    float radius = (vwidth - vwidth * 2.0f * margin) / 2.0f;
+    float radius = (vwidth - vwidth * 2.0f * margin) / 4.0f;
+    radius = radius;
 
     // Draw satellite labels
     //    QString label;
@@ -201,10 +230,10 @@ void HSIDisplay::drawGPS()
             painter.setPen(color);
             painter.setBrush(brush);
 
-            float xPos = sin(sat->direction) * sat->azimuth * radius;
-            float yPos = cos(sat->direction) * sat->azimuth * radius;
+            float xPos = xCenter + sin(sat->direction/180.0f * M_PI) * (sat->azimuth/180.0f * M_PI) * radius;
+            float yPos = yCenter + cos(sat->direction/180.0f * M_PI) * (sat->azimuth/180.0f * M_PI) * radius;
 
-            drawCircle(xPos, yPos, vwidth/10.0f, 1.0f, color, &painter);
+            drawCircle(xPos, yPos, vwidth*0.02f, 1.0f, color, &painter);
         }
     }
 }
