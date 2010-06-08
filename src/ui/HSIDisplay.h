@@ -97,6 +97,7 @@ protected:
     };
 
     QVector<GPSSatellite*> gpsSatellites;
+    unsigned int satellitesUsed;
 
 private:
 };
