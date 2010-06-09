@@ -181,7 +181,7 @@ void UASControlWidget::cycleContextButton()
     if (mav)
     {
 
-        if (engineOn)
+        if (!engineOn)
         {
             ui.controlButton->setText(tr("Stop Engine"));
             mav->setMode(MAV_MODE_MANUAL);
