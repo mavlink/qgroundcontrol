@@ -132,7 +132,15 @@ void UASWaypointManager::requestWaypoints()
 
 void UASWaypointManager::sendWaypoints(void)
 {
+    mavlink_message_t message;
+    mavlink_waypoint_count_t wpc;
 
+    wpc.target_system = uas.getUASID();
+    wpc.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+    wpc.count = 0;  //TODO
+
+    mavlink_msg_waypoint_count_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpc);
+    uas.sendMessage(message);
 }
 
 void UASWaypointManager::getWaypoint(quint16 seq)

@@ -379,7 +379,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_waypoint_count_t wpc;
                 mavlink_msg_waypoint_count_decode(&message, &wpc);
-                waypointManager.handleWaypointCount(message.sysid, message.compid, wpc.count);
+                if (wpc.target_system == mavlink->getSystemId() && wpc.target_component == mavlink->getComponentId())
+                {
+                    waypointManager.handleWaypointCount(message.sysid, message.compid, wpc.count);
+                }
             }
             break;
 
@@ -387,7 +390,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_waypoint_t wp;
                 mavlink_msg_waypoint_decode(&message, &wp);
-                waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
+                if(wp.target_system == mavlink->getSystemId() && wp.target_component == mavlink->getComponentId())
+                {
+                    waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
+                }
             }
             break;
 
@@ -395,7 +401,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_waypoint_request_t wpr;
                 mavlink_msg_waypoint_request_decode(&message, &wpr);
-                waypointManager.handleWaypointRequest(message.sysid, message.compid, &wpr);
+                if(wpr.target_system == mavlink->getSystemId() && wpr.target_component == mavlink->getComponentId())
+                {
+                    waypointManager.handleWaypointRequest(message.sysid, message.compid, &wpr);
+                }
             }
             break;
 
