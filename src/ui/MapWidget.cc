@@ -126,6 +126,7 @@ void MapWidget::addUAS(UASInterface* uas)
 void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
+    Q_UNUSED(alt); // FIXME Use altitude
     quint64 currTime = MG::TIME::getGroundTimeNow();
     if (currTime - lastUpdate > 90)
     {
