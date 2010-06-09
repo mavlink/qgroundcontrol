@@ -82,9 +82,10 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_debug_vect_t vect;
                 mavlink_msg_debug_vect_decode(msg, &vect);
                 QString str((const char*)vect.name);
-                emit valueChanged(uasId, str+".x", vect.x, MG::TIME::getGroundTimeNow());
-                emit valueChanged(uasId, str+".y", vect.y, MG::TIME::getGroundTimeNow());
-                emit valueChanged(uasId, str+".z", vect.z, MG::TIME::getGroundTimeNow());
+                quint64 time = getUnixTime(vect.usec);
+                emit valueChanged(uasId, str+".x", vect.x, time);
+                emit valueChanged(uasId, str+".y", vect.y, time);
+                emit valueChanged(uasId, str+".z", vect.z, time);
             }
             break;
     case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE:
