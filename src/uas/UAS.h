@@ -110,7 +110,7 @@ protected:
     double currentVoltage;      ///< Voltage currently measured
     float lpVoltage;            ///< Low-pass filtered voltage
     int timeRemaining;          ///< Remaining time calculated based on previous and current
-    int mode;                   ///< The current mode of the MAV
+    unsigned int mode;          ///< The current mode of the MAV
     int status;                 ///< The current status of the MAV
     quint64 onboardTimeOffset;
 
