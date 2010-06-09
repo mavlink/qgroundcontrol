@@ -97,6 +97,11 @@ void HSIDisplay::paintDisplay()
 
     drawGPS();
 
+    // Draw state indicator
+
+    // Draw position
+
+
 
     //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
     //drawGauge(15.0f, 15.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
@@ -138,6 +143,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     }
 
     connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
+    connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT())
 
     // Now connect the new UAS
 
@@ -147,6 +153,26 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     // Setup communication
     //connect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
     //}
+}
+
+void HSIDisplay::updateAttitudeSetpoints(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec)
+{
+
+}
+
+void HSIDisplay::updatePositionSetpoints(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec)
+{
+
+}
+
+void HSIDisplay::updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec)
+{
+
+}
+
+void HSIDisplay::updateGlobalPosition(UASInterface*, double lat, double lon, double alt, quint64 usec)
+{
+
 }
 
 void HSIDisplay::updateSatellite(int uasid, int satid, float elevation, float azimuth, float snr, bool used)
