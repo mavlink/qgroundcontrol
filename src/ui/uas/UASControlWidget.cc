@@ -42,19 +42,32 @@ This file is part of the PIXHAWK project
 #include <UAS.h>
 //#include <mavlink.h>
 
+#define CONTROL_MODE_LOCKED "MODE LOCKED"
+#define CONTROL_MODE_MANUAL "MODE MANUAL"
+#define CONTROL_MODE_GUIDED "MODE GUIDED"
+#define CONTROL_MODE_AUTO   "MODE AUTO"
+#define CONTROL_MODE_TEST1  "MODE TEST1"
+
+#define CONTROL_MODE_LOCKED_INDEX 2
+#define CONTROL_MODE_MANUAL_INDEX 3
+#define CONTROL_MODE_GUIDED_INDEX 4
+#define CONTROL_MODE_AUTO_INDEX   5
+#define CONTROL_MODE_TEST1_INDEX  6
+
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
         uas(NULL)
 {
     ui.setupUi(this);
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
-    ui.modeComboBox->insertItem(MAV_MODE_LOCKED, "MODE LOCKED");
-    ui.modeComboBox->insertItem(MAV_MODE_MANUAL, "MODE MANUAL");
-    ui.modeComboBox->insertItem(MAV_MODE_GUIDED, "MODE GUIDED");
-    ui.modeComboBox->insertItem(MAV_MODE_AUTO, "MODE AUTO");
-    ui.modeComboBox->insertItem(MAV_MODE_TEST1, "MODE TEST1");
-    ui.modeComboBox->insertItem(MAV_MODE_TEST2, "MODE TEST2");
-    ui.modeComboBox->insertItem(MAV_MODE_TEST3, "MODE TEST3");
+    ui.modeComboBox->insertItem(0, "Select..");
+    ui.modeComboBox->insertItem(CONTROL_MODE_LOCKED_INDEX, CONTROL_MODE_LOCKED);
+    ui.modeComboBox->insertItem(CONTROL_MODE_MANUAL_INDEX, CONTROL_MODE_MANUAL);
+    ui.modeComboBox->insertItem(CONTROL_MODE_GUIDED_INDEX, CONTROL_MODE_GUIDED);
+    ui.modeComboBox->insertItem(CONTROL_MODE_AUTO_INDEX, CONTROL_MODE_AUTO);
+    ui.modeComboBox->insertItem(CONTROL_MODE_TEST1_INDEX, CONTROL_MODE_TEST1);
+
+    ui.modeComboBox->setCurrentIndex(0);
 }
 
 void UASControlWidget::setUAS(UASInterface* uas)
@@ -92,36 +105,48 @@ UASControlWidget::~UASControlWidget() {
 void UASControlWidget::setMode(int mode)
 {
     // Adapt context button mode
-    switch (mode)
+    if (mode == CONTROL_MODE_LOCKED_INDEX)
     {
-        case MAV_MODE_LOCKED:
-        break;
-        case MAV_MODE_MANUAL:
-        break;
-        case MAV_MODE_GUIDED:
-        break;
-        case MAV_MODE_AUTO:
-        break;
-        case MAV_MODE_TEST1:
-        break;
-        case MAV_MODE_TEST2:
-        break;
-        case MAV_MODE_TEST3:
-        break;
-    }
-
-    // Set mode on system
-    if (mode >= MAV_MODE_LOCKED && mode <= MAV_MODE_TEST3)
-    {
-        uasMode = mode;
+        uasMode = (unsigned int)MAV_MODE_LOCKED;
         ui.modeComboBox->setCurrentIndex(mode);
     }
-    qDebug() << "SET MODE REQUESTED" << mode;
+    else if (mode == CONTROL_MODE_MANUAL_INDEX)
+    {
+        uasMode = (unsigned int)MAV_MODE_MANUAL;
+        ui.modeComboBox->setCurrentIndex(mode);
+    }
+    else if (mode == CONTROL_MODE_GUIDED_INDEX)
+    {
+        uasMode = (unsigned int)MAV_MODE_GUIDED;
+        ui.modeComboBox->setCurrentIndex(mode);
+    }
+    else if (mode == CONTROL_MODE_AUTO_INDEX)
+    {
+        uasMode = (unsigned int)MAV_MODE_AUTO;
+        ui.modeComboBox->setCurrentIndex(mode);
+    }
+    else if (mode == CONTROL_MODE_TEST1_INDEX)
+    {
+        uasMode = (unsigned int)MAV_MODE_TEST1;
+        ui.modeComboBox->setCurrentIndex(mode);
+    }
+    else
+    {
+        qDebug() << "ERROR! MODE NOT FOUND";
+        uasMode = 0;
+    }
+
+
+    qDebug() << "SET MODE REQUESTED" << uasMode;
 }
 
 void UASControlWidget::transmitMode()
 {
-    this->uas->setMode(uasMode);
+    if (uasMode != 0)
+    {
+        this->uas->setMode(uasMode);
+        ui.lastActionLabel->setText(QString("Set new mode for system %1").arg(uas->getUASName()));
+    }
 }
 
 void UASControlWidget::cycleContextButton()
@@ -139,12 +164,14 @@ void UASControlWidget::cycleContextButton()
             ui.controlButton->setText(tr("Stop Engine"));
             mav->setMode(MAV_MODE_MANUAL);
             mav->enable_motors();
+            ui.lastActionLabel->setText(QString("Enabled motors on %1").arg(uas->getUASName()));
             state++;
             break;
         case 1:
             ui.controlButton->setText(tr("Activate Engine"));
             mav->setMode(MAV_MODE_LOCKED);
             mav->disable_motors();
+            ui.lastActionLabel->setText(QString("Disabled motors on %1").arg(uas->getUASName()));
             state = 0;
             break;
         case 2:

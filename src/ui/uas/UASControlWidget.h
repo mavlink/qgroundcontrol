@@ -58,7 +58,7 @@ public slots:
 
 protected:
     UASInterface* uas;
-    int uasMode;
+    unsigned int uasMode;
 
 private:
     Ui::uasControl ui;

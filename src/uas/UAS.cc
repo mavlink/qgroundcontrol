@@ -159,42 +159,42 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (state.status != this->status)
                 {
                     statechanged = true;
-                    this->status = state.status;
+                    this->status = (int)state.status;
                     getStatusForCode((int)state.status, uasState, stateDescription);
                     emit statusChanged(this, uasState, stateDescription);
                     stateAudio = " changed status to " + uasState;
                 }
 
-                if (static_cast<unsigned int>(this->mode) != static_cast<unsigned int>(state.mode))
+                if (this->mode != static_cast<unsigned int>(state.mode))
                 {
                     modechanged = true;
-                    this->mode = state.mode;
+                    this->mode = static_cast<unsigned int>(state.mode);
                     QString mode;
 
-                    switch ((unsigned int)(state.mode))
+                    switch (state.mode)
                     {
-                    case MAV_MODE_LOCKED:
+                    case (uint8_t)MAV_MODE_LOCKED:
                         mode = "LOCKED MODE";
                         break;
-                    case MAV_MODE_MANUAL:
+                    case (uint8_t)MAV_MODE_MANUAL:
                         mode = "MANUAL MODE";
                         break;
-                    case MAV_MODE_AUTO:
+                    case (uint8_t)MAV_MODE_AUTO:
                         mode = "AUTO MODE";
                         break;
-                    case MAV_MODE_GUIDED:
+                    case (uint8_t)MAV_MODE_GUIDED:
                         mode = "GUIDED MODE";
                         break;
-                    case MAV_MODE_READY:
+                    case (uint8_t)MAV_MODE_READY:
                         mode = "READY";
                         break;
-                    case MAV_MODE_TEST1:
+                    case (uint8_t)MAV_MODE_TEST1:
                         mode = "TEST1 MODE";
                         break;
-                    case MAV_MODE_TEST2:
+                    case (uint8_t)MAV_MODE_TEST2:
                         mode = "TEST2 MODE";
                         break;
-                    case MAV_MODE_TEST3:
+                    case (uint8_t)MAV_MODE_TEST3:
                         mode = "TEST3 MODE";
                         break;
                     default:
@@ -324,14 +324,33 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_gps_raw_t pos;
                 mavlink_msg_gps_raw_decode(&message, &pos);
+
+                // SANITY CHECK
+                // only accept values in a realistic range
                // quint64 time = getUnixTime(pos.usec);
                 quint64 time = MG::TIME::getGroundTimeNow();
                 emit valueChanged(uasId, "lat", pos.lat, time);
                 emit valueChanged(uasId, "lon", pos.lon, time);
+                // Check for NaN
+                int alt = pos.alt;
+                if (alt != alt)
+                {
+                    alt = 0;
+                    emit textMessageReceived(uasId, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
+                }
                 emit valueChanged(uasId, "alt", pos.alt, time);
-                emit valueChanged(uasId, "speed", pos.v, time);
-                //qDebug() << "GOT GPS RAW";
-                emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
+                // Smaller than threshold and not NaN
+                if (pos.v < 1000000 && pos.v == pos.v)
+                {
+                    emit valueChanged(uasId, "speed", pos.v, time);
+                    //qDebug() << "GOT GPS RAW";
+                    emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
+                }
+                else
+                {
+                     emit textMessageReceived(uasId, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(pos.v));
+                }
+                emit globalPositionChanged(this, pos.lon, pos.lat, alt, time);
             }
             break;
         case MAVLINK_MSG_ID_GPS_STATUS:
@@ -454,13 +473,12 @@ quint64 UAS::getUnixTime(quint64 time)
 
 void UAS::setMode(int mode)
 {
-    if (mode >= MAV_MODE_LOCKED && mode <= MAV_MODE_TEST3)
+    if ((uint8_t)mode >= MAV_MODE_LOCKED && (uint8_t)mode <= MAV_MODE_TEST3)
     {
-        this->mode = mode;
         mavlink_message_t msg;
-        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, (unsigned char)mode);
+        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, (uint8_t)mode);
         sendMessage(msg);
-        qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << mode;
+        qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << (uint8_t)mode;
     }
 }
 
@@ -838,7 +856,7 @@ void UAS::launch()
 {
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(int)MAV_ACTION_LAUNCH);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(uint8_t)MAV_ACTION_LAUNCH);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
@@ -852,7 +870,7 @@ void UAS::enable_motors()
 {
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(int)MAV_ACTION_MOTORS_START);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(uint8_t)MAV_ACTION_MOTORS_START);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
@@ -866,7 +884,7 @@ void UAS::disable_motors()
 {
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(int)MAV_ACTION_MOTORS_STOP);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(uint8_t)MAV_ACTION_MOTORS_STOP);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
@@ -884,7 +902,7 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     manualYawAngle = yaw * yawScaling;
     manualThrust = thrust * thrustScaling;
 
-    if(mode == MAV_MODE_MANUAL)
+    if(mode == (int)MAV_MODE_MANUAL)
     {
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);

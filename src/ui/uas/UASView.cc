@@ -40,16 +40,26 @@ This file is part of the PIXHAWK project
 
 UASView::UASView(UASInterface* uas, QWidget *parent) :
         QWidget(parent),
+        startTime(0),
         timeRemaining(0),
+        chargeLevel(0),
+        uas(uas),
+        load(0),
         state("UNKNOWN"),
         stateDesc(tr("Unknown system state")),
         mode("MAV_MODE_UNKNOWN"),
         thrust(0),
         isActive(false),
+        x(0),
+        y(0),
+        z(0),
+        totalSpeed(0),
+        lat(0),
+        lon(0),
+        alt(0),
+        groundDistance(0),
         m_ui(new Ui::UASView)
 {
-    this->uas = uas;
-
     m_ui->setupUi(this);
 
     // Setup communication
@@ -316,8 +326,36 @@ void UASView::refresh()
     position = position.sprintf("%02.2f %02.2f %02.2f m", x, y, z);
     m_ui->positionLabel->setText(position);
     QString globalPosition;
-    globalPosition = globalPosition.sprintf("%02.2f %02.2f %02.2f m", lon, lat, alt);
+    QString latIndicator;
+    if (lat > 0)
+    {
+        latIndicator = "N";
+    }
+    else
+    {
+        latIndicator = "S";
+    }
+    QString lonIndicator;
+    if (lon > 0)
+    {
+        lonIndicator = "E";
+    }
+    else
+    {
+        lonIndicator = "W";
+    }
+    globalPosition = globalPosition.sprintf("%02.2f%s %02.2f%s %02.2f m", lon, lonIndicator.toStdString().c_str(), lat, latIndicator.toStdString().c_str(), alt);
     m_ui->gpsLabel->setText(globalPosition);
+
+    // Altitude
+    if (groundDistance == 0 && alt != 0)
+    {
+        m_ui->groundDistanceLabel->setText(QString("%1 m").arg(alt));
+    }
+    else
+    {
+        m_ui->groundDistanceLabel->setText(QString("%1 m").arg(groundDistance));
+    }
 
     // Speed
     QString speed;
