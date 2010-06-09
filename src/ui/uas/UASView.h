@@ -93,6 +93,7 @@ protected:
     float lat;
     float lon;
     float alt;
+    float groundDistance;
 
 
     void mouseDoubleClickEvent (QMouseEvent * event);

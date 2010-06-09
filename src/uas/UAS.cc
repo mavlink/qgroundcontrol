@@ -323,14 +323,33 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_gps_raw_t pos;
                 mavlink_msg_gps_raw_decode(&message, &pos);
+
+                // SANITY CHECK
+                // only accept values in a realistic range
                // quint64 time = getUnixTime(pos.usec);
                 quint64 time = MG::TIME::getGroundTimeNow();
                 emit valueChanged(uasId, "lat", pos.lat, time);
                 emit valueChanged(uasId, "lon", pos.lon, time);
+                // Check for NaN
+                int alt = pos.alt;
+                if (alt != alt)
+                {
+                    alt = 0;
+                    emit textMessageReceived(uasId, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
+                }
                 emit valueChanged(uasId, "alt", pos.alt, time);
-                emit valueChanged(uasId, "speed", pos.v, time);
-                //qDebug() << "GOT GPS RAW";
-                emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
+                // Smaller than threshold and not NaN
+                if (pos.v < 1000000 && pos.v == pos.v)
+                {
+                    emit valueChanged(uasId, "speed", pos.v, time);
+                    //qDebug() << "GOT GPS RAW";
+                    emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
+                }
+                else
+                {
+                     emit textMessageReceived(uasId, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(pos.v));
+                }
+                emit globalPositionChanged(this, pos.lon, pos.lat, alt, time);
             }
             break;
         case MAVLINK_MSG_ID_GPS_STATUS:
