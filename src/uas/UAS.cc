@@ -162,6 +162,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     this->status = (int)state.status;
                     getStatusForCode((int)state.status, uasState, stateDescription);
                     emit statusChanged(this, uasState, stateDescription);
+                    emit statusChanged(this->status);
                     stateAudio = " changed status to " + uasState;
                 }
 

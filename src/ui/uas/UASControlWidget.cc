@@ -55,7 +55,8 @@ This file is part of the PIXHAWK project
 #define CONTROL_MODE_TEST1_INDEX  6
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
-        uas(NULL)
+        uas(NULL),
+        engineOn(false)
 {
     ui.setupUi(this);
 
@@ -94,12 +95,37 @@ void UASControlWidget::setUAS(UASInterface* uas)
 
         ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
 
+        connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+
         this->uas = uas;
     }
 }
 
 UASControlWidget::~UASControlWidget() {
 
+}
+
+void UASControlWidget::updateMode(int uas,QString mode,QString description)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(mode);
+    Q_UNUSED(description);
+}
+
+void UASControlWidget::updateState(int state)
+{
+    switch (state)
+    {
+    case (int)MAV_STATE_ACTIVE:
+        engineOn = true;
+        ui.controlButton->setText(tr("Stop Engine"));
+        break;
+    case (int)MAV_STATE_STANDBY:
+        engineOn = false;
+        ui.controlButton->setText(tr("Activate Engine"));
+        break;
+    }
 }
 
 void UASControlWidget::setMode(int mode)
@@ -151,34 +177,26 @@ void UASControlWidget::transmitMode()
 
 void UASControlWidget::cycleContextButton()
 {
-    //switch(uas->getMode());
-    static int state = 0;
-
     UAS* mav = dynamic_cast<UAS*>(this->uas);
     if (mav)
     {
 
-        switch (state)
+        if (!engineOn)
         {
-        case 0:
             ui.controlButton->setText(tr("Stop Engine"));
             mav->setMode(MAV_MODE_MANUAL);
             mav->enable_motors();
             ui.lastActionLabel->setText(QString("Enabled motors on %1").arg(uas->getUASName()));
-            state++;
-            break;
-        case 1:
+        }
+        else
+        {
             ui.controlButton->setText(tr("Activate Engine"));
             mav->setMode(MAV_MODE_LOCKED);
             mav->disable_motors();
             ui.lastActionLabel->setText(QString("Disabled motors on %1").arg(uas->getUASName()));
-            state = 0;
-            break;
-        case 2:
-            //ui.controlButton->setText(tr("Force Landing"));
-            ui.controlButton->setText(tr("KILL VEHICLE"));
-            break;
         }
+            //ui.controlButton->setText(tr("Force Landing"));
+            //ui.controlButton->setText(tr("KILL VEHICLE"));
     }
 
 }
