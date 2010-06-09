@@ -53,12 +53,17 @@ public slots:
     void cycleContextButton();
     /** @brief Set the operation mode of the MAV */
     void setMode(int mode);
-    /** @brief Transmit the operation mode **/
+    /** @brief Transmit the operation mode */
     void transmitMode();
+    /** @brief Update the mode */
+    void updateMode(int uas,QString mode,QString description);
+    /** @brief Update state */
+    void updateState(int state);
 
 protected:
     UASInterface* uas;
     unsigned int uasMode;
+    bool engineOn;
 
 private:
     Ui::uasControl ui;
