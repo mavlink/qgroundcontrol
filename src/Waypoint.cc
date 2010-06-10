@@ -26,29 +26,21 @@ This file is part of the PIXHAWK project
  *   @brief Waypoint class
  *
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
+ *   @author Petri Tanskanen <mavteam@student.ethz.ch>
  *
  */
 
 #include "Waypoint.h"
 
-Waypoint::Waypoint(QString name, int id, double x, double y, double z, double yaw, bool autocontinue, bool current)
+Waypoint::Waypoint(quint16 id, float x, float y, float z, float yaw, bool autocontinue, bool current)
 {
     this->id = id;
-
     this->x = x;
     this->y = y;
     this->z = z;
-
     this->yaw = yaw;
     this->autocontinue = autocontinue;
     this->current = current;
-
-    this->name = name;
-}
-
-int Waypoint::getId()
-{
-    return id;
 }
 
 Waypoint::~Waypoint()
@@ -56,27 +48,27 @@ Waypoint::~Waypoint()
 
 }
 
-void Waypoint::setName(QString name)
+void Waypoint::setId(quint16 id)
 {
-    this->name = name;
+    this->id = id;
 }
 
-void Waypoint::setX(double x)
+void Waypoint::setX(float x)
 {
     this->x = x;
 }
 
-void Waypoint::setY(double y)
+void Waypoint::setY(float y)
 {
     this->y = y;
 }
 
-void Waypoint::setZ(double z)
+void Waypoint::setZ(float z)
 {
     this->z = z;
 }
 
-void Waypoint::setYaw(double yaw)
+void Waypoint::setYaw(float yaw)
 {
     this->yaw = yaw;
 }

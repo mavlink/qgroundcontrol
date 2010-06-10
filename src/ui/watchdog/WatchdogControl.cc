@@ -58,7 +58,7 @@ void WatchdogControl::updateWatchdog(int systemId, int watchdogId, unsigned int 
     // start the timeout timer
     //watchdog.timeoutTimer_.reset();
 
-    qDebug() << "WATCHDOG RECEIVED";
+    //qDebug() << "WATCHDOG RECEIVED";
     //qDebug() << "<-- received mavlink_watchdog_heartbeat_t " << msg->sysid << " / " << payload.watchdog_id << " / " << payload.process_count << std::endl;
 }
 

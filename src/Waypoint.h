@@ -26,6 +26,7 @@ This file is part of the PIXHAWK project
  *   @brief Waypoint class
  *
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
+ *   @author Petri Tanskanen <mavteam@student.ethz.ch>
  *
  */
 
@@ -38,35 +39,36 @@ This file is part of the PIXHAWK project
 class Waypoint : public QObject
 {
     Q_OBJECT
+
 public:
-    Waypoint(QString name, int id = 0, double x = 0.0f, double y = 0.0f, double z = 0.0f, double yaw = 0.0f, bool autocontinue = false, bool current = false);
+    Waypoint(quint16 id = 0, float x = 0.0f, float y = 0.0f, float z = 0.0f, float yaw = 0.0f, bool autocontinue = false, bool current = false);
     ~Waypoint();
 
-    int getId();
+    quint16 getId() const { return id; }
+    float getX() const { return x; }
+    float getY() const { return y; }
+    float getZ() const { return z; }
+    float getYaw() const { return yaw; }
+    bool getAutoContinue() const { return autocontinue; }
+    bool getCurrent() const { return current; }
 
-    int id;
-
-    double x;
-    double y;
-    double z;
-
-    double yaw;
+private:
+    quint16 id;
+    float x;
+    float y;
+    float z;
+    float yaw;
     bool autocontinue;
     bool current;
 
-    QString name;
-
-
 public slots:
-    void setName(QString name);
-    void setX(double x);
-    void setY(double y);
-    void setZ(double z);
-    void setYaw(double yaw);
+    void setId(quint16 id);
+    void setX(float x);
+    void setY(float y);
+    void setZ(float z);
+    void setYaw(float yaw);
     void setAutocontinue(bool autoContinue);
     void setCurrent(bool current);
-
-
 };
 
 #endif // WAYPOINT_H

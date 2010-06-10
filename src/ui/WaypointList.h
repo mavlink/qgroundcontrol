@@ -27,6 +27,7 @@ This file is part of the PIXHAWK project
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
+ *   @author Petri Tanskanen <mavteam@student.ethz.ch>
  *
  */
 
@@ -65,6 +66,9 @@ public slots:
     void moveUp(Waypoint* wp);
     void moveDown(Waypoint* wp);
     void setCurrentWaypoint(Waypoint* wp);
+
+    /** @brief sets statusLabel string */
+    void updateStatusLabel(const QString &string);
 
     //To be moved to UASWaypointManager (?)
     void setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current);

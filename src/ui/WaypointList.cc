@@ -27,6 +27,7 @@ This file is part of the PIXHAWK project
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
+ *   @author Petri Tanskanen <mavteam@student.ethz.ch>
  *
  */
 
@@ -74,6 +75,9 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
     connect(transmitDelay, SIGNAL(timeout()), this, SLOT(reenableTransmit()));
 
+    // STATUS LABEL
+    updateStatusLabel("");
+
     // SET UAS AFTER ALL SIGNALS/SLOTS ARE CONNECTED
     setUAS(uas);
 }
@@ -81,6 +85,11 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
 WaypointList::~WaypointList()
 {
     delete m_ui;
+}
+
+void WaypointList::updateStatusLabel(const QString &string)
+{
+    m_ui->statusLabel->setText(string);
 }
 
 void WaypointList::setUAS(UASInterface* uas)
@@ -95,10 +104,12 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(this, SIGNAL(requestWaypoints()),           &uas->getWaypointManager(), SLOT(requestWaypoints()));
         connect(this, SIGNAL(clearWaypointList()),          &uas->getWaypointManager(), SLOT(clearWaypointList()));
 
+        connect(&uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)), this, SLOT(updateStatusLabel(const QString &)));
+
         // This slot is not implemented in UAS: connect(this, SIGNAL(removeWaypointId(int)), uas, SLOT(removeWaypoint(Waypoint*)));
 
-        qDebug() << "Requesting waypoints";
-        emit requestWaypoints();
+        //qDebug() << "Requesting waypoints";
+        //emit requestWaypoints();
     }
 }
 
@@ -114,7 +125,7 @@ void WaypointList::setWaypoint(int uasId, int id, double x, double y, double z, 
             string = waypointNames.value(id);
         }
 
-        Waypoint* wp = new Waypoint(string, id, x, y, z, yaw, autocontinue, current);
+        Waypoint* wp = new Waypoint(id, x, y, z, yaw, autocontinue, current);
         addWaypoint(wp);
     }
 }
@@ -122,7 +133,9 @@ void WaypointList::setWaypoint(int uasId, int id, double x, double y, double z, 
 void WaypointList::waypointReached(UASInterface* uas, int waypointId)
 {
     Q_UNUSED(uas);
-    if (waypoints.size() > waypointId)
+    qDebug() << "Waypoint reached: " << waypointId;
+
+    /*if (waypoints.size() > waypointId)
     {
         if (waypoints[waypointId]->autocontinue == true)
         {
@@ -149,7 +162,7 @@ void WaypointList::waypointReached(UASInterface* uas, int waypointId)
 
             qDebug() << "NEW WAYPOINT SET";
         }
-    }
+    }*/
 }
 
 void WaypointList::transmit()
@@ -160,12 +173,13 @@ void WaypointList::transmit()
     waypointNames.clear();
     for(int i = 0; i < waypoints.size(); i++)
     {
-        Waypoint* wp = waypoints[i];
-        waypointNames.insert(wp->id, wp->name);
+        //Waypoint* wp = waypoints[i];
+        /*waypointNames.insert(wp->id, wp->name);
         emit waypointChanged(wp);
         if (wp->current)
-            emit currentWaypointChanged(wp->id);
+            emit currentWaypointChanged(wp->id);*/
     }
+
     while(waypoints.size()>0)
     {
         removeWaypoint(waypoints[0]);
@@ -180,11 +194,11 @@ void WaypointList::add()
     {
         if (waypoints.size() > 0)
         {
-            addWaypoint(new Waypoint("New waypoint", waypoints.size(), 0.0, 0.1, -0.5, 0.0, false, false));
+            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.1, -0.5, 0.0, false, false));
         }
         else
         {
-            addWaypoint(new Waypoint("New waypoint", waypoints.size(), 0.0, 0.0, -0.5, 360.0, false, true));
+            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.0, -0.5, 360.0, false, true));
         }
     }
 }
@@ -196,7 +210,7 @@ void WaypointList::addWaypoint(Waypoint* wp)
         removeWaypoint(wp);
     }
 
-    waypoints.insert(wp->id, wp);
+    waypoints.insert(wp->getId(), wp);
 
     if (!wpViews.contains(wp))
     {
@@ -231,17 +245,9 @@ void WaypointList::redrawList()
     }
 }
 
-void WaypointList::debugOutputWaypoints()
-{
-    for (int i = 0; i < waypoints.size(); i++)
-    {
-        qDebug() << i << " " << waypoints[i]->name;
-    }
-}
-
 void WaypointList::moveUp(Waypoint* wp)
 {
-    int id = wp->id;
+    int id = wp->getId();
     if (waypoints.size() > 1 && waypoints.size() > id)
     {
         Waypoint* temp = waypoints[id];
@@ -249,15 +255,15 @@ void WaypointList::moveUp(Waypoint* wp)
         {
             waypoints[id] = waypoints[id-1];
             waypoints[id-1] = temp;
-            waypoints[id-1]->id = id-1;
-            waypoints[id]->id = id;
+            waypoints[id-1]->setId(id-1);
+            waypoints[id]->setId(id);
         }
         else
         {
             waypoints[id] = waypoints[waypoints.size()-1];
             waypoints[waypoints.size()-1] = temp;
-            waypoints[waypoints.size()-1]->id = waypoints.size()-1;
-            waypoints[id]->id = id;
+            waypoints[waypoints.size()-1]->setId(waypoints.size()-1);
+            waypoints[id]->setId(id);
         }
         redrawList();
     }
@@ -265,7 +271,7 @@ void WaypointList::moveUp(Waypoint* wp)
 
 void WaypointList::moveDown(Waypoint* wp)
 {
-    int id = wp->id;
+    int id = wp->getId();
     if (waypoints.size() > 1 && waypoints.size() > id)
     {
         Waypoint* temp = waypoints[id];
@@ -273,15 +279,15 @@ void WaypointList::moveDown(Waypoint* wp)
         {
             waypoints[id] = waypoints[id+1];
             waypoints[id+1] = temp;
-            waypoints[id+1]->id = id+1;
-            waypoints[id]->id = id;
+            waypoints[id+1]->setId(id+1);
+            waypoints[id]->setId(id);
         }
         else
         {
             waypoints[id] = waypoints[0];
             waypoints[0] = temp;
-            waypoints[0]->id = 0;
-            waypoints[id]->id = id;
+            waypoints[0]->setId(0);
+            waypoints[id]->setId(id);
         }
         redrawList();
     }
@@ -289,7 +295,7 @@ void WaypointList::moveDown(Waypoint* wp)
 
 void WaypointList::removeWaypointAndName(Waypoint* wp)
 {
-    waypointNames.remove(wp->id);
+    waypointNames.remove(wp->getId());
     removeWaypoint(wp);
 }
 
@@ -297,10 +303,10 @@ void WaypointList::removeWaypoint(Waypoint* wp)
 {
     // Delete from list
     if (wp != NULL){
-        waypoints.remove(wp->id);
-        for(int i = wp->id; i < waypoints.size(); i++)
+        waypoints.remove(wp->getId());
+        for(int i = wp->getId(); i < waypoints.size(); i++)
         {
-            waypoints[i]->id = i;
+            waypoints[i]->setId(i);
         }
 
         // Remove from view
@@ -318,15 +324,15 @@ void WaypointList::setCurrentWaypoint(Waypoint* wp)
     {
         if (waypoints[i] == wp)
         {
-            waypoints[i]->current = true;
+            waypoints[i]->setCurrent(true);
             // Retransmit waypoint
             //uas->getWaypointManager().setWaypointActive(i);
         }
         else
         {
-            if (waypoints[i]->current)
+            if (waypoints[i]->getCurrent())
             {
-                waypoints[i]->current = false;
+                waypoints[i]->setCurrent(false);
                 WaypointView* widget = wpViews.find(waypoints[i]).value();
                 widget->removeCurrentCheck();
             }
@@ -361,7 +367,7 @@ void WaypointList::saveWaypoints()
     for (int i = 0; i < waypoints.size(); i++)
     {
         Waypoint* wp = waypoints[i];
-        in << wp->name << "~" << wp->id << "~" << wp->x << "~" << wp->y << "~" << wp->z << "~" << wp->yaw << "~" << wp->autocontinue << "~" << wp->current << "\n";
+        in << "~" << wp->getId() << "~" << wp->getX() << "~" << wp->getY()  << "~" << wp->getZ()  << "~" << wp->getYaw()  << "~" << wp->getAutoContinue() << "~" << wp->getCurrent() << "\n";
         in.flush();
     }
     file.close();
@@ -384,7 +390,7 @@ void WaypointList::loadWaypoints()
     {
         QStringList wpParams = in.readLine().split("~");
         if (wpParams.size() == 8)
-            addWaypoint(new Waypoint(wpParams[0], wpParams[1].toInt(), wpParams[2].toDouble(), wpParams[3].toDouble(), wpParams[4].toDouble(), wpParams[5].toDouble(), (wpParams[6].toInt() == 1 ? true : false), (wpParams[7].toInt() == 1 ? true : false)));
+            addWaypoint(new Waypoint(wpParams[1].toInt(), wpParams[2].toDouble(), wpParams[3].toDouble(), wpParams[4].toDouble(), wpParams[5].toDouble(), (wpParams[6].toInt() == 1 ? true : false), (wpParams[7].toInt() == 1 ? true : false)));
     }
     file.close();
 }
