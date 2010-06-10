@@ -183,7 +183,7 @@ void Core::startUASManager()
 #endif
     pluginsDir.cd("plugins");
 
-    UASManager* m = UASManager::instance();
+    UASManager::instance();
 
     // Load plugins
 
@@ -197,7 +197,7 @@ void Core::startUASManager()
         {
             //populateMenus(plugin);
             pluginFileNames += fileName;
-            printf(QString("Loaded plugin from " + fileName + "\n").toStdString().c_str());
+            //printf(QString("Loaded plugin from " + fileName + "\n").toStdString().c_str());
         }
     }
 }
