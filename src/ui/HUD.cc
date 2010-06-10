@@ -1170,6 +1170,8 @@ void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRat
 
 void HUD::drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter)
 {
+    Q_UNUSED(maxWidth);
+    Q_UNUSED(maxHeight);
     if (values.size() > 0)
     {
         QString selectedKey = values.begin().key();
@@ -1298,6 +1300,8 @@ void HUD::drawLine(float refX1, float refY1, float refX2, float refY2, float wid
 
 void HUD::drawEllipse(float refX, float refY, float radiusX, float radiusY, float startDeg, float endDeg, float lineWidth, const QColor& color, QPainter* painter)
 {
+    Q_UNUSED(startDeg);
+    Q_UNUSED(endDeg);
     QPen pen(painter->pen().style());
     pen.setWidth(refLineWidthToPen(lineWidth));
     pen.setColor(color);
