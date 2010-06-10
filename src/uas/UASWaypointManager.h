@@ -2,6 +2,7 @@
 #define UASWAYPOINTMANAGER_H
 
 #include <QObject>
+#include <QVector>
 #include "Waypoint.h"
 #include <mavlink.h>
 class UAS;
@@ -26,26 +27,29 @@ public:
     void handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_waypoint_request_t *wpr);
 
 private:
-    void getWaypoint(quint16 seq);
+    void sendWaypointRequest(quint16 seq);
 
 public slots:
     void clearWaypointList();
     void currentWaypointChanged(int);
     void removeWaypointId(int);
     void requestWaypoints();
-    void sendWaypoints(void);
+    void sendWaypoints(const QVector<Waypoint *> &list);
     void waypointChanged(Waypoint*);
 
 signals:
-    void waypointUpdated(int,int,double,double,double,double,bool,bool);
+    void waypointUpdated(int,int,double,double,double,double,bool,bool);    ///< Adds a waypoint to the waypoint list widget
+    void updateStatusString(const QString &);                         ///< updates the current status string
 
 private:
-    UAS &uas;
-    quint16 current_wp_id;                 ///< The last used waypoint ID
-    quint16 current_count;
-    WaypointState current_state;        ///< The current state
-    quint8 current_partner_systemid;
-    quint8 current_partner_compid;
+    UAS &uas;                                       ///< Reference to the corresponding UAS
+    quint16 current_wp_id;                          ///< The last used waypoint ID in the current protocol transaction
+    quint16 current_count;                          ///< The number of waypoints in the current protocol transaction
+    WaypointState current_state;                    ///< The current protocol state
+    quint8 current_partner_systemid;                ///< The current protocol communication target system
+    quint8 current_partner_compid;                  ///< The current protocol communication target component
+
+    QVector<mavlink_waypoint_t *> waypoint_buffer;  ///< communication buffer for waypoints
 };
 
 #endif // UASWAYPOINTMANAGER_H
