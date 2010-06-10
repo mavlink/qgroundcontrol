@@ -193,6 +193,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 
 void MapWidget::updatePosition(float time, double lat, double lon)
 {
+    Q_UNUSED(time);
     //gpsposition->setText(QString::number(time) + " / " + QString::number(lat) + " / " + QString::number(lon));
     if (followgps->isChecked())
     {
