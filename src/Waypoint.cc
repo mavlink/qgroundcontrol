@@ -82,3 +82,23 @@ void Waypoint::setCurrent(bool current)
 {
     this->current = current;
 }
+
+void Waypoint::setX(double x)
+{
+    this->x = x;
+}
+
+void Waypoint::setY(double y)
+{
+    this->y = y;
+}
+
+void Waypoint::setZ(double z)
+{
+    this->z = z;
+}
+
+void Waypoint::setYaw(double yaw)
+{
+    this->yaw = yaw;
+}

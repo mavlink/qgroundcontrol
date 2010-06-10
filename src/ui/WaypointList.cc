@@ -97,12 +97,12 @@ void WaypointList::setUAS(UASInterface* uas)
     if (this->uas == NULL && uas != NULL)
     {
         this->uas = uas;
-        connect(&uas->getWaypointManager(), SIGNAL(waypointUpdated(int,int,double,double,double,double,bool,bool)), this, SLOT(setWaypoint(int,int,double,double,double,double,bool,bool)));
-        connect(&uas->getWaypointManager(), SIGNAL(waypointReached(UASInterface*,int)), this, SLOT(waypointReached(UASInterface*,int)));
-        connect(this, SIGNAL(waypointChanged(Waypoint*)),   &uas->getWaypointManager(), SLOT(setWaypoint(Waypoint*)));
-        connect(this, SIGNAL(currentWaypointChanged(int)),  &uas->getWaypointManager(), SLOT(setWaypointActive(int)));
-        connect(this, SIGNAL(requestWaypoints()),           &uas->getWaypointManager(), SLOT(requestWaypoints()));
-        connect(this, SIGNAL(clearWaypointList()),          &uas->getWaypointManager(), SLOT(clearWaypointList()));
+        connect(&uas->getWaypointManager(), SIGNAL(waypointUpdated(int,quint16,double,double,double,double,bool,bool)), this, SLOT(setWaypoint(int,quint16,double,double,double,double,bool,bool)));
+        //connect(this, SIGNAL(waypointChanged(Waypoint*)),   &uas->getWaypointManager(), SLOT(setWaypoint(Waypoint*)));
+        //connect(this, SIGNAL(currentWaypointChanged(int)),  &uas->getWaypointManager(), SLOT(setWaypointActive(quint16)));
+        connect(this, SIGNAL(sendWaypoints(const QVector<Waypoint*> &)),    &uas->getWaypointManager(), SLOT(sendWaypoints(const QVector<Waypoint*> &)));
+        connect(this, SIGNAL(requestWaypoints()),                           &uas->getWaypointManager(), SLOT(requestWaypoints()));
+        connect(this, SIGNAL(clearWaypointList()),                          &uas->getWaypointManager(), SLOT(clearWaypointList()));
 
         connect(&uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)), this, SLOT(updateStatusLabel(const QString &)));
 
@@ -113,24 +113,17 @@ void WaypointList::setUAS(UASInterface* uas)
     }
 }
 
-void WaypointList::setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current)
+void WaypointList::setWaypoint(int uasId, quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current)
 {
     if (uasId == this->uas->getUASID())
     {
         transmitDelay->start(1000);
-        QString string = "New waypoint";
-
-        if (waypointNames.contains(id))
-        {
-            string = waypointNames.value(id);
-        }
-
         Waypoint* wp = new Waypoint(id, x, y, z, yaw, autocontinue, current);
         addWaypoint(wp);
     }
 }
 
-void WaypointList::waypointReached(UASInterface* uas, int waypointId)
+void WaypointList::waypointReached(UASInterface* uas, quint16 waypointId)
 {
     Q_UNUSED(uas);
     qDebug() << "Waypoint reached: " << waypointId;
@@ -170,15 +163,16 @@ void WaypointList::transmit()
     transmitDelay->start(1000);
     m_ui->transmitButton->setEnabled(false);
     emit clearWaypointList();
-    waypointNames.clear();
+
     for(int i = 0; i < waypoints.size(); i++)
     {
         //Waypoint* wp = waypoints[i];
-        /*waypointNames.insert(wp->id, wp->name);
-        emit waypointChanged(wp);
-        if (wp->current)
-            emit currentWaypointChanged(wp->id);*/
+        //emit waypointChanged(wp);
+        //if (wp->current)
+        //    emit currentWaypointChanged(wp->id);
     }
+
+    emit sendWaypoints(waypoints);
 
     while(waypoints.size()>0)
     {
@@ -219,7 +213,7 @@ void WaypointList::addWaypoint(Waypoint* wp)
         listLayout->addWidget(wpViews.value(wp));
         connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)), this, SLOT(moveDown(Waypoint*)));
         connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)), this, SLOT(moveUp(Waypoint*)));
-        connect(wpview, SIGNAL(removeWaypoint(Waypoint*)), this, SLOT(removeWaypointAndName(Waypoint*)));
+        connect(wpview, SIGNAL(removeWaypoint(Waypoint*)), this, SLOT(removeWaypoint(Waypoint*)));
         connect(wpview, SIGNAL(setCurrentWaypoint(Waypoint*)), this, SLOT(setCurrentWaypoint(Waypoint*)));
         connect(wpview, SIGNAL(waypointUpdated(Waypoint*)), this, SIGNAL(waypointChanged(Waypoint*)));
     }
@@ -293,11 +287,10 @@ void WaypointList::moveDown(Waypoint* wp)
     }
 }
 
-void WaypointList::removeWaypointAndName(Waypoint* wp)
+/*void WaypointList::removeWaypointAndName(Waypoint* wp)
 {
-    waypointNames.remove(wp->getId());
     removeWaypoint(wp);
-}
+}*/
 
 void WaypointList::removeWaypoint(Waypoint* wp)
 {
@@ -382,7 +375,7 @@ void WaypointList::loadWaypoints()
 
     while(waypoints.size()>0)
     {
-        removeWaypointAndName(waypoints[0]);
+        removeWaypoint(waypoints[0]);
     }
 
     QTextStream in(&file);

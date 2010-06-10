@@ -69,6 +69,12 @@ public slots:
     void setYaw(float yaw);
     void setAutocontinue(bool autoContinue);
     void setCurrent(bool current);
+
+    //for QDoubleSpin
+    void setX(double x);
+    void setY(double y);
+    void setZ(double z);
+    void setYaw(double yaw);
 };
 
 #endif // WAYPOINT_H
