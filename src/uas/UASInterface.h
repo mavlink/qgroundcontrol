@@ -302,6 +302,7 @@ signals:
     void heartbeat(UASInterface* uas);
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
     void attitudeThrustSetPointChanged(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
+    void positionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
     void globalPositionChanged(UASInterface*, double lat, double lon, double alt, quint64 usec);
     /** @brief Update the status of one satellite used for localization */

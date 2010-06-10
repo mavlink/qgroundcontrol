@@ -502,6 +502,8 @@ void SerialConfigurationWindow::setPortName(QString port)
 
 void SerialConfigurationWindow::setLinkName(QString name)
 {
+    Q_UNUSED(name);
+    // FIXME
     action->setText(tr("Configure ") + link->getName());
     action->setStatusTip(tr("Configure ") + link->getName());
     setWindowTitle(tr("Configuration of ") + link->getName());

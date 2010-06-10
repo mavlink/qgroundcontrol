@@ -49,11 +49,11 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         posXSet(0),
         posYSet(0),
         posZSet(0),
-        attXSaturation(0.33),
-        attYSaturation(0.33),
-        attYawSaturation(0.33),
-        posXSaturation(1.0),
-        posYSaturation(1.0),
+        attXSaturation(0.5f),
+        attYSaturation(0.5f),
+        attYawSaturation(0.5f),
+        posXSaturation(0.05),
+        posYSaturation(0.05),
         altitudeSaturation(1.0),
         lat(0),
         lon(0),
@@ -62,9 +62,11 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         x(0),
         y(0),
         z(0),
+        //yaw(0),
         localAvailable(0)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    refreshTimer->setInterval(80);
 }
 
 void HSIDisplay::paintEvent(QPaintEvent * event)
@@ -88,14 +90,14 @@ void HSIDisplay::paintDisplay()
     const float margin = 0.1f;  // 10% margin of total width on each side
     float baseRadius = (vwidth - vwidth * 2.0f * margin) / 2.0f;
 
-    quint64 refreshInterval = 100;
-    quint64 currTime = MG::TIME::getGroundTimeNow();
-    if (currTime - lastPaintTime < refreshInterval)
-    {
-        // FIXME Need to find the source of the spurious paint events
-        //return;
-    }
-    lastPaintTime = currTime;
+//    quint64 refreshInterval = 100;
+//    quint64 currTime = MG::TIME::getGroundTimeNow();
+//    if (currTime - lastPaintTime < refreshInterval)
+//    {
+//        // FIXME Need to find the source of the spurious paint events
+//        //return;
+//    }
+//    lastPaintTime = currTime;
     // Draw instruments
     // TESTING THIS SHOULD BE MOVED INTO A QGRAPHICSVIEW
     // Update scaling factor
@@ -138,7 +140,7 @@ void HSIDisplay::paintDisplay()
 
     // Draw attitude
     QColor attitudeColor(200, 20, 20);
-    drawPositionSetpoint(xCenterPos, yCenterPos, baseRadius, attitudeColor, &painter);
+    drawAttitudeSetpoint(xCenterPos, yCenterPos, baseRadius, attitudeColor, &painter);
 
 
 
@@ -196,6 +198,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
+    connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
 
     // Now connect the new UAS
 
@@ -217,10 +220,11 @@ void HSIDisplay::updateAttitudeSetpoints(UASInterface* uas, double rollDesired, 
     altitudeSet = thrustDesired;
 }
 
-void HSIDisplay::updatePositionSetpoints(int uasid, double xDesired, double yDesired, double zDesired, quint64 usec)
+void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec)
 {
     Q_UNUSED(usec);
     Q_UNUSED(uasid);
+    Q_UNUSED(yawDesired);
     posXSet = xDesired;
     posYSet = yDesired;
     posZSet = zDesired;
@@ -362,16 +366,21 @@ void HSIDisplay::drawPositionSetpoint(float xRef, float yRef, float radius, cons
     const float maxWidth = radius / 10.0f;
     const float minWidth = maxWidth * 0.3f;
 
-    float angle = asin(posXSet) + acos(posYSet);
+    float angle = atan2(posXSet, -posYSet);
+    angle -= M_PI/2.0f;
 
     QPolygonF p(6);
 
-    p.replace(0, QPointF(xRef-maxWidth/2.0f, yRef-radius * 0.5f));
+    //radius *= ((posXSaturation + posYSaturation) - sqrt(pow(posXSet, 2), pow(posYSet, 2))) / (2*posXSaturation);
+
+    radius *= sqrt(pow(posXSet, 2) + pow(posYSet, 2)) / sqrt(posXSaturation + posYSaturation);
+
+    p.replace(0, QPointF(xRef-maxWidth/2.0f, yRef-radius * 0.4f));
     p.replace(1, QPointF(xRef-minWidth/2.0f, yRef-radius * 0.9f));
     p.replace(2, QPointF(xRef+minWidth/2.0f, yRef-radius * 0.9f));
-    p.replace(3, QPointF(xRef+maxWidth/2.0f, yRef-radius * 0.5f));
-    p.replace(4, QPointF(xRef,               yRef-radius * 0.46f));
-    p.replace(5, QPointF(xRef-maxWidth/2.0f, yRef-radius * 0.5f));
+    p.replace(3, QPointF(xRef+maxWidth/2.0f, yRef-radius * 0.4f));
+    p.replace(4, QPointF(xRef,               yRef-radius * 0.36f));
+    p.replace(5, QPointF(xRef-maxWidth/2.0f, yRef-radius * 0.4f));
 
     rotatePolygonClockWiseRad(p, angle, QPointF(xRef, yRef));
 
@@ -382,6 +391,8 @@ void HSIDisplay::drawPositionSetpoint(float xRef, float yRef, float radius, cons
     painter->setPen(color);
     painter->setBrush(indexBrush);
     drawPolygon(p, painter);
+
+    qDebug() << "DRAWING POS SETPOINT X:" << posXSet << "Y:" << posYSet << angle;
 }
 
 void HSIDisplay::drawAttitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter)
@@ -390,16 +401,19 @@ void HSIDisplay::drawAttitudeSetpoint(float xRef, float yRef, float radius, cons
     const float maxWidth = radius / 10.0f;
     const float minWidth = maxWidth * 0.3f;
 
-    float angle = asin(attXSet) + acos(attYSet);
+    float angle = atan2(attXSet, attYSet);
+    angle -= M_PI/2.0f;
+
+    radius *= sqrt(pow(attXSet, 2) + pow(attYSet, 2)) / sqrt(attXSaturation + attYSaturation);
 
     QPolygonF p(6);
 
-    p.replace(0, QPointF(xRef-maxWidth/2.0f, yRef-radius * 0.5f));
+    p.replace(0, QPointF(xRef-maxWidth/2.0f, yRef-radius * 0.4f));
     p.replace(1, QPointF(xRef-minWidth/2.0f, yRef-radius * 0.9f));
     p.replace(2, QPointF(xRef+minWidth/2.0f, yRef-radius * 0.9f));
-    p.replace(3, QPointF(xRef+maxWidth/2.0f, yRef-radius * 0.5f));
-    p.replace(4, QPointF(xRef,               yRef-radius * 0.46f));
-    p.replace(5, QPointF(xRef-maxWidth/2.0f, yRef-radius * 0.5f));
+    p.replace(3, QPointF(xRef+maxWidth/2.0f, yRef-radius * 0.4f));
+    p.replace(4, QPointF(xRef,               yRef-radius * 0.36f));
+    p.replace(5, QPointF(xRef-maxWidth/2.0f, yRef-radius * 0.4f));
 
     rotatePolygonClockWiseRad(p, angle, QPointF(xRef, yRef));
 
@@ -412,6 +426,8 @@ void HSIDisplay::drawAttitudeSetpoint(float xRef, float yRef, float radius, cons
     drawPolygon(p, painter);
 
     // TODO Draw Yaw indicator
+
+    qDebug() << "DRAWING ATT SETPOINT X:" << attXSet << "Y:" << attYSet << angle;
 }
 
 void HSIDisplay::drawAltitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter)

@@ -83,7 +83,7 @@ void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, m
     {
         qDebug() << "handleWaypointRequest";
 
-        if (wpr->seq < 0)
+        if (wpr->seq > 0)
         {
             //TODO: send waypoint
         }

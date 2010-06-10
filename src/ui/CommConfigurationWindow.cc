@@ -141,6 +141,7 @@ QAction* CommConfigurationWindow::getAction()
 void CommConfigurationWindow::setLinkType(int linktype)
 {
     // Adjust the form layout per link type
+    Q_UNUSED(linktype);
 }
 
 void CommConfigurationWindow::setConnection()
@@ -157,6 +158,7 @@ void CommConfigurationWindow::setConnection()
 
 void CommConfigurationWindow::setLinkName(QString name)
 {
+    Q_UNUSED(name); // FIXME
     action->setText(tr("Configure ") + link->getName());
     action->setStatusTip(tr("Configure ") + link->getName());
     this->window()->setWindowTitle(tr("Settings for ") + this->link->getName());
