@@ -27,6 +27,7 @@ This file is part of the PIXHAWK project
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
+ *   @author Petri Tanskanen <mavteam@student.ethz.ch>
  *
  */
 
@@ -56,7 +57,7 @@ public slots:
     void remove();
     void setAutoContinue(int);
     void setCurrent();
-    void setText();
+    //void setText();
 
 protected:
     virtual void changeEvent(QEvent *e);

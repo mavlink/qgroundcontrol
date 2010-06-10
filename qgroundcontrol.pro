@@ -3,9 +3,9 @@
 # from http://github.com/pixhawk/qmapcontrol/
 # over bundled version in lib directory
 # Version from GIT repository is preferred
-include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
+#include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
 # Include bundled version if necessary
-#include(lib/QMapControl/QMapControl.pri)
+include(lib/QMapControl/QMapControl.pri)
 #message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
 
 

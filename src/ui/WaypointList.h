@@ -27,6 +27,7 @@ This file is part of the PIXHAWK project
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
+ *   @author Petri Tanskanen <mavteam@student.ethz.ch>
  *
  */
 
@@ -66,18 +67,19 @@ public slots:
     void moveDown(Waypoint* wp);
     void setCurrentWaypoint(Waypoint* wp);
 
+    /** @brief sets statusLabel string */
+    void updateStatusLabel(const QString &string);
+
     //To be moved to UASWaypointManager (?)
-    void setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current);
+    void setWaypoint(int uasId, quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current);
     void addWaypoint(Waypoint* wp);
-    void removeWaypointAndName(Waypoint* wp);
-    void waypointReached(UASInterface* uas, int waypointId);
+    void removeWaypoint(Waypoint* wp);
+    void waypointReached(UASInterface* uas, quint16 waypointId);
 
 protected:
     virtual void changeEvent(QEvent *e);
-    void debugOutputWaypoints();
 
     QVector<Waypoint*> waypoints;
-    QMap<int, QString> waypointNames;
     QMap<Waypoint*, WaypointView*> wpViews;
     QVBoxLayout* listLayout;
     QTimer* transmitDelay;
@@ -85,12 +87,12 @@ protected:
 
 private:
     Ui::WaypointList *m_ui;
-    void removeWaypoint(Waypoint* wp);
 
 signals:
-    void waypointChanged(Waypoint*);
-    void currentWaypointChanged(int);
-    void removeWaypointId(int);
+    //void waypointChanged(Waypoint*);
+    //void currentWaypointChanged(int);
+    //void removeWaypointId(int);
+    void sendWaypoints(const QVector<Waypoint*> &);
     void requestWaypoints();
     void clearWaypointList();
 };

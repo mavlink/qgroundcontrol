@@ -155,7 +155,7 @@ QProgressBar::chunk#thrustBar {
      <property name="title">
       <string/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,25,5,0,0,0,0,0,0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,5,0,0,0,0,0,0,0,0">
       <property name="spacing">
        <number>2</number>
       </property>
@@ -179,9 +179,9 @@ QProgressBar::chunk#thrustBar {
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="name">
+       <widget class="QLabel" name="idLabel">
         <property name="text">
-         <string>Name</string>
+         <string>TextLabel</string>
         </property>
        </widget>
       </item>

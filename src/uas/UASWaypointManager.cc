@@ -15,22 +15,13 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
 {
     if (current_state == WP_GETLIST && systemId == current_partner_systemid && compId == current_partner_compid)
     {
-        qDebug() << "handleWaypointCount";
+        qDebug() << "got waypoint count (" << count << ") from ID " << systemId;
 
         current_count = count;
-
-        mavlink_message_t message;
-        mavlink_waypoint_request_t wpr;
-
-        wpr.target_system = uas.getUASID();
-        wpr.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
-        wpr.seq = 0;
-
         current_wp_id = 0;
         current_state = WP_GETLIST_GETWPS;
 
-        mavlink_msg_waypoint_request_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpr);
-        uas.sendMessage(message);
+        sendWaypointRequest(current_wp_id);
     }
 }
 
@@ -38,7 +29,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 {
     if (systemId == current_partner_systemid && compId == current_partner_compid && current_state == WP_GETLIST_GETWPS && wp->seq == current_wp_id)
     {
-        qDebug() << "handleWaypoint";
+        qDebug() << "got waypoint (" << wp->seq << ") from ID " << systemId;
 
         if(wp->seq == current_wp_id)
         {
@@ -50,15 +41,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
             if(current_wp_id < current_count)
             {
-                mavlink_message_t message;
-                mavlink_waypoint_request_t wpr;
-
-                wpr.target_system = uas.getUASID();
-                wpr.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
-                wpr.seq = current_wp_id;
-
-                mavlink_msg_waypoint_request_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpr);
-                uas.sendMessage(message);
+                sendWaypointRequest(current_wp_id);
             }
             else
             {
@@ -68,6 +51,10 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
                 current_wp_id = 0;
                 current_partner_systemid = 0;
                 current_partner_compid = 0;
+
+                emit updateStatusString("done.");
+
+                qDebug() << "got all waypoints from from ID " << systemId;
             }
         }
         else
@@ -83,7 +70,7 @@ void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, m
     {
         qDebug() << "handleWaypointRequest";
 
-        if (wpr->seq > 0)
+        if (wpr->seq < waypoint_buffer.count())
         {
             //TODO: send waypoint
         }
@@ -99,12 +86,12 @@ void UASWaypointManager::clearWaypointList()
 
 }
 
-void UASWaypointManager::currentWaypointChanged(int)
+void UASWaypointManager::currentWaypointChanged(quint16)
 {
 
 }
 
-void UASWaypointManager::removeWaypointId(int)
+void UASWaypointManager::removeWaypointId(quint16)
 {
 
 }
@@ -113,7 +100,6 @@ void UASWaypointManager::requestWaypoints()
 {
     if(current_state == WP_IDLE)
     {
-        qDebug() << "requestWaypoints";
         mavlink_message_t message;
         mavlink_waypoint_request_list_t wprl;
 
@@ -125,27 +111,80 @@ void UASWaypointManager::requestWaypoints()
         current_partner_systemid = uas.getUASID();
         current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
 
+        qDebug() << "sent waypoint list request to ID " << wprl.target_system;
+
+        const QString str = QString("requesting waypoint list...");
+        emit updateStatusString(str);
+
         mavlink_msg_waypoint_request_list_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wprl);
-        uas.sendMessage(message);
+        uas.sendMessage(message);        
     }
 }
 
-void UASWaypointManager::sendWaypoints(void)
+void UASWaypointManager::sendWaypoints(const QVector<Waypoint*> &list)
 {
-    mavlink_message_t message;
-    mavlink_waypoint_count_t wpc;
+    if (current_state == WP_IDLE)
+    {
+        current_count = list.count();
+        current_state = WP_SENDLIST;
+        current_wp_id = 0;
 
-    wpc.target_system = uas.getUASID();
-    wpc.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
-    wpc.count = 0;  //TODO
+        //copy waypoint data to local buffer
+        for (int i=0; i < current_count; i++)
+        {
+            waypoint_buffer.push_back(new mavlink_waypoint_t);
+            mavlink_waypoint_t *cur_d = waypoint_buffer.back();
+            memset(cur_d, 0, sizeof(mavlink_waypoint_t));   //initialize with zeros
+            const Waypoint *cur_s = list.at(i);
 
-    mavlink_msg_waypoint_count_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpc);
-    uas.sendMessage(message);
+           cur_d->autocontinue = cur_s->getAutoContinue();
+           cur_d->current = cur_s->getCurrent();
+           cur_d->seq = i;
+           cur_d->x = cur_s->getX();
+           cur_d->y = cur_s->getY();
+           cur_d->z = cur_s->getZ();
+           cur_d->yaw = cur_s->getYaw();
+        }
+
+        //send the waypoint count to UAS (this starts the send transaction)
+        mavlink_message_t message;
+        mavlink_waypoint_count_t wpc;
+
+        wpc.target_system = uas.getUASID();
+        wpc.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+        wpc.count = current_count;
+
+        qDebug() << "sent waypoint count (" << wpc.count << ") to ID " << wpc.target_system;
+
+        const QString str = QString("start transmitting waypoints...");
+        emit updateStatusString(str);
+
+        mavlink_msg_waypoint_count_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpc);
+        uas.sendMessage(message);        
+    }
+    else
+    {
+        //we're in another transaction, ignore command
+        qDebug() << "UASWaypointManager::sendWaypoints() doing something else ignoring command";
+    }
 }
 
-void UASWaypointManager::getWaypoint(quint16 seq)
+void UASWaypointManager::sendWaypointRequest(quint16 seq)
 {
+    mavlink_message_t message;
+    mavlink_waypoint_request_t wpr;
 
+    wpr.target_system = uas.getUASID();
+    wpr.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+    wpr.seq = seq;
+
+    mavlink_msg_waypoint_request_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpr);
+    uas.sendMessage(message);
+
+    qDebug() << "sent waypoint request (" << wpr.seq << ") to ID " << wpr.target_system;
+
+    const QString str = QString("retrieving waypoint ID %1 of %2 total").arg(wpr.seq).arg(current_count);
+    emit updateStatusString(str);
 }
 
 void UASWaypointManager::waypointChanged(Waypoint*)
