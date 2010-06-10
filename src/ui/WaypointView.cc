@@ -27,6 +27,7 @@ This file is part of the PIXHAWK project
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
+ *   @author Petri Tanskanen <mavteam@student.ethz.ch>
  *
  */
 
@@ -45,13 +46,13 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     this->wp = wp;
 
     // Read values and set user interface
-    m_ui->name->setText(wp->name);
-    m_ui->xSpinBox->setValue(wp->x);
-    m_ui->ySpinBox->setValue(wp->y);
-    m_ui->zSpinBox->setValue(wp->z);
-    m_ui->yawSpinBox->setValue(wp->yaw);
-    m_ui->selectedBox->setChecked(wp->current);
-    m_ui->autoContinue->setChecked(wp->autocontinue);
+    m_ui->xSpinBox->setValue(wp->getX());
+    m_ui->ySpinBox->setValue(wp->getY());
+    m_ui->zSpinBox->setValue(wp->getZ());
+    m_ui->yawSpinBox->setValue(wp->getYaw());
+    m_ui->selectedBox->setChecked(wp->getCurrent());
+    m_ui->autoContinue->setChecked(wp->getAutoContinue());
+    m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
 
     connect(m_ui->xSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
     connect(m_ui->ySpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
@@ -64,7 +65,6 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
 
     connect(m_ui->autoContinue, SIGNAL(stateChanged(int)), this, SLOT(setAutoContinue(int)));
     connect(m_ui->selectedBox, SIGNAL(clicked()), this, SLOT(setCurrent()));
-    connect(m_ui->name, SIGNAL(editingFinished()), this, SLOT(setText()));
 }
 
 void WaypointView::moveUp()
@@ -86,9 +86,9 @@ void WaypointView::remove()
 void WaypointView::setAutoContinue(int state)
 {
     if (state == 0)
-        wp->autocontinue = false;
+        wp->setAutocontinue(false);
     else
-        wp->autocontinue = true;
+        wp->setAutocontinue(true);
     emit waypointUpdated(wp);
 }
 
@@ -103,11 +103,6 @@ void WaypointView::setCurrent()
         emit setCurrentWaypoint(wp);
     else
         m_ui->selectedBox->setCheckState(Qt::Checked);
-}
-
-void WaypointView::setText()
-{
-    wp->name = m_ui->name->text();
 }
 
 WaypointView::~WaypointView()
