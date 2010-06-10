@@ -374,7 +374,28 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_DEBUG:
             emit valueChanged(uasId, QString("debug ") + QString::number(mavlink_msg_debug_get_ind(&message)), mavlink_msg_debug_get_value(&message), MG::TIME::getGroundTimeNow());
             break;
-
+        case MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT:
+            {
+                mavlink_attitude_controller_output_t out;
+                mavlink_msg_attitude_controller_output_decode(&message, &out);
+                quint64 time = MG::TIME::getGroundTimeNowUsecs();
+                emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
+                emit valueChanged(uasId, "att control roll", out.roll, time/1000.0f);
+                emit valueChanged(uasId, "att control pitch", out.pitch, time/1000.0f);
+                emit valueChanged(uasId, "att control yaw", out.yaw, time/1000.0f);
+            }
+            break;
+        case MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT:
+            {
+                mavlink_position_controller_output_t out;
+                mavlink_msg_position_controller_output_decode(&message, &out);
+                quint64 time = MG::TIME::getGroundTimeNowUsecs();
+                emit attitudeThrustSetPointChanged(this, out.x, out.y, out.z, out.yaw, time);
+                emit valueChanged(uasId, "pos control x", out.x, time/1000.0f);
+                emit valueChanged(uasId, "pos control y", out.y, time/1000.0f);
+                emit valueChanged(uasId, "pos control z", out.z, time/1000.0f);
+            }
+            break;
         case MAVLINK_MSG_ID_WAYPOINT_COUNT:
             {
                 mavlink_waypoint_count_t wpc;

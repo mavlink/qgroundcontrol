@@ -64,6 +64,9 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     // SEND WAYPOINTS
     connect(m_ui->transmitButton, SIGNAL(clicked()), this, SLOT(transmit()));
 
+    // REQUEST WAYPOINTS
+    connect(m_ui->readButton, SIGNAL(clicked()), this, SIGNAL(requestWaypoints()));
+
     // SAVE/LOAD WAYPOINTS
     connect(m_ui->saveButton, SIGNAL(clicked()), this, SLOT(saveWaypoints()));
     connect(m_ui->loadButton, SIGNAL(clicked()), this, SLOT(loadWaypoints()));
