@@ -379,7 +379,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_attitude_controller_output_t out;
                 mavlink_msg_attitude_controller_output_decode(&message, &out);
                 quint64 time = MG::TIME::getGroundTimeNowUsecs();
-                emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
+                emit attitudeThrustSetPointChanged(this, out.roll/127.0f, out.pitch/127.0f, out.yaw/127.0f, (uint8_t)out.thrust, time);
                 emit valueChanged(uasId, "att control roll", out.roll, time/1000.0f);
                 emit valueChanged(uasId, "att control pitch", out.pitch, time/1000.0f);
                 emit valueChanged(uasId, "att control yaw", out.yaw, time/1000.0f);
@@ -390,7 +390,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_position_controller_output_t out;
                 mavlink_msg_position_controller_output_decode(&message, &out);
                 quint64 time = MG::TIME::getGroundTimeNowUsecs();
-                emit attitudeThrustSetPointChanged(this, out.x, out.y, out.z, out.yaw, time);
+                emit positionSetPointsChanged(uasId, out.x/127.0f, out.y/127.0f, out.z/127.0f, out.yaw, time);
                 emit valueChanged(uasId, "pos control x", out.x, time/1000.0f);
                 emit valueChanged(uasId, "pos control y", out.y, time/1000.0f);
                 emit valueChanged(uasId, "pos control z", out.z, time/1000.0f);
