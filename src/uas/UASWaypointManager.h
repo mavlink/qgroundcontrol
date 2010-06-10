@@ -31,14 +31,14 @@ private:
 
 public slots:
     void clearWaypointList();
-    void currentWaypointChanged(int);
-    void removeWaypointId(int);
+    void currentWaypointChanged(quint16);
+    void removeWaypointId(quint16);
     void requestWaypoints();
     void sendWaypoints(const QVector<Waypoint *> &list);
     void waypointChanged(Waypoint*);
 
 signals:
-    void waypointUpdated(int,int,double,double,double,double,bool,bool);    ///< Adds a waypoint to the waypoint list widget
+    void waypointUpdated(int,quint16,double,double,double,double,bool,bool);    ///< Adds a waypoint to the waypoint list widget
     void updateStatusString(const QString &);                         ///< updates the current status string
 
 private:

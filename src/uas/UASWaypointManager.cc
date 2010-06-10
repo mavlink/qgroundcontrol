@@ -86,12 +86,12 @@ void UASWaypointManager::clearWaypointList()
 
 }
 
-void UASWaypointManager::currentWaypointChanged(int)
+void UASWaypointManager::currentWaypointChanged(quint16)
 {
 
 }
 
-void UASWaypointManager::removeWaypointId(int)
+void UASWaypointManager::removeWaypointId(quint16)
 {
 
 }
@@ -121,7 +121,7 @@ void UASWaypointManager::requestWaypoints()
     }
 }
 
-void UASWaypointManager::sendWaypoints(const QVector<Waypoint *> &list)
+void UASWaypointManager::sendWaypoints(const QVector<Waypoint*> &list)
 {
     if (current_state == WP_IDLE)
     {
