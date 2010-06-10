@@ -46,6 +46,8 @@ namespace qmapcontrol
 
     void FixedImageOverlay::draw(QPainter* painter, const MapAdapter* mapadapter, const QRect &viewport, const QPoint offset)
     {
+        Q_UNUSED(viewport)
+        Q_UNUSED(offset)
         if (!visible)
             return;
 

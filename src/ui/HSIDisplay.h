@@ -51,13 +51,19 @@ public:
 public slots:
     void setActiveUAS(UASInterface* uas);
     void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
+    void updateAttitudeSetpoints(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
+    void updatePositionSetpoints(int uasid, double xDesired, double yDesired, double zDesired, quint64 usec);
+    void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
+    void updateGlobalPosition(UASInterface*, double lat, double lon, double alt, quint64 usec);
     void paintEvent(QPaintEvent * event);
 
 protected slots:
     void paintDisplay();
     void drawGPS();
     void drawObjects();
-    void drawBaseLines(float xRef, float yRef, float radius, float yaw, const QColor& color, QPainter* painter, bool solid);
+    void drawPositionSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
+    void drawAttitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
+    void drawAltitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
 
 
 protected:
@@ -102,6 +108,35 @@ protected:
 
     QMap<int, GPSSatellite*> gpsSatellites;
     unsigned int satellitesUsed;
+
+    // Current controller values
+    float attXSet;
+    float attYSet;
+    float attYawSet;
+    float altitudeSet;
+
+    float posXSet;
+    float posYSet;
+    float posZSet;
+
+    // Controller saturation values
+    float attXSaturation;
+    float attYSaturation;
+    float attYawSaturation;
+
+    float posXSaturation;
+    float posYSaturation;
+    float altitudeSaturation;
+
+    // Position
+    float lat;
+    float lon;
+    float alt;
+    quint64 globalAvailable;  ///< Last global position update time
+    float x;
+    float y;
+    float z;
+    quint64 localAvailable;   ///< Last local position update time
 
 private:
 };
