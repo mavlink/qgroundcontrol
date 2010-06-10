@@ -64,10 +64,12 @@ namespace qmapcontrol
         //double lon = ((point.x()/tilesize*numberOfTiles)*360)-180;
         //double lat = (((point.y()/tilesize*numberOfTiles)*180)-90)*-1;
 
-        qreal lon = (point.x()*(360./(numberOfTiles*mytilesize)))-180.;
-        //double lat = -(point.y()*(180./(numberOfTiles*tilesize)))+90;
-        //qreal lat = getMercatorLatitude(point.y()*-1*(2*M_PI/(numberOfTiles*tilesize)) + M_PI);
-        qreal lat = lat *180./M_PI;
+        qreal lon = (point.x()*(360.0/(numberOfTiles*mytilesize)))-180.0;
+       // qreal lat = -(point.y()*(180.0/(numberOfTiles*mytilesize)))+90.0;
+        // FIXME Looks buggy
+
+        qreal lat = getMercatorLatitude(point.y()*-1*(2*M_PI/(numberOfTiles*mytilesize)) + M_PI);
+        //qreal lat = lat *180./M_PI;
         return QPointF(lon, lat);
     }
 
