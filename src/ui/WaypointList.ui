@@ -26,7 +26,7 @@
    <property name="spacing">
     <number>4</number>
    </property>
-   <item row="0" column="0" colspan="5">
+   <item row="0" column="0" colspan="7">
     <widget class="QScrollArea" name="scrollArea">
      <property name="widgetResizable">
       <bool>true</bool>
@@ -36,8 +36,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>405</width>
-        <height>160</height>
+        <width>409</width>
+        <height>158</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
@@ -78,17 +78,6 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="4">
-    <widget class="QPushButton" name="transmitButton">
-     <property name="text">
-      <string>Transmit</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="1">
     <widget class="QPushButton" name="saveButton">
      <property name="text">
@@ -100,6 +89,28 @@
     <widget class="QPushButton" name="loadButton">
      <property name="text">
       <string>Load WPs</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="5">
+    <widget class="QPushButton" name="readButton">
+     <property name="text">
+      <string>Read</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../mavground.qrc">
+       <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="6">
+    <widget class="QPushButton" name="transmitButton">
+     <property name="text">
+      <string>Write</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../mavground.qrc">
+       <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
      </property>
     </widget>
    </item>
@@ -126,6 +137,15 @@
    </property>
    <property name="toolTip">
     <string>Transmit waypoints to unmanned system</string>
+   </property>
+  </action>
+  <action name="actionRead">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Read</string>
    </property>
   </action>
  </widget>
