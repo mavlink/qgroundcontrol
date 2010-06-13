@@ -26,7 +26,7 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string>QWidget#colorIcon {}
+   <string notr="true">QWidget#colorIcon {}
 
 QWidget {
 background-color: none;
@@ -95,19 +95,6 @@ QGroupBox#heartbeatIcon {
 	background-color: red;
 }
 
-QToolButton {
-	font-weight: bold;
-	font-size: 12px;
-	border: 1px solid #999999;
-	border-radius: 5px;
-	min-width:44px;
-	max-width: 44px;
-	min-height: 44px;
-	max-height: 44px;
-	padding: 0px;
-	background-color: none;
-}
-
 QToolButton#typeButton {
 	font-weight: bold;
 	font-size: 12px;
@@ -126,7 +113,7 @@ QPushButton {
 	font-size: 12px;
 	border: 1px solid #999999;
 	border-radius: 10px;
-	min-width:12px;
+	min-width: 20px;
 	max-width: 40px;
 	min-height: 16px;
 	max-height: 16px;
@@ -203,14 +190,14 @@ QProgressBar::chunk#thrustBar {
    <item>
     <widget class="QGroupBox" name="uasViewFrame">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="minimumSize">
       <size>
-       <width>350</width>
+       <width>0</width>
        <height>0</height>
       </size>
      </property>
@@ -558,7 +545,7 @@ QProgressBar::chunk#thrustBar {
          <widget class="QPushButton" name="liftoffButton">
           <property name="minimumSize">
            <size>
-            <width>18</width>
+            <width>26</width>
             <height>22</height>
            </size>
           </property>
@@ -575,7 +562,7 @@ QProgressBar::chunk#thrustBar {
          <widget class="QPushButton" name="haltButton">
           <property name="minimumSize">
            <size>
-            <width>18</width>
+            <width>26</width>
             <height>22</height>
            </size>
           </property>
@@ -592,7 +579,7 @@ QProgressBar::chunk#thrustBar {
          <widget class="QPushButton" name="continueButton">
           <property name="minimumSize">
            <size>
-            <width>18</width>
+            <width>26</width>
             <height>22</height>
            </size>
           </property>
@@ -609,7 +596,7 @@ QProgressBar::chunk#thrustBar {
          <widget class="QPushButton" name="landButton">
           <property name="minimumSize">
            <size>
-            <width>18</width>
+            <width>26</width>
             <height>22</height>
            </size>
           </property>
@@ -637,7 +624,7 @@ QProgressBar::chunk#thrustBar {
          <widget class="QPushButton" name="abortButton">
           <property name="minimumSize">
            <size>
-            <width>18</width>
+            <width>26</width>
             <height>22</height>
            </size>
           </property>
@@ -654,7 +641,7 @@ QProgressBar::chunk#thrustBar {
          <widget class="QPushButton" name="killButton">
           <property name="minimumSize">
            <size>
-            <width>18</width>
+            <width>26</width>
             <height>22</height>
            </size>
           </property>

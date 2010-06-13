@@ -47,17 +47,18 @@ void XMLCommProtocolWidget::selectXMLFile()
     {
         m_ui->fileNameLabel->setText(fileNames.first());
         QFile file(fileNames.first());
-        // Store filename for next time
-        settings.setValue(mavlinkXML, fileNames.first());
+
         if (file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             const QString instanceText(QString::fromUtf8(file.readAll()));
             setXML(instanceText);
+            // Store filename for next time
+            settings.setValue(mavlinkXML, QFileInfo(file).absoluteFilePath());
         }
         else
         {
             QMessageBox msgBox;
-            msgBox.setText("Could not write XML file. Permission denied");
+            msgBox.setText("Could not read XML file. Permission denied");
             msgBox.exec();
         }
     }
@@ -114,10 +115,25 @@ void XMLCommProtocolWidget::selectOutputDirectory()
 
 void XMLCommProtocolWidget::generate()
 {
+    // Check if input file is present
+    if (!QFileInfo(m_ui->fileNameLabel->text().trimmed()).isFile())
+    {
+        QMessageBox::critical(this, tr("Please select an XML input file first"), tr("You have to select an input XML file before generating C files."), QMessageBox::Ok);
+        return;
+    }
+
+    // Check if output dir is selected
+    if (!QFileInfo(m_ui->outputDirNameLabel->text().trimmed()).isDir())
+    {
+        QMessageBox::critical(this, tr("Please select output directory first"), tr("You have to select an output directory before generating C files."), QMessageBox::Ok);
+        return;
+    }
+
     // First save file
     save();
     // Clean log
     m_ui->compileLog->clear();
+
     MAVLinkXMLParser* parser = new MAVLinkXMLParser(m_ui->fileNameLabel->text().trimmed(), m_ui->outputDirNameLabel->text().trimmed());
     connect(parser, SIGNAL(parseState(QString)), m_ui->compileLog, SLOT(appendHtml(QString)));
     bool result = parser->generate();

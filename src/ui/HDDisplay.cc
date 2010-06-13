@@ -581,6 +581,16 @@ float HDDisplay::refToScreenY(float y)
     return (scalingFactor * y);
 }
 
+float HDDisplay::screenToRefX(float x)
+{
+    return x/scalingFactor;
+}
+
+float HDDisplay::screenToRefY(float y)
+{
+    return y/scalingFactor;
+}
+
 void HDDisplay::drawLine(float refX1, float refY1, float refX2, float refY2, float width, const QColor& color, QPainter* painter)
 {
     QPen pen(Qt::SolidLine);

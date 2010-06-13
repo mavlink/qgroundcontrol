@@ -37,6 +37,7 @@ This file is part of the PIXHAWK project
 #include <QTimer>
 #include <QMap>
 #include <QPair>
+#include <QMouseEvent>
 #include <cmath>
 
 #include "HDDisplay.h"
@@ -55,19 +56,38 @@ public slots:
     void updatePositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
     void updateGlobalPosition(UASInterface*, double lat, double lon, double alt, quint64 usec);
+    void updateSpeed(UASInterface* uas, double vx, double vy, double vz, quint64 time);
     void paintEvent(QPaintEvent * event);
+    /** @brief Update state from joystick */
+    void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);
+    void pressKey(int key);
 
 protected slots:
     void paintDisplay();
-    void drawGPS();
-    void drawObjects();
-    void drawPositionSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
-    void drawAttitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
+    void drawGPS(QPainter &painter);
+    void drawObjects(QPainter &painter);
+    void drawPositionDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
+    void drawAttitudeDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
     void drawAltitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
+    void setBodySetpointCoordinateXY(double x, double y);
+    void setBodySetpointCoordinateZ(double z);
+    /** @brief Send the current ui setpoint coordinates as new setpoint to the MAV */
+    void sendBodySetPointCoordinates();
+    /** @brief Draw one setpoint */
+    void drawSetpointXY(float x, float y, float yaw, const QColor &color, QPainter &painter);
+    /** @brief Draw the limiting safety area */
+    void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
 
+    void mouseDoubleClickEvent(QMouseEvent* event);
 
 protected:
     static QColor getColorForSNR(float snr);
+    /** @brief Screen coordinates of widget to metric coordinates in body frame */
+    QPointF screenToMetricBody(QPointF ref);
+    /** @brief Reference coordinates to metric coordinates */
+    QPointF refToMetricBody(QPointF &ref);
+    /** @brief Metric coordinates to reference coordinates */
+    QPointF metricBodyToRefX(QPointF &metric);
 
     /**
      * @brief Private data container class to be used within the HSI widget
@@ -132,11 +152,31 @@ protected:
     float lat;
     float lon;
     float alt;
-    quint64 globalAvailable;  ///< Last global position update time
+    quint64 globalAvailable;   ///< Last global position update time
     float x;
     float y;
     float z;
-    quint64 localAvailable;   ///< Last local position update time
+    float vx;
+    float vy;
+    float vz;
+    float speed;
+    quint64 localAvailable;    ///< Last local position update time
+    float roll;
+    float pitch;
+    float yaw;
+    float bodyXSetCoordinate;  ///< X Setpoint coordinate active on the MAV
+    float bodyYSetCoordinate;  ///< Y Setpoint coordinate active on the MAV
+    float bodyZSetCoordinate;  ///< Z Setpoint coordinate active on the MAV
+    float bodyYawSet;          ///< Yaw setpoint coordinate active on the MAV
+    float uiXSetCoordinate;    ///< X Setpoint coordinate wanted by the UI
+    float uiYSetCoordinate;    ///< Y Setpoint coordinate wanted by the UI
+    float uiZSetCoordinate;    ///< Z Setpoint coordinate wanted by the UI
+    float uiYawSet;            ///< Yaw Setpoint wanted by the UI
+    float metricWidth;         ///< Width the instrument represents in meters (the width of the ground shown by the widget)
+
+    //
+    float xCenterPos;
+    float yCenterPos;
 
 private:
 };
