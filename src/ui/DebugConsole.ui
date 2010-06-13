@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>488</width>
-    <height>390</height>
+    <width>435</width>
+    <height>185</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,16 +24,15 @@
     <number>6</number>
    </property>
    <item row="0" column="0" colspan="2">
-    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,10,0,0,0,0">
-     <item>
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Link</string>
-       </property>
-      </widget>
-     </item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="10,0,0,0,0">
      <item>
       <widget class="QComboBox" name="linkComboBox">
+       <property name="maximumSize">
+        <size>
+         <width>130</width>
+         <height>16777215</height>
+        </size>
+       </property>
        <property name="toolTip">
         <string>Select the link to monitor</string>
        </property>
@@ -52,7 +51,7 @@
         <string>Ignore MAVLINK protocol messages in display</string>
        </property>
        <property name="text">
-        <string>Ignore MAVLINK</string>
+        <string>No MAVLINK</string>
        </property>
       </widget>
      </item>
