@@ -241,12 +241,16 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
     {
         if (event->button() == Qt::RightButton)
         {
-
+            startX = event->globalX();
         }
         else if (event->button() == Qt::LeftButton)
         {
 
         }
+    }
+    else if (event->MouseMove)
+    {
+
     }
 }
 
