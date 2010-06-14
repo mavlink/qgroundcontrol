@@ -28,6 +28,7 @@ public:
 
 private:
     void sendWaypointRequest(quint16 seq);
+    void sendWaypoint(quint16 seq);
 
 public slots:
     void clearWaypointList();

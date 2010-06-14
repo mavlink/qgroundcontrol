@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 #include "UASManager.h"
 #include "HSIDisplay.h"
 #include "MG.h"
+#include "QGC.h"
 
 #include <QDebug>
 
@@ -62,11 +63,31 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         x(0),
         y(0),
         z(0),
-        //yaw(0),
-        localAvailable(0)
+        vx(0),
+        vy(0),
+        vz(0),
+        speed(0),
+        localAvailable(0),
+        roll(0),
+        pitch(0),
+        yaw(0.0f),
+        bodyXSetCoordinate(0.0f),
+        bodyYSetCoordinate(0.0f),
+        bodyZSetCoordinate(0.0f),
+        bodyYawSet(0.0f),
+        uiXSetCoordinate(0.0f),
+        uiYSetCoordinate(0.0f),
+        uiZSetCoordinate(0.0f),
+        uiYawSet(0.0f),
+        metricWidth(2.0f)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     refreshTimer->setInterval(80);
+
+    // FIXME
+    float bottomMargin = 3.0f;
+    xCenterPos = vwidth/2.0f;
+    yCenterPos = vheight/2.0f - bottomMargin;
 }
 
 void HSIDisplay::paintEvent(QPaintEvent * event)
@@ -83,21 +104,12 @@ void HSIDisplay::paintDisplay()
 {
     // Center location of the HSI gauge items
 
-    float xCenterPos = vwidth/2.0f;
-    float yCenterPos = vheight/2.0f;
+    float bottomMargin = 3.0f;
 
     // Size of the ring instrument
     const float margin = 0.1f;  // 10% margin of total width on each side
-    float baseRadius = (vwidth - vwidth * 2.0f * margin) / 2.0f;
+    float baseRadius = (vheight - vheight * 2.0f * margin) / 2.0f - bottomMargin / 2.0f;
 
-//    quint64 refreshInterval = 100;
-//    quint64 currTime = MG::TIME::getGroundTimeNow();
-//    if (currTime - lastPaintTime < refreshInterval)
-//    {
-//        // FIXME Need to find the source of the spurious paint events
-//        //return;
-//    }
-//    lastPaintTime = currTime;
     // Draw instruments
     // TESTING THIS SHOULD BE MOVED INTO A QGRAPHICSVIEW
     // Update scaling factor
@@ -109,75 +121,137 @@ void HSIDisplay::paintDisplay()
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+
+    // Draw background
     painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
-    const QColor ringColor = QColor(200, 250, 200);
 
     // Draw base instrument
     // ----------------------
+    const QColor ringColor = QColor(200, 250, 200);
     const int ringCount = 2;
     for (int i = 0; i < ringCount; i++)
     {
-        float radius = (vwidth - vwidth * 2.0f * margin) / (2.0f * i+1) / 2.0f;
-        drawCircle(vwidth/2.0f, vheight/2.0f, radius, 0.1f, ringColor, &painter);
+        float radius = (vwidth - vwidth * 2.0f * margin) / (2.0f * i+1) / 2.0f - bottomMargin / 2.0f;
+        drawCircle(xCenterPos, yCenterPos, radius, 0.1f, ringColor, &painter);
     }
 
     // Draw center indicator
-    drawCircle(vwidth/2.0f, vheight/2.0f, 1.0f, 0.1f, ringColor, &painter);
-
-    // Draw orientation labels
-    paintText(tr("N"), ringColor, 3.5f, xCenterPos - 1.0f, yCenterPos - baseRadius - 5.5f, &painter);
-    paintText(tr("S"), ringColor, 3.5f, xCenterPos - 1.0f, yCenterPos + baseRadius + 1.5f, &painter);
-    paintText(tr("E"), ringColor, 3.5f, xCenterPos + baseRadius + 2.0f, yCenterPos - 1.75f, &painter);
-    paintText(tr("W"), ringColor, 3.5f, xCenterPos - baseRadius - 5.5f, yCenterPos - 1.75f, &painter);
+    QPolygonF p(3);
+    p.replace(0, QPointF(xCenterPos, yCenterPos-2.8484f));
+    p.replace(1, QPointF(xCenterPos-2.0f, yCenterPos+2.0f));
+    p.replace(2, QPointF(xCenterPos+2.0f, yCenterPos+2.0f));
+    drawPolygon(p, &painter);
 
     // ----------------------
+
+    // Draw satellites
+    drawGPS(painter);
 
     // Draw state indicator
 
     // Draw position
     QColor positionColor(20, 20, 200);
-    drawPositionSetpoint(xCenterPos, yCenterPos, baseRadius, positionColor, &painter);
+    drawPositionDirection(xCenterPos, yCenterPos, baseRadius, positionColor, &painter);
 
     // Draw attitude
     QColor attitudeColor(200, 20, 20);
-    drawAttitudeSetpoint(xCenterPos, yCenterPos, baseRadius, attitudeColor, &painter);
+    drawAttitudeDirection(xCenterPos, yCenterPos, baseRadius, attitudeColor, &painter);
 
 
+    // Draw position setpoints in body coordinates
 
-    // Draw satellites
-    drawGPS();
-
-    if (localAvailable > 0)
+    if (uiXSetCoordinate != 0 || uiYSetCoordinate != 0)
     {
-        QString str;
-        str.sprintf("%05.2f %05.2f %05.2f m", x, y, z);
-        paintText(str, ringColor, 4.5f, xCenterPos + baseRadius - 5.5f, yCenterPos + baseRadius - 20.75f, &painter);
+        QColor spColor(150, 150, 150);
+        drawSetpointXY(uiXSetCoordinate, uiYSetCoordinate, uiYawSet, spColor, painter);
     }
 
+    if (bodyXSetCoordinate != 0 || bodyYSetCoordinate != 0)
+    {
+        // Draw setpoint
+        drawSetpointXY(bodyXSetCoordinate, bodyYSetCoordinate, bodyYawSet, QGC::ColorCyan, painter);
+        // Draw travel direction line
+        QPointF m(bodyXSetCoordinate, bodyYSetCoordinate);
+        QPointF s = metricBodyToRefX(m);
+        drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, QGC::ColorCyan, &painter);
+    }
 
-    //drawSystemIndicator(10.0f-gaugeWidth/2.0f, 20.0f, 10.0f, 40.0f, 15.0f, &painter);
-    //drawGauge(15.0f, 15.0f, gaugeWidth/2.0f, 0, 1.0f, "thrust", values.value("thrust", 0.0f), gaugeColor, &painter, qMakePair(0.45f, 0.8f), qMakePair(0.8f, 1.0f), true);
-    //drawGauge(15.0f+gaugeWidth*1.7f, 15.0f, gaugeWidth/2.0f, 0, 10.0f, "altitude", values.value("altitude", 0.0f), gaugeColor, &painter, qMakePair(1.0f, 2.5f), qMakePair(0.0f, 0.5f), true);
+    // Labels on outer part and bottom
 
-    // Left spacing from border / other gauges, measured from left edge to center
-    //    float leftSpacing = gaugeWidth * spacing;
-    //    float xCoord = leftSpacing + gaugeWidth/2.0f;
-    //
-    //    float topSpacing = leftSpacing;
-    //    float yCoord = topSpacing + gaugeWidth/2.0f;
-    //
-    //    for (int i = 0; i < acceptList->size(); ++i)
-    //    {
-    //        QString value = acceptList->at(i);
-    //        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
-    //        xCoord += gaugeWidth + leftSpacing;
-    //        // Move one row down if necessary
-    //        if (xCoord + gaugeWidth > vwidth)
-    //        {
-    //            yCoord += topSpacing + gaugeWidth;
-    //            xCoord = leftSpacing + gaugeWidth/2.0f;
-    //        }
-    //    }
+    //if (localAvailable > 0)
+    {
+        // Position
+        QString str;
+        str.sprintf("%05.2f %05.2f %05.2f m", x, y, z);
+        paintText(str, ringColor, 3.0f, xCenterPos + baseRadius - 30.75f, vheight - 5.0f, &painter);
+
+        // Speed
+        str.sprintf("%05.2f m/s", speed);
+        paintText(str, ringColor, 3.0f, xCenterPos, vheight - 5.0f, &painter);
+    }
+
+    // Draw orientation labels
+    // Translate and rotate coordinate frame
+    painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
+    painter.rotate(yaw);
+    paintText(tr("N"), ringColor, 3.5f, - 1.0f, - baseRadius - 5.5f, &painter);
+    paintText(tr("S"), ringColor, 3.5f, - 1.0f, + baseRadius + 1.5f, &painter);
+    paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.75f, &painter);
+    paintText(tr("W"), ringColor, 3.5f, - baseRadius - 5.5f, - 1.75f, &painter);
+
+    // FIXME Just for testing
+    bodyXSetCoordinate = 0.95 * bodyXSetCoordinate + 0.05 * uiXSetCoordinate;
+    bodyYSetCoordinate = 0.95 * bodyYSetCoordinate + 0.05 * uiYSetCoordinate;
+    bodyZSetCoordinate = 0.95 * bodyZSetCoordinate + 0.05 * uiZSetCoordinate;
+    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
+}
+
+QPointF HSIDisplay::screenToMetricBody(QPointF ref)
+{
+    return QPointF(-((screenToRefY(ref.y()) - yCenterPos)/ vwidth) * metricWidth, ((screenToRefX(ref.x()) - xCenterPos) / vwidth) * metricWidth);
+}
+
+QPointF HSIDisplay::refToMetricBody(QPointF &ref)
+{
+    return QPointF(-((ref.y() - yCenterPos)/ vwidth) * metricWidth, ((ref.x() - xCenterPos) / vwidth) * metricWidth);
+}
+
+/**
+ * @see refToScreenX()
+ */
+QPointF HSIDisplay::metricBodyToRefX(QPointF &metric)
+{
+    return QPointF(((metric.y())/ metricWidth) * vwidth + xCenterPos, ((-metric.x()) / metricWidth) * vwidth + yCenterPos);
+}
+
+void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
+{
+    static bool dragStarted;
+    static float startX;
+
+    if (event->MouseButtonDblClick)
+    {
+        //setBodySetpointCoordinateXY(-refToMetric(screenToRefY(event->y()) - yCenterPos), refToMetric(screenToRefX(event->x()) - xCenterPos));
+
+        QPointF p = screenToMetricBody(event->posF());
+        setBodySetpointCoordinateXY(p.x(), p.y());
+        qDebug() << "Double click at x: " << screenToRefX(event->x()) - xCenterPos << "y:" << screenToRefY(event->y()) - yCenterPos;
+    }
+    else if (event->MouseButtonPress)
+    {
+        if (event->button() == Qt::RightButton)
+        {
+            startX = event->globalX();
+        }
+        else if (event->button() == Qt::LeftButton)
+        {
+
+        }
+    }
+    else if (event->MouseMove)
+    {
+
+    }
 }
 
 /**
@@ -186,19 +260,23 @@ void HSIDisplay::paintDisplay()
  */
 void HSIDisplay::setActiveUAS(UASInterface* uas)
 {
-    HDDisplay::setActiveUAS(uas);
-    //qDebug() << "ATTEMPTING TO SET UAS";
     if (this->uas != NULL && this->uas != uas)
     {
         // Disconnect any previously connected active MAV
         //disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
     }
 
+
+    HDDisplay::setActiveUAS(uas);
+    //qDebug() << "ATTEMPTING TO SET UAS";
+
+
     connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
     connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
     connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
+    connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
 
     // Now connect the new UAS
 
@@ -208,6 +286,36 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     // Setup communication
     //connect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
     //}
+}
+
+void HSIDisplay::updateSpeed(UASInterface* uas, double vx, double vy, double vz, quint64 time)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(time);
+    this->vx = vx;
+    this->vy = vy;
+    this->vz = vz;
+    this->speed = sqrt(pow(vx, 2.0f) + pow(vy, 2.0f) + pow(vz, 2.0f));
+}
+
+void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
+{
+    // Set coordinates and send them out to MAV
+
+    qDebug() << "Setting new setpoint at x: " << x << "metric y:" << y;
+    uiXSetCoordinate = x;
+    uiYSetCoordinate = y;
+}
+
+void HSIDisplay::setBodySetpointCoordinateZ(double z)
+{
+    // Set coordinates and send them out to MAV
+    uiZSetCoordinate = z;
+}
+
+void HSIDisplay::sendBodySetPointCoordinates()
+{
+    // Send the coordinates to the MAV
 }
 
 void HSIDisplay::updateAttitudeSetpoints(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec)
@@ -287,14 +395,36 @@ QColor HSIDisplay::getColorForSNR(float snr)
     return color;
 }
 
-void HSIDisplay::drawGPS()
+void HSIDisplay::drawSetpointXY(float x, float y, float yaw, const QColor &color, QPainter &painter)
 {
-    float xCenter = vwidth/2.0f;
-    float yCenter = vwidth/2.0f;
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    float radius = vwidth / 20.0f;
+    QPen pen(color);
+    pen.setWidthF(refLineWidthToPen(0.4f));
+    pen.setColor(color);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+    QPointF in(x, y);
+    QPointF p = metricBodyToRefX(in);
+    drawCircle(p.x(), p.y(), radius, 0.4f, color, &painter);
+    radius *= 0.8;
+    drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
+    painter.setBrush(color);
+    drawCircle(p.x(), p.y(), radius * 0.1f, 0.1f, color, &painter);
+}
 
+void HSIDisplay::drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight, const QColor &color, QPainter &painter)
+{
+    QPen pen(color);
+    pen.setWidthF(refLineWidthToPen(0.1f));
+    pen.setColor(color);
+    painter.setPen(pen);
+    painter.drawRect(QRectF(topLeft, bottomRight));
+}
+
+void HSIDisplay::drawGPS(QPainter &painter)
+{
+    float xCenter = xCenterPos;
+    float yCenter = xCenterPos;
     // Max satellite circle radius
 
     const float margin = 0.15f;  // 20% margin of total width on each side
@@ -349,18 +479,20 @@ void HSIDisplay::drawGPS()
             float xPos = xCenter + (sin(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * cos(sat->elevation/180.0f * M_PI)) * radius;
             float yPos = yCenter - (cos(((sat->azimuth/255.0f)*360.0f)/180.0f * M_PI) * cos(sat->elevation/180.0f * M_PI)) * radius;
 
+            // Draw circle for satellite, filled for used satellites
             drawCircle(xPos, yPos, vwidth*0.02f, 1.0f, color, &painter);
+            // Draw satellite PRN
             paintText(QString::number(sat->id), QColor(255, 255, 255), 2.9f, xPos+1.7f, yPos+2.0f, &painter);
         }
     }
 }
 
-void HSIDisplay::drawObjects()
+void HSIDisplay::drawObjects(QPainter &painter)
 {
-
+    Q_UNUSED(painter);
 }
 
-void HSIDisplay::drawPositionSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter)
+void HSIDisplay::drawPositionDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter)
 {
     // Draw the needle
     const float maxWidth = radius / 10.0f;
@@ -392,10 +524,10 @@ void HSIDisplay::drawPositionSetpoint(float xRef, float yRef, float radius, cons
     painter->setBrush(indexBrush);
     drawPolygon(p, painter);
 
-    qDebug() << "DRAWING POS SETPOINT X:" << posXSet << "Y:" << posYSet << angle;
+    //qDebug() << "DRAWING POS SETPOINT X:" << posXSet << "Y:" << posYSet << angle;
 }
 
-void HSIDisplay::drawAttitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter)
+void HSIDisplay::drawAttitudeDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter)
 {
     // Draw the needle
     const float maxWidth = radius / 10.0f;
@@ -427,7 +559,7 @@ void HSIDisplay::drawAttitudeSetpoint(float xRef, float yRef, float radius, cons
 
     // TODO Draw Yaw indicator
 
-    qDebug() << "DRAWING ATT SETPOINT X:" << attXSet << "Y:" << attYSet << angle;
+    //qDebug() << "DRAWING ATT SETPOINT X:" << attXSet << "Y:" << attYSet << angle;
 }
 
 void HSIDisplay::drawAltitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter)
@@ -445,4 +577,14 @@ void HSIDisplay::drawAltitudeSetpoint(float xRef, float yRef, float radius, cons
     //    QString label;
     //    label.sprintf("%05.1f", value);
     //    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
+}
+
+void HSIDisplay::updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat)
+{
+
+}
+
+void HSIDisplay::pressKey(int key)
+{
+
 }

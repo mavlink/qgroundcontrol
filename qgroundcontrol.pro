@@ -3,23 +3,23 @@
 # from http://github.com/pixhawk/qmapcontrol/
 # over bundled version in lib directory
 # Version from GIT repository is preferred
-#include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
+# include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
 # Include bundled version if necessary
 include(lib/QMapControl/QMapControl.pri)
-#message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
 
-
-QT       += network opengl svg xml phonon
-
+# message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
+QT += network \
+    opengl \
+    svg \
+    xml \
+    phonon
 TEMPLATE = app
 TARGET = qgroundcontrol
-
 BASEDIR = .
 BUILDDIR = build
 LANGUAGE = C++
-
-CONFIG += debug_and_release console
-
+CONFIG += debug_and_release \
+    console
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
@@ -142,7 +142,8 @@ HEADERS += src/MG.h \
     src/ui/watchdog/WatchdogProcessView.h \
     src/ui/watchdog/WatchdogView.h \
     src/uas/UASWaypointManager.h \
-    src/ui/HSIDisplay.h
+    src/ui/HSIDisplay.h \
+    src/QGC.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \

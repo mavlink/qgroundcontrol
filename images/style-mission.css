@@ -107,7 +107,7 @@ QSpinBox {
 QPushButton {
 	font-weight: bold;
 	min-height: 18px;
-	max-height: 32px;
+	max-height: 18px;
 	border: 2px solid #4A4A4F;
 	border-radius: 5px;
 	padding-left: 10px;
@@ -127,10 +127,10 @@ QToolButton {
 	font-weight: bold;
 	min-height: 16px;
 	min-width: 24px;
-	max-height: 32px;
-	border: 1px solid #EEEEEE;
+	max-height: 18px;
+	border: 2px solid #4A4A4F;
 	border-radius: 5px;
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #303030, stop: 1 #202020);
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
 }
 
 QToolButton:checked {
