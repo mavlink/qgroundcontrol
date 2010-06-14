@@ -104,13 +104,6 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "vis. vy", pos.vy, time);
                 emit valueChanged(uasId, "vis. vz", pos.vz, time);
                 emit valueChanged(uasId, "vis. vyaw", pos.vyaw, time);
-                // Set internal state
-                if (!positionLock)
-                {
-                    // If position was not locked before, notify positive
-                    GAudioOutput::instance()->notifyPositive();
-                }
-                positionLock = true;
             }
             break;
     case MAVLINK_MSG_ID_AUX_STATUS:
