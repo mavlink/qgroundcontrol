@@ -490,10 +490,11 @@ void MainWindow::loadEngineerView()
     container3->setWidget(info);
     addDockWidget(Qt::LeftDockWidgetArea, container3);
 
-    // WAYPOINT LIST
-    QDockWidget* container5 = new QDockWidget(tr("Waypoint List"), this);
-    container5->setWidget(waypoints);
-    addDockWidget(Qt::BottomDockWidgetArea, container5);
+    // HORIZONTAL SITUATION INDICATOR
+    QDockWidget* container6 = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+    container6->setWidget(hsi);
+    hsi->start();
+    addDockWidget(Qt::BottomDockWidgetArea, container6);
 
     // DEBUG CONSOLE
     QDockWidget* container7 = new QDockWidget(tr("Communication Console"), this);

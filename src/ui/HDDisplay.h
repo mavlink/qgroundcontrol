@@ -70,6 +70,8 @@ protected:
     float refLineWidthToPen(float line);
     float refToScreenX(float x);
     float refToScreenY(float y);
+    float screenToRefX(float x);
+    float screenToRefY(float y);
     void rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin);
     void drawPolygon(QPolygonF refPolygon, QPainter* painter);
     void drawLine(float refX1, float refY1, float refX2, float refY2, float width, const QColor& color, QPainter* painter);
