@@ -216,6 +216,9 @@ public slots:
     /** @brief Update the system state */
     void updateState();
 
+    /** @brief Set local position setpoint */
+    void setLocalPositionSetpoint(float x, float y, float z, float yaw);
+
 signals:
 
     /** @brief The main/battery voltage has changed/was updated */

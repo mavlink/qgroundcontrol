@@ -100,7 +100,7 @@ void UAS::updateState()
     }
     else
     {
-        if (mode > MAV_MODE_LOCKED && positionLock)
+        if (mode > (uint8_t)MAV_MODE_LOCKED && positionLock)
         {
             GAudioOutput::instance()->notifyNegative();
         }
@@ -301,6 +301,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "vy", pos.vy, time);
                 emit valueChanged(uasId, "vz", pos.vz, time);
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+                emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
+                // Set internal state
+                if (!positionLock)
+                {
+                    // If position was not locked before, notify positive
+                    GAudioOutput::instance()->notifyPositive();
+                }
+                positionLock = true;
             }
             break;
         case MAVLINK_MSG_ID_GLOBAL_POSITION:
@@ -317,6 +325,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "g-vy", pos.vy, time);
                 emit valueChanged(uasId, "g-vz", pos.vz, time);
                 emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
+                emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
+                // Set internal state
+                if (!positionLock)
+                {
+                    // If position was not locked before, notify positive
+                    GAudioOutput::instance()->notifyPositive();
+                }
+                positionLock = true;
             }
             break;
         case MAVLINK_MSG_ID_GPS_RAW:
@@ -462,6 +478,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         }
     }
+}
+
+void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
+{
+    mavlink_message_t msg;
+
 }
 
 quint64 UAS::getUnixTime(quint64 time)
