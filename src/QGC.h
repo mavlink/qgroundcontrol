@@ -8,7 +8,7 @@ namespace QGC
 {
     const QColor ColorCyan(55, 154, 195);
 
-    quint64 groundTimeUsecs()
+    static quint64 groundTimeUsecs()
     {
         QDateTime time = QDateTime::currentDateTime();
         time = time.toUTC();
