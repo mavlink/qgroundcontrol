@@ -39,6 +39,7 @@ This file is part of the PIXHAWK project
 #include "LinkInterface.h"
 #include "UASManager.h"
 #include "MG.h"
+#include "QGC.h"
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
 #include <mavlink.h>
@@ -406,7 +407,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_position_controller_output_t out;
                 mavlink_msg_position_controller_output_decode(&message, &out);
                 quint64 time = MG::TIME::getGroundTimeNowUsecs();
-                emit positionSetPointsChanged(uasId, out.x/127.0f, out.y/127.0f, out.z/127.0f, out.yaw, time);
+                //emit positionSetPointsChanged(uasId, out.x/127.0f, out.y/127.0f, out.z/127.0f, out.yaw, time);
                 emit valueChanged(uasId, "pos control x", out.x, time/1000.0f);
                 emit valueChanged(uasId, "pos control y", out.y, time/1000.0f);
                 emit valueChanged(uasId, "pos control z", out.z, time/1000.0f);
@@ -450,6 +451,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //                mavlink_waypoint_reached_t wp;
 //                mavlink_msg_waypoint_reached_decode(&message, &wp);
 //                emit waypointReached(this, wp.id);
+            }
+            break;
+        case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT:
+            {
+                mavlink_local_position_setpoint_t p;
+                mavlink_msg_local_position_setpoint_decode(&message, &p);
+                emit positionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw, QGC::groundTimeUsecs());
             }
             break;
         case MAVLINK_MSG_ID_STATUSTEXT:
