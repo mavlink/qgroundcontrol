@@ -239,18 +239,24 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
     }
     else if (event->MouseButtonPress)
     {
+        startX = event->globalX();
         if (event->button() == Qt::RightButton)
         {
-            startX = event->globalX();
+            // Start tracking mouse move
+            dragStarted = true;
         }
         else if (event->button() == Qt::LeftButton)
         {
 
         }
     }
+    else if (event->MouseButtonRelease)
+    {
+        dragStarted = false;
+    }
     else if (event->MouseMove)
     {
-
+        if (dragStarted) uiYawSet += (startX - event->globalX()) / this->frameSize().width();
     }
 }
 
@@ -332,10 +338,14 @@ void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesir
 {
     Q_UNUSED(usec);
     Q_UNUSED(uasid);
-    Q_UNUSED(yawDesired);
-    posXSet = xDesired;
-    posYSet = yDesired;
-    posZSet = zDesired;
+    bodyXSetCoordinate = xDesired;
+    bodyYSetCoordinate = yDesired;
+    bodyZSetCoordinate = zDesired;
+    bodyYawSet = yawDesired;
+//    posXSet = xDesired;
+//    posYSet = yDesired;
+//    posZSet = zDesired;
+//    posYawSet = yawDesired;
 }
 
 void HSIDisplay::updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec)
