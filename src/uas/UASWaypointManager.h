@@ -40,7 +40,7 @@ public slots:
 
 signals:
     void waypointUpdated(int,quint16,double,double,double,double,bool,bool);    ///< Adds a waypoint to the waypoint list widget
-    void updateStatusString(const QString &);                         ///< updates the current status string
+    void updateStatusString(const QString &);                                   ///< updates the current status string
 
 private:
     UAS &uas;                                       ///< Reference to the corresponding UAS
