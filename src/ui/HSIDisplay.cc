@@ -206,6 +206,22 @@ void HSIDisplay::paintDisplay()
 //    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
 }
 
+QPointF HSIDisplay::metricWorldToBody(QPointF world)
+{
+    // First translate to body-centered coordinates
+    // Rotate around -yaw
+    QPointF result(sin(-yaw) * (world.x() - x), cos(-yaw) * (world.y() - y));
+    return result;
+}
+
+QPointF HSIDisplay::metricBodyToWorld(QPointF body)
+{
+    // First rotate into world coordinates
+    // then translate to world position
+    QPointF result((sin(yaw) * body.x()) + x, (cos(yaw) * body.y()) + y);
+    return result;
+}
+
 QPointF HSIDisplay::screenToMetricBody(QPointF ref)
 {
     return QPointF(-((screenToRefY(ref.y()) - yCenterPos)/ vwidth) * metricWidth - x, ((screenToRefX(ref.x()) - xCenterPos) / vwidth) * metricWidth - y);

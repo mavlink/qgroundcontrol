@@ -62,6 +62,7 @@ public slots:
     void saveWaypoints();
     void loadWaypoints();    
     void transmit();
+    void read();
     void add();
     void moveUp(Waypoint* wp);
     void moveDown(Waypoint* wp);
