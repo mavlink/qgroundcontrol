@@ -160,6 +160,7 @@ void WaypointList::read()
         removeWaypoint(waypoints[0]);
     }
     
+    redrawList();
     emit requestWaypoints();
 }
 
@@ -189,13 +190,6 @@ void WaypointList::add()
 
 void WaypointList::addWaypoint(Waypoint* wp)
 {
-    if (waypoints.contains(wp))
-    {
-        removeWaypoint(wp);
-    }
-
-    waypoints.insert(wp->getId(), wp);
-
     if (!wpViews.contains(wp))
     {
         WaypointView* wpview = new WaypointView(wp, this);
@@ -205,7 +199,7 @@ void WaypointList::addWaypoint(Waypoint* wp)
         connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)), this, SLOT(moveUp(Waypoint*)));
         connect(wpview, SIGNAL(removeWaypoint(Waypoint*)), this, SLOT(removeWaypoint(Waypoint*)));
         connect(wpview, SIGNAL(setCurrentWaypoint(Waypoint*)), this, SLOT(setCurrentWaypoint(Waypoint*)));
-        connect(wpview, SIGNAL(waypointUpdated(Waypoint*)), this, SIGNAL(waypointChanged(Waypoint*)));
+        //connect(wpview, SIGNAL(waypointUpdated(Waypoint*)), this, SIGNAL(waypointChanged(Waypoint*)));
     }
 }
 
@@ -280,7 +274,8 @@ void WaypointList::moveDown(Waypoint* wp)
 void WaypointList::removeWaypoint(Waypoint* wp)
 {
     // Delete from list
-    if (wp != NULL){
+    if (wp != NULL)
+    {
         waypoints.remove(wp->getId());
         for(int i = wp->getId(); i < waypoints.size(); i++)
         {

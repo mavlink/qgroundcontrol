@@ -428,6 +428,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_waypoint_t wp;
                 mavlink_msg_waypoint_decode(&message, &wp);
+                qDebug() << "got waypoint (" << wp.seq << ") from ID " << message.sysid << " x=" << wp.x << " y=" << wp.y << " z=" << wp.z;
                 if(wp.target_system == mavlink->getSystemId() && wp.target_component == mavlink->getComponentId())
                 {
                     waypointManager.handleWaypoint(message.sysid, message.compid, &wp);

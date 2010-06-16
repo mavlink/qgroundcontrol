@@ -37,7 +37,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 {
     if (systemId == current_partner_systemid && compId == current_partner_compid && current_state == WP_GETLIST_GETWPS && wp->seq == current_wp_id)
     {
-        qDebug() << "got waypoint (" << wp->seq << ") from ID " << systemId;
+        qDebug() << "got waypoint (" << wp->seq << ") from ID " << systemId << " x=" << wp->x << " y=" << wp->y << " z=" << wp->z;
 
         if(wp->seq == current_wp_id)
         {
@@ -170,6 +170,8 @@ void UASWaypointManager::sendWaypoints(const QVector<Waypoint*> &list)
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent();
+                cur_d->orbit = 0.1f;    //FIXME
+                cur_d->type = 1;        //FIXME
                 cur_d->seq = i;
                 cur_d->x = cur_s->getX();
                 cur_d->y = cur_s->getY();
