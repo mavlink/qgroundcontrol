@@ -79,10 +79,14 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         uiYSetCoordinate(0.0f),
         uiZSetCoordinate(0.0f),
         uiYawSet(0.0f),
-        metricWidth(2.0f)
+        metricWidth(2.0f),
+        positionLock(false),
+        attControlEnabled(false),
+        xyControlEnabled(false),
+        zControlEnabled(false)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    refreshTimer->setInterval(80);
+    refreshTimer->setInterval(60);
 
     // FIXME
     float bottomMargin = 3.0f;
@@ -125,9 +129,40 @@ void HSIDisplay::paintDisplay()
     // Draw background
     painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
 
+    // Draw status indicators
+    QColor statusColor(255, 255, 255);
+    QString lockStatus;
+    QString xyContrStatus;
+    QString zContrStatus;
+    QString attContrStatus;
+
+    QColor lockStatusColor;
+
+    if (positionLock)
+    {
+        lockStatus = tr("LOCK");
+        lockStatusColor = QColor(20, 255, 20);
+    }
+    else
+    {
+        lockStatus = tr("NO");
+        lockStatusColor = QColor(255, 20, 20);
+    }
+
+    paintText(tr("POS"), QGC::ColorCyan, 1.8f, 2.0f, 2.5f, &painter);
+    painter.setBrush(lockStatusColor);
+    painter.setPen(Qt::NoPen);
+    painter.drawRect(QRect(refToScreenX(9.5f), refToScreenY(2.0f), refToScreenX(7.0f), refToScreenY(4.0f)));
+    paintText(lockStatus, statusColor, 2.8f, 10.0f, 2.0f, &painter);
+
     // Draw base instrument
     // ----------------------
+    painter.setBrush(Qt::NoBrush);
     const QColor ringColor = QColor(200, 250, 200);
+    QPen pen;
+    pen.setColor(ringColor);
+    pen.setWidth(refLineWidthToPen(0.1f));
+    painter.setPen(pen);
     const int ringCount = 2;
     for (int i = 0; i < ringCount; i++)
     {
@@ -172,6 +207,9 @@ void HSIDisplay::paintDisplay()
         drawSetpointXY(bodyXSetCoordinate, bodyYSetCoordinate, bodyYawSet, QGC::ColorCyan, painter);
         // Draw travel direction line
         QPointF m(bodyXSetCoordinate, bodyYSetCoordinate);
+        // Transform from body to world coordinates
+        m = metricWorldToBody(m);
+        // Scale from metric body to screen reference units
         QPointF s = metricBodyToRefX(m);
         drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, QGC::ColorCyan, &painter);
     }
@@ -187,13 +225,13 @@ void HSIDisplay::paintDisplay()
 
         // Speed
         str.sprintf("%05.2f m/s", speed);
-        paintText(str, ringColor, 3.0f, xCenterPos, vheight - 5.0f, &painter);
+        paintText(str, ringColor, 3.0f, 10.0f, vheight - 5.0f, &painter);
     }
 
     // Draw orientation labels
     // Translate and rotate coordinate frame
     painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
-    painter.rotate(yaw);
+    painter.rotate((-yaw/(M_PI))*180.0f);
     paintText(tr("N"), ringColor, 3.5f, - 1.0f, - baseRadius - 5.5f, &painter);
     paintText(tr("S"), ringColor, 3.5f, - 1.0f, + baseRadius + 1.5f, &painter);
     paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.75f, &painter);
@@ -206,11 +244,35 @@ void HSIDisplay::paintDisplay()
 //    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
 }
 
+void HSIDisplay::updatePositionLock(UASInterface* uas, bool lock)
+{
+    Q_UNUSED(uas);
+    positionLock = lock;
+}
+
+void HSIDisplay::updateAttitudeControllerEnabled(UASInterface* uas, bool enabled)
+{
+    Q_UNUSED(uas);
+    attControlEnabled = enabled;
+}
+
+void HSIDisplay::updatePositionXYControllerEnabled(UASInterface* uas, bool enabled)
+{
+    Q_UNUSED(uas);
+    xyControlEnabled = enabled;
+}
+
+void HSIDisplay::updatePositionZControllerEnabled(UASInterface* uas, bool enabled)
+{
+    Q_UNUSED(uas);
+    zControlEnabled = enabled;
+}
+
 QPointF HSIDisplay::metricWorldToBody(QPointF world)
 {
     // First translate to body-centered coordinates
     // Rotate around -yaw
-    QPointF result(sin(-yaw) * (world.x() - x), cos(-yaw) * (world.y() - y));
+    QPointF result(cos(yaw) * (world.x() - x) + -sin(yaw) * (world.x() - x), sin(yaw) * (world.y() - y) + cos(yaw) * (world.y() - y));
     return result;
 }
 
@@ -218,7 +280,7 @@ QPointF HSIDisplay::metricBodyToWorld(QPointF body)
 {
     // First rotate into world coordinates
     // then translate to world position
-    QPointF result((sin(yaw) * body.x()) + x, (cos(yaw) * body.y()) + y);
+    QPointF result((cos(yaw) * body.x()) + (sin(yaw) * body.x()) + x, (-sin(yaw) * body.y()) + (cos(yaw) * body.y()) + y);
     return result;
 }
 
@@ -299,6 +361,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
     connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
     connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+    connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
     // Now connect the new UAS
 
@@ -324,9 +387,12 @@ void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
 {
     // Set coordinates and send them out to MAV
 
+    QPointF sp(x, y);
+    sp = metricBodyToWorld(sp);
+    uiXSetCoordinate = sp.x();
+    uiYSetCoordinate = sp.y();
+
     qDebug() << "Setting new setpoint at x: " << x << "metric y:" << y;
-    uiXSetCoordinate = x;
-    uiYSetCoordinate = y;
 }
 
 void HSIDisplay::setBodySetpointCoordinateZ(double z)
@@ -348,6 +414,15 @@ void HSIDisplay::updateAttitudeSetpoints(UASInterface* uas, double rollDesired, 
     attYSet = rollDesired;
     attYawSet = yawDesired;
     altitudeSet = thrustDesired;
+}
+
+void HSIDisplay::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 time)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(time);
+    this->roll = roll;
+    this->pitch = pitch;
+    this->yaw = yaw;
 }
 
 void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec)
@@ -430,6 +505,9 @@ void HSIDisplay::drawSetpointXY(float x, float y, float yaw, const QColor &color
     painter.setPen(pen);
     painter.setBrush(Qt::NoBrush);
     QPointF in(x, y);
+    // Transform from body to world coordinates
+    in = metricWorldToBody(in);
+    // Scale from metric to screen reference coordinates
     QPointF p = metricBodyToRefX(in);
     drawCircle(p.x(), p.y(), radius, 0.4f, color, &painter);
     radius *= 0.8;
