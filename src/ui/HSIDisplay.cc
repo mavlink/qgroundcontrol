@@ -199,11 +199,27 @@ void HSIDisplay::paintDisplay()
     paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.75f, &painter);
     paintText(tr("W"), ringColor, 3.5f, - baseRadius - 5.5f, - 1.75f, &painter);
 
-    // FIXME Just for testing
-    bodyXSetCoordinate = 0.95 * bodyXSetCoordinate + 0.05 * uiXSetCoordinate;
-    bodyYSetCoordinate = 0.95 * bodyYSetCoordinate + 0.05 * uiYSetCoordinate;
-    bodyZSetCoordinate = 0.95 * bodyZSetCoordinate + 0.05 * uiZSetCoordinate;
-    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
+//    // FIXME Just for testing
+//    bodyXSetCoordinate = 0.95 * bodyXSetCoordinate + 0.05 * uiXSetCoordinate;
+//    bodyYSetCoordinate = 0.95 * bodyYSetCoordinate + 0.05 * uiYSetCoordinate;
+//    bodyZSetCoordinate = 0.95 * bodyZSetCoordinate + 0.05 * uiZSetCoordinate;
+//    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
+}
+
+QPointF HSIDisplay::metricWorldToBody(QPointF world)
+{
+    // First translate to body-centered coordinates
+    // Rotate around -yaw
+    QPointF result(sin(-yaw) * (world.x() - x), cos(-yaw) * (world.y() - y));
+    return result;
+}
+
+QPointF HSIDisplay::metricBodyToWorld(QPointF body)
+{
+    // First rotate into world coordinates
+    // then translate to world position
+    QPointF result((sin(yaw) * body.x()) + x, (cos(yaw) * body.y()) + y);
+    return result;
 }
 
 QPointF HSIDisplay::screenToMetricBody(QPointF ref)
