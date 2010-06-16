@@ -199,21 +199,21 @@ void HSIDisplay::paintDisplay()
     paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.75f, &painter);
     paintText(tr("W"), ringColor, 3.5f, - baseRadius - 5.5f, - 1.75f, &painter);
 
-    // FIXME Just for testing
-    bodyXSetCoordinate = 0.95 * bodyXSetCoordinate + 0.05 * uiXSetCoordinate;
-    bodyYSetCoordinate = 0.95 * bodyYSetCoordinate + 0.05 * uiYSetCoordinate;
-    bodyZSetCoordinate = 0.95 * bodyZSetCoordinate + 0.05 * uiZSetCoordinate;
-    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
+//    //  Just for testing
+//    bodyXSetCoordinate = 0.95 * bodyXSetCoordinate + 0.05 * uiXSetCoordinate;
+//    bodyYSetCoordinate = 0.95 * bodyYSetCoordinate + 0.05 * uiYSetCoordinate;
+//    bodyZSetCoordinate = 0.95 * bodyZSetCoordinate + 0.05 * uiZSetCoordinate;
+//    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
 }
 
 QPointF HSIDisplay::screenToMetricBody(QPointF ref)
 {
-    return QPointF(-((screenToRefY(ref.y()) - yCenterPos)/ vwidth) * metricWidth, ((screenToRefX(ref.x()) - xCenterPos) / vwidth) * metricWidth);
+    return QPointF(-((screenToRefY(ref.y()) - yCenterPos)/ vwidth) * metricWidth - x, ((screenToRefX(ref.x()) - xCenterPos) / vwidth) * metricWidth - y);
 }
 
 QPointF HSIDisplay::refToMetricBody(QPointF &ref)
 {
-    return QPointF(-((ref.y() - yCenterPos)/ vwidth) * metricWidth, ((ref.x() - xCenterPos) / vwidth) * metricWidth);
+    return QPointF(-((ref.y() - yCenterPos)/ vwidth) * metricWidth - x, ((ref.x() - xCenterPos) / vwidth) * metricWidth - y);
 }
 
 /**
