@@ -81,7 +81,12 @@ protected slots:
     void mouseDoubleClickEvent(QMouseEvent* event);
 
 protected:
+    /** @brief Get color from GPS signal-to-noise colormap */
     static QColor getColorForSNR(float snr);
+    /** @brief Metric world coordinates to metric body coordinates */
+    QPointF metricWorldToBody(QPointF world);
+    /** @brief Metric body coordinates to metric world coordinates */
+    QPointF metricBodyToWorld(QPointF body);
     /** @brief Screen coordinates of widget to metric coordinates in body frame */
     QPointF screenToMetricBody(QPointF ref);
     /** @brief Reference coordinates to metric coordinates */

@@ -42,6 +42,7 @@ This file is part of the PIXHAWK project
 #include "MAVLinkSimulationLink.h"
 // MAVLINK includes
 #include <mavlink.h>
+#include "QGC.h"
 
 /**
  * Create a simulated link. This link is connected to an input and output file.
@@ -97,6 +98,11 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     // Open packet log
     mavlinkLogFile = new QFile(MAVLinkProtocol::getLogfileName());
     mavlinkLogFile->open(QIODevice::ReadOnly);
+
+    x = 0;
+    y = 0;
+    z = 0;
+    yaw = 0;
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
@@ -369,6 +375,11 @@ void MAVLinkSimulationLink::mainloop()
     if (rate10hzCounter == 1000 / rate / 9)
     {
         rate10hzCounter = 1;
+
+        // Move X Position
+        x += sin(QGC::groundTimeUsecs());
+        y += sin(QGC::groundTimeUsecs());
+        z += sin(QGC::groundTimeUsecs());
     }
 
     // 1 HZ TASKS
@@ -538,6 +549,25 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                     // Set mode indepent of mode.target
                     status.mode = mode.mode;
                 }
+                break;
+            case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET:
+                {
+                    mavlink_local_position_setpoint_set_t set;
+                    mavlink_msg_local_position_setpoint_set_decode(&msg, &set);
+                    spX = set.x;
+                    spY = set.y;
+                    spZ = set.z;
+                    spYaw = set.yaw;
+
+                    // Send back new setpoint
+                    mavlink_message_t ret;
+                    mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, spX, spY, spZ, spYaw);
+                    bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+                    //add data into datastream
+                    memcpy(stream+streampointer,buffer, bufferlength);
+                    streampointer += bufferlength;
+                }
+                break;
                 // EXECUTE OPERATOR ACTIONS
             case MAVLINK_MSG_ID_ACTION:
                 {
