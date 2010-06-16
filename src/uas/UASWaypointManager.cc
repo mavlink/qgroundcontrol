@@ -37,8 +37,6 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 {
     if (systemId == current_partner_systemid && compId == current_partner_compid && current_state == WP_GETLIST_GETWPS && wp->seq == current_wp_id)
     {
-        qDebug() << "got waypoint (" << wp->seq << ") from ID " << systemId << " x=" << wp->x << " y=" << wp->y << " z=" << wp->z;
-
         if(wp->seq == current_wp_id)
         {
             //update the UI FIXME
