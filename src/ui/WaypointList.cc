@@ -159,8 +159,7 @@ void WaypointList::read()
     {
         removeWaypoint(waypoints[0]);
     }
-    
-    redrawList();
+
     emit requestWaypoints();
 }
 
@@ -170,6 +169,7 @@ void WaypointList::transmit()
     m_ui->transmitButton->setEnabled(false);
 
     emit sendWaypoints(waypoints);
+    //emit requestWaypoints(); FIXME
 }
 
 void WaypointList::add()
@@ -179,17 +179,18 @@ void WaypointList::add()
     {
         if (waypoints.size() > 0)
         {
-            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.1, -0.5, 0.0, false, false));
+            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.0, -0.0, 0.0, false, false));
         }
         else
         {
-            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.0, -0.5, 360.0, false, true));
+            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.0, -0.0, 0.0, false, true));
         }
     }
 }
 
 void WaypointList::addWaypoint(Waypoint* wp)
 {
+    waypoints.push_back(wp);
     if (!wpViews.contains(wp))
     {
         WaypointView* wpview = new WaypointView(wp, this);
