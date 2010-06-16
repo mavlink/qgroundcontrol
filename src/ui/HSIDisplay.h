@@ -53,10 +53,16 @@ public slots:
     void setActiveUAS(UASInterface* uas);
     void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     void updateAttitudeSetpoints(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
+    void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 time);
     void updatePositionSetpoints(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
     void updateGlobalPosition(UASInterface*, double lat, double lon, double alt, quint64 usec);
     void updateSpeed(UASInterface* uas, double vx, double vy, double vz, quint64 time);
+    void updatePositionLock(UASInterface* uas, bool lock);
+    void updateAttitudeControllerEnabled(UASInterface* uas, bool enabled);
+    void updatePositionXYControllerEnabled(UASInterface* uas, bool enabled);
+    void updatePositionZControllerEnabled(UASInterface* uas, bool enabled);
+
     void paintEvent(QPaintEvent * event);
     /** @brief Update state from joystick */
     void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);
@@ -182,6 +188,11 @@ protected:
     //
     float xCenterPos;
     float yCenterPos;
+
+    bool positionLock;
+    bool attControlEnabled;
+    bool xyControlEnabled;
+    bool zControlEnabled;
 
 private:
 };
