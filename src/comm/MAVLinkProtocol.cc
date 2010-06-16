@@ -49,6 +49,7 @@ This file is part of the PIXHAWK project
 #include "configuration.h"
 #include "LinkManager.h"
 #include <mavlink.h>
+#include "QGC.h"
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
@@ -129,7 +130,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
             if (m_loggingEnabled)
             {
                 uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-                mavlink_msg_to_send_buffer(buf, &message);
+                quint64 time = MG::TIME::getGroundTimeNowUsecs();
+                memcpy(buf, (void*)&time, sizeof(quint64));
+                mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
                 m_logfile->write((const char*) buf);
                 qDebug() << "WROTE LOGFILE";
             }

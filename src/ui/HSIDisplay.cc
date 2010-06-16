@@ -210,7 +210,7 @@ void HSIDisplay::paintDisplay()
         // Transform from body to world coordinates
         m = metricWorldToBody(m);
         // Scale from metric body to screen reference units
-        QPointF s = metricBodyToRefX(m);
+        QPointF s = metricBodyToRef(m);
         drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, QGC::ColorCyan, &painter);
     }
 
@@ -297,9 +297,17 @@ QPointF HSIDisplay::refToMetricBody(QPointF &ref)
 /**
  * @see refToScreenX()
  */
-QPointF HSIDisplay::metricBodyToRefX(QPointF &metric)
+QPointF HSIDisplay::metricBodyToRef(QPointF &metric)
 {
     return QPointF(((metric.y())/ metricWidth) * vwidth + xCenterPos, ((-metric.x()) / metricWidth) * vwidth + yCenterPos);
+}
+
+QPointF HSIDisplay::metricBodyToScreen(QPointF metric)
+{
+    QPointF ref = metricBodyToRef(metric);
+    ref.setX(refToScreenX(ref.x()));
+    ref.setY(refToScreenY(ref.y()));
+    return ref;
 }
 
 void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
@@ -508,7 +516,7 @@ void HSIDisplay::drawSetpointXY(float x, float y, float yaw, const QColor &color
     // Transform from body to world coordinates
     in = metricWorldToBody(in);
     // Scale from metric to screen reference coordinates
-    QPointF p = metricBodyToRefX(in);
+    QPointF p = metricBodyToRef(in);
     drawCircle(p.x(), p.y(), radius, 0.4f, color, &painter);
     radius *= 0.8;
     drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
@@ -522,7 +530,7 @@ void HSIDisplay::drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRig
     pen.setWidthF(refLineWidthToPen(0.1f));
     pen.setColor(color);
     painter.setPen(pen);
-    painter.drawRect(QRectF(topLeft, bottomRight));
+    painter.drawRect(QRectF(metricBodyToScreen(metricWorldToBody(topLeft)), metricBodyToScreen(metricWorldToBody(bottomRight))));
 }
 
 void HSIDisplay::drawGPS(QPainter &painter)
