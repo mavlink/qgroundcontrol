@@ -66,7 +66,7 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     connect(m_ui->transmitButton, SIGNAL(clicked()), this, SLOT(transmit()));
 
     // REQUEST WAYPOINTS
-    connect(m_ui->readButton, SIGNAL(clicked()), this, SIGNAL(requestWaypoints()));
+    connect(m_ui->readButton, SIGNAL(clicked()), this, SLOT(read()));
 
     // SAVE/LOAD WAYPOINTS
     connect(m_ui->saveButton, SIGNAL(clicked()), this, SLOT(saveWaypoints()));
@@ -105,11 +105,6 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(this, SIGNAL(clearWaypointList()),                          &uas->getWaypointManager(), SLOT(clearWaypointList()));
 
         connect(&uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)), this, SLOT(updateStatusLabel(const QString &)));
-
-        // This slot is not implemented in UAS: connect(this, SIGNAL(removeWaypointId(int)), uas, SLOT(removeWaypoint(Waypoint*)));
-
-        //qDebug() << "Requesting waypoints";
-        //emit requestWaypoints();
     }
 }
 
@@ -158,27 +153,22 @@ void WaypointList::waypointReached(UASInterface* uas, quint16 waypointId)
     }*/
 }
 
-void WaypointList::transmit()
+void WaypointList::read()
 {
-    transmitDelay->start(1000);
-    m_ui->transmitButton->setEnabled(false);
-    emit clearWaypointList();
-
-    for(int i = 0; i < waypoints.size(); i++)
-    {
-        //Waypoint* wp = waypoints[i];
-        //emit waypointChanged(wp);
-        //if (wp->current)
-        //    emit currentWaypointChanged(wp->id);
-    }
-
-    emit sendWaypoints(waypoints);
-
     while(waypoints.size()>0)
     {
         removeWaypoint(waypoints[0]);
     }
+    
     emit requestWaypoints();
+}
+
+void WaypointList::transmit()
+{
+    transmitDelay->start(1000);
+    m_ui->transmitButton->setEnabled(false);
+
+    emit sendWaypoints(waypoints);
 }
 
 void WaypointList::add()
@@ -286,11 +276,6 @@ void WaypointList::moveDown(Waypoint* wp)
         redrawList();
     }
 }
-
-/*void WaypointList::removeWaypointAndName(Waypoint* wp)
-{
-    removeWaypoint(wp);
-}*/
 
 void WaypointList::removeWaypoint(Waypoint* wp)
 {
