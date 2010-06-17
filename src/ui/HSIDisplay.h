@@ -98,7 +98,9 @@ protected:
     /** @brief Reference coordinates to metric coordinates */
     QPointF refToMetricBody(QPointF &ref);
     /** @brief Metric coordinates to reference coordinates */
-    QPointF metricBodyToRefX(QPointF &metric);
+    QPointF metricBodyToRef(QPointF &metric);
+    /** @brief Metric body coordinates to screen coordinates */
+    QPointF metricBodyToScreen(QPointF metric);
 
     /**
      * @brief Private data container class to be used within the HSI widget

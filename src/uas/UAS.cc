@@ -406,11 +406,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_position_controller_output_t out;
                 mavlink_msg_position_controller_output_decode(&message, &out);
-                quint64 time = MG::TIME::getGroundTimeNowUsecs();
+                quint64 time = MG::TIME::getGroundTimeNow();
                 //emit positionSetPointsChanged(uasId, out.x/127.0f, out.y/127.0f, out.z/127.0f, out.yaw, time);
-                emit valueChanged(uasId, "pos control x", out.x, time/1000.0f);
-                emit valueChanged(uasId, "pos control y", out.y, time/1000.0f);
-                emit valueChanged(uasId, "pos control z", out.z, time/1000.0f);
+                emit valueChanged(uasId, "pos control x", out.x, time);
+                emit valueChanged(uasId, "pos control y", out.y, time);
+                emit valueChanged(uasId, "pos control z", out.z, time);
             }
             break;
         case MAVLINK_MSG_ID_WAYPOINT_COUNT:
@@ -428,7 +428,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_waypoint_t wp;
                 mavlink_msg_waypoint_decode(&message, &wp);
-                qDebug() << "got waypoint (" << wp.seq << ") from ID " << message.sysid << " x=" << wp.x << " y=" << wp.y << " z=" << wp.z;
+                //qDebug() << "got waypoint (" << wp.seq << ") from ID " << message.sysid << " x=" << wp.x << " y=" << wp.y << " z=" << wp.z;
                 if(wp.target_system == mavlink->getSystemId() && wp.target_component == mavlink->getComponentId())
                 {
                     waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
@@ -449,11 +449,20 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
         case MAVLINK_MSG_ID_WAYPOINT_REACHED:
             {
-//                mavlink_waypoint_reached_t wp;
-//                mavlink_msg_waypoint_reached_decode(&message, &wp);
-//                emit waypointReached(this, wp.id);
+                mavlink_waypoint_reached_t wpr;
+                mavlink_msg_waypoint_reached_decode(&message, &wpr);
+                waypointManager.handleWaypointReached(message.sysid, message.compid, &wpr);
             }
             break;
+
+        case MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT:
+            {
+                mavlink_waypoint_set_current_t wpsc;
+                mavlink_msg_waypoint_set_current_decode(&message, &wpsc);
+                waypointManager.handleWaypointSetCurrent(message.sysid, message.compid, &wpsc);
+            }
+            break;
+
         case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT:
             {
                 mavlink_local_position_setpoint_t p;
@@ -461,6 +470,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit positionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw, QGC::groundTimeUsecs());
             }
             break;
+
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
