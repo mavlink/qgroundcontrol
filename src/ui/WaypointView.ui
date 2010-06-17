@@ -180,8 +180,20 @@ QProgressBar::chunk#thrustBar {
       </item>
       <item>
        <widget class="QLabel" name="idLabel">
+        <property name="minimumSize">
+         <size>
+          <width>15</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Waypoint Sequence Number</string>
+        </property>
         <property name="text">
          <string>TextLabel</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
@@ -200,21 +212,39 @@ QProgressBar::chunk#thrustBar {
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="xSpinBox">
+        <property name="toolTip">
+         <string>Position X coordinate</string>
+        </property>
+        <property name="suffix">
+         <string>m</string>
+        </property>
         <property name="minimum">
          <double>-100000.000000000000000</double>
         </property>
         <property name="maximum">
          <double>100000.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.050000000000000</double>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="ySpinBox">
+        <property name="toolTip">
+         <string>Position Y coordinate</string>
+        </property>
+        <property name="suffix">
+         <string>m</string>
+        </property>
         <property name="minimum">
          <double>-100000.000000000000000</double>
         </property>
         <property name="maximum">
          <double>100000.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.050000000000000</double>
         </property>
         <property name="value">
          <double>0.000000000000000</double>
@@ -223,21 +253,36 @@ QProgressBar::chunk#thrustBar {
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="zSpinBox">
+        <property name="toolTip">
+         <string>Position Z coordinate</string>
+        </property>
+        <property name="suffix">
+         <string>m</string>
+        </property>
         <property name="minimum">
          <double>-100000.000000000000000</double>
         </property>
         <property name="maximum">
-         <double>100000.000000000000000</double>
+         <double>0.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.050000000000000</double>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QDoubleSpinBox" name="yawSpinBox">
-        <property name="minimum">
-         <double>0.000000000000000</double>
+       <widget class="QSpinBox" name="yawSpinBox">
+        <property name="toolTip">
+         <string>Yaw angle</string>
+        </property>
+        <property name="wrapping">
+         <bool>true</bool>
+        </property>
+        <property name="suffix">
+         <string>°</string>
         </property>
         <property name="maximum">
-         <double>360.000000000000000</double>
+         <number>359</number>
         </property>
        </widget>
       </item>
@@ -259,6 +304,9 @@ QProgressBar::chunk#thrustBar {
           <height>22</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Move Up</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -276,6 +324,9 @@ QProgressBar::chunk#thrustBar {
           <height>22</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Move Down</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -292,6 +343,9 @@ QProgressBar::chunk#thrustBar {
           <width>28</width>
           <height>22</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>Delete</string>
         </property>
         <property name="text">
          <string/>

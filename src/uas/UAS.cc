@@ -449,11 +449,20 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
         case MAVLINK_MSG_ID_WAYPOINT_REACHED:
             {
-//                mavlink_waypoint_reached_t wp;
-//                mavlink_msg_waypoint_reached_decode(&message, &wp);
-//                emit waypointReached(this, wp.id);
+                mavlink_waypoint_reached_t wpr;
+                mavlink_msg_waypoint_reached_decode(&message, &wpr);
+                waypointManager.handleWaypointReached(message.sysid, message.compid, &wpr);
             }
             break;
+
+        case MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT:
+            {
+                mavlink_waypoint_set_current_t wpsc;
+                mavlink_msg_waypoint_set_current_decode(&message, &wpsc);
+                waypointManager.handleWaypointSetCurrent(message.sysid, message.compid, &wpsc);
+            }
+            break;
+
         case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT:
             {
                 mavlink_local_position_setpoint_t p;
@@ -461,6 +470,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit positionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw, QGC::groundTimeUsecs());
             }
             break;
+
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
