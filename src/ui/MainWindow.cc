@@ -501,6 +501,12 @@ void MainWindow::loadEngineerView()
     container7->setWidget(debugConsole);
     addDockWidget(Qt::BottomDockWidgetArea, container7);
 
+    // ONBOARD PARAMETERS
+    QDockWidget* containerParams = new QDockWidget(tr("Onboard Parameters"), this);
+    containerParams->setWidget(parameters);
+    addDockWidget(Qt::RightDockWidgetArea, containerParams);
+
+
     this->show();
 }
 
