@@ -56,7 +56,6 @@ class WaypointList : public QWidget {
 public slots:
     void setUAS(UASInterface* uas);
     void redrawList();
-    void reenableTransmit();
 
     //UI Buttons
     void saveWaypoints();
@@ -66,10 +65,11 @@ public slots:
     void add();
     void moveUp(Waypoint* wp);
     void moveDown(Waypoint* wp);
-    void setCurrentWaypoint(Waypoint* wp);
 
     /** @brief sets statusLabel string */
     void updateStatusLabel(const QString &string);
+
+    void currentWaypointChanged(quint16 seq);
 
     //To be moved to UASWaypointManager (?)
     void setWaypoint(int uasId, quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current);
@@ -77,25 +77,21 @@ public slots:
     void removeWaypoint(Waypoint* wp);
     void waypointReached(UASInterface* uas, quint16 waypointId);
 
+signals:
+    void sendWaypoints(const QVector<Waypoint*> &);
+    void requestWaypoints();
+    void clearWaypointList();
+
 protected:
     virtual void changeEvent(QEvent *e);
 
     QVector<Waypoint*> waypoints;
     QMap<Waypoint*, WaypointView*> wpViews;
     QVBoxLayout* listLayout;
-    QTimer* transmitDelay;
     UASInterface* uas;
 
 private:
     Ui::WaypointList *m_ui;
-
-signals:
-    //void waypointChanged(Waypoint*);
-    //void currentWaypointChanged(int);
-    //void removeWaypointId(int);
-    void sendWaypoints(const QVector<Waypoint*> &);
-    void requestWaypoints();
-    void clearWaypointList();
 };
 
 #endif // WAYPOINTLIST_H
