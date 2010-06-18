@@ -149,7 +149,7 @@ void HSIDisplay::paintDisplay()
         lockStatusColor = QColor(255, 20, 20);
     }
 
-    paintText(tr("POS"), QGC::ColorCyan, 1.8f, 2.0f, 2.5f, &painter);
+    paintText(tr("POS"), QGC::colorCyan, 1.8f, 2.0f, 2.5f, &painter);
     painter.setBrush(lockStatusColor);
     painter.setPen(Qt::NoPen);
     painter.drawRect(QRect(refToScreenX(9.5f), refToScreenY(2.0f), refToScreenX(7.0f), refToScreenY(4.0f)));
@@ -204,14 +204,14 @@ void HSIDisplay::paintDisplay()
     if (bodyXSetCoordinate != 0 || bodyYSetCoordinate != 0)
     {
         // Draw setpoint
-        drawSetpointXY(bodyXSetCoordinate, bodyYSetCoordinate, bodyYawSet, QGC::ColorCyan, painter);
+        drawSetpointXY(bodyXSetCoordinate, bodyYSetCoordinate, bodyYawSet, QGC::colorCyan, painter);
         // Draw travel direction line
         QPointF m(bodyXSetCoordinate, bodyYSetCoordinate);
         // Transform from body to world coordinates
         m = metricWorldToBody(m);
         // Scale from metric body to screen reference units
         QPointF s = metricBodyToRef(m);
-        drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, QGC::ColorCyan, &painter);
+        drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, QGC::colorCyan, &painter);
     }
 
     // Labels on outer part and bottom
