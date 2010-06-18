@@ -49,15 +49,16 @@ class WaypointView : public QWidget {
     virtual ~WaypointView();
 
 public:
-    void removeCurrentCheck();
+    void setCurrent(bool state);
 
 public slots:
     void moveUp();
     void moveDown();
     void remove();
-    void setAutoContinue(int);
-    void setCurrent();
-    //void setText();
+    void changedAutoContinue(int);
+    void changedCurrent(int);
+
+    void setYaw(int);   //hidden degree to radian conversion
 
 protected:
     virtual void changeEvent(QEvent *e);
@@ -70,9 +71,8 @@ signals:
     void moveUpWaypoint(Waypoint*);
     void moveDownWaypoint(Waypoint*);
     void removeWaypoint(Waypoint*);
-    void setCurrentWaypoint(Waypoint*);
-    void setWaypointText(Waypoint*, QString);
-    void waypointUpdated(Waypoint*);
+    void currentWaypointChanged(quint16);
+    void setYaw(double);
 };
 
 #endif // WAYPOINTVIEW_H
