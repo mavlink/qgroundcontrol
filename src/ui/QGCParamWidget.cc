@@ -188,7 +188,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             parameterItem = new QTreeWidgetItem(plist);
 
             compParamGroups->value(parent)->addChild(parameterItem);
-            parameterItem>setFlags(item->flags() | Qt::ItemIsEditable);
+            parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
         }
     }
     else
@@ -216,14 +216,14 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             plist.append(QString::number(value));
             parameterItem = new QTreeWidgetItem(plist);
 
-            compParamGroups->value(parent)->addChild(parameterItem);
-            parameterItem>setFlags(item->flags() | Qt::ItemIsEditable);
+            components->value(component)->addChild(parameterItem);
+            parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
         }
         //tree->expandAll();
     }
     // Reset background color
-    current->setBackground(0, QBrush(QColor(QGC::colorGreen)));
-    current->setBackground(1, QBrush(QColor(QGC::colorGreen)));
+    parameterItem->setBackground(0, QBrush(Qt::NoBrush));
+    parameterItem->setBackground(1, QBrush(Qt::NoBrush));
     tree->update();
 }
 
