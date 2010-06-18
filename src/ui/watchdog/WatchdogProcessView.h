@@ -2,6 +2,7 @@
 #define WATCHDOGPROCESSVIEW_H
 
 #include <QtGui/QWidget>
+#include <QMap>
 
 namespace Ui {
     class WatchdogProcessView;
@@ -10,7 +11,7 @@ namespace Ui {
 class WatchdogProcessView : public QWidget {
     Q_OBJECT
 public:
-    WatchdogProcessView(QWidget *parent = 0);
+    WatchdogProcessView(int processid, QWidget *parent = 0);
     ~WatchdogProcessView();
 
 protected:
