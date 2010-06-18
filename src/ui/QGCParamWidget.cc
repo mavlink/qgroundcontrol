@@ -82,6 +82,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     headerItems.append("Value");
     tree->setHeaderLabels(headerItems);
     tree->setColumnCount(2);
+    tree->setExpandsOnDoubleClick(true);
 
     // Connect signals/slots
     connect(this, SIGNAL(parameterChanged(int,QString,float)), mav, SLOT(setParameter(int,QString,float)));
@@ -222,9 +223,10 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
         //tree->expandAll();
     }
     // Reset background color
-    parameterItem->setBackground(0, QBrush(Qt::NoBrush));
-    parameterItem->setBackground(1, QBrush(Qt::NoBrush));
-    tree->update();
+    parameterItem->setBackground(0, QBrush(QColor(0, 0, 0)));
+    parameterItem->setBackground(1, Qt::NoBrush);
+    //tree->update();
+    if (changedValues.contains(component)) changedValues.value(component)->remove(parameterName);
 }
 
 /**
@@ -265,9 +267,10 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
                 if (ok)
                 {
                     qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
+                    if (map->contains(str)) map->remove(str);
                     map->insert(str, value);
-                    current->setBackground(0, QBrush(QColor(QGC::colorGreen)));
-                    current->setBackground(1, QBrush(QColor(QGC::colorGreen)));
+                    //current->setBackground(0, QBrush(QColor(QGC::colorGreen)));
+                    //current->setBackground(1, QBrush(QColor(QGC::colorGreen)));
                 }
             }
         }
@@ -282,6 +285,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
 void QGCParamWidget::setParameter(int component, QString parameterName, float value)
 {
     emit parameterChanged(component, parameterName, value);
+    qDebug() << "SENT PARAM" << parameterName << value;
 }
 
 /**
@@ -300,7 +304,7 @@ void QGCParamWidget::setParameters()
             QMap<QString, float>::iterator j;
             for (j = comp->begin(); j != comp->end(); ++j)
             {
-                emit parameterChanged(compid, j.key(), j.value());
+                setParameter(compid, j.key(), j.value());
             }
         }
     }
