@@ -392,7 +392,11 @@ void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
     uiXSetCoordinate = sp.x();
     uiYSetCoordinate = sp.y();
 
-    qDebug() << "Setting new setpoint at x: " << x << "metric y:" << y;
+    if (uas)
+    {
+        uas->setLocalPositionSetpoint(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet);
+        qDebug() << "Setting new setpoint at x: " << x << "metric y:" << y;
+    }
 }
 
 void HSIDisplay::setBodySetpointCoordinateZ(double z)

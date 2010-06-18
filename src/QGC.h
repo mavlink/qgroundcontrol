@@ -8,14 +8,8 @@ namespace QGC
 {
     const QColor ColorCyan(55, 154, 195);
 
-    static quint64 groundTimeUsecs()
-    {
-        QDateTime time = QDateTime::currentDateTime();
-        time = time.toUTC();
-        /* Return seconds and milliseconds, in milliseconds unit */
-        quint64 microseconds = time.toTime_t() * static_cast<quint64>(1000000);
-        return static_cast<quint64>(microseconds + (time.time().msec()*1000));
-    }
+    /** @brief Get the current ground time in microseconds */
+    quint64 groundTimeUsecs();
 }
 
 #endif // QGC_H

@@ -44,7 +44,8 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
         QWidget(parent),
         mav(uas),
         components(new QMap<int, QTreeWidgetItem*>()),
-        changedValues()//QMap<int, QMap<QString, float>* >())
+        paramGroups(),
+        changedValues()
 {
     // Create tree widget
     tree = new QTreeWidget(this);
@@ -107,15 +108,22 @@ UASInterface* QGCParamWidget::getUAS()
 void QGCParamWidget::addComponent(int uas, int component, QString componentName)
 {
     Q_UNUSED(uas);
-    QStringList list;
-    list.append(componentName);
-    list.append(QString::number(component));
-    QTreeWidgetItem* comp = new QTreeWidgetItem(list);
-    bool updated = false;
-    if (components->contains(component)) updated = true;
-    components->insert(component, comp);
-    if (!updated)
+    if (components->contains(component))
     {
+        // Update existing
+        components->value(component)->setData(0, Qt::DisplayRole, componentName);
+        components->value(component)->setData(1, Qt::DisplayRole, QString::number(component));
+    }
+    else
+    {
+        // Add new
+        QStringList list;
+        list.append(componentName);
+        list.append(QString::number(component));
+        QTreeWidgetItem* comp = new QTreeWidgetItem(list);
+        components->insert(component, comp);
+        // Create grouping and update maps
+        paramGroups.insert(component, new QMap<QString, QTreeWidgetItem*>());
         tree->addTopLevelItem(comp);
         tree->update();
     }
@@ -130,15 +138,6 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
 {
     Q_UNUSED(uas);
     // Insert parameter into map
-
-    QString splitToken = "_";
-    // Check if auto-grouping can work
-    /*
-    if (parameterName.contains(splitToken))
-    {
-        QString parent = parameterName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
-        QString children = parameterName.section(splitToken, 1, -1, QString::SectionSkipEmpty);
-    }*/
     QStringList plist;
     plist.append(parameterName);
     plist.append(QString::number(value));
@@ -150,27 +149,46 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
         addComponent(uas, component, "Component #" + QString::number(component));
     }
 
-    bool found = false;
-    QTreeWidgetItem* parent = components->value(component);
-    for (int i = 0; i < parent->childCount(); i++)
+    QString splitToken = "_";
+    // Check if auto-grouping can work
+    if (parameterName.contains(splitToken))
     {
-        QTreeWidgetItem* child = parent->child(i);
-        QString key = child->data(0, Qt::DisplayRole).toString();
-        if (key == parameterName)
+        QString parent = parameterName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
+        QMap<QString, QTreeWidgetItem*>* compParamGroups = paramGroups.value(component);
+        if (!compParamGroups->contains(parent))
         {
-            qDebug() << "UPDATED CHILD";
-            child->setData(1, Qt::DisplayRole, value);
-            found = true;
+            // Insert group item
+            QStringList glist;
+            glist.append(parent);
+            QTreeWidgetItem* item = new QTreeWidgetItem(glist);
+            compParamGroups->insert(parent, item);
+            components->value(component)->addChild(item);
         }
     }
-
-    if (!found)
+    else
     {
-        components->value(component)->addChild(item);
-        item->setFlags(item->flags() | Qt::ItemIsEditable);
+        bool found = false;
+        QTreeWidgetItem* parent = components->value(component);
+        for (int i = 0; i < parent->childCount(); i++)
+        {
+            QTreeWidgetItem* child = parent->child(i);
+            QString key = child->data(0, Qt::DisplayRole).toString();
+            if (key == parameterName)
+            {
+                //qDebug() << "UPDATED CHILD";
+                child->setData(1, Qt::DisplayRole, value);
+                found = true;
+            }
+        }
+
+        if (!found)
+        {
+            components->value(component)->addChild(item);
+            item->setFlags(item->flags() | Qt::ItemIsEditable);
+        }
+        //connect(item, SIGNAL())
+        tree->expandAll();
     }
-    //connect(item, SIGNAL())
-    tree->expandAll();
     tree->update();
 }
 
@@ -213,6 +231,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
                 {
                     qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
                     map->insert(str, value);
+                    // FIXME CHANGE COLOR OF CHANGED PARAM
                 }
             }
         }

@@ -492,7 +492,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 {
     mavlink_message_t msg;
-
+    mavlink_msg_position_control_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, 0, x, y, z, yaw);
+    sendMessage(msg);
 }
 
 quint64 UAS::getUnixTime(quint64 time)
