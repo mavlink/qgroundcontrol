@@ -34,6 +34,8 @@ This file is part of the PIXHAWK project
 #include <QDoubleSpinBox>
 #include <QDebug>
 
+#include <cmath>    //M_PI
+
 #include "WaypointView.h"
 #include "ui_WaypointView.h"
 
@@ -49,7 +51,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->xSpinBox->setValue(wp->getX());
     m_ui->ySpinBox->setValue(wp->getY());
     m_ui->zSpinBox->setValue(wp->getZ());
-    m_ui->yawSpinBox->setValue(wp->getYaw());
+    m_ui->yawSpinBox->setValue(wp->getYaw()/M_PI*180.);
     m_ui->selectedBox->setChecked(wp->getCurrent());
     m_ui->autoContinue->setChecked(wp->getAutoContinue());
     m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
@@ -57,14 +59,22 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(m_ui->xSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
     connect(m_ui->ySpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
     connect(m_ui->zSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
-    connect(m_ui->yawSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setYaw(double)));
+
+    //hidden degree to radian conversion of the yaw angle
+    connect(m_ui->yawSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setYaw(int)));
+    connect(this, SIGNAL(setYaw(double)), wp, SLOT(setYaw(double)));
 
     connect(m_ui->upButton, SIGNAL(clicked()), this, SLOT(moveUp()));
     connect(m_ui->downButton, SIGNAL(clicked()), this, SLOT(moveDown()));
     connect(m_ui->removeButton, SIGNAL(clicked()), this, SLOT(remove()));
 
-    connect(m_ui->autoContinue, SIGNAL(stateChanged(int)), this, SLOT(setAutoContinue(int)));
-    connect(m_ui->selectedBox, SIGNAL(clicked()), this, SLOT(setCurrent()));
+    connect(m_ui->autoContinue, SIGNAL(stateChanged(int)), this, SLOT(changedAutoContinue(int)));
+    connect(m_ui->selectedBox, SIGNAL(stateChanged(int)), this, SLOT(changedCurrent(int)));
+}
+
+void WaypointView::setYaw(int yawDegree)
+{
+    emit setYaw((double)yawDegree*M_PI/180.);
 }
 
 void WaypointView::moveUp()
@@ -83,26 +93,37 @@ void WaypointView::remove()
     delete this;
 }
 
-void WaypointView::setAutoContinue(int state)
+void WaypointView::changedAutoContinue(int state)
 {
     if (state == 0)
         wp->setAutocontinue(false);
     else
         wp->setAutocontinue(true);
-    emit waypointUpdated(wp);
 }
 
-void WaypointView::removeCurrentCheck()
+void WaypointView::changedCurrent(int state)
 {
-    m_ui->selectedBox->setCheckState(Qt::Unchecked);
-}
-
-void WaypointView::setCurrent()
-{
-    if (m_ui->selectedBox->isChecked())
-        emit setCurrentWaypoint(wp);
+    if (state == 0)
+    {
+        wp->setCurrent(false);
+    }
     else
+    {
+        wp->setCurrent(true);
+        emit currentWaypointChanged(wp->getId());   //the slot currentWayppointChanged() in WaypointList sets all other current flags to false
+    }
+}
+
+void WaypointView::setCurrent(bool state)
+{
+    if (state)
+    {
         m_ui->selectedBox->setCheckState(Qt::Checked);
+    }
+    else
+    {
+         m_ui->selectedBox->setCheckState(Qt::Unchecked);
+    }
 }
 
 WaypointView::~WaypointView()
