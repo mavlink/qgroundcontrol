@@ -58,7 +58,7 @@ void WatchdogControl::updateWatchdog(int systemId, int watchdogId, unsigned int 
     // start the timeout timer
     //watchdog.timeoutTimer_.reset();
 
-    //qDebug() << "WATCHDOG RECEIVED";
+    qDebug() << "WATCHDOG RECEIVED";
     //qDebug() << "<-- received mavlink_watchdog_heartbeat_t " << msg->sysid << " / " << payload.watchdog_id << " / " << payload.process_count << std::endl;
 }
 
@@ -73,6 +73,7 @@ void WatchdogControl::addProcess(int systemId, int watchdogId, int processId, QS
     process.arguments_ = arguments.toStdString();
     process.timeout_ = timeout;
     qDebug() << "PROCESS RECEIVED";
+    qDebug() << "SYS" << systemId << "WD" << watchdogId << "PROCESS" << processId << name << "ARG" << arguments << "TO" << timeout;
     //qDebug() << "<-- received mavlink_watchdog_process_info_t " << msg->sysid << " / " << (const char*)payload.name << " / " << (const char*)payload.arguments << " / " << payload.timeout << std::endl;
 }
 
@@ -90,6 +91,8 @@ void WatchdogControl::updateProcess(int systemId, int watchdogId, int processId,
     process.pid_ = pid;
 
     qDebug() << "PROCESS UPDATED";
+    qDebug() << "SYS" << systemId << "WD" << watchdogId << "PROCESS" << processId << "STATE" << state << "CRASH" << crashes << "PID" << pid;
+
     //process.updateTimer_.reset();
     //qDebug() << "<-- received mavlink_watchdog_process_status_t " << msg->sysid << " / " << payload.state << " / " << payload.muted << " / " << payload.crashes << " / " << payload.pid << std::endl;
 }
