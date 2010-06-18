@@ -205,6 +205,8 @@ public slots:
     virtual void enableRawControllerDataTransmission(bool enabled) = 0;
     virtual void enableRawSensorFusionTransmission(bool enabled) = 0;
 
+    virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
+
 protected:
     QColor color;
 

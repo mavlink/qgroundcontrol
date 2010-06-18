@@ -210,6 +210,7 @@ void HDDisplay::setActiveUAS(UASInterface* uas)
     // Setup communication
     connect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
     //}
+    this->uas = uas;
 }
 
 /**

@@ -198,5 +198,6 @@ SOURCES += src/main.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
     src/ui/watchdog/WatchdogView.cc \
     src/uas/UASWaypointManager.cc \
-    src/ui/HSIDisplay.cc
+    src/ui/HSIDisplay.cc \
+    src/QGC.cc
 RESOURCES = mavground.qrc
