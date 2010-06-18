@@ -6,7 +6,9 @@
 
 namespace QGC
 {
-    const QColor ColorCyan(55, 154, 195);
+    const QColor colorCyan(55, 154, 195);
+    const QColor colorRed(154, 20, 20);
+    const QColor colorGreen(20, 200, 20);
 
     /** @brief Get the current ground time in microseconds */
     quint64 groundTimeUsecs();

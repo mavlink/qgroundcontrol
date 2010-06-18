@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCParamWidget.h"
 #include "UASInterface.h"
 #include <QDebug>
+#include "QGC.h"
 
 /**
  * @param uas MAV to set the parameters on
@@ -137,11 +138,8 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
 void QGCParamWidget::addParameter(int uas, int component, QString parameterName, float value)
 {
     Q_UNUSED(uas);
-    // Insert parameter into map
-    QStringList plist;
-    plist.append(parameterName);
-    plist.append(QString::number(value));
-    QTreeWidgetItem* item = new QTreeWidgetItem(plist);
+    // Reference to item in tree
+    QTreeWidgetItem* parameterItem;
 
     // Get component
     if (!components->contains(component))
@@ -164,6 +162,34 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             compParamGroups->insert(parent, item);
             components->value(component)->addChild(item);
         }
+
+        // Append child to group
+        bool found = false;
+        QTreeWidgetItem* parentItem = compParamGroups->value(parent);
+        for (int i = 0; i < parentItem->childCount(); i++)
+        {
+            QTreeWidgetItem* child = parentItem->child(i);
+            QString key = child->data(0, Qt::DisplayRole).toString();
+            if (key == parameterName)
+            {
+                //qDebug() << "UPDATED CHILD";
+                parameterItem = child;
+                parameterItem->setData(1, Qt::DisplayRole, value);
+                found = true;
+            }
+        }
+
+        if (!found)
+        {
+            // Insert parameter into map
+            QStringList plist;
+            plist.append(parameterName);
+            plist.append(QString::number(value));
+            parameterItem = new QTreeWidgetItem(plist);
+
+            compParamGroups->value(parent)->addChild(parameterItem);
+            parameterItem>setFlags(item->flags() | Qt::ItemIsEditable);
+        }
     }
     else
     {
@@ -176,19 +202,28 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             if (key == parameterName)
             {
                 //qDebug() << "UPDATED CHILD";
-                child->setData(1, Qt::DisplayRole, value);
+                parameterItem = child;
+                parameterItem->setData(1, Qt::DisplayRole, value);
                 found = true;
             }
         }
 
         if (!found)
         {
-            components->value(component)->addChild(item);
-            item->setFlags(item->flags() | Qt::ItemIsEditable);
+            // Insert parameter into map
+            QStringList plist;
+            plist.append(parameterName);
+            plist.append(QString::number(value));
+            parameterItem = new QTreeWidgetItem(plist);
+
+            compParamGroups->value(parent)->addChild(parameterItem);
+            parameterItem>setFlags(item->flags() | Qt::ItemIsEditable);
         }
-        //connect(item, SIGNAL())
-        tree->expandAll();
+        //tree->expandAll();
     }
+    // Reset background color
+    current->setBackground(0, QBrush(QColor(QGC::colorGreen)));
+    current->setBackground(1, QBrush(QColor(QGC::colorGreen)));
     tree->update();
 }
 
@@ -231,7 +266,8 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
                 {
                     qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
                     map->insert(str, value);
-                    // FIXME CHANGE COLOR OF CHANGED PARAM
+                    current->setBackground(0, QBrush(QColor(QGC::colorGreen)));
+                    current->setBackground(1, QBrush(QColor(QGC::colorGreen)));
                 }
             }
         }
