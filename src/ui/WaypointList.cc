@@ -168,11 +168,11 @@ void WaypointList::add()
     {
         if (waypoints.size() > 0)
         {
-            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.0, -0.0, 0.0, false, false));
+            addWaypoint(new Waypoint(waypoints.size(), 1.1, 1.1, -0.6, 0.0, true, false));
         }
         else
         {
-            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.0, -0.0, 0.0, false, true));
+            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.0, -0.0, 0.0, true, true));
         }
     }
 }
