@@ -47,12 +47,16 @@ This file is part of the PIXHAWK project
 #define CONTROL_MODE_GUIDED "MODE GUIDED"
 #define CONTROL_MODE_AUTO   "MODE AUTO"
 #define CONTROL_MODE_TEST1  "MODE TEST1"
+#define CONTROL_MODE_TEST2  "MODE TEST2"
+#define CONTROL_MODE_TEST3  "MODE TEST3"
 
 #define CONTROL_MODE_LOCKED_INDEX 2
 #define CONTROL_MODE_MANUAL_INDEX 3
 #define CONTROL_MODE_GUIDED_INDEX 4
 #define CONTROL_MODE_AUTO_INDEX   5
 #define CONTROL_MODE_TEST1_INDEX  6
+#define CONTROL_MODE_TEST2_INDEX  7
+#define CONTROL_MODE_TEST3_INDEX  8
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
         uas(NULL),
@@ -61,12 +65,15 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     ui.setupUi(this);
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
+    ui.modeComboBox->clear();
     ui.modeComboBox->insertItem(0, "Select..");
     ui.modeComboBox->insertItem(CONTROL_MODE_LOCKED_INDEX, CONTROL_MODE_LOCKED);
     ui.modeComboBox->insertItem(CONTROL_MODE_MANUAL_INDEX, CONTROL_MODE_MANUAL);
     ui.modeComboBox->insertItem(CONTROL_MODE_GUIDED_INDEX, CONTROL_MODE_GUIDED);
     ui.modeComboBox->insertItem(CONTROL_MODE_AUTO_INDEX, CONTROL_MODE_AUTO);
     ui.modeComboBox->insertItem(CONTROL_MODE_TEST1_INDEX, CONTROL_MODE_TEST1);
+    ui.modeComboBox->insertItem(CONTROL_MODE_TEST2_INDEX, CONTROL_MODE_TEST2);
+    ui.modeComboBox->insertItem(CONTROL_MODE_TEST3_INDEX, CONTROL_MODE_TEST3);
 
     ui.modeComboBox->setCurrentIndex(0);
 }
@@ -154,6 +161,16 @@ void UASControlWidget::setMode(int mode)
     else if (mode == CONTROL_MODE_TEST1_INDEX)
     {
         uasMode = (unsigned int)MAV_MODE_TEST1;
+        ui.modeComboBox->setCurrentIndex(mode);
+    }
+    else if (mode == CONTROL_MODE_TEST2_INDEX)
+    {
+        uasMode = (unsigned int)MAV_MODE_TEST2;
+        ui.modeComboBox->setCurrentIndex(mode);
+    }
+    else if (mode == CONTROL_MODE_TEST3_INDEX)
+    {
+        uasMode = (unsigned int)MAV_MODE_TEST3;
         ui.modeComboBox->setCurrentIndex(mode);
     }
     else
