@@ -195,6 +195,7 @@ protected:
     bool attControlEnabled;
     bool xyControlEnabled;
     bool zControlEnabled;
+    bool mavInitialized;      ///< The MAV is initialized once the setpoint has been received
 
 private:
 };
