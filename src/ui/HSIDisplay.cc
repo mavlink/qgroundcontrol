@@ -70,7 +70,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         localAvailable(0),
         roll(0),
         pitch(0),
-        yaw(0.0f),
+        yaw(1.0f), // FIXME Should be 0
         bodyXSetCoordinate(0.0f),
         bodyYSetCoordinate(0.0f),
         bodyZSetCoordinate(0.0f),
@@ -83,7 +83,8 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         positionLock(false),
         attControlEnabled(false),
         xyControlEnabled(false),
-        zControlEnabled(false)
+        zControlEnabled(false),
+        mavInitialized(false)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     refreshTimer->setInterval(60);
@@ -272,7 +273,7 @@ QPointF HSIDisplay::metricWorldToBody(QPointF world)
 {
     // First translate to body-centered coordinates
     // Rotate around -yaw
-    QPointF result(cos(yaw) * (world.x() - x) + -sin(yaw) * (world.x() - x), sin(yaw) * (world.y() - y) + cos(yaw) * (world.y() - y));
+    QPointF result(cos(yaw) * (x - world.x()) + -sin(yaw) * (x - world.x()), sin(yaw) * (y - world.y()) + cos(yaw) * (y - world.y()));
     return result;
 }
 
@@ -400,7 +401,9 @@ void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
     uiXSetCoordinate = sp.x();
     uiYSetCoordinate = sp.y();
 
-    if (uas)
+    qDebug() << "Attempting to set new setpoint at x: " << x << "metric y:" << y;
+
+    if (uas && mavInitialized)
     {
         uas->setLocalPositionSetpoint(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet);
         qDebug() << "Setting new setpoint at x: " << x << "metric y:" << y;
@@ -445,6 +448,9 @@ void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesir
     bodyYSetCoordinate = yDesired;
     bodyZSetCoordinate = zDesired;
     bodyYawSet = yawDesired;
+    mavInitialized = true;
+
+    qDebug() << "Received setpoint at x: " << x << "metric y:" << y;
 //    posXSet = xDesired;
 //    posYSet = yDesired;
 //    posZSet = zDesired;

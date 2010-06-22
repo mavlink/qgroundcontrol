@@ -1,7 +1,7 @@
 #include "WatchdogProcessView.h"
 #include "ui_WatchdogProcessView.h"
 
-WatchdogProcessView::WatchdogProcessView(QWidget *parent) :
+WatchdogProcessView::WatchdogProcessView(int processid, QWidget *parent) :
     QWidget(parent),
     m_ui(new Ui::WatchdogProcessView)
 {
