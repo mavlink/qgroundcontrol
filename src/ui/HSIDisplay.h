@@ -63,6 +63,31 @@ public slots:
     void updatePositionXYControllerEnabled(UASInterface* uas, bool enabled);
     void updatePositionZControllerEnabled(UASInterface* uas, bool enabled);
 
+    /** @brief Attitude control enabled/disabled */
+    void attitudeControlEnabled(bool enabled);
+    /** @brief Position 2D control enabled/disabled */
+    void positionXYControlEnabled(bool enabled);
+    /** @brief Altitude control enabled/disabled */
+    void positionZControlEnabled(bool enabled);
+    /** @brief Heading control enabled/disabled */
+    void positionYawControlEnabled(bool enabled);
+
+    /**
+     * @brief Localization quality changed
+     * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+     */
+    void updateLocalization(UASInterface* uas, int localization);
+    /**
+     * @brief GPS localization quality changed
+     * @param fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D localization, 3: 3D localization
+     */
+    void updateGpsLocalization(UASInterface* uas, int localization);
+    /**
+     * @brief Vision localization quality changed
+     * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+     */
+    void updateVisionLocalization(UASInterface* uas, int localization);
+
     void paintEvent(QPaintEvent * event);
     /** @brief Update state from joystick */
     void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);

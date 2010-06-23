@@ -119,6 +119,12 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(this, "Load", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
             }
             break;
+        case MAVLINK_MSG_ID_CONTROL_STATUS:
+            {
+                mavlink_control_status_t status;
+                mavlink_msg_control_status_decode(&message, &status);
+            }
+            break;
     default:
             // Do nothing
             break;
