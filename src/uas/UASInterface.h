@@ -314,6 +314,30 @@ signals:
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);
     /** @brief Emit the new system type */
     void systemTypeSet(UASInterface* uas, unsigned int type);
+    /** @brief Attitude control enabled/disabled */
+    void attitudeControlEnabled(bool enabled);
+    /** @brief Position 2D control enabled/disabled */
+    void positionXYControlEnabled(bool enabled);
+    /** @brief Altitude control enabled/disabled */
+    void positionZControlEnabled(bool enabled);
+    /** @brief Heading control enabled/disabled */
+    void positionYawControlEnabled(bool enabled);
+
+    /**
+     * @brief Localization quality changed
+     * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+     */
+    void localizationChanged(UASInterface* uas, int fix);
+    /**
+     * @brief GPS localization quality changed
+     * @param fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D localization, 3: 3D localization
+     */
+    void gpsLocalizationChanged(UASInterface* uas, int fix);
+    /**
+     * @brief Vision localization quality changed
+     * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+     */
+    void visionLocalizationChanged(UASInterface* uas, int fix);
 };
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0");

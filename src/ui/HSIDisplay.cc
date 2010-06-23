@@ -372,6 +372,10 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
+    connect(uas, SIGNAL(attitudeControlEnabled(bool)), this, SLOT(updateAttitudeControllerEnabled(UASInterface*,bool)));
+    connect(uas, SIGNAL(positionXYControlEnabled(bool)), this, SLOT(updatePositionXYControllerEnabled(UASInterface*,bool)));
+    connect(uas, SIGNAL(positionZControlEnabled(bool)), this, SLOT(updatePositionZControllerEnabled(UASInterface*,bool)));
+    connect(uas, SIGNAL(positionYawControlEnabled(bool)), this, SLOT(updatePositionYawControllerEnabled(UASInterface*,bool)))
     // Now connect the new UAS
 
     //if (this->uas != uas)
@@ -701,6 +705,19 @@ void HSIDisplay::drawAltitudeSetpoint(float xRef, float yRef, float radius, cons
     //    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
 }
 
+/**
+ * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+ */
+void localizationChanged(UASInterface* uas, int fix);
+/**
+ * @param fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D localization, 3: 3D localization
+ */
+void gpsLocalizationChanged(UASInterface* uas, int fix);
+/**
+ * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+ */
+void visionLocalizationChanged(UASInterface* uas, int fix);
+
 void HSIDisplay::updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat)
 {
 
@@ -710,3 +727,5 @@ void HSIDisplay::pressKey(int key)
 {
 
 }
+
+
