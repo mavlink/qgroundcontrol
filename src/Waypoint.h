@@ -41,7 +41,7 @@ class Waypoint : public QObject
     Q_OBJECT
 
 public:
-    Waypoint(quint16 id = 0, float x = 0.0f, float y = 0.0f, float z = 0.0f, float yaw = 0.0f, bool autocontinue = false, bool current = false);
+    Waypoint(quint16 id = 0, float x = 0.0f, float y = 0.0f, float z = 0.0f, float yaw = 0.0f, bool autocontinue = false, bool current = false, float orbit = 0.1f, int holdTime = 2000);
     ~Waypoint();
 
     quint16 getId() const { return id; }
@@ -51,6 +51,8 @@ public:
     float getYaw() const { return yaw; }
     bool getAutoContinue() const { return autocontinue; }
     bool getCurrent() const { return current; }
+    float getOrbit() const { return orbit; }
+    float getHoldTime() const { return holdTime; }
 
 private:
     quint16 id;
@@ -60,6 +62,8 @@ private:
     float yaw;
     bool autocontinue;
     bool current;
+    float orbit;
+    int holdTime;
 
 public slots:
     void setId(quint16 id);
@@ -69,12 +73,15 @@ public slots:
     void setYaw(float yaw);
     void setAutocontinue(bool autoContinue);
     void setCurrent(bool current);
+    void setOrbit(float orbit);
+    void setHoldTime(int holdTime);
 
     //for QDoubleSpin
     void setX(double x);
     void setY(double y);
     void setZ(double z);
     void setYaw(double yaw);
+    void setOrbit(double orbit);
 };
 
 #endif // WAYPOINT_H
