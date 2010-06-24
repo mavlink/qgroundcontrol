@@ -94,7 +94,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
         if(wp->seq == current_wp_id)
         {
             //update the UI FIXME
-            emit waypointUpdated(uas.getUASID(), wp->seq, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue, wp->current);
+            emit waypointUpdated(uas.getUASID(), wp->seq, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue, wp->current, wp->orbit, wp->hold_time);
 
             //get next waypoint
             current_wp_id++;
@@ -237,7 +237,8 @@ void UASWaypointManager::sendWaypoints(const QVector<Waypoint*> &list)
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent();
-                cur_d->orbit = 0.1f;    //FIXME
+                cur_d->orbit = cur_s->getOrbit();
+                cur_d->hold_time = cur_s->getHoldTime();
                 cur_d->type = 1;        //FIXME
                 cur_d->seq = i;
                 cur_d->x = cur_s->getX();
