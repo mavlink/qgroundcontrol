@@ -65,6 +65,8 @@ public slots:
     void setParameters();
     /** @brief Write the current parameters to permanent storage (EEPROM/HDD) */
     void writeParameters();
+    /** @brief Read the parameters from permanent storage to RAM */
+    void readParameters();
     /** @brief Clear the parameter list */
     void clear();
     /** @brief Update when user changes parameters */

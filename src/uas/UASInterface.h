@@ -173,7 +173,9 @@ public slots:
     /** @brief Request all onboard parameters of all components */
     virtual void requestParameters() = 0;
     /** @brief Write parameter to permanent storage */
-    virtual void writeParameters() = 0;
+    virtual void writeParametersToStorage() = 0;
+    /** @brief Read parameter from permanent storage */
+    virtual void readParametersFromStorage() = 0;
     /** @brief Set a system parameter
      * @param component ID of the system component to write the parameter to
      * @param id String identifying the parameter

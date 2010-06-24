@@ -200,7 +200,9 @@ public slots:
     void setParameter(int component, QString id, float value);
 
     /** @brief Write parameters to permanent storage */
-    void writeParameters();
+    void writeParametersToStorage();
+    /** @brief Read parameters from permanent storage */
+    void readParametersFromStorage();
 
     void enableAllDataTransmission(bool enabled);
     void enableRawSensorDataTransmission(bool enabled);
