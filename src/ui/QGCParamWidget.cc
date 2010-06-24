@@ -64,17 +64,21 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
     horizontalLayout->addWidget(tree, 0, 0, 1, 3);
-    QPushButton* readButton = new QPushButton(tr("Read"));
-    connect(readButton, SIGNAL(clicked()), this, SLOT(requestParameterList()));
-    horizontalLayout->addWidget(readButton, 1, 0);
+    QPushButton* refreshButton = new QPushButton(tr("Refresh"));
+    connect(refreshButton, SIGNAL(clicked()), this, SLOT(requestParameterList()));
+    horizontalLayout->addWidget(refreshButton, 1, 0);
 
-    QPushButton* setButton = new QPushButton(tr("Set (RAM)"));
+    QPushButton* setButton = new QPushButton(tr("Transmit"));
     connect(setButton, SIGNAL(clicked()), this, SLOT(setParameters()));
     horizontalLayout->addWidget(setButton, 1, 1);
 
-    QPushButton* writeButton = new QPushButton(tr("Write (Disk)"));
+    QPushButton* writeButton = new QPushButton(tr("Write (ROM)"));
     connect(writeButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
     horizontalLayout->addWidget(writeButton, 1, 2);
+
+    QPushButton* readButton = new QPushButton(tr("Read (ROM)"));
+    connect(readButton, SIGNAL(clicked()), this, SLOT(readParameters()));
+    horizontalLayout->addWidget(readButton, 2, 2);
 
     QPushButton* loadFileButton = new QPushButton(tr("Load File"));
     connect(loadFileButton, SIGNAL(clicked()), this, SLOT(loadParameters()));
@@ -432,7 +436,12 @@ void QGCParamWidget::setParameters()
  */
 void QGCParamWidget::writeParameters()
 {
-    mav->writeParameters();
+    mav->writeParametersToStorage();
+}
+
+void QGCParamWidget::readParameters()
+{
+    mav->readParametersFromStorage();
 }
 
 /**
