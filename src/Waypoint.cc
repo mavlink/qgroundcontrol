@@ -32,15 +32,17 @@ This file is part of the PIXHAWK project
 
 #include "Waypoint.h"
 
-Waypoint::Waypoint(quint16 id, float x, float y, float z, float yaw, bool autocontinue, bool current)
+Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _autocontinue, bool _current, float _orbit, int _holdTime)
+: id(_id),
+  x(_x),
+  y(_y),
+  z(_z),
+  yaw(_yaw),
+  autocontinue(_autocontinue),
+  current(_current),
+  orbit(_orbit),
+  holdTime(_holdTime)
 {
-    this->id = id;
-    this->x = x;
-    this->y = y;
-    this->z = z;
-    this->yaw = yaw;
-    this->autocontinue = autocontinue;
-    this->current = current;
 }
 
 Waypoint::~Waypoint()
@@ -83,6 +85,16 @@ void Waypoint::setCurrent(bool current)
     this->current = current;
 }
 
+void Waypoint::setOrbit(float orbit)
+{
+    this->orbit = orbit;
+}
+
+void Waypoint::setHoldTime(int holdTime)
+{
+    this->holdTime = holdTime;
+}
+
 void Waypoint::setX(double x)
 {
     this->x = x;
@@ -101,4 +113,9 @@ void Waypoint::setZ(double z)
 void Waypoint::setYaw(double yaw)
 {
     this->yaw = yaw;
+}
+
+void Waypoint::setOrbit(double orbit)
+{
+    this->orbit = orbit;
 }
