@@ -72,7 +72,7 @@ public slots:
     void currentWaypointChanged(quint16 seq);
 
     //To be moved to UASWaypointManager (?)
-    void setWaypoint(int uasId, quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current);
+    void setWaypoint(int uasId, quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current, double orbit, int holdTime);
     void addWaypoint(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
     void waypointReached(UASInterface* uas, quint16 waypointId);

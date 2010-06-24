@@ -71,7 +71,7 @@ public slots:
     void sendWaypoints(const QVector<Waypoint *> &list);
 
 signals:
-    void waypointUpdated(int,quint16,double,double,double,double,bool,bool);    ///< Adds a waypoint to the waypoint list widget
+    void waypointUpdated(int,quint16,double,double,double,double,bool,bool,double,int);    ///< Adds a waypoint to the waypoint list widget
     void currentWaypointChanged(quint16);                                       ///< emits the new current waypoint sequence number
     void updateStatusString(const QString &);                                   ///< emits the current status string
 
