@@ -31,6 +31,8 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QGridLayout>
 #include <QPushButton>
+#include <QFileDialog>
+#include <QFile>
 
 #include "QGCParamWidget.h"
 #include "UASInterface.h"
@@ -46,7 +48,8 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
         mav(uas),
         components(new QMap<int, QTreeWidgetItem*>()),
         paramGroups(),
-        changedValues()
+        changedValues(),
+        parameters()
 {
     // Create tree widget
     tree = new QTreeWidget(this);
@@ -72,6 +75,14 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     QPushButton* writeButton = new QPushButton(tr("Write (Disk)"));
     connect(writeButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
     horizontalLayout->addWidget(writeButton, 1, 2);
+
+    QPushButton* loadFileButton = new QPushButton(tr("Load File"));
+    connect(loadFileButton, SIGNAL(clicked()), this, SLOT(loadParameters()));
+    horizontalLayout->addWidget(loadFileButton, 2, 0);
+
+    QPushButton* saveFileButton = new QPushButton(tr("Save File"));
+    connect(saveFileButton, SIGNAL(clicked()), this, SLOT(saveParameters()));
+    horizontalLayout->addWidget(saveFileButton, 2, 1);
 
     // Set layout
     this->setLayout(horizontalLayout);
@@ -128,6 +139,16 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
         paramGroups.insert(component, new QMap<QString, QTreeWidgetItem*>());
         tree->addTopLevelItem(comp);
         tree->update();
+        // Create map in parameters
+        if (!parameters.contains(component))
+        {
+            parameters.insert(component, new QMap<QString, float>());
+        }
+        // Create map in changed parameters
+        if (!changedValues.contains(component))
+        {
+            changedValues.insert(component, new QMap<QString, float>());
+        }
     }
 }
 
@@ -147,6 +168,13 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     {
         addComponent(uas, component, "Component #" + QString::number(component));
     }
+
+    // Replace value in map
+
+    // FIXME
+    if (parameters.value(component)->contains(parameterName)) parameters.value(component)->remove(parameterName);
+    parameters.value(component)->insert(parameterName, value);
+
 
     QString splitToken = "_";
     // Check if auto-grouping can work
@@ -267,15 +295,100 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
                 if (ok)
                 {
                     qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
+                    // Changed values list
                     if (map->contains(str)) map->remove(str);
                     map->insert(str, value);
-                    //current->setBackground(0, QBrush(QColor(QGC::colorGreen)));
-                    //current->setBackground(1, QBrush(QColor(QGC::colorGreen)));
+
+                    // Check if the value was numerically changed
+                    if (!parameters.value(key)->contains(str) || parameters.value(key)->value(str, 0.0f) != value)
+                    {
+                        current->setBackground(0, QBrush(QColor(QGC::colorGreen)));
+                        current->setBackground(1, QBrush(QColor(QGC::colorGreen)));
+                    }
+
+                    // All parameters list
+                    if (parameters.value(key)->contains(str)) parameters.value(key)->remove(str);
+                    parameters.value(key)->insert(str, value);
                 }
             }
         }
     }
 }
+
+void QGCParamWidget::saveParameters()
+{    
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./parameters.txt", tr("Parameter File (*.txt)"));
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        return;
+    }
+
+    QTextStream in(&file);
+
+    in << "# Onboard parameters for system " << mav->getUASName() << "\n";
+    in << "#\n";
+    in << "# MAV ID  COMPONENT ID  PARAM NAME  VALUE (FLOAT)\n";
+
+    // Iterate through all components, through all parameters and emit them
+    QMap<int, QMap<QString, float>*>::iterator i;
+    for (i = parameters.begin(); i != parameters.end(); ++i)
+    {
+        // Iterate through the parameters of the component
+        int compid = i.key();
+        QMap<QString, float>* comp = i.value();
+        {
+            QMap<QString, float>::iterator j;
+            for (j = comp->begin(); j != comp->end(); ++j)
+            {
+                in << mav->getUASID() << "\t" << compid << "\t" << j.key() << "\t" << j.value() << "\n";
+                in.flush();
+            }
+        }
+    }
+    file.close();
+}
+
+void QGCParamWidget::loadParameters()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Parameter file (*.txt)"));
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    // Clear list
+    clear();
+
+    QTextStream in(&file);
+    while (!in.atEnd())
+    {
+        QString line = in.readLine();
+        if (!line.startsWith("#"))
+        {
+            QStringList wpParams = line.split("\t");
+            if (wpParams.size() == 4)
+            {
+                // Only load parameters for right mav
+                if (mav->getUASID() == wpParams.at(0).toInt())
+                {
+                    addParameter(wpParams.at(0).toInt(), wpParams.at(1).toInt(), wpParams.at(2), wpParams.at(3).toDouble());
+                    if (changedValues.contains(wpParams.at(1).toInt()))
+                    {
+                        if (changedValues.value(wpParams.at(1).toInt())->contains(wpParams.at(1)))
+                        {
+                            changedValues.value(wpParams.at(1).toInt())->remove(wpParams.at(1));
+                        }
+
+                        changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(1), (float)wpParams.at(2).toDouble());
+                    }
+                }
+            }
+        }
+    }
+    file.close();
+
+}
+
 
 /**
  * @param component the subsystem which has the parameter
