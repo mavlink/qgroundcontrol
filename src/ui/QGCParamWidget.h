@@ -65,16 +65,24 @@ public slots:
     void setParameters();
     /** @brief Write the current parameters to permanent storage (EEPROM/HDD) */
     void writeParameters();
+    /** @brief Read the parameters from permanent storage to RAM */
+    void readParameters();
     /** @brief Clear the parameter list */
     void clear();
     /** @brief Update when user changes parameters */
     void parameterItemChanged(QTreeWidgetItem* prev, int column);
+
+    /** @brief Store parameters to a file */
+    void saveParameters();
+    /** @brief Load parameters from a file */
+    void loadParameters();
 protected:
     UASInterface* mav;  ///< The MAV this widget is controlling
     QTreeWidget* tree;  ///< The parameter tree
     QMap<int, QTreeWidgetItem*>* components; ///< The list of components
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups
     QMap<int, QMap<QString, float>* > changedValues; ///< Changed values
+    QMap<int, QMap<QString, float>* > parameters; ///< All parameters
 
 };
 

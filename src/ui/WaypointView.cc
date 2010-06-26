@@ -54,7 +54,9 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->yawSpinBox->setValue(wp->getYaw()/M_PI*180.);
     m_ui->selectedBox->setChecked(wp->getCurrent());
     m_ui->autoContinue->setChecked(wp->getAutoContinue());
-    m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
+    m_ui->idLabel->setText(QString("%1").arg(wp->getId()));\
+    m_ui->orbitSpinBox->setValue(wp->getOrbit());
+    m_ui->holdTimeSpinBox->setValue(wp->getHoldTime());
 
     connect(m_ui->xSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
     connect(m_ui->ySpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
@@ -70,6 +72,9 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
 
     connect(m_ui->autoContinue, SIGNAL(stateChanged(int)), this, SLOT(changedAutoContinue(int)));
     connect(m_ui->selectedBox, SIGNAL(stateChanged(int)), this, SLOT(changedCurrent(int)));
+
+    connect(m_ui->orbitSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setOrbit(double)));
+    connect(m_ui->holdTimeSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setHoldTime(int)));
 }
 
 void WaypointView::setYaw(int yawDegree)
