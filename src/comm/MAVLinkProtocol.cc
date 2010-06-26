@@ -170,16 +170,42 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
                 {
                 case MAV_AUTOPILOT_GENERIC:
                     uas = new UAS(this, message.sysid);
+                    // Connect this robot to the UAS object
+                    connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), uas, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
                     break;
                 case MAV_AUTOPILOT_PIXHAWK:
+                    {
                     // Fixme differentiate between quadrotor and coaxial here
-                    uas = new PxQuadMAV(this, message.sysid);
+                    PxQuadMAV* mav = new PxQuadMAV(this, message.sysid);
+                    // Connect this robot to the UAS object
+                    // it is IMPORTANT here to use the right object type,
+                    // else the slot of the parent object is called (and thus the special
+                    // packets never reach their goal)
+                    connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+                    uas = mav;
+                }
                     break;
                 case MAV_AUTOPILOT_SLUGS:
-                    uas = new SlugsMAV(this, message.sysid);
+                    {
+                    SlugsMAV* mav = new SlugsMAV(this, message.sysid);
+                    // Connect this robot to the UAS object
+                    // it is IMPORTANT here to use the right object type,
+                    // else the slot of the parent object is called (and thus the special
+                    // packets never reach their goal)
+                    connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+                    uas = mav;
+                }
                     break;
                 case MAV_AUTOPILOT_ARDUPILOT:
-                    uas = new ArduPilotMAV(this, message.sysid);
+                    {
+                    ArduPilotMAV* mav = new ArduPilotMAV(this, message.sysid);
+                    // Connect this robot to the UAS object
+                    // it is IMPORTANT here to use the right object type,
+                    // else the slot of the parent object is called (and thus the special
+                    // packets never reach their goal)
+                    connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+                    uas = mav;
+                }
                     break;
                 default:
                     uas = new UAS(this, message.sysid);
@@ -189,8 +215,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link)
 
                 // Make UAS aware that this link can be used to communicate with the actual robot
                 uas->addLink(link);
-                // Connect this robot to the UAS object
-                connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), uas, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
                 // Now add UAS to "official" list, which makes the whole application aware of it
                 UASManager::instance()->addUAS(uas);
             }
