@@ -96,7 +96,7 @@ void WaypointList::setUAS(UASInterface* uas)
         this->uas = uas;
 
         connect(&uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)),                                this, SLOT(updateStatusLabel(const QString &)));
-        connect(&uas->getWaypointManager(), SIGNAL(waypointUpdated(int,quint16,double,double,double,double,bool,bool)), this, SLOT(setWaypoint(int,quint16,double,double,double,double,bool,bool)));
+        connect(&uas->getWaypointManager(), SIGNAL(waypointUpdated(int,quint16,double,double,double,double,bool,bool,double,int)), this, SLOT(setWaypoint(int,quint16,double,double,double,double,bool,bool,double,int)));
         connect(&uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),                                    this, SLOT(currentWaypointChanged(quint16)));
 
         connect(this, SIGNAL(sendWaypoints(const QVector<Waypoint*> &)),    &uas->getWaypointManager(), SLOT(sendWaypoints(const QVector<Waypoint*> &)));
@@ -105,11 +105,11 @@ void WaypointList::setUAS(UASInterface* uas)
     }
 }
 
-void WaypointList::setWaypoint(int uasId, quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current)
+void WaypointList::setWaypoint(int uasId, quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current, double orbit, int holdTime)
 {
     if (uasId == this->uas->getUASID())
     {
-        Waypoint* wp = new Waypoint(id, x, y, z, yaw, autocontinue, current);
+        Waypoint* wp = new Waypoint(id, x, y, z, yaw, autocontinue, current, orbit, holdTime);
         addWaypoint(wp);
     }
 }
@@ -168,11 +168,11 @@ void WaypointList::add()
     {
         if (waypoints.size() > 0)
         {
-            addWaypoint(new Waypoint(waypoints.size(), 1.1, 1.1, -0.6, 0.0, true, false));
+            addWaypoint(new Waypoint(waypoints.size(), 1.1, 1.1, -0.6, 0.0, true, false, 0.1, 2000));
         }
         else
         {
-            addWaypoint(new Waypoint(waypoints.size(), 0.0, 0.0, -0.0, 0.0, true, true));
+            addWaypoint(new Waypoint(waypoints.size(), 1.1, 1.1, -0.6, 0.0, true, true, 0.1, 2000));
         }
     }
 }
@@ -302,7 +302,7 @@ void WaypointList::saveWaypoints()
     for (int i = 0; i < waypoints.size(); i++)
     {
         Waypoint* wp = waypoints[i];
-        in << "~" << wp->getId() << "~" << wp->getX() << "~" << wp->getY()  << "~" << wp->getZ()  << "~" << wp->getYaw()  << "~" << wp->getAutoContinue() << "~" << wp->getCurrent() << "\n";
+        in << "\t" << wp->getId() << "\t" << wp->getX() << "\t" << wp->getY()  << "\t" << wp->getZ()  << "\t" << wp->getYaw()  << "\t" << wp->getAutoContinue() << "\t" << wp->getCurrent() << wp->getOrbit() << "\t" << wp->getHoldTime() << "\n";
         in.flush();
     }
     file.close();
@@ -323,9 +323,9 @@ void WaypointList::loadWaypoints()
     QTextStream in(&file);
     while (!in.atEnd())
     {
-        QStringList wpParams = in.readLine().split("~");
+        QStringList wpParams = in.readLine().split("\t");
         if (wpParams.size() == 8)
-            addWaypoint(new Waypoint(wpParams[1].toInt(), wpParams[2].toDouble(), wpParams[3].toDouble(), wpParams[4].toDouble(), wpParams[5].toDouble(), (wpParams[6].toInt() == 1 ? true : false), (wpParams[7].toInt() == 1 ? true : false)));
+            addWaypoint(new Waypoint(wpParams[1].toInt(), wpParams[2].toDouble(), wpParams[3].toDouble(), wpParams[4].toDouble(), wpParams[5].toDouble(), (wpParams[6].toInt() == 1 ? true : false), (wpParams[7].toInt() == 1 ? true : false), wpParams[8].toDouble(), wpParams[9].toInt()));
     }
     file.close();
 }

@@ -504,7 +504,7 @@ void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesir
     bodyYawSet = yawDesired;
     mavInitialized = true;
 
-    qDebug() << "Received setpoint at x: " << x << "metric y:" << y;
+//    qDebug() << "Received setpoint at x: " << x << "metric y:" << y;
 //    posXSet = xDesired;
 //    posYSet = yDesired;
 //    posZSet = zDesired;
