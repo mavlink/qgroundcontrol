@@ -62,15 +62,8 @@ public slots:
     void updateAttitudeControllerEnabled(UASInterface* uas, bool enabled);
     void updatePositionXYControllerEnabled(UASInterface* uas, bool enabled);
     void updatePositionZControllerEnabled(UASInterface* uas, bool enabled);
-
-    /** @brief Attitude control enabled/disabled */
-    void attitudeControlEnabled(bool enabled);
-    /** @brief Position 2D control enabled/disabled */
-    void positionXYControlEnabled(bool enabled);
-    /** @brief Altitude control enabled/disabled */
-    void positionZControlEnabled(bool enabled);
     /** @brief Heading control enabled/disabled */
-    void positionYawControlEnabled(bool enabled);
+    void updatePositionYawControllerEnabled(bool enabled);
 
     /**
      * @brief Localization quality changed
@@ -100,6 +93,8 @@ protected slots:
     void drawPositionDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
     void drawAttitudeDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
     void drawAltitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
+    void drawStatusFlag(float x, float y, QString label, bool status, QPainter& painter);
+    void drawPositionLock(float x, float y, QString label, int status, QPainter& painter);
     void setBodySetpointCoordinateXY(double x, double y);
     void setBodySetpointCoordinateZ(double z);
     /** @brief Send the current ui setpoint coordinates as new setpoint to the MAV */
@@ -220,6 +215,11 @@ protected:
     bool attControlEnabled;
     bool xyControlEnabled;
     bool zControlEnabled;
+    bool yawControlEnabled;
+    int positionFix;
+    int gpsFix;
+    int visionFix;
+    int laserFix;
     bool mavInitialized;      ///< The MAV is initialized once the setpoint has been received
 
 private:
