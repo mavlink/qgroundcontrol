@@ -324,7 +324,7 @@ void WaypointList::loadWaypoints()
     while (!in.atEnd())
     {
         QStringList wpParams = in.readLine().split("\t");
-        if (wpParams.size() == 8)
+        if (wpParams.size() == 10)
             addWaypoint(new Waypoint(wpParams[1].toInt(), wpParams[2].toDouble(), wpParams[3].toDouble(), wpParams[4].toDouble(), wpParams[5].toDouble(), (wpParams[6].toInt() == 1 ? true : false), (wpParams[7].toInt() == 1 ? true : false), wpParams[8].toDouble(), wpParams[9].toInt()));
     }
     file.close();
