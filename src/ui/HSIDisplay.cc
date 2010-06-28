@@ -84,6 +84,11 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         attControlEnabled(false),
         xyControlEnabled(false),
         zControlEnabled(false),
+        yawControlEnabled(false),
+        positionFix(0),
+        gpsFix(0),
+        visionFix(0),
+        laserFix(0),
         mavInitialized(false)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
@@ -130,31 +135,16 @@ void HSIDisplay::paintDisplay()
     // Draw background
     painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
 
-    // Draw status indicators
-    QColor statusColor(255, 255, 255);
-    QString lockStatus;
-    QString xyContrStatus;
-    QString zContrStatus;
-    QString attContrStatus;
+    // Draw status flags
+    drawStatusFlag(2,  1, tr("ATT"), attControlEnabled, painter);
+    drawStatusFlag(22, 1, tr("PXY"), xyControlEnabled,  painter);
+    drawStatusFlag(44, 1, tr("PZ"),  zControlEnabled,   painter);
 
-    QColor lockStatusColor;
+    // Draw position lock indicators
+    drawPositionLock(2,  5, tr("POS"), positionFix, painter);
+    drawPositionLock(22, 5, tr("VIS"), positionFix, painter);
+    drawPositionLock(44, 5, tr("GPS"), positionFix, painter);
 
-    if (positionLock)
-    {
-        lockStatus = tr("LOCK");
-        lockStatusColor = QColor(20, 255, 20);
-    }
-    else
-    {
-        lockStatus = tr("NO");
-        lockStatusColor = QColor(255, 20, 20);
-    }
-
-    paintText(tr("POS"), QGC::colorCyan, 1.8f, 2.0f, 2.5f, &painter);
-    painter.setBrush(lockStatusColor);
-    painter.setPen(Qt::NoPen);
-    painter.drawRect(QRect(refToScreenX(9.5f), refToScreenY(2.0f), refToScreenX(7.0f), refToScreenY(4.0f)));
-    paintText(lockStatus, statusColor, 2.8f, 10.0f, 2.0f, &painter);
 
     // Draw base instrument
     // ----------------------
@@ -243,6 +233,61 @@ void HSIDisplay::paintDisplay()
 //    bodyYSetCoordinate = 0.95 * bodyYSetCoordinate + 0.05 * uiYSetCoordinate;
 //    bodyZSetCoordinate = 0.95 * bodyZSetCoordinate + 0.05 * uiZSetCoordinate;
 //    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
+}
+
+void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, QPainter& painter)
+{
+    paintText(label, QGC::colorCyan, 2.6f, x, y+0.35f, &painter);
+    QColor statusColor(250, 250, 250);
+    if(status)
+    {
+        painter.setBrush(QGC::colorRed);
+    }
+    else
+    {
+        painter.setBrush(QGC::colorRed);
+    }
+    painter.setPen(Qt::NoPen);
+    painter.drawRect(QRect(refToScreenX(x+7.3f), refToScreenY(y+0.05), refToScreenX(7.0f), refToScreenY(4.0f)));
+    paintText((status) ? tr("ON") : tr("OFF"), statusColor, 2.6f, x+7.9f, y+0.35f, &painter);
+}
+
+void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, QPainter& painter)
+{
+    paintText(label, QGC::colorCyan, 2.6f, x, y+0.35f, &painter);
+    QColor negStatusColor(200, 20, 20);
+    QColor posStatusColor(20, 200, 20);
+    QColor statusColor(250, 250, 250);
+    if(status > 0 && status < 4)
+    {
+        painter.setBrush(posStatusColor);
+    }
+    else
+    {
+        painter.setBrush(negStatusColor);
+    }
+
+    // Lock text
+    QString lockText;
+    switch (status)
+    {
+    case 1:
+        lockText = tr("LOC");
+        break;
+    case 2:
+        lockText = tr("2D");
+        break;
+    case 3:
+        lockText = tr("3D");
+        break;
+    default:
+        lockText = tr("NO");
+        break;
+    }
+
+    painter.setPen(Qt::NoPen);
+    painter.drawRect(QRect(refToScreenX(x+7.3f), refToScreenY(y+0.05), refToScreenX(7.0f), refToScreenY(4.0f)));
+    paintText(lockText, statusColor, 2.6f, x+7.9f, y+0.35f, &painter);
 }
 
 void HSIDisplay::updatePositionLock(UASInterface* uas, bool lock)
@@ -372,6 +417,15 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
+    connect(uas, SIGNAL(attitudeControlEnabled(bool)), this, SLOT(updateAttitudeControllerEnabled(UASInterface*,bool)));
+    connect(uas, SIGNAL(positionXYControlEnabled(bool)), this, SLOT(updatePositionXYControllerEnabled(UASInterface*,bool)));
+    connect(uas, SIGNAL(positionZControlEnabled(bool)), this, SLOT(updatePositionZControllerEnabled(UASInterface*,bool)));
+    connect(uas, SIGNAL(positionYawControlEnabled(bool)), this, SLOT(updatePositionYawControllerEnabled(UASInterface*,bool)));
+
+    connect(uas, SIGNAL(localizationChanged(UASInterface*,int)), this, SLOT(updateLocalization(UASInterface*,int)));
+    connect(uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)), this, SLOT(updateVisionLocalization(UASInterface*,int)));
+    connect(uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
+
     // Now connect the new UAS
 
     //if (this->uas != uas)
@@ -486,6 +540,36 @@ void HSIDisplay::updateSatellite(int uasid, int satid, float elevation, float az
     {
         gpsSatellites.insert(satid, new GPSSatellite(satid, elevation, azimuth, snr, used));
     }
+}
+
+void HSIDisplay::updatePositionYawControllerEnabled(bool enabled)
+{
+    yawControlEnabled = enabled;
+}
+
+/**
+ * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+ */
+void HSIDisplay::updateLocalization(UASInterface* uas, int fix)
+{
+    Q_UNUSED(uas);
+    positionFix = fix;
+}
+/**
+ * @param fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D localization, 3: 3D localization
+ */
+void HSIDisplay::updateGpsLocalization(UASInterface* uas, int fix)
+{
+    Q_UNUSED(uas);
+    gpsFix = fix;
+}
+/**
+ * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+ */
+void HSIDisplay::updateVisionLocalization(UASInterface* uas, int fix)
+{
+    Q_UNUSED(uas);
+    visionFix = fix;
 }
 
 QColor HSIDisplay::getColorForSNR(float snr)
@@ -701,6 +785,19 @@ void HSIDisplay::drawAltitudeSetpoint(float xRef, float yRef, float radius, cons
     //    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
 }
 
+/**
+ * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+ */
+void localizationChanged(UASInterface* uas, int fix);
+/**
+ * @param fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D localization, 3: 3D localization
+ */
+void gpsLocalizationChanged(UASInterface* uas, int fix);
+/**
+ * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+ */
+void visionLocalizationChanged(UASInterface* uas, int fix);
+
 void HSIDisplay::updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat)
 {
 
@@ -710,3 +807,5 @@ void HSIDisplay::pressKey(int key)
 {
 
 }
+
+

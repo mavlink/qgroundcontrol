@@ -62,7 +62,7 @@ This file is part of the PIXHAWK project
 Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 {
     this->setApplicationName("QGroundControl");
-    this->setApplicationVersion("v. 0.7.0 (Beta)");
+    this->setApplicationVersion("v. 0.7.5 (Beta)");
     this->setOrganizationName(QLatin1String("OpenMAV Association"));
     this->setOrganizationDomain("http://qgroundcontrol.org");
 
