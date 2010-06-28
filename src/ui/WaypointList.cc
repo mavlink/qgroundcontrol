@@ -302,7 +302,7 @@ void WaypointList::saveWaypoints()
     for (int i = 0; i < waypoints.size(); i++)
     {
         Waypoint* wp = waypoints[i];
-        in << "\t" << wp->getId() << "\t" << wp->getX() << "\t" << wp->getY()  << "\t" << wp->getZ()  << "\t" << wp->getYaw()  << "\t" << wp->getAutoContinue() << "\t" << wp->getCurrent() << wp->getOrbit() << "\t" << wp->getHoldTime() << "\n";
+        in << "\t" << wp->getId() << "\t" << wp->getX() << "\t" << wp->getY()  << "\t" << wp->getZ()  << "\t" << wp->getYaw()  << "\t" << wp->getAutoContinue() << "\t" << wp->getCurrent() << "\t" << wp->getOrbit() << "\t" << wp->getHoldTime() << "\n";
         in.flush();
     }
     file.close();
