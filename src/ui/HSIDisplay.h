@@ -59,9 +59,9 @@ public slots:
     void updateGlobalPosition(UASInterface*, double lat, double lon, double alt, quint64 usec);
     void updateSpeed(UASInterface* uas, double vx, double vy, double vz, quint64 time);
     void updatePositionLock(UASInterface* uas, bool lock);
-    void updateAttitudeControllerEnabled(UASInterface* uas, bool enabled);
-    void updatePositionXYControllerEnabled(UASInterface* uas, bool enabled);
-    void updatePositionZControllerEnabled(UASInterface* uas, bool enabled);
+    void updateAttitudeControllerEnabled(bool enabled);
+    void updatePositionXYControllerEnabled(bool enabled);
+    void updatePositionZControllerEnabled(bool enabled);
     /** @brief Heading control enabled/disabled */
     void updatePositionYawControllerEnabled(bool enabled);
 
@@ -221,6 +221,8 @@ protected:
     int visionFix;
     int laserFix;
     bool mavInitialized;      ///< The MAV is initialized once the setpoint has been received
+    float bottomMargin;       ///< Margin on the bottom of the page, in virtual coordinates
+    float topMargin;          ///< Margin on top of the page, in virtual coordinates
 
 private:
 };

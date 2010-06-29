@@ -63,12 +63,13 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     _isConnected = false;
 
     onboardParams = QMap<QString, float>();
-    onboardParams.insert("ROLL_K_P", 0.5f);
-    onboardParams.insert("PITCH_K_P", 0.5f);
-    onboardParams.insert("YAW_K_P", 0.5f);
-    onboardParams.insert("XY_K_P", 0.5f);
-    onboardParams.insert("ALT_K_P", 0.5f);
-    onboardParams.insert("SYSTEM_TYPE", 1);
+    onboardParams.insert("PID_ROLL_K_P", 0.5f);
+    onboardParams.insert("PID_PITCH_K_P", 0.5f);
+    onboardParams.insert("PID_YAW_K_P", 0.5f);
+    onboardParams.insert("PID_XY_K_P", 0.5f);
+    onboardParams.insert("PID_ALT_K_P", 0.5f);
+    onboardParams.insert("SYS_TYPE", 1);
+    onboardParams.insert("SYS_ID", systemId);
 
     // Comments on the variables can be found in the header file
 
@@ -445,6 +446,22 @@ void MAVLinkSimulationLink::mainloop()
         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+
+
+        // Send controller states
+        uint8_t attControl = 1;
+        uint8_t posXYControl = 1;
+        uint8_t posZControl = 0;
+        uint8_t posYawControl = 1;
+
+        uint8_t gpsLock = 2;
+        uint8_t visLock = 3;
+        uint8_t posLock = qMax(gpsLock, visLock);
+
+        messageSize = mavlink_msg_control_status_pack(systemId, componentId, &msg, posLock, visLock, gpsLock, attControl, posXYControl, posZControl, posYawControl);
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+        memcpy(stream+streampointer, buffer, bufferlength);
         streampointer += bufferlength;
 
 
