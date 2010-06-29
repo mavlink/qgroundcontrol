@@ -89,15 +89,15 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         gpsFix(0),
         visionFix(0),
         laserFix(0),
-        mavInitialized(false)
+        mavInitialized(false),
+        bottomMargin(3.0f),
+        topMargin(3.0f)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     refreshTimer->setInterval(60);
 
-    // FIXME
-    float bottomMargin = 3.0f;
     xCenterPos = vwidth/2.0f;
-    yCenterPos = vheight/2.0f - bottomMargin;
+    yCenterPos = vheight/2.0f + topMargin - bottomMargin;
 }
 
 void HSIDisplay::paintEvent(QPaintEvent * event)
@@ -118,7 +118,7 @@ void HSIDisplay::paintDisplay()
 
     // Size of the ring instrument
     const float margin = 0.1f;  // 10% margin of total width on each side
-    float baseRadius = (vheight - vheight * 2.0f * margin) / 2.0f - bottomMargin / 2.0f;
+    float baseRadius = (vheight - topMargin - bottomMargin) / 2.0f - bottomMargin / 2.0f;
 
     // Draw instruments
     // TESTING THIS SHOULD BE MOVED INTO A QGRAPHICSVIEW
@@ -139,11 +139,12 @@ void HSIDisplay::paintDisplay()
     drawStatusFlag(2,  1, tr("ATT"), attControlEnabled, painter);
     drawStatusFlag(22, 1, tr("PXY"), xyControlEnabled,  painter);
     drawStatusFlag(44, 1, tr("PZ"),  zControlEnabled,   painter);
+    drawStatusFlag(66, 1, tr("YAW"), yawControlEnabled, painter);
 
     // Draw position lock indicators
     drawPositionLock(2,  5, tr("POS"), positionFix, painter);
-    drawPositionLock(22, 5, tr("VIS"), positionFix, painter);
-    drawPositionLock(44, 5, tr("GPS"), positionFix, painter);
+    drawPositionLock(22, 5, tr("VIS"), visionFix, painter);
+    drawPositionLock(44, 5, tr("GPS"), gpsFix, painter);
 
 
     // Draw base instrument
@@ -157,7 +158,7 @@ void HSIDisplay::paintDisplay()
     const int ringCount = 2;
     for (int i = 0; i < ringCount; i++)
     {
-        float radius = (vwidth - vwidth * 2.0f * margin) / (2.0f * i+1) / 2.0f - bottomMargin / 2.0f;
+        float radius = (vwidth - topMargin - bottomMargin) / (2.0f * i+1) / 2.0f - bottomMargin / 2.0f;
         drawCircle(xCenterPos, yCenterPos, radius, 0.1f, ringColor, &painter);
     }
 
@@ -241,11 +242,11 @@ void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, QP
     QColor statusColor(250, 250, 250);
     if(status)
     {
-        painter.setBrush(QGC::colorRed);
+        painter.setBrush(QGC::colorGreen);
     }
     else
     {
-        painter.setBrush(QGC::colorRed);
+        painter.setBrush(QGC::colorYellow);
     }
     painter.setPen(Qt::NoPen);
     painter.drawRect(QRect(refToScreenX(x+7.3f), refToScreenY(y+0.05), refToScreenX(7.0f), refToScreenY(4.0f)));
@@ -292,25 +293,21 @@ void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, Q
 
 void HSIDisplay::updatePositionLock(UASInterface* uas, bool lock)
 {
-    Q_UNUSED(uas);
     positionLock = lock;
 }
 
-void HSIDisplay::updateAttitudeControllerEnabled(UASInterface* uas, bool enabled)
+void HSIDisplay::updateAttitudeControllerEnabled(bool enabled)
 {
-    Q_UNUSED(uas);
     attControlEnabled = enabled;
 }
 
-void HSIDisplay::updatePositionXYControllerEnabled(UASInterface* uas, bool enabled)
+void HSIDisplay::updatePositionXYControllerEnabled(bool enabled)
 {
-    Q_UNUSED(uas);
     xyControlEnabled = enabled;
 }
 
-void HSIDisplay::updatePositionZControllerEnabled(UASInterface* uas, bool enabled)
+void HSIDisplay::updatePositionZControllerEnabled(bool enabled)
 {
-    Q_UNUSED(uas);
     zControlEnabled = enabled;
 }
 
@@ -417,10 +414,10 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
-    connect(uas, SIGNAL(attitudeControlEnabled(bool)), this, SLOT(updateAttitudeControllerEnabled(UASInterface*,bool)));
-    connect(uas, SIGNAL(positionXYControlEnabled(bool)), this, SLOT(updatePositionXYControllerEnabled(UASInterface*,bool)));
-    connect(uas, SIGNAL(positionZControlEnabled(bool)), this, SLOT(updatePositionZControllerEnabled(UASInterface*,bool)));
-    connect(uas, SIGNAL(positionYawControlEnabled(bool)), this, SLOT(updatePositionYawControllerEnabled(UASInterface*,bool)));
+    connect(uas, SIGNAL(attitudeControlEnabled(bool)), this, SLOT(updateAttitudeControllerEnabled(bool)));
+    connect(uas, SIGNAL(positionXYControlEnabled(bool)), this, SLOT(updatePositionXYControllerEnabled(bool)));
+    connect(uas, SIGNAL(positionZControlEnabled(bool)), this, SLOT(updatePositionZControllerEnabled(bool)));
+    connect(uas, SIGNAL(positionYawControlEnabled(bool)), this, SLOT(updatePositionYawControllerEnabled(bool)));
 
     connect(uas, SIGNAL(localizationChanged(UASInterface*,int)), this, SLOT(updateLocalization(UASInterface*,int)));
     connect(uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)), this, SLOT(updateVisionLocalization(UASInterface*,int)));
