@@ -375,15 +375,36 @@ void QGCParamWidget::loadParameters()
                 // Only load parameters for right mav
                 if (mav->getUASID() == wpParams.at(0).toInt())
                 {
-                    addParameter(wpParams.at(0).toInt(), wpParams.at(1).toInt(), wpParams.at(2), wpParams.at(3).toDouble());
-                    if (changedValues.contains(wpParams.at(1).toInt()))
+                    bool changed = false;
+                    int component = wpParams.at(1).toInt();
+                    QString parameterName = wpParams.at(2);
+                    if (!parameters.contains(component) || parameters.value(component)->value(parameterName, 0.0f) != (float)wpParams.at(3).toDouble())
                     {
-                        if (changedValues.value(wpParams.at(1).toInt())->contains(wpParams.at(1)))
+                        changed = true;
+                    }
+
+                    // Set parameter value
+                    addParameter(wpParams.at(0).toInt(), wpParams.at(1).toInt(), wpParams.at(2), wpParams.at(3).toDouble());
+
+                    if (changed)
+                    {
+                        // Create changed values data structure if necessary
+                        if (!changedValues.contains(wpParams.at(1).toInt()))
                         {
-                            changedValues.value(wpParams.at(1).toInt())->remove(wpParams.at(1));
+                            changedValues.insert(wpParams.at(1).toInt(), new QMap<QString, float>());
                         }
 
-                        changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(1), (float)wpParams.at(2).toDouble());
+                        // Add to changed values
+                        if (changedValues.value(wpParams.at(1).toInt())->contains(wpParams.at(2)))
+                        {
+                            changedValues.value(wpParams.at(1).toInt())->remove(wpParams.at(2));
+                        }
+
+                        changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), (float)wpParams.at(3).toDouble());
+
+                        qDebug() << "MARKING COMP" << wpParams.at(1).toInt() << "PARAM" << wpParams.at(2) << "VALUE" << (float)wpParams.at(3).toDouble() << "AS CHANGED";
+
+                        // Mark in UI
                     }
                 }
             }
