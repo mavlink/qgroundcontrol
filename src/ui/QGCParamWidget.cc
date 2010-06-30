@@ -375,6 +375,7 @@ void QGCParamWidget::loadParameters()
                 // Only load parameters for right mav
                 if (mav->getUASID() == wpParams.at(0).toInt())
                 {
+
                     bool changed = false;
                     int component = wpParams.at(1).toInt();
                     QString parameterName = wpParams.at(2);
@@ -405,6 +406,7 @@ void QGCParamWidget::loadParameters()
                         qDebug() << "MARKING COMP" << wpParams.at(1).toInt() << "PARAM" << wpParams.at(2) << "VALUE" << (float)wpParams.at(3).toDouble() << "AS CHANGED";
 
                         // Mark in UI
+
                     }
                 }
             }
