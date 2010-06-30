@@ -258,7 +258,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     parameterItem->setBackground(0, QBrush(QColor(0, 0, 0)));
     parameterItem->setBackground(1, Qt::NoBrush);
     //tree->update();
-//    if (changedValues.contains(component)) changedValues.value(component)->remove(parameterName);
+    if (changedValues.contains(component)) changedValues.value(component)->remove(parameterName);
 }
 
 /**
@@ -360,29 +360,21 @@ void QGCParamWidget::loadParameters()
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
 
-    qDebug() << "PARAM file opened";
     // Clear list
     clear();
 
     QTextStream in(&file);
     while (!in.atEnd())
     {
-
-        qDebug() << "PARAM while";
         QString line = in.readLine();
         if (!line.startsWith("#"))
         {
-
-            qDebug() << "PARAM no #";
             QStringList wpParams = line.split("\t");
             if (wpParams.size() == 4)
             {
-
-                qDebug() << "PARAM size 4";
                 // Only load parameters for right mav
                 if (mav->getUASID() == wpParams.at(0).toInt())
                 {
-
                     bool changed = false;
                     int component = wpParams.at(1).toInt();
                     QString parameterName = wpParams.at(2);
@@ -392,29 +384,10 @@ void QGCParamWidget::loadParameters()
                     }
 
                     // Set parameter value
-
                     addParameter(wpParams.at(0).toInt(), wpParams.at(1).toInt(), wpParams.at(2), wpParams.at(3).toDouble());
 
                     if (changed)
                     {
-
-
-                        qDebug() << "PARAM changed contains";
-                        if (changedValues.value(wpParams.at(1).toInt())->contains(wpParams.at(1)))
-                        {
-                            qDebug() << "PARAM changed remove";
-                            changedValues.value(wpParams.at(1).toInt())->remove(wpParams.at(1));
-                        }
-
-                        changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(1), (float)wpParams.at(2).toDouble());
-
-
-
-
-
-                        // set param to be changed
-//                        QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, column);
-
                         // Create changed values data structure if necessary
                         if (!changedValues.contains(wpParams.at(1).toInt()))
                         {
