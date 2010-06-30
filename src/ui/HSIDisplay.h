@@ -65,21 +65,15 @@ public slots:
     /** @brief Heading control enabled/disabled */
     void updatePositionYawControllerEnabled(bool enabled);
 
-    /**
-     * @brief Localization quality changed
-     * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
-     */
+    /** @brief Localization quality changed */
     void updateLocalization(UASInterface* uas, int localization);
-    /**
-     * @brief GPS localization quality changed
-     * @param fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D localization, 3: 3D localization
-     */
+    /** @brief GPS localization quality changed */
     void updateGpsLocalization(UASInterface* uas, int localization);
-    /**
-     * @brief Vision localization quality changed
-     * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
-     */
+    /** @brief Vision localization quality changed */
     void updateVisionLocalization(UASInterface* uas, int localization);
+
+    /** @brief Ultrasound/Infrared localization changed */
+    void updateInfraredUltrasoundLocalization(UASInterface* uas, int fix);
 
     void paintEvent(QPaintEvent * event);
     /** @brief Update state from joystick */
@@ -101,6 +95,8 @@ protected slots:
     void sendBodySetPointCoordinates();
     /** @brief Draw one setpoint */
     void drawSetpointXY(float x, float y, float yaw, const QColor &color, QPainter &painter);
+    /** @brief Draw waypoints of this system */
+    void drawWaypoints(QPainter& painter);
     /** @brief Draw the limiting safety area */
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
 
@@ -208,18 +204,19 @@ protected:
     float metricWidth;         ///< Width the instrument represents in meters (the width of the ground shown by the widget)
 
     //
-    float xCenterPos;
-    float yCenterPos;
+    float xCenterPos;         ///< X center of instrument in virtual coordinates
+    float yCenterPos;         ///< Y center of instrument in virtual coordinates
 
     bool positionLock;
-    bool attControlEnabled;
-    bool xyControlEnabled;
-    bool zControlEnabled;
-    bool yawControlEnabled;
-    int positionFix;
-    int gpsFix;
-    int visionFix;
-    int laserFix;
+    bool attControlEnabled;   ///< Attitude control enabled
+    bool xyControlEnabled;    ///< Horizontal control enabled
+    bool zControlEnabled;     ///< Vertical control enabled
+    bool yawControlEnabled;   ///< Yaw angle position control enabled
+    int positionFix;          ///< Total dimensions the MAV is localizaed in
+    int gpsFix;               ///< Localization dimensions based on GPS
+    int visionFix;            ///< Localizaiton dimensions based on computer vision
+    int laserFix;             ///< Localization dimensions based on laser
+    int iruFix;               ///< Localization dimensions based on ultrasound
     bool mavInitialized;      ///< The MAV is initialized once the setpoint has been received
     float bottomMargin;       ///< Margin on the bottom of the page, in virtual coordinates
     float topMargin;          ///< Margin on top of the page, in virtual coordinates

@@ -145,6 +145,7 @@ void HSIDisplay::paintDisplay()
     drawPositionLock(2,  5, tr("POS"), positionFix, painter);
     drawPositionLock(22, 5, tr("VIS"), visionFix, painter);
     drawPositionLock(44, 5, tr("GPS"), gpsFix, painter);
+    drawPositionLock(66, 5, tr("IRU"), iruFix, painter);
 
 
     // Draw base instrument
@@ -422,6 +423,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(localizationChanged(UASInterface*,int)), this, SLOT(updateLocalization(UASInterface*,int)));
     connect(uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)), this, SLOT(updateVisionLocalization(UASInterface*,int)));
     connect(uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
+    connect(uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
 
     // Now connect the new UAS
 
@@ -569,6 +571,15 @@ void HSIDisplay::updateVisionLocalization(UASInterface* uas, int fix)
     visionFix = fix;
 }
 
+/**
+ * @param fix 0: lost, 1-N: Localized with N ultrasound or infrared sensors
+ */
+void HSIDisplay::updateInfraredUltrasoundLocalization(UASInterface* uas, int fix)
+{
+    Q_UNUSED(uas);
+    iruFix = fix;
+}
+
 QColor HSIDisplay::getColorForSNR(float snr)
 {
     QColor color;
@@ -597,6 +608,29 @@ QColor HSIDisplay::getColorForSNR(float snr)
 
 void HSIDisplay::drawSetpointXY(float x, float y, float yaw, const QColor &color, QPainter &painter)
 {
+    float radius = vwidth / 20.0f;
+    QPen pen(color);
+    pen.setWidthF(refLineWidthToPen(0.4f));
+    pen.setColor(color);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+    QPointF in(x, y);
+    // Transform from body to world coordinates
+    in = metricWorldToBody(in);
+    // Scale from metric to screen reference coordinates
+    QPointF p = metricBodyToRef(in);
+    drawCircle(p.x(), p.y(), radius, 0.4f, color, &painter);
+    radius *= 0.8;
+    drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
+    painter.setBrush(color);
+    drawCircle(p.x(), p.y(), radius * 0.1f, 0.1f, color, &painter);
+}
+
+void HSIDisplay::drawWaypoints(QPainter& painter)
+{
+    QColor color = uas->getColor();
+    float x = 1.1;
+    float y = 1.1;
     float radius = vwidth / 20.0f;
     QPen pen(color);
     pen.setWidthF(refLineWidthToPen(0.4f));
