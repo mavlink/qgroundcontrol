@@ -169,7 +169,7 @@ void WaypointList::add()
         if (waypoints.size() > 0)
         {
             Waypoint *last = waypoints.at(waypoints.size()-1);
-            addWaypoint(new Waypoint(waypoints.size(), last->getX(), last->getY(), last->getZ(), last->getYaw(), last->getAutoContinue(), last->getCurrent(), last->getOrbit(), last->getHoldTime()));
+            addWaypoint(new Waypoint(waypoints.size(), last->getX(), last->getY(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime()));
         }
         else
         {
