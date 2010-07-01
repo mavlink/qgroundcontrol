@@ -302,7 +302,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "pitch", pos.pitch, time);
                 emit valueChanged(uasId, "yaw", pos.yaw, time);
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
-                emit speedChanged(this, pos.roll, pos.pitch, pos.yaw, time);
+                //emit speedChanged(this, pos.roll, pos.pitch, pos.yaw, time);
+                emit attitudeChanged(this, pos.roll, pos.pitch, pos.yaw, time);
                 // Set internal state
                 if (!positionLock)
                 {
