@@ -43,13 +43,15 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_PATTERN_DETECTED:
             {
+                mavlink_pattern_detected_t detected;
+                mavlink_msg_pattern_detected_decode(&message, &detected);
                 QByteArray b;
                 b.resize(256);
                 mavlink_msg_pattern_detected_get_file(&message, (int8_t*)b.data());
                 b.append('\0');
                 QString path = QString(b);
-                bool detected (mavlink_msg_pattern_detected_get_detected(&message) == 1 ? true : false );
-                emit detectionReceived(uasId, path, 0, 0, 0, 0, 0, 0, 0, 0, mavlink_msg_pattern_detected_get_confidence(&message), detected);
+                emit detectionReceived(uasId, path, 0, 0, 0, 0, 0, 0, 0, 0, mavlink_msg_pattern_detected_get_confidence(&message), detected.detected);
+                emit letterDetected(uasId, path, detected.confidence, detected.detected);
             }
             break;
     case MAVLINK_MSG_ID_WATCHDOG_HEARTBEAT:
