@@ -75,7 +75,16 @@ void ObjectDetectionView::setUAS(UASInterface* uas)
     //{
     this->uas = uas;
     connect(uas, SIGNAL(detectionReceived(int, QString, int, int, int, int, int, int, int, int, double, bool)), this, SLOT(newDetection(int,QString,int,int,int,int,int,int,int,int,double,bool)));
+    connect(uas, SIGNAL(letterDetected(int,QString,float,bool)), this, SLOT(newLetter(int,QString,float,bool)));
     //}
+}
+
+void ObjectDetectionView::newLetter(int uasId, QString letter, float confidence, bool detected)
+{
+    // Emit audio message on detection
+    if (detected) GAudioOutput::instance()->say("System " + QString::number(uasId) + " detected letter " + letter);
+    m_ui->nameLabel->setText(letter);
+    m_ui->imageLabel->setText(letter);
 }
 
 void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, double confidence, bool detected)
@@ -88,6 +97,11 @@ void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, i
     Q_UNUSED(y3);
     Q_UNUSED(x4);
     Q_UNUSED(y4);
+    newDetection(uasId, patternPath, confidence, detected);
+}
+
+void ObjectDetectionView::newDetection(int uasId, QString patternPath, float confidence, bool detected)
+{
     if (detected)
     {
         if (patternList.contains(patternPath))
