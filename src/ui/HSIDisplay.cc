@@ -37,6 +37,7 @@ This file is part of the PIXHAWK project
 #include "MG.h"
 #include "QGC.h"
 #include "Waypoint.h"
+#include "UASWaypointManager.h"
 
 #include <QDebug>
 
@@ -136,19 +137,6 @@ void HSIDisplay::paintDisplay()
     // Draw background
     painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
 
-    // Draw status flags
-    drawStatusFlag(2,  1, tr("ATT"), attControlEnabled, painter);
-    drawStatusFlag(22, 1, tr("PXY"), xyControlEnabled,  painter);
-    drawStatusFlag(44, 1, tr("PZ"),  zControlEnabled,   painter);
-    drawStatusFlag(66, 1, tr("YAW"), yawControlEnabled, painter);
-
-    // Draw position lock indicators
-    drawPositionLock(2,  5, tr("POS"), positionFix, painter);
-    drawPositionLock(22, 5, tr("VIS"), visionFix, painter);
-    drawPositionLock(44, 5, tr("GPS"), gpsFix, painter);
-    drawPositionLock(66, 5, tr("IRU"), iruFix, painter);
-
-
     // Draw base instrument
     // ----------------------
     painter.setBrush(Qt::NoBrush);
@@ -163,6 +151,17 @@ void HSIDisplay::paintDisplay()
         float radius = (vwidth - topMargin - bottomMargin) / (2.0f * i+1) / 2.0f - bottomMargin / 2.0f;
         drawCircle(xCenterPos, yCenterPos, radius, 0.1f, ringColor, &painter);
     }
+
+    // Draw orientation labels
+    // Translate and rotate coordinate frame
+    painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
+    painter.rotate((-yaw/(M_PI))*180.0f);
+    paintText(tr("N"), ringColor, 3.5f, - 1.0f, - baseRadius - 5.5f, &painter);
+    paintText(tr("S"), ringColor, 3.5f, - 1.0f, + baseRadius + 1.5f, &painter);
+    paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.75f, &painter);
+    paintText(tr("W"), ringColor, 3.5f, - baseRadius - 5.5f, - 1.75f, &painter);
+    painter.rotate((yaw/(M_PI))*180.0f);
+    painter.translate(-(xCenterPos)*scalingFactor, -(yCenterPos)*scalingFactor);
 
     // Draw center indicator
     QPolygonF p(3);
@@ -208,9 +207,6 @@ void HSIDisplay::paintDisplay()
         drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, QGC::colorCyan, &painter);
     }
 
-    // Draw waypoints
-    drawWaypoints(painter);
-
     // Labels on outer part and bottom
 
     if (localAvailable > 0)
@@ -225,20 +221,20 @@ void HSIDisplay::paintDisplay()
         paintText(str, ringColor, 3.0f, 10.0f, vheight - 5.0f, &painter);
     }
 
-    // Draw orientation labels
-    // Translate and rotate coordinate frame
-    painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
-    painter.rotate((-yaw/(M_PI))*180.0f);
-    paintText(tr("N"), ringColor, 3.5f, - 1.0f, - baseRadius - 5.5f, &painter);
-    paintText(tr("S"), ringColor, 3.5f, - 1.0f, + baseRadius + 1.5f, &painter);
-    paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.75f, &painter);
-    paintText(tr("W"), ringColor, 3.5f, - baseRadius - 5.5f, - 1.75f, &painter);
+    // Draw waypoints
+    drawWaypoints(painter);
 
-    //    //  Just for testing
-    //    bodyXSetCoordinate = 0.95 * bodyXSetCoordinate + 0.05 * uiXSetCoordinate;
-    //    bodyYSetCoordinate = 0.95 * bodyYSetCoordinate + 0.05 * uiYSetCoordinate;
-    //    bodyZSetCoordinate = 0.95 * bodyZSetCoordinate + 0.05 * uiZSetCoordinate;
-    //    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
+    // Draw status flags
+    drawStatusFlag(2,  1, tr("ATT"), attControlEnabled, painter);
+    drawStatusFlag(22, 1, tr("PXY"), xyControlEnabled,  painter);
+    drawStatusFlag(44, 1, tr("PZ"),  zControlEnabled,   painter);
+    drawStatusFlag(66, 1, tr("YAW"), yawControlEnabled, painter);
+
+    // Draw position lock indicators
+    drawPositionLock(2,  5, tr("POS"), positionFix, painter);
+    drawPositionLock(22, 5, tr("VIS"), visionFix, painter);
+    drawPositionLock(44, 5, tr("GPS"), gpsFix, painter);
+    drawPositionLock(66, 5, tr("IRU"), iruFix, painter);
 }
 
 void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, QPainter& painter)
@@ -251,7 +247,7 @@ void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, QP
     }
     else
     {
-        painter.setBrush(QGC::colorYellow);
+        painter.setBrush(QGC::colorDarkYellow);
     }
     painter.setPen(Qt::NoPen);
     painter.drawRect(QRect(refToScreenX(x+7.3f), refToScreenY(y+0.05), refToScreenX(7.0f), refToScreenY(4.0f)));
@@ -320,7 +316,8 @@ QPointF HSIDisplay::metricWorldToBody(QPointF world)
 {
     // First translate to body-centered coordinates
     // Rotate around -yaw
-    QPointF result(cos(yaw) * (x - world.x()) + -sin(yaw) * (x - world.x()), sin(yaw) * (y - world.y()) + cos(yaw) * (y - world.y()));
+    float angle = yaw + M_PI;
+    QPointF result(cos(angle) * (x - world.x()) - sin(angle) * (y - world.y()), sin(angle) * (x - world.x()) + cos(angle) * (y - world.y()));
     return result;
 }
 
@@ -328,7 +325,7 @@ QPointF HSIDisplay::metricBodyToWorld(QPointF body)
 {
     // First rotate into world coordinates
     // then translate to world position
-    QPointF result((cos(yaw) * body.x()) + (sin(yaw) * body.x()) + x, (-sin(yaw) * body.y()) + (cos(yaw) * body.y()) + y);
+    QPointF result((cos(yaw) * body.x()) + (sin(yaw) * body.y()) + x, (-sin(yaw) * body.x()) + (cos(yaw) * body.y()) + y);
     return result;
 }
 
@@ -634,9 +631,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
 {
     if (uas)
     {
-        QVector<Waypoint*> list = QVector<Waypoint*>();
-        list.append(new Waypoint(0, x, y, z, yaw, false, false, 0.5f, 2000));
-        list.append(new Waypoint(0, x+0.1, y+0.1, z, yaw, true, true, 0.5f, 2000));
+        QVector<Waypoint*>& list = uas->getWaypointManager().getWaypointList();
 
         QColor color;
         painter.setBrush(Qt::NoBrush);
@@ -651,29 +646,11 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             // Scale from metric to screen reference coordinates
             QPointF p = metricBodyToRef(in);
 
-            // Select color based on if this is the current waypoint
-            if (list.at(i)->getCurrent())
-            {
-                color = uas->getColor().lighter().lighter();
-            }
-            else
-            {
-                color = uas->getColor();
-            }
-
             // Setup pen
             QPen pen(color);
-            pen.setWidthF(refLineWidthToPen(0.4f));
-            painter.setPen(pen);
             painter.setBrush(Qt::NoBrush);
 
-            // Draw line from last waypoint to this one
-            if (!lastWaypoint.isNull())
-            {
-                drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f), color, &painter);
-            }
-            lastWaypoint = p;
-
+            // DRAW WAYPOINT
             //drawCircle(p.x(), p.y(), radius, 0.4f, color, &painter);
             float waypointSize = vwidth / 20.0f * 2.0f;
             QPolygonF poly(4);
@@ -684,10 +661,35 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             // Bottom point
             poly.replace(2, QPointF(p.x(), p.y() + waypointSize/2.0f));
             poly.replace(3, QPointF(p.x() - waypointSize/2.0f, p.y()));
-            drawPolygon(poly, &painter);
+
+            // Select color based on if this is the current waypoint
+            if (list.at(i)->getCurrent())
+            {
+                color = QGC::colorCyan;//uas->getColor();
+                pen.setWidthF(refLineWidthToPen(0.8f));
+            }
+            else
+            {
+                color = uas->getColor();
+                pen.setWidthF(refLineWidthToPen(0.4f));
+            }
+
+            pen.setColor(color);
+            painter.setPen(pen);
             float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
             drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
-            painter.setBrush(color);
+            drawPolygon(poly, &painter);
+
+            // DRAW CONNECTING LINE
+            // Draw line from last waypoint to this one
+            if (!lastWaypoint.isNull())
+            {
+                pen.setWidthF(refLineWidthToPen(0.4f));
+                painter.setPen(pen);
+                color = uas->getColor();
+                drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f), color, &painter);
+            }
+            lastWaypoint = p;
         }
     }
 }
