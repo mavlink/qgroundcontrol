@@ -7,17 +7,20 @@
     <x>0</x>
     <y>0</y>
     <width>246</width>
-    <height>396</height>
+    <height>403</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="10,10" columnminimumwidth="0,0">
+   <item row="0" column="0" colspan="2">
     <widget class="QListWidget" name="listWidget"/>
    </item>
-   <item row="1" column="0">
+   <item row="1" column="0" colspan="2">
+    <widget class="QListWidget" name="letterListWidget"/>
+   </item>
+   <item row="2" column="0">
     <widget class="QLabel" name="imageLabel">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -36,7 +39,39 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="2" column="1">
+    <widget class="QLabel" name="letterLabel">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>10</horstretch>
+       <verstretch>10</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="sizeIncrement">
+      <size>
+       <width>2</width>
+       <height>2</height>
+      </size>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>10</width>
+       <height>10</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font: 72pt;
+color: white;</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
     <widget class="QLabel" name="nameLabel">
      <property name="text">
       <string>No objects recognized</string>

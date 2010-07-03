@@ -290,7 +290,7 @@ signals:
     void waypointReached(UASInterface* uas, int id);
     void autoModeChanged(bool autoMode);
     void parameterChanged(int uas, int component, QString parameterName, float value);
-    void detectionReceived(int uasId, QString patternPath, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, double confidence, bool detected);
+    void patternDetected(int uasId, QString patternPath, float confidence, bool detected);
     void letterDetected(int uasId, QString letter, float confidence, bool detected);
     /**
      * @brief The battery status has been updated
