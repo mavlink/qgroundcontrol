@@ -60,6 +60,8 @@ public:
     void handleWaypointReached(quint8 systemId, quint8 compId, mavlink_waypoint_reached_t *wpr);
     void handleWaypointSetCurrent(quint8 systemId, quint8 compId, mavlink_waypoint_set_current_t *wpr);
 
+    QVector<Waypoint *> &getWaypointList(void) { return waypoints; }
+
 private:
     void sendWaypointRequest(quint16 seq);
     void sendWaypoint(quint16 seq);
@@ -68,12 +70,12 @@ public slots:
     void timeout();
     void clearWaypointList();
     void requestWaypoints();
-    void sendWaypoints(const QVector<Waypoint *> &list);
+    void sendWaypoints();
 
 signals:
-    void waypointUpdated(int,quint16,double,double,double,double,bool,bool,double,int);    ///< Adds a waypoint to the waypoint list widget
-    void currentWaypointChanged(quint16);                                       ///< emits the new current waypoint sequence number
-    void updateStatusString(const QString &);                                   ///< emits the current status string
+    void waypointUpdated(quint16,double,double,double,double,bool,bool,double,int); ///< Adds a waypoint to the waypoint list widget
+    void currentWaypointChanged(quint16);                                           ///< emits the new current waypoint sequence number
+    void updateStatusString(const QString &);                                       ///< emits the current status string
 
 private:
     UAS &uas;                                       ///< Reference to the corresponding UAS
@@ -83,6 +85,7 @@ private:
     quint8 current_partner_systemid;                ///< The current protocol communication target system
     quint8 current_partner_compid;                  ///< The current protocol communication target component
 
+    QVector<Waypoint *> waypoints;                  ///< local waypoint list
     QVector<mavlink_waypoint_t *> waypoint_buffer;  ///< communication buffer for waypoints
     QTimer protocol_timer;                          ///< Timer to catch timeouts
 };
