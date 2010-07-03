@@ -26,6 +26,7 @@ This file is part of the PIXHAWK project
  *   @brief List of detected objects
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *   @author Fabian Landau <mavteam@student.ethz.ch>
  *
  */
 
@@ -47,8 +48,21 @@ namespace Ui {
 class ObjectDetectionView : public QWidget {
     Q_OBJECT
     Q_DISABLE_COPY(ObjectDetectionView)
-        public:
-            explicit ObjectDetectionView(QString folder="patterns", QWidget *parent = 0);
+
+    struct Pattern
+    {
+        Pattern() : name(QString()), confidence(0.0f), count(0) {}
+        Pattern(QString name, float confidence) : name(name), confidence(confidence), count(1) {}
+
+        bool operator<(const Pattern& other) const { return this->confidence > other.confidence; } // this comparison is intentionally wrong to sort the QList from highest confidence to lowest
+
+        QString name;
+        float confidence;
+        unsigned int count;
+    };
+
+public:
+    explicit ObjectDetectionView(QString folder="patterns", QWidget *parent = 0);
     virtual ~ObjectDetectionView();
 
     /** @brief Resize widget contents */
@@ -58,17 +72,19 @@ public slots:
     /** @brief Set the UAS this view is currently associated to */
     void setUAS(UASInterface* uas);
     /** @brief Report new detection */
-    void newDetection(int uasId, QString patternPath, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, double confidence, bool detected);
+    void newPattern(int uasId, QString patternPath, float confidence, bool detected);
     void newLetter(int uasId, QString letter, float confidence, bool detected);
-    void newDetection(int uasId, QString patternPath, float confidence, bool detected);
+    void decreaseLetterTime();
+    void updateLetterList();
     /** @brief Accept an internal action, update name and preview image label */
     void takeAction();
 
 protected:
     virtual void changeEvent(QEvent *e);
-    QMap<QString, double>  patternList;  ///< The detected patterns
-    QMap<QString, unsigned int> patternCount; ///< Number of detections per pattern
-    UASInterface*   uas;                 ///< The monitored UAS
+    QMap<QString, Pattern> patternList;  ///< The detected patterns with their confidence and detection count
+    QMap<QString, Pattern> letterList;   ///< The detected letters with their confidence and detection count
+    QTimer letterTimer;                  ///< A timer to "forget" old letters
+    UASInterface* uas;                   ///< The monitored UAS
     QString patternFolder;               ///< The base folder where pattern images are stored in
     const QString separator;
 
