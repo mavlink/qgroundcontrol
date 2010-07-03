@@ -93,10 +93,7 @@ WaypointList::~WaypointList()
 
 void WaypointList::updateStatusLabel(const QString &string)
 {
-    if (this->uas)
-    {
-        m_ui->statusLabel->setText(string);
-    }
+    m_ui->statusLabel->setText(string);
 }
 
 void WaypointList::updateLocalPosition(UASInterface* uas, double x, double y, double z, quint64 usec)
@@ -229,11 +226,11 @@ void WaypointList::addCurrentPositonWaypoint()
         if (waypoints.size() > 0)
         {
             Waypoint *last = waypoints.at(waypoints.size()-1);
-            addWaypoint(new Waypoint(waypoints.size(), mavX, mavY, mavZ, mavYaw, last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime()));
+            addWaypoint(new Waypoint(waypoints.size(), (float)(qRound(mavX*100))/100.f, (float)(qRound(mavY*100))/100.f, (float)(qRound(mavZ*100))/100.f, (float)(qRound(mavYaw*100))/100.f, last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime()));
         }
         else
         {
-            addWaypoint(new Waypoint(waypoints.size(), mavX, mavY, mavZ, mavYaw, true, true, 0.15, 2000));
+            addWaypoint(new Waypoint(waypoints.size(), (float)(qRound(mavX*100))/100.f, (float)(qRound(mavY*100))/100.f, (float)(qRound(mavZ*100))/100.f, (float)(qRound(mavYaw*100))/100.f, true, true, 0.15, 2000));
         }
 
     }
