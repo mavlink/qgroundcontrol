@@ -41,6 +41,10 @@ This file is part of the PIXHAWK project
 WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
         QWidget(parent),
         uas(NULL),
+        mavX(0.0),
+        mavY(0.0),
+        mavZ(0.0),
+        mavYaw(0.0),
         m_ui(new Ui::WaypointList)
 {
     m_ui->setupUi(this);
@@ -59,6 +63,9 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     // Connect add action, set right button icon and connect action to this class
     connect(m_ui->addButton, SIGNAL(clicked()), m_ui->actionAddWaypoint, SIGNAL(triggered()));
     connect(m_ui->actionAddWaypoint, SIGNAL(triggered()), this, SLOT(add()));
+
+    // ADD WAYPOINT AT CURRENT POSITION
+    connect(m_ui->positionAddButton, SIGNAL(clicked()), this, SLOT(addCurrentPositonWaypoint()));
 
     // SEND WAYPOINTS
     connect(m_ui->transmitButton, SIGNAL(clicked()), this, SLOT(transmit()));
@@ -89,6 +96,24 @@ void WaypointList::updateStatusLabel(const QString &string)
     m_ui->statusLabel->setText(string);
 }
 
+void WaypointList::updateLocalPosition(UASInterface* uas, double x, double y, double z, quint64 usec)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(usec);
+    mavX = x;
+    mavY = y;
+    mavZ = z;
+}
+
+void WaypointList::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 usec)
+{
+    Q_UNUSED(uas);
+    Q_UNUSED(usec);
+    Q_UNUSED(roll);
+    Q_UNUSED(pitch);
+    mavYaw = yaw;
+}
+
 void WaypointList::setUAS(UASInterface* uas)
 {
     if (this->uas == NULL && uas != NULL)
@@ -98,6 +123,8 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(&uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)),                                this, SLOT(updateStatusLabel(const QString &)));
         connect(&uas->getWaypointManager(), SIGNAL(waypointUpdated(int,quint16,double,double,double,double,bool,bool,double,int)), this, SLOT(setWaypoint(int,quint16,double,double,double,double,bool,bool,double,int)));
         connect(&uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),                                    this, SLOT(currentWaypointChanged(quint16)));
+        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
         connect(this, SIGNAL(sendWaypoints(const QVector<Waypoint*> &)),    &uas->getWaypointManager(), SLOT(sendWaypoints(const QVector<Waypoint*> &)));
         connect(this, SIGNAL(requestWaypoints()),                           &uas->getWaypointManager(), SLOT(requestWaypoints()));
@@ -173,8 +200,25 @@ void WaypointList::add()
         }
         else
         {
-            addWaypoint(new Waypoint(waypoints.size(), 1.1, 1.1, -0.8, 0.0, true, true, 0.1, 1000));
+            addWaypoint(new Waypoint(waypoints.size(), 1.1, 1.1, -0.8, 0.0, true, true, 0.15, 2000));
         }
+    }
+}
+
+void WaypointList::addCurrentPositonWaypoint()
+{
+    if (uas)
+    {
+        if (waypoints.size() > 0)
+        {
+            Waypoint *last = waypoints.at(waypoints.size()-1);
+            addWaypoint(new Waypoint(waypoints.size(), mavX, mavY, mavZ, mavYaw, last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime()));
+        }
+        else
+        {
+            addWaypoint(new Waypoint(waypoints.size(), mavX, mavY, mavZ, mavYaw, true, true, 0.15, 2000));
+        }
+
     }
 }
 

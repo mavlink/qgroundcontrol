@@ -136,8 +136,6 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit localizationChanged(this, status.position_fix);
                 emit visionLocalizationChanged(this, status.vision_fix);
                 emit gpsLocalizationChanged(this, status.gps_fix);
-
-                qDebug() << "ATT CONTROL IS" << status.control_att;
             }
             break;
     default:
