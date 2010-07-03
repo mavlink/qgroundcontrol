@@ -665,6 +665,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             QPen pen(color);
             pen.setWidthF(refLineWidthToPen(0.4f));
             painter.setPen(pen);
+            painter.setBrush(Qt::NoBrush);
 
             // Draw line from last waypoint to this one
             if (!lastWaypoint.isNull())
