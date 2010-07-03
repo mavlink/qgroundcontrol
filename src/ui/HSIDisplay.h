@@ -99,7 +99,7 @@ protected slots:
     void drawWaypoints(QPainter& painter);
     /** @brief Draw the limiting safety area */
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
-
+    /** @brief Receive mouse clicks */
     void mouseDoubleClickEvent(QMouseEvent* event);
 
 protected:
