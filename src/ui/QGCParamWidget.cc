@@ -269,6 +269,7 @@ void QGCParamWidget::requestParameterList()
 {
     // Clear view and request param list
     clear();
+    parameters.clear();
     mav->requestParameters();
 }
 
