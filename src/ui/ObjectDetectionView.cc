@@ -56,6 +56,7 @@ ObjectDetectionView::ObjectDetectionView(QString folder, QWidget *parent) :
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
     letterTimer.start(1000);
     connect(&letterTimer, SIGNAL(timeout()), this, SLOT(decreaseLetterTime()));
+    connect(m_ui->clearButton, SIGNAL(clicked()), this, SLOT(clearLists()));
 }
 
 ObjectDetectionView::~ObjectDetectionView()
@@ -181,6 +182,14 @@ void ObjectDetectionView::updateLetterList()
     m_ui->letterListWidget->clear();
     foreach (Pattern pattern, templist)
         m_ui->letterListWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
+}
+
+void ObjectDetectionView::clearLists()
+{
+    patternList.clear();
+    letterList.clear();
+    m_ui->listWidget->clear();
+    m_ui->letterListWidget->clear();
 }
 
 void ObjectDetectionView::takeAction()

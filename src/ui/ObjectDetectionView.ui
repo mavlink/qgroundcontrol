@@ -13,25 +13,37 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="10,10" columnminimumwidth="0,0">
-   <item row="0" column="0" colspan="2">
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="3">
     <widget class="QListWidget" name="listWidget"/>
    </item>
-   <item row="1" column="0" colspan="2">
+   <item row="1" column="0" colspan="3">
     <widget class="QListWidget" name="letterListWidget"/>
    </item>
    <item row="2" column="0">
     <widget class="QLabel" name="imageLabel">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>1</horstretch>
-       <verstretch>1</verstretch>
+       <horstretch>10</horstretch>
+       <verstretch>10</verstretch>
       </sizepolicy>
      </property>
      <property name="minimumSize">
       <size>
-       <width>64</width>
-       <height>64</height>
+       <width>110</width>
+       <height>110</height>
+      </size>
+     </property>
+     <property name="sizeIncrement">
+      <size>
+       <width>2</width>
+       <height>2</height>
+      </size>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>10</width>
+       <height>10</height>
       </size>
      </property>
      <property name="text">
@@ -39,13 +51,19 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
+   <item row="2" column="1" colspan="2">
     <widget class="QLabel" name="letterLabel">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>10</horstretch>
        <verstretch>10</verstretch>
       </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>110</width>
+       <height>110</height>
+      </size>
      </property>
      <property name="sizeIncrement">
       <size>
@@ -75,6 +93,19 @@ color: white;</string>
     <widget class="QLabel" name="nameLabel">
      <property name="text">
       <string>No objects recognized</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QPushButton" name="clearButton">
+     <property name="maximumSize">
+      <size>
+       <width>80</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>Clear</string>
      </property>
     </widget>
    </item>
