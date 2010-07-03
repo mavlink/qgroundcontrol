@@ -94,7 +94,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
         if(wp->seq == current_wp_id)
         {
             //update the UI FIXME
-            emit waypointUpdated(uas.getUASID(), wp->seq, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue, wp->current, wp->orbit, wp->hold_time);
+            emit waypointUpdated(wp->seq, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue, wp->current, wp->orbit, wp->hold_time);
 
             //get next waypoint
             current_wp_id++;
@@ -206,15 +206,15 @@ void UASWaypointManager::requestWaypoints()
     }
 }
 
-void UASWaypointManager::sendWaypoints(const QVector<Waypoint*> &list)
+void UASWaypointManager::sendWaypoints()
 {
     if (current_state == WP_IDLE)
     {
-        if (list.count() > 0)
+        if (waypoints.count() > 0)
         {
             protocol_timer.start(PROTOCOL_TIMEOUT_MS);
 
-            current_count = list.count();
+            current_count = waypoints.count();
             current_state = WP_SENDLIST;
             current_wp_id = 0;
             current_partner_systemid = uas.getUASID();
@@ -233,7 +233,7 @@ void UASWaypointManager::sendWaypoints(const QVector<Waypoint*> &list)
                 waypoint_buffer.push_back(new mavlink_waypoint_t);
                 mavlink_waypoint_t *cur_d = waypoint_buffer.back();
                 memset(cur_d, 0, sizeof(mavlink_waypoint_t));   //initialize with zeros
-                const Waypoint *cur_s = list.at(i);
+                const Waypoint *cur_s = waypoints.at(i);
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent();

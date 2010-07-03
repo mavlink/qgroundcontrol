@@ -63,6 +63,8 @@ public slots:
     void refresh();
     /** @brief Receive new waypoint information */
     void setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current);
+    /** @brief Update the current active waypoint */
+    void currentWaypointUpdated(quint16 waypoint);
     /** @brief Set waypoint as current target */
     void selectWaypoint(int uasId, int id);
     /** @brief Set the current system type */
