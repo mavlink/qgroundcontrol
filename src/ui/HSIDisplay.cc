@@ -36,6 +36,7 @@ This file is part of the PIXHAWK project
 #include "HSIDisplay.h"
 #include "MG.h"
 #include "QGC.h"
+#include "Waypoint.h"
 
 #include <QDebug>
 
@@ -79,7 +80,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         uiYSetCoordinate(0.0f),
         uiZSetCoordinate(0.0f),
         uiYawSet(0.0f),
-        metricWidth(2.0f),
+        metricWidth(4.0f),
         positionLock(false),
         attControlEnabled(false),
         xyControlEnabled(false),
@@ -207,9 +208,12 @@ void HSIDisplay::paintDisplay()
         drawLine(s.x(), s.y(), xCenterPos, yCenterPos, 1.5f, QGC::colorCyan, &painter);
     }
 
+    // Draw waypoints
+    drawWaypoints(painter);
+
     // Labels on outer part and bottom
 
-    //if (localAvailable > 0)
+    if (localAvailable > 0)
     {
         // Position
         QString str;
@@ -230,11 +234,11 @@ void HSIDisplay::paintDisplay()
     paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.75f, &painter);
     paintText(tr("W"), ringColor, 3.5f, - baseRadius - 5.5f, - 1.75f, &painter);
 
-//    //  Just for testing
-//    bodyXSetCoordinate = 0.95 * bodyXSetCoordinate + 0.05 * uiXSetCoordinate;
-//    bodyYSetCoordinate = 0.95 * bodyYSetCoordinate + 0.05 * uiYSetCoordinate;
-//    bodyZSetCoordinate = 0.95 * bodyZSetCoordinate + 0.05 * uiZSetCoordinate;
-//    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
+    //    //  Just for testing
+    //    bodyXSetCoordinate = 0.95 * bodyXSetCoordinate + 0.05 * uiXSetCoordinate;
+    //    bodyYSetCoordinate = 0.95 * bodyYSetCoordinate + 0.05 * uiYSetCoordinate;
+    //    bodyZSetCoordinate = 0.95 * bodyZSetCoordinate + 0.05 * uiZSetCoordinate;
+    //    bodyYawSet = 0.95 * bodyYawSet + 0.05 * uiYawSet;
 }
 
 void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, QPainter& painter)
@@ -503,11 +507,11 @@ void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesir
     bodyYawSet = yawDesired;
     mavInitialized = true;
 
-//    qDebug() << "Received setpoint at x: " << x << "metric y:" << y;
-//    posXSet = xDesired;
-//    posYSet = yDesired;
-//    posZSet = zDesired;
-//    posYawSet = yawDesired;
+    //    qDebug() << "Received setpoint at x: " << x << "metric y:" << y;
+    //    posXSet = xDesired;
+    //    posYSet = yDesired;
+    //    posZSet = zDesired;
+    //    posYawSet = yawDesired;
 }
 
 void HSIDisplay::updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec)
@@ -628,25 +632,64 @@ void HSIDisplay::drawSetpointXY(float x, float y, float yaw, const QColor &color
 
 void HSIDisplay::drawWaypoints(QPainter& painter)
 {
-    QColor color = uas->getColor();
-    float x = 1.1;
-    float y = 1.1;
-    float radius = vwidth / 20.0f;
-    QPen pen(color);
-    pen.setWidthF(refLineWidthToPen(0.4f));
-    pen.setColor(color);
-    painter.setPen(pen);
-    painter.setBrush(Qt::NoBrush);
-    QPointF in(x, y);
-    // Transform from body to world coordinates
-    in = metricWorldToBody(in);
-    // Scale from metric to screen reference coordinates
-    QPointF p = metricBodyToRef(in);
-    drawCircle(p.x(), p.y(), radius, 0.4f, color, &painter);
-    radius *= 0.8;
-    drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
-    painter.setBrush(color);
-    drawCircle(p.x(), p.y(), radius * 0.1f, 0.1f, color, &painter);
+    if (uas)
+    {
+        QVector<Waypoint*> list = QVector<Waypoint*>();
+        list.append(new Waypoint(0, x, y, z, yaw, false, false, 0.5f, 2000));
+        list.append(new Waypoint(0, x+0.1, y+0.1, z, yaw, true, true, 0.5f, 2000));
+
+        QColor color;
+        painter.setBrush(Qt::NoBrush);
+
+        QPointF lastWaypoint;
+
+        for (int i = 0; i < list.size(); i++)
+        {
+            QPointF in(list.at(i)->getX(), list.at(i)->getY());
+            // Transform from world to body coordinates
+            in = metricWorldToBody(in);
+            // Scale from metric to screen reference coordinates
+            QPointF p = metricBodyToRef(in);
+
+            // Select color based on if this is the current waypoint
+            if (list.at(i)->getCurrent())
+            {
+                color = uas->getColor().lighter().lighter();
+            }
+            else
+            {
+                color = uas->getColor();
+            }
+
+            // Setup pen
+            QPen pen(color);
+            pen.setWidthF(refLineWidthToPen(0.4f));
+            painter.setPen(pen);
+            painter.setBrush(Qt::NoBrush);
+
+            // Draw line from last waypoint to this one
+            if (!lastWaypoint.isNull())
+            {
+                drawLine(lastWaypoint.x(), lastWaypoint.y(), p.x(), p.y(), refLineWidthToPen(0.4f), color, &painter);
+            }
+            lastWaypoint = p;
+
+            //drawCircle(p.x(), p.y(), radius, 0.4f, color, &painter);
+            float waypointSize = vwidth / 20.0f * 2.0f;
+            QPolygonF poly(4);
+            // Top point
+            poly.replace(0, QPointF(p.x(), p.y()-waypointSize/2.0f));
+            // Right point
+            poly.replace(1, QPointF(p.x()+waypointSize/2.0f, p.y()));
+            // Bottom point
+            poly.replace(2, QPointF(p.x(), p.y() + waypointSize/2.0f));
+            poly.replace(3, QPointF(p.x() - waypointSize/2.0f, p.y()));
+            drawPolygon(poly, &painter);
+            float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
+            drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
+            painter.setBrush(color);
+        }
+    }
 }
 
 void HSIDisplay::drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight, const QColor &color, QPainter &painter)
