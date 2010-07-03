@@ -76,6 +76,7 @@ public slots:
     void newLetter(int uasId, QString letter, float confidence, bool detected);
     void decreaseLetterTime();
     void updateLetterList();
+    void clearLists();
     /** @brief Accept an internal action, update name and preview image label */
     void takeAction();
 
