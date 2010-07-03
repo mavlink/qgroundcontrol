@@ -62,7 +62,10 @@ public slots:
     void loadWaypoints();    
     void transmit();
     void read();
+    /** @brief Add a waypoint */
     void add();
+    /** @brief Add a waypoint at the current MAV position */
+    void addCurrentPositonWaypoint();
     void moveUp(Waypoint* wp);
     void moveDown(Waypoint* wp);
 
@@ -76,6 +79,8 @@ public slots:
     void addWaypoint(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
     void waypointReached(UASInterface* uas, quint16 waypointId);
+    void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
+    void updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
 
 signals:
     void sendWaypoints(const QVector<Waypoint*> &);
@@ -89,6 +94,10 @@ protected:
     QMap<Waypoint*, WaypointView*> wpViews;
     QVBoxLayout* listLayout;
     UASInterface* uas;
+    double mavX;
+    double mavY;
+    double mavZ;
+    double mavYaw;
 
 private:
     Ui::WaypointList *m_ui;
