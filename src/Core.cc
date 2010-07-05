@@ -40,6 +40,7 @@ This file is part of the PIXHAWK project
 #include <QStyleFactory>
 #include <QAction>
 
+#include "configuration.h"
 #include "Core.h"
 #include "MG.h"
 #include "MainWindow.h"
@@ -61,9 +62,9 @@ This file is part of the PIXHAWK project
 
 Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 {
-    this->setApplicationName("QGroundControl");
-    this->setApplicationVersion("v. 0.7.5 (Beta)");
-    this->setOrganizationName(QLatin1String("OpenMAV Association"));
+    this->setApplicationName(QGC_APPLICATION_NAME);
+    this->setApplicationVersion(QGC_APPLICATION_VERSION);
+    this->setOrganizationName(QLatin1String("PIXHAWK Association Zurich"));
     this->setOrganizationDomain("http://qgroundcontrol.org");
 
     // Show splash screen
