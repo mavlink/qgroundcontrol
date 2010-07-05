@@ -188,8 +188,13 @@ void ObjectDetectionView::clearLists()
 {
     patternList.clear();
     letterList.clear();
+
     m_ui->listWidget->clear();
     m_ui->letterListWidget->clear();
+
+    m_ui->imageLabel->clear();;
+    m_ui->letterLabel->clear();
+    m_ui->nameLabel->clear();
 }
 
 void ObjectDetectionView::takeAction()

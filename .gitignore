@@ -23,3 +23,4 @@ doc/html
 doc/doxy.log
 deploy/mac
 deploy/linux
+controller_log*
