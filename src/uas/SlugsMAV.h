@@ -6,6 +6,7 @@
 class SlugsMAV : public UAS
 {
     Q_OBJECT
+    Q_INTERFACES(UASInterface)
 public:
     SlugsMAV(MAVLinkProtocol* mavlink, int id = 0);
 

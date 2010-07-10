@@ -666,6 +666,7 @@ void UAS::writeParametersToStorage()
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
     mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_STORAGE_WRITE);
+    //mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(uint8_t)MAV_ACTION_STORAGE_WRITE);
     sendMessage(msg);
 }
 
