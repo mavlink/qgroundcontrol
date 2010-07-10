@@ -120,11 +120,14 @@ win32 {
     
     # Special settings for debug
     #CONFIG += CONSOLE
-    LIBS += -L$$BASEDIR\lib\sdl\win32 \
-        -lmingw32 -lSDLmain -lSDL -mwindows
-    
-    INCLUDEPATH += $$BASEDIR/lib/sdl/include #\
+
+    INCLUDEPATH += $$BASEDIR\lib\sdl\include #\
                    #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
+
+    LIBS += -L$$BASEDIR\lib\sdl\win32 \
+             -lmingw32 -lSDLmain -lSDL -mwindows
+
+
 
     debug {
         DESTDIR = $$BASEDIR/bin
