@@ -1,4 +1,6 @@
 #include "WatchdogControl.h"
+#include "WatchdogView.h"
+#include "WatchdogProcessView.h"
 #include "ui_WatchdogControl.h"
 #include "PxQuadMAV.h"
 
@@ -52,7 +54,8 @@ void WatchdogControl::updateWatchdog(int systemId, int watchdogId, unsigned int 
     {
         watchdog.processes_ = std::vector<ProcessInfo>(processCount);
         // Create new UI widget
-        //WatchdogView* view = new Watch
+        //WatchdogView* view = new WatchdogView(this);
+
     }
 
     // start the timeout timer
