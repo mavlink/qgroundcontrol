@@ -11,6 +11,8 @@
 #include <string>
 #include <sstream>
 
+#include "WatchdogView.h"
+
 #include "UASInterface.h"
 
 namespace Ui {
@@ -128,6 +130,7 @@ private:
     WatchdogInfo& getWatchdog(uint8_t system_id, uint16_t watchdog_id);
 
     std::map<WatchdogID, WatchdogInfo> watchdogs_;          ///< A map containing all watchdogs which are currently active
+    std::map<WatchdogID, WatchdogView> views;
     QTimer updateTimer_;
 };
 
