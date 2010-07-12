@@ -21,7 +21,6 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
     // Let UAS handle the default message set
     UAS::receiveMessage(link, message);
 
-
     // Handle your special messages mavlink_message_t* msg = &message;
     switch (message.msgid)
     {
@@ -30,6 +29,9 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             qDebug() << "SLUGS RECEIVED HEARTBEAT";
             break;
         }
+
+#ifdef MAVLINK_ENABLED_SLUGS_MESSAGES
+
     case MAVLINK_MSG_ID_CPU_LOAD:
         {
             mavlink_cpu_load_t cpu_load;
@@ -119,6 +121,8 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             break;
         }
+#endif
+
     default:
         qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
         break;

@@ -298,12 +298,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "x", pos.x, time);
                 emit valueChanged(uasId, "y", pos.y, time);
                 emit valueChanged(uasId, "z", pos.z, time);
-                emit valueChanged(uasId, "roll", pos.roll, time);
-                emit valueChanged(uasId, "pitch", pos.pitch, time);
-                emit valueChanged(uasId, "yaw", pos.yaw, time);
+                emit valueChanged(uasId, "Vx", pos.vx, time);
+                emit valueChanged(uasId, "Vy", pos.vy, time);
+                emit valueChanged(uasId, "Vz", pos.vz, time);
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
-                //emit speedChanged(this, pos.roll, pos.pitch, pos.yaw, time);
-                emit attitudeChanged(this, pos.roll, pos.pitch, pos.yaw, time);
+                emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
+                //emit attitudeChanged(this, pos.roll, pos.pitch, pos.yaw, time);
                 // Set internal state
                 if (!positionLock)
                 {
@@ -502,9 +502,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 {
+  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     mavlink_message_t msg;
     mavlink_msg_position_control_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, 0, x, y, z, yaw);
     sendMessage(msg);
+  #endif
 }
 
 quint64 UAS::getUnixTime(quint64 time)
@@ -681,6 +683,7 @@ void UAS::readParametersFromStorage()
 
 void UAS::enableAllDataTransmission(bool enabled)
 {
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -701,10 +704,12 @@ void UAS::enableAllDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::enableRawSensorDataTransmission(bool enabled)
 {
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -723,10 +728,12 @@ void UAS::enableRawSensorDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::enableExtendedSystemStatusTransmission(bool enabled)
 {
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -745,10 +752,12 @@ void UAS::enableExtendedSystemStatusTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::enableRCChannelDataTransmission(bool enabled)
 {
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -767,10 +776,12 @@ void UAS::enableRCChannelDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::enableRawControllerDataTransmission(bool enabled)
 {
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -789,10 +800,12 @@ void UAS::enableRawControllerDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::enableRawSensorFusionTransmission(bool enabled)
 {
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -811,10 +824,12 @@ void UAS::enableRawSensorFusionTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::enablePositionTransmission(bool enabled)
 {
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -833,10 +848,12 @@ void UAS::enablePositionTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::enableExtra1Transmission(bool enabled)
 {
+  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -855,10 +872,12 @@ void UAS::enableExtra1Transmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::enableExtra2Transmission(bool enabled)
 {
+  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -877,10 +896,12 @@ void UAS::enableExtra2Transmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::enableExtra3Transmission(bool enabled)
 {
+  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -899,6 +920,7 @@ void UAS::enableExtra3Transmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#endif
 }
 
 void UAS::setParameter(int component, QString id, float value)
@@ -989,12 +1011,14 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
 
     if(mode == (int)MAV_MODE_MANUAL)
     {
+      #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
         sendMessage(message);
         qDebug() << __FILE__ << __LINE__ << ": SENT MANUAL CONTROL MESSAGE: roll" << manualRollAngle << " pitch: " << manualPitchAngle << " yaw: " << manualYawAngle << " thrust: " << manualThrust;
 
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, MG::TIME::getGroundTimeNow());
+      #endif
     }
 }
 
