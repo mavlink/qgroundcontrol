@@ -26,6 +26,7 @@ This file is part of the PIXHAWK project
  *   @brief List of detected objects
  *   @author Benjamin Knecht <mavteam@student.ethz.ch>
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *   @author Fabian Landau <mavteam@student.ethz.ch>
  *
  */
 
@@ -37,13 +38,15 @@ This file is part of the PIXHAWK project
 #include "GAudioOutput.h"
 
 #include <QDebug>
+#include <QMap>
 
 #include "MG.h"
 
 ObjectDetectionView::ObjectDetectionView(QString folder, QWidget *parent) :
         QWidget(parent),
         patternList(),
-        patternCount(),
+        letterList(),
+        letterTimer(),
         uas(NULL),
         patternFolder(folder),
         separator(" "),
@@ -51,6 +54,9 @@ ObjectDetectionView::ObjectDetectionView(QString folder, QWidget *parent) :
 {
     m_ui->setupUi(this);
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
+    letterTimer.start(1000);
+    connect(&letterTimer, SIGNAL(timeout()), this, SLOT(decreaseLetterTime()));
+    connect(m_ui->clearButton, SIGNAL(clicked()), this, SLOT(clearLists()));
 }
 
 ObjectDetectionView::~ObjectDetectionView()
@@ -74,77 +80,121 @@ void ObjectDetectionView::setUAS(UASInterface* uas)
     //if (this->uas == NULL && uas != NULL)
     //{
     this->uas = uas;
-    connect(uas, SIGNAL(detectionReceived(int, QString, int, int, int, int, int, int, int, int, double, bool)), this, SLOT(newDetection(int,QString,int,int,int,int,int,int,int,int,double,bool)));
+    connect(uas, SIGNAL(patternDetected(int, QString, float, bool)), this, SLOT(newPattern(int, QString, float, bool)));
+    connect(uas, SIGNAL(letterDetected(int, QString, float, bool)), this, SLOT(newLetter(int, QString, float, bool)));
     //}
 }
 
-void ObjectDetectionView::newDetection(int uasId, QString patternPath, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, double confidence, bool detected)
+void ObjectDetectionView::newPattern(int uasId, QString patternPath, float confidence, bool detected)
 {
-    Q_UNUSED(x1);
-    Q_UNUSED(y1);
-    Q_UNUSED(x2);
-    Q_UNUSED(y2);
-    Q_UNUSED(x3);
-    Q_UNUSED(y3);
-    Q_UNUSED(x4);
-    Q_UNUSED(y4);
     if (detected)
     {
-        if (patternList.contains(patternPath))
-        {
-            //qDebug() << "REDETECTED";
-
-            QList<QAction*> actions = m_ui->listWidget->actions();
-            // Find action and update it
-            foreach (QAction* act, actions)
-            {
-                qDebug() << "ACTION";
-                if (act->text().trimmed().split(separator).first() == patternPath)
-                {
-                    int count = patternCount.value(patternPath);
-                    patternCount.insert(patternPath, count);
-                    act->setText(patternPath + separator + "(#" + QString::number(count) + ")" + separator + QString::number(confidence));
-                }
-            }
-            QString filePath = MG::DIR::getSupportFilesDirectory() + "/" + patternFolder + "/" + patternPath.split("/").last();
-            qDebug() << "Loading:" << filePath;
-            QPixmap image = QPixmap(filePath);
-            image = image.scaledToWidth(m_ui->imageLabel->width());
-            m_ui->imageLabel->setPixmap(image);
-            QString patternName = patternPath.split("//").last(); // Remove preceding folder names
-            patternName = patternName.split(".").first(); // Remove file ending
-
-            // Set name and label
-            m_ui->nameLabel->setText(patternName);
-        }
-        else
+        if (!patternList.contains(patternPath))
         {
             // Emit audio message on detection
             if (detected) GAudioOutput::instance()->say("System " + QString::number(uasId) + " detected pattern " + QString(patternPath.split("/").last()).split(".").first());
 
-            patternList.insert(patternPath, confidence);
-            patternCount.insert(patternPath, 1);
-
-            QString filePath = MG::DIR::getSupportFilesDirectory() + "/" + patternFolder + "/" + patternPath.split("/").last();
-
-            qDebug() << "Loading:" << filePath;
-            QPixmap image = QPixmap(filePath);
-            QIcon ico(image);
-            QAction* act = new QAction(ico, patternPath + separator + "(#" + QString::number(1) + ")" + separator + QString::number(confidence), this);
-            connect(act, SIGNAL(triggered()), this, SLOT(takeAction()));
-            //m_ui->listWidget->addAction(act);
-            m_ui->listWidget->addItem(patternPath + separator + "(#" + QString::number(1) + ")" + separator + QString::number(confidence));
-            //m_ui->listWidget->addItem(patternPath + " " + QString::number(confidence));
-            image = image.scaledToWidth(m_ui->imageLabel->width());
-            m_ui->imageLabel->setPixmap(image);
-            QString patternName = patternPath.split("//").last(); // Remove preceding folder names
-            patternName = patternName.split(".").first(); // Remove file ending
-
-            // Set name and label
-            m_ui->nameLabel->setText(patternName);
-            qDebug() << "IMAGE SET" << patternFolder + "/" + patternPath;
+            patternList.insert(patternPath, Pattern(patternPath, confidence));
         }
+        else
+        {
+            Pattern pattern = patternList.value(patternPath);
+            if (confidence > pattern.confidence)
+                pattern.confidence = confidence;
+            ++pattern.count;
+            patternList.insert(patternPath, pattern);
+        }
+
+        // set list items
+        QList<Pattern> templist;
+        foreach (Pattern pattern, patternList)
+            templist.push_back(pattern);
+        qSort(templist);
+        m_ui->listWidget->clear();
+        foreach (Pattern pattern, templist)
+            m_ui->listWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
+
+        // load image
+        QString filePath = MG::DIR::getSupportFilesDirectory() + "/" + patternFolder + "/" + patternPath.split("/").last();
+        QPixmap image = QPixmap(filePath);
+        if (image.width() > image.height())
+            image = image.scaledToWidth(m_ui->imageLabel->width());
+        else
+            image = image.scaledToHeight(m_ui->imageLabel->height());
+        m_ui->imageLabel->setPixmap(image);
+
+        // set textlabel
+        QString patternName = patternPath.split("/").last(); // Remove preceding folder names
+        patternName = patternName.split(".").first(); // Remove file ending
+        m_ui->nameLabel->setText("Pattern: " + patternName);
     }
+}
+
+void ObjectDetectionView::newLetter(int uasId, QString letter, float confidence, bool detected)
+{
+    Q_UNUSED(confidence);
+
+    if (detected)
+    {
+        if (!letterList.contains(letter))
+        {
+            // Emit audio message on detection
+            if (detected) GAudioOutput::instance()->say("System " + QString::number(uasId) + " detected letter " + letter);
+
+            letterList.insert(letter, Pattern(letter, 0));
+        }
+        else
+        {
+            Pattern pattern = letterList.value(letter);
+            pattern.confidence = 0;
+            ++pattern.count;
+            letterList.insert(letter, pattern);
+        }
+
+        updateLetterList();
+
+        // display letter
+        m_ui->letterLabel->setText(letter);
+
+        // set textlabel
+        m_ui->nameLabel->setText("Letter: " + letter);
+    }
+}
+
+void ObjectDetectionView::decreaseLetterTime()
+{
+    foreach (Pattern pattern, letterList)
+    {
+        pattern.confidence -= 1;
+        letterList.insert(pattern.name, pattern);
+    }
+
+    updateLetterList();
+}
+
+void ObjectDetectionView::updateLetterList()
+{
+    // set list items
+    QList<Pattern> templist;
+    foreach (Pattern pattern, letterList)
+        templist.push_back(pattern);
+    qSort(templist);
+    m_ui->letterListWidget->clear();
+    foreach (Pattern pattern, templist)
+        m_ui->letterListWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
+}
+
+void ObjectDetectionView::clearLists()
+{
+    patternList.clear();
+    letterList.clear();
+
+    m_ui->listWidget->clear();
+    m_ui->letterListWidget->clear();
+
+    m_ui->imageLabel->clear();;
+    m_ui->letterLabel->clear();
+    m_ui->nameLabel->clear();
 }
 
 void ObjectDetectionView::takeAction()

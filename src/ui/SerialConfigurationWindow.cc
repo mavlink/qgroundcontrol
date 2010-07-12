@@ -490,7 +490,9 @@ void SerialConfigurationWindow::setParityEven()
 
 void SerialConfigurationWindow::setPortName(QString port)
 {
+#ifdef _WIN32
     port = port.split("-").first();
+#endif
     port = port.remove(" ");
 
     if (this->link->getPortName() != port)

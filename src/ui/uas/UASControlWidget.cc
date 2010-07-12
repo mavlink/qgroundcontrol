@@ -201,16 +201,14 @@ void UASControlWidget::cycleContextButton()
         if (!engineOn)
         {
             ui.controlButton->setText(tr("Stop Engine"));
-            mav->setMode(MAV_MODE_MANUAL);
             mav->enable_motors();
-            ui.lastActionLabel->setText(QString("Enabled motors on %1").arg(uas->getUASName()));
+            ui.lastActionLabel->setText(QString("Attempted to enable motors on %1").arg(uas->getUASName()));
         }
         else
         {
             ui.controlButton->setText(tr("Activate Engine"));
-            mav->setMode(MAV_MODE_LOCKED);
             mav->disable_motors();
-            ui.lastActionLabel->setText(QString("Disabled motors on %1").arg(uas->getUASName()));
+            ui.lastActionLabel->setText(QString("Attempted to disable motors on %1").arg(uas->getUASName()));
         }
             //ui.controlButton->setText(tr("Force Landing"));
             //ui.controlButton->setText(tr("KILL VEHICLE"));

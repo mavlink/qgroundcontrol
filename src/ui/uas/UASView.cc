@@ -36,6 +36,7 @@ This file is part of the PIXHAWK project
 #include "MG.h"
 #include "UASManager.h"
 #include "UASView.h"
+#include "UASWaypointManager.h"
 #include "ui_UASView.h"
 
 UASView::UASView(UASInterface* uas, QWidget *parent) :
@@ -75,6 +76,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateLoad(UASInterface*, double)));
     //connect(uas, SIGNAL(waypointUpdated(int,int,double,double,double,double,bool,bool)), this, SLOT(setWaypoint(int,int,double,double,double,double,bool,bool)));
     connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int,int)));
+    connect(&(uas->getWaypointManager()), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
 
     // Setup UAS selection
@@ -249,6 +251,11 @@ void UASView::updateSpeed(UASInterface*, double x, double y, double z, quint64 u
 {
     Q_UNUSED(usec);
     totalSpeed = sqrt((pow(x, 2) + pow(y, 2) + pow(z, 2)));
+}
+
+void UASView::currentWaypointUpdated(quint16 waypoint)
+{
+    m_ui->waypointLabel->setText(tr("WP") + QString::number(waypoint));
 }
 
 void UASView::setWaypoint(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool current)

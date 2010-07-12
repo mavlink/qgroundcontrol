@@ -62,7 +62,10 @@ public slots:
     void loadWaypoints();    
     void transmit();
     void read();
+    /** @brief Add a waypoint */
     void add();
+    /** @brief Add a waypoint at the current MAV position */
+    void addCurrentPositonWaypoint();
     void moveUp(Waypoint* wp);
     void moveDown(Waypoint* wp);
 
@@ -70,25 +73,28 @@ public slots:
     void updateStatusLabel(const QString &string);
 
     void currentWaypointChanged(quint16 seq);
-
-    //To be moved to UASWaypointManager (?)
-    void setWaypoint(int uasId, quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current, double orbit, int holdTime);
+    void setWaypoint(quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current, double orbit, int holdTime);
     void addWaypoint(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
-    void waypointReached(UASInterface* uas, quint16 waypointId);
+    void waypointReached(quint16 waypointId);
+    void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
+    void updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
 
 signals:
-    void sendWaypoints(const QVector<Waypoint*> &);
+    void sendWaypoints();
     void requestWaypoints();
     void clearWaypointList();
 
 protected:
     virtual void changeEvent(QEvent *e);
 
-    QVector<Waypoint*> waypoints;
     QMap<Waypoint*, WaypointView*> wpViews;
     QVBoxLayout* listLayout;
     UASInterface* uas;
+    double mavX;
+    double mavY;
+    double mavZ;
+    double mavYaw;
 
 private:
     Ui::WaypointList *m_ui;

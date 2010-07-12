@@ -11,4 +11,7 @@
 
 #define WITH_TEXT_TO_SPEECH 1
 
+#define QGC_APPLICATION_NAME "QGroundControl"
+#define QGC_APPLICATION_VERSION "v. 0.7.6 (Beta)"
+
 #endif // CONFIGURATION_H

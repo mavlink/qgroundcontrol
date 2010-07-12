@@ -59,9 +59,21 @@ public slots:
     void updateGlobalPosition(UASInterface*, double lat, double lon, double alt, quint64 usec);
     void updateSpeed(UASInterface* uas, double vx, double vy, double vz, quint64 time);
     void updatePositionLock(UASInterface* uas, bool lock);
-    void updateAttitudeControllerEnabled(UASInterface* uas, bool enabled);
-    void updatePositionXYControllerEnabled(UASInterface* uas, bool enabled);
-    void updatePositionZControllerEnabled(UASInterface* uas, bool enabled);
+    void updateAttitudeControllerEnabled(bool enabled);
+    void updatePositionXYControllerEnabled(bool enabled);
+    void updatePositionZControllerEnabled(bool enabled);
+    /** @brief Heading control enabled/disabled */
+    void updatePositionYawControllerEnabled(bool enabled);
+
+    /** @brief Localization quality changed */
+    void updateLocalization(UASInterface* uas, int localization);
+    /** @brief GPS localization quality changed */
+    void updateGpsLocalization(UASInterface* uas, int localization);
+    /** @brief Vision localization quality changed */
+    void updateVisionLocalization(UASInterface* uas, int localization);
+
+    /** @brief Ultrasound/Infrared localization changed */
+    void updateInfraredUltrasoundLocalization(UASInterface* uas, int fix);
 
     void paintEvent(QPaintEvent * event);
     /** @brief Update state from joystick */
@@ -75,15 +87,19 @@ protected slots:
     void drawPositionDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
     void drawAttitudeDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
     void drawAltitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
+    void drawStatusFlag(float x, float y, QString label, bool status, QPainter& painter);
+    void drawPositionLock(float x, float y, QString label, int status, QPainter& painter);
     void setBodySetpointCoordinateXY(double x, double y);
     void setBodySetpointCoordinateZ(double z);
     /** @brief Send the current ui setpoint coordinates as new setpoint to the MAV */
     void sendBodySetPointCoordinates();
     /** @brief Draw one setpoint */
     void drawSetpointXY(float x, float y, float yaw, const QColor &color, QPainter &painter);
+    /** @brief Draw waypoints of this system */
+    void drawWaypoints(QPainter& painter);
     /** @brief Draw the limiting safety area */
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
-
+    /** @brief Receive mouse clicks */
     void mouseDoubleClickEvent(QMouseEvent* event);
 
 protected:
@@ -188,14 +204,22 @@ protected:
     float metricWidth;         ///< Width the instrument represents in meters (the width of the ground shown by the widget)
 
     //
-    float xCenterPos;
-    float yCenterPos;
+    float xCenterPos;         ///< X center of instrument in virtual coordinates
+    float yCenterPos;         ///< Y center of instrument in virtual coordinates
 
     bool positionLock;
-    bool attControlEnabled;
-    bool xyControlEnabled;
-    bool zControlEnabled;
+    bool attControlEnabled;   ///< Attitude control enabled
+    bool xyControlEnabled;    ///< Horizontal control enabled
+    bool zControlEnabled;     ///< Vertical control enabled
+    bool yawControlEnabled;   ///< Yaw angle position control enabled
+    int positionFix;          ///< Total dimensions the MAV is localizaed in
+    int gpsFix;               ///< Localization dimensions based on GPS
+    int visionFix;            ///< Localizaiton dimensions based on computer vision
+    int laserFix;             ///< Localization dimensions based on laser
+    int iruFix;               ///< Localization dimensions based on ultrasound
     bool mavInitialized;      ///< The MAV is initialized once the setpoint has been received
+    float bottomMargin;       ///< Margin on the bottom of the page, in virtual coordinates
+    float topMargin;          ///< Margin on top of the page, in virtual coordinates
 
 private:
 };
