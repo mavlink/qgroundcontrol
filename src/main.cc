@@ -35,9 +35,9 @@ This file is part of the PIXHAWK project
 
 
 /* SDL does ugly things to main() */
-//#ifdef main
-//#	undef main
-//#endif
+#ifdef main
+#	undef main
+#endif
 
 /**
  * @brief Starts the application
