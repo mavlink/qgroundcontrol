@@ -290,7 +290,8 @@ signals:
     void waypointReached(UASInterface* uas, int id);
     void autoModeChanged(bool autoMode);
     void parameterChanged(int uas, int component, QString parameterName, float value);
-    void detectionReceived(int uasId, QString patternPath, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, double confidence, bool detected);
+    void patternDetected(int uasId, QString patternPath, float confidence, bool detected);
+    void letterDetected(int uasId, QString letter, float confidence, bool detected);
     /**
      * @brief The battery status has been updated
      *
@@ -316,6 +317,35 @@ signals:
     void imageDataReceived(int imgid, const unsigned char* imageData, int length, int startIndex);
     /** @brief Emit the new system type */
     void systemTypeSet(UASInterface* uas, unsigned int type);
+    /** @brief Attitude control enabled/disabled */
+    void attitudeControlEnabled(bool enabled);
+    /** @brief Position 2D control enabled/disabled */
+    void positionXYControlEnabled(bool enabled);
+    /** @brief Altitude control enabled/disabled */
+    void positionZControlEnabled(bool enabled);
+    /** @brief Heading control enabled/disabled */
+    void positionYawControlEnabled(bool enabled);
+
+    /**
+     * @brief Localization quality changed
+     * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+     */
+    void localizationChanged(UASInterface* uas, int fix);
+    /**
+     * @brief GPS localization quality changed
+     * @param fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D localization, 3: 3D localization
+     */
+    void gpsLocalizationChanged(UASInterface* uas, int fix);
+    /**
+     * @brief Vision localization quality changed
+     * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
+     */
+    void visionLocalizationChanged(UASInterface* uas, int fix);
+    /**
+     * @brief IR/U localization quality changed
+     * @param fix 0: No IR/Ultrasound sensor, N > 0: Found N active sensors
+     */
+    void irUltraSoundLocalizationChanged(UASInterface* uas, int fix);
 };
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0");
