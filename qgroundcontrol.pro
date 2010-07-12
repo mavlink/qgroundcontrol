@@ -42,9 +42,8 @@ DEPENDPATH += . \
     plugins
 INCLUDEPATH += . \
     lib/QMapControl \
-    ../mavlink/contrib/slugs/include \
-   MAVLink/contrib/slugs/include \
-    mavlink/contrib/slugs/include
+    $$BASEDIR/../mavlink/contrib/slugs/include \
+    $$BASEDIR/../mavlink/include
 
 
    # ../mavlink/include \
