@@ -54,10 +54,11 @@ macx {
         message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
     }
 
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
 
     DESTDIR = $$BASEDIR/bin/mac
     INCLUDEPATH += -framework SDL \
+        $$BASEDIR/../mavlink/contrib/slugs/include \
         $$BASEDIR/../mavlink/include
 
     LIBS += -framework IOKit \
@@ -120,11 +121,14 @@ win32 {
     
     # Special settings for debug
     #CONFIG += CONSOLE
-    LIBS += -L$$BASEDIR\lib\sdl\win32 \
-        -lmingw32 -lSDLmain -lSDL -mwindows
-    
-    INCLUDEPATH += $$BASEDIR/lib/sdl/include #\
+
+    INCLUDEPATH += $$BASEDIR\lib\sdl\include #\
                    #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
+
+    LIBS += -L$$BASEDIR\lib\sdl\win32 \
+             -lmingw32 -lSDLmain -lSDL -mwindows
+
+
 
     debug {
         DESTDIR = $$BASEDIR/bin

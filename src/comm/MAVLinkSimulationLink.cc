@@ -186,7 +186,9 @@ void MAVLinkSimulationLink::mainloop()
     static float drainRate = 0.025; // x.xx% of the capacity is linearly drained per second
 
     mavlink_attitude_t attitude;
-    mavlink_raw_aux_t rawAuxValues;
+    #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+      mavlink_raw_aux_t rawAuxValues;
+    #endif
     mavlink_raw_imu_t rawImuValues;
 
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
@@ -305,7 +307,7 @@ void MAVLinkSimulationLink::mainloop()
                     {
                         rawImuValues.zgyro = d;
                     }
-
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
                     if (keys.value(i, "") == "Pressure")
                     {
                         rawAuxValues.baro = d;
@@ -315,7 +317,7 @@ void MAVLinkSimulationLink::mainloop()
                     {
                         rawAuxValues.vbat = d;
                     }
-
+#endif
                     if (keys.value(i, "") == "roll_IMU")
                     {
                         attitude.roll = d;
@@ -459,7 +461,10 @@ void MAVLinkSimulationLink::mainloop()
         uint8_t visLock = 3;
         uint8_t posLock = qMax(gpsLock, visLock);
 
+        #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
         messageSize = mavlink_msg_control_status_pack(systemId, componentId, &msg, posLock, visLock, gpsLock, attControl, posXYControl, posZControl, posYawControl);
+        #endif
+
         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
         memcpy(stream+streampointer, buffer, bufferlength);
         streampointer += bufferlength;
@@ -493,7 +498,9 @@ void MAVLinkSimulationLink::mainloop()
         //qDebug() << "BOOT" << "BUF LEN" << bufferlength << "POINTER" << streampointer;
 
         // AUX STATUS
+        #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
         rawAuxValues.vbat = voltage;
+#endif
 
         rate1hzCounter = 1;
     }
@@ -632,14 +639,17 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                     }
                 }
                 break;
-
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
             case MAVLINK_MSG_ID_MANUAL_CONTROL:
                 {
+                  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
                     mavlink_manual_control_t control;
                     mavlink_msg_manual_control_decode(&msg, &control);
                     qDebug() << "\n" << "ROLL:" << control.roll << "PITCH:" << control.pitch;
+                  #endif
                 }
                 break;
+#endif
             case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
                 {
                     qDebug() << "GCS REQUESTED PARAM LIST FROM SIMULATION";

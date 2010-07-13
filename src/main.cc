@@ -33,6 +33,7 @@ This file is part of the PIXHAWK project
 #include "MainWindow.h"
 #include "configuration.h"
 
+
 /* SDL does ugly things to main() */
 #ifdef main
 #	undef main
