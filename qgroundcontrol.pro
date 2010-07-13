@@ -42,9 +42,13 @@ DEPENDPATH += . \
     plugins
 INCLUDEPATH += . \
     lib/QMapControl \
-    ../mavlink/include \
-    MAVLink/include \
-    mavlink/include
+    $$BASEDIR/../mavlink/contrib/slugs/include \
+    $$BASEDIR/../mavlink/include
+
+
+   # ../mavlink/include \
+    #MAVLink/include \
+    #mavlink/include
 
 # Input
 FORMS += src/ui/MainWindow.ui \
