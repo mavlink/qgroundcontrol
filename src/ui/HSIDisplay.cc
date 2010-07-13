@@ -155,12 +155,12 @@ void HSIDisplay::paintDisplay()
     // Draw orientation labels
     // Translate and rotate coordinate frame
     painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
-    painter.rotate((-yaw/(M_PI))*180.0f);
+    painter.rotate((yaw/(M_PI))*180.0f);
     paintText(tr("N"), ringColor, 3.5f, - 1.0f, - baseRadius - 5.5f, &painter);
     paintText(tr("S"), ringColor, 3.5f, - 1.0f, + baseRadius + 1.5f, &painter);
     paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.75f, &painter);
     paintText(tr("W"), ringColor, 3.5f, - baseRadius - 5.5f, - 1.75f, &painter);
-    painter.rotate((yaw/(M_PI))*180.0f);
+    painter.rotate((-yaw/(M_PI))*180.0f);
     painter.translate(-(xCenterPos)*scalingFactor, -(yCenterPos)*scalingFactor);
 
     // Draw center indicator
@@ -677,7 +677,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
             pen.setColor(color);
             painter.setPen(pen);
             float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
-            drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
+            drawLine(p.x(), p.y(), p.x()+sin(list.at(i)->getYaw()+yaw) * radius, p.y()-cos(list.at(i)->getYaw()+yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
             drawPolygon(poly, &painter);
 
             // DRAW CONNECTING LINE
