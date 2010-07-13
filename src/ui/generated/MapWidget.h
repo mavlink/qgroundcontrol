@@ -1,5 +1,5 @@
 /********************************************************************************
-** Form generated from reading UI file 'UASList.ui'
+** Form generated from reading UI file 'MapWidget.ui'
 **
 ** Created: Sun Jul 11 18:53:34 2010
 **      by: Qt User Interface Compiler version 4.6.2
@@ -7,8 +7,8 @@
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef UASLIST_H
-#define UASLIST_H
+#ifndef MAPWIDGET_H
+#define MAPWIDGET_H
 
 #include <QtCore/QVariant>
 #include <QtGui/QAction>
@@ -19,33 +19,32 @@
 
 QT_BEGIN_NAMESPACE
 
-class Ui_UASList
+class Ui_MapWidget
 {
 public:
 
-    void setupUi(QWidget *UASList)
+    void setupUi(QWidget *MapWidget)
     {
-        if (UASList->objectName().isEmpty())
-            UASList->setObjectName(QString::fromUtf8("UASList"));
-        UASList->resize(400, 300);
-        UASList->setMinimumSize(QSize(500, 0));
+        if (MapWidget->objectName().isEmpty())
+            MapWidget->setObjectName(QString::fromUtf8("MapWidget"));
+        MapWidget->resize(400, 300);
 
-        retranslateUi(UASList);
+        retranslateUi(MapWidget);
 
-        QMetaObject::connectSlotsByName(UASList);
+        QMetaObject::connectSlotsByName(MapWidget);
     } // setupUi
 
-    void retranslateUi(QWidget *UASList)
+    void retranslateUi(QWidget *MapWidget)
     {
-        UASList->setWindowTitle(QApplication::translate("UASList", "Form", 0, QApplication::UnicodeUTF8));
+        MapWidget->setWindowTitle(QApplication::translate("MapWidget", "Form", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
 
 namespace Ui {
-    class UASList: public Ui_UASList {};
+    class MapWidget: public Ui_MapWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE
 
-#endif // UASLIST_H
+#endif // MAPWIDGET_H
