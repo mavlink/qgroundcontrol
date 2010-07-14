@@ -661,15 +661,17 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         // Iterate through all components, through all parameters and emit them
                         QMap<QString, float>::iterator i;
                         // Iterate through all components / subsystems
+                        int j = 0;
                         for (i = onboardParams.begin(); i != onboardParams.end(); ++i)
                         {
                             // Pack message and get size of encoded byte string
-                            mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)i.key().toStdString().c_str(), i.value());
+                            mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)i.key().toStdString().c_str(), i.value(), onboardParams.size(), j);
                             // Allocate buffer with packet data
                             bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
                             //add data into datastream
                             memcpy(stream+streampointer,buffer, bufferlength);
                             streampointer+=bufferlength;
+                            j++;
                         }
 
                         /*
@@ -715,7 +717,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                             onboardParams.insert(key, set.param_value);
 
                             // Pack message and get size of encoded byte string
-                            mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)key.toStdString().c_str(), set.param_value);
+                            mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)key.toStdString().c_str(), set.param_value, onboardParams.size(), 0);
                             // Allocate buffer with packet data
                             bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
                             //add data into datastream
