@@ -176,12 +176,12 @@ void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, m
     }
 }
 
-void UASWaypointManager::handleWaypointSetCurrent(quint8 systemId, quint8 compId, mavlink_waypoint_set_current_t *wpr)
+void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_waypoint_current_t *wpc)
 {
     if (systemId == uas.getUASID() && compId == MAV_COMP_ID_WAYPOINTPLANNER)
     {
-        qDebug() << "new current waypoint" << wpr->seq;
-        emit currentWaypointChanged(wpr->seq);
+        qDebug() << "new current waypoint" << wpc->seq;
+        emit currentWaypointChanged(wpc->seq);
     }
 }
 

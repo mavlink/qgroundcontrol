@@ -71,7 +71,7 @@ public:
     void handleWaypointAck(quint8 systemId, quint8 compId, mavlink_waypoint_ack_t *wpa);                ///< Handles received waypoint ack messages
     void handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_waypoint_request_t *wpr);        ///< Handles received waypoint request messages
     void handleWaypointReached(quint8 systemId, quint8 compId, mavlink_waypoint_reached_t *wpr);        ///< Handles received waypoint reached messages
-    void handleWaypointSetCurrent(quint8 systemId, quint8 compId, mavlink_waypoint_set_current_t *wpr); ///< Handles received set current waypoint messages
+    void handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_waypoint_current_t *wpc);        ///< Handles received set current waypoint messages
     /*@}*/
 
     QVector<Waypoint *> &getWaypointList(void) { return waypoints; }    ///< Returns a reference to the local waypoint list. Gives full access to the internal data structure - Subject to change: Public const access and friend access for the waypoint list widget.
