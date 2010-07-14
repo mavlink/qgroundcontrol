@@ -467,11 +467,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
-        case MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT:
+        case MAVLINK_MSG_ID_WAYPOINT_CURRENT:
             {
-                mavlink_waypoint_set_current_t wpsc;
-                mavlink_msg_waypoint_set_current_decode(&message, &wpsc);
-                waypointManager.handleWaypointSetCurrent(message.sysid, message.compid, &wpsc);
+                mavlink_waypoint_current_t wpc;
+                mavlink_msg_waypoint_current_decode(&message, &wpc);
+                waypointManager.handleWaypointCurrent(message.sysid, message.compid, &wpc);
             }
             break;
 
