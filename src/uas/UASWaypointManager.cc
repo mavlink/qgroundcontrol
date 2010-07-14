@@ -268,7 +268,8 @@ void UASWaypointManager::sendWaypoints()
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent();
-                cur_d->orbit = 0.f;     //FIXME
+                cur_d->orbit = 0;
+                cur_d->orbit_direction = 0;
                 cur_d->param1 = cur_s->getOrbit();
                 cur_d->param2 = cur_s->getHoldTime();
                 cur_d->type = 1;        //FIXME
