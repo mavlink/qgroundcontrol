@@ -437,6 +437,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
+        case MAVLINK_MSG_ID_WAYPOINT_ACK:
+            {
+                mavlink_waypoint_ack_t wpa;
+                mavlink_msg_waypoint_ack_decode(&message, &wpa);
+                if(wpa.target_system == mavlink->getSystemId() && wpa.target_component == mavlink->getComponentId())
+                {
+                    waypointManager.handleWaypointAck(message.sysid, message.compid, &wpa);
+                }
+            }
+            break;
+
         case MAVLINK_MSG_ID_WAYPOINT_REQUEST:
             {
                 mavlink_waypoint_request_t wpr;
