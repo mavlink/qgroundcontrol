@@ -415,6 +415,7 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
  **/
 void LinechartWidget::removeCurve(QString curve)
 {
+    Q_UNUSED(curve)
     //TODO @todo Ensure that the button for a curve gets deleted when the original curve is deleted
     // Remove name
 }
