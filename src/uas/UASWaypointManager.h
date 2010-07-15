@@ -58,7 +58,8 @@ private:
         WP_SENDLIST_SENDWPS,///< Sending waypoints
         WP_GETLIST,         ///< Initial state for retrieving wayppoints from the MAV
         WP_GETLIST_GETWPS,  ///< Receiving waypoints
-        WP_CLEARLIST        ///< Clearing waypoint list on the MAV
+        WP_CLEARLIST,       ///< Clearing waypoint list on the MAV
+        WP_SETCURRENT       ///< Setting new current waypoint on the MAV
     }; ///< The possible states for the waypoint protocol
 
 public:
@@ -77,15 +78,20 @@ public:
     QVector<Waypoint *> &getWaypointList(void) { return waypoints; }    ///< Returns a reference to the local waypoint list. Gives full access to the internal data structure - Subject to change: Public const access and friend access for the waypoint list widget.
 
 private:
+    void sendWaypointClearAll();
+    void sendWaypointSetCurrent(quint16 seq);
+    void sendWaypointCount();
+    void sendWaypointRequestList();
     void sendWaypointRequest(quint16 seq);          ///< Requests a waypoint with sequence number seq
     void sendWaypoint(quint16 seq);                 ///< Sends a waypoint with sequence number seq
     void sendWaypointAck(quint8 type);              ///< Sends a waypoint ack
 
 public slots:
     void timeout();                                 ///< Called by the timer if a response times out. Handles send retries.
+    void setCurrent(quint16 seq);                   ///< Sends the sequence number of the waypoint that should get the new target waypoint
     void clearWaypointList();                       ///< Sends the waypoint clear all message to the MAV
-    void requestWaypoints();                        ///< Requests the MAV's current waypoint list
-    void sendWaypoints();                           ///< Sends the local waypoint list to the MAV
+    void readWaypoints();                           ///< Requests the MAV's current waypoint list
+    void writeWaypoints();                          ///< Sends the local waypoint list to the MAV
 
 signals:
     void waypointUpdated(quint16,double,double,double,double,bool,bool,double,int); ///< Adds a waypoint to the waypoint list widget
@@ -94,6 +100,7 @@ signals:
 
 private:
     UAS &uas;                                       ///< Reference to the corresponding UAS
+    quint32 current_retries;                        ///< The current number of retries left
     quint16 current_wp_id;                          ///< The last used waypoint ID in the current protocol transaction
     quint16 current_count;                          ///< The number of waypoints in the current protocol transaction
     WaypointState current_state;                    ///< The current protocol state
