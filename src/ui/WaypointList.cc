@@ -126,9 +126,10 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
-        connect(this, SIGNAL(sendWaypoints()),       &uas->getWaypointManager(), SLOT(sendWaypoints()));
-        connect(this, SIGNAL(requestWaypoints()),   &uas->getWaypointManager(), SLOT(requestWaypoints()));
+        connect(this, SIGNAL(sendWaypoints()),       &uas->getWaypointManager(), SLOT(writeWaypoints()));
+        connect(this, SIGNAL(requestWaypoints()),   &uas->getWaypointManager(), SLOT(readWaypoints()));
         connect(this, SIGNAL(clearWaypointList()),  &uas->getWaypointManager(), SLOT(clearWaypointList()));
+        connect(this, SIGNAL(setCurrent(quint16)),  &uas->getWaypointManager(), SLOT(setCurrent(quint16)));
     }
 }
 
@@ -146,6 +147,35 @@ void WaypointList::waypointReached(quint16 waypointId)
     if (this->uas)
     {
         updateStatusLabel(QString("Waypoint %1 reached.").arg(waypointId));
+    }
+}
+
+void WaypointList::changeCurrentWaypoint(quint16 seq)
+{
+    if (this->uas)
+    {
+        QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+
+        if (seq < waypoints.size())
+        {
+            for(int i = 0; i < waypoints.size(); i++)
+            {
+                WaypointView* widget = wpViews.find(waypoints[i]).value();
+
+                if (waypoints[i]->getId() == seq)
+                {
+                    waypoints[i]->setCurrent(true);
+                    widget->setCurrent(true);
+                    emit setCurrent(seq);
+                }
+                else
+                {
+                    waypoints[i]->setCurrent(false);
+                    widget->setCurrent(false);
+                }
+            }
+            redrawList();
+        }
     }
 }
 
@@ -250,6 +280,7 @@ void WaypointList::addWaypoint(Waypoint* wp)
             connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)), this, SLOT(moveUp(Waypoint*)));
             connect(wpview, SIGNAL(removeWaypoint(Waypoint*)), this, SLOT(removeWaypoint(Waypoint*)));
             connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
+            connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
         }
     }
 }

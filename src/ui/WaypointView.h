@@ -72,6 +72,7 @@ signals:
     void moveDownWaypoint(Waypoint*);
     void removeWaypoint(Waypoint*);
     void currentWaypointChanged(quint16);
+    void changeCurrentWaypoint(quint16);
     void setYaw(double);
 };
 
