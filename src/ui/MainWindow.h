@@ -117,6 +117,10 @@ public slots:
     /** @brief Load MAVLink XML generator view */
     void loadMAVLinkView();
 
+    // Fixme find a nicer solution that scales to more AP types
+    void loadSlugsView();
+    void loadPixhawkView();
+
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
 protected:
