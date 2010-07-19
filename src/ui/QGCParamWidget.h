@@ -83,6 +83,7 @@ protected:
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups
     QMap<int, QMap<QString, float>* > changedValues; ///< Changed values
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
+    QVector<bool> received; ///< Successfully received parameters
 
 };
 
