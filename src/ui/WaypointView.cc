@@ -115,7 +115,7 @@ void WaypointView::changedCurrent(int state)
     else
     {
         wp->setCurrent(true);
-        emit currentWaypointChanged(wp->getId());   //the slot currentWayppointChanged() in WaypointList sets all other current flags to false
+        emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
     }
 }
 
