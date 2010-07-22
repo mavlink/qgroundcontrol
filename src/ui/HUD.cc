@@ -569,7 +569,10 @@ void HUD::paintHUD()
 
     float yawTrans = yawInt * (double)maxYawTrans;
     yawInt *= 0.6f;
-    //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw << "asin(yawInt)" << asinYaw;
+
+    if ((yawTrans < 5.0) && (yawTrans > -5.0)) yawTrans = 0;
+
+    qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw;
 
     // Update scaling factor
     // adjust scaling to fit both horizontally and vertically

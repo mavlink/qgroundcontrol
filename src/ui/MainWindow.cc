@@ -48,6 +48,10 @@ This file is part of the QGROUNDCONTROL project
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
 
+// FIXME Move
+#include "PxQuadMAV.h"
+#include "SlugsMAV.h"
+
 
 #include "LogCompressor.h"
 
@@ -344,6 +348,12 @@ void MainWindow::UASCreated(UASInterface* uas)
     // Revalidate UI
     // TODO Stylesheet reloading should in theory not be necessary
     reloadStylesheet();
+
+    // Check which type this UAS is of
+    PxQuadMAV* mav = dynamic_cast<PxQuadMAV*>(uas);
+    if (mav) loadPixhawkView();
+    SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
+    if (mav2) loadSlugsView();
 }
 
 /**
@@ -375,6 +385,98 @@ void MainWindow::clearView()
             //delete widget;
         }
     }
+}
+
+void MainWindow::loadSlugsView()
+{
+    clearView();
+    // Engineer view, used in EMAV2009
+
+    // LINE CHART
+    linechart->setActive(true);
+    centerStack->setCurrentWidget(linechart);
+
+    // UAS CONTROL
+    QDockWidget* container1 = new QDockWidget(tr("Control"), this);
+    container1->setWidget(control);
+    addDockWidget(Qt::LeftDockWidgetArea, container1);
+
+    // UAS LIST
+    QDockWidget* container4 = new QDockWidget(tr("Unmanned Systems"), this);
+    container4->setWidget(list);
+    addDockWidget(Qt::BottomDockWidgetArea, container4);
+
+    // UAS STATUS
+    QDockWidget* container3 = new QDockWidget(tr("Status Details"), this);
+    container3->setWidget(info);
+    addDockWidget(Qt::LeftDockWidgetArea, container3);
+
+    // HORIZONTAL SITUATION INDICATOR
+    QDockWidget* container6 = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+    container6->setWidget(hsi);
+    hsi->start();
+    addDockWidget(Qt::LeftDockWidgetArea, container6);
+
+    // WAYPOINT LIST
+    QDockWidget* container5 = new QDockWidget(tr("Waypoint List"), this);
+    container5->setWidget(waypoints);
+    addDockWidget(Qt::BottomDockWidgetArea, container5);
+
+    // DEBUG CONSOLE
+    QDockWidget* container7 = new QDockWidget(tr("Communication Console"), this);
+    container7->setWidget(debugConsole);
+    addDockWidget(Qt::BottomDockWidgetArea, container7);
+
+    // ONBOARD PARAMETERS
+    QDockWidget* containerParams = new QDockWidget(tr("Onboard Parameters"), this);
+    containerParams->setWidget(parameters);
+    addDockWidget(Qt::RightDockWidgetArea, containerParams);
+
+
+    this->show();
+}
+
+void MainWindow::loadPixhawkView()
+{
+    clearView();
+    // Engineer view, used in EMAV2009
+
+    // LINE CHART
+    linechart->setActive(true);
+    centerStack->setCurrentWidget(linechart);
+
+    // UAS CONTROL
+    QDockWidget* container1 = new QDockWidget(tr("Control"), this);
+    container1->setWidget(control);
+    addDockWidget(Qt::LeftDockWidgetArea, container1);
+
+    // UAS LIST
+    QDockWidget* container4 = new QDockWidget(tr("Unmanned Systems"), this);
+    container4->setWidget(list);
+    addDockWidget(Qt::BottomDockWidgetArea, container4);
+
+    // UAS STATUS
+    QDockWidget* container3 = new QDockWidget(tr("Status Details"), this);
+    container3->setWidget(info);
+    addDockWidget(Qt::LeftDockWidgetArea, container3);
+
+    // WAYPOINT LIST
+    QDockWidget* container5 = new QDockWidget(tr("Waypoint List"), this);
+    container5->setWidget(waypoints);
+    addDockWidget(Qt::BottomDockWidgetArea, container5);
+
+    // DEBUG CONSOLE
+    QDockWidget* container7 = new QDockWidget(tr("Communication Console"), this);
+    container7->setWidget(debugConsole);
+    addDockWidget(Qt::BottomDockWidgetArea, container7);
+
+    // ONBOARD PARAMETERS
+    QDockWidget* containerParams = new QDockWidget(tr("Onboard Parameters"), this);
+    containerParams->setWidget(parameters);
+    addDockWidget(Qt::RightDockWidgetArea, containerParams);
+
+
+    this->show();
 }
 
 void MainWindow::loadPilotView()
@@ -489,12 +591,6 @@ void MainWindow::loadEngineerView()
     QDockWidget* container3 = new QDockWidget(tr("Status Details"), this);
     container3->setWidget(info);
     addDockWidget(Qt::LeftDockWidgetArea, container3);
-
-    // HORIZONTAL SITUATION INDICATOR
-    QDockWidget* container6 = new QDockWidget(tr("Horizontal Situation Indicator"), this);
-    container6->setWidget(hsi);
-    hsi->start();
-    addDockWidget(Qt::LeftDockWidgetArea, container6);
 
     // WAYPOINT LIST
     QDockWidget* container5 = new QDockWidget(tr("Waypoint List"), this);

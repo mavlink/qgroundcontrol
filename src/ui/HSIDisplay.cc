@@ -119,7 +119,7 @@ void HSIDisplay::paintDisplay()
     float bottomMargin = 3.0f;
 
     // Size of the ring instrument
-    const float margin = 0.1f;  // 10% margin of total width on each side
+    //const float margin = 0.1f;  // 10% margin of total width on each side
     float baseRadius = (vheight - topMargin - bottomMargin) / 2.0f - bottomMargin / 2.0f;
 
     // Draw instruments
@@ -294,6 +294,7 @@ void HSIDisplay::drawPositionLock(float x, float y, QString label, int status, Q
 
 void HSIDisplay::updatePositionLock(UASInterface* uas, bool lock)
 {
+    Q_UNUSED(uas);
     positionLock = lock;
 }
 
@@ -876,12 +877,17 @@ void visionLocalizationChanged(UASInterface* uas, int fix);
 
 void HSIDisplay::updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat)
 {
-
+    Q_UNUSED(roll);
+    Q_UNUSED(pitch);
+    Q_UNUSED(yaw);
+    Q_UNUSED(thrust);
+    Q_UNUSED(xHat);
+    Q_UNUSED(yHat);
 }
 
 void HSIDisplay::pressKey(int key)
 {
-
+    Q_UNUSED(key);
 }
 
 

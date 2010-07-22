@@ -72,7 +72,8 @@ public slots:
     /** @brief sets statusLabel string */
     void updateStatusLabel(const QString &string);
 
-    void currentWaypointChanged(quint16 seq);
+    void changeCurrentWaypoint(quint16 seq);    ///< The user wants to change the current waypoint
+    void currentWaypointChanged(quint16 seq);   ///< The waypointplanner changed the current waypoint
     void setWaypoint(quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current, double orbit, int holdTime);
     void addWaypoint(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
@@ -84,6 +85,7 @@ signals:
     void sendWaypoints();
     void requestWaypoints();
     void clearWaypointList();
+    void setCurrent(quint16);
 
 protected:
     virtual void changeEvent(QEvent *e);

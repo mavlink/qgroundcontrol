@@ -16,6 +16,7 @@ public:
 
 protected:
     void changeEvent(QEvent *e);
+    int processid;
 
 private:
     Ui::WatchdogProcessView *m_ui;

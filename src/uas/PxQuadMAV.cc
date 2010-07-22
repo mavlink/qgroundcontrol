@@ -104,10 +104,6 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "vis. x", pos.x, time);
                 emit valueChanged(uasId, "vis. y", pos.y, time);
                 emit valueChanged(uasId, "vis. z", pos.z, time);
-                emit valueChanged(uasId, "vis. vx", pos.vx, time);
-                emit valueChanged(uasId, "vis. vy", pos.vy, time);
-                emit valueChanged(uasId, "vis. vz", pos.vz, time);
-                emit valueChanged(uasId, "vis. vyaw", pos.vyaw, time);
             }
             break;
     case MAVLINK_MSG_ID_AUX_STATUS:

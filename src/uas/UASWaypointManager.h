@@ -39,38 +39,59 @@ This file is part of the PIXHAWK project
 #include <mavlink.h>
 class UAS;
 
+/**
+ * @brief Implementation of the MAVLINK waypoint protocol
+ *
+ * This class handles the communication with a waypoint manager on the MAV.
+ * All waypoints are stored in the QVector waypoints, modifications can be done with the WaypointList widget.
+ * Notice that currently the access to the internal waypoint storage is not guarded nor thread-safe. This works as long as no other widget alters the data.
+ *
+ * See http://qgroundcontrol.org/waypoint_protocol for more information about the protocol and the states.
+ */
 class UASWaypointManager : public QObject
 {
 Q_OBJECT
 private:
     enum WaypointState {
-        WP_IDLE = 0,
-        WP_SENDLIST,
-        WP_SENDLIST_SENDWPS,
-        WP_GETLIST,
-        WP_GETLIST_GETWPS
+        WP_IDLE = 0,        ///< Waiting for commands
+        WP_SENDLIST,        ///< Initial state for sending waypoints to the MAV
+        WP_SENDLIST_SENDWPS,///< Sending waypoints
+        WP_GETLIST,         ///< Initial state for retrieving wayppoints from the MAV
+        WP_GETLIST_GETWPS,  ///< Receiving waypoints
+        WP_CLEARLIST,       ///< Clearing waypoint list on the MAV
+        WP_SETCURRENT       ///< Setting new current waypoint on the MAV
     }; ///< The possible states for the waypoint protocol
 
 public:
-    UASWaypointManager(UAS&);
+    UASWaypointManager(UAS&);   ///< Standard constructor.
 
-    void handleWaypointCount(quint8 systemId, quint8 compId, quint16 count);
-    void handleWaypoint(quint8 systemId, quint8 compId, mavlink_waypoint_t *wp);
-    void handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_waypoint_request_t *wpr);
-    void handleWaypointReached(quint8 systemId, quint8 compId, mavlink_waypoint_reached_t *wpr);
-    void handleWaypointSetCurrent(quint8 systemId, quint8 compId, mavlink_waypoint_set_current_t *wpr);
+    /** @name Protocol handlers */
+    /*@{*/
+    void handleWaypointCount(quint8 systemId, quint8 compId, quint16 count);                            ///< Handles received waypoint count messages
+    void handleWaypoint(quint8 systemId, quint8 compId, mavlink_waypoint_t *wp);                        ///< Handles received waypoint messages
+    void handleWaypointAck(quint8 systemId, quint8 compId, mavlink_waypoint_ack_t *wpa);                ///< Handles received waypoint ack messages
+    void handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_waypoint_request_t *wpr);        ///< Handles received waypoint request messages
+    void handleWaypointReached(quint8 systemId, quint8 compId, mavlink_waypoint_reached_t *wpr);        ///< Handles received waypoint reached messages
+    void handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_waypoint_current_t *wpc);        ///< Handles received set current waypoint messages
+    /*@}*/
 
-    QVector<Waypoint *> &getWaypointList(void) { return waypoints; }
+    QVector<Waypoint *> &getWaypointList(void) { return waypoints; }    ///< Returns a reference to the local waypoint list. Gives full access to the internal data structure - Subject to change: Public const access and friend access for the waypoint list widget.
 
 private:
-    void sendWaypointRequest(quint16 seq);
-    void sendWaypoint(quint16 seq);
+    void sendWaypointClearAll();
+    void sendWaypointSetCurrent(quint16 seq);
+    void sendWaypointCount();
+    void sendWaypointRequestList();
+    void sendWaypointRequest(quint16 seq);          ///< Requests a waypoint with sequence number seq
+    void sendWaypoint(quint16 seq);                 ///< Sends a waypoint with sequence number seq
+    void sendWaypointAck(quint8 type);              ///< Sends a waypoint ack
 
 public slots:
-    void timeout();
-    void clearWaypointList();
-    void requestWaypoints();
-    void sendWaypoints();
+    void timeout();                                 ///< Called by the timer if a response times out. Handles send retries.
+    void setCurrent(quint16 seq);                   ///< Sends the sequence number of the waypoint that should get the new target waypoint
+    void clearWaypointList();                       ///< Sends the waypoint clear all message to the MAV
+    void readWaypoints();                           ///< Requests the MAV's current waypoint list
+    void writeWaypoints();                          ///< Sends the local waypoint list to the MAV
 
 signals:
     void waypointUpdated(quint16,double,double,double,double,bool,bool,double,int); ///< Adds a waypoint to the waypoint list widget
@@ -79,6 +100,7 @@ signals:
 
 private:
     UAS &uas;                                       ///< Reference to the corresponding UAS
+    quint32 current_retries;                        ///< The current number of retries left
     quint16 current_wp_id;                          ///< The last used waypoint ID in the current protocol transaction
     quint16 current_count;                          ///< The number of waypoints in the current protocol transaction
     WaypointState current_state;                    ///< The current protocol state
