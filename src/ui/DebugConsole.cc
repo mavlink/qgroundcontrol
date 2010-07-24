@@ -101,6 +101,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     connect(m_ui->holdCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAutoHold(bool)));
     // Connect hold button
     connect(m_ui->holdButton, SIGNAL(toggled(bool)), this, SLOT(hold(bool)));
+
+    this->setVisible(false);
 }
 
 DebugConsole::~DebugConsole()

@@ -23,6 +23,7 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
 
     // Setup MAV connections
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+    this->setVisible(false);
 }
 
 ParameterInterface::~ParameterInterface()

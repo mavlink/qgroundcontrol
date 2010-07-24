@@ -51,6 +51,8 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UA
     this->setMinimumWidth(250);
 
     uasViews = QMap<UASInterface*, UASView*>();
+
+    this->setVisible(false);
 }
 
 UASListWidget::~UASListWidget()

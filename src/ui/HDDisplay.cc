@@ -100,6 +100,8 @@ HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     //start();
+
+    this->setVisible(false);
 }
 
 HDDisplay::~HDDisplay()

@@ -5,6 +5,7 @@ Linecharts::Linecharts(QWidget *parent) :
         plots(),
         active(true)
 {
+  this->setVisible(false);
 }
 
 
