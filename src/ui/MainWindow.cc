@@ -62,94 +62,23 @@ This file is part of the QGROUNDCONTROL project
 *
 * @see QMainWindow::show()
 **/
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),
-settings()
+MainWindow::MainWindow(QWidget *parent) :
+  QMainWindow(parent),
+  settings()
 {
     this->hide();
     this->setVisible(false);
 
-    mavlink = new MAVLinkProtocol();
-
     // Setup user interface
     ui.setupUi(this);
 
-    // Initialize views, NOT show them yet, only initialize model and controller
-    centerStack = new QStackedWidget(this);
-    linechart = new Linecharts(this);
-    linechart->setActive(false);
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), linechart, SLOT(addSystem(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(int)), linechart, SLOT(selectSystem(int)));
-    centerStack->addWidget(linechart);
-    control = new UASControlWidget(this);
-    //controlDock = new QDockWidget(this);
-    //controlDock->setWidget(control);
-    list = new UASListWidget(this);
-    list->setVisible(false);
-    waypoints = new WaypointList(this, NULL);
-    waypoints->setVisible(false);
-    info = new UASInfoWidget(this);
-    info->setVisible(false);
-    detection = new ObjectDetectionView("patterns", this);
-    detection->setVisible(false);
-    hud = new HUD(640, 480, this);
-    hud->setVisible(false);
-    debugConsole = new DebugConsole(this);
-    debugConsole->setVisible(false);
-    map = new MapWidget(this);
-    map->setVisible(false);
-    protocol = new XMLCommProtocolWidget(this);
-    protocol->setVisible(false);
-    centerStack->addWidget(protocol);
-    parameters = new ParameterInterface(this);
-    parameters->setVisible(false);
-    watchdogControl = new WatchdogControl(this);
-    watchdogControl->setVisible(false);
-    hsi = new HSIDisplay(this);
-    hsi->setVisible(false);
+    buildWidgets();
 
-    QStringList* acceptList = new QStringList();
-    acceptList->append("roll IMU");
-    acceptList->append("pitch IMU");
-    acceptList->append("yaw IMU");
-    acceptList->append("rollspeed IMU");
-    acceptList->append("pitchspeed IMU");
-    acceptList->append("yawspeed IMU");
-    headDown1 = new HDDisplay(acceptList, this);
-    headDown1->setVisible(false);
+    connectWidgets();
 
-    QStringList* acceptList2 = new QStringList();
-    acceptList2->append("Battery");
-    acceptList2->append("Pressure");
-    headDown2 = new HDDisplay(acceptList2, this);
-    headDown2->setVisible(false);
-    centerStack->addWidget(map);
-    centerStack->addWidget(hud);
-    setCentralWidget(centerStack);
+    arrangeCenterStack();
 
-    // Get IPs
-    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
-
-    QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
-
-    windowname.append(" (" + QHostInfo::localHostName() + ": ");
-    bool prevAddr = false;
-    for (int i = 0; i < hostAddresses.size(); i++)
-    {
-        // Exclude loopback IPv4 and all IPv6 addresses
-        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
-        {
-            if(prevAddr) windowname.append("/");
-            windowname.append(hostAddresses.at(i).toString());
-            prevAddr = true;
-        }
-    }
-
-    windowname.append(")");
-
-    setWindowTitle(windowname);
-#ifndef Q_WS_MAC
-    //qApp->setWindowIcon(QIcon(":/core/images/qtcreator_logo_128.png"));
-#endif
+    configureWindowName();
 
     // Add status bar
     setStatusBar(createStatusBar());
@@ -157,10 +86,10 @@ settings()
     // Set the application style (not the same as a style sheet)
     // Set the style to Plastique
     qApp->setStyle("plastique");
+
     // Set style sheet as last step
     reloadStylesheet();
 
-    joystick = new JoystickInput();
 
     // Create actions
     connectActions();
@@ -170,15 +99,92 @@ settings()
 
     // Adjust the size
     adjustSize();
-
-    //
-    connect(mavlink, SIGNAL(receiveLossChanged(int, float)), info, SLOT(updateSendLoss(int, float)));
 }
 
 MainWindow::~MainWindow()
 {
     delete statusBar;
     statusBar = NULL;
+}
+
+
+void MainWindow::buildWidgets()
+{
+  QStringList* acceptList = new QStringList();
+  acceptList->append("roll IMU");
+  acceptList->append("pitch IMU");
+  acceptList->append("yaw IMU");
+  acceptList->append("rollspeed IMU");
+  acceptList->append("pitchspeed IMU");
+  acceptList->append("yawspeed IMU");
+
+  QStringList* acceptList2 = new QStringList();
+  acceptList2->append("Battery");
+  acceptList2->append("Pressure");
+
+
+  mavlink     = new MAVLinkProtocol();
+  linechart   = new Linecharts(this);
+  control     = new UASControlWidget(this);
+  list        = new UASListWidget(this);
+  waypoints   = new WaypointList(this, NULL);
+  info        = new UASInfoWidget(this);
+  detection   = new ObjectDetectionView("patterns", this);
+  hud         = new HUD(640, 480, this);
+  debugConsole= new DebugConsole(this);
+  map         = new MapWidget(this);
+  protocol    = new XMLCommProtocolWidget(this);
+  parameters  = new ParameterInterface(this);
+  watchdogControl = new WatchdogControl(this);
+  hsi         = new HSIDisplay(this);
+  headDown1   = new HDDisplay(acceptList, this);
+  headDown2   = new HDDisplay(acceptList2, this);
+  joystick    = new JoystickInput();
+}
+
+void MainWindow::connectWidgets(){
+  connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), linechart, SLOT(addSystem(UASInterface*)));
+  connect(UASManager::instance(), SIGNAL(activeUASSet(int)), linechart, SLOT(selectSystem(int)));
+  connect(mavlink, SIGNAL(receiveLossChanged(int, float)), info, SLOT(updateSendLoss(int, float)));
+}
+
+void MainWindow::arrangeCenterStack(){
+
+  centerStack = new QStackedWidget(this);
+
+  centerStack->addWidget(linechart);
+  centerStack->addWidget(protocol);
+  centerStack->addWidget(map);
+  centerStack->addWidget(hud);
+
+  setCentralWidget(centerStack);
+}
+
+void MainWindow::configureWindowName(){
+  QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
+  QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
+  bool prevAddr = false;
+
+  windowname.append(" (" + QHostInfo::localHostName() + ": ");
+
+  for (int i = 0; i < hostAddresses.size(); i++)
+  {
+      // Exclude loopback IPv4 and all IPv6 addresses
+      if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
+      {
+          if(prevAddr) windowname.append("/");
+          windowname.append(hostAddresses.at(i).toString());
+          prevAddr = true;
+      }
+  }
+
+  windowname.append(")");
+
+  setWindowTitle(windowname);
+
+#ifndef Q_WS_MAC
+  //qApp->setWindowIcon(QIcon(":/core/images/qtcreator_logo_128.png"));
+#endif
 }
 
 QStatusBar* MainWindow::createStatusBar()
