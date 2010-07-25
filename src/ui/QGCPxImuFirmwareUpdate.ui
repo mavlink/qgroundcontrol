@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCPxImuFirmwareUpdate</class>
+ <widget class="QWidget" name="QGCPxImuFirmwareUpdate">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="5">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Instructions</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="margin">
+       <number>2</number>
+      </property>
+      <item>
+       <widget class="QPlainTextEdit" name="plainTextEdit">
+        <property name="plainText">
+         <string>&lt;h1&gt;pxIMU Firmware Update&lt;/h1&gt;
+
+&lt;li&gt;
+  &lt;item&gt;Item 1&lt;/item&gt;
+&lt;/li&gt;
+</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="QRadioButton" name="radioButton">
+     <property name="text">
+      <string>From File</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2" colspan="2">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Choose file..</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4">
+    <widget class="QPushButton" name="pushButton_2">
+     <property name="text">
+      <string>Choose File</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QRadioButton" name="radioButton_2">
+     <property name="text">
+      <string>From Internet</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2" colspan="2">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Firmware v.0.2.1</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="4">
+    <widget class="QPushButton" name="pushButton_3">
+     <property name="text">
+      <string>Download</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1" colspan="2">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Waiting for first user action</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="3" colspan="2">
+    <widget class="QPushButton" name="pushButton">
+     <property name="text">
+      <string>Flash Firmware</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

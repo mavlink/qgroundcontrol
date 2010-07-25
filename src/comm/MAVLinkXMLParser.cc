@@ -4,6 +4,7 @@
 #include <QList>
 #include <QMap>
 #include <QDateTime>
+#include <QLocale>
 #include "MAVLinkXMLParser.h"
 
 #include <QDebug>
@@ -222,7 +223,7 @@ bool MAVLinkXMLParser::generate()
                                         while (!f.isNull())
                                         {
                                             QDomElement e2 = f.toElement();
-                                            if (!e2.isNull())
+                                            if (!e2.isNull() && e2.tagName() == "field")
                                             {
                                                 QString fieldType = e2.attribute("type", "");
                                                 QString fieldName = e2.attribute("name", "");
@@ -362,8 +363,9 @@ bool MAVLinkXMLParser::generate()
 
     // XML parsed and converted to C code. Now generating the files
     QDateTime now = QDateTime::currentDateTime().toUTC();
+    QLocale loc(QLocale::English);
     QString dateFormat = "dddd, MMMM d yyyy, hh:mm UTC";
-    QString date = now.toString(dateFormat);
+    QString date = loc.toString(now, dateFormat);
     QString mainHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef MAVLINK_H\n#define MAVLINK_H\n\n").arg(date); // The main header includes all messages
     // Mark all code as C code
     mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n";
