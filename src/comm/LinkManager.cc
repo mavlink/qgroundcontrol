@@ -33,6 +33,8 @@ This file is part of the PIXHAWK project
 #include <QApplication>
 #include "LinkManager.h"
 
+#include <QDebug>
+
 LinkManager* LinkManager::instance() {
 	static LinkManager* _instance = 0;
 	if(_instance == 0) {
@@ -79,7 +81,8 @@ void LinkManager::addProtocol(LinkInterface* link, ProtocolInterface* protocol)
     // the protocol will receive new bytes from the link
     connect(link, SIGNAL(bytesReady(LinkInterface*)), protocol, SLOT(receiveBytes(LinkInterface*)));
     // Store the connection information in the protocol links map
-    protocolLinks.insert(protocol, link);
+    protocolLinks.insertMulti(protocol, link);
+    //qDebug() << __FILE__ << __LINE__ << "ADDED LINK TO PROTOCOL" << link->getName() << protocol->getName() << "NEW SIZE OF LINK LIST:" << protocolLinks.size();
 }
 
 QList<LinkInterface*> LinkManager::getLinksForProtocol(ProtocolInterface* protocol)

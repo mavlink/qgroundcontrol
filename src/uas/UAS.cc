@@ -118,9 +118,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
     if (!links->contains(link))
     {
         addLink(link);
+//        qDebug() << __FILE__ << __LINE__ << "ADDED LINK!" << link->getName();
     }
+//    else
+//    {
+//        qDebug() << __FILE__ << __LINE__ << "DID NOT ADD LINK" << link->getName() << "ALREADY IN LIST";
+//    }
 
-    //qDebug() << "UAS RECEIVED" << message.sysid << message.compid << message.msgid;
+//    qDebug() << "UAS RECEIVED from" << message.sysid << "component" << message.compid << "msg id" << message.msgid << "seq no" << message.seq;
 
     if (message.sysid == uasId)
     {
