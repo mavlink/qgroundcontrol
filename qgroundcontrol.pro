@@ -216,5 +216,5 @@ win32 {
     INCLUDEPATH += C:\OPAL-RT\RT-LAB7.2.4\Common\Include
     SOURCES += src/comm/OpalLink.cc
     HEADERS += src/comm/OpalLink.h
-
+    DEFINES += OPAL_RT
 }
