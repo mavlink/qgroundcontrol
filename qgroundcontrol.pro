@@ -207,7 +207,7 @@ SOURCES += src/main.cc \
     src/ui/HSIDisplay.cc \
     src/QGC.cc \
     src/ui/QGCFirmwareUpdate.cc \
-    src/ui/QGCPxImuFirmwareUpdate.cc \    
+    src/ui/QGCPxImuFirmwareUpdate.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
