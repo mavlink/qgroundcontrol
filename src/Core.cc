@@ -115,7 +115,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
-        msgBox.setText("Could not connect UDP port. Is already an instance of " + qAppName() + " running?");
+        msgBox.setText("Could not connect UDP port. Is an instance of " + qAppName() + "already running?");
         msgBox.setInformativeText("You will not be able to receive data via UDP. Please check that you're running the right executable and then re-start " + qAppName() + ". Do you want to close the application?");
         msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Cancel);
