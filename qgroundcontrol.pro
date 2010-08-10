@@ -149,7 +149,7 @@ HEADERS += src/MG.h \
     src/ui/HSIDisplay.h \
     src/QGC.h \
     src/ui/QGCFirmwareUpdate.h \
-    src/ui/QGCPxImuFirmwareUpdate.h
+    src/ui/QGCPxImuFirmwareUpdate.h \    
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -207,5 +207,14 @@ SOURCES += src/main.cc \
     src/ui/HSIDisplay.cc \
     src/QGC.cc \
     src/ui/QGCFirmwareUpdate.cc \
-    src/ui/QGCPxImuFirmwareUpdate.cc
+    src/ui/QGCPxImuFirmwareUpdate.cc \    
 RESOURCES = mavground.qrc
+
+# Include RT-LAB Library
+win32 {
+    LIBS += C:\OPAL-RT\RT-LAB7.2.4\Common\lib\OpalApi.lib
+    INCLUDEPATH += C:\OPAL-RT\RT-LAB7.2.4\Common\Include
+    SOURCES += src/comm/OpalLink.cc
+    HEADERS += src/comm/OpalLink.h
+
+}
