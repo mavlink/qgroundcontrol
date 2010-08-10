@@ -149,7 +149,7 @@ HEADERS += src/MG.h \
     src/ui/HSIDisplay.h \
     src/QGC.h \
     src/ui/QGCFirmwareUpdate.h \
-    src/ui/QGCPxImuFirmwareUpdate.h \    
+    src/ui/QGCPxImuFirmwareUpdate.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
