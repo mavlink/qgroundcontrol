@@ -80,7 +80,8 @@ bool OpalLink::isFullDuplex()
 
 bool OpalLink::connect()
 {
-    return false;
+    short modelState;
+    OpalConnect(101, true, &modelState);
 }
 
 bool OpalLink::disconnect()
@@ -91,4 +92,15 @@ bool OpalLink::disconnect()
 qint64 OpalLink::bytesAvailable()
 {
     return 0;
+}
+
+void OpalLink::writeBytes(const char *bytes, qint64 length)
+{
+
+}
+
+
+void OpalLink::readBytes(char *bytes, qint64 maxLength)
+{
+
 }

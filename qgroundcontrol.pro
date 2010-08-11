@@ -212,7 +212,7 @@ RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
 win32 {
-    LIBS += C:\OPAL-RT\RT-LAB7.2.4\Common\lib\OpalApi.lib
+    LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin -lOpalApi
     INCLUDEPATH += src/lib/opalrt
     SOURCES += src/comm/OpalLink.cc
     HEADERS += src/comm/OpalLink.h
