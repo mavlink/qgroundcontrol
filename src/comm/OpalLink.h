@@ -35,13 +35,13 @@ class OpalLink : public LinkInterface
     qint64 getBitsReceived();
 
 
-    virtual bool connect() = 0;
+    bool connect();
 
 
-    virtual bool disconnect() = 0;
+    bool disconnect();
 
 
-    virtual qint64 bytesAvailable() = 0;
+    qint64 bytesAvailable();
 
 public slots:
 
