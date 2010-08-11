@@ -29,6 +29,7 @@ class OpalLink : public LinkInterface
     bool isFullDuplex();
     int getLinkQuality();
     qint64 getTotalUpstream();
+    qint64 getTotalDownstream();
     qint64 getCurrentUpstream();
     qint64 getMaxUpstream();
     qint64 getBitsSent();

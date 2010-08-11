@@ -42,8 +42,16 @@ int OpalLink::getLinkQuality()
 qint64 OpalLink::getTotalUpstream()
 {
     statisticsMutex.lock();
-    return bitsSentTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
+    qint64 totalUpstream =  bitsSentTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
     statisticsMutex.unlock();
+    return totalUpstream;
+}
+
+qint64 OpalLink::getTotalDownstream() {
+    statisticsMutex.lock();
+    qint64 totalDownstream = bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
+    statisticsMutex.unlock();
+    return totalDownstream;
 }
 
 qint64 OpalLink::getCurrentUpstream()
@@ -68,4 +76,19 @@ qint64 OpalLink::getBitsReceived() {
 bool OpalLink::isFullDuplex()
 {
     return false;
+}
+
+bool OpalLink::connect()
+{
+    return false;
+}
+
+bool OpalLink::disconnect()
+{
+    return false;
+}
+
+qint64 OpalLink::bytesAvailable()
+{
+    return 0;
 }
