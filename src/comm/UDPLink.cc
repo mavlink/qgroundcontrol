@@ -209,7 +209,11 @@ bool UDPLink::connect()
     connectState = socket->bind(host, port);
 
     emit connected(connectState);
-    if (connectState) emit connected();
+    if (connectState)
+    {
+        emit connected();
+        connectionStartTime = MG::TIME::getGroundTimeNow();
+    }
 
     start(HighPriority);
     return connectState;
@@ -247,8 +251,9 @@ qint64 UDPLink::getNominalDataRate() {
 
 qint64 UDPLink::getTotalUpstream() {
     statisticsMutex.lock();
-    return bitsSentTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
+    qint64 totalUpstream = bitsSentTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
     statisticsMutex.unlock();
+    return totalUpstream;
 }
 
 qint64 UDPLink::getCurrentUpstream() {
@@ -269,8 +274,9 @@ qint64 UDPLink::getBitsReceived() {
 
 qint64 UDPLink::getTotalDownstream() {
     statisticsMutex.lock();
-    return bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
+    qint64 totalDownstream = bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
     statisticsMutex.unlock();
+    return totalDownstream;
 }
 
 qint64 UDPLink::getCurrentDownstream() {
