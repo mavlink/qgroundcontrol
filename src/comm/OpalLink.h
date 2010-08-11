@@ -13,6 +13,9 @@
 #include "LinkManager.h"
 #include "MG.h"
 
+#include "errno.h"
+#include "OpalApi.h"
+
 class OpalLink : public LinkInterface
 {
     Q_OBJECT
@@ -47,29 +50,11 @@ class OpalLink : public LinkInterface
 public slots:
 
 
-    virtual void writeBytes(const char *bytes, qint64 length) = 0;
+    void writeBytes(const char *bytes, qint64 length);
 
 
-    virtual void readBytes(char *bytes, qint64 maxLength) = 0;
+    void readBytes(char *bytes, qint64 maxLength);
 
-signals:
-
-    void bytesReady(LinkInterface* link);
-
-
-    void bytesReceived(LinkInterface* link, QByteArray data);
-
-
-    void connected();
-
-
-    void disconnected();
-
-
-    void connected(bool connected);
-
-
-    void nameChanged(QString name);
 
 public:
     OpalLink();
