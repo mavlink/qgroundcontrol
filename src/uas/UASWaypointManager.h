@@ -65,7 +65,7 @@ private:
 public:
     UASWaypointManager(UAS&);   ///< Standard constructor.
 
-    /** @name Protocol handlers */
+    /** @name Received message handlers */
     /*@{*/
     void handleWaypointCount(quint8 systemId, quint8 compId, quint16 count);                            ///< Handles received waypoint count messages
     void handleWaypoint(quint8 systemId, quint8 compId, mavlink_waypoint_t *wp);                        ///< Handles received waypoint messages
@@ -78,6 +78,8 @@ public:
     QVector<Waypoint *> &getWaypointList(void) { return waypoints; }    ///< Returns a reference to the local waypoint list. Gives full access to the internal data structure - Subject to change: Public const access and friend access for the waypoint list widget.
 
 private:
+    /** @name Message send functions */
+    /*@{*/
     void sendWaypointClearAll();
     void sendWaypointSetCurrent(quint16 seq);
     void sendWaypointCount();
@@ -85,6 +87,7 @@ private:
     void sendWaypointRequest(quint16 seq);          ///< Requests a waypoint with sequence number seq
     void sendWaypoint(quint16 seq);                 ///< Sends a waypoint with sequence number seq
     void sendWaypointAck(quint8 type);              ///< Sends a waypoint ack
+    /*@}*/
 
 public slots:
     void timeout();                                 ///< Called by the timer if a response times out. Handles send retries.
@@ -107,8 +110,8 @@ private:
     quint8 current_partner_systemid;                ///< The current protocol communication target system
     quint8 current_partner_compid;                  ///< The current protocol communication target component
 
-    QVector<Waypoint *> waypoints;                  ///< local waypoint list
-    QVector<mavlink_waypoint_t *> waypoint_buffer;  ///< communication buffer for waypoints
+    QVector<Waypoint *> waypoints;                  ///< local waypoint list (main storage)
+    QVector<mavlink_waypoint_t *> waypoint_buffer;  ///< buffer for waypoints during communication
     QTimer protocol_timer;                          ///< Timer to catch timeouts
 };
 
