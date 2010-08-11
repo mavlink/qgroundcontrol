@@ -39,7 +39,11 @@ This file is part of the PIXHAWK project
 #include "UASManager.h"
 #include "LinkManager.h"
 /*#include "ViconTarsusProtocol.h" */
+#ifdef OPAL_RT
 
+#include "OpalLink.h"
+
+#endif
 /**
  * @brief The main application and management class.
  *
