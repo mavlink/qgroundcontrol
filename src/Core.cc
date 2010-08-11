@@ -132,6 +132,11 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
         }
     }
 
+#ifdef OPAL_RT
+    // Add OpalRT Link, but do not connect
+    OpalLink* opalLink = new OpalLink();
+    mainWindow->addLink(opalLink);
+#endif
     // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
     mainWindow->addLink(simulationLink);
