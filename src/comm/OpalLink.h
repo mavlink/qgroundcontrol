@@ -8,6 +8,8 @@
 */
 
 #include <QMutex>
+#include <QDebug>
+#include <QMessageBox>
 
 #include "LinkInterface.h"
 #include "LinkManager.h"
@@ -73,6 +75,8 @@ protected:
     quint64 connectionStartTime;
 
     QMutex statisticsMutex;
+    QString lastErrorMsg;
+    void setLastErrorMsg();
 
     void setName(QString name);
 };
