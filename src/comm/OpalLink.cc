@@ -1,6 +1,6 @@
 #include "OpalLink.h"
 
-OpalLink::OpalLink()
+OpalLink::OpalLink() : connectState(false)
 {
 
     // Set unique ID and add link to the list of links
@@ -26,6 +26,7 @@ void OpalLink::setName(QString name)
 }
 
 bool OpalLink::isConnected() {
+    //qDebug() << "OpalLink::isConnected:: connectState: " << connectState;
     return connectState;
 }
 
@@ -81,13 +82,42 @@ bool OpalLink::isFullDuplex()
 bool OpalLink::connect()
 {
     short modelState;
-    OpalConnect(101, true, &modelState);
-    return true;
+
+    /// \todo allow configuration of instid in window
+    if (OpalConnect(101, false, &modelState) == EOK)
+    {
+        connectState = true;
+    }
+    else
+    {
+        connectState = false;
+        setLastErrorMsg();
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText(lastErrorMsg);
+        msgBox.exec();
+    }
+
+    emit connected(connectState);
+    if (connectState)
+    {
+        emit connected();
+    }
+    return connectState;
 }
 
 bool OpalLink::disconnect()
 {
     return false;
+}
+
+void OpalLink::setLastErrorMsg()
+{
+    char buf[512];
+    unsigned short len;
+    OpalGetLastErrMsg(buf, sizeof(buf), &len);
+    lastErrorMsg.clear();
+    lastErrorMsg.append(buf);
 }
 
 qint64 OpalLink::bytesAvailable()
