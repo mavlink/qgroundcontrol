@@ -82,6 +82,7 @@ bool OpalLink::connect()
 {
     short modelState;
     OpalConnect(101, true, &modelState);
+    return true;
 }
 
 bool OpalLink::disconnect()
