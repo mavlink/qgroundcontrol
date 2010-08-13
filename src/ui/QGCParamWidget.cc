@@ -165,7 +165,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
 {
     Q_UNUSED(uas);
     // Reference to item in tree
-    QTreeWidgetItem* parameterItem;
+    QTreeWidgetItem* parameterItem = NULL;
 
     // Get component
     if (!components->contains(component))
