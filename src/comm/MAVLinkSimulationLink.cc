@@ -186,10 +186,13 @@ void MAVLinkSimulationLink::mainloop()
     static float drainRate = 0.025; // x.xx% of the capacity is linearly drained per second
 
     mavlink_attitude_t attitude;
+    memset(&attitude, 0, sizeof(mavlink_attitude_t));
     #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
       mavlink_raw_aux_t rawAuxValues;
+      memset(&rawAuxValues, 0, sizeof(mavlink_raw_aux_t));
     #endif
     mavlink_raw_imu_t rawImuValues;
+    memset(&rawImuValues, 0, sizeof(mavlink_raw_imu_t));
 
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     int bufferlength;

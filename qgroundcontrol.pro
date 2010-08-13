@@ -149,7 +149,8 @@ HEADERS += src/MG.h \
     src/ui/HSIDisplay.h \
     src/QGC.h \
     src/ui/QGCFirmwareUpdate.h \
-    src/ui/QGCPxImuFirmwareUpdate.h
+    src/ui/QGCPxImuFirmwareUpdate.h \
+    src/comm/MAVLinkLightProtocol.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -207,5 +208,6 @@ SOURCES += src/main.cc \
     src/ui/HSIDisplay.cc \
     src/QGC.cc \
     src/ui/QGCFirmwareUpdate.cc \
-    src/ui/QGCPxImuFirmwareUpdate.cc
+    src/ui/QGCPxImuFirmwareUpdate.cc \
+    src/comm/MAVLinkLightProtocol.cc
 RESOURCES = mavground.qrc

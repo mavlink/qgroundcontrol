@@ -2,9 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 QGROUNDCONTROL/PIXHAWK PROJECT
-<http://www.qgroundcontrol.org>
-<http://pixhawk.ethz.ch>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -142,13 +140,15 @@ void MainWindow::buildWidgets()
   joystick    = new JoystickInput();
 }
 
-void MainWindow::connectWidgets(){
+void MainWindow::connectWidgets()
+{
   connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), linechart, SLOT(addSystem(UASInterface*)));
   connect(UASManager::instance(), SIGNAL(activeUASSet(int)), linechart, SLOT(selectSystem(int)));
   connect(mavlink, SIGNAL(receiveLossChanged(int, float)), info, SLOT(updateSendLoss(int, float)));
 }
 
-void MainWindow::arrangeCenterStack(){
+void MainWindow::arrangeCenterStack()
+{
 
   centerStack = new QStackedWidget(this);
 
@@ -160,7 +160,8 @@ void MainWindow::arrangeCenterStack(){
   setCentralWidget(centerStack);
 }
 
-void MainWindow::configureWindowName(){
+void MainWindow::configureWindowName()
+{
   QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
   QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
   bool prevAddr = false;
@@ -245,11 +246,14 @@ void MainWindow::reloadStylesheet()
     {
         styleSheet = new QFile(":/images/style-mission.css");
     }
-    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
         QString style = QString(styleSheet->readAll());
         style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "/images/");
         qApp->setStyleSheet(style);
-    } else {
+    }
+    else
+    {
         qDebug() << "Style not set:" << styleSheet->fileName() << "opened: " << styleSheet->isOpen();
     }
     delete styleSheet;
