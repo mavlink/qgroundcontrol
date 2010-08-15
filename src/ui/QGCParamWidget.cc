@@ -405,7 +405,7 @@ void QGCParamWidget::loadParameters()
 
                         changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), (float)wpParams.at(3).toDouble());
 
-                        qDebug() << "MARKING COMP" << wpParams.at(1).toInt() << "PARAM" << wpParams.at(2) << "VALUE" << (float)wpParams.at(3).toDouble() << "AS CHANGED";
+                        //qDebug() << "MARKING COMP" << wpParams.at(1).toInt() << "PARAM" << wpParams.at(2) << "VALUE" << (float)wpParams.at(3).toDouble() << "AS CHANGED";
 
                         // Mark in UI
 
