@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCDataPlot2D</class>
+ <widget class="QWidget" name="QGCDataPlot2D">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>736</width>
+    <height>308</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout" columnstretch="2,10,2,0,0,0,0,0,0,0,0,0">
+   <item row="0" column="0" colspan="2">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>X</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QComboBox" name="xAxis"/>
+   </item>
+   <item row="0" column="3">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Y</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="4">
+    <widget class="QLineEdit" name="yAxis"/>
+   </item>
+   <item row="0" column="5" colspan="2">
+    <widget class="QComboBox" name="style">
+     <item>
+      <property name="text">
+       <string>Style..</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dots</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Lines</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="0" column="8">
+    <widget class="QPushButton" name="reloadButton">
+     <property name="text">
+      <string>Reload</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="9">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="10">
+    <widget class="QPushButton" name="savePlotButton">
+     <property name="text">
+      <string>Save Plot</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="12">
+    <widget class="QFrame" name="plotFrame">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>File</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1" colspan="2">
+    <widget class="QComboBox" name="inputFileType">
+     <item>
+      <property name="text">
+       <string>CSV</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>pxIMU</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>RAW</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="3" colspan="4">
+    <widget class="QLabel" name="filenameLabel">
+     <property name="text">
+      <string>Please select input file..</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="9">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="11">
+    <widget class="QPushButton" name="printButton">
+     <property name="text">
+      <string>Print</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="11">
+    <widget class="QPushButton" name="saveCsvButton">
+     <property name="text">
+      <string>Save CSV</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="8">
+    <widget class="QPushButton" name="selectFileButton">
+     <property name="text">
+      <string>Select file</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="7">
+    <widget class="QCheckBox" name="symmetricCheckBox">
+     <property name="text">
+      <string>Symmetric</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

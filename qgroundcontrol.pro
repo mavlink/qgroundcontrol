@@ -73,7 +73,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/watchdog/WatchdogProcessView.ui \
     src/ui/watchdog/WatchdogView.ui \
     src/ui/QGCFirmwareUpdate.ui \
-    src/ui/QGCPxImuFirmwareUpdate.ui
+    src/ui/QGCPxImuFirmwareUpdate.ui \
+    src/ui/QGCDataPlot2D.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -150,7 +151,9 @@ HEADERS += src/MG.h \
     src/QGC.h \
     src/ui/QGCFirmwareUpdate.h \
     src/ui/QGCPxImuFirmwareUpdate.h \
-    src/comm/MAVLinkLightProtocol.h
+    src/comm/MAVLinkLightProtocol.h \
+    src/ui/QGCDataPlot2D.h \
+    src/ui/linechart/IncrementalPlot.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -209,5 +212,7 @@ SOURCES += src/main.cc \
     src/QGC.cc \
     src/ui/QGCFirmwareUpdate.cc \
     src/ui/QGCPxImuFirmwareUpdate.cc \
-    src/comm/MAVLinkLightProtocol.cc
+    src/comm/MAVLinkLightProtocol.cc \
+    src/ui/QGCDataPlot2D.cc \
+    src/ui/linechart/IncrementalPlot.cc
 RESOURCES = mavground.qrc

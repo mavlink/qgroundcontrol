@@ -42,6 +42,8 @@ This file is part of the PIXHAWK project
 #include <QColor>
 #include <QPalette>
 #include <QFileDialog>
+#include <QDesktopServices>
+#include <QMessageBox>
 
 #include "LinechartWidget.h"
 #include "LinechartPlot.h"
@@ -259,20 +261,39 @@ void LinechartWidget::startLogging()
     // Let user select the log file name
     QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), tr("."), tr("Logfile (*.txt)"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.txt, *.csv);;"));
     // Store reference to file
-    logFile = new QFile(fileName);
-    if (logFile->open(QIODevice::WriteOnly | QIODevice::Text))
+    // Append correct file ending if needed
+    bool abort = false;
+    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")))
     {
-        logging = true;
-        logindex++;
-        logButton->setText(tr("Stop logging"));
-        disconnect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
-        connect(logButton, SIGNAL(clicked()), this, SLOT(stopLogging()));
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Unsuitable file extension for logfile");
+        msgBox.setInformativeText("Please choose .txt or .csv as file extension. Click OK to change the file extension, cancel to not start logging.");
+        msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        if(msgBox.exec() == QMessageBox::Cancel)
+        {
+            abort = true;
+            break;
+        }
+        fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.txt, *.csv);;"));
+
     }
-    else
+
+    // Check if the user did not abort the file save dialog
+    if (!abort && fileName != "")
     {
-        return;
+        logFile = new QFile(fileName);
+        if (logFile->open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            logging = true;
+            logindex++;
+            logButton->setText(tr("Stop logging"));
+            disconnect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
+            connect(logButton, SIGNAL(clicked()), this, SLOT(stopLogging()));
+        }
     }
 }
 
@@ -418,7 +439,7 @@ void LinechartWidget::removeCurve(QString curve)
     Q_UNUSED(curve)
     //TODO @todo Ensure that the button for a curve gets deleted when the original curve is deleted
     // Remove name
-}
+    }
 
 void LinechartWidget::setActive(bool active)
 {

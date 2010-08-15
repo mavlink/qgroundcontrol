@@ -62,6 +62,7 @@ This file is part of the PIXHAWK project
 #include "HDDisplay.h"
 #include "WatchdogControl.h"
 #include "HSIDisplay.h"
+#include "QGCDataPlot2D.h"
 
 #include "LogCompressor.h"
 
@@ -116,6 +117,15 @@ public slots:
     void loadAllView();
     /** @brief Load MAVLink XML generator view */
     void loadMAVLinkView();
+    /** @brief Load data view, allowing to plot flight data */
+    void loadDataView();
+
+    /** @brief Show the online help for users */
+    void showHelp();
+    /** @brief Show the authors / credits */
+    void showCredits();
+    /** @brief Show the project roadmap */
+    void showRoadMap();
 
     // Fixme find a nicer solution that scales to more AP types
     void loadSlugsView();
@@ -158,6 +168,7 @@ protected:
     HDDisplay* headDown2;
     WatchdogControl* watchdogControl;
     HSIDisplay* hsi;
+    QGCDataPlot2D* dataplot;
 
     // Popup widgets
     JoystickWidget* joystickWidget;
