@@ -270,7 +270,16 @@ QColor IncrementalPlot::getColorForCurve(QString id)
 
 void IncrementalPlot::removeData()
 {
+    foreach (QwtPlotCurve* curve, d_curve)
+    {
+        delete curve;
+    }
     d_curve.clear();
+
+    foreach (CurveData* data, d_data)
+    {
+        delete data;
+    }
     d_data.clear();
     resetScaling();
     replot();
