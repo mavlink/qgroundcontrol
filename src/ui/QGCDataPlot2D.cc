@@ -252,7 +252,6 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
     ui->xAxis->clear();
     ui->yAxis->clear();
 
-    ui->xAxis->addItem("*");
     int curveNameIndex = 0;
 
     int xValueIndex = curveNames.indexOf(xAxisName);
@@ -263,14 +262,17 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
         if (curveNameIndex != xValueIndex)
         {
             // FIXME Add check for y value filter
-            yValues.insert(curveName, new QVector<double>());
-            ui->xAxis->addItem(curveName);
-            // Add separator starting with second item
-            if (curveNameIndex > 0 && curveNameIndex < curveNames.size())
+            if ((ui->yAxis->text() == "") && yValues.contains(curveName))
             {
-                ui->yAxis->setText(ui->yAxis->text()+"|");
+                yValues.insert(curveName, new QVector<double>());
+                ui->xAxis->addItem(curveName);
+                // Add separator starting with second item
+                if (curveNameIndex > 0 && curveNameIndex < curveNames.size())
+                {
+                    ui->yAxis->setText(ui->yAxis->text()+"|");
+                }
+                ui->yAxis->setText(ui->yAxis->text()+curveName);
             }
-            ui->yAxis->setText(ui->yAxis->text()+curveName);
         }
         curveNameIndex++;
     }
