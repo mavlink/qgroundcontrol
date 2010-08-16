@@ -4,6 +4,7 @@
 #include <QList>
 #include <QMap>
 #include <QDateTime>
+#include <QLocale>
 #include "MAVLinkXMLParser.h"
 
 #include <QDebug>
@@ -205,7 +206,7 @@ bool MAVLinkXMLParser::generate()
                                         QString encode = "static inline uint16_t mavlink_msg_%1_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const %2* %1)\n{\n\treturn mavlink_msg_%1_pack(%3);\n}\n";
 
                                         QString decode = "static inline void mavlink_msg_%1_decode(const mavlink_message_t* msg, %2* %1)\n{\n%3}\n";
-                                        QString pack = "static inline uint16_t mavlink_msg_%1_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg%2)\n{\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\tuint16_t i = 0;\n\n%4\n\treturn mavlink_finalize_message(msg, system_id, component_id, i);\n}\n\n";
+                                        QString pack = "static inline uint16_t mavlink_msg_%1_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg%2)\n{\n\tuint16_t i = 0;\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\n%4\n\treturn mavlink_finalize_message(msg, system_id, component_id, i);\n}\n\n";
                                         QString compactSend = "#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_pack(mavlink_system.sysid, mavlink_system.compid, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif";
                                         //QString compactStructSend = "#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_struct_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_encode(mavlink_system.sysid, mavlink_system.compid, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif";
                                         QString unpacking = "";
@@ -222,7 +223,7 @@ bool MAVLinkXMLParser::generate()
                                         while (!f.isNull())
                                         {
                                             QDomElement e2 = f.toElement();
-                                            if (!e2.isNull())
+                                            if (!e2.isNull() && e2.tagName() == "field")
                                             {
                                                 QString fieldType = e2.attribute("type", "");
                                                 QString fieldName = e2.attribute("name", "");
@@ -362,8 +363,9 @@ bool MAVLinkXMLParser::generate()
 
     // XML parsed and converted to C code. Now generating the files
     QDateTime now = QDateTime::currentDateTime().toUTC();
+    QLocale loc(QLocale::English);
     QString dateFormat = "dddd, MMMM d yyyy, hh:mm UTC";
-    QString date = now.toString(dateFormat);
+    QString date = loc.toString(now, dateFormat);
     QString mainHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef MAVLINK_H\n#define MAVLINK_H\n\n").arg(date); // The main header includes all messages
     // Mark all code as C code
     mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n";

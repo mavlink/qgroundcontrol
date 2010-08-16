@@ -1,6 +1,17 @@
 QGroundControl Open Source Micro Air Vehicle Ground Control Station
 
-http://pixhawk.ethz.ch
+Project:
+http://qgroundcontrol.org
+
+Files:
+http://github.com/pixhawk/qgroundcontrol
+http://github.com/pixhawk/mavlink
+
+
+**********************************************************************************************
+* PLEASE NOTE: YOU NEED TO DOWNLOAD THE MAVLINK LIBRARY IN ORDER TO COMPILE THIS APPLICATION *
+**********************************************************************************************
+
 
 Mac OS X
 ========
@@ -21,7 +32,7 @@ Install QT with Cocoa
 
 Get the MAVLINK Library
 -----------------------
-1) Clone the MAVLINK repository : `git clone git@pixhawk.ethz.ch:mavlink.git` (You need to have emailed  your ssh key). **NOTE:** Make sure that the mavlink directory is in the same directory as groundcontrol. QGround control will look for mavlink library in ../mavlink
+1) Clone the MAVLINK repository : `git clone git@github.com:pixhawk/mavlink.git`. **NOTE:** Make sure that the mavlink directory is in the same directory as groundcontrol. QGround control will look for mavlink library in ../mavlink
 
 Build QGroundControl
 --------------------
@@ -35,13 +46,28 @@ Build QGroundControl
 Linux 
 =====
 
-**********************************************************************************************
-* PLEASE NOTE: YOU NEED TO DOWNLOAD THE MAVLINK LIBRARY IN ORDER TO COMPILE THIS APPLICATION *
-**********************************************************************************************
-
 
 To build on Linux:
-<instructions to be written>
+
+sudo apt-get install phonon libqt4-dev libqt4-phonon-dev \
+libqt4-phonon libphonon-dev libphonon4 phonon-backend-gstreamer \
+qt-creator libsdl1.2-dev libflite1 flite1-dev
+
+cd directory
+
+git clone git@github.com:pixhawk/mavlink.git
+git clone git@github.com:pixhawk/qgroundcontrol.git
+
+Ubuntu Application Menu -> Development -> Qt Creator
+
+QtCreator Menu File -> Open File or Project..
+
+Open directory/qgroundcontrol/qgroundcontrol.pro
+
+Hit the green play button to compile and launch it
+
+Done.
+
 
 Windows
 =======

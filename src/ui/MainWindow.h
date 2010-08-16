@@ -129,6 +129,10 @@ protected:
     void loadWidgets();
     void connectActions();
     void clearView();
+    void buildWidgets();
+    void connectWidgets();
+    void arrangeCenterStack();
+    void configureWindowName();
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
@@ -178,6 +182,7 @@ protected:
 
 private:
     Ui::MainWindow ui;
+
 };
 
 #endif /* _MAINWINDOW_H_ */

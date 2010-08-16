@@ -100,6 +100,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
 
     xCenterPos = vwidth/2.0f;
     yCenterPos = vheight/2.0f + topMargin - bottomMargin;
+    this->setVisible(false);
 }
 
 void HSIDisplay::paintEvent(QPaintEvent * event)

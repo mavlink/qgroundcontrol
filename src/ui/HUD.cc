@@ -153,6 +153,8 @@ HUD::HUD(int width, int height, QWidget* parent)
     // Connect with UAS
     UASManager* manager = UASManager::instance();
     connect(manager, SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
+    this->setVisible(false);
 }
 
 HUD::~HUD()

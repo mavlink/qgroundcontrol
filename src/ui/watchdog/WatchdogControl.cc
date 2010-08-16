@@ -24,6 +24,8 @@ WatchdogControl::WatchdogControl(QWidget *parent) :
     ui->mainWidget->setLayout(listLayout);
 
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
+
+    this->setVisible(false);
 }
 
 WatchdogControl::~WatchdogControl()

@@ -57,6 +57,8 @@ ObjectDetectionView::ObjectDetectionView(QString folder, QWidget *parent) :
     letterTimer.start(1000);
     connect(&letterTimer, SIGNAL(timeout()), this, SLOT(decreaseLetterTime()));
     connect(m_ui->clearButton, SIGNAL(clicked()), this, SLOT(clearLists()));
+
+    this->setVisible(false);
 }
 
 ObjectDetectionView::~ObjectDetectionView()
