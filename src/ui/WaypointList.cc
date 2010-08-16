@@ -91,11 +91,6 @@ WaypointList::~WaypointList()
     delete m_ui;
 }
 
-void WaypointList::updateStatusLabel(const QString &string)
-{
-    m_ui->statusLabel->setText(string);
-}
-
 void WaypointList::updateLocalPosition(UASInterface* uas, double x, double y, double z, quint64 usec)
 {
     Q_UNUSED(uas);
@@ -129,106 +124,21 @@ void WaypointList::setUAS(UASInterface* uas)
     }
 }
 
-void WaypointList::waypointReached(quint16 waypointId)
-{
-    if (this->uas)
-    {
-        updateStatusLabel(QString("Waypoint %1 reached.").arg(waypointId));
-    }
-}
-
-void WaypointList::changeCurrentWaypoint(quint16 seq)
-{
-    if (this->uas)
-    {
-        uas->getWaypointManager().setCurrentWaypoint(seq);
-    }
-}
-
-void WaypointList::currentWaypointChanged(quint16 seq)
-{
-    if (this->uas)
-    {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
-
-        if (seq < waypoints.size())
-        {
-            for(int i = 0; i < waypoints.size(); i++)
-            {
-                WaypointView* widget = wpViews.find(waypoints[i]).value();
-
-                if (waypoints[i]->getId() == seq)
-                {
-                    widget->setCurrent(true);
-                }
-                else
-                {
-                    widget->setCurrent(false);
-                }
-            }
-        }
-    }
-}
-
-void WaypointList::waypointListChanged()
-{
-    if (this->uas)
-    {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
-
-        // first remove all views of non existing waypoints
-        if (!wpViews.empty())
-        {
-            QMapIterator<Waypoint*,WaypointView*> viewIt(wpViews);
-            viewIt.toFront();
-            while(viewIt.hasNext())
-            {
-                viewIt.next();
-                Waypoint *cur = viewIt.key();
-                int i;
-                for (i = 0; i < waypoints.size(); i++)
-                {
-                    if (waypoints[i] == cur)
-                    {
-                        break;
-                    }
-                }
-                if (i == waypoints.size())
-                {
-                    WaypointView* widget = wpViews.find(cur).value();
-                    widget->hide();
-                    listLayout->removeWidget(widget);
-                    wpViews.remove(cur);
-                }
-            }
-        }
-
-        for(int i = 0; i < waypoints.size(); i++)
-        {
-            Waypoint *wp = waypoints[i];
-            if (!wpViews.contains(wp))
-            {
-                WaypointView* wpview = new WaypointView(wp, this);
-                wpViews.insert(wp, wpview);
-                connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
-                connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
-                connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
-                connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
-                connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
-            }
-
-            WaypointView *wpv = wpViews.value(wp);
-            wpv->updateValues();    // update the values of the ui elements in the view
-            listLayout->addWidget(wpv);
-        }
-    }
-}
-
-void WaypointList::read()
+void WaypointList::saveWaypoints()
 {
     if (uas)
     {
-        uas->getWaypointManager().readWaypoints();
+        QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./waypoints.txt", tr("Waypoint File (*.txt)"));
+        uas->getWaypointManager().localSaveWaypoints(fileName);
+    }
+}
+
+void WaypointList::loadWaypoints()
+{
+    if (uas)
+    {
+        QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
+        uas->getWaypointManager().localLoadWaypoints(fileName);
     }
 }
 
@@ -240,9 +150,16 @@ void WaypointList::transmit()
     }
 }
 
+void WaypointList::read()
+{
+    if (uas)
+    {
+        uas->getWaypointManager().readWaypoints();
+    }
+}
+
 void WaypointList::add()
 {
-    // Only add waypoints if UAS is present
     if (uas)
     {
         const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
@@ -275,6 +192,99 @@ void WaypointList::addCurrentPositonWaypoint()
         {
             Waypoint *wp = new Waypoint(0, (qRound(mavX*100))/100., (qRound(mavY*100))/100., (qRound(mavZ*100))/100., (qRound(mavYaw*100))/100., true, true, 0.15, 2000);
             uas->getWaypointManager().localAddWaypoint(wp);
+        }
+    }
+}
+
+void WaypointList::updateStatusLabel(const QString &string)
+{
+    m_ui->statusLabel->setText(string);
+}
+
+void WaypointList::changeCurrentWaypoint(quint16 seq)
+{
+    if (uas)
+    {
+        uas->getWaypointManager().setCurrentWaypoint(seq);
+    }
+}
+
+void WaypointList::currentWaypointChanged(quint16 seq)
+{
+    if (uas)
+    {
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+
+        if (seq < waypoints.size())
+        {
+            for(int i = 0; i < waypoints.size(); i++)
+            {
+                WaypointView* widget = wpViews.find(waypoints[i]).value();
+
+                if (waypoints[i]->getId() == seq)
+                {
+                    widget->setCurrent(true);
+                }
+                else
+                {
+                    widget->setCurrent(false);
+                }
+            }
+        }
+    }
+}
+
+void WaypointList::waypointListChanged()
+{
+    if (uas)
+    {
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+
+        // first remove all views of non existing waypoints
+        if (!wpViews.empty())
+        {
+            QMapIterator<Waypoint*,WaypointView*> viewIt(wpViews);
+            viewIt.toFront();
+            while(viewIt.hasNext())
+            {
+                viewIt.next();
+                Waypoint *cur = viewIt.key();
+                int i;
+                for (i = 0; i < waypoints.size(); i++)
+                {
+                    if (waypoints[i] == cur)
+                    {
+                        break;
+                    }
+                }
+                if (i == waypoints.size())
+                {
+                    WaypointView* widget = wpViews.find(cur).value();
+                    widget->hide();
+                    listLayout->removeWidget(widget);
+                    wpViews.remove(cur);
+                }
+            }
+        }
+
+        // then add/update the views for each waypoint in the list
+        for(int i = 0; i < waypoints.size(); i++)
+        {
+            Waypoint *wp = waypoints[i];
+            if (!wpViews.contains(wp))
+            {
+                WaypointView* wpview = new WaypointView(wp, this);
+                wpViews.insert(wp, wpview);
+                connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
+                connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
+                connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
+                connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
+                connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
+            }
+
+            WaypointView *wpv = wpViews.value(wp);
+            wpv->updateValues();    // update the values of the ui elements in the view
+            listLayout->addWidget(wpv);
         }
     }
 }
@@ -339,24 +349,6 @@ void WaypointList::changeEvent(QEvent *e)
         break;
     default:
         break;
-    }
-}
-
-void WaypointList::saveWaypoints()
-{
-    if (uas)
-    {
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./waypoints.txt", tr("Waypoint File (*.txt)"));
-        uas->getWaypointManager().localSaveWaypoints(fileName);
-    }
-}
-
-void WaypointList::loadWaypoints()
-{
-    if (uas)
-    {
-        QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
-        uas->getWaypointManager().localLoadWaypoints(fileName);
     }
 }
 
