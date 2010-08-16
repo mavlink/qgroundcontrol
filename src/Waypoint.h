@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 
 #include <QObject>
 #include <QString>
+#include <QTextStream>
 
 class Waypoint : public QObject
 {
@@ -53,6 +54,10 @@ public:
     bool getCurrent() const { return current; }
     float getOrbit() const { return orbit; }
     float getHoldTime() const { return holdTime; }
+
+    void save(QTextStream &saveStream);
+    bool load(QTextStream &loadStream);
+
 
 private:
     quint16 id;
