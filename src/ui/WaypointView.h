@@ -57,6 +57,7 @@ public slots:
     void remove();
     void changedAutoContinue(int);
     void changedCurrent(int);
+    void updateValues(void);
 
     void setYaw(int);   //hidden degree to radian conversion
 

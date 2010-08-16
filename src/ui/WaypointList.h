@@ -55,7 +55,6 @@ class WaypointList : public QWidget {
 
 public slots:
     void setUAS(UASInterface* uas);
-    void redrawList();
 
     //UI Buttons
     void saveWaypoints();
@@ -73,23 +72,18 @@ public slots:
     void updateStatusLabel(const QString &string);
 
     void changeCurrentWaypoint(quint16 seq);    ///< The user wants to change the current waypoint
-    void currentWaypointChanged(quint16 seq);   ///< The waypointplanner changed the current waypoint
-    void setWaypoint(quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current, double orbit, int holdTime);
-    void addWaypoint(Waypoint* wp);
+    void currentWaypointChanged(quint16 seq);   ///< The waypoint planner changed the current waypoint
+    void waypointListChanged(void);             ///< The waypoint manager informs that the waypoint list was changed
+
     void removeWaypoint(Waypoint* wp);
     void waypointReached(quint16 waypointId);
     void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
     void updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
 
-signals:
-    void sendWaypoints();
-    void requestWaypoints();
-    void clearWaypointList();
-    void setCurrent(quint16);
-
 protected:
     virtual void changeEvent(QEvent *e);
 
+protected:
     QMap<Waypoint*, WaypointView*> wpViews;
     QVBoxLayout* listLayout;
     UASInterface* uas;
