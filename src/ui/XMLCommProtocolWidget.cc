@@ -24,6 +24,8 @@ XMLCommProtocolWidget::XMLCommProtocolWidget(QWidget *parent) :
     connect(m_ui->selectOutputButton, SIGNAL(clicked()), this, SLOT(selectOutputDirectory()));
     connect(m_ui->generateButton, SIGNAL(clicked()), this, SLOT(generate()));
     connect(m_ui->saveButton, SIGNAL(clicked()), this, SLOT(save()));
+
+    this->setVisible(false);
 }
 
 void XMLCommProtocolWidget::selectXMLFile()

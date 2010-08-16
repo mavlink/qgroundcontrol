@@ -107,6 +107,8 @@ MapWidget::MapWidget(QWidget *parent) :
     mc->setZoom(3);
 
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+
+    this->setVisible(false);
 }
 
 MapWidget::~MapWidget()

@@ -45,11 +45,9 @@ INCLUDEPATH += . \
     $$BASEDIR/../mavlink/contrib/slugs/include \
     $$BASEDIR/../mavlink/include
 
-
-   # ../mavlink/include \
-    #MAVLink/include \
-    #mavlink/include
-
+# ../mavlink/include \
+# MAVLink/include \
+# mavlink/include
 # Input
 FORMS += src/ui/MainWindow.ui \
     src/ui/CommSettings.ui \
@@ -73,7 +71,9 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCSensorSettingsWidget.ui \
     src/ui/watchdog/WatchdogControl.ui \
     src/ui/watchdog/WatchdogProcessView.ui \
-    src/ui/watchdog/WatchdogView.ui
+    src/ui/watchdog/WatchdogView.ui \
+    src/ui/QGCFirmwareUpdate.ui \
+    src/ui/QGCPxImuFirmwareUpdate.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -147,7 +147,9 @@ HEADERS += src/MG.h \
     src/ui/watchdog/WatchdogView.h \
     src/uas/UASWaypointManager.h \
     src/ui/HSIDisplay.h \
-    src/QGC.h
+    src/QGC.h \
+    src/ui/QGCFirmwareUpdate.h \
+    src/ui/QGCPxImuFirmwareUpdate.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -203,5 +205,7 @@ SOURCES += src/main.cc \
     src/ui/watchdog/WatchdogView.cc \
     src/uas/UASWaypointManager.cc \
     src/ui/HSIDisplay.cc \
-    src/QGC.cc
+    src/QGC.cc \
+    src/ui/QGCFirmwareUpdate.cc \
+    src/ui/QGCPxImuFirmwareUpdate.cc
 RESOURCES = mavground.qrc

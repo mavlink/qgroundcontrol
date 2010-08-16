@@ -75,6 +75,8 @@ UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
     updateTimer->start(50);
 
+    this->setVisible(false);
+
 }
 
 UASInfoWidget::~UASInfoWidget()

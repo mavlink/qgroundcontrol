@@ -82,6 +82,8 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
 
     // STATUS LABEL
     updateStatusLabel("");
+
+    this->setVisible(false);
 }
 
 WaypointList::~WaypointList()
