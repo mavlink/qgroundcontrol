@@ -165,7 +165,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
 {
     Q_UNUSED(uas);
     // Reference to item in tree
-    QTreeWidgetItem* parameterItem;
+    QTreeWidgetItem* parameterItem = NULL;
 
     // Get component
     if (!components->contains(component))
@@ -405,7 +405,7 @@ void QGCParamWidget::loadParameters()
 
                         changedValues.value(wpParams.at(1).toInt())->insert(wpParams.at(2), (float)wpParams.at(3).toDouble());
 
-                        qDebug() << "MARKING COMP" << wpParams.at(1).toInt() << "PARAM" << wpParams.at(2) << "VALUE" << (float)wpParams.at(3).toDouble() << "AS CHANGED";
+                        //qDebug() << "MARKING COMP" << wpParams.at(1).toInt() << "PARAM" << wpParams.at(2) << "VALUE" << (float)wpParams.at(3).toDouble() << "AS CHANGED";
 
                         // Mark in UI
 

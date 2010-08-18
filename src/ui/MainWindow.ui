@@ -35,7 +35,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -75,13 +75,23 @@
     <addaction name="actionSettingsView"/>
     <addaction name="separator"/>
     <addaction name="actionShow_MAVLink_view"/>
+    <addaction name="actionShow_data_analysis_view"/>
     <addaction name="actionShow_full_view"/>
     <addaction name="actionStyleConfig"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionOnline_documentation"/>
+    <addaction name="actionProject_Roadmap"/>
+    <addaction name="actionCredits_Developers"/>
    </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
    <addaction name="menuUnmanned_System"/>
    <addaction name="menuWindow"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -261,6 +271,42 @@
    </property>
    <property name="text">
     <string>Show MAVLink view</string>
+   </property>
+  </action>
+  <action name="actionOnline_documentation">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Online documentation</string>
+   </property>
+  </action>
+  <action name="actionShow_data_analysis_view">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Show data analysis view</string>
+   </property>
+  </action>
+  <action name="actionProject_Roadmap">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Project Roadmap</string>
+   </property>
+  </action>
+  <action name="actionCredits_Developers">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Credits / Developers</string>
    </property>
   </action>
  </widget>

@@ -99,7 +99,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     }
     else if (dynamic_cast<UDPLink*>(link) != 0)
     {
-        ui.linkGroupBox->setTitle(tr("udp link"));
+        ui.linkGroupBox->setTitle(tr("UDP Link"));
     }
     else
     {

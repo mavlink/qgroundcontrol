@@ -2,9 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 QGROUNDCONTROL/PIXHAWK PROJECT
-<http://www.qgroundcontrol.org>
-<http://pixhawk.ethz.ch>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -140,15 +138,18 @@ void MainWindow::buildWidgets()
   headDown1   = new HDDisplay(acceptList, this);
   headDown2   = new HDDisplay(acceptList2, this);
   joystick    = new JoystickInput();
+  dataplot    = new QGCDataPlot2D();
 }
 
-void MainWindow::connectWidgets(){
+void MainWindow::connectWidgets()
+{
   connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), linechart, SLOT(addSystem(UASInterface*)));
   connect(UASManager::instance(), SIGNAL(activeUASSet(int)), linechart, SLOT(selectSystem(int)));
   connect(mavlink, SIGNAL(receiveLossChanged(int, float)), info, SLOT(updateSendLoss(int, float)));
 }
 
-void MainWindow::arrangeCenterStack(){
+void MainWindow::arrangeCenterStack()
+{
 
   centerStack = new QStackedWidget(this);
 
@@ -156,11 +157,13 @@ void MainWindow::arrangeCenterStack(){
   centerStack->addWidget(protocol);
   centerStack->addWidget(map);
   centerStack->addWidget(hud);
+  centerStack->addWidget(dataplot);
 
   setCentralWidget(centerStack);
 }
 
-void MainWindow::configureWindowName(){
+void MainWindow::configureWindowName()
+{
   QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
   QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
   bool prevAddr = false;
@@ -245,11 +248,14 @@ void MainWindow::reloadStylesheet()
     {
         styleSheet = new QFile(":/images/style-mission.css");
     }
-    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
+    {
         QString style = QString(styleSheet->readAll());
         style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "/images/");
         qApp->setStyleSheet(style);
-    } else {
+    }
+    else
+    {
         qDebug() << "Style not set:" << styleSheet->fileName() << "opened: " << styleSheet->isOpen();
     }
     delete styleSheet;
@@ -292,10 +298,57 @@ void MainWindow::connectActions()
     connect(ui.actionSettingsView, SIGNAL(triggered()), this, SLOT(loadSettingsView()));
     connect(ui.actionShow_full_view, SIGNAL(triggered()), this, SLOT(loadAllView()));
     connect(ui.actionShow_MAVLink_view, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
+    connect(ui.actionShow_data_analysis_view, SIGNAL(triggered()), this, SLOT(loadDataView()));
     connect(ui.actionStyleConfig, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
+
+    connect(ui.actionOnline_documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
+    connect(ui.actionCredits_Developers, SIGNAL(triggered()), this, SLOT(showCredits()));
+    connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
 
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
+}
+
+void MainWindow::showHelp()
+{
+    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/user_guide")))
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Could not open help in browser");
+        msgBox.setInformativeText("To get to the online help, please open http://qgroundcontrol.org/user_guide in a browser.");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
+    }
+}
+
+void MainWindow::showCredits()
+{
+    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/credits")))
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Could not open credits in browser");
+        msgBox.setInformativeText("To get to the online help, please open http://qgroundcontrol.org/credits in a browser.");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
+    }
+}
+
+void MainWindow::showRoadMap()
+{
+    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/roadmap")))
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("Could not open roadmap in browser");
+        msgBox.setInformativeText("To get to the online help, please open http://qgroundcontrol.org/roadmap in a browser.");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
+    }
 }
 
 void MainWindow::configure()
@@ -483,6 +536,12 @@ void MainWindow::loadPixhawkView()
 
 
     this->show();
+}
+
+void MainWindow::loadDataView()
+{
+    clearView();
+    centerStack->setCurrentWidget(dataplot);
 }
 
 void MainWindow::loadPilotView()

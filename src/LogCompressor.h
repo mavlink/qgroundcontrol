@@ -6,10 +6,17 @@
 class LogCompressor : public QThread
 {
 public:
-    LogCompressor(QString logFileName, int uasid = 0);
+    LogCompressor(QString logFileName, QString outFileName="", int uasid = 0);
+    bool isFinished();
+    int getDataLines();
+    int getCurrentLine();
 protected:
     void run();
     QString logFileName;
+    QString outFileName;
+    bool running;
+    int currentDataLine;
+    int dataLines;
     int uasid;
 };
 
