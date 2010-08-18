@@ -31,6 +31,7 @@ This file is part of the PIXHAWK project
  */
 
 #include "Waypoint.h"
+#include <QStringList>
 
 Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _autocontinue, bool _current, float _orbit, int _holdTime)
 : id(_id),
@@ -48,6 +49,30 @@ Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _
 Waypoint::~Waypoint()
 {
 
+}
+
+void Waypoint::save(QTextStream &saveStream)
+{
+    saveStream << "\t" << this->getId() << "\t" << this->getX() << "\t" << this->getY()  << "\t" << this->getZ()  << "\t" << this->getYaw()  << "\t" << this->getAutoContinue() << "\t" << this->getCurrent() << "\t" << this->getOrbit() << "\t" << this->getHoldTime() << "\n";
+}
+
+bool Waypoint::load(QTextStream &loadStream)
+{
+    const QStringList &wpParams = loadStream.readLine().split("\t");
+    if (wpParams.size() == 10)
+    {
+        this->id = wpParams[1].toInt();
+        this->x = wpParams[2].toDouble();
+        this->y = wpParams[3].toDouble();
+        this->z = wpParams[4].toDouble();
+        this->yaw = wpParams[5].toDouble();
+        this->autocontinue = (wpParams[6].toInt() == 1 ? true : false);
+        this->current = (wpParams[7].toInt() == 1 ? true : false);
+        this->orbit = wpParams[8].toDouble();
+        this->holdTime = wpParams[9].toInt();
+        return true;
+    }
+    return false;
 }
 
 void Waypoint::setId(quint16 id)
