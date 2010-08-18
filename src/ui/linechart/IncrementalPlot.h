@@ -40,11 +40,11 @@ public:
     virtual ~IncrementalPlot();
 
     /** @brief Get color map of this plot */
-    QList<QColor> IncrementalPlot::getColorMap();
+    QList<QColor> getColorMap();
     /** @brief Get next color of color map */
-    QColor IncrementalPlot::getNextColor();
+    QColor getNextColor();
     /** @brief Get color for curve id */
-    QColor IncrementalPlot::getColorForCurve(QString id);
+    QColor getColorForCurve(QString id);
 
 public slots:
     void appendData(QString key, double x, double y);
