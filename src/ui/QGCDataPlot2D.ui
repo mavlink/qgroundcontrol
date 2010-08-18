@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>736</width>
+    <width>807</width>
     <height>308</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="2,10,2,0,0,0,0,0,0,0,0,0">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="2,10,2,0,0,0,0,0,0,0,0,0,0">
    <item row="0" column="0" colspan="2">
     <widget class="QLabel" name="label_2">
      <property name="text">
@@ -43,24 +43,74 @@
      </item>
      <item>
       <property name="text">
-       <string>Dots</string>
+       <string>Only crosses</string>
       </property>
      </item>
      <item>
       <property name="text">
-       <string>Lines</string>
+       <string>Only circles</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Only dots</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Lines and crosses</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Lines and circles</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Lines and dots</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dotted lines and crosses</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dotted lines and circles</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dotted lines and dots</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dashed lines and crosses</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dashed lines and circles</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Dashed lines and dots</string>
       </property>
      </item>
     </widget>
    </item>
-   <item row="0" column="8">
+   <item row="0" column="9">
     <widget class="QPushButton" name="reloadButton">
      <property name="text">
       <string>Reload</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="9">
+   <item row="0" column="10">
     <spacer name="horizontalSpacer_2">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -73,14 +123,14 @@
      </property>
     </spacer>
    </item>
-   <item row="0" column="10">
+   <item row="0" column="11">
     <widget class="QPushButton" name="savePlotButton">
      <property name="text">
       <string>Save Plot</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="12">
+   <item row="1" column="0" colspan="13">
     <widget class="QFrame" name="plotFrame">
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
@@ -123,7 +173,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="9">
+   <item row="2" column="10">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -136,21 +186,21 @@
      </property>
     </spacer>
    </item>
-   <item row="0" column="11">
+   <item row="0" column="12">
     <widget class="QPushButton" name="printButton">
      <property name="text">
       <string>Print</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="11">
+   <item row="2" column="12">
     <widget class="QPushButton" name="saveCsvButton">
      <property name="text">
       <string>Save CSV</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="8">
+   <item row="2" column="9">
     <widget class="QPushButton" name="selectFileButton">
      <property name="text">
       <string>Select file</string>
@@ -161,6 +211,13 @@
     <widget class="QCheckBox" name="symmetricCheckBox">
      <property name="text">
       <string>Symmetric</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="8">
+    <widget class="QCheckBox" name="legendCheckBox">
+     <property name="text">
+      <string>Legend</string>
      </property>
     </widget>
    </item>

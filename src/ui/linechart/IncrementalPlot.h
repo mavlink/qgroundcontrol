@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <qwt_array.h>
 #include <qwt_plot.h>
+#include <qwt_legend.h>
 #include <QMap>
 #include "ScrollZoomer.h"
 
@@ -38,12 +39,6 @@ public:
     IncrementalPlot(QWidget *parent = NULL);
     virtual ~IncrementalPlot();
 
-    void appendData(QString key, double x, double y);
-    void appendData(QString key, double *x, double *y, int size);
-
-    void resetScaling();
-    void removeData();
-
     /** @brief Get color map of this plot */
     QList<QColor> IncrementalPlot::getColorMap();
     /** @brief Get next color of color map */
@@ -51,10 +46,22 @@ public:
     /** @brief Get color for curve id */
     QColor IncrementalPlot::getColorForCurve(QString id);
 
+public slots:
+    void appendData(QString key, double x, double y);
+    void appendData(QString key, double *x, double *y, int size);
+
+    void resetScaling();
+    void removeData();
+    /** @brief Show the plot legend */
+    void showLegend(bool show);
+    /** @brief Set new plot style */
+    void setStyleText(QString style);
+
 protected:
     QList<QColor> colors;
     int nextColor;
     ScrollZoomer* zoomer;
+    QwtLegend* legend;
     double xmin;
     double xmax;
     double ymin;

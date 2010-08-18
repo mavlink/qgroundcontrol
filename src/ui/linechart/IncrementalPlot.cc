@@ -62,6 +62,7 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
 
     setFrameStyle(QFrame::NoFrame);
     setLineWidth(0);
+    setStyleText("solid crosses");
     setCanvasLineWidth(2);
 
     plotLayout()->setAlignCanvasToScales(true);
@@ -84,6 +85,7 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
     zoomer->setRubberBandPen(QPen(Qt::red, 2, Qt::DotLine));
     zoomer->setTrackerPen(QPen(Qt::red));
     //zoomer->setZoomBase(QwtDoubleRect());
+    legend = NULL;
 
     colors = QList<QColor>();
     nextColor = 0;
@@ -115,6 +117,75 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
 IncrementalPlot::~IncrementalPlot()
 {
 
+}
+
+void IncrementalPlot::showLegend(bool show)
+{
+    if (show)
+    {
+        if (legend == NULL)
+        {
+            legend = new QwtLegend;
+            legend->setFrameStyle(QFrame::Box);
+        }
+        insertLegend(legend, QwtPlot::RightLegend);
+    }
+    else
+    {
+        delete legend;
+        legend = NULL;
+    }
+    replot();
+}
+
+/**
+ * Set datapoint and line style. This interface is intented
+ * to be directly connected to the UI and allows to parse
+ * human-readable, textual descriptions into plot specs.
+ *
+ * Data points: Either "circles", "crosses" or the default "dots"
+ * Lines: Either "dotted", ("solid"/"line") or no lines if not used
+ *
+ * No special formatting is needed, as long as the keywords are contained
+ * in the string. Lower/uppercase is ignored as well.
+ *
+ * @param style Formatting string for line/data point style
+ */
+void IncrementalPlot::setStyleText(QString style)
+{
+    foreach (QwtPlotCurve* curve, d_curve)
+    {
+        // Style of datapoints
+        if (style.toLower().contains("circles"))
+        {
+            curve->setSymbol(QwtSymbol(QwtSymbol::Ellipse,
+                                       QBrush(curve->pen().color()), curve->pen(), QSize(5, 5)) );
+        }
+        else if (style.toLower().contains("crosses"))
+        {
+            curve->setSymbol(QwtSymbol(QwtSymbol::XCross,
+                                       QBrush(curve->pen().color()), curve->pen(), QSize(5, 5)) );
+        }
+        else // Always show dots (style.toLower().contains("dots"))
+        {
+            curve->setSymbol(QwtSymbol(QwtSymbol::Rect,
+                                       QBrush(curve->pen().color()), curve->pen(), QSize(1, 1)) );
+        }
+
+        // Style of lines
+        if (style.toLower().contains("dotted"))
+        {
+            curve->setStyle(QwtPlotCurve::Dots);
+        }
+        else if (style.toLower().contains("line") || style.toLower().contains("solid"))
+        {
+            curve->setStyle(QwtPlotCurve::Lines);
+        }
+        else
+        {
+            curve->setStyle(QwtPlotCurve::NoCurve);
+        }
+    }
 }
 
 void IncrementalPlot::resetScaling()
@@ -233,11 +304,11 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
 
         canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, false);
         // FIXME Check if here all curves should be drawn
-//        QwtPlotCurve* plotCurve;
-//        foreach(plotCurve, d_curve)
-//        {
-//            plotCurve->draw(0, curve->dataSize()-1);
-//        }
+        //        QwtPlotCurve* plotCurve;
+        //        foreach(plotCurve, d_curve)
+        //        {
+        //            plotCurve->draw(0, curve->dataSize()-1);
+        //        }
 
         curve->draw(curve->dataSize() - size, curve->dataSize() - 1);
         canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, cacheMode);
