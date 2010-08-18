@@ -10,17 +10,28 @@
 #include <QMutex>
 #include <QDebug>
 #include <QMessageBox>
+#include <QTimer>
+#include <QQueue>
+#include <QByteArray>
+#include <QObject>
 
 #include "LinkInterface.h"
 #include "LinkManager.h"
 #include "MG.h"
+#include "mavlink.h"
+#include "mavlink_types.h"
+#include "configuration.h"
 
 #include "errno.h"
 #include "OpalApi.h"
+#include "string.h"
 
 class OpalLink : public LinkInterface
 {
     Q_OBJECT
+
+public:
+    OpalLink();
     /* Connection management */
 
     int getId();
@@ -49,6 +60,8 @@ class OpalLink : public LinkInterface
 
     qint64 bytesAvailable();
 
+    void run();
+
 public slots:
 
 
@@ -57,9 +70,13 @@ public slots:
 
     void readBytes(char *bytes, qint64 maxLength);
 
+    void heartbeat();
 
-public:
-    OpalLink();
+protected slots:
+
+    void receiveMessage(mavlink_message_t message);
+
+
 
 protected:
     QString name;
@@ -75,10 +92,22 @@ protected:
     quint64 connectionStartTime;
 
     QMutex statisticsMutex;
+    QMutex receiveDataMutex;
     QString lastErrorMsg;
     void setLastErrorMsg();
 
     void setName(QString name);
+
+    QTimer* heartbeatTimer;    ///< Timer to emit heartbeats
+    int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
+    bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
+    QQueue<QByteArray>* receiveBuffer;
+    QByteArray* sendBuffer;
+
+    const int systemID;
+    const int componentID;
+
+
 };
 
 #endif // OPALLINK_H
