@@ -134,7 +134,8 @@ d_curve(NULL)
     setCanvasBackground(QColor(40, 40, 40));
 
     // Enable zooming
-    Zoomer *zoomer = new Zoomer(canvas());
+    //zoomer = new Zoomer(canvas());
+    zoomer = new ScrollZoomer(canvas());
     zoomer->setRubberBandPen(QPen(Qt::blue, 2, Qt::DotLine));
     zoomer->setTrackerPen(QPen(Qt::blue));
 
@@ -581,16 +582,23 @@ void LinechartPlot::paintRealtime()
     {
         // Update plot window value to new max time if the last time was also the max time
         windowLock.lock();
-        if (automaticScrollActive) {
-            if (MG::TIME::getGroundTimeNow() > maxTime && abs(MG::TIME::getGroundTimeNow() - maxTime) < 5000000)
-            {
-                plotPosition = MG::TIME::getGroundTimeNow();
-            }
-            else
-            {
+        if (automaticScrollActive)
+        {
+
+            // FIXME Check, but commenting this out should have been
+            // beneficial (does only add complexity)
+//            if (MG::TIME::getGroundTimeNow() > maxTime && abs(MG::TIME::getGroundTimeNow() - maxTime) < 5000000)
+//            {
+//                plotPosition = MG::TIME::getGroundTimeNow();
+//            }
+//            else
+//            {
                 plotPosition = maxTime;// + lastMaxTimeAdded.msec();
-            }
+//            }
             setAxisScale(QwtPlot::xBottom, plotPosition - plotInterval, plotPosition, timeScaleStep);
+
+            // FIXME Last fix for scroll zoomer is here
+            //setAxisScale(QwtPlot::yLeft, minValue + minValue * 0.05, maxValue + maxValue * 0.05f, (maxValue - minValue) / 10.0);
             /* Notify about change. Even if the window position was not changed
          * itself, the relative position of the window to the interval must
          * have changed, as the interval likely increased in length */
@@ -618,8 +626,17 @@ void LinechartPlot::paintRealtime()
         canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, directPaint);
 #endif
 
+        // Only set current view as zoombase if zoomer is not active
+        // else we could not zoom out any more
 
-        replot();
+        if(zoomer->zoomStack().size() < 2)
+        {
+            zoomer->setZoomBase(true);
+        }
+        else
+        {
+            replot();
+        }
 
 #ifndef _WIN32
         canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, oldDirectPaint);
@@ -726,10 +743,11 @@ void TimeSeriesData::append(quint64 ms, double value)
 {
     dataMutex.lock();
     // Pre- allocate new space
+    // FIXME Check this for validity
     if(static_cast<quint64>(size()) < (count + 100))
     {
-        this->ms.resize(size() + 1000);
-        this->value.resize(size() + 1000);
+        this->ms.resize(size() + 10000);
+        this->value.resize(size() + 10000);
     }
     this->ms[count] = ms;
     this->value[count] = value;
@@ -779,16 +797,16 @@ void TimeSeriesData::append(quint64 ms, double value)
     if(maxInterval > 0)
     { // maxInterval = 0 means infinite
 
-        if(interval >= maxInterval && !this->ms.isEmpty() && !this->value.isEmpty())
+        if(interval > maxInterval && !this->ms.isEmpty() && !this->value.isEmpty())
         {
             // The time at which this time series should be cut
-            quint64 minTime = stopTime - maxInterval;
+            double minTime = stopTime - maxInterval;
             // Delete elements from the start of the list as long the time
             // value of this elements is before the cut time
             while(this->ms.first() < minTime)
             {
-                this->ms.remove(0);
-                this->value.remove(0);
+                this->ms.pop_front();
+                this->value.pop_front();
             }
         }
     }

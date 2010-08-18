@@ -54,42 +54,44 @@ class WaypointList : public QWidget {
     virtual ~WaypointList();
 
 public slots:
-    void setUAS(UASInterface* uas);
-    void redrawList();
+    void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
+    void updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
 
-    //UI Buttons
+    void setUAS(UASInterface* uas);
+
+    //Waypoint list operations
+    /** @brief Save the local waypoint list to a file */
     void saveWaypoints();
+    /** @brief Load a waypoint list from a file */
     void loadWaypoints();    
+    /** @brief Transmit the local waypoint list to the UAS */
     void transmit();
+    /** @brief Read the remote waypoint list */
     void read();
     /** @brief Add a waypoint */
     void add();
     /** @brief Add a waypoint at the current MAV position */
     void addCurrentPositonWaypoint();
-    void moveUp(Waypoint* wp);
-    void moveDown(Waypoint* wp);
 
+    //Update events
     /** @brief sets statusLabel string */
     void updateStatusLabel(const QString &string);
+    /** @brief The user wants to change the current waypoint */
+    void changeCurrentWaypoint(quint16 seq);
+    /** @brief The waypoint planner changed the current waypoint */
+    void currentWaypointChanged(quint16 seq);
+    /** @brief The waypoint manager informs that the waypoint list was changed */
+    void waypointListChanged(void);
 
-    void changeCurrentWaypoint(quint16 seq);    ///< The user wants to change the current waypoint
-    void currentWaypointChanged(quint16 seq);   ///< The waypointplanner changed the current waypoint
-    void setWaypoint(quint16 id, double x, double y, double z, double yaw, bool autocontinue, bool current, double orbit, int holdTime);
-    void addWaypoint(Waypoint* wp);
+    // Waypoint operations
+    void moveUp(Waypoint* wp);
+    void moveDown(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
-    void waypointReached(quint16 waypointId);
-    void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
-    void updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
-
-signals:
-    void sendWaypoints();
-    void requestWaypoints();
-    void clearWaypointList();
-    void setCurrent(quint16);
 
 protected:
     virtual void changeEvent(QEvent *e);
 
+protected:
     QMap<Waypoint*, WaypointView*> wpViews;
     QVBoxLayout* listLayout;
     UASInterface* uas;

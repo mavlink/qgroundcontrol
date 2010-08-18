@@ -265,6 +265,7 @@ protected:
     QMap<QString, QwtPlotCurve*> curves;
     QMap<QString, TimeSeriesData*> data;
     QMap<QString, QwtScaleMap*> scaleMaps;
+    ScrollZoomer* zoomer;
 
     QList<QColor> colors;
     int nextColor;
