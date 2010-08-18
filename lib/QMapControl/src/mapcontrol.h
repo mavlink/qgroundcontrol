@@ -214,6 +214,14 @@ namespace qmapcontrol
          */
         void showScale ( bool show );
 
+
+        //! Displays the Lat and Lon within the widget
+        /*!
+         *
+         * @param show true if Lat and Lon should be displayed
+         */
+        void showCoord ( bool show );
+
     private:
         LayerManager* layermanager;
         QPoint screen_middle; // middle of the widget (half size)
@@ -223,9 +231,14 @@ namespace qmapcontrol
 
         QSize size; // size of the widget
 
+        QPointF currentWorldCoordinate; // updated by mouseMove
+
+        QList<double> distanceList;
+
         bool mousepressed;
         MouseMode mymousemode;
         bool scaleVisible;
+        bool cursorPosVisible;
 
         bool m_loadingFlag;
 
@@ -244,7 +257,7 @@ namespace qmapcontrol
         void mouseMoveEvent ( QMouseEvent* evnt );
 
     signals:
-        // void mouseEvent(const QMouseEvent* evnt);
+        void mouseEvent(const QMouseEvent* evnt);
 
         //! Emitted AFTER a MouseEvent occured
         /*!
@@ -255,6 +268,15 @@ namespace qmapcontrol
          * @param  coordinate the corresponding world coordinate
          */
         void mouseEventCoordinate ( const QMouseEvent* evnt, const QPointF coordinate );
+
+        //! Emitted on mouse move generating
+        /*!
+         * This signals allows to receive the mouse position in the world coordinate.
+         * It is emitted on mouseMoveEvents.
+         * setMouseTracking must be set programatically to have this method work.
+         * @param  coordinate the corresponding world coordinate
+         */
+        void mouseMoveCoordinateEvent(const QPointF coordinate);
 
         //! Emitted, after a Rectangular is dragged.
         /*!
