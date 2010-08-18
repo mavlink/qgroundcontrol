@@ -27,7 +27,7 @@
 namespace qmapcontrol
 {
     MapControl::MapControl(QSize size, MouseMode mousemode)
-        : size(size), mymousemode(mousemode), scaleVisible(false)
+        : size(size), mymousemode(mousemode), scaleVisible(false), cursorPosVisible(false)
     {
         layermanager = new LayerManager(this, size);
         screen_middle = QPoint(size.width()/2, size.height()/2);
@@ -41,6 +41,9 @@ namespace qmapcontrol
                 this, SLOT(loadingFinished()));
 
         this->setMaximumSize(size.width()+1, size.height()+1);
+
+        distanceList<<5000000<<2000000<<1000000<<1000000<<1000000<<100000<<100000<<50000<<50000<<10000<<10000<<10000<<1000<<1000<<500<<200<<100<<50<<25;
+
     }
 
     MapControl::~MapControl()
@@ -127,6 +130,8 @@ namespace qmapcontrol
     {
         QWidget::paintEvent(evnt);
         QPainter painter(this);
+        double line;
+
 
         // painter.translate(150,190);
         // painter.scale(0.5,0.5);
@@ -150,11 +155,8 @@ namespace qmapcontrol
         // draw scale
         if (scaleVisible)
         {
-            QList<double> distanceList;
-            distanceList<<5000000<<2000000<<1000000<<1000000<<1000000<<100000<<100000<<50000<<50000<<10000<<10000<<10000<<1000<<1000<<500<<200<<100<<50<<25;
             if (currentZoom() >= 0 && distanceList.size() > currentZoom())
             {
-                double line;
                 line = distanceList.at( currentZoom() ) / pow(2, 18-currentZoom() ) / 0.597164;
 
                 // draw the scale
@@ -199,12 +201,25 @@ namespace qmapcontrol
         //qt = painter.transform();
            qm = painter.combinedMatrix();
         */
-
         if (mousepressed && mymousemode == Dragging)
         {
             QRect rect = QRect(pre_click_px, current_mouse_pos);
             painter.drawRect(rect);
         }
+
+
+        // Draw the Lat and Lon if needed
+        if (cursorPosVisible) {
+          line = distanceList.at( currentZoom() ) / pow(2, 18-currentZoom() ) / 0.597164;
+
+          QString str;
+          str = QString(tr(" Lat: %1")).arg(currentWorldCoordinate.y());
+          painter.drawText(QPoint((int)line+70,size.height()-15), str);
+
+          str = QString(tr(" Lon: %1")).arg(currentWorldCoordinate.x());
+          painter.drawText(QPoint((int)line+160,size.height()-15), str);
+        }
+
         emit viewChanged(currentCoordinate(), currentZoom());
     }
 
@@ -256,7 +271,8 @@ namespace qmapcontrol
 
     void MapControl::mouseMoveEvent(QMouseEvent* evnt)
     {
-        // emit(mouseEvent(evnt));
+        emit(mouseEvent(evnt));
+
 
         /*
         // rotating
@@ -275,8 +291,13 @@ namespace qmapcontrol
         }
         // emit(mouseEventCoordinate(evnt, clickToWorldCoordinate(evnt->pos())));
 
-        update();
-        // emit(mouseEventCoordinate(evnt, clickToWorldCoordinate(evnt->pos())));
+        currentWorldCoordinate = clickToWorldCoordinate(evnt->pos());
+
+        emit(mouseMoveCoordinateEvent(currentWorldCoordinate));
+
+      update();
+
+        //emit(mouseEventCoordinate(evnt, clickToWorldCoordinate(evnt->pos())));
     }
 
     QPointF MapControl::clickToWorldCoordinate(QPoint click)
@@ -401,6 +422,11 @@ namespace qmapcontrol
     void MapControl::showScale(bool show)
     {
         scaleVisible = show;
+    }
+
+    void MapControl::showCoord(bool show)
+    {
+        cursorPosVisible = show;
     }
 
     void MapControl::resize(const QSize newSize)

@@ -60,8 +60,11 @@ protected:
     void keyPressEvent(QKeyEvent *event);
     void resizeEvent(QResizeEvent* event);
 
+
     QPushButton* followgps;
+    QPushButton* createPath;
     QLabel* gpsposition;
+
     MapControl* mc;
     int zoomLevel;
     int detailZoom; ///< Steps zoomed in further than qMapControl allows
@@ -70,12 +73,16 @@ protected:
     TileMapAdapter* osmAdapter;
     GoogleSatMapAdapter* gSatAdapter;
     Layer* osmLayer;
-    Layer* gSatLayer;
+    //Layer* gSatLayer;
 
     QMap<int, CirclePoint*> uasIcons;
     QMap<int, LineString*> uasTrails;
     UASInterface* mav;
     quint64 lastUpdate;
+
+  protected slots:
+    void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
+    void createPathButtonClicked();
 
 private:
     Ui::MapWidget *m_ui;
