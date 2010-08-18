@@ -26,6 +26,12 @@
 #include "OpalApi.h"
 #include "string.h"
 
+/*
+  Configuration info for the model
+ */
+
+#define NUM_OUTPUT_SIGNALS 6
+
 class OpalLink : public LinkInterface
 {
     Q_OBJECT
@@ -72,6 +78,8 @@ public slots:
 
     void heartbeat();
 
+    void getSignals();
+
 protected slots:
 
     void receiveMessage(mavlink_message_t message);
@@ -95,12 +103,17 @@ protected:
     QMutex receiveDataMutex;
     QString lastErrorMsg;
     void setLastErrorMsg();
+    void displayErrorMsg();
 
     void setName(QString name);
 
     QTimer* heartbeatTimer;    ///< Timer to emit heartbeats
     int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
+
+    QTimer* getSignalsTimer;
+    int getSignalsPeriod;
+
     QQueue<QByteArray>* receiveBuffer;
     QByteArray* sendBuffer;
 
