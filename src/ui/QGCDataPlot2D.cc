@@ -34,6 +34,8 @@ QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
     connect(ui->reloadButton, SIGNAL(clicked()), this, SLOT(reloadFile()));
     connect(ui->savePlotButton, SIGNAL(clicked()), this, SLOT(savePlot()));
     connect(ui->printButton, SIGNAL(clicked()), this, SLOT(print()));
+    connect(ui->legendCheckBox, SIGNAL(clicked(bool)), plot, SLOT(showLegend(bool)));
+    connect(ui->style, SIGNAL(currentIndexChanged(QString)), plot, SLOT(setStyleText(QString)));
 }
 
 void QGCDataPlot2D::reloadFile()
@@ -214,6 +216,24 @@ void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFil
     loadCsvLog(logFile->fileName(), xAxisName, yAxisFilter);
 }
 
+/**
+ * This function loads a CSV file into the plot. It tries to assign the dimension names
+ * based on the first data row and tries to guess the separator char.
+ *
+ * @param file Name of the file to open
+ * @param xAxisName Optional paramater. If given, the x axis dimension will be selected to match this string
+ * @param yAxisFilter Optional parameter. If given, only data dimension names present in the filter string will be
+ *        plotted
+ *
+ * @code
+ *
+ * QString file = "/home/user/datalog.txt"; // With header: x<tab>y<tab>z
+ * QString xAxis = "x";
+ * QString yAxis = "z";
+ *
+ * // Plotted result will be x vs z with y ignored.
+ * @endcode
+ */
 void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFilter)
 {
     if (logFile != NULL)
@@ -235,9 +255,44 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     // First line is header
     QString header = in.readLine();
-    QString separator = "\t";
 
-    qDebug() << "READING CSV:" << header;
+    bool charRead = false;
+    QString separator = "";
+    QList<QChar> sepCandidates;
+    sepCandidates << '\t';
+    sepCandidates << ',';
+    sepCandidates << ';';
+    sepCandidates << ' ';
+    sepCandidates << '~';
+    sepCandidates << '|';
+
+    // Iterate until separator is found
+    // or full header is parsed
+    for (int i = 0; i < header.length(); i++)
+    {
+        if (sepCandidates.contains(header.at(i)))
+        {
+            // Separator found
+            if (charRead)
+            {
+                separator += header[i];
+            }
+        }
+        else
+        {
+            // Char found
+            charRead = true;
+            // If the separator is not empty, this char
+            // has been read after a separator, so detection
+            // is now complete
+            if (separator != "") break;
+        }
+    }
+
+    QString out = separator;
+    out.replace("\t", "<tab>");
+    ui->filenameLabel->setText(file.split("/").last().split("\\").last()+" Separator: \""+out+"\"");
+    //qDebug() << "READING CSV:" << header;
 
     // Clear plot
     plot->removeData();
@@ -245,7 +300,7 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
     QVector<double> xValues;
     QMap<QString, QVector<double>* > yValues;
 
-    QStringList curveNames = header.split(separator);
+    QStringList curveNames = header.split(separator, QString::SkipEmptyParts);
     QString curveName;
 
     // Clear UI elements
@@ -254,73 +309,89 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     int curveNameIndex = 0;
 
-    int xValueIndex = curveNames.indexOf(xAxisName);
-    if (xValueIndex < 0 || xValueIndex > (curveNames.size() - 1)) xValueIndex = 0;
+    //int xValueIndex = curveNames.indexOf(xAxisName);
+
+    QString xAxisFilter;
+    if (xAxisName == "")
+    {
+        xAxisFilter = curveNames.first();
+    }
+    else
+    {
+        xAxisFilter = xAxisName;
+    }
 
     foreach(curveName, curveNames)
     {
-        if (curveNameIndex != xValueIndex)
+        ui->xAxis->addItem(curveName);
+        if (curveName != xAxisFilter)
         {
-            // FIXME Add check for y value filter
-            if ((ui->yAxis->text() == "") && yValues.contains(curveName))
+            if ((yAxisFilter == "") || yAxisFilter.contains(curveName))
             {
                 yValues.insert(curveName, new QVector<double>());
-                ui->xAxis->addItem(curveName);
                 // Add separator starting with second item
                 if (curveNameIndex > 0 && curveNameIndex < curveNames.size())
                 {
                     ui->yAxis->setText(ui->yAxis->text()+"|");
                 }
                 ui->yAxis->setText(ui->yAxis->text()+curveName);
+                curveNameIndex++;
             }
         }
-        curveNameIndex++;
     }
+
+    // Select current axis in UI
+    ui->xAxis->setCurrentIndex(curveNames.indexOf(xAxisFilter));
 
     // Read data
 
     double x,y;
 
-    while (!in.atEnd()) {
+    while (!in.atEnd())
+    {
         QString line = in.readLine();
 
-        QStringList values = line.split(separator);
+        QStringList values = line.split(separator, QString::SkipEmptyParts);
 
-        bool okx;
-
-        x = values.at(xValueIndex).toDouble(&okx);
-
-        if(okx)
+        foreach(curveName, curveNames)
         {
-            // Append X value
-            xValues.append(x);
-            QString yStr;
-            bool oky;
-
-            int yCount = 0;
-            foreach(yStr, values)
+            bool okx;
+            if (curveName == xAxisFilter)
             {
-                // We have already x, so only handle
-                // true y values
-                if (yCount != xValueIndex && yCount < curveNames.size())
-                {
-                    y = yStr.toDouble(&oky);
-                    // Append one of the Y values
-                    yValues.value(curveNames.at(yCount))->append(y);
-                }
+                // X  AXIS HANDLING
 
-                yCount++;
+                // Take this value as x if it is selected
+                x = values.at(curveNames.indexOf(curveName)).toDouble(&okx);
+                xValues.append(x - 1270125570000LL);
+                qDebug() << "x" << x - 1270125570000LL;
+            }
+            else
+            {
+                // Y  AXIS HANDLING
+
+                if(yAxisFilter == "" || yAxisFilter.contains(curveName))
+                {
+                    // Only append y values where a valid x value is present
+                    if (yValues.value(curveName)->size() == xValues.size() - 1)
+                    {
+                        bool oky;
+                        int curveNameIndex = curveNames.indexOf(curveName);
+                        if (values.size() > curveNameIndex)
+                        {
+                            y = values.at(curveNameIndex).toDouble(&oky);
+                            yValues.value(curveName)->append(y);
+                        }
+                    }
+                }
             }
         }
     }
 
-
-    QVector<double>* yCurve;
-    int yCurveIndex = 0;
-    foreach(yCurve, yValues)
+    // Add data array of each curve to the plot at once (fast)
+    // Iterates through all x-y curve combinations
+    for (int i = 0; i < yValues.size(); i++)
     {
-        plot->appendData(yValues.keys().at(yCurveIndex), xValues.data(), yCurve->data(), xValues.size());
-        yCurveIndex++;
+        plot->appendData(yValues.keys().at(i), xValues.data(), yValues.values().at(i)->data(), xValues.size());
     }
 }
 
@@ -339,7 +410,7 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
  *          the match of the regression.
  * @return 1 on success, 0 on failure (e.g. because of infinite slope)
  */
-int QGCDataPlot2D::linearRegression(double *x,double *y,int n,double *a,double *b,double *r)
+int QGCDataPlot2D::linearRegression(double* x,double* y,int n,double* a,double* b,double* r)
 {
     int i;
     double sumx=0,sumy=0,sumx2=0,sumy2=0,sumxy=0;
