@@ -1,12 +1,30 @@
 #include "OpalLink.h"
 
-OpalLink::OpalLink() : connectState(false)
+OpalLink::OpalLink() :
+        connectState(false),
+        heartbeatTimer(new QTimer(this)),
+        heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
+        m_heartbeatsEnabled(true),
+        receiveBuffer(new QQueue<QByteArray>()),
+        systemID(1),
+        componentID(1)
 {
+    start(QThread::LowPriority);
 
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
     this->name = tr("OpalRT link ") + QString::number(getId());
     LinkManager::instance()->add(this);
+
+    // Start heartbeat timer, emitting a heartbeat at the configured rate
+    qDebug() << "OpalLink::OpalLink:: Connect the timer";
+    QObject::connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(heartbeat()));
+    heartbeatTimer->start(1000/heartbeatRate);
+}
+
+void OpalLink::run()
+{
+    qDebug() << "OpalLink::run():: Starting the thread";
 }
 
 int OpalLink::getId()
@@ -133,5 +151,51 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
 
 void OpalLink::readBytes(char *bytes, qint64 maxLength)
 {
+
+    receiveDataMutex.lock();
+    qDebug() << "OpalLink::readBytes(): Reading a message.  size of buffer: " << receiveBuffer->count();
+    QByteArray message = receiveBuffer->dequeue();
+    if (maxLength < message.size())
+    {
+        qDebug() << "OpalLink::readBytes:: Buffer Overflow";
+
+        memcpy(bytes, message.data(), maxLength);
+    }
+    else
+    {
+        memcpy(bytes, message.data(), message.size());
+    }
+
+    emit bytesReceived(this, message);
+    receiveDataMutex.unlock();
+
+}
+
+void OpalLink::heartbeat()
+{
+
+    if (m_heartbeatsEnabled)
+    {
+        qDebug() << "OpalLink::heartbeat(): Generate a heartbeat";
+        mavlink_message_t beat;
+        mavlink_msg_heartbeat_pack(systemID, componentID,&beat, MAV_HELICOPTER, MAV_AUTOPILOT_GENERIC);
+        receiveMessage(beat);
+    }
+
+}
+
+void OpalLink::receiveMessage(mavlink_message_t message)
+{
+
+    // Create buffer
+    char buffer[MAVLINK_MAX_PACKET_LEN];
+    // Write message into buffer, prepending start sign
+    int len = mavlink_msg_to_send_buffer((uint8_t*)(buffer), &message);
+    // If link is connected
+    if (isConnected())
+    {
+        receiveBuffer->enqueue(QByteArray(buffer, len));
+        emit bytesReady(this);
+    }
 
 }
