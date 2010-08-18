@@ -1,12 +1,17 @@
 #include <QFile>
 #include <QTextStream>
 #include <QStringList>
+#include <QFileInfo>
 #include "LogCompressor.h"
 
 #include <QDebug>
 
-LogCompressor::LogCompressor(QString logFileName, int uasid) :
+LogCompressor::LogCompressor(QString logFileName, QString outFileName, int uasid) :
         logFileName(logFileName),
+        outFileName(outFileName),
+        running(true),
+        currentDataLine(0),
+        dataLines(1),
         uasid(uasid)
 {
     start();
@@ -17,12 +22,22 @@ void LogCompressor::run()
     QString separator = "\t";
     QString fileName = logFileName;
     QFile file(fileName);
+    QFile outfile(outFileName);
     QStringList* keys = new QStringList();
     QStringList* times = new QStringList();
 
     if (!file.exists()) return;
-    if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
+
+    if (outFileName != "")
+    {
+        // Check if file is writeable
+        if (!QFileInfo(outfile).isWritable())
+        {
+            return;
+        }
+    }
 
     // Find all keys
     QTextStream in(&file);
@@ -43,9 +58,9 @@ void LogCompressor::run()
         spacer += " " + separator;
     }
 
-    qDebug() << header;
+    //qDebug() << header;
 
-    qDebug() << "NOW READING TIMES";
+    //qDebug() << "NOW READING TIMES";
 
     // Find all times
     //in.reset();
@@ -62,6 +77,9 @@ void LogCompressor::run()
             times->append(time);
         }
     }
+
+    dataLines = times->length();
+
     times->sort();
 
     // Create lines
@@ -74,7 +92,10 @@ void LogCompressor::run()
     // Fill in the values for all keys
     file.reset();
     QTextStream data(&file);
+    int linecounter = 0;
     while (!data.atEnd()) {
+        linecounter++;
+        currentDataLine = linecounter;
         QString line = data.readLine();
         QStringList parts = line.split(separator);
         // Get time
@@ -100,20 +121,43 @@ void LogCompressor::run()
 
     // Add header, write out file
     file.close();
-    QFile::remove(file.fileName());
-    if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
+
+    if (outFileName == "")
+    {
+        QFile::remove(file.fileName());
+        outfile.setFileName(file.fileName());
+    }
+    if (!outfile.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
-    file.write(QString(QString("unix_timestamp") + separator + header.replace(" ", "_") + QString("\n")).toLatin1());
+    outfile.write(QString(QString("unix_timestamp") + separator + header.replace(" ", "_") + QString("\n")).toLatin1());
     //QString fileHeader = QString("unix_timestamp") + header.replace(" ", "_") + QString("\n");
 
-    // Debug output
+    // File output
     for (int i = 0; i < outLines->length(); i++)
     {
         //qDebug() << outLines->at(i);
-        file.write(QString(outLines->at(i) + "\n").toLatin1());
+        outfile.write(QString(outLines->at(i) + "\n").toLatin1());
 
     }
 
+    currentDataLine = 0;
+    dataLines = 1;
     delete keys;
     qDebug() << "Done with logfile processing";
+    running = false;
+}
+
+bool LogCompressor::isFinished()
+{
+    return !running;
+}
+
+int LogCompressor::getCurrentLine()
+{
+    return currentDataLine;
+}
+
+int LogCompressor::getDataLines()
+{
+    return dataLines;
 }
