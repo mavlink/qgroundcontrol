@@ -101,6 +101,12 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     {
         ui.linkGroupBox->setTitle(tr("UDP Link"));
     }
+#ifdef OPAL_RT
+    else if (dynamic_cast<OpalLink*>(link) != 0)
+    {
+        ui.linkGroupBox->setTitle(tr("Opal-RT Link"));
+    }
+#endif
     else
     {
         qDebug() << "Link is NOT a known link, can't open configuration window";

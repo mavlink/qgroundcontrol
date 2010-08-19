@@ -40,6 +40,10 @@ This file is part of the PIXHAWK project
 #include "ProtocolInterface.h"
 #include "ui_CommSettings.h"
 
+#ifdef OPAL_RT
+#include "OpalLink.h"
+#endif
+
 class CommConfigurationWindow : public QWidget
 {
     Q_OBJECT
