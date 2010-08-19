@@ -225,3 +225,9 @@ win32 {
     HEADERS += src/comm/OpalLink.h
     DEFINES += OPAL_RT
 }
+
+macx {
+    SOURCES += src/comm/OpalLink.cc
+    HEADERS += src/comm/OpalLink.h
+    DEFINES += OPAL_RT
+}

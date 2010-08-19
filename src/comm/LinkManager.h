@@ -44,7 +44,8 @@ This file is part of the PIXHAWK project
  * protocol instance to transport the link data into the application.
  *
  **/
-class LinkManager : public QThread {
+class LinkManager : public QObject
+{
     Q_OBJECT
 
 public:

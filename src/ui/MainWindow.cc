@@ -374,9 +374,9 @@ void MainWindow::addLink()
 
 void MainWindow::addLink(LinkInterface *link)
 {
+    LinkManager::instance()->addProtocol(link, mavlink);
     CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
     ui.menuNetwork->addAction(commWidget->getAction());
-    LinkManager::instance()->addProtocol(link, mavlink);
 
     // Special case for simulationlink
     MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);

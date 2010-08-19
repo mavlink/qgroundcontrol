@@ -86,51 +86,53 @@ void MAVLinkLightProtocol::sendMessage(LinkInterface* link, mavlink_light_messag
  * @param link The interface to read from
  * @see LinkInterface
  **/
-void MAVLinkLightProtocol::receiveBytes(LinkInterface* link)
+void MAVLinkLightProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 {
-    receiveMutex.lock();
-    // Prepare buffer
-    static const int maxlen = 4096 * 100;
-    static char buffer[maxlen];
-    qint64 bytesToRead = link->bytesAvailable();
-
-    // Get all data at once, let link read the bytes in the buffer array
-    link->readBytes(buffer, maxlen);
-
-    // Run through all bytes
-    for (int position = 0; position < bytesToRead; position++)
-    {
-        mavlink_light_message_t msg;
-        // FIXME PARSE
-        if (1 == 0/* parsing returned a message */)
-        {
-
-            int sysid = 0; // system id from message, or always null if only one MAV is supported
-            UASInterface* uas = UASManager::instance()->getUASForId(sysid);
-
-            // Check and (if necessary) create UAS object
-            if (uas == NULL)
-            {
-                ArduPilotMAV* mav = new ArduPilotMAV(this, sysid); // FIXME change to msg.sysid if this field exists
-                // Connect this robot to the UAS object
-                // it is IMPORTANT here to use the right object type,
-                // else the slot of the parent object is called (and thus the special
-                // packets never reach their goal)
-                connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                uas = mav;
-                // Make UAS aware that this link can be used to communicate with the actual robot
-                uas->addLink(link);
-                // Now add UAS to "official" list, which makes the whole application aware of it
-                UASManager::instance()->addUAS(uas);
-            }
-
-            // The packet is emitted as a whole, as it is only 255 - 261 bytes short
-            // kind of inefficient, but no issue for a groundstation pc.
-            // It buys as reentrancy for the whole code over all threads
-            emit messageReceived(link, msg);
-        }
-    }
-    receiveMutex.unlock();
+    Q_UNUSED(link);
+    Q_UNUSED(b);
+//    receiveMutex.lock();
+//    // Prepare buffer
+//    static const int maxlen = 4096 * 100;
+//    static char buffer[maxlen];
+//    qint64 bytesToRead = link->bytesAvailable();
+//
+//    // Get all data at once, let link read the bytes in the buffer array
+//    link->readBytes(buffer, maxlen);
+//
+//    // Run through all bytes
+//    for (int position = 0; position < bytesToRead; position++)
+//    {
+//        mavlink_light_message_t msg;
+//        // FIXME PARSE
+//        if (1 == 0/* parsing returned a message */)
+//        {
+//
+//            int sysid = 0; // system id from message, or always null if only one MAV is supported
+//            UASInterface* uas = UASManager::instance()->getUASForId(sysid);
+//
+//            // Check and (if necessary) create UAS object
+//            if (uas == NULL)
+//            {
+//                ArduPilotMAV* mav = new ArduPilotMAV(this, sysid); // FIXME change to msg.sysid if this field exists
+//                // Connect this robot to the UAS object
+//                // it is IMPORTANT here to use the right object type,
+//                // else the slot of the parent object is called (and thus the special
+//                // packets never reach their goal)
+//                connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+//                uas = mav;
+//                // Make UAS aware that this link can be used to communicate with the actual robot
+//                uas->addLink(link);
+//                // Now add UAS to "official" list, which makes the whole application aware of it
+//                UASManager::instance()->addUAS(uas);
+//            }
+//
+//            // The packet is emitted as a whole, as it is only 255 - 261 bytes short
+//            // kind of inefficient, but no issue for a groundstation pc.
+//            // It buys as reentrancy for the whole code over all threads
+//            emit messageReceived(link, msg);
+//        }
+//    }
+//    receiveMutex.unlock();
 }
 
 /**

@@ -42,10 +42,11 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
 }
 
 
-void OpalLink::readBytes(char *bytes, qint64 maxLength)
+void OpalLink::readBytes()
 {
-
     receiveDataMutex.lock();
+    const qint64 maxLength = 2048;
+    char bytes[maxLength];
     qDebug() << "OpalLink::readBytes(): Reading a message.  size of buffer: " << receiveBuffer->count();
     QByteArray message = receiveBuffer->dequeue();
     if (maxLength < message.size())
@@ -75,7 +76,7 @@ void OpalLink::receiveMessage(mavlink_message_t message)
     if (isConnected())
     {
         receiveBuffer->enqueue(QByteArray(buffer, len));
-        emit bytesReady(this);
+        readBytes();
     }
 
 }
@@ -95,41 +96,41 @@ void OpalLink::heartbeat()
 
 void OpalLink::getSignals()
 {
-    qDebug() <<  "OpalLink::getSignals(): Attempting to acquire signals";
-
-
-    unsigned long  timeout = 0;
-    unsigned short acqGroup = 0; //this is actually group 1 in the model
-    unsigned short allocatedSignals = NUM_OUTPUT_SIGNALS;
-    unsigned short *numSignals = new unsigned short(0);   
-    double *timestep = new double(0);
-    double values[NUM_OUTPUT_SIGNALS] = {};
-    unsigned short *lastValues = new unsigned short(false);
-    unsigned short *decimation = new unsigned short(0);
-
-    int returnVal = OpalGetSignals(timeout, acqGroup, allocatedSignals, numSignals, timestep,
-                                   values, lastValues, decimation);
-
-    if (returnVal == EOK )
-    {
-        qDebug() << "OpalLink::getSignals: Timestep=" << *timestep;// << ", Last? " << (bool)(*lastValues);
-    }
-    else if (returnVal == EAGAIN)
-    {
-        qDebug() << "OpalLink::getSignals: Data was not ready";
-    }
-    // if returnVal == EAGAIN => data just wasn't ready
-    else if (returnVal != EAGAIN)
-    {
-        getSignalsTimer->stop();
-        displayErrorMsg();
-    }
-    /* deallocate used memory */
-
-    delete timestep;
-    delete lastValues;
-    delete lastValues;
-    delete decimation;
+//    qDebug() <<  "OpalLink::getSignals(): Attempting to acquire signals";
+//
+//
+//    unsigned long  timeout = 0;
+//    unsigned short acqGroup = 0; //this is actually group 1 in the model
+//    unsigned short allocatedSignals = NUM_OUTPUT_SIGNALS;
+//    unsigned short *numSignals = new unsigned short(0);
+//    double *timestep = new double(0);
+//    double values[NUM_OUTPUT_SIGNALS] = {};
+//    unsigned short *lastValues = new unsigned short(false);
+//    unsigned short *decimation = new unsigned short(0);
+//
+//    int returnVal = OpalGetSignals(timeout, acqGroup, allocatedSignals, numSignals, timestep,
+//                                   values, lastValues, decimation);
+//
+//    if (returnVal == EOK )
+//    {
+//        qDebug() << "OpalLink::getSignals: Timestep=" << *timestep;// << ", Last? " << (bool)(*lastValues);
+//    }
+//    else if (returnVal == EAGAIN)
+//    {
+//        qDebug() << "OpalLink::getSignals: Data was not ready";
+//    }
+//    // if returnVal == EAGAIN => data just wasn't ready
+//    else if (returnVal != EAGAIN)
+//    {
+//        getSignalsTimer->stop();
+//        displayErrorMsg();
+//    }
+//    /* deallocate used memory */
+//
+//    delete timestep;
+//    delete lastValues;
+//    delete lastValues;
+//    delete decimation;
 
 }
 
@@ -172,18 +173,18 @@ bool OpalLink::connect()
     short modelState;
 
     /// \todo allow configuration of instid in window
-    if (OpalConnect(101, false, &modelState) == EOK)
-    {
+//    if (OpalConnect(101, false, &modelState) == EOK)
+//    {
         connectState = true;
         emit connected();
         heartbeatTimer->start(1000/heartbeatRate);
         getSignalsTimer->start(getSignalsPeriod);
-    }
-    else
-    {
-        connectState = false;
-        displayErrorMsg();
-    }
+//    }
+//    else
+//    {
+//        connectState = false;
+//        displayErrorMsg();
+//    }
 
     emit connected(connectState);
     return connectState;
@@ -205,11 +206,11 @@ void OpalLink::displayErrorMsg()
 
 void OpalLink::setLastErrorMsg()
 {
-    char buf[512];
-    unsigned short len;
-    OpalGetLastErrMsg(buf, sizeof(buf), &len);
-    lastErrorMsg.clear();
-    lastErrorMsg.append(buf);
+//    char buf[512];
+//    unsigned short len;
+//    OpalGetLastErrMsg(buf, sizeof(buf), &len);
+//    lastErrorMsg.clear();
+//    lastErrorMsg.append(buf);
 }
 
 

@@ -108,21 +108,14 @@ QString MAVLinkProtocol::getLogfileName()
  * @param link The interface to read from
  * @see LinkInterface
  **/
-void MAVLinkProtocol::receiveBytes(LinkInterface* link)
+void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 {
     receiveMutex.lock();
-    // Prepare buffer
-    static const int maxlen = 4096 * 100;
-    static char buffer[maxlen];
-    qint64 bytesToRead = link->bytesAvailable();
-
-    // Get all data at once, let link read the bytes in the buffer array
-    link->readBytes(buffer, maxlen);
     mavlink_message_t message;
     mavlink_status_t status;
-    for (int position = 0; position < bytesToRead; position++)
+    for (int position = 0; position < b.size(); position++)
     {
-        unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)*(buffer + position), &message, &status);
+        unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)(b.at(position)), &message, &status);
 
         if (decodeState == 1)
         {

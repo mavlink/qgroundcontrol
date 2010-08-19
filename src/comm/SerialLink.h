@@ -106,7 +106,7 @@ public slots:
     bool setDataBitsType(int dataBits);
     bool setStopBitsType(int stopBits);
 
-    void readBytes(char* data, qint64 maxLength);
+    void readBytes();
     /**
      * @brief Write a number of bytes to the interface.
      *
@@ -118,7 +118,6 @@ public slots:
     bool disconnect();
 
 protected slots:
-    void emitBytesReady();
     void checkForBytes();
 
 protected:

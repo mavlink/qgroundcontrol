@@ -95,7 +95,7 @@ public slots:
 
 	void readLine();
         void writeBytes(char *bytes, qint64 length);
-	void readBytes(char *bytes, qint64 maxLength);
+        void readBytes();
 
 	bool connect();
 	bool disconnect();

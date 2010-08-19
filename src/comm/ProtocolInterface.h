@@ -34,6 +34,7 @@ This file is part of the PIXHAWK project
 
 #include <QThread>
 #include <QString>
+#include <QByteArray>
 #include "LinkInterface.h"
 
 /**
@@ -53,7 +54,7 @@ public:
     virtual QString getName() = 0;
 
 public slots:
-    virtual void receiveBytes(LinkInterface *link) = 0;
+    virtual void receiveBytes(LinkInterface *link, QByteArray b) = 0;
 
 signals:
     /** @brief Update the packet loss from one system */
