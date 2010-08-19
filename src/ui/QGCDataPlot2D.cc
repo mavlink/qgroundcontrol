@@ -116,7 +116,7 @@ void QGCDataPlot2D::print()
     QPrintDialog dialog(&printer);
     if ( dialog.exec() )
     {
-        plot->setStyleSheet("QWidget { background-color: #FFFFFF; color: #000000; background-clip: border; font-size: 11pt;}");
+        plot->setStyleSheet("QWidget { background-color: #FFFFFF; color: #000000; background-clip: border; font-size: 10pt;}");
         plot->setCanvasBackground(Qt::white);
         QwtPlotPrintFilter filter;
         filter.color(Qt::white, QwtPlotPrintFilter::CanvasBackground);
@@ -132,6 +132,8 @@ void QGCDataPlot2D::print()
             filter.setOptions(options);
         }
         plot->print(printer, filter);
+        plot->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; font-size: 11pt;}");
+        //plot->setCanvasBackground(QColor(5, 5, 8));
     }
 }
 
