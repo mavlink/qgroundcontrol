@@ -73,6 +73,8 @@ protected:
     TileMapAdapter* osmAdapter;
     GoogleSatMapAdapter* gSatAdapter;
     Layer* osmLayer;
+    Layer* geomLayer;
+
     //Layer* gSatLayer;
 
     QMap<int, CirclePoint*> uasIcons;
@@ -83,9 +85,12 @@ protected:
   protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
     void createPathButtonClicked();
-
+    void captureGeometryClick(Geometry*, QPoint);
 private:
     Ui::MapWidget *m_ui;
+    QList<Point*> wps;
+    LineString* path;
+    QPen* pointPen;
 };
 
 #endif // MAPWIDGET_H
