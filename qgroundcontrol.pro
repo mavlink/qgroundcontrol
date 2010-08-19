@@ -216,3 +216,18 @@ SOURCES += src/main.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc
 RESOURCES = mavground.qrc
+
+# Include RT-LAB Library
+win32 {
+    LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin -lOpalApi
+    INCLUDEPATH += src/lib/opalrt
+    SOURCES += src/comm/OpalLink.cc
+    HEADERS += src/comm/OpalLink.h
+    DEFINES += OPAL_RT
+}
+
+macx {
+    SOURCES += src/comm/OpalLink.cc
+    HEADERS += src/comm/OpalLink.h
+    DEFINES += OPAL_RT
+}

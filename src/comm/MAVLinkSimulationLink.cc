@@ -142,13 +142,7 @@ void MAVLinkSimulationLink::run()
 //                }
 //                readyBufferMutex.unlock();
 
-
-
-
-
-
-
-                emit bytesReady(this);
+                readBytes();
             }
             last = MG::TIME::getGroundTimeNow();
         }
@@ -752,9 +746,11 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 }
 
 
-void MAVLinkSimulationLink::readBytes(char* const data, qint64 maxLength) {
+void MAVLinkSimulationLink::readBytes() {
     // Lock concurrent resource readyBuffer
     readyBufferMutex.lock();
+    const qint64 maxLength = 2048;
+    char data[maxLength];
     qint64 len = maxLength;
     if (maxLength > readyBuffer.size()) len = readyBuffer.size();
 

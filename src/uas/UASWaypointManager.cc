@@ -386,6 +386,16 @@ void UASWaypointManager::localLoadWaypoints(const QString &loadFile)
     emit waypointListChanged();
 }
 
+void UASWaypointManager::globalAddWaypoint(Waypoint *wp)
+{
+
+}
+
+int UASWaypointManager::globalRemoveWaypoint(quint16 seq)
+{
+    return 0;
+}
+
 void UASWaypointManager::clearWaypointList()
 {
     if(current_state == WP_IDLE)

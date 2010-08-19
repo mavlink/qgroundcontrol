@@ -39,8 +39,12 @@ This file is part of the PIXHAWK project
 
 #include "CommConfigurationWindow.h"
 #include "SerialConfigurationWindow.h"
-#include "SerialLinkInterface.h"
+#include "SerialLink.h"
 #include "UDPLink.h"
+#include "MAVLinkSimulationLink.h"
+#ifdef OPAL_RT
+#include "OpalLink.h"
+#endif
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
 
@@ -86,7 +90,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // TODO Move these calls to each link so that dynamic casts vanish
 
     // Open details pane for serial link if necessary
-    SerialLinkInterface* serial = dynamic_cast<SerialLinkInterface*>(link);
+    SerialLink* serial = dynamic_cast<SerialLink*>(link);
     if(serial != 0)
     {
         QWidget* conf = new SerialConfigurationWindow(serial, this);
@@ -97,11 +101,28 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         //ui.linkGroupBox->setTitle(link->getName());
         //connect(link, SIGNAL(nameChanged(QString)), ui.linkGroupBox, SLOT(setTitle(QString)));
     }
-    else if (dynamic_cast<UDPLink*>(link) != 0)
+    UDPLink* udp = dynamic_cast<UDPLink*>(link);
+    if (udp != 0)
     {
         ui.linkGroupBox->setTitle(tr("UDP Link"));
     }
-    else
+    MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
+    if (sim != 0)
+    {
+        ui.linkGroupBox->setTitle(tr("MAVLink Simulation Link"));
+    }
+#ifdef OPAL_RT
+    OpalLink* opal = dynamic_cast<OpalLink*>(link);
+    if (opal != 0)
+    {
+        ui.linkGroupBox->setTitle(tr("Opal-RT Link"));
+    }
+#endif
+    if (serial == 0 && udp == 0 && sim == 0
+#ifdef OPAL_RT
+        && opal == 0
+#endif
+        )
     {
         qDebug() << "Link is NOT a known link, can't open configuration window";
     }
