@@ -73,7 +73,7 @@ public:
 
 public slots:
     /** @brief Receive bytes from a communication interface */
-    void receiveBytes(LinkInterface* link);
+    void receiveBytes(LinkInterface* link, QByteArray b);
     /** @brief Send MAVLink message through serial interface */
     void sendMessage(mavlink_message_t message);
     /** @brief Send MAVLink message through serial interface */

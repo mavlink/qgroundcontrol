@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #define MAVLINKLIGHTPROTOCOL_H
 
 #include <inttypes.h>
+#include <QByteArray>
 #include <MAVLinkProtocol.h>
 
 #define MAVLINK_LIGHT_MAX_PAYLOAD_LEN 50
@@ -59,7 +60,7 @@ signals:
 public slots:
     void sendMessage(mavlink_light_message_t message);
     void sendMessage(LinkInterface* link, mavlink_light_message_t message);
-    void receiveBytes(LinkInterface* link);
+    void receiveBytes(LinkInterface* link, QByteArray b);
 
 };
 

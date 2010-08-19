@@ -48,8 +48,6 @@ public:
     UDPLink(QHostAddress host = QHostAddress::Any, quint16 port = 14550);
     ~UDPLink();
 
-    static const int poll_interval = UDP_POLL_INTERVAL; ///< Polling interval, defined in configuration.h
-
     bool isConnected();
     qint64 bytesAvailable();
 
@@ -86,7 +84,7 @@ public slots:
     void setPort(quint16 port);
     //    void readPendingDatagrams();
 
-    void readBytes(char* data, qint64 maxLength);
+    void readBytes();
     /**
      * @brief Write a number of bytes to the interface.
      *
@@ -96,10 +94,6 @@ public slots:
     void writeBytes(const char* data, qint64 length);
     bool connect();
     bool disconnect();
-
-protected slots:
-    void emitBytesReady();
-    //void checkForBytes();
 
 protected:
     QString name;

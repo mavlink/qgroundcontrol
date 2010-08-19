@@ -297,7 +297,7 @@ SYMBOL_CACHE_SIZE      = 0
 # Private class members and static file members will be hidden unless
 # the EXTRACT_PRIVATE and EXTRACT_STATIC tags are set to YES
 
-EXTRACT_ALL            = NO
+EXTRACT_ALL            = YES
 
 # If the EXTRACT_PRIVATE tag is set to YES all private members of a class
 # will be included in the documentation.
@@ -976,7 +976,7 @@ FORMULA_FONTSIZE       = 10
 # there is already a search function so this one should typically
 # be disabled.
 
-SEARCHENGINE           = NO
+SEARCHENGINE           = YES
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
@@ -1501,7 +1501,7 @@ DOT_TRANSPARENT        = YES
 # makes dot run faster, but since only newer versions of dot (>1.8.10)
 # support this, this feature is disabled by default.
 
-DOT_MULTI_TARGETS      = NO
+DOT_MULTI_TARGETS      = YES
 
 # If the GENERATE_LEGEND tag is set to YES (the default) Doxygen will
 # generate a legend page explaining the meaning of the various boxes and

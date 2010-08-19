@@ -120,8 +120,10 @@ void UDPLink::writeBytes(const char* data, qint64 size)
  * @param data Pointer to the data byte array to write the bytes to
  * @param maxLength The maximum number of bytes to write
  **/
-void UDPLink::readBytes(char* data, qint64 maxLength)
+void UDPLink::readBytes()
 {
+    const qint64 maxLength = 2048;
+    char data[maxLength];
     QHostAddress sender;
     quint16 senderPort;
 
@@ -170,14 +172,6 @@ qint64 UDPLink::bytesAvailable() {
 }
 
 /**
- * @brief Convenience method to emit the bytesReady signal
- **/
-void UDPLink::emitBytesReady()
-{
-    emit bytesReady(this);
-}
-
-/**
  * @brief Disconnect the connection.
  *
  * @return True if connection has been disconnected, false if connection couldn't be disconnected.
@@ -204,7 +198,7 @@ bool UDPLink::connect()
     socket = new QUdpSocket(this);
 
     //QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
-    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(emitBytesReady()));
+    QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
     connectState = socket->bind(host, port);
 
