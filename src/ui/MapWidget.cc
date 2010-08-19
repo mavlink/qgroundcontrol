@@ -60,9 +60,12 @@ MapWidget::MapWidget(QWidget *parent) :
 
     // create a layer with the mapadapter and type MapLayer
     osmLayer = new Layer("Custom Layer", osmAdapter, Layer::MapLayer);
+    // create a layer with the mapadapter and type GeometryLayer (for waypoints)
+    geomLayer = new Layer("Geom Layer", osmAdapter, Layer::GeometryLayer);
 
-    // add Layer to the MapControl
+    // add Layers to the MapControl and set zoom level
     mc->addLayer(osmLayer);
+    mc->addLayer(geomLayer);
     mc->setZoom(3);
 
     // display the MapControl in the application
@@ -70,7 +73,6 @@ MapWidget::MapWidget(QWidget *parent) :
     layout->setMargin(0);
     layout->addWidget(mc);
     setLayout(layout);
-
 
     // create buttons to control the map (zoom, GPS tracking and WP capture)
     QPushButton* zoomin = new QPushButton(QIcon(":/images/actions/list-add.svg"), "", this);
@@ -83,14 +85,11 @@ MapWidget::MapWidget(QWidget *parent) :
     createPath->setMaximumWidth(50);
     followgps->setMaximumWidth(50);
 
-
     // Set checkable buttons
     // TODO: Currently checked buttons are are very difficult to distinguish when checked.
     //       create a style and the slots to change the background so it is easier to distinguish
     followgps->setCheckable(true);
     createPath->setCheckable(true);
-
-
 
     // add buttons to control the map (zoom, GPS tracking and WP capture)
     QVBoxLayout* innerlayout = new QVBoxLayout;
@@ -102,6 +101,12 @@ MapWidget::MapWidget(QWidget *parent) :
 
 
     // Connect the required signals-slots
+    connect(zoomin, SIGNAL(clicked(bool)),
+            mc, SLOT(zoomIn()));
+
+    connect(zoomout, SIGNAL(clicked(bool)),
+            mc, SLOT(zoomOut()));
+
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
             this, SLOT(addUAS(UASInterface*)));
 
@@ -111,6 +116,16 @@ MapWidget::MapWidget(QWidget *parent) :
     connect(createPath, SIGNAL(clicked(bool)),
             this, SLOT(createPathButtonClicked()));
 
+    connect(geomLayer, SIGNAL(geometryClicked(Geometry*,QPoint)),
+            this, SLOT(captureGeometryClick(Geometry*, QPoint)));
+
+
+    // Configure the WP Path's pen
+    pointPen = new QPen(QColor(0, 255,0));
+    pointPen->setWidth(3);
+
+    path = new LineString (wps, "UAV Path", pointPen);
+    mc->layer("Geom Layer")->addGeometry(path);
 
     this->setVisible(false);
 
@@ -136,16 +151,50 @@ MapWidget::MapWidget(QWidget *parent) :
 }
 
 void MapWidget::createPathButtonClicked(){
-  this->setCursor(createPath->isChecked()? Qt::PointingHandCursor : Qt::ArrowCursor);
+  if (createPath->isChecked()){
+    // change the cursor shape
+    this->setCursor(Qt::PointingHandCursor);
+
+    // Clear the previous WP track
+    // TODO: Move this to an actual clear track button and add a warning dialog
+    mc->layer("Geom Layer")->clearGeometries();
+    wps.clear();
+    path->setPoints(wps);
+    mc->layer("Geom Layer")->addGeometry(path);
+  } else {
+    this->setCursor(Qt::ArrowCursor);
+  }
+
 }
 
 
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate){
+
   if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked()){
-    qDebug()<< "Click Event";
+
+    // Create waypoint name
+    QString str;
+    str = QString("WP%1").arg(path->numberOfPoints()+1);
+
+
+    qDebug()<< "Waypoint " << str;
     qDebug()<< "Lat: " << coordinate.y();
     qDebug()<< "Lon: " << coordinate.x();
+
+    // create the WP and set everything in the LineString to display the path
+    mc->layer("Geom Layer")->addGeometry(new CirclePoint(coordinate.x(), coordinate.y(), 10, str));
+    wps.append(new Point(coordinate.x(), coordinate.y(),str));
+    path->addPoint(new Point(coordinate.x(), coordinate.y(),str));
+
+    mc->updateRequestNew();
   }
+}
+
+void MapWidget::captureGeometryClick(Geometry* geom, QPoint point){
+  Q_UNUSED(point);
+
+  qDebug ()<< geom->name();
+  qDebug() << geom->GeometryType;
 }
 
 MapWidget::~MapWidget()
