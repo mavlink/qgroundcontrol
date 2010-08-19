@@ -114,13 +114,14 @@ SerialLink::~SerialLink()
  * @brief Runs the thread
  *
  **/
-void SerialLink::run() {
-
+void SerialLink::run()
+{
     // Initialize the connection
     hardwareConnect();
 
     // Qt way to make clear what a while(1) loop does
-    forever {
+    forever
+    {
         // Check if new bytes have arrived, if yes, emit the notification signal
         checkForBytes();
         /* Serial data isn't arriving that fast normally, this saves the thread
@@ -128,30 +129,33 @@ void SerialLink::run() {
                  */
         MG::SLEEP::msleep(SerialLink::poll_interval);
     }
-
 }
 
 
-void SerialLink::checkForBytes() {
+void SerialLink::checkForBytes()
+{
     /* Check if bytes are available */
-    if(port->isOpen()) {
+    if(port->isOpen())
+    {
         dataMutex.lock();
         qint64 available = port->bytesAvailable();
         dataMutex.unlock();
 
-        if(available > 0) {
-            emit bytesReady(this);
-            //qDebug() << "Bytes available" << available << "connected:" << port->isOpen();
+        if(available > 0)
+        {
+            readBytes();
         }
-    } else {
+    }
+    else
+    {
         emit disconnected();
     }
 
 }
 
 
-void SerialLink::writeBytes(const char* data, qint64 size) {
-
+void SerialLink::writeBytes(const char* data, qint64 size)
+{
     if(port->isOpen())
     {
         int b = port->write(data, size);
@@ -176,17 +180,20 @@ void SerialLink::writeBytes(const char* data, qint64 size) {
  * @param data Pointer to the data byte array to write the bytes to
  * @param maxLength The maximum number of bytes to write
  **/
-void SerialLink::readBytes(char* data, qint64 maxLength) {
+void SerialLink::readBytes()
+{
     dataMutex.lock();
-    if(port->isOpen()) {
+    if(port->isOpen())
+    {
+        const qint64 maxLength = 2048;
+        char data[maxLength];
         qint64 numBytes = port->bytesAvailable();
-        if(numBytes > 0) {
+        if(numBytes > 0)
+        {
             /* Read as much data in buffer as possible without overflow */
             if(maxLength < numBytes) numBytes = maxLength;
 
             port->read(data, numBytes);
-
-            // FIXME TODO Check if this method should be preferred over manual read by process
             QByteArray b(data, numBytes);
             emit bytesReceived(this, b);
 
@@ -210,15 +217,9 @@ void SerialLink::readBytes(char* data, qint64 maxLength) {
  *
  * @return The number of bytes to read
  **/
-qint64 SerialLink::bytesAvailable() {
+qint64 SerialLink::bytesAvailable()
+{
     return port->bytesAvailable();
-}
-
-/**
- * @brief Convenience method to emit the bytesReady signal
- **/
-void SerialLink::emitBytesReady() {
-    emit bytesReady(this);
 }
 
 /**
@@ -226,7 +227,8 @@ void SerialLink::emitBytesReady() {
  *
  * @return True if connection has been disconnected, false if connection couldn't be disconnected.
  **/
-bool SerialLink::disconnect() {
+bool SerialLink::disconnect()
+{
     //#if !defined _WIN32 || !defined _WIN64
     /* Block the thread until it returns from run() */
     //#endif
@@ -276,10 +278,8 @@ bool SerialLink::connect()
  * @return True if the connection could be established, false otherwise
  * @see connect() For the right function to establish the connection.
  **/
-bool SerialLink::hardwareConnect() {
-
-    qDebug() << "Opening serial port" << porthandle;
-
+bool SerialLink::hardwareConnect()
+{
     QObject::connect(port, SIGNAL(aboutToClose()), this, SIGNAL(disconnected()));
 
     port->open(QIODevice::ReadWrite);
@@ -300,12 +300,15 @@ bool SerialLink::hardwareConnect() {
 
     return connectionUp;
 }
+
+
 /**
  * @brief Check if connection is active.
  *
  * @return True if link is connected, false otherwise.
  **/
-bool SerialLink::isConnected() {
+bool SerialLink::isConnected()
+{
     return port->isOpen();
 }
 
@@ -326,7 +329,8 @@ void SerialLink::setName(QString name)
 }
 
 
-qint64 SerialLink::getNominalDataRate() {
+qint64 SerialLink::getNominalDataRate()
+{
     qint64 dataRate = 0;
     switch (baudrate) {
     case BAUD50:
@@ -399,77 +403,94 @@ qint64 SerialLink::getNominalDataRate() {
     return dataRate;
 }
 
-qint64 SerialLink::getTotalUpstream() {
+qint64 SerialLink::getTotalUpstream()
+{
     statisticsMutex.lock();
     return bitsSentTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
     statisticsMutex.unlock();
 }
 
-qint64 SerialLink::getCurrentUpstream() {
+qint64 SerialLink::getCurrentUpstream()
+{
     return 0; // TODO
 }
 
-qint64 SerialLink::getMaxUpstream() {
+qint64 SerialLink::getMaxUpstream()
+{
     return 0; // TODO
 }
 
-qint64 SerialLink::getBitsSent() {
+qint64 SerialLink::getBitsSent()
+{
     return bitsSentTotal;
 }
 
-qint64 SerialLink::getBitsReceived() {
+qint64 SerialLink::getBitsReceived()
+{
     return bitsReceivedTotal;
 }
 
-qint64 SerialLink::getTotalDownstream() {
+qint64 SerialLink::getTotalDownstream()
+{
     statisticsMutex.lock();
     return bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
     statisticsMutex.unlock();
 }
 
-qint64 SerialLink::getCurrentDownstream() {
+qint64 SerialLink::getCurrentDownstream()
+{
     return 0; // TODO
 }
 
-qint64 SerialLink::getMaxDownstream() {
+qint64 SerialLink::getMaxDownstream()
+{
     return 0; // TODO
 }
 
-bool SerialLink::isFullDuplex() {
+bool SerialLink::isFullDuplex()
+{
     /* Serial connections are always half duplex */
     return false;
 }
 
-int SerialLink::getLinkQuality() {
+int SerialLink::getLinkQuality()
+{
     /* This feature is not supported with this interface */
     return -1;
 }
 
-QString SerialLink::getPortName() {
+QString SerialLink::getPortName()
+{
     return porthandle;
 }
 
-int SerialLink::getBaudRate() {
+int SerialLink::getBaudRate()
+{
     return getNominalDataRate();
 }
 
-int SerialLink::getBaudRateType() {
+int SerialLink::getBaudRateType()
+{
     return baudrate;
 }
 
-int SerialLink::getFlowType() {
+int SerialLink::getFlowType()
+{
     return flow;
 }
 
-int SerialLink::getParityType() {
+int SerialLink::getParityType()
+{
     return parity;
 }
 
-int SerialLink::getDataBitsType() {
+int SerialLink::getDataBitsType()
+{
     return dataBits;
 }
 
-int SerialLink::getStopBitsType() {
+int SerialLink::getStopBitsType()
+{
     return stopBits;
 }
 
@@ -689,7 +710,8 @@ bool SerialLink::setBaudRate(int rate)
     return accepted;
 }
 
-bool SerialLink::setFlowType(int flow) {
+bool SerialLink::setFlowType(int flow)
+{
     bool reconnect = false;
     bool accepted = true;
     if(isConnected()) {
@@ -717,7 +739,8 @@ bool SerialLink::setFlowType(int flow) {
     return accepted;
 }
 
-bool SerialLink::setParityType(int parity) {
+bool SerialLink::setParityType(int parity)
+{
     bool reconnect = false;
     bool accepted = true;
     if(isConnected()) {
@@ -752,7 +775,8 @@ bool SerialLink::setParityType(int parity) {
     return accepted;
 }
 
-bool SerialLink::setDataBitsType(int dataBits) {
+bool SerialLink::setDataBitsType(int dataBits)
+{
     bool accepted = true;
 
     switch (dataBits) {
@@ -783,7 +807,8 @@ bool SerialLink::setDataBitsType(int dataBits) {
     return accepted;
 }
 
-bool SerialLink::setStopBitsType(int stopBits) {
+bool SerialLink::setStopBitsType(int stopBits)
+{
     bool reconnect = false;
     bool accepted = true;
     if(isConnected()) {

@@ -46,6 +46,9 @@ This file is part of the PIXHAWK project
 #include "MainWindow.h"
 #include "GAudioOutput.h"
 
+#ifdef OPAL_RT
+#include "OpalLink.h"
+#endif
 #include "UDPLink.h"
 #include "MAVLinkSimulationLink.h"
 
@@ -136,6 +139,8 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     // Add OpalRT Link, but do not connect
     OpalLink* opalLink = new OpalLink();
     mainWindow->addLink(opalLink);
+    opalLink->connect();
+#warning OPAL LINK NOW AUTO CONNECTING IN CORE.CC
 #endif
     // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");

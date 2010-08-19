@@ -56,17 +56,11 @@ LinkManager::LinkManager()
 {
         links = QList<LinkInterface*>();
         protocolLinks = QMap<ProtocolInterface*, LinkInterface*>();
-	start(QThread::LowPriority);
 }
 
 LinkManager::~LinkManager()
 {
     disconnectAll();
-}
-
-
-void LinkManager::run()
-{
 }
 
 void LinkManager::add(LinkInterface* link)
@@ -79,7 +73,7 @@ void LinkManager::addProtocol(LinkInterface* link, ProtocolInterface* protocol)
 {
     // Connect link to protocol
     // the protocol will receive new bytes from the link
-    connect(link, SIGNAL(bytesReady(LinkInterface*)), protocol, SLOT(receiveBytes(LinkInterface*)));
+    connect(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)), protocol, SLOT(receiveBytes(LinkInterface*, QByteArray)));
     // Store the connection information in the protocol links map
     protocolLinks.insertMulti(protocol, link);
     //qDebug() << __FILE__ << __LINE__ << "ADDED LINK TO PROTOCOL" << link->getName() << protocol->getName() << "NEW SIZE OF LINK LIST:" << protocolLinks.size();

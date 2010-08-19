@@ -99,13 +99,13 @@ void AS4Protocol::receiveBytes(LinkInterface* link)
 {
 //    receiveMutex.lock();
     // Prepare buffer
-    static const int maxlen = 4096 * 100;
-    static char buffer[maxlen];
+    //static const int maxlen = 4096 * 100;
+    //static char buffer[maxlen];
 
     qint64 bytesToRead = link->bytesAvailable();
 
     // Get all data at once, let link read the bytes in the buffer array
-    link->readBytes(buffer, maxlen);
+    //link->readBytes(buffer, maxlen);
 //
 //    /*
 //    // Debug output

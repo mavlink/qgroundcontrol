@@ -23,7 +23,17 @@
 #include "configuration.h"
 
 #include "errno.h"
-#include "OpalApi.h"
+
+
+
+
+// FIXME
+//#include "OpalApi.h"
+
+
+
+
+
 #include "string.h"
 
 /*
@@ -74,7 +84,7 @@ public slots:
     void writeBytes(const char *bytes, qint64 length);
 
 
-    void readBytes(char *bytes, qint64 maxLength);
+    void readBytes();
 
     void heartbeat();
 
