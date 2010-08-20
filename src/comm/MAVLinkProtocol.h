@@ -1,33 +1,30 @@
 /*=====================================================================
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-Please see our website at <http://pixhawk.ethz.ch>
+QGroundControl Open Source Ground Control Station
 
-(c) 2009 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
-This file is part of the PIXHAWK project
+This file is part of the QGROUNDCONTROL project
 
-    PIXHAWK is free software: you can redistribute it and/or modify
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    PIXHAWK is distributed in the hope that it will be useful,
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
 
 /**
  * @file
- *   @brief Definition of the MAVLink protocol
- *
- *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *
+ *   @brief Definition of class MAVLinkProtocol
+ *   @author Lorenz Meier <mail@qgroundcontrol.org>
  */
 
 #ifndef MAVLINKPROTOCOL_H_
@@ -45,8 +42,11 @@ This file is part of the PIXHAWK project
 #include "protocol.h"
 
 /**
- * MAVLink micro air vehicle protocol reference implementation.
+ * @brief MAVLink micro air vehicle protocol reference implementation.
  *
+ * MAVLink is a generic communication protocol for micro air vehicles.
+ * for more information, please see the official website.
+ * @ref http://pixhawk.ethz.ch/software/mavlink/
  **/
 class MAVLinkProtocol : public ProtocolInterface {
     Q_OBJECT

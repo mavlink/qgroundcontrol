@@ -1,11 +1,34 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Connection to OpalRT
+ *   @author Bryan Godbolt <godbolt@ualberta.ca>
+ */
+
 #ifndef OPALLINK_H
 #define OPALLINK_H
-/**
-  Connection to OpalRT.  This class receives MAVLink packets as if it is a true link, but it
-  interprets the packets internally, and calls the appropriate api functions.
-
-  \author Bryan Godbolt <godbolt@ualberta.ca>
-*/
 
 #include <QMutex>
 #include <QDebug>
@@ -42,6 +65,16 @@
 
 #define NUM_OUTPUT_SIGNALS 6
 
+/**
+ * @brief Interface to OPAL-RT targets
+ *
+ * This is an interface to the Opal-RT hardware-in-the-loop (HIL) simulator.
+ * This class receives MAVLink packets as if it is a true link, but it
+ * interprets the packets internally, and calls the appropriate api functions.
+ *
+ * @author Bryan Godbolt <godbolt@ualberta.ca>
+ * @ref http://www.opal-rt.com/
+ */
 class OpalLink : public LinkInterface
 {
     Q_OBJECT
