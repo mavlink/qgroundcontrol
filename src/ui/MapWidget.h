@@ -23,9 +23,10 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Definition of map view
+ *   @brief Definition of MapWidget
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *   @author Mariano Lizzaraga
  *
  */
 

@@ -1,3 +1,32 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Implementation of class MAVLinkXMLParser
+ *   @author Lorenz Meier <mail@qgroundcontrol.org>
+ */
+
 #include <QFile>
 #include <QDir>
 #include <QPair>
@@ -33,6 +62,9 @@ MAVLinkXMLParser::~MAVLinkXMLParser()
 {
 }
 
+/**
+ * Generate C-code (C-89 compliant) out of the XML protocol specs.
+ */
 bool MAVLinkXMLParser::generate()
 {
     // Process result
@@ -50,26 +82,6 @@ bool MAVLinkXMLParser::generate()
     // Sanity check variables
     QList<int>* usedMessageIDs = new QList<int>();
     QMap<QString, QString>* usedMessageNames = new QMap<QString, QString>();
-
-
-    /*
-    // Seek for element "messages" until end of document
-    // ignoring all other tags
-    while(!n.isNull())
-    {
-        if (n.toElement().tagName() == "messages")
-        {
-            break;
-        }
-        else
-        {
-            qDebug() << "IGNORED TAG" << n.toElement().tagName();
-            n = n.nextSibling();
-        }
-    }
-
-    qDebug() << "WORKING ON" << n.toElement().tagName();
-    */
 
     QList< QPair<QString, QString> > cFiles;
     QString lcmStructDefs = "";
