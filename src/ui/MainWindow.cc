@@ -145,6 +145,7 @@ void MainWindow::connectWidgets()
 {
   connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), linechart, SLOT(addSystem(UASInterface*)));
   connect(UASManager::instance(), SIGNAL(activeUASSet(int)), linechart, SLOT(selectSystem(int)));
+  connect(linechart, SIGNAL(logfileWritten(QString)), this, SLOT(loadDataView(QString)));
   connect(mavlink, SIGNAL(receiveLossChanged(int, float)), info, SLOT(updateSendLoss(int, float)));
 }
 
@@ -542,6 +543,13 @@ void MainWindow::loadDataView()
 {
     clearView();
     centerStack->setCurrentWidget(dataplot);
+}
+
+void MainWindow::loadDataView(QString fileName)
+{
+    clearView();
+    centerStack->setCurrentWidget(dataplot);
+    dataplot->loadFile(fileName);
 }
 
 void MainWindow::loadPilotView()

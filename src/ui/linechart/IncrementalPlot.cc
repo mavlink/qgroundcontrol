@@ -1,3 +1,33 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Implementation of class IncrementalPlot
+ *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *
+ */
+
 #include <qwt_plot.h>
 #include <qwt_plot_canvas.h>
 #include <qwt_plot_curve.h>
@@ -9,9 +39,9 @@
 #include <Scrollbar.h>
 #include <ScrollZoomer.h>
 #include <float.h>
-#if QT_VERSION >= 0x040000
 #include <qpaintengine.h>
-#endif
+
+#include <QDebug>
 
 CurveData::CurveData():
         d_count(0)
@@ -45,18 +75,23 @@ int CurveData::size() const
     return d_x.size();
 }
 
-const double *CurveData::x() const
+const double* CurveData::x() const
 {
     return d_x.data();
 }
 
-const double *CurveData::y() const
+const double* CurveData::y() const
 {
     return d_y.data();
 }
 
 IncrementalPlot::IncrementalPlot(QWidget *parent):
-        QwtPlot(parent)
+        QwtPlot(parent),
+        symbolWidth(1.2f),
+        curveWidth(1.0f),
+        gridWidth(0.8f),
+        scaleWidth(1.0f),
+        symmetric(false)
 {
     setAutoReplot(false);
 
@@ -67,8 +102,8 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
 
     plotLayout()->setAlignCanvasToScales(true);
 
-    QwtPlotGrid *grid = new QwtPlotGrid;
-    grid->setMajPen(QPen(Qt::gray, 0, Qt::DotLine));
+    grid = new QwtPlotGrid;
+    grid->setMajPen(QPen(Qt::gray, 0.8f, Qt::DotLine));
     grid->attach(this);
 
     QwtLinearScaleEngine* yScaleEngine = new QwtLinearScaleEngine();
@@ -82,7 +117,7 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
     // enable zooming
 
     zoomer = new ScrollZoomer(canvas());
-    zoomer->setRubberBandPen(QPen(Qt::red, 2, Qt::DotLine));
+    zoomer->setRubberBandPen(QPen(Qt::red, 1.5f, Qt::DotLine));
     zoomer->setTrackerPen(QPen(Qt::red));
     //zoomer->setZoomBase(QwtDoubleRect());
     legend = NULL;
@@ -112,11 +147,30 @@ IncrementalPlot::IncrementalPlot(QWidget *parent):
     colors.append(QColor(161,252,116));
     colors.append(QColor(87,231,246));
     colors.append(QColor(230,126,23));
+
+    connect(this, SIGNAL(legendChecked(QwtPlotItem*,bool)), this, SLOT(handleLegendClick(QwtPlotItem*,bool)));
 }
 
 IncrementalPlot::~IncrementalPlot()
 {
 
+}
+
+/**
+ * @param symmetric true will enforce that both axes have the same interval,
+ *        centered around the data plot. A circle will thus remain a circle if true,
+ *        if set to false it might become an ellipse because of axis scaling.
+ */
+void IncrementalPlot::setSymmetric(bool symmetric)
+{
+    this->symmetric = symmetric;
+    updateScale(); // Updates the scaling at replots
+}
+
+void IncrementalPlot::handleLegendClick(QwtPlotItem* item, bool on)
+{
+    item->setVisible(!on);
+    replot();
 }
 
 void IncrementalPlot::showLegend(bool show)
@@ -127,6 +181,7 @@ void IncrementalPlot::showLegend(bool show)
         {
             legend = new QwtLegend;
             legend->setFrameStyle(QFrame::Box);
+            legend->setItemMode(QwtLegend::CheckableItem);
         }
         insertLegend(legend, QwtPlot::RightLegend);
     }
@@ -135,7 +190,7 @@ void IncrementalPlot::showLegend(bool show)
         delete legend;
         legend = NULL;
     }
-    replot();
+    updateScale(); // Updates the scaling at replots
 }
 
 /**
@@ -159,19 +214,25 @@ void IncrementalPlot::setStyleText(QString style)
         if (style.toLower().contains("circles"))
         {
             curve->setSymbol(QwtSymbol(QwtSymbol::Ellipse,
-                                       QBrush(curve->pen().color()), curve->pen(), QSize(5, 5)) );
+                                       Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
         }
         else if (style.toLower().contains("crosses"))
         {
             curve->setSymbol(QwtSymbol(QwtSymbol::XCross,
-                                       QBrush(curve->pen().color()), curve->pen(), QSize(5, 5)) );
+                                       Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(5, 5)) );
         }
-        else // Always show dots (style.toLower().contains("dots"))
+        else if (style.toLower().contains("rect"))
         {
             curve->setSymbol(QwtSymbol(QwtSymbol::Rect,
-                                       QBrush(curve->pen().color()), curve->pen(), QSize(1, 1)) );
+                                       Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
+        }
+        else if (style.toLower().contains("line")) // Show no symbol
+        {
+            curve->setSymbol(QwtSymbol(QwtSymbol::NoSymbol,
+                                       Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
         }
 
+        curve->setPen(QPen(QBrush(curve->symbol().pen().color().darker()), curveWidth));
         // Style of lines
         if (style.toLower().contains("dotted"))
         {
@@ -181,19 +242,25 @@ void IncrementalPlot::setStyleText(QString style)
         {
             curve->setStyle(QwtPlotCurve::Lines);
         }
+        else if (style.toLower().contains("dashed") || style.toLower().contains("solid"))
+        {
+            curve->setStyle(QwtPlotCurve::Steps);
+        }
         else
         {
             curve->setStyle(QwtPlotCurve::NoCurve);
         }
+
     }
+    replot();
 }
 
 void IncrementalPlot::resetScaling()
 {
     xmin = 0;
     xmax = 500;
-    ymin = 0;
-    ymax = 500;
+    ymin = xmin;
+    ymax = xmax;
 
     setAxisScale(xBottom, xmin+xmin*0.05, xmax+xmax*0.05);
     setAxisScale(yLeft, ymin+ymin*0.05, ymax+ymax*0.05);
@@ -205,6 +272,46 @@ void IncrementalPlot::resetScaling()
     xmax = DBL_MIN;
     ymin = DBL_MAX;
     ymax = DBL_MIN;
+}
+
+/**
+ * Updates the scale calculation and re-plots the whole plot
+ */
+void IncrementalPlot::updateScale()
+{
+    const double margin = 0.05;
+    double xMinRange = xmin+(xmin*margin);
+    double xMaxRange = xmax+(xmax*margin);
+    double yMinRange = ymin+(ymin*margin);
+    double yMaxRange = ymax+(ymax*margin);
+    if (symmetric)
+    {
+        double xRange = xMaxRange - xMinRange;
+        double yRange = yMaxRange - yMinRange;
+
+        // Get the aspect ratio of the plot
+        float xSize = width();
+        if (legend != NULL) xSize -= legend->width();
+        float ySize = height();
+
+        float aspectRatio = xSize / ySize;
+
+        if (xRange > yRange)
+        {
+            double yCenter = yMinRange + yRange/2.0;
+            yMinRange = yCenter - xRange/2.0;
+            yMaxRange = yCenter + xRange/2.0;
+        }
+        else
+        {
+            double xCenter = xMinRange + xRange/2.0;
+            xMinRange = xCenter - yRange/2.0;
+            xMaxRange = xCenter + yRange/2.0;
+        }
+    }
+    setAxisScale(xBottom, xMinRange, xMaxRange);
+    setAxisScale(yLeft, yMinRange, yMaxRange);
+    zoomer->setZoomBase(true);
 }
 
 void IncrementalPlot::appendData(QString key, double x, double y)
@@ -235,7 +342,7 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
 
         const QColor &c = getNextColor();
         curve->setSymbol(QwtSymbol(QwtSymbol::XCross,
-                                   QBrush(c), QPen(c), QSize(5, 5)) );
+                                   QBrush(c), QPen(c, 1.2f), QSize(5, 5)) );
 
         curve->attach(this);
     }
@@ -285,9 +392,7 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
 
     if(scaleChanged)
     {
-        setAxisScale(xBottom, xmin+xmin*0.05, xmax+xmax*0.05);
-        setAxisScale(yLeft, ymin+ymin*0.05, ymax+ymax*0.05);
-        zoomer->setZoomBase(true);
+        updateScale();
     }
     else
     {
@@ -316,9 +421,44 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
 #if QT_VERSION >= 0x040000 && defined(Q_WS_X11)
         canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, false);
 #endif
-
     }
+}
 
+/**
+ * @return Number of copied data points, 0 on failure
+ */
+int IncrementalPlot::data(QString key, double* r_x, double* r_y, int maxSize)
+{
+    int result = 0;
+    if (d_data.contains(key))
+    {
+        CurveData* d = d_data.value(key);
+        if (maxSize >= d->count())
+        {
+            result = d->count();
+            memcpy(r_x, d->x(), sizeof(double) * d->count());
+            memcpy(r_y, d->y(), sizeof(double) * d->count());
+        }
+        else
+        {
+            result = 0;
+        }
+    }
+    return result;
+}
+
+/**
+ * @param show true to show the grid, false else
+ */
+void IncrementalPlot::showGrid(bool show)
+{
+    grid->setVisible(show);
+    replot();
+}
+
+bool IncrementalPlot::gridEnabled()
+{
+    return grid->isVisible();
 }
 
 QList<QColor> IncrementalPlot::getColorMap()
@@ -330,7 +470,7 @@ QColor IncrementalPlot::getNextColor()
 {
     /* Return current color and increment counter for next round */
     nextColor++;
-    if(nextColor >= colors.size()) nextColor = 0;
+    if(nextColor >= colors.count()) nextColor = 0;
     return colors[nextColor++];
 }
 
