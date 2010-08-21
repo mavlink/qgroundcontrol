@@ -141,8 +141,9 @@ void LinechartWidget::createLayout()
 
     // Averaging spin box
     averageSpinBox = new QSpinBox(this);
-    averageSpinBox->setValue(2);
+    averageSpinBox->setValue(200);
     averageSpinBox->setMinimum(2);
+    averageSpinBox->setMaximum(9999);
     layout->addWidget(averageSpinBox, 1, 2);
     layout->setColumnStretch(2, 0);
     connect(averageSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setAverageWindow(int)));
@@ -306,6 +307,8 @@ void LinechartWidget::stopLogging()
         logFile->close();
         // Postprocess log file
         compressor = new LogCompressor(logFile->fileName());
+        connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
+        compressor->startCompression();
     }
     logButton->setText(tr("Start logging"));
     disconnect(logButton, SIGNAL(clicked()), this, SLOT(stopLogging()));

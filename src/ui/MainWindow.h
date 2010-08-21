@@ -119,6 +119,8 @@ public slots:
     void loadMAVLinkView();
     /** @brief Load data view, allowing to plot flight data */
     void loadDataView();
+    /** @brief Load data view, allowing to plot flight data */
+    void loadDataView(QString fileName);
 
     /** @brief Show the online help for users */
     void showHelp();

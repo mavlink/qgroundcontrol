@@ -14,6 +14,8 @@ public:
     explicit Linecharts(QWidget *parent = 0);
 
 signals:
+    /** @brief This signal is emitted once a logfile has been finished writing */
+    void logfileWritten(QString fileName);
 
 public slots:
     /** @brief Set all plots active/inactive */
