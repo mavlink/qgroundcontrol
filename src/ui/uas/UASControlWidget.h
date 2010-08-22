@@ -64,10 +64,14 @@ public slots:
     /** @brief Update state */
     void updateState(int state);
 
+protected slots:
+    /** @brief Set the background color for the widget */
+    void setBackgroundColor(QColor color);
+
 protected:
-    UASInterface* uas;
-    unsigned int uasMode;
-    bool engineOn;
+    int uas;              ///< Reference to the current uas
+    unsigned int uasMode; ///< Current uas mode
+    bool engineOn;        ///< Engine state
 
 private:
     Ui::uasControl ui;

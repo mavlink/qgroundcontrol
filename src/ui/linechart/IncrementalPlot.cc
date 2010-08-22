@@ -299,14 +299,17 @@ void IncrementalPlot::updateScale()
         if (xRange > yRange)
         {
             double yCenter = yMinRange + yRange/2.0;
+            double xCenter = xMinRange + xRange/2.0;
             yMinRange = yCenter - xRange/2.0;
             yMaxRange = yCenter + xRange/2.0;
+            xMinRange = xCenter - (xRange*aspectRatio)/2.0;
+            xMaxRange = xCenter + (xRange*aspectRatio)/2.0;
         }
         else
         {
             double xCenter = xMinRange + xRange/2.0;
-            xMinRange = xCenter - yRange/2.0;
-            xMaxRange = xCenter + yRange/2.0;
+            xMinRange = xCenter - (yRange*aspectRatio)/2.0;
+            xMaxRange = xCenter + (yRange*aspectRatio)/2.0;
         }
     }
     setAxisScale(xBottom, xMinRange, xMaxRange);

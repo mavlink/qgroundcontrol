@@ -214,7 +214,7 @@ public:
     static const int SCALE_LOGARITHMIC = 2;
 
     static const int DEFAULT_REFRESH_RATE = 40; ///< The default refresh rate is 25 Hz / every 100 ms
-    static const int DEFAULT_PLOT_INTERVAL = 1000 * 10; ///< The default plot interval is 10 seconds
+    static const int DEFAULT_PLOT_INTERVAL = 1000 * 15; ///< The default plot interval is 15 seconds
     static const int DEFAULT_SCALE_INTERVAL = 1000 * 5;
 
 public slots:

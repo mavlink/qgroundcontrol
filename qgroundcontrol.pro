@@ -152,7 +152,10 @@ HEADERS += src/MG.h \
     src/ui/QGCPxImuFirmwareUpdate.h \
     src/comm/MAVLinkLightProtocol.h \
     src/ui/QGCDataPlot2D.h \
-    src/ui/linechart/IncrementalPlot.h
+    src/ui/linechart/IncrementalPlot.h \
+    src/ui/map/Waypoint2DIcon.h \
+    src/ui/map/MAV2DIcon.h \
+    src/ui/map/QGC2DIcon.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -212,7 +215,10 @@ SOURCES += src/main.cc \
     src/ui/QGCPxImuFirmwareUpdate.cc \
     src/comm/MAVLinkLightProtocol.cc \
     src/ui/QGCDataPlot2D.cc \
-    src/ui/linechart/IncrementalPlot.cc
+    src/ui/linechart/IncrementalPlot.cc \
+    src/ui/map/Waypoint2DIcon.cc \
+    src/ui/map/MAV2DIcon.cc \
+    src/ui/map/QGC2DIcon.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library

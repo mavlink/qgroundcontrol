@@ -32,6 +32,8 @@ This file is part of the PIXHAWK project
 #include <QFile>
 #include <QGLWidget>
 #include <QStringList>
+#include <QGraphicsTextItem>
+#include <QMouseEvent>
 #include "UASManager.h"
 #include "HDDisplay.h"
 #include "ui_HDDisplay.h"
@@ -80,11 +82,47 @@ HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
         acceptList = new QStringList();
     }
 
+//    setBackgroundBrush(QBrush(backgroundColor));
+//    setDragMode(QGraphicsView::ScrollHandDrag);
+//    setCacheMode(QGraphicsView::CacheBackground);
+//    // FIXME Handle full update with care - ressource intensive
+//    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+//
+//    setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+//
+//    //Set-up the scene
+//    QGraphicsScene* Scene = new QGraphicsScene(this);
+//    setScene(Scene);
+//
+//    //Populate the scene
+//    for(int x = 0; x < 1000; x = x + 25) {
+//        for(int y = 0; y < 1000; y = y + 25) {
+//
+//            if(x % 100 == 0 && y % 100 == 0) {
+//                Scene->addRect(x, y, 2, 2);
+//
+//                QString pointString;
+//                QTextStream stream(&pointString);
+//                stream << "(" << x << "," << y << ")";
+//                QGraphicsTextItem* item = Scene->addText(pointString);
+//                item->setPos(x, y);
+//            } else {
+//                Scene->addRect(x, y, 1, 1);
+//            }
+//        }
+//    }
+//
+//    //Set-up the view
+//    setSceneRect(0, 0, 1000, 1000);
+//    setCenter(QPointF(500.0, 500.0)); //A modified version of centerOn(), handles special cases
+//    setCursor(Qt::OpenHandCursor);
+
+
     this->setMinimumHeight(125);
     this->setMinimumWidth(100);
 
     // Refresh timer
-    refreshTimer->setInterval(150); // 200 Hz/5 ms
+    refreshTimer->setInterval(180); //
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(triggerUpdate()));
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintGL()));
 
@@ -117,14 +155,12 @@ void HDDisplay::enableGLRendering(bool enable)
 void HDDisplay::triggerUpdate()
 {
     // Only repaint the regions necessary
-    QRect r = geometry();
-    update(r);
+    update(this->geometry());
 }
 
 void HDDisplay::paintEvent(QPaintEvent * event)
 {
     Q_UNUSED(event);
-    //paintGL();
     static quint64 interval = 0;
     //qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
     interval = MG::TIME::getGroundTimeNow();
@@ -152,7 +188,7 @@ void HDDisplay::renderOverlay()
     QPainter painter(viewport());
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
-    painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
+    //painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
     const int columns = 3;
     const float spacing = 0.4f; // 40% of width
     const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.5f));
@@ -629,3 +665,138 @@ void HDDisplay::changeEvent(QEvent *e)
         break;
     }
 }
+
+
+
+
+
+///**
+//  * Sets the current centerpoint.  Also updates the scene's center point.
+//  * Unlike centerOn, which has no way of getting the floating point center
+//  * back, SetCenter() stores the center point.  It also handles the special
+//  * sidebar case.  This function will claim the centerPoint to sceneRec ie.
+//  * the centerPoint must be within the sceneRec.
+//  */
+////Set the current centerpoint in the
+//void HDDisplay::setCenter(const QPointF& centerPoint) {
+//    //Get the rectangle of the visible area in scene coords
+//    QRectF visibleArea = mapToScene(rect()).boundingRect();
+//
+//    //Get the scene area
+//    QRectF sceneBounds = sceneRect();
+//
+//    double boundX = visibleArea.width() / 2.0;
+//    double boundY = visibleArea.height() / 2.0;
+//    double boundWidth = sceneBounds.width() - 2.0 * boundX;
+//    double boundHeight = sceneBounds.height() - 2.0 * boundY;
+//
+//    //The max boundary that the centerPoint can be to
+//    QRectF bounds(boundX, boundY, boundWidth, boundHeight);
+//
+//    if(bounds.contains(centerPoint)) {
+//        //We are within the bounds
+//        currentCenterPoint = centerPoint;
+//    } else {
+//        //We need to clamp or use the center of the screen
+//        if(visibleArea.contains(sceneBounds)) {
+//            //Use the center of scene ie. we can see the whole scene
+//            currentCenterPoint = sceneBounds.center();
+//        } else {
+//
+//            currentCenterPoint = centerPoint;
+//
+//            //We need to clamp the center. The centerPoint is too large
+//            if(centerPoint.x() > bounds.x() + bounds.width()) {
+//                currentCenterPoint.setX(bounds.x() + bounds.width());
+//            } else if(centerPoint.x() < bounds.x()) {
+//                currentCenterPoint.setX(bounds.x());
+//            }
+//
+//            if(centerPoint.y() > bounds.y() + bounds.height()) {
+//                currentCenterPoint.setY(bounds.y() + bounds.height());
+//            } else if(centerPoint.y() < bounds.y()) {
+//                currentCenterPoint.setY(bounds.y());
+//            }
+//
+//        }
+//    }
+//
+//    //Update the scrollbars
+//    centerOn(currentCenterPoint);
+//}
+//
+///**
+//  * Handles when the mouse button is pressed
+//  */
+//void HDDisplay::mousePressEvent(QMouseEvent* event) {
+//    //For panning the view
+//    lastPanPoint = event->pos();
+//    setCursor(Qt::ClosedHandCursor);
+//}
+//
+///**
+//  * Handles when the mouse button is released
+//  */
+//void HDDisplay::mouseReleaseEvent(QMouseEvent* event) {
+//    setCursor(Qt::OpenHandCursor);
+//    lastPanPoint = QPoint();
+//}
+//
+///**
+//*Handles the mouse move event
+//*/
+//void HDDisplay::mouseMoveEvent(QMouseEvent* event) {
+//    if(!lastPanPoint.isNull()) {
+//        //Get how much we panned
+//        QPointF delta = mapToScene(lastPanPoint) - mapToScene(event->pos());
+//        lastPanPoint = event->pos();
+//
+//        //Update the center ie. do the pan
+//        setCenter(getCenter() + delta);
+//    }
+//}
+//
+///**
+//  * Zoom the view in and out.
+//  */
+//void HDDisplay::wheelEvent(QWheelEvent* event) {
+//
+//    //Get the position of the mouse before scaling, in scene coords
+//    QPointF pointBeforeScale(mapToScene(event->pos()));
+//
+//    //Get the original screen centerpoint
+//    QPointF screenCenter = getCenter(); //CurrentCenterPoint; //(visRect.center());
+//
+//    //Scale the view ie. do the zoom
+//    double scaleFactor = 1.15; //How fast we zoom
+//    if(event->delta() > 0) {
+//        //Zoom in
+//        scale(scaleFactor, scaleFactor);
+//    } else {
+//        //Zooming out
+//        scale(1.0 / scaleFactor, 1.0 / scaleFactor);
+//    }
+//
+//    //Get the position after scaling, in scene coords
+//    QPointF pointAfterScale(mapToScene(event->pos()));
+//
+//    //Get the offset of how the screen moved
+//    QPointF offset = pointBeforeScale - pointAfterScale;
+//
+//    //Adjust to the new center for correct zooming
+//    QPointF newCenter = screenCenter + offset;
+//    setCenter(newCenter);
+//}
+//
+///**
+//  * Need to update the center so there is no jolt in the
+//  * interaction after resizing the widget.
+//  */
+//void HDDisplay::resizeEvent(QResizeEvent* event) {
+//    //Get the rectangle of the visible area in scene coords
+//    QRectF visibleArea = mapToScene(rect()).boundingRect();
+//    setCenter(visibleArea.center());
+//
+//    //Call the subclass resize so the scrollbars are updated correctly
+//    QGraphicsView::resizeEvent(event);
+//}
