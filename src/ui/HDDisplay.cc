@@ -40,7 +40,7 @@ This file is part of the PIXHAWK project
 #include <QDebug>
 
 HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
-        QWidget(parent),
+        QGraphicsView(parent),
         uas(NULL),
         values(QMap<QString, float>()),
         valuesDot(QMap<QString, float>()),
@@ -109,6 +109,11 @@ HDDisplay::~HDDisplay()
     delete m_ui;
 }
 
+void HDDisplay::enableGLRendering(bool enable)
+{
+
+}
+
 void HDDisplay::triggerUpdate()
 {
     // Only repaint the regions necessary
@@ -123,14 +128,10 @@ void HDDisplay::paintEvent(QPaintEvent * event)
     static quint64 interval = 0;
     //qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
     interval = MG::TIME::getGroundTimeNow();
-    paintDisplay();
+    renderOverlay();
 }
 
-void HDDisplay::paintGL()
-{
-}
-
-void HDDisplay::paintDisplay()
+void HDDisplay::renderOverlay()
 {
     quint64 refreshInterval = 100;
     quint64 currTime = MG::TIME::getGroundTimeNow();
@@ -148,7 +149,7 @@ void HDDisplay::paintDisplay()
     double scalingFactorH = this->height()/vheight;
     if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
 
-    QPainter painter(this);
+    QPainter painter(viewport());
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);

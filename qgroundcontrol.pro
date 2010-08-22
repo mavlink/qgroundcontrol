@@ -124,7 +124,6 @@ HEADERS += src/MG.h \
     src/ui/ObjectDetectionView.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
-    src/ui/PFD.h \
     src/ui/DebugConsole.h \
     src/ui/MapWidget.h \
     src/ui/XMLCommProtocolWidget.h \
@@ -185,7 +184,6 @@ SOURCES += src/main.cc \
     src/ui/ObjectDetectionView.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
-    src/ui/PFD.cc \
     src/ui/DebugConsole.cc \
     src/ui/MapWidget.cc \
     src/ui/XMLCommProtocolWidget.cc \
@@ -218,8 +216,9 @@ SOURCES += src/main.cc \
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
-win32 {
-    LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin -lOpalApi
+win32 { 
+    LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
+        -lOpalApi
     INCLUDEPATH += src/lib/opalrt
     SOURCES += src/comm/OpalLink.cc
     HEADERS += src/comm/OpalLink.h

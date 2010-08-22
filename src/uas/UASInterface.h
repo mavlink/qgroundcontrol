@@ -228,10 +228,11 @@ signals:
      * messages like critical errors.
      *
      * @param uasid ID of the sending system
+     * @param compid ID of the sending component
      * @param text the status text
      * @param severity The severity of the message, 0 for plain debug messages, 10 for very critical messages
      */
-    void textMessageReceived(int uasid, int severity, QString text);
+    void textMessageReceived(int uasid, int componentid, int severity, QString text);
     /**
      * @brief Update the error count of a device
      *
