@@ -1,23 +1,23 @@
 /*=====================================================================
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
-This file is part of the PIXHAWK project
+This file is part of the QGROUNDCONTROL project
 
-    PIXHAWK is free software: you can redistribute it and/or modify
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    PIXHAWK is distributed in the hope that it will be useful,
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
 
@@ -32,7 +32,7 @@ This file is part of the PIXHAWK project
 #ifndef HDDISPLAY_H
 #define HDDISPLAY_H
 
-#include <QtGui/QWidget>
+#include <QtGui/QGraphicsView>
 #include <QColor>
 #include <QTimer>
 #include <QFontDatabase>
@@ -46,7 +46,16 @@ namespace Ui {
     class HDDisplay;
 }
 
-class HDDisplay : public QWidget {
+/**
+ * @brief Head Down Display Widget
+ *
+ * This widget is used for any head down display as base widget. It handles the basic widget setup
+ * each head down instrument has a virtual screen size in millimeters as base coordinate system
+ * this virtual screen size is then scaled to pixels on the screen.
+ * When the pixel per millimeter ratio is known, a 1:1 representation is possible on the screen
+ */
+class HDDisplay : public QGraphicsView
+{
     Q_OBJECT
 public:
     HDDisplay(QStringList* plotList, QWidget *parent = 0);
@@ -60,8 +69,9 @@ public slots:
     void setActiveUAS(UASInterface* uas);
 
 protected slots:
-    void paintGL();
-    void paintDisplay();
+    void enableGLRendering(bool enable);
+    //void render(QPainter* painter, const QRectF& target = QRectF(), const QRect& source = QRect(), Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio);
+    void renderOverlay();
     void triggerUpdate();
 
 protected:

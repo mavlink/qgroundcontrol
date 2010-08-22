@@ -1,23 +1,23 @@
 /*=====================================================================
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
-This file is part of the PIXHAWK project
+This file is part of the QGROUNDCONTROL project
 
-    PIXHAWK is free software: you can redistribute it and/or modify
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    PIXHAWK is distributed in the hope that it will be useful,
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
 
@@ -110,10 +110,10 @@ void HSIDisplay::paintEvent(QPaintEvent * event)
     static quint64 interval = 0;
     //qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
     interval = MG::TIME::getGroundTimeNow();
-    paintDisplay();
+    renderOverlay();
 }
 
-void HSIDisplay::paintDisplay()
+void HSIDisplay::renderOverlay()
 {
     // Center location of the HSI gauge items
 
@@ -131,7 +131,7 @@ void HSIDisplay::paintDisplay()
     double scalingFactorH = this->height()/vheight;
     if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
 
-    QPainter painter(this);
+    QPainter painter(viewport());
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
 

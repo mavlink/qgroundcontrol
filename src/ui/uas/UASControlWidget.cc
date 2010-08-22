@@ -59,8 +59,8 @@ This file is part of the PIXHAWK project
 #define CONTROL_MODE_TEST3_INDEX  8
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
-        uas(NULL),
-        engineOn(false)
+uas(NULL),
+engineOn(false)
 {
     ui.setupUi(this);
 
@@ -88,25 +88,27 @@ void UASControlWidget::setUAS(UASInterface* uas)
         disconnect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
         disconnect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
         disconnect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
+        ui.modeComboBox->clear();
+
+        disconnect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        disconnect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
     }
-    else
-    {
-        // Connect user interface controls
-        connect(ui.controlButton, SIGNAL(clicked()), this, SLOT(cycleContextButton()));
-        connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
-        connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
-        connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-        connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
-        connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
-        ui.modeComboBox->insertItem(0, "Select..");
 
-        ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
+    // Connect user interface controls
+    connect(ui.controlButton, SIGNAL(clicked()), this, SLOT(cycleContextButton()));
+    connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
+    connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
+    connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
+    connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
+    connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
+    ui.modeComboBox->insertItem(0, "Select..");
 
-        connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-        connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+    ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
 
-        this->uas = uas;
-    }
+    connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+    connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+
+    this->uas = uas;
 }
 
 UASControlWidget::~UASControlWidget() {
@@ -210,8 +212,8 @@ void UASControlWidget::cycleContextButton()
             mav->disable_motors();
             ui.lastActionLabel->setText(QString("Attempted to disable motors on %1").arg(uas->getUASName()));
         }
-            //ui.controlButton->setText(tr("Force Landing"));
-            //ui.controlButton->setText(tr("KILL VEHICLE"));
+        //ui.controlButton->setText(tr("Force Landing"));
+        //ui.controlButton->setText(tr("KILL VEHICLE"));
     }
 
 }

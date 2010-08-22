@@ -87,8 +87,14 @@
     <addaction name="actionProject_Roadmap"/>
     <addaction name="actionCredits_Developers"/>
    </widget>
+   <widget class="QMenu" name="menuConnected_Systems">
+    <property name="title">
+     <string>Connected Systems</string>
+    </property>
+   </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
+   <addaction name="menuConnected_Systems"/>
    <addaction name="menuUnmanned_System"/>
    <addaction name="menuWindow"/>
    <addaction name="menuHelp"/>
