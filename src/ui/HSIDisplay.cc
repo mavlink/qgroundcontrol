@@ -32,12 +32,16 @@ This file is part of the QGROUNDCONTROL project
 #include <QFile>
 #include <QStringList>
 #include <QPainter>
+#include <QGraphicsScene>
+#include <QHBoxLayout>
+#include <QDoubleSpinBox>
 #include "UASManager.h"
 #include "HSIDisplay.h"
 #include "MG.h"
 #include "QGC.h"
 #include "Waypoint.h"
 #include "UASWaypointManager.h"
+#include "Waypoint2DIcon.h"
 
 #include <QDebug>
 
@@ -98,9 +102,28 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     refreshTimer->setInterval(60);
 
+
+//    this->setScene(new QGraphicsScene(-metricWidth/2.0f, -metricWidth/2.0f, metricWidth, metricWidth, this));
+
     xCenterPos = vwidth/2.0f;
     yCenterPos = vheight/2.0f + topMargin - bottomMargin;
+
+    // Add interaction elements
+    QHBoxLayout* layout = new QHBoxLayout(this);
+    layout->setMargin(2);
+    layout->setSpacing(0);
+    QDoubleSpinBox* spinBox = new QDoubleSpinBox(this);
+    spinBox->setMinimum(0.1);
+    spinBox->setMaximum(9999);
+    connect(spinBox, SIGNAL(valueChanged(double)), this, SLOT(setMetricWidth(double)));
+    connect(this, SIGNAL(metricWidthChanged(double)), spinBox, SLOT(setValue(double)));
+    layout->addWidget(spinBox);
+    layout->setAlignment(spinBox, Qt::AlignBottom | Qt::AlignLeft);
+    this->setLayout(layout);
+
     this->setVisible(false);
+    // Do first update
+    setMetricWidth(metricWidth);
 }
 
 void HSIDisplay::paintEvent(QPaintEvent * event)
@@ -136,7 +159,8 @@ void HSIDisplay::renderOverlay()
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
 
     // Draw background
-    painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
+    //painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
+
 
     // Draw base instrument
     // ----------------------
@@ -393,6 +417,15 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
     }
 }
 
+void HSIDisplay::setMetricWidth(double width)
+{
+    if (width != metricWidth)
+    {
+        metricWidth = width;
+        emit metricWidthChanged(metricWidth);
+    }
+}
+
 /**
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
@@ -634,6 +667,18 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
     if (uas)
     {
         const QVector<Waypoint*>& list = uas->getWaypointManager().getWaypointList();
+//        for (int i = 0; i < list.size(); i++)
+//        {
+//            QPointF in(list.at(i)->getX(), list.at(i)->getY());
+//            // Transform from world to body coordinates
+//            in = metricWorldToBody(in);
+//            // Scale from metric to screen reference coordinates
+//            QPointF p = metricBodyToRef(in);
+//            Waypoint2DIcon* wp = new Waypoint2DIcon();
+//            wp->setLocalPosition(list.at(i)->getX(), list.at(i)->getY());
+//            wp->setPos(0, 0);
+//            scene()->addItem(wp);
+//        }
 
         QColor color;
         painter.setBrush(Qt::NoBrush);
@@ -863,18 +908,22 @@ void HSIDisplay::drawAltitudeSetpoint(float xRef, float yRef, float radius, cons
     //    paintText(label, color, 4.5f, xRef-7.5f, yRef-2.0f, painter);
 }
 
-/**
- * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
- */
-void localizationChanged(UASInterface* uas, int fix);
-/**
- * @param fix 0: lost, 1: at least one satellite, but no GPS fix, 2: 2D localization, 3: 3D localization
- */
-void gpsLocalizationChanged(UASInterface* uas, int fix);
-/**
- * @param fix 0: lost, 1: 2D local position hold, 2: 2D localization, 3: 3D localization
- */
-void visionLocalizationChanged(UASInterface* uas, int fix);
+void HSIDisplay::wheelEvent(QWheelEvent* event)
+{
+    double zoomScale = 0.005; // Scaling of zoom value
+    if(event->delta() > 0)
+    {
+        // Reduce width -> Zoom in
+        metricWidth -= event->delta() * zoomScale;
+    }
+    else
+    {
+        // Increase width -> Zoom out
+        metricWidth -= event->delta() * zoomScale;
+    }
+    metricWidth = qBound(0.1, metricWidth, 9999.0);
+    emit metricWidthChanged(metricWidth);
+}
 
 void HSIDisplay::updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat)
 {

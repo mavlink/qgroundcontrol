@@ -51,6 +51,8 @@ public:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
+    /** @brief Set the width in meters this widget shows from top */
+    void setMetricWidth(double width);
     void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     void updateAttitudeSetpoints(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 time);
@@ -80,6 +82,9 @@ public slots:
     void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);
     void pressKey(int key);
 
+signals:
+    void metricWidthChanged(double width);
+
 protected slots:
     void renderOverlay();
     void drawGPS(QPainter &painter);
@@ -101,6 +106,8 @@ protected slots:
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
     /** @brief Receive mouse clicks */
     void mouseDoubleClickEvent(QMouseEvent* event);
+    /** @brief Receive mouse wheel events */
+    void wheelEvent(QWheelEvent* event);
 
 protected:
 
@@ -202,7 +209,7 @@ protected:
     float uiYSetCoordinate;    ///< Y Setpoint coordinate wanted by the UI
     float uiZSetCoordinate;    ///< Z Setpoint coordinate wanted by the UI
     float uiYawSet;            ///< Yaw Setpoint wanted by the UI
-    float metricWidth;         ///< Width the instrument represents in meters (the width of the ground shown by the widget)
+    double metricWidth;        ///< Width the instrument represents in meters (the width of the ground shown by the widget)
 
     //
     float xCenterPos;         ///< X center of instrument in virtual coordinates

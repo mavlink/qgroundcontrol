@@ -1038,6 +1038,11 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     }
 }
 
+int UAS::getSystemType()
+{
+    return this->type;
+}
+
 void UAS::receiveButton(int buttonIndex)
 {
     switch (buttonIndex)

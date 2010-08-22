@@ -101,7 +101,45 @@ QSeparator {
 
 
 QSpinBox {
-	min-height: 12 px;
+	min-height: 14px;
+	max-height: 18px;
+    border: 1px solid #4A4A4F;
+	border-radius: 5px;
+}
+
+QSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right; /* position at the top right corner */
+    border-image: url(:/images/actions/go-up.svg) 1;
+    border-width: 1px;
+}
+QSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right; /* position at the top right corner */
+    border-image: url(:/images/actions/go-down.svg) 1;
+    border-width: 1px;
+}
+
+QDoubleSpinBox {
+	min-height: 14px;
+	max-height: 18px;
+    border: 1px solid #4A4A4F;
+	border-radius: 5px;
+}
+
+QDoubleSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right; /* position at the top right corner */
+    border-image: url(:/images/actions/go-up.svg) 1;
+    border-width: 1px;
+    max-width: 5px;
+}
+QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right; /* position at the top right corner */
+    border-image: url(:/images/actions/go-down.svg) 1;
+    border-width: 1px;
+    max-width: 5px;
 }
 
 QPushButton {

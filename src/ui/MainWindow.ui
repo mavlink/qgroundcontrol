@@ -89,7 +89,7 @@
    </widget>
    <widget class="QMenu" name="menuConnected_Systems">
     <property name="title">
-     <string>Connected Systems</string>
+     <string>Select System</string>
     </property>
    </widget>
    <addaction name="menuMGround"/>

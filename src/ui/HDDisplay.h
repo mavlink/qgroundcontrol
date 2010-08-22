@@ -94,6 +94,23 @@ protected:
     void drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter);
     void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
 
+//    //Holds the current centerpoint for the view, used for panning and zooming
+//     QPointF currentCenterPoint;
+//
+//     //From panning the view
+//     QPoint lastPanPoint;
+//
+//     //Set the current centerpoint in the
+//     void setCenter(const QPointF& centerPoint);
+//     QPointF getCenter() { return currentCenterPoint; }
+//
+//     //Take over the interaction
+//     virtual void mousePressEvent(QMouseEvent* event);
+//     virtual void mouseReleaseEvent(QMouseEvent* event);
+//     virtual void mouseMoveEvent(QMouseEvent* event);
+//     virtual void wheelEvent(QWheelEvent* event);
+//     virtual void resizeEvent(QResizeEvent* event);
+
     UASInterface* uas;                 ///< The uas currently monitored
     QMap<QString, float> values;       ///< The variables this HUD displays
     QMap<QString, float> valuesDot;    ///< First derivative of the variable

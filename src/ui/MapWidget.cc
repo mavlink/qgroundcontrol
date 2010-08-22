@@ -64,7 +64,10 @@ MapWidget::MapWidget(QWidget *parent) :
     geomLayer = new Layer("Geom Layer", osmAdapter, Layer::GeometryLayer);
 
     // add Layers to the MapControl and set zoom level
-    mc->addLayer(osmLayer);
+    //mc->addLayer(osmLayer);
+    GoogleSatMapAdapter* gsat = new GoogleSatMapAdapter();
+    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
+    mc->addLayer(gsatLayer);
     mc->addLayer(geomLayer);
     mc->setZoom(3);
 
