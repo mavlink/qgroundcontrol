@@ -38,6 +38,8 @@ This file is part of the QGROUNDCONTROL project
 #include "qmapcontrol.h"
 #include "UASInterface.h"
 
+class QMenu;
+
 namespace Ui {
     class MapWidget;
 }
@@ -61,20 +63,29 @@ protected:
     void keyPressEvent(QKeyEvent *event);
     void resizeEvent(QResizeEvent* event);
 
+    QAction* osmAction;
+    QAction* yahooActionMap;
+    QAction* yahooActionSatellite;
+    QAction* yahooActionOverlay;
+    QAction* googleActionMap;
+    QAction* googleSatAction;
+
 
     QPushButton* followgps;
     QPushButton* createPath;
     QLabel* gpsposition;
+    QMenu* mapMenu;
+    QPushButton* mapButton;
 
-    MapControl* mc;
+    MapControl* mc;                   ///< QMapControl widget
+    MapAdapter* mapadapter;           ///< Adapter to load the map data
+    qmapcontrol::Layer* l;            ///< Current map layer (background)
+    qmapcontrol::Layer* overlay;      ///< Street overlay (foreground)
+    qmapcontrol::GeometryLayer* geomLayer; ///< Layer for waypoints
     int zoomLevel;
-    int detailZoom; ///< Steps zoomed in further than qMapControl allows
+    int detailZoom;                   ///< Steps zoomed in further than qMapControl allows
     static const int scrollStep = 40; ///< Scroll n pixels per keypress
-    static const int maxZoom = 50;
-    TileMapAdapter* osmAdapter;
-    GoogleSatMapAdapter* gSatAdapter;
-    Layer* osmLayer;
-    Layer* geomLayer;
+    static const int maxZoom = 50;    ///< Maximum zoom level
 
     //Layer* gSatLayer;
 
@@ -87,6 +98,7 @@ protected:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
     void createPathButtonClicked();
     void captureGeometryClick(Geometry*, QPoint);
+    void mapproviderSelected(QAction* action);
 private:
     Ui::MapWidget *m_ui;
     QList<Point*> wps;
