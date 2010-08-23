@@ -26,7 +26,7 @@ This file is part of the QGROUNDCONTROL project
  *   @brief Definition of MapWidget
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
- *   @author Mariano Lizaraga
+ *   @author Mariano Lizarraga
  *
  */
 
@@ -46,6 +46,12 @@ namespace Ui {
 
 using namespace qmapcontrol;
 
+/**
+ * @brief 2D Moving map
+ *
+ * This map displays street maps, aerial images and the MAV position,
+ * waypoints and trails on top.
+ */
 class MapWidget : public QWidget {
     Q_OBJECT
 public:
