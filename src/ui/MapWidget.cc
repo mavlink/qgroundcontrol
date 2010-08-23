@@ -92,11 +92,11 @@ MapWidget::MapWidget(QWidget *parent) :
     // Add controls to select map provider
     /////////////////////////////////////////////////
     QActionGroup* mapproviderGroup = new QActionGroup(this);
-    osmAction = new QAction(tr("OpenStreetMap"), mapproviderGroup);
-    yahooActionMap = new QAction(tr("Yahoo: Map"), mapproviderGroup);
-    yahooActionSatellite = new QAction(tr("Yahoo: Satellite"), mapproviderGroup);
-    googleActionMap = new QAction(tr("Google: Map"), mapproviderGroup);
-    googleSatAction = new QAction(tr("Google: Sat"), mapproviderGroup);
+    osmAction = new QAction(QIcon(":/images/mapproviders/openstreetmap.png"), tr("OpenStreetMap"), mapproviderGroup);
+    yahooActionMap = new QAction(QIcon(":/images/mapproviders/yahoo.png"), tr("Yahoo: Map"), mapproviderGroup);
+    yahooActionSatellite = new QAction(QIcon(":/images/mapproviders/yahoo.png"), tr("Yahoo: Satellite"), mapproviderGroup);
+    googleActionMap = new QAction(QIcon(":/images/mapproviders/google.png"), tr("Google: Map"), mapproviderGroup);
+    googleSatAction = new QAction(QIcon(":/images/mapproviders/google.png"), tr("Google: Sat"), mapproviderGroup);
     osmAction->setCheckable(true);
     yahooActionMap->setCheckable(true);
     yahooActionSatellite->setCheckable(true);
@@ -222,9 +222,9 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-        yahooActionOverlay->setEnabled(false);
+//        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
-        yahooActionOverlay->setChecked(false);
+//        yahooActionOverlay->setChecked(false);
 
     }
     else if (action == yahooActionMap)
@@ -238,9 +238,9 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-        yahooActionOverlay->setEnabled(false);
+//        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
-        yahooActionOverlay->setChecked(false);
+//        yahooActionOverlay->setChecked(false);
     }
     else if (action == yahooActionSatellite)
     {
@@ -253,7 +253,7 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-        yahooActionOverlay->setEnabled(true);
+//        yahooActionOverlay->setEnabled(true);
     }
     else if (action == googleActionMap)
     {
@@ -265,9 +265,9 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-        yahooActionOverlay->setEnabled(false);
+//        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
-        yahooActionOverlay->setChecked(false);
+//        yahooActionOverlay->setChecked(false);
     }
     else if (action == googleSatAction)
     {
@@ -279,9 +279,9 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-        yahooActionOverlay->setEnabled(false);
+//        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
-        yahooActionOverlay->setChecked(false);
+//        yahooActionOverlay->setChecked(false);
     }
     else
     {
