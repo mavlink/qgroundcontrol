@@ -191,10 +191,17 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 }
 
 void MapWidget::captureGeometryClick(Geometry* geom, QPoint point){
-  Q_UNUSED(point);
 
-  qDebug ()<< geom->name();
+  qDebug() << geom->name();
   qDebug() << geom->GeometryType;
+  qDebug() << point;
+}
+
+void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
+
+  qDebug() << geom->name();
+  qDebug() << geom->GeometryType;
+  qDebug() << coordinate;
 }
 
 MapWidget::~MapWidget()
