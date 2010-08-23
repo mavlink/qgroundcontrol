@@ -1,23 +1,23 @@
 /*=====================================================================
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
-This file is part of the PIXHAWK project
+This file is part of the QGROUNDCONTROL project
 
-    PIXHAWK is free software: you can redistribute it and/or modify
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    PIXHAWK is distributed in the hope that it will be useful,
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
 
@@ -135,6 +135,9 @@ public:
         return colors[nextColor++];
     }
 
+    /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
+    virtual int getSystemType() = 0;
+
     QColor getColor()
     {
         return color;
@@ -228,10 +231,11 @@ signals:
      * messages like critical errors.
      *
      * @param uasid ID of the sending system
+     * @param compid ID of the sending component
      * @param text the status text
      * @param severity The severity of the message, 0 for plain debug messages, 10 for very critical messages
      */
-    void textMessageReceived(int uasid, int severity, QString text);
+    void textMessageReceived(int uasid, int componentid, int severity, QString text);
     /**
      * @brief Update the error count of a device
      *

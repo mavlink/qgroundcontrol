@@ -1,29 +1,29 @@
 /*=====================================================================
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+QGroundControl Open Source Ground Control Station
 
-(c) 2009 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
-This file is part of the PIXHAWK project
+This file is part of the QGROUNDCONTROL project
 
-    PIXHAWK is free software: you can redistribute it and/or modify
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    PIXHAWK is distributed in the hope that it will be useful,
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
 
 /**
  * @file
- *   @brief Definition of central manager for all connected aerial vehicles
+ *   @brief Definition of class UASManager
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
@@ -37,7 +37,7 @@ This file is part of the PIXHAWK project
 #include <UASInterface.h>
 
 /**
- * @brief Manager class for the UASs
+ * @brief Central manager for all connected aerial vehicles
  *
  * This class keeps a list of all connected / configured UASs. It also stores which
  * UAS is currently select with respect to user input or manual controls.
@@ -165,8 +165,14 @@ protected:
 
 signals:
     void UASCreated(UASInterface* UAS);
+    /** @brief The UAS currently under main operator control changed */
     void activeUASSet(UASInterface* UAS);
+    /** @brief The UAS currently under main operator control changed */
     void activeUASSet(int systemId);
+    /** @brief The UAS currently under main operator control changed */
+    void activeUASStatusChanged(UASInterface* UAS, bool active);
+    /** @brief The UAS currently under main operator control changed */
+    void activeUASStatusChanged(int systemId, bool active);
 
 };
 
