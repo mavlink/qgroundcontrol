@@ -136,7 +136,7 @@ d_curve(NULL)
     // Enable zooming
     //zoomer = new Zoomer(canvas());
     zoomer = new ScrollZoomer(canvas());
-    zoomer->setRubberBandPen(QPen(Qt::blue, 2, Qt::DotLine));
+    zoomer->setRubberBandPen(QPen(Qt::blue, 1.2, Qt::DotLine));
     zoomer->setTrackerPen(QPen(Qt::blue));
 
     // Start QTimer for plot update
@@ -314,7 +314,7 @@ QColor LinechartPlot::getNextColor()
 {
     /* Return current color and increment counter for next round */
     nextColor++;
-    if(nextColor >= colors.size()) nextColor = 0;
+    if(nextColor >= colors.count()) nextColor = 0;
     return colors[nextColor++];
 }
 
@@ -762,15 +762,15 @@ void TimeSeriesData::append(quint64 ms, double value)
     mean = mean / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
     qSort(medianList);
 
-    if (medianList.size() > 2)
+    if (medianList.count() > 2)
     {
-        if (medianList.size() % 2 == 0)
+        if (medianList.count() % 2 == 0)
         {
-            median = (medianList.at(medianList.size()/2) + medianList.at(medianList.size()/2+1)) / 2.0;
+            median = (medianList.at(medianList.count()/2) + medianList.at(medianList.count()/2+1)) / 2.0;
         }
         else
         {
-            median = medianList.at(medianList.size()/2+1);
+            median = medianList.at(medianList.count()/2+1);
         }
     }
 

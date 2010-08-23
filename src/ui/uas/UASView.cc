@@ -78,6 +78,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int,int)));
     connect(&(uas->getWaypointManager()), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
+    connect(UASManager::instance(), SIGNAL(activeUASStatusChanged(UASInterface*,bool)), this, SLOT(updateActiveUAS(UASInterface*,bool)));
 
     // Setup UAS selection
     connect(m_ui->uasViewFrame, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
@@ -108,7 +109,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     // Heartbeat fade
     refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
-    refreshTimer->start(100);
+    refreshTimer->start(180);
 }
 
 UASView::~UASView()
@@ -142,9 +143,19 @@ void UASView::setBackgroundColor()
 
 void UASView::setUASasActive(bool active)
 {
-    UASManager::instance()->setActiveUAS(this->uas);
-    this->isActive = active;
-    setBackgroundColor();
+    if (active)
+    {
+        UASManager::instance()->setActiveUAS(this->uas);
+    }
+}
+
+void UASView::updateActiveUAS(UASInterface* uas, bool active)
+{
+    if (uas == this->uas)
+    {
+        this->isActive = active;
+        setBackgroundColor();
+    }
 }
 
 void UASView::updateMode(int sysId, QString status, QString description)

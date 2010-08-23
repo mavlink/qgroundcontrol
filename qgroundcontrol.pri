@@ -31,7 +31,10 @@
 
 message(Qt version $$[QT_VERSION])
 
-
+release {
+#    DEFINES += QT_NO_DEBUG_OUTPUT
+#    DEFINES += QT_NO_WARNING_OUTPUT
+}
 
 # MAC OS X
 macx { 

@@ -23,7 +23,7 @@ This file is part of the PIXHAWK project
 
 /**
  * @file
- *   @brief Implementation of central manager for all connected aerial vehicles
+ *   @brief Implementation of class UASManager
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
@@ -81,9 +81,7 @@ void UASManager::addUAS(UASInterface* uas)
     // If there is no active UAS yet, set the first one as the active UAS
     if (activeUAS == NULL)
     {
-        activeUAS = uas;
-        emit activeUASSet(uas);
-        emit activeUASSet(uas->getUASID());
+        setActiveUAS(uas);
     }
 }
 
@@ -165,6 +163,11 @@ void UASManager::setActiveUAS(UASInterface* uas)
     if (uas != NULL)
     {
         activeUASMutex.lock();
+        if (activeUAS != NULL)
+        {
+            emit activeUASStatusChanged(activeUAS, false);
+            emit activeUASStatusChanged(activeUAS->getUASID(), false);
+        }
         activeUAS = uas;
         activeUASMutex.unlock();
 
@@ -172,6 +175,8 @@ void UASManager::setActiveUAS(UASInterface* uas)
 
         emit activeUASSet(uas);
         emit activeUASSet(uas->getUASID());
+        emit activeUASStatusChanged(uas, true);
+        emit activeUASStatusChanged(uas->getUASID(), true);
     }
 }
 
