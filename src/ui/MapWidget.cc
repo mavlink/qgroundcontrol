@@ -29,6 +29,9 @@ This file is part of the PIXHAWK project
  *
  */
 
+#include <QComboBox>
+#include <QGridLayout>
+
 #include "MapWidget.h"
 #include "ui_MapWidget.h"
 #include "UASInterface.h"
@@ -56,25 +59,87 @@ MapWidget::MapWidget(QWidget *parent) :
     mc->setMouseTracking(true); // required to update the mouse position for diplay and capture
 
     // create MapAdapter to get maps from
-    TileMapAdapter* osmAdapter = new TileMapAdapter("tile.openstreetmap.org", "/%1/%2/%3.png", 256, 0, 17);
+    //TileMapAdapter* osmAdapter = new TileMapAdapter("tile.openstreetmap.org", "/%1/%2/%3.png", 256, 0, 17);
 
-    // create a layer with the mapadapter and type MapLayer
-    osmLayer = new Layer("Custom Layer", osmAdapter, Layer::MapLayer);
+    MapAdapter* mapadapter_overlay = new YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=2.2&t=h&s=256&x=%2&y=%3&z=%1");
+
+    // MAP BACKGROUND
+    mapadapter = new GoogleSatMapAdapter();
+    l = new MapLayer("Google Satellite", mapadapter);
+    mc->addLayer(l);
+
+    // STREET OVERLAY
+    overlay = new MapLayer("Overlay", mapadapter_overlay);
+    overlay->setVisible(false);
+    mc->addLayer(overlay);
+
+    // WAYPOINT LAYER
     // create a layer with the mapadapter and type GeometryLayer (for waypoints)
-    geomLayer = new Layer("Geom Layer", osmAdapter, Layer::GeometryLayer);
-
-    // add Layers to the MapControl and set zoom level
-    //mc->addLayer(osmLayer);
-    GoogleSatMapAdapter* gsat = new GoogleSatMapAdapter();
-    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
-    mc->addLayer(gsatLayer);
+    geomLayer = new GeometryLayer("Waypoints", mapadapter);
     mc->addLayer(geomLayer);
-    mc->setZoom(3);
+
+//
+//    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
+//    mc->addLayer(gsatLayer);
+
+    // SET INITIAL POSITION AND ZOOM
+    // Set default zoom level
+    mc->setZoom(16);
+    // Zurich, ETH
+    mc->setView(QPointF(8.548056,47.376389));
+
+    // Add controls to select map provider
+    /////////////////////////////////////////////////
+    QActionGroup* mapproviderGroup = new QActionGroup(this);
+    osmAction = new QAction(tr("OpenStreetMap"), mapproviderGroup);
+    yahooActionMap = new QAction(tr("Yahoo: Map"), mapproviderGroup);
+    yahooActionSatellite = new QAction(tr("Yahoo: Satellite"), mapproviderGroup);
+    googleActionMap = new QAction(tr("Google: Map"), mapproviderGroup);
+    googleSatAction = new QAction(tr("Google: Sat"), mapproviderGroup);
+    osmAction->setCheckable(true);
+    yahooActionMap->setCheckable(true);
+    yahooActionSatellite->setCheckable(true);
+    googleActionMap->setCheckable(true);
+    googleSatAction->setCheckable(true);
+    googleSatAction->setChecked(true);
+    connect(mapproviderGroup, SIGNAL(triggered(QAction*)),
+            this, SLOT(mapproviderSelected(QAction*)));
+
+    // Overlay seems currently broken
+//    yahooActionOverlay = new QAction(tr("Yahoo: street overlay"), this);
+//    yahooActionOverlay->setCheckable(true);
+//    yahooActionOverlay->setChecked(overlay->isVisible());
+//    connect(yahooActionOverlay, SIGNAL(toggled(bool)),
+//            overlay, SLOT(setVisible(bool)));
+
+//    mapproviderGroup->addAction(googleSatAction);
+//    mapproviderGroup->addAction(osmAction);
+//    mapproviderGroup->addAction(yahooActionOverlay);
+//    mapproviderGroup->addAction(googleActionMap);
+//    mapproviderGroup->addAction(yahooActionMap);
+//    mapproviderGroup->addAction(yahooActionSatellite);
+
+    // Create map provider selection menu
+    mapMenu = new QMenu(this);
+    mapMenu->addActions(mapproviderGroup->actions());
+    mapMenu->addSeparator();
+//    mapMenu->addAction(yahooActionOverlay);
+
+    mapButton = new QPushButton(this);
+    mapButton->setText("Map Source");
+    mapButton->setMenu(mapMenu);
 
     // display the MapControl in the application
-    QHBoxLayout* layout = new QHBoxLayout;
+    QGridLayout* layout = new QGridLayout(this);
     layout->setMargin(0);
-    layout->addWidget(mc);
+    layout->setSpacing(2);
+    layout->addWidget(mc, 0, 0, 1, 2);
+    layout->addWidget(mapButton, 1, 0);
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 1);
+    layout->setRowStretch(0, 100);
+    layout->setRowStretch(1, 1);
+    layout->setColumnStretch(0, 1);
+    layout->setColumnStretch(1, 50);
     setLayout(layout);
 
     // create buttons to control the map (zoom, GPS tracking and WP capture)
@@ -95,11 +160,18 @@ MapWidget::MapWidget(QWidget *parent) :
     createPath->setCheckable(true);
 
     // add buttons to control the map (zoom, GPS tracking and WP capture)
-    QVBoxLayout* innerlayout = new QVBoxLayout;
-    innerlayout->addWidget(zoomin);
-    innerlayout->addWidget(zoomout);
-    innerlayout->addWidget(followgps);
-    innerlayout->addWidget(createPath);
+    QGridLayout* innerlayout = new QGridLayout(mc);
+    innerlayout->setMargin(5);
+    innerlayout->setSpacing(5);
+    innerlayout->addWidget(zoomin, 0, 0);
+    innerlayout->addWidget(zoomout, 1, 0);
+    innerlayout->addWidget(followgps, 2, 0);
+    innerlayout->addWidget(createPath, 3, 0);
+    // Add spacers to compress buttons on the top left
+    innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 4, 0);
+    innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 1, 0, 5);
+    innerlayout->setRowStretch(0, 1);
+    innerlayout->setRowStretch(1, 100);
     mc->setLayout(innerlayout);
 
 
@@ -128,45 +200,111 @@ MapWidget::MapWidget(QWidget *parent) :
     pointPen->setWidth(3);
 
     path = new LineString (wps, "UAV Path", pointPen);
-    mc->layer("Geom Layer")->addGeometry(path);
+    mc->layer("Waypoints")->addGeometry(path);
 
     this->setVisible(false);
-
-
-    // Attic (Code that was commented)
-    // ==============================
-    //uasIcons = QMap<int, CirclePoint*>();
-
-    //QSize(480,640)
-    //      ImageManager::instance()->setProxy("www-cache", 8080);
-
-    //GoogleSatMapAdapter* gSatAdapter = new GoogleSatMapAdapter();
-    //Layer* gSatLayer = new Layer("Custom Layer", gSatAdapter, Layer::MapLayer);
-    //mc->addLayer(gSatLayer);
-
-    // gpsposition = new QLabel();
-    //gpsposition->setFont(QFont("Arial", 10));
-    //GPS_Neo* gm = new GPS_Neo();
-    //connect(gm, SIGNAL(new_position(float, QPointF)),
-    //                  this, SLOT(updatePosition(float, QPointF)));
-    //gm->start();
-
 }
 
-void MapWidget::createPathButtonClicked(){
-  if (createPath->isChecked()){
-    // change the cursor shape
-    this->setCursor(Qt::PointingHandCursor);
 
-    // Clear the previous WP track
-    // TODO: Move this to an actual clear track button and add a warning dialog
-    mc->layer("Geom Layer")->clearGeometries();
-    wps.clear();
-    path->setPoints(wps);
-    mc->layer("Geom Layer")->addGeometry(path);
-  } else {
-    this->setCursor(Qt::ArrowCursor);
-  }
+void MapWidget::mapproviderSelected(QAction* action)
+{
+    //delete mapadapter;
+    mapButton->setText(action->text());
+    if (action == osmAction)
+    {
+        int zoom = mapadapter->adaptedZoom();
+        mc->setZoom(0);
+
+        mapadapter = new OSMMapAdapter();
+        l->setMapAdapter(mapadapter);
+        geomLayer->setMapAdapter(mapadapter);
+
+        mc->updateRequestNew();
+        mc->setZoom(zoom);
+        yahooActionOverlay->setEnabled(false);
+        overlay->setVisible(false);
+        yahooActionOverlay->setChecked(false);
+
+    }
+    else if (action == yahooActionMap)
+    {
+        int zoom = mapadapter->adaptedZoom();
+        mc->setZoom(0);
+
+        mapadapter = new YahooMapAdapter();
+        l->setMapAdapter(mapadapter);
+        geomLayer->setMapAdapter(mapadapter);
+
+        mc->updateRequestNew();
+        mc->setZoom(zoom);
+        yahooActionOverlay->setEnabled(false);
+        overlay->setVisible(false);
+        yahooActionOverlay->setChecked(false);
+    }
+    else if (action == yahooActionSatellite)
+    {
+        int zoom = mapadapter->adaptedZoom();
+        QPointF a = mc->currentCoordinate();
+        mc->setZoom(0);
+
+        mapadapter = new YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
+        l->setMapAdapter(mapadapter);
+
+        mc->updateRequestNew();
+        mc->setZoom(zoom);
+        yahooActionOverlay->setEnabled(true);
+    }
+    else if (action == googleActionMap)
+    {
+        int zoom = mapadapter->adaptedZoom();
+        mc->setZoom(0);
+        mapadapter = new GoogleMapAdapter();
+        l->setMapAdapter(mapadapter);
+        geomLayer->setMapAdapter(mapadapter);
+
+        mc->updateRequestNew();
+        mc->setZoom(zoom);
+        yahooActionOverlay->setEnabled(false);
+        overlay->setVisible(false);
+        yahooActionOverlay->setChecked(false);
+    }
+    else if (action == googleSatAction)
+    {
+        int zoom = mapadapter->adaptedZoom();
+        mc->setZoom(0);
+        mapadapter = new GoogleSatMapAdapter();
+        l->setMapAdapter(mapadapter);
+        geomLayer->setMapAdapter(mapadapter); 
+
+        mc->updateRequestNew();
+        mc->setZoom(zoom);
+        yahooActionOverlay->setEnabled(false);
+        overlay->setVisible(false);
+        yahooActionOverlay->setChecked(false);
+    }
+    else
+    {
+        mapButton->setText("Select..");
+    }
+}
+
+
+void MapWidget::createPathButtonClicked()
+{
+    if (createPath->isChecked())
+    {
+        // change the cursor shape
+        this->setCursor(Qt::PointingHandCursor);
+
+        // Clear the previous WP track
+        // TODO: Move this to an actual clear track button and add a warning dialog
+        mc->layer("Waypoints")->clearGeometries();
+        wps.clear();
+        path->setPoints(wps);
+        mc->layer("Waypoints")->addGeometry(path);
+    } else {
+        this->setCursor(Qt::ArrowCursor);
+    }
 
 }
 
@@ -185,7 +323,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
     qDebug()<< "Lon: " << coordinate.x();
 
     // create the WP and set everything in the LineString to display the path
-    mc->layer("Geom Layer")->addGeometry(new CirclePoint(coordinate.x(), coordinate.y(), 10, str));
+    mc->layer("Waypoints")->addGeometry(new CirclePoint(coordinate.x(), coordinate.y(), 10, str));
     wps.append(new Point(coordinate.x(), coordinate.y(),str));
     path->addPoint(new Point(coordinate.x(), coordinate.y(),str));
 
@@ -214,6 +352,15 @@ void MapWidget::addUAS(UASInterface* uas)
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
 }
 
+/**
+ * Updates the global position of one MAV and append the last movement to the trail
+ *
+ * @param uas The unmanned air system
+ * @param lat Latitude in WGS84 ellipsoid
+ * @param lon Longitutde in WGS84 ellipsoid
+ * @param alt Altitude over mean sea level
+ * @param usec Timestamp of the position message in milliseconds FIXME will move to microseconds
+ */
 void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
@@ -238,7 +385,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
             QPen* pointpen = new QPen(uasColor);
             CirclePoint* p = new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen);
             uasIcons.insert(uas->getUASID(), p);
-            osmLayer->addGeometry(p);
+            geomLayer->addGeometry(p);
 
             // Line
             // A QPen also can use transparency
@@ -252,7 +399,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
             uasTrails.insert(uas->getUASID(), ls);
 
             // Add the LineString to the layer
-            osmLayer->addGeometry(ls);
+            geomLayer->addGeometry(ls);
         }
         else
         {
@@ -281,7 +428,9 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
     }
 }
 
-
+/**
+ * Center the view on this position
+ */
 void MapWidget::updatePosition(float time, double lat, double lon)
 {
     Q_UNUSED(time);
