@@ -87,6 +87,8 @@ protected:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
     void createPathButtonClicked();
     void captureGeometryClick(Geometry*, QPoint);
+    void captureGeometryDrag(Geometry* geom, QPointF coordinate);
+
 private:
     Ui::MapWidget *m_ui;
     QList<Point*> wps;
