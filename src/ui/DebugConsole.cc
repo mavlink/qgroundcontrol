@@ -33,6 +33,7 @@ This file is part of the PIXHAWK project
 #include "DebugConsole.h"
 #include "ui_DebugConsole.h"
 #include "LinkManager.h"
+#include "UASManager.h"
 #include "protocol.h"
 
 #include <QDebug>
@@ -163,9 +164,13 @@ void DebugConsole::setAutoHold(bool hold)
     autoHold = hold;
 }
 
-void DebugConsole::receiveTextMessage(int id, int severity, QString text)
+/**
+ * Prints the message in the UAS color
+ */
+void DebugConsole::receiveTextMessage(int id, int component, int severity, QString text)
 {
-    m_ui->receiveText->appendHtml(QString("<font color=\"yellow\">(MAV" + QString::number(id) + QString(":") + QString::number(severity) + QString(") ") + text + QString("</font>")));
+    Q_UNUSED(severity);
+    m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(MAV%2:%3) %4</font>").arg(UASManager::instance()->getUASForId(id)->getColor().name(), QString::number(id), QString::number(component), text));
 }
 
 void DebugConsole::updateTrafficMeasurements()

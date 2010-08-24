@@ -258,7 +258,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 //if ()
 
                 // If a new loss was detected or we just hit one 128th packet step
-                if (lastLoss != totalLossCounter || (totalReceiveCounter & 0x7F) == 0)
+                if (lastLoss != totalLossCounter || (totalReceiveCounter == 128))
                 {
                     // Calculate new loss ratio
                     // Receive loss

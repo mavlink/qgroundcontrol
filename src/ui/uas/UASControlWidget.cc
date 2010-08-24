@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 #include <QFileDialog>
 #include <QDebug>
 #include <QProcess>
+#include <QPalette>
 
 #include <MG.h>
 #include "UASControlWidget.h"
@@ -59,8 +60,8 @@ This file is part of the PIXHAWK project
 #define CONTROL_MODE_TEST3_INDEX  8
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
-        uas(NULL),
-        engineOn(false)
+uas(0),
+engineOn(false)
 {
     ui.setupUi(this);
 
@@ -74,44 +75,65 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     ui.modeComboBox->insertItem(CONTROL_MODE_TEST1_INDEX, CONTROL_MODE_TEST1);
     ui.modeComboBox->insertItem(CONTROL_MODE_TEST2_INDEX, CONTROL_MODE_TEST2);
     ui.modeComboBox->insertItem(CONTROL_MODE_TEST3_INDEX, CONTROL_MODE_TEST3);
+    connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
+    connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
     ui.modeComboBox->setCurrentIndex(0);
 }
 
 void UASControlWidget::setUAS(UASInterface* uas)
 {
-    if (this->uas != NULL)
+    if (this->uas != 0)
     {
-        disconnect(ui.controlButton, SIGNAL(clicked()), uas, SLOT(enable_motors()));
-        disconnect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
-        disconnect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
-        disconnect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-        disconnect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
-        disconnect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
+        UASInterface* oldUAS = UASManager::instance()->getUASForId(this->uas);
+        disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(enable_motors()));
+        disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
+        disconnect(ui.landButton, SIGNAL(clicked()), oldUAS, SLOT(home()));
+        disconnect(ui.shutdownButton, SIGNAL(clicked()), oldUAS, SLOT(shutdown()));
+        disconnect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        disconnect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
     }
-    else
-    {
-        // Connect user interface controls
-        connect(ui.controlButton, SIGNAL(clicked()), this, SLOT(cycleContextButton()));
-        connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
-        connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
-        connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-        connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
-        connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
-        ui.modeComboBox->insertItem(0, "Select..");
 
-        ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
+    // Connect user interface controls
+    connect(ui.controlButton, SIGNAL(clicked()), this, SLOT(cycleContextButton()));
+    connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
+    connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
+    connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
+    connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+    connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
 
-        connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-        connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
+    ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
 
-        this->uas = uas;
-    }
+    this->uas = uas->getUASID();
+    setBackgroundColor(uas->getColor());
 }
 
-UASControlWidget::~UASControlWidget() {
+UASControlWidget::~UASControlWidget()
+{
 
 }
+
+/**
+ * Set the background color based on the MAV color. If the MAV is selected as the
+ * currently actively controlled system, the frame color is highlighted
+ */
+void UASControlWidget::setBackgroundColor(QColor color)
+{
+    // UAS color
+    QColor uasColor = color;
+    QString colorstyle;
+    QString borderColor = "#4A4A4F";
+    borderColor = "#FA4A4F";
+    uasColor = uasColor.darker(900);
+    colorstyle = colorstyle.sprintf("QLabel { border-radius: 3px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X; border: 0px solid %s; }",
+                                    uasColor.red(), uasColor.green(), uasColor.blue(), borderColor.toStdString().c_str());
+    setStyleSheet(colorstyle);
+    QPalette palette = this->palette();
+    palette.setBrush(QPalette::Window, QBrush(uasColor));
+    setPalette(palette);
+    setAutoFillBackground(true);
+}
+
 
 void UASControlWidget::updateMode(int uas,QString mode,QString description)
 {
@@ -187,14 +209,14 @@ void UASControlWidget::transmitMode()
 {
     if (uasMode != 0)
     {
-        this->uas->setMode(uasMode);
-        ui.lastActionLabel->setText(QString("Set new mode for system %1").arg(uas->getUASName()));
+        UASManager::instance()->getUASForId(this->uas)->setMode(uasMode);
+        ui.lastActionLabel->setText(QString("Set new mode for system %1").arg(UASManager::instance()->getUASForId(uas)->getUASName()));
     }
 }
 
 void UASControlWidget::cycleContextButton()
 {
-    UAS* mav = dynamic_cast<UAS*>(this->uas);
+    UAS* mav = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(this->uas));
     if (mav)
     {
 
@@ -202,16 +224,16 @@ void UASControlWidget::cycleContextButton()
         {
             ui.controlButton->setText(tr("Stop Engine"));
             mav->enable_motors();
-            ui.lastActionLabel->setText(QString("Attempted to enable motors on %1").arg(uas->getUASName()));
+            ui.lastActionLabel->setText(QString("Attempted to enable motors on %1").arg(mav->getUASName()));
         }
         else
         {
             ui.controlButton->setText(tr("Activate Engine"));
             mav->disable_motors();
-            ui.lastActionLabel->setText(QString("Attempted to disable motors on %1").arg(uas->getUASName()));
+            ui.lastActionLabel->setText(QString("Attempted to disable motors on %1").arg(mav->getUASName()));
         }
-            //ui.controlButton->setText(tr("Force Landing"));
-            //ui.controlButton->setText(tr("KILL VEHICLE"));
+        //ui.controlButton->setText(tr("Force Landing"));
+        //ui.controlButton->setText(tr("KILL VEHICLE"));
     }
 
 }

@@ -36,6 +36,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QDebug>
 
+/**
+ * It will only get active upon calling startCompression()
+ */
 LogCompressor::LogCompressor(QString logFileName, QString outFileName, int uasid) :
         logFileName(logFileName),
         outFileName(outFileName),
@@ -44,7 +47,6 @@ LogCompressor::LogCompressor(QString logFileName, QString outFileName, int uasid
         dataLines(1),
         uasid(uasid)
 {
-    start();
 }
 
 void LogCompressor::run()
@@ -174,7 +176,13 @@ void LogCompressor::run()
     dataLines = 1;
     delete keys;
     qDebug() << "Done with logfile processing";
+    emit finishedFile(outfile.fileName());
     running = false;
+}
+
+void LogCompressor::startCompression()
+{
+    start();
 }
 
 bool LogCompressor::isFinished()

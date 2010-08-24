@@ -79,6 +79,9 @@
         <file>images/splash.png</file>
         <file>audio/alert.wav</file>
         <file>demo-log.txt</file>
+        <file>images/mapproviders/openstreetmap.png</file>
+        <file>images/mapproviders/google.png</file>
+        <file>images/mapproviders/yahoo.png</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">images/Vera.ttf</file>

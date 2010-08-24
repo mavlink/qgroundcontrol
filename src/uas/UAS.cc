@@ -360,7 +360,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (alt != alt)
                 {
                     alt = 0;
-                    emit textMessageReceived(uasId, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
+                    emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
                 }
                 emit valueChanged(uasId, "alt", pos.alt, time);
                 // Smaller than threshold and not NaN
@@ -372,7 +372,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
                 else
                 {
-                     emit textMessageReceived(uasId, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(pos.v));
+                     emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(pos.v));
                 }
                 emit globalPositionChanged(this, pos.lon, pos.lat, alt, time);
             }
@@ -498,7 +498,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 int severity = mavlink_msg_statustext_get_severity(&message);
                 //qDebug() << "RECEIVED STATUS:" << text;false
                 //emit statusTextReceived(severity, text);
-                emit textMessageReceived(uasId, severity, text);
+                emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
         default:
@@ -1036,6 +1036,11 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, MG::TIME::getGroundTimeNow());
       #endif
     }
+}
+
+int UAS::getSystemType()
+{
+    return this->type;
 }
 
 void UAS::receiveButton(int buttonIndex)

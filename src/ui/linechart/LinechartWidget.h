@@ -163,6 +163,9 @@ signals:
     void plotWindowPositionUpdated(quint64 position);
     void plotWindowPositionUpdated(int position);
 
+    /** @brief This signal is emitted once a logfile has been finished writing */
+    void logfileWritten(QString fileName);
+
 };
 
 #endif // LINECHARTWIDGET_H

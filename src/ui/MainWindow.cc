@@ -145,6 +145,7 @@ void MainWindow::connectWidgets()
 {
   connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), linechart, SLOT(addSystem(UASInterface*)));
   connect(UASManager::instance(), SIGNAL(activeUASSet(int)), linechart, SLOT(selectSystem(int)));
+  connect(linechart, SIGNAL(logfileWritten(QString)), this, SLOT(loadDataView(QString)));
   connect(mavlink, SIGNAL(receiveLossChanged(int, float)), info, SLOT(updateSendLoss(int, float)));
 }
 
@@ -390,29 +391,61 @@ void MainWindow::addLink(LinkInterface *link)
 void MainWindow::UASCreated(UASInterface* uas)
 {
     // Connect the UAS to the full user interface
-    //ui.menuConnected_Systems->addAction(QIcon(":/images/mavs/generic.svg"), tr("View ") + uas->getUASName(), uas, SLOT(setSelected()));
 
-    // FIXME Should be not inside the mainwindow
-    connect(uas, SIGNAL(textMessageReceived(int,int,QString)), debugConsole, SLOT(receiveTextMessage(int,int,QString)));
+    if (uas != NULL)
+    {
+        QIcon icon;
+        // Set matching icon
+        switch (uas->getSystemType())
+        {
+        case 0:
+            icon = QIcon(":/images/mavs/generic.svg");
+            break;
+        case 1:
+            icon = QIcon(":/images/mavs/fixed-wing.svg");
+            break;
+        case 2:
+            icon = QIcon(":/images/mavs/quadrotor.svg");
+            break;
+        case 3:
+            icon = QIcon(":/images/mavs/coaxial.svg");
+            break;
+        case 4:
+            icon = QIcon(":/images/mavs/helicopter.svg");
+            break;
+        case 5:
+            icon = QIcon(":/images/mavs/groundstation.svg");
+            break;
+        default:
+            icon = QIcon(":/images/mavs/unknown.svg");
+            break;
+        }
 
-    // Health / System status indicator
-    info->addUAS(uas);
+        ui.menuConnected_Systems->addAction(icon, tr("Select %1 for control").arg(uas->getUASName()), uas, SLOT(setSelected()));
 
-    // UAS List
-    list->addUAS(uas);
+        // FIXME Should be not inside the mainwindow
+        connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), debugConsole, SLOT(receiveTextMessage(int,int,int,QString)));
 
-    // Camera view
-    //camera->addUAS(uas);
+        // Health / System status indicator
+        info->addUAS(uas);
 
-    // Revalidate UI
-    // TODO Stylesheet reloading should in theory not be necessary
-    reloadStylesheet();
+        // UAS List
+        list->addUAS(uas);
 
-    // Check which type this UAS is of
-    PxQuadMAV* mav = dynamic_cast<PxQuadMAV*>(uas);
-    if (mav) loadPixhawkView();
-    SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
-    if (mav2) loadSlugsView();
+        // Camera view
+        //camera->addUAS(uas);
+
+        // Revalidate UI
+        // TODO Stylesheet reloading should in theory not be necessary
+        reloadStylesheet();
+
+        // Check which type this UAS is of
+        PxQuadMAV* mav = dynamic_cast<PxQuadMAV*>(uas);
+        if (mav) loadPixhawkView();
+        SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
+        if (mav2) loadSlugsView();
+
+    }
 }
 
 /**
@@ -542,6 +575,13 @@ void MainWindow::loadDataView()
 {
     clearView();
     centerStack->setCurrentWidget(dataplot);
+}
+
+void MainWindow::loadDataView(QString fileName)
+{
+    clearView();
+    centerStack->setCurrentWidget(dataplot);
+    dataplot->loadFile(fileName);
 }
 
 void MainWindow::loadPilotView()
