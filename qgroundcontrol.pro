@@ -153,7 +153,8 @@ HEADERS += src/MG.h \
     src/ui/QGCPxImuFirmwareUpdate.h \
     src/comm/MAVLinkLightProtocol.h \
     src/ui/QGCDataPlot2D.h \
-    src/ui/linechart/IncrementalPlot.h
+    src/ui/linechart/IncrementalPlot.h \
+    src/comm/OpalRT.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -218,8 +219,9 @@ SOURCES += src/main.cc \
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
-win32 {
-    LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin -lOpalApi
+win32 { 
+    LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
+        -lOpalApi
     INCLUDEPATH += src/lib/opalrt
     SOURCES += src/comm/OpalLink.cc
     HEADERS += src/comm/OpalLink.h
