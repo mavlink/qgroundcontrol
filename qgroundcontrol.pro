@@ -124,7 +124,6 @@ HEADERS += src/MG.h \
     src/ui/ObjectDetectionView.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
-    src/ui/PFD.h \
     src/ui/DebugConsole.h \
     src/ui/MapWidget.h \
     src/ui/XMLCommProtocolWidget.h \
@@ -154,7 +153,10 @@ HEADERS += src/MG.h \
     src/comm/MAVLinkLightProtocol.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/linechart/IncrementalPlot.h \
-    src/comm/OpalRT.h
+    src/ui/map/Waypoint2DIcon.h \
+    src/ui/map/MAV2DIcon.h \
+    src/ui/map/QGC2DIcon.h
+
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -186,7 +188,6 @@ SOURCES += src/main.cc \
     src/ui/ObjectDetectionView.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
-    src/ui/PFD.cc \
     src/ui/DebugConsole.cc \
     src/ui/MapWidget.cc \
     src/ui/XMLCommProtocolWidget.cc \
@@ -215,7 +216,10 @@ SOURCES += src/main.cc \
     src/ui/QGCPxImuFirmwareUpdate.cc \
     src/comm/MAVLinkLightProtocol.cc \
     src/ui/QGCDataPlot2D.cc \
-    src/ui/linechart/IncrementalPlot.cc
+    src/ui/linechart/IncrementalPlot.cc \
+    src/ui/map/Waypoint2DIcon.cc \
+    src/ui/map/MAV2DIcon.cc \
+    src/ui/map/QGC2DIcon.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
@@ -226,4 +230,8 @@ win32 {
     SOURCES += src/comm/OpalLink.cc
     HEADERS += src/comm/OpalLink.h
     DEFINES += OPAL_RT
+
+    HEADERS += src/comm/OpalRT.h
+
+
 }

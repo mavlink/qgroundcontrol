@@ -1,23 +1,23 @@
 /*=====================================================================
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
-This file is part of the PIXHAWK project
+This file is part of the QGROUNDCONTROL project
 
-    PIXHAWK is free software: you can redistribute it and/or modify
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    PIXHAWK is distributed in the hope that it will be useful,
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
 
@@ -51,6 +51,8 @@ public:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
+    /** @brief Set the width in meters this widget shows from top */
+    void setMetricWidth(double width);
     void updateSatellite(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     void updateAttitudeSetpoints(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 time);
@@ -80,8 +82,11 @@ public slots:
     void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);
     void pressKey(int key);
 
+signals:
+    void metricWidthChanged(double width);
+
 protected slots:
-    void paintDisplay();
+    void renderOverlay();
     void drawGPS(QPainter &painter);
     void drawObjects(QPainter &painter);
     void drawPositionDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
@@ -101,8 +106,11 @@ protected slots:
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
     /** @brief Receive mouse clicks */
     void mouseDoubleClickEvent(QMouseEvent* event);
+    /** @brief Receive mouse wheel events */
+    void wheelEvent(QWheelEvent* event);
 
 protected:
+
     /** @brief Get color from GPS signal-to-noise colormap */
     static QColor getColorForSNR(float snr);
     /** @brief Metric world coordinates to metric body coordinates */
@@ -201,7 +209,7 @@ protected:
     float uiYSetCoordinate;    ///< Y Setpoint coordinate wanted by the UI
     float uiZSetCoordinate;    ///< Z Setpoint coordinate wanted by the UI
     float uiYawSet;            ///< Yaw Setpoint wanted by the UI
-    float metricWidth;         ///< Width the instrument represents in meters (the width of the ground shown by the widget)
+    double metricWidth;        ///< Width the instrument represents in meters (the width of the ground shown by the widget)
 
     //
     float xCenterPos;         ///< X center of instrument in virtual coordinates

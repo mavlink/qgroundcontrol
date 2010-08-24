@@ -16,11 +16,17 @@ public:
     QGCDataPlot2D(QWidget *parent = 0);
     ~QGCDataPlot2D();
 
+    /** @brief Calculate and display regression function*/
+    bool calculateRegression(QString xName, QString yName, QString method="linear");
+
     /** @brief Linear regression over data points */
-    int linearRegression(double *x,double *y,int n,double *a,double *b,double *r);
+    int linearRegression(double* x,double* y,int n,double* a,double* b,double* r);
 
 public slots:
+    /** @brief Load previously selected file */
     void loadFile();
+    /** @brief Load file with this name */
+    void loadFile(QString file);
     /** @brief Reload a file, with filtering enabled */
     void reloadFile();
     void selectFile();
@@ -29,10 +35,14 @@ public slots:
     void saveCsvLog();
     /** @brief Save plot to PDF or SVG */
     void savePlot();
+    /** @brief Export PDF file */
+    void exportPDF(QString fileName);
     /** @brief Export SVG file */
     void exportSVG(QString file);
     /** @brief Print or save PDF file (MacOS/Linux) */
     void print();
+    /** @brief Calculate and display regression function*/
+    bool calculateRegression();
 
 protected:
     void changeEvent(QEvent *e);
@@ -40,6 +50,7 @@ protected:
     LogCompressor* compressor;
     QFile* logFile;
     QString fileName;
+    QStringList curveNames;
 
 private:
     Ui::QGCDataPlot2D *ui;
