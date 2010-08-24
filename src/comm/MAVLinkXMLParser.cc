@@ -258,7 +258,7 @@ bool MAVLinkXMLParser::generate()
                                                     packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); //%4\n").arg(arrayType, fieldName, QString::number(arrayLength), e2.text());
                                                     // Add decode function for this type
                                                     decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
-                                                    arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
+                                                    arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
                                                 }
                                                 else if (fieldType.startsWith("string"))
                                                 {
@@ -273,7 +273,7 @@ bool MAVLinkXMLParser::generate()
                                                     packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); //%4\n").arg(arrayType, fieldName, QString::number(arrayLength), e2.text());
                                                     // Add decode function for this type
                                                     decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
-                                                    arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
+                                                    arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
                                                 }
                                                 else
                                                     // Handle simple types like integers and floats
