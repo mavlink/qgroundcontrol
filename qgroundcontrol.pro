@@ -228,10 +228,7 @@ win32 {
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
     SOURCES += src/comm/OpalLink.cc
-    HEADERS += src/comm/OpalLink.h
+    HEADERS += src/comm/OpalLink.h \
+               src/comm/OpalRT.h
     DEFINES += OPAL_RT
-
-    HEADERS += src/comm/OpalRT.h
-
-
 }

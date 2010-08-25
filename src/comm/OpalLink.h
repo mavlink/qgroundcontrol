@@ -37,6 +37,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QQueue>
 #include <QByteArray>
 #include <QObject>
+#include <stdlib.h>
+
 
 #include "LinkInterface.h"
 #include "LinkManager.h"
@@ -61,7 +63,7 @@ This file is part of the QGROUNDCONTROL project
   Configuration info for the model
  */
 
-#define NUM_OUTPUT_SIGNALS 6
+#define NUM_OUTPUT_SIGNALS 36
 
 /**
  * @brief Interface to OpalRT targets
@@ -124,6 +126,7 @@ public slots:
 protected slots:
 
     void receiveMessage(mavlink_message_t message);
+    void setSignals(double *values);
 
 
 
