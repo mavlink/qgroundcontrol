@@ -96,6 +96,7 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
                 mavlink_param_set_t param;
                 mavlink_msg_param_set_decode(&msg, &param);
                 QString paramName((char*)param.param_id);
+                qDebug() << "OpalLink::writeBytes():paramName: " << paramName;
                 if (paramName == "NAV_FILT_INIT")
                 {
                     if (param.param_value == 1 || param.param_value == 0)
@@ -164,7 +165,7 @@ void OpalLink::heartbeat()
 }
 void OpalLink::setSignals(double *values)
 {
-    unsigned short numSignals = 9;
+    unsigned short numSignals = 2;
     unsigned short logicalId = 1;
     unsigned short signalIndex[] = {0,1};
 //    double values[] = {0.5, // ch 1
