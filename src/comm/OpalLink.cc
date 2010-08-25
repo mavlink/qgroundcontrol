@@ -67,7 +67,56 @@ qint64 OpalLink::bytesAvailable()
 
 void OpalLink::writeBytes(const char *bytes, qint64 length)
 {
+    /* decode the message */
+    mavlink_message_t msg;
+    mavlink_status_t status;        
+    int decodeSuccess = 0;
+    for (int i=0; (!(decodeSuccess=mavlink_parse_char(this->getId(), bytes[i], &msg, &status))&& i<length); ++i);    
 
+    /* perform the appropriate action */
+    if (decodeSuccess)
+    {
+        switch(msg.msgid)
+        {
+        case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
+            {
+                qDebug() << "OpalLink::writeBytes(): request params";
+                mavlink_message_t param;
+                char paramName[] = "NAV_FILT_INIT";
+                mavlink_msg_param_value_pack(systemID, componentID, &param,
+                                             (int8_t*)(paramName),
+                                             0,
+                                             1,
+                                             0);
+                receiveMessage(param);
+            }
+        case MAVLINK_MSG_ID_PARAM_SET:
+            {
+                qDebug() << "OpalLink::writeBytes(): Attempt to set a parameter";
+                mavlink_param_set_t param;
+                mavlink_msg_param_set_decode(&msg, &param);
+                QString paramName((char*)param.param_id);
+                if (paramName == "NAV_FILT_INIT")
+                {
+                    if (param.param_value == 1 || param.param_value == 0)
+                    {
+                        double values[2] = {};
+                        values[0] = param.param_value;
+                        setSignals(values);
+                    }
+                    else
+                    {
+                        qDebug() << "OpalLink::writeBytes(): Param NAV_FILT_INIT must be 1 or 0";
+                    }
+                }
+            }
+            break;
+        default:
+            {
+                qDebug() << "OpalLink::writeBytes(): Unknown mavlink packet";
+            }
+        }
+    }
 }
 
 
@@ -113,7 +162,29 @@ void OpalLink::heartbeat()
     }
 
 }
+void OpalLink::setSignals(double *values)
+{
+    unsigned short numSignals = 9;
+    unsigned short logicalId = 1;
+    unsigned short signalIndex[] = {0,1};
+//    double values[] = {0.5, // ch 1
+//                       0.5, // ch2
+//                       0.5, // ch3
+//                       0.5, // ch4
+//                       0.5, // ch5
+//                       0.5, // ch6
+//                       0.5, // ch7
+//                       0.5, // ch8
+//                       0.5}; // ch9
 
+    int returnValue;
+    returnValue =  OpalSetSignals( numSignals, logicalId, signalIndex, values);
+    if (returnValue != EOK)
+    {
+        setLastErrorMsg();
+        displayErrorMsg();
+    }
+}
 void OpalLink::getSignals()
 {
 //    getSignalsMutex.lock();
@@ -137,6 +208,7 @@ void OpalLink::getSignals()
         if (returnVal == EOK )
         {
             //        qDebug() << "OpalLink::getSignals: Timestep=" << *timestep;// << ", Last? " << (bool)(*lastValues);
+            /* Send position info to qgroundcontrol */
             mavlink_message_t local_position;
             mavlink_msg_local_position_pack(systemID, componentID, &local_position,
                                             (*timestep)*1000000,
@@ -147,11 +219,37 @@ void OpalLink::getSignals()
                                             values[OpalRT::Y_VEL],
                                             values[OpalRT::Z_VEL]);
             receiveMessage(local_position);
+
+            /* send attitude info to qgroundcontrol */
+            mavlink_message_t attitude;
+            mavlink_msg_attitude_pack(systemID, componentID, &attitude,
+                                      (*timestep)*1000000,
+                                      values[OpalRT::ROLL],
+                                      values[OpalRT::PITCH],
+                                      values[OpalRT::YAW],
+                                      0, // rollspeed
+                                      0, // pitchspeed
+                                      0 // yawspeed
+                                      );
+            receiveMessage(attitude);
+
+            /* send bias info to qgroundcontrol */
+            mavlink_message_t bias;
+            mavlink_msg_nav_filter_bias_pack(systemID, componentID, &bias,
+                                             (*timestep)*1000000,
+                                             values[OpalRT::B_F_0],
+                                             values[OpalRT::B_F_1],
+                                             values[OpalRT::B_F_2],
+                                             values[OpalRT::B_W_0],
+                                             values[OpalRT::B_W_1],
+                                             values[OpalRT::B_W_2]
+                                             );
+            receiveMessage(bias);
         }
-        else if (returnVal == EAGAIN)
-        {
+//        else if (returnVal == EAGAIN)
+//        {
 //            qDebug() << "OpalLink::getSignals: Data was not ready";
-        }
+//        }
         // if returnVal == EAGAIN => data just wasn't ready
         else if (returnVal != EAGAIN)
         {
@@ -208,8 +306,8 @@ bool OpalLink::connect()
 {
     short modelState;
 
-    /// \todo allow configuration of instid in window
-    if (OpalConnect(101, false, &modelState) == EOK)
+    /// \todo allow configuration of instid in window    
+    if ((OpalConnect(101, false, &modelState) == EOK) && (OpalGetSignalControl(0, true) == EOK))
     {
         connectState = true;
         emit connected();
