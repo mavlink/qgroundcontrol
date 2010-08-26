@@ -190,11 +190,16 @@ MapWidget::MapWidget(QWidget *parent) :
             this, SLOT(captureMapClick(const QMouseEvent*, const QPointF)));
 
     connect(createPath, SIGNAL(clicked(bool)),
-            this, SLOT(createPathButtonClicked()));
+            this, SLOT(createPathButtonClicked(bool)));
 
     connect(geomLayer, SIGNAL(geometryClicked(Geometry*,QPoint)),
             this, SLOT(captureGeometryClick(Geometry*, QPoint)));
 
+    connect(geomLayer, SIGNAL(geometryDragged(Geometry*, QPointF)),
+            this, SLOT(captureGeometryDrag(Geometry*, QPointF)));
+
+    connect(geomLayer, SIGNAL(geometryEndDrag(Geometry*, QPointF)),
+            this, SLOT(captureGeometryEndDrag(Geometry*, QPointF)));
 
     // Configure the WP Path's pen
     pointPen = new QPen(QColor(0, 255,0));
@@ -290,12 +295,15 @@ void MapWidget::mapproviderSelected(QAction* action)
 }
 
 
-void MapWidget::createPathButtonClicked()
+void MapWidget::createPathButtonClicked(bool checked)
 {
+  Q_UNUSED(checked);
+
     if (createPath->isChecked())
     {
         // change the cursor shape
         this->setCursor(Qt::PointingHandCursor);
+        mc->setMouseMode(qmapcontrol::MapControl::None);
 
         // Clear the previous WP track
         // TODO: Move this to an actual clear track button and add a warning dialog
@@ -303,8 +311,12 @@ void MapWidget::createPathButtonClicked()
         wps.clear();
         path->setPoints(wps);
         mc->layer("Waypoints")->addGeometry(path);
+        wpIndex.clear();
+
+
     } else {
         this->setCursor(Qt::ArrowCursor);
+        mc->setMouseMode(qmapcontrol::MapControl::Panning);
     }
 
 }
@@ -313,37 +325,55 @@ void MapWidget::createPathButtonClicked()
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate){
 
   if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked()){
-
     // Create waypoint name
     QString str;
-    str = QString("WP%1").arg(path->numberOfPoints()+1);
 
-
-    qDebug()<< "Waypoint " << str;
-    qDebug()<< "Lat: " << coordinate.y();
-    qDebug()<< "Lon: " << coordinate.x();
+    str = QString("WP%1").arg(path->numberOfPoints());
 
     // create the WP and set everything in the LineString to display the path
-    mc->layer("Waypoints")->addGeometry(new CirclePoint(coordinate.x(), coordinate.y(), 10, str));
-    wps.append(new Point(coordinate.x(), coordinate.y(),str));
-    path->addPoint(new Point(coordinate.x(), coordinate.y(),str));
+    CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
+    mc->layer("Waypoints")->addGeometry(tempCirclePoint);
 
+    Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
+    wps.append(tempPoint);
+    path->addPoint(tempPoint);
+
+    wpIndex.insert(str,tempPoint);
+
+    // Refresh the screen
     mc->updateRequestNew();
   }
 }
 
 void MapWidget::captureGeometryClick(Geometry* geom, QPoint point){
+  Q_UNUSED(geom);
+  Q_UNUSED(point);
 
-  qDebug() << geom->name();
-  qDebug() << geom->GeometryType;
-  qDebug() << point;
+  mc->setMouseMode(qmapcontrol::MapControl::None);
+
+
 }
 
 void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
+  Q_UNUSED(coordinate);
 
-  qDebug() << geom->name();
-  qDebug() << geom->GeometryType;
-  qDebug() << coordinate;
+  Point* point2Find;
+  point2Find = wpIndex[geom->name()];
+  point2Find->setCoordinate(coordinate);
+
+  point2Find = dynamic_cast <Point*> (geom);
+  point2Find->setCoordinate(coordinate);
+
+  // Refresh the screen
+  mc->updateRequestNew();
+}
+
+void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate){
+  mc->setMouseMode(qmapcontrol::MapControl::Panning);
+
+//  qDebug() << geom->name();
+//  qDebug() << geom->GeometryType;
+//  qDebug() << point;
 }
 
 MapWidget::~MapWidget()

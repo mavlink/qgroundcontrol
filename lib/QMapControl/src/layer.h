@@ -63,6 +63,7 @@ namespace qmapcontrol
     public:
         friend class LayerManager;
 
+
         //! sets the type of a layer, see Layer class doc for further information
         enum LayerType
         {
@@ -157,6 +158,9 @@ namespace qmapcontrol
         bool takeevents;
         mutable QRect myoffscreenViewport;
 
+        Geometry* geometrySelected;
+        bool draggingGeometry;
+
     signals:
         //! This signal is emitted when a Geometry is clicked
         /*!
@@ -166,6 +170,25 @@ namespace qmapcontrol
          * @param  point The coordinate (in widget coordinates) of the click
          */
         void geometryClicked(Geometry* geometry, QPoint point);
+
+        //! This signal is emitted while a Geometry is being dragged
+        /*!
+         * A Geometry is clickable, if the containing layer is clickable.
+         * The layer emits a signal as it is dragged
+         * @param  geometry The selected Geometry
+         * @param  coordinate The new coordinate (in world coordinates)
+         */
+        void geometryDragged(Geometry* geometrySelected, QPointF coordinate);
+
+
+        //! This signal is emitted when a User releases the button after selecting a Geometry
+        /*!
+         * A Geometry is clickable, if the containing layer is clickable.
+         * The layer emits a signal when it is released
+         * @param  geometry The selected Geometry
+         * @param  coordinate The new coordinate (in world coordinates)
+         */
+        void geometryEndDrag(Geometry* geometrySelected, QPointF coordinate);
 
         void updateRequest(QRectF rect);
         void updateRequest();

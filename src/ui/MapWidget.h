@@ -102,14 +102,19 @@ protected:
 
   protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
-    void createPathButtonClicked();
+    void createPathButtonClicked(bool checked);
     void captureGeometryClick(Geometry*, QPoint);
     void mapproviderSelected(QAction* action);
     void captureGeometryDrag(Geometry* geom, QPointF coordinate);
+    void captureGeometryEndDrag(Geometry* geom, QPointF coordinate);
+
+  signals:
+    void movePoint(QPointF newCoord);
 
 private:
     Ui::MapWidget *m_ui;
     QList<Point*> wps;
+    QHash <QString, Point*> wpIndex;
     LineString* path;
     QPen* pointPen;
 };
