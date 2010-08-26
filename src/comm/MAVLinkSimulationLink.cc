@@ -404,8 +404,15 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
-        // Send back new position
+        // GPS RAW
         mavlink_msg_gps_raw_pack(systemId, componentId, &ret, 0, 3, 47.376417+x*0.001f, 8.548103+y*0.001f, z, 0, 0, 2.5f, 0.1f);
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+
+        // GLOBAL POSITION
+        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 3, 47.376417+x*0.001f, 8.548103+y*0.001f, z, 0, 0);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
