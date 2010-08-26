@@ -94,7 +94,7 @@ void ObjectDetectionView::newPattern(int uasId, QString patternPath, float confi
         if (!patternList.contains(patternPath))
         {
             // Emit audio message on detection
-            if (detected) GAudioOutput::instance()->say("System " + QString::number(uasId) + " detected pattern " + QString(patternPath.split("/").last()).split(".").first());
+            if (detected) GAudioOutput::instance()->say("System " + QString::number(uasId) + " detected pattern " + QString(patternPath.split("/", QString::SkipEmptyParts).last()).split(".", QString::SkipEmptyParts).first());
 
             patternList.insert(patternPath, Pattern(patternPath, confidence));
         }
@@ -117,7 +117,7 @@ void ObjectDetectionView::newPattern(int uasId, QString patternPath, float confi
             m_ui->listWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
 
         // load image
-        QString filePath = MG::DIR::getSupportFilesDirectory() + "/" + patternFolder + "/" + patternPath.split("/").last();
+        QString filePath = MG::DIR::getSupportFilesDirectory() + "/" + patternFolder + "/" + patternPath.split("/", QString::SkipEmptyParts).last();
         QPixmap image = QPixmap(filePath);
         if (image.width() > image.height())
             image = image.scaledToWidth(m_ui->imageLabel->width());
@@ -126,8 +126,8 @@ void ObjectDetectionView::newPattern(int uasId, QString patternPath, float confi
         m_ui->imageLabel->setPixmap(image);
 
         // set textlabel
-        QString patternName = patternPath.split("/").last(); // Remove preceding folder names
-        patternName = patternName.split(".").first(); // Remove file ending
+        QString patternName = patternPath.split("/", QString::SkipEmptyParts).last(); // Remove preceding folder names
+        patternName = patternName.split(".", QString::SkipEmptyParts).first(); // Remove file ending
         m_ui->nameLabel->setText("Pattern: " + patternName);
     }
 }
@@ -204,9 +204,9 @@ void ObjectDetectionView::takeAction()
     QAction* act = dynamic_cast<QAction*>(sender());
     if (act)
     {
-        QString patternPath = act->text().trimmed().split(separator).first(); // Remove additional information
-        QString patternName = patternPath.split("//").last(); // Remove preceding folder names
-        patternName = patternName.split(".").first(); // Remove file ending
+        QString patternPath = act->text().trimmed().split(separator, QString::SkipEmptyParts).first(); // Remove additional information
+        QString patternName = patternPath.split("//", QString::SkipEmptyParts).last(); // Remove preceding folder names
+        patternName = patternName.split(".", QString::SkipEmptyParts).first(); // Remove file ending
 
         // Set name and label
         m_ui->nameLabel->setText(patternName);
