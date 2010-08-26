@@ -940,21 +940,20 @@ void UAS::enableExtra3Transmission(bool enabled)
 }
 
 void UAS::setParameter(int component, QString id, float value)
-{
+{    
     mavlink_message_t msg;
     mavlink_param_set_t p;
     p.param_value = value;
     p.target_system = (uint8_t)uasId;
     p.target_component = (uint8_t)component;
 
-    // Copy string into buffer, ensuring not to exceed the buffer size
-    char* s = (char*)id.toStdString().c_str();
+    // Copy string into buffer, ensuring not to exceed the buffer size    
     for (unsigned int i = 0; i < sizeof(p.param_id); i++)
     {
         // String characters
         if ((int)i < id.length() && i < (sizeof(p.param_id) - 1))
         {
-            p.param_id[i] = s[i];
+            p.param_id[i] = id.toAscii()[i];
         }
         // Null termination at end of string or end of buffer
         else if ((int)i == id.length() || i == (sizeof(p.param_id) - 1))
@@ -966,7 +965,7 @@ void UAS::setParameter(int component, QString id, float value)
         {
             p.param_id[i] = 0;
         }
-    }
+    }    
     mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
     sendMessage(msg);
 }
