@@ -1,23 +1,23 @@
 /*=====================================================================
 
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
+QGroundControl Open Source Ground Control Station
 
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
-This file is part of the PIXHAWK project
+This file is part of the QGROUNDCONTROL project
 
-    PIXHAWK is free software: you can redistribute it and/or modify
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    PIXHAWK is distributed in the hope that it will be useful,
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
 
@@ -384,6 +384,42 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 for(int i = 0; i < (int)pos.satellites_visible; i++)
                 {
                     emit gpsSatelliteStatusChanged(uasId, (unsigned char)pos.satellite_prn[i], (unsigned char)pos.satellite_elevation[i], (unsigned char)pos.satellite_azimuth[i], (unsigned char)pos.satellite_snr[i], static_cast<bool>(pos.satellite_used[i]));
+                }
+            }
+            break;
+        case MAVLINK_MSG_ID_RC_CHANNELS:
+            {
+                mavlink_rc_channels_t channels;
+                mavlink_msg_rc_channels_decode(&message, &channels);
+                for (int i = 0; i < 8; i++)
+                {
+                    switch (i)
+                    {
+                    case 0:
+                        emit remoteControlChannelChanged(i, channels.chan1_raw, channels.chan1_255/255.0f);
+                        break;
+                    case 1:
+                        emit remoteControlChannelChanged(i, channels.chan2_raw, channels.chan2_255/255.0f);
+                        break;
+                    case 2:
+                        emit remoteControlChannelChanged(i, channels.chan3_raw, channels.chan3_255/255.0f);
+                        break;
+                    case 3:
+                        emit remoteControlChannelChanged(i, channels.chan4_raw, channels.chan4_255/255.0f);
+                        break;
+                    case 4:
+                        emit remoteControlChannelChanged(i, channels.chan5_raw, channels.chan5_255/255.0f);
+                        break;
+                    case 5:
+                        emit remoteControlChannelChanged(i, channels.chan6_raw, channels.chan6_255/255.0f);
+                        break;
+                    case 6:
+                        emit remoteControlChannelChanged(i, channels.chan7_raw, channels.chan7_255/255.0f);
+                        break;
+                    case 7:
+                        emit remoteControlChannelChanged(i, channels.chan8_raw, channels.chan8_255/255.0f);
+                        break;
+                    }
                 }
             }
             break;
@@ -939,6 +975,13 @@ void UAS::enableExtra3Transmission(bool enabled)
 #endif
 }
 
+/**
+ * Set a parameter value onboard
+ *
+ * @param component The component to set the parameter
+ * @param id Name of the parameter
+ * @param value Parameter value
+ */
 void UAS::setParameter(int component, QString id, float value)
 {    
     mavlink_message_t msg;
@@ -971,7 +1014,7 @@ void UAS::setParameter(int component, QString id, float value)
 }
 
 /**
- * @brief Launches the system
+ * Launches the system
  *
  **/
 void UAS::launch()

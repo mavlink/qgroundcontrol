@@ -21,6 +21,13 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
+/**
+ * @file
+ *   @brief Implementation of QGCSensorSettingsWidget
+ *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *
+ */
+
 #include "QGCSensorSettingsWidget.h"
 #include "ui_QGCSensorSettingsWidget.h"
 

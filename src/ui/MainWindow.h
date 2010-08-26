@@ -62,6 +62,7 @@ This file is part of the QGROUNDCONTROL project
 #include "WatchdogControl.h"
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
+#include "QGCRemoteControlView.h"
 
 #include "LogCompressor.h"
 
@@ -170,6 +171,7 @@ protected:
     WatchdogControl* watchdogControl;
     HSIDisplay* hsi;
     QGCDataPlot2D* dataplot;
+    QGCRemoteControlView* rcView;
 
     // Popup widgets
     JoystickWidget* joystickWidget;
