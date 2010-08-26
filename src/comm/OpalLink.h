@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QMutex>
 #include <QDebug>
+#include <QTextStreamManipulator>
 #include <QMessageBox>
 #include <QTimer>
 #include <QQueue>
@@ -148,7 +149,7 @@ protected:
 //    QMutex getSignalsMutex;
     QString lastErrorMsg;
     void setLastErrorMsg();
-    void displayErrorMsg();
+    void displayLastErrorMsg();
 
     void setName(QString name);
 
@@ -164,6 +165,8 @@ protected:
 
     const int systemID;
     const int componentID;
+
+    void getParameterList();
 
 
 };

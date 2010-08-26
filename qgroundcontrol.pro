@@ -156,7 +156,6 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
     src/ui/map/QGC2DIcon.h
-
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -227,8 +226,12 @@ win32 {
     LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
-    SOURCES += src/comm/OpalLink.cc
+    SOURCES += src/comm/OpalLink.cc \
+               src/comm/Parameter.cc \
+               src/comm/QGCParamID.cc
     HEADERS += src/comm/OpalLink.h \
-               src/comm/OpalRT.h
+        src/comm/OpalRT.h \
+        src/comm/Parameter.h \
+        src/comm/QGCParamID.h
     DEFINES += OPAL_RT
 }
