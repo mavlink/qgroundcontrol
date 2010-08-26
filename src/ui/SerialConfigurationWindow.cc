@@ -23,8 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Implementation of configuration window for serial links
- *
+ *   @brief Implementation of SerialConfigurationWindow
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */
