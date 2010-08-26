@@ -110,28 +110,45 @@ namespace qmapcontrol
     }
 
     void Layer::mouseEvent(const QMouseEvent* evnt, const QPoint mapmiddle_px)
-    {
-        if (takesMouseEvents())
         {
-            if (evnt->button() == Qt::LeftButton && evnt->type() == QEvent::MouseButtonPress)
+            if (takesMouseEvents())
             {
-                // check for collision
-                QPointF c = mapAdapter->displayToCoordinate(QPoint(evnt->x()-screenmiddle.x()+mapmiddle_px.x(),
-                                                                   evnt->y()-screenmiddle.y()+mapmiddle_px.y()));
-                Point* tmppoint = new Point(c.x(), c.y());
-                for (int i=0; i<geometries.count(); i++)
+                if (evnt->button() == Qt::LeftButton && evnt->type() == QEvent::MouseButtonPress)
                 {
-                    if (geometries.at(i)->isVisible() && geometries.at(i)->Touches(tmppoint, mapAdapter))
-
-                        //if (geometries.at(i)->Touches(c, mapAdapter))
+                    // check for collision
+                    QPointF c = mapAdapter->displayToCoordinate(QPoint(evnt->x()-screenmiddle.x()+mapmiddle_px.x(),
+                                                                       evnt->y()-screenmiddle.y()+mapmiddle_px.y()));
+                    Point* tmppoint = new Point(c.x(), c.y());
+                    for (int i=0; i<geometries.count(); i++)
                     {
-                        emit(geometryClicked(geometries.at(i), QPoint(evnt->x(), evnt->y())));
+                        if (geometries.at(i)->isVisible() && geometries.at(i)->Touches(tmppoint, mapAdapter))
+
+                            //if (geometries.at(i)->Touches(c, mapAdapter))
+                        {
+
+                            emit(geometryClicked(geometries.at(i), QPoint(evnt->x(), evnt->y())));
+                            draggingGeometry = true;
+                            geometrySelected = geometries.at(i);
+                        }
                     }
+                    delete tmppoint;
                 }
-                delete tmppoint;
+
+                if (evnt->type() == QEvent::MouseButtonRelease){
+                  QPointF c = mapAdapter->displayToCoordinate(QPoint(evnt->x()-screenmiddle.x()+mapmiddle_px.x(),
+                                                                   evnt->y()-screenmiddle.y()+mapmiddle_px.y()));
+                    draggingGeometry = false;
+                    emit (geometryEndDrag(geometrySelected, c));
+                    geometrySelected = 0;
+                }
+
+                if ( evnt->type() == QEvent::MouseMove && draggingGeometry){
+                    QPointF c = mapAdapter->displayToCoordinate(QPoint(evnt->x()-screenmiddle.x()+mapmiddle_px.x(),
+                                                                     evnt->y()-screenmiddle.y()+mapmiddle_px.y()));
+                    emit(geometryDragged(geometrySelected, c));
+                }
             }
         }
-    }
 
     bool Layer::takesMouseEvents() const
     {

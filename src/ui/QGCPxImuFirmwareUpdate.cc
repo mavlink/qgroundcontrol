@@ -21,6 +21,13 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
+/**
+ * @file
+ *   @brief Implementation of QGCPxImuFirmwareUpdate
+ *   @author Lorenz Meier <mavteam@student.ethz.ch>
+ *
+ */
+
 #include "QGCPxImuFirmwareUpdate.h"
 #include "ui_QGCPxImuFirmwareUpdate.h"
 

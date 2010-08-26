@@ -74,7 +74,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/watchdog/WatchdogView.ui \
     src/ui/QGCFirmwareUpdate.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
-    src/ui/QGCDataPlot2D.ui
+    src/ui/QGCDataPlot2D.ui \
+    src/ui/QGCRemoteControlView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -155,7 +156,8 @@ HEADERS += src/MG.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
-    src/ui/map/QGC2DIcon.h
+    src/ui/map/QGC2DIcon.h \
+    src/ui/QGCRemoteControlView.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -218,7 +220,8 @@ SOURCES += src/main.cc \
     src/ui/linechart/IncrementalPlot.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/MAV2DIcon.cc \
-    src/ui/map/QGC2DIcon.cc
+    src/ui/map/QGC2DIcon.cc \
+    src/ui/QGCRemoteControlView.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
