@@ -111,8 +111,8 @@ public:
             ///> Color map for plots, includes 20 colors
             ///> Map will start from beginning when the first 20 colors are exceeded
 
-            colors.append(QColor(203,254,121));
             colors.append(QColor(231,72,28));
+            colors.append(QColor(203,254,121));
             colors.append(QColor(161,252,116));
             colors.append(QColor(232,33,47));
             colors.append(QColor(116,251,110));
