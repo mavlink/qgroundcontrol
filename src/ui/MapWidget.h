@@ -89,7 +89,7 @@ protected:
     qmapcontrol::Layer* overlay;      ///< Street overlay (foreground)
     qmapcontrol::GeometryLayer* geomLayer; ///< Layer for waypoints
     int zoomLevel;
-    int detailZoom;                   ///< Steps zoomed in further than qMapControl allows
+    int detailZoom; ///< Steps zoomed in further than qMapControl allows
     static const int scrollStep = 40; ///< Scroll n pixels per keypress
     static const int maxZoom = 50;    ///< Maximum zoom level
 
@@ -102,12 +102,19 @@ protected:
 
   protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
-    void createPathButtonClicked();
+    void createPathButtonClicked(bool checked);
     void captureGeometryClick(Geometry*, QPoint);
     void mapproviderSelected(QAction* action);
+    void captureGeometryDrag(Geometry* geom, QPointF coordinate);
+    void captureGeometryEndDrag(Geometry* geom, QPointF coordinate);
+
+  signals:
+    void movePoint(QPointF newCoord);
+
 private:
     Ui::MapWidget *m_ui;
     QList<Point*> wps;
+    QHash <QString, Point*> wpIndex;
     LineString* path;
     QPen* pointPen;
 };

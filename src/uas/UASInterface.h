@@ -329,6 +329,8 @@ signals:
     void positionZControlEnabled(bool enabled);
     /** @brief Heading control enabled/disabled */
     void positionYawControlEnabled(bool enabled);
+    /** @brief Value of a remote control channel */
+    void remoteControlChannelChanged(int channelId, float raw, float normalized);
 
     /**
      * @brief Localization quality changed

@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Implementation of class AudioOutputWidget
+ *   @brief Implementation of AudioOutputWidget
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
  */

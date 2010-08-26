@@ -255,6 +255,7 @@ namespace qmapcontrol
 
     void MapControl::mouseReleaseEvent(QMouseEvent* evnt)
     {
+      layermanager->mouseEvent(evnt);
         mousepressed = false;
         if (mymousemode == Dragging)
         {
@@ -271,6 +272,7 @@ namespace qmapcontrol
 
     void MapControl::mouseMoveEvent(QMouseEvent* evnt)
     {
+        layermanager->mouseEvent(evnt);
         emit(mouseEvent(evnt));
 
 

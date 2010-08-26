@@ -138,7 +138,8 @@ void MainWindow::buildWidgets()
   headDown1   = new HDDisplay(acceptList, this);
   headDown2   = new HDDisplay(acceptList2, this);
   joystick    = new JoystickInput();
-  dataplot    = new QGCDataPlot2D();
+  dataplot    = new QGCDataPlot2D(this);
+  rcView      = new QGCRemoteControlView(this);
 }
 
 void MainWindow::connectWidgets()
@@ -561,6 +562,11 @@ void MainWindow::loadPixhawkView()
     QDockWidget* container7 = new QDockWidget(tr("Communication Console"), this);
     container7->setWidget(debugConsole);
     addDockWidget(Qt::BottomDockWidgetArea, container7);
+
+    // DEBUG CONSOLE
+    QDockWidget* rcContainer = new QDockWidget(tr("Radio Control"), this);
+    rcContainer->setWidget(rcView);
+    addDockWidget(Qt::BottomDockWidgetArea, rcContainer);
 
     // ONBOARD PARAMETERS
     QDockWidget* containerParams = new QDockWidget(tr("Onboard Parameters"), this);
