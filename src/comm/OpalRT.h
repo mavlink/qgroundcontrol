@@ -43,6 +43,6 @@ namespace OpalRT
         B_W_0,
         B_W_1,
         B_W_2
-    };
+    };       
 }
 #endif // OPALRT_H

@@ -81,6 +81,7 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
             {
                 qDebug() << "OpalLink::writeBytes(): request params";
+                getParameterList();
                 mavlink_message_t param;
                 char paramName[] = "NAV_FILT_INIT";
                 mavlink_msg_param_value_pack(systemID, componentID, &param,
@@ -183,7 +184,7 @@ void OpalLink::setSignals(double *values)
     if (returnValue != EOK)
     {
         setLastErrorMsg();
-        displayErrorMsg();
+        displayLastErrorMsg();
     }
 }
 void OpalLink::getSignals()
@@ -255,7 +256,7 @@ void OpalLink::getSignals()
         else if (returnVal != EAGAIN)
         {
             getSignalsTimer->stop();
-            displayErrorMsg();
+            displayLastErrorMsg();
         }
     }
 
@@ -266,6 +267,77 @@ void OpalLink::getSignals()
     delete lastValues;
     delete decimation;
 //    getSignalsMutex.unlock();
+
+}
+
+void OpalLink::getParameterList()
+{
+    /* inputs */
+    unsigned short allocatedParams=0;
+    unsigned short allocatedPathLen=0;
+    unsigned short allocatedNameLen=0;
+    unsigned short allocatedVarLen=0;
+
+    /* outputs */
+    unsigned short numParams;
+    unsigned short *idParam=NULL;
+    unsigned short maxPathLen;
+    char **path=NULL;
+    unsigned short maxNameLen;
+    char **name=NULL;
+    unsigned short maxVarLen;
+    char **var=NULL;
+
+    int returnValue;
+
+    returnValue = OpalGetParameterList(allocatedParams, &numParams, idParam,
+                             allocatedPathLen, &maxPathLen, path,
+                             allocatedNameLen, &maxNameLen, name,
+                             allocatedVarLen, &maxVarLen, var);
+    if (returnValue!=E2BIG)
+    {
+        setLastErrorMsg();
+        displayLastErrorMsg();
+        return;
+    }
+
+    // allocate memory for parameter list
+
+    idParam = new unsigned short[numParams];
+    allocatedParams = numParams;
+
+    path = new char*[numParams];
+    for (int i=0; i<numParams; i++)
+        path[i]=new char[maxPathLen];
+    allocatedPathLen = maxPathLen;
+
+    name = new char*[numParams];
+    for (int i=0; i<numParams; i++)
+        name[i] = new char[maxNameLen];
+    allocatedNameLen = maxNameLen;
+
+    var = new char*[numParams];
+    for (int i=0; i<numParams; i++)
+        var[i] = new char[maxVarLen];
+    allocatedVarLen = maxVarLen;
+
+    returnValue = OpalGetParameterList(allocatedParams, &numParams, idParam,
+                             allocatedPathLen, &maxPathLen, path,
+                             allocatedNameLen, &maxNameLen, name,
+                             allocatedVarLen, &maxVarLen, var);
+
+    if (returnValue != EOK)
+    {
+        setLastErrorMsg();
+        displayLastErrorMsg();
+        return;
+    }
+
+    qDebug() << "Num params: " << numParams << endl;
+    qDebug() << "Name\tPath\tVar" << endl;
+    for (int i=0; i<numParams; i++)
+        qDebug() << qSetFieldWidth(20) << name[i] << qSetFieldWidth(5) << idParam[i]
+                << qSetFieldWidth(50) << path[i];
 
 }
 
@@ -318,7 +390,7 @@ bool OpalLink::connect()
     else
     {
         connectState = false;
-        displayErrorMsg();
+        displayLastErrorMsg();
     }
 
     emit connected(connectState);
@@ -330,7 +402,7 @@ bool OpalLink::disconnect()
     return false;
 }
 
-void OpalLink::displayErrorMsg()
+void OpalLink::displayLastErrorMsg()
 {
     setLastErrorMsg();
     QMessageBox msgBox;
