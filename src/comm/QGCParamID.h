@@ -2,12 +2,11 @@
 #define QGCPARAMID_H
 
 #include <QString>
-#include <QObject>
+
 namespace OpalRT
 {
-    class QGCParamID : public QString
+    class QGCParamID : protected QString
     {
-        Q_OBJECT
     public:
         QGCParamID();
     };

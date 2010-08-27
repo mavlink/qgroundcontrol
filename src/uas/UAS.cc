@@ -537,7 +537,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
-#ifdef OPAL_RT
+#ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
         case MAVLINK_MSG_ID_NAV_FILTER_BIAS:
             {
                 mavlink_nav_filter_bias_t bias;
