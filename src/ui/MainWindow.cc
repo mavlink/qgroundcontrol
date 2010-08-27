@@ -127,7 +127,7 @@ void MainWindow::buildWidgets()
   list        = new UASListWidget(this);
   waypoints   = new WaypointList(this, NULL);
   info        = new UASInfoWidget(this);
-  detection   = new ObjectDetectionView("patterns", this);
+  detection   = new ObjectDetectionView("images/patterns", this);
   hud         = new HUD(640, 480, this);
   debugConsole= new DebugConsole(this);
   map         = new MapWidget(this);
@@ -563,7 +563,7 @@ void MainWindow::loadPixhawkView()
     container7->setWidget(debugConsole);
     addDockWidget(Qt::BottomDockWidgetArea, container7);
 
-    // DEBUG CONSOLE
+    // RADIO CONTROL VIEW
     QDockWidget* rcContainer = new QDockWidget(tr("Radio Control"), this);
     rcContainer->setWidget(rcView);
     addDockWidget(Qt::BottomDockWidgetArea, rcContainer);
