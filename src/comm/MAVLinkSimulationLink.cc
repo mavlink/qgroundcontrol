@@ -377,20 +377,77 @@ void MAVLinkSimulationLink::mainloop()
         rate10hzCounter = 1;
 
         // Move X Position
-        x += sin(QGC::groundTimeUsecs()) * 0.1f;
-        y += sin(QGC::groundTimeUsecs()) * 0.1f;
-        z += sin(QGC::groundTimeUsecs()) * 0.1f;
+        x += sin(QGC::groundTimeUsecs()*1000) * 0.05f;
+        y += sin(QGC::groundTimeUsecs()) * 0.05f;
+        z += sin(QGC::groundTimeUsecs()) * 0.009f;
 
-        x = (x > 1.0f) ? 1.0f : x;
-        y = (y > 1.0f) ? 1.0f : y;
-        z = (z > 1.0f) ? 1.0f : z;
+        x = (x > 5.0f) ? 5.0f : x;
+        y = (y > 5.0f) ? 5.0f : y;
+        z = (z > 3.0f) ? 3.0f : z;
+
+        x = (x < -5.0f) ? -5.0f : x;
+        y = (y < -5.0f) ? -5.0f : y;
+        z = (z < -3.0f) ? -3.0f : z;
+
         // Send back new setpoint
         mavlink_message_t ret;
         mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, spX, spY, spZ, spYaw);
-        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
+
+        // Send back new position
+        mavlink_msg_local_position_pack(systemId, componentId, &ret, 0, x, y, z, 0, 0, 0);
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+
+        // GPS RAW
+        mavlink_msg_gps_raw_pack(systemId, componentId, &ret, 0, 3, 47.376417+x*0.001f, 8.548103+y*0.001f, z, 0, 0, 2.5f, 0.1f);
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+
+        // GLOBAL POSITION
+        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 3, 47.376417+x*0.001f, 8.548103+y*0.001f, z, 0, 0);
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+
+        static int rcCounter = 0;
+        if (rcCounter == 2)
+        {
+            mavlink_rc_channels_t chan;
+            chan.chan1_raw = 1000 + ((int)(fabs(x) * 1000) % 2000);
+            chan.chan2_raw = 1000 + ((int)(fabs(y) * 1000) % 2000);
+            chan.chan3_raw = 1000 + ((int)(fabs(z) * 1000) % 2000);
+            chan.chan4_raw = (chan.chan1_raw + chan.chan2_raw) / 2.0f;
+            chan.chan5_raw = (chan.chan3_raw + chan.chan4_raw) / 2.0f;
+            chan.chan6_raw = (chan.chan3_raw + chan.chan2_raw) / 2.0f;
+            chan.chan7_raw = (chan.chan4_raw + chan.chan2_raw) / 2.0f;
+            chan.chan8_raw = (chan.chan6_raw + chan.chan2_raw) / 2.0f;
+            chan.chan1_255 = ((chan.chan1_raw - 1000)/1000.0f) * 255.0f;
+            chan.chan2_255 = ((chan.chan2_raw - 1000)/1000.0f) * 255.0f;
+            chan.chan3_255 = ((chan.chan3_raw - 1000)/1000.0f) * 255.0f;
+            chan.chan4_255 = ((chan.chan4_raw - 1000)/1000.0f) * 255.0f;
+            chan.chan5_255 = ((chan.chan5_raw - 1000)/1000.0f) * 255.0f;
+            chan.chan6_255 = ((chan.chan6_raw - 1000)/1000.0f) * 255.0f;
+            chan.chan7_255 = ((chan.chan7_raw - 1000)/1000.0f) * 255.0f;
+            chan.chan8_255 = ((chan.chan8_raw - 1000)/1000.0f) * 255.0f;
+            messageSize = mavlink_msg_rc_channels_encode(systemId, componentId, &msg, &chan);
+            // Allocate buffer with packet data
+            bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+            //add data into datastream
+            memcpy(stream+streampointer,buffer, bufferlength);
+            streampointer += bufferlength;
+            rcCounter = 0;
+        }
+        rcCounter++;
+
     }
 
     // 1 HZ TASKS
@@ -404,6 +461,62 @@ void MAVLinkSimulationLink::mainloop()
             statusCounter = 0;
         }
         statusCounter++;
+
+        static int detectionCounter = 6;
+        if (detectionCounter % 10 == 0)
+        {
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+            mavlink_pattern_detected_t detected;
+            detected.confidence = 5.0f;
+
+            if (detectionCounter == 10)
+            {
+                char fileName[] = "patterns/face5.png";
+                memcpy(detected.file, fileName, sizeof(fileName));
+                detected.type = 0; // 0: Pattern, 1: Letter
+            }
+            else if (detectionCounter == 20)
+            {
+                char fileName[] = "7";
+                memcpy(detected.file, fileName, sizeof(fileName));
+                detected.type = 1; // 0: Pattern, 1: Letter
+            }
+            else if (detectionCounter == 30)
+            {
+                char fileName[] = "patterns/einstein.bmp";
+                memcpy(detected.file, fileName, sizeof(fileName));
+                detected.type = 0; // 0: Pattern, 1: Letter
+            }
+            else if (detectionCounter == 40)
+            {
+                char fileName[] = "F";
+                memcpy(detected.file, fileName, sizeof(fileName));
+                detected.type = 1; // 0: Pattern, 1: Letter
+            }
+            else if (detectionCounter == 50)
+            {
+                char fileName[] = "patterns/face2.png";
+                memcpy(detected.file, fileName, sizeof(fileName));
+                detected.type = 0; // 0: Pattern, 1: Letter
+            }
+            else if (detectionCounter == 60)
+            {
+                char fileName[] = "H";
+                memcpy(detected.file, fileName, sizeof(fileName));
+                detected.type = 1; // 0: Pattern, 1: Letter
+                detectionCounter = 0;
+            }
+            detected.detected = 1;
+            messageSize = mavlink_msg_pattern_detected_encode(systemId, componentId, &msg, &detected);
+            // Allocate buffer with packet data
+            bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+            //add data into datastream
+            memcpy(stream+streampointer,buffer, bufferlength);
+            streampointer += bufferlength;
+            //detectionCounter = 0;
+#endif
+        }
+        detectionCounter++;
 
         status.vbat = voltage * 1000; // millivolts
 
@@ -436,7 +549,15 @@ void MAVLinkSimulationLink::mainloop()
         // HEARTBEAT
 
         static int typeCounter = 0;
-        uint8_t mavType = typeCounter % (OCU);
+        uint8_t mavType;
+        if (typeCounter < 10)
+        {
+            mavType = MAV_QUADROTOR;
+        }
+        else
+        {
+            mavType = typeCounter % (OCU);
+        }
         typeCounter++;
 
         // Pack message and get size of encoded byte string
