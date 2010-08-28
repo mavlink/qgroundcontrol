@@ -37,18 +37,33 @@ namespace OpalRT
         class ParameterList;
 }
 #include "OpalLink.h"
-namespace OpalRT{
+namespace OpalRT
+{
     class ParameterList
     {
+        class const_iterator
+        {
+        public:
+            const_iterator();
+        private:
+            QMap<int, QMap<QGCParamID, Parameter> >::const_iterator componentIter;
+            QMap<QGCParamID, Parameter>::const_iterator paramIter;
+        };
+
     public:
         ParameterList();
         ~ParameterList();
         int setValue(int compid, QGCParamID paramid, float value);
         float getValue(int compid, QGCParamID paramid);
+
+        const_iterator begin() const;
+        const_iterator end() const;
     protected:
         QMap<int, QMap<QGCParamID, Parameter> > *params;
 
         void getParameterList(QMap<QString, unsigned short>*);
+
+
 
     };
 }
