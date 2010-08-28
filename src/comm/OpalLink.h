@@ -48,6 +48,7 @@ This file is part of the QGROUNDCONTROL project
 #include "mavlink_types.h"
 #include "configuration.h"
 #include "OpalRT.h"
+#include "ParameterList.h"
 
 #include "errno.h"
 
@@ -101,22 +102,18 @@ public:
     qint64 getBitsSent();
     qint64 getBitsReceived();
 
-
     bool connect();
 
-
     bool disconnect();
-
 
     qint64 bytesAvailable();
 
     void run();
-
+    static void setLastErrorMsg();
+    static void displayLastErrorMsg();
 public slots:
 
-
     void writeBytes(const char *bytes, qint64 length);
-
 
     void readBytes();
 
@@ -128,8 +125,6 @@ protected slots:
 
     void receiveMessage(mavlink_message_t message);
     void setSignals(double *values);
-
-
 
 protected:
     QString name;
@@ -147,9 +142,7 @@ protected:
     QMutex statisticsMutex;
     QMutex receiveDataMutex;
 //    QMutex getSignalsMutex;
-    QString lastErrorMsg;
-    void setLastErrorMsg();
-    void displayLastErrorMsg();
+    static QString lastErrorMsg;
 
     void setName(QString name);
 
@@ -167,8 +160,8 @@ protected:
     const int componentID;
 
     void getParameterList();
-
-
+    OpalRT::ParameterList *params;
 };
 
+//QString OpalLink::lastErrorMsg = QString();
 #endif // OPALLINK_H

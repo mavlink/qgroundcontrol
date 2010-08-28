@@ -21,38 +21,35 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-#ifndef PARAMETER_H
-#define PARAMETER_H
+#ifndef PARAMETERLIST_H
+#define PARAMETERLIST_H
 
-#include <QString>
+#include <QMap>
+
 #include "mavlink_types.h"
 #include "QGCParamID.h"
+#include "Parameter.h"
+#include "OpalRT.h"
 
+// Forward declare ParameterList before including OpalLink.h because a member of type ParameterList is used in OpalLink
 namespace OpalRT
 {
-class Parameter
-{
-public:
-    Parameter(char *simulinkPath = "",
-              char *simulinkName = "",
-              uint8_t componentID = 0,
-              QGCParamID paramID = QGCParamID(),
-              unsigned short opalID = 0);
-    /// \todo Implement copy constructor
-    Parameter(const Parameter& other);
-    ~Parameter();
-
-    QGCParamID getParamID() {return *paramID;}
-    void setOpalID(unsigned short opalID) {this->opalID = opalID;}
-    const QString& getSimulinkPath() {return *simulinkPath;}
-    const QString& getSimulinkName() {return *simulinkName;}
-protected:
-    QString *simulinkPath;
-    QString *simulinkName;
-    uint8_t componentID;
-    QGCParamID *paramID;
-    unsigned short opalID;
-};
+        class ParameterList;
 }
+#include "OpalLink.h"
+namespace OpalRT{
+    class ParameterList
+    {
+    public:
+        ParameterList();
+        ~ParameterList();
+        int setValue(int compid, QGCParamID paramid, float value);
+        float getValue(int compid, QGCParamID paramid);
+    protected:
+        QMap<int, QMap<QGCParamID, Parameter> > *params;
 
-#endif // PARAMETER_H
+        void getParameterList(QMap<QString, unsigned short>*);
+
+    };
+}
+#endif // PARAMETERLIST_H

@@ -81,7 +81,8 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
             {
                 qDebug() << "OpalLink::writeBytes(): request params";
-                getParameterList();
+//                getParameterList();
+                params = new OpalRT::ParameterList();
                 mavlink_message_t param;
                 char paramName[] = "NAV_FILT_INIT";
                 mavlink_msg_param_value_pack(systemID, componentID, &param,
@@ -270,6 +271,7 @@ void OpalLink::getSignals()
 
 }
 
+
 void OpalLink::getParameterList()
 {
     /* inputs */
@@ -404,6 +406,7 @@ bool OpalLink::disconnect()
 
 void OpalLink::displayLastErrorMsg()
 {
+    static QString lastErrorMsg;
     setLastErrorMsg();
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Critical);
@@ -415,6 +418,7 @@ void OpalLink::setLastErrorMsg()
 {
     char buf[512];
     unsigned short len;
+    static QString lastErrorMsg;
     OpalGetLastErrMsg(buf, sizeof(buf), &len);
     lastErrorMsg.clear();
     lastErrorMsg.append(buf);

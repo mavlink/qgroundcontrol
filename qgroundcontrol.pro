@@ -42,8 +42,8 @@ DEPENDPATH += . \
     plugins
 INCLUDEPATH += . \
     lib/QMapControl \
-    $$BASEDIR/../mavlink/contrib/slugs/include \
-    $$BASEDIR/../mavlink/include
+    $$BASEDIR/../mavlink/include \
+    $$BASEDIR/../mavlink/contrib/slugs/include
 
 # ../mavlink/include \
 # MAVLink/include \
@@ -230,11 +230,13 @@ win32 {
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
     SOURCES += src/comm/OpalLink.cc \
-               src/comm/Parameter.cc \
-               src/comm/QGCParamID.cc
+        src/comm/Parameter.cc \
+        src/comm/QGCParamID.cc \
+        src/comm/ParameterList.cc
     HEADERS += src/comm/OpalLink.h \
         src/comm/OpalRT.h \
         src/comm/Parameter.h \
-        src/comm/QGCParamID.h
+        src/comm/QGCParamID.h \
+        src/comm/ParameterList.h
     DEFINES += OPAL_RT
 }
