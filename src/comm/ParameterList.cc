@@ -69,6 +69,17 @@ ParameterList::~ParameterList()
 {
     delete params;
 }
+
+ParameterList::const_iterator::const_iterator()
+{
+
+}
+
+ParameterList::begin()
+{
+
+}
+
 /**
   Get the list of parameters in the simulink model.  This function does not require
   any prior knowlege of the parameters.  It works by first calling OpalGetParameterList to
