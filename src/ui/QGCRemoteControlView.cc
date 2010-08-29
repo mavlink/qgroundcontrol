@@ -52,18 +52,21 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
     nameLabel = new QLabel(this);
     nameLabel->setText("No MAV selected yet..");
     layout->addWidget(nameLabel, 0, 0, 1, 2);
-    // Add spacer left of button
-    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 2, 0);
-    // Set stretch to maximize spacer, not button
-    layout->setColumnStretch(0, 100);
-    layout->setColumnStretch(1, 1);
-    // Calibrate button
-    QPushButton* calibrateButton = new QPushButton(this);
-    calibrateButton->setText(tr("Calibrate"));
-    // Connect to calibration slot
-    connect(calibrateButton, SIGNAL(clicked()), this, SLOT(calibrate()));
-    // Add button
-    layout->addWidget(calibrateButton, 2, 1);
+
+    // RSSI bar
+    // Create new layout
+    QHBoxLayout* rssiLayout = new QHBoxLayout();
+    rssiLayout->setSpacing(5);
+    // Add content
+    rssiLayout->addWidget(new QLabel(tr("Signal"), this));
+    // Append raw label
+    // Append progress bar
+    rssiBar = new QProgressBar(this);
+    rssiBar->setMinimum(0);
+    rssiBar->setMaximum(100);
+    rssiBar->setValue(0);
+    rssiLayout->addWidget(rssiBar);
+    layout->addItem(rssiLayout, 2, 0, 1, 2);
     setVisible(false);
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(setUASId(int)));
@@ -75,11 +78,6 @@ QGCRemoteControlView::~QGCRemoteControlView()
     delete channelLayout;
 }
 
-void QGCRemoteControlView::calibrate()
-{
-    // Run auto-calibration
-}
-
 void QGCRemoteControlView::setUASId(int id)
 {
     if (uasId != -1)
@@ -89,6 +87,7 @@ void QGCRemoteControlView::setUASId(int id)
         {
             // The UAS exists, disconnect any existing connections
             disconnect(uas, SIGNAL(remoteControlChannelChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
+            disconnect(uas, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
         }
     }
 
@@ -99,6 +98,7 @@ void QGCRemoteControlView::setUASId(int id)
         // New UAS exists, connect
         nameLabel->setText(QString("RC Input of %1").arg(newUAS->getUASName()));
         connect(newUAS, SIGNAL(remoteControlChannelChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
+        connect(newUAS, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
     }
 }
 
@@ -132,7 +132,7 @@ void QGCRemoteControlView::setRemoteRSSI(float rssiNormalized)
 void QGCRemoteControlView::appendChannelWidget(int channelId)
 {
     // Create new layout
-    QHBoxLayout* layout = new QHBoxLayout(this);
+    QHBoxLayout* layout = new QHBoxLayout();
     // Add content
     layout->addWidget(new QLabel(QString("Channel %1").arg(channelId + 1), this));
     QLabel* raw = new QLabel(this);
