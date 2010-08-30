@@ -226,6 +226,8 @@ RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
 win32 { 
+exists(src/lib/opalrt/OpalApi.h){
+    message("Building support for Opal-RT")
     LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
@@ -239,4 +241,5 @@ win32 {
         src/comm/QGCParamID.h \
         src/comm/ParameterList.h
     DEFINES += OPAL_RT
+}
 }

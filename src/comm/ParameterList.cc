@@ -75,7 +75,7 @@ ParameterList::const_iterator::const_iterator()
 
 }
 
-ParameterList::begin()
+const_iterator ParameterList::begin()
 {
 
 }
