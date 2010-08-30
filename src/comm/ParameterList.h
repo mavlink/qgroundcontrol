@@ -41,23 +41,24 @@ namespace OpalRT
 {
     class ParameterList
     {
+    public:
+
         class const_iterator
         {
         public:
             const_iterator();
+            const_iterator(const_iterator& other);
         private:
-            QMap<int, QMap<QGCParamID, Parameter> >::const_iterator componentIter;
-            QMap<QGCParamID, Parameter>::const_iterator paramIter;
+            int componentID;
+            QGCParamID paramID;
         };
-
-    public:
         ParameterList();
         ~ParameterList();
         int setValue(int compid, QGCParamID paramid, float value);
         float getValue(int compid, QGCParamID paramid);
 
-        const_iterator begin() const;
-        const_iterator end() const;
+//        const_iterator begin() const;
+//        const_iterator end() const;
     protected:
         QMap<int, QMap<QGCParamID, Parameter> > *params;
 
