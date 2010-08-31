@@ -82,15 +82,30 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
             {
                 qDebug() << "OpalLink::writeBytes(): request params";
 //                getParameterList();
-                params = new OpalRT::ParameterList();
+
                 mavlink_message_t param;
-                char paramName[] = "NAV_FILT_INIT";
-                mavlink_msg_param_value_pack(systemID, componentID, &param,
-                                             (int8_t*)(paramName),
-                                             0,
-                                             1,
-                                             0);
-                receiveMessage(param);
+//                char paramName[] = "NAV_FILT_INIT";
+//                mavlink_msg_param_value_pack(systemID, componentID, &param,
+//                                             (int8_t*)(paramName),
+//                                             0,
+//                                             1,
+//                                             0);
+//                receiveMessage(param);
+
+                OpalRT::ParameterList::const_iterator paramIter;
+                for (paramIter = params->begin(); paramIter != params->end(); ++paramIter)
+                {
+                    mavlink_msg_param_value_pack(systemID,
+                                                 (*paramIter).getComponentID(),
+                                                 &param,
+                                                 (*paramIter).getParamID().toInt8_t(),
+                                                 (static_cast<OpalRT::Parameter>(*paramIter)).getValue(),
+                                                 params->count(),
+                                                 params->indexOf(*paramIter));
+                    receiveMessage(param);
+                }
+
+
             }
         case MAVLINK_MSG_ID_PARAM_SET:
             {
@@ -385,6 +400,8 @@ bool OpalLink::connect()
     if ((OpalConnect(101, false, &modelState) == EOK) && (OpalGetSignalControl(0, true) == EOK))
     {
         connectState = true;
+        /// \todo try/catch a delete in case params has already been allocated
+        params = new OpalRT::ParameterList();
         emit connected();
         heartbeatTimer->start(1000/heartbeatRate);
         getSignalsTimer->start(getSignalsPeriod);

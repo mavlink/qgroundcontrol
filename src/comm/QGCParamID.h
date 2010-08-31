@@ -25,18 +25,27 @@ This file is part of the QGROUNDCONTROL project
 #define QGCPARAMID_H
 
 #include <QString>
+#include "mavlink_types.h"
 
 namespace OpalRT
 {
-    class QGCParamID : public QString
+    class QGCParamID
     {
     public:
 
         QGCParamID(const char *paramid);
+        QGCParamID(const QString);
         QGCParamID() {}
         QGCParamID(const QGCParamID& other);
 
-//       bool operator<(const QGCParamID& other);
+        bool operator<(const QGCParamID& other) const {return data<other.data;}
+        bool operator==(const QGCParamID& other) const {return data == other.data;}
+
+        const QString getParamString() const {return static_cast<const QString>(data);}
+        int8_t* toInt8_t() const {return (int8_t*)data.toAscii().data();}
+
+    protected:
+        QString data;
     };
 }
 #endif // QGCPARAMID_H

@@ -1,21 +1,23 @@
 #include "QGCParamID.h"
 using namespace OpalRT;
 
-QGCParamID::QGCParamID(const char *paramid):QString(paramid)
+QGCParamID::QGCParamID(const char *paramid):data(paramid)
 {
 }
 
-QGCParamID::QGCParamID(const QGCParamID &other):QString(other)
+QGCParamID::QGCParamID(const QString s):data(s)
 {
 
 }
 
-/*
-bool QGCParamID::operator<(const QGCParamID& other)
+QGCParamID::QGCParamID(const QGCParamID &other):data(other.data)
 {
-    const QString *lefthand, *righthand;
-    lefthand = this;
-    righthand = &other;
-    return lefthand < righthand;
+
 }
-*/
+
+//int8_t* QGCParamID::toInt8_t()
+//{
+//    int8_t
+//    for (int i=0; ((i < data.size()) && (i < 15)); ++i)
+//
+//}

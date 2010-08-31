@@ -49,6 +49,7 @@ This file is part of the QGROUNDCONTROL project
 #include "configuration.h"
 #include "OpalRT.h"
 #include "ParameterList.h"
+#include "Parameter.h"
 
 #include "errno.h"
 
