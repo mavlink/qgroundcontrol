@@ -46,6 +46,12 @@ QGCSensorSettingsWidget::QGCSensorSettingsWidget(UASInterface* uas, QWidget *par
     connect(ui->sendExtra1CheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtra1Transmission(bool)));
     connect(ui->sendExtra2CheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtra2Transmission(bool)));
     connect(ui->sendExtra3CheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtra3Transmission(bool)));
+
+    // Calibration
+    connect(ui->rcCalButton, SIGNAL(clicked()), mav, SLOT(startRadioControlCalibration()));
+    connect(ui->magCalButton, SIGNAL(clicked()), mav, SLOT(startMagnetometerCalibration()));
+    connect(ui->pressureCalButton, SIGNAL(clicked()), mav, SLOT(startPressureCalibration()));
+    connect(ui->gyroCalButton, SIGNAL(clicked()), mav, SLOT(startGyroscopeCalibration()));
 }
 
 QGCSensorSettingsWidget::~QGCSensorSettingsWidget()

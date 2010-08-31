@@ -211,6 +211,12 @@ public slots:
     virtual void enableRawSensorFusionTransmission(bool enabled) = 0;
 
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
+    virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;
+
+    virtual void startRadioControlCalibration() = 0;
+    virtual void startMagnetometerCalibration() = 0;
+    virtual void startGyroscopeCalibration() = 0;
+    virtual void startPressureCalibration() = 0;
 
 protected:
     QColor color;
@@ -331,6 +337,8 @@ signals:
     void positionYawControlEnabled(bool enabled);
     /** @brief Value of a remote control channel */
     void remoteControlChannelChanged(int channelId, float raw, float normalized);
+    /** @brief Remote control RSSI changed */
+    void remoteControlRSSIChanged(float rssi);
 
     /**
      * @brief Localization quality changed

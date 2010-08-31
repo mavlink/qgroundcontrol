@@ -391,6 +391,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_rc_channels_t channels;
                 mavlink_msg_rc_channels_decode(&message, &channels);
+                emit remoteControlRSSIChanged(channels.rssi/255.0f);
                 for (int i = 0; i < 8; i++)
                 {
                     switch (i)
@@ -574,6 +575,43 @@ void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
     mavlink_msg_position_control_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, 0, x, y, z, yaw);
     sendMessage(msg);
   #endif
+}
+
+void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
+{
+#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+  mavlink_message_t msg;
+  mavlink_msg_position_control_offset_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw);
+  sendMessage(msg);
+#endif
+}
+
+void UAS::startRadioControlCalibration()
+{
+  mavlink_message_t msg;
+  mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_RC);
+  sendMessage(msg);
+}
+
+void UAS::startMagnetometerCalibration()
+{
+    mavlink_message_t msg;
+    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_MAG);
+    sendMessage(msg);
+}
+
+void UAS::startGyroscopeCalibration()
+{
+    mavlink_message_t msg;
+    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_GYRO);
+    sendMessage(msg);
+}
+
+void UAS::startPressureCalibration()
+{
+    mavlink_message_t msg;
+    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_PRESSURE);
+    sendMessage(msg);
 }
 
 quint64 UAS::getUnixTime(quint64 time)

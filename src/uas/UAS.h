@@ -221,6 +221,13 @@ public slots:
 
     /** @brief Set local position setpoint */
     void setLocalPositionSetpoint(float x, float y, float z, float yaw);
+    /** @brief Add an offset in body frame to the setpoint */
+    void setLocalPositionOffset(float x, float y, float z, float yaw);
+
+    void startRadioControlCalibration();
+    void startMagnetometerCalibration();
+    void startGyroscopeCalibration();
+    void startPressureCalibration();
 
 signals:
 
