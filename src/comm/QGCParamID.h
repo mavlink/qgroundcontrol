@@ -21,25 +21,44 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
+/**
+ * @file
+ *   @brief Stores the paramid used for mavlink
+ *   @author Bryan Godbolt <godbolt@ualberta.ca>
+ */
+
 #ifndef QGCPARAMID_H
 #define QGCPARAMID_H
 
 #include <QString>
+
 #include "mavlink_types.h"
+
+//namespace OpalRT
+//{
+//    class QGCParamID;
+//}
+//
+//QDataStream& operator<<(QDataStream&, const OpalRT::QGCParamID&);
 
 namespace OpalRT
 {
+    /** Stores a param_id for the mavlink parameter packets.  This class adds the convenience
+      of storing the id as a string (e.g., easy comparison).
+      */
     class QGCParamID
     {
+//        friend QDataStream& operator<<(QDataStream& stream, const QGCParamID& paramid);
     public:
 
-        QGCParamID(const char *paramid);
+        QGCParamID(const char[]);
         QGCParamID(const QString);
         QGCParamID() {}
         QGCParamID(const QGCParamID& other);
 
         bool operator<(const QGCParamID& other) const {return data<other.data;}
         bool operator==(const QGCParamID& other) const {return data == other.data;}
+        operator QString() const {return data;}
 
         const QString getParamString() const {return static_cast<const QString>(data);}
         int8_t* toInt8_t() const {return (int8_t*)data.toAscii().data();}

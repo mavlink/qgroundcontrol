@@ -21,8 +21,19 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
+/**
+ * @file
+ *   @brief Types used for Opal-RT interface configuration
+ *   @author Bryan Godbolt <godbolt@ualberta.ca>
+ */
+
 #ifndef OPALRT_H
 #define OPALRT_H
+
+#include <QString>
+#include <QMessageBox>
+
+#include "OpalApi.h"
 
 namespace OpalRT
 {
@@ -77,6 +88,14 @@ namespace OpalRT
         NAV_ID = 1,
         LOG_ID = 1,
         CONTROLLER_ID = 1
+    };
+
+    class OpalErrorMsg
+    {
+        static QString lastErrorMsg;
+    public:
+        static void displayLastErrorMsg();
+        static void setLastErrorMsg();
     };
 }
 #endif // OPALRT_H

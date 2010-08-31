@@ -81,16 +81,9 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
             {
                 qDebug() << "OpalLink::writeBytes(): request params";
-//                getParameterList();
 
                 mavlink_message_t param;
-//                char paramName[] = "NAV_FILT_INIT";
-//                mavlink_msg_param_value_pack(systemID, componentID, &param,
-//                                             (int8_t*)(paramName),
-//                                             0,
-//                                             1,
-//                                             0);
-//                receiveMessage(param);
+
 
                 OpalRT::ParameterList::const_iterator paramIter;
                 for (paramIter = params->begin(); paramIter != params->end(); ++paramIter)
@@ -109,23 +102,32 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
             }
         case MAVLINK_MSG_ID_PARAM_SET:
             {
-                qDebug() << "OpalLink::writeBytes(): Attempt to set a parameter";
+
+//                qDebug() << "OpalLink::writeBytes(): Attempt to set a parameter";
+
                 mavlink_param_set_t param;
                 mavlink_msg_param_set_decode(&msg, &param);
-                QString paramName((char*)param.param_id);
-                qDebug() << "OpalLink::writeBytes():paramName: " << paramName;
-                if (paramName == "NAV_FILT_INIT")
+                OpalRT::QGCParamID paramName((char*)param.param_id);
+
+//                qDebug() << "OpalLink::writeBytes():paramName: " << paramName;
+
+                if ((*params).contains(param.target_component, paramName))
                 {
-                    if (param.param_value == 1 || param.param_value == 0)
-                    {
-                        double values[2] = {};
-                        values[0] = param.param_value;
-                        setSignals(values);
-                    }
-                    else
-                    {
-                        qDebug() << "OpalLink::writeBytes(): Param NAV_FILT_INIT must be 1 or 0";
-                    }
+                    OpalRT::Parameter p = (*params)(param.target_component, paramName);
+//                    qDebug() << __FILE__ << ":" << __LINE__ << ": "  << p;
+                    // Set the param value in Opal-RT
+                    p.setValue(param.param_value);
+
+                    // Get the param value from Opal-RT to make sure it was set properly
+                    mavlink_message_t paramMsg;
+                    mavlink_msg_param_value_pack(systemID,
+                                                 p.getComponentID(),
+                                                 &paramMsg,
+                                                 p.getParamID().toInt8_t(),
+                                                 p.getValue(),
+                                                 params->count(),
+                                                 params->indexOf(p));
+                    receiveMessage(paramMsg);
                 }
             }
             break;
@@ -141,10 +143,6 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
 void OpalLink::readBytes()
 {
     receiveDataMutex.lock();
-//    qDebug() << "OpalLink::readBytes(): Reading a message.  size of buffer: " << receiveBuffer->count();
-//    QByteArray message = receiveBuffer->dequeue();
-
-
     emit bytesReceived(this, receiveBuffer->dequeue());
     receiveDataMutex.unlock();
 
@@ -173,7 +171,6 @@ void OpalLink::heartbeat()
 
     if (m_heartbeatsEnabled)
     {
-//        qDebug() << "OpalLink::heartbeat(): Generate a heartbeat";
         mavlink_message_t beat;
         mavlink_msg_heartbeat_pack(systemID, componentID,&beat, MAV_HELICOPTER, MAV_AUTOPILOT_GENERIC);
         receiveMessage(beat);
@@ -185,30 +182,17 @@ void OpalLink::setSignals(double *values)
     unsigned short numSignals = 2;
     unsigned short logicalId = 1;
     unsigned short signalIndex[] = {0,1};
-//    double values[] = {0.5, // ch 1
-//                       0.5, // ch2
-//                       0.5, // ch3
-//                       0.5, // ch4
-//                       0.5, // ch5
-//                       0.5, // ch6
-//                       0.5, // ch7
-//                       0.5, // ch8
-//                       0.5}; // ch9
 
     int returnValue;
     returnValue =  OpalSetSignals( numSignals, logicalId, signalIndex, values);
     if (returnValue != EOK)
     {
-        setLastErrorMsg();
-        displayLastErrorMsg();
+//        OpalRT::setLastErrorMsg();
+        OpalRT::OpalErrorMsg::displayLastErrorMsg();
     }
 }
 void OpalLink::getSignals()
 {
-//    getSignalsMutex.lock();
-//    qDebug() <<  "OpalLink::getSignals(): Attempting to acquire signals";
-
-
     unsigned long  timeout = 0;
     unsigned short acqGroup = 0; //this is actually group 1 in the model
     unsigned short allocatedSignals = NUM_OUTPUT_SIGNALS;
@@ -224,8 +208,7 @@ void OpalLink::getSignals()
                                        values, lastValues, decimation);
 
         if (returnVal == EOK )
-        {
-            //        qDebug() << "OpalLink::getSignals: Timestep=" << *timestep;// << ", Last? " << (bool)(*lastValues);
+        {            
             /* Send position info to qgroundcontrol */
             mavlink_message_t local_position;
             mavlink_msg_local_position_pack(systemID, componentID, &local_position,
@@ -263,16 +246,11 @@ void OpalLink::getSignals()
                                              values[OpalRT::B_W_2]
                                              );
             receiveMessage(bias);
-        }
-//        else if (returnVal == EAGAIN)
-//        {
-//            qDebug() << "OpalLink::getSignals: Data was not ready";
-//        }
-        // if returnVal == EAGAIN => data just wasn't ready
-        else if (returnVal != EAGAIN)
+        }        
+        else if (returnVal != EAGAIN) // if returnVal == EAGAIN => data just wasn't ready
         {
             getSignalsTimer->stop();
-            displayLastErrorMsg();
+            OpalRT::OpalErrorMsg::displayLastErrorMsg();
         }
     }
 
@@ -282,81 +260,9 @@ void OpalLink::getSignals()
     delete timestep;
     delete lastValues;
     delete decimation;
-//    getSignalsMutex.unlock();
 
 }
 
-
-void OpalLink::getParameterList()
-{
-    /* inputs */
-    unsigned short allocatedParams=0;
-    unsigned short allocatedPathLen=0;
-    unsigned short allocatedNameLen=0;
-    unsigned short allocatedVarLen=0;
-
-    /* outputs */
-    unsigned short numParams;
-    unsigned short *idParam=NULL;
-    unsigned short maxPathLen;
-    char **path=NULL;
-    unsigned short maxNameLen;
-    char **name=NULL;
-    unsigned short maxVarLen;
-    char **var=NULL;
-
-    int returnValue;
-
-    returnValue = OpalGetParameterList(allocatedParams, &numParams, idParam,
-                             allocatedPathLen, &maxPathLen, path,
-                             allocatedNameLen, &maxNameLen, name,
-                             allocatedVarLen, &maxVarLen, var);
-    if (returnValue!=E2BIG)
-    {
-        setLastErrorMsg();
-        displayLastErrorMsg();
-        return;
-    }
-
-    // allocate memory for parameter list
-
-    idParam = new unsigned short[numParams];
-    allocatedParams = numParams;
-
-    path = new char*[numParams];
-    for (int i=0; i<numParams; i++)
-        path[i]=new char[maxPathLen];
-    allocatedPathLen = maxPathLen;
-
-    name = new char*[numParams];
-    for (int i=0; i<numParams; i++)
-        name[i] = new char[maxNameLen];
-    allocatedNameLen = maxNameLen;
-
-    var = new char*[numParams];
-    for (int i=0; i<numParams; i++)
-        var[i] = new char[maxVarLen];
-    allocatedVarLen = maxVarLen;
-
-    returnValue = OpalGetParameterList(allocatedParams, &numParams, idParam,
-                             allocatedPathLen, &maxPathLen, path,
-                             allocatedNameLen, &maxNameLen, name,
-                             allocatedVarLen, &maxVarLen, var);
-
-    if (returnValue != EOK)
-    {
-        setLastErrorMsg();
-        displayLastErrorMsg();
-        return;
-    }
-
-    qDebug() << "Num params: " << numParams << endl;
-    qDebug() << "Name\tPath\tVar" << endl;
-    for (int i=0; i<numParams; i++)
-        qDebug() << qSetFieldWidth(20) << name[i] << qSetFieldWidth(5) << idParam[i]
-                << qSetFieldWidth(50) << path[i];
-
-}
 
 /*
  *
@@ -384,8 +290,7 @@ void OpalLink::setName(QString name)
     emit nameChanged(this->name);
 }
 
-bool OpalLink::isConnected() {
-    //qDebug() << "OpalLink::isConnected:: connectState: " << connectState;
+bool OpalLink::isConnected() {    
     return connectState;
 }
 
@@ -397,7 +302,9 @@ bool OpalLink::connect()
     short modelState;
 
     /// \todo allow configuration of instid in window    
-    if ((OpalConnect(101, false, &modelState) == EOK) && (OpalGetSignalControl(0, true) == EOK))
+    if ((OpalConnect(101, false, &modelState) == EOK)
+        && (OpalGetSignalControl(0, true) == EOK)
+        && (OpalGetParameterControl(true) == EOK))
     {
         connectState = true;
         /// \todo try/catch a delete in case params has already been allocated
@@ -409,7 +316,7 @@ bool OpalLink::connect()
     else
     {
         connectState = false;
-        displayLastErrorMsg();
+        OpalRT::OpalErrorMsg::displayLastErrorMsg();
     }
 
     emit connected(connectState);
@@ -421,25 +328,7 @@ bool OpalLink::disconnect()
     return false;
 }
 
-void OpalLink::displayLastErrorMsg()
-{
-    static QString lastErrorMsg;
-    setLastErrorMsg();
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Critical);
-    msgBox.setText(lastErrorMsg);
-    msgBox.exec();
-}
 
-void OpalLink::setLastErrorMsg()
-{
-    char buf[512];
-    unsigned short len;
-    static QString lastErrorMsg;
-    OpalGetLastErrMsg(buf, sizeof(buf), &len);
-    lastErrorMsg.clear();
-    lastErrorMsg.append(buf);
-}
 
 
 /*

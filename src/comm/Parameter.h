@@ -21,13 +21,24 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
+/**
+ * @file
+ *   @brief Parameter Object used to intefrace with an OpalRT Simulink Parameter
+     \see OpalLink
+     \see OpalRT::ParameterList
+ *   @author Bryan Godbolt <godbolt@ualberta.ca>
+ */
+
 #ifndef PARAMETER_H
 #define PARAMETER_H
 
 #include <QString>
+#include <QDebug>
+
 #include "mavlink_types.h"
 #include "QGCParamID.h"
 #include "OpalApi.h"
+#include "OpalRT.h"
 #include <cfloat>
 
 namespace OpalRT
@@ -48,9 +59,11 @@ namespace OpalRT
         const QString& getSimulinkPath() {return *simulinkPath;}
         const QString& getSimulinkName() {return *simulinkName;}
         uint8_t getComponentID() const {return componentID;}
-        float getValue();// const;
+        float getValue();
+        void setValue(float value);
 
         bool operator==(const Parameter& other) const;
+        operator QString() const;
 
     protected:
         QString *simulinkPath;

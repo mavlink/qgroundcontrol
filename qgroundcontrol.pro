@@ -225,21 +225,20 @@ SOURCES += src/main.cc \
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
-win32 { 
-exists(src/lib/opalrt/OpalApi.h){
+win32:exists(src/lib/opalrt/OpalApi.h) { 
     message("Building support for Opal-RT")
     LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
-    SOURCES += src/comm/OpalLink.cc \
-        src/comm/Parameter.cc \
-        src/comm/QGCParamID.cc \
-        src/comm/ParameterList.cc
-    HEADERS += src/comm/OpalLink.h \
-        src/comm/OpalRT.h \
+    HEADERS += src/comm/OpalRT.h \
+        src/comm/OpalLink.h \
         src/comm/Parameter.h \
         src/comm/QGCParamID.h \
         src/comm/ParameterList.h
+    SOURCES += src/comm/OpalRT.cc \
+        src/comm/OpalLink.cc \
+        src/comm/Parameter.cc \
+        src/comm/QGCParamID.cc \
+        src/comm/ParameterList.cc
     DEFINES += OPAL_RT
-}
 }
