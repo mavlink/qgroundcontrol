@@ -187,7 +187,6 @@ void OpalLink::setSignals(double *values)
     returnValue =  OpalSetSignals( numSignals, logicalId, signalIndex, values);
     if (returnValue != EOK)
     {
-//        OpalRT::setLastErrorMsg();
         OpalRT::OpalErrorMsg::displayLastErrorMsg();
     }
 }
