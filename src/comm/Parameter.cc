@@ -79,7 +79,6 @@ float Parameter::getValue()
 
     if (returnVal != EOK)
     {
-//        OpalRT::setLastErrorMsg();
         OpalRT::OpalErrorMsg::displayLastErrorMsg();
         return FLT_MAX;
     }
@@ -99,7 +98,7 @@ void Parameter::setValue(float val)
                                       numValues, &returnedNumValues, &value);
     if (returnVal != EOK)
     {
-        qDebug() << __FILE__ << ":" << __LINE__ << ": Error numer: " << QString::number(returnVal);
+        //qDebug() << __FILE__ << ":" << __LINE__ << ": Error numer: " << QString::number(returnVal);
         OpalErrorMsg::displayLastErrorMsg();
     }
 }
