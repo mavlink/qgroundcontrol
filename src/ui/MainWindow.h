@@ -154,24 +154,26 @@ protected:
     LinkInterface* udpLink;
 
     QSettings settings;
-    UASControlWidget* control;
-    Linecharts* linechart;
-    UASInfoWidget* info;
-    CameraView* camera;
-    UASListWidget* list;
-    WaypointList* waypoints;
-    ObjectDetectionView* detection;
-    HUD* hud;
-    DebugConsole* debugConsole;
-    MapWidget* map;
-    ParameterInterface* parameters;
-    XMLCommProtocolWidget* protocol;
-    HDDisplay* headDown1;
-    HDDisplay* headDown2;
-    WatchdogControl* watchdogControl;
-    HSIDisplay* hsi;
-    QGCDataPlot2D* dataplot;
-    QGCRemoteControlView* rcView;
+    // Center widgets
+    QPointer<Linecharts> linechartWidget;
+    QPointer<HUD> hudWidget;
+    QPointer<MapWidget> mapWidget;
+    QPointer<XMLCommProtocolWidget> protocolWidget;
+    QPointer<QGCDataPlot2D> dataplotWidget;
+    // Dock widgets
+    QPointer<QDockWidget> controlDockWidget;
+    QPointer<QDockWidget> infoDockWidget;
+    QPointer<QDockWidget> cameraDockWidget;
+    QPointer<QDockWidget> listDockWidget;
+    QPointer<QDockWidget> waypointsDockWidget;
+    QPointer<QDockWidget> detectionDockWidget;
+    QPointer<QDockWidget> debugConsoleDockWidget;
+    QPointer<QDockWidget> parametersDockWidget;
+    QPointer<QDockWidget> headDown1DockWidget;
+    QPointer<QDockWidget> headDown2DockWidget;
+    QPointer<QDockWidget> watchdogControlDockWidget;
+    QPointer<QDockWidget> hsiDockWidget;
+    QPointer<QDockWidget> rcViewDockWidget;
 
     // Popup widgets
     JoystickWidget* joystickWidget;
@@ -186,9 +188,6 @@ protected:
     QAction* stopUASAct;
     QAction* killUASAct;
     QAction* simulateUASAct;
-
-    QDockWidget* controlDock;
-    QStackedWidget* centerStack;
 
     LogCompressor* comp;
     QString screenFileName;

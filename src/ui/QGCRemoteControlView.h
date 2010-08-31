@@ -51,7 +51,6 @@ public slots:
     void setUASId(int id);
     void setChannel(int channelId, float raw, float normalized);
     void setRemoteRSSI(float rssiNormalized);
-    void calibrate();
     void redraw();
 
 protected slots:
@@ -67,6 +66,7 @@ protected:
     QVector<float> normalized;
     QVector<QLabel*> rawLabels;
     QVector<QProgressBar*> progressBars;
+    QProgressBar* rssiBar;
     QLabel* nameLabel;
 
 private:
