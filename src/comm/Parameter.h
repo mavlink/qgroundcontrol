@@ -27,32 +27,38 @@ This file is part of the QGROUNDCONTROL project
 #include <QString>
 #include "mavlink_types.h"
 #include "QGCParamID.h"
+#include "OpalApi.h"
+#include <cfloat>
 
 namespace OpalRT
 {
-class Parameter
-{
-public:
-    Parameter(char *simulinkPath = "",
-              char *simulinkName = "",
-              uint8_t componentID = 0,
-              QGCParamID paramID = QGCParamID(),
-              unsigned short opalID = 0);
-    /// \todo Implement copy constructor
-    Parameter(const Parameter& other);
-    ~Parameter();
+    class Parameter
+    {
+    public:
+        Parameter(char *simulinkPath = "",
+                  char *simulinkName = "",
+                  uint8_t componentID = 0,
+                  QGCParamID paramID = QGCParamID(),
+                  unsigned short opalID = 0);
+        Parameter(const Parameter& other);
+        ~Parameter();
 
-    QGCParamID getParamID() {return *paramID;}
-    void setOpalID(unsigned short opalID) {this->opalID = opalID;}
-    const QString& getSimulinkPath() {return *simulinkPath;}
-    const QString& getSimulinkName() {return *simulinkName;}
-protected:
-    QString *simulinkPath;
-    QString *simulinkName;
-    uint8_t componentID;
-    QGCParamID *paramID;
-    unsigned short opalID;
-};
+        const QGCParamID& getParamID() const {return *paramID;}
+        void setOpalID(unsigned short opalID) {this->opalID = opalID;}
+        const QString& getSimulinkPath() {return *simulinkPath;}
+        const QString& getSimulinkName() {return *simulinkName;}
+        uint8_t getComponentID() const {return componentID;}
+        float getValue();// const;
+
+        bool operator==(const Parameter& other) const;
+
+    protected:
+        QString *simulinkPath;
+        QString *simulinkName;
+        uint8_t componentID;
+        QGCParamID *paramID;
+        unsigned short opalID;
+    };
 }
 
 #endif // PARAMETER_H

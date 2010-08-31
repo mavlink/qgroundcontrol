@@ -2,8 +2,10 @@
 using namespace OpalRT;
 
 ParameterList::ParameterList()
+    :params(new QMap<int, QMap<QGCParamID, Parameter> >),
+    paramVector(new QVector<Parameter>)
 {
-    params = new QMap<int, QMap<QGCParamID, Parameter> >;
+//    params = new QMap<int, QMap<QGCParamID, Parameter> >;
 
     /* Populate the map with parameter names.  There is no elegant way of doing this so all
        parameter paths and names must be known at compile time and defined here.
@@ -50,6 +52,7 @@ ParameterList::ParameterList()
         for (paramIter = (*componentIter).begin(); paramIter != (*componentIter).end(); ++paramIter)
         {
             s = (*paramIter).getSimulinkPath() + (*paramIter).getSimulinkName();
+            paramVector->append((*paramIter));
             if (opalParams->contains(s))
             {
                 (*paramIter).setOpalID(opalParams->value(s));
@@ -68,16 +71,35 @@ ParameterList::ParameterList()
 ParameterList::~ParameterList()
 {
     delete params;
+    delete paramVector;
 }
 
-ParameterList::const_iterator::const_iterator()
+ParameterList::const_iterator::const_iterator(QList<Parameter> paramList)
 {
-
+    this->paramList = QList<Parameter>(paramList);
+    index = 0;
 }
 
-const_iterator ParameterList::begin()
+ParameterList::const_iterator::const_iterator(const const_iterator &other)
 {
+    paramList = QList<Parameter>(other.paramList);
+    index = other.index;
+}
 
+ParameterList::const_iterator ParameterList::begin() const
+{
+    QList<QMap<QGCParamID, Parameter> > compList = params->values();
+    QList<Parameter> paramList;
+    QList<QMap<QGCParamID, Parameter> >::const_iterator compIter;
+    for (compIter = compList.begin(); compIter != compList.end(); ++compIter)
+        paramList.append((*compIter).values());
+    return const_iterator(paramList);
+}
+
+ParameterList::const_iterator ParameterList::end() const
+{
+    const_iterator iter = begin();
+    return iter+=iter.paramList.size();
 }
 
 /**
@@ -161,10 +183,16 @@ void ParameterList::getParameterList(QMap<QString, unsigned short> *opalParams)
         else
             opalParams->insert(path+'/'+name, idParam[i]);
     }
-    // Dump out the list of parameters
+//     Dump out the list of parameters
 //    QMap<QString, unsigned short>::const_iterator paramPrint;
 //    for (paramPrint = opalParams->begin(); paramPrint != opalParams->end(); ++paramPrint)
 //        qDebug() << paramPrint.key();
 
 
+}
+
+int ParameterList::count()
+{
+    const_iterator iter = begin();
+    return iter.paramList.count();
 }

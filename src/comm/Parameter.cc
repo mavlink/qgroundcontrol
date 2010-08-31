@@ -26,3 +26,34 @@ Parameter::~Parameter()
     delete simulinkName;
     delete paramID;
 }
+
+bool Parameter::operator ==(const Parameter& other) const
+{
+    return
+            (*simulinkPath) == *(other.simulinkPath)
+            && *simulinkName == *(other.simulinkName)
+            && componentID == other.componentID
+            && *paramID == *(other.paramID)
+            && opalID == other.opalID;
+
+}
+
+float Parameter::getValue() //const
+{
+    unsigned short allocatedParams = 1;
+    unsigned short numParams;
+//    unsigned short allocatedValues;
+    unsigned short numValues = 1;
+    unsigned short returnedNumValues;
+    double value;
+
+    int returnVal = OpalGetParameters(allocatedParams, &numParams, &opalID,
+                                      numValues, &returnedNumValues, &value);
+
+    if (returnVal != EOK)
+    {
+        return FLT_MAX;
+    }
+
+    return static_cast<float>(value);
+}

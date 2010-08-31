@@ -29,6 +29,7 @@ This file is part of the QGROUNDCONTROL project
 #include "mavlink_types.h"
 #include "QGCParamID.h"
 #include "Parameter.h"
+#include "QVector"
 #include "OpalRT.h"
 
 // Forward declare ParameterList before including OpalLink.h because a member of type ParameterList is used in OpalLink
@@ -45,23 +46,42 @@ namespace OpalRT
 
         class const_iterator
         {
+            friend class ParameterList;
+
         public:
-            const_iterator();
-            const_iterator(const_iterator& other);
+            inline const_iterator() {}
+            const_iterator(const const_iterator& other);
+
+            const_iterator& operator+=(int i) {index += i; return *this;}
+            bool operator<(const const_iterator& other) {return (this->paramList == other.paramList)
+                                                         &&(this->index<other.index);}
+            bool operator==(const const_iterator& other) {return (this->paramList == other.paramList)
+                                                          &&(this->index==other.index);}
+            bool operator!=(const const_iterator& other) {return !((*this) == other);}
+            const Parameter& operator*() const {return paramList[index];}
+            const Parameter* operator->() const {return &paramList[index];}
+
+            const_iterator& operator++() {++index; return *this;}
         private:
-            int componentID;
-            QGCParamID paramID;
+            const_iterator(QList<Parameter>);
+            QList<Parameter> paramList;
+            int index;
         };
+
+
         ParameterList();
         ~ParameterList();
         int setValue(int compid, QGCParamID paramid, float value);
         float getValue(int compid, QGCParamID paramid);
+        int count();
+        int indexOf(const Parameter& p) {return paramVector->indexOf(p);}
 
-//        const_iterator begin() const;
-//        const_iterator end() const;
+        const_iterator begin() const;
+        const_iterator end() const;
+
     protected:
         QMap<int, QMap<QGCParamID, Parameter> > *params;
-
+        QVector<Parameter> *paramVector;
         void getParameterList(QMap<QString, unsigned short>*);
 
 

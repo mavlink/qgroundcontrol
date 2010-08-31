@@ -68,11 +68,15 @@ namespace OpalRT
         B_W_2
     };       
 
+    /* Component IDs of the parameters.  Currently they are all 1 becuase there is no advantage
+       to dividing them between component ids.  However this syntax is used so that this can
+       easily be changed in the future.
+       */
     enum SubsystemIds
     {
         NAV_ID = 1,
-        LOG_ID,
-        CONTROLLER_ID
+        LOG_ID = 1,
+        CONTROLLER_ID = 1
     };
 }
 #endif // OPALRT_H
