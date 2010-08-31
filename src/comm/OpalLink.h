@@ -33,7 +33,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QMutex>
 #include <QDebug>
 #include <QTextStreamManipulator>
-#include <QMessageBox>
 #include <QTimer>
 #include <QQueue>
 #include <QByteArray>
@@ -50,16 +49,9 @@ This file is part of the QGROUNDCONTROL project
 #include "OpalRT.h"
 #include "ParameterList.h"
 #include "Parameter.h"
-
-#include "errno.h"
-
-#ifdef OPAL_RT
+#include "QGCParamID.h"
 #include "OpalApi.h"
-#endif
-
-
-
-
+#include "errno.h"
 #include "string.h"
 
 /*
@@ -110,8 +102,7 @@ public:
     qint64 bytesAvailable();
 
     void run();
-    static void setLastErrorMsg();
-    static void displayLastErrorMsg();
+
 public slots:
 
     void writeBytes(const char *bytes, qint64 length);
@@ -142,8 +133,6 @@ protected:
 
     QMutex statisticsMutex;
     QMutex receiveDataMutex;
-//    QMutex getSignalsMutex;
-    static QString lastErrorMsg;
 
     void setName(QString name);
 
@@ -164,5 +153,4 @@ protected:
     OpalRT::ParameterList *params;
 };
 
-//QString OpalLink::lastErrorMsg = QString();
 #endif // OPALLINK_H

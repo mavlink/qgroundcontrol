@@ -1,9 +1,38 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Implementation of class OpalRT::ParameterList
+ *   @author Bryan Godbolt <godbolt@ualberta.ca>
+ */
+
 #include "ParameterList.h"
 using namespace OpalRT;
 
 ParameterList::ParameterList()
     :params(new QMap<int, QMap<QGCParamID, Parameter> >),
-    paramVector(new QVector<Parameter>)
+    paramList(new QList<QList<Parameter*> >())
 {
 //    params = new QMap<int, QMap<QGCParamID, Parameter> >;
 
@@ -49,18 +78,19 @@ ParameterList::ParameterList()
     QString s;
     for (componentIter = params->begin(); componentIter != params->end(); ++componentIter)
     {
+        paramList->append(QList<Parameter*>());
         for (paramIter = (*componentIter).begin(); paramIter != (*componentIter).end(); ++paramIter)
         {
+            paramList->last().append(paramIter.operator ->());
             s = (*paramIter).getSimulinkPath() + (*paramIter).getSimulinkName();
-            paramVector->append((*paramIter));
             if (opalParams->contains(s))
             {
                 (*paramIter).setOpalID(opalParams->value(s));
-                qDebug() << __FILE__ << " Line:" << __LINE__ << ": Successfully added " << s;
+//                qDebug() << __FILE__ << " Line:" << __LINE__ << ": Successfully added " << s;
             }
             else
             {
-                qDebug() << __FILE__ << " Line:" << __LINE__ << ": " << s << " was not found in param list";
+                qWarning() << __FILE__ << " Line:" << __LINE__ << ": " << s << " was not found in param list";
             }
         }
     }
@@ -71,35 +101,7 @@ ParameterList::ParameterList()
 ParameterList::~ParameterList()
 {
     delete params;
-    delete paramVector;
-}
-
-ParameterList::const_iterator::const_iterator(QList<Parameter> paramList)
-{
-    this->paramList = QList<Parameter>(paramList);
-    index = 0;
-}
-
-ParameterList::const_iterator::const_iterator(const const_iterator &other)
-{
-    paramList = QList<Parameter>(other.paramList);
-    index = other.index;
-}
-
-ParameterList::const_iterator ParameterList::begin() const
-{
-    QList<QMap<QGCParamID, Parameter> > compList = params->values();
-    QList<Parameter> paramList;
-    QList<QMap<QGCParamID, Parameter> >::const_iterator compIter;
-    for (compIter = compList.begin(); compIter != compList.end(); ++compIter)
-        paramList.append((*compIter).values());
-    return const_iterator(paramList);
-}
-
-ParameterList::const_iterator ParameterList::end() const
-{
-    const_iterator iter = begin();
-    return iter+=iter.paramList.size();
+    delete paramList;
 }
 
 /**
@@ -134,8 +136,8 @@ void ParameterList::getParameterList(QMap<QString, unsigned short> *opalParams)
                              allocatedVarLen, &maxVarLen, var);
     if (returnValue!=E2BIG)
     {
-        OpalLink::setLastErrorMsg();
-        OpalLink::displayLastErrorMsg();
+//        OpalRT::setLastErrorMsg();
+        OpalRT::OpalErrorMsg::displayLastErrorMsg();
         return;
     }
 
@@ -166,8 +168,8 @@ void ParameterList::getParameterList(QMap<QString, unsigned short> *opalParams)
 
     if (returnValue != EOK)
     {
-        OpalLink::setLastErrorMsg();
-        OpalLink::displayLastErrorMsg();
+//        OpalRT::setLastErrorMsg();
+        OpalRT::OpalErrorMsg::displayLastErrorMsg();
         return;
     }
 
@@ -191,8 +193,55 @@ void ParameterList::getParameterList(QMap<QString, unsigned short> *opalParams)
 
 }
 
-int ParameterList::count()
+int ParameterList::indexOf(const Parameter &p)
+{
+    // incase p is a copy of the actual parameter we want (i.e., addresses differ)
+    Parameter *pPtr = &((*params)[p.getComponentID()][p.getParamID()]);
+
+    QList<QList<Parameter*> >::const_iterator iter;
+    int index = -1;
+    for (iter = paramList->begin(); iter != paramList->end(); ++iter)
+    {
+        if ((index = (*iter).indexOf(pPtr)) != -1)
+            return index;
+    }
+    return index;
+}
+
+
+ParameterList::const_iterator::const_iterator(QList<Parameter> paramList)
+{
+    this->paramList = QList<Parameter>(paramList);
+    index = 0;
+}
+
+ParameterList::const_iterator::const_iterator(const const_iterator &other)
+{
+    paramList = QList<Parameter>(other.paramList);
+    index = other.index;
+}
+
+ParameterList::const_iterator ParameterList::begin() const
+{
+    QList<QMap<QGCParamID, Parameter> > compList = params->values();
+    QList<Parameter> paramList;
+    QList<QMap<QGCParamID, Parameter> >::const_iterator compIter;
+    for (compIter = compList.begin(); compIter != compList.end(); ++compIter)
+        paramList.append((*compIter).values());
+    return const_iterator(paramList);
+}
+
+ParameterList::const_iterator ParameterList::end() const
 {
     const_iterator iter = begin();
-    return iter.paramList.count();
+    return iter+=iter.paramList.size();
+}
+
+int ParameterList::count()
+{
+    int count = 0;
+    QList<QList<Parameter*> >::const_iterator iter;
+    for (iter = paramList->begin(); iter != paramList->end(); ++iter)
+        count += (*iter).count();
+    return count;
 }

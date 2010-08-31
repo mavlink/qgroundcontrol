@@ -25,19 +25,13 @@ This file is part of the QGROUNDCONTROL project
 #define PARAMETERLIST_H
 
 #include <QMap>
+#include <QVector>
 
 #include "mavlink_types.h"
 #include "QGCParamID.h"
 #include "Parameter.h"
-#include "QVector"
 #include "OpalRT.h"
 
-// Forward declare ParameterList before including OpalLink.h because a member of type ParameterList is used in OpalLink
-namespace OpalRT
-{
-        class ParameterList;
-}
-#include "OpalLink.h"
 namespace OpalRT
 {
     class ParameterList
@@ -71,21 +65,61 @@ namespace OpalRT
 
         ParameterList();
         ~ParameterList();
-        int setValue(int compid, QGCParamID paramid, float value);
-        float getValue(int compid, QGCParamID paramid);
+
+        /** Count the number of parameters in the list.
+          \return Total number of parameters
+          */
         int count();
-        int indexOf(const Parameter& p) {return paramVector->indexOf(p);}
+
+        /** Find p in the list and return its index.
+          \note In order to use this index to look up p, the component is also needed.
+          \return the index of p or -1 if p is not found
+          \example
+          \code
+          int compid = OpalRT::CONTROLLER_ID;
+          Parameter p("simulinkpath", "simulinkparamname", compid, QGCParamID("PID_GAIN"));
+          ParameterList pList;
+          if ((int index=pList.indexOf(p)) != -1)
+             qDebug() << "PID_GAIN is at index " << index;
+          \endcode          
+          */
+
+        int indexOf(const Parameter& p);
+        bool contains(int compid, QGCParamID paramid) const {return (*params)[compid].contains(paramid);}
+
+        /// Get a parameter from the list
+        const Parameter getParameter(int compid, QGCParamID paramid) const {return (*params)[compid][paramid];}
+        Parameter& getParameter(int compid, QGCParamID paramid) {return (*params)[compid][paramid];}
+        const Parameter getParameter(int compid, int index) const {return *((*paramList)[compid][index]);}        
+
+        /** Convenient syntax for calling OpalRT::Parameter::getParameter() */
+        Parameter& operator()(int compid, QGCParamID paramid) {return getParameter(compid, paramid);}
+        Parameter& operator()(uint8_t compid, QGCParamID paramid) {return getParameter(static_cast<int>(compid), paramid);}
 
         const_iterator begin() const;
         const_iterator end() const;
 
     protected:
+        /** Store the parameters mapped by componentid, and paramid.
+           \code
+           // Look up a parameter
+           int compid = 1;
+           QGCParamID paramid("PID_GAIN");
+           Parameter p = params[compid][paramid];
+           \endcode
+           */
         QMap<int, QMap<QGCParamID, Parameter> > *params;
-        QVector<Parameter> *paramVector;
-        void getParameterList(QMap<QString, unsigned short>*);
-
-
-
+        /**
+          Store pointers to the parameters to allow fast lookup by index.
+          This variable may be changed to const pointers to ensure all changes
+          are made through the map container.
+          */
+        QList<QList<Parameter*> > *paramList;
+        /**
+          Get the list of available parameters from Opal-RT.
+          \param[out] opalParams Map of parameter paths/names to ids which are valid in Opal-RT
+          */
+        void getParameterList(QMap<QString, unsigned short>* opalParams);
     };
 }
 #endif // PARAMETERLIST_H
