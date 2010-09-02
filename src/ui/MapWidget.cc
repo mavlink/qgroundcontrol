@@ -328,7 +328,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
     // Create waypoint name
     QString str;
 
-    str = QString("WP%1").arg(path->numberOfPoints());
+    str = QString("%1").arg(path->numberOfPoints());
 
     // create the WP and set everything in the LineString to display the path
     CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
