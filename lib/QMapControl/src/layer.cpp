@@ -29,6 +29,7 @@ namespace qmapcontrol
     Layer::Layer(QString layername, MapAdapter* mapadapter, enum LayerType layertype, bool takeevents)
         :visible(true), mylayername(layername), mylayertype(layertype), mapAdapter(mapadapter), takeevents(takeevents), myoffscreenViewport(QRect(0,0,0,0))
     {
+       draggingGeometry = false;
         //qDebug() << "creating new Layer: " << layername << ", type: " << contents;
         //qDebug() << this->layertype;
     }

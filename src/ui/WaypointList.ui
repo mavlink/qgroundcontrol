@@ -26,7 +26,7 @@
    <property name="spacing">
     <number>4</number>
    </property>
-   <item row="0" column="0" colspan="9">
+   <item row="0" column="0" colspan="10">
     <widget class="QScrollArea" name="scrollArea">
      <property name="widgetResizable">
       <bool>true</bool>
@@ -37,7 +37,7 @@
         <x>0</x>
         <y>0</y>
         <width>466</width>
-        <height>149</height>
+        <height>163</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
@@ -54,7 +54,7 @@
      </widget>
     </widget>
    </item>
-   <item row="2" column="7">
+   <item row="2" column="8">
     <widget class="QPushButton" name="readButton">
      <property name="text">
       <string>Read</string>
@@ -65,7 +65,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="8">
+   <item row="2" column="9">
     <widget class="QPushButton" name="transmitButton">
      <property name="text">
       <string>Write</string>
@@ -76,7 +76,7 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0" colspan="9">
+   <item row="3" column="0" colspan="10">
     <widget class="QLabel" name="statusLabel">
      <property name="text">
       <string>TextLabel</string>
@@ -132,6 +132,17 @@
      <property name="icon">
       <iconset resource="../../mavground.qrc">
        <normaloff>:/images/actions/go-bottom.svg</normaloff>:/images/actions/go-bottom.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="7">
+    <widget class="QPushButton" name="clearWPListButton">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="../../mavground.qrc">
+       <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
      </property>
     </widget>
    </item>

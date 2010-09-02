@@ -63,6 +63,9 @@ public slots:
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     void updatePosition(float time, double lat, double lon);
 
+    //ROCA
+    void clearPath();
+
 protected:
     void changeEvent(QEvent* e);
     void wheelEvent(QWheelEvent *event);
@@ -108,8 +111,10 @@ protected:
     void captureGeometryDrag(Geometry* geom, QPointF coordinate);
     void captureGeometryEndDrag(Geometry* geom, QPointF coordinate);
 
+
+
   signals:
-    void movePoint(QPointF newCoord);
+    //void movePoint(QPointF newCoord);
 
 private:
     Ui::MapWidget *m_ui;
