@@ -97,6 +97,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Adjust the size
     adjustSize();
+
+    //waypoints->setMapHandle(map);
+    connect(waypoints, SIGNAL(clearPahtclicked()), map, SLOT(clearPath()));
 }
 
 MainWindow::~MainWindow()
@@ -147,6 +150,10 @@ void MainWindow::connectWidgets()
   connect(UASManager::instance(), SIGNAL(activeUASSet(int)), linechart, SLOT(selectSystem(int)));
   connect(linechart, SIGNAL(logfileWritten(QString)), this, SLOT(loadDataView(QString)));
   connect(mavlink, SIGNAL(receiveLossChanged(int, float)), info, SLOT(updateSendLoss(int, float)));
+
+
+
+
 }
 
 void MainWindow::arrangeCenterStack()
@@ -308,6 +315,8 @@ void MainWindow::connectActions()
 
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
+
+
 }
 
 void MainWindow::showHelp()
