@@ -196,16 +196,15 @@ void OpalLink::getSignals()
 {
     unsigned long  timeout = 0;
     unsigned short acqGroup = 0; //this is actually group 1 in the model
-    unsigned short allocatedSignals = NUM_OUTPUT_SIGNALS;
     unsigned short *numSignals = new unsigned short(0);
     double *timestep = new double(0);
-    double values[NUM_OUTPUT_SIGNALS] = {};
+    double values[OpalRT::NUM_OUTPUT_SIGNALS] = {};
     unsigned short *lastValues = new unsigned short(false);
     unsigned short *decimation = new unsigned short(0);
 
     while (!(*lastValues))
     {
-        int returnVal = OpalGetSignals(timeout, acqGroup, allocatedSignals, numSignals, timestep,
+        int returnVal = OpalGetSignals(timeout, acqGroup, OpalRT::NUM_OUTPUT_SIGNALS, numSignals, timestep,
                                        values, lastValues, decimation);
 
         if (returnVal == EOK )
@@ -229,9 +228,9 @@ void OpalLink::getSignals()
                                       values[OpalRT::ROLL],
                                       values[OpalRT::PITCH],
                                       values[OpalRT::YAW],
-                                      0, // rollspeed
-                                      0, // pitchspeed
-                                      0 // yawspeed
+                                      values[OpalRT::ROLL_SPEED],
+                                      values[OpalRT::PITCH_SPEED],
+                                      values[OpalRT::YAW_SPEED]
                                       );
             receiveMessage(attitude);
 

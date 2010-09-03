@@ -37,16 +37,22 @@ This file is part of the QGROUNDCONTROL project
 
 namespace OpalRT
 {
+    /**
+      Configuration info for the model
+     */
+
+    const unsigned short NUM_OUTPUT_SIGNALS=39;
+
     /*  ------------------------------ Outputs ------------------------------
     *
-    *    Copied from Mag_GPS_aided_INS.c Aug 20, 2010
     *      Port 1: Navigation state estimates
     *      1       t   [s]     time elapsed since INS mode started
     *      2-4     p^n [m]     navigation frame position (N,E,D)
     *      5-7     v^n [m/s]   navigation frame velocity (N,E,D)
     *      8-10    Euler angles [rad] (roll, pitch, yaw)
-    *     11-13    b_f [m/s^2] accelerometer biases
-    *     14-16    b_w [rad/s] gyro biases
+    *     11-13    Angular rates
+    *     14-16    b_f [m/s^2] accelerometer biases
+    *     17-19    b_w [rad/s] gyro biases
     *
     *      Port 2: Navigation system status
     *      1       mode    (0: initialization, 1: INS)
@@ -71,6 +77,9 @@ namespace OpalRT
         ROLL,
         PITCH,
         YAW,
+        ROLL_SPEED,
+        PITCH_SPEED,
+        YAW_SPEED,
         B_F_0,
         B_F_1,
         B_F_2,
@@ -79,7 +88,7 @@ namespace OpalRT
         B_W_2
     };       
 
-    /* Component IDs of the parameters.  Currently they are all 1 becuase there is no advantage
+    /** Component IDs of the parameters.  Currently they are all 1 becuase there is no advantage
        to dividing them between component ids.  However this syntax is used so that this can
        easily be changed in the future.
        */

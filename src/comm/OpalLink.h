@@ -54,12 +54,6 @@ This file is part of the QGROUNDCONTROL project
 #include "errno.h"
 #include "string.h"
 
-/*
-  Configuration info for the model
- */
-
-#define NUM_OUTPUT_SIGNALS 36
-
 /**
  * @brief Interface to OpalRT targets
  *
