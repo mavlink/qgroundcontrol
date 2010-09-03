@@ -366,15 +366,26 @@ namespace qmapcontrol
 
     void LayerManager::mouseEvent(const QMouseEvent* evnt)
     {
-        QListIterator<Layer*> it(mylayers);
-        while (it.hasNext())
+        // TODO: to review errors generated in the Windows operating system when the QListIterator is used
+        for(int i=0; i<mylayers.size(); i++)
         {
-            Layer* l = it.next();
+            Layer* l = mylayers[i];
             if (l->isVisible())
             {
                 l->mouseEvent(evnt, mapmiddle_px);
             }
         }
+//        QListIterator<Layer*> it(mylayers);
+
+//        while (it.hasNext())
+//        {
+//            qDebug() << it.next();
+//            Layer* l = it.next();
+//            if (l->isVisible())
+//            {
+//                l->mouseEvent(evnt, mapmiddle_px);
+//            }
+//        }
     }
 
     void LayerManager::updateRequest(QRectF rect)
