@@ -155,7 +155,8 @@ HEADERS += src/MG.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
-    src/ui/map/QGC2DIcon.h
+    src/ui/map/QGC2DIcon.h \
+    src/WaypointGlobal.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -218,7 +219,8 @@ SOURCES += src/main.cc \
     src/ui/linechart/IncrementalPlot.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/MAV2DIcon.cc \
-    src/ui/map/QGC2DIcon.cc
+    src/ui/map/QGC2DIcon.cc \
+    src/WaypointGlobal.cpp
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library

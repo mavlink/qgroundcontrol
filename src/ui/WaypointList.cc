@@ -358,5 +358,39 @@ void WaypointList::changeEvent(QEvent *e)
 
 void WaypointList::on_clearWPListButton_clicked()
 {
-    emit clearPahtclicked();
+    emit clearPathclicked();
+
+//    if (uas)
+//    {
+//        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+//            for(int i = 0; i <=waypoints.size(); i++)
+//            {
+//                WaypointView* widget = wpViews.find(waypoints[i]).value();
+
+//                widget->remove();
+
+//            }
+
+//    }
+}
+
+/** @brief Add a waypoint by mouse click over the map */
+void WaypointList::addWaypointMouse(QPointF coordinate)
+{
+    if (uas)
+    {
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+        if (waypoints.size() > 0)
+        {
+            Waypoint *last = waypoints.at(waypoints.size()-1);
+            Waypoint *wp = new Waypoint(0, coordinate.x(), coordinate.y(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime());
+            uas->getWaypointManager().localAddWaypoint(wp);
+        }
+        else
+        {
+            Waypoint *wp = new Waypoint(0, coordinate.x(), coordinate.y(), -0.8, 0.0, true, true, 0.15, 2000);
+            uas->getWaypointManager().localAddWaypoint(wp);
+        }
+    }
+
 }
