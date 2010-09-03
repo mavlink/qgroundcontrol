@@ -234,11 +234,14 @@ win32:exists(src/lib/opalrt/OpalApi.h) {
         src/comm/OpalLink.h \
         src/comm/Parameter.h \
         src/comm/QGCParamID.h \
-        src/comm/ParameterList.h
+        src/comm/ParameterList.h \
+        src/ui/OpalLinkConfigurationWindow.h
     SOURCES += src/comm/OpalRT.cc \
         src/comm/OpalLink.cc \
         src/comm/Parameter.cc \
         src/comm/QGCParamID.cc \
-        src/comm/ParameterList.cc
+        src/comm/ParameterList.cc \
+        src/ui/OpalLinkConfigurationWindow.cc
+    FORMS += src/ui/OpalLinkSettings.ui
     DEFINES += OPAL_RT
 }

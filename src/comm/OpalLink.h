@@ -103,6 +103,8 @@ public:
 
     void run();
 
+    int getOpalInstID() {return static_cast<int>(opalInstID);}
+
 public slots:
 
     void writeBytes(const char *bytes, qint64 length);
@@ -112,6 +114,8 @@ public slots:
     void heartbeat();
 
     void getSignals();
+
+    void setOpalInstID(int instID) {opalInstID = static_cast<unsigned short>(instID);}
 
 protected slots:
 
@@ -151,6 +155,8 @@ protected:
 
     void getParameterList();
     OpalRT::ParameterList *params;
+
+    unsigned short opalInstID;
 };
 
 #endif // OPALLINK_H
