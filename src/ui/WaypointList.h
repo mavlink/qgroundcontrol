@@ -73,6 +73,8 @@ public slots:
     void add();
     /** @brief Add a waypoint at the current MAV position */
     void addCurrentPositonWaypoint();
+    /** @brief Add a waypoint by mouse click over the map */
+    void addWaypointMouse(QPointF coordinate);
 
 
 
@@ -93,7 +95,7 @@ public slots:
 
 
 signals:
-  void clearPahtclicked();
+  void clearPathclicked();
 
 
 
