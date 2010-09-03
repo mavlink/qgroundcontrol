@@ -77,6 +77,8 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
 
+
+
     // SET UAS AFTER ALL SIGNALS/SLOTS ARE CONNECTED
     setUAS(uas);
 
@@ -352,3 +354,9 @@ void WaypointList::changeEvent(QEvent *e)
     }
 }
 
+
+
+void WaypointList::on_clearWPListButton_clicked()
+{
+    emit clearPahtclicked();
+}

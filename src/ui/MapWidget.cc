@@ -305,13 +305,13 @@ void MapWidget::createPathButtonClicked(bool checked)
         this->setCursor(Qt::PointingHandCursor);
         mc->setMouseMode(qmapcontrol::MapControl::None);
 
-        // Clear the previous WP track
-        // TODO: Move this to an actual clear track button and add a warning dialog
-        mc->layer("Waypoints")->clearGeometries();
-        wps.clear();
-        path->setPoints(wps);
-        mc->layer("Waypoints")->addGeometry(path);
-        wpIndex.clear();
+//        // Clear the previous WP track
+//        // TODO: Move this to an actual clear track button and add a warning dialog
+//        mc->layer("Waypoints")->clearGeometries();
+//        wps.clear();
+//        path->setPoints(wps);
+//        mc->layer("Waypoints")->addGeometry(path);
+//        wpIndex.clear();
 
 
     } else {
@@ -535,4 +535,15 @@ void MapWidget::changeEvent(QEvent *e)
     default:
         break;
     }
+}
+void MapWidget::clearPath()
+{
+    // Clear the previous WP track
+
+    mc->layer("Waypoints")->clearGeometries();
+    wps.clear();
+    path->setPoints(wps);
+    mc->layer("Waypoints")->addGeometry(path);
+    wpIndex.clear();
+    mc->updateRequestNew();
 }

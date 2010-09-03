@@ -42,6 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "WaypointView.h"
 
+
 namespace Ui {
     class WaypointList;
 }
@@ -73,6 +74,8 @@ public slots:
     /** @brief Add a waypoint at the current MAV position */
     void addCurrentPositonWaypoint();
 
+
+
     //Update events
     /** @brief sets statusLabel string */
     void updateStatusLabel(const QString &string);
@@ -88,6 +91,12 @@ public slots:
     void moveDown(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
 
+
+signals:
+  void clearPahtclicked();
+
+
+
 protected:
     virtual void changeEvent(QEvent *e);
 
@@ -102,6 +111,13 @@ protected:
 
 private:
     Ui::WaypointList *m_ui;
+
+
+
+
+
+private slots:
+    void on_clearWPListButton_clicked();
 };
 
 #endif // WAYPOINTLIST_H
