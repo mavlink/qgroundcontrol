@@ -45,6 +45,8 @@ namespace OpalRT
 {
     /** Stores a param_id for the mavlink parameter packets.  This class adds the convenience
       of storing the id as a string (e.g., easy comparison).
+
+      \todo Fix: warning: deprecated conversion from string constant to 'char*'
       */
     class QGCParamID
     {
