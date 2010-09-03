@@ -39,7 +39,8 @@ OpalLink::OpalLink() :
         receiveBuffer(new QQueue<QByteArray>()),
         systemID(1),
         componentID(1),
-        params(NULL)
+        params(NULL),
+        opalInstID(101)
 {
     start(QThread::LowPriority);
 
@@ -302,7 +303,7 @@ bool OpalLink::connect()
     short modelState;
 
     /// \todo allow configuration of instid in window    
-    if ((OpalConnect(101, false, &modelState) == EOK)
+    if ((OpalConnect(opalInstID, false, &modelState) == EOK)
         && (OpalGetSignalControl(0, true) == EOK)
         && (OpalGetParameterControl(true) == EOK))
     {
@@ -330,6 +331,8 @@ bool OpalLink::disconnect()
     OpalDisconnect();
     heartbeatTimer->stop();
     getSignalsTimer->stop();
+    connectState = false;
+    emit connected(connectState);
     return true;
 }
 

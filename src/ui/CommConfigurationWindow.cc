@@ -43,6 +43,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSimulationLink.h"
 #ifdef OPAL_RT
 #include "OpalLink.h"
+#include "OpalLinkConfigurationWindow.h"
 #endif
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
@@ -114,6 +115,10 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     OpalLink* opal = dynamic_cast<OpalLink*>(link);
     if (opal != 0)
     {
+        QWidget* conf = new OpalLinkConfigurationWindow(opal, this);
+        QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
+        layout->addWidget(conf);
+        ui.linkGroupBox->setLayout(layout);
         ui.linkGroupBox->setTitle(tr("Opal-RT Link"));
     }
 #endif
