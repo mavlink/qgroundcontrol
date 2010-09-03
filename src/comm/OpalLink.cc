@@ -38,7 +38,8 @@ OpalLink::OpalLink() :
         getSignalsPeriod(10),
         receiveBuffer(new QQueue<QByteArray>()),
         systemID(1),
-        componentID(1)
+        componentID(1),
+        params(NULL)
 {
     start(QThread::LowPriority);
 
@@ -306,7 +307,8 @@ bool OpalLink::connect()
         && (OpalGetParameterControl(true) == EOK))
     {
         connectState = true;
-        /// \todo try/catch a delete in case params has already been allocated
+        if (params)
+            delete params;
         params = new OpalRT::ParameterList();
         emit connected();
         heartbeatTimer->start(1000/heartbeatRate);
@@ -324,7 +326,11 @@ bool OpalLink::connect()
 
 bool OpalLink::disconnect()
 {
-    return false;
+    // OpalDisconnect returns void so its success or failure cannot be tested
+    OpalDisconnect();
+    heartbeatTimer->stop();
+    getSignalsTimer->stop();
+    return true;
 }
 
 
