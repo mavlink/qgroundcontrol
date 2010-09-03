@@ -342,6 +342,9 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
     // Refresh the screen
     mc->updateRequestNew();
+
+    // emit signal mouse was clicked
+    emit captureMapCoordinateClick(coordinate);
   }
 }
 

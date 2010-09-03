@@ -92,14 +92,16 @@ MainWindow::MainWindow(QWidget *parent) :
     // Create actions
     connectActions();
 
-    // Load widgets and show application window
+    // Load widgets and show application windowa
     loadWidgets();
 
     // Adjust the size
     adjustSize();
 
-    //waypoints->setMapHandle(map);
-    connect(waypoints, SIGNAL(clearPahtclicked()), map, SLOT(clearPath()));
+   // clear path create on the map
+    connect(waypoints, SIGNAL(clearPathclicked()), map, SLOT(clearPath()));
+    // add Waypoint widget in the WaypointList widget when mouse clicked
+    connect(map, SIGNAL(captureMapCoordinateClick(QPointF)), waypoints, SLOT(addWaypointMouse(QPointF)));
 }
 
 MainWindow::~MainWindow()

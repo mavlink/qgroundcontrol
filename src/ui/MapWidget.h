@@ -115,6 +115,8 @@ protected:
 
   signals:
     //void movePoint(QPointF newCoord);
+    void captureMapCoordinateClick(const QPointF coordinate); //ROCA
+
 
 private:
     Ui::MapWidget *m_ui;
