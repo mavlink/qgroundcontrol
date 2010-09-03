@@ -360,18 +360,20 @@ void WaypointList::on_clearWPListButton_clicked()
 {
     emit clearPathclicked();
 
-//    if (uas)
-//    {
-//        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
-//            for(int i = 0; i <=waypoints.size(); i++)
-//            {
-//                WaypointView* widget = wpViews.find(waypoints[i]).value();
+    if (uas)
+    {
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+            while(!waypoints.isEmpty())//for(int i = 0; i <= waypoints.size(); i++)
+            {
+                //Waypoint *temp = waypoints[i];
 
-//                widget->remove();
+                WaypointView* widget = wpViews.find(waypoints[0]).value();
 
-//            }
+                widget->remove();
 
-//    }
+            }
+
+    }
 }
 
 /** @brief Add a waypoint by mouse click over the map */
