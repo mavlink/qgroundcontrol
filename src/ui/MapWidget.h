@@ -116,6 +116,7 @@ protected:
   signals:
     //void movePoint(QPointF newCoord);
     void captureMapCoordinateClick(const QPointF coordinate); //ROCA
+    void createGlobalWP(bool value);
 
 
 private:
