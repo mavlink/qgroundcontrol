@@ -355,7 +355,7 @@ QProgressBar::chunk#thrustBar {
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../mavground.qrc">
+         <iconset>
           <normaloff>:/images/actions/go-up.svg</normaloff>:/images/actions/go-up.svg</iconset>
         </property>
        </widget>
@@ -375,7 +375,7 @@ QProgressBar::chunk#thrustBar {
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../mavground.qrc">
+         <iconset>
           <normaloff>:/images/actions/go-down.svg</normaloff>:/images/actions/go-down.svg</iconset>
         </property>
        </widget>
@@ -395,7 +395,7 @@ QProgressBar::chunk#thrustBar {
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../mavground.qrc">
+         <iconset>
           <normaloff>:/images/actions/list-remove.svg</normaloff>:/images/actions/list-remove.svg</iconset>
         </property>
        </widget>
@@ -405,8 +405,6 @@ QProgressBar::chunk#thrustBar {
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../../mavground.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

@@ -299,11 +299,16 @@ void MapWidget::createPathButtonClicked(bool checked)
 {
   Q_UNUSED(checked);
 
+
+
     if (createPath->isChecked())
     {
         // change the cursor shape
         this->setCursor(Qt::PointingHandCursor);
         mc->setMouseMode(qmapcontrol::MapControl::None);
+
+        // emit signal start to create a Waypoint global
+        emit createGlobalWP(true);
 
 //        // Clear the previous WP track
 //        // TODO: Move this to an actual clear track button and add a warning dialog
@@ -315,8 +320,11 @@ void MapWidget::createPathButtonClicked(bool checked)
 
 
     } else {
+
         this->setCursor(Qt::ArrowCursor);
         mc->setMouseMode(qmapcontrol::MapControl::Panning);
+
+
     }
 
 }
@@ -345,6 +353,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
     // emit signal mouse was clicked
     emit captureMapCoordinateClick(coordinate);
+
   }
 }
 
