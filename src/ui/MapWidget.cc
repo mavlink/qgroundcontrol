@@ -87,7 +87,10 @@ MapWidget::MapWidget(QWidget *parent) :
     // Set default zoom level
     mc->setZoom(16);
     // Zurich, ETH
-    mc->setView(QPointF(8.548056,47.376389));
+    //mc->setView(QPointF(8.548056,47.376389));
+
+    // Veracruz Mexico, ETH
+    mc->setView(QPointF(-96.105208,19.138955));
 
     // Add controls to select map provider
     /////////////////////////////////////////////////
@@ -336,7 +339,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
     // Create waypoint name
     QString str;
 
-    str = QString("WP%1").arg(path->numberOfPoints());
+    str = QString("%1").arg(path->numberOfPoints());
 
     // create the WP and set everything in the LineString to display the path
     CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
@@ -369,6 +372,10 @@ void MapWidget::captureGeometryClick(Geometry* geom, QPoint point){
 void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
   Q_UNUSED(coordinate);
 
+  // Refresh the screen
+  mc->updateRequestNew();
+
+  int temp = 0;
   Point* point2Find;
   point2Find = wpIndex[geom->name()];
   point2Find->setCoordinate(coordinate);
@@ -376,12 +383,18 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
   point2Find = dynamic_cast <Point*> (geom);
   point2Find->setCoordinate(coordinate);
 
-  // Refresh the screen
-  mc->updateRequestNew();
+ // qDebug() << geom->name();
+  temp = geom->get_myIndex();
+  //qDebug() << temp;
+  emit sendGeometryEndDrag(coordinate,temp);
+
+
 }
 
-void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate){
-  mc->setMouseMode(qmapcontrol::MapControl::Panning);
+void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
+{
+
+    mc->setMouseMode(qmapcontrol::MapControl::Panning);
 
 //  qDebug() << geom->name();
 //  qDebug() << geom->GeometryType;
@@ -558,4 +571,11 @@ void MapWidget::clearPath()
     mc->layer("Waypoints")->addGeometry(path);
     wpIndex.clear();
     mc->updateRequestNew();
+
+    // si el boton de crear wp globales esta activo desactivarlo llamando a su evento clicket
+    if(createPath->isChecked())
+    {
+        createPath->click();
+    }
+
 }

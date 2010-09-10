@@ -90,10 +90,17 @@ public slots:
     /** @brief The waypoint manager informs that the waypoint list was changed */
     void waypointListChanged(void);
 
+    /** @brief The MapWidget informs that a waypoint global was changed on the map */
+    void waypointGlobalChanged(const QPointF coordinate, const int indexWP);
+
+    void clearLocalWPWidget();
+
     // Waypoint operations
     void moveUp(Waypoint* wp);
     void moveDown(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
+
+
 
 
 signals:
@@ -114,6 +121,7 @@ protected:
     double mavZ;
     double mavYaw;
     bool isGlobalWP;
+    bool isLocalWP;
 
 private:
     Ui::WaypointList *m_ui;

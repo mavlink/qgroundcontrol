@@ -104,6 +104,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(map, SIGNAL(captureMapCoordinateClick(QPointF)), waypoints, SLOT(addWaypointMouse(QPointF)));
     // it notifies that a waypoint global goes to do create
     connect(map, SIGNAL(createGlobalWP(bool)), waypoints, SLOT(setIsWPGlobal(bool)));
+    connect(map, SIGNAL(sendGeometryEndDrag(QPointF,int)), waypoints, SLOT(waypointGlobalChanged(QPointF,int)) );
+
 }
 
 MainWindow::~MainWindow()
