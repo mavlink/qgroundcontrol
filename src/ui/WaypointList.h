@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include "UASInterface.h"
 #include "WaypointView.h"
+#include "WaypointGlobalView.h"
 
 
 namespace Ui {
@@ -75,7 +76,8 @@ public slots:
     void addCurrentPositonWaypoint();
     /** @brief Add a waypoint by mouse click over the map */
     void addWaypointMouse(QPointF coordinate);
-
+    /** @brief it notifies that a global waypoint goes to do created */
+    void setIsWPGlobal(bool value);
 
 
     //Update events
@@ -88,10 +90,17 @@ public slots:
     /** @brief The waypoint manager informs that the waypoint list was changed */
     void waypointListChanged(void);
 
+    /** @brief The MapWidget informs that a waypoint global was changed on the map */
+    void waypointGlobalChanged(const QPointF coordinate, const int indexWP);
+
+    void clearLocalWPWidget();
+
     // Waypoint operations
     void moveUp(Waypoint* wp);
     void moveDown(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
+
+
 
 
 signals:
@@ -104,12 +113,15 @@ protected:
 
 protected:
     QMap<Waypoint*, WaypointView*> wpViews;
+    QMap<Waypoint*, WaypointGlobalView*> wpGlobalViews;
     QVBoxLayout* listLayout;
     UASInterface* uas;
     double mavX;
     double mavY;
     double mavZ;
     double mavYaw;
+    bool isGlobalWP;
+    bool isLocalWP;
 
 private:
     Ui::WaypointList *m_ui;
@@ -120,6 +132,7 @@ private:
 
 private slots:
     void on_clearWPListButton_clicked();
+
 };
 
 #endif // WAYPOINTLIST_H
