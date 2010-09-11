@@ -29,8 +29,8 @@ namespace qmapcontrol
     Geometry::Geometry(QString name)
         : GeometryType("Geometry"), myparentGeometry(0), mypen(0), visible(true), myname(name)
     {
+        myIndex = name.toInt(0,10);
     }
-
 
     Geometry::~Geometry()
     {
@@ -40,6 +40,11 @@ namespace qmapcontrol
     {
         return myname;
     }
+    int Geometry::get_myIndex() const
+    {
+        return myIndex;
+    }
+
     Geometry* Geometry::parentGeometry() const
     {
         return myparentGeometry;
@@ -85,4 +90,5 @@ namespace qmapcontrol
     {
         return mypen;
     }
+
 }

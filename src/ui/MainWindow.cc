@@ -61,8 +61,8 @@ This file is part of the QGROUNDCONTROL project
 * @see QMainWindow::show()
 **/
 MainWindow::MainWindow(QWidget *parent) :
-  QMainWindow(parent),
-  settings()
+        QMainWindow(parent),
+        settings()
 {
     this->hide();
     this->setVisible(false);
@@ -92,7 +92,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // Create actions
     connectActions();
 
-    // Load widgets and show application window
+    // Load widgets and show application windowa
     loadWidgets();
 
     // Adjust the size
@@ -108,131 +108,144 @@ MainWindow::~MainWindow()
 
 void MainWindow::buildWidgets()
 {
-  //FIXME: memory of acceptList will never be freed again
-  QStringList* acceptList = new QStringList();
-  acceptList->append("roll IMU");
-  acceptList->append("pitch IMU");
-  acceptList->append("yaw IMU");
-  acceptList->append("rollspeed IMU");
-  acceptList->append("pitchspeed IMU");
-  acceptList->append("yawspeed IMU");
+    //FIXME: memory of acceptList will never be freed again
+    QStringList* acceptList = new QStringList();
+    acceptList->append("roll IMU");
+    acceptList->append("pitch IMU");
+    acceptList->append("yaw IMU");
+    acceptList->append("rollspeed IMU");
+    acceptList->append("pitchspeed IMU");
+    acceptList->append("yawspeed IMU");
 
-  //FIXME: memory of acceptList2 will never be freed again
-  QStringList* acceptList2 = new QStringList();
-  acceptList2->append("Battery");
-  acceptList2->append("Pressure");
+    //FIXME: memory of acceptList2 will never be freed again
+    QStringList* acceptList2 = new QStringList();
+    acceptList2->append("Battery");
+    acceptList2->append("Pressure");
 
-  //TODO:  move protocol outside UI
-  mavlink     = new MAVLinkProtocol();
+    //TODO:  move protocol outside UI
+    mavlink     = new MAVLinkProtocol();
 
-  // Center widgets
-  linechartWidget   = new Linecharts(this);
-  hudWidget         = new HUD(640, 480, this);
-  mapWidget         = new MapWidget(this);
-  protocolWidget    = new XMLCommProtocolWidget(this);
-  dataplotWidget    = new QGCDataPlot2D(this);
+    // Center widgets
+    linechartWidget   = new Linecharts(this);
+    hudWidget         = new HUD(640, 480, this);
+    mapWidget         = new MapWidget(this);
+    protocolWidget    = new XMLCommProtocolWidget(this);
+    dataplotWidget    = new QGCDataPlot2D(this);
 
-  // Dock widgets
-  controlDockWidget = new QDockWidget(tr("Control"), this);
-  controlDockWidget->setWidget( new UASControlWidget(this) );
+    // Dock widgets
+    controlDockWidget = new QDockWidget(tr("Control"), this);
+    controlDockWidget->setWidget( new UASControlWidget(this) );
 
-  listDockWidget = new QDockWidget(tr("Unmanned Systems"), this);
-  listDockWidget->setWidget( new UASListWidget(this) );
+    listDockWidget = new QDockWidget(tr("Unmanned Systems"), this);
+    listDockWidget->setWidget( new UASListWidget(this) );
 
-  waypointsDockWidget = new QDockWidget(tr("Waypoint List"), this);
-  waypointsDockWidget->setWidget( new WaypointList(this, NULL) );
+    waypointsDockWidget = new QDockWidget(tr("Waypoint List"), this);
+    waypointsDockWidget->setWidget( new WaypointList(this, NULL) );
 
-  infoDockWidget = new QDockWidget(tr("Status Details"), this);
-  infoDockWidget->setWidget( new UASInfoWidget(this) );
+    infoDockWidget = new QDockWidget(tr("Status Details"), this);
+    infoDockWidget->setWidget( new UASInfoWidget(this) );
 
-  detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
-  detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
+    detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
+    detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
 
-  debugConsoleDockWidget = new QDockWidget(tr("Communication Console"), this);
-  debugConsoleDockWidget->setWidget( new DebugConsole(this) );
+    debugConsoleDockWidget = new QDockWidget(tr("Communication Console"), this);
+    debugConsoleDockWidget->setWidget( new DebugConsole(this) );
 
-  parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
-  parametersDockWidget->setWidget( new ParameterInterface(this) );
+    parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
+    parametersDockWidget->setWidget( new ParameterInterface(this) );
 
-  watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
-  watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
+    watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
+    watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
 
-  hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
-  hsiDockWidget->setWidget( new HSIDisplay(this) );
+    hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+    hsiDockWidget->setWidget( new HSIDisplay(this) );
 
-  headDown1DockWidget = new QDockWidget(tr("Primary Flight Display"), this);
-  headDown1DockWidget->setWidget( new HDDisplay(acceptList, this) );
+    headDown1DockWidget = new QDockWidget(tr("Primary Flight Display"), this);
+    headDown1DockWidget->setWidget( new HDDisplay(acceptList, this) );
 
-  headDown2DockWidget = new QDockWidget(tr("Payload Status"), this);
-  headDown2DockWidget->setWidget( new HDDisplay(acceptList2, this) );
+    headDown2DockWidget = new QDockWidget(tr("Payload Status"), this);
+    headDown2DockWidget->setWidget( new HDDisplay(acceptList2, this) );
 
-  rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
-  rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
+    rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
+    rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
 
-  // Dialogue widgets
-  //FIXME: free memory in destructor
-  joystick    = new JoystickInput();
+    // Dialogue widgets
+    //FIXME: free memory in destructor
+    joystick    = new JoystickInput();
 
 }
 
+/**
+ * Connect all signals and slots of the main window widgets
+ */
 void MainWindow::connectWidgets()
 {
-  if (linechartWidget)
-  {
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
-      linechartWidget, SLOT(addSystem(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
-      linechartWidget, SLOT(selectSystem(int)));
-    connect(linechartWidget, SIGNAL(logfileWritten(QString)),
-      this, SLOT(loadDataView(QString)));
-  }
-  if (infoDockWidget && infoDockWidget->widget())
-  {
-    connect(mavlink, SIGNAL(receiveLossChanged(int, float)),
-      infoDockWidget->widget(), SLOT(updateSendLoss(int, float)));
-  }
+    if (linechartWidget)
+    {
+        connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
+                linechartWidget, SLOT(addSystem(UASInterface*)));
+        connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
+                linechartWidget, SLOT(selectSystem(int)));
+        connect(linechartWidget, SIGNAL(logfileWritten(QString)),
+                this, SLOT(loadDataView(QString)));
+    }
+    if (infoDockWidget && infoDockWidget->widget())
+    {
+        connect(mavlink, SIGNAL(receiveLossChanged(int, float)),
+                infoDockWidget->widget(), SLOT(updateSendLoss(int, float)));
+    }
+    if (mapWidget && waypointsDockWidget->widget())
+    {
+        // clear path create on the map
+        connect(waypointsDockWidget->widget(), SIGNAL(clearPathclicked()), mapWidget, SLOT(clearPath()));
+        // add Waypoint widget in the WaypointList widget when mouse clicked
+        connect(mapWidget, SIGNAL(captureMapCoordinateClick(QPointF)), waypointsDockWidget->widget(), SLOT(addWaypointMouse(QPointF)));
+        // it notifies that a waypoint global goes to do create
+        connect(mapWidget, SIGNAL(createGlobalWP(bool)), waypointsDockWidget->widget(), SLOT(setIsWPGlobal(bool)));
+        connect(mapWidget, SIGNAL(sendGeometryEndDrag(QPointF,int)), waypointsDockWidget->widget(), SLOT(waypointGlobalChanged(QPointF,int)) );
+    }
 }
 
 void MainWindow::arrangeCenterStack()
 {
 
-  QStackedWidget *centerStack = new QStackedWidget(this);
-  if (!centerStack) return;
+    QStackedWidget *centerStack = new QStackedWidget(this);
+    if (!centerStack) return;
 
-  if (linechartWidget) centerStack->addWidget(linechartWidget);
-  if (protocolWidget) centerStack->addWidget(protocolWidget);
-  if (mapWidget) centerStack->addWidget(mapWidget);
-  if (hudWidget) centerStack->addWidget(hudWidget);
-  if (dataplotWidget) centerStack->addWidget(dataplotWidget);
+    if (linechartWidget) centerStack->addWidget(linechartWidget);
+    if (protocolWidget) centerStack->addWidget(protocolWidget);
+    if (mapWidget) centerStack->addWidget(mapWidget);
+    if (hudWidget) centerStack->addWidget(hudWidget);
+    if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 
-  setCentralWidget(centerStack);
+    setCentralWidget(centerStack);
 }
 
 void MainWindow::configureWindowName()
 {
-  QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
-  QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
-  bool prevAddr = false;
+    QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
+    QString windowname = qApp->applicationName() + " " + qApp->applicationVersion();
+    bool prevAddr = false;
 
-  windowname.append(" (" + QHostInfo::localHostName() + ": ");
+    windowname.append(" (" + QHostInfo::localHostName() + ": ");
 
-  for (int i = 0; i < hostAddresses.size(); i++)
-  {
-      // Exclude loopback IPv4 and all IPv6 addresses
-      if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
-      {
-          if(prevAddr) windowname.append("/");
-          windowname.append(hostAddresses.at(i).toString());
-          prevAddr = true;
-      }
-  }
+    for (int i = 0; i < hostAddresses.size(); i++)
+    {
+        // Exclude loopback IPv4 and all IPv6 addresses
+        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
+        {
+            if(prevAddr) windowname.append("/");
+            windowname.append(hostAddresses.at(i).toString());
+            prevAddr = true;
+        }
+    }
 
-  windowname.append(")");
+    windowname.append(")");
 
-  setWindowTitle(windowname);
+    setWindowTitle(windowname);
 
 #ifndef Q_WS_MAC
-  //qApp->setWindowIcon(QIcon(":/core/images/qtcreator_logo_128.png"));
+    //qApp->setWindowIcon(QIcon(":/core/images/qtcreator_logo_128.png"));
 #endif
 }
 
@@ -353,6 +366,8 @@ void MainWindow::connectActions()
 
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
+
+
 }
 
 void MainWindow::showHelp()
@@ -471,32 +486,32 @@ void MainWindow::UASCreated(UASInterface* uas)
         // FIXME Should be not inside the mainwindow
         if (debugConsoleDockWidget)
         {
-                DebugConsole *debugConsole = dynamic_cast<DebugConsole*>(debugConsoleDockWidget->widget());
-                if (debugConsole)
-                {
-                        connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)),
-                                debugConsole, SLOT(receiveTextMessage(int,int,int,QString)));
-                }
+            DebugConsole *debugConsole = dynamic_cast<DebugConsole*>(debugConsoleDockWidget->widget());
+            if (debugConsole)
+            {
+                connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)),
+                        debugConsole, SLOT(receiveTextMessage(int,int,int,QString)));
+            }
         }
 
         // Health / System status indicator
         if (infoDockWidget)
         {
-                UASInfoWidget *infoWidget = dynamic_cast<UASInfoWidget*>(infoDockWidget->widget());
-                if (infoWidget)
-                {
-                        infoWidget->addUAS(uas);
-                }
+            UASInfoWidget *infoWidget = dynamic_cast<UASInfoWidget*>(infoDockWidget->widget());
+            if (infoWidget)
+            {
+                infoWidget->addUAS(uas);
+            }
         }
 
         // UAS List
         if (listDockWidget)
         {
-                UASListWidget *listWidget = dynamic_cast<UASListWidget*>(listDockWidget->widget());
-                if (listWidget)
-                {
-                        listWidget->addUAS(uas);
-                }
+            UASListWidget *listWidget = dynamic_cast<UASListWidget*>(listDockWidget->widget());
+            if (listWidget)
+            {
+                listWidget->addUAS(uas);
+            }
         }
 
         // Camera view
@@ -530,7 +545,7 @@ void MainWindow::clearView()
         HDDisplay* hddWidget = dynamic_cast<HDDisplay*>( headDown1DockWidget->widget() );
         if (hddWidget) hddWidget->stop();
     }
-     if (headDown2DockWidget)
+    if (headDown2DockWidget)
     {
         HDDisplay* hddWidget = dynamic_cast<HDDisplay*>( headDown2DockWidget->widget() );
         if (hddWidget) hddWidget->stop();
@@ -678,7 +693,7 @@ void MainWindow::loadPixhawkView()
         waypointsDockWidget->show();
     }
 
-        // HORIZONTAL SITUATION INDICATOR
+    // HORIZONTAL SITUATION INDICATOR
     if (hsiDockWidget)
     {
         HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
@@ -730,7 +745,7 @@ void MainWindow::loadDataView()
 void MainWindow::loadDataView(QString fileName)
 {
     clearView();
- 
+
     // DATAPLOT
     if (dataplotWidget)
     {
@@ -1026,8 +1041,8 @@ void MainWindow::loadAllView()
     // OBJECT DETECTION
     if (detectionDockWidget)
     {
-         addDockWidget(Qt::RightDockWidgetArea, detectionDockWidget);
-         detectionDockWidget->show();
+        addDockWidget(Qt::RightDockWidgetArea, detectionDockWidget);
+        detectionDockWidget->show();
     }
 
     // LINE CHART
