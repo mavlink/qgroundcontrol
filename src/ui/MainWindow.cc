@@ -678,6 +678,18 @@ void MainWindow::loadPixhawkView()
         waypointsDockWidget->show();
     }
 
+        // HORIZONTAL SITUATION INDICATOR
+    if (hsiDockWidget)
+    {
+        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+        if (hsi)
+        {
+            hsi->start();
+            addDockWidget(Qt::BottomDockWidgetArea, hsiDockWidget);
+            hsiDockWidget->show();
+        }
+    }
+
     // DEBUG CONSOLE
     if (debugConsoleDockWidget)
     {

@@ -222,7 +222,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 // LOW BATTERY ALARM
                 float chargeLevel = getChargeLevel();
-                if (chargeLevel <= 10.0f)
+                if (chargeLevel <= 20.0f)
                 {
                     startLowBattAlarm();
                 }
