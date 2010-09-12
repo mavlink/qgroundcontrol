@@ -18,8 +18,8 @@ TARGET = qgroundcontrol
 BASEDIR = .
 BUILDDIR = build
 LANGUAGE = C++
-CONFIG += debug_and_release \
-    console
+CONFIG += release #debug_and_release \
+    #console
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
@@ -75,7 +75,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCFirmwareUpdate.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
-    src/ui/QGCRemoteControlView.ui
+    src/ui/QGCRemoteControlView.ui \
+    src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -157,7 +158,9 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
     src/ui/map/QGC2DIcon.h \
-    src/ui/QGCRemoteControlView.h
+    src/ui/QGCRemoteControlView.h \
+    src/WaypointGlobal.h \
+    src/ui/WaypointGlobalView.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -221,7 +224,9 @@ SOURCES += src/main.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/MAV2DIcon.cc \
     src/ui/map/QGC2DIcon.cc \
-    src/ui/QGCRemoteControlView.cc
+    src/ui/QGCRemoteControlView.cc \
+    src/WaypointGlobal.cpp \
+    src/ui/WaypointGlobalView.cpp
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library

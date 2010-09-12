@@ -49,6 +49,7 @@ namespace qmapcontrol
         Q_OBJECT
     public:
         explicit Geometry(QString name = QString());
+
         virtual ~Geometry();
 
         QString GeometryType;
@@ -73,6 +74,12 @@ namespace qmapcontrol
          * @return the name of this Geometry
          */
         QString name() const;
+
+        //! returns the index of this Geometry
+        /*!
+         * @return the index of this Geometry
+         */
+        int get_myIndex() const;
 
         //! returns the parent Geometry of this Geometry
         /*!
@@ -123,6 +130,7 @@ namespace qmapcontrol
         QPen* mypen;
         bool visible;
         QString myname;
+        int myIndex;
         void setParentGeometry(Geometry* geom);
 
     signals:
@@ -149,6 +157,8 @@ namespace qmapcontrol
          * @param  visible if the layer should be visible
          */
         virtual void setVisible(bool visible);
+
+
     };
 }
 #endif

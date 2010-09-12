@@ -451,6 +451,7 @@ void UASWaypointManager::writeWaypoints()
             current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
 
             //clear local buffer
+            //TODO: Why not replace with waypoint_buffer.clear() ?
             while(!waypoint_buffer.empty())
             {
                 delete waypoint_buffer.back();
@@ -473,6 +474,7 @@ void UASWaypointManager::writeWaypoints()
                 cur_d->orbit_direction = 0;
                 cur_d->param1 = cur_s->getOrbit();
                 cur_d->param2 = cur_s->getHoldTime();
+                // TODO: Replace this value depending on the type of waypoint
                 cur_d->type = 1;    //FIXME: we only use local waypoints at the moment
                 cur_d->seq = i;     // don't read out the sequence number of the waypoint class
                 cur_d->x = cur_s->getX();
