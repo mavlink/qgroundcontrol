@@ -310,8 +310,9 @@ void MapWidget::createPathButtonClicked(bool checked)
         this->setCursor(Qt::PointingHandCursor);
         mc->setMouseMode(qmapcontrol::MapControl::None);
 
+
         // emit signal start to create a Waypoint global
-        emit createGlobalWP(true);
+        emit createGlobalWP(true, mc->currentCoordinate());
 
 //        // Clear the previous WP track
 //        // TODO: Move this to an actual clear track button and add a warning dialog
@@ -358,6 +359,30 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
     emit captureMapCoordinateClick(coordinate);
 
   }
+}
+
+void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
+{
+    // Create waypoint name
+    QString str;
+
+    str = QString("%1").arg(path->numberOfPoints());
+
+    // create the WP and set everything in the LineString to display the path
+    CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
+    mc->layer("Waypoints")->addGeometry(tempCirclePoint);
+
+    Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
+    wps.append(tempPoint);
+    path->addPoint(tempPoint);
+
+    wpIndex.insert(str,tempPoint);
+
+    // Refresh the screen
+    mc->updateRequestNew();
+
+////    // emit signal mouse was clicked
+//    emit captureMapCoordinateClick(coordinate);
 }
 
 void MapWidget::captureGeometryClick(Geometry* geom, QPoint point){
