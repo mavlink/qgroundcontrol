@@ -1,0 +1,76 @@
+<ParameterList version="0.1">
+
+  <!-- Parameters in the top level block -->
+  <Block name="TopLevel">
+    <Parameter>
+    
+    </Parameter>
+  </Block>
+
+  <!--Parameters related to the navigation block -->
+  <Block name="Navigation">
+    <Parameter
+      SimulinkPath="avionics_src/sm_avionics/Navigation_Filter/NAV_FILT_INIT/"
+      SimulinkParameterName="Value"
+      QGCParamID="NAV_FILT_INIT"
+       />
+  </Block>
+
+  <!--Parameters related to the controller block -->
+  <Block name="Controller">
+
+  </Block>
+
+  <!-- Paremters for the Pilot Input/Raw RC block -->
+  <Block name="ServoInputs">
+
+  </Block>
+
+  <!-- Parameters for the servo output block -->
+  <Block name="ServoOutputs">
+
+    <!-- Settings for Aileron Servo -->
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/AileronOutput/"
+       SimulinkParameterName="Low"
+       QGCParamID="AIL_LOW_OUT"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/AileronOutput/"
+       SimulinkParameterName="Center"
+       QGCParamID="AIL_CENTER_OUT"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/AileronOutput/"
+       SimulinkParameterName="High"
+       QGCParamID="AIL_HIGH_OUT"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/AileronOutput/"
+       SimulinkParameterName="Reverse"
+       QGCParamID="AIL_REV_OUT"
+       />
+
+    <!-- Settings for Elevator Servo -->
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/ElevatorOutput/"
+       SimulinkParameterName="Low"
+       QGCParamID="ELE_LOW_OUT"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/ElevatorOutput/"
+       SimulinkParameterName="Center"
+       QGCParamID="ELE_CENTER_OUT"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/ElevatorOutput/"
+       SimulinkParameterName="High"
+       QGCParamID="ELE_HIGH_OUT"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/ElevatorOutput/"
+       SimulinkParameterName="Reverse"
+       QGCParamID="ELE_REV_OUT"
+       />
+  </Block>
+</ParameterList>

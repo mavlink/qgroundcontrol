@@ -95,8 +95,10 @@ namespace OpalRT
     enum SubsystemIds
     {
         NAV_ID = 1,
-        LOG_ID = 1,
-        CONTROLLER_ID = 1
+        LOG_ID,
+        CONTROLLER_ID,
+        SERVO_OUTPUTS,
+        SERVO_INPUTS
     };
 
     class OpalErrorMsg
