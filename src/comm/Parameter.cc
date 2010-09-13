@@ -29,7 +29,17 @@ This file is part of the QGROUNDCONTROL project
 #include "Parameter.h"
 using namespace OpalRT;
 
-Parameter::Parameter(char *simulinkPath, char *simulinkName, uint8_t componentID,
+//Parameter::Parameter(char *simulinkPath, char *simulinkName, uint8_t componentID,
+//                     QGCParamID paramID, unsigned short opalID)
+//                         : simulinkPath(new QString(simulinkPath)),
+//                         simulinkName(new QString(simulinkName)),
+//                         componentID(componentID),
+//                         paramID(new QGCParamID(paramID)),
+//                         opalID(opalID)
+//
+//{
+//}
+Parameter::Parameter(QString simulinkPath, QString simulinkName, uint8_t componentID,
                      QGCParamID paramID, unsigned short opalID)
                          : simulinkPath(new QString(simulinkPath)),
                          simulinkName(new QString(simulinkName)),

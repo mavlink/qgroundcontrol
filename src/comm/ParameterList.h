@@ -26,6 +26,11 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QMap>
 #include <QVector>
+#include <QIODevice>
+#include <QFile>
+#include <QDir>
+#include <QApplication>
+#include <QtXml>
 
 #include "mavlink_types.h"
 #include "QGCParamID.h"
@@ -83,7 +88,6 @@ namespace OpalRT
              qDebug() << "PID_GAIN is at index " << index;
           \endcode          
           */
-
         int indexOf(const Parameter& p);
         bool contains(int compid, QGCParamID paramid) const {return (*params)[compid].contains(paramid);}
 
@@ -120,6 +124,19 @@ namespace OpalRT
           \param[out] opalParams Map of parameter paths/names to ids which are valid in Opal-RT
           */
         void getParameterList(QMap<QString, unsigned short>* opalParams);
+
+        /**
+          Open a file for reading in the xml config data
+          */
+        bool open(QString filename=QString());
+        /**
+          Attempt to read XML configuration data from device
+          \param[in] the device to read the xml data from
+          \return true if the configuration was read successfully, false otherwise
+          */
+        bool read(QIODevice *device);
+
+        void parseBlock(const QDomElement &block);
     };
 }
 #endif // PARAMETERLIST_H

@@ -46,8 +46,13 @@ namespace OpalRT
     class Parameter
     {
     public:
-        Parameter(char *simulinkPath = "",
-                  char *simulinkName = "",
+//        Parameter(char *simulinkPath = "",
+//                  char *simulinkName = "",
+//                  uint8_t componentID = 0,
+//                  QGCParamID paramID = QGCParamID(),
+//                  unsigned short opalID = 0);
+        Parameter(QString simulinkPath = QString(),
+                  QString simulinkName = QString(),
                   uint8_t componentID = 0,
                   QGCParamID paramID = QGCParamID(),
                   unsigned short opalID = 0);
