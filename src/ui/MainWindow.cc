@@ -103,8 +103,11 @@ MainWindow::MainWindow(QWidget *parent) :
     // add Waypoint widget in the WaypointList widget when mouse clicked
     connect(map, SIGNAL(captureMapCoordinateClick(QPointF)), waypoints, SLOT(addWaypointMouse(QPointF)));
     // it notifies that a waypoint global goes to do create
-    connect(map, SIGNAL(createGlobalWP(bool)), waypoints, SLOT(setIsWPGlobal(bool)));
+    connect(map, SIGNAL(createGlobalWP(bool,QPointF)), waypoints, SLOT(setIsWPGlobal(bool, QPointF)));
+     // it notifies that a waypoint global goes to do create
     connect(map, SIGNAL(sendGeometryEndDrag(QPointF,int)), waypoints, SLOT(waypointGlobalChanged(QPointF,int)) );
+     // it notifies that a waypoint global goes to do create and a map graphic too
+    connect(waypoints, SIGNAL(createWaypointAtMap(QPointF)), map, SLOT(createWaypointGraphAtMap(QPointF)));
 
 }
 
@@ -172,6 +175,7 @@ void MainWindow::arrangeCenterStack()
   centerStack->addWidget(map);
   centerStack->addWidget(hud);
   centerStack->addWidget(dataplot);
+  centerStack->addWidget(hsi);
 
   setCentralWidget(centerStack);
 }
@@ -314,7 +318,7 @@ void MainWindow::connectActions()
     connect(ui.actionShow_MAVLink_view, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
     connect(ui.actionShow_data_analysis_view, SIGNAL(triggered()), this, SLOT(loadDataView()));
     connect(ui.actionStyleConfig, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
-
+    connect(ui.actionGlobalOperatorView, SIGNAL(triggered()), this, SLOT(loadGlobalOperatorView()));
     connect(ui.actionOnline_documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(ui.actionCredits_Developers, SIGNAL(triggered()), this, SLOT(showCredits()));
     connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
@@ -626,8 +630,11 @@ void MainWindow::loadOperatorView()
 {
     clearView();
 
-    // MAP
-    centerStack->setCurrentWidget(map);
+
+    centerStack->setCurrentWidget(hsi);
+    hsi->start();
+
+
 
     // UAS CONTROL
     QDockWidget* container1 = new QDockWidget(tr("Control"), this);
@@ -650,10 +657,10 @@ void MainWindow::loadOperatorView()
     addDockWidget(Qt::BottomDockWidgetArea, container5);
 
     // HORIZONTAL SITUATION INDICATOR
-    QDockWidget* container7 = new QDockWidget(tr("Horizontal Situation Indicator"), this);
-    container7->setWidget(hsi);
-    hsi->start();
-    addDockWidget(Qt::BottomDockWidgetArea, container7);
+//    QDockWidget* container7 = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+//    container7->setWidget(hsi);
+//    hsi->start();
+//    addDockWidget(Qt::BottomDockWidgetArea, container7);
 
     // OBJECT DETECTION
     QDockWidget* container6 = new QDockWidget(tr("Object Recognition"), this);
@@ -667,6 +674,50 @@ void MainWindow::loadOperatorView()
     this->show();
 }
 
+void MainWindow::loadGlobalOperatorView()
+{
+    clearView();
+
+    // MAP
+   centerStack->setCurrentWidget(map);
+
+    // UAS CONTROL
+    QDockWidget* container1 = new QDockWidget(tr("Control"), this);
+    container1->setWidget(control);
+    addDockWidget(Qt::LeftDockWidgetArea, container1);
+
+    // UAS LIST
+    QDockWidget* container4 = new QDockWidget(tr("Unmanned Systems"), this);
+    container4->setWidget(list);
+    addDockWidget(Qt::BottomDockWidgetArea, container4);
+
+    // UAS STATUS
+    QDockWidget* container3 = new QDockWidget(tr("Status Details"), this);
+    container3->setWidget(info);
+    addDockWidget(Qt::LeftDockWidgetArea, container3);
+
+    // WAYPOINT LIST
+    QDockWidget* container5 = new QDockWidget(tr("Waypoint List"), this);
+    container5->setWidget(waypoints);
+    addDockWidget(Qt::BottomDockWidgetArea, container5);
+
+    // // HEAD UP DISPLAY
+    QDockWidget* container6 = new QDockWidget(tr("Control Indicator"), this);
+    container6->setWidget(hud);
+    hud->start();
+    addDockWidget(Qt::RightDockWidgetArea, container6);
+
+//    // OBJECT DETECTION
+//    QDockWidget* container6 = new QDockWidget(tr("Object Recognition"), this);
+//    container6->setWidget(detection);
+//    addDockWidget(Qt::RightDockWidgetArea, container6);
+
+    // PROCESS CONTROL
+    QDockWidget* pControl = new QDockWidget(tr("Process Control"), this);
+    pControl->setWidget(watchdogControl);
+    addDockWidget(Qt::BottomDockWidgetArea, pControl);
+    this->show();
+}
 void MainWindow::loadSettingsView()
 {
     clearView();

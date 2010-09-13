@@ -39,6 +39,7 @@ This file is part of the PIXHAWK project
 #include <QFileDialog>
 #include "WaypointGlobalView.h"
 #include <QMessageBox>
+#include <QMouseEvent>
 
 WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
         QWidget(parent),
@@ -90,6 +91,9 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     this->setVisible(false);
     isGlobalWP = false;
     isLocalWP = false;
+    centerMapCoordinate.setX(0.0);
+    centerMapCoordinate.setY(0.0);
+
 }
 
 WaypointList::~WaypointList()
@@ -168,6 +172,25 @@ void WaypointList::add()
 {
     if (uas)
     {
+        if(isGlobalWP)
+        {
+            const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+            if (waypoints.size() > 0)
+            {
+                Waypoint *last = waypoints.at(waypoints.size()-1);
+                Waypoint *wp = new Waypoint(0, centerMapCoordinate.x(), centerMapCoordinate.y(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime());
+                uas->getWaypointManager().localAddWaypoint(wp);
+            }
+            else
+            {
+                Waypoint *wp = new Waypoint(0, centerMapCoordinate.x(), centerMapCoordinate.y(), -0.8, 0.0, true, true, 0.15, 2000);
+                uas->getWaypointManager().localAddWaypoint(wp);
+            }
+
+             emit createWaypointAtMap(centerMapCoordinate);
+        }
+        else
+        {
 
             const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
             if (waypoints.size() > 0)
@@ -178,14 +201,15 @@ void WaypointList::add()
             }
             else
             {
-                Waypoint *wp = new Waypoint(0, 1.1, 1.1, -0.8, 0.0, true, true, 0.15, 2000);
-                uas->getWaypointManager().localAddWaypoint(wp);
+
+
+                    isLocalWP = true;
+                    Waypoint *wp = new Waypoint(0, 1.1, 1.1, -0.8, 0.0, true, true, 0.15, 2000);
+                    uas->getWaypointManager().localAddWaypoint(wp);
+
+
             }
-
-            isLocalWP = true;
-
-
-
+        }
     }
 }
 
@@ -498,13 +522,16 @@ void WaypointList::addWaypointMouse(QPointF coordinate)
             Waypoint *wp = new Waypoint(0, coordinate.x(), coordinate.y(), -0.8, 0.0, true, true, 0.15, 2000);
             uas->getWaypointManager().localAddWaypoint(wp);
         }
+
+
     }
 
 }
 
  /** @brief it notifies that a global waypoint goes to do created */
-void WaypointList::setIsWPGlobal(bool value)
+void WaypointList::setIsWPGlobal(bool value, QPointF centerCoordinate)
 {
+    centerMapCoordinate = centerCoordinate;
 
 
     if(isLocalWP)

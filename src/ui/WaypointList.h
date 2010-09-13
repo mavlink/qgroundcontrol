@@ -77,7 +77,7 @@ public slots:
     /** @brief Add a waypoint by mouse click over the map */
     void addWaypointMouse(QPointF coordinate);
     /** @brief it notifies that a global waypoint goes to do created */
-    void setIsWPGlobal(bool value);
+    void setIsWPGlobal(bool value, QPointF centerCoordinate);
 
 
     //Update events
@@ -105,6 +105,7 @@ public slots:
 
 signals:
   void clearPathclicked();
+  void createWaypointAtMap(const QPointF coordinate);
 
 
 
@@ -122,6 +123,7 @@ protected:
     double mavYaw;
     bool isGlobalWP;
     bool isLocalWP;
+    QPointF centerMapCoordinate;
 
 private:
     Ui::WaypointList *m_ui;
