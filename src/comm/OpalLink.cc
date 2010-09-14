@@ -258,6 +258,15 @@ void OpalLink::getSignals()
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_6]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_7]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_8]),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_1]),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_2]),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_3]),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_4]),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_5]),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_6]),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_7]),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_8]),
+                                             /*
                                              static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_1]*255),
                                              static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_2]*255),
                                              static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_3]*255),
@@ -265,7 +274,7 @@ void OpalLink::getSignals()
                                              static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_5]*255),
                                              static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_6]*255),
                                              static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_7]*255),
-                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_8]*255),
+                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_8]*255),*/
                                              0 //rssi unused
                                              );
             receiveMessage(rc);
@@ -323,7 +332,10 @@ uint16_t OpalLink::duty2PulseMicros(double duty)
     return static_cast<uint16_t>(duty/70*1000000);
 }
 
-
+uint8_t OpalLink::rescaleNorm(double norm)
+{
+    return static_cast<uint8_t>((norm+1)/2*255);
+}
 
 
 bool OpalLink::connect()

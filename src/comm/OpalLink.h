@@ -153,6 +153,7 @@ protected:
     unsigned short opalInstID;
 
     uint16_t duty2PulseMicros(double duty);
+    uint8_t rescaleNorm(double norm);
 };
 
 #endif // OPALLINK_H
