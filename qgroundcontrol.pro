@@ -19,7 +19,7 @@ BASEDIR = .
 BUILDDIR = build
 LANGUAGE = C++
 CONFIG += debug_and_release
-    #console
+    console
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
