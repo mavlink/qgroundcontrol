@@ -32,11 +32,13 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QMutex>
 #include <QDebug>
-#include <QMessageBox>
+#include <QTextStreamManipulator>
 #include <QTimer>
 #include <QQueue>
 #include <QByteArray>
 #include <QObject>
+#include <stdlib.h>
+
 
 #include "LinkInterface.h"
 #include "LinkManager.h"
@@ -44,31 +46,18 @@ This file is part of the QGROUNDCONTROL project
 #include "mavlink.h"
 #include "mavlink_types.h"
 #include "configuration.h"
-
+#include "OpalRT.h"
+#include "ParameterList.h"
+#include "Parameter.h"
+#include "QGCParamID.h"
+#include "OpalApi.h"
 #include "errno.h"
-
-
-
-
-// FIXME
-//#include "OpalApi.h"
-
-
-
-
-
 #include "string.h"
 
-/*
-  Configuration info for the model
- */
-
-#define NUM_OUTPUT_SIGNALS 6
-
 /**
- * @brief Interface to OPAL-RT targets
+ * @brief Interface to OpalRT targets
  *
- * This is an interface to the Opal-RT hardware-in-the-loop (HIL) simulator.
+ * This is an interface to the OpalRT hardware-in-the-loop (HIL) simulator.
  * This class receives MAVLink packets as if it is a true link, but it
  * interprets the packets internally, and calls the appropriate api functions.
  *
@@ -100,22 +89,19 @@ public:
     qint64 getBitsSent();
     qint64 getBitsReceived();
 
-
     bool connect();
 
-
     bool disconnect();
-
 
     qint64 bytesAvailable();
 
     void run();
 
+    int getOpalInstID() {return static_cast<int>(opalInstID);}
+
 public slots:
 
-
     void writeBytes(const char *bytes, qint64 length);
-
 
     void readBytes();
 
@@ -123,11 +109,12 @@ public slots:
 
     void getSignals();
 
+    void setOpalInstID(int instID) {opalInstID = static_cast<unsigned short>(instID);}
+
 protected slots:
 
     void receiveMessage(mavlink_message_t message);
-
-
+    void setSignals(double *values);
 
 protected:
     QString name;
@@ -144,9 +131,6 @@ protected:
 
     QMutex statisticsMutex;
     QMutex receiveDataMutex;
-    QString lastErrorMsg;
-    void setLastErrorMsg();
-    void displayErrorMsg();
 
     void setName(QString name);
 
@@ -163,7 +147,10 @@ protected:
     const int systemID;
     const int componentID;
 
+    void getParameterList();
+    OpalRT::ParameterList *params;
 
+    unsigned short opalInstID;
 };
 
 #endif // OPALLINK_H

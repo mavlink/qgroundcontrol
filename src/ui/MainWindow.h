@@ -111,8 +111,8 @@ public slots:
     void loadEngineerView();
     /** @brief Load view for operator */
     void loadOperatorView();
-    /** @brief Load view for general settings */
-    void loadSettingsView();
+    /** @brief Load 3D view */
+    void load3DView();
     /** @brief Load view with all widgets */
     void loadAllView();
     /** @brief Load MAVLink XML generator view */
@@ -160,6 +160,7 @@ protected:
     QPointer<MapWidget> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
+    QPointer<QWidget> map3DWidget;
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
     QPointer<QDockWidget> infoDockWidget;

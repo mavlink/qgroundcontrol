@@ -18,7 +18,7 @@ TARGET = qgroundcontrol
 BASEDIR = .
 BUILDDIR = build
 LANGUAGE = C++
-CONFIG += debug_and_release \
+CONFIG +=  debug_and_release \
     console
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
@@ -42,8 +42,8 @@ DEPENDPATH += . \
     plugins
 INCLUDEPATH += . \
     lib/QMapControl \
-    $$BASEDIR/../mavlink/contrib/slugs/include \
-    $$BASEDIR/../mavlink/include
+    $$BASEDIR/../mavlink/include \
+    $$BASEDIR/../mavlink/contrib/slugs/include
 
 # ../mavlink/include \
 # MAVLink/include \
@@ -75,7 +75,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCFirmwareUpdate.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
-    src/ui/QGCRemoteControlView.ui
+    src/ui/QGCRemoteControlView.ui \
+    src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -157,7 +158,9 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
     src/ui/map/QGC2DIcon.h \
-    src/ui/QGCRemoteControlView.h
+    src/ui/QGCRemoteControlView.h \
+    src/WaypointGlobal.h \
+    src/ui/WaypointGlobalView.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -221,15 +224,29 @@ SOURCES += src/main.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/MAV2DIcon.cc \
     src/ui/map/QGC2DIcon.cc \
-    src/ui/QGCRemoteControlView.cc
+    src/ui/QGCRemoteControlView.cc \
+    src/WaypointGlobal.cpp \
+    src/ui/WaypointGlobalView.cpp
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
-win32 { 
+win32:exists(src/lib/opalrt/OpalApi.h) { 
+    message("Building support for Opal-RT")
     LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
-    SOURCES += src/comm/OpalLink.cc
-    HEADERS += src/comm/OpalLink.h
+    HEADERS += src/comm/OpalRT.h \
+        src/comm/OpalLink.h \
+        src/comm/Parameter.h \
+        src/comm/QGCParamID.h \
+        src/comm/ParameterList.h \
+        src/ui/OpalLinkConfigurationWindow.h
+    SOURCES += src/comm/OpalRT.cc \
+        src/comm/OpalLink.cc \
+        src/comm/Parameter.cc \
+        src/comm/QGCParamID.cc \
+        src/comm/ParameterList.cc \
+        src/ui/OpalLinkConfigurationWindow.cc
+    FORMS += src/ui/OpalLinkSettings.ui
     DEFINES += OPAL_RT
 }
