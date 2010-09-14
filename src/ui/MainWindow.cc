@@ -979,6 +979,13 @@ void MainWindow::loadEngineerView()
         parametersDockWidget->show();
     }
 
+    // RADIO CONTROL VIEW
+    if (rcViewDockWidget)
+    {
+        addDockWidget(Qt::BottomDockWidgetArea, rcViewDockWidget);
+        rcViewDockWidget->show();
+    }
+
     this->show();
 }
 
