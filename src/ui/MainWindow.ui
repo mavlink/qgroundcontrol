@@ -38,7 +38,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -75,7 +75,7 @@
     <addaction name="actionEngineerView"/>
     <addaction name="actionPilotView"/>
     <addaction name="actionOperatorView"/>
-    <addaction name="actionSettingsView"/>
+    <addaction name="action3DView"/>
     <addaction name="separator"/>
     <addaction name="actionShow_MAVLink_view"/>
     <addaction name="actionShow_data_analysis_view"/>
@@ -240,13 +240,16 @@
     <string>Shop the 2D map and system status</string>
    </property>
   </action>
-  <action name="actionSettingsView">
+  <action name="action3DView">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
      <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Show settings view</string>
+    <string>Show 3D view</string>
+   </property>
+   <property name="toolTip">
+    <string>Show 3D view</string>
    </property>
   </action>
   <action name="actionSimulate">

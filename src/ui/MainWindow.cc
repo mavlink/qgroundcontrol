@@ -131,6 +131,7 @@ void MainWindow::buildWidgets()
     mapWidget         = new MapWidget(this);
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
+    map3DWidget       = new QWidget(this); // FIXME Lionel, insert visualizer here
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -354,7 +355,7 @@ void MainWindow::connectActions()
     connect(ui.actionPilotView, SIGNAL(triggered()), this, SLOT(loadPilotView()));
     connect(ui.actionEngineerView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionOperatorView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
-    connect(ui.actionSettingsView, SIGNAL(triggered()), this, SLOT(loadSettingsView()));
+    connect(ui.action3DView, SIGNAL(triggered()), this, SLOT(load3DView()));
     connect(ui.actionShow_full_view, SIGNAL(triggered()), this, SLOT(loadAllView()));
     connect(ui.actionShow_MAVLink_view, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
     connect(ui.actionShow_data_analysis_view, SIGNAL(triggered()), this, SLOT(loadDataView()));
@@ -869,36 +870,56 @@ void MainWindow::loadOperatorView()
     this->show();
 }
 
-void MainWindow::loadSettingsView()
+void MainWindow::load3DView()
 {
-    clearView();
+            clearView();
 
-    // LINE CHART
-    if (linechartWidget)
-    {
-        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-        if (centerStack)
-        {
-            linechartWidget->setActive(true);
-            centerStack->setCurrentWidget(linechartWidget);
+            // 3D map
+            if (map3DWidget)
+            {
+                QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+                if (centerStack)
+                {
+                    //map3DWidget->setActive(true);
+                    centerStack->setCurrentWidget(map3DWidget);
+                }
+            }
+
+            // UAS CONTROL
+            if (controlDockWidget)
+            {
+                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+                controlDockWidget->show();
+            }
+
+            // UAS LIST
+            if (listDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+                listDockWidget->show();
+            }
+
+            // WAYPOINT LIST
+            if (waypointsDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
+                waypointsDockWidget->show();
+            }
+
+            // HORIZONTAL SITUATION INDICATOR
+            if (hsiDockWidget)
+            {
+                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+                if (hsi)
+                {
+                    hsi->start();
+                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+                    hsiDockWidget->show();
+                }
+            }
+
+            this->show();
         }
-    }
-
-    /*
-    // COMM XML
-    QDockWidget* container1 = new QDockWidget(tr("MAVLink XML to C Code Generator"), this);
-    container1->setWidget(protocol);
-    addDockWidget(Qt::LeftDockWidgetArea, container1);*/
-
-    // ONBOARD PARAMETERS
-    if (parametersDockWidget)
-    {
-        addDockWidget(Qt::RightDockWidgetArea, parametersDockWidget);
-        parametersDockWidget->show();
-    }
-
-    this->show();
-}
 
 void MainWindow::loadEngineerView()
 {
