@@ -142,7 +142,6 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     // Add OpalRT Link, but do not connect
     OpalLink* opalLink = new OpalLink();
     mainWindow->addLink(opalLink);
-#warning OPAL LINK NOW AUTO CONNECTING IN CORE.CC
 #endif
     // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");

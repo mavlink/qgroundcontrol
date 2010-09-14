@@ -22,6 +22,9 @@
     <height>800</height>
    </size>
   </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
+  </property>
   <property name="windowTitle">
    <string>MGMainWindow</string>
   </property>
@@ -35,7 +38,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -72,7 +75,7 @@
     <addaction name="actionEngineerView"/>
     <addaction name="actionPilotView"/>
     <addaction name="actionOperatorView"/>
-    <addaction name="actionSettingsView"/>
+    <addaction name="action3DView"/>
     <addaction name="separator"/>
     <addaction name="actionShow_MAVLink_view"/>
     <addaction name="actionShow_data_analysis_view"/>
@@ -110,7 +113,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionExit">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
    </property>
    <property name="text">
@@ -122,7 +125,7 @@
   </action>
   <action name="actionSettings">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/categories/preferences-system.svg</normaloff>
      <normalon>:/images/categories/preferences-system.svg</normalon>:/images/categories/preferences-system.svg</iconset>
    </property>
@@ -135,7 +138,7 @@
   </action>
   <action name="actionLiftoff">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/control/launch.svg</normaloff>
      <normalon>:/images/control/launch.svg</normalon>:/images/control/launch.svg</iconset>
    </property>
@@ -145,7 +148,7 @@
   </action>
   <action name="actionLand">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/control/land.svg</normaloff>:/images/control/land.svg</iconset>
    </property>
    <property name="text">
@@ -170,7 +173,7 @@
   </action>
   <action name="actionAdd_Link">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
    </property>
    <property name="text">
@@ -179,7 +182,7 @@
   </action>
   <action name="actionConfiguration">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/categories/applications-system.svg</normaloff>:/images/categories/applications-system.svg</iconset>
    </property>
    <property name="text">
@@ -191,7 +194,7 @@
   </action>
   <action name="actionEngineerView">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
@@ -200,7 +203,7 @@
   </action>
   <action name="actionPilotView">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/status/weather-overcast.svg</normaloff>:/images/status/weather-overcast.svg</iconset>
    </property>
    <property name="text">
@@ -209,7 +212,7 @@
   </action>
   <action name="actionStyleConfig">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
@@ -218,7 +221,7 @@
   </action>
   <action name="actionJoystickSettings">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/devices/input-gaming.svg</normaloff>:/images/devices/input-gaming.svg</iconset>
    </property>
    <property name="text">
@@ -227,7 +230,7 @@
   </action>
   <action name="actionOperatorView">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/status/network-wireless-encrypted.svg</normaloff>:/images/status/network-wireless-encrypted.svg</iconset>
    </property>
    <property name="text">
@@ -237,13 +240,16 @@
     <string>Shop the 2D map and system status</string>
    </property>
   </action>
-  <action name="actionSettingsView">
+  <action name="action3DView">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Show settings view</string>
+    <string>Show 3D view</string>
+   </property>
+   <property name="toolTip">
+    <string>Show 3D view</string>
    </property>
   </action>
   <action name="actionSimulate">
@@ -251,7 +257,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
    </property>
    <property name="text">
@@ -263,7 +269,7 @@
   </action>
   <action name="actionShow_full_view">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/status/network-transmit-receive.svg</normaloff>:/images/status/network-transmit-receive.svg</iconset>
    </property>
    <property name="text">
@@ -272,7 +278,7 @@
   </action>
   <action name="actionShow_MAVLink_view">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/devices/network-wired.svg</normaloff>:/images/devices/network-wired.svg</iconset>
    </property>
    <property name="text">
@@ -281,7 +287,7 @@
   </action>
   <action name="actionOnline_documentation">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
@@ -290,7 +296,7 @@
   </action>
   <action name="actionShow_data_analysis_view">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
@@ -299,7 +305,7 @@
   </action>
   <action name="actionProject_Roadmap">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
    </property>
    <property name="text">
@@ -308,7 +314,7 @@
   </action>
   <action name="actionCredits_Developers">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset>
      <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
@@ -317,9 +323,7 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="../../mavground.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>actionExit</sender>
