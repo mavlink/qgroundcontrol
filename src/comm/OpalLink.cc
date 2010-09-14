@@ -246,6 +246,29 @@ void OpalLink::getSignals()
                                              values[OpalRT::B_W_2]
                                              );
             receiveMessage(bias);
+
+            /* send radio outputs */
+            mavlink_message_t rc;
+            mavlink_msg_rc_channels_pack(systemID, componentID, &rc,
+                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_1]),
+                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_2]),
+                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_3]),
+                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_4]),
+                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_5]),
+                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_6]),
+                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_7]),
+                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_8]),
+                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_1]*255),
+                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_2]*255),
+                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_3]*255),
+                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_4]*255),
+                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_5]*255),
+                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_6]*255),
+                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_7]*255),
+                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_8]*255),
+                                             0 //rssi unused
+                                             );
+            receiveMessage(rc);
         }        
         else if (returnVal != EAGAIN) // if returnVal == EAGAIN => data just wasn't ready
         {
@@ -292,6 +315,12 @@ void OpalLink::setName(QString name)
 
 bool OpalLink::isConnected() {    
     return connectState;
+}
+
+uint16_t OpalLink::duty2PulseMicros(double duty)
+{
+    /* duty cycle assumed to be of a signal at 70 Hz */
+    return static_cast<uint16_t>(duty/70*1000000);
 }
 
 
