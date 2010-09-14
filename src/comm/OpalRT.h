@@ -41,7 +41,7 @@ namespace OpalRT
       Configuration info for the model
      */
 
-    const unsigned short NUM_OUTPUT_SIGNALS=39;
+    const unsigned short NUM_OUTPUT_SIGNALS=57;
 
     /*  ------------------------------ Outputs ------------------------------
     *
@@ -85,7 +85,25 @@ namespace OpalRT
         B_F_2,
         B_W_0,
         B_W_1,
-        B_W_2
+        B_W_2,
+        RAW_CHANNEL_1 = 39,
+        RAW_CHANNEL_2,
+        RAW_CHANNEL_3,
+        RAW_CHANNEL_4,
+        RAW_CHANNEL_5,
+        RAW_CHANNEL_6,
+        RAW_CHANNEL_7,
+        RAW_CHANNEL_8,
+        NORM_CHANNEL_1,
+        NORM_CHANNEL_2,
+        NORM_CHANNEL_3,
+        NORM_CHANNEL_4,
+        NORM_CHANNEL_5,
+        NORM_CHANNEL_6,
+        NORM_CHANNEL_7,
+        NORM_CHANNEL_8,
+        CONTROLLER_AILERON,
+        CONTROLLER_ELEVATOR
     };       
 
     /** Component IDs of the parameters.  Currently they are all 1 becuase there is no advantage

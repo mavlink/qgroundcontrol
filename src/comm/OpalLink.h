@@ -151,6 +151,8 @@ protected:
     OpalRT::ParameterList *params;
 
     unsigned short opalInstID;
+
+    uint16_t duty2PulseMicros(double duty);
 };
 
 #endif // OPALLINK_H

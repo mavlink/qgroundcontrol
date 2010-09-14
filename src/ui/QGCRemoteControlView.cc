@@ -45,6 +45,7 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
     channelLayout(new QVBoxLayout()),
     ui(new Ui::QGCRemoteControlView)
 {
+
     //ui->setupUi(this);
     QGridLayout* layout = new QGridLayout(this);
     layout->addLayout(channelLayout, 1, 0, 1, 2);
