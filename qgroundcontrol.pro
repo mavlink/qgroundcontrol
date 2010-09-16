@@ -18,7 +18,7 @@ TARGET = qgroundcontrol
 BASEDIR = .
 BUILDDIR = build
 LANGUAGE = C++
-CONFIG += debug_and_release
+CONFIG += debug_and_release \
     console
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
