@@ -40,7 +40,8 @@ OpalLink::OpalLink() :
         systemID(1),
         componentID(1),
         params(NULL),
-        opalInstID(101)
+        opalInstID(101),
+        sendRCValues(false)
 {
     start(QThread::LowPriority);
 
@@ -133,6 +134,14 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
                 }
             }
             break;
+        case MAVLINK_MSG_ID_REQUEST_RC_CHANNELS:
+        {
+        	mavlink_request_rc_channels_t rc;
+        	mavlink_msg_request_rc_channels_decode(&msg, &rc);
+        	//qDebug() << __FILE__ << __LINE__ << ": enabled=" << static_cast<bool>(rc.enabled);
+        	this->sendRCValues = static_cast<bool>(rc.enabled);
+        }
+        break;
         default:
             {
                 qDebug() << "OpalLink::writeBytes(): Unknown mavlink packet";
@@ -248,8 +257,10 @@ void OpalLink::getSignals()
             receiveMessage(bias);
 
             /* send radio outputs */
-            mavlink_message_t rc;
-            mavlink_msg_rc_channels_pack(systemID, componentID, &rc,
+            if (sendRCValues)
+            {
+                mavlink_message_t rc;
+                mavlink_msg_rc_channels_pack(systemID, componentID, &rc,
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_1]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_2]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_3]),
@@ -266,18 +277,10 @@ void OpalLink::getSignals()
                                              rescaleNorm(values[OpalRT::NORM_CHANNEL_6]),
                                              rescaleNorm(values[OpalRT::NORM_CHANNEL_7]),
                                              rescaleNorm(values[OpalRT::NORM_CHANNEL_8]),
-                                             /*
-                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_1]*255),
-                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_2]*255),
-                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_3]*255),
-                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_4]*255),
-                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_5]*255),
-                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_6]*255),
-                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_7]*255),
-                                             static_cast<uint8_t>(values[OpalRT::NORM_CHANNEL_8]*255),*/
                                              0 //rssi unused
                                              );
-            receiveMessage(rc);
+                receiveMessage(rc);
+            }
         }        
         else if (returnVal != EAGAIN) // if returnVal == EAGAIN => data just wasn't ready
         {
@@ -342,7 +345,6 @@ bool OpalLink::connect()
 {
     short modelState;
 
-    /// \todo allow configuration of instid in window    
     if ((OpalConnect(opalInstID, false, &modelState) == EOK)
         && (OpalGetSignalControl(0, true) == EOK)
         && (OpalGetParameterControl(true) == EOK))

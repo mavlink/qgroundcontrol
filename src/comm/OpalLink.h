@@ -154,6 +154,8 @@ protected:
 
     uint16_t duty2PulseMicros(double duty);
     uint8_t rescaleNorm(double norm);
+
+    bool sendRCValues;
 };
 
 #endif // OPALLINK_H
