@@ -76,7 +76,7 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
     calibrateButtonLayout->addWidget(calibrate, 0, Qt::AlignHCenter);
     layout->addItem(calibrateButtonLayout, 3, 0, 1, 2);
 
-    calibrationWindow = new QWidget(this, Qt::Window);
+    calibrationWindow = new RadioCalibrationWindow(this);
     connect(calibrate, SIGNAL(clicked()), calibrationWindow, SLOT(show()));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(setUASId(int)));
@@ -108,6 +108,7 @@ void QGCRemoteControlView::setUASId(int id)
         // New UAS exists, connect
         nameLabel->setText(QString("RC Input of %1").arg(newUAS->getUASName()));
         connect(newUAS, SIGNAL(remoteControlChannelChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
+        connect(newUAS, SIGNAL(remoteControlChannelChanged(int,float,float)), calibrationWindow, SLOT(setChannel(int,float,float)));
         connect(newUAS, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
     }
 }
