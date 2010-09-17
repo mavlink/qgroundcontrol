@@ -6,6 +6,11 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QVector>
+#include <QGridLayout>
+
+#include "AirfoilServoCalibrator.h"
+#include "SwitchCalibrator.h"
+#include "CurveCalibrator.h"
 
 class RadioCalibrationWindow : public QWidget
 {
@@ -16,34 +21,15 @@ public:
 signals:
 
 public slots:
+    void setChannel(int ch, float raw, float normalized);
 
 protected:
-    class AirfoilServoCalibrator : public QWidget
-    {
-        Q_OBJECT
-    public:
-        explicit AirfoilServoCalibrator(QWidget *parent=0);
-
-    signals:
-        void highSetpointChanged(float);
-        void centerSetpointChanged(float);
-        void lowSetpointChanged(float);
-
-    public slots:
-        void channelChanged(float raw);
-
-    protected:        
-        QLabel *pulseWidth;
-        QPushButton *highButton;
-        QPushButton *centerButton;
-        QPushButton *lowButton;
-
-        float high;
-        float center;
-        float low;
-
-        QVector<float> log;
-    };        
+        AirfoilServoCalibrator *aileron;
+        AirfoilServoCalibrator *elevator;
+        AirfoilServoCalibrator *rudder;
+        SwitchCalibrator *gyro;        
+        CurveCalibrator *pitch;
+        CurveCalibrator *throttle;
 
 };
 

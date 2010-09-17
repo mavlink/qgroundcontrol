@@ -76,8 +76,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui \
-    src/ui/WaypointGlobalView.ui \
-    src/ui/QGCRadioCalibration.ui
+    src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -162,7 +161,10 @@ HEADERS += src/MG.h \
     src/ui/QGCRemoteControlView.h \
     src/WaypointGlobal.h \
     src/ui/WaypointGlobalView.h \
-    src/ui/RadioCalibration/RadioCalibrationWindow.h
+    src/ui/RadioCalibration/RadioCalibrationWindow.h \
+    src/ui/RadioCalibration/AirfoilServoCalibrator.h \
+    src/ui/RadioCalibration/SwitchCalibrator.h \
+    src/ui/RadioCalibration/CurveCalibrator.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -229,7 +231,10 @@ SOURCES += src/main.cc \
     src/ui/QGCRemoteControlView.cc \
     src/WaypointGlobal.cpp \
     src/ui/WaypointGlobalView.cpp \
-    src/ui/RadioCalibration/RadioCalibrationWindow.cc
+    src/ui/RadioCalibration/RadioCalibrationWindow.cc \
+    src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
+    src/ui/RadioCalibration/SwitchCalibrator.cc \
+    src/ui/RadioCalibration/CurveCalibrator.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
