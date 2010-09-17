@@ -65,6 +65,7 @@ public slots:
 
     //ROCA
     void clearPath();
+    void changeGlobalWaypointPositionBySpinBox(int index, float lat, float lon);
 
 protected:
     void changeEvent(QEvent* e);
@@ -114,6 +115,7 @@ protected:
 
 
 
+
   signals:
     //void movePoint(QPointF newCoord);
     void captureMapCoordinateClick(const QPointF coordinate); //ROCA
@@ -127,6 +129,7 @@ private:
     QHash <QString, Point*> wpIndex;
     LineString* path;
     QPen* pointPen;
+    bool waypointIsDrag;
 };
 
 #endif // MAPWIDGET_H

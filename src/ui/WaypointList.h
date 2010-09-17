@@ -95,6 +95,8 @@ public slots:
 
     void clearLocalWPWidget();
 
+    void changeWPPositionBySpinBox(Waypoint* wp);
+
     // Waypoint operations
     void moveUp(Waypoint* wp);
     void moveDown(Waypoint* wp);
@@ -106,6 +108,8 @@ public slots:
 signals:
   void clearPathclicked();
   void createWaypointAtMap(const QPointF coordinate);
+ // void ChangeWaypointGlobalPosition(int index, QPointF coord);
+  void changePositionWPGlobalBySpinBox(int indexWP, float lat, float lon);
 
 
 

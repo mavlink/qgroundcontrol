@@ -325,9 +325,11 @@ void WaypointList::waypointListChanged()
                     {
                         WaypointGlobalView* wpview = new WaypointGlobalView(wp, this);
                         wpGlobalViews.insert(wp, wpview);
+                        connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
+                        connect(wpview, SIGNAL(changePositionWP(Waypoint*)), this, SLOT(changeWPPositionBySpinBox(Waypoint*)));
 //                        connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
 //                        connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
-                        connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
+                       // connect(wpview, SIGNAL(changePositionWP(Waypoint*)), this, SLOT(waypointGlobalPositionChanged(Waypoint*)));
 //                        connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
 //                        connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
                     }
@@ -547,10 +549,13 @@ void WaypointList::setIsWPGlobal(bool value, QPointF centerCoordinate)
             if(ret)
             {
                 clearLocalWPWidget();
-                isGlobalWP = value;
-                isLocalWP = !(value);
+
+
             }
+
         }
+        isLocalWP = !value;
+        isGlobalWP = value;
 
 
     }
@@ -583,6 +588,19 @@ void WaypointList::waypointGlobalChanged(QPointF coordinate, int indexWP)
 
 }
 
+///** @brief The MapWidget informs that a waypoint global was changed on the map */
+
+//void WaypointList::waypointGlobalPositionChanged(Waypoint* wp)
+//{
+//    QPointF coordinate;
+//    coordinate.setX(wp->getX());
+//    coordinate.setY(wp->getY());
+
+//   emit ChangeWaypointGlobalPosition(wp->getId(), coordinate);
+
+
+//}
+
 void WaypointList::clearLocalWPWidget()
 {
   if (uas)
@@ -597,4 +615,10 @@ void WaypointList::clearLocalWPWidget()
 
       }
   }
+}
+
+void WaypointList::changeWPPositionBySpinBox(Waypoint *wp)
+{
+
+    emit changePositionWPGlobalBySpinBox(wp->getId(), wp->getY(), wp->getX());
 }
