@@ -109,6 +109,8 @@ MainWindow::MainWindow(QWidget *parent) :
      // it notifies that a waypoint global goes to do create and a map graphic too
     connect(waypoints, SIGNAL(createWaypointAtMap(QPointF)), map, SLOT(createWaypointGraphAtMap(QPointF)));
 
+     // it notifies that a waypoint global change it´s position by spinBox on Widget WaypointView
+    connect(waypoints, SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), map, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
 }
 
 MainWindow::~MainWindow()
