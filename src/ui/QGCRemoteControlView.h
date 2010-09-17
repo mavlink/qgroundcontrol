@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QWidget>
 #include <QVector>
+#include <QPushButton>
 
 namespace Ui {
     class QGCRemoteControlView;
@@ -68,6 +69,8 @@ protected:
     QVector<QProgressBar*> progressBars;
     QProgressBar* rssiBar;
     QLabel* nameLabel;
+    QPushButton *calibrate;
+    QWidget *calibrationWindow;
 
 private:
     Ui::QGCRemoteControlView *ui;

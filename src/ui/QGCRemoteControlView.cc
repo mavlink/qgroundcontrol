@@ -25,6 +25,7 @@ This file is part of the QGROUNDCONTROL project
  * @file
  *   @brief Implementation of QGCRemoteControlView
  *   @author Lorenz Meier <mail@qgroundcontrol.org>
+ *   @author Bryan Godbolt <godbolt@ece.ualberta.ca>
  */
 
 #include <QGridLayout>
@@ -69,6 +70,14 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
     rssiLayout->addWidget(rssiBar);
     layout->addItem(rssiLayout, 2, 0, 1, 2);
     setVisible(false);
+
+    calibrate = new QPushButton(tr("Calibrate"), this);
+    QHBoxLayout *calibrateButtonLayout = new QHBoxLayout();
+    calibrateButtonLayout->addWidget(calibrate, 0, Qt::AlignHCenter);
+    layout->addItem(calibrateButtonLayout, 3, 0, 1, 2);
+
+    calibrationWindow = new QWidget(this, Qt::Window);
+    connect(calibrate, SIGNAL(clicked()), calibrationWindow, SLOT(show()));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(setUASId(int)));
 }
