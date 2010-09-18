@@ -32,10 +32,12 @@ public slots:
     //update latitude
      void updateLatitudeWP(int value);
      void updateLatitudeMinuteWP(double value);
+     void changeDirectionLatitudeWP();
 
      //update longitude
      void updateLongitudeWP(int value);
      void updateLongitudeMinuteWP(double value);
+     void changeDirectionLongitudeWP();
 
 
 

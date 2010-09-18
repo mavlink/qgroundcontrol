@@ -21,17 +21,18 @@ WaypointGlobalView::WaypointGlobalView(Waypoint* wp,QWidget *parent) :
     //for spinBox Latitude
     connect(ui->m_latitudGrados_spinBox, SIGNAL(valueChanged(int)), this, SLOT(updateLatitudeWP(int)));
     connect(ui->m_latitudMinutos_spinBox, SIGNAL(valueChanged(double)), this, SLOT(updateLatitudeMinuteWP(double)));
+    connect(ui->m_dirLatitudeN_radioButton, SIGNAL(clicked()), this, SLOT(changeDirectionLatitudeWP()));
+    connect(ui->m_dirLatitudeS_radioButton, SIGNAL(clicked()), this, SLOT(changeDirectionLatitudeWP()));
 
     //for spinBox Longitude
     connect(ui->m_longitudGrados_spinBox, SIGNAL(valueChanged(int)), this, SLOT(updateLongitudeWP(int)));
     connect(ui->m_longitudMinutos_spinBox, SIGNAL(valueChanged(double)), this, SLOT(updateLongitudeMinuteWP(double)));
+    connect(ui->m_dirLongitudeW_radioButton, SIGNAL(clicked()), this, SLOT(changeDirectionLongitudeWP()));
+    connect(ui->m_dirLongitudeE_radioButton, SIGNAL(clicked()), this, SLOT(changeDirectionLongitudeWP()));
 
 
 
-    // latitude spinBox
-
-
-    connect(ui->m_orbitCheckBox, SIGNAL(stateChanged(int)), this, SLOT(changeOrbitalState(int)));
+   connect(ui->m_orbitCheckBox, SIGNAL(stateChanged(int)), this, SLOT(changeOrbitalState(int)));
 
 
 
@@ -63,50 +64,46 @@ WaypointGlobalView::~WaypointGlobalView()
 
 void WaypointGlobalView::updateValues()
 {
-//    ui->m_latitudtextEdit->setText(getLatitudString(wp->getY()));
 
-//    ui->m_longitudtextEdit->setText(getLongitudString(wp->getX()));
+            int gradoLat, gradoLon;
+            float minLat, minLon;
+            QString dirLat, dirLon;
 
-    int gradoLat, gradoLon;
-    float minLat, minLon;
-    QString dirLat, dirLon;
+            getLatitudeGradoMin(wp->getY(), &gradoLat, &minLat, &dirLat);
+            getLongitudGradoMin(wp->getX(), &gradoLon, &minLon, &dirLon);
 
-    getLatitudeGradoMin(wp->getY(), &gradoLat, &minLat, &dirLat);
-    getLongitudGradoMin(wp->getX(), &gradoLon, &minLon, &dirLon);
+            //latitude on spinBox
+            ui->m_latitudGrados_spinBox->setValue(gradoLat);
+            ui->m_latitudMinutos_spinBox->setValue(minLat);
+            if(dirLat == "N")
+            {
+                ui->m_dirLatitudeN_radioButton->setChecked(true);
+                ui->m_dirLatitudeS_radioButton->setChecked(false);
+            }
+            else
+            {
+                ui->m_dirLatitudeS_radioButton->setChecked(true);
+                ui->m_dirLatitudeN_radioButton->setChecked(false);
 
-    //latitude on spinBox
-    ui->m_latitudGrados_spinBox->setValue(gradoLat);
-    ui->m_latitudMinutos_spinBox->setValue(minLat);
-    if(dirLat == "N")
-    {
-        ui->m_dirLatitudeN_radioButton->setChecked(true);
-        ui->m_dirLatitudeS_radioButton->setChecked(false);
-    }
-    else
-    {
-        ui->m_dirLatitudeS_radioButton->setChecked(true);
-        ui->m_dirLatitudeN_radioButton->setChecked(false);
+            }
 
-    }
+             //longitude on spinBox
+            ui->m_longitudGrados_spinBox->setValue(gradoLon);
+            ui->m_longitudMinutos_spinBox->setValue(minLon);
+            if(dirLon == "W")
+            {
+                ui->m_dirLongitudeW_radioButton->setChecked(true);
+                ui->m_dirLongitudeE_radioButton->setChecked(false);
+            }
+            else
+            {
+               ui->m_dirLongitudeE_radioButton->setChecked(true);
+               ui->m_dirLongitudeW_radioButton->setChecked(false);
 
+            }
 
-    ui->m_longitudGrados_spinBox->setValue(gradoLon);
-    ui->m_longitudMinutos_spinBox->setValue(minLon);
-    if(dirLon == "W")
-    {
-        ui->m_dirLongitudeW_radioButton->setChecked(true);
-        ui->m_dirLongitudeE_radioButton->setChecked(false);
-    }
-    else
-    {
-       ui->m_dirLongitudeE_radioButton->setChecked(true);
-       ui->m_dirLongitudeW_radioButton->setChecked(false);
+            ui->idWP_label->setText(QString("WP-%1").arg(wp->getId()));
 
-    }
-
-
-
-    ui->idWP_label->setText(QString("WP-%1").arg(wp->getId()));
 
 }
 
@@ -408,5 +405,58 @@ void WaypointGlobalView::updateLongitudeMinuteWP(double value)
 
 }
 
+void WaypointGlobalView::changeDirectionLatitudeWP()
+{
+    if(ui->m_dirLatitudeN_radioButton->isChecked())
+    {
+        if(wp->getY() < 0)
+        {
+            wp->setY(wp->getY()* -1);
+            //emit signal waypoint position was changed
+            emit changePositionWP(wp);
+        }
+
+    }
+    if(ui->m_dirLatitudeS_radioButton->isChecked())
+    {
+        if(wp->getY() > 0)
+        {
+            wp->setY(wp->getY()*-1);
+            //emit signal waypoint position was changed
+            emit changePositionWP(wp);
+
+        }
+
+    }
+
+}
+
+void WaypointGlobalView::changeDirectionLongitudeWP()
+{
+    if(ui->m_dirLongitudeW_radioButton->isChecked())
+    {
+        if(wp->getX() > 0)
+        {
+           wp->setX(wp->getX()*-1);
+           //emit signal waypoint position was changed
+           emit changePositionWP(wp);
+        }
+
+    }
+
+    if(ui->m_dirLongitudeE_radioButton->isChecked())
+    {
+        if(wp->getX() < 0)
+        {
+            wp->setX(wp->getX()*-1);
+            //emit signal waypoint position was changed
+            emit changePositionWP(wp);
+        }
+
+    }
+
+
+
+}
 
 
