@@ -512,8 +512,8 @@ void WaypointList::setIsWPGlobal(bool value)
         if(wpViews.size()!= 0)
         {
 
-            int ret = QMessageBox::warning(this, tr("My Application"),
-                                    tr("There are Waypoints local created.\n"
+            int ret = QMessageBox::warning(this, tr("QGroundControl"),
+                                    tr("There are Local Waypoints created.\n"
                                        "Do you want to clear them?"),
                                     QMessageBox::Ok | QMessageBox::Cancel);
 
