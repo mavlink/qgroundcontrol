@@ -602,7 +602,7 @@ void MapWidget::clearPath()
     wpIndex.clear();
     mc->updateRequestNew();
 
-    // si el boton de crear wp globales esta activo desactivarlo llamando a su evento clicked
+
     if(createPath->isChecked())
     {
         createPath->click();
