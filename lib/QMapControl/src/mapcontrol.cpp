@@ -309,6 +309,7 @@ namespace qmapcontrol
                                       click.y()-screen_middle.y()+layermanager->getMapmiddle_px().y());
         // image coordinate to world coordinate
         return layermanager->layer()->mapadapter()->displayToCoordinate(displayToImage);
+
     }
 
     void MapControl::updateRequest(QRect rect)
