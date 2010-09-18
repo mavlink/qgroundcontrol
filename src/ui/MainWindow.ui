@@ -75,6 +75,7 @@
     <addaction name="actionEngineerView"/>
     <addaction name="actionPilotView"/>
     <addaction name="actionOperatorView"/>
+    <addaction name="actionGlobalOperatorView"/>
     <addaction name="actionSettingsView"/>
     <addaction name="separator"/>
     <addaction name="actionShow_MAVLink_view"/>
@@ -316,6 +317,15 @@
    </property>
    <property name="text">
     <string>Credits / Developers</string>
+   </property>
+  </action>
+  <action name="actionGlobalOperatorView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Show Global operator view</string>
    </property>
   </action>
  </widget>

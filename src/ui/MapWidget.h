@@ -65,6 +65,7 @@ public slots:
 
     //ROCA
     void clearPath();
+    void changeGlobalWaypointPositionBySpinBox(int index, float lat, float lon);
 
 protected:
     void changeEvent(QEvent* e);
@@ -105,6 +106,7 @@ protected:
 
   protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
+    void createWaypointGraphAtMap (const QPointF coordinate);
     void createPathButtonClicked(bool checked);
     void captureGeometryClick(Geometry*, QPoint);
     void mapproviderSelected(QAction* action);
@@ -113,10 +115,11 @@ protected:
 
 
 
+
   signals:
     //void movePoint(QPointF newCoord);
     void captureMapCoordinateClick(const QPointF coordinate); //ROCA
-    void createGlobalWP(bool value);
+    void createGlobalWP(bool value, QPointF centerCoordinate);
     void sendGeometryEndDrag(const QPointF coordinate, const int index);
 
 
@@ -126,6 +129,7 @@ private:
     QHash <QString, Point*> wpIndex;
     LineString* path;
     QPen* pointPen;
+    bool waypointIsDrag;
 };
 
 #endif // MAPWIDGET_H

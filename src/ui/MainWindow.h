@@ -120,6 +120,8 @@ public slots:
     void loadDataView();
     /** @brief Load data view, allowing to plot flight data */
     void loadDataView(QString fileName);
+    /** @brief Load view for global operator, allowing to flight on earth */
+    void loadGlobalOperatorView();
 
     /** @brief Show the online help for users */
     void showHelp();

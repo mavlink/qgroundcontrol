@@ -157,7 +157,6 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
     src/ui/map/QGC2DIcon.h \
-    src/WaypointGlobal.h \
     src/ui/WaypointGlobalView.h
 SOURCES += src/main.cc \
     src/Core.cc \
@@ -222,7 +221,6 @@ SOURCES += src/main.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/MAV2DIcon.cc \
     src/ui/map/QGC2DIcon.cc \
-    src/WaypointGlobal.cpp \
     src/ui/WaypointGlobalView.cpp
 RESOURCES = mavground.qrc
 
