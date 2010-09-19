@@ -6,134 +6,151 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>350</width>
-    <height>545</height>
+    <width>319</width>
+    <height>221</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_4">
+  <layout class="QGridLayout" name="gridLayout_4" rowstretch="10,0">
    <property name="margin">
     <number>0</number>
    </property>
-   <item row="0" column="0">
-    <widget class="QGroupBox" name="groupBox">
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="groupBox_3">
      <property name="title">
-      <string>Activate Extended Output</string>
+      <string>Calibration Wizards</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <property name="margin">
+     <layout class="QGridLayout" name="gridLayout" columnstretch="5,5">
+      <property name="leftMargin">
+       <number>6</number>
+      </property>
+      <property name="topMargin">
+       <number>2</number>
+      </property>
+      <property name="rightMargin">
+       <number>6</number>
+      </property>
+      <property name="bottomMargin">
+       <number>2</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>12</number>
+      </property>
+      <property name="verticalSpacing">
        <number>6</number>
       </property>
       <item row="0" column="0">
-       <widget class="QCheckBox" name="sendRawCheckBox">
+       <widget class="QPushButton" name="rcCalButton">
         <property name="text">
-         <string>Send RAW Sensor data</string>
+         <string>RC Calibration</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QPushButton" name="magCalButton">
+        <property name="text">
+         <string>Mag. Calibration</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QPushButton" name="gyroCalButton">
+        <property name="text">
+         <string>Gyro Calibration</string>
         </property>
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QCheckBox" name="sendExtendedCheckBox">
+       <widget class="QPushButton" name="pressureCalButton">
         <property name="text">
-         <string>Send extended status</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QCheckBox" name="sendRCCheckBox">
-        <property name="text">
-         <string>Send RC-values</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QCheckBox" name="sendControllerCheckBox">
-        <property name="text">
-         <string>Send raw controller outputs</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QCheckBox" name="sendPositionCheckBox">
-        <property name="text">
-         <string>Send position setpoint and estimate</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QCheckBox" name="sendExtra1CheckBox">
-        <property name="text">
-         <string>Send Extra1</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="0">
-       <widget class="QCheckBox" name="sendExtra2CheckBox">
-        <property name="text">
-         <string>Send Extra2</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="QCheckBox" name="sendExtra3CheckBox">
-        <property name="text">
-         <string>Send Extra3</string>
+         <string>Pressure Calibration</string>
         </property>
        </widget>
       </item>
      </layout>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QGroupBox" name="groupBox_3">
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="groupBox">
      <property name="title">
-      <string>Calibration Wizards</string>
+      <string>Activate Extended Output</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout" columnstretch="0,50">
-      <property name="margin">
+     <layout class="QGridLayout" name="gridLayout_2">
+      <property name="leftMargin">
        <number>6</number>
       </property>
-      <item row="1" column="0">
-       <widget class="QPushButton" name="magCalButton">
-        <property name="text">
-         <string>Start Mag. Calibration</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QPushButton" name="gyroCalButton">
-        <property name="text">
-         <string>Start Gyro Calibration</string>
-        </property>
-       </widget>
-      </item>
+      <property name="topMargin">
+       <number>2</number>
+      </property>
+      <property name="rightMargin">
+       <number>6</number>
+      </property>
+      <property name="bottomMargin">
+       <number>2</number>
+      </property>
+      <property name="horizontalSpacing">
+       <number>5</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>2</number>
+      </property>
       <item row="0" column="0">
-       <widget class="QPushButton" name="rcCalButton">
+       <widget class="QCheckBox" name="sendRawCheckBox">
         <property name="text">
-         <string>Start RC Calibration</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QPushButton" name="pressureCalButton">
-        <property name="text">
-         <string>Start Pressure Calibration</string>
+         <string>RAW Sensor Data</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+       <widget class="QCheckBox" name="sendRCCheckBox">
+        <property name="text">
+         <string>RC Values</string>
         </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QCheckBox" name="sendPositionCheckBox">
+        <property name="text">
+         <string>Position setpoint</string>
         </property>
-       </spacer>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QCheckBox" name="sendControllerCheckBox">
+        <property name="text">
+         <string>Raw Controller</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="sendExtra1CheckBox">
+        <property name="text">
+         <string>Send Extra1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="sendExtendedCheckBox">
+        <property name="text">
+         <string>Attitude</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QCheckBox" name="sendExtra2CheckBox">
+        <property name="text">
+         <string>Send Extra2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QCheckBox" name="sendExtra3CheckBox">
+        <property name="text">
+         <string>Send Extra3</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

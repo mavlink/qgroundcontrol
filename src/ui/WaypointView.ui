@@ -160,7 +160,7 @@ QProgressBar::chunk#thrustBar {
        <number>2</number>
       </property>
       <property name="margin">
-       <number>5</number>
+       <number>2</number>
       </property>
       <item>
        <widget class="QCheckBox" name="selectedBox">
@@ -205,7 +205,7 @@ QProgressBar::chunk#thrustBar {
         <property name="sizeHint" stdset="0">
          <size>
           <width>25</width>
-          <height>12</height>
+          <height>0</height>
          </size>
         </property>
        </spacer>
@@ -355,7 +355,7 @@ QProgressBar::chunk#thrustBar {
          <string/>
         </property>
         <property name="icon">
-         <iconset>
+         <iconset resource="../../mavground.qrc">
           <normaloff>:/images/actions/go-up.svg</normaloff>:/images/actions/go-up.svg</iconset>
         </property>
        </widget>
@@ -375,7 +375,7 @@ QProgressBar::chunk#thrustBar {
          <string/>
         </property>
         <property name="icon">
-         <iconset>
+         <iconset resource="../../mavground.qrc">
           <normaloff>:/images/actions/go-down.svg</normaloff>:/images/actions/go-down.svg</iconset>
         </property>
        </widget>
@@ -395,7 +395,7 @@ QProgressBar::chunk#thrustBar {
          <string/>
         </property>
         <property name="icon">
-         <iconset>
+         <iconset resource="../../mavground.qrc">
           <normaloff>:/images/actions/list-remove.svg</normaloff>:/images/actions/list-remove.svg</iconset>
         </property>
        </widget>
@@ -405,6 +405,8 @@ QProgressBar::chunk#thrustBar {
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../mavground.qrc"/>
+ </resources>
  <connections/>
 </ui>
