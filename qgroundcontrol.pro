@@ -230,7 +230,7 @@ SOURCES += src/main.cc \
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
-win32 { 
+win32:exists(C:\OPAL-RT\RT-LAB7.2.4\Common\bin) {
     LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
