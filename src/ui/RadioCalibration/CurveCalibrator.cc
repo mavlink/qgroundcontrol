@@ -82,7 +82,7 @@ void CurveCalibrator::setSetpoint(int setpoint)
     {
         setpoints->replace(setpoint, static_cast<double>(logAverage()));
     }
-
+    curve->setData(*positions, *setpoints);
     plot->replot();
 
     emit setpointChanged(setpoint, static_cast<float>(setpoints->value(setpoint)));
