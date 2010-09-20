@@ -8,7 +8,9 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 
-class SwitchCalibrator : public QWidget
+#include "AbstractCalibrator.h"
+
+class SwitchCalibrator : public AbstractCalibrator
 {
 Q_OBJECT
 public:
@@ -18,17 +20,13 @@ signals:
     void defaultSetpointChanged(float);
     void toggledSetpointChanged(float);
 
-public slots:
-    void channelChanged(float raw);
-protected:
-    QLabel *pulseWidth;
-    QPushButton *defaultButton;
-    QPushButton *toggledButton;
+protected slots:
+    void setDefault();
+    void setToggled();
 
-    float defaultPos;
-    float toggled;
-
-    QVector<float> log;
+protected:   
+    QLabel *defaultPulseWidth;
+    QLabel *toggledPulseWidth;    
 
 };
 

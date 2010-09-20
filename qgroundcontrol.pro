@@ -164,7 +164,8 @@ HEADERS += src/MG.h \
     src/ui/RadioCalibration/RadioCalibrationWindow.h \
     src/ui/RadioCalibration/AirfoilServoCalibrator.h \
     src/ui/RadioCalibration/SwitchCalibrator.h \
-    src/ui/RadioCalibration/CurveCalibrator.h
+    src/ui/RadioCalibration/CurveCalibrator.h \
+    src/ui/RadioCalibration/AbstractCalibrator.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -234,7 +235,8 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/RadioCalibrationWindow.cc \
     src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
-    src/ui/RadioCalibration/CurveCalibrator.cc
+    src/ui/RadioCalibration/CurveCalibrator.cc \
+    src/ui/RadioCalibration/AbstractCalibrator.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library

@@ -10,7 +10,9 @@
 #include <QLabel>
 #include <QPushButton>
 
-class CurveCalibrator : public QWidget
+#include "AbstractCalibrator.h"
+
+class CurveCalibrator : public AbstractCalibrator
 {
 Q_OBJECT
 public:
@@ -18,15 +20,12 @@ public:
 
 signals:
     void setpointChanged(float[5]);
-public slots:
-    void channelChanged(float raw);
 
 protected:
     QVector<double> setpoints;
     QVector<double> positions;
     QwtPlot *plot;
     QwtPlotCurve *curve;
-    QLabel *pulseWidth;
 };
 
 #endif // CURVECALIBRATOR_H
