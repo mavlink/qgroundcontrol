@@ -1,7 +1,7 @@
 #include "CurveCalibrator.h"
 
 CurveCalibrator::CurveCalibrator(QString titleString, QWidget *parent) :
-    QWidget(parent),
+    AbstractCalibrator(parent),
     setpoints(QVector<double>(5)),
     positions(QVector<double>())
 
@@ -38,9 +38,4 @@ CurveCalibrator::CurveCalibrator(QString titleString, QWidget *parent) :
 
 
     this->setLayout(grid);
-}
-
-void CurveCalibrator::channelChanged(float raw)
-{
-    pulseWidth->setText(QString::number(static_cast<double>(raw)));
 }

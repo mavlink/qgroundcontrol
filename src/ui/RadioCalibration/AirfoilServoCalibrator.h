@@ -8,7 +8,9 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 
-class AirfoilServoCalibrator : public QWidget
+#include "AbstractCalibrator.h"
+
+class AirfoilServoCalibrator : public AbstractCalibrator
 {
 Q_OBJECT
 public:
@@ -21,26 +23,24 @@ public:
 
     explicit AirfoilServoCalibrator(AirfoilType type = AILERON, QWidget *parent = 0);
 
-
-
 signals:
     void highSetpointChanged(float);
     void centerSetpointChanged(float);
     void lowSetpointChanged(float);
 
-public slots:
-    void channelChanged(float raw);
-protected:
-    QLabel *pulseWidth;
-    QPushButton *highButton;
-    QPushButton *centerButton;
-    QPushButton *lowButton;
+protected slots:
+    void setHigh();
+    void setCenter();
+    void setLow();
+
+protected:    
+    QLabel *highPulseWidth;
+    QLabel *centerPulseWidth;
+    QLabel *lowPulseWidth;
 
     float high;
     float center;
     float low;
-
-    QVector<float> log;
 };
 
 #endif // AIRFOILSERVOCALIBRATOR_H
