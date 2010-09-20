@@ -17,7 +17,7 @@ float AbstractCalibrator::logAverage()
     float total = 0;
     for (int i=0; i<log->size(); ++i)
         total += log->value(i);
-    return (total/log->size());
+    return floor(total/log->size());
 }
 
 float AbstractCalibrator::logExtrema()

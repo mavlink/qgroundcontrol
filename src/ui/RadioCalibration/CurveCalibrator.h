@@ -9,6 +9,11 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QPen>
+#include <QColor>
+#include <QString>
+#include <QSignalMapper>
+#include <QDebug>
 
 #include "AbstractCalibrator.h"
 
@@ -17,15 +22,20 @@ class CurveCalibrator : public AbstractCalibrator
 Q_OBJECT
 public:
     explicit CurveCalibrator(QString title = QString(), QWidget *parent = 0);
-
+    ~CurveCalibrator();
 signals:
-    void setpointChanged(float[5]);
+    void setpointChanged(int setpoint, float raw);    
+
+protected slots:
+    void setSetpoint(int setpoint);
 
 protected:
-    QVector<double> setpoints;
-    QVector<double> positions;
+    QVector<double> *setpoints;
+    QVector<double> *positions;
     QwtPlot *plot;
     QwtPlotCurve *curve;
+
+    QSignalMapper *signalMapper;
 };
 
 #endif // CURVECALIBRATOR_H

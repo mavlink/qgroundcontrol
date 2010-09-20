@@ -5,6 +5,8 @@
 #include <QString>
 #include <QLabel>
 
+#include <math.h>
+
 class AbstractCalibrator : public QWidget
 {
 Q_OBJECT
