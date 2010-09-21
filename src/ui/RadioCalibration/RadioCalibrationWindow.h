@@ -16,6 +16,7 @@
 
 #include "UASManager.h"
 #include "UASInterface.h"
+#include "UAS.h"
 #include "mavlink.h"
 
 class RadioCalibrationWindow : public QWidget
@@ -75,7 +76,7 @@ protected:
 
         protected:
             QVector<QVector<float> > *data;
-            int uasID;
+            int uasId;
 
             void init(const QVector<float>& aileron,
                       const QVector<float>& elevator,

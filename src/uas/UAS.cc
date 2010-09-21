@@ -1156,7 +1156,7 @@ void UAS::receiveButton(int buttonIndex)
 
         break;
     }
-    qDebug() << __FILE__ << __LINE__ << ": Received button clicked signal (button # is: " << buttonIndex << "), UNIMPLEMENTED IN MAVLINK!";
+//    qDebug() << __FILE__ << __LINE__ << ": Received button clicked signal (button # is: " << buttonIndex << "), UNIMPLEMENTED IN MAVLINK!";
 
 }
 

@@ -1,7 +1,8 @@
 #include "RadioCalibrationWindow.h"
 
 RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
-        QWidget(parent, Qt::Window)
+        QWidget(parent, Qt::Window),
+        radio(new RadioCalibrationData())
 {
     QGridLayout *grid = new QGridLayout();
 
@@ -26,7 +27,23 @@ RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
 
     /* Buttons for loading/transmitting calibration data */
     QHBoxLayout *hbox = new QHBoxLayout();
+    QPushButton *load = new QPushButton(tr("Load File"));
+    QPushButton *save = new QPushButton(tr("Save File"));
+    QPushButton *transmit = new QPushButton(tr("Transmit to UAV"));
+    QPushButton *get = new QPushButton(tr("Get from UAV"));
+    hbox->addWidget(load);
+    hbox->addWidget(save);
+    hbox->addWidget(transmit);
+    hbox->addWidget(get);
+    grid->addLayout(hbox, 2, 0, 1, 4);
     this->setLayout(grid);
+
+    connect(load, SIGNAL(clicked()), this, SLOT(loadFile()));
+    connect(save, SIGNAL(clicked()), this, SLOT(saveFile()));
+    connect(transmit, SIGNAL(clicked()), this, SLOT(send()));
+    connect(get, SIGNAL(clicked()), this, SLOT(receive()));
+
+    setUASId(0);
 }
 
 void RadioCalibrationWindow::setChannel(int ch, float raw, float normalized)
@@ -96,18 +113,19 @@ RadioCalibrationWindow::RadioCalibrationData::RadioCalibrationData(RadioCalibrat
 
 void RadioCalibrationWindow::RadioCalibrationData::saveFile()
 {
-
+    qDebug() << __FILE__ << __LINE__ << "SAVE TO FILE";
 }
 
 void RadioCalibrationWindow::RadioCalibrationData::loadFile()
 {
-
+    qDebug() << __FILE__ << __LINE__ << "LOAD FROM FILE";
 }
 
 void RadioCalibrationWindow::RadioCalibrationData::send()
 {    
-#ifdef MAVLINK_ENABLE_UALBERTA_MESSAGES
-    UAS *uas = dynamic_cast<UAS>(UASManager::instance()->getUASForId(uasId));
+    qDebug() << __FILE__ << __LINE__ << "uasId = " << uasId;
+#ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
+    UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(uasId));
     if (uas)
     {
         qDebug()<< "we have a uas";
@@ -119,7 +137,7 @@ void RadioCalibrationWindow::RadioCalibrationData::send()
                                            (*data)[GYRO].constData(),
                                            (*data)[PITCH].constData(),
                                            (*data)[THROTTLE].constData());
-        uas.sendMessage(msg);
+        uas->sendMessage(msg);
 
     }
 #endif
@@ -127,10 +145,10 @@ void RadioCalibrationWindow::RadioCalibrationData::send()
 
 void RadioCalibrationWindow::RadioCalibrationData::receive()
 {
-
+    qDebug() << __FILE__ << __LINE__ << "READ FROM UAV";
 }
 
 void RadioCalibrationWindow::RadioCalibrationData::setUASId(int id)
 {
-    this->uasID = id;
+    this->uasId = id;
 }
