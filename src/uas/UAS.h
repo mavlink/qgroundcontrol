@@ -79,6 +79,15 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
+    double getLocalX() const { return localX; };
+    double getLocalY() const { return localY; };
+    double getLocalZ() const { return localZ; };
+
+    double getRoll() const { return roll; };
+    double getPitch() const { return pitch; };
+    double getYaw() const { return yaw; };
+
+
 friend class UASWaypointManager;
 protected:
     int uasId;                    ///< Unique system ID
@@ -127,6 +136,12 @@ protected:
     float sendDropRate;         ///< Percentage of packets that were not received from the MAV by the GCS
     bool lowBattAlarm;          ///< Switch if battery is low
     bool positionLock;          ///< Status if position information is available or not
+    double localX;
+    double localY;
+    double localZ;
+    double roll;
+    double pitch;
+    double yaw;
     QTimer* statusTimeout;      ///< Timer for various status timeouts
 
     /** @brief Set the current battery type */

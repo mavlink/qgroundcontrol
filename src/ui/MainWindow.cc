@@ -45,6 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
+#include "QMap3DWidget.h"
 
 // FIXME Move
 #include "PxQuadMAV.h"
@@ -131,7 +132,7 @@ void MainWindow::buildWidgets()
     mapWidget         = new MapWidget(this);
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
-    map3DWidget       = new QWidget(this); // FIXME Lionel, insert visualizer here
+    map3DWidget       = new QMap3DWidget(this);
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -216,6 +217,7 @@ void MainWindow::arrangeCenterStack()
     if (linechartWidget) centerStack->addWidget(linechartWidget);
     if (protocolWidget) centerStack->addWidget(protocolWidget);
     if (mapWidget) centerStack->addWidget(mapWidget);
+    if (map3DWidget) centerStack->addWidget(map3DWidget);
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 
