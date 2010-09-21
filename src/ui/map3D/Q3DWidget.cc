@@ -241,8 +241,21 @@ Q3DWidget::set2DRotation(bool onoff)
 	allow2DRotation = onoff;
 }
 
+void
+Q3DWidget::setDisplayMode2D(void)
+{
+        glDisable(GL_DEPTH_TEST);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(0.0, static_cast<GLfloat>(getWindowWidth()),
+                0.0, static_cast<GLfloat>(getWindowHeight()),
+                -10.0, 10.0);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+}
+
 std::pair<float,float>
-Q3DWidget::pickPoint(int32_t mouseX, int32_t mouseY)
+Q3DWidget::getPositionIn3DMode(int32_t mouseX, int32_t mouseY)
 {
 	float cx = windowWidth / 2.0f;
 	float cy = windowHeight / 2.0f;
@@ -264,10 +277,10 @@ Q3DWidget::pickPoint(int32_t mouseX, int32_t mouseY)
 }
 
 std::pair<float,float>
-Q3DWidget::get2DPosition(int32_t x, int32_t y)
+Q3DWidget::getPositionIn2DMode(int32_t mouseX, int32_t mouseY)
 {
-	float dx = (x - windowWidth / 2.0f) / cameraPose.zoom;
-	float dy = (windowHeight / 2.0f - y) / cameraPose.zoom;
+        float dx = (mouseX - windowWidth / 2.0f) / cameraPose.zoom;
+        float dy = (windowHeight / 2.0f - mouseY) / cameraPose.zoom;
 	float ctheta = cosf(-cameraPose.rotation2D);
 	float stheta = sinf(-cameraPose.rotation2D);
 
@@ -404,7 +417,7 @@ void Q3DWidget::switchTo3DMode(void)
 	float cameraX = cameraPose.distance * cosf(cpan) * cosf(ctilt);
 	float cameraY = cameraPose.distance * sinf(cpan) * cosf(ctilt);
 	float cameraZ = cameraPose.distance * sinf(ctilt);
-	setDisplayMode3D(windowWidth, windowHeight);
+        setDisplayMode3D();
 	glViewport(0, 0, static_cast<GLsizei>(windowWidth),
 			   static_cast<GLsizei>(windowHeight));
 	gluLookAt(cameraX + cameraPose.xOffset, cameraY + cameraPose.yOffset,
@@ -413,21 +426,10 @@ void Q3DWidget::switchTo3DMode(void)
 }
 
 void
-Q3DWidget::setDisplayMode2D(int32_t width, int32_t height)
+Q3DWidget::setDisplayMode3D()
 {
-	glDisable(GL_DEPTH_TEST);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, static_cast<GLfloat>(width), 0.0, static_cast<GLfloat>(height),
-			-10.0, 10.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
-
-void
-Q3DWidget::setDisplayMode3D(int32_t width, int32_t height)
-{
-	float aspect = static_cast<float>(width) / static_cast<float>(height);
+        float aspect = static_cast<float>(getWindowWidth()) /
+                       static_cast<float>(getWindowHeight());
 
 	glEnable(GL_DEPTH_TEST);
 	glMatrixMode(GL_PROJECTION);
@@ -480,7 +482,7 @@ Q3DWidget::paintGL(void)
 	}
 	else
 	{
-		setDisplayMode2D(windowWidth, windowHeight);
+                setDisplayMode2D();
 		// do camera control
 		glTranslatef(static_cast<float>(windowWidth) / 2.0f,
 					 static_cast<float>(windowHeight) / 2.0f,
@@ -517,11 +519,11 @@ Q3DWidget::resizeGL(int32_t width, int32_t height)
 
 	if (_is3D)
 	{
-		setDisplayMode3D(width, height);
+                setDisplayMode3D();
 	}
 	else
 	{
-		setDisplayMode2D(width, height);
+                setDisplayMode2D();
 	}
 }
 

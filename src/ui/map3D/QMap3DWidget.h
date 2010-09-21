@@ -2,8 +2,9 @@
 #define QMAP3DWIDGET_H
 
 #include "Q3DWidget.h"
-#include "CheetahModel.h"
 
+class CheetahModel;
+class FTTextureFont;
 class UASInterface;
 
 class QMap3DWidget : public Q3DWidget
@@ -13,6 +14,8 @@ class QMap3DWidget : public Q3DWidget
 public:
     explicit QMap3DWidget(QWidget* parent);
     ~QMap3DWidget();
+
+    void init(void);
 
     static void display(void* clientData);
     void displayHandler(void);
@@ -32,6 +35,7 @@ private:
     double lastRedrawTime;
 
     boost::scoped_ptr<CheetahModel> cheetahModel;
+    boost::scoped_ptr<FTTextureFont> font;
 };
 
 #endif // QMAP3DWIDGET_H
