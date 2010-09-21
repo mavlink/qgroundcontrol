@@ -1,15 +1,17 @@
 #include "QMap3DWidget.h"
-#include <QPushButton>
 
+#include <FTGL/ftgl.h>
+#include <QPushButton>
 #include <sys/time.h>
 
+#include "CheetahModel.h"
 #include "UASManager.h"
 #include "UASInterface.h"
 
 QMap3DWidget::QMap3DWidget(QWidget* parent)
-     : Q3DWidget(parent),
-     uas(NULL),
-     lastRedrawTime(0.0)
+     : Q3DWidget(parent)
+     , uas(NULL)
+     , lastRedrawTime(0.0)
 {
     setFocusPolicy(Qt::StrongFocus);
 
@@ -35,11 +37,19 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
     layout->setColumnStretch(1, 50);
     setLayout(layout);
 
+    font.reset(new FTTextureFont("images/Vera.ttf"));
+
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
 }
 
 QMap3DWidget::~QMap3DWidget()
+{
+
+}
+
+void
+QMap3DWidget::init(void)
 {
 
 }
@@ -91,6 +101,38 @@ QMap3DWidget::displayHandler(void)
 
     cheetahModel->draw();
 
+    glPopMatrix();
+
+    setDisplayMode2D();
+
+    // display pose information
+    glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+    glBegin(GL_POLYGON);
+    glVertex2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 20.0f);
+    glVertex2f(getWindowWidth(), 20.0f);
+    glVertex2f(getWindowWidth(), 0.0f);
+    glEnd();
+
+    char buffer[6][255];
+
+    sprintf(buffer[0], "x = %.2f", uas->getLocalX());
+    sprintf(buffer[1], "y = %.2f", uas->getLocalY());
+    sprintf(buffer[2], "z = %.2f", uas->getLocalZ());
+    sprintf(buffer[3], "r = %.2f", uas->getRoll());
+    sprintf(buffer[4], "p = %.2f", uas->getPitch());
+    sprintf(buffer[5], "y = %.2f", uas->getYaw());
+
+    font->FaceSize(10);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glPushMatrix();
+
+    glTranslatef(0.0f, 5.0f, 0.0f);
+    for (int32_t i = 0; i < 6; ++i)
+    {
+        glTranslatef(60.0f, 0.0f, 0.0f);
+        font->Render(buffer[i]);
+    }
     glPopMatrix();
 }
 

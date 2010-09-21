@@ -98,9 +98,13 @@ public:
 
 	void set2DRotation(bool onoff);
 
-	std::pair<float,float> pickPoint(int32_t mouseX, int32_t mouseY);
+        void setDisplayMode2D(void);
 
-	std::pair<float,float> get2DPosition(int32_t x, int32_t y);
+        std::pair<float,float> getPositionIn3DMode(int32_t mouseX,
+                                                   int32_t mouseY);
+
+        std::pair<float,float> getPositionIn2DMode(int32_t mouseX,
+                                                   int32_t mouseY);
 
 	int32_t getWindowWidth(void);
 	int32_t getWindowHeight(void);
@@ -121,8 +125,7 @@ private:
 	void moveCamera2D(float dx, float dy);
 
 	void switchTo3DMode(void);
-	void setDisplayMode2D(int32_t width, int32_t height);
-	void setDisplayMode3D(int32_t width, int32_t height);
+        void setDisplayMode3D(void);
 
 	float r2d(float angle);
 	float d2r(float angle);
