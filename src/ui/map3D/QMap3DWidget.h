@@ -34,8 +34,8 @@ protected:
 private:
     double lastRedrawTime;
 
-    boost::scoped_ptr<CheetahModel> cheetahModel;
-    boost::scoped_ptr<FTTextureFont> font;
+    QScopedPointer<CheetahModel> cheetahModel;
+    QScopedPointer<FTTextureFont> font;
 };
 
 #endif // QMAP3DWIDGET_H

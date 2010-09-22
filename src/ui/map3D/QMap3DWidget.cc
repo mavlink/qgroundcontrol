@@ -64,7 +64,7 @@ QMap3DWidget::display(void* clientData)
 void
 QMap3DWidget::displayHandler(void)
 {
-    if (cheetahModel.get() == 0)
+    if (cheetahModel.data() == 0)
     {
         cheetahModel.reset(new CheetahModel);
         cheetahModel->init(1.0f, 1.0f, 1.0f);

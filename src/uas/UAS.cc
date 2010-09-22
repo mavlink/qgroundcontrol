@@ -1132,8 +1132,8 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     manualYawAngle = yaw * yawScaling;
     manualThrust = thrust * thrustScaling;
 
-    if(mode == (int)MAV_MODE_MANUAL)
-    {
+//    if(mode == (int)MAV_MODE_MANUAL)
+//    {
       #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
@@ -1142,7 +1142,7 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
 
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, MG::TIME::getGroundTimeNow());
       #endif
-    }
+//    }
 }
 
 int UAS::getSystemType()
