@@ -43,6 +43,7 @@ RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
     connect(transmit, SIGNAL(clicked()), this, SLOT(send()));
     connect(get, SIGNAL(clicked()), this, SLOT(request()));
 
+    connect(aileron, SIGNAL(setpointChanged(int,float)), radio, SLOT(setAileron(int,float)));
 
     setUASId(0);
 }
@@ -94,7 +95,6 @@ void RadioCalibrationWindow::send()
     UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(uasId));
     if (uas)
     {
-        qDebug()<< "we have a uas";
         mavlink_message_t msg;
         mavlink_msg_radio_calibration_pack(uasId, 0, &msg,
                                            (*radio)[RadioCalibrationData::AILERON],

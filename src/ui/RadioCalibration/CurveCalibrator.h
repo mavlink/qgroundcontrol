@@ -25,8 +25,8 @@ public:
     ~CurveCalibrator();
 
     void set(const QVector<float> &data);
-signals:
-    void setpointChanged(int setpoint, float raw);    
+//signals:
+//    void setpointChanged(int setpoint, float raw);
 
 protected slots:
     void setSetpoint(int setpoint);

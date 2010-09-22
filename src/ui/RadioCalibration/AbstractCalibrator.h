@@ -16,6 +16,8 @@ public:
     ~AbstractCalibrator();
 
     virtual void set(const QVector<float>& data)=0;
+signals:
+    void setpointChanged(int index, float value);
 
 public slots:
     void channelChanged(float raw);

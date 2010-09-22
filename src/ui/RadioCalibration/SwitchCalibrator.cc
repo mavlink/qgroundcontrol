@@ -39,13 +39,13 @@ SwitchCalibrator::SwitchCalibrator(QString titleString, QWidget *parent) :
 void SwitchCalibrator::setDefault()
 {
     defaultPulseWidth->setText(QString::number(static_cast<double>(logExtrema())));
-    emit defaultSetpointChanged(logExtrema());
+    emit setpointChanged(0, logExtrema());
 }
 
 void SwitchCalibrator::setToggled()
 {
     toggledPulseWidth->setText(QString::number(static_cast<double>(logExtrema())));
-    emit toggledSetpointChanged(logExtrema());
+    emit setpointChanged(1, logExtrema());
 }
 
 void SwitchCalibrator::set(const QVector<float> &data)
