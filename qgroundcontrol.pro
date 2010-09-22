@@ -18,9 +18,10 @@ TARGET = qgroundcontrol
 BASEDIR = .
 BUILDDIR = build
 LANGUAGE = C++
-CONFIG += debug_and_release \
-    #console
-OBJECTS_DIR = $$BUILDDIR/obj
+CONFIG += debug_and_release \ # console
+    OBJECTS_DIR \
+    = \
+    $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
 
@@ -161,6 +162,7 @@ HEADERS += src/MG.h \
     src/ui/QGCRemoteControlView.h \
     src/WaypointGlobal.h \
     src/ui/WaypointGlobalView.h \
+    src/ui/RadioCalibration/RadioCalibrationData.h \
     src/ui/RadioCalibration/RadioCalibrationWindow.h \
     src/ui/RadioCalibration/AirfoilServoCalibrator.h \
     src/ui/RadioCalibration/SwitchCalibrator.h \
@@ -236,7 +238,8 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
-    src/ui/RadioCalibration/AbstractCalibrator.cc
+    src/ui/RadioCalibration/AbstractCalibrator.cc \
+    src/ui/RadioCalibration/RadioCalibrationData.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library

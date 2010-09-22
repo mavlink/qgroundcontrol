@@ -47,3 +47,12 @@ void SwitchCalibrator::setToggled()
     toggledPulseWidth->setText(QString::number(static_cast<double>(logExtrema())));
     emit toggledSetpointChanged(logExtrema());
 }
+
+void SwitchCalibrator::set(const QVector<float> &data)
+{
+    if (data.size() == 2)
+    {
+        defaultPulseWidth->setText(QString::number(data[0]));
+        toggledPulseWidth->setText(QString::number(data[1]));
+    }
+}

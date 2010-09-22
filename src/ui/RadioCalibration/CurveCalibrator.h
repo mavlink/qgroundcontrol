@@ -23,6 +23,8 @@ Q_OBJECT
 public:
     explicit CurveCalibrator(QString title = QString(), QWidget *parent = 0);
     ~CurveCalibrator();
+
+    void set(const QVector<float> &data);
 signals:
     void setpointChanged(int setpoint, float raw);    
 

@@ -87,3 +87,17 @@ void CurveCalibrator::setSetpoint(int setpoint)
 
     emit setpointChanged(setpoint, static_cast<float>(setpoints->value(setpoint)));
 }
+
+void CurveCalibrator::set(const QVector<float> &data)
+{
+    if (data.size() == 5)
+    {
+        delete setpoints;
+        QVector<double> dataDouble;
+        for (int i=0; i<data.size(); ++i)
+            dataDouble << static_cast<double>(data[i]);
+        setpoints = new QVector<double>(dataDouble);
+        curve->setData(*positions, *setpoints);
+        plot->replot();
+    }
+}

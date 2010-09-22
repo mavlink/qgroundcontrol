@@ -142,6 +142,16 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         	this->sendRCValues = static_cast<bool>(rc.enabled);
         }
         break;
+#ifdef MAVLINK_ENABLE_UALBERTA_MESSAGES
+        case MAVLINK_MSG_ID_RADIO_CALIBRATION:
+        {
+            mavlink_radio_calibration_t radio;
+            mavlink_msg_radio_calibration_decode(&msg, &radio);
+            qDebug() << "RADIO CALIBRATION RECEIVED";
+            qDebug() << "AILERON: " << radio.aileron[0] << " " << radio.aileron[1] << " " << radio.aileron[2];
+        }
+        break;
+#endif
         default:
             {
                 qDebug() << "OpalLink::writeBytes(): Unknown mavlink packet";

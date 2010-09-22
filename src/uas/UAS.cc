@@ -552,6 +552,41 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "b_w[2]", bias.gyro_2, time);
             }
             break;
+       case MAVLINK_MSG_ID_RADIO_CALIBRATION:
+            {
+                mavlink_radio_calibration_t radioMsg;
+                mavlink_msg_radio_calibration_decode(&message, &radioMsg);
+                QVector<float> aileron;
+                QVector<float> elevator;
+                QVector<float> rudder;
+                QVector<float> gyro;
+                QVector<float> pitch;
+                QVector<float> throttle;
+
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_AILERON_LEN; ++i)
+                    aileron << radioMsg.aileron[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_ELEVATOR_LEN; ++i)
+                    elevator << radioMsg.elevator[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_RUDDER_LEN; ++i)
+                    rudder << radioMsg.rudder[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_GYRO_LEN; ++i)
+                    gyro << radioMsg.gyro[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_PITCH_LEN; ++i)
+                    pitch << radioMsg.pitch[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_THROTTLE_LEN; ++i)
+                    throttle << radioMsg.throttle[i];
+
+                QPointer<RadioCalibrationData> radioData = new RadioCalibrationData(aileron,
+                                                                                    elevator,
+                                                                                    rudder,
+                                                                                    gyro,
+                                                                                    pitch,
+                                                                                    throttle);
+                emit radioCalibrationReceived(radioData);
+                delete radioData;
+            }
+            break;
+
 #endif
         default:
             {
