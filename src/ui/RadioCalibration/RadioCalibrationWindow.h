@@ -50,6 +50,7 @@ protected:
         CurveCalibrator *throttle;
         int uasId;
         QPointer<RadioCalibrationData> radio;
+        QSignalMapper mapper;
 };
 
 #endif // RADIOCALIBRATIONWINDOW_H

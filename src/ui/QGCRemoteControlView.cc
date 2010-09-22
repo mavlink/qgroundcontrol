@@ -110,7 +110,7 @@ void QGCRemoteControlView::setUASId(int id)
         // New UAS exists, connect
         nameLabel->setText(QString("RC Input of %1").arg(newUAS->getUASName()));
         calibrationWindow->setUASId(id);
-        connect(newUAS, SIGNAL(radioCalibrationReceived(const QPointer<RadioCalibrationData>)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
+        connect(newUAS, SIGNAL(radioCalibrationReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
         connect(newUAS, SIGNAL(remoteControlChannelChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
         connect(newUAS, SIGNAL(remoteControlChannelChanged(int,float,float)), calibrationWindow, SLOT(setChannel(int,float,float)));
         connect(newUAS, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));

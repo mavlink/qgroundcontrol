@@ -17,9 +17,9 @@ public:
     explicit SwitchCalibrator(QString title=QString(), QWidget *parent = 0);
 
     void set(const QVector<float> &data);
-signals:
-    void defaultSetpointChanged(float);
-    void toggledSetpointChanged(float);
+//signals:
+//    void defaultSetpointChanged(float);
+//    void toggledSetpointChanged(float);
 
 protected slots:
     void setDefault();

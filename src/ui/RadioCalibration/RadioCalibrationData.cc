@@ -2,7 +2,13 @@
 
 RadioCalibrationData::RadioCalibrationData()
 {
-    data = new QVector<QVector<float> >();
+    data = new QVector<QVector<float> >(6);
+    (*data).insert(AILERON, QVector<float>(3));
+    (*data).insert(ELEVATOR, QVector<float>(3));
+    (*data).insert(RUDDER, QVector<float>(3));
+    (*data).insert(GYRO, QVector<float>(2));
+    (*data).insert(PITCH, QVector<float>(5));
+    (*data).insert(THROTTLE, QVector<float>(5));
 }
 
 RadioCalibrationData::RadioCalibrationData(const QVector<float> &aileron,
@@ -45,5 +51,5 @@ const QVector<float>& RadioCalibrationData::operator ()(int i) const
     }
 
     // This is not good.  If it is ever used after being returned it will cause a crash
-    return QVector<float>();
+//    return QVector<float>();
 }
