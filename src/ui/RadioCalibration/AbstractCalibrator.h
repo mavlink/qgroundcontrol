@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QString>
 #include <QLabel>
+#include <QVector>
 
 #include <math.h>
 
@@ -13,6 +14,8 @@ Q_OBJECT
 public:
     explicit AbstractCalibrator(QWidget *parent = 0);
     ~AbstractCalibrator();
+
+    virtual void set(const QVector<float>& data)=0;
 
 public slots:
     void channelChanged(float raw);

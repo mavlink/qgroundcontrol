@@ -36,10 +36,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QAction>
 #include <QColor>
+#include <QPointer>
 
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
 #include "UASWaypointManager.h"
+#include "RadioCalibration/RadioCalibrationData.h"
 
 /**
  * @brief Interface for all robots.
@@ -339,6 +341,8 @@ signals:
     void remoteControlChannelChanged(int channelId, float raw, float normalized);
     /** @brief Remote control RSSI changed */
     void remoteControlRSSIChanged(float rssi);
+    /** @brief Radio Calibration Data has been received from the MAV*/
+    void radioCalibrationReceived(const QPointer<RadioCalibrationData>&);
 
     /**
      * @brief Localization quality changed

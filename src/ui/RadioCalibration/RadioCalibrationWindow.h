@@ -9,15 +9,18 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QDebug>
+#include <QPointer>
 
 #include "AirfoilServoCalibrator.h"
 #include "SwitchCalibrator.h"
 #include "CurveCalibrator.h"
 
-#include "UASManager.h"
-#include "UASInterface.h"
-#include "UAS.h"
 #include "mavlink.h"
+#include "mavlink_types.h"
+#include "UAS.h"
+#include "UASManager.h"
+#include "RadioCalibrationData.h"
+
 
 class RadioCalibrationWindow : public QWidget
 {
@@ -30,11 +33,12 @@ signals:
 
 public slots:
     void setChannel(int ch, float raw, float normalized);
-    void loadFile() {this->radio->loadFile();}
-    void saveFile() {this->radio->saveFile();}
-    void send() {this->radio->send();}
-    void receive() {this->radio->receive();}
-    void setUASId(int id) {this->radio->setUASId(id);}
+    void loadFile();
+    void saveFile();
+    void send();
+    void request();
+    void receive(const QPointer<RadioCalibrationData>& radio);
+    void setUASId(int id) {this->uasId = id;}
 
 
 protected:
@@ -44,54 +48,8 @@ protected:
         SwitchCalibrator *gyro;        
         CurveCalibrator *pitch;
         CurveCalibrator *throttle;
-
-        class RadioCalibrationData
-        {
-        public:
-            explicit RadioCalibrationData(RadioCalibrationWindow *parent=0);
-            RadioCalibrationData(RadioCalibrationData&);            
-            RadioCalibrationData(const QVector<float>& aileron,
-                                 const QVector<float>& elevator,
-                                 const QVector<float>& rudder,
-                                 const QVector<float>& gyro,
-                                 const QVector<float>& pitch,
-                                 const QVector<float>& throttle,
-                                 RadioCalibrationWindow *parent=0);
-
-            enum RadioElement
-            {
-                AILERON=0,
-                ELEVATOR,
-                RUDDER,
-                GYRO,
-                PITCH,
-                THROTTLE
-            };
-
-            void loadFile();
-            void saveFile();
-            void send();
-            void receive();
-            void setUASId(int id);
-
-        protected:
-            QVector<QVector<float> > *data;
-            int uasId;
-
-            void init(const QVector<float>& aileron,
-                      const QVector<float>& elevator,
-                      const QVector<float>& rudder,
-                      const QVector<float>& gyro,
-                      const QVector<float>& pitch,
-                      const QVector<float>& throttle);
-
-        private:
-            RadioCalibrationWindow *parent;
-
-
-        };
-
-        RadioCalibrationData *radio;
+        int uasId;
+        QPointer<RadioCalibrationData> radio;
 };
 
 #endif // RADIOCALIBRATIONWINDOW_H

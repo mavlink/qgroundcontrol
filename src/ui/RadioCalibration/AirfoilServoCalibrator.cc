@@ -105,3 +105,13 @@ void AirfoilServoCalibrator::setLow()
     lowPulseWidth->setText(QString::number(static_cast<double>(logExtrema())));
     emit lowSetpointChanged(logExtrema());
 }
+
+void AirfoilServoCalibrator::set(const QVector<float> &data)
+{
+    if (data.size() == 3)
+    {
+        lowPulseWidth->setText(QString::number(data[0]));
+        centerPulseWidth->setText(QString::number(data[1]));
+        highPulseWidth->setText(QString::number(data[2]));
+    }
+}

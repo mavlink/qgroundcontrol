@@ -41,7 +41,8 @@ RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
     connect(load, SIGNAL(clicked()), this, SLOT(loadFile()));
     connect(save, SIGNAL(clicked()), this, SLOT(saveFile()));
     connect(transmit, SIGNAL(clicked()), this, SLOT(send()));
-    connect(get, SIGNAL(clicked()), this, SLOT(receive()));
+    connect(get, SIGNAL(clicked()), this, SLOT(request()));
+
 
     setUASId(0);
 }
@@ -76,53 +77,18 @@ void RadioCalibrationWindow::setChannel(int ch, float raw, float normalized)
     }
 }
 
-
-/*
-  ** RadioCalibrationData Function Definitions **
-*/
-
-RadioCalibrationWindow::RadioCalibrationData::RadioCalibrationData(RadioCalibrationWindow *parent)
-    :parent(parent)
-{
-    data = new QVector<QVector<float> >();
-}
-
-RadioCalibrationWindow::RadioCalibrationData::RadioCalibrationData(const QVector<float> &aileron,
-                                                                   const QVector<float> &elevator,
-                                                                   const QVector<float> &rudder,
-                                                                   const QVector<float> &gyro,
-                                                                   const QVector<float> &pitch,
-                                                                   const QVector<float> &throttle,
-                                                                   RadioCalibrationWindow *parent)
-                                                                       :parent(parent)
-{
-    data = new QVector<QVector<float> >();
-    (*data) << aileron
-            << elevator
-            << rudder
-            << gyro
-            << pitch
-            << throttle;
-}
-
-RadioCalibrationWindow::RadioCalibrationData::RadioCalibrationData(RadioCalibrationData &other)
-    :parent(other.parent)
-{
-    data = new QVector<QVector<float> >(*other.data);
-}
-
-void RadioCalibrationWindow::RadioCalibrationData::saveFile()
+void RadioCalibrationWindow::saveFile()
 {
     qDebug() << __FILE__ << __LINE__ << "SAVE TO FILE";
 }
 
-void RadioCalibrationWindow::RadioCalibrationData::loadFile()
+void RadioCalibrationWindow::loadFile()
 {
     qDebug() << __FILE__ << __LINE__ << "LOAD FROM FILE";
 }
 
-void RadioCalibrationWindow::RadioCalibrationData::send()
-{    
+void RadioCalibrationWindow::send()
+{
     qDebug() << __FILE__ << __LINE__ << "uasId = " << uasId;
 #ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
     UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(uasId));
@@ -131,24 +97,42 @@ void RadioCalibrationWindow::RadioCalibrationData::send()
         qDebug()<< "we have a uas";
         mavlink_message_t msg;
         mavlink_msg_radio_calibration_pack(uasId, 0, &msg,
-                                           (*data)[AILERON].constData(),
-                                           (*data)[ELEVATOR].constData(),
-                                           (*data)[RUDDER].constData(),
-                                           (*data)[GYRO].constData(),
-                                           (*data)[PITCH].constData(),
-                                           (*data)[THROTTLE].constData());
+                                           (*radio)[RadioCalibrationData::AILERON],
+                                           (*radio)[RadioCalibrationData::ELEVATOR],
+                                           (*radio)[RadioCalibrationData::RUDDER],
+                                           (*radio)[RadioCalibrationData::GYRO],
+                                           (*radio)[RadioCalibrationData::PITCH],
+                                           (*radio)[RadioCalibrationData::THROTTLE]);
         uas->sendMessage(msg);
-
     }
 #endif
 }
 
-void RadioCalibrationWindow::RadioCalibrationData::receive()
+void RadioCalibrationWindow::request()
 {
     qDebug() << __FILE__ << __LINE__ << "READ FROM UAV";
+    UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(uasId));
+    if (uas)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_action_pack(uasId, 0, &msg, 0, 0, ::MAV_ACTION_CALIBRATE_RC);
+        uas->sendMessage(msg);
+    }
 }
 
-void RadioCalibrationWindow::RadioCalibrationData::setUASId(int id)
+void RadioCalibrationWindow::receive(const QPointer<RadioCalibrationData>& radio)
 {
-    this->uasId = id;
+    if (radio)
+    {
+        if (this->radio)
+            delete this->radio;
+        this->radio = new RadioCalibrationData(*radio);
+
+        aileron->set((*radio)(RadioCalibrationData::AILERON));
+        elevator->set((*radio)(RadioCalibrationData::ELEVATOR));
+        rudder->set((*radio)(RadioCalibrationData::RUDDER));
+        gyro->set((*radio)(RadioCalibrationData::GYRO));
+        pitch->set((*radio)(RadioCalibrationData::PITCH));
+        throttle->set((*radio)(RadioCalibrationData::THROTTLE));
+    }        
 }
