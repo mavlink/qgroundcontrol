@@ -1,7 +1,7 @@
 #include "QMap3DWidget.h"
 
 #include <FTGL/ftgl.h>
-#include <QPushButton>
+#include <QCheckBox>
 #include <sys/time.h>
 
 #include "CheetahModel.h"
@@ -12,30 +12,19 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
      : Q3DWidget(parent)
      , uas(NULL)
      , lastRedrawTime(0.0)
+     , displayGrid(false)
+     , displayTrail(false)
+     , lockCamera(false)
 {
     setFocusPolicy(Qt::StrongFocus);
 
     initialize(10, 10, 1000, 900, 10.0f);
-    setCameraParams(0.05f, 0.5f, 0.001f, 0.5f, 30.0f, 0.01f, 400.0f);
+    setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 400.0f);
 
     setDisplayFunc(display, this);
     addTimerFunc(100, timer, this);
 
-    QPushButton* mapButton = new QPushButton(this);
-    mapButton->setText("Grid");
-
-    // display the MapControl in the application
-    QGridLayout* layout = new QGridLayout(this);
-    layout->setMargin(0);
-    layout->setSpacing(2);
-    //layout->addWidget(mc, 0, 0, 1, 2);
-    layout->addWidget(mapButton, 1, 0);
-    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 1);
-    layout->setRowStretch(0, 100);
-    layout->setRowStretch(1, 1);
-    layout->setColumnStretch(0, 1);
-    layout->setColumnStretch(1, 50);
-    setLayout(layout);
+    buildLayout();
 
     font.reset(new FTTextureFont("images/Vera.ttf"));
 
@@ -49,9 +38,44 @@ QMap3DWidget::~QMap3DWidget()
 }
 
 void
-QMap3DWidget::init(void)
+QMap3DWidget::buildLayout(void)
 {
+    QCheckBox* gridCheckBox = new QCheckBox(this);
+    gridCheckBox->setText("Grid");
+    gridCheckBox->setChecked(displayGrid);
 
+    QCheckBox* trailCheckBox = new QCheckBox(this);
+    trailCheckBox->setText("Trail");
+    trailCheckBox->setChecked(displayTrail);
+
+    QPushButton* recenterButton = new QPushButton(this);
+    recenterButton->setText("Recenter Camera");
+
+    QCheckBox* lockCameraCheckBox = new QCheckBox(this);
+    lockCameraCheckBox->setText("Lock Camera");
+    lockCameraCheckBox->setChecked(lockCamera);
+
+    QGridLayout* layout = new QGridLayout(this);
+    layout->setMargin(0);
+    layout->setSpacing(2);
+    //layout->addWidget(mc, 0, 0, 1, 2);
+    layout->addWidget(gridCheckBox, 1, 0);
+    layout->addWidget(trailCheckBox, 1, 1);
+    layout->addWidget(recenterButton, 1, 2);
+    layout->addWidget(lockCameraCheckBox, 1, 3);
+    layout->setRowStretch(0, 100);
+    layout->setRowStretch(1, 1);
+    layout->setColumnStretch(0, 1);
+    layout->setColumnStretch(1, 50);
+    setLayout(layout);
+
+    connect(gridCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showGrid(int)));
+    connect(trailCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showTrail(int)));
+    connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenterCamera()));
+    connect(lockCameraCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(toggleLockCamera(int)));
 }
 
 void
@@ -70,10 +94,19 @@ QMap3DWidget::displayHandler(void)
         cheetahModel->init(1.0f, 1.0f, 1.0f);
     }
 
-    if (uas == NULL)
+    float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
+    float robotRoll = 0.0f, robotPitch = 0.0f, robotYaw = 0.0f;
+    if (uas != NULL)
     {
-        return;
+        robotX = uas->getLocalX();
+        robotY = uas->getLocalY();
+        robotZ = uas->getLocalZ();
+        robotRoll = uas->getRoll();
+        robotPitch = uas->getPitch();
+        robotYaw = uas->getYaw();
     }
+
+    setCameraLock(lockCamera);
 
     // turn on smooth lines
     glEnable(GL_LINE_SMOOTH);
@@ -86,48 +119,44 @@ QMap3DWidget::displayHandler(void)
     glClear(GL_COLOR_BUFFER_BIT);
 
     // draw Cheetah model
-    glPushMatrix();
+    drawPlatform(robotRoll, robotPitch, robotYaw);
 
-    glRotatef(uas->getYaw(), 0.0f, 0.0f, 1.0f);
-    glRotatef(uas->getPitch(), 0.0f, 1.0f, 0.0f);
-    glRotatef(uas->getRoll(), 1.0f, 0.0f, 0.0f);
+    if (displayGrid)
+    {
+        drawGrid();
+    }
 
-    glLineWidth(3.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);
-    glBegin(GL_LINES);
-    glVertex3f(0.0f, 0.0f, 0.0f);
-    glVertex3f(0.3f, 0.0f, 0.0f);
-    glEnd();
+    if (displayTrail)
+    {
+        drawTrail(robotX, robotY, robotZ);
+    }
 
-    cheetahModel->draw();
-
-    glPopMatrix();
-
+    // switch to 2D
     setDisplayMode2D();
 
     // display pose information
     glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
     glBegin(GL_POLYGON);
     glVertex2f(0.0f, 0.0f);
-    glVertex2f(0.0f, 20.0f);
-    glVertex2f(getWindowWidth(), 20.0f);
+    glVertex2f(0.0f, 45.0f);
+    glVertex2f(getWindowWidth(), 45.0f);
     glVertex2f(getWindowWidth(), 0.0f);
     glEnd();
 
     char buffer[6][255];
 
-    sprintf(buffer[0], "x = %.2f", uas->getLocalX());
-    sprintf(buffer[1], "y = %.2f", uas->getLocalY());
-    sprintf(buffer[2], "z = %.2f", uas->getLocalZ());
-    sprintf(buffer[3], "r = %.2f", uas->getRoll());
-    sprintf(buffer[4], "p = %.2f", uas->getPitch());
-    sprintf(buffer[5], "y = %.2f", uas->getYaw());
+    sprintf(buffer[0], "x = %.2f", robotX);
+    sprintf(buffer[1], "y = %.2f", robotY);
+    sprintf(buffer[2], "z = %.2f", robotZ);
+    sprintf(buffer[3], "r = %.2f", robotRoll);
+    sprintf(buffer[4], "p = %.2f", robotPitch);
+    sprintf(buffer[5], "y = %.2f", robotYaw);
 
     font->FaceSize(10);
     glColor3f(1.0f, 1.0f, 1.0f);
     glPushMatrix();
 
-    glTranslatef(0.0f, 5.0f, 0.0f);
+    glTranslatef(0.0f, 30.0f, 0.0f);
     for (int32_t i = 0; i < 6; ++i)
     {
         glTranslatef(60.0f, 0.0f, 0.0f);
@@ -179,4 +208,150 @@ QMap3DWidget::getTime(void) const
 
      return static_cast<double>(tv.tv_sec) +
              static_cast<double>(tv.tv_usec) / 1000000.0;
+}
+
+void
+QMap3DWidget::showGrid(int32_t state)
+{
+    if (state == Qt::Checked)
+    {
+        displayGrid = true;
+    }
+    else
+    {
+        displayGrid = false;
+    }
+}
+
+void
+QMap3DWidget::showTrail(int32_t state)
+{
+    if (state == Qt::Checked)
+    {
+        if (!displayTrail)
+        {
+            trail.clear();
+        }
+
+        displayTrail = true;
+    }
+    else
+    {
+        displayTrail = false;
+    }
+}
+
+void
+QMap3DWidget::recenterCamera(void)
+{
+    recenter();
+}
+
+void
+QMap3DWidget::toggleLockCamera(int32_t state)
+{
+    if (state == Qt::Checked)
+    {
+        lockCamera = true;
+    }
+    else
+    {
+        lockCamera = false;
+    }
+}
+
+void
+QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
+{
+    glPushMatrix();
+
+    glRotatef(yaw, 0.0f, 0.0f, 1.0f);
+    glRotatef(pitch, 0.0f, 1.0f, 0.0f);
+    glRotatef(roll, 1.0f, 0.0f, 0.0f);
+
+    glLineWidth(3.0f);
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glBegin(GL_LINES);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glVertex3f(0.3f, 0.0f, 0.0f);
+    glEnd();
+
+    cheetahModel->draw();
+
+    glPopMatrix();
+}
+
+void
+QMap3DWidget::drawGrid(void)
+{
+    float radius = 10.0f;
+    float resolution = 0.25f;
+
+    glPushMatrix();
+
+    // draw a 20m x 20m grid with 0.25m resolution
+    glColor3f(0.5f, 0.5f, 0.5f);
+    for (float i = -radius; i <= radius; i += resolution)
+    {
+        if (fabsf(i - roundf(i)) < 0.01f)
+        {
+            glLineWidth(2.0f);
+        }
+        else
+        {
+            glLineWidth(0.25f);
+        }
+
+        glBegin(GL_LINES);
+        glVertex3f(i, -radius, 0.0f);
+        glVertex3f(i, radius, 0.0f);
+        glVertex3f(-radius, i, 0.0f);
+        glVertex3f(radius, i, 0.0f);
+        glEnd();
+    }
+
+    glPopMatrix();
+}
+
+void
+QMap3DWidget::drawTrail(float x, float y, float z)
+{
+    bool addToTrail = false;
+    if (trail.size() > 0)
+    {
+        if (fabsf(x - trail[trail.size() - 1].x) > 0.01f ||
+            fabsf(y - trail[trail.size() - 1].y) > 0.01f ||
+            fabsf(z - trail[trail.size() - 1].z) > 0.01f)
+        {
+            addToTrail = true;
+        }
+    }
+    else
+    {
+        addToTrail = true;
+    }
+
+    if (addToTrail)
+    {
+        Pose3D p = {x, y, z};
+        if (trail.size() == trail.capacity())
+        {
+            memcpy(trail.data(), trail.data() + 1,
+                   (trail.size() - 1) * sizeof(Pose3D));
+            trail[trail.size() - 1] = p;
+        }
+        else
+        {
+            trail.append(p);
+        }
+    }
+
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glLineWidth(1.0f);
+    glBegin(GL_LINE_STRIP);
+    for (int32_t i = 0; i < trail.size(); ++i)
+    {
+        glVertex3f(trail[i].x - x, trail[i].y - y, trail[i].z - z);
+    }
+    glEnd();
 }
