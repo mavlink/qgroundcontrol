@@ -1,10 +1,11 @@
 #ifndef QMAP3DWIDGET_H
 #define QMAP3DWIDGET_H
 
+#include <QLabel>
+
 #include "Q3DWidget.h"
 
 class CheetahModel;
-class FTTextureFont;
 class UASInterface;
 
 class QMap3DWidget : public Q3DWidget
@@ -36,6 +37,7 @@ private slots:
 
 protected:
     UASInterface* uas;
+    QLabel* positionLabel;
 
 private:
     void drawPlatform(float roll, float pitch, float yaw);
@@ -57,7 +59,6 @@ private:
     QVarLengthArray<Pose3D, 10000> trail;
 
     QScopedPointer<CheetahModel> cheetahModel;
-    QScopedPointer<FTTextureFont> font;
 };
 
 #endif // QMAP3DWIDGET_H
