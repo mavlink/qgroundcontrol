@@ -18,8 +18,8 @@ TARGET = qgroundcontrol
 BASEDIR = .
 BUILDDIR = build
 LANGUAGE = C++
-CONFIG += debug_and_release
-    #console
+CONFIG += debug_and_release \
+    console
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
@@ -230,11 +230,23 @@ SOURCES += src/main.cc \
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
-win32:exists(C:\OPAL-RT\RT-LAB7.2.4\Common\bin) {
+win32:exists(src/lib/opalrt/OpalApi.h) { 
+    message("Building support for Opal-RT")
     LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
-    SOURCES += src/comm/OpalLink.cc
-    HEADERS += src/comm/OpalLink.h
+    HEADERS += src/comm/OpalRT.h \
+        src/comm/OpalLink.h \
+        src/comm/Parameter.h \
+        src/comm/QGCParamID.h \
+        src/comm/ParameterList.h \
+        src/ui/OpalLinkConfigurationWindow.h
+    SOURCES += src/comm/OpalRT.cc \
+        src/comm/OpalLink.cc \
+        src/comm/Parameter.cc \
+        src/comm/QGCParamID.cc \
+        src/comm/ParameterList.cc \
+        src/ui/OpalLinkConfigurationWindow.cc
+    FORMS += src/ui/OpalLinkSettings.ui
     DEFINES += OPAL_RT
 }
