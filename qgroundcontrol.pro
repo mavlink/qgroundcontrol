@@ -43,7 +43,9 @@ DEPENDPATH += . \
 INCLUDEPATH += . \
     lib/QMapControl \
     $$BASEDIR/../mavlink/contrib/slugs/include \
-    $$BASEDIR/../mavlink/include
+    $$BASEDIR/../mavlink/include \
+    /usr/include/freetype2
+LIBS += /usr/lib/libftgl.so
 
 # ../mavlink/include \
 # MAVLink/include \
@@ -89,7 +91,8 @@ INCLUDEPATH += src \
     src/lib/qmapcontrol \
     src/ui/mavlink \
     src/ui/param \
-    src/ui/watchdog
+    src/ui/watchdog \
+    src/ui/map3D
 HEADERS += src/MG.h \
     src/Core.h \
     src/uas/UASInterface.h \
@@ -160,7 +163,11 @@ HEADERS += src/MG.h \
     src/ui/map/QGC2DIcon.h \
     src/ui/QGCRemoteControlView.h \
     src/WaypointGlobal.h \
-    src/ui/WaypointGlobalView.h
+    src/ui/WaypointGlobalView.h \
+    src/ui/map3D/Q3DWidget.h \
+    src/ui/map3D/CheetahModel.h \
+    src/ui/map3D/CheetahGL.h \
+    src/ui/map3D/QMap3DWidget.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -226,7 +233,11 @@ SOURCES += src/main.cc \
     src/ui/map/QGC2DIcon.cc \
     src/ui/QGCRemoteControlView.cc \
     src/WaypointGlobal.cpp \
-    src/ui/WaypointGlobalView.cpp
+    src/ui/WaypointGlobalView.cpp \
+    src/ui/map3D/Q3DWidget.cc \
+    src/ui/map3D/CheetahModel.cc \
+    src/ui/map3D/CheetahGL.cc \
+    src/ui/map3D/QMap3DWidget.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library

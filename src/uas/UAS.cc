@@ -73,6 +73,12 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         sendDropRate(0),
         lowBattAlarm(false),
         positionLock(false),
+        localX(0),
+        localY(0),
+        localZ(0),
+        roll(0),
+        pitch(0),
+        yaw(0),
         statusTimeout(new QTimer(this))
 {
     color = UASInterface::getNextColor();
@@ -281,6 +287,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
                 quint64 time = getUnixTime(attitude.usec);
+                roll = attitude.roll;
+                pitch = attitude.pitch;
+                yaw = attitude.yaw;
                 emit valueChanged(uasId, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
                 emit valueChanged(uasId, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
                 emit valueChanged(uasId, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
@@ -300,6 +309,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_local_position_t pos;
                 mavlink_msg_local_position_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.usec);
+                localX = pos.x;
+                localY = pos.y;
+                localZ = pos.z;
                 emit valueChanged(uasId, "x", pos.x, time);
                 emit valueChanged(uasId, "y", pos.y, time);
                 emit valueChanged(uasId, "z", pos.z, time);
@@ -1120,8 +1132,8 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     manualYawAngle = yaw * yawScaling;
     manualThrust = thrust * thrustScaling;
 
-    if(mode == (int)MAV_MODE_MANUAL)
-    {
+//    if(mode == (int)MAV_MODE_MANUAL)
+//    {
       #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
@@ -1130,7 +1142,7 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
 
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, MG::TIME::getGroundTimeNow());
       #endif
-    }
+//    }
 }
 
 int UAS::getSystemType()
