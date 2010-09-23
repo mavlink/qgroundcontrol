@@ -64,6 +64,14 @@ public:
     /** @brief Get the status flag for the communication **/
     virtual int getCommunicationStatus() const = 0;
 
+    virtual double getLocalX() const = 0;
+    virtual double getLocalY() const = 0;
+    virtual double getLocalZ() const = 0;
+
+    virtual double getRoll() const = 0;
+    virtual double getPitch() const = 0;
+    virtual double getYaw() const = 0;
+
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager &getWaypointManager(void) = 0;
 
