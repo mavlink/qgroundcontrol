@@ -1,7 +1,6 @@
 #ifndef Q3DWIDGET_H_
 #define Q3DWIDGET_H_
 
-#include <boost/scoped_ptr.hpp>
 #include <inttypes.h>
 #include <string>
 #include <QtOpenGL>

@@ -1,6 +1,6 @@
 #include "QMap3DWidget.h"
 
-#include <FTGL/ftgl.h>
+//#include <FTGL/ftgl.h>
 #include <QCheckBox>
 #include <sys/time.h>
 
@@ -26,7 +26,7 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
 
     buildLayout();
 
-    font.reset(new FTTextureFont("images/Vera.ttf"));
+    //font.reset(new FTTextureFont("images/Vera.ttf"));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
@@ -55,6 +55,9 @@ QMap3DWidget::buildLayout(void)
     lockCameraCheckBox->setText("Lock Camera");
     lockCameraCheckBox->setChecked(lockCamera);
 
+    positionLabel = new QLabel(this);
+    positionLabel->setText(tr("Waiting for first position update.. "));
+
     QGridLayout* layout = new QGridLayout(this);
     layout->setMargin(0);
     layout->setSpacing(2);
@@ -63,6 +66,7 @@ QMap3DWidget::buildLayout(void)
     layout->addWidget(trailCheckBox, 1, 1);
     layout->addWidget(recenterButton, 1, 2);
     layout->addWidget(lockCameraCheckBox, 1, 3);
+    layout->addWidget(positionLabel, 1, 4);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
     layout->setColumnStretch(0, 1);
@@ -143,26 +147,29 @@ QMap3DWidget::displayHandler(void)
     glVertex2f(getWindowWidth(), 0.0f);
     glEnd();
 
-    char buffer[6][255];
 
-    sprintf(buffer[0], "x = %.2f", robotX);
-    sprintf(buffer[1], "y = %.2f", robotY);
-    sprintf(buffer[2], "z = %.2f", robotZ);
-    sprintf(buffer[3], "r = %.2f", robotRoll);
-    sprintf(buffer[4], "p = %.2f", robotPitch);
-    sprintf(buffer[5], "y = %.2f", robotYaw);
+//    char buffer[6][255];
+//
+//    sprintf(buffer[0], "x = %.2f", robotX);
+//    sprintf(buffer[1], "y = %.2f", robotY);
+//    sprintf(buffer[2], "z = %.2f", robotZ);
+//    sprintf(buffer[3], "r = %.2f", robotRoll);
+//    sprintf(buffer[4], "p = %.2f", robotPitch);
+//    sprintf(buffer[5], "y = %.2f", robotYaw);
 
-    font->FaceSize(10);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glPushMatrix();
+    positionLabel->setText(QString("x = %1 y = %2 z = %3 r = %4 p = %5 y = %6").arg(robotX).arg(robotY).arg(robotZ).arg(robotRoll).arg(robotPitch).arg(robotYaw));
 
-    glTranslatef(0.0f, 30.0f, 0.0f);
-    for (int32_t i = 0; i < 6; ++i)
-    {
-        glTranslatef(60.0f, 0.0f, 0.0f);
-        font->Render(buffer[i]);
-    }
-    glPopMatrix();
+//    font->FaceSize(10);
+//    glColor3f(1.0f, 1.0f, 1.0f);
+//    glPushMatrix();
+//
+//    glTranslatef(0.0f, 30.0f, 0.0f);
+//    for (int32_t i = 0; i < 6; ++i)
+//    {
+//        glTranslatef(60.0f, 0.0f, 0.0f);
+//        font->Render(buffer[i]);
+//    }
+//    glPopMatrix();
 }
 
 /**

@@ -43,9 +43,7 @@ DEPENDPATH += . \
 INCLUDEPATH += . \
     lib/QMapControl \
     $$BASEDIR/../mavlink/contrib/slugs/include \
-    $$BASEDIR/../mavlink/include \
-    /usr/include/freetype2
-LIBS += /usr/lib/libftgl.so
+    $$BASEDIR/../mavlink/include
 
 # ../mavlink/include \
 # MAVLink/include \
