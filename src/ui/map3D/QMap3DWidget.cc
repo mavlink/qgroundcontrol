@@ -55,8 +55,8 @@ QMap3DWidget::buildLayout(void)
     lockCameraCheckBox->setText("Lock Camera");
     lockCameraCheckBox->setChecked(lockCamera);
 
-    positionLabel = new QLabel(this);
-    positionLabel->setText(tr("Waiting for first position update.. "));
+    //positionLabel = new QLabel(this);
+    //positionLabel->setText(tr("Waiting for first position update.. "));
 
     QGridLayout* layout = new QGridLayout(this);
     layout->setMargin(0);
@@ -66,7 +66,7 @@ QMap3DWidget::buildLayout(void)
     layout->addWidget(trailCheckBox, 1, 1);
     layout->addWidget(recenterButton, 1, 2);
     layout->addWidget(lockCameraCheckBox, 1, 3);
-    layout->addWidget(positionLabel, 1, 4);
+    // layout->addWidget(positionLabel, 1, 4);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
     layout->setColumnStretch(0, 1);
@@ -147,29 +147,43 @@ QMap3DWidget::displayHandler(void)
     glVertex2f(getWindowWidth(), 0.0f);
     glEnd();
 
+    // QT QPAINTER OPENGL PAINTING
 
-//    char buffer[6][255];
-//
-//    sprintf(buffer[0], "x = %.2f", robotX);
-//    sprintf(buffer[1], "y = %.2f", robotY);
-//    sprintf(buffer[2], "z = %.2f", robotZ);
-//    sprintf(buffer[3], "r = %.2f", robotRoll);
-//    sprintf(buffer[4], "p = %.2f", robotPitch);
-//    sprintf(buffer[5], "y = %.2f", robotYaw);
+    QPainter painter;
+    painter.begin(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    paintText(QString("x = %1 y = %2 z = %3 r = %4 p = %5 y = %6").arg(robotX, 0, 'f', 2).arg(robotY, 0, 'f', 2).arg(robotZ, 0, 'f', 2).arg(robotRoll, 0, 'f', 2).arg(robotPitch, 0, 'f', 2).arg(robotYaw, 0, 'f', 2),
+              QColor(255, 255, 255),
+              12,
+              5,
+              5,
+              &painter);
+}
 
-    positionLabel->setText(QString("x = %1 y = %2 z = %3 r = %4 p = %5 y = %6").arg(robotX).arg(robotY).arg(robotZ).arg(robotRoll).arg(robotPitch).arg(robotYaw));
+void QMap3DWidget::paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter)
+{
+    QPen prevPen = painter->pen();
 
-//    font->FaceSize(10);
-//    glColor3f(1.0f, 1.0f, 1.0f);
-//    glPushMatrix();
-//
-//    glTranslatef(0.0f, 30.0f, 0.0f);
-//    for (int32_t i = 0; i < 6; ++i)
-//    {
-//        glTranslatef(60.0f, 0.0f, 0.0f);
-//        font->Render(buffer[i]);
-//    }
-//    glPopMatrix();
+    float pPositionX = refX;
+    float pPositionY = refY;
+
+    QFont font("Bitstream Vera Sans");
+    // Enforce minimum font size of 5 pixels
+    int fSize = qMax(5, (int)(fontSize));
+    font.setPixelSize(fSize);
+
+    QFontMetrics metrics = QFontMetrics(font);
+    int border = qMax(4, metrics.leading());
+    QRect rect = metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125),
+                                      Qt::AlignLeft | Qt::TextWordWrap, text);
+    painter->setPen(color);
+    painter->setFont(font);
+    painter->setRenderHint(QPainter::TextAntialiasing);
+    painter->drawText(pPositionX, pPositionY,
+                      rect.width(), rect.height(),
+                      Qt::AlignCenter | Qt::TextWordWrap, text);
+    painter->setPen(prevPen);
 }
 
 /**
