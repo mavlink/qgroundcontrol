@@ -483,7 +483,12 @@ Q3DWidget::initializeGL(void)
     glEnable(GL_NORMALIZE);
 
     // TODO: Added these, please check
+    // Fix for some platforms, e.g. windows
+    #ifndef GL_MULTISAMPLE
+    glEnable(0x809D);
+    #else
     glEnable(GL_MULTISAMPLE);
+    #endif
     glEnable(GL_BLEND);
 
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
