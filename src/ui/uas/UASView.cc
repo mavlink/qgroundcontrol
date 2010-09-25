@@ -109,7 +109,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     // Heartbeat fade
     refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
-    refreshTimer->start(180);
+    refreshTimer->start(updateInterval);
 }
 
 UASView::~UASView()
@@ -195,7 +195,7 @@ void UASView::receiveHeartbeat(UASInterface* uas)
         m_ui->heartbeatIcon->setStyleSheet(colorstyle);
         m_ui->heartbeatIcon->setAutoFillBackground(true);
         refreshTimer->stop();
-        refreshTimer->start(100);
+        refreshTimer->start(updateInterval);
     }
 }
 
@@ -330,6 +330,20 @@ void UASView::updateLoad(UASInterface* uas, double load)
 
 void UASView::refresh()
 {
+    //setUpdatesEnabled(false);
+    setUpdatesEnabled(true);
+
+    static quint64 lastupdate = 0;
+    qDebug() << "UASVIEW update diff: " << MG::TIME::getGroundTimeNow() - lastupdate;
+    lastupdate = MG::TIME::getGroundTimeNow();
+
+    // FIXME
+    static int generalUpdateCount = 0;
+
+    if (generalUpdateCount == 4)
+    {
+        generalUpdateCount = 0;
+        qDebug() << "UPDATING EVERYTHING";
     // State
     m_ui->stateLabel->setText(state);
     m_ui->statusTextLabel->setText(stateDesc);
@@ -411,6 +425,8 @@ void UASView::refresh()
     QString timeText;
     timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
     m_ui->timeElapsedLabel->setText(timeText);
+}
+    generalUpdateCount++;
 
     // Fade heartbeat icon
     // Make color darker
@@ -421,6 +437,9 @@ void UASView::refresh()
                                     heartbeatColor.red(), heartbeatColor.green(), heartbeatColor.blue());
     m_ui->heartbeatIcon->setStyleSheet(colorstyle);
     m_ui->heartbeatIcon->setAutoFillBackground(true);
+    //setUpdatesEnabled(true);
+    repaint();
+    setUpdatesEnabled(false);
 }
 
 void UASView::changeEvent(QEvent *e)

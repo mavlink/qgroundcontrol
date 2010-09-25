@@ -37,7 +37,7 @@ private slots:
 
 protected:
     UASInterface* uas;
-    QLabel* positionLabel;
+    void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
 
 private:
     void drawPlatform(float roll, float pitch, float yaw);
