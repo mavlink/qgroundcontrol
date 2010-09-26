@@ -481,18 +481,6 @@ Q3DWidget::initializeGL(void)
     glEnable(GL_LIGHT0);
     glDisable(GL_LIGHTING);
     glEnable(GL_NORMALIZE);
-
-    // TODO: Added these, please check
-    glEnable(GL_MULTISAMPLE);
-    glEnable(GL_BLEND);
-
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-    glEnable(GL_POINT_SMOOTH);
-    glEnable(GL_LINE_SMOOTH);
-
-    glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 }
 
 void
