@@ -331,7 +331,8 @@ void UASView::updateLoad(UASInterface* uas, double load)
 void UASView::refresh()
 {
     //setUpdatesEnabled(false);
-    setUpdatesEnabled(true);
+    //setUpdatesEnabled(true);
+    //repaint();
 
     static quint64 lastupdate = 0;
     qDebug() << "UASVIEW update diff: " << MG::TIME::getGroundTimeNow() - lastupdate;
@@ -438,8 +439,8 @@ void UASView::refresh()
     m_ui->heartbeatIcon->setStyleSheet(colorstyle);
     m_ui->heartbeatIcon->setAutoFillBackground(true);
     //setUpdatesEnabled(true);
-    repaint();
-    setUpdatesEnabled(false);
+
+    //setUpdatesEnabled(false);
 }
 
 void UASView::changeEvent(QEvent *e)

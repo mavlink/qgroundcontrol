@@ -100,7 +100,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         topMargin(3.0f)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    refreshTimer->setInterval(60);
+    refreshTimer->setInterval(120);
 
 
 //    this->setScene(new QGraphicsScene(-metricWidth/2.0f, -metricWidth/2.0f, metricWidth, metricWidth, this));

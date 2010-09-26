@@ -286,15 +286,31 @@ QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
 {
     glPushMatrix();
 
-    glRotatef(yaw, 0.0f, 0.0f, 1.0f);
-    glRotatef(pitch, 0.0f, 1.0f, 0.0f);
-    glRotatef(roll, 1.0f, 0.0f, 0.0f);
+    glRotatef((yaw*180.0f)/M_PI, 0.0f, 0.0f, 1.0f);
+    glRotatef((pitch*180.0f)/M_PI, 0.0f, 1.0f, 0.0f);
+    glRotatef((roll*180.0f)/M_PI, 1.0f, 0.0f, 0.0f);
 
     glLineWidth(3.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);
+
+    // X AXIS
+    glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_LINES);
     glVertex3f(0.0f, 0.0f, 0.0f);
     glVertex3f(0.3f, 0.0f, 0.0f);
+    glEnd();
+
+    // Y AXIS
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glBegin(GL_LINES);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, 0.15f, 0.0f);
+    glEnd();
+
+    // Z AXIS
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glBegin(GL_LINES);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, 0.15f);
     glEnd();
 
     cheetahModel->draw();
