@@ -365,10 +365,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // only accept values in a realistic range
                // quint64 time = getUnixTime(pos.usec);
                 quint64 time = MG::TIME::getGroundTimeNow();
+
+                emit valueChanged(uasId, "lat", pos.lat, time);
+                emit valueChanged(uasId, "lon", pos.lon, time);
+
                 if (pos.fix_type > 0)
                 {
-                    emit valueChanged(uasId, "lat", pos.lat, time);
-                    emit valueChanged(uasId, "lon", pos.lon, time);
                     emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
 
                     // Check for NaN
