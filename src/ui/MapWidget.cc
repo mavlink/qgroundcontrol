@@ -378,16 +378,22 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
   int temp = 0;
   Point* point2Find;
   point2Find = wpIndex[geom->name()];
-  point2Find->setCoordinate(coordinate);
 
-  point2Find = dynamic_cast <Point*> (geom);
-  point2Find->setCoordinate(coordinate);
+  if (point2Find)
+  {
+      point2Find->setCoordinate(coordinate);
 
- // qDebug() << geom->name();
-  temp = geom->get_myIndex();
-  //qDebug() << temp;
-  emit sendGeometryEndDrag(coordinate,temp);
+      point2Find = dynamic_cast <Point*> (geom);
+      if (point2Find)
+      {
+          point2Find->setCoordinate(coordinate);
 
+          // qDebug() << geom->name();
+          temp = geom->get_myIndex();
+          //qDebug() << temp;
+          emit sendGeometryEndDrag(coordinate,temp);
+      }
+  }
 
 }
 
