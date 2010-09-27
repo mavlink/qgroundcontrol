@@ -369,7 +369,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 {
                     emit valueChanged(uasId, "lat", pos.lat, time);
                     emit valueChanged(uasId, "lon", pos.lon, time);
-                    emit globalPositionChanged(this, pos.lon, pos.lat, alt, time);
+                    emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
 
                     // Check for NaN
                     int alt = pos.alt;
