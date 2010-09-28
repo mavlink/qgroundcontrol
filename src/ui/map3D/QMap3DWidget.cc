@@ -268,7 +268,7 @@ QMap3DWidget::mouseHandler(Qt::MouseButton button, MouseState state,
     if (button == Qt::RightButton && state == MOUSE_STATE_DOWN)
     {
         QMenu menu(this);
-        QAction* targetAction = menu.addAction("Mark as Target");
+        QAction* targetAction = menu.addAction(tr("Mark as Target"));
         connect(targetAction, SIGNAL(triggered()), this, SLOT(markTarget()));
         menu.exec(mapToGlobal(QPoint(x, y)));
     }
@@ -339,7 +339,7 @@ QMap3DWidget::markTarget(void)
 
     displayTarget = true;
 
-    uas->setTargetPosition(targetPosition.x, targetPosition.y,
+    if (uas) uas->setTargetPosition(targetPosition.x, targetPosition.y,
                            targetPosition.z, 0.0f);
 }
 
