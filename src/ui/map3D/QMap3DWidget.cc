@@ -1,6 +1,38 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Definition of the class QMap3DWidget.
+ *
+ *   @author Lionel Heng <hengli@student.ethz.ch>
+ *
+ */
+
 #include "QMap3DWidget.h"
 
 #include <FTGL/ftgl.h>
+#include <GL/glut.h>
 #include <QCheckBox>
 #include <sys/time.h>
 
@@ -14,14 +46,20 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
      , lastRedrawTime(0.0)
      , displayGrid(false)
      , displayTrail(false)
-     , lockCamera(false)
+     , lockCamera(true)
+     , updateLastUnlockedPose(true)
+     , displayTarget(false)
 {
     setFocusPolicy(Qt::StrongFocus);
 
     initialize(10, 10, 1000, 900, 10.0f);
     setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 400.0f);
 
+    int32_t argc = 0;
+    glutInit(&argc, NULL);
+
     setDisplayFunc(display, this);
+    setMouseFunc(mouse, this);
     addTimerFunc(100, timer, this);
 
     buildLayout();
@@ -58,7 +96,6 @@ QMap3DWidget::buildLayout(void)
     QGridLayout* layout = new QGridLayout(this);
     layout->setMargin(0);
     layout->setSpacing(2);
-    //layout->addWidget(mc, 0, 0, 1, 2);
     layout->addWidget(gridCheckBox, 1, 0);
     layout->addWidget(trailCheckBox, 1, 1);
     layout->addWidget(recenterButton, 1, 2);
@@ -106,7 +143,25 @@ QMap3DWidget::displayHandler(void)
         robotYaw = uas->getYaw();
     }
 
-    setCameraLock(lockCamera);
+    if (updateLastUnlockedPose)
+    {
+        lastUnlockedPose.x = robotX;
+        lastUnlockedPose.y = robotY;
+        lastUnlockedPose.z = robotZ;
+
+        camOffset.x = 0.0f;
+        camOffset.y = 0.0f;
+        camOffset.z = 0.0f;
+
+        updateLastUnlockedPose = false;
+    }
+
+    if (!lockCamera)
+    {
+        camOffset.x = robotX - lastUnlockedPose.x;
+        camOffset.y = robotY - lastUnlockedPose.y;
+        camOffset.z = robotZ - lastUnlockedPose.z;
+    }
 
     // turn on smooth lines
     glEnable(GL_LINE_SMOOTH);
@@ -117,6 +172,9 @@ QMap3DWidget::displayHandler(void)
     // clear window
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glPushMatrix();
+    glTranslatef(camOffset.x, camOffset.y, camOffset.z);
 
     // draw Cheetah model
     drawPlatform(robotRoll, robotPitch, robotYaw);
@@ -131,6 +189,13 @@ QMap3DWidget::displayHandler(void)
         drawTrail(robotX, robotY, robotZ);
     }
 
+    if (displayTarget)
+    {
+        drawTarget(robotX, robotY, robotZ);
+    }
+
+    glPopMatrix();
+
     // switch to 2D
     setDisplayMode2D();
 
@@ -143,7 +208,7 @@ QMap3DWidget::displayHandler(void)
     glVertex2f(getWindowWidth(), 0.0f);
     glEnd();
 
-    char buffer[6][255];
+    char buffer[7][255];
 
     sprintf(buffer[0], "x = %.2f", robotX);
     sprintf(buffer[1], "y = %.2f", robotY);
@@ -152,12 +217,17 @@ QMap3DWidget::displayHandler(void)
     sprintf(buffer[4], "p = %.2f", robotPitch);
     sprintf(buffer[5], "y = %.2f", robotYaw);
 
+    std::pair<float,float> mouseWorldCoords =
+            getPositionIn3DMode(getMouseX(), getMouseY());
+    sprintf(buffer[6], "Cursor [%.2f %.2f]",
+            mouseWorldCoords.first + robotX, mouseWorldCoords.second + robotY);
+
     font->FaceSize(10);
     glColor3f(1.0f, 1.0f, 1.0f);
     glPushMatrix();
 
     glTranslatef(0.0f, 30.0f, 0.0f);
-    for (int32_t i = 0; i < 6; ++i)
+    for (int32_t i = 0; i < 7; ++i)
     {
         glTranslatef(60.0f, 0.0f, 0.0f);
         font->Render(buffer[i]);
@@ -165,19 +235,25 @@ QMap3DWidget::displayHandler(void)
     glPopMatrix();
 }
 
-/**
- *
- * @param uas the UAS/MAV to monitor/display with the HUD
- */
-void QMap3DWidget::setActiveUAS(UASInterface* uas)
+void
+QMap3DWidget::mouse(Qt::MouseButton button, MouseState state,
+                    int32_t x, int32_t y, void* clientData)
 {
-    if (this->uas != NULL && this->uas != uas)
-    {
-        // Disconnect any previously connected active MAV
-        //disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
-    }
+    QMap3DWidget* map3d = reinterpret_cast<QMap3DWidget *>(clientData);
+    map3d->mouseHandler(button, state, x, y);
+}
 
-    this->uas = uas;
+void
+QMap3DWidget::mouseHandler(Qt::MouseButton button, MouseState state,
+                           int32_t x, int32_t y)
+{
+    if (button == Qt::RightButton && state == MOUSE_STATE_DOWN)
+    {
+        QMenu menu(this);
+        QAction* targetAction = menu.addAction("Mark as Target");
+        connect(targetAction, SIGNAL(triggered()), this, SLOT(markTarget()));
+        menu.exec(mapToGlobal(QPoint(x, y)));
+    }
 }
 
 void
@@ -208,6 +284,45 @@ QMap3DWidget::getTime(void) const
 
      return static_cast<double>(tv.tv_sec) +
              static_cast<double>(tv.tv_usec) / 1000000.0;
+}
+
+/**
+ *
+ * @param uas the UAS/MAV to monitor/display with the HUD
+ */
+void QMap3DWidget::setActiveUAS(UASInterface* uas)
+{
+    if (this->uas != NULL && this->uas != uas)
+    {
+        // Disconnect any previously connected active MAV
+        //disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
+    }
+
+    this->uas = uas;
+}
+
+void
+QMap3DWidget::markTarget(void)
+{
+    std::pair<float,float> mouseWorldCoords =
+            getPositionIn3DMode(getLastMouseX(), getLastMouseY());
+
+    float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
+    if (uas != NULL)
+    {
+        robotX = uas->getLocalX();
+        robotY = uas->getLocalY();
+        robotZ = uas->getLocalZ();
+    }
+
+    targetPosition.x = mouseWorldCoords.first + robotX;
+    targetPosition.y = mouseWorldCoords.second + robotY;
+    targetPosition.z = robotZ;
+
+    displayTarget = true;
+
+    uas->setTargetPosition(targetPosition.x, targetPosition.y,
+                           targetPosition.z, 0.0f);
 }
 
 void
@@ -244,6 +359,8 @@ QMap3DWidget::showTrail(int32_t state)
 void
 QMap3DWidget::recenterCamera(void)
 {
+    updateLastUnlockedPose = true;
+
     recenter();
 }
 
@@ -354,4 +471,37 @@ QMap3DWidget::drawTrail(float x, float y, float z)
         glVertex3f(trail[i].x - x, trail[i].y - y, trail[i].z - z);
     }
     glEnd();
+}
+
+void
+QMap3DWidget::drawTarget(float x, float y, float z)
+{
+    static double radius = 0.2;
+    static bool expand = true;
+
+    if (radius < 0.1)
+    {
+        expand = true;
+    }
+    else if (radius > 0.25)
+    {
+        expand = false;
+    }
+
+    glPushMatrix();
+    glTranslatef(targetPosition.x - x, targetPosition.y - y, 0.0f);
+    glColor3f(0.0f, 0.7f, 1.0f);
+    glLineWidth(1.0f);
+    glutWireSphere(radius, 10, 10);
+
+    if (expand)
+    {
+        radius += 0.02;
+    }
+    else
+    {
+        radius -= 0.02;
+    }
+
+    glPopMatrix();
 }

@@ -177,6 +177,13 @@ public slots:
      * Works only if already landed and will cleanly shut down all onboard computers.
      */
     virtual void shutdown() = 0;
+    /** @brief Set the target position for the robot to navigate to.
+     *  @param x x-coordinate of the target position
+     *  @param y y-coordinate of the target position
+     *  @param z z-coordinate of the target position
+     *  @param yaw heading of the target position
+     */
+    virtual void setTargetPosition(float x, float y, float z, float yaw) = 0;
     /** @brief Request the list of stored waypoints from the robot */
     //virtual void requestWaypoints() = 0;
     /** @brief Clear all existing waypoints on the robot */

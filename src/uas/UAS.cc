@@ -1336,6 +1336,16 @@ void UAS::shutdown()
     }
 }
 
+void UAS::setTargetPosition(float x, float y, float z, float yaw)
+{
+    mavlink_message_t msg;
+    mavlink_msg_position_target_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, x, y, z, yaw);
+
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
+}
+
 /**
  * @return The name of this system as string in human-readable form
  */

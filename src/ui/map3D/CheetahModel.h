@@ -1,18 +1,62 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Definition of the class CheetahModel.
+ *
+ *   @author Lionel Heng <hengli@student.ethz.ch>
+ *
+ */
+
 #ifndef CHEETAHMODEL_H_
 #define CHEETAHMODEL_H_
 
 #include <GL/gl.h>
 
+/**
+ * @brief Container for display list which renders the Pixhawk Cheetah MAV.
+ **/
 class CheetahModel
 {
 public:
-        CheetahModel();
+    CheetahModel();
 
-        void init(float red, float green, float blue);
-	void draw(void);
+    /**
+     * @brief Initializes the display list.
+     * @param red Red intensity of the MAV model
+     * @param green Green intensity of the MAV model
+     * @param blue Blue intensity of the MAV model
+     **/
+    void init(float red, float green, float blue);
+
+    /**
+     * @brief Executes the display list.
+     **/
+    void draw(void);
 
 private:
-	GLint cheetah_dl;
+    GLint cheetah_dl;
 };
 
 #endif /* CHEETAHMODEL_H_ */

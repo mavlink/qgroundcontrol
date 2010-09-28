@@ -45,7 +45,7 @@ INCLUDEPATH += . \
     $$BASEDIR/../mavlink/contrib/slugs/include \
     $$BASEDIR/../mavlink/include \
     /usr/include/freetype2
-LIBS += /usr/lib/libftgl.so
+LIBS += /usr/lib/libftgl.so /usr/lib/libglut.so
 
 # ../mavlink/include \
 # MAVLink/include \

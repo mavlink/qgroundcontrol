@@ -179,6 +179,9 @@ public slots:
     /** @brief Shut the system cleanly down. Will shut down any onboard computers **/
     void shutdown();
 
+    /** @brief Set the target position for the robot to navigate to. */
+    void setTargetPosition(float x, float y, float z, float yaw);
+
     void startLowBattAlarm();
     void stopLowBattAlarm();
 
