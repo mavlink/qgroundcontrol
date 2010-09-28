@@ -1,3 +1,34 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Definition of the class Q3DWidget.
+ *
+ *   @author Lionel Heng <hengli@student.ethz.ch>
+ *
+ */
+
 #include "Q3DWidget.h"
 
 #include <cmath>
@@ -28,7 +59,6 @@ Q3DWidget::Q3DWidget(QWidget* parent)
   , _forceRedraw(false)
   , allow2DRotation(true)
   , limitCamera(false)
-  , lockCamera(false)
   , timerFunc(NULL)
   , timerFuncData(NULL)
 {
@@ -103,12 +133,6 @@ void
 Q3DWidget::setCameraLimit(bool onoff)
 {
     limitCamera = onoff;
-}
-
-void
-Q3DWidget::setCameraLock(bool onoff)
-{
-    lockCamera = onoff;
 }
 
 void
@@ -338,21 +362,18 @@ Q3DWidget::getMouseY(void)
 void
 Q3DWidget::rotateCamera(float dx, float dy)
 {
-    if (!lockCamera)
+    cameraPose.pan += dx * cameraParams.rotateSensitivity;
+    cameraPose.tilt += dy * cameraParams.rotateSensitivity;
+    if (limitCamera)
     {
-	cameraPose.pan += dx * cameraParams.rotateSensitivity;
-	cameraPose.tilt += dy * cameraParams.rotateSensitivity;
-	if (limitCamera)
-	{
-            if (cameraPose.tilt < 180.5f)
-            {
-                cameraPose.tilt = 180.5f;
-            }
-            else if (cameraPose.tilt > 269.5f)
-            {
-                cameraPose.tilt = 269.5f;
-            }
-	}
+        if (cameraPose.tilt < 180.5f)
+        {
+            cameraPose.tilt = 180.5f;
+        }
+        else if (cameraPose.tilt > 269.5f)
+        {
+            cameraPose.tilt = 269.5f;
+        }
     }
 }
 
@@ -495,8 +516,8 @@ Q3DWidget::paintGL(void)
         setDisplayMode2D();
         // do camera control
         glTranslatef(static_cast<float>(windowWidth) / 2.0f,
-                                 static_cast<float>(windowHeight) / 2.0f,
-                                 0.0f);
+                     static_cast<float>(windowHeight) / 2.0f,
+                     0.0f);
         glScalef(cameraPose.zoom, cameraPose.zoom, 1.0f);
         glRotatef(r2d(cameraPose.rotation2D), 0.0f, 0.0f, 1.0f);
         glScalef(cameraPose.warpX, cameraPose.warpY, 1.0f);
@@ -540,303 +561,301 @@ Q3DWidget::resizeGL(int32_t width, int32_t height)
 void
 Q3DWidget::keyPressEvent(QKeyEvent* event)
 {
-	float dx = 0.0f, dy = 0.0f;
+    float dx = 0.0f, dy = 0.0f;
 
-	Qt::KeyboardModifiers modifiers = event->modifiers();
-	if (_is3D)
-	{
-		if (modifiers & Qt::ControlModifier)
-		{
-			switch (event->key())
-			{
-			case Qt::Key_Left:
-				dx = -KEY_ROTATE_AMOUNT;
-				dy = 0.0f;
-				break;
-			case Qt::Key_Right:
-				dx = KEY_ROTATE_AMOUNT;
-				dy = 0.0f;
-				break;
-			case Qt::Key_Up:
-				dx = 0.0f;
-				dy = KEY_ROTATE_AMOUNT;
-				break;
-			case Qt::Key_Down:
-				dx = 0.0f;
-				dy = -KEY_ROTATE_AMOUNT;
-				break;
-			default:
-				QWidget::keyPressEvent(event);
-			}
-			if (dx != 0.0f || dy != 0.0f)
-			{
-				rotateCamera(dx, dy);
-			}
-		}
-		else if (modifiers & Qt::AltModifier)
-		{
-			switch (event->key())
-			{
-			case Qt::Key_Up:
-				dy = KEY_ZOOM_AMOUNT;
-				break;
-			case Qt::Key_Down:
-				dy = -KEY_ZOOM_AMOUNT;
-				break;
-			default:
-				QWidget::keyPressEvent(event);
-			}
-			if (dy != 0.0f)
-			{
-				zoomCamera(dy);
-			}
-		}
-		else
-		{
-			switch (event->key())
-			{
-			case Qt::Key_Left:
-				dx = KEY_MOVE_AMOUNT;
-				dy = 0.0f;
-				break;
-			case Qt::Key_Right:
-				dx = -KEY_MOVE_AMOUNT;
-				dy = 0.0f;
-				break;
-			case Qt::Key_Up:
-				dx = 0.0f;
-				dy = -KEY_MOVE_AMOUNT;
-				break;
-			case Qt::Key_Down:
-				dx = 0.0f;
-				dy = KEY_MOVE_AMOUNT;
-				break;
-			default:
-				QWidget::keyPressEvent(event);
-			}
-			if (dx != 0.0f || dy != 0.0f)
-			{
-				moveCamera(dx, dy);
-			}
-		}
-	}
-	else {
-		if (modifiers & Qt::ControlModifier)
-		{
-			switch (event->key())
-			{
-			case Qt::Key_Left:
-				dx = KEY_ROTATE_AMOUNT;
-				dy = 0.0f;
-				break;
-			case Qt::Key_Right:
-				dx = -KEY_ROTATE_AMOUNT;
-				dy = 0.0f;
-				break;
-			default:
-				QWidget::keyPressEvent(event);
-			}
-			if (dx != 0.0f)
-			{
-				rotateCamera2D(dx);
-			}
-		}
-		else if (modifiers & Qt::AltModifier)
-		{
-			switch (event->key())
-			{
-			case Qt::Key_Up:
-				dy = KEY_ZOOM_AMOUNT;
-				break;
-			case Qt::Key_Down:
-				dy = -KEY_ZOOM_AMOUNT;
-				break;
-			default:
-				QWidget::keyPressEvent(event);
-			}
-			if (dy != 0.0f)
-			{
-				zoomCamera2D(dy);
-			}
-		}
-		else {
-			switch (event->key())
-			{
-			case Qt::Key_Left:
-				dx = KEY_MOVE_AMOUNT;
-				dy = 0.0f;
-				break;
-			case Qt::Key_Right:
-				dx = -KEY_MOVE_AMOUNT;
-				dy = 0.0f;
-				break;
-			case Qt::Key_Up:
-				dx = 0.0f;
-				dy = KEY_MOVE_AMOUNT;
-				break;
-			case Qt::Key_Down:
-				dx = 0.0f;
-				dy = -KEY_MOVE_AMOUNT;
-				break;
-			default:
-				QWidget::keyPressEvent(event);
-			}
-			if (dx != 0.0f || dy != 0.0f)
-			{
-				moveCamera2D(dx, dy);
-			}
-		}
-	}
+    Qt::KeyboardModifiers modifiers = event->modifiers();
+    if (_is3D)
+    {
+        if (modifiers & Qt::ControlModifier)
+        {
+            switch (event->key())
+            {
+            case Qt::Key_Left:
+                dx = -KEY_ROTATE_AMOUNT;
+                dy = 0.0f;
+                break;
+            case Qt::Key_Right:
+                dx = KEY_ROTATE_AMOUNT;
+                dy = 0.0f;
+                break;
+            case Qt::Key_Up:
+                dx = 0.0f;
+                dy = KEY_ROTATE_AMOUNT;
+                break;
+            case Qt::Key_Down:
+                dx = 0.0f;
+                dy = -KEY_ROTATE_AMOUNT;
+                break;
+            default:
+                QWidget::keyPressEvent(event);
+            }
+            if (dx != 0.0f || dy != 0.0f)
+            {
+                rotateCamera(dx, dy);
+            }
+        }
+        else if (modifiers & Qt::AltModifier)
+        {
+            switch (event->key())
+            {
+            case Qt::Key_Up:
+                dy = KEY_ZOOM_AMOUNT;
+                break;
+            case Qt::Key_Down:
+                dy = -KEY_ZOOM_AMOUNT;
+                break;
+            default:
+                QWidget::keyPressEvent(event);
+            }
+            if (dy != 0.0f)
+            {
+                zoomCamera(dy);
+            }
+        }
+        else
+        {
+            switch (event->key())
+            {
+            case Qt::Key_Left:
+                dx = KEY_MOVE_AMOUNT;
+                dy = 0.0f;
+                break;
+            case Qt::Key_Right:
+                dx = -KEY_MOVE_AMOUNT;
+                dy = 0.0f;
+                break;
+            case Qt::Key_Up:
+                dx = 0.0f;
+                dy = -KEY_MOVE_AMOUNT;
+                break;
+            case Qt::Key_Down:
+                dx = 0.0f;
+                dy = KEY_MOVE_AMOUNT;
+                break;
+            default:
+                QWidget::keyPressEvent(event);
+            }
+            if (dx != 0.0f || dy != 0.0f)
+            {
+                moveCamera(dx, dy);
+            }
+        }
+    }
+    else
+    {
+        if (modifiers & Qt::ControlModifier)
+        {
+            switch (event->key())
+            {
+            case Qt::Key_Left:
+                dx = KEY_ROTATE_AMOUNT;
+                dy = 0.0f;
+                break;
+            case Qt::Key_Right:
+                dx = -KEY_ROTATE_AMOUNT;
+                dy = 0.0f;
+                break;
+            default:
+                QWidget::keyPressEvent(event);
+            }
+            if (dx != 0.0f)
+            {
+                rotateCamera2D(dx);
+            }
+        }
+        else if (modifiers & Qt::AltModifier)
+        {
+            switch (event->key())
+            {
+            case Qt::Key_Up:
+                dy = KEY_ZOOM_AMOUNT;
+                break;
+            case Qt::Key_Down:
+                dy = -KEY_ZOOM_AMOUNT;
+                break;
+            default:
+                QWidget::keyPressEvent(event);
+            }
+            if (dy != 0.0f)
+            {
+                zoomCamera2D(dy);
+            }
+        }
+        else
+        {
+            switch (event->key())
+            {
+            case Qt::Key_Left:
+                dx = KEY_MOVE_AMOUNT;
+                dy = 0.0f;
+                break;
+            case Qt::Key_Right:
+                dx = -KEY_MOVE_AMOUNT;
+                dy = 0.0f;
+                break;
+            case Qt::Key_Up:
+                dx = 0.0f;
+                dy = KEY_MOVE_AMOUNT;
+                break;
+            case Qt::Key_Down:
+                dx = 0.0f;
+                dy = -KEY_MOVE_AMOUNT;
+                break;
+            default:
+                QWidget::keyPressEvent(event);
+            }
+            if (dx != 0.0f || dy != 0.0f)
+            {
+                moveCamera2D(dx, dy);
+            }
+        }
+    }
 
-	_forceRedraw = true;
+    _forceRedraw = true;
 
-	if (userKeyboardFunc)
-	{
-		if (event->text().isEmpty())
-		{
-			userKeyboardFunc(0, userKeyboardFuncData);
-		}
-		else
-		{
-			userKeyboardFunc(event->text().at(0).toAscii(),
-							 userKeyboardFuncData);
-		}
-	}
+    if (userKeyboardFunc)
+    {
+        if (event->text().isEmpty())
+        {
+            userKeyboardFunc(0, userKeyboardFuncData);
+        }
+        else
+        {
+            userKeyboardFunc(event->text().at(0).toAscii(),
+                             userKeyboardFuncData);
+        }
+    }
 }
 
 void
 Q3DWidget::mousePressEvent(QMouseEvent* event)
 {
-	Qt::KeyboardModifiers modifiers = event->modifiers();
+    Qt::KeyboardModifiers modifiers = event->modifiers();
 
-	if (!(modifiers & (Qt::ControlModifier | Qt::AltModifier)))
-	{
-		lastMouseX = event->x();
-		lastMouseY = event->y();
-		if (event->button() == Qt::LeftButton)
-		{
-			cameraPose.state = ROTATING;
-		}
-		else if (event->button() == Qt::MidButton)
-		{
-			cameraPose.state = MOVING;
-		}
-		else if (event->button() == Qt::RightButton)
-		{
-			cameraPose.state = ZOOMING;
-		}
-	}
+    if (!(modifiers & (Qt::ControlModifier | Qt::AltModifier)))
+    {
+        lastMouseX = event->x();
+        lastMouseY = event->y();
+        if (event->button() == Qt::LeftButton)
+        {
+            cameraPose.state = ROTATING;
+        }
+        else if (event->button() == Qt::MidButton)
+        {
+            cameraPose.state = MOVING;
+        }
+    }
 
-	_forceRedraw = true;
+    _forceRedraw = true;
 
-	if (userMouseFunc)
-	{
-		userMouseFunc(event->button(), MOUSE_STATE_DOWN, event->x(), event->y(),
-					  userMouseFuncData);
-	}
+    if (userMouseFunc)
+    {
+        userMouseFunc(event->button(), MOUSE_STATE_DOWN, event->x(), event->y(),
+                      userMouseFuncData);
+    }
 }
 
 void
 Q3DWidget::mouseReleaseEvent(QMouseEvent* event)
 {
-	Qt::KeyboardModifiers modifiers = event->modifiers();
+    Qt::KeyboardModifiers modifiers = event->modifiers();
 
-	if (!(modifiers & (Qt::ControlModifier | Qt::AltModifier)))
-	{
-		cameraPose.state = IDLE;
-	}
+    if (!(modifiers & (Qt::ControlModifier | Qt::AltModifier)))
+    {
+        cameraPose.state = IDLE;
+    }
 
-	_forceRedraw = true;
+    _forceRedraw = true;
 
-	if (userMouseFunc)
-	{
-		userMouseFunc(event->button(), MOUSE_STATE_UP, event->x(), event->y(),
-					  userMouseFuncData);
-	}
+    if (userMouseFunc)
+    {
+        userMouseFunc(event->button(), MOUSE_STATE_UP, event->x(), event->y(),
+                      userMouseFuncData);
+    }
 }
 
 void
 Q3DWidget::mouseMoveEvent(QMouseEvent* event)
 {
-	int32_t dx = event->x() - lastMouseX;
-	int32_t dy = event->y() - lastMouseY;
+    int32_t dx = event->x() - lastMouseX;
+    int32_t dy = event->y() - lastMouseY;
 
-	if (_is3D)
-	{
-		if (cameraPose.state == ROTATING)
-		{
-			rotateCamera(static_cast<float>(dx), static_cast<float>(dy));
-		}
-		else if (cameraPose.state == MOVING)
-		{
-			moveCamera(static_cast<float>(dx), static_cast<float>(dy));
-		}
-		else if (cameraPose.state == ZOOMING)
-		{
-			zoomCamera(static_cast<float>(dy));
-		}
-	}
-	else
-	{
-		if (cameraPose.state == ROTATING)
-		{
-			if (event->x() > windowWidth / 2)
-			{
-				dy *= -1;
-			}
+    if (_is3D)
+    {
+        if (cameraPose.state == ROTATING)
+        {
+            rotateCamera(static_cast<float>(dx), static_cast<float>(dy));
+        }
+        else if (cameraPose.state == MOVING)
+        {
+            moveCamera(static_cast<float>(dx), static_cast<float>(dy));
+        }
+        else if (cameraPose.state == ZOOMING)
+        {
+            zoomCamera(static_cast<float>(dy));
+        }
+    }
+    else
+    {
+        if (cameraPose.state == ROTATING)
+        {
+            if (event->x() > windowWidth / 2)
+            {
+                dy *= -1;
+            }
 
-			rotateCamera2D(static_cast<float>(dx));
-		}
-		else if (cameraPose.state == MOVING)
-		{
-			moveCamera2D(static_cast<float>(dx), static_cast<float>(dy));
-		}
-		else if (cameraPose.state == ZOOMING)
-		{
-			zoomCamera2D(static_cast<float>(dy));
-		}
-	}
+            rotateCamera2D(static_cast<float>(dx));
+        }
+        else if (cameraPose.state == MOVING)
+        {
+            moveCamera2D(static_cast<float>(dx), static_cast<float>(dy));
+        }
+        else if (cameraPose.state == ZOOMING)
+        {
+            zoomCamera2D(static_cast<float>(dy));
+        }
+    }
 
-	lastMouseX = event->x();
-	lastMouseY = event->y();
-	_forceRedraw = true;
+    lastMouseX = event->x();
+    lastMouseY = event->y();
+    _forceRedraw = true;
 
-	if (userMotionFunc)
-	{
-		userMotionFunc(event->x(), event->y(), userMotionFuncData);
-	}
+    if (userMotionFunc)
+    {
+            userMotionFunc(event->x(), event->y(), userMotionFuncData);
+    }
 }
 
 void
 Q3DWidget::wheelEvent(QWheelEvent* event)
 {
-	if (_is3D)
-	{
-		zoomCamera(static_cast<float>(event->delta()) / 40.0f);
-	}
-	else
-	{
-		zoomCamera2D(static_cast<float>(event->delta()) / 40.0f);
-	}
+    if (_is3D)
+    {
+        zoomCamera(static_cast<float>(event->delta()) / 40.0f);
+    }
+    else
+    {
+        zoomCamera2D(static_cast<float>(event->delta()) / 40.0f);
+    }
 
-	_forceRedraw = true;
+    _forceRedraw = true;
 }
 
 void
 Q3DWidget::timerEvent(QTimerEvent* event)
 {
-	if (event->timerId() == timer.timerId())
-	{
-		if (_forceRedraw)
-		{
-			updateGL();
-			_forceRedraw = false;
-		}
-	}
-	else
-	{
-		QObject::timerEvent(event);
-	}
+    if (event->timerId() == timer.timerId())
+    {
+        if (_forceRedraw)
+        {
+            updateGL();
+            _forceRedraw = false;
+        }
+    }
+    else
+    {
+        QObject::timerEvent(event);
+    }
 }
 
 void

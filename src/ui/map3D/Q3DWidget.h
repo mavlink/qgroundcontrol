@@ -1,3 +1,34 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Definition of the class Q3DWidget.
+ *
+ *   @author Lionel Heng <hengli@student.ethz.ch>
+ *
+ */
+
 #ifndef Q3DWIDGET_H_
 #define Q3DWIDGET_H_
 
@@ -50,6 +81,9 @@ typedef void (*KeyboardFunc)(char, void *);
 typedef void (*MouseFunc)(Qt::MouseButton, MouseState, int32_t, int32_t, void *);
 typedef void (*MotionFunc)(int32_t, int32_t, void *);
 
+/**
+ * @brief A base 3D widget which executes OpenGL commands.
+ **/
 class Q3DWidget: public QGLWidget
 {
     Q_OBJECT
@@ -67,7 +101,6 @@ public:
                          float maxClipRange);
 
     void setCameraLimit(bool onoff);
-    void setCameraLock(bool onoff);
 
     void set2DCameraParams(float zoomSensitivity,
                            float rotateSensitivity,
@@ -166,7 +199,6 @@ private:
     bool _forceRedraw;
     bool allow2DRotation;
     bool limitCamera;
-    bool lockCamera;
 
     CameraParams cameraParams;
 
