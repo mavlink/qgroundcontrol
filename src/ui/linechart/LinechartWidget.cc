@@ -90,7 +90,7 @@ updateTimer(new QTimer())
     connect(this, SIGNAL(plotWindowPositionUpdated(int)), scrollbar, SLOT(setValue(int)));
     connect(scrollbar, SIGNAL(sliderMoved(int)), this, SLOT(setPlotWindowPosition(int)));
 
-    updateTimer->setInterval(100);
+    updateTimer->setInterval(300);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
     updateTimer->start();
 }
@@ -247,13 +247,13 @@ void LinechartWidget::refresh()
         str.sprintf("%+.2f", activePlot->getMean(j.key()));
         j.value()->setText(str);
     }
-    QMap<QString, QLabel*>::iterator k;
-    for (k = curveMedians->begin(); k != curveMedians->end(); ++k)
-    {
-        // Median
-        str.sprintf("%+.2f", activePlot->getMedian(k.key()));
-        k.value()->setText(str);
-    }
+//    QMap<QString, QLabel*>::iterator k;
+//    for (k = curveMedians->begin(); k != curveMedians->end(); ++k)
+//    {
+//        // Median
+//        str.sprintf("%+.2f", activePlot->getMedian(k.key()));
+//        k.value()->setText(str);
+//    }
 }
 
 
@@ -397,11 +397,11 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     curveMeans->insert(curve, mean);
     horizontalLayout->addWidget(mean);
 
-    // Median
-    median = new QLabel(form);
-    value->setNum(0.00);
-    curveMedians->insert(curve, median);
-    horizontalLayout->addWidget(median);
+//    // Median
+//    median = new QLabel(form);
+//    value->setNum(0.00);
+//    curveMedians->insert(curve, median);
+//    horizontalLayout->addWidget(median);
 
     /* Color picker
     QColor color = QColorDialog::getColor(Qt::green, this);
@@ -418,7 +418,7 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     horizontalLayout->setStretchFactor(label, 80);
     horizontalLayout->setStretchFactor(value, 50);
     horizontalLayout->setStretchFactor(mean, 50);
-    horizontalLayout->setStretchFactor(median, 50);
+//    horizontalLayout->setStretchFactor(median, 50);
 
     // Connect actions
     QObject::connect(checkBox, SIGNAL(clicked(bool)), this, SLOT(takeButtonClick(bool)));

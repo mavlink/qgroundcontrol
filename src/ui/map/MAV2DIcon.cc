@@ -1,27 +1,83 @@
 #include "MAV2DIcon.h"
 #include <QPainter>
 
-MAV2DIcon::MAV2DIcon(QGraphicsItem* parent) :
-    QGC2DIcon(parent)
+MAV2DIcon::MAV2DIcon(qreal x, qreal y, int radius, QString name, Alignment alignment, QPen* pen)
+    : Point(x, y, name, alignment),
+    yaw(0.0f)
 {
+    size = QSize(radius, radius);
+    drawIcon(pen);
+}
+
+MAV2DIcon::MAV2DIcon(qreal x, qreal y, QString name, Alignment alignment, QPen* pen)
+    : Point(x, y, name, alignment)
+{
+    int radius = 10;
+    size = QSize(radius, radius);
+    drawIcon(pen);
+}
+
+MAV2DIcon::~MAV2DIcon()
+{
+    delete mypixmap;
+}
+
+void MAV2DIcon::setPen(QPen* pen)
+{
+    mypen = pen;
+    drawIcon(pen);
 }
 
 /**
- * @return the bounding rectangle of the icon
+ * @param yaw in radians, 0 = north, positive = clockwise
  */
-QRectF MAV2DIcon::boundingRect() const
+void MAV2DIcon::setYaw(float yaw)
 {
-    qreal penWidth = 1;
-    return QRectF(-10 - penWidth / 2, -10 - penWidth / 2,
-                  20 + penWidth, 20 + penWidth);
+    this->yaw = yaw;
 }
 
-/**
- * @param painter QPainter to draw with
- * @param option Visual style
- * @param widget Parent widget
- */
-void MAV2DIcon::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+void MAV2DIcon::drawIcon(QPen* pen)
 {
-    painter->drawRoundedRect(-10, -10, 20, 20, 5, 5);
+    mypixmap = new QPixmap(radius+1, radius+1);
+    mypixmap->fill(Qt::transparent);
+    QPainter painter(mypixmap);
+
+    // DRAW MICRO AIR VEHICLE
+    QPointF p(radius/2, radius/2);
+
+    float waypointSize = radius;
+    QPolygonF poly(3);
+    // Top point
+    poly.replace(0, QPointF(p.x(), p.y()+waypointSize/2.0f));
+    // Right point
+    poly.replace(1, QPointF(p.x()-waypointSize/2.0f, p.y()-waypointSize/2.0f));
+    // Left point
+    poly.replace(2, QPointF(p.x()+waypointSize/2.0f, p.y() + waypointSize/2.0f));
+
+//    // Select color based on if this is the current waypoint
+//    if (list.at(i)->getCurrent())
+//    {
+//        color = QGC::colorCyan;//uas->getColor();
+//        pen.setWidthF(refLineWidthToPen(0.8f));
+//    }
+//    else
+//    {
+//        color = uas->getColor();
+//        pen.setWidthF(refLineWidthToPen(0.4f));
+//    }
+
+    //pen.setColor(color);
+    if (pen)
+    {
+        pen->setWidthF(2);
+        painter.setPen(*pen);
+    }
+    else
+    {
+        QPen pen2(Qt::yellow);
+        pen2.setWidth(2);
+        painter.setPen(pen2);
+    }
+    painter.setBrush(Qt::NoBrush);
+    painter.drawPolygon(poly);
 }

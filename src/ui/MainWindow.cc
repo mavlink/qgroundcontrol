@@ -657,14 +657,14 @@ void MainWindow::loadPixhawkView()
     clearView();
     // Engineer view, used in EMAV2009
 
-    // LINE CHART
-    if (linechartWidget)
+    // 3D map
+    if (map3DWidget)
     {
         QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
         if (centerStack)
         {
-            linechartWidget->setActive(true);
-            centerStack->setCurrentWidget(linechartWidget);
+            //map3DWidget->setActive(true);
+            centerStack->setCurrentWidget(map3DWidget);
         }
     }
 
@@ -673,6 +673,18 @@ void MainWindow::loadPixhawkView()
     {
         addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
         controlDockWidget->show();
+    }
+
+    // HORIZONTAL SITUATION INDICATOR
+    if (hsiDockWidget)
+    {
+        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+        if (hsi)
+        {
+            hsi->start();
+            addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+            hsiDockWidget->show();
+        }
     }
 
     // UAS LIST
@@ -696,30 +708,11 @@ void MainWindow::loadPixhawkView()
         waypointsDockWidget->show();
     }
 
-    // HORIZONTAL SITUATION INDICATOR
-    if (hsiDockWidget)
-    {
-        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-        if (hsi)
-        {
-            hsi->start();
-            addDockWidget(Qt::BottomDockWidgetArea, hsiDockWidget);
-            hsiDockWidget->show();
-        }
-    }
-
     // DEBUG CONSOLE
     if (debugConsoleDockWidget)
     {
         addDockWidget(Qt::BottomDockWidgetArea, debugConsoleDockWidget);
         debugConsoleDockWidget->show();
-    }
-
-    // RADIO CONTROL VIEW
-    if (rcViewDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, rcViewDockWidget);
-        rcViewDockWidget->show();
     }
 
     // ONBOARD PARAMETERS
@@ -979,6 +972,13 @@ void MainWindow::loadEngineerView()
     {
         addDockWidget(Qt::RightDockWidgetArea, parametersDockWidget);
         parametersDockWidget->show();
+    }
+
+    // RADIO CONTROL VIEW
+    if (rcViewDockWidget)
+    {
+        addDockWidget(Qt::BottomDockWidgetArea, rcViewDockWidget);
+        rcViewDockWidget->show();
     }
 
     this->show();

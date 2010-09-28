@@ -44,8 +44,6 @@ namespace Ui {
     class MapWidget;
 }
 
-using namespace qmapcontrol;
-
 /**
  * @brief 2D Moving map
  *
@@ -60,6 +58,7 @@ public:
 
 public slots:
     void addUAS(UASInterface* uas);
+    void activeUASSet(UASInterface* uas);
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     void updatePosition(float time, double lat, double lon);
 
@@ -86,8 +85,8 @@ protected:
     QMenu* mapMenu;
     QPushButton* mapButton;
 
-    MapControl* mc;                   ///< QMapControl widget
-    MapAdapter* mapadapter;           ///< Adapter to load the map data
+    qmapcontrol::MapControl* mc;                   ///< QMapControl widget
+    qmapcontrol::MapAdapter* mapadapter;           ///< Adapter to load the map data
     qmapcontrol::Layer* l;            ///< Current map layer (background)
     qmapcontrol::Layer* overlay;      ///< Street overlay (foreground)
     qmapcontrol::GeometryLayer* geomLayer; ///< Layer for waypoints
@@ -98,18 +97,18 @@ protected:
 
     //Layer* gSatLayer;
 
-    QMap<int, CirclePoint*> uasIcons;
-    QMap<int, LineString*> uasTrails;
+    QMap<int, qmapcontrol::Point*> uasIcons;
+    QMap<int, qmapcontrol::LineString*> uasTrails;
     UASInterface* mav;
     quint64 lastUpdate;
 
   protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
     void createPathButtonClicked(bool checked);
-    void captureGeometryClick(Geometry*, QPoint);
+    void captureGeometryClick(qmapcontrol::Geometry*, QPoint);
     void mapproviderSelected(QAction* action);
-    void captureGeometryDrag(Geometry* geom, QPointF coordinate);
-    void captureGeometryEndDrag(Geometry* geom, QPointF coordinate);
+    void captureGeometryDrag(qmapcontrol::Geometry* geom, QPointF coordinate);
+    void captureGeometryEndDrag(qmapcontrol::Geometry* geom, QPointF coordinate);
 
 
 
@@ -122,9 +121,9 @@ protected:
 
 private:
     Ui::MapWidget *m_ui;
-    QList<Point*> wps;
-    QHash <QString, Point*> wpIndex;
-    LineString* path;
+    QList<qmapcontrol::Point*> wps;
+    QHash <QString, qmapcontrol::Point*> wpIndex;
+    qmapcontrol::LineString* path;
     QPen* pointPen;
 };
 

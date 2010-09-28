@@ -32,8 +32,9 @@ This file is part of the QGROUNDCONTROL project
 #include "Q3DWidget.h"
 
 #include <cmath>
-#include <GL/gl.h>
-#include <GL/glu.h>
+
+//#include <GL/gl.h>
+//#include <GL/glu.h>
 
 static const float KEY_ROTATE_AMOUNT = 5.0f;
 static const float KEY_MOVE_AMOUNT   = 10.0f;
@@ -63,9 +64,9 @@ Q3DWidget::Q3DWidget(QWidget* parent)
   , timerFuncData(NULL)
 {
     cameraPose.state = IDLE;
-    cameraPose.pan = 0.0f;
-    cameraPose.tilt = 180.0f;
-    cameraPose.distance = 10.0f;
+    cameraPose.pan = 50.0f;
+    cameraPose.tilt = 200.0f;
+    cameraPose.distance = 5.0f;
     cameraPose.xOffset = 0.0f;
     cameraPose.yOffset = 0.0f;
     cameraPose.zOffset = 0.0f;

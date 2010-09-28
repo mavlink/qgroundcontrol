@@ -32,10 +32,11 @@ This file is part of the QGROUNDCONTROL project
 #ifndef QMAP3DWIDGET_H
 #define QMAP3DWIDGET_H
 
+#include <QLabel>
+
 #include "Q3DWidget.h"
 
 class CheetahModel;
-class FTTextureFont;
 class UASInterface;
 
 /**
@@ -76,6 +77,7 @@ private slots:
 
 protected:
     UASInterface* uas;
+    void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
 
 private:
     void drawPlatform(float roll, float pitch, float yaw);
@@ -106,7 +108,6 @@ private:
     Pose3D targetPosition;
 
     QScopedPointer<CheetahModel> cheetahModel;
-    QScopedPointer<FTTextureFont> font;
 };
 
 #endif // QMAP3DWIDGET_H
