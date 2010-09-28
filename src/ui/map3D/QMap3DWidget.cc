@@ -12,13 +12,13 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
      : Q3DWidget(parent)
      , uas(NULL)
      , lastRedrawTime(0.0)
-     , displayGrid(false)
+     , displayGrid(true)
      , displayTrail(false)
      , lockCamera(false)
 {
     setFocusPolicy(Qt::StrongFocus);
 
-    initialize(10, 10, 1000, 900, 10.0f);
+    initialize(10, 10, 1000, 900, 15.0f);
     setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 400.0f);
 
     setDisplayFunc(display, this);
@@ -61,16 +61,16 @@ QMap3DWidget::buildLayout(void)
     QGridLayout* layout = new QGridLayout(this);
     layout->setMargin(0);
     layout->setSpacing(2);
-    //layout->addWidget(mc, 0, 0, 1, 2);
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 0);
     layout->addWidget(gridCheckBox, 1, 0);
     layout->addWidget(trailCheckBox, 1, 1);
-    layout->addWidget(recenterButton, 1, 2);
-    layout->addWidget(lockCameraCheckBox, 1, 3);
-    // layout->addWidget(positionLabel, 1, 4);
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 2);
+    layout->addWidget(recenterButton, 1, 3);
+    layout->addWidget(lockCameraCheckBox, 1, 4);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
-    layout->setColumnStretch(0, 1);
-    layout->setColumnStretch(1, 50);
+    //layout->setColumnStretch(0, 1);
+    layout->setColumnStretch(2, 50);
     setLayout(layout);
 
     connect(gridCheckBox, SIGNAL(stateChanged(int)),

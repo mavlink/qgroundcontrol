@@ -37,6 +37,8 @@ This file is part of the QGROUNDCONTROL project
 #include "ui_MapWidget.h"
 #include "UASInterface.h"
 #include "UASManager.h"
+#include "MAV2DIcon.h"
+#include "Waypoint2DIcon.h"
 
 #include "MG.h"
 
@@ -53,7 +55,7 @@ MapWidget::MapWidget(QWidget *parent) :
     this->setFocusPolicy(Qt::StrongFocus);
 
     // create MapControl
-    mc = new MapControl(QSize(320, 240));
+    mc = new qmapcontrol::MapControl(QSize(320, 240));
     mc->showScale(true);
     mc->showCoord(true);
     mc->enablePersistentCache();
@@ -62,21 +64,21 @@ MapWidget::MapWidget(QWidget *parent) :
     // create MapAdapter to get maps from
     //TileMapAdapter* osmAdapter = new TileMapAdapter("tile.openstreetmap.org", "/%1/%2/%3.png", 256, 0, 17);
 
-    MapAdapter* mapadapter_overlay = new YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=2.2&t=h&s=256&x=%2&y=%3&z=%1");
+    qmapcontrol::MapAdapter* mapadapter_overlay = new qmapcontrol::YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=2.2&t=h&s=256&x=%2&y=%3&z=%1");
 
     // MAP BACKGROUND
-    mapadapter = new GoogleSatMapAdapter();
-    l = new MapLayer("Google Satellite", mapadapter);
+    mapadapter = new qmapcontrol::GoogleSatMapAdapter();
+    l = new qmapcontrol::MapLayer("Google Satellite", mapadapter);
     mc->addLayer(l);
 
     // STREET OVERLAY
-    overlay = new MapLayer("Overlay", mapadapter_overlay);
+    overlay = new qmapcontrol::MapLayer("Overlay", mapadapter_overlay);
     overlay->setVisible(false);
     mc->addLayer(overlay);
 
     // WAYPOINT LAYER
     // create a layer with the mapadapter and type GeometryLayer (for waypoints)
-    geomLayer = new GeometryLayer("Waypoints", mapadapter);
+    geomLayer = new qmapcontrol::GeometryLayer("Waypoints", mapadapter);
     mc->addLayer(geomLayer);
 
 //
@@ -188,6 +190,7 @@ MapWidget::MapWidget(QWidget *parent) :
 
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
             this, SLOT(addUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)));
 
     connect(mc, SIGNAL(mouseEventCoordinate(const QMouseEvent*, const QPointF)),
             this, SLOT(captureMapClick(const QMouseEvent*, const QPointF)));
@@ -208,7 +211,7 @@ MapWidget::MapWidget(QWidget *parent) :
     pointPen = new QPen(QColor(0, 255,0));
     pointPen->setWidth(3);
 
-    path = new LineString (wps, "UAV Path", pointPen);
+    path = new qmapcontrol::LineString (wps, "UAV Path", pointPen);
     mc->layer("Waypoints")->addGeometry(path);
 
     this->setVisible(false);
@@ -224,7 +227,7 @@ void MapWidget::mapproviderSelected(QAction* action)
         int zoom = mapadapter->adaptedZoom();
         mc->setZoom(0);
 
-        mapadapter = new OSMMapAdapter();
+        mapadapter = new qmapcontrol::OSMMapAdapter();
         l->setMapAdapter(mapadapter);
         geomLayer->setMapAdapter(mapadapter);
 
@@ -240,7 +243,7 @@ void MapWidget::mapproviderSelected(QAction* action)
         int zoom = mapadapter->adaptedZoom();
         mc->setZoom(0);
 
-        mapadapter = new YahooMapAdapter();
+        mapadapter = new qmapcontrol::YahooMapAdapter();
         l->setMapAdapter(mapadapter);
         geomLayer->setMapAdapter(mapadapter);
 
@@ -256,7 +259,7 @@ void MapWidget::mapproviderSelected(QAction* action)
         QPointF a = mc->currentCoordinate();
         mc->setZoom(0);
 
-        mapadapter = new YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
+        mapadapter = new qmapcontrol::YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
         l->setMapAdapter(mapadapter);
 
         mc->updateRequestNew();
@@ -267,7 +270,7 @@ void MapWidget::mapproviderSelected(QAction* action)
     {
         int zoom = mapadapter->adaptedZoom();
         mc->setZoom(0);
-        mapadapter = new GoogleMapAdapter();
+        mapadapter = new qmapcontrol::GoogleMapAdapter();
         l->setMapAdapter(mapadapter);
         geomLayer->setMapAdapter(mapadapter);
 
@@ -281,7 +284,7 @@ void MapWidget::mapproviderSelected(QAction* action)
     {
         int zoom = mapadapter->adaptedZoom();
         mc->setZoom(0);
-        mapadapter = new GoogleSatMapAdapter();
+        mapadapter = new qmapcontrol::GoogleSatMapAdapter();
         l->setMapAdapter(mapadapter);
         geomLayer->setMapAdapter(mapadapter); 
 
@@ -342,10 +345,19 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
     str = QString("%1").arg(path->numberOfPoints());
 
     // create the WP and set everything in the LineString to display the path
-    CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
+    Waypoint2DIcon* tempCirclePoint;
+
+    if (mav)
+    {
+        tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle, new QPen(mav->getColor()));
+    }
+    else
+    {
+        tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
+    }
     mc->layer("Waypoints")->addGeometry(tempCirclePoint);
 
-    Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
+    qmapcontrol::Point* tempPoint = new qmapcontrol::Point(coordinate.x(), coordinate.y(),str);
     wps.append(tempPoint);
     path->addPoint(tempPoint);
 
@@ -360,7 +372,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
   }
 }
 
-void MapWidget::captureGeometryClick(Geometry* geom, QPoint point){
+void MapWidget::captureGeometryClick(qmapcontrol::Geometry* geom, QPoint point){
   Q_UNUSED(geom);
   Q_UNUSED(point);
 
@@ -369,21 +381,21 @@ void MapWidget::captureGeometryClick(Geometry* geom, QPoint point){
 
 }
 
-void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
+void MapWidget::captureGeometryDrag(qmapcontrol::Geometry* geom, QPointF coordinate){
   Q_UNUSED(coordinate);
 
   // Refresh the screen
   mc->updateRequestNew();
 
   int temp = 0;
-  Point* point2Find;
+  qmapcontrol::Point* point2Find;
   point2Find = wpIndex[geom->name()];
 
   if (point2Find)
   {
       point2Find->setCoordinate(coordinate);
 
-      point2Find = dynamic_cast <Point*> (geom);
+      point2Find = dynamic_cast <qmapcontrol::Point*> (geom);
       if (point2Find)
       {
           point2Find->setCoordinate(coordinate);
@@ -397,7 +409,7 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
 
 }
 
-void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
+void MapWidget::captureGeometryEndDrag(qmapcontrol::Geometry* geom, QPointF coordinate)
 {
 
     mc->setMouseMode(qmapcontrol::MapControl::Panning);
@@ -417,8 +429,16 @@ MapWidget::~MapWidget()
  */
 void MapWidget::addUAS(UASInterface* uas)
 {
-    mav = uas;
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+}
+
+void MapWidget::activeUASSet(UASInterface* uas)
+{
+    if (uas)
+    {
+        mav = uas;
+        path->setPen(new QPen(mav->getColor()));
+    }
 }
 
 /**
@@ -452,19 +472,19 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 
             // Icon
             QPen* pointpen = new QPen(uasColor);
-            CirclePoint* p = new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen);
+            MAV2DIcon* p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, pointpen);
             uasIcons.insert(uas->getUASID(), p);
             geomLayer->addGeometry(p);
 
             // Line
             // A QPen also can use transparency
 
-            QList<Point*> points;
-            points.append(new Point(lat, lon, QString("lat: %1 lon: %2").arg(lat, lon)));
+            QList<qmapcontrol::Point*> points;
+            points.append(new qmapcontrol::Point(lat, lon, QString("lat: %1 lon: %2").arg(lat, lon)));
             QPen* linepen = new QPen(uasColor.darker());
             linepen->setWidth(2);
             // Add the Points and the QPen to a LineString
-            LineString* ls = new LineString(points, uas->getUASName(), linepen);
+            qmapcontrol::LineString* ls = new qmapcontrol::LineString(points, uas->getUASName(), linepen);
             uasTrails.insert(uas->getUASID(), ls);
 
             // Add the LineString to the layer
@@ -472,10 +492,14 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         }
         else
         {
-            CirclePoint* p = uasIcons.value(uas->getUASID());
-            p->setCoordinate(QPointF(lat, lon));
+            MAV2DIcon* p = dynamic_cast<MAV2DIcon*>(uasIcons.value(uas->getUASID()));
+            if (p)
+            {
+                p->setCoordinate(QPointF(lat, lon));
+                p->setYaw(uas->getYaw());
+            }
             // Extend trail
-            uasTrails.value(uas->getUASID())->addPoint(new Point(lat, lon, QString("lat: %1 lon: %2").arg(lat, lon)));
+            uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, QString("lat: %1 lon: %2").arg(lat, lon)));
         }
 
         //    points.append(new CirclePoint(8.275145, 50.016992, 15, "Wiesbaden-Mainz-Kastel, Johannes-Goßner-Straße", Point::Middle, pointpen));
