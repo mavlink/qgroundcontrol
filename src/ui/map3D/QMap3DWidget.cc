@@ -31,7 +31,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QMap3DWidget.h"
 
-#include <FTGL/ftgl.h>
 #include <GL/glut.h>
 #include <QCheckBox>
 #include <sys/time.h>
@@ -44,7 +43,7 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
      : Q3DWidget(parent)
      , uas(NULL)
      , lastRedrawTime(0.0)
-     , displayGrid(false)
+     , displayGrid(true)
      , displayTrail(false)
      , lockCamera(true)
      , updateLastUnlockedPose(true)
@@ -52,7 +51,7 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
 {
     setFocusPolicy(Qt::StrongFocus);
 
-    initialize(10, 10, 1000, 900, 10.0f);
+    initialize(10, 10, 1000, 900, 15.0f);
     setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 400.0f);
 
     int32_t argc = 0;
@@ -64,7 +63,7 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
 
     buildLayout();
 
-    font.reset(new FTTextureFont("images/Vera.ttf"));
+    //font.reset(new FTTextureFont("images/Vera.ttf"));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
@@ -93,17 +92,21 @@ QMap3DWidget::buildLayout(void)
     lockCameraCheckBox->setText("Lock Camera");
     lockCameraCheckBox->setChecked(lockCamera);
 
+    //positionLabel = new QLabel(this);
+    //positionLabel->setText(tr("Waiting for first position update.. "));
+
     QGridLayout* layout = new QGridLayout(this);
     layout->setMargin(0);
     layout->setSpacing(2);
     layout->addWidget(gridCheckBox, 1, 0);
     layout->addWidget(trailCheckBox, 1, 1);
-    layout->addWidget(recenterButton, 1, 2);
-    layout->addWidget(lockCameraCheckBox, 1, 3);
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 2);
+    layout->addWidget(recenterButton, 1, 3);
+    layout->addWidget(lockCameraCheckBox, 1, 4);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
-    layout->setColumnStretch(0, 1);
-    layout->setColumnStretch(1, 50);
+    //layout->setColumnStretch(0, 1);
+    layout->setColumnStretch(2, 50);
     setLayout(layout);
 
     connect(gridCheckBox, SIGNAL(stateChanged(int)),
@@ -208,31 +211,46 @@ QMap3DWidget::displayHandler(void)
     glVertex2f(getWindowWidth(), 0.0f);
     glEnd();
 
-    char buffer[7][255];
-
-    sprintf(buffer[0], "x = %.2f", robotX);
-    sprintf(buffer[1], "y = %.2f", robotY);
-    sprintf(buffer[2], "z = %.2f", robotZ);
-    sprintf(buffer[3], "r = %.2f", robotRoll);
-    sprintf(buffer[4], "p = %.2f", robotPitch);
-    sprintf(buffer[5], "y = %.2f", robotYaw);
-
     std::pair<float,float> mouseWorldCoords =
             getPositionIn3DMode(getMouseX(), getMouseY());
-    sprintf(buffer[6], "Cursor [%.2f %.2f]",
-            mouseWorldCoords.first + robotX, mouseWorldCoords.second + robotY);
 
-    font->FaceSize(10);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glPushMatrix();
+    // QT QPAINTER OPENGL PAINTING
 
-    glTranslatef(0.0f, 30.0f, 0.0f);
-    for (int32_t i = 0; i < 7; ++i)
-    {
-        glTranslatef(60.0f, 0.0f, 0.0f);
-        font->Render(buffer[i]);
-    }
-    glPopMatrix();
+    QPainter painter;
+    painter.begin(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+    paintText(QString("x = %1 y = %2 z = %3 r = %4 p = %5 y = %6 Cursor [%7 %8]").arg(robotX, 0, 'f', 2).arg(robotY, 0, 'f', 2).arg(robotZ, 0, 'f', 2).arg(robotRoll, 0, 'f', 2).arg(robotPitch, 0, 'f', 2).arg(robotYaw, 0, 'f', 2).arg( mouseWorldCoords.first + robotX, 0, 'f', 2).arg( mouseWorldCoords.second + robotY, 0, 'f', 2),
+              QColor(255, 255, 255),
+              12,
+              5,
+              5,
+              &painter);
+}
+
+void QMap3DWidget::paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter)
+{
+    QPen prevPen = painter->pen();
+
+    float pPositionX = refX;
+    float pPositionY = refY;
+
+    QFont font("Bitstream Vera Sans");
+    // Enforce minimum font size of 5 pixels
+    int fSize = qMax(5, (int)(fontSize));
+    font.setPixelSize(fSize);
+
+    QFontMetrics metrics = QFontMetrics(font);
+    int border = qMax(4, metrics.leading());
+    QRect rect = metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125),
+                                      Qt::AlignLeft | Qt::TextWordWrap, text);
+    painter->setPen(color);
+    painter->setFont(font);
+    painter->setRenderHint(QPainter::TextAntialiasing);
+    painter->drawText(pPositionX, pPositionY,
+                      rect.width(), rect.height(),
+                      Qt::AlignCenter | Qt::TextWordWrap, text);
+    painter->setPen(prevPen);
 }
 
 void
@@ -382,15 +400,31 @@ QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
 {
     glPushMatrix();
 
-    glRotatef(yaw, 0.0f, 0.0f, 1.0f);
-    glRotatef(pitch, 0.0f, 1.0f, 0.0f);
-    glRotatef(roll, 1.0f, 0.0f, 0.0f);
+    glRotatef((yaw*180.0f)/M_PI, 0.0f, 0.0f, 1.0f);
+    glRotatef((pitch*180.0f)/M_PI, 0.0f, 1.0f, 0.0f);
+    glRotatef((roll*180.0f)/M_PI, 1.0f, 0.0f, 0.0f);
 
     glLineWidth(3.0f);
-    glColor3f(0.0f, 1.0f, 0.0f);
+
+    // X AXIS
+    glColor3f(1.0f, 0.0f, 0.0f);
     glBegin(GL_LINES);
     glVertex3f(0.0f, 0.0f, 0.0f);
     glVertex3f(0.3f, 0.0f, 0.0f);
+    glEnd();
+
+    // Y AXIS
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glBegin(GL_LINES);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, 0.15f, 0.0f);
+    glEnd();
+
+    // Z AXIS
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glBegin(GL_LINES);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, 0.15f);
     glEnd();
 
     cheetahModel->draw();

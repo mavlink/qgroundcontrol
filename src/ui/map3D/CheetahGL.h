@@ -32,7 +32,11 @@ This file is part of the QGROUNDCONTROL project
 #ifndef CHEETAHGL_H_
 #define CHEETAHGL_H_
 
+#if (defined __APPLE__) & (defined __MACH__)
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
+#endif
 
 /**
  * @brief Creates a display list which renders a Pixhawk Cheetah MAV.
