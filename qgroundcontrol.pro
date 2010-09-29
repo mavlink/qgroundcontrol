@@ -44,7 +44,6 @@ INCLUDEPATH += . \
     lib/QMapControl \
     $$BASEDIR/../mavlink/contrib/slugs/include \
     $$BASEDIR/../mavlink/include
-LIBS += -lglut
 
 # ../mavlink/include \
 # MAVLink/include \
