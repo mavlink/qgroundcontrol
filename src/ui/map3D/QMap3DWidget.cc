@@ -31,7 +31,11 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QMap3DWidget.h"
 
+#if (defined __APPLE__) & (defined __MACH__)
+#include <GLUT/glut.h>
+#else
 #include <GL/glut.h>
+#endif
 #include <QCheckBox>
 #include <sys/time.h>
 

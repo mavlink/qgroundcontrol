@@ -69,6 +69,7 @@ macx {
         -framework SDL \
         -framework CoreFoundation \
         -framework ApplicationServices \
+        -framework GLUT \
         -lm
     
     ICON = $$BASEDIR/images/icons/macx.icns
@@ -114,7 +115,8 @@ linux-g++ {
         -lflite_cmulex \
         -lflite \
         -lSDL \
-        -lSDLmain
+        -lSDLmain \
+        -lglut
 }
 
 
