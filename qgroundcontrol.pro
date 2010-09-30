@@ -55,7 +55,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/UASControl.ui \
     src/ui/UASList.ui \
     src/ui/UASInfo.ui \
-    src/ui/LineChart.ui \
+    src/ui/Linechart.ui \
     src/ui/UASView.ui \
     src/ui/ParameterInterface.ui \
     src/ui/WaypointList.ui \
