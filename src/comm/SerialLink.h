@@ -57,7 +57,7 @@ class SerialLink : public SerialLinkInterface {
     //Q_INTERFACES(SerialLinkInterface:LinkInterface)
 
 public:
-    SerialLink(QString portname=NULL, BaudRateType baudrate=BAUD57600, FlowType flow=FLOW_OFF, ParityType parity=PAR_NONE, DataBitsType dataBits=DATA_8, StopBitsType stopBits=STOP_1);
+    SerialLink(QString portname = "", BaudRateType baudrate=BAUD57600, FlowType flow=FLOW_OFF, ParityType parity=PAR_NONE, DataBitsType dataBits=DATA_8, StopBitsType stopBits=STOP_1);
     ~SerialLink();
 
     static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in configuration.h
