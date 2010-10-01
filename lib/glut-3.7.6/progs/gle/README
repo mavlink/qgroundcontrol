@@ -1,9 +1,0 @@
-
-The demos are best seen in order, from the most basic, to the advanced. 
-Run the "rundemo" script.
-
-Note that most of the demo's were written using cut & paste, starting
-with the simplest demo, cylinder.c.  We could have written a fancy demo
-package that avoided all of the cut&paste of code, but we felt that this
-would only hide what we are trying to show here: the programming API for
-the tube & extrusion library.
