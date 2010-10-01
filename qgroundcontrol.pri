@@ -108,8 +108,49 @@ linux-g++ {
     LIBS += \
         -L/usr/lib \
         -lm \
+        -lflite_cmu_us_kal16 \
+        -lflite_usenglish \
+        -lflite_cmulex \
+        -lflite \
+        -lSDL \
+        -lSDLmain \
+        -lglut
+
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
+}
+
+linux-g++-64 {
+    CONFIG += debug
+
+    debug {
+        DESTDIR = $$BASEDIR
+    }
+
+    release {
+        DESTDIR = $$BASEDIR
+    }
+    INCLUDEPATH += /usr/include \
+                   /usr/include/qt4/phonon
+              # $$BASEDIR/lib/flite/include \
+              # $$BASEDIR/lib/flite/lang
+
+
+    HARDWARE_PLATFORM = $$system(uname -a)
+    contains( HARDWARE_PLATFORM, x86_64 ) {
+        # 64-bit Linux
+        #LIBS += \
+            #-L$$BASEDIR/lib/flite/linux64
+        message(Building for GNU/Linux 64bit/x64)
+    } else {
+        # 32-bit Linux
+        #LIBS += \
+           #-L$$BASEDIR/lib/flite/linux32
+        message(Building for GNU/Linux 32bit/i386)
+    }
+    LIBS += \
+        -L/usr/lib \
+        -lm \
         -lflite_cmu_us_kal16 \
         -lflite_usenglish \
         -lflite_cmulex \
