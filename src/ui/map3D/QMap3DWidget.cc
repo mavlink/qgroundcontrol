@@ -31,15 +31,10 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QMap3DWidget.h"
 
-//#if (defined __APPLE__) & (defined __MACH__)
-//#include <GLUT/glut.h>
-//#else
-//#include <GL/glut.h>
-//#endif
 #include <QCheckBox>
 #include <sys/time.h>
 
-#include "QGCGlut.h"
+//#include "QGCGlut.h"
 #include "CheetahModel.h"
 #include "UASManager.h"
 #include "UASInterface.h"
@@ -531,7 +526,15 @@ QMap3DWidget::drawTarget(float x, float y, float z)
     glTranslatef(targetPosition.x - x, targetPosition.y - y, 0.0f);
     glColor3f(0.0f, 0.7f, 1.0f);
     glLineWidth(1.0f);
-    glutWireSphere(radius, 10, 10);
+
+    // Make sure quad object exists
+    if(!quadObj) quadObj = gluNewQuadric();
+    gluQuadricDrawStyle(quadObj, GLU_LINE);
+    gluQuadricNormals(quadObj, GLU_SMOOTH);
+    /* If we ever changed/used the texture or orientation state
+       of quadObj, we'd need to change it to the defaults here
+       with gluQuadricTexture and/or gluQuadricOrientation. */
+    gluSphere(quadObj, radius, 10, 10);
 
     if (expand)
     {

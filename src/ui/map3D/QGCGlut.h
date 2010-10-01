@@ -48,7 +48,10 @@ OpenGL(TM) is a trademark of Silicon Graphics, Inc.
 */
 
 #include <cmath>
-#include "glu.h"
+#include "OpenGL/glu.h"
+
+namespace sgi
+{
 
 /* Some <math.h> files do not define M_PI... */
 #ifndef M_PI
@@ -597,6 +600,6 @@ glutSolidTetrahedron(void)
 }
 
 /* ENDCENTRY */
-
+}
 
 #endif // QGCGLUT_H

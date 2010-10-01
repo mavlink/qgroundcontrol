@@ -164,8 +164,7 @@ HEADERS += src/MG.h \
     src/ui/map3D/Q3DWidget.h \
     src/ui/map3D/CheetahModel.h \
     src/ui/map3D/CheetahGL.h \
-    src/ui/map3D/QMap3DWidget.h \
-    src/ui/map3D/QGCGlut.h
+    src/ui/map3D/QMap3DWidget.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \

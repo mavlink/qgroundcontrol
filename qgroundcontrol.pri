@@ -113,8 +113,7 @@ linux-g++ {
         -lflite_cmulex \
         -lflite \
         -lSDL \
-        -lSDLmain \
-        -lglut
+        -lSDLmain
 
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
@@ -156,8 +155,7 @@ linux-g++-64 {
         -lflite_cmulex \
         -lflite \
         -lSDL \
-        -lSDLmain \
-        -lglut
+        -lSDLmain
 }
 
 
