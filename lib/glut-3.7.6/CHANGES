@@ -1,0 +1,988 @@
+
+GLUT Change Log
+================
+
+NOTE:  This document is potentially incomplete.
+
+
+GLUT 3.7 -> 3.7.1
+------------------
+
+  o  Added a default icon for glut windows (Win32 only).
+
+  o  Added workspace and project files for compiling with
+     Microsoft Visual Studio (6 or greater).
+
+  o  Updated some of the demo programs.
+
+
+GLUT 3.6 -> 3.7
+----------------
+
+  o  Added to <GL/glut.h> the ability to automatically link with
+     the necessary GLUT and OpenGL libraries.  Define GLUT_NO_LIB_PRAGMA
+     to disable this (you need to disable this when compiling the
+     library itself).  Define GLUT_USE_SGI_OPENGL for auto library
+     linking with the SGI OpenGL for Windows libraries.  Define
+     GLUT_NO_WARNINGS_DISABLE to avoid warnings that GLUT programs
+     typically want to suppress.
+
+  o  Port of IRIS GL newave "wave physics" demo by Erik Larsen
+     (cayman@sprintmail.com).  Look in progs/demos/newave
+
+  o  The glutSolidTeapot and glutWireTeapot do not tesselate as
+     finely as in previous releases.  Expect the teapot to render
+     much faster as of GLUT 3.7.
+
+  o  The lib/*/Imakefile files have been updated to make it easier
+     to build shared/debug/profiling versions of the various GLUT
+     libraries.  See Question 44 in the "FAQ.glut" files for
+     more details.
+
+  o  Fix progs/advanced/textext example to work on little-endian machines.
+
+  o  Fixed a performance bug in progs/advanced/rts.c that eliminates
+     one full shadow volume rendering pass.  If you have the silhouette
+     shadow volume geometry, you can use GL_INVERT and draw the shadow
+     volume with a single pass with both front & back faces enabled
+     instead of two distinct passes for front and back as would be
+     needed if GL_INCR/GL_DECR were used.  Also fixed the near and
+     far clipping planes for better depth precision with 16-bit
+     depth bufffers.
+
+  o  Improve the efficiency of Win32's wglMakeCurrent calls.  It
+     turns out that Microsoft does not "short circuit" a redundant
+     wglMakeCurrent (ie, if you make current to the same context
+     and same DC you are already bound to, it is not a no-up).
+     Now, GLUT uses wglGetCurrentContext and wglGetCurrentDC to
+     determine when not to redundantly call wglMakeCurrent.
+
+     This also reduced the calling of GetDC within Win32 GLUT.
+
+     Note that the GLX version still assumes that a redundant
+     glXMakeCurrent is short circuited.
+
+  o  Call glutDestroyWindow (and glutLeaveGameMode) destroys the
+     window (or game mode window) before returning.  Previously,
+     the X11 implementation didn't do an explicit flush so the
+     window could still be on the screen after glutDestroyWindow
+     (or glutLeaveGameMode) returned.  The Win32 behavior was
+     corret in GLUT 3.6.
+
+  o  Work around Microsoft's bug where atexit callbacks are not
+     called if exit is called from within a DLL.  I had to add new
+     routines glutCreateWindowWITHEXIT, glutCreateMenuWITHEXIT,
+     and glutInitWITHEXIT that pass in the exit routine's function
+     pointer so GLUT can call this routine and exit with the
+     atexit callbacks called correctly.
+
+  o  Added lib/glsmap library for dynamic real-time sphere mapping.
+     See the demos in progs/spheremap/glsmap
+
+     Builds for N32, O32, and N64 for IRIX.
+
+     rtsmap has an environment reflected in a sphere, teapot, or
+     icosahedron (8 passes).  Very cool.  fakeraytrace goes one
+     step further and has two reflective objects, then does an
+     extra recursive pass so that one of the spheres is actually
+     reflecting the reflection in the other sphere.  Wow.
+
+  o  Man pages updated.
+
+     Version number in man pages changed to 3.7.
+
+     My email address changed to mjk@nvidia.com
+
+     New man pages:
+       glutEnterGameMode
+       glutForceJoystickFunc
+       glutGameModeGet
+       glutGameModeString
+       glutIgnoreKeyRepeat
+       glutJoystickFunc
+       glutKeyboardUpFunc
+       glutSetKeyRepeat
+       glutSpecialUpFunc
+
+     Updated man pages:
+       glutDeviceGet
+       glutGet
+       glutSolidTeapot
+
+  o  Updated the ./linux/* files for GLUT 3.7.
+
+  o  The GLUT library should compile with a C++ compiler now.  I make
+     no promises that the entirety of GLUT can compile with a C++
+     compiler though.  Brian Paul wanted this for Mesa which does
+     expect to build with a C++ compiler.  Christoph M. Hoffmann
+     <cmh@cs.purdue.edu> brought up this issue.
+
+  o  Added proto dynamic sphere mapping programs in
+     progs/spheremap/hacks to help you understand the steps in
+     making a dynamic sphere map.
+
+  o  Added program demonstrating window space texture coordinate
+     generation at progs/advanced/texwinalign.c; demonstrates how
+     texture matrix can be be used to generated texture coordinates
+     in window space.
+
+  o  The -iconic command line option works for Win32 GLUT programs
+     now.  The new test28 actually tests the -iconic command line option.
+
+  o  Added the glutGameModeString, glutEnterGameMode, glutLeaveGameMode,
+     and glutGameModeGet calls for "full screen" game mode display
+     change switching.  Only the Win32 implementation really does
+     display mode changes.  See lib/glut/glut_gamemode.c
+
+  o  Several demos added a -fullscreen option to use the new GLUT
+     game mode functionality.  I generally also fixed these to
+     match the window aspect ratio.  Examples:  underwater, txfdemo
+
+  o  Sort of fixed how WM_ACTIVATE messages get processed in the
+     Win32 GLUT implementation.
+
+  o  Moved the Win32 WinProc function out of win32_util.c into
+     its own win32_winproc.c file.
+
+  o  Building the GLUT library debug for Win32 works now (changes
+     to the Makefile.win setup).
+
+  o  Added a poor man's stereo example by Walter Vannini
+     (walterv@jps.net, waltervannini@hotmail.com).  The idea
+     is to draw the left eye in red and right eye in blue
+     and use cheap red/blue filter stereo glasses to see
+     the stereo separation.  See progs/advanced/redblue_stereo.c
+
+  o  Improve GLUT static library implementation.  Now if you don't
+     use the GLUT menu API, you don't get this code included in your
+     binary.  Reduces GLUT program text size by 25% for such non-menu
+     GLUT programs.
+
+  o  Add gleGetNumSlices and gleSetNumSlices entry points to control
+     the tessellation level (previously, always a constant 20).
+
+  o  Improved dependencies in SGI Makefiles in lib/*/Makefile.sgi
+
+  o  Added progs/gle/martini.c example.  Spinning martini glass.
+
+  o  Should work on VMS 7.0.  Changes suggested by Jouk Jansen
+     (joukj@crys.chem.uva.nl).  Mainly changes to GLUT library itself
+     to deal with VMS 7.0's POSIX-compliant support for gettimeofday.
+
+  o  Added GLUT version of "skyfly" terrain fly over demo.  See
+     progs/demos/skyfly
+
+  o  Update of GLUT frequently asked questions.  See FAQ.glut
+
+  o  Added workaround to real-time shadow demos so they work on old
+     (pre-IRIX 6.5) Octane and Impact systems.  The work around makes
+     sure the feedback buffer is always at least 2048 entries big to
+     force use of software feedback.  See progs/advanced/rts.c and
+     progs/advanced/shadowfun.c
+
+  o  Add work-around in hello2rts for Riva 128 and 128 ZX to make
+     hello2rts start by default with the stencil invariant hack
+     enabled.  This makes sure that hello2rts use the software
+     rasterizer for all rendering so the shadows look right.  Other
+     platforms may need this support.  There is a menu option to
+     flip it on if need be.
+
+  o  Added a "win32pfd" (Win32 Pixel Format Descriptor) capability
+     name for the Win32 version of GLUT's glutInitDisplayString
+     parser.  This lets you select a specific pixel format descriptor,
+     much as "xvisual" allows one to do with X11.  This is intended
+     to facilitate benchmark construction with GLUT where particular
+     PFDs can be selected for benchmarking or testing.  Also documented
+     on glutInitDisplayString man page.  Win32 GLUT only.
+
+  o  Add glutGet(GLUT_WINDOW_FORMAT_ID) to return the window system
+     dependent window format ID (Visual ID for X11; Pixel Format
+     Descriptor Number for Win32).  This should help people be able
+     to report bugs and now precisely what format ID they are
+     testing and/or benchmarking.  Note that these values can change
+     between X servers, hardware, and OpenGL implementations.
+
+  o  Fix glutGet(GLUT_WINDOW_COLORMAP_SIZE) bug in X11 GLUT
+     implementation.  The routine now correctly returns the colormap
+     size of the current layer (previously it returned the size
+     of the normal layer which was a totally bogus value for an
+     RGBA normal layer).
+
+  o  Fixed SEE ALSO section of glutDeviceGet man page.
+
+  o  glutInitDisplayString now knows how to use the SGIX_fbconfig
+     extension to access 16-bit StaticGray luminance visuals.
+     These high-resolution luminance (1 component) visuals are
+     excellent for medical imaging applications that need the
+     16 bits per pixel resolution.
+
+     To get a luminance window, do:
+
+	glutInitDisplayString("luminance");
+
+     Note that few systems actually support 16-bit luminance visuals.
+     InfiniteReality does.  I'm not aware of any other systems that
+     do.
+
+  o  Added missing GLUT entry points to the GLUT Ada binding
+     and interface files.
+
+  o  Added progs/demos/sysview, an IRIX operating system 3D
+     monitor.  Only compiles on SGI machines, though it could
+     easily be adapted to other operating systems.  Courtesy
+     of Javier Velasco <fjvelasco@sfe.indra.es>.
+
+  o  Win32 GLUT didn't generate keyboard callback for Delete key
+     (ascii 127) before; now it does.
+ 
+  o  Fix warning in glut_input.c when compiling on Alpha due
+     to XInput extension API snafu.  Pointed out by Tom Holroyd
+     <tomh@taz.ccs.fau.edu> compiling on a Linux Alpha machine.
+
+  o  Fixed bug reported by Rune Hasvold <runeh@ifi.uio.no> in
+     win32_glx.c where Win32 GLUT was always requesting a 1
+     bit depth buffer at least.  Now, GLUT requests zero bits
+     of DEPTH unless you request a depth buffer.  Apparently
+     this bug was fixed in the Mesa version of GLUT a while
+     back, but didn't get to my GLUT source until now.
+
+GLUT 3.5 -> 3.6
+----------------
+
+  o  The GLUT .zip file now has "Makefile" be a copy of "Makefile.win"
+     instead of "Makefile.sgi".  This makes it easier for Win32 GLUT
+     users to just do an "nmake" to build GLUT.
+
+  o  Updated various README files for GLUT 3.6.
+
+  o  Update GLUT man page revs to say 3.6.
+
+  o  Fixed bug in Win32 accumulation buffer allocation code.  Thanks to
+     Nate and Layne Christensen <lchriste@es.com>.
+
+  o  Fix bug in Win32 GLUT where pushing/popping a subwindow would
+     also reposition the window to its parent's origin.  Now, push/pop
+     operations do not disturb the window position.
+
+  o  Fix all VC++ Win32 warnings and improve the GLUT.DLL speed
+     and size by macro'izing Xlib routines and eliminating X11-only
+     functionality from the Win32 version of the library.
+
+  o  Fixed various bugs in Win32 GLUT menu handling.  The glutChange*
+     and glutRemoveMenuItem routines should work pretty well now.
+
+  o  Fix Win32 GLUT bug where a reshape did not properly result in
+     repair-damage, ie. glutLayerGet(GLUT_NORMAL_DAMAGED) didn't work
+     right in GLUT 3.5.
+
+  o  The "walker" demo's win32_dirent.h code got update to read directory
+     correctly for Windows 95 (does Win32 FindFirstFile on "." operate
+     differently from Windows NT?  It seems like "*" works the way "."
+     should.)
+
+  o  X11 GLUT now detects when you set up an infinite loop due to
+     recursive submenu nesting.  In previous GLUT implementations,
+     this could lead to an infinite loop with the X server grabbed;
+     now it leads to a GLUT fatal error.
+     
+  o  GLUT now exits with a fatal error if glXCreateContext (or
+     wglCreateContext) fails instead of crashing.
+
+  o  Win32 "make test" infrastructure in place.
+
+  o  Ideas in Motion demo builds better now.
+
+  o  Substantially improve the performance of glutSolidTorus and
+     glutWireTorus by using quad strips instead of independent quads.
+     Also, generally made the looping more efficient.  Thanks to
+     Emmanuel Maa BERRIET (eberriet@sky.fr) for pointing out the
+     inefficiencies.
+
+  o  Include Linas Vepstas's GLE library with GLUT (based on GLE 2.2.6).
+     Includes man pages at man/gle and examples at progs/gle
+  
+     The GLE Tubing and Extrusion Library is a graphics application
+     programming interface (API). The library consists of a number of
+     "C" language subroutines for drawing tubing and extrusions.
+
+     Several bugs in GLE 2.2.6 are fixed here, particularly to make
+     GLE work well under Win32.
+
+  o  Fixed bugs in MUI so that it can support multiple user interface
+     windows.  Added muiAttachUIList to associate a UI list with a GLUT
+     window.
+
+  o  More MUI enchancements to allow "disabled" greyed-out UI elements
+     courtesy of Tom Davis.
+
+  o  gliq, a pegboard game of IQ by Kiri Wagstaff, is at progs/demos/gliq
+
+  o  Add Nate Robin's port of the IRIS GL bounce program to OpenGL; see
+     progs/demos/bounce (includes a slider GUI element).
+
+  o  Add Nate Robin's "smooth" 3D object viewer without automatic nice
+     normal generation.
+
+  o  glflare, an OpenGL version of the D3D flare idea by Stephen Coy of
+     Microsoft.  See progs/demos/glflare
+
+  o  Resolve gcc warnings (picky, picky) in lib/glut.  This includes
+     not relying on the libc having strdup (not required by ANSI C or
+     POSIX).
+
+  o  Fix array bound overflow bug in progs/examples/stars.c
+
+  o  Handle fopen failure in progs/texfont/gentexfont.c
+
+  o  Add many more Ada GLUT examples; see progs/ada
+
+  o  Support X11R6's XK_KP_* keysyms for the keypad.  Previously,
+     the Home,Left,Right,etc keys on the numeric keypad (when num lock
+     is off) got ignored.  Now they should work.  Thanks to Paul
+     Henning (phenning@cs.uiowa.edu) for pointing out this problem.
+
+  o  It is now possible to catch a Unix signal in a signal handler and
+     add a glutIdleFunc and know that the GLUT main loop will
+     immediately drop out of waiting for the event and call the idle
+     callback.  This makes it possible to reliably respond to signals
+     from within a GLUT program.  (Just on Unix systems, not Win32.)
+
+  o  Added progs/demos/lorenz, Lorenz Attractor Demo.
+
+  o  Added progs/examples/editgrid.c
+
+  o  Improved progs/mesademos/texobj.c
+
+  o  Fixed progs/redbook/surface.c to request a depth buffer.
+
+  o  Added progs/advanced/pointburst.c demonstrating a particle system.
+
+  o  Added progs/advanced/sgiflag.c demonstrating dynamic real-time
+     NURBS trimming.
+
+  o  progs/advanced/envmap.c supports OpenGL 1.1 now.
+
+  o  Fix GLUT library compilation problem on DEC Unix 4.0 on Alpha
+     machines reported by Ray S. Babcock (babcock@cs.montana.edu).
+     See glut_dstr.c
+
+  o  Fix single buffered GLUT programs that needed to be calling
+     glFlush at the end of the frame.  Reported by
+     fossum@austin.ibm.com (Gordon C. Fossum).
+
+  o  Fix Fortran build error under IRIX 6.5 (use sed instead of grep).
+
+  o  Use "-Wl,-ignore_unresolved" SGI linker option to get around
+     problems in buggy SGI OpenGL Fortran bindings having extension
+     routines that are not implemented in the supplied OpenGL.
+
+  o  Added Brian Paul's marvelous Blue Pony demo in demos/bluepony
+
+     I had requested a Blue Pony from SIGGRAPH as one of my "special
+     needs" for our SIGGRAPH '97 "OpenGL and Window System Integration"
+     course.  Brian came through with this virtual Blue Pony.  Thanks,
+     Brian!
+
+  o  Fixed a problem in test/glut/bigtest.c where if it ran too
+     long, it would stop rotation due to numeric problems.
+
+  o  Make new glut_swap.c and glut_cmap.c files to help keep
+     glutSwapWindow and the color index GLUT entrypoints out of
+     statically linked GLUT programs that do not use these routines.
+
+  o  Fix many warnings.
+
+GLUT 3.4 -> 3.5
+----------------
+
+  o  Henk Kok (kok@wins.uva.nl) contributes another cool demo.  See
+     progs/demos/opengl_logo
+
+  o  README.win32 now named README.win
+
+  o  Add the MUI (micro-UI) library developed for GLUT experimentally
+     based on SGI's Showcase user interface library.  This code was
+     developed by Tom Davis (davis@sgi.com).
+
+  o  The test directory now has subdirectories.  test/glut has
+     all the previous GLUT API tests.
+
+  o  Added menus to progs/advanced/projtex.c
+
+  o  Added tiffsift.c showing how to do "sifting" texture distortions
+     with OpenGL's third texture coordinate.
+
+  o  Improve lib/glut/glut_menu.c by having the code check if the
+     default visual is in the overlay so that it will get chosen
+     as the pop-up menu visual to minimize colormap flashing.
+     Suggested by Thomas Roell (thomas@xig.com).
+
+  o  Fix bug in glutStrokeLength and glutBitmapLength reported by Tom
+     Carroll <carroll@fp.com>.
+
+  o  Added shadowfun.c, boundary.c, hello2rts.c and rts.c as
+     examples of how to do fancy stenciled shadow volumes.  See
+     the progs/advanced subdirectory.
+
+  o  Now man pages get installed with "glut" suffix.  Should avoid
+     situations where GLUT's intro.3 clobber's systems intro.3
+     because GLUT should now install intro.3glut
+
+  o  Changes to Glut.cf for Digital Unix (Alpha) suggested by
+     Dr Andrej Panjkov (A.Panjkov@latrobe.edu.au).
+
+  o  Added demos/chess and demos/rollercoaster demos written by
+     Henk Kok (kok@wins.uva.nl).  Very nice.
+
+  o  Michael Gold's "rasterization only" demo uses OpenGL as just
+     a rasterization interfaces.  See progs/advanced/rasonly.c
+
+  o  progs/demos/underwater shows OpenGL-based rendering of underwater
+     caustics effects.  Very cool!
+
+  o  Added progs/perf_harness directory with an example of how
+     to create an application specific GLUT-based OpenGL benchmark.
+
+  o  Remove lib/glut/cannotate.c from distribution (no one should care).
+
+  o  Portability improvements throughout, particularly to Win32.
+
+GLUT 3.3 -> 3.4
+----------------
+
+  o  Add glutStrokeLength and glutBitmapLength calls to glut.h
+     (previously undocumented).  Will be documented part of GLUT 4
+     API.
+
+  o  Added man discussion of glutStrokeLength, glutBitmapLength,
+     and glutWarpPointer.
+
+  o  Used ANSI C "const" keyword in glut API and implementation
+     as appropriate (this helped make Ada binding generation
+     easier).
+
+  o  README.win32 added; this is from Nate Robins's GLUT 3.3
+     Win32 distribution.
+
+  o  SGI Makefiles use $(TOP)/glutdefs for shared GLUT-related
+     macros.
+
+  o  Add workaround for Microsoft's OpenGL 1.1 implementation.
+     MS OpenGL 1.1 does not advance the raster position by the
+     xoffset and yoffset of glBitmap if the specified bitmap
+     has a width or height of zero (it is just a no-op); this is
+     not what OpenGL specifies.  I've fixed the GLUT bitmap fonts
+     to not use null bitmaps #ifdef WIN32 and instead use a 1x1
+     bitmap with not bit set.  capturexfont.c has been changed to
+     generate code with the #ifdef WIN32 workaround.
+
+  o  Fix bug in -geometry handling for negative window positions.
+     Now "-geometry 400x500-23-34" does not crash GLUT programs.
+
+  o  Makefile support for SGI machines so that you can set your
+     OBJECT_STYLE environment variable to one of SGI's various ABIs
+     and ISAs.  This can let you compile GLUT fully 64-bit with
+     R10K instructions or mereley old 32-bit ABI.  For example,
+     to compile N32 with only R4K instructions, do a
+     "setenv OBJECT_STYLE N32_M3".
+
+  o  Put header files in include/GL instead of GL - this would make
+     it esier to support other libraries within the GLUT distribution
+     (possibly libtiff) that wouldn't want a header to be in the GL
+     subdirectory.
+
+  o  Add GLUT 4 glutReportErrors entry point.
+
+  o  New cool game-oriented rendering demos: dinoreflect.c dinoshade.c
+     and halomagic.c
+
+  o  Support HP's Color Recovery System since Mesa uses it.
+
+  o  Add the libtiff examples in progs/tiff:  showtiff, writetiff,
+     and textiff
+
+  o  Add the new OpenGL Programming Guide 2nd Edition examples to the
+     GLUT distribution.
+
+  o  added progs/mesademos/trdemo.c - Brian Paul's tiled rendering demo.
+
+  o  added progs/demos/geoface - facial animation demo.
+
+  o  no long export internal symbols in libglut that should have been static.
+     See lib/glut/Makefile.sgi's "make symcheck" rule.
+
+  o  glutInitDisplayString implemented.  See test23.  Also works automatically
+     with Mesa.
+
+  o  Added popup menu overlay color cell allocation logic for Sun's
+     Creator hardware.  See test24.
+
+  o  Enhanced tests and fixed messages in a few places.
+
+GLUT 3.2 -> 3.3
+----------------
+
+  o  The SGI Makefiles always build O32 executables.  In IRIX 6.4, the
+     default executable type changes to N32; to avoid Makefile
+     sommersaults, we just keep use at O32.
+
+  o  Get rid of all the __glutFatalError calls in the GLUT test suite.
+     Naughty to be using a GLUT internal function.
+
+  o  Introduced some new entry points that will be part of the official
+     GLUT 4 API when it is finalized for video resize & window status.
+     The video resize API is useful for hardware with full screen
+     video resize (ie, InfiniteReality).  The window status callback
+     extends the information of the previous visibility callback to
+     tell you when the window is fully vs. partially visible and
+     when the window is hidden vs. fully obscured.  GUIs typically want
+     to know when a window gets unmapped; programs that rely on a
+     fully unobscured frame buffer (such as histogram occlusion culling)
+     need to know when the window is fully visisble.
+
+  o  progs/advanced/occlude.c demonstrates a histogram based occlusion
+     culling technique.  It requires support of the histogram extension
+     and works best on a machine like RealityEngine.
+  
+  o  glutSolidCube and glutWireCube efficiency improved.
+ 
+  o  Added progs/examples/cube.c - simple demo to draw a 3D cube.
+
+  o  Fixed warning message from glutSetWindow.
+  
+  o  glutFullScreen called on a window before it is mapped now
+     properly overrides the WM_NORMAL_HINTS to ensure that the window
+     is positioned at 0,0 (ie, no random or interactive placement
+     by the window manager).
+
+  o  For IRIX 6.3 and IRIX 6.4, eliminate X server routine trips for
+     interning atoms using SGI's fast atoms optimization.
+
+  o  Added a GLUT introduction man page.  Either "man glut" or "man intro".
+
+  o  Previously, timer callbacks could be starved by continous X
+     events.  Now, timer callbacks and X event processing are handled
+     at the same priority.  test/timer_test.c helps verify the improved
+     behavior.
+
+  o  Add IAFA for submitting GLUT to sunsite.unc.edu for anonymous
+     ftp; based on Mesa version.
+
+  o  SGI Makefiles work with MIPS 7.10 compilers now.
+
+  o  Fixed more warnings.
+
+  o  advanced: Fixed overlay bug in zcomposite.
+
+  o  demos: Fixed OpenGL bug in glutmech.
+
+  o  demos: Fixed atlantis to have a more reasonable near/far range for
+     machines with limited depth buffer resolution (<=16 bits).
+
+  o  Improved comments in places.
+
+  o  libglut: Fixed message if Motif atom intern'ing failed for fullscreen.
+
+GLUT 3.1 -> 3.2
+----------------
+
+  o  Complete Unix-style nroff man pages for all the GLUT library
+     routines.  See README.man for details.
+
+  o  Implement the MESA_SWAP_HACK.  If you set the MESA_SWAP_HACK
+     enviornment variable and you are using Mesa, GLUT will attempt
+     to simply do a glXSwapBuffers to repair damage to a double
+     buffered GLUT window that appears to have been last displayed
+     using a glutSwapBuffers call.  This can *greatly* improve the
+     redraw performance of GLUT programs running under Mesa when
+     they are damaged (for example by popup menus that are not in
+     the overlays).  See lib/glut/glut_mesa.c  This idea was suggested
+     by Brian Paul on the Mesa mailing list.
+
+     Note that some poorly behaved (probably buggy, actually) GLUT
+     programs may no redraw correctly with MESA_SWAP_HACK.  The
+     optimization relies upon your display callback being idempotent
+     and that the window is not otherwise rendered to by other
+     callback routines.
+
+  o  Port Brian Paul's various Mesa 2.0 demo programs to use
+     GLUT: bounce, gamma, gears, isosurf, offset, reflect,
+     spin, tess_demo, texobj, & winpos.  The reflect program
+     is definitely worth checking out.
+
+  o  Include GLUT examples presented by Tom McReynolds and
+     David Blythe at the "Advanced OpenGL Rendering" course at
+     SIGGRAPH '96.
+
+  o  Add progs/examples/simple.c showing how to simply draw
+     a single triangle with OpenGL.  How long would an equivalent
+     Direct3D immediate program be?  Much longer...
+
+  o  Screen door transparency example using polygon stippling
+     based on code from Tim Hall.  progs/examples/screendoor.c
+
+  o  Fix bug where glutRemoveMenuItem about recalculating
+     the menu's width in pixel that would sometimes cause an
+     X protocol error.
+
+  o  Make sure that when a popup menu is finished that if the
+     initiating window has an overlay, the overlay colormap
+     is installed.  An overlay popup menu could otherwise knock
+     out the window's overlay colormap.
+
+  o  Fix an "off by one" error in the window number printed out
+     in a fatal error message when a redisplay is generated on
+     a window without a display callback.
+
+  o  Make consistent puncutation in some fatal error messages.
+
+  o  Some work to make example programs easier to build on
+     Windows NT and 95 (probably not complete; report bugs
+     please).
+
+GLUT 3.0 -> 3.1
+----------------
+
+  o  The various shape rendering routines use single
+     precision instead of double precision.
+
+  o  The box shape rendering routines don't generate
+     redundant normals.
+
+  o  Make glutExtensionSupported more robust.
+
+  o  Added test20 for glutExtensionSupported.
+
+  o  Fixed Makefile in /usr/share/src/GLUT images.
+
+  o  Fixed multisample complication bug in dinospin.c
+
+  o  Fixed multiple includes in moth.c
+
+  o  Add contribed steam.c and glutmech demos (cool!).
+
+  o  Added fontdemo and evaltest in progs/examples.
+
+  o  Fix an HP/UX compilation problem with libglut.a
+
+  o  Fix GETTIMEOFDAY macro to take two args on a Sun.  Why does
+     Sun claim to be SVR4 when they have a BSD (2 parameter
+     gettimeoday)?
+
+  o  Add an #ifdef to glut_win.c for working around Solaris
+     2.4 and 2.5 bug in XmuLookupStandardColormap.
+
+GLUT 2.3 -> 3.0
+----------------
+
+  o  Major version change so GLUT 3.0 does have API additions!
+
+  o  Added yacme (yet another colormap editor) demo by Patrick Bouchaud
+     (SGI Switzerland).
+
+  o  Updated glut.h so that GLUT_XLIB_IMPLEMENTATION=5 for 3.0
+     and GLUT_API_VERSION=3 for 3.0.
+
+  o  Change all the sample programs to _not_ #include <GL/gl.h> or
+     <GL/glu.h>.  From the spec:  "Because a very large window system
+     software vendor (who will remain nameless) has an apparent
+     inability to appreciate that OpenGL's API is independent of their
+     window system API, portable ANSI C GLUT programs should not
+     directly include <GL/gl.h> or <GL/glu.h>.  Instead, ANSI C GLUT
+     programs should rely on <GL/glut.h> to include the necessary
+     OpenGL and GLU related header files."  Sigh.
+
+  o  New Helvetica fonts: 10, 12, and 18 point versions.
+     GLUT_BITMAP_HELVETICA_10, GLUT_BITMAP_HELVETICA_12, and
+     GLUT_BITMAP_HELVETICA_18.
+
+  o  Implement glutFullScreen.
+
+  o  Implement glutSetCursor.
+
+  o  Implement glutGetModifiers.
+
+  o  Implement glutBitmapWidth and glutStrokeWidth.
+
+  o  Reimplement test2 to use glutGet(GLUT_ELAPSED_TIME) instead of
+     the less than portable gettimeofday.
+
+  o  Ripped out all the support for compiling earlier GLUT API
+     versions.  It got very ugly and hard to maintain.
+
+  o  Added GLUT_LUMINANCE to GLUT verison 3 API and documented it, but
+     it is not implemented as part of GLUT 3.0; should be in 3.1.
+
+  o  Added OpenVMS support to GLUT library with much help from Andy Vesper.
+
+  o  The display mode mask parameter for glutInitDisplayMode and the
+     milliseconds parameter for glutTimerFunc are now of type unsigned
+     int (previously unsigned long).
+
+  o  glutMenuStatus obsoletes glutMenuState.  The callback registered
+     by glutMenuStatus is triggered just like glutMenuState, except
+     that an additional two parameters pass the X and Y location of the
+     mouse when the menu status changes.  This is to remedy problems a
+     GLUT program using glutPassiveMotion might have re-sync'ing with
+     the mouse position after menu use.
+
+  o  In previous releases of GLUT, various user input events were
+     discarded when menus were in use.  Now, these callbacks are
+     generated.  If the effect of the events should be performed after
+     the menu is released, it is up to the GLUT program to delay the
+     action.
+
+  o  Careful to ignore Enter/LeaveNotify events that come
+     from the pop-up window pointer grab and ungrab (ie,
+     Enter/LeaveNotify events not marked NotifyNormal for their mode.
+     Eliminates "spurious" entry events.
+
+  o  Fixed bug with new work (like subwindow creation is a display callback)
+     not being placed on the work queue and getting lost.
+
+  o  Fix memory corruption bug in caching of values returned by
+     glXChooseVisual; no longer cache.
+
+  o  Fixed bug with glutCopyColormap sometimes not accurately
+     re-establishing the WM_COLORMAP_WINDOWS property.
+
+  o  Fixed bug in deliver of enter and left callbacks.  Before "virtual"
+     enter and leave (X protocol teminology) were being reported.  The
+     semantic for the entry callback is it is entering and leaving
+     a GLUT windows real estate that counts; not passing through
+     the window hiearchy.
+
+  o  Add XFlush to __glutFinishMenu in case menu call back will want to
+     read from a terminal window.  In this case, the X server may still
+     be grabbed since the XUngrabPointer hasn't been flushed out of
+     Xlib's buffers to the X server for processing (deadlock!).
+
+  o  Don't allow modification of menus while in use.  Spec ammended to
+     say "It is illegal to create or destroy menus or change, add, or
+     remove menu items while a menu (and any cascaded sub-menus) are in
+     use (i.e., popped up)." Allowing modifications of menus while in
+     use was dubious, the semantics would be unclear, and even more
+     unfortunate, might vary from system to system.
+
+  o  Spec warns that you should not call routines that require a current
+     window or menu when there is not a current window or menu (like
+     before you create one or if you destroy the current one).
+
+  o  Fixed bug where glutSpecialFunc callback would only operate if
+     a glutKeyboardFunc callback was also registered.
+
+  o  Fixed bug in color index visual selection so that largest number
+     of bits of color resolution is preferred to smallest.
+
+  o  Fixed bug where if a double buffer X window was used to emulate
+     a single buffer window, GLUT should set the OpenGL read mode
+     to GL_FRONT (it was only changing the draw mode).
+
+  o  Fixed an obscure ordering bug with simultaneous glutPushWindow and
+     glutPopWindow calls on different subwindows of the same window.
+
+  o  Now, it is a fatal error to receive an expose event with no
+     display callback registered (it was stupid to allow mapped windows
+     that made no attempt to redisplay).  The spec has been changed to
+     say NULL can not be passed to glutDisplayFunc; previously, it
+     said this would disable the callback.  Stupid.  What was I thinking?
+
+  o  GLUT spec is indexed now and generally improved.
+
+  o  Support for IRIX 6.2's N32 and N64 object style to take advantage
+     of new MIPS processor instruction sets.  See lib/glut.n32 and
+     lib/glut.n64 (IRIX 6.x only).
+
+  o  Fortran bindings also available for N32 and N64.  See lib/fglut.n32
+     and lib/fglut.n64.
+
+  o  Tests support the new API version 3 interfaces.
+
+  o  Contributed "bigtest" test program.
+
+  o  Added splatlogo example demonstrating pixel path functionality.
+
+  o  Added zoomdino program demonstrating use overlay rubber-banding.
+
+  o  Contributed demo programs: hanoi, hanoi2, gears, moth, text3d,
+     and noof.
+
+  o  Contributed SGI stereo program: stereo-plane
+
+  o  Being out of colors in the default colormap without overlay planes
+     will no longer lead to a fatal error when allocating the color gray
+     for a pop-up menu.  Instead, GLUT finds the closest matching color
+     automatically.  Help from Brian Paul to code this.
+
+  o  Eliminated Glut64.mk from all Makefile.sgi's
+
+GLUT 2.2 -> 2.3
+----------------
+
+  o  Fix obscure problem with how X Input extension button press and
+     release events get selected; it seems GLUT should also be
+     selecting for the DeviceButtonPressGrab event class since this
+     ensures that a release will be delivered to the same window as the
+     press; that was my intent for how buttons presses and releases
+     should work.  I just didn't know you needed this obscure event
+     class to be selected.  Such a grab is the default for pointer
+     events.
+
+  o  If windows are indirect, make sure that a glFinish is properly
+     done for all windows that have been made current to recently (ie,
+     last main loop iteration).  This helps ensure windows don't get
+     ahead of themselves.  Previously, GLUT simply did a glFinish to
+     whatever window GLUT happened to be made current to last at the
+     end of each main loop iteration.
+
+  o  Fix what can be considered a bug where calling glutPostRedisplay
+     within a display callback would not leave the redisplay set; this
+     applies other routines that set work state needing to be done.
+     Essentially, clear the workMask before the work callbacks are done
+     instead of after.  The new test15 tests this.
+
+  o  To support other OpenGL higher-level library that might want to
+     be able to call glXMakeCurrent, GLUT should not try to track
+     make current state and short circuit glXMakeCurrent calls when
+     GLUT believes the window/context are already current.  glXMakeCurrent
+     should implement the same "short circuit" case, but can appropriately
+     track the changed state from multiple libraries.
+
+  o  The glutRemoveMenuItem routine was totally busted previous to 2.3.
+     Now it is fixed and test14 is a regression test for it.
+
+  o  Add Greg Humphreys's hanoi program to progs/contrib
+
+  o  Examples demonstrating Open Inventor used with GLUT found in
+     progs/inventor
+
+  o  New progs/examples programs:  abgr, triselect, texenv, stenciltst,
+     stars, fogtst
+
+GLUT 2.1 -> GLUT 2.2
+---------------------
+
+  o  Fixed bug in glutGet(GLUT_WINDOW_X) and glutGet(GLUT_WINDOW_Y).
+
+  o  Added Philip Winston's human kinetics demo in progs/demos/walker
+     (COOL!).
+
+  o  Improved test suite.
+
+  o  Work around SunOS 4.x's non-ANSI compliant realloc.
+
+  o  Better handle delivery of reshape callback.
+
+  o  Pre-build stroke font C files to avoid having to rely on lex/yacc
+     working correctly.  Too many Linux systems missing flex/bison or
+     having verisons that resulted in undefined symbols while building
+     strokegen.
+
+  o  Better portability, mostly avoiding compiler warnings.
+
+  o  64-bit clean (as far as I know!).
+
+  o  Compiles right for systems like DEC Alpha that support GLX 1.1 but
+     do not support GLX_SGIS_multisample extension.
+
+  o  At Brian Paul's request for better Mesa support, changed colormap
+     allocation to work if RGBA window has PsueoColor visual.
+
+  o  Fix Drew Bliss reported bug in colormap allocation (resulted in
+     GLUT programs not correctly sharing colormaps).
+
+  o  Interesting bug involving the fact that XFlush may actually
+     read X protocol into Xlib's internal buffers so if you call
+     XFlush, then select on the X socket, you might find nothing to
+     read, but when in fact there is data in the Xlib internal buffers
+     that should be processed.  Using ISDN (I guess it has weird
+     network properties) showed this bug in a GLUT test13.  The fix is
+     to use XPending after XFlush.
+
+  o  Improve X Input documentation references in the GLUT spec.
+
+  o  Widen margins so spec kills less trees.
+
+  o  Clarify GLUT spec to explain glutGet values returned by
+     GLUT_WINDOW_X, GLUT_WINDOW_Y, GLUT_WINDOW_WIDTH, and
+     GLUT_WINDOW_HEIGHT as being returned in pixels.
+
+  o  Make sure consistently using reshape (and not resize) within GLUT
+     spec.
+
+  o  GLUT spec should document that glutExtensionSupported,
+     glutCreateWindow, and glutCreateSubwindow return int.
+
+GLUT 2.0 -> GLUT 2.1
+---------------------
+
+  o  XCOMM comments in Imakefiles results in unusable Makefiles
+     for systems that pre-date an X11R5-based imake.
+
+  o  The rings.c and worms.c examples use "float" returning
+     versions of trigonometric functions (ie, cosf, sinf, etc.).  While
+     ANSI C reserves these names for their logical purpose, many
+     systems do not implement these functions.
+
+  o  Calls to __glutWarning in glut_cindex in places lack
+     variable %d argument.
+
+  o  Intended comments in lib/Imakefile cause avoiable
+     warnings for some C pre-processors.
+
+  o  Old (pre-X11R6) versions of Xlib did not have XK_Page_Up
+     and XK_Page_Down keysym defs in /usr/include/X11/keysymdef.h
+     These are aliases to XK_Prior and XK_Next.
+
+  o  The X11R5 to_wfont derived strokegen program for converting
+     PEX fonts to C data structures was full of memory access
+     bugs.  On most systems, they were not fatal.  That's
+     what I get for trying to steal PEX code I gues. :-)
+
+  o  Various Purify-detected memory access bugs within the
+     GLUT library have been fixed.
+
+  o  Better Imakefile handling of lex usage in lib/glut/Imakefile
+
+  o  Better document colormap management routines.
+
+  o  Correctly document the prototype for glutCreateSubWindow
+
+  o  Add documentation usage hint explaining glutGetWindow
+     and glutGetMenu can be used to determine what window
+     or menu a callback is for.
+
+  o  Fix bug in glutDetachMenu
+
+  o  Fix bug in delivery of visibility callback for subwindows
+     of an unmapped top-level window.
+
+  o  scube.c should use more likely to be optimized
+     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA) instead of
+     glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA)
+
+  o  Supression of various compiler detected warnings through
+     the GLUT distribution.
+
+  o  Use of the "polygon offset" extension if available in origami.c
+
+  o  SGI mkmkfiles.sgi script doesn't make Fortran by default now;
+     see instructions in README.fortran
+
+  o  Improvements to the test programs.
+
+  o  Avoid X Input extension calls when extension is present but
+     no devices are available.
+
+GLUT 1.0 -> GLUT 2.0
+---------------------
+
+  o  API extensions; see README.glut2
+
+  o  Bug fixes.
+
+  o  More demos.
+
+  o  Update documentation.
+
+- Mark

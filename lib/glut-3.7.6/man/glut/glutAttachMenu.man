@@ -1,0 +1,29 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutAttachMenu 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutAttachMenu - attaches a mouse button for the current window to the
+identifier of the current menu; glutDetachMenu - detaches an attached
+mouse button from the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutAttachMenu(int button);
+void glutDetachMenu(int button);
+.fi
+.SH ARGUMENTS
+.IP \fIbutton\fP 1i
+The button to attach a menu or detach a menu.
+.SH DESCRIPTION
+glutAttachMenu attaches a mouse button for the current window to the
+identifier of the current menu; glutDetachMenu detaches an attached
+mouse button from the current window. By attaching a menu identifier to
+a button, the named menu will be popped up when the user presses the
+specified button. button should be one of GLUT_LEFT_BUTTON,
+GLUT_MIDDLE_BUTTON, and GLUT_RIGHT_BUTTON. Note that the menu
+is attached to the button by identifier, not by reference. 
+.SH SEE ALSO
+glutCreateMenu, glutMouseFunc, glutMenuStatusFunc
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

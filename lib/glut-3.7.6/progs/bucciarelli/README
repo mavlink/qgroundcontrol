@@ -1,0 +1,155 @@
+
+INTRODUCTION
+------------
+
+This directory is usually included in the Mesa demos distribution or
+in the GLUT distribution.
+
+I have written the demos included in this directory mainly for showing
+the capabilities of the Mesa library when using the Voodoo driver.
+However all the demos are written using the GLUT and OpenGL so they
+work with any GLUT/OpenGL platform (tested: Linux+Mesa+Voodoo driver,
+Linux+Mesa+X11 driver, Win95+Mesa+Voodoo driver and SGI Onyx IR thanks
+to Mark Kilgard).
+
+All the demos make an heavy use of texture mapping, blending, etc. so
+you _need_ some kind of hardware support for the OpenGL otherwise they
+will run at ~1fps. You need also a OpenGL 1.1 compliant library.
+
+you can find some screenshot of these demos at
+http://www-hmw.caribel.pisa.it/fxmesa/fxdemos.hmtl
+
+Write me if you find some bug in the demos.
+
+David Bucciarelli (tech.hmw@plus.it)
+
+Humanware s.r.l.
+Via XXIV Maggio 62
+Pisa, Italy
+Tel./Fax +39-50-554108
+email: info.hmw@plus.it
+www: www-hmw.caribel.pisa.it
+
+
+A BRIEF DESCRIPTION OF THE DEMOS
+--------------------------------
+
+RAY
+---
+
+Sources: ray.c
+
+I'm using ray tracing to dynamically generate texture maps with
+specular, diffuse, shadows, and mirror colors. Each frame the texture
+maps of the plane and of the sphere are partially updated.  With this
+technique you can obtain true mirrors, shadows, specular highlights,
+bump mapping, etc. in realtime.  This demo is really CPU intensive
+(~25fps on a PentiumII@300MHz with a Pure3D).
+
+
+TUNNEL
+------
+
+Sources: tunnel.c image.c sources.c
+Data: bw.rgb tile.rgb
+
+The model was designed and prelighted with Alias|Wavefront
+PowerAnimator V8. Triangle strips were built with a tool written by
+me and then statically included in the sources.
+
+
+TEAPOT
+------
+
+Sources: teapot.c image.c dteapot.c shadow.c
+Data: bw.rgb tile.rgb
+
+The shadow is drawn projecting the teapot geometry over the plane. All
+other light effects are drawn using the standard OpenGL capabilities.
+
+
+FIRE
+----
+
+Sources: fire.c image.c
+Data: s128.rgb tree2.rgb
+
+The demo use a small particle system to draw some nice visual effect.
+You can interactively change many parameters of the particle system
+and you can choose the number of particles at the startup ('fire
+4000').  This demo should be called fountain.
+
+
+TERRAIN
+-------
+
+Sources: mesaland.c
+
+This demo is base on another demo written by Mikael SkiZoWalker.
+I have added the capabilities to freely fly around, view culling
+and some nice color.
+
+
+GLTEST
+------
+
+Sources: gltest.c
+
+This is a simple benchmark suite that I'm using in the development
+of the Mesa/Voodoo driver. Type 'gltest >my.res' and you will get
+some data about the performances of your OpenGL. Follow the
+results with my PC (PentiumII@300MHz+Pure3D):
+
+Simple Points
+587900.080674 Pnts/sec
+
+Smooth Lines
+SIZE=480 => 39007.426183 Lins/sec
+SIZE=250 => 74575.016485 Lins/sec
+SIZE=100 => 179734.882409 Lins/sec
+SIZE=050 => 183987.795297 Lins/sec
+SIZE=025 => 183820.086309 Lins/sec
+
+
+ZSmooth Triangles
+SIZE=480 => 784.954997 Tris/sec
+SIZE=250 => 2862.325889 Tris/sec
+SIZE=100 => 17779.492938 Tris/sec
+SIZE=050 => 159339.829844 Tris/sec
+SIZE=025 => 428602.984008 Tris/sec
+
+
+ZSmooth Tex Blend Triangles
+SIZE=480 => 784.473931 Tris/sec
+SIZE=250 => 2853.781513 Tris/sec
+SIZE=100 => 17598.252146 Tris/sec
+SIZE=050 => 152632.578337 Tris/sec
+SIZE=025 => 377584.760048 Tris/sec
+
+
+ZSmooth Tex Blend TMesh Triangles
+SIZE=400 => 563.900695 Tris/sec, MPixel Fill/sec: 45.112056
+SIZE=250 => 1449.777225 Tris/sec, MPixel Fill/sec: 45.305538
+SIZE=100 => 8702.869121 Tris/sec, MPixel Fill/sec: 43.514346
+SIZE=050 => 31896.867466 Tris/sec, MPixel Fill/sec: 39.871084
+SIZE=025 => 114037.262894 Tris/sec, MPixel Fill/sec: 35.636645
+SIZE=010 => 220494.235839 Tris/sec, MPixel Fill/sec: 11.024712
+SIZE=005 => 225615.506651 Tris/sec, MPixel Fill/sec: 2.820194
+SIZE=002 => 225607.681439 Tris/sec, MPixel Fill/sec: 0.451215
+
+
+Color/Depth Buffer Clears
+295.042474 Clrs/sec, MPixel Fill/sec: 90.553256
+
+
+PALTEX and GLBPALTX
+-------------------
+
+Sources: paltex.c and glbpaltx.c
+
+The PALTEX example was written by Brian Paul and it shows the
+capabilities of the GL_EXT_paletted_texture extension.  I have written
+the other example in order to show the capabilities of the
+gl3DfxSetPaletteEXT() (it used only by GLQuake and Quake2).
+
+

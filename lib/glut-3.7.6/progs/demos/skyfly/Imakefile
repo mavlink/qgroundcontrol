@@ -1,0 +1,14 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994, 1997. */
+
+#include "../../../Glut.cf"
+
+TARGETS = skyfly
+
+SRCS = database.c fly.c gm_main.c image.c perfdraw.c skyfly.c
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(skyfly,database.o fly.o gm_main.o image.o perfdraw.o skyfly.o)
+
+DependTarget()

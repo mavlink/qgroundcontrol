@@ -1,0 +1,66 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutStrokeCharacter 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutStrokeCharacter - renders a stroke character using OpenGL. 
+.SH SYNTAX
+.nf
+.LP
+void glutStrokeCharacter(void *font, int character);
+.fi
+.SH ARGUMENTS
+.IP \fIfont\fP 1i
+Stroke font to use. 
+.IP \fIcharacter\fP 1i
+Character to render (not confined to 8 bits). 
+.SH DESCRIPTION
+Without using any display lists, glutStrokeCharacter renders the
+character in the named stroke font. The available fonts are: 
+.TP 8
+.B GLUT_STROKE_ROMAN 
+A proportionally spaced Roman Simplex font for ASCII characters
+32 through 127. The maximum top character in the font is 119.05
+units; the bottom descends 33.33 units. 
+.TP 8
+.B GLUT_STROKE_MONO_ROMAN 
+A mono-spaced spaced Roman Simplex font (same characters as
+GLUT_STROKE_ROMAN) for ASCII characters 32 through 127. The
+maximum top character in the font is 119.05 units; the bottom
+descends 33.33 units. Each character is 104.76 units wide. 
+.LP
+Rendering a nonexistent character has no effect. A glTranslatef is
+used to translate the current model view matrix to advance the width of
+the character. 
+.SH EXAMPLE
+Here is a routine that shows how to render a string of ASCII text
+with glutStrokeCharacter:
+.nf
+.LP
+  void 
+  output(GLfloat x, GLfloat y, char *text)
+  {
+    char *p;
+
+    glPushMatrix();
+    glTranslatef(x, y, 0);
+    for (p = text; *p; p++)
+      glutStrokeCharacter(GLUT_STROKE_ROMAN, *p);
+    glPopMatrix();
+  }
+.fi
+.LP
+If you want to draw stroke font text using wide, antialiased lines, use:
+.nf
+.LP
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glEnable(GL_LINE_SMOOTH);
+  glLineWidth(2.0);
+  output(200, 225, "This is antialiased.");
+.fi
+.LP
+.SH SEE ALSO
+glutBitmapCharacter, glutStrokeWidth
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

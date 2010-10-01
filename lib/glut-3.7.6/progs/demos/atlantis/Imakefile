@@ -1,0 +1,14 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+#include "../../../Glut.cf"
+
+TARGETS = atlantis
+
+SRCS = atlantis.c dolphin.c shark.c swim.c whale.c
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(atlantis,atlantis.o whale.o dolphin.o shark.o swim.o)
+
+DependTarget()

@@ -1,0 +1,365 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "_all"=".\gle\_all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name candlestick
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name cone
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name cylinder
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name helix
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name helix2
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name helix3
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name helix4
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name helixtex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name horn
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name joinoffset
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name martini
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name screw
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name taper
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texas
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name transport
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name twistoid
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name twoid
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "beam"=".\gle\beam.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "candlestick"=".\gle\candlestick.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "cone"=".\gle\cone.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "cylinder"=".\gle\cylinder.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "gle"="..\lib\gle\gle.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "helix"=".\gle\helix.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "helix2"=".\gle\helix2.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "helix3"=".\gle\helix3.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "helix4"=".\gle\helix4.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "helixtex"=".\gle\helixtex.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "horn"=".\gle\horn.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "joinoffset"=".\gle\joinoffset.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "martini"=".\gle\martini.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "screw"=".\gle\screw.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "taper"=".\gle\taper.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "texas"=".\gle\texas.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "transport"=".\gle\transport.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "twistoid"=".\gle\twistoid.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "twoid"=".\gle\twoid.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name gle
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

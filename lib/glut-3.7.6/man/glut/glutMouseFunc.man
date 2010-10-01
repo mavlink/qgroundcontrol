@@ -1,0 +1,45 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutMouseFunc 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutMouseFunc - sets the mouse callback for the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutMouseFunc(void (*func)(int button, int state,
+                   int x, int y));
+.fi
+.SH ARGUMENTS
+.IP \fIfunc\fP 1i
+The new mouse callback function. 
+.SH DESCRIPTION
+glutMouseFunc sets the mouse callback for the current window. When a
+user presses and releases mouse buttons in the window, each press and
+each release generates a mouse callback. The button parameter is one of
+GLUT_LEFT_BUTTON, GLUT_MIDDLE_BUTTON, or
+GLUT_RIGHT_BUTTON. For systems with only two mouse buttons, it may
+not be possible to generate GLUT_MIDDLE_BUTTON callback. For systems
+with a single mouse button, it may be possible to generate only a
+GLUT_LEFT_BUTTON callback. The state parameter is either GLUT_UP
+or GLUT_DOWN indicating whether the callback was due to a release or
+press respectively. The x and y callback parameters indicate the window
+relative coordinates when the mouse button state changed. If a
+GLUT_DOWN callback for a specific button is triggered, the program can
+assume a GLUT_UP callback for the same button will be generated
+(assuming the window still has a mouse callback registered) when the
+mouse button is released even if the mouse has moved outside the window.
+
+If a menu is attached to a button for a window, mouse callbacks will not
+be generated for that button. 
+
+During a mouse callback, glutGetModifiers may be called to
+determine the state of modifier keys when the mouse event generating the
+callback occurred. 
+
+Passing NULL to glutMouseFunc disables the generation of mouse
+callbacks. 
+.SH SEE ALSO
+glutKeyboardFunc, glutMotionFunc, glutSpaceballButtonFunc, glutButtonBoxFunc, glutTabletButtonFunc, glutGetModifiers
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

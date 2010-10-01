@@ -1,0 +1,15 @@
+
+GLC is the OpenGL Character Renderer implementation.  GLC is a state
+machine that provides OpenGL programs with character rendering services
+via an application programming interface (API).  The specification for
+GLC can be found at:
+
+  http://reality.sgi.com/dunwoody/glcspec.ps
+
+The GLC library is provided with IRIX 6.2 and beyond on SGI
+workstations.
+
+glcdemo.c is a very simple GLC demo showing off rotating texting.
+
+- Mark Kilgard
+  July 22, 1997

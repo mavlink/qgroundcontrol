@@ -1,0 +1,30 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutSwapBuffers 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutSwapBuffers - swaps the buffers of the current window if double buffered. 
+.SH SYNTAX
+.nf
+.LP
+void glutSwapBuffers(void);
+.fi
+.SH DESCRIPTION
+Performs a buffer swap on the layer in use for the current window.
+Specifically, glutSwapBuffers promotes the contents of the back
+buffer of the layer in use of the current window to become the contents
+of the front buffer. The contents of the back buffer then become
+undefined. The update typically takes place during the vertical retrace of
+the monitor, rather than immediately after glutSwapBuffers is called.
+
+An implicit glFlush is done by glutSwapBuffers before it returns.
+Subsequent OpenGL commands can be issued immediately after calling
+glutSwapBuffers, but are not executed until the buffer exchange is
+completed. 
+
+If the layer in use is not double buffered, glutSwapBuffers has no
+effect. 
+.SH SEE ALSO
+glutPostRedisplay, glutDisplayFunc
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

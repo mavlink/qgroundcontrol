@@ -1,0 +1,20 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutMainLoop 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutMainLoop - enters the GLUT event processing loop. 
+.SH SYNTAX
+.nf
+.LP
+void glutMainLoop(void);
+.fi
+.SH DESCRIPTION
+glutMainLoop enters the GLUT event processing loop. This routine
+should be called at most once in a GLUT program. Once called, this
+routine will never return. It will call as necessary any callbacks that have
+been registered. 
+.SH SEE ALSO
+glutInit
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

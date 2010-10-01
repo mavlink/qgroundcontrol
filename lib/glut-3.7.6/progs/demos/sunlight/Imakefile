@@ -1,0 +1,15 @@
+
+/* Copyright (c) Mark J. Kilgard, 1998. */
+
+#include "../../../Glut.cf"
+
+TARGETS = sunlight
+
+SRCS =  sunlight.c
+OBJS =  sunlight.o
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(sunlight,$(OBJS))
+
+DependTarget()

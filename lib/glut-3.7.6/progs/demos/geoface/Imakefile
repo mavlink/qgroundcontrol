@@ -1,0 +1,15 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../../Glut.cf"
+
+TARGETS = geoface
+
+SRCS =  display.c fileio.c main.c make_face.c muscle.c
+OBJS =  display.o fileio.o main.o make_face.o muscle.o
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(geoface,$(OBJS))
+
+DependTarget()

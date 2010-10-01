@@ -1,0 +1,35 @@
+
+This directory contains a GLUT "hack" program for using SGI's
+proprietary X stereo extension (officially named
+"SGIFullScreenStereo").  The extension provides stereo support for
+mid-range and low-end SGI workstations including Indy and Indigo^2
+workstations with Indy, XL, XZ, Extreme, and IMPACT graphics options.
+
+NOTE:  This example "hacks" GLUT to get at private GLUT implementation
+variables (basically __glutDisplay).  Any program that does so is
+effectively unportable to other GLUT implementations.  SGI's
+proprietary X stereo extension is not suitable for portable, direct
+support via GLUT's API, so these examples are being released as an
+exception to the rule.
+
+To use this example code effectively, you must have:
+
+  o  A low-end or mid-range SGI workstation described above.
+
+  o  IRIX 5.3, 6.1 (Power Indigo^2), 6.2, or higher.
+
+  o  A set of stereo LCD shutter goggles.
+
+  o  A monitor that syncs to the stereo video signal.
+
+To get more information on SGIFullScreenStereo, try:
+
+  man XSGISetStereoBuffer
+
+Mike Blackwell contributed the original GLUT stereo example.  The
+example itself is based on a demonstration program found in Appendix 1
+of "The CrystalEyes Handbook" by Lenny Lipton, 1991, StereoGraphics
+Corp.
+
+- Mark Kilgard
+  November 21, 1995

@@ -1,0 +1,57 @@
+GLUT Open Inventor users,
+
+BUILD INSTRUCTIONS
+===================
+
+To enable building of the GLUT Open Inventor examples (assuming
+an Silicon Graphics workstation running IRIX), do the following:
+
+  1)  Make sure you have the Open Inventor development (inventor_dev)
+      and the C++ development (c++_dev) products installed.
+
+  2)  Run "mkmkfiles.sgi" in this directory.
+
+  3)  Create a file in this directory called Inventor.mk with
+      the following line:
+
+INVENTOR = inventor
+
+  4)  Execute "make" in this directory.
+
+NOTES
+======
+
+  o  The GLUT Open Inventor examples can be found in the
+     progs/inventor subdirectory.
+
+  o  To build the progs/inventor subdirectory if you use Imakefiles,
+     try:
+
+cd progs
+make SUBDIRS=inventor Makefiles
+cd inventor
+make
+
+     Since I'm not familiar with how Open Inventor is installed on
+     non-Silicon Graphics machines, you may have to adapt the Inventor
+     related lines in Glut.cf to your system's Open Inventor
+     installation.
+
+  o  Using the Imakefile requires an X11R6-based set of
+     /usr/lib/X11/config rules that support C++.
+
+  o  When you use Open Inventor with GLUT, you can access all
+     the non-window system based features of Inventor like the scene
+     graph, etc.  Specifically, you won't be able to use the
+     SoOffscreenRenderer or SoXt based classes.
+
+  o  Link with -lInventor instead of -lInventorXt to make sure
+     you only get the non-window system based features of Inventor.
+
+  o  See Chapter 17 "Using Inventor with OpenGL" in the Inventor
+     Mentor (Addison-Wesley, ISBN 0-201-62495-8) for a discussion about
+     using Open Inventor outside the context of Open Invetor's Xt
+     widget frame work.
+
+- Mark Kilgard
+  June 18, 1995

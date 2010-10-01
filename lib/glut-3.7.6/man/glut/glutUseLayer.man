@@ -1,0 +1,28 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutUseLayer 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutUseLayer - changes the layer in use for the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutUseLayer(GLenum layer);
+.fi
+.SH ARGUMENTS
+.IP \fIlayer\fP 1i
+Either GLUT_NORMAL or GLUT_OVERLAY, selecting the normal
+plane or overlay respectively. 
+.SH DESCRIPTION
+glutUseLayer changes the per-window layer in use for the current
+window, selecting either the normal plane or overlay. The overlay should
+only be specified if an overlay exists, however windows without an
+overlay may still call glutUseLayer(GLUT_NORMAL). OpenGL
+commands for the window are directed to the current layer in use. 
+
+To query the layer in use for a window, call
+glutLayerGet(GLUT_LAYER_IN_USE). 
+.SH SEE ALSO
+glutEstablishOverlay, glutSetWindow
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

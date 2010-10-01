@@ -1,0 +1,26 @@
+
+/* Copyright (c) Mark J. Kilgard, 1996. */
+
+#include "../../Glut.cf"
+
+TARGETS = bounce gamma gears isosurf offset reflect spin tess_demo \
+	texobj winpos trdemo
+
+SRCS = bounce.c gamma.c gears.c isosurf.c offset.c reflect.c spin.c \
+	tess_demo.c texobj.c winpos.c trdemo.c tr.c
+
+AllTarget($(TARGETS))
+
+SimpleGlutProgramTarget(bounce)
+SimpleGlutProgramTarget(gamma)
+SimpleGlutProgramTarget(gears)
+SimpleGlutProgramTarget(isosurf)
+SimpleGlutProgramTarget(offset)
+NormalGlutProgramTarget(reflect,reflect.o image.o)
+SimpleGlutProgramTarget(spin)
+SimpleGlutProgramTarget(tess_demo)
+SimpleGlutProgramTarget(texobj)
+NormalGlutProgramTarget(trdemo,trdemo.o tr.o)
+SimpleGlutProgramTarget(winpos)
+
+DependTarget()

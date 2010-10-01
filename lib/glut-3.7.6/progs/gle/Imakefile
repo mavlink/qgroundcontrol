@@ -1,0 +1,62 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../Glut.cf"
+
+SRCS = beam.c candlestick.c cone.c cylinder.c helix.c helix2.c \
+  helix3.c helix4.c helixtex.c horn.c joinoffset.c mainjoin.c \
+  mainsimple.c maintex.c screw.c taper.c texas.c texture.c transport.c \
+  twistoid.c twoid.c
+
+TARGETS = \
+	beam \
+	candlestick \
+	cone \
+	cylinder \
+	helix \
+	helix2 \
+	helix3 \
+	helix4 \
+	helixtex \
+	horn \
+	joincone \
+	joinoffset \
+	joinstyle \
+	martini \
+	screw \
+	taper \
+	texas \
+	transport \
+	twistoid \
+	twoid
+
+AllTarget($(TARGETS))
+
+NormalGleProgramTarget(beam, beam.o mainsimple.o)
+SimpleGleProgramTarget(candlestick)
+NormalGleProgramTarget(cone, cone.o mainsimple.o)
+NormalGleProgramTarget(cylinder, cylinder.o mainsimple.o)
+NormalGleProgramTarget(helix, helix.o mainsimple.o)
+NormalGleProgramTarget(helix2, helix2.o mainsimple.o)
+NormalGleProgramTarget(helix3, helix3.o mainsimple.o)
+NormalGleProgramTarget(helix4, helix4.o mainsimple.o)
+NormalGleProgramTarget(helixtex, helixtex.o texture.o maintex.o)
+NormalGleProgramTarget(horn, horn.o mainsimple.o)
+NormalGleProgramTarget(joincone, cone.o mainjoin.o)
+NormalGleProgramTarget(joinoffset, joinoffset.o mainjoin.o)
+NormalGleProgramTarget(joinstyle, cylinder.o mainjoin.o)
+NormalGleProgramTarget(martini, martini.o trackball.o)
+NormalGleProgramTarget(screw, screw.o texture.o maintex.o)
+NormalGleProgramTarget(taper, taper.o mainsimple.o)
+NormalGleProgramTarget(texas, texas.o mainjoin.o)
+SimpleGleProgramTarget(transport)
+NormalGleProgramTarget(twistoid, twistoid.o texture.o maintex.o)
+NormalGleProgramTarget(twoid, twoid.o)
+
+LinkFile(trackball.c, ../examples/trackball.c)
+LinkFile(trackball.h, ../examples/trackball.h)
+
+trackball.o: trackball.h trackball.c
+martini.o: trackball.h martini.c
+
+DependTarget()

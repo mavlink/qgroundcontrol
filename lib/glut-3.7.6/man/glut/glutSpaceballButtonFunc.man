@@ -1,0 +1,36 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutSpaceballButtonFunc 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutSpaceballButtonFunc - sets the Spaceball button callback for the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutSpaceballButtonFunc(void (*func)(int button, int state));
+.fi
+.SH ARGUMENTS
+.IP \fIfunc\fP 1i
+The new spaceball button callback function. 
+.SH DESCRIPTION
+glutSpaceballButtonFunc sets the Spaceball button callback for the
+current window. The Spaceball button callback for a window is called
+when the window has Spaceball input focus (normally, when the mouse
+is in the window) and the user generates Spaceball button presses. The
+button parameter will be the button number (starting at one). The
+number of available Spaceball buttons can be determined with
+glutDeviceGet(GLUT_NUM_SPACEBALL_BUTTONS). The state is
+either GLUT_UP or GLUT_DOWN indicating whether the callback was due
+to a release or press respectively. 
+
+Registering a Spaceball button callback when a Spaceball device is not
+available is ineffectual and not an error. In this case, no Spaceball button
+callbacks will be generated. 
+
+Passing NULL to glutSpaceballButtonFunc disables the generation
+of Spaceball button callbacks. When a new window is created, no
+Spaceball button callback is initially registered. 
+.SH SEE ALSO
+glutSpaceballMotionFunc, glutSpaceballRotateFunc, glutMouseFunc, glutButtonBoxFunc, glutTabletButtonFunc, glutJoystickFunc, glutDeviceGet
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

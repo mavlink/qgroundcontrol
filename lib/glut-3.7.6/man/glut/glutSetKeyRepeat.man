@@ -1,0 +1,30 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1998.
+.\"
+.TH glutSetKeyRepeat 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutSetKeyRepeat - retrieves simple GLUT state represented by integers. 
+.SH SYNTAX
+.nf
+.LP
+int glutSetKeyRepeat(int repeatMode);
+.fi
+.SH ARGUMENTS
+.IP \fIrepeatMode\fP 1i
+Mode for setting key repeat to.
+.TP 8
+.B GLUT_KEY_REPEAT_OFF 
+Disable key repeat for the window system on a global basis if possible.
+.TP 8
+.B GLUT_KEY_REPEAT_ON 
+Enable key repeat for the window system on a global basis if possible.
+.TP 8
+.B GLUT_KEY_REPEAT_DEFAULT 
+Reset the key repeat mode for the window system to its default state
+if possible.
+.SH DESCRIPTION
+.I XXX fix me
+.SH SEE ALSO
+glutIgnoreKeyRepeat, glutKeyboardFunc, glutSpecialFunc, glutKeyboardUpFunc, glutSpecialUpFunc, glutDeviceGet
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

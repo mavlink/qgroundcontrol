@@ -1,0 +1,174 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+#define DoNormalLib YES
+
+#include <Library.tmpl>
+
+#include "../../Glut.cf"
+
+HDRS = \
+	glutint.h \
+	glutstroke.h \
+	layerutil.h
+
+SRCS = \
+	glut_8x13.c \
+	glut_9x15.c \
+	glut_bitmap.c \
+	glut_bwidth.c \
+	glut_cindex.c \
+	glut_cmap.c \
+	glut_cursor.c \
+	glut_dials.c \
+	glut_dstr.c \
+	glut_event.c \
+	glut_ext.c \
+	glut_fullscrn.c \
+	glut_gamemode.c \
+	glut_get.c \
+	glut_glxext.c \
+	glut_hel10.c \
+	glut_hel12.c \
+	glut_hel18.c \
+	glut_init.c \
+	glut_input.c \
+	glut_joy.c \
+	glut_key.c \
+	glut_keyctrl.c \
+	glut_keyup.c \
+	glut_menu.c \
+	glut_menu2.c \
+	glut_mesa.c \
+	glut_modifier.c \
+	glut_mroman.c \
+	glut_overlay.c \
+	glut_roman.c \
+	glut_shapes.c \
+	glut_space.c \
+	glut_stroke.c \
+	glut_swap.c \
+	glut_swidth.c \
+	glut_tablet.c \
+	glut_teapot.c \
+	glut_tr10.c \
+	glut_tr24.c \
+	glut_util.c \
+	glut_vidresize.c \
+	glut_warp.c \
+	glut_win.c \
+	glut_winmisc.c \
+	layerutil.c
+
+OBJS = \
+	glut_8x13.o \
+	glut_9x15.o \
+	glut_bitmap.o \
+	glut_bwidth.o \
+	glut_cindex.o \
+	glut_cmap.o \
+	glut_cursor.o \
+	glut_dials.o \
+	glut_dstr.o \
+	glut_event.o \
+	glut_ext.o \
+	glut_fullscrn.o \
+	glut_gamemode.o \
+	glut_get.o \
+	glut_glxext.o \
+	glut_hel10.o \
+	glut_hel12.o \
+	glut_hel18.o \
+	glut_init.o \
+	glut_input.o \
+	glut_joy.o \
+	glut_key.o \
+	glut_keyctrl.o \
+	glut_keyup.o \
+	glut_menu.o \
+	glut_menu2.o \
+	glut_mesa.o \
+	glut_modifier.o \
+	glut_mroman.o \
+	glut_overlay.o \
+	glut_roman.o \
+	glut_shapes.o \
+	glut_space.o \
+	glut_stroke.o \
+	glut_swap.o \
+	glut_swidth.o \
+	glut_tablet.o \
+	glut_teapot.o \
+	glut_tr10.o \
+	glut_tr24.o \
+	glut_util.o \
+	glut_vidresize.o \
+	glut_warp.o \
+	glut_win.o \
+	glut_winmisc.o \
+	layerutil.o
+
+#ifdef LibraryObjectRule
+LibraryObjectRule()
+#else
+/* XXX Very lame, you must be using pre-R5 config files!  This
+   will probably do essentially what LibraryObjectRule does. */
+NormalLibraryObjectRule()
+#endif
+
+NormalLibraryTarget(glut,$(OBJS))
+
+/* I've gotten too many complaints from people (mostly Linux users)
+   trying to build GLUT that have problems using lex and yacc to
+   build the stroke fonts for GLUT so I will simply supply the
+   generated C stroke fonts files.  If you would like to build the
+   fonts, please uncomment the following define of BuildStrokeFontsWithLex
+   and regenerate the Makefile. */
+
+/* #define BuildStrokeFontsWithLex */
+
+#ifdef BuildStrokeFontsWithLex
+
+# for SGI's parallel make
+.ORDER : strokegen.h strokegen.c
+
+strokegen.h strokegen.c : strokegen.y
+	$(YACC) -d strokegen.y
+	$(MV) y.tab.c strokegen.c
+	$(MV) y.tab.h strokegen.h
+
+/* XXX Attempt to make up for the lack of lex support in pre-R6 imake
+   config files. */
+#ifndef LexCmd
+#define LexCmd lex
+LEX = LexCmd
+#endif
+#ifndef LexLib
+#define LexLib -ll
+LEXLIB = LexLib
+#endif
+
+strokelex.c : strokelex.l
+	$(LEX) strokelex.l
+	$(MV) lex.yy.c strokelex.c
+
+strokegen : strokegen.o strokelex.o
+	$(CC) -o $@ $(CFLAGS) strokegen.o strokelex.o $(LEXLIB)
+
+glut_roman.c : Roman.stroke strokegen
+	./strokegen -s glutStrokeRoman < Roman.stroke > $@
+
+glut_mroman.c : MonoRoman.stroke strokegen
+	./strokegen -s glutStrokeMonoRoman < MonoRoman.stroke > $@
+
+GEN_STROKES = glut_roman.c glut_mroman.c
+
+depend:: glut_roman.c glut_mroman.c
+
+#endif /* BuildStrokeFontsWithLex */
+
+clean::
+	$(RM) y.tab.h y.tab.c lex.yy.c gram.h gram.c lex.c
+	$(RM) strokelex.c strokegen.c $(GEN_STROKES) strokegen capturexfont
+
+DependTarget()

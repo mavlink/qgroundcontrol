@@ -1,0 +1,28 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutShowWindow 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutShowWindow, glutHideWindow, glutIconifyWindow - change the display status of the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutShowWindow(void);
+void glutHideWindow(void);
+void glutIconifyWindow(void);
+.fi
+.SH DESCRIPTION
+glutShowWindow will show the current window (though it may still
+not be visible if obscured by other shown windows). glutHideWindow
+will hide the current window. glutIconifyWindow will iconify a
+top-level window, but GLUT prohibits iconification of a subwindow.
+The effect of showing, hiding, and iconifying windows does not take
+place immediately. Instead the requests are saved for execution upon
+return to the GLUT event loop. Subsequent show, hide, or iconification
+requests on a window replace the previously saved request for that
+window. The effect of hiding, showing, or iconifying top-level windows
+is subject to the window system's policy for displaying windows. 
+.SH SEE ALSO
+glutPopWindow, glutPushWindow
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

@@ -1,0 +1,20 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1998.
+.\"
+.TH glutGameModeString 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutGameModeString - sets the game mode configuration via a string.
+.SH SYNTAX
+.nf
+.LP
+void glutGameModeString(const char *string);
+.fi
+.SH ARGUMENTS
+.IP \fIstring\fP 1i
+ASCII string for selecting a game mode configuration.
+.SH DESCRIPTION
+.I XXX fix me
+.SH SEE ALSO
+glutGameModeGet, glutEnterGameMode, glutLeaveGameMode, glutInitDisplayString
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

@@ -1,0 +1,39 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1997.
+.\"
+.TH glutWarpPointer 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutWarpPointer warps the pointer's location.
+.SH SYNTAX
+.nf
+.LP
+void glutWarpPointer(int x, int y);
+.fi
+.SH ARGUMENTS
+.IP \fIx\fP 1i
+X offset relative to the current window's origin (upper left).
+.IP \fIy\fP 1i
+Y offset relative to the current window's origin (upper left).
+.SH DESCRIPTION
+glutWarpPointer warps the window system's pointer to a new location
+relative to the origin of the current window.  The new location will
+be offset 
+.I x
+pixels on the X axis and 
+.I y
+pixels on the Y axis.
+These parameters may be negative.  The warp is done immediately.
+
+If the pointer would be warped outside the screen's frame buffer
+region, the location will be clamped to the nearest screen edge.  The
+window system is allowed to further constrain the pointer's location in
+window system dependent ways.
+
+The following is good advice that applies to glutWarpPointer:
+``There is seldom any reason for calling this function. The pointer
+should normally be left to the user.'' (from Xlib's
+XWarpPointer man page.)
+.SH SEE ALSO
+glutMouseFunc, glutMotionFunc
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

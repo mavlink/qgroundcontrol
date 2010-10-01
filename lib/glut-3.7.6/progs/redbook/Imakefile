@@ -1,0 +1,92 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994, 1997. */
+
+#include "../../Glut.cf"
+
+TARGETS = accanti anti bezmesh checker depthcue dof fog fogindex material \
+  mipmap nurbs pickdepth plane polys sccolorlight scene scenebamb \
+  sceneflat stencil stroke surface teaambient teapots texturesurf \
+  aaindex aapoly aargb accpersp alpha alpha3D bezcurve clip colormat \
+  cube double drawf feedback font hello image light lines list model \
+  movelight picksquare planet polyoff quadric robot select smooth \
+  tess tesswind texbind texgen texprox texsub torus trim unproject \
+  varray wrap
+
+SRCS = aaindex.c aapoly.c aargb.c accanti.c accpersp.c alpha.c \
+  alpha3D.c anti.c bezcurve.c bezmesh.c checker.c clip.c colormat.c \
+  cube.c depthcue.c dof.c double.c drawf.c feedback.c fog.c fogindex.c \
+  font.c hello.c image.c light.c lines.c list.c material.c mipmap.c \
+  model.c movelight.c nurbs.c pickdepth.c picksquare.c plane.c planet.c \
+  polyoff.c polys.c quadric.c robot.c sccolorlight.c scene.c \
+  scenebamb.c sceneflat.c select.c smooth.c stencil.c stroke.c \
+  surface.c teaambient.c teapots.c tess.c tesswind.c texbind.c texgen.c \
+  texprox.c texsub.c texturesurf.c torus.c trim.c unproject.c varray.c \
+  wrap.c
+
+AllTarget($(TARGETS))
+
+SimpleGlutProgramTarget(accanti)
+SimpleGlutProgramTarget(anti)
+SimpleGlutProgramTarget(bezmesh)
+SimpleGlutProgramTarget(checker)
+SimpleGlutProgramTarget(depthcue)
+SimpleGlutProgramTarget(dof)
+SimpleGlutProgramTarget(fog)
+SimpleGlutProgramTarget(fogindex)
+SimpleGlutProgramTarget(material)
+SimpleGlutProgramTarget(nurbs)
+SimpleGlutProgramTarget(pickdepth)
+SimpleGlutProgramTarget(plane)
+SimpleGlutProgramTarget(mipmap)
+SimpleGlutProgramTarget(polys)
+SimpleGlutProgramTarget(sccolorlight)
+SimpleGlutProgramTarget(scene)
+SimpleGlutProgramTarget(scenebamb)
+SimpleGlutProgramTarget(sceneflat)
+SimpleGlutProgramTarget(stencil)
+SimpleGlutProgramTarget(stroke)
+SimpleGlutProgramTarget(surface)
+SimpleGlutProgramTarget(teaambient)
+SimpleGlutProgramTarget(teapots)
+SimpleGlutProgramTarget(texturesurf)
+SimpleGlutProgramTarget(aaindex)
+SimpleGlutProgramTarget(aapoly)
+SimpleGlutProgramTarget(aargb)
+SimpleGlutProgramTarget(accpersp)
+SimpleGlutProgramTarget(alpha)
+SimpleGlutProgramTarget(alpha3D)
+SimpleGlutProgramTarget(bezcurve)
+SimpleGlutProgramTarget(clip)
+SimpleGlutProgramTarget(colormat)
+SimpleGlutProgramTarget(cube)
+SimpleGlutProgramTarget(double)
+SimpleGlutProgramTarget(drawf)
+SimpleGlutProgramTarget(feedback)
+SimpleGlutProgramTarget(font)
+SimpleGlutProgramTarget(hello)
+SimpleGlutProgramTarget(image)
+SimpleGlutProgramTarget(light)
+SimpleGlutProgramTarget(lines)
+SimpleGlutProgramTarget(list)
+SimpleGlutProgramTarget(model)
+SimpleGlutProgramTarget(movelight)
+SimpleGlutProgramTarget(picksquare)
+SimpleGlutProgramTarget(planet)
+SimpleGlutProgramTarget(polyoff)
+SimpleGlutProgramTarget(quadric)
+SimpleGlutProgramTarget(robot)
+SimpleGlutProgramTarget(select)
+SimpleGlutProgramTarget(smooth)
+SimpleGlutProgramTarget(tess)
+SimpleGlutProgramTarget(tesswind)
+SimpleGlutProgramTarget(texbind)
+SimpleGlutProgramTarget(texgen)
+SimpleGlutProgramTarget(texprox)
+SimpleGlutProgramTarget(texsub)
+SimpleGlutProgramTarget(torus)
+SimpleGlutProgramTarget(trim)
+SimpleGlutProgramTarget(unproject)
+SimpleGlutProgramTarget(varray)
+SimpleGlutProgramTarget(wrap)
+
+DependTarget()

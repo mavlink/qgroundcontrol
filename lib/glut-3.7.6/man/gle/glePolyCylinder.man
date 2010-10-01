@@ -1,0 +1,42 @@
+.\"
+.\" GLE Tubing & Extrusions Library Documentation 
+.\"
+.TH glePolyCylinder 3GLE "3.6" "GLE" "GLE"
+.SH NAME
+glePolyCylinder - Draw polycylinder, specified as a polyline. 
+.SH SYNTAX
+.nf
+.LP
+void glePolyCylinder(int npoints,
+                     gleDouble point_array[][3],
+                     float color_array[][3],
+                     gleDouble radius);
+.fi
+.SH ARGUMENTS
+.IP \fInpoints\fP 1i
+numpoints in poly-line
+.IP \fIpoint_array\fP 1i
+polyline vertices
+.IP \fIcolor_array\fP 1i
+colors at polyline verts
+.IP \fIradius\fP 1i
+cylinder radius
+.SH DESCRIPTION
+
+Draw polycylinder, specified as a polyline.
+
+Note that neither the very first segment, nor the very last segment are
+drawn. The first and last segments serve only to define the angle of
+the join at the very ends of the polyline. Thus, to draw one segment,
+three must be specified. To draw two segments, four must be specified,
+etc.
+
+The color array may be NULL. If NULL, the current color is used. If not
+NULL, the glColor3f() routine is used to set the color; therefore,
+specifying the glColorMaterial() subroutine before this primitive can
+be used to set diffuse, specular, ambient, etc. colors.
+
+.SH SEE ALSO
+glePolyCone
+.SH AUTHOR
+Linas Vepstas (linas@fc.net)

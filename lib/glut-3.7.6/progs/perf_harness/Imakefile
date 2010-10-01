@@ -1,0 +1,14 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../Glut.cf"
+
+TARGETS = perf_torus
+
+SRCS = gl_harness.c torus.c
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(perf_torus,torus.o gl_harness.o)
+
+DependTarget()

@@ -1,0 +1,16 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../../Glut.cf"
+
+TARGETS = opengl_logo
+
+SRCS = opengl_logo.c def_logo.c
+
+OBJS = opengl_logo.o def_logo.o
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(opengl_logo,$(OBJS))
+
+DependTarget()

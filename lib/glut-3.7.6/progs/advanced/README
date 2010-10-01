@@ -1,0 +1,53 @@
+
+This directory contains OpenGL examaples from the SIGGRAPH '96 course
+titled "Programming with OpenGL: Advanced Rendering" taught by Tom
+McReynolds (tomcat@sgi.com) and David Blythe (blythe@sgi.com), both
+from SGI.  These examples demonstrate interesting rendering techniques
+that may not be obvious to the beginning OpenGL user.  Think of OpenGL
+as a powerful vocabulary for rendering, and you'll be surprised the
+powerful expressions that you can devise.
+
+Information about the course is at:
+
+  http://www.siggraph.org/conferences/siggraph96/core/conference/courses/23.html
+
+Material presented at the course can be found at:
+
+  http://www.sgi.com/Technology/openGL/advanced_sig96.html
+
+The original source code for the course examples can be found at:
+
+  http://www.sgi.com/Technology/openGL/advanced/programs.html
+
+In a few places, I've taken the liberty of adding GLUT popup menus and
+disabling animation when the window is iconfied.  Warnings and bugs I
+found were fixed.  In a few examples, the degree of tesselation and
+default window size have been scaled down to perform better on low-end
+graphics workstations and PCs.
+
+A number of SGI .rgb image files are used to supply texture data needed
+by some of these examples.  Since the files are large, I am not
+including them in the GLUT distribution.  Instead, they are provided in
+a separate distribution called glut_data.tar.gz
+
+If you retrieve glut_data.tar.gz, it will generate a glut-3.3/data
+directory where the images will be placed.  Use the "make links" target
+to make links in this directory into the glut-3.3/data directory.
+
+You can also get the files individually over the Internet from:
+
+  http://www.sgi.com/Technology/openGL/advanced/blythe/00.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/01.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/02.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/03.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/04.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/05.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/a.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/b.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/flowers.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/mandrill.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/road.rgb
+  http://www.sgi.com/Technology/openGL/advanced/blythe/tree.rgb
+
+- Mark Kilgard
+  October 25, 1996.

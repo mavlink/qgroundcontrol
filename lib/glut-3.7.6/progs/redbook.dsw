@@ -1,0 +1,974 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "_all"=".\redbook\_all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name aaindex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name aapoly
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name aargb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name accanti
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name accpersp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name alpha
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name alpha3D
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name anti
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name bezcurve
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name bezmesh
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name checker
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name clip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name colormat
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name cube
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name depthcue
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dof
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name double
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name drawf
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name feedback
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fog
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fogindex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name font
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name hello
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name image
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name light
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lines
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name list
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name material
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name mipmap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name model
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name movelight
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nurbs
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pickdepth
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name picksquare
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name plane
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name planet
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name polyoff
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name polys
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name quadric
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name robot
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sccolorlight
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name scene
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name scenebamb
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sceneflat
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name select
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name smooth
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name stencil
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name stroke
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name surface
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name teaambient
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name teapots
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tess
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tesswind
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texbind
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texgen
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texprox
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texsub
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texturesurf
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name torus
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name trim
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name unproject
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name varray
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name wrap
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "aaindex"=".\redbook\aaindex.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "aapoly"=".\redbook\aapoly.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "aargb"=".\redbook\aargb.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "accanti"=".\redbook\accanti.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "accpersp"=".\redbook\accpersp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "alpha"=".\redbook\alpha.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "alpha3D"=".\redbook\alpha3D.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "anti"=".\redbook\anti.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "bezcurve"=".\redbook\bezcurve.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "bezmesh"=".\redbook\bezmesh.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "checker"=".\redbook\checker.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "clip"=".\redbook\clip.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "colormat"=".\redbook\colormat.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "cube"=".\redbook\cube.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "depthcue"=".\redbook\depthcue.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dof"=".\redbook\dof.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "double"=".\redbook\double.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "drawf"=".\redbook\drawf.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "feedback"=".\redbook\feedback.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fog"=".\redbook\fog.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fogindex"=".\redbook\fogindex.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "font"=".\redbook\font.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "hello"=".\redbook\hello.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "image"=".\redbook\image.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "light"=".\redbook\light.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "lines"=".\redbook\lines.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "list"=".\redbook\list.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "material"=".\redbook\material.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "mipmap"=".\redbook\mipmap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "model"=".\redbook\model.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "movelight"=".\redbook\movelight.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nurbs"=".\redbook\nurbs.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pickdepth"=".\redbook\pickdepth.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "picksquare"=".\redbook\picksquare.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "plane"=".\redbook\plane.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "planet"=".\redbook\planet.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "polyoff"=".\redbook\polyoff.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "polys"=".\redbook\polys.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "quadric"=".\redbook\quadric.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "robot"=".\redbook\robot.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sccolorlight"=".\redbook\sccolorlight.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "scene"=".\redbook\scene.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "scenebamb"=".\redbook\scenebamb.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sceneflat"=".\redbook\sceneflat.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "select"=".\redbook\select.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "smooth"=".\redbook\smooth.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "stencil"=".\redbook\stencil.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "stroke"=".\redbook\stroke.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "surface"=".\redbook\surface.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "teaambient"=".\redbook\teaambient.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "teapots"=".\redbook\teapots.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tess"=".\redbook\tess.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tesswind"=".\redbook\tesswind.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texbind"=".\redbook\texbind.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texgen"=".\redbook\texgen.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texprox"=".\redbook\texprox.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texsub"=".\redbook\texsub.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texturesurf"=".\redbook\texturesurf.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "torus"=".\redbook\torus.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "trim"=".\redbook\trim.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "unproject"=".\redbook\unproject.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "varray"=".\redbook\varray.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "wrap"=".\redbook\wrap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

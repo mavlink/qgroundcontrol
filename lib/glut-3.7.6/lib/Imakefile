@@ -1,0 +1,13 @@
+
+/* Copyright (c) Mark J. Kilgard, 1995. */
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+/* NOTE: The fglut directory is GLUT FORTRAN bindings which are */
+/* specific to IRIX 5.x.  See ../README.fortran */
+
+SUBDIRS = glut mui gle glsmap
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

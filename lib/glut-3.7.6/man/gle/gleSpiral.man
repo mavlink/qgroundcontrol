@@ -1,0 +1,110 @@
+.\"
+.\" GLE Tubing & Extrusions Library Documentation 
+.\"
+.TH gleSpiral 3GLE "3.6" "GLE" "GLE"
+.SH NAME
+gleSpiral - Sweep an arbitrary contour along a helical path.
+.SH SYNTAX
+.nf
+.LP
+void gleSpiral (int ncp,
+                gleDouble contour[][2],
+                gleDouble cont_normal[][2],
+                gleDouble up[3],
+                gleDouble startRadius,     /* spiral starts in x-y plane */
+                gleDouble drdTheta,        /* change in radius per revolution */
+                gleDouble startZ,          /* starting z value */
+                gleDouble dzdTheta,        /* change in Z per revolution */
+                gleDouble startXform[2][3], /* starting contour affine xform */
+                gleDouble dXformdTheta[2][3], /* tangent change xform per revoln */
+                gleDouble startTheta,      /* start angle in x-y plane */
+                gleDouble sweepTheta);     /* degrees to spiral around */
+.fi
+.SH ARGUMENTS
+.IP \fIncp\fP 1i
+number of contour points
+.IP \fIcontour\fP 1i
+2D contour
+.IP \fIcont_normal\fP 1i
+2D contour normals
+.IP \fIup\fP 1i
+up vector for contour
+.IP \fIstartRadius\fP 1i
+spiral starts in x-y plane
+.IP \fIdrdTheta\fP 1i
+change in radius per revolution
+.IP \fIstartZ\fP 1i
+starting z value
+.IP \fIdzdTheta\fP 1i
+change in Z per revolution
+.IP \fIstartXform\fP 1i
+starting contour affine transformation
+.IP \fIdXformdTheta\fP 1i
+tangent change xform per revolution
+.IP \fIstartTheta\fP 1i
+start angle in x-y plane
+.IP \fIsweepTheta\fP 1i
+degrees to spiral around
+.SH DESCRIPTION
+
+Sweep an arbitrary contour along a helical path. 
+
+The axis of the helix lies along the modeling coordinate z-axis. 
+
+An affine transform can be applied as the contour is swept. For most
+ordinary usage, the affines should be given as NULL.
+
+The "startXform[][]" is an affine matrix applied to the contour to
+deform the contour. Thus, "startXform" of the form
+
+     |  cos     sin    0   |
+     |  -sin    cos    0   |
+
+will rotate the contour (in the plane of the contour), while 
+
+     |  1    0    tx   |
+     |  0    1    ty   |
+
+will translate the contour, and 
+
+     |  sx    0    0   |
+     |  0    sy    0   |
+
+scales along the two axes of the contour. In particular, note that 
+
+     |  1    0    0   |
+     |  0    1    0   |
+
+is the identity matrix. 
+
+The "dXformdTheta[][]" is a differential affine matrix that is
+integrated while the contour is extruded.  Note that this affine matrix
+lives in the tangent space, and so it should have the form of a
+generator.  Thus, dx/dt's of the form
+
+     |  0     r    0   |
+     |  -r    0    0   |
+
+rotate the the contour as it is extruded (r == 0 implies no rotation, r
+== 2*PI implies that the contour is rotated once, etc.), while
+
+     |  0    0    tx   |
+     |  0    0    ty   |
+
+translates the contour, and 
+
+     |  sx    0    0   |
+     |  0    sy    0   |
+
+scales it. In particular, note that 
+
+     |  0    0    0   |
+     |  0    0    0   |
+
+is the identity matrix -- i.e. the derivatives are zero, and therefore
+the integral is a constant.
+
+.SH SEE ALSO
+gleLathe
+.SH AUTHOR
+Linas Vepstas (linas@fc.net)

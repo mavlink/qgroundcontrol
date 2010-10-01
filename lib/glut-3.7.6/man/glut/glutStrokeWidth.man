@@ -1,0 +1,35 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutStrokeWidth 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutStrokeWidth returns the width of a stroke character,
+glutStrokeLength returns the length of a stroke font string.
+.SH SYNTAX
+.nf
+.LP
+int glutStrokeWidth(void *font, int character);
+int glutStrokeLength(void *font, const unsigned char *string);
+.fi
+.SH ARGUMENTS
+.IP \fIfont\fP 1i
+Stroke font to use. 
+For valid values, see the
+glutStrokeWidth description.
+.IP \fIcharacter\fP 1i
+Character to return width of (not confined to 8 bits). 
+.IP \fIstring\fP 1i
+Text string (8-bit characters), nul terminated.
+.SH DESCRIPTION
+glutStrokeWidth returns the width in modeling units of a stroke character in a
+supported stroke font. While the width of characters in a font may vary
+(though fixed width fonts do not vary), the maximum height
+characteristics of a particular font are fixed. 
+
+glutStrokeLength returns the length in modeling units of a string (8-bit
+characters).  This length is equivalent to summing all the widths
+returned by glutStrokeWidth for each character in the string.
+.SH SEE ALSO
+glutStrokeCharacter, glutBitmapWidth
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

@@ -1,0 +1,32 @@
+
+/* Copyright (c) Mark J. Kilgard, 1998. */
+
+#define DoNormalLib YES
+
+#include <Library.tmpl>
+
+#include "../../Glut.cf"
+
+SRCS = smap_buildsmap.c smap_context.c smap_create.c smap_destroy.c \
+  smap_drawmesh.c smap_flag.c smap_get.c smap_getfunc.c smap_gettexdim.c \
+  smap_gettexobj.c smap_getvec.c smap_makemesh.c smap_nearfar.c \
+  smap_origin.c smap_render.c smap_rvec2st.c smap_set.c smap_setfunc.c \
+  smap_setvec.c smap_texdim.c smap_texobj.c
+
+OBJS = smap_buildsmap.o smap_context.o smap_create.o smap_destroy.o \
+  smap_drawmesh.o smap_flag.o smap_get.o smap_getfunc.o smap_gettexdim.o \
+  smap_gettexobj.o smap_getvec.o smap_makemesh.o smap_nearfar.o \
+  smap_origin.o smap_render.o smap_rvec2st.o smap_set.o smap_setfunc.o \
+  smap_setvec.o smap_texdim.o smap_texobj.o
+
+#ifdef LibraryObjectRule
+LibraryObjectRule()
+#else
+/* XXX Very lame, you must be using pre-R5 config files!  This
+   will probably do essentially what LibraryObjectRule does. */
+NormalLibraryObjectRule()
+#endif
+
+NormalLibraryTarget(glsmap,$(OBJS))
+
+DependTarget()

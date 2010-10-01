@@ -1,0 +1,149 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "_all"=".\bucciarelli\_all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name fire
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name glbpaltex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name gltest
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name paltex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ray
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name teapot
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name terrain
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tunnel
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "fire"=".\bucciarelli\fire.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "glbpaltex"=".\bucciarelli\glbpaltex.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "gltest"=".\bucciarelli\gltest.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "paltex"=".\bucciarelli\paltex.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ray"=".\bucciarelli\ray.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "teapot"=".\bucciarelli\teapot.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "terrain"=".\bucciarelli\terrain.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tunnel"=".\bucciarelli\tunnel.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

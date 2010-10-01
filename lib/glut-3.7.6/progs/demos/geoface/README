@@ -1,0 +1,32 @@
+
+The geoface example in this directory is a modified version of the code
+presented in Appendix 1 of Frederic I Parke and Keith Waters's most
+interesting book "Computer Facial Animation" (A.K. Peters, ISBN
+1-56881-014-8).  Information about the book can be found at:
+
+  http://www.research.digital.com/CRL/personal/waters/book.html
+
+From the book's Preface:
+
+  This book is about computer facial models, computer generated facial
+  images, and facial animation. In particular it concerns the
+  principles of creating face models and the manipulation or control of
+  computer generated facial attributes. In addition, various sections
+  in the book describe and explain the development of specific computer
+  facial animation techniques over the past twenty years, as well as
+  those expected in the near future.
+
+The original Appendix 1 code (using the aux library) can be found at:
+
+  http://www.research.digital.com/CRL/books/facebook/appendix1/appendix1.html
+
+I've improved the code to add menus, better mouse motion handling,
+arrow key support, and less terminal output.
+
+DEC has a program called DECface that looks even more involved:
+
+  http://www.research.digital.com/CRL/projects/DECface/DECface.html
+
+If the example here intrigues you, you'll definitely want the book.
+
+- Mark Kilgard

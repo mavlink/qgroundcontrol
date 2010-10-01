@@ -1,0 +1,36 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutSolidTorus 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutSolidTorus, glutWireTorus - render a solid or wireframe
+torus (doughnut) respectively. 
+.SH SYNTAX
+.nf
+.LP
+void glutSolidTorus(GLdouble innerRadius,
+                    GLdouble outerRadius,
+                    GLint nsides, GLint rings);
+void glutWireTorus(GLdouble innerRadius,
+                   GLdouble outerRadius,
+                   GLint nsides, GLint rings);
+.fi
+.SH ARGUMENTS
+.IP \fIinnerRadius\fP 1i
+Inner radius of the torus. 
+.IP \fIouterRadius\fP 1i
+Outer radius of the torus. 
+.IP \fInsides\fP 1i
+Number of sides for each radial section. 
+.IP \fIrings\fP 1i
+Number of radial divisions for the torus. 
+.SH DESCRIPTION
+glutSolidTorus and glutWireTorus render a solid or wireframe
+torus (doughnut) respectively centered at the modeling coordinates origin
+whose axis is aligned with the Z axis. 
+.SH SEE ALSO
+glutSolidSphere, glutSolidCube, glutSolidCone, glutSolidDodecahedron,
+glutSolidOctahedron, glutSolidTetrahedron, glutSolidIcosahedron,
+glutSolidTeapot
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

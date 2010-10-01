@@ -1,0 +1,38 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutKeyboardFunc 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutKeyboardFunc - sets the keyboard callback for the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutKeyboardFunc(void (*func)(unsigned char key,
+                      int x, int y));
+.fi
+.SH ARGUMENTS
+.IP \fIfunc\fP 1i
+The new keyboard callback function. 
+.SH DESCRIPTION
+glutKeyboardFunc sets the keyboard callback for the current window.
+When a user types into the window, each key press generating an ASCII
+character will generate a keyboard callback. The key callback parameter
+is the generated ASCII character. The state of modifier keys such as Shift
+cannot be determined directly; their only effect will be on the returned
+ASCII data. The x and y callback parameters indicate the mouse location
+in window relative coordinates when the key was pressed. When a new
+window is created, no keyboard callback is initially registered, and ASCII
+key strokes in the window are ignored. Passing NULL to
+glutKeyboardFunc disables the generation of keyboard callbacks. 
+
+During a keyboard callback, glutGetModifiers may be called to
+determine the state of modifier keys when the keystroke generating the
+callback occurred. 
+
+Use glutSpecialFunc for a means to detect non-ASCII key
+strokes.
+.SH SEE ALSO
+glutKeyboardUpFunc,
+glutSpecialFunc, glutCreateWindow, glutMouseFunc, glutSpaceballButtonFunc, glutButtonBoxFunc, glutTabletButtonFunc, glutGetModifiers
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

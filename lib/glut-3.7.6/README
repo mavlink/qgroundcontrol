@@ -1,0 +1,186 @@
+
+This directory and its subdirectories contains the OpenGL Utility
+Toolkit (GLUT) distribution.  See the NOTICE for legal terms.
+
+VERSION:
+
+Release 3.7, Novermber 22, 1998.
+
+SUPPORTED PLATFORMS:
+
+This distribution should compile for:
+
+  o  Microsoft Windows 95, Windows 98, or Windows NT with Microsoft
+     OpenGL 1.1 (bundled standard with these systems) or SGI OpenGL
+     for Windows (aka Cosmo OpenGL).
+  
+  o  SGI workstation running IRIX 5.2 or higher supporting OpenGL,
+     including 64-bit and N32 support IRIX 6.1, 6.2, 6.3, 6.4, and
+     6.5.
+
+  o  DEC Alpha workstation running OSF/1 and OpenVMS with Open3D
+     layered product.
+
+  o  IBM RS/6000 workstations running AIX with OpenGL support.
+
+  o  Metro Link's Metro OpenGL for Linux.
+
+  o  Sun's OpenGL implementation for its workstations or Template
+     Graphics Software's OpenGL for Sun workstations.
+
+  o  Mesa 3.x (and 2.x) for Unix workstations, including Linux PCs
+     and SunOS 4.1.x.
+
+  o  Most other Unix workstations supporting either OpenGL or Mesa.
+
+MICROSOFT WINDOWS 95 and NT BUILD INSTRUCTIONS:   <-- IMPORTANT!
+
+Read the "README-win32.txt" accompanying file.
+
+MESA BUILD INSTRUCTIONS:                          <-- IMPORTANT!
+
+Mesa 3.x and higher provide an implementation of GLUT in Mesa's
+"MesaDemos" source code distribution.  The official GLUT source
+code distribution may or may not be more current than the version
+of the GLUT library included with the MesaDemos distribution.
+
+Please note that even though the MesaDemos distribution contains
+the source code for the GLUT library, the many GLUT source code
+examples and demos in the GLUT source code distribution are not
+part of Mesa.
+
+To ease building the GLUT source code distribution for Mesa,
+users, see the note in the Glut.cf file in this directory.  If
+you uncomment the line saying "#define UseMesa 1" and then
+set the "MesaDir" #define to the location of your Mesa source
+code distribution, GLUT should build easily with Mesa.
+
+MAKEFILE GENERATION TO BUILD GLUT:                <-- IMPORTANT!
+
+Use "mkmkfiles.sgi" to put Makefiles using the SGI Makefile conventions
+in place.  Use "mkmkfiles.imake" to put Makefiles generated from
+Imakefiles in place.  Run one of these two commands in this directory,
+then do a "make".
+
+FREQUENTLY ASKED QUESTIONS ABOUT GLUT:
+
+See FAQ.glut
+
+CONTENTS OVERVIEW BY DIRECTORY:
+
+  GL - GLUT interface header files
+
+  lib - source code for GLUT libraries
+
+     glut - GLUT library implementation
+
+     mui - Tom Davis's GLUT-based micro-UI user interface library
+
+     gle - Linas Vepstas's GLE Tubing & Extrusions library
+
+     fglut -     GLUT FORTRAN bindings (IRIX only)
+     glut.n32 -  "N32" version of the GLUT library (IRIX only).
+     fglut.n32 - "N32" version of the GLUT library (IRIX only).
+     glut.n64 -  64-bit version of the GLUT library (IRIX only).
+     fglut.n64 - 64-bit version of the GLUT library (IRIX only).
+     mui.n32 -   "N32" version of micro-UI library (IRIX only).
+     mui.n64 -   64-bit version of micro-UI library (IRIX only).
+     gle.n32 -   "N32" version of GLE Tubing & Extrusions library (IRIX only).
+     gle.n64 -   64-bit version of GLE Tubing & Extrusions library (IRIX only).
+
+  test - test programs
+  
+      glut - GLUT library tests
+
+      mui - micro-UI library test
+
+  progs - programs using GLUT
+
+     examples - misc. GLUT examples
+
+     redbook - examples from the OpenGL Programming Guide ported to GLUT
+
+     advanced - GLUT examples demonstrating advanced OpenGL rendering
+        techniques.  The programs are largely based on the SIGGRAPH '96
+	course taught by David Blythe and Tom McReynolds.
+
+     contrib - contributed GLUT examples
+
+     demos - more involved OpenGL demos using GLUT
+
+     fortran - GLUT FORTRAN examples
+
+     glc - An example of using OpenGL's Character Rendering API
+	included in IRIX 6.2 and beyond.
+
+     inventor - Two GLUT-based Open Inventor examples.
+
+     mesademos - Ports to GLUT of programs developed by Brian Paul
+        that are distributed with Mesa.
+
+     texfont - Tools and demos for using texture mapped fonts.
+
+     tiff - Examples of using Sam Leffler's libtiff library for
+        reading, display, and writing TIFF image files.
+
+     ada - Examples using the GLUT ADA binding.
+
+DOCUMENTATION:
+
+See the other README files in this directory.  There is a complete
+specification for GLUT API version 3 in PostScript available by
+anonymous ftp accompanying this distribution.  GLUT includes a full set
+of nroff man pages for the GLUT API version 3.  nroff man pages for
+GLE are also included.
+
+ACCOMPANYING DATA FILES:
+
+Another separate GLUT data distribution contains a "data" subdirectory
+containing large data files used by some of the examples in the
+"progs/advanced" subdirectory.  See the file "progs/advanced/README"
+for more details.
+
+GLUT MAILING LIST:
+
+To subscribe to the GLUT mailing list, send an electronic mail message
+with the word "subscribe" in the first line of the message to
+glut-request@perp.com  Messages intended for the GLUT mailing list can
+be sent to glut@prep.com
+
+A SHAMELESS BUT HOPEFULLY HELPFUL PLUG:
+
+I've written a book titled "Programming OpenGL for the X Window System"
+(ISBN: 0-201-48359-9) published by Addison-Wesley.  It includes both a
+complete tutorial and documentation for GLUT, as well as a full
+explanation of using OpenGL with the X Window System's Xlib and
+Xt/Motif interfaces.  If you use GLUT, I believe you'll find this
+book very informative.  See:
+
+  http://reality.sgi.com/mjk/OpenGLforX.html
+
+BUG REPORTING:
+
+Send bug reports by electronic mail to mjk@nvidia.com (I now work
+for NVIDIA Corporation, not Silicon Graphics).
+
+Questions of a general interest about GLUT will be answered on the
+comp.graphics.api.opengl newsgroup.
+
+ACKNOWLEDGEMENTS:
+
+Much thanks to OpenGL engineers at DEC, IBM, Microsoft, SGI, Sun, and
+TGS.  Of particular mention are Brian Paul from the University of
+Wisconsin, Nate Robins at the Univeristy of Utah, and Craig Groeschel
+of Metro Link Inc. for helping me ensure the portability of this code
+to non-SGI graphics platforms.  Also thank you to GLUT users who
+supplied me with feedback and bug fixes.
+
+Nate Robin's effort to combine his Win32 GLUT with GLUT 3.5 were most
+excellent.  Tom Davis contributed the micro-UI library.  GLUT 3.5's
+testing on PCs was greatly aided by Petri Nordlund, Brian Buchner,
+Leath Muller, Stephen Speicher, and I've probably missed others.  Henk
+Kok is responsible for the several way cool demos in GLUT 3.5.  Thanks
+for your help!
+
+- Mark Kilgard
+  mjk@nvidia.com

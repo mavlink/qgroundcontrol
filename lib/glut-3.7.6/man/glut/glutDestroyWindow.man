@@ -1,0 +1,25 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutDestroyWindow 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutDestroyWindow - destroys the specified window. 
+.SH SYNTAX
+.nf
+.LP
+void glutDestroyWindow(int win);
+.fi
+.SH ARGUMENTS
+.IP \fIwin\fP 1i
+Identifier of GLUT window to destroy. 
+.SH DESCRIPTION
+glutDestroyWindow destroys the window specified by win and the
+window's associated OpenGL context, logical colormap (if the window
+is color index), and overlay and related state (if an overlay has been
+established). Any subwindows of destroyed windows are also destroyed
+by glutDestroyWindow. If win was the current window, the current
+window becomes invalid ( glutGetWindow will return zero). 
+.SH SEE ALSO
+glutCreateWindow, glutCreateSubWindow, glutDestroyMenu
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

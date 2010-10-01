@@ -1,0 +1,105 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutSpecialUpFunc 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutSpecialUpFunc - sets the special keyboard up (key release) callback for the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutSpecialUpFunc(void (*func)(int key, int x, int y));
+.fi
+.SH ARGUMENTS
+.IP \fIfunc\fP 1i
+The new special callback function. 
+.SH DESCRIPTION
+glutSpecialUpFunc sets the special keyboard up (key release) callback for the current
+window. The special keyboard up callback is triggered when keyboard
+function or directional keys are released. The key callback parameter is a
+GLUT_KEY_* constant for the special key pressed. The x and y callback
+parameters indicate the mouse in window relative coordinates when the
+key was pressed. When a new window is created, no special up callback is
+initially registered and special key releases in the window are ignored.
+Passing NULL to glutSpecialUpFunc disables the generation of special up
+callbacks. 
+
+During a special up callback, glutGetModifiers may be called to
+determine the state of modifier keys when the key release generating the
+callback occurred. 
+
+To avoid the reporting of key release/press pairs due to auto
+repeat, use glutIgnoreKeyRepeat to ignore auto repeated keystrokes.
+
+An implementation should do its best to provide ways to generate all the
+GLUT_KEY_* special keys. The available GLUT_KEY_* values are: 
+.TP 8
+.B GLUT_KEY_F1 
+F1 function key. 
+.TP 8
+.B GLUT_KEY_F2 
+F2 function key. 
+.TP 8
+.B GLUT_KEY_F3 
+F3 function key. 
+.TP 8
+.B GLUT_KEY_F4 
+F4 function key. 
+.TP 8
+.B GLUT_KEY_F5 
+F5 function key. 
+.TP 8
+.B GLUT_KEY_F6 
+F6 function key. 
+.TP 8
+.B GLUT_KEY_F7 
+F7 function key. 
+.TP 8
+.B GLUT_KEY_F8 
+F8 function key. 
+.TP 8
+.B GLUT_KEY_F9 
+F9 function key. 
+.TP 8
+.B GLUT_KEY_F10 
+F10 function key. 
+.TP 8
+.B GLUT_KEY_F11 
+F11 function key. 
+.TP 8
+.B GLUT_KEY_F12 
+F12 function key. 
+.TP 8
+.B GLUT_KEY_LEFT 
+Left directional key. 
+.TP 8
+.B GLUT_KEY_UP 
+Up directional key. 
+.TP 8
+.B GLUT_KEY_RIGHT 
+Right directional key. 
+.TP 8
+.B GLUT_KEY_DOWN 
+Down directional key. 
+.TP 8
+.B GLUT_KEY_PAGE_UP 
+Page up directional key. 
+.TP 8
+.B GLUT_KEY_PAGE_DOWN 
+Page down directional key. 
+.TP 8
+.B GLUT_KEY_HOME 
+Home directional key. 
+.TP 8
+.B GLUT_KEY_END 
+End directional key. 
+.TP 8
+.B GLUT_KEY_INSERT 
+Inset directional key. 
+.LP
+Note that the escape, backspace, and delete keys are generated as an ASCII
+character. 
+.SH SEE ALSO
+glutSpecialFunc,
+glutKeyboardFunc, glutKeyboardUpFunc, glutMouseFunc, glutSpaceballButtonFunc, glutButtonBoxFunc, glutTabletButtonFunc, glutGetModifiers, glutIgnoreKeyRepeat
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

@@ -1,0 +1,114 @@
+
+CHANGES for GLUT API version 3
+-------------------------------
+
+GLUT API version 3 should be (almost) fully compatible with the
+GLUT API version 2.  See the GLUT 3 specification for full details.
+
+Please be aware of two obscure reasons that programs that worked
+under GLUT API version 2 may need slight modification for GLUT 3.
+
+  1)  You are now _required_ to have a display callback registered
+      for any GLUT window displayed to the screen.  Otherwise a
+      fatal error is generated.  It would be a bug in your program
+      otherwise!  In conjunction with this, you can no longer
+      call glutDisplayFunc(NULL) to unregister a display callback.
+
+  2)  It is a fatal error now to modify a GLUT pop-up menu while
+      menus are in use.  There were too many semantic problems with
+      changing menus that may be currently displayed.  To determine
+      if menus are in use, you can use the "menu use" callback registered
+      with glutMenuStatusFunc
+
+Here are the GLUT API version 3 additions in more detail:
+
+  void glutSetCursor(int cursor)
+  int glutGet(GLUT_WINDOW_CURSOR)
+
+     Provides a way to set (and get) the window's cursor to one
+     of several enumerated cursor shapes including "none",
+     "stop-watch", "arrow", "crosshair", "pull left/up/down/etc.",
+     or "inherit".
+
+  void glutFullScreen(void)
+
+     Attempts to make the window as large as the window system
+     permits (ie, the screen size).  Borders will be automatically
+     disabled if possible.
+
+  void glutMenuStatus(void (*)(int status, int x, int y))
+
+     The existing glutMenuState routine's callback did not
+     provide the X & Y location when the menu state changed
+     which made it impossible to correctly implement locate
+     highlight in conjunction with menus.  glutMenuStatus
+     returns the location.
+
+   GLUT_BITMAP_HELVETICA_10
+   GLUT_BITMAP_HELVETICA_12
+   GLUT_BITMAP_HELVETICA_18
+ 
+      New bitmap fonts in a nicer font at nicer sizes.
+
+   int glutStrokeLength(void *, char *string)
+   int glutBitmapLength(void *, char *string)
+
+      Given a font handle and a string, returns the length in
+      modelview units or pixels respectively for the string
+      if rendered with the font.
+
+   int glutCurrentModifiers(void)
+
+      When called from within a keyboard, special keyboard, mouse
+      button, or mouse callback, returns a bitmask representing
+      the modifier keys active when the event generating the callback
+      occured.  This will let you implement Alt+<key> combinations
+      and such.
+
+   void glutEstablishOverlays(void)
+   void glutRemoveOverlays(void)
+   void glutOverlayDisplayFunc(void (*func)(void))
+   void glutPostOverlayRedisplay(void)
+   void glutUseLayer(GLenum layer)
+   void glutLayerGet(GLenum type)
+   void glutShowOverlay(void)
+   void glutHideOverlay(void)
+
+      This API provides a way to "add" an overlay to a GLUT window.
+      The overlay is like IRIS GL overlay support in that the overlay
+      completely overlaps the window.  You setup the layer with
+      glutEstablishOverlay.  You switch between the normal plane
+      and overlay using glutUseLayer.  You can register an independent
+      callback for redisplaying the overlay, or use a unified display
+      callback for both layers.
+
+      I believe this is a very simple overlay facility that will be
+      readily useful for OpenGL programs wanting access to overlay
+      planes.
+
+   GLUT_LUMINANCE
+
+     This is a new display mode that is like OpenGL's basic RGBA
+     color model, but has no Green or Blue components (and Alpha
+     is optional).  The Red component represents single component
+     (or "luminance") data (between 0.0 and 1.0).  The component
+     is integerized to between 0 and glutGet(GLUT_WINDOW_COLORMAP_SIZE)-1
+     and looked up in a per-window color map.  GLUT's glutSetColor,
+     glutGetColor, and glutCopyColormap work on a GLUT_LUMINANCE
+     window.  The initial colormap of GLUT_LUMINANCE windows is
+     initialized to be a linear gray ramp.
+
+     GLUT_LUMINANCE is very much like a color index window with
+     an RGBA rendering model.  GLUT_LUMINANCE should be useful for
+     scientific visualization.
+
+     Only some platforms will support GLUT_LUMINANCE.  SGI's IMPACT
+     and InfiniteReality systems should provide GLUT_LUMINANCE
+     support, however while the GLUT version 3 API provides GLUT_LUMINANCE,
+     GLUT 3.0 does not implement GLUT_LUMINANCE support.
+
+     Exact specifics of how GLUT_LUMINANCE operates are subject to
+     change.
+
+Also there are a handful of minor bug fixes (of course).
+

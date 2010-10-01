@@ -1,0 +1,15 @@
+
+/* Copyright (c) Mark J. Kilgard, 1998. */
+
+#include "../../../Glut.cf"
+
+TARGETS = particle
+
+SRCS =  particle.c
+OBJS =  particle.o
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(particle,$(OBJS))
+
+DependTarget()
