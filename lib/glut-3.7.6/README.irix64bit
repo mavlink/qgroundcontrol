@@ -1,6 +1,0 @@
-
-This file (in GLUT 2.3) used to discuss building a 64-bit version of
-the GLUT library for IRIX 6.1.  Now, this information is in the
-README.irix6 file.
-
-- Mark Kilgard
