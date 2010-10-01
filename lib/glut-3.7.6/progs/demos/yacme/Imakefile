@@ -1,0 +1,17 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+#include "../../../Glut.cf"
+
+TARGETS = yacme
+
+SRCS =  Editor.c invertmat.c
+OBJS =  Editor.o invertmat.o
+
+DEFINES = -DYACME_DBG
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(yacme,$(OBJS))
+
+DependTarget()

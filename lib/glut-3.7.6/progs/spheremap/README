@@ -1,0 +1,15 @@
+
+These are GLUT-based OpenGL examples that develop the idea of real-time
+dynamic environment mapping using sphere maps.  The examples were
+originally presented at the Computer Game Developers Convention (CGDC)
+in Long Beach, CA on May 5, 1998.
+
+The "glsmap" directory contains examples that use the glsmap dynamic
+sphere mapping library API (see ../../lib/glsmap for the library's
+source code).  The "hacks" directory contains a few examples that
+demonstrate the functional building blocks for dynamic sphere mapping
+(and do not use the glsmap library).
+
+- Mark Kilgard
+  mjk@nvidia.com
+

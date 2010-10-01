@@ -1,0 +1,12 @@
+#!/bin/csh -f
+echo "Setting up use of SGI Makefiles"
+echo ""
+echo "NOTE: If you have a Fortran compiler and IRIX 5.3 or later, please see"
+echo "the instructions in README.fortran for building the GLUT Fortran"
+echo "API and sample programs.  Fortran code is not built by default."
+echo ""
+foreach i ( `find . -name Makefile.sgi -print` )
+   echo "Linking $i to $i:r"
+   rm -f $i:r
+   ln -s Makefile.sgi $i:r
+end

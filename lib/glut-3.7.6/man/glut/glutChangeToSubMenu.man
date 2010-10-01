@@ -1,0 +1,32 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutChangeToSubMenu 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutChangeToSubMenu - changes the specified menu item in the current
+menu into a sub-menu trigger. 
+.SH SYNTAX
+.nf
+.LP
+void glutChangeToSubMenu(int entry, char *name, int menu);
+.fi
+.SH ARGUMENTS
+.IP \fIentry\fP 1i
+Index into the menu items of the current menu (1 is the topmost menu item). 
+.IP \fIname\fP 1i
+ASCII character string to display in the menu item to cascade the sub-menu from. 
+.IP \fImenu\fP 1i
+Identifier of the menu to cascade from this sub-menu menu item. 
+.SH DESCRIPTION
+glutChangeToSubMenu changes the specified menu item in the current
+menu into a sub-menu trigger. The entry parameter determines which
+menu item should be changed, with one being the topmost item. entry
+must be between 1 and glutGet(GLUT_MENU_NUM_ITEMS) inclusive.
+The menu item to change does not have to be a sub-menu trigger already.
+The string name will be displayed for the newly changed sub-menu
+trigger. The menu identifier names the sub-menu to cascade from the
+newly added sub-menu trigger. 
+.SH SEE ALSO
+glutChangeToMenuEntry, glutAddSubMenu, glutRemoveMenuItem
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

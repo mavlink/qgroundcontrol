@@ -1,0 +1,341 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "_all"=".\demos\_all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name atlantis
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name bluepony
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name bounce
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name chess
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name geoface
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name glflare
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name glutmech
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ideas
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lorenz
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name newave
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name opengl_logo
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name particle
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name rollercoaster
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name skyfly
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name smooth
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sunlight
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sysview
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name underwater
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name walker
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name yacme
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "atlantis"=".\demos\atlantis\atlantis.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "bluepony"=".\demos\bluepony\bluepony.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "bounce"=".\demos\bounce\bounce.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "chess"=".\demos\chess\chess.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "geoface"=".\demos\geoface\geoface.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "glflare"=".\demos\glflare\glflare.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "gliq"=".\demos\gliq\gliq.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "glutmech"=".\demos\glutmech\glutmech.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ideas"=".\demos\ideas\ideas.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "lorenz"=".\demos\lorenz\lorenz.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "newave"=".\demos\newave\newave.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "opengl_logo"=".\demos\opengl_logo\opengl_logo.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "particle"=".\demos\particle\particle.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "rollercoaster"=".\demos\rollercoaster\rollercoaster.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "skyfly"=".\demos\skyfly\skyfly.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "smooth"=".\demos\smooth\smooth.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sunlight"=".\demos\sunlight\sunlight.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sysview"=".\demos\sysview\sysview.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "underwater"=".\demos\underwater\underwater.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "walker"=".\demos\walker\walker.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "yacme"=".\demos\yacme\yacme.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

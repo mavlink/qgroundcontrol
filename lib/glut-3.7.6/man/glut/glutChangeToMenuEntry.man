@@ -1,0 +1,32 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutChangeToMenuEntry 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutChangeToMenuEntry - changes the specified menu item in
+the current menu into a menu entry. 
+.SH SYNTAX
+.nf
+.LP
+void glutChangeToMenuEntry(int entry, char *name, int value);
+.fi
+.SH ARGUMENTS
+.IP \fIentry\fP 1i
+Index into the menu items of the current menu (1 is the topmost menu item). 
+.IP \fIname\fP 1i
+ASCII character string to display in the menu entry. 
+.IP \fIvalue\fP 1i
+Value to return to the menu's callback function if the menu entry is selected. 
+.SH DESCRIPTION
+glutChangeToMenuEntry changes the specified menu entry in the
+current menu into a menu entry. The entry parameter determines which
+menu item should be changed, with one being the topmost item. entry
+must be between 1 and glutGet(GLUT_MENU_NUM_ITEMS) inclusive.
+The menu item to change does not have to be a menu entry already. The
+string name will be displayed for the newly changed menu entry. The
+value will be returned to the menu's callback if this menu entry is
+selected. 
+.SH SEE ALSO
+glutChangeToSubMenu, glutAddMenuEntry, glutRemoveMenuItem
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

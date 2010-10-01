@@ -1,0 +1,12 @@
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+SUBDIRS = glut mui
+
+MakeSubdirs($(SUBDIRS))
+
+test:
+	cd glut ; $(MAKE) test
+	cd mui ; $(MAKE) test
+
+DependSubdirs($(SUBDIRS))

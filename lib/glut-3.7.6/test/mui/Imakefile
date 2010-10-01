@@ -1,0 +1,17 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../Glut.cf"
+
+TARGETS = mui_test multi_test
+
+SRCS = mui_test.c multi_test.c
+
+AllTarget($(TARGETS))
+
+MuiTestProgramTarget(mui_test)
+MuiTestProgramTarget(multi_test)
+
+test: $(TARGETS)
+
+DependTarget()

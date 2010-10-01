@@ -1,0 +1,16 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../../Glut.cf"
+
+TARGETS = rc
+
+SRCS = defrc.c matrix.c rc.c
+
+OBJS = defrc.o matrix.o rc.o
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(rc,$(OBJS))
+
+DependTarget()

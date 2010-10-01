@@ -1,0 +1,10 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+SUBDIRS = hacks glsmap
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

@@ -1,0 +1,17 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../Glut.cf"
+
+TARGETS = txfdemo simpletxf gentexfont showtxf
+
+SRCS = gentexfont.c showtxf.c simpletxf.c texfont.c txfdemo.c
+
+AllTarget($(TARGETS))
+
+SimpleGlutProgramTarget(gentexfont)
+NormalGlutProgramTarget(showtxf,showtxf.o texfont.o)
+NormalGlutProgramTarget(simpletxf,simpletxf.o texfont.o)
+NormalGlutProgramTarget(txfdemo,txfdemo.o texfont.o)
+
+DependTarget()

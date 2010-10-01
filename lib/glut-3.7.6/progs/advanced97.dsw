@@ -1,0 +1,779 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "_all"=".\advanced97\_all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name accconvolve
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name accumaa
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name alphablend
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name alphablendnosort
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name billboard
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name bubble
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name bump
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name chromakey
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name chromakey_fancy
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name cloud
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name cloudl
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name complexity
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name csg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name decal
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dissolve
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name explode
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fire
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name genspheremap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name highlight
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name interp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lightmap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lightp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name line
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name multiaccumaa
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name multialphablend
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name multialphablendnosort
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name multimirror
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name multiscreendoor
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name multispheremap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name noise
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name nthsurfdemo
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name paint
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name projtex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sbias
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name screendoor
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name smoke
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name softshadow2
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name spectral
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tess
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name usespheremap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name vapor
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name volume
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name warp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name water
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zcomposite
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texmovie
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texpage
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name textile
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name underwater
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texgen
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "accconvolve"=".\advanced97\accconvolve.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "accumaa"=".\advanced97\accumaa.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "alphablend"=".\advanced97\alphablend.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "alphablendnosort"=".\advanced97\alphablendnosort.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "billboard"=".\advanced97\billboard.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "bubble"=".\advanced97\bubble.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "bump"=".\advanced97\bump.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "chromakey"=".\advanced97\chromakey.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "chromakey_fancy"=".\advanced97\chromakey_fancy.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "cloud"=".\advanced97\cloud.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "cloudl"=".\advanced97\cloudl.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "complexity"=".\advanced97\complexity.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "csg"=".\advanced97\csg.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "decal"=".\advanced97\decal.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dissolve"=".\advanced97\dissolve.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "explode"=".\advanced97\explode.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fire"=".\advanced97\fire.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "genspheremap"=".\advanced97\genspheremap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "highlight"=".\advanced97\highlight.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "interp"=".\advanced97\interp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "lightmap"=".\advanced97\lightmap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "lightp"=".\advanced97\lightp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "line"=".\advanced97\line.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "multiaccumaa"=".\advanced97\multiaccumaa.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "multialphablend"=".\advanced97\multialphablend.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "multialphablendnosort"=".\advanced97\multialphablendnosort.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "multimirror"=".\advanced97\multimirror.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "multiscreendoor"=".\advanced97\multiscreendoor.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "multispheremap"=".\advanced97\multispheremap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "noise"=".\advanced97\noise.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "nthsurfdemo"=".\advanced97\nthsurfdemo.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "paint"=".\advanced97\paint.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "projtex"=".\advanced97\projtex.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sbias"=".\advanced97\sbias.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "screendoor"=".\advanced97\screendoor.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "smoke"=".\advanced97\smoke.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "softshadow2"=".\advanced97\softshadow2.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "spectral"=".\advanced97\spectral.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tess"=".\advanced97\tess.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texgen"=".\advanced97\texgen.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texmovie"=".\advanced97\texmovie.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texpage"=".\advanced97\texpage.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "textile"=".\advanced97\textile.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "underwater"=".\advanced97\underwater.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "usespheremap"=".\advanced97\usespheremap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "vapor"=".\advanced97\vapor.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "volume"=".\advanced97\volume.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "warp"=".\advanced97\warp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "water"=".\advanced97\water.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "zcomposite"=".\advanced97\zcomposite.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

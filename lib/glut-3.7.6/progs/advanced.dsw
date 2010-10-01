@@ -1,0 +1,659 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "_all"=".\advanced\_all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name accumaa
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name af_depthcue
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name af_teapots
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name boundary
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name comp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name convolve
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name csg
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name decal
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dissolve
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name envmap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name envphong
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name field
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name genmipmap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name haloed
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name hello2rts
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name hiddenline
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name imgproc
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name mipmap_lines
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name motionblur
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name multilight
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name occlude
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name pointburst
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name projshadow
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name projtex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name rasonly
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name redblue_stereo
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sgiflag
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name shadowfun
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name shadowmap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name shadowvol
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name silhouette
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name softshadow
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tess
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name textext
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name textile
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name textrim
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texwinalign
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name tvertex
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name videoresize
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name vox
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name warp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zcomposite
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "accumaa"=".\advanced\accumaa.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "af_depthcue"=".\advanced\af_depthcue.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "af_teapots"=".\advanced\af_teapots.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "boundary"=".\advanced\boundary.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "comp"=".\advanced\comp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "convolve"=".\advanced\convolve.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "csg"=".\advanced\csg.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "decal"=".\advanced\decal.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dissolve"=".\advanced\dissolve.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "envmap"=".\advanced\envmap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "envphong"=".\advanced\envphong.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "field"=".\advanced\field.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "genmipmap"=".\advanced\genmipmap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "haloed"=".\advanced\haloed.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "hello2rts"=".\advanced\hello2rts.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "hiddenline"=".\advanced\hiddenline.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "imgproc"=".\advanced\imgproc.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "mipmap_lines"=".\advanced\mipmap_lines.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "motionblur"=".\advanced\motionblur.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "multilight"=".\advanced\multilight.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "occlude"=".\advanced\occlude.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "pointburst"=".\advanced\pointburst.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "projshadow"=".\advanced\projshadow.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "projtex"=".\advanced\projtex.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "rasonly"=".\advanced\rasonly.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "redblue_stereo"=".\advanced\redblue_stereo.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sgiflag"=".\advanced\sgiflag.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "shadowfun"=".\advanced\shadowfun.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "shadowmap"=".\advanced\shadowmap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "shadowvol"=".\advanced\shadowvol.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "silhouette"=".\advanced\silhouette.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "softshadow"=".\advanced\softshadow.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tess"=".\advanced\tess.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "textext"=".\advanced\textext.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "textile"=".\advanced\textile.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "textrim"=".\advanced\textrim.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texwinalign"=".\advanced\texwinalign.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "tvertex"=".\advanced\tvertex.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "videoresize"=".\advanced\videoresize.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "vox"=".\advanced\vox.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "warp"=".\advanced\warp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "zcomposite"=".\advanced\zcomposite.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

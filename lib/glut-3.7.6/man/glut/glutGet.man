@@ -1,0 +1,161 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutGet 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutGet - retrieves simple GLUT state represented by integers. 
+.SH SYNTAX
+.nf
+.LP
+int glutGet(GLenum state);
+.fi
+.SH ARGUMENTS
+.IP \fIstate\fP 1i
+Name of state to retrieve. 
+.TP 8
+.B GLUT_WINDOW_X 
+X location in pixels (relative to the screen origin) of the current
+window. 
+.TP 8
+.B GLUT_WINDOW_Y 
+Y location in pixels (relative to the screen origin) of the current
+window. 
+.TP 8
+.B GLUT_WINDOW_WIDTH 
+Width in pixels of the current window. 
+.TP 8
+.B GLUT_WINDOW_HEIGHT 
+Height in pixels of the current window. 
+.TP 8
+.B GLUT_WINDOW_BUFFER_SIZE 
+Total number of bits for current layer of current window's color buffer. For an
+RGBA window, this is the sum of GLUT_WINDOW_RED_SIZE,
+GLUT_WINDOW_GREEN_SIZE, GLUT_WINDOW_BLUE_SIZE, and
+GLUT_WINDOW_ALPHA_SIZE. For color index windows, this is
+the size of the color indexes. 
+.TP 8
+.B GLUT_WINDOW_STENCIL_SIZE 
+Number of bits in the current layer of current window's stencil buffer. 
+.TP 8
+.B GLUT_WINDOW_DEPTH_SIZE 
+Number of bits in the current layer of current window's depth buffer. 
+.TP 8
+.B GLUT_WINDOW_RED_SIZE 
+Number of bits of red stored the current layer of current window's color buffer.
+Zero if the current layer of the current window is color index. 
+.TP 8
+.B GLUT_WINDOW_GREEN_SIZE 
+Number of bits of green stored the current layer of current window's color buffer.
+Zero if the current layer of the current window is color index. 
+.TP 8
+.B GLUT_WINDOW_BLUE_SIZE 
+Number of bits of blue stored the current layer of current window's color buffer.
+Zero if the current layer of the current window is color index. 
+.TP 8
+.B GLUT_WINDOW_ALPHA_SIZE 
+Number of bits of alpha stored the current layer of current window's color buffer.
+Zero if the current layer of the current window is color index. 
+.TP 8
+.B GLUT_WINDOW_ACCUM_RED_SIZE 
+Number of bits of red stored in the current layer of current window's accumulation
+buffer. Zero if the current layer of the current window is color index. 
+.TP 8
+.B GLUT_WINDOW_ACCUM_GREEN_SIZE 
+Number of bits of green stored in the current layer of current window's
+accumulation buffer. Zero if the current layer of the current window is color index. 
+.TP 8
+.B GLUT_WINDOW_ACCUM_BLUE_SIZE 
+Number of bits of blue stored in the current layer of current window's
+accumulation buffer. Zero if the current layer of the current window is color index. 
+.TP 8
+.B GLUT_WINDOW_ACCUM_ALPHA_SIZE 
+Number of bits of alpha stored in the current layer of current window's
+accumulation buffer. Zero if the current layer of the current window is color index. 
+.TP 8
+.B GLUT_WINDOW_DOUBLEBUFFER 
+One if the current layer of the current window is double buffered, zero otherwise. 
+.TP 8
+.B GLUT_WINDOW_RGBA 
+One if the current layer of the current window is RGBA mode, zero otherwise (i.e.,
+color index). 
+.TP 8
+.B GLUT_WINDOW_PARENT 
+The window number of the current window's parent; zero if the
+window is a top-level window. 
+.TP 8
+.B GLUT_WINDOW_NUM_CHILDREN 
+The number of subwindows the current window has (not counting
+children of children). 
+.TP 8
+.B GLUT_WINDOW_COLORMAP_SIZE 
+Size of current layer of current window's color index colormap; zero for RGBA
+color model layers. 
+.TP 8
+.B GLUT_WINDOW_NUM_SAMPLES 
+Number of samples for multisampling for the current layer of the current window. 
+.TP 8
+.B GLUT_WINDOW_STEREO 
+One if the current layer of the current window is stereo, zero otherwise. 
+.TP 8
+.B GLUT_WINDOW_CURSOR 
+Current cursor for the current window. 
+.TP 8
+.B GLUT_SCREEN_WIDTH 
+Width of the screen in pixels. Zero indicates the width is unknown
+or not available. 
+.TP 8
+.B GLUT_SCREEN_HEIGHT 
+Height of the screen in pixels. Zero indicates the height is
+unknown or not available. 
+.TP 8
+.B GLUT_SCREEN_WIDTH_MM 
+Width of the screen in millimeters. Zero indicates the width is
+unknown or not available. 
+.TP 8
+.B GLUT_SCREEN_HEIGHT_MM 
+Height of the screen in millimeters. Zero indicates the height is
+unknown or not available. 
+.TP 8
+.B GLUT_MENU_NUM_ITEMS 
+Number of menu items in the current menu. 
+.TP 8
+.B GLUT_DISPLAY_MODE_POSSIBLE 
+Whether the current display mode is supported or not. 
+.TP 8
+.B GLUT_INIT_DISPLAY_MODE 
+The initial display mode bit mask. 
+.TP 8
+.B GLUT_INIT_WINDOW_X 
+The X value of the initial window position. 
+.TP 8
+.B GLUT_INIT_WINDOW_Y 
+The Y value of the initial window position. 
+.TP 8
+.B GLUT_INIT_WINDOW_WIDTH 
+The width value of the initial window size. 
+.TP 8
+.B GLUT_INIT_WINDOW_HEIGHT 
+The height value of the initial window size. 
+.TP 8
+.B GLUT_ELAPSED_TIME 
+Number of milliseconds since glutInit called (or first call to
+glutGet(GLUT_ELAPSED_TIME)). 
+.TP 8
+.B GLUT_WINDOW_FORMAT_ID
+The window system dependent format ID for the current layer of the
+current window.  On X11 GLUT implementations, this is the X visual ID.
+On Win32 GLUT implementations, this is the Win32 Pixel Format
+Descriptor number.  This value is returned for debugging, benchmarking,
+and testing ease.
+.SH DESCRIPTION
+glutGet retrieves simple GLUT state represented by integers. The
+state parameter determines what type of state to return.  Where appropriate, window
+capability state is returned for the layer in use. GLUT state names
+beginning with GLUT_WINDOW_ return state for the current window.
+GLUT state names beginning with GLUT_MENU_ return state for the
+current menu. Other GLUT state names return global state. Requesting
+state for an invalid GLUT state name returns negative one. 
+.SH SEE ALSO
+glutDeviceGet, glutLayerGet, glutGetColor, glutGetWindow, glutGetMenu, glutGetModifiers, glutExtensionSupported
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

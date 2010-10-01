@@ -1,0 +1,209 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "_all"=".\contrib\_all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name agv_viewer
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fractals
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name gears
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name hanoi
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name hanoi2
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lineblend
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name moth
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name noof
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name rings
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name steam
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name text3d
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name worms
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "agv_viewer"=".\contrib\agv_viewer.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fractals"=".\contrib\fractals.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "gears"=".\contrib\gears.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "hanoi"=".\contrib\hanoi.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "hanoi2"=".\contrib\hanoi2.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "lineblend"=".\contrib\lineblend.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "moth"=".\contrib\moth.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "noof"=".\contrib\noof.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "rings"=".\contrib\rings.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "steam"=".\contrib\steam.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "text3d"=".\contrib\text3d.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "worms"=".\contrib\worms.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

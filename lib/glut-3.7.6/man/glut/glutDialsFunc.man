@@ -1,0 +1,37 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutDialsFunc 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutDialsFunc - sets the dial & button box dials callback for the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutDialsFunc(void (*func)(int dial, int value));
+.fi
+.SH ARGUMENTS
+.IP \fIfunc\fP 1i
+The new dials callback function. 
+.SH DESCRIPTION
+glutDialsFunc sets the dial & button box dials callback for the
+current window. The dial & button box dials callback for a window is
+called when the window has dial & button box input focus (normally,
+when the mouse is in the window) and the user generates dial & button
+box dial changes. The dial parameter will be the dial number (starting
+at one). The number of available dial & button box dials can be
+determined with glutDeviceGet(GLUT_NUM_DIALS). The value
+measures the absolute rotation in degrees. Dial values do not ``roll over''
+with each complete rotation but continue to accumulate degrees (until the
+int dial value overflows). 
+
+Registering a dial & button box dials callback when a dial & button box
+device is not available is ineffectual and not an error. In this case, no dial
+& button box dials callbacks will be generated. 
+
+Passing NULL to glutDialsFunc disables the generation of dial &
+button box dials callbacks. When a new window is created, no dial &
+button box dials callback is initially registered. 
+.SH SEE ALSO
+glutButtonBoxFunc, glutDeviceGet
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

@@ -1,0 +1,50 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutMenuStatusFunc 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutMenuStatusFunc - sets the global menu status callback. 
+.SH SYNTAX
+.nf
+.LP
+void glutMenuStatusFunc(void (*func)(int status, int x, int y));
+void glutMenuStateFunc(void (*func)(int status));
+.fi
+.SH ARGUMENTS
+.IP \fIfunc\fP 1i
+The new menu status (or state) callback function.
+.SH DESCRIPTION
+glutMenuStatusFunc sets the global menu status callback so a GLUT
+program can determine when a menu is in use or not. When a menu
+status callback is registered, it will be called with the value
+GLUT_MENU_IN_USE for its value parameter when pop-up menus are
+in use by the user; and the callback will be called with the value
+GLUT_MENU_NOT_IN_USE for its status parameter when pop-up
+menus are no longer in use. The x and y parameters indicate the location
+in window coordinates of the button press that caused the menu to go
+into use, or the location where the menu was released (may be outside the
+window). The func parameter names the callback function. Other
+callbacks continue to operate (except mouse motion callbacks) when
+pop-up menus are in use so the menu status callback allows a program to
+suspend animation or other tasks when menus are in use. The cascading
+and unmapping of sub-menus from an initial pop-up menu does not
+generate menu status callbacks. There is a single menu status callback for
+GLUT. 
+
+When the menu status callback is called, the current menu will be set to
+the initial pop-up menu in both the GLUT_MENU_IN_USE and
+GLUT_MENU_NOT_IN_USE cases. The current window will be set to the
+window from which the initial menu was popped up from, also in both
+cases. 
+
+Passing NULL to glutMenuStatusFunc disables the generation of the
+menu status callback. 
+
+glutMenuStateFunc is a deprecated version of the
+glutMenuStatusFunc routine. The only difference is
+glutMenuStateFunc callback prototype does not deliver the two
+additional x and y coordinates. 
+.SH SEE ALSO
+glutCreateMenu, glutCreateWindow
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

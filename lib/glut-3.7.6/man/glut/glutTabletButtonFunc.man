@@ -1,0 +1,39 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutTabletButtonFunc 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutTabletButtonFunc - sets the special keyboard callback for the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutTabletButtonFunc(void (*func)(int button, int state,
+                          int x, int y));
+.fi
+.SH ARGUMENTS
+.IP \fIfunc\fP 1i
+The new tablet button callback function. 
+.SH DESCRIPTION
+glutTabletButtonFunc sets the tablet button callback for the current
+window. The tablet button callback for a window is called when the
+window has tablet input focus (normally, when the mouse is in the
+window) and the user generates tablet button presses. The button
+parameter will be the button number (starting at one). The number of
+available tablet buttons can be determined with
+glutDeviceGet(GLUT_NUM_TABLET_BUTTONS). The state is
+either GLUT_UP or GLUT_DOWN indicating whether the callback was due
+to a release or press respectively. The x and y callback parameters
+indicate the window relative coordinates when the tablet button state
+changed. 
+
+Registering a tablet button callback when a tablet device is not available
+is ineffectual and not an error. In this case, no tablet button callbacks will
+be generated. 
+
+Passing NULL to glutTabletButtonFunc disables the generation of
+tablet button callbacks. When a new window is created, no tablet button
+callback is initially registered. 
+.SH SEE ALSO
+glutTabletMotionFunc, glutDeviceGet, glutMotionFunc, glutSpaceballMotionFunc
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

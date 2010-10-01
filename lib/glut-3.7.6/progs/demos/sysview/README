@@ -1,0 +1,27 @@
+
+This is a nice 3D system monitor written with GLUT.  The operating
+system dependent code for querying system statistics is only for IRIX,
+but maybe someone could adapt the code to work on other operating
+systems.
+
+Be warned that on a multiprocessor SGI systems, some of the
+measurements go "off the chart".  The program was written on a single
+processor machine so the top of the chart is 100% of one processor.
+
+- Mark
+
+Javier writes:
+> I am sending attached a very simple program that uses OpenGL and GLUT.
+> As you will see it resembles a little bit the gr_osview SGI application.
+> I hope you find it useful to be included as a contribution to GLUT
+> distribution.
+> 
+> Keep on working with GLUT, it is a great starting point for OpenGL
+> users.
+> 
+> Greetings from Spain!
+> 
+> --
+> Javier Velasco
+> fjvelasco@sfe.indra.es
+> fjvelasco@sinix.net

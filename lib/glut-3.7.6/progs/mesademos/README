@@ -1,0 +1,21 @@
+
+The source code in this directory is derived from a set of demos found
+in the Mesa 2.0 source code distribution.  The original Mesa demos
+were written to use Xlib, aux, or tk; the versions in this directory
+have been converted to use GLUT.
+
+Some of the programs from the Mesa 2.0 demos directory are not
+included here because they demonstrated features specific to Mesa.  To
+avoid any possible confusion, the Mesa 2.0 demo source files NOT
+reproduced here are fdraw.f, ftest.c, glxdemo.c, glxpixmap.c, test0.c,
+vgears.c, vindex.c, vtest.c, and xdemo.c
+
+Many thanks to Brian Paul and the various contributors to the Mesa
+library.
+
+NOTE to SGI users:  IRIX includes a system command called
+/usr/sbin/gamma so you may need to run "./gamma" to run the gamma
+demo in this directory.
+
+- Mark Kilgard
+  November 7, 1996

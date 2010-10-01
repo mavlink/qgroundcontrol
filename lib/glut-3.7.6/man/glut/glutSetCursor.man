@@ -1,0 +1,99 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutSetCursor 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutSetCursor - changes the cursor image of the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutSetCursor(int cursor);
+.fi
+.SH ARGUMENTS
+.IP \fIcursor\fP 1i
+Name of cursor image to change to.  Possible values follow:
+.TP 8
+.B GLUT_CURSOR_RIGHT_ARROW
+Arrow pointing up and to the right. 
+.TP 8
+.B GLUT_CURSOR_LEFT_ARROW
+Arrow pointing up and to the left. 
+.TP 8
+.B GLUT_CURSOR_INFO 
+Pointing hand. 
+.TP 8
+.B GLUT_CURSOR_DESTROY
+Skull & cross bones. 
+.TP 8
+.B GLUT_CURSOR_HELP
+Question mark. 
+.TP 8
+.B GLUT_CURSOR_CYCLE
+Arrows rotating in a circle. 
+.TP 8
+.B GLUT_CURSOR_SPRAY
+Spray can. 
+.TP 8
+.B GLUT_CURSOR_WAIT
+Wrist watch. 
+.TP 8
+.B GLUT_CURSOR_TEXT
+Insertion point cursor for text. 
+.TP 8
+.B GLUT_CURSOR_CROSSHAIR
+Simple cross-hair. 
+.TP 8
+.B GLUT_CURSOR_UP_DOWN 
+Bi-directional pointing up & down. 
+.TP 8
+.B GLUT_CURSOR_LEFT_RIGHT
+Bi-directional pointing left & right. 
+.TP 8
+.B GLUT_CURSOR_TOP_SIDE
+Arrow pointing to top side. 
+.TP 8
+.B GLUT_CURSOR_BOTTOM_SIDE
+Arrow pointing to bottom side. 
+.TP 8
+.B GLUT_CURSOR_LEFT_SIDE
+Arrow pointing to left side. 
+.TP 8
+.B GLUT_CURSOR_RIGHT_SIDE
+Arrow pointing to right side. 
+.TP 8
+.B GLUT_CURSOR_TOP_LEFT_CORNER
+Arrow pointing to top-left corner. 
+.TP 8
+.B GLUT_CURSOR_TOP_RIGHT_CORNER
+Arrow pointing to top-right corner. 
+.TP 8
+.B GLUT_CURSOR_BOTTOM_RIGHT_CORNER
+Arrow pointing to bottom-left corner. 
+.TP 8
+.B GLUT_CURSOR_BOTTOM_LEFT_CORNER
+Arrow pointing to bottom-right corner. 
+.TP 8
+.B GLUT_CURSOR_FULL_CROSSHAIR
+Full-screen cross-hair cursor (if possible, otherwise
+GLUT_CURSOR_CROSSHAIR). 
+.TP 8
+.B GLUT_CURSOR_NONE
+Invisible cursor. 
+.TP 8
+.B GLUT_CURSOR_INHERIT
+Use parent's cursor. 
+.SH DESCRIPTION
+glutSetCursor changes the cursor image of the current window.
+Each call requests the window system change the cursor appropriately.
+The cursor image when a window is created is
+GLUT_CURSOR_INHERIT. The exact cursor images used are
+implementation dependent. The intent is for the image to convey the
+meaning of the cursor name. For a top-level window,
+GLUT_CURSOR_INHERIT uses the default window system cursor. 
+.SH X IMPLEMENTATION NOTES
+GLUT for X uses SGI's _SGI_CROSSHAIR_CURSOR convention to
+access a full-screen cross-hair cursor if possible.
+.SH SEE ALSO
+glutCreateWindow, glutCreateSubWindow
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

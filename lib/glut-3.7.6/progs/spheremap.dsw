@@ -1,0 +1,137 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "_all"=".\spheremap\_all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name cview2smap
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sixviews
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name smapmesh
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name st2rvec
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fakeraytrace
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name rtsmap
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "cview2smap"=".\spheremap\hacks\cview2smap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fakeraytrace"=".\spheremap\glsmap\fakeraytrace.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name glsmap
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "glsmap"="..\lib\glsmap\glsmap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "rtsmap"=".\spheremap\glsmap\rtsmap.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name glsmap
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "sixviews"=".\spheremap\hacks\sixviews.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "smapmesh"=".\spheremap\hacks\smapmesh.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "st2rvec"=".\spheremap\hacks\st2rvec.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

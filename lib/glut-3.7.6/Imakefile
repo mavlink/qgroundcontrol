@@ -1,0 +1,7 @@
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+SUBDIRS = lib test progs
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

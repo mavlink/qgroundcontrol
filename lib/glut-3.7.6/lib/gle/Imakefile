@@ -1,0 +1,30 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+#define DoNormalLib YES
+
+#include <Library.tmpl>
+
+#include "../../Glut.cf"
+
+EXTRA_DEFINES = -DOPENGL_10 -DAUTO_TEXTURE -D__GUTIL_DOUBLE
+
+SRCS = ex_angle.c ex_cut_round.c ex_raw.c extrude.c intersect.c \
+  rot_prince.c rotate.c round_cap.c segment.c texgen.c \
+  urotate.c view.c
+
+OBJS = ex_angle.o ex_cut_round.o ex_raw.o extrude.o intersect.o \
+  rot_prince.o rotate.o round_cap.o segment.o texgen.o \
+  urotate.o view.o
+
+#ifdef LibraryObjectRule
+LibraryObjectRule()
+#else
+/* XXX Very lame, you must be using pre-R5 config files!  This
+   will probably do essentially what LibraryObjectRule does. */
+NormalLibraryObjectRule()
+#endif
+
+NormalLibraryTarget(gle,$(OBJS))
+
+DependTarget()

@@ -1,0 +1,22 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+#include "../../Glut.cf"
+
+#undef CCsuf
+#define CCsuf c++
+
+TARGETS = glutduck globe
+
+DEPEND_DEFINES = $(CXXEXTRA_INCLUDES)
+
+SRCS = glutduck.c++
+
+AllTarget($(TARGETS))
+
+SimpleGlutInventorProgramTarget(glutduck)
+SimpleGlutInventorProgramTarget(globe)
+
+NormalCplusplusObjectRule()
+
+DependTarget()

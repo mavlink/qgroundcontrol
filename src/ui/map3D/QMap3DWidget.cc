@@ -31,14 +31,15 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QMap3DWidget.h"
 
-#if (defined __APPLE__) & (defined __MACH__)
-#include <GLUT/glut.h>
-#else
-#include <GL/glut.h>
-#endif
+//#if (defined __APPLE__) & (defined __MACH__)
+//#include <GLUT/glut.h>
+//#else
+//#include <GL/glut.h>
+//#endif
 #include <QCheckBox>
 #include <sys/time.h>
 
+#include "QGCGlut.h"
 #include "CheetahModel.h"
 #include "UASManager.h"
 #include "UASInterface.h"
@@ -59,7 +60,7 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
     setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 400.0f);
 
     int32_t argc = 0;
-    glutInit(&argc, NULL);
+    //glutInit(&argc, NULL);
 
     setDisplayFunc(display, this);
     setMouseFunc(mouse, this);

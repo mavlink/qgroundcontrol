@@ -1,0 +1,109 @@
+%!PS
+% this code is free
+% Frederic Delhoume (delhoume@ilog.fr)
+
+/bd{bind def}bind def
+
+% use small threshold to have a smooth shading
+/threshold .1 def
+
+/triangle % [x1 x2 x3 y1 y2 y3] [i1 i2 i3]
+{
+  aload pop   setrgbcolor  
+  aload pop
+  5 3 roll % x1 y1 y2 y3 x2 x3
+  4 2 roll % x1 y1 x2 x3 y2 y3
+  3 2 roll % x1 y1 x2 y2 y3 x3
+  exch moveto lineto lineto closepath fill
+} bd
+
+/computediff1 % i31 i21 i11 -> true/false
+{
+  2 copy sub abs threshold ge % |i21-i11| > threshold
+  {pop pop pop true}
+  {
+    exch 2 index sub abs threshold ge % |i21-i31| > threshold
+    { pop pop true}
+    {
+      sub abs threshold ge % |i11-i31| > threshold
+    } ifelse
+  } ifelse
+} bd
+
+/computediff3 % [i11 i12 i13] [i21 i22 i23] [i31 i32 i33] -> true/false
+{
+  3 copy 0 get 3 1 roll 0 get 3 1 roll 0 get computediff1 
+  {true}
+  {
+    3 copy 1 get 3 1 roll 1 get 3 1 roll 1 get computediff1 
+    {true}
+    {
+      3 copy 2 get 3 1 roll  2 get 3 1 roll 2 get computediff1 
+    } ifelse
+  } ifelse
+} bd
+
+/middlecolor % [ar ag ab] [br bg bb] -> cr cg cb
+{
+  aload pop 4 -1 roll aload pop
+  4 -1 roll add 2 div 5 1 roll 3 -1 roll add 2 div 3 1 roll
+  add 2 div 3 1 roll exch 3 array astore
+} bd
+  
+/gouraudtriangle % [x1 x2 x3 y1 y2 y3] [i11 i12 i13] [i21 i22 i23] [i31 i32 i33]
+{
+  computediff3 
+  { 
+    % [x1 x2 x3 y1 y2 y3] [i11 i12 i13] [i21 i22 i23] [i31 i32 i33]
+    4 -1 roll % [i11 i12 i13] [i21 i22 i23] [i31 i32 i33] [x1 x2 x3 y1 y2 y3]
+    % first is x2x3y2y3
+    aload 7 1 roll 
+    6 -1 roll pop 3 -1 roll pop
+    add 2 div 3 1 roll add 2 div exch % [x1 x2 x3 y1 y2 y3] mx23 my23
+    % second is x1x3y1y3
+    3 -1 roll aload 7 1 roll exch pop 4 -1 roll pop
+    add 2 div 3 1 roll add 2 div exch
+    % third is x1x2y1y2
+    3 -1 roll aload 7 1 roll pop 3 -1 roll pop 
+    add 2 div 3 1 roll add 2 div exch
+    7 3 roll % [x1 x2 x3 y1 y2 y3] ax ay bx by cx cy
+    10 -3 roll dup 3 index middlecolor % 1-3
+    4 1 roll 2 copy middlecolor % 2-3
+    4 1 roll 3 copy pop middlecolor 4 1 roll % 1-2
+    13 -1 roll aload pop
+    %  ax ay bx by cx cy cc cb ca cx1 cx2 cx3 x1 x2 x3 y1 y2 y3
+    % now it's time to build the triangles
+    % first is ax1c
+    17 index 6 index 15 index 19 index 6 index 17 index 6 array astore 
+    10 index 10 index 14 index gouraudtriangle
+    % second is ax2b
+    17 index 5 index 17 index 19 index 5 index 19 index 6 array astore
+    10 index 9 index 13 index gouraudtriangle
+    % third is cbx3 
+    13 index 16 index 5 index 15 index 18 index 5 index 6 array astore
+    12 index 12 index 9 index gouraudtriangle
+    % fourth is abc
+    17 index 16 index 15 index 19 index 18 index 17 index 6 array astore
+    10 index 12 index 14 index gouraudtriangle
+    18 {pop} repeat
+  }
+  {
+    aload pop 5 3 roll aload pop 7 3 roll aload pop 9 3 roll
+    4 index 6 index 4 index add add 3 div
+    10 1 roll 7 index 5 index 3 index add add 3 div
+    10 1 roll 6 index 4 index 2 index add add 3 div
+    10 1 roll 9 {pop} repeat
+    3 array astore triangle
+  } ifelse
+} bd
+
+%% here is an nice example 
+[200 200 300 500 350 300] [1 1 0] [0 1 0] [0 1 1] gouraudtriangle  
+[200 300 300 500 300 425] [1 1 0] [0 1 1] [1 1 1] gouraudtriangle
+
+[300 400 400 300 350 500] [0 1 1] [0 0 1] [1 0 1] gouraudtriangle
+[300 400 300 300 500 425] [0 1 1] [1 0 1] [1 1 1] gouraudtriangle
+
+[300 300 400 550 425 500] [1 0 0] [1 1 1] [1 0 1] gouraudtriangle 
+[200 300 300 500 425 550] [1 1 0] [1 1 1] [1 0 0] gouraudtriangle
+showpage

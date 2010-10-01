@@ -1,0 +1,16 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../../Glut.cf"
+
+TARGETS = chess
+
+SRCS =  chess.c main.c animate.c pathplan.c texture.c
+
+OBJS =  chess.o main.o animate.o pathplan.o texture.o
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(chess,$(OBJS))
+
+DependTarget()

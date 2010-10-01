@@ -1,0 +1,49 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutExtensionSupported 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutExtensionSupported - helps to easily determine whether a
+given OpenGL extension is supported. 
+.SH SYNTAX
+.nf
+.LP
+int glutExtensionSupported(char *extension);
+.fi
+.SH ARGUMENTS
+.IP \fIextension\fP 1i
+Name of OpenGL extension.
+.SH DESCRIPTION
+glutExtensionSupported helps to easily determine whether a
+given OpenGL extension is supported or not. The extension
+parameter names the extension to query. The supported extensions can
+also be determined with glGetString(GL_EXTENSIONS), but
+glutExtensionSupported does the correct parsing of the returned
+string. 
+
+glutExtensionSupported returns non-zero if the extension is
+supported, zero if not supported. 
+
+There must be a valid current window to call
+glutExtensionSupported. 
+
+glutExtensionSupported only returns information about OpenGL
+extensions only. This means window system dependent extensions (for
+example, GLX extensions) are not reported by
+glutExtensionSupported. 
+.SH EXAMPLE
+Here is an example of using glutExtensionSupported:
+.nf
+.LP
+  if (!glutExtensionSupported("GL_EXT_texture")) {
+    fprintf(stderr, "Missing the texture extension!\\n");
+    exit(1);
+  }
+
+.fi
+Notice that the name argument includes both the GL prefix and the
+extension family prefix (EXT).
+.SH SEE ALSO
+glutGet, glGetString
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

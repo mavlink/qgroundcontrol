@@ -1,0 +1,23 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutSolidOctahedron 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutSolidOctahedron, glutWireOctahedron - render a solid
+or wireframe octahedron (8-sided regular solid) respectively. 
+.SH SYNTAX
+.nf
+.LP
+void glutSolidOctahedron(void);
+void glutWireOctahedron(void);
+.fi
+.SH DESCRIPTION
+glutSolidOctahedron and glutWireOctahedron render a solid or
+wireframe octahedron respectively centered at the modeling coordinates
+origin with a radius of 1.0. 
+.SH SEE ALSO
+glutSolidSphere, glutSolidCube, glutSolidCone, glutSolidTorus, glutSolidDodecahedron,
+glutSolidTetrahedron, glutSolidIcosahedron,
+glutSolidTeapot
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

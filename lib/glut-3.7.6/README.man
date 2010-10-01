@@ -1,0 +1,80 @@
+
+Since GLUT 3.2, GLUT includes complete API man pages.  These man pages
+use the standard Unix man macros, so to be useful, they must be
+formatted with nroff (or psroff or groff or ditroff or troff, depending
+on what your system provides).  You can find the raw nroff source for
+the GLUT API man pages in the "man/glut subdirectory".
+
+Below are instructions that should help the SGI and non-SGI GLUT user
+get these man pages installed.
+
+SILICON GRAPHICS USERS
+-----------------------
+The easiest way to install the GLUT man pages on your Silicon Graphics
+system is to install the "glut_dev.man.glut" subsystem on your SGI
+workstation.  This subsystem contains pre-formatted man pages which
+are placed in the /usr/share/catman/p_man/cat3/GLUT subirectory.  Once
+installed, simply type "man glutInit" (or any other GLUT routine) to
+view the man pages.
+
+You _can_ build the man pages from the supplied nroff source files,
+but this *requires* that you have the Documenter's WorkBench (dwb)
+images installed or have GNU groff available.  This is why I strongly
+recommend saving your time and simply installing the man pages from
+the pre-built SGI images that accompany this GLUT source code
+distribution.
+
+If you must build the man pages yourself...  As supplied, the SGI
+Makefiles will not descend into nor build the Makefiles.  You'll need
+to do the following by hand:
+
+  cd man/glut
+  make
+
+Then, install the man pages into /usr/share/catman/p_man/cat3/GLUT by
+executing (assuming your have write permission):
+
+  make install
+
+Again, I strongly recommend simply installing the pre-built man pages
+from the "glut_dev" images.
+
+NON-SILIGON GRAPHICS USERS
+---------------------------
+If you are not using a Silicon Graphics system, you *must* use
+Documeter's WorkBench or GNU groff to format the man pages.
+
+Unfortunately, man pages are formatted and installed in different ways
+depending on your system.  If you don't have a Silicon Graphics
+system, you are going to need to use imake (the X11 Makefile
+configuration system) to build a Makefile that should format and
+install the man pages appropriately.  Assuming everything is
+configured appropriately, things should just work.  If not, you'll
+need to figure out what went wrong (I won't be able to help you).
+
+To format and install (this is a single step unfortunately), run the
+following commands in GLUT's toplevel directory:
+
+  make SUBDIRS=man Makefiles
+  make SUBDIRS=man
+  cd man/glut
+  make install.man
+
+The installation assumes that you have permission to install the man
+pages in the appropriate destination.  If you don't want them
+installed in the standard location or don't have permission, try to
+set your DESTDIR environment variable to some directory where you want
+the man pages installed.  For example:
+
+  setenv DESTDIR ~/fakeroot
+
+TUBING AND EXTRUSION LIBRARY (GLE) MAN PAGES
+---------------------------------------------
+GLUT 3.6 includes man pages (derived from Linas Vepstas's HTML
+documentation for GLE).  The man page source is found in the "man/gle"
+directory.
+
+To build the GLE man pages, follow the instuctions above, but
+substitute "gle" for "glut" in the commands above.
+
+- Mark Kilgard

@@ -1,0 +1,839 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "_all"=".\examples\_all.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name abgr
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name bitfont
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name blender
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name circlefit
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name cube
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dials
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dials2
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dinoball
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dinodraw
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dinoshade
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name dinospin
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name editgrid
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name evaltest
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fogtst
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name fontdemo
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name glpuzzle
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name glutdino
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name glutplane
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name halomagic
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name highlight
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name lightlab
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name luminance16
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name mjksift
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name mjkwarp
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name molehill
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name movelight
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name oclip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ohidden
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name olight
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name olympic
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name origami
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name oversphere
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name reflectdino
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name rendereps
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name resolution
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sb2db
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name scene
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name screendoor
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name scube
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name simple
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sphere
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name sphere2
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name splatlogo
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name spots
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name stars
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name stenciltst
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name stereo
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name stroke
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name subwin
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name surfgrid
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name texenv
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name trippy
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name triselect
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name zoomdino
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "abgr"=".\examples\abgr.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "bitfont"=".\examples\bitfont.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "blender"=".\examples\blender.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "circlefit"=".\examples\circlefit.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "cube"=".\examples\cube.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dials"=".\examples\dials.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dials2"=".\examples\dials2.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dinoball"=".\examples\dinoball.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dinodraw"=".\examples\dinodraw.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dinoshade"=".\examples\dinoshade.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "dinospin"=".\examples\dinospin.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "editgrid"=".\examples\editgrid.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "evaltest"=".\examples\evaltest.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fogtst"=".\examples\fogtst.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "fontdemo"=".\examples\fontdemo.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "glpuzzle"=".\examples\glpuzzle.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "glutdino"=".\examples\glutdino.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "glutplane"=".\examples\glutplane.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "halomagic"=".\examples\halomagic.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "highlight"=".\examples\highlight.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "lightlab"=".\examples\lightlab.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "luminance16"=".\examples\luminance16.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "mjksift"=".\examples\mjksift.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "mjkwarp"=".\examples\mjkwarp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "molehill"=".\examples\molehill.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "movelight"=".\examples\movelight.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "oclip"=".\examples\oclip.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "ohidden"=".\examples\ohidden.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "olight"=".\examples\olight.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "olympic"=".\examples\olympic.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "origami"=".\examples\origami.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "oversphere"=".\examples\oversphere.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "reflectdino"=".\examples\reflectdino.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "rendereps"=".\examples\rendereps.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "resolution"=".\examples\resolution.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sb2db"=".\examples\sb2db.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "scene"=".\examples\scene.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "screendoor"=".\examples\screendoor.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "scube"=".\examples\scube.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "simple"=".\examples\simple.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sphere"=".\examples\sphere.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "sphere2"=".\examples\sphere2.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "splatlogo"=".\examples\splatlogo.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "spots"=".\examples\spots.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "stars"=".\examples\stars.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "stenciltst"=".\examples\stenciltst.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "stereo"=".\examples\stereo.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "stroke"=".\examples\stroke.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "subwin"=".\examples\subwin.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "surfgrid"=".\examples\surfgrid.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "texenv"=".\examples\texenv.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "trippy"=".\examples\trippy.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "triselect"=".\examples\triselect.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "zoomdino"=".\examples\zoomdino.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

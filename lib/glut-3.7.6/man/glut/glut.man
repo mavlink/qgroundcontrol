@@ -1,0 +1,247 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glut 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glut - an introduction to the OpenGL Utility Toolkit
+.SH SYNOPSIS
+.nf
+.LP
+#include <GL/glut.h>
+.fi
+.SH DESCRIPTION
+The OpenGL Utility Toolkit (GLUT) is a programming interface with ANSI C and FORTRAN bindings for writing
+window system independent OpenGL programs. The toolkit supports the following functionality: 
+.IP
+Multiple windows for OpenGL rendering. 
+.IP
+Callback driven event processing. 
+.IP
+Sophisticated input devices. 
+.IP
+An ``idle'' routine and timers. 
+.IP
+A simple, cascading pop-up menu facility. 
+.IP
+Utility routines to generate various solid and wire frame objects. 
+.IP
+Support for bitmap and stroke fonts. 
+.IP
+Miscellaneous window management functions, including managing overlays. 
+.LP
+An ANSI C implementation of GLUT for the X Window System has been
+implemented by the author. Windows NT and OS/2 versions of GLUT are
+also available.
+.SH BACKGROUND
+One of the major accomplishments in the specification of OpenGL
+was the isolation of window system dependencies from OpenGL's
+rendering model. The result is that OpenGL is window system independent.
+
+Window system operations such as the creation of a rendering window and
+the handling of window system events are left to the native window system
+to define. Necessary interactions between OpenGL and the window system
+such as creating and binding an OpenGL context to a window are described
+separately from the OpenGL specification in a window system dependent
+specification. For example, the GLX specification describes the standard
+by which OpenGL interacts with the X Window System. 
+
+The predecessor to OpenGL is IRIS GL. Unlike OpenGL, IRIS GL
+does specify how rendering windows are created and manipulated. IRIS
+GL's windowing interface is reasonably popular largely because it is simple
+to use. IRIS GL programmers can worry about graphics programming
+without needing to be an expert in programming the native window system.
+Experience also demonstrated that IRIS GL's windowing interface was
+high-level enough that it could be retargeted to different window systems.
+Silicon Graphics migrated from NeWS to the X Window System without
+any major changes to IRIS GL's basic windowing interface. 
+
+Removing window system operations from OpenGL is a sound decision
+because it allows the OpenGL graphics system to be retargeted to various
+systems including powerful but expensive graphics workstations as well as
+mass-production graphics systems like video games, set-top boxes for
+interactive television, and PCs. 
+
+Unfortunately, the lack of a window system interface for OpenGL is a gap
+in OpenGL's utility. Learning native window system APIs such as the X
+Window System's Xlib or Motif can be daunting. Even those
+familiar with native window system APIs need to understand the interface
+that binds OpenGL to the native window system. And when an OpenGL
+program is written using the native window system interface, despite the
+portability of the program's OpenGL rendering code, the program itself
+will be window system dependent. 
+
+Testing and documenting OpenGL's functionality lead to the development
+of the tk and aux toolkits. The aux toolkit is used in the examples found in
+the OpenGL Programming Guide. Unfortunately, aux has numerous
+limitations and its utility is largely limited to toy programs. The tk library
+has more functionality than aux but was developed in an ad hoc fashion and
+still lacks much important functionality that IRIS GL programmers expect,
+like pop-up menus and overlays. 
+
+GLUT is designed to fill the need for a window system independent
+programming interface for OpenGL programs. The interface is designed to
+be simple yet still meet the needs of useful OpenGL programs. Features
+from the IRIS GL, aux, and tk interfaces are included to make it easy for
+programmers used to these interfaces to develop programs for GLUT. 
+.SH PHILOSPHY
+GLUT simplifies the implementation of programs using OpenGL
+rendering. The GLUT application programming interface (API) requires
+very few routines to display a graphics scene rendered using OpenGL. The
+GLUT API (like the OpenGL API) is stateful. Most initial GLUT state is
+defined and the initial state is reasonable for simple programs. 
+
+The GLUT routines also take relatively few parameters. No pointers are
+returned. The only pointers passed into GLUT are pointers to character
+strings (all strings passed to GLUT are copied, not referenced) and opaque
+font handles. 
+
+The GLUT API is (as much as reasonable) window system independent. For
+this reason, GLUT does not return any native window system handles,
+pointers, or other data structures. More subtle window system dependencies
+such as reliance on window system dependent fonts are avoided by GLUT;
+instead, GLUT supplies its own (limited) set of fonts. 
+
+For programming ease, GLUT provides a simple menu sub-API. While the
+menuing support is designed to be implemented as pop-up menus, GLUT
+gives window system leeway to support the menu functionality in another
+manner (pull-down menus for example). 
+
+Two of the most important pieces of GLUT state are the current window
+and current menu. Most window and menu routines affect the current
+window or menu respectively. Most callbacks implicitly set the current
+window and menu to the appropriate window or menu responsible for the
+callback. GLUT is designed so that a program with only a single window
+and/or menu will not need to keep track of any window or menu identifiers.
+This greatly simplifies very simple GLUT programs. 
+
+GLUT is designed for simple to moderately complex programs focused on
+OpenGL rendering. GLUT implements its own event loop. For this reason,
+mixing GLUT with other APIs that demand their own event handling
+structure may be difficult. The advantage of a builtin event dispatch loop is
+simplicity. 
+
+GLUT contains routines for rendering fonts and geometric objects, however
+GLUT makes no claims on the OpenGL display list name space. For this
+reason, none of the GLUT rendering routines use OpenGL display lists. It is
+up to the GLUT programmer to compile the output from GLUT rendering
+routines into display lists if this is desired. 
+
+GLUT routines are logically organized into several sub-APIs according to
+their functionality. The sub-APIs are: 
+.IP Initialization. 
+Command line processing, window system initialization, and initial
+window creation state are controlled by these routines. 
+.IP "Beginning Event Processing."
+This routine enters GLUT's event processing loop. This routine never
+returns, and it continuously calls GLUT callbacks as necessary. 
+.IP "Window Management."
+These routines create and control windows. 
+.IP "Overlay Management."
+These routines establish and manage overlays for windows. 
+.IP "Menu Management."
+These routines create and control pop-up menus. 
+.IP "Callback Registration."
+These routines register callbacks to be called by the GLUT event
+processing loop. 
+.IP "Color Index Colormap Management."
+These routines allow the manipulation of color index colormaps for
+windows. 
+.IP "State Retrieval."
+These routines allows programs to retrieve state from GLUT. 
+.IP "Font Rendering."
+These routines allow rendering of stroke and bitmap fonts. 
+.IP "Geometric Shape Rendering."
+These routines allow the rendering of 3D geometric objects including
+spheres, cones, icosahedrons, and teapots. 
+.SH CONVENTIONS
+GLUT window and screen coordinates are expressed in pixels. The
+upper left hand corner of the screen or a window is (0,0). X coordinates
+increase in a rightward direction; Y coordinates increase in a
+downward direction. Note: This is inconsistent with OpenGL's
+coordinate scheme that generally considers the lower left hand
+coordinate of a window to be at (0,0) but is consistent with most
+popular window systems. 
+
+Integer identifiers in GLUT begin with one, not zero. So window
+identifiers, menu identifiers, and menu item indexes are based from
+one, not zero. 
+
+In GLUT's ANSI C binding, for most routines, basic types (int,
+char*) are used as parameters. In routines where the parameters are
+directly passed to OpenGL routines, OpenGL types (GLfloat) are
+used. 
+
+The header files for GLUT should be included in GLUT programs
+with the following include directive: 
+.nf
+.LP
+#include <GL/glut.h>
+.fi
+.LP
+Because a very large window system software vendor (who will
+remain nameless) has an apparent inability to appreciate that
+OpenGL's API is independent of their window system API, portable
+ANSI C GLUT programs should not directly include <GL/gl.h> or
+<GL/glu.h>. Instead, ANSI C GLUT programs should rely on
+<GL/glut.h> to include the necessary OpenGL and GLU related
+header files. 
+
+The ANSI C GLUT library archive is typically named libglut.a on
+Unix systems. GLUT programs need to link with the system's OpenGL
+and GLUT libraries (and any libraries these libraries potentially
+depend on). A set of window system dependent libraries may also be
+necessary for linking GLUT programs. For example, programs using
+the X11 GLUT implementation typically need to link with Xlib, the X
+extension library, possibly the X Input extension library, the X
+miscellaneous utilities library, and the math library. An example
+X11/Unix compile line would look like: 
+.nf
+.LP
+cc -o foo foo.c -lglut -lGLU -lGL -lXmu -lXi -lXext -lX11 -lm
+.fi
+.SH SEE ALSO
+glutAddMenuEntry, glutAddSubMenu, glutAttachMenu, glutBitmapCharacter,
+glutBitmapWidth, glutButtonBoxFunc, glutChangeToMenuEntry,
+glutChangeToSubMenu, glutCopyColormap, glutCreateMenu,
+glutCreateSubWindow, glutCreateWindow, glutDestroyMenu,
+glutDestroyWindow, glutDeviceGet, glutDialsFunc, glutDisplayFunc,
+glutEntryFunc, glutEstablishOverlay, glutExtensionSupported,
+glutFullScreen, glutGet, glutGetColor, glutGetModifiers, glutIdleFunc,
+glutInit, glutInitDisplayMode, glutInitWindowPosition,
+glutKeyboardFunc, glutLayerGet, glutMainLoop, glutMenuStatusFunc,
+glutMotionFunc, glutMouseFunc, glutOverlayDisplayFunc, glutPopWindow,
+glutPositionWindow, glutPostOverlayRedisplay, glutPostRedisplay,
+glutRemoveMenuItem, glutRemoveOverlay, glutReshapeFunc,
+glutReshapeWindow, glutSetColor, glutSetCursor, glutSetMenu,
+glutSetWindow, glutSetWindowTitle, glutShowOverlay, glutShowWindow,
+glutSolidCone, glutSolidCube, glutSolidDodecahedron,
+glutSolidIcosahedron, glutSolidOctahedron, glutSolidSphere,
+glutSolidTeapot, glutSolidTetrahedron, glutSolidTorus,
+glutSpaceballButtonFunc, glutSpaceballMotionFunc,
+glutSpaceballRotateFunc, glutSpecialFunc, glutStrokeCharacter,
+glutStrokeWidth, glutSwapBuffers, glutTabletButtonFunc,
+glutTabletMotionFunc, glutTimerFunc, glutUseLayer, glutVisibilityFunc,
+.SH REFERENCES
+Mark Kilgard, \fIProgramming OpenGL for the X Window System\fP, Addison-Wesley, ISBN 0-201-48359-9, 1996.
+
+Mark Kilgard, \fIThe OpenGL Utility Toolkit (GLUT) Programming Interface API Version 3\fP (the official GLUT specification).
+.SH WEB REFERENCES
+Main GLUT page
+.br
+http://reality.sgi.com/mjk/glut3/glut3.html
+
+GLUT Frequently Asked Question list
+.br
+http://reality.sgi.com/mjk/glut3/glut-faq.html
+
+The OpenGL Utility Toolkit (GLUT) Programming Interface API Version 3
+.br
+http://reality.sgi.com/mjk/spec3/spec3.html
+.br
+http://reality.sgi.com/mjk/glut3/glut-3.spec.ps.gz
+
+OpenGL and X: An OpenGL Toolkit article (PostScript)
+.br
+http://reality.sgi.com/mjk/glut3/glut.column1.ps.gz
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

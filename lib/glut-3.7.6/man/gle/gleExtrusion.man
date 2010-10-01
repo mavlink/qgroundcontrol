@@ -1,0 +1,57 @@
+.\"
+.\" GLE Tubing & Extrusions Library Documentation 
+.\"
+.TH gleExtrusion 3GLE "3.6" "GLE" "GLE"
+.SH NAME
+gleExtrusion - Extrude arbitrary 2D contour along arbitrary 3D path.
+.SH SYNTAX
+.nf
+.LP
+void gleExtrusion (int ncp,
+                gleDouble contour[][2],
+                gleDouble cont_normal[][2],
+                gleDouble up[3],
+                int npoints,
+                gleDouble point_array[][3],
+                float color_array[][3]);
+.fi
+.SH ARGUMENTS
+.IP \fIncp\fP 1i
+number of contour points
+.IP \fIcontour\fP 1i
+2D contour
+.IP \fIcont_normal\fP 1i
+2D contour normals
+.IP \fIup\fP 1i
+up vector for contour
+.IP \fInpoints\fP 1i
+numpoints in poly-line
+.IP \fIpoint_array\fP 1i
+polyline vertices
+.IP \fIcolor_array\fP 1i
+colors at polyline verts
+.SH DESCRIPTION
+
+Extrude arbitrary 2D contour along arbitrary 3D path. The argument
+"contour" specifies the 2D contour to be extruded, while the argument
+"point_array" specifies the path along which to extrude.  The vector
+"up" defines the orientation of the contour y-axis in real 3D space.
+
+Note that neither the very first segment, nor the very last segment are
+drawn. The first and last segments serve only to define the angle of
+the join at the very ends of the polyline. Thus, to draw one segment,
+three must be specified. To draw two segments, four must be specified,
+etc.
+
+The normal array may be NULL. If it is, normal vectors will NOT be
+automatically generated, and the object will look terrible when lit.
+
+The color array may be NULL. If NULL, the current color is used. If not
+NULL, the glColor3f() routine is used to set the color; therefore,
+specifying the glColorMaterial() subroutine before this primitive can
+be used to set diffuse, specular, ambient, etc. colors.
+
+.SH SEE ALSO
+gleTwistExtrusion, gleSuperExtrusion
+.SH AUTHOR
+Linas Vepstas (linas@fc.net)

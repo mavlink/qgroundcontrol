@@ -1,0 +1,23 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+#include "../../../Glut.cf"
+
+TARGETS = smooth
+
+SRCS = glm.c gltx.c smooth.c trackball.c gltb.c
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(smooth,glm.o gltx.o smooth.o gltb.o trackball.o)
+
+LinkFile(trackball.c, ../../examples/trackball.c)
+LinkFile(trackball.h, ../../examples/trackball.h)
+
+trackball.o: trackball.h
+gltb.o: trackball.h gltb.h
+
+/* some old imake configs do setup "make depend" dependencies on linked files */
+depend:: trackball.c trackball.h
+
+DependTarget()

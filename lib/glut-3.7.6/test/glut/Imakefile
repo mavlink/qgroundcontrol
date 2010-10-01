@@ -1,0 +1,98 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+#include "../../Glut.cf"
+
+/* Andy V @ DEC sez... */
+#ifdef AlphaArchitecture
+EXTRA_INCLUDES = GLUTInclude -I$(TOP)/lib/glut
+#else
+INCLUDES = -I$(TOP)/lib/glut
+#endif
+
+SRCS = bigtest.c cursor_test.c over_test.c shape_test.c test1.c test10.c \
+  test11.c test12.c test13.c test14.c test15.c test16.c test17.c \
+  test18.c test19.c test2.c test20.c test21.c test22.c test23.c test24.c \
+  test25.c test26.c test27.c test3.c test4.c test5.c test6.c test7.c \
+  test8.c test9.c test28.c timer_test.c menu_test.c keyup_test.c joy_test.c
+
+TARGETS = test1 test2 test3 test4 test5 test6 test7 test8 \
+       test9 test10 test11 test12 test13 test14 test15 test16 test17 \
+       test18 test19 test20 test21 test22 test23 test24 test25 test26 \
+       test27 test28 bigtest cursor_test menu_test over_test shape_test \
+       timer_test keyup_test joy_test
+
+AllTarget($(TARGETS))
+
+GlutTestProgramTarget(test1)
+GlutTestProgramTarget(test2)
+GlutTestProgramTarget(test3)
+GlutTestProgramTarget(test4)
+GlutTestProgramTarget(test5)
+GlutTestProgramTarget(test6)
+GlutTestProgramTarget(test7)
+GlutTestProgramTarget(test8)
+GlutTestProgramTarget(test9)
+GlutTestProgramTarget(test10)
+GlutTestProgramTarget(test11)
+GlutTestProgramTarget(test12)
+GlutTestProgramTarget(test13)
+GlutTestProgramTarget(test14)
+GlutTestProgramTarget(test15)
+GlutTestProgramTarget(test16)
+GlutTestProgramTarget(test17)
+GlutTestProgramTarget(test18)
+GlutTestProgramTarget(test19)
+GlutTestProgramTarget(test20)
+GlutTestProgramTarget(test21)
+GlutTestProgramTarget(test22)
+GlutTestProgramTarget(test23)
+GlutTestProgramTarget(test24)
+GlutTestProgramTarget(test25)
+GlutTestProgramTarget(test26)
+GlutTestProgramTarget(test27)
+GlutTestProgramTarget(test28)
+GlutTestProgramTarget(bigtest)
+GlutTestProgramTarget(cursor_test)
+GlutTestProgramTarget(keyup_test)
+GlutTestProgramTarget(joy_test)
+GlutTestProgramTarget(menu_test)
+GlutTestProgramTarget(over_test)
+GlutTestProgramTarget(shape_test)
+GlutTestProgramTarget(timer_test)
+
+# Do not be surprised if some of these tests fail on previous GLUT releases.
+
+# NOTE: first run of test2 can fail since time dependent, but run twice
+
+test : $(TARGETS)
+	@GLUT_TEST_ALT_DISPLAY=$$DISPLAY ./test1
+	-./test2
+	@./test2
+	@./test3
+	@./test4
+	@./test5
+	@./test7
+	@./test8
+	@./test9
+	@./test10
+	@./test11
+	@./test12
+	@./test13
+	@./test14
+	@./test15
+	@./test16
+	@./test17
+	@./test18
+	@./test19
+	@./test20
+	@./test21
+	@./test22
+	@./test23
+	@./test24
+	@./test25
+	@./test26
+	@./test27
+	@./test28
+
+DependTarget()

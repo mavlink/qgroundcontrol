@@ -1,0 +1,34 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutSolidCone 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutSolidCone, glutWireCone - render a solid or wireframe cone respectively. 
+.SH SYNTAX
+.nf
+.LP
+void glutSolidCone(GLdouble base, GLdouble height,
+                   GLint slices, GLint stacks);
+void glutWireCone(GLdouble base, GLdouble height,
+                  GLint slices, GLint stacks);
+.fi
+.SH ARGUMENTS
+.IP \fIbase\fP 1i
+The radius of the base of the cone. 
+.IP \fIheight\fP 1i
+The height of the cone. 
+.IP \fIslices\fP 1i
+The number of subdivisions around the Z axis. 
+.IP \fIstacks\fP 1i
+The number of subdivisions along the Z axis. 
+.SH DESCRIPTION
+glutSolidCone and glutWireCone render a solid or wireframe cone
+respectively oriented along the Z axis. The base of the cone is placed at Z
+= 0, and the top at Z = height. The cone is subdivided around the Z axis
+into slices, and along the Z axis into stacks. 
+.SH SEE ALSO
+glutSolidSphere, glutSolidCube, glutSolidTorus, glutSolidDodecahedron,
+glutSolidOctahedron, glutSolidTetrahedron, glutSolidIcosahedron,
+glutSolidTeapot
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

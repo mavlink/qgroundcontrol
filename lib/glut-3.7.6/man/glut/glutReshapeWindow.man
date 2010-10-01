@@ -1,0 +1,40 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutReshapeWindow 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutReshapeWindow - requests a change to the size of the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutReshapeWindow(int width, int height);
+.fi
+.SH ARGUMENTS
+.IP \fIwidth\fP 1i
+New width of window in pixels. 
+.IP \fIheight\fP 1i
+New height of window in pixels. 
+.SH DESCRIPTION
+glutReshapeWindow requests a change in the size of the current
+window. The width and height parameters are size extents in pixels.
+The width and height must be positive values. 
+
+The requests by glutReshapeWindow are not processed immediately.
+The request is executed after returning to the main event loop. This
+allows multiple glutReshapeWindow, glutPositionWindow, and
+glutFullScreen requests to the same window to be coalesced. 
+
+In the case of top-level windows, a glutReshapeWindow call is
+considered only a request for sizing the window. The window system is
+free to apply its own policies to top-level window sizing. The intent is
+that top-level windows should be reshaped according
+glutReshapeWindow's parameters. Whether a reshape actually takes
+effect and, if so, the reshaped dimensions are reported to the program by
+a reshape callback. 
+
+glutReshapeWindow disables the full screen status of a window if
+previously enabled. 
+.SH SEE ALSO
+glutPositionWindow, glutReshapeFunc
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

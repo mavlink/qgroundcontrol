@@ -1,0 +1,24 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994. */
+
+#include "../../../Glut.cf"
+
+TARGETS = bounce
+
+SRCS = bounce.c glui.c tb.c trackball.c
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(bounce,bounce.o glui.o tb.o trackball.o)
+
+LinkFile(trackball.c, ../../examples/trackball.c)
+LinkFile(trackball.h, ../../examples/trackball.h)
+
+trackball.o: trackball.h
+tb.o: tb.h trackball.h
+bounce.o: tb.h glui.c glui.h
+
+/* some old imake configs do setup "make depend" dependencies on linked files */
+depend:: trackball.c trackball.h tb.c tb.h
+
+DependTarget()

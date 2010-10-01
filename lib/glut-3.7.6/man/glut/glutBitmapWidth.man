@@ -1,0 +1,34 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutBitmapWidth 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutBitmapWidth - returns the width of a bitmap character,
+glutBitmapLength returns the length of a bitmap font string.
+.SH SYNTAX
+.nf
+.LP
+int glutBitmapWidth(void *font, int character)
+int glutBitmapLength(void *font, const unsigned char *string)
+.fi
+.SH ARGUMENTS
+.IP \fIfont\fP 1i
+Bitmap font to use.  For valid values, see the
+glutBitmapCharacter description.
+.IP \fIcharacter\fP 1i
+Character to return width of (not confined to 8 bits). 
+.IP \fIstring\fP 1i
+Text string (8-bit characters), nul terminated.
+.SH DESCRIPTION
+glutBitmapWidth returns the width in pixels of a bitmap character in
+a supported bitmap font. While the width of characters in a font may vary
+(though fixed width fonts do not vary), the maximum height
+characteristics of a particular font are fixed. 
+
+glutBitmapLength returns the length in pixels of a string (8-bit
+characters).  This length is equivalent to summing all the widths
+returned by glutBitmapWidth for each character in the string.
+.SH SEE ALSO
+glutBitmapCharacter, glutStrokeWidth
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

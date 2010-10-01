@@ -1,0 +1,29 @@
+
+The "linux" subdirectory in earlier GLUT releases is no longer supported
+because it was too hard to maintain.
+
+Now, if you want to build Linux shared libraries, just edit the
+library Imakefiles (that is "lib/*/Imakefile") to say:
+
+  #define DoNormalLib   NO
+  #define DoSharedLib   YES
+
+Then alter Glut.cf and enable shared objects for the sample applications:
+
+  #define UseSharedObjects 1
+
+And finally do:
+
+  cd lib
+  make Makefiles
+  make clean
+  make
+
+That's it!
+
+See Question 44 in the "FAQ.glut" file for more information.
+
+- Mark Kilgard
+  mjk@nvidia.com
+  November 23, 1998
+

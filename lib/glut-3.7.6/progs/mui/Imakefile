@@ -1,0 +1,10 @@
+
+/* Copyright (c) Mark J. Kilgard, 1994, 1997. */
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+SUBDIRS = calc
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

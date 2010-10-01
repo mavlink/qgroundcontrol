@@ -1,0 +1,26 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1996.
+.\"
+.TH glutSetWindow 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutSetWindow - sets the current window; glutGetWindow - returns
+the identifier of the current window. 
+.SH SYNTAX
+.nf
+.LP
+void glutSetWindow(int win);
+int glutGetWindow(void);
+.fi
+.SH ARGUMENTS
+.IP \fIwin\fP 1i
+Identifier of GLUT window to make the current window. 
+.SH DESCRIPTION
+glutSetWindow sets the current window; glutGetWindow returns the
+identifier of the current window. If no windows exist or the previously
+current window was destroyed, glutGetWindow returns zero.
+glutSetWindow does not change the layer in use for the window; this is
+done using glutUseLayer. 
+.SH SEE ALSO
+glutCreateWindow, glutSetMenu
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)

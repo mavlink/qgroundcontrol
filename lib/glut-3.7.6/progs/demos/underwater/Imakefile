@@ -1,0 +1,16 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../../Glut.cf"
+
+TARGETS = underwater
+
+SRCS = underwater.c texload.c dino.c
+
+OBJS = underwater.o texload.o dino.o
+
+AllTarget($(TARGETS))
+
+NormalGlutProgramTarget(underwater,$(OBJS))
+
+DependTarget()

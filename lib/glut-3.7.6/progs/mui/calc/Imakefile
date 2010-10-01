@@ -1,0 +1,16 @@
+
+/* Copyright (c) Mark J. Kilgard, 1997. */
+
+#include "../../../Glut.cf"
+
+TARGETS = calc
+
+SRCS = calc.c
+
+OBJS = calc.o
+
+AllTarget($(TARGETS))
+
+NormalMuiProgramTarget(calc,$(OBJS))
+
+DependTarget()

@@ -1,0 +1,40 @@
+.\"
+.\" Copyright (c) Mark J. Kilgard, 1998.
+.\"
+.TH glutForceJoystickFunc 3GLUT "3.7" "GLUT" "GLUT"
+.SH NAME
+glutForceJoystickFunc - forces current window's joystick callback to be called.
+.SH SYNTAX
+.nf
+.LP
+void glutForceJoystickFunc(void);
+.fi
+.SH DESCRIPTION
+glutForceJoystickFunc forces the current window's joystick callback to be
+called, reporting the latest joystick state.
+
+The joystick callback is called either due to polling of the joystick
+at the uniform timer interval set by glutJoystickFunc's
+pollInterval (specified in milliseconds) or 
+in response to calling glutForceJoystickFunc.  If the pollInterval is
+non-positive, no joystick polling is performed and the GLUT application
+must frequently (usually from an idle callback) call glutForceJoystickFunc.
+
+The joystick callback will be called once (if one exists)
+for each time glutForceJoystickFunc is called.  The callback is called
+from glutJoystickFunc.  That is, when glutJoystickFunc returns, the
+callback will have already happened.
+.SH GLUT IMPLEMENTATION NOTES FOR X11
+The GLUT 3.7 implementation of GLUT for X11 supports the joystick API, but
+not actual joystick input.  A future implementation of GLUT for X11 may
+add joystick support.
+.SH GLUT IMPLEMENTATION NOTES FOR WIN32
+The GLUT 3.7 implementation of GLUT for Win32 supports the joystick API
+and joystick input, but does so through the dated joySetCapture and
+joyGetPosEx Win32 Multimedia API.  The GLUT 3.7 joystick support for
+Win32 has all the limitations of the Win32 Multimedia API joystick support.
+A future implementation of GLUT for Win32 may use DirectInput.
+.SH SEE ALSO
+glutJoystickFunc
+.SH AUTHOR
+Mark J. Kilgard (mjk@nvidia.com)
