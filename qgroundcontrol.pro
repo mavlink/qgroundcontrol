@@ -18,10 +18,9 @@ TARGET = qgroundcontrol
 BASEDIR = .
 BUILDDIR = build
 LANGUAGE = C++
-CONFIG += debug_and_release \ # console
-    OBJECTS_DIR \
-    = \
-    $$BUILDDIR/obj
+CONFIG += debug_and_release \
+    console
+OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
 
@@ -56,7 +55,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/UASControl.ui \
     src/ui/UASList.ui \
     src/ui/UASInfo.ui \
-    src/ui/LineChart.ui \
+    src/ui/Linechart.ui \
     src/ui/UASView.ui \
     src/ui/ParameterInterface.ui \
     src/ui/WaypointList.ui \
@@ -90,7 +89,8 @@ INCLUDEPATH += src \
     src/lib/qmapcontrol \
     src/ui/mavlink \
     src/ui/param \
-    src/ui/watchdog
+    src/ui/watchdog \
+    src/ui/map3D
 HEADERS += src/MG.h \
     src/Core.h \
     src/uas/UASInterface.h \
@@ -158,7 +158,6 @@ HEADERS += src/MG.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
-    src/ui/map/QGC2DIcon.h \
     src/ui/QGCRemoteControlView.h \
     src/WaypointGlobal.h \
     src/ui/WaypointGlobalView.h \
@@ -167,7 +166,11 @@ HEADERS += src/MG.h \
     src/ui/RadioCalibration/AirfoilServoCalibrator.h \
     src/ui/RadioCalibration/SwitchCalibrator.h \
     src/ui/RadioCalibration/CurveCalibrator.h \
-    src/ui/RadioCalibration/AbstractCalibrator.h
+    src/ui/RadioCalibration/AbstractCalibrator.h \
+    src/ui/map3D/Q3DWidget.h \
+    src/ui/map3D/CheetahModel.h \
+    src/ui/map3D/CheetahGL.h \
+    src/ui/map3D/QMap3DWidget.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -230,7 +233,6 @@ SOURCES += src/main.cc \
     src/ui/linechart/IncrementalPlot.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/MAV2DIcon.cc \
-    src/ui/map/QGC2DIcon.cc \
     src/ui/QGCRemoteControlView.cc \
     src/WaypointGlobal.cpp \
     src/ui/WaypointGlobalView.cpp \
@@ -239,7 +241,11 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc
+    src/ui/RadioCalibration/RadioCalibrationData.cc \
+    src/ui/map3D/Q3DWidget.cc \
+    src/ui/map3D/CheetahModel.cc \
+    src/ui/map3D/CheetahGL.cc \
+    src/ui/map3D/QMap3DWidget.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
