@@ -495,6 +495,7 @@ Q3DWidget::initializeGL(void)
 
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
+
     glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
     glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
