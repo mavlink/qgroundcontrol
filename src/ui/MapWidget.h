@@ -44,6 +44,8 @@ namespace Ui {
     class MapWidget;
 }
 
+    using namespace qmapcontrol;
+
 /**
  * @brief 2D Moving map
  *
@@ -105,10 +107,10 @@ protected:
   protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
     void createPathButtonClicked(bool checked);
-    void captureGeometryClick(qmapcontrol::Geometry*, QPoint);
+    void captureGeometryClick(Geometry*, QPoint);
     void mapproviderSelected(QAction* action);
-    void captureGeometryDrag(qmapcontrol::Geometry* geom, QPointF coordinate);
-    void captureGeometryEndDrag(qmapcontrol::Geometry* geom, QPointF coordinate);
+    void captureGeometryDrag(Geometry* geom, QPointF coordinate);
+    void captureGeometryEndDrag(Geometry* geom, QPointF coordinate);
 
 
 
