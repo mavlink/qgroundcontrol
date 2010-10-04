@@ -54,9 +54,6 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
     initialize(10, 10, 1000, 900, 15.0f);
     setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 400.0f);
 
-    int32_t argc = 0;
-    //glutInit(&argc, NULL);
-
     setDisplayFunc(display, this);
     setMouseFunc(mouse, this);
     addTimerFunc(100, timer, this);
