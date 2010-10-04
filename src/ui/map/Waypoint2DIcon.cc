@@ -1,31 +1,88 @@
 #include "Waypoint2DIcon.h"
 #include <QPainter>
 
-#include <QDebug>
-
-Waypoint2DIcon::Waypoint2DIcon(QGraphicsItem* parent) :
-        QGC2DIcon(parent)
+Waypoint2DIcon::Waypoint2DIcon(qreal x, qreal y, int radius, QString name, Alignment alignment, QPen* pen)
+    : Point(x, y, name, alignment),
+    yaw(0.0f),
+    radius(radius)
 {
+    size = QSize(radius, radius);
+    drawIcon(pen);
+}
+
+Waypoint2DIcon::Waypoint2DIcon(qreal x, qreal y, QString name, Alignment alignment, QPen* pen)
+    : Point(x, y, name, alignment)
+{
+    int radius = 10;
+    size = QSize(radius, radius);
+    drawIcon(pen);
+}
+
+Waypoint2DIcon::~Waypoint2DIcon()
+{
+    delete mypixmap;
+}
+
+void Waypoint2DIcon::setPen(QPen* pen)
+{
+    mypen = pen;
+    drawIcon(pen);
 }
 
 /**
- * @return the bounding rectangle of the icon
+ * @param yaw in radians, 0 = north, positive = clockwise
  */
-QRectF Waypoint2DIcon::boundingRect() const
+void Waypoint2DIcon::setYaw(float yaw)
 {
-    qreal penWidth = 1;
-    return QRectF(-10 - penWidth / 2, -10 - penWidth / 2,
-                  20 + penWidth, 20 + penWidth);
+    this->yaw = yaw;
 }
 
-/**
- * @param painter QPainter to draw with
- * @param option Visual style
- * @param widget Parent widget
- */
-void Waypoint2DIcon::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+void Waypoint2DIcon::drawIcon(QPen* pen)
 {
-    qDebug() << __FILE__ << __LINE__ << "DRAWING";
-    painter->setPen(QPen(Qt::red));
-    painter->drawRoundedRect(-10, -10, 20, 20, 5, 5);
+    mypixmap = new QPixmap(radius+1, radius+1);
+    mypixmap->fill(Qt::transparent);
+    QPainter painter(mypixmap);
+
+    // DRAW WAYPOINT
+    QPointF p(radius/2, radius/2);
+
+    float waypointSize = radius;
+    QPolygonF poly(4);
+    // Top point
+    poly.replace(0, QPointF(p.x(), p.y()-waypointSize/2.0f));
+    // Right point
+    poly.replace(1, QPointF(p.x()+waypointSize/2.0f, p.y()));
+    // Bottom point
+    poly.replace(2, QPointF(p.x(), p.y() + waypointSize/2.0f));
+    poly.replace(3, QPointF(p.x() - waypointSize/2.0f, p.y()));
+
+//    // Select color based on if this is the current waypoint
+//    if (list.at(i)->getCurrent())
+//    {
+//        color = QGC::colorCyan;//uas->getColor();
+//        pen.setWidthF(refLineWidthToPen(0.8f));
+//    }
+//    else
+//    {
+//        color = uas->getColor();
+//        pen.setWidthF(refLineWidthToPen(0.4f));
+//    }
+
+    //pen.setColor(color);
+    if (pen)
+    {
+        pen->setWidthF(2);
+        painter.setPen(*pen);
+    }
+    else
+    {
+        QPen pen2(Qt::red);
+        pen2.setWidth(2);
+        painter.setPen(pen2);
+    }
+    painter.setBrush(Qt::NoBrush);
+
+    float rad = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
+    painter.drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * rad);
+    painter.drawPolygon(poly);
 }

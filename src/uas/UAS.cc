@@ -73,6 +73,12 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         sendDropRate(0),
         lowBattAlarm(false),
         positionLock(false),
+        localX(0),
+        localY(0),
+        localZ(0),
+        roll(0),
+        pitch(0),
+        yaw(0),
         statusTimeout(new QTimer(this))
 {
     color = UASInterface::getNextColor();
@@ -281,6 +287,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
                 quint64 time = getUnixTime(attitude.usec);
+                roll = attitude.roll;
+                pitch = attitude.pitch;
+                yaw = attitude.yaw;
                 emit valueChanged(uasId, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
                 emit valueChanged(uasId, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
                 emit valueChanged(uasId, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
@@ -300,6 +309,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_local_position_t pos;
                 mavlink_msg_local_position_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.usec);
+                localX = pos.x;
+                localY = pos.y;
+                localZ = pos.z;
                 emit valueChanged(uasId, "x", pos.x, time);
                 emit valueChanged(uasId, "y", pos.y, time);
                 emit valueChanged(uasId, "z", pos.z, time);
@@ -353,28 +365,34 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // only accept values in a realistic range
                // quint64 time = getUnixTime(pos.usec);
                 quint64 time = MG::TIME::getGroundTimeNow();
+
                 emit valueChanged(uasId, "lat", pos.lat, time);
                 emit valueChanged(uasId, "lon", pos.lon, time);
-                // Check for NaN
-                int alt = pos.alt;
-                if (alt != alt)
+
+                if (pos.fix_type > 0)
                 {
-                    alt = 0;
-                    emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
+                    emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
+
+                    // Check for NaN
+                    int alt = pos.alt;
+                    if (alt != alt)
+                    {
+                        alt = 0;
+                        emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
+                    }
+                    emit valueChanged(uasId, "alt", pos.alt, time);
+                    // Smaller than threshold and not NaN
+                    if (pos.v < 1000000 && pos.v == pos.v)
+                    {
+                        emit valueChanged(uasId, "speed", pos.v, time);
+                        //qDebug() << "GOT GPS RAW";
+                        emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
+                    }
+                    else
+                    {
+                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(pos.v));
+                    }
                 }
-                emit valueChanged(uasId, "alt", pos.alt, time);
-                // Smaller than threshold and not NaN
-                if (pos.v < 1000000 && pos.v == pos.v)
-                {
-                    emit valueChanged(uasId, "speed", pos.v, time);
-                    //qDebug() << "GOT GPS RAW";
-                    emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
-                }
-                else
-                {
-                     emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(pos.v));
-                }
-                emit globalPositionChanged(this, pos.lon, pos.lat, alt, time);
             }
             break;
         case MAVLINK_MSG_ID_GPS_STATUS:
@@ -1159,8 +1177,8 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     manualYawAngle = yaw * yawScaling;
     manualThrust = thrust * thrustScaling;
 
-    if(mode == (int)MAV_MODE_MANUAL)
-    {
+//    if(mode == (int)MAV_MODE_MANUAL)
+//    {
       #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
@@ -1169,7 +1187,7 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
 
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, MG::TIME::getGroundTimeNow());
       #endif
-    }
+//    }
 }
 
 int UAS::getSystemType()
@@ -1361,6 +1379,16 @@ void UAS::shutdown()
         sendMessage(msg);
         result = true;
     }
+}
+
+void UAS::setTargetPosition(float x, float y, float z, float yaw)
+{
+    mavlink_message_t msg;
+    mavlink_msg_position_target_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, x, y, z, yaw);
+
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
 }
 
 /**

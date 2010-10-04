@@ -45,6 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
+#include "QMap3DWidget.h"
 
 // FIXME Move
 #include "PxQuadMAV.h"
@@ -131,7 +132,7 @@ void MainWindow::buildWidgets()
     mapWidget         = new MapWidget(this);
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
-    map3DWidget       = new QWidget(this); // FIXME Lionel, insert visualizer here
+    map3DWidget       = new QMap3DWidget(this);
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -216,6 +217,7 @@ void MainWindow::arrangeCenterStack()
     if (linechartWidget) centerStack->addWidget(linechartWidget);
     if (protocolWidget) centerStack->addWidget(protocolWidget);
     if (mapWidget) centerStack->addWidget(mapWidget);
+    if (map3DWidget) centerStack->addWidget(map3DWidget);
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 
@@ -655,14 +657,14 @@ void MainWindow::loadPixhawkView()
     clearView();
     // Engineer view, used in EMAV2009
 
-    // LINE CHART
-    if (linechartWidget)
+    // 3D map
+    if (map3DWidget)
     {
         QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
         if (centerStack)
         {
-            linechartWidget->setActive(true);
-            centerStack->setCurrentWidget(linechartWidget);
+            //map3DWidget->setActive(true);
+            centerStack->setCurrentWidget(map3DWidget);
         }
     }
 
@@ -671,6 +673,18 @@ void MainWindow::loadPixhawkView()
     {
         addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
         controlDockWidget->show();
+    }
+
+    // HORIZONTAL SITUATION INDICATOR
+    if (hsiDockWidget)
+    {
+        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+        if (hsi)
+        {
+            hsi->start();
+            addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+            hsiDockWidget->show();
+        }
     }
 
     // UAS LIST
@@ -694,30 +708,11 @@ void MainWindow::loadPixhawkView()
         waypointsDockWidget->show();
     }
 
-    // HORIZONTAL SITUATION INDICATOR
-    if (hsiDockWidget)
-    {
-        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-        if (hsi)
-        {
-            hsi->start();
-            addDockWidget(Qt::BottomDockWidgetArea, hsiDockWidget);
-            hsiDockWidget->show();
-        }
-    }
-
     // DEBUG CONSOLE
     if (debugConsoleDockWidget)
     {
         addDockWidget(Qt::BottomDockWidgetArea, debugConsoleDockWidget);
         debugConsoleDockWidget->show();
-    }
-
-    // RADIO CONTROL VIEW
-    if (rcViewDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, rcViewDockWidget);
-        rcViewDockWidget->show();
     }
 
     // ONBOARD PARAMETERS

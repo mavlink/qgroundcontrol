@@ -66,6 +66,14 @@ public:
     /** @brief Get the status flag for the communication **/
     virtual int getCommunicationStatus() const = 0;
 
+    virtual double getLocalX() const = 0;
+    virtual double getLocalY() const = 0;
+    virtual double getLocalZ() const = 0;
+
+    virtual double getRoll() const = 0;
+    virtual double getPitch() const = 0;
+    virtual double getYaw() const = 0;
+
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager &getWaypointManager(void) = 0;
 
@@ -171,6 +179,13 @@ public slots:
      * Works only if already landed and will cleanly shut down all onboard computers.
      */
     virtual void shutdown() = 0;
+    /** @brief Set the target position for the robot to navigate to.
+     *  @param x x-coordinate of the target position
+     *  @param y y-coordinate of the target position
+     *  @param z z-coordinate of the target position
+     *  @param yaw heading of the target position
+     */
+    virtual void setTargetPosition(float x, float y, float z, float yaw) = 0;
     /** @brief Request the list of stored waypoints from the robot */
     //virtual void requestWaypoints() = 0;
     /** @brief Clear all existing waypoints on the robot */

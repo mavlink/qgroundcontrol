@@ -99,6 +99,7 @@ protected:
     float lon;
     float alt;
     float groundDistance;
+    static const int updateInterval = 300;
 
 
     void mouseDoubleClickEvent (QMouseEvent * event);
