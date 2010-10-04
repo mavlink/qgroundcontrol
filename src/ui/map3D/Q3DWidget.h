@@ -165,7 +165,7 @@ protected:
     float r2d(float angle);
     float d2r(float angle);
 
-    void Q3DWidget::wireSphere(double radius, int slices, int stacks);
+    void wireSphere(double radius, int slices, int stacks);
     void solidSphere(double radius, int slices, int stacks);
     void wireCone(double base, double height, int slices, int stacks);
     void solidCone(double base, double height, int slices, int stacks);
