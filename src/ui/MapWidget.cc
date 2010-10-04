@@ -198,6 +198,7 @@ MapWidget::MapWidget(QWidget *parent) :
     connect(createPath, SIGNAL(clicked(bool)),
             this, SLOT(createPathButtonClicked(bool)));
 
+
     connect(geomLayer, SIGNAL(geometryClicked(Geometry*,QPoint)),
             this, SLOT(captureGeometryClick(Geometry*, QPoint)));
 
@@ -372,7 +373,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
   }
 }
 
-void MapWidget::captureGeometryClick(qmapcontrol::Geometry* geom, QPoint point){
+void MapWidget::captureGeometryClick(Geometry* geom, QPoint point){
   Q_UNUSED(geom);
   Q_UNUSED(point);
 
@@ -381,7 +382,7 @@ void MapWidget::captureGeometryClick(qmapcontrol::Geometry* geom, QPoint point){
 
 }
 
-void MapWidget::captureGeometryDrag(qmapcontrol::Geometry* geom, QPointF coordinate){
+void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
   Q_UNUSED(coordinate);
 
   // Refresh the screen
@@ -409,7 +410,7 @@ void MapWidget::captureGeometryDrag(qmapcontrol::Geometry* geom, QPointF coordin
 
 }
 
-void MapWidget::captureGeometryEndDrag(qmapcontrol::Geometry* geom, QPointF coordinate)
+void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
 {
 
     mc->setMouseMode(qmapcontrol::MapControl::Panning);
