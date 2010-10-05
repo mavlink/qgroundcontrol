@@ -30,10 +30,6 @@ public:
         THROTTLE
     };
 
-//    void loadFile();
-//    void saveFile();
-//    void send();
-//    void receive();
     const float* operator[](int i) const;
     const QVector<float>& operator()(int i) const;
     void set(int element, int index, float value) {(*data)[element][index] = value;}
