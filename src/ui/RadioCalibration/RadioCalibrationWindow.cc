@@ -44,7 +44,11 @@ RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
     connect(get, SIGNAL(clicked()), this, SLOT(request()));
 
     connect(aileron, SIGNAL(setpointChanged(int,float)), radio, SLOT(setAileron(int,float)));
-
+    connect(elevator, SIGNAL(setpointChanged(int,float)), radio, SLOT(setElevator(int,float)));
+    connect(rudder, SIGNAL(setpointChanged(int,float)), radio, SLOT(setRudder(int,float)));
+    connect(gyro, SIGNAL(setpointChanged(int,float)), radio, SLOT(setGyro(int,float)));
+    connect(pitch, SIGNAL(setpointChanged(int,float)), radio, SLOT(setPitch(int,float)));
+    connect(throttle, SIGNAL(setpointChanged(int,float)), radio, SLOT(setThrottle(int,float)));
     setUASId(0);
 }
 
