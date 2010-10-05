@@ -1,0 +1,6 @@
+<!-- Values are ordered low center high -->
+<channels>
+  <threeSetpoint name="Aileron" number="1">1.0, 1.5, 2.0</threeSetpoint>
+  <twoSetpoint name="Gyro" number="3">2.0, 1.0</twoSetpoint>
+  <fiveSetpoint name="Pitch" number="5">1.0, 1.25, 1.5, 1.75, 2.0</fiveSetpoint>
+</channels>
