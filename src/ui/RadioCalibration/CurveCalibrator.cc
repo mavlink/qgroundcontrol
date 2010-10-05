@@ -100,4 +100,8 @@ void CurveCalibrator::set(const QVector<float> &data)
         curve->setData(*positions, *setpoints);
         plot->replot();
     }
+    else
+    {
+        qDebug() << __FILE__ << __LINE__ << ": wrong data vector size";
+    }
 }
