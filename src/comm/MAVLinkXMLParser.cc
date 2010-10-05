@@ -443,10 +443,10 @@ bool MAVLinkXMLParser::generate()
     rawHeader.write(mainHeader.toLatin1());
 
     // Write C structs / lcm definitions
-    QFile lcmStructs(outputDirName + "/mavlink.lcm");
-    ok = lcmStructs.open(QIODevice::WriteOnly | QIODevice::Text);
-    success = success && ok;
-    lcmStructs.write(lcmStructDefs.toLatin1());
+//    QFile lcmStructs(outputDirName + "/mavlink.lcm");
+//    ok = lcmStructs.open(QIODevice::WriteOnly | QIODevice::Text);
+//    success = success && ok;
+//    lcmStructs.write(lcmStructDefs.toLatin1());
 
     return success;
 }
