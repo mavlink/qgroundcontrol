@@ -33,6 +33,11 @@ RadioCalibrationData::RadioCalibrationData(const RadioCalibrationData &other)
     data = new QVector<QVector<float> >(*other.data);
 }
 
+RadioCalibrationData::~RadioCalibrationData()
+{
+    delete data;
+}
+
 const float* RadioCalibrationData::operator [](int i) const
 {
     if (i < data->size())

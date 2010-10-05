@@ -19,6 +19,7 @@ public:
                          const QVector<float>& gyro,
                          const QVector<float>& pitch,
                          const QVector<float>& throttle);
+    ~RadioCalibrationData();
 
     enum RadioElement
     {
@@ -37,7 +38,7 @@ public:
 public slots:
     void setAileron(int index, float value) {set(AILERON, index, value);}
     void setElevator(int index, float value) {set(ELEVATOR, index, value);}
-    void setRudeer(int index, float value) {set(RUDDER, index, value);}
+    void setRudder(int index, float value) {set(RUDDER, index, value);}
     void setGyro(int index, float value) {set(GYRO, index, value);}
     void setPitch(int index, float value) {set(PITCH, index, value);}
     void setThrottle(int index, float value) {set(THROTTLE, index, value);}

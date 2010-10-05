@@ -87,8 +87,101 @@ void RadioCalibrationWindow::loadFile()
 {
     QString fileName(QFileDialog::getOpenFileName(this,
                                                   tr("Load RC Calibration"),
-                                                  QString(),
+                                                  "settings/",
                                                   tr("XML Files (*.xml)")));
+
+    if (fileName.isEmpty())
+        return;
+
+    QFile rcFile(fileName);
+    if (!rcFile.exists())
+    {        
+        return;
+    }
+
+    if (!rcFile.open(QIODevice::ReadOnly))
+    {
+        return;
+    }
+
+    QDomDocument *rcConfig = new QDomDocument();
+
+    QString errorStr;
+    int errorLine;
+    int errorColumn;
+
+    if (!rcConfig->setContent(&rcFile, true, &errorStr, &errorLine,
+                                &errorColumn))
+    {
+        qDebug() << "Error reading XML Parameter File on line: " << errorLine << errorStr;
+        return;
+    }
+
+    QDomElement root = rcConfig->documentElement();
+    if (root.tagName() != "channels") {
+        qDebug() << __FILE__ << __LINE__ << "This is not a Radio Calibration xml file";
+        return;
+    }
+
+
+    QPointer<RadioCalibrationData> newRadio = new RadioCalibrationData();
+    QDomElement child = root.firstChildElement();
+    while (!child.isNull())
+    {
+        parseSetpoint(child, newRadio);
+        child = child.nextSiblingElement();
+    }
+
+    receive(newRadio);
+
+    delete newRadio;
+    delete rcConfig;
+}
+
+void RadioCalibrationWindow::parseSetpoint(const QDomElement &setpoint, const QPointer<RadioCalibrationData>& newRadio)
+{
+    QVector<float> setpoints;
+    QStringList setpointList = setpoint.text().split(",", QString::SkipEmptyParts);
+    foreach (QString setpoint, setpointList)
+        setpoints << setpoint.trimmed().toFloat();
+
+    qDebug() << __FILE__ << __LINE__ << ": " << setpoint.tagName() << ": " << setpoint.attribute("name") ;
+    if (setpoint.tagName() == "threeSetpoint")
+    {
+        if (setpoints.isEmpty())
+            setpoints << 0 << 0 << 0;
+        for (int i=0; i<3; ++i)
+        {
+            if (setpoint.attribute("name").toUpper() == "AILERON")
+                newRadio->setAileron(i, setpoints[i]);
+            else if(setpoint.attribute("name").toUpper() == "ELEVATOR")
+                newRadio->setElevator(i, setpoints[i]);
+            else if(setpoint.attribute("name").toUpper() == "RUDDER")
+                newRadio->setRudder(i, setpoints[i]);
+        }
+    }    
+    else if (setpoint.tagName() == "twoSetpoint")
+    {
+        if (setpoints.isEmpty())
+            setpoints << 0 << 0;
+        for (int i=0; i<2; ++i)
+        {
+            if (setpoint.attribute("name").toUpper() == "GYRO")
+                newRadio->setGyro(i, setpoints[i]);
+        }
+    }
+    else if (setpoint.tagName() == "fiveSetpoint")
+    {
+        if (setpoints.isEmpty())
+            setpoints << 0 << 0 << 0 << 0 << 0;
+        for (int i=0; i<5; ++i)
+        {
+            if (setpoint.attribute("name").toUpper() == "PITCH")
+                newRadio->setPitch(i, setpoints[i]);
+            else if (setpoint.attribute("name").toUpper() == "THROTTLE")
+                newRadio->setThrottle(i, setpoints[i]);
+        }
+    }
 }
 
 void RadioCalibrationWindow::send()

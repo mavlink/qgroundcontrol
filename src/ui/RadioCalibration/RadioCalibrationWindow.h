@@ -11,6 +11,8 @@
 #include <QDebug>
 #include <QPointer>
 #include <QFileDialog>
+#include <QFile>
+#include <QtXml>
 
 #include "AirfoilServoCalibrator.h"
 #include "SwitchCalibrator.h"
@@ -30,8 +32,6 @@ Q_OBJECT
 public:
     explicit RadioCalibrationWindow(QWidget *parent = 0);
 
-signals:
-
 public slots:
     void setChannel(int ch, float raw, float normalized);
     void loadFile();
@@ -43,15 +43,17 @@ public slots:
 
 
 protected:
-        AirfoilServoCalibrator *aileron;
-        AirfoilServoCalibrator *elevator;
-        AirfoilServoCalibrator *rudder;
-        SwitchCalibrator *gyro;        
-        CurveCalibrator *pitch;
-        CurveCalibrator *throttle;
-        int uasId;
-        QPointer<RadioCalibrationData> radio;
-        QSignalMapper mapper;
+    AirfoilServoCalibrator *aileron;
+    AirfoilServoCalibrator *elevator;
+    AirfoilServoCalibrator *rudder;
+    SwitchCalibrator *gyro;
+    CurveCalibrator *pitch;
+    CurveCalibrator *throttle;
+    int uasId;
+    QPointer<RadioCalibrationData> radio;
+    QSignalMapper mapper;
+
+    void parseSetpoint(const QDomElement& setpoint, const QPointer<RadioCalibrationData>& radio);
 };
 
 #endif // RADIOCALIBRATIONWINDOW_H
