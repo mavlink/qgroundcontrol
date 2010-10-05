@@ -10,6 +10,7 @@
 #include <QHBoxLayout>
 #include <QDebug>
 #include <QPointer>
+#include <QFileDialog>
 
 #include "AirfoilServoCalibrator.h"
 #include "SwitchCalibrator.h"

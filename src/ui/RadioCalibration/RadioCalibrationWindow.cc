@@ -85,7 +85,10 @@ void RadioCalibrationWindow::saveFile()
 
 void RadioCalibrationWindow::loadFile()
 {
-    qDebug() << __FILE__ << __LINE__ << "LOAD FROM FILE";
+    QString fileName(QFileDialog::getOpenFileName(this,
+                                                  tr("Load RC Calibration"),
+                                                  QString(),
+                                                  tr("XML Files (*.xml)")));
 }
 
 void RadioCalibrationWindow::send()

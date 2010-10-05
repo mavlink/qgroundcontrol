@@ -271,6 +271,8 @@ bool ParameterList::open(QString filename)
 
     read(&paramFile);
 
+    paramFile.close();
+
     return true;
 }
 
