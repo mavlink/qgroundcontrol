@@ -149,7 +149,7 @@ void RadioCalibrationWindow::parseSetpoint(const QDomElement &setpoint, const QP
     foreach (QString setpoint, setpointList)
         setpoints << setpoint.trimmed().toFloat();
 
-    qDebug() << __FILE__ << __LINE__ << ": " << setpoint.tagName() << ": " << setpoint.attribute("name") ;
+//    qDebug() << __FILE__ << __LINE__ << ": " << setpoint.tagName() << ": " << setpoint.attribute("name") ;
     if (setpoint.tagName() == "threeSetpoint")
     {
         if (setpoints.isEmpty())
