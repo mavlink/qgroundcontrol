@@ -58,3 +58,13 @@ const QVector<float>& RadioCalibrationData::operator ()(int i) const
     // This is not good.  If it is ever used after being returned it will cause a crash
 //    return QVector<float>();
 }
+
+QString RadioCalibrationData::toString(RadioElement element) const
+{
+    QString s;
+    foreach (float f, (*data)[element])
+    {
+        s += QString::number(f) + ", ";
+    }
+    return s.mid(0, s.length()-2);
+}

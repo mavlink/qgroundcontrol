@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QDebug>
 #include <QVector>
+#include <QString>
 
 
 class RadioCalibrationData : public QObject
@@ -42,6 +43,10 @@ public slots:
     void setGyro(int index, float value) {set(GYRO, index, value);}
     void setPitch(int index, float value) {set(PITCH, index, value);}
     void setThrottle(int index, float value) {set(THROTTLE, index, value);}
+
+public:
+    /// Creates a comman seperated list of the values for a particular element
+    QString toString(const RadioElement element) const;
 
 protected:
     QVector<QVector<float> > *data;
