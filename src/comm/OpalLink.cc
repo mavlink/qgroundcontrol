@@ -149,6 +149,11 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
             mavlink_msg_radio_calibration_decode(&msg, &radio);
             qDebug() << "RADIO CALIBRATION RECEIVED";
             qDebug() << "AILERON: " << radio.aileron[0] << " " << radio.aileron[1] << " " << radio.aileron[2];
+            qDebug() << "ELEVATOR: " << radio.elevator[0] << " " << radio.elevator[1] << " " << radio.elevator[2];
+            qDebug() << "RUDDER: " << radio.rudder[0] << " " << radio.rudder[1] << " " << radio.rudder[2];
+            qDebug() << "GYRO: " << radio.gyro[0] << " " << radio.gyro[1];
+            qDebug() << "PITCH: " << radio.pitch[0] << radio.pitch[1] << radio.pitch[2] << radio.pitch[3] << radio.pitch[4];
+            qDebug() << "THROTTLE: " << radio.throttle[0] << radio.throttle[1] << radio.throttle[2] << radio.throttle[3] << radio.throttle[4];
         }
         break;
 #endif

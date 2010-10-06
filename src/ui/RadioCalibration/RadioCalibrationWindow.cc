@@ -84,7 +84,80 @@ void RadioCalibrationWindow::setChannel(int ch, float raw, float normalized)
 
 void RadioCalibrationWindow::saveFile()
 {
-    qDebug() << __FILE__ << __LINE__ << "SAVE TO FILE";
+    QString fileName(QFileDialog::getSaveFileName(this,
+                                                  tr("Save RC Calibration"),
+                                                  "settings/",
+                                                  tr("XML Files (*.xml)")));
+    if (fileName.isEmpty())
+        return;
+
+    QDomDocument *rcConfig = new QDomDocument();
+
+    QFile rcFile(fileName);
+    if (rcFile.exists())
+    {
+            rcFile.remove();
+    }
+    if (!rcFile.open(QFile::WriteOnly | QFile::Text))
+    {
+        qDebug() << __FILE__ << __LINE__ << "could not open"  << rcFile.fileName() << "for writing";
+        return;
+    }
+
+    QDomElement root;
+    rcConfig->appendChild(root=rcConfig->createElement("channels"));
+    QDomElement e;
+    QDomText t;
+
+    // Aileron
+    e = rcConfig->createElement("threeSetpoint");
+    e.setAttribute("name", "Aileron");
+    e.setAttribute("number", "1");
+    t = rcConfig->createTextNode(radio->toString(RadioCalibrationData::AILERON));
+    e.appendChild(t);
+    root.appendChild(e);
+    // Elevator
+    e = rcConfig->createElement("threeSetpoint");
+    e.setAttribute("name", "Elevator");
+    e.setAttribute("number", "2");
+    t = rcConfig->createTextNode(radio->toString(RadioCalibrationData::ELEVATOR));
+    e.appendChild(t);
+    root.appendChild(e);
+    // Rudder
+    e = rcConfig->createElement("threeSetpoint");
+    e.setAttribute("name", "Rudder");
+    e.setAttribute("number", "4");
+    t = rcConfig->createTextNode(radio->toString(RadioCalibrationData::RUDDER));
+    e.appendChild(t);
+    root.appendChild(e);
+    // Gyro Mode/Gain
+    e = rcConfig->createElement("twoSetpoint");
+    e.setAttribute("name", "Gyro");
+    e.setAttribute("number", "5");
+    t = rcConfig->createTextNode(radio->toString(RadioCalibrationData::GYRO));
+    e.appendChild(t);
+    root.appendChild(e);
+    // Throttle
+    e = rcConfig->createElement("fiveSetpoint");
+    e.setAttribute("name", "Throttle");
+    e.setAttribute("number", "3");
+    t = rcConfig->createTextNode(radio->toString(RadioCalibrationData::THROTTLE));
+    e.appendChild(t);
+    root.appendChild(e);
+    // Pitch
+    e = rcConfig->createElement("fiveSetpoint");
+    e.setAttribute("name", "Pitch");
+    e.setAttribute("number", "6");
+    t = rcConfig->createTextNode(radio->toString(RadioCalibrationData::PITCH));
+    e.appendChild(t);
+    root.appendChild(e);
+
+
+    QTextStream out(&rcFile);
+    const int IndentSize = 4;
+    rcConfig->save(out, IndentSize);
+    rcFile.close();
+
 }
 
 void RadioCalibrationWindow::loadFile()
@@ -121,6 +194,7 @@ void RadioCalibrationWindow::loadFile()
         return;
     }
 
+    rcFile.close();
     QDomElement root = rcConfig->documentElement();
     if (root.tagName() != "channels") {
         qDebug() << __FILE__ << __LINE__ << "This is not a Radio Calibration xml file";

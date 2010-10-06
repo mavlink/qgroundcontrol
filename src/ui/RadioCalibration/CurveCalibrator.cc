@@ -92,16 +92,9 @@ void CurveCalibrator::set(const QVector<float> &data)
 {
     if (data.size() == 5)
     {
-//        delete setpoints;
-//        QVector<double> dataDouble;
         for (int i=0; i<data.size(); ++i)
             setpoints->replace(i, static_cast<double>(data[i]));
-//        setpoints = new QVector<double>(dataDouble);
-        curve->setPen(QPen(QColor(QString("lime"))));
         curve->setData(*positions, *setpoints);
-
-
-        curve->attach(plot);
         plot->replot();
     }
     else

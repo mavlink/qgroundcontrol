@@ -13,6 +13,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QtXml>
+#include <QTextStream>
 
 #include "AirfoilServoCalibrator.h"
 #include "SwitchCalibrator.h"
