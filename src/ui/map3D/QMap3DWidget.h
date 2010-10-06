@@ -78,6 +78,7 @@ private slots:
 protected:
     UASInterface* uas;
     void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
+    void drawWaypoints();
 
 private:
     void drawPlatform(float roll, float pitch, float yaw);
@@ -105,6 +106,7 @@ private:
     QVarLengthArray<Pose3D, 10000> trail;
 
     bool displayTarget;
+    bool displayWaypoints;
     Pose3D targetPosition;
 
     QScopedPointer<CheetahModel> cheetahModel;

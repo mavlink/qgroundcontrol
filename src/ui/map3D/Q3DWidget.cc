@@ -867,6 +867,7 @@ Q3DWidget::closeEvent(QCloseEvent *)
 
 void Q3DWidget::wireSphere(double radius, int slices, int stacks)
 {
+            static GLUquadricObj* quadObj;
     // Make sure quad object exists
     if(!quadObj) quadObj = gluNewQuadric();
   gluQuadricDrawStyle(quadObj, GLU_LINE);
@@ -879,6 +880,7 @@ void Q3DWidget::wireSphere(double radius, int slices, int stacks)
 
 void Q3DWidget::solidSphere(double radius, int slices, int stacks)
 {
+            static GLUquadricObj* quadObj;
     // Make sure quad object exists
     if(!quadObj) quadObj = gluNewQuadric();
   gluQuadricDrawStyle(quadObj, GLU_FILL);
@@ -891,6 +893,7 @@ void Q3DWidget::solidSphere(double radius, int slices, int stacks)
 
 void Q3DWidget::wireCone(double base, double height, int slices, int stacks)
 {
+        static GLUquadricObj* quadObj;
     // Make sure quad object exists
     if(!quadObj) quadObj = gluNewQuadric();
   gluQuadricDrawStyle(quadObj, GLU_LINE);
@@ -903,6 +906,7 @@ void Q3DWidget::wireCone(double base, double height, int slices, int stacks)
 
 void Q3DWidget::solidCone(double base, double height, int slices, int stacks)
 {
+    static GLUquadricObj* quadObj;
     // Make sure quad object exists
     if(!quadObj) quadObj = gluNewQuadric();
   gluQuadricDrawStyle(quadObj, GLU_FILL);
