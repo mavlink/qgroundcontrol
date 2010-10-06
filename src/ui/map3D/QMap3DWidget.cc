@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include "CheetahModel.h"
 #include "UASManager.h"
 #include "UASInterface.h"
+#include "QGC.h"
 
 QMap3DWidget::QMap3DWidget(QWidget* parent)
      : Q3DWidget(parent)
@@ -48,6 +49,7 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
      , lockCamera(true)
      , updateLastUnlockedPose(true)
      , displayTarget(false)
+     , displayWaypoints(true)
 {
     setFocusPolicy(Qt::StrongFocus);
 
@@ -82,6 +84,10 @@ QMap3DWidget::buildLayout(void)
     trailCheckBox->setText("Trail");
     trailCheckBox->setChecked(displayTrail);
 
+    QCheckBox* waypointsCheckBox = new QCheckBox(this);
+    waypointsCheckBox->setText("Waypoints");
+    waypointsCheckBox->setChecked(displayWaypoints);
+
     QPushButton* recenterButton = new QPushButton(this);
     recenterButton->setText("Recenter Camera");
 
@@ -97,9 +103,10 @@ QMap3DWidget::buildLayout(void)
     layout->setSpacing(2);
     layout->addWidget(gridCheckBox, 1, 0);
     layout->addWidget(trailCheckBox, 1, 1);
-    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 2);
-    layout->addWidget(recenterButton, 1, 3);
-    layout->addWidget(lockCameraCheckBox, 1, 4);
+    layout->addWidget(waypointsCheckBox, 1, 2);
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
+    layout->addWidget(recenterButton, 1, 4);
+    layout->addWidget(lockCameraCheckBox, 1, 5);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
     //layout->setColumnStretch(0, 1);
@@ -194,6 +201,11 @@ QMap3DWidget::displayHandler(void)
         drawTarget(robotX, robotY, robotZ);
     }
 
+    if (displayWaypoints)
+    {
+        drawWaypoints();
+    }
+
     glPopMatrix();
 
     // switch to 2D
@@ -223,6 +235,82 @@ QMap3DWidget::displayHandler(void)
               5,
               5,
               &painter);
+}
+
+void QMap3DWidget::drawWaypoints()
+{
+    if (uas)
+    {
+        const QVector<Waypoint*>& list = uas->getWaypointManager().getWaypointList();
+        QColor color;
+
+        QPointF lastWaypoint;
+
+        for (int i = 0; i < list.size(); i++)
+        {
+            QPointF in(list.at(i)->getX(), list.at(i)->getY());
+            // Transform from world to body coordinates
+            //in = metricWorldToBody(in);
+
+            // DRAW WAYPOINT
+            float waypointRadius = 0.1f;// = vwidth / 20.0f * 2.0f;
+
+
+            // Select color based on if this is the current waypoint
+            if (list.at(i)->getCurrent())
+            {
+                color = QGC::colorCyan;//uas->getColor();
+
+            }
+            else
+            {
+                color = uas->getColor();
+
+            }
+
+            //float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
+            // Draw yaw
+            // Draw sphere
+
+
+
+
+
+            static double radius = 0.2;
+
+            glPushMatrix();
+            glTranslatef(in.x() - uas->getLocalX(), in.y() - uas->getLocalY(), 0.0f);
+            glColor3f(0.3f, 0.3f, 1.0f);
+            glLineWidth(1.0f);
+
+//            // Make sure quad object exists
+//            static GLUquadricObj* quadObj2;
+//            if(!quadObj2) quadObj2 = gluNewQuadric();
+//            gluQuadricDrawStyle(quadObj2, GLU_LINE);
+//            gluQuadricNormals(quadObj2, GLU_SMOOTH);
+//            /* If we ever changed/used the texture or orientation state
+//               of quadObj, we'd need to change it to the defaults here
+//               with gluQuadricTexture and/or gluQuadricOrientation. */
+//            gluSphere(quadObj2, radius, 10, 10);
+
+            wireSphere(radius, 10, 10);
+
+            glPopMatrix();
+
+
+
+
+
+
+            // DRAW CONNECTING LINE
+            // Draw line from last waypoint to this one
+            if (!lastWaypoint.isNull())
+            {
+                // OpenGL line
+            }
+            lastWaypoint = in;
+        }
+    }
 }
 
 void QMap3DWidget::paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter)
@@ -524,14 +612,7 @@ QMap3DWidget::drawTarget(float x, float y, float z)
     glColor3f(0.0f, 0.7f, 1.0f);
     glLineWidth(1.0f);
 
-    // Make sure quad object exists
-    if(!quadObj) quadObj = gluNewQuadric();
-    gluQuadricDrawStyle(quadObj, GLU_LINE);
-    gluQuadricNormals(quadObj, GLU_SMOOTH);
-    /* If we ever changed/used the texture or orientation state
-       of quadObj, we'd need to change it to the defaults here
-       with gluQuadricTexture and/or gluQuadricOrientation. */
-    gluSphere(quadObj, radius, 10, 10);
+    wireSphere(radius, 10, 10);
 
     if (expand)
     {
