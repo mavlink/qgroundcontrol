@@ -5,6 +5,7 @@
 #include <QVector>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
+//#include <qwt_array.h>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -34,6 +35,7 @@ protected slots:
 protected:
     QVector<double> *setpoints;
     QVector<double> *positions;
+//    QwtArrayData
     QwtPlot *plot;
     QwtPlotCurve *curve;
 
