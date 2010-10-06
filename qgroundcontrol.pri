@@ -108,7 +108,7 @@ linux-g++ {
     LIBS += \
         -L/usr/lib \
         -lm \
-        -lflite_cmu_us_kal16 \
+        -lflite_cmu_us_kal \
         -lflite_usenglish \
         -lflite_cmulex \
         -lflite \
@@ -150,7 +150,7 @@ linux-g++-64 {
     LIBS += \
         -L/usr/lib \
         -lm \
-        -lflite_cmu_us_kal16 \
+        -lflite_cmu_us_kal \
         -lflite_usenglish \
         -lflite_cmulex \
         -lflite \
