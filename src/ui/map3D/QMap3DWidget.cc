@@ -280,7 +280,7 @@ void QMap3DWidget::drawWaypoints()
 
             glPushMatrix();
             glTranslatef(in.x() - uas->getLocalX(), in.y() - uas->getLocalY(), 0.0f);
-            glColor3f(0.3f, 0.3f, 1.0f);
+            glColor3f(1.0f, 0.3f, 0.3f);
             glLineWidth(1.0f);
 
 //            // Make sure quad object exists
