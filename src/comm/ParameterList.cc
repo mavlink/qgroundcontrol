@@ -342,7 +342,7 @@ void ParameterList::parseBlock(const QDomElement &block)
             }
             else
             {
-                qDebug() << __FILE__ << ":" << __LINE__ << ": error in xml doc";
+                qDebug() << __FILE__ << ":" << __LINE__ << ": error in xml doc in block" << block.attribute("name");
             }
         }
 

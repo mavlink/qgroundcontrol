@@ -2,9 +2,9 @@
 
   <!-- Parameters in the top level block -->
   <Block name="TopLevel">
-    <Parameter>
+
     
-    </Parameter>
+
   </Block>
 
   <!--Parameters related to the navigation block -->
