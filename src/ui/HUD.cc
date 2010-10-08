@@ -574,6 +574,9 @@ void HUD::paintHUD()
 
     if ((yawTrans < 5.0) && (yawTrans > -5.0)) yawTrans = 0;
 
+    // Negate to correct direction
+    yawTrans -yawTrans;
+
     //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw;
 
     // Update scaling factor
