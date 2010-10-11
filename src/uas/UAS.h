@@ -247,6 +247,10 @@ public slots:
     void startGyroscopeCalibration();
     void startPressureCalibration();
 
+    void startDataRecording();
+    void pauseDataRecording();
+    void stopDataRecording();
+
 signals:
 
     /** @brief The main/battery voltage has changed/was updated */
