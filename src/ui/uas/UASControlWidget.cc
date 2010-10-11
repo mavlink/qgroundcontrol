@@ -104,6 +104,24 @@ void UASControlWidget::setUAS(UASInterface* uas)
 
     ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
 
+    // Check if additional controls should be loaded
+    UAS* mav = dynamic_cast<UAS*>(uas);
+    if (mav)
+    {
+        QPushButton* startRecButton = new QPushButton(tr("Record"));
+        connect(startRecButton, SIGNAL(clicked()), mav, SLOT(startDataRecording()));
+        ui.gridLayout->addWidget(startRecButton, 10, 1);
+
+        QPushButton* pauseRecButton = new QPushButton(tr("Pause"));
+        connect(pauseRecButton, SIGNAL(clicked()), mav, SLOT(pauseDataRecording()));
+        ui.gridLayout->addWidget(pauseRecButton, 10, 2);
+
+        QPushButton* stopRecButton = new QPushButton(tr("Stop"));
+        connect(stopRecButton, SIGNAL(clicked()), mav, SLOT(stopDataRecording()));
+        ui.gridLayout->addWidget(stopRecButton, 10, 3);
+    }
+
+
     this->uas = uas->getUASID();
     setBackgroundColor(uas->getColor());
 }

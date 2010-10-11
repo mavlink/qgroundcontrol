@@ -611,6 +611,27 @@ void UAS::startRadioControlCalibration()
   sendMessage(msg);
 }
 
+void UAS::startDataRecording()
+{
+  mavlink_message_t msg;
+  mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_START);
+  sendMessage(msg);
+}
+
+void UAS::pauseDataRecording()
+{
+  mavlink_message_t msg;
+  mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_PAUSE);
+  sendMessage(msg);
+}
+
+void UAS::stopDataRecording()
+{
+  mavlink_message_t msg;
+  mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_STOP);
+  sendMessage(msg);
+}
+
 void UAS::startMagnetometerCalibration()
 {
     mavlink_message_t msg;
