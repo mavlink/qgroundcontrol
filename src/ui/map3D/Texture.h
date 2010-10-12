@@ -9,6 +9,10 @@ class Texture
 public:
     Texture();
 
+    void draw(float x1, float y1, float x2, float y2,
+              bool smoothInterpolation) const;
+
+private:
     enum State
     {
         UNINITIALIZED = 0,
@@ -16,16 +20,6 @@ public:
         READY = 2
     };
 
-    State getState(void) const;
-    GLuint getTextureId(void) const;
-    int32_t getTextureWidth(void) const;
-    int32_t getTextureHeight(void) const;
-    int32_t getImageWidth(void) const;
-    int32_t getImageHeight(void) const;
-    float getMaxU(void) const;
-    float getMaxV(void) const;
-
-private:
     State state;
 
     GLuint textureId;
