@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <sstream>
+#include <QNetworkReply>
+#include <QPixmap>
 
 //for street-maps to:
 //http://mt1.google.com/mt?&x=%d&y=%d&z=%d
@@ -13,9 +15,12 @@
 const double WGS84_A = 6378137.0;
 const double WGS84_ECCSQ = 0.00669437999013;
 
-Imagery::Imagery()
+Imagery::Imagery(QObject* parent)
+    : QObject(parent)
+    , networkManager(new QNetworkAccessManager)
 {
-
+//    connect(networkManager.data(), SIGNAL(finished(QNetworkReply*)),
+//            this, SLOT(downloadFinished(QNetworkReply*)));
 }
 
 void
@@ -62,6 +67,8 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
             imageResolution = 512.0;
         }
     }
+
+//    networkManager->get(QNetworkRequest(QUrl("")));
 }
 
 void
@@ -98,61 +105,20 @@ Imagery::update(void)
 }
 
 void
-Imagery::drawTexture3D(const TexturePtr& t,
-                       float x1, float y1, float x2, float y2,
-                       bool smooth)
+Imagery::downloadFinished(QNetworkReply* reply)
 {
-    if (t.isNull() == 0)
+    if (reply->error() != QNetworkReply::NoError) {
+        return;
+    }
+    QVariant attribute = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if (attribute.isValid())
     {
         return;
     }
 
-    if (t->getState() == Texture::REQUESTED)
-    {
-        glBegin(GL_LINE_LOOP);
-        glColor3f(0.0f, 0.0f, 1.0f);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y1);
-        glVertex2f(x2, y2);
-        glVertex2f(x1, y2);
-        glEnd();
-        return;
-    }
-
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, t->getTextureId());
-
-    float dx, dy;
-    if (smooth)
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        dx = 1.0f / (2.0f * t->getTextureWidth());
-        dy = 1.0f / (2.0f * t->getTextureHeight());
-    }
-    else
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        dx = 0.0f;
-        dy = 0.0f;
-    }
-
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_QUADS);
-
-    glTexCoord2f(dx, t->getMaxV() - dy);
-    glVertex2f(x1, y1);
-    glTexCoord2f(t->getMaxU() - dx, t->getMaxV() - dy);
-    glVertex2f(x2, y1);
-    glTexCoord2f(t->getMaxU() - dx, dy);
-    glVertex2f(x2, y2);
-    glTexCoord2f(dx, dy);
-    glVertex2f(x1, y2);
-
-    glEnd();
-
-    glDisable(GL_TEXTURE_2D);
+    QByteArray jpegData = reply->readAll();
+    QPixmap pixmap;
+    pixmap.loadFromData(jpegData);
 }
 
 void

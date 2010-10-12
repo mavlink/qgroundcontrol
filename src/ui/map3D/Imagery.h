@@ -3,13 +3,17 @@
 
 #include <inttypes.h>
 #include <string>
+#include <QNetworkAccessManager>
+#include <QObject>
 
 #include "Texture.h"
 
-class Imagery
+class Imagery : public QObject
 {
+//    Q_OBJECT
+
 public:
-    Imagery();
+    explicit Imagery(QObject* parent);
 
     enum ImageryType
     {
@@ -41,11 +45,10 @@ public:
 
     bool update(void);
 
-private:
-    void drawTexture3D(const TexturePtr& t,
-                       float x1, float y1, float x2, float y2,
-                       bool smooth);
+private slots:
+    void downloadFinished(QNetworkReply* reply);
 
+private:
     void UTMtoTile(double northing, double easting, const std::string& utmZone,
                    double imageResolution, int32_t& tileX, int32_t& tileY,
                    int32_t& zoomLevel);
@@ -61,6 +64,8 @@ private:
                  double& latitude, double& longitude);
 
     ImageryType currentImageryType;
+
+    QScopedPointer<QNetworkAccessManager> networkManager;
 };
 
 #endif // IMAGERY_H
