@@ -165,8 +165,11 @@ HEADERS += src/MG.h \
     src/ui/map3D/CheetahModel.h \
     src/ui/map3D/CheetahGL.h \
     src/ui/map3D/QMap3DWidget.h \
-    src/ui/map3D/Imagery.h \
-    src/ui/map3D/Texture.h
+    src/ui/map3D/Texture.h \
+    src/ui/map3D/TextureCache.h \
+    src/ui/map3D/WebImage.h \
+    src/ui/map3D/WebImageCache.h \
+    src/ui/map3D/Imagery.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -236,8 +239,11 @@ SOURCES += src/main.cc \
     src/ui/map3D/CheetahModel.cc \
     src/ui/map3D/CheetahGL.cc \
     src/ui/map3D/QMap3DWidget.cc \
-    src/ui/map3D/Imagery.cc \
-    src/ui/map3D/Texture.cc
+    src/ui/map3D/Texture.cc \
+    src/ui/map3D/TextureCache.cc \
+    src/ui/map3D/WebImageCache.cc \
+    src/ui/map3D/WebImage.cc \
+    src/ui/map3D/Imagery.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
