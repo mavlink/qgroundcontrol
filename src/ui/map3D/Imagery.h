@@ -2,18 +2,13 @@
 #define IMAGERY_H
 
 #include <inttypes.h>
-#include <string>
-#include <QNetworkAccessManager>
-#include <QObject>
 
-#include "Texture.h"
+#include "TextureCache.h"
 
-class Imagery : public QObject
+class Imagery
 {
-//    Q_OBJECT
-
 public:
-    explicit Imagery(QObject* parent);
+    Imagery();
 
     enum ImageryType
     {
@@ -23,49 +18,56 @@ public:
 
     void setImageryType(ImageryType type);
     void setOffset(double xOffset, double yOffset);
-    void setUrl(std::string url);
 
     void prefetch2D(double windowWidth, double windowHeight,
                     double zoom, double xOrigin, double yOrigin,
                     double viewXOffset, double viewYOffset,
-                    const std::string& utmZone);
+                    const QString& utmZone);
     void draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
                 double viewXOffset, double viewYOffset,
-                const std::string& utmZone);
+                const QString& utmZone);
 
     void prefetch3D(double radius, double imageResolution,
                     double xOrigin, double yOrigin,
                     double viewXOffset, double viewYOffset,
-                    const std::string& utmZone);
+                    const QString& utmZone);
     void draw3D(double radius, double imageResolution,
                 double xOrigin, double yOrigin,
                 double viewXOffset, double viewYOffset,
-                const std::string& utmZone);
+                const QString& utmZone);
 
     bool update(void);
 
-private slots:
-    void downloadFinished(QNetworkReply* reply);
-
 private:
-    void UTMtoTile(double northing, double easting, const std::string& utmZone,
+    void imageBounds(int32_t x, int32_t y, double imageResolution,
+                     double& x1, double& y1, double& x2, double& y2,
+                     double& x3, double& y3, double& x4, double& y4);
+
+    double tileYToLatitude(double y);
+    double latitudeToTileY(double latitude);
+
+    void UTMtoTile(double northing, double easting, const QString& utmZone,
                    double imageResolution, int32_t& tileX, int32_t& tileY,
                    int32_t& zoomLevel);
 
-    char UTMLetterDesignator(double latitude);
+    QChar UTMLetterDesignator(double latitude);
 
     void LLtoUTM(const double latitude, const double longitude,
                  double& utmNorthing, double& utmEasting,
-                 std::string& utmZone);
+                 QString& utmZone);
 
     void UTMtoLL(const double utmNorthing, const double utmEasting,
-                 const std::string& utmZone,
+                 const QString& utmZone,
                  double& latitude, double& longitude);
+
+    QString getTileURL(int32_t x, int32_t y, int32_t zoomLevel);
 
     ImageryType currentImageryType;
 
-    QScopedPointer<QNetworkAccessManager> networkManager;
+    QScopedPointer<TextureCache> textureCache;
+
+    double xOffset, yOffset;
 };
 
 #endif // IMAGERY_H

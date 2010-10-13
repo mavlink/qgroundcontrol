@@ -9,12 +9,23 @@
 #include <inttypes.h>
 #include <QSharedPointer>
 
+#include "WebImage.h"
+
 class Texture
 {
 public:
     Texture();
 
+    QString getSourceURL(void);
+
+    void setID(GLuint id);
+
+    void sync(const WebImagePtr& image);
+
     void draw(float x1, float y1, float x2, float y2,
+              bool smoothInterpolation) const;
+    void draw(float x1, float y1, float x2, float y2,
+              float x3, float y3, float x4, float y4,
               bool smoothInterpolation) const;
 
 private:
@@ -26,8 +37,8 @@ private:
     };
 
     State state;
-
-    GLuint textureId;
+    QString sourceURL;
+    GLuint id;
 
     int32_t textureWidth;
     int32_t textureHeight;
@@ -39,6 +50,6 @@ private:
     float maxV;
 };
 
-typedef struct QSharedPointer<Texture> TexturePtr;
+typedef QSharedPointer<Texture> TexturePtr;
 
 #endif // TEXTURE_H
