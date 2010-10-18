@@ -2,6 +2,8 @@
 
 WebImage::WebImage()
     : state(WebImage::UNINITIALIZED)
+    , sourceURL("")
+    , image(new QImage)
     , lastReference(0)
     , syncFlag(false)
 {
@@ -29,7 +31,7 @@ WebImage::setState(State state)
     this->state = state;
 }
 
-QString
+const QString&
 WebImage::getSourceURL(void) const
 {
     return sourceURL;
@@ -45,6 +47,12 @@ const uint8_t*
 WebImage::getData(void) const
 {
     return image->bits();
+}
+
+void
+WebImage::setData(const QByteArray& data)
+{
+    image->loadFromData(data);
 }
 
 int32_t

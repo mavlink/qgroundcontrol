@@ -22,10 +22,12 @@ public:
     State getState(void) const;
     void setState(State state);
 
-    QString getSourceURL(void) const;
+    const QString& getSourceURL(void) const;
     void setSourceURL(const QString& url);
 
     const uint8_t* getData(void) const;
+    void setData(const QByteArray& data);
+
     int32_t getWidth(void) const;
     int32_t getHeight(void) const;
 

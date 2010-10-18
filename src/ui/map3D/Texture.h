@@ -16,7 +16,7 @@ class Texture
 public:
     Texture();
 
-    QString getSourceURL(void);
+    const QString& getSourceURL(void) const;
 
     void setID(GLuint id);
 

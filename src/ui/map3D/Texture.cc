@@ -5,8 +5,8 @@ Texture::Texture()
 
 }
 
-QString
-Texture::getSourceURL(void)
+const QString&
+Texture::getSourceURL(void) const
 {
     return sourceURL;
 }

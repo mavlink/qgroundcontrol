@@ -7,6 +7,7 @@ const double WGS84_A = 6378137.0;
 const double WGS84_ECCSQ = 0.00669437999013;
 
 Imagery::Imagery()
+    : textureCache(new TextureCache(1000))
 {
 
 }
@@ -137,10 +138,13 @@ Imagery::draw2D(double windowWidth, double windowHeight,
             imageBounds(c, r, imageResolution, x1, y1, x2, y2, x3, y3, x4, y4);
 
             TexturePtr t = textureCache->get(tileURL);
-            t->draw(x1 - xOrigin, y1 - yOrigin,
-                    x2 - xOrigin, y2 - yOrigin,
-                    x3 - xOrigin, y3 - yOrigin,
-                    x4 - xOrigin, y4 - yOrigin, true);
+            if (!t.isNull())
+            {
+                t->draw(x1 - xOrigin, y1 - yOrigin,
+                        x2 - xOrigin, y2 - yOrigin,
+                        x3 - xOrigin, y3 - yOrigin,
+                        x4 - xOrigin, y4 - yOrigin, true);
+            }
         }
     }
 }
@@ -231,10 +235,13 @@ Imagery::draw3D(double radius, double imageResolution,
             imageBounds(c, r, imageResolution, x1, y1, x2, y2, x3, y3, x4, y4);
 
             TexturePtr t = textureCache->get(tileURL);
-            t->draw(x1 - xOrigin, y1 - yOrigin,
-                    x2 - xOrigin, y2 - yOrigin,
-                    x3 - xOrigin, y3 - yOrigin,
-                    x4 - xOrigin, y4 - yOrigin, true);
+            if (!t.isNull())
+            {
+                t->draw(x1 - xOrigin, y1 - yOrigin,
+                        x2 - xOrigin, y2 - yOrigin,
+                        x3 - xOrigin, y3 - yOrigin,
+                        x4 - xOrigin, y4 - yOrigin, true);
+            }
         }
     }
 }
@@ -499,18 +506,18 @@ Imagery::getTileURL(int32_t x, int32_t y, int32_t zoomLevel)
     switch (currentImageryType)
     {
     case MAP:
-        oss << "http://mt1.google.com/mt?&x=" << x << "&y=" << y <<
-                "&z=" << zoomLevel;
+        oss << "http://mt0.google.com/vt/lyrs=m@120&x=" << x << "&y=" << y
+            << "&z=" << zoomLevel;
         break;
     case SATELLITE:
-        oss << "http://khm.google.com/kh?&x=" << x << "&y=" << y <<
-                "&zoom=" << zoomLevel;
+        oss << "http://khm.google.com/vt/lbw/lyrs=y&x=" << x << "&y=" << y
+            << "&z=" << zoomLevel;
         break;
     default:
         {};
     }
 
-    QString url;
+    QString url(oss.str().c_str());
 
     return url;
 }
