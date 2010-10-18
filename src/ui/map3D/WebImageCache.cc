@@ -9,7 +9,12 @@ WebImageCache::WebImageCache(QObject* parent, uint32_t _cacheSize)
     , currentReference(0)
     , networkManager(new QNetworkAccessManager)
 {
-    webImages.resize(cacheSize);
+    for (uint32_t i = 0; i < cacheSize; ++i)
+    {
+        WebImagePtr image(new WebImage);
+
+        webImages.push_back(image);
+    }
 
     connect(networkManager.data(), SIGNAL(finished(QNetworkReply*)),
             this, SLOT(downloadFinished(QNetworkReply*)));
@@ -104,9 +109,16 @@ WebImageCache::downloadFinished(QNetworkReply* reply)
         return;
     }
 
-    QByteArray imageData = reply->readAll();
-    QPixmap pixmap;
-    pixmap.loadFromData(imageData);
+    WebImagePtr image;
+    foreach(image, webImages)
+    {
+        if (reply->url().toString() == image->getSourceURL())
+        {
+            image->setData(reply->readAll());
+            image->setSyncFlag(true);
+            image->setState(WebImage::READY);
 
-    // set image, needsSync to true, and state to READY
+            return;
+        }
+    }
 }

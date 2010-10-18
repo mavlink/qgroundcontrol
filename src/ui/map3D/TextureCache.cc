@@ -4,10 +4,9 @@ TextureCache::TextureCache(uint32_t _cacheSize)
     : cacheSize(_cacheSize)
     , imageCache(new WebImageCache(0, cacheSize))
 {
-    textures.resize(cacheSize);
-    TexturePtr t;
-    foreach(t, textures)
+    for (uint32_t i = 0; i < cacheSize; ++i)
     {
+        TexturePtr t(new Texture);
         GLuint id;
         glGenTextures(1, &id);
         t->setID(id);
@@ -15,6 +14,8 @@ TextureCache::TextureCache(uint32_t _cacheSize)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        textures.push_back(t);
     }
 }
 

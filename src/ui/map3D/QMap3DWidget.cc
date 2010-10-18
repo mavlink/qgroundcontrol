@@ -45,11 +45,13 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
      , uas(NULL)
      , lastRedrawTime(0.0)
      , displayGrid(true)
+     , displayImagery(false)
      , displayTrail(false)
      , lockCamera(true)
      , updateLastUnlockedPose(true)
      , displayTarget(false)
      , displayWaypoints(true)
+     , imagery(new Imagery)
 {
     setFocusPolicy(Qt::StrongFocus);
 
@@ -88,6 +90,14 @@ QMap3DWidget::buildLayout(void)
     waypointsCheckBox->setText("Waypoints");
     waypointsCheckBox->setChecked(displayWaypoints);
 
+    QLabel* imageryLabel = new QLabel(this);
+    imageryLabel->setText("Imagery");
+
+    QComboBox* imageryComboBox = new QComboBox(this);
+    imageryComboBox->addItem("None");
+    imageryComboBox->addItem("Map (Google)");
+    imageryComboBox->addItem("Satellite (Google)");
+
     QPushButton* recenterButton = new QPushButton(this);
     recenterButton->setText("Recenter Camera");
 
@@ -105,18 +115,23 @@ QMap3DWidget::buildLayout(void)
     layout->addWidget(trailCheckBox, 1, 1);
     layout->addWidget(waypointsCheckBox, 1, 2);
     layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
-    layout->addWidget(recenterButton, 1, 4);
-    layout->addWidget(lockCameraCheckBox, 1, 5);
+    layout->addWidget(imageryLabel, 1, 4);
+    layout->addWidget(imageryComboBox, 1, 5);
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 6);
+    layout->addWidget(recenterButton, 1, 7);
+    layout->addWidget(lockCameraCheckBox, 1, 8);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
-    //layout->setColumnStretch(0, 1);
-    layout->setColumnStretch(2, 50);
+    layout->setColumnStretch(3, 50);
+    layout->setColumnStretch(6, 50);
     setLayout(layout);
 
     connect(gridCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showGrid(int)));
     connect(trailCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showTrail(int)));
+    connect(imageryComboBox, SIGNAL(currentIndexChanged(const QString &)),
+            this, SLOT(showImagery(const QString &)));
     connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenterCamera()));
     connect(lockCameraCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(toggleLockCamera(int)));
@@ -204,6 +219,11 @@ QMap3DWidget::displayHandler(void)
     if (displayWaypoints)
     {
         drawWaypoints();
+    }
+
+    if (displayImagery)
+    {
+        drawImagery(robotX, robotY, "32N", true);
     }
 
     glPopMatrix();
@@ -442,6 +462,28 @@ QMap3DWidget::showGrid(int32_t state)
 }
 
 void
+QMap3DWidget::showImagery(const QString& text)
+{
+    if (text.compare("None") == 0)
+    {
+        displayImagery = false;
+    }
+    else
+    {
+        if (text.compare("Map (Google)") == 0)
+        {
+            imagery->setImageryType(Imagery::MAP);
+        }
+        else if (text.compare("Satellite (Google)") == 0)
+        {
+            imagery->setImageryType(Imagery::SATELLITE);
+        }
+        displayImagery = true;
+    }
+}
+
+
+void
 QMap3DWidget::showTrail(int32_t state)
 {
     if (state == Qt::Checked)
@@ -546,6 +588,56 @@ QMap3DWidget::drawGrid(void)
         glEnd();
     }
 
+    glPopMatrix();
+}
+
+void
+QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
+                          bool prefetch)
+{
+    glPushMatrix();
+    glEnable(GL_BLEND);
+
+    CameraPose camPose = getCameraPose();
+    double viewingRadius = camPose.distance / 4000.0 * 3000.0;
+    if (viewingRadius < 100.0)
+    {
+        viewingRadius = 100.0;
+    }
+
+    double minResolution = 0.25;
+    double centerResolution = camPose.distance / 160.0 * 0.25;
+    double maxResolution = 2.0;
+
+    double resolution = minResolution;
+    while (resolution * 2.0 < centerResolution)
+    {
+        resolution *= 2.0;
+    }
+    if (resolution > maxResolution)
+    {
+        resolution = maxResolution;
+    }
+
+    imagery->draw3D(viewingRadius, resolution, originX, originY, camPose.yOffset, camPose.xOffset, zone);
+
+    if (prefetch)
+    {
+        if (resolution / 2.0 >= minResolution)
+        {
+            imagery->prefetch3D(viewingRadius / 2.0, resolution / 2.0,
+                                originX, originY,
+                                camPose.yOffset, camPose.xOffset, zone);
+        }
+        if (resolution * 2.0 <= maxResolution)
+        {
+            imagery->prefetch3D(viewingRadius * 2.0, resolution * 2.0,
+                                originX, originY,
+                                camPose.yOffset, camPose.xOffset, zone);
+        }
+    }
+
+    glDisable(GL_BLEND);
     glPopMatrix();
 }
 

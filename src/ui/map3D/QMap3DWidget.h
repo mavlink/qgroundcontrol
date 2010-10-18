@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QLabel>
 
+#include "Imagery.h"
 #include "Q3DWidget.h"
 
 class CheetahModel;
@@ -72,23 +73,28 @@ public slots:
 private slots:
     void showGrid(int state);
     void showTrail(int state);
+    void showImagery(const QString& text);
     void recenterCamera(void);
     void toggleLockCamera(int state);
 
 protected:
     UASInterface* uas;
-    void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
+    void paintText(QString text, QColor color, float fontSize,
+                   float refX, float refY, QPainter* painter);
     void drawWaypoints();
 
 private:
     void drawPlatform(float roll, float pitch, float yaw);
     void drawGrid(void);
+    void drawImagery(double originX, double originY, const QString& zone,
+                     bool prefetch);
     void drawTrail(float x, float y, float z);
     void drawTarget(float x, float y, float z);
 
     double lastRedrawTime;
 
     bool displayGrid;
+    bool displayImagery;
     bool displayTrail;
 
     typedef struct
@@ -110,6 +116,7 @@ private:
     Pose3D targetPosition;
 
     QScopedPointer<CheetahModel> cheetahModel;
+    QScopedPointer<Imagery> imagery;
 };
 
 #endif // QMAP3DWIDGET_H
