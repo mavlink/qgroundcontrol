@@ -214,6 +214,7 @@ Imagery::draw3D(double radius, double imageResolution,
               centerTileX, centerTileY, zoomLevel);
     UTMtoTile(maxX, maxY, utmZone, imageResolution,
               maxTileX, minTileY, zoomLevel);
+
     if (maxTileX - minTileX + 1 > 14)
     {
         minTileX = centerTileX - 7;
@@ -235,6 +236,7 @@ Imagery::draw3D(double radius, double imageResolution,
             imageBounds(c, r, imageResolution, x1, y1, x2, y2, x3, y3, x4, y4);
 
             TexturePtr t = textureCache->get(tileURL);
+
             if (!t.isNull())
             {
                 t->draw(x1 - xOrigin, y1 - yOrigin,
@@ -249,6 +251,8 @@ Imagery::draw3D(double radius, double imageResolution,
 bool
 Imagery::update(void)
 {
+    textureCache->sync();
+
     return true;
 }
 
@@ -257,7 +261,7 @@ Imagery::imageBounds(int32_t x, int32_t y, double imageResolution,
                      double& x1, double& y1, double& x2, double& y2,
                      double& x3, double& y3, double& x4, double& y4)
 {
-    int32_t zoomLevel = 17 - static_cast<int32_t>(rint(log2(imageResolution)));
+    int32_t zoomLevel = 19 - static_cast<int32_t>(rint(log2(imageResolution)));
     int32_t numTiles = static_cast<int32_t>(exp2(static_cast<double>(zoomLevel)));
 
     double lon1 = 360.0 * (static_cast<double>(x)
@@ -273,10 +277,10 @@ Imagery::imageBounds(int32_t x, int32_t y, double imageResolution,
                                   * 2.0 * M_PI - M_PI);
 
     QString utmZone;
-    LLtoUTM(lat1, lon1, y1, x1, utmZone);
-    LLtoUTM(lat1, lon2, y2, x2, utmZone);
-    LLtoUTM(lat2, lon2, y3, x3, utmZone);
-    LLtoUTM(lat2, lon1, y4, x4, utmZone);
+    LLtoUTM(lat2, lon1, x1, y1, utmZone);
+    LLtoUTM(lat2, lon2, x2, y2, utmZone);
+    LLtoUTM(lat1, lon2, x3, y3, utmZone);
+    LLtoUTM(lat1, lon1, x4, y4, utmZone);
 }
 
 double
@@ -302,7 +306,7 @@ Imagery::UTMtoTile(double northing, double easting, const QString& utmZone,
 
     UTMtoLL(northing, easting, utmZone, latitude, longitude);
 
-    zoomLevel = 17 - static_cast<int32_t>(rint(log2(imageResolution)));
+    zoomLevel = 19 - static_cast<int32_t>(rint(log2(imageResolution)));
     int32_t numTiles = static_cast<int32_t>(exp2(static_cast<double>(zoomLevel)));
 
     double x = longitude / 180.0;

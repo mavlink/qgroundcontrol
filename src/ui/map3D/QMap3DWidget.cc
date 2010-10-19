@@ -51,7 +51,7 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
      , updateLastUnlockedPose(true)
      , displayTarget(false)
      , displayWaypoints(true)
-     , imagery(new Imagery)
+     , imagery(0)
 {
     setFocusPolicy(Qt::StrongFocus);
 
@@ -223,7 +223,7 @@ QMap3DWidget::displayHandler(void)
 
     if (displayImagery)
     {
-        drawImagery(robotX, robotY, "32N", true);
+        drawImagery(robotX, robotY, "32T", true);
     }
 
     glPopMatrix();
@@ -389,9 +389,15 @@ QMap3DWidget::timer(void* clientData)
 void
 QMap3DWidget::timerHandler(void)
 {
+    if (imagery.isNull())
+    {
+        imagery.reset(new Imagery);
+    }
+
     double timeLapsed = getTime() - lastRedrawTime;
     if (timeLapsed > 0.1)
     {
+        imagery->update();
         forceRedraw();
         lastRedrawTime = getTime();
     }
@@ -598,6 +604,8 @@ QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
     glPushMatrix();
     glEnable(GL_BLEND);
 
+    glTranslatef(0, 0, 0.1);
+
     CameraPose camPose = getCameraPose();
     double viewingRadius = camPose.distance / 4000.0 * 3000.0;
     if (viewingRadius < 100.0)
@@ -605,8 +613,8 @@ QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
         viewingRadius = 100.0;
     }
 
-    double minResolution = 0.25;
-    double centerResolution = camPose.distance / 160.0 * 0.25;
+    double minResolution = 0.125;
+    double centerResolution = camPose.distance / 160.0;
     double maxResolution = 2.0;
 
     double resolution = minResolution;
@@ -619,7 +627,7 @@ QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
         resolution = maxResolution;
     }
 
-    imagery->draw3D(viewingRadius, resolution, originX, originY, camPose.yOffset, camPose.xOffset, zone);
+    imagery->draw3D(viewingRadius, resolution, originX, originY, camPose.xOffset, camPose.yOffset, zone);
 
     if (prefetch)
     {
@@ -627,13 +635,13 @@ QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
         {
             imagery->prefetch3D(viewingRadius / 2.0, resolution / 2.0,
                                 originX, originY,
-                                camPose.yOffset, camPose.xOffset, zone);
+                                camPose.xOffset, camPose.yOffset, zone);
         }
         if (resolution * 2.0 <= maxResolution)
         {
             imagery->prefetch3D(viewingRadius * 2.0, resolution * 2.0,
                                 originX, originY,
-                                camPose.yOffset, camPose.xOffset, zone);
+                                camPose.xOffset, camPose.yOffset, zone);
         }
     }
 
