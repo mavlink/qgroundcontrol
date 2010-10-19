@@ -55,13 +55,12 @@ Texture::sync(const WebImagePtr& image)
 
             glBindTexture(GL_TEXTURE_2D, id);
             glTexImage2D(GL_TEXTURE_2D, 0, 3, textureWidth, textureHeight,
-                         0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+                         0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         }
 
         glBindTexture(GL_TEXTURE_2D, id);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, imageWidth, imageHeight,
-                        GL_RGB, GL_UNSIGNED_BYTE, image->getData());
-
+                        GL_RGBA, GL_UNSIGNED_BYTE, image->getData());
     }
 }
 

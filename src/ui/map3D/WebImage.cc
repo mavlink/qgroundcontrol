@@ -1,5 +1,8 @@
 #include "WebImage.h"
 
+#include <QDebug>
+#include <QGLWidget>
+
 WebImage::WebImage()
     : state(WebImage::UNINITIALIZED)
     , sourceURL("")
@@ -46,13 +49,25 @@ WebImage::setSourceURL(const QString& url)
 const uint8_t*
 WebImage::getData(void) const
 {
-    return image->bits();
+    return image->scanLine(0);
 }
 
 void
 WebImage::setData(const QByteArray& data)
 {
-    image->loadFromData(data);
+    QImage tempImage;
+    if (tempImage.loadFromData(data))
+    {
+        if (image.isNull())
+        {
+            image = QSharedPointer<QImage>(new QImage);
+        }
+        *image = QGLWidget::convertToGLFormat(tempImage);
+    }
+    else
+    {
+        qDebug() << "# WARNING: cannot load image data for" << sourceURL;
+    }
 }
 
 int32_t
@@ -65,6 +80,12 @@ int32_t
 WebImage::getHeight(void) const
 {
     return image->height();
+}
+
+int32_t
+WebImage::getByteCount(void) const
+{
+    return image->byteCount();
 }
 
 uint64_t

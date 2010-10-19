@@ -3,6 +3,7 @@
 
 #include <inttypes.h>
 #include <QImage>
+#include <QScopedPointer>
 #include <QSharedPointer>
 
 class WebImage
@@ -30,6 +31,7 @@ public:
 
     int32_t getWidth(void) const;
     int32_t getHeight(void) const;
+    int32_t getByteCount(void) const;
 
     uint64_t getLastReference(void) const;
     void setLastReference(uint64_t value);

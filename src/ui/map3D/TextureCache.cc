@@ -7,6 +7,7 @@ TextureCache::TextureCache(uint32_t _cacheSize)
     for (uint32_t i = 0; i < cacheSize; ++i)
     {
         TexturePtr t(new Texture);
+
         GLuint id;
         glGenTextures(1, &id);
         t->setID(id);

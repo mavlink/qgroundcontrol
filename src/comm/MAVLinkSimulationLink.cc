@@ -389,6 +389,10 @@ void MAVLinkSimulationLink::mainloop()
         y = (y < -5.0f) ? -5.0f : y;
         z = (z < -3.0f) ? -3.0f : z;
 
+        // position at Pixhawk lab @ ETHZ
+        x += 5247273.0f;
+        y += 465955.0f;
+
         // Send back new setpoint
         mavlink_message_t ret;
         mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, spX, spY, spZ, spYaw);
