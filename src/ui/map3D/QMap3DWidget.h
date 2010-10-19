@@ -91,6 +91,8 @@ private:
     void drawTrail(float x, float y, float z);
     void drawTarget(float x, float y, float z);
 
+    void drawLegend(void);
+
     double lastRedrawTime;
 
     bool displayGrid;
@@ -117,6 +119,8 @@ private:
 
     QScopedPointer<CheetahModel> cheetahModel;
     QScopedPointer<Imagery> imagery;
+
+    QComboBox* imageryComboBox;
 };
 
 #endif // QMAP3DWIDGET_H

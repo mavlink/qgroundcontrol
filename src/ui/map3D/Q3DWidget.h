@@ -178,7 +178,6 @@ protected:
 
     GLUquadricObj* quadObj;
 
-private:
     // QGLWidget events
     void initializeGL(void);
     void paintGL(void);

@@ -6,6 +6,8 @@
 const double WGS84_A = 6378137.0;
 const double WGS84_ECCSQ = 0.00669437999013;
 
+const int32_t MAX_ZOOM_LEVEL = 20;
+
 Imagery::Imagery()
     : textureCache(new TextureCache(1000))
 {
@@ -261,7 +263,7 @@ Imagery::imageBounds(int32_t x, int32_t y, double imageResolution,
                      double& x1, double& y1, double& x2, double& y2,
                      double& x3, double& y3, double& x4, double& y4)
 {
-    int32_t zoomLevel = 19 - static_cast<int32_t>(rint(log2(imageResolution)));
+    int32_t zoomLevel = MAX_ZOOM_LEVEL - static_cast<int32_t>(rint(log2(imageResolution)));
     int32_t numTiles = static_cast<int32_t>(exp2(static_cast<double>(zoomLevel)));
 
     double lon1 = 360.0 * (static_cast<double>(x)
@@ -306,7 +308,7 @@ Imagery::UTMtoTile(double northing, double easting, const QString& utmZone,
 
     UTMtoLL(northing, easting, utmZone, latitude, longitude);
 
-    zoomLevel = 19 - static_cast<int32_t>(rint(log2(imageResolution)));
+    zoomLevel = MAX_ZOOM_LEVEL - static_cast<int32_t>(rint(log2(imageResolution)));
     int32_t numTiles = static_cast<int32_t>(exp2(static_cast<double>(zoomLevel)));
 
     double x = longitude / 180.0;

@@ -56,7 +56,7 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
     setFocusPolicy(Qt::StrongFocus);
 
     initialize(10, 10, 1000, 900, 15.0f);
-    setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 400.0f);
+    setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 1000000.0f);
 
     setDisplayFunc(display, this);
     setMouseFunc(mouse, this);
@@ -93,7 +93,7 @@ QMap3DWidget::buildLayout(void)
     QLabel* imageryLabel = new QLabel(this);
     imageryLabel->setText("Imagery");
 
-    QComboBox* imageryComboBox = new QComboBox(this);
+    imageryComboBox = new QComboBox(this);
     imageryComboBox->addItem("None");
     imageryComboBox->addItem("Map (Google)");
     imageryComboBox->addItem("Satellite (Google)");
@@ -231,6 +231,8 @@ QMap3DWidget::displayHandler(void)
     // switch to 2D
     setDisplayMode2D();
 
+    drawLegend();
+
     // display pose information
     glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
     glBegin(GL_POLYGON);
@@ -331,6 +333,55 @@ void QMap3DWidget::drawWaypoints()
             lastWaypoint = in;
         }
     }
+}
+
+void
+QMap3DWidget::drawLegend(void)
+{
+    // draw marker outlines
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glLineWidth(3.0f);
+    glBegin(GL_LINES);
+    glVertex2f(20.0f, 60.0f);
+    glVertex2f(20.0f, 80.0f);
+    glVertex2f(20.0f, 70.0f);
+    glVertex2f(100.0f, 70.0f);
+    glVertex2f(100.0f, 60.0f);
+    glVertex2f(100.0f, 80.0f);
+    glEnd();
+
+    // draw markers
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glLineWidth(1.5f);
+    glBegin(GL_LINES);
+    glVertex2f(20.0f, 60.0f);
+    glVertex2f(20.0f, 80.0f);
+    glVertex2f(20.0f, 70.0f);
+    glVertex2f(100.0f, 70.0f);
+    glVertex2f(100.0f, 60.0f);
+    glVertex2f(100.0f, 80.0f);
+    glEnd();
+
+    float f = windowHeight / 2.0f / tanf(d2r(cameraParams.cameraFov / 2.0f));
+    float dist = cameraPose.distance / f * 80.0f;
+
+    QPainter painter;
+    painter.begin(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+
+    QColor rgb(255, 255, 255);
+    if (imageryComboBox->currentText().compare("Map (Google)") == 0)
+    {
+        rgb.setRgb(0, 0, 0);
+    }
+
+    paintText(QString("%1 m").arg(dist, 0, 'f', 2),
+              rgb,
+              10,
+              25,
+              getWindowHeight() - 65,
+              &painter);
 }
 
 void QMap3DWidget::paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter)
@@ -450,8 +501,11 @@ QMap3DWidget::markTarget(void)
 
     displayTarget = true;
 
-    if (uas) uas->setTargetPosition(targetPosition.x, targetPosition.y,
-                           targetPosition.z, 0.0f);
+    if (uas)
+    {
+        uas->setTargetPosition(targetPosition.x, targetPosition.y,
+                               targetPosition.z, 0.0f);
+    }
 }
 
 void
@@ -533,9 +587,9 @@ QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
 {
     glPushMatrix();
 
-    glRotatef((yaw*180.0f)/M_PI, 0.0f, 0.0f, 1.0f);
-    glRotatef((pitch*180.0f)/M_PI, 0.0f, 1.0f, 0.0f);
-    glRotatef((roll*180.0f)/M_PI, 1.0f, 0.0f, 0.0f);
+    glRotatef(yaw * 180.0f / M_PI, 0.0f, 0.0f, 1.0f);
+    glRotatef(pitch * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
+    glRotatef(roll * 180.0f / M_PI, 1.0f, 0.0f, 0.0f);
 
     glLineWidth(3.0f);
 
@@ -606,16 +660,24 @@ QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
 
     glTranslatef(0, 0, 0.1);
 
-    CameraPose camPose = getCameraPose();
-    double viewingRadius = camPose.distance / 4000.0 * 3000.0;
+    double viewingRadius = cameraPose.distance / 4000.0 * 3000.0;
     if (viewingRadius < 100.0)
     {
         viewingRadius = 100.0;
     }
 
-    double minResolution = 0.125;
-    double centerResolution = camPose.distance / 160.0;
-    double maxResolution = 2.0;
+    double minResolution = 0.25;
+    double centerResolution = cameraPose.distance / 100.0;
+    double maxResolution = 1048576.0;
+
+    if (imageryComboBox->currentText().compare("Map (Google)") == 0)
+    {
+        minResolution = 0.25;
+    }
+    else if (imageryComboBox->currentText().compare("Satellite (Google)") == 0)
+    {
+        minResolution = 0.5;
+    }
 
     double resolution = minResolution;
     while (resolution * 2.0 < centerResolution)
@@ -627,7 +689,8 @@ QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
         resolution = maxResolution;
     }
 
-    imagery->draw3D(viewingRadius, resolution, originX, originY, camPose.xOffset, camPose.yOffset, zone);
+    imagery->draw3D(viewingRadius, resolution, originX, originY,
+                    cameraPose.xOffset, cameraPose.yOffset, zone);
 
     if (prefetch)
     {
@@ -635,13 +698,13 @@ QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
         {
             imagery->prefetch3D(viewingRadius / 2.0, resolution / 2.0,
                                 originX, originY,
-                                camPose.xOffset, camPose.yOffset, zone);
+                                cameraPose.xOffset, cameraPose.yOffset, zone);
         }
         if (resolution * 2.0 <= maxResolution)
         {
             imagery->prefetch3D(viewingRadius * 2.0, resolution * 2.0,
                                 originX, originY,
-                                camPose.xOffset, camPose.yOffset, zone);
+                                cameraPose.xOffset, cameraPose.yOffset, zone);
         }
     }
 
