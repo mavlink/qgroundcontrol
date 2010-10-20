@@ -16,7 +16,7 @@ WebImage::WebImage()
 void
 WebImage::clear(void)
 {
-    image.clear();
+    image.reset();
     sourceURL.clear();
     state = WebImage::UNINITIALIZED;
     lastReference = 0;
@@ -60,7 +60,7 @@ WebImage::setData(const QByteArray& data)
     {
         if (image.isNull())
         {
-            image = QSharedPointer<QImage>(new QImage);
+            image.reset(new QImage);
         }
         *image = QGLWidget::convertToGLFormat(tempImage);
     }
