@@ -234,12 +234,19 @@ QMap3DWidget::displayHandler(void)
     drawLegend();
 
     // display pose information
-    glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
     glBegin(GL_POLYGON);
     glVertex2f(0.0f, 0.0f);
-    glVertex2f(0.0f, 45.0f);
-    glVertex2f(getWindowWidth(), 45.0f);
+    glVertex2f(0.0f, 30.0f);
+    glVertex2f(getWindowWidth(), 30.0f);
     glVertex2f(getWindowWidth(), 0.0f);
+    glEnd();
+    glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
+    glBegin(GL_POLYGON);
+    glVertex2f(0.0f, getWindowHeight());
+    glVertex2f(0.0f, getWindowHeight() - 25.0f);
+    glVertex2f(getWindowWidth(), getWindowHeight() - 25.0f);
+    glVertex2f(getWindowWidth(), getWindowHeight());
     glEnd();
 
     std::pair<float,float> mouseWorldCoords =
@@ -253,7 +260,7 @@ QMap3DWidget::displayHandler(void)
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     paintText(QString("x = %1 y = %2 z = %3 r = %4 p = %5 y = %6 Cursor [%7 %8]").arg(robotX, 0, 'f', 2).arg(robotY, 0, 'f', 2).arg(robotZ, 0, 'f', 2).arg(robotRoll, 0, 'f', 2).arg(robotPitch, 0, 'f', 2).arg(robotYaw, 0, 'f', 2).arg( mouseWorldCoords.first + robotX, 0, 'f', 2).arg( mouseWorldCoords.second + robotY, 0, 'f', 2),
               QColor(255, 255, 255),
-              12,
+              11,
               5,
               5,
               &painter);

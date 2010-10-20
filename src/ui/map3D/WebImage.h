@@ -42,7 +42,7 @@ public:
 private:
     State state;
     QString sourceURL;
-    QSharedPointer<QImage> image;
+    QScopedPointer<QImage> image;
     uint64_t lastReference;
     bool syncFlag;
 };
