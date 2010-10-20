@@ -162,19 +162,21 @@ protected:
     void switchTo3DMode(void);
     void setDisplayMode3D(void);
 
-    float r2d(float angle);
-    float d2r(float angle);
+    float r2d(float angle) const;
+    float d2r(float angle) const;
 
-    void wireSphere(double radius, int slices, int stacks);
-    void solidSphere(double radius, int slices, int stacks);
-    void wireCone(double base, double height, int slices, int stacks);
-    void solidCone(double base, double height, int slices, int stacks);
-    void drawBox(float size, GLenum type);
-    void wireCube(double size);
-    void solidCube(double size);
-    void doughnut(float r, float R, int nsides, int rings);
-    void wireTorus(double innerRadius, double outerRadius, int nsides, int rings);
-    void solidTorus(double innerRadius, double outerRadius, int nsides, int rings);
+    void wireSphere(double radius, int slices, int stacks) const;
+    void solidSphere(double radius, int slices, int stacks) const;
+    void wireCone(double base, double height, int slices, int stacks) const;
+    void solidCone(double base, double height, int slices, int stacks) const;
+    void drawBox(float size, GLenum type) const;
+    void wireCube(double size) const;
+    void solidCube(double size) const;
+    void doughnut(float r, float R, int nsides, int rings) const;
+    void wireTorus(double innerRadius, double outerRadius,
+                   int nsides, int rings) const;
+    void solidTorus(double innerRadius, double outerRadius,
+                    int nsides, int rings) const;
 
     GLUquadricObj* quadObj;
 

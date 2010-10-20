@@ -266,7 +266,7 @@ QMap3DWidget::displayHandler(void)
               &painter);
 }
 
-void QMap3DWidget::drawWaypoints()
+void QMap3DWidget::drawWaypoints(void) const
 {
     if (uas)
     {
@@ -391,7 +391,9 @@ QMap3DWidget::drawLegend(void)
               &painter);
 }
 
-void QMap3DWidget::paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter)
+void
+QMap3DWidget::paintText(QString text, QColor color, float fontSize,
+                        float refX, float refY, QPainter* painter) const
 {
     QPen prevPen = painter->pen();
 
@@ -590,7 +592,7 @@ QMap3DWidget::toggleLockCamera(int32_t state)
 }
 
 void
-QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
+QMap3DWidget::drawPlatform(float roll, float pitch, float yaw) const
 {
     glPushMatrix();
 
@@ -627,7 +629,7 @@ QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
 }
 
 void
-QMap3DWidget::drawGrid(void)
+QMap3DWidget::drawGrid(void) const
 {
     float radius = 10.0f;
     float resolution = 0.25f;
@@ -660,7 +662,7 @@ QMap3DWidget::drawGrid(void)
 
 void
 QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
-                          bool prefetch)
+                          bool prefetch) const
 {
     glPushMatrix();
     glEnable(GL_BLEND);
@@ -763,7 +765,7 @@ QMap3DWidget::drawTrail(float x, float y, float z)
 }
 
 void
-QMap3DWidget::drawTarget(float x, float y, float z)
+QMap3DWidget::drawTarget(float x, float y, float z) const
 {
     static double radius = 0.2;
     static bool expand = true;
