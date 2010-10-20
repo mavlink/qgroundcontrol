@@ -23,7 +23,38 @@
 
   <!-- Paremters for the Pilot Input/Raw RC block -->
   <Block name="ServoInputs">
-
+    <!-- Settings for Aileron Servo -->
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/AileronInput/"
+       SimulinkParameterName="Setpoint0"
+       QGCParamID="AIL_RIGHT_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/AileronInput/"
+       SimulinkParameterName="Setpoint1"
+       QGCParamID="AIL_CENTER_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/AileronInput/"
+       SimulinkParameterName="Setpoint2"
+       QGCParamID="AIL_LEFT_IN"
+       />
+    <!-- Settings for Elevator Servo -->
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/ElevatorInput/"
+       SimulinkParameterName="Setpoint0"
+       QGCParamID="ELE_DOWN_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/AileronInput/"
+       SimulinkParameterName="Setpoint1"
+       QGCParamID="ELE_CENTER_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/AileronInput/"
+       SimulinkParameterName="Setpoint2"
+       QGCParamID="ELE_UP_IN"
+       />    
   </Block>
 
   <!-- Parameters for the servo output block -->

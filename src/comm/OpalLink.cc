@@ -154,6 +154,13 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
             qDebug() << "GYRO: " << radio.gyro[0] << " " << radio.gyro[1];
             qDebug() << "PITCH: " << radio.pitch[0] << radio.pitch[1] << radio.pitch[2] << radio.pitch[3] << radio.pitch[4];
             qDebug() << "THROTTLE: " << radio.throttle[0] << radio.throttle[1] << radio.throttle[2] << radio.throttle[3] << radio.throttle[4];
+
+            if (params->contains(OpalRT::SERVO_INPUTS, "AIL_RIGHT_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "AIL_RIGHT_IN").setValue(radio.aileron[0]);
+            if (params->contains(OpalRT::SERVO_INPUTS, "AIL_CENTER_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "AIL_CENTER_IN").setValue(radio.aileron[1]);
+            if (params->contains(OpalRT::SERVO_INPUTS, "AIL_LEFT_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "AIL_LEFT_IN").setValue(radio.aileron[2]);
         }
         break;
 #endif
