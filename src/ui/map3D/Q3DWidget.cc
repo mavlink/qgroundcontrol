@@ -33,11 +33,8 @@ This file is part of the QGROUNDCONTROL project
 
 #include <cmath>
 
-//#include <GL/gl.h>
-//#include <GL/glu.h>
-
 static const float KEY_ROTATE_AMOUNT = 5.0f;
-static const float KEY_MOVE_AMOUNT   = 10.0f;
+static const float KEY_MOVE_AMOUNT   = 5.0f;
 static const float KEY_ZOOM_AMOUNT   = 5.0f;
 
 Q3DWidget::Q3DWidget(QWidget* parent)

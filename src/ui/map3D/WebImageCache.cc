@@ -54,66 +54,68 @@ WebImageCache::WebImageCache(QObject* parent, uint32_t _cacheSize)
 QPair<WebImagePtr, int32_t>
 WebImageCache::lookup(const QString& url)
 {
-    QPair<WebImagePtr, int32_t> p;
+    QPair<WebImagePtr, int32_t> cacheEntry;
+
     for (int32_t i = 0; i < webImages.size(); ++i)
     {
         if (webImages[i]->getState() != WebImage::UNINITIALIZED &&
             webImages[i]->getSourceURL() == url)
         {
-            p.first = webImages[i];
-            p.second = i;
+            cacheEntry.first = webImages[i];
+            cacheEntry.second = i;
             break;
         }
     }
 
-    if (p.first.isNull())
+    if (cacheEntry.first.isNull())
     {
         for (int32_t i = 0; i < webImages.size(); ++i)
         {
             // get uninitialized image
             if (webImages[i]->getState() == WebImage::UNINITIALIZED)
             {
-                p.first = webImages[i];
-                p.second = i;
+                cacheEntry.first = webImages[i];
+                cacheEntry.second = i;
                 break;
             }
             // get oldest image
             else if (webImages[i]->getState() == WebImage::READY &&
-                     (p.first.isNull() ||
-                      p.first->getLastReference() < p.first->getLastReference()))
+                     (cacheEntry.first.isNull() ||
+                      webImages[i]->getLastReference() <
+                      cacheEntry.first->getLastReference()))
             {
-                p.first = webImages[i];
-                p.second = i;
+                cacheEntry.first = webImages[i];
+                cacheEntry.second = i;
             }
         }
 
-        if (p.first.isNull())
+        if (cacheEntry.first.isNull())
         {
             return qMakePair(WebImagePtr(), -1);
         }
         else
         {
-            if (p.first->getState() == WebImage::READY)
+            if (cacheEntry.first->getState() == WebImage::READY)
             {
-                p.first->clear();
+                cacheEntry.first->clear();
             }
-            p.first->setSourceURL(url);
-            p.first->setLastReference(currentReference);
+            cacheEntry.first->setSourceURL(url);
+            cacheEntry.first->setLastReference(currentReference);
             ++currentReference;
-            p.first->setState(WebImage::REQUESTED);
+            cacheEntry.first->setState(WebImage::REQUESTED);
 
             networkManager->get(QNetworkRequest(QUrl(url)));
 
-            return p;
+            return cacheEntry;
         }
     }
     else
     {
-        if (p.first->getState() == WebImage::READY)
+        if (cacheEntry.first->getState() == WebImage::READY)
         {
-            p.first->setLastReference(currentReference);
+            cacheEntry.first->setLastReference(currentReference);
             ++currentReference;
-            return p;
+            return cacheEntry;
         }
         else
         {

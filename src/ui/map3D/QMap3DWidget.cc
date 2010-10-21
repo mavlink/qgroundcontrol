@@ -64,8 +64,6 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
 
     buildLayout();
 
-    //font.reset(new FTTextureFont("images/Vera.ttf"));
-
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
 }
