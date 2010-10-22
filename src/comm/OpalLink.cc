@@ -147,20 +147,62 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         {
             mavlink_radio_calibration_t radio;
             mavlink_msg_radio_calibration_decode(&msg, &radio);
-            qDebug() << "RADIO CALIBRATION RECEIVED";
-            qDebug() << "AILERON: " << radio.aileron[0] << " " << radio.aileron[1] << " " << radio.aileron[2];
-            qDebug() << "ELEVATOR: " << radio.elevator[0] << " " << radio.elevator[1] << " " << radio.elevator[2];
-            qDebug() << "RUDDER: " << radio.rudder[0] << " " << radio.rudder[1] << " " << radio.rudder[2];
-            qDebug() << "GYRO: " << radio.gyro[0] << " " << radio.gyro[1];
-            qDebug() << "PITCH: " << radio.pitch[0] << radio.pitch[1] << radio.pitch[2] << radio.pitch[3] << radio.pitch[4];
-            qDebug() << "THROTTLE: " << radio.throttle[0] << radio.throttle[1] << radio.throttle[2] << radio.throttle[3] << radio.throttle[4];
+//            qDebug() << "RADIO CALIBRATION RECEIVED";
+//            qDebug() << "AILERON: " << radio.aileron[0] << " " << radio.aileron[1] << " " << radio.aileron[2];
+//            qDebug() << "ELEVATOR: " << radio.elevator[0] << " " << radio.elevator[1] << " " << radio.elevator[2];
+//            qDebug() << "RUDDER: " << radio.rudder[0] << " " << radio.rudder[1] << " " << radio.rudder[2];
+//            qDebug() << "GYRO: " << radio.gyro[0] << " " << radio.gyro[1];
+//            qDebug() << "PITCH: " << radio.pitch[0] << radio.pitch[1] << radio.pitch[2] << radio.pitch[3] << radio.pitch[4];
+//            qDebug() << "THROTTLE: " << radio.throttle[0] << radio.throttle[1] << radio.throttle[2] << radio.throttle[3] << radio.throttle[4];
 
+            /* AILERON SERVO */
             if (params->contains(OpalRT::SERVO_INPUTS, "AIL_RIGHT_IN"))
-                params->getParameter(OpalRT::SERVO_INPUTS, "AIL_RIGHT_IN").setValue(radio.aileron[0]);
+                params->getParameter(OpalRT::SERVO_INPUTS, "AIL_RIGHT_IN").setValue(((radio.aileron[0]>900 /*in us?*/)?radio.aileron[0]/1000:radio.aileron[0]));
             if (params->contains(OpalRT::SERVO_INPUTS, "AIL_CENTER_IN"))
-                params->getParameter(OpalRT::SERVO_INPUTS, "AIL_CENTER_IN").setValue(radio.aileron[1]);
+                params->getParameter(OpalRT::SERVO_INPUTS, "AIL_CENTER_IN").setValue(((radio.aileron[1]>900 /*in us?*/)?radio.aileron[1]/1000:radio.aileron[1]));
             if (params->contains(OpalRT::SERVO_INPUTS, "AIL_LEFT_IN"))
-                params->getParameter(OpalRT::SERVO_INPUTS, "AIL_LEFT_IN").setValue(radio.aileron[2]);
+                params->getParameter(OpalRT::SERVO_INPUTS, "AIL_LEFT_IN").setValue(((radio.aileron[2]>900 /*in us?*/)?radio.aileron[2]/1000:radio.aileron[2]));
+            /* ELEVATOR SERVO */
+            if (params->contains(OpalRT::SERVO_INPUTS, "ELE_DOWN_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "ELE_DOWN_IN").setValue(((radio.elevator[0]>900 /*in us?*/)?radio.elevator[0]/1000:radio.elevator[0]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "ELE_CENTER_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "ELE_CENTER_IN").setValue(((radio.elevator[1]>900 /*in us?*/)?radio.elevator[1]/1000:radio.elevator[1]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "ELE_UP_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "ELE_UP_IN").setValue(((radio.elevator[2]>900 /*in us?*/)?radio.elevator[2]/1000:radio.elevator[2]));
+            /* THROTTLE SERVO */
+            if (params->contains(OpalRT::SERVO_INPUTS, "THR_SET0_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "THR_SET0_IN").setValue(((radio.throttle[0]>900 /*in us?*/)?radio.throttle[0]/1000:radio.throttle[0]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "THR_SET1_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "THR_SET1_IN").setValue(((radio.throttle[1]>900 /*in us?*/)?radio.throttle[1]/1000:radio.throttle[1]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "THR_SET2_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "THR_SET2_IN").setValue(((radio.throttle[2]>900 /*in us?*/)?radio.throttle[2]/1000:radio.throttle[2]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "THR_SET3_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "THR_SET3_IN").setValue(((radio.throttle[3]>900 /*in us?*/)?radio.throttle[3]/1000:radio.throttle[3]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "THR_SET4_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "THR_SET4_IN").setValue(((radio.throttle[4]>900 /*in us?*/)?radio.throttle[4]/1000:radio.throttle[4]));
+            /* RUDDER SERVO */
+            if (params->contains(OpalRT::SERVO_INPUTS, "RUD_LEFT_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "RUD_LEFT_IN").setValue(((radio.rudder[0]>900 /*in us?*/)?radio.rudder[0]/1000:radio.rudder[0]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "RUD_CENTER_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "RUD_CENTER_IN").setValue(((radio.rudder[1]>900 /*in us?*/)?radio.rudder[1]/1000:radio.rudder[1]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "RUD_RIGHT_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "RUD_RIGHT_IN").setValue(((radio.rudder[2]>900 /*in us?*/)?radio.rudder[2]/1000:radio.rudder[2]));
+            /* GYRO MODE/GAIN SWITCH */
+            if (params->contains(OpalRT::SERVO_INPUTS, "GYRO_DEF_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "GYRO_DEF_IN").setValue(((radio.gyro[0]>900 /*in us?*/)?radio.gyro[0]/1000:radio.gyro[0]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "GYRO_TOG_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "GYRO_TOG_IN").setValue(((radio.gyro[1]>900 /*in us?*/)?radio.gyro[1]/1000:radio.gyro[1]));
+            /* PITCH SERVO */
+            if (params->contains(OpalRT::SERVO_INPUTS, "PIT_SET0_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "PIT_SET0_IN").setValue(((radio.pitch[0]>900 /*in us?*/)?radio.pitch[0]/1000:radio.pitch[0]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "PIT_SET1_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "PIT_SET1_IN").setValue(((radio.pitch[1]>900 /*in us?*/)?radio.pitch[1]/1000:radio.pitch[1]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "PIT_SET2_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "PIT_SET2_IN").setValue(((radio.pitch[2]>900 /*in us?*/)?radio.pitch[2]/1000:radio.pitch[2]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "PIT_SET3_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "PIT_SET3_IN").setValue(((radio.pitch[3]>900 /*in us?*/)?radio.pitch[3]/1000:radio.pitch[3]));
+            if (params->contains(OpalRT::SERVO_INPUTS, "PIT_SET4_IN"))
+                params->getParameter(OpalRT::SERVO_INPUTS, "PIT_SET4_IN").setValue(((radio.pitch[4]>900 /*in us?*/)?radio.pitch[4]/1000:radio.pitch[4]));
         }
         break;
 #endif
@@ -291,17 +333,23 @@ void OpalLink::getSignals()
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_6]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_7]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_8]),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_1]),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_2]),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_3]),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_4]),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_5]),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_6]),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_7]),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_8]),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_1], OpalRT::NORM_CHANNEL_1),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_2], OpalRT::NORM_CHANNEL_2),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_3], OpalRT::NORM_CHANNEL_3),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_4], OpalRT::NORM_CHANNEL_4),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_5], OpalRT::NORM_CHANNEL_5),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_6], OpalRT::NORM_CHANNEL_6),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_7], OpalRT::NORM_CHANNEL_7),
+                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_8], OpalRT::NORM_CHANNEL_8),
                                              0 //rssi unused
                                              );
                 receiveMessage(rc);
+//                qDebug() << __FILE__  << __LINE__ << "Aileron: " << values[OpalRT::NORM_CHANNEL_1];
+//                qDebug() << __FILE__  << __LINE__ << "Elevator: " << values[OpalRT::NORM_CHANNEL_2];
+//                qDebug() << __FILE__  << __LINE__ << "Rudder: " << values[OpalRT::NORM_CHANNEL_4];
+//                qDebug() << __FILE__  << __LINE__ << "Pitch: " << values[OpalRT::NORM_CHANNEL_6];
+
+
             }
         }        
         else if (returnVal != EAGAIN) // if returnVal == EAGAIN => data just wasn't ready
@@ -357,9 +405,26 @@ uint16_t OpalLink::duty2PulseMicros(double duty)
     return static_cast<uint16_t>(duty/70*1000000);
 }
 
-uint8_t OpalLink::rescaleNorm(double norm)
+uint8_t OpalLink::rescaleNorm(double norm, int ch)
 {
-    return static_cast<uint8_t>((norm+1)/2*255);
+    switch(ch)
+    {
+    case OpalRT::NORM_CHANNEL_1:
+    case OpalRT::NORM_CHANNEL_2:
+    case OpalRT::NORM_CHANNEL_4:
+    default:
+        // three setpoints
+        return static_cast<uint8_t>((norm+1)/2*255);
+        break;
+    case OpalRT::NORM_CHANNEL_5:
+        //two setpoints
+    case OpalRT::NORM_CHANNEL_3:
+    case OpalRT::NORM_CHANNEL_6:        
+        return static_cast<uint8_t>(norm*255);
+        break;
+    }
+
+
 }
 
 

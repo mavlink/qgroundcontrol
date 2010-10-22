@@ -48,6 +48,9 @@ ParameterList::ParameterList()
     reqdServoParams->append("ELE_DOWN_IN");
     reqdServoParams->append("ELE_CENTER_IN");
     reqdServoParams->append("ELE_UP_IN");
+    reqdServoParams->append("RUD_LEFT_IN");
+    reqdServoParams->append("RUD_CENTER_IN");
+    reqdServoParams->append("RUD_RIGHT_IN");
 
     QString filename(settingsDir.path() + "/ParameterList.xml");
     if ((QFile::exists(filename)) && open(filename))
