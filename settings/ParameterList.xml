@@ -46,15 +46,95 @@
        QGCParamID="ELE_DOWN_IN"
        />
     <Parameter
-       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/AileronInput/"
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/ElevatorInput/"
        SimulinkParameterName="Setpoint1"
        QGCParamID="ELE_CENTER_IN"
        />
     <Parameter
-       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/AileronInput/"
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/ElevatorInput/"
        SimulinkParameterName="Setpoint2"
        QGCParamID="ELE_UP_IN"
+       />
+    <!-- Settings for Throttle Servo -->
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/ThrottleInput/"
+       SimulinkParameterName="Setpoint0"
+       QGCParamID="THR_SET0_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/ThrottleInput/"
+       SimulinkParameterName="Setpoint1"
+       QGCParamID="THR_SET1_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/ThrottleInput/"
+       SimulinkParameterName="Setpoint2"
+       QGCParamID="THR_SET2_IN"
        />    
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/ThrottleInput/"
+       SimulinkParameterName="Setpoint3"
+       QGCParamID="THR_SET3_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/ThrottleInput/"
+       SimulinkParameterName="Setpoint4"
+       QGCParamID="THR_SET4_IN"
+       />
+    <!-- Settings for Rudder Servo -->
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/RudderInput/"
+       SimulinkParameterName="Setpoint0"
+       QGCParamID="RUD_LEFT_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/RudderInput/"
+       SimulinkParameterName="Setpoint1"
+       QGCParamID="RUD_CENTER_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/RudderInput/"
+       SimulinkParameterName="Setpoint2"
+       QGCParamID="RUD_RIGHT_IN"
+       />
+    <!-- Settings for Gyro Mode/Gain Switch -->
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/GyroInput/"
+       SimulinkParameterName="Setpoint0"
+       QGCParamID="GYRO_DEF_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/GyroInput/"
+       SimulinkParameterName="Setpoint1"
+       QGCParamID="GYRO_TOG_IN"
+       />    
+    <!-- Settings for Pitch Servo -->
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/PitchInput/"
+       SimulinkParameterName="Setpoint0"
+       QGCParamID="PIT_SET0_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/PitchInput/"
+       SimulinkParameterName="Setpoint1"
+       QGCParamID="PIT_SET1_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/PitchInput/"
+       SimulinkParameterName="Setpoint2"
+       QGCParamID="PIT_SET2_IN"
+       />    
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/PitchInput/"
+       SimulinkParameterName="Setpoint3"
+       QGCParamID="PIT_SET3_IN"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Pilot_Inputs/PitchInput/"
+       SimulinkParameterName="Setpoint4"
+       QGCParamID="PIT_SET4_IN"
+       />
+
   </Block>
 
   <!-- Parameters for the servo output block -->

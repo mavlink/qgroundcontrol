@@ -30,6 +30,7 @@ float AbstractCalibrator::logExtrema()
             if (log->value(i) < extrema)
                 extrema = log->value(i);
         }
+        extrema -= 5; // add 5us to prevent integer overflow
     }
     else
     {
@@ -38,6 +39,7 @@ float AbstractCalibrator::logExtrema()
             if (log->value(i) > extrema)
                 extrema = log->value(i);
         }
+        extrema += 5; // subtact 5us to prevent integer overflow
     }
 
     return extrema;
