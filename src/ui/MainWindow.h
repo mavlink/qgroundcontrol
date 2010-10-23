@@ -122,6 +122,8 @@ public slots:
     void loadDataView();
     /** @brief Load data view, allowing to plot flight data */
     void loadDataView(QString fileName);
+    /** @brief Load view for global operator, allowing to flight on earth */
+    void loadGlobalOperatorView();
 
     /** @brief Show the online help for users */
     void showHelp();
@@ -174,6 +176,7 @@ protected:
     QPointer<QDockWidget> headDown1DockWidget;
     QPointer<QDockWidget> headDown2DockWidget;
     QPointer<QDockWidget> watchdogControlDockWidget;
+    QPointer<QDockWidget> headUpDockWidget;
     QPointer<QDockWidget> hsiDockWidget;
     QPointer<QDockWidget> rcViewDockWidget;
 

@@ -81,6 +81,7 @@ public slots:
     void setOrbit(float orbit);
     void setHoldTime(int holdTime);
 
+
     //for QDoubleSpin
     void setX(double x);
     void setY(double y);

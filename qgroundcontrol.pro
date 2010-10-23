@@ -159,7 +159,6 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
     src/ui/QGCRemoteControlView.h \
-    src/WaypointGlobal.h \
     src/ui/WaypointGlobalView.h \
     src/ui/map3D/Q3DWidget.h \
     src/ui/map3D/CheetahModel.h \
@@ -233,8 +232,7 @@ SOURCES += src/main.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/MAV2DIcon.cc \
     src/ui/QGCRemoteControlView.cc \
-    src/WaypointGlobal.cpp \
-    src/ui/WaypointGlobalView.cpp \
+    src/ui/WaypointGlobalView.cc \
     src/ui/map3D/Q3DWidget.cc \
     src/ui/map3D/CheetahModel.cc \
     src/ui/map3D/CheetahGL.cc \
