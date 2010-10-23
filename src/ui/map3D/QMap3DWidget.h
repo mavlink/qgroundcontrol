@@ -55,6 +55,7 @@ public:
 
     static void display(void* clientData);
     void displayHandler(void);
+//    void paintEvent(QPaintEvent *event);
 
     static void mouse(Qt::MouseButton button, MouseState state,
                       int32_t x, int32_t y, void* clientData);

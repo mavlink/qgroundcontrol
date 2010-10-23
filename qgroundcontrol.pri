@@ -1,27 +1,25 @@
 #-------------------------------------------------
 #
-# MAVGround - Micro Air Vehicle Groundstation
-# 
+# QGroundControl - Micro Air Vehicle Groundstation
+#
 # Please see our website at <http://qgroundcontrol.org>
 #
-# Original Author:
+# Author:
 # Lorenz Meier <mavteam@student.ethz.ch>
 #
-# Contributing Authors (in alphabetical order):
-# 
-# (c) 2009 PIXHAWK Team
+# (c) 2009-2010 PIXHAWK Team
 #
 # This file is part of the mav groundstation project
-# MAVGround is free software: you can redistribute it and/or modify
+# QGroundControl is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# MAVGround is distributed in the hope that it will be useful,
+# QGroundControl is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
-# along with MAVGround. If not, see <http://www.gnu.org/licenses/>.
+# along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
 #
 #-------------------------------------------------
 

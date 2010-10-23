@@ -1,3 +1,29 @@
+#-------------------------------------------------
+#
+# QGroundControl - Micro Air Vehicle Groundstation
+#
+# Please see our website at <http://qgroundcontrol.org>
+#
+# Author:
+# Lorenz Meier <mavteam@student.ethz.ch>
+#
+# (c) 2009-2010 PIXHAWK Team
+#
+# This file is part of the mav groundstation project
+# QGroundControl is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# QGroundControl is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
+#
+#-------------------------------------------------
+
+
 # Include QMapControl map library
 # prefer version from external directory /
 # from http://github.com/pixhawk/qmapcontrol/
@@ -5,6 +31,7 @@
 # Version from GIT repository is preferred
 # include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
 # Include bundled version if necessary
+
 include(lib/QMapControl/QMapControl.pri)
 
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
@@ -24,6 +51,12 @@ OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
 
+exists(user_config.pri) {
+    message("----- USING USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
+    include(user_config.pri)
+}
+
+
 # }
 # Include general settings for MAVGround
 # necessary as last include to override any non-acceptable settings
@@ -42,8 +75,7 @@ DEPENDPATH += . \
     plugins
 INCLUDEPATH += . \
     lib/QMapControl \
-    $$BASEDIR/../mavlink/contrib/slugs/include \
-    $$BASEDIR/../mavlink/include
+    $$BASEDIR/../mavlink/include/common
 
 # ../mavlink/include \
 # MAVLink/include \
