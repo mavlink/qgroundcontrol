@@ -200,6 +200,12 @@ namespace qmapcontrol
          */
         void setVisible(bool visible);
 
+        //! get geometry selected by index
+        /*!
+         * @param  index of geometry selected
+         */
+         Geometry* get_Geometry(int index);
+
     };
 }
 #endif
