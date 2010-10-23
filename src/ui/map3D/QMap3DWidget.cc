@@ -142,6 +142,13 @@ QMap3DWidget::display(void* clientData)
     map3d->displayHandler();
 }
 
+
+
+//void QMap3DWidget::paintEvent(QPaintEvent *event)
+//{
+//    Q_UNUSED(event);
+//}
+
 void
 QMap3DWidget::displayHandler(void)
 {
@@ -184,6 +191,7 @@ QMap3DWidget::displayHandler(void)
     }
 
     // turn on smooth lines
+    makeCurrent();
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glEnable(GL_BLEND);
@@ -247,6 +255,8 @@ QMap3DWidget::displayHandler(void)
     glVertex2f(getWindowWidth(), getWindowHeight());
     glEnd();
 
+    glFlush();
+
     std::pair<float,float> mouseWorldCoords =
             getPositionIn3DMode(getMouseX(), getMouseY());
 
@@ -262,6 +272,8 @@ QMap3DWidget::displayHandler(void)
               5,
               5,
               &painter);
+    painter.end();
+    repaint();
 }
 
 void QMap3DWidget::drawWaypoints(void) const
@@ -310,24 +322,9 @@ void QMap3DWidget::drawWaypoints(void) const
             glColor3f(1.0f, 0.3f, 0.3f);
             glLineWidth(1.0f);
 
-//            // Make sure quad object exists
-//            static GLUquadricObj* quadObj2;
-//            if(!quadObj2) quadObj2 = gluNewQuadric();
-//            gluQuadricDrawStyle(quadObj2, GLU_LINE);
-//            gluQuadricNormals(quadObj2, GLU_SMOOTH);
-//            /* If we ever changed/used the texture or orientation state
-//               of quadObj, we'd need to change it to the defaults here
-//               with gluQuadricTexture and/or gluQuadricOrientation. */
-//            gluSphere(quadObj2, radius, 10, 10);
-
             wireSphere(radius, 10, 10);
 
             glPopMatrix();
-
-
-
-
-
 
             // DRAW CONNECTING LINE
             // Draw line from last waypoint to this one
@@ -387,6 +384,7 @@ QMap3DWidget::drawLegend(void)
               25,
               getWindowHeight() - 65,
               &painter);
+    painter.end();
 }
 
 void
