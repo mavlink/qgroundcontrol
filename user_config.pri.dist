@@ -27,7 +27,18 @@
 # Several message sets can be also enabled in parallel, as long as function names
 # and message ids do not conflict.
 
-INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
-#INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
-#INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
+# Remove the default set - it is included anyway
 INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+
+# PIXHAWK SPECIAL MESSAGES
+INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
+DEFINES += QGC_USE_PIXHAWK_MESSAGES
+
+# SLUGS SPECIAL MESSAGES
+INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
+DEFINES += QGC_USE_SLUGS_MESSAGES
+
+# UALBERTA SPECIAL MESSAGES
+INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
+DEFINES += QGC_USE_UALBERTA_MESSAGES
+

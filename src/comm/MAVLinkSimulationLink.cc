@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
 // MAVLINK includes
-#include <mavlink.h>
+#include <QGCMAVLink.h>
 #include "QGC.h"
 
 /**
