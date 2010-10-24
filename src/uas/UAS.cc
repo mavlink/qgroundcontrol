@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
-#include <mavlink.h>
+#include "QGCMAVLink.h"
 
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         uasId(id),

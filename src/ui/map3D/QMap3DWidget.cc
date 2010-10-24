@@ -273,7 +273,6 @@ QMap3DWidget::displayHandler(void)
               5,
               &painter);
     painter.end();
-    repaint();
 }
 
 void QMap3DWidget::drawWaypoints(void) const

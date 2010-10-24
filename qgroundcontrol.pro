@@ -200,7 +200,8 @@ HEADERS += src/MG.h \
     src/ui/map3D/TextureCache.h \
     src/ui/map3D/WebImage.h \
     src/ui/map3D/WebImageCache.h \
-    src/ui/map3D/Imagery.h
+    src/ui/map3D/Imagery.h \
+    src/comm/QGCMAVlink.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
