@@ -100,9 +100,10 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     mavlinkLogFile = new QFile(MAVLinkProtocol::getLogfileName());
     mavlinkLogFile->open(QIODevice::ReadOnly);
 
-    x = 0;
-    y = 0;
-    z = 0;
+    // position at Pixhawk lab @ ETHZ
+    x = 5247273.0f;
+    y = 465955.0f;
+    z = -0.2f;
     yaw = 0;
 }
 
@@ -381,17 +382,13 @@ void MAVLinkSimulationLink::mainloop()
         y += sin(QGC::groundTimeUsecs()) * 0.05f;
         z += sin(QGC::groundTimeUsecs()) * 0.009f;
 
-        x = (x > 5.0f) ? 5.0f : x;
-        y = (y > 5.0f) ? 5.0f : y;
-        z = (z > 3.0f) ? 3.0f : z;
-
-        x = (x < -5.0f) ? -5.0f : x;
-        y = (y < -5.0f) ? -5.0f : y;
-        z = (z < -3.0f) ? -3.0f : z;
-
-        // position at Pixhawk lab @ ETHZ
-        x += 5247273.0f;
-        y += 465955.0f;
+//        x = (x > 5.0f) ? 5.0f : x;
+//        y = (y > 5.0f) ? 5.0f : y;
+//        z = (z > 3.0f) ? 3.0f : z;
+//
+//        x = (x < -5.0f) ? -5.0f : x;
+//        y = (y < -5.0f) ? -5.0f : y;
+//        z = (z < -3.0f) ? -3.0f : z;
 
         // Send back new setpoint
         mavlink_message_t ret;
