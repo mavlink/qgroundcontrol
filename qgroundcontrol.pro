@@ -272,8 +272,6 @@ SOURCES += src/main.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/MAV2DIcon.cc \
     src/ui/QGCRemoteControlView.cc \
-    src/WaypointGlobal.cpp \
-    src/ui/WaypointGlobalView.cpp \
     src/ui/RadioCalibration/RadioCalibrationWindow.cc \
     src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
