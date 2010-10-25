@@ -75,6 +75,7 @@ DEPENDPATH += . \
     plugins
 INCLUDEPATH += . \
     lib/QMapControl \
+    $$BASEDIR/../mavlink/include \
     $$BASEDIR/../mavlink/include/common
 
 # ../mavlink/include \
@@ -201,7 +202,7 @@ HEADERS += src/MG.h \
     src/ui/map3D/WebImage.h \
     src/ui/map3D/WebImageCache.h \
     src/ui/map3D/Imagery.h \
-    src/comm/QGCMAVlink.h
+    src/comm/QGCMAVLink.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
