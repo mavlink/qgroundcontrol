@@ -556,7 +556,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
-#ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
+#ifdef MAVLINK_ENABLED_UALBERTA
         case MAVLINK_MSG_ID_NAV_FILTER_BIAS:
             {
                 mavlink_nav_filter_bias_t bias;
@@ -588,7 +588,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+  #ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_message_t msg;
     mavlink_msg_position_control_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, 0, x, y, z, yaw);
     sendMessage(msg);
@@ -597,7 +597,7 @@ void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 
 void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
   mavlink_message_t msg;
   mavlink_msg_position_control_offset_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw);
   sendMessage(msg);
@@ -827,7 +827,7 @@ void UAS::readParametersFromStorage()
 
 void UAS::enableAllDataTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -853,7 +853,7 @@ void UAS::enableAllDataTransmission(bool enabled)
 
 void UAS::enableRawSensorDataTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -877,7 +877,7 @@ void UAS::enableRawSensorDataTransmission(bool enabled)
 
 void UAS::enableExtendedSystemStatusTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -901,7 +901,7 @@ void UAS::enableExtendedSystemStatusTransmission(bool enabled)
 
 void UAS::enableRCChannelDataTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -925,7 +925,7 @@ void UAS::enableRCChannelDataTransmission(bool enabled)
 
 void UAS::enableRawControllerDataTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -949,7 +949,7 @@ void UAS::enableRawControllerDataTransmission(bool enabled)
 
 void UAS::enableRawSensorFusionTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -973,7 +973,7 @@ void UAS::enableRawSensorFusionTransmission(bool enabled)
 
 void UAS::enablePositionTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -997,7 +997,7 @@ void UAS::enablePositionTransmission(bool enabled)
 
 void UAS::enableExtra1Transmission(bool enabled)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+  #ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -1021,7 +1021,7 @@ void UAS::enableExtra1Transmission(bool enabled)
 
 void UAS::enableExtra2Transmission(bool enabled)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+  #ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -1045,7 +1045,7 @@ void UAS::enableExtra2Transmission(bool enabled)
 
 void UAS::enableExtra3Transmission(bool enabled)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+  #ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -1161,7 +1161,7 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
 
 //    if(mode == (int)MAV_MODE_MANUAL)
 //    {
-      #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+      #ifdef MAVLINK_ENABLED_PIXHAWK
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
         sendMessage(message);
