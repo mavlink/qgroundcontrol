@@ -137,8 +137,7 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         case MAVLINK_MSG_ID_REQUEST_RC_CHANNELS:
         {
         	mavlink_request_rc_channels_t rc;
-        	mavlink_msg_request_rc_channels_decode(&msg, &rc);
-        	//qDebug() << __FILE__ << __LINE__ << ": enabled=" << static_cast<bool>(rc.enabled);
+        	mavlink_msg_request_rc_channels_decode(&msg, &rc);        	
         	this->sendRCValues = static_cast<bool>(rc.enabled);
         }
         break;
@@ -344,12 +343,6 @@ void OpalLink::getSignals()
                                              0 //rssi unused
                                              );
                 receiveMessage(rc);
-//                qDebug() << __FILE__  << __LINE__ << "Aileron: " << values[OpalRT::NORM_CHANNEL_1];
-//                qDebug() << __FILE__  << __LINE__ << "Elevator: " << values[OpalRT::NORM_CHANNEL_2];
-//                qDebug() << __FILE__  << __LINE__ << "Rudder: " << values[OpalRT::NORM_CHANNEL_4];
-//                qDebug() << __FILE__  << __LINE__ << "Pitch: " << values[OpalRT::NORM_CHANNEL_6];
-
-
             }
         }        
         else if (returnVal != EAGAIN) // if returnVal == EAGAIN => data just wasn't ready
