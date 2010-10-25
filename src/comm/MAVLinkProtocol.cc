@@ -45,7 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ArduPilotMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
-#include <mavlink.h>
+#include <QGCMAVLink.h>
 #include "QGC.h"
 
 /**

@@ -405,7 +405,7 @@ void HUD::paintCenterBackground(float roll, float pitch, float yaw)
     // Translate in the direction of the rotation based
     // on the pitch. On the 777, a pitch of 1 degree = 2 mm
     //glTranslatef(0, ((-pitch/M_PI)*180.0f * vPitchPerDeg), 0);
-    glTranslatef(0.0f, (pitch * vPitchPerDeg * 16.5f), 0.0f);
+    glTranslatef(0.0f, (-pitch * vPitchPerDeg * 16.5f), 0.0f);
 
     // Ground
     glColor3ub(179,102,0);
@@ -574,6 +574,9 @@ void HUD::paintHUD()
 
     if ((yawTrans < 5.0) && (yawTrans > -5.0)) yawTrans = 0;
 
+    // Negate to correct direction
+    yawTrans = -yawTrans;
+
     //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw;
 
     // Update scaling factor
@@ -718,7 +721,7 @@ void HUD::paintHUD()
     // Rotate view and draw all roll-dependent indicators
     painter.rotate((roll/M_PI)* -180.0f);
 
-    painter.translate(0, (pitch/M_PI)* -180.0f * refToScreenY(1.8));
+    painter.translate(0, (-pitch/M_PI)* -180.0f * refToScreenY(1.8));
 
     //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 

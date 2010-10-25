@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
-#include <mavlink.h>
+#include "QGCMAVLink.h"
 
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         uasId(id),
@@ -643,6 +643,27 @@ void UAS::startRadioControlCalibration()
 {
   mavlink_message_t msg;
   mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_RC);
+  sendMessage(msg);
+}
+
+void UAS::startDataRecording()
+{
+  mavlink_message_t msg;
+  mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_START);
+  sendMessage(msg);
+}
+
+void UAS::pauseDataRecording()
+{
+  mavlink_message_t msg;
+  mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_PAUSE);
+  sendMessage(msg);
+}
+
+void UAS::stopDataRecording()
+{
+  mavlink_message_t msg;
+  mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_STOP);
   sendMessage(msg);
 }
 

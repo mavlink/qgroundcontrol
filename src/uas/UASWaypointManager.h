@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QVector>
 #include <QTimer>
 #include "Waypoint.h"
-#include <mavlink.h>
+#include "QGCMAVLink.h"
 class UAS;
 
 /**
