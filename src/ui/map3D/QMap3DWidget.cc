@@ -170,7 +170,7 @@ QMap3DWidget::displayHandler(void)
         robotYaw = uas->getYaw();
     }
 
-    if (updateLastUnlockedPose)
+    if (updateLastUnlockedPose && uas != NULL)
     {
         lastUnlockedPose.x = robotX;
         lastUnlockedPose.y = robotY;
@@ -209,7 +209,7 @@ QMap3DWidget::displayHandler(void)
 
     if (displayGrid)
     {
-        drawGrid();
+        drawGrid(-camOffset.x, -camOffset.y, robotZ);
     }
 
     if (displayTrail)
@@ -229,7 +229,7 @@ QMap3DWidget::displayHandler(void)
 
     if (displayImagery)
     {
-        drawImagery(robotX, robotY, "32T", true);
+        drawImagery(robotX, robotY, robotZ, "32T", true);
     }
 
     glPopMatrix();
@@ -624,7 +624,7 @@ QMap3DWidget::drawPlatform(float roll, float pitch, float yaw) const
 }
 
 void
-QMap3DWidget::drawGrid(void) const
+QMap3DWidget::drawGrid(float x, float y, float z) const
 {
     float radius = 10.0f;
     float resolution = 0.25f;
@@ -645,10 +645,10 @@ QMap3DWidget::drawGrid(void) const
         }
 
         glBegin(GL_LINES);
-        glVertex3f(i, -radius, 0.0f);
-        glVertex3f(i, radius, 0.0f);
-        glVertex3f(-radius, i, 0.0f);
-        glVertex3f(radius, i, 0.0f);
+        glVertex3f(x + i, y - radius, -z);
+        glVertex3f(x + i, y + radius, -z);
+        glVertex3f(x - radius, y + i, -z);
+        glVertex3f(x + radius, y + i, -z);
         glEnd();
     }
 
@@ -656,13 +656,13 @@ QMap3DWidget::drawGrid(void) const
 }
 
 void
-QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
-                          bool prefetch) const
+QMap3DWidget::drawImagery(double originX, double originY, double originZ,
+                          const QString& zone, bool prefetch) const
 {
     glPushMatrix();
     glEnable(GL_BLEND);
 
-    glTranslatef(0, 0, 0.1);
+    glTranslatef(0, 0, -originZ);
 
     double viewingRadius = cameraPose.distance / 4000.0 * 3000.0;
     if (viewingRadius < 100.0)

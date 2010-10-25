@@ -86,9 +86,9 @@ protected:
 
 private:
     void drawPlatform(float roll, float pitch, float yaw) const;
-    void drawGrid(void) const;
-    void drawImagery(double originX, double originY, const QString& zone,
-                     bool prefetch) const;
+    void drawGrid(float x, float y, float z) const;
+    void drawImagery(double originX, double originY, double originZ,
+                     const QString& zone, bool prefetch) const;
     void drawTrail(float x, float y, float z);
     void drawTarget(float x, float y, float z) const;
 
