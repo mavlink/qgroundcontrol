@@ -377,10 +377,12 @@ void MAVLinkSimulationLink::mainloop()
     {
         rate10hzCounter = 1;
 
+
+
         // Move X Position
-        x += sin(QGC::groundTimeUsecs()*1000) * 0.05f;
-        y += sin(QGC::groundTimeUsecs()) * 0.05f;
-        z += sin(QGC::groundTimeUsecs()) * 0.009f;
+        x = x*0.93f + 0.07f*(x+sin(QGC::groundTimeUsecs()) * 0.08f);
+        y = y*0.93f + 0.07f*(y+sin(QGC::groundTimeUsecs()) * 0.5f);
+        z = z*0.93f + 0.07f*(z+sin(QGC::groundTimeUsecs()*100000) * 0.1f);
 
 //        x = (x > 5.0f) ? 5.0f : x;
 //        y = (y > 5.0f) ? 5.0f : y;
@@ -399,7 +401,7 @@ void MAVLinkSimulationLink::mainloop()
         streampointer += bufferlength;
 
         // Send back new position
-        mavlink_msg_local_position_pack(systemId, componentId, &ret, 0, x, y, z, 0, 0, 0);
+        mavlink_msg_local_position_pack(systemId, componentId, &ret, 0, y+z, y, -fabs(z), 0, 0, 0);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
