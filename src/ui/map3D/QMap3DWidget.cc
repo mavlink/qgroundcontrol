@@ -38,29 +38,31 @@ This file is part of the QGROUNDCONTROL project
 #include "CheetahModel.h"
 #include "UASManager.h"
 #include "UASInterface.h"
+#include "QGC.h"
 
 QMap3DWidget::QMap3DWidget(QWidget* parent)
      : Q3DWidget(parent)
      , uas(NULL)
      , lastRedrawTime(0.0)
      , displayGrid(true)
+     , displayImagery(false)
      , displayTrail(false)
      , lockCamera(true)
      , updateLastUnlockedPose(true)
      , displayTarget(false)
+     , displayWaypoints(true)
+     , imagery(0)
 {
     setFocusPolicy(Qt::StrongFocus);
 
     initialize(10, 10, 1000, 900, 15.0f);
-    setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 400.0f);
+    setCameraParams(0.05f, 0.5f, 0.01f, 0.5f, 30.0f, 0.01f, 1000000.0f);
 
     setDisplayFunc(display, this);
     setMouseFunc(mouse, this);
     addTimerFunc(100, timer, this);
 
     buildLayout();
-
-    //font.reset(new FTTextureFont("images/Vera.ttf"));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
@@ -82,6 +84,18 @@ QMap3DWidget::buildLayout(void)
     trailCheckBox->setText("Trail");
     trailCheckBox->setChecked(displayTrail);
 
+    QCheckBox* waypointsCheckBox = new QCheckBox(this);
+    waypointsCheckBox->setText("Waypoints");
+    waypointsCheckBox->setChecked(displayWaypoints);
+
+    QLabel* imageryLabel = new QLabel(this);
+    imageryLabel->setText("Imagery");
+
+    imageryComboBox = new QComboBox(this);
+    imageryComboBox->addItem("None");
+    imageryComboBox->addItem("Map (Google)");
+    imageryComboBox->addItem("Satellite (Google)");
+
     QPushButton* recenterButton = new QPushButton(this);
     recenterButton->setText("Recenter Camera");
 
@@ -97,19 +111,25 @@ QMap3DWidget::buildLayout(void)
     layout->setSpacing(2);
     layout->addWidget(gridCheckBox, 1, 0);
     layout->addWidget(trailCheckBox, 1, 1);
-    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 2);
-    layout->addWidget(recenterButton, 1, 3);
-    layout->addWidget(lockCameraCheckBox, 1, 4);
+    layout->addWidget(waypointsCheckBox, 1, 2);
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
+    layout->addWidget(imageryLabel, 1, 4);
+    layout->addWidget(imageryComboBox, 1, 5);
+    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 6);
+    layout->addWidget(recenterButton, 1, 7);
+    layout->addWidget(lockCameraCheckBox, 1, 8);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
-    //layout->setColumnStretch(0, 1);
-    layout->setColumnStretch(2, 50);
+    layout->setColumnStretch(3, 50);
+    layout->setColumnStretch(6, 50);
     setLayout(layout);
 
     connect(gridCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showGrid(int)));
     connect(trailCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showTrail(int)));
+    connect(imageryComboBox, SIGNAL(currentIndexChanged(const QString &)),
+            this, SLOT(showImagery(const QString &)));
     connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenterCamera()));
     connect(lockCameraCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(toggleLockCamera(int)));
@@ -121,6 +141,13 @@ QMap3DWidget::display(void* clientData)
     QMap3DWidget* map3d = reinterpret_cast<QMap3DWidget *>(clientData);
     map3d->displayHandler();
 }
+
+
+
+//void QMap3DWidget::paintEvent(QPaintEvent *event)
+//{
+//    Q_UNUSED(event);
+//}
 
 void
 QMap3DWidget::displayHandler(void)
@@ -143,7 +170,7 @@ QMap3DWidget::displayHandler(void)
         robotYaw = uas->getYaw();
     }
 
-    if (updateLastUnlockedPose)
+    if (updateLastUnlockedPose && uas != NULL)
     {
         lastUnlockedPose.x = robotX;
         lastUnlockedPose.y = robotY;
@@ -164,6 +191,7 @@ QMap3DWidget::displayHandler(void)
     }
 
     // turn on smooth lines
+    makeCurrent();
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glEnable(GL_BLEND);
@@ -181,7 +209,7 @@ QMap3DWidget::displayHandler(void)
 
     if (displayGrid)
     {
-        drawGrid();
+        drawGrid(-camOffset.x, -camOffset.y, robotZ);
     }
 
     if (displayTrail)
@@ -194,19 +222,40 @@ QMap3DWidget::displayHandler(void)
         drawTarget(robotX, robotY, robotZ);
     }
 
+    if (displayWaypoints)
+    {
+        drawWaypoints();
+    }
+
+    if (displayImagery)
+    {
+        drawImagery(robotX, robotY, robotZ, "32T", true);
+    }
+
     glPopMatrix();
 
     // switch to 2D
     setDisplayMode2D();
 
+    drawLegend();
+
     // display pose information
-    glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
     glBegin(GL_POLYGON);
     glVertex2f(0.0f, 0.0f);
-    glVertex2f(0.0f, 45.0f);
-    glVertex2f(getWindowWidth(), 45.0f);
+    glVertex2f(0.0f, 30.0f);
+    glVertex2f(getWindowWidth(), 30.0f);
     glVertex2f(getWindowWidth(), 0.0f);
     glEnd();
+    glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
+    glBegin(GL_POLYGON);
+    glVertex2f(0.0f, getWindowHeight());
+    glVertex2f(0.0f, getWindowHeight() - 25.0f);
+    glVertex2f(getWindowWidth(), getWindowHeight() - 25.0f);
+    glVertex2f(getWindowWidth(), getWindowHeight());
+    glEnd();
+
+    glFlush();
 
     std::pair<float,float> mouseWorldCoords =
             getPositionIn3DMode(getMouseX(), getMouseY());
@@ -219,13 +268,127 @@ QMap3DWidget::displayHandler(void)
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     paintText(QString("x = %1 y = %2 z = %3 r = %4 p = %5 y = %6 Cursor [%7 %8]").arg(robotX, 0, 'f', 2).arg(robotY, 0, 'f', 2).arg(robotZ, 0, 'f', 2).arg(robotRoll, 0, 'f', 2).arg(robotPitch, 0, 'f', 2).arg(robotYaw, 0, 'f', 2).arg( mouseWorldCoords.first + robotX, 0, 'f', 2).arg( mouseWorldCoords.second + robotY, 0, 'f', 2),
               QColor(255, 255, 255),
-              12,
+              11,
               5,
               5,
               &painter);
+    painter.end();
 }
 
-void QMap3DWidget::paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter)
+void QMap3DWidget::drawWaypoints(void) const
+{
+    if (uas)
+    {
+        const QVector<Waypoint*>& list = uas->getWaypointManager().getWaypointList();
+        QColor color;
+
+        QPointF lastWaypoint;
+
+        for (int i = 0; i < list.size(); i++)
+        {
+            QPointF in(list.at(i)->getX(), list.at(i)->getY());
+            // Transform from world to body coordinates
+            //in = metricWorldToBody(in);
+
+            // DRAW WAYPOINT
+            float waypointRadius = 0.1f;// = vwidth / 20.0f * 2.0f;
+
+
+            // Select color based on if this is the current waypoint
+            if (list.at(i)->getCurrent())
+            {
+                color = QGC::colorCyan;//uas->getColor();
+
+            }
+            else
+            {
+                color = uas->getColor();
+
+            }
+
+            //float radius = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
+            // Draw yaw
+            // Draw sphere
+
+
+
+
+
+            static double radius = 0.2;
+
+            glPushMatrix();
+            glTranslatef(in.x() - uas->getLocalX(), in.y() - uas->getLocalY(), 0.0f);
+            glColor3f(1.0f, 0.3f, 0.3f);
+            glLineWidth(1.0f);
+
+            wireSphere(radius, 10, 10);
+
+            glPopMatrix();
+
+            // DRAW CONNECTING LINE
+            // Draw line from last waypoint to this one
+            if (!lastWaypoint.isNull())
+            {
+                // OpenGL line
+            }
+            lastWaypoint = in;
+        }
+    }
+}
+
+void
+QMap3DWidget::drawLegend(void)
+{
+    // draw marker outlines
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glLineWidth(3.0f);
+    glBegin(GL_LINES);
+    glVertex2f(20.0f, 60.0f);
+    glVertex2f(20.0f, 80.0f);
+    glVertex2f(20.0f, 70.0f);
+    glVertex2f(100.0f, 70.0f);
+    glVertex2f(100.0f, 60.0f);
+    glVertex2f(100.0f, 80.0f);
+    glEnd();
+
+    // draw markers
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glLineWidth(1.5f);
+    glBegin(GL_LINES);
+    glVertex2f(20.0f, 60.0f);
+    glVertex2f(20.0f, 80.0f);
+    glVertex2f(20.0f, 70.0f);
+    glVertex2f(100.0f, 70.0f);
+    glVertex2f(100.0f, 60.0f);
+    glVertex2f(100.0f, 80.0f);
+    glEnd();
+
+    float f = windowHeight / 2.0f / tanf(d2r(cameraParams.cameraFov / 2.0f));
+    float dist = cameraPose.distance / f * 80.0f;
+
+    QPainter painter;
+    painter.begin(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+
+    QColor rgb(255, 255, 255);
+    if (imageryComboBox->currentText().compare("Map (Google)") == 0)
+    {
+        rgb.setRgb(0, 0, 0);
+    }
+
+    paintText(QString("%1 m").arg(dist, 0, 'f', 2),
+              rgb,
+              10,
+              25,
+              getWindowHeight() - 65,
+              &painter);
+    painter.end();
+}
+
+void
+QMap3DWidget::paintText(QString text, QColor color, float fontSize,
+                        float refX, float refY, QPainter* painter) const
 {
     QPen prevPen = painter->pen();
 
@@ -281,9 +444,15 @@ QMap3DWidget::timer(void* clientData)
 void
 QMap3DWidget::timerHandler(void)
 {
+    if (imagery.isNull())
+    {
+        imagery.reset(new Imagery);
+    }
+
     double timeLapsed = getTime() - lastRedrawTime;
     if (timeLapsed > 0.1)
     {
+        imagery->update();
         forceRedraw();
         lastRedrawTime = getTime();
     }
@@ -336,8 +505,11 @@ QMap3DWidget::markTarget(void)
 
     displayTarget = true;
 
-    if (uas) uas->setTargetPosition(targetPosition.x, targetPosition.y,
-                           targetPosition.z, 0.0f);
+    if (uas)
+    {
+        uas->setTargetPosition(targetPosition.x, targetPosition.y,
+                               targetPosition.z, 0.0f);
+    }
 }
 
 void
@@ -352,6 +524,28 @@ QMap3DWidget::showGrid(int32_t state)
         displayGrid = false;
     }
 }
+
+void
+QMap3DWidget::showImagery(const QString& text)
+{
+    if (text.compare("None") == 0)
+    {
+        displayImagery = false;
+    }
+    else
+    {
+        if (text.compare("Map (Google)") == 0)
+        {
+            imagery->setImageryType(Imagery::MAP);
+        }
+        else if (text.compare("Satellite (Google)") == 0)
+        {
+            imagery->setImageryType(Imagery::SATELLITE);
+        }
+        displayImagery = true;
+    }
+}
+
 
 void
 QMap3DWidget::showTrail(int32_t state)
@@ -393,13 +587,13 @@ QMap3DWidget::toggleLockCamera(int32_t state)
 }
 
 void
-QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
+QMap3DWidget::drawPlatform(float roll, float pitch, float yaw) const
 {
     glPushMatrix();
 
-    glRotatef((yaw*180.0f)/M_PI, 0.0f, 0.0f, 1.0f);
-    glRotatef((pitch*180.0f)/M_PI, 0.0f, 1.0f, 0.0f);
-    glRotatef((roll*180.0f)/M_PI, 1.0f, 0.0f, 0.0f);
+    glRotatef(yaw * 180.0f / M_PI, 0.0f, 0.0f, 1.0f);
+    glRotatef(pitch * 180.0f / M_PI, 0.0f, 1.0f, 0.0f);
+    glRotatef(roll * 180.0f / M_PI, 1.0f, 0.0f, 0.0f);
 
     glLineWidth(3.0f);
 
@@ -430,7 +624,7 @@ QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
 }
 
 void
-QMap3DWidget::drawGrid(void)
+QMap3DWidget::drawGrid(float x, float y, float z) const
 {
     float radius = 10.0f;
     float resolution = 0.25f;
@@ -451,13 +645,74 @@ QMap3DWidget::drawGrid(void)
         }
 
         glBegin(GL_LINES);
-        glVertex3f(i, -radius, 0.0f);
-        glVertex3f(i, radius, 0.0f);
-        glVertex3f(-radius, i, 0.0f);
-        glVertex3f(radius, i, 0.0f);
+        glVertex3f(x + i, y - radius, -z);
+        glVertex3f(x + i, y + radius, -z);
+        glVertex3f(x - radius, y + i, -z);
+        glVertex3f(x + radius, y + i, -z);
         glEnd();
     }
 
+    glPopMatrix();
+}
+
+void
+QMap3DWidget::drawImagery(double originX, double originY, double originZ,
+                          const QString& zone, bool prefetch) const
+{
+    glPushMatrix();
+    glEnable(GL_BLEND);
+
+    glTranslatef(0, 0, -originZ);
+
+    double viewingRadius = cameraPose.distance / 4000.0 * 3000.0;
+    if (viewingRadius < 100.0)
+    {
+        viewingRadius = 100.0;
+    }
+
+    double minResolution = 0.25;
+    double centerResolution = cameraPose.distance / 100.0;
+    double maxResolution = 1048576.0;
+
+    if (imageryComboBox->currentText().compare("Map (Google)") == 0)
+    {
+        minResolution = 0.25;
+    }
+    else if (imageryComboBox->currentText().compare("Satellite (Google)") == 0)
+    {
+        minResolution = 0.5;
+    }
+
+    double resolution = minResolution;
+    while (resolution * 2.0 < centerResolution)
+    {
+        resolution *= 2.0;
+    }
+    if (resolution > maxResolution)
+    {
+        resolution = maxResolution;
+    }
+
+    imagery->draw3D(viewingRadius, resolution, originX, originY,
+                    cameraPose.xOffset, cameraPose.yOffset, zone);
+
+    if (prefetch)
+    {
+        if (resolution / 2.0 >= minResolution)
+        {
+            imagery->prefetch3D(viewingRadius / 2.0, resolution / 2.0,
+                                originX, originY,
+                                cameraPose.xOffset, cameraPose.yOffset, zone);
+        }
+        if (resolution * 2.0 <= maxResolution)
+        {
+            imagery->prefetch3D(viewingRadius * 2.0, resolution * 2.0,
+                                originX, originY,
+                                cameraPose.xOffset, cameraPose.yOffset, zone);
+        }
+    }
+
+    glDisable(GL_BLEND);
     glPopMatrix();
 }
 
@@ -505,7 +760,7 @@ QMap3DWidget::drawTrail(float x, float y, float z)
 }
 
 void
-QMap3DWidget::drawTarget(float x, float y, float z)
+QMap3DWidget::drawTarget(float x, float y, float z) const
 {
     static double radius = 0.2;
     static bool expand = true;
@@ -524,14 +779,7 @@ QMap3DWidget::drawTarget(float x, float y, float z)
     glColor3f(0.0f, 0.7f, 1.0f);
     glLineWidth(1.0f);
 
-    // Make sure quad object exists
-    if(!quadObj) quadObj = gluNewQuadric();
-    gluQuadricDrawStyle(quadObj, GLU_LINE);
-    gluQuadricNormals(quadObj, GLU_SMOOTH);
-    /* If we ever changed/used the texture or orientation state
-       of quadObj, we'd need to change it to the defaults here
-       with gluQuadricTexture and/or gluQuadricOrientation. */
-    gluSphere(quadObj, radius, 10, 10);
+    wireSphere(radius, 10, 10);
 
     if (expand)
     {

@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
 // MAVLINK includes
-#include <mavlink.h>
+#include <QGCMAVLink.h>
 #include "QGC.h"
 
 /**
@@ -100,9 +100,10 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     mavlinkLogFile = new QFile(MAVLinkProtocol::getLogfileName());
     mavlinkLogFile->open(QIODevice::ReadOnly);
 
-    x = 0;
-    y = 0;
-    z = 0;
+    // position at Pixhawk lab @ ETHZ
+    x = 5247273.0f;
+    y = 465955.0f;
+    z = -0.2f;
     yaw = 0;
 }
 
@@ -376,18 +377,20 @@ void MAVLinkSimulationLink::mainloop()
     {
         rate10hzCounter = 1;
 
+
+
         // Move X Position
-        x += sin(QGC::groundTimeUsecs()*1000) * 0.05f;
-        y += sin(QGC::groundTimeUsecs()) * 0.05f;
-        z += sin(QGC::groundTimeUsecs()) * 0.009f;
+        x = x*0.93f + 0.07f*(x+sin(QGC::groundTimeUsecs()) * 0.08f);
+        y = y*0.93f + 0.07f*(y+sin(QGC::groundTimeUsecs()) * 0.5f);
+        z = z*0.93f + 0.07f*(z+sin(QGC::groundTimeUsecs()*100000) * 0.1f);
 
-        x = (x > 5.0f) ? 5.0f : x;
-        y = (y > 5.0f) ? 5.0f : y;
-        z = (z > 3.0f) ? 3.0f : z;
-
-        x = (x < -5.0f) ? -5.0f : x;
-        y = (y < -5.0f) ? -5.0f : y;
-        z = (z < -3.0f) ? -3.0f : z;
+//        x = (x > 5.0f) ? 5.0f : x;
+//        y = (y > 5.0f) ? 5.0f : y;
+//        z = (z > 3.0f) ? 3.0f : z;
+//
+//        x = (x < -5.0f) ? -5.0f : x;
+//        y = (y < -5.0f) ? -5.0f : y;
+//        z = (z < -3.0f) ? -3.0f : z;
 
         // Send back new setpoint
         mavlink_message_t ret;
@@ -398,7 +401,7 @@ void MAVLinkSimulationLink::mainloop()
         streampointer += bufferlength;
 
         // Send back new position
-        mavlink_msg_local_position_pack(systemId, componentId, &ret, 0, x, y, z, 0, 0, 0);
+        mavlink_msg_local_position_pack(systemId, componentId, &ret, 0, y+z, y, -fabs(z), 0, 0, 0);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);

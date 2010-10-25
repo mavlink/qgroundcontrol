@@ -171,6 +171,9 @@ void MainWindow::buildWidgets()
     rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
     rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
 
+    headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
+    headUpDockWidget->setWidget( new HUD(320, 240, this));
+
     // Dialogue widgets
     //FIXME: free memory in destructor
     joystick    = new JoystickInput();
@@ -203,8 +206,13 @@ void MainWindow::connectWidgets()
         // add Waypoint widget in the WaypointList widget when mouse clicked
         connect(mapWidget, SIGNAL(captureMapCoordinateClick(QPointF)), waypointsDockWidget->widget(), SLOT(addWaypointMouse(QPointF)));
         // it notifies that a waypoint global goes to do create
-        connect(mapWidget, SIGNAL(createGlobalWP(bool)), waypointsDockWidget->widget(), SLOT(setIsWPGlobal(bool)));
+        connect(mapWidget, SIGNAL(createGlobalWP(bool, QPointF)), waypointsDockWidget->widget(), SLOT(setIsWPGlobal(bool, QPointF)));
         connect(mapWidget, SIGNAL(sendGeometryEndDrag(QPointF,int)), waypointsDockWidget->widget(), SLOT(waypointGlobalChanged(QPointF,int)) );
+
+        // it notifies that a waypoint global goes to do create and a map graphic too
+        connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
+        // it notifies that a waypoint global change it´s position by spinBox on Widget WaypointView
+        connect(waypointsDockWidget->widget(), SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), mapWidget, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
     }
 }
 
@@ -213,7 +221,6 @@ void MainWindow::arrangeCenterStack()
 
     QStackedWidget *centerStack = new QStackedWidget(this);
     if (!centerStack) return;
-
     if (linechartWidget) centerStack->addWidget(linechartWidget);
     if (protocolWidget) centerStack->addWidget(protocolWidget);
     if (mapWidget) centerStack->addWidget(mapWidget);
@@ -362,7 +369,7 @@ void MainWindow::connectActions()
     connect(ui.actionShow_MAVLink_view, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
     connect(ui.actionShow_data_analysis_view, SIGNAL(triggered()), this, SLOT(loadDataView()));
     connect(ui.actionStyleConfig, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
-
+    connect(ui.actionGlobalOperatorView, SIGNAL(triggered()), this, SLOT(loadGlobalOperatorView()));
     connect(ui.actionOnline_documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(ui.actionCredits_Developers, SIGNAL(triggered()), this, SLOT(showCredits()));
     connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
@@ -808,6 +815,7 @@ void MainWindow::loadOperatorView()
             centerStack->setCurrentWidget(mapWidget);
         }
     }
+
     // UAS CONTROL
     if (controlDockWidget)
     {
@@ -863,6 +871,83 @@ void MainWindow::loadOperatorView()
     }
 
     this->show();
+}
+
+void MainWindow::loadGlobalOperatorView()
+{
+    clearView();
+
+    // MAP
+    if (mapWidget)
+    {
+        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+        if (centerStack)
+        {
+            centerStack->setCurrentWidget(mapWidget);
+        }
+    }
+
+    // UAS CONTROL
+    if (controlDockWidget)
+    {
+        addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+        controlDockWidget->show();
+    }
+
+    // UAS LIST
+    if (listDockWidget)
+    {
+        addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+        listDockWidget->show();
+    }
+
+    // UAS STATUS
+    if (infoDockWidget)
+    {
+        addDockWidget(Qt::LeftDockWidgetArea, infoDockWidget);
+        infoDockWidget->show();
+    }
+
+    // WAYPOINT LIST
+    if (waypointsDockWidget)
+    {
+        addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
+        waypointsDockWidget->show();
+    }
+
+//    // HORIZONTAL SITUATION INDICATOR
+//    if (hsiDockWidget)
+//    {
+//        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+//        if (hsi)
+//        {
+//            addDockWidget(Qt::BottomDockWidgetArea, hsiDockWidget);
+//            hsiDockWidget->show();
+//            hsi->start();
+//        }
+//    }
+
+    // PROCESS CONTROL
+    if (watchdogControlDockWidget)
+    {
+        addDockWidget(Qt::RightDockWidgetArea, watchdogControlDockWidget);
+        watchdogControlDockWidget->show();
+    }
+
+    // HEAD UP DISPLAY
+    if (headUpDockWidget)
+    {
+        addDockWidget(Qt::RightDockWidgetArea, headUpDockWidget);
+        // FIXME Replace with default ->show() call
+        HUD* hud = dynamic_cast<HUD*>(headUpDockWidget->widget());
+
+        if (hud)
+        {
+            headUpDockWidget->show();
+            hud->start();
+        }
+    }
+
 }
 
 void MainWindow::load3DView()

@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QLabel>
 
+#include "Imagery.h"
 #include "Q3DWidget.h"
 
 class CheetahModel;
@@ -54,6 +55,7 @@ public:
 
     static void display(void* clientData);
     void displayHandler(void);
+//    void paintEvent(QPaintEvent *event);
 
     static void mouse(Qt::MouseButton button, MouseState state,
                       int32_t x, int32_t y, void* clientData);
@@ -72,22 +74,30 @@ public slots:
 private slots:
     void showGrid(int state);
     void showTrail(int state);
+    void showImagery(const QString& text);
     void recenterCamera(void);
     void toggleLockCamera(int state);
 
 protected:
     UASInterface* uas;
-    void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
+    void paintText(QString text, QColor color, float fontSize,
+                   float refX, float refY, QPainter* painter) const;
+    void drawWaypoints(void) const;
 
 private:
-    void drawPlatform(float roll, float pitch, float yaw);
-    void drawGrid(void);
+    void drawPlatform(float roll, float pitch, float yaw) const;
+    void drawGrid(float x, float y, float z) const;
+    void drawImagery(double originX, double originY, double originZ,
+                     const QString& zone, bool prefetch) const;
     void drawTrail(float x, float y, float z);
-    void drawTarget(float x, float y, float z);
+    void drawTarget(float x, float y, float z) const;
+
+    void drawLegend(void);
 
     double lastRedrawTime;
 
     bool displayGrid;
+    bool displayImagery;
     bool displayTrail;
 
     typedef struct
@@ -105,9 +115,13 @@ private:
     QVarLengthArray<Pose3D, 10000> trail;
 
     bool displayTarget;
+    bool displayWaypoints;
     Pose3D targetPosition;
 
     QScopedPointer<CheetahModel> cheetahModel;
+    QScopedPointer<Imagery> imagery;
+
+    QComboBox* imageryComboBox;
 };
 
 #endif // QMAP3DWIDGET_H

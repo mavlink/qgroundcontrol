@@ -335,7 +335,7 @@ void UASView::refresh()
     //repaint();
 
     static quint64 lastupdate = 0;
-    qDebug() << "UASVIEW update diff: " << MG::TIME::getGroundTimeNow() - lastupdate;
+    //qDebug() << "UASVIEW update diff: " << MG::TIME::getGroundTimeNow() - lastupdate;
     lastupdate = MG::TIME::getGroundTimeNow();
 
     // FIXME
@@ -344,7 +344,7 @@ void UASView::refresh()
     if (generalUpdateCount == 4)
     {
         generalUpdateCount = 0;
-        qDebug() << "UPDATING EVERYTHING";
+        //qDebug() << "UPDATING EVERYTHING";
     // State
     m_ui->stateLabel->setText(state);
     m_ui->statusTextLabel->setText(stateDesc);
@@ -431,7 +431,7 @@ void UASView::refresh()
 
     // Fade heartbeat icon
     // Make color darker
-    heartbeatColor = heartbeatColor.darker(110);
+    heartbeatColor = heartbeatColor.darker(150);
 
     QString colorstyle;
     colorstyle = colorstyle.sprintf("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",

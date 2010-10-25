@@ -180,6 +180,11 @@ QToolButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
 }
 
+QToolTip {
+        background-color: #404040;
+	border-radius: 3px;
+}
+
 QPushButton#forceLandButton {
 	font-weight: bold;
 	min-height: 30px;

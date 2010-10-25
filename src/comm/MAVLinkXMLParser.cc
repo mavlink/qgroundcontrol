@@ -71,7 +71,13 @@ bool MAVLinkXMLParser::generate()
     bool success = true;
 
     // Only generate if output dir is correctly set
-    if (outputDirName == "") return false;
+    if (outputDirName == "")
+    {
+        emit parseState(tr("<font color=\"red\">ERROR: No output directory given.\nAbort.</font>"));
+        return false;
+    }
+
+    QString topLevelOutputDirName = outputDirName;
 
     // print out the element names of all elements that are direct children
     // of the outermost element.
@@ -87,6 +93,31 @@ bool MAVLinkXMLParser::generate()
     QString lcmStructDefs = "";
 
     QString pureFileName;
+    QString pureIncludeFileName;
+
+    QFileInfo fInfo(this->fileName);
+    pureFileName = fInfo.baseName().split(".", QString::SkipEmptyParts).first();
+
+    // XML parsed and converted to C code. Now generating the files
+    outputDirName += QDir::separator() + pureFileName;
+    QDateTime now = QDateTime::currentDateTime().toUTC();
+    QLocale loc(QLocale::English);
+    QString dateFormat = "dddd, MMMM d yyyy, hh:mm UTC";
+    QString date = loc.toString(now, dateFormat);
+    QString includeLine = "#include \"%1\"\n";
+    QString mainHeaderName = pureFileName + ".h";
+    QString messagesDirName = ".";//"generated";
+    QDir dir(outputDirName + "/" + messagesDirName);
+
+
+
+    // Start main header
+    QString mainHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef " + pureFileName.toUpper() + "_H\n#define " + pureFileName.toUpper() + "_H\n\n").arg(date); // The main header includes all messages
+    // Mark all code as C code
+    mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n";
+    mainHeader += "\n#include \"../protocol.h\"\n";
+    mainHeader += "\n#define MAVLINK_ENABLED_" + pureFileName.toUpper() + "\n\n";
+
 
     // Run through root children
     while(!n.isNull())
@@ -107,47 +138,55 @@ bool MAVLinkXMLParser::generate()
                         // Handle all include tags
                         if (e.tagName() == "include")
                         {
-                            QString fileName = e.text();
+                            QString incFileName = e.text();
                             // Load file
-                            QDomDocument includeDoc = QDomDocument();
+                            //QDomDocument includeDoc = QDomDocument();
 
                             // Prepend file path if it is a relative path and
                             // make it relative to opened file
-                            QFileInfo fInfo(fileName);
+                            QFileInfo fInfo(incFileName);
+
+                            QString incFilePath;
                             if (fInfo.isRelative())
                             {
                                 QFileInfo rInfo(this->fileName);
-                                fileName = rInfo.absoluteDir().canonicalPath() + "/" + fileName;
-                                pureFileName = rInfo.baseName().split(".").first();
+                                incFilePath = rInfo.absoluteDir().canonicalPath() + "/" + incFileName;
+                                pureIncludeFileName = fInfo.baseName().split(".", QString::SkipEmptyParts).first();
                             }
 
-                            QFile file(fileName);
+                            QFile file(incFilePath);
                             if (file.open(QIODevice::ReadOnly | QIODevice::Text))
                             {
-                                const QString instanceText(QString::fromUtf8(file.readAll()));
-                                includeDoc.setContent(instanceText);
+                                emit parseState(QString("<font color=\"green\">Included messages from file: %1</font>").arg(incFileName));
+                                // NEW MODE: CREATE INDIVIDUAL FOLDERS
+                                // Create new output directory, parse included XML and generate C-code
+                                MAVLinkXMLParser includeParser(incFilePath, topLevelOutputDirName, this);
+                                connect(&includeParser, SIGNAL(parseState(QString)), this, SIGNAL(parseState(QString)));
+                                // Generate and write
+                                includeParser.generate();
+                                mainHeader += "\n#include \"../" + pureIncludeFileName + "/" + pureIncludeFileName + ".h\"\n";
 
-                                // Get all messages
-                                QDomNode in = includeDoc.documentElement().firstChild();
-                                //while (!in.isNull())
-                                //{
-                                    QDomElement ie = in.toElement();
-                                    if (!ie.isNull())
-                                    {
-                                        if (ie.tagName() == "messages" || ie.tagName() == "include")
-                                        {
-                                            QDomNode ref = n.parentNode().insertAfter(in, n);
-                                            if (ref.isNull())
-                                            {
-                                                emit parseState(QString("<font color=\"red\">ERROR: Inclusion failed: XML syntax error in file %1. Wrong/misspelled XML?\nAbort.</font>").arg(fileName));
-                                                return false;
-                                            }
-                                        }
-                                    }
-                                    //in = in.nextSibling();
-                                //}
 
-                                emit parseState(QString("<font color=\"green\">Included messages from file: %1</font>").arg(fileName));
+                                // OLD MODE: MERGE BOTH FILES
+//                                        const QString instanceText(QString::fromUtf8(file.readAll()));
+//                                        includeDoc.setContent(instanceText);
+//                                // Get all messages
+//                                QDomNode in = includeDoc.documentElement().firstChild();
+//                                QDomElement ie = in.toElement();
+//                                if (!ie.isNull())
+//                                {
+//                                    if (ie.tagName() == "messages" || ie.tagName() == "include")
+//                                    {
+//                                        QDomNode ref = n.parentNode().insertAfter(in, n);
+//                                        if (ref.isNull())
+//                                        {
+//                                            emit parseState(QString("<font color=\"red\">ERROR: Inclusion failed: XML syntax error in file %1. Wrong/misspelled XML?\nAbort.</font>").arg(fileName));
+//                                            return false;
+//                                        }
+//                                    }
+//                                }
+
+                                emit parseState(QString("<font color=\"green\">End of inclusion from file: %1</font>").arg(incFileName));
                             }
                             else
                             {
@@ -406,20 +445,7 @@ bool MAVLinkXMLParser::generate()
         n = n.nextSibling();
     } // While through root children
 
-    // XML parsed and converted to C code. Now generating the files
-    QDateTime now = QDateTime::currentDateTime().toUTC();
-    QLocale loc(QLocale::English);
-    QString dateFormat = "dddd, MMMM d yyyy, hh:mm UTC";
-    QString date = loc.toString(now, dateFormat);
-    QString mainHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef MAVLINK_H\n#define MAVLINK_H\n\n").arg(date); // The main header includes all messages
-    // Mark all code as C code
-    mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n";
-    mainHeader += "\n#include \"protocol.h\"\n";
-    mainHeader += "\n#define MAVLINK_ENABLED_" + pureFileName.toUpper() + "\n\n";
-    QString includeLine = "#include \"%1\"\n";
-    QString mainHeaderName = "mavlink.h";
-    QString messagesDirName = "generated";
-    QDir dir(outputDirName + "/" + messagesDirName);
+
     // Create directory if it doesn't exist, report result in success
     if (!dir.exists()) success = success && dir.mkpath(outputDirName + "/" + messagesDirName);
     for (int i = 0; i < cFiles.size(); i++)
@@ -428,6 +454,7 @@ bool MAVLinkXMLParser::generate()
         bool ok = rawFile.open(QIODevice::WriteOnly | QIODevice::Text);
         success = success && ok;
         rawFile.write(cFiles.at(i).second.toLatin1());
+        rawFile.close();
         mainHeader += includeLine.arg(messagesDirName + "/" + cFiles.at(i).first);
     }
 
@@ -441,6 +468,18 @@ bool MAVLinkXMLParser::generate()
     bool ok = rawHeader.open(QIODevice::WriteOnly | QIODevice::Text);
     success = success && ok;
     rawHeader.write(mainHeader.toLatin1());
+    rawHeader.close();
+
+    // Write alias mavlink header
+    QFile mavlinkHeader(outputDirName + "/mavlink.h");
+    ok = mavlinkHeader.open(QIODevice::WriteOnly | QIODevice::Text);
+    success = success && ok;
+    QString mHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef MAVLINK_H\n#define MAVLINK_H\n\n").arg(date); // The main header includes all messages
+    // Mark all code as C code
+    mHeader += "#include \"" + mainHeaderName + "\"\n\n";
+    mHeader += "#endif\n";
+    mavlinkHeader.write(mHeader.toLatin1());
+    mavlinkHeader.close();
 
     // Write C structs / lcm definitions
 //    QFile lcmStructs(outputDirName + "/mavlink.lcm");
