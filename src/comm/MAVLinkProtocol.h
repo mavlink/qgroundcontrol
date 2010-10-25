@@ -39,8 +39,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QByteArray>
 #include "ProtocolInterface.h"
 #include "LinkInterface.h"
-#include "protocol.h"
-#include "QGCMAVlink.h"
+#include "QGCMAVLink.h"
 
 /**
  * @brief MAVLink micro air vehicle protocol reference implementation.

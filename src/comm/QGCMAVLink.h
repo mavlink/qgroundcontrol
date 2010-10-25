@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #define QGCMAVLINK_H
 
 #include <mavlink_types.h>
+#include <mavlink.h>
 
 #ifdef QGC_USE_PIXHAWK_MESSAGES
 #include <pixhawk.h>
