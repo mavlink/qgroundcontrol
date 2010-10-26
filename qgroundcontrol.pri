@@ -165,11 +165,11 @@ win32 {
     # Special settings for debug
     #CONFIG += CONSOLE
 
-    INCLUDEPATH += $$BASEDIR\lib\sdl\include \
-                   $$BASEDIR\lib\opal\include #\ #\
+    INCLUDEPATH += $$BASEDIR/lib/sdl/include \
+                   $$BASEDIR/lib/opal/include #\ #\
                    #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
 
-    LIBS += -L$$BASEDIR\lib\sdl\win32 \
+    LIBS += -L$$BASEDIR/lib/sdl/win32 \
              -lmingw32 -lSDLmain -lSDL -mwindows
 
 
