@@ -51,11 +51,38 @@ OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
 
+MAVLINK_CONF = ""
+
 exists(user_config.pri) {
     message("----- USING USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
     include(user_config.pri)
 }
 
+INCLUDEPATH += $$BASEDIR/../mavlink/include/common
+
+contains(MAVLINK_CONF, pixhawk) {
+# Remove the default set - it is included anyway
+INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+# PIXHAWK SPECIAL MESSAGES
+INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
+DEFINES += QGC_USE_PIXHAWK_MESSAGES
+}
+
+contains(MAVLINK_CONF, slugs) {
+# Remove the default set - it is included anyway
+INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+# SLUGS SPECIAL MESSAGES
+INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
+DEFINES += QGC_USE_SLUGS_MESSAGES
+}
+
+contains(MAVLINK_CONF, ualberta) {
+# Remove the default set - it is included anyway
+INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+# UALBERTA SPECIAL MESSAGES
+INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
+DEFINES += QGC_USE_UALBERTA_MESSAGES
+}
 
 # }
 # Include general settings for MAVGround
@@ -75,8 +102,7 @@ DEPENDPATH += . \
     plugins
 INCLUDEPATH += . \
     lib/QMapControl \
-    $$BASEDIR/../mavlink/include \
-    $$BASEDIR/../mavlink/include/common
+    $$BASEDIR/../mavlink/include
 
 # ../mavlink/include \
 # MAVLink/include \

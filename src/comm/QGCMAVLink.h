@@ -33,20 +33,22 @@ This file is part of the QGROUNDCONTROL project
 #include <mavlink_types.h>
 #include <mavlink.h>
 
-//#ifdef QGC_USE_PIXHAWK_MESSAGES
+#ifdef QGC_USE_PIXHAWK_MESSAGES
 #include <pixhawk.h>
-//#endif
+#endif
 
-//#ifdef QGC_USE_SLUGS_MESSAGES
+#ifdef QGC_USE_SLUGS_MESSAGES
 #include <slugs.h>
-//#endif
+#endif
 
-//#ifdef QGC_USE_UALBERTA_MESSAGES
+#ifdef QGC_USE_UALBERTA_MESSAGES
 #include <ualberta.h>
-//#endif
+#endif
 
 #ifdef QGC_USE_ARDUPILOT_MESSAGES
 #include <ardupilot.h>
 #endif
 
+
 #endif // QGCMAVLINK_H
+
