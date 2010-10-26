@@ -317,9 +317,9 @@ SOURCES += src/main.cc \
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
-win32:exists(src/lib/opalrt/OpalApi.h):exists(C:\OPAL-RT\RT-LAB7.2.4\Common\bin) { 
+win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
     message("Building support for Opal-RT")
-    LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
+    LIBS += -LC:/OPAL-RT/RT-LAB7.2.4/Common/bin \
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
     HEADERS += src/comm/OpalRT.h \
