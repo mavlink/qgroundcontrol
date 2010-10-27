@@ -298,12 +298,12 @@ Imagery::tileBounds(double tileResolution,
     {
         double utmMultiplier = tileResolution * 200;
 
-        minTileX = static_cast<int32_t>(floor(minUtmX / utmMultiplier));
-        minTileY = static_cast<int32_t>(floor(minUtmY / utmMultiplier));
-        centerTileX = static_cast<int32_t>(floor(centerUtmX / utmMultiplier));
-        centerTileY = static_cast<int32_t>(floor(centerUtmY / utmMultiplier));
-        maxTileX = static_cast<int32_t>(floor(maxUtmX / utmMultiplier));
-        maxTileY = static_cast<int32_t>(floor(maxUtmY / utmMultiplier));
+        minTileX = static_cast<int32_t>(rint(minUtmX / utmMultiplier));
+        minTileY = static_cast<int32_t>(rint(minUtmY / utmMultiplier));
+        centerTileX = static_cast<int32_t>(rint(centerUtmX / utmMultiplier));
+        centerTileY = static_cast<int32_t>(rint(centerUtmY / utmMultiplier));
+        maxTileX = static_cast<int32_t>(rint(maxUtmX / utmMultiplier));
+        maxTileY = static_cast<int32_t>(rint(maxUtmY / utmMultiplier));
     }
 
     if (maxTileX - minTileX + 1 > 14)
@@ -571,7 +571,7 @@ Imagery::getTileLocation(int32_t tileX, int32_t tileY, int32_t zoomLevel,
             << "&y=" << tileY << "&z=" << zoomLevel;
         break;
     case SWISSTOPO_SATELLITE:
-        oss << "../map/eth_zurich_swissimage_025/200/color/" << tileX
+        oss << "../map/eth_zurich_swissimage_025/200/color/" << tileY
             << "/tile-";
         if (tileResolution < 1.0)
         {
@@ -581,7 +581,7 @@ Imagery::getTileLocation(int32_t tileX, int32_t tileY, int32_t zoomLevel,
         {
             oss << static_cast<int32_t>(rint(tileResolution));
         }
-        oss << "-" << tileX << "-" << tileY << ".jpg";
+        oss << "-" << tileY << "-" << tileX << ".jpg";
     default:
         {};
     }
