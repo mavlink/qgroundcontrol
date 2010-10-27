@@ -25,6 +25,7 @@ This file is part of the QGROUNDCONTROL project
  * @file
  *   @brief Implementation of QGCRemoteControlView
  *   @author Lorenz Meier <mail@qgroundcontrol.org>
+ *   @author Bryan Godbolt <godbolt@ece.ualberta.ca>
  */
 
 #include <QGridLayout>
@@ -70,6 +71,14 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
     layout->addItem(rssiLayout, 2, 0, 1, 2);
     setVisible(false);
 
+    calibrate = new QPushButton(tr("Calibrate"), this);
+    QHBoxLayout *calibrateButtonLayout = new QHBoxLayout();
+    calibrateButtonLayout->addWidget(calibrate, 0, Qt::AlignHCenter);
+    layout->addItem(calibrateButtonLayout, 3, 0, 1, 2);
+
+    calibrationWindow = new RadioCalibrationWindow(this);
+    connect(calibrate, SIGNAL(clicked()), calibrationWindow, SLOT(show()));
+
     connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(setUASId(int)));
 }
 
@@ -89,6 +98,8 @@ void QGCRemoteControlView::setUASId(int id)
             // The UAS exists, disconnect any existing connections
             disconnect(uas, SIGNAL(remoteControlChannelChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
             disconnect(uas, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
+            disconnect(uas, SIGNAL(radioCalibrationReceived(const QPointer<RadioCalibrationData>)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
+            disconnect(uas, SIGNAL(remoteControlChannelChanged(int,float,float)), calibrationWindow, SLOT(setChannel(int,float,float)));
         }
     }
 
@@ -98,7 +109,10 @@ void QGCRemoteControlView::setUASId(int id)
     {
         // New UAS exists, connect
         nameLabel->setText(QString("RC Input of %1").arg(newUAS->getUASName()));
+        calibrationWindow->setUASId(id);
+        connect(newUAS, SIGNAL(radioCalibrationReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
         connect(newUAS, SIGNAL(remoteControlChannelChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
+        connect(newUAS, SIGNAL(remoteControlChannelChanged(int,float,float)), calibrationWindow, SLOT(setChannel(int,float,float)));
         connect(newUAS, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
     }
 }
@@ -173,7 +187,7 @@ void QGCRemoteControlView::changeEvent(QEvent *e)
     QWidget::changeEvent(e);
     switch (e->type()) {
     case QEvent::LanguageChange:
-        ui->retranslateUi(this);
+        //ui->retranslateUi(this);
         break;
     default:
         break;

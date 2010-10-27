@@ -51,11 +51,38 @@ OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
 
+MAVLINK_CONF = ""
+
 exists(user_config.pri) {
     message("----- USING USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
     include(user_config.pri)
 }
 
+INCLUDEPATH += $$BASEDIR/../mavlink/include/common
+
+contains(MAVLINK_CONF, pixhawk) {
+# Remove the default set - it is included anyway
+INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+# PIXHAWK SPECIAL MESSAGES
+INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
+DEFINES += QGC_USE_PIXHAWK_MESSAGES
+}
+
+contains(MAVLINK_CONF, slugs) {
+# Remove the default set - it is included anyway
+INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+# SLUGS SPECIAL MESSAGES
+INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
+DEFINES += QGC_USE_SLUGS_MESSAGES
+}
+
+contains(MAVLINK_CONF, ualberta) {
+# Remove the default set - it is included anyway
+INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+# UALBERTA SPECIAL MESSAGES
+INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
+DEFINES += QGC_USE_UALBERTA_MESSAGES
+}
 
 # }
 # Include general settings for MAVGround
@@ -75,8 +102,7 @@ DEPENDPATH += . \
     plugins
 INCLUDEPATH += . \
     lib/QMapControl \
-    $$BASEDIR/../mavlink/include \
-    $$BASEDIR/../mavlink/include/common
+    $$BASEDIR/../mavlink/include
 
 # ../mavlink/include \
 # MAVLink/include \
@@ -193,6 +219,12 @@ HEADERS += src/MG.h \
     src/ui/map/MAV2DIcon.h \
     src/ui/QGCRemoteControlView.h \
     src/ui/WaypointGlobalView.h \
+    src/ui/RadioCalibration/RadioCalibrationData.h \
+    src/ui/RadioCalibration/RadioCalibrationWindow.h \
+    src/ui/RadioCalibration/AirfoilServoCalibrator.h \
+    src/ui/RadioCalibration/SwitchCalibrator.h \
+    src/ui/RadioCalibration/CurveCalibrator.h \
+    src/ui/RadioCalibration/AbstractCalibrator.h \
     src/ui/map3D/Q3DWidget.h \
     src/ui/map3D/CheetahModel.h \
     src/ui/map3D/CheetahGL.h \
@@ -266,6 +298,12 @@ SOURCES += src/main.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/MAV2DIcon.cc \
     src/ui/QGCRemoteControlView.cc \
+    src/ui/RadioCalibration/RadioCalibrationWindow.cc \
+    src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
+    src/ui/RadioCalibration/SwitchCalibrator.cc \
+    src/ui/RadioCalibration/CurveCalibrator.cc \
+    src/ui/RadioCalibration/AbstractCalibrator.cc \
+    src/ui/RadioCalibration/RadioCalibrationData.cc \
     src/ui/WaypointGlobalView.cc \
     src/ui/map3D/Q3DWidget.cc \
     src/ui/map3D/CheetahModel.cc \
@@ -279,7 +317,7 @@ SOURCES += src/main.cc \
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
-win32:exists(src/lib/opalrt/OpalApi.h) { 
+win32:exists(src/lib/opalrt/OpalApi.h):exists(C:\OPAL-RT\RT-LAB7.2.4\Common\bin) { 
     message("Building support for Opal-RT")
     LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
         -lOpalApi

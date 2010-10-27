@@ -46,7 +46,7 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
     //qDebug() << "PX RECEIVED" << msg->sysid << msg->compid << msg->msgid;
 
 // Only compile this portion if matching MAVLink packets have been compiled
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
 
     if (message.sysid == uasId)
     {
@@ -169,7 +169,7 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 void PxQuadMAV::sendProcessCommand(int watchdogId, int processId, unsigned int command)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_watchdog_command_t payload;
     payload.target_system_id = uasId;
     payload.watchdog_id = watchdogId;

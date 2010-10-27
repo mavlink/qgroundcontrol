@@ -32,6 +32,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QWidget>
 #include <QVector>
+#include <QPushButton>
+
+#include "RadioCalibration/RadioCalibrationWindow.h"
 
 namespace Ui {
     class QGCRemoteControlView;
@@ -68,6 +71,8 @@ protected:
     QVector<QProgressBar*> progressBars;
     QProgressBar* rssiBar;
     QLabel* nameLabel;
+    QPushButton *calibrate;
+    RadioCalibrationWindow *calibrationWindow;
 
 private:
     Ui::QGCRemoteControlView *ui;
