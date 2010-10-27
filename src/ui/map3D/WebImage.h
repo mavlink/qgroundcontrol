@@ -58,7 +58,8 @@ public:
     void setSourceURL(const QString& url);
 
     const uint8_t* getData(void) const;
-    void setData(const QByteArray& data);
+    bool setData(const QByteArray& data);
+    bool setData(const QString& filename);
 
     int32_t getWidth(void) const;
     int32_t getHeight(void) const;

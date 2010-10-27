@@ -43,8 +43,9 @@ public:
 
     enum ImageryType
     {
-        MAP = 0,
-        SATELLITE = 1
+        GOOGLE_MAP = 0,
+        GOOGLE_SATELLITE = 1,
+        SWISSTOPO_SATELLITE = 2
     };
 
     void setImageryType(ImageryType type);
@@ -100,7 +101,8 @@ private:
     void UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
                  double& latitude, double& longitude) const;
 
-    QString getTileURL(int32_t tileX, int32_t tileY, int32_t zoomLevel) const;
+    QString getTileLocation(int32_t tileX, int32_t tileY, int32_t zoomLevel,
+                            double tileResolution) const;
 
     ImageryType currentImageryType;
 
