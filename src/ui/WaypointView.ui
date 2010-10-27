@@ -254,7 +254,7 @@ QProgressBar::chunk#thrustBar {
       <item>
        <widget class="QDoubleSpinBox" name="zSpinBox">
         <property name="toolTip">
-         <string>Position Z coordinate</string>
+         <string>Position Z coordinate (negative)</string>
         </property>
         <property name="suffix">
          <string> m</string>
@@ -313,8 +313,11 @@ QProgressBar::chunk#thrustBar {
       </item>
       <item>
        <widget class="QSpinBox" name="holdTimeSpinBox">
-        <property name="statusTip">
+        <property name="toolTip">
          <string>Time in milliseconds that the MAV has to stay inside the orbit before advancing</string>
+        </property>
+        <property name="statusTip">
+         <string/>
         </property>
         <property name="suffix">
          <string> ms</string>

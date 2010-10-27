@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "MG.h"
 #include <MAVLinkProtocol.h>
-#include <mavlink.h>
+#include "QGCMAVLink.h"
 
 /**
  * @brief A generic MAVLINK-connected MAV/UAV

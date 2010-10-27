@@ -97,6 +97,36 @@ namespace qmapcontrol
         geometries.clear();
     }
 
+    Geometry* Layer::get_Geometry(int index)
+    {
+        if(geometrySelected)
+        {
+            return geometrySelected;
+        }
+        else
+        {
+            for(int i = 0; i <= geometries.size(); i++)
+            {
+                Geometry *geometry = geometries[i];
+                if(geometry->name() == QString::number(index))
+                {
+                  return geometry;
+                }
+            }
+
+//           foreach(Geometry *geometry, geometries)
+//           {
+
+//               if(geometry->name() == QString::number(index))
+//               {
+//                   return geometry;
+//               }
+
+//           }
+        }
+
+    }
+
     bool Layer::isVisible() const
     {
         return visible;
@@ -323,3 +353,5 @@ namespace qmapcontrol
         mapAdapter = mapadapter;
     }
 }
+
+

@@ -47,9 +47,12 @@ MapWidget::MapWidget(QWidget *parent) :
         zoomLevel(0),
         uasIcons(),
         uasTrails(),
+        mav(NULL),
         m_ui(new Ui::MapWidget)
 {
     m_ui->setupUi(this);
+
+    waypointIsDrag = false;
 
     // Accept focus by clicking or keyboard
     this->setFocusPolicy(Qt::StrongFocus);
@@ -314,8 +317,9 @@ void MapWidget::createPathButtonClicked(bool checked)
         this->setCursor(Qt::PointingHandCursor);
         mc->setMouseMode(qmapcontrol::MapControl::None);
 
+
         // emit signal start to create a Waypoint global
-        emit createGlobalWP(true);
+        emit createGlobalWP(true, mc->currentCoordinate());
 
 //        // Clear the previous WP track
 //        // TODO: Move this to an actual clear track button and add a warning dialog
@@ -337,9 +341,11 @@ void MapWidget::createPathButtonClicked(bool checked)
 }
 
 
-void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate){
+void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate)
+{
 
-  if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked()){
+  if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked())
+    {
     // Create waypoint name
     QString str;
 
@@ -373,17 +379,44 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
   }
 }
 
-void MapWidget::captureGeometryClick(Geometry* geom, QPoint point){
+void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
+{
+    // Create waypoint name
+    QString str;
+
+    str = QString("%1").arg(path->numberOfPoints());
+
+    // create the WP and set everything in the LineString to display the path
+    CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
+    mc->layer("Waypoints")->addGeometry(tempCirclePoint);
+
+    Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
+    wps.append(tempPoint);
+    path->addPoint(tempPoint);
+
+    wpIndex.insert(str,tempPoint);
+
+    // Refresh the screen
+    mc->updateRequestNew();
+
+////    // emit signal mouse was clicked
+//    emit captureMapCoordinateClick(coordinate);
+}
+
+void MapWidget::captureGeometryClick(Geometry* geom, QPoint point)
+{
   Q_UNUSED(geom);
   Q_UNUSED(point);
 
   mc->setMouseMode(qmapcontrol::MapControl::None);
 
-
 }
 
-void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
+void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
+{
   Q_UNUSED(coordinate);
+
+  waypointIsDrag = true;
 
   // Refresh the screen
   mc->updateRequestNew();
@@ -412,6 +445,7 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate){
 
 void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
 {
+    waypointIsDrag = false;
 
     mc->setMouseMode(qmapcontrol::MapControl::Panning);
 
@@ -603,10 +637,35 @@ void MapWidget::clearPath()
     wpIndex.clear();
     mc->updateRequestNew();
 
-    // si el boton de crear wp globales esta activo desactivarlo llamando a su evento clicket
+
     if(createPath->isChecked())
     {
         createPath->click();
     }
 
 }
+
+void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, float lon)
+{
+    if(!waypointIsDrag)
+    {
+        qDebug() <<"indice WP= "<<index <<"\n";
+
+        QPointF coordinate;
+        coordinate.setX(lon);
+        coordinate.setY(lat);
+
+        Point* point2Find;
+        point2Find = wpIndex[QString::number(index)];
+        point2Find->setCoordinate(coordinate);
+
+        point2Find = dynamic_cast <Point*> (mc->layer("Waypoints")->get_Geometry(index));
+        point2Find->setCoordinate(coordinate);
+
+        // Refresh the screen
+        mc->updateRequestNew();
+   }
+
+
+}
+

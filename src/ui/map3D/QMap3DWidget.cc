@@ -64,8 +64,6 @@ QMap3DWidget::QMap3DWidget(QWidget* parent)
 
     buildLayout();
 
-    //font.reset(new FTTextureFont("images/Vera.ttf"));
-
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
 }
@@ -144,6 +142,13 @@ QMap3DWidget::display(void* clientData)
     map3d->displayHandler();
 }
 
+
+
+//void QMap3DWidget::paintEvent(QPaintEvent *event)
+//{
+//    Q_UNUSED(event);
+//}
+
 void
 QMap3DWidget::displayHandler(void)
 {
@@ -165,7 +170,7 @@ QMap3DWidget::displayHandler(void)
         robotYaw = uas->getYaw();
     }
 
-    if (updateLastUnlockedPose)
+    if (updateLastUnlockedPose && uas != NULL)
     {
         lastUnlockedPose.x = robotX;
         lastUnlockedPose.y = robotY;
@@ -186,6 +191,7 @@ QMap3DWidget::displayHandler(void)
     }
 
     // turn on smooth lines
+    makeCurrent();
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glEnable(GL_BLEND);
@@ -203,7 +209,7 @@ QMap3DWidget::displayHandler(void)
 
     if (displayGrid)
     {
-        drawGrid();
+        drawGrid(-camOffset.x, -camOffset.y, robotZ);
     }
 
     if (displayTrail)
@@ -223,7 +229,7 @@ QMap3DWidget::displayHandler(void)
 
     if (displayImagery)
     {
-        drawImagery(robotX, robotY, "32T", true);
+        drawImagery(robotX, robotY, robotZ, "32T", true);
     }
 
     glPopMatrix();
@@ -249,6 +255,8 @@ QMap3DWidget::displayHandler(void)
     glVertex2f(getWindowWidth(), getWindowHeight());
     glEnd();
 
+    glFlush();
+
     std::pair<float,float> mouseWorldCoords =
             getPositionIn3DMode(getMouseX(), getMouseY());
 
@@ -264,9 +272,10 @@ QMap3DWidget::displayHandler(void)
               5,
               5,
               &painter);
+    painter.end();
 }
 
-void QMap3DWidget::drawWaypoints()
+void QMap3DWidget::drawWaypoints(void) const
 {
     if (uas)
     {
@@ -312,24 +321,9 @@ void QMap3DWidget::drawWaypoints()
             glColor3f(1.0f, 0.3f, 0.3f);
             glLineWidth(1.0f);
 
-//            // Make sure quad object exists
-//            static GLUquadricObj* quadObj2;
-//            if(!quadObj2) quadObj2 = gluNewQuadric();
-//            gluQuadricDrawStyle(quadObj2, GLU_LINE);
-//            gluQuadricNormals(quadObj2, GLU_SMOOTH);
-//            /* If we ever changed/used the texture or orientation state
-//               of quadObj, we'd need to change it to the defaults here
-//               with gluQuadricTexture and/or gluQuadricOrientation. */
-//            gluSphere(quadObj2, radius, 10, 10);
-
             wireSphere(radius, 10, 10);
 
             glPopMatrix();
-
-
-
-
-
 
             // DRAW CONNECTING LINE
             // Draw line from last waypoint to this one
@@ -389,9 +383,12 @@ QMap3DWidget::drawLegend(void)
               25,
               getWindowHeight() - 65,
               &painter);
+    painter.end();
 }
 
-void QMap3DWidget::paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter)
+void
+QMap3DWidget::paintText(QString text, QColor color, float fontSize,
+                        float refX, float refY, QPainter* painter) const
 {
     QPen prevPen = painter->pen();
 
@@ -590,7 +587,7 @@ QMap3DWidget::toggleLockCamera(int32_t state)
 }
 
 void
-QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
+QMap3DWidget::drawPlatform(float roll, float pitch, float yaw) const
 {
     glPushMatrix();
 
@@ -627,7 +624,7 @@ QMap3DWidget::drawPlatform(float roll, float pitch, float yaw)
 }
 
 void
-QMap3DWidget::drawGrid(void)
+QMap3DWidget::drawGrid(float x, float y, float z) const
 {
     float radius = 10.0f;
     float resolution = 0.25f;
@@ -648,10 +645,10 @@ QMap3DWidget::drawGrid(void)
         }
 
         glBegin(GL_LINES);
-        glVertex3f(i, -radius, 0.0f);
-        glVertex3f(i, radius, 0.0f);
-        glVertex3f(-radius, i, 0.0f);
-        glVertex3f(radius, i, 0.0f);
+        glVertex3f(x + i, y - radius, -z);
+        glVertex3f(x + i, y + radius, -z);
+        glVertex3f(x - radius, y + i, -z);
+        glVertex3f(x + radius, y + i, -z);
         glEnd();
     }
 
@@ -659,13 +656,13 @@ QMap3DWidget::drawGrid(void)
 }
 
 void
-QMap3DWidget::drawImagery(double originX, double originY, const QString& zone,
-                          bool prefetch)
+QMap3DWidget::drawImagery(double originX, double originY, double originZ,
+                          const QString& zone, bool prefetch) const
 {
     glPushMatrix();
     glEnable(GL_BLEND);
 
-    glTranslatef(0, 0, 0.1);
+    glTranslatef(0, 0, -originZ);
 
     double viewingRadius = cameraPose.distance / 4000.0 * 3000.0;
     if (viewingRadius < 100.0)
@@ -763,7 +760,7 @@ QMap3DWidget::drawTrail(float x, float y, float z)
 }
 
 void
-QMap3DWidget::drawTarget(float x, float y, float z)
+QMap3DWidget::drawTarget(float x, float y, float z) const
 {
     static double radius = 0.2;
     static bool expand = true;

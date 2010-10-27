@@ -1,3 +1,34 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Definition of the class Imagery.
+ *
+ *   @author Lionel Heng <hengli@student.ethz.ch>
+ *
+ */
+
 #include "Imagery.h"
 
 #include <cmath>
@@ -33,45 +64,29 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
                     double viewXOffset, double viewYOffset,
                     const QString& utmZone)
 {
-    double minX = xOrigin + viewXOffset - windowWidth / 2.0 / zoom;
-    double minY = yOrigin + viewYOffset - windowHeight / 2.0 / zoom;
-    double centerX = xOrigin + viewXOffset;
-    double centerY = yOrigin + viewYOffset;
-    double maxX = xOrigin + viewXOffset + windowWidth / 2.0 / zoom;
-    double maxY = yOrigin + viewYOffset + windowHeight / 2.0 / zoom;
-
-    double imageResolution;
+    double tileResolution;
     if (currentImageryType == SATELLITE)
     {
-        imageResolution = 1.0;
-        while (imageResolution * 3.0 / 2.0 < 1.0 / zoom)
+        tileResolution = 1.0;
+        while (tileResolution * 3.0 / 2.0 < 1.0 / zoom)
         {
-            imageResolution *= 2.0;
+            tileResolution *= 2.0;
         }
-        if (imageResolution > 512.0)
+        if (tileResolution > 512.0)
         {
-            imageResolution = 512.0;
+            tileResolution = 512.0;
         }
     }
 
-    int32_t minTileX, minTileY, centerTileX, centerTileY, maxTileX, maxTileY;
+    int32_t minTileX, minTileY, maxTileX, maxTileY;
     int32_t zoomLevel;
-    UTMtoTile(minX, minY, utmZone, imageResolution,
-              minTileX, maxTileY, zoomLevel);
-    UTMtoTile(centerX, centerY, utmZone, imageResolution,
-              centerTileX, centerTileY, zoomLevel);
-    UTMtoTile(maxX, maxY, utmZone, imageResolution,
-              maxTileX, minTileY, zoomLevel);
-    if (maxTileX - minTileX + 1 > 14)
-    {
-        minTileX = centerTileX - 7;
-        maxTileX = centerTileX + 6;
-    }
-    if (maxTileY - minTileY + 1 > 14)
-    {
-        minTileY = centerTileY - 7;
-        maxTileY = centerTileY + 6;
-    }
+
+    tileBounds(tileResolution,
+               xOrigin + viewXOffset - windowWidth / 2.0 / zoom,
+               yOrigin + viewYOffset - windowHeight / 2.0 / zoom,
+               xOrigin + viewXOffset + windowWidth / 2.0 / zoom,
+               yOrigin + viewYOffset + windowHeight / 2.0 / zoom, utmZone,
+               minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
     for (int32_t r = minTileY; r <= maxTileY; ++r)
     {
@@ -90,45 +105,29 @@ Imagery::draw2D(double windowWidth, double windowHeight,
                 double viewXOffset, double viewYOffset,
                 const QString& utmZone)
 {
-    double minX = xOrigin + viewXOffset - windowWidth / 2.0 / zoom * 1.5;
-    double minY = yOrigin + viewYOffset - windowHeight / 2.0 / zoom * 1.5;
-    double centerX = xOrigin + viewXOffset;
-    double centerY = yOrigin + viewYOffset;
-    double maxX = xOrigin + viewXOffset + windowWidth / 2.0 / zoom * 1.5;
-    double maxY = yOrigin + viewYOffset + windowHeight / 2.0 / zoom * 1.5;
-
-    double imageResolution;
+    double tileResolution;
     if (currentImageryType == SATELLITE)
     {
-        imageResolution = 1.0;
-        while (imageResolution * 3.0 / 2.0 < 1.0 / zoom)
+        tileResolution = 1.0;
+        while (tileResolution * 3.0 / 2.0 < 1.0 / zoom)
         {
-            imageResolution *= 2.0;
+            tileResolution *= 2.0;
         }
-        if (imageResolution > 512.0)
+        if (tileResolution > 512.0)
         {
-            imageResolution = 512.0;
+            tileResolution = 512.0;
         }
     }
 
-    int32_t minTileX, minTileY, centerTileX, centerTileY, maxTileX, maxTileY;
+    int32_t minTileX, minTileY, maxTileX, maxTileY;
     int32_t zoomLevel;
-    UTMtoTile(minX, minY, utmZone, imageResolution,
-              minTileX, maxTileY, zoomLevel);
-    UTMtoTile(centerX, centerY, utmZone, imageResolution,
-              centerTileX, centerTileY, zoomLevel);
-    UTMtoTile(maxX, maxY, utmZone, imageResolution,
-              maxTileX, minTileY, zoomLevel);
-    if (maxTileX - minTileX + 1 > 14)
-    {
-        minTileX = centerTileX - 7;
-        maxTileX = centerTileX + 6;
-    }
-    if (maxTileY - minTileY + 1 > 14)
-    {
-        minTileY = centerTileY - 7;
-        maxTileY = centerTileY + 6;
-    }
+
+    tileBounds(tileResolution,
+               xOrigin + viewXOffset - windowWidth / 2.0 / zoom * 1.5,
+               yOrigin + viewYOffset - windowHeight / 2.0 / zoom * 1.5,
+               xOrigin + viewXOffset + windowWidth / 2.0 / zoom * 1.5,
+               yOrigin + viewYOffset + windowHeight / 2.0 / zoom * 1.5, utmZone,
+               minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
     for (int32_t r = minTileY; r <= maxTileY; ++r)
     {
@@ -137,7 +136,7 @@ Imagery::draw2D(double windowWidth, double windowHeight,
             QString tileURL = getTileURL(c, r, zoomLevel);
 
             double x1, y1, x2, y2, x3, y3, x4, y4;
-            imageBounds(c, r, imageResolution, x1, y1, x2, y2, x3, y3, x4, y4);
+            imageBounds(c, r, tileResolution, x1, y1, x2, y2, x3, y3, x4, y4);
 
             TexturePtr t = textureCache->get(tileURL);
             if (!t.isNull())
@@ -152,36 +151,20 @@ Imagery::draw2D(double windowWidth, double windowHeight,
 }
 
 void
-Imagery::prefetch3D(double radius, double imageResolution,
+Imagery::prefetch3D(double radius, double tileResolution,
                     double xOrigin, double yOrigin,
                     double viewXOffset, double viewYOffset,
                     const QString& utmZone)
 {
-    double minX = xOrigin + viewXOffset - radius;
-    double minY = yOrigin + viewYOffset - radius;
-    double centerX = xOrigin + viewXOffset;
-    double centerY = yOrigin + viewYOffset;
-    double maxX = xOrigin + viewXOffset + radius;
-    double maxY = yOrigin + viewYOffset + radius;
-
-    int32_t minTileX, minTileY, centerTileX, centerTileY, maxTileX, maxTileY;
+    int32_t minTileX, minTileY, maxTileX, maxTileY;
     int32_t zoomLevel;
-    UTMtoTile(minX, minY, utmZone, imageResolution,
-              minTileX, maxTileY, zoomLevel);
-    UTMtoTile(centerX, centerY, utmZone, imageResolution,
-              centerTileX, centerTileY, zoomLevel);
-    UTMtoTile(maxX, maxY, utmZone, imageResolution,
-              maxTileX, minTileY, zoomLevel);
-    if (maxTileX - minTileX + 1 > 14)
-    {
-        minTileX = centerTileX - 7;
-        maxTileX = centerTileX + 6;
-    }
-    if (maxTileY - minTileY + 1 > 14)
-    {
-        minTileY = centerTileY - 7;
-        maxTileY = centerTileY + 6;
-    }
+
+    tileBounds(tileResolution,
+               xOrigin + viewXOffset - radius,
+               yOrigin + viewYOffset - radius,
+               xOrigin + viewXOffset + radius,
+               yOrigin + viewYOffset + radius, utmZone,
+               minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
     for (int32_t r = minTileY; r <= maxTileY; ++r)
     {
@@ -195,38 +178,20 @@ Imagery::prefetch3D(double radius, double imageResolution,
 }
 
 void
-Imagery::draw3D(double radius, double imageResolution,
+Imagery::draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
                 double viewXOffset, double viewYOffset,
                 const QString& utmZone)
 {
-
-    double minX = xOrigin + viewXOffset - radius;
-    double minY = yOrigin + viewYOffset - radius;
-    double centerX = xOrigin + viewXOffset;
-    double centerY = yOrigin + viewYOffset;
-    double maxX = xOrigin + viewXOffset + radius;
-    double maxY = yOrigin + viewYOffset + radius;
-
-    int32_t minTileX, minTileY, centerTileX, centerTileY, maxTileX, maxTileY;
+    int32_t minTileX, minTileY, maxTileX, maxTileY;
     int32_t zoomLevel;
-    UTMtoTile(minX, minY, utmZone, imageResolution,
-              minTileX, maxTileY, zoomLevel);
-    UTMtoTile(centerX, centerY, utmZone, imageResolution,
-              centerTileX, centerTileY, zoomLevel);
-    UTMtoTile(maxX, maxY, utmZone, imageResolution,
-              maxTileX, minTileY, zoomLevel);
 
-    if (maxTileX - minTileX + 1 > 14)
-    {
-        minTileX = centerTileX - 7;
-        maxTileX = centerTileX + 6;
-    }
-    if (maxTileY - minTileY + 1 > 14)
-    {
-        minTileY = centerTileY - 7;
-        maxTileY = centerTileY + 6;
-    }
+    tileBounds(tileResolution,
+               xOrigin + viewXOffset - radius,
+               yOrigin + viewYOffset - radius,
+               xOrigin + viewXOffset + radius,
+               yOrigin + viewYOffset + radius, utmZone,
+               minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
     for (int32_t r = minTileY; r <= maxTileY; ++r)
     {
@@ -235,7 +200,7 @@ Imagery::draw3D(double radius, double imageResolution,
             QString tileURL = getTileURL(c, r, zoomLevel);
 
             double x1, y1, x2, y2, x3, y3, x4, y4;
-            imageBounds(c, r, imageResolution, x1, y1, x2, y2, x3, y3, x4, y4);
+            imageBounds(c, r, tileResolution, x1, y1, x2, y2, x3, y3, x4, y4);
 
             TexturePtr t = textureCache->get(tileURL);
 
@@ -259,66 +224,108 @@ Imagery::update(void)
 }
 
 void
-Imagery::imageBounds(int32_t x, int32_t y, double imageResolution,
+Imagery::imageBounds(int32_t tileX, int32_t tileY, double tileResolution,
                      double& x1, double& y1, double& x2, double& y2,
-                     double& x3, double& y3, double& x4, double& y4)
+                     double& x3, double& y3, double& x4, double& y4) const
 {
-    int32_t zoomLevel = MAX_ZOOM_LEVEL - static_cast<int32_t>(rint(log2(imageResolution)));
+    int32_t zoomLevel = MAX_ZOOM_LEVEL - static_cast<int32_t>(rint(log2(tileResolution)));
     int32_t numTiles = static_cast<int32_t>(exp2(static_cast<double>(zoomLevel)));
 
-    double lon1 = 360.0 * (static_cast<double>(x)
-                           / static_cast<double>(numTiles)) - 180;
-    double lon2 = 360.0 * ((static_cast<double>(x + 1))
-                           / static_cast<double>(numTiles)) - 180;
+    double lon1 = tileXToLongitude(tileX, numTiles);
+    double lon2 = tileXToLongitude(tileX + 1, numTiles);
 
-    double lat1 = tileYToLatitude((static_cast<double>(y + 1)
-                                   / static_cast<double>(numTiles))
-                                  * 2.0 * M_PI - M_PI);
-    double lat2 = tileYToLatitude((static_cast<double>(y)
-                                   / static_cast<double>(numTiles))
-                                  * 2.0 * M_PI - M_PI);
+    double lat1 = tileYToLatitude(tileY, numTiles);
+    double lat2 = tileYToLatitude(tileY + 1, numTiles);
 
     QString utmZone;
-    LLtoUTM(lat2, lon1, x1, y1, utmZone);
-    LLtoUTM(lat2, lon2, x2, y2, utmZone);
-    LLtoUTM(lat1, lon2, x3, y3, utmZone);
-    LLtoUTM(lat1, lon1, x4, y4, utmZone);
+    LLtoUTM(lat1, lon1, x1, y1, utmZone);
+    LLtoUTM(lat1, lon2, x2, y2, utmZone);
+    LLtoUTM(lat2, lon2, x3, y3, utmZone);
+    LLtoUTM(lat2, lon1, x4, y4, utmZone);
+}
+
+void
+Imagery::tileBounds(double tileResolution,
+                    double minUtmX, double minUtmY,
+                    double maxUtmX, double maxUtmY, const QString& utmZone,
+                    int32_t& minTileX, int32_t& minTileY,
+                    int32_t& maxTileX, int32_t& maxTileY,
+                    int32_t& zoomLevel) const
+{
+    double centerUtmX = (maxUtmX - minUtmX) / 2.0 + minUtmX;
+    double centerUtmY = (maxUtmY - minUtmY) / 2.0 + minUtmY;
+
+    int32_t centerTileX, centerTileY;
+
+    UTMtoTile(minUtmX, minUtmY, utmZone, tileResolution,
+              minTileX, maxTileY, zoomLevel);
+    UTMtoTile(centerUtmX, centerUtmY, utmZone, tileResolution,
+              centerTileX, centerTileY, zoomLevel);
+    UTMtoTile(maxUtmX, maxUtmY, utmZone, tileResolution,
+              maxTileX, minTileY, zoomLevel);
+
+    if (maxTileX - minTileX + 1 > 14)
+    {
+        minTileX = centerTileX - 7;
+        maxTileX = centerTileX + 6;
+    }
+    if (maxTileY - minTileY + 1 > 14)
+    {
+        minTileY = centerTileY - 7;
+        maxTileY = centerTileY + 6;
+    }
 }
 
 double
-Imagery::tileYToLatitude(double y)
+Imagery::tileXToLongitude(int32_t tileX, int32_t numTiles) const
 {
-    double rad = 2.0 * atan(exp(y)) - M_PI / 2.0;
+    return 360.0 * (static_cast<double>(tileX)
+                    / static_cast<double>(numTiles)) - 180.0;
+}
+
+double
+Imagery::tileYToLatitude(int32_t tileY, int32_t numTiles) const
+{
+    double unnormalizedRad =
+            (static_cast<double>(tileY) / static_cast<double>(numTiles))
+            * 2.0 * M_PI - M_PI;
+    double rad = 2.0 * atan(exp(unnormalizedRad)) - M_PI / 2.0;
     return -rad * 180.0 / M_PI;
 }
 
-double
-Imagery::latitudeToTileY(double latitude)
+int32_t
+Imagery::longitudeToTileX(double longitude, int32_t numTiles) const
+{
+    return static_cast<int32_t>((longitude / 180.0 + 1.0) / 2.0 * numTiles);
+}
+
+int32_t
+Imagery::latitudeToTileY(double latitude, int32_t numTiles) const
 {
     double rad = latitude * M_PI / 180.0;
-    return -log(tan(rad) + 1.0 / cos(rad));
+    double normalizedRad = -log(tan(rad) + 1.0 / cos(rad));
+    return static_cast<int32_t>((normalizedRad + M_PI)
+                                / (2.0 * M_PI) * numTiles);
 }
 
 void
 Imagery::UTMtoTile(double northing, double easting, const QString& utmZone,
-                   double imageResolution, int32_t& tileX, int32_t& tileY,
-                   int32_t& zoomLevel)
+                   double tileResolution, int32_t& tileX, int32_t& tileY,
+                   int32_t& zoomLevel) const
 {
     double latitude, longitude;
 
     UTMtoLL(northing, easting, utmZone, latitude, longitude);
 
-    zoomLevel = MAX_ZOOM_LEVEL - static_cast<int32_t>(rint(log2(imageResolution)));
+    zoomLevel = MAX_ZOOM_LEVEL - static_cast<int32_t>(rint(log2(tileResolution)));
     int32_t numTiles = static_cast<int32_t>(exp2(static_cast<double>(zoomLevel)));
 
-    double x = longitude / 180.0;
-    double y = latitudeToTileY(latitude);
-    tileX = static_cast<int32_t>((x + 1.0) / 2.0 * numTiles);
-    tileY = static_cast<int32_t>((y + M_PI) / (2.0 * M_PI) * numTiles);
+    tileX = longitudeToTileX(longitude, numTiles);
+    tileY = latitudeToTileY(latitude, numTiles);
 }
 
 QChar
-Imagery::UTMLetterDesignator(double latitude)
+Imagery::UTMLetterDesignator(double latitude) const
 {
     // This routine determines the correct UTM letter designator for the given latitude
     // returns 'Z' if latitude is outside the UTM limits of 84N to 80S
@@ -351,8 +358,9 @@ Imagery::UTMLetterDesignator(double latitude)
 }
 
 void
-Imagery::LLtoUTM(const double latitude, const double longitude,
-                 double& utmNorthing, double& utmEasting, QString& utmZone)
+Imagery::LLtoUTM(double latitude, double longitude,
+                 double& utmNorthing, double& utmEasting,
+                 QString& utmZone) const
 {
     // converts lat/long to UTM coords.  Equations from USGS Bulletin 1532
     // East Longitudes are positive, West longitudes are negative.
@@ -432,8 +440,8 @@ Imagery::LLtoUTM(const double latitude, const double longitude,
 }
 
 void
-Imagery::UTMtoLL(const double utmNorthing, const double utmEasting,
-                 const QString& utmZone, double& latitude, double& longitude)
+Imagery::UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
+                 double& latitude, double& longitude) const
 {
     // converts UTM coords to lat/long.  Equations from USGS Bulletin 1532
     // East Longitudes are positive, West longitudes are negative.
@@ -505,19 +513,19 @@ Imagery::UTMtoLL(const double utmNorthing, const double utmEasting,
 }
 
 QString
-Imagery::getTileURL(int32_t x, int32_t y, int32_t zoomLevel)
+Imagery::getTileURL(int32_t tileX, int32_t tileY, int32_t zoomLevel) const
 {
     std::ostringstream oss;
 
     switch (currentImageryType)
     {
     case MAP:
-        oss << "http://mt0.google.com/vt/lyrs=m@120&x=" << x << "&y=" << y
-            << "&z=" << zoomLevel;
+        oss << "http://mt0.google.com/vt/lyrs=m@120&x=" << tileX
+            << "&y=" << tileY << "&z=" << zoomLevel;
         break;
     case SATELLITE:
-        oss << "http://khm.google.com/vt/lbw/lyrs=y&x=" << x << "&y=" << y
-            << "&z=" << zoomLevel;
+        oss << "http://khm.google.com/vt/lbw/lyrs=y&x=" << tileX
+            << "&y=" << tileY << "&z=" << zoomLevel;
         break;
     default:
         {};

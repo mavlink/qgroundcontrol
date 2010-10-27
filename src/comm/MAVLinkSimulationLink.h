@@ -39,7 +39,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QMutex>
 #include <QMap>
 #include <inttypes.h>
-#include <mavlink.h>
+#include "QGCMAVLink.h"
 
 #include "LinkInterface.h"
 

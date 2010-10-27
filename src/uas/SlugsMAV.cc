@@ -53,7 +53,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         }
 
-#ifdef MAVLINK_ENABLED_SLUGS_MESSAGES
+#ifdef MAVLINK_ENABLED_SLUGS
 
     case MAVLINK_MSG_ID_CPU_LOAD:
         {
