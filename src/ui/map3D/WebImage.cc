@@ -31,7 +31,6 @@ This file is part of the QGROUNDCONTROL project
 
 #include "WebImage.h"
 
-#include <QDebug>
 #include <QGLWidget>
 
 WebImage::WebImage()
@@ -99,8 +98,6 @@ WebImage::setData(const QByteArray& data)
     }
     else
     {
-        qDebug() << "# WARNING: cannot load image data for" << sourceURL;
-
         return false;
     }
 }
@@ -121,8 +118,6 @@ WebImage::setData(const QString& filename)
     }
     else
     {
-        qDebug() << "# WARNING: cannot load image data for" << filename;
-
         return false;
     }
 }
