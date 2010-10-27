@@ -55,6 +55,7 @@ public:
 
     static void display(void* clientData);
     void displayHandler(void);
+//    void paintEvent(QPaintEvent *event);
 
     static void mouse(Qt::MouseButton button, MouseState state,
                       int32_t x, int32_t y, void* clientData);
@@ -80,16 +81,16 @@ private slots:
 protected:
     UASInterface* uas;
     void paintText(QString text, QColor color, float fontSize,
-                   float refX, float refY, QPainter* painter);
-    void drawWaypoints();
+                   float refX, float refY, QPainter* painter) const;
+    void drawWaypoints(void) const;
 
 private:
-    void drawPlatform(float roll, float pitch, float yaw);
-    void drawGrid(void);
-    void drawImagery(double originX, double originY, const QString& zone,
-                     bool prefetch);
+    void drawPlatform(float roll, float pitch, float yaw) const;
+    void drawGrid(float x, float y, float z) const;
+    void drawImagery(double originX, double originY, double originZ,
+                     const QString& zone, bool prefetch) const;
     void drawTrail(float x, float y, float z);
-    void drawTarget(float x, float y, float z);
+    void drawTarget(float x, float y, float z) const;
 
     void drawLegend(void);
 

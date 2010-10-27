@@ -33,11 +33,8 @@ This file is part of the QGROUNDCONTROL project
 
 #include <cmath>
 
-//#include <GL/gl.h>
-//#include <GL/glu.h>
-
 static const float KEY_ROTATE_AMOUNT = 5.0f;
-static const float KEY_MOVE_AMOUNT   = 10.0f;
+static const float KEY_MOVE_AMOUNT   = 5.0f;
 static const float KEY_ZOOM_AMOUNT   = 5.0f;
 
 Q3DWidget::Q3DWidget(QWidget* parent)
@@ -474,13 +471,13 @@ Q3DWidget::setDisplayMode3D()
 }
 
 float
-Q3DWidget::r2d(float angle)
+Q3DWidget::r2d(float angle) const
 {
     return angle * 57.295779513082320876f;
 }
 
 float
-Q3DWidget::d2r(float angle)
+Q3DWidget::d2r(float angle) const
 {
     return angle * 0.0174532925199432957692f;
 }
@@ -866,160 +863,173 @@ Q3DWidget::closeEvent(QCloseEvent *)
     // exit application
 }
 
-void Q3DWidget::wireSphere(double radius, int slices, int stacks)
-{
-            static GLUquadricObj* quadObj;
-    // Make sure quad object exists
-    if(!quadObj) quadObj = gluNewQuadric();
-  gluQuadricDrawStyle(quadObj, GLU_LINE);
-  gluQuadricNormals(quadObj, GLU_SMOOTH);
-  /* If we ever changed/used the texture or orientation state
-     of quadObj, we'd need to change it to the defaults here
-     with gluQuadricTexture and/or gluQuadricOrientation. */
-  gluSphere(quadObj, radius, slices, stacks);
-}
-
-void Q3DWidget::solidSphere(double radius, int slices, int stacks)
-{
-            static GLUquadricObj* quadObj;
-    // Make sure quad object exists
-    if(!quadObj) quadObj = gluNewQuadric();
-  gluQuadricDrawStyle(quadObj, GLU_FILL);
-  gluQuadricNormals(quadObj, GLU_SMOOTH);
-  /* If we ever changed/used the texture or orientation state
-     of quadObj, we'd need to change it to the defaults here
-     with gluQuadricTexture and/or gluQuadricOrientation. */
-  gluSphere(quadObj, radius, slices, stacks);
-}
-
-void Q3DWidget::wireCone(double base, double height, int slices, int stacks)
-{
-        static GLUquadricObj* quadObj;
-    // Make sure quad object exists
-    if(!quadObj) quadObj = gluNewQuadric();
-  gluQuadricDrawStyle(quadObj, GLU_LINE);
-  gluQuadricNormals(quadObj, GLU_SMOOTH);
-  /* If we ever changed/used the texture or orientation state
-     of quadObj, we'd need to change it to the defaults here
-     with gluQuadricTexture and/or gluQuadricOrientation. */
-  gluCylinder(quadObj, base, 0.0, height, slices, stacks);
-}
-
-void Q3DWidget::solidCone(double base, double height, int slices, int stacks)
+void
+Q3DWidget::wireSphere(double radius, int slices, int stacks) const
 {
     static GLUquadricObj* quadObj;
     // Make sure quad object exists
-    if(!quadObj) quadObj = gluNewQuadric();
-  gluQuadricDrawStyle(quadObj, GLU_FILL);
-  gluQuadricNormals(quadObj, GLU_SMOOTH);
-  /* If we ever changed/used the texture or orientation state
-     of quadObj, we'd need to change it to the defaults here
-     with gluQuadricTexture and/or gluQuadricOrientation. */
-  gluCylinder(quadObj, base, 0.0, height, slices, stacks);
+    if (!quadObj) quadObj = gluNewQuadric();
+    gluQuadricDrawStyle(quadObj, GLU_LINE);
+    gluQuadricNormals(quadObj, GLU_SMOOTH);
+    /* If we ever changed/used the texture or orientation state
+       of quadObj, we'd need to change it to the defaults here
+       with gluQuadricTexture and/or gluQuadricOrientation. */
+    gluSphere(quadObj, radius, slices, stacks);
 }
 
-void Q3DWidget::drawBox(float size, GLenum type)
+void
+Q3DWidget::solidSphere(double radius, int slices, int stacks) const
 {
-  static GLfloat n[6][3] =
-  {
-    {-1.0, 0.0, 0.0},
-    {0.0, 1.0, 0.0},
-    {1.0, 0.0, 0.0},
-    {0.0, -1.0, 0.0},
-    {0.0, 0.0, 1.0},
-    {0.0, 0.0, -1.0}
-  };
-  static GLint faces[6][4] =
-  {
-    {0, 1, 2, 3},
-    {3, 2, 6, 7},
-    {7, 6, 5, 4},
-    {4, 5, 1, 0},
-    {5, 6, 2, 1},
-    {7, 4, 0, 3}
-  };
-  GLfloat v[8][3];
-  GLint i;
-
-  v[0][0] = v[1][0] = v[2][0] = v[3][0] = -size / 2;
-  v[4][0] = v[5][0] = v[6][0] = v[7][0] = size / 2;
-  v[0][1] = v[1][1] = v[4][1] = v[5][1] = -size / 2;
-  v[2][1] = v[3][1] = v[6][1] = v[7][1] = size / 2;
-  v[0][2] = v[3][2] = v[4][2] = v[7][2] = -size / 2;
-  v[1][2] = v[2][2] = v[5][2] = v[6][2] = size / 2;
-
-  for (i = 5; i >= 0; i--) {
-    glBegin(type);
-    glNormal3fv(&n[i][0]);
-    glVertex3fv(&v[faces[i][0]][0]);
-    glVertex3fv(&v[faces[i][1]][0]);
-    glVertex3fv(&v[faces[i][2]][0]);
-    glVertex3fv(&v[faces[i][3]][0]);
-    glEnd();
-  }
+    static GLUquadricObj* quadObj;
+    // Make sure quad object exists
+    if (!quadObj) quadObj = gluNewQuadric();
+    gluQuadricDrawStyle(quadObj, GLU_FILL);
+    gluQuadricNormals(quadObj, GLU_SMOOTH);
+    /* If we ever changed/used the texture or orientation state
+       of quadObj, we'd need to change it to the defaults here
+       with gluQuadricTexture and/or gluQuadricOrientation. */
+    gluSphere(quadObj, radius, slices, stacks);
 }
 
-void Q3DWidget::wireCube(double size)
+void
+Q3DWidget::wireCone(double base, double height, int slices, int stacks) const
 {
-  drawBox(size, GL_LINE_LOOP);
+    static GLUquadricObj* quadObj;
+    // Make sure quad object exists
+    if (!quadObj) quadObj = gluNewQuadric();
+    gluQuadricDrawStyle(quadObj, GLU_LINE);
+    gluQuadricNormals(quadObj, GLU_SMOOTH);
+    /* If we ever changed/used the texture or orientation state
+       of quadObj, we'd need to change it to the defaults here
+       with gluQuadricTexture and/or gluQuadricOrientation. */
+    gluCylinder(quadObj, base, 0.0, height, slices, stacks);
 }
 
-void Q3DWidget::solidCube(double size)
+void
+Q3DWidget::solidCone(double base, double height, int slices, int stacks) const
 {
-  drawBox(size, GL_QUADS);
+    static GLUquadricObj* quadObj;
+    // Make sure quad object exists
+    if (!quadObj) quadObj = gluNewQuadric();
+    gluQuadricDrawStyle(quadObj, GLU_FILL);
+    gluQuadricNormals(quadObj, GLU_SMOOTH);
+    /* If we ever changed/used the texture or orientation state
+       of quadObj, we'd need to change it to the defaults here
+       with gluQuadricTexture and/or gluQuadricOrientation. */
+    gluCylinder(quadObj, base, 0.0, height, slices, stacks);
 }
 
-void Q3DWidget::doughnut(float r, float R, int nsides, int rings)
+void
+Q3DWidget::drawBox(float size, GLenum type) const
 {
-  int i, j;
-  GLfloat theta, phi, theta1;
-  GLfloat cosTheta, sinTheta;
-  GLfloat cosTheta1, sinTheta1;
-  GLfloat ringDelta, sideDelta;
+    static GLfloat n[6][3] =
+    {
+        {-1.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0},
+        {1.0, 0.0, 0.0},
+        {0.0, -1.0, 0.0},
+        {0.0, 0.0, 1.0},
+        {0.0, 0.0, -1.0}
+    };
+    static GLint faces[6][4] =
+    {
+        {0, 1, 2, 3},
+        {3, 2, 6, 7},
+        {7, 6, 5, 4},
+        {4, 5, 1, 0},
+        {5, 6, 2, 1},
+        {7, 4, 0, 3}
+    };
+    GLfloat v[8][3];
+    GLint i;
 
-  ringDelta = 2.0 * M_PI / rings;
-  sideDelta = 2.0 * M_PI / nsides;
+    v[0][0] = v[1][0] = v[2][0] = v[3][0] = -size / 2;
+    v[4][0] = v[5][0] = v[6][0] = v[7][0] = size / 2;
+    v[0][1] = v[1][1] = v[4][1] = v[5][1] = -size / 2;
+    v[2][1] = v[3][1] = v[6][1] = v[7][1] = size / 2;
+    v[0][2] = v[3][2] = v[4][2] = v[7][2] = -size / 2;
+    v[1][2] = v[2][2] = v[5][2] = v[6][2] = size / 2;
 
-  theta = 0.0;
-  cosTheta = 1.0;
-  sinTheta = 0.0;
-  for (i = rings - 1; i >= 0; i--) {
-    theta1 = theta + ringDelta;
-    cosTheta1 = cos(theta1);
-    sinTheta1 = sin(theta1);
-    glBegin(GL_QUAD_STRIP);
-    phi = 0.0;
-    for (j = nsides; j >= 0; j--) {
-      GLfloat cosPhi, sinPhi, dist;
-
-      phi += sideDelta;
-      cosPhi = cos(phi);
-      sinPhi = sin(phi);
-      dist = R + r * cosPhi;
-
-      glNormal3f(cosTheta1 * cosPhi, -sinTheta1 * cosPhi, sinPhi);
-      glVertex3f(cosTheta1 * dist, -sinTheta1 * dist, r * sinPhi);
-      glNormal3f(cosTheta * cosPhi, -sinTheta * cosPhi, sinPhi);
-      glVertex3f(cosTheta * dist, -sinTheta * dist,  r * sinPhi);
+    for (i = 5; i >= 0; i--)
+    {
+        glBegin(type);
+        glNormal3fv(&n[i][0]);
+        glVertex3fv(&v[faces[i][0]][0]);
+        glVertex3fv(&v[faces[i][1]][0]);
+        glVertex3fv(&v[faces[i][2]][0]);
+        glVertex3fv(&v[faces[i][3]][0]);
+        glEnd();
     }
-    glEnd();
-    theta = theta1;
-    cosTheta = cosTheta1;
-    sinTheta = sinTheta1;
-  }
 }
 
-void Q3DWidget::wireTorus(double innerRadius, double outerRadius,
-  int nsides, int rings)
+void
+Q3DWidget::wireCube(double size) const
 {
-  glPushAttrib(GL_POLYGON_BIT);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  doughnut(innerRadius, outerRadius, nsides, rings);
-  glPopAttrib();
+    drawBox(size, GL_LINE_LOOP);
 }
 
-void Q3DWidget::solidTorus(double innerRadius, double outerRadius,
-  int nsides, int rings)
+void
+Q3DWidget::solidCube(double size) const
 {
-  doughnut(innerRadius, outerRadius, nsides, rings);
+    drawBox(size, GL_QUADS);
+}
+
+void
+Q3DWidget::doughnut(float r, float R, int nsides, int rings) const
+{
+    int i, j;
+    GLfloat theta, phi, theta1;
+    GLfloat cosTheta, sinTheta;
+    GLfloat cosTheta1, sinTheta1;
+    GLfloat ringDelta, sideDelta;
+
+    ringDelta = 2.0 * M_PI / rings;
+    sideDelta = 2.0 * M_PI / nsides;
+
+    theta = 0.0;
+    cosTheta = 1.0;
+    sinTheta = 0.0;
+    for (i = rings - 1; i >= 0; i--)
+    {
+        theta1 = theta + ringDelta;
+        cosTheta1 = cos(theta1);
+        sinTheta1 = sin(theta1);
+        glBegin(GL_QUAD_STRIP);
+        phi = 0.0;
+        for (j = nsides; j >= 0; j--)
+        {
+            GLfloat cosPhi, sinPhi, dist;
+
+            phi += sideDelta;
+            cosPhi = cos(phi);
+            sinPhi = sin(phi);
+            dist = R + r * cosPhi;
+
+            glNormal3f(cosTheta1 * cosPhi, -sinTheta1 * cosPhi, sinPhi);
+            glVertex3f(cosTheta1 * dist, -sinTheta1 * dist, r * sinPhi);
+            glNormal3f(cosTheta * cosPhi, -sinTheta * cosPhi, sinPhi);
+            glVertex3f(cosTheta * dist, -sinTheta * dist,  r * sinPhi);
+        }
+        glEnd();
+        theta = theta1;
+        cosTheta = cosTheta1;
+        sinTheta = sinTheta1;
+    }
+}
+
+void
+Q3DWidget::wireTorus(double innerRadius, double outerRadius,
+                     int nsides, int rings) const
+{
+    glPushAttrib(GL_POLYGON_BIT);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    doughnut(innerRadius, outerRadius, nsides, rings);
+    glPopAttrib();
+}
+
+void
+Q3DWidget::solidTorus(double innerRadius, double outerRadius,
+                      int nsides, int rings) const
+{
+    doughnut(innerRadius, outerRadius, nsides, rings);
 }

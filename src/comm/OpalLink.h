@@ -43,8 +43,7 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkInterface.h"
 #include "LinkManager.h"
 #include "MG.h"
-#include "mavlink.h"
-#include "mavlink_types.h"
+#include "QGCMAVLink.h"
 #include "configuration.h"
 #include "OpalRT.h"
 #include "ParameterList.h"
@@ -153,6 +152,9 @@ protected:
     unsigned short opalInstID;
 
     uint16_t duty2PulseMicros(double duty);
+    uint8_t rescaleNorm(double norm, int ch);
+
+    bool sendRCValues;
 };
 
 #endif // OPALLINK_H

@@ -1,3 +1,34 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Definition of the class WebImageCache.
+ *
+ *   @author Lionel Heng <hengli@student.ethz.ch>
+ *
+ */
+
 #include "WebImageCache.h"
 
 #include <QNetworkReply>
@@ -23,66 +54,68 @@ WebImageCache::WebImageCache(QObject* parent, uint32_t _cacheSize)
 QPair<WebImagePtr, int32_t>
 WebImageCache::lookup(const QString& url)
 {
-    QPair<WebImagePtr, int32_t> p;
+    QPair<WebImagePtr, int32_t> cacheEntry;
+
     for (int32_t i = 0; i < webImages.size(); ++i)
     {
         if (webImages[i]->getState() != WebImage::UNINITIALIZED &&
             webImages[i]->getSourceURL() == url)
         {
-            p.first = webImages[i];
-            p.second = i;
+            cacheEntry.first = webImages[i];
+            cacheEntry.second = i;
             break;
         }
     }
 
-    if (p.first.isNull())
+    if (cacheEntry.first.isNull())
     {
         for (int32_t i = 0; i < webImages.size(); ++i)
         {
             // get uninitialized image
             if (webImages[i]->getState() == WebImage::UNINITIALIZED)
             {
-                p.first = webImages[i];
-                p.second = i;
+                cacheEntry.first = webImages[i];
+                cacheEntry.second = i;
                 break;
             }
             // get oldest image
             else if (webImages[i]->getState() == WebImage::READY &&
-                     (p.first.isNull() ||
-                      p.first->getLastReference() < p.first->getLastReference()))
+                     (cacheEntry.first.isNull() ||
+                      webImages[i]->getLastReference() <
+                      cacheEntry.first->getLastReference()))
             {
-                p.first = webImages[i];
-                p.second = i;
+                cacheEntry.first = webImages[i];
+                cacheEntry.second = i;
             }
         }
 
-        if (p.first.isNull())
+        if (cacheEntry.first.isNull())
         {
             return qMakePair(WebImagePtr(), -1);
         }
         else
         {
-            if (p.first->getState() == WebImage::READY)
+            if (cacheEntry.first->getState() == WebImage::READY)
             {
-                p.first->clear();
+                cacheEntry.first->clear();
             }
-            p.first->setSourceURL(url);
-            p.first->setLastReference(currentReference);
+            cacheEntry.first->setSourceURL(url);
+            cacheEntry.first->setLastReference(currentReference);
             ++currentReference;
-            p.first->setState(WebImage::REQUESTED);
+            cacheEntry.first->setState(WebImage::REQUESTED);
 
             networkManager->get(QNetworkRequest(QUrl(url)));
 
-            return p;
+            return cacheEntry;
         }
     }
     else
     {
-        if (p.first->getState() == WebImage::READY)
+        if (cacheEntry.first->getState() == WebImage::READY)
         {
-            p.first->setLastReference(currentReference);
+            cacheEntry.first->setLastReference(currentReference);
             ++currentReference;
-            return p;
+            return cacheEntry;
         }
         else
         {
@@ -100,7 +133,10 @@ WebImageCache::at(int32_t index) const
 void
 WebImageCache::downloadFinished(QNetworkReply* reply)
 {
-    if (reply->error() != QNetworkReply::NoError) {
+    reply->deleteLater();
+
+    if (reply->error() != QNetworkReply::NoError)
+    {
         return;
     }
     QVariant attribute = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);

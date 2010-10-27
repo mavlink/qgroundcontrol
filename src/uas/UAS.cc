@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
-#include <mavlink.h>
+#include "QGCMAVLink.h"
 
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         uasId(id),
@@ -556,7 +556,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
-#ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
+#ifdef MAVLINK_ENABLED_UALBERTA
         case MAVLINK_MSG_ID_NAV_FILTER_BIAS:
             {
                 mavlink_nav_filter_bias_t bias;
@@ -570,6 +570,41 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "b_w[2]", bias.gyro_2, time);
             }
             break;
+       case MAVLINK_MSG_ID_RADIO_CALIBRATION:
+            {
+                mavlink_radio_calibration_t radioMsg;
+                mavlink_msg_radio_calibration_decode(&message, &radioMsg);
+                QVector<float> aileron;
+                QVector<float> elevator;
+                QVector<float> rudder;
+                QVector<float> gyro;
+                QVector<float> pitch;
+                QVector<float> throttle;
+
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_AILERON_LEN; ++i)
+                    aileron << radioMsg.aileron[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_ELEVATOR_LEN; ++i)
+                    elevator << radioMsg.elevator[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_RUDDER_LEN; ++i)
+                    rudder << radioMsg.rudder[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_GYRO_LEN; ++i)
+                    gyro << radioMsg.gyro[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_PITCH_LEN; ++i)
+                    pitch << radioMsg.pitch[i];
+                for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_THROTTLE_LEN; ++i)
+                    throttle << radioMsg.throttle[i];
+
+                QPointer<RadioCalibrationData> radioData = new RadioCalibrationData(aileron,
+                                                                                    elevator,
+                                                                                    rudder,
+                                                                                    gyro,
+                                                                                    pitch,
+                                                                                    throttle);
+                emit radioCalibrationReceived(radioData);
+                delete radioData;
+            }
+            break;
+
 #endif
         default:
             {
@@ -588,7 +623,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+  #ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_message_t msg;
     mavlink_msg_position_control_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, 0, x, y, z, yaw);
     sendMessage(msg);
@@ -597,7 +632,7 @@ void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 
 void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
   mavlink_message_t msg;
   mavlink_msg_position_control_offset_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw);
   sendMessage(msg);
@@ -827,7 +862,7 @@ void UAS::readParametersFromStorage()
 
 void UAS::enableAllDataTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -853,7 +888,7 @@ void UAS::enableAllDataTransmission(bool enabled)
 
 void UAS::enableRawSensorDataTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -877,7 +912,7 @@ void UAS::enableRawSensorDataTransmission(bool enabled)
 
 void UAS::enableExtendedSystemStatusTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -901,7 +936,7 @@ void UAS::enableExtendedSystemStatusTransmission(bool enabled)
 
 void UAS::enableRCChannelDataTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -920,12 +955,16 @@ void UAS::enableRCChannelDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+#elif defined(MAVLINK_ENABLED_UALBERTA_MESSAGES)
+    mavlink_message_t msg;
+    mavlink_msg_request_rc_channels_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, enabled);
+    sendMessage(msg);
 #endif
 }
 
 void UAS::enableRawControllerDataTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -949,7 +988,7 @@ void UAS::enableRawControllerDataTransmission(bool enabled)
 
 void UAS::enableRawSensorFusionTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -973,7 +1012,7 @@ void UAS::enableRawSensorFusionTransmission(bool enabled)
 
 void UAS::enablePositionTransmission(bool enabled)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -997,7 +1036,7 @@ void UAS::enablePositionTransmission(bool enabled)
 
 void UAS::enableExtra1Transmission(bool enabled)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+  #ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -1021,7 +1060,7 @@ void UAS::enableExtra1Transmission(bool enabled)
 
 void UAS::enableExtra2Transmission(bool enabled)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+  #ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -1045,7 +1084,7 @@ void UAS::enableExtra2Transmission(bool enabled)
 
 void UAS::enableExtra3Transmission(bool enabled)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+  #ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
@@ -1161,7 +1200,7 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
 
 //    if(mode == (int)MAV_MODE_MANUAL)
 //    {
-      #ifdef MAVLINK_ENABLED_PIXHAWK_MESSAGES
+      #ifdef MAVLINK_ENABLED_PIXHAWK
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
         sendMessage(message);
@@ -1191,7 +1230,7 @@ void UAS::receiveButton(int buttonIndex)
 
         break;
     }
-    qDebug() << __FILE__ << __LINE__ << ": Received button clicked signal (button # is: " << buttonIndex << "), UNIMPLEMENTED IN MAVLINK!";
+//    qDebug() << __FILE__ << __LINE__ << ": Received button clicked signal (button # is: " << buttonIndex << "), UNIMPLEMENTED IN MAVLINK!";
 
 }
 

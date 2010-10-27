@@ -41,7 +41,7 @@ namespace OpalRT
       Configuration info for the model
      */
 
-    const unsigned short NUM_OUTPUT_SIGNALS=57;
+    const unsigned short NUM_OUTPUT_SIGNALS=42;
 
     /*  ------------------------------ Outputs ------------------------------
     *
@@ -86,7 +86,7 @@ namespace OpalRT
         B_W_0,
         B_W_1,
         B_W_2,
-        RAW_CHANNEL_1 = 39,
+        RAW_CHANNEL_1 = 24,
         RAW_CHANNEL_2,
         RAW_CHANNEL_3,
         RAW_CHANNEL_4,

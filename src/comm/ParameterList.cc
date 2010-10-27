@@ -32,7 +32,8 @@ using namespace OpalRT;
 
 ParameterList::ParameterList()
     :params(new QMap<int, QMap<QGCParamID, Parameter> >),
-    paramList(new QList<QList<Parameter*> >())
+    paramList(new QList<QList<Parameter*> >()),
+    reqdServoParams(new QStringList())
 {
 
     QDir settingsDir = QDir(qApp->applicationDirPath());
@@ -40,40 +41,20 @@ ParameterList::ParameterList()
         settingsDir.cdUp();
     settingsDir.cd("settings");
 
+    // Enforce a list of parameters which are necessary for flight
+    reqdServoParams->append("AIL_RIGHT_IN");
+    reqdServoParams->append("AIL_CENTER_IN");
+    reqdServoParams->append("AIL_LEFT_IN");
+    reqdServoParams->append("ELE_DOWN_IN");
+    reqdServoParams->append("ELE_CENTER_IN");
+    reqdServoParams->append("ELE_UP_IN");
+    reqdServoParams->append("RUD_LEFT_IN");
+    reqdServoParams->append("RUD_CENTER_IN");
+    reqdServoParams->append("RUD_RIGHT_IN");
+
     QString filename(settingsDir.path() + "/ParameterList.xml");
     if ((QFile::exists(filename)) && open(filename))
     {
-        /* Populate the map with parameter names.  There is no elegant way of doing this so all
-       parameter paths and names must be known at compile time and defined here.
-       Note: This function is written in a way that calls a lot of copy constructors and is
-           therefore not particularly efficient.  However since it is only called once memory
-           and computation time are sacrificed for code clarity when adding and modifying
-           parameters.
-           When defining the path, the trailing slash is necessary
-       */
-        //    Parameter *p;
-        //    /* Component: Navigation Filter */
-        //    p = new Parameter("avionics_src/sm_ampro/NAV_FILT_INIT/",
-        //                            "Value",
-        //                            OpalRT::NAV_ID,
-        //                            QGCParamID("NAV_FILT_INIT"));
-        //    (*params)[OpalRT::NAV_ID].insert(p->getParamID(), *p);
-        //    delete p;
-        //
-        //    p = new Parameter("avionics_src/sm_ampro/Gain/",
-        //                            "Gain",
-        //                            OpalRT::NAV_ID,
-        //                            QGCParamID("TEST_OUTP_GAIN"));
-        //    (*params)[OpalRT::NAV_ID].insert(p->getParamID(), *p);
-        //    delete p;
-        //
-        //    /* Component: Log Facility */
-        //    p = new Parameter("avionics_src/sm_ampro/LOG_FILE_ON/",
-        //                            "Value",
-        //                            OpalRT::LOG_ID,
-        //                            QGCParamID("LOG_FILE_ON"));
-        //    (*params)[OpalRT::LOG_ID].insert(p->getParamID(), *p);
-        //    delete p;
 
         /* Get a list of the available parameters from opal-rt */
         QMap<QString, unsigned short> *opalParams = new QMap<QString, unsigned short>;
@@ -271,6 +252,8 @@ bool ParameterList::open(QString filename)
 
     read(&paramFile);
 
+    paramFile.close();
+
     return true;
 }
 
@@ -336,11 +319,25 @@ void ParameterList::parseBlock(const QDomElement &block)
                                   static_cast<uint8_t>(id),
                                   QGCParamID(e.attribute("QGCParamID")));
                 (*params)[id].insert(p->getParamID(), *p);
+                if (reqdServoParams->contains((QString)p->getParamID()))
+                    reqdServoParams->removeAt(reqdServoParams->indexOf((QString)p->getParamID()));
+
                 delete p;
-            }
+
+
+            }            
             else
             {
-                qDebug() << __FILE__ << ":" << __LINE__ << ": error in xml doc";
+                qDebug() << __FILE__ << ":" << __LINE__ << ": error in xml doc in block" << block.attribute("name");
+            }
+        }
+
+        if (!reqdServoParams->empty())
+        {
+            qDebug() << __FILE__ << __LINE__ << "Missing the following required servo parameters";
+            foreach(QString s, *reqdServoParams)
+            {
+                qDebug() << s;
             }
         }
 
