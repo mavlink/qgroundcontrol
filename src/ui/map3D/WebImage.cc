@@ -83,7 +83,7 @@ WebImage::getData(void) const
     return image->scanLine(0);
 }
 
-void
+bool
 WebImage::setData(const QByteArray& data)
 {
     QImage tempImage;
@@ -94,10 +94,36 @@ WebImage::setData(const QByteArray& data)
             image.reset(new QImage);
         }
         *image = QGLWidget::convertToGLFormat(tempImage);
+
+        return true;
     }
     else
     {
         qDebug() << "# WARNING: cannot load image data for" << sourceURL;
+
+        return false;
+    }
+}
+
+bool
+WebImage::setData(const QString& filename)
+{
+    QImage tempImage;
+    if (tempImage.load(filename))
+    {
+        if (image.isNull())
+        {
+            image.reset(new QImage);
+        }
+        *image = QGLWidget::convertToGLFormat(tempImage);
+
+        return true;
+    }
+    else
+    {
+        qDebug() << "# WARNING: cannot load image data for" << filename;
+
+        return false;
     }
 }
 

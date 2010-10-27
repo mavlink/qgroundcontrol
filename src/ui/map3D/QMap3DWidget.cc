@@ -95,6 +95,7 @@ QMap3DWidget::buildLayout(void)
     imageryComboBox->addItem("None");
     imageryComboBox->addItem("Map (Google)");
     imageryComboBox->addItem("Satellite (Google)");
+    imageryComboBox->addItem("Satellite (Swisstopo)");
 
     QPushButton* recenterButton = new QPushButton(this);
     recenterButton->setText("Recenter Camera");
@@ -536,11 +537,15 @@ QMap3DWidget::showImagery(const QString& text)
     {
         if (text.compare("Map (Google)") == 0)
         {
-            imagery->setImageryType(Imagery::MAP);
+            imagery->setImageryType(Imagery::GOOGLE_MAP);
         }
         else if (text.compare("Satellite (Google)") == 0)
         {
-            imagery->setImageryType(Imagery::SATELLITE);
+            imagery->setImageryType(Imagery::GOOGLE_SATELLITE);
+        }
+        else if (text.compare("Satellite (Swisstopo)") == 0)
+        {
+            imagery->setImageryType(Imagery::SWISSTOPO_SATELLITE);
         }
         displayImagery = true;
     }
@@ -681,6 +686,11 @@ QMap3DWidget::drawImagery(double originX, double originY, double originZ,
     else if (imageryComboBox->currentText().compare("Satellite (Google)") == 0)
     {
         minResolution = 0.5;
+    }
+    else if (imageryComboBox->currentText().compare("Satellite (Swisstopo)") == 0)
+    {
+        minResolution = 0.25;
+        maxResolution = 0.25;
     }
 
     double resolution = minResolution;
