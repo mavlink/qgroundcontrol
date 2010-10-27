@@ -2,7 +2,7 @@
 
 QGroundControl Open Source Ground Control Station
 
-(c) 2009 - 2011 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
 
 This file is part of the QGROUNDCONTROL project
 
@@ -23,32 +23,42 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief MAVLink header file for QGroundControl
- *   @author Lorenz Meier <pixhawk@switched.com>
+ *   @brief Calibration widget for 2 setpoint switch
+ *   @author Bryan Godbolt <godbolt@ualberta.ca>
  */
 
-#ifndef QGCMAVLINK_H
-#define QGCMAVLINK_H
+#ifndef SWITCHCALIBRATOR_H
+#define SWITCHCALIBRATOR_H
 
-#include <mavlink_types.h>
-#include <mavlink.h>
+#include <QWidget>
+#include <QLabel>
+#include <QPushButton>
+#include <QVector>
+#include <QGridLayout>
+#include <QHBoxLayout>
 
-#ifdef QGC_USE_PIXHAWK_MESSAGES
-#include <pixhawk.h>
-#endif
+#include "AbstractCalibrator.h"
 
-#ifdef QGC_USE_SLUGS_MESSAGES
-#include <slugs.h>
-#endif
+/**
+  @brief Calibration widget for 2 setpoint switch
+  @author Bryan Godbolt <godbolt@ece.ualberta.ca>
+  */
+class SwitchCalibrator : public AbstractCalibrator
+{
+Q_OBJECT
+public:
+    explicit SwitchCalibrator(QString title=QString(), QWidget *parent = 0);
 
-#ifdef QGC_USE_UALBERTA_MESSAGES
-#include <ualberta.h>
-#endif
+    void set(const QVector<float> &data);
 
-#ifdef QGC_USE_ARDUPILOT_MESSAGES
-#include <ardupilot.h>
-#endif
+protected slots:
+    void setDefault();
+    void setToggled();
 
+protected:   
+    QLabel *defaultPulseWidth;
+    QLabel *toggledPulseWidth;    
 
-#endif // QGCMAVLINK_H
+};
 
+#endif // SWITCHCALIBRATOR_H

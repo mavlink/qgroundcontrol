@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDir>
 #include <QApplication>
 #include <QtXml>
+#include <QStringList>
 
 #include "mavlink_types.h"
 #include "QGCParamID.h"
@@ -119,6 +120,10 @@ namespace OpalRT
           are made through the map container.
           */
         QList<QList<Parameter*> > *paramList;
+        /**
+          List of parameters which are necessary to control the servos.
+          */
+        QStringList *reqdServoParams;
         /**
           Get the list of available parameters from Opal-RT.
           \param[out] opalParams Map of parameter paths/names to ids which are valid in Opal-RT

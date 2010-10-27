@@ -23,22 +23,10 @@
 #
 #-------------------------------------------------
 
-# Uncomment ONE of these lines to enable the special message set of a project.
-# Several message sets can be also enabled in parallel, as long as function names
-# and message ids do not conflict.
+# Add or remove custom message specs here. The matching mavlink headers are
+# included in the main qgroundcontrol.pro file.
 
-# Remove the default set - it is included anyway
-INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-
-# PIXHAWK SPECIAL MESSAGES
-INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
-DEFINES += QGC_USE_PIXHAWK_MESSAGES
-
-# SLUGS SPECIAL MESSAGES
-INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
-DEFINES += QGC_USE_SLUGS_MESSAGES
-
-# UALBERTA SPECIAL MESSAGES
-INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
-DEFINES += QGC_USE_UALBERTA_MESSAGES
+MAVLINK_CONF += pixhawk \
+                slugs \
+                ualberta
 
