@@ -34,6 +34,11 @@
       SimulinkParameterName="Gain"
       QGCParamID="AIL_KD"
        />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Attitude_Controller/PID_AIL/Angle_Norm/Max_Min_Angle/"
+       SimulinkParameterName="Constant Value"
+       QGCParamID="ANG_AIL_MAX"
+       />
     <!-- Elevator Control Parameters -->
     <Parameter
       SimulinkPath="avionics_src/sm_avionics/Attitude_Controller/PID_ELE/kp/"
@@ -49,6 +54,11 @@
       SimulinkPath="avionics_src/sm_avionics/Attitude_Controller/PID_ELE/kd/"
       SimulinkParameterName="Gain"
       QGCParamID="ELE_KD"
+       />
+    <Parameter
+       SimulinkPath="avionics_src/sm_avionics/Attitude_Controller/PID_ELE/Angle_Norm/Max_Min_Angle/"
+       SimulinkParameterName="Constant Value"
+       QGCParamID="ANG_ELE_MAX"
        />
   </Block>
 
