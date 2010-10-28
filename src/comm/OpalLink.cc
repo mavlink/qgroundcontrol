@@ -41,7 +41,9 @@ OpalLink::OpalLink() :
         componentID(1),
         params(NULL),
         opalInstID(101),
-        sendRCValues(false)
+        sendRCValues(false),
+        sendRawController(false),
+        sendPosition(false)
 {
     start(QThread::LowPriority);
 
@@ -134,13 +136,13 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
                 }
             }
             break;
-        case MAVLINK_MSG_ID_REQUEST_RC_CHANNELS:
-        {
-        	mavlink_request_rc_channels_t rc;
-        	mavlink_msg_request_rc_channels_decode(&msg, &rc);        	
-        	this->sendRCValues = static_cast<bool>(rc.enabled);
-        }
-        break;
+//        case MAVLINK_MSG_ID_REQUEST_RC_CHANNELS:
+//        {
+//        	mavlink_request_rc_channels_t rc;
+//        	mavlink_msg_request_rc_channels_decode(&msg, &rc);
+//        	this->sendRCValues = static_cast<bool>(rc.enabled);
+//        }
+//        break;
 #ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
         case MAVLINK_MSG_ID_RADIO_CALIBRATION:
         {
@@ -217,17 +219,38 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         }
         break;
 #endif
+#ifdef MAVLINK_ENABLED_PIXHAWK
         case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:
         {
             mavlink_request_data_stream_t stream;
             mavlink_msg_request_data_stream_decode(&msg, &stream);
             switch (stream.req_stream_id)
             {
-            case 4:
+            case 0: // All data types
+                break;
+            case 1: // Raw Sensor Data
+                break;
+            case 2: // extended system status
+                break;
+            case 3: // rc channel data
+                sendRCValues = (stream.start_stop == 1?true:false);
+                break;
+            case 4: // raw controller
                 if (stream.start_stop == 1)
                     sendRawController = true;
                 else
                     sendRawController = false;
+                break;
+            case 5: // raw sensor fusion
+                break;
+            case 6: // position
+                sendPosition = (stream.start_stop == 1?true:false);
+                break;
+            case 7: // extra 1
+                break;
+            case 8: // extra 2
+                break;
+            case 9: // extra 3
                 break;
             default:
                 qDebug() << __FILE__ << __LINE__ << "Received Unknown Data Strem Request with ID" << stream.req_stream_id;
@@ -239,6 +262,7 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
                 qDebug() << "OpalLink::writeBytes(): Unknown mavlink packet";
             }
         }
+#endif
     }
 }
 
@@ -311,17 +335,19 @@ void OpalLink::getSignals()
         if (returnVal == EOK )
         {            
             /* Send position info to qgroundcontrol */
-            mavlink_message_t local_position;
-            mavlink_msg_local_position_pack(systemID, componentID, &local_position,
-                                            (*timestep)*1000000,
-                                            values[OpalRT::X_POS],
-                                            values[OpalRT::Y_POS],
-                                            values[OpalRT::Z_POS],
-                                            values[OpalRT::X_VEL],
-                                            values[OpalRT::Y_VEL],
-                                            values[OpalRT::Z_VEL]);
-            receiveMessage(local_position);
-
+            if (sendPosition)
+            {
+                mavlink_message_t local_position;
+                mavlink_msg_local_position_pack(systemID, componentID, &local_position,
+                                                (*timestep)*1000000,
+                                                values[OpalRT::X_POS],
+                                                values[OpalRT::Y_POS],
+                                                values[OpalRT::Z_POS],
+                                                values[OpalRT::X_VEL],
+                                                values[OpalRT::Y_VEL],
+                                                values[OpalRT::Z_VEL]);
+                receiveMessage(local_position);
+            }
             /* send attitude info to qgroundcontrol */
             mavlink_message_t attitude;
             mavlink_msg_attitude_pack(systemID, componentID, &attitude,

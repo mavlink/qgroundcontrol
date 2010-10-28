@@ -157,6 +157,7 @@ protected:
 
     bool sendRCValues;
     bool sendRawController;
+    bool sendPosition;
 };
 
 #endif // OPALLINK_H

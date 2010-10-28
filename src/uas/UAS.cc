@@ -955,10 +955,6 @@ void UAS::enableRCChannelDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#elif defined(MAVLINK_ENABLED_UALBERTA_MESSAGES)
-    mavlink_message_t msg;
-    mavlink_msg_request_rc_channels_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, enabled);
-    sendMessage(msg);
 #endif
 }
 
