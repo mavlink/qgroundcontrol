@@ -143,7 +143,7 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
 //        	this->sendRCValues = static_cast<bool>(rc.enabled);
 //        }
 //        break;
-#ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
+#ifdef MAVLINK_ENABLED_UALBERTA
         case MAVLINK_MSG_ID_RADIO_CALIBRATION:
         {
             mavlink_radio_calibration_t radio;
