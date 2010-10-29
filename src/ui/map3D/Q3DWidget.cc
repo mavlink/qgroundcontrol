@@ -232,7 +232,7 @@ Q3DWidget::userTimer(void)
 {
     if (timerFunc)
     {
-            timerFunc(timerFuncData);
+        timerFunc(timerFuncData);
     }
 }
 
@@ -355,7 +355,6 @@ Q3DWidget::getMouseY(void)
 {
     return mapFromGlobal(cursor().pos()).y();
 }
-
 
 void
 Q3DWidget::rotateCamera(float dx, float dy)
@@ -858,9 +857,12 @@ Q3DWidget::timerEvent(QTimerEvent* event)
 }
 
 void
-Q3DWidget::closeEvent(QCloseEvent *)
+Q3DWidget::closeEvent(QCloseEvent* event)
 {
     // exit application
+    timer.stop();
+
+    event->accept();
 }
 
 void

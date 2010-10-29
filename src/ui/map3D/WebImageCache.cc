@@ -104,7 +104,22 @@ WebImageCache::lookup(const QString& url)
             ++currentReference;
             cacheEntry.first->setState(WebImage::REQUESTED);
 
-            networkManager->get(QNetworkRequest(QUrl(url)));
+            if (url.left(4).compare("http") == 0)
+            {
+                networkManager->get(QNetworkRequest(QUrl(url)));
+            }
+            else
+            {
+                if (cacheEntry.first->setData(url))
+                {
+                    cacheEntry.first->setSyncFlag(true);
+                    cacheEntry.first->setState(WebImage::READY);
+                }
+                else
+                {
+                    cacheEntry.first->setState(WebImage::UNINITIALIZED);
+                }
+            }
 
             return cacheEntry;
         }
