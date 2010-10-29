@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Texture.h"
 
 Texture::Texture()
+    : _is3D(false)
 {
 
 }
@@ -54,9 +55,11 @@ Texture::sync(const WebImagePtr& image)
     state = static_cast<State>(image->getState());
 
     if (image->getState() != WebImage::UNINITIALIZED &&
-        sourceURL != image->getSourceURL())
+        (sourceURL != image->getSourceURL() ||
+         _is3D != image->is3D()))
     {
         sourceURL = image->getSourceURL();
+        _is3D = image->is3D();
     }
 
     if (image->getState() == WebImage::READY && image->getSyncFlag())
@@ -91,7 +94,9 @@ Texture::sync(const WebImagePtr& image)
 
         glBindTexture(GL_TEXTURE_2D, id);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, imageWidth, imageHeight,
-                        GL_RGBA, GL_UNSIGNED_BYTE, image->getData());
+                        GL_RGBA, GL_UNSIGNED_BYTE, image->getImageData());
+
+        heightModel = image->getHeightModel();
     }
 }
 
@@ -140,18 +145,77 @@ Texture::draw(float x1, float y1, float x2, float y2,
     }
 
     glColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_QUADS);
+    if (!_is3D)
+    {
+        glBegin(GL_QUADS);
+        glTexCoord2f(dx, maxV - dy);
+        glVertex3f(x1, y1, 0.0f);
+        glTexCoord2f(maxU - dx, maxV - dy);
+        glVertex3f(x2, y2, 0.0f);
+        glTexCoord2f(maxU - dx, dy);
+        glVertex3f(x3, y3, 0.0f);
+        glTexCoord2f(dx, dy);
+        glVertex3f(x4, y4, 0.0f);
+        glEnd();
+    }
+    else
+    {
+        float scaleX = 1.0f / static_cast<float>(heightModel.size() - 1);
 
-    glTexCoord2f(dx, maxV - dy);
-    glVertex2f(x1, y1);
-    glTexCoord2f(maxU - dx, maxV - dy);
-    glVertex2f(x2, y2);
-    glTexCoord2f(maxU - dx, dy);
-    glVertex2f(x3, y3);
-    glTexCoord2f(dx, dy);
-    glVertex2f(x4, y4);
+        for (int32_t i = 0; i < heightModel.size() - 1; ++i)
+        {
+            float scaleI = scaleX * static_cast<float>(i);
 
-    glEnd();
+            float scaleY =
+                    1.0f / static_cast<float>(heightModel[i].size() - 1);
+
+            float x1i = x1 + scaleI * (x4 - x1);
+            float x1f = x2 + scaleI * (x3 - x2);
+            float x2i = x1i + scaleX * (x4 - x1);
+            float x2f = x1f + scaleX * (x3 - x2);
+
+            for (int32_t j = 0; j < heightModel[i].size() - 1; ++j)
+            {
+                float scaleJ = scaleY * static_cast<float>(j);
+
+                float y1i = y1 + scaleJ * (y2 - y1);
+                float y1f = y4 + scaleJ * (y3 - y4);
+                float y2i = y1i + scaleY * (y2 - y1);
+                float y2f = y1f + scaleY * (y3 - y4);
+
+                float nx1 = x1i + scaleJ * (x1f - x1i);
+                float nx2 = x1i + (scaleJ + scaleY) * (x1f - x1i);
+                float nx3 = x2i + (scaleJ + scaleY) * (x2f - x2i);
+                float nx4  = x2i + scaleJ * (x2f - x2i);
+                float ny1 = y1i + scaleI * (y1f - y1i);
+                float ny2 = y2i + scaleI * (y2f - y2i);
+                float ny3 = y2i + (scaleI + scaleX) * (y2f - y2i);
+                float ny4 = y1i + (scaleI + scaleX) * (y1f - y1i);
+
+                glBegin(GL_QUADS);
+                glTexCoord2f(dx + scaleJ * (maxU - dx * 2.0f),
+                             dy + (1.0f - scaleI) * (maxV - dy * 2.0f));
+                glVertex3f(nx1, ny1, -static_cast<float>(heightModel[i][j]));
+                glTexCoord2f(dx + (scaleJ + scaleY) * (maxU - dx * 2.0f),
+                             dy + (1.0f - scaleI) * (maxV - dy * 2.0f));
+                glVertex3f(nx2, ny2, -static_cast<float>(heightModel[i][j + 1]));
+                glTexCoord2f(dx + (scaleJ + scaleY) * (maxU - dx * 2.0f),
+                             dy + (1.0f - scaleI - scaleX) * (maxV - dy * 2.0f));
+                glVertex3f(nx3, ny3, -static_cast<float>(heightModel[i + 1][j + 1]));
+                glTexCoord2f(dx + scaleJ * (maxU - dx * 2.0f),
+                             dy + (1.0f - scaleI - scaleX) * (maxV - dy * 2.0f));
+                glVertex3f(nx4, ny4, -static_cast<float>(heightModel[i + 1][j]));
+
+                glEnd();
+            }
+        }
+    }
 
     glDisable(GL_TEXTURE_2D);
+}
+
+bool
+Texture::is3D(void) const
+{
+    return _is3D;
 }

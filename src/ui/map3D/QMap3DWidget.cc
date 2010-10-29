@@ -96,6 +96,7 @@ QMap3DWidget::buildLayout(void)
     imageryComboBox->addItem("Map (Google)");
     imageryComboBox->addItem("Satellite (Google)");
     imageryComboBox->addItem("Satellite (Swisstopo)");
+    imageryComboBox->addItem("3D Satellite (Swisstopo)");
 
     QPushButton* recenterButton = new QPushButton(this);
     recenterButton->setText("Recenter Camera");
@@ -547,6 +548,10 @@ QMap3DWidget::showImagery(const QString& text)
         {
             imagery->setImageryType(Imagery::SWISSTOPO_SATELLITE);
         }
+        else if (text.compare("3D Satellite (Swisstopo)") == 0)
+        {
+            imagery->setImageryType(Imagery::SWISSTOPO_SATELLITE_3D);
+        }
         displayImagery = true;
     }
 }
@@ -678,6 +683,7 @@ QMap3DWidget::drawImagery(double originX, double originY, double originZ,
     double minResolution = 0.25;
     double centerResolution = cameraPose.distance / 100.0;
     double maxResolution = 1048576.0;
+    bool useHeightModel = false;
 
     if (imageryComboBox->currentText().compare("Map (Google)") == 0)
     {
@@ -692,6 +698,12 @@ QMap3DWidget::drawImagery(double originX, double originY, double originZ,
         minResolution = 0.25;
         maxResolution = 0.25;
     }
+    else if (imageryComboBox->currentText().compare("3D Satellite (Swisstopo)") == 0)
+    {
+        minResolution = 0.25;
+        maxResolution = 0.25;
+        useHeightModel = true;
+    }
 
     double resolution = minResolution;
     while (resolution * 2.0 < centerResolution)
@@ -704,7 +716,8 @@ QMap3DWidget::drawImagery(double originX, double originY, double originZ,
     }
 
     imagery->draw3D(viewingRadius, resolution, originX, originY,
-                    cameraPose.xOffset, cameraPose.yOffset, zone);
+                    cameraPose.xOffset, cameraPose.yOffset, zone,
+                    useHeightModel);
 
     if (prefetch)
     {
@@ -712,13 +725,15 @@ QMap3DWidget::drawImagery(double originX, double originY, double originZ,
         {
             imagery->prefetch3D(viewingRadius / 2.0, resolution / 2.0,
                                 originX, originY,
-                                cameraPose.xOffset, cameraPose.yOffset, zone);
+                                cameraPose.xOffset, cameraPose.yOffset, zone,
+                                useHeightModel);
         }
         if (resolution * 2.0 <= maxResolution)
         {
             imagery->prefetch3D(viewingRadius * 2.0, resolution * 2.0,
                                 originX, originY,
-                                cameraPose.xOffset, cameraPose.yOffset, zone);
+                                cameraPose.xOffset, cameraPose.yOffset, zone,
+                                useHeightModel);
         }
     }
 

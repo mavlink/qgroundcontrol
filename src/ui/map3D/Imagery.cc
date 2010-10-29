@@ -165,7 +165,7 @@ void
 Imagery::prefetch3D(double radius, double tileResolution,
                     double xOrigin, double yOrigin,
                     double viewXOffset, double viewYOffset,
-                    const QString& utmZone)
+                    const QString& utmZone, bool useHeightModel)
 {
     int32_t minTileX, minTileY, maxTileX, maxTileY;
     int32_t zoomLevel;
@@ -183,7 +183,7 @@ Imagery::prefetch3D(double radius, double tileResolution,
         {
             QString url = getTileLocation(c, r, zoomLevel, tileResolution);
 
-            TexturePtr t = textureCache->get(url);
+            TexturePtr t = textureCache->get(url, useHeightModel);
         }
     }
 }
@@ -192,7 +192,7 @@ void
 Imagery::draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
                 double viewXOffset, double viewYOffset,
-                const QString& utmZone)
+                const QString& utmZone, bool useHeightModel)
 {
     int32_t minTileX, minTileY, maxTileX, maxTileY;
     int32_t zoomLevel;
@@ -213,7 +213,7 @@ Imagery::draw3D(double radius, double tileResolution,
             double x1, y1, x2, y2, x3, y3, x4, y4;
             imageBounds(c, r, tileResolution, x1, y1, x2, y2, x3, y3, x4, y4);
 
-            TexturePtr t = textureCache->get(tileURL);
+            TexturePtr t = textureCache->get(tileURL, useHeightModel);
 
             if (!t.isNull())
             {
@@ -257,7 +257,8 @@ Imagery::imageBounds(int32_t tileX, int32_t tileY, double tileResolution,
         LLtoUTM(lat2, lon2, x3, y3, utmZone);
         LLtoUTM(lat2, lon1, x4, y4, utmZone);
     }
-    else if (currentImageryType == SWISSTOPO_SATELLITE)
+    else if (currentImageryType == SWISSTOPO_SATELLITE ||
+             currentImageryType == SWISSTOPO_SATELLITE_3D)
     {
         double utmMultiplier = tileResolution * 200.0;
         double minX = tileX * utmMultiplier;
@@ -294,7 +295,8 @@ Imagery::tileBounds(double tileResolution,
         UTMtoTile(maxUtmX, maxUtmY, utmZone, tileResolution,
                   maxTileX, minTileY, zoomLevel);
     }
-    else if (currentImageryType == SWISSTOPO_SATELLITE)
+    else if (currentImageryType == SWISSTOPO_SATELLITE ||
+             currentImageryType == SWISSTOPO_SATELLITE_3D)
     {
         double utmMultiplier = tileResolution * 200;
 
@@ -570,7 +572,7 @@ Imagery::getTileLocation(int32_t tileX, int32_t tileY, int32_t zoomLevel,
         oss << "http://khm.google.com/vt/lbw/lyrs=y&x=" << tileX
             << "&y=" << tileY << "&z=" << zoomLevel;
         break;
-    case SWISSTOPO_SATELLITE:
+    case SWISSTOPO_SATELLITE: case SWISSTOPO_SATELLITE_3D:
         oss << "../map/eth_zurich_swissimage_025/200/color/" << tileY
             << "/tile-";
         if (tileResolution < 1.0)
