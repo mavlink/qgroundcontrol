@@ -57,13 +57,17 @@ public:
     const QString& getSourceURL(void) const;
     void setSourceURL(const QString& url);
 
-    const uint8_t* getData(void) const;
+    const uint8_t* getImageData(void) const;
+    const QVector< QVector<int32_t> >& getHeightModel(void) const;
     bool setData(const QByteArray& data);
     bool setData(const QString& filename);
+    bool setData(const QString& imageFilename, const QString& heightFilename);
 
     int32_t getWidth(void) const;
     int32_t getHeight(void) const;
     int32_t getByteCount(void) const;
+
+    bool is3D(void) const;
 
     uint64_t getLastReference(void) const;
     void setLastReference(uint64_t value);
@@ -75,7 +79,9 @@ private:
     State state;
     QString sourceURL;
     QScopedPointer<QImage> image;
+    QVector< QVector<int32_t> > heightModel;
     uint64_t lastReference;
+    bool _is3D;
     bool syncFlag;
 };
 
