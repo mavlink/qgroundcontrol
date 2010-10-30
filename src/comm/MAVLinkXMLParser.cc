@@ -1,24 +1,4 @@
 /*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
 ======================================================================*/
 
 /**
@@ -88,6 +68,7 @@ bool MAVLinkXMLParser::generate()
     // Sanity check variables
     QList<int>* usedMessageIDs = new QList<int>();
     QMap<QString, QString>* usedMessageNames = new QMap<QString, QString>();
+    QMap<QString, QString>* usedEnumNames = new QMap<QString, QString>();
 
     QList< QPair<QString, QString> > cFiles;
     QString lcmStructDefs = "";
@@ -117,6 +98,8 @@ bool MAVLinkXMLParser::generate()
     mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n";
     mainHeader += "\n#include \"../protocol.h\"\n";
     mainHeader += "\n#define MAVLINK_ENABLED_" + pureFileName.toUpper() + "\n\n";
+
+    QString enums;
 
 
     // Run through root children
@@ -168,23 +151,23 @@ bool MAVLinkXMLParser::generate()
 
 
                                 // OLD MODE: MERGE BOTH FILES
-//                                        const QString instanceText(QString::fromUtf8(file.readAll()));
-//                                        includeDoc.setContent(instanceText);
-//                                // Get all messages
-//                                QDomNode in = includeDoc.documentElement().firstChild();
-//                                QDomElement ie = in.toElement();
-//                                if (!ie.isNull())
-//                                {
-//                                    if (ie.tagName() == "messages" || ie.tagName() == "include")
-//                                    {
-//                                        QDomNode ref = n.parentNode().insertAfter(in, n);
-//                                        if (ref.isNull())
-//                                        {
-//                                            emit parseState(QString("<font color=\"red\">ERROR: Inclusion failed: XML syntax error in file %1. Wrong/misspelled XML?\nAbort.</font>").arg(fileName));
-//                                            return false;
-//                                        }
-//                                    }
-//                                }
+                                //                                        const QString instanceText(QString::fromUtf8(file.readAll()));
+                                //                                        includeDoc.setContent(instanceText);
+                                //                                // Get all messages
+                                //                                QDomNode in = includeDoc.documentElement().firstChild();
+                                //                                QDomElement ie = in.toElement();
+                                //                                if (!ie.isNull())
+                                //                                {
+                                //                                    if (ie.tagName() == "messages" || ie.tagName() == "include")
+                                //                                    {
+                                //                                        QDomNode ref = n.parentNode().insertAfter(in, n);
+                                //                                        if (ref.isNull())
+                                //                                        {
+                                //                                            emit parseState(QString("<font color=\"red\">ERROR: Inclusion failed: XML syntax error in file %1. Wrong/misspelled XML?\nAbort.</font>").arg(fileName));
+                                //                                            return false;
+                                //                                        }
+                                //                                    }
+                                //                                }
 
                                 emit parseState(QString("<font color=\"green\">End of inclusion from file: %1</font>").arg(incFileName));
                             }
@@ -196,6 +179,107 @@ bool MAVLinkXMLParser::generate()
                             }
 
                         }
+                        // Handle all enum tags
+                        else if (e.tagName() == "enums")
+                        {
+                            // One down into the enums list
+                            p = n;
+                            n = n.firstChild();
+                            while (!n.isNull())
+                            {
+                                e = n.toElement();
+
+                                QString currEnum;
+                                QString currEnumEnd;
+                                // Comment
+                                QString comment;
+
+                                if(!e.isNull() && e.tagName() == "enum")
+                                {
+                                    // Get enum name
+                                    QString enumName = e.attribute("name", "").toLower();
+                                    if (enumName.size() == 0)
+                                    {
+                                        emit parseState(tr("<font color=\"red\">ERROR: Missing required name=\"\" attribute for tag %2 near line %1\nAbort.</font>").arg(QString::number(e.lineNumber()), e.tagName()));
+                                        return false;
+                                    }
+                                    else
+                                    {
+                                        // Sanity check: Accept only enum names not used previously
+                                        if (usedEnumNames->contains(enumName))
+                                        {
+                                            emit parseState(tr("<font color=\"red\">ERROR: Enum name %1 used twice, second occurence near line %2 of file %3\nAbort.</font>").arg(enumName, QString::number(e.lineNumber()), fileName));
+                                            return false;
+                                        }
+                                        else
+                                        {
+                                            usedEnumNames->insert(enumName, QString::number(e.lineNumber()));
+                                        }
+
+                                        // Everything sane, starting with enum content
+                                        currEnum = "enum " + enumName.toUpper() + "\n{\n";
+                                        currEnumEnd = "};\n\n";
+                                        comment = e.text();
+
+                                        int nextEnumValue = 0;
+
+                                        // Get the message fields
+                                        QDomNode f = e.firstChild();
+                                        while (!f.isNull())
+                                        {
+                                            QDomElement e2 = f.toElement();
+                                            if (!e2.isNull() && e2.tagName() == "entry")
+                                            {
+                                                QString fieldValue = e2.attribute("value", "");
+
+                                                // If value was given, use it, if not, use the enum iterator
+                                                // value. The iterator value gets reset by manual values
+
+                                                QString fieldName = e2.attribute("name", "");
+                                                if (fieldValue.length() == 0)
+                                                {
+                                                    fieldValue = QString::number(nextEnumValue);
+                                                    nextEnumValue++;
+                                                }
+                                                else
+                                                {
+                                                    bool ok;
+                                                    nextEnumValue = fieldValue.toInt(&ok) + 1;
+                                                    if (!ok)
+                                                    {
+                                                        emit parseState(tr("<font color=\"red\">ERROR: Enum entry %1 has not a valid number (%2) in the value field.\nAbort.</font>").arg(fieldName, fieldValue));
+                                                        return false;
+                                                    }
+                                                }
+
+                                                // Add comment of field if there is one
+                                                QString fieldComment;
+                                                if (e2.text().length() > 0)
+                                                {
+                                                     fieldComment = " // " + e2.text();
+                                                }
+                                                currEnum += "\t" + fieldName.toUpper() + "=" + fieldValue + "," + fieldComment + "\n";
+                                            }
+                                            else if(!e.isNull() && e.tagName() == "description")
+                                            {
+                                                comment = e.text() + comment;
+                                            }
+                                            f = f.nextSibling();
+                                        }
+                                    }
+                                    // Add the last parsed enum
+                                    // Remove the last comma, as the last value has none
+                                    int commaPosition = currEnum.lastIndexOf(",");
+                                    currEnum.remove(commaPosition, 1);
+
+                                    enums += "/**" + comment  + "*/\n" + currEnum + currEnumEnd;
+                                } // Element is non-zero and element name is <enum>
+                                n = n.nextSibling();
+                            } // While through <enums>
+                            // One up, back into the <mavlink> structure
+                            n = p;
+                        }
+
                         // Handle all message tags
                         else if (e.tagName() == "messages")
                         {
@@ -338,7 +422,7 @@ bool MAVLinkXMLParser::generate()
                                                     unpackingCode = QString("\n\tmemcpy(r_data, msg->payload%1, sizeof(%2)*%3);\n\treturn sizeof(%2)*%3;").arg(prepends, arrayType, QString::number(arrayLength));
 
                                                     unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, %3* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, arrayType, unpackingCode);
-//                                                    decodeLines += "";
+                                                    //                                                    decodeLines += "";
                                                     prepends += QString("+sizeof(%1)*%2").arg(arrayType, QString::number(arrayLength));
 
                                                 }
@@ -358,7 +442,7 @@ bool MAVLinkXMLParser::generate()
                                                 commentLines += commentEntry.arg(fieldName, fieldText);
 
                                                 //
-//                                                QString unpackingCode;
+                                                //                                                QString unpackingCode;
 
                                                 if (fieldType == "uint8_t" || fieldType == "int8_t")
                                                 {
@@ -438,6 +522,7 @@ bool MAVLinkXMLParser::generate()
                     } // Check if e = NULL
                     n = n.nextSibling();
                 } // While through include and messages
+                // One up - current node = parent
                 n = p;
 
             } // Check if tag = mavlink
@@ -445,7 +530,13 @@ bool MAVLinkXMLParser::generate()
         n = n.nextSibling();
     } // While through root children
 
+    // Add enums to main header
 
+    mainHeader += "// ENUM DEFINITIONS\n\n";
+    mainHeader += enums;
+    mainHeader += "\n";
+
+    mainHeader += "// MESSAGE DEFINITIONS\n\n";
     // Create directory if it doesn't exist, report result in success
     if (!dir.exists()) success = success && dir.mkpath(outputDirName + "/" + messagesDirName);
     for (int i = 0; i < cFiles.size(); i++)
@@ -482,10 +573,10 @@ bool MAVLinkXMLParser::generate()
     mavlinkHeader.close();
 
     // Write C structs / lcm definitions
-//    QFile lcmStructs(outputDirName + "/mavlink.lcm");
-//    ok = lcmStructs.open(QIODevice::WriteOnly | QIODevice::Text);
-//    success = success && ok;
-//    lcmStructs.write(lcmStructDefs.toLatin1());
+    //    QFile lcmStructs(outputDirName + "/mavlink.lcm");
+    //    ok = lcmStructs.open(QIODevice::WriteOnly | QIODevice::Text);
+    //    success = success && ok;
+    //    lcmStructs.write(lcmStructDefs.toLatin1());
 
     return success;
 }
