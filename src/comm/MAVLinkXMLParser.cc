@@ -219,7 +219,6 @@ bool MAVLinkXMLParser::generate()
                                         // Everything sane, starting with enum content
                                         currEnum = "enum " + enumName.toUpper() + "\n{\n";
                                         currEnumEnd = "};\n\n";
-                                        comment = e.text();
 
                                         int nextEnumValue = 0;
 
@@ -260,9 +259,9 @@ bool MAVLinkXMLParser::generate()
                                                 }
                                                 currEnum += "\t" + fieldName.toUpper() + "=" + fieldValue + "," + fieldComment + "\n";
                                             }
-                                            else if(!e.isNull() && e.tagName() == "description")
+                                            else if(!e2.isNull() && e2.tagName() == "description")
                                             {
-                                                comment = e.text() + comment;
+                                                comment = e2.text() + comment;
                                             }
                                             f = f.nextSibling();
                                         }
