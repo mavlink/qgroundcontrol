@@ -178,6 +178,9 @@ void MainWindow::buildWidgets()
     //FIXME: free memory in destructor
     joystick    = new JoystickInput();
 
+    slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
+    slugsDataWidget->setWidget( new SlugsDataSensorView(this));
+
 }
 
 /**
@@ -377,6 +380,8 @@ void MainWindow::connectActions()
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
 
+    // Slugs View
+    connect(ui.actionShow_Slugs_View, SIGNAL(triggered()), this, SLOT(loadSlugsView()));
 
 }
 
@@ -649,11 +654,11 @@ void MainWindow::loadSlugsView()
         debugConsoleDockWidget->show();
     }
 
-    // ONBOARD PARAMETERS
-    if (parametersDockWidget)
+    // Slugs Data View
+    if (slugsDataWidget)
     {
-        addDockWidget(Qt::RightDockWidgetArea, parametersDockWidget);
-        parametersDockWidget->show();
+        addDockWidget(Qt::RightDockWidgetArea, slugsDataWidget);
+        slugsDataWidget->show();
     }
 
     this->show();
