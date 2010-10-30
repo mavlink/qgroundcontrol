@@ -272,7 +272,7 @@ bool MAVLinkXMLParser::generate()
                                     int commaPosition = currEnum.lastIndexOf(",");
                                     currEnum.remove(commaPosition, 1);
 
-                                    enums += "/**" + comment  + "*/\n" + currEnum + currEnumEnd;
+                                    enums += "/** " + comment  + " */\n" + currEnum + currEnumEnd;
                                 } // Element is non-zero and element name is <enum>
                                 n = n.nextSibling();
                             } // While through <enums>
