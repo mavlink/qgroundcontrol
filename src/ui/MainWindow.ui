@@ -322,7 +322,7 @@
   <action name="actionShow_Slugs_View">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
+     <normaloff>:/images/contrib/slugs.png</normaloff>:/images/contrib/slugs.png</iconset>
    </property>
    <property name="text">
     <string>Show Slugs View</string>
