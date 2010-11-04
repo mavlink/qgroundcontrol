@@ -29,6 +29,8 @@ SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
         UAS(mavlink, id)//,
         // Place other initializers here
 {
+
+
 }
 
 /**
@@ -64,6 +66,8 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, tr("SensorDSC Load"), cpu_load.sensLoad, time);
                 emit valueChanged(uasId, tr("ControlDSC Load"), cpu_load.ctrlLoad, time);
                 emit valueChanged(uasId, tr("Battery Volt"), cpu_load.batVolt, time);
+
+                emit newCpuLoad (uasId, &cpu_load);
 
             break;
         }

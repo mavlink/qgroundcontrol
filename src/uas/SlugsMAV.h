@@ -25,6 +25,7 @@ This file is part of the QGROUNDCONTROL project
 #define SLUGSMAV_H
 
 #include "UAS.h"
+#include "mavlink.h"
 
 class SlugsMAV : public UAS
 {
