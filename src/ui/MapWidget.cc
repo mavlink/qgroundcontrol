@@ -340,9 +340,18 @@ void MapWidget::createPathButtonClicked(bool checked)
 
 }
 
+/**
+ * Captures a click on the map and if in create WP path mode, it adds the WP on MouseButtonRelease
+ *
+ * @param event The mouse event
+ * @param coordinate The coordinate in which it occured the mouse event
+ * @note  This slot is connected to the mouseEventCoordinate of the QMapControl object
+ */
 
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate)
 {
+
+  qDebug() << mc->mouseMode();
 
   if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked())
     {
@@ -403,6 +412,7 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
 //    emit captureMapCoordinateClick(coordinate);
 }
 
+
 void MapWidget::captureGeometryClick(Geometry* geom, QPoint point)
 {
   Q_UNUSED(geom);
@@ -414,7 +424,7 @@ void MapWidget::captureGeometryClick(Geometry* geom, QPoint point)
 
 void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
 {
-  Q_UNUSED(coordinate);
+
 
   waypointIsDrag = true;
 
@@ -445,13 +455,15 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
 
 void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
 {
+
+  // TODO: Investigate why when creating the waypoint path this slot is being called
+
+  // Only change the mouse mode back to panning when not creating a WP path
+  if (!createPath->isChecked()){
     waypointIsDrag = false;
-
     mc->setMouseMode(qmapcontrol::MapControl::Panning);
+  }
 
-//  qDebug() << geom->name();
-//  qDebug() << geom->GeometryType;
-//  qDebug() << point;
 }
 
 MapWidget::~MapWidget()

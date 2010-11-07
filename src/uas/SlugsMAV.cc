@@ -67,7 +67,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, tr("ControlDSC Load"), cpu_load.ctrlLoad, time);
                 emit valueChanged(uasId, tr("Battery Volt"), cpu_load.batVolt, time);
 
-                emit newCpuLoad (uasId, &cpu_load);
+                //emit newCpuLoad (uasId, &cpu_load);
 
             break;
         }
