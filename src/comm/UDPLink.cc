@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UDPLink.h"
 #include "LinkManager.h"
 #include "MG.h"
-#include <netinet/in.h>
+//#include <netinet/in.h>
 
 UDPLink::UDPLink(QHostAddress host, quint16 port)
 {
