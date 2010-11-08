@@ -113,6 +113,8 @@ void SlugsDataSensorView::refresh()
             ui->m_SlugsGyBiases_textEdit->setText(QString::number(Gyb, 'f', 4));
             ui->m_SlugsGzBiases_textEdit->setText(QString::number(Gzb, 'f', 4));
 
+
+
     }
 
 }
