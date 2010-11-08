@@ -75,10 +75,35 @@ public slots:
     void refresh();
 
 
-    void slugLocalPositionChanged(UASInterface* uasTemp,double x,double y,double z,quint64 time);
-    void slugSpeedLocalPositionChanged(UASInterface* uasTemp,double vx,double vy,double vz,quint64 time);
-    void slugAttitudeChanged(UASInterface* uasTemp,double slugroll,double slugpitch,double slugyaw, quint64 time);
-    void slugsSensorBiasAcelerometerChanged(UASInterface* uasTemp, double axb, double ayb, double azb, quint64 time);
+
+
+
+    void slugLocalPositionChanged(UASInterface* uasTemp,
+                                  double x,
+                                  double y,
+                                  double z,
+                                  quint64 time);
+
+    void slugSpeedLocalPositionChanged(UASInterface* uasTemp,
+                                       double vx,
+                                       double vy,
+                                       double vz,
+                                       quint64 time);
+
+    void slugAttitudeChanged(UASInterface* uasTemp,
+                             double slugroll,
+                             double slugpitch,
+                             double slugyaw,
+                             quint64 time);
+
+    void slugsSensorBiasChanged(UASInterface* uasTemp,
+                                            double axb,
+                                            double ayb,
+                                            double azb,
+                                            double gxb,
+                                            double gyb,
+                                            double gzb,
+                                            quint64 time);
 
 protected:
     QTimer* updateTimer;
@@ -106,12 +131,14 @@ protected:
      double Axb;
      double Ayb;
      double Azb;
-     quint64 TimeActualAcel;
+
      //Gyro
      double Gxb;
      double Gyb;
      double Gzb;
-      quint64 TimeActualGyro;
+     quint64 TimeActualBias;
+
+     //
 
 
 
