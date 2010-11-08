@@ -167,6 +167,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             break;
         }
+
 #endif
 
     default:
