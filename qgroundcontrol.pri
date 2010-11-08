@@ -157,10 +157,10 @@ linux-g++-64 {
 }
 
 
-# Windows (32bit/64bit)
+# Windows (32bit)
 win32 { 
 
-    message(Building for Windows Platform (32/64bit))
+    message(Building for Windows Platform (32bit))
     
     # Special settings for debug
     #CONFIG += CONSOLE
@@ -185,5 +185,31 @@ win32 {
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 }
 
+# Windows (64bit)
+win64 {
 
+    message(Building for Windows Platform (64bit))
+
+    # Special settings for debug
+    #CONFIG += CONSOLE
+
+    INCLUDEPATH += $$BASEDIR\lib\sdl\include \
+                   $$BASEDIR\lib\opal\include #\ #\
+                   #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
+
+    LIBS += -L$$BASEDIR\lib\sdl\win32 \
+             -lmingw32 -lSDLmain -lSDL -mwindows
+
+
+
+    debug {
+        DESTDIR = $$BASEDIR/bin
+    }
+
+    release {
+        DESTDIR = $$BASEDIR/bin
+    }
+
+    RC_FILE = $$BASEDIR/qgroundcontrol.rc
+}
 
