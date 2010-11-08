@@ -107,12 +107,14 @@ protected:
 
   protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
-    void createWaypointGraphAtMap (const QPointF coordinate);
-    void createPathButtonClicked(bool checked);
     void captureGeometryClick(Geometry*, QPoint);
-    void mapproviderSelected(QAction* action);
     void captureGeometryDrag(Geometry* geom, QPointF coordinate);
     void captureGeometryEndDrag(Geometry* geom, QPointF coordinate);
+
+    void createPathButtonClicked(bool checked);
+
+    void createWaypointGraphAtMap (const QPointF coordinate);
+    void mapproviderSelected(QAction* action);
 
 
 
