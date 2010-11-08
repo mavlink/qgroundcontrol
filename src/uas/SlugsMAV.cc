@@ -1,26 +1,3 @@
-/*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
-======================================================================*/
-
 #include "SlugsMAV.h"
 
 #include <QDebug>
@@ -29,8 +6,6 @@ SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
         UAS(mavlink, id)//,
         // Place other initializers here
 {
-
-
 }
 
 /**
@@ -55,7 +30,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         }
 
-#ifdef MAVLINK_ENABLED_SLUGS
+#ifdef MAVLINK_ENABLED_SLUGS_MESSAGES_QGC
 
     case MAVLINK_MSG_ID_CPU_LOAD:
         {
@@ -67,7 +42,11 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, tr("ControlDSC Load"), cpu_load.ctrlLoad, time);
                 emit valueChanged(uasId, tr("Battery Volt"), cpu_load.batVolt, time);
 
-                emit newCpuLoad (uasId, &cpu_load);
+                emit slugsCPULoad(uasId,
+                                  cpu_load.sensLoad,
+                                  cpu_load.ctrlLoad,
+                                  cpu_load.batVolt,
+                                  time);
 
             break;
         }
@@ -79,6 +58,12 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, tr("Dynamic Pressure"), air_data.dynamicPressure,time);
                 emit valueChanged(uasId, tr("Static Pressure"),air_data.staticPressure, time);
                 emit valueChanged(uasId, tr("Temp"),air_data.temperature,time);
+
+                emit slugsAirData(uasId,
+                                  air_data.dynamicPressure,
+                                  air_data.staticPressure,
+                                  air_data.temperature,
+                                  time);
 
             break;
         }
@@ -94,6 +79,16 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId,tr("Gy Bias"),sensor_bias.gyBias,time);
                 emit valueChanged(uasId,tr("Gz Bias"),sensor_bias.gzBias,time);
 
+                emit slugsSensorBias(uasId,
+                                     sensor_bias.axBias,
+                                     sensor_bias.ayBias,
+                                     sensor_bias.azBias,
+                                     sensor_bias.gxBias,
+                                     sensor_bias.gyBias,
+                                     sensor_bias.gzBias,
+                                     time);
+
+
             break;
         }
     case MAVLINK_MSG_ID_DIAGNOSTIC:
@@ -108,6 +103,14 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId,tr("Diag S2"),diagnostic.diagSh2,time);
                 emit valueChanged(uasId,tr("Diag S3"),diagnostic.diagSh3,time);
 
+                emit slugsDiagnostic(uasId,
+                                     diagnostic.diagFl1,
+                                     diagnostic.diagFl2,
+                                     diagnostic.diagFl3,
+                                     diagnostic.diagSh1,
+                                     diagnostic.diagSh2,
+                                     diagnostic.diagSh3);
+
             break;
         }
     case MAVLINK_MSG_ID_PILOT_CONSOLE:
@@ -120,6 +123,15 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId,"dra",pilot.dra,time);
                 emit valueChanged(uasId,"dr",pilot.dr,time);
                 emit valueChanged(uasId,"de",pilot.de,time);
+
+                emit slugsPilotConsolePWM(uasId,
+                                          pilot.dt,
+                                          pilot.dla,
+                                          pilot.dra,
+                                          pilot.dr,
+                                          pilot.de,
+                                          time);
+
 
             break;
         }
@@ -138,6 +150,19 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId,"drf_c",pwm.drf_c,time);
                 emit valueChanged(uasId,"da1_c",pwm.aux1,time);
                 emit valueChanged(uasId,"da2_c",pwm.aux2,time);
+
+                emit slugsPWM(uasId,
+                              pwm.dt_c,
+                              pwm.dla_c,
+                              pwm.dra_c,
+                              pwm.dr_c,
+                              pwm.dle_c,
+                              pwm.dre_c,
+                              pwm.dlf_c,
+                              pwm.drf_c,
+                              pwm.aux1,
+                              pwm.aux2,
+                              time);
 
 
             break;
