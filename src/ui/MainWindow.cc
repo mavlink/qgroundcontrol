@@ -181,6 +181,7 @@ void MainWindow::buildWidgets()
     slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
     slugsDataWidget->setWidget( new SlugsDataSensorView(this));
 
+
 }
 
 /**
@@ -540,7 +541,17 @@ void MainWindow::UASCreated(UASInterface* uas)
         PxQuadMAV* mav = dynamic_cast<PxQuadMAV*>(uas);
         if (mav) loadPixhawkView();
         SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
-        if (mav2) loadSlugsView();
+        if (mav2)
+        {
+            SlugsDataSensorView* slugDataView = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+            if(slugDataView)
+            {
+                slugDataView->addUAS(uas);
+            }
+            loadSlugsView();
+        }
+
+
 
     }
 }
