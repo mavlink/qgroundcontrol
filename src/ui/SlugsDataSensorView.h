@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QWidget>
 
 #include "UASInterface.h"
+#include "SlugsMAV.h"
 
 namespace Ui {
     class SlugsDataSensorView;
@@ -77,25 +78,41 @@ public slots:
 
 
 
-
+    /**
+         * @brief Adds the UAS for data display
+         *
+         * Adds the UAS and makes all the correct connections for data display on the Widgets
+    */
     void slugLocalPositionChanged(UASInterface* uasTemp,
                                   double x,
                                   double y,
                                   double z,
                                   quint64 time);
-
+    /**
+         * @brief Adds the UAS for data display
+         *
+         * Adds the UAS and makes all the correct connections for data display on the Widgets
+    */
     void slugSpeedLocalPositionChanged(UASInterface* uasTemp,
                                        double vx,
                                        double vy,
                                        double vz,
                                        quint64 time);
-
+    /**
+         * @brief Adds the UAS for data display
+         *
+         * Adds the UAS and makes all the correct connections for data display on the Widgets
+    */
     void slugAttitudeChanged(UASInterface* uasTemp,
                              double slugroll,
                              double slugpitch,
                              double slugyaw,
                              quint64 time);
-
+    /**
+         * @brief Adds the UAS for data display
+         *
+         * Adds the UAS and makes all the correct connections for data display on the Widgets
+    */
     void slugsSensorBiasChanged(UASInterface* uasTemp,
                                             double axb,
                                             double ayb,
@@ -104,6 +121,19 @@ public slots:
                                             double gyb,
                                             double gzb,
                                             quint64 time);
+    /**
+         * @brief Adds the UAS for data display
+         *
+         * Adds the UAS and makes all the correct connections for data display on the Widgets
+    */
+//    void slugsDiagnosticMessageChanged(UASInterface* uasTemp,
+//                                       double diagfl1,
+//                                       double diagfl2,
+//                                       double diagfl3,
+//                                       int16_t diagsh1,
+//                                       int16_t diagsh2,
+//                                       int16_t diagsh3,
+//                                       quint64 time);
 
 protected:
     QTimer* updateTimer;
@@ -138,7 +168,14 @@ protected:
      double Gzb;
      quint64 TimeActualBias;
 
-     //
+     //Diagnostic
+     double diagFl1;
+     double diagFl2;
+     double diagFl3;
+     int16_t diagSh1;
+     int16_t diagSh2;
+     int16_t diagSh3;
+     quint64 timeDiagnostic;
 
 
 
