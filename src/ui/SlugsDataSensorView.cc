@@ -2,6 +2,7 @@
 #include "ui_SlugsDataSensorView.h"
 
 #include <UASManager.h>
+#include "SlugsMAV.h"
 
 SlugsDataSensorView::SlugsDataSensorView(QWidget *parent) :
     QWidget(parent),
@@ -62,12 +63,15 @@ SlugsDataSensorView::~SlugsDataSensorView()
 
 void SlugsDataSensorView::addUAS(UASInterface* uas)
 {
-    if (uas != NULL)
+    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(uas);
+
+    if (slugsMav != NULL)
     {
-        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugLocalPositionChange(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugSpeedLocalPositionChanged(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugAttitudeChanged(UASInterface*,double,double,double,quint64)));
-        connect(uas, SIGNAL(slugsSensorBias(UASInterface*,double,double,double,double,double,double,quint64)), this, SLOT(slugsSensorBiasAcelerometerChanged(UASInterface*,double,double,double,quint64)));
+        connect(slugsMav, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugLocalPositionChange(UASInterface*,double,double,double,quint64)));
+        connect(slugsMav, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugSpeedLocalPositionChanged(UASInterface*,double,double,double,quint64)));
+        connect(slugsMav, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugAttitudeChanged(UASInterface*,double,double,double,quint64)));
+        connect(slugsMav, SIGNAL(slugsSensorBias(UASInterface*,double,double,double,double,double,double,quint64)), this, SLOT(slugsSensorBiasAcelerometerChanged(UASInterface*,double,double,double,quint64)));
+
 
         // Set this UAS as active if it is the first one
         if(activeUAS == 0)
@@ -112,6 +116,8 @@ void SlugsDataSensorView::refresh()
             ui->m_SlugsGxBiases_textEdit->setText(QString::number(Gxb, 'f', 4));
             ui->m_SlugsGyBiases_textEdit->setText(QString::number(Gyb, 'f', 4));
             ui->m_SlugsGzBiases_textEdit->setText(QString::number(Gzb, 'f', 4));
+
+
 
 
 
