@@ -126,14 +126,14 @@ public slots:
          *
          * Adds the UAS and makes all the correct connections for data display on the Widgets
     */
-    void slugsDiagnosticMessageChanged(UASInterface* uasTemp,
-                                       double diagfl1,
-                                       double diagfl2,
-                                       double diagfl3,
-                                       int16_t diagsh1,
-                                       int16_t diagsh2,
-                                       int16_t diagsh3,
-                                       quint64 time);
+//    void slugsDiagnosticMessageChanged(UASInterface* uasTemp,
+//                                       double diagfl1,
+//                                       double diagfl2,
+//                                       double diagfl3,
+//                                       int16_t diagsh1,
+//                                       int16_t diagsh2,
+//                                       int16_t diagsh3,
+//                                       quint64 time);
 
 protected:
     QTimer* updateTimer;

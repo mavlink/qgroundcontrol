@@ -32,6 +32,7 @@
 # include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
 # Include bundled version if necessary
 
+
 include(lib/QMapControl/QMapControl.pri)
 
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")

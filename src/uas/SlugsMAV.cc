@@ -30,7 +30,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         }
 
-#ifdef MAVLINK_ENABLED_SLUGS_MESSAGES_QGC
+#ifdef MAVLINK_ENABLED_SLUGS
 
     case MAVLINK_MSG_ID_CPU_LOAD:
         {
@@ -42,11 +42,11 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, tr("ControlDSC Load"), cpu_load.ctrlLoad, time);
                 emit valueChanged(uasId, tr("Battery Volt"), cpu_load.batVolt, time);
 
-                emit slugsCPULoad(uasId,
-                                  cpu_load.sensLoad,
-                                  cpu_load.ctrlLoad,
-                                  cpu_load.batVolt,
-                                  time);
+//                emit slugsCPULoad(uasId,
+//                                  cpu_load.sensLoad,
+//                                  cpu_load.ctrlLoad,
+//                                  cpu_load.batVolt,
+//                                  0);
 
             break;
         }
@@ -59,11 +59,11 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, tr("Static Pressure"),air_data.staticPressure, time);
                 emit valueChanged(uasId, tr("Temp"),air_data.temperature,time);
 
-                emit slugsAirData(uasId,
-                                  air_data.dynamicPressure,
-                                  air_data.staticPressure,
-                                  air_data.temperature,
-                                  time);
+//                emit slugsAirData(uasId,
+//                                  air_data.dynamicPressure,
+//                                  air_data.staticPressure,
+//                                  air_data.temperature,
+//                                  time);
 
             break;
         }
@@ -79,14 +79,15 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId,tr("Gy Bias"),sensor_bias.gyBias,time);
                 emit valueChanged(uasId,tr("Gz Bias"),sensor_bias.gzBias,time);
 
-                emit slugsSensorBias(uasId,
+                emit slugsSensorBias(this,
                                      sensor_bias.axBias,
                                      sensor_bias.ayBias,
                                      sensor_bias.azBias,
                                      sensor_bias.gxBias,
                                      sensor_bias.gyBias,
                                      sensor_bias.gzBias,
-                                     time);
+                                     0);
+                qDebug()<<"Entro";
 
 
             break;
@@ -103,13 +104,14 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId,tr("Diag S2"),diagnostic.diagSh2,time);
                 emit valueChanged(uasId,tr("Diag S3"),diagnostic.diagSh3,time);
 
-                emit slugsDiagnostic(uasId,
-                                     diagnostic.diagFl1,
-                                     diagnostic.diagFl2,
-                                     diagnostic.diagFl3,
-                                     diagnostic.diagSh1,
-                                     diagnostic.diagSh2,
-                                     diagnostic.diagSh3);
+//                emit slugsDiagnostic(uasId,
+//                                     diagnostic.diagFl1,
+//                                     diagnostic.diagFl2,
+//                                     diagnostic.diagFl3,
+//                                     diagnostic.diagSh1,
+//                                     diagnostic.diagSh2,
+//                                     diagnostic.diagSh3,
+//                                     0);
 
             break;
         }
@@ -124,13 +126,13 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId,"dr",pilot.dr,time);
                 emit valueChanged(uasId,"de",pilot.de,time);
 
-                emit slugsPilotConsolePWM(uasId,
-                                          pilot.dt,
-                                          pilot.dla,
-                                          pilot.dra,
-                                          pilot.dr,
-                                          pilot.de,
-                                          time);
+//                emit slugsPilotConsolePWM(uasId,
+//                                          pilot.dt,
+//                                          pilot.dla,
+//                                          pilot.dra,
+//                                          pilot.dr,
+//                                          pilot.de,
+//                                          0);
 
 
             break;
@@ -151,18 +153,18 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId,"da1_c",pwm.aux1,time);
                 emit valueChanged(uasId,"da2_c",pwm.aux2,time);
 
-                emit slugsPWM(uasId,
-                              pwm.dt_c,
-                              pwm.dla_c,
-                              pwm.dra_c,
-                              pwm.dr_c,
-                              pwm.dle_c,
-                              pwm.dre_c,
-                              pwm.dlf_c,
-                              pwm.drf_c,
-                              pwm.aux1,
-                              pwm.aux2,
-                              time);
+//                emit slugsPWM(uasId,
+//                              pwm.dt_c,
+//                              pwm.dla_c,
+//                              pwm.dra_c,
+//                              pwm.dr_c,
+//                              pwm.dle_c,
+//                              pwm.dre_c,
+//                              pwm.dlf_c,
+//                              pwm.drf_c,
+//                              pwm.aux1,
+//                              pwm.aux2,
+//                              0);
 
 
             break;
