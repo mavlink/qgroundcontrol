@@ -71,8 +71,7 @@ void SlugsDataSensorView::addUAS(UASInterface* uas)
         connect(slugsMav, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugSpeedLocalPositionChanged(UASInterface*,double,double,double,quint64)));
         connect(slugsMav, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugAttitudeChanged(UASInterface*,double,double,double,quint64)));
         connect(slugsMav, SIGNAL(slugsSensorBias(UASInterface*,double,double,double,double,double,double,quint64)), this, SLOT(slugsSensorBiasAcelerometerChanged(UASInterface*,double,double,double,quint64)));
-       // connect(slugsMav, SIGNAL(slugsDiagnostic(UASInterface*,double,double,double,int16_t,int16_t,int16_t,quint64)),
-             //   this, SLOT());
+
 
         // Set this UAS as active if it is the first one
         if(activeUAS == 0)
