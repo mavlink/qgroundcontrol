@@ -40,19 +40,19 @@ public slots:
 
 signals:
     // ESPECIAL SLUGS MESSAGE
-    void slugsCPULoad(UASInterface* uas,
+    void slugsCPULoad(int systemId,
                       uint8_t sensLoad,
                       uint8_t ctrlLoad,
                       uint8_t batVolt,
                       quint64 time);
 
-    void slugsAirData(UASInterface* uas,
+    void slugsAirData(int systemId,
                       float dinamicPressure,
                       float staticPresure,
                       uint16_t temperature,
                       quint64 time);
 
-    void slugsSensorBias(UASInterface* uas,
+    void slugsSensorBias(int systemId,
                          double axBias,
                          double ayBias,
                          double azBias,
@@ -61,7 +61,7 @@ signals:
                          double gzBias,
                          quint64 time);
 
-    void slugsDiagnostic(UASInterface* uas,
+    void slugsDiagnostic(int systemId,
                          double diagFl1,
                          double diagFl2,
                          double diagFl3,
@@ -70,7 +70,7 @@ signals:
                          int16_t diagSh3,
                          quint64 time);
 
-    void slugsPilotConsolePWM(UASInterface* uas,
+    void slugsPilotConsolePWM(int systemId,
                               uint16_t dt,
                               uint16_t dla,
                               uint16_t dra,
@@ -78,7 +78,7 @@ signals:
                               uint16_t de,
                               quint64 time);
 
-    void slugsPWM(UASInterface* uas,
+    void slugsPWM(int systemId,
                   uint16_t dt_c,
                   uint16_t dla_c,
                   uint16_t dra_c,
@@ -90,6 +90,53 @@ signals:
                   uint16_t da1_c,
                   uint16_t da2_c,
                   quint64 time);
+
+    void slugsNavegation(int systemId,
+                          double u_m,
+                          double phi_c,
+                          double theta_c,
+                          double psiDot_c,
+                          double ay_body,
+                          double totalDist,
+                          double dist2Go,
+                          uint8_t fromWP,
+                          uint8_t toWP,
+                          quint64 time);
+
+   void slugsDataLog(int systemId,
+                 double logfl_1,
+                 double logfl_2,
+                 double logfl_3,
+                 double logfl_4,
+                 double logfl_5,
+                 double logfl_6,
+                 quint64 time);
+
+
+   void slugsFilteredData(int systemId,
+                          double filaX,
+                          double filaY,
+                          double filaZ,
+                          double filgX,
+                          double filgY,
+                          double filgZ,
+                          double filmX,
+                          double filmY,
+                          double filmZ,
+                          quint64 time);
+
+   void slugsGPSDateTime(int uasId,
+                         uint8_t gpsyear,
+                         uint8_t gpsmonth,
+                         uint8_t gpsday,
+                         uint8_t gpshour,
+                         uint8_t gpsmin,
+                         uint8_t gpssec,
+                         uint8_t gpsvisSat,
+                         quint64 time);
+
+
+
 
 };
 
