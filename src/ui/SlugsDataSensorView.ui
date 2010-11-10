@@ -1541,7 +1541,7 @@
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QTextEdit" name="textEdit">
+               <widget class="QTextEdit" name="m_logFl1_textEdit">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1583,7 +1583,7 @@
                </widget>
               </item>
               <item row="0" column="3">
-               <widget class="QTextEdit" name="textEdit_4">
+               <widget class="QTextEdit" name="m_logFl4_textEdit">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1625,7 +1625,7 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QTextEdit" name="textEdit_2">
+               <widget class="QTextEdit" name="m_logFl2_textEdit">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1667,7 +1667,7 @@
                </widget>
               </item>
               <item row="1" column="3">
-               <widget class="QTextEdit" name="textEdit_5">
+               <widget class="QTextEdit" name="m_logFl5_textEdit">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1709,7 +1709,7 @@
                </widget>
               </item>
               <item row="2" column="1">
-               <widget class="QTextEdit" name="textEdit_3">
+               <widget class="QTextEdit" name="m_logFl3_textEdit">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1751,7 +1751,7 @@
                </widget>
               </item>
               <item row="2" column="3">
-               <widget class="QTextEdit" name="textEdit_6">
+               <widget class="QTextEdit" name="m_logFl6_textEdit">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1819,7 +1819,7 @@
                  </widget>
                 </item>
                 <item row="0" column="1">
-                 <widget class="QLineEdit" name="lineEdit_7">
+                 <widget class="QLineEdit" name="m_GpsDate">
                   <property name="minimumSize">
                    <size>
                     <width>60</width>
@@ -1854,7 +1854,7 @@
                  </widget>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QLineEdit" name="lineEdit_8">
+                 <widget class="QLineEdit" name="m_GpsTime">
                   <property name="minimumSize">
                    <size>
                     <width>60</width>
@@ -1889,7 +1889,7 @@
                  </widget>
                 </item>
                 <item row="2" column="1">
-                 <widget class="QLineEdit" name="lineEdit_12">
+                 <widget class="QLineEdit" name="m_GpsSat">
                   <property name="minimumSize">
                    <size>
                     <width>60</width>
@@ -1924,7 +1924,7 @@
                  </widget>
                 </item>
                 <item row="3" column="1">
-                 <widget class="QLineEdit" name="lineEdit_10">
+                 <widget class="QLineEdit" name="m_GpsCog">
                   <property name="minimumSize">
                    <size>
                     <width>60</width>
@@ -1959,7 +1959,7 @@
                  </widget>
                 </item>
                 <item row="4" column="1">
-                 <widget class="QLineEdit" name="lineEdit_11">
+                 <widget class="QLineEdit" name="m_GpsSog">
                   <property name="minimumSize">
                    <size>
                     <width>60</width>
@@ -1998,7 +1998,7 @@
                  </widget>
                 </item>
                 <item row="0" column="1">
-                 <widget class="QLineEdit" name="lineEdit_5">
+                 <widget class="QLineEdit" name="m_GpsLatitude">
                   <property name="minimumSize">
                    <size>
                     <width>60</width>
@@ -2033,7 +2033,7 @@
                  </widget>
                 </item>
                 <item row="1" column="1">
-                 <widget class="QLineEdit" name="lineEdit_6">
+                 <widget class="QLineEdit" name="m_GpsLongitude">
                   <property name="minimumSize">
                    <size>
                     <width>60</width>
@@ -2068,7 +2068,7 @@
                  </widget>
                 </item>
                 <item row="2" column="1">
-                 <widget class="QLineEdit" name="lineEdit_9">
+                 <widget class="QLineEdit" name="m_Gpsheigth">
                   <property name="minimumSize">
                    <size>
                     <width>60</width>
@@ -2155,7 +2155,7 @@
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QTextEdit" name="m_SlugsAxBiases_textEdit">
+               <widget class="QTextEdit" name="m_AxBiases">
                 <property name="minimumSize">
                  <size>
                   <width>60</width>
@@ -2214,7 +2214,7 @@
                </widget>
               </item>
               <item row="0" column="3">
-               <widget class="QTextEdit" name="m_SlugsGxBiases_textEdit">
+               <widget class="QTextEdit" name="m_GxBiases">
                 <property name="minimumSize">
                  <size>
                   <width>60</width>
@@ -2273,7 +2273,7 @@
                </widget>
               </item>
               <item row="1" column="1">
-               <widget class="QTextEdit" name="m_SlugsAyBiases_textEdit">
+               <widget class="QTextEdit" name="m_AyBiases">
                 <property name="minimumSize">
                  <size>
                   <width>60</width>
@@ -2332,7 +2332,7 @@
                </widget>
               </item>
               <item row="1" column="3">
-               <widget class="QTextEdit" name="m_SlugsGyBiases_textEdit">
+               <widget class="QTextEdit" name="m_GyBiases">
                 <property name="minimumSize">
                  <size>
                   <width>60</width>
@@ -2391,7 +2391,7 @@
                </widget>
               </item>
               <item row="2" column="1">
-               <widget class="QTextEdit" name="m_SlugsAzBiases_textEdit">
+               <widget class="QTextEdit" name="m_AzBiases">
                 <property name="minimumSize">
                  <size>
                   <width>60</width>
@@ -2450,7 +2450,7 @@
                </widget>
               </item>
               <item row="2" column="3">
-               <widget class="QTextEdit" name="m_SlugsGzBiases_textEdit">
+               <widget class="QTextEdit" name="m_GzBiases">
                 <property name="minimumSize">
                  <size>
                   <width>60</width>
@@ -2533,39 +2533,6 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QTextEdit" name="m_SlugsThro_textEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>80</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="2">
                <widget class="QLabel" name="label_21">
                 <property name="minimumSize">
@@ -2589,39 +2556,6 @@
                 </property>
                 <property name="text">
                  <string>Thro Trim</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="3">
-               <widget class="QTextEdit" name="m_SlugsThTrim_textEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>80</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2651,39 +2585,6 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QTextEdit" name="m_SlugsAile_textEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>80</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="2">
                <widget class="QLabel" name="label_22">
                 <property name="minimumSize">
@@ -2707,39 +2608,6 @@
                 </property>
                 <property name="text">
                  <string>Aile Trim</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="3">
-               <widget class="QTextEdit" name="m_SlugsAileTrim_textEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>80</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2769,39 +2637,6 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
-               <widget class="QTextEdit" name="m_SlugsElev_textEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>80</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
               <item row="2" column="2">
                <widget class="QLabel" name="label_23">
                 <property name="minimumSize">
@@ -2825,39 +2660,6 @@
                 </property>
                 <property name="text">
                  <string>Elev Trim</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="3">
-               <widget class="QTextEdit" name="m_SlugsElevTrim_textEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>80</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -2887,39 +2689,6 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <widget class="QTextEdit" name="m_SlugsRudd_textEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>80</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
               <item row="3" column="2">
                <widget class="QLabel" name="label_24">
                 <property name="minimumSize">
@@ -2943,39 +2712,6 @@
                 </property>
                 <property name="text">
                  <string>Rudd Trim</string>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="3">
-               <widget class="QTextEdit" name="m_SlugsRuddTrim_textEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>80</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -3005,39 +2741,6 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="1">
-               <widget class="QTextEdit" name="m_SlugsFailSafe_textEdit">
-                <property name="minimumSize">
-                 <size>
-                  <width>60</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>80</width>
-                  <height>18</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
               <item row="4" column="2">
                <widget class="QLabel" name="label_25">
                 <property name="minimumSize">
@@ -3064,8 +2767,14 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="3">
-               <widget class="QTextEdit" name="m_SlugsAvailable_textEdit">
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="m_pwmThro">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="minimumSize">
                  <size>
                   <width>60</width>
@@ -3078,22 +2787,152 @@
                   <height>18</height>
                  </size>
                 </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="m_pwmAile">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>60</horstretch>
+                  <verstretch>18</verstretch>
+                 </sizepolicy>
                 </property>
-                <property name="frameShape">
-                 <enum>QFrame::WinPanel</enum>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>18</height>
+                 </size>
                 </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QLineEdit" name="m_pwmElev">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>60</horstretch>
+                  <verstretch>18</verstretch>
+                 </sizepolicy>
                 </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>18</height>
+                 </size>
                 </property>
-                <property name="readOnly">
-                 <bool>true</bool>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QLineEdit" name="m_pwmRudd">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>60</horstretch>
+                  <verstretch>18</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QLineEdit" name="m_pwmFailSafe">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>60</horstretch>
+                  <verstretch>18</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="3">
+               <widget class="QLineEdit" name="m_pwmThroTrim">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>60</horstretch>
+                  <verstretch>18</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="3">
+               <widget class="QLineEdit" name="m_pwmAileTrim">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>60</horstretch>
+                  <verstretch>18</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="3">
+               <widget class="QLineEdit" name="m_pwmElevTrim">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>60</horstretch>
+                  <verstretch>18</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="3">
+               <widget class="QLineEdit" name="m_pwmRuddTrim">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>60</horstretch>
+                  <verstretch>18</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>18</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="3">
+               <widget class="QLineEdit" name="m_pwmAvailable">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>60</horstretch>
+                  <verstretch>18</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>80</width>
+                  <height>18</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string/>
                 </property>
                </widget>
               </item>
