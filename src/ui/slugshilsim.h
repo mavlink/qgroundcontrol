@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include "LinkInterface.h"
+
 namespace Ui {
     class SlugsHilSim;
 }
@@ -14,6 +16,9 @@ class SlugsHilSim : public QWidget
 public:
     explicit SlugsHilSim(QWidget *parent = 0);
     ~SlugsHilSim();
+
+protected:
+    LinkInterface* hilLink;
 
 private:
     Ui::SlugsHilSim *ui;

@@ -138,7 +138,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCRemoteControlView.ui \
     src/ui/WaypointGlobalView.ui \
     src/ui/SlugsDataSensorView.ui \
-    src/ui/slugshilsim.ui
+    src/ui/SlugsHilSim.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -239,7 +239,7 @@ HEADERS += src/MG.h \
     src/ui/map3D/Imagery.h \
     src/comm/QGCMAVLink.h\
     src/ui/SlugsDataSensorView.h \
-    src/ui/slugshilsim.h
+    src/ui/SlugsHilSim.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -320,7 +320,7 @@ SOURCES += src/main.cc \
     src/ui/map3D/WebImage.cc \
     src/ui/map3D/Imagery.cc \
     src/ui/SlugsDataSensorView.cc \
-    src/ui/slugshilsim.cc
+    src/ui/SlugsHilSim.cc
 
 RESOURCES = mavground.qrc
 
