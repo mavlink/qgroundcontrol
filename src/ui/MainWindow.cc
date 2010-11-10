@@ -903,33 +903,43 @@ void MainWindow::loadGlobalOperatorView()
         }
     }
 
-    // UAS CONTROL
-    if (controlDockWidget)
-    {
-        addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-        controlDockWidget->show();
-    }
-
-    // UAS LIST
-    if (listDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-        listDockWidget->show();
-    }
-
-    // UAS STATUS
-    if (infoDockWidget)
-    {
-        addDockWidget(Qt::LeftDockWidgetArea, infoDockWidget);
-        infoDockWidget->show();
-    }
-
     // WAYPOINT LIST
     if (waypointsDockWidget)
     {
         addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
         waypointsDockWidget->show();
     }
+
+    // Slugs Data View
+    if (slugsDataWidget)
+    {
+        addDockWidget(Qt::RightDockWidgetArea, slugsDataWidget);
+        slugsDataWidget->show();
+    }
+
+
+
+//    // UAS CONTROL
+//    if (controlDockWidget)
+//    {
+//        addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+//        controlDockWidget->show();
+//    }
+
+//    // UAS LIST
+//    if (listDockWidget)
+//    {
+//        addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+//        listDockWidget->show();
+//    }
+
+//    // UAS STATUS
+//    if (infoDockWidget)
+//    {
+//        addDockWidget(Qt::LeftDockWidgetArea, infoDockWidget);
+//        infoDockWidget->show();
+//    }
+
 
 //    // HORIZONTAL SITUATION INDICATOR
 //    if (hsiDockWidget)
@@ -944,25 +954,25 @@ void MainWindow::loadGlobalOperatorView()
 //    }
 
     // PROCESS CONTROL
-    if (watchdogControlDockWidget)
-    {
-        addDockWidget(Qt::RightDockWidgetArea, watchdogControlDockWidget);
-        watchdogControlDockWidget->show();
-    }
+//    if (watchdogControlDockWidget)
+//    {
+//        addDockWidget(Qt::RightDockWidgetArea, watchdogControlDockWidget);
+//        watchdogControlDockWidget->show();
+//    }
 
     // HEAD UP DISPLAY
-    if (headUpDockWidget)
-    {
-        addDockWidget(Qt::RightDockWidgetArea, headUpDockWidget);
-        // FIXME Replace with default ->show() call
-        HUD* hud = dynamic_cast<HUD*>(headUpDockWidget->widget());
+//    if (headUpDockWidget)
+//    {
+//        addDockWidget(Qt::RightDockWidgetArea, headUpDockWidget);
+//        // FIXME Replace with default ->show() call
+//        HUD* hud = dynamic_cast<HUD*>(headUpDockWidget->widget());
 
-        if (hud)
-        {
-            headUpDockWidget->show();
-            hud->start();
-        }
-    }
+//        if (hud)
+//        {
+//            headUpDockWidget->show();
+//            hud->start();
+//        }
+//    }
 
 }
 

@@ -255,6 +255,16 @@ void SlugsDataSensorView::refresh()
             ui->m_logFl6_textEdit->setText(QString::number(Logfl_6, 'f', 4));
 
             //refresh UI PWM Commands
+            ui->m_pwmThro->setText("No data");
+            ui->m_pwmThroTrim->setText("No data");
+            ui->m_pwmAile->setText("No data");
+            ui->m_pwmAileTrim->setText("No data");
+            ui->m_pwmElev->setText("No data");
+            ui->m_pwmElevTrim->setText("No data");
+            ui->m_pwmRudd->setText("No data");
+            ui->m_pwmRuddTrim->setText("No data");
+            ui->m_pwmFailSafe->setText("No data");
+            ui->m_pwmAvailable->setText("No data");
 
 
 
