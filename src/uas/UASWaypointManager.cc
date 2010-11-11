@@ -437,6 +437,7 @@ void UASWaypointManager::readWaypoints()
 
 void UASWaypointManager::writeWaypoints()
 {
+    qDebug() << "+++++++++++++++++++>>>> Entro Funcion Write WP";
     if (current_state == WP_IDLE)
     {
         if (waypoints.count() > 0)
@@ -541,6 +542,7 @@ void UASWaypointManager::sendWaypointCount()
     wpc.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
     wpc.count = current_count;
 
+    qDebug() << "sent waypoint count (" << wpc.count << ") to ID " << wpc.target_system;
     emit updateStatusString(QString("start transmitting waypoints..."));
 
     mavlink_msg_waypoint_count_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpc);

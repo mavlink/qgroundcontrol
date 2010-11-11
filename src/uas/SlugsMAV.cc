@@ -47,7 +47,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                                   cpu_load.ctrlLoad,
                                   cpu_load.batVolt,
                                   0);
-qDebug()<<"--------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_CPU_LOAD 170";
+//qDebug()<<"--------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_CPU_LOAD 170";
             break;
         }
     case MAVLINK_MSG_ID_AIR_DATA://171
@@ -64,7 +64,7 @@ qDebug()<<"--------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_CPU_LOAD 170";
                                   air_data.staticPressure,
                                   air_data.temperature,
                                   time);
-qDebug()<<"--------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_AIR_DATA 171";
+//qDebug()<<"--------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_AIR_DATA 171";
             break;
         }
     case MAVLINK_MSG_ID_SENSOR_BIAS://172
@@ -87,7 +87,7 @@ qDebug()<<"--------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_AIR_DATA 171";
                                      sensor_bias.gyBias,
                                      sensor_bias.gzBias,
                                      0);
-               qDebug()<<"------------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_SENSOR_BIAS 172";
+          //     qDebug()<<"------------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_SENSOR_BIAS 172";
 
 
             break;
@@ -112,7 +112,7 @@ qDebug()<<"--------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_AIR_DATA 171";
                                      diagnostic.diagSh2,
                                      diagnostic.diagSh3,
                                      0);
-qDebug()<<"------->>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_DIAGNOSTIC 173";
+//qDebug()<<"------->>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_DIAGNOSTIC 173";
             break;
         }
     case MAVLINK_MSG_ID_PILOT_CONSOLE://174
@@ -133,7 +133,7 @@ qDebug()<<"------->>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_DIAGNOSTIC 173";
                                           pilot.dr,
                                           pilot.de,
                                           0);
-                qDebug()<<"---------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PILOT_CONSOLE 174";
+             //   qDebug()<<"---------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PILOT_CONSOLE 174";
 
 
             break;
@@ -166,7 +166,7 @@ qDebug()<<"------->>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_DIAGNOSTIC 173";
                               pwm.aux1,
                               pwm.aux2,
                               0);
-qDebug()<<"----------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PWM_COMMANDS 175";
+//qDebug()<<"----------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PWM_COMMANDS 175";
 
             break;
         }
@@ -197,7 +197,7 @@ qDebug()<<"----------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PWM_COMMANDS 175"
                                      nav.toWP,
                                      time);
 
-            qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_SLUGS_NAVIGATION 176";
+           // qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_SLUGS_NAVIGATION 176";
 
             break;
         }
@@ -222,7 +222,7 @@ qDebug()<<"----------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PWM_COMMANDS 175"
                                   dataLog.fl_6,
                                   time);
 
-                qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO LOG DATA 177";
+             //   qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO LOG DATA 177";
 
 
 
@@ -259,7 +259,7 @@ qDebug()<<"----------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PWM_COMMANDS 175"
 
 
 
-                qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO filtering data 178";
+              //  qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO filtering data 178";
 
 
 
@@ -291,52 +291,52 @@ qDebug()<<"----------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PWM_COMMANDS 175"
 
 
 
-                qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_GPS_DATE_TIME 179";
+              //  qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_GPS_DATE_TIME 179";
 
 
 
             break;
         }
-    case MAVLINK_MSG_ID_MID_LVL_CMDS://180
-        {
+//    case MAVLINK_MSG_ID_MID_LVL_CMDS://180
+//        {
 
 
-                qDebug()<<"------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_MID_LVL_CMDS 180";
-
-
-
-            break;
-        }
-    case MAVLINK_MSG_ID_CTRL_SRFC_PT://181
-        {
-
-
-                qDebug()<<"--------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_CTRL_SRFC_PT 181";
+//             //   qDebug()<<"------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_MID_LVL_CMDS 180";
 
 
 
-            break;
-        }
-    case MAVLINK_MSG_ID_PID://182
-        {
+//            break;
+//        }
+//    case MAVLINK_MSG_ID_CTRL_SRFC_PT://181
+//        {
 
 
-                qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PID 182";
-
-
-
-            break;
-        }
-    case MAVLINK_MSG_ID_SLUGS_ACTION://183
-        {
-
-
-                qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_SLUGS_ACTION 183";
+//               // qDebug()<<"--------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_CTRL_SRFC_PT 181";
 
 
 
-            break;
-        }
+//            break;
+//        }
+//    case MAVLINK_MSG_ID_PID://182
+//        {
+
+
+//               // qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_PID 182";
+
+
+
+//            break;
+//        }
+//    case MAVLINK_MSG_ID_SLUGS_ACTION://183
+//        {
+
+
+//               // qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_SLUGS_ACTION 183";
+
+
+
+//            break;
+//        }
 #endif
 
     default:
