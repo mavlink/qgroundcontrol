@@ -2,8 +2,10 @@
 #define SLUGSHILSIM_H
 
 #include <QWidget>
-
+#include <QHostAddress>
+#include <QUdpSocket>
 #include "LinkInterface.h"
+
 
 namespace Ui {
     class SlugsHilSim;
@@ -19,6 +21,11 @@ public:
 
 protected:
     LinkInterface* hilLink;
+    QHostAddress* simulinkIp;
+    QUdpSocket* txSocket;
+    QUdpSocket* rxSocket;
+
+slots:
 
 private:
     Ui::SlugsHilSim *ui;

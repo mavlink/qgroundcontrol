@@ -53,7 +53,7 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QLineEdit" name="lineEdit_3">
+        <widget class="QLineEdit" name="ed_ipAdress">
          <property name="minimumSize">
           <size>
            <width>60</width>
@@ -99,7 +99,7 @@
         </widget>
        </item>
        <item row="2" column="1">
-        <widget class="QLineEdit" name="lineEdit">
+        <widget class="QLineEdit" name="ed_rxPort">
          <property name="minimumSize">
           <size>
            <width>60</width>
@@ -132,7 +132,7 @@
         </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QLineEdit" name="lineEdit_2">
+        <widget class="QLineEdit" name="ed_TxPort">
          <property name="minimumSize">
           <size>
            <width>60</width>
@@ -179,12 +179,12 @@
         <enum>Qt::RightToLeft</enum>
        </property>
        <property name="text">
-        <string>Slugs HIL Sim Serial Port</string>
+        <string>Slugs HIL Sim Serial Link</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QComboBox" name="comboBox"/>
+      <widget class="QComboBox" name="cb_mavlinkLinks"/>
      </item>
     </layout>
    </item>
@@ -204,7 +204,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="bt_startHil">
        <property name="text">
         <string>Set in HIL Mode</string>
        </property>
