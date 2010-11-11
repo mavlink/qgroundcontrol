@@ -108,6 +108,17 @@ public slots:
                              double slugpitch,
                              double slugyaw,
                              quint64 time);
+
+    /**
+         * @brief Adds the UAS for data display
+         *
+         * Adds the UAS and makes all the correct connections for data display on the Widgets
+    */
+    void slugsGlobalPositionChanged(UASInterface* uas,
+                                    double lat,
+                                    double lon,
+                                    double alt,
+                                    quint64 time);
     /**
          * @brief Adds the UAS for data display
          *
@@ -214,11 +225,7 @@ public slots:
                                  double filmZ,
                                  quint64 time);
 
-    void slugsGlobalPositionChanged(UASInterface* uas,
-                                    double lat,
-                                    double lon,
-                                    double alt,
-                                    quint64 time);
+
 
 
 
