@@ -25,7 +25,9 @@ protected:
     QUdpSocket* txSocket;
     QUdpSocket* rxSocket;
 
-slots:
+public slots:
+    void linkAdded();
+
 
 private:
     Ui::SlugsHilSim *ui;
