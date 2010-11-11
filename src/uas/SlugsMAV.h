@@ -125,7 +125,7 @@ signals:
                           double filmZ,
                           quint64 time);
 
-   void slugsGPSDateTime(int uasId,
+   void slugsGPSDateTime(int systemId,
                          uint8_t gpsyear,
                          uint8_t gpsmonth,
                          uint8_t gpsday,
