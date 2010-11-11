@@ -258,6 +258,10 @@ signals:
      * @param text the status text
      * @param severity The severity of the message, 0 for plain debug messages, 10 for very critical messages
      */
+
+    void poiFound(UASInterface* uas, int type, int colorIndex, QString message, float x, float y, float z);
+    void poiConnectionFound(UASInterface* uas, int type, int colorIndex, QString message, float x1, float y1, float z1, float x2, float y2, float z2);
+
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
     /**
      * @brief Update the error count of a device

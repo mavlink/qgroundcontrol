@@ -184,12 +184,15 @@ void QGCRemoteControlView::redraw()
 
 void QGCRemoteControlView::changeEvent(QEvent *e)
 {
-    QWidget::changeEvent(e);
-    switch (e->type()) {
-    case QEvent::LanguageChange:
-        //ui->retranslateUi(this);
-        break;
-    default:
-        break;
-    }
+    Q_UNUSED(e);
+    // FIXME If the lines below are commented in
+    // runtime errors can occur on x64 systems.
+//    QWidget::changeEvent(e);
+//    switch (e->type()) {
+//    case QEvent::LanguageChange:
+//        //ui->retranslateUi(this);
+//        break;
+//    default:
+//        break;
+//    }
 }
