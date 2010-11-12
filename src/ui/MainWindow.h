@@ -66,6 +66,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QMap3DWidget.h"
 #include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
+#include "slugshilsim.h"
 
 
 /**
@@ -180,6 +181,7 @@ protected:
     QPointer<QDockWidget> hsiDockWidget;
     QPointer<QDockWidget> rcViewDockWidget;
     QPointer<QDockWidget> slugsDataWidget;
+    QPointer<QDockWidget> slugsHilSimWidget;
 
     // Popup widgets
     JoystickWidget* joystickWidget;

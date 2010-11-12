@@ -64,7 +64,8 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
     // Set the port name
     if (porthandle == "")
     {
-        name = tr("serial link ") + QString::number(getId()) + tr(" (unconfigured)");
+//        name = tr("serial link ") + QString::number(getId()) + tr(" (unconfigured)");
+        name = tr("Serial Link ") + QString::number(getId());
     }
     else
     {
