@@ -184,6 +184,8 @@ void MainWindow::buildWidgets()
     slugsPIDControlWidget = new QDockWidget(tr("PID Control"), this);
     slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
 
+    slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
+    slugsHilSimWidget->setWidget( new SlugsHilSim(this));
 
 }
 
@@ -218,9 +220,14 @@ void MainWindow::connectWidgets()
 
         // it notifies that a waypoint global goes to do create and a map graphic too
         connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
-        // it notifies that a waypoint global change it´s position by spinBox on Widget WaypointView
+        // it notifies that a waypoint global change itÂ¥s position by spinBox on Widget WaypointView
         connect(waypointsDockWidget->widget(), SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), mapWidget, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
     }
+
+    if (slugsHilSimWidget->widget()){
+      connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), dynamic_cast<SlugsHilSim*>(slugsHilSimWidget->widget()), SLOT(activeUasSet(UASInterface*)) );
+    }
+
 }
 
 void MainWindow::arrangeCenterStack()
@@ -543,15 +550,13 @@ void MainWindow::UASCreated(UASInterface* uas)
         // Check which type this UAS is of
         PxQuadMAV* mav = dynamic_cast<PxQuadMAV*>(uas);
         if (mav) loadPixhawkView();
+
         SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
         if (mav2)
         {
-            SlugsDataSensorView* slugDataView = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
-            if(slugDataView)
-            {
-                slugDataView->addUAS(uas);
-            }
-            loadSlugsView();
+          dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget())->addUAS(uas);
+          loadSlugsView();
+
         }
 
 
@@ -642,17 +647,6 @@ void MainWindow::loadSlugsView()
         infoDockWidget->show();
     }
 
-    // HORIZONTAL SITUATION INDICATOR
-    if (hsiDockWidget)
-    {
-        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-        if (hsi)
-        {
-            hsi->start();
-            addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
-            hsiDockWidget->show();
-        }
-    }
 
     // WAYPOINT LIST
     if (waypointsDockWidget)
@@ -675,6 +669,12 @@ void MainWindow::loadSlugsView()
         slugsDataWidget->show();
     }
 
+    // Slugs Data View
+    if (slugsHilSimWidget)
+    {
+        addDockWidget(Qt::LeftDockWidgetArea, slugsHilSimWidget);
+        slugsHilSimWidget->show();
+    }
     this->show();
 }
 
