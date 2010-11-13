@@ -81,6 +81,9 @@
             <property name="text">
              <string>dT_P_get</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="1" column="1">
@@ -95,6 +98,9 @@
             <property name="text">
              <string>dT_I_get</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="2" column="1">
@@ -108,6 +114,9 @@
            <widget class="QLineEdit" name="dT_D_get">
             <property name="text">
              <string>dT_D_get</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -235,6 +244,9 @@
             <property name="text">
              <string>dE_P_get</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="1" column="1">
@@ -249,6 +261,9 @@
             <property name="text">
              <string>dE_I_get</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="2" column="1">
@@ -262,6 +277,9 @@
            <widget class="QLineEdit" name="dE_D_get">
             <property name="text">
              <string>dE_D_get</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -389,6 +407,9 @@
             <property name="text">
              <string>dA_P_get</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="1" column="1">
@@ -403,6 +424,9 @@
             <property name="text">
              <string>dA_I_get</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="2" column="1">
@@ -416,6 +440,9 @@
            <widget class="QLineEdit" name="dA_D_get">
             <property name="text">
              <string>dA_D_get</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -520,6 +547,9 @@
             <property name="text">
              <string>HELPComm_P_get</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="1" column="1">
@@ -533,6 +563,9 @@
            <widget class="QLineEdit" name="HELPComm_I_get">
             <property name="text">
              <string>HELPComm_I_get</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -614,6 +647,9 @@
            <widget class="QLineEdit" name="HELPComm_FF_get">
             <property name="text">
              <string>HELPComm_FF_get</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -741,6 +777,9 @@
             <property name="text">
              <string>dR_P_get</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="1" column="1">
@@ -755,6 +794,9 @@
             <property name="text">
              <string>dR_I_get</string>
             </property>
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
           <item row="2" column="1">
@@ -768,6 +810,9 @@
            <widget class="QLineEdit" name="dR_D_get">
             <property name="text">
              <string>dR_D_get</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -866,6 +911,9 @@
            <widget class="QLineEdit" name="P2dT_FF_get">
             <property name="text">
              <string>P2dT_FF_get</string>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </item>

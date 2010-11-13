@@ -21,10 +21,21 @@ public slots:
     void setRedColorStyle();
     void setGreenColorStyle();
 
-    void changeColor_AirSpeed_groupBox();
 
-    void connectButtons();
+    void changeColor_RED_AirSpeed_groupBox(QString text);
+    void changeColor_GREEN_AirSpeed_groupBox();
+    /**
+     * @brief Connects the SIGNALS from the editline to SLOT changeColor_RED_AirSpeed_groupBox()
+     *
+     * @param
+     */
     void connect_AirSpeed_LineEdit();
+
+
+
+
+
+    void connect_set_pushButtons();
 
 private:
     Ui::SlugsPIDControl *ui;

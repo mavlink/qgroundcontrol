@@ -6,19 +6,19 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>256</width>
+    <width>325</width>
     <height>191</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>256</width>
+    <width>320</width>
     <height>191</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>367</width>
+    <width>450</width>
     <height>229</height>
    </size>
   </property>
@@ -45,7 +45,7 @@
           </font>
          </property>
          <property name="layoutDirection">
-          <enum>Qt::RightToLeft</enum>
+          <enum>Qt::LeftToRight</enum>
          </property>
          <property name="text">
           <string>IP Address</string>
@@ -91,7 +91,7 @@
           </font>
          </property>
          <property name="layoutDirection">
-          <enum>Qt::RightToLeft</enum>
+          <enum>Qt::LeftToRight</enum>
          </property>
          <property name="text">
           <string>Receive Port</string>
@@ -124,7 +124,7 @@
           </font>
          </property>
          <property name="layoutDirection">
-          <enum>Qt::RightToLeft</enum>
+          <enum>Qt::LeftToRight</enum>
          </property>
          <property name="text">
           <string>Send Port</string>
@@ -132,7 +132,7 @@
         </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QLineEdit" name="ed_TxPort">
+        <widget class="QLineEdit" name="ed_txPort">
          <property name="minimumSize">
           <size>
            <width>60</width>
@@ -165,8 +165,8 @@
     </layout>
    </item>
    <item>
-    <layout class="QGridLayout" name="gridLayout_2">
-     <item row="0" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
       <widget class="QLabel" name="label_4">
        <property name="font">
         <font>
@@ -179,12 +179,32 @@
         <enum>Qt::RightToLeft</enum>
        </property>
        <property name="text">
-        <string>Slugs HIL Sim Serial Link</string>
+        <string>Slugs HIL Link</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="cb_mavlinkLinks"/>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QComboBox" name="cb_mavlinkLinks">
+       <property name="minimumSize">
+        <size>
+         <width>171</width>
+         <height>26</height>
+        </size>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -206,7 +226,10 @@
      <item>
       <widget class="QPushButton" name="bt_startHil">
        <property name="text">
-        <string>Set in HIL Mode</string>
+        <string>Set Slugs in HIL Mode</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

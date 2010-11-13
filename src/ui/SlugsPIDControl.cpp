@@ -12,10 +12,11 @@ SlugsPIDControl::SlugsPIDControl(QWidget *parent) :
 {
     ui->setupUi(this);
     setRedColorStyle();
-//    setGreenColorStyle();
+    setGreenColorStyle();
 
-    //ORIGINcolorStyle = ui->AirSpeedHold_groupBox->styleSheet();
-    //connectButtons();
+
+    connect_set_pushButtons();
+    connect_AirSpeed_LineEdit();
 
 
 }
@@ -26,7 +27,7 @@ SlugsPIDControl::~SlugsPIDControl()
 }
 
 /**
- * Set the background color RED of the GroupBox PID based on the send Slugs PID message
+ * Set the background color RED style for the GroupBox PID when change lineEdit information
  *
  */
 void SlugsPIDControl::setRedColorStyle()
@@ -45,7 +46,7 @@ void SlugsPIDControl::setRedColorStyle()
 }
 
 /**
- * Set the background color GREEN of the GroupBox PID based on the send Slugs PID message
+ * Set the background color GREEN style for the GroupBox PID when change lineEdit information
  *
  */
 void SlugsPIDControl::setGreenColorStyle()
@@ -63,24 +64,33 @@ void SlugsPIDControl::setGreenColorStyle()
 }
 
 /**
- * Connection Signal and Slot of the set and get buttons on the widget
- *
+ * Connection Signal and Slot of the set buttons on the widget
  */
-void SlugsPIDControl::connectButtons()
+void SlugsPIDControl::connect_set_pushButtons()
 {
     //ToDo connect buttons set and get. Before create the slots
+    connect(ui->dT_PID_set_pushButton, SIGNAL(clicked(bool)),this,SLOT(changeColor_GREEN_AirSpeed_groupBox()));
+
 
 }
 
 void SlugsPIDControl::connect_AirSpeed_LineEdit()
 {
-    connect(ui->dT_P_set,SIGNAL(editingFinished()),this, SLOT(changeColor_AirSpeed_groupBox()));
+    connect(ui->dT_P_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_AirSpeed_groupBox(QString)));
+    connect(ui->dT_I_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_AirSpeed_groupBox(QString)));
+    connect(ui->dT_D_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_AirSpeed_groupBox(QString)));
 }
 
-void SlugsPIDControl::changeColor_AirSpeed_groupBox()
+void SlugsPIDControl::changeColor_RED_AirSpeed_groupBox(QString text)
 {
+    Q_UNUSED(text);
     ui->AirSpeedHold_groupBox->setStyleSheet(REDcolorStyle);
 
+}
+
+void SlugsPIDControl::changeColor_GREEN_AirSpeed_groupBox()
+{
+    ui->AirSpeedHold_groupBox->setStyleSheet(GREENcolorStyle);
 }
 
 
