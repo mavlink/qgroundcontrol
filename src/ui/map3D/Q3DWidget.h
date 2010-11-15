@@ -29,47 +29,14 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#ifndef Q3DWIDGET_H_
-#define Q3DWIDGET_H_
+#ifndef Q3DWIDGET_H
+#define Q3DWIDGET_H
 
-#include <inttypes.h>
-#include <string>
 #include <QtOpenGL>
-#include <QtGui>
 
-//class GLUquadricObj;
-
-enum CameraState
-{
-    IDLE = 0,
-    ROTATING = 1,
-    MOVING = 2,
-    ZOOMING = 3
-};
-
-struct CameraPose
-{
-    CameraState state;
-    float pan, tilt, distance;
-    float xOffset, yOffset, zOffset;
-    float xOffset2D, yOffset2D, rotation2D, zoom, warpX, warpY;
-};
-
-struct CameraParams
-{
-    float zoomSensitivity;
-    float rotateSensitivity;
-    float moveSensitivity;
-
-    float minZoomRange;
-    float cameraFov;
-    float minClipRange;
-    float maxClipRange;
-
-    float zoomSensitivity2D;
-    float rotateSensitivity2D;
-    float moveSensitivity2D;
-};
+#include <osg/LineSegment>
+#include <osg/PositionAttitudeTransform>
+#include <osgViewer/Viewer>
 
 enum MouseState
 {
@@ -79,148 +46,113 @@ enum MouseState
 
 typedef void (*DisplayFunc)(void *);
 typedef void (*KeyboardFunc)(char, void *);
-typedef void (*MouseFunc)(Qt::MouseButton, MouseState, int32_t, int32_t, void *);
-typedef void (*MotionFunc)(int32_t, int32_t, void *);
+typedef void (*MouseFunc)(Qt::MouseButton, MouseState, int, int, void *);
+typedef void (*MotionFunc)(int, int, void *);
 
-/**
- * @brief A base 3D widget which executes OpenGL commands.
- **/
-class Q3DWidget: public QGLWidget
+class Q3DWidget : public QGLWidget, public osgViewer::Viewer
 {
     Q_OBJECT
 
 public:
-    explicit Q3DWidget(QWidget* parent);
-    ~Q3DWidget();
+    Q3DWidget(QWidget* parent = 0);
+    virtual ~Q3DWidget();
 
-    void initialize(int32_t windowX, int32_t windowY,
-                    int32_t windowWidth, int32_t windowHeight, float fps);
-
-    void setCameraParams(float zoomSensitivity, float rotateSensitivity,
-                         float moveSensitivity, float minZoomRange,
-                         float cameraFov, float minClipRange,
+    void init(float fps);
+    void setCameraParams(float minZoomRange, float cameraFov,
+                         float minClipRange,
                          float maxClipRange);
 
-    void setCameraLimit(bool onoff);
-
-    void set2DCameraParams(float zoomSensitivity,
-                           float rotateSensitivity,
-                           float moveSensitivity);
-
-    void set3D(bool onoff);
-    bool is3D(void) const;
-
-    void setInitialCameraPos(float pan, float tilt, float range,
-                             float xOffset, float yOffset, float zOffset);
-    void setInitial2DCameraPos(float xOffset, float yOffset,
-                               float rotation, float zoom);
-    void setCameraPose(const CameraPose& cameraPose);
-    CameraPose getCameraPose(void) const;
+    void forceRedraw(void);
+    void recenter(void);
+    void setDisplayMode3D(void);
 
     void setDisplayFunc(DisplayFunc func, void* clientData);
     void setKeyboardFunc(KeyboardFunc func, void* clientData);
     void setMouseFunc(MouseFunc func, void* clientData);
     void setMotionFunc(MotionFunc func, void* clientData);
-    void addTimerFunc(uint32_t msecs, void(*func)(void *),
+    void addTimerFunc(uint msecs, void(*func)(void *),
                       void* clientData);
 
-    void forceRedraw(void);
+    std::pair<float,float> getGlobalCursorPosition(int32_t mouseX,
+                                                   int32_t mouseY);
 
-    void set2DWarping(float warpX, float warpY);
-
-    void recenter(void);
-    void recenter2D(void);
-
-    void set2DRotation(bool onoff);
-
-    void setDisplayMode2D(void);
-
-    std::pair<float,float> getPositionIn3DMode(int32_t mouseX,
-                                               int32_t mouseY);
-
-    std::pair<float,float> getPositionIn2DMode(int32_t mouseX,
-                                               int32_t mouseY);
-
-    int32_t getWindowWidth(void);
-    int32_t getWindowHeight(void);
-    int32_t getLastMouseX(void);
-    int32_t getLastMouseY(void);
-    int32_t getMouseX(void);
-    int32_t getMouseY(void);
-
-private Q_SLOTS:
+protected slots:
+    void redraw(void);
     void userTimer(void);
 
 protected:
-    void rotateCamera(float dx, float dy);
-    void zoomCamera(float dy);
-    void moveCamera(float dx, float dy);
-    void rotateCamera2D(float dx);
-    void zoomCamera2D(float dx);
-    void moveCamera2D(float dx, float dy);
+    osg::ref_ptr<osg::Geode> createRobot(void);
+    osg::ref_ptr<osg::Node> createHUD(void);
 
-    void switchTo3DMode(void);
-    void setDisplayMode3D(void);
+    int getMouseX(void);
+    int getMouseY(void);
+    int getLastMouseX(void);
+    int getLastMouseY(void);
 
-    float r2d(float angle) const;
-    float d2r(float angle) const;
+    osgViewer::GraphicsWindow* getGraphicsWindow(void);
+    const osgViewer::GraphicsWindow* getGraphicsWindow(void) const;
 
-    void wireSphere(double radius, int slices, int stacks) const;
-    void solidSphere(double radius, int slices, int stacks) const;
-    void wireCone(double base, double height, int slices, int stacks) const;
-    void solidCone(double base, double height, int slices, int stacks) const;
-    void drawBox(float size, GLenum type) const;
-    void wireCube(double size) const;
-    void solidCube(double size) const;
-    void doughnut(float r, float R, int nsides, int rings) const;
-    void wireTorus(double innerRadius, double outerRadius,
-                   int nsides, int rings) const;
-    void solidTorus(double innerRadius, double outerRadius,
-                    int nsides, int rings) const;
+    virtual void resizeGL(int width, int height);
+    virtual void paintGL(void);
+    virtual void keyPressEvent(QKeyEvent* event);
+    virtual void keyReleaseEvent(QKeyEvent* event);
+    virtual void mousePressEvent(QMouseEvent* event);
+    virtual void mouseReleaseEvent(QMouseEvent* event);
+    virtual void mouseMoveEvent(QMouseEvent* event);
+    virtual void wheelEvent(QWheelEvent* event);
 
-    GLUquadricObj* quadObj;
+    float r2d(float angle);
+    float d2r(float angle);
+    osgGA::GUIEventAdapter::KeySymbol convertKey(int key) const;
+    osg::ref_ptr<osg::LineSegment> projectNormalizedXYIntoObjectCoordinates(
+            const osg::Matrix& projectionMatrix,
+            const osg::Matrix& viewMatrix,
+            float x,
+            float y) const;
+    bool getPlaneLineIntersection(const osg::Vec4d& plane,
+                                  const osg::LineSegment& line,
+                                  osg::Vec3d& isect);
 
-    // QGLWidget events
-    void initializeGL(void);
-    void paintGL(void);
-    void resizeGL(int32_t width, int32_t height);
+    osg::ref_ptr<osg::Group> root;
+    osg::ref_ptr<osg::Switch> allocentricMap;
+    osg::ref_ptr<osg::Switch> rollingMap;
+    osg::ref_ptr<osg::Switch> egocentricMap;
+    osg::ref_ptr<osg::PositionAttitudeTransform> robotPosition;
+    osg::ref_ptr<osg::PositionAttitudeTransform> robotAttitude;
 
-    // Qt events
-    void keyPressEvent(QKeyEvent* event);
-    void mousePressEvent(QMouseEvent* event);
-    void mouseReleaseEvent(QMouseEvent* event);
-    void mouseMoveEvent(QMouseEvent* event);
-    void wheelEvent(QWheelEvent *wheel);
-    void timerEvent(QTimerEvent* event);
-    void closeEvent(QCloseEvent* event);
+    osg::ref_ptr<osg::Geode> hudGeode;
+    osg::ref_ptr<osg::Projection> hudProjectionMatrix;
 
     DisplayFunc userDisplayFunc;
     KeyboardFunc userKeyboardFunc;
     MouseFunc userMouseFunc;
     MotionFunc userMotionFunc;
+    void (*userTimerFunc)(void *);
 
     void* userDisplayFuncData;
     void* userKeyboardFuncData;
     void* userMouseFuncData;
     void* userMotionFuncData;
+    void* userTimerFuncData;
 
-    int32_t windowWidth, windowHeight;
-    float requestedFps;
-    CameraPose cameraPose;
-    int32_t lastMouseX, lastMouseY;
+    osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> osgGW;
 
-    bool _is3D;
+    QTimer timer;
 
-    bool _forceRedraw;
-    bool allow2DRotation;
-    bool limitCamera;
+    struct CameraParams
+    {
+        float minZoomRange;
+        float cameraFov;
+        float minClipRange;
+        float maxClipRange;
+    };
 
     CameraParams cameraParams;
 
-    QBasicTimer timer;
+    int lastMouseX;
+    int lastMouseY;
 
-    void (*timerFunc)(void *);
-    void* timerFuncData;
+    bool _forceRedraw;
 };
 
-#endif
+#endif // Q3DWIDGET_H
