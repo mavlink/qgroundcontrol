@@ -38,10 +38,6 @@
 #include <osg/LineWidth>
 #include <osg/ShapeDrawable>
 
-#include <osgEarth/Map>
-#include <osgEarth/MapNode>
-#include <osgEarthDrivers/gdal/GDALOptions>
-
 #include "PixhawkCheetahGeode.h"
 #include "UASManager.h"
 #include "UASInterface.h"
@@ -60,9 +56,6 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     init(15.0f);
     setCameraParams(0.5f, 30.0f, 0.01f, 10000.0f);
 
-    osg::Node* imagery = osgDB::readNodeFile("/home/hengli/swissimage.earth");
-    root->addChild(imagery);
-
     // generate Pixhawk Cheetah model
     egocentricMap->addChild(PixhawkCheetahGeode::instance());
 
@@ -73,6 +66,10 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     // generate empty trail model
     trailNode = createTrail();
     rollingMap->addChild(trailNode);
+
+    // generate map model
+    mapNode = createMap();
+    root->addChild(mapNode);
 
     // generate target model
     targetNode = createTarget();
@@ -85,7 +82,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     setupHUD();
 
     setDisplayFunc(display, this);
-//    setMouseFunc(mouse, this);
+    setMouseFunc(mouse, this);
     addTimerFunc(100, timer, this);
 
     buildLayout();
@@ -114,6 +111,10 @@ Pixhawk3DWidget::buildLayout(void)
     waypointsCheckBox->setText("Waypoints");
     waypointsCheckBox->setChecked(displayWaypoints);
 
+    targetButton = new QPushButton(this);
+    targetButton->setCheckable(true);
+    targetButton->setIcon(QIcon(QString::fromUtf8(":/images/status/weather-clear.svg")));
+
     QPushButton* recenterButton = new QPushButton(this);
     recenterButton->setText("Recenter Camera");
 
@@ -127,19 +128,21 @@ Pixhawk3DWidget::buildLayout(void)
     layout->addWidget(gridCheckBox, 1, 0);
     layout->addWidget(trailCheckBox, 1, 1);
     layout->addWidget(waypointsCheckBox, 1, 2);
-    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
-    layout->addWidget(recenterButton, 1, 4);
-    layout->addWidget(lockCameraCheckBox, 1, 5);
+    layout->addItem(new QSpacerItem(20, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
+    layout->addWidget(targetButton, 1, 4);
+    layout->addItem(new QSpacerItem(20, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 5);
+    layout->addWidget(recenterButton, 1, 6);
+    layout->addWidget(lockCameraCheckBox, 1, 7);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
-    //layout->setColumnStretch(0, 1);
-    layout->setColumnStretch(2, 50);
     setLayout(layout);
 
     connect(gridCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showGrid(int)));
     connect(trailCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showTrail(int)));
+    connect(waypointsCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showWaypoints(int)));
     connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenterCamera()));
     connect(lockCameraCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(toggleLockCamera(int)));
@@ -174,6 +177,7 @@ Pixhawk3DWidget::displayHandler(void)
 
     updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw);
     updateTrail(robotX, robotY, robotZ);
+    updateTarget(robotX, robotY, robotZ);
     updateWaypoints();
 
     // set node visibility
@@ -185,7 +189,7 @@ Pixhawk3DWidget::displayHandler(void)
 
 void
 Pixhawk3DWidget::mouse(Qt::MouseButton button, MouseState state,
-                    int32_t x, int32_t y, void* clientData)
+                       int32_t x, int32_t y, void* clientData)
 {
     Pixhawk3DWidget* map3d = reinterpret_cast<Pixhawk3DWidget *>(clientData);
     map3d->mouseHandler(button, state, x, y);
@@ -193,14 +197,12 @@ Pixhawk3DWidget::mouse(Qt::MouseButton button, MouseState state,
 
 void
 Pixhawk3DWidget::mouseHandler(Qt::MouseButton button, MouseState state,
-                           int32_t x, int32_t y)
+                              int32_t x, int32_t y)
 {
-    if (button == Qt::RightButton && state == MOUSE_STATE_DOWN)
+    if (button == Qt::LeftButton && state == MOUSE_STATE_DOWN &&
+        targetButton->isChecked())
     {
-        QMenu menu(this);
-        QAction* targetAction = menu.addAction(tr("Mark as Target"));
-        connect(targetAction, SIGNAL(triggered()), this, SLOT(markTarget()));
-        menu.exec(mapToGlobal(QPoint(x, y)));
+        markTarget();
     }
 }
 
@@ -250,35 +252,6 @@ void Pixhawk3DWidget::setActiveUAS(UASInterface* uas)
 }
 
 void
-Pixhawk3DWidget::markTarget(void)
-{
-    std::pair<float,float> mouseWorldCoords =
-            getGlobalCursorPosition(getLastMouseX(), getLastMouseY());
-
-    float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
-    if (uas != NULL)
-    {
-        robotX = uas->getLocalX();
-        robotY = uas->getLocalY();
-        robotZ = uas->getLocalZ();
-    }
-
-    targetPosition.x() = mouseWorldCoords.first + robotX;
-    targetPosition.y() = mouseWorldCoords.second + robotY;
-    targetPosition.z() = robotZ;
-
-    displayTarget = true;
-
-    if (uas)
-    {
-        uas->setTargetPosition(targetPosition.x(),
-                               targetPosition.y(),
-                               targetPosition.z(),
-                               0.0f);
-    }
-}
-
-void
 Pixhawk3DWidget::showGrid(int32_t state)
 {
     if (state == Qt::Checked)
@@ -306,6 +279,19 @@ Pixhawk3DWidget::showTrail(int32_t state)
     else
     {
         displayTrail = false;
+    }
+}
+
+void
+Pixhawk3DWidget::showWaypoints(int state)
+{
+    if (state == Qt::Checked)
+    {
+        displayWaypoints = true;
+    }
+    else
+    {
+        displayWaypoints = false;
     }
 }
 
@@ -397,20 +383,29 @@ Pixhawk3DWidget::createTrail(void)
     return geode;
 }
 
+osg::ref_ptr<osgEarth::MapNode>
+Pixhawk3DWidget::createMap(void)
+{
+    osg::ref_ptr<osg::Node> model = osgDB::readNodeFile("map.earth");
+    osg::ref_ptr<osgEarth::MapNode> node = osgEarth::MapNode::findMapNode(model);
+
+    return node;
+}
+
 osg::ref_ptr<osg::Group>
 Pixhawk3DWidget::createTarget(void)
 {
-    osg::ref_ptr<osg::Group> geode(new osg::Group());
+    osg::ref_ptr<osg::Group> group(new osg::Group());
 
-    return geode;
+    return group;
 }
 
 osg::ref_ptr<osg::Group>
 Pixhawk3DWidget::createWaypoints(void)
 {
-    osg::ref_ptr<osg::Group> geode(new osg::Group());
+    osg::ref_ptr<osg::Group> group(new osg::Group());
 
-    return geode;
+    return group;
 }
 
 void
@@ -421,19 +416,31 @@ Pixhawk3DWidget::setupHUD(void)
     hudBackgroundVertices->push_back(osg::Vec3(width(), height(), -1));
     hudBackgroundVertices->push_back(osg::Vec3(width(), height() - 30, -1));
     hudBackgroundVertices->push_back(osg::Vec3(0, height() - 30, -1));
+    hudBackgroundVertices->push_back(osg::Vec3(0, 0, -1));
+    hudBackgroundVertices->push_back(osg::Vec3(width(), 0, -1));
+    hudBackgroundVertices->push_back(osg::Vec3(width(), 25, -1));
+    hudBackgroundVertices->push_back(osg::Vec3(0, 25, -1));
 
-    osg::ref_ptr<osg::DrawElementsUInt> hudBackgroundIndices(
+    osg::ref_ptr<osg::DrawElementsUInt> hudTopBackgroundIndices(
             new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0));
-    hudBackgroundIndices->push_back(0);
-    hudBackgroundIndices->push_back(1);
-    hudBackgroundIndices->push_back(2);
-    hudBackgroundIndices->push_back(3);
+    hudTopBackgroundIndices->push_back(0);
+    hudTopBackgroundIndices->push_back(1);
+    hudTopBackgroundIndices->push_back(2);
+    hudTopBackgroundIndices->push_back(3);
+
+    osg::ref_ptr<osg::DrawElementsUInt> hudBottomBackgroundIndices(
+            new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0));
+    hudBottomBackgroundIndices->push_back(4);
+    hudBottomBackgroundIndices->push_back(5);
+    hudBottomBackgroundIndices->push_back(6);
+    hudBottomBackgroundIndices->push_back(7);
 
     osg::ref_ptr<osg::Vec4Array> hudColors(new osg::Vec4Array);
     hudColors->push_back(osg::Vec4(0.0f, 0.0f, 0.0f, 0.2f));
 
     hudBackgroundGeometry = new osg::Geometry;
-    hudBackgroundGeometry->addPrimitiveSet(hudBackgroundIndices);
+    hudBackgroundGeometry->addPrimitiveSet(hudTopBackgroundIndices);
+    hudBackgroundGeometry->addPrimitiveSet(hudBottomBackgroundIndices);
     hudBackgroundGeometry->setVertexArray(hudBackgroundVertices);
     hudBackgroundGeometry->setColorArray(hudColors);
     hudBackgroundGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
@@ -459,12 +466,16 @@ Pixhawk3DWidget::updateHUD(float robotX, float robotY, float robotZ,
     hudBackgroundVertices->push_back(osg::Vec3(width(), height(), -1));
     hudBackgroundVertices->push_back(osg::Vec3(width(), height() - 30, -1));
     hudBackgroundVertices->push_back(osg::Vec3(0, height() - 30, -1));
+    hudBackgroundVertices->push_back(osg::Vec3(0, 0, -1));
+    hudBackgroundVertices->push_back(osg::Vec3(width(), 0, -1));
+    hudBackgroundVertices->push_back(osg::Vec3(width(), 25, -1));
+    hudBackgroundVertices->push_back(osg::Vec3(0, 25, -1));
     hudBackgroundGeometry->setVertexArray(hudBackgroundVertices);
 
     statusText->setPosition(osg::Vec3(10, height() - 20, -1.5));
 
-    std::pair<float,float> cursorPosition =
-            getGlobalCursorPosition(getMouseX(), getMouseY());
+    std::pair<double,double> cursorPosition =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), -robotZ);
 
     std::ostringstream oss;
     oss.setf(std::ios::fixed, std::ios::floatfield);
@@ -546,6 +557,11 @@ Pixhawk3DWidget::updateTarget(float robotX, float robotY, float robotZ)
         expand = false;
     }
 
+    if (targetNode->getNumChildren() > 0)
+    {
+        targetNode->removeChild(0, targetNode->getNumChildren());
+    }
+
     osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
     osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere;
     sphere->setRadius(radius);
@@ -617,4 +633,34 @@ Pixhawk3DWidget::updateWaypoints(void)
             pat->addChild(geode);
         }
     }
+}
+
+
+void
+Pixhawk3DWidget::markTarget(void)
+{
+    float robotZ = 0.0f;
+    if (uas != NULL)
+    {
+        robotZ = uas->getLocalZ();
+    }
+
+    std::pair<double,double> mouseWorldCoords =
+            getGlobalCursorPosition(getLastMouseX(), getLastMouseY(), -robotZ);
+
+    targetPosition.x() = mouseWorldCoords.first;
+    targetPosition.y() = mouseWorldCoords.second;
+    targetPosition.z() = robotZ;
+
+    displayTarget = true;
+
+    if (uas)
+    {
+        uas->setTargetPosition(targetPosition.x(),
+                               targetPosition.y(),
+                               targetPosition.z(),
+                               0.0f);
+    }
+
+    targetButton->setChecked(false);
 }

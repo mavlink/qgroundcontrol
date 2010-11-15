@@ -73,8 +73,9 @@ public:
     void addTimerFunc(uint msecs, void(*func)(void *),
                       void* clientData);
 
-    std::pair<float,float> getGlobalCursorPosition(int32_t mouseX,
-                                                   int32_t mouseY);
+    std::pair<double,double> getGlobalCursorPosition(int32_t mouseX,
+                                                     int32_t mouseY,
+                                                     double z);
 
 protected slots:
     void redraw(void);
@@ -104,11 +105,6 @@ protected:
     float r2d(float angle);
     float d2r(float angle);
     osgGA::GUIEventAdapter::KeySymbol convertKey(int key) const;
-    osg::ref_ptr<osg::LineSegment> projectNormalizedXYIntoObjectCoordinates(
-            const osg::Matrix& projectionMatrix,
-            const osg::Matrix& viewMatrix,
-            float x,
-            float y) const;
     bool getPlaneLineIntersection(const osg::Vec4d& plane,
                                   const osg::LineSegment& line,
                                   osg::Vec3d& isect);

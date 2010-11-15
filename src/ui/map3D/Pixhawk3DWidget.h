@@ -33,6 +33,7 @@
 #define PIXHAWK3DWIDGET_H
 
 #include <osgText/Text>
+#include <osgEarth/MapNode>
 
 #include "Q3DWidget.h"
 
@@ -66,11 +67,11 @@ public:
 
 public slots:
     void setActiveUAS(UASInterface* uas);
-    void markTarget(void);
 
 private slots:
     void showGrid(int state);
     void showTrail(int state);
+    void showWaypoints(int state);
     void recenterCamera(void);
     void toggleLockCamera(int state);
 
@@ -80,6 +81,7 @@ protected:
 private:
     osg::ref_ptr<osg::Geode> createGrid(void);
     osg::ref_ptr<osg::Geode> createTrail(void);
+    osg::ref_ptr<osgEarth::MapNode> createMap(void);
     osg::ref_ptr<osg::Group> createTarget(void);
     osg::ref_ptr<osg::Group> createWaypoints(void);
 
@@ -91,19 +93,14 @@ private:
     void updateTarget(float robotX, float robotY, float robotZ);
     void updateWaypoints(void);
 
+    void markTarget(void);
+
     double lastRedrawTime;
 
     bool displayGrid;
     bool displayTrail;
     bool displayTarget;
     bool displayWaypoints;
-
-    typedef struct
-    {
-        float x;
-        float y;
-        float z;
-    } Pose3D;
 
     bool lockCamera;
 
@@ -118,8 +115,11 @@ private:
     osg::ref_ptr<osg::Geode> trailNode;
     osg::ref_ptr<osg::Geometry> trailGeometry;
     osg::ref_ptr<osg::DrawArrays> trailDrawArrays;
+    osg::ref_ptr<osgEarth::MapNode> mapNode;
     osg::ref_ptr<osg::Group> targetNode;
     osg::ref_ptr<osg::Group> waypointsNode;
+
+    QPushButton* targetButton;
 };
 
 #endif // PIXHAWK3DWIDGET_H
