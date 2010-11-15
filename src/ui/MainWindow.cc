@@ -45,7 +45,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
-#include "QMap3DWidget.h"
+#include "Q3DWidgetFactory.h"
 
 // FIXME Move
 #include "PxQuadMAV.h"
@@ -132,7 +132,7 @@ void MainWindow::buildWidgets()
     mapWidget         = new MapWidget(this);
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
-    map3DWidget       = new QMap3DWidget(this);
+    _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -224,7 +224,7 @@ void MainWindow::arrangeCenterStack()
     if (linechartWidget) centerStack->addWidget(linechartWidget);
     if (protocolWidget) centerStack->addWidget(protocolWidget);
     if (mapWidget) centerStack->addWidget(mapWidget);
-    if (map3DWidget) centerStack->addWidget(map3DWidget);
+    if (_3DWidget) centerStack->addWidget(_3DWidget);
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 
@@ -665,13 +665,13 @@ void MainWindow::loadPixhawkView()
     // Engineer view, used in EMAV2009
 
     // 3D map
-    if (map3DWidget)
+    if (_3DWidget)
     {
         QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
         if (centerStack)
         {
             //map3DWidget->setActive(true);
-            centerStack->setCurrentWidget(map3DWidget);
+            centerStack->setCurrentWidget(_3DWidget);
         }
     }
 
@@ -955,13 +955,13 @@ void MainWindow::load3DView()
             clearView();
 
             // 3D map
-            if (map3DWidget)
+            if (_3DWidget)
             {
                 QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
                 if (centerStack)
                 {
                     //map3DWidget->setActive(true);
-                    centerStack->setCurrentWidget(map3DWidget);
+                    centerStack->setCurrentWidget(_3DWidget);
                 }
             }
 

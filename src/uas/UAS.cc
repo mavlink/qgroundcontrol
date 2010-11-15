@@ -210,6 +210,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     case (uint8_t)MAV_MODE_TEST3:
                         mode = "TEST3 MODE";
                         break;
+                    case (uint8_t)MAV_MODE_RC_TRAINING:
+                        mode = "RC TRAINING MODE";
+                        break;
                     default:
                         mode = "UNINIT MODE";
                         break;
@@ -744,7 +747,7 @@ quint64 UAS::getUnixTime(quint64 time)
 
 void UAS::setMode(int mode)
 {
-    if ((uint8_t)mode >= MAV_MODE_LOCKED && (uint8_t)mode <= MAV_MODE_TEST3)
+    if ((uint8_t)mode >= MAV_MODE_LOCKED && (uint8_t)mode <= MAV_MODE_RC_TRAINING)
     {
         mavlink_message_t msg;
         mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, (uint8_t)mode);

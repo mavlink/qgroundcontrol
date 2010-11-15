@@ -63,7 +63,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
-#include "QMap3DWidget.h"
+#include "Q3DWidget.h"
 
 #include "LogCompressor.h"
 
@@ -163,7 +163,7 @@ protected:
     QPointer<MapWidget> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
-    QPointer<QMap3DWidget> map3DWidget;
+    QPointer<Q3DWidget> _3DWidget;
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
     QPointer<QDockWidget> infoDockWidget;
