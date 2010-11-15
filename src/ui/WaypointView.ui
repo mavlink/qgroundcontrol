@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>763</width>
-    <height>40</height>
+    <width>853</width>
+    <height>30</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -155,7 +155,7 @@ QProgressBar::chunk#thrustBar {
      <property name="title">
       <string/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
       <property name="spacing">
        <number>2</number>
       </property>
@@ -337,6 +337,16 @@ QProgressBar::chunk#thrustBar {
        <widget class="QCheckBox" name="autoContinue">
         <property name="toolTip">
          <string>Automatically continue after this waypoint</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="orbitCheckBox">
+        <property name="toolTip">
+         <string>enable orbital mode (loiter at waypoint)</string>
         </property>
         <property name="text">
          <string/>

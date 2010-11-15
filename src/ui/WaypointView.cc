@@ -46,6 +46,9 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->setupUi(this);
 
     this->wp = wp;
+    wp->setType(Waypoint::LOCAL);
+    m_ui->orbitSpinBox->setEnabled(false);
+    m_ui->orbitSpinBox->hide();
 
     // Read values and set user interface
     updateValues();
@@ -64,6 +67,9 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
 
     connect(m_ui->autoContinue, SIGNAL(stateChanged(int)), this, SLOT(changedAutoContinue(int)));
     connect(m_ui->selectedBox, SIGNAL(stateChanged(int)), this, SLOT(changedCurrent(int)));
+    connect(m_ui->orbitCheckBox, SIGNAL(stateChanged(int)), this, SLOT(changeOrbitalState(int)));
+
+
 
     connect(m_ui->orbitSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setOrbit(double)));
     connect(m_ui->holdTimeSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setHoldTime(int)));
@@ -151,5 +157,23 @@ void WaypointView::changeEvent(QEvent *e)
         break;
     default:
         break;
+    }
+}
+
+void WaypointView::changeOrbitalState(int state)
+{
+    Q_UNUSED(state);
+
+    if(m_ui->orbitCheckBox->isChecked())
+    {
+        m_ui->orbitSpinBox->setEnabled(true);
+        m_ui->orbitSpinBox->show();
+        wp->setType(Waypoint::LOCAL_ORBIT);
+    }
+    else
+    {
+        m_ui->orbitSpinBox->setEnabled(false);
+        m_ui->orbitSpinBox->hide();
+        wp->setType(Waypoint::LOCAL);
     }
 }
