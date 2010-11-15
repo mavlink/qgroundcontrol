@@ -262,24 +262,29 @@ Q3DWidget::addTimerFunc(uint32_t msecs, void(*func)(void *),
     QTimer::singleShot(msecs, this, SLOT(userTimer()));
 }
 
-std::pair<float,float>
-Q3DWidget::getGlobalCursorPosition(int32_t mouseX, int32_t mouseY)
+std::pair<double,double>
+Q3DWidget::getGlobalCursorPosition(int32_t mouseX, int32_t mouseY,
+                                   double z)
 {
     osgUtil::LineSegmentIntersector::Intersections intersections;
 
     // normalize cursor position to value between -1 and 1
-    float x = -1.0f + static_cast<float>(2 * mouseX)
-              / static_cast<float>(width());
-    float y = -1.0f + static_cast<float>(2 * (height() - mouseY))
-              / static_cast<float>(height());
+    double x = -1.0f + static_cast<double>(2 * mouseX)
+              / static_cast<double>(width());
+    double y = -1.0f + static_cast<double>(2 * (height() - mouseY))
+              / static_cast<double>(height());
 
-    osg::Matrix pm = getCamera()->getProjectionMatrix();
-    osg::Matrix vm = getCamera()->getViewMatrix();
+    osg::Matrixd m = getCamera()->getViewMatrix()
+                     * getCamera()->getProjectionMatrix();
+    osg::Matrixd invM = osg::Matrixd::inverse(m);
+
+    osg::Vec3d nearPoint = osg::Vec3d(x, y, -1.0) * invM;
+    osg::Vec3d farPoint = osg::Vec3d(x, y, 1.0) * invM;
 
     osg::ref_ptr<osg::LineSegment> line =
-            projectNormalizedXYIntoObjectCoordinates(pm, vm, x, y);
+            new osg::LineSegment(nearPoint, farPoint);
 
-    osg::Plane p(line->start() - line->end(), 0.0);
+    osg::Plane p(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 0.0, z));
 
     osg::Vec3d projectedPoint;
     getPlaneLineIntersection(p.asVec4(), *line, projectedPoint);
@@ -616,24 +621,6 @@ Q3DWidget::convertKey(int key) const
     default:
         return static_cast<osgGA::GUIEventAdapter::KeySymbol>(key);
     }
-}
-
-osg::ref_ptr<osg::LineSegment>
-Q3DWidget::projectNormalizedXYIntoObjectCoordinates(
-        const osg::Matrix& projectionMatrix,
-        const osg::Matrix& viewMatrix,
-        float x,
-        float y) const
-{
-    osg::Matrix matrix = viewMatrix * projectionMatrix;
-    osg::Matrix inverseVP;
-    inverseVP.invert(matrix);
-
-    osg::Vec3 nearPoint = osg::Vec3(x, y, -1.0f) * inverseVP;
-    osg::Vec3 farPoint = osg::Vec3(x, y, 1.0f) * inverseVP;
-
-    return osg::ref_ptr<osg::LineSegment>(
-            new osg::LineSegment(nearPoint, farPoint));
 }
 
 bool
