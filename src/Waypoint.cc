@@ -100,6 +100,11 @@ void Waypoint::setYaw(float yaw)
     this->yaw = yaw;
 }
 
+void Waypoint::setType(type_enum type)
+{
+    this->type = type;
+}
+
 void Waypoint::setAutocontinue(bool autoContinue)
 {
     this->autocontinue = autoContinue;

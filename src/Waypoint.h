@@ -36,6 +36,7 @@ This file is part of the PIXHAWK project
 #include <QObject>
 #include <QString>
 #include <QTextStream>
+#include <inttypes.h>
 
 class Waypoint : public QObject
 {
@@ -58,6 +59,14 @@ public:
     void save(QTextStream &saveStream);
     bool load(QTextStream &loadStream);
 
+    enum type_enum
+    {
+        GLOBAL = 0,
+        LOCAL = 1,
+        GLOBAL_ORBIT = 2,
+        LOCAL_ORBIT = 3
+    };
+
 
 protected:
     quint16 id;
@@ -65,6 +74,7 @@ protected:
     float y;
     float z;
     float yaw;
+    type_enum type;
     bool autocontinue;
     bool current;
     float orbit;
@@ -76,6 +86,7 @@ public slots:
     void setY(float y);
     void setZ(float z);
     void setYaw(float yaw);
+    void setType(type_enum type);
     void setAutocontinue(bool autoContinue);
     void setCurrent(bool current);
     void setOrbit(float orbit);
