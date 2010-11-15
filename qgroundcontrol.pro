@@ -1,14 +1,9 @@
-#-------------------------------------------------
-#
+# -------------------------------------------------
 # QGroundControl - Micro Air Vehicle Groundstation
-#
 # Please see our website at <http://qgroundcontrol.org>
-#
 # Author:
 # Lorenz Meier <mavteam@student.ethz.ch>
-#
 # (c) 2009-2010 PIXHAWK Team
-#
 # This file is part of the mav groundstation project
 # QGroundControl is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +15,7 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
-#
-#-------------------------------------------------
-
-
+# -------------------------------------------------
 # Include QMapControl map library
 # prefer version from external directory /
 # from http://github.com/pixhawk/qmapcontrol/
@@ -31,7 +23,6 @@
 # Version from GIT repository is preferred
 # include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
 # Include bundled version if necessary
-
 include(lib/QMapControl/QMapControl.pri)
 
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
@@ -50,39 +41,42 @@ CONFIG += debug_and_release \
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
-
 MAVLINK_CONF = ""
-
-exists(user_config.pri) {
+exists(user_config.pri) { 
     message("----- USING USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
     include(user_config.pri)
 }
-
 INCLUDEPATH += $$BASEDIR/../mavlink/include/common
-
-contains(MAVLINK_CONF, pixhawk) {
-# Remove the default set - it is included anyway
-INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-# PIXHAWK SPECIAL MESSAGES
-INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
-DEFINES += QGC_USE_PIXHAWK_MESSAGES
+contains(MAVLINK_CONF, pixhawk) { 
+    # Remove the default set - it is included anyway
+    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    
+    # PIXHAWK SPECIAL MESSAGES
+    INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
+    DEFINES += QGC_USE_PIXHAWK_MESSAGES
+}
+contains(MAVLINK_CONF, slugs) { 
+    # Remove the default set - it is included anyway
+    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    
+    # SLUGS SPECIAL MESSAGES
+    INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
+    DEFINES += QGC_USE_SLUGS_MESSAGES
+}
+contains(MAVLINK_CONF, ualberta) { 
+    # Remove the default set - it is included anyway
+    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    
+    # UALBERTA SPECIAL MESSAGES
+    INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
+    DEFINES += QGC_USE_UALBERTA_MESSAGES
 }
 
-contains(MAVLINK_CONF, slugs) {
-# Remove the default set - it is included anyway
-INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-# SLUGS SPECIAL MESSAGES
-INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
-DEFINES += QGC_USE_SLUGS_MESSAGES
-}
-
-contains(MAVLINK_CONF, ualberta) {
-# Remove the default set - it is included anyway
-INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-# UALBERTA SPECIAL MESSAGES
-INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
-DEFINES += QGC_USE_UALBERTA_MESSAGES
-}
+# Include OpenSceneGraph and osgEarth libraries
+LIBS += -losg \
+    -losgViewer \
+    -losgEarth
+QMAKE_CXXFLAGS += -Wl,-E
 
 # }
 # Include general settings for MAVGround
@@ -226,15 +220,15 @@ HEADERS += src/MG.h \
     src/ui/RadioCalibration/CurveCalibrator.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
     src/ui/map3D/Q3DWidget.h \
-    src/ui/map3D/CheetahModel.h \
-    src/ui/map3D/CheetahGL.h \
-    src/ui/map3D/QMap3DWidget.h \
+    src/ui/map3D/PixhawkCheetahGeode.h \
     src/ui/map3D/Texture.h \
     src/ui/map3D/TextureCache.h \
     src/ui/map3D/WebImage.h \
     src/ui/map3D/WebImageCache.h \
     src/ui/map3D/Imagery.h \
-    src/comm/QGCMAVLink.h
+    src/comm/QGCMAVLink.h \
+    src/ui/map3D/Pixhawk3DWidget.h \
+    src/ui/map3D/Q3DWidgetFactory.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -306,14 +300,14 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/RadioCalibrationData.cc \
     src/ui/WaypointGlobalView.cc \
     src/ui/map3D/Q3DWidget.cc \
-    src/ui/map3D/CheetahModel.cc \
-    src/ui/map3D/CheetahGL.cc \
-    src/ui/map3D/QMap3DWidget.cc \
+    src/ui/map3D/PixhawkCheetahGeode.cc \
     src/ui/map3D/Texture.cc \
     src/ui/map3D/TextureCache.cc \
     src/ui/map3D/WebImageCache.cc \
     src/ui/map3D/WebImage.cc \
-    src/ui/map3D/Imagery.cc
+    src/ui/map3D/Imagery.cc \
+    src/ui/map3D/Pixhawk3DWidget.cc \
+    src/ui/map3D/Q3DWidgetFactory.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library
