@@ -223,7 +223,8 @@ HEADERS += src/MG.h \
     src/ui/map3D/PixhawkCheetahGeode.h \
     src/comm/QGCMAVLink.h \
     src/ui/map3D/Pixhawk3DWidget.h \
-    src/ui/map3D/Q3DWidgetFactory.h
+    src/ui/map3D/Q3DWidgetFactory.h \
+    src/ui/map3D/GCManipulator.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -297,7 +298,8 @@ SOURCES += src/main.cc \
     src/ui/map3D/Q3DWidget.cc \
     src/ui/map3D/PixhawkCheetahGeode.cc \
     src/ui/map3D/Pixhawk3DWidget.cc \
-    src/ui/map3D/Q3DWidgetFactory.cc
+    src/ui/map3D/Q3DWidgetFactory.cc \
+    src/ui/map3D/GCManipulator.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library

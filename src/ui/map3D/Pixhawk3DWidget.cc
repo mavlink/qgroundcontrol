@@ -51,8 +51,8 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
      , displayWaypoints(true)
      , followCamera(true)
 {
+    setCameraParams(2.0f, 30.0f, 0.01f, 10000.0f);
     init(15.0f);
-    setCameraParams(0.5f, 30.0f, 0.01f, 10000.0f);
 
     // generate Pixhawk Cheetah model
     egocentricMap->addChild(PixhawkCheetahGeode::instance());
@@ -177,7 +177,7 @@ Pixhawk3DWidget::showTrail(int32_t state)
     {
         if (!displayTrail)
         {
-            trailVertices->clear();
+            trail.clear();
         }
 
         displayTrail = true;
@@ -255,7 +255,7 @@ Pixhawk3DWidget::display(void)
 
     updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw);
     updateTrail(robotX, robotY, robotZ);
-    updateTarget(robotX, robotY, robotZ);
+    updateTarget();
     updateWaypoints();
 
     // set node visibility
@@ -280,38 +280,64 @@ osg::ref_ptr<osg::Geode>
 Pixhawk3DWidget::createGrid(void)
 {
     osg::ref_ptr<osg::Geode> geode(new osg::Geode());
-    osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry());
-    geode->addDrawable(geometry.get());
+    osg::ref_ptr<osg::Geometry> fineGeometry(new osg::Geometry());
+    osg::ref_ptr<osg::Geometry> coarseGeometry(new osg::Geometry());
+    geode->addDrawable(fineGeometry);
+    geode->addDrawable(coarseGeometry);
 
     float radius = 10.0f;
     float resolution = 0.25f;
 
-    osg::ref_ptr<osg::Vec3Array> coords(new osg::Vec3Array);
+    osg::ref_ptr<osg::Vec3Array> fineCoords(new osg::Vec3Array);
+    osg::ref_ptr<osg::Vec3Array> coarseCoords(new osg::Vec3Array);
 
     // draw a 20m x 20m grid with 0.25m resolution
     for (float i = -radius; i <= radius; i += resolution)
     {
-        coords->push_back(osg::Vec3(i, -radius, 0.0f));
-        coords->push_back(osg::Vec3(i, radius, 0.0f));
-        coords->push_back(osg::Vec3(-radius, i, 0.0f));
-        coords->push_back(osg::Vec3(radius, i, 0.0f));
+        if (fabsf(i - roundf(i)) < 0.01f)
+        {
+            coarseCoords->push_back(osg::Vec3(i, -radius, 0.0f));
+            coarseCoords->push_back(osg::Vec3(i, radius, 0.0f));
+            coarseCoords->push_back(osg::Vec3(-radius, i, 0.0f));
+            coarseCoords->push_back(osg::Vec3(radius, i, 0.0f));
+        }
+        else
+        {
+            fineCoords->push_back(osg::Vec3(i, -radius, 0.0f));
+            fineCoords->push_back(osg::Vec3(i, radius, 0.0f));
+            fineCoords->push_back(osg::Vec3(-radius, i, 0.0f));
+            fineCoords->push_back(osg::Vec3(radius, i, 0.0f));
+        }
     }
 
-    geometry->setVertexArray(coords);
+    fineGeometry->setVertexArray(fineCoords);
+    coarseGeometry->setVertexArray(coarseCoords);
 
     osg::ref_ptr<osg::Vec4Array> color(new osg::Vec4Array);
     color->push_back(osg::Vec4(0.5f, 0.5f, 0.5f, 1.0f));
-    geometry->setColorArray(color);
-    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    fineGeometry->setColorArray(color);
+    coarseGeometry->setColorArray(color);
+    fineGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+    coarseGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
-    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, coords->size()));
+    fineGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
+                                                      0, fineCoords->size()));
+    coarseGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0,
+                                                        coarseCoords->size()));
 
-    osg::ref_ptr<osg::StateSet> stateset(new osg::StateSet);
-    osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
-    linewidth->setWidth(0.25f);
-    stateset->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
-    stateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
-    geometry->setStateSet(stateset);
+    osg::ref_ptr<osg::StateSet> fineStateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> fineLinewidth(new osg::LineWidth());
+    fineLinewidth->setWidth(0.25f);
+    fineStateset->setAttributeAndModes(fineLinewidth, osg::StateAttribute::ON);
+    fineStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    fineGeometry->setStateSet(fineStateset);
+
+    osg::ref_ptr<osg::StateSet> coarseStateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> coarseLinewidth(new osg::LineWidth());
+    coarseLinewidth->setWidth(2.0f);
+    coarseStateset->setAttributeAndModes(coarseLinewidth, osg::StateAttribute::ON);
+    coarseStateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    coarseGeometry->setStateSet(coarseStateset);
 
     return geode;
 }
@@ -508,7 +534,7 @@ Pixhawk3DWidget::updateTrail(float robotX, float robotY, float robotZ)
 }
 
 void
-Pixhawk3DWidget::updateTarget(float robotX, float robotY, float robotZ)
+Pixhawk3DWidget::updateTarget(void)
 {
     static double radius = 0.2;
     static bool expand = true;
