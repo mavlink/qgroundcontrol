@@ -243,6 +243,11 @@ Pixhawk3DWidget::display(void)
         robotYaw = uas->getYaw();
     }
 
+    if (followCamera)
+    {
+        recenter(robotY, robotX, -robotZ);
+    }
+
     robotPosition->setPosition(osg::Vec3(robotY, robotX, -robotZ));
     robotAttitude->setAttitude(osg::Quat(-robotYaw, osg::Vec3f(0.0f, 0.0f, 1.0f),
                                          robotPitch, osg::Vec3f(1.0f, 0.0f, 0.0f),
