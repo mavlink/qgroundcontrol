@@ -36,14 +36,16 @@ This file is part of the PIXHAWK project
 #include <QObject>
 #include <QString>
 #include <QTextStream>
-#include <inttypes.h>
+#include "mavlink_types.h"
 
 class Waypoint : public QObject
 {
     Q_OBJECT
 
 public:
-    Waypoint(quint16 id = 0, float x = 0.0f, float y = 0.0f, float z = 0.0f, float yaw = 0.0f, bool autocontinue = false, bool current = false, float orbit = 0.1f, int holdTime = 2000);
+    Waypoint(quint16 id = 0, float x = 0.0f, float y = 0.0f, float z = 0.0f, float yaw = 0.0f, bool autocontinue = false,
+             bool current = false, float orbit = 0.1f, int holdTime = 2000,
+             MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_ACTION action=MAV_ACTION_NAVIGATE);
     ~Waypoint();
 
     quint16 getId() const { return id; }
@@ -55,18 +57,11 @@ public:
     bool getCurrent() const { return current; }
     float getOrbit() const { return orbit; }
     float getHoldTime() const { return holdTime; }
+    MAV_FRAME getFrame() const { return frame; }
+    MAV_ACTION getAction() const { return action; }
 
     void save(QTextStream &saveStream);
     bool load(QTextStream &loadStream);
-
-    enum type_enum
-    {
-        GLOBAL = 0,
-        LOCAL = 1,
-        GLOBAL_ORBIT = 2,
-        LOCAL_ORBIT = 3
-    };
-
 
 protected:
     quint16 id;
@@ -74,7 +69,8 @@ protected:
     float y;
     float z;
     float yaw;
-    type_enum type;
+    MAV_FRAME frame;
+    MAV_ACTION action;
     bool autocontinue;
     bool current;
     float orbit;
@@ -86,7 +82,8 @@ public slots:
     void setY(float y);
     void setZ(float z);
     void setYaw(float yaw);
-    void setType(type_enum type);
+    void setAction(MAV_ACTION action);
+    void setFrame(MAV_FRAME frame);
     void setAutocontinue(bool autoContinue);
     void setCurrent(bool current);
     void setOrbit(float orbit);
