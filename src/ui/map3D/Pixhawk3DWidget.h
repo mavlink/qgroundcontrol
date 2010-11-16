@@ -52,17 +52,6 @@ public:
 
     void buildLayout(void);
 
-    static void display(void* clientData);
-    void displayHandler(void);
-
-    static void mouse(Qt::MouseButton button, MouseState state,
-                      int32_t x, int32_t y, void* clientData);
-    void mouseHandler(Qt::MouseButton button, MouseState state,
-                      int32_t x, int32_t y);
-
-    static void timer(void* clientData);
-    void timerHandler(void);
-
     double getTime(void) const;
 
 public slots:
@@ -73,16 +62,19 @@ private slots:
     void showTrail(int state);
     void showWaypoints(int state);
     void recenterCamera(void);
-    void toggleLockCamera(int state);
+    void toggleFollowCamera(int state);
 
 protected:
+    virtual void display(void);
+    virtual void mousePressEvent(QMouseEvent* event);
+
     UASInterface* uas;
 
 private:
     osg::ref_ptr<osg::Geode> createGrid(void);
     osg::ref_ptr<osg::Geode> createTrail(void);
     osg::ref_ptr<osgEarth::MapNode> createMap(void);
-    osg::ref_ptr<osg::Group> createTarget(void);
+    osg::ref_ptr<osg::Node> createTarget(void);
     osg::ref_ptr<osg::Group> createWaypoints(void);
 
     void setupHUD(void);
@@ -95,19 +87,15 @@ private:
 
     void markTarget(void);
 
-    double lastRedrawTime;
-
     bool displayGrid;
     bool displayTrail;
     bool displayTarget;
     bool displayWaypoints;
 
-    bool lockCamera;
+    bool followCamera;
 
     osg::ref_ptr<osg::Vec3Array> trailVertices;
     QVarLengthArray<osg::Vec3, 10000> trail;
-
-    osg::Vec3 targetPosition;
 
     osg::ref_ptr<osg::Geometry> hudBackgroundGeometry;
     osg::ref_ptr<osgText::Text> statusText;
@@ -116,7 +104,8 @@ private:
     osg::ref_ptr<osg::Geometry> trailGeometry;
     osg::ref_ptr<osg::DrawArrays> trailDrawArrays;
     osg::ref_ptr<osgEarth::MapNode> mapNode;
-    osg::ref_ptr<osg::Group> targetNode;
+    osg::ref_ptr<osg::Geode> targetNode;
+    osg::ref_ptr<osg::PositionAttitudeTransform> targetPosition;
     osg::ref_ptr<osg::Group> waypointsNode;
 
     QPushButton* targetButton;
