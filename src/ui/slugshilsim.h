@@ -37,6 +37,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LinkInterface.h"
 #include "UAS.h"
+#include <stdint.h>
 
 
 namespace Ui {
@@ -99,8 +100,23 @@ public slots:
 
 
 private:
+
+	typedef union _tFloatToChar {
+		unsigned char   chData[4];
+		float   		flData;
+	} tFloatToChar;
+
+	typedef union _tUint16ToChar {
+		unsigned char   chData[2];
+		uint16_t   		uiData;
+	} tUint16ToChar;
+
     Ui::SlugsHilSim *ui;
     QHash <int, LinkInterface*> linksAvailable;
+
+    void processHilDatagram (const QByteArray* datagram);
+    float getFloatFromDatagram (const QByteArray* datagram, unsigned char * i);
+    uint16_t getUint16FromDatagram (const QByteArray* datagram, unsigned char * i);
 
 };
 
