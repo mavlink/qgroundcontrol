@@ -31,7 +31,6 @@
 
 #include "Pixhawk3DWidget.h"
 
-#include <sys/time.h>
 #include <sstream>
 
 #include <osg/Geode>
@@ -46,12 +45,11 @@
 Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
      : Q3DWidget(parent)
      , uas(NULL)
-     , lastRedrawTime(0.0)
      , displayGrid(true)
      , displayTrail(false)
      , displayTarget(false)
      , displayWaypoints(true)
-     , lockCamera(true)
+     , followCamera(true)
 {
     init(15.0f);
     setCameraParams(0.5f, 30.0f, 0.01f, 10000.0f);
@@ -72,18 +70,13 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     root->addChild(mapNode);
 
     // generate target model
-    targetNode = createTarget();
-    rollingMap->addChild(targetNode);
+    allocentricMap->addChild(createTarget());
 
     // generate waypoint model
     waypointsNode = createWaypoints();
     rollingMap->addChild(waypointsNode);
 
     setupHUD();
-
-    setDisplayFunc(display, this);
-    setMouseFunc(mouse, this);
-    addTimerFunc(100, timer, this);
 
     buildLayout();
 
@@ -113,14 +106,15 @@ Pixhawk3DWidget::buildLayout(void)
 
     targetButton = new QPushButton(this);
     targetButton->setCheckable(true);
+    targetButton->setChecked(false);
     targetButton->setIcon(QIcon(QString::fromUtf8(":/images/status/weather-clear.svg")));
 
     QPushButton* recenterButton = new QPushButton(this);
     recenterButton->setText("Recenter Camera");
 
-    QCheckBox* lockCameraCheckBox = new QCheckBox(this);
-    lockCameraCheckBox->setText("Lock Camera");
-    lockCameraCheckBox->setChecked(lockCamera);
+    QCheckBox* followCameraCheckBox = new QCheckBox(this);
+    followCameraCheckBox->setText("Follow Camera");
+    followCameraCheckBox->setChecked(followCamera);
 
     QGridLayout* layout = new QGridLayout(this);
     layout->setMargin(0);
@@ -132,7 +126,7 @@ Pixhawk3DWidget::buildLayout(void)
     layout->addWidget(targetButton, 1, 4);
     layout->addItem(new QSpacerItem(20, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 5);
     layout->addWidget(recenterButton, 1, 6);
-    layout->addWidget(lockCameraCheckBox, 1, 7);
+    layout->addWidget(followCameraCheckBox, 1, 7);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
     setLayout(layout);
@@ -144,96 +138,8 @@ Pixhawk3DWidget::buildLayout(void)
     connect(waypointsCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showWaypoints(int)));
     connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenterCamera()));
-    connect(lockCameraCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(toggleLockCamera(int)));
-}
-
-void
-Pixhawk3DWidget::display(void* clientData)
-{
-    Pixhawk3DWidget* map3d = reinterpret_cast<Pixhawk3DWidget *>(clientData);
-    map3d->displayHandler();
-}
-
-void
-Pixhawk3DWidget::displayHandler(void)
-{
-    float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
-    float robotRoll = 0.0f, robotPitch = 0.0f, robotYaw = 0.0f;
-    if (uas != NULL)
-    {
-        robotX = uas->getLocalX();
-        robotY = uas->getLocalY();
-        robotZ = uas->getLocalZ();
-        robotRoll = uas->getRoll();
-        robotPitch = uas->getPitch();
-        robotYaw = uas->getYaw();
-    }
-
-    robotPosition->setPosition(osg::Vec3(robotY, robotX, -robotZ));
-    robotAttitude->setAttitude(osg::Quat(-robotYaw, osg::Vec3f(0.0f, 0.0f, 1.0f),
-                                         robotPitch, osg::Vec3f(1.0f, 0.0f, 0.0f),
-                                         robotRoll, osg::Vec3f(0.0f, 1.0f, 0.0f)));
-
-    updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw);
-    updateTrail(robotX, robotY, robotZ);
-    updateTarget(robotX, robotY, robotZ);
-    updateWaypoints();
-
-    // set node visibility
-    rollingMap->setChildValue(gridNode, displayGrid);
-    rollingMap->setChildValue(trailNode, displayTrail);
-    rollingMap->setChildValue(targetNode, displayTarget);
-    rollingMap->setChildValue(waypointsNode, displayWaypoints);
-}
-
-void
-Pixhawk3DWidget::mouse(Qt::MouseButton button, MouseState state,
-                       int32_t x, int32_t y, void* clientData)
-{
-    Pixhawk3DWidget* map3d = reinterpret_cast<Pixhawk3DWidget *>(clientData);
-    map3d->mouseHandler(button, state, x, y);
-}
-
-void
-Pixhawk3DWidget::mouseHandler(Qt::MouseButton button, MouseState state,
-                              int32_t x, int32_t y)
-{
-    if (button == Qt::LeftButton && state == MOUSE_STATE_DOWN &&
-        targetButton->isChecked())
-    {
-        markTarget();
-    }
-}
-
-void
-Pixhawk3DWidget::timer(void* clientData)
-{
-    Pixhawk3DWidget* map3d = reinterpret_cast<Pixhawk3DWidget *>(clientData);
-    map3d->timerHandler();
-}
-
-void
-Pixhawk3DWidget::timerHandler(void)
-{
-    double timeLapsed = getTime() - lastRedrawTime;
-    if (timeLapsed > 0.1)
-    {
-        forceRedraw();
-        lastRedrawTime = getTime();
-    }
-    addTimerFunc(100, timer, this);
-}
-
-double
-Pixhawk3DWidget::getTime(void) const
-{
-     struct timeval tv;
-
-     gettimeofday(&tv, NULL);
-
-     return static_cast<double>(tv.tv_sec) +
-             static_cast<double>(tv.tv_usec) / 1000000.0;
+    connect(followCameraCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(toggleFollowCamera(int)));
 }
 
 /**
@@ -298,20 +204,71 @@ Pixhawk3DWidget::showWaypoints(int state)
 void
 Pixhawk3DWidget::recenterCamera(void)
 {
-    recenter();
+    float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
+    if (uas != NULL)
+    {
+        robotX = uas->getLocalX();
+        robotY = uas->getLocalY();
+        robotZ = uas->getLocalZ();
+    }
+
+    recenter(robotY, robotX, -robotZ);
 }
 
 void
-Pixhawk3DWidget::toggleLockCamera(int32_t state)
+Pixhawk3DWidget::toggleFollowCamera(int32_t state)
 {
     if (state == Qt::Checked)
     {
-        lockCamera = true;
+        followCamera = true;
     }
     else
     {
-        lockCamera = false;
+        followCamera = false;
     }
+}
+
+void
+Pixhawk3DWidget::display(void)
+{
+    float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
+    float robotRoll = 0.0f, robotPitch = 0.0f, robotYaw = 0.0f;
+    if (uas != NULL)
+    {
+        robotX = uas->getLocalX();
+        robotY = uas->getLocalY();
+        robotZ = uas->getLocalZ();
+        robotRoll = uas->getRoll();
+        robotPitch = uas->getPitch();
+        robotYaw = uas->getYaw();
+    }
+
+    robotPosition->setPosition(osg::Vec3(robotY, robotX, -robotZ));
+    robotAttitude->setAttitude(osg::Quat(-robotYaw, osg::Vec3f(0.0f, 0.0f, 1.0f),
+                                         robotPitch, osg::Vec3f(1.0f, 0.0f, 0.0f),
+                                         robotRoll, osg::Vec3f(0.0f, 1.0f, 0.0f)));
+
+    updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw);
+    updateTrail(robotX, robotY, robotZ);
+    updateTarget(robotX, robotY, robotZ);
+    updateWaypoints();
+
+    // set node visibility
+    rollingMap->setChildValue(gridNode, displayGrid);
+    rollingMap->setChildValue(trailNode, displayTrail);
+    rollingMap->setChildValue(targetNode, displayTarget);
+    rollingMap->setChildValue(waypointsNode, displayWaypoints);
+}
+
+void
+Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
+{
+    if (event->button() == Qt::LeftButton && targetButton->isChecked())
+    {
+        markTarget();
+    }
+
+    Q3DWidget::mousePressEvent(event);
 }
 
 osg::ref_ptr<osg::Geode>
@@ -392,12 +349,15 @@ Pixhawk3DWidget::createMap(void)
     return node;
 }
 
-osg::ref_ptr<osg::Group>
+osg::ref_ptr<osg::Node>
 Pixhawk3DWidget::createTarget(void)
 {
-    osg::ref_ptr<osg::Group> group(new osg::Group());
+    targetPosition = new osg::PositionAttitudeTransform;
 
-    return group;
+    targetNode = new osg::Geode;
+    targetPosition->addChild(targetNode);
+
+    return targetPosition;
 }
 
 osg::ref_ptr<osg::Group>
@@ -557,9 +517,9 @@ Pixhawk3DWidget::updateTarget(float robotX, float robotY, float robotZ)
         expand = false;
     }
 
-    if (targetNode->getNumChildren() > 0)
+    if (targetNode->getNumDrawables() > 0)
     {
-        targetNode->removeChild(0, targetNode->getNumChildren());
+        targetNode->removeDrawables(0, targetNode->getNumDrawables());
     }
 
     osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
@@ -568,18 +528,7 @@ Pixhawk3DWidget::updateTarget(float robotX, float robotY, float robotZ)
     sd->setShape(sphere);
     sd->setColor(osg::Vec4(0.0f, 0.7f, 1.0f, 1.0f));
 
-    osg::ref_ptr<osg::Geode> geode = new osg::Geode;
-    geode->addDrawable(sd);
-
-    osg::ref_ptr<osg::PositionAttitudeTransform> pat =
-            new osg::PositionAttitudeTransform;
-
-    pat->setPosition(osg::Vec3d(targetPosition.y() - robotY,
-                                targetPosition.x() - robotX,
-                                0.0));
-
-    targetNode->addChild(pat);
-    pat->addChild(geode);
+    targetNode->addDrawable(sd);
 
     if (expand)
     {
@@ -645,21 +594,20 @@ Pixhawk3DWidget::markTarget(void)
         robotZ = uas->getLocalZ();
     }
 
-    std::pair<double,double> mouseWorldCoords =
-            getGlobalCursorPosition(getLastMouseX(), getLastMouseY(), -robotZ);
+    std::pair<double,double> cursorWorldCoords =
+            getGlobalCursorPosition(getMouseX(), getMouseY(), -robotZ);
 
-    targetPosition.x() = mouseWorldCoords.first;
-    targetPosition.y() = mouseWorldCoords.second;
-    targetPosition.z() = robotZ;
+    double targetX = cursorWorldCoords.first;
+    double targetY = cursorWorldCoords.second;
+    double targetZ = robotZ;
+
+    targetPosition->setPosition(osg::Vec3d(targetY, targetX, -targetZ));
 
     displayTarget = true;
 
     if (uas)
     {
-        uas->setTargetPosition(targetPosition.x(),
-                               targetPosition.y(),
-                               targetPosition.z(),
-                               0.0f);
+        uas->setTargetPosition(targetX, targetY, targetZ, 0.0f);
     }
 
     targetButton->setChecked(false);
