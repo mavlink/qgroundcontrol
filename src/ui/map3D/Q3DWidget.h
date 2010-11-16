@@ -39,6 +39,8 @@ This file is part of the QGROUNDCONTROL project
 #include <osgGA/TrackballManipulator>
 #include <osgViewer/Viewer>
 
+#include "GCManipulator.h"
+
 /**
  * @brief Definition of the class Q3DWidget.
  * The Q3DWidget widget uses the OpenSceneGraph framework to render
@@ -243,7 +245,7 @@ protected:
 
     osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> osgGW; /**< A class which manages OSG graphics windows and events. */
 
-    osg::ref_ptr<osgGA::TrackballManipulator> cameraManipulator; /**< Camera manipulator. */
+    osg::ref_ptr<GCManipulator> cameraManipulator; /**< Camera manipulator. */
 
     QTimer timer; /**< Timer which draws graphics based on specified fps. */
 

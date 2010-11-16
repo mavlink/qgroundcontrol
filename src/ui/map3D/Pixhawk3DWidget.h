@@ -82,7 +82,7 @@ private:
     void updateHUD(float robotX, float robotY, float robotZ,
                    float robotRoll, float robotPitch, float robotYaw);
     void updateTrail(float robotX, float robotY, float robotZ);
-    void updateTarget(float robotX, float robotY, float robotZ);
+    void updateTarget(void);
     void updateWaypoints(void);
 
     void markTarget(void);

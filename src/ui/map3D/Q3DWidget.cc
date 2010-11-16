@@ -51,7 +51,7 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     , hudProjectionMatrix(new osg::Projection)
 {
     // set initial camera parameters
-    cameraParams.minZoomRange = 0.5f;
+    cameraParams.minZoomRange = 2.0f;
     cameraParams.cameraFov = 30.0f;
     cameraParams.minClipRange = 1.0f;
     cameraParams.maxClipRange = 10000.0f;
@@ -94,8 +94,10 @@ Q3DWidget::init(float fps)
     egocentricMap->addChild(createRobot());
 
     // set up camera control
-    cameraManipulator = new osgGA::TrackballManipulator;
+    cameraManipulator = new GCManipulator;
     setCameraManipulator(cameraManipulator);
+    cameraManipulator->setMinZoomRange(cameraParams.minZoomRange);
+    cameraManipulator->setDistance(cameraParams.minZoomRange * 2.0);
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(redraw()));
     timer.start(static_cast<int>(floorf(1000.0f / fps)));
@@ -282,6 +284,7 @@ Q3DWidget::keyPressEvent(QKeyEvent* event)
     {
         return;
     }
+
     if (event->text().isEmpty())
     {
         osgGW->getEventQueue()->keyPress(convertKey(event->key()));
