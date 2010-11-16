@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UAS.h"
 #include "SlugsMAV.h"
 #include "PxQuadMAV.h"
-#include "ArduPilotMAV.h"
+#include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
 #include <QGCMAVLink.h>
@@ -186,9 +186,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     uas = mav;
                 }
                     break;
-                case MAV_AUTOPILOT_ARDUPILOT:
+                case MAV_AUTOPILOT_ARDUPILOTMEGA:
                     {
-                    ArduPilotMAV* mav = new ArduPilotMAV(this, message.sysid);
+                    ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(this, message.sysid);
                     // Connect this robot to the UAS object
                     // it is IMPORTANT here to use the right object type,
                     // else the slot of the parent object is called (and thus the special
