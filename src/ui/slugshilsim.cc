@@ -200,6 +200,11 @@ float SlugsHilSim::getFloatFromDatagram (const QByteArray* datagram, unsigned ch
   tmpF2C.chData[2] = datagram->at((*i)++);
   tmpF2C.chData[3] = datagram->at((*i)++);
 
+
+//  if (uas != NULL) {
+//    //activeUas = uas;
+//  }
+
   return tmpF2C.flData;
 }
 
@@ -210,6 +215,7 @@ uint16_t SlugsHilSim::getUint16FromDatagram (const QByteArray* datagram, unsigne
   tmpU2C.chData[1] = datagram->at((*i)++);
 
   return tmpU2C.uiData;
+
 }
 
 void SlugsHilSim::linkSelected(int cbIndex){

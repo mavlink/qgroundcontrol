@@ -181,6 +181,9 @@ void MainWindow::buildWidgets()
     slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
     slugsDataWidget->setWidget( new SlugsDataSensorView(this));
 
+    slugsPIDControlWidget = new QDockWidget(tr("PID Control"), this);
+    slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
+
     slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
     slugsHilSimWidget->setWidget( new SlugsHilSim(this));
 
@@ -224,6 +227,7 @@ void MainWindow::connectWidgets()
     if (slugsHilSimWidget->widget()){
       connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), dynamic_cast<SlugsHilSim*>(slugsHilSimWidget->widget()), SLOT(activeUasSet(UASInterface*)) );
     }
+
 
 }
 
@@ -915,6 +919,13 @@ void MainWindow::loadGlobalOperatorView()
     {
         addDockWidget(Qt::RightDockWidgetArea, slugsDataWidget);
         slugsDataWidget->show();
+    }
+
+    // Slugs Data View
+    if (slugsPIDControlWidget)
+    {
+        addDockWidget(Qt::LeftDockWidgetArea, slugsPIDControlWidget);
+        slugsPIDControlWidget->show();
     }
 
 
