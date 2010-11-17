@@ -44,6 +44,7 @@ void SlugsPIDControl::activeUasSet(UASInterface* uas)
 {
     SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(uas);
 
+
     if (slugsMav != NULL)
     {
         connect(slugsMav,SIGNAL(slugsActionAck(int,uint8_t,uint8_t)),this,SLOT(recibeMensaje(int,uint8_t,uint8_t)));
@@ -154,23 +155,26 @@ void SlugsPIDControl::changeColor_RED_AirSpeed_groupBox(QString text)
 
 void SlugsPIDControl::changeColor_GREEN_AirSpeed_groupBox()
 {
-    //create the packet
+
+  SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(activeUAS);
+
+  if (slugsMav != NULL)
+  {
+
+   //create the packet
     pidMessage.target = activeUAS->getUASID();
     pidMessage.idx = 0;
     pidMessage.pVal = ui->dT_P_set->text().toFloat();
     pidMessage.iVal = ui->dT_I_set->text().toFloat();
     pidMessage.dVal = ui->dT_D_set->text().toFloat();
 
-    UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getActiveUAS());
-
     mavlink_message_t msg;
 
     mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
-    uas->sendMessage(msg);
+    slugsMav->sendMessage(msg);
 
-
-
-    ui->AirSpeedHold_groupBox->setStyleSheet(GREENcolorStyle);
+     ui->AirSpeedHold_groupBox->setStyleSheet(GREENcolorStyle);
+  }
 }
 
 

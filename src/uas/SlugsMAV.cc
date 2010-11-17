@@ -26,7 +26,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
     {
     case MAVLINK_MSG_ID_HEARTBEAT:
         {
-            qDebug() << "SLUGS RECEIVED HEARTBEAT";
+            //qDebug() << "SLUGS RECEIVED HEARTBEAT";
             break;
         }
 
@@ -299,7 +299,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
     case MAVLINK_MSG_ID_ACTION_ACK:
         {
-            qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_ACTION_ACK";
+            qDebug()<<"--->>>> EMITIENDO MAVLINK_MSG_ID_ACTION_ACK";
             mavlink_action_ack_t ack;
 
             mavlink_msg_action_ack_decode(&message,&ack);
@@ -348,7 +348,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 #endif
 
     default:
-        qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
+        //qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
         break;
     }
 }
