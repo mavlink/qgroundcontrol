@@ -82,9 +82,17 @@ public:
                          float minClipRange, float maxClipRange);
 
     /**
+     * @brief Moves the camera by [dx,dy,dz].
+     * @param dx Translation along the x-axis in meters.
+     * @param dy Translation along the y-axis in meters.
+     * @param dz Translation along the z-axis in meters.
+     */
+    void moveCamera(float dx, float dy, float dz);
+
+    /**
      * @brief Recenters the camera at (x,y,z).
      */
-    void recenter(float x, float y, float z);
+    void recenterCamera(float x, float y, float z);
 
     /**
      * @brief Sets up 3D display mode.
