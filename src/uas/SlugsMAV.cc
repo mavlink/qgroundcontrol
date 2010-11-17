@@ -297,6 +297,13 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
             break;
         }
+    case MAVLINK_MSG_ID_ACTION_ACK:
+        {
+            mavlink_action_ack_t ack;
+
+            mavlink_msg_action_ack_decode(&message,&ack);
+            emit slugsActionAck(uasId,ack.action,ack.result);
+        }
 //    case MAVLINK_MSG_ID_MID_LVL_CMDS://180
 //        {
 
