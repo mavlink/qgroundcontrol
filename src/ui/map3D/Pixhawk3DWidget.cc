@@ -50,6 +50,9 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
      , displayTarget(false)
      , displayWaypoints(true)
      , followCamera(true)
+     , lastRobotX(0.0f)
+     , lastRobotY(0.0f)
+     , lastRobotZ(0.0f)
 {
     setCameraParams(2.0f, 30.0f, 0.01f, 10000.0f);
     init(15.0f);
@@ -137,7 +140,7 @@ Pixhawk3DWidget::buildLayout(void)
             this, SLOT(showTrail(int)));
     connect(waypointsCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showWaypoints(int)));
-    connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenterCamera()));
+    connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenter()));
     connect(followCameraCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(toggleFollowCamera(int)));
 }
@@ -202,7 +205,7 @@ Pixhawk3DWidget::showWaypoints(int state)
 }
 
 void
-Pixhawk3DWidget::recenterCamera(void)
+Pixhawk3DWidget::recenter(void)
 {
     float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
     if (uas != NULL)
@@ -212,7 +215,7 @@ Pixhawk3DWidget::recenterCamera(void)
         robotZ = uas->getLocalZ();
     }
 
-    recenter(robotY, robotX, -robotZ);
+    recenterCamera(robotY, robotX, -robotZ);
 }
 
 void
@@ -231,21 +234,36 @@ Pixhawk3DWidget::toggleFollowCamera(int32_t state)
 void
 Pixhawk3DWidget::display(void)
 {
-    float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
-    float robotRoll = 0.0f, robotPitch = 0.0f, robotYaw = 0.0f;
-    if (uas != NULL)
+    if (uas == NULL)
     {
-        robotX = uas->getLocalX();
-        robotY = uas->getLocalY();
-        robotZ = uas->getLocalZ();
-        robotRoll = uas->getRoll();
-        robotPitch = uas->getPitch();
-        robotYaw = uas->getYaw();
+        return;
+    }
+
+    float robotX = uas->getLocalX();
+    float robotY = uas->getLocalY();
+    float robotZ = uas->getLocalZ();
+    float robotRoll = uas->getRoll();
+    float robotPitch = uas->getPitch();
+    float robotYaw = uas->getYaw();
+
+    if (lastRobotX == 0.0f && lastRobotY == 0.0f && lastRobotZ == 0.0f)
+    {
+        lastRobotX = robotX;
+        lastRobotY = robotY;
+        lastRobotZ = robotZ;
+
+        recenterCamera(robotY, robotX, -robotZ);
+
+        return;
     }
 
     if (followCamera)
     {
-        recenter(robotY, robotX, -robotZ);
+        float dx = robotY - lastRobotY;
+        float dy = robotX - lastRobotX;
+        float dz = lastRobotZ - robotZ;
+
+        moveCamera(dx, dy, dz);
     }
 
     robotPosition->setPosition(osg::Vec3(robotY, robotX, -robotZ));
@@ -263,6 +281,10 @@ Pixhawk3DWidget::display(void)
     rollingMap->setChildValue(trailNode, displayTrail);
     rollingMap->setChildValue(targetNode, displayTarget);
     rollingMap->setChildValue(waypointsNode, displayWaypoints);
+
+    lastRobotX = robotX;
+    lastRobotY = robotY;
+    lastRobotZ = robotZ;
 }
 
 void

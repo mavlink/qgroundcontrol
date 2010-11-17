@@ -33,14 +33,21 @@ This file is part of the QGROUNDCONTROL project
 
 GCManipulator::GCManipulator()
 {
-    _moveSensitivity = 0.05;
-    _minZoomRange = 2.0;
+    _moveSensitivity = 0.05f;
+    _zoomSensitivity = 1.0f;
+    _minZoomRange = 2.0f;
 }
 
 void
-GCManipulator::setMinZoomRange(double minZoomRange)
+GCManipulator::setMinZoomRange(float minZoomRange)
 {
     _minZoomRange = minZoomRange;
+}
+
+void
+GCManipulator::move(float dx, float dy, float dz)
+{
+    _center += osg::Vec3(dx, dy, dz);
 }
 
 bool
@@ -123,11 +130,11 @@ GCManipulator::handle(const osgGA::GUIEventAdapter& ea,
 
             if (ea.getScrollingMotion() == GUIEventAdapter::SCROLL_UP)
             {
-                scale -= 0.1f;
+                scale -= _zoomSensitivity * 0.1f;
             }
             else
             {
-                scale += 0.1f;
+                scale += _zoomSensitivity * 0.1f;
             }
             if (_distance * scale > _minZoomRange)
             {
@@ -271,7 +278,7 @@ GCManipulator::calcMovement()
                             GUIEventAdapter::RIGHT_MOUSE_BUTTON))
     {
         // pan model
-        float scale = -0.3f * _distance;
+        float scale = -_moveSensitivity * _distance;
 
         osg::Matrix rotation_matrix;
         rotation_matrix.makeRotate(_rotation);
@@ -286,7 +293,7 @@ GCManipulator::calcMovement()
     else if (buttonMask == GUIEventAdapter::RIGHT_MOUSE_BUTTON)
     {
         // zoom model
-        float scale = 1.0f + dy;
+        float scale = 1.0f + dy * _zoomSensitivity;
         if (_distance * scale > _minZoomRange)
         {
 

@@ -181,7 +181,13 @@ Q3DWidget::setCameraParams(float minZoomRange, float cameraFov,
 }
 
 void
-Q3DWidget::recenter(float x, float y, float z)
+Q3DWidget::moveCamera(float dx, float dy, float dz)
+{
+    cameraManipulator->move(dx, dy, dz);
+}
+
+void
+Q3DWidget::recenterCamera(float x, float y, float z)
 {
     cameraManipulator->setCenter(osg::Vec3d(x, y, z));
 }
