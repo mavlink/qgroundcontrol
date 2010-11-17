@@ -105,6 +105,10 @@ public slots:
      */
     void linkSelected (int cbIndex);
 
+public slots:
+
+
+
 private:
 
 	typedef union _tFloatToChar {

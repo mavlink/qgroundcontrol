@@ -432,7 +432,6 @@ void SlugsDataSensorView::slugsDataLogChanged(int systemId,
                                               double logfl_6,
                                               quint64 time)
 {
-    qDebug()<<"----------------------------------------------------->>>>>>>>>>>>>>> ACTUALIZANDO LOG DATA";
      Q_UNUSED(systemId);
     Logfl_1 = logfl_1;
     Logfl_2 = logfl_2;
