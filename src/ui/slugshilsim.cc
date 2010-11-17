@@ -50,6 +50,7 @@ SlugsHilSim::SlugsHilSim(QWidget *parent) :
 
 SlugsHilSim::~SlugsHilSim()
 {
+    rxSocket->disconnectFromHost();
     delete ui;
 }
 
@@ -87,8 +88,9 @@ void SlugsHilSim::putInHilMode(void){
 
     if(msgBox.exec() == QMessageBox::Yes)
     {
+      rxSocket->disconnectFromHost();
       rxSocket->bind(QHostAddress::Any, ui->ed_rxPort->text().toInt());
-      txSocket->bind(QHostAddress::Broadcast, ui->ed_txPort->text().toInt());
+      //txSocket->bind(QHostAddress::Broadcast, ui->ed_txPort->text().toInt());
 
       ui->ed_ipAdress->setEnabled(sw_enableControls);
       ui->ed_rxPort->setEnabled(sw_enableControls);
@@ -108,21 +110,100 @@ void SlugsHilSim::putInHilMode(void){
     ui->cb_mavlinkLinks->setEnabled(sw_enableControls);
 
     ui->bt_startHil->setText(buttonCaption);
+
+    rxSocket->disconnectFromHost();
   }
-
-
-
-
 }
 
 void SlugsHilSim::readDatagram(void){
+  static int count = 0;
+  while (rxSocket->hasPendingDatagrams()) {
+           QByteArray datagram;
+           datagram.resize(rxSocket->pendingDatagramSize());
+           QHostAddress sender;
+           quint16 senderPort;
 
+           rxSocket->readDatagram(datagram.data(), datagram.size(),
+                                   &sender, &senderPort);
+
+           if (datagram.size() == 113) {
+             processHilDatagram(&datagram);
+           }
+
+           ui->ed_count->setText(QString::number(count++));
+       }
 }
 
 
 void SlugsHilSim::activeUasSet(UASInterface* uas){
 
   if (uas != NULL) {
-    //activeUas = uas;
+    activeUas = static_cast <UAS *>(uas);
   }
+}
+
+
+void SlugsHilSim::processHilDatagram(const QByteArray* datagram){
+  unsigned char i = 0;
+
+  mavlink_message_t msg;
+
+  // GPS
+  mavlink_gps_raw_t tmpGpsRaw;
+  mavlink_gps_date_time_t tmpGpsTime;
+
+  tmpGpsTime.year  = datagram->at(i++);
+  tmpGpsTime.month = datagram->at(i++);
+  tmpGpsTime.day   = datagram->at(i++);
+  tmpGpsTime.hour  = datagram->at(i++);
+  tmpGpsTime.min   = datagram->at(i++);
+  tmpGpsTime.sec   = datagram->at(i++);
+
+  tmpGpsRaw.lat = getFloatFromDatagram(datagram, &i);
+  tmpGpsRaw.lon = getFloatFromDatagram(datagram, &i);
+  tmpGpsRaw.alt = getFloatFromDatagram(datagram, &i);
+
+  tmpGpsRaw.hdg = getUint16FromDatagram(datagram, &i);
+  tmpGpsRaw.v   = getUint16FromDatagram(datagram, &i);
+  tmpGpsRaw.eph = getUint16FromDatagram(datagram, &i);
+
+  tmpGpsRaw.fix_type = datagram->at(i++);
+  tmpGpsTime.visSat  = datagram->at(i++);
+
+  //mavlink_msg_gps_date_time_pack();
+
+  //activeUas->sendMessage();
+
+  // TODO: this is legacy of old HIL datagram. Need to remove from Simulink model
+  i++;
+
+  ui->ed_1->setText(QString::number(tmpGpsRaw.hdg));
+  ui->ed_2->setText(QString::number(tmpGpsRaw.v));
+  ui->ed_3->setText(QString::number(tmpGpsRaw.eph));
+}
+
+float SlugsHilSim::getFloatFromDatagram (const QByteArray* datagram, unsigned char * i){
+  tFloatToChar tmpF2C;
+
+  tmpF2C.chData[0] = datagram->at((*i)++);
+  tmpF2C.chData[1] = datagram->at((*i)++);
+  tmpF2C.chData[2] = datagram->at((*i)++);
+  tmpF2C.chData[3] = datagram->at((*i)++);
+
+
+//  if (uas != NULL) {
+//    //activeUas = uas;
+//  }
+
+  return tmpF2C.flData;
+}
+
+uint16_t SlugsHilSim::getUint16FromDatagram (const QByteArray* datagram, unsigned char * i){
+  tUint16ToChar tmpU2C;
+
+  tmpU2C.chData[0] = datagram->at((*i)++);
+  tmpU2C.chData[1] = datagram->at((*i)++);
+
+  return tmpU2C.uiData;
+
 }

@@ -19,13 +19,8 @@ SlugsPIDControl::SlugsPIDControl(QWidget *parent) :
 
     activeUAS = NULL;
 
-
     setRedColorStyle();
     setGreenColorStyle();
-
-
-
-
 
 //    connect_set_pushButtons();
 //    connect_AirSpeed_LineEdit();
