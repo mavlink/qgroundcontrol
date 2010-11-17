@@ -424,7 +424,7 @@ void MAVLinkSimulationLink::mainloop()
         static int rcCounter = 0;
         if (rcCounter == 2)
         {
-            mavlink_rc_channels_t chan;
+            mavlink_rc_channels_raw_t chan;
             chan.chan1_raw = 1000 + ((int)(fabs(x) * 1000) % 2000);
             chan.chan2_raw = 1000 + ((int)(fabs(y) * 1000) % 2000);
             chan.chan3_raw = 1000 + ((int)(fabs(z) * 1000) % 2000);
@@ -433,15 +433,7 @@ void MAVLinkSimulationLink::mainloop()
             chan.chan6_raw = (chan.chan3_raw + chan.chan2_raw) / 2.0f;
             chan.chan7_raw = (chan.chan4_raw + chan.chan2_raw) / 2.0f;
             chan.chan8_raw = (chan.chan6_raw + chan.chan2_raw) / 2.0f;
-            chan.chan1_255 = ((chan.chan1_raw - 1000)/1000.0f) * 255.0f;
-            chan.chan2_255 = ((chan.chan2_raw - 1000)/1000.0f) * 255.0f;
-            chan.chan3_255 = ((chan.chan3_raw - 1000)/1000.0f) * 255.0f;
-            chan.chan4_255 = ((chan.chan4_raw - 1000)/1000.0f) * 255.0f;
-            chan.chan5_255 = ((chan.chan5_raw - 1000)/1000.0f) * 255.0f;
-            chan.chan6_255 = ((chan.chan6_raw - 1000)/1000.0f) * 255.0f;
-            chan.chan7_255 = ((chan.chan7_raw - 1000)/1000.0f) * 255.0f;
-            chan.chan8_255 = ((chan.chan8_raw - 1000)/1000.0f) * 255.0f;
-            messageSize = mavlink_msg_rc_channels_encode(systemId, componentId, &msg, &chan);
+            messageSize = mavlink_msg_rc_channels_raw_encode(systemId, componentId, &msg, &chan);
             // Allocate buffer with packet data
             bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
             //add data into datastream
