@@ -57,19 +57,6 @@ SlugsHilSim::~SlugsHilSim()
     delete ui;
 }
 
-void SlugsHilSim::linkAdded(void){
-
-//  ui->cb_mavlinkLinks->clear();
-
-//  QList<LinkInterface *> linkList;
-//  linkList.append(LinkManager::instance()->getLinks()) ;
-
-//  for (int i = 0; i< linkList.size(); i++){
-//    ui->cb_mavlinkLinks->addItem((linkList.takeFirst())->getName());
-//  }
-
-}
-
 void SlugsHilSim::addToCombo(LinkInterface* theLink){
 
   ui->cb_mavlinkLinks->addItem(theLink->getName());
@@ -177,12 +164,12 @@ void SlugsHilSim::processHilDatagram(const QByteArray* datagram){
   tmpGpsTime.visSat  = datagram->at(i++);
 
   mavlink_msg_gps_date_time_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &tmpGpsTime);
-  activeUas->sendMessage(hilLink,&msg);
+  activeUas->sendMessage(hilLink, msg);
 
   memset(&msg, 0, sizeof(mavlink_message_t));
 
   mavlink_msg_gps_raw_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &tmpGpsRaw);
-  activeUas->sendMessage(hilLink,&msg);
+  activeUas->sendMessage(hilLink,msg);
 
   // TODO: this is legacy of old HIL datagram. Need to remove from Simulink model
   i++;
@@ -199,11 +186,6 @@ float SlugsHilSim::getFloatFromDatagram (const QByteArray* datagram, unsigned ch
   tmpF2C.chData[1] = datagram->at((*i)++);
   tmpF2C.chData[2] = datagram->at((*i)++);
   tmpF2C.chData[3] = datagram->at((*i)++);
-
-
-//  if (uas != NULL) {
-//    //activeUas = uas;
-//  }
 
   return tmpF2C.flData;
 }

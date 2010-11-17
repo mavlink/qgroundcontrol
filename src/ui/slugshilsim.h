@@ -60,7 +60,6 @@ protected:
     UAS* activeUas;
 
 public slots:
-    void linkAdded (void);
 
     /**
      * @brief Adds a link to the combo box listing so the user can select a link
