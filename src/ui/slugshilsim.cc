@@ -41,7 +41,10 @@ SlugsHilSim::SlugsHilSim(QWidget *parent) :
     rxSocket = new QUdpSocket(this);
     txSocket = new QUdpSocket(this);
 
+    hilLink = NULL;
+
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addToCombo(LinkInterface*)));
+    connect(ui->cb_mavlinkLinks, SIGNAL(currentIndexChanged(int)), this, SLOT(linkSelected(int)));
     connect(ui->bt_startHil, SIGNAL(clicked()), this, SLOT(putInHilMode()));
     connect(rxSocket, SIGNAL(readyRead()), this, SLOT(readDatagram()));
 
@@ -71,6 +74,11 @@ void SlugsHilSim::addToCombo(LinkInterface* theLink){
 
   ui->cb_mavlinkLinks->addItem(theLink->getName());
   linksAvailable.insert(ui->cb_mavlinkLinks->count(),theLink);
+
+  if (hilLink == NULL){
+    hilLink = theLink;
+  }
+
 }
 
 void SlugsHilSim::putInHilMode(void){
@@ -86,8 +94,7 @@ void SlugsHilSim::putInHilMode(void){
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     msgBox.setDefaultButton(QMessageBox::No);
 
-    if(msgBox.exec() == QMessageBox::Yes)
-    {
+    if(msgBox.exec() == QMessageBox::Yes) {
       rxSocket->disconnectFromHost();
       rxSocket->bind(QHostAddress::Any, ui->ed_rxPort->text().toInt());
       //txSocket->bind(QHostAddress::Broadcast, ui->ed_txPort->text().toInt());
@@ -98,7 +105,6 @@ void SlugsHilSim::putInHilMode(void){
       ui->cb_mavlinkLinks->setEnabled(sw_enableControls);
 
       ui->bt_startHil->setText(buttonCaption);
-
 
     } else {
       ui->bt_startHil->setChecked(false);
@@ -170,9 +176,13 @@ void SlugsHilSim::processHilDatagram(const QByteArray* datagram){
   tmpGpsRaw.fix_type = datagram->at(i++);
   tmpGpsTime.visSat  = datagram->at(i++);
 
-  mavlink_msg_gps_date_time_pack()
+  mavlink_msg_gps_date_time_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &tmpGpsTime);
+  activeUas->sendMessage(hilLink,&msg);
 
-  activeUas->sendMessage();
+  memset(&msg, 0, sizeof(mavlink_message_t));
+
+  mavlink_msg_gps_raw_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &tmpGpsRaw);
+  activeUas->sendMessage(hilLink,&msg);
 
   // TODO: this is legacy of old HIL datagram. Need to remove from Simulink model
   i++;
@@ -200,4 +210,8 @@ uint16_t SlugsHilSim::getUint16FromDatagram (const QByteArray* datagram, unsigne
   tmpU2C.chData[1] = datagram->at((*i)++);
 
   return tmpU2C.uiData;
+}
+
+void SlugsHilSim::linkSelected(int cbIndex){
+  //hilLink = linksAvailable
 }
