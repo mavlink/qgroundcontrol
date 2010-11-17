@@ -299,6 +299,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
     case MAVLINK_MSG_ID_ACTION_ACK:
         {
+            qDebug()<<"-------->>>>>>>>>>>>>>> EMITIENDO MAVLINK_MSG_ID_ACTION_ACK";
             mavlink_action_ack_t ack;
 
             mavlink_msg_action_ack_decode(&message,&ack);
