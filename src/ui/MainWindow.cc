@@ -228,6 +228,7 @@ void MainWindow::connectWidgets()
       connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), dynamic_cast<SlugsHilSim*>(slugsHilSimWidget->widget()), SLOT(activeUasSet(UASInterface*)) );
     }
 
+
 }
 
 void MainWindow::arrangeCenterStack()

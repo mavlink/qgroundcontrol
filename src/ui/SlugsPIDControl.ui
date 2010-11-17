@@ -123,6 +123,13 @@
          </layout>
         </item>
         <item>
+         <widget class="QLabel" name="recepcion_label">
+          <property name="text">
+           <string>Recepcion</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer_5">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -671,14 +678,14 @@
         <item>
          <layout class="QGridLayout" name="gridLayout_12">
           <item row="0" column="0">
-           <widget class="QPushButton" name="HELPComm_set_pushButton">
+           <widget class="QPushButton" name="HELPComm_PDI_set_pushButton">
             <property name="text">
              <string>SET</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
-           <widget class="QPushButton" name="HELPComm_get_pushButton">
+           <widget class="QPushButton" name="HELPComm_PDI_get_pushButton">
             <property name="text">
              <string>GET</string>
             </property>
@@ -834,14 +841,14 @@
         <item>
          <layout class="QGridLayout" name="gridLayout_14">
           <item row="0" column="0">
-           <widget class="QPushButton" name="dR_set_pushButton">
+           <widget class="QPushButton" name="dR_PDI_set_pushButton">
             <property name="text">
              <string>SET</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
-           <widget class="QPushButton" name="dR_get_pushButton">
+           <widget class="QPushButton" name="dR_PDI_get_pushButton">
             <property name="text">
              <string>GET</string>
             </property>
@@ -922,14 +929,14 @@
         <item>
          <layout class="QGridLayout" name="gridLayout_16">
           <item row="0" column="0">
-           <widget class="QPushButton" name="Pitch2dT_set_pushButton">
+           <widget class="QPushButton" name="Pitch2dT_PDI_set_pushButton">
             <property name="text">
              <string>SET</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
-           <widget class="QPushButton" name="Pitch2dT_get_pushButton">
+           <widget class="QPushButton" name="Pitch2dT_PDI_get_pushButton">
             <property name="text">
              <string>GET</string>
             </property>
