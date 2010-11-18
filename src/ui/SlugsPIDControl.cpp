@@ -337,5 +337,5 @@ void SlugsPIDControl::connect_Pitch2dT_LineEdit()
 
 void SlugsPIDControl::recibeMensaje(int systemId, uint8_t action, uint8_t result)
 {
-    ui->recepcion_label->setText(QString::number(action));
+    ui->recepcion_label->setText("Mensaje Recibido: " + QString::number(action));
 }

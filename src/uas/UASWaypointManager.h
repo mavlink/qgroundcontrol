@@ -91,6 +91,7 @@ public:
     void localMoveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
     void localSaveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
     void localLoadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
+
     /*@}*/
 
     /** @name Global waypoint list operations */
@@ -119,6 +120,8 @@ signals:
     void waypointListChanged(void);                 ///< emits signal that the local waypoint list has been changed
     void currentWaypointChanged(quint16);           ///< emits the new current waypoint sequence number
     void updateStatusString(const QString &);       ///< emits the current status string
+
+    void loadWPFile();                                ///< emits signal that a file wp has been load
 
 private:
     UAS &uas;                                       ///< Reference to the corresponding UAS

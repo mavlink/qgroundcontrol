@@ -135,6 +135,8 @@ signals:
                          uint8_t gpsvisSat,
                          quint64 time);
 
+
+   // Standart messages MAVLINK used by SLUGS
    void slugsActionAck(int systemId,
                        uint8_t action,
                        uint8_t result);
