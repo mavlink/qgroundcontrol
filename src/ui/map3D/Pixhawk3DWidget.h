@@ -61,7 +61,7 @@ private slots:
     void showGrid(int state);
     void showTrail(int state);
     void showWaypoints(int state);
-    void recenterCamera(void);
+    void recenter(void);
     void toggleFollowCamera(int state);
 
 protected:
@@ -109,6 +109,8 @@ private:
     osg::ref_ptr<osg::Group> waypointsNode;
 
     QPushButton* targetButton;
+
+    float lastRobotX, lastRobotY, lastRobotZ;
 };
 
 #endif // PIXHAWK3DWIDGET_H
