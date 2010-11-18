@@ -91,6 +91,7 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     this->setVisible(false);
     isGlobalWP = false;
     isLocalWP = false;
+    loadFileGlobalWP = false;
     centerMapCoordinate.setX(0.0);
     centerMapCoordinate.setY(0.0);
 
@@ -131,6 +132,7 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(&uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
         connect(&uas->getWaypointManager(), SIGNAL(waypointListChanged(void)),                  this, SLOT(waypointListChanged(void)));
         connect(&uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointChanged(quint16)));
+        connect(&uas->getWaypointManager(),SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
     }
 }
 
@@ -147,9 +149,12 @@ void WaypointList::loadWaypoints()
 {
     if (uas)
     {
+
+
         QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
         uas->getWaypointManager().localLoadWaypoints(fileName);
-    }
+
+     }
 }
 
 void WaypointList::transmit()
@@ -336,6 +341,11 @@ void WaypointList::waypointListChanged()
                 WaypointGlobalView *wpgv = wpGlobalViews.value(wp);
                 wpgv->updateValues();
                 listLayout->addWidget(wpgv);
+                if(loadFileGlobalWP)
+                {
+                    emit createWaypointAtMap(QPointF(wp->getX(),wp->getY()));
+                    qDebug()<<"Emitiendo Pos: "<<wp->getX()<<" - "<<wp->getY();
+                }
             }
 
             }
@@ -391,7 +401,7 @@ void WaypointList::waypointListChanged()
             }
 
 
-
+            loadFileGlobalWP = false;
         }
 
 
@@ -621,4 +631,9 @@ void WaypointList::changeWPPositionBySpinBox(Waypoint *wp)
 {
 
     emit changePositionWPGlobalBySpinBox(wp->getId(), wp->getY(), wp->getX());
+}
+
+void WaypointList::setIsLoadFileWP()
+{
+    loadFileGlobalWP = true;
 }

@@ -348,7 +348,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 #endif
 
     default:
-        qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
+        //qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
         break;
     }
 }

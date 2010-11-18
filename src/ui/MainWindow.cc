@@ -395,6 +395,9 @@ void MainWindow::connectActions()
     // Slugs View
     connect(ui.actionShow_Slugs_View, SIGNAL(triggered()), this, SLOT(loadSlugsView()));
 
+    //GlobalOperatorView
+   // connect(ui.actionGlobalOperatorView,SIGNAL(triggered()),waypointsDockWidget->widget(),SLOT())
+
 }
 
 void MainWindow::showHelp()
@@ -912,6 +915,7 @@ void MainWindow::loadGlobalOperatorView()
     {
         addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
         waypointsDockWidget->show();
+
     }
 
     // Slugs Data View

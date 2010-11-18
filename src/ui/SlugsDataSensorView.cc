@@ -167,10 +167,6 @@ void SlugsDataSensorView::addUAS(UASInterface* uas)
         connect(slugsMav, SIGNAL(slugsGPSDateTime(int,uint8_t,uint8_t,uint8_t,uint8_t,uint8_t,uint8_t,uint8_t,quint64)),this,SLOT(slugsGPSDateTimeChanged(int,uint8_t,uint8_t,uint8_t,uint8_t,uint8_t,uint8_t,uint8_t,quint64)));
 
 
-
-
-
-
         // Set this UAS as active if it is the first one
         if(activeUAS == 0)
         {
@@ -265,12 +261,6 @@ void SlugsDataSensorView::refresh()
             ui->m_pwmRuddTrim->setText(QString::number(aux1, 'f', 4));
             ui->m_pwmFailSafe->setText(QString::number(dre_c, 'f', 4));
             ui->m_pwmAvailable->setText("No Data");
-
-
-
-
-
-
 
 
     }
