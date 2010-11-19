@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "UASInterface.h"
 #include "SlugsMAV.h"
+#include "mavlink.h"
 
 namespace Ui {
     class SlugsDataSensorView;
@@ -67,17 +68,10 @@ public slots:
     */
     void setActiveUAS(UASInterface* uas);
 
-    /**
-         * @brief Adds the UAS for data display
-         *
-         * Adds the UAS and makes all the correct connections for data display on the Widgets
-    */
 
-    void refresh();
+    void slugRawDataChanged (int uasId, const mavlink_raw_imu_t& rawData);
 
-
-
-
+#ifdef MAVLINK_ENABLED_SLUGS
     /**
          * @brief Adds the UAS for data display
          *
@@ -120,240 +114,62 @@ public slots:
                                     double alt,
                                     quint64 time);
     /**
-         * @brief Adds the UAS for data display
-         *
-         * Adds the UAS and makes all the correct connections for data display on the Widgets
+         * @brief Updates the sensor bias widget
     */
     void slugsSensorBiasChanged(int systemId,
-                                double axb,
-                                double ayb,
-                                double azb,
-                                double gxb,
-                                double gyb,
-                                double gzb,
-                                quint64 time);
+                                const mavlink_sensor_bias_t& sensorBias);
+
     /**
-         * @brief Adds the UAS for data display
-         *
-         * Adds the UAS and makes all the correct connections for data display on the Widgets
+         * @brief Updates the diagnostic widget
     */
     void slugsDiagnosticMessageChanged(int systemId,
-                                       double diagfl1,
-                                       double diagfl2,
-                                       double diagfl3,
-                                       int16_t diagsh1,
-                                       int16_t diagsh2,
-                                       int16_t diagsh3,
-                                       quint64 time);
+                                       const mavlink_diagnostic_t& diagnostic);
 
     /**
-         * @brief Adds the UAS for data display
-         *
-         * Adds the UAS and makes all the correct connections for data display on the Widgets
+         * @brief Updates the CPU load widget
     */
     void slugsCpuLoadChanged(int systemId,
-                             uint8_t sensload,
-                             uint8_t ctrlload,
-                             uint8_t batvolt,
-                             quint64 time);
+                             const mavlink_cpu_load_t& cpuLoad);
 
 
     /**
-         * @brief Adds the UAS for data display
-         *
-         * Adds the UAS and makes all the correct connections for data display on the Widgets
+         * @brief Updates the Navigation widget
     */
     void slugsNavegationChanged(int systemId,
-                                double navu_m,
-                                double navphi_c,
-                                double navtheta_c,
-                                double navpsiDot_c,
-                                double navay_body,
-                                double navtotalDist,
-                                double navdist2Go,
-                                uint8_t navfromWP,
-                                uint8_t navtoWP,
-                                quint64 time);
+                                const mavlink_slugs_navigation_t& slugsNavigation);
 
     /**
-         * @brief Adds the UAS for data display
-         *
-         * Adds the UAS and makes all the correct connections for data display on the Widgets
+         * @brief Updates the Data Log widget
     */
    void  slugsDataLogChanged(int systemId,
-                            double logfl_1,
-                            double logfl_2,
-                            double logfl_3,
-                            double logfl_4,
-                            double logfl_5,
-                            double logfl_6,
-                            quint64 time);
+                             const mavlink_data_log_t& dataLog);
 
    /**
-        * @brief Adds the UAS for data display
-        *
-        * Adds the UAS and makes all the correct connections for data display on the Widgets
+        * @brief Updates the PWM Commands widget
    */
-
    void slugsPWMChanged(int systemId,
-                        uint16_t vdt_c,
-                        uint16_t vdla_c,
-                        uint16_t vdra_c,
-                        uint16_t vdr_c,
-                        uint16_t vdle_c,
-                        uint16_t vdre_c,
-                        uint16_t vdlf_c,
-                        uint16_t vdrf_c,
-                        uint16_t vda1_c,
-                        uint16_t vda2_c,
-                        quint64 time);
+                        const mavlink_pwm_commands_t& pwmCommands);
 
    /**
-        * @brief Adds the UAS for data display
-        *
-        * Adds the UAS and makes all the correct connections for data display on the Widgets
+        * @brief Updates the filtered sensor measurements widget
    */
    void slugsFilteredDataChanged(int systemId,
-                                 double filaX,
-                                 double filaY,
-                                 double filaZ,
-                                 double filgX,
-                                 double filgY,
-                                 double filgZ,
-                                 double filmX,
-                                 double filmY,
-                                 double filmZ,
-                                 quint64 time);
+                                 const mavlink_filtered_data_t& filteredData);
 
 
-
-
-
+   /**
+        * @brief Updates the gps Date Time widget
+   */
     void slugsGPSDateTimeChanged(int systemId,
-                                    uint8_t gpsyear,
-                                     uint8_t gpsmonth,
-                                     uint8_t gpsday,
-                                     uint8_t gpshour,
-                                     uint8_t gpsmin,
-                                     uint8_t gpssec,
-                                    uint8_t gpsvisSat,
-                                    quint64 time);
+                                 const mavlink_gps_date_time_t& gpsDateTime);
 
+#endif // MAVLINK_ENABLED_SLUGS
 
 protected:
-    QTimer* updateTimer;
      UASInterface* activeUAS;
-
-     //Global Position
-     double Latitude;
-     double Longitude;
-     double Height;
-     quint64 timeGlobalPosition;
-
-     // Position and Attitude
-     //Position
-     double Xpos;
-     double Ypos;
-     double Zpos;
-     quint64 TimeActualPosition;
-     //Speed
-     double VXpos;
-     double VYpos;
-     double VZpos;
-     quint64 TimeActualSpeed;
-     //Attitude
-     double roll;
-     double pitch;
-     double yaw;
-     quint64 TimeActualAttitude;
-
-     //Sensor Biases
-     //Acelerometer
-     double Axb;
-     double Ayb;
-     double Azb;
-
-     //Gyro
-     double Gxb;
-     double Gyb;
-     double Gzb;
-     quint64 TimeActualBias;
-
-     //Diagnostic
-     double diagFl1;
-     double diagFl2;
-     double diagFl3;
-     int16_t diagSh1;
-     int16_t diagSh2;
-     int16_t diagSh3;
-     quint64 timeDiagnostic;
-
-     //CPU Load
-     uint8_t sensLoad;
-     uint8_t ctrlLoad;
-     uint8_t batVolt;
-     quint64 timeCpuLoad;
-
-     //navigation data
-     double u_m;
-     double phi_c;
-     double theta_c;
-     double psiDot_c;
-     double ay_body;
-     double totalDist;
-     double dist2Go;
-     uint8_t fromWP;
-     uint8_t toWP;
-     quint64 timeNavigation;
-
-     // Data Log
-     double Logfl_1;
-     double Logfl_2;
-     double Logfl_3;
-     double Logfl_4;
-     double Logfl_5;
-     double Logfl_6;
-     quint64 timeDataLog;
-
-     //pwm commands
-     uint16_t dt_c; ///< AutoPilot's throttle command
-     uint16_t dla_c; ///< AutoPilot's left aileron command
-     uint16_t dra_c; ///< AutoPilot's right aileron command
-     uint16_t dr_c; ///< AutoPilot's rudder command
-     uint16_t dle_c; ///< AutoPilot's left elevator command
-     uint16_t dre_c; ///< AutoPilot's right elevator command
-     uint16_t dlf_c; ///< AutoPilot's left  flap command
-     uint16_t drf_c; ///< AutoPilot's right flap command
-     uint16_t aux1; ///< AutoPilot's aux1 command
-     uint16_t aux2; ///< AutoPilot's aux2 command
-     quint64 timePWMCommand;
-
-     //filtered data
-     double aX; ///< Accelerometer X value (m/s^2)
-     double aY; ///< Accelerometer Y value (m/s^2)
-     double aZ; ///< Accelerometer Z value (m/s^2)
-     double gX; ///< Gyro X value (rad/s)
-     double gY; ///< Gyro Y value (rad/s)
-     double gZ; ///< Gyro Z value (rad/s)
-     double mX; ///< Magnetometer X (normalized to 1)
-     double mY; ///< Magnetometer Y (normalized to 1)
-     double mZ; ///< Magnetometer Z (normalized to 1)
-     quint64 timeFiltered;
-
-     //gps date and time
-     uint8_t year; ///< Year reported by Gps
-     uint8_t month; ///< Month reported by Gps
-     uint8_t day; ///< Day reported by Gps
-     uint8_t hour; ///< Hour reported by Gps
-     uint8_t min; ///< Min reported by Gps
-     uint8_t sec; ///< Sec reported by Gps
-     uint8_t visSat; ///< Visible sattelites reported by Gps
-     quint64 timeGPSDateTime;
-
 
 private:
     Ui::SlugsDataSensorView *ui;
-    void loadParameters();
 
 
 };

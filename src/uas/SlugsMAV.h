@@ -26,7 +26,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include "UAS.h"
 #include "mavlink.h"
+#include <QTimer>
 
+#define SLUGS_UPDATE_RATE   100   // in ms
 class SlugsMAV : public UAS
 {
     Q_OBJECT
@@ -38,109 +40,79 @@ public slots:
     /** @brief Receive a MAVLink message from this MAV */
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
 
+    void emitSignals (void);
+
+
+
 signals:
-    // ESPECIAL SLUGS MESSAGE
-    void slugsCPULoad(int systemId,
-                      uint8_t sensLoad,
-                      uint8_t ctrlLoad,
-                      uint8_t batVolt,
-                      quint64 time);
 
-    void slugsAirData(int systemId,
-                      float dinamicPressure,
-                      float staticPresure,
-                      uint16_t temperature,
-                      quint64 time);
+    void slugsRawImu(int uasId, const mavlink_raw_imu_t& rawData);
 
-    void slugsSensorBias(int systemId,
-                         double axBias,
-                         double ayBias,
-                         double azBias,
-                         double gxBias,
-                         double gyBias,
-                         double gzBias,
-                         quint64 time);
+#ifdef MAVLINK_ENABLED_SLUGS
 
-    void slugsDiagnostic(int systemId,
-                         double diagFl1,
-                         double diagFl2,
-                         double diagFl3,
-                         int16_t diagSh1,
-                         int16_t diagSh2,
-                         int16_t diagSh3,
-                         quint64 time);
+    void slugsCPULoad(int systemId, const mavlink_cpu_load_t& cpuLoad);
+    void slugsAirData(int systemId, const mavlink_air_data_t& airData);
+    void slugsSensorBias(int systemId, const mavlink_sensor_bias_t& sensorBias);
+    void slugsDiagnostic(int systemId, const mavlink_diagnostic_t& diagnostic);
+    void slugsPilotConsolePWM(int systemId, const mavlink_pilot_console_t& pilotConsole);
+    void slugsPWM(int systemId, const mavlink_pwm_commands_t& pwmCommands);
+    void slugsNavegation(int systemId, const mavlink_slugs_navigation_t& slugsNavigation);
+    void slugsDataLog(int systemId, const mavlink_data_log_t& dataLog);
+    void slugsFilteredData(int systemId, const mavlink_filtered_data_t& filteredData);
+    void slugsGPSDateTime(int systemId, const mavlink_gps_date_time_t& gpsDateTime);
+    void slugsActionAck(int systemId, const mavlink_action_ack_t& actionAck);
 
-    void slugsPilotConsolePWM(int systemId,
-                              uint16_t dt,
-                              uint16_t dla,
-                              uint16_t dra,
-                              uint16_t dr,
-                              uint16_t de,
-                              quint64 time);
+    void slugsBootMsg(int uasId, mavlink_boot_t& boot);
+    void slugsAttitude(int uasId, mavlink_attitude_t& attitude);
 
-    void slugsPWM(int systemId,
-                  uint16_t dt_c,
-                  uint16_t dla_c,
-                  uint16_t dra_c,
-                  uint16_t dr_c,
-                  uint16_t dle_c,
-                  uint16_t dre_c,
-                  uint16_t dlf_c,
-                  uint16_t drf_c,
-                  uint16_t da1_c,
-                  uint16_t da2_c,
-                  quint64 time);
+#endif
 
-    void slugsNavegation(int systemId,
-                          double u_m,
-                          double phi_c,
-                          double theta_c,
-                          double psiDot_c,
-                          double ay_body,
-                          double totalDist,
-                          double dist2Go,
-                          uint8_t fromWP,
-                          uint8_t toWP,
-                          quint64 time);
+protected:
 
-   void slugsDataLog(int systemId,
-                 double logfl_1,
-                 double logfl_2,
-                 double logfl_3,
-                 double logfl_4,
-                 double logfl_5,
-                 double logfl_6,
-                 quint64 time);
+   typedef struct _mavlink_pid_values_t {
+         float P[11];
+         float I[11];
+         float D[11];
+     }mavlink_pid_values_t;
+
+   unsigned char updateRoundRobin;
+   QTimer* widgetTimer;
 
 
-   void slugsFilteredData(int systemId,
-                          double filaX,
-                          double filaY,
-                          double filaZ,
-                          double filgX,
-                          double filgY,
-                          double filgZ,
-                          double filmX,
-                          double filmY,
-                          double filmZ,
-                          quint64 time);
+   mavlink_raw_imu_t 			mlRawImuData;
 
-   void slugsGPSDateTime(int systemId,
-                         uint8_t gpsyear,
-                         uint8_t gpsmonth,
-                         uint8_t gpsday,
-                         uint8_t gpshour,
-                         uint8_t gpsmin,
-                         uint8_t gpssec,
-                         uint8_t gpsvisSat,
-                         quint64 time);
+#ifdef MAVLINK_ENABLED_SLUGS
+   mavlink_gps_raw_t			mlGpsData;
+   mavlink_attitude_t           mlAttitude;
+   mavlink_cpu_load_t 			mlCpuLoadData;
+   mavlink_air_data_t 			mlAirData;
+   mavlink_sensor_bias_t 		mlSensorBiasData;
+   mavlink_diagnostic_t 		mlDiagnosticData;
+   mavlink_pilot_console_t 		mlPilotConsoleData;
+   mavlink_filtered_data_t 		mlFilteredData;
+   mavlink_boot_t 				mlBoot;
+   mavlink_gps_date_time_t 		mlGpsDateTime;
+   mavlink_mid_lvl_cmds_t 		mlMidLevelCommands;
+   mavlink_set_mode_t 			mlApMode;
+   mavlink_pwm_commands_t		mlPwmCommands;
+   mavlink_pid_values_t			mlPidValues;
+   mavlink_pid_t				mlSinglePid;
 
-   void slugsActionAck(int systemId,
-                       uint8_t action,
-                       uint8_t result);
+   mavlink_slugs_navigation_t	mlNavigation;
+   mavlink_data_log_t			mlDataLog;
+   mavlink_ctrl_srfc_pt_t		mlPassthrough;
+   mavlink_action_ack_t			mlActionAck;
+
+   mavlink_slugs_action_t		mlAction;
+
+private:
 
 
+   void emitGpsSignals (void);
 
+   int uasId;
+
+#endif // if SLUGS
 
 };
 
