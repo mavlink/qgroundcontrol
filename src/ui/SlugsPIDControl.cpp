@@ -162,7 +162,7 @@ void SlugsPIDControl::changeColor_GREEN_AirSpeed_groupBox()
   if (slugsMav != NULL)
   {
 
-   //create the packet
+    //create the packet
     pidMessage.target = activeUAS->getUASID();
     pidMessage.idx = 0;
     pidMessage.pVal = ui->dT_P_set->text().toFloat();
@@ -174,7 +174,7 @@ void SlugsPIDControl::changeColor_GREEN_AirSpeed_groupBox()
     mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
     slugsMav->sendMessage(msg);
 
-     ui->AirSpeedHold_groupBox->setStyleSheet(GREENcolorStyle);
+    ui->AirSpeedHold_groupBox->setStyleSheet(GREENcolorStyle);
   }
 }
 

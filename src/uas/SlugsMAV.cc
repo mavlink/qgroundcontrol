@@ -80,7 +80,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       case MAVLINK_MSG_ID_RAW_IMU:
         mavlink_msg_raw_imu_decode(&message, &mlRawImuData);
-      break;
+            break;
 
 #ifdef MAVLINK_ENABLED_SLUGS
 
@@ -97,21 +97,21 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       case MAVLINK_MSG_ID_GPS_RAW:
         mavlink_msg_gps_raw_decode(&message, &mlGpsData);
-      break;
+            break;
 
       case MAVLINK_MSG_ID_ACTION_ACK:      // 62
         mavlink_msg_action_ack_decode(&message,&mlActionAck);
-      break;
+            break;
 
 
 
       case MAVLINK_MSG_ID_CPU_LOAD:       //170
         mavlink_msg_cpu_load_decode(&message,&mlCpuLoadData);
-      break;
+            break;
 
       case MAVLINK_MSG_ID_AIR_DATA:       //171
         mavlink_msg_air_data_decode(&message,&mlAirData);
-      break;
+            break;
 
       case MAVLINK_MSG_ID_SENSOR_BIAS:    //172
         mavlink_msg_sensor_bias_decode(&message,&mlSensorBiasData);
@@ -123,7 +123,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       case MAVLINK_MSG_ID_PILOT_CONSOLE:  //174
         mavlink_msg_pilot_console_decode(&message,&mlPilotConsoleData);
-      break;
+            break;
 
       case MAVLINK_MSG_ID_PWM_COMMANDS:   //175
         mavlink_msg_pwm_commands_decode(&message,&mlPwmCommands);
@@ -131,7 +131,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       case MAVLINK_MSG_ID_SLUGS_NAVIGATION://176
         mavlink_msg_slugs_navigation_decode(&message,&mlNavigation);
-      break;
+            break;
 
       case MAVLINK_MSG_ID_DATA_LOG:       //177
         mavlink_msg_data_log_decode(&message,&mlDataLog);
@@ -143,7 +143,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       case MAVLINK_MSG_ID_GPS_DATE_TIME:    //179
         mavlink_msg_gps_date_time_decode(&message,&mlGpsDateTime);
-      break;
+            break;
 
       case MAVLINK_MSG_ID_MID_LVL_CMDS:     //180
 
@@ -151,7 +151,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       case MAVLINK_MSG_ID_CTRL_SRFC_PT:     //181
 
-      break;
+            break;
 
       case MAVLINK_MSG_ID_PID:              //182
 
@@ -165,8 +165,8 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       default:
 //        qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
-      break;
-    }
+            break;
+        }
 }
 
 
@@ -197,13 +197,13 @@ void SlugsMAV::emitSignals (void){
     case 5:
       emit slugsFilteredData(uasId,mlFilteredData);
       emit slugsGPSDateTime(uasId, mlGpsDateTime);
-    break;
+            break;
 
     case 6:
       emit slugsActionAck(uasId,mlActionAck);
       emit emitGpsSignals();
     break;
-  }
+        }
 
   emit slugsAttitude(uasId, mlAttitude);
   emit attitudeChanged(this,
@@ -238,7 +238,7 @@ void SlugsMAV::emitGpsSignals (void){
     } else {
       emit textMessageReceived(uasId, uasId, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(mlGpsData.v));
     }
-  }
+    }
 }
 
 #endif // MAVLINK_ENABLED_SLUGS

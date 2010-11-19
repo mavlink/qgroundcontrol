@@ -383,8 +383,11 @@ void UASWaypointManager::localLoadWaypoints(const QString &loadFile)
     }
     file.close();
 
+    emit loadWPFile();
     emit waypointListChanged();
+
 }
+
 
 void UASWaypointManager::globalAddWaypoint(Waypoint *wp)
 {
