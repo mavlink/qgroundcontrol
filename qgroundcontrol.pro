@@ -139,7 +139,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/WaypointGlobalView.ui \
     src/ui/SlugsDataSensorView.ui \
     src/ui/SlugsHilSim.ui \
-    src/ui/SlugsDataSensorView.ui \
     src/ui/SlugsPIDControl.ui
 INCLUDEPATH += src \
     src/ui \

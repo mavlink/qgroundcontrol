@@ -1,8 +1,10 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
+#include "mavlink.h"
+
 /** @brief Polling interval in ms */
-#ifdef MAVLINK_ENABLED_SLUGS_MESSAGES_QGC
+#ifdef MAVLINK_ENABLED_SLUGS
   #define SERIAL_POLL_INTERVAL 7
 #else
   #define SERIAL_POLL_INTERVAL 2

@@ -44,12 +44,13 @@ void SlugsPIDControl::activeUasSet(UASInterface* uas)
 {
     SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(uas);
 
-
+#ifdef MAVLINK_ENABLED_SLUGS
     if (slugsMav != NULL)
     {
-        connect(slugsMav,SIGNAL(slugsActionAck(int,uint8_t,uint8_t)),this,SLOT(recibeMensaje(int,uint8_t,uint8_t)));
+        connect(slugsMav,SIGNAL(slugsActionAck(int,const mavlink_action_ack_t&)),this,SLOT(recibeMensaje(int,mavlink_action_ack_t)));
     }
 
+#endif // MAVLINK_ENABLED_SLUG
     // Set this UAS as active if it is the first one
         if(activeUAS == 0)
         {
@@ -339,7 +340,11 @@ void SlugsPIDControl::connect_Pitch2dT_LineEdit()
     connect(ui->P2dT_FF_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_Pitch2dT_groupBox(QString)));
 }
 
-void SlugsPIDControl::recibeMensaje(int systemId, uint8_t action, uint8_t result)
+#ifdef MAVLINK_ENABLED_SLUGS
+
+void SlugsPIDControl::recibeMensaje(int systemId, const mavlink_action_ack_t& action)
 {
-    ui->recepcion_label->setText(QString::number(action));
+    ui->recepcion_label->setText(QString::number(action.action));
 }
+
+#endif // MAVLINK_ENABLED_SLUGS
