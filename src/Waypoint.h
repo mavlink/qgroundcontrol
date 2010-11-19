@@ -59,6 +59,7 @@ public:
     bool load(QTextStream &loadStream);
 
 
+
 protected:
     quint16 id;
     float x;

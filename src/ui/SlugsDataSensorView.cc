@@ -10,21 +10,21 @@ SlugsDataSensorView::SlugsDataSensorView(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::SlugsDataSensorView)
 {
-  ui->setupUi(this);
+    ui->setupUi(this);
 
-  activeUAS = NULL;
+    activeUAS = NULL;
 
-  this->setVisible(false);
+    this->setVisible(false);
 }
 
 SlugsDataSensorView::~SlugsDataSensorView()
 {
-  delete ui;
+    delete ui;
 }
 
 void SlugsDataSensorView::addUAS(UASInterface* uas)
 {
-  SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(uas);
+    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(uas);
 
   if (slugsMav != NULL) {
 
@@ -32,15 +32,15 @@ void SlugsDataSensorView::addUAS(UASInterface* uas)
 
     #ifdef MAVLINK_ENABLED_SLUGS
 
-    //connect standar messages
+        //connect standar messages
     connect(slugsMav, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugLocalPositionChanged(UASInterface*,double,double,double,quint64)));
-    connect(slugsMav, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugSpeedLocalPositionChanged(UASInterface*,double,double,double,quint64)));
-    connect(slugsMav, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugAttitudeChanged(UASInterface*,double,double,double,quint64)));
-    connect(slugsMav, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugsGlobalPositionChanged(UASInterface*,double,double,double,quint64)));
+        connect(slugsMav, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugSpeedLocalPositionChanged(UASInterface*,double,double,double,quint64)));
+        connect(slugsMav, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugAttitudeChanged(UASInterface*,double,double,double,quint64)));
+        connect(slugsMav, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugsGlobalPositionChanged(UASInterface*,double,double,double,quint64)));
 
 
 
-    //connect slugs especial messages
+        //connect slugs especial messages
     connect(slugsMav, SIGNAL(slugsSensorBias(int,const mavlink_sensor_bias_t&)), this, SLOT(slugsSensorBiasChanged(int,const mavlink_sensor_bias_t&)));
     connect(slugsMav, SIGNAL(slugsDiagnostic(int,const mavlink_diagnostic_t&)), this, SLOT(slugsDiagnosticMessageChanged(int,const mavlink_diagnostic_t&)));
     connect(slugsMav, SIGNAL(slugsCPULoad(int,const mavlink_cpu_load_t&)), this, SLOT(slugsCpuLoadChanged(int,const mavlink_cpu_load_t&)));
@@ -51,13 +51,12 @@ void SlugsDataSensorView::addUAS(UASInterface* uas)
     connect(slugsMav, SIGNAL(slugsGPSDateTime(int,const mavlink_gps_date_time_t&)),this,SLOT(slugsGPSDateTimeChanged(int,const mavlink_gps_date_time_t&)));
 
     #endif // MAVLINK_ENABLED_SLUGS
-
-    // Set this UAS as active if it is the first one
+        // Set this UAS as active if it is the first one
     if(activeUAS == 0) {
-      activeUAS = uas;
-    }
+            activeUAS = uas;
+        }
 
-  }
+    }
 }
 
 void SlugsDataSensorView::slugRawDataChanged(int uasId, const mavlink_raw_imu_t &rawData){
@@ -107,7 +106,7 @@ void SlugsDataSensorView::slugSpeedLocalPositionChanged(UASInterface* uas,
                                                         double vy,
                                                         double vz,
                                                         quint64 time) {
-  Q_UNUSED( uas);
+    Q_UNUSED( uas);
   Q_UNUSED(time);
 
   ui->ed_vx->setPlainText(QString::number(vx));
@@ -134,7 +133,7 @@ void SlugsDataSensorView::slugAttitudeChanged(UASInterface* uas,
 
 void SlugsDataSensorView::slugsSensorBiasChanged(int systemId,
                                                  const mavlink_sensor_bias_t& sensorBias){
-  Q_UNUSED( systemId);
+     Q_UNUSED( systemId);
 
   ui->m_AxBiases->setText(QString::number(sensorBias.axBias));
   ui->m_AyBiases->setText(QString::number(sensorBias.ayBias));
@@ -147,12 +146,12 @@ void SlugsDataSensorView::slugsSensorBiasChanged(int systemId,
 
 void SlugsDataSensorView::slugsDiagnosticMessageChanged(int systemId,
                                                         const mavlink_diagnostic_t& diagnostic){
-  Q_UNUSED(systemId);
+    Q_UNUSED(systemId);
 
   ui->m_Fl1->setText(QString::number(diagnostic.diagFl1));
   ui->m_Fl2->setText(QString::number(diagnostic.diagFl2));
   ui->m_Fl3->setText(QString::number(diagnostic.diagFl2));
-                                               
+
   ui->m_Sh1->setText(QString::number(diagnostic.diagSh1));
   ui->m_Sh2->setText(QString::number(diagnostic.diagSh2));
   ui->m_Sh3->setText(QString::number(diagnostic.diagSh3));
@@ -161,7 +160,7 @@ void SlugsDataSensorView::slugsDiagnosticMessageChanged(int systemId,
 
 void SlugsDataSensorView::slugsCpuLoadChanged(int systemId,
                                               const mavlink_cpu_load_t& cpuLoad){
-  Q_UNUSED(systemId);
+     Q_UNUSED(systemId);
   ui->ed_sens->setText(QString::number(cpuLoad.sensLoad));
   ui->ed_control->setText(QString::number(cpuLoad.ctrlLoad));
   ui->ed_batvolt->setText(QString::number(cpuLoad.batVolt));
@@ -169,7 +168,7 @@ void SlugsDataSensorView::slugsCpuLoadChanged(int systemId,
 
 void SlugsDataSensorView::slugsNavegationChanged(int systemId,
                                                  const mavlink_slugs_navigation_t& slugsNavigation){
-  Q_UNUSED(systemId);
+     Q_UNUSED(systemId);
   ui->m_Um->setText(QString::number(slugsNavigation.u_m));
   ui->m_PhiC->setText(QString::number(slugsNavigation.phi_c));
   ui->m_PitchC->setText(QString::number(slugsNavigation.theta_c));
@@ -185,7 +184,7 @@ void SlugsDataSensorView::slugsNavegationChanged(int systemId,
 
 void SlugsDataSensorView::slugsDataLogChanged(int systemId,
                                               const mavlink_data_log_t& dataLog){
-  Q_UNUSED(systemId);
+     Q_UNUSED(systemId);
   ui->m_logFl1->setText(QString::number(dataLog.fl_1));
   ui->m_logFl2->setText(QString::number(dataLog.fl_2));
   ui->m_logFl3->setText(QString::number(dataLog.fl_3));
@@ -196,7 +195,7 @@ void SlugsDataSensorView::slugsDataLogChanged(int systemId,
 
 void SlugsDataSensorView::slugsPWMChanged(int systemId,
                                           const mavlink_pwm_commands_t& pwmCommands){
-  Q_UNUSED(systemId);
+       Q_UNUSED(systemId);
   ui->m_pwmThro->setText(QString::number(pwmCommands.dt_c));
   ui->m_pwmAile->setText(QString::number(pwmCommands.dla_c));
   ui->m_pwmElev->setText(QString::number(pwmCommands.dle_c));
@@ -211,7 +210,7 @@ void SlugsDataSensorView::slugsPWMChanged(int systemId,
 
 void SlugsDataSensorView::slugsFilteredDataChanged(int systemId,
                                                    const mavlink_filtered_data_t& filteredData){
-  Q_UNUSED(systemId);
+    Q_UNUSED(systemId);
   ui->m_Axf->setText(QString::number(filteredData.aX));
   ui->m_Ayf->setText(QString::number(filteredData.aY));
   ui->m_Azf->setText(QString::number(filteredData.aZ));
@@ -225,7 +224,7 @@ void SlugsDataSensorView::slugsFilteredDataChanged(int systemId,
 
 void SlugsDataSensorView::slugsGPSDateTimeChanged(int systemId,
                                                   const mavlink_gps_date_time_t& gpsDateTime){
-  Q_UNUSED(systemId);
+    Q_UNUSED(systemId);
   ui->m_GpsDate->setText(QString::number(gpsDateTime.month) + "/" +
                          QString::number(gpsDateTime.day) + "/" +
                          QString::number(gpsDateTime.year));

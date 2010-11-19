@@ -105,6 +105,8 @@ protected:
 
    mavlink_slugs_action_t		mlAction;
 
+
+   // Standart messages MAVLINK used by SLUGS
 private:
 
 

@@ -396,7 +396,17 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
     str = QString("%1").arg(path->numberOfPoints());
 
     // create the WP and set everything in the LineString to display the path
-    CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
+    //CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
+    Waypoint2DIcon* tempCirclePoint;
+
+    if (mav)
+    {
+        tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle, new QPen(mav->getColor()));
+    }
+    else
+    {
+        tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
+    }
     mc->layer("Waypoints")->addGeometry(tempCirclePoint);
 
     Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
