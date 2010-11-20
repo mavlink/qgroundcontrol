@@ -71,6 +71,8 @@ This file is part of the QGROUNDCONTROL project
 
 #include "slugshilsim.h"
 
+#include "SlugsVideoCamControl.h"
+
 
 
 /**
@@ -187,6 +189,7 @@ protected:
     QPointer<QDockWidget> slugsDataWidget;
     QPointer<QDockWidget> slugsPIDControlWidget;
     QPointer<QDockWidget> slugsHilSimWidget;
+    QPointer<QDockWidget> slugsCamControlWidget;
 
 
     // Popup widgets
