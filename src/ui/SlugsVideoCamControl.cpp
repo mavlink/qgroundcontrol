@@ -11,6 +11,7 @@
 
 
 SlugsVideoCamControl::SlugsVideoCamControl(QWidget *parent) :
+    QWidget(parent),
     ui(new Ui::SlugsVideoCamControl)
 {
     ui->setupUi(this);
@@ -25,8 +26,8 @@ SlugsVideoCamControl::SlugsVideoCamControl(QWidget *parent) :
 //         setTransformationAnchor(AnchorUnderMouse);
 //         setResizeAnchor(AnchorViewCenter);
 
-      ui->CamControlPanel_graphicsView->installEventFilter(this);
-      ui->label_x->installEventFilter(this);
+//      ui->CamControlPanel_graphicsView->installEventFilter(this);
+//      ui->label_x->installEventFilter(this);
 
 }
 
@@ -37,8 +38,15 @@ SlugsVideoCamControl::~SlugsVideoCamControl()
 
 void SlugsVideoCamControl::mouseMoveEvent(QMouseEvent *event)
 {
+  QPoint tL = ui->widget->frameGeometry().topLeft();
+  QPoint bR = ui->widget->frameGeometry().bottomRight();
+
+  if (!(event->x() > bR.x() || event->x() < tL.x() ||
+      event->y() > bR.y() || event->y() < tL.y() )){
     ui->label_x->setText(QString::number(event->x()));
     ui->label_y->setText(QString::number(event->y()));
+  }
+
 }
 
 
