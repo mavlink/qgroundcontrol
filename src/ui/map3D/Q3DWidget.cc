@@ -34,7 +34,6 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/Geometry>
 #include <osg/LineWidth>
 #include <osg/MatrixTransform>
-#include <osgGA/NodeTrackerManipulator>
 
 static const float KEY_ROTATE_AMOUNT = 5.0f;
 static const float KEY_MOVE_AMOUNT   = 10.0f;
@@ -50,22 +49,9 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     , robotAttitude(new osg::PositionAttitudeTransform())
     , hudGeode(new osg::Geode())
     , hudProjectionMatrix(new osg::Projection)
-    , userDisplayFunc(NULL)
-    , userKeyboardFunc(NULL)
-    , userMouseFunc(NULL)
-    , userMotionFunc(NULL)
-    , userTimerFunc(NULL)
-    , userDisplayFuncData(NULL)
-    , userKeyboardFuncData(NULL)
-    , userMouseFuncData(NULL)
-    , userMotionFuncData(NULL)
-    , userTimerFuncData(NULL)
-    , lastMouseX(0)
-    , lastMouseY(0)
-    , _forceRedraw(false)
 {
     // set initial camera parameters
-    cameraParams.minZoomRange = 0.5f;
+    cameraParams.minZoomRange = 2.0f;
     cameraParams.cameraFov = 30.0f;
     cameraParams.minClipRange = 1.0f;
     cameraParams.maxClipRange = 10000.0f;
@@ -85,11 +71,14 @@ Q3DWidget::~Q3DWidget()
 void
 Q3DWidget::init(float fps)
 {
-    getCamera()->setGraphicsContext(getGraphicsWindow());
+    getCamera()->setGraphicsContext(osgGW);
     
     setLightingMode(osg::View::SKY_LIGHT);
 
-    // set up coordinate systems
+    // set up various maps
+    // allocentric - world map
+    // rolling - map aligned to the world axes and centered on the robot
+    // egocentric - vehicle-centric map
     root->addChild(allocentricMap);
     allocentricMap->addChild(robotPosition);
     robotPosition->addChild(rollingMap);
@@ -101,12 +90,14 @@ Q3DWidget::init(float fps)
     // set up HUD
     root->addChild(createHUD());
 
+    // set up robot
     egocentricMap->addChild(createRobot());
 
-    osg::ref_ptr<osgGA::NodeTrackerManipulator> nodeTrackerManipulator(
-            new osgGA::NodeTrackerManipulator);
-    nodeTrackerManipulator->setTrackNode(rollingMap);
-    setCameraManipulator(nodeTrackerManipulator);
+    // set up camera control
+    cameraManipulator = new GCManipulator;
+    setCameraManipulator(cameraManipulator);
+    cameraManipulator->setMinZoomRange(cameraParams.minZoomRange);
+    cameraManipulator->setDistance(cameraParams.minZoomRange * 2.0);
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(redraw()));
     timer.start(static_cast<int>(floorf(1000.0f / fps)));
@@ -187,20 +178,18 @@ Q3DWidget::setCameraParams(float minZoomRange, float cameraFov,
     cameraParams.cameraFov = cameraFov;
     cameraParams.minClipRange = minClipRange;
     cameraParams.maxClipRange = maxClipRange;
-
-    _forceRedraw = true;
 }
 
 void
-Q3DWidget::forceRedraw(void)
+Q3DWidget::moveCamera(float dx, float dy, float dz)
 {
-    _forceRedraw = true;
+    cameraManipulator->move(dx, dy, dz);
 }
 
 void
-Q3DWidget::recenter(void)
+Q3DWidget::recenterCamera(float x, float y, float z)
 {
-
+    cameraManipulator->setCenter(osg::Vec3d(x, y, z));
 }
 
 void
@@ -214,66 +203,20 @@ Q3DWidget::setDisplayMode3D(void)
                                                   aspect,
                                                   cameraParams.minClipRange,
                                                   cameraParams.maxClipRange);
-    
-//    getCamera()->setViewMatrixAsLookAt(osg::Vec3d(cameraX + cameraPose.xOffset,
-//                                                  cameraY + cameraPose.yOffset,
-//                                                  cameraZ + cameraPose.zOffset),
-//                                       osg::Vec3d(cameraPose.xOffset,
-//                                                  cameraPose.yOffset,
-//                                                  cameraPose.zOffset),
-//                                       osg::Vec3d(0.0, 0.0, 1.0));
-}
-
-void
-Q3DWidget::setDisplayFunc(DisplayFunc func, void* clientData)
-{
-    userDisplayFunc = func;
-    userDisplayFuncData = clientData;
-}
-
-void
-Q3DWidget::setKeyboardFunc(KeyboardFunc func, void* clientData)
-{
-    userKeyboardFunc = func;
-    userKeyboardFuncData = clientData;
-}
-
-void
-Q3DWidget::setMouseFunc(MouseFunc func, void* clientData)
-{
-    userMouseFunc = func;
-    userMouseFuncData = clientData;
-}
-
-void
-Q3DWidget::setMotionFunc(MotionFunc func, void* clientData)
-{
-    userMotionFunc = func;
-    userMotionFuncData = clientData;
-}
-
-void
-Q3DWidget::addTimerFunc(uint32_t msecs, void(*func)(void *),
-                        void* clientData)
-{
-    userTimerFunc = func;
-    userTimerFuncData = clientData;
-
-    QTimer::singleShot(msecs, this, SLOT(userTimer()));
 }
 
 std::pair<double,double>
-Q3DWidget::getGlobalCursorPosition(int32_t mouseX, int32_t mouseY,
-                                   double z)
+Q3DWidget::getGlobalCursorPosition(int32_t cursorX, int32_t cursorY, double z)
 {
     osgUtil::LineSegmentIntersector::Intersections intersections;
 
     // normalize cursor position to value between -1 and 1
-    double x = -1.0f + static_cast<double>(2 * mouseX)
+    double x = -1.0f + static_cast<double>(2 * cursorX)
               / static_cast<double>(width());
-    double y = -1.0f + static_cast<double>(2 * (height() - mouseY))
+    double y = -1.0f + static_cast<double>(2 * (height() - cursorY))
               / static_cast<double>(height());
 
+    // compute matrix which transforms screen coordinates to world coordinates
     osg::Matrixd m = getCamera()->getViewMatrix()
                      * getCamera()->getProjectionMatrix();
     osg::Matrixd invM = osg::Matrixd::inverse(m);
@@ -295,20 +238,7 @@ Q3DWidget::getGlobalCursorPosition(int32_t mouseX, int32_t mouseY,
 void
 Q3DWidget::redraw(void)
 {
-    if (_forceRedraw)
-    {
-        updateGL();
-        _forceRedraw = false;
-    }
-}
-
-void
-Q3DWidget::userTimer(void)
-{
-    if (userTimerFunc)
-    {
-        userTimerFunc(userTimerFuncData);
-    }
+    updateGL();
 }
 
 int
@@ -323,31 +253,8 @@ Q3DWidget::getMouseY(void)
     return mapFromGlobal(cursor().pos()).y();
 }
 
-int
-Q3DWidget::getLastMouseX(void)
-{
-    return lastMouseX;
-}
-
-int
-Q3DWidget::getLastMouseY(void)
-{
-    return lastMouseY;
-}
-
-osgViewer::GraphicsWindow*
-Q3DWidget::getGraphicsWindow(void)
-{
-    return osgGW.get();
-}
-
-const osgViewer::GraphicsWindow*
-Q3DWidget::getGraphicsWindow(void) const
-{
-    return osgGW.get();
-}
-
-void Q3DWidget::resizeGL(int width, int height)
+void
+Q3DWidget::resizeGL(int width, int height)
 {
     hudProjectionMatrix->setMatrix(osg::Matrix::ortho2D(0, width,
                                                         0, height));
@@ -356,28 +263,34 @@ void Q3DWidget::resizeGL(int width, int height)
     osgGW->resized(0 , 0, width, height);
 }
 
-void Q3DWidget::paintGL(void)
+void
+Q3DWidget::paintGL(void)
 {
     setDisplayMode3D();
 
     getCamera()->setClearColor(osg::Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
     getCamera()->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (userDisplayFunc)
-    {
-        userDisplayFunc(userDisplayFuncData);
-    }
+    display();
 
     frame();
 }
 
-void Q3DWidget::keyPressEvent(QKeyEvent* event)
+void
+Q3DWidget::display(void)
+{
+
+}
+
+void
+Q3DWidget::keyPressEvent(QKeyEvent* event)
 {
     QWidget::keyPressEvent(event);
     if (event->isAccepted())
     {
         return;
     }
+
     if (event->text().isEmpty())
     {
         osgGW->getEventQueue()->keyPress(convertKey(event->key()));
@@ -388,24 +301,10 @@ void Q3DWidget::keyPressEvent(QKeyEvent* event)
                 static_cast<osgGA::GUIEventAdapter::KeySymbol>(
                         *(event->text().toAscii().data())));
     }
-
-    if (userKeyboardFunc)
-    {
-        if (event->text().isEmpty())
-        {
-            userKeyboardFunc(0, userKeyboardFuncData);
-        }
-        else
-        {
-            userKeyboardFunc(event->text().at(0).toAscii(),
-                             userKeyboardFuncData);
-        }
-    }
-
-    forceRedraw();
 }
 
-void Q3DWidget::keyReleaseEvent(QKeyEvent* event)
+void
+Q3DWidget::keyReleaseEvent(QKeyEvent* event)
 {
     QWidget::keyReleaseEvent(event);
     if (event->isAccepted())
@@ -422,11 +321,10 @@ void Q3DWidget::keyReleaseEvent(QKeyEvent* event)
                 static_cast<osgGA::GUIEventAdapter::KeySymbol>(
                         *(event->text().toAscii().data())));
     }
-
-    forceRedraw();
 }
 
-void Q3DWidget::mousePressEvent(QMouseEvent* event)
+void
+Q3DWidget::mousePressEvent(QMouseEvent* event)
 {
     int button = 0;
     switch (event->button())
@@ -447,17 +345,10 @@ void Q3DWidget::mousePressEvent(QMouseEvent* event)
         {}
     }
     osgGW->getEventQueue()->mouseButtonPress(event->x(), event->y(), button);
-
-    if (userMouseFunc)
-    {
-        userMouseFunc(event->button(), MOUSE_STATE_DOWN, event->x(), event->y(),
-                      userMouseFuncData);
-    }
-
-    forceRedraw();
 }
 
-void Q3DWidget::mouseReleaseEvent(QMouseEvent* event)
+void
+Q3DWidget::mouseReleaseEvent(QMouseEvent* event)
 {
     int button = 0;
     switch (event->button())
@@ -478,35 +369,20 @@ void Q3DWidget::mouseReleaseEvent(QMouseEvent* event)
         {}
     }
     osgGW->getEventQueue()->mouseButtonRelease(event->x(), event->y(), button);
-
-    if (userMouseFunc)
-    {
-        userMouseFunc(event->button(), MOUSE_STATE_UP, event->x(), event->y(),
-                      userMouseFuncData);
-    }
-
-    forceRedraw();
 }
 
-void Q3DWidget::mouseMoveEvent(QMouseEvent* event)
+void
+Q3DWidget::mouseMoveEvent(QMouseEvent* event)
 {
     osgGW->getEventQueue()->mouseMotion(event->x(), event->y());
-
-    if (userMotionFunc)
-    {
-        userMotionFunc(event->x(), event->y(), userMotionFuncData);
-    }
-
-    forceRedraw();
 }
 
-void Q3DWidget::wheelEvent(QWheelEvent* event)
+void
+Q3DWidget::wheelEvent(QWheelEvent* event)
 {
     osgGW->getEventQueue()->mouseScroll((event->delta() > 0) ?
             osgGA::GUIEventAdapter::SCROLL_UP :
             osgGA::GUIEventAdapter::SCROLL_DOWN);
-
-    forceRedraw();
 }
 
 float
