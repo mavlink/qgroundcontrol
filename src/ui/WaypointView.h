@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QtGui/QWidget>
 #include "Waypoint.h"
+#include <iostream>
 
 namespace Ui {
     class WaypointView;
@@ -56,7 +57,8 @@ public slots:
     void moveDown();
     void remove();
     void changedAutoContinue(int);
-    void changeOrbitalState(int state);
+    void changedFrame(int state);
+    void changedAction(int state);
     void changedCurrent(int);
     void updateValues(void);
 

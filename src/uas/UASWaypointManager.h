@@ -79,25 +79,18 @@ public:
     /*@{*/
     void clearWaypointList();                       ///< Sends the waypoint clear all message to the MAV
     void readWaypoints();                           ///< Requests the MAV's current waypoint list
-    void writeWaypoints();                          ///< Sends the local waypoint list to the MAV
+    void writeWaypoints();                          ///< Sends the waypoint list to the MAV
     int setCurrentWaypoint(quint16 seq);            ///< Changes the current waypoint and sends the sequence number of the waypoint that should get the new target waypoint to the UAS
     /*@}*/
 
-    /** @name Local waypoint list operations */
+    /** @name Waypoint list operations */
     /*@{*/
-    const QVector<Waypoint *> &getWaypointList(void) { return waypoints; }  ///< Returns a const reference to the local waypoint list.
-    void localAddWaypoint(Waypoint *wp);                        ///< locally adds a new waypoint to the end of the list and changes its sequence number accordingly
-    int localRemoveWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
-    void localMoveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
-    void localSaveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
-    void localLoadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
-    /*@}*/
-
-    /** @name Global waypoint list operations */
-    /*@{*/
-    const QVector<Waypoint *> &getGlobalWaypointList(void) { return waypoints; }  ///< Returns a const reference to the global waypoint list.
-    void globalAddWaypoint(Waypoint *wp);                        ///< locally adds a new waypoint to the end of the list and changes its sequence number accordingly
-    int globalRemoveWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
+    const QVector<Waypoint *> &getWaypointList(void) { return waypoints; }  ///< Returns a const reference to the waypoint list.
+    void addWaypoint(Waypoint *wp);                        ///< adds a new waypoint to the end of the list and changes its sequence number accordingly
+    int removeWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
+    void moveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
+    void saveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
+    void loadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
     /*@}*/
 
 private:
