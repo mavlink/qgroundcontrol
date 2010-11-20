@@ -21,16 +21,16 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
-#ifndef ARDUPILOTMAV_H
-#define ARDUPILOTMAV_H
+#ifndef ARDUPILOTMEGAMAV_H
+#define ARDUPILOTMEGAMAV_H
 
 #include "UAS.h"
 
-class ArduPilotMAV : public UAS
+class ArduPilotMegaMAV : public UAS
 {
     Q_OBJECT
 public:
-    ArduPilotMAV(MAVLinkProtocol* mavlink, int id = 0);
+    ArduPilotMegaMAV(MAVLinkProtocol* mavlink, int id = 0);
 public slots:
     /** @brief Receive a MAVLink message from this MAV */
     void receiveMessage(LinkInterface* link, mavlink_message_t message);

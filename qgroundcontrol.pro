@@ -127,8 +127,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCFirmwareUpdate.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
-    src/ui/QGCRemoteControlView.ui \
-    src/ui/WaypointGlobalView.ui
+    src/ui/QGCRemoteControlView.ui
+    #src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -195,7 +195,7 @@ HEADERS += src/MG.h \
     src/ui/linechart/Linecharts.h \
     src/uas/SlugsMAV.h \
     src/uas/PxQuadMAV.h \
-    src/uas/ArduPilotMAV.h \
+    src/uas/ArduPilotMegaMAV.h \
     src/comm/MAVLinkSyntaxHighlighter.h \
     src/ui/watchdog/WatchdogControl.h \
     src/ui/watchdog/WatchdogProcessView.h \
@@ -211,7 +211,7 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
     src/ui/QGCRemoteControlView.h \
-    src/ui/WaypointGlobalView.h \
+    #src/ui/WaypointGlobalView.h \
     src/ui/RadioCalibration/RadioCalibrationData.h \
     src/ui/RadioCalibration/RadioCalibrationWindow.h \
     src/ui/RadioCalibration/AirfoilServoCalibrator.h \
@@ -271,7 +271,7 @@ SOURCES += src/main.cc \
     src/ui/linechart/Linecharts.cc \
     src/uas/SlugsMAV.cc \
     src/uas/PxQuadMAV.cc \
-    src/uas/ArduPilotMAV.cc \
+    src/uas/ArduPilotMegaMAV.cc \
     src/comm/MAVLinkSyntaxHighlighter.cc \
     src/ui/watchdog/WatchdogControl.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
@@ -293,7 +293,7 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
     src/ui/RadioCalibration/RadioCalibrationData.cc \
-    src/ui/WaypointGlobalView.cc \
+    #src/ui/WaypointGlobalView.cc \
     src/ui/map3D/Q3DWidget.cc \
     src/ui/map3D/PixhawkCheetahGeode.cc \
     src/ui/map3D/Pixhawk3DWidget.cc \
