@@ -11,7 +11,7 @@ namespace Ui {
     class SlugsVideoCamControl;
 }
 
-class SlugsVideoCamControl : public QGraphicsView
+class SlugsVideoCamControl : public QWidget
 
 {
     Q_OBJECT
