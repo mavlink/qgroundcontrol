@@ -220,14 +220,10 @@ HEADERS += src/MG.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
     src/ui/map3D/Q3DWidget.h \
     src/ui/map3D/PixhawkCheetahGeode.h \
-    src/ui/map3D/Texture.h \
-    src/ui/map3D/TextureCache.h \
-    src/ui/map3D/WebImage.h \
-    src/ui/map3D/WebImageCache.h \
-    src/ui/map3D/Imagery.h \
     src/comm/QGCMAVLink.h \
     src/ui/map3D/Pixhawk3DWidget.h \
-    src/ui/map3D/Q3DWidgetFactory.h
+    src/ui/map3D/Q3DWidgetFactory.h \
+    src/ui/map3D/GCManipulator.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -300,13 +296,9 @@ SOURCES += src/main.cc \
     src/ui/WaypointGlobalView.cc \
     src/ui/map3D/Q3DWidget.cc \
     src/ui/map3D/PixhawkCheetahGeode.cc \
-    src/ui/map3D/Texture.cc \
-    src/ui/map3D/TextureCache.cc \
-    src/ui/map3D/WebImageCache.cc \
-    src/ui/map3D/WebImage.cc \
-    src/ui/map3D/Imagery.cc \
     src/ui/map3D/Pixhawk3DWidget.cc \
-    src/ui/map3D/Q3DWidgetFactory.cc
+    src/ui/map3D/Q3DWidgetFactory.cc \
+    src/ui/map3D/GCManipulator.cc
 RESOURCES = mavground.qrc
 
 # Include RT-LAB Library

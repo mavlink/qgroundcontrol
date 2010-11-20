@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Generates a geode which renders a Pixhawk Cheetah MAV.
+ *   @brief Definition of the class PixhawkCheetahGeode.
  *
  *   @author Lionel Heng <hengli@student.ethz.ch>
  *
@@ -35,22 +35,32 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/Geode>
 
 /**
- * @brief Creates a geode which renders a Pixhawk Cheetah MAV.
- * @param red Red intensity of the MAV model
- * @param green Green intensity of the MAV model
- * @param blue Blue intensity of the MAV model
- *
- * @return The pointer to the geode.
+ * @brief The PixhawkCheetahGeode class.
+ * Generates an OpenSceneGraph geode which renders a Pixhawk Cheetah MAV.
  **/
 
 class PixhawkCheetahGeode
 {
 public:
+    /**
+     * Constructor.
+     */
     PixhawkCheetahGeode();
 
+    /**
+     * Get a single instance of the geode.
+     */
     static osg::ref_ptr<osg::Geode> instance(void);
 
 private:
+    /**
+     * @brief Creates an OpenSceneGraph geode which renders a Pixhawk Cheetah MAV.
+     * @param red Red intensity of the MAV model.
+     * @param green Green intensity of the MAV model.
+     * @param blue Blue intensity of the MAV model.
+     *
+     * @return A smart pointer to the geode.
+     **/
     static osg::ref_ptr<osg::Geode> create(float red, float green, float blue);
 
     static osg::ref_ptr<osg::Geode> _instance;
