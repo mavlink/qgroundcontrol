@@ -6,6 +6,7 @@ SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
         UAS(mavlink, id)//,
         // Place other initializers here
 {
+
 }
 
 /**

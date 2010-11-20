@@ -187,6 +187,9 @@ void MainWindow::buildWidgets()
     slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
     slugsHilSimWidget->setWidget( new SlugsHilSim(this));
 
+    slugsCamControlWidget = new QDockWidget(tr("Video Camera Control"), this);
+    slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
+
 }
 
 /**
@@ -930,6 +933,12 @@ void MainWindow::loadGlobalOperatorView()
     {
         addDockWidget(Qt::LeftDockWidgetArea, slugsPIDControlWidget);
         slugsPIDControlWidget->show();
+    }
+
+    if (slugsCamControlWidget)
+    {
+        addDockWidget(Qt::RightDockWidgetArea, slugsCamControlWidget);
+        slugsCamControlWidget->show();
     }
 
 
