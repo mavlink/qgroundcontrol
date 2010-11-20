@@ -60,7 +60,6 @@ protected:
     UAS* activeUas;
 
 public slots:
-    void linkAdded (void);
 
     /**
      * @brief Adds a link to the combo box listing so the user can select a link
@@ -98,6 +97,12 @@ public slots:
      */
     void activeUasSet(UASInterface* uas);
 
+    /**
+     * @brief Called when the Link combobox selects a new link.
+     *
+     * @param uas The new index of the selected link
+     */
+    void linkSelected (int cbIndex);
 
 public slots:
 

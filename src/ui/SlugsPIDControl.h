@@ -6,7 +6,7 @@
 #include "UASInterface.h"
 #include "QGCMAVLink.h"
 #include "SlugsMAV.h"
-
+#include "mavlink.h"
 
 namespace Ui {
     class SlugsPIDControl;
@@ -184,9 +184,11 @@ public slots:
 
      //Create, send and get Messages PID
     // void createMessagePID();
+#ifdef MAVLINK_ENABLED_SLUGS
 
-     void recibeMensaje(int systemId, uint8_t action, uint8_t result);
+     void recibeMensaje(int systemId, const mavlink_action_ack_t& action);
 
+#endif // MAVLINK_ENABLED_SLUG
 
 private:
     Ui::SlugsPIDControl *ui;

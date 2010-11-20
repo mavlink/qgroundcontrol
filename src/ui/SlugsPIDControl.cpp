@@ -44,11 +44,13 @@ void SlugsPIDControl::activeUasSet(UASInterface* uas)
 {
     SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(uas);
 
+#ifdef MAVLINK_ENABLED_SLUGS
     if (slugsMav != NULL)
     {
-        connect(slugsMav,SIGNAL(slugsActionAck(int,uint8_t,uint8_t)),this,SLOT(recibeMensaje(int,uint8_t,uint8_t)));
+        connect(slugsMav,SIGNAL(slugsActionAck(int,const mavlink_action_ack_t&)),this,SLOT(recibeMensaje(int,mavlink_action_ack_t)));
     }
 
+#endif // MAVLINK_ENABLED_SLUG
     // Set this UAS as active if it is the first one
         if(activeUAS == 0)
         {
@@ -154,6 +156,12 @@ void SlugsPIDControl::changeColor_RED_AirSpeed_groupBox(QString text)
 
 void SlugsPIDControl::changeColor_GREEN_AirSpeed_groupBox()
 {
+
+  SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(activeUAS);
+
+  if (slugsMav != NULL)
+  {
+
     //create the packet
     pidMessage.target = activeUAS->getUASID();
     pidMessage.idx = 0;
@@ -161,16 +169,13 @@ void SlugsPIDControl::changeColor_GREEN_AirSpeed_groupBox()
     pidMessage.iVal = ui->dT_I_set->text().toFloat();
     pidMessage.dVal = ui->dT_D_set->text().toFloat();
 
-    UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getActiveUAS());
-
     mavlink_message_t msg;
 
     mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
-    uas->sendMessage(msg);
-
-
+    slugsMav->sendMessage(msg);
 
     ui->AirSpeedHold_groupBox->setStyleSheet(GREENcolorStyle);
+  }
 }
 
 
@@ -335,7 +340,11 @@ void SlugsPIDControl::connect_Pitch2dT_LineEdit()
     connect(ui->P2dT_FF_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_Pitch2dT_groupBox(QString)));
 }
 
-void SlugsPIDControl::recibeMensaje(int systemId, uint8_t action, uint8_t result)
+#ifdef MAVLINK_ENABLED_SLUGS
+
+void SlugsPIDControl::recibeMensaje(int systemId, const mavlink_action_ack_t& action)
 {
-    ui->recepcion_label->setText("Mensaje Recibido: " + QString::number(action));
+    ui->recepcion_label->setText(QString::number(action.action));
 }
+
+#endif // MAVLINK_ENABLED_SLUGS

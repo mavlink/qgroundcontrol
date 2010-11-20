@@ -227,8 +227,14 @@ void MainWindow::connectWidgets()
         connect(waypointsDockWidget->widget(), SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), mapWidget, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
     }
 
-    if (slugsHilSimWidget->widget()){
-      connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), dynamic_cast<SlugsHilSim*>(slugsHilSimWidget->widget()), SLOT(activeUasSet(UASInterface*)) );
+    if (slugsHilSimWidget && slugsHilSimWidget->widget()){
+      connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+              slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
+    }
+
+    if (slugsDataWidget && slugsDataWidget->widget()){
+      connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+              slugsDataWidget->widget(), SLOT(setActiveUAS(UASInterface*)));
     }
 
 
@@ -558,16 +564,16 @@ void MainWindow::UASCreated(UASInterface* uas)
         PxQuadMAV* mav = dynamic_cast<PxQuadMAV*>(uas);
         if (mav) loadPixhawkView();
 
-        SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
-        if (mav2)
-        {
-          dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget())->addUAS(uas);
-          loadSlugsView();
-
+        if (slugsDataWidget) {
+          SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+          if (dataWidget) {
+            SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
+            if (mav2) {
+              dataWidget->addUAS(uas);
+              loadSlugsView();
+            }
+          }
         }
-
-
-
     }
 }
 
