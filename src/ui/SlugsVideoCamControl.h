@@ -21,8 +21,8 @@ public:
     ~SlugsVideoCamControl();
 
 protected:
-   // virtual void mousePressEvent(QMouseEvent* event);
-    //virtual void mouseReleaseEvent(QMouseEvent* event);
+    virtual void mousePressEvent(QMouseEvent* event);
+    virtual void mouseReleaseEvent(QMouseEvent* event);
     //void mouseMoveEvent(QMouseEvent* event);
      void mouseMoveEvent(QMouseEvent* event);
    // virtual void wheelEvent(QWheelEvent* event);
@@ -33,6 +33,7 @@ protected:
 
 private:
     Ui::SlugsVideoCamControl *ui;
+    bool dragging;
 };
 
 #endif // SLUGSVIDEOCAMCONTROL_H
