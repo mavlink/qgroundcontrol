@@ -76,7 +76,6 @@ contains(MAVLINK_CONF, ualberta) {
 LIBS += -losg \
     -losgViewer \
     -losgEarth
-QMAKE_CXXFLAGS += -Wl,-E
 
 # }
 # Include general settings for MAVGround
