@@ -12,7 +12,8 @@
 
 SlugsVideoCamControl::SlugsVideoCamControl(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::SlugsVideoCamControl)
+    ui(new Ui::SlugsVideoCamControl),
+    dragging(0)
 {
     ui->setupUi(this);
 
@@ -42,7 +43,7 @@ void SlugsVideoCamControl::mouseMoveEvent(QMouseEvent *event)
   QPoint bR = ui->widget->frameGeometry().bottomRight();
 
   if (!(event->x() > bR.x() || event->x() < tL.x() ||
-      event->y() > bR.y() || event->y() < tL.y() )){
+      event->y() > bR.y() || event->y() < tL.y() ) && dragging){
     ui->label_x->setText(QString::number(event->x()));
     ui->label_y->setText(QString::number(event->y()));
   }
@@ -50,15 +51,17 @@ void SlugsVideoCamControl::mouseMoveEvent(QMouseEvent *event)
 }
 
 
-//void SlugsVideoCamControl::mousePressEvent(QMouseEvent *evnt)
-//{
+void SlugsVideoCamControl::mousePressEvent(QMouseEvent *evnt)
+{
+  Q_UNUSED(evnt);
 
-//}
+  dragging = true;
+}
 
-//void SlugsVideoCamControl::mouseReleaseEvent(QMouseEvent *evnt)
-//{
-
-//}
+void SlugsVideoCamControl::mouseReleaseEvent(QMouseEvent *evnt)
+{
+dragging = false;
+}
 
 //void SlugsVideoCamControl::mouseDoubleClickEvent(QMouseEvent *evnt)
 //{
