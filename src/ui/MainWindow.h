@@ -63,7 +63,9 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
+#ifdef QGC_OSG_ENABLED
 #include "Q3DWidget.h"
+#endif
 
 #include "LogCompressor.h"
 
@@ -163,7 +165,9 @@ protected:
     QPointer<MapWidget> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
+    #ifdef QGC_OSG_ENABLED
     QPointer<Q3DWidget> _3DWidget;
+#endif
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
     QPointer<QDockWidget> infoDockWidget;
