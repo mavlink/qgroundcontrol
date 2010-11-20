@@ -38,8 +38,7 @@ release {
 macx { 
 
     HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || || contains( HARDWARE_PLATFORM, 9.9.0 )
-    {
+    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || || contains( HARDWARE_PLATFORM, 9.9.0 ) {
         # x86 Mac OS X Leopard 10.5 and earlier
         CONFIG += x86 cocoa phonon
         message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
@@ -71,10 +70,24 @@ macx {
         -lm
     
     ICON = $$BASEDIR/images/icons/macx.icns
+
+    # Copy audio files if needed
+    QMAKE_PRE_LINK += cp -r $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+
+    exists(/opt/local/lib/osg):exists("/opt/local/lib/osgEarth") {
+    message("Building support for OSGEARTH")
+    LIBS += -L/opt/local/lib/
+    INCLUDEPATH += /opt/local/include
+    # Include OpenSceneGraph and osgEarth libraries
+    LIBS += -losg \
+        -losgViewer \
+        -losgEarth
+    DEFINES += QGC_OSG_ENABLED
+    }
 }
 
 # GNU/Linux
-linux-g++ { 
+linux-g++-32 {
 
     CONFIG += debug
     
@@ -112,6 +125,15 @@ linux-g++ {
         -lflite \
         -lSDL \
         -lSDLmain
+
+exists(/usr/lib/osg):exists(/usr/lib/osgEarth) {
+message("Building support for OSGEARTH")
+# Include OpenSceneGraph and osgEarth libraries
+LIBS += -losg \
+    -losgViewer \
+    -losgEarth
+DEFINES += QGC_OSG_ENABLED
+}
 
 QMAKE_CXXFLAGS += -Wl,-E
 
@@ -156,6 +178,15 @@ linux-g++-64 {
         -lflite \
         -lSDL \
         -lSDLmain
+
+exists(/usr/lib/osg):exists(/usr/lib/osgEarth) {
+message("Building support for OSGEARTH")
+# Include OpenSceneGraph and osgEarth libraries
+LIBS += -losg \
+    -losgViewer \
+    -losgEarth
+DEFINES += QGC_OSG_ENABLED
+}
 }
 
 
@@ -185,6 +216,11 @@ win32 {
     }
         
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
+
+    # Copy dependencies
+    QMAKE_PRE_LINK += copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/debug/ & copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/release/
+    QMAKE_PRE_LINK += copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/debug/ & copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/release/
+    QMAKE_PRE_LINK += copy /Y audio $$BUILDDIR\debug\
 }
 
 # Windows (64bit)
@@ -213,5 +249,10 @@ win64 {
     }
 
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
+
+    # Copy dependencies
+    QMAKE_PRE_LINK += copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/debug/ & copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/release/
+    QMAKE_PRE_LINK += copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/debug/ & copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/release/
+    QMAKE_PRE_LINK += copy /Y audio $$BUILDDIR\debug\
 }
 

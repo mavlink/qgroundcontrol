@@ -45,7 +45,10 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
+
+    #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
+#endif
 
 // FIXME Move
 #include "PxQuadMAV.h"
@@ -132,7 +135,9 @@ void MainWindow::buildWidgets()
     mapWidget         = new MapWidget(this);
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
+    #ifdef QGC_OSG_ENABLED
     _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+#endif
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -224,7 +229,9 @@ void MainWindow::arrangeCenterStack()
     if (linechartWidget) centerStack->addWidget(linechartWidget);
     if (protocolWidget) centerStack->addWidget(protocolWidget);
     if (mapWidget) centerStack->addWidget(mapWidget);
+        #ifdef QGC_OSG_ENABLED
     if (_3DWidget) centerStack->addWidget(_3DWidget);
+#endif
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 
@@ -664,6 +671,7 @@ void MainWindow::loadPixhawkView()
     clearView();
     // Engineer view, used in EMAV2009
 
+        #ifdef QGC_OSG_ENABLED
     // 3D map
     if (_3DWidget)
     {
@@ -674,6 +682,7 @@ void MainWindow::loadPixhawkView()
             centerStack->setCurrentWidget(_3DWidget);
         }
     }
+#endif
 
     // UAS CONTROL
     if (controlDockWidget)
@@ -952,6 +961,7 @@ void MainWindow::loadGlobalOperatorView()
 
 void MainWindow::load3DView()
 {
+        #ifdef QGC_OSG_ENABLED
             clearView();
 
             // 3D map
@@ -997,8 +1007,9 @@ void MainWindow::load3DView()
                     hsiDockWidget->show();
                 }
             }
-
+#endif
             this->show();
+
         }
 
 void MainWindow::loadEngineerView()

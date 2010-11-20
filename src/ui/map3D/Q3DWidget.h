@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QtOpenGL>
 
+
 #include <osg/LineSegment>
 #include <osg/PositionAttitudeTransform>
 #include <osgGA/TrackballManipulator>
