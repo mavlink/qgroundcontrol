@@ -89,7 +89,8 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
     }
 #else
     // *nix (Linux, MacOS tested) serial port support
-    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
+    //port = new QextSerialPort(porthandle, QextSerialPort::Polling);
+    port = new QextSerialPort(porthandle, QextSerialPort::EventDriven);
     port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
     port->setBaudRate(baudrate);
     port->setFlowControl(flow);
