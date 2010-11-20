@@ -76,6 +76,7 @@ macx {
 
     exists(/opt/local/lib/osg):exists("/opt/local/lib/osgEarth") {
     message("Building support for OSGEARTH")
+    DEPENDENCIES_PRESENT += osgearth
     LIBS += -L/opt/local/lib/
     INCLUDEPATH += /opt/local/include
     # Include OpenSceneGraph and osgEarth libraries
@@ -128,6 +129,7 @@ linux-g++-32 {
 
 exists(/usr/lib/osg):exists(/usr/lib/osgEarth) {
 message("Building support for OSGEARTH")
+DEPENDENCIES_PRESENT += osgearth
 # Include OpenSceneGraph and osgEarth libraries
 LIBS += -losg \
     -losgViewer \
@@ -181,6 +183,7 @@ linux-g++-64 {
 
 exists(/usr/lib/osg):exists(/usr/lib/osgEarth) {
 message("Building support for OSGEARTH")
+DEPENDENCIES_PRESENT += osgearth
 # Include OpenSceneGraph and osgEarth libraries
 LIBS += -losg \
     -losgViewer \
