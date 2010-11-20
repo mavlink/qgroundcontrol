@@ -113,6 +113,8 @@ linux-g++ {
         -lSDL \
         -lSDLmain
 
+QMAKE_CXXFLAGS += -Wl,-E
+
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
 }
