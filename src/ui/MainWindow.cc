@@ -46,8 +46,8 @@ This file is part of the QGROUNDCONTROL project
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
 
-    #ifdef QGC_OSG_ENABLED
-#include "Q3DWidgetFactory.h"
+#ifdef QGC_OSG_ENABLED
+#include "QMap3D.h"
 #endif
 
 // FIXME Move
@@ -136,8 +136,9 @@ void MainWindow::buildWidgets()
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
     #ifdef QGC_OSG_ENABLED
-    _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-#endif
+    //_3DWidget         = Q3DWidgetFactory::get(QGC_MAP3D_OSGEARTH);
+    _3DWidget = new QMap3D(this);
+    #endif
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -229,9 +230,9 @@ void MainWindow::arrangeCenterStack()
     if (linechartWidget) centerStack->addWidget(linechartWidget);
     if (protocolWidget) centerStack->addWidget(protocolWidget);
     if (mapWidget) centerStack->addWidget(mapWidget);
-        #ifdef QGC_OSG_ENABLED
+    #ifdef QGC_OSG_ENABLED
     if (_3DWidget) centerStack->addWidget(_3DWidget);
-#endif
+    #endif
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 

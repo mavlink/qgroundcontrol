@@ -82,13 +82,14 @@ macx {
     # Include OpenSceneGraph and osgEarth libraries
     LIBS += -losg \
         -losgViewer \
-        -losgEarth
+        -losgEarth \
+        -losgEarthUtil
     DEFINES += QGC_OSG_ENABLED
     }
 }
 
 # GNU/Linux
-linux-g++-32 {
+linux-g++ {
 
     CONFIG += debug
     
@@ -127,17 +128,18 @@ linux-g++-32 {
         -lSDL \
         -lSDLmain
 
-exists(/usr/lib/osg):exists(/usr/lib/osgEarth) {
+exists(/usr/include/osgEarth) | exists(/usr/local/include/osgEarth) {
 message("Building support for OSGEARTH")
 DEPENDENCIES_PRESENT += osgearth
 # Include OpenSceneGraph and osgEarth libraries
 LIBS += -losg \
     -losgViewer \
-    -losgEarth
+    -losgEarth \
+    -losgEarthUtil
 DEFINES += QGC_OSG_ENABLED
 }
 
-QMAKE_CXXFLAGS += -Wl,-E
+QMAKE_CXXFLAGS += -Wl,-E, -DUSE_QT4
 
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
