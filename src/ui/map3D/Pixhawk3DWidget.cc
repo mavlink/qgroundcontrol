@@ -68,9 +68,11 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     trailNode = createTrail();
     rollingMap->addChild(trailNode);
 
+#ifdef QGC_OSGEARTH_ENABLED
     // generate map model
     mapNode = createMap();
     root->addChild(mapNode);
+#endif
 
     // generate target model
     allocentricMap->addChild(createTarget());
@@ -393,6 +395,7 @@ Pixhawk3DWidget::createTrail(void)
     return geode;
 }
 
+#ifdef QGC_OSGEARTH_ENABLED
 osg::ref_ptr<osgEarth::MapNode>
 Pixhawk3DWidget::createMap(void)
 {
@@ -401,6 +404,7 @@ Pixhawk3DWidget::createMap(void)
 
     return node;
 }
+#endif
 
 osg::ref_ptr<osg::Node>
 Pixhawk3DWidget::createTarget(void)
