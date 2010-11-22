@@ -88,7 +88,7 @@ macx {
 }
 
 # GNU/Linux
-linux-g++-32 {
+linux-g++ {
 
     CONFIG += debug
     
@@ -127,14 +127,21 @@ linux-g++-32 {
         -lSDL \
         -lSDLmain
 
-exists(/usr/lib/osg):exists(/usr/lib/osgEarth) {
-message("Building support for OSGEARTH")
-DEPENDENCIES_PRESENT += osgearth
-# Include OpenSceneGraph and osgEarth libraries
-LIBS += -losg \
-    -losgViewer \
-    -losgEarth
+exists(/usr/include/osg) {
+message("Building support for OpenSceneGraph")
+DEPENDENCIES_PRESENT += osg
+# Include OpenSceneGraph libraries
+LIBS += -losg
 DEFINES += QGC_OSG_ENABLED
+}
+
+exists(/usr/include/osgEarth) {
+message("Building support for osgEarth")
+DEPENDENCIES_PRESENT += osgearth
+# Include osgEarth libraries
+LIBS += -losgViewer \
+        -losgEarth
+DEFINES += QGC_OSGEARTH_ENABLED
 }
 
 QMAKE_CXXFLAGS += -Wl,-E
@@ -181,14 +188,21 @@ linux-g++-64 {
         -lSDL \
         -lSDLmain
 
-exists(/usr/lib/osg):exists(/usr/lib/osgEarth) {
-message("Building support for OSGEARTH")
-DEPENDENCIES_PRESENT += osgearth
-# Include OpenSceneGraph and osgEarth libraries
-LIBS += -losg \
-    -losgViewer \
-    -losgEarth
+exists(/usr/include/osg) {
+message("Building support for OpenSceneGraph")
+DEPENDENCIES_PRESENT += osg
+# Include OpenSceneGraph libraries
+LIBS += -losg
 DEFINES += QGC_OSG_ENABLED
+}
+
+exists(/usr/include/osgEarth) {
+message("Building support for osgEarth")
+DEPENDENCIES_PRESENT += osgearth
+# Include osgEarth libraries
+LIBS += -losgViewer \
+        -losgEarth
+DEFINES += QGC_OSGEARTH_ENABLED
 }
 }
 

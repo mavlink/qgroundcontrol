@@ -33,7 +33,10 @@
 #define PIXHAWK3DWIDGET_H
 
 #include <osgText/Text>
+
+#ifdef QGC_OSGEARTH_ENABLED
 #include <osgEarth/MapNode>
+#endif
 
 #include "Q3DWidget.h"
 
@@ -73,7 +76,11 @@ protected:
 private:
     osg::ref_ptr<osg::Geode> createGrid(void);
     osg::ref_ptr<osg::Geode> createTrail(void);
+
+#ifdef QGC_OSGEARTH_ENABLED
     osg::ref_ptr<osgEarth::MapNode> createMap(void);
+#endif
+
     osg::ref_ptr<osg::Node> createTarget(void);
     osg::ref_ptr<osg::Group> createWaypoints(void);
 
@@ -103,7 +110,9 @@ private:
     osg::ref_ptr<osg::Geode> trailNode;
     osg::ref_ptr<osg::Geometry> trailGeometry;
     osg::ref_ptr<osg::DrawArrays> trailDrawArrays;
+#ifdef QGC_OSGEARTH_ENABLED
     osg::ref_ptr<osgEarth::MapNode> mapNode;
+#endif
     osg::ref_ptr<osg::Geode> targetNode;
     osg::ref_ptr<osg::PositionAttitudeTransform> targetPosition;
     osg::ref_ptr<osg::Group> waypointsNode;
