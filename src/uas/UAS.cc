@@ -357,6 +357,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     GAudioOutput::instance()->notifyPositive();
                 }
                 positionLock = true;
+
+                // Send to patch antenna
+                mavlink_message_t msg;
+                mavlink_msg_global_position_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, pos.usec, pos.lat, pos.lon, pos.alt, pos.vx, pos.vy, pos.vz);
+                sendMessage(msg);
             }
             break;
         case MAVLINK_MSG_ID_GPS_RAW:
