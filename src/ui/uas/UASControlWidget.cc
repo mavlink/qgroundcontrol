@@ -237,8 +237,12 @@ void UASControlWidget::transmitMode()
 {
     if (uasMode != 0)
     {
-        UASManager::instance()->getUASForId(this->uas)->setMode(uasMode);
-        ui.lastActionLabel->setText(QString("Set new mode for system %1").arg(UASManager::instance()->getUASForId(uas)->getUASName()));
+        UASInterface* mav = UASManager::instance()->getUASForId(this->uas);
+        if (mav)
+        {
+            mav->setMode(uasMode);
+            ui.lastActionLabel->setText(QString("Set new mode for system %1").arg(mav->getUASName()));
+        }
     }
 }
 
