@@ -41,7 +41,8 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 // Speech synthesis is only supported with MSVC compiler
-#if _MSC_VER
+#if _MSC_VER2
+// Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #include <sapi.h>
 using System;
 using System.Speech.Synthesis;
@@ -111,7 +112,7 @@ bool GAudioOutput::say(QString text, int severity)
     {
 
         // Speech synthesis is only supported with MSVC compiler
-#ifdef _MSC_VER
+#ifdef _MSC_VER2
         SpeechSynthesizer synth = new SpeechSynthesizer();
         synth.SelectVoice("Microsoft Anna");
         synth.SpeakText(text.toStdString().c_str());

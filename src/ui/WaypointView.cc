@@ -35,6 +35,9 @@ This file is part of the PIXHAWK project
 #include <QDebug>
 
 #include <cmath>    //M_PI
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 #include "WaypointView.h"
 #include "ui_WaypointView.h"

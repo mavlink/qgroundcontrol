@@ -264,7 +264,7 @@ namespace MG
          * @param screenDiameter The screen diameter in mm, e.g. 13.3" = 338 mm.
          */
         static void setPixelSize(int horizontalResolution, int verticalResolution, double screenDiameter) {
-            pixelSize = screenDiameter / sqrt((horizontalResolution^(2)) + (verticalResolution^(2)));
+            pixelSize = screenDiameter / sqrt(static_cast<float>(horizontalResolution*horizontalResolution + verticalResolution*verticalResolution));
         }
 
     private:
