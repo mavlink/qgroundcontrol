@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent) :
     configureWindowName();
 
     // Add status bar
-    setStatusBar(createStatusBar());
+    //setStatusBar(createStatusBar());
 
     // Set the application style (not the same as a style sheet)
     // Set the style to Plastique
@@ -131,7 +131,7 @@ void MainWindow::buildWidgets()
 
     // Center widgets
     linechartWidget   = new Linecharts(this);
-    hudWidget         = new HUD(640, 480, this);
+    hudWidget         = new HUD(320, 240, this);
     mapWidget         = new MapWidget(this);
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
@@ -340,12 +340,12 @@ void MainWindow::reloadStylesheet()
 
 void MainWindow::showStatusMessage(const QString& status, int timeout)
 {
-    statusBar->showMessage(status, timeout);
+    //statusBar->showMessage(status, timeout);
 }
 
 void MainWindow::showStatusMessage(const QString& status)
 {
-    statusBar->showMessage(status, 5);
+    //statusBar->showMessage(status, 5);
 }
 
 /**
