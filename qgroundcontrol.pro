@@ -47,7 +47,6 @@ MAVLINK_CONF = ""
 # if the variable MAVLINK_CONF contains the name of an
 # additional project, QGroundControl includes the support
 # of custom MAVLink messages of this project
-
 exists(user_config.pri) { 
     include(user_config.pri)
     message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
@@ -79,10 +78,10 @@ contains(MAVLINK_CONF, ualberta) {
     INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
     DEFINES += QGC_USE_UALBERTA_MESSAGES
 }
-contains(MAVLINK_CONF, ardupilotmega) {
+contains(MAVLINK_CONF, ardupilotmega) { 
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-
+    
     # UALBERTA SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/ardupilotmega
     DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
@@ -139,7 +138,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui
-    #src/ui/WaypointGlobalView.ui
+
+# src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -221,26 +221,31 @@ HEADERS += src/MG.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
-    src/ui/QGCRemoteControlView.h \
-    #src/ui/WaypointGlobalView.h \
+    src/ui/QGCRemoteControlView.h \ # src/ui/WaypointGlobalView.h \
     src/ui/RadioCalibration/RadioCalibrationData.h \
     src/ui/RadioCalibration/RadioCalibrationWindow.h \
     src/ui/RadioCalibration/AirfoilServoCalibrator.h \
     src/ui/RadioCalibration/SwitchCalibrator.h \
     src/ui/RadioCalibration/CurveCalibrator.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
-    src/comm/QGCMAVLink.h
-
-contains(DEPENDENCIES_PRESENT, osgearth) {
-message("Including headers for OSGEARTH")
-# Enable only if OpenSceneGraph is available
-HEADERS += src/ui/map3D/Q3DWidget.h \
-    src/ui/map3D/PixhawkCheetahGeode.h \
-    src/ui/map3D/Pixhawk3DWidget.h \
-    src/ui/map3D/Q3DWidgetFactory.h \
-    src/ui/map3D/GCManipulator.h
+    src/comm/QGCMAVLink.h \
+    src/ui/map3D/ImageWindowGeode.h
+contains(DEPENDENCIES_PRESENT, osg) { 
+    message("Including headers for OpenSceneGraph")
+    
+    # Enable only if OpenSceneGraph is available
+    HEADERS += src/ui/map3D/Q3DWidget.h \
+        src/ui/map3D/PixhawkCheetahGeode.h \
+        src/ui/map3D/Pixhawk3DWidget.h \
+        src/ui/map3D/Q3DWidgetFactory.h \
+        src/ui/map3D/GCManipulator.h
 }
-
+contains(DEPENDENCIES_PRESENT, libfreenect) { 
+    message("Including headers for libfreenect")
+    
+    # Enable only if libfreenect is available
+    HEADERS += src/input/Freenect.h
+}
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -309,17 +314,23 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc \
-    #src/ui/WaypointGlobalView.cc \
-
-contains(DEPENDENCIES_PRESENT, osgearth) {
-message("Including sources for OSGEARTH")
-# Enable only if OpenSceneGraph is available
-SOURCES += src/ui/map3D/Q3DWidget.cc \
-    src/ui/map3D/PixhawkCheetahGeode.cc \
-    src/ui/map3D/Pixhawk3DWidget.cc \
-    src/ui/map3D/Q3DWidgetFactory.cc \
-    src/ui/map3D/GCManipulator.cc
+    src/ui/RadioCalibration/RadioCalibrationData.cc \ # src/ui/WaypointGlobalView.cc \
+    src/ui/map3D/ImageWindowGeode.cc
+contains(DEPENDENCIES_PRESENT, osg) { 
+    message("Including headers for OpenSceneGraph")
+    
+    # Enable only if OpenSceneGraph is available
+    SOURCES += src/ui/map3D/Q3DWidget.cc \
+        src/ui/map3D/PixhawkCheetahGeode.cc \
+        src/ui/map3D/Pixhawk3DWidget.cc \
+        src/ui/map3D/Q3DWidgetFactory.cc \
+        src/ui/map3D/GCManipulator.cc
+}
+contains(DEPENDENCIES_PRESENT, libfreenect) { 
+    message("Including headers for libfreenect")
+    
+    # Enable only if libfreenect is available
+    SOURCES += src/input/Freenect.cc
 }
 RESOURCES += mavground.qrc
 
