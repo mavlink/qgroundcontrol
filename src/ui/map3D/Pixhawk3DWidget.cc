@@ -34,6 +34,7 @@
 #include <sstream>
 
 #include <osg/Geode>
+#include <osg/Image>
 #include <osg/LineWidth>
 #include <osg/ShapeDrawable>
 
@@ -49,6 +50,8 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
      , displayTrail(false)
      , displayTarget(false)
      , displayWaypoints(true)
+     , displayRGBD2D(false)
+     , displayRGBD3D(false)
      , followCamera(true)
      , lastRobotX(0.0f)
      , lastRobotY(0.0f)
@@ -80,6 +83,15 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     // generate waypoint model
     waypointsNode = createWaypoints();
     rollingMap->addChild(waypointsNode);
+
+#ifdef QGC_LIBFREENECT_ENABLED
+    // generate RGBD model
+    freenect.reset(new Freenect());
+    freenect->init();
+
+    rgbdNode = createRGBD();
+    egocentricMap->addChild(rgbdNode);
+#endif
 
     setupHUD();
 
@@ -273,20 +285,41 @@ Pixhawk3DWidget::display(void)
                                          robotPitch, osg::Vec3f(1.0f, 0.0f, 0.0f),
                                          robotRoll, osg::Vec3f(0.0f, 1.0f, 0.0f)));
 
-    updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw);
     updateTrail(robotX, robotY, robotZ);
     updateTarget();
     updateWaypoints();
+#ifdef QGC_LIBFREENECT_ENABLED
+    updateRGBD();
+#endif
+    updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw);
 
     // set node visibility
     rollingMap->setChildValue(gridNode, displayGrid);
     rollingMap->setChildValue(trailNode, displayTrail);
     rollingMap->setChildValue(targetNode, displayTarget);
     rollingMap->setChildValue(waypointsNode, displayWaypoints);
+    hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
+    hudGroup->setChildValue(depth2DGeode, displayRGBD2D);
 
     lastRobotX = robotX;
     lastRobotY = robotY;
     lastRobotZ = robotZ;
+}
+
+void
+Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
+{
+    if (!event->text().isEmpty())
+    {
+        switch (*(event->text().toAscii().data()))
+        {
+        case '1':
+            displayRGBD2D = !displayRGBD2D;
+            break;
+        }
+    }
+
+    Q3DWidget::keyPressEvent(event);
 }
 
 void
@@ -425,71 +458,105 @@ Pixhawk3DWidget::createWaypoints(void)
     return group;
 }
 
+#ifdef QGC_LIBFREENECT_ENABLED
+osg::ref_ptr<osg::Geode>
+Pixhawk3DWidget::createRGBD(void)
+{
+    return osg::ref_ptr<osg::Geode>(new osg::Geode);
+}
+#endif
+
 void
 Pixhawk3DWidget::setupHUD(void)
 {
-    osg::ref_ptr<osg::Vec3Array> hudBackgroundVertices(new osg::Vec3Array);
-    hudBackgroundVertices->push_back(osg::Vec3(0, height(), -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), height(), -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), height() - 30, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, height() - 30, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, 0, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), 0, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), 25, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, 25, -1));
-
-    osg::ref_ptr<osg::DrawElementsUInt> hudTopBackgroundIndices(
-            new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0));
-    hudTopBackgroundIndices->push_back(0);
-    hudTopBackgroundIndices->push_back(1);
-    hudTopBackgroundIndices->push_back(2);
-    hudTopBackgroundIndices->push_back(3);
-
-    osg::ref_ptr<osg::DrawElementsUInt> hudBottomBackgroundIndices(
-            new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0));
-    hudBottomBackgroundIndices->push_back(4);
-    hudBottomBackgroundIndices->push_back(5);
-    hudBottomBackgroundIndices->push_back(6);
-    hudBottomBackgroundIndices->push_back(7);
-
     osg::ref_ptr<osg::Vec4Array> hudColors(new osg::Vec4Array);
     hudColors->push_back(osg::Vec4(0.0f, 0.0f, 0.0f, 0.2f));
 
     hudBackgroundGeometry = new osg::Geometry;
-    hudBackgroundGeometry->addPrimitiveSet(hudTopBackgroundIndices);
-    hudBackgroundGeometry->addPrimitiveSet(hudBottomBackgroundIndices);
-    hudBackgroundGeometry->setVertexArray(hudBackgroundVertices);
+    hudBackgroundGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,
+                                                               0, 4));
+    hudBackgroundGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,
+                                                               4, 4));
     hudBackgroundGeometry->setColorArray(hudColors);
     hudBackgroundGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
-
-    hudGeode->addDrawable(hudBackgroundGeometry);
+    hudBackgroundGeometry->setUseDisplayList(false);
 
     statusText = new osgText::Text;
     statusText->setCharacterSize(11);
     statusText->setFont("images/Vera.ttf");
     statusText->setAxisAlignment(osgText::Text::SCREEN);
-    statusText->setPosition(osg::Vec3(10, height() - 10, -1.5));
     statusText->setColor(osg::Vec4(255, 255, 255, 1));
 
-    hudGeode->addDrawable(statusText);
+    resizeHUD();
+
+    osg::ref_ptr<osg::Geode> statusGeode = new osg::Geode;
+    statusGeode->addDrawable(hudBackgroundGeometry);
+    statusGeode->addDrawable(statusText);
+    hudGroup->addChild(statusGeode);
+
+    rgbImage = new osg::Image;
+    rgb2DGeode = new ImageWindowGeode("RGB Image",
+                                      osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
+                                      rgbImage);
+    hudGroup->addChild(rgb2DGeode);
+
+    depthImage = new osg::Image;
+    depthImage->allocateImage(640, 480, 1, GL_RGB, GL_UNSIGNED_BYTE);
+    depth2DGeode = new ImageWindowGeode("Depth Image",
+                                        osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
+                                        depthImage);
+    hudGroup->addChild(depth2DGeode);
+
+    for (int i = 0; i < 2048; ++i)
+    {
+        float v = static_cast<float>(i) / 2048.0f;
+        v = powf(v, 3.0f) * 6.0f;
+        gammaLookup[i] = static_cast<unsigned short>(v * 6.0f * 256.0f);
+    }
+}
+
+void
+Pixhawk3DWidget::resizeHUD(void)
+{
+    int topHUDHeight = 30;
+    int bottomHUDHeight = 25;
+
+    osg::Vec3Array* vertices = static_cast<osg::Vec3Array*>(hudBackgroundGeometry->getVertexArray());
+    if (vertices == NULL || vertices->size() != 8)
+    {
+        osg::ref_ptr<osg::Vec3Array> newVertices = new osg::Vec3Array(8);
+        hudBackgroundGeometry->setVertexArray(newVertices);
+
+        vertices = static_cast<osg::Vec3Array*>(hudBackgroundGeometry->getVertexArray());
+    }
+
+    (*vertices)[0] = osg::Vec3(0, height(), -1);
+    (*vertices)[1] = osg::Vec3(width(), height(), -1);
+    (*vertices)[2] = osg::Vec3(width(), height() - topHUDHeight, -1);
+    (*vertices)[3] = osg::Vec3(0, height() - topHUDHeight, -1);
+    (*vertices)[4] = osg::Vec3(0, 0, -1);
+    (*vertices)[5] = osg::Vec3(width(), 0, -1);
+    (*vertices)[6] = osg::Vec3(width(), bottomHUDHeight, -1);
+    (*vertices)[7] = osg::Vec3(0, bottomHUDHeight, -1);
+
+    statusText->setPosition(osg::Vec3(10, height() - 20, -1.5));
+
+    if (rgb2DGeode.valid() && depth2DGeode.valid())
+    {
+        int windowWidth = (width() - 20) / 2;
+        int windowHeight = 3 * windowWidth / 4;
+        rgb2DGeode->setAttributes(10, (height() - windowHeight) / 2,
+                                  windowWidth, windowHeight);
+        depth2DGeode->setAttributes(width() / 2, (height() - windowHeight) / 2,
+                                    windowWidth, windowHeight);
+    }
 }
 
 void
 Pixhawk3DWidget::updateHUD(float robotX, float robotY, float robotZ,
-                         float robotRoll, float robotPitch, float robotYaw)
+                           float robotRoll, float robotPitch, float robotYaw)
 {
-    osg::ref_ptr<osg::Vec3Array> hudBackgroundVertices(new osg::Vec3Array);
-    hudBackgroundVertices->push_back(osg::Vec3(0, height(), -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), height(), -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), height() - 30, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, height() - 30, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, 0, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), 0, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), 25, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, 25, -1));
-    hudBackgroundGeometry->setVertexArray(hudBackgroundVertices);
-
-    statusText->setPosition(osg::Vec3(10, height() - 20, -1.5));
+    resizeHUD();
 
     std::pair<double,double> cursorPosition =
             getGlobalCursorPosition(getMouseX(), getMouseY(), -robotZ);
@@ -506,6 +573,62 @@ Pixhawk3DWidget::updateHUD(float robotX, float robotY, float robotZ,
             " Cursor [" << cursorPosition.first <<
             " " << cursorPosition.second << "]";
     statusText->setText(oss.str());
+
+    if (!rgb.isNull())
+    {
+        rgbImage->setImage(640, 480, 1,
+                           GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
+                           reinterpret_cast<unsigned char *>(rgb->data()),
+                           osg::Image::NO_DELETE);
+        rgbImage->dirty();
+
+        unsigned short* src = reinterpret_cast<unsigned short *>(depth->data());
+        unsigned char* dst = depthImage->data();
+        for (int i = 0; i < depthImage->s() * depthImage->t(); ++i)
+        {
+            unsigned short pval = gammaLookup[src[i]];
+            unsigned short lb = pval & 0xFF;
+            switch (pval >> 8)
+            {
+            case 0:
+                dst[3 * i] = 255;
+                dst[3 * i + 1] = 255 - lb;
+                dst[3 * i + 2] = 255 - lb;
+                break;
+            case 1:
+                dst[3 * i] = 255;
+                dst[3 * i + 1] = lb;
+                dst[3 * i + 2] = 0;
+                break;
+            case 2:
+                dst[3 * i] = 255 - lb;
+                dst[3 * i + 1] = 255;
+                dst[3 * i + 2] = 0;
+                break;
+            case 3:
+                dst[3 * i] = 0;
+                dst[3 * i + 1] = 255;
+                dst[3 * i + 2] = lb;
+                break;
+            case 4:
+                dst[3 * i] = 0;
+                dst[3 * i + 1] = 255 - lb;
+                dst[3 * i + 2] = 255;
+                break;
+            case 5:
+                dst[3 * i] = 0;
+                dst[3 * i + 1] = 0;
+                dst[3 * i + 2] = 255 - lb;
+                break;
+            default:
+                dst[3 * i] = 0;
+                dst[3 * i + 1] = 0;
+                dst[3 * i + 2] = 0;
+                break;
+            }
+        }
+        depthImage->dirty();
+    }
 }
 
 void
@@ -641,6 +764,14 @@ Pixhawk3DWidget::updateWaypoints(void)
     }
 }
 
+#ifdef QGC_LIBFREENECT_ENABLED
+void
+Pixhawk3DWidget::updateRGBD(void)
+{
+    rgb = freenect->getRgbData();
+    depth = freenect->getDepthData();
+}
+#endif
 
 void
 Pixhawk3DWidget::markTarget(void)

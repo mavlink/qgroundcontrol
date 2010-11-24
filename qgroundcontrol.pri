@@ -74,16 +74,29 @@ macx {
     # Copy audio files if needed
     QMAKE_PRE_LINK += cp -r $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
 
-    exists(/opt/local/lib/osg):exists("/opt/local/lib/osgEarth") {
-    message("Building support for OSGEARTH")
-    DEPENDENCIES_PRESENT += osgearth
-    LIBS += -L/opt/local/lib/
-    INCLUDEPATH += /opt/local/include
-    # Include OpenSceneGraph and osgEarth libraries
-    LIBS += -losg \
-        -losgViewer \
-        -losgEarth
+    exists(/usr/include/osg) {
+    message("Building support for OpenSceneGraph")
+    DEPENDENCIES_PRESENT += osg
+    # Include OpenSceneGraph libraries
+    LIBS += -losg
     DEFINES += QGC_OSG_ENABLED
+    }
+
+    exists(/usr/include/osgEarth) {
+    message("Building support for osgEarth")
+    DEPENDENCIES_PRESENT += osgearth
+    # Include osgEarth libraries
+    LIBS += -losgViewer \
+            -losgEarth
+    DEFINES += QGC_OSGEARTH_ENABLED
+    }
+
+    exists(/usr/local/include/libfreenect) {
+    message("Building support for libfreenect")
+    DEPENDENCIES_PRESENT += libfreenect
+    # Include libfreenect libraries
+    LIBS += -lfreenect
+    DEFINES += QGC_LIBFREENECT_ENABLED
     }
 }
 
@@ -127,24 +140,32 @@ linux-g++ {
         -lSDL \
         -lSDLmain
 
-exists(/usr/include/osg) {
-message("Building support for OpenSceneGraph")
-DEPENDENCIES_PRESENT += osg
-# Include OpenSceneGraph libraries
-LIBS += -losg
-DEFINES += QGC_OSG_ENABLED
-}
+    exists(/usr/include/osg) {
+    message("Building support for OpenSceneGraph")
+    DEPENDENCIES_PRESENT += osg
+    # Include OpenSceneGraph libraries
+    LIBS += -losg
+    DEFINES += QGC_OSG_ENABLED
+    }
 
-exists(/usr/include/osgEarth) {
-message("Building support for osgEarth")
-DEPENDENCIES_PRESENT += osgearth
-# Include osgEarth libraries
-LIBS += -losgViewer \
-        -losgEarth
-DEFINES += QGC_OSGEARTH_ENABLED
-}
+    exists(/usr/include/osgEarth) {
+    message("Building support for osgEarth")
+    DEPENDENCIES_PRESENT += osgearth
+    # Include osgEarth libraries
+    LIBS += -losgViewer \
+            -losgEarth
+    DEFINES += QGC_OSGEARTH_ENABLED
+    }
 
-QMAKE_CXXFLAGS += -Wl,-E
+    exists(/usr/local/include/libfreenect) {
+    message("Building support for libfreenect")
+    DEPENDENCIES_PRESENT += libfreenect
+    # Include libfreenect libraries
+    LIBS += -lfreenect
+    DEFINES += QGC_LIBFREENECT_ENABLED
+    }
+
+    QMAKE_CXXFLAGS += -Wl,-E
 
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
@@ -188,22 +209,31 @@ linux-g++-64 {
         -lSDL \
         -lSDLmain
 
-exists(/usr/include/osg) {
-message("Building support for OpenSceneGraph")
-DEPENDENCIES_PRESENT += osg
-# Include OpenSceneGraph libraries
-LIBS += -losg
-DEFINES += QGC_OSG_ENABLED
-}
+    exists(/usr/include/osg) {
+    message("Building support for OpenSceneGraph")
+    DEPENDENCIES_PRESENT += osg
+    # Include OpenSceneGraph libraries
+    LIBS += -losg
+    DEFINES += QGC_OSG_ENABLED
+    }
 
-exists(/usr/include/osgEarth) {
-message("Building support for osgEarth")
-DEPENDENCIES_PRESENT += osgearth
-# Include osgEarth libraries
-LIBS += -losgViewer \
-        -losgEarth
-DEFINES += QGC_OSGEARTH_ENABLED
-}
+    exists(/usr/include/osgEarth) {
+    message("Building support for osgEarth")
+    DEPENDENCIES_PRESENT += osgearth
+    # Include osgEarth libraries
+    LIBS += -losgViewer \
+            -losgEarth
+    DEFINES += QGC_OSGEARTH_ENABLED
+    }
+
+    exists(/usr/local/include/libfreenect) {
+    message("Building support for libfreenect")
+    DEPENDENCIES_PRESENT += libfreenect
+    # Include libfreenect libraries
+    LIBS += -lfreenect
+    DEFINES += QGC_LIBFREENECT_ENABLED
+    }
+
 }
 
 

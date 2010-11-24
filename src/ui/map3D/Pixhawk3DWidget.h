@@ -33,9 +33,15 @@
 #define PIXHAWK3DWIDGET_H
 
 #include <osgText/Text>
-
 #ifdef QGC_OSGEARTH_ENABLED
 #include <osgEarth/MapNode>
+#endif
+
+#ifdef QGC_OSG_ENABLED
+#include "ImageWindowGeode.h"
+#endif
+#ifdef QGC_LIBFREENECT_ENABLED
+#include "Freenect.h"
 #endif
 
 #include "Q3DWidget.h"
@@ -69,6 +75,7 @@ private slots:
 
 protected:
     virtual void display(void);
+    virtual void keyPressEvent(QKeyEvent* event);
     virtual void mousePressEvent(QMouseEvent* event);
 
     UASInterface* uas;
@@ -84,13 +91,21 @@ private:
     osg::ref_ptr<osg::Node> createTarget(void);
     osg::ref_ptr<osg::Group> createWaypoints(void);
 
+#ifdef QGC_LIBFREENECT_ENABLED
+    osg::ref_ptr<osg::Geode> createRGBD(void);
+#endif
+
     void setupHUD(void);
+    void resizeHUD(void);
 
     void updateHUD(float robotX, float robotY, float robotZ,
                    float robotRoll, float robotPitch, float robotYaw);
     void updateTrail(float robotX, float robotY, float robotZ);
     void updateTarget(void);
     void updateWaypoints(void);
+#ifdef QGC_LIBFREENECT_ENABLED
+    void updateRGBD(void);
+#endif
 
     void markTarget(void);
 
@@ -98,6 +113,8 @@ private:
     bool displayTrail;
     bool displayTarget;
     bool displayWaypoints;
+    bool displayRGBD2D;
+    bool displayRGBD3D;
 
     bool followCamera;
 
@@ -106,6 +123,10 @@ private:
 
     osg::ref_ptr<osg::Geometry> hudBackgroundGeometry;
     osg::ref_ptr<osgText::Text> statusText;
+    osg::ref_ptr<ImageWindowGeode> rgb2DGeode;
+    osg::ref_ptr<ImageWindowGeode> depth2DGeode;
+    osg::ref_ptr<osg::Image> rgbImage;
+    osg::ref_ptr<osg::Image> depthImage;
     osg::ref_ptr<osg::Geode> gridNode;
     osg::ref_ptr<osg::Geode> trailNode;
     osg::ref_ptr<osg::Geometry> trailGeometry;
@@ -116,6 +137,13 @@ private:
     osg::ref_ptr<osg::Geode> targetNode;
     osg::ref_ptr<osg::PositionAttitudeTransform> targetPosition;
     osg::ref_ptr<osg::Group> waypointsNode;
+#ifdef QGC_LIBFREENECT_ENABLED
+    osg::ref_ptr<osg::Geode> rgbdNode;
+    QScopedPointer<Freenect> freenect;
+#endif
+    QSharedPointer<QByteArray> rgb;
+    QSharedPointer<QByteArray> depth;
+    unsigned short gammaLookup[2048];
 
     QPushButton* targetButton;
 
