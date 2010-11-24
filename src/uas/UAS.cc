@@ -729,7 +729,7 @@ quint64 UAS::getUnixTime(quint64 time)
     // 60 seconds
     // 1000 milliseconds
     // 1000 microseconds
-    else if (time < 1261440000000000LLU)
+    else if (time < 1261440000000000)
     {
         if (onboardTimeOffset == 0)
         {
