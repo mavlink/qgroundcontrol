@@ -199,6 +199,30 @@ DEFINES += QGC_OSG_ENABLED
 }
 }
 
+# Windows (32bit)
+win32-msvc2008 {
+
+    message(Building for Windows Visual Studio 2008 (32bit))
+
+    # Special settings for debug
+    #CONFIG += CONSOLE
+
+    INCLUDEPATH += $$BASEDIR/lib/sdl/msvc/include \
+                   $$BASEDIR/lib/opal/include \
+                   $$BASEDIR/lib/msinttypes
+                   #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
+
+    LIBS += -L$$BASEDIR/lib/sdl/msvc/lib \
+             -lSDLmain -lSDL
+
+    RC_FILE = $$BASEDIR/qgroundcontrol.rc
+
+    # Copy dependencies
+    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+}
 
 # Windows (32bit)
 win32-g++ {
