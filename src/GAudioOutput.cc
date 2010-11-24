@@ -41,11 +41,20 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 // Speech synthesis is only supported with MSVC compiler
-#if _MSC_VER2
+#if _MSC_VER
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
+#define _ATL_APARTMENT_THREADED
+
+#include <atlbase.h>
+//You may derive a class from CComModule and use it if you want to override something,
+//but do not change the name of _Module
+extern CComModule _Module;
+#include <atlcom.h>
+
 #include <sapi.h>
-using System;
-using System.Speech.Synthesis;
+
+//using System;
+//using System.Speech.Synthesis;
 #endif
 
 #ifdef Q_OS_LINUX
@@ -83,6 +92,26 @@ emergency(false)
 #ifdef Q_OS_LINUX
     flite_init();
 #endif
+
+	#if _MSC_VER
+
+		ISpVoice * pVoice = NULL;
+	    if (FAILED(::CoInitialize(NULL)))
+		{
+			qDebug("Creating COM object for audio output failed!");
+		}
+		else
+		{
+
+    HRESULT hr = CoCreateInstance(CLSID_SpVoice, NULL, CLSCTX_ALL, IID_ISpVoice, (void **)&pVoice;);
+    if( SUCCEEDED( hr ) )
+    {
+        hr = pVoice->Speak(L"Hello world", 0, NULL);
+        pVoice->Release();
+        pVoice = NULL;
+    }
+		}
+#endif
     // Initialize audio output
     m_media = new Phonon::MediaObject(this);
     Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
@@ -101,6 +130,13 @@ emergency(false)
         selectMaleVoice();
         break;
     }
+}
+
+GAudioOutput::~GAudioOutput()
+{
+#ifdef _MSC_VER
+	::CoUninitialize();
+#endif
 }
 
 bool GAudioOutput::say(QString text, int severity)
