@@ -72,14 +72,13 @@ macx {
     ICON = $$BASEDIR/images/icons/macx.icns
 
     # Copy audio files if needed
-    QMAKE_PRE_LINK += cp -r $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
 
     exists(/usr/include/osg) {
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
     # Include OpenSceneGraph libraries
     LIBS += -losg
-    DEFINES += QGC_OSG_ENABLED
     }
 
     exists(/usr/include/osgEarth) {
@@ -106,12 +105,15 @@ linux-g++ {
     CONFIG += debug
     
     debug {
-        DESTDIR = $$BASEDIR
+        DESTDIR = $$BUILDDIR/debug
     }
 
     release {
-        DESTDIR = $$BASEDIR
+        DESTDIR = $$BUILDDIR/release
     }
+
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
@@ -176,12 +178,14 @@ linux-g++-64 {
     CONFIG += debug
 
     debug {
-        DESTDIR = $$BASEDIR
+        DESTDIR = $$BUILDDIR/debug
     }
 
     release {
-        DESTDIR = $$BASEDIR
+        DESTDIR = $$BUILDDIR/release
     }
+
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
@@ -238,42 +242,67 @@ linux-g++-64 {
 
 }
 
+# Windows (32bit)
+win32-msvc2008 {
+
+    message(Building for Windows Visual Studio 2008 (32bit))
+
+    # Special settings for debug
+    #CONFIG += CONSOLE
+
+    INCLUDEPATH += $$BASEDIR/lib/sdl/msvc/include \
+                   $$BASEDIR/lib/opal/include \
+                   $$BASEDIR/lib/msinttypes
+                   #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
+
+    LIBS += -L$$BASEDIR/lib/sdl/msvc/lib \
+             -lSDLmain -lSDL
+
+    RC_FILE = $$BASEDIR/qgroundcontrol.rc
+
+    # Copy dependencies
+    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+}
 
 # Windows (32bit)
-win32 { 
+win32-g++ {
 
     message(Building for Windows Platform (32bit))
     
     # Special settings for debug
     #CONFIG += CONSOLE
 
-    INCLUDEPATH += $$BASEDIR\lib\sdl\include \
-                   $$BASEDIR\lib\opal\include #\ #\
+    INCLUDEPATH += $$BASEDIR/lib/sdl/include \
+                   $$BASEDIR/lib/opal/include #\ #\
                    #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
 
-    LIBS += -L$$BASEDIR\lib\sdl\win32 \
+    LIBS += -L$$BASEDIR/lib/sdl/win32 \
              -lmingw32 -lSDLmain -lSDL -mwindows
 
 
 
     debug {
-        DESTDIR = $$BASEDIR/bin
+        DESTDIR = $$BUILDDIR/debug
     }
 
     release {
-        DESTDIR = $$BASEDIR/bin
+        DESTDIR = $$BUILDDIR/release
     }
         
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
-    QMAKE_PRE_LINK += copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/debug/ & copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/release/
-    QMAKE_PRE_LINK += copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/debug/ & copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/release/
-    QMAKE_PRE_LINK += copy /Y audio $$BUILDDIR\debug\
+    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/release/.
 }
 
 # Windows (64bit)
-win64 {
+win64-g++ {
 
     message(Building for Windows Platform (64bit))
 
@@ -300,8 +329,9 @@ win64 {
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
-    QMAKE_PRE_LINK += copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/debug/ & copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/release/
-    QMAKE_PRE_LINK += copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/debug/ & copy /Y $$BASEDIR/lib/sdl/SDL.dll $$BUILDDIR/release/
-    QMAKE_PRE_LINK += copy /Y audio $$BUILDDIR\debug\
+    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/release/.
 }
 

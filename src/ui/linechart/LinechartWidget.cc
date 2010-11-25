@@ -70,7 +70,7 @@ updateTimer(new QTimer())
 {
     // Add elements defined in Qt Designer
     ui.setupUi(this);
-    this->setMinimumSize(600, 300);
+    this->setMinimumSize(400, 250);
 
     // Add and customize curve list elements (left side)
     curvesWidget = new QWidget(ui.curveListWidget);

@@ -37,7 +37,6 @@ QGCSensorSettingsWidget::QGCSensorSettingsWidget(UASInterface* uas, QWidget *par
     ui(new Ui::QGCSensorSettingsWidget)
 {
     ui->setupUi(this);
-
     connect(ui->sendRawCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableRawSensorDataTransmission(bool)));
     connect(ui->sendControllerCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableRawControllerDataTransmission(bool)));
     connect(ui->sendExtendedCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtendedSystemStatusTransmission(bool)));

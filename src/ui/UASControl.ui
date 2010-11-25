@@ -6,44 +6,53 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>287</width>
-    <height>354</height>
+    <width>210</width>
+    <height>130</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>280</width>
-    <height>170</height>
+    <width>210</width>
+    <height>130</height>
    </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowminimumheight="10,20,0,10,10,10,300">
-   <property name="leftMargin">
-    <number>6</number>
+  <layout class="QGridLayout" name="gridLayout" rowstretch="10,10,0,10,10,5,100" columnstretch="0,0,10,10,10,0">
+   <property name="margin">
+    <number>0</number>
    </property>
-   <property name="topMargin">
-    <number>12</number>
-   </property>
-   <property name="rightMargin">
-    <number>6</number>
-   </property>
-   <property name="bottomMargin">
+   <property name="spacing">
     <number>6</number>
    </property>
    <item row="0" column="1" colspan="4">
     <widget class="QLabel" name="controlStatusLabel">
+     <property name="minimumSize">
+      <size>
+       <width>50</width>
+       <height>20</height>
+      </size>
+     </property>
      <property name="text">
       <string>UNCONNECTED</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
      </property>
+     <property name="margin">
+      <number>0</number>
+     </property>
     </widget>
    </item>
    <item row="1" column="1" colspan="4">
     <widget class="QPushButton" name="controlButton">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>12</height>
+      </size>
+     </property>
      <property name="text">
       <string>Activate Engine</string>
      </property>
@@ -80,6 +89,12 @@
    </item>
    <item row="3" column="1">
     <widget class="QPushButton" name="liftoffButton">
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>12</height>
+      </size>
+     </property>
      <property name="text">
       <string>Liftoff</string>
      </property>
@@ -91,6 +106,12 @@
    </item>
    <item row="3" column="2" colspan="2">
     <widget class="QPushButton" name="landButton">
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>12</height>
+      </size>
+     </property>
      <property name="text">
       <string>Land</string>
      </property>
@@ -102,6 +123,12 @@
    </item>
    <item row="3" column="4">
     <widget class="QPushButton" name="shutdownButton">
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>12</height>
+      </size>
+     </property>
      <property name="text">
       <string>Halt</string>
      </property>
@@ -125,10 +152,23 @@
     </spacer>
    </item>
    <item row="4" column="1" colspan="2">
-    <widget class="QComboBox" name="modeComboBox"/>
+    <widget class="QComboBox" name="modeComboBox">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>12</height>
+      </size>
+     </property>
+    </widget>
    </item>
    <item row="4" column="3" colspan="2">
     <widget class="QPushButton" name="setModeButton">
+     <property name="minimumSize">
+      <size>
+       <width>40</width>
+       <height>12</height>
+      </size>
+     </property>
      <property name="text">
       <string>Set Mode</string>
      </property>
@@ -140,6 +180,12 @@
    </item>
    <item row="5" column="1" colspan="4">
     <widget class="QLabel" name="lastActionLabel">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>12</height>
+      </size>
+     </property>
      <property name="text">
       <string>No actions executed so far</string>
      </property>
