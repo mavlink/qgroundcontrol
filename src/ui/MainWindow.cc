@@ -47,7 +47,7 @@ This file is part of the QGROUNDCONTROL project
 #include "GAudioOutput.h"
 
 #ifdef QGC_OSG_ENABLED
-#include "QMap3D.h"
+#include "Q3DWidgetFactory.h"
 #endif
 
 // FIXME Move
@@ -136,8 +136,8 @@ void MainWindow::buildWidgets()
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
     #ifdef QGC_OSG_ENABLED
-    //_3DWidget         = Q3DWidgetFactory::get(QGC_MAP3D_OSGEARTH);
-    _3DWidget = new QMap3D(this);
+    _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+    //_3DWidget = Q3DWidgetFactory::get("MAP3D");
     #endif
 
     // Dock widgets
@@ -672,7 +672,7 @@ void MainWindow::loadPixhawkView()
     clearView();
     // Engineer view, used in EMAV2009
 
-        #ifdef QGC_OSG_ENABLED
+#ifdef QGC_OSG_ENABLED
     // 3D map
     if (_3DWidget)
     {

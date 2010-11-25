@@ -167,7 +167,7 @@ protected:
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
     #ifdef QGC_OSG_ENABLED
-    QPointer<QMap3D> _3DWidget;
+    QPointer<QWidget> _3DWidget;
     #endif
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;

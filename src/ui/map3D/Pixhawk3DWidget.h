@@ -37,9 +37,8 @@
 #include <osgEarth/MapNode>
 #endif
 
-#ifdef QGC_OSG_ENABLED
 #include "ImageWindowGeode.h"
-#endif
+
 #ifdef QGC_LIBFREENECT_ENABLED
 #include "Freenect.h"
 #endif
@@ -59,10 +58,6 @@ public:
     explicit Pixhawk3DWidget(QWidget* parent = 0);
     ~Pixhawk3DWidget();
 
-    void buildLayout(void);
-
-    double getTime(void) const;
-
 public slots:
     void setActiveUAS(UASInterface* uas);
 
@@ -70,10 +65,13 @@ private slots:
     void showGrid(int state);
     void showTrail(int state);
     void showWaypoints(int state);
+    void selectVehicleModel(int index);
     void recenter(void);
     void toggleFollowCamera(int state);
 
 protected:
+    QVector< osg::ref_ptr<osg::Node> > findVehicleModels(void);
+    void buildLayout(void);
     virtual void display(void);
     virtual void keyPressEvent(QKeyEvent* event);
     virtual void mousePressEvent(QMouseEvent* event);
@@ -90,10 +88,7 @@ private:
 
     osg::ref_ptr<osg::Node> createTarget(void);
     osg::ref_ptr<osg::Group> createWaypoints(void);
-
-#ifdef QGC_LIBFREENECT_ENABLED
-    osg::ref_ptr<osg::Geode> createRGBD(void);
-#endif
+    osg::ref_ptr<osg::Geode> createRGBD3D(void);
 
     void setupHUD(void);
     void resizeHUD(void);
@@ -121,6 +116,7 @@ private:
     osg::ref_ptr<osg::Vec3Array> trailVertices;
     QVarLengthArray<osg::Vec3, 10000> trail;
 
+    osg::ref_ptr<osg::Node> vehicleModel;
     osg::ref_ptr<osg::Geometry> hudBackgroundGeometry;
     osg::ref_ptr<osgText::Text> statusText;
     osg::ref_ptr<ImageWindowGeode> rgb2DGeode;
@@ -137,13 +133,14 @@ private:
     osg::ref_ptr<osg::Geode> targetNode;
     osg::ref_ptr<osg::PositionAttitudeTransform> targetPosition;
     osg::ref_ptr<osg::Group> waypointsNode;
+    osg::ref_ptr<osg::Geode> rgbd3DNode;
 #ifdef QGC_LIBFREENECT_ENABLED
-    osg::ref_ptr<osg::Geode> rgbdNode;
     QScopedPointer<Freenect> freenect;
 #endif
     QSharedPointer<QByteArray> rgb;
-    QSharedPointer<QByteArray> depth;
-    unsigned short gammaLookup[2048];
+    QSharedPointer<QByteArray> coloredDepth;
+
+    QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
     QPushButton* targetButton;
 
