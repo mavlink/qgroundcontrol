@@ -133,8 +133,7 @@ class ViewerQOSG : public osgViewer::Viewer, public QOSGWidget
         void updateCamera()
         {
             getCamera()->setViewport(new osg::Viewport(0,0,width(),height()));
-            // we want an aspect ratio of 1.0, not: static_cast<double>(width())/static_cast<double>(height())
-            getCamera()->setProjectionMatrixAsPerspective(30.0f, 1.0f , 1.0f, 10000.0f);
+            getCamera()->setProjectionMatrixAsPerspective(30.0f, 1.0f , static_cast<double>(width())/static_cast<double>(height()), 10000.0f);
             getCamera()->setGraphicsContext(getGraphicsWindow());
         }
 
