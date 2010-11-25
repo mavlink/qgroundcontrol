@@ -46,8 +46,8 @@ This file is part of the QGROUNDCONTROL project
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
 
-    #ifdef QGC_OSG_ENABLED
-#include "Q3DWidgetFactory.h"
+#ifdef QGC_OSG_ENABLED
+#include "QMap3D.h"
 #endif
 
 // FIXME Move
@@ -83,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent) :
     configureWindowName();
 
     // Add status bar
-    setStatusBar(createStatusBar());
+    //setStatusBar(createStatusBar());
 
     // Set the application style (not the same as a style sheet)
     // Set the style to Plastique
@@ -131,13 +131,14 @@ void MainWindow::buildWidgets()
 
     // Center widgets
     linechartWidget   = new Linecharts(this);
-    hudWidget         = new HUD(640, 480, this);
+    hudWidget         = new HUD(320, 240, this);
     mapWidget         = new MapWidget(this);
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
     #ifdef QGC_OSG_ENABLED
-    _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-#endif
+    //_3DWidget         = Q3DWidgetFactory::get(QGC_MAP3D_OSGEARTH);
+    _3DWidget = new QMap3D(this);
+    #endif
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -229,9 +230,9 @@ void MainWindow::arrangeCenterStack()
     if (linechartWidget) centerStack->addWidget(linechartWidget);
     if (protocolWidget) centerStack->addWidget(protocolWidget);
     if (mapWidget) centerStack->addWidget(mapWidget);
-        #ifdef QGC_OSG_ENABLED
+    #ifdef QGC_OSG_ENABLED
     if (_3DWidget) centerStack->addWidget(_3DWidget);
-#endif
+    #endif
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 
@@ -339,12 +340,12 @@ void MainWindow::reloadStylesheet()
 
 void MainWindow::showStatusMessage(const QString& status, int timeout)
 {
-    statusBar->showMessage(status, timeout);
+    //statusBar->showMessage(status, timeout);
 }
 
 void MainWindow::showStatusMessage(const QString& status)
 {
-    statusBar->showMessage(status, 5);
+    //statusBar->showMessage(status, 5);
 }
 
 /**

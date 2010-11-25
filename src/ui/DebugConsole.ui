@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>435</width>
+    <width>402</width>
     <height>185</height>
    </rect>
   </property>
@@ -77,14 +77,24 @@
         <string>Enable auto hold to lower the CPU consumption</string>
        </property>
        <property name="text">
-        <string>Auto hold</string>
+        <string>Hold</string>
        </property>
       </widget>
      </item>
     </layout>
    </item>
    <item row="1" column="0" colspan="2">
-    <widget class="QPlainTextEdit" name="receiveText"/>
+    <widget class="QPlainTextEdit" name="receiveText">
+     <property name="minimumSize">
+      <size>
+       <width>300</width>
+       <height>50</height>
+      </size>
+     </property>
+     <property name="tabStopWidth">
+      <number>60</number>
+     </property>
+    </widget>
    </item>
    <item row="2" column="0" colspan="2">
     <widget class="QLineEdit" name="sentText">
@@ -98,13 +108,22 @@
    </item>
    <item row="3" column="0">
     <widget class="QLineEdit" name="sendText">
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>0</height>
+      </size>
+     </property>
      <property name="toolTip">
       <string>Type the bytes to send here, use 0xAA format for HEX (Check HEX checkbox above)</string>
      </property>
     </widget>
    </item>
    <item row="3" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,10,10">
+     <property name="spacing">
+      <number>5</number>
+     </property>
      <item>
       <widget class="QPushButton" name="transmitButton">
        <property name="toolTip">

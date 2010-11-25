@@ -38,7 +38,9 @@ This file is part of the PIXHAWK project
 #include "HDDisplay.h"
 #include "ui_HDDisplay.h"
 #include "MG.h"
-
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #include <QDebug>
 
 HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
