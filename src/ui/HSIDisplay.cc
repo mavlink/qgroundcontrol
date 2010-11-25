@@ -478,7 +478,7 @@ void HSIDisplay::updateSpeed(UASInterface* uas, double vx, double vy, double vz,
     this->vx = vx;
     this->vy = vy;
     this->vz = vz;
-    this->speed = sqrt(pow(vx, 2.0f) + pow(vy, 2.0f) + pow(vz, 2.0f));
+    this->speed = sqrt(pow(vx, 2.0) + pow(vy, 2.0) + pow(vz, 2.0));
 }
 
 void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
