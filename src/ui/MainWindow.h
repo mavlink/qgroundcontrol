@@ -63,10 +63,6 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
-#ifdef QGC_OSG_ENABLED
-//#include "Q3DWidget.h"
-#include "QMap3D.h"
-#endif
 
 #include "LogCompressor.h"
 
