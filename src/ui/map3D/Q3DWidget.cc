@@ -35,10 +35,6 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/LineWidth>
 #include <osg/MatrixTransform>
 
-static const float KEY_ROTATE_AMOUNT = 5.0f;
-static const float KEY_MOVE_AMOUNT   = 10.0f;
-static const float KEY_ZOOM_AMOUNT   = 5.0f;
-
 Q3DWidget::Q3DWidget(QWidget* parent)
     : QGLWidget(parent)
     , root(new osg::Group())

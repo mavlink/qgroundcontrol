@@ -172,7 +172,9 @@ Pixhawk3DWidget::showWaypoints(int state)
 void
 Pixhawk3DWidget::selectVehicleModel(int index)
 {
+    egocentricMap->removeChild(vehicleModel);
     vehicleModel = vehicleModels.at(index);
+    egocentricMap->addChild(vehicleModel);
 }
 
 void
@@ -201,7 +203,7 @@ Pixhawk3DWidget::toggleFollowCamera(int32_t state)
         followCamera = false;
     }
 }
-
+#include <osgDB/WriteFile>
 QVector< osg::ref_ptr<osg::Node> >
 Pixhawk3DWidget::findVehicleModels(void)
 {
@@ -211,14 +213,15 @@ Pixhawk3DWidget::findVehicleModels(void)
     QVector< osg::ref_ptr<osg::Node> > nodes;
 
     // add Pixhawk Bravo model
-    vehicleModels.push_back(PixhawkCheetahGeode::instance());
+    nodes.push_back(PixhawkCheetahGeode::instance());
 
+    // add all other models in folder
     for (int i = 0; i < files.size(); ++i)
     {
         osg::ref_ptr<osg::Node> node =
                 osgDB::readNodeFile(directory.absoluteFilePath(files[i]).toStdString().c_str());
 
-        vehicleModels.push_back(node);
+        nodes.push_back(node);
     }
 
     return nodes;
@@ -264,11 +267,11 @@ Pixhawk3DWidget::buildLayout(void)
     layout->addWidget(gridCheckBox, 1, 0);
     layout->addWidget(trailCheckBox, 1, 1);
     layout->addWidget(waypointsCheckBox, 1, 2);
-    layout->addItem(new QSpacerItem(20, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
     layout->addWidget(modelLabel, 1, 4);
     layout->addWidget(modelComboBox, 1, 5);
     layout->addWidget(targetButton, 1, 6);
-    layout->addItem(new QSpacerItem(20, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 7);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 7);
     layout->addWidget(recenterButton, 1, 8);
     layout->addWidget(followCameraCheckBox, 1, 9);
     layout->setRowStretch(0, 100);
