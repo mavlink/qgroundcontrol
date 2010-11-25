@@ -380,9 +380,9 @@ void MAVLinkSimulationLink::mainloop()
 
 
         // Move X Position
-        x = x*0.93f + 0.07f*(x+sin(QGC::groundTimeUsecs()) * 0.08f);
-        y = y*0.93f + 0.07f*(y+sin(QGC::groundTimeUsecs()) * 0.5f);
-        z = z*0.93f + 0.07f*(z+sin(QGC::groundTimeUsecs()*100000) * 0.1f);
+        x = x*0.93f + 0.07f*(x+sin(static_cast<float>(QGC::groundTimeUsecs()) * 0.08f));
+        y = y*0.93f + 0.07f*(y+sin(static_cast<float>(QGC::groundTimeUsecs()) * 0.5f));
+        z = z*0.93f + 0.07f*(z+sin(static_cast<float>(QGC::groundTimeUsecs()*0.001f)) * 0.1f);
         x = 5247273.0f;
         y = 465955.0f;
 //        x = (x > 5.0f) ? 5.0f : x;

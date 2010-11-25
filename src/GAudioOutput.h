@@ -114,6 +114,7 @@ protected:
     QTimer* emergencyTimer;
 private:
     GAudioOutput(QObject* parent=NULL);
+	~GAudioOutput();
 };
 
 #endif // AUDIOOUTPUT_H

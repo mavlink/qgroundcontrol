@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>319</width>
+    <width>231</width>
     <height>221</height>
    </rect>
   </property>
@@ -22,7 +22,7 @@
      <property name="title">
       <string>Calibration Wizards</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout" columnstretch="5,5">
+     <layout class="QGridLayout" name="gridLayout" columnstretch="100,100">
       <property name="leftMargin">
        <number>6</number>
       </property>
@@ -44,28 +44,28 @@
       <item row="0" column="0">
        <widget class="QPushButton" name="rcCalButton">
         <property name="text">
-         <string>RC Calibration</string>
+         <string>RC Cal.</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
        <widget class="QPushButton" name="magCalButton">
         <property name="text">
-         <string>Mag. Calibration</string>
+         <string>Mag. Cal.</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
        <widget class="QPushButton" name="gyroCalButton">
         <property name="text">
-         <string>Gyro Calibration</string>
+         <string>Gyro Cal.</string>
         </property>
        </widget>
       </item>
       <item row="1" column="0">
        <widget class="QPushButton" name="pressureCalButton">
         <property name="text">
-         <string>Pressure Calibration</string>
+         <string>Pressure Cal.</string>
         </property>
        </widget>
       </item>
@@ -102,7 +102,7 @@
          <bool>true</bool>
         </property>
         <property name="text">
-         <string>RAW Sensor Data</string>
+         <string>RAW Sensors</string>
         </property>
         <property name="checked">
          <bool>false</bool>
@@ -125,14 +125,14 @@
       <item row="4" column="0">
        <widget class="QCheckBox" name="sendPositionCheckBox">
         <property name="text">
-         <string>Position setpoint</string>
+         <string>Position CTRL</string>
         </property>
        </widget>
       </item>
       <item row="5" column="0">
        <widget class="QCheckBox" name="sendControllerCheckBox">
         <property name="text">
-         <string>Raw Controller</string>
+         <string>Attitude CTRL</string>
         </property>
        </widget>
       </item>
