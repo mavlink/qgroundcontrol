@@ -38,6 +38,8 @@ This file is part of the QGROUNDCONTROL project
 #include <GL/gl.h>
 #endif
 #include <inttypes.h>
+#include <osg/ref_ptr>
+#include <osg/Geometry>
 #include <QSharedPointer>
 
 #include "WebImage.h"
@@ -49,15 +51,15 @@ public:
 
     const QString& getSourceURL(void) const;
 
-    void setID(GLuint id);
+    void setId(unsigned int _id);
 
     void sync(const WebImagePtr& image);
 
-    void draw(float x1, float y1, float x2, float y2,
-              bool smoothInterpolation) const;
-    void draw(float x1, float y1, float x2, float y2,
-              float x3, float y3, float x4, float y4,
-              bool smoothInterpolation) const;
+    osg::ref_ptr<osg::Geometry> draw(float x1, float y1, float x2, float y2,
+                                     bool smoothInterpolation) const;
+    osg::ref_ptr<osg::Geometry> draw(float x1, float y1, float x2, float y2,
+                                     float x3, float y3, float x4, float y4,
+                                     bool smoothInterpolation) const;
 
     bool is3D(void) const;
 
@@ -71,7 +73,8 @@ private:
 
     State state;
     QString sourceURL;
-    GLuint id;
+    unsigned int id;
+    osg::ref_ptr<osg::Texture2D> texture2D;
 
     int32_t textureWidth;
     int32_t textureHeight;
