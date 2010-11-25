@@ -17,7 +17,9 @@ public:
     bool process(void);
 
     QSharedPointer<QByteArray> getRgbData(void);
-    QSharedPointer<QByteArray> getDepthData(void);
+    QSharedPointer<QByteArray> getRawDepthData(void);
+    QSharedPointer<QByteArray> getDistanceData(void);
+    QSharedPointer<QByteArray> getColoredDepthData(void);
 
     int getTiltAngle(void) const;
     void setTiltAngle(int angle);
@@ -53,9 +55,18 @@ private:
     char depth[FREENECT_DEPTH_SIZE];
     QMutex depthMutex;
 
+    float distance[FREENECT_FRAME_PIX];
+    QMutex distanceMutex;
+
+    char coloredDepth[FREENECT_RGB_SIZE];
+    QMutex coloredDepthMutex;
+
     // accelerometer data
     short ax, ay, az;
     double dx, dy, dz;
+
+    // gamma map
+    unsigned short gammaTable[2048];
 };
 
 #endif // FREENECT_H
