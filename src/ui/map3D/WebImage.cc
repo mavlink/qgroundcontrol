@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "WebImage.h"
 
-#include <QDebug>
+#include <QFile>
 #include <QGLWidget>
 
 WebImage::WebImage()
@@ -39,6 +39,7 @@ WebImage::WebImage()
     , sourceURL("")
     , image(0)
     , lastReference(0)
+    , _is3D(false)
     , syncFlag(false)
 {
 
@@ -51,6 +52,7 @@ WebImage::clear(void)
     sourceURL.clear();
     state = WebImage::UNINITIALIZED;
     lastReference = 0;
+    heightModel.clear();
 }
 
 WebImage::State
@@ -78,12 +80,18 @@ WebImage::setSourceURL(const QString& url)
 }
 
 const uint8_t*
-WebImage::getData(void) const
+WebImage::getImageData(void) const
 {
     return image->scanLine(0);
 }
 
-void
+const QVector< QVector<int32_t> >&
+WebImage::getHeightModel(void) const
+{
+    return heightModel;
+}
+
+bool
 WebImage::setData(const QByteArray& data)
 {
     QImage tempImage;
@@ -94,10 +102,84 @@ WebImage::setData(const QByteArray& data)
             image.reset(new QImage);
         }
         *image = QGLWidget::convertToGLFormat(tempImage);
+
+        return true;
     }
     else
     {
-        qDebug() << "# WARNING: cannot load image data for" << sourceURL;
+        return false;
+    }
+}
+
+bool
+WebImage::setData(const QString& filename)
+{
+    QImage tempImage;
+    if (tempImage.load(filename))
+    {
+        if (image.isNull())
+        {
+            image.reset(new QImage);
+        }
+        *image = QGLWidget::convertToGLFormat(tempImage);
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool
+WebImage::setData(const QString& imageFilename, const QString& heightFilename)
+{
+    QFile heightFile(heightFilename);
+
+    QImage tempImage;
+    if (tempImage.load(imageFilename) && heightFile.open(QIODevice::ReadOnly))
+    {
+        if (image.isNull())
+        {
+            image.reset(new QImage);
+        }
+        *image = QGLWidget::convertToGLFormat(tempImage);
+
+        QDataStream heightDataStream(&heightFile);
+
+        // read in width and height values for height map
+        char header[8];
+        heightDataStream.readRawData(header, 8);
+
+        int32_t height = *(reinterpret_cast<int32_t *>(header));
+        int32_t width = *(reinterpret_cast<int32_t *>(header + 4));
+
+        char buffer[height * width * sizeof(int32_t)];
+        heightDataStream.readRawData(buffer, height * width * sizeof(int32_t));
+
+        heightModel.clear();
+        for (int32_t i = 0; i < height; ++i)
+        {
+            QVector<int32_t> scanline;
+            for (int32_t j = 0; j < width; ++j)
+            {    
+                int32_t n = *(reinterpret_cast<int32_t *>(buffer
+                                                          + (i * height + j)
+                                                          * sizeof(int32_t)));
+                scanline.push_back(n);
+            }
+            heightModel.push_back(scanline);
+        }
+
+        heightFile.close();
+
+        _is3D = true;
+
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -117,6 +199,12 @@ int32_t
 WebImage::getByteCount(void) const
 {
     return image->byteCount();
+}
+
+bool
+WebImage::is3D(void) const
+{
+    return _is3D;
 }
 
 uint64_t

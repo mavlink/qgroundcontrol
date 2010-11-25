@@ -59,6 +59,8 @@ public:
               float x3, float y3, float x4, float y4,
               bool smoothInterpolation) const;
 
+    bool is3D(void) const;
+
 private:
     enum State
     {
@@ -76,6 +78,9 @@ private:
 
     int32_t imageWidth;
     int32_t imageHeight;
+
+    bool _is3D;
+    QVector< QVector<int32_t> > heightModel;
 
     float maxU;
     float maxV;

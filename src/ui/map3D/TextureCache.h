@@ -42,12 +42,13 @@ class TextureCache
 public:
     explicit TextureCache(uint32_t cacheSize);
 
-    TexturePtr get(const QString& tileURL);
+    TexturePtr get(const QString& tileURL, bool useHeightModel = false);
 
     void sync(void);
 
 private:
-    QPair<TexturePtr, int32_t> lookup(const QString& tileURL);
+    QPair<TexturePtr, int32_t> lookup(const QString& tileURL,
+                                      bool useHeightModel);
 
     bool requireSync(void) const;
 
