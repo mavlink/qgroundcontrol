@@ -45,6 +45,9 @@ class QMap3D : public QWidget, private Ui::QMap3D
 public:
     QMap3D(QWidget * parent = 0, const char * name = 0, WindowFlags f = 0);
     ~QMap3D();
+public slots:
+    void on_pushButton_map_clicked();
+    void on_pushButton_vehicle_clicked();
 };
 
 #endif // QMAP3D_H

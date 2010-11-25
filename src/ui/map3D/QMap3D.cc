@@ -31,20 +31,34 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QMap3D.h"
 #include <osgEarthUtil/EarthManipulator>
-#include <stdexcept>
+#include <QFileDialog>
 
 QMap3D::QMap3D(QWidget * parent, const char * name, WindowFlags f) :
         QWidget(parent,f)
 {
     setupUi(this);
-    osg::ref_ptr<osg::Node> map = osgDB::readNodeFile("data/yahoo_heightfield.earth");
-    if (!map) throw std::runtime_error("unable to load file");
-    graphicsView->updateCamera();
     graphicsView->setCameraManipulator(new osgEarthUtil::EarthManipulator);
-    graphicsView->setSceneData(map);
+    graphicsView->setSceneData(new osg::Group);
+    graphicsView->updateCamera();
     show();
 }
 
 QMap3D::~QMap3D()
 {
+}
+
+void QMap3D::on_pushButton_map_clicked()
+{
+    QString mapName = QFileDialog::getOpenFileName(this, tr("Select an OsgEarth map file"),
+        QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("OsgEarth file (*.earth);;"));
+    graphicsView->getSceneData()->asGroup()->addChild(osgDB::readNodeFile(mapName.toStdString()));
+    graphicsView->updateCamera();  
+}
+
+void QMap3D::on_pushButton_vehicle_clicked()
+{
+    QString vehicleName = QFileDialog::getOpenFileName(this, tr("Select a 3D model for your vehicle"),
+        QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("OsgEarth file (*.osg, *.ac, *.3ds);;"));
+    graphicsView->getSceneData()->asGroup()->addChild(osgDB::readNodeFile(vehicleName.toStdString()));
+    graphicsView->updateCamera();
 }
