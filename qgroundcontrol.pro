@@ -35,7 +35,7 @@ TEMPLATE = app
 TARGET = qgroundcontrol
 BASEDIR = $$IN_PWD
 TARGETDIR = $$OUT_PWD
-BUILDDIR = $$TARGET_DIR/build
+BUILDDIR = $$TARGETDIR/build
 LANGUAGE = C++
 CONFIG += debug_and_release \
     console
