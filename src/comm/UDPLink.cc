@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UDPLink.h"
 #include "LinkManager.h"
 #include "MG.h"
+//#include <netinet/in.h>
 
 UDPLink::UDPLink(QHostAddress host, quint16 port)
 {
@@ -197,10 +198,45 @@ bool UDPLink::connect()
 {
     socket = new QUdpSocket(this);
 
+    //Check if we are using a multicast-address
+//    bool multicast = false;
+//    if (host.isInSubnet(QHostAddress("224.0.0.0"),4))
+//    {
+//        multicast = true;
+//        connectState = socket->bind(port, QUdpSocket::ShareAddress);
+//    }
+//    else
+//    {
+        connectState = socket->bind(host, port);
+//    }
+
+    //Provides Multicast functionality to UdpSocket
+    /* not working yet
+    if (multicast)
+    {
+        int sendingFd = socket->socketDescriptor();
+
+        if (sendingFd != -1)
+        {
+            // set up destination address
+            struct sockaddr_in sendAddr;
+            memset(&sendAddr,0,sizeof(sendAddr));
+            sendAddr.sin_family=AF_INET;
+            sendAddr.sin_addr.s_addr=inet_addr(HELLO_GROUP);
+            sendAddr.sin_port=htons(port);
+
+            // set TTL
+            unsigned int ttl = 1; // restricted to the same subnet
+            if (setsockopt(sendingFd, IPPROTO_IP, IP_MULTICAST_TTL, (unsigned int*)&ttl, sizeof(ttl) ) < 0)
+            {
+                std::cout << "TTL failed\n";
+            }
+        }
+    }
+    */
+
     //QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
-
-    connectState = socket->bind(host, port);
 
     emit connected(connectState);
     if (connectState)

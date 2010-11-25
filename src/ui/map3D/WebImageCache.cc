@@ -52,14 +52,15 @@ WebImageCache::WebImageCache(QObject* parent, uint32_t _cacheSize)
 }
 
 QPair<WebImagePtr, int32_t>
-WebImageCache::lookup(const QString& url)
+WebImageCache::lookup(const QString& url, bool useHeightModel)
 {
     QPair<WebImagePtr, int32_t> cacheEntry;
 
     for (int32_t i = 0; i < webImages.size(); ++i)
     {
         if (webImages[i]->getState() != WebImage::UNINITIALIZED &&
-            webImages[i]->getSourceURL() == url)
+            webImages[i]->getSourceURL() == url &&
+            webImages[i]->is3D() == useHeightModel)
         {
             cacheEntry.first = webImages[i];
             cacheEntry.second = i;
@@ -104,7 +105,37 @@ WebImageCache::lookup(const QString& url)
             ++currentReference;
             cacheEntry.first->setState(WebImage::REQUESTED);
 
-            networkManager->get(QNetworkRequest(QUrl(url)));
+            if (url.left(4).compare("http") == 0)
+            {
+                networkManager->get(QNetworkRequest(QUrl(url)));
+            }
+            else
+            {
+                bool success;
+
+                if (useHeightModel)
+                {
+                    QString heightURL = url;
+                    heightURL.replace("color", "dom");
+                    heightURL.replace(".jpg", ".txt");
+
+                    success = cacheEntry.first->setData(url, heightURL);
+                }
+                else
+                {
+                    success = cacheEntry.first->setData(url);
+                }
+
+                if (success)
+                {
+                    cacheEntry.first->setSyncFlag(true);
+                    cacheEntry.first->setState(WebImage::READY);
+                }
+                else
+                {
+                    cacheEntry.first->setState(WebImage::UNINITIALIZED);
+                }
+            }
 
             return cacheEntry;
         }
