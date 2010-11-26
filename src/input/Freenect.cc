@@ -174,8 +174,7 @@ Freenect::FreenectThread::run(void)
 }
 
 void
-Freenect::rgbCallback(freenect_device* device, freenect_pixel* rgb,
-                      unsigned int timestamp)
+Freenect::rgbCallback(freenect_device* device, freenect_pixel* rgb, uint32_t timestamp)
 {
     Freenect* freenect = static_cast<Freenect *>(freenect_get_user(device));
 
@@ -184,8 +183,7 @@ Freenect::rgbCallback(freenect_device* device, freenect_pixel* rgb,
 }
 
 void
-Freenect::depthCallback(freenect_device* device, void* depth,
-                        unsigned int timestamp)
+Freenect::depthCallback(freenect_device* device, freenect_depth* depth, uint32_t timestamp)
 {
     Freenect* freenect = static_cast<Freenect *>(freenect_get_user(device));
     freenect_depth* data = reinterpret_cast<freenect_depth *>(depth);
