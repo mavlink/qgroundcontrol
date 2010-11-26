@@ -332,13 +332,13 @@ SOURCES += src/main.cc \
     src/ui/map3D/ImageWindowGeode.cc
 
 contains(DEPENDENCIES_PRESENT, osg) { 
-    message("Including headers for OpenSceneGraph")
+    message("Including sources for OpenSceneGraph")
     
     # Enable only if OpenSceneGraph is available
     SOURCES += src/ui/map3D/Q3DWidget.cc
 
 contains(DEPENDENCIES_PRESENT, osgearth) { 
-    message("Including sources for OSGEARTH")
+    message("Including sources for osgEarth")
     
     # Enable only if OpenSceneGraph is available
     SOURCES += src/ui/map3D/QOSGWidget.cc \
@@ -352,7 +352,7 @@ contains(DEPENDENCIES_PRESENT, osgearth) {
 }
 
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
-    message("Including headers for libfreenect")
+    message("Including sources for libfreenect")
     
     # Enable only if libfreenect is available
     SOURCES += src/input/Freenect.cc
