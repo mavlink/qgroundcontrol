@@ -34,6 +34,11 @@ release {
 #    DEFINES += QT_NO_WARNING_OUTPUT
 }
 
+QMAKE_PRE_LINK += echo "Copying files"
+
+#QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+#QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+
 # MAC OS X
 macx { 
 
@@ -102,8 +107,6 @@ macx {
 
 # GNU/Linux
 linux-g++ {
-
-    CONFIG += debug
     
     debug {
         DESTDIR = $$BUILDDIR/debug
@@ -170,7 +173,7 @@ linux-g++ {
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
 
-    QMAKE_CXXFLAGS += -Wl,-E
+    #QMAKE_CXXFLAGS += -Wl,-E
 
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
@@ -267,7 +270,9 @@ win32-msvc2008 {
     QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/. &&
     QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/. &&
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/release/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/models $$TARGETDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 }
 
 # Windows (32bit)
@@ -300,8 +305,10 @@ win32-g++ {
     # Copy dependencies
     QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/. &&
     QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/release/.
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/models $$TARGETDIR/debug/. &&
+    QMAKE_PRE_LINK += cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 }
 
 # Windows (64bit)
@@ -337,4 +344,3 @@ win64-g++ {
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/debug/. &&
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/release/.
 }
-

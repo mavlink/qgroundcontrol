@@ -136,8 +136,8 @@ void MainWindow::buildWidgets()
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
     #ifdef QGC_OSG_ENABLED
-    _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-    //_3DWidget = Q3DWidgetFactory::get("MAP3D");
+    //_3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+    _3DWidget = Q3DWidgetFactory::get("MAP3D");
     #endif
 
     // Dock widgets

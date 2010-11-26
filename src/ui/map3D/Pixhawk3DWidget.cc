@@ -208,7 +208,7 @@ QVector< osg::ref_ptr<osg::Node> >
 Pixhawk3DWidget::findVehicleModels(void)
 {
     QDir directory("models");
-    QStringList files = directory.entryList(QStringList("*.osg"));
+    QStringList files = directory.entryList(QStringList("*.osg"), QDir::Files);
 
     QVector< osg::ref_ptr<osg::Node> > nodes;
 
@@ -221,8 +221,38 @@ Pixhawk3DWidget::findVehicleModels(void)
         osg::ref_ptr<osg::Node> node =
                 osgDB::readNodeFile(directory.absoluteFilePath(files[i]).toStdString().c_str());
 
+        if (node)
+        {
+
         nodes.push_back(node);
+        }
+        else
+        {
+            printf(QString("ERROR: Could not load file " + directory.absoluteFilePath(files[i]) + "\n").toStdString().c_str());
+        }
     }
+
+//    QStringList dirs = directory.entryList(QDir::Dirs);
+//    // Add models in subfolders
+//    for (int i = 0; i < dirs.size(); ++i)
+//    {
+//        // Handling the current directory
+//        QStringList currFiles = QDir(dirs[i]).entryList(QStringList("*.ac"), QDir::Files);
+
+//        // Load the file
+//        osg::ref_ptr<osg::Node> node =
+//                osgDB::readNodeFile(directory.absoluteFilePath(currFiles.first()).toStdString().c_str());
+
+//        if (node)
+//        {
+
+//        nodes.push_back(node);
+//        }
+//        else
+//        {
+//            printf(QString("ERROR: Could not load file " + directory.absoluteFilePath(files[i]) + "\n").toStdString().c_str());
+//        }
+//    }
 
     return nodes;
 }
