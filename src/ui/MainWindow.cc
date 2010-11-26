@@ -136,8 +136,8 @@ void MainWindow::buildWidgets()
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
     #ifdef QGC_OSG_ENABLED
-    //_3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-    _3DWidget = Q3DWidgetFactory::get("MAP3D");
+    _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+    _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
     #endif
 
     // Dock widgets
@@ -232,6 +232,7 @@ void MainWindow::arrangeCenterStack()
     if (mapWidget) centerStack->addWidget(mapWidget);
     #ifdef QGC_OSG_ENABLED
     if (_3DWidget) centerStack->addWidget(_3DWidget);
+    if (_3DMapWidget) centerStack->addWidget(_3DMapWidget);
     #endif
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
@@ -373,6 +374,7 @@ void MainWindow::connectActions()
     connect(ui.actionEngineerView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionOperatorView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.action3DView, SIGNAL(triggered()), this, SLOT(load3DView()));
+    connect(ui.action3DMapView, SIGNAL(triggered()), this, SLOT(load3DMapView()));
     connect(ui.actionShow_full_view, SIGNAL(triggered()), this, SLOT(loadAllView()));
     connect(ui.actionShow_MAVLink_view, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
     connect(ui.actionShow_data_analysis_view, SIGNAL(triggered()), this, SLOT(loadDataView()));
@@ -959,6 +961,60 @@ void MainWindow::loadGlobalOperatorView()
     }
 
 }
+
+void MainWindow::load3DMapView()
+{
+        #ifdef QGC_OSG_ENABLED
+            clearView();
+
+            // 3D map
+            if (_3DWidget)
+            {
+                QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+                if (centerStack)
+                {
+                    //map3DWidget->setActive(true);
+                    centerStack->setCurrentWidget(_3DMapWidget);
+                }
+            }
+
+            // UAS CONTROL
+            if (controlDockWidget)
+            {
+                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+                controlDockWidget->show();
+            }
+
+            // UAS LIST
+            if (listDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+                listDockWidget->show();
+            }
+
+            // WAYPOINT LIST
+            if (waypointsDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
+                waypointsDockWidget->show();
+            }
+
+            // HORIZONTAL SITUATION INDICATOR
+            if (hsiDockWidget)
+            {
+                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+                if (hsi)
+                {
+                    hsi->start();
+                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+                    hsiDockWidget->show();
+                }
+            }
+#endif
+            this->show();
+
+        }
+
 
 void MainWindow::load3DView()
 {
