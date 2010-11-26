@@ -103,10 +103,9 @@ macx {
 # GNU/Linux
 linux-g++ {
 
-    CONFIG += debug
-    
     debug {
         DESTDIR = $$BUILDDIR/debug
+        CONFIG += debug
     }
 
     release {
@@ -121,18 +120,8 @@ linux-g++ {
               # $$BASEDIR/lib/flite/lang
 
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
-        # 64-bit Linux
-        #LIBS += \
-            #-L$$BASEDIR/lib/flite/linux64
-        message(Building for GNU/Linux 64bit/x64)
-    } else {
-        # 32-bit Linux
-        #LIBS += \
-           #-L$$BASEDIR/lib/flite/linux32
-        message(Building for GNU/Linux 32bit/i386)
-    }
+    message(Building for GNU/Linux 32bit/i386)
+
     LIBS += \
         -L/usr/lib \
         -lm \
@@ -177,10 +166,10 @@ linux-g++ {
 }
 
 linux-g++-64 {
-    CONFIG += debug
 
     debug {
         DESTDIR = $$BUILDDIR/debug
+        CONFIG += debug
     }
 
     release {
@@ -188,24 +177,16 @@ linux-g++-64 {
     }
 
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
               # $$BASEDIR/lib/flite/lang
 
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
-        # 64-bit Linux
-        #LIBS += \
-            #-L$$BASEDIR/lib/flite/linux64
-        message(Building for GNU/Linux 64bit/x64)
-    } else {
-        # 32-bit Linux
-        #LIBS += \
-           #-L$$BASEDIR/lib/flite/linux32
-        message(Building for GNU/Linux 32bit/i386)
-    }
+    # 64-bit Linux
+    message(Building for GNU/Linux 64bit/x64 (g++-64))
+
     LIBS += \
         -L/usr/lib \
         -lm \
@@ -242,7 +223,6 @@ linux-g++-64 {
     LIBS += -lfreenect
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
-
 }
 
 # Windows (32bit)
