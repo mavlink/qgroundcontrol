@@ -943,7 +943,7 @@ void MainWindow::loadGlobalOperatorView()
 
     if (slugsCamControlWidget)
     {
-        addDockWidget(Qt::RightDockWidgetArea, slugsCamControlWidget);
+        addDockWidget(Qt::BottomDockWidgetArea, slugsCamControlWidget);
         slugsCamControlWidget->show();
     }
 
