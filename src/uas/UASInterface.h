@@ -221,7 +221,7 @@ public slots:
     virtual void setSelected() = 0;
 
     virtual void enableAllDataTransmission(bool enabled) = 0;
-    virtual void enableRawSensorDataTransmission(bool enabled) = 0;
+    virtual void enableRawSensorDataTransmission(bool enabled, int rate = 0) = 0;
     virtual void enableExtendedSystemStatusTransmission(bool enabled) = 0;
     virtual void enableRCChannelDataTransmission(bool enabled) = 0;
     virtual void enableRawControllerDataTransmission(bool enabled) = 0;
