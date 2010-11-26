@@ -113,6 +113,8 @@ public slots:
     void loadOperatorView();
     /** @brief Load 3D view */
     void load3DView();
+    /** @brief Load 3D map view */
+    void load3DMapView();
     /** @brief Load view with all widgets */
     void loadAllView();
     /** @brief Load MAVLink XML generator view */
@@ -164,6 +166,7 @@ protected:
     QPointer<QGCDataPlot2D> dataplotWidget;
     #ifdef QGC_OSG_ENABLED
     QPointer<QWidget> _3DWidget;
+    QPointer<QWidget> _3DMapWidget;
     #endif
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;

@@ -177,6 +177,12 @@ linux-g++ {
 
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
+
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release/.
+
 }
 
 linux-g++-64 {
