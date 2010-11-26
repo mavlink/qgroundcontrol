@@ -86,7 +86,8 @@ macx {
     DEPENDENCIES_PRESENT += osgearth
     # Include osgEarth libraries
     LIBS += -losgViewer \
-            -losgEarth
+            -losgEarth \
+            -losgEarthUtil
     DEFINES += QGC_OSGEARTH_ENABLED
     }
 
@@ -228,7 +229,8 @@ linux-g++-64 {
     DEPENDENCIES_PRESENT += osgearth
     # Include osgEarth libraries
     LIBS += -losgViewer \
-            -losgEarth
+            -losgEarth \
+            -losgEarthUtil
     DEFINES += QGC_OSGEARTH_ENABLED
     }
 
