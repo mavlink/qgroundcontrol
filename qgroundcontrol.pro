@@ -328,14 +328,16 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc \ # src/ui/WaypointGlobalView.cc \
-    src/ui/map3D/ImageWindowGeode.cc
+    src/ui/RadioCalibration/RadioCalibrationData.cc
 
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     
     # Enable only if OpenSceneGraph is available
-    SOURCES += src/ui/map3D/Q3DWidget.cc
+    SOURCES += src/ui/map3D/Q3DWidget.cc \
+    src/ui/map3D/ImageWindowGeode.cc
+
+
 
 contains(DEPENDENCIES_PRESENT, osgearth) { 
     message("Including sources for osgEarth")
