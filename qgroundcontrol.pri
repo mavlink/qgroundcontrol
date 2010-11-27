@@ -38,7 +38,7 @@ release {
 macx { 
 
     HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || || contains( HARDWARE_PLATFORM, 9.9.0 ) {
+    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || contains( HARDWARE_PLATFORM, 9.9.0 ) {
         # x86 Mac OS X Leopard 10.5 and earlier
         CONFIG += x86 cocoa phonon
         message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
@@ -142,7 +142,7 @@ LIBS += -losg \
 DEFINES += QGC_OSG_ENABLED
 }
 
-QMAKE_CXXFLAGS += -Wl,-E, -DUSE_QT4
+QMAKE_CXXFLAGS += -Wl,-E
 
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
@@ -197,6 +197,7 @@ LIBS += -losg \
     -losgEarth
 DEFINES += QGC_OSG_ENABLED
 }
+
 }
 
 # Windows (32bit)
