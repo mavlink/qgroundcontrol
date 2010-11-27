@@ -215,12 +215,39 @@ win32-msvc2008 {
     LIBS += -L$$BASEDIR/lib/sdl/msvc/lib \
              -lSDLmain -lSDL
 
+message("Building support for OSGEARTH")
+DEPENDENCIES_PRESENT += osgearth
+# Include OpenSceneGraph and osgEarth libraries
+INCLUDEPATH += $$BASEDIR/lib/osgEarth/win32/include \
+    $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/include
+LIBS += -L$$BASEDIR/lib/osgEarth/win32/lib \
+    -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
+    -losg \
+    -losgViewer \
+	-losgGA \
+	-losgDB \
+	-losgText \
+	-lOpenThreads \
+    -losgEarth \
+	-losgEarthUtil
+DEFINES += QGC_OSG_ENABLED
+QMAKE_CXXFLAGS += -DUSE_QT4
+
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
     QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/. &&
+	QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/debug/. &&
+	
+	
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osg.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osgViewer.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osgGA.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osgDB.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osgText.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/OpenThreads.dll $$TARGETDIR/release/. &&
+	
     QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/debug/. &&
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
 }
 
