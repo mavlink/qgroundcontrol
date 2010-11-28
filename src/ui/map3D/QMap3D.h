@@ -29,6 +29,8 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
+#ifdef QGC_OSGEARTH_ENABLED
+
 #ifndef QMAP3D_H
 #define QMAP3D_H
 
@@ -52,3 +54,4 @@ public slots:
 
 #endif // QMAP3D_H
 
+#endif

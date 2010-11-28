@@ -32,16 +32,25 @@ This file is part of the QGROUNDCONTROL project
 #include "Q3DWidgetFactory.h"
 
 #include "Pixhawk3DWidget.h"
+#ifdef QGC_OSGEARTH_ENABLED
+#include "QMap3D.h"
+#endif
 
-QPointer<Q3DWidget>
+QPointer<QWidget>
 Q3DWidgetFactory::get(const std::string& type)
 {
     if (type == "PIXHAWK")
     {
-        return QPointer<Q3DWidget>(new Pixhawk3DWidget);
+        return QPointer<QWidget>(new Pixhawk3DWidget());
     }
+#ifdef QGC_OSGEARTH_ENABLED
+    else if (type == "MAP3D")
+    {
+        return QPointer<QWidget>(new QMap3D());
+    }
+#endif
     else
     {
-        return QPointer<Q3DWidget>(new Q3DWidget);
+        return QPointer<QWidget>(new Q3DWidget());
     }
 }

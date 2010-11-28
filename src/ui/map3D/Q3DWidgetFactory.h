@@ -50,7 +50,7 @@ public:
      * @return A smart pointer to the Q3DWidget instance.
      */
 
-    static QPointer<Q3DWidget> get(const std::string& type);
+    static QPointer<QWidget> get(const std::string& type);
 };
 
 #endif // Q3DWIDGETFACTORY_H
