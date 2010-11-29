@@ -34,7 +34,6 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/Geometry>
 #include <osg/LineWidth>
 #include <osg/MatrixTransform>
-#include <Carbon/Carbon.h>
 
 Q3DWidget::Q3DWidget(QWidget* parent)
     : QGLWidget(parent)
