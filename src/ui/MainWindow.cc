@@ -137,8 +137,11 @@ void MainWindow::buildWidgets()
     dataplotWidget    = new QGCDataPlot2D(this);
     #ifdef QGC_OSG_ENABLED
     _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-    _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
     #endif
+
+#ifdef QGC_OSGEARTH_ENABLED
+    _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
+#endif
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -232,6 +235,8 @@ void MainWindow::arrangeCenterStack()
     if (mapWidget) centerStack->addWidget(mapWidget);
     #ifdef QGC_OSG_ENABLED
     if (_3DWidget) centerStack->addWidget(_3DWidget);
+#endif
+    #ifdef QGC_OSGEARTH_ENABLED
     if (_3DMapWidget) centerStack->addWidget(_3DMapWidget);
     #endif
     if (hudWidget) centerStack->addWidget(hudWidget);
@@ -964,11 +969,11 @@ void MainWindow::loadGlobalOperatorView()
 
 void MainWindow::load3DMapView()
 {
-        #ifdef QGC_OSG_ENABLED
+        #ifdef QGC_OSGEARTH_ENABLED
             clearView();
 
             // 3D map
-            if (_3DWidget)
+            if (_3DMapWidget)
             {
                 QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
                 if (centerStack)

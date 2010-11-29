@@ -35,6 +35,7 @@
 
 #include <osg/Geode>
 #include <osg/Image>
+#include <osgDB/ReadFile>
 #include <osg/LineWidth>
 #include <osg/ShapeDrawable>
 
