@@ -236,19 +236,19 @@ contains(DEPENDENCIES_PRESENT, osg) {
     message("Including headers for OpenSceneGraph")
     
     # Enable only if OpenSceneGraph is available
-    HEADERS += src/ui/map3D/Q3DWidget.h
+    HEADERS += src/ui/map3D/Q3DWidget.h \
+        src/ui/map3D/GCManipulator.h \
+        src/ui/map3D/ImageWindowGeode.h \
+        src/ui/map3D/QOSGWidget.h \
+        src/ui/map3D/PixhawkCheetahGeode.h \
+        src/ui/map3D/Pixhawk3DWidget.h \
+        src/ui/map3D/Q3DWidgetFactory.h
 
 contains(DEPENDENCIES_PRESENT, osgearth) { 
     message("Including headers for OSGEARTH")
     
     # Enable only if OpenSceneGraph is available
-    HEADERS += src/ui/map3D/QOSGWidget.h \
-        src/ui/map3D/QMap3D.h \
-        src/ui/map3D/PixhawkCheetahGeode.h \
-        src/ui/map3D/Pixhawk3DWidget.h \
-        src/ui/map3D/Q3DWidgetFactory.h \
-        src/ui/map3D/GCManipulator.h \
-        src/ui/map3D/ImageWindowGeode.h
+    HEADERS += src/ui/map3D/QMap3D.h
 }
 }
 
@@ -327,25 +327,27 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc \ # src/ui/WaypointGlobalView.cc \
-    src/ui/map3D/ImageWindowGeode.cc
+    src/ui/RadioCalibration/RadioCalibrationData.cc
 
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     
     # Enable only if OpenSceneGraph is available
-    SOURCES += src/ui/map3D/Q3DWidget.cc
+    SOURCES += src/ui/map3D/Q3DWidget.cc \
+    src/ui/map3D/ImageWindowGeode.cc \
+    src/ui/map3D/GCManipulator.cc \
+    src/ui/map3D/QOSGWidget.cc \
+        src/ui/map3D/PixhawkCheetahGeode.cc \
+        src/ui/map3D/Pixhawk3DWidget.cc \
+        src/ui/map3D/Q3DWidgetFactory.cc
+
+
 
 contains(DEPENDENCIES_PRESENT, osgearth) { 
     message("Including sources for osgEarth")
     
     # Enable only if OpenSceneGraph is available
-    SOURCES += src/ui/map3D/QOSGWidget.cc \
-        src/ui/map3D/QMap3D.cc \
-        src/ui/map3D/PixhawkCheetahGeode.cc \
-        src/ui/map3D/Pixhawk3DWidget.cc \
-        src/ui/map3D/Q3DWidgetFactory.cc \
-        src/ui/map3D/GCManipulator.cc
+    SOURCES += src/ui/map3D/QMap3D.cc
 
 }
 }

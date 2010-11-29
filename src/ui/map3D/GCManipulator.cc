@@ -254,7 +254,7 @@ GCManipulator::calcMovement()
     if (buttonMask == GUIEventAdapter::LEFT_MOUSE_BUTTON)
     {
         // rotate camera
-        osg::Vec3 axis;
+        osg::Vec3d axis;
         float angle;
 
         float px0 = _ga_t0->getXnormalized();

@@ -18,6 +18,10 @@
 
 #include "QOSGWidget.h"
 
+#ifdef Q_OS_MACX
+
+#endif
+
 QOSGWidget::QOSGWidget( QWidget * parent, const char * name, WindowFlags f, bool overrideTraits):
     QWidget(parent, f), _overrideTraits (overrideTraits)
 {
