@@ -559,22 +559,22 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
-#ifdef MAVLINK_ENABLED_PIXHAWK
-            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
-            {
-                mavlink_point_of_interest_t poi;
-                mavlink_msg_point_of_interest_decode(&message, &poi);
-                emit poiFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_FIELD_NAME_LEN), poi.x, poi.y, poi.z);
-            }
-            break;
-            case MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION:
-            {
-                mavlink_point_of_interest_connection_t poi;
-                mavlink_msg_point_of_interest_connection_decode(&message, &poi);
-                emit poiConnectionFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN), poi.x1, poi.y1, poi.z1, poi.x2, poi.y2, poi.z2);
-            }
-            break;
-#endif
+//#ifdef MAVLINK_ENABLED_PIXHAWK
+//            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
+//            {
+//                mavlink_point_of_interest_t poi;
+//                mavlink_msg_point_of_interest_decode(&message, &poi);
+//                emit poiFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_FIELD_NAME_LEN), poi.x, poi.y, poi.z);
+//            }
+//            break;
+//            case MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION:
+//            {
+//                mavlink_point_of_interest_connection_t poi;
+//                mavlink_msg_point_of_interest_connection_decode(&message, &poi);
+//                emit poiConnectionFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN), poi.x1, poi.y1, poi.z1, poi.x2, poi.y2, poi.z2);
+//            }
+//            break;
+//#endif
 #ifdef MAVLINK_ENABLED_UALBERTA
         case MAVLINK_MSG_ID_NAV_FILTER_BIAS:
             {
