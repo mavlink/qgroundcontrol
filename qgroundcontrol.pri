@@ -189,7 +189,7 @@ linux-g++ {
     }
 
     exists(/usr/local/include/libfreenect) {
-    message("Building suplocport for libfreenect")
+    message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
     INCLUDEPATH += /usr/include/libusb-1.0
     # Include libfreenect libraries

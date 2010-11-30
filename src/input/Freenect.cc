@@ -9,11 +9,50 @@ Freenect::Freenect()
     , device(NULL)
     , tiltAngle(0)
 {
+    // default rgb camera parameters
+    rgbCameraParameters.cx = 3.2894272028759258e+02;
+    rgbCameraParameters.cy = 2.6748068171871557e+02;
+    rgbCameraParameters.fx = 5.2921508098293293e+02;
+    rgbCameraParameters.fy = 5.2556393630057437e+02;
+    rgbCameraParameters.k[0] = 2.6451622333009589e-01;
+    rgbCameraParameters.k[1] = -8.3990749424620825e-01;
+    rgbCameraParameters.k[2] = -1.9922302173693159e-03;
+    rgbCameraParameters.k[3] = 1.4371995932897616e-03;
+    rgbCameraParameters.k[4] = 9.1192465078713847e-01;
+
+    // default depth camera parameters
+    depthCameraParameters.cx = 3.3930780975300314e+02;
+    depthCameraParameters.cy = 2.4273913761751615e+02;
+    depthCameraParameters.fx = 5.9421434211923247e+02;
+    depthCameraParameters.fy = 5.9104053696870778e+02;
+    depthCameraParameters.k[0] = -2.6386489753128833e-01;
+    depthCameraParameters.k[1] = 9.9966832163729757e-01;
+    depthCameraParameters.k[2] = -7.6275862143610667e-04;
+    depthCameraParameters.k[3] = 5.0350940090814270e-03;
+    depthCameraParameters.k[4] = -1.3053628089976321e+00;
+
+    // populate gamma lookup table
     for (int i = 0; i < 2048; ++i)
     {
         float v = static_cast<float>(i) / 2048.0f;
         v = powf(v, 3.0f) * 6.0f;
         gammaTable[i] = static_cast<unsigned short>(v * 6.0f * 256.0f);
+    }
+
+    // populate depth projection matrix
+    for (int i = 0; i < FREENECT_FRAME_H; ++i)
+    {
+        for (int j = 0; j < FREENECT_FRAME_W; ++j)
+        {
+            QVector2D originalPoint(j, i);
+            QVector2D rectifiedPoint;
+            rectifyPoint(originalPoint, rectifiedPoint, depthCameraParameters);
+
+            QVector3D rectifiedRay;
+            projectPixelTo3DRay(rectifiedPoint, rectifiedRay, depthCameraParameters);
+
+            depthProjectionMatrix[i * FREENECT_FRAME_W + j] = rectifiedRay;
+        }
     }
 }
 
@@ -121,20 +160,39 @@ Freenect::getRawDepthData(void)
 }
 
 QSharedPointer<QByteArray>
-Freenect::getDistanceData(void)
-{
-    QMutexLocker locker(&distanceMutex);
-    return QSharedPointer<QByteArray>(
-            new QByteArray(reinterpret_cast<char *>(distance),
-                           FREENECT_FRAME_PIX * sizeof(float)));
-}
-
-QSharedPointer<QByteArray>
 Freenect::getColoredDepthData(void)
 {
     QMutexLocker locker(&coloredDepthMutex);
     return QSharedPointer<QByteArray>(
             new QByteArray(coloredDepth, FREENECT_RGB_SIZE));
+}
+
+QVector<QVector3D>
+Freenect::getPointCloudData(void)
+{
+    QMutexLocker locker(&depthMutex);
+
+    QVector<QVector3D> pointCloud;
+
+    unsigned short* data = reinterpret_cast<unsigned short*>(depth);
+    for (int i = 0; i < FREENECT_FRAME_PIX; ++i)
+    {
+        if (data[i] <= 2048)
+        {
+            // see www.ros.org/wiki/kinect_node for details
+            double range = 1.0f / (-0.00307f * static_cast<float>(data[i]) + 3.33f);
+
+            if (range > 0.0f)
+            {
+                QVector3D ray = depthProjectionMatrix[i];
+                ray *= range;
+
+                pointCloud.push_back(QVector3D(ray.x(), ray.y(), ray.z()));
+            }
+        }
+    }
+
+    return pointCloud;
 }
 
 int
@@ -174,6 +232,43 @@ Freenect::FreenectThread::run(void)
 }
 
 void
+Freenect::rectifyPoint(const QVector2D& originalPoint, QVector2D& rectifiedPoint,
+                       const IntrinsicCameraParameters& params)
+{
+    double x = (originalPoint.x() - params.cx) / params.fx;
+    double y = (originalPoint.y() - params.cy) / params.fy;
+
+    double x0 = x;
+    double y0 = y;
+
+    // eliminate lens distortion iteratively
+    for (int i = 0; i < 4; ++i)
+    {
+        double r2 = x * x + y * y;
+
+        // tangential distortion vector [dx dy]
+        double dx = 2 * params.k[2] * x * y + params.k[3] * (r2 + 2 * x * x);
+        double dy = params.k[2] * (r2 + 2 * y * y) + 2 * params.k[3] * x * y;
+
+        double icdist = 1.0 / (1.0 + r2 * (params.k[0] + r2 * (params.k[1] + r2 * params.k[4])));
+        x = (x0 - dx) * icdist;
+        y = (y0 - dy) * icdist;
+    }
+
+    rectifiedPoint.setX(x * params.fx + params.cx);
+    rectifiedPoint.setY(y * params.fy + params.cy);
+}
+
+void
+Freenect::projectPixelTo3DRay(const QVector2D& pixel, QVector3D& ray,
+                              const IntrinsicCameraParameters& params)
+{
+    ray.setX((pixel.x() - params.cx) / params.fx);
+    ray.setY((pixel.y() - params.cy) / params.fy);
+    ray.setZ(1.0);
+}
+
+void
 Freenect::rgbCallback(freenect_device* device, freenect_pixel* rgb, uint32_t timestamp)
 {
     Freenect* freenect = static_cast<Freenect *>(freenect_get_user(device));
@@ -183,20 +278,13 @@ Freenect::rgbCallback(freenect_device* device, freenect_pixel* rgb, uint32_t tim
 }
 
 void
-Freenect::depthCallback(freenect_device* device, freenect_depth* depth, uint32_t timestamp)
+Freenect::depthCallback(freenect_device* device, void* depth, uint32_t timestamp)
 {
     Freenect* freenect = static_cast<Freenect *>(freenect_get_user(device));
     freenect_depth* data = reinterpret_cast<freenect_depth *>(depth);
 
     QMutexLocker depthLocker(&freenect->depthMutex);
     memcpy(freenect->depth, data, FREENECT_DEPTH_SIZE);
-
-    QMutexLocker distanceLocker(&freenect->distanceMutex);
-    for (int i = 0; i < FREENECT_FRAME_PIX; ++i)
-    {
-        freenect->distance[i] =
-                100.f / (-0.00307f * static_cast<float>(data[i]) + 3.33f);
-    }
 
     QMutexLocker coloredDepthLocker(&freenect->coloredDepthMutex);
     unsigned short* src = reinterpret_cast<unsigned short *>(data);
