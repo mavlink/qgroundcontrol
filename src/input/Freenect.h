@@ -1,7 +1,7 @@
 #ifndef FREENECT_H
 #define FREENECT_H
 
-#include <libfreenect.h>
+#include <libfreenect/libfreenect.h>
 #include <QMutex>
 #include <QScopedPointer>
 #include <QSharedPointer>
@@ -81,7 +81,7 @@ private:
     QMutex coloredDepthMutex;
 
     // accelerometer data
-    short ax, ay, az;
+    double ax, ay, az;
     double dx, dy, dz;
 
     // gamma map

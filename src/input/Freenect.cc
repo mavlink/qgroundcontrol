@@ -137,8 +137,14 @@ Freenect::process(void)
         return false;
     }
 
-    freenect_get_raw_accel(device, &ax, &ay, &az);
-    freenect_get_mks_accel(device, &dx, &dy, &dz);
+    //libfreenect changed some access functions in one of the new revisions
+    freenect_raw_device_state state;
+    freenect_get_mks_accel(&state, &ax, &ay, &az);
+    //tiltAngle = freenect_get_tilt_degs(&state);
+
+    //these are the old access functions
+    //freenect_get_raw_accel(device, &ax, &ay, &az);
+    //freenect_get_mks_accel(device, &dx, &dy, &dz);
 
     return true;
 }
