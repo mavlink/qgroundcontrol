@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <string.h>
-#include <QDebug>
 
 Freenect::Freenect()
     : context(NULL)
