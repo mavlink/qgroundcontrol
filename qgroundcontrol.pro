@@ -37,8 +37,7 @@ BASEDIR = $$IN_PWD
 TARGETDIR = $$OUT_PWD
 BUILDDIR = $$TARGETDIR/build
 LANGUAGE = C++
-CONFIG += debug_and_release \
-    console
+CONFIG += console
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
@@ -353,9 +352,9 @@ contains(DEPENDENCIES_PRESENT, osgearth) {
 }
 }
 
-contains(DEPENDENCIES_PRESENT, libfreenect) { 
+contains(DEPENDENCIES_PRESENT, libfreenect) {
     message("Including sources for libfreenect")
-    
+
     # Enable only if libfreenect is available
     SOURCES += src/input/Freenect.cc
 }
