@@ -135,7 +135,7 @@ macx {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    #QMAKE_CXXFLAGS += -Wl, -E
+    #QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # GNU/Linux
@@ -204,7 +204,7 @@ linux-g++ {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 linux-g++-64 {
@@ -268,7 +268,7 @@ linux-g++-64 {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # Windows (32bit)
@@ -339,7 +339,7 @@ win32-g++ {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # Windows (64bit)
@@ -377,5 +377,5 @@ win64-g++ {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
