@@ -100,7 +100,7 @@ Freenect::process(void)
 
     //libfreenect changed some access functions in one of the new revisions
     freenect_raw_device_state state;
-    freenect_get_mks_accel(state, &ax, &ay, &az);
+    freenect_get_mks_accel(&state, &ax, &ay, &az);
     //tiltAngle = freenect_get_tilt_degs(&state);
 
     //these are the old access functions

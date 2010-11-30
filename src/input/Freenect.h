@@ -60,7 +60,7 @@ private:
     QMutex coloredDepthMutex;
 
     // accelerometer data
-    short ax, ay, az;
+    double ax, ay, az;
     double dx, dy, dz;
 
     // gamma map
