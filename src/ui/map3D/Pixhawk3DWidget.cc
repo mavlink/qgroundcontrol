@@ -224,8 +224,7 @@ Pixhawk3DWidget::findVehicleModels(void)
 
         if (node)
         {
-
-        nodes.push_back(node);
+            nodes.push_back(node);
         }
         else
         {
@@ -809,12 +808,175 @@ Pixhawk3DWidget::updateWaypoints(void)
     }
 }
 
+float colormap_jet[128][3] =
+{
+                {0.0f,0.0f,0.53125f},
+                {0.0f,0.0f,0.5625f},
+                {0.0f,0.0f,0.59375f},
+                {0.0f,0.0f,0.625f},
+                {0.0f,0.0f,0.65625f},
+                {0.0f,0.0f,0.6875f},
+                {0.0f,0.0f,0.71875f},
+                {0.0f,0.0f,0.75f},
+                {0.0f,0.0f,0.78125f},
+                {0.0f,0.0f,0.8125f},
+                {0.0f,0.0f,0.84375f},
+                {0.0f,0.0f,0.875f},
+                {0.0f,0.0f,0.90625f},
+                {0.0f,0.0f,0.9375f},
+                {0.0f,0.0f,0.96875f},
+                {0.0f,0.0f,1.0f},
+                {0.0f,0.03125f,1.0f},
+                {0.0f,0.0625f,1.0f},
+                {0.0f,0.09375f,1.0f},
+                {0.0f,0.125f,1.0f},
+                {0.0f,0.15625f,1.0f},
+                {0.0f,0.1875f,1.0f},
+                {0.0f,0.21875f,1.0f},
+                {0.0f,0.25f,1.0f},
+                {0.0f,0.28125f,1.0f},
+                {0.0f,0.3125f,1.0f},
+                {0.0f,0.34375f,1.0f},
+                {0.0f,0.375f,1.0f},
+                {0.0f,0.40625f,1.0f},
+                {0.0f,0.4375f,1.0f},
+                {0.0f,0.46875f,1.0f},
+                {0.0f,0.5f,1.0f},
+                {0.0f,0.53125f,1.0f},
+                {0.0f,0.5625f,1.0f},
+                {0.0f,0.59375f,1.0f},
+                {0.0f,0.625f,1.0f},
+                {0.0f,0.65625f,1.0f},
+                {0.0f,0.6875f,1.0f},
+                {0.0f,0.71875f,1.0f},
+                {0.0f,0.75f,1.0f},
+                {0.0f,0.78125f,1.0f},
+                {0.0f,0.8125f,1.0f},
+                {0.0f,0.84375f,1.0f},
+                {0.0f,0.875f,1.0f},
+                {0.0f,0.90625f,1.0f},
+                {0.0f,0.9375f,1.0f},
+                {0.0f,0.96875f,1.0f},
+                {0.0f,1.0f,1.0f},
+                {0.03125f,1.0f,0.96875f},
+                {0.0625f,1.0f,0.9375f},
+                {0.09375f,1.0f,0.90625f},
+                {0.125f,1.0f,0.875f},
+                {0.15625f,1.0f,0.84375f},
+                {0.1875f,1.0f,0.8125f},
+                {0.21875f,1.0f,0.78125f},
+                {0.25f,1.0f,0.75f},
+                {0.28125f,1.0f,0.71875f},
+                {0.3125f,1.0f,0.6875f},
+                {0.34375f,1.0f,0.65625f},
+                {0.375f,1.0f,0.625f},
+                {0.40625f,1.0f,0.59375f},
+                {0.4375f,1.0f,0.5625f},
+                {0.46875f,1.0f,0.53125f},
+                {0.5f,1.0f,0.5f},
+                {0.53125f,1.0f,0.46875f},
+                {0.5625f,1.0f,0.4375f},
+                {0.59375f,1.0f,0.40625f},
+                {0.625f,1.0f,0.375f},
+                {0.65625f,1.0f,0.34375f},
+                {0.6875f,1.0f,0.3125f},
+                {0.71875f,1.0f,0.28125f},
+                {0.75f,1.0f,0.25f},
+                {0.78125f,1.0f,0.21875f},
+                {0.8125f,1.0f,0.1875f},
+                {0.84375f,1.0f,0.15625f},
+                {0.875f,1.0f,0.125f},
+                {0.90625f,1.0f,0.09375f},
+                {0.9375f,1.0f,0.0625f},
+                {0.96875f,1.0f,0.03125f},
+                {1.0f,1.0f,0.0f},
+                {1.0f,0.96875f,0.0f},
+                {1.0f,0.9375f,0.0f},
+                {1.0f,0.90625f,0.0f},
+                {1.0f,0.875f,0.0f},
+                {1.0f,0.84375f,0.0f},
+                {1.0f,0.8125f,0.0f},
+                {1.0f,0.78125f,0.0f},
+                {1.0f,0.75f,0.0f},
+                {1.0f,0.71875f,0.0f},
+                {1.0f,0.6875f,0.0f},
+                {1.0f,0.65625f,0.0f},
+                {1.0f,0.625f,0.0f},
+                {1.0f,0.59375f,0.0f},
+                {1.0f,0.5625f,0.0f},
+                {1.0f,0.53125f,0.0f},
+                {1.0f,0.5f,0.0f},
+                {1.0f,0.46875f,0.0f},
+                {1.0f,0.4375f,0.0f},
+                {1.0f,0.40625f,0.0f},
+                {1.0f,0.375f,0.0f},
+                {1.0f,0.34375f,0.0f},
+                {1.0f,0.3125f,0.0f},
+                {1.0f,0.28125f,0.0f},
+                {1.0f,0.25f,0.0f},
+                {1.0f,0.21875f,0.0f},
+                {1.0f,0.1875f,0.0f},
+                {1.0f,0.15625f,0.0f},
+                {1.0f,0.125f,0.0f},
+                {1.0f,0.09375f,0.0f},
+                {1.0f,0.0625f,0.0f},
+                {1.0f,0.03125f,0.0f},
+                {1.0f,0.0f,0.0f},
+                {0.96875f,0.0f,0.0f},
+                {0.9375f,0.0f,0.0f},
+                {0.90625f,0.0f,0.0f},
+                {0.875f,0.0f,0.0f},
+                {0.84375f,0.0f,0.0f},
+                {0.8125f,0.0f,0.0f},
+                {0.78125f,0.0f,0.0f},
+                {0.75f,0.0f,0.0f},
+                {0.71875f,0.0f,0.0f},
+                {0.6875f,0.0f,0.0f},
+                {0.65625f,0.0f,0.0f},
+                {0.625f,0.0f,0.0f},
+                {0.59375f,0.0f,0.0f},
+                {0.5625f,0.0f,0.0f},
+                {0.53125f,0.0f,0.0f},
+                {0.5f,0.0f,0.0f}
+};
+
 #ifdef QGC_LIBFREENECT_ENABLED
 void
 Pixhawk3DWidget::updateRGBD(void)
 {
     rgb = freenect->getRgbData();
     coloredDepth = freenect->getColoredDepthData();
+    pointCloud = freenect->getPointCloudData();
+
+    osg::Geometry* geometry = rgbd3DNode->getDrawable(0)->asGeometry();
+
+    osg::Vec3Array* vertices = static_cast<osg::Vec3Array*>(geometry->getVertexArray());
+    osg::Vec4Array* colors = static_cast<osg::Vec4Array*>(geometry->getColorArray());
+    for (int i = 0; i < pointCloud.size(); ++i)
+    {
+        double x = pointCloud[i].x();
+        double y = pointCloud[i].y();
+        double z = pointCloud[i].z();
+        (*vertices)[i].set(x, z, -y);
+
+        double dist = sqrt(x * x + y * y + z * z);
+        int colorIndex = static_cast<int>(fmin(dist / 7.0 * 127.0, 127.0));
+        (*colors)[i].set(colormap_jet[colorIndex][0],
+                         colormap_jet[colorIndex][1],
+                         colormap_jet[colorIndex][2],
+                         1.0f);
+    }
+
+    if (geometry->getNumPrimitiveSets() == 0)
+    {
+        geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS,
+                                                      0, pointCloud.size()));
+    }
+    else
+    {
+        osg::DrawArrays* drawarrays = static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+        drawarrays->setCount(pointCloud.size());
+    }
 }
 #endif
 

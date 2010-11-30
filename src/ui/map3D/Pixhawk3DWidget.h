@@ -139,6 +139,7 @@ private:
 #endif
     QSharedPointer<QByteArray> rgb;
     QSharedPointer<QByteArray> coloredDepth;
+    QVector<QVector3D> pointCloud;
 
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
