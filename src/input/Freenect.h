@@ -1,7 +1,7 @@
 #ifndef FREENECT_H
 #define FREENECT_H
 
-#include <libfreenect.h>
+#include <libfreenect/libfreenect.h>
 #include <QMutex>
 #include <QScopedPointer>
 #include <QSharedPointer>
@@ -26,7 +26,7 @@ public:
 
 private:
     static void rgbCallback(freenect_device* device, freenect_pixel* rgb, uint32_t timestamp);
-    static void depthCallback(freenect_device* device, freenect_depth* depth, uint32_t timestamp);
+    static void depthCallback(freenect_device* device, void* depth, uint32_t timestamp);
 
     freenect_context* context;
     freenect_device* device;
