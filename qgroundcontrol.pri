@@ -135,14 +135,15 @@ macx {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    #QMAKE_CXXFLAGS += -Wl, -E
+    #QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # GNU/Linux
 linux-g++ {
-    
+
     debug {
         DESTDIR = $$BUILDDIR/debug
+        CONFIG += debug
     }
 
     release {
@@ -157,18 +158,8 @@ linux-g++ {
               # $$BASEDIR/lib/flite/lang
 
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
-        # 64-bit Linux
-        #LIBS += \
-            #-L$$BASEDIR/lib/flite/linux64
-        message(Building for GNU/Linux 64bit/x64)
-    } else {
-        # 32-bit Linux
-        #LIBS += \
-           #-L$$BASEDIR/lib/flite/linux32
-        message(Building for GNU/Linux 32bit/i386)
-    }
+    message(Building for GNU/Linux 32bit/i386)
+
     LIBS += \
         -L/usr/lib \
         -lm \
@@ -198,7 +189,7 @@ linux-g++ {
     }
 
     exists(/usr/local/include/libfreenect) {
-    message("Building suplocport for libfreenect")
+    message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
     INCLUDEPATH += /usr/include/libusb-1.0
     # Include libfreenect libraries
@@ -213,14 +204,14 @@ linux-g++ {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 linux-g++-64 {
-    CONFIG += debug
 
     debug {
         DESTDIR = $$BUILDDIR/debug
+        CONFIG += debug
     }
 
     release {
@@ -228,24 +219,16 @@ linux-g++-64 {
     }
 
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
               # $$BASEDIR/lib/flite/lang
 
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
-        # 64-bit Linux
-        #LIBS += \
-            #-L$$BASEDIR/lib/flite/linux64
-        message(Building for GNU/Linux 64bit/x64)
-    } else {
-        # 32-bit Linux
-        #LIBS += \
-           #-L$$BASEDIR/lib/flite/linux32
-        message(Building for GNU/Linux 32bit/i386)
-    }
+    # 64-bit Linux
+    message(Building for GNU/Linux 64bit/x64 (g++-64))
+
     LIBS += \
         -L/usr/lib \
         -lm \
@@ -285,7 +268,7 @@ linux-g++-64 {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # Windows (32bit)
@@ -356,7 +339,7 @@ win32-g++ {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # Windows (64bit)
@@ -394,5 +377,5 @@ win64-g++ {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
