@@ -40,12 +40,12 @@ Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _
   y(_y),
   z(_z),
   yaw(_yaw),
+  frame(_frame),
+  action(_action),
   autocontinue(_autocontinue),
   current(_current),
   orbit(_orbit),
-  holdTime(_holdTime),
-  frame(_frame),
-  action(_action)
+  holdTime(_holdTime)
 {
 }
 
