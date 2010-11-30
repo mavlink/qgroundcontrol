@@ -6,6 +6,7 @@
 #include <QScopedPointer>
 #include <QSharedPointer>
 #include <QThread>
+#include <QVector>
 #include <QVector2D>
 #include <QVector3D>
 
@@ -39,6 +40,7 @@ private:
 
         // distortion parameters
         double k[5];
+
     } IntrinsicCameraParameters;
 
     void rectifyPoint(const QVector2D& originalPoint, QVector2D& rectifiedPoint,
