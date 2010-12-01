@@ -2,6 +2,7 @@
 #define FREENECT_H
 
 #include <libfreenect/libfreenect.h>
+#include <QMatrix4x4>
 #include <QMutex>
 #include <QScopedPointer>
 #include <QSharedPointer>
@@ -22,7 +23,18 @@ public:
     QSharedPointer<QByteArray> getRgbData(void);
     QSharedPointer<QByteArray> getRawDepthData(void);
     QSharedPointer<QByteArray> getColoredDepthData(void);
-    QVector<QVector3D> getPointCloudData(void);
+    QVector<QVector3D> get3DPointCloudData(void);
+
+    typedef struct
+    {
+        double x;
+        double y;
+        double z;
+        unsigned char r;
+        unsigned char g;
+        unsigned char b;
+    } Vector6D;
+    QVector<Vector6D> get6DPointCloudData(void);
 
     int getTiltAngle(void) const;
     void setTiltAngle(int angle);
@@ -43,8 +55,12 @@ private:
 
     } IntrinsicCameraParameters;
 
-    void rectifyPoint(const QVector2D& originalPoint, QVector2D& rectifiedPoint,
+    void rectifyPoint(const QVector2D& originalPoint,
+                      QVector2D& rectifiedPoint,
                       const IntrinsicCameraParameters& params);
+    void unrectifyPoint(const QVector2D& rectifiedPoint,
+                        QVector2D& originalPoint,
+                        const IntrinsicCameraParameters& params);
     void projectPixelTo3DRay(const QVector2D& pixel, QVector3D& ray,
                              const IntrinsicCameraParameters& params);
 
@@ -69,6 +85,8 @@ private:
     IntrinsicCameraParameters rgbCameraParameters;
     IntrinsicCameraParameters depthCameraParameters;
 
+    QMatrix4x4 transformMatrix;
+
     // tilt angle of Kinect camera
     int tiltAngle;
 
@@ -90,6 +108,7 @@ private:
     unsigned short gammaTable[2048];
 
     QVector3D depthProjectionMatrix[FREENECT_FRAME_PIX];
+    QVector2D rgbRectificationMap[FREENECT_FRAME_PIX];
 };
 
 #endif // FREENECT_H
