@@ -573,7 +573,8 @@ void MainWindow::UASCreated(UASInterface* uas)
             SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
             if (mav2) {
               dataWidget->addUAS(uas);
-              loadSlugsView();
+              //loadSlugsView();
+              loadGlobalOperatorView();
             }
           }
         }
