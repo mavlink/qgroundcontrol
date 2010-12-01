@@ -240,7 +240,7 @@ contains(DEPENDENCIES_PRESENT, osg) {
     HEADERS += src/ui/map3D/Q3DWidget.h
 
 contains(DEPENDENCIES_PRESENT, osgearth) { 
-    message("Including headers for OSGEARTH")
+    message("Including headers for osgEarth")
     
     # Enable only if OpenSceneGraph is available
     HEADERS += src/ui/map3D/QOSGWidget.h \
@@ -336,8 +336,6 @@ contains(DEPENDENCIES_PRESENT, osg) {
     # Enable only if OpenSceneGraph is available
     SOURCES += src/ui/map3D/Q3DWidget.cc \
     src/ui/map3D/ImageWindowGeode.cc
-
-
 
 contains(DEPENDENCIES_PRESENT, osgearth) { 
     message("Including sources for osgEarth")
