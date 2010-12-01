@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>443</width>
-    <height>351</height>
+    <width>153</width>
+    <height>200</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>153</width>
+    <height>176</height>
+   </size>
   </property>
   <property name="mouseTracking">
    <bool>true</bool>
@@ -16,36 +22,66 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_2">
-   <item>
-    <widget class="QWidget" name="widget" native="true">
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QFrame" name="padCamContro_frame">
+     <property name="minimumSize">
+      <size>
+       <width>131</width>
+       <height>91</height>
+      </size>
+     </property>
      <property name="mouseTracking">
       <bool>true</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(255, 193, 76);</string>
+      <string notr="true">background-color: rgb(255, 170, 0);</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::WinPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
      </property>
     </widget>
    </item>
-   <item>
+   <item row="1" column="0">
     <layout class="QVBoxLayout" name="verticalLayout">
-     <item>
-      <widget class="QLabel" name="label_y">
-       <property name="mouseTracking">
-        <bool>true</bool>
-       </property>
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-     </item>
      <item>
       <widget class="QLabel" name="label_x">
        <property name="mouseTracking">
         <bool>true</bool>
        </property>
        <property name="text">
-        <string>TextLabel</string>
+        <string>Coord_X</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_y">
+       <property name="mouseTracking">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Coord_Y</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_dir">
+       <property name="text">
+        <string>Camera Pos</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="2" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QCheckBox" name="viewCamBordeatMap_checkBox">
+       <property name="text">
+        <string>Camera at Map</string>
        </property>
       </widget>
      </item>
