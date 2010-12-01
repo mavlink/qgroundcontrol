@@ -35,7 +35,7 @@ TEMPLATE = app
 TARGET = qgroundcontrol
 BASEDIR = $$IN_PWD
 TARGETDIR = $$OUT_PWD
-BUILDDIR = $$OUT_PWD/build
+BUILDDIR = $$TARGETDIR/build
 LANGUAGE = C++
 CONFIG += debug_and_release \
     console
@@ -231,18 +231,35 @@ HEADERS += src/MG.h \
     src/ui/RadioCalibration/CurveCalibrator.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
     src/comm/QGCMAVLink.h
+
+
+contains(DEPENDENCIES_PRESENT, osg) { 
+    message("Including headers for OpenSceneGraph")
+    
+    # Enable only if OpenSceneGraph is available
+    HEADERS += src/ui/map3D/Q3DWidget.h
+
 contains(DEPENDENCIES_PRESENT, osgearth) { 
     message("Including headers for OSGEARTH")
     
     # Enable only if OpenSceneGraph is available
-    HEADERS += src/ui/map3D/Q3DWidget.h \
-        src/ui/map3D/QOSGWidget.h \
+    HEADERS += src/ui/map3D/QOSGWidget.h \
         src/ui/map3D/QMap3D.h \
         src/ui/map3D/PixhawkCheetahGeode.h \
         src/ui/map3D/Pixhawk3DWidget.h \
         src/ui/map3D/Q3DWidgetFactory.h \
-        src/ui/map3D/GCManipulator.h
+        src/ui/map3D/GCManipulator.h \
+        src/ui/map3D/ImageWindowGeode.h
 }
+}
+
+contains(DEPENDENCIES_PRESENT, libfreenect) { 
+    message("Including headers for libfreenect")
+    
+    # Enable only if libfreenect is available
+    HEADERS += src/input/Freenect.h
+}
+
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -311,19 +328,39 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc # src/ui/WaypointGlobalView.cc \
-contains(DEPENDENCIES_PRESENT, osgearth) { 
-    message("Including sources for OSGEARTH")
+    src/ui/RadioCalibration/RadioCalibrationData.cc
+
+contains(DEPENDENCIES_PRESENT, osg) { 
+    message("Including sources for OpenSceneGraph")
     
     # Enable only if OpenSceneGraph is available
     SOURCES += src/ui/map3D/Q3DWidget.cc \
-        src/ui/map3D/QOSGWidget.cc \
+    src/ui/map3D/ImageWindowGeode.cc
+
+
+
+contains(DEPENDENCIES_PRESENT, osgearth) { 
+    message("Including sources for osgEarth")
+    
+    # Enable only if OpenSceneGraph is available
+    SOURCES += src/ui/map3D/QOSGWidget.cc \
         src/ui/map3D/QMap3D.cc \
         src/ui/map3D/PixhawkCheetahGeode.cc \
         src/ui/map3D/Pixhawk3DWidget.cc \
         src/ui/map3D/Q3DWidgetFactory.cc \
         src/ui/map3D/GCManipulator.cc
+
 }
+}
+
+contains(DEPENDENCIES_PRESENT, libfreenect) { 
+    message("Including sources for libfreenect")
+    
+    # Enable only if libfreenect is available
+    SOURCES += src/input/Freenect.cc
+}
+
+
 RESOURCES += mavground.qrc
 
 # Include RT-LAB Library

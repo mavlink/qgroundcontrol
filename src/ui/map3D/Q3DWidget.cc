@@ -35,10 +35,6 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/LineWidth>
 #include <osg/MatrixTransform>
 
-static const float KEY_ROTATE_AMOUNT = 5.0f;
-static const float KEY_MOVE_AMOUNT   = 10.0f;
-static const float KEY_ZOOM_AMOUNT   = 5.0f;
-
 Q3DWidget::Q3DWidget(QWidget* parent)
     : QGLWidget(parent)
     , root(new osg::Group())
@@ -47,7 +43,7 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     , egocentricMap(new osg::Switch())
     , robotPosition(new osg::PositionAttitudeTransform())
     , robotAttitude(new osg::PositionAttitudeTransform())
-    , hudGeode(new osg::Geode())
+    , hudGroup(new osg::Switch())
     , hudProjectionMatrix(new osg::Projection)
 {
     // set initial camera parameters
@@ -159,11 +155,12 @@ Q3DWidget::createHUD(void)
     hudModelViewMatrix->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
 
     hudProjectionMatrix->addChild(hudModelViewMatrix);
-    hudModelViewMatrix->addChild(hudGeode);
+    hudModelViewMatrix->addChild(hudGroup);
 
     osg::ref_ptr<osg::StateSet> hudStateSet(new osg::StateSet);
-    hudGeode->setStateSet(hudStateSet);
+    hudGroup->setStateSet(hudStateSet);
     hudStateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+    hudStateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
     hudStateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
     hudStateSet->setRenderBinDetails(11, "RenderBin");
 

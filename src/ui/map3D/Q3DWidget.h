@@ -249,7 +249,7 @@ protected:
     osg::ref_ptr<osg::PositionAttitudeTransform> robotPosition;
     osg::ref_ptr<osg::PositionAttitudeTransform> robotAttitude;
 
-    osg::ref_ptr<osg::Geode> hudGeode; /**< A geode which contains renderable HUD objects. */
+    osg::ref_ptr<osg::Switch> hudGroup; /**< A group which contains renderable HUD objects. */
     osg::ref_ptr<osg::Projection> hudProjectionMatrix; /**< An orthographic projection matrix for HUD display. */
 
     osg::ref_ptr<osgViewer::GraphicsWindowEmbedded> osgGW; /**< A class which manages OSG graphics windows and events. */

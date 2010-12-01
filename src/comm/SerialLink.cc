@@ -187,6 +187,7 @@ void SerialLink::readBytes()
         const qint64 maxLength = 2048;
         char data[maxLength];
         qint64 numBytes = port->bytesAvailable();
+
         if(numBytes > 0)
         {
             /* Read as much data in buffer as possible without overflow */

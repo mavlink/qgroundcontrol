@@ -33,7 +33,15 @@
 #define PIXHAWK3DWIDGET_H
 
 #include <osgText/Text>
+#ifdef QGC_OSGEARTH_ENABLED
 #include <osgEarth/MapNode>
+#endif
+
+#include "ImageWindowGeode.h"
+
+#ifdef QGC_LIBFREENECT_ENABLED
+#include "Freenect.h"
+#endif
 
 #include "Q3DWidget.h"
 
@@ -50,10 +58,6 @@ public:
     explicit Pixhawk3DWidget(QWidget* parent = 0);
     ~Pixhawk3DWidget();
 
-    void buildLayout(void);
-
-    double getTime(void) const;
-
 public slots:
     void setActiveUAS(UASInterface* uas);
 
@@ -61,11 +65,15 @@ private slots:
     void showGrid(int state);
     void showTrail(int state);
     void showWaypoints(int state);
+    void selectVehicleModel(int index);
     void recenter(void);
     void toggleFollowCamera(int state);
 
 protected:
+    QVector< osg::ref_ptr<osg::Node> > findVehicleModels(void);
+    void buildLayout(void);
     virtual void display(void);
+    virtual void keyPressEvent(QKeyEvent* event);
     virtual void mousePressEvent(QMouseEvent* event);
 
     UASInterface* uas;
@@ -73,17 +81,26 @@ protected:
 private:
     osg::ref_ptr<osg::Geode> createGrid(void);
     osg::ref_ptr<osg::Geode> createTrail(void);
+
+#ifdef QGC_OSGEARTH_ENABLED
     osg::ref_ptr<osgEarth::MapNode> createMap(void);
+#endif
+
     osg::ref_ptr<osg::Node> createTarget(void);
     osg::ref_ptr<osg::Group> createWaypoints(void);
+    osg::ref_ptr<osg::Geode> createRGBD3D(void);
 
     void setupHUD(void);
+    void resizeHUD(void);
 
     void updateHUD(float robotX, float robotY, float robotZ,
                    float robotRoll, float robotPitch, float robotYaw);
     void updateTrail(float robotX, float robotY, float robotZ);
     void updateTarget(void);
     void updateWaypoints(void);
+#ifdef QGC_LIBFREENECT_ENABLED
+    void updateRGBD(void);
+#endif
 
     void markTarget(void);
 
@@ -91,22 +108,39 @@ private:
     bool displayTrail;
     bool displayTarget;
     bool displayWaypoints;
+    bool displayRGBD2D;
+    bool displayRGBD3D;
 
     bool followCamera;
 
     osg::ref_ptr<osg::Vec3Array> trailVertices;
     QVarLengthArray<osg::Vec3, 10000> trail;
 
+    osg::ref_ptr<osg::Node> vehicleModel;
     osg::ref_ptr<osg::Geometry> hudBackgroundGeometry;
     osg::ref_ptr<osgText::Text> statusText;
+    osg::ref_ptr<ImageWindowGeode> rgb2DGeode;
+    osg::ref_ptr<ImageWindowGeode> depth2DGeode;
+    osg::ref_ptr<osg::Image> rgbImage;
+    osg::ref_ptr<osg::Image> depthImage;
     osg::ref_ptr<osg::Geode> gridNode;
     osg::ref_ptr<osg::Geode> trailNode;
     osg::ref_ptr<osg::Geometry> trailGeometry;
     osg::ref_ptr<osg::DrawArrays> trailDrawArrays;
+#ifdef QGC_OSGEARTH_ENABLED
     osg::ref_ptr<osgEarth::MapNode> mapNode;
+#endif
     osg::ref_ptr<osg::Geode> targetNode;
     osg::ref_ptr<osg::PositionAttitudeTransform> targetPosition;
     osg::ref_ptr<osg::Group> waypointsNode;
+    osg::ref_ptr<osg::Geode> rgbd3DNode;
+#ifdef QGC_LIBFREENECT_ENABLED
+    QScopedPointer<Freenect> freenect;
+#endif
+    QSharedPointer<QByteArray> rgb;
+    QSharedPointer<QByteArray> coloredDepth;
+
+    QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
     QPushButton* targetButton;
 

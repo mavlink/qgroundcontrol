@@ -729,7 +729,11 @@ quint64 UAS::getUnixTime(quint64 time)
     // 60 seconds
     // 1000 milliseconds
     // 1000 microseconds
+#ifndef _MSVC_VER
+    else if (time < 1261440000000000LLU)
+#else
     else if (time < 1261440000000000)
+#endif
     {
         if (onboardTimeOffset == 0)
         {
@@ -879,20 +883,21 @@ void UAS::readParametersFromStorage()
     sendMessage(msg);
 }
 
-void UAS::enableAllDataTransmission(bool enabled)
+void UAS::enableAllDataTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
     // 0 is a magic ID and will enable/disable the standard message set except for heartbeat
-    stream.req_stream_id = 0;
+    stream.req_stream_id = MAV_DATA_STREAM_ALL;
     // Select the update rate in Hz the message should be send
     // All messages will be send with their default rate
+    // TODO: use 0 to turn off and get rid of enable/disable? will require
+    //  a different magic flag for turning on defaults, possibly something really high like 1111 ?
     stream.req_message_rate = 0;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -902,21 +907,19 @@ void UAS::enableAllDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableRawSensorDataTransmission(bool enabled)
+void UAS::enableRawSensorDataTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 1;
+    stream.req_stream_id = MAV_DATA_STREAM_RAW_SENSORS;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -926,21 +929,19 @@ void UAS::enableRawSensorDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableExtendedSystemStatusTransmission(bool enabled)
+void UAS::enableExtendedSystemStatusTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 2;
+    stream.req_stream_id = MAV_DATA_STREAM_EXTENDED_STATUS;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 10;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -950,49 +951,23 @@ void UAS::enableExtendedSystemStatusTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableRCChannelDataTransmission(bool enabled)
+void UAS::enableRCChannelDataTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
-    // Buffers to write data to
-    mavlink_message_t msg;
-    mavlink_request_data_stream_t stream;
-    // Select the message to request from now on
-    stream.req_stream_id = 3;
-    // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
-    // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
-    // The system which should take this command
-    stream.target_system = uasId;
-    // The component / subsystem which should take this command
-    stream.target_component = 0;
-    // Encode and send the message
-    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
-#elif defined(MAVLINK_ENABLED_UALBERTA_MESSAGES)
+#if defined(MAVLINK_ENABLED_UALBERTA_MESSAGES)
     mavlink_message_t msg;
     mavlink_msg_request_rc_channels_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, enabled);
     sendMessage(msg);
-#endif
-}
-
-void UAS::enableRawControllerDataTransmission(bool enabled)
-{
-#ifdef MAVLINK_ENABLED_PIXHAWK
-    // Buffers to write data to
+#else
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 4;
+    stream.req_stream_id = MAV_DATA_STREAM_RC_CHANNELS;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -1005,18 +980,17 @@ void UAS::enableRawControllerDataTransmission(bool enabled)
 #endif
 }
 
-void UAS::enableRawSensorFusionTransmission(bool enabled)
+void UAS::enableRawControllerDataTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 5;
+    stream.req_stream_id = MAV_DATA_STREAM_RAW_CONTROLLER;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -1026,21 +1000,19 @@ void UAS::enableRawSensorFusionTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enablePositionTransmission(bool enabled)
+void UAS::enableRawSensorFusionTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 6;
+    stream.req_stream_id = MAV_DATA_STREAM_RAW_SENSOR_FUSION;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -1050,21 +1022,19 @@ void UAS::enablePositionTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableExtra1Transmission(bool enabled)
+void UAS::enablePositionTransmission(int rate)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 7;
+    stream.req_stream_id = MAV_DATA_STREAM_POSITION;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -1074,21 +1044,19 @@ void UAS::enableExtra1Transmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableExtra2Transmission(bool enabled)
+void UAS::enableExtra1Transmission(int rate)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 8;
+    stream.req_stream_id = MAV_DATA_STREAM_EXTRA1;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -1098,21 +1066,19 @@ void UAS::enableExtra2Transmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableExtra3Transmission(bool enabled)
+void UAS::enableExtra2Transmission(int rate)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 9;
+    stream.req_stream_id = MAV_DATA_STREAM_EXTRA2;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -1122,7 +1088,28 @@ void UAS::enableExtra3Transmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
+}
+
+void UAS::enableExtra3Transmission(int rate)
+{
+    // Buffers to write data to
+    mavlink_message_t msg;
+    mavlink_request_data_stream_t stream;
+    // Select the message to request from now on
+    stream.req_stream_id = MAV_DATA_STREAM_EXTRA3;
+    // Select the update rate in Hz the message should be send
+    stream.req_message_rate = rate;
+    // Start / stop the message
+    stream.start_stop = (rate) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
 }
 
 /**
