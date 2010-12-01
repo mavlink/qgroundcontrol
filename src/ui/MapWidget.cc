@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QComboBox>
 #include <QGridLayout>
 
+
 #include "MapWidget.h"
 #include "ui_MapWidget.h"
 #include "UASInterface.h"
@@ -41,6 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint2DIcon.h"
 
 #include "MG.h"
+
 
 MapWidget::MapWidget(QWidget *parent) :
         QWidget(parent),
@@ -83,6 +85,8 @@ MapWidget::MapWidget(QWidget *parent) :
     // create a layer with the mapadapter and type GeometryLayer (for waypoints)
     geomLayer = new qmapcontrol::GeometryLayer("Waypoints", mapadapter);
     mc->addLayer(geomLayer);
+
+
 
 //
 //    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
@@ -217,6 +221,19 @@ MapWidget::MapWidget(QWidget *parent) :
 
     path = new qmapcontrol::LineString (wps, "UAV Path", pointPen);
     mc->layer("Waypoints")->addGeometry(path);
+
+    //Camera Control
+    // CAMERA INDICATOR LAYER
+    // create a layer with the mapadapter and type GeometryLayer (for camera indicator)
+    camLayer = new qmapcontrol::GeometryLayer("Camera", mapadapter);
+    mc->addLayer(camLayer);
+
+    //camLine = new qmapcontrol::LineString(camPoints,"Camera Eje", camBorderPen);
+
+    drawCamBorder = false;
+    radioCamera = 10;
+
+
 
     this->setVisible(false);
 }
@@ -602,6 +619,10 @@ void MapWidget::wheelEvent(QWheelEvent *event)
     // Detail zoom level is the number of steps zoomed in further
     // after the bounding has taken effect
     detailZoom = qAbs(qMin(0, mc->currentZoom()-newZoom));
+
+    // visual field of camera
+     updateCameraPosition(20*newZoom,0,"no");
+
 }
 
 void MapWidget::keyPressEvent(QKeyEvent *event)
@@ -689,5 +710,70 @@ void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, floa
    }
 
 
+}
+
+void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
+{
+    //camPoints.clear();
+    QPointF currentPos = mc->currentCoordinate();
+//    QPointF actualPos = getPointxBearing_Range(currentPos.y(),currentPos.x(),bearing,distance);
+
+//    qmapcontrol::Point* tempPoint1 = new qmapcontrol::Point(currentPos.x(), currentPos.y(),"inicial",qmapcontrol::Point::Middle);
+//    qmapcontrol::Point* tempPoint2 = new qmapcontrol::Point(actualPos.x(), actualPos.y(),"final",qmapcontrol::Point::Middle);
+
+//    camPoints.append(tempPoint1);
+//    camPoints.append(tempPoint2);
+
+//    camLine->setPoints(camPoints);
+
+     QPen* camBorderPen = new QPen(QColor(255,0,0));
+    camBorderPen->setWidth(2);
+
+    //radio = mc->currentZoom()
+
+    if(drawCamBorder)
+    {
+        //clear camera borders
+        mc->layer("Camera")->clearGeometries();
+
+        //create a camera borders
+        qmapcontrol::CirclePoint* camBorder = new qmapcontrol::CirclePoint(currentPos.x(), currentPos.y(), radio, "camBorder", qmapcontrol::Point::Middle, camBorderPen);
+
+       //camBorder->setCoordinate(currentPos);
+
+        mc->layer("Camera")->addGeometry(camBorder);
+       // mc->layer("Camera")->addGeometry(camLine);
+        mc->updateRequestNew();
+
+    }
+   else
+   {
+       //clear camera borders
+       mc->layer("Camera")->clearGeometries();
+       mc->updateRequestNew();
+
+   }
+
+
+}
+
+void MapWidget::drawBorderCamAtMap(bool status)
+{
+    drawCamBorder = status;
+    updateCameraPosition(20,0,"no");
+
+}
+
+QPointF MapWidget::getPointxBearing_Range(double lat1, double lon1, double bearing, double distance)
+{
+    QPointF temp;
+
+    double rad = M_PI/180;
+
+    bearing = bearing*rad;
+    temp.setX((lon1 + ((distance/60) * (sin(bearing)))));
+    temp.setY((lat1 + ((distance/60) * (cos(bearing)))));
+
+    return temp;
 }
 
