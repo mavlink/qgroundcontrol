@@ -103,6 +103,7 @@ public slots:
     void removeWaypoint(Waypoint* wp);
 
     void setIsLoadFileWP();
+    void setIsReadGlobalWP(bool value);
 
 
 
@@ -131,6 +132,7 @@ protected:
     bool isLocalWP;
     QPointF centerMapCoordinate;
     bool loadFileGlobalWP;
+    bool readGlobalWP;
 
 private:
     Ui::WaypointList *m_ui;

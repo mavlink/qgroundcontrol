@@ -92,6 +92,7 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     isGlobalWP = false;
     isLocalWP = false;
     loadFileGlobalWP = false;
+    readGlobalWP = false;
     centerMapCoordinate.setX(0.0);
     centerMapCoordinate.setY(0.0);
 
@@ -133,6 +134,8 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(&uas->getWaypointManager(), SIGNAL(waypointListChanged(void)),                  this, SLOT(waypointListChanged(void)));
         connect(&uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointChanged(quint16)));
         connect(&uas->getWaypointManager(),SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
+        connect(&uas->getWaypointManager(),SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
+
     }
 }
 
@@ -250,6 +253,8 @@ void WaypointList::addCurrentPositonWaypoint()
 void WaypointList::updateStatusLabel(const QString &string)
 {
     m_ui->statusLabel->setText(string);
+
+
 }
 
 void WaypointList::changeCurrentWaypoint(quint16 seq)
@@ -341,7 +346,7 @@ void WaypointList::waypointListChanged()
                 WaypointGlobalView *wpgv = wpGlobalViews.value(wp);
                 wpgv->updateValues();
                 listLayout->addWidget(wpgv);
-                if(loadFileGlobalWP)
+                if(loadFileGlobalWP || readGlobalWP)
                 {
                     emit createWaypointAtMap(QPointF(wp->getX(),wp->getY()));
                     qDebug()<<"Emitiendo Pos: "<<wp->getX()<<" - "<<wp->getY();
@@ -636,4 +641,9 @@ void WaypointList::changeWPPositionBySpinBox(Waypoint *wp)
 void WaypointList::setIsLoadFileWP()
 {
     loadFileGlobalWP = true;
+}
+
+void WaypointList::setIsReadGlobalWP(bool value)
+{
+    readGlobalWP = value;
 }
