@@ -110,6 +110,7 @@ private:
     bool displayWaypoints;
     bool displayRGBD2D;
     bool displayRGBD3D;
+    bool enableRGBDColor;
 
     bool followCamera;
 
@@ -139,7 +140,7 @@ private:
 #endif
     QSharedPointer<QByteArray> rgb;
     QSharedPointer<QByteArray> coloredDepth;
-    QVector<QVector3D> pointCloud;
+    QVector<Freenect::Vector6D> pointCloud;
 
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
