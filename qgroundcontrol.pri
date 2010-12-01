@@ -34,6 +34,11 @@ release {
 #    DEFINES += QT_NO_WARNING_OUTPUT
 }
 
+QMAKE_PRE_LINK += echo "Copying files"
+
+#QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+#QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+
 # MAC OS X
 macx { 
 
@@ -74,24 +79,34 @@ macx {
     # Copy audio files if needed
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
 
-    exists(/opt/local/lib/osg):exists("/opt/local/lib/osgEarth") {
-    message("Building support for OSGEARTH")
+    exists(/usr/include/osg) {
+    message("Building support for OpenSceneGraph")
+    DEPENDENCIES_PRESENT += osg
+    # Include OpenSceneGraph libraries
+    LIBS += -losg
+    }
+
+    exists(/usr/include/osgEarth) {
+    message("Building support for osgEarth")
     DEPENDENCIES_PRESENT += osgearth
-    LIBS += -L/opt/local/lib/
-    INCLUDEPATH += /opt/local/include
-    # Include OpenSceneGraph and osgEarth libraries
-    LIBS += -losg \
-        -losgViewer \
-        -losgEarth \
-        -losgEarthUtil
-    DEFINES += QGC_OSG_ENABLED
+    # Include osgEarth libraries
+    LIBS += -losgViewer \
+            -losgEarth \
+            -losgEarthUtil
+    DEFINES += QGC_OSGEARTH_ENABLED
+    }
+
+    exists(/usr/local/include/libfreenect) {
+    message("Building support for libfreenect")
+    DEPENDENCIES_PRESENT += libfreenect
+    # Include libfreenect libraries
+    LIBS += -lfreenect
+    DEFINES += QGC_LIBFREENECT_ENABLED
     }
 }
 
 # GNU/Linux
 linux-g++ {
-
-    CONFIG += debug
     
     debug {
         DESTDIR = $$BUILDDIR/debug
@@ -131,21 +146,43 @@ linux-g++ {
         -lSDL \
         -lSDLmain
 
-exists(/usr/include/osgEarth) | exists(/usr/local/include/osgEarth) {
-message("Building support for OSGEARTH")
-DEPENDENCIES_PRESENT += osgearth
-# Include OpenSceneGraph and osgEarth libraries
-LIBS += -losg \
-    -losgViewer \
-    -losgEarth \
-    -losgEarthUtil
-DEFINES += QGC_OSG_ENABLED
-}
+    exists(/usr/include/osg) {
+    message("Building support for OpenSceneGraph")
+    DEPENDENCIES_PRESENT += osg
+    # Include OpenSceneGraph libraries
+    LIBS += -losg
+    DEFINES += QGC_OSG_ENABLED
+    }
 
-QMAKE_CXXFLAGS += -Wl,-E, -DUSE_QT4
+    exists(/usr/include/osgEarth) | exists(/usr/local/include/osgEarth) {
+    message("Building support for osgEarth")
+    DEPENDENCIES_PRESENT += osgearth
+    # Include osgEarth libraries
+    LIBS += -losgViewer \
+            -losgEarth \
+            -losgEarthUtil
+    DEFINES += QGC_OSGEARTH_ENABLED
+    }
+
+    exists(/usr/local/include/libfreenect) {
+    message("Building suplocport for libfreenect")
+    DEPENDENCIES_PRESENT += libfreenect
+    INCLUDEPATH += /usr/include/libusb-1.0
+    # Include libfreenect libraries
+    LIBS += -lfreenect
+    DEFINES += QGC_LIBFREENECT_ENABLED
+    }
+
+    #QMAKE_CXXFLAGS += -Wl,-E
 
         #-lflite_cmu_us_rms \
         #-lflite_cmu_us_slt \
+
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release/.
+
 }
 
 linux-g++-64 {
@@ -188,15 +225,33 @@ linux-g++-64 {
         -lSDL \
         -lSDLmain
 
-exists(/usr/lib/osg):exists(/usr/lib/osgEarth) {
-message("Building support for OSGEARTH")
-DEPENDENCIES_PRESENT += osgearth
-# Include OpenSceneGraph and osgEarth libraries
-LIBS += -losg \
-    -losgViewer \
-    -losgEarth
-DEFINES += QGC_OSG_ENABLED
-}
+    exists(/usr/include/osg) {
+    message("Building support for OpenSceneGraph")
+    DEPENDENCIES_PRESENT += osg
+    # Include OpenSceneGraph libraries
+    LIBS += -losg
+    DEFINES += QGC_OSG_ENABLED
+    }
+
+    exists(/usr/include/osgEarth) {
+    message("Building support for osgEarth")
+    DEPENDENCIES_PRESENT += osgearth
+    # Include osgEarth libraries
+    LIBS += -losgViewer \
+            -losgEarth \
+            -losgEarthUtil
+    DEFINES += QGC_OSGEARTH_ENABLED
+    }
+
+    exists(/usr/local/include/libfreenect) {
+    message("Building support for libfreenect")
+    DEPENDENCIES_PRESENT += libfreenect
+    INCLUDEPATH += /usr/include/libusb-1.0
+    # Include libfreenect libraries
+    LIBS += -lfreenect
+    DEFINES += QGC_LIBFREENECT_ENABLED
+    }
+
 }
 
 # Windows (32bit)
@@ -236,8 +291,8 @@ QMAKE_CXXFLAGS += -DUSE_QT4
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/. &&
-	QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/debug/. &&
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/.
+	QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/debug/.
 	
 	
 	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osg.dll $$TARGETDIR/release/. &&
@@ -247,8 +302,10 @@ QMAKE_CXXFLAGS += -DUSE_QT4
 	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osgText.dll $$TARGETDIR/release/. &&
 	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/OpenThreads.dll $$TARGETDIR/release/. &&
 	
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 }
 
 # Windows (32bit)
@@ -279,10 +336,17 @@ win32-g++ {
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/release/.
+	debug {
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/debug/.
+	QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+	}
+	
+	release {
+	QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+	}
 }
 
 # Windows (64bit)
@@ -313,9 +377,15 @@ win64-g++ {
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/release/.
+	debug {
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/debug/.
+	QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+	}
+	
+	release {
+	QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+	}
 }
-

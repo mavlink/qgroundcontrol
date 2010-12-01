@@ -19,22 +19,13 @@
 #include "QOSGWidget.h"
 
 QOSGWidget::QOSGWidget( QWidget * parent, const char * name, WindowFlags f, bool overrideTraits):
-#if USE_QT4
     QWidget(parent, f), _overrideTraits (overrideTraits)
-#else
-    QWidget(parent, name, f), _overrideTraits (overrideTraits)
-#endif
 {
     createContext();
     
-
-#if USE_QT4
     setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_NoSystemBackground);
-    setFocusPolicy(Qt::ClickFocus);
-#else
-    setBackgroundMode(Qt::NoBackground);
-#endif    
+    setFocusPolicy(Qt::ClickFocus);   
 }
 
 void QOSGWidget::createContext()
@@ -106,9 +97,7 @@ void QOSGWidget::destroyEvent(bool destroyWindow, bool destroySubWindows)
 
 void QOSGWidget::closeEvent( QCloseEvent * event )
 {
-#ifndef USE_QT4
     event->accept();
-#endif
 
     _gw->getEventQueue()->closeWindow();
 }
@@ -123,20 +112,12 @@ void QOSGWidget::resizeEvent( QResizeEvent * event )
 
 void QOSGWidget::keyPressEvent( QKeyEvent* event )
 {
-#if USE_QT4
     _gw->getEventQueue()->keyPress( (osgGA::GUIEventAdapter::KeySymbol) *(event->text().toAscii().data() ) );
-#else
-    _gw->getEventQueue()->keyPress( (osgGA::GUIEventAdapter::KeySymbol) event->ascii() );
-#endif
 }
 
 void QOSGWidget::keyReleaseEvent( QKeyEvent* event )
 {
-#if USE_QT4
     int c = *event->text().toAscii().data();
-#else
-    int c = event->ascii();
-#endif
 
     _gw->getEventQueue()->keyRelease( (osgGA::GUIEventAdapter::KeySymbol) (c) );
 }
@@ -229,8 +210,6 @@ void CompositeViewerQOSG::RemoveView()
   Tile();
 }
 
-
-#if USE_QT4
 // we use this wrapper for CompositeViewer ONLY because of the timer
 // NOTE: this is a workaround because we're not using QT's moc precompiler here.
 //
@@ -259,7 +238,6 @@ class QViewerTimer : public QWidget
         QTimer _timer;
 
 };
-#endif
 
 void setupHandlers(osgViewer::View * viewer)
 {

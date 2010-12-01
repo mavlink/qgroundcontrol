@@ -220,12 +220,12 @@ public slots:
      */
     virtual void setSelected() = 0;
 
-    virtual void enableAllDataTransmission(bool enabled) = 0;
-    virtual void enableRawSensorDataTransmission(bool enabled) = 0;
-    virtual void enableExtendedSystemStatusTransmission(bool enabled) = 0;
-    virtual void enableRCChannelDataTransmission(bool enabled) = 0;
-    virtual void enableRawControllerDataTransmission(bool enabled) = 0;
-    virtual void enableRawSensorFusionTransmission(bool enabled) = 0;
+    virtual void enableAllDataTransmission(int rate) = 0;
+    virtual void enableRawSensorDataTransmission(int rate) = 0;
+    virtual void enableExtendedSystemStatusTransmission(int rate) = 0;
+    virtual void enableRCChannelDataTransmission(int rate) = 0;
+    virtual void enableRawControllerDataTransmission(int rate) = 0;
+    virtual void enableRawSensorFusionTransmission(int rate) = 0;
 
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;

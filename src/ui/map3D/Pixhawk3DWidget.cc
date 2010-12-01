@@ -34,6 +34,7 @@
 #include <sstream>
 
 #include <osg/Geode>
+#include <osg/Image>
 #include <osg/LineWidth>
 #include <osg/ShapeDrawable>
 
@@ -49,6 +50,8 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
      , displayTrail(false)
      , displayTarget(false)
      , displayWaypoints(true)
+     , displayRGBD2D(false)
+     , displayRGBD3D(false)
      , followCamera(true)
      , lastRobotX(0.0f)
      , lastRobotY(0.0f)
@@ -58,7 +61,8 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     init(15.0f);
 
     // generate Pixhawk Cheetah model
-    egocentricMap->addChild(PixhawkCheetahGeode::instance());
+    vehicleModel = PixhawkCheetahGeode::instance();
+    egocentricMap->addChild(vehicleModel);
 
     // generate grid model
     gridNode = createGrid();
@@ -68,9 +72,11 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     trailNode = createTrail();
     rollingMap->addChild(trailNode);
 
+#ifdef QGC_OSGEARTH_ENABLED
     // generate map model
     mapNode = createMap();
     root->addChild(mapNode);
+#endif
 
     // generate target model
     allocentricMap->addChild(createTarget());
@@ -79,7 +85,19 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     waypointsNode = createWaypoints();
     rollingMap->addChild(waypointsNode);
 
+#ifdef QGC_LIBFREENECT_ENABLED
+    freenect.reset(new Freenect());
+    freenect->init();
+#endif
+
+    // generate RGBD model
+    rgbd3DNode = createRGBD3D();
+    egocentricMap->addChild(rgbd3DNode);
+
     setupHUD();
+
+    // find available vehicle models in models folder
+    vehicleModels = findVehicleModels();
 
     buildLayout();
 
@@ -90,59 +108,6 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
 Pixhawk3DWidget::~Pixhawk3DWidget()
 {
 
-}
-
-void
-Pixhawk3DWidget::buildLayout(void)
-{
-    QCheckBox* gridCheckBox = new QCheckBox(this);
-    gridCheckBox->setText("Grid");
-    gridCheckBox->setChecked(displayGrid);
-
-    QCheckBox* trailCheckBox = new QCheckBox(this);
-    trailCheckBox->setText("Trail");
-    trailCheckBox->setChecked(displayTrail);
-
-    QCheckBox* waypointsCheckBox = new QCheckBox(this);
-    waypointsCheckBox->setText("Waypoints");
-    waypointsCheckBox->setChecked(displayWaypoints);
-
-    targetButton = new QPushButton(this);
-    targetButton->setCheckable(true);
-    targetButton->setChecked(false);
-    targetButton->setIcon(QIcon(QString::fromUtf8(":/images/status/weather-clear.svg")));
-
-    QPushButton* recenterButton = new QPushButton(this);
-    recenterButton->setText("Recenter Camera");
-
-    QCheckBox* followCameraCheckBox = new QCheckBox(this);
-    followCameraCheckBox->setText("Follow Camera");
-    followCameraCheckBox->setChecked(followCamera);
-
-    QGridLayout* layout = new QGridLayout(this);
-    layout->setMargin(0);
-    layout->setSpacing(2);
-    layout->addWidget(gridCheckBox, 1, 0);
-    layout->addWidget(trailCheckBox, 1, 1);
-    layout->addWidget(waypointsCheckBox, 1, 2);
-    layout->addItem(new QSpacerItem(20, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
-    layout->addWidget(targetButton, 1, 4);
-    layout->addItem(new QSpacerItem(20, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 5);
-    layout->addWidget(recenterButton, 1, 6);
-    layout->addWidget(followCameraCheckBox, 1, 7);
-    layout->setRowStretch(0, 100);
-    layout->setRowStretch(1, 1);
-    setLayout(layout);
-
-    connect(gridCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(showGrid(int)));
-    connect(trailCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(showTrail(int)));
-    connect(waypointsCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(showWaypoints(int)));
-    connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenter()));
-    connect(followCameraCheckBox, SIGNAL(stateChanged(int)),
-            this, SLOT(toggleFollowCamera(int)));
 }
 
 /**
@@ -205,6 +170,14 @@ Pixhawk3DWidget::showWaypoints(int state)
 }
 
 void
+Pixhawk3DWidget::selectVehicleModel(int index)
+{
+    egocentricMap->removeChild(vehicleModel);
+    vehicleModel = vehicleModels.at(index);
+    egocentricMap->addChild(vehicleModel);
+}
+
+void
 Pixhawk3DWidget::recenter(void)
 {
     float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
@@ -229,6 +202,123 @@ Pixhawk3DWidget::toggleFollowCamera(int32_t state)
     {
         followCamera = false;
     }
+}
+#include <osgDB/WriteFile>
+QVector< osg::ref_ptr<osg::Node> >
+Pixhawk3DWidget::findVehicleModels(void)
+{
+    QDir directory("models");
+    QStringList files = directory.entryList(QStringList("*.osg"), QDir::Files);
+
+    QVector< osg::ref_ptr<osg::Node> > nodes;
+
+    // add Pixhawk Bravo model
+    nodes.push_back(PixhawkCheetahGeode::instance());
+
+    // add all other models in folder
+    for (int i = 0; i < files.size(); ++i)
+    {
+        osg::ref_ptr<osg::Node> node =
+                osgDB::readNodeFile(directory.absoluteFilePath(files[i]).toStdString().c_str());
+
+        if (node)
+        {
+
+        nodes.push_back(node);
+        }
+        else
+        {
+            printf(QString("ERROR: Could not load file " + directory.absoluteFilePath(files[i]) + "\n").toStdString().c_str());
+        }
+    }
+
+//    QStringList dirs = directory.entryList(QDir::Dirs);
+//    // Add models in subfolders
+//    for (int i = 0; i < dirs.size(); ++i)
+//    {
+//        // Handling the current directory
+//        QStringList currFiles = QDir(dirs[i]).entryList(QStringList("*.ac"), QDir::Files);
+
+//        // Load the file
+//        osg::ref_ptr<osg::Node> node =
+//                osgDB::readNodeFile(directory.absoluteFilePath(currFiles.first()).toStdString().c_str());
+
+//        if (node)
+//        {
+
+//        nodes.push_back(node);
+//        }
+//        else
+//        {
+//            printf(QString("ERROR: Could not load file " + directory.absoluteFilePath(files[i]) + "\n").toStdString().c_str());
+//        }
+//    }
+
+    return nodes;
+}
+
+void
+Pixhawk3DWidget::buildLayout(void)
+{
+    QCheckBox* gridCheckBox = new QCheckBox(this);
+    gridCheckBox->setText("Grid");
+    gridCheckBox->setChecked(displayGrid);
+
+    QCheckBox* trailCheckBox = new QCheckBox(this);
+    trailCheckBox->setText("Trail");
+    trailCheckBox->setChecked(displayTrail);
+
+    QCheckBox* waypointsCheckBox = new QCheckBox(this);
+    waypointsCheckBox->setText("Waypoints");
+    waypointsCheckBox->setChecked(displayWaypoints);
+
+    QLabel* modelLabel = new QLabel("Vehicle Model", this);
+    QComboBox* modelComboBox = new QComboBox(this);
+    for (int i = 0; i < vehicleModels.size(); ++i)
+    {
+        modelComboBox->addItem(vehicleModels[i]->getName().c_str());
+    }
+
+    targetButton = new QPushButton(this);
+    targetButton->setCheckable(true);
+    targetButton->setChecked(false);
+    targetButton->setIcon(QIcon(QString::fromUtf8(":/images/status/weather-clear.svg")));
+
+    QPushButton* recenterButton = new QPushButton(this);
+    recenterButton->setText("Recenter Camera");
+
+    QCheckBox* followCameraCheckBox = new QCheckBox(this);
+    followCameraCheckBox->setText("Follow Camera");
+    followCameraCheckBox->setChecked(followCamera);
+
+    QGridLayout* layout = new QGridLayout(this);
+    layout->setMargin(0);
+    layout->setSpacing(2);
+    layout->addWidget(gridCheckBox, 1, 0);
+    layout->addWidget(trailCheckBox, 1, 1);
+    layout->addWidget(waypointsCheckBox, 1, 2);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
+    layout->addWidget(modelLabel, 1, 4);
+    layout->addWidget(modelComboBox, 1, 5);
+    layout->addWidget(targetButton, 1, 6);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 7);
+    layout->addWidget(recenterButton, 1, 8);
+    layout->addWidget(followCameraCheckBox, 1, 9);
+    layout->setRowStretch(0, 100);
+    layout->setRowStretch(1, 1);
+    setLayout(layout);
+
+    connect(gridCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showGrid(int)));
+    connect(trailCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showTrail(int)));
+    connect(waypointsCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(showWaypoints(int)));
+    connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(selectVehicleModel(int)));
+    connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenter()));
+    connect(followCameraCheckBox, SIGNAL(stateChanged(int)),
+            this, SLOT(toggleFollowCamera(int)));
 }
 
 void
@@ -271,20 +361,45 @@ Pixhawk3DWidget::display(void)
                                          robotPitch, osg::Vec3f(1.0f, 0.0f, 0.0f),
                                          robotRoll, osg::Vec3f(0.0f, 1.0f, 0.0f)));
 
-    updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw);
     updateTrail(robotX, robotY, robotZ);
     updateTarget();
     updateWaypoints();
+#ifdef QGC_LIBFREENECT_ENABLED
+    updateRGBD();
+#endif
+    updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw);
 
     // set node visibility
     rollingMap->setChildValue(gridNode, displayGrid);
     rollingMap->setChildValue(trailNode, displayTrail);
     rollingMap->setChildValue(targetNode, displayTarget);
     rollingMap->setChildValue(waypointsNode, displayWaypoints);
+    egocentricMap->setChildValue(rgbd3DNode, displayRGBD3D);
+    hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
+    hudGroup->setChildValue(depth2DGeode, displayRGBD2D);
 
     lastRobotX = robotX;
     lastRobotY = robotY;
     lastRobotZ = robotZ;
+}
+
+void
+Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
+{
+    if (!event->text().isEmpty())
+    {
+        switch (*(event->text().toAscii().data()))
+        {
+        case '1':
+            displayRGBD2D = !displayRGBD2D;
+            break;
+        case '2':
+            displayRGBD3D = !displayRGBD3D;
+            break;
+        }
+    }
+
+    Q3DWidget::keyPressEvent(event);
 }
 
 void
@@ -393,6 +508,7 @@ Pixhawk3DWidget::createTrail(void)
     return geode;
 }
 
+#ifdef QGC_OSGEARTH_ENABLED
 osg::ref_ptr<osgEarth::MapNode>
 Pixhawk3DWidget::createMap(void)
 {
@@ -401,6 +517,7 @@ Pixhawk3DWidget::createMap(void)
 
     return node;
 }
+#endif
 
 osg::ref_ptr<osg::Node>
 Pixhawk3DWidget::createTarget(void)
@@ -421,71 +538,110 @@ Pixhawk3DWidget::createWaypoints(void)
     return group;
 }
 
+osg::ref_ptr<osg::Geode>
+Pixhawk3DWidget::createRGBD3D(void)
+{
+    int frameSize = 640 * 480;
+
+    osg::ref_ptr<osg::Geode> geode(new osg::Geode);
+    osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry);
+
+    osg::ref_ptr<osg::Vec3Array> vertices(new osg::Vec3Array(frameSize));
+    geometry->setVertexArray(vertices);
+
+    osg::ref_ptr<osg::Vec4Array> colors(new osg::Vec4Array(frameSize));
+    geometry->setColorArray(colors);
+    geometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
+    geometry->setUseDisplayList(false);
+
+    geode->addDrawable(geometry);
+
+    return geode;
+}
+
 void
 Pixhawk3DWidget::setupHUD(void)
 {
-    osg::ref_ptr<osg::Vec3Array> hudBackgroundVertices(new osg::Vec3Array);
-    hudBackgroundVertices->push_back(osg::Vec3(0, height(), -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), height(), -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), height() - 30, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, height() - 30, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, 0, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), 0, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), 25, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, 25, -1));
-
-    osg::ref_ptr<osg::DrawElementsUInt> hudTopBackgroundIndices(
-            new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0));
-    hudTopBackgroundIndices->push_back(0);
-    hudTopBackgroundIndices->push_back(1);
-    hudTopBackgroundIndices->push_back(2);
-    hudTopBackgroundIndices->push_back(3);
-
-    osg::ref_ptr<osg::DrawElementsUInt> hudBottomBackgroundIndices(
-            new osg::DrawElementsUInt(osg::PrimitiveSet::POLYGON, 0));
-    hudBottomBackgroundIndices->push_back(4);
-    hudBottomBackgroundIndices->push_back(5);
-    hudBottomBackgroundIndices->push_back(6);
-    hudBottomBackgroundIndices->push_back(7);
-
     osg::ref_ptr<osg::Vec4Array> hudColors(new osg::Vec4Array);
     hudColors->push_back(osg::Vec4(0.0f, 0.0f, 0.0f, 0.2f));
 
     hudBackgroundGeometry = new osg::Geometry;
-    hudBackgroundGeometry->addPrimitiveSet(hudTopBackgroundIndices);
-    hudBackgroundGeometry->addPrimitiveSet(hudBottomBackgroundIndices);
-    hudBackgroundGeometry->setVertexArray(hudBackgroundVertices);
+    hudBackgroundGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,
+                                                               0, 4));
+    hudBackgroundGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,
+                                                               4, 4));
     hudBackgroundGeometry->setColorArray(hudColors);
     hudBackgroundGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
-
-    hudGeode->addDrawable(hudBackgroundGeometry);
+    hudBackgroundGeometry->setUseDisplayList(false);
 
     statusText = new osgText::Text;
     statusText->setCharacterSize(11);
     statusText->setFont("images/Vera.ttf");
     statusText->setAxisAlignment(osgText::Text::SCREEN);
-    statusText->setPosition(osg::Vec3(10, height() - 10, -1.5));
     statusText->setColor(osg::Vec4(255, 255, 255, 1));
 
-    hudGeode->addDrawable(statusText);
+    resizeHUD();
+
+    osg::ref_ptr<osg::Geode> statusGeode = new osg::Geode;
+    statusGeode->addDrawable(hudBackgroundGeometry);
+    statusGeode->addDrawable(statusText);
+    hudGroup->addChild(statusGeode);
+
+    rgbImage = new osg::Image;
+    rgb2DGeode = new ImageWindowGeode("RGB Image",
+                                      osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
+                                      rgbImage);
+    hudGroup->addChild(rgb2DGeode);
+
+    depthImage = new osg::Image;
+    depth2DGeode = new ImageWindowGeode("Depth Image",
+                                        osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
+                                        depthImage);
+    hudGroup->addChild(depth2DGeode);
+}
+
+void
+Pixhawk3DWidget::resizeHUD(void)
+{
+    int topHUDHeight = 30;
+    int bottomHUDHeight = 25;
+
+    osg::Vec3Array* vertices = static_cast<osg::Vec3Array*>(hudBackgroundGeometry->getVertexArray());
+    if (vertices == NULL || vertices->size() != 8)
+    {
+        osg::ref_ptr<osg::Vec3Array> newVertices = new osg::Vec3Array(8);
+        hudBackgroundGeometry->setVertexArray(newVertices);
+
+        vertices = static_cast<osg::Vec3Array*>(hudBackgroundGeometry->getVertexArray());
+    }
+
+    (*vertices)[0] = osg::Vec3(0, height(), -1);
+    (*vertices)[1] = osg::Vec3(width(), height(), -1);
+    (*vertices)[2] = osg::Vec3(width(), height() - topHUDHeight, -1);
+    (*vertices)[3] = osg::Vec3(0, height() - topHUDHeight, -1);
+    (*vertices)[4] = osg::Vec3(0, 0, -1);
+    (*vertices)[5] = osg::Vec3(width(), 0, -1);
+    (*vertices)[6] = osg::Vec3(width(), bottomHUDHeight, -1);
+    (*vertices)[7] = osg::Vec3(0, bottomHUDHeight, -1);
+
+    statusText->setPosition(osg::Vec3(10, height() - 20, -1.5));
+
+    if (rgb2DGeode.valid() && depth2DGeode.valid())
+    {
+        int windowWidth = (width() - 20) / 2;
+        int windowHeight = 3 * windowWidth / 4;
+        rgb2DGeode->setAttributes(10, (height() - windowHeight) / 2,
+                                  windowWidth, windowHeight);
+        depth2DGeode->setAttributes(width() / 2, (height() - windowHeight) / 2,
+                                    windowWidth, windowHeight);
+    }
 }
 
 void
 Pixhawk3DWidget::updateHUD(float robotX, float robotY, float robotZ,
-                         float robotRoll, float robotPitch, float robotYaw)
+                           float robotRoll, float robotPitch, float robotYaw)
 {
-    osg::ref_ptr<osg::Vec3Array> hudBackgroundVertices(new osg::Vec3Array);
-    hudBackgroundVertices->push_back(osg::Vec3(0, height(), -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), height(), -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), height() - 30, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, height() - 30, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, 0, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), 0, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(width(), 25, -1));
-    hudBackgroundVertices->push_back(osg::Vec3(0, 25, -1));
-    hudBackgroundGeometry->setVertexArray(hudBackgroundVertices);
-
-    statusText->setPosition(osg::Vec3(10, height() - 20, -1.5));
+    resizeHUD();
 
     std::pair<double,double> cursorPosition =
             getGlobalCursorPosition(getMouseX(), getMouseY(), -robotZ);
@@ -502,6 +658,21 @@ Pixhawk3DWidget::updateHUD(float robotX, float robotY, float robotZ,
             " Cursor [" << cursorPosition.first <<
             " " << cursorPosition.second << "]";
     statusText->setText(oss.str());
+
+    if (!rgb.isNull())
+    {
+        rgbImage->setImage(640, 480, 1,
+                           GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
+                           reinterpret_cast<unsigned char *>(rgb->data()),
+                           osg::Image::NO_DELETE);
+        rgbImage->dirty();
+
+        depthImage->setImage(640, 480, 1,
+                             GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
+                             reinterpret_cast<unsigned char *>(coloredDepth->data()),
+                             osg::Image::NO_DELETE);
+        depthImage->dirty();
+    }
 }
 
 void
@@ -637,6 +808,14 @@ Pixhawk3DWidget::updateWaypoints(void)
     }
 }
 
+#ifdef QGC_LIBFREENECT_ENABLED
+void
+Pixhawk3DWidget::updateRGBD(void)
+{
+    rgb = freenect->getRgbData();
+    coloredDepth = freenect->getColoredDepthData();
+}
+#endif
 
 void
 Pixhawk3DWidget::markTarget(void)
