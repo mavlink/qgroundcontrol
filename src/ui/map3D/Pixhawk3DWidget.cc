@@ -53,6 +53,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
      , displayWaypoints(true)
      , displayRGBD2D(false)
      , displayRGBD3D(false)
+     , enableRGBDColor(true)
      , followCamera(true)
      , lastRobotX(0.0f)
      , lastRobotY(0.0f)
@@ -228,7 +229,7 @@ Pixhawk3DWidget::findVehicleModels(void)
         }
         else
         {
-            printf(QString("ERROR: Could not load file " + directory.absoluteFilePath(files[i]) + "\n").toStdString().c_str());
+            printf("%s\n", QString("ERROR: Could not load file " + directory.absoluteFilePath(files[i]) + "\n").toStdString().c_str());
         }
     }
 
@@ -395,6 +396,9 @@ Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
             break;
         case '2':
             displayRGBD3D = !displayRGBD3D;
+            break;
+        case 'c': case 'C':
+            enableRGBDColor = !enableRGBDColor;
             break;
         }
     }
@@ -946,7 +950,7 @@ Pixhawk3DWidget::updateRGBD(void)
 {
     rgb = freenect->getRgbData();
     coloredDepth = freenect->getColoredDepthData();
-    pointCloud = freenect->getPointCloudData();
+    pointCloud = freenect->get6DPointCloudData();
 
     osg::Geometry* geometry = rgbd3DNode->getDrawable(0)->asGeometry();
 
@@ -954,17 +958,27 @@ Pixhawk3DWidget::updateRGBD(void)
     osg::Vec4Array* colors = static_cast<osg::Vec4Array*>(geometry->getColorArray());
     for (int i = 0; i < pointCloud.size(); ++i)
     {
-        double x = pointCloud[i].x();
-        double y = pointCloud[i].y();
-        double z = pointCloud[i].z();
+        double x = pointCloud[i].x;
+        double y = pointCloud[i].y;
+        double z = pointCloud[i].z;
         (*vertices)[i].set(x, z, -y);
 
-        double dist = sqrt(x * x + y * y + z * z);
-        int colorIndex = static_cast<int>(fmin(dist / 7.0 * 127.0, 127.0));
-        (*colors)[i].set(colormap_jet[colorIndex][0],
-                         colormap_jet[colorIndex][1],
-                         colormap_jet[colorIndex][2],
-                         1.0f);
+        if (enableRGBDColor)
+        {
+            (*colors)[i].set(pointCloud[i].r / 255.0f,
+                             pointCloud[i].g / 255.0f,
+                             pointCloud[i].b / 255.0f,
+                             1.0f);
+        }
+        else
+        {
+            double dist = sqrt(x * x + y * y + z * z);
+            int colorIndex = static_cast<int>(fmin(dist / 7.0 * 127.0, 127.0));
+            (*colors)[i].set(colormap_jet[colorIndex][0],
+                             colormap_jet[colorIndex][1],
+                             colormap_jet[colorIndex][2],
+                             1.0f);
+        }
     }
 
     if (geometry->getNumPrimitiveSets() == 0)
