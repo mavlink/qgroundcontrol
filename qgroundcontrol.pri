@@ -188,7 +188,7 @@ linux-g++ {
     DEFINES += QGC_OSGEARTH_ENABLED
     }
 
-    exists(/usr/local/include/libfreenect) {
+    exists(/usr/local/include/libfreenect/libfreenect.h) {
     message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
     INCLUDEPATH += /usr/include/libusb-1.0
