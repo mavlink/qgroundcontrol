@@ -122,6 +122,7 @@ signals:
     void updateStatusString(const QString &);       ///< emits the current status string
 
     void loadWPFile();                                ///< emits signal that a file wp has been load
+    void readGlobalWPFromUAS(bool value);                            ///< emits signal when finish to read Global WP from UAS
 
 private:
     UAS &uas;                                       ///< Reference to the corresponding UAS

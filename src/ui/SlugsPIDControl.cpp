@@ -489,32 +489,32 @@ void SlugsPIDControl::receivePidValues(int systemId, const mavlink_pid_t &pidVal
      qDebug() << "\nACTUALIZANDO GUI = " << pidValues.idx;
     switch(pidValues.idx)
     {
-    case 1:
+    case 0:
         ui->dT_P_get->setText(QString::number(pidValues.pVal));
         ui->dT_I_get->setText(QString::number(pidValues.iVal));
         ui->dT_D_get->setText(QString::number(pidValues.dVal));
         break;
-    case 2:
+    case 1:
         ui->HELPComm_P_get->setText(QString::number(pidValues.pVal));
         ui->HELPComm_I_get->setText(QString::number(pidValues.iVal));
         ui->HELPComm_FF_get->setText(QString::number(pidValues.dVal));
         break;
-    case 3:
+    case 2:
         ui->dE_P_get->setText(QString::number(pidValues.pVal));
         ui->dE_I_get->setText(QString::number(pidValues.iVal));
         ui->dE_D_get->setText(QString::number(pidValues.dVal));
         break;
-    case 4:
+    case 3:
         ui->dR_P_get->setText(QString::number(pidValues.pVal));
         ui->dR_I_get->setText(QString::number(pidValues.iVal));
         ui->dR_D_get->setText(QString::number(pidValues.dVal));
         break;
-    case 5:
+    case 4:
         ui->dA_P_get->setText(QString::number(pidValues.pVal));
         ui->dA_I_get->setText(QString::number(pidValues.iVal));
         ui->dA_D_get->setText(QString::number(pidValues.dVal));
         break;
-    case 9:
+    case 8:
         ui->P2dT_FF_get->setText(QString::number(pidValues.pVal));
         break;
 

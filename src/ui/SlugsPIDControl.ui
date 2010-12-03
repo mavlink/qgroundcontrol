@@ -977,6 +977,52 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>dT_P_set</tabstop>
+  <tabstop>dT_I_set</tabstop>
+  <tabstop>dT_D_set</tabstop>
+  <tabstop>dT_PID_set_pushButton</tabstop>
+  <tabstop>dT_PID_get_pushButton</tabstop>
+  <tabstop>HELPComm_P_set</tabstop>
+  <tabstop>HELPComm_I_set</tabstop>
+  <tabstop>HELPComm_FF_set</tabstop>
+  <tabstop>HELPComm_PDI_set_pushButton</tabstop>
+  <tabstop>HELPComm_PDI_get_pushButton</tabstop>
+  <tabstop>dE_P_set</tabstop>
+  <tabstop>dE_I_set</tabstop>
+  <tabstop>dE_D_set</tabstop>
+  <tabstop>dE_PID_set_pushButton</tabstop>
+  <tabstop>dE_PID_get_pushButton</tabstop>
+  <tabstop>dR_P_set</tabstop>
+  <tabstop>dR_I_set</tabstop>
+  <tabstop>dR_D_set</tabstop>
+  <tabstop>dR_PDI_set_pushButton</tabstop>
+  <tabstop>dR_PDI_get_pushButton</tabstop>
+  <tabstop>dA_P_set</tabstop>
+  <tabstop>dA_I_set</tabstop>
+  <tabstop>dA_D_set</tabstop>
+  <tabstop>dA_PID_set_pushButton</tabstop>
+  <tabstop>dA_PID_get_pushButton</tabstop>
+  <tabstop>P2dT_FF_set</tabstop>
+  <tabstop>Pitch2dT_PDI_set_pushButton</tabstop>
+  <tabstop>Pitch2dT_PDI_get_pushButton</tabstop>
+  <tabstop>dT_P_get</tabstop>
+  <tabstop>dT_I_get</tabstop>
+  <tabstop>dT_D_get</tabstop>
+  <tabstop>HELPComm_P_get</tabstop>
+  <tabstop>HELPComm_I_get</tabstop>
+  <tabstop>HELPComm_FF_get</tabstop>
+  <tabstop>dE_P_get</tabstop>
+  <tabstop>dE_I_get</tabstop>
+  <tabstop>dE_D_get</tabstop>
+  <tabstop>dR_P_get</tabstop>
+  <tabstop>dR_I_get</tabstop>
+  <tabstop>dR_D_get</tabstop>
+  <tabstop>dA_P_get</tabstop>
+  <tabstop>dA_I_get</tabstop>
+  <tabstop>dA_D_get</tabstop>
+  <tabstop>P2dT_FF_get</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
