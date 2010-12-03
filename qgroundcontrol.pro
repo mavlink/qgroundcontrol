@@ -140,7 +140,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/SlugsDataSensorView.ui \
     src/ui/SlugsHilSim.ui \
     src/ui/SlugsPIDControl.ui \
-    src/ui/SlugsVideoCamControl.ui
+    src/ui/SlugsVideoCamControl.ui \
+    src/ui/SlugsPadCameraControl.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -243,7 +244,8 @@ HEADERS += src/MG.h \
     src/ui/SlugsDataSensorView.h \
     src/ui/SlugsHilSim.h \
     src/ui/SlugsPIDControl.h \
-    src/ui/SlugsVideoCamControl.h
+    src/ui/SlugsVideoCamControl.h \
+    src/ui/SlugsPadCameraControl.h
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -326,7 +328,8 @@ SOURCES += src/main.cc \
     src/ui/SlugsDataSensorView.cc \
     src/ui/SlugsHilSim.cc \
     src/ui/SlugsPIDControl.cpp \
-    src/ui/SlugsVideoCamControl.cpp
+    src/ui/SlugsVideoCamControl.cpp \
+    src/ui/SlugsPadCameraControl.cpp
 
 RESOURCES = mavground.qrc
 

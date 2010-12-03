@@ -153,6 +153,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
                 current_partner_compid = 0;
 
                 protocol_timer.stop();
+                emit readGlobalWPFromUAS(false);
                 emit updateStatusString("done.");
 
                 qDebug() << "got all waypoints from ID " << systemId;
@@ -294,6 +295,7 @@ void UASWaypointManager::localAddWaypoint(Waypoint *wp)
     {
         wp->setId(waypoints.size());
         waypoints.insert(waypoints.size(), wp);
+
         emit waypointListChanged();
     }
 }
@@ -417,6 +419,7 @@ void UASWaypointManager::clearWaypointList()
 
 void UASWaypointManager::readWaypoints()
 {
+    emit readGlobalWPFromUAS(true);
     if(current_state == WP_IDLE)
     {
         while(waypoints.size()>0)
@@ -424,6 +427,7 @@ void UASWaypointManager::readWaypoints()
             Waypoint *t = waypoints.back();
             delete t;
             waypoints.pop_back();
+
         }
 
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
@@ -435,6 +439,7 @@ void UASWaypointManager::readWaypoints()
         current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
 
         sendWaypointRequestList();
+
     }
 }
 
@@ -569,6 +574,8 @@ void UASWaypointManager::sendWaypointRequestList()
     MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
 
     qDebug() << "sent waypoint list request to ID " << wprl.target_system;
+
+
 }
 
 void UASWaypointManager::sendWaypointRequest(quint16 seq)
