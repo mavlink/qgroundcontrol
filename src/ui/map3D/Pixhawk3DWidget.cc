@@ -78,7 +78,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
 
     // generate map model
     mapNode = createMap();
-    allocentricMap->addChild(mapNode);
+    rollingMap->addChild(mapNode);
 
     // generate target model
     allocentricMap->addChild(createTarget());
@@ -203,9 +203,13 @@ Pixhawk3DWidget::recenter(void)
     double robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
     if (uas != NULL)
     {
-        robotX = uas->getLocalX();
-        robotY = uas->getLocalY();
-        robotZ = uas->getLocalZ();
+        double latitude = uas->getLatitude();
+        double longitude = uas->getLongitude();
+        double altitude = uas->getAltitude();
+
+        QString utmZone;
+        Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);
+        robotZ = -altitude;
     }
 
     recenterCamera(robotY, robotX, -robotZ);
@@ -358,9 +362,16 @@ Pixhawk3DWidget::display(void)
         return;
     }
 
-    double robotX = uas->getLocalX();
-    double robotY = uas->getLocalY();
-    double robotZ = uas->getLocalZ();
+    double latitude = uas->getLatitude();
+    double longitude = uas->getLongitude();
+    double altitude = uas->getAltitude();
+
+    double robotX;
+    double robotY;
+    QString utmZone;
+    Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);
+    double robotZ = -altitude;
+
     double robotRoll = uas->getRoll();
     double robotPitch = uas->getPitch();
     double robotYaw = uas->getYaw();
@@ -397,7 +408,7 @@ Pixhawk3DWidget::display(void)
 
     if (displayImagery)
     {
-        updateImagery();
+        updateImagery(robotX, robotY, utmZone);
     }
 
     if (displayTarget)
@@ -422,7 +433,7 @@ Pixhawk3DWidget::display(void)
 
     rollingMap->setChildValue(gridNode, displayGrid);
     rollingMap->setChildValue(trailNode, displayTrail);
-    allocentricMap->setChildValue(mapNode, displayImagery);
+    rollingMap->setChildValue(mapNode, displayImagery);
     rollingMap->setChildValue(targetNode, displayTarget);
     rollingMap->setChildValue(waypointsNode, displayWaypoints);
     if (enableFreenect)
@@ -779,14 +790,13 @@ Pixhawk3DWidget::updateTrail(double robotX, double robotY, double robotZ)
 }
 
 void
-Pixhawk3DWidget::updateImagery(void)
+Pixhawk3DWidget::updateImagery(double originX, double originY,
+                               const QString& zone)
 {
     if (mapNode->getImageryType() == Imagery::BLANK_MAP)
     {
         return;
     }
-
-    char zone[5] = "32T";
 
     double viewingRadius = cameraManipulator->getDistance() * 10.0;
     if (viewingRadius < 100.0)
@@ -828,6 +838,8 @@ Pixhawk3DWidget::updateImagery(void)
                     resolution,
                     cameraManipulator->getCenter().y(),
                     cameraManipulator->getCenter().x(),
+                    originX,
+                    originY,
                     zone);
 
     // prefetch map tiles
@@ -894,6 +906,13 @@ Pixhawk3DWidget::updateWaypoints(void)
 {
     if (uas)
     {
+        double latitude = uas->getLatitude();
+        double longitude = uas->getLongitude();
+
+        double robotX, robotY;
+        QString utmZone;
+        Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);
+
         if (waypointsNode->getNumChildren() > 0)
         {
             waypointsNode->removeChild(0, waypointsNode->getNumChildren());
@@ -923,8 +942,8 @@ Pixhawk3DWidget::updateWaypoints(void)
             osg::ref_ptr<osg::PositionAttitudeTransform> pat =
                     new osg::PositionAttitudeTransform;
 
-            pat->setPosition(osg::Vec3d(list.at(i)->getY() - uas->getLocalY(),
-                                        list.at(i)->getX() - uas->getLocalX(),
+            pat->setPosition(osg::Vec3d(list.at(i)->getY() - robotY,
+                                        list.at(i)->getX() - robotX,
                                         0.0));
 
             waypointsNode->addChild(pat);

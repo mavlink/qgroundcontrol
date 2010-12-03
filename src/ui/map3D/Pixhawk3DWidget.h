@@ -91,7 +91,7 @@ private:
     void updateHUD(double robotX, double robotY, double robotZ,
                    double robotRoll, double robotPitch, double robotYaw);
     void updateTrail(double robotX, double robotY, double robotZ);
-    void updateImagery(void);
+    void updateImagery(double originX, double originY, const QString& zone);
     void updateTarget(void);
     void updateWaypoints(void);
 #ifdef QGC_LIBFREENECT_ENABLED
