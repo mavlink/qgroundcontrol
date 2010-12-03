@@ -488,7 +488,7 @@ Pixhawk3DWidget::createGrid(void)
     // draw a 20m x 20m grid with 0.25m resolution
     for (float i = -radius; i <= radius; i += resolution)
     {
-        if (fabsf(i - roundf(i)) < 0.01f)
+        if (fabsf(i - floor(i + 0.5f)) < 0.01f)
         {
             coarseCoords->push_back(osg::Vec3(i, -radius, 0.0f));
             coarseCoords->push_back(osg::Vec3(i, radius, 0.0f));

@@ -142,6 +142,7 @@ void MainWindow::buildWidgets()
 #ifdef QGC_OSGEARTH_ENABLED
     _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
 #endif
+    gEarthWidget = new QGCGoogleEarthView(this);
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -239,6 +240,7 @@ void MainWindow::arrangeCenterStack()
     #ifdef QGC_OSGEARTH_ENABLED
     if (_3DMapWidget) centerStack->addWidget(_3DMapWidget);
     #endif
+    if (gEarthWidget) centerStack->addWidget(gEarthWidget);
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 
@@ -388,6 +390,7 @@ void MainWindow::connectActions()
     connect(ui.actionOnline_documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(ui.actionCredits_Developers, SIGNAL(triggered()), this, SLOT(showCredits()));
     connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
+    connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
 
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
@@ -1016,6 +1019,55 @@ void MainWindow::load3DMapView()
                 }
             }
 #endif
+            this->show();
+        }
+
+void MainWindow::loadGoogleEarthView()
+{
+            clearView();
+
+            // 3D map
+            if (gEarthWidget)
+            {
+                QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+                if (centerStack)
+                {
+                    centerStack->setCurrentWidget(gEarthWidget);
+                }
+            }
+
+            // UAS CONTROL
+            if (controlDockWidget)
+            {
+                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+                controlDockWidget->show();
+            }
+
+            // UAS LIST
+            if (listDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+                listDockWidget->show();
+            }
+
+            // WAYPOINT LIST
+            if (waypointsDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
+                waypointsDockWidget->show();
+            }
+
+            // HORIZONTAL SITUATION INDICATOR
+            if (hsiDockWidget)
+            {
+                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+                if (hsi)
+                {
+                    hsi->start();
+                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+                    hsiDockWidget->show();
+                }
+            }
             this->show();
 
         }
