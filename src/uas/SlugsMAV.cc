@@ -59,76 +59,12 @@ SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
 void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     // Let UAS handle the default message set
-   // UAS::receiveMessage(link, message);
+   UAS::receiveMessage(link, message);
 
 
     // Handle your special messages mavlink_message_t* msg = &message;
     switch (message.msgid)
     {
-
-      case MAVLINK_MSG_ID_HEARTBEAT:
-        emit heartbeat(this);
-        // Set new type if it has changed
-        if (this->type != mavlink_msg_heartbeat_get_type(&message))
-        {
-            this->type = mavlink_msg_heartbeat_get_type(&message);
-            emit systemTypeSet(this, type);
-        }
-      break;
-
-      case MAVLINK_MSG_ID_RAW_IMU:
-        mavlink_msg_raw_imu_decode(&message, &mlRawImuData);
-      break;
-
-      case MAVLINK_MSG_ID_WAYPOINT_COUNT:
-        mavlink_waypoint_count_t wpct;
-        mavlink_msg_waypoint_count_decode(&message, &wpct);
-        if (wpct.target_system == mavlink->getSystemId() && wpct.target_component == mavlink->getComponentId())
-        {
-          waypointManager.handleWaypointCount(message.sysid, message.compid, wpct.count);
-        }
-      break;
-
-      case MAVLINK_MSG_ID_WAYPOINT:
-        mavlink_waypoint_t wp;
-        mavlink_msg_waypoint_decode(&message, &wp);
-        //qDebug() << "got waypoint (" << wp.seq << ") from ID " << message.sysid << " x=" << wp.x << " y=" << wp.y << " z=" << wp.z;
-        if(wp.target_system == mavlink->getSystemId() && wp.target_component == mavlink->getComponentId())
-        {
-          waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
-        }
-      break;
-
-      case MAVLINK_MSG_ID_WAYPOINT_ACK:
-        mavlink_waypoint_ack_t wpa;
-        mavlink_msg_waypoint_ack_decode(&message, &wpa);
-        if(wpa.target_system == mavlink->getSystemId() && wpa.target_component == mavlink->getComponentId())
-        {
-          waypointManager.handleWaypointAck(message.sysid, message.compid, &wpa);
-        }
-      break;
-
-      case MAVLINK_MSG_ID_WAYPOINT_REQUEST:
-        mavlink_waypoint_request_t wpr;
-        mavlink_msg_waypoint_request_decode(&message, &wpr);
-        qDebug() << "Waypoint Request" << wpr.seq;
-        if(wpr.target_system == mavlink->getSystemId() && wpr.target_component == mavlink->getComponentId())
-        {
-          waypointManager.handleWaypointRequest(message.sysid, message.compid, &wpr);
-        }
-      break;
-
-      case MAVLINK_MSG_ID_WAYPOINT_REACHED:
-        mavlink_waypoint_reached_t wpre;
-        mavlink_msg_waypoint_reached_decode(&message, &wpre);
-        waypointManager.handleWaypointReached(message.sysid, message.compid, &wpre);
-      break;
-
-      case MAVLINK_MSG_ID_WAYPOINT_CURRENT:
-        mavlink_waypoint_current_t wpc;
-        mavlink_msg_waypoint_current_decode(&message, &wpc);
-        waypointManager.handleWaypointCurrent(message.sysid, message.compid, &wpc);
-      break;
 
 #ifdef MAVLINK_ENABLED_SLUGS
 

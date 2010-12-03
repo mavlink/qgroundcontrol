@@ -490,6 +490,7 @@ void WaypointList::on_clearWPListButton_clicked()
                   widget->remove();
               }
 
+              uas->getWaypointManager().clearWaypointList();
 
 
               isGlobalWP = false;
