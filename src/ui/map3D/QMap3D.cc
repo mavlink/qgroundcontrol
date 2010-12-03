@@ -21,6 +21,8 @@ This file is part of the QGROUNDCONTROL project
 
 ======================================================================*/
 
+#ifdef QGC_OSGEARTH_ENABLED
+
 /**
  * @file
  *   @brief Definition of the class QMap3D.
@@ -62,3 +64,5 @@ void QMap3D::on_pushButton_vehicle_clicked()
     graphicsView->getSceneData()->asGroup()->addChild(osgDB::readNodeFile(vehicleName.toStdString()));
     graphicsView->updateCamera();
 }
+
+#endif

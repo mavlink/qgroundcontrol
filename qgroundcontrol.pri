@@ -42,8 +42,11 @@ QMAKE_PRE_LINK += echo "Copying files"
 # MAC OS X
 macx { 
 
+    COMPILER_VERSION = $$system(gcc -v)
+    message(Using compiler $$COMPILER_VERSION)
+
     HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || || contains( HARDWARE_PLATFORM, 9.9.0 ) {
+    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || contains( HARDWARE_PLATFORM, 9.9.0 ) {
         # x86 Mac OS X Leopard 10.5 and earlier
         CONFIG += x86 cocoa phonon
         message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
@@ -60,18 +63,15 @@ macx {
         message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
     }
 
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 
     DESTDIR = $$BASEDIR/bin/mac
-    INCLUDEPATH += -framework SDL \
-        $$BASEDIR/../mavlink/contrib/slugs/include \
-        $$BASEDIR/../mavlink/include
+    INCLUDEPATH += -framework SDL
 
     LIBS += -framework IOKit \
         -framework SDL \
         -framework CoreFoundation \
         -framework ApplicationServices \
- #       -framework GLUT \
         -lm
     
     ICON = $$BASEDIR/images/icons/macx.icns
@@ -79,37 +79,71 @@ macx {
     # Copy audio files if needed
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
 
-    exists(/usr/include/osg) {
+    exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
+    # No check for GLUT.framework since it's a MAC default
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
+    DEFINES += QGC_OSG_ENABLED
     # Include OpenSceneGraph libraries
-    LIBS += -losg
+    INCLUDEPATH += -framework GLUT \
+            -framework Carbon \
+            -framework OpenThreads \
+            -framework osg \
+            -framework osgViewer \
+            -framework osgGA \
+            -framework osgDB \
+            -framework osgText \
+            -framework osgWidget
+
+    LIBS += -framework GLUT \
+            -framework Carbon \
+            -framework OpenThreads \
+            -framework osg \
+            -framework osgViewer \
+            -framework osgGA \
+            -framework osgDB \
+            -framework osgText \
+            -framework osgWidget
     }
 
     exists(/usr/include/osgEarth) {
     message("Building support for osgEarth")
     DEPENDENCIES_PRESENT += osgearth
     # Include osgEarth libraries
-    LIBS += -losgViewer \
-            -losgEarth \
-            -losgEarthUtil
+    INCLUDEPATH += -framework GDAL \
+            $$IN_PWD/lib/mac32-gcc/include \
+            -framework GEOS \
+            -framework SQLite3 \
+            -framework osgFX \
+            -framework osgTerrain
+
+    LIBS += -framework GDAL \
+            -framework GEOS \
+            -framework SQLite3 \
+            -framework osgFX \
+            -framework osgTerrain \
     DEFINES += QGC_OSGEARTH_ENABLED
     }
 
-    exists(/usr/local/include/libfreenect) {
+    exists(/opt/local/include/libfreenect) {
     message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
     # Include libfreenect libraries
     LIBS += -lfreenect
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
+
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    #QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # GNU/Linux
 linux-g++ {
-    
+
     debug {
         DESTDIR = $$BUILDDIR/debug
+        CONFIG += debug
     }
 
     release {
@@ -124,18 +158,8 @@ linux-g++ {
               # $$BASEDIR/lib/flite/lang
 
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
-        # 64-bit Linux
-        #LIBS += \
-            #-L$$BASEDIR/lib/flite/linux64
-        message(Building for GNU/Linux 64bit/x64)
-    } else {
-        # 32-bit Linux
-        #LIBS += \
-           #-L$$BASEDIR/lib/flite/linux32
-        message(Building for GNU/Linux 32bit/i386)
-    }
+    message(Building for GNU/Linux 32bit/i386)
+
     LIBS += \
         -L/usr/lib \
         -lm \
@@ -165,7 +189,7 @@ linux-g++ {
     }
 
     exists(/usr/local/include/libfreenect) {
-    message("Building suplocport for libfreenect")
+    message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
     INCLUDEPATH += /usr/include/libusb-1.0
     # Include libfreenect libraries
@@ -173,23 +197,21 @@ linux-g++ {
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
 
-    #QMAKE_CXXFLAGS += -Wl,-E
-
-        #-lflite_cmu_us_rms \
-        #-lflite_cmu_us_slt \
-
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug/.
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release/.
 
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 linux-g++-64 {
-    CONFIG += debug
 
     debug {
         DESTDIR = $$BUILDDIR/debug
+        CONFIG += debug
     }
 
     release {
@@ -197,24 +219,16 @@ linux-g++-64 {
     }
 
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
               # $$BASEDIR/lib/flite/lang
 
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
-        # 64-bit Linux
-        #LIBS += \
-            #-L$$BASEDIR/lib/flite/linux64
-        message(Building for GNU/Linux 64bit/x64)
-    } else {
-        # 32-bit Linux
-        #LIBS += \
-           #-L$$BASEDIR/lib/flite/linux32
-        message(Building for GNU/Linux 32bit/i386)
-    }
+    # 64-bit Linux
+    message(Building for GNU/Linux 64bit/x64 (g++-64))
+
     LIBS += \
         -L/usr/lib \
         -lm \
@@ -252,6 +266,9 @@ linux-g++-64 {
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
 
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # Windows (32bit)
@@ -306,6 +323,10 @@ QMAKE_CXXFLAGS += -DUSE_QT4
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    QMAKE_CXXFLAGS += /Wl /E
 }
 
 # Windows (32bit)
@@ -347,6 +368,10 @@ win32-g++ {
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 	}
+
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # Windows (64bit)
@@ -388,4 +413,8 @@ win64-g++ {
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
     QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 	}
+
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    QMAKE_CXXFLAGS += -Wl,-E
 }

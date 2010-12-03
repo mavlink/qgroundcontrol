@@ -166,6 +166,8 @@ protected:
     QPointer<QGCDataPlot2D> dataplotWidget;
     #ifdef QGC_OSG_ENABLED
     QPointer<QWidget> _3DWidget;
+    #endif
+    #ifdef QGC_OSGEARTH_ENABLED
     QPointer<QWidget> _3DMapWidget;
     #endif
     // Dock widgets
