@@ -30,7 +30,8 @@ QT += network \
     opengl \
     svg \
     xml \
-    phonon
+    phonon \
+    webkit
 TEMPLATE = app
 TARGET = qgroundcontrol
 BASEDIR = $$IN_PWD
@@ -138,7 +139,9 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui \
-    src/ui/QMap3D.ui
+    src/ui/QMap3D.ui \
+    src/ui/QGCWebView.ui \
+    src/ui/map3D/QGCGoogleEarthView.ui
 
 # src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
@@ -229,7 +232,9 @@ HEADERS += src/MG.h \
     src/ui/RadioCalibration/SwitchCalibrator.h \
     src/ui/RadioCalibration/CurveCalibrator.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
-    src/comm/QGCMAVLink.h
+    src/comm/QGCMAVLink.h \
+    src/ui/QGCWebView.h \
+    src/ui/map3D/QGCGoogleEarthView.h
 
 
 contains(DEPENDENCIES_PRESENT, osg) { 
@@ -329,7 +334,9 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc
+    src/ui/RadioCalibration/RadioCalibrationData.cc \
+    src/ui/QGCWebView.cc \
+    src/ui/map3D/QGCGoogleEarthView.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     
