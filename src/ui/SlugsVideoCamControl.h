@@ -6,6 +6,8 @@
 #include <QGraphicsView>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsScene>
+#include "SlugsPadCameraControl.h"
+
 
 #define DELTA 1000
 
@@ -36,6 +38,8 @@ protected:
     virtual void mousePressEvent(QMouseEvent* event);
     virtual void mouseReleaseEvent(QMouseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
+    //virtual void paintEvent(QPaintEvent *pe);
+    void paintEvent(QPaintEvent *pe);
 
 
 private:
@@ -44,6 +48,10 @@ private:
 
     int x1;
     int y1;
+     QPoint tL;
+      QPoint bR;
+
+       SlugsPadCameraControl* padCamera;
 
 
 };
