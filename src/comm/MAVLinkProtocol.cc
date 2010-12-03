@@ -258,7 +258,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 //if ()
 
                 // If a new loss was detected or we just hit one 128th packet step
-                if (lastLoss != totalLossCounter || (totalReceiveCounter == 128))
+                if (lastLoss != totalLossCounter || (totalReceiveCounter % 64 == 0))
                 {
                     // Calculate new loss ratio
                     // Receive loss
@@ -325,6 +325,8 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
 {
     // Create buffer
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    // Rewriting header to ensure correct link ID is set
+    if (link->getId() != 0) mavlink_finalize_message_chan(&message, this->getSystemId(), this->getComponentId(), link->getId(), message.len);
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer(buffer, &message);
     // If link is connected

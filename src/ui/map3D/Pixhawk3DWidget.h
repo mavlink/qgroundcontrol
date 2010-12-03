@@ -110,6 +110,7 @@ private:
     bool displayWaypoints;
     bool displayRGBD2D;
     bool displayRGBD3D;
+    bool enableRGBDColor;
 
     bool followCamera;
 
@@ -136,10 +137,10 @@ private:
     osg::ref_ptr<osg::Geode> rgbd3DNode;
 #ifdef QGC_LIBFREENECT_ENABLED
     QScopedPointer<Freenect> freenect;
+    QVector<Freenect::Vector6D> pointCloud;
 #endif
     QSharedPointer<QByteArray> rgb;
     QSharedPointer<QByteArray> coloredDepth;
-    QVector<QVector3D> pointCloud;
 
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
