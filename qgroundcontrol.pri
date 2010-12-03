@@ -77,7 +77,9 @@ macx {
     ICON = $$BASEDIR/images/icons/macx.icns
 
     # Copy audio files if needed
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+    # Copy google earth starter file
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/images/earth.html $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
 
     exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
     # No check for GLUT.framework since it's a MAC default
@@ -325,6 +327,10 @@ DEFINES += QGC_OSG_ENABLED
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
+
+    # Copy google earth starter file
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/release/
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/debug/
 
 }
 
