@@ -88,9 +88,9 @@ private:
     void setupHUD(void);
     void resizeHUD(void);
 
-    void updateHUD(float robotX, float robotY, float robotZ,
-                   float robotRoll, float robotPitch, float robotYaw);
-    void updateTrail(float robotX, float robotY, float robotZ);
+    void updateHUD(double robotX, double robotY, double robotZ,
+                   double robotRoll, double robotPitch, double robotYaw);
+    void updateTrail(double robotX, double robotY, double robotZ);
     void updateImagery(void);
     void updateTarget(void);
     void updateWaypoints(void);
@@ -111,8 +111,8 @@ private:
 
     bool followCamera;
 
-    osg::ref_ptr<osg::Vec3Array> trailVertices;
-    QVarLengthArray<osg::Vec3, 10000> trail;
+    osg::ref_ptr<osg::Vec3dArray> trailVertices;
+    QVarLengthArray<osg::Vec3d, 10000> trail;
 
     osg::ref_ptr<osg::Node> vehicleModel;
     osg::ref_ptr<osg::Geometry> hudBackgroundGeometry;
@@ -134,6 +134,7 @@ private:
     QScopedPointer<Freenect> freenect;
     QVector<Freenect::Vector6D> pointCloud;
 #endif
+    bool enableFreenect;
     QSharedPointer<QByteArray> rgb;
     QSharedPointer<QByteArray> coloredDepth;
 
@@ -141,7 +142,7 @@ private:
 
     QPushButton* targetButton;
 
-    float lastRobotX, lastRobotY, lastRobotZ;
+    double lastRobotX, lastRobotY, lastRobotZ;
 };
 
 #endif // PIXHAWK3DWIDGET_H

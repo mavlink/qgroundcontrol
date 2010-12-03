@@ -88,12 +88,12 @@ public:
      * @param dy Translation along the y-axis in meters.
      * @param dz Translation along the z-axis in meters.
      */
-    void moveCamera(float dx, float dy, float dz);
+    void moveCamera(double dx, double dy, double dz);
 
     /**
      * @brief Recenters the camera at (x,y,z).
      */
-    void recenterCamera(float x, float y, float z);
+    void recenterCamera(double x, double y, double z);
 
     /**
      * @brief Sets up 3D display mode.
@@ -210,20 +210,6 @@ protected:
      * @param event Mouse wheel event.
      */
     virtual void wheelEvent(QWheelEvent* event);
-
-    /**
-     * @brief Converts radians to degrees.
-     * @param angle Angle in radians.
-     * @return angle in degrees.
-     */
-    float r2d(float angle);
-
-    /**
-     * @brief Converts degrees to radians.
-     * @param angle Angle in degrees.
-     * @return angle in radians.
-     */
-    float d2r(float angle);
 
     /**
      * @brief Converts Qt-defined key to OSG-defined key.

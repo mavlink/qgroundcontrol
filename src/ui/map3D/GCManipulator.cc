@@ -33,21 +33,21 @@ This file is part of the QGROUNDCONTROL project
 
 GCManipulator::GCManipulator()
 {
-    _moveSensitivity = 0.05f;
-    _zoomSensitivity = 1.0f;
-    _minZoomRange = 2.0f;
+    _moveSensitivity = 0.05;
+    _zoomSensitivity = 1.0;
+    _minZoomRange = 2.0;
 }
 
 void
-GCManipulator::setMinZoomRange(float minZoomRange)
+GCManipulator::setMinZoomRange(double minZoomRange)
 {
     _minZoomRange = minZoomRange;
 }
 
 void
-GCManipulator::move(float dx, float dy, float dz)
+GCManipulator::move(double dx, double dy, double dz)
 {
-    _center += osg::Vec3(dx, dy, dz);
+    _center += osg::Vec3d(dx, dy, dz);
 }
 
 bool
@@ -126,15 +126,15 @@ GCManipulator::handle(const osgGA::GUIEventAdapter& ea,
     case GUIEventAdapter::SCROLL:
         {
             // zoom model
-            float scale = 1.0f;
+            double scale = 1.0;
 
             if (ea.getScrollingMotion() == GUIEventAdapter::SCROLL_UP)
             {
-                scale -= _zoomSensitivity * 0.1f;
+                scale -= _zoomSensitivity * 0.1;
             }
             else
             {
-                scale += _zoomSensitivity * 0.1f;
+                scale += _zoomSensitivity * 0.1;
             }
             if (_distance * scale > _minZoomRange)
             {
@@ -161,12 +161,12 @@ GCManipulator::handle(const osgGA::GUIEventAdapter& ea,
             }
         case GUIEventAdapter::KEY_Left:
             {
-                float scale = -_moveSensitivity * _distance;
+                double scale = -_moveSensitivity * _distance;
 
                 osg::Matrix rotation_matrix;
                 rotation_matrix.makeRotate(_rotation);
 
-                osg::Vec3 dv(scale, 0.0f, 0.0f);
+                osg::Vec3d dv(scale, 0.0, 0.0);
 
                 _center += dv * rotation_matrix;
 
@@ -174,12 +174,12 @@ GCManipulator::handle(const osgGA::GUIEventAdapter& ea,
             }
         case GUIEventAdapter::KEY_Right:
             {
-                float scale = _moveSensitivity * _distance;
+                double scale = _moveSensitivity * _distance;
 
                 osg::Matrix rotation_matrix;
                 rotation_matrix.makeRotate(_rotation);
 
-                osg::Vec3 dv(scale, 0.0f, 0.0f);
+                osg::Vec3d dv(scale, 0.0, 0.0);
 
                 _center += dv * rotation_matrix;
 
@@ -187,12 +187,12 @@ GCManipulator::handle(const osgGA::GUIEventAdapter& ea,
             }
         case GUIEventAdapter::KEY_Up:
             {
-                float scale = _moveSensitivity * _distance;
+                double scale = _moveSensitivity * _distance;
 
                 osg::Matrix rotation_matrix;
                 rotation_matrix.makeRotate(_rotation);
 
-                osg::Vec3 dv(0.0f, scale, 0.0f);
+                osg::Vec3d dv(0.0, scale, 0.0);
 
                 _center += dv * rotation_matrix;
 
@@ -200,12 +200,12 @@ GCManipulator::handle(const osgGA::GUIEventAdapter& ea,
             }
         case GUIEventAdapter::KEY_Down:
             {
-                float scale = -_moveSensitivity * _distance;
+                double scale = -_moveSensitivity * _distance;
 
                 osg::Matrix rotation_matrix;
                 rotation_matrix.makeRotate(_rotation);
 
-                osg::Vec3 dv(0.0f, scale, 0.0f);
+                osg::Vec3d dv(0.0, scale, 0.0);
 
                 _center += dv * rotation_matrix;
 
@@ -231,7 +231,7 @@ GCManipulator::handle(const osgGA::GUIEventAdapter& ea,
 
 
 bool
-GCManipulator::calcMovement()
+GCManipulator::calcMovement(void)
 {
     using namespace osgGA;
 
@@ -241,11 +241,11 @@ GCManipulator::calcMovement()
         return false;
     }
 
-    float dx = _ga_t0->getXnormalized() - _ga_t1->getXnormalized();
-    float dy = _ga_t0->getYnormalized() - _ga_t1->getYnormalized();
+    double dx = _ga_t0->getXnormalized() - _ga_t1->getXnormalized();
+    double dy = _ga_t0->getYnormalized() - _ga_t1->getYnormalized();
 
     // return if there is no movement.
-    if (dx == 0.0f && dy == 0.0f)
+    if (dx == 0.0 && dy == 0.0)
     {
         return false;
     }
@@ -282,12 +282,12 @@ GCManipulator::calcMovement()
                             GUIEventAdapter::RIGHT_MOUSE_BUTTON))
     {
         // pan model
-        float scale = -_moveSensitivity * _distance;
+        double scale = -_moveSensitivity * _distance;
 
         osg::Matrix rotation_matrix;
         rotation_matrix.makeRotate(_rotation);
 
-        osg::Vec3 dv(dx * scale, dy * scale, 0.0f);
+        osg::Vec3d dv(dx * scale, dy * scale, 0.0);
 
         _center += dv * rotation_matrix;
 
@@ -297,7 +297,7 @@ GCManipulator::calcMovement()
     else if (buttonMask == GUIEventAdapter::RIGHT_MOUSE_BUTTON)
     {
         // zoom model
-        float scale = 1.0f + dy * _zoomSensitivity;
+        double scale = 1.0 + dy * _zoomSensitivity;
         if (_distance * scale > _minZoomRange)
         {
 
