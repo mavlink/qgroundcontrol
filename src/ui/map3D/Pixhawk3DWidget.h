@@ -33,10 +33,8 @@
 #define PIXHAWK3DWIDGET_H
 
 #include <osgText/Text>
-#ifdef QGC_OSGEARTH_ENABLED
-#include <osgEarth/MapNode>
-#endif
 
+#include "Imagery.h"
 #include "ImageWindowGeode.h"
 
 #ifdef QGC_LIBFREENECT_ENABLED
@@ -65,6 +63,7 @@ private slots:
     void showGrid(int state);
     void showTrail(int state);
     void showWaypoints(int state);
+    void selectMapSource(int index);
     void selectVehicleModel(int index);
     void recenter(void);
     void toggleFollowCamera(int state);
@@ -81,11 +80,7 @@ protected:
 private:
     osg::ref_ptr<osg::Geode> createGrid(void);
     osg::ref_ptr<osg::Geode> createTrail(void);
-
-#ifdef QGC_OSGEARTH_ENABLED
-    osg::ref_ptr<osgEarth::MapNode> createMap(void);
-#endif
-
+    osg::ref_ptr<Imagery> createMap(void);
     osg::ref_ptr<osg::Node> createTarget(void);
     osg::ref_ptr<osg::Group> createWaypoints(void);
     osg::ref_ptr<osg::Geode> createRGBD3D(void);
@@ -96,6 +91,7 @@ private:
     void updateHUD(float robotX, float robotY, float robotZ,
                    float robotRoll, float robotPitch, float robotYaw);
     void updateTrail(float robotX, float robotY, float robotZ);
+    void updateImagery(void);
     void updateTarget(void);
     void updateWaypoints(void);
 #ifdef QGC_LIBFREENECT_ENABLED
@@ -106,6 +102,7 @@ private:
 
     bool displayGrid;
     bool displayTrail;
+    bool displayImagery;
     bool displayTarget;
     bool displayWaypoints;
     bool displayRGBD2D;
@@ -128,9 +125,7 @@ private:
     osg::ref_ptr<osg::Geode> trailNode;
     osg::ref_ptr<osg::Geometry> trailGeometry;
     osg::ref_ptr<osg::DrawArrays> trailDrawArrays;
-#ifdef QGC_OSGEARTH_ENABLED
-    osg::ref_ptr<osgEarth::MapNode> mapNode;
-#endif
+    osg::ref_ptr<Imagery> mapNode;
     osg::ref_ptr<osg::Geode> targetNode;
     osg::ref_ptr<osg::PositionAttitudeTransform> targetPosition;
     osg::ref_ptr<osg::Group> waypointsNode;
