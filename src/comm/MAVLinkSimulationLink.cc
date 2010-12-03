@@ -99,12 +99,6 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     // Open packet log
     mavlinkLogFile = new QFile(MAVLinkProtocol::getLogfileName());
     mavlinkLogFile->open(QIODevice::ReadOnly);
-
-    // position at Pixhawk lab @ ETHZ
-    x = 5247273.0f;
-    y = 465955.0f;
-    z = -0.2f;
-    yaw = 0;
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
@@ -383,15 +377,14 @@ void MAVLinkSimulationLink::mainloop()
         x = x*0.93f + 0.07f*(x+sin(static_cast<float>(QGC::groundTimeUsecs()) * 0.08f));
         y = y*0.93f + 0.07f*(y+sin(static_cast<float>(QGC::groundTimeUsecs()) * 0.5f));
         z = z*0.93f + 0.07f*(z+sin(static_cast<float>(QGC::groundTimeUsecs()*0.001f)) * 0.1f);
-        x = 5247273.0f;
-        y = 465955.0f;
-//        x = (x > 5.0f) ? 5.0f : x;
-//        y = (y > 5.0f) ? 5.0f : y;
-//        z = (z > 3.0f) ? 3.0f : z;
-//
-//        x = (x < -5.0f) ? -5.0f : x;
-//        y = (y < -5.0f) ? -5.0f : y;
-//        z = (z < -3.0f) ? -3.0f : z;
+
+        x = (x > 5.0f) ? 5.0f : x;
+        y = (y > 5.0f) ? 5.0f : y;
+        z = (z > 3.0f) ? 3.0f : z;
+
+        x = (x < -5.0f) ? -5.0f : x;
+        y = (y < -5.0f) ? -5.0f : y;
+        z = (z < -3.0f) ? -3.0f : z;
 
         // Send back new setpoint
         mavlink_message_t ret;
@@ -409,14 +402,14 @@ void MAVLinkSimulationLink::mainloop()
         streampointer += bufferlength;
 
         // GPS RAW
-        mavlink_msg_gps_raw_pack(systemId, componentId, &ret, 0, 3, 47.376417+(x*0.001), 8.548103+(y*0.001), z, 0, 0, 2.5f, 0.1f);
+        mavlink_msg_gps_raw_pack(systemId, componentId, &ret, 0, 3, 47.376417+(x*0.00001), 8.548103+(y*0.00001), z, 0, 0, 2.5f, 0.1f);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
         // GLOBAL POSITION
-        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 3, 47.376417+(x*0.001), 8.548103+(y*0.001), z, 0, 0);
+        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 47.378028137103+(x*0.00001), 8.54899892510421+(y*0.00001), z, 0, 0, 0);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);

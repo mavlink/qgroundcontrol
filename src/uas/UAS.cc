@@ -73,12 +73,15 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         sendDropRate(0),
         lowBattAlarm(false),
         positionLock(false),
-        localX(0),
-        localY(0),
-        localZ(0),
-        roll(0),
-        pitch(0),
-        yaw(0),
+        localX(0.0),
+        localY(0.0),
+        localZ(0.0),
+        latitude(0.0),
+        longitude(0.0),
+        altitude(0.0),
+        roll(0.0),
+        pitch(0.0),
+        yaw(0.0),
         statusTimeout(new QTimer(this))
 {
     color = UASInterface::getNextColor();
@@ -342,6 +345,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_global_position_t pos;
                 mavlink_msg_global_position_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.usec);
+                latitude = pos.lat;
+                longitude = pos.lon;
+                altitude = pos.alt;
                 emit valueChanged(uasId, "lat", pos.lat, time);
                 emit valueChanged(uasId, "lon", pos.lon, time);
                 emit valueChanged(uasId, "alt", pos.alt, time);
