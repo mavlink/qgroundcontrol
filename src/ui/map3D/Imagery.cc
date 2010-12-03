@@ -70,6 +70,11 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
                     double zoom, double xOrigin, double yOrigin,
                     const QString& utmZone)
 {
+    if (currentImageryType == BLANK_MAP)
+    {
+        return;
+    }
+
     double tileResolution;
     if (currentImageryType == GOOGLE_SATELLITE ||
         currentImageryType == GOOGLE_MAP)
@@ -115,6 +120,16 @@ Imagery::draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
                 const QString& utmZone)
 {
+    if (getNumDrawables() > 0)
+    {
+        removeDrawables(0, getNumDrawables());
+    }
+
+    if (currentImageryType == BLANK_MAP)
+    {
+        return;
+    }
+
     double tileResolution;
     if (currentImageryType == GOOGLE_SATELLITE ||
         currentImageryType == GOOGLE_MAP)
@@ -144,11 +159,6 @@ Imagery::draw2D(double windowWidth, double windowHeight,
                yOrigin + windowHeight / 2.0 / zoom * 1.5, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
-    if (getNumDrawables() > 0)
-    {
-        removeDrawables(0, getNumDrawables());
-    }
-
     for (int r = minTileY; r <= maxTileY; ++r)
     {
         for (int c = minTileX; c <= maxTileX; ++c)
@@ -161,10 +171,10 @@ Imagery::draw2D(double windowWidth, double windowHeight,
             TexturePtr t = textureCache->get(tileURL);
             if (!t.isNull())
             {
-                addDrawable(t->draw(y1 - yOrigin, x1 - xOrigin,
-                                    y2 - yOrigin, x2 - xOrigin,
-                                    y3 - yOrigin, x3 - xOrigin,
-                                    y4 - yOrigin, x4 - xOrigin,
+                addDrawable(t->draw(y1, x1,
+                                    y2, x2,
+                                    y3, x3,
+                                    y4, x4,
                                     true));
             }
         }
@@ -176,6 +186,11 @@ Imagery::prefetch3D(double radius, double tileResolution,
                     double xOrigin, double yOrigin,
                     const QString& utmZone)
 {
+    if (currentImageryType == BLANK_MAP)
+    {
+        return;
+    }
+
     int minTileX, minTileY, maxTileX, maxTileY;
     int zoomLevel;
 
@@ -200,6 +215,16 @@ Imagery::draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
                 const QString& utmZone)
 {
+    if (getNumDrawables() > 0)
+    {
+        removeDrawables(0, getNumDrawables());
+    }
+
+    if (currentImageryType == BLANK_MAP)
+    {
+        return;
+    }
+
     int minTileX, minTileY, maxTileX, maxTileY;
     int zoomLevel;
 
@@ -207,11 +232,6 @@ Imagery::draw3D(double radius, double tileResolution,
                xOrigin - radius, yOrigin - radius,
                xOrigin + radius, yOrigin + radius, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
-
-    if (getNumDrawables() > 0)
-    {
-        removeDrawables(0, getNumDrawables());
-    }
 
     for (int r = minTileY; r <= maxTileY; ++r)
     {
@@ -226,10 +246,10 @@ Imagery::draw3D(double radius, double tileResolution,
 
             if (!t.isNull())
             {
-                addDrawable(t->draw(y1 - yOrigin, x1 - xOrigin,
-                                    y2 - yOrigin, x2 - xOrigin,
-                                    y3 - yOrigin, x3 - xOrigin,
-                                    y4 - yOrigin, x4 - xOrigin,
+                addDrawable(t->draw(y1, x1,
+                                    y2, x2,
+                                    y3, x3,
+                                    y4, x4,
                                     true));
             }
         }
@@ -563,7 +583,7 @@ Imagery::UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
                  * D * D * D * D * D / 120.0) / cos(phi1Rad);
     longitude = LongOrigin + longitude / M_PI * 180.0;
 }
-#include <QDebug>
+
 QString
 Imagery::getTileLocation(int tileX, int tileY, int zoomLevel,
                          double tileResolution) const

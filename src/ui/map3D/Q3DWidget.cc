@@ -181,13 +181,13 @@ Q3DWidget::setCameraParams(float minZoomRange, float cameraFov,
 }
 
 void
-Q3DWidget::moveCamera(float dx, float dy, float dz)
+Q3DWidget::moveCamera(double dx, double dy, double dz)
 {
     cameraManipulator->move(dx, dy, dz);
 }
 
 void
-Q3DWidget::recenterCamera(float x, float y, float z)
+Q3DWidget::recenterCamera(double x, double y, double z)
 {
     cameraManipulator->setCenter(osg::Vec3d(x, y, z));
 }
@@ -383,18 +383,6 @@ Q3DWidget::wheelEvent(QWheelEvent* event)
     osgGW->getEventQueue()->mouseScroll((event->delta() > 0) ?
             osgGA::GUIEventAdapter::SCROLL_UP :
             osgGA::GUIEventAdapter::SCROLL_DOWN);
-}
-
-float
-Q3DWidget::r2d(float angle)
-{
-    return angle * 57.295779513082320876f;
-}
-
-float
-Q3DWidget::d2r(float angle)
-{
-    return angle * 0.0174532925199432957692f;
 }
 
 osgGA::GUIEventAdapter::KeySymbol

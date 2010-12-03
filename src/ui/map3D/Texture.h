@@ -51,10 +51,10 @@ public:
 
     void sync(const WebImagePtr& image);
 
-    osg::ref_ptr<osg::Geometry> draw(float x1, float y1, float x2, float y2,
+    osg::ref_ptr<osg::Geometry> draw(double x1, double y1, double x2, double y2,
                                      bool smoothInterpolation) const;
-    osg::ref_ptr<osg::Geometry> draw(float x1, float y1, float x2, float y2,
-                                     float x3, float y3, float x4, float y4,
+    osg::ref_ptr<osg::Geometry> draw(double x1, double y1, double x2, double y2,
+                                     double x3, double y3, double x4, double y4,
                                      bool smoothInterpolation) const;
 
 private:

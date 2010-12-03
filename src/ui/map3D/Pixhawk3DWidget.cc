@@ -56,6 +56,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
      , displayRGBD3D(false)
      , enableRGBDColor(true)
      , followCamera(true)
+     , enableFreenect(false)
      , lastRobotX(0.0f)
      , lastRobotY(0.0f)
      , lastRobotZ(0.0f)
@@ -88,12 +89,15 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
 
 #ifdef QGC_LIBFREENECT_ENABLED
     freenect.reset(new Freenect());
-    freenect->init();
+    enableFreenect = freenect->init();
 #endif
 
     // generate RGBD model
-    rgbd3DNode = createRGBD3D();
-    egocentricMap->addChild(rgbd3DNode);
+    if (enableFreenect)
+    {
+        rgbd3DNode = createRGBD3D();
+        egocentricMap->addChild(rgbd3DNode);
+    }
 
     setupHUD();
 
@@ -174,6 +178,15 @@ void
 Pixhawk3DWidget::selectMapSource(int index)
 {
     mapNode->setImageryType(static_cast<Imagery::ImageryType>(index));
+
+    if (mapNode->getImageryType() == Imagery::BLANK_MAP)
+    {
+        displayImagery = false;
+    }
+    else
+    {
+        displayImagery = true;
+    }
 }
 
 void
@@ -187,7 +200,7 @@ Pixhawk3DWidget::selectVehicleModel(int index)
 void
 Pixhawk3DWidget::recenter(void)
 {
-    float robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
+    double robotX = 0.0f, robotY = 0.0f, robotZ = 0.0f;
     if (uas != NULL)
     {
         robotX = uas->getLocalX();
@@ -345,12 +358,12 @@ Pixhawk3DWidget::display(void)
         return;
     }
 
-    float robotX = uas->getLocalX();
-    float robotY = uas->getLocalY();
-    float robotZ = uas->getLocalZ();
-    float robotRoll = uas->getRoll();
-    float robotPitch = uas->getPitch();
-    float robotYaw = uas->getYaw();
+    double robotX = uas->getLocalX();
+    double robotY = uas->getLocalY();
+    double robotZ = uas->getLocalZ();
+    double robotRoll = uas->getRoll();
+    double robotPitch = uas->getPitch();
+    double robotYaw = uas->getYaw();
 
     if (lastRobotX == 0.0f && lastRobotY == 0.0f && lastRobotZ == 0.0f)
     {
@@ -365,17 +378,17 @@ Pixhawk3DWidget::display(void)
 
     if (followCamera)
     {
-        float dx = robotY - lastRobotY;
-        float dy = robotX - lastRobotX;
-        float dz = lastRobotZ - robotZ;
+        double dx = robotY - lastRobotY;
+        double dy = robotX - lastRobotX;
+        double dz = lastRobotZ - robotZ;
 
         moveCamera(dx, dy, dz);
     }
 
-    robotPosition->setPosition(osg::Vec3(robotY, robotX, -robotZ));
-    robotAttitude->setAttitude(osg::Quat(-robotYaw, osg::Vec3f(0.0f, 0.0f, 1.0f),
-                                         robotPitch, osg::Vec3f(1.0f, 0.0f, 0.0f),
-                                         robotRoll, osg::Vec3f(0.0f, 1.0f, 0.0f)));
+    robotPosition->setPosition(osg::Vec3d(robotY, robotX, -robotZ));
+    robotAttitude->setAttitude(osg::Quat(-robotYaw, osg::Vec3d(0.0f, 0.0f, 1.0f),
+                                         robotPitch, osg::Vec3d(1.0f, 0.0f, 0.0f),
+                                         robotRoll, osg::Vec3d(0.0f, 1.0f, 0.0f)));
 
     if (displayTrail)
     {
@@ -398,7 +411,7 @@ Pixhawk3DWidget::display(void)
     }
 
 #ifdef QGC_LIBFREENECT_ENABLED
-    if (displayRGBD2D || displayRGBD3D)
+    if (enableFreenect && (displayRGBD2D || displayRGBD3D))
     {
         updateRGBD();
     }
@@ -409,10 +422,13 @@ Pixhawk3DWidget::display(void)
 
     rollingMap->setChildValue(gridNode, displayGrid);
     rollingMap->setChildValue(trailNode, displayTrail);
+    allocentricMap->setChildValue(mapNode, displayImagery);
     rollingMap->setChildValue(targetNode, displayTarget);
     rollingMap->setChildValue(waypointsNode, displayWaypoints);
-    egocentricMap->setChildValue(rgbd3DNode, displayRGBD3D);
-    allocentricMap->setChildValue(mapNode, displayImagery);
+    if (enableFreenect)
+    {
+        egocentricMap->setChildValue(rgbd3DNode, displayRGBD3D);
+    }
     hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
     hudGroup->setChildValue(depth2DGeode, displayRGBD2D);
 
@@ -436,9 +452,6 @@ Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
             break;
         case 'c': case 'C':
             enableRGBDColor = !enableRGBDColor;
-            break;
-        case 'i': case 'I':
-            displayImagery = !displayImagery;
             break;
         }
     }
@@ -531,7 +544,7 @@ Pixhawk3DWidget::createTrail(void)
     trailGeometry->setUseDisplayList(false);
     geode->addDrawable(trailGeometry.get());
 
-    trailVertices = new osg::Vec3Array;
+    trailVertices = new osg::Vec3dArray;
     trailGeometry->setVertexArray(trailVertices);
 
     trailDrawArrays = new osg::DrawArrays(osg::PrimitiveSet::LINE_STRIP);
@@ -677,8 +690,8 @@ Pixhawk3DWidget::resizeHUD(void)
 }
 
 void
-Pixhawk3DWidget::updateHUD(float robotX, float robotY, float robotZ,
-                           float robotRoll, float robotPitch, float robotYaw)
+Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
+                           double robotRoll, double robotPitch, double robotYaw)
 {
     resizeHUD();
 
@@ -715,7 +728,7 @@ Pixhawk3DWidget::updateHUD(float robotX, float robotY, float robotZ,
 }
 
 void
-Pixhawk3DWidget::updateTrail(float robotX, float robotY, float robotZ)
+Pixhawk3DWidget::updateTrail(double robotX, double robotY, double robotZ)
 {
     if (robotX == 0.0f || robotY == 0.0f || robotZ == 0.0f)
     {
@@ -725,9 +738,9 @@ Pixhawk3DWidget::updateTrail(float robotX, float robotY, float robotZ)
     bool addToTrail = false;
     if (trail.size() > 0)
     {
-        if (fabsf(robotX - trail[trail.size() - 1].x()) > 0.01f ||
-            fabsf(robotY - trail[trail.size() - 1].y()) > 0.01f ||
-            fabsf(robotZ - trail[trail.size() - 1].z()) > 0.01f)
+        if (fabs(robotX - trail[trail.size() - 1].x()) > 0.01f ||
+            fabs(robotY - trail[trail.size() - 1].y()) > 0.01f ||
+            fabs(robotZ - trail[trail.size() - 1].z()) > 0.01f)
         {
             addToTrail = true;
         }
@@ -739,11 +752,11 @@ Pixhawk3DWidget::updateTrail(float robotX, float robotY, float robotZ)
 
     if (addToTrail)
     {
-        osg::Vec3 p(robotX, robotY, robotZ);
+        osg::Vec3d p(robotX, robotY, robotZ);
         if (trail.size() == trail.capacity())
         {
             memcpy(trail.data(), trail.data() + 1,
-                   (trail.size() - 1) * sizeof(osg::Vec3));
+                   (trail.size() - 1) * sizeof(osg::Vec3d));
             trail[trail.size() - 1] = p;
         }
         else
@@ -755,9 +768,9 @@ Pixhawk3DWidget::updateTrail(float robotX, float robotY, float robotZ)
     trailVertices->clear();
     for (int i = 0; i < trail.size(); ++i)
     {
-        trailVertices->push_back(osg::Vec3(trail[i].y() - robotY,
-                                           trail[i].x() - robotX,
-                                           -(trail[i].z() - robotZ)));
+        trailVertices->push_back(osg::Vec3d(trail[i].y() - robotY,
+                                            trail[i].x() - robotX,
+                                            -(trail[i].z() - robotZ)));
     }
 
     trailDrawArrays->setFirst(0);
@@ -768,6 +781,11 @@ Pixhawk3DWidget::updateTrail(float robotX, float robotY, float robotZ)
 void
 Pixhawk3DWidget::updateImagery(void)
 {
+    if (mapNode->getImageryType() == Imagery::BLANK_MAP)
+    {
+        return;
+    }
+
     char zone[5] = "32T";
 
     double viewingRadius = cameraManipulator->getDistance() * 10.0;
@@ -777,7 +795,7 @@ Pixhawk3DWidget::updateImagery(void)
     }
 
     double minResolution = 0.25;
-    double centerResolution = cameraManipulator->getDistance() / 25.0;
+    double centerResolution = cameraManipulator->getDistance() / 50.0;
     double maxResolution = 1048576.0;
 
     Imagery::ImageryType imageryType = mapNode->getImageryType();
@@ -1100,7 +1118,7 @@ Pixhawk3DWidget::updateRGBD(void)
 void
 Pixhawk3DWidget::markTarget(void)
 {
-    float robotZ = 0.0f;
+    double robotZ = 0.0f;
     if (uas != NULL)
     {
         robotZ = uas->getLocalZ();

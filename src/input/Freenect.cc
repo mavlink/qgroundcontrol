@@ -197,7 +197,7 @@ Freenect::get3DPointCloudData(void)
     unsigned short* data = reinterpret_cast<unsigned short*>(depth);
     for (int i = 0; i < FREENECT_FRAME_PIX; ++i)
     {
-        if (data[i] <= 2048)
+        if (data[i] > 0 && data[i] <= 2048)
         {
             // see www.ros.org/wiki/kinect_node for details
             double range = 1.0f / (-0.00307f * static_cast<float>(data[i]) + 3.33f);
@@ -226,9 +226,9 @@ Freenect::get6DPointCloudData(void)
     {
         Vector6D point;
 
-        point.x = rawPointCloud[i].x();
-        point.y = rawPointCloud[i].y();
-        point.z = rawPointCloud[i].z();
+        point.x = rawPointCloud.at(i).x();
+        point.y = rawPointCloud.at(i).y();
+        point.z = rawPointCloud.at(i).z();
 
         QVector4D transformedPoint = transformMatrix * QVector4D(point.x, point.y, point.z, 1.0);
 
