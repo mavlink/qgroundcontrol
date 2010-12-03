@@ -63,7 +63,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
-
+#include "QGCGoogleEarthView.h"
 #include "LogCompressor.h"
 
 
@@ -113,6 +113,8 @@ public slots:
     void loadOperatorView();
     /** @brief Load 3D view */
     void load3DView();
+    /** @brief Load 3D Google Earth view */
+    void loadGoogleEarthView();
     /** @brief Load 3D map view */
     void load3DMapView();
     /** @brief Load view with all widgets */
@@ -170,6 +172,7 @@ protected:
     #ifdef QGC_OSGEARTH_ENABLED
     QPointer<QWidget> _3DMapWidget;
     #endif
+    QPointer<QGCGoogleEarthView> gEarthWidget;
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
     QPointer<QDockWidget> infoDockWidget;
