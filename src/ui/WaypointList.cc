@@ -480,11 +480,12 @@ void WaypointList::changeEvent(QEvent *e)
 void WaypointList::on_clearWPListButton_clicked()
 {
 
+
     if (uas)
     {
         if(isGlobalWP)
         {
-            emit clearPathclicked();
+           emit clearPathclicked();
 
             const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
               while(!waypoints.isEmpty())//for(int i = 0; i <= waypoints.size(); i++)
@@ -519,6 +520,13 @@ void WaypointList::on_clearWPListButton_clicked()
 
         }
 
+    }
+    else
+    {
+        if(isGlobalWP)
+        {
+           emit clearPathclicked();
+        }
     }
 }
 

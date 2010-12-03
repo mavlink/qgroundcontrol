@@ -9,6 +9,10 @@
 #include <QWheelEvent>
 #include <QDebug>
 #include <qmath.h>
+#include <QPainter>
+#include <QGridLayout>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
 
 SlugsVideoCamControl::SlugsVideoCamControl(QWidget *parent) :
@@ -20,6 +24,22 @@ SlugsVideoCamControl::SlugsVideoCamControl(QWidget *parent) :
    x1= 0;
    y1 = 0;
     connect(ui->viewCamBordeatMap_checkBox,SIGNAL(clicked(bool)),this,SLOT(changeViewCamBorderAtMapStatus(bool)));
+    tL = ui->padCamContro_frame->frameGeometry().topLeft();
+    bR = ui->padCamContro_frame->frameGeometry().bottomRight();
+    //ui->padCamContro_frame->setVisible(true);
+
+    // create a layout for camera pad
+    QGridLayout* padCameraLayout = new QGridLayout(ui->padCamContro_frame);
+    padCameraLayout->setSpacing(2);
+    padCameraLayout->setMargin(0);
+    padCameraLayout->setAlignment(Qt::AlignTop);
+    ui->padCamContro_frame->setLayout(padCameraLayout);
+    // create a camera pad widget
+    padCamera = new SlugsPadCameraControl();
+
+
+
+   padCameraLayout->addWidget(padCamera);
 
 
 
@@ -325,6 +345,28 @@ QPointF SlugsVideoCamControl::ObtenerMarcacionDistanciaPixel(double lon1, double
     return QPointF(marcacion,distancia);
 
 }
+
+void SlugsVideoCamControl::paintEvent(QPaintEvent *pe)
+{
+    Q_UNUSED(pe);
+    QPainter painter(this);
+    painter.setPen(Qt::blue);
+    painter.setFont(QFont("Arial", 30));
+
+//    QRectF rectangle(tL.x(), tL.y(), ui->padCamContro_frame->width(), ui->padCamContro_frame->height());
+//     int startAngle = 30 * 16;
+//     int spanAngle = 120 * 16;
+
+    painter.drawLine(QPoint(tL.x(),tL.y()),QPoint(bR.x(),bR.y()));
+   // painter.drawLine(QPoint());
+    //painter.drawLines(padLines);
+
+
+    // painter.drawPie(rectangle, startAngle, spanAngle);
+
+    //painter.drawText(rect(), Qt::AlignCenter, "Qt");
+}
+
 
 
 

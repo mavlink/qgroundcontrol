@@ -410,6 +410,7 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
     // Create waypoint name
     QString str;
 
+
     str = QString("%1").arg(path->numberOfPoints());
 
     // create the WP and set everything in the LineString to display the path
@@ -431,8 +432,9 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
     path->addPoint(tempPoint);
 
     wpIndex.insert(str,tempPoint);
+        qDebug()<<"Funcion createWaypointGraphAtMap WP= "<<str<<" -> x= "<<tempPoint->latitude()<<" y= "<<tempPoint->longitude();
 
-    // Refresh the screen
+        // Refresh the screen
     mc->updateRequestNew();
 
 ////    // emit signal mouse was clicked
