@@ -440,7 +440,6 @@ void UASWaypointManager::readWaypoints()
 
 void UASWaypointManager::writeWaypoints()
 {
-    qDebug() << "+++++++++++++++++++>>>> Entro Funcion Write WP";
     if (current_state == WP_IDLE)
     {
         if (waypoints.count() > 0)
