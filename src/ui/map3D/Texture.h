@@ -32,14 +32,10 @@ This file is part of the QGROUNDCONTROL project
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
-#if (defined __APPLE__) & (defined __MACH__)
-#include <OpenGL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 #include <inttypes.h>
 #include <osg/ref_ptr>
 #include <osg/Geometry>
+#include <osg/Texture2D>
 #include <QSharedPointer>
 
 #include "WebImage.h"
@@ -47,7 +43,7 @@ This file is part of the QGROUNDCONTROL project
 class Texture
 {
 public:
-    Texture();
+    explicit Texture(unsigned int _id);
 
     const QString& getSourceURL(void) const;
 
@@ -61,8 +57,6 @@ public:
                                      float x3, float y3, float x4, float y4,
                                      bool smoothInterpolation) const;
 
-    bool is3D(void) const;
-
 private:
     enum State
     {
@@ -75,18 +69,7 @@ private:
     QString sourceURL;
     unsigned int id;
     osg::ref_ptr<osg::Texture2D> texture2D;
-
-    int32_t textureWidth;
-    int32_t textureHeight;
-
-    int32_t imageWidth;
-    int32_t imageHeight;
-
-    bool _is3D;
-    QVector< QVector<int32_t> > heightModel;
-
-    float maxU;
-    float maxV;
+    osg::ref_ptr<osg::Geometry> geometry;
 };
 
 typedef QSharedPointer<Texture> TexturePtr;
