@@ -22,15 +22,6 @@ SlugsPIDControl::SlugsPIDControl(QWidget *parent) :
     setRedColorStyle();
     setGreenColorStyle();
 
-//    connect_set_pushButtons();
-//    connect_AirSpeed_LineEdit();
-//    connect_PitchFollowei_LineEdit();
-//    connect_RollControl_LineEdit();
-//    connect_HeigthError_LineEdit();
-//    connect_YawDamper_LineEdit();
-//    connect_Pitch2dT_LineEdit();
-
-
 }
 
 /**
@@ -48,6 +39,7 @@ void SlugsPIDControl::activeUasSet(UASInterface* uas)
     if (slugsMav != NULL)
     {
         connect(slugsMav,SIGNAL(slugsActionAck(int,const mavlink_action_ack_t&)),this,SLOT(recibeMensaje(int,mavlink_action_ack_t)));
+        connect(slugsMav,SIGNAL(slugsPidValues(int,mavlink_pid_t)),this, SLOT(receivePidValues(int,mavlink_pid_t)) );
     }
 
 #endif // MAVLINK_ENABLED_SLUG
@@ -73,6 +65,7 @@ void SlugsPIDControl::connect_editLinesPDIvalues()
     if(activeUAS)
     {
        connect_set_pushButtons();
+       connect_get_pushButtons();
        connect_AirSpeed_LineEdit();
        connect_PitchFollowei_LineEdit();
        connect_RollControl_LineEdit();
@@ -140,6 +133,21 @@ void SlugsPIDControl::connect_set_pushButtons()
 
 }
 
+/**
+ *@brief Connection Signal and Slot of the set buttons on the widget
+ */
+void SlugsPIDControl::connect_get_pushButtons()
+{
+   connect(ui->dT_PID_get_pushButton, SIGNAL(clicked()),this,SLOT(get_AirSpeed_PID()));
+   connect(ui->dE_PID_get_pushButton,SIGNAL(clicked()),this,SLOT(get_PitchFollowei_PID()));
+   connect(ui->dR_PDI_get_pushButton,SIGNAL(clicked()),this,SLOT(get_YawDamper_PID()));
+   connect(ui->dA_PID_get_pushButton,SIGNAL(clicked()),this,SLOT(get_RollControl_PID()));
+   connect(ui->Pitch2dT_PDI_get_pushButton,SIGNAL(clicked()),this,SLOT(get_Pitch2dT_PID()));
+   connect(ui->HELPComm_PDI_get_pushButton,SIGNAL(clicked()),this,SLOT(get_HeigthError_PID()));
+
+}
+
+// Functions for Air Speed GroupBox
 void SlugsPIDControl::connect_AirSpeed_LineEdit()
 {
     connect(ui->dT_P_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_AirSpeed_groupBox(QString)));
@@ -178,7 +186,16 @@ void SlugsPIDControl::changeColor_GREEN_AirSpeed_groupBox()
   }
 }
 
+void SlugsPIDControl::get_AirSpeed_PID()
+{
+     qDebug() << "\nSend Message = Air Speed ";
+   sendMessagePIDStatus(0);
 
+}
+
+
+
+// Functions for PitchFollowei GroupBox
 void SlugsPIDControl::connect_PitchFollowei_LineEdit()
 {
     connect(ui->dE_P_set, SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_PitchFollowei_groupBox(QString)));
@@ -195,8 +212,33 @@ void SlugsPIDControl::changeColor_RED_PitchFollowei_groupBox(QString text)
 
 void SlugsPIDControl::changeColor_GREEN_PitchFollowei_groupBox()
 {
-    ui->PitchFlowei_groupBox->setStyleSheet(GREENcolorStyle);
+    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(activeUAS);
+
+    if (slugsMav != NULL)
+    {
+      //create the packet
+      pidMessage.target = activeUAS->getUASID();
+      pidMessage.idx = 2;
+      pidMessage.pVal = ui->dE_P_set->text().toFloat();
+      pidMessage.iVal = ui->dE_I_set->text().toFloat();
+      pidMessage.dVal = ui->dE_D_set->text().toFloat();
+
+      mavlink_message_t msg;
+
+      mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
+      slugsMav->sendMessage(msg);
+
+      ui->PitchFlowei_groupBox->setStyleSheet(GREENcolorStyle);
+  }
 }
+
+void SlugsPIDControl::get_PitchFollowei_PID()
+{
+    qDebug() << "\nSend Message = Pitch Followei ";
+  sendMessagePIDStatus(2);
+
+}
+
 
 // Functions for Roll Control GroupBox
 /**
@@ -218,7 +260,24 @@ void SlugsPIDControl::changeColor_RED_RollControl_groupBox(QString text)
          */
 void SlugsPIDControl::changeColor_GREEN_RollControl_groupBox()
 {
-    ui->RollControl_groupBox->setStyleSheet(GREENcolorStyle);
+    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(activeUAS);
+
+    if (slugsMav != NULL)
+    {
+          //create the packet
+          pidMessage.target = activeUAS->getUASID();
+          pidMessage.idx = 4;
+          pidMessage.pVal = ui->dA_P_set->text().toFloat();
+          pidMessage.iVal = ui->dA_I_set->text().toFloat();
+          pidMessage.dVal = ui->dA_D_set->text().toFloat();
+
+          mavlink_message_t msg;
+
+          mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
+          slugsMav->sendMessage(msg);
+
+        ui->RollControl_groupBox->setStyleSheet(GREENcolorStyle);
+    }
 }
 
 /**
@@ -232,6 +291,13 @@ void SlugsPIDControl::connect_RollControl_LineEdit()
     connect(ui->dA_I_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_RollControl_groupBox(QString)));
     connect(ui->dA_D_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_RollControl_groupBox(QString)));
 }
+
+void SlugsPIDControl::get_RollControl_PID()
+{
+    qDebug() << "\nSend Message = Roll Control ";
+  sendMessagePIDStatus(4);
+}
+
 
 
 // Functions for Heigth Error GroupBox
@@ -254,7 +320,24 @@ void SlugsPIDControl::changeColor_RED_HeigthError_groupBox(QString text)
          */
 void SlugsPIDControl::changeColor_GREEN_HeigthError_groupBox()
 {
-    ui->HeightErrorLoPitch_groupBox->setStyleSheet(GREENcolorStyle);
+    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(activeUAS);
+
+    if (slugsMav != NULL)
+    {
+          //create the packet
+          pidMessage.target = activeUAS->getUASID();
+          pidMessage.idx = 1;
+          pidMessage.pVal = ui->HELPComm_P_set->text().toFloat();
+          pidMessage.iVal = ui->HELPComm_I_set->text().toFloat();
+          pidMessage.dVal = ui->HELPComm_FF_set->text().toFloat();
+
+          mavlink_message_t msg;
+
+          mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
+          slugsMav->sendMessage(msg);
+
+        ui->HeightErrorLoPitch_groupBox->setStyleSheet(GREENcolorStyle);
+    }
 }
 
 /**
@@ -267,6 +350,12 @@ void SlugsPIDControl::connect_HeigthError_LineEdit()
     connect(ui->HELPComm_P_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_HeigthError_groupBox(QString)));
     connect(ui->HELPComm_I_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_HeigthError_groupBox(QString)));
     connect(ui->HELPComm_FF_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_HeigthError_groupBox(QString)));
+}
+
+void SlugsPIDControl::get_HeigthError_PID()
+{
+    qDebug() << "\nSend Message = Heigth Error ";
+  sendMessagePIDStatus(1);
 }
 
 
@@ -290,7 +379,24 @@ void SlugsPIDControl::changeColor_RED_YawDamper_groupBox(QString text)
          */
 void SlugsPIDControl::changeColor_GREEN_YawDamper_groupBox()
 {
-    ui->YawDamper_groupBox->setStyleSheet(GREENcolorStyle);
+    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(activeUAS);
+
+    if (slugsMav != NULL)
+    {
+          //create the packet
+          pidMessage.target = activeUAS->getUASID();
+          pidMessage.idx = 3;
+          pidMessage.pVal = ui->dR_P_set->text().toFloat();
+          pidMessage.iVal = ui->dR_I_set->text().toFloat();
+          pidMessage.dVal = ui->dR_D_set->text().toFloat();
+
+          mavlink_message_t msg;
+
+          mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
+          slugsMav->sendMessage(msg);
+
+        ui->YawDamper_groupBox->setStyleSheet(GREENcolorStyle);
+    }
 }
 
 /**
@@ -306,6 +412,13 @@ void SlugsPIDControl::connect_YawDamper_LineEdit()
 
 
 }
+
+void SlugsPIDControl::get_YawDamper_PID()
+{
+    qDebug() << "\nSend Message = Yaw Damper ";
+  sendMessagePIDStatus(3);
+}
+
 
 // Functions for Pitch to dT GroupBox
 /**
@@ -327,7 +440,23 @@ void SlugsPIDControl::changeColor_RED_Pitch2dT_groupBox(QString text)
          */
 void SlugsPIDControl::changeColor_GREEN_Pitch2dT_groupBox()
 {
-    ui->Pitch2dTFFterm_groupBox->setStyleSheet(GREENcolorStyle);
+    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(activeUAS);
+
+    if (slugsMav != NULL)
+    {
+          //create the packet
+          pidMessage.target = activeUAS->getUASID();
+          pidMessage.idx = 8;
+          pidMessage.pVal = ui->dR_P_set->text().toFloat();
+          pidMessage.iVal = ui->dR_I_set->text().toFloat();
+          pidMessage.dVal = ui->dR_D_set->text().toFloat();
+
+          mavlink_message_t msg;
+
+          mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
+          slugsMav->sendMessage(msg);
+        ui->Pitch2dTFFterm_groupBox->setStyleSheet(GREENcolorStyle);
+    }
 }
 
 /**
@@ -340,11 +469,146 @@ void SlugsPIDControl::connect_Pitch2dT_LineEdit()
     connect(ui->P2dT_FF_set,SIGNAL(textChanged(QString)),this,SLOT(changeColor_RED_Pitch2dT_groupBox(QString)));
 }
 
+void SlugsPIDControl::get_Pitch2dT_PID()
+{
+    qDebug() << "\nSend Message = Pitch to dT ";
+  sendMessagePIDStatus(8);
+}
+
 #ifdef MAVLINK_ENABLED_SLUGS
 
 void SlugsPIDControl::recibeMensaje(int systemId, const mavlink_action_ack_t& action)
 {
-    ui->recepcion_label->setText(QString::number(action.action));
+    ui->recepcion_label->setText(QString::number(action.action) + ":" + QString::number(action.result));
+}
+
+void SlugsPIDControl::receivePidValues(int systemId, const mavlink_pid_t &pidValues)
+{
+    Q_UNUSED(systemId);
+
+     qDebug() << "\nACTUALIZANDO GUI = " << pidValues.idx;
+    switch(pidValues.idx)
+    {
+    case 1:
+        ui->dT_P_get->setText(QString::number(pidValues.pVal));
+        ui->dT_I_get->setText(QString::number(pidValues.iVal));
+        ui->dT_D_get->setText(QString::number(pidValues.dVal));
+        break;
+    case 2:
+        ui->HELPComm_P_get->setText(QString::number(pidValues.pVal));
+        ui->HELPComm_I_get->setText(QString::number(pidValues.iVal));
+        ui->HELPComm_FF_get->setText(QString::number(pidValues.dVal));
+        break;
+    case 3:
+        ui->dE_P_get->setText(QString::number(pidValues.pVal));
+        ui->dE_I_get->setText(QString::number(pidValues.iVal));
+        ui->dE_D_get->setText(QString::number(pidValues.dVal));
+        break;
+    case 4:
+        ui->dR_P_get->setText(QString::number(pidValues.pVal));
+        ui->dR_I_get->setText(QString::number(pidValues.iVal));
+        ui->dR_D_get->setText(QString::number(pidValues.dVal));
+        break;
+    case 5:
+        ui->dA_P_get->setText(QString::number(pidValues.pVal));
+        ui->dA_I_get->setText(QString::number(pidValues.iVal));
+        ui->dA_D_get->setText(QString::number(pidValues.dVal));
+        break;
+    case 9:
+        ui->P2dT_FF_get->setText(QString::number(pidValues.pVal));
+        break;
+
+    default:
+        qDebug() << "\nSLUGS RECEIVED AND SHOW PID type ID = " << pidValues.idx;
+          break;
+
+    }
+}
+
+
+void SlugsPIDControl::sendMessagePIDStatus(int PIDtype)
+{
+    //ToDo remplace actionId values
+
+
+    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(activeUAS);
+
+    if (slugsMav != NULL)
+    {
+        mavlink_message_t msg;
+        qDebug() << "\n Send Message SLUGS PID with loop index  = " << PIDtype;
+
+        switch(PIDtype)
+        {
+            case 0: //Air Speed PID values Request
+                actionSlugs.target = activeUAS->getUASID();
+                actionSlugs.actionId = 9;
+                actionSlugs.actionVal = 0;
+
+
+
+                mavlink_msg_slugs_action_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &actionSlugs);
+                slugsMav->sendMessage(msg);
+                break;
+
+            case 1: //Heigth Error lo Pitch Comm PID values request
+                actionSlugs.target = activeUAS->getUASID();
+                actionSlugs.actionId = 9;
+                actionSlugs.actionVal = 1;
+
+
+                mavlink_msg_slugs_action_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &actionSlugs);
+                slugsMav->sendMessage(msg);
+                break;
+
+            case 2://Pitch Followei PID values Request
+                actionSlugs.target = activeUAS->getUASID();
+                actionSlugs.actionId = 9;
+                actionSlugs.actionVal = 2;
+
+
+                mavlink_msg_slugs_action_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &actionSlugs);
+                slugsMav->sendMessage(msg);
+                break;
+
+            case 3:// Yaw Damper PID values  request
+                actionSlugs.target = activeUAS->getUASID();
+                actionSlugs.actionId = 9;
+                actionSlugs.actionVal = 3;
+
+
+                mavlink_msg_slugs_action_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &actionSlugs);
+                slugsMav->sendMessage(msg);
+                break;
+
+            case 4: // Roll Control PID values request
+                actionSlugs.target = activeUAS->getUASID();
+                actionSlugs.actionId = 9;
+                actionSlugs.actionVal = 4;
+
+
+                mavlink_msg_slugs_action_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &actionSlugs);
+                slugsMav->sendMessage(msg);
+                break;
+
+            case 8: // Pitch to dT FF term
+                actionSlugs.target = activeUAS->getUASID();
+                actionSlugs.actionId = 9;
+                actionSlugs.actionVal = 8;
+
+
+                mavlink_msg_slugs_action_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &actionSlugs);
+                slugsMav->sendMessage(msg);
+                break;
+
+
+            default:
+                qDebug() << "\nSLUGS RECEIVED PID type ID = " << PIDtype;
+                  break;
+
+
+        }
+    }
 }
 
 #endif // MAVLINK_ENABLED_SLUGS

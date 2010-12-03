@@ -23,13 +23,7 @@ public:
 protected:
     virtual void mousePressEvent(QMouseEvent* event);
     virtual void mouseReleaseEvent(QMouseEvent* event);
-    //void mouseMoveEvent(QMouseEvent* event);
-     void mouseMoveEvent(QMouseEvent* event);
-   // virtual void wheelEvent(QWheelEvent* event);
-    //virtual void resizeEvent(QResizeEvent* event);
-
-
-
+    void mouseMoveEvent(QMouseEvent* event);
 
 private:
     Ui::SlugsVideoCamControl *ui;
