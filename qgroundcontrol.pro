@@ -225,7 +225,7 @@ HEADERS += src/MG.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
-    src/ui/QGCRemoteControlView.h \ # src/ui/WaypointGlobalView.h \
+    src/ui/QGCRemoteControlView.h \
     src/ui/RadioCalibration/RadioCalibrationData.h \
     src/ui/RadioCalibration/RadioCalibrationWindow.h \
     src/ui/RadioCalibration/AirfoilServoCalibrator.h \
