@@ -62,6 +62,8 @@ signals:
     void slugsGPSDateTime(int systemId, const mavlink_gps_date_time_t& gpsDateTime);
     void slugsActionAck(int systemId, const mavlink_action_ack_t& actionAck);
 
+    void slugsPidValues(int systemId, const mavlink_pid_t& pidValues);
+
     void slugsBootMsg(int uasId, mavlink_boot_t& boot);
     void slugsAttitude(int uasId, mavlink_attitude_t& attitude);
 
@@ -96,7 +98,7 @@ protected:
    mavlink_set_mode_t 			mlApMode;
    mavlink_pwm_commands_t		mlPwmCommands;
    mavlink_pid_values_t			mlPidValues;
-   mavlink_pid_t				mlSinglePid;
+   mavlink_pid_t			mlSinglePid;
 
    mavlink_slugs_navigation_t	mlNavigation;
    mavlink_data_log_t			mlDataLog;
@@ -106,11 +108,14 @@ protected:
    mavlink_slugs_action_t		mlAction;
 
 
+
+
    // Standart messages MAVLINK used by SLUGS
 private:
 
 
    void emitGpsSignals (void);
+   void emitPidSignal(void);
 
    int uasId;
 

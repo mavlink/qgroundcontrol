@@ -72,14 +72,14 @@
           <item row="0" column="1">
            <widget class="QLineEdit" name="dT_P_set">
             <property name="text">
-             <string>dT_P_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
            <widget class="QLineEdit" name="dT_P_get">
             <property name="text">
-             <string>dT_P_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -89,14 +89,14 @@
           <item row="1" column="1">
            <widget class="QLineEdit" name="dT_I_set">
             <property name="text">
-             <string>dT_I_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="1" column="2">
            <widget class="QLineEdit" name="dT_I_get">
             <property name="text">
-             <string>dT_I_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -106,14 +106,14 @@
           <item row="2" column="1">
            <widget class="QLineEdit" name="dT_D_set">
             <property name="text">
-             <string>dT_D_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="2" column="2">
            <widget class="QLineEdit" name="dT_D_get">
             <property name="text">
-             <string>dT_D_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -242,14 +242,14 @@
           <item row="0" column="1">
            <widget class="QLineEdit" name="dE_P_set">
             <property name="text">
-             <string>dE_P_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
            <widget class="QLineEdit" name="dE_P_get">
             <property name="text">
-             <string>dE_P_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -259,14 +259,14 @@
           <item row="1" column="1">
            <widget class="QLineEdit" name="dE_I_set">
             <property name="text">
-             <string>dE_I_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="1" column="2">
            <widget class="QLineEdit" name="dE_I_get">
             <property name="text">
-             <string>dE_I_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -276,14 +276,14 @@
           <item row="2" column="1">
            <widget class="QLineEdit" name="dE_D_set">
             <property name="text">
-             <string>dE_D_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="2" column="2">
            <widget class="QLineEdit" name="dE_D_get">
             <property name="text">
-             <string>dE_D_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -405,14 +405,14 @@
           <item row="0" column="1">
            <widget class="QLineEdit" name="dA_P_set">
             <property name="text">
-             <string>dA_P_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
            <widget class="QLineEdit" name="dA_P_get">
             <property name="text">
-             <string>dA_P_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -422,14 +422,14 @@
           <item row="1" column="1">
            <widget class="QLineEdit" name="dA_I_set">
             <property name="text">
-             <string>dA_I_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="1" column="2">
            <widget class="QLineEdit" name="dA_I_get">
             <property name="text">
-             <string>dA_I_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -439,14 +439,14 @@
           <item row="2" column="1">
            <widget class="QLineEdit" name="dA_D_set">
             <property name="text">
-             <string>dA_D_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="2" column="2">
            <widget class="QLineEdit" name="dA_D_get">
             <property name="text">
-             <string>dA_D_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -545,14 +545,14 @@
           <item row="0" column="1">
            <widget class="QLineEdit" name="HELPComm_P_set">
             <property name="text">
-             <string>HELPComm_P_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
            <widget class="QLineEdit" name="HELPComm_P_get">
             <property name="text">
-             <string>HELPComm_P_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -562,14 +562,14 @@
           <item row="1" column="1">
            <widget class="QLineEdit" name="HELPComm_I_set">
             <property name="text">
-             <string>HELPComm_I_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="1" column="2">
            <widget class="QLineEdit" name="HELPComm_I_get">
             <property name="text">
-             <string>HELPComm_I_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -646,14 +646,14 @@
           <item row="0" column="1">
            <widget class="QLineEdit" name="HELPComm_FF_set">
             <property name="text">
-             <string>HELPComm_FF_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
            <widget class="QLineEdit" name="HELPComm_FF_get">
             <property name="text">
-             <string>HELPComm_FF_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -775,14 +775,14 @@
           <item row="0" column="1">
            <widget class="QLineEdit" name="dR_P_set">
             <property name="text">
-             <string>dR_P_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
            <widget class="QLineEdit" name="dR_P_get">
             <property name="text">
-             <string>dR_P_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -792,14 +792,14 @@
           <item row="1" column="1">
            <widget class="QLineEdit" name="dR_I_set">
             <property name="text">
-             <string>dR_I_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="1" column="2">
            <widget class="QLineEdit" name="dR_I_get">
             <property name="text">
-             <string>dR_I_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -809,14 +809,14 @@
           <item row="2" column="1">
            <widget class="QLineEdit" name="dR_D_set">
             <property name="text">
-             <string>dR_D_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="2" column="2">
            <widget class="QLineEdit" name="dR_D_get">
             <property name="text">
-             <string>dR_D_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>
@@ -910,14 +910,14 @@
           <item row="0" column="1">
            <widget class="QLineEdit" name="P2dT_FF_set">
             <property name="text">
-             <string>P2dT_FF_set</string>
+             <string>0.0</string>
             </property>
            </widget>
           </item>
           <item row="0" column="2">
            <widget class="QLineEdit" name="P2dT_FF_get">
             <property name="text">
-             <string>P2dT_FF_get</string>
+             <string>0.0</string>
             </property>
             <property name="readOnly">
              <bool>true</bool>

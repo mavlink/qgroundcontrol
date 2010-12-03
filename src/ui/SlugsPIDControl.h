@@ -49,11 +49,25 @@ public slots:
     void connect_set_pushButtons();
 
     /**
+     * @brief Connect Set pushButtons to change the color GroupBox
+     *
+     * @param
+     */
+    void connect_get_pushButtons();
+
+    /**
      * @brief Connect Edition Lines for PID Values
      *
      * @param
      */
     void connect_editLinesPDIvalues();
+
+    /**
+     * @brief send a PDI request message to UAS
+     *
+     * @param
+     */
+    void sendMessagePIDStatus(int PIDtype);
 
 // Fuctions for Air Speed GroupBox
     /**
@@ -75,6 +89,13 @@ public slots:
      * @param
      */
     void connect_AirSpeed_LineEdit();
+    /**
+     * @brief get message PID Air Speed(loop index = 0) from UAS
+     *
+     * @param
+     */
+    void get_AirSpeed_PID();
+
 
 // Functions for Pitch Followei GroupBox
     /**
@@ -96,6 +117,13 @@ public slots:
          * @param
          */
      void connect_PitchFollowei_LineEdit();
+     /**
+      * @brief get message PID Pitch Followei(loop index = 2) from UAS
+      *
+      * @param
+      */
+     void get_PitchFollowei_PID();
+
 
      // Functions for Roll Control GroupBox
      /**
@@ -117,6 +145,13 @@ public slots:
               * @param
               */
      void connect_RollControl_LineEdit();
+     /**
+      * @brief get message PID Roll Control(loop index = 4) from UAS
+      *
+      * @param
+      */
+     void get_RollControl_PID();
+
 
      // Functions for Heigth Error GroupBox
      /**
@@ -138,6 +173,12 @@ public slots:
               * @param
               */
      void connect_HeigthError_LineEdit();
+     /**
+      * @brief get message PID Heigth Error(loop index = 1) from UAS
+      *
+      * @param
+      */
+     void get_HeigthError_PID();
 
      // Functions for Yaw Damper GroupBox
      /**
@@ -159,6 +200,14 @@ public slots:
               * @param
               */
      void connect_YawDamper_LineEdit();
+     /**
+      * @brief get message PID Yaw Damper(loop index = 3) from UAS
+      *
+      * @param
+      */
+     void get_YawDamper_PID();
+
+
 
      // Functions for Pitch to dT GroupBox
      /**
@@ -180,6 +229,12 @@ public slots:
               * @param
               */
      void connect_Pitch2dT_LineEdit();
+     /**
+      * @brief get message PID Pitch2dT(loop index = 8) from UAS
+      *
+      * @param
+      */
+     void get_Pitch2dT_PID();
 
 
      //Create, send and get Messages PID
@@ -187,6 +242,7 @@ public slots:
 #ifdef MAVLINK_ENABLED_SLUGS
 
      void recibeMensaje(int systemId, const mavlink_action_ack_t& action);
+     void receivePidValues(int systemId, const mavlink_pid_t& pidValues);
 
 #endif // MAVLINK_ENABLED_SLUG
 
@@ -206,6 +262,7 @@ private:
 
     //SlugsMav Message
     mavlink_pid_t pidMessage;
+    mavlink_slugs_action_t actionSlugs;
 };
 
 #endif // SLUGSPIDCONTROL_H

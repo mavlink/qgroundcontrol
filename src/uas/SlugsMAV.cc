@@ -39,6 +39,7 @@ SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
     memset(&mlActionAck,0, sizeof(mavlink_action_ack_t));
     memset(&mlAction ,0, sizeof(mavlink_slugs_action_t));
 
+
     updateRoundRobin = 0;
 
 
@@ -134,6 +135,12 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
       case MAVLINK_MSG_ID_PID:              //182
+          memset(&mlSinglePid,0,sizeof(mavlink_pid_t));
+          mavlink_msg_pid_decode(&message, &mlSinglePid);
+          qDebug() << "\nSLUGS RECEIVED PID Message = "<<mlSinglePid.idx;
+
+          emit slugsPidValues(uasId, mlSinglePid);
+
 
       break;
 
@@ -177,7 +184,7 @@ void SlugsMAV::emitSignals (void){
     case 5:
       emit slugsFilteredData(uasId,mlFilteredData);
       emit slugsGPSDateTime(uasId, mlGpsDateTime);
-            break;
+    break;
 
     case 6:
       emit slugsActionAck(uasId,mlActionAck);
@@ -219,6 +226,13 @@ void SlugsMAV::emitGpsSignals (void){
       emit textMessageReceived(uasId, uasId, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(mlGpsData.v));
     }
     }
+}
+
+void SlugsMAV::emitPidSignal()
+{
+     qDebug() << "\nSLUGS RECEIVED PID Message";
+    emit slugsPidValues(uasId, mlSinglePid);
+
 }
 
 #endif // MAVLINK_ENABLED_SLUGS
