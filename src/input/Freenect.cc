@@ -30,6 +30,18 @@ Freenect::Freenect()
     depthCameraParameters.k[3] = 5.0350940090814270e-03;
     depthCameraParameters.k[4] = -1.3053628089976321e+00;
 
+    // relative rotation/translation between cameras with depth camera as reference
+    transformMatrix = QMatrix4x4(9.9984628826577793e-01, 1.2635359098409581e-03,
+                                 -1.7487233004436643e-02, 1.9985242312092553e-02,
+                                 -1.4779096108364480e-03, 9.9992385683542895e-01,
+                                 -1.2251380107679535e-02, -7.4423738761617583e-04,
+                                 1.7470421412464927e-02, 1.2275341476520762e-02,
+                                 9.9977202419716948e-01, -1.0916736334336222e-02,
+                                 0.0, 0.0, 0.0, 1.0);
+
+    // relative rotation/translation between cameras with rgb camera as reference
+    transformMatrix = transformMatrix.transposed();
+
     // populate gamma lookup table
     for (int i = 0; i < 2048; ++i)
     {
@@ -51,6 +63,9 @@ Freenect::Freenect()
             projectPixelTo3DRay(rectifiedPoint, rectifiedRay, depthCameraParameters);
 
             depthProjectionMatrix[i * FREENECT_FRAME_W + j] = rectifiedRay;
+
+            rectifyPoint(originalPoint, rectifiedPoint, rgbCameraParameters);
+            rgbRectificationMap[i * FREENECT_FRAME_W + j] = rectifiedPoint;
         }
     }
 }
@@ -173,7 +188,7 @@ Freenect::getColoredDepthData(void)
 }
 
 QVector<QVector3D>
-Freenect::getPointCloudData(void)
+Freenect::get3DPointCloudData(void)
 {
     QMutexLocker locker(&depthMutex);
 
@@ -194,6 +209,49 @@ Freenect::getPointCloudData(void)
 
                 pointCloud.push_back(QVector3D(ray.x(), ray.y(), ray.z()));
             }
+        }
+    }
+
+    return pointCloud;
+}
+
+QVector<Freenect::Vector6D>
+Freenect::get6DPointCloudData(void)
+{
+    QVector<QVector3D> rawPointCloud = get3DPointCloudData();
+
+    QVector<Freenect::Vector6D> pointCloud;
+
+    for (int i = 0; i < rawPointCloud.size(); ++i)
+    {
+        Vector6D point;
+
+        point.x = rawPointCloud[i].x();
+        point.y = rawPointCloud[i].y();
+        point.z = rawPointCloud[i].z();
+
+        QVector4D transformedPoint = transformMatrix * QVector4D(point.x, point.y, point.z, 1.0);
+
+        float iz = 1.0 / transformedPoint.z();
+        QVector2D rectifiedPoint(transformedPoint.x() * iz * rgbCameraParameters.fx + rgbCameraParameters.cx,
+                                 transformedPoint.y() * iz * rgbCameraParameters.fy + rgbCameraParameters.cy);
+
+        QVector2D originalPoint;
+        unrectifyPoint(rectifiedPoint, originalPoint, rgbCameraParameters);
+
+        if (originalPoint.x() >= 0.0 && originalPoint.x() < FREENECT_FRAME_W &&
+            originalPoint.y() >= 0.0 && originalPoint.y() < FREENECT_FRAME_H)
+        {
+            int x = static_cast<int>(originalPoint.x());
+            int y = static_cast<int>(originalPoint.y());
+            unsigned char* pixel = reinterpret_cast<unsigned char*>(rgb)
+                                   + (y * FREENECT_FRAME_W + x) * 3;
+
+            point.r = pixel[0];
+            point.g = pixel[1];
+            point.b = pixel[2];
+
+            pointCloud.push_back(point);
         }
     }
 
@@ -237,7 +295,8 @@ Freenect::FreenectThread::run(void)
 }
 
 void
-Freenect::rectifyPoint(const QVector2D& originalPoint, QVector2D& rectifiedPoint,
+Freenect::rectifyPoint(const QVector2D& originalPoint,
+                       QVector2D& rectifiedPoint,
                        const IntrinsicCameraParameters& params)
 {
     double x = (originalPoint.x() - params.cx) / params.fx;
@@ -262,6 +321,28 @@ Freenect::rectifyPoint(const QVector2D& originalPoint, QVector2D& rectifiedPoint
 
     rectifiedPoint.setX(x * params.fx + params.cx);
     rectifiedPoint.setY(y * params.fy + params.cy);
+}
+
+void
+Freenect::unrectifyPoint(const QVector2D& rectifiedPoint,
+                         QVector2D& originalPoint,
+                         const IntrinsicCameraParameters& params)
+{
+    double x = (rectifiedPoint.x() - params.cx) / params.fx;
+    double y = (rectifiedPoint.y() - params.cy) / params.fy;
+
+    double r2 = x * x + y * y;
+
+    // tangential distortion vector [dx dy]
+    double dx = 2 * params.k[2] * x * y + params.k[3] * (r2 + 2 * x * x);
+    double dy = params.k[2] * (r2 + 2 * y * y) + 2 * params.k[3] * x * y;
+
+    double cdist = 1.0 + r2 * (params.k[0] + r2 * (params.k[1] + r2 * params.k[4]));
+    x = x * cdist + dx;
+    y = y * cdist + dy;
+
+    originalPoint.setX(x * params.fx + params.cx);
+    originalPoint.setY(y * params.fy + params.cy);
 }
 
 void
