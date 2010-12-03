@@ -287,22 +287,30 @@ win32-msvc2008 {
     LIBS += -L$$BASEDIR/lib/sdl/msvc/lib \
              -lSDLmain -lSDL
 
-message("Building support for OSGEARTH")
-DEPENDENCIES_PRESENT += osgearth
+exists($$BASEDIR/lib/osg123) {
+message("Building support for OSG")
+DEPENDENCIES_PRESENT += osg
+
 # Include OpenSceneGraph and osgEarth libraries
 INCLUDEPATH += $$BASEDIR/lib/osgEarth/win32/include \
     $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/include
-LIBS += -L$$BASEDIR/lib/osgEarth/win32/lib \
-    -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
+LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
     -losg \
     -losgViewer \
 	-losgGA \
 	-losgDB \
 	-losgText \
-	-lOpenThreads \
-    -losgEarth \
-	-losgEarthUtil
+        -lOpenThreads
 DEFINES += QGC_OSG_ENABLED
+exists($$BASEDIR/lib/osgEarth123) {
+    DEPENDENCIES_PRESENT += osgearth
+    message("Building support for osgEarth")
+    DEFINES += QGC_OSGEARTH_ENABLED
+    LIBS += -L$$BASEDIR/lib/osgEarth/win32/lib \
+        -losgEarth \
+        -losgEarthUtil
+}
+}
 
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
