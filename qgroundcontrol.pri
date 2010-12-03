@@ -42,7 +42,7 @@ QMAKE_PRE_LINK += echo "Copying files"
 # MAC OS X
 macx { 
 
-    COMPILER_VERSION = $$system(gcc -v)
+    COMPILER_VERSION = system(gcc -v)
     message(Using compiler $$COMPILER_VERSION)
 
     HARDWARE_PLATFORM = $$system(uname -a)
@@ -188,7 +188,6 @@ linux-g++ {
     DEFINES += QGC_OSGEARTH_ENABLED
     }
 
-    exists(/usr/local/include/libfreenect) {
     exists(/usr/local/include/libfreenect/libfreenect.h) {
     message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
@@ -304,7 +303,6 @@ LIBS += -L$$BASEDIR/lib/osgEarth/win32/lib \
     -losgEarth \
 	-losgEarthUtil
 DEFINES += QGC_OSG_ENABLED
-QMAKE_CXXFLAGS += -DUSE_QT4
 
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
@@ -327,7 +325,7 @@ QMAKE_CXXFLAGS += -DUSE_QT4
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += /Wl /E
+
 }
 
 # Windows (32bit)
@@ -355,51 +353,6 @@ win32-g++ {
         DESTDIR = $$BUILDDIR/release
     }
         
-    RC_FILE = $$BASEDIR/qgroundcontrol.rc
-
-    # Copy dependencies
-	debug {
-    QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/.
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/debug/.
-	QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
-	}
-	
-	release {
-	QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/.
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
-	}
-
-    # osg/osgEarth dynamic casts might fail without this compiler option.
-    # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl,-E
-}
-
-# Windows (64bit)
-win64-g++ {
-
-    message(Building for Windows Platform (64bit))
-
-    # Special settings for debug
-    #CONFIG += CONSOLE
-
-    INCLUDEPATH += $$BASEDIR\lib\sdl\include \
-                   $$BASEDIR\lib\opal\include #\ #\
-                   #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
-
-    LIBS += -L$$BASEDIR\lib\sdl\win32 \
-             -lmingw32 -lSDLmain -lSDL -mwindows
-
-
-
-    debug {
-        DESTDIR = $$BASEDIR/bin
-    }
-
-    release {
-        DESTDIR = $$BASEDIR/bin
-    }
-
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
