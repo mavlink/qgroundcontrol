@@ -34,6 +34,9 @@ This file is part of the QGROUNDCONTROL project
 #include <osg/Geometry>
 #include <osg/LineWidth>
 #include <osg/MatrixTransform>
+#ifdef Q_OS_MACX
+#include <Carbon/Carbon.h>
+#endif
 
 Q3DWidget::Q3DWidget(QWidget* parent)
     : QGLWidget(parent)
@@ -90,7 +93,7 @@ Q3DWidget::init(float fps)
     egocentricMap->addChild(createRobot());
 
     // set up camera control
-    cameraManipulator = new GCManipulator;
+    cameraManipulator = new GCManipulator();
     setCameraManipulator(cameraManipulator);
     cameraManipulator->setMinZoomRange(cameraParams.minZoomRange);
     cameraManipulator->setDistance(cameraParams.minZoomRange * 2.0);
