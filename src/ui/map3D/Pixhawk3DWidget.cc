@@ -47,6 +47,8 @@
 Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
      : Q3DWidget(parent)
      , uas(NULL)
+     , mode(DEFAULT_MODE)
+     , selectedWpIndex(-1)
      , displayGrid(true)
      , displayTrail(false)
      , displayImagery(true)
@@ -228,6 +230,87 @@ Pixhawk3DWidget::toggleFollowCamera(int32_t state)
     }
 }
 
+void
+Pixhawk3DWidget::insertWaypoint(void)
+{
+    if (uas)
+    {
+        double altitude = uas->getAltitude();
+
+        std::pair<double,double> cursorWorldCoords =
+                getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+
+        Waypoint* wp = new Waypoint(0,
+                                    cursorWorldCoords.first,
+                                    cursorWorldCoords.second,
+                                    -altitude);
+        uas->getWaypointManager().addWaypoint(wp);
+    }
+}
+
+void
+Pixhawk3DWidget::moveWaypoint(void)
+{
+    mode = MOVE_WAYPOINT_MODE;
+}
+
+void
+Pixhawk3DWidget::setWaypoint(void)
+{
+    if (uas)
+    {
+        double altitude = uas->getAltitude();
+
+        std::pair<double,double> cursorWorldCoords =
+                getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+
+        const QVector<Waypoint *> waypoints =
+                uas->getWaypointManager().getWaypointList();
+        Waypoint* waypoint = waypoints.at(selectedWpIndex);
+        waypoint->setX(cursorWorldCoords.first);
+        waypoint->setY(cursorWorldCoords.second);
+        waypoint->setZ(-altitude);
+    }
+}
+
+void
+Pixhawk3DWidget::deleteWaypoint(void)
+{
+    if (uas)
+    {
+        uas->getWaypointManager().removeWaypoint(selectedWpIndex);
+    }
+}
+
+void
+Pixhawk3DWidget::setWaypointAltitude(void)
+{
+    if (uas)
+    {
+        const QVector<Waypoint *> waypoints =
+                uas->getWaypointManager().getWaypointList();
+        waypoints.at(selectedWpIndex)->setZ(0.0);
+    }
+}
+
+void
+Pixhawk3DWidget::clearAllWaypoints(void)
+{
+    if (uas)
+    {
+        double altitude = uas->getAltitude();
+
+        std::pair<double,double> cursorWorldCoords =
+                getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
+
+        Waypoint* wp = new Waypoint(0,
+                                    cursorWorldCoords.first,
+                                    cursorWorldCoords.second,
+                                    -altitude);
+        uas->getWaypointManager().addWaypoint(wp);
+    }
+}
+
 QVector< osg::ref_ptr<osg::Node> >
 Pixhawk3DWidget::findVehicleModels(void)
 {
@@ -301,17 +384,12 @@ Pixhawk3DWidget::buildLayout(void)
     mapComboBox->addItem("Map (Google)");
     mapComboBox->addItem("Satellite (Google)");
 
-    QLabel* modelLabel = new QLabel("Vehicle Model", this);
+    QLabel* modelLabel = new QLabel("Vehicle", this);
     QComboBox* modelComboBox = new QComboBox(this);
     for (int i = 0; i < vehicleModels.size(); ++i)
     {
         modelComboBox->addItem(vehicleModels[i]->getName().c_str());
     }
-
-    targetButton = new QPushButton(this);
-    targetButton->setCheckable(true);
-    targetButton->setChecked(false);
-    targetButton->setIcon(QIcon(QString::fromUtf8(":/images/status/weather-clear.svg")));
 
     QPushButton* recenterButton = new QPushButton(this);
     recenterButton->setText("Recenter Camera");
@@ -331,10 +409,9 @@ Pixhawk3DWidget::buildLayout(void)
     layout->addWidget(mapComboBox, 1, 5);
     layout->addWidget(modelLabel, 1, 6);
     layout->addWidget(modelComboBox, 1, 7);
-    layout->addWidget(targetButton, 1, 8);
-    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 9);
-    layout->addWidget(recenterButton, 1, 10);
-    layout->addWidget(followCameraCheckBox, 1, 11);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 8);
+    layout->addWidget(recenterButton, 1, 9);
+    layout->addWidget(followCameraCheckBox, 1, 10);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
     setLayout(layout);
@@ -473,9 +550,30 @@ Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
 void
 Pixhawk3DWidget::mousePressEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::LeftButton && targetButton->isChecked())
+    if (event->button() == Qt::LeftButton)
     {
-        markTarget();
+        if (mode == MOVE_WAYPOINT_MODE)
+        {
+            setWaypoint();
+            mode = DEFAULT_MODE;
+
+            return;
+        }
+
+        if (event->modifiers() == Qt::ShiftModifier)
+        {
+            selectedWpIndex = findWaypoint(event->x(), event->y());
+            if (selectedWpIndex == -1)
+            {
+                showInsertWaypointMenu(event->globalPos());
+            }
+            else
+            {
+                showEditWaypointMenu(event->globalPos());
+            }
+
+            return;
+        }
     }
 
     Q3DWidget::mousePressEvent(event);
@@ -912,6 +1010,7 @@ Pixhawk3DWidget::updateWaypoints(void)
         double robotX, robotY;
         QString utmZone;
         Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);
+        double robotZ = -uas->getAltitude();
 
         if (waypointsNode->getNumChildren() > 0)
         {
@@ -922,18 +1021,24 @@ Pixhawk3DWidget::updateWaypoints(void)
 
         for (int i = 0; i < list.size(); i++)
         {
-            osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
-            osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere;
-            sphere->setRadius(0.2);
-            sd->setShape(sphere);
+            Waypoint* wp = list.at(i);
 
-            if (list.at(i)->getCurrent())
+            osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
+            osg::ref_ptr<osg::Cylinder> cylinder =
+                    new osg::Cylinder(osg::Vec3d(0.0, 0.0, 0.0),
+                                      wp->getOrbit(),
+                                      fabs(wp->getZ()));
+
+            sd->setShape(cylinder);
+            sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+
+            if (wp->getCurrent())
             {
-                sd->setColor(osg::Vec4(1.0f, 0.3f, 0.3f, 1.0f));
+                sd->setColor(osg::Vec4(1.0f, 0.3f, 0.3f, 0.5f));
             }
             else
             {
-                sd->setColor(osg::Vec4(0.0f, 1.0f, 1.0f, 1.0f));
+                sd->setColor(osg::Vec4(0.0f, 1.0f, 0.0f, 0.5f));
             }
 
             osg::ref_ptr<osg::Geode> geode = new osg::Geode;
@@ -942,9 +1047,9 @@ Pixhawk3DWidget::updateWaypoints(void)
             osg::ref_ptr<osg::PositionAttitudeTransform> pat =
                     new osg::PositionAttitudeTransform;
 
-            pat->setPosition(osg::Vec3d(list.at(i)->getY() - robotY,
-                                        list.at(i)->getX() - robotX,
-                                        0.0));
+            pat->setPosition(osg::Vec3d(wp->getY() - robotY,
+                                        wp->getX() - robotX,
+                                        wp->getZ() / 2.0 - robotZ));
 
             waypointsNode->addChild(pat);
             pat->addChild(geode);
@@ -1160,4 +1265,64 @@ Pixhawk3DWidget::markTarget(void)
     }
 
     targetButton->setChecked(false);
+}
+
+int
+Pixhawk3DWidget::findWaypoint(int mouseX, int mouseY)
+{
+    if (getSceneData() != NULL)
+    {
+        osgUtil::LineSegmentIntersector::Intersections intersections;
+
+        if (computeIntersections(mouseX, height() - mouseY, intersections))
+        {
+            for (osgUtil::LineSegmentIntersector::Intersections::iterator
+                 it = intersections.begin(); it != intersections.end(); it++)
+            {
+                for (uint i = 0 ; i < it->nodePath.size(); ++i)
+                {
+                    std::string nodeName = it->nodePath[i]->getName();
+                    if (nodeName.c_str()[0] == 'w' && nodeName.c_str()[1] == 'p')
+                    {
+                        char wpNum[5];
+                        wpNum[0] = nodeName[2];
+                        wpNum[1] = nodeName[3];
+                        return atoi(wpNum);
+                    }
+                }
+            }
+        }
+    }
+
+    return -1;
+}
+
+void
+Pixhawk3DWidget::showInsertWaypointMenu(const QPoint &cursorPos)
+{
+    QMenu menu;
+    menu.addAction("Insert new waypoint", this, SLOT(insertWaypoint()));
+    menu.addAction("Clear all waypoints", this, SLOT(clearAllWaypoints()));
+    menu.exec(cursorPos);
+}
+
+void
+Pixhawk3DWidget::showEditWaypointMenu(const QPoint &cursorPos)
+{
+    QMenu menu;
+
+    QString text;
+    text.append("Move waypoint %1").arg(QString::number(selectedWpIndex));
+    menu.addAction(text, this, SLOT(moveWaypoint()));
+
+    text.clear();
+    text.append("Change altitude of waypoint %1").arg(QString::number(selectedWpIndex));
+    menu.addAction(text, this, SLOT(setWaypointAltitude()));
+
+    text.clear();
+    text.append("Delete waypoint %1").arg(QString::number(selectedWpIndex));
+    menu.addAction(text, this, SLOT(deleteWaypoint()));
+
+    menu.addAction("Clear all waypoints", this, SLOT(clearAllWaypoints()));
+    menu.exec(cursorPos);
 }
