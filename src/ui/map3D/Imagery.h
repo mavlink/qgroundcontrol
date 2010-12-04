@@ -60,7 +60,7 @@ public:
                     const QString& utmZone);
     void draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
-                double xOffset, double yOffset,
+                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone);
 
     void prefetch3D(double radius, double tileResolution,
@@ -68,7 +68,7 @@ public:
                     const QString& utmZone);
     void draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
-                double xOffset, double yOffset,
+                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone);
 
     bool update(void);
