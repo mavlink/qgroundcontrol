@@ -118,7 +118,7 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
 void
 Imagery::draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
-                double xOffset, double yOffset,
+                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone)
 {
     if (getNumDrawables() > 0)
@@ -176,6 +176,7 @@ Imagery::draw2D(double windowWidth, double windowHeight,
                                     y2 - yOffset, x2 - xOffset,
                                     y3 - yOffset, x3 - xOffset,
                                     y4 - yOffset, x4 - xOffset,
+                                    zOffset,
                                     true));
             }
         }
@@ -214,7 +215,7 @@ Imagery::prefetch3D(double radius, double tileResolution,
 void
 Imagery::draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
-                double xOffset, double yOffset,
+                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone)
 {
     if (getNumDrawables() > 0)
@@ -252,6 +253,7 @@ Imagery::draw3D(double radius, double tileResolution,
                                     y2 - yOffset, x2 - xOffset,
                                     y3 - yOffset, x3 - xOffset,
                                     y4 - yOffset, x4 - xOffset,
+                                    zOffset,
                                     true));
             }
         }
