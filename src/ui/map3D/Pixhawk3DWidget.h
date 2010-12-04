@@ -68,6 +68,13 @@ private slots:
     void recenter(void);
     void toggleFollowCamera(int state);
 
+    void insertWaypoint(void);
+    void moveWaypoint(void);
+    void setWaypoint(void);
+    void deleteWaypoint(void);
+    void setWaypointAltitude(void);
+    void clearAllWaypoints(void);
+
 protected:
     QVector< osg::ref_ptr<osg::Node> > findVehicleModels(void);
     void buildLayout(void);
@@ -99,6 +106,17 @@ private:
 #endif
 
     void markTarget(void);
+
+    int findWaypoint(int mouseX, int mouseY);
+    void showInsertWaypointMenu(const QPoint& cursorPos);
+    void showEditWaypointMenu(const QPoint& cursorPos);
+
+    enum Mode {
+        DEFAULT_MODE,
+        MOVE_WAYPOINT_MODE
+    };
+    Mode mode;
+    int selectedWpIndex;
 
     bool displayGrid;
     bool displayTrail;
