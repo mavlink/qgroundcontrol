@@ -82,9 +82,9 @@ public:
     double getLocalX() const { return localX; };
     double getLocalY() const { return localY; };
     double getLocalZ() const { return localZ; };
-    double getLat() const { return latitude; };
-    double getLon() const { return longitude; };
-    double getAlt() const { return altitude; };
+    double getLatitude() const { return latitude; };
+    double getLongitude() const { return longitude; };
+    double getAltitude() const { return altitude; };
 
     double getRoll() const { return roll; };
     double getPitch() const { return pitch; };

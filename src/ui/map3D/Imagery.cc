@@ -118,6 +118,7 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
 void
 Imagery::draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
+                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone)
 {
     if (getNumDrawables() > 0)
@@ -171,10 +172,11 @@ Imagery::draw2D(double windowWidth, double windowHeight,
             TexturePtr t = textureCache->get(tileURL);
             if (!t.isNull())
             {
-                addDrawable(t->draw(y1, x1,
-                                    y2, x2,
-                                    y3, x3,
-                                    y4, x4,
+                addDrawable(t->draw(y1 - yOffset, x1 - xOffset,
+                                    y2 - yOffset, x2 - xOffset,
+                                    y3 - yOffset, x3 - xOffset,
+                                    y4 - yOffset, x4 - xOffset,
+                                    zOffset,
                                     true));
             }
         }
@@ -213,6 +215,7 @@ Imagery::prefetch3D(double radius, double tileResolution,
 void
 Imagery::draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
+                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone)
 {
     if (getNumDrawables() > 0)
@@ -246,10 +249,11 @@ Imagery::draw3D(double radius, double tileResolution,
 
             if (!t.isNull())
             {
-                addDrawable(t->draw(y1, x1,
-                                    y2, x2,
-                                    y3, x3,
-                                    y4, x4,
+                addDrawable(t->draw(y1 - yOffset, x1 - xOffset,
+                                    y2 - yOffset, x2 - xOffset,
+                                    y3 - yOffset, x3 - xOffset,
+                                    y4 - yOffset, x4 - xOffset,
+                                    zOffset,
                                     true));
             }
         }
@@ -397,7 +401,7 @@ Imagery::UTMtoTile(double northing, double easting, const QString& utmZone,
 }
 
 QChar
-Imagery::UTMLetterDesignator(double latitude) const
+Imagery::UTMLetterDesignator(double latitude)
 {
     // This routine determines the correct UTM letter designator for the given latitude
     // returns 'Z' if latitude is outside the UTM limits of 84N to 80S
@@ -432,7 +436,7 @@ Imagery::UTMLetterDesignator(double latitude) const
 void
 Imagery::LLtoUTM(double latitude, double longitude,
                  double& utmNorthing, double& utmEasting,
-                 QString& utmZone) const
+                 QString& utmZone)
 {
     // converts lat/long to UTM coords.  Equations from USGS Bulletin 1532
     // East Longitudes are positive, West longitudes are negative.
@@ -513,7 +517,7 @@ Imagery::LLtoUTM(double latitude, double longitude,
 
 void
 Imagery::UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
-                 double& latitude, double& longitude) const
+                 double& latitude, double& longitude)
 {
     // converts UTM coords to lat/long.  Equations from USGS Bulletin 1532
     // East Longitudes are positive, West longitudes are negative.

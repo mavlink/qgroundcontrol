@@ -68,6 +68,13 @@ private slots:
     void recenter(void);
     void toggleFollowCamera(int state);
 
+    void insertWaypoint(void);
+    void moveWaypoint(void);
+    void setWaypoint(void);
+    void deleteWaypoint(void);
+    void setWaypointAltitude(void);
+    void clearAllWaypoints(void);
+
 protected:
     QVector< osg::ref_ptr<osg::Node> > findVehicleModels(void);
     void buildLayout(void);
@@ -91,7 +98,8 @@ private:
     void updateHUD(double robotX, double robotY, double robotZ,
                    double robotRoll, double robotPitch, double robotYaw);
     void updateTrail(double robotX, double robotY, double robotZ);
-    void updateImagery(void);
+    void updateImagery(double originX, double originY, double originZ,
+                       const QString& zone);
     void updateTarget(void);
     void updateWaypoints(void);
 #ifdef QGC_LIBFREENECT_ENABLED
@@ -99,6 +107,17 @@ private:
 #endif
 
     void markTarget(void);
+
+    int findWaypoint(int mouseX, int mouseY);
+    void showInsertWaypointMenu(const QPoint& cursorPos);
+    void showEditWaypointMenu(const QPoint& cursorPos);
+
+    enum Mode {
+        DEFAULT_MODE,
+        MOVE_WAYPOINT_MODE
+    };
+    Mode mode;
+    int selectedWpIndex;
 
     bool displayGrid;
     bool displayTrail;
