@@ -76,6 +76,9 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         localX(0),
         localY(0),
         localZ(0),
+        latitude(0),
+        longitude(0),
+        altitude(0),
         roll(0),
         pitch(0),
         yaw(0),
@@ -776,6 +779,7 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer(buffer, &message);
+    mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getId(), message.len);
     // If link is connected
     if (link->isConnected())
     {

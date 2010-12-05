@@ -141,7 +141,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCRemoteControlView.ui \
     src/ui/QMap3D.ui \
     src/ui/QGCWebView.ui \
-    src/ui/map3D/QGCGoogleEarthView.ui
+    src/ui/map3D/QGCGoogleEarthView.ui \
+    src/ui/map3D/QGCGoogleEarthViewWin.ui
 
 # src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
@@ -234,7 +235,8 @@ HEADERS += src/MG.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
     src/comm/QGCMAVLink.h \
     src/ui/QGCWebView.h \
-    src/ui/map3D/QGCGoogleEarthView.h
+    src/ui/map3D/QGCGoogleEarthView.h \
+    src/ui/map3D/QGCWebPage.h
 
 
 contains(DEPENDENCIES_PRESENT, osg) { 
@@ -336,7 +338,8 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
     src/ui/RadioCalibration/RadioCalibrationData.cc \
     src/ui/QGCWebView.cc \
-    src/ui/map3D/QGCGoogleEarthView.cc
+    src/ui/map3D/QGCGoogleEarthView.cc \
+    src/ui/map3D/QGCWebPage.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     

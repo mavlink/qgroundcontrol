@@ -70,6 +70,10 @@ public:
     virtual double getLocalY() const = 0;
     virtual double getLocalZ() const = 0;
 
+    virtual double getLat() const = 0;
+    virtual double getLon() const = 0;
+    virtual double getAlt() const = 0;
+
     virtual double getRoll() const = 0;
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
