@@ -127,10 +127,10 @@ Texture::draw(double x1, double y1, double x2, double y2,
 {
     osg::Vec3dArray* vertices =
             static_cast<osg::Vec3dArray*>(geometry->getVertexArray());
-    (*vertices)[0].set(x1, y1, z - 0.1);
-    (*vertices)[1].set(x2, y2, z - 0.1);
-    (*vertices)[2].set(x3, y3, z - 0.1);
-    (*vertices)[3].set(x4, y4, z - 0.1);
+    (*vertices)[0].set(x1, y1, z);
+    (*vertices)[1].set(x2, y2, z);
+    (*vertices)[2].set(x3, y3, z);
+    (*vertices)[3].set(x4, y4, z);
 
     osg::DrawArrays* drawarrays =
             static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
