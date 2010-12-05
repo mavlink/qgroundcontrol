@@ -235,15 +235,23 @@ Pixhawk3DWidget::insertWaypoint(void)
 {
     if (uas)
     {
+        double latitude = uas->getLatitude();
+        double longitude = uas->getLongitude();
         double altitude = uas->getAltitude();
+        double x, y;
+        QString utmZone;
+        Imagery::LLtoUTM(uas->getLatitude(), uas->getLongitude(), x, y, utmZone);
 
         std::pair<double,double> cursorWorldCoords =
                 getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
 
+        Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second, utmZone,
+                         latitude, longitude);
+
         Waypoint* wp = new Waypoint(0,
-                                    cursorWorldCoords.first,
-                                    cursorWorldCoords.second,
-                                    -altitude);
+                                    longitude,
+                                    latitude,
+                                    altitude);
         uas->getWaypointManager().addWaypoint(wp);
     }
 }
@@ -259,17 +267,25 @@ Pixhawk3DWidget::setWaypoint(void)
 {
     if (uas)
     {
+        double latitude = uas->getLatitude();
+        double longitude = uas->getLongitude();
         double altitude = uas->getAltitude();
+        double x, y;
+        QString utmZone;
+        Imagery::LLtoUTM(uas->getLatitude(), uas->getLongitude(), x, y, utmZone);
 
         std::pair<double,double> cursorWorldCoords =
                 getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
 
+        Imagery::UTMtoLL(cursorWorldCoords.first, cursorWorldCoords.second, utmZone,
+                         latitude, longitude);
+
         const QVector<Waypoint *> waypoints =
                 uas->getWaypointManager().getWaypointList();
         Waypoint* waypoint = waypoints.at(selectedWpIndex);
-        waypoint->setX(cursorWorldCoords.first);
-        waypoint->setY(cursorWorldCoords.second);
-        waypoint->setZ(-altitude);
+        waypoint->setX(longitude);
+        waypoint->setY(latitude);
+        waypoint->setZ(altitude);
     }
 }
 
@@ -294,10 +310,10 @@ Pixhawk3DWidget::setWaypointAltitude(void)
 
         double newAltitude =
                 QInputDialog::getDouble(this, tr("Set altitude of waypoint %1").arg(selectedWpIndex),
-                                        tr("Altitude (m):"), -waypoint->getZ(), -1000.0, 1000.0, 1, &ok);
+                                        tr("Altitude (m):"), waypoint->getZ(), -1000.0, 1000.0, 1, &ok);
         if (ok)
         {
-            waypoint->setZ(-newAltitude);
+            waypoint->setZ(newAltitude);
         }
     }
 }
@@ -1049,7 +1065,7 @@ Pixhawk3DWidget::updateWaypoints(void)
 
             osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
             osg::ref_ptr<osg::Cylinder> cylinder =
-                    new osg::Cylinder(osg::Vec3d(0.0, 0.0, - wp->getZ() / 2.0),
+                    new osg::Cylinder(osg::Vec3d(0.0, 0.0, wp->getZ() / 2.0),
                                       wp->getOrbit(),
                                       fabs(wp->getZ()));
 
@@ -1072,14 +1088,21 @@ Pixhawk3DWidget::updateWaypoints(void)
             sprintf(wpLabel, "wp%d", i);
             geode->setName(wpLabel);
 
+            double wpX, wpY;
+            Imagery::LLtoUTM(wp->getY(), wp->getX(), wpX, wpY, utmZone);
+
             if (i < list.size() - 1)
             {
+                double nextWpX, nextWpY;
+                Imagery::LLtoUTM(list.at(i+1)->getY(), list.at(i+1)->getX(),
+                                 nextWpX, nextWpY, utmZone);
+
                 osg::ref_ptr<osg::Geometry> geometry = new osg::Geometry;
                 osg::ref_ptr<osg::Vec3dArray> vertices = new osg::Vec3dArray;
-                vertices->push_back(osg::Vec3d(0.0, 0.0, -wp->getZ()));
-                vertices->push_back(osg::Vec3d(list.at(i+1)->getY() - wp->getY(),
-                                               list.at(i+1)->getX() - wp->getX(),
-                                               -list.at(i+1)->getZ()));
+                vertices->push_back(osg::Vec3d(0.0, 0.0, wp->getZ()));
+                vertices->push_back(osg::Vec3d(nextWpY - wpY,
+                                               nextWpX - wpX,
+                                               list.at(i+1)->getZ()));
                 geometry->setVertexArray(vertices);
 
                 osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
@@ -1092,6 +1115,7 @@ Pixhawk3DWidget::updateWaypoints(void)
                 osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
                 linewidth->setWidth(2.0f);
                 geometry->getOrCreateStateSet()->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
+                geometry->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
 
                 geode->addDrawable(geometry);
             }
@@ -1099,8 +1123,8 @@ Pixhawk3DWidget::updateWaypoints(void)
             osg::ref_ptr<osg::PositionAttitudeTransform> pat =
                     new osg::PositionAttitudeTransform;
 
-            pat->setPosition(osg::Vec3d(wp->getY() - robotY,
-                                        wp->getX() - robotX,
+            pat->setPosition(osg::Vec3d(wpY - robotY,
+                                        wpX - robotX,
                                         robotZ));
 
             waypointsNode->addChild(pat);
