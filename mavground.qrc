@@ -83,6 +83,7 @@
         <file>images/mapproviders/google.png</file>
         <file>images/mapproviders/yahoo.png</file>
         <file>images/earth.html</file>
+        <file>images/mapproviders/googleearth.svg</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">images/Vera.ttf</file>
