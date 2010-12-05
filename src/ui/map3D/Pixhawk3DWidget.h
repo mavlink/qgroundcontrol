@@ -37,6 +37,7 @@
 #include "HUDScaleGeode.h"
 #include "Imagery.h"
 #include "ImageWindowGeode.h"
+#include "WaypointGroupNode.h"
 
 #ifdef QGC_LIBFREENECT_ENABLED
 #include "Freenect.h"
@@ -61,6 +62,7 @@ public slots:
     void setActiveUAS(UASInterface* uas);
 
 private slots:
+    void selectFrame(QString text);
     void showGrid(int state);
     void showTrail(int state);
     void showWaypoints(int state);
@@ -86,28 +88,33 @@ protected:
     UASInterface* uas;
 
 private:
+    void getPose(double& x, double& y, double& z,
+                 double& roll, double& pitch, double& yaw,
+                 QString& utmZone);
+    void getPose(double& x, double& y, double& z,
+                 double& roll, double& pitch, double& yaw);
+    void getPosition(double& x, double& y, double& z,
+                     QString& utmZone);
+    void getPosition(double& x, double& y, double& z);
+
     osg::ref_ptr<osg::Geode> createGrid(void);
     osg::ref_ptr<osg::Geode> createTrail(void);
     osg::ref_ptr<Imagery> createMap(void);
-    osg::ref_ptr<osg::Node> createTarget(void);
-    osg::ref_ptr<osg::Group> createWaypoints(void);
     osg::ref_ptr<osg::Geode> createRGBD3D(void);
 
     void setupHUD(void);
     void resizeHUD(void);
 
     void updateHUD(double robotX, double robotY, double robotZ,
-                   double robotRoll, double robotPitch, double robotYaw);
+                   double robotRoll, double robotPitch, double robotYaw,
+                   const QString& utmZone);
     void updateTrail(double robotX, double robotY, double robotZ);
     void updateImagery(double originX, double originY, double originZ,
                        const QString& zone);
-    void updateTarget(void);
     void updateWaypoints(void);
 #ifdef QGC_LIBFREENECT_ENABLED
     void updateRGBD(void);
 #endif
-
-    void markTarget(void);
 
     int findWaypoint(int mouseX, int mouseY);
     void showInsertWaypointMenu(const QPoint& cursorPos);
@@ -123,7 +130,6 @@ private:
     bool displayGrid;
     bool displayTrail;
     bool displayImagery;
-    bool displayTarget;
     bool displayWaypoints;
     bool displayRGBD2D;
     bool displayRGBD3D;
@@ -147,9 +153,7 @@ private:
     osg::ref_ptr<osg::Geometry> trailGeometry;
     osg::ref_ptr<osg::DrawArrays> trailDrawArrays;
     osg::ref_ptr<Imagery> mapNode;
-    osg::ref_ptr<osg::Geode> targetNode;
-    osg::ref_ptr<osg::PositionAttitudeTransform> targetPosition;
-    osg::ref_ptr<osg::Group> waypointsNode;
+    osg::ref_ptr<WaypointGroupNode> waypointGroupNode;
     osg::ref_ptr<osg::Geode> rgbd3DNode;
 #ifdef QGC_LIBFREENECT_ENABLED
     QScopedPointer<Freenect> freenect;
@@ -161,8 +165,7 @@ private:
 
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
-    QPushButton* targetButton;
-
+    MAV_FRAME frame;
     double lastRobotX, lastRobotY, lastRobotZ;
 };
 
