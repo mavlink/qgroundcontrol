@@ -287,9 +287,18 @@ Pixhawk3DWidget::setWaypointAltitude(void)
 {
     if (uas)
     {
+        bool ok;
         const QVector<Waypoint *> waypoints =
                 uas->getWaypointManager().getWaypointList();
-//        waypoints.at(selectedWpIndex)->setZ(0.0);
+        Waypoint* waypoint = waypoints.at(selectedWpIndex);
+
+        double newAltitude =
+                QInputDialog::getDouble(this, tr("Set altitude of waypoint %1").arg(selectedWpIndex),
+                                        tr("Altitude (m):"), -waypoint->getZ(), -1000.0, 1000.0, 1, &ok);
+        if (ok)
+        {
+            waypoint->setZ(-newAltitude);
+        }
     }
 }
 
@@ -760,6 +769,10 @@ Pixhawk3DWidget::setupHUD(void)
                                         osg::Vec4(0.0f, 0.0f, 0.1f, 1.0f),
                                         depthImage);
     hudGroup->addChild(depth2DGeode);
+
+    scaleGeode = new HUDScaleGeode;
+    scaleGeode->init();
+    hudGroup->addChild(scaleGeode);
 }
 
 void
@@ -820,6 +833,15 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
             " Cursor [" << cursorPosition.first <<
             " " << cursorPosition.second << "]";
     statusText->setText(oss.str());
+
+    bool darkBackground = true;
+    if (mapNode->getImageryType() == Imagery::GOOGLE_MAP)
+    {
+        darkBackground = false;
+    }
+
+    scaleGeode->update(height(), cameraParams.cameraFov,
+                       cameraManipulator->getDistance(), darkBackground);
 
     if (!rgb.isNull())
     {

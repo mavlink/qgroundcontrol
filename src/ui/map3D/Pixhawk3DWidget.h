@@ -34,6 +34,7 @@
 
 #include <osgText/Text>
 
+#include "HUDScaleGeode.h"
 #include "Imagery.h"
 #include "ImageWindowGeode.h"
 
@@ -136,6 +137,7 @@ private:
     osg::ref_ptr<osg::Node> vehicleModel;
     osg::ref_ptr<osg::Geometry> hudBackgroundGeometry;
     osg::ref_ptr<osgText::Text> statusText;
+    osg::ref_ptr<HUDScaleGeode> scaleGeode;
     osg::ref_ptr<ImageWindowGeode> rgb2DGeode;
     osg::ref_ptr<ImageWindowGeode> depth2DGeode;
     osg::ref_ptr<osg::Image> rgbImage;

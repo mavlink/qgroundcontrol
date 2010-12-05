@@ -235,8 +235,6 @@ HEADERS += src/MG.h \
     src/comm/QGCMAVLink.h \
     src/ui/QGCWebView.h \
     src/ui/map3D/QGCGoogleEarthView.h
-
-
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
     
@@ -252,7 +250,8 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/WebImage.h \
         src/ui/map3D/TextureCache.h \
         src/ui/map3D/Texture.h \
-        src/ui/map3D/Imagery.h
+        src/ui/map3D/Imagery.h \
+        src/ui/map3D/HUDScaleGeode.h
     contains(DEPENDENCIES_PRESENT, osgearth) { 
         message("Including headers for OSGEARTH")
         
@@ -352,7 +351,8 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/WebImage.cc \
         src/ui/map3D/TextureCache.cc \
         src/ui/map3D/Texture.cc \
-        src/ui/map3D/Imagery.cc
+        src/ui/map3D/Imagery.cc \
+        src/ui/map3D/HUDScaleGeode.cc
     contains(DEPENDENCIES_PRESENT, osgearth) { 
         message("Including sources for osgEarth")
         
