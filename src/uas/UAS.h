@@ -82,7 +82,6 @@ public:
     double getLocalX() const { return localX; };
     double getLocalY() const { return localY; };
     double getLocalZ() const { return localZ; };
-
     double getLatitude() const { return latitude; };
     double getLongitude() const { return longitude; };
     double getAltitude() const { return altitude; };
