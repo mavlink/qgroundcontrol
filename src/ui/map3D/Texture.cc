@@ -113,22 +113,24 @@ Texture::sync(const WebImagePtr& image)
 
 osg::ref_ptr<osg::Geometry>
 Texture::draw(double x1, double y1, double x2, double y2,
+              double z,
               bool smoothInterpolation) const
 {
-    return draw(x1, y1, x2, y1, x2, y2, x1, y2, smoothInterpolation);
+    return draw(x1, y1, x2, y1, x2, y2, x1, y2, z, smoothInterpolation);
 }
 
 osg::ref_ptr<osg::Geometry>
 Texture::draw(double x1, double y1, double x2, double y2,
               double x3, double y3, double x4, double y4,
+              double z,
               bool smoothInterpolation) const
 {
     osg::Vec3dArray* vertices =
             static_cast<osg::Vec3dArray*>(geometry->getVertexArray());
-    (*vertices)[0].set(x1, y1, -0.1);
-    (*vertices)[1].set(x2, y2, -0.1);
-    (*vertices)[2].set(x3, y3, -0.1);
-    (*vertices)[3].set(x4, y4, -0.1);
+    (*vertices)[0].set(x1, y1, z - 0.1);
+    (*vertices)[1].set(x2, y2, z - 0.1);
+    (*vertices)[2].set(x3, y3, z - 0.1);
+    (*vertices)[3].set(x4, y4, z - 0.1);
 
     osg::DrawArrays* drawarrays =
             static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));

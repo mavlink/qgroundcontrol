@@ -76,24 +76,25 @@ void QGCGoogleEarthView::updateState()
         if (mav)
         {
             uasId = mav->getUASID();
-            lat = mav->getLat();
-            lon = mav->getLon();
-            alt = mav->getAlt();
+            lat = mav->getLatitude();
+            lon = mav->getLongitude();
+            alt = mav->getAltitude();
             roll = mav->getRoll();
             pitch = mav->getPitch();
             yaw = mav->getYaw();
         }
-//        ui->webView->page()->currentFrame()->evaluateJavaScript(QString("setAircraftPosition(%1, %2, %3, %4);")
-//                                                                .arg(uasId)
-//                                                                .arg(lat)
-//                                                                .arg(lon)
-//                                                                .arg(alt));
-//        //ui->webView->page()->currentFrame()->evaluateJavaScript(QString("drawAndCenter(%1, %2, %3, %4, '%5', %6, %7, %8, %9, %10, %11);").arg(lat).arg(lon).arg(alt).arg("true").arg("ff0000ff").arg("1").arg("true").arg("true").arg(yaw).arg(pitch).arg(roll));
+        ui->webView->page()->currentFrame()->evaluateJavaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
+                                                                .arg(uasId)
+                                                                .arg(lat)
+                                                                .arg(lon)
+                                                                .arg(alt+500)
+                                                                .arg(roll)
+                                                                .arg(pitch)
+                                                                .arg(yaw));
 
         if (followCamera)
         {
              ui->webView->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
-            //ui->webView->page()->currentFrame()->evaluateJavaScript(QString("followAircraft(%1);").arg(mav->getUASID()));
         }
     }
 }
