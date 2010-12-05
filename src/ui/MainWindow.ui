@@ -332,7 +332,7 @@
   <action name="actionGoogleEarthView">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/mapproviders/google.png</normaloff>:/images/mapproviders/google.png</iconset>
+     <normaloff>:/images/mapproviders/googleearth.svg</normaloff>:/images/mapproviders/googleearth.svg</iconset>
    </property>
    <property name="text">
     <string>Google Earth View</string>
