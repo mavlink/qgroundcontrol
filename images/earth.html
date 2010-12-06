@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN""http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
+
+<html>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <head>
+<!-- QGroundControl -->
+    <title>QGroundControl Google Earth View</title>
+    <!-- *** Replace the key below below with your own API key, available at http://code.google.com/apis/maps/signup.html *** -->
+    <script  type="text/javascript" src="http://www.google.com/jsapi?key=ABQIAAAAwbkbZLyhsmTCWXbTcjbgbRSzHs7K5SvaUdm8ua-Xxy_-2dYwMxQMhnagaawTo7L1FE1-amhuQxIlXw"></script>
+    <script  type="text/javascript">
+google.load("earth", "1", { 'language': 'en'});
+
+var ge = null;
+var initialized = false;
+var aircraft = new Array();
+var currAircraft = 220;
+var followAircraft = false;
+var currLat = 47.3769;
+var currLon = 8.549444;
+var currAlt = 470;
+
+var homeLat = 0;
+var homeLon = 0;
+var homeAlt = 0;
+var homeViewRange = 500;
+var homeLocation = null;
+var homeGroundLevel = 0;
+
+var currViewRange = 3.0;	///<< The current viewing range from this position (in meters)
+var currTilt = 40.0;		///<< The tilt angle (in degrees)
+var currFollowTilt = 40.0;
+var currView = null;
+
+
+
+var planeOrient;
+var planeLoc;
+
+
+// Aircraft class
+
+
+function isInitialized()
+{
+	return initialized;
+}
+
+
+function init() {
+	google.earth.createInstance("map3d", initCallback, failureCallback);
+}
+
+
+
+
+
+function setGCSHome(lat, lon, alt)
+{
+	homeLat = lat;
+	homeLon = lon;
+	homeAlt = alt;
+	
+	
+	
+	var placemark = ge.createPlacemark(''); 
+	    var icon = ge.createIcon(''); 
+	    icon.setHref('http://google-maps-icons.googlecode.com/files/blackH.png'); 
+	    var style = ge.createStyle(''); 
+	    style.getIconStyle().setIcon(icon); 
+	    //style.getIconStyle().setScale(0.5); 
+	    placemark.setStyleSelector(style);  
+
+	    // Set the placemark's location.   
+	    homeLocation = ge.createPoint(''); 
+	    homeLocation.setLatitude(lat); 
+	    homeLocation.setLongitude(lon);
+	    homeLocation.setAltitude(alt); 
+	    placemark.setGeometry(homeLocation);  
+
+	    // Add the placemark to Earth. 
+	    ge.getFeatures().appendChild(placemark); 
+
+	    homeGroundLevel = ge.getGlobe().getGroundAltitude(lat,lon);
+	    if (homeGroundLevel == 0)
+	    {
+		    homeGroundLevel = alt;
+	    }
+	
+	
+	
+	
+	
+	
+	goHome();
+}
+
+function initCallback(object)
+{
+  ge = object;
+  ge.getWindow().setVisibility(true);
+          ge.getOptions().setStatusBarVisibility(true); 
+        ge.getOptions().setScaleLegendVisibility(true);
+        ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT); 
+        ge.getNavigationControl().setVisibility(ge.VISIBILITY_AUTO);
+        
+        ge.getLayerRoot().enableLayerById(ge.LAYER_TERRAIN, true); 
+        ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true); 
+        ge.getLayerRoot().enableLayerById(ge.LAYER_BORDERS, true); 
+        ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
+        
+        // Now after the Google Earth initialization, initialize the GCS view
+        setGCSHome(currLat, currLon, currAlt);
+        
+        
+        // Create the first aircraft model
+        	// Load 3D model
+	      var planePlacemark = ge.createPlacemark('');
+          planePlacemark.setName('aircraft');
+          planeModel = ge.createModel('');
+          ge.getFeatures().appendChild(planePlacemark);
+          planeLoc = ge.createLocation('');
+          planeModel.setLocation(planeLoc);
+          planeLink = ge.createLink('');
+          planeOrient = ge.createOrientation(''); 
+          planeModel.setOrientation(planeOrient); 
+
+          planeLink.setHref('http://qgroundcontrol.org/_media/users/models/multiplex-twinstar.dae');
+          planeModel.setLink(planeLink);
+          planeModel.setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
+
+          planeLoc.setLatitude(currLat);
+          planeLoc.setLongitude(currLon);
+          planeLoc.setAltitude(currAlt);
+
+          planePlacemark.setGeometry(planeModel);
+          
+          setAircraftPositionAttitude(220, 47.3772, currLon, currAlt+50, 20, 15, 50);
+          enableFollowing(true);
+          updateFollowAircraft();
+        initialized = true;
+        
+        
+}
+
+function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
+{
+	if (id == currAircraft)
+	{
+		currLat = lat;
+		currLon = lon;
+		currAlt = alt;
+	}
+	
+	planeOrient.setRoll(roll); 
+	planeOrient.setTilt(pitch); 
+	        planeOrient.setHeading(yaw);
+        
+        
+                
+        planeLoc.setLatitude(lat);
+        planeLoc.setLongitude(lon);
+        planeLoc.setAltitude(alt);
+	
+}
+
+function goHome()
+{
+	var currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
+	currView.setLatitude(homeLat);
+	currView.setLongitude(homeLon);
+	currView.setAltitude(homeAlt);
+	currView.setRange(homeViewRange);
+	currView.setTilt(currTilt);
+	ge.getView().setAbstractView(currView);
+}
+
+function setCurrentAircraft(id)
+{
+	currAircraft = id;
+}
+
+function enableFollowing(follow)
+{
+	followEnabled = follow;
+}
+
+
+function updateFollowAircraft()
+{
+	if (followEnabled)
+	{
+	currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
+	currView.setLatitude(currLat);
+	currView.setLongitude(currLon);
+	currView.setAltitude(currAlt);
+	currView.setRange(currViewRange);
+	currView.setTilt(currFollowTilt);
+	ge.getView().setAbstractView(currView);
+	}
+}
+
+function failureCallback(object)
+{
+}
+</script>
+
+
+    <style type="text/css">
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+    </style>
+  </head>
+  <body onload='init()' id='body'>
+    <center>
+      <div id='map3d' style='margin: 0; spacing: 0; height: 100%; width: 100%'></div>
+    </center>
+  </body>
+</html>

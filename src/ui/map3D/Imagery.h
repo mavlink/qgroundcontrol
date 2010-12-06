@@ -32,46 +32,52 @@ This file is part of the QGROUNDCONTROL project
 #ifndef IMAGERY_H
 #define IMAGERY_H
 
+#include <osg/Geode>
 #include <QScopedPointer>
 #include <QString>
 
 #include "TextureCache.h"
 
-class Imagery
+class Imagery : public osg::Geode
 {
 public:
     enum ImageryType
     {
-        GOOGLE_MAP = 0,
-        GOOGLE_SATELLITE = 1,
-        SWISSTOPO_SATELLITE = 2,
-        SWISSTOPO_SATELLITE_3D = 3
+        BLANK_MAP = 0,
+        GOOGLE_MAP = 1,
+        GOOGLE_SATELLITE = 2,
+        SWISSTOPO_SATELLITE = 3
     };
 
     Imagery();
 
+    ImageryType getImageryType(void) const;
     void setImageryType(ImageryType type);
     void setOffset(double xOffset, double yOffset);
 
     void prefetch2D(double windowWidth, double windowHeight,
                     double zoom, double xOrigin, double yOrigin,
-                    double viewXOffset, double viewYOffset,
                     const QString& utmZone);
     void draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
-                double viewXOffset, double viewYOffset,
+                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone);
 
     void prefetch3D(double radius, double tileResolution,
                     double xOrigin, double yOrigin,
-                    double viewXOffset, double viewYOffset,
-                    const QString& utmZone, bool useHeightModel);
+                    const QString& utmZone);
     void draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
-                double viewXOffset, double viewYOffset,
-                const QString& utmZone, bool useHeightModel);
+                double xOffset, double yOffset, double zOffset,
+                const QString& utmZone);
 
     bool update(void);
+
+    static void LLtoUTM(double latitude, double longitude,
+                        double& utmNorthing, double& utmEasting,
+                        QString& utmZone);
+    static void UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
+                        double& latitude, double& longitude);
 
 private:
     void imageBounds(int tileX, int tileY, double tileResolution,
@@ -92,13 +98,7 @@ private:
     void UTMtoTile(double northing, double easting, const QString& utmZone,
                    double tileResolution, int& tileX, int& tileY,
                    int& zoomLevel) const;
-    QChar UTMLetterDesignator(double latitude) const;
-
-    void LLtoUTM(double latitude, double longitude,
-                 double& utmNorthing, double& utmEasting,
-                 QString& utmZone) const;
-    void UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
-                 double& latitude, double& longitude) const;
+    static QChar UTMLetterDesignator(double latitude);
 
     QString getTileLocation(int tileX, int tileY, int zoomLevel,
                             double tileResolution) const;

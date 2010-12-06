@@ -73,12 +73,15 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         sendDropRate(0),
         lowBattAlarm(false),
         positionLock(false),
-        localX(0),
-        localY(0),
-        localZ(0),
-        roll(0),
-        pitch(0),
-        yaw(0),
+        localX(0.0),
+        localY(0.0),
+        localZ(0.0),
+        latitude(0.0),
+        longitude(0.0),
+        altitude(0.0),
+        roll(0.0),
+        pitch(0.0),
+        yaw(0.0),
         statusTimeout(new QTimer(this))
 {
     color = UASInterface::getNextColor();
@@ -243,7 +246,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
 
                 // COMMUNICATIONS DROP RATE
-                emit dropRateChanged(this->getUASID(), state.packet_drop);
+                emit dropRateChanged(this->getUASID(), state.packet_drop/1000.0f);
                 //qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;
 
                 // AUDIO
@@ -342,6 +345,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_global_position_t pos;
                 mavlink_msg_global_position_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.usec);
+                latitude = pos.lat;
+                longitude = pos.lon;
+                altitude = pos.alt;
                 emit valueChanged(uasId, "lat", pos.lat, time);
                 emit valueChanged(uasId, "lon", pos.lon, time);
                 emit valueChanged(uasId, "alt", pos.alt, time);
@@ -559,22 +565,22 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
-#ifdef MAVLINK_ENABLED_PIXHAWK
-            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
-            {
-                mavlink_point_of_interest_t poi;
-                mavlink_msg_point_of_interest_decode(&message, &poi);
-                emit poiFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_FIELD_NAME_LEN), poi.x, poi.y, poi.z);
-            }
-            break;
-            case MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION:
-            {
-                mavlink_point_of_interest_connection_t poi;
-                mavlink_msg_point_of_interest_connection_decode(&message, &poi);
-                emit poiConnectionFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN), poi.x1, poi.y1, poi.z1, poi.x2, poi.y2, poi.z2);
-            }
-            break;
-#endif
+//#ifdef MAVLINK_ENABLED_PIXHAWK
+//            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
+//            {
+//                mavlink_point_of_interest_t poi;
+//                mavlink_msg_point_of_interest_decode(&message, &poi);
+//                emit poiFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_FIELD_NAME_LEN), poi.x, poi.y, poi.z);
+//            }
+//            break;
+//            case MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION:
+//            {
+//                mavlink_point_of_interest_connection_t poi;
+//                mavlink_msg_point_of_interest_connection_decode(&message, &poi);
+//                emit poiConnectionFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN), poi.x1, poi.y1, poi.z1, poi.x2, poi.y2, poi.z2);
+//            }
+//            break;
+//#endif
 #ifdef MAVLINK_ENABLED_UALBERTA
         case MAVLINK_MSG_ID_NAV_FILTER_BIAS:
             {
@@ -776,6 +782,7 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer(buffer, &message);
+    mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getId(), message.len);
     // If link is connected
     if (link->isConnected())
     {
