@@ -565,6 +565,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
+    case MAVLINK_MSG_ID_DEBUG_VECT:
+            {
+                mavlink_debug_vect_t vect;
+                mavlink_msg_debug_vect_decode(&message, &vect);
+                QString str((const char*)vect.name);
+                quint64 time = getUnixTime(vect.usec);
+                emit valueChanged(uasId, str+".x", vect.x, time);
+                emit valueChanged(uasId, str+".y", vect.y, time);
+                emit valueChanged(uasId, str+".z", vect.z, time);
+            }
+            break;
 //#ifdef MAVLINK_ENABLED_PIXHAWK
 //            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
 //            {
@@ -648,11 +659,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK
+    #ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_message_t msg;
     mavlink_msg_position_control_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, 0, x, y, z, yaw);
     sendMessage(msg);
-  #endif
+#endif
 }
 
 void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
@@ -1213,14 +1224,12 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
 
 //    if(mode == (int)MAV_MODE_MANUAL)
 //    {
-      #ifdef MAVLINK_ENABLED_PIXHAWK
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
         sendMessage(message);
         qDebug() << __FILE__ << __LINE__ << ": SENT MANUAL CONTROL MESSAGE: roll" << manualRollAngle << " pitch: " << manualPitchAngle << " yaw: " << manualYawAngle << " thrust: " << manualThrust;
 
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, MG::TIME::getGroundTimeNow());
-      #endif
 //    }
 }
 
