@@ -49,6 +49,7 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
      , uas(NULL)
      , displayGrid(true)
      , displayTrail(false)
+     , displayImagery(true)
      , displayTarget(false)
      , displayWaypoints(true)
      , displayRGBD2D(false)
@@ -74,11 +75,9 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     trailNode = createTrail();
     rollingMap->addChild(trailNode);
 
-#ifdef QGC_OSGEARTH_ENABLED
     // generate map model
     mapNode = createMap();
-    root->addChild(mapNode);
-#endif
+    allocentricMap->addChild(mapNode);
 
     // generate target model
     allocentricMap->addChild(createTarget());
@@ -172,6 +171,12 @@ Pixhawk3DWidget::showWaypoints(int state)
 }
 
 void
+Pixhawk3DWidget::selectMapSource(int index)
+{
+    mapNode->setImageryType(static_cast<Imagery::ImageryType>(index));
+}
+
+void
 Pixhawk3DWidget::selectVehicleModel(int index)
 {
     egocentricMap->removeChild(vehicleModel);
@@ -205,7 +210,7 @@ Pixhawk3DWidget::toggleFollowCamera(int32_t state)
         followCamera = false;
     }
 }
-#include <osgDB/WriteFile>
+
 QVector< osg::ref_ptr<osg::Node> >
 Pixhawk3DWidget::findVehicleModels(void)
 {
@@ -273,6 +278,12 @@ Pixhawk3DWidget::buildLayout(void)
     waypointsCheckBox->setText("Waypoints");
     waypointsCheckBox->setChecked(displayWaypoints);
 
+    QLabel* mapLabel = new QLabel("Map", this);
+    QComboBox* mapComboBox = new QComboBox(this);
+    mapComboBox->addItem("None");
+    mapComboBox->addItem("Map (Google)");
+    mapComboBox->addItem("Satellite (Google)");
+
     QLabel* modelLabel = new QLabel("Vehicle Model", this);
     QComboBox* modelComboBox = new QComboBox(this);
     for (int i = 0; i < vehicleModels.size(); ++i)
@@ -299,12 +310,14 @@ Pixhawk3DWidget::buildLayout(void)
     layout->addWidget(trailCheckBox, 1, 1);
     layout->addWidget(waypointsCheckBox, 1, 2);
     layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 3);
-    layout->addWidget(modelLabel, 1, 4);
-    layout->addWidget(modelComboBox, 1, 5);
-    layout->addWidget(targetButton, 1, 6);
-    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 7);
-    layout->addWidget(recenterButton, 1, 8);
-    layout->addWidget(followCameraCheckBox, 1, 9);
+    layout->addWidget(mapLabel, 1, 4);
+    layout->addWidget(mapComboBox, 1, 5);
+    layout->addWidget(modelLabel, 1, 6);
+    layout->addWidget(modelComboBox, 1, 7);
+    layout->addWidget(targetButton, 1, 8);
+    layout->addItem(new QSpacerItem(10, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 9);
+    layout->addWidget(recenterButton, 1, 10);
+    layout->addWidget(followCameraCheckBox, 1, 11);
     layout->setRowStretch(0, 100);
     layout->setRowStretch(1, 1);
     setLayout(layout);
@@ -315,6 +328,8 @@ Pixhawk3DWidget::buildLayout(void)
             this, SLOT(showTrail(int)));
     connect(waypointsCheckBox, SIGNAL(stateChanged(int)),
             this, SLOT(showWaypoints(int)));
+    connect(mapComboBox, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(selectMapSource(int)));
     connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
             this, SLOT(selectVehicleModel(int)));
     connect(recenterButton, SIGNAL(clicked()), this, SLOT(recenter()));
@@ -362,20 +377,42 @@ Pixhawk3DWidget::display(void)
                                          robotPitch, osg::Vec3f(1.0f, 0.0f, 0.0f),
                                          robotRoll, osg::Vec3f(0.0f, 1.0f, 0.0f)));
 
-    updateTrail(robotX, robotY, robotZ);
-    updateTarget();
-    updateWaypoints();
+    if (displayTrail)
+    {
+        updateTrail(robotX, robotY, robotZ);
+    }
+
+    if (displayImagery)
+    {
+        updateImagery();
+    }
+
+    if (displayTarget)
+    {
+        updateTarget();
+    }
+
+    if (displayWaypoints)
+    {
+        updateWaypoints();
+    }
+
 #ifdef QGC_LIBFREENECT_ENABLED
-    updateRGBD();
+    if (displayRGBD2D || displayRGBD3D)
+    {
+        updateRGBD();
+    }
 #endif
     updateHUD(robotX, robotY, robotZ, robotRoll, robotPitch, robotYaw);
 
     // set node visibility
+
     rollingMap->setChildValue(gridNode, displayGrid);
     rollingMap->setChildValue(trailNode, displayTrail);
     rollingMap->setChildValue(targetNode, displayTarget);
     rollingMap->setChildValue(waypointsNode, displayWaypoints);
     egocentricMap->setChildValue(rgbd3DNode, displayRGBD3D);
+    allocentricMap->setChildValue(mapNode, displayImagery);
     hudGroup->setChildValue(rgb2DGeode, displayRGBD2D);
     hudGroup->setChildValue(depth2DGeode, displayRGBD2D);
 
@@ -399,6 +436,9 @@ Pixhawk3DWidget::keyPressEvent(QKeyEvent* event)
             break;
         case 'c': case 'C':
             enableRGBDColor = !enableRGBDColor;
+            break;
+        case 'i': case 'I':
+            displayImagery = !displayImagery;
             break;
         }
     }
@@ -435,7 +475,7 @@ Pixhawk3DWidget::createGrid(void)
     // draw a 20m x 20m grid with 0.25m resolution
     for (float i = -radius; i <= radius; i += resolution)
     {
-        if (fabsf(i - roundf(i)) < 0.01f)
+        if (fabsf(i - floor(i + 0.5f)) < 0.01f)
         {
             coarseCoords->push_back(osg::Vec3(i, -radius, 0.0f));
             coarseCoords->push_back(osg::Vec3(i, radius, 0.0f));
@@ -512,16 +552,11 @@ Pixhawk3DWidget::createTrail(void)
     return geode;
 }
 
-#ifdef QGC_OSGEARTH_ENABLED
-osg::ref_ptr<osgEarth::MapNode>
+osg::ref_ptr<Imagery>
 Pixhawk3DWidget::createMap(void)
 {
-    osg::ref_ptr<osg::Node> model = osgDB::readNodeFile("map.earth");
-    osg::ref_ptr<osgEarth::MapNode> node = osgEarth::MapNode::findMapNode(model);
-
-    return node;
+    return osg::ref_ptr<Imagery>(new Imagery());
 }
-#endif
 
 osg::ref_ptr<osg::Node>
 Pixhawk3DWidget::createTarget(void)
@@ -728,6 +763,74 @@ Pixhawk3DWidget::updateTrail(float robotX, float robotY, float robotZ)
     trailDrawArrays->setFirst(0);
     trailDrawArrays->setCount(trailVertices->size());
     trailGeometry->dirtyBound();
+}
+
+void
+Pixhawk3DWidget::updateImagery(void)
+{
+    char zone[5] = "32T";
+
+    double viewingRadius = cameraManipulator->getDistance() * 10.0;
+    if (viewingRadius < 100.0)
+    {
+        viewingRadius = 100.0;
+    }
+
+    double minResolution = 0.25;
+    double centerResolution = cameraManipulator->getDistance() / 25.0;
+    double maxResolution = 1048576.0;
+
+    Imagery::ImageryType imageryType = mapNode->getImageryType();
+    switch (imageryType)
+    {
+    case Imagery::GOOGLE_MAP:
+        minResolution = 0.25;
+        break;
+    case Imagery::GOOGLE_SATELLITE:
+        minResolution = 0.5;
+        break;
+    case Imagery::SWISSTOPO_SATELLITE:
+        minResolution = 0.25;
+        maxResolution = 0.25;
+        break;
+    default: {}
+    }
+
+    double resolution = minResolution;
+    while (resolution * 2.0 < centerResolution)
+    {
+        resolution *= 2.0;
+    }
+    if (resolution > maxResolution)
+    {
+        resolution = maxResolution;
+    }
+
+    mapNode->draw3D(viewingRadius,
+                    resolution,
+                    cameraManipulator->getCenter().y(),
+                    cameraManipulator->getCenter().x(),
+                    zone);
+
+    // prefetch map tiles
+    if (resolution / 2.0 >= minResolution)
+    {
+        mapNode->prefetch3D(viewingRadius / 2.0,
+                            resolution / 2.0,
+                            cameraManipulator->getCenter().y(),
+                            cameraManipulator->getCenter().x(),
+                            zone);
+    }
+    if (resolution * 2.0 <= maxResolution)
+    {
+        mapNode->prefetch3D(viewingRadius * 2.0,
+                            resolution * 2.0,
+                            cameraManipulator->getCenter().y(),
+                            cameraManipulator->getCenter().x(),
+                            zone);
+    }
+
+    mapNode->update();
 }
 
 void
