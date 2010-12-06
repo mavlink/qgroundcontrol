@@ -142,7 +142,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QMap3D.ui \
     src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
-    src/ui/map3D/QGCGoogleEarthViewWin.ui
+    src/ui/map3D/QGCGoogleEarthViewWin.ui \
+    src/ui/map3D/QGCGoogleEarthControls.ui
 
 # src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \

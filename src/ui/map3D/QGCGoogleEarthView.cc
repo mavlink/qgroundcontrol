@@ -6,7 +6,9 @@
 #include "QGCGoogleEarthView.h"
 #include "QGCWebPage.h"
 #include "UASManager.h"
+#include "ui_QGCGoogleEarthControls.h"
 #if (defined Q_OS_WIN) && !(defined __MINGW32__)
+#include "ui_QGCGoogleEarthViewWin.h"
 #else
 #include "ui_QGCGoogleEarthView.h"
 #endif
@@ -16,20 +18,34 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         updateTimer(new QTimer(this)),
         mav(NULL),
         followCamera(true),
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+#if (defined Q_OS_MAC)
+        webViewMac(new QWebView(this)),
+#endif
+#if (defined Q_OS_WIN) & !(defined __MINGW32__)
         webViewWin(new QGCWebAxWidget(this)),
 #else
         ui(new Ui::QGCGoogleEarthView)
 #endif
 {
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+#if (defined Q_OS_WIN) & !(defined __MINGW32__)
     // Create layout and attach webViewWin
 #else
-    ui->setupUi(this);
-    ui->webView->setPage(new QGCWebPage(ui->webView));
-    ui->webView->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
+#endif
 
-    ui->webView->load(QUrl("earth.html"));
+    ui->setupUi(this);
+
+#if (defined Q_OS_MAC)
+    ui->webViewLayout->addWidget(webViewMac);
+    webViewMac->setPage(new QGCWebPage(webViewMac));
+    webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
+    webViewMac->load(QUrl("earth.html"));
+#endif
+
+#if (defined Q_OS_WIN) & !(defined __MINGW32__)
+    webViewWin->load(QUrl("earth.html"));
+#endif
+
+#if ((defined Q_OS_MAC) | ((defined Q_OS_WIN) & !(defined __MINGW32__)))
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateState()));
     updateTimer->start(200);
@@ -54,14 +70,29 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
     mav = uas;
 }
 
+void QGCGoogleEarthView::showTrail(int state)
+{
+
+}
+
+void QGCGoogleEarthView::showWaypoints(int state)
+{
+
+}
+
+void QGCGoogleEarthView::follow(bool follow)
+{
+
+}
+
 void QGCGoogleEarthView::updateState()
 {
-    if (ui->webView->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
+    if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
     {
         static bool initialized = false;
         if (!initialized)
         {
-            ui->webView->page()->currentFrame()->evaluateJavaScript("setGCSHome(22.679833,8.549444, 470);");
+            webViewMac->page()->currentFrame()->evaluateJavaScript("setGCSHome(22.679833,8.549444, 470);");
             initialized = true;
         }
         int uasId = 0;
@@ -83,7 +114,7 @@ void QGCGoogleEarthView::updateState()
             pitch = mav->getPitch();
             yaw = mav->getYaw();
         }
-        ui->webView->page()->currentFrame()->evaluateJavaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
+        webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
                                                                 .arg(uasId)
                                                                 .arg(lat)
                                                                 .arg(lon)
@@ -94,7 +125,7 @@ void QGCGoogleEarthView::updateState()
 
         if (followCamera)
         {
-             ui->webView->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
+             webViewMac->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
         }
     }
 }
