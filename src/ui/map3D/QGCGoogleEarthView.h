@@ -5,6 +5,10 @@
 #include <QTimer>
 #include <UASInterface.h>
 
+#if (defined Q_OS_MAC)
+#include <QWebView>
+#endif
+
 #if (defined Q_OS_WIN) && !(defined __MINGW32__)
     QGCWebAxWidget* webViewWin;
 #include <ActiveQt/QAxWidget>
@@ -30,7 +34,12 @@ protected:
 };
 #else
 namespace Ui {
+    class QGCGoogleEarthControls;
+#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+    class QGCGoogleEarthViewWin;
+#else
     class QGCGoogleEarthView;
+#endif
 }
 #endif
 
@@ -47,17 +56,31 @@ public slots:
     void updateState();
     /** @brief Set the currently selected UAS */
     void setActiveUAS(UASInterface* uas);
+    /** @brief Show the vehicle trail */
+    void showTrail(int state);
+    /** @brief Show the waypoints */
+    void showWaypoints(int state);
+    /** @brief Follow the aircraft during flight */
+    void follow(bool follow);
 
 protected:
     void changeEvent(QEvent *e);
     QTimer* updateTimer;
     UASInterface* mav;
     bool followCamera;
+#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+    WebAxWidget* webViewWin;
+#endif
+#if (defined Q_OS_MAC)
+    QWebView* webViewMac;
+#endif
 
-    #if (defined Q_OS_WIN) && !(defined __MINGW32__)
-#else
 private:
-    Ui::QGCGoogleEarthView *ui;
+    Ui::QGCGoogleEarthControls* controls;
+#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+    Ui::QGCGoogleEarthViewWin* ui;
+#else
+    Ui::QGCGoogleEarthView* ui;
 #endif
 };
 
