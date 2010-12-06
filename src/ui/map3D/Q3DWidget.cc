@@ -168,6 +168,7 @@ Q3DWidget::createHUD(void)
     hudGroup->setStateSet(hudStateSet);
     hudStateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
     hudStateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    hudStateSet->setMode(GL_BLEND, osg::StateAttribute::ON);
     hudStateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
     hudStateSet->setRenderBinDetails(11, "RenderBin");
 
