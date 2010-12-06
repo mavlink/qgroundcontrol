@@ -87,6 +87,7 @@ void QGCGoogleEarthView::follow(bool follow)
 
 void QGCGoogleEarthView::updateState()
 {
+#ifdef Q_OS_MAC
     if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
     {
         static bool initialized = false;
@@ -128,6 +129,7 @@ void QGCGoogleEarthView::updateState()
              webViewMac->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
         }
     }
+#endif
 }
 
 void QGCGoogleEarthView::changeEvent(QEvent *e)
