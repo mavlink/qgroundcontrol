@@ -12,6 +12,9 @@ WaypointGlobalView::WaypointGlobalView(Waypoint* wp,QWidget *parent) :
 
     ui->m_orbitalSpinBox->hide();
 
+    // set type
+    wp->setType(Waypoint::GLOBAL);
+
     // Read values and set user interface
     updateValues();
 
@@ -197,11 +200,13 @@ void WaypointGlobalView::changeOrbitalState(int state)
     {
         ui->m_orbitalSpinBox->setEnabled(true);
         ui->m_orbitalSpinBox->show();
+        wp->setType(Waypoint::GLOBAL_ORBIT);
     }
     else
     {
         ui->m_orbitalSpinBox->setEnabled(false);
         ui->m_orbitalSpinBox->hide();
+        wp->setType(Waypoint::GLOBAL);
     }
 }
 

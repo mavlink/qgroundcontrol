@@ -165,8 +165,20 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-100</number>
+   </property>
    <property name="value">
-    <number>24</number>
+    <number>0</number>
+   </property>
+   <property name="textVisible">
+    <bool>true</bool>
+   </property>
+   <property name="invertedAppearance">
+    <bool>false</bool>
+   </property>
+   <property name="format">
+    <string>%v%</string>
    </property>
   </widget>
   <widget class="QProgressBar" name="chan2ProgressBar">
@@ -178,8 +190,14 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-100</number>
+   </property>
    <property name="value">
-    <number>24</number>
+    <number>0</number>
+   </property>
+   <property name="format">
+    <string>%v%</string>
    </property>
   </widget>
   <widget class="QProgressBar" name="chan3ProgressBar">
@@ -191,8 +209,14 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-100</number>
+   </property>
    <property name="value">
-    <number>24</number>
+    <number>0</number>
+   </property>
+   <property name="format">
+    <string>%v%</string>
    </property>
   </widget>
   <widget class="QProgressBar" name="chan4ProgressBar">
@@ -204,8 +228,14 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-100</number>
+   </property>
    <property name="value">
-    <number>24</number>
+    <number>0</number>
+   </property>
+   <property name="format">
+    <string>%v%</string>
    </property>
   </widget>
   <widget class="QProgressBar" name="chan5ProgressBar">
@@ -217,8 +247,14 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-100</number>
+   </property>
    <property name="value">
-    <number>24</number>
+    <number>0</number>
+   </property>
+   <property name="format">
+    <string>%v%</string>
    </property>
   </widget>
   <widget class="QProgressBar" name="chan6ProgressBar">
@@ -230,8 +266,14 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-100</number>
+   </property>
    <property name="value">
-    <number>24</number>
+    <number>0</number>
+   </property>
+   <property name="format">
+    <string>%v%</string>
    </property>
   </widget>
   <widget class="QProgressBar" name="chan7ProgressBar">
@@ -243,8 +285,14 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-100</number>
+   </property>
    <property name="value">
-    <number>24</number>
+    <number>0</number>
+   </property>
+   <property name="format">
+    <string>%v%</string>
    </property>
   </widget>
   <widget class="QProgressBar" name="chan8ProgressBar">
@@ -256,8 +304,14 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-100</number>
+   </property>
    <property name="value">
-    <number>24</number>
+    <number>0</number>
+   </property>
+   <property name="format">
+    <string>%v%</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_11">

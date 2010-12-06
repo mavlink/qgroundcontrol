@@ -1,14 +1,9 @@
-#-------------------------------------------------
-#
+# -------------------------------------------------
 # QGroundControl - Micro Air Vehicle Groundstation
-#
 # Please see our website at <http://qgroundcontrol.org>
-#
 # Author:
 # Lorenz Meier <mavteam@student.ethz.ch>
-#
 # (c) 2009-2010 PIXHAWK Team
-#
 # This file is part of the mav groundstation project
 # QGroundControl is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +15,7 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
-#
-#-------------------------------------------------
-
-
+# -------------------------------------------------
 # Include QMapControl map library
 # prefer version from external directory /
 # from http://github.com/pixhawk/qmapcontrol/
@@ -31,7 +23,6 @@
 # Version from GIT repository is preferred
 # include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
 # Include bundled version if necessary
-
 include(lib/QMapControl/QMapControl.pri)
 
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
@@ -42,46 +33,58 @@ QT += network \
     phonon
 TEMPLATE = app
 TARGET = qgroundcontrol
-BASEDIR = .
-BUILDDIR = build
+BASEDIR = $$IN_PWD
+TARGETDIR = $$OUT_PWD
+BUILDDIR = $$TARGETDIR/build
 LANGUAGE = C++
-CONFIG += debug_and_release \
-    console
+CONFIG += console
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
-
 MAVLINK_CONF = ""
 
-exists(user_config.pri) {
-    message("----- USING USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
+# If the user config file exists, it will be included.
+# if the variable MAVLINK_CONF contains the name of an
+# additional project, QGroundControl includes the support
+# of custom MAVLink messages of this project
+exists(user_config.pri) { 
     include(user_config.pri)
+    message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
+    message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
+    message("------------------------------------------------------------------------")
 }
-
 INCLUDEPATH += $$BASEDIR/../mavlink/include/common
-
-contains(MAVLINK_CONF, pixhawk) {
-# Remove the default set - it is included anyway
-INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-# PIXHAWK SPECIAL MESSAGES
-INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
-DEFINES += QGC_USE_PIXHAWK_MESSAGES
+contains(MAVLINK_CONF, pixhawk) { 
+    # Remove the default set - it is included anyway
+    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    
+    # PIXHAWK SPECIAL MESSAGES
+    INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
+    DEFINES += QGC_USE_PIXHAWK_MESSAGES
 }
-
-contains(MAVLINK_CONF, slugs) {
-# Remove the default set - it is included anyway
-INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-# SLUGS SPECIAL MESSAGES
-INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
-DEFINES += QGC_USE_SLUGS_MESSAGES
+contains(MAVLINK_CONF, slugs) { 
+    # Remove the default set - it is included anyway
+    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    
+    # SLUGS SPECIAL MESSAGES
+    INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
+    DEFINES += QGC_USE_SLUGS_MESSAGES
 }
-
-contains(MAVLINK_CONF, ualberta) {
-# Remove the default set - it is included anyway
-INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-# UALBERTA SPECIAL MESSAGES
-INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
-DEFINES += QGC_USE_UALBERTA_MESSAGES
+contains(MAVLINK_CONF, ualberta) { 
+    # Remove the default set - it is included anyway
+    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    
+    # UALBERTA SPECIAL MESSAGES
+    INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
+    DEFINES += QGC_USE_UALBERTA_MESSAGES
+}
+contains(MAVLINK_CONF, ardupilotmega) { 
+    # Remove the default set - it is included anyway
+    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    
+    # UALBERTA SPECIAL MESSAGES
+    INCLUDEPATH += $$BASEDIR/../mavlink/include/ardupilotmega
+    DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
 }
 
 # }
@@ -135,7 +138,9 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui \
-    src/ui/WaypointGlobalView.ui
+    src/ui/QMap3D.ui
+
+# src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -202,7 +207,7 @@ HEADERS += src/MG.h \
     src/ui/linechart/Linecharts.h \
     src/uas/SlugsMAV.h \
     src/uas/PxQuadMAV.h \
-    src/uas/ArduPilotMAV.h \
+    src/uas/ArduPilotMegaMAV.h \
     src/comm/MAVLinkSyntaxHighlighter.h \
     src/ui/watchdog/WatchdogControl.h \
     src/ui/watchdog/WatchdogProcessView.h \
@@ -217,24 +222,43 @@ HEADERS += src/MG.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
-    src/ui/QGCRemoteControlView.h \
-    src/ui/WaypointGlobalView.h \
+    src/ui/QGCRemoteControlView.h \ # src/ui/WaypointGlobalView.h \
     src/ui/RadioCalibration/RadioCalibrationData.h \
     src/ui/RadioCalibration/RadioCalibrationWindow.h \
     src/ui/RadioCalibration/AirfoilServoCalibrator.h \
     src/ui/RadioCalibration/SwitchCalibrator.h \
     src/ui/RadioCalibration/CurveCalibrator.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
-    src/ui/map3D/Q3DWidget.h \
-    src/ui/map3D/CheetahModel.h \
-    src/ui/map3D/CheetahGL.h \
-    src/ui/map3D/QMap3DWidget.h \
-    src/ui/map3D/Texture.h \
-    src/ui/map3D/TextureCache.h \
-    src/ui/map3D/WebImage.h \
-    src/ui/map3D/WebImageCache.h \
-    src/ui/map3D/Imagery.h \
     src/comm/QGCMAVLink.h
+
+
+contains(DEPENDENCIES_PRESENT, osg) { 
+    message("Including headers for OpenSceneGraph")
+    
+    # Enable only if OpenSceneGraph is available
+    HEADERS += src/ui/map3D/Q3DWidget.h \
+        src/ui/map3D/GCManipulator.h \
+        src/ui/map3D/ImageWindowGeode.h \
+        src/ui/map3D/QOSGWidget.h \
+        src/ui/map3D/PixhawkCheetahGeode.h \
+        src/ui/map3D/Pixhawk3DWidget.h \
+        src/ui/map3D/Q3DWidgetFactory.h
+
+contains(DEPENDENCIES_PRESENT, osgearth) { 
+    message("Including headers for OSGEARTH")
+    
+    # Enable only if OpenSceneGraph is available
+    HEADERS += src/ui/map3D/QMap3D.h
+}
+}
+
+contains(DEPENDENCIES_PRESENT, libfreenect) { 
+    message("Including headers for libfreenect")
+    
+    # Enable only if libfreenect is available
+    HEADERS += src/input/Freenect.h
+}
+
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -282,7 +306,7 @@ SOURCES += src/main.cc \
     src/ui/linechart/Linecharts.cc \
     src/uas/SlugsMAV.cc \
     src/uas/PxQuadMAV.cc \
-    src/uas/ArduPilotMAV.cc \
+    src/uas/ArduPilotMegaMAV.cc \
     src/comm/MAVLinkSyntaxHighlighter.cc \
     src/ui/watchdog/WatchdogControl.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
@@ -303,18 +327,40 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc \
-    src/ui/WaypointGlobalView.cc \
-    src/ui/map3D/Q3DWidget.cc \
-    src/ui/map3D/CheetahModel.cc \
-    src/ui/map3D/CheetahGL.cc \
-    src/ui/map3D/QMap3DWidget.cc \
-    src/ui/map3D/Texture.cc \
-    src/ui/map3D/TextureCache.cc \
-    src/ui/map3D/WebImageCache.cc \
-    src/ui/map3D/WebImage.cc \
-    src/ui/map3D/Imagery.cc
-RESOURCES = mavground.qrc
+    src/ui/RadioCalibration/RadioCalibrationData.cc
+
+contains(DEPENDENCIES_PRESENT, osg) { 
+    message("Including sources for OpenSceneGraph")
+    
+    # Enable only if OpenSceneGraph is available
+    SOURCES += src/ui/map3D/Q3DWidget.cc \
+    src/ui/map3D/ImageWindowGeode.cc \
+    src/ui/map3D/GCManipulator.cc \
+    src/ui/map3D/QOSGWidget.cc \
+        src/ui/map3D/PixhawkCheetahGeode.cc \
+        src/ui/map3D/Pixhawk3DWidget.cc \
+        src/ui/map3D/Q3DWidgetFactory.cc
+
+
+
+contains(DEPENDENCIES_PRESENT, osgearth) { 
+    message("Including sources for osgEarth")
+    
+    # Enable only if OpenSceneGraph is available
+    SOURCES += src/ui/map3D/QMap3D.cc
+
+}
+}
+
+contains(DEPENDENCIES_PRESENT, libfreenect) {
+    message("Including sources for libfreenect")
+
+    # Enable only if libfreenect is available
+    SOURCES += src/input/Freenect.cc
+}
+
+
+RESOURCES += mavground.qrc
 
 # Include RT-LAB Library
 win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
