@@ -106,7 +106,7 @@ Freenect::~Freenect()
     if (device != NULL)
     {
         freenect_stop_depth(device);
-        freenect_stop_rgb(device);
+        freenect_stop_video(device);
     }
 
     freenect_close_device(device);
@@ -136,8 +136,8 @@ Freenect::init(int userDeviceNumber)
 
     freenect_set_user(device, this);
 
-    memset(rgb, 0, FREENECT_RGB_SIZE);
-    memset(depth, 0, FREENECT_DEPTH_SIZE);
+    memset(rgb, 0, FREENECT_VIDEO_RGB_SIZE);
+    memset(depth, 0, FREENECT_DEPTH_11BIT_SIZE);
 
     // set Kinect parameters
     if (freenect_set_tilt_degs(device, tiltAngle) != 0)
@@ -148,22 +148,22 @@ Freenect::init(int userDeviceNumber)
     {
         return false;
     }
-    if (freenect_set_rgb_format(device, FREENECT_FORMAT_RGB) != 0)
+    if (freenect_set_video_format(device, FREENECT_VIDEO_RGB) != 0)
     {
         return false;
     }
-    if (freenect_set_depth_format(device, FREENECT_FORMAT_11_BIT) != 0)
+    if (freenect_set_depth_format(device, FREENECT_DEPTH_11BIT) != 0)
     {
         return false;
     }
-    freenect_set_rgb_callback(device, rgbCallback);
+    freenect_set_video_callback(device, videoCallback);
     freenect_set_depth_callback(device, depthCallback);
 
-    if (freenect_start_rgb(device) != 0)
+    if (freenect_start_depth(device) != 0)
     {
         return false;
     }
-    if (freenect_start_depth(device) != 0)
+    if (freenect_start_video(device) != 0)
     {
         return false;
     }
@@ -182,14 +182,10 @@ Freenect::process(void)
         return false;
     }
 
-    //libfreenect changed some access functions in one of the new revisions
-    freenect_raw_device_state state;
-    freenect_get_mks_accel(&state, &ax, &ay, &az);
-    //tiltAngle = freenect_get_tilt_degs(&state);
-
-    //these are the old access functions
-    //freenect_get_raw_accel(device, &ax, &ay, &az);
-    //freenect_get_mks_accel(device, &dx, &dy, &dz);
+    freenect_raw_tilt_state* state;
+    freenect_update_tilt_state(device);
+    state = freenect_get_tilt_state(device);
+    freenect_get_mks_accel(state, &ax, &ay, &az);
 
     return true;
 }
@@ -199,7 +195,7 @@ Freenect::getRgbData(void)
 {
     QMutexLocker locker(&rgbMutex);
     return QSharedPointer<QByteArray>(
-            new QByteArray(rgb, FREENECT_RGB_SIZE));
+            new QByteArray(rgb, FREENECT_VIDEO_RGB_SIZE));
 }
 
 QSharedPointer<QByteArray>
@@ -207,7 +203,7 @@ Freenect::getRawDepthData(void)
 {
     QMutexLocker locker(&depthMutex);
     return QSharedPointer<QByteArray>(
-            new QByteArray(depth, FREENECT_DEPTH_SIZE));
+            new QByteArray(depth, FREENECT_DEPTH_11BIT_SIZE));
 }
 
 QSharedPointer<QByteArray>
@@ -215,7 +211,7 @@ Freenect::getColoredDepthData(void)
 {
     QMutexLocker locker(&coloredDepthMutex);
     return QSharedPointer<QByteArray>(
-            new QByteArray(coloredDepth, FREENECT_RGB_SIZE));
+            new QByteArray(coloredDepth, FREENECT_VIDEO_RGB_SIZE));
 }
 
 QVector<QVector3D>
@@ -386,22 +382,22 @@ Freenect::projectPixelTo3DRay(const QVector2D& pixel, QVector3D& ray,
 }
 
 void
-Freenect::rgbCallback(freenect_device* device, freenect_pixel* rgb, uint32_t timestamp)
+Freenect::videoCallback(freenect_device* device, void* video, uint32_t timestamp)
 {
     Freenect* freenect = static_cast<Freenect *>(freenect_get_user(device));
 
     QMutexLocker locker(&freenect->rgbMutex);
-    memcpy(freenect->rgb, rgb, FREENECT_RGB_SIZE);
+    memcpy(freenect->rgb, video, FREENECT_VIDEO_RGB_SIZE);
 }
 
 void
 Freenect::depthCallback(freenect_device* device, void* depth, uint32_t timestamp)
 {
     Freenect* freenect = static_cast<Freenect *>(freenect_get_user(device));
-    freenect_depth* data = reinterpret_cast<freenect_depth *>(depth);
+    uint16_t* data = reinterpret_cast<uint16_t *>(depth);
 
     QMutexLocker depthLocker(&freenect->depthMutex);
-    memcpy(freenect->depth, data, FREENECT_DEPTH_SIZE);
+    memcpy(freenect->depth, data, FREENECT_DEPTH_11BIT_SIZE);
 
     QMutexLocker coloredDepthLocker(&freenect->coloredDepthMutex);
     unsigned short* src = reinterpret_cast<unsigned short *>(data);
