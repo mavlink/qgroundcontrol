@@ -2,10 +2,46 @@
 #define QGCGOOGLEEARTHVIEW_H
 
 #include <QWidget>
+#include <QTimer>
+#include <UASInterface.h>
 
+#if (defined Q_OS_MAC)
+#include <QWebView>
+#endif
+
+#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+    QGCWebAxWidget* webViewWin;
+#include <ActiveQt/QAxWidget>
+#include "windows.h"
+
+class WebAxWidget : public QAxWidget
+{
+public:
+
+    WebAxWidget(QWidget* parent = 0, Qt::WindowFlags f = 0)
+        : QAxWidget(parent, f)
+    {
+    }
+protected:
+    virtual bool translateKeyEvent(int message, int keycode) const
+    {
+        if (message >= WM_KEYFIRST && message <= WM_KEYLAST)
+            return true;
+        else
+            return QAxWidget::translateKeyEvent(message, keycode);
+    }
+
+};
+#else
 namespace Ui {
+    class QGCGoogleEarthControls;
+#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+    class QGCGoogleEarthViewWin;
+#else
     class QGCGoogleEarthView;
+#endif
 }
+#endif
 
 class QGCGoogleEarthView : public QWidget
 {
@@ -15,11 +51,37 @@ public:
     explicit QGCGoogleEarthView(QWidget *parent = 0);
     ~QGCGoogleEarthView();
 
+public slots:
+    /** @brief Update the internal state. Does not trigger a redraw */
+    void updateState();
+    /** @brief Set the currently selected UAS */
+    void setActiveUAS(UASInterface* uas);
+    /** @brief Show the vehicle trail */
+    void showTrail(int state);
+    /** @brief Show the waypoints */
+    void showWaypoints(int state);
+    /** @brief Follow the aircraft during flight */
+    void follow(bool follow);
+
 protected:
     void changeEvent(QEvent *e);
+    QTimer* updateTimer;
+    UASInterface* mav;
+    bool followCamera;
+#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+    WebAxWidget* webViewWin;
+#endif
+#if (defined Q_OS_MAC)
+    QWebView* webViewMac;
+#endif
 
 private:
-    Ui::QGCGoogleEarthView *ui;
+    Ui::QGCGoogleEarthControls* controls;
+#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+    Ui::QGCGoogleEarthViewWin* ui;
+#else
+    Ui::QGCGoogleEarthView* ui;
+#endif
 };
 
 #endif // QGCGOOGLEEARTHVIEW_H
