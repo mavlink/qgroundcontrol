@@ -29,12 +29,22 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
+#include <osg/LineWidth>
+
 #include "Texture.h"
 
 Texture::Texture()
     : _is3D(false)
 {
-
+    texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+    texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
+    GLuint id;
+    glGenTextures(1, &id);
+    t->setID(id);
+    glBindTexture(GL_TEXTURE_2D, id);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 const QString&
@@ -44,9 +54,9 @@ Texture::getSourceURL(void) const
 }
 
 void
-Texture::setID(GLuint id)
+Texture::setId(unsigned int _id)
 {
-    this->id = id;
+    id = _id;
 }
 
 void
@@ -87,6 +97,10 @@ Texture::sync(const WebImagePtr& image)
             maxV = static_cast<double>(imageHeight)
                    / static_cast<double>(textureHeight);
 
+            osg::ref_ptr<osg::Image> image;
+            image->setImage(textureWidth, textureHeight, 8, 3, GL_RGBA, GL_UNSIGNED_BYTES, NULL, osg::Image::USE_NEW_DELETE);
+
+            texture2D->
             glBindTexture(GL_TEXTURE_2D, id);
             glTexImage2D(GL_TEXTURE_2D, 0, 3, textureWidth, textureHeight,
                          0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -100,46 +114,56 @@ Texture::sync(const WebImagePtr& image)
     }
 }
 
-void
+osg::ref_ptr<osg::Geometry>
 Texture::draw(float x1, float y1, float x2, float y2,
               bool smoothInterpolation) const
 {
-    draw(x1, y1, x2, y1, x2, y2, x1, y2, smoothInterpolation);
+    return draw(x1, y1, x2, y1, x2, y2, x1, y2, smoothInterpolation);
 }
 
-void
+osg::ref_ptr<osg::Geometry>
 Texture::draw(float x1, float y1, float x2, float y2,
               float x3, float y3, float x4, float y4,
               bool smoothInterpolation) const
 {
+    osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry);
+    osg::ref_ptr<osg::StateSet> stateset(new osg::StateSet);
+
     if (state == REQUESTED)
     {
-        glBegin(GL_LINE_LOOP);
-        glColor3f(0.0f, 0.0f, 1.0f);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-        glVertex2f(x3, y3);
-        glVertex2f(x4, y4);
-        glEnd();
+        osg::ref_ptr<osg::Vec2Array> vertices(new osg::Vec2Array);
+        vertices->push_back(osg::Vec2(x1, y1));
+        vertices->push_back(osg::Vec2(x2, y2));
+        vertices->push_back(osg::Vec2(x3, y3));
+        vertices->push_back(osg::Vec2(x4, y4));
 
-        return;
+        geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
+                                                      0, vertices->size()));
+
+        geometry->setVertexArray(vertices);
+
+        osg::ref_ptr<osg::Vec4Array> color(new osg::Vec4Array);
+        color->push_back(osg::Vec4(0.0f, 0.0f, 1.0f, 1.0f));
+        geometry->setColorArray(color);
+        geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+        
+        return geometry;
     }
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, id);
+    stateset->setTextureAttributeAndModes(id, texture2D);
 
     float dx, dy;
     if (smoothInterpolation)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+        texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
         dx = 1.0f / (2.0f * textureWidth);
         dy = 1.0f / (2.0f * textureHeight);
     }
     else
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+        texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
         dx = 0.0f;
         dy = 0.0f;
     }
@@ -147,6 +171,14 @@ Texture::draw(float x1, float y1, float x2, float y2,
     glColor3f(1.0f, 1.0f, 1.0f);
     if (!_is3D)
     {
+        osg::ref_ptr<osg::Vec2Array> tc = new osg::Vec2Array;
+
+        geometry->setTexCoordArray(id, tc);
+        tc->push_back(osg::Vec2(dx, maxV - dy));
+        tc->push_back(osg::Vec2(maxU - dx, maxV - dy));
+        tc->push_back(osg::Vec2(maxU - dx, dy));
+        tc->push_back(osg::Vec2(dx, dy));
+
         glBegin(GL_QUADS);
         glTexCoord2f(dx, maxV - dy);
         glVertex3f(x1, y1, 0.0f);
@@ -210,8 +242,6 @@ Texture::draw(float x1, float y1, float x2, float y2,
             }
         }
     }
-
-    glDisable(GL_TEXTURE_2D);
 }
 
 bool

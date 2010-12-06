@@ -175,6 +175,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     getStatusForCode((int)state.status, uasState, stateDescription);
                     emit statusChanged(this, uasState, stateDescription);
                     emit statusChanged(this->status);
+                    emit loadChanged(this,state.load/10.0f);
+                    emit UAS::valueChanged(this, "Load", ((float)state.load)/1000.0f, MG::TIME::getGroundTimeNow());
                     stateAudio = " changed status to " + uasState;
                 }
 
@@ -209,6 +211,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                         break;
                     case (uint8_t)MAV_MODE_TEST3:
                         mode = "TEST3 MODE";
+                        break;
+                    case (uint8_t)MAV_MODE_RC_TRAINING:
+                        mode = "RC TRAINING MODE";
                         break;
                     default:
                         mode = "UNINIT MODE";
@@ -352,6 +357,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     GAudioOutput::instance()->notifyPositive();
                 }
                 positionLock = true;
+
+                // Send to patch antenna
+                mavlink_message_t msg;
+                mavlink_msg_global_position_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, pos.usec, pos.lat, pos.lon, pos.alt, pos.vx, pos.vy, pos.vz);
+                sendMessage(msg);
             }
             break;
         case MAVLINK_MSG_ID_GPS_RAW:
@@ -405,41 +415,34 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
             break;
-        case MAVLINK_MSG_ID_RC_CHANNELS:
+        case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
             {
-                mavlink_rc_channels_t channels;
-                mavlink_msg_rc_channels_decode(&message, &channels);
+                mavlink_rc_channels_raw_t channels;
+                mavlink_msg_rc_channels_raw_decode(&message, &channels);
                 emit remoteControlRSSIChanged(channels.rssi/255.0f);
-                for (int i = 0; i < 8; i++)
-                {
-                    switch (i)
-                    {
-                    case 0:
-                        emit remoteControlChannelChanged(i, channels.chan1_raw, channels.chan1_255/255.0f);
-                        break;
-                    case 1:
-                        emit remoteControlChannelChanged(i, channels.chan2_raw, channels.chan2_255/255.0f);
-                        break;
-                    case 2:
-                        emit remoteControlChannelChanged(i, channels.chan3_raw, channels.chan3_255/255.0f);
-                        break;
-                    case 3:
-                        emit remoteControlChannelChanged(i, channels.chan4_raw, channels.chan4_255/255.0f);
-                        break;
-                    case 4:
-                        emit remoteControlChannelChanged(i, channels.chan5_raw, channels.chan5_255/255.0f);
-                        break;
-                    case 5:
-                        emit remoteControlChannelChanged(i, channels.chan6_raw, channels.chan6_255/255.0f);
-                        break;
-                    case 6:
-                        emit remoteControlChannelChanged(i, channels.chan7_raw, channels.chan7_255/255.0f);
-                        break;
-                    case 7:
-                        emit remoteControlChannelChanged(i, channels.chan8_raw, channels.chan8_255/255.0f);
-                        break;
-                    }
-                }
+                emit remoteControlChannelRawChanged(0, channels.chan1_raw);
+                emit remoteControlChannelRawChanged(1, channels.chan2_raw);
+                emit remoteControlChannelRawChanged(2, channels.chan3_raw);
+                emit remoteControlChannelRawChanged(3, channels.chan4_raw);
+                emit remoteControlChannelRawChanged(4, channels.chan5_raw);
+                emit remoteControlChannelRawChanged(5, channels.chan6_raw);
+                emit remoteControlChannelRawChanged(6, channels.chan7_raw);
+                emit remoteControlChannelRawChanged(7, channels.chan8_raw);
+            }
+            break;
+        case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
+            {
+                mavlink_rc_channels_scaled_t channels;
+                mavlink_msg_rc_channels_scaled_decode(&message, &channels);
+                emit remoteControlRSSIChanged(channels.rssi/255.0f);
+                emit remoteControlChannelScaledChanged(0, channels.chan1_scaled/10000.0f);
+                emit remoteControlChannelScaledChanged(1, channels.chan2_scaled/10000.0f);
+                emit remoteControlChannelScaledChanged(2, channels.chan3_scaled/10000.0f);
+                emit remoteControlChannelScaledChanged(3, channels.chan4_scaled/10000.0f);
+                emit remoteControlChannelScaledChanged(4, channels.chan5_scaled/10000.0f);
+                emit remoteControlChannelScaledChanged(5, channels.chan6_scaled/10000.0f);
+                emit remoteControlChannelScaledChanged(6, channels.chan7_scaled/10000.0f);
+                emit remoteControlChannelScaledChanged(7, channels.chan8_scaled/10000.0f);
             }
             break;
         case MAVLINK_MSG_ID_PARAM_VALUE:
@@ -556,6 +559,22 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
+#ifdef MAVLINK_ENABLED_PIXHAWK
+            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
+            {
+                mavlink_point_of_interest_t poi;
+                mavlink_msg_point_of_interest_decode(&message, &poi);
+                emit poiFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_FIELD_NAME_LEN), poi.x, poi.y, poi.z);
+            }
+            break;
+            case MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION:
+            {
+                mavlink_point_of_interest_connection_t poi;
+                mavlink_msg_point_of_interest_connection_decode(&message, &poi);
+                emit poiConnectionFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN), poi.x1, poi.y1, poi.z1, poi.x2, poi.y2, poi.z2);
+            }
+            break;
+#endif
 #ifdef MAVLINK_ENABLED_UALBERTA
         case MAVLINK_MSG_ID_NAV_FILTER_BIAS:
             {
@@ -710,7 +729,11 @@ quint64 UAS::getUnixTime(quint64 time)
     // 60 seconds
     // 1000 milliseconds
     // 1000 microseconds
+#ifndef _MSVC_VER
     else if (time < 1261440000000000LLU)
+#else
+    else if (time < 1261440000000000)
+#endif
     {
         if (onboardTimeOffset == 0)
         {
@@ -728,7 +751,7 @@ quint64 UAS::getUnixTime(quint64 time)
 
 void UAS::setMode(int mode)
 {
-    if ((uint8_t)mode >= MAV_MODE_LOCKED && (uint8_t)mode <= MAV_MODE_TEST3)
+    if ((uint8_t)mode >= MAV_MODE_LOCKED && (uint8_t)mode <= MAV_MODE_RC_TRAINING)
     {
         mavlink_message_t msg;
         mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, (uint8_t)mode);
@@ -860,20 +883,91 @@ void UAS::readParametersFromStorage()
     sendMessage(msg);
 }
 
-void UAS::enableAllDataTransmission(bool enabled)
+void UAS::enableAllDataTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
     // 0 is a magic ID and will enable/disable the standard message set except for heartbeat
-    stream.req_stream_id = 0;
+    stream.req_stream_id = MAV_DATA_STREAM_ALL;
     // Select the update rate in Hz the message should be send
     // All messages will be send with their default rate
+    // TODO: use 0 to turn off and get rid of enable/disable? will require
+    //  a different magic flag for turning on defaults, possibly something really high like 1111 ?
     stream.req_message_rate = 0;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
+}
+
+void UAS::enableRawSensorDataTransmission(int rate)
+{
+    // Buffers to write data to
+    mavlink_message_t msg;
+    mavlink_request_data_stream_t stream;
+    // Select the message to request from now on
+    stream.req_stream_id = MAV_DATA_STREAM_RAW_SENSORS;
+    // Select the update rate in Hz the message should be send
+    stream.req_message_rate = rate;
+    // Start / stop the message
+    stream.start_stop = (rate) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
+}
+
+void UAS::enableExtendedSystemStatusTransmission(int rate)
+{
+    // Buffers to write data to
+    mavlink_message_t msg;
+    mavlink_request_data_stream_t stream;
+    // Select the message to request from now on
+    stream.req_stream_id = MAV_DATA_STREAM_EXTENDED_STATUS;
+    // Select the update rate in Hz the message should be send
+    stream.req_message_rate = rate;
+    // Start / stop the message
+    stream.start_stop = (rate) ? 1 : 0;
+    // The system which should take this command
+    stream.target_system = uasId;
+    // The component / subsystem which should take this command
+    stream.target_component = 0;
+    // Encode and send the message
+    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
+}
+
+void UAS::enableRCChannelDataTransmission(int rate)
+{
+#if defined(MAVLINK_ENABLED_UALBERTA_MESSAGES)
+    mavlink_message_t msg;
+    mavlink_msg_request_rc_channels_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, enabled);
+    sendMessage(msg);
+#else
+    mavlink_message_t msg;
+    mavlink_request_data_stream_t stream;
+    // Select the message to request from now on
+    stream.req_stream_id = MAV_DATA_STREAM_RC_CHANNELS;
+    // Select the update rate in Hz the message should be send
+    stream.req_message_rate = rate;
+    // Start / stop the message
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -886,18 +980,17 @@ void UAS::enableAllDataTransmission(bool enabled)
 #endif
 }
 
-void UAS::enableRawSensorDataTransmission(bool enabled)
+void UAS::enableRawControllerDataTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 1;
+    stream.req_stream_id = MAV_DATA_STREAM_RAW_CONTROLLER;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -907,21 +1000,19 @@ void UAS::enableRawSensorDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableExtendedSystemStatusTransmission(bool enabled)
+void UAS::enableRawSensorFusionTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 2;
+    stream.req_stream_id = MAV_DATA_STREAM_RAW_SENSOR_FUSION;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 10;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -931,21 +1022,19 @@ void UAS::enableExtendedSystemStatusTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableRCChannelDataTransmission(bool enabled)
+void UAS::enablePositionTransmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 3;
+    stream.req_stream_id = MAV_DATA_STREAM_POSITION;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -955,21 +1044,19 @@ void UAS::enableRCChannelDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableRawControllerDataTransmission(bool enabled)
+void UAS::enableExtra1Transmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 4;
+    stream.req_stream_id = MAV_DATA_STREAM_EXTRA1;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -979,21 +1066,19 @@ void UAS::enableRawControllerDataTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enableRawSensorFusionTransmission(bool enabled)
+void UAS::enableExtra2Transmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 5;
+    stream.req_stream_id = MAV_DATA_STREAM_EXTRA2;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -1003,21 +1088,19 @@ void UAS::enableRawSensorFusionTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
 }
 
-void UAS::enablePositionTransmission(bool enabled)
+void UAS::enableExtra3Transmission(int rate)
 {
-#ifdef MAVLINK_ENABLED_PIXHAWK
     // Buffers to write data to
     mavlink_message_t msg;
     mavlink_request_data_stream_t stream;
     // Select the message to request from now on
-    stream.req_stream_id = 6;
+    stream.req_stream_id = MAV_DATA_STREAM_EXTRA3;
     // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
+    stream.req_message_rate = rate;
     // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
+    stream.start_stop = (rate) ? 1 : 0;
     // The system which should take this command
     stream.target_system = uasId;
     // The component / subsystem which should take this command
@@ -1027,79 +1110,6 @@ void UAS::enablePositionTransmission(bool enabled)
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
-#endif
-}
-
-void UAS::enableExtra1Transmission(bool enabled)
-{
-  #ifdef MAVLINK_ENABLED_PIXHAWK
-    // Buffers to write data to
-    mavlink_message_t msg;
-    mavlink_request_data_stream_t stream;
-    // Select the message to request from now on
-    stream.req_stream_id = 7;
-    // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
-    // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
-    // The system which should take this command
-    stream.target_system = uasId;
-    // The component / subsystem which should take this command
-    stream.target_component = 0;
-    // Encode and send the message
-    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
-#endif
-}
-
-void UAS::enableExtra2Transmission(bool enabled)
-{
-  #ifdef MAVLINK_ENABLED_PIXHAWK
-    // Buffers to write data to
-    mavlink_message_t msg;
-    mavlink_request_data_stream_t stream;
-    // Select the message to request from now on
-    stream.req_stream_id = 8;
-    // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
-    // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
-    // The system which should take this command
-    stream.target_system = uasId;
-    // The component / subsystem which should take this command
-    stream.target_component = 0;
-    // Encode and send the message
-    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
-#endif
-}
-
-void UAS::enableExtra3Transmission(bool enabled)
-{
-  #ifdef MAVLINK_ENABLED_PIXHAWK
-    // Buffers to write data to
-    mavlink_message_t msg;
-    mavlink_request_data_stream_t stream;
-    // Select the message to request from now on
-    stream.req_stream_id = 9;
-    // Select the update rate in Hz the message should be send
-    stream.req_message_rate = 200;
-    // Start / stop the message
-    stream.start_stop = (enabled) ? 1 : 0;
-    // The system which should take this command
-    stream.target_system = uasId;
-    // The component / subsystem which should take this command
-    stream.target_component = 0;
-    // Encode and send the message
-    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
-#endif
 }
 
 /**

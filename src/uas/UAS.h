@@ -223,16 +223,16 @@ public slots:
     /** @brief Read parameters from permanent storage */
     void readParametersFromStorage();
 
-    void enableAllDataTransmission(bool enabled);
-    void enableRawSensorDataTransmission(bool enabled);
-    void enableExtendedSystemStatusTransmission(bool enabled);
-    void enableRCChannelDataTransmission(bool enabled);
-    void enableRawControllerDataTransmission(bool enabled);
-    void enableRawSensorFusionTransmission(bool enabled);
-    void enablePositionTransmission(bool enabled);
-    void enableExtra1Transmission(bool enabled);
-    void enableExtra2Transmission(bool enabled);
-    void enableExtra3Transmission(bool enabled);
+    void enableAllDataTransmission(int rate);
+    void enableRawSensorDataTransmission(int rate);
+    void enableExtendedSystemStatusTransmission(int rate);
+    void enableRCChannelDataTransmission(int rate);
+    void enableRawControllerDataTransmission(int rate);
+    void enableRawSensorFusionTransmission(int rate);
+    void enablePositionTransmission(int rate);
+    void enableExtra1Transmission(int rate);
+    void enableExtra2Transmission(int rate);
+    void enableExtra3Transmission(int rate);
 
     /** @brief Update the system state */
     void updateState();

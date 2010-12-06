@@ -32,15 +32,14 @@ This file is part of the QGROUNDCONTROL project
 #ifndef IMAGERY_H
 #define IMAGERY_H
 
-#include <inttypes.h>
+#include <QScopedPointer>
+#include <QString>
 
 #include "TextureCache.h"
 
 class Imagery
 {
 public:
-    Imagery();
-
     enum ImageryType
     {
         GOOGLE_MAP = 0,
@@ -48,6 +47,8 @@ public:
         SWISSTOPO_SATELLITE = 2,
         SWISSTOPO_SATELLITE_3D = 3
     };
+
+    Imagery();
 
     void setImageryType(ImageryType type);
     void setOffset(double xOffset, double yOffset);
@@ -73,43 +74,41 @@ public:
     bool update(void);
 
 private:
-    void imageBounds(int32_t tileX, int32_t tileY, double tileResolution,
+    void imageBounds(int tileX, int tileY, double tileResolution,
                      double& x1, double& y1, double& x2, double& y2,
                      double& x3, double& y3, double& x4, double& y4) const;
-
     void tileBounds(double tileResolution,
                     double minUtmX, double minUtmY,
                     double maxUtmX, double maxUtmY, const QString& utmZone,
-                    int32_t& minTileX, int32_t& minTileY,
-                    int32_t& maxTileX, int32_t& maxTileY,
-                    int32_t& zoomLevel) const;
+                    int& minTileX, int& minTileY,
+                    int& maxTileX, int& maxTileY,
+                    int& zoomLevel) const;
 
-    double tileXToLongitude(int32_t tileX, int32_t numTiles) const;
-    double tileYToLatitude(int32_t tileY, int32_t numTiles) const;
-    int32_t longitudeToTileX(double longitude, int32_t numTiles) const;
-    int32_t latitudeToTileY(double latitude, int32_t numTiles) const;
+    double tileXToLongitude(int tileX, int numTiles) const;
+    double tileYToLatitude(int tileY, int numTiles) const;
+    int longitudeToTileX(double longitude, int numTiles) const;
+    int latitudeToTileY(double latitude, int numTiles) const;
 
     void UTMtoTile(double northing, double easting, const QString& utmZone,
-                   double tileResolution, int32_t& tileX, int32_t& tileY,
-                   int32_t& zoomLevel) const;
-
+                   double tileResolution, int& tileX, int& tileY,
+                   int& zoomLevel) const;
     QChar UTMLetterDesignator(double latitude) const;
 
     void LLtoUTM(double latitude, double longitude,
                  double& utmNorthing, double& utmEasting,
                  QString& utmZone) const;
-
     void UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
                  double& latitude, double& longitude) const;
 
-    QString getTileLocation(int32_t tileX, int32_t tileY, int32_t zoomLevel,
+    QString getTileLocation(int tileX, int tileY, int zoomLevel,
                             double tileResolution) const;
-
-    ImageryType currentImageryType;
 
     QScopedPointer<TextureCache> textureCache;
 
-    double xOffset, yOffset;
+    ImageryType currentImageryType;
+
+    double xOffset;
+    double yOffset;
 };
 
 #endif // IMAGERY_H
