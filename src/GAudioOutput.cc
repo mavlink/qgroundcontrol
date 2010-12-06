@@ -41,7 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 
 // Speech synthesis is only supported with MSVC compiler
-#if _MSC_VER
+#if _MSC_VER2
 // Documentation: http://msdn.microsoft.com/en-us/library/ee125082%28v=VS.85%29.aspx
 #define _ATL_APARTMENT_THREADED
 
@@ -93,7 +93,7 @@ emergency(false)
     flite_init();
 #endif
 
-	#if _MSC_VER
+	#if _MSC_VER2
 
 		ISpVoice * pVoice = NULL;
 	    if (FAILED(::CoInitialize(NULL)))
@@ -134,7 +134,7 @@ emergency(false)
 
 GAudioOutput::~GAudioOutput()
 {
-#ifdef _MSC_VER
+#ifdef _MSC_VER2
 	::CoUninitialize();
 #endif
 }

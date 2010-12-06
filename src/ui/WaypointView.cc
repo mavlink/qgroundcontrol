@@ -49,7 +49,6 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->setupUi(this);
 
     this->wp = wp;
-    wp->setFrame(MAV_FRAME_LOCAL);
 
     // add actions
     m_ui->comboBox_action->addItem("Navigate",MAV_ACTION_NAVIGATE);
@@ -63,7 +62,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
 
     // defaults
     changedAction(0);
-    changedFrame(0);
+    changedFrame(wp->getFrame());
 
     // Read values and set user interface
     updateValues();

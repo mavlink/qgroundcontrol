@@ -39,9 +39,9 @@ class GCManipulator : public osgGA::TrackballManipulator
 public:
     GCManipulator();
 
-    void setMinZoomRange(float minZoomRange);
+    void setMinZoomRange(double minZoomRange);
 
-    virtual void move(float dx, float dy, float dz);
+    virtual void move(double dx, double dy, double dz);
 
     /**
      * @brief Handle events.
@@ -51,11 +51,11 @@ public:
                         osgGA::GUIActionAdapter& us);
 
 protected:
-    bool calcMovement();
+    bool calcMovement(void);
 
-    float _moveSensitivity;
-    float _zoomSensitivity;
-    float _minZoomRange;
+    double _moveSensitivity;
+    double _zoomSensitivity;
+    double _minZoomRange;
 };
 
 #endif // GCMANIPULATOR_H

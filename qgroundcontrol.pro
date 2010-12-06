@@ -30,7 +30,8 @@ QT += network \
     opengl \
     svg \
     xml \
-    phonon
+    phonon \
+    webkit
 TEMPLATE = app
 TARGET = qgroundcontrol
 BASEDIR = $$IN_PWD
@@ -138,7 +139,11 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui \
-    src/ui/QMap3D.ui
+    src/ui/QMap3D.ui \
+    src/ui/QGCWebView.ui \
+    src/ui/map3D/QGCGoogleEarthView.ui \
+    src/ui/map3D/QGCGoogleEarthViewWin.ui \
+    src/ui/map3D/QGCGoogleEarthControls.ui
 
 # src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
@@ -222,16 +227,17 @@ HEADERS += src/MG.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/MAV2DIcon.h \
-    src/ui/QGCRemoteControlView.h \ # src/ui/WaypointGlobalView.h \
+    src/ui/QGCRemoteControlView.h \
     src/ui/RadioCalibration/RadioCalibrationData.h \
     src/ui/RadioCalibration/RadioCalibrationWindow.h \
     src/ui/RadioCalibration/AirfoilServoCalibrator.h \
     src/ui/RadioCalibration/SwitchCalibrator.h \
     src/ui/RadioCalibration/CurveCalibrator.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
-    src/comm/QGCMAVLink.h
-
-
+    src/comm/QGCMAVLink.h \
+    src/ui/QGCWebView.h \
+    src/ui/map3D/QGCGoogleEarthView.h \
+    src/ui/map3D/QGCWebPage.h
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
     
@@ -242,23 +248,27 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/QOSGWidget.h \
         src/ui/map3D/PixhawkCheetahGeode.h \
         src/ui/map3D/Pixhawk3DWidget.h \
-        src/ui/map3D/Q3DWidgetFactory.h
-
-contains(DEPENDENCIES_PRESENT, osgearth) { 
-    message("Including headers for OSGEARTH")
-    
-    # Enable only if OpenSceneGraph is available
-    HEADERS += src/ui/map3D/QMap3D.h
+        src/ui/map3D/Q3DWidgetFactory.h \
+        src/ui/map3D/WebImageCache.h \
+        src/ui/map3D/WebImage.h \
+        src/ui/map3D/TextureCache.h \
+        src/ui/map3D/Texture.h \
+        src/ui/map3D/Imagery.h \
+        src/ui/map3D/HUDScaleGeode.h \
+        src/ui/map3D/WaypointGroupNode.h
+    contains(DEPENDENCIES_PRESENT, osgearth) { 
+        message("Including headers for OSGEARTH")
+        
+        # Enable only if OpenSceneGraph is available
+        HEADERS += src/ui/map3D/QMap3D.h
+    }
 }
-}
-
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including headers for libfreenect")
     
     # Enable only if libfreenect is available
     HEADERS += src/input/Freenect.h
 }
-
 SOURCES += src/main.cc \
     src/Core.cc \
     src/uas/UASManager.cc \
@@ -327,39 +337,41 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/SwitchCalibrator.cc \
     src/ui/RadioCalibration/CurveCalibrator.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
-    src/ui/RadioCalibration/RadioCalibrationData.cc
-
+    src/ui/RadioCalibration/RadioCalibrationData.cc \
+    src/ui/QGCWebView.cc \
+    src/ui/map3D/QGCGoogleEarthView.cc \
+    src/ui/map3D/QGCWebPage.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     
     # Enable only if OpenSceneGraph is available
     SOURCES += src/ui/map3D/Q3DWidget.cc \
-    src/ui/map3D/ImageWindowGeode.cc \
-    src/ui/map3D/GCManipulator.cc \
-    src/ui/map3D/QOSGWidget.cc \
+        src/ui/map3D/ImageWindowGeode.cc \
+        src/ui/map3D/GCManipulator.cc \
+        src/ui/map3D/QOSGWidget.cc \
         src/ui/map3D/PixhawkCheetahGeode.cc \
         src/ui/map3D/Pixhawk3DWidget.cc \
-        src/ui/map3D/Q3DWidgetFactory.cc
-
-
-
-contains(DEPENDENCIES_PRESENT, osgearth) { 
-    message("Including sources for osgEarth")
-    
-    # Enable only if OpenSceneGraph is available
-    SOURCES += src/ui/map3D/QMap3D.cc
-
+        src/ui/map3D/Q3DWidgetFactory.cc \
+        src/ui/map3D/WebImageCache.cc \
+        src/ui/map3D/WebImage.cc \
+        src/ui/map3D/TextureCache.cc \
+        src/ui/map3D/Texture.cc \
+        src/ui/map3D/Imagery.cc \
+        src/ui/map3D/HUDScaleGeode.cc \
+        src/ui/map3D/WaypointGroupNode.cc
+    contains(DEPENDENCIES_PRESENT, osgearth) { 
+        message("Including sources for osgEarth")
+        
+        # Enable only if OpenSceneGraph is available
+        SOURCES += src/ui/map3D/QMap3D.cc
+    }
 }
-}
-
-contains(DEPENDENCIES_PRESENT, libfreenect) {
+contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including sources for libfreenect")
-
+    
     # Enable only if libfreenect is available
     SOURCES += src/input/Freenect.cc
 }
-
-
 RESOURCES += mavground.qrc
 
 # Include RT-LAB Library

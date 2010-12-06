@@ -42,7 +42,7 @@ QMAKE_PRE_LINK += echo "Copying files"
 # MAC OS X
 macx { 
 
-    COMPILER_VERSION = $$system(gcc -v)
+    COMPILER_VERSION = system(gcc -v)
     message(Using compiler $$COMPILER_VERSION)
 
     HARDWARE_PLATFORM = $$system(uname -a)
@@ -77,7 +77,11 @@ macx {
     ICON = $$BASEDIR/images/icons/macx.icns
 
     # Copy audio files if needed
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+    # Copy google earth starter file
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/images/earth.html $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+    # Copy model files
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/models/*.skp $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
 
     exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
     # No check for GLUT.framework since it's a MAC default
@@ -135,7 +139,7 @@ macx {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    #QMAKE_CXXFLAGS += -Wl, -E
+    #QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # GNU/Linux
@@ -188,8 +192,8 @@ linux-g++ {
     DEFINES += QGC_OSGEARTH_ENABLED
     }
 
-    exists(/usr/local/include/libfreenect) {
-    message("Building suplocport for libfreenect")
+    exists(/usr/local/include/libfreenect/libfreenect.h) {
+    message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
     INCLUDEPATH += /usr/include/libusb-1.0
     # Include libfreenect libraries
@@ -204,7 +208,7 @@ linux-g++ {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 linux-g++-64 {
@@ -268,13 +272,15 @@ linux-g++-64 {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # Windows (32bit)
 win32-msvc2008 {
 
     message(Building for Windows Visual Studio 2008 (32bit))
+
+    CONFIG += qaxcontainer
 
     # Special settings for debug
     #CONFIG += CONSOLE
@@ -287,19 +293,57 @@ win32-msvc2008 {
     LIBS += -L$$BASEDIR/lib/sdl/msvc/lib \
              -lSDLmain -lSDL
 
+exists($$BASEDIR/lib/osg123) {
+message("Building support for OSG")
+DEPENDENCIES_PRESENT += osg
+
+# Include OpenSceneGraph and osgEarth libraries
+INCLUDEPATH += $$BASEDIR/lib/osgEarth/win32/include \
+    $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/include
+LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
+    -losg \
+    -losgViewer \
+	-losgGA \
+	-losgDB \
+	-losgText \
+        -lOpenThreads
+DEFINES += QGC_OSG_ENABLED
+exists($$BASEDIR/lib/osgEarth123) {
+    DEPENDENCIES_PRESENT += osgearth
+    message("Building support for osgEarth")
+    DEFINES += QGC_OSGEARTH_ENABLED
+    LIBS += -L$$BASEDIR/lib/osgEarth/win32/lib \
+        -losgEarth \
+        -losgEarthUtil
+}
+}
+
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/release/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/models $$TARGETDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/.
+	QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/debug/.
+	
+	
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osg.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osgViewer.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osgGA.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osgDB.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/osg55-osgText.dll $$TARGETDIR/release/. &&
+	#QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/bin/OpenThreads.dll $$TARGETDIR/release/. &&
+	
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += /Wl /E
+
+    # Copy google earth starter file
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/release/
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/debug/
+
 }
 
 # Windows (32bit)
@@ -330,52 +374,19 @@ win32-g++ {
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/models $$TARGETDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+	debug {
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/debug/.
+	QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+	}
+	
+	release {
+	QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+	}
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
-}
-
-# Windows (64bit)
-win64-g++ {
-
-    message(Building for Windows Platform (64bit))
-
-    # Special settings for debug
-    #CONFIG += CONSOLE
-
-    INCLUDEPATH += $$BASEDIR\lib\sdl\include \
-                   $$BASEDIR\lib\opal\include #\ #\
-                   #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
-
-    LIBS += -L$$BASEDIR/lib/sdl/win32 \
-             -lmingw32 -lSDLmain -lSDL -mwindows
-
-
-
-    debug {
-        DESTDIR = $$BASEDIR/bin
-    }
-
-    release {
-        DESTDIR = $$BASEDIR/bin
-    }
-
-    RC_FILE = $$BASEDIR/qgroundcontrol.rc
-
-    # Copy dependencies
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/debug/. &&
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$BUILDDIR/release/.
-
-    # osg/osgEarth dynamic casts might fail without this compiler option.
-    # see http://osgearth.org/wiki/FAQ for details.
-    QMAKE_CXXFLAGS += -Wl, -E
+    QMAKE_CXXFLAGS += -Wl,-E
 }

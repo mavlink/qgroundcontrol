@@ -45,8 +45,7 @@ class WebImageCache : public QObject
 public:
     WebImageCache(QObject* parent, uint32_t cacheSize);
 
-    QPair<WebImagePtr, int32_t> lookup(const QString& url,
-                                       bool useHeightModel);
+    QPair<WebImagePtr, int32_t> lookup(const QString& url);
 
     WebImagePtr at(int32_t index) const;
 
