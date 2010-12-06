@@ -46,6 +46,12 @@ Imagery::Imagery()
 
 }
 
+Imagery::ImageryType
+Imagery::getImageryType(void) const
+{
+    return currentImageryType;
+}
+
 void
 Imagery::setImageryType(ImageryType type)
 {
@@ -62,7 +68,6 @@ Imagery::setOffset(double xOffset, double yOffset)
 void
 Imagery::prefetch2D(double windowWidth, double windowHeight,
                     double zoom, double xOrigin, double yOrigin,
-                    double viewXOffset, double viewYOffset,
                     const QString& utmZone)
 {
     double tileResolution;
@@ -88,10 +93,10 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
     int zoomLevel;
 
     tileBounds(tileResolution,
-               xOrigin + viewXOffset - windowWidth / 2.0 / zoom,
-               yOrigin + viewYOffset - windowHeight / 2.0 / zoom,
-               xOrigin + viewXOffset + windowWidth / 2.0 / zoom,
-               yOrigin + viewYOffset + windowHeight / 2.0 / zoom, utmZone,
+               xOrigin - windowWidth / 2.0 / zoom * 1.5,
+               yOrigin - windowHeight / 2.0 / zoom * 1.5,
+               xOrigin + windowWidth / 2.0 / zoom * 1.5,
+               yOrigin + windowHeight / 2.0 / zoom * 1.5, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
     for (int r = minTileY; r <= maxTileY; ++r)
@@ -108,7 +113,6 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
 void
 Imagery::draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
-                double viewXOffset, double viewYOffset,
                 const QString& utmZone)
 {
     double tileResolution;
@@ -134,11 +138,16 @@ Imagery::draw2D(double windowWidth, double windowHeight,
     int zoomLevel;
 
     tileBounds(tileResolution,
-               xOrigin + viewXOffset - windowWidth / 2.0 / zoom * 1.5,
-               yOrigin + viewYOffset - windowHeight / 2.0 / zoom * 1.5,
-               xOrigin + viewXOffset + windowWidth / 2.0 / zoom * 1.5,
-               yOrigin + viewYOffset + windowHeight / 2.0 / zoom * 1.5, utmZone,
+               xOrigin - windowWidth / 2.0 / zoom * 1.5,
+               yOrigin - windowHeight / 2.0 / zoom * 1.5,
+               xOrigin + windowWidth / 2.0 / zoom * 1.5,
+               yOrigin + windowHeight / 2.0 / zoom * 1.5, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
+
+    if (getNumDrawables() > 0)
+    {
+        removeDrawables(0, getNumDrawables());
+    }
 
     for (int r = minTileY; r <= maxTileY; ++r)
     {
@@ -152,10 +161,11 @@ Imagery::draw2D(double windowWidth, double windowHeight,
             TexturePtr t = textureCache->get(tileURL);
             if (!t.isNull())
             {
-                t->draw(x1 - xOrigin, y1 - yOrigin,
-                        x2 - xOrigin, y2 - yOrigin,
-                        x3 - xOrigin, y3 - yOrigin,
-                        x4 - xOrigin, y4 - yOrigin, true);
+                addDrawable(t->draw(y1 - yOrigin, x1 - xOrigin,
+                                    y2 - yOrigin, x2 - xOrigin,
+                                    y3 - yOrigin, x3 - xOrigin,
+                                    y4 - yOrigin, x4 - xOrigin,
+                                    true));
             }
         }
     }
@@ -164,17 +174,14 @@ Imagery::draw2D(double windowWidth, double windowHeight,
 void
 Imagery::prefetch3D(double radius, double tileResolution,
                     double xOrigin, double yOrigin,
-                    double viewXOffset, double viewYOffset,
-                    const QString& utmZone, bool useHeightModel)
+                    const QString& utmZone)
 {
     int minTileX, minTileY, maxTileX, maxTileY;
     int zoomLevel;
 
     tileBounds(tileResolution,
-               xOrigin + viewXOffset - radius,
-               yOrigin + viewYOffset - radius,
-               xOrigin + viewXOffset + radius,
-               yOrigin + viewYOffset + radius, utmZone,
+               xOrigin - radius, yOrigin - radius,
+               xOrigin + radius, yOrigin + radius, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
 
     for (int r = minTileY; r <= maxTileY; ++r)
@@ -183,7 +190,7 @@ Imagery::prefetch3D(double radius, double tileResolution,
         {
             QString url = getTileLocation(c, r, zoomLevel, tileResolution);
 
-            TexturePtr t = textureCache->get(url, useHeightModel);
+            TexturePtr t = textureCache->get(url);
         }
     }
 }
@@ -191,18 +198,20 @@ Imagery::prefetch3D(double radius, double tileResolution,
 void
 Imagery::draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
-                double viewXOffset, double viewYOffset,
-                const QString& utmZone, bool useHeightModel)
+                const QString& utmZone)
 {
     int minTileX, minTileY, maxTileX, maxTileY;
     int zoomLevel;
 
     tileBounds(tileResolution,
-               xOrigin + viewXOffset - radius,
-               yOrigin + viewYOffset - radius,
-               xOrigin + viewXOffset + radius,
-               yOrigin + viewYOffset + radius, utmZone,
+               xOrigin - radius, yOrigin - radius,
+               xOrigin + radius, yOrigin + radius, utmZone,
                minTileX, minTileY, maxTileX, maxTileY, zoomLevel);
+
+    if (getNumDrawables() > 0)
+    {
+        removeDrawables(0, getNumDrawables());
+    }
 
     for (int r = minTileY; r <= maxTileY; ++r)
     {
@@ -213,14 +222,15 @@ Imagery::draw3D(double radius, double tileResolution,
             double x1, y1, x2, y2, x3, y3, x4, y4;
             imageBounds(c, r, tileResolution, x1, y1, x2, y2, x3, y3, x4, y4);
 
-            TexturePtr t = textureCache->get(tileURL, useHeightModel);
+            TexturePtr t = textureCache->get(tileURL);
 
             if (!t.isNull())
             {
-                t->draw(x1 - xOrigin, y1 - yOrigin,
-                        x2 - xOrigin, y2 - yOrigin,
-                        x3 - xOrigin, y3 - yOrigin,
-                        x4 - xOrigin, y4 - yOrigin, true);
+                addDrawable(t->draw(y1 - yOrigin, x1 - xOrigin,
+                                    y2 - yOrigin, x2 - xOrigin,
+                                    y3 - yOrigin, x3 - xOrigin,
+                                    y4 - yOrigin, x4 - xOrigin,
+                                    true));
             }
         }
     }
@@ -257,8 +267,7 @@ Imagery::imageBounds(int tileX, int tileY, double tileResolution,
         LLtoUTM(lat2, lon2, x3, y3, utmZone);
         LLtoUTM(lat2, lon1, x4, y4, utmZone);
     }
-    else if (currentImageryType == SWISSTOPO_SATELLITE ||
-             currentImageryType == SWISSTOPO_SATELLITE_3D)
+    else if (currentImageryType == SWISSTOPO_SATELLITE)
     {
         double utmMultiplier = tileResolution * 200.0;
         double minX = tileX * utmMultiplier;
@@ -295,8 +304,7 @@ Imagery::tileBounds(double tileResolution,
         UTMtoTile(maxUtmX, maxUtmY, utmZone, tileResolution,
                   maxTileX, minTileY, zoomLevel);
     }
-    else if (currentImageryType == SWISSTOPO_SATELLITE ||
-             currentImageryType == SWISSTOPO_SATELLITE_3D)
+    else if (currentImageryType == SWISSTOPO_SATELLITE)
     {
         double utmMultiplier = tileResolution * 200;
 
@@ -555,7 +563,7 @@ Imagery::UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
                  * D * D * D * D * D / 120.0) / cos(phi1Rad);
     longitude = LongOrigin + longitude / M_PI * 180.0;
 }
-
+#include <QDebug>
 QString
 Imagery::getTileLocation(int tileX, int tileY, int zoomLevel,
                          double tileResolution) const
@@ -572,7 +580,7 @@ Imagery::getTileLocation(int tileX, int tileY, int zoomLevel,
         oss << "http://khm.google.com/vt/lbw/lyrs=y&x=" << tileX
             << "&y=" << tileY << "&z=" << zoomLevel;
         break;
-    case SWISSTOPO_SATELLITE: case SWISSTOPO_SATELLITE_3D:
+    case SWISSTOPO_SATELLITE:
         oss << "../map/eth_zurich_swissimage_025/200/color/" << tileY
             << "/tile-";
         if (tileResolution < 1.0)
