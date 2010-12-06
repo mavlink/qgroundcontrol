@@ -95,7 +95,7 @@ private:
     void projectPixelTo3DRay(const QVector2D& pixel, QVector3D& ray,
                              const IntrinsicCameraParameters& params);
 
-    static void rgbCallback(freenect_device* device, freenect_pixel* rgb, uint32_t timestamp);
+    static void videoCallback(freenect_device* device, void* video, uint32_t timestamp);
     static void depthCallback(freenect_device* device, void* depth, uint32_t timestamp);
 
     freenect_context* context;
@@ -122,13 +122,13 @@ private:
     int tiltAngle;
 
     // rgbd data
-    char rgb[FREENECT_RGB_SIZE];
+    char rgb[FREENECT_VIDEO_RGB_SIZE];
     QMutex rgbMutex;
 
-    char depth[FREENECT_DEPTH_SIZE];
+    char depth[FREENECT_DEPTH_11BIT_SIZE];
     QMutex depthMutex;
 
-    char coloredDepth[FREENECT_RGB_SIZE];
+    char coloredDepth[FREENECT_VIDEO_RGB_SIZE];
     QMutex coloredDepthMutex;
 
     // accelerometer data
