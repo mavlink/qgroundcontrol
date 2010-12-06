@@ -34,6 +34,7 @@
 
 #include <osgText/Text>
 
+#include "HUDScaleGeode.h"
 #include "Imagery.h"
 #include "ImageWindowGeode.h"
 
@@ -68,6 +69,13 @@ private slots:
     void recenter(void);
     void toggleFollowCamera(int state);
 
+    void insertWaypoint(void);
+    void moveWaypoint(void);
+    void setWaypoint(void);
+    void deleteWaypoint(void);
+    void setWaypointAltitude(void);
+    void clearAllWaypoints(void);
+
 protected:
     QVector< osg::ref_ptr<osg::Node> > findVehicleModels(void);
     void buildLayout(void);
@@ -88,10 +96,11 @@ private:
     void setupHUD(void);
     void resizeHUD(void);
 
-    void updateHUD(float robotX, float robotY, float robotZ,
-                   float robotRoll, float robotPitch, float robotYaw);
-    void updateTrail(float robotX, float robotY, float robotZ);
-    void updateImagery(void);
+    void updateHUD(double robotX, double robotY, double robotZ,
+                   double robotRoll, double robotPitch, double robotYaw);
+    void updateTrail(double robotX, double robotY, double robotZ);
+    void updateImagery(double originX, double originY, double originZ,
+                       const QString& zone);
     void updateTarget(void);
     void updateWaypoints(void);
 #ifdef QGC_LIBFREENECT_ENABLED
@@ -99,6 +108,17 @@ private:
 #endif
 
     void markTarget(void);
+
+    int findWaypoint(int mouseX, int mouseY);
+    void showInsertWaypointMenu(const QPoint& cursorPos);
+    void showEditWaypointMenu(const QPoint& cursorPos);
+
+    enum Mode {
+        DEFAULT_MODE,
+        MOVE_WAYPOINT_MODE
+    };
+    Mode mode;
+    int selectedWpIndex;
 
     bool displayGrid;
     bool displayTrail;
@@ -111,12 +131,13 @@ private:
 
     bool followCamera;
 
-    osg::ref_ptr<osg::Vec3Array> trailVertices;
-    QVarLengthArray<osg::Vec3, 10000> trail;
+    osg::ref_ptr<osg::Vec3dArray> trailVertices;
+    QVarLengthArray<osg::Vec3d, 10000> trail;
 
     osg::ref_ptr<osg::Node> vehicleModel;
     osg::ref_ptr<osg::Geometry> hudBackgroundGeometry;
     osg::ref_ptr<osgText::Text> statusText;
+    osg::ref_ptr<HUDScaleGeode> scaleGeode;
     osg::ref_ptr<ImageWindowGeode> rgb2DGeode;
     osg::ref_ptr<ImageWindowGeode> depth2DGeode;
     osg::ref_ptr<osg::Image> rgbImage;
@@ -134,6 +155,7 @@ private:
     QScopedPointer<Freenect> freenect;
     QVector<Freenect::Vector6D> pointCloud;
 #endif
+    bool enableFreenect;
     QSharedPointer<QByteArray> rgb;
     QSharedPointer<QByteArray> coloredDepth;
 
@@ -141,7 +163,7 @@ private:
 
     QPushButton* targetButton;
 
-    float lastRobotX, lastRobotY, lastRobotZ;
+    double lastRobotX, lastRobotY, lastRobotZ;
 };
 
 #endif // PIXHAWK3DWIDGET_H

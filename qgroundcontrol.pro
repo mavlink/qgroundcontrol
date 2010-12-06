@@ -141,7 +141,9 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCRemoteControlView.ui \
     src/ui/QMap3D.ui \
     src/ui/QGCWebView.ui \
-    src/ui/map3D/QGCGoogleEarthView.ui
+    src/ui/map3D/QGCGoogleEarthView.ui \
+    src/ui/map3D/QGCGoogleEarthViewWin.ui \
+    src/ui/map3D/QGCGoogleEarthControls.ui
 
 # src/ui/WaypointGlobalView.ui
 INCLUDEPATH += src \
@@ -234,8 +236,8 @@ HEADERS += src/MG.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
     src/comm/QGCMAVLink.h \
     src/ui/QGCWebView.h \
-    src/ui/map3D/QGCGoogleEarthView.h
-
+    src/ui/map3D/QGCGoogleEarthView.h \
+    src/ui/map3D/QGCWebPage.h
 
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
@@ -252,7 +254,8 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/WebImage.h \
         src/ui/map3D/TextureCache.h \
         src/ui/map3D/Texture.h \
-        src/ui/map3D/Imagery.h
+        src/ui/map3D/Imagery.h \
+        src/ui/map3D/HUDScaleGeode.h
     contains(DEPENDENCIES_PRESENT, osgearth) { 
         message("Including headers for OSGEARTH")
         
@@ -336,7 +339,8 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
     src/ui/RadioCalibration/RadioCalibrationData.cc \
     src/ui/QGCWebView.cc \
-    src/ui/map3D/QGCGoogleEarthView.cc
+    src/ui/map3D/QGCGoogleEarthView.cc \
+    src/ui/map3D/QGCWebPage.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     
@@ -352,7 +356,8 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/WebImage.cc \
         src/ui/map3D/TextureCache.cc \
         src/ui/map3D/Texture.cc \
-        src/ui/map3D/Imagery.cc
+        src/ui/map3D/Imagery.cc \
+        src/ui/map3D/HUDScaleGeode.cc
     contains(DEPENDENCIES_PRESENT, osgearth) { 
         message("Including sources for osgEarth")
         

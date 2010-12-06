@@ -1,3 +1,34 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Definition of the class Freenect.
+ *
+ *   @author Lionel Heng <hengli@student.ethz.ch>
+ *
+ */
+
 #include "Freenect.h"
 
 #include <cmath>
@@ -197,7 +228,7 @@ Freenect::get3DPointCloudData(void)
     unsigned short* data = reinterpret_cast<unsigned short*>(depth);
     for (int i = 0; i < FREENECT_FRAME_PIX; ++i)
     {
-        if (data[i] <= 2048)
+        if (data[i] > 0 && data[i] <= 2048)
         {
             // see www.ros.org/wiki/kinect_node for details
             double range = 1.0f / (-0.00307f * static_cast<float>(data[i]) + 3.33f);
@@ -226,9 +257,9 @@ Freenect::get6DPointCloudData(void)
     {
         Vector6D point;
 
-        point.x = rawPointCloud[i].x();
-        point.y = rawPointCloud[i].y();
-        point.z = rawPointCloud[i].z();
+        point.x = rawPointCloud.at(i).x();
+        point.y = rawPointCloud.at(i).y();
+        point.z = rawPointCloud.at(i).z();
 
         QVector4D transformedPoint = transformMatrix * QVector4D(point.x, point.y, point.z, 1.0);
 
