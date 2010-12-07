@@ -86,6 +86,8 @@ private:
 
     } IntrinsicCameraParameters;
 
+    void readConfigFile(void);
+
     void rectifyPoint(const QVector2D& originalPoint,
                       QVector2D& rectifiedPoint,
                       const IntrinsicCameraParameters& params);
