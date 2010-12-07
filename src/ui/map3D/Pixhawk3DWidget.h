@@ -157,11 +157,8 @@ private:
     osg::ref_ptr<osg::Geode> rgbd3DNode;
 #ifdef QGC_LIBFREENECT_ENABLED
     QScopedPointer<Freenect> freenect;
-    QVector<Freenect::Vector6D> pointCloud;
 #endif
     bool enableFreenect;
-    QSharedPointer<QByteArray> rgb;
-    QSharedPointer<QByteArray> coloredDepth;
 
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
