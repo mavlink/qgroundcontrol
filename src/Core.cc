@@ -147,7 +147,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     mainWindow->addLink(opalLink);
 #endif
     // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
-    MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
+    MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/ahrs.txt");
     mainWindow->addLink(simulationLink);
 }
 
