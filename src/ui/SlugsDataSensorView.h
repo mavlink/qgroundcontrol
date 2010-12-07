@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SlugsMAV.h"
 #include "mavlink.h"
 
+
 namespace Ui {
     class SlugsDataSensorView;
 }
@@ -163,6 +164,8 @@ public slots:
     void slugsGPSDateTimeChanged(int systemId,
                                  const mavlink_gps_date_time_t& gpsDateTime);
 
+
+
 #endif // MAVLINK_ENABLED_SLUGS
 
 protected:
@@ -170,6 +173,11 @@ protected:
 
 private:
     Ui::SlugsDataSensorView *ui;
+
+
+
+
+
 
 
 };
