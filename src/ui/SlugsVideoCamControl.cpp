@@ -19,30 +19,11 @@
 
 SlugsVideoCamControl::SlugsVideoCamControl(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::SlugsVideoCamControl),
-    dragging(0)
-
+    ui(new Ui::SlugsVideoCamControl)
 {
     ui->setupUi(this);
-   x1= 0;
-   y1 = 0;
+
     connect(ui->viewCamBordeatMap_checkBox,SIGNAL(clicked(bool)),this,SLOT(changeViewCamBorderAtMapStatus(bool)));
-//    tL = ui->padCamContro_frame->frameGeometry().topLeft();
-//    bR = ui->padCamContro_frame->frameGeometry().bottomRight();
-    //ui->padCamContro_frame->setVisible(true);
-
-//    // create a layout for camera pad
-//    QGridLayout* padCameraLayout = new QGridLayout(this);
-//    padCameraLayout->setSpacing(2);
-//    padCameraLayout->setMargin(0);
-//    padCameraLayout->setAlignment(Qt::AlignTop);
-
-    //ui->padCamContro_frame->setLayout(padCameraLayout);
-    // create a camera pad widget
-   //test = new QPushButton(QIcon(":/images/actions/list-add.svg"), "", this);
-   //test->setMaximumWidth(50);
-  //ui->gridLayout->addWidget(test, 0,0);
-
     padCamera = new SlugsPadCameraControl(this);
 
     ui->gridLayout->addWidget(padCamera);
@@ -52,28 +33,6 @@ SlugsVideoCamControl::SlugsVideoCamControl(QWidget *parent) :
     connect(padCamera,SIGNAL(mouseReleaseCoord(int,int)),this,SLOT(mousePadReleaseEvent(int,int)));
     connect(padCamera,SIGNAL(changeCursorPosition(double,double,QString)),this,SLOT(getDeltaPositionPad(double,double,QString)));
 
-
-
-    //padCamera->setVisible(true);
-
-
-
-  // padCameraLayout->addWidget(padCamera);
-
-
-
-//    QGraphicsScene *scene = new QGraphicsScene(ui->CamControlPanel_graphicsView);
-//         scene->setItemIndexMethod(QGraphicsScene::NoIndex);
-//         scene->setSceneRect(-200, -200, 400, 400);
-//         setScene(scene);
-//         setCacheMode(CacheBackground);
-//         setViewportUpdateMode(BoundingRectViewportUpdate);
-//         setRenderHint(QPainter::Antialiasing);
-//         setTransformationAnchor(AnchorUnderMouse);
-//         setResizeAnchor(AnchorViewCenter);
-
-//      ui->CamControlPanel_graphicsView->installEventFilter(this);
-//      ui->label_x->installEventFilter(this);
 
 }
 
