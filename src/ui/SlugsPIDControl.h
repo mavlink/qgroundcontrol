@@ -7,6 +7,8 @@
 #include "QGCMAVLink.h"
 #include "SlugsMAV.h"
 #include "mavlink.h"
+#include <QTimer>
+#include <QMutex>
 
 namespace Ui {
     class SlugsPIDControl;
@@ -236,6 +238,20 @@ public slots:
       */
      void get_Pitch2dT_PID();
 
+     /**
+          * @brief get and updates the values on widget
+     */
+      void slugsGetGeneral();
+      /**
+           * @brief Sent all values to UAS
+      */
+       void slugsSetGeneral();
+
+       void slugsTimerStartSet();
+       void slugsTimerStartGet();
+       void slugsTimerStop();
+
+
 
      //Create, send and get Messages PID
     // void createMessagePID();
@@ -263,6 +279,12 @@ private:
     //SlugsMav Message
     mavlink_pid_t pidMessage;
     mavlink_slugs_action_t actionSlugs;
+
+    QTimer* refreshTimerSet;      ///< The main timer, controls the update view
+     QTimer* refreshTimerGet;      ///< The main timer, controls the update view
+    int counterRefreshSet;
+    int counterRefreshGet;
+     QMutex valuesMutex;
 };
 
 #endif // SLUGSPIDCONTROL_H
