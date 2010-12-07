@@ -22,6 +22,19 @@ SlugsPIDControl::SlugsPIDControl(QWidget *parent) :
     setRedColorStyle();
     setGreenColorStyle();
 
+    refreshTimerGet = new QTimer(this);
+    refreshTimerGet->setInterval(100); // 20 Hz
+    connect(refreshTimerGet, SIGNAL(timeout()), this, SLOT(slugsGetGeneral()));
+
+
+    refreshTimerSet = new QTimer(this);
+    refreshTimerSet->setInterval(100); // 20 Hz
+    connect(refreshTimerSet, SIGNAL(timeout()), this, SLOT(slugsSetGeneral()));
+
+
+    counterRefreshGet = 1;
+    counterRefreshSet = 1;
+
 }
 
 /**
@@ -40,6 +53,8 @@ void SlugsPIDControl::activeUasSet(UASInterface* uas)
     {
         connect(slugsMav,SIGNAL(slugsActionAck(int,const mavlink_action_ack_t&)),this,SLOT(recibeMensaje(int,mavlink_action_ack_t)));
         connect(slugsMav,SIGNAL(slugsPidValues(int,mavlink_pid_t)),this, SLOT(receivePidValues(int,mavlink_pid_t)) );
+
+        connect(ui->setGeneral_pushButton,SIGNAL(clicked()),this,SLOT(slugsTimerStartSet()));
     }
 
 #endif // MAVLINK_ENABLED_SLUG
@@ -611,4 +626,90 @@ void SlugsPIDControl::sendMessagePIDStatus(int PIDtype)
     }
 }
 
+void SlugsPIDControl::slugsGetGeneral()
+{
+    valuesMutex.lock();
+    switch(counterRefreshGet)
+    {
+    case 1:
+       ui->dT_PID_get_pushButton->click();
+        break;
+    case 2:
+        ui->HELPComm_PDI_get_pushButton->click();
+        break;
+    case 3:
+        ui->dE_PID_get_pushButton->click();
+        break;
+    case 4:
+        ui->dR_PDI_get_pushButton->click();
+        break;
+    case 5:
+        ui->dA_PID_get_pushButton->click();
+        break;
+    case 6:
+        ui->Pitch2dT_PDI_get_pushButton->click();
+        break;
+    default:
+         refreshTimerGet->stop();
+        break;
+
+
+    }
+
+    counterRefreshGet++;
+    valuesMutex.unlock();
+
+}
+
+void SlugsPIDControl::slugsSetGeneral()
+{
+    valuesMutex.lock();
+    switch(counterRefreshSet)
+    {
+    case 1:
+        ui->dT_PID_set_pushButton->click();
+        break;
+    case 2:
+        ui->HELPComm_PDI_set_pushButton->click();
+        break;
+    case 3:
+        ui->dE_PID_set_pushButton->click();
+        break;
+    case 4:
+        ui->dR_PDI_set_pushButton->click();
+        break;
+    case 5:
+        ui->dA_PID_set_pushButton->click();
+        break;
+    case 6:
+        ui->Pitch2dT_PDI_set_pushButton->click();
+        break;
+    default:
+        refreshTimerSet->stop();
+        break;
+
+    }
+
+    counterRefreshSet++;
+    valuesMutex.unlock();
+}
+void SlugsPIDControl::slugsTimerStartSet()
+{
+    counterRefreshSet = 1;
+    refreshTimerSet->start();
+
+}
+
+void SlugsPIDControl::slugsTimerStartGet()
+{
+    counterRefreshGet = 1;
+    refreshTimerGet->start();
+
+}
+void SlugsPIDControl::slugsTimerStop()
+{
+//    refreshTimerGet->stop();
+//     counterRefresh = 1;
+
+}
 #endif // MAVLINK_ENABLED_SLUGS
