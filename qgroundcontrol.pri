@@ -77,11 +77,11 @@ macx {
     ICON = $$BASEDIR/images/icons/macx.icns
 
     # Copy audio files if needed
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
     # Copy google earth starter file
-    QMAKE_PRE_LINK += && cp -f $$BASEDIR/images/earth.html $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+    QMAKE_PRE_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
     # Copy model files
-    QMAKE_PRE_LINK += && cp -f $$BASEDIR/models/*.skp $$DESTDIR/qgroundcontrol.app/Contents/MacOs/.
+    #QMAKE_PRE_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
 
     exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
     # No check for GLUT.framework since it's a MAC default
