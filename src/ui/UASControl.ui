@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>210</width>
-    <height>130</height>
+    <width>328</width>
+    <height>357</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="10,10,0,10,10,5,100" columnstretch="0,0,10,10,10,0">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="10,10,0,10,10,10,10,100" columnstretch="0,10,5,5,10,0">
    <property name="margin">
     <number>0</number>
    </property>
@@ -74,7 +74,7 @@
      </property>
     </spacer>
    </item>
-   <item row="0" column="0" rowspan="6">
+   <item row="0" column="0" rowspan="7">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -91,7 +91,7 @@
     <widget class="QPushButton" name="liftoffButton">
      <property name="minimumSize">
       <size>
-       <width>80</width>
+       <width>60</width>
        <height>12</height>
       </size>
      </property>
@@ -108,7 +108,7 @@
     <widget class="QPushButton" name="landButton">
      <property name="minimumSize">
       <size>
-       <width>80</width>
+       <width>60</width>
        <height>12</height>
       </size>
      </property>
@@ -125,7 +125,7 @@
     <widget class="QPushButton" name="shutdownButton">
      <property name="minimumSize">
       <size>
-       <width>80</width>
+       <width>60</width>
        <height>12</height>
       </size>
      </property>
@@ -138,7 +138,7 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="5" rowspan="6">
+   <item row="0" column="5" rowspan="7">
     <spacer name="horizontalSpacer_2">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -178,7 +178,7 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="1" colspan="4">
+   <item row="6" column="1" colspan="4">
     <widget class="QLabel" name="lastActionLabel">
      <property name="minimumSize">
       <size>
@@ -194,7 +194,7 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="0" colspan="6">
+   <item row="7" column="0" colspan="6">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -209,6 +209,23 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="5" column="1" colspan="2">
+    <widget class="QPushButton" name="setHomeButton">
+     <property name="minimumSize">
+      <size>
+       <width>60</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>Set Home</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../mavground.qrc">
+       <normaloff>:/images/actions/go-home.svg</normaloff>:/images/actions/go-home.svg</iconset>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
