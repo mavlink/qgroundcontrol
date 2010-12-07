@@ -219,7 +219,7 @@
       </size>
      </property>
      <property name="text">
-      <string>Set Home</string>
+      <string>Set Origin</string>
      </property>
      <property name="icon">
       <iconset resource="../../mavground.qrc">
