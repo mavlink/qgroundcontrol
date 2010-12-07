@@ -407,6 +407,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
 void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
 {
+  if (!wpExists(coordinate)){
     // Create waypoint name
     QString str;
 
@@ -425,6 +426,8 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
     {
         tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
     }
+
+
     mc->layer("Waypoints")->addGeometry(tempCirclePoint);
 
     Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
@@ -436,9 +439,20 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
 
         // Refresh the screen
     mc->updateRequestNew();
+  }
 
 ////    // emit signal mouse was clicked
 //    emit captureMapCoordinateClick(coordinate);
+}
+
+int MapWidget::wpExists(const QPointF coordinate){
+  for (int i = 0; i < wps.size(); i++){
+    if (wps.at(i)->latitude() == coordinate.y() &&
+        wps.at(i)->longitude()== coordinate.x()){
+      return 1;
+    }
+  }
+  return 0;
 }
 
 

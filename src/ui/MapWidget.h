@@ -144,7 +144,7 @@ private:
     QHash <QString, qmapcontrol::Point*> wpIndex;
     qmapcontrol::LineString* path;
     QPen* pointPen;
-
+    int wpExists(const QPointF coordinate);
     bool waypointIsDrag;
 
 
