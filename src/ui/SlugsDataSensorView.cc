@@ -15,6 +15,10 @@ SlugsDataSensorView::SlugsDataSensorView(QWidget *parent) :
     activeUAS = NULL;
 
     this->setVisible(false);
+
+
+
+
 }
 
 SlugsDataSensorView::~SlugsDataSensorView()
@@ -235,5 +239,7 @@ void SlugsDataSensorView::slugsGPSDateTimeChanged(int systemId,
 
   ui->m_GpsSat->setText(QString::number(gpsDateTime.visSat));
 }
+
+
 
 #endif // MAVLINK_ENABLED_SLUGS
