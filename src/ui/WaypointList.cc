@@ -203,8 +203,6 @@ void WaypointList::add()
                     Waypoint *wp = new Waypoint(0, uas->getLongitude(), uas->getLatitude(), uas->getAltitude(),
                                                 0.0, true, true, 0.15, 2000);
                     uas->getWaypointManager().addWaypoint(wp);
-
-
             }
         }
     }
