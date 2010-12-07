@@ -229,7 +229,27 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
             m_ui->typeButton->setIcon(QIcon(":/images/mavs/helicopter.svg"));
             break;
         case 5:
+            m_ui->typeButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
+            break;
+        case 6:
+            {
+                // A groundstation is a special system type, update widget
+                QString result;
+                m_ui->nameLabel->setText(tr("OCU ") + result.sprintf("%03d", uas->getUASID()));
+                m_ui->waypointLabel->setText("");
+                m_ui->timeRemainingLabel->setText("Online:");
+                m_ui->batteryBar->hide();
+                m_ui->thrustBar->hide();
+                m_ui->stateLabel->hide();
+                m_ui->statusTextLabel->hide();
+                m_ui->waypointLabel->hide();
+                m_ui->liftoffButton->hide();
+                m_ui->haltButton->hide();
+                m_ui->landButton->hide();
+                m_ui->shutdownButton->hide();
+                m_ui->abortButton->hide();
             m_ui->typeButton->setIcon(QIcon(":/images/mavs/groundstation.svg"));
+        }
             break;
         default:
             m_ui->typeButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
