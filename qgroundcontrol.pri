@@ -65,7 +65,7 @@ macx {
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 
-    DESTDIR = $$BASEDIR/bin/mac
+    #DESTDIR = $$BASEDIR/bin/mac
     INCLUDEPATH += -framework SDL
 
     LIBS += -framework IOKit \
@@ -146,12 +146,12 @@ macx {
 linux-g++ {
 
     debug {
-        DESTDIR = $$BUILDDIR/debug
+        #DESTDIR = $$BUILDDIR/debug
         CONFIG += debug
     }
 
     release {
-        DESTDIR = $$BUILDDIR/release
+        #DESTDIR = $$BUILDDIR/release
     }
 
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -214,12 +214,12 @@ linux-g++ {
 linux-g++-64 {
 
     debug {
-        DESTDIR = $$BUILDDIR/debug
+        #DESTDIR = $$BUILDDIR/debug
         CONFIG += debug
     }
 
     release {
-        DESTDIR = $$BUILDDIR/release
+        #DESTDIR = $$BUILDDIR/release
     }
 
     QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -364,11 +364,11 @@ win32-g++ {
 
 
     debug {
-        DESTDIR = $$BUILDDIR/debug
+        #DESTDIR = $$BUILDDIR/debug
     }
 
     release {
-        DESTDIR = $$BUILDDIR/release
+        #DESTDIR = $$BUILDDIR/release
     }
         
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
