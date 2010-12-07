@@ -33,45 +33,34 @@ This file is part of the QGROUNDCONTROL project
 
 #include <cmath>
 #include <string.h>
+#include <QSettings>
 
 Freenect::Freenect()
     : context(NULL)
     , device(NULL)
     , tiltAngle(0)
 {
-    // default rgb camera parameters
-    rgbCameraParameters.cx = 3.2894272028759258e+02;
-    rgbCameraParameters.cy = 2.6748068171871557e+02;
-    rgbCameraParameters.fx = 5.2921508098293293e+02;
-    rgbCameraParameters.fy = 5.2556393630057437e+02;
-    rgbCameraParameters.k[0] = 2.6451622333009589e-01;
-    rgbCameraParameters.k[1] = -8.3990749424620825e-01;
-    rgbCameraParameters.k[2] = -1.9922302173693159e-03;
-    rgbCameraParameters.k[3] = 1.4371995932897616e-03;
-    rgbCameraParameters.k[4] = 9.1192465078713847e-01;
 
-    // default depth camera parameters
-    depthCameraParameters.cx = 3.3930780975300314e+02;
-    depthCameraParameters.cy = 2.4273913761751615e+02;
-    depthCameraParameters.fx = 5.9421434211923247e+02;
-    depthCameraParameters.fy = 5.9104053696870778e+02;
-    depthCameraParameters.k[0] = -2.6386489753128833e-01;
-    depthCameraParameters.k[1] = 9.9966832163729757e-01;
-    depthCameraParameters.k[2] = -7.6275862143610667e-04;
-    depthCameraParameters.k[3] = 5.0350940090814270e-03;
-    depthCameraParameters.k[4] = -1.3053628089976321e+00;
+}
 
-    // relative rotation/translation between cameras with depth camera as reference
-    transformMatrix = QMatrix4x4(9.9984628826577793e-01, 1.2635359098409581e-03,
-                                 -1.7487233004436643e-02, 1.9985242312092553e-02,
-                                 -1.4779096108364480e-03, 9.9992385683542895e-01,
-                                 -1.2251380107679535e-02, -7.4423738761617583e-04,
-                                 1.7470421412464927e-02, 1.2275341476520762e-02,
-                                 9.9977202419716948e-01, -1.0916736334336222e-02,
-                                 0.0, 0.0, 0.0, 1.0);
+Freenect::~Freenect()
+{
+    if (device != NULL)
+    {
+        freenect_stop_depth(device);
+        freenect_stop_video(device);
+    }
 
-    // relative rotation/translation between cameras with rgb camera as reference
-    transformMatrix = transformMatrix.transposed();
+    freenect_close_device(device);
+
+    freenect_shutdown(context);
+}
+
+bool
+Freenect::init(int userDeviceNumber)
+{
+    // read in settings
+    readConfigFile();
 
     // populate gamma lookup table
     for (int i = 0; i < 2048; ++i)
@@ -99,24 +88,7 @@ Freenect::Freenect()
             rgbRectificationMap[i * FREENECT_FRAME_W + j] = rectifiedPoint;
         }
     }
-}
 
-Freenect::~Freenect()
-{
-    if (device != NULL)
-    {
-        freenect_stop_depth(device);
-        freenect_stop_video(device);
-    }
-
-    freenect_close_device(device);
-
-    freenect_shutdown(context);
-}
-
-bool
-Freenect::init(int userDeviceNumber)
-{
     if (freenect_init(&context, NULL) < 0)
     {
         return false;
@@ -319,6 +291,47 @@ Freenect::FreenectThread::run(void)
     {
         freenect->process();
     }
+}
+
+void
+Freenect::readConfigFile(void)
+{
+    QSettings settings("data/kinect.cal", QSettings::IniFormat, 0);
+
+    rgbCameraParameters.cx = settings.value("rgb/principal_point/x").toDouble();
+    rgbCameraParameters.cy = settings.value("rgb/principal_point/y").toDouble();
+    rgbCameraParameters.fx = settings.value("rgb/focal_length/x").toDouble();
+    rgbCameraParameters.fy = settings.value("rgb/focal_length/y").toDouble();
+    rgbCameraParameters.k[0] = settings.value("rgb/distortion/k1").toDouble();
+    rgbCameraParameters.k[1] = settings.value("rgb/distortion/k2").toDouble();
+    rgbCameraParameters.k[2] = settings.value("rgb/distortion/k3").toDouble();
+    rgbCameraParameters.k[3] = settings.value("rgb/distortion/k4").toDouble();
+    rgbCameraParameters.k[4] = settings.value("rgb/distortion/k5").toDouble();
+
+    depthCameraParameters.cx = settings.value("depth/principal_point/x").toDouble();
+    depthCameraParameters.cy = settings.value("depth/principal_point/y").toDouble();
+    depthCameraParameters.fx = settings.value("depth/focal_length/x").toDouble();
+    depthCameraParameters.fy = settings.value("depth/focal_length/y").toDouble();
+    depthCameraParameters.k[0] = settings.value("depth/distortion/k1").toDouble();
+    depthCameraParameters.k[1] = settings.value("depth/distortion/k2").toDouble();
+    depthCameraParameters.k[2] = settings.value("depth/distortion/k3").toDouble();
+    depthCameraParameters.k[3] = settings.value("depth/distortion/k4").toDouble();
+    depthCameraParameters.k[4] = settings.value("depth/distortion/k5").toDouble();
+
+    transformMatrix = QMatrix4x4(settings.value("transform/R11").toDouble(),
+                                 settings.value("transform/R12").toDouble(),
+                                 settings.value("transform/R13").toDouble(),
+                                 settings.value("transform/Tx").toDouble(),
+                                 settings.value("transform/R21").toDouble(),
+                                 settings.value("transform/R22").toDouble(),
+                                 settings.value("transform/R23").toDouble(),
+                                 settings.value("transform/Ty").toDouble(),
+                                 settings.value("transform/R31").toDouble(),
+                                 settings.value("transform/R32").toDouble(),
+                                 settings.value("transform/R33").toDouble(),
+                                 settings.value("transform/Tz").toDouble(),
+                                 0.0, 0.0, 0.0, 1.0);
+    transformMatrix = transformMatrix.transposed();
 }
 
 void
