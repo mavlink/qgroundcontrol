@@ -55,6 +55,7 @@ void SlugsPIDControl::activeUasSet(UASInterface* uas)
         connect(slugsMav,SIGNAL(slugsPidValues(int,mavlink_pid_t)),this, SLOT(receivePidValues(int,mavlink_pid_t)) );
 
         connect(ui->setGeneral_pushButton,SIGNAL(clicked()),this,SLOT(slugsTimerStartSet()));
+        connect(ui->getGeneral_pushButton,SIGNAL(clicked()),this,SLOT(slugsTimerStartGet()));
     }
 
 #endif // MAVLINK_ENABLED_SLUG

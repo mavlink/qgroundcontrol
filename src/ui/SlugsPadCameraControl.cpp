@@ -23,13 +23,25 @@ SlugsPadCameraControl::~SlugsPadCameraControl()
 
 void SlugsPadCameraControl::mouseMoveEvent(QMouseEvent *event)
 {
-    emit mouseMoveCoord(event->x(),event->y());
+    //emit mouseMoveCoord(event->x(),event->y());
+    if(dragging)
+    {
+        if(abs(x1-event->x())>20 || abs(y1-event->y())>20)
+        {
+
+            getDeltaPositionPad(event->x(), event->y());
+            x1 = event->x();
+            y1 = event->y();
+        }
+    }
+
 
 }
 
 void SlugsPadCameraControl::mousePressEvent(QMouseEvent *event)
 {
-    emit mousePressCoord(event->x(),event->y());
+    //emit mousePressCoord(event->x(),event->y());
+    dragging = true;
     x1 = event->x();
     y1 = event->y();
 
@@ -37,8 +49,10 @@ void SlugsPadCameraControl::mousePressEvent(QMouseEvent *event)
 
 void SlugsPadCameraControl::mouseReleaseEvent(QMouseEvent *event)
 {
-    emit mouseReleaseCoord(event->x(),event->y());
-    getDeltaPositionPad(event->x(), event->y());
+     dragging = false;
+    //emit mouseReleaseCoord(event->x(),event->y());
+    //getDeltaPositionPad(event->x(), event->y());
+
 
 }
 
@@ -92,7 +106,7 @@ void SlugsPadCameraControl::getDeltaPositionPad(int x2, int y2)
         {
             emit dirCursorText("right up");
             //bearing = 315;
-            dir = "riht up";
+            dir = "right up";
         }
         else
         {
@@ -100,7 +114,7 @@ void SlugsPadCameraControl::getDeltaPositionPad(int x2, int y2)
             {
                emit dirCursorText("right");
                 //bearing = 315;
-                dir = "riht";
+                dir = "right";
             }
             else
             {
@@ -108,7 +122,7 @@ void SlugsPadCameraControl::getDeltaPositionPad(int x2, int y2)
                 {
                    emit dirCursorText("right down");
                     //bearing = 315;
-                    dir = "riht down";
+                    dir = "right down";
                 }
                 else
                 {
@@ -229,3 +243,5 @@ QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, doubl
     return QPointF(marcacion,distancia);
 
 }
+
+

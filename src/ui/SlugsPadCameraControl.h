@@ -22,6 +22,7 @@ public slots:
     double getDistPixel(int x1, int y1, int x2, int y2);
     QPointF ObtenerMarcacionDistanciaPixel(double lon1, double lat1, double lon2, double lat2);
 
+
 signals:
     void mouseMoveCoord(int x, int y);
     void mousePressCoord(int x, int y);
