@@ -39,6 +39,11 @@ Freenect::Freenect()
     : context(NULL)
     , device(NULL)
     , tiltAngle(0)
+    , rgbData(new QByteArray)
+    , rawDepthData(new QByteArray)
+    , coloredDepthData(new QByteArray)
+    , pointCloud3D(new QVector<QVector3D>)
+    , pointCloud6D(new QVector<Vector6D>)
 {
 
 }
@@ -166,33 +171,38 @@ QSharedPointer<QByteArray>
 Freenect::getRgbData(void)
 {
     QMutexLocker locker(&rgbMutex);
-    return QSharedPointer<QByteArray>(
-            new QByteArray(rgb, FREENECT_VIDEO_RGB_SIZE));
+    rgbData->clear();
+    rgbData->append(rgb, FREENECT_VIDEO_RGB_SIZE);
+
+    return rgbData;
 }
 
 QSharedPointer<QByteArray>
 Freenect::getRawDepthData(void)
 {
     QMutexLocker locker(&depthMutex);
-    return QSharedPointer<QByteArray>(
-            new QByteArray(depth, FREENECT_DEPTH_11BIT_SIZE));
+    rawDepthData->clear();
+    rawDepthData->append(depth, FREENECT_DEPTH_11BIT_SIZE);
+
+    return rawDepthData;
 }
 
 QSharedPointer<QByteArray>
 Freenect::getColoredDepthData(void)
 {
     QMutexLocker locker(&coloredDepthMutex);
-    return QSharedPointer<QByteArray>(
-            new QByteArray(coloredDepth, FREENECT_VIDEO_RGB_SIZE));
+    coloredDepthData->clear();
+    coloredDepthData->append(coloredDepth, FREENECT_VIDEO_RGB_SIZE);
+
+    return coloredDepthData;
 }
 
-QVector<QVector3D>
+QSharedPointer< QVector<QVector3D> >
 Freenect::get3DPointCloudData(void)
 {
     QMutexLocker locker(&depthMutex);
 
-    QVector<QVector3D> pointCloud;
-
+    pointCloud3D->clear();
     unsigned short* data = reinterpret_cast<unsigned short*>(depth);
     for (int i = 0; i < FREENECT_FRAME_PIX; ++i)
     {
@@ -206,28 +216,27 @@ Freenect::get3DPointCloudData(void)
                 QVector3D ray = depthProjectionMatrix[i];
                 ray *= range;
 
-                pointCloud.push_back(QVector3D(ray.x(), ray.y(), ray.z()));
+                pointCloud3D->push_back(QVector3D(ray.x(), ray.y(), ray.z()));
             }
         }
     }
 
-    return pointCloud;
+    return pointCloud3D;
 }
 
-QVector<Freenect::Vector6D>
+QSharedPointer< QVector<Freenect::Vector6D> >
 Freenect::get6DPointCloudData(void)
 {
-    QVector<QVector3D> rawPointCloud = get3DPointCloudData();
+    get3DPointCloudData();
 
-    QVector<Freenect::Vector6D> pointCloud;
-
-    for (int i = 0; i < rawPointCloud.size(); ++i)
+    pointCloud6D->clear();
+    for (int i = 0; i < pointCloud3D->size(); ++i)
     {
         Vector6D point;
 
-        point.x = rawPointCloud.at(i).x();
-        point.y = rawPointCloud.at(i).y();
-        point.z = rawPointCloud.at(i).z();
+        point.x = pointCloud3D->at(i).x();
+        point.y = pointCloud3D->at(i).y();
+        point.z = pointCloud3D->at(i).z();
 
         QVector4D transformedPoint = transformMatrix * QVector4D(point.x, point.y, point.z, 1.0);
 
@@ -250,11 +259,11 @@ Freenect::get6DPointCloudData(void)
             point.g = pixel[1];
             point.b = pixel[2];
 
-            pointCloud.push_back(point);
+            pointCloud6D->push_back(point);
         }
     }
 
-    return pointCloud;
+    return pointCloud6D;
 }
 
 int
