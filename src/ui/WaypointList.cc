@@ -346,11 +346,11 @@ void WaypointList::waypointListChanged()
                 WaypointGlobalView *wpgv = wpGlobalViews.value(wp);
                 wpgv->updateValues();
                 listLayout->addWidget(wpgv);
-                if(loadFileGlobalWP || readGlobalWP)
-                {
+//                if(loadFileGlobalWP || readGlobalWP)
+//                {
                     emit createWaypointAtMap(QPointF(wp->getX(),wp->getY()));
                     qDebug()<<"Emitiendo Pos: "<<wp->getX()<<" - "<<wp->getY();
-                }
+//                }
             }
 
             }
