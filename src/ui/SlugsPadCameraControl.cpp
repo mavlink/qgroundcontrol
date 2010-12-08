@@ -13,6 +13,9 @@ SlugsPadCameraControl::SlugsPadCameraControl(QWidget *parent) :
     ui->setupUi(this);
     x1= 0;
     y1 = 0;
+    bearingPad = 0;
+    distancePad = 0;
+    directionPad = "no";
 
 }
 
@@ -53,6 +56,9 @@ void SlugsPadCameraControl::mouseReleaseEvent(QMouseEvent *event)
     //emit mouseReleaseCoord(event->x(),event->y());
     //getDeltaPositionPad(event->x(), event->y());
 
+     xFin = event->x();
+     yFin = event->y();
+
 
 }
 
@@ -72,6 +78,13 @@ void SlugsPadCameraControl::paintEvent(QPaintEvent *pe)
 
     painter.drawLine(QPoint(ui->frame->geometry().topLeft().x(),ui->frame->height()/2),
                      QPoint(ui->frame->geometry().bottomRight().x(),ui->frame->height()/2));
+
+    painter.setPen(Qt::white);
+
+    //QPointF coordTemp = getPointBy_BearingDistance(ui->frame->width()/2,ui->frame->height()/2,bearingPad,distancePad);
+
+    painter.drawLine(QPoint(ui->frame->width()/2,ui->frame->height()/2),
+                     QPoint(xFin,yFin));
 
 
    // painter.drawLine(QPoint());
@@ -172,7 +185,14 @@ void SlugsPadCameraControl::getDeltaPositionPad(int x2, int y2)
     }
 
 
+    bearingPad = bearing;
+    distancePad = dist;
+    directionPad = dir;
     emit changeCursorPosition(bearing, dist, dir);
+
+    update();
+
+
 
 }
 
@@ -244,4 +264,18 @@ QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, doubl
 
 }
 
+
+
+QPointF SlugsPadCameraControl::getPointBy_BearingDistance(double lat1, double lon1, double rumbo, double distancia)
+{
+    double lon2 = 0;
+    double lat2 = 0;
+    double rad= M_PI/180;
+
+    rumbo = rumbo*rad;
+    lon2=(lon1 + ((distancia/60) * (sin(rumbo))));
+    lat2=(lat1 + ((distancia/60) * (cos(rumbo))));
+
+    return QPointF(lon2,lat2);
+}
 

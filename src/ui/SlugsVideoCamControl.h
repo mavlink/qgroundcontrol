@@ -27,22 +27,43 @@ public:
     ~SlugsVideoCamControl();
 
 public slots:
+    /**
+         * @brief status = true: emit signal to draw a border cam over the map
+    */
     void changeViewCamBorderAtMapStatus(bool status);
-    void getDeltaPositionPad(double dir, double dist, QString dirText);
+    /**
+         * @brief show the values of mousepad on ui (labels) and emit a changeCamPosition(signal)
+         *        with values:
+         *       bearing and distance from mouse over the pad
+         *          dirText: direction of mouse movement in text format (up, right,right up,right down,
+         *                   left, left up, left down, down)
+    */
+    void getDeltaPositionPad(double bearing, double distance, QString dirText);
 
-
-    void mousePadPressEvent(int x, int y);
-    void mousePadReleaseEvent(int x, int y);
-    void mousePadMoveEvent(int x, int y);
+//    /**
+//         * @brief
+//    */
+//    void mousePadPressEvent(int x, int y);
+//    void mousePadReleaseEvent(int x, int y);
+//    void mousePadMoveEvent(int x, int y);
 
 signals:
-    void changeCamPosition(double dist, double dir, QString textDir);
+    /**
+         * @brief emit values from mousepad:
+         *       bearing and distance from mouse over the pad
+         *          dirText: direction of mouse movement in text format (up, right,right up,right down,
+         *                   left, left up, left down, down)
+    */
+    void changeCamPosition(double distance, double bearing, QString textDir);
+    /**
+         * @brief emit signal to draw a border cam over the map if status is true
+    */
     void viewCamBorderAtMap(bool status);
 
 protected:
-   void mousePressEvent(QMouseEvent* event);
-   void mouseReleaseEvent(QMouseEvent* event);
-   void mouseMoveEvent(QMouseEvent* event);
+//   void mousePressEvent(QMouseEvent* event);
+//   void mouseReleaseEvent(QMouseEvent* event);
+//   void mouseMoveEvent(QMouseEvent* event);
 
 
 
