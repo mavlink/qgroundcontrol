@@ -41,41 +41,41 @@ SlugsVideoCamControl::~SlugsVideoCamControl()
     delete ui;
 }
 
-void SlugsVideoCamControl::mouseMoveEvent(QMouseEvent *event)
-{
-     Q_UNUSED(event);
+//void SlugsVideoCamControl::mouseMoveEvent(QMouseEvent *event)
+//{
+//     Q_UNUSED(event);
 
-}
-
-
-void SlugsVideoCamControl::mousePressEvent(QMouseEvent *evnt)
-{
-  Q_UNUSED(evnt);
-
-}
-
-void SlugsVideoCamControl::mouseReleaseEvent(QMouseEvent *evnt)
-{
-    Q_UNUSED(evnt);
-
-}
+//}
 
 
-void SlugsVideoCamControl::mousePadMoveEvent(int x, int y)
-{
+//void SlugsVideoCamControl::mousePressEvent(QMouseEvent *evnt)
+//{
+//  Q_UNUSED(evnt);
 
-}
+//}
 
-void SlugsVideoCamControl::mousePadPressEvent(int x, int y)
-{
+//void SlugsVideoCamControl::mouseReleaseEvent(QMouseEvent *evnt)
+//{
+//    Q_UNUSED(evnt);
 
-}
-
-void SlugsVideoCamControl::mousePadReleaseEvent(int x, int y)
-{
+//}
 
 
-}
+//void SlugsVideoCamControl::mousePadMoveEvent(int x, int y)
+//{
+
+//}
+
+//void SlugsVideoCamControl::mousePadPressEvent(int x, int y)
+//{
+
+//}
+
+//void SlugsVideoCamControl::mousePadReleaseEvent(int x, int y)
+//{
+
+
+//}
 
 void SlugsVideoCamControl::changeViewCamBorderAtMapStatus(bool status)
 {
