@@ -123,9 +123,10 @@ macx {
             -framework GEOS \
             -framework SQLite3 \
             -framework osgFX \
-            -framework osgTerrain \
+            -framework osgTerrain
     DEFINES += QGC_OSGEARTH_ENABLED
     }
+
 
     exists(/opt/local/include/libfreenect) {
     message("Building support for libfreenect")

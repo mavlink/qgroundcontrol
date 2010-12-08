@@ -19,13 +19,13 @@
 
 SlugsVideoCamControl::SlugsVideoCamControl(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::SlugsVideoCamControl),
-    dragging(0)
+    ui(new Ui::SlugsVideoCamControl)
+    //dragging(0)
 
 {
     ui->setupUi(this);
-   x1= 0;
-   y1 = 0;
+//   x1= 0;
+//   y1 = 0;
     connect(ui->viewCamBordeatMap_checkBox,SIGNAL(clicked(bool)),this,SLOT(changeViewCamBorderAtMapStatus(bool)));
 //    tL = ui->padCamContro_frame->frameGeometry().topLeft();
 //    bR = ui->padCamContro_frame->frameGeometry().bottomRight();
