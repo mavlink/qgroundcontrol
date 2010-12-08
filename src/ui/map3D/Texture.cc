@@ -29,12 +29,43 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
+#include <osg/LineWidth>
+
 #include "Texture.h"
 
-Texture::Texture()
-    : _is3D(false)
+Texture::Texture(unsigned int _id)
+    : id(_id)
+    , texture2D(new osg::Texture2D)
+    , geometry(new osg::Geometry)
 {
+    texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+    texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
 
+    texture2D->setDataVariance(osg::Object::DYNAMIC);
+    texture2D->setResizeNonPowerOfTwoHint(false);
+
+    osg::ref_ptr<osg::Image> image = new osg::Image;
+    texture2D->setImage(image);
+
+    osg::ref_ptr<osg::Vec2Array> vertices(new osg::Vec2Array(4));
+    geometry->setVertexArray(vertices);
+
+    osg::ref_ptr<osg::Vec2Array> textureCoords = new osg::Vec2Array;
+    textureCoords->push_back(osg::Vec2(0.0f, 1.0f));
+    textureCoords->push_back(osg::Vec2(1.0f, 1.0f));
+    textureCoords->push_back(osg::Vec2(1.0f, 0.0f));
+    textureCoords->push_back(osg::Vec2(0.0f, 0.0f));
+    geometry->setTexCoordArray(id, textureCoords);
+
+    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
+                                                  0, 4));
+
+    osg::ref_ptr<osg::Vec4Array> colors(new osg::Vec4Array);
+    colors->push_back(osg::Vec4(0.0f, 0.0f, 1.0f, 1.0f));
+    geometry->setColorArray(colors);
+    geometry->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+    geometry->setUseDisplayList(false);
 }
 
 const QString&
@@ -44,178 +75,86 @@ Texture::getSourceURL(void) const
 }
 
 void
-Texture::setID(GLuint id)
-{
-    this->id = id;
-}
-
-void
 Texture::sync(const WebImagePtr& image)
 {
     state = static_cast<State>(image->getState());
 
     if (image->getState() != WebImage::UNINITIALIZED &&
-        (sourceURL != image->getSourceURL() ||
-         _is3D != image->is3D()))
+        sourceURL != image->getSourceURL())
     {
         sourceURL = image->getSourceURL();
-        _is3D = image->is3D();
     }
 
     if (image->getState() == WebImage::READY && image->getSyncFlag())
     {
         image->setSyncFlag(false);
 
-        if (image->getWidth() != imageWidth ||
-            image->getHeight() != imageHeight)
+        if (texture2D->getImage() != NULL)
         {
-            imageWidth = image->getWidth();
-            textureWidth = 32;
-            while (textureWidth < imageWidth)
-            {
-                textureWidth *= 2;
-            }
-            imageHeight = image->getHeight();
-            textureHeight = 32;
-            while (textureHeight < imageHeight)
-            {
-                textureHeight *= 2;
-            }
-
-            maxU = static_cast<double>(imageWidth)
-                   / static_cast<double>(textureWidth);
-            maxV = static_cast<double>(imageHeight)
-                   / static_cast<double>(textureHeight);
-
-            glBindTexture(GL_TEXTURE_2D, id);
-            glTexImage2D(GL_TEXTURE_2D, 0, 3, textureWidth, textureHeight,
-                         0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+            texture2D->getImage()->setImage(image->getWidth(),
+                                            image->getHeight(),
+                                            1,
+                                            GL_RGB,
+                                            GL_RGB,
+                                            GL_UNSIGNED_BYTE,
+                                            image->getImageData(),
+                                            osg::Image::NO_DELETE);
+            texture2D->getImage()->dirty();
         }
-
-        glBindTexture(GL_TEXTURE_2D, id);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, imageWidth, imageHeight,
-                        GL_RGBA, GL_UNSIGNED_BYTE, image->getImageData());
-
-        heightModel = image->getHeightModel();
     }
 }
 
-void
+osg::ref_ptr<osg::Geometry>
 Texture::draw(float x1, float y1, float x2, float y2,
               bool smoothInterpolation) const
 {
-    draw(x1, y1, x2, y1, x2, y2, x1, y2, smoothInterpolation);
+    return draw(x1, y1, x2, y1, x2, y2, x1, y2, smoothInterpolation);
 }
 
-void
+osg::ref_ptr<osg::Geometry>
 Texture::draw(float x1, float y1, float x2, float y2,
               float x3, float y3, float x4, float y4,
               bool smoothInterpolation) const
 {
+    osg::Vec2Array* vertices =
+            static_cast<osg::Vec2Array*>(geometry->getVertexArray());
+    (*vertices)[0].set(x1, y1);
+    (*vertices)[1].set(x2, y2);
+    (*vertices)[2].set(x3, y3);
+    (*vertices)[3].set(x4, y4);
+
+    osg::DrawArrays* drawarrays =
+            static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+    osg::Vec4Array* colors =
+            static_cast<osg::Vec4Array*>(geometry->getColorArray());
+
     if (state == REQUESTED)
     {
-        glBegin(GL_LINE_LOOP);
-        glColor3f(0.0f, 0.0f, 1.0f);
-        glVertex2f(x1, y1);
-        glVertex2f(x2, y2);
-        glVertex2f(x3, y3);
-        glVertex2f(x4, y4);
-        glEnd();
+        drawarrays->set(osg::PrimitiveSet::LINES, 0, 4);
+        (*colors)[0].set(0.0f, 0.0f, 1.0f, 1.0f);
+        
+        geometry->getOrCreateStateSet()->
+                setTextureAttributeAndModes(id, texture2D, osg::StateAttribute::OFF);
 
-        return;
+        return geometry;
     }
 
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, id);
-
-    float dx, dy;
     if (smoothInterpolation)
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        dx = 1.0f / (2.0f * textureWidth);
-        dy = 1.0f / (2.0f * textureHeight);
+        texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
+        texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
     }
     else
     {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        dx = 0.0f;
-        dy = 0.0f;
+        texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
+        texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
     }
 
-    glColor3f(1.0f, 1.0f, 1.0f);
-    if (!_is3D)
-    {
-        glBegin(GL_QUADS);
-        glTexCoord2f(dx, maxV - dy);
-        glVertex3f(x1, y1, 0.0f);
-        glTexCoord2f(maxU - dx, maxV - dy);
-        glVertex3f(x2, y2, 0.0f);
-        glTexCoord2f(maxU - dx, dy);
-        glVertex3f(x3, y3, 0.0f);
-        glTexCoord2f(dx, dy);
-        glVertex3f(x4, y4, 0.0f);
-        glEnd();
-    }
-    else
-    {
-        float scaleX = 1.0f / static_cast<float>(heightModel.size() - 1);
+    drawarrays->set(osg::PrimitiveSet::POLYGON, 0, 4);
+    (*colors)[0].set(1.0f, 1.0f, 1.0f, 1.0f);
 
-        for (int32_t i = 0; i < heightModel.size() - 1; ++i)
-        {
-            float scaleI = scaleX * static_cast<float>(i);
+    geometry->getOrCreateStateSet()->
+            setTextureAttributeAndModes(id, texture2D, osg::StateAttribute::ON);
 
-            float scaleY =
-                    1.0f / static_cast<float>(heightModel[i].size() - 1);
-
-            float x1i = x1 + scaleI * (x4 - x1);
-            float x1f = x2 + scaleI * (x3 - x2);
-            float x2i = x1i + scaleX * (x4 - x1);
-            float x2f = x1f + scaleX * (x3 - x2);
-
-            for (int32_t j = 0; j < heightModel[i].size() - 1; ++j)
-            {
-                float scaleJ = scaleY * static_cast<float>(j);
-
-                float y1i = y1 + scaleJ * (y2 - y1);
-                float y1f = y4 + scaleJ * (y3 - y4);
-                float y2i = y1i + scaleY * (y2 - y1);
-                float y2f = y1f + scaleY * (y3 - y4);
-
-                float nx1 = x1i + scaleJ * (x1f - x1i);
-                float nx2 = x1i + (scaleJ + scaleY) * (x1f - x1i);
-                float nx3 = x2i + (scaleJ + scaleY) * (x2f - x2i);
-                float nx4  = x2i + scaleJ * (x2f - x2i);
-                float ny1 = y1i + scaleI * (y1f - y1i);
-                float ny2 = y2i + scaleI * (y2f - y2i);
-                float ny3 = y2i + (scaleI + scaleX) * (y2f - y2i);
-                float ny4 = y1i + (scaleI + scaleX) * (y1f - y1i);
-
-                glBegin(GL_QUADS);
-                glTexCoord2f(dx + scaleJ * (maxU - dx * 2.0f),
-                             dy + (1.0f - scaleI) * (maxV - dy * 2.0f));
-                glVertex3f(nx1, ny1, -static_cast<float>(heightModel[i][j]));
-                glTexCoord2f(dx + (scaleJ + scaleY) * (maxU - dx * 2.0f),
-                             dy + (1.0f - scaleI) * (maxV - dy * 2.0f));
-                glVertex3f(nx2, ny2, -static_cast<float>(heightModel[i][j + 1]));
-                glTexCoord2f(dx + (scaleJ + scaleY) * (maxU - dx * 2.0f),
-                             dy + (1.0f - scaleI - scaleX) * (maxV - dy * 2.0f));
-                glVertex3f(nx3, ny3, -static_cast<float>(heightModel[i + 1][j + 1]));
-                glTexCoord2f(dx + scaleJ * (maxU - dx * 2.0f),
-                             dy + (1.0f - scaleI - scaleX) * (maxV - dy * 2.0f));
-                glVertex3f(nx4, ny4, -static_cast<float>(heightModel[i + 1][j]));
-
-                glEnd();
-            }
-        }
-    }
-
-    glDisable(GL_TEXTURE_2D);
-}
-
-bool
-Texture::is3D(void) const
-{
-    return _is3D;
+    return geometry;
 }

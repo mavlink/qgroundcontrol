@@ -56,7 +56,7 @@ class WaypointList : public QWidget {
     virtual ~WaypointList();
 
 public slots:
-    void updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec);
+    void updatePosition(UASInterface*, double x, double y, double z, quint64 usec);
     void updateAttitude(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
 
     void setUAS(UASInterface* uas);
@@ -77,7 +77,7 @@ public slots:
     /** @brief Add a waypoint by mouse click over the map */
     void addWaypointMouse(QPointF coordinate);
     /** @brief it notifies that a global waypoint goes to do created */
-    void setIsWPGlobal(bool value, QPointF centerCoordinate);
+    //void setIsWPGlobal(bool value, QPointF centerCoordinate);
 
 
     //Update events
@@ -93,9 +93,9 @@ public slots:
     /** @brief The MapWidget informs that a waypoint global was changed on the map */
     void waypointGlobalChanged(const QPointF coordinate, const int indexWP);
 
-    void clearLocalWPWidget();
+    void clearWPWidget();
 
-    void changeWPPositionBySpinBox(Waypoint* wp);
+    //void changeWPPositionBySpinBox(Waypoint* wp);
 
     // Waypoint operations
     void moveUp(Waypoint* wp);
@@ -112,7 +112,7 @@ signals:
   void clearPathclicked();
   void createWaypointAtMap(const QPointF coordinate);
  // void ChangeWaypointGlobalPosition(int index, QPointF coord);
-  void changePositionWPGlobalBySpinBox(int indexWP, float lat, float lon);
+  void changePositionWPBySpinBox(int indexWP, float lat, float lon);
 
 
 
@@ -121,15 +121,13 @@ protected:
 
 protected:
     QMap<Waypoint*, WaypointView*> wpViews;
-    QMap<Waypoint*, WaypointGlobalView*> wpGlobalViews;
+    //QMap<Waypoint*, WaypointGlobalView*> wpGlobalViews;
     QVBoxLayout* listLayout;
     UASInterface* uas;
     double mavX;
     double mavY;
     double mavZ;
     double mavYaw;
-    bool isGlobalWP;
-    bool isLocalWP;
     QPointF centerMapCoordinate;
     bool loadFileGlobalWP;
     bool readGlobalWP;

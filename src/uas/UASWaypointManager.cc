@@ -132,7 +132,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
         if(wp->seq == current_wp_id)
         {
             Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue, wp->current, wp->param1, wp->param2);
-            localAddWaypoint(lwp);
+            addWaypoint(lwp);
 
             //get next waypoint
             current_wp_id++;
@@ -289,7 +289,7 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
     return -1;
 }
 
-void UASWaypointManager::localAddWaypoint(Waypoint *wp)
+void UASWaypointManager::addWaypoint(Waypoint *wp)
 {
     if (wp)
     {
@@ -300,7 +300,7 @@ void UASWaypointManager::localAddWaypoint(Waypoint *wp)
     }
 }
 
-int UASWaypointManager::localRemoveWaypoint(quint16 seq)
+int UASWaypointManager::removeWaypoint(quint16 seq)
 {
     if (seq < waypoints.size())
     {
@@ -318,7 +318,7 @@ int UASWaypointManager::localRemoveWaypoint(quint16 seq)
     return -1;
 }
 
-void UASWaypointManager::localMoveWaypoint(quint16 cur_seq, quint16 new_seq)
+void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
 {
     if (cur_seq != new_seq && cur_seq < waypoints.size() && new_seq < waypoints.size())
     {
@@ -346,7 +346,7 @@ void UASWaypointManager::localMoveWaypoint(quint16 cur_seq, quint16 new_seq)
     }
 }
 
-void UASWaypointManager::localSaveWaypoints(const QString &saveFile)
+void UASWaypointManager::saveWaypoints(const QString &saveFile)
 {
     QFile file(saveFile);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
@@ -360,7 +360,7 @@ void UASWaypointManager::localSaveWaypoints(const QString &saveFile)
     file.close();
 }
 
-void UASWaypointManager::localLoadWaypoints(const QString &loadFile)
+void UASWaypointManager::loadWaypoints(const QString &loadFile)
 {
     QFile file(loadFile);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -482,8 +482,8 @@ void UASWaypointManager::writeWaypoints()
                 cur_d->orbit_direction = 0;
                 cur_d->param1 = cur_s->getOrbit();
                 cur_d->param2 = cur_s->getHoldTime();
-                // TODO: Replace this value depending on the type of waypoint
-                cur_d->type = 1;    //FIXME: we only use local waypoints at the moment
+                cur_d->frame = cur_s->getFrame();
+                cur_d->action = cur_s->getAction();
                 cur_d->seq = i;     // don't read out the sequence number of the waypoint class
                 cur_d->x = cur_s->getX();
                 cur_d->y = cur_s->getY();

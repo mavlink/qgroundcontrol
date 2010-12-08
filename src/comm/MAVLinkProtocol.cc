@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UAS.h"
 #include "SlugsMAV.h"
 #include "PxQuadMAV.h"
-#include "ArduPilotMAV.h"
+#include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
 #include <QGCMAVLink.h>
@@ -186,9 +186,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     uas = mav;
                 }
                     break;
-                case MAV_AUTOPILOT_ARDUPILOT:
+                case MAV_AUTOPILOT_ARDUPILOTMEGA:
                     {
-                    ArduPilotMAV* mav = new ArduPilotMAV(this, message.sysid);
+                    ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(this, message.sysid);
                     // Connect this robot to the UAS object
                     // it is IMPORTANT here to use the right object type,
                     // else the slot of the parent object is called (and thus the special
@@ -258,7 +258,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 //if ()
 
                 // If a new loss was detected or we just hit one 128th packet step
-                if (lastLoss != totalLossCounter || (totalReceiveCounter == 128))
+                if (lastLoss != totalLossCounter || (totalReceiveCounter % 64 == 0))
                 {
                     // Calculate new loss ratio
                     // Receive loss
@@ -325,6 +325,8 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
 {
     // Create buffer
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    // Rewriting header to ensure correct link ID is set
+    if (link->getId() != 0) mavlink_finalize_message_chan(&message, this->getSystemId(), this->getComponentId(), link->getId(), message.len);
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer(buffer, &message);
     // If link is connected

@@ -49,6 +49,8 @@ This file is part of the PIXHAWK project
 #define CONTROL_MODE_TEST1  "MODE TEST1"
 #define CONTROL_MODE_TEST2  "MODE TEST2"
 #define CONTROL_MODE_TEST3  "MODE TEST3"
+#define CONTROL_MODE_READY  "MODE TEST3"
+#define CONTROL_MODE_RC_TRAINING  "MODE RC TRAINING"
 
 #define CONTROL_MODE_LOCKED_INDEX 1
 #define CONTROL_MODE_MANUAL_INDEX 2
@@ -57,6 +59,8 @@ This file is part of the PIXHAWK project
 #define CONTROL_MODE_TEST1_INDEX  5
 #define CONTROL_MODE_TEST2_INDEX  6
 #define CONTROL_MODE_TEST3_INDEX  7
+#define CONTROL_MODE_READY_INDEX  8
+#define CONTROL_MODE_RC_TRAINING_INDEX  9
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 uas(0),
@@ -74,6 +78,8 @@ engineOn(false)
     ui.modeComboBox->insertItem(CONTROL_MODE_TEST1_INDEX, CONTROL_MODE_TEST1);
     ui.modeComboBox->insertItem(CONTROL_MODE_TEST2_INDEX, CONTROL_MODE_TEST2);
     ui.modeComboBox->insertItem(CONTROL_MODE_TEST3_INDEX, CONTROL_MODE_TEST3);
+    ui.modeComboBox->insertItem(CONTROL_MODE_READY_INDEX, CONTROL_MODE_READY);
+    ui.modeComboBox->insertItem(CONTROL_MODE_RC_TRAINING_INDEX, CONTROL_MODE_RC_TRAINING);
     connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
@@ -212,6 +218,11 @@ void UASControlWidget::setMode(int mode)
         uasMode = (unsigned int)MAV_MODE_TEST3;
         ui.modeComboBox->setCurrentIndex(mode);
     }
+    else if (mode == CONTROL_MODE_RC_TRAINING_INDEX)
+    {
+        uasMode = (unsigned int)MAV_MODE_RC_TRAINING;
+        ui.modeComboBox->setCurrentIndex(mode);
+    }
     else
     {
         qDebug() << "ERROR! MODE NOT FOUND";
@@ -226,8 +237,12 @@ void UASControlWidget::transmitMode()
 {
     if (uasMode != 0)
     {
-        UASManager::instance()->getUASForId(this->uas)->setMode(uasMode);
-        ui.lastActionLabel->setText(QString("Set new mode for system %1").arg(UASManager::instance()->getUASForId(uas)->getUASName()));
+        UASInterface* mav = UASManager::instance()->getUASForId(this->uas);
+        if (mav)
+        {
+            mav->setMode(uasMode);
+            ui.lastActionLabel->setText(QString("Set new mode for system %1").arg(mav->getUASName()));
+        }
     }
 }
 

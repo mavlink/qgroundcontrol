@@ -82,6 +82,7 @@
         <file>images/mapproviders/openstreetmap.png</file>
         <file>images/mapproviders/google.png</file>
         <file>images/mapproviders/yahoo.png</file>
+        <file>images/earth.html</file>
         <file>images/contrib/slugs.png</file>
     </qresource>
     <qresource prefix="/general">

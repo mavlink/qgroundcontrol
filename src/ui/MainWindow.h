@@ -63,7 +63,8 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
-#include "QMap3DWidget.h"
+#include "QGCGoogleEarthView.h"
+//#include "QMap3DWidget.h"
 #include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
 
@@ -72,7 +73,6 @@ This file is part of the QGROUNDCONTROL project
 #include "slugshilsim.h"
 
 #include "SlugsVideoCamControl.h"
-
 
 
 /**
@@ -121,6 +121,10 @@ public slots:
     void loadOperatorView();
     /** @brief Load 3D view */
     void load3DView();
+    /** @brief Load 3D Google Earth view */
+    void loadGoogleEarthView();
+    /** @brief Load 3D map view */
+    void load3DMapView();
     /** @brief Load view with all widgets */
     void loadAllView();
     /** @brief Load MAVLink XML generator view */
@@ -170,7 +174,13 @@ protected:
     QPointer<MapWidget> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
-    QPointer<QMap3DWidget> map3DWidget;
+    #ifdef QGC_OSG_ENABLED
+    QPointer<QWidget> _3DWidget;
+    #endif
+    #ifdef QGC_OSGEARTH_ENABLED
+    QPointer<QWidget> _3DMapWidget;
+    #endif
+    QPointer<QGCGoogleEarthView> gEarthWidget;
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
     QPointer<QDockWidget> infoDockWidget;

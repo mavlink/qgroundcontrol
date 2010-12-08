@@ -33,12 +33,15 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include <QStringList>
 
-Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _autocontinue, bool _current, float _orbit, int _holdTime)
+Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _autocontinue, bool _current, float _orbit, int _holdTime,
+                   MAV_FRAME _frame, MAV_ACTION _action)
 : id(_id),
   x(_x),
   y(_y),
   z(_z),
   yaw(_yaw),
+  frame(_frame),
+  action(_action),
   autocontinue(_autocontinue),
   current(_current),
   orbit(_orbit),
@@ -99,6 +102,16 @@ void Waypoint::setZ(float z)
 void Waypoint::setYaw(float yaw)
 {
     this->yaw = yaw;
+}
+
+void Waypoint::setAction(MAV_ACTION action)
+{
+    this->action = action;
+}
+
+void Waypoint::setFrame(MAV_FRAME frame)
+{
+    this->frame = frame;
 }
 
 void Waypoint::setAutocontinue(bool autoContinue)
