@@ -98,8 +98,8 @@ namespace qmapcontrol
             z= min_zoom - z;
         }
 
-        if (x<0 || x>pow(2,z)-1 ||
-            y<0 || y>pow(2,z)-1)
+        if (x<0 || x>pow(2.0,z)-1 ||
+            y<0 || y>pow(2.0,z)-1)
         {
             return false;
         }
@@ -108,7 +108,7 @@ namespace qmapcontrol
     }
     int EmptyMapAdapter::tilesonzoomlevel(int zoomlevel) const
     {
-        return int(pow(2, zoomlevel));
+        return int(pow(2.0, zoomlevel));
     }
     int EmptyMapAdapter::xoffset(int x) const
     {

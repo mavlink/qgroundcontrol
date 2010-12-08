@@ -29,7 +29,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "MAVLinkLightProtocol.h"
 #include "UASManager.h"
-#include "ArduPilotMAV.h"
+#include "ArduPilotMegaMAV.h"
 #include "LinkManager.h"
 
 MAVLinkLightProtocol::MAVLinkLightProtocol() :
@@ -113,7 +113,7 @@ void MAVLinkLightProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 //            // Check and (if necessary) create UAS object
 //            if (uas == NULL)
 //            {
-//                ArduPilotMAV* mav = new ArduPilotMAV(this, sysid); // FIXME change to msg.sysid if this field exists
+//                ArduPilotMegaMAV* mav = new ArduPilotMAV(this, sysid); // FIXME change to msg.sysid if this field exists
 //                // Connect this robot to the UAS object
 //                // it is IMPORTANT here to use the right object type,
 //                // else the slot of the parent object is called (and thus the special

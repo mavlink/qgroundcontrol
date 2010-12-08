@@ -31,60 +31,35 @@ This file is part of the QGROUNDCONTROL project
 
 #include "Q3DWidget.h"
 
-#include <cmath>
-
-static const float KEY_ROTATE_AMOUNT = 5.0f;
-static const float KEY_MOVE_AMOUNT   = 5.0f;
-static const float KEY_ZOOM_AMOUNT   = 5.0f;
+#include <osg/Geometry>
+#include <osg/LineWidth>
+#include <osg/MatrixTransform>
+#ifdef Q_OS_MACX
+#include <Carbon/Carbon.h>
+#endif
 
 Q3DWidget::Q3DWidget(QWidget* parent)
-  : QGLWidget(QGLFormat(QGL::Rgba | QGL::DoubleBuffer | QGL:: DepthBuffer |
-                        QGL::StencilBuffer), parent)
-  , userDisplayFunc(NULL)
-  , userKeyboardFunc(NULL)
-  , userMouseFunc(NULL)
-  , userMotionFunc(NULL)
-  , userDisplayFuncData(NULL)
-  , userKeyboardFuncData(NULL)
-  , userMouseFuncData(NULL)
-  , userMotionFuncData(NULL)
-  , windowWidth(0)
-  , windowHeight(0)
-  , requestedFps(0.0f)
-  , lastMouseX(0)
-  , lastMouseY(0)
-  , _is3D(true)
-  , _forceRedraw(false)
-  , allow2DRotation(true)
-  , limitCamera(false)
-  , timerFunc(NULL)
-  , timerFuncData(NULL)
+    : QGLWidget(parent)
+    , root(new osg::Group())
+    , allocentricMap(new osg::Switch())
+    , rollingMap(new osg::Switch())
+    , egocentricMap(new osg::Switch())
+    , robotPosition(new osg::PositionAttitudeTransform())
+    , robotAttitude(new osg::PositionAttitudeTransform())
+    , hudGroup(new osg::Switch())
+    , hudProjectionMatrix(new osg::Projection)
 {
-    cameraPose.state = IDLE;
-    cameraPose.pan = 50.0f;
-    cameraPose.tilt = 200.0f;
-    cameraPose.distance = 5.0f;
-    cameraPose.xOffset = 0.0f;
-    cameraPose.yOffset = 0.0f;
-    cameraPose.zOffset = 0.0f;
-
-    cameraPose.xOffset2D = 0.0f;
-    cameraPose.yOffset2D = 0.0f;
-    cameraPose.rotation2D = 0.0f;
-    cameraPose.zoom = 1.0f;
-    cameraPose.warpX = 1.0f;
-    cameraPose.warpY = 1.0f;
-
-    cameraParams.zoomSensitivity = 0.05f;
-    cameraParams.rotateSensitivity = 0.5f;
-    cameraParams.moveSensitivity = 0.001f;
-    cameraParams.minZoomRange = 0.5f;
+    // set initial camera parameters
+    cameraParams.minZoomRange = 2.0f;
     cameraParams.cameraFov = 30.0f;
     cameraParams.minClipRange = 1.0f;
-    cameraParams.maxClipRange = 400.0f;
-    cameraParams.zoomSensitivity2D = 0.02f;
-    cameraParams.rotateSensitivity2D = 0.005f;
-    cameraParams.moveSensitivity2D = 1.0f;
+    cameraParams.maxClipRange = 10000.0f;
+
+    osgGW = new osgViewer::GraphicsWindowEmbedded(0, 0, width(), height());
+
+    setThreadingModel(osgViewer::Viewer::SingleThreaded);
+
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 Q3DWidget::~Q3DWidget()
@@ -93,255 +68,177 @@ Q3DWidget::~Q3DWidget()
 }
 
 void
-Q3DWidget::initialize(int32_t windowX, int32_t windowY,
-                      int32_t windowWidth, int32_t windowHeight, float fps)
+Q3DWidget::init(float fps)
 {
-    this->windowWidth = windowWidth;
-    this->windowHeight = windowHeight;
+    getCamera()->setGraphicsContext(osgGW);
+    
+    setLightingMode(osg::View::SKY_LIGHT);
 
-    requestedFps = fps;
+    // set up various maps
+    // allocentric - world map
+    // rolling - map aligned to the world axes and centered on the robot
+    // egocentric - vehicle-centric map
+    root->addChild(allocentricMap);
+    allocentricMap->addChild(robotPosition);
+    robotPosition->addChild(rollingMap);
+    rollingMap->addChild(robotAttitude);
+    robotAttitude->addChild(egocentricMap);
 
-    resize(windowWidth, windowHeight);
-    move(windowX, windowY);
+    setSceneData(root);
 
-    timer.start(static_cast<int>(floorf(1000.0f / requestedFps)), this);
+    // set up HUD
+    root->addChild(createHUD());
 
-    _is3D = true;
+    // set up robot
+    egocentricMap->addChild(createRobot());
+
+    // set up camera control
+    cameraManipulator = new GCManipulator();
+    setCameraManipulator(cameraManipulator);
+    cameraManipulator->setMinZoomRange(cameraParams.minZoomRange);
+    cameraManipulator->setDistance(cameraParams.minZoomRange * 2.0);
+
+    connect(&timer, SIGNAL(timeout()), this, SLOT(redraw()));
+    timer.start(static_cast<int>(floorf(1000.0f / fps)));
+}
+
+osg::ref_ptr<osg::Geode>
+Q3DWidget::createRobot(void)
+{
+    // draw x,y,z-axes
+    osg::ref_ptr<osg::Geode> geode(new osg::Geode());
+    osg::ref_ptr<osg::Geometry> geometry(new osg::Geometry());
+    geode->addDrawable(geometry.get());
+
+    osg::ref_ptr<osg::Vec3Array> coords(new osg::Vec3Array(6));
+    (*coords)[0] = (*coords)[2] = (*coords)[4] =
+                                  osg::Vec3(0.0f, 0.0f, 0.0f);
+    (*coords)[1] = osg::Vec3(0.15f, 0.0f, 0.0f);
+    (*coords)[3] = osg::Vec3(0.0f, 0.3f, 0.0f);
+    (*coords)[5] = osg::Vec3(0.0f, 0.0f, -0.15f);
+
+    geometry->setVertexArray(coords);
+
+    osg::Vec4 redColor(1.0f, 0.0f, 0.0f, 0.0f);
+    osg::Vec4 greenColor(0.0f, 1.0f, 0.0f, 0.0f);
+    osg::Vec4 blueColor(0.0f, 0.0f, 1.0f, 0.0f);
+
+    osg::ref_ptr<osg::Vec4Array> color(new osg::Vec4Array(6));
+    (*color)[0] = redColor;
+    (*color)[1] = redColor;
+    (*color)[2] = greenColor;
+    (*color)[3] = greenColor;
+    (*color)[4] = blueColor;
+    (*color)[5] = blueColor;
+
+    geometry->setColorArray(color);
+    geometry->setColorBinding(osg::Geometry::BIND_PER_VERTEX);
+
+    geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES, 0, 6));
+
+    osg::ref_ptr<osg::StateSet> stateset(new osg::StateSet);
+    osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth());
+    linewidth->setWidth(3.0f);
+    stateset->setAttributeAndModes(linewidth, osg::StateAttribute::ON);
+    stateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    geometry->setStateSet(stateset);
+
+    return geode;
+}
+
+osg::ref_ptr<osg::Node>
+Q3DWidget::createHUD(void)
+{
+    hudProjectionMatrix->setMatrix(osg::Matrix::ortho2D(0, width(),
+                                                        0, height()));
+
+    osg::ref_ptr<osg::MatrixTransform> hudModelViewMatrix(
+            new osg::MatrixTransform);
+    hudModelViewMatrix->setMatrix(osg::Matrix::identity());
+    hudModelViewMatrix->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+
+    hudProjectionMatrix->addChild(hudModelViewMatrix);
+    hudModelViewMatrix->addChild(hudGroup);
+
+    osg::ref_ptr<osg::StateSet> hudStateSet(new osg::StateSet);
+    hudGroup->setStateSet(hudStateSet);
+    hudStateSet->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+    hudStateSet->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    hudStateSet->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+    hudStateSet->setRenderBinDetails(11, "RenderBin");
+
+    return hudProjectionMatrix;
 }
 
 void
-Q3DWidget::setCameraParams(float zoomSensitivity, float rotateSensitivity,
-							 float moveSensitivity, float minZoomRange,
-							 float cameraFov, float minClipRange,
-							 float maxClipRange)
+Q3DWidget::setCameraParams(float minZoomRange, float cameraFov,
+                           float minClipRange, float maxClipRange)
 {
-    cameraParams.zoomSensitivity = zoomSensitivity;
-    cameraParams.rotateSensitivity = rotateSensitivity;
-    cameraParams.moveSensitivity = moveSensitivity;
     cameraParams.minZoomRange = minZoomRange;
     cameraParams.cameraFov = cameraFov;
     cameraParams.minClipRange = minClipRange;
     cameraParams.maxClipRange = maxClipRange;
-
-    limitCamera = true;
-    _forceRedraw = true;
 }
 
 void
-Q3DWidget::setCameraLimit(bool onoff)
+Q3DWidget::moveCamera(float dx, float dy, float dz)
 {
-    limitCamera = onoff;
+    cameraManipulator->move(dx, dy, dz);
 }
 
 void
-Q3DWidget::set2DCameraParams(float zoomSensitivity2D,
-                             float rotateSensitivity2D,
-                             float moveSensitivity2D)
+Q3DWidget::recenterCamera(float x, float y, float z)
 {
-    cameraParams.zoomSensitivity2D = zoomSensitivity2D;
-    cameraParams.rotateSensitivity2D = rotateSensitivity2D;
-    cameraParams.moveSensitivity2D = moveSensitivity2D;
+    cameraManipulator->setCenter(osg::Vec3d(x, y, z));
 }
 
 void
-Q3DWidget::set3D(bool onoff)
+Q3DWidget::setDisplayMode3D(void)
 {
-    _is3D = onoff;
+    double aspect = static_cast<double>(width())
+                    / static_cast<double>(height());
+
+    getCamera()->setViewport(new osg::Viewport(0, 0, width(), height()));
+    getCamera()->setProjectionMatrixAsPerspective(cameraParams.cameraFov,
+                                                  aspect,
+                                                  cameraParams.minClipRange,
+                                                  cameraParams.maxClipRange);
 }
 
-bool
-Q3DWidget::is3D(void) const
+std::pair<double,double>
+Q3DWidget::getGlobalCursorPosition(int32_t cursorX, int32_t cursorY, double z)
 {
-    return _is3D;
-}
+    osgUtil::LineSegmentIntersector::Intersections intersections;
 
-void
-Q3DWidget::setInitialCameraPos(float pan, float tilt, float range,
-								 float xOffset, float yOffset, float zOffset)
-{
-    cameraPose.pan = pan;
-    cameraPose.tilt = tilt;
-    cameraPose.distance = range;
-    cameraPose.xOffset = xOffset;
-    cameraPose.yOffset = yOffset;
-    cameraPose.zOffset = zOffset;
-}
+    // normalize cursor position to value between -1 and 1
+    double x = -1.0f + static_cast<double>(2 * cursorX)
+              / static_cast<double>(width());
+    double y = -1.0f + static_cast<double>(2 * (height() - cursorY))
+              / static_cast<double>(height());
 
-void
-Q3DWidget::setInitial2DCameraPos(float xOffset, float yOffset,
-								   float rotation, float zoom)
-{
-    cameraPose.xOffset2D = xOffset;
-    cameraPose.yOffset2D = yOffset;
-    cameraPose.rotation2D = rotation;
-    cameraPose.zoom = zoom;
-}
+    // compute matrix which transforms screen coordinates to world coordinates
+    osg::Matrixd m = getCamera()->getViewMatrix()
+                     * getCamera()->getProjectionMatrix();
+    osg::Matrixd invM = osg::Matrixd::inverse(m);
 
-void
-Q3DWidget::setCameraPose(const CameraPose& cameraPose)
-{
-    this->cameraPose = cameraPose;
-}
+    osg::Vec3d nearPoint = osg::Vec3d(x, y, -1.0) * invM;
+    osg::Vec3d farPoint = osg::Vec3d(x, y, 1.0) * invM;
 
-CameraPose
-Q3DWidget::getCameraPose(void) const
-{
-    return cameraPose;
+    osg::ref_ptr<osg::LineSegment> line =
+            new osg::LineSegment(nearPoint, farPoint);
+
+    osg::Plane p(osg::Vec3d(0.0, 0.0, 1.0), osg::Vec3d(0.0, 0.0, z));
+
+    osg::Vec3d projectedPoint;
+    getPlaneLineIntersection(p.asVec4(), *line, projectedPoint);
+
+    return std::make_pair(projectedPoint.y(), projectedPoint.x());
 }
 
 void
-Q3DWidget::setDisplayFunc(DisplayFunc func, void* clientData)
+Q3DWidget::redraw(void)
 {
-    userDisplayFunc = func;
-    userDisplayFuncData = clientData;
-}
-
-void
-Q3DWidget::setKeyboardFunc(KeyboardFunc func, void* clientData)
-{
-    userKeyboardFunc = func;
-    userKeyboardFuncData = clientData;
-}
-
-void
-Q3DWidget::setMouseFunc(MouseFunc func, void* clientData)
-{
-    userMouseFunc = func;
-    userMouseFuncData = clientData;
-}
-
-void
-Q3DWidget::setMotionFunc(MotionFunc func, void* clientData)
-{
-    userMotionFunc = func;
-    userMotionFuncData = clientData;
-}
-
-void
-Q3DWidget::addTimerFunc(uint32_t msecs, void(*func)(void *),
-                          void* clientData)
-{
-    timerFunc = func;
-    timerFuncData = clientData;
-
-    QTimer::singleShot(msecs, this, SLOT(userTimer()));
-}
-
-void
-Q3DWidget::userTimer(void)
-{
-    if (timerFunc)
-    {
-        timerFunc(timerFuncData);
-    }
-}
-
-void
-Q3DWidget::forceRedraw(void)
-{
-    _forceRedraw = true;
-}
-
-void
-Q3DWidget::set2DWarping(float warpX, float warpY)
-{
-    cameraPose.warpX = warpX;
-    cameraPose.warpY = warpY;
-}
-
-void
-Q3DWidget::recenter(void)
-{
-    cameraPose.xOffset = 0.0f;
-    cameraPose.yOffset = 0.0f;
-    cameraPose.zOffset = 0.0f;
-}
-
-void
-Q3DWidget::recenter2D(void)
-{
-    cameraPose.xOffset2D = 0.0f;
-    cameraPose.yOffset2D = 0.0f;
-}
-
-void
-Q3DWidget::set2DRotation(bool onoff)
-{
-    allow2DRotation = onoff;
-}
-
-void
-Q3DWidget::setDisplayMode2D(void)
-{
-    glDisable(GL_DEPTH_TEST);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0.0, static_cast<GLfloat>(getWindowWidth()),
-            0.0, static_cast<GLfloat>(getWindowHeight()),
-            -10.0, 10.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-}
-
-std::pair<float,float>
-Q3DWidget::getPositionIn3DMode(int32_t mouseX, int32_t mouseY)
-{
-    float cx = windowWidth / 2.0f;
-    float cy = windowHeight / 2.0f;
-    float pan = d2r(-90.0f - cameraPose.pan);
-    float tilt = d2r(90.0f - cameraPose.tilt);
-    float d = cameraPose.distance;
-    float f = cy / tanf(d2r(cameraParams.cameraFov / 2.0f));
-
-    float px = (mouseX - cx) * cosf(tilt) * d / (cosf(tilt) * f + sinf(tilt)
-                            * mouseY - sinf(tilt) * cy);
-    float py = -(mouseY - cy) * d / (cosf(tilt) * f + sinf(tilt) * mouseY
-                            - sinf(tilt) * cy);
-
-    std::pair<float,float> sceneCoords;
-    sceneCoords.first = px * cosf(pan) + py * sinf(pan) + cameraPose.xOffset;
-    sceneCoords.second = -px * sinf(pan) + py * cosf(pan) + cameraPose.yOffset;
-
-    return sceneCoords;
-}
-
-std::pair<float,float>
-Q3DWidget::getPositionIn2DMode(int32_t mouseX, int32_t mouseY)
-{
-    float dx = (mouseX - windowWidth / 2.0f) / cameraPose.zoom;
-    float dy = (windowHeight / 2.0f - mouseY) / cameraPose.zoom;
-    float ctheta = cosf(-cameraPose.rotation2D);
-    float stheta = sinf(-cameraPose.rotation2D);
-
-    std::pair<float,float> coords;
-    coords.first = cameraPose.xOffset2D + ctheta * dx - stheta * dy;
-    coords.second = cameraPose.yOffset2D + stheta * dx + ctheta * dy;
-
-    return coords;
-}
-
-int
-Q3DWidget::getWindowWidth(void)
-{
-    return windowWidth;
-}
-
-int
-Q3DWidget::getWindowHeight(void)
-{
-    return windowHeight;
-}
-
-int
-Q3DWidget::getLastMouseX(void)
-{
-    return lastMouseX;
-}
-
-int
-Q3DWidget::getLastMouseY(void)
-{
-    return lastMouseY;
+    updateGL();
 }
 
 int
@@ -357,681 +254,279 @@ Q3DWidget::getMouseY(void)
 }
 
 void
-Q3DWidget::rotateCamera(float dx, float dy)
+Q3DWidget::resizeGL(int width, int height)
 {
-    cameraPose.pan += dx * cameraParams.rotateSensitivity;
-    cameraPose.tilt += dy * cameraParams.rotateSensitivity;
-    if (limitCamera)
-    {
-        if (cameraPose.tilt < 180.5f)
-        {
-            cameraPose.tilt = 180.5f;
-        }
-        else if (cameraPose.tilt > 269.5f)
-        {
-            cameraPose.tilt = 269.5f;
-        }
-    }
-}
+    hudProjectionMatrix->setMatrix(osg::Matrix::ortho2D(0, width,
+                                                        0, height));
 
-void
-Q3DWidget::zoomCamera(float dy)
-{
-    cameraPose.distance -=
-            dy * cameraParams.zoomSensitivity * cameraPose.distance;
-    if (cameraPose.distance < cameraParams.minZoomRange)
-    {
-        cameraPose.distance = cameraParams.minZoomRange;
-    }
-}
-
-void
-Q3DWidget::moveCamera(float dx, float dy)
-{
-    cameraPose.xOffset +=
-            -dy * cosf(d2r(cameraPose.pan)) * cameraParams.moveSensitivity
-            * cameraPose.distance;
-    cameraPose.yOffset +=
-            -dy * sinf(d2r(cameraPose.pan)) * cameraParams.moveSensitivity
-            * cameraPose.distance;
-    cameraPose.xOffset += dx * cosf(d2r(cameraPose.pan - 90.0f))
-            * cameraParams.moveSensitivity * cameraPose.distance;
-    cameraPose.yOffset += dx * sinf(d2r(cameraPose.pan - 90.0f))
-            * cameraParams.moveSensitivity * cameraPose.distance;
-}
-
-void
-Q3DWidget::rotateCamera2D(float dx)
-{
-    if (allow2DRotation)
-    {
-        cameraPose.rotation2D += dx * cameraParams.rotateSensitivity2D;
-    }
-}
-
-void
-Q3DWidget::zoomCamera2D(float dx)
-{
-    cameraPose.zoom += dx * cameraParams.zoomSensitivity2D * cameraPose.zoom;
-    if (cameraPose.zoom > 1e7f)
-    {
-        cameraPose.zoom = 1e7f;
-    }
-    if (cameraPose.zoom < 1e-7f)
-    {
-        cameraPose.zoom = 1e-7f;
-    }
-}
-
-void
-Q3DWidget::moveCamera2D(float dx, float dy)
-{
-    float scaledX = dx / cameraPose.zoom;
-    float scaledY = dy / cameraPose.zoom;
-
-    cameraPose.xOffset2D -= (scaledX * cosf(-cameraPose.rotation2D)
-            + scaledY * sinf(-cameraPose.rotation2D)) / cameraPose.warpX
-            * cameraParams.moveSensitivity2D;
-    cameraPose.yOffset2D -= (scaledX * sinf(-cameraPose.rotation2D)
-            - scaledY * cosf(-cameraPose.rotation2D)) / cameraPose.warpY
-            * cameraParams.moveSensitivity2D;
-}
-
-void Q3DWidget::switchTo3DMode(void)
-{
-    // setup camera view
-    float cpan = d2r(cameraPose.pan);
-    float ctilt = d2r(cameraPose.tilt);
-    float cameraX = cameraPose.distance * cosf(cpan) * cosf(ctilt);
-    float cameraY = cameraPose.distance * sinf(cpan) * cosf(ctilt);
-    float cameraZ = cameraPose.distance * sinf(ctilt);
-    setDisplayMode3D();
-    glViewport(0, 0, static_cast<GLsizei>(windowWidth),
-               static_cast<GLsizei>(windowHeight));
-    gluLookAt(cameraX + cameraPose.xOffset, cameraY + cameraPose.yOffset,
-              cameraZ + cameraPose.zOffset, cameraPose.xOffset,
-              cameraPose.yOffset, cameraPose.zOffset, 0.0, 0.0, 1.0);
-}
-
-void
-Q3DWidget::setDisplayMode3D()
-{
-    float aspect = static_cast<float>(getWindowWidth()) /
-                   static_cast<float>(getWindowHeight());
-
-    glEnable(GL_DEPTH_TEST);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(cameraParams.cameraFov, aspect,
-                   cameraParams.minClipRange, cameraParams.maxClipRange);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glScalef(-1.0f, -1.0f, 1.0f);
-}
-
-float
-Q3DWidget::r2d(float angle) const
-{
-    return angle * 57.295779513082320876f;
-}
-
-float
-Q3DWidget::d2r(float angle) const
-{
-    return angle * 0.0174532925199432957692f;
-}
-
-void
-Q3DWidget::initializeGL(void)
-{
-    float lightAmbient[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    float lightDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    float lightSpecular[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    float lightPosition[] = {0.0f, 0.0f, 100.0f, 0.0f};
-
-    glEnable(GL_DEPTH_TEST);
-    glShadeModel(GL_SMOOTH);
-
-    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
-    glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-    glEnable(GL_LIGHT0);
-    glDisable(GL_LIGHTING);
-    glEnable(GL_NORMALIZE);
+    osgGW->getEventQueue()->windowResize(0, 0, width, height);
+    osgGW->resized(0 , 0, width, height);
 }
 
 void
 Q3DWidget::paintGL(void)
 {
-    if (_is3D)
-    {
-        // setup camera view
-        switchTo3DMode();
-    }
-    else
-    {
-        setDisplayMode2D();
-        // do camera control
-        glTranslatef(static_cast<float>(windowWidth) / 2.0f,
-                     static_cast<float>(windowHeight) / 2.0f,
-                     0.0f);
-        glScalef(cameraPose.zoom, cameraPose.zoom, 1.0f);
-        glRotatef(r2d(cameraPose.rotation2D), 0.0f, 0.0f, 1.0f);
-        glScalef(cameraPose.warpX, cameraPose.warpY, 1.0f);
-        glTranslatef(-cameraPose.xOffset2D, -cameraPose.yOffset2D, 0.0f);
-    }
+    setDisplayMode3D();
 
-    // turn on smooth lines
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_LINE_SMOOTH);
+    getCamera()->setClearColor(osg::Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
+    getCamera()->setClearMask(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLineWidth(1.0f);
+    display();
 
-    if (userDisplayFunc)
-    {
-        userDisplayFunc(userDisplayFuncData);
-    }
-    glFlush();
+    frame();
 }
 
 void
-Q3DWidget::resizeGL(int32_t width, int32_t height)
+Q3DWidget::display(void)
 {
-    glViewport(0, 0, width, height);
 
-    windowWidth = width;
-    windowHeight = height;
-
-    if (_is3D)
-    {
-        setDisplayMode3D();
-    }
-    else
-    {
-        setDisplayMode2D();
-    }
 }
 
 void
 Q3DWidget::keyPressEvent(QKeyEvent* event)
 {
-    float dx = 0.0f, dy = 0.0f;
-
-    Qt::KeyboardModifiers modifiers = event->modifiers();
-    if (_is3D)
+    QWidget::keyPressEvent(event);
+    if (event->isAccepted())
     {
-        if (modifiers & Qt::ControlModifier)
-        {
-            switch (event->key())
-            {
-            case Qt::Key_Left:
-                dx = -KEY_ROTATE_AMOUNT;
-                dy = 0.0f;
-                break;
-            case Qt::Key_Right:
-                dx = KEY_ROTATE_AMOUNT;
-                dy = 0.0f;
-                break;
-            case Qt::Key_Up:
-                dx = 0.0f;
-                dy = KEY_ROTATE_AMOUNT;
-                break;
-            case Qt::Key_Down:
-                dx = 0.0f;
-                dy = -KEY_ROTATE_AMOUNT;
-                break;
-            default:
-                QWidget::keyPressEvent(event);
-            }
-            if (dx != 0.0f || dy != 0.0f)
-            {
-                rotateCamera(dx, dy);
-            }
-        }
-        else if (modifiers & Qt::AltModifier)
-        {
-            switch (event->key())
-            {
-            case Qt::Key_Up:
-                dy = KEY_ZOOM_AMOUNT;
-                break;
-            case Qt::Key_Down:
-                dy = -KEY_ZOOM_AMOUNT;
-                break;
-            default:
-                QWidget::keyPressEvent(event);
-            }
-            if (dy != 0.0f)
-            {
-                zoomCamera(dy);
-            }
-        }
-        else
-        {
-            switch (event->key())
-            {
-            case Qt::Key_Left:
-                dx = KEY_MOVE_AMOUNT;
-                dy = 0.0f;
-                break;
-            case Qt::Key_Right:
-                dx = -KEY_MOVE_AMOUNT;
-                dy = 0.0f;
-                break;
-            case Qt::Key_Up:
-                dx = 0.0f;
-                dy = -KEY_MOVE_AMOUNT;
-                break;
-            case Qt::Key_Down:
-                dx = 0.0f;
-                dy = KEY_MOVE_AMOUNT;
-                break;
-            default:
-                QWidget::keyPressEvent(event);
-            }
-            if (dx != 0.0f || dy != 0.0f)
-            {
-                moveCamera(dx, dy);
-            }
-        }
+        return;
+    }
+
+    if (event->text().isEmpty())
+    {
+        osgGW->getEventQueue()->keyPress(convertKey(event->key()));
     }
     else
     {
-        if (modifiers & Qt::ControlModifier)
-        {
-            switch (event->key())
-            {
-            case Qt::Key_Left:
-                dx = KEY_ROTATE_AMOUNT;
-                dy = 0.0f;
-                break;
-            case Qt::Key_Right:
-                dx = -KEY_ROTATE_AMOUNT;
-                dy = 0.0f;
-                break;
-            default:
-                QWidget::keyPressEvent(event);
-            }
-            if (dx != 0.0f)
-            {
-                rotateCamera2D(dx);
-            }
-        }
-        else if (modifiers & Qt::AltModifier)
-        {
-            switch (event->key())
-            {
-            case Qt::Key_Up:
-                dy = KEY_ZOOM_AMOUNT;
-                break;
-            case Qt::Key_Down:
-                dy = -KEY_ZOOM_AMOUNT;
-                break;
-            default:
-                QWidget::keyPressEvent(event);
-            }
-            if (dy != 0.0f)
-            {
-                zoomCamera2D(dy);
-            }
-        }
-        else
-        {
-            switch (event->key())
-            {
-            case Qt::Key_Left:
-                dx = KEY_MOVE_AMOUNT;
-                dy = 0.0f;
-                break;
-            case Qt::Key_Right:
-                dx = -KEY_MOVE_AMOUNT;
-                dy = 0.0f;
-                break;
-            case Qt::Key_Up:
-                dx = 0.0f;
-                dy = KEY_MOVE_AMOUNT;
-                break;
-            case Qt::Key_Down:
-                dx = 0.0f;
-                dy = -KEY_MOVE_AMOUNT;
-                break;
-            default:
-                QWidget::keyPressEvent(event);
-            }
-            if (dx != 0.0f || dy != 0.0f)
-            {
-                moveCamera2D(dx, dy);
-            }
-        }
+        osgGW->getEventQueue()->keyPress(
+                static_cast<osgGA::GUIEventAdapter::KeySymbol>(
+                        *(event->text().toAscii().data())));
     }
+}
 
-    _forceRedraw = true;
-
-    if (userKeyboardFunc)
+void
+Q3DWidget::keyReleaseEvent(QKeyEvent* event)
+{
+    QWidget::keyReleaseEvent(event);
+    if (event->isAccepted())
     {
-        if (event->text().isEmpty())
-        {
-            userKeyboardFunc(0, userKeyboardFuncData);
-        }
-        else
-        {
-            userKeyboardFunc(event->text().at(0).toAscii(),
-                             userKeyboardFuncData);
-        }
+        return;
+    }
+    if (event->text().isEmpty())
+    {
+        osgGW->getEventQueue()->keyRelease(convertKey(event->key()));
+    }
+    else
+    {
+        osgGW->getEventQueue()->keyRelease(
+                static_cast<osgGA::GUIEventAdapter::KeySymbol>(
+                        *(event->text().toAscii().data())));
     }
 }
 
 void
 Q3DWidget::mousePressEvent(QMouseEvent* event)
 {
-    Qt::KeyboardModifiers modifiers = event->modifiers();
-
-    if (!(modifiers & (Qt::ControlModifier | Qt::AltModifier)))
+    int button = 0;
+    switch (event->button())
     {
-        lastMouseX = event->x();
-        lastMouseY = event->y();
-        if (event->button() == Qt::LeftButton)
-        {
-            cameraPose.state = ROTATING;
-        }
-        else if (event->button() == Qt::MidButton)
-        {
-            cameraPose.state = MOVING;
-        }
+    case Qt::LeftButton:
+        button = 1;
+        break;
+    case Qt::MidButton:
+        button = 2;
+        break;
+    case Qt::RightButton:
+        button = 3;
+        break;
+    case Qt::NoButton:
+        button = 0;
+        break;
+    default:
+        {}
     }
-
-    _forceRedraw = true;
-
-    if (userMouseFunc)
-    {
-        userMouseFunc(event->button(), MOUSE_STATE_DOWN, event->x(), event->y(),
-                      userMouseFuncData);
-    }
+    osgGW->getEventQueue()->mouseButtonPress(event->x(), event->y(), button);
 }
 
 void
 Q3DWidget::mouseReleaseEvent(QMouseEvent* event)
 {
-    Qt::KeyboardModifiers modifiers = event->modifiers();
-
-    if (!(modifiers & (Qt::ControlModifier | Qt::AltModifier)))
+    int button = 0;
+    switch (event->button())
     {
-        cameraPose.state = IDLE;
+    case Qt::LeftButton:
+        button = 1;
+        break;
+    case Qt::MidButton:
+        button = 2;
+        break;
+    case Qt::RightButton:
+        button = 3;
+        break;
+    case Qt::NoButton:
+        button = 0;
+        break;
+    default:
+        {}
     }
-
-    _forceRedraw = true;
-
-    if (userMouseFunc)
-    {
-        userMouseFunc(event->button(), MOUSE_STATE_UP, event->x(), event->y(),
-                      userMouseFuncData);
-    }
+    osgGW->getEventQueue()->mouseButtonRelease(event->x(), event->y(), button);
 }
 
 void
 Q3DWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    int32_t dx = event->x() - lastMouseX;
-    int32_t dy = event->y() - lastMouseY;
-
-    if (_is3D)
-    {
-        if (cameraPose.state == ROTATING)
-        {
-            rotateCamera(static_cast<float>(dx), static_cast<float>(dy));
-        }
-        else if (cameraPose.state == MOVING)
-        {
-            moveCamera(static_cast<float>(dx), static_cast<float>(dy));
-        }
-        else if (cameraPose.state == ZOOMING)
-        {
-            zoomCamera(static_cast<float>(dy));
-        }
-    }
-    else
-    {
-        if (cameraPose.state == ROTATING)
-        {
-            if (event->x() > windowWidth / 2)
-            {
-                dy *= -1;
-            }
-
-            rotateCamera2D(static_cast<float>(dx));
-        }
-        else if (cameraPose.state == MOVING)
-        {
-            moveCamera2D(static_cast<float>(dx), static_cast<float>(dy));
-        }
-        else if (cameraPose.state == ZOOMING)
-        {
-            zoomCamera2D(static_cast<float>(dy));
-        }
-    }
-
-    lastMouseX = event->x();
-    lastMouseY = event->y();
-    _forceRedraw = true;
-
-    if (userMotionFunc)
-    {
-            userMotionFunc(event->x(), event->y(), userMotionFuncData);
-    }
+    osgGW->getEventQueue()->mouseMotion(event->x(), event->y());
 }
 
 void
 Q3DWidget::wheelEvent(QWheelEvent* event)
 {
-    if (_is3D)
-    {
-        zoomCamera(static_cast<float>(event->delta()) / 40.0f);
-    }
-    else
-    {
-        zoomCamera2D(static_cast<float>(event->delta()) / 40.0f);
-    }
-
-    _forceRedraw = true;
+    osgGW->getEventQueue()->mouseScroll((event->delta() > 0) ?
+            osgGA::GUIEventAdapter::SCROLL_UP :
+            osgGA::GUIEventAdapter::SCROLL_DOWN);
 }
 
-void
-Q3DWidget::timerEvent(QTimerEvent* event)
+float
+Q3DWidget::r2d(float angle)
 {
-    if (event->timerId() == timer.timerId())
+    return angle * 57.295779513082320876f;
+}
+
+float
+Q3DWidget::d2r(float angle)
+{
+    return angle * 0.0174532925199432957692f;
+}
+
+osgGA::GUIEventAdapter::KeySymbol
+Q3DWidget::convertKey(int key) const
+{
+    switch (key)
     {
-        if (_forceRedraw)
-        {
-            updateGL();
-            _forceRedraw = false;
-        }
-    }
-    else
-    {
-        QObject::timerEvent(event);
-    }
-}
-
-void
-Q3DWidget::closeEvent(QCloseEvent* event)
-{
-    // exit application
-    timer.stop();
-
-    event->accept();
-}
-
-void
-Q3DWidget::wireSphere(double radius, int slices, int stacks) const
-{
-    static GLUquadricObj* quadObj;
-    // Make sure quad object exists
-    if (!quadObj) quadObj = gluNewQuadric();
-    gluQuadricDrawStyle(quadObj, GLU_LINE);
-    gluQuadricNormals(quadObj, GLU_SMOOTH);
-    /* If we ever changed/used the texture or orientation state
-       of quadObj, we'd need to change it to the defaults here
-       with gluQuadricTexture and/or gluQuadricOrientation. */
-    gluSphere(quadObj, radius, slices, stacks);
-}
-
-void
-Q3DWidget::solidSphere(double radius, int slices, int stacks) const
-{
-    static GLUquadricObj* quadObj;
-    // Make sure quad object exists
-    if (!quadObj) quadObj = gluNewQuadric();
-    gluQuadricDrawStyle(quadObj, GLU_FILL);
-    gluQuadricNormals(quadObj, GLU_SMOOTH);
-    /* If we ever changed/used the texture or orientation state
-       of quadObj, we'd need to change it to the defaults here
-       with gluQuadricTexture and/or gluQuadricOrientation. */
-    gluSphere(quadObj, radius, slices, stacks);
-}
-
-void
-Q3DWidget::wireCone(double base, double height, int slices, int stacks) const
-{
-    static GLUquadricObj* quadObj;
-    // Make sure quad object exists
-    if (!quadObj) quadObj = gluNewQuadric();
-    gluQuadricDrawStyle(quadObj, GLU_LINE);
-    gluQuadricNormals(quadObj, GLU_SMOOTH);
-    /* If we ever changed/used the texture or orientation state
-       of quadObj, we'd need to change it to the defaults here
-       with gluQuadricTexture and/or gluQuadricOrientation. */
-    gluCylinder(quadObj, base, 0.0, height, slices, stacks);
-}
-
-void
-Q3DWidget::solidCone(double base, double height, int slices, int stacks) const
-{
-    static GLUquadricObj* quadObj;
-    // Make sure quad object exists
-    if (!quadObj) quadObj = gluNewQuadric();
-    gluQuadricDrawStyle(quadObj, GLU_FILL);
-    gluQuadricNormals(quadObj, GLU_SMOOTH);
-    /* If we ever changed/used the texture or orientation state
-       of quadObj, we'd need to change it to the defaults here
-       with gluQuadricTexture and/or gluQuadricOrientation. */
-    gluCylinder(quadObj, base, 0.0, height, slices, stacks);
-}
-
-void
-Q3DWidget::drawBox(float size, GLenum type) const
-{
-    static GLfloat n[6][3] =
-    {
-        {-1.0, 0.0, 0.0},
-        {0.0, 1.0, 0.0},
-        {1.0, 0.0, 0.0},
-        {0.0, -1.0, 0.0},
-        {0.0, 0.0, 1.0},
-        {0.0, 0.0, -1.0}
-    };
-    static GLint faces[6][4] =
-    {
-        {0, 1, 2, 3},
-        {3, 2, 6, 7},
-        {7, 6, 5, 4},
-        {4, 5, 1, 0},
-        {5, 6, 2, 1},
-        {7, 4, 0, 3}
-    };
-    GLfloat v[8][3];
-    GLint i;
-
-    v[0][0] = v[1][0] = v[2][0] = v[3][0] = -size / 2;
-    v[4][0] = v[5][0] = v[6][0] = v[7][0] = size / 2;
-    v[0][1] = v[1][1] = v[4][1] = v[5][1] = -size / 2;
-    v[2][1] = v[3][1] = v[6][1] = v[7][1] = size / 2;
-    v[0][2] = v[3][2] = v[4][2] = v[7][2] = -size / 2;
-    v[1][2] = v[2][2] = v[5][2] = v[6][2] = size / 2;
-
-    for (i = 5; i >= 0; i--)
-    {
-        glBegin(type);
-        glNormal3fv(&n[i][0]);
-        glVertex3fv(&v[faces[i][0]][0]);
-        glVertex3fv(&v[faces[i][1]][0]);
-        glVertex3fv(&v[faces[i][2]][0]);
-        glVertex3fv(&v[faces[i][3]][0]);
-        glEnd();
+    case Qt::Key_Space : return osgGA::GUIEventAdapter::KEY_Space;
+    case Qt::Key_Backspace : return osgGA::GUIEventAdapter::KEY_BackSpace;
+    case Qt::Key_Tab : return osgGA::GUIEventAdapter::KEY_Tab;
+    case Qt::Key_Clear : return osgGA::GUIEventAdapter::KEY_Clear;
+    case Qt::Key_Return : return osgGA::GUIEventAdapter::KEY_Return;
+    case Qt::Key_Enter : return osgGA::GUIEventAdapter::KEY_KP_Enter;
+    case Qt::Key_Pause : return osgGA::GUIEventAdapter::KEY_Pause;
+    case Qt::Key_ScrollLock : return osgGA::GUIEventAdapter::KEY_Scroll_Lock;
+    case Qt::Key_SysReq : return osgGA::GUIEventAdapter::KEY_Sys_Req;
+    case Qt::Key_Escape : return osgGA::GUIEventAdapter::KEY_Escape;
+    case Qt::Key_Delete : return osgGA::GUIEventAdapter::KEY_Delete;
+    case Qt::Key_Home : return osgGA::GUIEventAdapter::KEY_Home;
+    case Qt::Key_Left : return osgGA::GUIEventAdapter::KEY_Left;
+    case Qt::Key_Up : return osgGA::GUIEventAdapter::KEY_Up;
+    case Qt::Key_Right : return osgGA::GUIEventAdapter::KEY_Right;
+    case Qt::Key_Down : return osgGA::GUIEventAdapter::KEY_Down;
+    case Qt::Key_PageUp : return osgGA::GUIEventAdapter::KEY_Page_Up;
+    case Qt::Key_PageDown : return osgGA::GUIEventAdapter::KEY_Page_Down;
+    case Qt::Key_End : return osgGA::GUIEventAdapter::KEY_End;
+    case Qt::Key_Select : return osgGA::GUIEventAdapter::KEY_Select;
+    case Qt::Key_Print : return osgGA::GUIEventAdapter::KEY_Print;
+    case Qt::Key_Execute : return osgGA::GUIEventAdapter::KEY_Execute;
+    case Qt::Key_Insert : return osgGA::GUIEventAdapter::KEY_Insert;
+    case Qt::Key_Menu : return osgGA::GUIEventAdapter::KEY_Menu;
+    case Qt::Key_Cancel : return osgGA::GUIEventAdapter::KEY_Cancel;
+    case Qt::Key_Help : return osgGA::GUIEventAdapter::KEY_Help;
+    case Qt::Key_Mode_switch : return osgGA::GUIEventAdapter::KEY_Mode_switch;
+    case Qt::Key_NumLock : return osgGA::GUIEventAdapter::KEY_Num_Lock;
+    case Qt::Key_Equal : return osgGA::GUIEventAdapter::KEY_KP_Equal;
+    case Qt::Key_Asterisk : return osgGA::GUIEventAdapter::KEY_KP_Multiply;
+    case Qt::Key_Plus : return osgGA::GUIEventAdapter::KEY_KP_Add;
+    case Qt::Key_Minus : return osgGA::GUIEventAdapter::KEY_KP_Subtract;
+    case Qt::Key_Comma : return osgGA::GUIEventAdapter::KEY_KP_Decimal;
+    case Qt::Key_Slash : return osgGA::GUIEventAdapter::KEY_KP_Divide;
+    case Qt::Key_0 : return osgGA::GUIEventAdapter::KEY_KP_0;
+    case Qt::Key_1 : return osgGA::GUIEventAdapter::KEY_KP_1;
+    case Qt::Key_2 : return osgGA::GUIEventAdapter::KEY_KP_2;
+    case Qt::Key_3 : return osgGA::GUIEventAdapter::KEY_KP_3;
+    case Qt::Key_4 : return osgGA::GUIEventAdapter::KEY_KP_4;
+    case Qt::Key_5 : return osgGA::GUIEventAdapter::KEY_KP_5;
+    case Qt::Key_6 : return osgGA::GUIEventAdapter::KEY_KP_6;
+    case Qt::Key_7 : return osgGA::GUIEventAdapter::KEY_KP_7;
+    case Qt::Key_8 : return osgGA::GUIEventAdapter::KEY_KP_8;
+    case Qt::Key_9 : return osgGA::GUIEventAdapter::KEY_KP_9;
+    case Qt::Key_F1 : return osgGA::GUIEventAdapter::KEY_F1;
+    case Qt::Key_F2 : return osgGA::GUIEventAdapter::KEY_F2;
+    case Qt::Key_F3 : return osgGA::GUIEventAdapter::KEY_F3;
+    case Qt::Key_F4 : return osgGA::GUIEventAdapter::KEY_F4;
+    case Qt::Key_F5 : return osgGA::GUIEventAdapter::KEY_F5;
+    case Qt::Key_F6 : return osgGA::GUIEventAdapter::KEY_F6;
+    case Qt::Key_F7 : return osgGA::GUIEventAdapter::KEY_F7;
+    case Qt::Key_F8 : return osgGA::GUIEventAdapter::KEY_F8;
+    case Qt::Key_F9 : return osgGA::GUIEventAdapter::KEY_F9;
+    case Qt::Key_F10 : return osgGA::GUIEventAdapter::KEY_F10;
+    case Qt::Key_F11 : return osgGA::GUIEventAdapter::KEY_F11;
+    case Qt::Key_F12 : return osgGA::GUIEventAdapter::KEY_F12;
+    case Qt::Key_F13 : return osgGA::GUIEventAdapter::KEY_F13;
+    case Qt::Key_F14 : return osgGA::GUIEventAdapter::KEY_F14;
+    case Qt::Key_F15 : return osgGA::GUIEventAdapter::KEY_F15;
+    case Qt::Key_F16 : return osgGA::GUIEventAdapter::KEY_F16;
+    case Qt::Key_F17 : return osgGA::GUIEventAdapter::KEY_F17;
+    case Qt::Key_F18 : return osgGA::GUIEventAdapter::KEY_F18;
+    case Qt::Key_F19 : return osgGA::GUIEventAdapter::KEY_F19;
+    case Qt::Key_F20 : return osgGA::GUIEventAdapter::KEY_F20;
+    case Qt::Key_F21 : return osgGA::GUIEventAdapter::KEY_F21;
+    case Qt::Key_F22 : return osgGA::GUIEventAdapter::KEY_F22;
+    case Qt::Key_F23 : return osgGA::GUIEventAdapter::KEY_F23;
+    case Qt::Key_F24 : return osgGA::GUIEventAdapter::KEY_F24;
+    case Qt::Key_F25 : return osgGA::GUIEventAdapter::KEY_F25;
+    case Qt::Key_F26 : return osgGA::GUIEventAdapter::KEY_F26;
+    case Qt::Key_F27 : return osgGA::GUIEventAdapter::KEY_F27;
+    case Qt::Key_F28 : return osgGA::GUIEventAdapter::KEY_F28;
+    case Qt::Key_F29 : return osgGA::GUIEventAdapter::KEY_F29;
+    case Qt::Key_F30 : return osgGA::GUIEventAdapter::KEY_F30;
+    case Qt::Key_F31 : return osgGA::GUIEventAdapter::KEY_F31;
+    case Qt::Key_F32 : return osgGA::GUIEventAdapter::KEY_F32;
+    case Qt::Key_F33 : return osgGA::GUIEventAdapter::KEY_F33;
+    case Qt::Key_F34 : return osgGA::GUIEventAdapter::KEY_F34;
+    case Qt::Key_F35 : return osgGA::GUIEventAdapter::KEY_F35;
+    case Qt::Key_Shift : return osgGA::GUIEventAdapter::KEY_Shift_L;
+//    case Qt::Key_Shift_R : return osgGA::GUIEventAdapter::KEY_Shift_R;
+    case Qt::Key_Control : return osgGA::GUIEventAdapter::KEY_Control_L;
+//    case Qt::Key_Control_R : return osgGA::GUIEventAdapter::KEY_Control_R;
+    case Qt::Key_CapsLock : return osgGA::GUIEventAdapter::KEY_Caps_Lock;
+    case Qt::Key_Meta : return osgGA::GUIEventAdapter::KEY_Meta_L;
+//    case Qt::Key_Meta_R: return osgGA::GUIEventAdapter::KEY_Meta_R;
+    case Qt::Key_Alt : return osgGA::GUIEventAdapter::KEY_Alt_L;
+//    case Qt::Key_Alt_R : return osgGA::GUIEventAdapter::KEY_Alt_R;
+    case Qt::Key_Super_L : return osgGA::GUIEventAdapter::KEY_Super_L;
+    case Qt::Key_Super_R : return osgGA::GUIEventAdapter::KEY_Super_R;
+    case Qt::Key_Hyper_L : return osgGA::GUIEventAdapter::KEY_Hyper_L;
+    case Qt::Key_Hyper_R : return osgGA::GUIEventAdapter::KEY_Hyper_R;
+    default:
+        return static_cast<osgGA::GUIEventAdapter::KeySymbol>(key);
     }
 }
 
-void
-Q3DWidget::wireCube(double size) const
+bool
+Q3DWidget::getPlaneLineIntersection(const osg::Vec4d& plane,
+                                    const osg::LineSegment& line,
+                                    osg::Vec3d& isect)
 {
-    drawBox(size, GL_LINE_LOOP);
-}
+    osg::Vec3d lineStart = line.start();
+    osg::Vec3d lineEnd = line.end();
 
-void
-Q3DWidget::solidCube(double size) const
-{
-    drawBox(size, GL_QUADS);
-}
+    const double deltaX = lineEnd.x() - lineStart.x();
+    const double deltaY = lineEnd.y() - lineStart.y();
+    const double deltaZ = lineEnd.z() - lineStart.z();
 
-void
-Q3DWidget::doughnut(float r, float R, int nsides, int rings) const
-{
-    int i, j;
-    GLfloat theta, phi, theta1;
-    GLfloat cosTheta, sinTheta;
-    GLfloat cosTheta1, sinTheta1;
-    GLfloat ringDelta, sideDelta;
-
-    ringDelta = 2.0 * M_PI / rings;
-    sideDelta = 2.0 * M_PI / nsides;
-
-    theta = 0.0;
-    cosTheta = 1.0;
-    sinTheta = 0.0;
-    for (i = rings - 1; i >= 0; i--)
+    const double denominator = plane[0] * deltaX
+                               + plane[1] * deltaY
+                               + plane[2] * deltaZ;
+    if (!denominator)
     {
-        theta1 = theta + ringDelta;
-        cosTheta1 = cos(theta1);
-        sinTheta1 = sin(theta1);
-        glBegin(GL_QUAD_STRIP);
-        phi = 0.0;
-        for (j = nsides; j >= 0; j--)
-        {
-            GLfloat cosPhi, sinPhi, dist;
-
-            phi += sideDelta;
-            cosPhi = cos(phi);
-            sinPhi = sin(phi);
-            dist = R + r * cosPhi;
-
-            glNormal3f(cosTheta1 * cosPhi, -sinTheta1 * cosPhi, sinPhi);
-            glVertex3f(cosTheta1 * dist, -sinTheta1 * dist, r * sinPhi);
-            glNormal3f(cosTheta * cosPhi, -sinTheta * cosPhi, sinPhi);
-            glVertex3f(cosTheta * dist, -sinTheta * dist,  r * sinPhi);
-        }
-        glEnd();
-        theta = theta1;
-        cosTheta = cosTheta1;
-        sinTheta = sinTheta1;
+        return false;
     }
-}
 
-void
-Q3DWidget::wireTorus(double innerRadius, double outerRadius,
-                     int nsides, int rings) const
-{
-    glPushAttrib(GL_POLYGON_BIT);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    doughnut(innerRadius, outerRadius, nsides, rings);
-    glPopAttrib();
-}
+    const double C = (plane[0] * lineStart.x()
+                      + plane[1] * lineStart.y()
+                      + plane[2] * lineStart.z()
+                      + plane[3]) / denominator;
 
-void
-Q3DWidget::solidTorus(double innerRadius, double outerRadius,
-                      int nsides, int rings) const
-{
-    doughnut(innerRadius, outerRadius, nsides, rings);
+    isect.x() = lineStart.x() - deltaX * C;
+    isect.y() = lineStart.y() - deltaY * C;
+    isect.z() = lineStart.z() - deltaZ * C;
+
+    return true;
 }

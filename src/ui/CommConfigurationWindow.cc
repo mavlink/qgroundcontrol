@@ -55,6 +55,10 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // Setup the user interface according to link type
     ui.setupUi(this);
 
+    // add link types
+    ui.linkType->addItem("Serial",QGC_LINK_SERIAL);
+    ui.linkType->addItem("UDP",QGC_LINK_UDP);
+
     // Create action to open this menu
     // Create configuration action for this link
     // Connect the current UAS

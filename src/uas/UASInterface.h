@@ -220,12 +220,12 @@ public slots:
      */
     virtual void setSelected() = 0;
 
-    virtual void enableAllDataTransmission(bool enabled) = 0;
-    virtual void enableRawSensorDataTransmission(bool enabled) = 0;
-    virtual void enableExtendedSystemStatusTransmission(bool enabled) = 0;
-    virtual void enableRCChannelDataTransmission(bool enabled) = 0;
-    virtual void enableRawControllerDataTransmission(bool enabled) = 0;
-    virtual void enableRawSensorFusionTransmission(bool enabled) = 0;
+    virtual void enableAllDataTransmission(int rate) = 0;
+    virtual void enableRawSensorDataTransmission(int rate) = 0;
+    virtual void enableExtendedSystemStatusTransmission(int rate) = 0;
+    virtual void enableRCChannelDataTransmission(int rate) = 0;
+    virtual void enableRawControllerDataTransmission(int rate) = 0;
+    virtual void enableRawSensorFusionTransmission(int rate) = 0;
 
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;
@@ -356,8 +356,10 @@ signals:
     void positionZControlEnabled(bool enabled);
     /** @brief Heading control enabled/disabled */
     void positionYawControlEnabled(bool enabled);
-    /** @brief Value of a remote control channel */
-    void remoteControlChannelChanged(int channelId, float raw, float normalized);
+    /** @brief Value of a remote control channel (raw) */
+    void remoteControlChannelRawChanged(int channelId, float raw);
+    /** @brief Value of a remote control channel (scaled)*/
+    void remoteControlChannelScaledChanged(int channelId, float normalized);
     /** @brief Remote control RSSI changed */
     void remoteControlRSSIChanged(float rssi);
     /** @brief Radio Calibration Data has been received from the MAV*/

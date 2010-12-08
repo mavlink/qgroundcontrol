@@ -37,35 +37,26 @@ TextureCache::TextureCache(uint32_t _cacheSize)
 {
     for (uint32_t i = 0; i < cacheSize; ++i)
     {
-        TexturePtr t(new Texture);
-
-        GLuint id;
-        glGenTextures(1, &id);
-        t->setID(id);
-        glBindTexture(GL_TEXTURE_2D, id);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        TexturePtr t(new Texture(i));
 
         textures.push_back(t);
     }
 }
 
 TexturePtr
-TextureCache::get(const QString& tileURL, bool useHeightModel)
+TextureCache::get(const QString& tileURL)
 {
-    QPair<TexturePtr, int32_t> p1 = lookup(tileURL, useHeightModel);
+    QPair<TexturePtr, int32_t> p1 = lookup(tileURL);
     if (!p1.first.isNull())
     {
         return p1.first;
     }
 
-    QPair<WebImagePtr, int32_t> p2 =
-            imageCache->lookup(tileURL, useHeightModel);
+    QPair<WebImagePtr, int32_t> p2 = imageCache->lookup(tileURL);
     if (!p2.first.isNull())
     {
         textures[p2.second]->sync(p2.first);
-        p1 = lookup(tileURL, useHeightModel);
+        p1 = lookup(tileURL);
 
         return p1.first;
     }
@@ -86,12 +77,11 @@ TextureCache::sync(void)
 }
 
 QPair<TexturePtr, int32_t>
-TextureCache::lookup(const QString& tileURL, bool useHeightModel)
+TextureCache::lookup(const QString& tileURL)
 {
     for (int32_t i = 0; i < textures.size(); ++i)
     {
-        if (textures[i]->getSourceURL() == tileURL &&
-            textures[i]->is3D() == useHeightModel)
+        if (textures[i]->getSourceURL() == tileURL)
         {
             return qMakePair(textures[i], i);
         }

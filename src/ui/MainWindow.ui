@@ -75,7 +75,9 @@
     <addaction name="actionEngineerView"/>
     <addaction name="actionPilotView"/>
     <addaction name="actionOperatorView"/>
+    <addaction name="action3DMapView"/>
     <addaction name="action3DView"/>
+    <addaction name="actionGoogleEarthView"/>
     <addaction name="actionGlobalOperatorView"/>
     <addaction name="separator"/>
     <addaction name="actionShow_MAVLink_view"/>
@@ -235,7 +237,7 @@
      <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Show 3D view</string>
+    <string>Show 3D Local View</string>
    </property>
    <property name="toolTip">
     <string>Show 3D view</string>
@@ -316,7 +318,25 @@
      <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
-    <string>Show Global operator view</string>
+    <string>Show 2D Map View</string>
+   </property>
+  </action>
+  <action name="action3DMapView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Show 3D Global View</string>
+   </property>
+  </action>
+  <action name="actionGoogleEarthView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/mapproviders/google.png</normaloff>:/images/mapproviders/google.png</iconset>
+   </property>
+   <property name="text">
+    <string>Google Earth View</string>
    </property>
   </action>
   <action name="actionShow_Slugs_View">

@@ -96,10 +96,11 @@ void QGCRemoteControlView::setUASId(int id)
         if (uas)
         {
             // The UAS exists, disconnect any existing connections
-            disconnect(uas, SIGNAL(remoteControlChannelChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
-            disconnect(uas, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
-            disconnect(uas, SIGNAL(radioCalibrationReceived(const QPointer<RadioCalibrationData>)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
-            disconnect(uas, SIGNAL(remoteControlChannelChanged(int,float,float)), calibrationWindow, SLOT(setChannel(int,float,float)));
+            disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
+            disconnect(uas, SIGNAL(remoteControlRSSIRawChanged(float)), this, SLOT(setRemoteRSSI(float)));
+            disconnect(uas, SIGNAL(radioCalibrationRawReceived(const QPointer<RadioCalibrationData>)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
+            disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannelRaw(int,float)));
+            disconnect(uas, SIGNAL(remoteControlChannelScaledChanged(int,float,float)), calibrationWindow, SLOT(setChannelScaled(int,float)));
         }
     }
 
@@ -111,25 +112,49 @@ void QGCRemoteControlView::setUASId(int id)
         nameLabel->setText(QString("RC Input of %1").arg(newUAS->getUASName()));
         calibrationWindow->setUASId(id);
         connect(newUAS, SIGNAL(radioCalibrationReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
-        connect(newUAS, SIGNAL(remoteControlChannelChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
-        connect(newUAS, SIGNAL(remoteControlChannelChanged(int,float,float)), calibrationWindow, SLOT(setChannel(int,float,float)));
         connect(newUAS, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
+
+        connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), this, SLOT(setChannelRaw(int,float)));
+        connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannelRaw(int,float)));
+
+        connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), this, SLOT(setChannelScaled(int,float)));
+        connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), calibrationWindow, SLOT(setChannelScaled(int,float)));
     }
 }
 
-void QGCRemoteControlView::setChannel(int channelId, float raw, float normalized)
+void QGCRemoteControlView::setChannelRaw(int channelId, float raw)
 {
+
     if (this->raw.size() <= channelId)
     {
         // This is a new channel, append it
         this->raw.append(raw);
+        this->normalized.append(0);
+        appendChannelWidget(channelId);
+    }
+    else
+    {
+        // This is an existing channel, aupdate it
+        this->raw[channelId] = raw;
+    }
+    updated = true;
+
+    // FIXME Will be timer based in the future
+    redraw();
+}
+
+void QGCRemoteControlView::setChannelScaled(int channelId, float normalized)
+{
+    if (this->raw.size() <= channelId) // using raw vector as size indicator
+    {
+        // This is a new channel, append it
         this->normalized.append(normalized);
+        this->raw.append(0);
         appendChannelWidget(channelId);
     }
     else
     {
         // This is an existing channel, update it
-        this->raw[channelId] = raw;
         this->normalized[channelId] = normalized;
     }
     updated = true;
@@ -156,8 +181,9 @@ void QGCRemoteControlView::appendChannelWidget(int channelId)
     layout->addWidget(raw);
     // Append progress bar
     QProgressBar* normalized = new QProgressBar(this);
-    normalized->setMinimum(0);
+    normalized->setMinimum(-100);
     normalized->setMaximum(100);
+    normalized->setFormat("%v%");
     progressBars.append(normalized);
     layout->addWidget(normalized);
     channelLayout->addLayout(layout);

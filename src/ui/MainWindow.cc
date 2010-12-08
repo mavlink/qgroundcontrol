@@ -45,7 +45,10 @@ This file is part of the QGROUNDCONTROL project
 #include "MainWindow.h"
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
-#include "QMap3DWidget.h"
+
+#ifdef QGC_OSG_ENABLED
+#include "Q3DWidgetFactory.h"
+#endif
 
 // FIXME Move
 #include "PxQuadMAV.h"
@@ -80,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent) :
     configureWindowName();
 
     // Add status bar
-    setStatusBar(createStatusBar());
+    //setStatusBar(createStatusBar());
 
     // Set the application style (not the same as a style sheet)
     // Set the style to Plastique
@@ -128,11 +131,18 @@ void MainWindow::buildWidgets()
 
     // Center widgets
     linechartWidget   = new Linecharts(this);
-    hudWidget         = new HUD(640, 480, this);
+    hudWidget         = new HUD(320, 240, this);
     mapWidget         = new MapWidget(this);
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
-    map3DWidget       = new QMap3DWidget(this);
+    #ifdef QGC_OSG_ENABLED
+    _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+    #endif
+
+#ifdef QGC_OSGEARTH_ENABLED
+    _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
+#endif
+    gEarthWidget = new QGCGoogleEarthView(this);
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -218,12 +228,13 @@ void MainWindow::connectWidgets()
         // add Waypoint widget in the WaypointList widget when mouse clicked
         connect(mapWidget, SIGNAL(captureMapCoordinateClick(QPointF)), waypointsDockWidget->widget(), SLOT(addWaypointMouse(QPointF)));
         // it notifies that a waypoint global goes to do create
-        connect(mapWidget, SIGNAL(createGlobalWP(bool, QPointF)), waypointsDockWidget->widget(), SLOT(setIsWPGlobal(bool, QPointF)));
-        connect(mapWidget, SIGNAL(sendGeometryEndDrag(QPointF,int)), waypointsDockWidget->widget(), SLOT(waypointGlobalChanged(QPointF,int)) );
+        //connect(mapWidget, SIGNAL(createGlobalWP(bool, QPointF)), waypointsDockWidget->widget(), SLOT(setIsWPGlobal(bool, QPointF)));
+        //connect(mapWidget, SIGNAL(sendGeometryEndDrag(QPointF,int)), waypointsDockWidget->widget(), SLOT(waypointGlobalChanged(QPointF,int)) );
 
         // it notifies that a waypoint global goes to do create and a map graphic too
         connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
         // it notifies that a waypoint global change it¥s position by spinBox on Widget WaypointView
+        //connect(waypointsDockWidget->widget(), SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), mapWidget, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
         connect(waypointsDockWidget->widget(), SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), mapWidget, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
 
         connect(slugsCamControlWidget->widget(),SIGNAL(viewCamBorderAtMap(bool)),mapWidget,SLOT(drawBorderCamAtMap(bool)));
@@ -251,7 +262,13 @@ void MainWindow::arrangeCenterStack()
     if (linechartWidget) centerStack->addWidget(linechartWidget);
     if (protocolWidget) centerStack->addWidget(protocolWidget);
     if (mapWidget) centerStack->addWidget(mapWidget);
-    if (map3DWidget) centerStack->addWidget(map3DWidget);
+    #ifdef QGC_OSG_ENABLED
+    if (_3DWidget) centerStack->addWidget(_3DWidget);
+#endif
+    #ifdef QGC_OSGEARTH_ENABLED
+    if (_3DMapWidget) centerStack->addWidget(_3DMapWidget);
+    #endif
+    if (gEarthWidget) centerStack->addWidget(gEarthWidget);
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 
@@ -359,12 +376,12 @@ void MainWindow::reloadStylesheet()
 
 void MainWindow::showStatusMessage(const QString& status, int timeout)
 {
-    statusBar->showMessage(status, timeout);
+    //statusBar->showMessage(status, timeout);
 }
 
 void MainWindow::showStatusMessage(const QString& status)
 {
-    statusBar->showMessage(status, 5);
+    //statusBar->showMessage(status, 5);
 }
 
 /**
@@ -392,6 +409,7 @@ void MainWindow::connectActions()
     connect(ui.actionEngineerView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionOperatorView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
     connect(ui.action3DView, SIGNAL(triggered()), this, SLOT(load3DView()));
+    connect(ui.action3DMapView, SIGNAL(triggered()), this, SLOT(load3DMapView()));
     connect(ui.actionShow_full_view, SIGNAL(triggered()), this, SLOT(loadAllView()));
     connect(ui.actionShow_MAVLink_view, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
     connect(ui.actionShow_data_analysis_view, SIGNAL(triggered()), this, SLOT(loadDataView()));
@@ -400,6 +418,7 @@ void MainWindow::connectActions()
     connect(ui.actionOnline_documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(ui.actionCredits_Developers, SIGNAL(triggered()), this, SLOT(showCredits()));
     connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
+    connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
 
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
@@ -570,7 +589,7 @@ void MainWindow::UASCreated(UASInterface* uas)
         if (slugsDataWidget) {
           SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
           if (dataWidget) {
-            SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
+        SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
             if (mav2) {
               dataWidget->addUAS(uas);
               //loadSlugsView();
@@ -700,16 +719,18 @@ void MainWindow::loadPixhawkView()
     clearView();
     // Engineer view, used in EMAV2009
 
+#ifdef QGC_OSG_ENABLED
     // 3D map
-    if (map3DWidget)
+    if (_3DWidget)
     {
         QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
         if (centerStack)
         {
             //map3DWidget->setActive(true);
-            centerStack->setCurrentWidget(map3DWidget);
+            centerStack->setCurrentWidget(_3DWidget);
         }
     }
+#endif
 
     // UAS CONTROL
     if (controlDockWidget)
@@ -1010,18 +1031,19 @@ void MainWindow::loadGlobalOperatorView()
 
 }
 
-void MainWindow::load3DView()
+void MainWindow::load3DMapView()
 {
+        #ifdef QGC_OSGEARTH_ENABLED
             clearView();
 
             // 3D map
-            if (map3DWidget)
+            if (_3DMapWidget)
             {
                 QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
                 if (centerStack)
                 {
                     //map3DWidget->setActive(true);
-                    centerStack->setCurrentWidget(map3DWidget);
+                    centerStack->setCurrentWidget(_3DMapWidget);
                 }
             }
 
@@ -1057,8 +1079,112 @@ void MainWindow::load3DView()
                     hsiDockWidget->show();
                 }
             }
-
+#endif
             this->show();
+        }
+
+void MainWindow::loadGoogleEarthView()
+{
+            clearView();
+
+            // 3D map
+            if (gEarthWidget)
+            {
+                QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+                if (centerStack)
+                {
+                    centerStack->setCurrentWidget(gEarthWidget);
+                }
+            }
+
+            // UAS CONTROL
+            if (controlDockWidget)
+            {
+                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+                controlDockWidget->show();
+            }
+
+            // UAS LIST
+            if (listDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+                listDockWidget->show();
+            }
+
+            // WAYPOINT LIST
+            if (waypointsDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
+                waypointsDockWidget->show();
+            }
+
+            // HORIZONTAL SITUATION INDICATOR
+            if (hsiDockWidget)
+            {
+                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+                if (hsi)
+                {
+                    hsi->start();
+                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+                    hsiDockWidget->show();
+                }
+            }
+            this->show();
+
+        }
+
+
+void MainWindow::load3DView()
+{
+        #ifdef QGC_OSG_ENABLED
+            clearView();
+
+            // 3D map
+            if (_3DWidget)
+            {
+                QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+                if (centerStack)
+                {
+                    //map3DWidget->setActive(true);
+                    centerStack->setCurrentWidget(_3DWidget);
+                }
+            }
+
+            // UAS CONTROL
+            if (controlDockWidget)
+            {
+                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+                controlDockWidget->show();
+            }
+
+            // UAS LIST
+            if (listDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+                listDockWidget->show();
+            }
+
+            // WAYPOINT LIST
+            if (waypointsDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
+                waypointsDockWidget->show();
+            }
+
+            // HORIZONTAL SITUATION INDICATOR
+            if (hsiDockWidget)
+            {
+                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+                if (hsi)
+                {
+                    hsi->start();
+                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+                    hsiDockWidget->show();
+                }
+            }
+#endif
+            this->show();
+
         }
 
 void MainWindow::loadEngineerView()
