@@ -178,7 +178,8 @@ linux-g++ {
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
     # Include OpenSceneGraph libraries
-    LIBS += -losg
+    LIBS += -losg \
+            -losgViewer
     DEFINES += QGC_OSG_ENABLED
     }
 
@@ -186,8 +187,7 @@ linux-g++ {
     message("Building support for osgEarth")
     DEPENDENCIES_PRESENT += osgearth
     # Include osgEarth libraries
-    LIBS += -losgViewer \
-            -losgEarth \
+    LIBS += -losgEarth \
             -losgEarthUtil
     DEFINES += QGC_OSGEARTH_ENABLED
     }
@@ -247,7 +247,8 @@ linux-g++-64 {
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
     # Include OpenSceneGraph libraries
-    LIBS += -losg
+    LIBS += -losg \
+            -losgViewer
     DEFINES += QGC_OSG_ENABLED
     }
 
@@ -255,8 +256,7 @@ linux-g++-64 {
     message("Building support for osgEarth")
     DEPENDENCIES_PRESENT += osgearth
     # Include osgEarth libraries
-    LIBS += -losgViewer \
-            -losgEarth \
+    LIBS += -losgEarth \
             -losgEarthUtil
     DEFINES += QGC_OSGEARTH_ENABLED
     }
