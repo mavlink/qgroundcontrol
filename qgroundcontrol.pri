@@ -374,17 +374,15 @@ win32-g++ {
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
-	debug {
-    QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/debug/.
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/debug/.
-	QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
-	}
-	
-	release {
-	QMAKE_PRE_LINK += && cp -f $$BASEDIR/lib/sdl/win32/SDL.dll $$BUILDDIR/release/.
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/release/.
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
-	}
+    BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
+    TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
+
+    QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\debug\SDL.dll\"
+    QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\release\SDL.dll\"
+    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\debug\audio\" /S /E /Y
+    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\release\audio\" /S /E /Y
+    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\debug\models\" /S /E /Y
+    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\release\models\" /S /E /Y
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
