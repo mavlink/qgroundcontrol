@@ -487,10 +487,10 @@ void WaypointList::on_clearWPListButton_clicked()
         }
     else
     {
-        if(isGlobalWP)
-        {
-           emit clearPathclicked();
-        }
+//        if(isGlobalWP)
+//        {
+//           emit clearPathclicked();
+//        }
     }
 }
 
@@ -573,5 +573,5 @@ void WaypointList::setIsLoadFileWP()
 
 void WaypointList::setIsReadGlobalWP(bool value)
 {
-    readGlobalWP = value;
+   // readGlobalWP = value;
 }

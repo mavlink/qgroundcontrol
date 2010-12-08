@@ -95,7 +95,7 @@ namespace qmapcontrol
                     }
                     else
                     {
-                        qDebug() << "NETWORK_PIXMAP_ERROR: " << ax;
+                        //qDebug() << "NETWORK_PIXMAP_ERROR: " << ax;
                     }
                 }
 
