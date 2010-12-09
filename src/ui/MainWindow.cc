@@ -1,24 +1,4 @@
-/*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
+/*===================================================================
 ======================================================================*/
 
 /**
@@ -135,14 +115,16 @@ void MainWindow::buildWidgets()
     mapWidget         = new MapWidget(this);
     protocolWidget    = new XMLCommProtocolWidget(this);
     dataplotWidget    = new QGCDataPlot2D(this);
-    #ifdef QGC_OSG_ENABLED
+#ifdef QGC_OSG_ENABLED
     _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-    #endif
+#endif
 
 #ifdef QGC_OSGEARTH_ENABLED
     _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
 #endif
+#if (defined Q_OS_WIN) | (defined Q_OS_MAC)
     gEarthWidget = new QGCGoogleEarthView(this);
+#endif
 
     // Dock widgets
     controlDockWidget = new QDockWidget(tr("Control"), this);
@@ -262,13 +244,15 @@ void MainWindow::arrangeCenterStack()
     if (linechartWidget) centerStack->addWidget(linechartWidget);
     if (protocolWidget) centerStack->addWidget(protocolWidget);
     if (mapWidget) centerStack->addWidget(mapWidget);
-    #ifdef QGC_OSG_ENABLED
+#ifdef QGC_OSG_ENABLED
     if (_3DWidget) centerStack->addWidget(_3DWidget);
 #endif
-    #ifdef QGC_OSGEARTH_ENABLED
+#ifdef QGC_OSGEARTH_ENABLED
     if (_3DMapWidget) centerStack->addWidget(_3DMapWidget);
-    #endif
+#endif
+#if (defined Q_OS_WIN) | (defined Q_OS_MAC)
     if (gEarthWidget) centerStack->addWidget(gEarthWidget);
+#endif
     if (hudWidget) centerStack->addWidget(hudWidget);
     if (dataplotWidget) centerStack->addWidget(dataplotWidget);
 
@@ -408,8 +392,17 @@ void MainWindow::connectActions()
     connect(ui.actionPilotView, SIGNAL(triggered()), this, SLOT(loadPilotView()));
     connect(ui.actionEngineerView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
     connect(ui.actionOperatorView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
+#ifdef QGC_OSG_ENABLED
     connect(ui.action3DView, SIGNAL(triggered()), this, SLOT(load3DView()));
+#else
+    ui.menuWindow->removeAction(ui.action3DView);
+#endif
+
+#ifdef QGC_OSGEARTH_ENABLED
     connect(ui.action3DMapView, SIGNAL(triggered()), this, SLOT(load3DMapView()));
+#else
+    ui.menuWindow->removeAction(ui.action3DMapView);
+#endif
     connect(ui.actionShow_full_view, SIGNAL(triggered()), this, SLOT(loadAllView()));
     connect(ui.actionShow_MAVLink_view, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
     connect(ui.actionShow_data_analysis_view, SIGNAL(triggered()), this, SLOT(loadDataView()));
@@ -418,7 +411,11 @@ void MainWindow::connectActions()
     connect(ui.actionOnline_documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(ui.actionCredits_Developers, SIGNAL(triggered()), this, SLOT(showCredits()));
     connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
+#if (defined Q_OS_WIN) | (defined Q_OS_MAC)
     connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
+#else
+    ui.menuWindow->removeAction(ui.actionGoogleEarthView);
+#endif
 
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
@@ -1033,7 +1030,7 @@ void MainWindow::loadGlobalOperatorView()
 
 void MainWindow::load3DMapView()
 {
-        #ifdef QGC_OSGEARTH_ENABLED
+#ifdef QGC_OSGEARTH_ENABLED
             clearView();
 
             // 3D map
@@ -1081,10 +1078,11 @@ void MainWindow::load3DMapView()
             }
 #endif
             this->show();
-        }
+}
 
 void MainWindow::loadGoogleEarthView()
 {
+    #if (defined Q_OS_WIN) | (defined Q_OS_MAC)
             clearView();
 
             // 3D map
@@ -1130,13 +1128,14 @@ void MainWindow::loadGoogleEarthView()
                 }
             }
             this->show();
+#endif
 
-        }
+}
 
 
 void MainWindow::load3DView()
 {
-        #ifdef QGC_OSG_ENABLED
+#ifdef QGC_OSG_ENABLED
             clearView();
 
             // 3D map
@@ -1185,7 +1184,7 @@ void MainWindow::load3DView()
 #endif
             this->show();
 
-        }
+}
 
 void MainWindow::loadEngineerView()
 {

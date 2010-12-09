@@ -95,6 +95,7 @@ void UASControlWidget::setUAS(UASInterface* uas)
         disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
         disconnect(ui.landButton, SIGNAL(clicked()), oldUAS, SLOT(home()));
         disconnect(ui.shutdownButton, SIGNAL(clicked()), oldUAS, SLOT(shutdown()));
+        connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
         disconnect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
     }
@@ -104,6 +105,7 @@ void UASControlWidget::setUAS(UASInterface* uas)
     connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
     connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
     connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
+    connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
     connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
     connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
 

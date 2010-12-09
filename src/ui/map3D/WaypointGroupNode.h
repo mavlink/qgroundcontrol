@@ -23,39 +23,29 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Definition of the class GCManipulator.
+ *   @brief Definition of the class WaypointGroupNode.
  *
  *   @author Lionel Heng <hengli@student.ethz.ch>
  *
  */
 
-#ifndef GCMANIPULATOR_H
-#define GCMANIPULATOR_H
+#ifndef WAYPOINTGROUPNODE_H
+#define WAYPOINTGROUPNODE_H
 
-#include <osgGA/TrackballManipulator>
+#include <osg/Group>
 
-class GCManipulator : public osgGA::TrackballManipulator
+#include "UASInterface.h"
+
+class WaypointGroupNode : public osg::Group
 {
 public:
-    GCManipulator();
+    WaypointGroupNode();
 
-    void setMinZoomRange(double minZoomRange);
+    void init(void);
+    void update(MAV_FRAME frame, UASInterface* uas);
 
-    virtual void move(double dx, double dy, double dz);
-
-    /**
-     * @brief Handle events.
-     * @return True if event is handled; false otherwise.
-     */
-    virtual bool handle(const osgGA::GUIEventAdapter& ea,
-                        osgGA::GUIActionAdapter& us);
-
-protected:
-    bool calcMovement(void);
-
-    double _moveSensitivity;
-    double _zoomSensitivity;
-    double _minZoomRange;
+private:
+    void getPosition(Waypoint* wp, double& x, double& y, double& z);
 };
 
-#endif // GCMANIPULATOR_H
+#endif // WAYPOINTGROUPNODE_H

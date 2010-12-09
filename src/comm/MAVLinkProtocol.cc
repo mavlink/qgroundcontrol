@@ -347,7 +347,7 @@ void MAVLinkProtocol::sendHeartbeat()
     if (m_heartbeatsEnabled)
     {
         mavlink_message_t beat;
-        mavlink_msg_heartbeat_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID,&beat, OCU, MAV_AUTOPILOT_GENERIC);
+        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, OCU, MAV_AUTOPILOT_GENERIC);
         sendMessage(beat);
     }
 }

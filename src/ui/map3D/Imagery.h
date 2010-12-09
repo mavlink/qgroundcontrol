@@ -60,6 +60,7 @@ public:
                     const QString& utmZone);
     void draw2D(double windowWidth, double windowHeight,
                 double zoom, double xOrigin, double yOrigin,
+                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone);
 
     void prefetch3D(double radius, double tileResolution,
@@ -67,9 +68,16 @@ public:
                     const QString& utmZone);
     void draw3D(double radius, double tileResolution,
                 double xOrigin, double yOrigin,
+                double xOffset, double yOffset, double zOffset,
                 const QString& utmZone);
 
     bool update(void);
+
+    static void LLtoUTM(double latitude, double longitude,
+                        double& utmNorthing, double& utmEasting,
+                        QString& utmZone);
+    static void UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
+                        double& latitude, double& longitude);
 
 private:
     void imageBounds(int tileX, int tileY, double tileResolution,
@@ -90,13 +98,7 @@ private:
     void UTMtoTile(double northing, double easting, const QString& utmZone,
                    double tileResolution, int& tileX, int& tileY,
                    int& zoomLevel) const;
-    QChar UTMLetterDesignator(double latitude) const;
-
-    void LLtoUTM(double latitude, double longitude,
-                 double& utmNorthing, double& utmEasting,
-                 QString& utmZone) const;
-    void UTMtoLL(double utmNorthing, double utmEasting, const QString& utmZone,
-                 double& latitude, double& longitude) const;
+    static QChar UTMLetterDesignator(double latitude);
 
     QString getTileLocation(int tileX, int tileY, int zoomLevel,
                             double tileResolution) const;

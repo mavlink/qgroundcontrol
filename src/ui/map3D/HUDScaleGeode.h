@@ -23,39 +23,30 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Definition of the class GCManipulator.
+ *   @brief Definition of the class HUDScaleGeode.
  *
  *   @author Lionel Heng <hengli@student.ethz.ch>
  *
  */
 
-#ifndef GCMANIPULATOR_H
-#define GCMANIPULATOR_H
+#ifndef HUDSCALEGEODE_H
+#define HUDSCALEGEODE_H
 
-#include <osgGA/TrackballManipulator>
+#include <osg/Geode>
+#include <osgText/Text>
+#include <QString>
 
-class GCManipulator : public osgGA::TrackballManipulator
+class HUDScaleGeode : public osg::Geode
 {
 public:
-    GCManipulator();
+    HUDScaleGeode();
 
-    void setMinZoomRange(double minZoomRange);
+    void init(void);
+    void update(int windowHeight, float cameraFov, float cameraDistance,
+                bool darkBackground);
 
-    virtual void move(double dx, double dy, double dz);
-
-    /**
-     * @brief Handle events.
-     * @return True if event is handled; false otherwise.
-     */
-    virtual bool handle(const osgGA::GUIEventAdapter& ea,
-                        osgGA::GUIActionAdapter& us);
-
-protected:
-    bool calcMovement(void);
-
-    double _moveSensitivity;
-    double _zoomSensitivity;
-    double _minZoomRange;
+private:
+    osg::ref_ptr<osgText::Text> text;
 };
 
-#endif // GCMANIPULATOR_H
+#endif // HUDSCALEGEODE_H

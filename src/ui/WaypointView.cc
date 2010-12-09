@@ -49,7 +49,6 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->setupUi(this);
 
     this->wp = wp;
-    wp->setFrame(MAV_FRAME_LOCAL);
 
     // add actions
     m_ui->comboBox_action->addItem("Navigate",MAV_ACTION_NAVIGATE);
@@ -61,12 +60,12 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_frame->addItem("Global",MAV_FRAME_GLOBAL);
     m_ui->comboBox_frame->addItem("Local",MAV_FRAME_LOCAL);
 
-    // defaults
-    changedAction(0);
-    changedFrame(0);
-
     // Read values and set user interface
     updateValues();
+
+    // defaults
+    //changedAction(wp->getAction());
+    //changedFrame(wp->getFrame());
 
     connect(m_ui->posNSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
     connect(m_ui->posESpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
@@ -134,7 +133,7 @@ void WaypointView::changedAction(int index)
     m_ui->holdTimeSpinBox->hide();
 
     // set waypoint action
-    MAV_ACTION action = (MAV_ACTION)m_ui->comboBox_action->itemData(index).toUInt();
+    MAV_ACTION action = (MAV_ACTION) m_ui->comboBox_action->itemData(index).toUInt();
     wp->setAction(action);
 
     // expose ui based on action
@@ -207,7 +206,8 @@ void WaypointView::updateValues()
 {
     // update frame
     MAV_FRAME frame = wp->getFrame();
-    changedFrame(m_ui->comboBox_frame->findData(frame));
+    int frame_index = m_ui->comboBox_frame->findData(frame);
+    m_ui->comboBox_frame->setCurrentIndex(frame_index);
     switch(frame)
     {
     case(MAV_FRAME_LOCAL):
@@ -221,11 +221,12 @@ void WaypointView::updateValues()
         m_ui->altSpinBox->setValue(wp->getZ());
         break;
     }
+    changedFrame(frame_index);
 
     // update action
     MAV_ACTION action = wp->getAction();
-    changedFrame(m_ui->comboBox_frame->findData(frame));
-    changedAction(m_ui->comboBox_action->findData(action));
+    int action_index = m_ui->comboBox_action->findData(action);
+    m_ui->comboBox_action->setCurrentIndex(action_index);
     switch(action)
     {
     case MAV_ACTION_TAKEOFF:
@@ -239,6 +240,7 @@ void WaypointView::updateValues()
     default:
         std::cerr << "unknown action" << std::endl;
     }
+    changedAction(action_index);
 
     m_ui->yawSpinBox->setValue(wp->getYaw()/M_PI*180.);
     m_ui->selectedBox->setChecked(wp->getCurrent());
