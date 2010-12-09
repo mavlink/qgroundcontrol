@@ -18,6 +18,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         updateTimer(new QTimer(this)),
         mav(NULL),
         followCamera(true),
+        trailEnabled(true),
 #if (defined Q_OS_MAC)
         webViewMac(new QWebView(this)),
 #endif
@@ -51,6 +52,14 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     updateTimer->start(200);
 #endif
 
+    // Follow checkbox
+    ui->followAirplaneCheckbox->setChecked(followCamera);
+    connect(ui->followAirplaneCheckbox, SIGNAL(toggled(bool)), this, SLOT(follow(bool)));
+
+    // Trail checkbox
+    ui->trailCheckbox->setChecked(trailEnabled);
+    connect(ui->trailCheckbox, SIGNAL(toggled(bool)), this, SLOT(showTrail(bool)));
+
     // Get list of available 3D models
 
     // Load HTML file
@@ -70,19 +79,19 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
     mav = uas;
 }
 
-void QGCGoogleEarthView::showTrail(int state)
+void QGCGoogleEarthView::showTrail(bool state)
 {
 
 }
 
-void QGCGoogleEarthView::showWaypoints(int state)
+void QGCGoogleEarthView::showWaypoints(bool state)
 {
 
 }
 
 void QGCGoogleEarthView::follow(bool follow)
 {
-
+    followCamera = follow;
 }
 
 void QGCGoogleEarthView::updateState()
