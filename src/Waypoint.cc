@@ -33,8 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include <QStringList>
 
-Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _autocontinue, bool _current, float _orbit, int _holdTime,
-                   MAV_FRAME _frame, MAV_ACTION _action)
+Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _autocontinue, bool _current, float _orbit, int _holdTime, MAV_FRAME _frame, MAV_ACTION _action)
 : id(_id),
   x(_x),
   y(_y),

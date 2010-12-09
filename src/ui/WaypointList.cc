@@ -206,13 +206,10 @@ void WaypointList::add()
             }
             else
             {
-
-
                     //isLocalWP = true;
-                    Waypoint *wp = new Waypoint(0, 1.1, 1.1, -0.8, 0.0, true, true, 0.15, 2000);
+                    Waypoint *wp = new Waypoint(0, uas->getLongitude(), uas->getLatitude(), uas->getAltitude(),
+                                                0.0, true, true, 0.15, 2000);
                     uas->getWaypointManager().addWaypoint(wp);
-
-
             }
         }
     }

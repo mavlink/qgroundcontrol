@@ -49,7 +49,7 @@ MAVLINK_CONF = ""
 # if the variable MAVLINK_CONF contains the name of an
 # additional project, QGroundControl includes the support
 # of custom MAVLink messages of this project
-exists(user_config.pri) {
+exists(user_config.pri) { 
     include(user_config.pri)
     message("----- USING CUSTOM USER QGROUNDCONTROL CONFIG FROM user_config.pri -----")
     message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
@@ -59,7 +59,7 @@ INCLUDEPATH += $$BASEDIR/../mavlink/include/common
 contains(MAVLINK_CONF, pixhawk) { 
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-
+    
     # PIXHAWK SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
     DEFINES += QGC_USE_PIXHAWK_MESSAGES
@@ -67,7 +67,7 @@ contains(MAVLINK_CONF, pixhawk) {
 contains(MAVLINK_CONF, slugs) { 
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-
+    
     # SLUGS SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
     DEFINES += QGC_USE_SLUGS_MESSAGES
@@ -75,7 +75,7 @@ contains(MAVLINK_CONF, slugs) {
 contains(MAVLINK_CONF, ualberta) { 
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-
+    
     # UALBERTA SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
     DEFINES += QGC_USE_UALBERTA_MESSAGES
@@ -83,7 +83,7 @@ contains(MAVLINK_CONF, ualberta) {
 contains(MAVLINK_CONF, ardupilotmega) { 
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
-
+    
     # UALBERTA SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/ardupilotmega
     DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
@@ -144,6 +144,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QMap3D.ui \
     src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
+    src/ui/map3D/QGCGoogleEarthViewWin.ui \
+    src/ui/map3D/QGCGoogleEarthControls.ui \
     src/ui/SlugsDataSensorView.ui \
     src/ui/SlugsHilSim.ui \
     src/ui/SlugsPIDControl.ui \
@@ -241,6 +243,7 @@ HEADERS += src/MG.h \
     src/ui/RadioCalibration/AbstractCalibrator.h \
     src/comm/QGCMAVLink.h \
     src/ui/QGCWebView.h \
+    src/ui/map3D/QGCWebPage.h \
     src/ui/map3D/QGCGoogleEarthView.h\
     src/ui/SlugsDataSensorView.h \
     src/ui/SlugsHilSim.h \
@@ -263,11 +266,9 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/WebImage.h \
         src/ui/map3D/TextureCache.h \
         src/ui/map3D/Texture.h \
-        src/ui/map3D/TextureCache.h \
-        src/ui/map3D/WebImage.h \
-        src/ui/map3D/WebImageCache.h \
         src/ui/map3D/Imagery.h \
-        src/comm/QGCMAVLink.h
+        src/ui/map3D/HUDScaleGeode.h \
+        src/ui/map3D/WaypointGroupNode.h
     contains(DEPENDENCIES_PRESENT, osgearth) { 
         message("Including headers for OSGEARTH")
         
@@ -352,7 +353,13 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
     src/ui/RadioCalibration/RadioCalibrationData.cc \
     src/ui/QGCWebView.cc \
-    src/ui/map3D/QGCGoogleEarthView.cc
+    src/ui/map3D/QGCGoogleEarthView.cc \
+    src/ui/map3D/QGCWebPage.cc \
+    src/ui/SlugsDataSensorView.cc \
+    src/ui/SlugsHilSim.cc \
+    src/ui/SlugsPIDControl.cpp \
+    src/ui/SlugsVideoCamControl.cpp \
+    src/ui/SlugsPadCameraControl.cpp
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     
@@ -364,16 +371,14 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/PixhawkCheetahGeode.cc \
         src/ui/map3D/Pixhawk3DWidget.cc \
         src/ui/map3D/Q3DWidgetFactory.cc \
-    src/ui/map3D/WebImageCache.cc \
-    src/ui/map3D/WebImage.cc \
+        src/ui/map3D/WebImageCache.cc \
+        src/ui/map3D/WebImage.cc \
         src/ui/map3D/TextureCache.cc \
         src/ui/map3D/Texture.cc \
-    src/ui/map3D/Imagery.cc \
-    src/ui/SlugsDataSensorView.cc \
-    src/ui/SlugsHilSim.cc \
-    src/ui/SlugsPIDControl.cpp \
-    src/ui/SlugsVideoCamControl.cpp \
-    src/ui/SlugsPadCameraControl.cpp
+        src/ui/map3D/Imagery.cc \
+        src/ui/map3D/HUDScaleGeode.cc \
+        src/ui/map3D/WaypointGroupNode.cc \
+
 
     contains(DEPENDENCIES_PRESENT, osgearth) { 
         message("Including sources for osgEarth")

@@ -73,12 +73,15 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         sendDropRate(0),
         lowBattAlarm(false),
         positionLock(false),
-        localX(0),
-        localY(0),
-        localZ(0),
-        roll(0),
-        pitch(0),
-        yaw(0),
+        localX(0.0),
+        localY(0.0),
+        localZ(0.0),
+        latitude(0.0),
+        longitude(0.0),
+        altitude(0.0),
+        roll(0.0),
+        pitch(0.0),
+        yaw(0.0),
         statusTimeout(new QTimer(this))
 {
     color = UASInterface::getNextColor();
@@ -243,7 +246,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
 
                 // COMMUNICATIONS DROP RATE
-                emit dropRateChanged(this->getUASID(), state.packet_drop);
+                emit dropRateChanged(this->getUASID(), state.packet_drop/1000.0f);
                 //qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;
 
                 // AUDIO
@@ -342,6 +345,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_global_position_t pos;
                 mavlink_msg_global_position_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.usec);
+                latitude = pos.lat;
+                longitude = pos.lon;
+                altitude = pos.alt;
                 emit valueChanged(uasId, "lat", pos.lat, time);
                 emit valueChanged(uasId, "lon", pos.lon, time);
                 emit valueChanged(uasId, "alt", pos.alt, time);
@@ -413,6 +419,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 {
                     emit gpsSatelliteStatusChanged(uasId, (unsigned char)pos.satellite_prn[i], (unsigned char)pos.satellite_elevation[i], (unsigned char)pos.satellite_azimuth[i], (unsigned char)pos.satellite_snr[i], static_cast<bool>(pos.satellite_used[i]));
                 }
+            }
+            break;
+        case MAVLINK_MSG_ID_GPS_LOCAL_ORIGIN_SET:
+            {
+                mavlink_gps_local_origin_set_t pos;
+                mavlink_msg_gps_local_origin_set_decode(&message, &pos);
+                // FIXME Emit to other components
             }
             break;
         case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
@@ -559,6 +572,17 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
+    case MAVLINK_MSG_ID_DEBUG_VECT:
+            {
+                mavlink_debug_vect_t vect;
+                mavlink_msg_debug_vect_decode(&message, &vect);
+                QString str((const char*)vect.name);
+                quint64 time = getUnixTime(vect.usec);
+                emit valueChanged(uasId, str+".x", vect.x, time);
+                emit valueChanged(uasId, str+".y", vect.y, time);
+                emit valueChanged(uasId, str+".z", vect.z, time);
+            }
+            break;
 //#ifdef MAVLINK_ENABLED_PIXHAWK
 //            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
 //            {
@@ -635,13 +659,43 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
     }
 }
 
+void UAS::setLocalOriginAtCurrentGPSPosition()
+{
+
+    bool result = false;
+    QMessageBox msgBox;
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setText("Setting new World Coordinate Frame Origin");
+    msgBox.setInformativeText("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    int ret = msgBox.exec();
+
+    // Close the message box shortly after the click to prevent accidental clicks
+    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
+
+
+    if (ret == QMessageBox::Yes)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getSystemId(), &msg, this->getUASID(), 0, MAV_ACTION_SET_ORIGIN);
+        // Send message twice to increase chance that it reaches its goal
+        sendMessage(msg);
+        // Wait 5 ms
+        MG::SLEEP::usleep(5000);
+        // Send again
+        sendMessage(msg);
+        result = true;
+    }
+}
+
 void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 {
-  #ifdef MAVLINK_ENABLED_PIXHAWK
+    #ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_message_t msg;
     mavlink_msg_position_control_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, 0, x, y, z, yaw);
     sendMessage(msg);
-  #endif
+#endif
 }
 
 void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
@@ -771,6 +825,7 @@ void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer(buffer, &message);
+    mavlink_finalize_message_chan(&message, mavlink->getSystemId(), mavlink->getComponentId(), link->getId(), message.len);
     // If link is connected
     if (link->isConnected())
     {
@@ -1201,14 +1256,12 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
 
 //    if(mode == (int)MAV_MODE_MANUAL)
 //    {
-      #ifdef MAVLINK_ENABLED_PIXHAWK
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
         sendMessage(message);
         qDebug() << __FILE__ << __LINE__ << ": SENT MANUAL CONTROL MESSAGE: roll" << manualRollAngle << " pitch: " << manualPitchAngle << " yaw: " << manualYawAngle << " thrust: " << manualThrust;
 
         emit attitudeThrustSetPointChanged(this, roll, pitch, yaw, thrust, MG::TIME::getGroundTimeNow());
-      #endif
 //    }
 }
 

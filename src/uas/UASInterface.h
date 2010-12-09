@@ -70,6 +70,10 @@ public:
     virtual double getLocalY() const = 0;
     virtual double getLocalZ() const = 0;
 
+    virtual double getLatitude() const = 0;
+    virtual double getLongitude() const = 0;
+    virtual double getAltitude() const = 0;
+
     virtual double getRoll() const = 0;
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
@@ -190,6 +194,8 @@ public slots:
     //virtual void requestWaypoints() = 0;
     /** @brief Clear all existing waypoints on the robot */
     //virtual void clearWaypointList() = 0;
+    /** @brief Set world frame origin at current GPS position */
+    virtual void setLocalOriginAtCurrentGPSPosition() = 0;
     /** @brief Request all onboard parameters of all components */
     virtual void requestParameters() = 0;
     /** @brief Write parameter to permanent storage */

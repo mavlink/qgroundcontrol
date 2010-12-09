@@ -1,46 +1,71 @@
+/*=====================================================================
+
+QGroundControl Open Source Ground Control Station
+
+(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+
+This file is part of the QGROUNDCONTROL project
+
+    QGROUNDCONTROL is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    QGROUNDCONTROL is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
+
+======================================================================*/
+
+/**
+ * @file
+ *   @brief Definition of the class Freenect.
+ *
+ *   @author Lionel Heng <hengli@student.ethz.ch>
+ *
+ */
+
 #include "Freenect.h"
 
 #include <cmath>
 #include <string.h>
+#include <QSettings>
 
 Freenect::Freenect()
     : context(NULL)
     , device(NULL)
     , tiltAngle(0)
+    , rgbData(new QByteArray)
+    , rawDepthData(new QByteArray)
+    , coloredDepthData(new QByteArray)
+    , pointCloud3D(new QVector<QVector3D>)
+    , pointCloud6D(new QVector<Vector6D>)
 {
-    // default rgb camera parameters
-    rgbCameraParameters.cx = 3.2894272028759258e+02;
-    rgbCameraParameters.cy = 2.6748068171871557e+02;
-    rgbCameraParameters.fx = 5.2921508098293293e+02;
-    rgbCameraParameters.fy = 5.2556393630057437e+02;
-    rgbCameraParameters.k[0] = 2.6451622333009589e-01;
-    rgbCameraParameters.k[1] = -8.3990749424620825e-01;
-    rgbCameraParameters.k[2] = -1.9922302173693159e-03;
-    rgbCameraParameters.k[3] = 1.4371995932897616e-03;
-    rgbCameraParameters.k[4] = 9.1192465078713847e-01;
 
-    // default depth camera parameters
-    depthCameraParameters.cx = 3.3930780975300314e+02;
-    depthCameraParameters.cy = 2.4273913761751615e+02;
-    depthCameraParameters.fx = 5.9421434211923247e+02;
-    depthCameraParameters.fy = 5.9104053696870778e+02;
-    depthCameraParameters.k[0] = -2.6386489753128833e-01;
-    depthCameraParameters.k[1] = 9.9966832163729757e-01;
-    depthCameraParameters.k[2] = -7.6275862143610667e-04;
-    depthCameraParameters.k[3] = 5.0350940090814270e-03;
-    depthCameraParameters.k[4] = -1.3053628089976321e+00;
+}
 
-    // relative rotation/translation between cameras with depth camera as reference
-    transformMatrix = QMatrix4x4(9.9984628826577793e-01, 1.2635359098409581e-03,
-                                 -1.7487233004436643e-02, 1.9985242312092553e-02,
-                                 -1.4779096108364480e-03, 9.9992385683542895e-01,
-                                 -1.2251380107679535e-02, -7.4423738761617583e-04,
-                                 1.7470421412464927e-02, 1.2275341476520762e-02,
-                                 9.9977202419716948e-01, -1.0916736334336222e-02,
-                                 0.0, 0.0, 0.0, 1.0);
+Freenect::~Freenect()
+{
+    if (device != NULL)
+    {
+        freenect_stop_depth(device);
+        freenect_stop_video(device);
+    }
 
-    // relative rotation/translation between cameras with rgb camera as reference
-    transformMatrix = transformMatrix.transposed();
+    freenect_close_device(device);
+
+    freenect_shutdown(context);
+}
+
+bool
+Freenect::init(int userDeviceNumber)
+{
+    // read in settings
+    readConfigFile();
 
     // populate gamma lookup table
     for (int i = 0; i < 2048; ++i)
@@ -68,24 +93,7 @@ Freenect::Freenect()
             rgbRectificationMap[i * FREENECT_FRAME_W + j] = rectifiedPoint;
         }
     }
-}
 
-Freenect::~Freenect()
-{
-    if (device != NULL)
-    {
-        freenect_stop_depth(device);
-        freenect_stop_rgb(device);
-    }
-
-    freenect_close_device(device);
-
-    freenect_shutdown(context);
-}
-
-bool
-Freenect::init(int userDeviceNumber)
-{
     if (freenect_init(&context, NULL) < 0)
     {
         return false;
@@ -105,8 +113,8 @@ Freenect::init(int userDeviceNumber)
 
     freenect_set_user(device, this);
 
-    memset(rgb, 0, FREENECT_RGB_SIZE);
-    memset(depth, 0, FREENECT_DEPTH_SIZE);
+    memset(rgb, 0, FREENECT_VIDEO_RGB_SIZE);
+    memset(depth, 0, FREENECT_DEPTH_11BIT_SIZE);
 
     // set Kinect parameters
     if (freenect_set_tilt_degs(device, tiltAngle) != 0)
@@ -117,22 +125,22 @@ Freenect::init(int userDeviceNumber)
     {
         return false;
     }
-    if (freenect_set_rgb_format(device, FREENECT_FORMAT_RGB) != 0)
+    if (freenect_set_video_format(device, FREENECT_VIDEO_RGB) != 0)
     {
         return false;
     }
-    if (freenect_set_depth_format(device, FREENECT_FORMAT_11_BIT) != 0)
+    if (freenect_set_depth_format(device, FREENECT_DEPTH_11BIT) != 0)
     {
         return false;
     }
-    freenect_set_rgb_callback(device, rgbCallback);
+    freenect_set_video_callback(device, videoCallback);
     freenect_set_depth_callback(device, depthCallback);
 
-    if (freenect_start_rgb(device) != 0)
+    if (freenect_start_depth(device) != 0)
     {
         return false;
     }
-    if (freenect_start_depth(device) != 0)
+    if (freenect_start_video(device) != 0)
     {
         return false;
     }
@@ -151,14 +159,10 @@ Freenect::process(void)
         return false;
     }
 
-    //libfreenect changed some access functions in one of the new revisions
-    freenect_raw_device_state state;
-    freenect_get_mks_accel(&state, &ax, &ay, &az);
-    //tiltAngle = freenect_get_tilt_degs(&state);
-
-    //these are the old access functions
-    //freenect_get_raw_accel(device, &ax, &ay, &az);
-    //freenect_get_mks_accel(device, &dx, &dy, &dz);
+    freenect_raw_tilt_state* state;
+    freenect_update_tilt_state(device);
+    state = freenect_get_tilt_state(device);
+    freenect_get_mks_accel(state, &ax, &ay, &az);
 
     return true;
 }
@@ -167,37 +171,42 @@ QSharedPointer<QByteArray>
 Freenect::getRgbData(void)
 {
     QMutexLocker locker(&rgbMutex);
-    return QSharedPointer<QByteArray>(
-            new QByteArray(rgb, FREENECT_RGB_SIZE));
+    rgbData->clear();
+    rgbData->append(rgb, FREENECT_VIDEO_RGB_SIZE);
+
+    return rgbData;
 }
 
 QSharedPointer<QByteArray>
 Freenect::getRawDepthData(void)
 {
     QMutexLocker locker(&depthMutex);
-    return QSharedPointer<QByteArray>(
-            new QByteArray(depth, FREENECT_DEPTH_SIZE));
+    rawDepthData->clear();
+    rawDepthData->append(depth, FREENECT_DEPTH_11BIT_SIZE);
+
+    return rawDepthData;
 }
 
 QSharedPointer<QByteArray>
 Freenect::getColoredDepthData(void)
 {
     QMutexLocker locker(&coloredDepthMutex);
-    return QSharedPointer<QByteArray>(
-            new QByteArray(coloredDepth, FREENECT_RGB_SIZE));
+    coloredDepthData->clear();
+    coloredDepthData->append(coloredDepth, FREENECT_VIDEO_RGB_SIZE);
+
+    return coloredDepthData;
 }
 
-QVector<QVector3D>
+QSharedPointer< QVector<QVector3D> >
 Freenect::get3DPointCloudData(void)
 {
     QMutexLocker locker(&depthMutex);
 
-    QVector<QVector3D> pointCloud;
-
+    pointCloud3D->clear();
     unsigned short* data = reinterpret_cast<unsigned short*>(depth);
     for (int i = 0; i < FREENECT_FRAME_PIX; ++i)
     {
-        if (data[i] <= 2048)
+        if (data[i] > 0 && data[i] <= 2048)
         {
             // see www.ros.org/wiki/kinect_node for details
             double range = 1.0f / (-0.00307f * static_cast<float>(data[i]) + 3.33f);
@@ -207,28 +216,27 @@ Freenect::get3DPointCloudData(void)
                 QVector3D ray = depthProjectionMatrix[i];
                 ray *= range;
 
-                pointCloud.push_back(QVector3D(ray.x(), ray.y(), ray.z()));
+                pointCloud3D->push_back(QVector3D(ray.x(), ray.y(), ray.z()));
             }
         }
     }
 
-    return pointCloud;
+    return pointCloud3D;
 }
 
-QVector<Freenect::Vector6D>
+QSharedPointer< QVector<Freenect::Vector6D> >
 Freenect::get6DPointCloudData(void)
 {
-    QVector<QVector3D> rawPointCloud = get3DPointCloudData();
+    get3DPointCloudData();
 
-    QVector<Freenect::Vector6D> pointCloud;
-
-    for (int i = 0; i < rawPointCloud.size(); ++i)
+    pointCloud6D->clear();
+    for (int i = 0; i < pointCloud3D->size(); ++i)
     {
         Vector6D point;
 
-        point.x = rawPointCloud[i].x();
-        point.y = rawPointCloud[i].y();
-        point.z = rawPointCloud[i].z();
+        point.x = pointCloud3D->at(i).x();
+        point.y = pointCloud3D->at(i).y();
+        point.z = pointCloud3D->at(i).z();
 
         QVector4D transformedPoint = transformMatrix * QVector4D(point.x, point.y, point.z, 1.0);
 
@@ -251,11 +259,11 @@ Freenect::get6DPointCloudData(void)
             point.g = pixel[1];
             point.b = pixel[2];
 
-            pointCloud.push_back(point);
+            pointCloud6D->push_back(point);
         }
     }
 
-    return pointCloud;
+    return pointCloud6D;
 }
 
 int
@@ -292,6 +300,47 @@ Freenect::FreenectThread::run(void)
     {
         freenect->process();
     }
+}
+
+void
+Freenect::readConfigFile(void)
+{
+    QSettings settings("data/kinect.cal", QSettings::IniFormat, 0);
+
+    rgbCameraParameters.cx = settings.value("rgb/principal_point/x").toDouble();
+    rgbCameraParameters.cy = settings.value("rgb/principal_point/y").toDouble();
+    rgbCameraParameters.fx = settings.value("rgb/focal_length/x").toDouble();
+    rgbCameraParameters.fy = settings.value("rgb/focal_length/y").toDouble();
+    rgbCameraParameters.k[0] = settings.value("rgb/distortion/k1").toDouble();
+    rgbCameraParameters.k[1] = settings.value("rgb/distortion/k2").toDouble();
+    rgbCameraParameters.k[2] = settings.value("rgb/distortion/k3").toDouble();
+    rgbCameraParameters.k[3] = settings.value("rgb/distortion/k4").toDouble();
+    rgbCameraParameters.k[4] = settings.value("rgb/distortion/k5").toDouble();
+
+    depthCameraParameters.cx = settings.value("depth/principal_point/x").toDouble();
+    depthCameraParameters.cy = settings.value("depth/principal_point/y").toDouble();
+    depthCameraParameters.fx = settings.value("depth/focal_length/x").toDouble();
+    depthCameraParameters.fy = settings.value("depth/focal_length/y").toDouble();
+    depthCameraParameters.k[0] = settings.value("depth/distortion/k1").toDouble();
+    depthCameraParameters.k[1] = settings.value("depth/distortion/k2").toDouble();
+    depthCameraParameters.k[2] = settings.value("depth/distortion/k3").toDouble();
+    depthCameraParameters.k[3] = settings.value("depth/distortion/k4").toDouble();
+    depthCameraParameters.k[4] = settings.value("depth/distortion/k5").toDouble();
+
+    transformMatrix = QMatrix4x4(settings.value("transform/R11").toDouble(),
+                                 settings.value("transform/R12").toDouble(),
+                                 settings.value("transform/R13").toDouble(),
+                                 settings.value("transform/Tx").toDouble(),
+                                 settings.value("transform/R21").toDouble(),
+                                 settings.value("transform/R22").toDouble(),
+                                 settings.value("transform/R23").toDouble(),
+                                 settings.value("transform/Ty").toDouble(),
+                                 settings.value("transform/R31").toDouble(),
+                                 settings.value("transform/R32").toDouble(),
+                                 settings.value("transform/R33").toDouble(),
+                                 settings.value("transform/Tz").toDouble(),
+                                 0.0, 0.0, 0.0, 1.0);
+    transformMatrix = transformMatrix.transposed();
 }
 
 void
@@ -355,22 +404,22 @@ Freenect::projectPixelTo3DRay(const QVector2D& pixel, QVector3D& ray,
 }
 
 void
-Freenect::rgbCallback(freenect_device* device, freenect_pixel* rgb, uint32_t timestamp)
+Freenect::videoCallback(freenect_device* device, void* video, uint32_t timestamp)
 {
     Freenect* freenect = static_cast<Freenect *>(freenect_get_user(device));
 
     QMutexLocker locker(&freenect->rgbMutex);
-    memcpy(freenect->rgb, rgb, FREENECT_RGB_SIZE);
+    memcpy(freenect->rgb, video, FREENECT_VIDEO_RGB_SIZE);
 }
 
 void
 Freenect::depthCallback(freenect_device* device, void* depth, uint32_t timestamp)
 {
     Freenect* freenect = static_cast<Freenect *>(freenect_get_user(device));
-    freenect_depth* data = reinterpret_cast<freenect_depth *>(depth);
+    uint16_t* data = reinterpret_cast<uint16_t *>(depth);
 
     QMutexLocker depthLocker(&freenect->depthMutex);
-    memcpy(freenect->depth, data, FREENECT_DEPTH_SIZE);
+    memcpy(freenect->depth, data, FREENECT_DEPTH_11BIT_SIZE);
 
     QMutexLocker coloredDepthLocker(&freenect->coloredDepthMutex);
     unsigned short* src = reinterpret_cast<unsigned short *>(data);

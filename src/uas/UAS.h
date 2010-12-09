@@ -82,6 +82,9 @@ public:
     double getLocalX() const { return localX; };
     double getLocalY() const { return localY; };
     double getLocalZ() const { return localZ; };
+    double getLatitude() const { return latitude; };
+    double getLongitude() const { return longitude; };
+    double getAltitude() const { return altitude; };
 
     double getRoll() const { return roll; };
     double getPitch() const { return pitch; };
@@ -139,6 +142,9 @@ protected:
     double localX;
     double localY;
     double localZ;
+    double latitude;
+    double longitude;
+    double altitude;
     double roll;
     double pitch;
     double yaw;
@@ -237,6 +243,8 @@ public slots:
     /** @brief Update the system state */
     void updateState();
 
+    /** @brief Set world frame origin at current GPS position */
+    void setLocalOriginAtCurrentGPSPosition();
     /** @brief Set local position setpoint */
     void setLocalPositionSetpoint(float x, float y, float z, float yaw);
     /** @brief Add an offset in body frame to the setpoint */
