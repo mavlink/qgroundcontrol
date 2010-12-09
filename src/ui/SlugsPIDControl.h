@@ -281,10 +281,10 @@ private:
     mavlink_slugs_action_t actionSlugs;
 
     QTimer* refreshTimerSet;      ///< The main timer, controls the update view
-     QTimer* refreshTimerGet;      ///< The main timer, controls the update view
+    QTimer* refreshTimerGet;      ///< The main timer, controls the update view
     int counterRefreshSet;
     int counterRefreshGet;
-     QMutex valuesMutex;
+    QMutex valuesMutex;
 };
 
 #endif // SLUGSPIDCONTROL_H
