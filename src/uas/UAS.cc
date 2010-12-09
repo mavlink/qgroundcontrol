@@ -421,6 +421,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
             break;
+        case MAVLINK_MSG_ID_GPS_LOCAL_ORIGIN_SET:
+            {
+                mavlink_gps_local_origin_set_t pos;
+                mavlink_msg_gps_local_origin_set_decode(&message, &pos);
+                // FIXME Emit to other components
+            }
+            break;
         case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
             {
                 mavlink_rc_channels_raw_t channels;
@@ -654,6 +661,36 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
         }
+    }
+}
+
+void UAS::setLocalOriginAtCurrentGPSPosition()
+{
+
+    bool result = false;
+    QMessageBox msgBox;
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setText("Setting new World Coordinate Frame Origin");
+    msgBox.setInformativeText("Do you want to set a new origin? Waypoints defined in the local frame will be shifted in their physical location");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    int ret = msgBox.exec();
+
+    // Close the message box shortly after the click to prevent accidental clicks
+    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
+
+
+    if (ret == QMessageBox::Yes)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getSystemId(), &msg, this->getUASID(), 0, MAV_ACTION_SET_ORIGIN);
+        // Send message twice to increase chance that it reaches its goal
+        sendMessage(msg);
+        // Wait 5 ms
+        MG::SLEEP::usleep(5000);
+        // Send again
+        sendMessage(msg);
+        result = true;
     }
 }
 

@@ -57,9 +57,9 @@ public slots:
     /** @brief Set the currently selected UAS */
     void setActiveUAS(UASInterface* uas);
     /** @brief Show the vehicle trail */
-    void showTrail(int state);
+    void showTrail(bool state);
     /** @brief Show the waypoints */
-    void showWaypoints(int state);
+    void showWaypoints(bool state);
     /** @brief Follow the aircraft during flight */
     void follow(bool follow);
 
@@ -68,6 +68,7 @@ protected:
     QTimer* updateTimer;
     UASInterface* mav;
     bool followCamera;
+    bool trailEnabled;
 #if (defined Q_OS_WIN) && !(defined __MINGW32__)
     WebAxWidget* webViewWin;
 #endif

@@ -243,6 +243,8 @@ public slots:
     /** @brief Update the system state */
     void updateState();
 
+    /** @brief Set world frame origin at current GPS position */
+    void setLocalOriginAtCurrentGPSPosition();
     /** @brief Set local position setpoint */
     void setLocalPositionSetpoint(float x, float y, float z, float yaw);
     /** @brief Add an offset in body frame to the setpoint */
