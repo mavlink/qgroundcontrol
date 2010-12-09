@@ -140,7 +140,7 @@ macx {
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
-    #QMAKE_CXXFLAGS += -Wl,-E
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # GNU/Linux
