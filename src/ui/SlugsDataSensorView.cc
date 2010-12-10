@@ -53,6 +53,7 @@ void SlugsDataSensorView::addUAS(UASInterface* uas)
     connect(slugsMav, SIGNAL(slugsPWM(int,const mavlink_pwm_commands_t&)),this,SLOT(slugsPWMChanged(int,const mavlink_pwm_commands_t&)));
     connect(slugsMav, SIGNAL(slugsFilteredData(int,const mavlink_filtered_data_t&)),this,SLOT(slugsFilteredDataChanged(int,const mavlink_filtered_data_t&)));
     connect(slugsMav, SIGNAL(slugsGPSDateTime(int,const mavlink_gps_date_time_t&)),this,SLOT(slugsGPSDateTimeChanged(int,const mavlink_gps_date_time_t&)));
+    //connect(slugsMav,SIGNAL(slugsAirData(int,mavlink_air_data_t&)),this,SLOT())
 
     #endif // MAVLINK_ENABLED_SLUGS
         // Set this UAS as active if it is the first one
@@ -148,6 +149,7 @@ void SlugsDataSensorView::slugsSensorBiasChanged(int systemId,
 
 }
 
+
 void SlugsDataSensorView::slugsDiagnosticMessageChanged(int systemId,
                                                         const mavlink_diagnostic_t& diagnostic){
     Q_UNUSED(systemId);
@@ -238,6 +240,18 @@ void SlugsDataSensorView::slugsGPSDateTimeChanged(int systemId,
                          QString::number(gpsDateTime.sec));
 
   ui->m_GpsSat->setText(QString::number(gpsDateTime.visSat));
+}
+
+/**
+     * @brief Updates the air data widget - 171
+*/
+void SlugsDataSensorView::slugsAirDataChanged(int systemId, const mavlink_air_data_t &airData)
+{
+     Q_UNUSED(systemId);
+
+     //ToDo add widget to view value
+
+
 }
 
 
