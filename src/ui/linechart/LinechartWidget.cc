@@ -352,8 +352,6 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     QLabel* label;
     QLabel* value;
     QLabel* mean;
-    QLabel* median;
-
     form->setAutoFillBackground(false);
     horizontalLayout = new QHBoxLayout(form);
     horizontalLayout->setSpacing(5);
