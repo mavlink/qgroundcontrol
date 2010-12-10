@@ -114,52 +114,60 @@ public slots:
                                     double lon,
                                     double alt,
                                     quint64 time);
+
+
     /**
-         * @brief Updates the sensor bias widget
+         * @brief Updates the CPU load widget - 170
+    */
+    void slugsCpuLoadChanged(int systemId,
+                             const mavlink_cpu_load_t& cpuLoad);
+
+    /**
+         * @brief Updates the air data widget - 171
+    */
+    void slugsAirDataChanged(int systemId,
+                             const mavlink_air_data_t& airData);
+
+    /**
+         * @brief Updates the sensor bias widget - 172
     */
     void slugsSensorBiasChanged(int systemId,
                                 const mavlink_sensor_bias_t& sensorBias);
 
     /**
-         * @brief Updates the diagnostic widget
+         * @brief Updates the diagnostic widget - 173
     */
     void slugsDiagnosticMessageChanged(int systemId,
                                        const mavlink_diagnostic_t& diagnostic);
 
-    /**
-         * @brief Updates the CPU load widget
-    */
-    void slugsCpuLoadChanged(int systemId,
-                             const mavlink_cpu_load_t& cpuLoad);
-
 
     /**
-         * @brief Updates the Navigation widget
+         * @brief Updates the Navigation widget - 176
     */
     void slugsNavegationChanged(int systemId,
                                 const mavlink_slugs_navigation_t& slugsNavigation);
 
     /**
-         * @brief Updates the Data Log widget
+         * @brief Updates the Data Log widget - 177
     */
    void  slugsDataLogChanged(int systemId,
                              const mavlink_data_log_t& dataLog);
 
    /**
-        * @brief Updates the PWM Commands widget
+        * @brief Updates the PWM Commands widget - 175
    */
    void slugsPWMChanged(int systemId,
                         const mavlink_pwm_commands_t& pwmCommands);
 
    /**
-        * @brief Updates the filtered sensor measurements widget
+        * @brief Updates the filtered sensor measurements widget - 178
    */
    void slugsFilteredDataChanged(int systemId,
                                  const mavlink_filtered_data_t& filteredData);
 
 
    /**
-        * @brief Updates the gps Date Time widget
+        * @brief Updates the gps Date Time widget - 179
    */
     void slugsGPSDateTimeChanged(int systemId,
                                  const mavlink_gps_date_time_t& gpsDateTime);
