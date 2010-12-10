@@ -28,8 +28,8 @@ This file is part of the QGROUNDCONTROL project
  */
 
 
-#include "slugshilsim.h"
-#include "ui_slugshilsim.h"
+#include "SlugsHilSim.h"
+#include "ui_SlugsHilSim.h"
 #include "LinkManager.h"
 
 SlugsHilSim::SlugsHilSim(QWidget *parent) :
