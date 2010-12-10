@@ -34,10 +34,10 @@ release {
 #    DEFINES += QT_NO_WARNING_OUTPUT
 }
 
-QMAKE_PRE_LINK += echo "Copying files"
+QMAKE_POST_LINK += echo "Copying files"
 
-#QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
-#QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+#QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+#QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 
 # MAC OS X
 macx { 
@@ -77,11 +77,11 @@ macx {
     ICON = $$BASEDIR/images/icons/macx.icns
 
     # Copy audio files if needed
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
     # Copy google earth starter file
-    QMAKE_PRE_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
     # Copy model files
-    #QMAKE_PRE_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
+    #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
 
     exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
     # No check for GLUT.framework since it's a MAC default
@@ -155,7 +155,7 @@ linux-g++ {
         #DESTDIR = $$BUILDDIR/release
     }
 
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+    QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
 
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
@@ -202,10 +202,15 @@ linux-g++ {
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
 
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug/.
-    QMAKE_PRE_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release/.
+    debug {
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug/.
+    }
+
+    release {
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release/.
+    }
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
@@ -223,7 +228,7 @@ linux-g++-64 {
         #DESTDIR = $$BUILDDIR/release
     }
 
-    QMAKE_PRE_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+    QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
 
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
@@ -325,16 +330,19 @@ exists($$BASEDIR/lib/osgEarth123) {
     BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
     TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
 
-    QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
-    QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\release\SDL.dll\"
-    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\debug\audio\" /S /E /Y
-    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\release\audio\" /S /E /Y
-    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\debug\models\" /S /E /Y
-    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\release\models\" /S /E /Y
+    debug {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\debug\audio\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\debug\models\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR/images/earth.html $$TARGETDIR_WIN\debug\"
+    }
 
-    # Copy google earth starter file
-    QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR/images/earth.html $$TARGETDIR_WIN\release\"
-    QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR/images/earth.html $$TARGETDIR_WIN\debug\"
+    release {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\release\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\release\audio\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\release\models\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR/images/earth.html $$TARGETDIR_WIN\release\"
+    }
 
 }
 
@@ -367,12 +375,17 @@ win32-g++ {
 
     # Copy dependencies
 
-    QMAKE_PRE_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/SDL.dll
-    QMAKE_PRE_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/SDL.dll
-    QMAKE_PRE_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/debug/audio
-    QMAKE_PRE_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/release/audio
-    QMAKE_PRE_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/debug/models
-    QMAKE_PRE_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/release/models
+    debug {
+        QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/SDL.dll
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/debug/audio
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/debug/models
+    }
+
+    release {
+        QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/SDL.dll
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/release/audio
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/release/models
+    }
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
