@@ -360,11 +360,14 @@ void MainWindow::reloadStylesheet()
 
 void MainWindow::showStatusMessage(const QString& status, int timeout)
 {
+    Q_UNUSED(status);
+    Q_UNUSED(timeout);
     //statusBar->showMessage(status, timeout);
 }
 
 void MainWindow::showStatusMessage(const QString& status)
 {
+    Q_UNUSED(status);
     //statusBar->showMessage(status, 5);
 }
 
