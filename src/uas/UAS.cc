@@ -637,7 +637,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_THROTTLE_LEN; ++i)
                     throttle << radioMsg.throttle[i];
 
-                QPointer<RadioCalibrationData> radioData = new RadioCalibrationData(aileron,
+                QPointer<RadioCalibrationData> radioData = new RadioCalibrationData(aileron, elevator, rudder, gyro, pitch, throttle);
                 emit radioCalibrationReceived(radioData);
                 delete radioData;
             }
