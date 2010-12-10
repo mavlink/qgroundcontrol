@@ -47,6 +47,7 @@ public slots:
 signals:
 
     void slugsRawImu(int uasId, const mavlink_raw_imu_t& rawData);
+    void slugsGPSCogSog(int uasId, double cog, double sog);
 
 #ifdef MAVLINK_ENABLED_SLUGS
 
@@ -66,6 +67,8 @@ signals:
 
     void slugsBootMsg(int uasId, mavlink_boot_t& boot);
     void slugsAttitude(int uasId, mavlink_attitude_t& attitude);
+
+
 
 #endif
 

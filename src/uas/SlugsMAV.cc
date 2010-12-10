@@ -169,11 +169,16 @@ void SlugsMAV::emitSignals (void){
     case 2:
       emit slugsAirData(uasId, mlAirData);
       emit slugsDiagnostic(uasId,mlDiagnosticData);
+
     break;
 
     case 3:
       emit remoteControlChannelScaledChanged(0,(mlPilotConsoleData.de- 1000.0f)/1000.0f);
-      emit remoteControlChannelScaledChanged(1,0.75);
+       emit remoteControlChannelScaledChanged(1,(mlPilotConsoleData.dla- 1000.0f)/1000.0f);
+        emit remoteControlChannelScaledChanged(2,(mlPilotConsoleData.dr- 1000.0f)/1000.0f);
+         emit remoteControlChannelScaledChanged(3,(mlPilotConsoleData.dra- 1000.0f)/1000.0f);
+          emit remoteControlChannelScaledChanged(0,(mlPilotConsoleData.dt- 1000.0f)/1000.0f);
+
       emit slugsPWM(uasId, mlPwmCommands);
     break;
 
@@ -185,11 +190,13 @@ void SlugsMAV::emitSignals (void){
     case 5:
       emit slugsFilteredData(uasId,mlFilteredData);
       emit slugsGPSDateTime(uasId, mlGpsDateTime);
+
     break;
 
     case 6:
       emit slugsActionAck(uasId,mlActionAck);
       emit emitGpsSignals();
+
     break;
         }
 
@@ -213,20 +220,30 @@ void SlugsMAV::emitSignals (void){
 #ifdef MAVLINK_ENABLED_SLUGS
 void SlugsMAV::emitGpsSignals (void){
 
-  if (mlGpsData.fix_type > 0){
+    qDebug()<<"After Emit GPS Signal"<<mlGpsData.fix_type;
+
+
+    //ToDo Uncomment if. it was comment only to test
+
+ // if (mlGpsData.fix_type > 0){
     emit globalPositionChanged(this,
                                mlGpsData.lon,
                                mlGpsData.lat,
                                mlGpsData.alt,
                                0.0);
 
-    // Smaller than threshold and not NaN
-    if (mlGpsData.v < 1000000 && mlGpsData.v == mlGpsData.v){
-      emit speedChanged(this, (double)mlGpsData.v, 0.0, 0.0, 0.0);
-    } else {
-      emit textMessageReceived(uasId, uasId, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(mlGpsData.v));
-    }
-    }
+     emit slugsGPSCogSog(uasId,mlGpsData.hdg, mlGpsData.v);
+
+//        // Smaller than threshold and not NaN
+//        if (mlGpsData.v < 1000000 && mlGpsData.v == mlGpsData.v){
+//            // emit speedChanged(this, (double)mlGpsData.v, 0.0, 0.0, 0.0);
+
+//         }
+//         else {
+//              emit textMessageReceived(uasId, uasId, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(mlGpsData.v));
+//         }
+  //}
+
 }
 
 void SlugsMAV::emitPidSignal()
