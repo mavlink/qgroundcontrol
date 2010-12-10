@@ -64,7 +64,15 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
 #include "QGCGoogleEarthView.h"
+//#include "QMap3DWidget.h"
+#include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
+
+#include "SlugsPIDControl.h"
+
+#include "slugshilsim.h"
+
+#include "SlugsVideoCamControl.h"
 
 
 /**
@@ -188,6 +196,11 @@ protected:
     QPointer<QDockWidget> headUpDockWidget;
     QPointer<QDockWidget> hsiDockWidget;
     QPointer<QDockWidget> rcViewDockWidget;
+    QPointer<QDockWidget> slugsDataWidget;
+    QPointer<QDockWidget> slugsPIDControlWidget;
+    QPointer<QDockWidget> slugsHilSimWidget;
+    QPointer<QDockWidget> slugsCamControlWidget;
+
 
     // Popup widgets
     JoystickWidget* joystickWidget;

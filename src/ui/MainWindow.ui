@@ -84,6 +84,7 @@
     <addaction name="actionShow_data_analysis_view"/>
     <addaction name="actionShow_full_view"/>
     <addaction name="actionStyleConfig"/>
+    <addaction name="actionShow_Slugs_View"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -336,6 +337,15 @@
    </property>
    <property name="text">
     <string>Google Earth View</string>
+   </property>
+  </action>
+  <action name="actionShow_Slugs_View">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/contrib/slugs.png</normaloff>:/images/contrib/slugs.png</iconset>
+   </property>
+   <property name="text">
+    <string>Show Slugs View</string>
    </property>
   </action>
  </widget>

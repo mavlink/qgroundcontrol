@@ -65,7 +65,7 @@ public slots:
     /** @brief Save the local waypoint list to a file */
     void saveWaypoints();
     /** @brief Load a waypoint list from a file */
-    void loadWaypoints();    
+    void    loadWaypoints();
     /** @brief Transmit the local waypoint list to the UAS */
     void transmit();
     /** @brief Read the remote waypoint list */
@@ -102,6 +102,9 @@ public slots:
     void moveDown(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
 
+    void setIsLoadFileWP();
+    void setIsReadGlobalWP(bool value);
+
 
 
 
@@ -126,6 +129,8 @@ protected:
     double mavZ;
     double mavYaw;
     QPointF centerMapCoordinate;
+    bool loadFileGlobalWP;
+    bool readGlobalWP;
 
 private:
     Ui::WaypointList *m_ui;

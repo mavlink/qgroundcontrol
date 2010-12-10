@@ -170,6 +170,18 @@ void MainWindow::buildWidgets()
     //FIXME: free memory in destructor
     joystick    = new JoystickInput();
 
+    slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
+    slugsDataWidget->setWidget( new SlugsDataSensorView(this));
+
+    slugsPIDControlWidget = new QDockWidget(tr("PID Control"), this);
+    slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
+
+    slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
+    slugsHilSimWidget->setWidget( new SlugsHilSim(this));
+
+    slugsCamControlWidget = new QDockWidget(tr("Video Camera Control"), this);
+    slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
+
 }
 
 /**
@@ -203,9 +215,25 @@ void MainWindow::connectWidgets()
 
         // it notifies that a waypoint global goes to do create and a map graphic too
         connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
-        // it notifies that a waypoint global change it´s position by spinBox on Widget WaypointView
+        // it notifies that a waypoint global change itÂ¥s position by spinBox on Widget WaypointView
         //connect(waypointsDockWidget->widget(), SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), mapWidget, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
+       // connect(waypointsDockWidget->widget(), SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), mapWidget, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
+
+        connect(slugsCamControlWidget->widget(),SIGNAL(viewCamBorderAtMap(bool)),mapWidget,SLOT(drawBorderCamAtMap(bool)));
+         connect(slugsCamControlWidget->widget(),SIGNAL(changeCamPosition(double,double,QString)),mapWidget,SLOT(updateCameraPosition(double,double, QString)));
     }
+
+    if (slugsHilSimWidget && slugsHilSimWidget->widget()){
+      connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+              slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
+    }
+
+    if (slugsDataWidget && slugsDataWidget->widget()){
+      connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+              slugsDataWidget->widget(), SLOT(setActiveUAS(UASInterface*)));
+    }
+
+
 }
 
 void MainWindow::arrangeCenterStack()
@@ -392,6 +420,11 @@ void MainWindow::connectActions()
     // Joystick configuration
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
 
+    // Slugs View
+    connect(ui.actionShow_Slugs_View, SIGNAL(triggered()), this, SLOT(loadSlugsView()));
+
+    //GlobalOperatorView
+   // connect(ui.actionGlobalOperatorView,SIGNAL(triggered()),waypointsDockWidget->widget(),SLOT())
 
 }
 
@@ -549,9 +582,18 @@ void MainWindow::UASCreated(UASInterface* uas)
         // Check which type this UAS is of
         PxQuadMAV* mav = dynamic_cast<PxQuadMAV*>(uas);
         if (mav) loadPixhawkView();
-        SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
-        if (mav2) loadSlugsView();
 
+        if (slugsDataWidget) {
+          SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+          if (dataWidget) {
+        SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
+            if (mav2) {
+              dataWidget->addUAS(uas);
+              //loadSlugsView();
+              loadGlobalOperatorView();
+            }
+          }
+        }
     }
 }
 
@@ -638,17 +680,6 @@ void MainWindow::loadSlugsView()
         infoDockWidget->show();
     }
 
-    // HORIZONTAL SITUATION INDICATOR
-    if (hsiDockWidget)
-    {
-        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-        if (hsi)
-        {
-            hsi->start();
-            addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
-            hsiDockWidget->show();
-        }
-    }
 
     // WAYPOINT LIST
     if (waypointsDockWidget)
@@ -664,13 +695,19 @@ void MainWindow::loadSlugsView()
         debugConsoleDockWidget->show();
     }
 
-    // ONBOARD PARAMETERS
-    if (parametersDockWidget)
+    // Slugs Data View
+    if (slugsDataWidget)
     {
-        addDockWidget(Qt::RightDockWidgetArea, parametersDockWidget);
-        parametersDockWidget->show();
+        addDockWidget(Qt::RightDockWidgetArea, slugsDataWidget);
+        slugsDataWidget->show();
     }
 
+    // Slugs Data View
+    if (slugsHilSimWidget)
+    {
+        addDockWidget(Qt::LeftDockWidgetArea, slugsHilSimWidget);
+        slugsHilSimWidget->show();
+    }
     this->show();
 }
 
@@ -904,169 +941,193 @@ void MainWindow::loadGlobalOperatorView()
         }
     }
 
-    // UAS CONTROL
-    if (controlDockWidget)
-    {
-        addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-        controlDockWidget->show();
-    }
-
-    // UAS LIST
-    if (listDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-        listDockWidget->show();
-    }
-
-    // UAS STATUS
-    if (infoDockWidget)
-    {
-        addDockWidget(Qt::LeftDockWidgetArea, infoDockWidget);
-        infoDockWidget->show();
-    }
-
     // WAYPOINT LIST
     if (waypointsDockWidget)
     {
         addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
         waypointsDockWidget->show();
+
     }
 
-    //    // HORIZONTAL SITUATION INDICATOR
-    //    if (hsiDockWidget)
-    //    {
-    //        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-    //        if (hsi)
-    //        {
-    //            addDockWidget(Qt::BottomDockWidgetArea, hsiDockWidget);
-    //            hsiDockWidget->show();
-    //            hsi->start();
-    //        }
-    //    }
+    // Slugs Data View
+    if (slugsDataWidget)
+    {
+        addDockWidget(Qt::RightDockWidgetArea, slugsDataWidget);
+        slugsDataWidget->show();
+    }
+
+    // Slugs Data View
+    if (slugsPIDControlWidget)
+    {
+        addDockWidget(Qt::LeftDockWidgetArea, slugsPIDControlWidget);
+        slugsPIDControlWidget->show();
+    }
+
+    if (slugsCamControlWidget)
+    {
+        addDockWidget(Qt::BottomDockWidgetArea, slugsCamControlWidget);
+        slugsCamControlWidget->show();
+    }
+
+
+
+//    // UAS CONTROL
+//    if (controlDockWidget)
+//    {
+//        addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+//        controlDockWidget->show();
+//    }
+
+//    // UAS LIST
+//    if (listDockWidget)
+//    {
+//        addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+//        listDockWidget->show();
+//    }
+
+//    // UAS STATUS
+//    if (infoDockWidget)
+//    {
+//        addDockWidget(Qt::LeftDockWidgetArea, infoDockWidget);
+//        infoDockWidget->show();
+//    }
+
+
+//    // HORIZONTAL SITUATION INDICATOR
+//    if (hsiDockWidget)
+//    {
+//        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+//        if (hsi)
+//        {
+//            addDockWidget(Qt::BottomDockWidgetArea, hsiDockWidget);
+//            hsiDockWidget->show();
+//            hsi->start();
+//        }
+//    }
 
     // PROCESS CONTROL
-    if (watchdogControlDockWidget)
-    {
-        addDockWidget(Qt::RightDockWidgetArea, watchdogControlDockWidget);
-        watchdogControlDockWidget->show();
-    }
+//    if (watchdogControlDockWidget)
+//    {
+//        addDockWidget(Qt::RightDockWidgetArea, watchdogControlDockWidget);
+//        watchdogControlDockWidget->show();
+//    }
 
     // HEAD UP DISPLAY
-    if (headUpDockWidget)
-    {
-        addDockWidget(Qt::RightDockWidgetArea, headUpDockWidget);
-        // FIXME Replace with default ->show() call
-        HUD* hud = dynamic_cast<HUD*>(headUpDockWidget->widget());
+//    if (headUpDockWidget)
+//    {
+//        addDockWidget(Qt::RightDockWidgetArea, headUpDockWidget);
+//        // FIXME Replace with default ->show() call
+//        HUD* hud = dynamic_cast<HUD*>(headUpDockWidget->widget());
 
-        if (hud)
-        {
-            headUpDockWidget->show();
-            hud->start();
-        }
-    }
+//        if (hud)
+//        {
+//            headUpDockWidget->show();
+//            hud->start();
+//        }
+//    }
 
 }
 
 void MainWindow::load3DMapView()
 {
 #ifdef QGC_OSGEARTH_ENABLED
-    clearView();
+            clearView();
 
-    // 3D map
-    if (_3DMapWidget)
-    {
-        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-        if (centerStack)
-        {
-            //map3DWidget->setActive(true);
-            centerStack->setCurrentWidget(_3DMapWidget);
-        }
-    }
+            // 3D map
+            if (_3DMapWidget)
+            {
+                QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+                if (centerStack)
+                {
+                    //map3DWidget->setActive(true);
+                    centerStack->setCurrentWidget(_3DMapWidget);
+                }
+            }
 
-    // UAS CONTROL
-    if (controlDockWidget)
-    {
-        addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-        controlDockWidget->show();
-    }
+            // UAS CONTROL
+            if (controlDockWidget)
+            {
+                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+                controlDockWidget->show();
+            }
 
-    // UAS LIST
-    if (listDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-        listDockWidget->show();
-    }
+            // UAS LIST
+            if (listDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+                listDockWidget->show();
+            }
 
-    // WAYPOINT LIST
-    if (waypointsDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
-        waypointsDockWidget->show();
-    }
+            // WAYPOINT LIST
+            if (waypointsDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
+                waypointsDockWidget->show();
+            }
 
-    // HORIZONTAL SITUATION INDICATOR
-    if (hsiDockWidget)
-    {
-        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-        if (hsi)
-        {
-            hsi->start();
-            addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
-            hsiDockWidget->show();
-        }
-    }
+            // HORIZONTAL SITUATION INDICATOR
+            if (hsiDockWidget)
+            {
+                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+                if (hsi)
+                {
+                    hsi->start();
+                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+                    hsiDockWidget->show();
+                }
+            }
 #endif
-    this->show();
+            this->show();
 }
 
 void MainWindow::loadGoogleEarthView()
 {
     #if (defined Q_OS_WIN) | (defined Q_OS_MAC)
-    clearView();
+            clearView();
 
-    // 3D map
-    if (gEarthWidget)
-    {
-        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-        if (centerStack)
-        {
-            centerStack->setCurrentWidget(gEarthWidget);
-        }
-    }
+            // 3D map
+            if (gEarthWidget)
+            {
+                QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+                if (centerStack)
+                {
+                    centerStack->setCurrentWidget(gEarthWidget);
+                }
+            }
 
-    // UAS CONTROL
-    if (controlDockWidget)
-    {
-        addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-        controlDockWidget->show();
-    }
+            // UAS CONTROL
+            if (controlDockWidget)
+            {
+                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+                controlDockWidget->show();
+            }
 
-    // UAS LIST
-    if (listDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-        listDockWidget->show();
-    }
+            // UAS LIST
+            if (listDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+                listDockWidget->show();
+            }
 
-    // WAYPOINT LIST
-    if (waypointsDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
-        waypointsDockWidget->show();
-    }
+            // WAYPOINT LIST
+            if (waypointsDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
+                waypointsDockWidget->show();
+            }
 
-    // HORIZONTAL SITUATION INDICATOR
-    if (hsiDockWidget)
-    {
-        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-        if (hsi)
-        {
-            hsi->start();
-            addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
-            hsiDockWidget->show();
-        }
-    }
-    this->show();
+            // HORIZONTAL SITUATION INDICATOR
+            if (hsiDockWidget)
+            {
+                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+                if (hsi)
+                {
+                    hsi->start();
+                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+                    hsiDockWidget->show();
+                }
+            }
+            this->show();
 #endif
 
 }
@@ -1075,53 +1136,53 @@ void MainWindow::loadGoogleEarthView()
 void MainWindow::load3DView()
 {
 #ifdef QGC_OSG_ENABLED
-    clearView();
+            clearView();
 
-    // 3D map
-    if (_3DWidget)
-    {
-        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-        if (centerStack)
-        {
-            //map3DWidget->setActive(true);
-            centerStack->setCurrentWidget(_3DWidget);
-        }
-    }
+            // 3D map
+            if (_3DWidget)
+            {
+                QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
+                if (centerStack)
+                {
+                    //map3DWidget->setActive(true);
+                    centerStack->setCurrentWidget(_3DWidget);
+                }
+            }
 
-    // UAS CONTROL
-    if (controlDockWidget)
-    {
-        addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-        controlDockWidget->show();
-    }
+            // UAS CONTROL
+            if (controlDockWidget)
+            {
+                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
+                controlDockWidget->show();
+            }
 
-    // UAS LIST
-    if (listDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-        listDockWidget->show();
-    }
+            // UAS LIST
+            if (listDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
+                listDockWidget->show();
+            }
 
-    // WAYPOINT LIST
-    if (waypointsDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
-        waypointsDockWidget->show();
-    }
+            // WAYPOINT LIST
+            if (waypointsDockWidget)
+            {
+                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
+                waypointsDockWidget->show();
+            }
 
-    // HORIZONTAL SITUATION INDICATOR
-    if (hsiDockWidget)
-    {
-        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-        if (hsi)
-        {
-            hsi->start();
-            addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
-            hsiDockWidget->show();
-        }
-    }
+            // HORIZONTAL SITUATION INDICATOR
+            if (hsiDockWidget)
+            {
+                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+                if (hsi)
+                {
+                    hsi->start();
+                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
+                    hsiDockWidget->show();
+                }
+            }
 #endif
-    this->show();
+            this->show();
 
 }
 

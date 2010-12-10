@@ -54,7 +54,9 @@ void Linecharts::addSystem(UASInterface* uas)
         LinechartWidget* widget = new LinechartWidget(uas->getUASID(), this);
         addWidget(widget);
         plots.insert(uas->getUASID(), widget);
+#ifndef MAVLINK_ENABLED_SLUGS
         connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), widget, SLOT(appendData(int,QString,double,quint64)));
+#endif
         connect(widget, SIGNAL(logfileWritten(QString)), this, SIGNAL(logfileWritten(QString)));
         // Set system active if this is the only system
         if (active)
