@@ -28,8 +28,8 @@ This file is part of the QGROUNDCONTROL project
  */
 
 
-#include "slugshilsim.h"
-#include "ui_slugshilsim.h"
+#include "SlugsHilSim.h"
+#include "ui_SlugsHilSim.h"
 #include "LinkManager.h"
 
 SlugsHilSim::SlugsHilSim(QWidget *parent) :
@@ -143,6 +143,8 @@ void SlugsHilSim::processHilDatagram(const QByteArray* datagram){
 
   // GPS
   mavlink_gps_raw_t tmpGpsRaw;
+
+#ifdef MAVLINK_ENABLED_SLUGS
   mavlink_gps_date_time_t tmpGpsTime;
 
   tmpGpsTime.year  = datagram->at(i++);
@@ -165,6 +167,7 @@ void SlugsHilSim::processHilDatagram(const QByteArray* datagram){
 
   mavlink_msg_gps_date_time_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &tmpGpsTime);
   activeUas->sendMessage(hilLink, msg);
+#endif
 
   memset(&msg, 0, sizeof(mavlink_message_t));
 

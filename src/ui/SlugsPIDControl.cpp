@@ -46,9 +46,9 @@ SlugsPIDControl::SlugsPIDControl(QWidget *parent) :
  */
 void SlugsPIDControl::activeUasSet(UASInterface* uas)
 {
+    #ifdef MAVLINK_ENABLED_SLUGS
     SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(uas);
 
-#ifdef MAVLINK_ENABLED_SLUGS
     if (slugsMav != NULL)
     {
         connect(slugsMav,SIGNAL(slugsActionAck(int,const mavlink_action_ack_t&)),this,SLOT(recibeMensaje(int,mavlink_action_ack_t)));
@@ -187,6 +187,7 @@ void SlugsPIDControl::changeColor_GREEN_AirSpeed_groupBox()
   {
 
     //create the packet
+#ifdef MAVLINK_ENABLED_SLUGS
     pidMessage.target = activeUAS->getUASID();
     pidMessage.idx = 0;
     pidMessage.pVal = ui->dT_P_set->text().toFloat();
@@ -197,6 +198,7 @@ void SlugsPIDControl::changeColor_GREEN_AirSpeed_groupBox()
 
     mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
     slugsMav->sendMessage(msg);
+#endif
 
     ui->AirSpeedHold_groupBox->setStyleSheet(GREENcolorStyle);
   }
@@ -232,6 +234,7 @@ void SlugsPIDControl::changeColor_GREEN_PitchFollowei_groupBox()
 
     if (slugsMav != NULL)
     {
+        #ifdef MAVLINK_ENABLED_SLUGS
       //create the packet
       pidMessage.target = activeUAS->getUASID();
       pidMessage.idx = 2;
@@ -243,6 +246,7 @@ void SlugsPIDControl::changeColor_GREEN_PitchFollowei_groupBox()
 
       mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
       slugsMav->sendMessage(msg);
+#endif
 
       ui->PitchFlowei_groupBox->setStyleSheet(GREENcolorStyle);
   }
@@ -280,6 +284,7 @@ void SlugsPIDControl::changeColor_GREEN_RollControl_groupBox()
 
     if (slugsMav != NULL)
     {
+        #ifdef MAVLINK_ENABLED_SLUGS
           //create the packet
           pidMessage.target = activeUAS->getUASID();
           pidMessage.idx = 4;
@@ -291,6 +296,7 @@ void SlugsPIDControl::changeColor_GREEN_RollControl_groupBox()
 
           mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
           slugsMav->sendMessage(msg);
+#endif
 
         ui->RollControl_groupBox->setStyleSheet(GREENcolorStyle);
     }
@@ -340,6 +346,7 @@ void SlugsPIDControl::changeColor_GREEN_HeigthError_groupBox()
 
     if (slugsMav != NULL)
     {
+        #ifdef MAVLINK_ENABLED_SLUGS
           //create the packet
           pidMessage.target = activeUAS->getUASID();
           pidMessage.idx = 1;
@@ -351,6 +358,7 @@ void SlugsPIDControl::changeColor_GREEN_HeigthError_groupBox()
 
           mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
           slugsMav->sendMessage(msg);
+#endif
 
         ui->HeightErrorLoPitch_groupBox->setStyleSheet(GREENcolorStyle);
     }
@@ -399,6 +407,7 @@ void SlugsPIDControl::changeColor_GREEN_YawDamper_groupBox()
 
     if (slugsMav != NULL)
     {
+        #ifdef MAVLINK_ENABLED_SLUGS
           //create the packet
           pidMessage.target = activeUAS->getUASID();
           pidMessage.idx = 3;
@@ -410,6 +419,7 @@ void SlugsPIDControl::changeColor_GREEN_YawDamper_groupBox()
 
           mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
           slugsMav->sendMessage(msg);
+#endif
 
         ui->YawDamper_groupBox->setStyleSheet(GREENcolorStyle);
     }
@@ -460,6 +470,7 @@ void SlugsPIDControl::changeColor_GREEN_Pitch2dT_groupBox()
 
     if (slugsMav != NULL)
     {
+#ifdef MAVLINK_ENABLED_SLUGS
           //create the packet
           pidMessage.target = activeUAS->getUASID();
           pidMessage.idx = 8;
@@ -471,6 +482,7 @@ void SlugsPIDControl::changeColor_GREEN_Pitch2dT_groupBox()
 
           mavlink_msg_pid_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &pidMessage);
           slugsMav->sendMessage(msg);
+#endif
         ui->Pitch2dTFFterm_groupBox->setStyleSheet(GREENcolorStyle);
     }
 }
@@ -541,10 +553,12 @@ void SlugsPIDControl::receivePidValues(int systemId, const mavlink_pid_t &pidVal
 
     }
 }
+#endif // MAVLINK_ENABLED_SLUG
 
 
 void SlugsPIDControl::sendMessagePIDStatus(int PIDtype)
 {
+#ifdef MAVLINK_ENABLED_SLUGS
     //ToDo remplace actionId values
 
 
@@ -626,6 +640,7 @@ void SlugsPIDControl::sendMessagePIDStatus(int PIDtype)
 
         }
     }
+    #endif // MAVLINK_ENABLED_SLUG
 }
 
 void SlugsPIDControl::slugsGetGeneral()
@@ -695,6 +710,8 @@ void SlugsPIDControl::slugsSetGeneral()
     counterRefreshSet++;
     valuesMutex.unlock();
 }
+
+
 void SlugsPIDControl::slugsTimerStartSet()
 {
     counterRefreshSet = 1;
@@ -714,4 +731,3 @@ void SlugsPIDControl::slugsTimerStop()
 //     counterRefresh = 1;
 
 }
-#endif // MAVLINK_ENABLED_SLUGS

@@ -70,7 +70,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "SlugsPIDControl.h"
 
-#include "slugshilsim.h"
+#include "SlugsHilSim.h"
 
 #include "SlugsVideoCamControl.h"
 
