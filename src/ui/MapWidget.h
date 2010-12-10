@@ -37,6 +37,11 @@ This file is part of the QGROUNDCONTROL project
 #include <QMap>
 #include "qmapcontrol.h"
 #include "UASInterface.h"
+#include "QPointF"
+
+#include <qmath.h>
+
+
 
 class QMenu;
 
@@ -63,10 +68,13 @@ public slots:
     void activeUASSet(UASInterface* uas);
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     void updatePosition(float time, double lat, double lon);
+    void updateCameraPosition(double distance, double bearing, QString dir);
+    QPointF getPointxBearing_Range(double lat1, double lon1, double bearing, double distance);
 
     //ROCA
     void clearPath();
     void changeGlobalWaypointPositionBySpinBox(int index, float lat, float lon);
+    void drawBorderCamAtMap(bool status);
 
 protected:
     void changeEvent(QEvent* e);
@@ -93,6 +101,10 @@ protected:
     qmapcontrol::Layer* l;            ///< Current map layer (background)
     qmapcontrol::Layer* overlay;      ///< Street overlay (foreground)
     qmapcontrol::GeometryLayer* geomLayer; ///< Layer for waypoints
+
+    //only for experiment
+    qmapcontrol::GeometryLayer* camLayer; ///< Layer for camera indicator
+
     int zoomLevel;
     int detailZoom; ///< Steps zoomed in further than qMapControl allows
     static const int scrollStep = 40; ///< Scroll n pixels per keypress
@@ -107,12 +119,14 @@ protected:
 
   protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
-    void createWaypointGraphAtMap (const QPointF coordinate);
-    void createPathButtonClicked(bool checked);
     void captureGeometryClick(Geometry*, QPoint);
-    void mapproviderSelected(QAction* action);
     void captureGeometryDrag(Geometry* geom, QPointF coordinate);
     void captureGeometryEndDrag(Geometry* geom, QPointF coordinate);
+
+    void createPathButtonClicked(bool checked);
+
+    void createWaypointGraphAtMap (const QPointF coordinate);
+    void mapproviderSelected(QAction* action);
 
 
 
@@ -130,7 +144,16 @@ private:
     QHash <QString, qmapcontrol::Point*> wpIndex;
     qmapcontrol::LineString* path;
     QPen* pointPen;
+    int wpExists(const QPointF coordinate);
     bool waypointIsDrag;
+
+
+    qmapcontrol::LineString* camLine;
+    QList<qmapcontrol::Point*> camPoints;
+    QPointF lastCamBorderPos;
+    bool drawCamBorder;
+    int radioCamera;
+
 };
 
 #endif // MAPWIDGET_H

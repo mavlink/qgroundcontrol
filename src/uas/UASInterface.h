@@ -391,6 +391,11 @@ signals:
      * @param fix 0: No IR/Ultrasound sensor, N > 0: Found N active sensors
      */
     void irUltraSoundLocalizationChanged(UASInterface* uas, int fix);
+
+
+
+
+
 };
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0");

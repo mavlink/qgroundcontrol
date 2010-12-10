@@ -77,6 +77,7 @@ bool Waypoint::load(QTextStream &loadStream)
     return false;
 }
 
+
 void Waypoint::setId(quint16 id)
 {
     this->id = id;

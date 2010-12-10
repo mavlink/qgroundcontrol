@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QComboBox>
 #include <QGridLayout>
 
+
 #include "MapWidget.h"
 #include "ui_MapWidget.h"
 #include "UASInterface.h"
@@ -41,6 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint2DIcon.h"
 
 #include "MG.h"
+
 
 MapWidget::MapWidget(QWidget *parent) :
         QWidget(parent),
@@ -83,6 +85,8 @@ MapWidget::MapWidget(QWidget *parent) :
     // create a layer with the mapadapter and type GeometryLayer (for waypoints)
     geomLayer = new qmapcontrol::GeometryLayer("Waypoints", mapadapter);
     mc->addLayer(geomLayer);
+
+
 
 //
 //    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
@@ -218,6 +222,19 @@ MapWidget::MapWidget(QWidget *parent) :
     path = new qmapcontrol::LineString (wps, "UAV Path", pointPen);
     mc->layer("Waypoints")->addGeometry(path);
 
+    //Camera Control
+    // CAMERA INDICATOR LAYER
+    // create a layer with the mapadapter and type GeometryLayer (for camera indicator)
+    camLayer = new qmapcontrol::GeometryLayer("Camera", mapadapter);
+    mc->addLayer(camLayer);
+
+    //camLine = new qmapcontrol::LineString(camPoints,"Camera Eje", camBorderPen);
+
+    drawCamBorder = false;
+    radioCamera = 10;
+
+
+
     this->setVisible(false);
 }
 
@@ -340,9 +357,18 @@ void MapWidget::createPathButtonClicked(bool checked)
 
 }
 
+/**
+ * Captures a click on the map and if in create WP path mode, it adds the WP on MouseButtonRelease
+ *
+ * @param event The mouse event
+ * @param coordinate The coordinate in which it occured the mouse event
+ * @note  This slot is connected to the mouseEventCoordinate of the QMapControl object
+ */
 
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate)
 {
+
+  qDebug() << mc->mouseMode();
 
   if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked())
     {
@@ -381,13 +407,27 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
 void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
 {
+  if (!wpExists(coordinate)){
     // Create waypoint name
     QString str;
+
 
     str = QString("%1").arg(path->numberOfPoints());
 
     // create the WP and set everything in the LineString to display the path
-    CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
+    //CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
+    Waypoint2DIcon* tempCirclePoint;
+
+    if (mav)
+    {
+        tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle, new QPen(mav->getColor()));
+    }
+    else
+    {
+        tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
+    }
+
+
     mc->layer("Waypoints")->addGeometry(tempCirclePoint);
 
     Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
@@ -395,13 +435,26 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
     path->addPoint(tempPoint);
 
     wpIndex.insert(str,tempPoint);
+        qDebug()<<"Funcion createWaypointGraphAtMap WP= "<<str<<" -> x= "<<tempPoint->latitude()<<" y= "<<tempPoint->longitude();
 
-    // Refresh the screen
+        // Refresh the screen
     mc->updateRequestNew();
+  }
 
 ////    // emit signal mouse was clicked
 //    emit captureMapCoordinateClick(coordinate);
 }
+
+int MapWidget::wpExists(const QPointF coordinate){
+  for (int i = 0; i < wps.size(); i++){
+    if (wps.at(i)->latitude() == coordinate.y() &&
+        wps.at(i)->longitude()== coordinate.x()){
+      return 1;
+    }
+  }
+  return 0;
+}
+
 
 void MapWidget::captureGeometryClick(Geometry* geom, QPoint point)
 {
@@ -414,7 +467,7 @@ void MapWidget::captureGeometryClick(Geometry* geom, QPoint point)
 
 void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
 {
-  Q_UNUSED(coordinate);
+
 
   waypointIsDrag = true;
 
@@ -445,13 +498,15 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
 
 void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
 {
+
+  // TODO: Investigate why when creating the waypoint path this slot is being called
+
+  // Only change the mouse mode back to panning when not creating a WP path
+  if (!createPath->isChecked()){
     waypointIsDrag = false;
-
     mc->setMouseMode(qmapcontrol::MapControl::Panning);
+  }
 
-//  qDebug() << geom->name();
-//  qDebug() << geom->GeometryType;
-//  qDebug() << point;
 }
 
 MapWidget::~MapWidget()
@@ -580,6 +635,10 @@ void MapWidget::wheelEvent(QWheelEvent *event)
     // Detail zoom level is the number of steps zoomed in further
     // after the bounding has taken effect
     detailZoom = qAbs(qMin(0, mc->currentZoom()-newZoom));
+
+    // visual field of camera
+     updateCameraPosition(20*newZoom,0,"no");
+
 }
 
 void MapWidget::keyPressEvent(QKeyEvent *event)
@@ -667,5 +726,70 @@ void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, floa
    }
 
 
+}
+
+void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
+{
+    //camPoints.clear();
+    QPointF currentPos = mc->currentCoordinate();
+//    QPointF actualPos = getPointxBearing_Range(currentPos.y(),currentPos.x(),bearing,distance);
+
+//    qmapcontrol::Point* tempPoint1 = new qmapcontrol::Point(currentPos.x(), currentPos.y(),"inicial",qmapcontrol::Point::Middle);
+//    qmapcontrol::Point* tempPoint2 = new qmapcontrol::Point(actualPos.x(), actualPos.y(),"final",qmapcontrol::Point::Middle);
+
+//    camPoints.append(tempPoint1);
+//    camPoints.append(tempPoint2);
+
+//    camLine->setPoints(camPoints);
+
+     QPen* camBorderPen = new QPen(QColor(255,0,0));
+    camBorderPen->setWidth(2);
+
+    //radio = mc->currentZoom()
+
+    if(drawCamBorder)
+    {
+        //clear camera borders
+        mc->layer("Camera")->clearGeometries();
+
+        //create a camera borders
+        qmapcontrol::CirclePoint* camBorder = new qmapcontrol::CirclePoint(currentPos.x(), currentPos.y(), radio, "camBorder", qmapcontrol::Point::Middle, camBorderPen);
+
+       //camBorder->setCoordinate(currentPos);
+
+        mc->layer("Camera")->addGeometry(camBorder);
+       // mc->layer("Camera")->addGeometry(camLine);
+        mc->updateRequestNew();
+
+    }
+   else
+   {
+       //clear camera borders
+       mc->layer("Camera")->clearGeometries();
+       mc->updateRequestNew();
+
+   }
+
+
+}
+
+void MapWidget::drawBorderCamAtMap(bool status)
+{
+    drawCamBorder = status;
+    updateCameraPosition(20,0,"no");
+
+}
+
+QPointF MapWidget::getPointxBearing_Range(double lat1, double lon1, double bearing, double distance)
+{
+    QPointF temp;
+
+    double rad = M_PI/180;
+
+    bearing = bearing*rad;
+    temp.setX((lon1 + ((distance/60) * (sin(bearing)))));
+    temp.setY((lat1 + ((distance/60) * (cos(bearing)))));
+
+    return temp;
 }
 
