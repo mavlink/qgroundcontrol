@@ -119,6 +119,8 @@ private:
     IntrinsicCameraParameters depthCameraParameters;
 
     QMatrix4x4 transformMatrix;
+    double baseline;
+    double disparityOffset;
 
     // tilt angle of Kinect camera
     int tiltAngle;
