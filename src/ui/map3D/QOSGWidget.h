@@ -123,7 +123,7 @@ public:
         getCamera()->setGraphicsContext(getGraphicsWindow());
     }
 
-    virtual void paintEvent( QPaintEvent * event ) { frame(); }
+    virtual void paintEvent( QPaintEvent * event ) { Q_UNUSED(event); frame(); }
 
 protected:
 
