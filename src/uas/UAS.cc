@@ -695,7 +695,12 @@ void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
     mavlink_message_t msg;
     mavlink_msg_position_control_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, 0, x, y, z, yaw);
     sendMessage(msg);
-#endif
+    #else
+    Q_UNUSED(x);
+    Q_UNUSED(y);
+    Q_UNUSED(z);
+    Q_UNUSED(yaw);
+    #endif
 }
 
 void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
@@ -704,6 +709,11 @@ void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
   mavlink_message_t msg;
   mavlink_msg_position_control_offset_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw);
   sendMessage(msg);
+#else
+Q_UNUSED(x);
+Q_UNUSED(y);
+Q_UNUSED(z);
+Q_UNUSED(yaw);
 #endif
 }
 
