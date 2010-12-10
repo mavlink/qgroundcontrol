@@ -369,12 +369,12 @@ win32-g++ {
     BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
     TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
 
-    QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\debug\SDL.dll\"
-    QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\release\SDL.dll\"
-    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\debug\audio\" /S /E /Y
-    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\release\audio\" /S /E /Y
-    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\debug\models\" /S /E /Y
-    QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\release\models\" /S /E /Y
+    #QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\debug\SDL.dll\"
+    #QMAKE_PRE_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\release\SDL.dll\"
+    #QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\debug\audio\" /S /E /Y
+    #QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\release\audio\" /S /E /Y
+    #QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\debug\models\" /S /E /Y
+    #QMAKE_PRE_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\release\models\" /S /E /Y
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
