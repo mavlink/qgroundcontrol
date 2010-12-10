@@ -70,6 +70,9 @@ public slots:
     void setActiveUAS(UASInterface* uas);
 
 
+    /**
+         * @brief Updates the Raw Data widget
+    */
     void slugRawDataChanged (int uasId, const mavlink_raw_imu_t& rawData);
 
 #ifdef MAVLINK_ENABLED_SLUGS
@@ -114,6 +117,16 @@ public slots:
                                     double lon,
                                     double alt,
                                     quint64 time);
+
+    /**
+         * @brief set COG and SOG values
+         *
+         * COG and SOG GPS display on the Widgets
+    */
+    void slugsGPSCogSog(int systemId,
+                        double cog,
+                        double sog);
+
 
 
     /**
@@ -171,6 +184,9 @@ public slots:
    */
     void slugsGPSDateTimeChanged(int systemId,
                                  const mavlink_gps_date_time_t& gpsDateTime);
+
+
+
 
 
 

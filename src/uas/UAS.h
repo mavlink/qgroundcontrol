@@ -79,16 +79,16 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
-    double getLocalX() const { return localX; };
-    double getLocalY() const { return localY; };
-    double getLocalZ() const { return localZ; };
-    double getLatitude() const { return latitude; };
-    double getLongitude() const { return longitude; };
-    double getAltitude() const { return altitude; };
+    double getLocalX() const { return localX; }
+    double getLocalY() const { return localY; }
+    double getLocalZ() const { return localZ; }
+    double getLatitude() const { return latitude; }
+    double getLongitude() const { return longitude; }
+    double getAltitude() const { return altitude; }
 
-    double getRoll() const { return roll; };
-    double getPitch() const { return pitch; };
-    double getYaw() const { return yaw; };
+    double getRoll() const { return roll; }
+    double getPitch() const { return pitch; }
+    double getYaw() const { return yaw; }
 
 
 friend class UASWaypointManager;
