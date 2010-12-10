@@ -168,5 +168,9 @@ void PxQuadMAV::sendProcessCommand(int watchdogId, int processId, unsigned int c
     mavlink_message_t msg;
     mavlink_msg_watchdog_command_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &payload);
     sendMessage(msg);
+#else
+    Q_UNUSED(watchdogId);
+    Q_UNUSED(processId);
+    Q_UNUSED(command);
 #endif
 }
