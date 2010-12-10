@@ -203,13 +203,13 @@ linux-g++ {
     }
 
     debug {
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug/.
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug
     }
 
     release {
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release/.
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release
+        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release
     }
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
