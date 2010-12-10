@@ -27,3 +27,7 @@ deploy/linux
 controller_log*
 user_config.pri
 *.app
+
+*.ncb
+*.vcproj
+*.sln

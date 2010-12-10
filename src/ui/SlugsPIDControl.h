@@ -277,8 +277,10 @@ private:
     QString ORIGINcolorStyle;
 
     //SlugsMav Message
+    #ifdef MAVLINK_ENABLED_SLUGS
     mavlink_pid_t pidMessage;
     mavlink_slugs_action_t actionSlugs;
+#endif
 
     QTimer* refreshTimerSet;      ///< The main timer, controls the update view
     QTimer* refreshTimerGet;      ///< The main timer, controls the update view
