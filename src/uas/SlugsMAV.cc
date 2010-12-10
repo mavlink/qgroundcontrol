@@ -172,7 +172,8 @@ void SlugsMAV::emitSignals (void){
     break;
 
     case 3:
-      emit slugsPilotConsolePWM(uasId,mlPilotConsoleData);
+      emit remoteControlChannelScaledChanged(0,(mlPilotConsoleData.de- 1000.0f)/1000.0f);
+      emit remoteControlChannelScaledChanged(1,0.75);
       emit slugsPWM(uasId, mlPwmCommands);
     break;
 
