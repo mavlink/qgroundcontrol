@@ -53,7 +53,7 @@ void SlugsDataSensorView::addUAS(UASInterface* uas)
     connect(slugsMav, SIGNAL(slugsPWM(int,const mavlink_pwm_commands_t&)),this,SLOT(slugsPWMChanged(int,const mavlink_pwm_commands_t&)));
     connect(slugsMav, SIGNAL(slugsFilteredData(int,const mavlink_filtered_data_t&)),this,SLOT(slugsFilteredDataChanged(int,const mavlink_filtered_data_t&)));
     connect(slugsMav, SIGNAL(slugsGPSDateTime(int,const mavlink_gps_date_time_t&)),this,SLOT(slugsGPSDateTimeChanged(int,const mavlink_gps_date_time_t&)));
-    //connect(slugsMav,SIGNAL(slugsAirData(int,mavlink_air_data_t&)),this,SLOT())
+    connect(slugsMav,SIGNAL(slugsAirData(int,mavlink_air_data_t&)),this,SLOT(slugsAirDataChanged(int,mavlink_air_data_t&)));
 
     #endif // MAVLINK_ENABLED_SLUGS
         // Set this UAS as active if it is the first one
@@ -248,11 +248,12 @@ void SlugsDataSensorView::slugsGPSDateTimeChanged(int systemId,
 void SlugsDataSensorView::slugsAirDataChanged(int systemId, const mavlink_air_data_t &airData)
 {
      Q_UNUSED(systemId);
-
-     //ToDo add widget to view value
-
+     ui->ed_dynamic->setText(QString::number(airData.dynamicPressure));
+     ui->ed_static->setText(QString::number(airData.staticPressure));
+     ui->ed_temp->setText(QString::number(airData.temperature));
 
 }
+
 
 
 
