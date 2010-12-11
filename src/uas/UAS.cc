@@ -49,6 +49,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         startTime(MG::TIME::getGroundTimeNow()),
         commStatus(COMM_DISCONNECTED),
         name(""),
+        autopilot(0),
         links(new QList<LinkInterface*>()),
         unknownPackets(),
         mavlink(protocol),
@@ -149,6 +150,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (this->type != mavlink_msg_heartbeat_get_type(&message))
             {
                 this->type = mavlink_msg_heartbeat_get_type(&message);
+                this->autopilot = mavlink_msg_heartbeat_get_autopilot(&message);
                 emit systemTypeSet(this, type);
             }
             break;

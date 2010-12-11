@@ -79,25 +79,26 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
-    double getLocalX() const { return localX; };
-    double getLocalY() const { return localY; };
-    double getLocalZ() const { return localZ; };
-    double getLatitude() const { return latitude; };
-    double getLongitude() const { return longitude; };
-    double getAltitude() const { return altitude; };
+    double getLocalX() const { return localX; }
+    double getLocalY() const { return localY; }
+    double getLocalZ() const { return localZ; }
+    double getLatitude() const { return latitude; }
+    double getLongitude() const { return longitude; }
+    double getAltitude() const { return altitude; }
 
-    double getRoll() const { return roll; };
-    double getPitch() const { return pitch; };
-    double getYaw() const { return yaw; };
+    double getRoll() const { return roll; }
+    double getPitch() const { return pitch; }
+    double getYaw() const { return yaw; }
 
 
 friend class UASWaypointManager;
 protected:
     int uasId;                    ///< Unique system ID
-    int type;                     ///< UAS type (from type enum)
+    unsigned char type;           ///< UAS type (from type enum)
     quint64 startTime;            ///< The time the UAS was switched on
     CommStatus commStatus;        ///< Communication status
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
+    int autopilot;                ///< Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
@@ -164,6 +165,7 @@ protected:
 public:
     UASWaypointManager &getWaypointManager(void) { return waypointManager; }
     int getSystemType();
+    unsigned char getAutopilotType() {return autopilot;}
 
 public slots:
     /** @brief Launches the system **/
