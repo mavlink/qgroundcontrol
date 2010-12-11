@@ -80,12 +80,34 @@
     <property name="title">
      <string>Tools</string>
     </property>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionOnline_Documentation"/>
+    <addaction name="actionProject_Roadmap_2"/>
+    <addaction name="actionDeveloper_Credits"/>
+   </widget>
+   <widget class="QMenu" name="menuPerspectives">
+    <property name="title">
+     <string>Perspectives</string>
+    </property>
+    <addaction name="actionFlightView"/>
+    <addaction name="actionEngineersView"/>
+    <addaction name="actionCalibrationView"/>
+    <addaction name="separator"/>
+    <addaction name="actionMavlinkView"/>
+    <addaction name="actionReloadStyle"/>
    </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
    <addaction name="menuConnected_Systems"/>
    <addaction name="menuUnmanned_System"/>
    <addaction name="menuTools"/>
+   <addaction name="menuPerspectives"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -342,6 +364,78 @@
    </property>
    <property name="visible">
     <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionOnline_Documentation">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Online Documentation</string>
+   </property>
+  </action>
+  <action name="actionProject_Roadmap_2">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Project Roadmap</string>
+   </property>
+  </action>
+  <action name="actionDeveloper_Credits">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Developer Credits</string>
+   </property>
+  </action>
+  <action name="actionFlightView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/weather-overcast.svg</normaloff>:/images/status/weather-overcast.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Flight</string>
+   </property>
+  </action>
+  <action name="actionEngineersView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Engineer</string>
+   </property>
+  </action>
+  <action name="actionMavlinkView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/devices/network-wired.svg</normaloff>:/images/devices/network-wired.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Mavlink</string>
+   </property>
+  </action>
+  <action name="actionReloadStyle">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Reload Style</string>
+   </property>
+  </action>
+  <action name="actionCalibrationView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/network-wireless-encrypted.svg</normaloff>:/images/status/network-wireless-encrypted.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Calibration</string>
    </property>
   </action>
  </widget>
