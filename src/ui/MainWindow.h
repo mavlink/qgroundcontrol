@@ -148,7 +148,70 @@ public slots:
 
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
+
+
+    void showToolWidget();
+    void updateVisibilitySettings (bool vis);
+    void updateLocationSettings (Qt::DockWidgetArea location);
 protected:
+
+    // These defines are used to save the settings when selecting with
+    // which widgets populate the views
+    // FIXME: DO NOT PUT CUSTOM VALUES IN THIS ENUM since it is iterated over
+    // this will be fixed in a future release.
+    typedef enum _TOOLS_WIDGET_NAMES {
+      MENU_UAS_CONTROL,
+      MENU_UAS_INFO,
+      MENU_CAMERA,
+      MENU_UAS_LIST,
+      MENU_WAYPOINTS,
+      MENU_STATUS,
+      MENU_DETECTION,
+      MENU_DEBUG_CONSOLE,
+      MENU_PARAMETERS,
+      MENU_HDD_1,
+      MENU_HDD_2,
+      MENU_WATCHDOG,
+      MENU_HUD,
+      MENU_HSI,
+      MENU_RC_VIEW,
+      MENU_SLUGS_DATA,
+      MENU_SLUGS_PID,
+      MENU_SLUGS_HIL,
+      MENU_SLUGS_CAMERA,
+      CENTRAL_LINECHART = 255, // Separation from dockwidgets and central widgets
+      CENTRAL_PROTOCOL,
+      CENTRAL_MAP,
+      CENTRAL_3D_LOCAL,
+      CENTRAL_3D_MAP,
+      CENTRAL_GOOGLE_EARTH,
+      CENTRAL_HUD,
+      CENTRAL_DATA_PLOT,
+    }TOOLS_WIDGET_NAMES;
+
+    typedef enum _SETTINGS_SECTIONS {
+      SECTION_MENU,
+      VIEW_ENGINEER,
+      VIEW_OPERATOR,
+      VIEW_CALIBRATION,
+      VIEW_MAVLINK,
+      SUB_SECTION_CHECKED,
+      SUB_SECTION_LOCATION,
+    } SETTINGS_SECTIONS;
+
+
+    QHash<int, QAction*> toolsMenuActions; // Holds ptr to the Menu Actions
+    QHash<int, QWidget*> dockWidgets;  // Holds ptr to the Actual Dock widget
+    QHash<int, Qt::DockWidgetArea> dockWidgetLocations; // Holds the location
+
+
+    void addToToolsMenu (QWidget* widget, const QString title, const char * slotName, TOOLS_WIDGET_NAMES tool, Qt::DockWidgetArea location);
+    void showTheWidget (TOOLS_WIDGET_NAMES widget);
+
+    int currentView;
+    int aboutToQuit;
+    //QHash<int, QString> settingsSections;
+
     QStatusBar* statusBar;
     QStatusBar* createStatusBar();
     void loadWidgets();
@@ -174,8 +237,6 @@ protected:
 
     void configureWindowName();
 
-    void buildHelpMenu ();
-    void buildViewsMenu ();
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
@@ -234,17 +295,7 @@ protected:
     QAction* stopUASAct;
     QAction* killUASAct;
     QAction* simulateUASAct;
-    QAction* actionOnline_documentation;
-    QAction* actionProject_Roadmap;
-    QAction* actionCredits_Developers;
-    QAction* actionCalibrationView;
-    QAction* actionEngineerView;
-    QAction* actionFlightView;
-    QAction* actionMavlinkView;
-    QAction* actionReloadStyle;
 
-    QMenu* helpMenu;
-    QMenu* viewsMenu;
 
     LogCompressor* comp;
     QString screenFileName;
@@ -252,6 +303,8 @@ protected:
 
 private:
     Ui::MainWindow ui;
+
+    QString buildMenuKey (SETTINGS_SECTIONS section , TOOLS_WIDGET_NAMES tool);
 
 };
 

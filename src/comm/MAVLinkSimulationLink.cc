@@ -659,7 +659,7 @@ qint64 MAVLinkSimulationLink::bytesAvailable()
 
 void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 {
-    qDebug() << "Simulation received " << size << " bytes from groundstation: ";
+    //qDebug() << "Simulation received " << size << " bytes from groundstation: ";
 
     // Increase write counter
     //bitsSentTotal += size * 8;
