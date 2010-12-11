@@ -45,21 +45,10 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionJoystickSettings"/>
+    <addaction name="actionJoystick_Settings"/>
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
-   </widget>
-   <widget class="QMenu" name="menuUnmanned_System">
-    <property name="title">
-     <string>Unmanned System</string>
-    </property>
-    <addaction name="actionLiftoff"/>
-    <addaction name="actionLand"/>
-    <addaction name="actionEmergency_Land"/>
-    <addaction name="actionEmergency_Kill"/>
-    <addaction name="separator"/>
-    <addaction name="actionConfiguration"/>
    </widget>
    <widget class="QMenu" name="menuNetwork">
     <property name="title">
@@ -68,43 +57,35 @@
     <addaction name="actionAdd_Link"/>
     <addaction name="separator"/>
    </widget>
-   <widget class="QMenu" name="menuWindow">
-    <property name="title">
-     <string>Window</string>
-    </property>
-    <addaction name="actionEngineerView"/>
-    <addaction name="actionPilotView"/>
-    <addaction name="actionOperatorView"/>
-    <addaction name="action3DMapView"/>
-    <addaction name="action3DView"/>
-    <addaction name="actionGoogleEarthView"/>
-    <addaction name="actionGlobalOperatorView"/>
-    <addaction name="separator"/>
-    <addaction name="actionShow_MAVLink_view"/>
-    <addaction name="actionShow_data_analysis_view"/>
-    <addaction name="actionShow_full_view"/>
-    <addaction name="actionStyleConfig"/>
-    <addaction name="actionShow_Slugs_View"/>
-   </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-    <addaction name="actionOnline_documentation"/>
-    <addaction name="actionProject_Roadmap"/>
-    <addaction name="actionCredits_Developers"/>
-   </widget>
    <widget class="QMenu" name="menuConnected_Systems">
     <property name="title">
      <string>Select System</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuUnmanned_System">
+    <property name="title">
+     <string>Unmanned System</string>
+    </property>
+    <property name="separatorsCollapsible">
+     <bool>false</bool>
+    </property>
+    <addaction name="actionLiftoff"/>
+    <addaction name="actionLand"/>
+    <addaction name="actionEmergency_Land"/>
+    <addaction name="actionEmergency_Kill"/>
+    <addaction name="separator"/>
+    <addaction name="actionConfiguration"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
     </property>
    </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
    <addaction name="menuConnected_Systems"/>
    <addaction name="menuUnmanned_System"/>
-   <addaction name="menuWindow"/>
-   <addaction name="menuHelp"/>
+   <addaction name="menuTools"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -217,6 +198,9 @@
    </property>
    <property name="text">
     <string>Joystick settings</string>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
    </property>
   </action>
   <action name="actionOperatorView">
@@ -346,6 +330,18 @@
    </property>
    <property name="text">
     <string>Show Slugs View</string>
+   </property>
+  </action>
+  <action name="actionJoystick_Settings">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/devices/input-gaming.svg</normaloff>:/images/devices/input-gaming.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Joystick Settings</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
  </widget>

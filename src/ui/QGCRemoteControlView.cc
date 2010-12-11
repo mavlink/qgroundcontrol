@@ -115,10 +115,10 @@ void QGCRemoteControlView::setUASId(int id)
         connect(newUAS, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
 
         connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), this, SLOT(setChannelRaw(int,float)));
-        connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannelRaw(int,float)));
+//        connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannelRaw(int,float)));
 
         connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), this, SLOT(setChannelScaled(int,float)));
-        connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), calibrationWindow, SLOT(setChannelScaled(int,float)));
+//        connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), calibrationWindow, SLOT(setChannelScaled(int,float)));
     }
 }
 

@@ -133,9 +133,6 @@ public slots:
     void loadDataView();
     /** @brief Load data view, allowing to plot flight data */
     void loadDataView(QString fileName);
-    /** @brief Load view for global operator, allowing to flight on earth */
-    void loadGlobalOperatorView();
-
     /** @brief Show the online help for users */
     void showHelp();
     /** @brief Show the authors / credits */
@@ -145,7 +142,9 @@ public slots:
 
     // Fixme find a nicer solution that scales to more AP types
     void loadSlugsView();
-    void loadPixhawkView();
+
+    void loadPixhawkEngineerView();
+    void loadSlugsEngineerView();
 
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
@@ -153,12 +152,30 @@ protected:
     QStatusBar* statusBar;
     QStatusBar* createStatusBar();
     void loadWidgets();
-    void connectActions();
+
     void clearView();
-    void buildWidgets();
-    void connectWidgets();
-    void arrangeCenterStack();
+
+    void buildCommonWidgets();
+    void buildPxWidgets();
+    void buildSlugsWidgets();
+
+    void connectCommonWidgets();
+    void connectPxWidgets();
+    void connectSlugsWidgets();
+
+    void arrangeCommonCenterStack();
+    void arrangePxCenterStack();
+    void arrangeSlugsCenterStack();
+
+    void connectCommonActions();
+    void connectPxActions();
+    void connectSlugsActions();
+
+
     void configureWindowName();
+
+    void buildHelpMenu ();
+    void buildViewsMenu ();
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
@@ -168,6 +185,8 @@ protected:
     LinkInterface* udpLink;
 
     QSettings settings;
+    QStackedWidget *centerStack;
+
     // Center widgets
     QPointer<Linecharts> linechartWidget;
     QPointer<HUD> hudWidget;
@@ -215,6 +234,17 @@ protected:
     QAction* stopUASAct;
     QAction* killUASAct;
     QAction* simulateUASAct;
+    QAction* actionOnline_documentation;
+    QAction* actionProject_Roadmap;
+    QAction* actionCredits_Developers;
+    QAction* actionCalibrationView;
+    QAction* actionEngineerView;
+    QAction* actionFlightView;
+    QAction* actionMavlinkView;
+    QAction* actionReloadStyle;
+
+    QMenu* helpMenu;
+    QMenu* viewsMenu;
 
     LogCompressor* comp;
     QString screenFileName;
