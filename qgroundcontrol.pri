@@ -77,11 +77,11 @@ macx {
     ICON = $$BASEDIR/images/icons/macx.icns
 
     # Copy audio files if needed
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
     # Copy google earth starter file
-    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
     # Copy model files
-    #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/.
+    #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
 
     exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
     # No check for GLUT.framework since it's a MAC default
@@ -147,12 +147,12 @@ macx {
 linux-g++ {
 
     debug {
-        #DESTDIR = $$BUILDDIR/debug
+        DESTDIR = $$TARGETDIR/debug
         CONFIG += debug
     }
 
     release {
-        #DESTDIR = $$BUILDDIR/release
+        DESTDIR = $$TARGETDIR/release
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -202,15 +202,10 @@ linux-g++ {
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
 
-    debug {
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/debug
-    }
-
-    release {
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release
-        QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$TARGETDIR/release
-    }
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
+    QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
@@ -220,12 +215,12 @@ linux-g++ {
 linux-g++-64 {
 
     debug {
-        #DESTDIR = $$BUILDDIR/debug
+        DESTDIR = $$TARGETDIR/debug
         CONFIG += debug
     }
 
     release {
-        #DESTDIR = $$BUILDDIR/release
+        DESTDIR = $$TARGETDIR/release
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -275,6 +270,11 @@ linux-g++-64 {
     LIBS += -lfreenect
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
+
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
+    QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
