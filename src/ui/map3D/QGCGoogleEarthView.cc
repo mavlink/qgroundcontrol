@@ -16,9 +16,11 @@
 QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         QWidget(parent),
         updateTimer(new QTimer(this)),
+        refreshRateMs(200),
         mav(NULL),
         followCamera(true),
         trailEnabled(true),
+        webViewInitialized(false),
 #if (defined Q_OS_MAC)
         webViewMac(new QWebView(this)),
 #endif
@@ -34,22 +36,14 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 #endif
 
     ui->setupUi(this);
-
 #if (defined Q_OS_MAC)
     ui->webViewLayout->addWidget(webViewMac);
-    webViewMac->setPage(new QGCWebPage(webViewMac));
-    webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
-    webViewMac->load(QUrl("earth.html"));
-#endif
-
-#if (defined Q_OS_WIN) & !(defined __MINGW32__)
-    webViewWin->load(QUrl("earth.html"));
 #endif
 
 #if ((defined Q_OS_MAC) | ((defined Q_OS_WIN) & !(defined __MINGW32__)))
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateState()));
-    updateTimer->start(200);
+    updateTimer->start(refreshRateMs);
 #endif
 
     // Follow checkbox
@@ -94,9 +88,36 @@ void QGCGoogleEarthView::follow(bool follow)
     followCamera = follow;
 }
 
+void QGCGoogleEarthView::hide()
+{
+    updateTimer->stop();
+    QWidget::hide();
+}
+
+void QGCGoogleEarthView::show()
+{
+    if (!webViewInitialized)
+    {
+#if (defined Q_OS_MAC)
+    webViewMac->setPage(new QGCWebPage(webViewMac));
+    webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
+    webViewMac->load(QUrl("earth.html"));
+#endif
+
+#if (defined Q_OS_WIN) & !(defined __MINGW32__)
+    webViewWin->load(QUrl("earth.html"));
+#endif
+    webViewInitialized = true;
+    }
+    updateTimer->start();
+    QWidget::show();
+}
+
 void QGCGoogleEarthView::updateState()
 {
 #ifdef Q_OS_MAC
+    if (isVisible())
+    {
     if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
     {
         static bool initialized = false;
@@ -139,6 +160,7 @@ void QGCGoogleEarthView::updateState()
         }
     }
 #endif
+}
 }
 
 void QGCGoogleEarthView::changeEvent(QEvent *e)
