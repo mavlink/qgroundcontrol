@@ -160,8 +160,8 @@ protected:
     void arrangeCenterStack();
     void configureWindowName();
 
-    void createCenterWidgetMenu();
-    void createDockWidgetMenu();
+    QMenu* createCenterWidgetMenu();
+    QMenu* createDockWidgetMenu();
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
@@ -203,6 +203,7 @@ protected:
     QPointer<QDockWidget> headUpDockWidget;
     QPointer<QDockWidget> hsiDockWidget;
     QPointer<QDockWidget> rcViewDockWidget;
+    QPointer<QDockWidget> hudDockWidget;
     QPointer<QDockWidget> slugsDataWidget;
     QPointer<QDockWidget> slugsPIDControlWidget;
     QPointer<QDockWidget> slugsHilSimWidget;

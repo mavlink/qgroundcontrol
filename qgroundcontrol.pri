@@ -133,11 +133,13 @@ macx {
 
 
     exists(/opt/local/include/libfreenect) {
-    message("Building support for libfreenect")
+    message("ENABLED support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
     # Include libfreenect libraries
     LIBS += -lfreenect
     DEFINES += QGC_LIBFREENECT_ENABLED
+    } else {
+        message("DISABLED libfreenect support")
     }
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
