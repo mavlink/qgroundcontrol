@@ -41,12 +41,12 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     // Let UAS handle the default message set
     UAS::receiveMessage(link, message);
-//    mavlink_message_t* msg = &message;
 
     //qDebug() << "PX RECEIVED" << msg->sysid << msg->compid << msg->msgid;
 
 // Only compile this portion if matching MAVLink packets have been compiled
 #ifdef MAVLINK_ENABLED_PIXHAWK
+    mavlink_message_t* msg = &message;
 
     if (message.sysid == uasId)
     {

@@ -81,6 +81,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Adjust the size
     adjustSize();
+
+    // Set menu
+    QMenu* widgetMenu = createPopupMenu();
+    widgetMenu->setTitle("Widgets");
+    ui.menuBar->addMenu(widgetMenu);
 }
 
 MainWindow::~MainWindow()
@@ -89,6 +94,46 @@ MainWindow::~MainWindow()
     statusBar = NULL;
 }
 
+//QList<QWidget* >* MainWindow::getMainWidgets()
+//{
+
+//}
+
+//QMenu* QMainWindow::getDockWidgetMenu()
+//{
+//    Q_D(QMainWindow);
+//    QMenu *menu = 0;
+//#ifndef QT_NO_DOCKWIDGET
+//    QList<QDockWidget *> dockwidgets = qFindChildren<QDockWidget *>(this);
+//    if (dockwidgets.size()) {
+//        menu = new QMenu(this);
+//        for (int i = 0; i < dockwidgets.size(); ++i) {
+//            QDockWidget *dockWidget = dockwidgets.at(i);
+//            if (dockWidget->parentWidget() == this
+//                && d->layout->contains(dockWidget)) {
+//                menu->addAction(dockwidgets.at(i)->toggleViewAction());
+//            }
+//        }
+//        menu->addSeparator();
+//    }
+//#endif // QT_NO_DOCKWIDGET
+//#ifndef QT_NO_TOOLBAR
+//    QList<QToolBar *> toolbars = qFindChildren<QToolBar *>(this);
+//    if (toolbars.size()) {
+//        if (!menu)
+//            menu = new QMenu(this);
+//        for (int i = 0; i < toolbars.size(); ++i) {
+//            QToolBar *toolBar = toolbars.at(i);
+//            if (toolBar->parentWidget() == this
+//                && d->layout->contains(toolBar)) {
+//                menu->addAction(toolbars.at(i)->toggleViewAction());
+//            }
+//        }
+//    }
+//#endif
+//    Q_UNUSED(d);
+//    return menu;
+//}
 
 void MainWindow::buildWidgets()
 {
@@ -285,6 +330,16 @@ void MainWindow::configureWindowName()
 #ifndef Q_WS_MAC
     //qApp->setWindowIcon(QIcon(":/core/images/qtcreator_logo_128.png"));
 #endif
+}
+
+void MainWindow::createCenterWidgetMenu()
+{
+
+}
+
+void MainWindow::createDockWidgetMenu()
+{
+
 }
 
 QStatusBar* MainWindow::createStatusBar()

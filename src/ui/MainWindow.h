@@ -160,6 +160,9 @@ protected:
     void arrangeCenterStack();
     void configureWindowName();
 
+    void createCenterWidgetMenu();
+    void createDockWidgetMenu();
+
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
     AS4Protocol* as4link;
@@ -168,6 +171,10 @@ protected:
     LinkInterface* udpLink;
 
     QSettings settings;
+    // Widget lists
+    QList<QPointer<QWidget> > centerWidgets;
+    QList<QPointer<QDockWidget> > dockWidgets;
+
     // Center widgets
     QPointer<Linecharts> linechartWidget;
     QPointer<HUD> hudWidget;
