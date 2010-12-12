@@ -159,7 +159,9 @@ void LinechartWidget::createLayout()
     QToolButton* timeButton = new QToolButton(this);
     timeButton->setText(tr("Ground Time"));
     timeButton->setCheckable(true);
-    timeButton->setChecked(false);
+    bool gTimeDefault = true;
+    if (activePlot) activePlot->enforceGroundTime(gTimeDefault);
+    timeButton->setChecked(gTimeDefault);
     layout->addWidget(timeButton, 1, 4);
     layout->setColumnStretch(4, 0);
     connect(timeButton, SIGNAL(clicked(bool)), activePlot, SLOT(enforceGroundTime(bool)));
@@ -441,6 +443,12 @@ void LinechartWidget::removeCurve(QString curve)
     //TODO @todo Ensure that the button for a curve gets deleted when the original curve is deleted
     // Remove name
     }
+
+void LinechartWidget::showEvent(QShowEvent* event)
+{
+    Q_UNUSED(event);
+    setActive(isVisible());
+}
 
 void LinechartWidget::setActive(bool active)
 {
