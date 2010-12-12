@@ -57,6 +57,7 @@ void XMLCommProtocolWidget::selectXMLFile()
             setXML(instanceText);
             // Store filename for next time
             settings.setValue(mavlinkXML, QFileInfo(file).absoluteFilePath());
+            settings.sync();
         }
         else
         {
@@ -112,6 +113,7 @@ void XMLCommProtocolWidget::selectOutputDirectory()
         m_ui->outputDirNameLabel->setText(fileNames.first());
         // Store directory for next time
         settings.setValue(mavlinkOutputDir, QFileInfo(fileNames.first()).absoluteFilePath());
+        settings.sync();
         //QFile file(fileName);
     }
 }

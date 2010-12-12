@@ -16,6 +16,7 @@
 #include <QHostInfo>
 
 #include "MG.h"
+#include "QGC.h"
 #include "MAVLinkSimulationLink.h"
 #include "SerialLink.h"
 #include "UDPLink.h"
@@ -89,6 +90,32 @@ MainWindow::MainWindow(QWidget *parent) :
 //    QMenu* centerMenu = createCenterWidgetMenu();
 //    centerMenu->setTitle("Center");
 //    ui.menuBar->addMenu(centerMenu);
+
+    // Load previous widget setup
+
+    // FIXME WORK IN PROGRESS
+    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+
+    QList<QDockWidget *> dockwidgets = qFindChildren<QDockWidget *>(this);
+    if (dockwidgets.size())
+    {
+        settings.beginGroup("mainwindow/dockwidgets");
+        for (int i = 0; i < dockwidgets.size(); ++i)
+        {
+            QDockWidget *dockWidget = dockwidgets.at(i);
+            if (dockWidget->parentWidget() == this)
+            {
+                if (settings.contains(dockWidget->windowTitle()))
+                {
+                    dockWidget->setVisible(settings.value(dockWidget->windowTitle(), dockWidget->isVisible()).toBool());
+                }
+            }
+        }
+        settings.endGroup();
+    }
+
+
+
     this->show();
 }
 
@@ -96,6 +123,27 @@ MainWindow::~MainWindow()
 {
     delete statusBar;
     statusBar = NULL;
+}
+
+void MainWindow::storeSettings()
+{
+    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+
+    QList<QDockWidget *> dockwidgets = qFindChildren<QDockWidget *>(this);
+    if (dockwidgets.size())
+    {
+        settings.beginGroup("mainwindow/dockwidgets");
+        for (int i = 0; i < dockwidgets.size(); ++i)
+        {
+            QDockWidget *dockWidget = dockwidgets.at(i);
+            if (dockWidget->parentWidget() == this)
+            {
+                settings.setValue(dockWidget->windowTitle(), QVariant(dockWidget->isVisible()));
+            }
+        }
+        settings.endGroup();
+    }
+    settings.sync();
 }
 
 QMenu* MainWindow::createCenterWidgetMenu()
