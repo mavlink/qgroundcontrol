@@ -87,6 +87,9 @@ public:
     ~MainWindow();
 
 public slots:
+    /** @brief Store the mainwindow settings */
+    void storeSettings();
+
     /**
      * @brief Shows a status message on the bottom status bar
      *
