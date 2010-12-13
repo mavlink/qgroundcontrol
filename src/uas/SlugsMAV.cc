@@ -137,7 +137,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
       case MAVLINK_MSG_ID_PID:              //182
           memset(&mlSinglePid,0,sizeof(mavlink_pid_t));
           mavlink_msg_pid_decode(&message, &mlSinglePid);
-          qDebug() << "\nSLUGS RECEIVED PID Message = "<<mlSinglePid.idx;
+        //  qDebug() << "\nSLUGS RECEIVED PID Message = "<<mlSinglePid.idx;
 
           emit slugsPidValues(uasId, mlSinglePid);
 
@@ -220,7 +220,7 @@ void SlugsMAV::emitSignals (void){
 #ifdef MAVLINK_ENABLED_SLUGS
 void SlugsMAV::emitGpsSignals (void){
 
-    qDebug()<<"After Emit GPS Signal"<<mlGpsData.fix_type;
+   // qDebug()<<"After Emit GPS Signal"<<mlGpsData.fix_type;
 
 
     //ToDo Uncomment if. it was comment only to test
@@ -248,7 +248,7 @@ void SlugsMAV::emitGpsSignals (void){
 
 void SlugsMAV::emitPidSignal()
 {
-     qDebug() << "\nSLUGS RECEIVED PID Message";
+    // qDebug() << "\nSLUGS RECEIVED PID Message";
     emit slugsPidValues(uasId, mlSinglePid);
 
 }

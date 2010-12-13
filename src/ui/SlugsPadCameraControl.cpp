@@ -27,6 +27,7 @@ SlugsPadCameraControl::~SlugsPadCameraControl()
 void SlugsPadCameraControl::mouseMoveEvent(QMouseEvent *event)
 {
     //emit mouseMoveCoord(event->x(),event->y());
+
     if(dragging)
     {
 
