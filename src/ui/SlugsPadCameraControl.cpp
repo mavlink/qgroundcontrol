@@ -29,13 +29,9 @@ void SlugsPadCameraControl::mouseMoveEvent(QMouseEvent *event)
     //emit mouseMoveCoord(event->x(),event->y());
     if(dragging)
     {
-        if(abs(x1-event->x())>20 || abs(y1-event->y())>20)
-        {
 
-            getDeltaPositionPad(event->x(), event->y());
-            x1 = event->x();
-            y1 = event->y();
-        }
+      // getDeltaPositionPad(event->x(), event->y());
+
     }
 
 
@@ -54,7 +50,7 @@ void SlugsPadCameraControl::mouseReleaseEvent(QMouseEvent *event)
 {
      dragging = false;
     //emit mouseReleaseCoord(event->x(),event->y());
-    //getDeltaPositionPad(event->x(), event->y());
+    getDeltaPositionPad(event->x(), event->y());
 
      xFin = event->x();
      yFin = event->y();
@@ -104,6 +100,10 @@ void SlugsPadCameraControl::getDeltaPositionPad(int x2, int y2)
 
     double bearing = localMeasures.x();
     double dist = getDistPixel(y1,x1,y2,x2);
+
+    // this only convert real bearing to frame widget bearing
+    bearing = bearing +90;
+    if(bearing>= 360) bearing = bearing - 360;
 
 
 
@@ -210,16 +210,9 @@ double SlugsPadCameraControl::getDistPixel(int x1, int y1, int x2, int y2)
       // distancia = (float) hipotenusa;
 }
 
-/**
-                * Esta función xxxxxxxxx
-                * @param double lat1 -->
-                * @param double lon1 -->
-                * @param double lat2 -->
-                * @param double lon2 -->
-                * @param ref double rumbo -->
-                * @param ref double distancia -->
-                */
-QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, double lat1, double lon2, double lat2)
+
+QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, double lat1,
+                                                              double lon2, double lat2)
 {
     double cateto_opuesto,cateto_adyacente, hipotenusa, distancia, marcacion;
 
@@ -256,9 +249,7 @@ QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, doubl
     else if((lat1 == lat2) && (lon1 == lon2)) //0
         marcacion = 0.0;
 
-    // this only convert real bearing to frame widget bearing
-    marcacion = marcacion +90;
-    if(marcacion>= 360) marcacion = marcacion - 360;
+
 
     return QPointF(marcacion,distancia);
 
