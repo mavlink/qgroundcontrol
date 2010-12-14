@@ -118,50 +118,51 @@ void QGCGoogleEarthView::updateState()
 #ifdef Q_OS_MAC
     if (isVisible())
     {
-    if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-    {
-        static bool initialized = false;
-        if (!initialized)
+        if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
         {
-            webViewMac->page()->currentFrame()->evaluateJavaScript("setGCSHome(22.679833,8.549444, 470);");
-            initialized = true;
-        }
-        int uasId = 0;
-        double lat = 22.679833;
-        double lon = 8.549444;
-        double alt = 470.0;
+            static bool initialized = false;
+            if (!initialized)
+            {
+                webViewMac->page()->currentFrame()->evaluateJavaScript("setGCSHome(22.679833,8.549444, 470);");
+                initialized = true;
+            }
+            int uasId = 0;
+            double lat = 22.679833;
+            double lon = 8.549444;
+            double alt = 470.0;
 
-        float roll = 0.0f;
-        float pitch = 0.0f;
-        float yaw = 0.0f;
+            float roll = 0.0f;
+            float pitch = 0.0f;
+            float yaw = 0.0f;
 
-        if (mav)
-        {
-            uasId = mav->getUASID();
-            lat = mav->getLatitude();
-            lon = mav->getLongitude();
-            alt = mav->getAltitude();
-            roll = mav->getRoll();
-            pitch = mav->getPitch();
-            yaw = mav->getYaw();
-        }
-        webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
-                                                                .arg(uasId)
-                                                                .arg(lat)
-                                                                .arg(lon)
-                                                                .arg(alt+500)
-                                                                .arg(roll)
-                                                                .arg(pitch)
-                                                                .arg(yaw));
+            if (mav)
+            {
+                uasId = mav->getUASID();
+                lat = mav->getLatitude();
+                lon = mav->getLongitude();
+                alt = mav->getAltitude();
+                roll = mav->getRoll();
+                pitch = mav->getPitch();
+                yaw = mav->getYaw();
+            }
+            webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
+                                                                   .arg(uasId)
+                                                                   .arg(lat)
+                                                                   .arg(lon)
+                                                                   .arg(alt+500)
+                                                                   .arg(roll)
+                                                                   .arg(pitch)
+                                                                   .arg(yaw));
 
-        if (followCamera)
-        {
-             webViewMac->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
+            if (followCamera)
+            {
+                webViewMac->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
+            }
         }
     }
 #endif
 }
-}
+
 
 void QGCGoogleEarthView::changeEvent(QEvent *e)
 {
