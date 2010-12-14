@@ -600,10 +600,13 @@ void UASWaypointManager::sendWaypointRequest(quint16 seq)
 void UASWaypointManager::sendWaypoint(quint16 seq)
 {
     mavlink_message_t message;
+    qDebug() <<" WP Buffer count: "<<waypoint_buffer.count();
 
     if (seq < waypoint_buffer.count())
     {
+
         mavlink_waypoint_t *wp;
+
 
         wp = waypoint_buffer.at(seq);
         wp->target_system = uas.getUASID();
@@ -611,11 +614,12 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
 
         emit updateStatusString(QString("sending waypoint ID %1 of %2 total").arg(wp->seq).arg(current_count));
 
+        qDebug() << "sent waypoint (" << wp->seq << ") to ID " << wp->target_system<<" WP Buffer count: "<<waypoint_buffer.count();
+
         mavlink_msg_waypoint_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, wp);
         uas.sendMessage(message);
         MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
 
-        qDebug() << "sent waypoint (" << wp->seq << ") to ID " << wp->target_system;
     }
 }
 
