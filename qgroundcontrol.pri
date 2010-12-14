@@ -209,7 +209,8 @@ linux-g++ {
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/patterns $$DESTDIR/images
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
@@ -278,7 +279,8 @@ linux-g++-64 {
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/patterns $$DESTDIR/images
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
