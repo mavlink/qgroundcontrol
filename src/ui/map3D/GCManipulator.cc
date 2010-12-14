@@ -254,10 +254,10 @@ GCManipulator::calcMovement(void)
     if (buttonMask == GUIEventAdapter::LEFT_MOUSE_BUTTON)
     {
         // rotate camera
-#ifdef __APPLE__
-        osg::Vec3d axis;
-#else
+#ifdef __WIN32__
         osg::Vec3 axis;
+#else
+        osg::Vec3d axis;
 #endif
         float angle;
 
