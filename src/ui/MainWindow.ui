@@ -80,7 +80,6 @@
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -94,9 +93,9 @@
     <property name="title">
      <string>Perspectives</string>
     </property>
-    <addaction name="actionFlightView"/>
+    <addaction name="actionOperatorsView"/>
     <addaction name="actionEngineersView"/>
-    <addaction name="actionCalibrationView"/>
+    <addaction name="actionPilotsView"/>
     <addaction name="separator"/>
     <addaction name="actionMavlinkView"/>
     <addaction name="actionReloadStyle"/>
@@ -393,13 +392,13 @@
     <string>Developer Credits</string>
    </property>
   </action>
-  <action name="actionFlightView">
+  <action name="actionOperatorsView">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
      <normaloff>:/images/status/weather-overcast.svg</normaloff>:/images/status/weather-overcast.svg</iconset>
    </property>
    <property name="text">
-    <string>Flight</string>
+    <string>Operator</string>
    </property>
   </action>
   <action name="actionEngineersView">
@@ -429,13 +428,13 @@
     <string>Reload Style</string>
    </property>
   </action>
-  <action name="actionCalibrationView">
+  <action name="actionPilotsView">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
      <normaloff>:/images/status/network-wireless-encrypted.svg</normaloff>:/images/status/network-wireless-encrypted.svg</iconset>
    </property>
    <property name="text">
-    <string>Calibration</string>
+    <string>Pilot</string>
    </property>
   </action>
  </widget>

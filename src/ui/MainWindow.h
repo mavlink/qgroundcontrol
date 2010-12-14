@@ -146,11 +146,14 @@ public slots:
     void loadPixhawkEngineerView();
     void loadSlugsEngineerView();
 
+    void presentView();
+
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
 
 
     void showToolWidget();
+    void showCentralWidget();
     void updateVisibilitySettings (bool vis);
     void updateLocationSettings (Qt::DockWidgetArea location);
 protected:
@@ -179,7 +182,7 @@ protected:
       MENU_SLUGS_PID,
       MENU_SLUGS_HIL,
       MENU_SLUGS_CAMERA,
-      CENTRAL_LINECHART = 255, // Separation from dockwidgets and central widgets
+      CENTRAL_LINECHART = 255, // do not change
       CENTRAL_PROTOCOL,
       CENTRAL_MAP,
       CENTRAL_3D_LOCAL,
@@ -187,17 +190,21 @@ protected:
       CENTRAL_GOOGLE_EARTH,
       CENTRAL_HUD,
       CENTRAL_DATA_PLOT,
+      CENTRAL_SEPARATOR,
     }TOOLS_WIDGET_NAMES;
 
     typedef enum _SETTINGS_SECTIONS {
       SECTION_MENU,
-      VIEW_ENGINEER,
-      VIEW_OPERATOR,
-      VIEW_CALIBRATION,
-      VIEW_MAVLINK,
       SUB_SECTION_CHECKED,
       SUB_SECTION_LOCATION,
     } SETTINGS_SECTIONS;
+
+    typedef enum _VIEW_SECTIONS {
+      VIEW_ENGINEER,
+      VIEW_OPERATOR,
+      VIEW_PILOT,
+      VIEW_MAVLINK,
+    } VIEW_SECTIONS;
 
 
     QHash<int, QAction*> toolsMenuActions; // Holds ptr to the Menu Actions
@@ -206,9 +213,11 @@ protected:
 
 
     void addToToolsMenu (QWidget* widget, const QString title, const char * slotName, TOOLS_WIDGET_NAMES tool, Qt::DockWidgetArea location);
-    void showTheWidget (TOOLS_WIDGET_NAMES widget);
+    void showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view = VIEW_MAVLINK);
+    void showCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SECTIONS view);
+    void addToCentralWidgetsMenu ( QWidget* widget, const QString title,const char * slotName, TOOLS_WIDGET_NAMES centralWidget);
 
-    int currentView;
+    VIEW_SECTIONS currentView;
     int aboutToQuit;
     //QHash<int, QString> settingsSections;
 
@@ -250,7 +259,9 @@ protected:
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
+
     QPointer<HUD> hudWidget;
+
     QPointer<MapWidget> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
@@ -273,7 +284,9 @@ protected:
     QPointer<QDockWidget> headDown1DockWidget;
     QPointer<QDockWidget> headDown2DockWidget;
     QPointer<QDockWidget> watchdogControlDockWidget;
+
     QPointer<QDockWidget> headUpDockWidget;
+
     QPointer<QDockWidget> hsiDockWidget;
     QPointer<QDockWidget> rcViewDockWidget;
     QPointer<QDockWidget> slugsDataWidget;
@@ -304,7 +317,7 @@ protected:
 private:
     Ui::MainWindow ui;
 
-    QString buildMenuKey (SETTINGS_SECTIONS section , TOOLS_WIDGET_NAMES tool);
+    QString buildMenuKey (SETTINGS_SECTIONS section , TOOLS_WIDGET_NAMES tool, VIEW_SECTIONS view);
 
 };
 

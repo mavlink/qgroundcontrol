@@ -57,6 +57,7 @@ public:
      * @return NULL pointer if no UAS exists, active UAS else
      **/
     UASInterface* getActiveUAS();
+    UASInterface* silentGetActiveUAS();
     /**
      * @brief Get the UAS with this id
      *

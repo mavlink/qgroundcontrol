@@ -96,6 +96,11 @@ UASInterface* UASManager::getActiveUAS()
     return activeUAS; ///< Return zero pointer if no UAS has been loaded
 }
 
+UASInterface* UASManager::silentGetActiveUAS()
+{
+    return activeUAS; ///< Return zero pointer if no UAS has been loaded
+}
+
 bool UASManager::launchActiveUAS()
 {
     // If the active UAS is set, execute command
