@@ -44,12 +44,13 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 
+
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         uasId(id),
         startTime(MG::TIME::getGroundTimeNow()),
         commStatus(COMM_DISCONNECTED),
         name(""),
-        autopilot(0),
+        autopilot(-1),
         links(new QList<LinkInterface*>()),
         unknownPackets(),
         mavlink(protocol),
@@ -153,6 +154,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 this->autopilot = mavlink_msg_heartbeat_get_autopilot(&message);
                 emit systemTypeSet(this, type);
             }
+
             break;
         case MAVLINK_MSG_ID_BOOT:
             getStatusForCode((int)MAV_STATE_BOOT, uasState, stateDescription);

@@ -98,7 +98,7 @@ protected:
     quint64 startTime;            ///< The time the UAS was switched on
     CommStatus commStatus;        ///< Communication status
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
-    int autopilot;                ///< Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
+    int autopilot;                ///< Type of the Autopilot: -1: None, 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
@@ -165,7 +165,8 @@ protected:
 public:
     UASWaypointManager &getWaypointManager(void) { return waypointManager; }
     int getSystemType();
-    unsigned char getAutopilotType() {return autopilot;}
+    int getAutopilotType() {return autopilot;}
+    void setAutopilotType(int apType) { autopilot = apType;}
 
 public slots:
     /** @brief Launches the system **/

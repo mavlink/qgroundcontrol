@@ -157,7 +157,9 @@ public:
         return color;
     }
 
-    virtual unsigned char getAutopilotType() = 0;
+    virtual int getAutopilotType() = 0;
+    virtual void setAutopilotType(int apType)= 0;
+
 public slots:
 
     /** @brief Launches the system/Liftof **/
