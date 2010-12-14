@@ -67,6 +67,8 @@ public:
 
 public slots:
     void setChannel(int ch, float raw, float normalized);
+    void setChannelRaw(int ch, float raw);
+    void setChannelScaled(int ch, float normalized);
     void loadFile();
     void saveFile();
     void send();

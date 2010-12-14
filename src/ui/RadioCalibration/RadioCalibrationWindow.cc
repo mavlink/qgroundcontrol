@@ -52,6 +52,66 @@ RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
     setUASId(0);
 }
 
+void RadioCalibrationWindow::setChannelRaw(int ch, float raw)
+{
+    /** this expects a particular channel to function mapping
+       \todo allow run-time channel mapping
+       */
+    switch (ch)
+    {
+    case 0:
+        aileron->channelChanged(raw);
+        break;
+    case 1:
+        elevator->channelChanged(raw);
+        break;
+    case 2:
+        throttle->channelChanged(raw);
+        break;
+    case 3:
+        rudder->channelChanged(raw);
+        break;
+    case 4:
+        gyro->channelChanged(raw);
+        break;
+    case 5:
+        pitch->channelChanged(raw);
+        break;
+
+
+    }
+}
+
+void RadioCalibrationWindow::setChannelScaled(int ch, float normalized)
+{
+//    /** this expects a particular channel to function mapping
+//       \todo allow run-time channel mapping
+//       */
+//    switch (ch)
+//    {
+//    case 0:
+//        aileron->channelChanged(raw);
+//        break;
+//    case 1:
+//        elevator->channelChanged(raw);
+//        break;
+//    case 2:
+//        throttle->channelChanged(raw);
+//        break;
+//    case 3:
+//        rudder->channelChanged(raw);
+//        break;
+//    case 4:
+//        gyro->channelChanged(raw);
+//        break;
+//    case 5:
+//        pitch->channelChanged(raw);
+//        break;
+
+
+//    }
+}
+
 void RadioCalibrationWindow::setChannel(int ch, float raw, float normalized)
 {
     /** this expects a particular channel to function mapping
