@@ -19,9 +19,13 @@ public:
 
 public slots:
     void getDeltaPositionPad(int x, int y);
+
+
+
     double getDistPixel(int x1, int y1, int x2, int y2);
     QPointF ObtenerMarcacionDistanciaPixel(double lon1, double lat1, double lon2, double lat2);
     QPointF getPointBy_BearingDistance(double lat1, double lon1, double rumbo, double distancia);
+
 
 
 

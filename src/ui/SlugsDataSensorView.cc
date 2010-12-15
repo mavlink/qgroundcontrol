@@ -104,7 +104,7 @@ void SlugsDataSensorView::slugsGlobalPositionChanged(UASInterface *uas,
  ui->m_GpsLongitude->setText(QString::number(lon));
  ui->m_GpsHeight->setText(QString::number(alt));
 
- qDebug()<<"GPS Position = "<<lat<<" - "<<lon<<" - "<<alt;
+ //qDebug()<<"GPS Position = "<<lat<<" - "<<lon<<" - "<<alt;
 }
 
 
@@ -154,7 +154,7 @@ void SlugsDataSensorView::slugAttitudeChanged(UASInterface* uas,
     ui->m_Pitch->setPlainText(QString::number(slugpitch));
     ui->m_Yaw->setPlainText(QString::number(slugyaw));
 
-     qDebug()<<"Attitude change = "<<slugroll<<" - "<<slugpitch<<" - "<<slugyaw;
+    // qDebug()<<"Attitude change = "<<slugroll<<" - "<<slugpitch<<" - "<<slugyaw;
 
 }
 
