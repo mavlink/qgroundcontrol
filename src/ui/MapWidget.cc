@@ -562,6 +562,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 
             // Icon
             QPen* pointpen = new QPen(uasColor);
+            qDebug() << uas->getUASName();
             MAV2DIcon* p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, pointpen);
             uasIcons.insert(uas->getUASID(), p);
             geomLayer->addGeometry(p);

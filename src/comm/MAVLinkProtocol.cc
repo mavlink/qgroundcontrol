@@ -162,10 +162,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
                     uas = new UAS(this, message.sysid);
 
-                    // Set the autopilot type
-                    uas->setAutopilotType((int)heartbeat.autopilot);
-
-
                     // Connect this robot to the UAS object
                     connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), uas, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
                     break;
@@ -173,10 +169,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     {
                     // Fixme differentiate between quadrotor and coaxial here
                     PxQuadMAV* mav = new PxQuadMAV(this, message.sysid);
-
-                    // Set the autopilot type
-                    //mav->setAutopilotType((int)heartbeat.autopilot);
-
                     // Connect this robot to the UAS object
                     // it is IMPORTANT here to use the right object type,
                     // else the slot of the parent object is called (and thus the special
@@ -188,10 +180,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 case MAV_AUTOPILOT_SLUGS:
                     {
                     SlugsMAV* mav = new SlugsMAV(this, message.sysid);
-
-                    // Set the autopilot type
-                    mav->setAutopilotType((int)heartbeat.autopilot);
-
                     // Connect this robot to the UAS object
                     // it is IMPORTANT here to use the right object type,
                     // else the slot of the parent object is called (and thus the special
@@ -203,10 +191,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 case MAV_AUTOPILOT_ARDUPILOTMEGA:
                     {
                     ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(this, message.sysid);
-
-                    // Set the autopilot type
-                    mav->setAutopilotType((int)heartbeat.autopilot);
-
                     // Connect this robot to the UAS object
                     // it is IMPORTANT here to use the right object type,
                     // else the slot of the parent object is called (and thus the special
@@ -228,12 +212,6 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 
                 // Now add UAS to "official" list, which makes the whole application aware of it
                 UASManager::instance()->addUAS(uas);
-
-
-
-                qDebug() << "++===============================";
-                qDebug() << uas->getAutopilotType();
-                qDebug() << "++===============================";
 
             }
 

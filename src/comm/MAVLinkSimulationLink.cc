@@ -837,9 +837,9 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 
         }
         unsigned char v=data[i];
-        fprintf(stderr,"%02x ", v);
+        //fprintf(stderr,"%02x ", v);
     }
-    fprintf(stderr,"\n");
+    //fprintf(stderr,"\n");
 
     readyBufferMutex.lock();
     for (int i = 0; i < streampointer; i++)

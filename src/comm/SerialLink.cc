@@ -170,7 +170,7 @@ void SerialLink::writeBytes(const char* data, qint64 size)
         {
             unsigned char v=data[i];
 
-            fprintf(stderr,"%02x ", v);
+            //fprintf(stderr,"%02x ", v);
         }
     }
 }
