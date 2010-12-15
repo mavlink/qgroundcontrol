@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SerialLink.h"
 #include "LinkManager.h"
 #include <MG.h>
+#include <iostream>
 #ifdef _WIN32
 #include "windows.h"
 #endif
@@ -106,7 +107,7 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
 SerialLink::~SerialLink()
 {
     disconnect();
-    delete port;
+    if(port) delete port;
     port = NULL;
 }
 
@@ -238,6 +239,8 @@ bool SerialLink::disconnect()
     port->flush();
     port->close();
     dataMutex.unlock();
+
+    if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
 
     bool closed = true;
     //port->isOpen();
@@ -516,7 +519,7 @@ bool SerialLink::setPortName(QString portName)
             this->porthandle = "\\\\.\\" + this->porthandle;
         }
 #endif
-        delete port;
+        if(port) delete port;
         port = new QextSerialPort(porthandle, QextSerialPort::Polling);
 
         port->setBaudRate(baudrate);

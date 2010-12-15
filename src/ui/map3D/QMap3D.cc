@@ -39,7 +39,7 @@ QMap3D::QMap3D(QWidget * parent, const char * name, WindowFlags f) :
         QWidget(parent,f)
 {
     setupUi(this);
-    graphicsView->setCameraManipulator(new osgEarthUtil::EarthManipulator);
+    graphicsView->setCameraManipulator(new osgEarth::Util::EarthManipulator);
     graphicsView->setSceneData(new osg::Group);
     graphicsView->updateCamera();
     show();
