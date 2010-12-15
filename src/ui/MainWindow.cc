@@ -1070,6 +1070,7 @@ void MainWindow::presentView() {
 #endif
 
   qDebug() << "LC";
+  showTheCentralWidget(CENTRAL_LINECHART, currentView);
   if (linechartWidget){
     qDebug () << buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_LINECHART,currentView) <<
         settings.value(buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_LINECHART,currentView)).toBool() ;
@@ -1094,6 +1095,7 @@ void MainWindow::presentView() {
   showTheCentralWidget(CENTRAL_PROTOCOL, currentView);
 
   // HEAD UP DISPLAY
+  showTheCentralWidget(CENTRAL_HUD, currentView);
   qDebug() << "HUD";
   if (hudWidget){
     qDebug() << buildMenuKey(SUB_SECTION_CHECKED,CENTRAL_HUD,currentView) <<
