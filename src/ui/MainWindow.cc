@@ -954,10 +954,9 @@ void MainWindow::UASCreated(UASInterface* uas)
 //              }
 //            }
           } break;
-
-          loadEngineerView();
         }
 
+        loadOperatorView();
     }
 }
 
