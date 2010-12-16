@@ -943,17 +943,12 @@ void MainWindow::UASCreated(UASInterface* uas)
             connectSlugsActions();
 
             // FIXME: This type checking might be redundant
-//            if (slugsDataWidget) {
-//              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
-//              if (dataWidget) {
-//                SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
-//                if (mav2) {
+            if (slugsDataWidget) {
+              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+              if (dataWidget) {
                   (dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget()))->addUAS(uas);
-//                  //loadSlugsView();
-//                  loadGlobalOperatorView();
-//                }
-//              }
-//            }
+              }
+            }
           } break;
 
           loadEngineerView();
