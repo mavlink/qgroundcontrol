@@ -60,9 +60,18 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
 
     // Load defaults from settings
     QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+    settings.sync();
     if (settings.contains("SERIALLINK_COMM_PORT"))
     {
         this->porthandle = settings.value("SERIALLINK_COMM_PORT").toString();
+    }
+
+    // *nix (Linux, MacOS tested) serial port support
+    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
+    //port = new QextSerialPort(porthandle, QextSerialPort::EventDriven);
+
+    if (settings.contains("SERIALLINK_COMM_PORT"))
+    {
         setBaudRate(settings.value("SERIALLINK_COMM_BAUD").toInt());
         setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
         setStopBitsType(settings.value("SERIALLINK_COMM_STOPBITS").toInt());
@@ -77,6 +86,12 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
         this->stopBits = stopBits;
         this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
     }
+    port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
+    port->setBaudRate(baudrate);
+    port->setFlowControl(flow);
+    port->setParity(parity);
+    port->setDataBits(dataBits);
+    port->setStopBits(stopBits);
 
     // Set the port name
     if (porthandle == "")
@@ -105,15 +120,7 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
         //some other error occurred. Inform user.
     }
 #else
-    // *nix (Linux, MacOS tested) serial port support
-    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
-    //port = new QextSerialPort(porthandle, QextSerialPort::EventDriven);
-    port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
-    port->setBaudRate(baudrate);
-    port->setFlowControl(flow);
-    port->setParity(parity);
-    port->setDataBits(dataBits);
-    port->setStopBits(stopBits);
+
 #endif
 
     // Link is setup, register it with link manager
@@ -301,15 +308,6 @@ bool SerialLink::connect()
  **/
 bool SerialLink::hardwareConnect()
 {
-    // Store settings
-    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
-    settings.setValue("SERIALLINK_COMM_PORT", this->porthandle);
-    settings.setValue("SERIALLINK_COMM_BAUD", this->baudrate);
-    settings.setValue("SERIALLINK_COMM_PARITY", this->parity);
-    settings.setValue("SERIALLINK_COMM_STOPBITS", this->stopBits);
-    settings.setValue("SERIALLINK_COMM_DATABITS", this->dataBits);
-    settings.sync();
-
     QObject::connect(port, SIGNAL(aboutToClose()), this, SIGNAL(disconnected()));
 
     port->open(QIODevice::ReadWrite);
@@ -326,6 +324,15 @@ bool SerialLink::hardwareConnect()
     if(connectionUp) {
         emit connected();
         emit connected(true);
+
+        // Store settings
+        QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+        settings.setValue("SERIALLINK_COMM_PORT", this->porthandle);
+        settings.setValue("SERIALLINK_COMM_BAUD", getBaudRate());
+        settings.setValue("SERIALLINK_COMM_PARITY", getParityType());
+        settings.setValue("SERIALLINK_COMM_STOPBITS", getStopBitsType());
+        settings.setValue("SERIALLINK_COMM_DATABITS", getDataBitsType());
+        settings.sync();
     }
 
     return connectionUp;
@@ -339,7 +346,14 @@ bool SerialLink::hardwareConnect()
  **/
 bool SerialLink::isConnected()
 {
-    return port->isOpen();
+    if (port)
+    {
+        return port->isOpen();
+    }
+    else
+    {
+        return false;
+    }
 }
 
 int SerialLink::getId()
@@ -735,9 +749,16 @@ bool SerialLink::setBaudRate(int rate)
         break;
     }
 
-    port->setBaudRate(this->baudrate);
-    if(reconnect) connect();
-    return accepted;
+    if (port)
+    {
+        port->setBaudRate(this->baudrate);
+        if(reconnect) connect();
+        return accepted;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool SerialLink::setFlowType(int flow)
