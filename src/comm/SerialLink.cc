@@ -30,9 +30,11 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QTimer>
 #include <QDebug>
+#include <QSettings>
 #include <QMutexLocker>
 #include "SerialLink.h"
 #include "LinkManager.h"
+#include "QGC.h"
 #include <MG.h>
 #ifdef _WIN32
 #include "windows.h"
@@ -54,12 +56,26 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
 #endif
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
-    this->baudrate = baudrate;
-    this->flow = flow;
-    this->parity = parity;
-    this->dataBits = dataBits;
-    this->stopBits = stopBits;
-    this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
+
+    // Load defaults from settings
+    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+    if (settings.contains("SERIALLINK_COMM_PORT"))
+    {
+        this->porthandle = settings.value("SERIALLINK_COMM_PORT").toString();
+        setBaudRate(settings.value("SERIALLINK_COMM_BAUD").toInt());
+        setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
+        setStopBitsType(settings.value("SERIALLINK_COMM_STOPBITS").toInt());
+        setDataBitsType(settings.value("SERIALLINK_COMM_DATABITS").toInt());
+    }
+    else
+    {
+        this->baudrate = baudrate;
+        this->flow = flow;
+        this->parity = parity;
+        this->dataBits = dataBits;
+        this->stopBits = stopBits;
+        this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
+    }
 
     // Set the port name
     if (porthandle == "")
@@ -282,6 +298,15 @@ bool SerialLink::connect()
  **/
 bool SerialLink::hardwareConnect()
 {
+    // Store settings
+    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+    settings.setValue("SERIALLINK_COMM_PORT", this->porthandle);
+    settings.setValue("SERIALLINK_COMM_BAUD", this->baudrate);
+    settings.setValue("SERIALLINK_COMM_PARITY", this->parity);
+    settings.setValue("SERIALLINK_COMM_STOPBITS", this->stopBits);
+    settings.setValue("SERIALLINK_COMM_DATABITS", this->dataBits);
+    settings.sync();
+
     QObject::connect(port, SIGNAL(aboutToClose()), this, SIGNAL(disconnected()));
 
     port->open(QIODevice::ReadWrite);

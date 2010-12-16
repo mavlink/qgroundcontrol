@@ -7,6 +7,7 @@
 #include "ui_XMLCommProtocolWidget.h"
 #include "MAVLinkXMLParser.h"
 #include "MAVLinkSyntaxHighlighter.h"
+#include "QGC.h"
 
 #include <QDebug>
 #include <iostream>
@@ -31,7 +32,7 @@ XMLCommProtocolWidget::XMLCommProtocolWidget(QWidget *parent) :
 void XMLCommProtocolWidget::selectXMLFile()
 {
     //QString fileName = QFileDialog::getOpenFileName(this, tr("Load Protocol Definition File"), ".", "*.xml");
-    QSettings settings;
+    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
     const QString mavlinkXML = "MAVLINK_XML_FILE";
     QString dirPath = settings.value(mavlinkXML, QCoreApplication::applicationDirPath() + "../").toString();
     QFileDialog dialog;
@@ -56,6 +57,7 @@ void XMLCommProtocolWidget::selectXMLFile()
             setXML(instanceText);
             // Store filename for next time
             settings.setValue(mavlinkXML, QFileInfo(file).absoluteFilePath());
+            settings.sync();
         }
         else
         {
@@ -92,7 +94,7 @@ void XMLCommProtocolWidget::setXML(const QString& xml)
 
 void XMLCommProtocolWidget::selectOutputDirectory()
 {
-    QSettings settings;
+    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
     const QString mavlinkOutputDir = "MAVLINK_OUTPUT_DIR";
     QString dirPath = settings.value(mavlinkOutputDir, QCoreApplication::applicationDirPath() + "../").toString();
     QFileDialog dialog;
@@ -110,7 +112,8 @@ void XMLCommProtocolWidget::selectOutputDirectory()
     {
         m_ui->outputDirNameLabel->setText(fileNames.first());
         // Store directory for next time
-        settings.setValue(mavlinkOutputDir, fileNames.first());
+        settings.setValue(mavlinkOutputDir, QFileInfo(fileNames.first()).absoluteFilePath());
+        settings.sync();
         //QFile file(fileName);
     }
 }
