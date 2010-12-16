@@ -157,6 +157,9 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
  **/
 Core::~Core()
 {
+    //mainWindow->storeSettings();
+    mainWindow->hide();
+    mainWindow->deleteLater();
     // Delete singletons
     delete LinkManager::instance();
     delete UASManager::instance();

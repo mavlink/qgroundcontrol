@@ -123,6 +123,8 @@ protected:
     float refLineWidthToPen(float line);
     /** @brief Rotate a polygon around a point clockwise */
     void rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin);
+    /** @brief Override base class show */
+    virtual void showEvent(QShowEvent* event);
 
     QImage* image; ///< Double buffer image
     QImage glImage; ///< The background / camera image

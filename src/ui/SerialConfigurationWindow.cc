@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <SerialConfigurationWindow.h>
 #include <SerialLinkInterface.h>
 #include <QDir>
+#include <QSettings>
 #include <QFileInfoList>
 #ifdef _WIN32
 #include <QextSerialEnumerator.h>

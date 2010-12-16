@@ -373,9 +373,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 positionLock = true;
 
                 // Send to patch antenna
-                mavlink_message_t msg;
-                mavlink_msg_global_position_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, pos.usec, pos.lat, pos.lon, pos.alt, pos.vx, pos.vy, pos.vz);
-                sendMessage(msg);
+                // FIXME Message re-routing should be implemented differently
+                //mavlink_message_t msg;
+                //mavlink_msg_global_position_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, pos.usec, pos.lat, pos.lon, pos.alt, pos.vx, pos.vy, pos.vz);
+                //sendMessage(msg);
             }
             break;
         case MAVLINK_MSG_ID_GPS_RAW:
