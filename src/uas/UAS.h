@@ -218,6 +218,9 @@ public slots:
     /** @brief Send a message over all links this UAS can be reached with (!= all links) */
     void sendMessage(mavlink_message_t message);
 
+    /** @brief Temporary Hack for sending packets to patch Antenna. Send a message over all serial links except for this UAS's */
+    void forwardMessage(mavlink_message_t message);
+
     /** @brief Set this UAS as the system currently in focus, e.g. in the main display widgets */
     void setSelected();
 
