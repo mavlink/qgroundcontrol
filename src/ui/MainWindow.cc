@@ -215,7 +215,8 @@ void MainWindow::buildPxWidgets()
 void MainWindow::buildSlugsWidgets()
 {
     // Center widgets
-    linechartWidget   = new Linecharts(this);
+//    linechartWidget   = new Linecharts(this);
+//    addToCentralWidgetsMenu(linechartWidget, "Line Plots", SLOT(showCentralWidget()), CENTRAL_LINECHART);
 
     // Dock widgets
     headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
@@ -942,17 +943,12 @@ void MainWindow::UASCreated(UASInterface* uas)
             connectSlugsActions();
 
             // FIXME: This type checking might be redundant
-//            if (slugsDataWidget) {
-//              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
-//              if (dataWidget) {
-//                SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
-//                if (mav2) {
+            if (slugsDataWidget) {
+              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+              if (dataWidget) {
                   (dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget()))->addUAS(uas);
-//                  //loadSlugsView();
-//                  loadGlobalOperatorView();
-//                }
-//              }
-//            }
+              }
+            }
           } break;
         }
 
@@ -1144,7 +1140,7 @@ void MainWindow::presentView() {
         if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,MENU_HUD,currentView)).toBool()){
           tmpHud->start();
           addDockWidget(static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,MENU_HUD, currentView)).toInt()),
-                        hsiDockWidget);
+                        headUpDockWidget);
           headUpDockWidget->show();
         } else {
           tmpHud->stop();
@@ -1546,7 +1542,7 @@ void MainWindow::load3DView()
  ========== ATTIC =================
  ==================================
 
-void MainWindow::buildCommonWidgets()
+void MainWindow::buildWidgets()
 {
     //FIXME: memory of acceptList will never be freed again
     QStringList* acceptList = new QStringList();
@@ -1689,7 +1685,7 @@ void MainWindow::connectWidgets()
 
 }
 
-void MainWindow::arrangeCommonCenterStack()
+void MainWindow::arrangeCenterStack()
 {
 
     QStackedWidget *centerStack = new QStackedWidget(this);

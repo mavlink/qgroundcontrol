@@ -69,6 +69,10 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 #ifdef MAVLINK_ENABLED_SLUGS
 
+      case MAVLINK_MSG_ID_RAW_IMU:
+        mavlink_msg_raw_imu_decode(&message, &mlRawImuData);
+      break;
+
       case MAVLINK_MSG_ID_BOOT:
         mavlink_msg_boot_decode(&message,&mlBoot);
         emit slugsBootMsg(uasId, mlBoot);
@@ -132,16 +136,14 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       case MAVLINK_MSG_ID_CTRL_SRFC_PT:     //181
 
-            break;
+      break;
 
       case MAVLINK_MSG_ID_PID:              //182
           memset(&mlSinglePid,0,sizeof(mavlink_pid_t));
           mavlink_msg_pid_decode(&message, &mlSinglePid);
-          qDebug() << "\nSLUGS RECEIVED PID Message = "<<mlSinglePid.idx;
+        //  qDebug() << "\nSLUGS RECEIVED PID Message = "<<mlSinglePid.idx;
 
           emit slugsPidValues(uasId, mlSinglePid);
-
-
       break;
 
       case MAVLINK_MSG_ID_SLUGS_ACTION:     //183
@@ -174,10 +176,9 @@ void SlugsMAV::emitSignals (void){
 
     case 3:
       emit remoteControlChannelScaledChanged(0,(mlPilotConsoleData.de- 1000.0f)/1000.0f);
-       emit remoteControlChannelScaledChanged(1,(mlPilotConsoleData.dla- 1000.0f)/1000.0f);
-        emit remoteControlChannelScaledChanged(2,(mlPilotConsoleData.dr- 1000.0f)/1000.0f);
-         emit remoteControlChannelScaledChanged(3,(mlPilotConsoleData.dra- 1000.0f)/1000.0f);
-          emit remoteControlChannelScaledChanged(0,(mlPilotConsoleData.dt- 1000.0f)/1000.0f);
+      emit remoteControlChannelScaledChanged(1,(mlPilotConsoleData.dla- 1000.0f)/1000.0f);
+      emit remoteControlChannelScaledChanged(2,(mlPilotConsoleData.dr- 1000.0f)/1000.0f);
+      emit remoteControlChannelScaledChanged(3,(mlPilotConsoleData.dra- 1000.0f)/1000.0f);
 
       emit slugsPWM(uasId, mlPwmCommands);
     break;
@@ -220,7 +221,7 @@ void SlugsMAV::emitSignals (void){
 #ifdef MAVLINK_ENABLED_SLUGS
 void SlugsMAV::emitGpsSignals (void){
 
-    qDebug()<<"After Emit GPS Signal"<<mlGpsData.fix_type;
+   // qDebug()<<"After Emit GPS Signal"<<mlGpsData.fix_type;
 
 
     //ToDo Uncomment if. it was comment only to test
@@ -248,7 +249,7 @@ void SlugsMAV::emitGpsSignals (void){
 
 void SlugsMAV::emitPidSignal()
 {
-     qDebug() << "\nSLUGS RECEIVED PID Message";
+    // qDebug() << "\nSLUGS RECEIVED PID Message";
     emit slugsPidValues(uasId, mlSinglePid);
 
 }
