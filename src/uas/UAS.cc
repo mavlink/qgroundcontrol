@@ -95,6 +95,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 UAS::~UAS()
 {
     delete links;
+    links=NULL;
 }
 
 int UAS::getUASID() const
@@ -126,6 +127,7 @@ void UAS::setSelected()
 
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
+    if (!link) return;
     if (!links->contains(link))
     {
         addLink(link);
@@ -371,12 +373,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     GAudioOutput::instance()->notifyPositive();
                 }
                 positionLock = true;
-
-                // Send to patch antenna
-                // FIXME Message re-routing should be implemented differently
-                //mavlink_message_t msg;
-                //mavlink_msg_global_position_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, pos.usec, pos.lat, pos.lon, pos.alt, pos.vx, pos.vy, pos.vz);
-                //sendMessage(msg);
             }
             break;
         case MAVLINK_MSG_ID_GPS_RAW:
@@ -840,6 +836,7 @@ void UAS::sendMessage(mavlink_message_t message)
 
 void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
 {
+    if(!link) return;
     // Create buffer
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Write message into buffer, prepending start sign

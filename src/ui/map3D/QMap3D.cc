@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 QMap3D::QMap3D(QWidget * parent, const char * name, WindowFlags f) :
         QWidget(parent,f)
 {
+    Q_UNUSED(name);
     setupUi(this);
 #if ((OPENSCENEGRAPH_MAJOR_VERSION == 2) & (OPENSCENEGRAPH_MINOR_VERSION > 8)) | (OPENSCENEGRAPH_MAJOR_VERSION > 2)
     graphicsView->setCameraManipulator(new osgEarth::Util::EarthManipulator);
