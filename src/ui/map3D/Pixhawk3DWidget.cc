@@ -396,6 +396,7 @@ Pixhawk3DWidget::findVehicleModels(void)
     // add sphere of 0.05m radius
     osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.05f);
     osg::ref_ptr<osg::ShapeDrawable> sphereDrawable = new osg::ShapeDrawable(sphere);
+    sphereDrawable->setColor(osg::Vec4f(0.5f, 0.0f, 0.5f, 1.0f));
     osg::ref_ptr<osg::Geode> sphereGeode = new osg::Geode;
     sphereGeode->addDrawable(sphereDrawable);
     sphereGeode->setName("Sphere (0.1m)");
