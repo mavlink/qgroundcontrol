@@ -504,10 +504,6 @@ void MainWindow::connectPxWidgets()
 {
     if (linechartWidget)
     {
-        connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
-                linechartWidget, SLOT(addSystem(UASInterface*)));
-        connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
-                linechartWidget, SLOT(selectSystem(int)));
         connect(linechartWidget, SIGNAL(logfileWritten(QString)),
                 this, SLOT(loadDataView(QString)));
     }

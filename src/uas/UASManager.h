@@ -69,6 +69,8 @@ public:
      **/
     UASInterface* getUASForId(int id);
 
+    QList<UASInterface*> getUASList();
+
 
 public slots:
 

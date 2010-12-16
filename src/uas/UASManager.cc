@@ -85,6 +85,11 @@ void UASManager::addUAS(UASInterface* uas)
     }
 }
 
+QList<UASInterface*> UASManager::getUASList()
+{
+    return systems.values();
+}
+
 UASInterface* UASManager::getActiveUAS()
 {
     if(!activeUAS)
