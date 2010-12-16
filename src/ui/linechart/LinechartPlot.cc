@@ -56,7 +56,7 @@ maxInterval(MAX_STORAGE_INTERVAL),
 timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
 automaticScrollActive(false),
 m_active(true),
-m_groundTime(false),
+m_groundTime(true),
 d_data(NULL),
 d_curve(NULL)
 {

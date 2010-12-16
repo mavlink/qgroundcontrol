@@ -39,7 +39,11 @@ QMap3D::QMap3D(QWidget * parent, const char * name, WindowFlags f) :
         QWidget(parent,f)
 {
     setupUi(this);
+#if ((OPENSCENEGRAPH_MAJOR_VERSION == 2) & (OPENSCENEGRAPH_MINOR_VERSION > 8)) | (OPENSCENEGRAPH_MAJOR_VERSION > 2)
     graphicsView->setCameraManipulator(new osgEarth::Util::EarthManipulator);
+#else
+    graphicsView->setCameraManipulator(new osgEarthUtil::EarthManipulator);
+#endif
     graphicsView->setSceneData(new osg::Group);
     graphicsView->updateCamera();
     show();
