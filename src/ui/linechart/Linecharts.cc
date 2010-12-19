@@ -1,4 +1,5 @@
 #include "Linecharts.h"
+#include "UASManager.h"
 
 Linecharts::Linecharts(QWidget *parent) :
         QStackedWidget(parent),
@@ -6,6 +7,18 @@ Linecharts::Linecharts(QWidget *parent) :
         active(true)
 {
   this->setVisible(false);
+  // Get current MAV list
+  QList<UASInterface*> systems = UASManager::instance()->getUASList();
+
+  // Add each of them
+  foreach (UASInterface* sys, systems)
+  {
+      addSystem(sys);
+  }
+  connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
+          this, SLOT(addSystem(UASInterface*)));
+  connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
+          this, SLOT(selectSystem(int)));
 }
 
 

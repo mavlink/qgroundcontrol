@@ -159,7 +159,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 switch (heartbeat.autopilot)
                 {
                 case MAV_AUTOPILOT_GENERIC:
+
                     uas = new UAS(this, message.sysid);
+
                     // Connect this robot to the UAS object
                     connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), uas, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
                     break;
@@ -202,11 +204,15 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     break;
                 }
 
+                // Set the autopilot type
+                uas->setAutopilotType((int)heartbeat.autopilot);
 
                 // Make UAS aware that this link can be used to communicate with the actual robot
                 uas->addLink(link);
+
                 // Now add UAS to "official" list, which makes the whole application aware of it
                 UASManager::instance()->addUAS(uas);
+
             }
 
             // Only count message if UAS exists for this message

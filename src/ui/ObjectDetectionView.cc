@@ -40,8 +40,6 @@ This file is part of the PIXHAWK project
 #include <QDebug>
 #include <QMap>
 
-#include "MG.h"
-
 ObjectDetectionView::ObjectDetectionView(QString folder, QWidget *parent) :
         QWidget(parent),
         patternList(),
@@ -117,7 +115,7 @@ void ObjectDetectionView::newPattern(int uasId, QString patternPath, float confi
             m_ui->listWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
 
         // load image
-        QString filePath = MG::DIR::getSupportFilesDirectory() + "/" + patternFolder + "/" + patternPath.split("/", QString::SkipEmptyParts).last();
+        QString filePath = patternFolder + "/" + patternPath.split("/", QString::SkipEmptyParts).last();
         QPixmap image = QPixmap(filePath);
         if (image.width() > image.height())
             image = image.scaledToWidth(m_ui->imageLabel->width());

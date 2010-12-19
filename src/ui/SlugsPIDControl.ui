@@ -122,13 +122,6 @@
            </layout>
           </item>
           <item>
-           <widget class="QLabel" name="recepcion_label">
-            <property name="text">
-             <string>Recepcion</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <spacer name="verticalSpacer_5">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
@@ -955,6 +948,13 @@
              </spacer>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="recepcion_label">
+            <property name="text">
+             <string>Recepcion</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
