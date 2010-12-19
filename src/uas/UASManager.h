@@ -57,6 +57,7 @@ public:
      * @return NULL pointer if no UAS exists, active UAS else
      **/
     UASInterface* getActiveUAS();
+    UASInterface* silentGetActiveUAS();
     /**
      * @brief Get the UAS with this id
      *
@@ -67,6 +68,8 @@ public:
      * @return UAS with the given ID, NULL pointer else
      **/
     UASInterface* getUASForId(int id);
+
+    QList<UASInterface*> getUASList();
 
 
 public slots:

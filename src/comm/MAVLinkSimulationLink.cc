@@ -660,7 +660,7 @@ qint64 MAVLinkSimulationLink::bytesAvailable()
 
 void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 {
-    qDebug() << "Simulation received " << size << " bytes from groundstation: ";
+    //qDebug() << "Simulation received " << size << " bytes from groundstation: ";
 
     // Increase write counter
     //bitsSentTotal += size * 8;
@@ -838,9 +838,9 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 
         }
         unsigned char v=data[i];
-        fprintf(stderr,"%02x ", v);
+        //fprintf(stderr,"%02x ", v);
     }
-    fprintf(stderr,"\n");
+    //fprintf(stderr,"\n");
 
     readyBufferMutex.lock();
     for (int i = 0; i < streampointer; i++)

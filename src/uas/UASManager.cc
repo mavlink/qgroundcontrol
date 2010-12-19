@@ -85,6 +85,11 @@ void UASManager::addUAS(UASInterface* uas)
     }
 }
 
+QList<UASInterface*> UASManager::getUASList()
+{
+    return systems.values();
+}
+
 UASInterface* UASManager::getActiveUAS()
 {
     if(!activeUAS)
@@ -93,6 +98,11 @@ UASInterface* UASManager::getActiveUAS()
         msgBox.setText(tr("No Micro Air Vehicle connected. Please connect one first."));
         msgBox.exec();
     }
+    return activeUAS; ///< Return zero pointer if no UAS has been loaded
+}
+
+UASInterface* UASManager::silentGetActiveUAS()
+{
     return activeUAS; ///< Return zero pointer if no UAS has been loaded
 }
 

@@ -157,6 +157,9 @@ public:
         return color;
     }
 
+    virtual int getAutopilotType() = 0;
+    virtual void setAutopilotType(int apType)= 0;
+
 public slots:
 
     /** @brief Launches the system/Liftof **/
@@ -240,6 +243,8 @@ public slots:
     virtual void startMagnetometerCalibration() = 0;
     virtual void startGyroscopeCalibration() = 0;
     virtual void startPressureCalibration() = 0;
+
+
 
 protected:
     QColor color;

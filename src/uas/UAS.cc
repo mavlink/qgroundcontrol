@@ -43,12 +43,16 @@ This file is part of the QGROUNDCONTROL project
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
+#include "LinkManager.h"
+#include "SerialLink.h"
+
 
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         uasId(id),
         startTime(MG::TIME::getGroundTimeNow()),
         commStatus(COMM_DISCONNECTED),
         name(""),
+        autopilot(-1),
         links(new QList<LinkInterface*>()),
         unknownPackets(),
         mavlink(protocol),
@@ -93,6 +97,7 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 UAS::~UAS()
 {
     delete links;
+    links=NULL;
 }
 
 int UAS::getUASID() const
@@ -124,6 +129,7 @@ void UAS::setSelected()
 
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
+    if (!link) return;
     if (!links->contains(link))
     {
         addLink(link);
@@ -149,8 +155,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (this->type != mavlink_msg_heartbeat_get_type(&message))
             {
                 this->type = mavlink_msg_heartbeat_get_type(&message);
+                this->autopilot = mavlink_msg_heartbeat_get_autopilot(&message);
                 emit systemTypeSet(this, type);
             }
+
             break;
         case MAVLINK_MSG_ID_BOOT:
             getStatusForCode((int)MAV_STATE_BOOT, uasState, stateDescription);
@@ -328,6 +336,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "Vz", pos.vz, time);
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
                 emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
+
+//                qDebug()<<"Local Position = "<<pos.x<<" - "<<pos.y<<" - "<<pos.z;
+//                qDebug()<<"Speed Local Position = "<<pos.vx<<" - "<<pos.vy<<" - "<<pos.vz;
+
                 //emit attitudeChanged(this, pos.roll, pos.pitch, pos.yaw, time);
                 // Set internal state
                 if (!positionLock)
@@ -363,12 +375,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     GAudioOutput::instance()->notifyPositive();
                 }
                 positionLock = true;
-
-                // Send to patch antenna
-                // FIXME Message re-routing should be implemented differently
-                //mavlink_message_t msg;
-                //mavlink_msg_global_position_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, pos.usec, pos.lat, pos.lon, pos.alt, pos.vx, pos.vy, pos.vz);
-                //sendMessage(msg);
+                //TODO fix this hack for forwarding of global position for patch antenna tracking
+                forwardMessage(message);
             }
             break;
         case MAVLINK_MSG_ID_GPS_RAW:
@@ -830,8 +838,31 @@ void UAS::sendMessage(mavlink_message_t message)
     }
 }
 
+void UAS::forwardMessage(mavlink_message_t message)
+{
+    // Emit message on all links that are currently connected
+    QList<LinkInterface*>link_list = LinkManager::instance()->getLinksForProtocol(mavlink);
+    foreach(LinkInterface* link, link_list)
+    {
+        SerialLink* serial = dynamic_cast<SerialLink*>(link);
+        if(serial != 0)
+        {
+
+            for(int i=0;i<links->size();i++)
+            {
+                if(serial != links->at(i))
+                {
+                    qDebug()<<"Forwarding Over link: "<<serial->getName()<<" "<<serial;
+                    sendMessage(serial, message);
+                }
+            }
+        }
+    }
+}
+
 void UAS::sendMessage(LinkInterface* link, mavlink_message_t message)
 {
+    if(!link) return;
     // Create buffer
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Write message into buffer, prepending start sign
@@ -1501,7 +1532,7 @@ void UAS::addLink(LinkInterface* link)
         links->append(link);
     }
     //links->append(link);
-    //qDebug() << " ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK";
+    qDebug() << link<<" ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK";
 }
 
 /**
