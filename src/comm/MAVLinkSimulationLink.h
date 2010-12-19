@@ -85,7 +85,7 @@ public:
 public slots:
     void writeBytes(const char* data, qint64 size);
     void readBytes();
-    void mainloop();
+    virtual void mainloop();
     bool connectLink(bool connect);
 
 
