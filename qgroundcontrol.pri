@@ -23,6 +23,7 @@
 #
 #-------------------------------------------------
 
+
 #$$BASEDIR/lib/qextserialport/include
 #               $$BASEDIR/lib/openjaus/libjaus/include \
 #               $$BASEDIR/lib/openjaus/libopenJaus/include
@@ -40,7 +41,7 @@ QMAKE_POST_LINK += echo "Copying files"
 #QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 
 # MAC OS X
-macx { 
+macx {
 
     COMPILER_VERSION = system(gcc -v)
     message(Using compiler $$COMPILER_VERSION)
@@ -73,15 +74,13 @@ macx {
         -framework CoreFoundation \
         -framework ApplicationServices \
         -lm
-    
+
     ICON = $$BASEDIR/images/icons/macx.icns
 
     # Copy audio files if needed
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
     # Copy google earth starter file
     QMAKE_POST_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
-    # Copy CSS stylesheet
-    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-mission.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/qgroundcontrol.css
     # Copy model files
     #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
 
@@ -133,13 +132,11 @@ macx {
 
 
     exists(/opt/local/include/libfreenect) {
-    message("ENABLED support for libfreenect")
+    message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
     # Include libfreenect libraries
     LIBS += -lfreenect
     DEFINES += QGC_LIBFREENECT_ENABLED
-    } else {
-        message("DISABLED libfreenect support")
     }
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
@@ -162,6 +159,7 @@ linux-g++ {
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
 
     INCLUDEPATH += /usr/include \
+                                   /usr/local/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
               # $$BASEDIR/lib/flite/lang
@@ -209,8 +207,7 @@ linux-g++ {
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
-    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/patterns $$DESTDIR/images
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
@@ -279,8 +276,7 @@ linux-g++-64 {
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
-    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/patterns $$DESTDIR/images
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
@@ -315,9 +311,9 @@ INCLUDEPATH += $$BASEDIR/lib/osgEarth/win32/include \
 LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
     -losg \
     -losgViewer \
-	-losgGA \
-	-losgDB \
-	-losgText \
+        -losgGA \
+        -losgDB \
+        -losgText \
         -lOpenThreads
 DEFINES += QGC_OSG_ENABLED
 exists($$BASEDIR/lib/osgEarth123) {
@@ -356,7 +352,7 @@ exists($$BASEDIR/lib/osgEarth123) {
 win32-g++ {
 
     message(Building for Windows Platform (32bit))
-    
+
     # Special settings for debug
     #CONFIG += CONSOLE
 
@@ -376,7 +372,7 @@ win32-g++ {
     release {
         #DESTDIR = $$BUILDDIR/release
     }
-        
+
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies

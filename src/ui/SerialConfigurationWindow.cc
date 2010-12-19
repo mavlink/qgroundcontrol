@@ -510,12 +510,3 @@ void SerialConfigurationWindow::setLinkName(QString name)
     setWindowTitle(tr("Configuration of ") + link->getName());
 }
 
-void SerialConfigurationWindow::remove()
-{
-    link->disconnect();
-    //delete link;
-    //delete action;
-    this->window()->close();
-    qDebug() << "TODO: Link cannot be deleted: SerialConfigurationWindow::remove() NOT IMPLEMENTED!";
-}
-

@@ -60,12 +60,6 @@ public slots:
     void setParityEven();
     void setPortName(QString port);
     void setLinkName(QString name);
-    /**
-         * @brief Remove this link
-         *
-         * Disconnects the associated link, removes it from all menus and closes the window.
-         */
-    void remove();
     void setupPortList();
 
 protected slots:

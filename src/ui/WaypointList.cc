@@ -153,7 +153,7 @@ void WaypointList::loadWaypoints()
 
         QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
         uas->getWaypointManager().loadWaypoints(fileName);
-    }
+     }
 }
 
 void WaypointList::transmit()
@@ -474,14 +474,14 @@ void WaypointList::on_clearWPListButton_clicked()
 
     if (uas)
     {
-            emit clearPathclicked();
+           emit clearPathclicked();
           const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
             while(!waypoints.isEmpty())//for(int i = 0; i <= waypoints.size(); i++)
             {
                 WaypointView* widget = wpViews.find(waypoints[0]).value();
                 widget->remove();
-            }
         }
+    }
     else
     {
 //        if(isGlobalWP)

@@ -55,6 +55,7 @@ void SlugsPIDControl::activeUasSet(UASInterface* uas)
         connect(slugsMav,SIGNAL(slugsPidValues(int,mavlink_pid_t)),this, SLOT(receivePidValues(int,mavlink_pid_t)) );
 
         connect(ui->setGeneral_pushButton,SIGNAL(clicked()),this,SLOT(slugsTimerStartSet()));
+        connect(ui->getGeneral_pushButton,SIGNAL(clicked()),this,SLOT(slugsTimerStartGet()));
     }
 
 #endif // MAVLINK_ENABLED_SLUG
@@ -473,9 +474,9 @@ void SlugsPIDControl::changeColor_GREEN_Pitch2dT_groupBox()
           //create the packet
           pidMessage.target = activeUAS->getUASID();
           pidMessage.idx = 8;
-          pidMessage.pVal = ui->dR_P_set->text().toFloat();
-          pidMessage.iVal = ui->dR_I_set->text().toFloat();
-          pidMessage.dVal = ui->dR_D_set->text().toFloat();
+          pidMessage.pVal = ui->P2dT_FF_set->text().toFloat();
+          pidMessage.iVal = 0;//ui->dR_I_set->text().toFloat();
+          pidMessage.dVal = 0;//ui->dR_D_set->text().toFloat();
 
           mavlink_message_t msg;
 
@@ -543,6 +544,7 @@ void SlugsPIDControl::receivePidValues(int systemId, const mavlink_pid_t &pidVal
         break;
     case 8:
         ui->P2dT_FF_get->setText(QString::number(pidValues.pVal));
+
         break;
 
     default:
