@@ -23,6 +23,7 @@
 #
 #-------------------------------------------------
 
+
 #$$BASEDIR/lib/qextserialport/include
 #               $$BASEDIR/lib/openjaus/libjaus/include \
 #               $$BASEDIR/lib/openjaus/libopenJaus/include
