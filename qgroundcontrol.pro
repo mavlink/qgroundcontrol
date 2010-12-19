@@ -250,7 +250,8 @@ HEADERS += src/MG.h \
     src/ui/SlugsPIDControl.h \
     src/ui/SlugsVideoCamControl.h \
     src/ui/SlugsPadCameraControl.h \
-    src/ui/QGCMainWindowAPConfigurator.h
+    src/ui/QGCMainWindowAPConfigurator.h \
+    src/comm/MAVLinkSwarmSimulationLink.h
 
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
@@ -361,7 +362,8 @@ SOURCES += src/main.cc \
     src/ui/SlugsPIDControl.cpp \
     src/ui/SlugsVideoCamControl.cpp \
     src/ui/SlugsPadCameraControl.cpp \
-    src/ui/QGCMainWindowAPConfigurator.cc
+    src/ui/QGCMainWindowAPConfigurator.cc \
+    src/comm/MAVLinkSwarmSimulationLink.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     
