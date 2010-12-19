@@ -562,6 +562,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 
             // Icon
             QPen* pointpen = new QPen(uasColor);
+            qDebug() << uas->getUASName();
             MAV2DIcon* p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, pointpen);
             uasIcons.insert(uas->getUASID(), p);
             geomLayer->addGeometry(p);
@@ -592,21 +593,12 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
             uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, QString("lat: %1 lon: %2").arg(lat, lon)));
         }
 
-        //    points.append(new CirclePoint(8.275145, 50.016992, 15, "Wiesbaden-Mainz-Kastel, Johannes-Goßner-Straße", Point::Middle, pointpen));
-        //    points.append(new CirclePoint(8.270476, 50.021426, 15, "Wiesbaden-Mainz-Kastel, Ruthof", Point::Middle, pointpen));
-        //    // "Blind" Points
-        //    points.append(new Point(8.266445, 50.025913, "Wiesbaden-Mainz-Kastel, Mudra Kaserne"));
-        //    points.append(new Point(8.260378, 50.030345, "Wiesbaden-Mainz-Amoneburg, Dyckerhoffstraße"));
 
         // Connect click events of the layer to this object
         // connect(osmLayer, SIGNAL(geometryClicked(Geometry*, QPoint)),
         //                  this, SLOT(geometryClicked(Geometry*, QPoint)));
 
         // Sets the view to the interesting area
-        //QList<QPointF> view;
-        //view.append(QPointF(8.24764, 50.0319));
-        //view.append(QPointF(8.28412, 49.9998));
-        // mc->setView(view);
         updatePosition(0, lat, lon);
     }
 }

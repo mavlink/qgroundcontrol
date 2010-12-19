@@ -67,6 +67,8 @@ public slots:
     void add(LinkInterface* link);
     void addProtocol(LinkInterface* link, ProtocolInterface* protocol);
 
+    bool removeLink(LinkInterface* link);
+
     bool connectAll();
     bool connectLink(LinkInterface* link);
 

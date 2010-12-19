@@ -62,14 +62,21 @@ public slots:
     void showWaypoints(bool state);
     /** @brief Follow the aircraft during flight */
     void follow(bool follow);
+    /** @brief Hide and deactivate */
+    void hide();
+    /** @brief Show and activate */
+    void show();
 
 protected:
     void changeEvent(QEvent *e);
     QTimer* updateTimer;
+    int refreshRateMs;
     UASInterface* mav;
     bool followCamera;
     bool trailEnabled;
+    bool webViewInitialized;
 #if (defined Q_OS_WIN) & (defined _MSVC_VER)
+#if (defined Q_OS_WIN) && !(defined __MINGW32__)
     WebAxWidget* webViewWin;
 #endif
 #if (defined Q_OS_MAC)

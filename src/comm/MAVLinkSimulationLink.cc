@@ -559,16 +559,17 @@ void MAVLinkSimulationLink::mainloop()
 
 
         // Send controller states
-        uint8_t attControl = 1;
-        uint8_t posXYControl = 1;
-        uint8_t posZControl = 0;
-        uint8_t posYawControl = 1;
 
-        uint8_t gpsLock = 2;
-        uint8_t visLock = 3;
-        uint8_t posLock = qMax(gpsLock, visLock);
 
         #ifdef MAVLINK_ENABLED_PIXHAWK
+                uint8_t attControl = 1;
+                uint8_t posXYControl = 1;
+                uint8_t posZControl = 0;
+                uint8_t posYawControl = 1;
+
+                uint8_t gpsLock = 2;
+                uint8_t visLock = 3;
+                uint8_t posLock = qMax(gpsLock, visLock);
         messageSize = mavlink_msg_control_status_pack(systemId, componentId, &msg, posLock, visLock, gpsLock, attControl, posXYControl, posZControl, posYawControl);
         #endif
 
@@ -659,7 +660,7 @@ qint64 MAVLinkSimulationLink::bytesAvailable()
 
 void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 {
-    qDebug() << "Simulation received " << size << " bytes from groundstation: ";
+    //qDebug() << "Simulation received " << size << " bytes from groundstation: ";
 
     // Increase write counter
     //bitsSentTotal += size * 8;
@@ -837,9 +838,9 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 
         }
         unsigned char v=data[i];
-        fprintf(stderr,"%02x ", v);
+        //fprintf(stderr,"%02x ", v);
     }
-    fprintf(stderr,"\n");
+    //fprintf(stderr,"\n");
 
     readyBufferMutex.lock();
     for (int i = 0; i < streampointer; i++)

@@ -41,10 +41,12 @@ void SlugsDataSensorView::addUAS(UASInterface* uas)
     connect(slugsMav, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugSpeedLocalPositionChanged(UASInterface*,double,double,double,quint64)));
     connect(slugsMav, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugAttitudeChanged(UASInterface*,double,double,double,quint64)));
     connect(slugsMav, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugsGlobalPositionChanged(UASInterface*,double,double,double,quint64)));
+    connect(slugsMav,SIGNAL(slugsGPSCogSog(int,double,double)),this,SLOT(slugsGPSCogSog(int,double,double)));
 
 
 
-        //connect slugs especial messages
+
+     //connect slugs especial messages
     connect(slugsMav, SIGNAL(slugsSensorBias(int,const mavlink_sensor_bias_t&)), this, SLOT(slugsSensorBiasChanged(int,const mavlink_sensor_bias_t&)));
     connect(slugsMav, SIGNAL(slugsDiagnostic(int,const mavlink_diagnostic_t&)), this, SLOT(slugsDiagnosticMessageChanged(int,const mavlink_diagnostic_t&)));
     connect(slugsMav, SIGNAL(slugsCPULoad(int,const mavlink_cpu_load_t&)), this, SLOT(slugsCpuLoadChanged(int,const mavlink_cpu_load_t&)));
@@ -53,6 +55,8 @@ void SlugsDataSensorView::addUAS(UASInterface* uas)
     connect(slugsMav, SIGNAL(slugsPWM(int,const mavlink_pwm_commands_t&)),this,SLOT(slugsPWMChanged(int,const mavlink_pwm_commands_t&)));
     connect(slugsMav, SIGNAL(slugsFilteredData(int,const mavlink_filtered_data_t&)),this,SLOT(slugsFilteredDataChanged(int,const mavlink_filtered_data_t&)));
     connect(slugsMav, SIGNAL(slugsGPSDateTime(int,const mavlink_gps_date_time_t&)),this,SLOT(slugsGPSDateTimeChanged(int,const mavlink_gps_date_time_t&)));
+    connect(slugsMav,SIGNAL(slugsAirData(int, const mavlink_air_data_t&)),this,SLOT(slugsAirDataChanged(int, const mavlink_air_data_t&)));
+
 
     #endif // MAVLINK_ENABLED_SLUGS
         // Set this UAS as active if it is the first one
@@ -69,6 +73,15 @@ void SlugsDataSensorView::slugRawDataChanged(int uasId, const mavlink_raw_imu_t 
  ui->m_Axr->setText(QString::number(rawData.xacc));
  ui->m_Ayr->setText(QString::number(rawData.yacc));
  ui->m_Azr->setText(QString::number(rawData.zacc));
+
+ ui->m_Mxr->setText(QString::number(rawData.xmag));
+ ui->m_Myr->setText(QString::number(rawData.ymag));
+ ui->m_Mzr->setText(QString::number(rawData.zmag));
+
+ ui->m_Gxr->setText(QString::number(rawData.xgyro));
+ ui->m_Gyr->setText(QString::number(rawData.ygyro));
+ ui->m_Gzr->setText(QString::number(rawData.zgyro));
+
 }
 
 void SlugsDataSensorView::setActiveUAS(UASInterface* uas){
@@ -85,9 +98,13 @@ void SlugsDataSensorView::slugsGlobalPositionChanged(UASInterface *uas,
  Q_UNUSED(uas);
  Q_UNUSED(time);
 
+
+
  ui->m_GpsLatitude->setText(QString::number(lat));
  ui->m_GpsLongitude->setText(QString::number(lon));
  ui->m_GpsHeight->setText(QString::number(alt));
+
+ qDebug()<<"GPS Position = "<<lat<<" - "<<lon<<" - "<<alt;
 }
 
 
@@ -103,6 +120,8 @@ void SlugsDataSensorView::slugLocalPositionChanged(UASInterface* uas,
   ui->ed_y->setPlainText(QString::number(y));
   ui->ed_z->setPlainText(QString::number(z));
 
+  //qDebug()<<"Local Position = "<<x<<" - "<<y<<" - "<<z;
+
 }
 
 void SlugsDataSensorView::slugSpeedLocalPositionChanged(UASInterface* uas,
@@ -116,6 +135,9 @@ void SlugsDataSensorView::slugSpeedLocalPositionChanged(UASInterface* uas,
   ui->ed_vx->setPlainText(QString::number(vx));
   ui->ed_vy->setPlainText(QString::number(vy));
   ui->ed_vz->setPlainText(QString::number(vz));
+
+  //qDebug()<<"Speed Local Position = "<<vx<<" - "<<vy<<" - "<<vz;
+
 
 }
 
@@ -132,6 +154,8 @@ void SlugsDataSensorView::slugAttitudeChanged(UASInterface* uas,
     ui->m_Pitch->setPlainText(QString::number(slugpitch));
     ui->m_Yaw->setPlainText(QString::number(slugyaw));
 
+     qDebug()<<"Attitude change = "<<slugroll<<" - "<<slugpitch<<" - "<<slugyaw;
+
 }
 
 
@@ -147,6 +171,7 @@ void SlugsDataSensorView::slugsSensorBiasChanged(int systemId,
   ui->m_GzBiases->setText(QString::number(sensorBias.gzBias));
 
 }
+
 
 void SlugsDataSensorView::slugsDiagnosticMessageChanged(int systemId,
                                                         const mavlink_diagnostic_t& diagnostic){
@@ -229,16 +254,74 @@ void SlugsDataSensorView::slugsFilteredDataChanged(int systemId,
 void SlugsDataSensorView::slugsGPSDateTimeChanged(int systemId,
                                                   const mavlink_gps_date_time_t& gpsDateTime){
     Q_UNUSED(systemId);
-  ui->m_GpsDate->setText(QString::number(gpsDateTime.month) + "/" +
-                         QString::number(gpsDateTime.day) + "/" +
+
+    QString month, day;
+
+    month = QString::number(gpsDateTime.month);
+    day = QString::number(gpsDateTime.day);
+
+    if(gpsDateTime.month < 10) month = "0" + QString::number(gpsDateTime.month);
+    if(gpsDateTime.day < 10) day = "0" + QString::number(gpsDateTime.day);
+
+
+    ui->m_GpsDate->setText(day + "/" +
+                         month + "/" +
                          QString::number(gpsDateTime.year));
 
-  ui->m_GpsTime->setText(QString::number(gpsDateTime.hour) + ":" +
-                         QString::number(gpsDateTime.min) + ":" +
-                         QString::number(gpsDateTime.sec));
+    QString hour, min, sec;
+
+    hour = QString::number(gpsDateTime.hour);
+    min =  QString::number(gpsDateTime.min);
+    sec =  QString::number(gpsDateTime.sec);
+
+    if(gpsDateTime.hour < 10) hour = "0" + QString::number(gpsDateTime.hour);
+    if(gpsDateTime.min < 10) min = "0" + QString::number(gpsDateTime.min);
+    if(gpsDateTime.sec < 10) sec = "0" + QString::number(gpsDateTime.sec);
+
+    ui->m_GpsTime->setText(hour + ":" +
+                           min + ":" +
+                           sec);
 
   ui->m_GpsSat->setText(QString::number(gpsDateTime.visSat));
+
+
 }
+
+/**
+     * @brief Updates the air data widget - 171
+*/
+void SlugsDataSensorView::slugsAirDataChanged(int systemId, const mavlink_air_data_t &airData)
+{
+     Q_UNUSED(systemId);
+     ui->ed_dynamic->setText(QString::number(airData.dynamicPressure));
+     ui->ed_static->setText(QString::number(airData.staticPressure));
+     ui->ed_temp->setText(QString::number(airData.temperature));
+
+//     qDebug()<<"Air Data = "<<airData.dynamicPressure<<" - "
+//                            <<airData.staticPressure<<" - "
+//                            <<airData.temperature;
+
+}
+
+/**
+     * @brief set COG and SOG values
+     *
+     * COG and SOG GPS display on the Widgets
+*/
+void SlugsDataSensorView::slugsGPSCogSog(int systemId,
+                                         double cog,
+                                         double sog)
+
+{
+     Q_UNUSED(systemId);
+
+     ui->m_GpsCog->setText(QString::number(cog));
+     ui->m_GpsSog->setText(QString::number(sog));
+
+}
+
+
+
 
 
 

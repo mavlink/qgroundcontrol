@@ -208,8 +208,9 @@ Freenect::get3DPointCloudData(void)
     {
         if (data[i] > 0 && data[i] <= 2048)
         {
-            // see www.ros.org/wiki/kinect_node for details
-            double range = 1.0f / (-0.00307f * static_cast<float>(data[i]) + 3.33f);
+            double range = baseline * depthCameraParameters.fx
+                           / (1.0 / 8.0 * (disparityOffset
+                                           - static_cast<double>(data[i])));
 
             if (range > 0.0f)
             {
@@ -340,7 +341,10 @@ Freenect::readConfigFile(void)
                                  settings.value("transform/R33").toDouble(),
                                  settings.value("transform/Tz").toDouble(),
                                  0.0, 0.0, 0.0, 1.0);
-    transformMatrix = transformMatrix.transposed();
+    transformMatrix = transformMatrix.inverted();
+
+    baseline = settings.value("transform/baseline").toDouble();
+    disparityOffset = settings.value("transform/disparity_offset").toDouble();
 }
 
 void

@@ -30,10 +30,13 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QTimer>
 #include <QDebug>
+#include <QSettings>
 #include <QMutexLocker>
 #include "SerialLink.h"
 #include "LinkManager.h"
+#include "QGC.h"
 #include <MG.h>
+#include <iostream>
 #ifdef _WIN32
 #include "windows.h"
 #endif
@@ -54,12 +57,41 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
 #endif
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
-    this->baudrate = baudrate;
-    this->flow = flow;
-    this->parity = parity;
-    this->dataBits = dataBits;
-    this->stopBits = stopBits;
-    this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
+
+    // Load defaults from settings
+    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+    settings.sync();
+    if (settings.contains("SERIALLINK_COMM_PORT"))
+    {
+        this->porthandle = settings.value("SERIALLINK_COMM_PORT").toString();
+    }
+
+    // *nix (Linux, MacOS tested) serial port support
+    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
+    //port = new QextSerialPort(porthandle, QextSerialPort::EventDriven);
+
+    if (settings.contains("SERIALLINK_COMM_PORT"))
+    {
+        setBaudRate(settings.value("SERIALLINK_COMM_BAUD").toInt());
+        setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
+        setStopBitsType(settings.value("SERIALLINK_COMM_STOPBITS").toInt());
+        setDataBitsType(settings.value("SERIALLINK_COMM_DATABITS").toInt());
+    }
+    else
+    {
+        this->baudrate = baudrate;
+        this->flow = flow;
+        this->parity = parity;
+        this->dataBits = dataBits;
+        this->stopBits = stopBits;
+        this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
+    }
+    port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
+    port->setBaudRate(baudrate);
+    port->setFlowControl(flow);
+    port->setParity(parity);
+    port->setDataBits(dataBits);
+    port->setStopBits(stopBits);
 
     // Set the port name
     if (porthandle == "")
@@ -88,15 +120,7 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
         //some other error occurred. Inform user.
     }
 #else
-    // *nix (Linux, MacOS tested) serial port support
-    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
-    //port = new QextSerialPort(porthandle, QextSerialPort::EventDriven);
-    port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
-    port->setBaudRate(baudrate);
-    port->setFlowControl(flow);
-    port->setParity(parity);
-    port->setDataBits(dataBits);
-    port->setStopBits(stopBits);
+
 #endif
 
     // Link is setup, register it with link manager
@@ -106,7 +130,7 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
 SerialLink::~SerialLink()
 {
     disconnect();
-    delete port;
+    if(port) delete port;
     port = NULL;
 }
 
@@ -170,7 +194,7 @@ void SerialLink::writeBytes(const char* data, qint64 size)
         {
             unsigned char v=data[i];
 
-            fprintf(stderr,"%02x ", v);
+            //fprintf(stderr,"%02x ", v);
         }
     }
 }
@@ -239,6 +263,8 @@ bool SerialLink::disconnect()
     port->close();
     dataMutex.unlock();
 
+    if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
+
     bool closed = true;
     //port->isOpen();
 
@@ -298,6 +324,15 @@ bool SerialLink::hardwareConnect()
     if(connectionUp) {
         emit connected();
         emit connected(true);
+
+        // Store settings
+        QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+        settings.setValue("SERIALLINK_COMM_PORT", this->porthandle);
+        settings.setValue("SERIALLINK_COMM_BAUD", getBaudRate());
+        settings.setValue("SERIALLINK_COMM_PARITY", getParityType());
+        settings.setValue("SERIALLINK_COMM_STOPBITS", getStopBitsType());
+        settings.setValue("SERIALLINK_COMM_DATABITS", getDataBitsType());
+        settings.sync();
     }
 
     return connectionUp;
@@ -311,7 +346,14 @@ bool SerialLink::hardwareConnect()
  **/
 bool SerialLink::isConnected()
 {
-    return port->isOpen();
+    if (port)
+    {
+        return port->isOpen();
+    }
+    else
+    {
+        return false;
+    }
 }
 
 int SerialLink::getId()
@@ -516,7 +558,7 @@ bool SerialLink::setPortName(QString portName)
             this->porthandle = "\\\\.\\" + this->porthandle;
         }
 #endif
-        delete port;
+        if(port) delete port;
         port = new QextSerialPort(porthandle, QextSerialPort::Polling);
 
         port->setBaudRate(baudrate);
@@ -707,9 +749,16 @@ bool SerialLink::setBaudRate(int rate)
         break;
     }
 
-    port->setBaudRate(this->baudrate);
-    if(reconnect) connect();
-    return accepted;
+    if (port)
+    {
+        port->setBaudRate(this->baudrate);
+        if(reconnect) connect();
+        return accepted;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool SerialLink::setFlowType(int flow)
