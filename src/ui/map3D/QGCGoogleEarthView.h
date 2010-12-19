@@ -9,7 +9,7 @@
 #include <QWebView>
 #endif
 
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+#if (defined Q_OS_WIN) & (defined _MSVC_VER)
     QGCWebAxWidget* webViewWin;
 #include <ActiveQt/QAxWidget>
 #include "windows.h"
@@ -35,7 +35,7 @@ protected:
 #else
 namespace Ui {
     class QGCGoogleEarthControls;
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+#if (defined Q_OS_WIN) & (defined _MSVC_VER)
     class QGCGoogleEarthViewWin;
 #else
     class QGCGoogleEarthView;
@@ -69,7 +69,7 @@ protected:
     UASInterface* mav;
     bool followCamera;
     bool trailEnabled;
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
+#if (defined Q_OS_WIN) & (defined _MSVC_VER)
     WebAxWidget* webViewWin;
 #endif
 #if (defined Q_OS_MAC)
