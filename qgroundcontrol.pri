@@ -43,7 +43,7 @@ QMAKE_POST_LINK += echo "Copying files"
 # MAC OS X
 macx {
 
-    COMPILER_VERSION = system(gcc -v)
+    COMPILER_VERSION = $$system(gcc -v)
     message(Using compiler $$COMPILER_VERSION)
 
     HARDWARE_PLATFORM = $$system(uname -a)
@@ -334,16 +334,16 @@ exists($$BASEDIR/lib/osgEarth123) {
 
     debug {
         QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\debug\audio\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\debug\models\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR/images/earth.html $$TARGETDIR_WIN\debug\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\debug\"
     }
 
     release {
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\release\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\release\audio\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\release\models\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR/images/earth.html $$TARGETDIR_WIN\release\"
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\release\"
     }
 
 }
@@ -363,6 +363,8 @@ win32-g++ {
     LIBS += -L$$BASEDIR/lib/sdl/win32 \
              -lmingw32 -lSDLmain -lSDL -mwindows
 
+    CONFIG += windows
+
 
 
     debug {
@@ -377,6 +379,9 @@ win32-g++ {
 
     # Copy dependencies
 
+    system(cp): {
+    # CP command is available, use it instead of copy / xcopy
+    message("Using cp to copy image and audio files to executable")
     debug {
         QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/SDL.dll
         QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/debug/audio
@@ -388,6 +393,29 @@ win32-g++ {
         QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/release/audio
         QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/release/models
     }
+
+    } else {
+    # No cp command available, go for copy / xcopy
+    # Copy dependencies
+    message("Using copy / xcopy to copy image and audio files to executable (cp command not found)")
+    BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
+    TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
+
+    debug {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\debug\"
+    }
+
+    release {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\release\"
+    }
+
+}
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.
