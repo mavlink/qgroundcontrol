@@ -837,7 +837,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 
 
         }
-        unsigned char v=data[i];
+        //unsigned char v=data[i];
         //fprintf(stderr,"%02x ", v);
     }
     //fprintf(stderr,"\n");
