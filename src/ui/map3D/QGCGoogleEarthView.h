@@ -9,16 +9,15 @@
 #include <QWebView>
 #endif
 
-#if (defined Q_OS_WIN) & (defined _MSVC_VER)
-    QGCWebAxWidget* webViewWin;
+#ifdef _MSC_VER
 #include <ActiveQt/QAxWidget>
 #include "windows.h"
 
-class WebAxWidget : public QAxWidget
+class QGCWebAxWidget : public QAxWidget
 {
 public:
 
-    WebAxWidget(QWidget* parent = 0, Qt::WindowFlags f = 0)
+    QGCWebAxWidget(QWidget* parent = 0, Qt::WindowFlags f = 0)
         : QAxWidget(parent, f)
     {
     }
@@ -32,16 +31,15 @@ protected:
     }
 
 };
-#else
+#endif
+
 namespace Ui {
-    class QGCGoogleEarthControls;
-#if (defined Q_OS_WIN) & (defined _MSVC_VER)
-    class QGCGoogleEarthViewWin;
+#ifdef _MSC_VER
+    class QGCGoogleEarthView;
 #else
     class QGCGoogleEarthView;
 #endif
 }
-#endif
 
 class QGCGoogleEarthView : public QWidget
 {
@@ -75,18 +73,16 @@ protected:
     bool followCamera;
     bool trailEnabled;
     bool webViewInitialized;
-#if (defined Q_OS_WIN) & (defined _MSVC_VER)
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
-    WebAxWidget* webViewWin;
+#ifdef _MSC_VER
+    QGCWebAxWidget* webViewWin;
 #endif
 #if (defined Q_OS_MAC)
     QWebView* webViewMac;
 #endif
 
 private:
-    Ui::QGCGoogleEarthControls* controls;
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
-    Ui::QGCGoogleEarthViewWin* ui;
+#ifdef _MSC_VER
+    Ui::QGCGoogleEarthView* ui;
 #else
     Ui::QGCGoogleEarthView* ui;
 #endif

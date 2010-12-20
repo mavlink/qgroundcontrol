@@ -6,9 +6,8 @@
 #include "QGCGoogleEarthView.h"
 #include "QGCWebPage.h"
 #include "UASManager.h"
-#include "ui_QGCGoogleEarthControls.h"
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
-#include "ui_QGCGoogleEarthViewWin.h"
+#ifdef _MSC_VER
+#include "ui_QGCGoogleEarthView.h"
 #else
 #include "ui_QGCGoogleEarthView.h"
 #endif
@@ -24,13 +23,16 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 #if (defined Q_OS_MAC)
         webViewMac(new QWebView(this)),
 #endif
-#if (defined Q_OS_WIN) & !(defined __MINGW32__)
+#ifdef _MSC_VER
         webViewWin(new QGCWebAxWidget(this)),
+#endif
+#if (defined _MSC_VER)
+		ui(new Ui::QGCGoogleEarthView)
 #else
         ui(new Ui::QGCGoogleEarthView)
 #endif
 {
-#if (defined Q_OS_WIN) & !(defined __MINGW32__)
+#ifdef _MSC_VER
     // Create layout and attach webViewWin
 #else
 #endif
@@ -40,7 +42,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     ui->webViewLayout->addWidget(webViewMac);
 #endif
 
-#if ((defined Q_OS_MAC) | ((defined Q_OS_WIN) & !(defined __MINGW32__)))
+#if ((defined Q_OS_MAC) | (defined _MSC_VER))
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateState()));
     updateTimer->start(refreshRateMs);
@@ -104,8 +106,8 @@ void QGCGoogleEarthView::show()
     webViewMac->load(QUrl("earth.html"));
 #endif
 
-#if (defined Q_OS_WIN) & !(defined __MINGW32__)
-    webViewWin->load(QUrl("earth.html"));
+#ifdef _MSC_VER
+    //webViewWin->load(QUrl("earth.html"));
 #endif
     webViewInitialized = true;
     }

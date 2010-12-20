@@ -2,7 +2,7 @@
 #define SLUGSPIDCONTROL_H
 
 #include <QWidget>
-#include<QGroupBox>
+#include <QGroupBox>
 #include "UASInterface.h"
 #include "QGCMAVLink.h"
 #include "SlugsMAV.h"
