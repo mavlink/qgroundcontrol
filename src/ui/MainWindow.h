@@ -138,16 +138,13 @@ public slots:
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
 
+    void closeEvent(QCloseEvent* event);
+
     /*
     ==========================================================
                   Potentially Deprecated
     ==========================================================
     */
-
-    void loadPixhawkEngineerView();
-
-    /** @brief Load view with all widgets */
-    void loadAllView();
 
     void loadWidgets();
 
@@ -228,13 +225,15 @@ protected:
 
     }TOOLS_WIDGET_NAMES;
 
-    typedef enum _SETTINGS_SECTIONS {
+    typedef enum _SETTINGS_SECTIONS
+    {
       SECTION_MENU,
       SUB_SECTION_CHECKED,
       SUB_SECTION_LOCATION,
     } SETTINGS_SECTIONS;
 
-    typedef enum _VIEW_SECTIONS {
+    typedef enum _VIEW_SECTIONS
+    {
       VIEW_ENGINEER,
       VIEW_OPERATOR,
       VIEW_PILOT,
@@ -301,6 +300,7 @@ protected:
 
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
+    bool aboutToCloseFlag;
 
     QStatusBar* statusBar;
     QStatusBar* createStatusBar();
