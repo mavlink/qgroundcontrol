@@ -290,6 +290,9 @@ win32-msvc2008 {
 
     CONFIG += qaxcontainer
 
+    # QWebkit is not needed on MS-Windows compilation environment
+    CONFIG -= webkit
+
     # Special settings for debug
     #CONFIG += CONSOLE
 
