@@ -1,18 +1,17 @@
-#include <QWebFrame>
-#include <QWebPage>
 #include <QApplication>
 #include <QDir>
 
 #include <QDebug>
-
-#include "QGCGoogleEarthView.h"
-#include "QGCWebPage.h"
 #include "UASManager.h"
 #ifdef _MSC_VER
 #include "ui_QGCGoogleEarthView.h"
 #else
+#include <QWebFrame>
+#include <QWebPage>
+#include "QGCWebPage.h"
 #include "ui_QGCGoogleEarthView.h"
 #endif
+#include "QGCGoogleEarthView.h"
 
 QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         QWidget(parent),
