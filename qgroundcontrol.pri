@@ -293,6 +293,10 @@ win32-msvc2008 {
     # QWebkit is not needed on MS-Windows compilation environment
     CONFIG -= webkit
 
+    release {
+        CONFIG -= console
+    }
+
     # Special settings for debug
     #CONFIG += CONSOLE
 
@@ -335,18 +339,18 @@ exists($$BASEDIR/lib/osgEarth123) {
     BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
     TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
 
-    debug {
-        QMAKE_POST_LINK += ; copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
-        QMAKE_POST_LINK += ; xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\" /S /E /Y
-        QMAKE_POST_LINK += ; xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\" /S /E /Y
-        QMAKE_POST_LINK += ; copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\debug\"
+    exists($$TARGETDIR/debug) {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
     }
 
-    release {
+    exists($$TARGETDIR/release) {
         QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\release\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
     }
 
 }
@@ -375,6 +379,7 @@ win32-g++ {
     }
 
     release {
+        CONFIG -= console
         #DESTDIR = $$BUILDDIR/release
     }
 
@@ -400,22 +405,21 @@ win32-g++ {
     } else {
     # No cp command available, go for copy / xcopy
     # Copy dependencies
-    message("Using copy / xcopy to copy image and audio files to executable (cp command not found)")
     BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
     TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
 
-    debug {
+    exists($$TARGETDIR/debug) {
         QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\debug\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
     }
 
-    release {
+    exists($$TARGETDIR/release) {
         QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\release\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
     }
 
 }
