@@ -67,6 +67,7 @@ LinkManager::~LinkManager()
 void LinkManager::add(LinkInterface* link)
 {
     if(!link) return;
+    connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeLink(QObject*)));
     links.append(link);
     emit newLink(link);
 }
@@ -125,6 +126,17 @@ bool LinkManager::disconnectLink(LinkInterface* link)
 {
         if(!link) return false;
 	return link->disconnect();
+}
+
+void LinkManager::removeLink(QObject* link)
+{
+    LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
+    // Add link to link list
+    if (links.contains(linkInterface))
+    {
+        int linkIndex = links.indexOf(linkInterface);
+        links.removeAt(linkIndex);
+    }
 }
 
 bool LinkManager::removeLink(LinkInterface* link)

@@ -66,7 +66,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 {
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
-    this->setOrganizationName(QLatin1String("PIXHAWK Association Zurich"));
+    this->setOrganizationName(QLatin1String("OPENMAV"));
     this->setOrganizationDomain("http://qgroundcontrol.org");
 
     // Show splash screen
@@ -105,10 +105,6 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     // Start the user interface
     splashScreen->showMessage(tr("Starting User Interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     // Start UI
-    mainWindow = new MainWindow();
-
-    // Remove splash screen
-    splashScreen->finish(mainWindow);
 
     // Connect links
     // to make sure that all components are initialized when the
@@ -117,7 +113,21 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     // Listen on Multicast-Address 239.255.77.77, Port 14550
     //QHostAddress * multicast_udp = new QHostAddress("239.255.77.77");
     //UDPLink* udpLink = new UDPLink(*multicast_udp, 14550);
-    mainWindow->addLink(udpLink);
+    //mainWindow->addLink(udpLink);
+
+#ifdef OPAL_RT
+    // Add OpalRT Link, but do not connect
+    OpalLink* opalLink = new OpalLink();
+    //mainWindow->addLink(opalLink);
+#endif
+    // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
+    MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
+    //mainWindow->addLink(simulationLink);
+
+    mainWindow = MainWindow::instance();
+
+    // Remove splash screen
+    splashScreen->finish(mainWindow);
 
     // Check if link could be connected
     if (!udpLink->connect())
@@ -140,15 +150,6 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
             QTimer::singleShot(200, mainWindow, SLOT(close()));
         }
     }
-
-#ifdef OPAL_RT
-    // Add OpalRT Link, but do not connect
-    OpalLink* opalLink = new OpalLink();
-    mainWindow->addLink(opalLink);
-#endif
-    // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
-    MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
-    mainWindow->addLink(simulationLink);
 }
 
 /**

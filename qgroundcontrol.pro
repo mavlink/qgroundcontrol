@@ -150,7 +150,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/SlugsHilSim.ui \
     src/ui/SlugsPIDControl.ui \
     src/ui/SlugsVideoCamControl.ui \
-    src/ui/SlugsPadCameraControl.ui
+    src/ui/SlugsPadCameraControl.ui \
+    src/ui/uas/QGCUnconnectedInfoWidget.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -251,7 +252,8 @@ HEADERS += src/MG.h \
     src/ui/SlugsVideoCamControl.h \
     src/ui/SlugsPadCameraControl.h \
     src/ui/QGCMainWindowAPConfigurator.h \
-    src/comm/MAVLinkSwarmSimulationLink.h
+    src/comm/MAVLinkSwarmSimulationLink.h \
+    src/ui/uas/QGCUnconnectedInfoWidget.h
 
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
@@ -363,7 +365,8 @@ SOURCES += src/main.cc \
     src/ui/SlugsVideoCamControl.cpp \
     src/ui/SlugsPadCameraControl.cpp \
     src/ui/QGCMainWindowAPConfigurator.cc \
-    src/comm/MAVLinkSwarmSimulationLink.cc
+    src/comm/MAVLinkSwarmSimulationLink.cc \
+    src/ui/uas/QGCUnconnectedInfoWidget.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     

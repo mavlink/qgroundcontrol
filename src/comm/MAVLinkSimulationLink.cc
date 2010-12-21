@@ -934,6 +934,18 @@ bool MAVLinkSimulationLink::connect()
  * @return True if connection has been established, false if connection
  * couldn't be established.
  **/
+void MAVLinkSimulationLink::connectLink()
+{
+    this->connect();
+}
+
+/**
+ * Connect the link.
+ *
+ * @param connect true connects the link, false disconnects it
+ * @return True if connection has been established, false if connection
+ * couldn't be established.
+ **/
 bool MAVLinkSimulationLink::connectLink(bool connect)
 {
     _isConnected = connect;

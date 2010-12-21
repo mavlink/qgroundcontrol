@@ -33,12 +33,17 @@ This file is part of the PIXHAWK project
 #include <QLabel>
 #include <QFileDialog>
 #include <QDebug>
+#include <QApplication>
 
 #include "MG.h"
 #include "UASListWidget.h"
 #include "UASManager.h"
 #include "UAS.h"
 #include "UASView.h"
+#include "QGCUnconnectedInfoWidget.h"
+#include "MainWindow.h"
+#include "MAVLinkSimulationLink.h"
+#include "LinkManager.h"
 
 UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UASList)
 {
@@ -47,6 +52,13 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UA
     listLayout = new QVBoxLayout(this);
     listLayout->setAlignment(Qt::AlignTop);
     this->setLayout(listLayout);
+
+    // Construct initial widget
+    uWidget = new QGCUnconnectedInfoWidget(this);
+    listLayout->addWidget(uWidget);
+
+    connect(uWidget, SIGNAL(addLink()), this, SLOT(addLink()));
+    connect(uWidget, SIGNAL(simulation()), this, SLOT(simulate()));
 
     this->setMinimumWidth(250);
 
@@ -72,11 +84,32 @@ void UASListWidget::changeEvent(QEvent *e)
     }
 }
 
+void UASListWidget::addLink()
+{
+    MainWindow::instance()->addLink();
+}
+
+void UASListWidget::simulate()
+{
+    // Try to get reference to MAVLinkSimulationlink
+    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    foreach(LinkInterface* link, links)
+    {
+        MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
+        if (sim)
+        {
+            sim->connectLink();
+        }
+    }
+}
+
 void UASListWidget::addUAS(UASInterface* uas)
 {
-    if (uasViews.size() == 0)
+    if (uasViews.isEmpty())
     {
-        // TODO Add label when no UAS is present yet.
+        listLayout->removeWidget(uWidget);
+        delete uWidget;
+        uWidget = NULL;
     }
 
     if (!uasViews.contains(uas))
