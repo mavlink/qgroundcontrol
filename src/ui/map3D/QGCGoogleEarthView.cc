@@ -68,7 +68,6 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 	#ifdef _MSC_VER
 	webViewWin->dynamicCall("GoHome()");
 	webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/earth.html");
-	qDebug() << QDir::cleanPath(QApplication::applicationDirPath() + "/earth.html").replace('/', "\\");
 #endif
 
     // Parse for model links
