@@ -205,30 +205,30 @@ void DebugConsole::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
     // Update bandwidth
-    if (holdOn)
-    {
-        //qDebug() << "Data rate:" << dataRate/1000.0f << "kB/s";
-        QString rate("data rate: %1");
-        rate.arg(dataRate);
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::HighQualityAntialiasing);
-        painter.translate(width()/5.0f, height()/5.0f);
+//    if (holdOn)
+//    {
+//        //qDebug() << "Data rate:" << dataRate/1000.0f << "kB/s";
+//        QString rate("data rate: %1");
+//        rate.arg(dataRate);
+//        QPainter painter(this);
+//        painter.setRenderHint(QPainter::HighQualityAntialiasing);
+//        painter.translate(width()/5.0f, height()/5.0f);
 
 
 
-        //QFont font("Bitstream Vera Sans");
-        QFont font = painter.font();
-        font.setPixelSize((int)(60.0f));
+//        //QFont font("Bitstream Vera Sans");
+//        QFont font = painter.font();
+//        font.setPixelSize((int)(60.0f));
 
-        QFontMetrics metrics = QFontMetrics(font);
-        int border = qMax(4, metrics.leading());
-        QRect rect = metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125),
-                                          Qt::AlignLeft | Qt::TextWordWrap, rate);
-        painter.setPen(QColor(255, 50, 50));
-        painter.setRenderHint(QPainter::TextAntialiasing);
-        painter.drawText(QRect(QPoint(static_cast<int>(width()/5.0f), static_cast<int>(height()/5.0f)), QPoint(static_cast<int>(width() - width()/5.0f), static_cast<int>(height() - height()/5.0f))), rate);
-        //Qt::AlignRight | Qt::TextWordWrap
-    }
+//        QFontMetrics metrics = QFontMetrics(font);
+//        int border = qMax(4, metrics.leading());
+//        QRect rect = metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125),
+//                                          Qt::AlignLeft | Qt::TextWordWrap, rate);
+//        painter.setPen(QColor(255, 50, 50));
+//        painter.setRenderHint(QPainter::TextAntialiasing);
+//        painter.drawText(QRect(QPoint(static_cast<int>(width()/5.0f), static_cast<int>(height()/5.0f)), QPoint(static_cast<int>(width() - width()/5.0f), static_cast<int>(height() - height()/5.0f))), rate);
+//        //Qt::AlignRight | Qt::TextWordWrap
+//    }
 }
 
 void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)

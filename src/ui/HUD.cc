@@ -150,8 +150,16 @@ HUD::HUD(int width, int height, QWidget* parent)
     if(!QFile::exists(fontFileName)) qDebug() << "ERROR! font file: " << fontFileName << " DOES NOT EXIST!";
 
     fontDatabase.addApplicationFont(fontFileName);
-    font = fontDatabase.font(fontFamilyName, "Roman", (int)(10*scalingFactor*1.2f+0.5f));
-    if (font.family() != fontFamilyName) qDebug() << "ERROR! Font not loaded: " << fontFamilyName;
+    font = fontDatabase.font(fontFamilyName, "Roman", qMax(5,(int)(10.0f*scalingFactor*1.2f+0.5f)));
+    QFont* fontPtr = &font;
+    if (!fontPtr)
+    {
+        qDebug() << "ERROR! FONT NOT LOADED!";
+    }
+    else
+    {
+        if (font.family() != fontFamilyName) qDebug() << "ERROR! WRONG FONT LOADED: " << fontFamilyName;
+    }
 
     // Connect with UAS
     UASManager* manager = UASManager::instance();

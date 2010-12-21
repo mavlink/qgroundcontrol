@@ -134,7 +134,7 @@ HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
     if(!QFile::exists(fontFileName)) qDebug() << "ERROR! font file: " << fontFileName << " DOES NOT EXIST!";
 
     fontDatabase.addApplicationFont(fontFileName);
-    font = fontDatabase.font(fontFamilyName, "Roman", (int)(10*scalingFactor*1.2f+0.5f));
+    font = fontDatabase.font(fontFamilyName, "Roman", qMax(5, (int)(10*scalingFactor*1.2f+0.5f)));
     if (font.family() != fontFamilyName) qDebug() << "ERROR! Font not loaded: " << fontFamilyName;
 
     // Connect with UAS
@@ -151,7 +151,7 @@ HDDisplay::~HDDisplay()
 
 void HDDisplay::enableGLRendering(bool enable)
 {
-
+    Q_UNUSED(enable)
 }
 
 void HDDisplay::triggerUpdate()
