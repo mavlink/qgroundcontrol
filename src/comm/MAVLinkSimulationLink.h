@@ -87,6 +87,7 @@ public slots:
     void readBytes();
     virtual void mainloop();
     bool connectLink(bool connect);
+    void connectLink();
 
 
 protected:

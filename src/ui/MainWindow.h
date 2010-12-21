@@ -83,7 +83,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = 0);
+    static MainWindow* instance();
     ~MainWindow();
 
 public slots:
@@ -187,6 +187,8 @@ public slots:
     void updateLocationSettings (Qt::DockWidgetArea location);
 
 protected:
+
+    MainWindow(QWidget *parent = 0);
 
     // These defines are used to save the settings when selecting with
     // which widgets populate the views

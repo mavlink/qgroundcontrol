@@ -125,12 +125,28 @@ void DebugConsole::addLink(LinkInterface* link)
 
     // Register for name changes
     connect(link, SIGNAL(nameChanged(QString)), this, SLOT(updateLinkName(QString)));
+    connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeLink(QObject*)));
+}
+
+void DebugConsole::removeLink(QObject* link)
+{
+    LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
+    // Add link to link list
+    if (links.contains(linkInterface))
+    {
+        int linkIndex = links.indexOf(linkInterface);
+
+        links.removeAt(linkIndex);
+
+        m_ui->linkComboBox->removeItem(linkIndex);
+    }
+    if (link == currLink) currLink = NULL;
 }
 
 void DebugConsole::linkSelected(int linkId)
 {
     // Disconnect
-    if (currLink != NULL)
+    if (currLink)
     {
         disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
     }

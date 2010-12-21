@@ -38,6 +38,20 @@
 
 #include "LogCompressor.h"
 
+MainWindow* MainWindow::instance()
+{
+        static MainWindow* _instance = 0;
+        if(_instance == 0)
+        {
+                _instance = new MainWindow();
+
+                /* Set the application as parent to ensure that this object
+                 * will be destroyed when the main application exits */
+                //_instance->setParent(qApp);
+        }
+        return _instance;
+}
+
 /**
 * Create new mainwindow. The constructor instantiates all parts of the user
 * interface. It does NOT show the mainwindow. To display it, call the show()
@@ -82,35 +96,17 @@ MainWindow::MainWindow(QWidget *parent):
     connectCommonActions();
 
     // Load mavlink view as default widget set
-    loadMAVLinkView();
+    //loadMAVLinkView();
 
     // Adjust the size
     adjustSize();
 
-    // Load previous widget setup
-
-    //    // FIXME WORK IN PROGRESS
-    //    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
-
-    //    QList<QDockWidget *> dockwidgets = qFindChildren<QDockWidget *>(this);
-    //    if (dockwidgets.size())
-    //    {
-    //        settings.beginGroup("mainwindow/dockwidgets");
-    //        for (int i = 0; i < dockwidgets.size(); ++i)
-    //        {
-    //            QDockWidget *dockWidget = dockwidgets.at(i);
-    //            if (dockWidget->parentWidget() == this)
-    //            {
-    //                if (settings.contains(dockWidget->windowTitle()))
-    //                {
-    //                    dockWidget->setVisible(settings.value(dockWidget->windowTitle(), dockWidget->isVisible()).toBool());
-    //                }
-    //            }
-    //        }
-    //        settings.endGroup();
-    //    }
-
-//    // Select the right perspective
+    // Populate link menu
+    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    foreach(LinkInterface* link, links)
+    {
+        this->addLink(link);
+    }
 
     // Enable and update view
     this->show();
@@ -398,8 +394,10 @@ void MainWindow::addToToolsMenu ( QWidget* widget,
     if (!settings.contains(posKey)){
         settings.setValue(posKey,location);
         dockWidgetLocations[tool] = location;
-    } else {
-        dockWidgetLocations[tool] = static_cast <Qt::DockWidgetArea> (settings.value(posKey).toInt());
+    }
+    else
+    {
+        dockWidgetLocations[tool] = static_cast <Qt::DockWidgetArea> (settings.value(posKey, Qt::RightDockWidgetArea).toInt());
     }
 
     chKey = buildMenuKey(SUB_SECTION_CHECKED,tool, currentView);
@@ -412,7 +410,7 @@ void MainWindow::addToToolsMenu ( QWidget* widget,
     else
     {
         tempAction->setChecked(settings.value(chKey).toBool());
-        widget->setVisible(settings.value(chKey).toBool());
+        widget->setVisible(settings.value(chKey, false).toBool());
     }
 
     // connect the action
@@ -456,7 +454,16 @@ void MainWindow::showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view)
     Qt::DockWidgetArea tempLocation;
     QDockWidget* tempWidget = static_cast <QDockWidget *>(dockWidgets[widget]);
 
-    tempVisible =  settings.value(buildMenuKey (SUB_SECTION_CHECKED,widget,view)).toBool();
+    tempVisible =  settings.value(buildMenuKey (SUB_SECTION_CHECKED,widget,view), false).toBool();
+
+    // Some widgets are per default visible. Overwrite the settings value if not present.
+    if (widget == MainWindow::MENU_UAS_LIST)
+    {
+        if (!settings.contains(buildMenuKey (SUB_SECTION_CHECKED,widget,view)))
+        {
+            tempVisible = true;
+        }
+    }
 
     if (tempWidget)
     {
@@ -466,9 +473,17 @@ void MainWindow::showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view)
 
     //qDebug() <<  buildMenuKey (SUB_SECTION_CHECKED,widget,view) << tempVisible;
 
-    tempLocation = static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,widget, view)).toInt());
+    tempLocation = static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,widget, view), QVariant(Qt::RightDockWidgetArea)).toInt());
 
-    if (tempWidget && tempVisible)
+    if (widget == MainWindow::MENU_UAS_LIST)
+    {
+        if (!settings.contains(buildMenuKey (SUB_SECTION_LOCATION,widget, view)))
+        {
+            tempLocation = Qt::RightDockWidgetArea;
+        }
+    }
+
+    if ((tempWidget != NULL) && tempVisible)
     {
         addDockWidget(tempLocation, tempWidget);
         tempWidget->show();
