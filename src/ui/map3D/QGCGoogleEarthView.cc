@@ -1,5 +1,7 @@
 #include <QWebFrame>
 #include <QWebPage>
+#include <QApplication>
+#include <QDir>
 
 #include <QDebug>
 
@@ -42,6 +44,10 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     ui->webViewLayout->addWidget(webViewMac);
 #endif
 
+#ifdef _MSC_VER
+	ui->webViewLayout->addWidget(webViewWin);
+#endif
+
 #if ((defined Q_OS_MAC) | (defined _MSC_VER))
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateState()));
@@ -59,6 +65,11 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     // Get list of available 3D models
 
     // Load HTML file
+	#ifdef _MSC_VER
+	webViewWin->dynamicCall("GoHome()");
+	webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/earth.html");
+	qDebug() << QDir::cleanPath(QApplication::applicationDirPath() + "/earth.html").replace('/', "\\");
+#endif
 
     // Parse for model links
 
@@ -107,7 +118,8 @@ void QGCGoogleEarthView::show()
 #endif
 
 #ifdef _MSC_VER
-    //webViewWin->load(QUrl("earth.html"));
+	webViewWin->dynamicCall("GoHome()");
+	webViewWin->dynamicCall("Navigate(const QString&)", "http://pixhawk.ethz.ch");
 #endif
     webViewInitialized = true;
     }

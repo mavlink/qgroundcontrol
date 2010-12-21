@@ -333,10 +333,10 @@ exists($$BASEDIR/lib/osgEarth123) {
     TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
 
     debug {
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\debug\"
+        QMAKE_POST_LINK += ; copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
+        QMAKE_POST_LINK += ; xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\" /S /E /Y
+        QMAKE_POST_LINK += ; xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\" /S /E /Y
+        QMAKE_POST_LINK += ; copy /Y \"$$BASEDIR\\images\\earth.html $$TARGETDIR_WIN\\debug\"
     }
 
     release {
