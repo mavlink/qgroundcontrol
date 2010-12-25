@@ -57,9 +57,6 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UA
     uWidget = new QGCUnconnectedInfoWidget(this);
     listLayout->addWidget(uWidget);
 
-    connect(uWidget, SIGNAL(addLink()), this, SLOT(addLink()));
-    connect(uWidget, SIGNAL(simulation()), this, SLOT(simulate()));
-
     this->setMinimumWidth(250);
 
     uasViews = QMap<UASInterface*, UASView*>();
@@ -81,25 +78,6 @@ void UASListWidget::changeEvent(QEvent *e)
         break;
     default:
         break;
-    }
-}
-
-void UASListWidget::addLink()
-{
-    MainWindow::instance()->addLink();
-}
-
-void UASListWidget::simulate()
-{
-    // Try to get reference to MAVLinkSimulationlink
-    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
-    foreach(LinkInterface* link, links)
-    {
-        MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
-        if (sim)
-        {
-            sim->connectLink();
-        }
     }
 }
 

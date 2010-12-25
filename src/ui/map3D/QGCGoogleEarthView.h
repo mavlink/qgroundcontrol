@@ -62,10 +62,6 @@ public slots:
     void showWaypoints(bool state);
     /** @brief Follow the aircraft during flight */
     void follow(bool follow);
-    /** @brief Hide and deactivate */
-    void hide();
-    /** @brief Show and activate */
-    void show();
 
 protected:
     void changeEvent(QEvent *e);
@@ -81,6 +77,9 @@ protected:
 #if (defined Q_OS_MAC)
     QWebView* webViewMac;
 #endif
+
+    /** @brief Enable / disable widget updating */
+    void showEvent(QShowEvent* event);
 
 private:
 #ifdef _MSC_VER

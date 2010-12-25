@@ -18,8 +18,6 @@ signals:
     void logfileWritten(QString fileName);
 
 public slots:
-    /** @brief Set all plots active/inactive */
-    void setActive(bool active);
     /** @brief Select plot for one system */
     void selectSystem(int systemid);
     /** @brief Add a new system to the list of plots */
@@ -28,6 +26,9 @@ public slots:
 protected:
     QMap<int, LinechartWidget*> plots;
     bool active;
+
+    void showEvent(QShowEvent* event);
+
 };
 
 #endif // LINECHARTS_H

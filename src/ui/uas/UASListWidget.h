@@ -52,10 +52,6 @@ public slots:
     void activeUAS(UASInterface* uas);
     void removeUAS(UASInterface* uas);
 
-    // TODO Kind of hack, works flawless but is bad architecture
-    void addLink();
-    void simulate();
-
 protected:
     QMap<UASInterface*, UASView*> uasViews;
     QVBoxLayout* listLayout;

@@ -173,14 +173,46 @@ void UASView::mouseDoubleClickEvent (QMouseEvent * event)
 
 void UASView::enterEvent(QEvent* event)
 {
-    if (event->MouseMove) emit uasInFocus(uas);
+    if (event->type() == QEvent::MouseMove)
+    {
+        emit uasInFocus(uas);
+        if (uas != UASManager::instance()->getActiveUAS())
+        {
+            grabMouse(QCursor(Qt::PointingHandCursor));
+        }
+    }
     qDebug() << __FILE__ << __LINE__ << "IN FOCUS";
+
+    if (event->type() == QEvent::MouseButtonDblClick)
+    {
+        qDebug() << __FILE__ << __LINE__ << "UAS CLICKED!";
+    }
 }
 
 void UASView::leaveEvent(QEvent* event)
 {
-    if (event->MouseMove) emit uasOutFocus(uas);
-    qDebug() << __FILE__ << __LINE__ << "OUT OF FOCUS";
+    if (event->type() == QEvent::MouseMove)
+    {
+        emit uasOutFocus(uas);
+        releaseMouse();
+    }
+}
+
+void UASView::showEvent(QShowEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    if (!event->spontaneous())
+    {
+        if (event->type() == QEvent::Hide)
+        {
+            refreshTimer->stop();
+        }
+        else if (event->type() == QEvent::Show)
+        {
+            refreshTimer->start(updateInterval);
+        }
+    }
 }
 
 void UASView::receiveHeartbeat(UASInterface* uas)

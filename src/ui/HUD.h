@@ -60,11 +60,6 @@ public slots:
     void initializeGL();
     //void paintGL();
 
-    /** @brief Start updating the view at 30Hz */
-    void start();
-    /** @brief Stop updating the view */
-    void stop();
-
     /** @brief Set the currently monitored UAS */
     void setActiveUAS(UASInterface* uas);
 
@@ -124,7 +119,9 @@ protected:
     /** @brief Rotate a polygon around a point clockwise */
     void rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin);
     /** @brief Override base class show */
-    virtual void showEvent(QShowEvent* event);
+    void showEvent(QShowEvent* event);
+
+    static const int updateInterval = 50;
 
     QImage* image; ///< Double buffer image
     QImage glImage; ///< The background / camera image

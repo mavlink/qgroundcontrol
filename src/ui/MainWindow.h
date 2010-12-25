@@ -260,7 +260,7 @@ protected:
      * @param tool      The ENUM defined in MainWindow.h that is associated to the widget
      * @param location  The default location for the QDockedWidget in case there is no previous key in the settings
      */
-    void addToToolsMenu (QWidget* widget, const QString title, const char * slotName, TOOLS_WIDGET_NAMES tool, Qt::DockWidgetArea location);
+    void addToToolsMenu (QWidget* widget, const QString title, const char * slotName, TOOLS_WIDGET_NAMES tool, Qt::DockWidgetArea location=Qt::RightDockWidgetArea);
 
     /**
      * @brief Determines if a QDockWidget needs to be show and if so, shows it
@@ -353,7 +353,9 @@ protected:
     #ifdef QGC_OSGEARTH_ENABLED
     QPointer<QWidget> _3DMapWidget;
     #endif
+#if (defined _MSC_VER) || (defined Q_OS_MAC)
     QPointer<QGCGoogleEarthView> gEarthWidget;
+#endif
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
     QPointer<QDockWidget> infoDockWidget;

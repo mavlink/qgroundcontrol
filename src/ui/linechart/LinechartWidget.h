@@ -90,7 +90,6 @@ public slots:
     void refresh();
 
 protected:
-
     void addCurveToList(QString curve);
     void removeCurveFromList(QString curve);
     QToolButton* createButton(QWidget* parent);

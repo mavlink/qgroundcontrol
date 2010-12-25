@@ -100,7 +100,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         topMargin(3.0f)
 {
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-    refreshTimer->setInterval(120);
+    refreshTimer->setInterval(updateInterval);
 
 
 //    this->setScene(new QGraphicsScene(-metricWidth/2.0f, -metricWidth/2.0f, metricWidth, metricWidth, this));
@@ -923,6 +923,23 @@ void HSIDisplay::wheelEvent(QWheelEvent* event)
     }
     metricWidth = qBound(0.1, metricWidth, 9999.0);
     emit metricWidthChanged(metricWidth);
+}
+
+void HSIDisplay::showEvent(QShowEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    if (!event->spontaneous())
+    {
+        if (event->type() == QEvent::Hide)
+        {
+            refreshTimer->stop();
+        }
+        else if (event->type() == QEvent::Show)
+        {
+            refreshTimer->start(updateInterval);
+        }
+    }
 }
 
 void HSIDisplay::updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat)

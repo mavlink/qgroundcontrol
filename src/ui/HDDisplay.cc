@@ -220,16 +220,6 @@ void HDDisplay::renderOverlay()
     }
 }
 
-void HDDisplay::start()
-{
-    refreshTimer->start();
-}
-
-void HDDisplay::stop()
-{
-    refreshTimer->stop();
-}
-
 /**
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
@@ -669,7 +659,22 @@ void HDDisplay::changeEvent(QEvent *e)
 }
 
 
-
+void HDDisplay::showEvent(QShowEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    if (!event->spontaneous())
+    {
+        if (event->type() == QEvent::Hide)
+        {
+            refreshTimer->stop();
+        }
+        else if (event->type() == QEvent::Show)
+        {
+            refreshTimer->start(updateInterval);
+        }
+    }
+}
 
 
 ///**
