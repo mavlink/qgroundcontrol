@@ -29,6 +29,8 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
+#include <QShowEvent>
+
 #include <QDebug>
 #include <cmath>
 #ifndef M_PI
@@ -129,7 +131,7 @@ HUD::HUD(int width, int height, QWidget* parent)
     glImage = QGLWidget::convertToGLFormat(fill);
 
     // Refresh timer
-    refreshTimer->setInterval(50); // 20 Hz
+    refreshTimer->setInterval(updateInterval);
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
 
@@ -175,25 +177,19 @@ HUD::~HUD()
 
 void HUD::showEvent(QShowEvent* event)
 {
-    Q_UNUSED(event);
-    if (isVisible())
+    // React only to internal (pre-display)
+    // events
+    if (!event->spontaneous())
     {
-        refreshTimer->start();
+        if (event->type() == QEvent::Hide)
+        {
+            refreshTimer->stop();
+        }
+        else if (event->type() == QEvent::Show)
+        {
+            refreshTimer->start(updateInterval);
+        }
     }
-    else
-    {
-        refreshTimer->stop();
-    }
-}
-
-void HUD::start()
-{
-    refreshTimer->start();
-}
-
-void HUD::stop()
-{
-    refreshTimer->stop();
 }
 
 void HUD::updateValue(UASInterface* uas, QString name, double value, quint64 msec)
@@ -561,9 +557,9 @@ void HUD::paintEvent(QPaintEvent *event)
 
 void HUD::paintHUD()
 {
-//    static quint64 interval = 0;
-//    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
-//    interval = MG::TIME::getGroundTimeNow();
+    //    static quint64 interval = 0;
+    //    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
+    //    interval = MG::TIME::getGroundTimeNow();
 
     // Read out most important values to limit hash table lookups
     static float roll = 0.0f;

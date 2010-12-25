@@ -1,5 +1,9 @@
+#include <QShowEvent>
+
 #include "Linecharts.h"
 #include "UASManager.h"
+
+#include "MainWindow.h"
 
 Linecharts::Linecharts(QWidget *parent) :
         QStackedWidget(parent),
@@ -19,23 +23,36 @@ Linecharts::Linecharts(QWidget *parent) :
           this, SLOT(addSystem(UASInterface*)));
   connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
           this, SLOT(selectSystem(int)));
+  connect(this, SIGNAL(logfileWritten(QString)),
+          MainWindow::instance(), SLOT(loadDataView(QString)));
 }
 
-
-void Linecharts::setActive(bool active)
+void Linecharts::showEvent(QShowEvent* event)
 {
-    this->active = active;
-    QWidget* prevWidget = currentWidget();
-    if (prevWidget)
+    // React only to internal (pre-display)
+    // events
+    if (!event->spontaneous())
     {
-        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
-        if (chart)
+        QWidget* prevWidget = currentWidget();
+        if (prevWidget)
         {
-            chart->setActive(active);
+            LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
+            if (chart)
+            {
+                if (event->type() == QEvent::Hide)
+                {
+                    this->active = false;
+                    chart->setActive(false);
+                }
+                else if (event->type() == QEvent::Show)
+                {
+                    this->active = true;
+                    chart->setActive(true);
+                }
+            }
         }
     }
 }
-
 
 void Linecharts::selectSystem(int systemid)
 {

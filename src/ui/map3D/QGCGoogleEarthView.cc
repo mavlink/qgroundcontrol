@@ -1,16 +1,17 @@
 #include <QApplication>
 #include <QDir>
+#include <QShowEvent>
 
 #include <QDebug>
 #include "UASManager.h"
-#ifdef _MSC_VER
-#include "ui_QGCGoogleEarthView.h"
-#else
+
+#ifdef Q_OS_MAC
 #include <QWebFrame>
 #include <QWebPage>
 #include "QGCWebPage.h"
-#include "ui_QGCGoogleEarthView.h"
 #endif
+
+#include "ui_QGCGoogleEarthView.h"
 #include "QGCGoogleEarthView.h"
 
 QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
@@ -28,7 +29,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         webViewWin(new QGCWebAxWidget(this)),
 #endif
 #if (defined _MSC_VER)
-		ui(new Ui::QGCGoogleEarthView)
+        ui(new Ui::QGCGoogleEarthView)
 #else
         ui(new Ui::QGCGoogleEarthView)
 #endif
@@ -44,7 +45,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 #endif
 
 #ifdef _MSC_VER
-	ui->webViewLayout->addWidget(webViewWin);
+    ui->webViewLayout->addWidget(webViewWin);
 #endif
 
 #if ((defined Q_OS_MAC) | (defined _MSC_VER))
@@ -64,9 +65,9 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     // Get list of available 3D models
 
     // Load HTML file
-	#ifdef _MSC_VER
-	webViewWin->dynamicCall("GoHome()");
-	webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/earth.html");
+#ifdef _MSC_VER
+    webViewWin->dynamicCall("GoHome()");
+    webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/earth.html");
 #endif
 
     // Parse for model links
@@ -99,43 +100,60 @@ void QGCGoogleEarthView::follow(bool follow)
     followCamera = follow;
 }
 
-void QGCGoogleEarthView::hide()
+void QGCGoogleEarthView::showEvent(QShowEvent* event)
 {
-    updateTimer->stop();
-    QWidget::hide();
-}
-
-void QGCGoogleEarthView::show()
-{
-    if (!webViewInitialized)
+    // React only to internal (pre-display)
+    // events
+    if (!event->spontaneous())
     {
+        if (event->type() == QEvent::Hide)
+        {
+            // Disable widget
+            updateTimer->stop();
+        }
+        else if (event->type() == QEvent::Show)
+        {
+            // Enable widget, initialize on first run
+            if (!webViewInitialized)
+            {
 #if (defined Q_OS_MAC)
-    webViewMac->setPage(new QGCWebPage(webViewMac));
-    webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
-    webViewMac->load(QUrl("earth.html"));
+                webViewMac->setPage(new QGCWebPage(webViewMac));
+                webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
+                webViewMac->load(QUrl("earth.html"));
 #endif
 
 #ifdef _MSC_VER
-	webViewWin->dynamicCall("GoHome()");
-	webViewWin->dynamicCall("Navigate(const QString&)", "http://pixhawk.ethz.ch");
+                webViewWin->dynamicCall("GoHome()");
+                webViewWin->dynamicCall("Navigate(const QString&)", "http://pixhawk.ethz.ch");
 #endif
-    webViewInitialized = true;
+                webViewInitialized = true;
+            }
+        }
+        updateTimer->start();
     }
-    updateTimer->start();
-    QWidget::show();
 }
 
 void QGCGoogleEarthView::updateState()
 {
-#ifdef Q_OS_MAC
     if (isVisible())
     {
+#ifdef Q_OS_MAC
         if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
         {
+#endif
+#ifdef _MSC_VER
+            //        if (webViewMacWin->dynamicCall("Navigate(const QString&)","isInitialized();").toBool())
+            //        {
+#endif
             static bool initialized = false;
             if (!initialized)
             {
+#ifdef Q_OS_MAC
                 webViewMac->page()->currentFrame()->evaluateJavaScript("setGCSHome(22.679833,8.549444, 470);");
+#endif
+#ifdef _MSC_VER
+                //webViewMac->page()->currentFrame()->evaluateJavaScript("setGCSHome(22.679833,8.549444, 470);");
+#endif
                 initialized = true;
             }
             int uasId = 0;
@@ -157,6 +175,7 @@ void QGCGoogleEarthView::updateState()
                 pitch = mav->getPitch();
                 yaw = mav->getYaw();
             }
+            #ifdef Q_OS_MAC
             webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
                                                                    .arg(uasId)
                                                                    .arg(lat)
@@ -165,14 +184,23 @@ void QGCGoogleEarthView::updateState()
                                                                    .arg(roll)
                                                                    .arg(pitch)
                                                                    .arg(yaw));
+#endif
+#ifdef _MSC_VER
+
+#endif
 
             if (followCamera)
             {
+#ifdef Q_OS_MAC
                 webViewMac->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
-            }
-        }
-    }
 #endif
+#ifdef _MSC_VER
+#endif
+            }
+#if (defined Q_OS_MAC) || (defined _MSC_VER)
+        }
+#endif
+    }
 }
 
 

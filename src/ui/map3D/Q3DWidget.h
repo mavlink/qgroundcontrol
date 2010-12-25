@@ -121,6 +121,10 @@ protected slots:
     void redraw(void);
 
 protected:
+
+    /** @brief Enable / disable widget updating */
+    void showEvent(QShowEvent* event);
+
     /**
      * @brief Get base robot geode.
      * @return Smart pointer to the geode.
