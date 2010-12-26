@@ -54,14 +54,24 @@ public:
 public slots:
     /** @brief Update the internal state. Does not trigger a redraw */
     void updateState();
+    /** @brief Add a new MAV/UAS to the visualization */
+    void addUAS(UASInterface* uas);
     /** @brief Set the currently selected UAS */
     void setActiveUAS(UASInterface* uas);
+    /** @brief Update the global position */
+    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     /** @brief Show the vehicle trail */
     void showTrail(bool state);
     /** @brief Show the waypoints */
     void showWaypoints(bool state);
     /** @brief Follow the aircraft during flight */
     void follow(bool follow);
+    /** @brief Go to the home location */
+    void goHome();
+    /** @brief Set the home location */
+    void setHome(double lat, double lon, double alt);
+    /** @brief Initialize Google Earth */
+    void initializeGoogleEarth();
 
 protected:
     void changeEvent(QEvent *e);
@@ -71,6 +81,7 @@ protected:
     bool followCamera;
     bool trailEnabled;
     bool webViewInitialized;
+    bool gEarthInitialized;
 #ifdef _MSC_VER
     QGCWebAxWidget* webViewWin;
 #endif
