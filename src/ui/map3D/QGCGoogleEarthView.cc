@@ -143,7 +143,7 @@ void QGCGoogleEarthView::updateState()
 #endif
 #ifdef _MSC_VER
             //        if (webViewMacWin->dynamicCall("Navigate(const QString&)","isInitialized();").toBool())
-            //        {
+            {
 #endif
             static bool initialized = false;
             if (!initialized)
