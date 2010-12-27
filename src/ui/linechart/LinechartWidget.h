@@ -77,8 +77,10 @@ public slots:
     void setPlotWindowPosition(int scrollBarValue);
     void setPlotWindowPosition(quint64 position);
     void setPlotInterval(quint64 interval);
-    /** @brief Override base class show */
-    virtual void showEvent(QShowEvent* event);
+    /** @brief Start automatic updates once visible */
+    void showEvent(QShowEvent* event);
+    /** @brief Stop automatic updates once hidden */
+    void hideEvent(QHideEvent* event);
     void setActive(bool active);
     /** @brief Set the number of values to average over */
     void setAverageWindow(int windowSize);

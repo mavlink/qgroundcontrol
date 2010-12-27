@@ -38,6 +38,7 @@ This file is part of the PIXHAWK project
 #include "HDDisplay.h"
 #include "ui_HDDisplay.h"
 #include "MG.h"
+#include "QGC.h"
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -171,6 +172,9 @@ void HDDisplay::paintEvent(QPaintEvent * event)
 
 void HDDisplay::renderOverlay()
 {
+#if (QGC_EVENTLOOP_DEBUG)
+    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
     quint64 refreshInterval = 100;
     quint64 currTime = MG::TIME::getGroundTimeNow();
     if (currTime - lastPaintTime < refreshInterval)
@@ -230,17 +234,17 @@ void HDDisplay::setActiveUAS(UASInterface* uas)
     if (this->uas != NULL && this->uas != uas)
     {
         // Disconnect any previously connected active MAV
-        disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
+        disconnect(this->uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
     }
 
     // Now connect the new UAS
 
-    //if (this->uas != uas)
-    // {
+    if (this->uas != uas)
+    {
     //qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
     // Setup communication
     connect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
-    //}
+    }
     this->uas = uas;
 }
 
@@ -663,16 +667,19 @@ void HDDisplay::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    if (!event->spontaneous())
+    Q_UNUSED(event)
     {
-        if (event->type() == QEvent::Hide)
-        {
-            refreshTimer->stop();
-        }
-        else if (event->type() == QEvent::Show)
-        {
-            refreshTimer->start(updateInterval);
-        }
+        refreshTimer->start(updateInterval);
+    }
+}
+
+void HDDisplay::hideEvent(QHideEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event)
+    {
+        refreshTimer->stop();
     }
 }
 

@@ -301,6 +301,8 @@ protected:
     // Methods
     void addCurve(QString id);
     QColor getNextColor();
+    void showEvent(QShowEvent* event);
+    void hideEvent(QHideEvent* event);
 
 private:
     TimeSeriesData* d_data;

@@ -447,7 +447,13 @@ void LinechartWidget::removeCurve(QString curve)
 void LinechartWidget::showEvent(QShowEvent* event)
 {
     Q_UNUSED(event);
-    setActive(isVisible());
+    setActive(true);
+}
+
+void LinechartWidget::hideEvent(QHideEvent* event)
+{
+    Q_UNUSED(event);
+    setActive(false);
 }
 
 void LinechartWidget::setActive(bool active)

@@ -76,6 +76,7 @@ protected:
     void changeEvent(QEvent *e);
     void paintEvent(QPaintEvent * event);
     void showEvent(QShowEvent* event);
+    void hideEvent(QHideEvent* event);
     float refLineWidthToPen(float line);
     float refToScreenX(float x);
     float refToScreenY(float y);
