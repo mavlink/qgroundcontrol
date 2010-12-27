@@ -122,8 +122,10 @@ protected slots:
 
 protected:
 
-    /** @brief Enable / disable widget updating */
+    /** @brief Start widget updating */
     void showEvent(QShowEvent* event);
+    /** @brief Stop widget updating */
+    void hideEvent(QHideEvent* event);
 
     /**
      * @brief Get base robot geode.

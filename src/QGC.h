@@ -19,4 +19,6 @@ namespace QGC
     const QString COMPANYNAME = "OPENMAV";
 }
 
+#define QGC_EVENTLOOP_DEBUG 0
+
 #endif // QGC_H

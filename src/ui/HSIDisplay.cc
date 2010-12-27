@@ -103,7 +103,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     refreshTimer->setInterval(updateInterval);
 
 
-//    this->setScene(new QGraphicsScene(-metricWidth/2.0f, -metricWidth/2.0f, metricWidth, metricWidth, this));
+    //    this->setScene(new QGraphicsScene(-metricWidth/2.0f, -metricWidth/2.0f, metricWidth, metricWidth, this));
 
     xCenterPos = vwidth/2.0f;
     yCenterPos = vheight/2.0f + topMargin - bottomMargin;
@@ -138,6 +138,9 @@ void HSIDisplay::paintEvent(QPaintEvent * event)
 
 void HSIDisplay::renderOverlay()
 {
+#if (QGC_EVENTLOOP_DEBUG)
+    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
     // Center location of the HSI gauge items
 
     float bottomMargin = 3.0f;
@@ -432,43 +435,49 @@ void HSIDisplay::setMetricWidth(double width)
  */
 void HSIDisplay::setActiveUAS(UASInterface* uas)
 {
-    if (this->uas != NULL && this->uas != uas)
+    if (this->uas != uas)
     {
-        // Disconnect any previously connected active MAV
-        //disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
+        if (this->uas != NULL)
+        {
+            disconnect(this->uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
+            disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+            disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+            disconnect(this->uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
+            disconnect(this->uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
+            disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+            disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
+
+            disconnect(this->uas, SIGNAL(attitudeControlEnabled(bool)), this, SLOT(updateAttitudeControllerEnabled(bool)));
+            disconnect(this->uas, SIGNAL(positionXYControlEnabled(bool)), this, SLOT(updatePositionXYControllerEnabled(bool)));
+            disconnect(this->uas, SIGNAL(positionZControlEnabled(bool)), this, SLOT(updatePositionZControllerEnabled(bool)));
+            disconnect(this->uas, SIGNAL(positionYawControlEnabled(bool)), this, SLOT(updatePositionYawControllerEnabled(bool)));
+
+            disconnect(this->uas, SIGNAL(localizationChanged(UASInterface*,int)), this, SLOT(updateLocalization(UASInterface*,int)));
+            disconnect(this->uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)), this, SLOT(updateVisionLocalization(UASInterface*,int)));
+            disconnect(this->uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
+            disconnect(this->uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
+        }
+
+        connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
+        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
+        connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
+        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
+
+        connect(uas, SIGNAL(attitudeControlEnabled(bool)), this, SLOT(updateAttitudeControllerEnabled(bool)));
+        connect(uas, SIGNAL(positionXYControlEnabled(bool)), this, SLOT(updatePositionXYControllerEnabled(bool)));
+        connect(uas, SIGNAL(positionZControlEnabled(bool)), this, SLOT(updatePositionZControllerEnabled(bool)));
+        connect(uas, SIGNAL(positionYawControlEnabled(bool)), this, SLOT(updatePositionYawControllerEnabled(bool)));
+
+        connect(uas, SIGNAL(localizationChanged(UASInterface*,int)), this, SLOT(updateLocalization(UASInterface*,int)));
+        connect(uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)), this, SLOT(updateVisionLocalization(UASInterface*,int)));
+        connect(uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
+        connect(uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
+
+        this->uas = uas;
     }
-
-
-    HDDisplay::setActiveUAS(uas);
-    //qDebug() << "ATTEMPTING TO SET UAS";
-
-
-    connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
-    connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-    connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-    connect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeSetpoints(UASInterface*,double,double,double,double,quint64)));
-    connect(uas, SIGNAL(positionSetPointsChanged(int,float,float,float,float,quint64)), this, SLOT(updatePositionSetpoints(int,float,float,float,float,quint64)));
-    connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
-    connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
-
-    connect(uas, SIGNAL(attitudeControlEnabled(bool)), this, SLOT(updateAttitudeControllerEnabled(bool)));
-    connect(uas, SIGNAL(positionXYControlEnabled(bool)), this, SLOT(updatePositionXYControllerEnabled(bool)));
-    connect(uas, SIGNAL(positionZControlEnabled(bool)), this, SLOT(updatePositionZControllerEnabled(bool)));
-    connect(uas, SIGNAL(positionYawControlEnabled(bool)), this, SLOT(updatePositionYawControllerEnabled(bool)));
-
-    connect(uas, SIGNAL(localizationChanged(UASInterface*,int)), this, SLOT(updateLocalization(UASInterface*,int)));
-    connect(uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)), this, SLOT(updateVisionLocalization(UASInterface*,int)));
-    connect(uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
-    connect(uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
-
-    // Now connect the new UAS
-
-    //if (this->uas != uas)
-    // {
-    //qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
-    // Setup communication
-    //connect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
-    //}
 }
 
 void HSIDisplay::updateSpeed(UASInterface* uas, double vx, double vy, double vz, quint64 time)
@@ -667,18 +676,18 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
     if (uas)
     {
         const QVector<Waypoint*>& list = uas->getWaypointManager().getWaypointList();
-//        for (int i = 0; i < list.size(); i++)
-//        {
-//            QPointF in(list.at(i)->getX(), list.at(i)->getY());
-//            // Transform from world to body coordinates
-//            in = metricWorldToBody(in);
-//            // Scale from metric to screen reference coordinates
-//            QPointF p = metricBodyToRef(in);
-//            Waypoint2DIcon* wp = new Waypoint2DIcon();
-//            wp->setLocalPosition(list.at(i)->getX(), list.at(i)->getY());
-//            wp->setPos(0, 0);
-//            scene()->addItem(wp);
-//        }
+        //        for (int i = 0; i < list.size(); i++)
+        //        {
+        //            QPointF in(list.at(i)->getX(), list.at(i)->getY());
+        //            // Transform from world to body coordinates
+        //            in = metricWorldToBody(in);
+        //            // Scale from metric to screen reference coordinates
+        //            QPointF p = metricBodyToRef(in);
+        //            Waypoint2DIcon* wp = new Waypoint2DIcon();
+        //            wp->setLocalPosition(list.at(i)->getX(), list.at(i)->getY());
+        //            wp->setPos(0, 0);
+        //            scene()->addItem(wp);
+        //        }
 
         QColor color;
         painter.setBrush(Qt::NoBrush);
@@ -929,16 +938,19 @@ void HSIDisplay::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    if (!event->spontaneous())
+    Q_UNUSED(event)
     {
-        if (event->type() == QEvent::Hide)
-        {
-            refreshTimer->stop();
-        }
-        else if (event->type() == QEvent::Show)
-        {
-            refreshTimer->start(updateInterval);
-        }
+        refreshTimer->start(updateInterval);
+    }
+}
+
+void HSIDisplay::hideEvent(QHideEvent* event)
+{
+    // React only to internal (post-display)
+    // events
+    Q_UNUSED(event)
+    {
+        refreshTimer->stop();
     }
 }
 

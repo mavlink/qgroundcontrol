@@ -43,6 +43,8 @@ This file is part of the PIXHAWK project
 #include <MG.h>
 #include <QPaintEngine>
 
+#include "QGC.h"
+
 /**
  * @brief The default constructor
  *
@@ -142,7 +144,7 @@ d_curve(NULL)
     // Start QTimer for plot update
     updateTimer = new QTimer(this);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(paintRealtime()));
-    updateTimer->start(DEFAULT_REFRESH_RATE);
+    //updateTimer->start(DEFAULT_REFRESH_RATE);
 
     //    QwtPlot::setAutoReplot();
 
@@ -153,6 +155,18 @@ d_curve(NULL)
 LinechartPlot::~LinechartPlot()
 {
     removeAllData();
+}
+
+void LinechartPlot::showEvent(QShowEvent* event)
+{
+    Q_UNUSED(event);
+    updateTimer->start(DEFAULT_REFRESH_RATE);
+}
+
+void LinechartPlot::hideEvent(QHideEvent* event)
+{
+    Q_UNUSED(event);
+    updateTimer->stop();
 }
 
 int LinechartPlot::getPlotId()
@@ -580,6 +594,9 @@ void LinechartPlot::paintRealtime()
 {
     if (m_active)
     {
+#if (QGC_EVENTLOOP_DEBUG)
+    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
         // Update plot window value to new max time if the last time was also the max time
         windowLock.lock();
         if (automaticScrollActive)
