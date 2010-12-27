@@ -435,8 +435,6 @@ void HSIDisplay::setMetricWidth(double width)
  */
 void HSIDisplay::setActiveUAS(UASInterface* uas)
 {
-    if (this->uas != uas)
-    {
         if (this->uas != NULL)
         {
             disconnect(this->uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
@@ -477,7 +475,6 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
 
         this->uas = uas;
-    }
 }
 
 void HSIDisplay::updateSpeed(UASInterface* uas, double vx, double vy, double vz, quint64 time)
