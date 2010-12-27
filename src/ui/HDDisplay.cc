@@ -231,7 +231,7 @@ void HDDisplay::renderOverlay()
 void HDDisplay::setActiveUAS(UASInterface* uas)
 {
     //qDebug() << "ATTEMPTING TO SET UAS";
-    if (this->uas != NULL && this->uas != uas)
+    if (this->uas != NULL)
     {
         // Disconnect any previously connected active MAV
         disconnect(this->uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
@@ -239,12 +239,9 @@ void HDDisplay::setActiveUAS(UASInterface* uas)
 
     // Now connect the new UAS
 
-    if (this->uas != uas)
-    {
     //qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
     // Setup communication
     connect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
-    }
     this->uas = uas;
 }
 
