@@ -132,6 +132,8 @@ public:
     double getMean();
     /** @brief Get the short-term median */
     double getMedian();
+    /** @brief Get the short-term variance */
+    double getVariance();
     /** @brief Get the current value */
     double getCurrentValue();
     void setZeroValue(double zeroValue);
@@ -166,6 +168,7 @@ private:
     QwtArray<double> value;
     double mean;
     double median;
+    double variance;
     unsigned int averageWindow;
     QwtArray<double> outputMs;
     QwtArray<double> outputValue;
@@ -208,6 +211,8 @@ public:
     double getMean(QString id);
     /** @brief Get the short-term median of a curve */
     double getMedian(QString id);
+    /** @brief Get the short-term variance of a curve */
+    double getVariance(QString id);
     /** @brief Get the last inserted value */
     double getCurrentValue(QString id);
 

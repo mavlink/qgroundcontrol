@@ -63,6 +63,7 @@ listedCurves(new QList<QString>()),
 curveLabels(new QMap<QString, QLabel*>()),
 curveMeans(new QMap<QString, QLabel*>()),
 curveMedians(new QMap<QString, QLabel*>()),
+curveVariances(new QMap<QString, QLabel*>()),
 curveMenu(new QMenu(this)),
 logFile(new QFile()),
 logindex(1),
@@ -268,6 +269,13 @@ void LinechartWidget::refresh()
 //        str.sprintf("%+.2f", activePlot->getMedian(k.key()));
 //        k.value()->setText(str);
 //    }
+    QMap<QString, QLabel*>::iterator l;
+    for (l = curveVariances->begin(); l != curveVariances->end(); ++l)
+    {
+      // Variance
+       str.sprintf("%+.5f", activePlot->getVariance(l.key()));
+      l.value()->setText(str);
+   }
 }
 
 
@@ -388,6 +396,7 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     QLabel* label;
     QLabel* value;
     QLabel* mean;
+    QLabel* variance;
     form->setAutoFillBackground(false);
     horizontalLayout = new QHBoxLayout(form);
     horizontalLayout->setSpacing(5);
@@ -437,6 +446,12 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
 //    curveMedians->insert(curve, median);
 //    horizontalLayout->addWidget(median);
 
+    // Variance
+    variance = new QLabel(form);
+    variance->setNum(0.00);
+    curveVariances->insert(curve, variance);
+    horizontalLayout->addWidget(variance);
+
     /* Color picker
     QColor color = QColorDialog::getColor(Qt::green, this);
          if (color.isValid()) {
@@ -453,6 +468,7 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     horizontalLayout->setStretchFactor(value, 50);
     horizontalLayout->setStretchFactor(mean, 50);
 //    horizontalLayout->setStretchFactor(median, 50);
+    horizontalLayout->setStretchFactor(variance, 50);
 
     // Connect actions
     QObject::connect(checkBox, SIGNAL(clicked(bool)), this, SLOT(takeButtonClick(bool)));
