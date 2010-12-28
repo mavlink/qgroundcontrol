@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include "GCManipulator.h"
+#include <osg/Version>
 
 GCManipulator::GCManipulator()
 {
@@ -254,10 +255,10 @@ GCManipulator::calcMovement(void)
     if (buttonMask == GUIEventAdapter::LEFT_MOUSE_BUTTON)
     {
         // rotate camera
-#ifdef __WIN32__
-        osg::Vec3 axis;
-#else
+#if ((OPENSCENEGRAPH_MAJOR_VERSION == 2) & (OPENSCENEGRAPH_MINOR_VERSION > 8)) | (OPENSCENEGRAPH_MAJOR_VERSION > 2)
         osg::Vec3d axis;
+#else
+        osg::Vec3 axis;
 #endif
         float angle;
 
