@@ -165,6 +165,19 @@ HUD::~HUD()
 
 }
 
+void HUD::showEvent(QShowEvent* event)
+{
+    Q_UNUSED(event);
+    if (isVisible())
+    {
+        refreshTimer->start();
+    }
+    else
+    {
+        refreshTimer->stop();
+    }
+}
+
 void HUD::start()
 {
     refreshTimer->start();
