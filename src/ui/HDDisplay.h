@@ -64,8 +64,6 @@ public:
 public slots:
     /** @brief Update a HDD value */
     void updateValue(UASInterface* uas, QString name, double value, quint64 msec);
-    void start();
-    void stop();
     void setActiveUAS(UASInterface* uas);
 
 protected slots:
@@ -77,6 +75,8 @@ protected slots:
 protected:
     void changeEvent(QEvent *e);
     void paintEvent(QPaintEvent * event);
+    void showEvent(QShowEvent* event);
+    void hideEvent(QHideEvent* event);
     float refLineWidthToPen(float line);
     float refToScreenX(float x);
     float refToScreenY(float y);
@@ -142,6 +142,7 @@ protected:
     int warningBlinkRate;      ///< Blink rate of warning messages, will be rounded to the refresh rate
 
     QTimer* refreshTimer;      ///< The main timer, controls the update rate
+    static const int updateInterval = 120; ///< Update interval in milliseconds
     QPainter* hudPainter;
     QFont font;                ///< The HUD font, per default the free Bitstream Vera SANS, which is very close to actual HUD fonts
     QFontDatabase fontDatabase;///< Font database, only used to load the TrueType font file (the HUD font is directly loaded from file rather than from the system)

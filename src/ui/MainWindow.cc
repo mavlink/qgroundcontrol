@@ -38,6 +38,20 @@
 
 #include "LogCompressor.h"
 
+MainWindow* MainWindow::instance()
+{
+    static MainWindow* _instance = 0;
+    if(_instance == 0)
+    {
+        _instance = new MainWindow();
+
+        /* Set the application as parent to ensure that this object
+                 * will be destroyed when the main application exits */
+        //_instance->setParent(qApp);
+    }
+    return _instance;
+}
+
 /**
 * Create new mainwindow. The constructor instantiates all parts of the user
 * interface. It does NOT show the mainwindow. To display it, call the show()
@@ -48,11 +62,27 @@
 MainWindow::MainWindow(QWidget *parent):
         QMainWindow(parent),
         toolsMenuActions(),
-        currentView(VIEW_MAVLINK),
+        currentView(VIEW_OPERATOR),
+        aboutToCloseFlag(false),
         settings()
 {
-    this->hide();
-    this->setVisible(false);
+    // Get current settings
+    settings.sync();
+
+    // Check if the settings exist, instantiate defaults if necessary
+    QString centralKey = buildMenuKey(SUB_SECTION_CHECKED, CENTRAL_MAP, currentView);
+    if (!settings.contains(centralKey))
+    {
+        settings.setValue(centralKey,true);
+    }
+
+    QString listKey = buildMenuKey(SUB_SECTION_CHECKED, MENU_UAS_LIST, currentView);
+    if (!settings.contains(listKey))
+    {
+        settings.setValue(listKey, true);
+    }
+
+    settings.sync();
 
     // Setup user interface
     ui.setupUi(this);
@@ -78,38 +108,32 @@ MainWindow::MainWindow(QWidget *parent):
     // Create actions
     connectCommonActions();
 
-    // Load mavlink view as default widget set
-    loadMAVLinkView();
+    // Set dock options
+    setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
 
+    // Load mavlink view as default widget set
+    //loadMAVLinkView();
+
+    if (settings.contains("geometry"))
+    {
+        // Restore the window geometry
+        restoreGeometry(settings.value("geometry").toByteArray());
+    }
+    else
+    {
     // Adjust the size
     adjustSize();
-
-    // Load previous widget setup
-
-    // FIXME WORK IN PROGRESS
-    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
-
-    QList<QDockWidget *> dockwidgets = qFindChildren<QDockWidget *>(this);
-    if (dockwidgets.size())
-    {
-        settings.beginGroup("mainwindow/dockwidgets");
-        for (int i = 0; i < dockwidgets.size(); ++i)
-        {
-            QDockWidget *dockWidget = dockwidgets.at(i);
-            if (dockWidget->parentWidget() == this)
-            {
-                if (settings.contains(dockWidget->windowTitle()))
-                {
-                    dockWidget->setVisible(settings.value(dockWidget->windowTitle(), dockWidget->isVisible()).toBool());
-                }
-            }
-        }
-        settings.endGroup();
     }
 
+    // Populate link menu
+    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    foreach(LinkInterface* link, links)
+    {
+        this->addLink(link);
+            }
 
-
-    this->show();
+    // Enable and update view
+    presentView();
 }
 
 MainWindow::~MainWindow()
@@ -124,140 +148,54 @@ void MainWindow::buildCommonWidgets()
     mavlink     = new MAVLinkProtocol();
 
     // Dock widgets
+    if (!controlDockWidget)
+    {
     controlDockWidget = new QDockWidget(tr("Control"), this);
     controlDockWidget->setWidget( new UASControlWidget(this) );
-    addToToolsMenu (controlDockWidget, tr("UAS Control"), SLOT(showToolWidget()), MENU_UAS_CONTROL, Qt::LeftDockWidgetArea);
+        addToToolsMenu (controlDockWidget, tr("Control"), SLOT(showToolWidget()), MENU_UAS_CONTROL, Qt::LeftDockWidgetArea);
+    }
 
+    if (!listDockWidget)
+    {
     listDockWidget = new QDockWidget(tr("Unmanned Systems"), this);
     listDockWidget->setWidget( new UASListWidget(this) );
-    addToToolsMenu (listDockWidget, tr("UAS List"), SLOT(showToolWidget()), MENU_UAS_LIST, Qt::RightDockWidgetArea);
+        addToToolsMenu (listDockWidget, tr("Unmanned Systems"), SLOT(showToolWidget()), MENU_UAS_LIST, Qt::RightDockWidgetArea);
+    }
 
+    if (!waypointsDockWidget)
+    {
     waypointsDockWidget = new QDockWidget(tr("Waypoint List"), this);
     waypointsDockWidget->setWidget( new WaypointList(this, NULL) );
     addToToolsMenu (waypointsDockWidget, tr("Waypoints List"), SLOT(showToolWidget()), MENU_WAYPOINTS, Qt::BottomDockWidgetArea);
+    }
 
+    if (!infoDockWidget)
+    {
     infoDockWidget = new QDockWidget(tr("Status Details"), this);
     infoDockWidget->setWidget( new UASInfoWidget(this) );
     addToToolsMenu (infoDockWidget, tr("Status Details"), SLOT(showToolWidget()), MENU_STATUS, Qt::RightDockWidgetArea);
+    }
 
-
+    if (!debugConsoleDockWidget)
+    {
     debugConsoleDockWidget = new QDockWidget(tr("Communication Console"), this);
     debugConsoleDockWidget->setWidget( new DebugConsole(this) );
     addToToolsMenu (debugConsoleDockWidget, tr("Communication Console"), SLOT(showToolWidget()), MENU_DEBUG_CONSOLE, Qt::BottomDockWidgetArea);
+    }
 
     // Center widgets
+    if (!mapWidget)
+    {
     mapWidget         = new MapWidget(this);
     addToCentralWidgetsMenu (mapWidget, "Maps", SLOT(showCentralWidget()),CENTRAL_MAP);
+    }
 
+    if (!protocolWidget)
+    {
     protocolWidget    = new XMLCommProtocolWidget(this);
     addToCentralWidgetsMenu (protocolWidget, "Mavlink Generator", SLOT(showCentralWidget()),CENTRAL_PROTOCOL);
-
-
+    }
 }
-
-//=======
-//void MainWindow::storeSettings()
-//{
-//    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
-
-//    QList<QDockWidget *> dockwidgets = qFindChildren<QDockWidget *>(this);
-//    if (dockwidgets.size())
-//    {
-//        settings.beginGroup("mainwindow/dockwidgets");
-//        for (int i = 0; i < dockwidgets.size(); ++i)
-//        {
-//            QDockWidget *dockWidget = dockwidgets.at(i);
-//            if (dockWidget->parentWidget() == this)
-//            {
-//                settings.setValue(dockWidget->windowTitle(), QVariant(dockWidget->isVisible()));
-//            }
-//        }
-//        settings.endGroup();
-//    }
-//    settings.sync();
-//}
-
-//QMenu* MainWindow::createCenterWidgetMenu()
-//{
-//    QMenu* menu = NULL;
-//    QStackedWidget* centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-//    if (centerStack)
-//    {
-//        if (centerStack->count() > 0)
-//        {
-//            menu = new QMenu(this);
-//            for (int i = 0; i < centerStack->count(); ++i)
-//            {
-//                //menu->addAction(centerStack->widget(i)->actions())
-//            }
-//        }
-//    }
-//    return menu;
-//}
-
-//QMenu* MainWindow::createDockWidgetMenu()
-//{
-//    QMenu *menu = 0;
-//#ifndef QT_NO_DOCKWIDGET
-//    QList<QDockWidget *> dockwidgets = qFindChildren<QDockWidget *>(this);
-//    if (dockwidgets.size())
-//    {
-//        menu = new QMenu(this);
-//        for (int i = 0; i < dockwidgets.size(); ++i)
-//        {
-//            QDockWidget *dockWidget = dockwidgets.at(i);
-//            if (dockWidget->parentWidget() == this)
-//            {
-//                menu->addAction(dockwidgets.at(i)->toggleViewAction());
-//            }
-//        }
-//        menu->addSeparator();
-//    }
-//#endif
-//    return menu;
-//}
-
-////QList<QWidget* >* MainWindow::getMainWidgets()
-////{
-
-////}
-
-////QMenu* QMainWindow::getDockWidgetMenu()
-////{
-////    Q_D(QMainWindow);
-////    QMenu *menu = 0;
-////#ifndef QT_NO_DOCKWIDGET
-////    QList<QDockWidget *> dockwidgets = qFindChildren<QDockWidget *>(this);
-////    if (dockwidgets.size()) {
-////        menu = new QMenu(this);
-////        for (int i = 0; i < dockwidgets.size(); ++i) {
-////            QDockWidget *dockWidget = dockwidgets.at(i);
-////            if (dockWidget->parentWidget() == this
-////                && d->layout->contains(dockWidget)) {
-////                menu->addAction(dockwidgets.at(i)->toggleViewAction());
-////            }
-////        }
-////        menu->addSeparator();
-////    }
-////#endif // QT_NO_DOCKWIDGET
-////#ifndef QT_NO_TOOLBAR
-////    QList<QToolBar *> toolbars = qFindChildren<QToolBar *>(this);
-////    if (toolbars.size()) {
-////        if (!menu)
-////            menu = new QMenu(this);
-////        for (int i = 0; i < toolbars.size(); ++i) {
-////            QToolBar *toolBar = toolbars.at(i);
-////            if (toolBar->parentWidget() == this
-////                && d->layout->contains(toolBar)) {
-////                menu->addAction(toolbars.at(i)->toggleViewAction());
-////            }
-////        }
-////    }
-////#endif
-////    Q_UNUSED(d);
-////    return menu;
-////}
-//>>>>>>> master
 
 void MainWindow::buildPxWidgets()
 {
@@ -275,179 +213,183 @@ void MainWindow::buildPxWidgets()
     acceptList2->append("Battery");
     acceptList2->append("Pressure");
 
+    if (!linechartWidget)
+    {
     // Center widgets
     linechartWidget   = new Linecharts(this);
     addToCentralWidgetsMenu(linechartWidget, "Line Plots", SLOT(showCentralWidget()), CENTRAL_LINECHART);
+    }
 
 
+    if (!hudWidget)
+    {
     hudWidget         = new HUD(320, 240, this);
     addToCentralWidgetsMenu(hudWidget, "HUD", SLOT(showCentralWidget()), CENTRAL_HUD);
+    }
 
+    if (!dataplotWidget)
+    {
     dataplotWidget    = new QGCDataPlot2D(this);
     addToCentralWidgetsMenu(dataplotWidget, "Data Plots", SLOT(showCentralWidget()), CENTRAL_DATA_PLOT);
+    }
 
 #ifdef QGC_OSG_ENABLED
+    if (!_3DWidget)
+    {
     _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
     addToCentralWidgetsMenu(_3DWidget, "Local 3D", SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
-
+    }
 #endif
 
 #ifdef QGC_OSGEARTH_ENABLED
+    if (!_3DMapWidget)
+    {
     _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
     addToCentralWidgetsMenu(_3DMapWidget, "OSG Earth 3D", SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
-
+    }
 #endif
-#if (defined Q_OS_WIN) | (defined Q_OS_MAC)
+
+#if (defined _MSC_VER) | (defined Q_OS_MAC)
+    if (!gEarthWidget)
+    {
     gEarthWidget = new QGCGoogleEarthView(this);
     addToCentralWidgetsMenu(gEarthWidget, "Google Earth", SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
+    }
 
 #endif
 
     // Dock widgets
 
+    if (!detectionDockWidget)
+    {
     detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
     detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
     addToToolsMenu (detectionDockWidget, tr("Object Recognition"), SLOT(showToolWidget()), MENU_DETECTION, Qt::RightDockWidgetArea);
+    }
 
-
+    if (!parametersDockWidget)
+    {
     parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
     parametersDockWidget->setWidget( new ParameterInterface(this) );
     addToToolsMenu (parametersDockWidget, tr("Onboard Parameters"), SLOT(showToolWidget()), MENU_PARAMETERS, Qt::RightDockWidgetArea);
+    }
 
+    if (!watchdogControlDockWidget)
+    {
     watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
     watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
     addToToolsMenu (watchdogControlDockWidget, tr("Process Control"), SLOT(showToolWidget()), MENU_WATCHDOG, Qt::BottomDockWidgetArea);
+    }
 
-
+    if (!hsiDockWidget)
+    {
     hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
     hsiDockWidget->setWidget( new HSIDisplay(this) );
     addToToolsMenu (hsiDockWidget, tr("HSI"), SLOT(showToolWidget()), MENU_HSI, Qt::BottomDockWidgetArea);
-//=======
-//    controlDockWidget = new QDockWidget(tr("Control"), this);
-//    controlDockWidget->setWidget( new UASControlWidget(this) );
-//    addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-//    controlDockWidget->hide();
+    }
 
-//    infoDockWidget = new QDockWidget(tr("Status Details"), this);
-//    infoDockWidget->setWidget( new UASInfoWidget(this) );
-//    addDockWidget(Qt::LeftDockWidgetArea, infoDockWidget);
-//    //infoDockWidget->hide();
-
-//    listDockWidget = new QDockWidget(tr("Unmanned Systems"), this);
-//    listDockWidget->setWidget( new UASListWidget(this) );
-//    addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-//    listDockWidget->hide();
-
-//    waypointsDockWidget = new QDockWidget(tr("Waypoint List"), this);
-//    waypointsDockWidget->setWidget( new WaypointList(this, NULL) );
-//    addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
-//    waypointsDockWidget->hide();
-
-//    detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
-//    detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
-//    addDockWidget(Qt::RightDockWidgetArea, detectionDockWidget);
-//    detectionDockWidget->hide();
-
-//    debugConsoleDockWidget = new QDockWidget(tr("Communication Console"), this);
-//    debugConsoleDockWidget->setWidget( new DebugConsole(this) );
-//    addDockWidget(Qt::BottomDockWidgetArea, debugConsoleDockWidget);
-
-//    parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
-//    parametersDockWidget->setWidget( new ParameterInterface(this) );
-//    addDockWidget(Qt::RightDockWidgetArea, parametersDockWidget);
-
-//    watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
-//    watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
-//    addDockWidget(Qt::RightDockWidgetArea, watchdogControlDockWidget);
-//    watchdogControlDockWidget->hide();
-
-//    hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
-//    hsiDockWidget->setWidget( new HSIDisplay(this) );
-//    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
-//>>>>>>> master
-
+    if (!headDown1DockWidget)
+    {
     headDown1DockWidget = new QDockWidget(tr("System Stats"), this);
     headDown1DockWidget->setWidget( new HDDisplay(acceptList, this) );
-
     addToToolsMenu (headDown1DockWidget, tr("Flight Display"), SLOT(showToolWidget()), MENU_HDD_1, Qt::RightDockWidgetArea);
+    }
 
+    if (!headDown2DockWidget)
+    {
     headDown2DockWidget = new QDockWidget(tr("Payload Status"), this);
     headDown2DockWidget->setWidget( new HDDisplay(acceptList2, this) );
     addToToolsMenu (headDown2DockWidget, tr("Payload Status"), SLOT(showToolWidget()), MENU_HDD_2, Qt::RightDockWidgetArea);
+    }
 
+    if (!rcViewDockWidget)
+    {
     rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
     rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
     addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget()), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
-//=======
-//    addDockWidget(Qt::RightDockWidgetArea, headDown1DockWidget);
+    }
 
-//    headDown2DockWidget = new QDockWidget(tr("Payload Status"), this);
-//    headDown2DockWidget->setWidget( new HDDisplay(acceptList2, this) );
-//    addDockWidget(Qt::RightDockWidgetArea, headDown2DockWidget);
-
-//    rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
-//    rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
-//    addDockWidget(Qt::BottomDockWidgetArea, rcViewDockWidget);
-//    rcViewDockWidget->hide();
-//>>>>>>> master
-
+    if (!headUpDockWidget)
+    {
     headUpDockWidget = new QDockWidget(tr("HUD"), this);
     headUpDockWidget->setWidget( new HUD(320, 240, this));
     addToToolsMenu (headUpDockWidget, tr("Control Indicator"), SLOT(showToolWidget()), MENU_HUD, Qt::LeftDockWidgetArea);
+    }
 
     // Dialogue widgets
     //FIXME: free memory in destructor
+    if (!joystick)
+    {
     joystick    = new JoystickInput();
+    }
 
 }
 
 void MainWindow::buildSlugsWidgets()
 {
+    if (!linechartWidget)
+    {
     // Center widgets
-//    linechartWidget   = new Linecharts(this);
-//    addToCentralWidgetsMenu(linechartWidget, "Line Plots", SLOT(showCentralWidget()), CENTRAL_LINECHART);
+        linechartWidget   = new Linecharts(this);
+    }
 
-//    // Dock widgets
-//    headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
-//    headUpDockWidget->setWidget( new HUD(320, 240, this));
-//    addToToolsMenu (headUpDockWidget, tr("HUD"), SLOT(showToolWidget()), MENU_HUD, Qt::LeftDockWidgetArea);
+    if (!headUpDockWidget)
+    {
+        // Dock widgets
+        headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
+        headUpDockWidget->setWidget( new HUD(320, 240, this));
+        addToToolsMenu (headUpDockWidget, tr("HUD"), SLOT(showToolWidget()), MENU_HUD, Qt::LeftDockWidgetArea);
+    }
 
+    if (!rcViewDockWidget)
+    {
+        rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
+        rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
+        addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget()), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
+    }
 
-//    rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
-//    rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
-//    addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget()), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
+    if (!slugsDataWidget)
+    {
+        // Dialog widgets
+        slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
+        slugsDataWidget->setWidget( new SlugsDataSensorView(this));
+        addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget()), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
+    }
 
-
-//    // Dialog widgets
-//    slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
-//    slugsDataWidget->setWidget( new SlugsDataSensorView(this));
-//    addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget()), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
-
-
+    if (!slugsPIDControlWidget)
+    {
     slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
     slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
     addToToolsMenu (slugsPIDControlWidget, tr("PID Configuration"), SLOT(showToolWidget()), MENU_SLUGS_PID, Qt::LeftDockWidgetArea);
+    }
 
+    if (!slugsHilSimWidget)
+    {
     slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
     slugsHilSimWidget->setWidget( new SlugsHilSim(this));
     addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
+    }
 
+    if (!slugsCamControlWidget)
+    {
     slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
     slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
     addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget()), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
-
+    }
 }
 
 
 void MainWindow::addToCentralWidgetsMenu ( QWidget* widget,
                                            const QString title,
                                            const char * slotName,
-                                           TOOLS_WIDGET_NAMES centralWidget){
+                                           TOOLS_WIDGET_NAMES centralWidget)
+{
   QAction* tempAction;
 
 
   // Add the separator that will separate tools from central Widgets
-  if (!toolsMenuActions[CENTRAL_SEPARATOR]){
+    if (!toolsMenuActions[CENTRAL_SEPARATOR])
+    {
     tempAction = ui.menuTools->addSeparator();
     toolsMenuActions[CENTRAL_SEPARATOR] = tempAction;
     tempAction->setData(CENTRAL_SEPARATOR);
@@ -464,28 +406,31 @@ void MainWindow::addToCentralWidgetsMenu ( QWidget* widget,
 
   QString chKey = buildMenuKey(SUB_SECTION_CHECKED, centralWidget, currentView);
 
-  if (!settings.contains(chKey)){
+    if (!settings.contains(chKey))
+    {
     settings.setValue(chKey,false);
     tempAction->setChecked(false);
   }
-//  else {
-//    tempAction->setChecked(settings.value(chKey).toBool());
-//  }
+    else
+    {
+        tempAction->setChecked(settings.value(chKey).toBool());
+    }
 
   // connect the action
   connect(tempAction,SIGNAL(triggered()),this, slotName);
-
 }
 
 
-void MainWindow::showCentralWidget(){
+void MainWindow::showCentralWidget()
+{
   QAction* senderAction = qobject_cast<QAction *>(sender());
   int tool = senderAction->data().toInt();
   QString chKey;
 
   // check the current action
 
-  if (senderAction && dockWidgets[tool]){
+    if (senderAction && dockWidgets[tool])
+    {
 
     // uncheck all central widget actions
     QHashIterator<int, QAction*> i(toolsMenuActions);
@@ -511,25 +456,34 @@ void MainWindow::showCentralWidget(){
     // store the selected central widget
     chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(tool), currentView);
     settings.setValue(chKey,true);
+        settings.sync();
 
    presentView();
   }
 }
 
+/**
+ * Adds a widget to the tools menu and sets it visible if it was
+ * enabled last time.
+ */
 void MainWindow::addToToolsMenu ( QWidget* widget,
                                  const QString title,
                                  const char * slotName,
                                  TOOLS_WIDGET_NAMES tool,
-                                 Qt::DockWidgetArea location){
+                                  Qt::DockWidgetArea location)
+{
   QAction* tempAction;
   QString posKey, chKey;
 
 
-  if (toolsMenuActions[CENTRAL_SEPARATOR]){
+    if (toolsMenuActions[CENTRAL_SEPARATOR])
+    {
     tempAction = new QAction(title, this);
     ui.menuTools->insertAction(toolsMenuActions[CENTRAL_SEPARATOR],
                                tempAction);
-  } else {
+    }
+    else
+    {
     tempAction = ui.menuTools->addAction(title);
   }
 
@@ -543,20 +497,28 @@ void MainWindow::addToToolsMenu ( QWidget* widget,
 
   posKey = buildMenuKey (SUB_SECTION_LOCATION,tool, currentView);
 
-  if (!settings.contains(posKey)){
+    if (!settings.contains(posKey))
+    {
     settings.setValue(posKey,location);
     dockWidgetLocations[tool] = location;
-  } else {
-    dockWidgetLocations[tool] = static_cast <Qt::DockWidgetArea> (settings.value(posKey).toInt());
   }
+    else
+    {
+        dockWidgetLocations[tool] = static_cast <Qt::DockWidgetArea> (settings.value(posKey, Qt::RightDockWidgetArea).toInt());
+    }
 
   chKey = buildMenuKey(SUB_SECTION_CHECKED,tool, currentView);
 
-  if (!settings.contains(chKey)){
+    if (!settings.contains(chKey))
+    {
     settings.setValue(chKey,false);
     tempAction->setChecked(false);
-  } else {
+        widget->setVisible(false);
+    }
+    else
+    {
     tempAction->setChecked(settings.value(chKey).toBool());
+        widget->setVisible(settings.value(chKey, false).toBool());
   }
 
   // connect the action
@@ -570,48 +532,75 @@ void MainWindow::addToToolsMenu ( QWidget* widget,
 
 }
 
-void MainWindow::showToolWidget(){
+void MainWindow::showToolWidget()
+{
   QAction* temp = qobject_cast<QAction *>(sender());
   int tool = temp->data().toInt();
 
 
-  if (temp && dockWidgets[tool]){
-    if (temp->isChecked()){
+    if (temp && dockWidgets[tool])
+    {
+        if (temp->isChecked())
+        {
       addDockWidget(dockWidgetLocations[tool], qobject_cast<QDockWidget *> (dockWidgets[tool]));
       qobject_cast<QDockWidget *>(dockWidgets[tool])->show();
-    } else {
+        }
+        else
+        {
       removeDockWidget(qobject_cast<QDockWidget *>(dockWidgets[tool]));
     }
     QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(tool), currentView);
     settings.setValue(chKey,temp->isChecked());
+        settings.sync();
   }
 }
 
 
-void MainWindow::showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view){
+void MainWindow::showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view)
+{
   bool tempVisible;
   Qt::DockWidgetArea tempLocation;
   QDockWidget* tempWidget = static_cast <QDockWidget *>(dockWidgets[widget]);
 
-  tempVisible =  settings.value(buildMenuKey (SUB_SECTION_CHECKED,widget,view)).toBool();
+    tempVisible =  settings.value(buildMenuKey (SUB_SECTION_CHECKED,widget,view), false).toBool();
 
-  if (tempWidget){
+    // Some widgets are per default visible. Overwrite the settings value if not present.
+    if (widget == MainWindow::MENU_UAS_LIST)
+    {
+        if (!settings.contains(buildMenuKey (SUB_SECTION_CHECKED,widget,view)))
+        {
+            tempVisible = true;
+        }
+    }
+
+    if (tempWidget)
+    {
     toolsMenuActions[widget]->setChecked(tempVisible);
   }
 
 
   //qDebug() <<  buildMenuKey (SUB_SECTION_CHECKED,widget,view) << tempVisible;
 
-  tempLocation = static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,widget, view)).toInt());
+    tempLocation = static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,widget, view), QVariant(Qt::RightDockWidgetArea)).toInt());
 
-  if (tempWidget && tempVisible){
+    //    if (widget == MainWindow::MENU_UAS_LIST)
+    //    {
+    //        if (!settings.contains(buildMenuKey (SUB_SECTION_LOCATION,widget, view)))
+    //        {
+    //            tempLocation = Qt::RightDockWidgetArea;
+    //        }
+    //    }
+
+    if ((tempWidget != NULL) && tempVisible)
+    {
     addDockWidget(tempLocation, tempWidget);
     tempWidget->show();
   }
 
 }
 
-QString MainWindow::buildMenuKey(SETTINGS_SECTIONS section, TOOLS_WIDGET_NAMES tool, VIEW_SECTIONS view){
+QString MainWindow::buildMenuKey(SETTINGS_SECTIONS section, TOOLS_WIDGET_NAMES tool, VIEW_SECTIONS view)
+{
   // Key is built as follows: autopilot_type/section_menu/view/tool/section
   int apType;
 
@@ -626,51 +615,62 @@ QString MainWindow::buildMenuKey(SETTINGS_SECTIONS section, TOOLS_WIDGET_NAMES t
           QString::number(section) + "/" );
 }
 
-void MainWindow::updateVisibilitySettings (bool vis){
-  Q_UNUSED(vis);
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    settings.setValue("geometry", saveGeometry());
+    //settings.setValue("windowState", saveState());
+    aboutToCloseFlag = true;
+    settings.setValue("VIEW_ON_APPLICATION_CLOSE", currentView);
+    settings.sync();
+    QMainWindow::closeEvent(event);
+}
 
-  // This is commented since when the application closes
-  // sets the visibility to false.
+/**
+ * Stores the visibility setting of each widget. This method
+ * will only change the settings if the application is not
+ * about to close.
+ */
+void MainWindow::updateVisibilitySettings (bool vis)
+{
+    if (!aboutToCloseFlag)
+    {
 
-  // TODO: A workaround is needed. The QApplication::aboutToQuit
-  //       did not work
-
-  /*
   QDockWidget* temp = qobject_cast<QDockWidget *>(sender());
 
+        if (temp)
+        {
   QHashIterator<int, QWidget*> i(dockWidgets);
-  while (i.hasNext()) {
+            while (i.hasNext())
+            {
       i.next();
-      if ((static_cast <QDockWidget *>(dockWidgets[i.key()])) == temp){
-        QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(i.key()));
-        qDebug() << "Key in visibility changed" << chKey;
+                if ((static_cast <QDockWidget *>(dockWidgets[i.key()])) == temp)
+                {
+                    QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(i.key()), currentView);
         settings.setValue(chKey,vis);
+                    settings.sync();
         toolsMenuActions[i.key()]->setChecked(vis);
         break;
       }
   }
-*/
+        }
+    }
 }
 
-void MainWindow::updateLocationSettings (Qt::DockWidgetArea location){
+void MainWindow::updateLocationSettings (Qt::DockWidgetArea location)
+{
   QDockWidget* temp = qobject_cast<QDockWidget *>(sender());
 
   QHashIterator<int, QWidget*> i(dockWidgets);
-  while (i.hasNext()) {
+    while (i.hasNext())
+    {
       i.next();
-      if ((static_cast <QDockWidget *>(dockWidgets[i.key()])) == temp){
+        if ((static_cast <QDockWidget *>(dockWidgets[i.key()])) == temp)
+        {
         QString posKey = buildMenuKey (SUB_SECTION_LOCATION,static_cast<TOOLS_WIDGET_NAMES>(i.key()), currentView);
         settings.setValue(posKey,location);
         break;
       }
   }
-//=======
-//    addDockWidget(Qt::BottomDockWidgetArea, slugsCamControlWidget);
-//    slugsCamControlWidget->hide();
-
-//    //FIXME: free memory in destructor
-//    joystick    = new JoystickInput();
-//>>>>>>> master
 }
 
 /**
@@ -699,26 +699,11 @@ void MainWindow::connectCommonWidgets()
 
 void MainWindow::connectPxWidgets()
 {
-    if (linechartWidget)
-    {
-        connect(linechartWidget, SIGNAL(logfileWritten(QString)),
-                this, SLOT(loadDataView(QString)));
-    }
-
+    // No special connections necessary at this point
 }
 
 void MainWindow::connectSlugsWidgets()
 {
-    if (linechartWidget)
-    {
-        connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
-                linechartWidget, SLOT(addSystem(UASInterface*)));
-        connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
-                linechartWidget, SLOT(selectSystem(int)));
-        connect(linechartWidget, SIGNAL(logfileWritten(QString)),
-                this, SLOT(loadDataView(QString)));
-    }
-
     if (slugsHilSimWidget && slugsHilSimWidget->widget()){
       connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
               slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
@@ -738,8 +723,8 @@ void MainWindow::arrangeCommonCenterStack()
 
     if (!centerStack) return;
 
-    if (mapWidget) centerStack->addWidget(mapWidget);
-    if (protocolWidget) centerStack->addWidget(protocolWidget);
+    if (mapWidget && (centerStack->indexOf(mapWidget) == -1)) centerStack->addWidget(mapWidget);
+    if (protocolWidget && (centerStack->indexOf(protocolWidget) == -1)) centerStack->addWidget(protocolWidget);
 
     setCentralWidget(centerStack);
 }
@@ -752,20 +737,20 @@ void MainWindow::arrangePxCenterStack()
     return;
   }
 
-    if (linechartWidget) centerStack->addWidget(linechartWidget);
+
+    if (linechartWidget && (centerStack->indexOf(linechartWidget) == -1)) centerStack->addWidget(linechartWidget);
 
 #ifdef QGC_OSG_ENABLED
-    if (_3DWidget) centerStack->addWidget(_3DWidget);
+    if (_3DWidget && (centerStack->indexOf(_3DWidget) == -1)) centerStack->addWidget(_3DWidget);
 #endif
 #ifdef QGC_OSGEARTH_ENABLED
-    if (_3DMapWidget) centerStack->addWidget(_3DMapWidget);
+    if (_3DMapWidget && (centerStack->indexOf(_3DMapWidget) == -1)) centerStack->addWidget(_3DMapWidget);
 #endif
-#if (defined Q_OS_WIN) | (defined Q_OS_MAC)
-    if (gEarthWidget) centerStack->addWidget(gEarthWidget);
+#if (defined _MSC_VER) | (defined Q_OS_MAC)
+    if (gEarthWidget && (centerStack->indexOf(gEarthWidget) == -1)) centerStack->addWidget(gEarthWidget);
 #endif
-    if (hudWidget) centerStack->addWidget(hudWidget);
-    if (dataplotWidget) centerStack->addWidget(dataplotWidget);
-
+    if (hudWidget && (centerStack->indexOf(hudWidget) == -1)) centerStack->addWidget(hudWidget);
+    if (dataplotWidget && (centerStack->indexOf(dataplotWidget) == -1)) centerStack->addWidget(dataplotWidget);
 }
 
 void MainWindow::arrangeSlugsCenterStack()
@@ -776,10 +761,8 @@ void MainWindow::arrangeSlugsCenterStack()
     return;
   }
 
-  if (linechartWidget) centerStack->addWidget(linechartWidget);
-
-
-  if (hudWidget) centerStack->addWidget(hudWidget);
+    if (linechartWidget && (centerStack->indexOf(linechartWidget) == -1)) centerStack->addWidget(linechartWidget);
+    if (hudWidget && (centerStack->indexOf(hudWidget) == -1)) centerStack->addWidget(hudWidget);
 
 }
 
@@ -901,7 +884,6 @@ void MainWindow::showStatusMessage(const QString& status)
 **/
 void MainWindow::connectCommonActions()
 {
-
     // Connect actions from ui
     connect(ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(addLink()));
 
@@ -928,12 +910,10 @@ void MainWindow::connectCommonActions()
     connect(ui.actionOnline_documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(ui.actionDeveloper_Credits, SIGNAL(triggered()), this, SLOT(showCredits()));
     connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
-
 }
 
 void MainWindow::connectPxActions()
 {
-
   ui.actionJoystickSettings->setVisible(true);
 
   // Joystick configuration
@@ -1005,8 +985,6 @@ void MainWindow::addLink()
     ui.menuNetwork->addAction(commWidget->getAction());
 
     commWidget->show();
-
-    // TODO Implement the link removal!
 }
 
 void MainWindow::addLink(LinkInterface *link)
@@ -1097,29 +1075,8 @@ void MainWindow::UASCreated(UASInterface* uas)
         // TODO Stylesheet reloading should in theory not be necessary
         reloadStylesheet();
 
-        switch (uas->getAutopilotType()){
-          case (MAV_AUTOPILOT_GENERIC):
-          case (MAV_AUTOPILOT_ARDUPILOTMEGA):
-          case (MAV_AUTOPILOT_PIXHAWK):
+        switch (uas->getAutopilotType())
           {
-            // Build Pixhawk Widgets
-            buildPxWidgets();
-
-            // Connect Pixhawk Widgets
-            connectPxWidgets();
-
-            // Arrange Pixhawk Centerstack
-            arrangePxCenterStack();
-
-            // Connect Pixhawk Actions
-            connectPxActions();
-
-            // FIXME: This type checking might be redundant
-            // Check which type this UAS is of
-//            PxQuadMAV* mav = dynamic_cast<PxQuadMAV*>(uas);
-//            if (mav) loadPixhawkEngineerView();
-          } break;
-
           case (MAV_AUTOPILOT_SLUGS):
           {
             // Build Slugs Widgets
@@ -1135,16 +1092,61 @@ void MainWindow::UASCreated(UASInterface* uas)
             connectSlugsActions();
 
             // FIXME: This type checking might be redundant
-            if (slugsDataWidget) {
-              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
-              if (dataWidget) {
+                //            if (slugsDataWidget) {
+                //              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+                //              if (dataWidget) {
+                //                SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
+                //                if (mav2) {
                   (dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget()))->addUAS(uas);
-              }
+                //                  //loadSlugsView();
+                //                  loadGlobalOperatorView();
+                //                }
+                //              }
+                //            }
             }
-          } break;
+            break;
+        default:
+        case (MAV_AUTOPILOT_GENERIC):
+        case (MAV_AUTOPILOT_ARDUPILOTMEGA):
+        case (MAV_AUTOPILOT_PIXHAWK):
+            {
+                // Build Pixhawk Widgets
+                buildPxWidgets();
 
-          loadEngineerView();
+                // Connect Pixhawk Widgets
+                connectPxWidgets();
+
+                // Arrange Pixhawk Centerstack
+                arrangePxCenterStack();
+
+                // Connect Pixhawk Actions
+                connectPxActions();
+
         }
+            break;
+
+    }
+
+        // Change the view only if this is the first UAS
+
+        // If this is the first connected UAS, it is both created as well as
+        // the currently active UAS
+        if (UASManager::instance()->getActiveUAS() == uas)
+        {
+            qDebug() << "UPDATING THE VIEW SINCE THIS IS THE FIRST CONNECTED SYSTEM";
+
+            // Load last view if setting is present
+            if (settings.contains("VIEW_ON_APPLICATION_CLOSE"))
+    {
+                int view = settings.value("VIEW_ON_APPLICATION_CLOSE").toInt();
+                currentView = (VIEW_SECTIONS) view;
+                presentView();
+    }
+            else
+    {
+                loadEngineerView();
+    }
+    }
 
     }
 }
@@ -1153,40 +1155,7 @@ void MainWindow::UASCreated(UASInterface* uas)
  * Clears the current view completely
  */
 void MainWindow::clearView()
-{ 
-    // Halt HUD central widget
-    if (hudWidget) hudWidget->stop();
-
-    // Disable linechart
-    if (linechartWidget) linechartWidget->setActive(false);
-
-    // Halt HDDs
-    if (headDown1DockWidget)
-    {
-        HDDisplay* hddWidget = dynamic_cast<HDDisplay*>( headDown1DockWidget->widget() );
-        if (hddWidget) hddWidget->stop();
-    }
-
-    if (headDown2DockWidget)
-    {
-        HDDisplay* hddWidget = dynamic_cast<HDDisplay*>( headDown2DockWidget->widget() );
-        if (hddWidget) hddWidget->stop();
-    }
-
-    // Halt HSI
-    if (hsiDockWidget)
-    {
-        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-        if (hsi) hsi->stop();
-    }
-
-    // Halt HUD if in docked widget mode
-    if (headUpDockWidget)
-    {
-        HUD* hud = dynamic_cast<HUD*>( headUpDockWidget->widget() );
-        if (hud) hud->stop();
-    }
-
+{
     // Remove all dock widgets from main window
     QObjectList childList( this->children() );
 
@@ -1241,47 +1210,12 @@ void MainWindow::loadMAVLinkView()
     currentView = VIEW_MAVLINK;
 
     presentView();
-//=======
-//    // Slugs Data View
-//    if (slugsHilSimWidget)
-//    {
-//        addDockWidget(Qt::LeftDockWidgetArea, slugsHilSimWidget);
-//        slugsHilSimWidget->show();
-//    }
-//>>>>>>> master
 }
 
-void MainWindow::presentView() {
-
-
-#ifdef QGC_OSG_ENABLED
-  // 3D map
-  if (_3DWidget)
-  {
-      if (centerStack)
-      {
-          //map3DWidget->setActive(true);
-          centerStack->setCurrentWidget(_3DWidget);
-      }
-  }
-#endif
-
+void MainWindow::presentView()
+{
   qDebug() << "LC";
   showTheCentralWidget(CENTRAL_LINECHART, currentView);
-  if (linechartWidget){
-    qDebug () << buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_LINECHART,currentView) <<
-        settings.value(buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_LINECHART,currentView)).toBool() ;
-    if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_LINECHART,currentView)).toBool()){
-      if (centerStack) {
-          linechartWidget->setActive(true);
-          centerStack->setCurrentWidget(linechartWidget);
-      }
-    } else {
-      linechartWidget->setActive(false);
-    }
-  }
-
-
 
   // MAP
   qDebug() << "MAP";
@@ -1293,19 +1227,17 @@ void MainWindow::presentView() {
 
   // HEAD UP DISPLAY
   showTheCentralWidget(CENTRAL_HUD, currentView);
-  qDebug() << "HUD";
-  if (hudWidget){
-    qDebug() << buildMenuKey(SUB_SECTION_CHECKED,CENTRAL_HUD,currentView) <<
-        settings.value(buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_HUD,currentView)).toBool();
-    if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_HUD,currentView)).toBool()){
-      if (centerStack) {
-          centerStack->setCurrentWidget(hudWidget);
-          hudWidget->start();
-      }
-    } else {
-      hudWidget->stop();
-    }
-  }
+
+    // GOOGLE EARTH
+    showTheCentralWidget(CENTRAL_GOOGLE_EARTH, currentView);
+
+    // LOCAL 3D VIEW
+    showTheCentralWidget(CENTRAL_3D_LOCAL, currentView);
+
+    // GLOBAL 3D VIEW
+    showTheCentralWidget(CENTRAL_3D_MAP, currentView);
+
+
 
   // Show docked widgets based on current view and autopilot type
 
@@ -1340,12 +1272,10 @@ void MainWindow::presentView() {
       HUD* tmpHud = dynamic_cast<HUD*>( headUpDockWidget->widget() );
       if (tmpHud){
         if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,MENU_HUD,currentView)).toBool()){
-          tmpHud->start();
           addDockWidget(static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,MENU_HUD, currentView)).toInt()),
                         headUpDockWidget);
           headUpDockWidget->show();
         } else {
-          tmpHud->stop();
           headUpDockWidget->hide();
         }
       }
@@ -1369,229 +1299,84 @@ void MainWindow::presentView() {
 
   // HORIZONTAL SITUATION INDICATOR
   showTheWidget(MENU_HSI, currentView);
-  if (hsiDockWidget)
-  {
-      HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-      if (hsi){
-        if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,MENU_HSI,currentView)).toBool()){
-          hsi->start();
-          addDockWidget(static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,MENU_HSI, currentView)).toInt()),
-                        hsiDockWidget);
-          hsiDockWidget->show();
-        } else {
-          hsi->stop();
-          hsiDockWidget->hide();
-        }
-      }
-  }
+    //    if (hsiDockWidget)
+    //    {
+    //        HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
+    //        if (hsi){
+    //            if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,MENU_HSI,currentView)).toBool()){
+    //                addDockWidget(static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,MENU_HSI, currentView)).toInt()),
+    //                              hsiDockWidget);
+    //            }
+    //        }
+    //    }
 
   // HEAD DOWN 1
   showTheWidget(MENU_HDD_1, currentView);
-  if (headDown1DockWidget)
-  {
-      HDDisplay *hdd = dynamic_cast<HDDisplay*>(headDown1DockWidget->widget());
-      if (hdd) {
-        if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,MENU_HDD_1,currentView)).toBool()) {
-          addDockWidget(static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,MENU_HDD_1, currentView)).toInt()),
-                        headDown1DockWidget);
-          headDown1DockWidget->show();
-          hdd->start();
-        } else {
-          headDown1DockWidget->hide();;
-          hdd->stop();
-        }
-      }
-  }
+    //    if (headDown1DockWidget)
+    //    {
+    //        HDDisplay *hdd = dynamic_cast<HDDisplay*>(headDown1DockWidget->widget());
+    //        if (hdd) {
+    //            if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,MENU_HDD_1,currentView)).toBool()) {
+    //                addDockWidget(static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,MENU_HDD_1, currentView)).toInt()),
+    //                              headDown1DockWidget);
+    //                headDown1DockWidget->show();
+    //                hdd->start();
+    //            } else {
+    //                headDown1DockWidget->hide();;
+    //                hdd->stop();
+    //            }
+    //        }
+    //    }
 
   // HEAD DOWN 2
   showTheWidget(MENU_HDD_2, currentView);
-  if (headDown2DockWidget)
-  {
-      HDDisplay *hdd = dynamic_cast<HDDisplay*>(headDown2DockWidget->widget());
-      if (hdd){
-        if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,MENU_HDD_2,currentView)).toBool()){
-          addDockWidget(static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,MENU_HDD_2, currentView)).toInt()),
-                        headDown2DockWidget);
-          headDown2DockWidget->show();
-          hdd->start();
-        } else {
-          headDown2DockWidget->hide();
-          hdd->stop();
-        }
-      }
-  }
+    //    if (headDown2DockWidget)
+    //    {
+    //        HDDisplay *hdd = dynamic_cast<HDDisplay*>(headDown2DockWidget->widget());
+    //        if (hdd){
+    //            if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,MENU_HDD_2,currentView)).toBool()){
+    //                addDockWidget(static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,MENU_HDD_2, currentView)).toInt()),
+    //                              headDown2DockWidget);
+    //                headDown2DockWidget->show();
+    //                hdd->start();
+    //            } else {
+    //                headDown2DockWidget->hide();
+    //                hdd->stop();
+    //            }
+    //        }
+    //    }
 
   this->show();
 
 }
 
-void MainWindow::showTheCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SECTIONS view){
+void MainWindow::showTheCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SECTIONS view)
+{
   bool tempVisible;
   QWidget* tempWidget = dockWidgets[centralWidget];
-//=======
-//    // ONBOARD PARAMETERS
-//    if (parametersDockWidget)
-//    {
-//        addDockWidget(Qt::RightDockWidgetArea, parametersDockWidget);
-//        parametersDockWidget->show();
-//    }
-//}
-//>>>>>>> master
 
   tempVisible =  settings.value(buildMenuKey (SUB_SECTION_CHECKED,centralWidget,view)).toBool();
   qDebug() << buildMenuKey (SUB_SECTION_CHECKED,centralWidget,view) << tempVisible;
-  if (toolsMenuActions[centralWidget]){
+    if (toolsMenuActions[centralWidget])
+    {
     toolsMenuActions[centralWidget]->setChecked(tempVisible);
   }
 
-  if (centerStack && tempWidget && tempVisible){
+    if (centerStack && tempWidget && tempVisible)
+    {
     centerStack->setCurrentWidget(tempWidget);
   }
 }
 
-
-
-/*
-==========================================================
-              Potentially Deprecated
-==========================================================
-*/
-
-void MainWindow::loadPixhawkEngineerView()
-{
-
-}
-
-
-void MainWindow::loadAllView()
-{
-    clearView();
-
-    if (headDown1DockWidget)
-    {
-        HDDisplay *hdd = dynamic_cast<HDDisplay*>(headDown1DockWidget->widget());
-        if (hdd)
-        {
-            addDockWidget(Qt::RightDockWidgetArea, headDown1DockWidget);
-            headDown1DockWidget->show();
-            hdd->start();
-        }
-
-    }
-    if (headDown2DockWidget)
-    {
-        HDDisplay *hdd = dynamic_cast<HDDisplay*>(headDown2DockWidget->widget());
-        if (hdd)
-        {
-            addDockWidget(Qt::RightDockWidgetArea, headDown2DockWidget);
-            headDown2DockWidget->show();
-            hdd->start();
-        }
-    }
-//<<<<<<< HEAD
-//=======
-//}
-
-//void MainWindow::loadOperatorView()
-//{
-//    clearView();
-
-//    // MAP
-//    if (mapWidget)
-//    {
-//        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-//        if (centerStack)
-//        {
-//            centerStack->setCurrentWidget(mapWidget);
-//        }
-//    }
-//>>>>>>> master
-
-    // UAS CONTROL
-    if (controlDockWidget)
-    {
-        addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-        controlDockWidget->show();
-    }
-
-    // UAS LIST
-    if (listDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-        listDockWidget->show();
-    }
-
-    // UAS STATUS
-    if (infoDockWidget)
-    {
-        addDockWidget(Qt::LeftDockWidgetArea, infoDockWidget);
-        infoDockWidget->show();
-    }
-
-    // WAYPOINT LIST
-    if (waypointsDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
-        waypointsDockWidget->show();
-    }
-
-    // DEBUG CONSOLE
-    if (debugConsoleDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, debugConsoleDockWidget);
-        debugConsoleDockWidget->show();
-    }
-
-    // OBJECT DETECTION
-    if (detectionDockWidget)
-    {
-        addDockWidget(Qt::RightDockWidgetArea, detectionDockWidget);
-        detectionDockWidget->show();
-    }
-
-    // LINE CHART
-    if (linechartWidget)
-    {
-        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-        if (centerStack)
-        {
-            linechartWidget->setActive(true);
-            centerStack->setCurrentWidget(linechartWidget);
-        }
-    }
-
-    // ONBOARD PARAMETERS
-    if (parametersDockWidget)
-    {
-        addDockWidget(Qt::RightDockWidgetArea, parametersDockWidget);
-        parametersDockWidget->show();
-    }
-}
-
 void MainWindow::loadWidgets()
 {
-    //loadOperatorView();
-    loadMAVLinkView();
+    loadOperatorView();
+    //loadMAVLinkView();
     //loadPilotView();
-}
-
-void MainWindow::loadDataView()
-{
-    clearView();
-
-    // DATAPLOT
-    if (dataplotWidget)
-    {
-        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-        if (centerStack)
-            centerStack->setCurrentWidget(dataplotWidget);
-    }
 }
 
 void MainWindow::loadDataView(QString fileName)
 {
-    clearView();
-
     // DATAPLOT
     if (dataplotWidget)
     {
@@ -1619,45 +1404,12 @@ void MainWindow::load3DMapView()
                     centerStack->setCurrentWidget(_3DMapWidget);
                 }
             }
-
-            // UAS CONTROL
-            if (controlDockWidget)
-            {
-                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-                controlDockWidget->show();
-            }
-
-            // UAS LIST
-            if (listDockWidget)
-            {
-                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-                listDockWidget->show();
-            }
-
-            // WAYPOINT LIST
-            if (waypointsDockWidget)
-            {
-                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
-                waypointsDockWidget->show();
-            }
-
-            // HORIZONTAL SITUATION INDICATOR
-            if (hsiDockWidget)
-            {
-                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-                if (hsi)
-                {
-                    hsi->start();
-                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
-                    hsiDockWidget->show();
-                }
-            }
 #endif
 }
 
 void MainWindow::loadGoogleEarthView()
 {
-    #if (defined Q_OS_WIN) | (defined Q_OS_MAC)
+#if (defined _MSC_VER) | (defined Q_OS_MAC)
             clearView();
 
             // 3D map
@@ -1667,39 +1419,6 @@ void MainWindow::loadGoogleEarthView()
                 if (centerStack)
                 {
                     centerStack->setCurrentWidget(gEarthWidget);
-                }
-            }
-
-            // UAS CONTROL
-            if (controlDockWidget)
-            {
-                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-                controlDockWidget->show();
-            }
-
-            // UAS LIST
-            if (listDockWidget)
-            {
-                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-                listDockWidget->show();
-            }
-
-            // WAYPOINT LIST
-            if (waypointsDockWidget)
-            {
-                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
-                waypointsDockWidget->show();
-            }
-
-            // HORIZONTAL SITUATION INDICATOR
-            if (hsiDockWidget)
-            {
-                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-                if (hsi)
-                {
-                    hsi->start();
-                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
-                    hsiDockWidget->show();
                 }
             }
 #endif
@@ -1721,300 +1440,6 @@ void MainWindow::load3DView()
                     centerStack->setCurrentWidget(_3DWidget);
                 }
             }
-
-            // UAS CONTROL
-            if (controlDockWidget)
-            {
-                addDockWidget(Qt::LeftDockWidgetArea, controlDockWidget);
-                controlDockWidget->show();
-            }
-
-            // UAS LIST
-            if (listDockWidget)
-            {
-                addDockWidget(Qt::BottomDockWidgetArea, listDockWidget);
-                listDockWidget->show();
-            }
-
-            // WAYPOINT LIST
-            if (waypointsDockWidget)
-            {
-                addDockWidget(Qt::BottomDockWidgetArea, waypointsDockWidget);
-                waypointsDockWidget->show();
-            }
-
-            // HORIZONTAL SITUATION INDICATOR
-            if (hsiDockWidget)
-            {
-                HSIDisplay* hsi = dynamic_cast<HSIDisplay*>( hsiDockWidget->widget() );
-                if (hsi)
-                {
-                    hsi->start();
-                    addDockWidget(Qt::LeftDockWidgetArea, hsiDockWidget);
-                    hsiDockWidget->show();
-                }
-            }
 #endif
 }
 
-/*
- ==================================
- ========== ATTIC =================
- ==================================
-
-void MainWindow::buildWidgets()
-{
-    //FIXME: memory of acceptList will never be freed again
-    QStringList* acceptList = new QStringList();
-    acceptList->append("roll IMU");
-    acceptList->append("pitch IMU");
-    acceptList->append("yaw IMU");
-    acceptList->append("rollspeed IMU");
-    acceptList->append("pitchspeed IMU");
-    acceptList->append("yawspeed IMU");
-
-    //FIXME: memory of acceptList2 will never be freed again
-    QStringList* acceptList2 = new QStringList();
-    acceptList2->append("Battery");
-    acceptList2->append("Pressure");
-
-    //TODO:  move protocol outside UI
-    mavlink     = new MAVLinkProtocol();
-
-    // Center widgets
-    linechartWidget   = new Linecharts(this);
-    hudWidget         = new HUD(320, 240, this);
-    mapWidget         = new MapWidget(this);
-    protocolWidget    = new XMLCommProtocolWidget(this);
-    dataplotWidget    = new QGCDataPlot2D(this);
-#ifdef QGC_OSG_ENABLED
-    _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-#endif
-
-#ifdef QGC_OSGEARTH_ENABLED
-    _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
-#endif
-#if (defined Q_OS_WIN) | (defined Q_OS_MAC)
-    gEarthWidget = new QGCGoogleEarthView(this);
-#endif
-
-    // Dock widgets
-    controlDockWidget = new QDockWidget(tr("Control"), this);
-    controlDockWidget->setWidget( new UASControlWidget(this) );
-
-    listDockWidget = new QDockWidget(tr("Unmanned Systems"), this);
-    listDockWidget->setWidget( new UASListWidget(this) );
-
-<<<<<<< HEAD
-    waypointsDockWidget = new QDockWidget(tr("Waypoint List"), this);
-    waypointsDockWidget->setWidget( new WaypointList(this, NULL) );
-
-    infoDockWidget = new QDockWidget(tr("Status Details"), this);
-    infoDockWidget->setWidget( new UASInfoWidget(this) );
-=======
-    // RADIO CONTROL VIEW
-    if (rcViewDockWidget)
-    {
-        addDockWidget(Qt::BottomDockWidgetArea, rcViewDockWidget);
-        rcViewDockWidget->show();
-    }
-}
->>>>>>> master
-
-    detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
-    detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
-
-<<<<<<< HEAD
-    debugConsoleDockWidget = new QDockWidget(tr("Communication Console"), this);
-    debugConsoleDockWidget->setWidget( new DebugConsole(this) );
-
-    parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
-    parametersDockWidget->setWidget( new ParameterInterface(this) );
-
-    watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
-    watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
-
-    hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
-    hsiDockWidget->setWidget( new HSIDisplay(this) );
-
-    headDown1DockWidget = new QDockWidget(tr("Primary Flight Display"), this);
-    headDown1DockWidget->setWidget( new HDDisplay(acceptList, this) );
-
-    headDown2DockWidget = new QDockWidget(tr("Payload Status"), this);
-    headDown2DockWidget->setWidget( new HDDisplay(acceptList2, this) );
-
-    rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
-    rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
-
-    headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
-    headUpDockWidget->setWidget( new HUD(320, 240, this));
-
-    // Dialogue widgets
-    //FIXME: free memory in destructor
-    joystick    = new JoystickInput();
-
-    slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
-    slugsDataWidget->setWidget( new SlugsDataSensorView(this));
-
-    slugsPIDControlWidget = new QDockWidget(tr("PID Control"), this);
-    slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
-
-    slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
-    slugsHilSimWidget->setWidget( new SlugsHilSim(this));
-
-    slugsCamControlWidget = new QDockWidget(tr("Video Camera Control"), this);
-    slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
-
-=======
-    if (protocolWidget)
-    {
-        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-        if (centerStack)
-        {
-            centerStack->setCurrentWidget(protocolWidget);
-        }
-    }
->>>>>>> master
-}
-
-void MainWindow::connectWidgets()
-{
-    if (linechartWidget)
-    {
-        connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
-                linechartWidget, SLOT(addSystem(UASInterface*)));
-        connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
-                linechartWidget, SLOT(selectSystem(int)));
-        connect(linechartWidget, SIGNAL(logfileWritten(QString)),
-                this, SLOT(loadDataView(QString)));
-    }
-    if (infoDockWidget && infoDockWidget->widget())
-    {
-        connect(mavlink, SIGNAL(receiveLossChanged(int, float)),
-                infoDockWidget->widget(), SLOT(updateSendLoss(int, float)));
-    }
-    if (mapWidget && waypointsDockWidget->widget())
-    {
-        // clear path create on the map
-        connect(waypointsDockWidget->widget(), SIGNAL(clearPathclicked()), mapWidget, SLOT(clearPath()));
-        // add Waypoint widget in the WaypointList widget when mouse clicked
-        connect(mapWidget, SIGNAL(captureMapCoordinateClick(QPointF)), waypointsDockWidget->widget(), SLOT(addWaypointMouse(QPointF)));
-        // it notifies that a waypoint global goes to do create
-        //connect(mapWidget, SIGNAL(createGlobalWP(bool, QPointF)), waypointsDockWidget->widget(), SLOT(setIsWPGlobal(bool, QPointF)));
-        //connect(mapWidget, SIGNAL(sendGeometryEndDrag(QPointF,int)), waypointsDockWidget->widget(), SLOT(waypointGlobalChanged(QPointF,int)) );
-
-        // it notifies that a waypoint global goes to do create and a map graphic too
-        connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
-        // it notifies that a waypoint global change it¥s position by spinBox on Widget WaypointView
-        //connect(waypointsDockWidget->widget(), SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), mapWidget, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
-       // connect(waypointsDockWidget->widget(), SIGNAL(changePositionWPGlobalBySpinBox(int,float,float)), mapWidget, SLOT(changeGlobalWaypointPositionBySpinBox(int,float,float)));
-
-        connect(slugsCamControlWidget->widget(),SIGNAL(viewCamBorderAtMap(bool)),mapWidget,SLOT(drawBorderCamAtMap(bool)));
-         connect(slugsCamControlWidget->widget(),SIGNAL(changeCamPosition(double,double,QString)),mapWidget,SLOT(updateCameraPosition(double,double, QString)));
-    }
-
-    if (slugsHilSimWidget && slugsHilSimWidget->widget()){
-      connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-              slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
-    }
-
-    if (slugsDataWidget && slugsDataWidget->widget()){
-      connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-              slugsDataWidget->widget(), SLOT(setActiveUAS(UASInterface*)));
-    }
-
-
-}
-
-void MainWindow::arrangeCenterStack()
-{
-
-    QStackedWidget *centerStack = new QStackedWidget(this);
-    if (!centerStack) return;
-    if (linechartWidget) centerStack->addWidget(linechartWidget);
-    if (protocolWidget) centerStack->addWidget(protocolWidget);
-    if (mapWidget) centerStack->addWidget(mapWidget);
-#ifdef QGC_OSG_ENABLED
-    if (_3DWidget) centerStack->addWidget(_3DWidget);
-#endif
-#ifdef QGC_OSGEARTH_ENABLED
-    if (_3DMapWidget) centerStack->addWidget(_3DMapWidget);
-#endif
-#if (defined Q_OS_WIN) | (defined Q_OS_MAC)
-    if (gEarthWidget) centerStack->addWidget(gEarthWidget);
-#endif
-    if (hudWidget) centerStack->addWidget(hudWidget);
-    if (dataplotWidget) centerStack->addWidget(dataplotWidget);
-
-    setCentralWidget(centerStack);
-=======
-    // ONBOARD PARAMETERS
-    if (parametersDockWidget)
-    {
-        addDockWidget(Qt::RightDockWidgetArea, parametersDockWidget);
-        parametersDockWidget->show();
-    }
->>>>>>> master
-}
-
-void MainWindow::connectActions()
-{
-<<<<<<< HEAD
-    // Connect actions from ui
-    connect(ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(addLink()));
-
-    // Connect internal actions
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(UASCreated(UASInterface*)));
-
-    // Connect user interface controls
-    connect(ui.actionLiftoff, SIGNAL(triggered()), UASManager::instance(), SLOT(launchActiveUAS()));
-    connect(ui.actionLand, SIGNAL(triggered()), UASManager::instance(), SLOT(returnActiveUAS()));
-    connect(ui.actionEmergency_Land, SIGNAL(triggered()), UASManager::instance(), SLOT(stopActiveUAS()));
-    connect(ui.actionEmergency_Kill, SIGNAL(triggered()), UASManager::instance(), SLOT(killActiveUAS()));
-
-    connect(ui.actionConfiguration, SIGNAL(triggered()), UASManager::instance(), SLOT(configureActiveUAS()));
-
-    // User interface actions
-    connect(ui.actionPilotView, SIGNAL(triggered()), this, SLOT(loadPilotView()));
-    connect(ui.actionEngineerView, SIGNAL(triggered()), this, SLOT(loadEngineerView()));
-    connect(ui.actionOperatorView, SIGNAL(triggered()), this, SLOT(loadOperatorView()));
-#ifdef QGC_OSG_ENABLED
-    connect(ui.action3DView, SIGNAL(triggered()), this, SLOT(load3DView()));
-#else
-    ui.menuWindow->removeAction(ui.action3DView);
-#endif
-
-#ifdef QGC_OSGEARTH_ENABLED
-    connect(ui.action3DMapView, SIGNAL(triggered()), this, SLOT(load3DMapView()));
-#else
-    ui.menuWindow->removeAction(ui.action3DMapView);
-#endif
-    connect(ui.actionShow_full_view, SIGNAL(triggered()), this, SLOT(loadAllView()));
-    connect(ui.actionShow_MAVLink_view, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
-    connect(ui.actionShow_data_analysis_view, SIGNAL(triggered()), this, SLOT(loadDataView()));
-    connect(ui.actionStyleConfig, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
-    connect(ui.actionGlobalOperatorView, SIGNAL(triggered()), this, SLOT(loadGlobalOperatorView()));
-    connect(ui.actionOnline_documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
-    connect(ui.actionCredits_Developers, SIGNAL(triggered()), this, SLOT(showCredits()));
-    connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
-#if (defined Q_OS_WIN) | (defined Q_OS_MAC)
-    connect(ui.actionGoogleEarthView, SIGNAL(triggered()), this, SLOT(loadGoogleEarthView()));
-#else
-    ui.menuWindow->removeAction(ui.actionGoogleEarthView);
-#endif
-
-    // Joystick configuration
-    connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
-
-    // Slugs View
-    connect(ui.actionShow_Slugs_View, SIGNAL(triggered()), this, SLOT(loadSlugsView()));
-
-    //GlobalOperatorView
-   // connect(ui.actionGlobalOperatorView,SIGNAL(triggered()),waypointsDockWidget->widget(),SLOT())
-
-=======
-    //loadEngineerView();
->>>>>>> master
-}
-
-*/

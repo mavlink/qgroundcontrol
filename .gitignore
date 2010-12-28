@@ -31,3 +31,12 @@ user_config.pri
 *.ncb
 *.vcproj
 *.sln
+*.sln
+*.vcproj
+*.user
+*.ncb
+*.idb
+*.project
+*.cproject
+*.sln
+*.suo

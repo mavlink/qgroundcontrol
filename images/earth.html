@@ -13,12 +13,12 @@ google.load("earth", "1", { 'language': 'en'});
 
 var ge = null;
 var initialized = false;
-var aircraft = new Array();
 var currAircraft = 220;
-var followAircraft = false;
+var followEnabled = false;
 var currLat = 47.3769;
 var currLon = 8.549444;
 var currAlt = 470;
+var currFollowHeading = 0.0;
 
 var homeLat = 0;
 var homeLon = 0;
@@ -32,11 +32,20 @@ var currTilt = 40.0;		///<< The tilt angle (in degrees)
 var currFollowTilt = 40.0;
 var currView = null;
 
+var M_PI = 3.14159265;
+
 
 
 var planeOrient;
 var planeLoc;
 
+var aircraft = [];
+var attitudes = [];
+var locations = [];
+var trails = [];
+var trail;
+var lineStringPlacemark;
+var lineStyle;
 
 // Aircraft class
 
@@ -53,7 +62,10 @@ function init() {
 
 
 
-
+function setCurrAircraft(id)
+{
+	currAircraft = id;
+}
 
 function setGCSHome(lat, lon, alt)
 {
@@ -86,36 +98,11 @@ function setGCSHome(lat, lon, alt)
 	    {
 		    homeGroundLevel = alt;
 	    }
-	
-	
-	
-	
-	
-	
-	goHome();
 }
 
-function initCallback(object)
+function createAircraft(id, type, color)
 {
-  ge = object;
-  ge.getWindow().setVisibility(true);
-          ge.getOptions().setStatusBarVisibility(true); 
-        ge.getOptions().setScaleLegendVisibility(true);
-        ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT); 
-        ge.getNavigationControl().setVisibility(ge.VISIBILITY_AUTO);
-        
-        ge.getLayerRoot().enableLayerById(ge.LAYER_TERRAIN, true); 
-        ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true); 
-        ge.getLayerRoot().enableLayerById(ge.LAYER_BORDERS, true); 
-        ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
-        
-        // Now after the Google Earth initialization, initialize the GCS view
-        setGCSHome(currLat, currLon, currAlt);
-        
-        
-        // Create the first aircraft model
-        	// Load 3D model
-	      var planePlacemark = ge.createPlacemark('');
+	      planePlacemark = ge.createPlacemark('');
           planePlacemark.setName('aircraft');
           planeModel = ge.createModel('');
           ge.getFeatures().appendChild(planePlacemark);
@@ -135,9 +122,77 @@ function initCallback(object)
 
           planePlacemark.setGeometry(planeModel);
           
-          setAircraftPositionAttitude(220, 47.3772, currLon, currAlt+50, 20, 15, 50);
-          enableFollowing(true);
-          updateFollowAircraft();
+          // Write into global structure
+          aircraft[id] = planePlacemark;
+          attitudes[id] = planeOrient;
+          locations[id] = planeLoc;
+          
+          //createTrail(id, color);
+}
+
+function createTrail(id, color)
+{
+          lineStringPlacemark = ge.createPlacemark('');
+          // Create the placemark
+// Create the LineString; set it to extend down to the ground
+// and set the altitude mode
+trail = ge.createLineString('');
+lineStringPlacemark.setGeometry(trail);
+trail.setExtrude(true);
+trail.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+
+// Add LineString points
+//lineString.getCoordinates().pushLatLngAlt(48.754, -121.835, 700);
+
+// Create a style and set width and color of line
+lineStringPlacemark.setStyleSelector(ge.createStyle(''));
+lineStyle = lineStringPlacemark.getStyleSelector().getLineStyle();
+lineStyle.setWidth(5);
+lineStyle.getColor().set(color);
+//lineStyle.getColor().set(color);  // aabbggrr format
+
+// Add the feature to Earth
+ge.getFeatures().appendChild(lineStringPlacemark);
+
+}
+
+function addTrailPosition(id, lat, lon, alt)
+{
+	trail.setExtrude(true);
+trail.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+
+// Add LineString points
+//lineString.getCoordinates().pushLatLngAlt(48.754, -121.835, 700);
+trail.getCoordinates().pushLatLngAlt(currLat, currLon, currAlt);
+
+// Create a style and set width and color of line
+lineStringPlacemark.setStyleSelector(ge.createStyle(''));
+lineStyle = lineStringPlacemark.getStyleSelector().getLineStyle();
+lineStyle.setWidth(5);
+lineStyle.getColor().set('99bbaaff');
+//lineStyle.getColor().set(color);  // aabbggrr format
+
+// Add the feature to Earth
+ge.getFeatures().replaceChild(lineStringPlacemark, lineStringPlacemark);
+}
+
+function initCallback(object)
+{
+  ge = object;
+  ge.getWindow().setVisibility(true);
+          ge.getOptions().setStatusBarVisibility(true); 
+        ge.getOptions().setScaleLegendVisibility(true);
+        ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT); 
+        ge.getNavigationControl().setVisibility(ge.VISIBILITY_AUTO);
+        
+        ge.getLayerRoot().enableLayerById(ge.LAYER_TERRAIN, true); 
+        ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true); 
+        ge.getLayerRoot().enableLayerById(ge.LAYER_BORDERS, true); 
+        ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
+
+        createTrail(220, 'bb2222ff');
+        createAircraft(220);
+
         initialized = true;
         
         
@@ -150,20 +205,34 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 		currLat = lat;
 		currLon = lon;
 		currAlt = alt;
+		currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
 	}
 	
-	planeOrient.setRoll(roll); 
-	planeOrient.setTilt(pitch); 
-	        planeOrient.setHeading(yaw);
+	// FIXME Currently invalid conversion from right-handed z-down to z-up frame
+	planeOrient.setRoll(((roll/M_PI)+1.0)*360.0);
+	planeOrient.setTilt(((pitch/M_PI)+1.0)*360.0);
+	planeOrient.setHeading(((yaw/M_PI)+1.0)*360.0);
         
         
                 
-        planeLoc.setLatitude(lat);
-        planeLoc.setLongitude(lon);
-        planeLoc.setAltitude(alt);
+    planeLoc.setLatitude(lat);
+    planeLoc.setLongitude(lon);
+    planeLoc.setAltitude(alt);
 	
 }
 
+function enableDaylight(enabled)
+{
+	if(enabled)
+	{
+		ge.getSun().setVisibility(true);
+	}
+	else
+	{
+		ge.getSun().setVisibility(false);
+	}
+}
+		
 function goHome()
 {
 	var currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
@@ -180,24 +249,16 @@ function setCurrentAircraft(id)
 	currAircraft = id;
 }
 
-function enableFollowing(follow)
-{
-	followEnabled = follow;
-}
-
-
 function updateFollowAircraft()
 {
-	if (followEnabled)
-	{
 	currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
 	currView.setLatitude(currLat);
 	currView.setLongitude(currLon);
 	currView.setAltitude(currAlt);
 	currView.setRange(currViewRange);
 	currView.setTilt(currFollowTilt);
+	currView.setHeading(currFollowHeading-90.0);
 	ge.getView().setAbstractView(currView);
-	}
 }
 
 function failureCallback(object)

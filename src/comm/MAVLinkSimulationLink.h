@@ -85,16 +85,17 @@ public:
 public slots:
     void writeBytes(const char* data, qint64 size);
     void readBytes();
-    void mainloop();
+    virtual void mainloop();
     bool connectLink(bool connect);
+    void connectLink();
 
 
 protected:
 
     // UAS properties
     float roll, pitch, yaw;
-    float x, y, z;
-    float spX, spY, spZ, spYaw;
+    double x, y, z;
+    double spX, spY, spZ, spYaw;
     int battery;
 
     QTimer* timer;

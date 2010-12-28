@@ -48,6 +48,7 @@ This file is part of the PIXHAWK project
 #include "LinechartWidget.h"
 #include "LinechartPlot.h"
 #include "LogCompressor.h"
+#include "QGC.h"
 #include "MG.h"
 
 
@@ -62,6 +63,7 @@ listedCurves(new QList<QString>()),
 curveLabels(new QMap<QString, QLabel*>()),
 curveMeans(new QMap<QString, QLabel*>()),
 curveMedians(new QMap<QString, QLabel*>()),
+curveVariances(new QMap<QString, QLabel*>()),
 curveMenu(new QMenu(this)),
 logFile(new QFile()),
 logindex(1),
@@ -79,7 +81,43 @@ updateTimer(new QTimer())
     curvesWidgetLayout->setMargin(2);
     curvesWidgetLayout->setSpacing(4);
     curvesWidgetLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    curvesWidgetLayout->setAlignment(Qt::AlignTop);
     curvesWidget->setLayout(curvesWidgetLayout);
+
+    // Create curve list headings
+    QWidget* form = new QWidget(this);
+    QHBoxLayout *horizontalLayout;
+    QLabel* label;
+    QLabel* value;
+    QLabel* mean;
+    QLabel* variance;
+    form->setAutoFillBackground(false);
+    horizontalLayout = new QHBoxLayout(form);
+    horizontalLayout->setSpacing(5);
+    horizontalLayout->setMargin(0);
+    horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
+
+    //horizontalLayout->addWidget(checkBox);
+
+    label = new QLabel(form);
+    label->setText("Name");
+    horizontalLayout->addWidget(label);
+
+    // Value
+    value = new QLabel(form);
+    value->setText("Val");
+    horizontalLayout->addWidget(value);
+
+    // Mean
+    mean = new QLabel(form);
+    mean->setText("Mean");
+    horizontalLayout->addWidget(mean);
+
+    // Variance
+    variance = new QLabel(form);
+    variance->setText("Variance");
+    horizontalLayout->addWidget(variance);
+    curvesWidgetLayout->addWidget(form);
 
     // Add and customize plot elements (right side)
 
@@ -87,8 +125,8 @@ updateTimer(new QTimer())
     createLayout();
     
     // Add the last actions
-    connect(this, SIGNAL(plotWindowPositionUpdated(int)), scrollbar, SLOT(setValue(int)));
-    connect(scrollbar, SIGNAL(sliderMoved(int)), this, SLOT(setPlotWindowPosition(int)));
+    //connect(this, SIGNAL(plotWindowPositionUpdated(int)), scrollbar, SLOT(setValue(int)));
+    //connect(scrollbar, SIGNAL(sliderMoved(int)), this, SLOT(setPlotWindowPosition(int)));
 
     updateTimer->setInterval(300);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -129,6 +167,8 @@ void LinechartWidget::createLayout()
     scalingLinearButton = createButton(this);
     scalingLinearButton->setDefaultAction(setScalingLinear);
     scalingLinearButton->setCheckable(true);
+    scalingLinearButton->setToolTip(tr("Set linear scale for Y axis"));
+    scalingLinearButton->setWhatsThis(tr("Set linear scale for Y axis"));
     layout->addWidget(scalingLinearButton, 1, 0);
     layout->setColumnStretch(0, 0);
 
@@ -136,13 +176,18 @@ void LinechartWidget::createLayout()
     scalingLogButton = createButton(this);
     scalingLogButton->setDefaultAction(setScalingLogarithmic);
     scalingLogButton->setCheckable(true);
+    scalingLogButton->setToolTip(tr("Set logarithmic scale for Y axis"));
+    scalingLogButton->setWhatsThis(tr("Set logarithmic scale for Y axis"));
     layout->addWidget(scalingLogButton, 1, 1);
     layout->setColumnStretch(1, 0);
 
     // Averaging spin box
     averageSpinBox = new QSpinBox(this);
-    averageSpinBox->setValue(200);
+    averageSpinBox->setToolTip(tr("Sliding window size to calculate mean and variance"));
+    averageSpinBox->setWhatsThis(tr("Sliding window size to calculate mean and variance"));
     averageSpinBox->setMinimum(2);
+    averageSpinBox->setValue(200);
+    setAverageWindow(200);
     averageSpinBox->setMaximum(9999);
     layout->addWidget(averageSpinBox, 1, 2);
     layout->setColumnStretch(2, 0);
@@ -150,6 +195,8 @@ void LinechartWidget::createLayout()
 
     // Log Button
     logButton = new QToolButton(this);
+    logButton->setToolTip(tr("Start to log curve data into a CSV or TXT file"));
+    logButton->setWhatsThis(tr("Start to log curve data into a CSV or TXT file"));
     logButton->setText(tr("Start Logging"));
     layout->addWidget(logButton, 1, 3);
     layout->setColumnStretch(3, 0);
@@ -159,6 +206,8 @@ void LinechartWidget::createLayout()
     QToolButton* timeButton = new QToolButton(this);
     timeButton->setText(tr("Ground Time"));
     timeButton->setCheckable(true);
+    timeButton->setToolTip(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
+    timeButton->setWhatsThis(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     bool gTimeDefault = true;
     if (activePlot) activePlot->enforceGroundTime(gTimeDefault);
     timeButton->setChecked(gTimeDefault);
@@ -167,18 +216,18 @@ void LinechartWidget::createLayout()
     connect(timeButton, SIGNAL(clicked(bool)), activePlot, SLOT(enforceGroundTime(bool)));
 
     // Create the scroll bar
-    scrollbar = new QScrollBar(Qt::Horizontal, ui.diagramGroupBox);
-    scrollbar->setMinimum(MIN_TIME_SCROLLBAR_VALUE);
-    scrollbar->setMaximum(MAX_TIME_SCROLLBAR_VALUE);
-    scrollbar->setPageStep(PAGESTEP_TIME_SCROLLBAR_VALUE);
+    //scrollbar = new QScrollBar(Qt::Horizontal, ui.diagramGroupBox);
+    //scrollbar->setMinimum(MIN_TIME_SCROLLBAR_VALUE);
+    //scrollbar->setMaximum(MAX_TIME_SCROLLBAR_VALUE);
+    //scrollbar->setPageStep(PAGESTEP_TIME_SCROLLBAR_VALUE);
     // Set scrollbar to maximum and disable it
-    scrollbar->setValue(MIN_TIME_SCROLLBAR_VALUE);
-    scrollbar->setDisabled(true);
+    //scrollbar->setValue(MIN_TIME_SCROLLBAR_VALUE);
+    //scrollbar->setDisabled(true);
     //    scrollbar->setFixedHeight(20);
 
 
     // Add scroll bar to layout and make sure it gets all available space
-    layout->addWidget(scrollbar, 1, 5);
+    //layout->addWidget(scrollbar, 1, 5);
     layout->setColumnStretch(5, 10);
 
     ui.diagramGroupBox->setLayout(layout);
@@ -225,7 +274,18 @@ void LinechartWidget::appendData(int uasId, QString curve, double value, quint64
     {
         if (activePlot->isVisible(curve))
         {
-            logFile->write(QString(QString::number(usec) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
+            quint64 time = 0;
+            // Adjust time
+            if (activePlot->groundTime())
+            {
+                time = QGC::groundTimeUsecs() - logStartTime;
+            }
+            else
+            {
+                time = usec - logStartTime;
+            }
+
+            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
             logFile->flush();
         }
     }
@@ -256,19 +316,47 @@ void LinechartWidget::refresh()
 //        str.sprintf("%+.2f", activePlot->getMedian(k.key()));
 //        k.value()->setText(str);
 //    }
+    QMap<QString, QLabel*>::iterator l;
+    for (l = curveVariances->begin(); l != curveVariances->end(); ++l)
+    {
+      // Variance
+       str.sprintf("%+.5f", activePlot->getVariance(l.key()));
+      l.value()->setText(str);
+   }
 }
 
 
 void LinechartWidget::startLogging()
 {
-    // Let user select the log file name
-    QDate date(QDate::currentDate());
-    // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.txt, *.csv);;"));
     // Store reference to file
     // Append correct file ending if needed
     bool abort = false;
-    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")))
+
+    // Check if any curve is enabled
+    if (!activePlot->anyCurveVisible())
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("No curves selected for logging.");
+        msgBox.setInformativeText("Please check all curves you want to log. Currently no data would be logged, aborting the logging.");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
+        return;
+    }
+
+    // Let user select the log file name
+    QDate date(QDate::currentDate());
+    // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.csv, *.txt);;"));
+
+    if (!fileName.contains("."))
+    {
+        // .csv is default extension
+        fileName.append(".csv");
+    }
+
+    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort)
     {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
@@ -292,6 +380,7 @@ void LinechartWidget::startLogging()
         if (logFile->open(QIODevice::WriteOnly | QIODevice::Text))
         {
             logging = true;
+            logStartTime = QGC::groundTimeUsecs();
             logindex++;
             logButton->setText(tr("Stop logging"));
             disconnect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
@@ -354,6 +443,7 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     QLabel* label;
     QLabel* value;
     QLabel* mean;
+    QLabel* variance;
     form->setAutoFillBackground(false);
     horizontalLayout = new QHBoxLayout(form);
     horizontalLayout->setSpacing(5);
@@ -363,6 +453,8 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     checkBox = new QCheckBox(form);
     checkBox->setCheckable(true);
     checkBox->setObjectName(curve);
+    checkBox->setToolTip(tr("Enable the curve in the graph window"));
+    checkBox->setWhatsThis(tr("Enable the curve in the graph window"));
 
     horizontalLayout->addWidget(checkBox);
 
@@ -388,12 +480,16 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     // Value
     value = new QLabel(form);
     value->setNum(0.00);
+    value->setToolTip(tr("Current value of ") + curve);
+    value->setWhatsThis(tr("Current value of ") + curve);
     curveLabels->insert(curve, value);
     horizontalLayout->addWidget(value);
 
     // Mean
     mean = new QLabel(form);
     mean->setNum(0.00);
+    mean->setToolTip(tr("Arithmetic mean of ") + curve);
+    mean->setWhatsThis(tr("Arithmetic mean of ") + curve);
     curveMeans->insert(curve, mean);
     horizontalLayout->addWidget(mean);
 
@@ -402,6 +498,14 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
 //    value->setNum(0.00);
 //    curveMedians->insert(curve, median);
 //    horizontalLayout->addWidget(median);
+
+    // Variance
+    variance = new QLabel(form);
+    variance->setNum(0.00);
+    variance->setToolTip(tr("Variance of ") + curve);
+    variance->setWhatsThis(tr("Variance of ") + curve);
+    curveVariances->insert(curve, variance);
+    horizontalLayout->addWidget(variance);
 
     /* Color picker
     QColor color = QColorDialog::getColor(Qt::green, this);
@@ -419,6 +523,7 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     horizontalLayout->setStretchFactor(value, 50);
     horizontalLayout->setStretchFactor(mean, 50);
 //    horizontalLayout->setStretchFactor(median, 50);
+    horizontalLayout->setStretchFactor(variance, 50);
 
     // Connect actions
     QObject::connect(checkBox, SIGNAL(clicked(bool)), this, SLOT(takeButtonClick(bool)));
@@ -447,7 +552,13 @@ void LinechartWidget::removeCurve(QString curve)
 void LinechartWidget::showEvent(QShowEvent* event)
 {
     Q_UNUSED(event);
-    setActive(isVisible());
+    setActive(true);
+}
+
+void LinechartWidget::hideEvent(QHideEvent* event)
+{
+    Q_UNUSED(event);
+    setActive(false);
 }
 
 void LinechartWidget::setActive(bool active)
@@ -528,14 +639,14 @@ void LinechartWidget::setPlotWindowPosition(quint64 position) {
     // A relative position makes only sense if the plot is filled
     if(activePlot->getDataInterval() > activePlot->getPlotInterval()) {
         //TODO @todo Implement the scrollbar enabling in a more elegant way
-        scrollbar->setDisabled(false);
+        //scrollbar->setDisabled(false);
         quint64 scrollInterval = position - activePlot->getMinTime() - activePlot->getPlotInterval();
 
 
 
         pos = (static_cast<double>(scrollInterval) / (activePlot->getDataInterval() - activePlot->getPlotInterval()));
     } else {
-        scrollbar->setDisabled(true);
+        //scrollbar->setDisabled(true);
         pos = 1;
     }
     plotWindowLock.unlock();
@@ -551,7 +662,8 @@ void LinechartWidget::setPlotWindowPosition(quint64 position) {
  *
  * @param interval The time interval to plot
  **/
-void LinechartWidget::setPlotInterval(quint64 interval) {
+void LinechartWidget::setPlotInterval(quint64 interval)
+{
     activePlot->setPlotInterval(interval);
 }
 
@@ -562,7 +674,8 @@ void LinechartWidget::setPlotInterval(quint64 interval) {
  *
  * @param checked The visibility of the curve: true to display the curve, false otherwise
  **/
-void LinechartWidget::takeButtonClick(bool checked) {
+void LinechartWidget::takeButtonClick(bool checked)
+{
 
     QCheckBox* button = qobject_cast<QCheckBox*>(QObject::sender());
 
@@ -579,7 +692,8 @@ void LinechartWidget::takeButtonClick(bool checked) {
  * @param text The button text
  * @param parent The parent object (to ensure that the memory is freed after the deletion of the button)
  **/
-QToolButton* LinechartWidget::createButton(QWidget* parent) {
+QToolButton* LinechartWidget::createButton(QWidget* parent)
+{
     QToolButton* button = new QToolButton(parent);
     button->setMinimumSize(QSize(20, 20));
     button->setMaximumSize(60, 20);

@@ -23,6 +23,7 @@
 #
 #-------------------------------------------------
 
+
 #$$BASEDIR/lib/qextserialport/include
 #               $$BASEDIR/lib/openjaus/libjaus/include \
 #               $$BASEDIR/lib/openjaus/libopenJaus/include
@@ -40,9 +41,9 @@ QMAKE_POST_LINK += echo "Copying files"
 #QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 
 # MAC OS X
-macx { 
+macx {
 
-    COMPILER_VERSION = system(gcc -v)
+    COMPILER_VERSION = $$system(gcc -v)
     message(Using compiler $$COMPILER_VERSION)
 
     HARDWARE_PLATFORM = $$system(uname -a)
@@ -73,7 +74,7 @@ macx {
         -framework CoreFoundation \
         -framework ApplicationServices \
         -lm
-    
+
     ICON = $$BASEDIR/images/icons/macx.icns
 
     # Copy audio files if needed
@@ -153,12 +154,13 @@ linux-g++ {
 
     release {
         DESTDIR = $$TARGETDIR/release
+        DEFINES += QT_NO_DEBUG
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
 
     INCLUDEPATH += /usr/include \
-				   /usr/local/include \
+                                   /usr/local/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
               # $$BASEDIR/lib/flite/lang
@@ -222,6 +224,7 @@ linux-g++-64 {
 
     release {
         DESTDIR = $$TARGETDIR/release
+        DEFINES += QT_NO_DEBUG
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -289,6 +292,14 @@ win32-msvc2008 {
 
     CONFIG += qaxcontainer
 
+    # QWebkit is not needed on MS-Windows compilation environment
+    CONFIG -= webkit
+
+    release {
+        CONFIG -= console
+        DEFINES += QT_NO_DEBUG
+    }
+
     # Special settings for debug
     #CONFIG += CONSOLE
 
@@ -310,9 +321,9 @@ INCLUDEPATH += $$BASEDIR/lib/osgEarth/win32/include \
 LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
     -losg \
     -losgViewer \
-	-losgGA \
-	-losgDB \
-	-losgText \
+        -losgGA \
+        -losgDB \
+        -losgText \
         -lOpenThreads
 DEFINES += QGC_OSG_ENABLED
 exists($$BASEDIR/lib/osgEarth123) {
@@ -331,18 +342,18 @@ exists($$BASEDIR/lib/osgEarth123) {
     BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
     TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
 
-    debug {
+    exists($$TARGETDIR/debug) {
         QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\debug\audio\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\debug\models\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR/images/earth.html $$TARGETDIR_WIN\debug\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
     }
 
-    release {
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\lib\sdl\win32\SDL.dll\" \"$$TARGETDIR_WIN\release\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\audio\" \"$$TARGETDIR_WIN\release\audio\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\models\" \"$$TARGETDIR_WIN\release\models\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR/images/earth.html $$TARGETDIR_WIN\release\"
+    exists($$TARGETDIR/release) {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
     }
 
 }
@@ -351,7 +362,7 @@ exists($$BASEDIR/lib/osgEarth123) {
 win32-g++ {
 
     message(Building for Windows Platform (32bit))
-    
+
     # Special settings for debug
     #CONFIG += CONSOLE
 
@@ -362,6 +373,8 @@ win32-g++ {
     LIBS += -L$$BASEDIR/lib/sdl/win32 \
              -lmingw32 -lSDLmain -lSDL -mwindows
 
+    CONFIG += windows
+
 
 
     debug {
@@ -369,13 +382,18 @@ win32-g++ {
     }
 
     release {
+        CONFIG -= console
+        DEFINES += QT_NO_DEBUG
         #DESTDIR = $$BUILDDIR/release
     }
-        
+
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
 
     # Copy dependencies
 
+    system(cp): {
+    # CP command is available, use it instead of copy / xcopy
+    message("Using cp to copy image and audio files to executable")
     debug {
         QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/SDL.dll
         QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/debug/audio
@@ -387,6 +405,28 @@ win32-g++ {
         QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/release/audio
         QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/release/models
     }
+
+    } else {
+    # No cp command available, go for copy / xcopy
+    # Copy dependencies
+    BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
+    TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
+
+    exists($$TARGETDIR/debug) {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
+    }
+
+    exists($$TARGETDIR/release) {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
+    }
+
+}
 
     # osg/osgEarth dynamic casts might fail without this compiler option.
     # see http://osgearth.org/wiki/FAQ for details.

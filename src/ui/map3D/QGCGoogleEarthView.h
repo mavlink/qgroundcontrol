@@ -9,18 +9,19 @@
 #include <QWebView>
 #endif
 
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
-    QGCWebAxWidget* webViewWin;
+#ifdef _MSC_VER
 #include <ActiveQt/QAxWidget>
 #include "windows.h"
 
-class WebAxWidget : public QAxWidget
+class QGCWebAxWidget : public QAxWidget
 {
 public:
 
-    WebAxWidget(QWidget* parent = 0, Qt::WindowFlags f = 0)
+    QGCWebAxWidget(QWidget* parent = 0, Qt::WindowFlags f = 0)
         : QAxWidget(parent, f)
     {
+		// Set web browser control
+		setControl("{8856F961-340A-11D0-A96B-00C04FD705A2}");
     }
 protected:
     virtual bool translateKeyEvent(int message, int keycode) const
@@ -32,16 +33,15 @@ protected:
     }
 
 };
-#else
+#endif
+
 namespace Ui {
-    class QGCGoogleEarthControls;
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
-    class QGCGoogleEarthViewWin;
+#ifdef _MSC_VER
+    class QGCGoogleEarthView;
 #else
     class QGCGoogleEarthView;
 #endif
 }
-#endif
 
 class QGCGoogleEarthView : public QWidget
 {
@@ -54,18 +54,24 @@ public:
 public slots:
     /** @brief Update the internal state. Does not trigger a redraw */
     void updateState();
+    /** @brief Add a new MAV/UAS to the visualization */
+    void addUAS(UASInterface* uas);
     /** @brief Set the currently selected UAS */
     void setActiveUAS(UASInterface* uas);
+    /** @brief Update the global position */
+    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     /** @brief Show the vehicle trail */
     void showTrail(bool state);
     /** @brief Show the waypoints */
     void showWaypoints(bool state);
     /** @brief Follow the aircraft during flight */
     void follow(bool follow);
-    /** @brief Hide and deactivate */
-    void hide();
-    /** @brief Show and activate */
-    void show();
+    /** @brief Go to the home location */
+    void goHome();
+    /** @brief Set the home location */
+    void setHome(double lat, double lon, double alt);
+    /** @brief Initialize Google Earth */
+    void initializeGoogleEarth();
 
 protected:
     void changeEvent(QEvent *e);
@@ -75,17 +81,22 @@ protected:
     bool followCamera;
     bool trailEnabled;
     bool webViewInitialized;
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
-    WebAxWidget* webViewWin;
+    bool gEarthInitialized;
+#ifdef _MSC_VER
+    QGCWebAxWidget* webViewWin;
 #endif
 #if (defined Q_OS_MAC)
     QWebView* webViewMac;
 #endif
 
+    /** @brief Start widget updating */
+    void showEvent(QShowEvent* event);
+    /** @brief Stop widget updating */
+    void hideEvent(QHideEvent* event);
+
 private:
-    Ui::QGCGoogleEarthControls* controls;
-#if (defined Q_OS_WIN) && !(defined __MINGW32__)
-    Ui::QGCGoogleEarthViewWin* ui;
+#ifdef _MSC_VER
+    Ui::QGCGoogleEarthView* ui;
 #else
     Ui::QGCGoogleEarthView* ui;
 #endif
