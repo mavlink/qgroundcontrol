@@ -48,6 +48,7 @@ This file is part of the PIXHAWK project
 #include "LinechartWidget.h"
 #include "LinechartPlot.h"
 #include "LogCompressor.h"
+#include "QGC.h"
 #include "MG.h"
 
 
@@ -225,7 +226,18 @@ void LinechartWidget::appendData(int uasId, QString curve, double value, quint64
     {
         if (activePlot->isVisible(curve))
         {
-            logFile->write(QString(QString::number(usec) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
+            quint64 time = 0;
+            // Adjust time
+            if (activePlot->groundTime())
+            {
+                time = QGC::groundTimeUsecs() - logStartTime;
+            }
+            else
+            {
+                time = usec - logStartTime;
+            }
+
+            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
             logFile->flush();
         }
     }
@@ -261,14 +273,35 @@ void LinechartWidget::refresh()
 
 void LinechartWidget::startLogging()
 {
-    // Let user select the log file name
-    QDate date(QDate::currentDate());
-    // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.txt, *.csv);;"));
     // Store reference to file
     // Append correct file ending if needed
     bool abort = false;
-    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")))
+
+    // Check if any curve is enabled
+    if (!activePlot->anyCurveVisible())
+    {
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Critical);
+        msgBox.setText("No curves selected for logging.");
+        msgBox.setInformativeText("Please check all curves you want to log. Currently no data would be logged, aborting the logging.");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
+        return;
+    }
+
+    // Let user select the log file name
+    QDate date(QDate::currentDate());
+    // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.csv, *.txt);;"));
+
+    if (!fileName.contains("."))
+    {
+        // .csv is default extension
+        fileName.append(".csv");
+    }
+
+    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort)
     {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
@@ -292,6 +325,7 @@ void LinechartWidget::startLogging()
         if (logFile->open(QIODevice::WriteOnly | QIODevice::Text))
         {
             logging = true;
+            logStartTime = QGC::groundTimeUsecs();
             logindex++;
             logButton->setText(tr("Stop logging"));
             disconnect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));

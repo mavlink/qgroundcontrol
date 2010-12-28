@@ -57,7 +57,7 @@ maxTime(QUINT64_MIN),
 maxInterval(MAX_STORAGE_INTERVAL),
 timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
 automaticScrollActive(false),
-m_active(true),
+m_active(false),
 m_groundTime(true),
 d_data(NULL),
 d_curve(NULL)
@@ -286,6 +286,14 @@ void LinechartPlot::enforceGroundTime(bool enforce)
     m_groundTime = enforce;
 }
 
+/**
+ * @return True if the data points are stamped with the packet receive time
+ */
+bool LinechartPlot::groundTime()
+{
+    return m_groundTime;
+}
+
 void LinechartPlot::addCurve(QString id)
 {
     QColor currentColor = getNextColor();
@@ -466,6 +474,23 @@ void LinechartPlot::showCurve(QString id)
 bool LinechartPlot::isVisible(QString id)
 {
     return curves.value(id)->isVisible();
+}
+
+/**
+ * @return The visibility, true if it is visible, false otherwise
+ **/
+bool LinechartPlot::anyCurveVisible()
+{
+    bool visible = false;
+    foreach (QString key, curves.keys())
+    {
+        if (curves.value(key)->isVisible())
+        {
+            visible = true;
+        }
+    }
+
+    return visible;
 }
 
 /**

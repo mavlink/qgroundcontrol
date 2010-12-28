@@ -131,6 +131,7 @@ protected:
     bool logging;
     QTimer* updateTimer;
     LogCompressor* compressor;
+    quint64 logStartTime;
 
     static const int MAX_CURVE_MENUITEM_NUMBER = 8;
     static const int PAGESTEP_TIME_SCROLLBAR_VALUE = (MAX_TIME_SCROLLBAR_VALUE - MIN_TIME_SCROLLBAR_VALUE) / 10;

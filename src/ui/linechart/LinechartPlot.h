@@ -190,6 +190,8 @@ public:
 
     QList<QwtPlotCurve*> getCurves();
     bool isVisible(QString id);
+    /** @brief Check if any curve is visible */
+    bool anyCurveVisible();
 
     int getPlotId();
     /** @brief Get the number of values to average over */
@@ -243,6 +245,8 @@ public slots:
 
     /** @brief Enforce the use of the receive timestamp */
     void enforceGroundTime(bool enforce);
+    /** @brief Check if the receive timestamp is enforced */
+    bool groundTime();
 
     // General interaction
     void setWindowPosition(quint64 end);

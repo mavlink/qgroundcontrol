@@ -126,6 +126,13 @@ void QGCDataPlot2D::savePlot()
     fileName = QFileDialog::getSaveFileName(
             this, "Export File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
             "PDF Documents (*.pdf);;SVG Images (*.svg)");
+
+    if (!fileName.contains("."))
+    {
+        // .csv is default extension
+        fileName.append(".pdf");
+    }
+
     while(!(fileName.endsWith(".svg") || fileName.endsWith(".pdf")))
     {
         QMessageBox msgBox;

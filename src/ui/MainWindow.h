@@ -151,8 +151,6 @@ public slots:
     void loadWidgets();
 
     /** @brief Load data view, allowing to plot flight data */
-    void loadDataView();
-    /** @brief Load data view, allowing to plot flight data */
     void loadDataView(QString fileName);
 
     /** @brief Load 3D map view */
