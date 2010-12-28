@@ -375,9 +375,12 @@ void MAVLinkSimulationLink::mainloop()
 
 
         // Move X Position
-        x = 8.0*sinf((double)circleCounter);
-        y = 3.0*cosf((double)circleCounter);
-        z = 1.8 + 1.2*sin((double)circleCounter/2.0);
+        x = 8.0*sin((double)circleCounter/50.0);
+        y = 3.0*cos((double)circleCounter/40.0);
+        z = 1.8 + 1.2*sin((double)circleCounter/60.0);
+
+        circleCounter++;
+
 
 //        x = (x > 5.0f) ? 5.0f : x;
 //        y = (y > 5.0f) ? 5.0f : y;
@@ -402,15 +405,15 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
-        // GPS RAW
-        mavlink_msg_gps_raw_pack(systemId, componentId, &ret, 0, 3, 47.376417+(x*0.00001), 8.548103+(y*0.00001), z, 0, 0, 2.5f, 0.1f);
-        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
-        //add data into datastream
-        memcpy(stream+streampointer,buffer, bufferlength);
-        streampointer += bufferlength;
+//        // GPS RAW
+//        mavlink_msg_gps_raw_pack(systemId, componentId, &ret, 0, 3, 47.376417+(x*0.00001), 8.548103+(y*0.00001), z, 0, 0, 2.5f, 0.1f);
+//        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+//        //add data into datastream
+//        memcpy(stream+streampointer,buffer, bufferlength);
+//        streampointer += bufferlength;
 
         // GLOBAL POSITION
-        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 47.378028137103+(x*0.01), 8.54899892510421+(y*0.01), z+25.0, 0, 0, 0);
+        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 47.378028137103+(x*0.001), 8.54899892510421+(y*0.001), z+25.0, 0, 0, 0);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
