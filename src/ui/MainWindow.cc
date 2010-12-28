@@ -1375,23 +1375,8 @@ void MainWindow::loadWidgets()
     //loadPilotView();
 }
 
-void MainWindow::loadDataView()
-{
-    clearView();
-
-    // DATAPLOT
-    if (dataplotWidget)
-    {
-        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
-        if (centerStack)
-            centerStack->setCurrentWidget(dataplotWidget);
-    }
-}
-
 void MainWindow::loadDataView(QString fileName)
 {
-    clearView();
-
     // DATAPLOT
     if (dataplotWidget)
     {
