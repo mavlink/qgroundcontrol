@@ -198,6 +198,14 @@ double LinechartPlot::getMedian(QString id)
     return data.value(id)->getMedian();
 }
 
+/**
+ * @param id curve identifier
+ */
+double LinechartPlot::getVariance(QString id)
+{
+    return data.value(id)->getVariance();
+}
+
 int LinechartPlot::getAverageWindow()
 {
     return averageWindowSize;
@@ -743,8 +751,9 @@ TimeSeriesData::TimeSeriesData(QwtPlot* plot, QString friendlyName, quint64 plot
         maxValue(DBL_MIN),
         zeroValue(0),
         count(0),
-        mean(0.00),
-        median(0.00),
+        mean(0.0),
+        median(0.0),
+        variance(0.0),
         averageWindow(50)
 {
     this->plot = plot;
@@ -802,6 +811,14 @@ void TimeSeriesData::append(quint64 ms, double value)
         medianList.append(this->value[count-i]);
     }
     mean = mean / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
+
+    this->variance = 0;
+    for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i)
+    {
+       this->variance += (this->value[count-i] - mean) * (this->value[count-i] - mean);
+    }
+    this->variance = this->variance / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
+
     qSort(medianList);
 
     if (medianList.count() > 2)
@@ -899,6 +916,14 @@ double TimeSeriesData::getMean()
 double TimeSeriesData::getMedian()
 {
     return median;
+}
+
+/**
+ * @return the variance
+ */
+double TimeSeriesData::getVariance()
+{
+    return variance;
 }
 
 double TimeSeriesData::getCurrentValue()

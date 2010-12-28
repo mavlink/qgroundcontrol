@@ -109,6 +109,7 @@ protected:
     QMap<QString, QLabel*>* curveLabels;  ///< References to the curve labels
     QMap<QString, QLabel*>* curveMeans;   ///< References to the curve means
     QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
+    QMap<QString, QLabel*>* curveVariances; ///< References to the curve variances
 
     QWidget* curvesWidget;                ///< The QWidget containing the curve selection button
     QVBoxLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
