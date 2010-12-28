@@ -269,7 +269,7 @@ void QGCDataPlot2D::selectFile()
     // Let user select the log file name
     //QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), tr("."), tr("Logfile (*.txt)"));
+    fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.csv *.txt *.log)");
     // Store reference to file
 
     QFileInfo fileInfo(fileName);
