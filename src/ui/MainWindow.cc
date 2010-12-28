@@ -407,31 +407,22 @@ void MainWindow::buildSlugsWidgets()
 //    linechartWidget   = new Linecharts(this);
 //    addToCentralWidgetsMenu(linechartWidget, "Line Plots", SLOT(showCentralWidget()), CENTRAL_LINECHART);
 
-    // Dock widgets
-    headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
-    headUpDockWidget->setWidget( new HUD(320, 240, this));
-    addToToolsMenu (headUpDockWidget, tr("HUD"), SLOT(showToolWidget()), MENU_HUD, Qt::LeftDockWidgetArea);
+//    // Dock widgets
+//    headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
+//    headUpDockWidget->setWidget( new HUD(320, 240, this));
+//    addToToolsMenu (headUpDockWidget, tr("HUD"), SLOT(showToolWidget()), MENU_HUD, Qt::LeftDockWidgetArea);
 
 
-    rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
-    rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
-    addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget()), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
+//    rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
+//    rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
+//    addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget()), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
 
 
-    // Dialog widgets
-    slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
-    slugsDataWidget->setWidget( new SlugsDataSensorView(this));
-    addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget()), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
-
-//=======
-//    this->addDockWidget(Qt::LeftDockWidgetArea, headUpDockWidget);
-
-//    // SLUGS
+//    // Dialog widgets
 //    slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
 //    slugsDataWidget->setWidget( new SlugsDataSensorView(this));
-//    addDockWidget(Qt::LeftDockWidgetArea, slugsDataWidget);
-//    slugsDataWidget->hide();
-//>>>>>>> master
+//    addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget()), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
+
 
     slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
     slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
@@ -440,15 +431,6 @@ void MainWindow::buildSlugsWidgets()
     slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
     slugsHilSimWidget->setWidget( new SlugsHilSim(this));
     addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
-//=======
-//    addDockWidget(Qt::BottomDockWidgetArea, slugsPIDControlWidget);
-//    slugsPIDControlWidget->hide();
-
-//    slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
-//    slugsHilSimWidget->setWidget( new SlugsHilSim(this));
-//    addDockWidget(Qt::BottomDockWidgetArea, slugsHilSimWidget);
-//    slugsHilSimWidget->hide();
-//>>>>>>> master
 
     slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
     slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
