@@ -63,7 +63,9 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
+#if (defined Q_OS_MAC) | (defined _MSC_VER)
 #include "QGCGoogleEarthView.h"
+#endif
 //#include "QMap3DWidget.h"
 #include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
