@@ -375,9 +375,9 @@ void MAVLinkSimulationLink::mainloop()
 
 
         // Move X Position
-        x = 8.0*sin(circleCounter);
-        y = 3.0*cos(circleCounter);
-        z = 1.8 + 1.2*sin(circleCounter/2.0);
+        x = 8.0*sinf((double)circleCounter);
+        y = 3.0*cosf((double)circleCounter);
+        z = 1.8 + 1.2*sin((double)circleCounter/2.0);
 
 //        x = (x > 5.0f) ? 5.0f : x;
 //        y = (y > 5.0f) ? 5.0f : y;
