@@ -7,7 +7,7 @@
 #ifdef MAVLINK_ENABLED_SLUGS
   #define SERIAL_POLL_INTERVAL 7
 #else
-  #define SERIAL_POLL_INTERVAL 2
+  #define SERIAL_POLL_INTERVAL 7
 #endif
 
 /** @brief Heartbeat emission rate, in Hertz (times per second) */
@@ -16,6 +16,6 @@
 #define WITH_TEXT_TO_SPEECH 1
 
 #define QGC_APPLICATION_NAME "QGroundControl"
-#define QGC_APPLICATION_VERSION "v. 0.7.7 (Beta)"
+#define QGC_APPLICATION_VERSION "v. 0.8.0 (Beta)"
 
 #endif // CONFIGURATION_H

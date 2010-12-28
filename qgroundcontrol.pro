@@ -150,7 +150,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/SlugsHilSim.ui \
     src/ui/SlugsPIDControl.ui \
     src/ui/SlugsVideoCamControl.ui \
-    src/ui/SlugsPadCameraControl.ui
+    src/ui/SlugsPadCameraControl.ui \
+    src/ui/uas/QGCUnconnectedInfoWidget.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -244,13 +245,19 @@ HEADERS += src/MG.h \
     src/comm/QGCMAVLink.h \
     src/ui/QGCWebView.h \
     src/ui/map3D/QGCWebPage.h \
-    src/ui/map3D/QGCGoogleEarthView.h\
     src/ui/SlugsDataSensorView.h \
     src/ui/SlugsHilSim.h \
     src/ui/SlugsPIDControl.h \
     src/ui/SlugsVideoCamControl.h \
     src/ui/SlugsPadCameraControl.h \
-    src/ui/QGCMainWindowAPConfigurator.h
+    src/ui/QGCMainWindowAPConfigurator.h \
+    src/comm/MAVLinkSwarmSimulationLink.h \
+    src/ui/uas/QGCUnconnectedInfoWidget.h
+
+# Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
+macx|win32-msvc2008: {
+    HEADERS +=    src/ui/map3D/QGCGoogleEarthView.h
+}
 
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
@@ -354,14 +361,20 @@ SOURCES += src/main.cc \
     src/ui/RadioCalibration/AbstractCalibrator.cc \
     src/ui/RadioCalibration/RadioCalibrationData.cc \
     src/ui/QGCWebView.cc \
-    src/ui/map3D/QGCGoogleEarthView.cc \
     src/ui/map3D/QGCWebPage.cc \
     src/ui/SlugsDataSensorView.cc \
     src/ui/SlugsHilSim.cc \
     src/ui/SlugsPIDControl.cpp \
     src/ui/SlugsVideoCamControl.cpp \
     src/ui/SlugsPadCameraControl.cpp \
-    src/ui/QGCMainWindowAPConfigurator.cc
+    src/ui/QGCMainWindowAPConfigurator.cc \
+    src/comm/MAVLinkSwarmSimulationLink.cc \
+    src/ui/uas/QGCUnconnectedInfoWidget.cc
+
+macx|win32-msvc2008: {
+    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+}
+
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     

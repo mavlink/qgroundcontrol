@@ -62,11 +62,9 @@ public slots:
     void setLinkName(QString name);
     void setupPortList();
 
-protected slots:
+protected:
     void showEvent(QShowEvent* event);
     void hideEvent(QHideEvent* event);
-
-protected:
     bool userConfigured; ///< Switch to detect if current values are user-selected and shouldn't be overriden
 
 private:

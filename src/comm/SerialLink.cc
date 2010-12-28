@@ -184,18 +184,18 @@ void SerialLink::writeBytes(const char* data, qint64 size)
     if(port->isOpen())
     {
         int b = port->write(data, size);
-        qDebug() << "Transmitted " << b << "bytes:";
+        qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
 
         // Increase write counter
         bitsSentTotal += size * 8;
 
-        int i;
-        for (i=0; i<size; i++)
-        {
-            unsigned char v=data[i];
+//        int i;
+//        for (i=0; i<size; i++)
+//        {
+//            unsigned char v=data[i];
 
-            //fprintf(stderr,"%02x ", v);
-        }
+//            //fprintf(stderr,"%02x ", v);
+//        }
     }
 }
 

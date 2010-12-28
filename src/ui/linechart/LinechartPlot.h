@@ -132,6 +132,8 @@ public:
     double getMean();
     /** @brief Get the short-term median */
     double getMedian();
+    /** @brief Get the short-term variance */
+    double getVariance();
     /** @brief Get the current value */
     double getCurrentValue();
     void setZeroValue(double zeroValue);
@@ -166,6 +168,7 @@ private:
     QwtArray<double> value;
     double mean;
     double median;
+    double variance;
     unsigned int averageWindow;
     QwtArray<double> outputMs;
     QwtArray<double> outputValue;
@@ -190,6 +193,8 @@ public:
 
     QList<QwtPlotCurve*> getCurves();
     bool isVisible(QString id);
+    /** @brief Check if any curve is visible */
+    bool anyCurveVisible();
 
     int getPlotId();
     /** @brief Get the number of values to average over */
@@ -206,6 +211,8 @@ public:
     double getMean(QString id);
     /** @brief Get the short-term median of a curve */
     double getMedian(QString id);
+    /** @brief Get the short-term variance of a curve */
+    double getVariance(QString id);
     /** @brief Get the last inserted value */
     double getCurrentValue(QString id);
 
@@ -214,8 +221,8 @@ public:
     static const int SCALE_LOGARITHMIC = 2;
 
     static const int DEFAULT_REFRESH_RATE = 50; ///< The default refresh rate is 25 Hz / every 100 ms
-    static const int DEFAULT_PLOT_INTERVAL = 1000 * 12; ///< The default plot interval is 15 seconds
-    static const int DEFAULT_SCALE_INTERVAL = 1000 * 5;
+    static const int DEFAULT_PLOT_INTERVAL = 1000 * 8; ///< The default plot interval is 15 seconds
+    static const int DEFAULT_SCALE_INTERVAL = 1000 * 8;
 
 public slots:
     void setRefreshRate(int ms);
@@ -243,6 +250,8 @@ public slots:
 
     /** @brief Enforce the use of the receive timestamp */
     void enforceGroundTime(bool enforce);
+    /** @brief Check if the receive timestamp is enforced */
+    bool groundTime();
 
     // General interaction
     void setWindowPosition(quint64 end);
@@ -301,6 +310,8 @@ protected:
     // Methods
     void addCurve(QString id);
     QColor getNextColor();
+    void showEvent(QShowEvent* event);
+    void hideEvent(QHideEvent* event);
 
 private:
     TimeSeriesData* d_data;
