@@ -23,7 +23,7 @@ SlugsPIDControl::SlugsPIDControl(QWidget *parent) :
     setGreenColorStyle();
 
     refreshTimerGet = new QTimer(this);
-    refreshTimerGet->setInterval(100); // 20 Hz
+    refreshTimerGet->setInterval(100); // 10 Hz
     connect(refreshTimerGet, SIGNAL(timeout()), this, SLOT(slugsGetGeneral()));
 
 
@@ -47,9 +47,9 @@ SlugsPIDControl::SlugsPIDControl(QWidget *parent) :
 void SlugsPIDControl::activeUasSet(UASInterface* uas)
 {
     #ifdef MAVLINK_ENABLED_SLUGS
-    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(uas);
+    SlugsMAV* slugsMav = qobject_cast<SlugsMAV*>(uas);
 
-    if (slugsMav != NULL)
+    if (slugsMav)
     {
         connect(slugsMav,SIGNAL(slugsActionAck(int,const mavlink_action_ack_t&)),this,SLOT(recibeMensaje(int,mavlink_action_ack_t)));
         connect(slugsMav,SIGNAL(slugsPidValues(int,mavlink_pid_t)),this, SLOT(receivePidValues(int,mavlink_pid_t)) );
@@ -58,15 +58,14 @@ void SlugsPIDControl::activeUasSet(UASInterface* uas)
         connect(ui->getGeneral_pushButton,SIGNAL(clicked()),this,SLOT(slugsTimerStartGet()));
     }
 
-#endif // MAVLINK_ENABLED_SLUG
+    #endif // MAVLINK_ENABLED_SLUG
+
     // Set this UAS as active if it is the first one
-        if(activeUAS == 0)
+        if(!activeUAS)
         {
             activeUAS = uas;
             systemId = activeUAS->getUASID();
             connect_editLinesPDIvalues();
-
-            //qDebug()<<"------------------->Active UAS ID: "<<uas->getUASID();
         }
 
 }
