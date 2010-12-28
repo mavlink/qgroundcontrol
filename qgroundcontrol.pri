@@ -154,6 +154,7 @@ linux-g++ {
 
     release {
         DESTDIR = $$TARGETDIR/release
+        DEFINES += QT_NO_DEBUG
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -223,6 +224,7 @@ linux-g++-64 {
 
     release {
         DESTDIR = $$TARGETDIR/release
+        DEFINES += QT_NO_DEBUG
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -295,6 +297,7 @@ win32-msvc2008 {
 
     release {
         CONFIG -= console
+        DEFINES += QT_NO_DEBUG
     }
 
     # Special settings for debug
@@ -380,6 +383,7 @@ win32-g++ {
 
     release {
         CONFIG -= console
+        DEFINES += QT_NO_DEBUG
         #DESTDIR = $$BUILDDIR/release
     }
 

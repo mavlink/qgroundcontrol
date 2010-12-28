@@ -62,26 +62,38 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
 
     horizontalLayout->addWidget(tree, 0, 0, 1, 3);
     QPushButton* refreshButton = new QPushButton(tr("Refresh"));
+    refreshButton->setToolTip(tr("Load parameters currently in non-permanent memory of aircraft."));
+    refreshButton->setWhatsThis(tr("Load parameters currently in non-permanent memory of aircraft."));
     connect(refreshButton, SIGNAL(clicked()), this, SLOT(requestParameterList()));
     horizontalLayout->addWidget(refreshButton, 1, 0);
 
     QPushButton* setButton = new QPushButton(tr("Transmit"));
+    setButton->setToolTip(tr("Set current parameters in non-permanent onboard memory"));
+    setButton->setWhatsThis(tr("Set current parameters in non-permanent onboard memory"));
     connect(setButton, SIGNAL(clicked()), this, SLOT(setParameters()));
     horizontalLayout->addWidget(setButton, 1, 1);
 
     QPushButton* writeButton = new QPushButton(tr("Write (ROM)"));
+    writeButton->setToolTip(tr("Copy current parameters in non-permanent memory of the aircraft to permanent memory. Transmit your parameters first to write these."));
+    writeButton->setWhatsThis(tr("Copy current parameters in non-permanent memory of the aircraft to permanent memory. Transmit your parameters first to write these."));
     connect(writeButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
     horizontalLayout->addWidget(writeButton, 1, 2);
 
     QPushButton* readButton = new QPushButton(tr("Read (ROM)"));
+    readButton->setToolTip(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
+    readButton->setWhatsThis(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
     connect(readButton, SIGNAL(clicked()), this, SLOT(readParameters()));
     horizontalLayout->addWidget(readButton, 2, 2);
 
     QPushButton* loadFileButton = new QPushButton(tr("Load File"));
+    loadFileButton->setToolTip(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
+    loadFileButton->setWhatsThis(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
     connect(loadFileButton, SIGNAL(clicked()), this, SLOT(loadParameters()));
     horizontalLayout->addWidget(loadFileButton, 2, 0);
 
     QPushButton* saveFileButton = new QPushButton(tr("Save File"));
+    saveFileButton->setToolTip(tr("Save parameters in this view to a file on this computer."));
+    saveFileButton->setWhatsThis(tr("Save parameters in this view to a file on this computer."));
     connect(saveFileButton, SIGNAL(clicked()), this, SLOT(saveParameters()));
     horizontalLayout->addWidget(saveFileButton, 2, 1);
 
