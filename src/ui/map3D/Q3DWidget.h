@@ -257,6 +257,7 @@ protected:
     };
 
     CameraParams cameraParams; /**< Struct representing camera parameters. */
+    float fps;
 };
 
 #endif // Q3DWIDGET_H

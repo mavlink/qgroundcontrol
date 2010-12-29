@@ -48,6 +48,7 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     , robotAttitude(new osg::PositionAttitudeTransform())
     , hudGroup(new osg::Switch())
     , hudProjectionMatrix(new osg::Projection)
+    , fps(30.0f)
 {
     // set initial camera parameters
     cameraParams.minZoomRange = 2.0f;
@@ -70,6 +71,8 @@ Q3DWidget::~Q3DWidget()
 void
 Q3DWidget::init(float fps)
 {
+    this->fps = fps;
+
     getCamera()->setGraphicsContext(osgGW);
 
     // manually specify near and far clip planes
@@ -103,6 +106,23 @@ Q3DWidget::init(float fps)
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(redraw()));
     timer.start(static_cast<int>(floorf(1000.0f / fps)));
+}
+
+void Q3DWidget::showEvent(QShowEvent* event)
+{
+    // React only to internal (pre/post-display)
+    // events
+    if (!event->spontaneous())
+    {
+        if (event->type() == QEvent::Hide)
+        {
+            timer.stop();
+        }
+        else if (event->type() == QEvent::Show)
+        {
+            timer.start(static_cast<int>(floorf(1000.0f / fps)));
+        }
+    }
 }
 
 osg::ref_ptr<osg::Geode>

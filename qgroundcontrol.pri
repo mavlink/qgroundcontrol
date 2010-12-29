@@ -297,8 +297,9 @@ win32-msvc2008 {
         CONFIG -= console
     }
 
-    # Special settings for debug
-    #CONFIG += CONSOLE
+    debug {
+		CONFIG += console
+	}
 
     INCLUDEPATH += $$BASEDIR/lib/sdl/msvc/include \
                    $$BASEDIR/lib/opal/include \
@@ -376,6 +377,7 @@ win32-g++ {
 
     debug {
         #DESTDIR = $$BUILDDIR/debug
+		CONFIG += console
     }
 
     release {
