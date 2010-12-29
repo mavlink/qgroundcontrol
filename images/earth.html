@@ -13,12 +13,13 @@ google.load("earth", "1", { 'language': 'en'});
 
 var ge = null;
 var initialized = false;
+
+var aircraft = new Array();
 var currAircraft = 220;
-var followEnabled = false;
+var followAircraft = false;
 var currLat = 47.3769;
 var currLon = 8.549444;
 var currAlt = 470;
-var currFollowHeading = 0.0;
 
 var homeLat = 0;
 var homeLon = 0;
@@ -32,17 +33,11 @@ var currTilt = 40.0;		///<< The tilt angle (in degrees)
 var currFollowTilt = 40.0;
 var currView = null;
 
-var M_PI = 3.14159265;
-
 
 
 var planeOrient;
 var planeLoc;
 
-var aircraft = [];
-var attitudes = [];
-var locations = [];
-var trails = [];
 var trail;
 var lineStringPlacemark;
 var lineStyle;
@@ -62,10 +57,7 @@ function init() {
 
 
 
-function setCurrAircraft(id)
-{
-	currAircraft = id;
-}
+
 
 function setGCSHome(lat, lon, alt)
 {
@@ -98,6 +90,13 @@ function setGCSHome(lat, lon, alt)
 	    {
 		    homeGroundLevel = alt;
 	    }
+	
+	
+	
+	
+	
+	
+	goHome();
 }
 
 function createAircraft(id, type, color)
@@ -205,19 +204,17 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 		currLat = lat;
 		currLon = lon;
 		currAlt = alt;
-		currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
 	}
 	
-	// FIXME Currently invalid conversion from right-handed z-down to z-up frame
-	planeOrient.setRoll(((roll/M_PI)+1.0)*360.0);
-	planeOrient.setTilt(((pitch/M_PI)+1.0)*360.0);
-	planeOrient.setHeading(((yaw/M_PI)+1.0)*360.0);
+	planeOrient.setRoll(roll); 
+	planeOrient.setTilt(pitch); 
+	        planeOrient.setHeading(yaw);
         
         
                 
-    planeLoc.setLatitude(lat);
-    planeLoc.setLongitude(lon);
-    planeLoc.setAltitude(alt);
+        planeLoc.setLatitude(lat);
+        planeLoc.setLongitude(lon);
+        planeLoc.setAltitude(alt);
 	
 }
 
@@ -249,16 +246,24 @@ function setCurrentAircraft(id)
 	currAircraft = id;
 }
 
+function enableFollowing(follow)
+{
+	followEnabled = follow;
+}
+
+
 function updateFollowAircraft()
 {
+	if (followEnabled)
+	{
 	currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
 	currView.setLatitude(currLat);
 	currView.setLongitude(currLon);
 	currView.setAltitude(currAlt);
 	currView.setRange(currViewRange);
 	currView.setTilt(currFollowTilt);
-	currView.setHeading(currFollowHeading-90.0);
 	ge.getView().setAbstractView(currView);
+	}
 }
 
 function failureCallback(object)
