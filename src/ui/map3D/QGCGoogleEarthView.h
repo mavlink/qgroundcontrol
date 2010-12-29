@@ -11,19 +11,36 @@
 
 #ifdef _MSC_VER
 #include <ActiveQt/QAxWidget>
+#include <ActiveQt/QAxObject>
 #include "windows.h"
 
 class QGCWebAxWidget : public QAxWidget
 {
 public:
-
+	//Q_OBJECT
     QGCWebAxWidget(QWidget* parent = 0, Qt::WindowFlags f = 0)
-        : QAxWidget(parent, f)
+        : QAxWidget(parent, f),
+		_document(NULL)
     {
 		// Set web browser control
 		setControl("{8856F961-340A-11D0-A96B-00C04FD705A2}");
+		//QObject::connect(this, SIGNAL(DocumentComplete(IDispatch*, QVariant&)), this, SLOT(setDocument(IDispatch*, QVariant&)));
+
+		
     }
+	
+	QAxObject* document()
+	{
+		return _document;
+	}
+
+	protected:
+	void setDocument(IDispatch* dispatch, QVariant& variant)
+	{
+		_document = this->querySubObject("Document()");
+	}
 protected:
+	QAxObject* _document;
     virtual bool translateKeyEvent(int message, int keycode) const
     {
         if (message >= WM_KEYFIRST && message <= WM_KEYLAST)

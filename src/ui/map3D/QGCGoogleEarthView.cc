@@ -2,8 +2,12 @@
 #include <QDir>
 #include <QShowEvent>
 #include <QSettings>
+#include <QAxObject>
+#include <QUuid>
 
 #include <QDebug>
+#include <QFile>
+#include <QTextStream>
 #include "UASManager.h"
 
 #ifdef Q_OS_MAC
@@ -41,6 +45,19 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 {
 #ifdef _MSC_VER
     // Create layout and attach webViewWin
+
+	/*
+	QFile file("doc.html");
+     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+		 qDebug() << __FILE__ << __LINE__ << "Could not open log file";
+
+     QTextStream out(&file);
+     out << webViewWin->generateDocumentation();
+	 out.flush();
+	 file.flush();
+	 file.close();*/
+
+
 #else
 #endif
 
@@ -154,7 +171,7 @@ void QGCGoogleEarthView::goHome()
     webViewMac->page()->currentFrame()->evaluateJavaScript("goHome();");
 #endif
 #ifdef _MSC_VER
-    webViewWin.dynamicCall("InvokeScript(\"goHome\");");
+	webViewWin->dynamicCall("InvokeScript(\"goHome\");");
 #endif
 }
 
@@ -164,7 +181,7 @@ void QGCGoogleEarthView::setHome(double lat, double lon, double alt)
     webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setGCSHome(%1,%2,%3);").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
 #endif
 #ifdef _MSC_VER
-    webViewWin.dynamicCall(QString("InvokeScript(\"setGCSHome\", %1, %2, %3);").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
+	webViewWin->dynamicCall((QString("InvokeScript(\"setGCSHome\", %1, %2, %3)").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15)).toStdString().c_str());
 #endif
 }
 
@@ -191,6 +208,31 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
 #ifdef _MSC_VER
                 //webViewWin->dynamicCall("GoHome()");
                 webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/earth.html");
+				/*
+				
+				Sleep(4000);
+					
+				
+				QAxObject* doc = webViewWin->querySubObject("Document()");
+				IUnknown* winDoc = NULL;
+				doc->queryInterface(QUuid("{25336920-03F9-11CF-8FD0-00AA00686F13}"), (void**)(&winDoc));
+				//if (winDoc)
+				{
+					doc = new QAxObject(winDoc, webViewWin);
+				}
+
+		QFile file("ie-doc.html");
+     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+		 qDebug() << __FILE__ << __LINE__ << "Could not open log file";
+
+     QTextStream out(&file);
+     out << doc->generateDocumentation();
+	 out.flush();
+	 file.flush();
+	 file.close();
+	 while(1);
+	 */
+
 #endif
 
                 webViewInitialized = true;
@@ -211,7 +253,7 @@ void QGCGoogleEarthView::initializeGoogleEarth()
         if (!webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
 #endif
 #ifdef _MSC_VER
-            //if (!webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
+		if (!webViewWin->dynamicCall("InvokeScript(const QString&)", QString("isInitialized")).toBool())
 #endif
         {
             QTimer::singleShot(200, this, SLOT(initializeGoogleEarth()));
@@ -281,7 +323,14 @@ void QGCGoogleEarthView::updateState()
                                                                    .arg(yaw));
 #endif
 #ifdef _MSC_VER
-
+webViewWin->dynamicCall((QString("InvokeScript(\"setAircraftPositionAttitude\", %1, %2, %3, %4, %6, %7, %8);")
+                                                                   .arg(uasId)
+                                                                   .arg(lat)
+                                                                   .arg(lon)
+                                                                   .arg(alt+500)
+                                                                   .arg(roll)
+                                                                   .arg(pitch)
+																   .arg(yaw)).toStdString().c_str());
 #endif
         }
 
@@ -291,6 +340,7 @@ void QGCGoogleEarthView::updateState()
             webViewMac->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
 #endif
 #ifdef _MSC_VER
+			webViewWin->dynamicCall("InvokeScript(\"updateFollowAircraft\");");
 #endif
         }
     }
