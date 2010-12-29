@@ -29,7 +29,7 @@
 QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         QWidget(parent),
         updateTimer(new QTimer(this)),
-        refreshRateMs(80),
+        refreshRateMs(60),
         mav(NULL),
         followCamera(true),
         trailEnabled(true),
@@ -108,7 +108,8 @@ QGCGoogleEarthView::~QGCGoogleEarthView()
 void QGCGoogleEarthView::addUAS(UASInterface* uas)
 {
     // uasid, type, color (in aarrbbgg format)
-    javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uas->getColor().name().remove(0, 1).prepend("50")));
+	//javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uas->getColor().name().remove(0, 1).prepend("50")));
+    javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg("0"));
     // Automatically receive further position updates
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
 }
@@ -189,7 +190,7 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
                 // Reloading the webpage, this resets Google Earth
                 gEarthInitialized = false;
 
-                QTimer::singleShot(1000, this, SLOT(initializeGoogleEarth()));
+                QTimer::singleShot(2000, this, SLOT(initializeGoogleEarth()));
                 updateTimer->start(refreshRateMs);
             }
     }
@@ -208,8 +209,7 @@ QVariant QGCGoogleEarthView::javaScript(QString javaScript)
 #ifdef _MSC_VER
 	if(!jScriptInitialized)
 	{
-		// Inititalize and drop call
-		initializeGoogleEarth();
+		qDebug() << "TOO EARLY JAVASCRIPT CALL, ABORTING";
 		return QVariant(false);
 	}
 	else
@@ -224,22 +224,13 @@ QVariant QGCGoogleEarthView::javaScript(QString javaScript)
 
 void QGCGoogleEarthView::initializeGoogleEarth()
 {
-    if (!gEarthInitialized)
-    {
-#ifdef Q_OS_MAC
-        if (!webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-        {
+	if (!jScriptInitialized)
+	{
+		#ifdef Q_OS_MAC
+	jScriptInitialized = true;
 #endif
-#ifdef _MSC_VER
-		static bool first = true;
-		if (first)
-        {
-            QTimer::singleShot(500, this, SLOT(initializeGoogleEarth()));
-			first = false;
-        }
-        else
-        {
-				QAxObject* doc = webViewWin->querySubObject("Document()");
+	#ifdef _MSC_VER
+						QAxObject* doc = webViewWin->querySubObject("Document()");
 				IDispatch* Disp;
 				IDispatch* winDoc = NULL;
 
@@ -266,7 +257,19 @@ void QGCGoogleEarthView::initializeGoogleEarth()
 					qDebug() << "COULD NOT GET DOCUMENT OBJECT! Aborting";
 				}
 #endif
+				QTimer::singleShot(2500, this, SLOT(initializeGoogleEarth()));
+				return;
+}
 
+    if (!gEarthInitialized)
+    {
+		if (0 == 1)//(!javaScript("isInitialized();").toBool())
+		{
+			QTimer::singleShot(500, this, SLOT(initializeGoogleEarth()));
+			qDebug() << "NOT INITIALIZED, WAITING";
+		}
+        else
+        {
             // Set home location
             setHome(47.3769, 8.549444, 500);
 

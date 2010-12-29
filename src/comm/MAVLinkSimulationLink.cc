@@ -413,7 +413,7 @@ void MAVLinkSimulationLink::mainloop()
 //        streampointer += bufferlength;
 
         // GLOBAL POSITION
-        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 47.378028137103+(x*0.002), 8.54899892510421+(y*0.002), z+35.0, 0, 0, 0);
+        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 47.378028137103+(x*0.0005), 8.54899892510421+(y*0.0005), z+35.0, 0, 0, 0);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
