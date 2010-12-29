@@ -1119,40 +1119,8 @@ void MainWindow::loadMAVLinkView()
 
 void MainWindow::presentView()
 {
-
-    showTheCentralWidget(CENTRAL_3D_LOCAL, currentView);
-    showTheCentralWidget(CENTRAL_3D_MAP, currentView);
-//#ifdef QGC_OSG_ENABLED
-//    // 3D map
-//    if (_3DWidget)
-//    {
-//        if (centerStack)
-//        {
-//            //map3DWidget->setActive(true);
-//            centerStack->setCurrentWidget(_3DWidget);
-//        }
-//    }
-//#endif
-
     qDebug() << "LC";
     showTheCentralWidget(CENTRAL_LINECHART, currentView);
-
-
-    // FIXME
-
-//    if (linechartWidget)
-//    {
-//        qDebug () << buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_LINECHART,currentView) <<
-//                settings.value(buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_LINECHART,currentView)).toBool() ;
-//        if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_LINECHART,currentView)).toBool()){
-//            if (centerStack)
-//            {
-//                centerStack->setCurrentWidget(linechartWidget);
-//            }
-//        }
-//    }
-
-
 
     // MAP
     qDebug() << "MAP";
@@ -1164,16 +1132,17 @@ void MainWindow::presentView()
 
     // HEAD UP DISPLAY
     showTheCentralWidget(CENTRAL_HUD, currentView);
-//    qDebug() << "HUD";
-//    if (hudWidget){
-//        qDebug() << buildMenuKey(SUB_SECTION_CHECKED,CENTRAL_HUD,currentView) <<
-//                settings.value(buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_HUD,currentView)).toBool();
-//        if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,CENTRAL_HUD,currentView)).toBool()){
-//            if (centerStack) {
-//                centerStack->setCurrentWidget(hudWidget);
-//            }
-//        }
-//    }
+
+    // GOOGLE EARTH
+    showTheCentralWidget(CENTRAL_GOOGLE_EARTH, currentView);
+
+    // LOCAL 3D VIEW
+    showTheCentralWidget(CENTRAL_3D_LOCAL, currentView);
+
+    // GLOBAL 3D VIEW
+    showTheCentralWidget(CENTRAL_3D_MAP, currentView);
+
+
 
     // Show docked widgets based on current view and autopilot type
 

@@ -11,19 +11,36 @@
 
 #ifdef _MSC_VER
 #include <ActiveQt/QAxWidget>
+#include <ActiveQt/QAxObject>
 #include "windows.h"
 
 class QGCWebAxWidget : public QAxWidget
 {
 public:
-
+	//Q_OBJECT
     QGCWebAxWidget(QWidget* parent = 0, Qt::WindowFlags f = 0)
-        : QAxWidget(parent, f)
+        : QAxWidget(parent, f),
+		_document(NULL)
     {
 		// Set web browser control
 		setControl("{8856F961-340A-11D0-A96B-00C04FD705A2}");
+		//QObject::connect(this, SIGNAL(DocumentComplete(IDispatch*, QVariant&)), this, SLOT(setDocument(IDispatch*, QVariant&)));
+
+		
     }
+	
+	QAxObject* document()
+	{
+		return _document;
+	}
+
+	protected:
+	void setDocument(IDispatch* dispatch, QVariant& variant)
+	{
+		_document = this->querySubObject("Document()");
+	}
 protected:
+	QAxObject* _document;
     virtual bool translateKeyEvent(int message, int keycode) const
     {
         if (message >= WM_KEYFIRST && message <= WM_KEYLAST)
@@ -54,14 +71,24 @@ public:
 public slots:
     /** @brief Update the internal state. Does not trigger a redraw */
     void updateState();
+    /** @brief Add a new MAV/UAS to the visualization */
+    void addUAS(UASInterface* uas);
     /** @brief Set the currently selected UAS */
     void setActiveUAS(UASInterface* uas);
+    /** @brief Update the global position */
+    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     /** @brief Show the vehicle trail */
     void showTrail(bool state);
     /** @brief Show the waypoints */
     void showWaypoints(bool state);
     /** @brief Follow the aircraft during flight */
     void follow(bool follow);
+    /** @brief Go to the home location */
+    void goHome();
+    /** @brief Set the home location */
+    void setHome(double lat, double lon, double alt);
+    /** @brief Initialize Google Earth */
+    void initializeGoogleEarth();
 
 protected:
     void changeEvent(QEvent *e);
@@ -71,6 +98,7 @@ protected:
     bool followCamera;
     bool trailEnabled;
     bool webViewInitialized;
+    bool gEarthInitialized;
 #ifdef _MSC_VER
     QGCWebAxWidget* webViewWin;
 #endif
