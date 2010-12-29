@@ -26,8 +26,10 @@ public slots:
 protected:
     QMap<int, LinechartWidget*> plots;
     bool active;
-
+    /** @brief Start updating widget */
     void showEvent(QShowEvent* event);
+    /** @brief Stop updating widget */
+    void hideEvent(QHideEvent* event);
 
 };
 

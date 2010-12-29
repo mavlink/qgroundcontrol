@@ -118,8 +118,10 @@ protected:
     float refLineWidthToPen(float line);
     /** @brief Rotate a polygon around a point clockwise */
     void rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin);
-    /** @brief Override base class show */
+    /** @brief Start updating widget */
     void showEvent(QShowEvent* event);
+    /** @brief Stop updating widget */
+    void hideEvent(QHideEvent* event);
 
     static const int updateInterval = 50;
 

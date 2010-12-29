@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASManager.h"
 #include "HUD.h"
 #include "MG.h"
+#include "QGC.h"
 
 // Fix for some platforms, e.g. windows
 #ifndef GL_MULTISAMPLE
@@ -179,16 +180,19 @@ void HUD::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    if (!event->spontaneous())
+    Q_UNUSED(event)
     {
-        if (event->type() == QEvent::Hide)
-        {
-            refreshTimer->stop();
-        }
-        else if (event->type() == QEvent::Show)
-        {
-            refreshTimer->start(updateInterval);
-        }
+        refreshTimer->start(updateInterval);
+    }
+}
+
+void HUD::hideEvent(QHideEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event)
+    {
+        refreshTimer->stop();
     }
 }
 
@@ -560,6 +564,10 @@ void HUD::paintHUD()
     //    static quint64 interval = 0;
     //    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
     //    interval = MG::TIME::getGroundTimeNow();
+
+#if (QGC_EVENTLOOP_DEBUG)
+    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
 
     // Read out most important values to limit hash table lookups
     static float roll = 0.0f;

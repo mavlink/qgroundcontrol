@@ -43,6 +43,8 @@ This file is part of the PIXHAWK project
 #include <MG.h>
 #include <QPaintEngine>
 
+#include "QGC.h"
+
 /**
  * @brief The default constructor
  *
@@ -55,7 +57,7 @@ maxTime(QUINT64_MIN),
 maxInterval(MAX_STORAGE_INTERVAL),
 timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
 automaticScrollActive(false),
-m_active(true),
+m_active(false),
 m_groundTime(true),
 d_data(NULL),
 d_curve(NULL)
@@ -142,7 +144,7 @@ d_curve(NULL)
     // Start QTimer for plot update
     updateTimer = new QTimer(this);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(paintRealtime()));
-    updateTimer->start(DEFAULT_REFRESH_RATE);
+    //updateTimer->start(DEFAULT_REFRESH_RATE);
 
     //    QwtPlot::setAutoReplot();
 
@@ -153,6 +155,18 @@ d_curve(NULL)
 LinechartPlot::~LinechartPlot()
 {
     removeAllData();
+}
+
+void LinechartPlot::showEvent(QShowEvent* event)
+{
+    Q_UNUSED(event);
+    updateTimer->start(DEFAULT_REFRESH_RATE);
+}
+
+void LinechartPlot::hideEvent(QHideEvent* event)
+{
+    Q_UNUSED(event);
+    updateTimer->stop();
 }
 
 int LinechartPlot::getPlotId()
@@ -182,6 +196,14 @@ double LinechartPlot::getMean(QString id)
 double LinechartPlot::getMedian(QString id)
 {
     return data.value(id)->getMedian();
+}
+
+/**
+ * @param id curve identifier
+ */
+double LinechartPlot::getVariance(QString id)
+{
+    return data.value(id)->getVariance();
 }
 
 int LinechartPlot::getAverageWindow()
@@ -270,6 +292,14 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
 void LinechartPlot::enforceGroundTime(bool enforce)
 {
     m_groundTime = enforce;
+}
+
+/**
+ * @return True if the data points are stamped with the packet receive time
+ */
+bool LinechartPlot::groundTime()
+{
+    return m_groundTime;
 }
 
 void LinechartPlot::addCurve(QString id)
@@ -455,6 +485,23 @@ bool LinechartPlot::isVisible(QString id)
 }
 
 /**
+ * @return The visibility, true if it is visible, false otherwise
+ **/
+bool LinechartPlot::anyCurveVisible()
+{
+    bool visible = false;
+    foreach (QString key, curves.keys())
+    {
+        if (curves.value(key)->isVisible())
+        {
+            visible = true;
+        }
+    }
+
+    return visible;
+}
+
+/**
  * @brief Allows to block interference of the automatic scrolling with user interaction
  * When the plot is updated very fast (at 1 ms for example) with new data, it might
  * get impossible for an user to interact. Therefore the automatic scrolling must be
@@ -580,6 +627,9 @@ void LinechartPlot::paintRealtime()
 {
     if (m_active)
     {
+#if (QGC_EVENTLOOP_DEBUG)
+    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
         // Update plot window value to new max time if the last time was also the max time
         windowLock.lock();
         if (automaticScrollActive)
@@ -701,8 +751,9 @@ TimeSeriesData::TimeSeriesData(QwtPlot* plot, QString friendlyName, quint64 plot
         maxValue(DBL_MIN),
         zeroValue(0),
         count(0),
-        mean(0.00),
-        median(0.00),
+        mean(0.0),
+        median(0.0),
+        variance(0.0),
         averageWindow(50)
 {
     this->plot = plot;
@@ -760,6 +811,14 @@ void TimeSeriesData::append(quint64 ms, double value)
         medianList.append(this->value[count-i]);
     }
     mean = mean / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
+
+    this->variance = 0;
+    for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i)
+    {
+       this->variance += (this->value[count-i] - mean) * (this->value[count-i] - mean);
+    }
+    this->variance = this->variance / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
+
     qSort(medianList);
 
     if (medianList.count() > 2)
@@ -857,6 +916,14 @@ double TimeSeriesData::getMean()
 double TimeSeriesData::getMedian()
 {
     return median;
+}
+
+/**
+ * @return the variance
+ */
+double TimeSeriesData::getVariance()
+{
+    return variance;
 }
 
 double TimeSeriesData::getCurrentValue()

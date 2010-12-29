@@ -16,6 +16,7 @@
 #include "QGCWebPage.h"
 #endif
 
+#include "QGC.h"
 #include "ui_QGCGoogleEarthView.h"
 #include "QGCGoogleEarthView.h"
 
@@ -102,7 +103,8 @@ QGCGoogleEarthView::~QGCGoogleEarthView()
 void QGCGoogleEarthView::addUAS(UASInterface* uas)
 {
 #ifdef Q_OS_MAC
-        webViewMac->page()->currentFrame()->evaluateJavaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uas->getColor().name()));
+    // uasid, type, color (in aarrbbgg format)
+    webViewMac->page()->currentFrame()->evaluateJavaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uas->getColor().name().remove(0, 1).prepend("50")));
 #endif
 #ifdef _MSC_VER
         //if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
@@ -134,6 +136,9 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, dou
     Q_UNUSED(usec);
 #ifdef Q_OS_MAC
         webViewMac->page()->currentFrame()->evaluateJavaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
+
+        //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
+
 #endif
 #ifdef _MSC_VER
         //if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
@@ -180,20 +185,17 @@ void QGCGoogleEarthView::setHome(double lat, double lon, double alt)
 #endif
 }
 
+void QGCGoogleEarthView::hideEvent(QHideEvent* event)
+{
+    Q_UNUSED(event) updateTimer->stop();
+}
+
 void QGCGoogleEarthView::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    if (!event->spontaneous())
+    Q_UNUSED(event)
     {
-        if (event->type() == QEvent::Hide)
-        {
-            // Disable widget
-            updateTimer->stop();
-            qDebug() << "STOPPED GOOGLE EARTH UPDATES";
-        }
-        else if (event->type() == QEvent::Show)
-        {
             // Enable widget, initialize on first run
             if (!webViewInitialized)
             {
@@ -240,7 +242,6 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
                 QTimer::singleShot(1000, this, SLOT(initializeGoogleEarth()));
                 updateTimer->start(refreshRateMs);
             }
-        }
     }
 }
 
@@ -285,6 +286,9 @@ void QGCGoogleEarthView::initializeGoogleEarth()
 
 void QGCGoogleEarthView::updateState()
 {
+#if (QGC_EVENTLOOP_DEBUG)
+    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
     if (gEarthInitialized)
     {
         int uasId = 0;
