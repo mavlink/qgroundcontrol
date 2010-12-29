@@ -47,7 +47,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
     if (pen)
     {
         mypixmap = new QPixmap(radius+1, radius+1);
-        mypixmap->fill(Qt::transparent);
+        //mypixmap->fill(Qt::transparent);
         QPainter painter(mypixmap);
 
         // DRAW MICRO AIR VEHICLE
