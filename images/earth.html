@@ -27,7 +27,7 @@ var homeViewRange = 500;
 var homeLocation = null;
 var homeGroundLevel = 0;
 
-var currViewRange = 3.0;	///<< The current viewing range from this position (in meters)
+var currViewRange = 50.0;	///<< The current viewing range from this position (in meters)
 var currTilt = 40.0;		///<< The tilt angle (in degrees)
 var currFollowTilt = 40.0;
 var currView = null;
@@ -183,7 +183,8 @@ function initCallback(object)
   ge.getWindow().setVisibility(true);
           ge.getOptions().setStatusBarVisibility(true); 
         ge.getOptions().setScaleLegendVisibility(true);
-        ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT); 
+		ge.getOptions().setFlyToSpeed(5.0); 
+        //ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT); 
         ge.getNavigationControl().setVisibility(ge.VISIBILITY_AUTO);
         
         ge.getLayerRoot().enableLayerById(ge.LAYER_TERRAIN, true); 
