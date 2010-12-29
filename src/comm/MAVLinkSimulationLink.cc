@@ -375,9 +375,9 @@ void MAVLinkSimulationLink::mainloop()
 
 
         // Move X Position
-        x = 8.0*sin((double)circleCounter/50.0);
-        y = 3.0*cos((double)circleCounter/40.0);
-        z = 1.8 + 1.2*sin((double)circleCounter/60.0);
+        x = 12.0*sin(((double)circleCounter)/100.0);
+        y = 5.0*cos(((double)circleCounter)/100.0);
+        z = 1.8 + 1.2*sin(((double)circleCounter)/60.0);
 
         circleCounter++;
 
@@ -413,7 +413,7 @@ void MAVLinkSimulationLink::mainloop()
 //        streampointer += bufferlength;
 
         // GLOBAL POSITION
-        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 47.378028137103+(x*0.001), 8.54899892510421+(y*0.001), z+25.0, 0, 0, 0);
+        mavlink_msg_global_position_pack(systemId, componentId, &ret, 0, 47.378028137103+(x*0.002), 8.54899892510421+(y*0.002), z+35.0, 0, 0, 0);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
