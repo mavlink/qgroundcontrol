@@ -211,7 +211,7 @@ public slots:
     void addLink(LinkInterface* link);
 
     /** @brief Receive a message from one of the communication links. */
-    void receiveMessage(LinkInterface* link, mavlink_message_t message);
+    virtual void receiveMessage(LinkInterface* link, mavlink_message_t message);
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
     void sendMessage(LinkInterface* link, mavlink_message_t message);

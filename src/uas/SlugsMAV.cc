@@ -60,100 +60,102 @@ SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
 void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     // Let UAS handle the default message set
-   UAS::receiveMessage(link, message);
+    UAS::receiveMessage(link, message);
 
-
-    // Handle your special messages mavlink_message_t* msg = &message;
-    switch (message.msgid)
+    if (message.sysid == uasId)
     {
+        // Handle your special messages mavlink_message_t* msg = &message;
+        switch (message.msgid)
+        {
 
 #ifdef MAVLINK_ENABLED_SLUGS
 
-      case MAVLINK_MSG_ID_BOOT:
-        mavlink_msg_boot_decode(&message,&mlBoot);
-        emit slugsBootMsg(uasId, mlBoot);
-      break;
-
-      case MAVLINK_MSG_ID_ATTITUDE:
-        mavlink_msg_attitude_decode(&message, &mlAttitude);
-      break;
-
-      case MAVLINK_MSG_ID_GPS_RAW:
-        mavlink_msg_gps_raw_decode(&message, &mlGpsData);
+        case MAVLINK_MSG_ID_BOOT:
+            mavlink_msg_boot_decode(&message,&mlBoot);
+            emit slugsBootMsg(uasId, mlBoot);
             break;
 
-      case MAVLINK_MSG_ID_ACTION_ACK:      // 62
-        mavlink_msg_action_ack_decode(&message,&mlActionAck);
+        case MAVLINK_MSG_ID_ATTITUDE:
+            mavlink_msg_attitude_decode(&message, &mlAttitude);
             break;
 
-      case MAVLINK_MSG_ID_CPU_LOAD:       //170
-        mavlink_msg_cpu_load_decode(&message,&mlCpuLoadData);
+        case MAVLINK_MSG_ID_GPS_RAW:
+            mavlink_msg_gps_raw_decode(&message, &mlGpsData);
             break;
 
-      case MAVLINK_MSG_ID_AIR_DATA:       //171
-        mavlink_msg_air_data_decode(&message,&mlAirData);
+        case MAVLINK_MSG_ID_ACTION_ACK:      // 62
+            mavlink_msg_action_ack_decode(&message,&mlActionAck);
             break;
 
-      case MAVLINK_MSG_ID_SENSOR_BIAS:    //172
-        mavlink_msg_sensor_bias_decode(&message,&mlSensorBiasData);
-      break;
-
-      case MAVLINK_MSG_ID_DIAGNOSTIC:     //173
-        mavlink_msg_diagnostic_decode(&message,&mlDiagnosticData);
-      break;
-
-      case MAVLINK_MSG_ID_PILOT_CONSOLE:  //174
-        mavlink_msg_pilot_console_decode(&message,&mlPilotConsoleData);
+        case MAVLINK_MSG_ID_CPU_LOAD:       //170
+            mavlink_msg_cpu_load_decode(&message,&mlCpuLoadData);
             break;
 
-      case MAVLINK_MSG_ID_PWM_COMMANDS:   //175
-        mavlink_msg_pwm_commands_decode(&message,&mlPwmCommands);
-      break;
-
-      case MAVLINK_MSG_ID_SLUGS_NAVIGATION://176
-        mavlink_msg_slugs_navigation_decode(&message,&mlNavigation);
+        case MAVLINK_MSG_ID_AIR_DATA:       //171
+            mavlink_msg_air_data_decode(&message,&mlAirData);
             break;
 
-      case MAVLINK_MSG_ID_DATA_LOG:       //177
-        mavlink_msg_data_log_decode(&message,&mlDataLog);
-      break;
-
-      case MAVLINK_MSG_ID_FILTERED_DATA:  //178
-        mavlink_msg_filtered_data_decode(&message,&mlFilteredData);
-      break;
-
-      case MAVLINK_MSG_ID_GPS_DATE_TIME:    //179
-        mavlink_msg_gps_date_time_decode(&message,&mlGpsDateTime);
+        case MAVLINK_MSG_ID_SENSOR_BIAS:    //172
+            mavlink_msg_sensor_bias_decode(&message,&mlSensorBiasData);
             break;
 
-      case MAVLINK_MSG_ID_MID_LVL_CMDS:     //180
+        case MAVLINK_MSG_ID_DIAGNOSTIC:     //173
+            mavlink_msg_diagnostic_decode(&message,&mlDiagnosticData);
+            break;
 
-      break;
+        case MAVLINK_MSG_ID_PILOT_CONSOLE:  //174
+            mavlink_msg_pilot_console_decode(&message,&mlPilotConsoleData);
+            break;
 
-      case MAVLINK_MSG_ID_CTRL_SRFC_PT:     //181
+        case MAVLINK_MSG_ID_PWM_COMMANDS:   //175
+            mavlink_msg_pwm_commands_decode(&message,&mlPwmCommands);
+            break;
+
+        case MAVLINK_MSG_ID_SLUGS_NAVIGATION://176
+            mavlink_msg_slugs_navigation_decode(&message,&mlNavigation);
+            break;
+
+        case MAVLINK_MSG_ID_DATA_LOG:       //177
+            mavlink_msg_data_log_decode(&message,&mlDataLog);
+            break;
+
+        case MAVLINK_MSG_ID_FILTERED_DATA:  //178
+            mavlink_msg_filtered_data_decode(&message,&mlFilteredData);
+            break;
+
+        case MAVLINK_MSG_ID_GPS_DATE_TIME:    //179
+            mavlink_msg_gps_date_time_decode(&message,&mlGpsDateTime);
+            break;
+
+        case MAVLINK_MSG_ID_MID_LVL_CMDS:     //180
 
             break;
 
-      case MAVLINK_MSG_ID_PID:              //182
-          memset(&mlSinglePid,0,sizeof(mavlink_pid_t));
-          mavlink_msg_pid_decode(&message, &mlSinglePid);
-          qDebug() << "\nSLUGS RECEIVED PID Message = "<<mlSinglePid.idx;
+        case MAVLINK_MSG_ID_CTRL_SRFC_PT:     //181
 
-          emit slugsPidValues(uasId, mlSinglePid);
+            break;
+
+        case MAVLINK_MSG_ID_PID:              //182
+            memset(&mlSinglePid,0,sizeof(mavlink_pid_t));
+            mavlink_msg_pid_decode(&message, &mlSinglePid);
+            qDebug() << "\nSLUGS RECEIVED PID Message = "<<mlSinglePid.idx;
+
+            emit slugsPidValues(uasId, mlSinglePid);
 
 
-      break;
+            break;
 
-      case MAVLINK_MSG_ID_SLUGS_ACTION:     //183
+        case MAVLINK_MSG_ID_SLUGS_ACTION:     //183
 
-      break;
+            break;
 
 #endif
 
-      default:
-//        qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
+        default:
+            //        qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
             break;
         }
+    }
 }
 
 

@@ -106,8 +106,10 @@ protected:
     QWebView* webViewMac;
 #endif
 
-    /** @brief Enable / disable widget updating */
+    /** @brief Start widget updating */
     void showEvent(QShowEvent* event);
+    /** @brief Stop widget updating */
+    void hideEvent(QHideEvent* event);
 
 private:
 #ifdef _MSC_VER

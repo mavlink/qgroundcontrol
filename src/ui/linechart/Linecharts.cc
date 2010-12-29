@@ -10,28 +10,28 @@ Linecharts::Linecharts(QWidget *parent) :
         plots(),
         active(true)
 {
-  this->setVisible(false);
-  // Get current MAV list
-  QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    this->setVisible(false);
+    // Get current MAV list
+    QList<UASInterface*> systems = UASManager::instance()->getUASList();
 
-  // Add each of them
-  foreach (UASInterface* sys, systems)
-  {
-      addSystem(sys);
-  }
-  connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
-          this, SLOT(addSystem(UASInterface*)));
-  connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
-          this, SLOT(selectSystem(int)));
-  connect(this, SIGNAL(logfileWritten(QString)),
-          MainWindow::instance(), SLOT(loadDataView(QString)));
+    // Add each of them
+    foreach (UASInterface* sys, systems)
+    {
+        addSystem(sys);
+    }
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
+            this, SLOT(addSystem(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
+            this, SLOT(selectSystem(int)));
+    connect(this, SIGNAL(logfileWritten(QString)),
+            MainWindow::instance(), SLOT(loadDataView(QString)));
 }
 
 void Linecharts::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    if (!event->spontaneous())
+    Q_UNUSED(event)
     {
         QWidget* prevWidget = currentWidget();
         if (prevWidget)
@@ -39,16 +39,27 @@ void Linecharts::showEvent(QShowEvent* event)
             LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
             if (chart)
             {
-                if (event->type() == QEvent::Hide)
-                {
-                    this->active = false;
-                    chart->setActive(false);
-                }
-                else if (event->type() == QEvent::Show)
-                {
-                    this->active = true;
-                    chart->setActive(true);
-                }
+                this->active = true;
+                chart->setActive(true);
+            }
+        }
+    }
+}
+
+void Linecharts::hideEvent(QHideEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event)
+    {
+        QWidget* prevWidget = currentWidget();
+        if (prevWidget)
+        {
+            LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
+            if (chart)
+            {
+                this->active = false;
+                chart->setActive(false);
             }
         }
     }

@@ -1,5 +1,4 @@
 /*=====================================================================
-
 PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
 
 (c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
@@ -10,15 +9,15 @@ This file is part of the PIXHAWK project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
+    
     PIXHAWK is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
+    
     You should have received a copy of the GNU General Public License
     along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-
+    
 ======================================================================*/
 
 /**
@@ -33,6 +32,7 @@ This file is part of the PIXHAWK project
 #include <QDateTime>
 #include <QDebug>
 
+#include "QGC.h"
 #include "MG.h"
 #include "UASManager.h"
 #include "UASView.h"
@@ -62,7 +62,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
-
+    
     // Setup communication
     //connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(receiveValue(int,QString,double,quint64)));
     connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
@@ -79,10 +79,10 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(&(uas->getWaypointManager()), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
     connect(UASManager::instance(), SIGNAL(activeUASStatusChanged(UASInterface*,bool)), this, SLOT(updateActiveUAS(UASInterface*,bool)));
-
+    
     // Setup UAS selection
     connect(m_ui->uasViewFrame, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
-
+    
     // Setup user interaction
     connect(m_ui->liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
     connect(m_ui->haltButton, SIGNAL(clicked()), uas, SLOT(halt()));
@@ -91,9 +91,9 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(m_ui->abortButton, SIGNAL(clicked()), uas, SLOT(emergencySTOP()));
     connect(m_ui->killButton, SIGNAL(clicked()), uas, SLOT(emergencyKILL()));
     connect(m_ui->shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-
+    
     // Set static values
-
+    
     // Name
     if (uas->getUASName() == "")
     {
@@ -103,13 +103,12 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     {
         m_ui->nameLabel->setText(uas->getUASName());
     }
-
+    
     setBackgroundColor();
-
+    
     // Heartbeat fade
     refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
-    refreshTimer->start(updateInterval);
 }
 
 UASView::~UASView()
@@ -182,7 +181,7 @@ void UASView::enterEvent(QEvent* event)
         }
     }
     qDebug() << __FILE__ << __LINE__ << "IN FOCUS";
-
+    
     if (event->type() == QEvent::MouseButtonDblClick)
     {
         qDebug() << __FILE__ << __LINE__ << "UAS CLICKED!";
@@ -202,33 +201,26 @@ void UASView::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    if (!event->spontaneous())
-    {
-        if (event->type() == QEvent::Hide)
-        {
-            refreshTimer->stop();
-        }
-        else if (event->type() == QEvent::Show)
-        {
-            refreshTimer->start(updateInterval);
-        }
-    }
+    Q_UNUSED(event);
+    refreshTimer->start(updateInterval);
+}
+
+void UASView::hideEvent(QHideEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event);
+    refreshTimer->stop();
 }
 
 void UASView::receiveHeartbeat(UASInterface* uas)
 {
-    if (uas == this->uas)
-    {
-        refreshTimer->stop();
-        QString colorstyle;
-        heartbeatColor = QColor(20, 200, 20);
-        colorstyle = colorstyle.sprintf("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",
-                                        heartbeatColor.red(), heartbeatColor.green(), heartbeatColor.blue());
-        m_ui->heartbeatIcon->setStyleSheet(colorstyle);
-        m_ui->heartbeatIcon->setAutoFillBackground(true);
-        refreshTimer->stop();
-        refreshTimer->start(updateInterval);
-    }
+    QString colorstyle;
+    heartbeatColor = QColor(20, 200, 20);
+    colorstyle = colorstyle.sprintf("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",
+                                    heartbeatColor.red(), heartbeatColor.green(), heartbeatColor.blue());
+    m_ui->heartbeatIcon->setStyleSheet(colorstyle);
+    m_ui->heartbeatIcon->setAutoFillBackground(true);
 }
 
 /**
@@ -280,8 +272,8 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
                 m_ui->landButton->hide();
                 m_ui->shutdownButton->hide();
                 m_ui->abortButton->hide();
-            m_ui->typeButton->setIcon(QIcon(":/images/mavs/groundstation.svg"));
-        }
+                m_ui->typeButton->setIcon(QIcon(":/images/mavs/groundstation.svg"));
+            }
             break;
         default:
             m_ui->typeButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
@@ -395,90 +387,93 @@ void UASView::refresh()
 
     if (generalUpdateCount == 4)
     {
+#if (QGC_EVENTLOOP_DEBUG)
+        qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
         generalUpdateCount = 0;
         //qDebug() << "UPDATING EVERYTHING";
-    // State
-    m_ui->stateLabel->setText(state);
-    m_ui->statusTextLabel->setText(stateDesc);
+        // State
+        m_ui->stateLabel->setText(state);
+        m_ui->statusTextLabel->setText(stateDesc);
 
-    // Battery
-    m_ui->batteryBar->setValue(static_cast<int>(this->chargeLevel));
-    //m_ui->loadBar->setValue(static_cast<int>(this->load));
-    m_ui->thrustBar->setValue(this->thrust);
+        // Battery
+        m_ui->batteryBar->setValue(static_cast<int>(this->chargeLevel));
+        //m_ui->loadBar->setValue(static_cast<int>(this->load));
+        m_ui->thrustBar->setValue(this->thrust);
 
-    // Position
-    QString position;
-    position = position.sprintf("%02.2f %02.2f %02.2f m", x, y, z);
-    m_ui->positionLabel->setText(position);
-    QString globalPosition;
-    QString latIndicator;
-    if (lat > 0)
-    {
-        latIndicator = "N";
-    }
-    else
-    {
-        latIndicator = "S";
-    }
-    QString lonIndicator;
-    if (lon > 0)
-    {
-        lonIndicator = "E";
-    }
-    else
-    {
-        lonIndicator = "W";
-    }
-    globalPosition = globalPosition.sprintf("%02.2f%s %02.2f%s %02.2f m", lon, lonIndicator.toStdString().c_str(), lat, latIndicator.toStdString().c_str(), alt);
-    m_ui->gpsLabel->setText(globalPosition);
+        // Position
+        QString position;
+        position = position.sprintf("%02.2f %02.2f %02.2f m", x, y, z);
+        m_ui->positionLabel->setText(position);
+        QString globalPosition;
+        QString latIndicator;
+        if (lat > 0)
+        {
+            latIndicator = "N";
+        }
+        else
+        {
+            latIndicator = "S";
+        }
+        QString lonIndicator;
+        if (lon > 0)
+        {
+            lonIndicator = "E";
+        }
+        else
+        {
+            lonIndicator = "W";
+        }
+        globalPosition = globalPosition.sprintf("%02.2f%s %02.2f%s %02.2f m", lon, lonIndicator.toStdString().c_str(), lat, latIndicator.toStdString().c_str(), alt);
+        m_ui->gpsLabel->setText(globalPosition);
 
-    // Altitude
-    if (groundDistance == 0 && alt != 0)
-    {
-        m_ui->groundDistanceLabel->setText(QString("%1 m").arg(alt));
-    }
-    else
-    {
-        m_ui->groundDistanceLabel->setText(QString("%1 m").arg(groundDistance));
-    }
+        // Altitude
+        if (groundDistance == 0 && alt != 0)
+        {
+            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(alt));
+        }
+        else
+        {
+            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(groundDistance));
+        }
 
-    // Speed
-    QString speed;
-    speed = speed.sprintf("%02.2f m/s", totalSpeed);
-    m_ui->speedLabel->setText(speed);
+        // Speed
+        QString speed;
+        speed = speed.sprintf("%02.2f m/s", totalSpeed);
+        m_ui->speedLabel->setText(speed);
 
-    // Thrust
-    m_ui->thrustBar->setValue(thrust * 100);
+        // Thrust
+        m_ui->thrustBar->setValue(thrust * 100);
 
-    if(this->timeRemaining > 1 && this->timeRemaining < MG::MAX_FLIGHT_TIME)
-    {
-        // Filter output to get a higher stability
-        static double filterTime = static_cast<int>(this->timeRemaining);
-        filterTime = 0.8 * filterTime + 0.2 * static_cast<int>(this->timeRemaining);
-        int sec = static_cast<int>(filterTime - static_cast<int>(filterTime / 60.0f) * 60);
+        if(this->timeRemaining > 1 && this->timeRemaining < MG::MAX_FLIGHT_TIME)
+        {
+            // Filter output to get a higher stability
+            static double filterTime = static_cast<int>(this->timeRemaining);
+            filterTime = 0.8 * filterTime + 0.2 * static_cast<int>(this->timeRemaining);
+            int sec = static_cast<int>(filterTime - static_cast<int>(filterTime / 60.0f) * 60);
+            int min = static_cast<int>(filterTime / 60);
+            int hours = static_cast<int>(filterTime - min * 60 - sec);
+
+            QString timeText;
+            timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
+            m_ui->timeRemainingLabel->setText(timeText);
+        }
+        else
+        {
+            m_ui->timeRemainingLabel->setText(tr("Calculating"));
+        }
+
+        // Time Elapsed
+        //QDateTime time = MG::TIME::msecToQDateTime(uas->getUptime());
+
+        quint64 filterTime = uas->getUptime() / 1000;
+        int sec = static_cast<int>(filterTime - static_cast<int>(filterTime / 60) * 60);
         int min = static_cast<int>(filterTime / 60);
         int hours = static_cast<int>(filterTime - min * 60 - sec);
-
         QString timeText;
         timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
-        m_ui->timeRemainingLabel->setText(timeText);
+        m_ui->timeElapsedLabel->setText(timeText);
     }
-    else
-    {
-        m_ui->timeRemainingLabel->setText(tr("Calculating"));
-    }
-
-    // Time Elapsed
-    //QDateTime time = MG::TIME::msecToQDateTime(uas->getUptime());
-
-    quint64 filterTime = uas->getUptime() / 1000;
-    int sec = static_cast<int>(filterTime - static_cast<int>(filterTime / 60) * 60);
-    int min = static_cast<int>(filterTime / 60);
-    int hours = static_cast<int>(filterTime - min * 60 - sec);
-    QString timeText;
-    timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
-    m_ui->timeElapsedLabel->setText(timeText);
-}
     generalUpdateCount++;
 
     // Fade heartbeat icon

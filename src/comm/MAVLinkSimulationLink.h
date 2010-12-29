@@ -94,8 +94,8 @@ protected:
 
     // UAS properties
     float roll, pitch, yaw;
-    float x, y, z;
-    float spX, spY, spZ, spYaw;
+    double x, y, z;
+    double spX, spY, spZ, spYaw;
     int battery;
 
     QTimer* timer;
