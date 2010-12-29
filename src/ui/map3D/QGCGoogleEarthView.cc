@@ -17,6 +17,7 @@
 #ifdef _MSC_VER
 #include <QAxObject>
 #include <QUuid>
+#include <mshtml.h>
 #endif
 
 #include "QGC.h"
@@ -33,6 +34,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         followCamera(true),
         trailEnabled(true),
         webViewInitialized(false),
+		jScriptInitialized(false),
         gEarthInitialized(false),
 #if (defined Q_OS_MAC)
         webViewMac(new QWebView(this)),
@@ -49,7 +51,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 #ifdef _MSC_VER
     // Create layout and attach webViewWin
 
-	/*
+	
 	QFile file("doc.html");
      if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
 		 qDebug() << __FILE__ << __LINE__ << "Could not open log file";
@@ -58,7 +60,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
      out << webViewWin->generateDocumentation();
 	 out.flush();
 	 file.flush();
-	 file.close();*/
+	 file.close();
 
 
 #else
@@ -105,16 +107,10 @@ QGCGoogleEarthView::~QGCGoogleEarthView()
 
 void QGCGoogleEarthView::addUAS(UASInterface* uas)
 {
-#ifdef Q_OS_MAC
     // uasid, type, color (in aarrbbgg format)
-    webViewMac->page()->currentFrame()->evaluateJavaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uas->getColor().name().remove(0, 1).prepend("50")));
-#endif
-#ifdef _MSC_VER
-        //if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-#endif
-
-        // Automatically receive further position updates
-        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+    javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uas->getColor().name().remove(0, 1).prepend("50")));
+    // Automatically receive further position updates
+    connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
 }
 
 void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
@@ -122,30 +118,16 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
     if (uas)
     {
         mav = uas;
-#ifdef Q_OS_MAC
-        if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-        {
-            webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setCurrAircraft(%1);").arg(uas->getUASID()));
-        }
-#endif
-#ifdef _MSC_VER
-        //if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-#endif
+		javaScript(QString("setCurrAircraft(%1);").arg(uas->getUASID()));
     }
 }
 
 void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
-#ifdef Q_OS_MAC
-        webViewMac->page()->currentFrame()->evaluateJavaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
+	javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
 
         //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
-
-#endif
-#ifdef _MSC_VER
-        //if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-#endif
 }
 
 void QGCGoogleEarthView::showTrail(bool state)
@@ -170,22 +152,12 @@ void QGCGoogleEarthView::goHome()
     follow(false);
     updateState();
     // Go to home location
-#ifdef Q_OS_MAC
-    webViewMac->page()->currentFrame()->evaluateJavaScript("goHome();");
-#endif
-#ifdef _MSC_VER
-	webViewWin->dynamicCall("InvokeScript(\"goHome\");");
-#endif
+    javaScript("goHome();");
 }
 
 void QGCGoogleEarthView::setHome(double lat, double lon, double alt)
 {
-#ifdef Q_OS_MAC
-    webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setGCSHome(%1,%2,%3);").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
-#endif
-#ifdef _MSC_VER
-	webViewWin->dynamicCall((QString("InvokeScript(\"setGCSHome\", %1, %2, %3)").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15)).toStdString().c_str());
-#endif
+	javaScript(QString("setGCSHome(%1,%2,%3);").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
 }
 
 void QGCGoogleEarthView::hideEvent(QHideEvent* event)
@@ -211,31 +183,6 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
 #ifdef _MSC_VER
                 //webViewWin->dynamicCall("GoHome()");
                 webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/earth.html");
-				/*
-				
-				Sleep(4000);
-					
-				
-				QAxObject* doc = webViewWin->querySubObject("Document()");
-				IUnknown* winDoc = NULL;
-				doc->queryInterface(QUuid("{25336920-03F9-11CF-8FD0-00AA00686F13}"), (void**)(&winDoc));
-				//if (winDoc)
-				{
-					doc = new QAxObject(winDoc, webViewWin);
-				}
-
-		QFile file("ie-doc.html");
-     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-		 qDebug() << __FILE__ << __LINE__ << "Could not open log file";
-
-     QTextStream out(&file);
-     out << doc->generateDocumentation();
-	 out.flush();
-	 file.flush();
-	 file.close();
-	 while(1);
-	 */
-
 #endif
 
                 webViewInitialized = true;
@@ -248,6 +195,33 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
     }
 }
 
+void QGCGoogleEarthView::printWinException(int no, QString str1, QString str2, QString str3)
+{
+	qDebug() << no << str1 << str2 << str3;
+}
+
+QVariant QGCGoogleEarthView::javaScript(QString javaScript)
+{
+#ifdef Q_OS_MAC
+	return webViewMac->page()->currentFrame()->evaluateJavaScript(javaScript);
+#endif
+#ifdef _MSC_VER
+	if(!jScriptInitialized)
+	{
+		// Inititalize and drop call
+		initializeGoogleEarth();
+		return QVariant(false);
+	}
+	else
+	{
+		QVariantList params;
+		params.append(javaScript);
+		params.append("JScript");
+		return jScriptWin->dynamicCall("execScript(QString, QString)", params);
+	}
+#endif
+}
+
 void QGCGoogleEarthView::initializeGoogleEarth()
 {
     if (!gEarthInitialized)
@@ -256,13 +230,44 @@ void QGCGoogleEarthView::initializeGoogleEarth()
         if (!webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
 #endif
 #ifdef _MSC_VER
-		if (!webViewWin->dynamicCall("InvokeScript(const QString&)", QString("isInitialized")).toBool())
+		static bool first = true;
+		if (first)
 #endif
         {
-            QTimer::singleShot(200, this, SLOT(initializeGoogleEarth()));
+            QTimer::singleShot(500, this, SLOT(initializeGoogleEarth()));
+			first = false;
         }
         else
         {
+#ifdef _MSC_VER
+				QAxObject* doc = webViewWin->querySubObject("Document()");
+				IDispatch* Disp;
+				IDispatch* winDoc = NULL;
+
+				//332C4425-26CB-11D0-B483-00C04FD90119 IHTMLDocument2
+				//25336920-03F9-11CF-8FD0-00AA00686F13 HTMLDocument
+				doc->queryInterface(QUuid("{332C4425-26CB-11D0-B483-00C04FD90119}"), (void**)(&winDoc));
+				if (winDoc)
+				{
+					// Security:
+					// CoInternetSetFeatureEnabled 
+                    // (FEATURE_LOCALMACHINE_LOCKDOWN, SET_FEATURE_ON_PROCESS, TRUE);
+					//
+					IHTMLDocument2* document = NULL; 
+					winDoc->QueryInterface( IID_IHTMLDocument2, (void**)&document ); 
+					IHTMLWindow2 *window = NULL; 
+					document->get_parentWindow( &window );
+
+					jScriptWin = new QAxObject(window, webViewWin);
+					connect(jScriptWin, SIGNAL(exception(int,QString,QString,QString)), this, SLOT(printWinException(int,QString,QString,QString)));
+					jScriptInitialized = true;
+				}
+				else
+				{
+					qDebug() << "COULD NOT GET DOCUMENT OBJECT! Aborting";
+				}
+#endif
+
             // Set home location
             setHome(47.3769, 8.549444, 500);
 
@@ -315,8 +320,7 @@ void QGCGoogleEarthView::updateState()
             pitch = mav->getPitch();
             yaw = mav->getYaw();
 
-#ifdef Q_OS_MAC
-            webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
+            javaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
                                                                    .arg(uasId)
                                                                    .arg(lat)
                                                                    .arg(lon)
@@ -324,27 +328,11 @@ void QGCGoogleEarthView::updateState()
                                                                    .arg(roll)
                                                                    .arg(pitch)
                                                                    .arg(yaw));
-#endif
-#ifdef _MSC_VER
-webViewWin->dynamicCall((QString("InvokeScript(\"setAircraftPositionAttitude\", %1, %2, %3, %4, %6, %7, %8);")
-                                                                   .arg(uasId)
-                                                                   .arg(lat)
-                                                                   .arg(lon)
-                                                                   .arg(alt+500)
-                                                                   .arg(roll)
-                                                                   .arg(pitch)
-																   .arg(yaw)).toStdString().c_str());
-#endif
         }
 
         if (followCamera)
         {
-#ifdef Q_OS_MAC
-            webViewMac->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
-#endif
-#ifdef _MSC_VER
-			webViewWin->dynamicCall("InvokeScript(\"updateFollowAircraft\");");
-#endif
+            javaScript(QString("updateFollowAircraft()"));
         }
     }
 }

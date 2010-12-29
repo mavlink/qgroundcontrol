@@ -19,28 +19,33 @@ class QGCWebAxWidget : public QAxWidget
 public:
 	//Q_OBJECT
     QGCWebAxWidget(QWidget* parent = 0, Qt::WindowFlags f = 0)
-        : QAxWidget(parent, f),
-		_document(NULL)
+        : QAxWidget(parent, f)/*,
+		_document(NULL)*/
     {
 		// Set web browser control
 		setControl("{8856F961-340A-11D0-A96B-00C04FD705A2}");
+		// WARNING: Makes it impossible to actually debug javascript. But useful in production mode
+		setProperty("ScriptErrorsSuppressed", true);
+		// see: http://www.codeproject.com/KB/cpp/ExtendedWebBrowser.aspx?fid=285594&df=90&mpp=25&noise=3&sort=Position&view=Quick&fr=151#GoalScriptError
+
+			//this->dynamicCall("setProperty(const QString&, 
 		//QObject::connect(this, SIGNAL(DocumentComplete(IDispatch*, QVariant&)), this, SLOT(setDocument(IDispatch*, QVariant&)));
 
 		
     }
-	
+	/*
 	QAxObject* document()
 	{
 		return _document;
-	}
+	}*/
 
-	protected:
+protected:
+		/*
 	void setDocument(IDispatch* dispatch, QVariant& variant)
 	{
 		_document = this->querySubObject("Document()");
 	}
-protected:
-	QAxObject* _document;
+	QAxObject* _document;*/
     virtual bool translateKeyEvent(int message, int keycode) const
     {
         if (message >= WM_KEYFIRST && message <= WM_KEYLAST)
@@ -89,6 +94,12 @@ public slots:
     void setHome(double lat, double lon, double alt);
     /** @brief Initialize Google Earth */
     void initializeGoogleEarth();
+	/** @brief Print a Windows exception */
+	void printWinException(int no, QString str1, QString str2, QString str3);
+
+public:
+	/** @brief Execute java script inside the Google Earth window */
+	QVariant javaScript(QString javascript);
 
 protected:
     void changeEvent(QEvent *e);
@@ -98,9 +109,11 @@ protected:
     bool followCamera;
     bool trailEnabled;
     bool webViewInitialized;
+	bool jScriptInitialized;
     bool gEarthInitialized;
 #ifdef _MSC_VER
     QGCWebAxWidget* webViewWin;
+	QAxObject* jScriptWin;
 #endif
 #if (defined Q_OS_MAC)
     QWebView* webViewMac;
