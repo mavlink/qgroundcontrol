@@ -2,8 +2,6 @@
 #include <QDir>
 #include <QShowEvent>
 #include <QSettings>
-#include <QAxObject>
-#include <QUuid>
 
 #include <QDebug>
 #include <QFile>
@@ -14,6 +12,11 @@
 #include <QWebFrame>
 #include <QWebPage>
 #include "QGCWebPage.h"
+#endif
+
+#ifdef _MSC_VER
+#include <QAxObject>
+#include <QUuid>
 #endif
 
 #include "QGC.h"
