@@ -228,18 +228,17 @@ void QGCGoogleEarthView::initializeGoogleEarth()
     {
 #ifdef Q_OS_MAC
         if (!webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
+        {
 #endif
 #ifdef _MSC_VER
 		static bool first = true;
 		if (first)
-#endif
         {
             QTimer::singleShot(500, this, SLOT(initializeGoogleEarth()));
 			first = false;
         }
         else
         {
-#ifdef _MSC_VER
 				QAxObject* doc = webViewWin->querySubObject("Document()");
 				IDispatch* Disp;
 				IDispatch* winDoc = NULL;
