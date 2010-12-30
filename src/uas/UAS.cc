@@ -86,7 +86,8 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
         roll(0.0),
         pitch(0.0),
         yaw(0.0),
-        statusTimeout(new QTimer(this))
+        statusTimeout(new QTimer(this)),
+        paramsOnceRequested(false)
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
@@ -356,7 +357,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_global_position_int_t pos;
                 mavlink_msg_global_position_int_decode(&message, &pos);
-                quint64 time = QGC::groundTimeUsecs();
+                quint64 time = QGC::groundTimeUsecs()/1000;
                 latitude = pos.lat/(double)1E7;
                 longitude = pos.lon/(double)1E7;
                 altitude = pos.alt/1000.0;
@@ -474,7 +475,23 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_param_value_t value;
                 mavlink_msg_param_value_decode(&message, &value);
-                emit parameterChanged(uasId, message.compid, QString((char*)value.param_id), value.param_value);
+
+                QString parameterName = QString((char*)value.param_id);
+                int component = message.compid;
+                float val = value.param_value;
+
+                // Insert component if necessary
+                if (!parameters.contains(component))
+                {
+                    parameters.insert(component, new QMap<QString, float>());
+                }
+
+                // Insert parameter into registry
+                if (parameters.value(component)->contains(parameterName)) parameters.value(component)->remove(parameterName);
+                parameters.value(component)->insert(parameterName, val);
+
+                // Emit change
+                emit parameterChanged(uasId, message.compid, parameterName, val);
             }
             break;
         case MAVLINK_MSG_ID_DEBUG:
@@ -818,6 +835,23 @@ quint64 UAS::getUnixTime(quint64 time)
         // a Unix epoch timestamp. Do nothing.
         return time/1000;
     }
+}
+
+QList<QString> UAS::getParameterNames(int component)
+{
+    if (parameters.contains(component))
+    {
+        return parameters.value(component)->keys();
+    }
+    else
+    {
+        return QList<QString>();
+    }
+}
+
+QList<int> UAS::getComponentIds()
+{
+    return parameters.keys();
 }
 
 void UAS::setMode(int mode)

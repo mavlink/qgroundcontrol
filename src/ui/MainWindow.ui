@@ -38,7 +38,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -46,6 +46,7 @@
      <string>File</string>
     </property>
     <addaction name="actionJoystick_Settings"/>
+    <addaction name="actionNewCustomWidget"/>
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
@@ -108,7 +109,6 @@
    <addaction name="menuPerspectives"/>
    <addaction name="menuHelp"/>
   </widget>
-
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionExit">
    <property name="icon">
@@ -430,6 +430,11 @@
     <string>Pilot</string>
    </property>
   </action>
+  <action name="actionNewCustomWidget">
+   <property name="text">
+    <string>New Custom Widget</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
@@ -454,5 +459,3 @@
   </connection>
  </connections>
 </ui>
-
-

@@ -26,6 +26,7 @@
 #include "MainWindow.h"
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
+#include "QGCToolWidget.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -107,6 +108,8 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Create actions
     connectCommonActions();
+    // Add option for custom widgets
+    connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
 
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
@@ -694,7 +697,16 @@ void MainWindow::connectCommonWidgets()
         // it notifies that a waypoint global goes to do create and a map graphic too
         connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
     }
+}
 
+void MainWindow::createCustomWidget()
+{
+    qDebug() << "ADDING CUSTOM WIDGET";
+    QGCToolWidget* tool = new QGCToolWidget(this);
+    QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
+    dock->setWidget(tool);
+    this->addDockWidget(Qt::LeftDockWidgetArea, dock);
+    dock->setVisible(true);
 }
 
 void MainWindow::connectPxWidgets()
