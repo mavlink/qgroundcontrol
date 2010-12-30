@@ -85,6 +85,7 @@ public:
 public slots:
     void writeBytes(const char* data, qint64 size);
     void readBytes();
+    /** @brief Mainloop simulating the mainloop of the MAV */
     virtual void mainloop();
     bool connectLink(bool connect);
     void connectLink();

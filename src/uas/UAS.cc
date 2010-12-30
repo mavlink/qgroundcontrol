@@ -350,24 +350,27 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 positionLock = true;
             }
             break;
-        case MAVLINK_MSG_ID_GLOBAL_POSITION:
+        case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
             //std::cerr << std::endl;
             //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
             {
-                mavlink_global_position_t pos;
-                mavlink_msg_global_position_decode(&message, &pos);
-                quint64 time = getUnixTime(pos.usec);
-                latitude = pos.lat;
-                longitude = pos.lon;
-                altitude = pos.alt;
+                mavlink_global_position_int_t pos;
+                mavlink_msg_global_position_int_decode(&message, &pos);
+                quint64 time = QGC::groundTimeUsecs();
+                latitude = pos.lat/(double)1E7;
+                longitude = pos.lon/(double)1E7;
+                altitude = pos.alt/1000.0;
+                speedX = pos.vx/100.0;
+                speedY = pos.vy/100.0;
+                speedZ = pos.vz/100.0;
                 emit valueChanged(uasId, "lat", pos.lat, time);
                 emit valueChanged(uasId, "lon", pos.lon, time);
                 emit valueChanged(uasId, "alt", pos.alt, time);
-                emit valueChanged(uasId, "g-vx", pos.vx, time);
-                emit valueChanged(uasId, "g-vy", pos.vy, time);
-                emit valueChanged(uasId, "g-vz", pos.vz, time);
-                emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
-                emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
+                emit valueChanged(uasId, "g-vx", speedX, time);
+                emit valueChanged(uasId, "g-vy", speedY, time);
+                emit valueChanged(uasId, "g-vz", speedZ, time);
+                emit globalPositionChanged(this, longitude, latitude, altitude, time);
+                emit speedChanged(this, speedX, speedY, speedZ, time);
                 // Set internal state
                 if (!positionLock)
                 {

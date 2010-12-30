@@ -146,6 +146,9 @@ protected:
     double latitude;
     double longitude;
     double altitude;
+    double speedX;              ///< True speed in X axis
+    double speedY;              ///< True speed in Y axis
+    double speedZ;              ///< True speed in Z axis
     double roll;
     double pitch;
     double yaw;
