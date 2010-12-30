@@ -15,6 +15,9 @@ var ge = null;
 var initialized = false;
 var currAircraft = 220;
 var followEnabled = false;
+
+var lastLat = 0;
+var lastLon = 0;
 var currLat = 47.3769;
 var currLon = 8.549444;
 var currAlt = 470;
@@ -48,6 +51,7 @@ var lineStringPlacemark;
 var lineStyle;
 
 // Aircraft class
+var planeColor = '6600ffff';
 
 
 function isInitialized()
@@ -127,6 +131,7 @@ function createAircraft(id, type, color)
           aircraft[id] = planePlacemark;
           attitudes[id] = planeOrient;
           locations[id] = planeLoc;
+          //planeColor = color;
           
           //createTrail(id, color);
 }
@@ -139,7 +144,7 @@ function createTrail(id, color)
 // and set the altitude mode
 trail = ge.createLineString('');
 lineStringPlacemark.setGeometry(trail);
-trail.setExtrude(true);
+trail.setExtrude(false);
 trail.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 
 // Add LineString points
@@ -149,7 +154,8 @@ trail.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 lineStringPlacemark.setStyleSelector(ge.createStyle(''));
 lineStyle = lineStringPlacemark.getStyleSelector().getLineStyle();
 lineStyle.setWidth(5);
-lineStyle.getColor().set(color);
+lineStyle.getColor().set(planeColor);  // aabbggrr format
+//lineStyle.getColor().set(color);
 //lineStyle.getColor().set(color);  // aabbggrr format
 
 // Add the feature to Earth
@@ -159,7 +165,7 @@ ge.getFeatures().appendChild(lineStringPlacemark);
 
 function addTrailPosition(id, lat, lon, alt)
 {
-	trail.setExtrude(true);
+	trail.setExtrude(false);
 trail.setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 
 // Add LineString points
@@ -170,7 +176,7 @@ trail.getCoordinates().pushLatLngAlt(currLat, currLon, currAlt);
 lineStringPlacemark.setStyleSelector(ge.createStyle(''));
 lineStyle = lineStringPlacemark.getStyleSelector().getLineStyle();
 lineStyle.setWidth(5);
-lineStyle.getColor().set('99bbaaff');
+lineStyle.getColor().set(planeColor);  // aabbggrr format
 //lineStyle.getColor().set(color);  // aabbggrr format
 
 // Add the feature to Earth
@@ -204,10 +210,12 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 {
 	if (id == currAircraft)
 	{
+		lastLat = currLat;
+		lastLon = lastLon;
 		currLat = lat;
 		currLon = lon;
 		currAlt = alt;
-		currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
+		//currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
 	}
 	
 	// FIXME Currently invalid conversion from right-handed z-down to z-up frame
@@ -259,7 +267,8 @@ function updateFollowAircraft()
 	currView.setAltitude(currAlt);
 	currView.setRange(currViewRange);
 	currView.setTilt(currFollowTilt);
-	currView.setHeading(currFollowHeading-90.0);
+	currFollowHeading = 0.9*currFollowHeading+0.1*((Math.atan2(lastLat-currLat, lastLon-currLon)/M_PI)+1.0)*360.0;
+	currView.setHeading(currFollowHeading-0.0);
 	ge.getView().setAbstractView(currView);
 }
 

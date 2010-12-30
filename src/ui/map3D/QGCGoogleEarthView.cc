@@ -29,7 +29,7 @@
 QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         QWidget(parent),
         updateTimer(new QTimer(this)),
-        refreshRateMs(60),
+        refreshRateMs(40),
         mav(NULL),
         followCamera(true),
         trailEnabled(true),
@@ -108,8 +108,8 @@ QGCGoogleEarthView::~QGCGoogleEarthView()
 void QGCGoogleEarthView::addUAS(UASInterface* uas)
 {
     // uasid, type, color (in aarrbbgg format)
-    //javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uas->getColor().name().remove(0, 1).prepend("50")));
-    javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg("0"));
+    javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uas->getColor().name().remove(0, 1).prepend("50")));
+    //javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg("0"));
     // Automatically receive further position updates
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
 }
@@ -324,12 +324,12 @@ void QGCGoogleEarthView::updateState()
 
             javaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
                        .arg(uasId)
-                       .arg(lat)
-                       .arg(lon)
-                       .arg(alt+500)
-                       .arg(roll)
-                       .arg(pitch)
-                       .arg(yaw));
+                       .arg(lat, 0, 'f', 15)
+                       .arg(lon, 0, 'f', 15)
+                       .arg(alt, 0, 'f', 15)
+                       .arg(roll, 0, 'f', 9)
+                       .arg(pitch, 0, 'f', 9)
+                       .arg(yaw, 0, 'f', 9));
         }
 
         if (followCamera)
