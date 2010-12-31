@@ -110,6 +110,9 @@ MainWindow::MainWindow(QWidget *parent):
     connectCommonActions();
     // Add option for custom widgets
     connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
+    // Allow to mute audio
+    ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
+    connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
 
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);

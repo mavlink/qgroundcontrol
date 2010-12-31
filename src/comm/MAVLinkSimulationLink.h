@@ -128,7 +128,7 @@ protected:
     void enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg);
 
     static const uint8_t systemId = 220;
-    static const uint8_t componentId = 0;
+    static const uint8_t componentId = 200;
     static const uint16_t version = 1000;
 
 signals:
