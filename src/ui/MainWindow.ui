@@ -38,7 +38,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -47,6 +47,7 @@
     </property>
     <addaction name="actionJoystick_Settings"/>
     <addaction name="actionNewCustomWidget"/>
+    <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
@@ -433,6 +434,22 @@
   <action name="actionNewCustomWidget">
    <property name="text">
     <string>New Custom Widget</string>
+   </property>
+  </action>
+  <action name="actionMuteAudioOutput">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/audio-volume-high.svg</normaloff>
+     <normalon>:/images/status/audio-volume-muted.svg</normalon>
+     <activeon>:/images/status/audio-volume-muted.svg</activeon>
+     <selectedoff>:/images/status/audio-volume-high.svg</selectedoff>
+     <selectedon>:/images/status/audio-volume-muted.svg</selectedon>:/images/status/audio-volume-high.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Mute Audio Output</string>
    </property>
   </action>
  </widget>

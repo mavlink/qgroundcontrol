@@ -145,7 +145,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
     src/ui/map3D/QGCGoogleEarthViewWin.ui \
-    src/ui/map3D/QGCGoogleEarthControls.ui \
     src/ui/SlugsDataSensorView.ui \
     src/ui/SlugsHilSim.ui \
     src/ui/SlugsPIDControl.ui \
