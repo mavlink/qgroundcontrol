@@ -42,6 +42,7 @@ along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 class LinkInterface : public QThread {
     Q_OBJECT
 public:
+    LinkInterface(QObject* parent = 0) : QThread(parent) {}
     //virtual ~LinkInterface() = 0;
 
     /* Connection management */

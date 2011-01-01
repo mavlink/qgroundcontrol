@@ -55,7 +55,7 @@ This file is part of the QGROUNDCONTROL project
  * @param writeFile The received messages are written to that file
  * @param rate The rate at which the messages are sent (in intervals of milliseconds)
  **/
-MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate) :
+MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate, QObject* parent) : LinkInterface(parent),
         readyBytes(0),
         timeOffset(0)
 {
@@ -445,6 +445,7 @@ void MAVLinkSimulationLink::mainloop()
             chan.chan6_raw = (chan.chan3_raw + chan.chan2_raw) / 2.0f;
             chan.chan7_raw = (chan.chan4_raw + chan.chan2_raw) / 2.0f;
             chan.chan8_raw = (chan.chan6_raw + chan.chan2_raw) / 2.0f;
+            chan.rssi = 100;
             messageSize = mavlink_msg_rc_channels_raw_encode(systemId, componentId, &msg, &chan);
             // Allocate buffer with packet data
             bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);

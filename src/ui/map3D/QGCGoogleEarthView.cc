@@ -178,7 +178,7 @@ void QGCGoogleEarthView::showTrail(bool state)
 
 void QGCGoogleEarthView::showWaypoints(bool state)
 {
-
+    waypointsEnabled = state;
 }
 
 void QGCGoogleEarthView::follow(bool follow)
@@ -232,7 +232,7 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
             // Reloading the webpage, this resets Google Earth
             gEarthInitialized = false;
 
-            QTimer::singleShot(2000, this, SLOT(initializeGoogleEarth()));
+            QTimer::singleShot(3000, this, SLOT(initializeGoogleEarth()));
             updateTimer->start(refreshRateMs);
         }
     }
@@ -299,7 +299,7 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             qDebug() << "COULD NOT GET DOCUMENT OBJECT! Aborting";
         }
 #endif
-        QTimer::singleShot(2500, this, SLOT(initializeGoogleEarth()));
+        QTimer::singleShot(3500, this, SLOT(initializeGoogleEarth()));
         return;
     }
 
