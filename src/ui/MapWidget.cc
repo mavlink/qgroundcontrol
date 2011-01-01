@@ -12,7 +12,7 @@
 
 #include <QComboBox>
 #include <QGridLayout>
-
+#include <QDir>
 
 #include "MapWidget.h"
 #include "ui_MapWidget.h"
@@ -43,7 +43,7 @@ MapWidget::MapWidget(QWidget *parent) :
     mc = new qmapcontrol::MapControl(QSize(320, 240));
     mc->showScale(true);
     mc->showCoord(true);
-    mc->enablePersistentCache(qApp->applicationDirPath());
+    mc->enablePersistentCache();
     mc->setMouseTracking(true); // required to update the mouse position for diplay and capture
 
     // create MapAdapter to get maps from
@@ -76,10 +76,10 @@ MapWidget::MapWidget(QWidget *parent) :
     // Set default zoom level
     mc->setZoom(16);
     // Zurich, ETH
-    //mc->setView(QPointF(8.548056,47.376389));
+    mc->setView(QPointF(8.548056,47.376389));
 
-    // Veracruz Mexico, ETH
-    mc->setView(QPointF(-96.105208,19.138955));
+    // Veracruz Mexico
+    //mc->setView(QPointF(-96.105208,19.138955));
 
     // Add controls to select map provider
     /////////////////////////////////////////////////
@@ -600,7 +600,7 @@ void MapWidget::updatePosition(float time, double lat, double lon)
 {
     Q_UNUSED(time);
     //gpsposition->setText(QString::number(time) + " / " + QString::number(lat) + " / " + QString::number(lon));
-    if (followgps->isChecked())
+    if (followgps->isChecked() && isVisible())
     {
         mc->setView(QPointF(lat, lon));
     }
@@ -653,6 +653,16 @@ void MapWidget::resizeEvent(QResizeEvent* event )
 {
     Q_UNUSED(event);
     mc->resize(this->size());
+}
+
+void MapWidget::showEvent(QShowEvent* event)
+{
+    Q_UNUSED(event);
+}
+
+void MapWidget::hideEvent(QHideEvent* event)
+{
+    Q_UNUSED(event);
 }
 
 
