@@ -570,5 +570,7 @@ void WaypointList::setIsLoadFileWP()
 
 void WaypointList::setIsReadGlobalWP(bool value)
 {
-   // readGlobalWP = value;
+    // FIXME James Check this
+    Q_UNUSED(value);
+    // readGlobalWP = value;
 }
