@@ -11,7 +11,7 @@ namespace Ui {
     class QGCParamSlider;
 }
 
-class QDESIGNER_WIDGET_EXPORT QGCParamSlider : public QGCToolWidgetItem
+class QGCParamSlider : public QGCToolWidgetItem
 {
     Q_OBJECT
 
