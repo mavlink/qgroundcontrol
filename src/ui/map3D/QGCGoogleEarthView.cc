@@ -74,7 +74,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     ui->setupUi(this);
 #if (defined Q_OS_MAC)
     ui->webViewLayout->addWidget(webViewMac);
-    connect(webViewMac, SIGNAL(loadFinished(bool)), this, SLOT(initializeGoogleEarth(bool)));
+    //connect(webViewMac, SIGNAL(loadFinished(bool)), this, SLOT(initializeGoogleEarth(bool)));
 #endif
 
 #ifdef _MSC_VER
@@ -219,7 +219,7 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
 #if (defined Q_OS_MAC)
             webViewMac->setPage(new QGCWebPage(webViewMac));
             webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
-            webViewMac->load(QUrl("earth.html"));
+            webViewMac->load(QUrl(QCoreApplication::applicationDirPath()+"/earth.html"));
 #endif
 
 #ifdef _MSC_VER
