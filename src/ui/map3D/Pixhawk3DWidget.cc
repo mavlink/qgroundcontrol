@@ -241,7 +241,7 @@ Pixhawk3DWidget::insertWaypoint(void)
 {
     if (uas)
     {
-        Waypoint* wp;
+        Waypoint* wp = NULL;
         if (frame == MAV_FRAME_GLOBAL)
         {
             double latitude = uas->getLatitude();

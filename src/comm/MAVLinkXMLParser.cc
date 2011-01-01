@@ -496,7 +496,7 @@ bool MAVLinkXMLParser::generate()
 
                                                 if (fieldType == "uint8_t_mavlink_version")
                                                 {
-                                                    unpackingCode = QString("\treturn %1;").arg(mavlinkVersion);
+                                                    unpackingCode = QString("\treturn (%1)(msg->payload%2)[0];").arg("uint8_t", prepends);
                                                 }
                                                 else if (fieldType == "uint8_t" || fieldType == "int8_t")
                                                 {
@@ -531,7 +531,7 @@ bool MAVLinkXMLParser::generate()
                                                 // Generate the message decoding function
                                                 if (fieldType.contains("uint8_t_mavlink_version"))
                                                 {
-                                                    unpacking += unpackingComment + QString("static inline uint8_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg)\n{\n\treturn %3;\n}\n\n").arg(messageName, fieldName).arg(mavlinkVersion);
+                                                    unpacking += unpackingComment + QString("static inline %1 mavlink_msg_%2_get_%3(const mavlink_message_t* msg)\n{\n%4\n}\n\n").arg("uint8_t", messageName, fieldName, unpackingCode);
                                                     decodeLines += "";
                                                     prepends += "+sizeof(uint8_t)";
                                                 }
