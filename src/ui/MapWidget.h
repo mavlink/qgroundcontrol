@@ -81,6 +81,10 @@ protected:
     void wheelEvent(QWheelEvent *event);
     void keyPressEvent(QKeyEvent *event);
     void resizeEvent(QResizeEvent* event);
+    /** @brief Start widget updating */
+    void showEvent(QShowEvent* event);
+    /** @brief Stop widget updating */
+    void hideEvent(QHideEvent* event);
 
     QAction* osmAction;
     QAction* yahooActionMap;

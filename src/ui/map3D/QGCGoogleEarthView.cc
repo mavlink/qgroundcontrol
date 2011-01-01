@@ -203,7 +203,8 @@ void QGCGoogleEarthView::setHome(double lat, double lon, double alt)
 
 void QGCGoogleEarthView::hideEvent(QHideEvent* event)
 {
-    Q_UNUSED(event) updateTimer->stop();
+    Q_UNUSED(event);
+    updateTimer->stop();
 }
 
 void QGCGoogleEarthView::showEvent(QShowEvent* event)
@@ -211,11 +212,9 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
     // React only to internal (pre-display)
     // events
     Q_UNUSED(event)
-    {
         // Enable widget, initialize on first run
 
-        // FIXME Re-inits now on every visibility change
-        //if (!webViewInitialized)
+        if (!webViewInitialized)
         {
 #if (defined Q_OS_MAC)
             webViewMac->setPage(new QGCWebPage(webViewMac));
@@ -233,9 +232,11 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
             gEarthInitialized = false;
 
             QTimer::singleShot(3000, this, SLOT(initializeGoogleEarth()));
+        }
+        else
+        {
             updateTimer->start(refreshRateMs);
         }
-    }
 }
 
 void QGCGoogleEarthView::printWinException(int no, QString str1, QString str2, QString str3)
@@ -348,6 +349,9 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             // Cam distance slider
             connect(ui->camDistanceSlider, SIGNAL(valueChanged(int)), this, SLOT(setViewRangeScaledInt(int)));
             setViewRangeScaledInt(ui->camDistanceSlider->value());
+
+            // Start update timer
+            updateTimer->start(refreshRateMs);
 
             gEarthInitialized = true;
         }
