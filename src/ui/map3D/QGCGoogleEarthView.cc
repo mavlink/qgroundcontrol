@@ -231,7 +231,7 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
             // Reloading the webpage, this resets Google Earth
             gEarthInitialized = false;
 
-            QTimer::singleShot(3000, this, SLOT(initializeGoogleEarth()));
+            QTimer::singleShot(10000, this, SLOT(initializeGoogleEarth()));
         }
         else
         {
@@ -300,7 +300,7 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             qDebug() << "COULD NOT GET DOCUMENT OBJECT! Aborting";
         }
 #endif
-        QTimer::singleShot(3500, this, SLOT(initializeGoogleEarth()));
+        QTimer::singleShot(2500, this, SLOT(initializeGoogleEarth()));
         return;
     }
 

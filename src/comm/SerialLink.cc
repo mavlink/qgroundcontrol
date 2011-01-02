@@ -1,24 +1,4 @@
 /*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
 ======================================================================*/
 /**
  * @file
@@ -58,34 +38,16 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
 
-    // Load defaults from settings
-    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
-    settings.sync();
-    if (settings.contains("SERIALLINK_COMM_PORT"))
-    {
-        this->porthandle = settings.value("SERIALLINK_COMM_PORT").toString();
-    }
-
     // *nix (Linux, MacOS tested) serial port support
     port = new QextSerialPort(porthandle, QextSerialPort::Polling);
     //port = new QextSerialPort(porthandle, QextSerialPort::EventDriven);
 
-    if (settings.contains("SERIALLINK_COMM_PORT"))
-    {
-        setBaudRate(settings.value("SERIALLINK_COMM_BAUD").toInt());
-        setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
-        setStopBitsType(settings.value("SERIALLINK_COMM_STOPBITS").toInt());
-        setDataBitsType(settings.value("SERIALLINK_COMM_DATABITS").toInt());
-    }
-    else
-    {
-        this->baudrate = baudrate;
-        this->flow = flow;
-        this->parity = parity;
-        this->dataBits = dataBits;
-        this->stopBits = stopBits;
-        this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
-    }
+    this->baudrate = baudrate;
+    this->flow = flow;
+    this->parity = parity;
+    this->dataBits = dataBits;
+    this->stopBits = stopBits;
+    this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
     port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
     port->setBaudRate(baudrate);
     port->setFlowControl(flow);
@@ -96,7 +58,7 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
     // Set the port name
     if (porthandle == "")
     {
-//        name = tr("serial link ") + QString::number(getId()) + tr(" (unconfigured)");
+        //        name = tr("serial link ") + QString::number(getId()) + tr(" (unconfigured)");
         name = tr("Serial Link ") + QString::number(getId());
     }
     else
@@ -132,6 +94,33 @@ SerialLink::~SerialLink()
     disconnect();
     if(port) delete port;
     port = NULL;
+}
+
+void SerialLink::loadSettings()
+{
+    // Load defaults from settings
+    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+    settings.sync();
+    if (settings.contains("SERIALLINK_COMM_PORT"))
+    {
+        setPortName(settings.value("SERIALLINK_COMM_PORT").toString());
+        setBaudRateType(settings.value("SERIALLINK_COMM_BAUD").toInt());
+        setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
+        setStopBitsType(settings.value("SERIALLINK_COMM_STOPBITS").toInt());
+        setDataBitsType(settings.value("SERIALLINK_COMM_DATABITS").toInt());
+    }
+}
+
+void SerialLink::writeSettings()
+{
+    // Store settings
+    QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
+    settings.setValue("SERIALLINK_COMM_PORT", this->porthandle);
+    settings.setValue("SERIALLINK_COMM_BAUD", getBaudRateType());
+    settings.setValue("SERIALLINK_COMM_PARITY", getParityType());
+    settings.setValue("SERIALLINK_COMM_STOPBITS", getStopBitsType());
+    settings.setValue("SERIALLINK_COMM_DATABITS", getDataBitsType());
+    settings.sync();
 }
 
 
@@ -189,13 +178,13 @@ void SerialLink::writeBytes(const char* data, qint64 size)
         // Increase write counter
         bitsSentTotal += size * 8;
 
-//        int i;
-//        for (i=0; i<size; i++)
-//        {
-//            unsigned char v=data[i];
+        //        int i;
+        //        for (i=0; i<size; i++)
+        //        {
+        //            unsigned char v=data[i];
 
-//            //fprintf(stderr,"%02x ", v);
-//        }
+        //            //fprintf(stderr,"%02x ", v);
+        //        }
     }
 }
 
@@ -321,18 +310,12 @@ bool SerialLink::hardwareConnect()
     statisticsMutex.unlock();
 
     bool connectionUp = isConnected();
-    if(connectionUp) {
+    if(connectionUp)
+    {
         emit connected();
         emit connected(true);
 
-        // Store settings
-        QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
-        settings.setValue("SERIALLINK_COMM_PORT", this->porthandle);
-        settings.setValue("SERIALLINK_COMM_BAUD", getBaudRate());
-        settings.setValue("SERIALLINK_COMM_PARITY", getParityType());
-        settings.setValue("SERIALLINK_COMM_STOPBITS", getStopBitsType());
-        settings.setValue("SERIALLINK_COMM_DATABITS", getDataBitsType());
-        settings.sync();
+        writeSettings();
     }
 
     return connectionUp;
@@ -376,7 +359,8 @@ void SerialLink::setName(QString name)
 qint64 SerialLink::getNominalDataRate()
 {
     qint64 dataRate = 0;
-    switch (baudrate) {
+    switch (baudrate)
+    {
     case BAUD50:
         dataRate = 50;
         break;
@@ -442,6 +426,13 @@ qint64 SerialLink::getNominalDataRate()
         break;
     case BAUD256000:
         dataRate = 256000;
+        // Windows-specific high-end baudrates
+    case BAUD230400:
+        dataRate = 230400;
+    case BAUD460800:
+        dataRate = 460800;
+    case BAUD921600:
+        dataRate = 921600;
         break;
     }
     return dataRate;
@@ -543,7 +534,8 @@ bool SerialLink::setPortName(QString portName)
     if(portName.trimmed().length() > 0)
     {
         bool reconnect = false;
-        if(isConnected()) {
+        if(isConnected())
+        {
             disconnect();
             reconnect = true;
         }
@@ -650,7 +642,16 @@ bool SerialLink::setBaudRateType(int rateIndex)
         baudrate = BAUD128000;
         break;
     case 21:
+        baudrate = BAUD230400;
+        break;
+    case 22:
         baudrate = BAUD256000;
+        break;
+    case 23:
+        baudrate = BAUD460800;
+        break;
+    case 24:
+        baudrate = BAUD921600;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -671,12 +672,14 @@ bool SerialLink::setBaudRate(int rate)
 {
     bool reconnect = false;
     bool accepted = true; // This is changed if none of the data rates matches
-    if(isConnected()) {
+    if(isConnected())
+    {
         disconnect();
         reconnect = true;
     }
 
-    switch (rate) {
+    switch (rate)
+    {
     case 50:
         baudrate = BAUD50;
         break;
@@ -740,8 +743,17 @@ bool SerialLink::setBaudRate(int rate)
     case 128000:
         baudrate = BAUD128000;
         break;
+    case 230400:
+        baudrate = BAUD230400;
+        break;
     case 256000:
         baudrate = BAUD256000;
+        break;
+    case 460800:
+        baudrate = BAUD460800;
+        break;
+    case 921600:
+        baudrate = BAUD921600;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -765,12 +777,14 @@ bool SerialLink::setFlowType(int flow)
 {
     bool reconnect = false;
     bool accepted = true;
-    if(isConnected()) {
+    if(isConnected())
+    {
         disconnect();
         reconnect = true;
     }
 
-    switch (flow) {
+    switch (flow)
+    {
     case FLOW_OFF:
         this->flow = FLOW_OFF;
         break;
@@ -794,12 +808,14 @@ bool SerialLink::setParityType(int parity)
 {
     bool reconnect = false;
     bool accepted = true;
-    if(isConnected()) {
+    if(isConnected())
+    {
         disconnect();
         reconnect = true;
     }
 
-    switch (parity) {
+    switch (parity)
+    {
     case PAR_NONE:
         this->parity = PAR_NONE;
         break;
@@ -826,11 +842,14 @@ bool SerialLink::setParityType(int parity)
     return accepted;
 }
 
+
+// FIXME Works not as anticipated by user!
 bool SerialLink::setDataBitsType(int dataBits)
 {
     bool accepted = true;
 
-    switch (dataBits) {
+    switch (dataBits)
+    {
     case 5:
         this->dataBits = DATA_5;
         break;
@@ -858,6 +877,7 @@ bool SerialLink::setDataBitsType(int dataBits)
     return accepted;
 }
 
+// FIXME WORKS NOT AS ANTICIPATED BY USER!
 bool SerialLink::setStopBitsType(int stopBits)
 {
     bool reconnect = false;
@@ -867,7 +887,8 @@ bool SerialLink::setStopBitsType(int stopBits)
         reconnect = true;
     }
 
-    switch (stopBits) {
+    switch (stopBits)
+    {
     case 1:
         this->stopBits = STOP_1;
         break;
