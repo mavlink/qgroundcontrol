@@ -234,6 +234,7 @@ userConfigured(false)
 
     if(serialLink != 0)
     {
+        serialLink->loadSettings();
         this->link = serialLink;
 
         // Setup the user interface according to link type

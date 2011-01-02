@@ -72,7 +72,7 @@ public:
 public slots:
     void addCurve(QString curve);
     void removeCurve(QString curve);
-    void appendData(int sysId, QString curve, double data, quint64 usec);
+    void appendData(int uasId, QString curve, double data, quint64 usec);
     void takeButtonClick(bool checked);
     void setPlotWindowPosition(int scrollBarValue);
     void setPlotWindowPosition(quint64 position);
