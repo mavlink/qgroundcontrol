@@ -45,6 +45,8 @@ var planeOrient;
 var planeLoc;
 
 var aircraft = [];
+var aircraftLocations = [];
+var aircraftLastLocations = [];
 var attitudes = [];
 var locations = [];
 var trails = [];
@@ -134,7 +136,8 @@ function createAircraft(id, type, color)
           // Write into global structure
           aircraft[id] = planePlacemark;
           attitudes[id] = planeOrient;
-          locations[id] = planeLoc;
+          aircraftLocations[id] = planeLoc;
+		  aircraftLastLocations[id] = ge.createLocation('');
           //planeColor = color;
           
           createTrail(id, color);
@@ -192,7 +195,7 @@ function addTrailPosition(id, lat, lon, alt)
 trails[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 
 // Add LineString points
-trails[id].getCoordinates().pushLatLngAlt(lat, lon, alt);
+	trails[id].getCoordinates().pushLatLngAlt(lat, lon, alt);
 
 // Create a style and set width and color of line
 trailPlacemarks[id].setStyleSelector(ge.createStyle(''));
@@ -238,18 +241,18 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 		currLon = lon;
 		currAlt = alt;
 		//currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
-	}
+	
 	
 	// FIXME Currently invalid conversion from right-handed z-down to z-up frame
 	planeOrient.setRoll(((roll/M_PI)+1.0)*360.0);
 	planeOrient.setTilt(((pitch/M_PI)+1.0)*360.0);
 	planeOrient.setHeading(((yaw/M_PI)+1.0)*360.0);
-        
+    }
         
                 
-    planeLoc.setLatitude(lat);
-    planeLoc.setLongitude(lon);
-    planeLoc.setAltitude(alt);
+    //planeLoc.setLatitude(lat);
+    //planeLoc.setLongitude(lon);
+    //planeLoc.setAltitude(alt);
 	
 }
 
@@ -284,18 +287,24 @@ function setCurrentAircraft(id)
 function updateFollowAircraft()
 {
 	currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
-	// Interpolate
-	currView.setLatitude(lastLat*0.7+currLat*0.3);
-	currView.setLongitude(lastLon*0.7+currLon*0.3);
-	currView.setAltitude(lastAlt*0.7+currAlt*0.3);
-	// Set new states
+	// Interpolate between t-1 and t and set new states
 	lastLat = lastLat*0.7+currLat*0.3;
 	lastLon = lastLon*0.7+currLon*0.3;
 	lastAlt = lastAlt*0.7+currAlt*0.3;
+	currView.setLatitude(lastLat);
+	currView.setLongitude(lastLon);
+	currView.setAltitude(lastAlt);
+
 	currView.setRange(currViewRange);
 	currView.setTilt(currFollowTilt);
 	currFollowHeading = 0;// 0.9*currFollowHeading+0.1*((Math.atan2(lastLat-currLat, lastLon-currLon)/M_PI)+1.0)*360.0;
 	currView.setHeading(currFollowHeading-0.0);
+	
+	// FIXME Shouldn't update aircraft in here, but works for now
+	planeLoc.setLatitude(lastLat);
+    planeLoc.setLongitude(lastLon);
+    planeLoc.setAltitude(lastAlt);
+	
 	ge.getView().setAbstractView(currView);
 }
 
