@@ -16,20 +16,20 @@ LicenseData ..\license.txt
 Section ""
 
   SetOutPath $INSTDIR
-  File qgroundcontrol\*.*
-  WriteUninstaller $INSTDIR\QGroundcontrol_uninstall.exe
+  File ..\release\*.*
+  WriteUninstaller $INSTDIR\QGroundControl_uninstall.exe
 SectionEnd 
 
 Section "Uninstall"
-  Delete $INSTDIR\QGroundcontrol_uninstall.exe
+  Delete $INSTDIR\QGroundControl_uninstall.exe
   Delete $INSTDIR\*.*
   RMDir $INSTDIR
-  Delete "$SMPROGRAMS\QGroundcontrol\*.*"
-  RMDir "$SMPROGRAMS\QGroundcontrol\"
+  Delete "$SMPROGRAMS\QGroundControl\*.*"
+  RMDir "$SMPROGRAMS\QGroundControl\"
 SectionEnd
 
 Section "create Start Menu Shortcuts"
-  CreateDirectory "$SMPROGRAMS\QGroundcontrol"
-  CreateShortCut "$SMPROGRAMS\QGroundcontrol\uninstall.lnk" "$INSTDIR\QGroundcontrol_uninstall.exe" "" "$INSTDIR\QGroundcontrol_uninstall.exe" 0
-  CreateShortCut "$SMPROGRAMS\QGroundcontrol\QGroundcontrol.lnk" "$INSTDIR\qgroundcontrol.exe" "" "$INSTDIR\qgroundcontrol.exe" 0
+  CreateDirectory "$SMPROGRAMS\QGroundControl"
+  CreateShortCut "$SMPROGRAMS\QGroundControl\uninstall.lnk" "$INSTDIR\QGroundControl_uninstall.exe" "" "$INSTDIR\QGroundControl_uninstall.exe" 0
+  CreateShortCut "$SMPROGRAMS\QGroundControl\QGroundControl.lnk" "$INSTDIR\qgroundcontrol.exe" "" "$INSTDIR\qgroundcontrol.exe" 0
 SectionEnd
