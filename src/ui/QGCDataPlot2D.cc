@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCDataPlot2D.h"
 #include "ui_QGCDataPlot2D.h"
 #include "MG.h"
+#include "MainWindow.h"
 #include <cmath>
 
 #include <QDebug>
@@ -75,7 +76,7 @@ void QGCDataPlot2D::reloadFile()
 {
     if (QFileInfo(fileName).isReadable())
     {
-        if (ui->inputFileType->currentText().contains("pxIMU"))
+        if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW"))
         {
             loadRawLog(fileName, ui->xAxis->currentText(), ui->yAxis->text());
         }
@@ -88,9 +89,10 @@ void QGCDataPlot2D::reloadFile()
 
 void QGCDataPlot2D::loadFile()
 {
+    qDebug() << "DATA PLOT: Loading file:" << fileName;
     if (QFileInfo(fileName).isReadable())
     {
-        if (ui->inputFileType->currentText().contains("pxIMU"))
+        if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW"))
         {
             loadRawLog(fileName);
         }
@@ -110,7 +112,7 @@ void QGCDataPlot2D::loadFile(QString file)
         {
             loadRawLog(fileName);
         }
-        else if (fileName.contains(".txt") || fileName.contains(".csv"))
+        else if (fileName.contains(".txt") || fileName.contains(".csv") || fileName.contains(".csv"))
         {
             loadCsvLog(fileName);
         }
@@ -129,7 +131,7 @@ void QGCDataPlot2D::savePlot()
 
     if (!fileName.contains("."))
     {
-        // .csv is default extension
+        // .pdf is default extension
         fileName.append(".pdf");
     }
 
@@ -269,7 +271,16 @@ void QGCDataPlot2D::selectFile()
     // Let user select the log file name
     //QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.csv *.txt *.log)");
+
+    if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW"))
+    {
+        fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.imu *.raw)");
+    }
+    else
+    {
+        fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.csv *.txt *.log)");
+    }
+
     // Store reference to file
 
     QFileInfo fileInfo(fileName);
@@ -296,32 +307,36 @@ void QGCDataPlot2D::selectFile()
 
 void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFilter)
 {
+    qDebug() << "LOADING RAW LOG!";
+
     if (logFile != NULL)
     {
         logFile->close();
         delete logFile;
     }
     // Postprocess log file
-    logFile = new QTemporaryFile();
+    logFile = new QTemporaryFile("qt_qgc_temp_log.XXXXXX.csv");
     compressor = new LogCompressor(file, logFile->fileName());
+    connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
+    connect(compressor, SIGNAL(finishedFile(QString)), this, SLOT(loadFile(QString)));
     compressor->startCompression();
 
-    // Block UI
-    QProgressDialog progress("Transforming RAW log file to CSV", "Abort Transformation", 0, 1, this);
-    progress.setWindowModality(Qt::WindowModal);
+//    // Block UI
+//    QProgressDialog progress("Transforming RAW log file to CSV", "Abort Transformation", 0, 1, this);
+//    progress.setWindowModality(Qt::WindowModal);
 
-    while (!compressor->isFinished())
-    {
-        MG::SLEEP::usleep(100000);
-        progress.setMaximum(compressor->getDataLines());
-        progress.setValue(compressor->getCurrentLine());
-    }
-    // Enforce end
-    progress.setMaximum(compressor->getDataLines());
-    progress.setValue(compressor->getDataLines());
+//    while (!compressor->isFinished())
+//    {
+//        MG::SLEEP::usleep(100000);
+////        progress.setMaximum(compressor->getDataLines());
+////        progress.setValue(compressor->getCurrentLine());
+//    }
+//    // Enforce end
+//    progress.setMaximum(compressor->getDataLines());
+//    progress.setValue(compressor->getDataLines());
 
     // Done with preprocessing - now load csv log
-    loadCsvLog(logFile->fileName(), xAxisName, yAxisFilter);
+    //loadFile(logFile->fileName());
 }
 
 /**
@@ -654,6 +669,13 @@ void QGCDataPlot2D::saveCsvLog()
     fileName = QFileDialog::getSaveFileName(
             this, "Export CSV File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
             "CSV file (*.csv);;Text file (*.txt)");
+
+    if (!fileName.contains("."))
+    {
+        // .csv is default extension
+        fileName.append(".csv");
+    }
+
     //    QFileInfo fileInfo(fileName);
     //
     //    // Check if we could create a new file in this directory
