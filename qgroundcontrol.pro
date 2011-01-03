@@ -145,13 +145,15 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
     src/ui/map3D/QGCGoogleEarthViewWin.ui \
-    src/ui/map3D/QGCGoogleEarthControls.ui \
     src/ui/SlugsDataSensorView.ui \
     src/ui/SlugsHilSim.ui \
     src/ui/SlugsPIDControl.ui \
     src/ui/SlugsVideoCamControl.ui \
     src/ui/SlugsPadCameraControl.ui \
-    src/ui/uas/QGCUnconnectedInfoWidget.ui
+    src/ui/uas/QGCUnconnectedInfoWidget.ui \
+    src/ui/designer/QGCToolWidget.ui \
+    src/ui/designer/QGCParamSlider.ui \
+    src/ui/designer/QGCActionButton.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -166,7 +168,8 @@ INCLUDEPATH += src \
     src/ui/mavlink \
     src/ui/param \
     src/ui/watchdog \
-    src/ui/map3D
+    src/ui/map3D \
+    src/ui/designer
 
 HEADERS += src/MG.h \
     src/Core.h \
@@ -252,7 +255,11 @@ HEADERS += src/MG.h \
     src/ui/SlugsPadCameraControl.h \
     src/ui/QGCMainWindowAPConfigurator.h \
     src/comm/MAVLinkSwarmSimulationLink.h \
-    src/ui/uas/QGCUnconnectedInfoWidget.h
+    src/ui/uas/QGCUnconnectedInfoWidget.h \
+    src/ui/designer/QGCToolWidget.h \
+    src/ui/designer/QGCParamSlider.h \
+    src/ui/designer/QGCActionButton.h \
+    src/ui/designer/QGCToolWidgetItem.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008: {
@@ -369,7 +376,11 @@ SOURCES += src/main.cc \
     src/ui/SlugsPadCameraControl.cpp \
     src/ui/QGCMainWindowAPConfigurator.cc \
     src/comm/MAVLinkSwarmSimulationLink.cc \
-    src/ui/uas/QGCUnconnectedInfoWidget.cc
+    src/ui/uas/QGCUnconnectedInfoWidget.cc \
+    src/ui/designer/QGCToolWidget.cc \
+    src/ui/designer/QGCParamSlider.cc \
+    src/ui/designer/QGCActionButton.cc \
+    src/ui/designer/QGCToolWidgetItem.cc
 
 macx|win32-msvc2008: {
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

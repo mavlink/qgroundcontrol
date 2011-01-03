@@ -46,7 +46,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
-        HDDisplay(NULL, parent),
+        HDDisplay(NULL, "", parent),
         gpsSatellites(),
         satellitesUsed(0),
         attXSet(0),

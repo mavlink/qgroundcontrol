@@ -55,7 +55,7 @@ This file is part of the QGROUNDCONTROL project
  * @param writeFile The received messages are written to that file
  * @param rate The rate at which the messages are sent (in intervals of milliseconds)
  **/
-MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate) :
+MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile, int rate, QObject* parent) : LinkInterface(parent),
         readyBytes(0),
         timeOffset(0)
 {
@@ -289,16 +289,19 @@ void MAVLinkSimulationLink::mainloop()
                     if (keys.value(i, "") == "Gyro_Phi")
                     {
                         rawImuValues.xgyro = d;
+                        attitude.rollspeed = ((d-29.000)/15000.0)*2.7-2.7-2.65;
                     }
 
                     if (keys.value(i, "") == "Gyro_Theta")
                     {
                         rawImuValues.ygyro = d;
+                        attitude.pitchspeed = ((d-29.000)/15000.0)*2.7-2.7-2.65;
                     }
 
                     if (keys.value(i, "") == "Gyro_Psi")
                     {
                         rawImuValues.zgyro = d;
+                        attitude.yawspeed = ((d-29.000)/3000.0)*2.7-2.7-2.65;
                     }
 #ifdef MAVLINK_ENABLED_PIXHAWK
                     if (keys.value(i, "") == "Pressure")
@@ -419,6 +422,20 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
+        // GLOBAL POSITION VEHICLE 2
+        mavlink_msg_global_position_int_pack(54, componentId, &ret, (473780.28137103+(x+0.002))*1E3, (85489.9892510421+((y/2)+0.3))*1E3, (z+570.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+
+//        // GLOBAL POSITION VEHICLE 3
+//        mavlink_msg_global_position_int_pack(60, componentId, &ret, (473780.28137103+(x/2+0.002))*1E3, (85489.9892510421+((y*2)+0.3))*1E3, (z+590.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
+//        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+//        //add data into datastream
+//        memcpy(stream+streampointer,buffer, bufferlength);
+//        streampointer += bufferlength;
+
         static int rcCounter = 0;
         if (rcCounter == 2)
         {
@@ -431,6 +448,7 @@ void MAVLinkSimulationLink::mainloop()
             chan.chan6_raw = (chan.chan3_raw + chan.chan2_raw) / 2.0f;
             chan.chan7_raw = (chan.chan4_raw + chan.chan2_raw) / 2.0f;
             chan.chan8_raw = (chan.chan6_raw + chan.chan2_raw) / 2.0f;
+            chan.rssi = 100;
             messageSize = mavlink_msg_rc_channels_raw_encode(systemId, componentId, &msg, &chan);
             // Allocate buffer with packet data
             bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
@@ -593,6 +611,16 @@ void MAVLinkSimulationLink::mainloop()
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
+
+//        // HEARTBEAT VEHICLE 3
+
+//        // Pack message and get size of encoded byte string
+//        messageSize = mavlink_msg_heartbeat_pack(60, componentId, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK);
+//        // Allocate buffer with packet data
+//        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+//        //add data into datastream
+//        memcpy(stream+streampointer,buffer, bufferlength);
+//        streampointer += bufferlength;
 
         // STATUS VEHICLE 2
         mavlink_sys_status_t status2;

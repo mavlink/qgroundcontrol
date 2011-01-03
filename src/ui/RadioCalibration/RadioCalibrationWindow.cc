@@ -84,6 +84,9 @@ void RadioCalibrationWindow::setChannelRaw(int ch, float raw)
 
 void RadioCalibrationWindow::setChannelScaled(int ch, float normalized)
 {
+    // FIXME James
+    // FIXME Bryan
+
 //    /** this expects a particular channel to function mapping
 //       \todo allow run-time channel mapping
 //       */

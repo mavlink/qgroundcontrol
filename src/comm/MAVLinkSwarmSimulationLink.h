@@ -7,7 +7,7 @@ class MAVLinkSwarmSimulationLink : public MAVLinkSimulationLink
 {
     Q_OBJECT
 public:
-    explicit MAVLinkSwarmSimulationLink(QObject *parent = 0);
+    MAVLinkSwarmSimulationLink(QString readFile="", QString writeFile="", int rate=5, QObject *parent = 0);
 
 signals:
 

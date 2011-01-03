@@ -394,11 +394,14 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
 
 void UASWaypointManager::globalAddWaypoint(Waypoint *wp)
 {
-
+    // FIXME Will be removed
+    Q_UNUSED(wp);
 }
 
 int UASWaypointManager::globalRemoveWaypoint(quint16 seq)
 {
+    // FIXME Will be removed
+    Q_UNUSED(seq);
     return 0;
 }
 

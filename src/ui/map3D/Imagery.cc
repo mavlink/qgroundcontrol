@@ -75,7 +75,7 @@ Imagery::prefetch2D(double windowWidth, double windowHeight,
         return;
     }
 
-    double tileResolution;
+    double tileResolution = 1.0;
     if (currentImageryType == GOOGLE_SATELLITE ||
         currentImageryType == GOOGLE_MAP)
     {
@@ -131,7 +131,7 @@ Imagery::draw2D(double windowWidth, double windowHeight,
         return;
     }
 
-    double tileResolution;
+    double tileResolution = 1.0;
     if (currentImageryType == GOOGLE_SATELLITE ||
         currentImageryType == GOOGLE_MAP)
     {

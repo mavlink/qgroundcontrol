@@ -46,6 +46,8 @@
      <string>File</string>
     </property>
     <addaction name="actionJoystick_Settings"/>
+    <addaction name="actionNewCustomWidget"/>
+    <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
@@ -108,7 +110,6 @@
    <addaction name="menuPerspectives"/>
    <addaction name="menuHelp"/>
   </widget>
-
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionExit">
    <property name="icon">
@@ -430,6 +431,27 @@
     <string>Pilot</string>
    </property>
   </action>
+  <action name="actionNewCustomWidget">
+   <property name="text">
+    <string>New Custom Widget</string>
+   </property>
+  </action>
+  <action name="actionMuteAudioOutput">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/audio-volume-high.svg</normaloff>
+     <normalon>:/images/status/audio-volume-muted.svg</normalon>
+     <activeon>:/images/status/audio-volume-muted.svg</activeon>
+     <selectedoff>:/images/status/audio-volume-high.svg</selectedoff>
+     <selectedon>:/images/status/audio-volume-muted.svg</selectedon>:/images/status/audio-volume-high.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Mute Audio Output</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
@@ -454,5 +476,3 @@
   </connection>
  </connections>
 </ui>
-
-
