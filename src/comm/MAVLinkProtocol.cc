@@ -60,6 +60,7 @@ MAVLinkProtocol::MAVLinkProtocol() :
         m_heartbeatsEnabled(false),
         m_loggingEnabled(false),
         m_logfile(NULL),
+        m_enable_version_check(true),
         versionMismatchIgnore(false)
 {
     start(QThread::LowPriority);
@@ -77,6 +78,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
             lastIndex[i][j] = -1;
         }
     }
+
+    emit versionCheckChanged(m_enable_version_check);
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()
@@ -161,7 +164,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
 
                 // Check if the UAS has a different protocol version
-                if (heartbeat.mavlink_version != MAVLINK_VERSION)
+                if (m_enable_version_check && (heartbeat.mavlink_version != MAVLINK_VERSION))
                 {
                     // Bring up dialog to inform user
                     if (!versionMismatchIgnore)
@@ -400,6 +403,11 @@ void MAVLinkProtocol::enableLogging(bool enabled)
     m_loggingEnabled = enabled;
 }
 
+void MAVLinkProtocol::enableVersionCheck(bool enabled)
+{
+    m_enable_version_check = enabled;
+}
+
 bool MAVLinkProtocol::heartbeatsEnabled(void)
 {
     return m_heartbeatsEnabled;
@@ -408,6 +416,11 @@ bool MAVLinkProtocol::heartbeatsEnabled(void)
 bool MAVLinkProtocol::loggingEnabled(void)
 {
     return m_loggingEnabled;
+}
+
+bool MAVLinkProtocol::versionCheckEnabled(void)
+{
+    return m_enable_version_check;
 }
 
 /**

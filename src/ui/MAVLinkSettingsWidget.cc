@@ -37,15 +37,19 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
 {
     m_ui->setupUi(this);
 
+    // Initialize state
+    m_ui->heartbeatCheckBox->setChecked(protocol->heartbeatsEnabled());
+    m_ui->loggingCheckBox->setChecked(protocol->loggingEnabled());
+    m_ui->versionCheckBox->setChecked(protocol->versionCheckEnabled());
+
     // Connect actions
     connect(protocol, SIGNAL(heartbeatChanged(bool)), m_ui->heartbeatCheckBox, SLOT(setChecked(bool)));
     connect(m_ui->heartbeatCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableHeartbeats(bool)));
     connect(protocol, SIGNAL(loggingChanged(bool)), m_ui->loggingCheckBox, SLOT(setChecked(bool)));
     connect(m_ui->loggingCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableLogging(bool)));
+    connect(protocol, SIGNAL(versionCheckChanged(bool)), m_ui->versionCheckBox, SLOT(setChecked(bool)));
+    connect(m_ui->versionCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableVersionCheck(bool)));
 
-    // Initialize state
-    m_ui->heartbeatCheckBox->setChecked(protocol->heartbeatsEnabled());
-    m_ui->loggingCheckBox->setChecked(protocol->loggingEnabled());
 }
 
 MAVLinkSettingsWidget::~MAVLinkSettingsWidget()

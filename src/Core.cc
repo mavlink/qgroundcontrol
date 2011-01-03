@@ -91,8 +91,6 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     //     "Warning: Do not use this function in conjunction with Qt Style Sheets."
     // setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
 
-    mainWindow = MainWindow::instance();
-
     // Start the comm link manager
     splashScreen->showMessage(tr("Starting Communication Links"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     startLinkManager();
@@ -107,9 +105,6 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     // Start the user interface
     splashScreen->showMessage(tr("Starting User Interface"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
     // Start UI
-
-        // Remove splash screen
-    splashScreen->finish(mainWindow);
 
     // Connect links
     // to make sure that all components are initialized when the
@@ -129,6 +124,10 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
     simulationLink->disconnect();
     //mainWindow->addLink(simulationLink);
+
+    mainWindow = MainWindow::instance();
+        // Remove splash screen
+    splashScreen->finish(mainWindow);
 
     // Check if link could be connected
     if (!udpLink->connect())
