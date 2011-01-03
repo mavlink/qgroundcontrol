@@ -18,6 +18,7 @@ var followEnabled = false;
 
 var lastLat = 0;
 var lastLon = 0;
+var lastAlt = 0;
 var currLat = 47.3769;
 var currLon = 8.549444;
 var currAlt = 470;
@@ -210,8 +211,11 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 {
 	if (id == currAircraft)
 	{
-		lastLat = currLat;
-		lastLon = lastLon;
+		if (lastLat == 0)
+		{
+			lastLat = currLat;
+			lastLon = lastLon;
+		}
 		currLat = lat;
 		currLon = lon;
 		currAlt = alt;
@@ -262,12 +266,17 @@ function setCurrentAircraft(id)
 function updateFollowAircraft()
 {
 	currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
-	currView.setLatitude(currLat);
-	currView.setLongitude(currLon);
-	currView.setAltitude(currAlt);
+	// Interpolate
+	currView.setLatitude(lastLat*0.7+currLat*0.3);
+	currView.setLongitude(lastLon*0.7+currLon*0.3);
+	currView.setAltitude(lastAlt*0.7+currAlt*0.3);
+	// Set new states
+	lastLat = lastLat*0.7+currLat*0.3;
+	lastLon = lastLon*0.7+currLon*0.3;
+	lastAlt = lastAlt*0.7+currAlt*0.3;
 	currView.setRange(currViewRange);
 	currView.setTilt(currFollowTilt);
-	currFollowHeading = 0.9*currFollowHeading+0.1*((Math.atan2(lastLat-currLat, lastLon-currLon)/M_PI)+1.0)*360.0;
+	currFollowHeading = 0;// 0.9*currFollowHeading+0.1*((Math.atan2(lastLat-currLat, lastLon-currLon)/M_PI)+1.0)*360.0;
 	currView.setHeading(currFollowHeading-0.0);
 	ge.getView().setAbstractView(currView);
 }
