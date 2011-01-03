@@ -102,6 +102,7 @@ protected:
     int totalLossCounter;
     int currReceiveCounter;
     int currLossCounter;
+    bool versionMismatchIgnore;
 
 signals:
     /** @brief Message received and directly copied via signal */
@@ -110,6 +111,8 @@ signals:
     void heartbeatChanged(bool heartbeats);
     /** @brief Emitted if logging is started / stopped */
     void loggingChanged(bool enabled);
+    /** @brief Emitted if a message from the protocol should reach the user */
+    void protocolStatusMessage(const QString& title, const QString& message);
 };
 
 #endif // MAVLINKPROTOCOL_H_
