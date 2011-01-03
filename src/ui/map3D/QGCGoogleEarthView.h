@@ -11,19 +11,41 @@
 
 #ifdef _MSC_VER
 #include <ActiveQt/QAxWidget>
+#include <ActiveQt/QAxObject>
 #include "windows.h"
 
 class QGCWebAxWidget : public QAxWidget
 {
 public:
-
+    //Q_OBJECT
     QGCWebAxWidget(QWidget* parent = 0, Qt::WindowFlags f = 0)
-        : QAxWidget(parent, f)
+        : QAxWidget(parent, f)/*,
+		_document(NULL)*/
     {
-		// Set web browser control
-		setControl("{8856F961-340A-11D0-A96B-00C04FD705A2}");
+        // Set web browser control
+        setControl("{8856F961-340A-11D0-A96B-00C04FD705A2}");
+        // WARNING: Makes it impossible to actually debug javascript. But useful in production mode
+        setProperty("ScriptErrorsSuppressed", true);
+        // see: http://www.codeproject.com/KB/cpp/ExtendedWebBrowser.aspx?fid=285594&df=90&mpp=25&noise=3&sort=Position&view=Quick&fr=151#GoalScriptError
+
+        //this->dynamicCall("setProperty(const QString&,
+        //QObject::connect(this, SIGNAL(DocumentComplete(IDispatch*, QVariant&)), this, SLOT(setDocument(IDispatch*, QVariant&)));
+
+
     }
+    /*
+	QAxObject* document()
+	{
+		return _document;
+	}*/
+
 protected:
+    /*
+	void setDocument(IDispatch* dispatch, QVariant& variant)
+	{
+		_document = this->querySubObject("Document()");
+	}
+	QAxObject* _document;*/
     virtual bool translateKeyEvent(int message, int keycode) const
     {
         if (message >= WM_KEYFIRST && message <= WM_KEYLAST)
@@ -59,7 +81,7 @@ public slots:
     /** @brief Set the currently selected UAS */
     void setActiveUAS(UASInterface* uas);
     /** @brief Update the global position */
-    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
+    void updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec);
     /** @brief Show the vehicle trail */
     void showTrail(bool state);
     /** @brief Show the waypoints */
@@ -70,8 +92,19 @@ public slots:
     void goHome();
     /** @brief Set the home location */
     void setHome(double lat, double lon, double alt);
+    /** @brief Set camera view range to aircraft in meters */
+    void setViewRange(float range);
+    /** @brief Set camera view range to aircraft in centimeters */
+    void setViewRangeScaledInt(int range);
+
     /** @brief Initialize Google Earth */
     void initializeGoogleEarth();
+    /** @brief Print a Windows exception */
+    void printWinException(int no, QString str1, QString str2, QString str3);
+
+public:
+    /** @brief Execute java script inside the Google Earth window */
+    QVariant javaScript(QString javascript);
 
 protected:
     void changeEvent(QEvent *e);
@@ -80,10 +113,13 @@ protected:
     UASInterface* mav;
     bool followCamera;
     bool trailEnabled;
+    bool waypointsEnabled;
     bool webViewInitialized;
+    bool jScriptInitialized;
     bool gEarthInitialized;
 #ifdef _MSC_VER
     QGCWebAxWidget* webViewWin;
+    QAxObject* jScriptWin;
 #endif
 #if (defined Q_OS_MAC)
     QWebView* webViewMac;

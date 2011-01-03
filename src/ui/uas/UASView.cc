@@ -215,6 +215,7 @@ void UASView::hideEvent(QHideEvent* event)
 
 void UASView::receiveHeartbeat(UASInterface* uas)
 {
+    Q_UNUSED(uas);
     QString colorstyle;
     heartbeatColor = QColor(20, 200, 20);
     colorstyle = colorstyle.sprintf("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",

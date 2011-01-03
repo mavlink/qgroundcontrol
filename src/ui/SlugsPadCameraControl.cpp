@@ -215,7 +215,8 @@ double SlugsPadCameraControl::getDistPixel(int x1, int y1, int x2, int y2)
 QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, double lat1,
                                                               double lon2, double lat2)
 {
-    double cateto_opuesto,cateto_adyacente, hipotenusa, distancia, marcacion;
+    double cateto_opuesto,cateto_adyacente, hipotenusa, distancia;
+    double marcacion = 0.0;
 
     //latitude and longitude first point
 
@@ -228,7 +229,7 @@ QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, doubl
     cateto_adyacente = abs((lon1-lon2));
 
     hipotenusa = sqrt(pow(cateto_opuesto,2) + pow(cateto_adyacente,2));
-    distancia = hipotenusa*60;
+    distancia = hipotenusa*60.0;
 
 
     if ((lat1 < lat2) && (lon1 > lon2)) //primer cuadrante

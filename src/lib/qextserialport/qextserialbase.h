@@ -92,8 +92,11 @@ enum BaudRateType
     BAUD57600,
     BAUD76800,             //POSIX ONLY
     BAUD115200,
-    BAUD128000,            //WINDOWS ONLY
-    BAUD256000             //WINDOWS ONLY
+    BAUD128000,            // WINDOWS ONLY
+    BAUD230400,            // WINDOWS ONLY
+    BAUD256000,            // WINDOWS ONLY
+    BAUD460800,            // WINDOWS ONLY
+    BAUD921600             // WINDOWS ONLY
 };
 
 enum DataBitsType 
