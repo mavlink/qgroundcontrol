@@ -174,6 +174,9 @@ public:
     void setAutopilotType(int apType) { autopilot = apType;}
 
 public slots:
+    /** @brief Sets an action **/
+    void setAction(MAV_ACTION action);
+
     /** @brief Launches the system **/
     void launch();
     /** @brief Write this waypoint to the list of waypoints */
