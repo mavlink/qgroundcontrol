@@ -58,12 +58,18 @@ macx {
                 debug {
                         #QMAKE_CXXFLAGS += -finstrument-functions
                         #LIBS += -lSaturn
+                        CONFIG += console
                 }
     } else {
         # x64 Mac OS X Snow Leopard 10.6 and later
         CONFIG += x86_64 cocoa
         CONFIG -= x86 phonon
         message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
+                debug {
+                        #QMAKE_CXXFLAGS += -finstrument-functions
+                        #LIBS += -lSaturn
+                        CONFIG += console
+                }
     }
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
@@ -151,12 +157,13 @@ linux-g++ {
 
     debug {
         DESTDIR = $$TARGETDIR/debug
-        CONFIG += debug
+        CONFIG += debug console
     }
 
     release {
         DESTDIR = $$TARGETDIR/release
         DEFINES += QT_NO_DEBUG
+        CONFIG -= console
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -221,12 +228,13 @@ linux-g++-64 {
 
     debug {
         DESTDIR = $$TARGETDIR/debug
-        CONFIG += debug
+        CONFIG += debug console
     }
 
     release {
         DESTDIR = $$TARGETDIR/release
         DEFINES += QT_NO_DEBUG
+        CONFIG -= console
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
