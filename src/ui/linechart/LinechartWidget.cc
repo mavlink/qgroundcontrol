@@ -321,7 +321,7 @@ void LinechartWidget::refresh()
     for (l = curveVariances->begin(); l != curveVariances->end(); ++l)
     {
       // Variance
-       str.sprintf("%+.5f", activePlot->getVariance(l.key()));
+       str.sprintf("%.2e", activePlot->getVariance(l.key()));
       l.value()->setText(str);
    }
 }
