@@ -72,11 +72,15 @@ public:
 public slots:
     void addCurve(QString curve);
     void removeCurve(QString curve);
-    void appendData(int sysId, QString curve, double data, quint64 usec);
+    void appendData(int uasId, QString curve, double data, quint64 usec);
     void takeButtonClick(bool checked);
     void setPlotWindowPosition(int scrollBarValue);
     void setPlotWindowPosition(quint64 position);
     void setPlotInterval(quint64 interval);
+    /** @brief Start automatic updates once visible */
+    void showEvent(QShowEvent* event);
+    /** @brief Stop automatic updates once hidden */
+    void hideEvent(QHideEvent* event);
     void setActive(bool active);
     /** @brief Set the number of values to average over */
     void setAverageWindow(int windowSize);
@@ -88,7 +92,6 @@ public slots:
     void refresh();
 
 protected:
-
     void addCurveToList(QString curve);
     void removeCurveFromList(QString curve);
     QToolButton* createButton(QWidget* parent);
@@ -106,6 +109,7 @@ protected:
     QMap<QString, QLabel*>* curveLabels;  ///< References to the curve labels
     QMap<QString, QLabel*>* curveMeans;   ///< References to the curve means
     QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
+    QMap<QString, QLabel*>* curveVariances; ///< References to the curve variances
 
     QWidget* curvesWidget;                ///< The QWidget containing the curve selection button
     QVBoxLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
@@ -128,6 +132,7 @@ protected:
     bool logging;
     QTimer* updateTimer;
     LogCompressor* compressor;
+    quint64 logStartTime;
 
     static const int MAX_CURVE_MENUITEM_NUMBER = 8;
     static const int PAGESTEP_TIME_SCROLLBAR_VALUE = (MAX_TIME_SCROLLBAR_VALUE - MIN_TIME_SCROLLBAR_VALUE) / 10;

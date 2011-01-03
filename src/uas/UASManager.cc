@@ -71,6 +71,18 @@ void UASManager::run()
 
 void UASManager::addUAS(UASInterface* uas)
 {
+    // WARNING: The active uas is set here
+    // and then announced below. This is necessary
+    // to make sure the getActiveUAS() function
+    // returns the UAS once the UASCreated() signal
+    // is emitted. The code is thus NOT redundant.
+    bool firstUAS = false;
+    if (activeUAS == NULL)
+    {
+        firstUAS = true;
+        activeUAS = uas;
+    }
+
     // Only execute if there is no UAS at this index
     if (!systems.contains(uas->getUASID()))
     {
@@ -79,20 +91,25 @@ void UASManager::addUAS(UASInterface* uas)
     }
 
     // If there is no active UAS yet, set the first one as the active UAS
-    if (activeUAS == NULL)
+    if (firstUAS)
     {
         setActiveUAS(uas);
     }
 }
 
+QList<UASInterface*> UASManager::getUASList()
+{
+    return systems.values();
+}
+
 UASInterface* UASManager::getActiveUAS()
 {
-    if(!activeUAS)
-    {
-        QMessageBox msgBox;
-        msgBox.setText(tr("No Micro Air Vehicle connected. Please connect one first."));
-        msgBox.exec();
-    }
+//    if(!activeUAS)
+//    {
+//        QMessageBox msgBox;
+//        msgBox.setText(tr("No Micro Air Vehicle connected. Please connect one first."));
+//        msgBox.exec();
+//    }
     return activeUAS; ///< Return zero pointer if no UAS has been loaded
 }
 

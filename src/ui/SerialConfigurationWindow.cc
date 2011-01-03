@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <SerialConfigurationWindow.h>
 #include <SerialLinkInterface.h>
 #include <QDir>
+#include <QSettings>
 #include <QFileInfoList>
 #ifdef _WIN32
 #include <QextSerialEnumerator.h>
@@ -233,6 +234,7 @@ userConfigured(false)
 
     if(serialLink != 0)
     {
+        serialLink->loadSettings();
         this->link = serialLink;
 
         // Setup the user interface according to link type
@@ -507,14 +509,5 @@ void SerialConfigurationWindow::setLinkName(QString name)
     action->setText(tr("Configure ") + link->getName());
     action->setStatusTip(tr("Configure ") + link->getName());
     setWindowTitle(tr("Configuration of ") + link->getName());
-}
-
-void SerialConfigurationWindow::remove()
-{
-    link->disconnect();
-    //delete link;
-    //delete action;
-    this->window()->close();
-    qDebug() << "TODO: Link cannot be deleted: SerialConfigurationWindow::remove() NOT IMPLEMENTED!";
 }
 

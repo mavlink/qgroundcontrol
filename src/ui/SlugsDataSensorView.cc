@@ -28,7 +28,7 @@ SlugsDataSensorView::~SlugsDataSensorView()
 
 void SlugsDataSensorView::addUAS(UASInterface* uas)
 {
-    SlugsMAV* slugsMav = dynamic_cast<SlugsMAV*>(uas);
+    SlugsMAV* slugsMav = qobject_cast<SlugsMAV*>(uas);
 
   if (slugsMav != NULL) {
 

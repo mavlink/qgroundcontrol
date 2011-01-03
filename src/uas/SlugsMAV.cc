@@ -62,7 +62,8 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
     // Let UAS handle the default message set
    UAS::receiveMessage(link, message);
 
-
+    if (message.sysid == uasId)
+    {
     // Handle your special messages mavlink_message_t* msg = &message;
     switch (message.msgid)
     {
@@ -136,7 +137,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       case MAVLINK_MSG_ID_CTRL_SRFC_PT:     //181
 
-      break;
+            break;
 
       case MAVLINK_MSG_ID_PID:              //182
           memset(&mlSinglePid,0,sizeof(mavlink_pid_t));
@@ -153,9 +154,10 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 #endif
 
       default:
-//        qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
+            //        qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
             break;
         }
+    }
 }
 
 
@@ -176,9 +178,9 @@ void SlugsMAV::emitSignals (void){
 
     case 3:
       emit remoteControlChannelScaledChanged(0,(mlPilotConsoleData.de- 1000.0f)/1000.0f);
-      emit remoteControlChannelScaledChanged(1,(mlPilotConsoleData.dla- 1000.0f)/1000.0f);
-      emit remoteControlChannelScaledChanged(2,(mlPilotConsoleData.dr- 1000.0f)/1000.0f);
-      emit remoteControlChannelScaledChanged(3,(mlPilotConsoleData.dra- 1000.0f)/1000.0f);
+       emit remoteControlChannelScaledChanged(1,(mlPilotConsoleData.dla- 1000.0f)/1000.0f);
+        emit remoteControlChannelScaledChanged(2,(mlPilotConsoleData.dr- 1000.0f)/1000.0f);
+         emit remoteControlChannelScaledChanged(3,(mlPilotConsoleData.dra- 1000.0f)/1000.0f);
 
       emit slugsPWM(uasId, mlPwmCommands);
     break;

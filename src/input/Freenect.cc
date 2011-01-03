@@ -341,7 +341,7 @@ Freenect::readConfigFile(void)
                                  settings.value("transform/R33").toDouble(),
                                  settings.value("transform/Tz").toDouble(),
                                  0.0, 0.0, 0.0, 1.0);
-    transformMatrix = transformMatrix.transposed();
+    transformMatrix = transformMatrix.inverted();
 
     baseline = settings.value("transform/baseline").toDouble();
     disparityOffset = settings.value("transform/disparity_offset").toDouble();

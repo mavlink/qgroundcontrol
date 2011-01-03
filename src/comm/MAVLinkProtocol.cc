@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QTime>
 #include <QApplication>
+#include <QMessageBox>
 
 #include "MG.h"
 #include "MAVLinkProtocol.h"
@@ -45,6 +46,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
+#include "MainWindow.h"
 #include <QGCMAVLink.h>
 #include "QGC.h"
 
@@ -141,8 +143,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // of its existence, as it only then can send and receive
                 // it's first messages.
 
-                // FIXME Current debugging
-                // check if the UAS has the same id like this system
+                // Check if the UAS has the same id like this system
                 if (message.sysid == getSystemId())
                 {
                     qDebug() << "WARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\n\n RECEIVED MESSAGE FROM THIS SYSTEM WITH ID" << message.msgid << "FROM COMPONENT" << message.compid;
@@ -155,7 +156,22 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // First create new UAS object
                 // Decode heartbeat message
                 mavlink_heartbeat_t heartbeat;
+                // Reset version field to 0
+                heartbeat.mavlink_version = 0;
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
+
+                // Check if the UAS has a different protocol version
+                if (heartbeat.mavlink_version != MAVLINK_VERSION)
+                {
+                    // Bring up dialog to inform user
+                    MainWindow::instance()->showCriticalMessage(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"),
+                                                                 tr("It is unsafe to use different MAVLink versions. QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
+
+
+                    // Ignore this message and continue gracefully
+                    continue;
+                }
+
                 switch (heartbeat.autopilot)
                 {
                 case MAV_AUTOPILOT_GENERIC:
@@ -229,6 +245,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
                 else
                 {
+                    // TODO: This if-else block can (should) be greatly simplified
                     if (lastIndex[message.sysid][message.compid] == 255)
                     {
                         lastIndex[message.sysid][message.compid] = 0;

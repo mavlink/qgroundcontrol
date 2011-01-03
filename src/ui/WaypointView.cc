@@ -146,6 +146,7 @@ void WaypointView::changedAction(int index)
         break;
     case MAV_ACTION_NAVIGATE:
         m_ui->autoContinue->show();
+		m_ui->orbitSpinBox->show();
         break;
     case MAV_ACTION_LOITER:
         m_ui->orbitSpinBox->show();

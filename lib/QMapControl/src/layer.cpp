@@ -99,9 +99,10 @@ namespace qmapcontrol
 
     Geometry* Layer::get_Geometry(int index)
     {
+        Geometry* geo = NULL;
         if(geometrySelected)
         {
-            return geometrySelected;
+            geo = geometrySelected;
         }
         else
         {
@@ -110,7 +111,7 @@ namespace qmapcontrol
                 Geometry *geometry = geometries[i];
                 if(geometry->name() == QString::number(index))
                 {
-                  return geometry;
+                  geo = geometry;
                 }
             }
 
@@ -124,7 +125,7 @@ namespace qmapcontrol
 
 //           }
         }
-
+        return geo;
     }
 
     bool Layer::isVisible() const

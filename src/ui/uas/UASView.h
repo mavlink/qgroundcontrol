@@ -107,6 +107,10 @@ protected:
     void enterEvent(QEvent* event);
     /** @brief Mouse leaves the widget */
     void leaveEvent(QEvent* event);
+    /** @brief Start widget updating */
+    void showEvent(QShowEvent* event);
+    /** @brief Stop widget updating */
+    void hideEvent(QHideEvent* event);
 
 private:
     Ui::UASView *m_ui;
