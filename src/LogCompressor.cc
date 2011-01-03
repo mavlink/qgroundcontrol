@@ -125,7 +125,9 @@ void LogCompressor::run()
     file.reset();
     QTextStream data(&file);
     int linecounter = 0;
-    while (!data.atEnd()) {
+    quint64 lastTimeIndex = 0;
+    while (!data.atEnd())
+    {
         linecounter++;
         currentDataLine = linecounter;
         QString line = data.readLine();
@@ -140,7 +142,33 @@ void LogCompressor::run()
             value = "NaN";
         }
         // Get matching output line
-        quint64 index = times->indexOf(time);
+
+        // Constraining the search area might result in not finding a key,
+        // but it significantly reduces the time needed for the search
+        // setting a window of 1000 entries means that a 1 Hz data point
+        // can still be located
+        int offsetLimit = 200;
+        quint64 offset;
+        quint64 index = -1;
+        while (index == -1)
+        {
+            if (lastTimeIndex > offsetLimit)
+            {
+                offset = lastTimeIndex - offsetLimit;
+            }
+            else
+            {
+                offset = 0;
+            }
+            quint64 index = times->indexOf(time, offset);
+            if (index == -1)
+            {
+                qDebug() << "INDEX NOT FOUND DURING LOGFILE PROCESSING, RESTARTING SEARCH";
+                // FIXME Reset and start without offset heuristic again
+                offsetLimit+=1000;
+            }
+        }
+        lastTimeIndex = index;
         QString outLine = outLines->at(index);
         QStringList outParts = outLine.split(separator);
         // Replace measurement placeholder with current value
