@@ -1,5 +1,4 @@
-/*=====================================================================
-
+/*===================================================================
 QGroundControl Open Source Ground Control Station
 
 (c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -10,15 +9,15 @@ This file is part of the QGROUNDCONTROL project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
+    
     QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
+    
     You should have received a copy of the GNU General Public License
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
+    
 ======================================================================*/
 
 /**
@@ -32,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QTextStream>
 #include <QStringList>
 #include <QFileInfo>
+#include <QList>
 #include "LogCompressor.h"
 
 #include <QDebug>
@@ -56,12 +56,13 @@ void LogCompressor::run()
     QFile file(fileName);
     QFile outfile(outFileName);
     QStringList* keys = new QStringList();
-    QStringList* times = new QStringList();
-
+    QList<quint64> times;// = new QList<quint64>();
+    QList<quint64> finalTimes;
+    
     if (!file.exists()) return;
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
-
+    
     if (outFileName != "")
     {
         // Check if file is writeable
@@ -70,18 +71,27 @@ void LogCompressor::run()
             return;
         }
     }
-
+    
     // Find all keys
     QTextStream in(&file);
-    while (!in.atEnd()) {
+
+    // Search only a certain region, assuming that not more
+    // than N dimensions at H Hertz can be send
+    const unsigned int keySearchLimit = 15000;
+    // e.g. 500 Hz * 30 values or
+    // e.g. 100 Hz * 150 values
+
+    unsigned int keyCounter = 0;
+    while (!in.atEnd() && keyCounter < keySearchLimit) {
         QString line = in.readLine();
         // Accumulate map of keys
         // Data field name is at position 2
         QString key = line.split(separator).at(2);
         if (!keys->contains(key)) keys->append(key);
+        keyCounter++;
     }
     keys->sort();
-
+    
     QString header = "";
     QString spacer = "";
     for (int i = 0; i < keys->length(); i++)
@@ -90,42 +100,58 @@ void LogCompressor::run()
         spacer += " " + separator;
     }
 
+    emit logProcessingStatusChanged(tr("Log compressor: Dataset contains dimension: ") + header);
+    
     //qDebug() << header;
-
+    
     //qDebug() << "NOW READING TIMES";
-
+    
     // Find all times
     //in.reset();
     file.reset();
     in.reset();
     in.resetStatus();
-    while (!in.atEnd()) {
+    bool ok;
+    while (!in.atEnd())
+    {
         QString line = in.readLine();
         // Accumulate map of keys
-        // Data field name is at position 2
-        QString time = line.split(separator).at(0);
-        if (!times->contains(time))
+        // Data field name is at position 2b
+        quint64 time = static_cast<QString>(line.split(separator).at(0)).toLongLong(&ok);
+        if (ok)
         {
-            times->append(time);
+            times.append(time);
+        }
+    }
+    
+    qSort(times);
+    
+    qint64 lastTime = -1;
+    
+    // Create lines
+    QStringList* outLines = new QStringList();
+    for (int i = 0; i < times.length(); i++)
+    {
+        if (times.at(i) != lastTime)
+        {
+            outLines->append(QString("%1").arg(times.at(i)) + separator + spacer);
+            lastTime = static_cast<qint64>(times.at(i));
+            finalTimes.append(times.at(i));
+            //qDebug() << "ADDED:" << outLines->last();
         }
     }
 
-    dataLines = times->length();
+    dataLines = finalTimes.length();
 
-    times->sort();
-
-    // Create lines
-    QStringList* outLines = new QStringList();
-    for (int i = 0; i < times->length(); i++)
-    {
-        outLines->append(times->at(i) + separator + spacer);
-    }
-
+    emit logProcessingStatusChanged(tr("Log compressor: Now processing %1 log lines").arg(finalTimes.length()));
+    
     // Fill in the values for all keys
     file.reset();
     QTextStream data(&file);
     int linecounter = 0;
     quint64 lastTimeIndex = 0;
+    bool failed = false;
+    
     while (!data.atEnd())
     {
         linecounter++;
@@ -133,7 +159,7 @@ void LogCompressor::run()
         QString line = data.readLine();
         QStringList parts = line.split(separator);
         // Get time
-        QString time = parts.first();
+        quint64 time = static_cast<QString>(parts.first()).toLongLong(&ok);
         QString field = parts.at(2);
         QString value = parts.at(3);
         // Enforce NaN if no value is present
@@ -142,15 +168,19 @@ void LogCompressor::run()
             value = "NaN";
         }
         // Get matching output line
-
+        
         // Constraining the search area might result in not finding a key,
         // but it significantly reduces the time needed for the search
         // setting a window of 1000 entries means that a 1 Hz data point
         // can still be located
-        int offsetLimit = 200;
+        quint64 offsetLimit = 100;
         quint64 offset;
-        quint64 index = -1;
-        while (index == -1)
+        qint64 index = -1;
+        failed = false;
+
+        // Search the index until it is valid (!= -1)
+        // or the start of the list has been reached (failed)
+        while (index == -1 && !failed)
         {
             if (lastTimeIndex > offsetLimit)
             {
@@ -160,14 +190,27 @@ void LogCompressor::run()
             {
                 offset = 0;
             }
-            quint64 index = times->indexOf(time, offset);
+            
+            index = finalTimes.indexOf(time, offset);
             if (index == -1)
             {
-                qDebug() << "INDEX NOT FOUND DURING LOGFILE PROCESSING, RESTARTING SEARCH";
-                // FIXME Reset and start without offset heuristic again
-                offsetLimit+=1000;
+                if (offset == 0)
+                {
+                    emit logProcessingStatusChanged(tr("Log compressor: Timestamp %1 not found in dataset, ignoring log line %2").arg(time).arg(linecounter));
+                    //continue;
+                    failed = true;
+                }
+                else
+                {
+                    emit logProcessingStatusChanged(tr("Log compressor: Timestamp %1 not found in dataset, restarting search.").arg(time));
+                    offsetLimit*=2;
+                }
             }
         }
+
+        if (index % (dataLines/10) == 0) emit logProcessingStatusChanged(tr("Log compressor: Processed %1%% of %2 lines").arg(index/(float)dataLines).arg(dataLines));
+        
+        // When the algorithm reaches here the correct index was found
         lastTimeIndex = index;
         QString outLine = outLines->at(index);
         QStringList outParts = outLine.split(separator);
@@ -176,12 +219,11 @@ void LogCompressor::run()
         outLine = outParts.join(separator);
         outLines->replace(index, outLine);
     }
-
-
-
+    
+    
     // Add header, write out file
     file.close();
-
+    
     if (outFileName == "")
     {
         QFile::remove(file.fileName());
@@ -191,19 +233,20 @@ void LogCompressor::run()
         return;
     outfile.write(QString(QString("unix_timestamp") + separator + header.replace(" ", "_") + QString("\n")).toLatin1());
     //QString fileHeader = QString("unix_timestamp") + header.replace(" ", "_") + QString("\n");
-
+    
     // File output
     for (int i = 0; i < outLines->length(); i++)
     {
         //qDebug() << outLines->at(i);
         outfile.write(QString(outLines->at(i) + "\n").toLatin1());
-
+        
     }
-
+    
     currentDataLine = 0;
     dataLines = 1;
     delete keys;
-    qDebug() << "Done with logfile processing";
+    emit logProcessingStatusChanged(tr("Log compressor: Finished processing file: %1").arg(outfile.fileName()));
+    //qDebug() << "Done with logfile processing";
     emit finishedFile(outfile.fileName());
     running = false;
 }
