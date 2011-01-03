@@ -58,19 +58,23 @@ void LogCompressor::run()
     QStringList* keys = new QStringList();
     QList<quint64> times;// = new QList<quint64>();
     QList<quint64> finalTimes;
+
+    qDebug() << "LOG COMPRESSOR: Starting" << fileName;
     
-    if (!file.exists()) return;
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return;
-    
-    if (outFileName != "")
+    if (!file.exists() || !file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
+        qDebug() << "LOG COMPRESSOR: INPUT FILE DOES NOT EXIST";
+        emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since input file %1 is not readable").arg(QFileInfo(fileName).absoluteFilePath()));
+        return;
+    }
+    
         // Check if file is writeable
-        if (!QFileInfo(outfile).isWritable())
+        if (outFileName == ""/* || !QFileInfo(outfile).isWritable()*/)
         {
+            qDebug() << "LOG COMPRESSOR: OUTPUT FILE DOES NOT EXIST" << outFileName;
+            emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outFileName).absoluteFilePath()));
             return;
         }
-    }
     
     // Find all keys
     QTextStream in(&file);
@@ -132,7 +136,8 @@ void LogCompressor::run()
     QStringList* outLines = new QStringList();
     for (int i = 0; i < times.length(); i++)
     {
-        if (times.at(i) != lastTime)
+        // Cast to signed on purpose, 64 bit timestamp still long enough
+        if (static_cast<qint64>(times.at(i)) != lastTime)
         {
             outLines->append(QString("%1").arg(times.at(i)) + separator + spacer);
             lastTime = static_cast<qint64>(times.at(i));
@@ -197,6 +202,7 @@ void LogCompressor::run()
                 if (offset == 0)
                 {
                     emit logProcessingStatusChanged(tr("Log compressor: Timestamp %1 not found in dataset, ignoring log line %2").arg(time).arg(linecounter));
+                    qDebug() << "Completely failed finding value";
                     //continue;
                     failed = true;
                 }
@@ -208,16 +214,19 @@ void LogCompressor::run()
             }
         }
 
-        if (index % (dataLines/10) == 0) emit logProcessingStatusChanged(tr("Log compressor: Processed %1%% of %2 lines").arg(index/(float)dataLines).arg(dataLines));
+        if (index % (dataLines/100) == 0) emit logProcessingStatusChanged(tr("Log compressor: Processed %1% of %2 lines").arg(index/(float)dataLines*100, 0, 'f', 2).arg(dataLines));
         
-        // When the algorithm reaches here the correct index was found
-        lastTimeIndex = index;
-        QString outLine = outLines->at(index);
-        QStringList outParts = outLine.split(separator);
-        // Replace measurement placeholder with current value
-        outParts.replace(keys->indexOf(field)+1, value);
-        outLine = outParts.join(separator);
-        outLines->replace(index, outLine);
+        if (!failed)
+        {
+            // When the algorithm reaches here the correct index was found
+            lastTimeIndex = index;
+            QString outLine = outLines->at(index);
+            QStringList outParts = outLine.split(separator);
+            // Replace measurement placeholder with current value
+            outParts.replace(keys->indexOf(field)+1, value);
+            outLine = outParts.join(separator);
+            outLines->replace(index, outLine);
+        }
     }
     
     
@@ -246,7 +255,7 @@ void LogCompressor::run()
     dataLines = 1;
     delete keys;
     emit logProcessingStatusChanged(tr("Log compressor: Finished processing file: %1").arg(outfile.fileName()));
-    //qDebug() << "Done with logfile processing";
+    qDebug() << "Done with logfile processing";
     emit finishedFile(outfile.fileName());
     running = false;
 }

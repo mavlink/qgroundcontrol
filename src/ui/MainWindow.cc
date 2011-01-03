@@ -153,6 +153,7 @@ void MainWindow::buildCommonWidgets()
 {
     //TODO:  move protocol outside UI
     mavlink     = new MAVLinkProtocol();
+    connect(mavlink, SIGNAL(protocolStatusMessage(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
 
     // Dock widgets
     if (!controlDockWidget)
@@ -201,6 +202,12 @@ void MainWindow::buildCommonWidgets()
     {
         protocolWidget    = new XMLCommProtocolWidget(this);
         addToCentralWidgetsMenu (protocolWidget, "Mavlink Generator", SLOT(showCentralWidget()),CENTRAL_PROTOCOL);
+    }
+
+    if (!dataplotWidget)
+    {
+        dataplotWidget    = new QGCDataPlot2D(this);
+        addToCentralWidgetsMenu (dataplotWidget, "Data Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
     }
 }
 
@@ -742,6 +749,7 @@ void MainWindow::arrangeCommonCenterStack()
     if (!centerStack) return;
 
     if (mapWidget && (centerStack->indexOf(mapWidget) == -1)) centerStack->addWidget(mapWidget);
+    if (dataplotWidget && (centerStack->indexOf(dataplotWidget) == -1)) centerStack->addWidget(dataplotWidget);
     if (protocolWidget && (centerStack->indexOf(protocolWidget) == -1)) centerStack->addWidget(protocolWidget);
 
     setCentralWidget(centerStack);
