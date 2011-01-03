@@ -104,12 +104,12 @@ QList<UASInterface*> UASManager::getUASList()
 
 UASInterface* UASManager::getActiveUAS()
 {
-    if(!activeUAS)
-    {
-        QMessageBox msgBox;
-        msgBox.setText(tr("No Micro Air Vehicle connected. Please connect one first."));
-        msgBox.exec();
-    }
+//    if(!activeUAS)
+//    {
+//        QMessageBox msgBox;
+//        msgBox.setText(tr("No Micro Air Vehicle connected. Please connect one first."));
+//        msgBox.exec();
+//    }
     return activeUAS; ///< Return zero pointer if no UAS has been loaded
 }
 

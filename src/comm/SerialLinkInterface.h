@@ -57,6 +57,8 @@ public slots:
 	virtual bool setParityType(int parity) = 0;
 	virtual bool setDataBitsType(int dataBits) = 0;
 	virtual bool setStopBitsType(int stopBits) = 0;
+        virtual void loadSettings() = 0;
+        virtual void writeSettings() = 0;
 
 };
 

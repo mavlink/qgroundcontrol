@@ -4,12 +4,20 @@
 #include <QSettings>
 
 #include <QDebug>
+#include <QFile>
+#include <QTextStream>
 #include "UASManager.h"
 
 #ifdef Q_OS_MAC
 #include <QWebFrame>
 #include <QWebPage>
 #include "QGCWebPage.h"
+#endif
+
+#ifdef _MSC_VER
+#include <QAxObject>
+#include <QUuid>
+#include <mshtml.h>
 #endif
 
 #include "QGC.h"
@@ -21,11 +29,12 @@
 QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         QWidget(parent),
         updateTimer(new QTimer(this)),
-        refreshRateMs(80),
+        refreshRateMs(40),
         mav(NULL),
         followCamera(true),
         trailEnabled(true),
         webViewInitialized(false),
+        jScriptInitialized(false),
         gEarthInitialized(false),
 #if (defined Q_OS_MAC)
         webViewMac(new QWebView(this)),
@@ -41,6 +50,19 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 {
 #ifdef _MSC_VER
     // Create layout and attach webViewWin
+
+
+    QFile file("doc.html");
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        qDebug() << __FILE__ << __LINE__ << "Could not open log file";
+
+    QTextStream out(&file);
+    out << webViewWin->generateDocumentation();
+    out.flush();
+    file.flush();
+    file.close();
+
+
 #else
 #endif
 
@@ -52,26 +74,14 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     ui->setupUi(this);
 #if (defined Q_OS_MAC)
     ui->webViewLayout->addWidget(webViewMac);
-    connect(webViewMac, SIGNAL(loadFinished(bool)), this, SLOT(initializeGoogleEarth(bool)));
+    //connect(webViewMac, SIGNAL(loadFinished(bool)), this, SLOT(initializeGoogleEarth(bool)));
 #endif
 
 #ifdef _MSC_VER
     ui->webViewLayout->addWidget(webViewWin);
 #endif
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateState()));
-
-    // Follow checkbox
-    ui->followAirplaneCheckbox->setChecked(followCamera);
-    connect(ui->followAirplaneCheckbox, SIGNAL(toggled(bool)), this, SLOT(follow(bool)));
-
-    // Trail checkbox
-    ui->trailCheckbox->setChecked(trailEnabled);
-    connect(ui->trailCheckbox, SIGNAL(toggled(bool)), this, SLOT(showTrail(bool)));
-
-    // Go home
-    connect(ui->goHomeButton, SIGNAL(clicked()), this, SLOT(goHome()));
 }
 
 QGCGoogleEarthView::~QGCGoogleEarthView()
@@ -80,21 +90,48 @@ QGCGoogleEarthView::~QGCGoogleEarthView()
     settings.setValue(QGCGOOGLEEARTHVIEWSETTINGS + "follow", followCamera);
     settings.setValue(QGCGOOGLEEARTHVIEWSETTINGS + "trail", trailEnabled);
     settings.sync();
+#if (defined Q_OS_MAC)
+        delete webViewMac;
+#endif
+#ifdef _MSC_VER
+        delete webViewWin;
+#endif
     delete ui;
+}
+
+/**
+ * @param range in centimeters
+ */
+void QGCGoogleEarthView::setViewRangeScaledInt(int range)
+{
+    setViewRange(range/100.0f);
+}
+
+/**
+ * @param range in meters (SI-units)
+ */
+void QGCGoogleEarthView::setViewRange(float range)
+{
+    javaScript(QString("setViewRange(%1);").arg(range, 0, 'f', 5));
 }
 
 void QGCGoogleEarthView::addUAS(UASInterface* uas)
 {
-#ifdef Q_OS_MAC
-    // uasid, type, color (in aarrbbgg format)
-    webViewMac->page()->currentFrame()->evaluateJavaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uas->getColor().name().remove(0, 1).prepend("50")));
-#endif
-#ifdef _MSC_VER
-        //if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-#endif
+    // uasid, type, color (in #rrbbgg format)
+    QString uasColor = uas->getColor().name().remove(0, 1);
+    // Convert to bbggrr format
+    QString rChannel = uasColor.mid(0, 2);
+    uasColor.remove(0, 2);
+    uasColor.prepend(rChannel);
+    // Set alpha value to 0x66, append JavaScript quotes ('')
+    uasColor.prepend("'66").append("'");
+    javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg(uasColor));
 
-        // Automatically receive further position updates
-        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+    if (trailEnabled) javaScript(QString("showTrail(%1);").arg(uas->getUASID()));
+
+    //javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg("0"));
+    // Automatically receive further position updates
+    connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
 }
 
 void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
@@ -102,40 +139,46 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
     if (uas)
     {
         mav = uas;
-#ifdef Q_OS_MAC
-        if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-        {
-            webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setCurrAircraft(%1);").arg(uas->getUASID()));
-        }
-#endif
-#ifdef _MSC_VER
-        //if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-#endif
+        javaScript(QString("setCurrAircraft(%1);").arg(uas->getUASID()));
     }
 }
 
-void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
+void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
-#ifdef Q_OS_MAC
-        webViewMac->page()->currentFrame()->evaluateJavaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
+    javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
 
-        //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
-
-#endif
-#ifdef _MSC_VER
-        //if (webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-#endif
+    //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }
 
 void QGCGoogleEarthView::showTrail(bool state)
 {
+    // Check if the current trail has to be hidden
+    if (trailEnabled && !state)
+    {
+        QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+        foreach (UASInterface* currMav, mavs)
+        {
+            javaScript(QString("hideTrail(%1);").arg(currMav->getUASID()));
+        }
+    }
+
+    // Check if the current trail has to be shown
+    if (!trailEnabled && state)
+    {
+        QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+        foreach (UASInterface* currMav, mavs)
+        {
+            javaScript(QString("showTrail(%1);").arg(currMav->getUASID()));
+        }
+    }
+    trailEnabled = state;
     ui->trailCheckbox->setChecked(state);
 }
 
 void QGCGoogleEarthView::showWaypoints(bool state)
 {
-
+    waypointsEnabled = state;
 }
 
 void QGCGoogleEarthView::follow(bool follow)
@@ -150,27 +193,18 @@ void QGCGoogleEarthView::goHome()
     follow(false);
     updateState();
     // Go to home location
-#ifdef Q_OS_MAC
-    webViewMac->page()->currentFrame()->evaluateJavaScript("goHome();");
-#endif
-#ifdef _MSC_VER
-    webViewWin.dynamicCall("InvokeScript(\"goHome\");");
-#endif
+    javaScript("goHome();");
 }
 
 void QGCGoogleEarthView::setHome(double lat, double lon, double alt)
 {
-#ifdef Q_OS_MAC
-    webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setGCSHome(%1,%2,%3);").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
-#endif
-#ifdef _MSC_VER
-    webViewWin.dynamicCall(QString("InvokeScript(\"setGCSHome\", %1, %2, %3);").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
-#endif
+    javaScript(QString("setGCSHome(%1,%2,%3);").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
 }
 
 void QGCGoogleEarthView::hideEvent(QHideEvent* event)
 {
-    Q_UNUSED(event) updateTimer->stop();
+    Q_UNUSED(event);
+    updateTimer->stop();
 }
 
 void QGCGoogleEarthView::showEvent(QShowEvent* event)
@@ -178,43 +212,104 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
     // React only to internal (pre-display)
     // events
     Q_UNUSED(event)
-    {
-            // Enable widget, initialize on first run
-            if (!webViewInitialized)
-            {
+        // Enable widget, initialize on first run
+
+        if (!webViewInitialized)
+        {
 #if (defined Q_OS_MAC)
-                webViewMac->setPage(new QGCWebPage(webViewMac));
-                webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
-                webViewMac->load(QUrl("earth.html"));
+            webViewMac->setPage(new QGCWebPage(webViewMac));
+            webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
+            webViewMac->load(QUrl(QCoreApplication::applicationDirPath()+"/earth.html"));
 #endif
 
 #ifdef _MSC_VER
-                //webViewWin->dynamicCall("GoHome()");
-                webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/earth.html");
+            //webViewWin->dynamicCall("GoHome()");
+            webViewWin->dynamicCall("Navigate(const QString&)", QApplication::applicationDirPath() + "/earth.html");
 #endif
 
-                webViewInitialized = true;
-                // Reloading the webpage, this resets Google Earth
-                gEarthInitialized = false;
+            webViewInitialized = true;
+            // Reloading the webpage, this resets Google Earth
+            gEarthInitialized = false;
 
-                QTimer::singleShot(1000, this, SLOT(initializeGoogleEarth()));
-                updateTimer->start(refreshRateMs);
-            }
+            QTimer::singleShot(10000, this, SLOT(initializeGoogleEarth()));
+        }
+        else
+        {
+            updateTimer->start(refreshRateMs);
+        }
+}
+
+void QGCGoogleEarthView::printWinException(int no, QString str1, QString str2, QString str3)
+{
+    qDebug() << no << str1 << str2 << str3;
+}
+
+QVariant QGCGoogleEarthView::javaScript(QString javaScript)
+{
+#ifdef Q_OS_MAC
+    return webViewMac->page()->currentFrame()->evaluateJavaScript(javaScript);
+#endif
+#ifdef _MSC_VER
+    if(!jScriptInitialized)
+    {
+        qDebug() << "TOO EARLY JAVASCRIPT CALL, ABORTING";
+        return QVariant(false);
     }
+    else
+    {
+        QVariantList params;
+        params.append(javaScript);
+        params.append("JScript");
+        return jScriptWin->dynamicCall("execScript(QString, QString)", params);
+    }
+#endif
 }
 
 void QGCGoogleEarthView::initializeGoogleEarth()
 {
-    if (!gEarthInitialized)
+    if (!jScriptInitialized)
     {
 #ifdef Q_OS_MAC
-        if (!webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
+        jScriptInitialized = true;
 #endif
 #ifdef _MSC_VER
-            //if (!webViewMac->page()->currentFrame()->evaluateJavaScript("isInitialized();").toBool())
-#endif
+        QAxObject* doc = webViewWin->querySubObject("Document()");
+        IDispatch* Disp;
+        IDispatch* winDoc = NULL;
+
+        //332C4425-26CB-11D0-B483-00C04FD90119 IHTMLDocument2
+        //25336920-03F9-11CF-8FD0-00AA00686F13 HTMLDocument
+        doc->queryInterface(QUuid("{332C4425-26CB-11D0-B483-00C04FD90119}"), (void**)(&winDoc));
+        if (winDoc)
         {
-            QTimer::singleShot(200, this, SLOT(initializeGoogleEarth()));
+            // Security:
+            // CoInternetSetFeatureEnabled
+            // (FEATURE_LOCALMACHINE_LOCKDOWN, SET_FEATURE_ON_PROCESS, TRUE);
+            //
+            IHTMLDocument2* document = NULL;
+            winDoc->QueryInterface( IID_IHTMLDocument2, (void**)&document );
+            IHTMLWindow2 *window = NULL;
+            document->get_parentWindow( &window );
+
+            jScriptWin = new QAxObject(window, webViewWin);
+            connect(jScriptWin, SIGNAL(exception(int,QString,QString,QString)), this, SLOT(printWinException(int,QString,QString,QString)));
+            jScriptInitialized = true;
+        }
+        else
+        {
+            qDebug() << "COULD NOT GET DOCUMENT OBJECT! Aborting";
+        }
+#endif
+        QTimer::singleShot(2500, this, SLOT(initializeGoogleEarth()));
+        return;
+    }
+
+    if (!gEarthInitialized)
+    {
+        if (0 == 1)//(!javaScript("isInitialized();").toBool())
+        {
+            QTimer::singleShot(500, this, SLOT(initializeGoogleEarth()));
+            qDebug() << "NOT INITIALIZED, WAITING";
         }
         else
         {
@@ -224,18 +319,39 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             // Move to home location
             goHome();
 
-            // Set current UAS
-            setActiveUAS(mav);
-
             // Add all MAVs
             QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-            foreach (UASInterface* mav, mavs)
+            foreach (UASInterface* currMav, mavs)
             {
-                addUAS(mav);
+                addUAS(currMav);
             }
+
+            // Set current UAS
+            setActiveUAS(UASManager::instance()->getActiveUAS());
 
             // Add any further MAV automatically
             connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
+            // Connect UI signals/slots
+
+            // Follow checkbox
+            ui->followAirplaneCheckbox->setChecked(followCamera);
+            connect(ui->followAirplaneCheckbox, SIGNAL(toggled(bool)), this, SLOT(follow(bool)));
+
+            // Trail checkbox
+            ui->trailCheckbox->setChecked(trailEnabled);
+            connect(ui->trailCheckbox, SIGNAL(toggled(bool)), this, SLOT(showTrail(bool)));
+
+            // Go home
+            connect(ui->goHomeButton, SIGNAL(clicked()), this, SLOT(goHome()));
+
+            // Cam distance slider
+            connect(ui->camDistanceSlider, SIGNAL(valueChanged(int)), this, SLOT(setViewRangeScaledInt(int)));
+            setViewRangeScaledInt(ui->camDistanceSlider->value());
+
+            // Start update timer
+            updateTimer->start(refreshRateMs);
 
             gEarthInitialized = true;
         }
@@ -260,38 +376,29 @@ void QGCGoogleEarthView::updateState()
 
         // Update all MAVs
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-        foreach (UASInterface* mav, mavs)
+        foreach (UASInterface* currMav, mavs)
         {
-            uasId = mav->getUASID();
-            lat = mav->getLatitude();
-            lon = mav->getLongitude();
-            alt = mav->getAltitude();
-            roll = mav->getRoll();
-            pitch = mav->getPitch();
-            yaw = mav->getYaw();
+            uasId = currMav->getUASID();
+            lat = currMav->getLatitude();
+            lon = currMav->getLongitude();
+            alt = currMav->getAltitude();
+            roll = currMav->getRoll();
+            pitch = currMav->getPitch();
+            yaw = currMav->getYaw();
 
-#ifdef Q_OS_MAC
-            webViewMac->page()->currentFrame()->evaluateJavaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
-                                                                   .arg(uasId)
-                                                                   .arg(lat)
-                                                                   .arg(lon)
-                                                                   .arg(alt+500)
-                                                                   .arg(roll)
-                                                                   .arg(pitch)
-                                                                   .arg(yaw));
-#endif
-#ifdef _MSC_VER
-
-#endif
+            javaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
+                       .arg(uasId)
+                       .arg(lat, 0, 'f', 15)
+                       .arg(lon, 0, 'f', 15)
+                       .arg(alt, 0, 'f', 15)
+                       .arg(roll, 0, 'f', 9)
+                       .arg(pitch, 0, 'f', 9)
+                       .arg(yaw, 0, 'f', 9));
         }
 
         if (followCamera)
         {
-#ifdef Q_OS_MAC
-            webViewMac->page()->currentFrame()->evaluateJavaScript(QString("updateFollowAircraft()"));
-#endif
-#ifdef _MSC_VER
-#endif
+            javaScript(QString("updateFollowAircraft()"));
         }
     }
 }

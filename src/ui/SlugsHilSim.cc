@@ -136,7 +136,9 @@ void SlugsHilSim::activeUasSet(UASInterface* uas){
 }
 
 
-void SlugsHilSim::processHilDatagram(const QByteArray* datagram){
+void SlugsHilSim::processHilDatagram(const QByteArray* datagram)
+{
+    #ifdef MAVLINK_ENABLED_SLUGS
   unsigned char i = 0;
 
   mavlink_message_t msg;
@@ -144,7 +146,6 @@ void SlugsHilSim::processHilDatagram(const QByteArray* datagram){
   // GPS
   mavlink_gps_raw_t tmpGpsRaw;
 
-#ifdef MAVLINK_ENABLED_SLUGS
   mavlink_gps_date_time_t tmpGpsTime;
 
   tmpGpsTime.year  = datagram->at(i++);
@@ -167,7 +168,6 @@ void SlugsHilSim::processHilDatagram(const QByteArray* datagram){
 
   mavlink_msg_gps_date_time_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &tmpGpsTime);
   activeUas->sendMessage(hilLink, msg);
-#endif
 
   memset(&msg, 0, sizeof(mavlink_message_t));
 
@@ -180,6 +180,9 @@ void SlugsHilSim::processHilDatagram(const QByteArray* datagram){
   ui->ed_1->setText(QString::number(tmpGpsRaw.hdg));
   ui->ed_2->setText(QString::number(tmpGpsRaw.v));
   ui->ed_3->setText(QString::number(tmpGpsRaw.eph));
+#else
+  Q_UNUSED(datagram);
+#endif
 }
 
 float SlugsHilSim::getFloatFromDatagram (const QByteArray* datagram, unsigned char * i){
@@ -205,4 +208,5 @@ uint16_t SlugsHilSim::getUint16FromDatagram (const QByteArray* datagram, unsigne
 
 void SlugsHilSim::linkSelected(int cbIndex){
   //hilLink = linksAvailable
+    // FIXME Mariano
 }

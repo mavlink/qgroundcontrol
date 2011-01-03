@@ -146,10 +146,15 @@ protected:
     double latitude;
     double longitude;
     double altitude;
+    double speedX;              ///< True speed in X axis
+    double speedY;              ///< True speed in Y axis
+    double speedZ;              ///< True speed in Z axis
     double roll;
     double pitch;
     double yaw;
     QTimer* statusTimeout;      ///< Timer for various status timeouts
+    QMap<int, QMap<QString, float>* > parameters; ///< All parameters
+    bool paramsOnceRequested;   ///< If the parameter list has been read at least once
 
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
@@ -196,7 +201,7 @@ public slots:
 
     //void requestWaypoints();  FIXME tbd
     //void clearWaypointList();   FIXME tbd
-    void requestParameters();
+
     /** @brief Enable the motors */
     void enable_motors();
     /** @brief Disable the motors */
@@ -227,6 +232,9 @@ public slots:
     /** @brief Set current mode of operation, e.g. auto or manual */
     void setMode(int mode);
 
+    /** @brief Request all parameters */
+    void requestParameters();
+
     /** @brief Set a system parameter */
     void setParameter(int component, QString id, float value);
 
@@ -234,6 +242,12 @@ public slots:
     void writeParametersToStorage();
     /** @brief Read parameters from permanent storage */
     void readParametersFromStorage();
+
+    /** @brief Get the names of all parameters */
+    QList<QString> getParameterNames(int component);
+
+    /** @brief Get the ids of all components */
+    QList<int> getComponentIds();
 
     void enableAllDataTransmission(int rate);
     void enableRawSensorDataTransmission(int rate);

@@ -53,7 +53,9 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
 {
     if (uas)
     {
-        double robotX, robotY, robotZ;
+        double robotX = 0.0;
+        double robotY = 0.0;
+        double robotZ = 0.0;
         if (frame == MAV_FRAME_GLOBAL)
         {
             double latitude = uas->getLatitude();
