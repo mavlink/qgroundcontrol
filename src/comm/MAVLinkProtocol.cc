@@ -164,13 +164,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 if (heartbeat.mavlink_version != MAVLINK_VERSION)
                 {
                     // Bring up dialog to inform user
-                    QMessageBox msgBox(MainWindow::instance());
-                    msgBox.setIcon(QMessageBox::Critical);
-                    msgBox.setText(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"));
-                    msgBox.setInformativeText(tr("It is unsafe to use different MAVLink versions. QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
-                    msgBox.setStandardButtons(QMessageBox::Ok);
-                    msgBox.setDefaultButton(QMessageBox::Ok);
-                    msgBox.exec();
+                    MainWindow::instance()->showCriticalMessage(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"),
+                                                                 tr("It is unsafe to use different MAVLink versions. QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
+
 
                     // Ignore this message and continue gracefully
                     continue;

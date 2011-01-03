@@ -882,17 +882,37 @@ void MainWindow::reloadStylesheet()
     delete styleSheet;
 }
 
+/**
+ * The status message will be overwritten if a new message is posted to this function
+ *
+ * @param status message text
+ * @param timeout how long the status should be displayed
+ */
 void MainWindow::showStatusMessage(const QString& status, int timeout)
 {
-    Q_UNUSED(status);
-    Q_UNUSED(timeout);
-    //statusBar->showMessage(status, timeout);
+    statusBar->showMessage(status, timeout);
 }
 
+/**
+ * The status message will be overwritten if a new message is posted to this function.
+ * it will be automatically hidden after 5 seconds.
+ *
+ * @param status message text
+ */
 void MainWindow::showStatusMessage(const QString& status)
 {
-    Q_UNUSED(status);
-    //statusBar->showMessage(status, 5);
+    statusBar->showMessage(status, 5);
+}
+
+void MainWindow::showCriticalMessage(const QString& title, const QString& message)
+{
+    QMessageBox msgBox(MainWindow::instance());
+    msgBox.setIcon(QMessageBox::Critical);
+    msgBox.setText(title);
+    msgBox.setInformativeText(message);
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.setDefaultButton(QMessageBox::Ok);
+    msgBox.exec();
 }
 
 /**
