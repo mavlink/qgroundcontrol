@@ -51,6 +51,15 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
     // Setup UI connections
     connect(m_ui->vehicleComboBox, SIGNAL(activated(int)), this, SLOT(selectUAS(int)));
 
+    // Get current MAV list
+    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+
+    // Add each of them
+    foreach (UASInterface* sys, systems)
+    {
+        addUAS(sys);
+    }
+
     // Setup MAV connections
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
     this->setVisible(false);

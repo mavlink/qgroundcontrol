@@ -241,7 +241,7 @@ Pixhawk3DWidget::insertWaypoint(void)
 {
     if (uas)
     {
-        Waypoint* wp;
+        Waypoint* wp = NULL;
         if (frame == MAV_FRAME_GLOBAL)
         {
             double latitude = uas->getLatitude();
@@ -392,6 +392,15 @@ Pixhawk3DWidget::findVehicleModels(void)
 
     // add Pixhawk Bravo model
     nodes.push_back(PixhawkCheetahGeode::instance());
+
+    // add sphere of 0.05m radius
+    osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.05f);
+    osg::ref_ptr<osg::ShapeDrawable> sphereDrawable = new osg::ShapeDrawable(sphere);
+    sphereDrawable->setColor(osg::Vec4f(0.5f, 0.0f, 0.5f, 1.0f));
+    osg::ref_ptr<osg::Geode> sphereGeode = new osg::Geode;
+    sphereGeode->addDrawable(sphereDrawable);
+    sphereGeode->setName("Sphere (0.1m)");
+    nodes.push_back(sphereGeode);
 
     // add all other models in folder
     for (int i = 0; i < files.size(); ++i)

@@ -111,6 +111,8 @@ protected slots:
 
 protected:
 
+    void showEvent(QShowEvent* event);
+    void hideEvent(QHideEvent* event);
     /** @brief Get color from GPS signal-to-noise colormap */
     static QColor getColorForSNR(float snr);
     /** @brief Metric world coordinates to metric body coordinates */

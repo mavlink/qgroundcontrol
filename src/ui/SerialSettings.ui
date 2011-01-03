@@ -161,7 +161,22 @@
      </item>
      <item>
       <property name="text">
+       <string>230400</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
        <string>256000</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>460800</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>921600</string>
       </property>
      </item>
     </widget>

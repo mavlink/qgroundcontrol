@@ -1,28 +1,69 @@
+#include <QShowEvent>
+
 #include "Linecharts.h"
+#include "UASManager.h"
+
+#include "MainWindow.h"
 
 Linecharts::Linecharts(QWidget *parent) :
         QStackedWidget(parent),
         plots(),
         active(true)
 {
-  this->setVisible(false);
+    this->setVisible(false);
+    // Get current MAV list
+    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+
+    // Add each of them
+    foreach (UASInterface* sys, systems)
+    {
+        addSystem(sys);
+    }
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
+            this, SLOT(addSystem(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(int)),
+            this, SLOT(selectSystem(int)));
+    connect(this, SIGNAL(logfileWritten(QString)),
+            MainWindow::instance(), SLOT(loadDataView(QString)));
 }
 
-
-void Linecharts::setActive(bool active)
+void Linecharts::showEvent(QShowEvent* event)
 {
-    this->active = active;
-    QWidget* prevWidget = currentWidget();
-    if (prevWidget)
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event)
     {
-        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
-        if (chart)
+        QWidget* prevWidget = currentWidget();
+        if (prevWidget)
         {
-            chart->setActive(active);
+            LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
+            if (chart)
+            {
+                this->active = true;
+                chart->setActive(true);
+            }
         }
     }
 }
 
+void Linecharts::hideEvent(QHideEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event)
+    {
+        QWidget* prevWidget = currentWidget();
+        if (prevWidget)
+        {
+            LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
+            if (chart)
+            {
+                this->active = false;
+                chart->setActive(false);
+            }
+        }
+    }
+}
 
 void Linecharts::selectSystem(int systemid)
 {

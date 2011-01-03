@@ -63,7 +63,9 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
+#if (defined Q_OS_MAC) | (defined _MSC_VER)
 #include "QGCGoogleEarthView.h"
+#endif
 //#include "QMap3DWidget.h"
 #include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
@@ -83,28 +85,20 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = 0);
+    static MainWindow* instance();
     ~MainWindow();
 
 public slots:
-    /**
-     * @brief Shows a status message on the bottom status bar
-     *
-     * The status message will be overwritten if a new message is posted to this function
-     *
-     * @param status message text
-     * @param timeout how long the status should be displayed
-     */
+//    /** @brief Store the mainwindow settings */
+//    void storeSettings();
+
+    /** @brief Shows a status message on the bottom status bar */
     void showStatusMessage(const QString& status, int timeout);
-    /**
-     * @brief Shows a status message on the bottom status bar
-     *
-     * The status message will be overwritten if a new message is posted to this function.
-     * it will be automatically hidden after 5 seconds.
-     *
-     * @param status message text
-     */
+    /** @brief Shows a status message on the bottom status bar */
     void showStatusMessage(const QString& status);
+    /** @brief Shows a critical message as popup or as widget */
+    void showCriticalMessage(const QString& title, const QString& message);
+
     void addLink();
     void addLink(LinkInterface* link);
     void configure();
@@ -135,21 +129,19 @@ public slots:
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
 
+    /** @brief Add a custom tool widget */
+    void createCustomWidget();
+
+    void closeEvent(QCloseEvent* event);
+
     /*
     ==========================================================
                   Potentially Deprecated
     ==========================================================
     */
 
-    void loadPixhawkEngineerView();
-
-    /** @brief Load view with all widgets */
-    void loadAllView();
-
     void loadWidgets();
 
-    /** @brief Load data view, allowing to plot flight data */
-    void loadDataView();
     /** @brief Load data view, allowing to plot flight data */
     void loadDataView(QString fileName);
 
@@ -188,6 +180,8 @@ public slots:
 
 protected:
 
+    MainWindow(QWidget *parent = 0);
+
     // These defines are used to save the settings when selecting with
     // which widgets populate the views
     // FIXME: DO NOT PUT CUSTOM VALUES IN THIS ENUM since it is iterated over
@@ -225,13 +219,15 @@ protected:
 
     }TOOLS_WIDGET_NAMES;
 
-    typedef enum _SETTINGS_SECTIONS {
+    typedef enum _SETTINGS_SECTIONS
+    {
       SECTION_MENU,
       SUB_SECTION_CHECKED,
       SUB_SECTION_LOCATION,
     } SETTINGS_SECTIONS;
 
-    typedef enum _VIEW_SECTIONS {
+    typedef enum _VIEW_SECTIONS
+    {
       VIEW_ENGINEER,
       VIEW_OPERATOR,
       VIEW_PILOT,
@@ -256,7 +252,7 @@ protected:
      * @param tool      The ENUM defined in MainWindow.h that is associated to the widget
      * @param location  The default location for the QDockedWidget in case there is no previous key in the settings
      */
-    void addToToolsMenu (QWidget* widget, const QString title, const char * slotName, TOOLS_WIDGET_NAMES tool, Qt::DockWidgetArea location);
+    void addToToolsMenu (QWidget* widget, const QString title, const char * slotName, TOOLS_WIDGET_NAMES tool, Qt::DockWidgetArea location=Qt::RightDockWidgetArea);
 
     /**
      * @brief Determines if a QDockWidget needs to be show and if so, shows it
@@ -298,6 +294,7 @@ protected:
 
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
+    bool aboutToCloseFlag;
 
     QStatusBar* statusBar;
     QStatusBar* createStatusBar();
@@ -324,7 +321,6 @@ protected:
 
     void configureWindowName();
 
-
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
     AS4Protocol* as4link;
@@ -349,7 +345,9 @@ protected:
     #ifdef QGC_OSGEARTH_ENABLED
     QPointer<QWidget> _3DMapWidget;
     #endif
+#if (defined _MSC_VER) || (defined Q_OS_MAC)
     QPointer<QGCGoogleEarthView> gEarthWidget;
+#endif
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
     QPointer<QDockWidget> infoDockWidget;
@@ -367,6 +365,7 @@ protected:
 
     QPointer<QDockWidget> hsiDockWidget;
     QPointer<QDockWidget> rcViewDockWidget;
+    QPointer<QDockWidget> hudDockWidget;
     QPointer<QDockWidget> slugsDataWidget;
     QPointer<QDockWidget> slugsPIDControlWidget;
     QPointer<QDockWidget> slugsHilSimWidget;

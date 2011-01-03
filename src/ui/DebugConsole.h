@@ -59,6 +59,8 @@ public:
 public slots:
     /** @brief Add a link to the list of monitored links */
     void addLink(LinkInterface* link);
+    /** @brief Remove a link from the list */
+    void removeLink(QObject* link);
     /** @brief Update a link name */
     void updateLinkName(QString name);
     /** @brief Select a link for the active view */

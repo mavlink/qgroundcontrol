@@ -47,7 +47,7 @@ class MAVLinkSimulationLink : public LinkInterface
 {
     Q_OBJECT
 public:
-    MAVLinkSimulationLink(QString readFile="", QString writeFile="", int rate=5);
+    MAVLinkSimulationLink(QString readFile="", QString writeFile="", int rate=5, QObject* parent = 0);
     ~MAVLinkSimulationLink();
     bool isConnected();
     qint64 bytesAvailable();
@@ -85,16 +85,18 @@ public:
 public slots:
     void writeBytes(const char* data, qint64 size);
     void readBytes();
-    void mainloop();
+    /** @brief Mainloop simulating the mainloop of the MAV */
+    virtual void mainloop();
     bool connectLink(bool connect);
+    void connectLink();
 
 
 protected:
 
     // UAS properties
     float roll, pitch, yaw;
-    float x, y, z;
-    float spX, spY, spZ, spYaw;
+    double x, y, z;
+    double spX, spY, spZ, spYaw;
     int battery;
 
     QTimer* timer;
@@ -126,7 +128,7 @@ protected:
     void enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg);
 
     static const uint8_t systemId = 220;
-    static const uint8_t componentId = 0;
+    static const uint8_t componentId = 200;
     static const uint16_t version = 1000;
 
 signals:
