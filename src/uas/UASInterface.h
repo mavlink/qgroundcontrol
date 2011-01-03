@@ -126,6 +126,7 @@ public:
             ///> Map will start from beginning when the first 20 colors are exceeded
 
             colors.append(QColor(231,72,28));
+            colors.append(QColor(104,64,240));
             colors.append(QColor(203,254,121));
             colors.append(QColor(161,252,116));
             colors.append(QColor(232,33,47));
@@ -140,11 +141,10 @@ public:
             colors.append(QColor(87,231,246));
             colors.append(QColor(151,59,239));
             colors.append(QColor(81,183,244));
-            colors.append(QColor(104,64,240));
             colors.append(QColor(75,133,243));
             colors.append(QColor(242,255,128));
             colors.append(QColor(230,126,23));
-            nextColor++;
+            nextColor = 0;
         }
         return colors[nextColor++];
     }

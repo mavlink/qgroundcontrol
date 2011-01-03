@@ -122,6 +122,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 #endif
     // MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(MG::DIR::getSupportFilesDirectory() + "/demo-log.txt");
     MAVLinkSimulationLink* simulationLink = new MAVLinkSimulationLink(":/demo-log.txt");
+    simulationLink->disconnect();
     //mainWindow->addLink(simulationLink);
 
     mainWindow = MainWindow::instance();

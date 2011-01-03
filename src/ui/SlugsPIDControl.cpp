@@ -640,6 +640,8 @@ void SlugsPIDControl::sendMessagePIDStatus(int PIDtype)
 
         }
     }
+#else
+    Q_UNUSED(PIDtype);
     #endif // MAVLINK_ENABLED_SLUG
 }
 

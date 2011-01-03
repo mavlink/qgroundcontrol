@@ -26,6 +26,7 @@
 #include "MainWindow.h"
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
+#include "QGCToolWidget.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -107,6 +108,11 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Create actions
     connectCommonActions();
+    // Add option for custom widgets
+    connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
+    // Allow to mute audio
+    ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
+    connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
 
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
@@ -201,17 +207,19 @@ void MainWindow::buildPxWidgets()
 {
     //FIXME: memory of acceptList will never be freed again
     QStringList* acceptList = new QStringList();
-    acceptList->append("roll IMU");
-    acceptList->append("pitch IMU");
-    acceptList->append("yaw IMU");
-    acceptList->append("rollspeed IMU");
-    acceptList->append("pitchspeed IMU");
-    acceptList->append("yawspeed IMU");
+    acceptList->append("-180,roll (deg),+180");
+    acceptList->append("-180,pitch (deg),+180");
+    acceptList->append("-180,yaw (deg),+180");
+
+    acceptList->append("-500,roll V (deg/s),+500");
+    acceptList->append("-500,pitch V (deg/s),+500");
+    acceptList->append("-500,yaw V (deg/s),+500");
 
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
-    acceptList2->append("Battery");
-    acceptList2->append("Pressure");
+    acceptList2->append("0,Abs pressure,65500");
+    acceptList2->append("-2000,Accel. X, 2000");
+    acceptList2->append("-2000,Accel. Y, 2000");
 
     if (!linechartWidget)
     {
@@ -290,15 +298,15 @@ void MainWindow::buildPxWidgets()
 
     if (!headDown1DockWidget)
     {
-        headDown1DockWidget = new QDockWidget(tr("System Stats"), this);
-        headDown1DockWidget->setWidget( new HDDisplay(acceptList, this) );
+        headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
+        headDown1DockWidget->setWidget( new HDDisplay(acceptList, "Flight Display", this) );
         addToToolsMenu (headDown1DockWidget, tr("Flight Display"), SLOT(showToolWidget()), MENU_HDD_1, Qt::RightDockWidgetArea);
     }
 
     if (!headDown2DockWidget)
     {
         headDown2DockWidget = new QDockWidget(tr("Payload Status"), this);
-        headDown2DockWidget->setWidget( new HDDisplay(acceptList2, this) );
+        headDown2DockWidget->setWidget( new HDDisplay(acceptList2, "Payload Status", this) );
         addToToolsMenu (headDown2DockWidget, tr("Payload Status"), SLOT(showToolWidget()), MENU_HDD_2, Qt::RightDockWidgetArea);
     }
 
@@ -694,7 +702,16 @@ void MainWindow::connectCommonWidgets()
         // it notifies that a waypoint global goes to do create and a map graphic too
         connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
     }
+}
 
+void MainWindow::createCustomWidget()
+{
+    qDebug() << "ADDING CUSTOM WIDGET";
+    QGCToolWidget* tool = new QGCToolWidget(this);
+    QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
+    dock->setWidget(tool);
+    this->addDockWidget(Qt::LeftDockWidgetArea, dock);
+    dock->setVisible(true);
 }
 
 void MainWindow::connectPxWidgets()

@@ -5,6 +5,16 @@
 #include <windows.h>
 #include <QThread>
 
+/* These baudrates work on windows, but are not part of the windows headers */
+#ifndef CBR_230400
+#define CBR_230400 230400
+#endif
+#ifndef CBR_460800
+#define CBR_460800 460800
+#endif
+#ifndef CBR_921600
+#define CBR_921600 921600
+#endif
 
 /*if all warning messages are turned off, flag portability warnings to be turned off as well*/
 #ifdef _TTY_NOWARN_

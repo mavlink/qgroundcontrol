@@ -140,6 +140,9 @@ public slots:
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
 
+    /** @brief Add a custom tool widget */
+    void createCustomWidget();
+
     void closeEvent(QCloseEvent* event);
 
     /*
