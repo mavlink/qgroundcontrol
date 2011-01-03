@@ -98,6 +98,8 @@ public slots:
     void showStatusMessage(const QString& status);
     /** @brief Shows a critical message as popup or as widget */
     void showCriticalMessage(const QString& title, const QString& message);
+    /** @brief Shows an info message as popup or as widget */
+    void showInfoMessage(const QString& title, const QString& message);
 
     void addLink();
     void addLink(LinkInterface* link);
@@ -295,10 +297,6 @@ protected:
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
     bool aboutToCloseFlag;
-
-    QStatusBar* statusBar;
-    QStatusBar* createStatusBar();
-
 
     void clearView();
 
