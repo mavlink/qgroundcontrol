@@ -229,6 +229,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
                 else
                 {
+                    // TODO: This if-else block can (should) be greatly simplified
                     if (lastIndex[message.sysid][message.compid] == 255)
                     {
                         lastIndex[message.sysid][message.compid] = 0;
