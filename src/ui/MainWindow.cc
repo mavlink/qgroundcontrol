@@ -153,6 +153,7 @@ void MainWindow::buildCommonWidgets()
 {
     //TODO:  move protocol outside UI
     mavlink     = new MAVLinkProtocol();
+    connect(mavlink, SIGNAL(protocolStatusMessage(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
 
     // Dock widgets
     if (!controlDockWidget)

@@ -59,7 +59,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
         heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
         m_heartbeatsEnabled(false),
         m_loggingEnabled(false),
-        m_logfile(NULL)
+        m_logfile(NULL),
+        versionMismatchIgnore(false)
 {
     start(QThread::LowPriority);
     // Start heartbeat timer, emitting a heartbeat at the configured rate
@@ -91,7 +92,6 @@ MAVLinkProtocol::~MAVLinkProtocol()
 
 void MAVLinkProtocol::run()
 {
-
 }
 
 QString MAVLinkProtocol::getLogfileName()
@@ -146,7 +146,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // Check if the UAS has the same id like this system
                 if (message.sysid == getSystemId())
                 {
-                    qDebug() << "WARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\n\n RECEIVED MESSAGE FROM THIS SYSTEM WITH ID" << message.msgid << "FROM COMPONENT" << message.compid;
+                    emit protocolStatusMessage(tr("SYSTEM ID CONFLICT!"), tr("Warning: A second system is using the same system id (%1)").arg(getSystemId()));
                 }
 
                 // Create a new UAS based on the heartbeat received
@@ -164,9 +164,12 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 if (heartbeat.mavlink_version != MAVLINK_VERSION)
                 {
                     // Bring up dialog to inform user
-                    MainWindow::instance()->showCriticalMessage(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"),
+                    if (!versionMismatchIgnore)
+                    {
+                        emit protocolStatusMessage(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"),
                                                                  tr("It is unsafe to use different MAVLink versions. QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
-
+                        versionMismatchIgnore = true;
+                    }
 
                     // Ignore this message and continue gracefully
                     continue;
