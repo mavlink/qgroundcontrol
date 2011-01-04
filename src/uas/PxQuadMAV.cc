@@ -118,6 +118,21 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "vis. z", pos.z, time);
             }
             break;
+        case MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE:
+                {
+                    mavlink_vicon_position_estimate_t pos;
+                    mavlink_msg_vicon_position_estimate_decode(&message, &pos);
+                    quint64 time = getUnixTime(pos.usec);
+                    //emit valueChanged(uasId, "vis. time", pos.usec, time);
+                    emit valueChanged(uasId, "vicon roll", pos.roll, time);
+                    emit valueChanged(uasId, "vicon pitch", pos.pitch, time);
+                    emit valueChanged(uasId, "vicon yaw", pos.yaw, time);
+                    emit valueChanged(uasId, "vicon x", pos.x, time);
+                    emit valueChanged(uasId, "vicon y", pos.y, time);
+                    emit valueChanged(uasId, "vicon z", pos.z, time);
+                    emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+                }
+                break;
     case MAVLINK_MSG_ID_AUX_STATUS:
             {
                 mavlink_aux_status_t status;
