@@ -88,6 +88,8 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     updateStatusLabel("");
 
     this->setVisible(false);
+    loadFileGlobalWP = false;
+    readGlobalWP = false;
     centerMapCoordinate.setX(0.0);
     centerMapCoordinate.setY(0.0);
 
@@ -128,6 +130,9 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(&uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
         connect(&uas->getWaypointManager(), SIGNAL(waypointListChanged(void)),                  this, SLOT(waypointListChanged(void)));
         connect(&uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointChanged(quint16)));
+        connect(&uas->getWaypointManager(),SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
+        connect(&uas->getWaypointManager(),SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
+
     }
 }
 
@@ -144,9 +149,11 @@ void WaypointList::loadWaypoints()
 {
     if (uas)
     {
+
+
         QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
         uas->getWaypointManager().loadWaypoints(fileName);
-    }
+     }
 }
 
 void WaypointList::transmit()
@@ -203,8 +210,6 @@ void WaypointList::add()
                     Waypoint *wp = new Waypoint(0, uas->getLongitude(), uas->getLatitude(), uas->getAltitude(),
                                                 0.0, true, true, 0.15, 2000);
                     uas->getWaypointManager().addWaypoint(wp);
-
-
             }
         }
     }
@@ -244,6 +249,8 @@ void WaypointList::addCurrentPositonWaypoint()
 void WaypointList::updateStatusLabel(const QString &string)
 {
     m_ui->statusLabel->setText(string);
+
+
 }
 
 void WaypointList::changeCurrentWaypoint(quint16 seq)
@@ -390,7 +397,7 @@ void WaypointList::waypointListChanged()
             }
 
 
-
+            loadFileGlobalWP = false;
         }
 
 
@@ -464,15 +471,23 @@ void WaypointList::changeEvent(QEvent *e)
 void WaypointList::on_clearWPListButton_clicked()
 {
 
+
     if (uas)
     {
-        emit clearPathclicked();
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
-        while(!waypoints.isEmpty())//for(int i = 0; i <= waypoints.size(); i++)
-        {
-            WaypointView* widget = wpViews.find(waypoints[0]).value();
-            widget->remove();
+           emit clearPathclicked();
+          const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+            while(!waypoints.isEmpty())//for(int i = 0; i <= waypoints.size(); i++)
+            {
+                WaypointView* widget = wpViews.find(waypoints[0]).value();
+                widget->remove();
         }
+    }
+    else
+    {
+//        if(isGlobalWP)
+//        {
+//           emit clearPathclicked();
+//        }
     }
 }
 
@@ -536,14 +551,26 @@ void WaypointList::waypointGlobalChanged(QPointF coordinate, int indexWP)
 
 void WaypointList::clearWPWidget()
 {
-    if (uas)
-    {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
-        while(!waypoints.isEmpty())//for(int i = 0; i <= waypoints.size(); i++)
-        {
-            WaypointView* widget = wpViews.find(waypoints[0]).value();
-            widget->remove();
-        }
-    }
+  if (uas)
+  {
+    const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+      while(!waypoints.isEmpty())//for(int i = 0; i <= waypoints.size(); i++)
+      {
+          WaypointView* widget = wpViews.find(waypoints[0]).value();
+          widget->remove();
+      }
+  }
     //emit changePositionWPBySpinBox(wp->getId(), wp->getY(), wp->getX());
+}
+
+void WaypointList::setIsLoadFileWP()
+{
+    loadFileGlobalWP = true;
+}
+
+void WaypointList::setIsReadGlobalWP(bool value)
+{
+    // FIXME James Check this
+    Q_UNUSED(value);
+    // readGlobalWP = value;
 }

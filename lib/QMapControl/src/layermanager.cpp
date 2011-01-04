@@ -112,7 +112,14 @@ namespace qmapcontrol
 
     void LayerManager::setView(const QPointF& coordinate)
     {
+        QPoint oldMapPx = mapmiddle_px;
+
         mapmiddle_px = layer()->mapadapter()->coordinateToDisplay(coordinate);
+
+        scroll += mapmiddle_px - oldMapPx;
+        zoomImageScroll+= mapmiddle_px - oldMapPx;
+
+
         mapmiddle = coordinate;
 
         //TODO: muss wegen moveTo() raus
@@ -125,7 +132,8 @@ namespace qmapcontrol
             //TODO:
             // verschiebung ausrechnen
             // oder immer neues offscreenimage
-            newOffscreenImage();
+            //newOffscreenImage();
+            moveWidgets();
         }
     }
 

@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include "Q3DWidget.h"
+#include "QGC.h"
 
 #include <osg/Geometry>
 #include <osg/LineWidth>
@@ -48,6 +49,7 @@ Q3DWidget::Q3DWidget(QWidget* parent)
     , robotAttitude(new osg::PositionAttitudeTransform())
     , hudGroup(new osg::Switch())
     , hudProjectionMatrix(new osg::Projection)
+    , fps(30.0f)
 {
     // set initial camera parameters
     cameraParams.minZoomRange = 2.0f;
@@ -70,6 +72,8 @@ Q3DWidget::~Q3DWidget()
 void
 Q3DWidget::init(float fps)
 {
+    this->fps = fps;
+
     getCamera()->setGraphicsContext(osgGW);
 
     // manually specify near and far clip planes
@@ -102,7 +106,23 @@ Q3DWidget::init(float fps)
     cameraManipulator->setDistance(cameraParams.minZoomRange * 2.0);
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(redraw()));
+    // DO NOT START TIMER IN INITIALIZATION! IT IS STARTED IN THE SHOW EVENT
+}
+
+void Q3DWidget::showEvent(QShowEvent* event)
+{
+    // React only to internal (pre/post-display)
+    // events
+    Q_UNUSED(event)
     timer.start(static_cast<int>(floorf(1000.0f / fps)));
+}
+
+void Q3DWidget::hideEvent(QHideEvent* event)
+{
+    // React only to internal (pre/post-display)
+    // events
+    Q_UNUSED(event)
+    timer.stop();
 }
 
 osg::ref_ptr<osg::Geode>
@@ -243,6 +263,9 @@ Q3DWidget::getGlobalCursorPosition(int32_t cursorX, int32_t cursorY, double z)
 void
 Q3DWidget::redraw(void)
 {
+#if (QGC_EVENTLOOP_DEBUG)
+    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
     updateGL();
 }
 

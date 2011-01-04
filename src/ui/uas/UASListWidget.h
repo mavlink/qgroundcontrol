@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QVBoxLayout>
 #include "UASInterface.h"
 #include "UASView.h"
+#include "QGCUnconnectedInfoWidget.h"
 #include "ui_UASList.h"
 
 class UASListWidget : public QWidget
@@ -54,6 +55,7 @@ public slots:
 protected:
     QMap<UASInterface*, UASView*> uasViews;
     QVBoxLayout* listLayout;
+    QGCUnconnectedInfoWidget* uWidget;
     void changeEvent(QEvent *e);
 
 private:
