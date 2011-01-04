@@ -197,19 +197,27 @@ void WaypointList::add()
         {
 
             const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+            Waypoint *wp;
+
+
             if (waypoints.size() > 0)
             {
+                // Create waypoint with last frame
                 Waypoint *last = waypoints.at(waypoints.size()-1);
-                Waypoint *wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(),
+                wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(),
                                             last->getHoldTime(), last->getFrame(), last->getAction());
                 uas->getWaypointManager().addWaypoint(wp);
             }
             else
             {
-                    //isLocalWP = true;
-                    Waypoint *wp = new Waypoint(0, uas->getLongitude(), uas->getLatitude(), uas->getAltitude(),
+                    // Create global frame waypoint per default
+                    wp = new Waypoint(0, uas->getLongitude(), uas->getLatitude(), uas->getAltitude(),
                                                 0.0, true, true, 0.15, 2000);
                     uas->getWaypointManager().addWaypoint(wp);
+            }
+            if (wp->getFrame() == MAV_FRAME_GLOBAL)
+            {
+                emit createWaypointAtMap(QPointF(wp->getX(), wp->getY()));
             }
         }
     }
