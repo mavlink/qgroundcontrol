@@ -92,24 +92,15 @@ public slots:
 //    /** @brief Store the mainwindow settings */
 //    void storeSettings();
 
-    /**
-     * @brief Shows a status message on the bottom status bar
-     *
-     * The status message will be overwritten if a new message is posted to this function
-     *
-     * @param status message text
-     * @param timeout how long the status should be displayed
-     */
+    /** @brief Shows a status message on the bottom status bar */
     void showStatusMessage(const QString& status, int timeout);
-    /**
-     * @brief Shows a status message on the bottom status bar
-     *
-     * The status message will be overwritten if a new message is posted to this function.
-     * it will be automatically hidden after 5 seconds.
-     *
-     * @param status message text
-     */
+    /** @brief Shows a status message on the bottom status bar */
     void showStatusMessage(const QString& status);
+    /** @brief Shows a critical message as popup or as widget */
+    void showCriticalMessage(const QString& title, const QString& message);
+    /** @brief Shows an info message as popup or as widget */
+    void showInfoMessage(const QString& title, const QString& message);
+
     void addLink();
     void addLink(LinkInterface* link);
     void configure();
@@ -306,10 +297,6 @@ protected:
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
     bool aboutToCloseFlag;
-
-    QStatusBar* statusBar;
-    QStatusBar* createStatusBar();
-
 
     void clearView();
 
