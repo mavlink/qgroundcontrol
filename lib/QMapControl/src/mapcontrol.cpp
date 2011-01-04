@@ -157,7 +157,7 @@ namespace qmapcontrol
         {
             if (currentZoom() >= 0 && distanceList.size() > currentZoom())
             {
-                line = distanceList.at( currentZoom() ) / pow(2, 18-currentZoom() ) / 0.597164;
+                line = distanceList.at( currentZoom() ) / pow(2.0, 18-currentZoom() ) / 0.597164;
 
                 // draw the scale
                 painter.setPen(Qt::black);
@@ -210,7 +210,7 @@ namespace qmapcontrol
 
         // Draw the Lat and Lon if needed
         if (cursorPosVisible) {
-          line = distanceList.at( currentZoom() ) / pow(2, 18-currentZoom() ) / 0.597164;
+          line = distanceList.at( currentZoom() ) / pow(2.0, 18-currentZoom() ) / 0.597164;
 
           QString str;
           str = QString(tr(" Lat: %1")).arg(currentWorldCoordinate.y());

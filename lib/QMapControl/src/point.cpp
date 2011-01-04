@@ -144,8 +144,8 @@ namespace qmapcontrol
             int diffzoom = homelevel-currentzoom;
             int viewheight = size.height();
             int viewwidth = size.width();
-            viewheight = int(viewheight / pow(2, diffzoom));
-            viewwidth = int(viewwidth / pow(2, diffzoom));
+            viewheight = int(viewheight / pow(2.0, diffzoom));
+            viewwidth = int(viewwidth / pow(2.0, diffzoom));
 
             if (minsize.height()!= -1 && viewheight < minsize.height())
                 viewheight = minsize.height();

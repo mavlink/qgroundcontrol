@@ -99,6 +99,10 @@ public slots:
     void notifyPositive();
     /** @brief Notify about negative event */
     void notifyNegative();
+    /** @brief Mute/unmute sound */
+    void mute(bool mute);
+    /** @brief Get the mute state */
+    bool isMuted();
 
 protected:
 #ifdef Q_OS_MAC
@@ -112,8 +116,10 @@ protected:
     Phonon::AudioOutput* m_audioOutput;
     bool emergency;   ///< Emergency status flag
     QTimer* emergencyTimer;
+    bool muted;
 private:
     GAudioOutput(QObject* parent=NULL);
+	~GAudioOutput();
 };
 
 #endif // AUDIOOUTPUT_H

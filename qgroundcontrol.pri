@@ -23,25 +23,35 @@
 #
 #-------------------------------------------------
 
+
 #$$BASEDIR/lib/qextserialport/include
 #               $$BASEDIR/lib/openjaus/libjaus/include \
 #               $$BASEDIR/lib/openjaus/libopenJaus/include
 
 message(Qt version $$[QT_VERSION])
+message(Using Qt from $QTDIR)
 
 release {
 #    DEFINES += QT_NO_DEBUG_OUTPUT
 #    DEFINES += QT_NO_WARNING_OUTPUT
 }
 
+QMAKE_POST_LINK += echo "Copying files"
+
+#QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
+#QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
+
 # MAC OS X
-macx { 
+macx {
+
+    COMPILER_VERSION = $$system(gcc -v)
+    message(Using compiler $$COMPILER_VERSION)
 
     HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || || contains( HARDWARE_PLATFORM, 9.9.0 )
-    {
+    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || contains( HARDWARE_PLATFORM, 9.9.0 ) {
         # x86 Mac OS X Leopard 10.5 and earlier
         CONFIG += x86 cocoa phonon
+        CONFIG -= x86_64
         message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
 
                 # Enable function-profiling with the OS X saturn tool
@@ -56,53 +66,110 @@ macx {
         message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
     }
 
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 
-    DESTDIR = $$BASEDIR/bin/mac
-    INCLUDEPATH += -framework SDL \
-        $$BASEDIR/../mavlink/contrib/slugs/include \
-        $$BASEDIR/../mavlink/include
+    #DESTDIR = $$BASEDIR/bin/mac
+    INCLUDEPATH += -framework SDL
 
     LIBS += -framework IOKit \
         -framework SDL \
         -framework CoreFoundation \
         -framework ApplicationServices \
- #       -framework GLUT \
         -lm
-    
+
     ICON = $$BASEDIR/images/icons/macx.icns
+
+    # Copy audio files if needed
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
+    # Copy google earth starter file
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
+    # Copy model files
+    #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
+
+    exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
+    # No check for GLUT.framework since it's a MAC default
+    message("Building support for OpenSceneGraph")
+    DEPENDENCIES_PRESENT += osg
+    DEFINES += QGC_OSG_ENABLED
+    # Include OpenSceneGraph libraries
+    INCLUDEPATH += -framework GLUT \
+            -framework Carbon \
+            -framework OpenThreads \
+            -framework osg \
+            -framework osgViewer \
+            -framework osgGA \
+            -framework osgDB \
+            -framework osgText \
+            -framework osgWidget
+
+    LIBS += -framework GLUT \
+            -framework Carbon \
+            -framework OpenThreads \
+            -framework osg \
+            -framework osgViewer \
+            -framework osgGA \
+            -framework osgDB \
+            -framework osgText \
+            -framework osgWidget
+    }
+
+    exists(/usr/include/osgEarth) {
+    message("Building support for osgEarth")
+    DEPENDENCIES_PRESENT += osgearth
+    # Include osgEarth libraries
+    INCLUDEPATH += -framework GDAL \
+            $$IN_PWD/lib/mac32-gcc/include \
+            -framework GEOS \
+            -framework SQLite3 \
+            -framework osgFX \
+            -framework osgTerrain
+
+    LIBS += -framework GDAL \
+            -framework GEOS \
+            -framework SQLite3 \
+            -framework osgFX \
+            -framework osgTerrain
+    DEFINES += QGC_OSGEARTH_ENABLED
+    }
+
+
+    exists(/opt/local/include/libfreenect) {
+    message("Building support for libfreenect")
+    DEPENDENCIES_PRESENT += libfreenect
+    # Include libfreenect libraries
+    LIBS += -lfreenect
+    DEFINES += QGC_LIBFREENECT_ENABLED
+    }
+
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    #QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # GNU/Linux
-linux-g++ { 
+linux-g++ {
 
-    CONFIG += debug
-    
     debug {
-        DESTDIR = $$BASEDIR
+        DESTDIR = $$TARGETDIR/debug
+        CONFIG += debug
     }
 
     release {
-        DESTDIR = $$BASEDIR
+        DESTDIR = $$TARGETDIR/release
+        DEFINES += QT_NO_DEBUG
     }
+
+    QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+
     INCLUDEPATH += /usr/include \
+                                   /usr/local/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
               # $$BASEDIR/lib/flite/lang
 
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
-        # 64-bit Linux
-        #LIBS += \
-            #-L$$BASEDIR/lib/flite/linux64
-        message(Building for GNU/Linux 64bit/x64)
-    } else {
-        # 32-bit Linux
-        #LIBS += \
-           #-L$$BASEDIR/lib/flite/linux32
-        message(Building for GNU/Linux 32bit/i386)
-    }
+    message(Building for GNU/Linux 32bit/i386)
+
     LIBS += \
         -L/usr/lib \
         -lm \
@@ -113,38 +180,66 @@ linux-g++ {
         -lSDL \
         -lSDLmain
 
-        #-lflite_cmu_us_rms \
-        #-lflite_cmu_us_slt \
+    exists(/usr/include/osg) {
+    message("Building support for OpenSceneGraph")
+    DEPENDENCIES_PRESENT += osg
+    # Include OpenSceneGraph libraries
+    LIBS += -losg \
+            -losgViewer
+    DEFINES += QGC_OSG_ENABLED
+    }
+
+    exists(/usr/include/osgEarth) | exists(/usr/local/include/osgEarth) {
+    message("Building support for osgEarth")
+    DEPENDENCIES_PRESENT += osgearth
+    # Include osgEarth libraries
+    LIBS += -losgEarth \
+            -losgEarthUtil
+    DEFINES += QGC_OSGEARTH_ENABLED
+    }
+
+    exists(/usr/local/include/libfreenect/libfreenect.h) {
+    message("Building support for libfreenect")
+    DEPENDENCIES_PRESENT += libfreenect
+    INCLUDEPATH += /usr/include/libusb-1.0
+    # Include libfreenect libraries
+    LIBS += -lfreenect
+    DEFINES += QGC_LIBFREENECT_ENABLED
+    }
+
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
+    QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
+
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
 linux-g++-64 {
-    CONFIG += debug
 
     debug {
-        DESTDIR = $$BASEDIR
+        DESTDIR = $$TARGETDIR/debug
+        CONFIG += debug
     }
 
     release {
-        DESTDIR = $$BASEDIR
+        DESTDIR = $$TARGETDIR/release
+        DEFINES += QT_NO_DEBUG
     }
+
+    QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
               # $$BASEDIR/lib/flite/lang
 
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, x86_64 ) {
-        # 64-bit Linux
-        #LIBS += \
-            #-L$$BASEDIR/lib/flite/linux64
-        message(Building for GNU/Linux 64bit/x64)
-    } else {
-        # 32-bit Linux
-        #LIBS += \
-           #-L$$BASEDIR/lib/flite/linux32
-        message(Building for GNU/Linux 32bit/i386)
-    }
+    # 64-bit Linux
+    message(Building for GNU/Linux 64bit/x64 (g++-64))
+
     LIBS += \
         -L/usr/lib \
         -lm \
@@ -154,14 +249,123 @@ linux-g++-64 {
         -lflite \
         -lSDL \
         -lSDLmain
+
+    exists(/usr/include/osg) {
+    message("Building support for OpenSceneGraph")
+    DEPENDENCIES_PRESENT += osg
+    # Include OpenSceneGraph libraries
+    LIBS += -losg \
+            -losgViewer
+    DEFINES += QGC_OSG_ENABLED
+    }
+
+    exists(/usr/include/osgEarth) {
+    message("Building support for osgEarth")
+    DEPENDENCIES_PRESENT += osgearth
+    # Include osgEarth libraries
+    LIBS += -losgEarth \
+            -losgEarthUtil
+    DEFINES += QGC_OSGEARTH_ENABLED
+    }
+
+    exists(/usr/local/include/libfreenect) {
+    message("Building support for libfreenect")
+    DEPENDENCIES_PRESENT += libfreenect
+    INCLUDEPATH += /usr/include/libusb-1.0
+    # Include libfreenect libraries
+    LIBS += -lfreenect
+    DEFINES += QGC_LIBFREENECT_ENABLED
+    }
+
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
+    QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
+
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    QMAKE_CXXFLAGS += -Wl,-E
 }
 
+# Windows (32bit)
+win32-msvc2008 {
 
-# Windows (32bit/64bit)
-win32 { 
+    message(Building for Windows Visual Studio 2008 (32bit))
 
-    message(Building for Windows Platform (32/64bit))
-    
+    CONFIG += qaxcontainer
+
+    # QWebkit is not needed on MS-Windows compilation environment
+    CONFIG -= webkit
+
+    release {
+        CONFIG -= console
+        DEFINES += QT_NO_DEBUG
+    }
+
+    debug {
+		CONFIG += console
+	}
+
+    INCLUDEPATH += $$BASEDIR/lib/sdl/msvc/include \
+                   $$BASEDIR/lib/opal/include \
+                   $$BASEDIR/lib/msinttypes
+                   #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
+
+    LIBS += -L$$BASEDIR/lib/sdl/msvc/lib \
+             -lSDLmain -lSDL
+
+exists($$BASEDIR/lib/osg123) {
+message("Building support for OSG")
+DEPENDENCIES_PRESENT += osg
+
+# Include OpenSceneGraph and osgEarth libraries
+INCLUDEPATH += $$BASEDIR/lib/osgEarth/win32/include \
+    $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/include
+LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
+    -losg \
+    -losgViewer \
+        -losgGA \
+        -losgDB \
+        -losgText \
+        -lOpenThreads
+DEFINES += QGC_OSG_ENABLED
+exists($$BASEDIR/lib/osgEarth123) {
+    DEPENDENCIES_PRESENT += osgearth
+    message("Building support for osgEarth")
+    DEFINES += QGC_OSGEARTH_ENABLED
+    LIBS += -L$$BASEDIR/lib/osgEarth/win32/lib \
+        -losgEarth \
+        -losgEarthUtil
+}
+}
+
+    RC_FILE = $$BASEDIR/qgroundcontrol.rc
+
+    # Copy dependencies
+    BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
+    TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
+
+    exists($$TARGETDIR/debug) {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
+    }
+
+    exists($$TARGETDIR/release) {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
+    }
+
+}
+
+# Windows (32bit)
+win32-g++ {
+
+    message(Building for Windows Platform (32bit))
+
     # Special settings for debug
     #CONFIG += CONSOLE
 
@@ -172,18 +376,63 @@ win32 {
     LIBS += -L$$BASEDIR/lib/sdl/win32 \
              -lmingw32 -lSDLmain -lSDL -mwindows
 
+    CONFIG += windows
+
 
 
     debug {
-        DESTDIR = $$BASEDIR/bin
+        #DESTDIR = $$BUILDDIR/debug
+		CONFIG += console
     }
 
     release {
-        DESTDIR = $$BASEDIR/bin
+        CONFIG -= console
+        DEFINES += QT_NO_DEBUG
+        #DESTDIR = $$BUILDDIR/release
     }
-        
+
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
+
+    # Copy dependencies
+
+    system(cp): {
+    # CP command is available, use it instead of copy / xcopy
+    message("Using cp to copy image and audio files to executable")
+    debug {
+        QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/debug/SDL.dll
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/debug/audio
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/debug/models
+    }
+
+    release {
+        QMAKE_POST_LINK += && cp $$BASEDIR/lib/sdl/win32/SDL.dll $$TARGETDIR/release/SDL.dll
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/audio $$TARGETDIR/release/audio
+        QMAKE_POST_LINK += && cp -r $$BASEDIR/models $$TARGETDIR/release/models
+    }
+
+    } else {
+    # No cp command available, go for copy / xcopy
+    # Copy dependencies
+    BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
+    TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
+
+    exists($$TARGETDIR/debug) {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
+    }
+
+    exists($$TARGETDIR/release) {
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
+        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
+        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
+    }
+
 }
 
-
-
+    # osg/osgEarth dynamic casts might fail without this compiler option.
+    # see http://osgearth.org/wiki/FAQ for details.
+    QMAKE_CXXFLAGS += -Wl,-E
+}

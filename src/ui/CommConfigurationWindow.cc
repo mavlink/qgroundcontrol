@@ -47,6 +47,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
+#include "LinkManager.h"
 
 CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolInterface* protocol, QWidget *parent, Qt::WindowFlags flags) : QWidget(parent, flags)
 {
@@ -54,6 +55,14 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 
     // Setup the user interface according to link type
     ui.setupUi(this);
+
+    // add link types
+    ui.linkType->addItem("Serial",QGC_LINK_SERIAL);
+    ui.linkType->addItem("UDP",QGC_LINK_UDP);
+    ui.linkType->addItem("Simulation",QGC_LINK_SIMULATION);
+    ui.linkType->addItem("Serial Forwarding",QGC_LINK_FORWARDING);
+
+    ui.connectionType->addItem("MAVLink", QGC_PROTOCOL_MAVLINK);
 
     // Create action to open this menu
     // Create configuration action for this link
@@ -191,11 +200,20 @@ void CommConfigurationWindow::setLinkName(QString name)
 
 void CommConfigurationWindow::remove()
 {
-    link->disconnect();
-    //delete link;
-    //delete action;
+    if(action) delete action; //delete action first since it has a pointer to link
+    action=NULL;
+
+    if(link)
+    {
+        LinkManager::instance()->removeLink(link); //remove link from LinkManager list
+        link->disconnect(); //disconnect port, and also calls terminate() to stop the thread
+        if (link->isRunning()) link->terminate(); // terminate() the serial thread just in case it is still running
+        link->wait(); // wait() until thread is stoped before deleting
+        delete link;
+    }
+    link=NULL;
+
     this->window()->close();
-    qDebug() << "TODO: Link cannot be deleted: CommConfigurationWindow::remove() NOT IMPLEMENTED!";
 }
 
 void CommConfigurationWindow::connectionState(bool connect)

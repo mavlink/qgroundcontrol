@@ -70,6 +70,10 @@ public:
     virtual double getLocalY() const = 0;
     virtual double getLocalZ() const = 0;
 
+    virtual double getLatitude() const = 0;
+    virtual double getLongitude() const = 0;
+    virtual double getAltitude() const = 0;
+
     virtual double getRoll() const = 0;
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
@@ -122,6 +126,7 @@ public:
             ///> Map will start from beginning when the first 20 colors are exceeded
 
             colors.append(QColor(231,72,28));
+            colors.append(QColor(104,64,240));
             colors.append(QColor(203,254,121));
             colors.append(QColor(161,252,116));
             colors.append(QColor(232,33,47));
@@ -136,11 +141,10 @@ public:
             colors.append(QColor(87,231,246));
             colors.append(QColor(151,59,239));
             colors.append(QColor(81,183,244));
-            colors.append(QColor(104,64,240));
             colors.append(QColor(75,133,243));
             colors.append(QColor(242,255,128));
             colors.append(QColor(230,126,23));
-            nextColor++;
+            nextColor = 0;
         }
         return colors[nextColor++];
     }
@@ -152,6 +156,9 @@ public:
     {
         return color;
     }
+
+    virtual int getAutopilotType() = 0;
+    virtual void setAutopilotType(int apType)= 0;
 
 public slots:
 
@@ -190,6 +197,8 @@ public slots:
     //virtual void requestWaypoints() = 0;
     /** @brief Clear all existing waypoints on the robot */
     //virtual void clearWaypointList() = 0;
+    /** @brief Set world frame origin at current GPS position */
+    virtual void setLocalOriginAtCurrentGPSPosition() = 0;
     /** @brief Request all onboard parameters of all components */
     virtual void requestParameters() = 0;
     /** @brief Write parameter to permanent storage */
@@ -220,12 +229,12 @@ public slots:
      */
     virtual void setSelected() = 0;
 
-    virtual void enableAllDataTransmission(bool enabled) = 0;
-    virtual void enableRawSensorDataTransmission(bool enabled) = 0;
-    virtual void enableExtendedSystemStatusTransmission(bool enabled) = 0;
-    virtual void enableRCChannelDataTransmission(bool enabled) = 0;
-    virtual void enableRawControllerDataTransmission(bool enabled) = 0;
-    virtual void enableRawSensorFusionTransmission(bool enabled) = 0;
+    virtual void enableAllDataTransmission(int rate) = 0;
+    virtual void enableRawSensorDataTransmission(int rate) = 0;
+    virtual void enableExtendedSystemStatusTransmission(int rate) = 0;
+    virtual void enableRCChannelDataTransmission(int rate) = 0;
+    virtual void enableRawControllerDataTransmission(int rate) = 0;
+    virtual void enableRawSensorFusionTransmission(int rate) = 0;
 
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;
@@ -234,6 +243,8 @@ public slots:
     virtual void startMagnetometerCalibration() = 0;
     virtual void startGyroscopeCalibration() = 0;
     virtual void startPressureCalibration() = 0;
+
+
 
 protected:
     QColor color;
@@ -258,6 +269,10 @@ signals:
      * @param text the status text
      * @param severity The severity of the message, 0 for plain debug messages, 10 for very critical messages
      */
+
+    void poiFound(UASInterface* uas, int type, int colorIndex, QString message, float x, float y, float z);
+    void poiConnectionFound(UASInterface* uas, int type, int colorIndex, QString message, float x1, float y1, float z1, float x2, float y2, float z2);
+
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
     /**
      * @brief Update the error count of a device
@@ -352,8 +367,10 @@ signals:
     void positionZControlEnabled(bool enabled);
     /** @brief Heading control enabled/disabled */
     void positionYawControlEnabled(bool enabled);
-    /** @brief Value of a remote control channel */
-    void remoteControlChannelChanged(int channelId, float raw, float normalized);
+    /** @brief Value of a remote control channel (raw) */
+    void remoteControlChannelRawChanged(int channelId, float raw);
+    /** @brief Value of a remote control channel (scaled)*/
+    void remoteControlChannelScaledChanged(int channelId, float normalized);
     /** @brief Remote control RSSI changed */
     void remoteControlRSSIChanged(float rssi);
     /** @brief Radio Calibration Data has been received from the MAV*/
@@ -379,6 +396,11 @@ signals:
      * @param fix 0: No IR/Ultrasound sensor, N > 0: Found N active sensors
      */
     void irUltraSoundLocalizationChanged(UASInterface* uas, int fix);
+
+
+
+
+
 };
 
 Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0");
