@@ -59,7 +59,9 @@ MAVLinkProtocol::MAVLinkProtocol() :
         heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
         m_heartbeatsEnabled(false),
         m_loggingEnabled(false),
-        m_logfile(NULL)
+        m_logfile(NULL),
+        m_enable_version_check(true),
+        versionMismatchIgnore(false)
 {
     start(QThread::LowPriority);
     // Start heartbeat timer, emitting a heartbeat at the configured rate
@@ -76,6 +78,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
             lastIndex[i][j] = -1;
         }
     }
+
+    emit versionCheckChanged(m_enable_version_check);
 }
 
 MAVLinkProtocol::~MAVLinkProtocol()
@@ -91,7 +95,6 @@ MAVLinkProtocol::~MAVLinkProtocol()
 
 void MAVLinkProtocol::run()
 {
-
 }
 
 QString MAVLinkProtocol::getLogfileName()
@@ -146,7 +149,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // Check if the UAS has the same id like this system
                 if (message.sysid == getSystemId())
                 {
-                    qDebug() << "WARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\n\n RECEIVED MESSAGE FROM THIS SYSTEM WITH ID" << message.msgid << "FROM COMPONENT" << message.compid;
+                    emit protocolStatusMessage(tr("SYSTEM ID CONFLICT!"), tr("Warning: A second system is using the same system id (%1)").arg(getSystemId()));
                 }
 
                 // Create a new UAS based on the heartbeat received
@@ -161,12 +164,15 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
 
                 // Check if the UAS has a different protocol version
-                if (heartbeat.mavlink_version != MAVLINK_VERSION)
+                if (m_enable_version_check && (heartbeat.mavlink_version != MAVLINK_VERSION))
                 {
                     // Bring up dialog to inform user
-                    MainWindow::instance()->showCriticalMessage(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"),
+                    if (!versionMismatchIgnore)
+                    {
+                        emit protocolStatusMessage(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"),
                                                                  tr("It is unsafe to use different MAVLink versions. QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
-
+                        versionMismatchIgnore = true;
+                    }
 
                     // Ignore this message and continue gracefully
                     continue;
@@ -398,6 +404,11 @@ void MAVLinkProtocol::enableLogging(bool enabled)
     m_loggingEnabled = enabled;
 }
 
+void MAVLinkProtocol::enableVersionCheck(bool enabled)
+{
+    m_enable_version_check = enabled;
+}
+
 bool MAVLinkProtocol::heartbeatsEnabled(void)
 {
     return m_heartbeatsEnabled;
@@ -406,6 +417,11 @@ bool MAVLinkProtocol::heartbeatsEnabled(void)
 bool MAVLinkProtocol::loggingEnabled(void)
 {
     return m_loggingEnabled;
+}
+
+bool MAVLinkProtocol::versionCheckEnabled(void)
+{
+    return m_enable_version_check;
 }
 
 /**

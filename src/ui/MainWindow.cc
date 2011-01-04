@@ -120,6 +120,8 @@ MainWindow::MainWindow(QWidget *parent):
     // Load mavlink view as default widget set
     //loadMAVLinkView();
 
+    statusBar()->setSizeGripEnabled(true);
+
     if (settings.contains("geometry"))
     {
         // Restore the window geometry
@@ -144,14 +146,14 @@ MainWindow::MainWindow(QWidget *parent):
 
 MainWindow::~MainWindow()
 {
-    delete statusBar;
-    statusBar = NULL;
+
 }
 
 void MainWindow::buildCommonWidgets()
 {
     //TODO:  move protocol outside UI
     mavlink     = new MAVLinkProtocol();
+    connect(mavlink, SIGNAL(protocolStatusMessage(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
 
     // Dock widgets
     if (!controlDockWidget)
@@ -200,6 +202,12 @@ void MainWindow::buildCommonWidgets()
     {
     protocolWidget    = new XMLCommProtocolWidget(this);
     addToCentralWidgetsMenu (protocolWidget, "Mavlink Generator", SLOT(showCentralWidget()),CENTRAL_PROTOCOL);
+    }
+
+    if (!dataplotWidget)
+    {
+        dataplotWidget    = new QGCDataPlot2D(this);
+        addToCentralWidgetsMenu (dataplotWidget, "Data Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
     }
 }
 
@@ -740,6 +748,7 @@ void MainWindow::arrangeCommonCenterStack()
     if (!centerStack) return;
 
     if (mapWidget && (centerStack->indexOf(mapWidget) == -1)) centerStack->addWidget(mapWidget);
+    if (dataplotWidget && (centerStack->indexOf(dataplotWidget) == -1)) centerStack->addWidget(dataplotWidget);
     if (protocolWidget && (centerStack->indexOf(protocolWidget) == -1)) centerStack->addWidget(protocolWidget);
 
     setCentralWidget(centerStack);
@@ -808,15 +817,6 @@ void MainWindow::configureWindowName()
 #ifndef Q_WS_MAC
     //qApp->setWindowIcon(QIcon(":/core/images/qtcreator_logo_128.png"));
 #endif
-}
-
-QStatusBar* MainWindow::createStatusBar()
-{
-    QStatusBar* bar = new QStatusBar();
-    /* Add status fields and messages */
-    /* Enable resize grip in the bottom right corner */
-    bar->setSizeGripEnabled(true);
-    return bar;
 }
 
 void MainWindow::startVideoCapture()
@@ -889,7 +889,7 @@ void MainWindow::reloadStylesheet()
  */
 void MainWindow::showStatusMessage(const QString& status, int timeout)
 {
-    statusBar->showMessage(status, timeout);
+    statusBar()->showMessage(status, timeout);
 }
 
 /**
@@ -900,13 +900,24 @@ void MainWindow::showStatusMessage(const QString& status, int timeout)
  */
 void MainWindow::showStatusMessage(const QString& status)
 {
-    statusBar->showMessage(status, 5);
+    statusBar()->showMessage(status, 20000);
 }
 
 void MainWindow::showCriticalMessage(const QString& title, const QString& message)
 {
     QMessageBox msgBox(MainWindow::instance());
     msgBox.setIcon(QMessageBox::Critical);
+    msgBox.setText(title);
+    msgBox.setInformativeText(message);
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.setDefaultButton(QMessageBox::Ok);
+    msgBox.exec();
+}
+
+void MainWindow::showInfoMessage(const QString& title, const QString& message)
+{
+    QMessageBox msgBox(MainWindow::instance());
+    msgBox.setIcon(QMessageBox::Information);
     msgBox.setText(title);
     msgBox.setInformativeText(message);
     msgBox.setStandardButtons(QMessageBox::Ok);

@@ -68,6 +68,8 @@ public:
     bool heartbeatsEnabled(void);
     /** @brief Get logging state */
     bool loggingEnabled(void);
+    /** @brief Get protocol version check state */
+    bool versionCheckEnabled(void);
     /** @brief Get the name of the packet log file */
     static QString getLogfileName();
 
@@ -87,6 +89,9 @@ public slots:
     /** @brief Enable/disable binary packet logging */
     void enableLogging(bool enabled);
 
+    /** @brief Enable / disable version check */
+    void enableVersionCheck(bool enabled);
+
     /** @brief Send an extra heartbeat to all connected units */
     void sendHeartbeat();
 
@@ -96,12 +101,14 @@ protected:
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
     bool m_loggingEnabled;     ///< Enable/disable packet logging
     QFile* m_logfile;           ///< Logfile
+    bool m_enable_version_check; ///< Enable checking of version match of MAV and QGC
     QMutex receiveMutex;       ///< Mutex to protect receiveBytes function
     int lastIndex[256][256];
     int totalReceiveCounter;
     int totalLossCounter;
     int currReceiveCounter;
     int currLossCounter;
+    bool versionMismatchIgnore;
 
 signals:
     /** @brief Message received and directly copied via signal */
@@ -110,6 +117,10 @@ signals:
     void heartbeatChanged(bool heartbeats);
     /** @brief Emitted if logging is started / stopped */
     void loggingChanged(bool enabled);
+    /** @brief Emitted if version check is enabled / disabled */
+    void versionCheckChanged(bool enabled);
+    /** @brief Emitted if a message from the protocol should reach the user */
+    void protocolStatusMessage(const QString& title, const QString& message);
 };
 
 #endif // MAVLINKPROTOCOL_H_
