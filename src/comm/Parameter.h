@@ -61,8 +61,8 @@ namespace OpalRT
 
         const QGCParamID& getParamID() const {return *paramID;}
         void setOpalID(unsigned short opalID) {this->opalID = opalID;}
-        const QString& getSimulinkPath() {return *simulinkPath;}
-        const QString& getSimulinkName() {return *simulinkName;}
+        const QString& getSimulinkPath() const {return *simulinkPath;}
+        const QString& getSimulinkName() const {return *simulinkName;}
         uint8_t getComponentID() const {return componentID;}
         float getValue();
         void setValue(float value);
