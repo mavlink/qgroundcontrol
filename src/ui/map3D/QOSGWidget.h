@@ -123,7 +123,7 @@ public:
         getCamera()->setGraphicsContext(getGraphicsWindow());
     }
 
-    virtual void paintEvent( QPaintEvent * event ) { frame(); }
+    virtual void paintEvent( QPaintEvent * event ) { Q_UNUSED(event); frame(); }
 
 protected:
 
@@ -158,7 +158,7 @@ public:
         _timer.start(1000.0f/fps);
     }
 
-    virtual void paintEvent( QPaintEvent * event ) { frame(); }
+    virtual void paintEvent( QPaintEvent * event ) { Q_UNUSED(event); frame(); }
 
     void keyPressEvent( QKeyEvent* event )
     {

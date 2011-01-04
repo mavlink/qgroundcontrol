@@ -55,6 +55,9 @@ const QVector<float>& RadioCalibrationData::operator ()(int i) const
         return (*data)[i];
     }
 
+    // FIXME Bryan
+    // FIXME James
+
     // This is not good.  If it is ever used after being returned it will cause a crash
 //    return QVector<float>();
 }

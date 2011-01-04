@@ -1,24 +1,4 @@
-/*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
+/*==================================================================
 ======================================================================*/
 
 /**
@@ -32,6 +12,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QComboBox>
 #include <QGridLayout>
+#include <QDir>
 
 #include "MapWidget.h"
 #include "ui_MapWidget.h"
@@ -41,6 +22,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint2DIcon.h"
 
 #include "MG.h"
+
 
 MapWidget::MapWidget(QWidget *parent) :
         QWidget(parent),
@@ -84,18 +66,20 @@ MapWidget::MapWidget(QWidget *parent) :
     geomLayer = new qmapcontrol::GeometryLayer("Waypoints", mapadapter);
     mc->addLayer(geomLayer);
 
-//
-//    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
-//    mc->addLayer(gsatLayer);
+
+
+    //
+    //    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
+    //    mc->addLayer(gsatLayer);
 
     // SET INITIAL POSITION AND ZOOM
     // Set default zoom level
     mc->setZoom(16);
     // Zurich, ETH
-    //mc->setView(QPointF(8.548056,47.376389));
+    mc->setView(QPointF(8.548056,47.376389));
 
-    // Veracruz Mexico, ETH
-    mc->setView(QPointF(-96.105208,19.138955));
+    // Veracruz Mexico
+    //mc->setView(QPointF(-96.105208,19.138955));
 
     // Add controls to select map provider
     /////////////////////////////////////////////////
@@ -115,24 +99,24 @@ MapWidget::MapWidget(QWidget *parent) :
             this, SLOT(mapproviderSelected(QAction*)));
 
     // Overlay seems currently broken
-//    yahooActionOverlay = new QAction(tr("Yahoo: street overlay"), this);
-//    yahooActionOverlay->setCheckable(true);
-//    yahooActionOverlay->setChecked(overlay->isVisible());
-//    connect(yahooActionOverlay, SIGNAL(toggled(bool)),
-//            overlay, SLOT(setVisible(bool)));
+    //    yahooActionOverlay = new QAction(tr("Yahoo: street overlay"), this);
+    //    yahooActionOverlay->setCheckable(true);
+    //    yahooActionOverlay->setChecked(overlay->isVisible());
+    //    connect(yahooActionOverlay, SIGNAL(toggled(bool)),
+    //            overlay, SLOT(setVisible(bool)));
 
-//    mapproviderGroup->addAction(googleSatAction);
-//    mapproviderGroup->addAction(osmAction);
-//    mapproviderGroup->addAction(yahooActionOverlay);
-//    mapproviderGroup->addAction(googleActionMap);
-//    mapproviderGroup->addAction(yahooActionMap);
-//    mapproviderGroup->addAction(yahooActionSatellite);
+    //    mapproviderGroup->addAction(googleSatAction);
+    //    mapproviderGroup->addAction(osmAction);
+    //    mapproviderGroup->addAction(yahooActionOverlay);
+    //    mapproviderGroup->addAction(googleActionMap);
+    //    mapproviderGroup->addAction(yahooActionMap);
+    //    mapproviderGroup->addAction(yahooActionSatellite);
 
     // Create map provider selection menu
     mapMenu = new QMenu(this);
     mapMenu->addActions(mapproviderGroup->actions());
     mapMenu->addSeparator();
-//    mapMenu->addAction(yahooActionOverlay);
+    //    mapMenu->addAction(yahooActionOverlay);
 
     mapButton = new QPushButton(this);
     mapButton->setText("Map Source");
@@ -191,8 +175,16 @@ MapWidget::MapWidget(QWidget *parent) :
     connect(zoomout, SIGNAL(clicked(bool)),
             mc, SLOT(zoomOut()));
 
+    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    foreach(UASInterface* system, systems)
+    {
+        addUAS(system);
+    }
+
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
             this, SLOT(addUAS(UASInterface*)));
+
+    activeUASSet(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)));
 
     connect(mc, SIGNAL(mouseEventCoordinate(const QMouseEvent*, const QPointF)),
@@ -218,7 +210,16 @@ MapWidget::MapWidget(QWidget *parent) :
     path = new qmapcontrol::LineString (wps, "UAV Path", pointPen);
     mc->layer("Waypoints")->addGeometry(path);
 
-    this->setVisible(false);
+    //Camera Control
+    // CAMERA INDICATOR LAYER
+    // create a layer with the mapadapter and type GeometryLayer (for camera indicator)
+    camLayer = new qmapcontrol::GeometryLayer("Camera", mapadapter);
+    mc->addLayer(camLayer);
+
+    //camLine = new qmapcontrol::LineString(camPoints,"Camera Eje", camBorderPen);
+
+    drawCamBorder = false;
+    radioCamera = 10;
 }
 
 
@@ -237,9 +238,9 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-//        yahooActionOverlay->setEnabled(false);
+        //        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
-//        yahooActionOverlay->setChecked(false);
+        //        yahooActionOverlay->setChecked(false);
 
     }
     else if (action == yahooActionMap)
@@ -253,9 +254,9 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-//        yahooActionOverlay->setEnabled(false);
+        //        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
-//        yahooActionOverlay->setChecked(false);
+        //        yahooActionOverlay->setChecked(false);
     }
     else if (action == yahooActionSatellite)
     {
@@ -268,7 +269,7 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-//        yahooActionOverlay->setEnabled(true);
+        //        yahooActionOverlay->setEnabled(true);
     }
     else if (action == googleActionMap)
     {
@@ -280,9 +281,9 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-//        yahooActionOverlay->setEnabled(false);
+        //        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
-//        yahooActionOverlay->setChecked(false);
+        //        yahooActionOverlay->setChecked(false);
     }
     else if (action == googleSatAction)
     {
@@ -294,9 +295,9 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mc->updateRequestNew();
         mc->setZoom(zoom);
-//        yahooActionOverlay->setEnabled(false);
+        //        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
-//        yahooActionOverlay->setChecked(false);
+        //        yahooActionOverlay->setChecked(false);
     }
     else
     {
@@ -307,7 +308,7 @@ void MapWidget::mapproviderSelected(QAction* action)
 
 void MapWidget::createPathButtonClicked(bool checked)
 {
-  Q_UNUSED(checked);
+    Q_UNUSED(checked);
 
 
 
@@ -321,13 +322,13 @@ void MapWidget::createPathButtonClicked(bool checked)
         // emit signal start to create a Waypoint global
         emit createGlobalWP(true, mc->currentCoordinate());
 
-//        // Clear the previous WP track
-//        // TODO: Move this to an actual clear track button and add a warning dialog
-//        mc->layer("Waypoints")->clearGeometries();
-//        wps.clear();
-//        path->setPoints(wps);
-//        mc->layer("Waypoints")->addGeometry(path);
-//        wpIndex.clear();
+        //        // Clear the previous WP track
+        //        // TODO: Move this to an actual clear track button and add a warning dialog
+        //        mc->layer("Waypoints")->clearGeometries();
+        //        wps.clear();
+        //        path->setPoints(wps);
+        //        mc->layer("Waypoints")->addGeometry(path);
+        //        wpIndex.clear();
 
 
     } else {
@@ -340,118 +341,158 @@ void MapWidget::createPathButtonClicked(bool checked)
 
 }
 
+/**
+ * Captures a click on the map and if in create WP path mode, it adds the WP on MouseButtonRelease
+ *
+ * @param event The mouse event
+ * @param coordinate The coordinate in which it occured the mouse event
+ * @note  This slot is connected to the mouseEventCoordinate of the QMapControl object
+ */
 
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate)
 {
 
-  if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked())
+    qDebug() << mc->mouseMode();
+
+    if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked())
     {
-    // Create waypoint name
-    QString str;
+        // Create waypoint name
+        QString str;
 
-    str = QString("%1").arg(path->numberOfPoints());
+        str = QString("%1").arg(path->numberOfPoints());
 
-    // create the WP and set everything in the LineString to display the path
-    Waypoint2DIcon* tempCirclePoint;
+        // create the WP and set everything in the LineString to display the path
+        Waypoint2DIcon* tempCirclePoint;
 
-    if (mav)
-    {
-        tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle, new QPen(mav->getColor()));
+        if (mav)
+        {
+            tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle, new QPen(mav->getColor()));
+        }
+        else
+        {
+            tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
+        }
+        mc->layer("Waypoints")->addGeometry(tempCirclePoint);
+
+        qmapcontrol::Point* tempPoint = new qmapcontrol::Point(coordinate.x(), coordinate.y(),str);
+        wps.append(tempPoint);
+        path->addPoint(tempPoint);
+
+        wpIndex.insert(str,tempPoint);
+
+        // Refresh the screen
+        mc->updateRequestNew();
+
+        // emit signal mouse was clicked
+        emit captureMapCoordinateClick(coordinate);
+
     }
-    else
-    {
-        tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
-    }
-    mc->layer("Waypoints")->addGeometry(tempCirclePoint);
-
-    qmapcontrol::Point* tempPoint = new qmapcontrol::Point(coordinate.x(), coordinate.y(),str);
-    wps.append(tempPoint);
-    path->addPoint(tempPoint);
-
-    wpIndex.insert(str,tempPoint);
-
-    // Refresh the screen
-    mc->updateRequestNew();
-
-    // emit signal mouse was clicked
-    emit captureMapCoordinateClick(coordinate);
-
-  }
 }
 
 void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
 {
-    // Create waypoint name
-    QString str;
+    if (!wpExists(coordinate)){
+        // Create waypoint name
+        QString str;
 
-    str = QString("%1").arg(path->numberOfPoints());
 
-    // create the WP and set everything in the LineString to display the path
-    CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
-    mc->layer("Waypoints")->addGeometry(tempCirclePoint);
+        str = QString("%1").arg(path->numberOfPoints());
 
-    Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
-    wps.append(tempPoint);
-    path->addPoint(tempPoint);
+        // create the WP and set everything in the LineString to display the path
+        //CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
+        Waypoint2DIcon* tempCirclePoint;
 
-    wpIndex.insert(str,tempPoint);
+        if (mav)
+        {
+            tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle, new QPen(mav->getColor()));
+        }
+        else
+        {
+            tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
+        }
 
-    // Refresh the screen
-    mc->updateRequestNew();
 
-////    // emit signal mouse was clicked
-//    emit captureMapCoordinateClick(coordinate);
+        mc->layer("Waypoints")->addGeometry(tempCirclePoint);
+
+        Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
+        wps.append(tempPoint);
+        path->addPoint(tempPoint);
+
+        wpIndex.insert(str,tempPoint);
+        qDebug()<<"Funcion createWaypointGraphAtMap WP= "<<str<<" -> x= "<<tempPoint->latitude()<<" y= "<<tempPoint->longitude();
+
+        // Refresh the screen
+        mc->updateRequestNew();
+    }
+
+    ////    // emit signal mouse was clicked
+    //    emit captureMapCoordinateClick(coordinate);
 }
+
+int MapWidget::wpExists(const QPointF coordinate){
+    for (int i = 0; i < wps.size(); i++){
+        if (wps.at(i)->latitude() == coordinate.y() &&
+            wps.at(i)->longitude()== coordinate.x()){
+            return 1;
+        }
+    }
+    return 0;
+}
+
 
 void MapWidget::captureGeometryClick(Geometry* geom, QPoint point)
 {
-  Q_UNUSED(geom);
-  Q_UNUSED(point);
+    Q_UNUSED(geom);
+    Q_UNUSED(point);
 
-  mc->setMouseMode(qmapcontrol::MapControl::None);
+    mc->setMouseMode(qmapcontrol::MapControl::None);
 
 }
 
 void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
 {
-  Q_UNUSED(coordinate);
 
-  waypointIsDrag = true;
 
-  // Refresh the screen
-  mc->updateRequestNew();
+    waypointIsDrag = true;
 
-  int temp = 0;
-  qmapcontrol::Point* point2Find;
-  point2Find = wpIndex[geom->name()];
+    // Refresh the screen
+    mc->updateRequestNew();
 
-  if (point2Find)
-  {
-      point2Find->setCoordinate(coordinate);
+    int temp = 0;
+    qmapcontrol::Point* point2Find;
+    point2Find = wpIndex[geom->name()];
 
-      point2Find = dynamic_cast <qmapcontrol::Point*> (geom);
-      if (point2Find)
-      {
-          point2Find->setCoordinate(coordinate);
+    if (point2Find)
+    {
+        point2Find->setCoordinate(coordinate);
 
-          // qDebug() << geom->name();
-          temp = geom->get_myIndex();
-          //qDebug() << temp;
-          emit sendGeometryEndDrag(coordinate,temp);
-      }
-  }
+        point2Find = dynamic_cast <qmapcontrol::Point*> (geom);
+        if (point2Find)
+        {
+            point2Find->setCoordinate(coordinate);
+
+            // qDebug() << geom->name();
+            temp = geom->get_myIndex();
+            //qDebug() << temp;
+            emit sendGeometryEndDrag(coordinate,temp);
+        }
+    }
 
 }
 
 void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
 {
-    waypointIsDrag = false;
+    Q_UNUSED(geom);
+    Q_UNUSED(coordinate);
+    // TODO: Investigate why when creating the waypoint path this slot is being called
 
-    mc->setMouseMode(qmapcontrol::MapControl::Panning);
+    // Only change the mouse mode back to panning when not creating a WP path
+    if (!createPath->isChecked())
+    {
+        waypointIsDrag = false;
+        mc->setMouseMode(qmapcontrol::MapControl::Panning);
+    }
 
-//  qDebug() << geom->name();
-//  qDebug() << geom->GeometryType;
-//  qDebug() << point;
 }
 
 MapWidget::~MapWidget()
@@ -464,6 +505,10 @@ MapWidget::~MapWidget()
  */
 void MapWidget::addUAS(UASInterface* uas)
 {
+    if(mav != NULL)
+    {
+        disconnect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+    }
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
 }
 
@@ -507,6 +552,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 
             // Icon
             QPen* pointpen = new QPen(uasColor);
+            qDebug() << uas->getUASName();
             MAV2DIcon* p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, pointpen);
             uasIcons.insert(uas->getUASID(), p);
             geomLayer->addGeometry(p);
@@ -515,7 +561,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
             // A QPen also can use transparency
 
             QList<qmapcontrol::Point*> points;
-            points.append(new qmapcontrol::Point(lat, lon, QString("lat: %1 lon: %2").arg(lat, lon)));
+            points.append(new qmapcontrol::Point(lat, lon, ""));
             QPen* linepen = new QPen(uasColor.darker());
             linepen->setWidth(2);
             // Add the Points and the QPen to a LineString
@@ -534,24 +580,15 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
                 p->setYaw(uas->getYaw());
             }
             // Extend trail
-            uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, QString("lat: %1 lon: %2").arg(lat, lon)));
+            uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, ""));
         }
 
-        //    points.append(new CirclePoint(8.275145, 50.016992, 15, "Wiesbaden-Mainz-Kastel, Johannes-Goßner-Straße", Point::Middle, pointpen));
-        //    points.append(new CirclePoint(8.270476, 50.021426, 15, "Wiesbaden-Mainz-Kastel, Ruthof", Point::Middle, pointpen));
-        //    // "Blind" Points
-        //    points.append(new Point(8.266445, 50.025913, "Wiesbaden-Mainz-Kastel, Mudra Kaserne"));
-        //    points.append(new Point(8.260378, 50.030345, "Wiesbaden-Mainz-Amoneburg, Dyckerhoffstraße"));
 
         // Connect click events of the layer to this object
         // connect(osmLayer, SIGNAL(geometryClicked(Geometry*, QPoint)),
         //                  this, SLOT(geometryClicked(Geometry*, QPoint)));
 
         // Sets the view to the interesting area
-        //QList<QPointF> view;
-        //view.append(QPointF(8.24764, 50.0319));
-        //view.append(QPointF(8.28412, 49.9998));
-        // mc->setView(view);
         updatePosition(0, lat, lon);
     }
 }
@@ -563,7 +600,7 @@ void MapWidget::updatePosition(float time, double lat, double lon)
 {
     Q_UNUSED(time);
     //gpsposition->setText(QString::number(time) + " / " + QString::number(lat) + " / " + QString::number(lon));
-    if (followgps->isChecked())
+    if (followgps->isChecked() && isVisible())
     {
         mc->setView(QPointF(lat, lon));
     }
@@ -580,6 +617,10 @@ void MapWidget::wheelEvent(QWheelEvent *event)
     // Detail zoom level is the number of steps zoomed in further
     // after the bounding has taken effect
     detailZoom = qAbs(qMin(0, mc->currentZoom()-newZoom));
+
+    // visual field of camera
+    updateCameraPosition(20*newZoom,0,"no");
+
 }
 
 void MapWidget::keyPressEvent(QKeyEvent *event)
@@ -612,6 +653,16 @@ void MapWidget::resizeEvent(QResizeEvent* event )
 {
     Q_UNUSED(event);
     mc->resize(this->size());
+}
+
+void MapWidget::showEvent(QShowEvent* event)
+{
+    Q_UNUSED(event);
+}
+
+void MapWidget::hideEvent(QHideEvent* event)
+{
+    Q_UNUSED(event);
 }
 
 
@@ -664,8 +715,74 @@ void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, floa
 
         // Refresh the screen
         mc->updateRequestNew();
-   }
+    }
 
 
+}
+
+void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
+{
+    // FIXME Mariano
+    //camPoints.clear();
+    QPointF currentPos = mc->currentCoordinate();
+    //    QPointF actualPos = getPointxBearing_Range(currentPos.y(),currentPos.x(),bearing,distance);
+
+    //    qmapcontrol::Point* tempPoint1 = new qmapcontrol::Point(currentPos.x(), currentPos.y(),"inicial",qmapcontrol::Point::Middle);
+    //    qmapcontrol::Point* tempPoint2 = new qmapcontrol::Point(actualPos.x(), actualPos.y(),"final",qmapcontrol::Point::Middle);
+
+    //    camPoints.append(tempPoint1);
+    //    camPoints.append(tempPoint2);
+
+    //    camLine->setPoints(camPoints);
+
+    QPen* camBorderPen = new QPen(QColor(255,0,0));
+    camBorderPen->setWidth(2);
+
+    //radio = mc->currentZoom()
+
+    if(drawCamBorder)
+    {
+        //clear camera borders
+        mc->layer("Camera")->clearGeometries();
+
+        //create a camera borders
+        qmapcontrol::CirclePoint* camBorder = new qmapcontrol::CirclePoint(currentPos.x(), currentPos.y(), radio, "camBorder", qmapcontrol::Point::Middle, camBorderPen);
+
+        //camBorder->setCoordinate(currentPos);
+
+        mc->layer("Camera")->addGeometry(camBorder);
+        // mc->layer("Camera")->addGeometry(camLine);
+        mc->updateRequestNew();
+
+    }
+    else
+    {
+        //clear camera borders
+        mc->layer("Camera")->clearGeometries();
+        mc->updateRequestNew();
+
+    }
+
+
+}
+
+void MapWidget::drawBorderCamAtMap(bool status)
+{
+    drawCamBorder = status;
+    updateCameraPosition(20,0,"no");
+
+}
+
+QPointF MapWidget::getPointxBearing_Range(double lat1, double lon1, double bearing, double distance)
+{
+    QPointF temp;
+
+    double rad = M_PI/180;
+
+    bearing = bearing*rad;
+    temp.setX((lon1 + ((distance/60) * (sin(bearing)))));
+    temp.setY((lat1 + ((distance/60) * (cos(bearing)))));
+
+    return temp;
 }
 

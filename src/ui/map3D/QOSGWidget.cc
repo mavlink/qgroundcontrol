@@ -26,7 +26,7 @@ QOSGWidget::QOSGWidget( QWidget * parent, const char * name, WindowFlags f, bool
     QWidget(parent, f), _overrideTraits (overrideTraits)
 {
     createContext();
-    
+    Q_UNUSED(name);
     setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_NoSystemBackground);
     setFocusPolicy(Qt::ClickFocus);   
@@ -95,6 +95,8 @@ void QOSGWidget::createContext()
 #ifndef WIN32 
 void QOSGWidget::destroyEvent(bool destroyWindow, bool destroySubWindows)
 {   
+    Q_UNUSED(destroyWindow);
+    Q_UNUSED(destroySubWindows);
     _gw->getEventQueue()->closeWindow();
 }
 
@@ -236,7 +238,7 @@ class QViewerTimer : public QWidget
         _timer.stop ();
     }
 
-        virtual void paintEvent (QPaintEvent * event) { _viewer->frame(); }
+        virtual void paintEvent (QPaintEvent * event) { Q_UNUSED(event); _viewer->frame(); }
 
         osg::ref_ptr <osgViewer::CompositeViewer> _viewer;
         QTimer _timer;

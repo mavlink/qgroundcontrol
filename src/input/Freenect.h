@@ -54,7 +54,7 @@ public:
     QSharedPointer<QByteArray> getRgbData(void);
     QSharedPointer<QByteArray> getRawDepthData(void);
     QSharedPointer<QByteArray> getColoredDepthData(void);
-    QVector<QVector3D> get3DPointCloudData(void);
+    QSharedPointer< QVector<QVector3D> > get3DPointCloudData(void);
 
     typedef struct
     {
@@ -65,7 +65,7 @@ public:
         unsigned char g;
         unsigned char b;
     } Vector6D;
-    QVector<Vector6D> get6DPointCloudData(void);
+    QSharedPointer< QVector<Vector6D> > get6DPointCloudData();
 
     int getTiltAngle(void) const;
     void setTiltAngle(int angle);
@@ -85,6 +85,8 @@ private:
         double k[5];
 
     } IntrinsicCameraParameters;
+
+    void readConfigFile(void);
 
     void rectifyPoint(const QVector2D& originalPoint,
                       QVector2D& rectifiedPoint,
@@ -117,6 +119,8 @@ private:
     IntrinsicCameraParameters depthCameraParameters;
 
     QMatrix4x4 transformMatrix;
+    double baseline;
+    double disparityOffset;
 
     // tilt angle of Kinect camera
     int tiltAngle;
@@ -140,6 +144,13 @@ private:
 
     QVector3D depthProjectionMatrix[FREENECT_FRAME_PIX];
     QVector2D rgbRectificationMap[FREENECT_FRAME_PIX];
+
+    // variables for use outside class
+    QSharedPointer<QByteArray> rgbData;
+    QSharedPointer<QByteArray> rawDepthData;
+    QSharedPointer<QByteArray> coloredDepthData;
+    QSharedPointer< QVector<QVector3D> > pointCloud3D;
+    QSharedPointer< QVector<Vector6D> > pointCloud6D;
 };
 
 #endif // FREENECT_H

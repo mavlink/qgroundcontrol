@@ -121,6 +121,12 @@ protected slots:
     void redraw(void);
 
 protected:
+
+    /** @brief Start widget updating */
+    void showEvent(QShowEvent* event);
+    /** @brief Stop widget updating */
+    void hideEvent(QHideEvent* event);
+
     /**
      * @brief Get base robot geode.
      * @return Smart pointer to the geode.
@@ -253,6 +259,7 @@ protected:
     };
 
     CameraParams cameraParams; /**< Struct representing camera parameters. */
+    float fps;
 };
 
 #endif // Q3DWIDGET_H

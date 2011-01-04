@@ -241,7 +241,7 @@ Pixhawk3DWidget::insertWaypoint(void)
 {
     if (uas)
     {
-        Waypoint* wp;
+        Waypoint* wp = NULL;
         if (frame == MAV_FRAME_GLOBAL)
         {
             double latitude = uas->getLatitude();
@@ -392,6 +392,15 @@ Pixhawk3DWidget::findVehicleModels(void)
 
     // add Pixhawk Bravo model
     nodes.push_back(PixhawkCheetahGeode::instance());
+
+    // add sphere of 0.05m radius
+    osg::ref_ptr<osg::Sphere> sphere = new osg::Sphere(osg::Vec3f(0.0f, 0.0f, 0.0f), 0.05f);
+    osg::ref_ptr<osg::ShapeDrawable> sphereDrawable = new osg::ShapeDrawable(sphere);
+    sphereDrawable->setColor(osg::Vec4f(0.5f, 0.0f, 0.5f, 1.0f));
+    osg::ref_ptr<osg::Geode> sphereGeode = new osg::Geode;
+    sphereGeode->addDrawable(sphereDrawable);
+    sphereGeode->setName("Sphere (0.1m)");
+    nodes.push_back(sphereGeode);
 
     // add all other models in folder
     for (int i = 0; i < files.size(); ++i)
@@ -975,21 +984,6 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
 
     scaleGeode->update(height(), cameraParams.cameraFov,
                        cameraManipulator->getDistance(), darkBackground);
-
-    if (!rgb.isNull())
-    {
-        rgbImage->setImage(640, 480, 1,
-                           GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
-                           reinterpret_cast<unsigned char *>(rgb->data()),
-                           osg::Image::NO_DELETE);
-        rgbImage->dirty();
-
-        depthImage->setImage(640, 480, 1,
-                             GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
-                             reinterpret_cast<unsigned char *>(coloredDepth->data()),
-                             osg::Image::NO_DELETE);
-        depthImage->dirty();
-    }
 }
 
 void
@@ -1260,26 +1254,45 @@ float colormap_jet[128][3] =
 void
 Pixhawk3DWidget::updateRGBD(void)
 {
-    rgb = freenect->getRgbData();
-    coloredDepth = freenect->getColoredDepthData();
-    pointCloud = freenect->get6DPointCloudData();
+    QSharedPointer<QByteArray> rgb = freenect->getRgbData();
+    if (!rgb.isNull())
+    {
+        rgbImage->setImage(640, 480, 1,
+                           GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
+                           reinterpret_cast<unsigned char *>(rgb->data()),
+                           osg::Image::NO_DELETE);
+        rgbImage->dirty();
+    }
+
+    QSharedPointer<QByteArray> coloredDepth = freenect->getColoredDepthData();
+    if (!coloredDepth.isNull())
+    {
+        depthImage->setImage(640, 480, 1,
+                             GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
+                             reinterpret_cast<unsigned char *>(coloredDepth->data()),
+                             osg::Image::NO_DELETE);
+        depthImage->dirty();
+    }
+
+    QSharedPointer< QVector<Freenect::Vector6D> > pointCloud =
+            freenect->get6DPointCloudData();
 
     osg::Geometry* geometry = rgbd3DNode->getDrawable(0)->asGeometry();
 
     osg::Vec3Array* vertices = static_cast<osg::Vec3Array*>(geometry->getVertexArray());
     osg::Vec4Array* colors = static_cast<osg::Vec4Array*>(geometry->getColorArray());
-    for (int i = 0; i < pointCloud.size(); ++i)
+    for (int i = 0; i < pointCloud->size(); ++i)
     {
-        double x = pointCloud[i].x;
-        double y = pointCloud[i].y;
-        double z = pointCloud[i].z;
+        double x = pointCloud->at(i).x;
+        double y = pointCloud->at(i).y;
+        double z = pointCloud->at(i).z;
         (*vertices)[i].set(x, z, -y);
 
         if (enableRGBDColor)
         {
-            (*colors)[i].set(pointCloud[i].r / 255.0f,
-                             pointCloud[i].g / 255.0f,
-                             pointCloud[i].b / 255.0f,
+            (*colors)[i].set(pointCloud->at(i).r / 255.0f,
+                             pointCloud->at(i).g / 255.0f,
+                             pointCloud->at(i).b / 255.0f,
                              1.0f);
         }
         else
@@ -1296,12 +1309,12 @@ Pixhawk3DWidget::updateRGBD(void)
     if (geometry->getNumPrimitiveSets() == 0)
     {
         geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POINTS,
-                                                      0, pointCloud.size()));
+                                                      0, pointCloud->size()));
     }
     else
     {
         osg::DrawArrays* drawarrays = static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
-        drawarrays->setCount(pointCloud.size());
+        drawarrays->setCount(pointCloud->size());
     }
 }
 #endif
