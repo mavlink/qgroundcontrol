@@ -506,6 +506,7 @@ void SlugsPIDControl::get_Pitch2dT_PID()
 
 void SlugsPIDControl::recibeMensaje(int systemId, const mavlink_action_ack_t& action)
 {
+  Q_UNUSED(systemId);
     ui->recepcion_label->setText(QString::number(action.action) + ":" + QString::number(action.result));
 }
 
