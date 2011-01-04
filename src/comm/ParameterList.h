@@ -53,11 +53,11 @@ namespace OpalRT
             const_iterator(const const_iterator& other);
 
             const_iterator& operator+=(int i) {index += i; return *this;}
-            bool operator<(const const_iterator& other) {return (this->paramList == other.paramList)
+            bool operator<(const const_iterator& other) const {return (this->paramList == other.paramList)
                                                          &&(this->index<other.index);}
-            bool operator==(const const_iterator& other) {return (this->paramList == other.paramList)
+            bool operator==(const const_iterator& other) const {return (this->paramList == other.paramList)
                                                           &&(this->index==other.index);}
-            bool operator!=(const const_iterator& other) {return !((*this) == other);}
+            bool operator!=(const const_iterator& other) const {return !((*this) == other);}
             const Parameter& operator*() const {return paramList[index];}
             const Parameter* operator->() const {return &paramList[index];}
 
