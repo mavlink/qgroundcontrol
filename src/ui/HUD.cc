@@ -117,6 +117,9 @@ HUD::HUD(int width, int height, QWidget* parent)
     // Set auto fill to false
     setAutoFillBackground(false);
 
+    // Set minimum size
+    setMinimumSize(80, 60);
+
     // Fill with black background
     QImage fill = QImage(width, height, QImage::Format_Indexed8);
     fill.setNumColors(3);
