@@ -150,6 +150,7 @@ void LogCompressor::run()
         int offsetLimit = 200;
         quint64 offset;
         quint64 index = -1;
+        // FIXME Lorenz (index is an unsigend int)
         while (index == -1)
         {
             if (lastTimeIndex > offsetLimit)
@@ -161,6 +162,7 @@ void LogCompressor::run()
                 offset = 0;
             }
             quint64 index = times->indexOf(time, offset);
+            // FIXME Lorenz (index is an unsigend int)
             if (index == -1)
             {
                 qDebug() << "INDEX NOT FOUND DURING LOGFILE PROCESSING, RESTARTING SEARCH";

@@ -207,6 +207,11 @@ uint16_t SlugsHilSim::getUint16FromDatagram (const QByteArray* datagram, unsigne
 }
 
 void SlugsHilSim::linkSelected(int cbIndex){
-  //hilLink = linksAvailable
-    // FIXME Mariano
+  #ifdef MAVLINK_ENABLED_SLUGS
+    // HIL code to go here...
+    //hilLink = linksAvailable
+    Q_UNUSED(cbIndex);
+  #else
+   Q_UNUSED(cbIndex);
+  #endif
 }

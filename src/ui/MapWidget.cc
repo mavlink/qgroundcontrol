@@ -722,7 +722,8 @@ void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, floa
 
 void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
 {
-    // FIXME Mariano
+  Q_UNUSED(bearing);
+  Q_UNUSED(dir);
     //camPoints.clear();
     QPointF currentPos = mc->currentCoordinate();
     //    QPointF actualPos = getPointxBearing_Range(currentPos.y(),currentPos.x(),bearing,distance);
