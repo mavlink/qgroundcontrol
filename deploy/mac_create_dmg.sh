@@ -12,6 +12,7 @@ cp -r ../bin/mac/qgroundcontrol.app mac/.
 
 cp -r ../audio mac/qgroundcontrol.app/Contents/MacOs/.
 mkdir -p mac/qgroundcontrol.app/Contents/Frameworks/
+# SDL is not copied by Qt - for whatever reason
 cp -r SDL.framework mac/qgroundcontrol.app/Contents/Frameworks/.
 echo -e '\n\nStarting to create disk image. This may take a while..\n'
 macdeployqt mac/qgroundcontrol.app -dmg

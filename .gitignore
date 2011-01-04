@@ -1,4 +1,5 @@
 *Makefile*
+tags
 build
 Info.plist
 obj
@@ -25,3 +26,17 @@ deploy/mac
 deploy/linux
 controller_log*
 user_config.pri
+*.app
+
+*.ncb
+*.vcproj
+*.sln
+*.sln
+*.vcproj
+*.user
+*.ncb
+*.idb
+*.project
+*.cproject
+*.sln
+*.suo

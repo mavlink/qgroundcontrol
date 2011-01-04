@@ -1,24 +1,4 @@
 /*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
 ======================================================================*/
 
 /**
@@ -88,6 +68,7 @@ bool MAVLinkXMLParser::generate()
     // Sanity check variables
     QList<int>* usedMessageIDs = new QList<int>();
     QMap<QString, QString>* usedMessageNames = new QMap<QString, QString>();
+    QMap<QString, QString>* usedEnumNames = new QMap<QString, QString>();
 
     QList< QPair<QString, QString> > cFiles;
     QString lcmStructDefs = "";
@@ -109,6 +90,8 @@ bool MAVLinkXMLParser::generate()
     QString messagesDirName = ".";//"generated";
     QDir dir(outputDirName + "/" + messagesDirName);
 
+    int mavlinkVersion = 0;
+
 
 
     // Start main header
@@ -117,6 +100,8 @@ bool MAVLinkXMLParser::generate()
     mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n";
     mainHeader += "\n#include \"../protocol.h\"\n";
     mainHeader += "\n#define MAVLINK_ENABLED_" + pureFileName.toUpper() + "\n\n";
+
+    QString enums;
 
 
     // Run through root children
@@ -168,23 +153,23 @@ bool MAVLinkXMLParser::generate()
 
 
                                 // OLD MODE: MERGE BOTH FILES
-//                                        const QString instanceText(QString::fromUtf8(file.readAll()));
-//                                        includeDoc.setContent(instanceText);
-//                                // Get all messages
-//                                QDomNode in = includeDoc.documentElement().firstChild();
-//                                QDomElement ie = in.toElement();
-//                                if (!ie.isNull())
-//                                {
-//                                    if (ie.tagName() == "messages" || ie.tagName() == "include")
-//                                    {
-//                                        QDomNode ref = n.parentNode().insertAfter(in, n);
-//                                        if (ref.isNull())
-//                                        {
-//                                            emit parseState(QString("<font color=\"red\">ERROR: Inclusion failed: XML syntax error in file %1. Wrong/misspelled XML?\nAbort.</font>").arg(fileName));
-//                                            return false;
-//                                        }
-//                                    }
-//                                }
+                                //                                        const QString instanceText(QString::fromUtf8(file.readAll()));
+                                //                                        includeDoc.setContent(instanceText);
+                                //                                // Get all messages
+                                //                                QDomNode in = includeDoc.documentElement().firstChild();
+                                //                                QDomElement ie = in.toElement();
+                                //                                if (!ie.isNull())
+                                //                                {
+                                //                                    if (ie.tagName() == "messages" || ie.tagName() == "include")
+                                //                                    {
+                                //                                        QDomNode ref = n.parentNode().insertAfter(in, n);
+                                //                                        if (ref.isNull())
+                                //                                        {
+                                //                                            emit parseState(QString("<font color=\"red\">ERROR: Inclusion failed: XML syntax error in file %1. Wrong/misspelled XML?\nAbort.</font>").arg(fileName));
+                                //                                            return false;
+                                //                                        }
+                                //                                    }
+                                //                                }
 
                                 emit parseState(QString("<font color=\"green\">End of inclusion from file: %1</font>").arg(incFileName));
                             }
@@ -196,6 +181,133 @@ bool MAVLinkXMLParser::generate()
                             }
 
                         }
+                        // Handle all enum tags
+                        else if (e.tagName() == "version")
+                        {
+                            //QString fieldType = e.attribute("type", "");
+                            //QString fieldName = e.attribute("name", "");
+                            QString fieldText = e.text();
+
+                            // Check if version has been previously set
+                            if (mavlinkVersion != 0)
+                            {
+                                emit parseState(QString("<font color=\"red\">ERROR: Protocol version tag set twice, please use it only once. First version was %1, second version is %2.\nAbort.</font>").arg(mavlinkVersion).arg(fieldText));
+                                return false;
+                            }
+
+                            bool ok;
+                            int version = fieldText.toInt(&ok);
+                            if (ok && (version > 0) && (version < 256))
+                            {
+                                // Set MAVLink version
+                                mavlinkVersion = version;
+                            }
+                            else
+                            {
+                                emit parseState(QString("<font color=\"red\">ERROR: Reading version string failed: %1, string is not an integer number between 1 and 255.\nAbort.</font>").arg(fieldText));
+                                return false;
+                            }
+                        }
+                        // Handle all enum tags
+                        else if (e.tagName() == "enums")
+                        {
+                            // One down into the enums list
+                            p = n;
+                            n = n.firstChild();
+                            while (!n.isNull())
+                            {
+                                e = n.toElement();
+
+                                QString currEnum;
+                                QString currEnumEnd;
+                                // Comment
+                                QString comment;
+
+                                if(!e.isNull() && e.tagName() == "enum")
+                                {
+                                    // Get enum name
+                                    QString enumName = e.attribute("name", "").toLower();
+                                    if (enumName.size() == 0)
+                                    {
+                                        emit parseState(tr("<font color=\"red\">ERROR: Missing required name=\"\" attribute for tag %2 near line %1\nAbort.</font>").arg(QString::number(e.lineNumber()), e.tagName()));
+                                        return false;
+                                    }
+                                    else
+                                    {
+                                        // Sanity check: Accept only enum names not used previously
+                                        if (usedEnumNames->contains(enumName))
+                                        {
+                                            emit parseState(tr("<font color=\"red\">ERROR: Enum name %1 used twice, second occurence near line %2 of file %3\nAbort.</font>").arg(enumName, QString::number(e.lineNumber()), fileName));
+                                            return false;
+                                        }
+                                        else
+                                        {
+                                            usedEnumNames->insert(enumName, QString::number(e.lineNumber()));
+                                        }
+
+                                        // Everything sane, starting with enum content
+                                        currEnum = "enum " + enumName.toUpper() + "\n{\n";
+                                        currEnumEnd = "};\n\n";
+
+                                        int nextEnumValue = 0;
+
+                                        // Get the message fields
+                                        QDomNode f = e.firstChild();
+                                        while (!f.isNull())
+                                        {
+                                            QDomElement e2 = f.toElement();
+                                            if (!e2.isNull() && e2.tagName() == "entry")
+                                            {
+                                                QString fieldValue = e2.attribute("value", "");
+
+                                                // If value was given, use it, if not, use the enum iterator
+                                                // value. The iterator value gets reset by manual values
+
+                                                QString fieldName = e2.attribute("name", "");
+                                                if (fieldValue.length() == 0)
+                                                {
+                                                    fieldValue = QString::number(nextEnumValue);
+                                                    nextEnumValue++;
+                                                }
+                                                else
+                                                {
+                                                    bool ok;
+                                                    nextEnumValue = fieldValue.toInt(&ok) + 1;
+                                                    if (!ok)
+                                                    {
+                                                        emit parseState(tr("<font color=\"red\">ERROR: Enum entry %1 has not a valid number (%2) in the value field.\nAbort.</font>").arg(fieldName, fieldValue));
+                                                        return false;
+                                                    }
+                                                }
+
+                                                // Add comment of field if there is one
+                                                QString fieldComment;
+                                                if (e2.text().length() > 0)
+                                                {
+                                                    fieldComment = " /* " + e2.text() + "*/";
+                                                }
+                                                currEnum += "\t" + fieldName.toUpper() + "=" + fieldValue + "," + fieldComment + "\n";
+                                            }
+                                            else if(!e2.isNull() && e2.tagName() == "description")
+                                            {
+                                                comment = e2.text() + comment;
+                                            }
+                                            f = f.nextSibling();
+                                        }
+                                    }
+                                    // Add the last parsed enum
+                                    // Remove the last comma, as the last value has none
+                                    int commaPosition = currEnum.lastIndexOf(",");
+                                    currEnum.remove(commaPosition, 1);
+
+                                    enums += "/** @brief " + comment  + " */\n" + currEnum + currEnumEnd;
+                                } // Element is non-zero and element name is <enum>
+                                n = n.nextSibling();
+                            } // While through <enums>
+                            // One up, back into the <mavlink> structure
+                            n = p;
+                        }
+
                         // Handle all message tags
                         else if (e.tagName() == "messages")
                         {
@@ -247,7 +359,11 @@ bool MAVLinkXMLParser::generate()
                                         QString messageType("mavlink_message_t");
 
                                         // Build up function call
-                                        QString commentContainer("/**\n * @brief Send a %1 message\n *\n%2 * @return length of the message in bytes (excluding serial stream start sign)\n */\n");
+                                        QString commentContainer("/**\n * @brief Pack a %1 message\n * @param system_id ID of this system\n * @param component_id ID of this component (e.g. 200 for IMU)\n * @param msg The MAVLink message to compress the data into\n *\n%2 * @return length of the message in bytes (excluding serial stream start sign)\n */\n");
+                                        QString commentPackChanContainer("/**\n * @brief Pack a %1 message\n * @param system_id ID of this system\n * @param component_id ID of this component (e.g. 200 for IMU)\n * @param chan The MAVLink channel this message was sent over\n * @param msg The MAVLink message to compress the data into\n%2 * @return length of the message in bytes (excluding serial stream start sign)\n */\n");
+                                        QString commentSendContainer("/**\n * @brief Send a %1 message\n * @param chan MAVLink channel to send the message\n *\n%2 */\n");
+                                        QString commentEncodeContainer("/**\n * @brief Encode a %1 struct into a message\n *\n * @param system_id ID of this system\n * @param component_id ID of this component (e.g. 200 for IMU)\n * @param msg The MAVLink message to compress the data into\n * @param %1 C-struct to read the message contents from\n */\n");
+                                        QString commentDecodeContainer("/**\n * @brief Decode a %1 message into a struct\n *\n * @param msg The message to decode\n * @param %1 C-struct to decode the message contents into\n */\n");
                                         QString commentEntry(" * @param %1 %2\n");
                                         QString idDefine = QString("#define MAVLINK_MSG_ID_%1 %2").arg(messageName.toUpper(), QString::number(messageId));
                                         QString arrayDefines;
@@ -258,7 +374,8 @@ bool MAVLinkXMLParser::generate()
 
                                         QString decode("static inline void mavlink_msg_%1_decode(const mavlink_message_t* msg, %2* %1)\n{\n%3}\n");
                                         QString pack("static inline uint16_t mavlink_msg_%1_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg%2)\n{\n\tuint16_t i = 0;\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\n%4\n\treturn mavlink_finalize_message(msg, system_id, component_id, i);\n}\n\n");
-                                        QString compactSend("#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_pack(mavlink_system.sysid, mavlink_system.compid, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif");
+                                        QString packChan("static inline uint16_t mavlink_msg_%1_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg%2)\n{\n\tuint16_t i = 0;\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\n%4\n\treturn mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);\n}\n\n");
+                                        QString compactSend("#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif");
                                         //QString compactStructSend = "#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_struct_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_encode(mavlink_system.sysid, mavlink_system.compid, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif";
                                         QString unpacking;
                                         QString prepends;
@@ -285,11 +402,28 @@ bool MAVLinkXMLParser::generate()
                                                 QString unpackingCode;
                                                 QString unpackingComment = QString("/**\n * @brief Get field %1 from %2 message\n *\n * @return %3\n */\n").arg(fieldName, messageName, fieldText);
 
-                                                // Send arguments are the same for integral types and arrays
-                                                sendArguments += ", " + fieldName;
+                                                // Send arguments do not work for the version field
+                                                if (!fieldType.contains("uint8_t_mavlink_version"))
+                                                {
+                                                    // Send arguments are the same for integral types and arrays
+                                                    sendArguments += ", " + fieldName;
+                                                    commentLines += commentEntry.arg(fieldName, fieldText);
+                                                }
+
+                                                // MAVLink version field
+                                                // this is a special field always containing the version define
+                                                if (fieldType.contains("uint8_t_mavlink_version"))
+                                                {
+                                                    // Add field to C structure
+                                                    cStructLines += QString("\t%1 %2; ///< %3\n").arg("uint8_t", fieldName, fieldText);
+                                                    // Add pack line to message_xx_pack function
+                                                    packLines += QString("\ti += put_uint8_t_by_index(%1, i, msg->payload); // %2\n").arg(mavlinkVersion).arg(fieldText);
+                                                    // Add decode function for this type
+                                                    decodeLines += QString("\t%1->%2 = mavlink_msg_%1_get_%2(msg);\n").arg(messageName, fieldName);
+                                                }
 
                                                 // Array handling is different from simple types
-                                                if (fieldType.startsWith("array"))
+                                                else if (fieldType.startsWith("array"))
                                                 {
                                                     int arrayLength = QString(fieldType.split("[").at(1).split("]").first()).toInt();
                                                     QString arrayType = fieldType.split("[").first();
@@ -299,7 +433,7 @@ bool MAVLinkXMLParser::generate()
                                                     // Add field to C structure
                                                     cStructLines += QString("\t%1 %2[%3]; ///< %4\n").arg("int8_t", fieldName, QString::number(arrayLength), fieldText);
                                                     // Add pack line to message_xx_pack function
-                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); //%4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
+                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); // %4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
                                                     // Add decode function for this type
                                                     decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
                                                     arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
@@ -314,7 +448,7 @@ bool MAVLinkXMLParser::generate()
                                                     // Add field to C structure
                                                     cStructLines += QString("\t%1 %2[%3]; ///< %4\n").arg("char", fieldName, QString::number(arrayLength), fieldText);
                                                     // Add pack line to message_xx_pack function
-                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); //%4\n").arg(arrayType, fieldName, QString::number(arrayLength), e2.text());
+                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); // %4\n").arg(arrayType, fieldName, QString::number(arrayLength), e2.text());
                                                     // Add decode function for this type
                                                     decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
                                                     arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
@@ -330,7 +464,7 @@ bool MAVLinkXMLParser::generate()
                                                     // Add field to C structure
                                                     cStructLines += QString("\t%1 %2[%3]; ///< %4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
                                                     // Add pack line to message_xx_pack function
-                                                    packLines += QString("\ti += put_array_by_index((int8_t*)%1, sizeof(%2)*%3, i, msg->payload); //%4\n").arg(fieldName, arrayType, QString::number(arrayLength), fieldText);
+                                                    packLines += QString("\ti += put_array_by_index((int8_t*)%1, sizeof(%2)*%3, i, msg->payload); // %4\n").arg(fieldName, arrayType, QString::number(arrayLength), fieldText);
                                                     // Add decode function for this type
                                                     decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
                                                     arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
@@ -338,7 +472,7 @@ bool MAVLinkXMLParser::generate()
                                                     unpackingCode = QString("\n\tmemcpy(r_data, msg->payload%1, sizeof(%2)*%3);\n\treturn sizeof(%2)*%3;").arg(prepends, arrayType, QString::number(arrayLength));
 
                                                     unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, %3* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, arrayType, unpackingCode);
-//                                                    decodeLines += "";
+                                                    //                                                    decodeLines += "";
                                                     prepends += QString("+sizeof(%1)*%2").arg(arrayType, QString::number(arrayLength));
 
                                                 }
@@ -351,16 +485,20 @@ bool MAVLinkXMLParser::generate()
                                                     // Add field to C structure
                                                     cStructLines += QString("\t%1 %2; ///< %3\n").arg(fieldType, fieldName, fieldText);
                                                     // Add pack line to message_xx_pack function
-                                                    packLines += QString("\ti += put_%1_by_index(%2, i, msg->payload); //%3\n").arg(fieldType, fieldName, e2.text());
+                                                    packLines += QString("\ti += put_%1_by_index(%2, i, msg->payload); // %3\n").arg(fieldType, fieldName, e2.text());
                                                     // Add decode function for this type
                                                     decodeLines += QString("\t%1->%2 = mavlink_msg_%1_get_%2(msg);\n").arg(messageName, fieldName);
                                                 }
-                                                commentLines += commentEntry.arg(fieldName, fieldText);
+
 
                                                 //
-//                                                QString unpackingCode;
+                                                //                                                QString unpackingCode;
 
-                                                if (fieldType == "uint8_t" || fieldType == "int8_t")
+                                                if (fieldType == "uint8_t_mavlink_version")
+                                                {
+                                                    unpackingCode = QString("\treturn (%1)(msg->payload%2)[0];").arg("uint8_t", prepends);
+                                                }
+                                                else if (fieldType == "uint8_t" || fieldType == "int8_t")
                                                 {
                                                     unpackingCode = QString("\treturn (%1)(msg->payload%2)[0];").arg(fieldType, prepends);
                                                 }
@@ -391,8 +529,14 @@ bool MAVLinkXMLParser::generate()
 
 
                                                 // Generate the message decoding function
+                                                if (fieldType.contains("uint8_t_mavlink_version"))
+                                                {
+                                                    unpacking += unpackingComment + QString("static inline %1 mavlink_msg_%2_get_%3(const mavlink_message_t* msg)\n{\n%4\n}\n\n").arg("uint8_t", messageName, fieldName, unpackingCode);
+                                                    decodeLines += "";
+                                                    prepends += "+sizeof(uint8_t)";
+                                                }
                                                 // Array handling is different from simple types
-                                                if (fieldType.startsWith("array"))
+                                                else if (fieldType.startsWith("array"))
                                                 {
                                                     unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, int8_t* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, unpackingCode);
                                                     decodeLines += "";
@@ -423,10 +567,11 @@ bool MAVLinkXMLParser::generate()
                                         cStruct = cStruct.arg(cStructName, cStructLines);
                                         lcmStructDefs.append("\n").append(cStruct).append("\n");
                                         pack = pack.arg(messageName, packParameters, messageName.toUpper(), packLines);
+                                        packChan = packChan.arg(messageName, packParameters, messageName.toUpper(), packLines);
                                         encode = encode.arg(messageName).arg(cStructName).arg(packArguments);
                                         decode = decode.arg(messageName).arg(cStructName).arg(decodeLines);
                                         compactSend = compactSend.arg(channelType, messageType, messageName, sendArguments, packParameters);
-                                        QString cFile = "// MESSAGE " + messageName.toUpper() + " PACKING\n\n" + idDefine + "\n\n" + cStruct + "\n\n" + arrayDefines + "\n\n" + commentContainer.arg(messageName.toLower(), commentLines) + pack + encode + "\n" + compactSend + "\n" + "// MESSAGE " + messageName.toUpper() + " UNPACKING\n\n" + unpacking + decode;
+                                        QString cFile = "// MESSAGE " + messageName.toUpper() + " PACKING\n\n" + idDefine + "\n\n" + cStruct + "\n\n" + arrayDefines + "\n\n" + commentContainer.arg(messageName.toLower(), commentLines) + pack + commentPackChanContainer.arg(messageName.toLower(), commentLines) + packChan + commentEncodeContainer.arg(messageName.toLower()) + encode + "\n" + commentSendContainer.arg(messageName.toLower(), commentLines) + compactSend + "\n" + "// MESSAGE " + messageName.toUpper() + " UNPACKING\n\n" + unpacking + commentDecodeContainer.arg(messageName.toLower()) + decode;
                                         cFiles.append(qMakePair(QString("mavlink_msg_%1.h").arg(messageName), cFile));
                                     } // Check if tag = message
                                 } // Check if e = NULL
@@ -438,6 +583,7 @@ bool MAVLinkXMLParser::generate()
                     } // Check if e = NULL
                     n = n.nextSibling();
                 } // While through include and messages
+                // One up - current node = parent
                 n = p;
 
             } // Check if tag = mavlink
@@ -445,7 +591,19 @@ bool MAVLinkXMLParser::generate()
         n = n.nextSibling();
     } // While through root children
 
+    // Add version to main header
 
+    mainHeader += "// MAVLINK VERSION\n\n";
+    mainHeader += QString("#ifndef MAVLINK_VERSION\n#define MAVLINK_VERSION %1\n#endif\n\n").arg(mavlinkVersion);
+    mainHeader += QString("#if (MAVLINK_VERSION == 0)\n#undef MAVLINK_VERSION\n#define MAVLINK_VERSION %1\n#endif\n\n").arg(mavlinkVersion);
+
+    // Add enums to main header
+
+    mainHeader += "// ENUM DEFINITIONS\n\n";
+    mainHeader += enums;
+    mainHeader += "\n";
+
+    mainHeader += "// MESSAGE DEFINITIONS\n\n";
     // Create directory if it doesn't exist, report result in success
     if (!dir.exists()) success = success && dir.mkpath(outputDirName + "/" + messagesDirName);
     for (int i = 0; i < cFiles.size(); i++)
@@ -482,10 +640,10 @@ bool MAVLinkXMLParser::generate()
     mavlinkHeader.close();
 
     // Write C structs / lcm definitions
-//    QFile lcmStructs(outputDirName + "/mavlink.lcm");
-//    ok = lcmStructs.open(QIODevice::WriteOnly | QIODevice::Text);
-//    success = success && ok;
-//    lcmStructs.write(lcmStructDefs.toLatin1());
+    //    QFile lcmStructs(outputDirName + "/mavlink.lcm");
+    //    ok = lcmStructs.open(QIODevice::WriteOnly | QIODevice::Text);
+    //    success = success && ok;
+    //    lcmStructs.write(lcmStructDefs.toLatin1());
 
     return success;
 }

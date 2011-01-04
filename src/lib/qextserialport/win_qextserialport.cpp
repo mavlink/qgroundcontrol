@@ -114,19 +114,19 @@ Win_QextSerialPort::Win_QextSerialPort(const QString & name, const PortSettings&
     setFlowControl(settings.FlowControl);
     setTimeout(settings.Timeout_Millisec);
     setQueryMode(mode);
-	init();
+    init();
 }
 
 void Win_QextSerialPort::init()
 {
-	_bytesToWrite = 0;
-	overlap.Internal = 0;
-	overlap.InternalHigh = 0;
-	overlap.Offset = 0;
-	overlap.OffsetHigh = 0;
-	overlap.hEvent = CreateEvent(NULL, true, false, NULL);
-	overlapThread = new Win_QextSerialThread(this);
-	bytesToWriteLock = new QReadWriteLock;
+    _bytesToWrite = 0;
+    overlap.Internal = 0;
+    overlap.InternalHigh = 0;
+    overlap.Offset = 0;
+    overlap.OffsetHigh = 0;
+    overlap.hEvent = CreateEvent(NULL, true, false, NULL);
+    overlapThread = new Win_QextSerialThread(this);
+    bytesToWriteLock = new QReadWriteLock;
 }
 
 /*!
@@ -178,11 +178,11 @@ if the port associated with the class is already open.  The port is also configu
 settings, as stored in the Settings structure.
 */
 bool Win_QextSerialPort::open(OpenMode mode) {
-	unsigned long confSize = sizeof(COMMCONFIG);
-	Win_CommConfig.dwSize = confSize;
-	DWORD dwFlagsAndAttributes = 0;
-	if (queryMode() == QextSerialBase::EventDriven)
-		dwFlagsAndAttributes += FILE_FLAG_OVERLAPPED;
+    unsigned long confSize = sizeof(COMMCONFIG);
+    Win_CommConfig.dwSize = confSize;
+    DWORD dwFlagsAndAttributes = 0;
+    if (queryMode() == QextSerialBase::EventDriven)
+        dwFlagsAndAttributes += FILE_FLAG_OVERLAPPED;
 
     LOCK_MUTEX();
     if (mode == QIODevice::NotOpen)
@@ -190,7 +190,7 @@ bool Win_QextSerialPort::open(OpenMode mode) {
     if (!isOpen()) {
         /*open the port*/
         Win_Handle=CreateFileA(port.toAscii(), GENERIC_READ|GENERIC_WRITE,
-                              FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, dwFlagsAndAttributes, NULL);
+                               FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, dwFlagsAndAttributes, NULL);
         if (Win_Handle!=INVALID_HANDLE_VALUE) {
             /*configure port settings*/
             GetCommConfig(Win_Handle, &Win_CommConfig, &confSize);
@@ -211,24 +211,24 @@ bool Win_QextSerialPort::open(OpenMode mode) {
             SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
 
             //init event driven approach
-			if (queryMode() == QextSerialBase::EventDriven) {
-		        Win_CommTimeouts.ReadIntervalTimeout = MAXDWORD;
-		        Win_CommTimeouts.ReadTotalTimeoutMultiplier = 0;
-		        Win_CommTimeouts.ReadTotalTimeoutConstant = 0;
-				Win_CommTimeouts.WriteTotalTimeoutMultiplier = 0;
-				Win_CommTimeouts.WriteTotalTimeoutConstant = 0;
-				SetCommTimeouts(Win_Handle, &Win_CommTimeouts);
+            if (queryMode() == QextSerialBase::EventDriven) {
+                Win_CommTimeouts.ReadIntervalTimeout = MAXDWORD;
+                Win_CommTimeouts.ReadTotalTimeoutMultiplier = 0;
+                Win_CommTimeouts.ReadTotalTimeoutConstant = 0;
+                Win_CommTimeouts.WriteTotalTimeoutMultiplier = 0;
+                Win_CommTimeouts.WriteTotalTimeoutConstant = 0;
+                SetCommTimeouts(Win_Handle, &Win_CommTimeouts);
             	if (!SetCommMask( Win_Handle, EV_TXEMPTY | EV_RXCHAR | EV_DSR)) {
-            		qWarning("failed to set Comm Mask. Error code: %ld", GetLastError());
-					UNLOCK_MUTEX();
-            		return false;
+                    qWarning("failed to set Comm Mask. Error code: %ld", GetLastError());
+                    UNLOCK_MUTEX();
+                    return false;
             	}
             	overlapThread->start();
             }
-			QIODevice::open(mode);
+            QIODevice::open(mode);
         }
     } else {
-		UNLOCK_MUTEX();
+        UNLOCK_MUTEX();
     	return false;
     }
     UNLOCK_MUTEX();
@@ -245,16 +245,16 @@ void Win_QextSerialPort::close()
     LOCK_MUTEX();
 
     if (isOpen()) {
-		flush();
-		if (overlapThread->isRunning()) {
-			overlapThread->stop();
-			if (QThread::currentThread() != overlapThread)
-				overlapThread->wait();
-		}
+        flush();
+        if (overlapThread->isRunning()) {
+            overlapThread->stop();
+            if (QThread::currentThread() != overlapThread)
+                overlapThread->wait();
+        }
         if (CloseHandle(Win_Handle))
             Win_Handle = INVALID_HANDLE_VALUE;
-		_bytesToWrite = 0;
-		QIODevice::close();
+        _bytesToWrite = 0;
+        QIODevice::close();
     }
 
     UNLOCK_MUTEX();
@@ -353,32 +353,32 @@ is currently open (use isOpen() function to check if port is open).
 qint64 Win_QextSerialPort::readData(char *data, qint64 maxSize)
 {
     DWORD retVal;
-	
+
     LOCK_MUTEX();
     
     retVal = 0;
-	if (queryMode() == QextSerialBase::EventDriven) {
-		OVERLAPPED overlapRead;
-		overlapRead.Internal = 0;
-		overlapRead.InternalHigh = 0;
-		overlapRead.Offset = 0;
-		overlapRead.OffsetHigh = 0;
-		overlapRead.hEvent = CreateEvent(NULL, true, false, NULL);
-		if (!ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, & overlapRead)) {
-			if (GetLastError() == ERROR_IO_PENDING)
-				GetOverlappedResult(Win_Handle, & overlapRead, & retVal, true);
-			else {
-	        	lastErr = E_READ_FAILED;
-	        	retVal = (DWORD)-1;
-			}
-		}
-		CloseHandle(overlapRead.hEvent);
-	} else if (!ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, NULL)) {
+    if (queryMode() == QextSerialBase::EventDriven) {
+        OVERLAPPED overlapRead;
+        overlapRead.Internal = 0;
+        overlapRead.InternalHigh = 0;
+        overlapRead.Offset = 0;
+        overlapRead.OffsetHigh = 0;
+        overlapRead.hEvent = CreateEvent(NULL, true, false, NULL);
+        if (!ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, & overlapRead)) {
+            if (GetLastError() == ERROR_IO_PENDING)
+                GetOverlappedResult(Win_Handle, & overlapRead, & retVal, true);
+            else {
+                lastErr = E_READ_FAILED;
+                retVal = (DWORD)-1;
+            }
+        }
+        CloseHandle(overlapRead.hEvent);
+    } else if (!ReadFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, NULL)) {
         lastErr = E_READ_FAILED;
         retVal = (DWORD)-1;
     }
 
-	UNLOCK_MUTEX();
+    UNLOCK_MUTEX();
 
     return (qint64)retVal;
 }
@@ -394,8 +394,8 @@ is currently open (use isOpen() function to check if port is open).
 */
 qint64 Win_QextSerialPort::writeData(const char *data, qint64 maxSize)
 {
-	DWORD retVal;
-	
+    DWORD retVal;
+
     LOCK_MUTEX();
 
     retVal = 0;
@@ -403,21 +403,21 @@ qint64 Win_QextSerialPort::writeData(const char *data, qint64 maxSize)
     	bytesToWriteLock->lockForWrite();
     	_bytesToWrite += maxSize;
     	bytesToWriteLock->unlock();
-		overlapWrite.Internal = 0;
-		overlapWrite.InternalHigh = 0;
-		overlapWrite.Offset = 0;
-		overlapWrite.OffsetHigh = 0;
-		overlapWrite.hEvent = CreateEvent(NULL, true, false, NULL);
-		if (!WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, & overlapWrite)) {
-			lastErr = E_WRITE_FAILED;
-			retVal = (DWORD)-1;
-	   	} else
-	   		retVal = maxSize;
+        overlapWrite.Internal = 0;
+        overlapWrite.InternalHigh = 0;
+        overlapWrite.Offset = 0;
+        overlapWrite.OffsetHigh = 0;
+        overlapWrite.hEvent = CreateEvent(NULL, true, false, NULL);
+        if (!WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, & overlapWrite)) {
+            lastErr = E_WRITE_FAILED;
+            retVal = (DWORD)-1;
+        } else
+            retVal = maxSize;
     } else if (!WriteFile(Win_Handle, (void*)data, (DWORD)maxSize, & retVal, NULL)) {
-		lastErr = E_WRITE_FAILED;
-		retVal = (DWORD)-1;
-   	}
-   	
+        lastErr = E_WRITE_FAILED;
+        retVal = (DWORD)-1;
+    }
+
     UNLOCK_MUTEX();
 
     return (qint64)retVal;
@@ -453,30 +453,30 @@ void Win_QextSerialPort::setFlowControl(FlowType flow) {
         switch(flow) {
 
             /*no flow control*/
-            case FLOW_OFF:
-                Win_CommConfig.dcb.fOutxCtsFlow=FALSE;
-                Win_CommConfig.dcb.fRtsControl=RTS_CONTROL_DISABLE;
-                Win_CommConfig.dcb.fInX=FALSE;
-                Win_CommConfig.dcb.fOutX=FALSE;
-                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                break;
+        case FLOW_OFF:
+            Win_CommConfig.dcb.fOutxCtsFlow=FALSE;
+            Win_CommConfig.dcb.fRtsControl=RTS_CONTROL_DISABLE;
+            Win_CommConfig.dcb.fInX=FALSE;
+            Win_CommConfig.dcb.fOutX=FALSE;
+            SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            break;
 
             /*software (XON/XOFF) flow control*/
-            case FLOW_XONXOFF:
-                Win_CommConfig.dcb.fOutxCtsFlow=FALSE;
-                Win_CommConfig.dcb.fRtsControl=RTS_CONTROL_DISABLE;
-                Win_CommConfig.dcb.fInX=TRUE;
-                Win_CommConfig.dcb.fOutX=TRUE;
-                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                break;
+        case FLOW_XONXOFF:
+            Win_CommConfig.dcb.fOutxCtsFlow=FALSE;
+            Win_CommConfig.dcb.fRtsControl=RTS_CONTROL_DISABLE;
+            Win_CommConfig.dcb.fInX=TRUE;
+            Win_CommConfig.dcb.fOutX=TRUE;
+            SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            break;
 
-            case FLOW_HARDWARE:
-                Win_CommConfig.dcb.fOutxCtsFlow=TRUE;
-                Win_CommConfig.dcb.fRtsControl=RTS_CONTROL_HANDSHAKE;
-                Win_CommConfig.dcb.fInX=FALSE;
-                Win_CommConfig.dcb.fOutX=FALSE;
-                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                break;
+        case FLOW_HARDWARE:
+            Win_CommConfig.dcb.fOutxCtsFlow=TRUE;
+            Win_CommConfig.dcb.fRtsControl=RTS_CONTROL_HANDSHAKE;
+            Win_CommConfig.dcb.fInX=FALSE;
+            Win_CommConfig.dcb.fOutX=FALSE;
+            SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            break;
         }
     }
     UNLOCK_MUTEX();
@@ -503,33 +503,33 @@ void Win_QextSerialPort::setParity(ParityType parity) {
         switch (parity) {
 
             /*space parity*/
-            case PAR_SPACE:
-                if (Settings.DataBits==DATA_8) {
-                    TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: Space parity with 8 data bits is not supported by POSIX systems.");
-                }
-                Win_CommConfig.dcb.fParity=TRUE;
-                break;
+        case PAR_SPACE:
+            if (Settings.DataBits==DATA_8) {
+                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: Space parity with 8 data bits is not supported by POSIX systems.");
+            }
+            Win_CommConfig.dcb.fParity=TRUE;
+            break;
 
             /*mark parity - WINDOWS ONLY*/
             case PAR_MARK:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning:  Mark parity is not supported by POSIX systems");
-                Win_CommConfig.dcb.fParity=TRUE;
-                break;
+            TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning:  Mark parity is not supported by POSIX systems");
+            Win_CommConfig.dcb.fParity=TRUE;
+            break;
 
             /*no parity*/
             case PAR_NONE:
-                Win_CommConfig.dcb.fParity=FALSE;
-                break;
+            Win_CommConfig.dcb.fParity=FALSE;
+            break;
 
             /*even parity*/
             case PAR_EVEN:
-                Win_CommConfig.dcb.fParity=TRUE;
-                break;
+            Win_CommConfig.dcb.fParity=TRUE;
+            break;
 
             /*odd parity*/
             case PAR_ODD:
-                Win_CommConfig.dcb.fParity=TRUE;
-                break;
+            Win_CommConfig.dcb.fParity=TRUE;
+            break;
         }
         SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
     }
@@ -570,48 +570,48 @@ void Win_QextSerialPort::setDataBits(DataBitsType dataBits) {
         switch(dataBits) {
 
             /*5 data bits*/
-            case DATA_5:
-                if (Settings.StopBits==STOP_2) {
-                    TTY_WARNING("Win_QextSerialPort: 5 Data bits cannot be used with 2 stop bits.");
-                }
-                else {
-                    Win_CommConfig.dcb.ByteSize=5;
-                    SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                }
-                break;
+        case DATA_5:
+            if (Settings.StopBits==STOP_2) {
+                TTY_WARNING("Win_QextSerialPort: 5 Data bits cannot be used with 2 stop bits.");
+            }
+            else {
+                Win_CommConfig.dcb.ByteSize=5;
+                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            }
+            break;
 
             /*6 data bits*/
             case DATA_6:
-                if (Settings.StopBits==STOP_1_5) {
-                    TTY_WARNING("Win_QextSerialPort: 6 Data bits cannot be used with 1.5 stop bits.");
-                }
-                else {
-                    Win_CommConfig.dcb.ByteSize=6;
-                    SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                }
-                break;
+            if (Settings.StopBits==STOP_1_5) {
+                TTY_WARNING("Win_QextSerialPort: 6 Data bits cannot be used with 1.5 stop bits.");
+            }
+            else {
+                Win_CommConfig.dcb.ByteSize=6;
+                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            }
+            break;
 
             /*7 data bits*/
             case DATA_7:
-                if (Settings.StopBits==STOP_1_5) {
-                    TTY_WARNING("Win_QextSerialPort: 7 Data bits cannot be used with 1.5 stop bits.");
-                }
-                else {
-                    Win_CommConfig.dcb.ByteSize=7;
-                    SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                }
-                break;
+            if (Settings.StopBits==STOP_1_5) {
+                TTY_WARNING("Win_QextSerialPort: 7 Data bits cannot be used with 1.5 stop bits.");
+            }
+            else {
+                Win_CommConfig.dcb.ByteSize=7;
+                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            }
+            break;
 
             /*8 data bits*/
             case DATA_8:
-                if (Settings.StopBits==STOP_1_5) {
-                    TTY_WARNING("Win_QextSerialPort: 8 Data bits cannot be used with 1.5 stop bits.");
-                }
-                else {
-                    Win_CommConfig.dcb.ByteSize=8;
-                    SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                }
-                break;
+            if (Settings.StopBits==STOP_1_5) {
+                TTY_WARNING("Win_QextSerialPort: 8 Data bits cannot be used with 1.5 stop bits.");
+            }
+            else {
+                Win_CommConfig.dcb.ByteSize=8;
+                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            }
+            break;
         }
     }
     UNLOCK_MUTEX();
@@ -649,33 +649,33 @@ void Win_QextSerialPort::setStopBits(StopBitsType stopBits) {
         switch (stopBits) {
 
             /*one stop bit*/
-            case STOP_1:
-                Win_CommConfig.dcb.StopBits=ONESTOPBIT;
-                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                break;
+        case STOP_1:
+            Win_CommConfig.dcb.StopBits=ONESTOPBIT;
+            SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            break;
 
             /*1.5 stop bits*/
-            case STOP_1_5:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: 1.5 stop bit operation is not supported by POSIX.");
-                if (Settings.DataBits!=DATA_5) {
-                    TTY_WARNING("Win_QextSerialPort: 1.5 stop bits can only be used with 5 data bits");
-                }
-                else {
-                    Win_CommConfig.dcb.StopBits=ONE5STOPBITS;
-                    SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                }
-                break;
+        case STOP_1_5:
+            TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: 1.5 stop bit operation is not supported by POSIX.");
+            if (Settings.DataBits!=DATA_5) {
+                TTY_WARNING("Win_QextSerialPort: 1.5 stop bits can only be used with 5 data bits");
+            }
+            else {
+                Win_CommConfig.dcb.StopBits=ONE5STOPBITS;
+                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            }
+            break;
 
             /*two stop bits*/
             case STOP_2:
-                if (Settings.DataBits==DATA_5) {
-                    TTY_WARNING("Win_QextSerialPort: 2 stop bits cannot be used with 5 data bits");
-                }
-                else {
-                    Win_CommConfig.dcb.StopBits=TWOSTOPBITS;
-                    SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
-                }
-                break;
+            if (Settings.DataBits==DATA_5) {
+                TTY_WARNING("Win_QextSerialPort: 2 stop bits cannot be used with 5 data bits");
+            }
+            else {
+                Win_CommConfig.dcb.StopBits=TWOSTOPBITS;
+                SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
+            }
+            break;
         }
     }
     UNLOCK_MUTEX();
@@ -713,156 +713,175 @@ are speeds that are usable on both Windows and POSIX.
   *BAUD115200          115200      115200
    BAUD128000          128000      115200
    BAUD256000          256000      115200
+   BAUD230400          230400      115200
+   BAUD256000          256000      115200
+   BAUD460800          460800      115200
+   BAUD921600          921600      115200
 \endverbatim
 */
 void Win_QextSerialPort::setBaudRate(BaudRateType baudRate) {
     LOCK_MUTEX();
     if (Settings.BaudRate!=baudRate) {
         switch (baudRate) {
-            case BAUD50:
-            case BAUD75:
-            case BAUD134:
-            case BAUD150:
-            case BAUD200:
-                Settings.BaudRate=BAUD110;
-                break;
+        case BAUD50:
+        case BAUD75:
+        case BAUD134:
+        case BAUD150:
+        case BAUD200:
+            Settings.BaudRate=BAUD110;
+            break;
 
-            case BAUD1800:
-                Settings.BaudRate=BAUD1200;
-                break;
+        case BAUD1800:
+            Settings.BaudRate=BAUD1200;
+            break;
 
-            case BAUD76800:
-                Settings.BaudRate=BAUD57600;
-                break;
+        case BAUD76800:
+            Settings.BaudRate=BAUD57600;
+            break;
 
-            default:
-                Settings.BaudRate=baudRate;
-                break;
+        default:
+            Settings.BaudRate=baudRate;
+            break;
         }
     }
     if (isOpen()) {
         switch (baudRate) {
 
             /*50 baud*/
-            case BAUD50:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 50 baud operation.  Switching to 110 baud.");
-                Win_CommConfig.dcb.BaudRate=CBR_110;
-                break;
+        case BAUD50:
+            TTY_WARNING("Win_QextSerialPort: Windows does not support 50 baud operation.  Switching to 110 baud.");
+            Win_CommConfig.dcb.BaudRate=CBR_110;
+            break;
 
             /*75 baud*/
-            case BAUD75:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 75 baud operation.  Switching to 110 baud.");
-                Win_CommConfig.dcb.BaudRate=CBR_110;
-                break;
+        case BAUD75:
+            TTY_WARNING("Win_QextSerialPort: Windows does not support 75 baud operation.  Switching to 110 baud.");
+            Win_CommConfig.dcb.BaudRate=CBR_110;
+            break;
 
             /*110 baud*/
-            case BAUD110:
-                Win_CommConfig.dcb.BaudRate=CBR_110;
-                break;
+        case BAUD110:
+            Win_CommConfig.dcb.BaudRate=CBR_110;
+            break;
 
             /*134.5 baud*/
-            case BAUD134:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 134.5 baud operation.  Switching to 110 baud.");
-                Win_CommConfig.dcb.BaudRate=CBR_110;
-                break;
+        case BAUD134:
+            TTY_WARNING("Win_QextSerialPort: Windows does not support 134.5 baud operation.  Switching to 110 baud.");
+            Win_CommConfig.dcb.BaudRate=CBR_110;
+            break;
 
             /*150 baud*/
-            case BAUD150:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 150 baud operation.  Switching to 110 baud.");
-                Win_CommConfig.dcb.BaudRate=CBR_110;
-                break;
+        case BAUD150:
+            TTY_WARNING("Win_QextSerialPort: Windows does not support 150 baud operation.  Switching to 110 baud.");
+            Win_CommConfig.dcb.BaudRate=CBR_110;
+            break;
 
             /*200 baud*/
-            case BAUD200:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 200 baud operation.  Switching to 110 baud.");
-                Win_CommConfig.dcb.BaudRate=CBR_110;
-                break;
+        case BAUD200:
+            TTY_WARNING("Win_QextSerialPort: Windows does not support 200 baud operation.  Switching to 110 baud.");
+            Win_CommConfig.dcb.BaudRate=CBR_110;
+            break;
 
             /*300 baud*/
-            case BAUD300:
-                Win_CommConfig.dcb.BaudRate=CBR_300;
-                break;
+        case BAUD300:
+            Win_CommConfig.dcb.BaudRate=CBR_300;
+            break;
 
             /*600 baud*/
-            case BAUD600:
-                Win_CommConfig.dcb.BaudRate=CBR_600;
-                break;
+        case BAUD600:
+            Win_CommConfig.dcb.BaudRate=CBR_600;
+            break;
 
             /*1200 baud*/
-            case BAUD1200:
-                Win_CommConfig.dcb.BaudRate=CBR_1200;
-                break;
+        case BAUD1200:
+            Win_CommConfig.dcb.BaudRate=CBR_1200;
+            break;
 
             /*1800 baud*/
-            case BAUD1800:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 1800 baud operation.  Switching to 1200 baud.");
-                Win_CommConfig.dcb.BaudRate=CBR_1200;
-                break;
+        case BAUD1800:
+            TTY_WARNING("Win_QextSerialPort: Windows does not support 1800 baud operation.  Switching to 1200 baud.");
+            Win_CommConfig.dcb.BaudRate=CBR_1200;
+            break;
 
             /*2400 baud*/
-            case BAUD2400:
-                Win_CommConfig.dcb.BaudRate=CBR_2400;
-                break;
+        case BAUD2400:
+            Win_CommConfig.dcb.BaudRate=CBR_2400;
+            break;
 
             /*4800 baud*/
-            case BAUD4800:
-                Win_CommConfig.dcb.BaudRate=CBR_4800;
-                break;
+        case BAUD4800:
+            Win_CommConfig.dcb.BaudRate=CBR_4800;
+            break;
 
             /*9600 baud*/
-            case BAUD9600:
-                Win_CommConfig.dcb.BaudRate=CBR_9600;
-                break;
+        case BAUD9600:
+            Win_CommConfig.dcb.BaudRate=CBR_9600;
+            break;
 
             /*14400 baud*/
-            case BAUD14400:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 14400 baud operation.");
-                Win_CommConfig.dcb.BaudRate=CBR_14400;
-                break;
+        case BAUD14400:
+            TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 14400 baud operation.");
+            Win_CommConfig.dcb.BaudRate=CBR_14400;
+            break;
 
             /*19200 baud*/
-            case BAUD19200:
-                Win_CommConfig.dcb.BaudRate=CBR_19200;
-                break;
+        case BAUD19200:
+            Win_CommConfig.dcb.BaudRate=CBR_19200;
+            break;
 
             /*38400 baud*/
-            case BAUD38400:
-                Win_CommConfig.dcb.BaudRate=CBR_38400;
-                break;
+        case BAUD38400:
+            Win_CommConfig.dcb.BaudRate=CBR_38400;
+            break;
 
             /*56000 baud*/
-            case BAUD56000:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 56000 baud operation.");
-                Win_CommConfig.dcb.BaudRate=CBR_56000;
-                break;
+        case BAUD56000:
+            TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 56000 baud operation.");
+            Win_CommConfig.dcb.BaudRate=CBR_56000;
+            break;
 
             /*57600 baud*/
-            case BAUD57600:
-                Win_CommConfig.dcb.BaudRate=CBR_57600;
-                break;
+        case BAUD57600:
+            Win_CommConfig.dcb.BaudRate=CBR_57600;
+            break;
 
             /*76800 baud*/
-            case BAUD76800:
-                TTY_WARNING("Win_QextSerialPort: Windows does not support 76800 baud operation.  Switching to 57600 baud.");
-                Win_CommConfig.dcb.BaudRate=CBR_57600;
-                break;
+        case BAUD76800:
+            TTY_WARNING("Win_QextSerialPort: Windows does not support 76800 baud operation.  Switching to 57600 baud.");
+            Win_CommConfig.dcb.BaudRate=CBR_57600;
+            break;
 
             /*115200 baud*/
-            case BAUD115200:
-                Win_CommConfig.dcb.BaudRate=CBR_115200;
-                break;
+        case BAUD115200:
+            Win_CommConfig.dcb.BaudRate=CBR_115200;
+            break;
 
             /*128000 baud*/
-            case BAUD128000:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 128000 baud operation.");
-                Win_CommConfig.dcb.BaudRate=CBR_128000;
-                break;
+        case BAUD128000:
+            TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 128000 baud operation.");
+            Win_CommConfig.dcb.BaudRate=CBR_128000;
+            break;
 
             /*256000 baud*/
-            case BAUD256000:
-                TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 256000 baud operation.");
-                Win_CommConfig.dcb.BaudRate=CBR_256000;
-                break;
+        case BAUD256000:
+            TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 256000 baud operation.");
+            Win_CommConfig.dcb.BaudRate=CBR_256000;
+            break;
+            /*230400 baud*/
+        case BAUD230400:
+            TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 230400 baud operation.");
+            Win_CommConfig.dcb.BaudRate=CBR_230400;
+            break;
+            /*460800 baud*/
+        case BAUD460800:
+            TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 460800 baud operation.");
+            Win_CommConfig.dcb.BaudRate=CBR_460800;
+            break;
+            /*921600 baud*/
+        case BAUD921600:
+            TTY_PORTABILITY_WARNING("Win_QextSerialPort Portability Warning: POSIX does not support 921600 baud operation.");
+            Win_CommConfig.dcb.BaudRate=CBR_921600;
+            break;
         }
         SetCommConfig(Win_Handle, &Win_CommConfig, sizeof(COMMCONFIG));
     }
@@ -948,55 +967,55 @@ ulong Win_QextSerialPort::lineStatus(void) {
 
 bool Win_QextSerialPort::waitForReadyRead(int msecs)
 {
-	//@todo implement
-	return false;
+    //@todo implement
+    return false;
 }
 
 qint64 Win_QextSerialPort::bytesToWrite() const
 {
-	return _bytesToWrite;
+    return _bytesToWrite;
 }
 
 void Win_QextSerialPort::monitorCommEvent()
 {
-	DWORD eventMask = 0;
+    DWORD eventMask = 0;
 
-	ResetEvent(overlap.hEvent);
-	if (!WaitCommEvent(Win_Handle, & eventMask, & overlap))
-		if (GetLastError() != ERROR_IO_PENDING)
-			qCritical("WaitCommEvent error %ld\n", GetLastError());
+    ResetEvent(overlap.hEvent);
+    if (!WaitCommEvent(Win_Handle, & eventMask, & overlap))
+        if (GetLastError() != ERROR_IO_PENDING)
+            qCritical("WaitCommEvent error %ld\n", GetLastError());
 
-	if (WaitForSingleObject(overlap.hEvent, INFINITE) == WAIT_OBJECT_0) {
-		//overlap event occured
-		DWORD undefined;
-		if (!GetOverlappedResult(Win_Handle, & overlap, & undefined, false)) {
-			qWarning("CommEvent overlapped error %ld", GetLastError());
-			return;
-		}
-		if (eventMask & EV_RXCHAR) {
-			if (sender() != this)
-				emit readyRead();
-		}
-		if (eventMask & EV_TXEMPTY) {
-			DWORD numBytes;
-			GetOverlappedResult(Win_Handle, & overlapWrite, & numBytes, true);
-			bytesToWriteLock->lockForWrite();
-			if (sender() != this)
-				emit bytesWritten(bytesToWrite());
-			_bytesToWrite = 0;
-			bytesToWriteLock->unlock();
-		}
-		if (eventMask & EV_DSR)
-			if (lineStatus() & LS_DSR)
-				emit dsrChanged(true);
-			else
-				emit dsrChanged(false);
-	}
+    if (WaitForSingleObject(overlap.hEvent, INFINITE) == WAIT_OBJECT_0) {
+        //overlap event occured
+        DWORD undefined;
+        if (!GetOverlappedResult(Win_Handle, & overlap, & undefined, false)) {
+            qWarning("CommEvent overlapped error %ld", GetLastError());
+            return;
+        }
+        if (eventMask & EV_RXCHAR) {
+            if (sender() != this)
+                emit readyRead();
+        }
+        if (eventMask & EV_TXEMPTY) {
+            DWORD numBytes;
+            GetOverlappedResult(Win_Handle, & overlapWrite, & numBytes, true);
+            bytesToWriteLock->lockForWrite();
+            if (sender() != this)
+                emit bytesWritten(bytesToWrite());
+            _bytesToWrite = 0;
+            bytesToWriteLock->unlock();
+        }
+        if (eventMask & EV_DSR)
+            if (lineStatus() & LS_DSR)
+                emit dsrChanged(true);
+        else
+            emit dsrChanged(false);
+    }
 }
 
 void Win_QextSerialPort::terminateCommWait()
 {
-	SetCommMask(Win_Handle, 0);
+    SetCommMask(Win_Handle, 0);
 }
 
 
@@ -1013,17 +1032,17 @@ void Win_QextSerialPort::setTimeout(long millisec) {
     LOCK_MUTEX();
     Settings.Timeout_Millisec = millisec;
 
-	if (millisec == -1) {
-		Win_CommTimeouts.ReadIntervalTimeout = MAXDWORD;
-		Win_CommTimeouts.ReadTotalTimeoutConstant = 0;
-	} else {
-		Win_CommTimeouts.ReadIntervalTimeout = millisec;
-		Win_CommTimeouts.ReadTotalTimeoutConstant = millisec;
-	}
-	Win_CommTimeouts.ReadTotalTimeoutMultiplier = 0;
-	Win_CommTimeouts.WriteTotalTimeoutMultiplier = millisec;
-	Win_CommTimeouts.WriteTotalTimeoutConstant = 0;
-	if (queryMode() != QextSerialBase::EventDriven)
+    if (millisec == -1) {
+        Win_CommTimeouts.ReadIntervalTimeout = MAXDWORD;
+        Win_CommTimeouts.ReadTotalTimeoutConstant = 0;
+    } else {
+        Win_CommTimeouts.ReadIntervalTimeout = millisec;
+        Win_CommTimeouts.ReadTotalTimeoutConstant = millisec;
+    }
+    Win_CommTimeouts.ReadTotalTimeoutMultiplier = 0;
+    Win_CommTimeouts.WriteTotalTimeoutMultiplier = millisec;
+    Win_CommTimeouts.WriteTotalTimeoutConstant = 0;
+    if (queryMode() != QextSerialBase::EventDriven)
       	SetCommTimeouts(Win_Handle, &Win_CommTimeouts);
 
     UNLOCK_MUTEX();
@@ -1033,19 +1052,19 @@ void Win_QextSerialPort::setTimeout(long millisec) {
 Win_QextSerialThread::Win_QextSerialThread(Win_QextSerialPort * qesp):
 	QThread()
 {
-	this->qesp = qesp;
-	terminate = false;
+    this->qesp = qesp;
+    terminate = false;
 }
 
 void Win_QextSerialThread::stop()
 {
-	terminate = true;
-	qesp->terminateCommWait();
+    terminate = true;
+    qesp->terminateCommWait();
 }
 
 void Win_QextSerialThread::run()
 {
-	while (!terminate)
-		qesp->monitorCommEvent();
-	terminate = false;
+    while (!terminate)
+        qesp->monitorCommEvent();
+    terminate = false;
 }

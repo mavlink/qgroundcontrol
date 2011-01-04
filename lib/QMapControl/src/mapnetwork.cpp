@@ -95,7 +95,9 @@ namespace qmapcontrol
                     }
                     else
                     {
-                        qDebug() << "NETWORK_PIXMAP_ERROR: " << ax;
+                        // QGC FIXME Error is currently undetected
+                        // TODO Error is currently undetected
+                        //qDebug() << "NETWORK_PIXMAP_ERROR: " << ax;
                     }
                 }
 

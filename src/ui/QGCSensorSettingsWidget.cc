@@ -37,15 +37,15 @@ QGCSensorSettingsWidget::QGCSensorSettingsWidget(UASInterface* uas, QWidget *par
     ui(new Ui::QGCSensorSettingsWidget)
 {
     ui->setupUi(this);
-
-    connect(ui->sendRawCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableRawSensorDataTransmission(bool)));
-    connect(ui->sendControllerCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableRawControllerDataTransmission(bool)));
-    connect(ui->sendExtendedCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtendedSystemStatusTransmission(bool)));
-    connect(ui->sendRCCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableRCChannelDataTransmission(bool)));
-    connect(ui->sendPositionCheckBox, SIGNAL(toggled(bool)), mav, SLOT(enablePositionTransmission(bool)));
-    connect(ui->sendExtra1CheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtra1Transmission(bool)));
-    connect(ui->sendExtra2CheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtra2Transmission(bool)));
-    connect(ui->sendExtra3CheckBox, SIGNAL(toggled(bool)), mav, SLOT(enableExtra3Transmission(bool)));
+    // XXX: This might be a bad idea sending a message every time the value changes
+    connect(ui->spinBox_rawSensor, SIGNAL(valueChanged(int)), mav, SLOT(enableRawSensorDataTransmission(int)));
+    connect(ui->spinBox_controller, SIGNAL(valueChanged(int)), mav, SLOT(enableRawControllerDataTransmission(int)));
+    connect(ui->spinBox_extended, SIGNAL(valueChanged(int)), mav, SLOT(enableExtendedSystemStatusTransmission(int)));
+    connect(ui->spinBox_rc, SIGNAL(valueChanged(int)), mav, SLOT(enableRCChannelDataTransmission(int)));
+    connect(ui->spinBox_position, SIGNAL(valueChanged(int)), mav, SLOT(enablePositionTransmission(int)));
+    connect(ui->spinBox_extra1, SIGNAL(valueChanged(int)), mav, SLOT(enableExtra1Transmission(int)));
+    connect(ui->spinBox_extra2, SIGNAL(valueChanged(int)), mav, SLOT(enableExtra2Transmission(int)));
+    connect(ui->spinBox_extra3, SIGNAL(valueChanged(int)), mav, SLOT(enableExtra3Transmission(int)));
 
     // Calibration
     connect(ui->rcCalButton, SIGNAL(clicked()), mav, SLOT(startRadioControlCalibration()));

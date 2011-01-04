@@ -91,6 +91,9 @@ public:
     qint64 getBitsSent();
     qint64 getBitsReceived();
 
+    void loadSettings();
+    void writeSettings();
+
     void run();
 
     int getLinkQuality();

@@ -43,23 +43,7 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QComboBox" name="linkType">
-       <item>
-        <property name="text">
-         <string>Serial Link</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>UDP</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Simulation</string>
-        </property>
-       </item>
-      </widget>
+      <widget class="QComboBox" name="linkType"/>
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_5">
@@ -71,13 +55,8 @@
      <item row="1" column="1">
       <widget class="QComboBox" name="connectionType">
        <property name="currentIndex">
-        <number>0</number>
+        <number>-1</number>
        </property>
-       <item>
-        <property name="text">
-         <string>MAVLink</string>
-        </property>
-       </item>
       </widget>
      </item>
     </layout>

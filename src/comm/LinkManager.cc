@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QApplication>
 #include "LinkManager.h"
+#include <iostream>
 
 #include <QDebug>
 
@@ -65,6 +66,8 @@ LinkManager::~LinkManager()
 
 void LinkManager::add(LinkInterface* link)
 {
+    if(!link) return;
+    connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeLink(QObject*)));
     links.append(link);
     emit newLink(link);
 }
@@ -73,6 +76,7 @@ void LinkManager::addProtocol(LinkInterface* link, ProtocolInterface* protocol)
 {
     // Connect link to protocol
     // the protocol will receive new bytes from the link
+    if(!link || !protocol) return;
     connect(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)), protocol, SLOT(receiveBytes(LinkInterface*, QByteArray)));
     // Store the connection information in the protocol links map
     protocolLinks.insertMulti(protocol, link);
@@ -91,7 +95,8 @@ bool LinkManager::connectAll()
 	
         foreach (LinkInterface* link, links)
         {
-		if(! link->connect()) allConnected = false;
+            if(!link) {}
+            else if(!link->connect()) allConnected = false;
 	}
 	
 	return allConnected;
@@ -103,7 +108,9 @@ bool LinkManager::disconnectAll()
 	
         foreach (LinkInterface* link, links)
         {
-		if(! link->disconnect()) allDisconnected = false;
+            //static int i=0;
+            if(!link){}
+            else if(!link->disconnect()) allDisconnected = false;
 	}
 	
 	return allDisconnected;
@@ -111,12 +118,41 @@ bool LinkManager::disconnectAll()
 
 bool LinkManager::connectLink(LinkInterface* link)
 {
+        if(!link) return false;
 	return link->connect();
 }
 
 bool LinkManager::disconnectLink(LinkInterface* link)
 {
+        if(!link) return false;
 	return link->disconnect();
+}
+
+void LinkManager::removeLink(QObject* link)
+{
+    LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
+    // Add link to link list
+    if (links.contains(linkInterface))
+    {
+        int linkIndex = links.indexOf(linkInterface);
+        links.removeAt(linkIndex);
+    }
+}
+
+bool LinkManager::removeLink(LinkInterface* link)
+{
+        if(link)
+        {
+            for (int i=0; i < QList<LinkInterface*>(links).size(); i++)
+            {
+                if(link==links.at(i))
+                {
+                    links.removeAt(i); //remove from link list
+                }
+            }
+            return true;
+        }
+        return false;
 }
 
 /**
