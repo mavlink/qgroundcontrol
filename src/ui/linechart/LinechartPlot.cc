@@ -254,7 +254,8 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     if(ms < minTime) minTime = ms;
     if(ms > maxTime) maxTime = ms;
     storageInterval = maxTime - minTime;
-    lastTime = time;
+
+    if(time > lastTime) lastTime = time;
 
     //
     if (value < minValue) minValue = value;
@@ -276,6 +277,8 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
 void LinechartPlot::enforceGroundTime(bool enforce)
 {
     m_groundTime = enforce;
+
+    lastTime = QGC::groundTimeUsecs()/1000;
 }
 
 /**
