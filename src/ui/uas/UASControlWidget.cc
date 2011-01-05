@@ -117,15 +117,15 @@ void UASControlWidget::setUAS(UASInterface* uas)
     {
         QPushButton* startRecButton = new QPushButton(tr("Record"));
         connect(startRecButton, SIGNAL(clicked()), mav, SLOT(startDataRecording()));
-        ui.gridLayout->addWidget(startRecButton, 10, 1);
+        ui.gridLayout->addWidget(startRecButton, 10, 0, 0, 2);
 
         QPushButton* pauseRecButton = new QPushButton(tr("Pause"));
         connect(pauseRecButton, SIGNAL(clicked()), mav, SLOT(pauseDataRecording()));
-        ui.gridLayout->addWidget(pauseRecButton, 10, 2);
+        ui.gridLayout->addWidget(pauseRecButton, 10, 2, 0, 2);
 
         QPushButton* stopRecButton = new QPushButton(tr("Stop"));
         connect(stopRecButton, SIGNAL(clicked()), mav, SLOT(stopDataRecording()));
-        ui.gridLayout->addWidget(stopRecButton, 10, 3);
+        ui.gridLayout->addWidget(stopRecButton, 10, 4, 0, 2);
     }
 
 

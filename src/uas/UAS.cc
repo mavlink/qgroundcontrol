@@ -318,7 +318,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "pitch V (deg/s)", (attitude.pitchspeed/M_PI)*180.0, time);
                 emit valueChanged(uasId, "yaw V (deg/s)", (attitude.yawspeed/M_PI)*180.0, time);
 
-                emit attitudeChanged(this, mavlink_msg_attitude_get_roll(&message), mavlink_msg_attitude_get_pitch(&message), mavlink_msg_attitude_get_yaw(&message), time);
+                emit attitudeChanged(this, attitude.roll, attitude.pitch, attitude.yaw, time);
             }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION:

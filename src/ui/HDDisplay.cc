@@ -76,6 +76,11 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
 
     restoreState();
 
+    // Set minimum size
+    setMinimumSize(80, 80);
+    // Set preferred size
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
     createActions();
 
     //    setBackgroundBrush(QBrush(backgroundColor));
@@ -142,6 +147,11 @@ HDDisplay::~HDDisplay()
 {
     saveState();
     delete m_ui;
+}
+
+QSize HDDisplay::sizeHint() const
+{
+    return QSize(400, 400*(vwidth/vheight));
 }
 
 void HDDisplay::enableGLRendering(bool enable)
@@ -281,6 +291,7 @@ void HDDisplay::addGauge(const QString& gauge)
             }
         }
     }
+    adjustGaugeAspectRatio();
 }
 
 void HDDisplay::createActions()
@@ -313,6 +324,16 @@ void HDDisplay::setColumns()
 void HDDisplay::setColumns(int cols)
 {
     columns = cols;
+    adjustGaugeAspectRatio();
+}
+
+void HDDisplay::adjustGaugeAspectRatio()
+{
+    // Adjust vheight dynamically according to the number of rows
+    float vColWidth = vwidth / columns;
+    int vRows = ceil(acceptList->length()/(float)columns);
+    // Assuming square instruments, vheight is column width*row count
+    vheight = vColWidth * vRows;
 }
 
 void HDDisplay::setTitle()
@@ -348,12 +369,6 @@ void HDDisplay::renderOverlay()
     // Update scaling factor
     // adjust scaling to fit both horizontally and vertically
     scalingFactor = this->width()/vwidth;
-
-    // Adjust vheight dynamically according to the number of rows
-    float vColWidth = vwidth / columns;
-    int vRows = ceil(acceptList->length()/(float)columns);
-    // Assuming square instruments, vheight is column width*row count
-    vheight = vColWidth * vRows;
 
     double scalingFactorH = this->height()/vheight;
     if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
