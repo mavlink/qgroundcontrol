@@ -48,18 +48,14 @@ const float* RadioCalibrationData::operator [](int i) const
     return NULL;
 }
 
-const QVector<float>& RadioCalibrationData::operator ()(int i) const
+const QVector<float>& RadioCalibrationData::operator ()(const int i) const throw(std::out_of_range)
 {
-    if (i < data->size())
+    if ((i < data->size()) && (i >=0))
     {
         return (*data)[i];
     }
 
-    // FIXME Bryan
-    // FIXME James
-
-    // This is not good.  If it is ever used after being returned it will cause a crash
-//    return QVector<float>();
+    throw std::out_of_range("Invalid channel index");
 }
 
 QString RadioCalibrationData::toString(RadioElement element) const
