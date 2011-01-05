@@ -108,11 +108,6 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Create actions
     connectCommonActions();
-    // Add option for custom widgets
-    connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
-    // Allow to mute audio
-    ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
-    connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
 
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
@@ -124,13 +119,13 @@ MainWindow::MainWindow(QWidget *parent):
 
     if (settings.contains("geometry"))
     {
-        // Restore the window geometry
-        restoreGeometry(settings.value("geometry").toByteArray());
+      // Restore the window geometry
+      restoreGeometry(settings.value("geometry").toByteArray());
     }
     else
     {
-    // Adjust the size
-    adjustSize();
+      // Adjust the size
+      adjustSize();
     }
 
     // Populate link menu
@@ -957,6 +952,14 @@ void MainWindow::connectCommonActions()
     connect(ui.actionOnline_documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(ui.actionDeveloper_Credits, SIGNAL(triggered()), this, SLOT(showCredits()));
     connect(ui.actionProject_Roadmap, SIGNAL(triggered()), this, SLOT(showRoadMap()));
+
+    // Add option for custom widgets
+    connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
+
+    // Allow to mute audio
+    ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
+    connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
+
 }
 
 void MainWindow::connectPxActions()
