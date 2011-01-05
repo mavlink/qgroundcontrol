@@ -1291,6 +1291,19 @@ void UAS::setParameter(int component, QString id, float value)
 }
 
 /**
+ * Sets an action
+ *
+ **/
+void UAS::setAction(MAV_ACTION action)
+{
+    mavlink_message_t msg;
+    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, action);
+    // Send message twice to increase chance that it reaches its goal
+    sendMessage(msg);
+    sendMessage(msg);
+}
+
+/**
  * Launches the system
  *
  **/

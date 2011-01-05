@@ -162,6 +162,9 @@ public:
 
 public slots:
 
+    /** @brief Sets an action **/
+    virtual void setAction(MAV_ACTION action) = 0;
+
     /** @brief Launches the system/Liftof **/
     virtual void launch() = 0;
     /** @brief Set a new waypoint **/
