@@ -112,13 +112,18 @@ HUD::HUD(int width, int height, QWidget* parent)
     strongStrokeWidth(1.5f),
     normalStrokeWidth(1.0f),
     fineStrokeWidth(0.5f),
-    waypointName("")
+    waypointName(""),
+    roll(0.0f),
+    pitch(0.0f),
+    yaw(0.0f)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
 
     // Set minimum size
     setMinimumSize(80, 60);
+    // Set preferred size
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     // Fill with black background
     QImage fill = QImage(width, height, QImage::Format_Indexed8);
@@ -170,13 +175,16 @@ HUD::HUD(int width, int height, QWidget* parent)
     // Connect with UAS
     UASManager* manager = UASManager::instance();
     connect(manager, SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
-
-    this->setVisible(false);
 }
 
 HUD::~HUD()
 {
 
+}
+
+QSize HUD::sizeHint() const
+{
+    return QSize(800, 600);
 }
 
 void HUD::showEvent(QShowEvent* event)
@@ -240,16 +248,9 @@ void HUD::setActiveUAS(UASInterface* uas)
         // Disconnect any previously connected active MAV
         disconnect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         disconnect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
-        disconnect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
-        disconnect(uas, SIGNAL(thrustChanged(UASInterface*, double)), this, SLOT(updateThrust(UASInterface*, double)));
-        disconnect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         disconnect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         disconnect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-        disconnect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateLoad(UASInterface*, double)));
-        disconnect(uas, SIGNAL(attitudeThrustSetPointChanged(UASInterface*,double,double,double,double,quint64)), this, SLOT(updateAttitudeThrustSetPoint(UASInterface*,double,double,double,double,quint64)));
-        disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
+        disconnect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
     }
 
     // Now connect the new UAS
@@ -284,7 +285,7 @@ void HUD::updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double
 
 void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
 {
-    //qDebug() << __FILE__ << __LINE__ << "ROLL" << roll;
+    qDebug() << __FILE__ << __LINE__ << "ROLL" << yaw;
     updateValue(uas, "roll", roll, timestamp);
     updateValue(uas, "pitch", pitch, timestamp);
     updateValue(uas, "yaw", yaw, timestamp);
@@ -573,10 +574,6 @@ void HUD::paintHUD()
 #endif
 
     // Read out most important values to limit hash table lookups
-    static float roll = 0.0f;
-    static float pitch = 0.0f;
-    static float yaw = 0.0f;
-
     // Low-pass roll, pitch and yaw
     roll = roll * 0.2f + 0.8f * values.value("roll", 0.0f);
     pitch = pitch * 0.2f + 0.8f * values.value("pitch", 0.0f);
@@ -725,7 +722,7 @@ void HUD::paintHUD()
     QString yawAngle;
 
     const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
-    //qDebug() << "YAW: " << yawDeg;
+    qDebug() << "YAW: " << yawDeg;
     yawAngle.sprintf("%03d", (int)yawDeg);
     paintText(yawAngle, defaultColor, 3.5f, -3.7f, compassY+ 0.9f, &painter);
 

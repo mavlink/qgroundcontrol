@@ -907,6 +907,7 @@ bool MAVLinkSimulationLink::disconnect() {
         _isConnected = false;
 
         emit disconnected();
+        emit connected(false);
 
         //exit();
     }
@@ -923,6 +924,8 @@ bool MAVLinkSimulationLink::disconnect() {
 bool MAVLinkSimulationLink::connect()
 {
     _isConnected = true;
+    emit connected();
+    emit connected(true);
 
     start(LowPriority);
     //    timer->start(rate);
