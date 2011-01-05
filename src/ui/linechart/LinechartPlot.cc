@@ -1,23 +1,4 @@
 /*=====================================================================
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
-
-This file is part of the PIXHAWK project
-
-    PIXHAWK is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-    
-    PIXHAWK is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    
-    You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-    
 ======================================================================*/
 
 /**
@@ -63,23 +44,23 @@ d_curve(NULL)
 {
     this->plotid = plotid;
     this->plotInterval = interval;
-    
+
     maxValue = DBL_MIN;
     minValue = DBL_MAX;
-    
+
     //lastMaxTimeAdded = QTime();
-    
+
     curves = QMap<QString, QwtPlotCurve*>();
     data = QMap<QString, TimeSeriesData*>();
     scaleMaps = QMap<QString, QwtScaleMap*>();
-    
+
     yScaleEngine = new QwtLinearScaleEngine();
     setAxisScaleEngine(QwtPlot::yLeft, yScaleEngine);
-    
+
     /* Create color map */
     colors = QList<QColor>();
     nextColor = 0;
-    
+
     ///> Color map for plots, includes 20 colors
     ///> Map will start from beginning when the first 20 colors are exceeded
     colors.append(QColor(242,255,128));
@@ -102,11 +83,11 @@ d_curve(NULL)
     colors.append(QColor(161,252,116));
     colors.append(QColor(87,231,246));
     colors.append(QColor(230,126,23));
-    
+
     plotPosition = 0;
-    
+
     setAutoReplot(false);
-    
+
     // Set grid
     QwtPlotGrid *grid = new QwtPlotGrid;
     grid->setMinPen(QPen(Qt::darkGray, 0, Qt::DotLine));
@@ -114,39 +95,39 @@ d_curve(NULL)
     grid->enableXMin(true);
     // TODO xmin?
     grid->attach(this);
-    
+
     // Set left scale
     //setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
-    
+
     // Set bottom scale
     setAxisScaleDraw(QwtPlot::xBottom, new TimeScaleDraw());
     setAxisLabelRotation(QwtPlot::xBottom, -25.0);
     setAxisLabelAlignment(QwtPlot::xBottom, Qt::AlignLeft | Qt::AlignBottom);
-    
+
     // Add some space on the left and right side of the scale to prevent flickering
-    
+
     QwtScaleWidget* bottomScaleWidget = axisWidget(QwtPlot::xBottom);
     const int fontMetricsX = QFontMetrics(bottomScaleWidget->font()).height();
     bottomScaleWidget->setMinBorderDist(fontMetricsX * 2, fontMetricsX / 2);
-    
+
     plotLayout()->setAlignCanvasToScales(true);
-    
+
     // Set canvas background
     setCanvasBackground(QColor(40, 40, 40));
-    
+
     // Enable zooming
     //zoomer = new Zoomer(canvas());
     zoomer = new ScrollZoomer(canvas());
     zoomer->setRubberBandPen(QPen(Qt::blue, 1.2, Qt::DotLine));
     zoomer->setTrackerPen(QPen(Qt::blue));
-    
+
     // Start QTimer for plot update
     updateTimer = new QTimer(this);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(paintRealtime()));
     //updateTimer->start(DEFAULT_REFRESH_RATE);
-    
+
     //    QwtPlot::setAutoReplot();
-    
+
     //    canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, false);
     //    canvas()->setPaintAttribute(QwtPlotCanvas::PaintPacked, false);
 }
@@ -245,31 +226,27 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
 {
     /* Lock resource to ensure data integrity */
     datalock.lock();
-    
+
     /* Check if dataset identifier already exists */
     if(!data.contains(dataname)) {
         addCurve(dataname);
     }
-    
+
     // Add new value
     TimeSeriesData* dataset = data.value(dataname);
-    
+
     quint64 time;
-    
+
     // Append data
     if (m_groundTime)
     {
         // Use the current (receive) time
-        //dataset->append(MG::TIME::getGroundTimeNow(), value);
         time = QGC::groundTimeUsecs()/1000;
-        //qDebug() << "QGC:" << QGC::groundTimeUsecs()/1000;
     }
     else
     {
         // Use timestamp from dataset
         time = ms;
-        //qDebug() << "MS:" << ms;
-        //qDebug() << "QGC:" << QGC::groundTimeUsecs()/1000;
     }
     dataset->append(time, value);
 
