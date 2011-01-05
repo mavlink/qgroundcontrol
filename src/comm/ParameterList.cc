@@ -45,9 +45,15 @@ ParameterList::ParameterList()
     reqdServoParams->append("AIL_RIGHT_IN");
     reqdServoParams->append("AIL_CENTER_IN");
     reqdServoParams->append("AIL_LEFT_IN");
+    reqdServoParams->append("AIL_RIGHT_OUT");
+    reqdServoParams->append("AIL_CENTER_OUT");
+    reqdServoParams->append("AIL_LEFT_OUT");
     reqdServoParams->append("ELE_DOWN_IN");
     reqdServoParams->append("ELE_CENTER_IN");
     reqdServoParams->append("ELE_UP_IN");
+    reqdServoParams->append("ELE_DOWN_OUT");
+    reqdServoParams->append("ELE_CENTER_OUT");
+    reqdServoParams->append("ELE_UP_OUT");
     reqdServoParams->append("RUD_LEFT_IN");
     reqdServoParams->append("RUD_CENTER_IN");
     reqdServoParams->append("RUD_RIGHT_IN");
@@ -285,6 +291,15 @@ bool ParameterList::read(QIODevice *device)
         child = child.nextSiblingElement("Block");
     }
 
+    if (!reqdServoParams->empty())
+    {
+        qDebug() << __FILE__ << __LINE__ << "Missing the following required servo parameters";
+        foreach(QString s, *reqdServoParams)
+        {
+            qDebug() << s;
+        }
+    }
+
     delete paramConfig;
     return true;
 }
@@ -297,9 +312,9 @@ void ParameterList::parseBlock(const QDomElement &block)
     Parameter *p;
     SubsystemIds id;
     if (block.attribute("name") == "Navigation")
-        id = OpalRT::NAV_ID;
+        id = OpalRT::NAV;
     else if (block.attribute("name") == "Controller")
-        id = OpalRT::CONTROLLER_ID;
+        id = OpalRT::CONTROLLER;
     else if (block.attribute("name") == "ServoOutputs")
         id = OpalRT::SERVO_OUTPUTS;
     else if (block.attribute("name") == "ServoInputs")
@@ -332,13 +347,6 @@ void ParameterList::parseBlock(const QDomElement &block)
             }
         }
 
-        if (!reqdServoParams->empty())
-        {
-            qDebug() << __FILE__ << __LINE__ << "Missing the following required servo parameters";
-            foreach(QString s, *reqdServoParams)
-            {
-                qDebug() << s;
-            }
-        }
+
 
 }

@@ -153,8 +153,11 @@ protected:
 
     uint16_t duty2PulseMicros(double duty);
     uint8_t rescaleNorm(double norm, int ch);
+    int8_t rescaleControllerOutput(double raw);
 
     bool sendRCValues;
+    bool sendRawController;
+    bool sendPosition;
 };
 
 #endif // OPALLINK_H
