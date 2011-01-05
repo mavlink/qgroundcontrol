@@ -7,6 +7,8 @@ namespace Ui {
     class QGCActionButton;
 }
 
+class UASInterface;
+
 class QGCActionButton : public QGCToolWidgetItem
 {
     Q_OBJECT
@@ -16,11 +18,17 @@ public:
     ~QGCActionButton();
 
 public slots:
+    void sendAction();
+    void setActionButtonName(QString text);
     void startEditMode();
     void endEditMode();
 
+private slots:
+    void setActiveUAS(UASInterface* uas);
+
 private:
     Ui::QGCActionButton *ui;
+    UASInterface* uas;
 };
 
 #endif // QGCACTIONBUTTON_H

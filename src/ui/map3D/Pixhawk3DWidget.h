@@ -71,6 +71,7 @@ private slots:
     void recenter(void);
     void toggleFollowCamera(int state);
 
+    void selectTarget(void);
     void insertWaypoint(void);
     void moveWaypoint(void);
     void setWaypoint(void);
@@ -101,6 +102,7 @@ private:
     osg::ref_ptr<osg::Geode> createTrail(void);
     osg::ref_ptr<Imagery> createMap(void);
     osg::ref_ptr<osg::Geode> createRGBD3D(void);
+    osg::ref_ptr<osg::Node> createTarget(void);
 
     void setupHUD(void);
     void resizeHUD(void);
@@ -112,11 +114,13 @@ private:
     void updateImagery(double originX, double originY, double originZ,
                        const QString& zone);
     void updateWaypoints(void);
+    void updateTarget(double robotX, double robotY);
 #ifdef QGC_LIBFREENECT_ENABLED
     void updateRGBD(void);
 #endif
 
     int findWaypoint(int mouseX, int mouseY);
+    bool findTarget(int mouseX, int mouseY);
     void showInsertWaypointMenu(const QPoint& cursorPos);
     void showEditWaypointMenu(const QPoint& cursorPos);
 
@@ -134,6 +138,7 @@ private:
     bool displayRGBD2D;
     bool displayRGBD3D;
     bool enableRGBDColor;
+    bool enableTarget;
 
     bool followCamera;
 
@@ -154,6 +159,7 @@ private:
     osg::ref_ptr<osg::DrawArrays> trailDrawArrays;
     osg::ref_ptr<Imagery> mapNode;
     osg::ref_ptr<WaypointGroupNode> waypointGroupNode;
+    osg::ref_ptr<osg::Node> targetNode;
     osg::ref_ptr<osg::Geode> rgbd3DNode;
 #ifdef QGC_LIBFREENECT_ENABLED
     QScopedPointer<Freenect> freenect;
@@ -163,6 +169,7 @@ private:
     QVector< osg::ref_ptr<osg::Node> > vehicleModels;
 
     MAV_FRAME frame;
+    osg::Vec2d target;
     double lastRobotX, lastRobotY, lastRobotZ;
 };
 
