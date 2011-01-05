@@ -89,8 +89,11 @@ protected slots:
     //void render(QPainter* painter, const QRectF& target = QRectF(), const QRect& source = QRect(), Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio);
     void renderOverlay();
     void triggerUpdate();
+    /** @brief Adjust the size hint for the current gauge layout */
+    void adjustGaugeAspectRatio();
 
 protected:
+    QSize sizeHint() const;
     void changeEvent(QEvent* e);
     void paintEvent(QPaintEvent* event);
     void showEvent(QShowEvent* event);

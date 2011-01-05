@@ -284,6 +284,7 @@ protected:
     // TODO CHECK THIS!!!
     int scaling;
     QwtScaleEngine* yScaleEngine;
+    quint64 lastTime; ///< Last added timestamp
     quint64 minTime; ///< The smallest timestamp occured so far
     quint64 maxTime; ///< The biggest timestamp occured so far
     quint64 maxInterval;

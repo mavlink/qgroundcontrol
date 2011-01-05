@@ -174,6 +174,9 @@ public:
     void setAutopilotType(int apType) { autopilot = apType;}
 
 public slots:
+    /** @brief Sets an action **/
+    void setAction(MAV_ACTION action);
+
     /** @brief Launches the system **/
     void launch();
     /** @brief Write this waypoint to the list of waypoints */
@@ -236,7 +239,7 @@ public slots:
     void requestParameters();
 
     /** @brief Set a system parameter */
-    void setParameter(int component, QString id, float value);
+    void setParameter(const int component, const QString& id, const float value);
 
     /** @brief Write parameters to permanent storage */
     void writeParametersToStorage();

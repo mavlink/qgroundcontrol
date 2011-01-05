@@ -118,6 +118,8 @@ protected:
     float refLineWidthToPen(float line);
     /** @brief Rotate a polygon around a point clockwise */
     void rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin);
+    /** @brief Preferred Size */
+    QSize sizeHint() const;
     /** @brief Start updating widget */
     void showEvent(QShowEvent* event);
     /** @brief Stop updating widget */
@@ -183,6 +185,9 @@ protected:
     float fineStrokeWidth;     ///< Fine line stroke width, used throughout the HUD
 
     QString waypointName;      ///< Waypoint name displayed in HUD
+    float roll;
+    float pitch;
+    float yaw;
     void paintEvent(QPaintEvent *event);
 
 };

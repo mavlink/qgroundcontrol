@@ -144,9 +144,6 @@ muted(false)
 
 GAudioOutput::~GAudioOutput()
 {
-    QSettings settings;
-    settings.setValue(QGC_GAUDIOOUTPUT_KEY+"muted", muted);
-    settings.sync();
 #ifdef _MSC_VER2
 	::CoUninitialize();
 #endif
@@ -155,6 +152,9 @@ GAudioOutput::~GAudioOutput()
 void GAudioOutput::mute(bool mute)
 {
     this->muted = mute;
+    QSettings settings;
+    settings.setValue(QGC_GAUDIOOUTPUT_KEY+"muted", muted);
+    settings.sync();
 }
 
 bool GAudioOutput::isMuted()
