@@ -239,7 +239,7 @@ public slots:
     void requestParameters();
 
     /** @brief Set a system parameter */
-    void setParameter(int component, QString id, float value);
+    void setParameter(const int component, const QString& id, const float value);
 
     /** @brief Write parameters to permanent storage */
     void writeParametersToStorage();

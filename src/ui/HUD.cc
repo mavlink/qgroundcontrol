@@ -285,7 +285,7 @@ void HUD::updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double
 
 void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
 {
-    qDebug() << __FILE__ << __LINE__ << "ROLL" << yaw;
+    //qDebug() << __FILE__ << __LINE__ << "YAW" << yaw;
     updateValue(uas, "roll", roll, timestamp);
     updateValue(uas, "pitch", pitch, timestamp);
     updateValue(uas, "yaw", yaw, timestamp);
