@@ -50,6 +50,8 @@ QGCActionButton::QGCActionButton(QWidget *parent) :
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
             this, SLOT(setActiveUAS(UASInterface*)));
+    // Set first UAS if it exists
+    this->setActiveUAS(UASManager::instance()->getActiveUAS());
 
     connect(ui->actionButton, SIGNAL(clicked()), this, SLOT(sendAction()));
     connect(ui->editFinishButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
@@ -90,6 +92,8 @@ void QGCActionButton::startEditMode()
     ui->editActionComboBox->show();
     ui->editActionsRefreshButton->show();
     ui->editFinishButton->show();
+    ui->editNameLabel->show();
+    ui->editButtonName->show();
     isInEditMode = true;
 }
 
@@ -98,6 +102,12 @@ void QGCActionButton::endEditMode()
     ui->editActionComboBox->hide();
     ui->editActionsRefreshButton->hide();
     ui->editFinishButton->hide();
+    ui->editNameLabel->hide();
+    ui->editButtonName->hide();
+
+    // Write to settings
+
+
     isInEditMode = false;
 }
 
