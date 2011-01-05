@@ -41,7 +41,9 @@ OpalLink::OpalLink() :
         componentID(1),
         params(NULL),
         opalInstID(101),
-        sendRCValues(false)
+        sendRCValues(false),
+        sendRawController(false),
+        sendPosition(false)
 {
     start(QThread::LowPriority);
 
@@ -134,13 +136,13 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
                 }
             }
             break;
-        case MAVLINK_MSG_ID_REQUEST_RC_CHANNELS:
-        {
-        	mavlink_request_rc_channels_t rc;
-        	mavlink_msg_request_rc_channels_decode(&msg, &rc);        	
-        	this->sendRCValues = static_cast<bool>(rc.enabled);
-        }
-        break;
+//        case MAVLINK_MSG_ID_REQUEST_RC_CHANNELS:
+//        {
+//        	mavlink_request_rc_channels_t rc;
+//        	mavlink_msg_request_rc_channels_decode(&msg, &rc);
+//        	this->sendRCValues = static_cast<bool>(rc.enabled);
+//        }
+//        break;
 #ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
         case MAVLINK_MSG_ID_RADIO_CALIBRATION:
         {
@@ -157,17 +159,29 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
             /* AILERON SERVO */
             if (params->contains(OpalRT::SERVO_INPUTS, "AIL_RIGHT_IN"))
                 params->getParameter(OpalRT::SERVO_INPUTS, "AIL_RIGHT_IN").setValue(((radio.aileron[0]>900 /*in us?*/)?radio.aileron[0]/1000:radio.aileron[0]));
+            if (params->contains(OpalRT::SERVO_OUTPUTS, "AIL_RIGHT_OUT"))
+                params->getParameter(OpalRT::SERVO_OUTPUTS, "AIL_RIGHT_OUT").setValue(((radio.aileron[0]>900 /*in us?*/)?radio.aileron[0]/1000:radio.aileron[0]));
             if (params->contains(OpalRT::SERVO_INPUTS, "AIL_CENTER_IN"))
                 params->getParameter(OpalRT::SERVO_INPUTS, "AIL_CENTER_IN").setValue(((radio.aileron[1]>900 /*in us?*/)?radio.aileron[1]/1000:radio.aileron[1]));
+            if (params->contains(OpalRT::SERVO_OUTPUTS, "AIL_CENTER_OUT"))
+                params->getParameter(OpalRT::SERVO_OUTPUTS, "AIL_CENTER_OUT").setValue(((radio.aileron[1]>900 /*in us?*/)?radio.aileron[1]/1000:radio.aileron[1]));
             if (params->contains(OpalRT::SERVO_INPUTS, "AIL_LEFT_IN"))
                 params->getParameter(OpalRT::SERVO_INPUTS, "AIL_LEFT_IN").setValue(((radio.aileron[2]>900 /*in us?*/)?radio.aileron[2]/1000:radio.aileron[2]));
+            if (params->contains(OpalRT::SERVO_OUTPUTS, "AIL_LEFT_OUT"))
+                params->getParameter(OpalRT::SERVO_OUTPUTS, "AIL_LEFT_OUT").setValue(((radio.aileron[2]>900 /*in us?*/)?radio.aileron[2]/1000:radio.aileron[2]));
             /* ELEVATOR SERVO */
             if (params->contains(OpalRT::SERVO_INPUTS, "ELE_DOWN_IN"))
                 params->getParameter(OpalRT::SERVO_INPUTS, "ELE_DOWN_IN").setValue(((radio.elevator[0]>900 /*in us?*/)?radio.elevator[0]/1000:radio.elevator[0]));
+            if (params->contains(OpalRT::SERVO_OUTPUTS, "ELE_DOWN_OUT"))
+                params->getParameter(OpalRT::SERVO_OUTPUTS, "ELE_DOWN_OUT").setValue(((radio.elevator[0]>900 /*in us?*/)?radio.elevator[0]/1000:radio.elevator[0]));
             if (params->contains(OpalRT::SERVO_INPUTS, "ELE_CENTER_IN"))
                 params->getParameter(OpalRT::SERVO_INPUTS, "ELE_CENTER_IN").setValue(((radio.elevator[1]>900 /*in us?*/)?radio.elevator[1]/1000:radio.elevator[1]));
+            if (params->contains(OpalRT::SERVO_OUTPUTS, "ELE_CENTER_OUT"))
+                params->getParameter(OpalRT::SERVO_OUTPUTS, "ELE_CENTER_OUT").setValue(((radio.elevator[1]>900 /*in us?*/)?radio.elevator[1]/1000:radio.elevator[1]));
             if (params->contains(OpalRT::SERVO_INPUTS, "ELE_UP_IN"))
                 params->getParameter(OpalRT::SERVO_INPUTS, "ELE_UP_IN").setValue(((radio.elevator[2]>900 /*in us?*/)?radio.elevator[2]/1000:radio.elevator[2]));
+            if (params->contains(OpalRT::SERVO_OUTPUTS, "ELE_UP_OUT"))
+                params->getParameter(OpalRT::SERVO_OUTPUTS, "ELE_UP_OUT").setValue(((radio.elevator[2]>900 /*in us?*/)?radio.elevator[2]/1000:radio.elevator[2]));
             /* THROTTLE SERVO */
             if (params->contains(OpalRT::SERVO_INPUTS, "THR_SET0_IN"))
                 params->getParameter(OpalRT::SERVO_INPUTS, "THR_SET0_IN").setValue(((radio.throttle[0]>900 /*in us?*/)?radio.throttle[0]/1000:radio.throttle[0]));
@@ -205,11 +219,50 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         }
         break;
 #endif
+#ifdef MAVLINK_ENABLED_PIXHAWK
+        case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:
+        {
+            mavlink_request_data_stream_t stream;
+            mavlink_msg_request_data_stream_decode(&msg, &stream);
+            switch (stream.req_stream_id)
+            {
+            case 0: // All data types
+                break;
+            case 1: // Raw Sensor Data
+                break;
+            case 2: // extended system status
+                break;
+            case 3: // rc channel data
+                sendRCValues = (stream.start_stop == 1?true:false);
+                break;
+            case 4: // raw controller
+                if (stream.start_stop == 1)
+                    sendRawController = true;
+                else
+                    sendRawController = false;
+                break;
+            case 5: // raw sensor fusion
+                break;
+            case 6: // position
+                sendPosition = (stream.start_stop == 1?true:false);
+                break;
+            case 7: // extra 1
+                break;
+            case 8: // extra 2
+                break;
+            case 9: // extra 3
+                break;
+            default:
+                qDebug() << __FILE__ << __LINE__ << "Received Unknown Data Strem Request with ID" << stream.req_stream_id;
+            }
+        }
+        break;
         default:
             {
                 qDebug() << "OpalLink::writeBytes(): Unknown mavlink packet";
             }
         }
+#endif
     }
 }
 
@@ -282,17 +335,19 @@ void OpalLink::getSignals()
         if (returnVal == EOK )
         {            
             /* Send position info to qgroundcontrol */
-            mavlink_message_t local_position;
-            mavlink_msg_local_position_pack(systemID, componentID, &local_position,
-                                            (*timestep)*1000000,
-                                            values[OpalRT::X_POS],
-                                            values[OpalRT::Y_POS],
-                                            values[OpalRT::Z_POS],
-                                            values[OpalRT::X_VEL],
-                                            values[OpalRT::Y_VEL],
-                                            values[OpalRT::Z_VEL]);
-            receiveMessage(local_position);
-
+            if (sendPosition)
+            {
+                mavlink_message_t local_position;
+                mavlink_msg_local_position_pack(systemID, componentID, &local_position,
+                                                (*timestep)*1000000,
+                                                values[OpalRT::X_POS],
+                                                values[OpalRT::Y_POS],
+                                                values[OpalRT::Z_POS],
+                                                values[OpalRT::X_VEL],
+                                                values[OpalRT::Y_VEL],
+                                                values[OpalRT::Z_VEL]);
+                receiveMessage(local_position);
+            }
             /* send attitude info to qgroundcontrol */
             mavlink_message_t attitude;
             mavlink_msg_attitude_pack(systemID, componentID, &attitude,
@@ -335,6 +390,18 @@ void OpalLink::getSignals()
                                              0 //rssi unused
                                              );
                 receiveMessage(rc);
+            }
+            if (sendRawController)
+            {
+                mavlink_message_t rawController;
+                mavlink_msg_attitude_controller_output_pack(systemID, componentID, &rawController,
+                                                            1,
+                                                            rescaleControllerOutput(values[OpalRT::CONTROLLER_AILERON]),
+                                                            rescaleControllerOutput(values[OpalRT::CONTROLLER_ELEVATOR]),
+                                                            0, // yaw not used
+                                                            0 // thrust not used
+                                                            );
+                receiveMessage(rawController);
             }
         }        
         else if (returnVal != EAGAIN) // if returnVal == EAGAIN => data just wasn't ready
@@ -408,10 +475,12 @@ uint8_t OpalLink::rescaleNorm(double norm, int ch)
         return static_cast<uint8_t>(norm*255);
         break;
     }
-
-
 }
 
+int8_t OpalLink::rescaleControllerOutput(double raw)
+{
+    return static_cast<int8_t>((raw>=0?raw*127:raw*128));
+}
 
 bool OpalLink::connect()
 {

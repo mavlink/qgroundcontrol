@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QVector>
 #include <QString>
+#include <stdexcept>
 
 
 /**
@@ -66,7 +67,7 @@ public:
     };
 
     const float* operator[](int i) const;
-    const QVector<float>& operator()(int i) const;
+    const QVector<float>& operator()(int i) const throw(std::out_of_range);
     void set(int element, int index, float value) {(*data)[element][index] = value;}
 
 public slots:

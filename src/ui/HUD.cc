@@ -721,8 +721,8 @@ void HUD::paintHUD()
     painter.drawRoundedRect(compassRect, 2, 2);
     QString yawAngle;
 
-    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
-    qDebug() << "YAW: " << yawDeg;
+//    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
+    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f);
     yawAngle.sprintf("%03d", (int)yawDeg);
     paintText(yawAngle, defaultColor, 3.5f, -3.7f, compassY+ 0.9f, &painter);
 
