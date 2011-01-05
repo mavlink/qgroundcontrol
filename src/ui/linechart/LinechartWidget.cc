@@ -35,6 +35,7 @@ This file is part of the PIXHAWK project
 #include <QGridLayout>
 #include <QComboBox>
 #include <QToolButton>
+#include <QSizePolicy>
 #include <QScrollBar>
 #include <QLabel>
 #include <QMenu>
@@ -78,47 +79,52 @@ updateTimer(new QTimer())
     // Add and customize curve list elements (left side)
     curvesWidget = new QWidget(ui.curveListWidget);
     ui.curveListWidget->setWidget(curvesWidget);
-    curvesWidgetLayout = new QVBoxLayout(curvesWidget);
+    curvesWidgetLayout = new QGridLayout(curvesWidget);
     curvesWidgetLayout->setMargin(2);
     curvesWidgetLayout->setSpacing(4);
-    curvesWidgetLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    //curvesWidgetLayout->setSizeConstraint(QSizePolicy::Expanding);
     curvesWidgetLayout->setAlignment(Qt::AlignTop);
+
+    curvesWidgetLayout->setColumnStretch(0, 0);
+    curvesWidgetLayout->setColumnStretch(1, 0);
+    curvesWidgetLayout->setColumnStretch(2, 80);
+    curvesWidgetLayout->setColumnStretch(3, 50);
+    curvesWidgetLayout->setColumnStretch(4, 50);
+//    horizontalLayout->setColumnStretch(median, 50);
+    curvesWidgetLayout->setColumnStretch(5, 50);
+
     curvesWidget->setLayout(curvesWidgetLayout);
 
     // Create curve list headings
-    QWidget* form = new QWidget(this);
-    QHBoxLayout *horizontalLayout;
     QLabel* label;
     QLabel* value;
     QLabel* mean;
     QLabel* variance;
-    form->setAutoFillBackground(false);
-    horizontalLayout = new QHBoxLayout(form);
-    horizontalLayout->setSpacing(5);
-    horizontalLayout->setMargin(0);
-    horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
     //horizontalLayout->addWidget(checkBox);
 
-    label = new QLabel(form);
+    int labelRow = curvesWidgetLayout->rowCount();
+
+    curvesWidgetLayout->addWidget(new QLabel("On"), labelRow, 0, 1, 2);
+
+    label = new QLabel(this);
     label->setText("Name");
-    horizontalLayout->addWidget(label);
+    curvesWidgetLayout->addWidget(label, labelRow, 2);
 
     // Value
-    value = new QLabel(form);
+    value = new QLabel(this);
     value->setText("Val");
-    horizontalLayout->addWidget(value);
+    curvesWidgetLayout->addWidget(value, labelRow, 3);
 
     // Mean
-    mean = new QLabel(form);
+    mean = new QLabel(this);
     mean->setText("Mean");
-    horizontalLayout->addWidget(mean);
+    curvesWidgetLayout->addWidget(mean, labelRow, 4);
 
     // Variance
-    variance = new QLabel(form);
+    variance = new QLabel(this);
     variance->setText("Variance");
-    horizontalLayout->addWidget(variance);
-    curvesWidgetLayout->addWidget(form);
+    curvesWidgetLayout->addWidget(variance, labelRow, 5);
 
     // Add and customize plot elements (right side)
 
@@ -434,41 +440,37 @@ void LinechartWidget::createActions()
  **/
 void LinechartWidget::addCurve(QString curve)
 {
-    curvesWidgetLayout->addWidget(createCurveItem(curve));
+    createCurveItem(curve);
 }
 
-QWidget* LinechartWidget::createCurveItem(QString curve)
+void LinechartWidget::createCurveItem(QString curve)
 {
     LinechartPlot* plot = activePlot;
-    QWidget* form = new QWidget(this);
-    QHBoxLayout *horizontalLayout;
+//    QHBoxLayout *horizontalLayout;
     QCheckBox *checkBox;
     QLabel* label;
     QLabel* value;
     QLabel* mean;
     QLabel* variance;
-    form->setAutoFillBackground(false);
-    horizontalLayout = new QHBoxLayout(form);
-    horizontalLayout->setSpacing(5);
-    horizontalLayout->setMargin(0);
-    horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
-    checkBox = new QCheckBox(form);
+    int labelRow = curvesWidgetLayout->rowCount();
+
+    checkBox = new QCheckBox(this);
     checkBox->setCheckable(true);
     checkBox->setObjectName(curve);
     checkBox->setToolTip(tr("Enable the curve in the graph window"));
     checkBox->setWhatsThis(tr("Enable the curve in the graph window"));
 
-    horizontalLayout->addWidget(checkBox);
+    curvesWidgetLayout->addWidget(checkBox, labelRow, 0);
 
-    QWidget* colorIcon = new QWidget(form);
+    QWidget* colorIcon = new QWidget(this);
     colorIcon->setMinimumSize(QSize(5, 14));
     colorIcon->setMaximumSize(4, 14);
 
-    horizontalLayout->addWidget(colorIcon);
+    curvesWidgetLayout->addWidget(colorIcon, labelRow, 1);
 
-    label = new QLabel(form);
-    horizontalLayout->addWidget(label);
+    label = new QLabel(this);
+    curvesWidgetLayout->addWidget(label, labelRow, 2);
 
     //checkBox->setText(QString());
     label->setText(curve);
@@ -481,20 +483,20 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     }
 
     // Value
-    value = new QLabel(form);
+    value = new QLabel(this);
     value->setNum(0.00);
     value->setToolTip(tr("Current value of ") + curve);
     value->setWhatsThis(tr("Current value of ") + curve);
     curveLabels->insert(curve, value);
-    horizontalLayout->addWidget(value);
+    curvesWidgetLayout->addWidget(value, labelRow, 3);
 
     // Mean
-    mean = new QLabel(form);
+    mean = new QLabel(this);
     mean->setNum(0.00);
     mean->setToolTip(tr("Arithmetic mean of ") + curve);
     mean->setWhatsThis(tr("Arithmetic mean of ") + curve);
     curveMeans->insert(curve, mean);
-    horizontalLayout->addWidget(mean);
+    curvesWidgetLayout->addWidget(mean, labelRow, 4);
 
 //    // Median
 //    median = new QLabel(form);
@@ -503,12 +505,12 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
 //    horizontalLayout->addWidget(median);
 
     // Variance
-    variance = new QLabel(form);
+    variance = new QLabel(this);
     variance->setNum(0.00);
     variance->setToolTip(tr("Variance of ") + curve);
     variance->setWhatsThis(tr("Variance of ") + curve);
     curveVariances->insert(curve, variance);
-    horizontalLayout->addWidget(variance);
+    curvesWidgetLayout->addWidget(variance, labelRow, 5);
 
     /* Color picker
     QColor color = QColorDialog::getColor(Qt::green, this);
@@ -520,13 +522,6 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
         */
 
     // Set stretch factors so that the label gets the whole space
-    horizontalLayout->setStretchFactor(checkBox, 0);
-    horizontalLayout->setStretchFactor(colorIcon, 0);
-    horizontalLayout->setStretchFactor(label, 80);
-    horizontalLayout->setStretchFactor(value, 50);
-    horizontalLayout->setStretchFactor(mean, 50);
-//    horizontalLayout->setStretchFactor(median, 50);
-    horizontalLayout->setStretchFactor(variance, 50);
 
     // Connect actions
     QObject::connect(checkBox, SIGNAL(clicked(bool)), this, SLOT(takeButtonClick(bool)));
@@ -535,8 +530,6 @@ QWidget* LinechartWidget::createCurveItem(QString curve)
     // Set UI components to initial state
     checkBox->setChecked(false);
     plot->setVisible(curve, false);
-
-    return form;
 }
 
 /**

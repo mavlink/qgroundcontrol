@@ -95,7 +95,7 @@ protected:
     void addCurveToList(QString curve);
     void removeCurveFromList(QString curve);
     QToolButton* createButton(QWidget* parent);
-    QWidget* createCurveItem(QString curve);
+    void createCurveItem(QString curve);
     void createLayout();
 
     int sysid;                            ///< ID of the unmanned system this plot belongs to
@@ -112,7 +112,7 @@ protected:
     QMap<QString, QLabel*>* curveVariances; ///< References to the curve variances
 
     QWidget* curvesWidget;                ///< The QWidget containing the curve selection button
-    QVBoxLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
+    QGridLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
     QScrollBar* scrollbar;                ///< The plot window scroll bar
     QSpinBox* averageSpinBox;             ///< Spin box to setup average window filter size
 
