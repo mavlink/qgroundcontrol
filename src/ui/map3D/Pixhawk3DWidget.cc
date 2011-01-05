@@ -574,8 +574,6 @@ Pixhawk3DWidget::display(void)
         lastRobotZ = robotZ;
 
         recenterCamera(robotY, robotX, -robotZ);
-
-        return;
     }
 
     if (followCamera)
