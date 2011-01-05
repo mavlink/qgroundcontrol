@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>210</width>
-    <height>141</height>
+    <width>222</width>
+    <height>172</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,14 +18,23 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>210</width>
-    <height>130</height>
+    <width>222</width>
+    <height>172</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>267</width>
+    <height>194</height>
    </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="0,100,50,50,100,0">
+  <property name="toolTip">
+   <string>Control widget to send basic control actions to the micro air vehicle</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout" rowstretch="60,150,80,80,80,100" columnstretch="1,100,40,40,100,1" rowminimumheight="0,0,0,0,0,0">
    <item row="0" column="0" rowspan="6">
     <spacer name="horizontalSpacer">
      <property name="orientation">
@@ -93,7 +102,7 @@
       </size>
      </property>
      <property name="text">
-      <string>Liftoff</string>
+      <string>Start</string>
      </property>
      <property name="icon">
       <iconset resource="../../mavground.qrc">

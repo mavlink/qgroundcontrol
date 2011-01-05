@@ -3,9 +3,16 @@
 
 #include "QGCParamSlider.h"
 #include "ui_QGCParamSlider.h"
+#include "UASInterface.h"
 
 QGCParamSlider::QGCParamSlider(QWidget *parent) :
-    QGCToolWidgetItem(parent),
+    QGCToolWidgetItem("Slider", parent),
+    parameterName(""),
+    parameterValue(0.0f),
+    parameterScalingFactor(0.0),
+    parameterMin(0.0f),
+    parameterMax(0.0f),
+    component(0),
     ui(new Ui::QGCParamSlider)
 {
     ui->setupUi(this);
@@ -46,6 +53,18 @@ void QGCParamSlider::endEditMode()
     ui->maxSpinBox->hide();
     ui->typeComboBox->hide();
     isInEditMode = false;
+}
+
+void QGCParamSlider::sendParameter()
+{
+    if (QGCToolWidgetItem::uas)
+    {
+        QGCToolWidgetItem::uas->setParameter(component, parameterName, parameterValue);
+    }
+    else
+    {
+        qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
+    }
 }
 
 void QGCParamSlider::changeEvent(QEvent *e)
