@@ -697,7 +697,7 @@ void MainWindow::connectCommonWidgets()
     if (mapWidget && waypointsDockWidget->widget())
     {
         // clear path create on the map
-        connect(waypointsDockWidget->widget(), SIGNAL(clearPathclicked()), mapWidget, SLOT(clearPath()));
+        connect(waypointsDockWidget->widget(), SIGNAL(clearPathclicked()), mapWidget, SLOT(clearWaypoints()));
         // add Waypoint widget in the WaypointList widget when mouse clicked
         connect(mapWidget, SIGNAL(captureMapCoordinateClick(QPointF)), waypointsDockWidget->widget(), SLOT(addWaypointMouse(QPointF)));
 
@@ -739,6 +739,7 @@ void MainWindow::connectSlugsWidgets()
 void MainWindow::arrangeCommonCenterStack()
 {
     centerStack = new QStackedWidget(this);
+    centerStack->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     if (!centerStack) return;
 

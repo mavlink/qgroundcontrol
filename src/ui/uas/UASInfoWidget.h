@@ -89,56 +89,15 @@ protected:
     double load;
     float receiveLoss;
     float sendLoss;
+    bool changed;
     QTimer* updateTimer;
     QString name;
     quint64 startTime;
     QMap<QString, int> errors;
-//    double lastRemainingTime;
-//    double lastChargeLevel;
-//    double startVoltage;
-//    double fullVoltage;
-//    double emptyVoltage;
-//    double currentVoltage;
-    // Battery Type
-//    BatteryType batteryType;
-    // Number of cells
-//    int cells;
+    static const int updateInterval = 200; ///< Refresh interval in milliseconds
 
-    /*
-    QMap<QString, QProgressBar*>* instruments;
-
-    class Instrument
-    {
-        public:
-        void setMin(double min)
-        {
-            this->min = min;
-        }
-
-                void setMax(double max)
-        {
-            this->max = max;
-        }
-
-                        void setValue(double value)
-        {
-            this->value = value;
-        }
-
-        void refresh()
-        {
-            bar.setValue(value);
-        }
-
-
-        protected:
-            double min;
-            double max;
-            double value;
-            QString unit;
-            QLabel label;
-            QProgressBar bar
-    };*/
+    void showEvent(QShowEvent* event);
+    void hideEvent(QHideEvent* event);
 
 private:
     Ui::uasInfo ui;

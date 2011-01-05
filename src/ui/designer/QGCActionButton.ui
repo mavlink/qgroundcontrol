@@ -21,13 +21,6 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="2">
-    <widget class="QPushButton" name="actionButton">
-     <property name="text">
-      <string>Button name</string>
-     </property>
-    </widget>
-   </item>
    <item row="2" column="0">
     <widget class="QComboBox" name="editActionComboBox"/>
    </item>
@@ -59,26 +52,17 @@
      </property>
     </widget>
    </item>
+   <item row="1" column="2">
+    <widget class="QPushButton" name="actionButton">
+     <property name="text">
+      <string>Button name</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>
  <connections>
-  <connection>
-   <sender>editButtonName</sender>
-   <signal>textChanged(QString)</signal>
-   <receiver>actionButton</receiver>
-   <slot>setWindowTitle(QString)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>310</x>
-     <y>22</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>310</x>
-     <y>55</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>editNameLabel</sender>
    <signal>textChanged(QString)</signal>
@@ -86,11 +70,11 @@
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>116</x>
+     <x>114</x>
      <y>22</y>
     </hint>
     <hint type="destinationlabel">
-     <x>116</x>
+     <x>114</x>
      <y>55</y>
     </hint>
    </hints>

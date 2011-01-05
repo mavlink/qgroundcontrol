@@ -30,6 +30,7 @@ MapWidget::MapWidget(QWidget *parent) :
         uasIcons(),
         uasTrails(),
         mav(NULL),
+        lastUpdate(0),
         m_ui(new Ui::MapWidget)
 {
     m_ui->setupUi(this);
@@ -60,6 +61,10 @@ MapWidget::MapWidget(QWidget *parent) :
     overlay = new qmapcontrol::MapLayer("Overlay", mapadapter_overlay);
     overlay->setVisible(false);
     mc->addLayer(overlay);
+
+    // MAV FLIGHT TRACKS
+    tracks = new qmapcontrol::MapLayer("Tracking", mapadapter);
+    mc->addLayer(tracks);
 
     // WAYPOINT LAYER
     // create a layer with the mapadapter and type GeometryLayer (for waypoints)
@@ -139,12 +144,14 @@ MapWidget::MapWidget(QWidget *parent) :
     QPushButton* zoomin = new QPushButton(QIcon(":/images/actions/list-add.svg"), "", this);
     QPushButton* zoomout = new QPushButton(QIcon(":/images/actions/list-remove.svg"), "", this);
     createPath = new QPushButton(QIcon(":/images/actions/go-bottom.svg"), "", this);
+    clearTracking = new QPushButton(QIcon(""), "", this);
     followgps = new QPushButton(QIcon(":/images/actions/system-lock-screen.svg"), "", this);
 
-    zoomin->setMaximumWidth(50);
-    zoomout->setMaximumWidth(50);
-    createPath->setMaximumWidth(50);
-    followgps->setMaximumWidth(50);
+    zoomin->setMaximumWidth(30);
+    zoomout->setMaximumWidth(30);
+    createPath->setMaximumWidth(30);
+    clearTracking->setMaximumWidth(30);
+    followgps->setMaximumWidth(30);
 
     // Set checkable buttons
     // TODO: Currently checked buttons are are very difficult to distinguish when checked.
@@ -160,9 +167,10 @@ MapWidget::MapWidget(QWidget *parent) :
     innerlayout->addWidget(zoomout, 1, 0);
     innerlayout->addWidget(followgps, 2, 0);
     innerlayout->addWidget(createPath, 3, 0);
+    innerlayout->addWidget(clearTracking, 4, 0);
     // Add spacers to compress buttons on the top left
-    innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 4, 0);
-    innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 1, 0, 5);
+    innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 5, 0);
+    innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 1, 0, 6);
     innerlayout->setRowStretch(0, 1);
     innerlayout->setRowStretch(1, 100);
     mc->setLayout(innerlayout);
@@ -206,9 +214,8 @@ MapWidget::MapWidget(QWidget *parent) :
     // Configure the WP Path's pen
     pointPen = new QPen(QColor(0, 255,0));
     pointPen->setWidth(3);
-
-    path = new qmapcontrol::LineString (wps, "UAV Path", pointPen);
-    mc->layer("Waypoints")->addGeometry(path);
+    waypointPath = new qmapcontrol::LineString (wps, "Waypoint path", pointPen);
+    mc->layer("Waypoints")->addGeometry(waypointPath);
 
     //Camera Control
     // CAMERA INDICATOR LAYER
@@ -310,8 +317,6 @@ void MapWidget::createPathButtonClicked(bool checked)
 {
     Q_UNUSED(checked);
 
-
-
     if (createPath->isChecked())
     {
         // change the cursor shape
@@ -329,14 +334,12 @@ void MapWidget::createPathButtonClicked(bool checked)
         //        path->setPoints(wps);
         //        mc->layer("Waypoints")->addGeometry(path);
         //        wpIndex.clear();
-
-
-    } else {
+    }
+    else
+    {
 
         this->setCursor(Qt::ArrowCursor);
         mc->setMouseMode(qmapcontrol::MapControl::Panning);
-
-
     }
 
 }
@@ -351,15 +354,13 @@ void MapWidget::createPathButtonClicked(bool checked)
 
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate)
 {
-
-    qDebug() << mc->mouseMode();
-
+    //qDebug() << mc->mouseMode();
     if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked())
     {
         // Create waypoint name
         QString str;
 
-        str = QString("%1").arg(path->numberOfPoints());
+        str = QString("%1").arg(waypointPath->numberOfPoints());
 
         // create the WP and set everything in the LineString to display the path
         Waypoint2DIcon* tempCirclePoint;
@@ -376,27 +377,27 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
         qmapcontrol::Point* tempPoint = new qmapcontrol::Point(coordinate.x(), coordinate.y(),str);
         wps.append(tempPoint);
-        path->addPoint(tempPoint);
+        waypointPath->addPoint(tempPoint);
 
         wpIndex.insert(str,tempPoint);
 
         // Refresh the screen
-        mc->updateRequestNew();
+        mc->updateRequest(tempPoint->boundingBox().toRect());
 
         // emit signal mouse was clicked
         emit captureMapCoordinateClick(coordinate);
-
     }
 }
 
 void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
 {
-    if (!wpExists(coordinate)){
+    if (!wpExists(coordinate))
+    {
         // Create waypoint name
         QString str;
 
 
-        str = QString("%1").arg(path->numberOfPoints());
+        str = QString("%1").arg(waypointPath->numberOfPoints());
 
         // create the WP and set everything in the LineString to display the path
         //CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
@@ -416,13 +417,13 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
 
         Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
         wps.append(tempPoint);
-        path->addPoint(tempPoint);
+        waypointPath->addPoint(tempPoint);
 
         wpIndex.insert(str,tempPoint);
         qDebug()<<"Funcion createWaypointGraphAtMap WP= "<<str<<" -> x= "<<tempPoint->latitude()<<" y= "<<tempPoint->longitude();
 
         // Refresh the screen
-        mc->updateRequestNew();
+        mc->updateRequest(tempPoint->boundingBox().toRect());
     }
 
     ////    // emit signal mouse was clicked
@@ -456,7 +457,7 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
     waypointIsDrag = true;
 
     // Refresh the screen
-    mc->updateRequestNew();
+    mc->updateRequest(geom->boundingBox().toRect());
 
     int temp = 0;
     qmapcontrol::Point* point2Find;
@@ -505,10 +506,6 @@ MapWidget::~MapWidget()
  */
 void MapWidget::addUAS(UASInterface* uas)
 {
-    if(mav != NULL)
-    {
-        disconnect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-    }
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
 }
 
@@ -517,7 +514,11 @@ void MapWidget::activeUASSet(UASInterface* uas)
     if (uas)
     {
         mav = uas;
-        path->setPen(new QPen(mav->getColor()));
+        QColor color = mav->getColor();
+        color.setAlphaF(0.6);
+        QPen* pen = new QPen(color);
+        pen->setWidth(3.0);
+        // FIXME Load waypoints of this system
     }
 }
 
@@ -534,62 +535,73 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 {
     Q_UNUSED(usec);
     Q_UNUSED(alt); // FIXME Use altitude
+
+    // create a LineString
+    //QList<Point*> points;
+    // Points with a circle
+    // A QPen can be used to customize the
+    //pointpen->setWidth(3);
+    //points.append(new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen));
+
+    MAV2DIcon* p;
+
+    if (!uasIcons.contains(uas->getUASID()))
+    {
+        // Get the UAS color
+        QColor uasColor = uas->getColor();
+
+        // Icon
+        QPen* pointpen = new QPen(uasColor);
+        qDebug() << uas->getUASName();
+        p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, pointpen);
+        uasIcons.insert(uas->getUASID(), p);
+        tracks->addGeometry(p);
+
+        // Line
+        // A QPen also can use transparency
+
+        QList<qmapcontrol::Point*> points;
+        points.append(new qmapcontrol::Point(lat, lon, ""));
+        QPen* linepen = new QPen(uasColor.darker());
+        linepen->setWidth(2);
+
+        // Create tracking line string
+        qmapcontrol::LineString* ls = new qmapcontrol::LineString(points, uas->getUASName(), linepen);
+        uasTrails.insert(uas->getUASID(), ls);
+
+        // Add the LineString to the layer
+        mc->layer("Tracking")->addGeometry(ls);
+    }
+    else
+    {
+        p = dynamic_cast<MAV2DIcon*>(uasIcons.value(uas->getUASID()));
+        if (p)
+        {
+            p->setCoordinate(QPointF(lat, lon));
+            p->setYaw(uas->getYaw());
+        }
+        // Extend trail
+        uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, ""));
+    }
+
+    //mc->updateRequestNew();//(uasTrails.value(uas->getUASID())->boundingBox().toRect());
+
+
+    // Limit the position update rate
     quint64 currTime = MG::TIME::getGroundTimeNow();
-    if (currTime - lastUpdate > 90)
+    if (currTime - lastUpdate > 120)
     {
         lastUpdate = currTime;
-        // create a LineString
-        //QList<Point*> points;
-        // Points with a circle
-        // A QPen can be used to customize the
-        //pointpen->setWidth(3);
-        //points.append(new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen));
-
-        if (!uasIcons.contains(uas->getUASID()))
+        // Sets the view to the interesting area
+        if (followgps->isChecked())
         {
-            // Get the UAS color
-            QColor uasColor = uas->getColor();
-
-            // Icon
-            QPen* pointpen = new QPen(uasColor);
-            qDebug() << uas->getUASName();
-            MAV2DIcon* p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, pointpen);
-            uasIcons.insert(uas->getUASID(), p);
-            geomLayer->addGeometry(p);
-
-            // Line
-            // A QPen also can use transparency
-
-            QList<qmapcontrol::Point*> points;
-            points.append(new qmapcontrol::Point(lat, lon, ""));
-            QPen* linepen = new QPen(uasColor.darker());
-            linepen->setWidth(2);
-            // Add the Points and the QPen to a LineString
-            qmapcontrol::LineString* ls = new qmapcontrol::LineString(points, uas->getUASName(), linepen);
-            uasTrails.insert(uas->getUASID(), ls);
-
-            // Add the LineString to the layer
-            geomLayer->addGeometry(ls);
+            updatePosition(0, lat, lon);
         }
         else
         {
-            MAV2DIcon* p = dynamic_cast<MAV2DIcon*>(uasIcons.value(uas->getUASID()));
-            if (p)
-            {
-                p->setCoordinate(QPointF(lat, lon));
-                p->setYaw(uas->getYaw());
-            }
-            // Extend trail
-            uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, ""));
+            // Refresh the screen
+            //mc->updateRequestNew();
         }
-
-
-        // Connect click events of the layer to this object
-        // connect(osmLayer, SIGNAL(geometryClicked(Geometry*, QPoint)),
-        //                  this, SLOT(geometryClicked(Geometry*, QPoint)));
-
-        // Sets the view to the interesting area
-        updatePosition(0, lat, lon);
     }
 }
 
@@ -677,23 +689,36 @@ void MapWidget::changeEvent(QEvent *e)
         break;
     }
 }
-void MapWidget::clearPath()
+
+void MapWidget::clearWaypoints()
 {
     // Clear the previous WP track
 
     mc->layer("Waypoints")->clearGeometries();
     wps.clear();
-    path->setPoints(wps);
-    mc->layer("Waypoints")->addGeometry(path);
+    waypointPath->setPoints(wps);
+    mc->layer("Waypoints")->addGeometry(waypointPath);
     wpIndex.clear();
-    mc->updateRequestNew();
-
+    mc->updateRequest(waypointPath->boundingBox().toRect());
 
     if(createPath->isChecked())
     {
         createPath->click();
     }
+}
 
+void MapWidget::clearPath()
+{
+    mc->layer("Tracking")->clearGeometries();
+    foreach (qmapcontrol::LineString* ls, uasTrails)
+    {
+        QPen* linepen = ls->pen();
+        delete ls;
+        qmapcontrol::LineString* lsNew = new qmapcontrol::LineString(QList<qmapcontrol::Point*>(), "", linepen);
+        mc->layer("Tracking")->addGeometry(lsNew);
+    }
+    // FIXME update this with update request only for bounding box of trails
+    mc->updateRequest(QRect(0, 0, width(), height()));
 }
 
 void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, float lon)
@@ -714,7 +739,7 @@ void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, floa
         point2Find->setCoordinate(coordinate);
 
         // Refresh the screen
-        mc->updateRequestNew();
+        mc->updateRequest(point2Find->boundingBox().toRect());
     }
 
 

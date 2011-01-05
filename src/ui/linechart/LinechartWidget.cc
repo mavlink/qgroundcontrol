@@ -321,7 +321,7 @@ void LinechartWidget::refresh()
     for (l = curveVariances->begin(); l != curveVariances->end(); ++l)
     {
       // Variance
-       str.sprintf("%+.5f", activePlot->getVariance(l.key()));
+       str.sprintf("%.2e", activePlot->getVariance(l.key()));
       l.value()->setText(str);
    }
 }
@@ -398,7 +398,7 @@ void LinechartWidget::stopLogging()
         logFile->flush();
         logFile->close();
         // Postprocess log file
-        compressor = new LogCompressor(logFile->fileName());
+        compressor = new LogCompressor(logFile->fileName(), logFile->fileName());
         connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
         connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
         MainWindow::instance()->showInfoMessage("Logging ended", "QGroundControl is now compressing the logfile in a consistent CVS file. This may take a while, you can continue to use QGroundControl. Status updates appear at the bottom of the window.");

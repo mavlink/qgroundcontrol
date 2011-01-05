@@ -71,7 +71,9 @@ public slots:
     void updateCameraPosition(double distance, double bearing, QString dir);
     QPointF getPointxBearing_Range(double lat1, double lon1, double bearing, double distance);
 
-    //ROCA
+    /** @brief Clear the waypoints overlay layer */
+    void clearWaypoints();
+    /** @brief Clear the UAV tracks on the map */
     void clearPath();
     void changeGlobalWaypointPositionBySpinBox(int index, float lat, float lon);
     void drawBorderCamAtMap(bool status);
@@ -96,6 +98,7 @@ protected:
 
     QPushButton* followgps;
     QPushButton* createPath;
+    QPushButton* clearTracking;
     QLabel* gpsposition;
     QMenu* mapMenu;
     QPushButton* mapButton;
@@ -104,6 +107,7 @@ protected:
     qmapcontrol::MapAdapter* mapadapter;           ///< Adapter to load the map data
     qmapcontrol::Layer* l;            ///< Current map layer (background)
     qmapcontrol::Layer* overlay;      ///< Street overlay (foreground)
+    qmapcontrol::Layer* tracks;      ///< Layer for UAV tracks
     qmapcontrol::GeometryLayer* geomLayer; ///< Layer for waypoints
 
     //only for experiment
@@ -132,9 +136,6 @@ protected:
     void createWaypointGraphAtMap (const QPointF coordinate);
     void mapproviderSelected(QAction* action);
 
-
-
-
   signals:
     //void movePoint(QPointF newCoord);
     void captureMapCoordinateClick(const QPointF coordinate); //ROCA
@@ -145,8 +146,8 @@ protected:
 private:
     Ui::MapWidget *m_ui;
     QList<qmapcontrol::Point*> wps;
+    qmapcontrol::LineString* waypointPath;
     QHash <QString, qmapcontrol::Point*> wpIndex;
-    qmapcontrol::LineString* path;
     QPen* pointPen;
     int wpExists(const QPointF coordinate);
     bool waypointIsDrag;

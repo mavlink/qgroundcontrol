@@ -1,24 +1,4 @@
 /*=====================================================================
-
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
-
-This file is part of the PIXHAWK project
-
-    PIXHAWK is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    PIXHAWK is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-
 ======================================================================*/
 
 /**
@@ -255,22 +235,27 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     // Add new value
     TimeSeriesData* dataset = data.value(dataname);
 
+    quint64 time;
+
     // Append data
     if (m_groundTime)
     {
         // Use the current (receive) time
-        dataset->append(MG::TIME::getGroundTimeNow(), value);
+        time = QGC::groundTimeUsecs()/1000;
     }
     else
     {
         // Use timestamp from dataset
-        dataset->append(ms, value);
+        time = ms;
     }
+    dataset->append(time, value);
 
     // Scaling values
     if(ms < minTime) minTime = ms;
     if(ms > maxTime) maxTime = ms;
     storageInterval = maxTime - minTime;
+
+    if(time > lastTime) lastTime = time;
 
     //
     if (value < minValue) minValue = value;
@@ -292,6 +277,8 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
 void LinechartPlot::enforceGroundTime(bool enforce)
 {
     m_groundTime = enforce;
+
+    lastTime = QGC::groundTimeUsecs()/1000;
 }
 
 /**
@@ -628,7 +615,9 @@ void LinechartPlot::paintRealtime()
     if (m_active)
     {
 #if (QGC_EVENTLOOP_DEBUG)
-    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+        static quint64 timestamp = 0;
+        qDebug() << "EVENTLOOP: (" << MG::TIME::getGroundTimeNow() - timestamp << ")" << __FILE__ << __LINE__;
+        timestamp = MG::TIME::getGroundTimeNow();
 #endif
         // Update plot window value to new max time if the last time was also the max time
         windowLock.lock();
@@ -637,14 +626,14 @@ void LinechartPlot::paintRealtime()
 
             // FIXME Check, but commenting this out should have been
             // beneficial (does only add complexity)
-//            if (MG::TIME::getGroundTimeNow() > maxTime && abs(MG::TIME::getGroundTimeNow() - maxTime) < 5000000)
-//            {
-//                plotPosition = MG::TIME::getGroundTimeNow();
-//            }
-//            else
-//            {
-                plotPosition = maxTime;// + lastMaxTimeAdded.msec();
-//            }
+            //            if (MG::TIME::getGroundTimeNow() > maxTime && abs(MG::TIME::getGroundTimeNow() - maxTime) < 5000000)
+            //            {
+            //                plotPosition = MG::TIME::getGroundTimeNow();
+            //            }
+            //            else
+            //            {
+            plotPosition = lastTime;// + lastMaxTimeAdded.msec();
+            //            }
             setAxisScale(QwtPlot::xBottom, plotPosition - plotInterval, plotPosition, timeScaleStep);
 
             // FIXME Last fix for scroll zoomer is here
@@ -702,12 +691,7 @@ void LinechartPlot::paintRealtime()
                 canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, cacheMode);
         }*/
 
-//        static quint64 timestamp = 0;
-//
-//
-//        qDebug() << "PLOT INTERVAL:" << MG::TIME::getGroundTimeNow() - timestamp;
-//
-//        timestamp = MG::TIME::getGroundTimeNow();
+
     }
 }
 
@@ -815,7 +799,7 @@ void TimeSeriesData::append(quint64 ms, double value)
     this->variance = 0;
     for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i)
     {
-       this->variance += (this->value[count-i] - mean) * (this->value[count-i] - mean);
+        this->variance += (this->value[count-i] - mean) * (this->value[count-i] - mean);
     }
     this->variance = this->variance / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
 

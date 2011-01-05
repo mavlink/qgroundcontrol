@@ -9,15 +9,15 @@ This file is part of the QGROUNDCONTROL project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
+    
     QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
+    
     You should have received a copy of the GNU General Public License
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
+    
 ======================================================================*/
 
 /**
@@ -63,19 +63,19 @@ void LogCompressor::run()
     
     if (!file.exists() || !file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        qDebug() << "LOG COMPRESSOR: INPUT FILE DOES NOT EXIST";
+        //qDebug() << "LOG COMPRESSOR: INPUT FILE DOES NOT EXIST";
         emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since input file %1 is not readable").arg(QFileInfo(fileName).absoluteFilePath()));
         return;
     }
-
+    
         // Check if file is writeable
         if (outFileName == ""/* || !QFileInfo(outfile).isWritable()*/)
         {
-            qDebug() << "LOG COMPRESSOR: OUTPUT FILE DOES NOT EXIST" << outFileName;
+            //qDebug() << "LOG COMPRESSOR: OUTPUT FILE DOES NOT EXIST" << outFileName;
             emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outFileName).absoluteFilePath()));
             return;
         }
-
+    
     // Find all keys
     QTextStream in(&file);
 
@@ -95,7 +95,7 @@ void LogCompressor::run()
         keyCounter++;
     }
     keys->sort();
-
+    
     QString header = "";
     QString spacer = "";
     for (int i = 0; i < keys->length(); i++)
@@ -107,9 +107,9 @@ void LogCompressor::run()
     emit logProcessingStatusChanged(tr("Log compressor: Dataset contains dimension: ") + header);
     
     //qDebug() << header;
-
+    
     //qDebug() << "NOW READING TIMES";
-
+    
     // Find all times
     //in.reset();
     file.reset();
@@ -127,11 +127,11 @@ void LogCompressor::run()
             times.append(time);
         }
     }
-
+    
     qSort(times);
-
+    
     qint64 lastTime = -1;
-
+    
     // Create lines
     QStringList* outLines = new QStringList();
     for (int i = 0; i < times.length(); i++)
@@ -143,7 +143,7 @@ void LogCompressor::run()
             lastTime = static_cast<qint64>(times.at(i));
             finalTimes.append(times.at(i));
             //qDebug() << "ADDED:" << outLines->last();
-    }
+        }
     }
 
     dataLines = finalTimes.length();
@@ -173,7 +173,7 @@ void LogCompressor::run()
             value = "NaN";
         }
         // Get matching output line
-
+        
         // Constraining the search area might result in not finding a key,
         // but it significantly reduces the time needed for the search
         // setting a window of 1000 entries means that a 1 Hz data point
@@ -205,7 +205,7 @@ void LogCompressor::run()
                     qDebug() << "Completely failed finding value";
                     //continue;
                     failed = true;
-            }
+                }
                 else
                 {
                     emit logProcessingStatusChanged(tr("Log compressor: Timestamp %1 not found in dataset, restarting search.").arg(time));
@@ -219,38 +219,40 @@ void LogCompressor::run()
         if (!failed)
         {
             // When the algorithm reaches here the correct index was found
-        lastTimeIndex = index;
-        QString outLine = outLines->at(index);
-        QStringList outParts = outLine.split(separator);
-        // Replace measurement placeholder with current value
-        outParts.replace(keys->indexOf(field)+1, value);
-        outLine = outParts.join(separator);
-        outLines->replace(index, outLine);
+            lastTimeIndex = index;
+            QString outLine = outLines->at(index);
+            QStringList outParts = outLine.split(separator);
+            // Replace measurement placeholder with current value
+            outParts.replace(keys->indexOf(field)+1, value);
+            outLine = outParts.join(separator);
+            outLines->replace(index, outLine);
+        }
     }
-    }
-
-
+    
+    
     // Add header, write out file
     file.close();
-
-    if (outFileName == "")
+    
+    if (outFileName == logFileName)
     {
         QFile::remove(file.fileName());
         outfile.setFileName(file.fileName());
+
     }
     if (!outfile.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
     outfile.write(QString(QString("unix_timestamp") + separator + header.replace(" ", "_") + QString("\n")).toLatin1());
+    emit logProcessingStatusChanged(tr("Log Compressor: Writing output to file %1").arg(QFileInfo(outFileName).absoluteFilePath()));
     //QString fileHeader = QString("unix_timestamp") + header.replace(" ", "_") + QString("\n");
-
+    
     // File output
     for (int i = 0; i < outLines->length(); i++)
     {
         //qDebug() << outLines->at(i);
         outfile.write(QString(outLines->at(i) + "\n").toLatin1());
-
+        
     }
-
+    
     currentDataLine = 0;
     dataLines = 1;
     delete keys;

@@ -318,7 +318,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "pitch V (deg/s)", (attitude.pitchspeed/M_PI)*180.0, time);
                 emit valueChanged(uasId, "yaw V (deg/s)", (attitude.yawspeed/M_PI)*180.0, time);
 
-                emit attitudeChanged(this, mavlink_msg_attitude_get_roll(&message), mavlink_msg_attitude_get_pitch(&message), mavlink_msg_attitude_get_yaw(&message), time);
+                emit attitudeChanged(this, attitude.roll, attitude.pitch, attitude.yaw, time);
             }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION:
@@ -1259,8 +1259,10 @@ void UAS::enableExtra3Transmission(int rate)
  * @param id Name of the parameter
  * @param value Parameter value
  */
-void UAS::setParameter(int component, QString id, float value)
-{    
+void UAS::setParameter(const int component, const QString& id, const float value)
+{
+    if (!id.isNull())
+    {
     mavlink_message_t msg;
     mavlink_param_set_t p;
     p.param_value = value;
@@ -1287,6 +1289,20 @@ void UAS::setParameter(int component, QString id, float value)
         }
     }    
     mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
+    sendMessage(msg);
+    }
+}
+
+/**
+ * Sets an action
+ *
+ **/
+void UAS::setAction(MAV_ACTION action)
+{
+    mavlink_message_t msg;
+    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, action);
+    // Send message twice to increase chance that it reaches its goal
+    sendMessage(msg);
     sendMessage(msg);
 }
 

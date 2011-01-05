@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkManager.h"
 #include "UASManager.h"
 #include "protocol.h"
+#include "QGC.h"
 
 #include <QDebug>
 
@@ -102,6 +103,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     connect(m_ui->holdCheckBox, SIGNAL(clicked(bool)), this, SLOT(setAutoHold(bool)));
     // Connect hold button
     connect(m_ui->holdButton, SIGNAL(toggled(bool)), this, SLOT(hold(bool)));
+    // Connect connect button
+    connect(m_ui->connectButton, SIGNAL(clicked()), this, SLOT(handleConnectButton()));
 
     this->setVisible(false);
 }
@@ -122,6 +125,7 @@ void DebugConsole::addLink(LinkInterface* link)
     m_ui->linkComboBox->insertItem(link->getId(), link->getName());
     // Set new item as current
     m_ui->linkComboBox->setCurrentIndex(qMax(0, links.size() - 1));
+    linkSelected(m_ui->linkComboBox->currentIndex());
 
     // Register for name changes
     connect(link, SIGNAL(nameChanged(QString)), this, SLOT(updateLinkName(QString)));
@@ -149,6 +153,7 @@ void DebugConsole::linkSelected(int linkId)
     if (currLink)
     {
         disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
+        disconnect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
     }
     // Clear data
     m_ui->receiveText->clear();
@@ -156,6 +161,8 @@ void DebugConsole::linkSelected(int linkId)
     // Connect new link
     currLink = links[linkId];
     connect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
+    connect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
+    setConnectionState(currLink->isConnected());
 }
 
 /**
@@ -420,6 +427,39 @@ void DebugConsole::hold(bool hold)
     }
 
     this->holdOn = hold;
+}
+
+/**
+ * Sets the connection state the widget shows to this state
+ */
+void DebugConsole::setConnectionState(bool connected)
+{
+    if(connected)
+    {
+        m_ui->connectButton->setText(tr("Disconn."));
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>").arg(QGC::colorGreen.name(), tr("Link %1 is connected.").arg(currLink->getName())));
+    }
+    else
+    {
+        m_ui->connectButton->setText(tr("Connect"));
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>").arg(QGC::colorYellow.name(), tr("Link %1 is unconnected.").arg(currLink->getName())));
+    }
+}
+
+/** @brief Handle the connect button */
+void DebugConsole::handleConnectButton()
+{
+    if (currLink)
+    {
+        if (currLink->isConnected())
+        {
+            currLink->disconnect();
+        }
+        else
+        {
+            currLink->connect();
+        }
+    }
 }
 
 void DebugConsole::changeEvent(QEvent *e)
