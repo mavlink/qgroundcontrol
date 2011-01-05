@@ -745,6 +745,7 @@ void MainWindow::connectSlugsWidgets()
 void MainWindow::arrangeCommonCenterStack()
 {
     centerStack = new QStackedWidget(this);
+    centerStack->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     if (!centerStack) return;
 

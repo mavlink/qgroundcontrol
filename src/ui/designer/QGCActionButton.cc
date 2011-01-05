@@ -42,16 +42,11 @@ const char* kActionLabels[MAV_ACTION_NB] =
  "RESET MAP"};
 
 QGCActionButton::QGCActionButton(QWidget *parent) :
-    QGCToolWidgetItem(parent),
+    QGCToolWidgetItem("Button", parent),
     ui(new Ui::QGCActionButton),
     uas(NULL)
 {
     ui->setupUi(this);
-
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-            this, SLOT(setActiveUAS(UASInterface*)));
-    // Set first UAS if it exists
-    this->setActiveUAS(UASManager::instance()->getActiveUAS());
 
     connect(ui->actionButton, SIGNAL(clicked()), this, SLOT(sendAction()));
     connect(ui->editFinishButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
@@ -73,12 +68,16 @@ QGCActionButton::~QGCActionButton()
 
 void QGCActionButton::sendAction()
 {
-    if (uas)
+    if (QGCToolWidgetItem::uas)
     {
         MAV_ACTION action = static_cast<MAV_ACTION>(
                 ui->editActionComboBox->currentIndex());
 
-        uas->setAction(action);
+        QGCToolWidgetItem::uas->setAction(action);
+    }
+    else
+    {
+        qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }
 }
 
@@ -109,9 +108,4 @@ void QGCActionButton::endEditMode()
 
 
     isInEditMode = false;
-}
-
-void QGCActionButton::setActiveUAS(UASInterface *uas)
-{
-    this->uas = uas;
 }

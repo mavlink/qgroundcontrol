@@ -23,9 +23,6 @@ public slots:
     void startEditMode();
     void endEditMode();
 
-private slots:
-    void setActiveUAS(UASInterface* uas);
-
 private:
     Ui::QGCActionButton *ui;
     UASInterface* uas;
