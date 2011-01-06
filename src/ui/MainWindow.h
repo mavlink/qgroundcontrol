@@ -142,19 +142,19 @@ public slots:
     ==========================================================
     */
 
-    void loadWidgets();
+//    void loadWidgets();
 
     /** @brief Load data view, allowing to plot flight data */
     void loadDataView(QString fileName);
 
-    /** @brief Load 3D map view */
-    void load3DMapView();
+//    /** @brief Load 3D map view */
+//    void load3DMapView();
 
-    /** @brief Load 3D Google Earth view */
-    void loadGoogleEarthView();
+//    /** @brief Load 3D Google Earth view */
+//    void loadGoogleEarthView();
 
-    /** @brief Load 3D view */
-    void load3DView();
+//    /** @brief Load 3D view */
+//    void load3DView();
 
     /**
      * @brief Shows a Docked Widget based on the action sender
@@ -393,6 +393,8 @@ private:
     Ui::MainWindow ui;
 
     QString buildMenuKey (SETTINGS_SECTIONS section , TOOLS_WIDGET_NAMES tool, VIEW_SECTIONS view);
+    QString getWindowStateKey();
+    QString getWindowGeometryKey();
 
 };
 

@@ -266,14 +266,17 @@ void LinechartWidget::createLayout()
 
 void LinechartWidget::appendData(int uasId, QString curve, double value, quint64 usec)
 {
-    // Order matters here, first append to plot, then update curve list
-    activePlot->appendData(curve, usec, value);
-    // Store data
-    QLabel* label = curveLabels->value(curve, NULL);
-    // Make sure the curve will be created if it does not yet exist
-    if(!label)
+    if (isVisible())
     {
-        addCurve(curve);
+        // Order matters here, first append to plot, then update curve list
+        activePlot->appendData(curve, usec, value);
+        // Store data
+        QLabel* label = curveLabels->value(curve, NULL);
+        // Make sure the curve will be created if it does not yet exist
+        if(!label)
+        {
+            addCurve(curve);
+        }
     }
 
     // Log data
@@ -305,7 +308,15 @@ void LinechartWidget::refresh()
     QMap<QString, QLabel*>::iterator i;
     for (i = curveLabels->begin(); i != curveLabels->end(); ++i)
     {
-        str.sprintf("%+.2f", activePlot->getCurrentValue(i.key()));
+        double val = activePlot->getCurrentValue(i.key());
+        if (val > 9999 || val < 0.002)
+        {
+            str.sprintf("% 10e", val);
+        }
+        else
+        {
+            str.sprintf("% 10f", val);
+        }
         // Value
         i.value()->setText(str);
     }
@@ -313,7 +324,7 @@ void LinechartWidget::refresh()
     QMap<QString, QLabel*>::iterator j;
     for (j = curveMeans->begin(); j != curveMeans->end(); ++j)
     {
-        str.sprintf("%+.2f", activePlot->getMean(j.key()));
+        str.sprintf("% 8.2e", activePlot->getMean(j.key()));
         j.value()->setText(str);
     }
 //    QMap<QString, QLabel*>::iterator k;
@@ -327,7 +338,7 @@ void LinechartWidget::refresh()
     for (l = curveVariances->begin(); l != curveVariances->end(); ++l)
     {
       // Variance
-       str.sprintf("%.2e", activePlot->getVariance(l.key()));
+       str.sprintf("% 8e", activePlot->getVariance(l.key()));
       l.value()->setText(str);
    }
 }

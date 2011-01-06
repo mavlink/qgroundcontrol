@@ -188,6 +188,7 @@ protected:
     float roll;
     float pitch;
     float yaw;
+    float yawDiff;
     void paintEvent(QPaintEvent *event);
 
 };
