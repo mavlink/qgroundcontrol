@@ -10,7 +10,7 @@ AirfoilServoCalibrator::AirfoilServoCalibrator(AirfoilType type, QWidget *parent
 
     /* Add title */
     QHBoxLayout *titleLayout = new QHBoxLayout();
-    QLabel *title;
+    QLabel* title;
     if (type == AILERON)
     {
         title = new QLabel(tr("Aileron"));
@@ -22,6 +22,10 @@ AirfoilServoCalibrator::AirfoilServoCalibrator(AirfoilType type, QWidget *parent
     else if (type == RUDDER)
     {
         title = new QLabel(tr("Rudder"));
+    }
+    else
+    {
+        title = new QLabel(tr("Unknown"));
     }
 
     titleLayout->addWidget(title);

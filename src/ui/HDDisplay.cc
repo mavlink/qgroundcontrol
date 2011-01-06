@@ -1,24 +1,4 @@
 /*=====================================================================
-
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
-
-This file is part of the PIXHAWK project
-
-    PIXHAWK is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    PIXHAWK is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-
 ======================================================================*/
 
 /**
@@ -33,15 +13,22 @@ This file is part of the PIXHAWK project
 #include <QGLWidget>
 #include <QStringList>
 #include <QGraphicsTextItem>
+#include <QDockWidget>
+#include <QInputDialog>
 #include <QMouseEvent>
+#include <QMenu>
+#include <QSettings>
 #include "UASManager.h"
 #include "HDDisplay.h"
 #include "ui_HDDisplay.h"
 #include "MG.h"
-
+#include "QGC.h"
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #include <QDebug>
 
-HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
+HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
         QGraphicsView(parent),
         uas(NULL),
         values(QMap<QString, float>()),
@@ -70,52 +57,61 @@ HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
         strongStrokeWidth(1.5f),
         normalStrokeWidth(1.0f),
         fineStrokeWidth(0.5f),
-        acceptList(plotList),
+        acceptList(new QStringList()),
         lastPaintTime(0),
+        columns(3),
         m_ui(new Ui::HDDisplay)
 {
+    setWindowTitle(title);
     //m_ui->setupUi(this);
 
-        // Check if acceptlist exists
-    if (!acceptList)
+    // Add all items in accept list to gauge
+    if (plotList)
     {
-        acceptList = new QStringList();
+        for(int i = 0; i < plotList->length(); ++i)
+        {
+            addGauge(plotList->at(i));
+        }
     }
 
-//    setBackgroundBrush(QBrush(backgroundColor));
-//    setDragMode(QGraphicsView::ScrollHandDrag);
-//    setCacheMode(QGraphicsView::CacheBackground);
-//    // FIXME Handle full update with care - ressource intensive
-//    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
-//
-//    setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-//
-//    //Set-up the scene
-//    QGraphicsScene* Scene = new QGraphicsScene(this);
-//    setScene(Scene);
-//
-//    //Populate the scene
-//    for(int x = 0; x < 1000; x = x + 25) {
-//        for(int y = 0; y < 1000; y = y + 25) {
-//
-//            if(x % 100 == 0 && y % 100 == 0) {
-//                Scene->addRect(x, y, 2, 2);
-//
-//                QString pointString;
-//                QTextStream stream(&pointString);
-//                stream << "(" << x << "," << y << ")";
-//                QGraphicsTextItem* item = Scene->addText(pointString);
-//                item->setPos(x, y);
-//            } else {
-//                Scene->addRect(x, y, 1, 1);
-//            }
-//        }
-//    }
-//
-//    //Set-up the view
-//    setSceneRect(0, 0, 1000, 1000);
-//    setCenter(QPointF(500.0, 500.0)); //A modified version of centerOn(), handles special cases
-//    setCursor(Qt::OpenHandCursor);
+    restoreState();
+
+    createActions();
+
+    //    setBackgroundBrush(QBrush(backgroundColor));
+    //    setDragMode(QGraphicsView::ScrollHandDrag);
+    //    setCacheMode(QGraphicsView::CacheBackground);
+    //    // FIXME Handle full update with care - ressource intensive
+    //    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    //
+    //    setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
+    //
+    //    //Set-up the scene
+    //    QGraphicsScene* Scene = new QGraphicsScene(this);
+    //    setScene(Scene);
+    //
+    //    //Populate the scene
+    //    for(int x = 0; x < 1000; x = x + 25) {
+    //        for(int y = 0; y < 1000; y = y + 25) {
+    //
+    //            if(x % 100 == 0 && y % 100 == 0) {
+    //                Scene->addRect(x, y, 2, 2);
+    //
+    //                QString pointString;
+    //                QTextStream stream(&pointString);
+    //                stream << "(" << x << "," << y << ")";
+    //                QGraphicsTextItem* item = Scene->addText(pointString);
+    //                item->setPos(x, y);
+    //            } else {
+    //                Scene->addRect(x, y, 1, 1);
+    //            }
+    //        }
+    //    }
+    //
+    //    //Set-up the view
+    //    setSceneRect(0, 0, 1000, 1000);
+    //    setCenter(QPointF(500.0, 500.0)); //A modified version of centerOn(), handles special cases
+    //    setCursor(Qt::OpenHandCursor);
 
 
     this->setMinimumHeight(125);
@@ -132,7 +128,7 @@ HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
     if(!QFile::exists(fontFileName)) qDebug() << "ERROR! font file: " << fontFileName << " DOES NOT EXIST!";
 
     fontDatabase.addApplicationFont(fontFileName);
-    font = fontDatabase.font(fontFamilyName, "Roman", (int)(10*scalingFactor*1.2f+0.5f));
+    font = fontDatabase.font(fontFamilyName, "Roman", qMax(5, (int)(10*scalingFactor*1.2f+0.5f)));
     if (font.family() != fontFamilyName) qDebug() << "ERROR! Font not loaded: " << fontFamilyName;
 
     // Connect with UAS
@@ -144,12 +140,13 @@ HDDisplay::HDDisplay(QStringList* plotList, QWidget *parent) :
 
 HDDisplay::~HDDisplay()
 {
+    saveState();
     delete m_ui;
 }
 
 void HDDisplay::enableGLRendering(bool enable)
 {
-
+    Q_UNUSED(enable);
 }
 
 void HDDisplay::triggerUpdate()
@@ -167,8 +164,177 @@ void HDDisplay::paintEvent(QPaintEvent * event)
     renderOverlay();
 }
 
+void HDDisplay::contextMenuEvent (QContextMenuEvent* event)
+{
+    QMenu menu(this);
+    menu.addAction(addGaugeAction);
+    menu.addActions(getItemRemoveActions());
+    menu.addSeparator();
+    menu.addAction(setColumnsAction);
+    menu.addAction(setTitleAction);
+    menu.exec(event->globalPos());
+}
+
+void HDDisplay::saveState()
+{
+    QSettings settings;
+
+    QString instruments;
+    // Restore instrument settings
+    for (int i = 0; i < acceptList->count(); i++)
+    {
+        QString key = acceptList->at(i);
+        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+QString::number(maxValues.value(key, +1.0));
+    }
+
+    qDebug() << "Saving" << instruments;
+
+    settings.setValue(windowTitle()+"_gauges", instruments);
+    settings.sync();
+}
+
+void HDDisplay::restoreState()
+{
+    QSettings settings;
+    settings.sync();
+
+    QStringList instruments = settings.value(windowTitle()+"_gauges").toString().split('|');
+    for (int i = 0; i < instruments.count(); i++)
+    {
+        addGauge(instruments.at(i));
+    }
+}
+
+QList<QAction*> HDDisplay::getItemRemoveActions()
+{
+    QList<QAction*> actions;
+    for(int i = 0; i < acceptList->length(); ++i)
+    {
+        QString gauge = acceptList->at(i);
+        QAction* remove = new QAction(tr("Remove %1 gauge").arg(gauge), this);
+        remove->setStatusTip(tr("Removes the %1 gauge from the view.").arg(gauge));
+        remove->setData(gauge);
+        connect(remove, SIGNAL(triggered()), this, SLOT(removeItemByAction()));
+        actions.append(remove);
+    }
+    return actions;
+}
+
+void HDDisplay::removeItemByAction()
+{
+    QAction* trigger = qobject_cast<QAction*>(QObject::sender());
+    if (trigger)
+    {
+        QString item = trigger->data().toString();
+        int index = acceptList->indexOf(item);
+        acceptList->removeAt(index);
+        minValues.remove(item);
+        maxValues.remove(item);
+    }
+}
+
+void HDDisplay::addGauge()
+{
+    QStringList items;
+    for (int i = 0; i < values.count(); ++i)
+    {
+        items.append(QString("%1,%2,%3").arg("-180").arg(values.keys().at(i)).arg("+180"));
+    }
+    bool ok;
+    QString item = QInputDialog::getItem(this, tr("Add Gauge Instrument"),
+                                         tr("Format: min, curve name, max"), items, 0, true, &ok);
+    if (ok && !item.isEmpty())
+    {
+        addGauge(item);
+    }
+}
+
+void HDDisplay::addGauge(const QString& gauge)
+{
+    if (gauge.length() > 0)
+    {
+        QStringList parts = gauge.split(',');
+        if (parts.count() > 1)
+        {
+            double val;
+            bool ok;
+
+            QString key = parts.at(1);
+
+            if (!acceptList->contains(key))
+            {
+                // Convert min to double number
+                val = parts.first().toDouble(&ok);
+                if (ok) minValues.insert(key, val);
+                // Convert max to double number
+                val = parts.last().toDouble(&ok);
+                if (ok) maxValues.insert(key, val);
+                // Add value to acceptlist
+                acceptList->append(key);
+            }
+        }
+        else
+        {
+            if (!acceptList->contains(gauge))
+            {
+                acceptList->append(parts.first());
+            }
+        }
+    }
+}
+
+void HDDisplay::createActions()
+{
+    addGaugeAction = new QAction(tr("New &Gauge"), this);
+    addGaugeAction->setStatusTip(tr("Add a new gauge to the view by adding its name from the linechart"));
+    connect(addGaugeAction, SIGNAL(triggered()), this, SLOT(addGauge()));
+
+    setTitleAction = new QAction(tr("Set Widget Title"), this);
+    setTitleAction->setStatusTip(tr("Set the title caption of this tool widget"));
+    connect(setTitleAction, SIGNAL(triggered()), this, SLOT(setTitle()));
+
+    setColumnsAction = new QAction(tr("Set Number of Instrument Columns"), this);
+    setColumnsAction->setStatusTip(tr("Set number of columns to draw"));
+    connect(setColumnsAction, SIGNAL(triggered()), this, SLOT(setColumns()));
+}
+
+
+void HDDisplay::setColumns()
+{
+    bool ok;
+    int i = QInputDialog::getInt(this, tr("Number of Instrument Columns"),
+                                 tr("Columns:"), columns, 1, 15, 1, &ok);
+    if (ok)
+    {
+        columns = i;
+    }
+}
+
+void HDDisplay::setColumns(int cols)
+{
+    columns = cols;
+}
+
+void HDDisplay::setTitle()
+{
+    QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
+    if (parent)
+    {
+        bool ok;
+        QString text = QInputDialog::getText(this, tr("New title"),
+                                             tr("Widget title:"), QLineEdit::Normal,
+                                             parent->windowTitle(), &ok);
+        if (ok && !text.isEmpty())
+            parent->setWindowTitle(text);
+        this->setWindowTitle(text);
+    }
+}
+
 void HDDisplay::renderOverlay()
 {
+#if (QGC_EVENTLOOP_DEBUG)
+    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
     quint64 refreshInterval = 100;
     quint64 currTime = MG::TIME::getGroundTimeNow();
     if (currTime - lastPaintTime < refreshInterval)
@@ -182,6 +348,13 @@ void HDDisplay::renderOverlay()
     // Update scaling factor
     // adjust scaling to fit both horizontally and vertically
     scalingFactor = this->width()/vwidth;
+
+    // Adjust vheight dynamically according to the number of rows
+    float vColWidth = vwidth / columns;
+    int vRows = ceil(acceptList->length()/(float)columns);
+    // Assuming square instruments, vheight is column width*row count
+    vheight = vColWidth * vRows;
+
     double scalingFactorH = this->height()/vheight;
     if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
 
@@ -189,7 +362,6 @@ void HDDisplay::renderOverlay()
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
     //painter.fillRect(QRect(0, 0, width(), height()), backgroundColor);
-    const int columns = 3;
     const float spacing = 0.4f; // 40% of width
     const float gaugeWidth = vwidth / (((float)columns) + (((float)columns+1) * spacing + spacing * 0.5f));
     const QColor gaugeColor = QColor(200, 200, 200);
@@ -210,22 +382,12 @@ void HDDisplay::renderOverlay()
         drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
         xCoord += gaugeWidth + leftSpacing;
         // Move one row down if necessary
-        if (xCoord + gaugeWidth > vwidth)
+        if (xCoord + gaugeWidth*0.9f > vwidth)
         {
             yCoord += topSpacing + gaugeWidth;
             xCoord = leftSpacing + gaugeWidth/2.0f;
         }
     }
-}
-
-void HDDisplay::start()
-{
-    refreshTimer->start();
-}
-
-void HDDisplay::stop()
-{
-    refreshTimer->stop();
 }
 
 /**
@@ -235,20 +397,17 @@ void HDDisplay::stop()
 void HDDisplay::setActiveUAS(UASInterface* uas)
 {
     //qDebug() << "ATTEMPTING TO SET UAS";
-    if (this->uas != NULL && this->uas != uas)
+    if (this->uas != NULL)
     {
         // Disconnect any previously connected active MAV
-        disconnect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
+        disconnect(this->uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(updateValue(int,QString,double,quint64)));
     }
 
     // Now connect the new UAS
 
-    //if (this->uas != uas)
-    // {
     //qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
     // Setup communication
-    connect(uas, SIGNAL(valueChanged(UASInterface*,QString,double,quint64)), this, SLOT(updateValue(UASInterface*,QString,double,quint64)));
-    //}
+    connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(updateValue(int,QString,double,quint64)));
     this->uas = uas;
 }
 
@@ -351,8 +510,13 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     // per max. change
     const float rangeScale = ((2.0f * M_PI) / (max - min)) * 0.72f;
 
-    const float nameHeight = radius / 2.5f;
+    const float scaledValue = (value-min)*rangeScale;
+
+    float nameHeight = radius / 2.6f;
     paintText(name.toUpper(), color, nameHeight*0.7f, xRef-radius, yRef-radius, painter);
+
+    // Ensure some space
+    nameHeight *= 1.2f;
 
     if (!solid)
     {
@@ -366,18 +530,17 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     //drawCircle(xRef, yRef+nameHeight, radius, 0.0f, 170.0f, 1.0f, color, painter);
 
     QString label;
-    label.sprintf("%05.1f", value);
+    label.sprintf("% 06.1f", value);
 
 
     // Text
     // height
-    const float textHeight = radius/2.0f;
-    const float textX = xRef-radius/6.0f;
+    const float textHeight = radius/2.1f;
+    const float textX = xRef-radius/3.0f;
     const float textY = yRef+radius/2.0f;
 
     // Draw background rectangle
-    // FIXME add background color for use in instrument panel
-    QBrush brush(QColor(0, 0, 0), Qt::SolidPattern);
+    QBrush brush(QGC::colorBackground, Qt::SolidPattern);
     painter->setBrush(brush);
     painter->setPen(Qt::NoPen);
     painter->drawRect(refToScreenX(xRef-radius/2.5f), refToScreenY(yRef+nameHeight+radius/4.0f), refToScreenX(radius+radius/2.0f), refToScreenY((radius - radius/4.0f)*1.2f));
@@ -403,7 +566,7 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
 
     // Draw the value
     //painter->setPen(textColor);
-    paintText(label, color, textHeight, textX, textY+nameHeight, painter);
+    paintText(label, QGC::colorCyan, textHeight, textX, textY+nameHeight, painter);
     //paintText(label, color, ((radius - radius/3.0f)*1.1f), xRef-radius/2.5f, yRef+radius/3.0f, painter);
 
     // Draw the needle
@@ -421,7 +584,7 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     p.replace(5, QPointF(xRef-maxWidth/2.0f, yRef+nameHeight+radius * 0.05f));
 
 
-    rotatePolygonClockWiseRad(p, value*rangeScale+zeroRotation, QPointF(xRef, yRef+nameHeight));
+    rotatePolygonClockWiseRad(p, scaledValue+zeroRotation, QPointF(xRef, yRef+nameHeight));
 
     QBrush indexBrush;
     indexBrush.setColor(color);
@@ -587,20 +750,17 @@ float HDDisplay::refLineWidthToPen(float line)
     return line * 2.50f;
 }
 
-void HDDisplay::updateValue(UASInterface* uas, QString name, double value, quint64 msec)
+void HDDisplay::updateValue(int uasId, QString name, double value, quint64 msec)
 {
-    Q_UNUSED(uas);
-    //if (this->uas == uas)
-    //{
-        // Update mean
-        const float oldMean = valuesMean.value(name, 0.0f);
-        const int meanCount = valuesCount.value(name, 0);
-        valuesMean.insert(name, (oldMean * meanCount +  value) / (meanCount + 1));
-        valuesCount.insert(name, meanCount + 1);
-        valuesDot.insert(name, (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f));
-        values.insert(name, value);
-        lastUpdate.insert(name, msec);
-    //}
+    Q_UNUSED(uasId);
+    // Update mean
+    const float oldMean = valuesMean.value(name, 0.0f);
+    const int meanCount = valuesCount.value(name, 0);
+    valuesMean.insert(name, (oldMean * meanCount +  value) / (meanCount + 1));
+    valuesCount.insert(name, meanCount + 1);
+    valuesDot.insert(name, (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f));
+    values.insert(name, value);
+    lastUpdate.insert(name, msec);
 }
 
 /**
@@ -667,7 +827,22 @@ void HDDisplay::changeEvent(QEvent *e)
 }
 
 
+void HDDisplay::showEvent(QShowEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event);
+    refreshTimer->start(updateInterval);
+}
 
+void HDDisplay::hideEvent(QHideEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event);
+    refreshTimer->stop();
+    saveState();
+}
 
 
 ///**

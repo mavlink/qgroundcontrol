@@ -39,6 +39,19 @@ This file is part of the QGROUNDCONTROL project
 #include "ProtocolInterface.h"
 #include "ui_CommSettings.h"
 
+enum qgc_link_t
+{
+    QGC_LINK_SERIAL,
+    QGC_LINK_UDP,
+    QGC_LINK_SIMULATION,
+    QGC_LINK_FORWARDING
+};
+
+enum qgc_protocol_t
+{
+    QGC_PROTOCOL_MAVLINK
+};
+
 #ifdef OPAL_RT
 #include "OpalLink.h"
 #endif

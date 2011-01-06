@@ -37,6 +37,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QTimer>
 #include <QFontDatabase>
 #include <QMap>
+#include <QContextMenuEvent>
 #include <QPair>
 #include <cmath>
 
@@ -58,15 +59,30 @@ class HDDisplay : public QGraphicsView
 {
     Q_OBJECT
 public:
-    HDDisplay(QStringList* plotList, QWidget *parent = 0);
+    HDDisplay(QStringList* plotList, QString title="", QWidget *parent = 0);
     ~HDDisplay();
 
 public slots:
     /** @brief Update a HDD value */
-    void updateValue(UASInterface* uas, QString name, double value, quint64 msec);
-    void start();
-    void stop();
+    void updateValue(int uasId, QString name, double value, quint64 msec);
     void setActiveUAS(UASInterface* uas);
+
+    /** @brief Removes a plot item by the action data */
+    void removeItemByAction();
+    /** @brief Bring up the menu to add a gauge */
+    void addGauge();
+    /** @brief Add a gauge using this spec string */
+    void addGauge(const QString& gauge);
+    /** @brief Set the title of this widget and any existing parent dock widget */
+    void setTitle();
+    /** @brief Set the number of colums via popup */
+    void setColumns();
+    /** @brief Set the number of colums */
+    void setColumns(int cols);
+    /** @brief Save the current layout and state to disk */
+    void saveState();
+    /** @brief Restore the last layout and state from disk */
+    void restoreState();
 
 protected slots:
     void enableGLRendering(bool enable);
@@ -75,8 +91,13 @@ protected slots:
     void triggerUpdate();
 
 protected:
-    void changeEvent(QEvent *e);
-    void paintEvent(QPaintEvent * event);
+    void changeEvent(QEvent* e);
+    void paintEvent(QPaintEvent* event);
+    void showEvent(QShowEvent* event);
+    void hideEvent(QHideEvent* event);
+    void contextMenuEvent(QContextMenuEvent* event);
+    QList<QAction*> getItemRemoveActions();
+    void createActions();
     float refLineWidthToPen(float line);
     float refToScreenX(float x);
     float refToScreenY(float y);
@@ -142,6 +163,7 @@ protected:
     int warningBlinkRate;      ///< Blink rate of warning messages, will be rounded to the refresh rate
 
     QTimer* refreshTimer;      ///< The main timer, controls the update rate
+    static const int updateInterval = 120; ///< Update interval in milliseconds
     QPainter* hudPainter;
     QFont font;                ///< The HUD font, per default the free Bitstream Vera SANS, which is very close to actual HUD fonts
     QFontDatabase fontDatabase;///< Font database, only used to load the TrueType font file (the HUD font is directly loaded from file rather than from the system)
@@ -154,6 +176,11 @@ protected:
     QStringList* acceptList;   ///< Variable names to plot
 
     quint64 lastPaintTime;     ///< Last time this widget was refreshed
+    int columns;               ///< Number of instrument columns
+
+    QAction* addGaugeAction;   ///< Action adding a gauge
+    QAction* setTitleAction;   ///< Action setting the title
+    QAction* setColumnsAction; ///< Action setting the number of columns
 
 private:
     Ui::HDDisplay *m_ui;

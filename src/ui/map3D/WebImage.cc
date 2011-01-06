@@ -31,7 +31,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "WebImage.h"
 
-#include <QDebug>
+#include <QFile>
 #include <QGLWidget>
 
 WebImage::WebImage()
@@ -77,13 +77,13 @@ WebImage::setSourceURL(const QString& url)
     sourceURL = url;
 }
 
-const uint8_t*
-WebImage::getData(void) const
+uchar*
+WebImage::getImageData(void) const
 {
     return image->scanLine(0);
 }
 
-void
+bool
 WebImage::setData(const QByteArray& data)
 {
     QImage tempImage;
@@ -94,39 +94,61 @@ WebImage::setData(const QByteArray& data)
             image.reset(new QImage);
         }
         *image = QGLWidget::convertToGLFormat(tempImage);
+
+        return true;
     }
     else
     {
-        qDebug() << "# WARNING: cannot load image data for" << sourceURL;
+        return false;
     }
 }
 
-int32_t
+bool
+WebImage::setData(const QString& filename)
+{
+    QImage tempImage;
+    if (tempImage.load(filename))
+    {
+        if (image.isNull())
+        {
+            image.reset(new QImage);
+        }
+        *image = QGLWidget::convertToGLFormat(tempImage);
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+int
 WebImage::getWidth(void) const
 {
     return image->width();
 }
 
-int32_t
+int
 WebImage::getHeight(void) const
 {
     return image->height();
 }
 
-int32_t
+int
 WebImage::getByteCount(void) const
 {
     return image->byteCount();
 }
 
-uint64_t
+ulong
 WebImage::getLastReference(void) const
 {
     return lastReference;
 }
 
 void
-WebImage::setLastReference(uint64_t value)
+WebImage::setLastReference(ulong value)
 {
     lastReference = value;
 }

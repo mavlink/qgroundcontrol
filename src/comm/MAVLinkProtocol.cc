@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QTime>
 #include <QApplication>
+#include <QMessageBox>
 
 #include "MG.h"
 #include "MAVLinkProtocol.h"
@@ -42,9 +43,10 @@ This file is part of the QGROUNDCONTROL project
 #include "UAS.h"
 #include "SlugsMAV.h"
 #include "PxQuadMAV.h"
-#include "ArduPilotMAV.h"
+#include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
+#include "MainWindow.h"
 #include <QGCMAVLink.h>
 #include "QGC.h"
 
@@ -141,8 +143,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // of its existence, as it only then can send and receive
                 // it's first messages.
 
-                // FIXME Current debugging
-                // check if the UAS has the same id like this system
+                // Check if the UAS has the same id like this system
                 if (message.sysid == getSystemId())
                 {
                     qDebug() << "WARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\nWARNING\n\n RECEIVED MESSAGE FROM THIS SYSTEM WITH ID" << message.msgid << "FROM COMPONENT" << message.compid;
@@ -155,11 +156,32 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // First create new UAS object
                 // Decode heartbeat message
                 mavlink_heartbeat_t heartbeat;
+                // Reset version field to 0
+                heartbeat.mavlink_version = 0;
                 mavlink_msg_heartbeat_decode(&message, &heartbeat);
+
+                // Check if the UAS has a different protocol version
+                if (heartbeat.mavlink_version != MAVLINK_VERSION)
+                {
+                    // Bring up dialog to inform user
+                    QMessageBox msgBox(MainWindow::instance());
+                    msgBox.setIcon(QMessageBox::Critical);
+                    msgBox.setText(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"));
+                    msgBox.setInformativeText(tr("It is unsafe to use different MAVLink versions. QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
+                    msgBox.setStandardButtons(QMessageBox::Ok);
+                    msgBox.setDefaultButton(QMessageBox::Ok);
+                    msgBox.exec();
+
+                    // Ignore this message and continue gracefully
+                    continue;
+                }
+
                 switch (heartbeat.autopilot)
                 {
                 case MAV_AUTOPILOT_GENERIC:
+
                     uas = new UAS(this, message.sysid);
+
                     // Connect this robot to the UAS object
                     connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), uas, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
                     break;
@@ -186,9 +208,9 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     uas = mav;
                 }
                     break;
-                case MAV_AUTOPILOT_ARDUPILOT:
+                case MAV_AUTOPILOT_ARDUPILOTMEGA:
                     {
-                    ArduPilotMAV* mav = new ArduPilotMAV(this, message.sysid);
+                    ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(this, message.sysid);
                     // Connect this robot to the UAS object
                     // it is IMPORTANT here to use the right object type,
                     // else the slot of the parent object is called (and thus the special
@@ -202,11 +224,15 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     break;
                 }
 
+                // Set the autopilot type
+                uas->setAutopilotType((int)heartbeat.autopilot);
 
                 // Make UAS aware that this link can be used to communicate with the actual robot
                 uas->addLink(link);
+
                 // Now add UAS to "official" list, which makes the whole application aware of it
                 UASManager::instance()->addUAS(uas);
+
             }
 
             // Only count message if UAS exists for this message
@@ -258,7 +284,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 //if ()
 
                 // If a new loss was detected or we just hit one 128th packet step
-                if (lastLoss != totalLossCounter || (totalReceiveCounter == 128))
+                if (lastLoss != totalLossCounter || (totalReceiveCounter % 64 == 0))
                 {
                     // Calculate new loss ratio
                     // Receive loss
@@ -325,6 +351,8 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
 {
     // Create buffer
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    // Rewriting header to ensure correct link ID is set
+    if (link->getId() != 0) mavlink_finalize_message_chan(&message, this->getSystemId(), this->getComponentId(), link->getId(), message.len);
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer(buffer, &message);
     // If link is connected
@@ -345,7 +373,7 @@ void MAVLinkProtocol::sendHeartbeat()
     if (m_heartbeatsEnabled)
     {
         mavlink_message_t beat;
-        mavlink_msg_heartbeat_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID,&beat, OCU, MAV_AUTOPILOT_GENERIC);
+        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, OCU, MAV_AUTOPILOT_GENERIC);
         sendMessage(beat);
     }
 }
