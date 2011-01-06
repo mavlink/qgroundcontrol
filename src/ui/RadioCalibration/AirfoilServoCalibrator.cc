@@ -39,21 +39,21 @@ AirfoilServoCalibrator::AirfoilServoCalibrator(AirfoilType type, QWidget *parent
     QLabel *lowPulseString;
     if (type == AILERON)
     {
-        highPulseString = new QLabel(tr("Bank Left"));
+        highPulseString = new QLabel(tr("Bank Right"));
         centerPulseString = new QLabel(tr("Center"));
-        lowPulseString = new QLabel(tr("Bank Right"));
+        lowPulseString = new QLabel(tr("Bank Left"));
     }
     else if (type == ELEVATOR)
     {
-        highPulseString = new QLabel(tr("Nose Down"));
+        highPulseString = new QLabel(tr("Nose Up"));
         centerPulseString = new QLabel(tr("Center"));
-        lowPulseString = new QLabel(tr("Nose Up"));
+        lowPulseString = new QLabel(tr("Nose Down"));
     }
     else if (type == RUDDER)
     {
-        highPulseString = new QLabel(tr("Nose Left"));
+        highPulseString = new QLabel(tr("Nose Right"));
         centerPulseString = new QLabel(tr("Center"));
-        lowPulseString = new QLabel(tr("Nose Right"));
+        lowPulseString = new QLabel(tr("Nose Left"));
     }
     else
     {
@@ -85,8 +85,6 @@ AirfoilServoCalibrator::AirfoilServoCalibrator(AirfoilType type, QWidget *parent
     connect(centerButton, SIGNAL(clicked()), this, SLOT(setCenter()));
     connect(lowButton, SIGNAL(clicked()), this, SLOT(setLow()));
 }
-
-
 
 void AirfoilServoCalibrator::setHigh()
 {
