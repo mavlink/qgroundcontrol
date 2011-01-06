@@ -48,6 +48,7 @@ This file is part of the PIXHAWK project
 #include "LinechartWidget.h"
 #include "LinechartPlot.h"
 #include "LogCompressor.h"
+#include "MainWindow.h"
 #include "QGC.h"
 #include "MG.h"
 
@@ -348,7 +349,7 @@ void LinechartWidget::startLogging()
     // Let user select the log file name
     QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.csv, *.txt);;"));
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.csv *.txt);;"));
 
     if (!fileName.contains("."))
     {
@@ -399,6 +400,8 @@ void LinechartWidget::stopLogging()
         // Postprocess log file
         compressor = new LogCompressor(logFile->fileName());
         connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
+        connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
+        MainWindow::instance()->showInfoMessage("Logging ended", "QGroundControl is now compressing the logfile in a consistent CVS file. This may take a while, you can continue to use QGroundControl. Status updates appear at the bottom of the window.");
         compressor->startCompression();
     }
     logButton->setText(tr("Start logging"));

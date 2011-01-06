@@ -27,6 +27,7 @@ signals:
     /** @brief This signal is emitted once a logfile has been finished writing
      * @param fileName The name out the output (CSV) file
      */
+    void logProcessingStatusChanged(QString);
     void finishedFile(QString fileName);
 };
 
