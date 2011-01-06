@@ -79,22 +79,26 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
-    double getLocalX() const { return localX; };
-    double getLocalY() const { return localY; };
-    double getLocalZ() const { return localZ; };
+    double getLocalX() const { return localX; }
+    double getLocalY() const { return localY; }
+    double getLocalZ() const { return localZ; }
+    double getLatitude() const { return latitude; }
+    double getLongitude() const { return longitude; }
+    double getAltitude() const { return altitude; }
 
-    double getRoll() const { return roll; };
-    double getPitch() const { return pitch; };
-    double getYaw() const { return yaw; };
+    double getRoll() const { return roll; }
+    double getPitch() const { return pitch; }
+    double getYaw() const { return yaw; }
 
 
 friend class UASWaypointManager;
 protected:
     int uasId;                    ///< Unique system ID
-    int type;                     ///< UAS type (from type enum)
+    unsigned char type;           ///< UAS type (from type enum)
     quint64 startTime;            ///< The time the UAS was switched on
     CommStatus commStatus;        ///< Communication status
     QString name;                 ///< Human-friendly name of the vehicle, e.g. bravo
+    int autopilot;                ///< Type of the Autopilot: -1: None, 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
     QList<LinkInterface*>* links; ///< List of links this UAS can be reached by
     QList<int> unknownPackets;    ///< Packet IDs which are unknown and have been received
     MAVLinkProtocol* mavlink;     ///< Reference to the MAVLink instance
@@ -139,10 +143,18 @@ protected:
     double localX;
     double localY;
     double localZ;
+    double latitude;
+    double longitude;
+    double altitude;
+    double speedX;              ///< True speed in X axis
+    double speedY;              ///< True speed in Y axis
+    double speedZ;              ///< True speed in Z axis
     double roll;
     double pitch;
     double yaw;
     QTimer* statusTimeout;      ///< Timer for various status timeouts
+    QMap<int, QMap<QString, float>* > parameters; ///< All parameters
+    bool paramsOnceRequested;   ///< If the parameter list has been read at least once
 
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
@@ -158,6 +170,8 @@ protected:
 public:
     UASWaypointManager &getWaypointManager(void) { return waypointManager; }
     int getSystemType();
+    int getAutopilotType() {return autopilot;}
+    void setAutopilotType(int apType) { autopilot = apType;}
 
 public slots:
     /** @brief Launches the system **/
@@ -187,7 +201,7 @@ public slots:
 
     //void requestWaypoints();  FIXME tbd
     //void clearWaypointList();   FIXME tbd
-    void requestParameters();
+
     /** @brief Enable the motors */
     void enable_motors();
     /** @brief Disable the motors */
@@ -202,18 +216,24 @@ public slots:
     void addLink(LinkInterface* link);
 
     /** @brief Receive a message from one of the communication links. */
-    void receiveMessage(LinkInterface* link, mavlink_message_t message);
+    virtual void receiveMessage(LinkInterface* link, mavlink_message_t message);
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
     void sendMessage(LinkInterface* link, mavlink_message_t message);
     /** @brief Send a message over all links this UAS can be reached with (!= all links) */
     void sendMessage(mavlink_message_t message);
 
+    /** @brief Temporary Hack for sending packets to patch Antenna. Send a message over all serial links except for this UAS's */
+    void forwardMessage(mavlink_message_t message);
+
     /** @brief Set this UAS as the system currently in focus, e.g. in the main display widgets */
     void setSelected();
 
     /** @brief Set current mode of operation, e.g. auto or manual */
     void setMode(int mode);
+
+    /** @brief Request all parameters */
+    void requestParameters();
 
     /** @brief Set a system parameter */
     void setParameter(int component, QString id, float value);
@@ -223,20 +243,28 @@ public slots:
     /** @brief Read parameters from permanent storage */
     void readParametersFromStorage();
 
-    void enableAllDataTransmission(bool enabled);
-    void enableRawSensorDataTransmission(bool enabled);
-    void enableExtendedSystemStatusTransmission(bool enabled);
-    void enableRCChannelDataTransmission(bool enabled);
-    void enableRawControllerDataTransmission(bool enabled);
-    void enableRawSensorFusionTransmission(bool enabled);
-    void enablePositionTransmission(bool enabled);
-    void enableExtra1Transmission(bool enabled);
-    void enableExtra2Transmission(bool enabled);
-    void enableExtra3Transmission(bool enabled);
+    /** @brief Get the names of all parameters */
+    QList<QString> getParameterNames(int component);
+
+    /** @brief Get the ids of all components */
+    QList<int> getComponentIds();
+
+    void enableAllDataTransmission(int rate);
+    void enableRawSensorDataTransmission(int rate);
+    void enableExtendedSystemStatusTransmission(int rate);
+    void enableRCChannelDataTransmission(int rate);
+    void enableRawControllerDataTransmission(int rate);
+    void enableRawSensorFusionTransmission(int rate);
+    void enablePositionTransmission(int rate);
+    void enableExtra1Transmission(int rate);
+    void enableExtra2Transmission(int rate);
+    void enableExtra3Transmission(int rate);
 
     /** @brief Update the system state */
     void updateState();
 
+    /** @brief Set world frame origin at current GPS position */
+    void setLocalOriginAtCurrentGPSPosition();
     /** @brief Set local position setpoint */
     void setLocalPositionSetpoint(float x, float y, float z, float yaw);
     /** @brief Add an offset in body frame to the setpoint */

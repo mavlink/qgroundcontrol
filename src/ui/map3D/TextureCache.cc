@@ -37,15 +37,7 @@ TextureCache::TextureCache(uint32_t _cacheSize)
 {
     for (uint32_t i = 0; i < cacheSize; ++i)
     {
-        TexturePtr t(new Texture);
-
-        GLuint id;
-        glGenTextures(1, &id);
-        t->setID(id);
-        glBindTexture(GL_TEXTURE_2D, id);
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        TexturePtr t(new Texture(i));
 
         textures.push_back(t);
     }

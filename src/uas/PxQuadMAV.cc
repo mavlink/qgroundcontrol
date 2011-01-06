@@ -41,12 +41,12 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     // Let UAS handle the default message set
     UAS::receiveMessage(link, message);
-    mavlink_message_t* msg = &message;
 
     //qDebug() << "PX RECEIVED" << msg->sysid << msg->compid << msg->msgid;
 
 // Only compile this portion if matching MAVLink packets have been compiled
 #ifdef MAVLINK_ENABLED_PIXHAWK
+    mavlink_message_t* msg = &message;
 
     if (message.sysid == uasId)
     {
@@ -102,17 +102,6 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_watchdog_process_status_t payload;
                 mavlink_msg_watchdog_process_status_decode(msg, &payload);
                 emit processChanged(this->uasId, payload.watchdog_id, payload.process_id, payload.state, (payload.muted == 1) ? true : false, payload.crashes, payload.pid);
-            }
-            break;
-    case MAVLINK_MSG_ID_DEBUG_VECT:
-            {
-                mavlink_debug_vect_t vect;
-                mavlink_msg_debug_vect_decode(msg, &vect);
-                QString str((const char*)vect.name);
-                quint64 time = getUnixTime(vect.usec);
-                emit valueChanged(uasId, str+".x", vect.x, time);
-                emit valueChanged(uasId, str+".y", vect.y, time);
-                emit valueChanged(uasId, str+".z", vect.z, time);
             }
             break;
     case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE:
@@ -179,5 +168,9 @@ void PxQuadMAV::sendProcessCommand(int watchdogId, int processId, unsigned int c
     mavlink_message_t msg;
     mavlink_msg_watchdog_command_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &payload);
     sendMessage(msg);
+#else
+    Q_UNUSED(watchdogId);
+    Q_UNUSED(processId);
+    Q_UNUSED(command);
 #endif
 }

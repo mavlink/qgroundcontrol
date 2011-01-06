@@ -57,15 +57,16 @@ public:
     const QString& getSourceURL(void) const;
     void setSourceURL(const QString& url);
 
-    const uint8_t* getData(void) const;
-    void setData(const QByteArray& data);
+    uchar* getImageData(void) const;
+    bool setData(const QByteArray& data);
+    bool setData(const QString& filename);
 
-    int32_t getWidth(void) const;
-    int32_t getHeight(void) const;
-    int32_t getByteCount(void) const;
+    int getWidth(void) const;
+    int getHeight(void) const;
+    int getByteCount(void) const;
 
-    uint64_t getLastReference(void) const;
-    void setLastReference(uint64_t value);
+    ulong getLastReference(void) const;
+    void setLastReference(ulong value);
 
     bool getSyncFlag(void) const;
     void setSyncFlag(bool onoff);
@@ -74,7 +75,7 @@ private:
     State state;
     QString sourceURL;
     QScopedPointer<QImage> image;
-    uint64_t lastReference;
+    ulong lastReference;
     bool syncFlag;
 };
 

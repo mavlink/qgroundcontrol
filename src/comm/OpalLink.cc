@@ -143,7 +143,7 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
 //        	this->sendRCValues = static_cast<bool>(rc.enabled);
 //        }
 //        break;
-#ifdef MAVLINK_ENABLED_UALBERTA
+#ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
         case MAVLINK_MSG_ID_RADIO_CALIBRATION:
         {
             mavlink_radio_calibration_t radio;
@@ -378,7 +378,7 @@ void OpalLink::getSignals()
             if (sendRCValues)
             {
                 mavlink_message_t rc;
-                mavlink_msg_rc_channels_pack(systemID, componentID, &rc,
+                mavlink_msg_rc_channels_raw_pack(systemID, componentID, &rc,
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_1]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_2]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_3]),
@@ -387,14 +387,6 @@ void OpalLink::getSignals()
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_6]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_7]),
                                              duty2PulseMicros(values[OpalRT::RAW_CHANNEL_8]),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_1], OpalRT::NORM_CHANNEL_1),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_2], OpalRT::NORM_CHANNEL_2),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_3], OpalRT::NORM_CHANNEL_3),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_4], OpalRT::NORM_CHANNEL_4),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_5], OpalRT::NORM_CHANNEL_5),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_6], OpalRT::NORM_CHANNEL_6),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_7], OpalRT::NORM_CHANNEL_7),
-                                             rescaleNorm(values[OpalRT::NORM_CHANNEL_8], OpalRT::NORM_CHANNEL_8),
                                              0 //rssi unused
                                              );
                 receiveMessage(rc);

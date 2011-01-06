@@ -40,8 +40,6 @@ This file is part of the PIXHAWK project
 #include <QDebug>
 #include <QMap>
 
-#include "MG.h"
-
 ObjectDetectionView::ObjectDetectionView(QString folder, QWidget *parent) :
         QWidget(parent),
         patternList(),
@@ -79,12 +77,15 @@ void ObjectDetectionView::changeEvent(QEvent *e)
 
 void ObjectDetectionView::setUAS(UASInterface* uas)
 {
-    //if (this->uas == NULL && uas != NULL)
-    //{
+    if (this->uas != NULL)
+    {
+        disconnect(this->uas, SIGNAL(patternDetected(int, QString, float, bool)), this, SLOT(newPattern(int, QString, float, bool)));
+        disconnect(this->uas, SIGNAL(letterDetected(int, QString, float, bool)), this, SLOT(newLetter(int, QString, float, bool)));
+    }
+
     this->uas = uas;
     connect(uas, SIGNAL(patternDetected(int, QString, float, bool)), this, SLOT(newPattern(int, QString, float, bool)));
     connect(uas, SIGNAL(letterDetected(int, QString, float, bool)), this, SLOT(newLetter(int, QString, float, bool)));
-    //}
 }
 
 void ObjectDetectionView::newPattern(int uasId, QString patternPath, float confidence, bool detected)
@@ -117,7 +118,7 @@ void ObjectDetectionView::newPattern(int uasId, QString patternPath, float confi
             m_ui->listWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
 
         // load image
-        QString filePath = MG::DIR::getSupportFilesDirectory() + "/" + patternFolder + "/" + patternPath.split("/", QString::SkipEmptyParts).last();
+        QString filePath = patternFolder + "/" + patternPath.split("/", QString::SkipEmptyParts).last();
         QPixmap image = QPixmap(filePath);
         if (image.width() > image.height())
             image = image.scaledToWidth(m_ui->imageLabel->width());

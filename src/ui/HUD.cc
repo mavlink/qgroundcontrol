@@ -29,13 +29,19 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
+#include <QShowEvent>
+
 #include <QDebug>
 #include <cmath>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #include <limits>
 
 #include "UASManager.h"
 #include "HUD.h"
 #include "MG.h"
+#include "QGC.h"
 
 // Fix for some platforms, e.g. windows
 #ifndef GL_MULTISAMPLE
@@ -126,7 +132,7 @@ HUD::HUD(int width, int height, QWidget* parent)
     glImage = QGLWidget::convertToGLFormat(fill);
 
     // Refresh timer
-    refreshTimer->setInterval(50); // 20 Hz
+    refreshTimer->setInterval(updateInterval);
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
 
@@ -147,8 +153,16 @@ HUD::HUD(int width, int height, QWidget* parent)
     if(!QFile::exists(fontFileName)) qDebug() << "ERROR! font file: " << fontFileName << " DOES NOT EXIST!";
 
     fontDatabase.addApplicationFont(fontFileName);
-    font = fontDatabase.font(fontFamilyName, "Roman", (int)(10*scalingFactor*1.2f+0.5f));
-    if (font.family() != fontFamilyName) qDebug() << "ERROR! Font not loaded: " << fontFamilyName;
+    font = fontDatabase.font(fontFamilyName, "Roman", qMax(5,(int)(10.0f*scalingFactor*1.2f+0.5f)));
+    QFont* fontPtr = &font;
+    if (!fontPtr)
+    {
+        qDebug() << "ERROR! FONT NOT LOADED!";
+    }
+    else
+    {
+        if (font.family() != fontFamilyName) qDebug() << "ERROR! WRONG FONT LOADED: " << fontFamilyName;
+    }
 
     // Connect with UAS
     UASManager* manager = UASManager::instance();
@@ -162,14 +176,24 @@ HUD::~HUD()
 
 }
 
-void HUD::start()
+void HUD::showEvent(QShowEvent* event)
 {
-    refreshTimer->start();
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event)
+    {
+        refreshTimer->start(updateInterval);
+    }
 }
 
-void HUD::stop()
+void HUD::hideEvent(QHideEvent* event)
 {
-    refreshTimer->stop();
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event)
+    {
+        refreshTimer->stop();
+    }
 }
 
 void HUD::updateValue(UASInterface* uas, QString name, double value, quint64 msec)
@@ -537,9 +561,13 @@ void HUD::paintEvent(QPaintEvent *event)
 
 void HUD::paintHUD()
 {
-//    static quint64 interval = 0;
-//    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
-//    interval = MG::TIME::getGroundTimeNow();
+    //    static quint64 interval = 0;
+    //    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
+    //    interval = MG::TIME::getGroundTimeNow();
+
+#if (QGC_EVENTLOOP_DEBUG)
+    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+#endif
 
     // Read out most important values to limit hash table lookups
     static float roll = 0.0f;

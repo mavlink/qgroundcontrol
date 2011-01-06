@@ -38,28 +38,19 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionJoystickSettings"/>
+    <addaction name="actionJoystick_Settings"/>
+    <addaction name="actionNewCustomWidget"/>
+    <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
-   </widget>
-   <widget class="QMenu" name="menuUnmanned_System">
-    <property name="title">
-     <string>Unmanned System</string>
-    </property>
-    <addaction name="actionLiftoff"/>
-    <addaction name="actionLand"/>
-    <addaction name="actionEmergency_Land"/>
-    <addaction name="actionEmergency_Kill"/>
-    <addaction name="separator"/>
-    <addaction name="actionConfiguration"/>
    </widget>
    <widget class="QMenu" name="menuNetwork">
     <property name="title">
@@ -68,48 +59,56 @@
     <addaction name="actionAdd_Link"/>
     <addaction name="separator"/>
    </widget>
-   <widget class="QMenu" name="menuWindow">
-    <property name="title">
-     <string>Window</string>
-    </property>
-    <addaction name="actionEngineerView"/>
-    <addaction name="actionPilotView"/>
-    <addaction name="actionOperatorView"/>
-    <addaction name="action3DView"/>
-    <addaction name="actionGlobalOperatorView"/>
-    <addaction name="separator"/>
-    <addaction name="actionShow_MAVLink_view"/>
-    <addaction name="actionShow_data_analysis_view"/>
-    <addaction name="actionShow_full_view"/>
-    <addaction name="actionStyleConfig"/>
-   </widget>
-   <widget class="QMenu" name="menuHelp">
-    <property name="title">
-     <string>Help</string>
-    </property>
-    <addaction name="actionOnline_documentation"/>
-    <addaction name="actionProject_Roadmap"/>
-    <addaction name="actionCredits_Developers"/>
-   </widget>
    <widget class="QMenu" name="menuConnected_Systems">
     <property name="title">
      <string>Select System</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuUnmanned_System">
+    <property name="title">
+     <string>Unmanned System</string>
+    </property>
+    <property name="separatorsCollapsible">
+     <bool>false</bool>
+    </property>
+    <addaction name="actionLiftoff"/>
+    <addaction name="actionLand"/>
+    <addaction name="actionEmergency_Land"/>
+    <addaction name="actionEmergency_Kill"/>
+    <addaction name="separator"/>
+    <addaction name="actionConfiguration"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionOnline_Documentation"/>
+    <addaction name="actionProject_Roadmap_2"/>
+    <addaction name="actionDeveloper_Credits"/>
+   </widget>
+   <widget class="QMenu" name="menuPerspectives">
+    <property name="title">
+     <string>Perspectives</string>
+    </property>
+    <addaction name="actionOperatorsView"/>
+    <addaction name="actionEngineersView"/>
+    <addaction name="actionPilotsView"/>
+    <addaction name="separator"/>
+    <addaction name="actionMavlinkView"/>
+    <addaction name="actionReloadStyle"/>
+   </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
    <addaction name="menuConnected_Systems"/>
    <addaction name="menuUnmanned_System"/>
-   <addaction name="menuWindow"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuPerspectives"/>
    <addaction name="menuHelp"/>
-  </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionExit">
@@ -215,6 +214,9 @@
    <property name="text">
     <string>Joystick settings</string>
    </property>
+   <property name="visible">
+    <bool>true</bool>
+   </property>
   </action>
   <action name="actionOperatorView">
    <property name="icon">
@@ -234,7 +236,7 @@
      <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
-    <string>Show 3D view</string>
+    <string>Show 3D Local View</string>
    </property>
    <property name="toolTip">
     <string>Show 3D view</string>
@@ -315,7 +317,139 @@
      <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
-    <string>Show Global operator view</string>
+    <string>Show 2D Map View</string>
+   </property>
+  </action>
+  <action name="action3DMapView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Show 3D Global View</string>
+   </property>
+  </action>
+  <action name="actionGoogleEarthView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/mapproviders/googleearth.svg</normaloff>:/images/mapproviders/googleearth.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Google Earth View</string>
+   </property>
+  </action>
+  <action name="actionShow_Slugs_View">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/contrib/slugs.png</normaloff>:/images/contrib/slugs.png</iconset>
+   </property>
+   <property name="text">
+    <string>Show Slugs View</string>
+   </property>
+  </action>
+  <action name="actionJoystick_Settings">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/devices/input-gaming.svg</normaloff>:/images/devices/input-gaming.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Joystick Settings</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionOnline_Documentation">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Online Documentation</string>
+   </property>
+  </action>
+  <action name="actionProject_Roadmap_2">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Project Roadmap</string>
+   </property>
+  </action>
+  <action name="actionDeveloper_Credits">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Developer Credits</string>
+   </property>
+  </action>
+  <action name="actionOperatorsView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/weather-overcast.svg</normaloff>:/images/status/weather-overcast.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Operator</string>
+   </property>
+  </action>
+  <action name="actionEngineersView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Engineer</string>
+   </property>
+  </action>
+  <action name="actionMavlinkView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/devices/network-wired.svg</normaloff>:/images/devices/network-wired.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Mavlink</string>
+   </property>
+  </action>
+  <action name="actionReloadStyle">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Reload Style</string>
+   </property>
+  </action>
+  <action name="actionPilotsView">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/network-wireless-encrypted.svg</normaloff>:/images/status/network-wireless-encrypted.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Pilot</string>
+   </property>
+  </action>
+  <action name="actionNewCustomWidget">
+   <property name="text">
+    <string>New Custom Widget</string>
+   </property>
+  </action>
+  <action name="actionMuteAudioOutput">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/audio-volume-high.svg</normaloff>
+     <normalon>:/images/status/audio-volume-muted.svg</normalon>
+     <activeon>:/images/status/audio-volume-muted.svg</activeon>
+     <selectedoff>:/images/status/audio-volume-high.svg</selectedoff>
+     <selectedon>:/images/status/audio-volume-muted.svg</selectedon>:/images/status/audio-volume-high.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Mute Audio Output</string>
    </property>
   </action>
  </widget>
