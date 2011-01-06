@@ -126,8 +126,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     //mainWindow->addLink(simulationLink);
 
     mainWindow = MainWindow::instance();
-
-    // Remove splash screen
+        // Remove splash screen
     splashScreen->finish(mainWindow);
 
     // Check if link could be connected

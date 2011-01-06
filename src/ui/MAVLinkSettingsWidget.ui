@@ -32,6 +32,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="versionCheckBox">
+     <property name="text">
+      <string>Only accept MAVs with same protocol version</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
