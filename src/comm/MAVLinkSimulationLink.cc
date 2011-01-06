@@ -447,7 +447,7 @@ void MAVLinkSimulationLink::mainloop()
             chan.chan5_raw = (chan.chan3_raw + chan.chan4_raw) / 2.0f;
             chan.chan6_raw = (chan.chan3_raw + chan.chan2_raw) / 2.0f;
             chan.chan7_raw = (chan.chan4_raw + chan.chan2_raw) / 2.0f;
-            chan.chan8_raw = (chan.chan6_raw + chan.chan2_raw) / 2.0f;
+            chan.chan8_raw = 0;
             chan.rssi = 100;
             messageSize = mavlink_msg_rc_channels_raw_encode(systemId, componentId, &msg, &chan);
             // Allocate buffer with packet data

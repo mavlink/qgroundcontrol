@@ -194,10 +194,10 @@ void HDDisplay::saveState()
     for (int i = 0; i < acceptList->count(); i++)
     {
         QString key = acceptList->at(i);
-        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+QString::number(maxValues.value(key, +1.0));
+        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+QString::number(maxValues.value(key, +1.0))+","+((symmetric.value(key, false)) ? "s" : "");
     }
 
-    qDebug() << "Saving" << instruments;
+   // qDebug() << "Saving" << instruments;
 
     settings.setValue(windowTitle()+"_gauges", instruments);
     settings.sync();
@@ -240,6 +240,8 @@ void HDDisplay::removeItemByAction()
         acceptList->removeAt(index);
         minValues.remove(item);
         maxValues.remove(item);
+        symmetric.remove(item);
+        adjustGaugeAspectRatio();
     }
 }
 
@@ -277,8 +279,16 @@ void HDDisplay::addGauge(const QString& gauge)
                 val = parts.first().toDouble(&ok);
                 if (ok) minValues.insert(key, val);
                 // Convert max to double number
-                val = parts.last().toDouble(&ok);
+                val = parts.at(2).toDouble(&ok);
                 if (ok) maxValues.insert(key, val);
+                // Convert symmetric flag
+                if (parts.length() >= 4)
+                {
+                    if (parts.at(3).contains("s"))
+                    {
+                        symmetric.insert(key, true);
+                    }
+                }
                 // Add value to acceptlist
                 acceptList->append(key);
             }
@@ -394,7 +404,7 @@ void HDDisplay::renderOverlay()
     for (int i = 0; i < acceptList->size(); ++i)
     {
         QString value = acceptList->at(i);
-        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
+        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, symmetric.value(value, false), goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
         xCoord += gaugeWidth + leftSpacing;
         // Move one row down if necessary
         if (xCoord + gaugeWidth*0.9f > vwidth)
@@ -513,17 +523,33 @@ void HDDisplay::drawChangeRateStrip(float xRef, float yRef, float height, float 
     paintText(label, defaultColor, 3.0f, xRef+width/2.0f, yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
 }
 
-void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float max, QString name, float value, const QColor& color, QPainter* painter, QPair<float, float> goodRange, QPair<float, float> criticalRange, bool solid)
+void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float max, QString name, float value, const QColor& color, QPainter* painter, bool symmetric, QPair<float, float> goodRange, QPair<float, float> criticalRange, bool solid)
 {
     // Draw the circle
     QPen circlePen(Qt::SolidLine);
 
     // Rotate the whole gauge with this angle (in radians) for the zero position
-    const float zeroRotation = 0.49f;
+    float zeroRotation;
+    if (symmetric)
+    {
+        zeroRotation = 1.35f;
+    }
+    else
+    {
+        zeroRotation = 0.49f;
+    }
 
     // Scale the rotation so that the gauge does one revolution
     // per max. change
-    const float rangeScale = ((2.0f * M_PI) / (max - min)) * 0.72f;
+    float rangeScale;
+    if (symmetric)
+    {
+        rangeScale = ((2.0f * M_PI) / (max - min)) * 0.57f;
+    }
+    else
+    {
+        rangeScale = ((2.0f * M_PI) / (max - min)) * 0.72f;
+    }
 
     const float scaledValue = (value-min)*rangeScale;
 
@@ -558,7 +584,15 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     QBrush brush(QGC::colorBackground, Qt::SolidPattern);
     painter->setBrush(brush);
     painter->setPen(Qt::NoPen);
-    painter->drawRect(refToScreenX(xRef-radius/2.5f), refToScreenY(yRef+nameHeight+radius/4.0f), refToScreenX(radius+radius/2.0f), refToScreenY((radius - radius/4.0f)*1.2f));
+
+    if (symmetric)
+    {
+        painter->drawRect(refToScreenX(xRef-radius), refToScreenY(yRef+nameHeight+radius/4.0f), refToScreenX(radius+radius), refToScreenY((radius - radius/4.0f)*1.2f));
+    }
+    else
+    {
+        painter->drawRect(refToScreenX(xRef-radius/2.5f), refToScreenY(yRef+nameHeight+radius/4.0f), refToScreenX(radius+radius/2.0f), refToScreenY((radius - radius/4.0f)*1.2f));
+    }
 
     // Draw good value and crit. value markers
     if (goodRange.first != goodRange.second)
