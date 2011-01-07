@@ -141,7 +141,7 @@ private:
 
     void sendMessageToSlugs();
 
-    void commandToSimulink();
+    void commandDatagramToSimulink();
 
 };
 
