@@ -375,12 +375,19 @@ void MAVLinkSimulationLink::mainloop()
     {
         rate10hzCounter = 1;
 
-
+        float lastX = x;
+        float lastY = y;
+        float lastZ = z;
+        float hackDt = 0.1f; // 100 ms
 
         // Move X Position
         x = 12.0*sin(((double)circleCounter)/100.0);
         y = 5.0*cos(((double)circleCounter)/100.0);
         z = 1.8 + 1.2*sin(((double)circleCounter)/60.0);
+
+        float xSpeed = (x - lastX)/hackDt;
+        float ySpeed = (y - lastY)/hackDt;
+        float zSpeed = (z - lastZ)/hackDt;
 
         circleCounter++;
 
@@ -402,7 +409,7 @@ void MAVLinkSimulationLink::mainloop()
         streampointer += bufferlength;
 
         // Send back new position
-        mavlink_msg_local_position_pack(systemId, componentId, &ret, 0, x, y, -fabs(z), 0, 0, 0);
+        mavlink_msg_local_position_pack(systemId, componentId, &ret, 0, x, y, -fabs(z), xSpeed, ySpeed, zSpeed);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
@@ -416,14 +423,14 @@ void MAVLinkSimulationLink::mainloop()
 //        streampointer += bufferlength;
 
         // GLOBAL POSITION
-        mavlink_msg_global_position_int_pack(systemId, componentId, &ret, (473780.28137103+(x))*1E3, (85489.9892510421+(y))*1E3, (z+550.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
+        mavlink_msg_global_position_int_pack(systemId, componentId, &ret, (473780.28137103+(x))*1E3, (85489.9892510421+(y))*1E3, (z+550.0)*1000.0, xSpeed*15.0*100.0, ySpeed*15.0*100.0, zSpeed*15*100.0);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
         // GLOBAL POSITION VEHICLE 2
-        mavlink_msg_global_position_int_pack(54, componentId, &ret, (473780.28137103+(x+0.002))*1E3, (85489.9892510421+((y/2)+0.3))*1E3, (z+570.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
+        mavlink_msg_global_position_int_pack(54, componentId, &ret, (473780.28137103+(x+0.002))*1E3, (85489.9892510421+((y/2)+0.3))*1E3, (z+570.0)*1000.0, xSpeed*15.0*100.0, ySpeed*15.0*100.0, zSpeed*15.0*100.0);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
@@ -447,7 +454,7 @@ void MAVLinkSimulationLink::mainloop()
             chan.chan5_raw = (chan.chan3_raw + chan.chan4_raw) / 2.0f;
             chan.chan6_raw = (chan.chan3_raw + chan.chan2_raw) / 2.0f;
             chan.chan7_raw = (chan.chan4_raw + chan.chan2_raw) / 2.0f;
-            chan.chan8_raw = (chan.chan6_raw + chan.chan2_raw) / 2.0f;
+            chan.chan8_raw = 0;
             chan.rssi = 100;
             messageSize = mavlink_msg_rc_channels_raw_encode(systemId, componentId, &msg, &chan);
             // Allocate buffer with packet data
@@ -907,6 +914,7 @@ bool MAVLinkSimulationLink::disconnect() {
         _isConnected = false;
 
         emit disconnected();
+        emit connected(false);
 
         //exit();
     }
@@ -923,6 +931,8 @@ bool MAVLinkSimulationLink::disconnect() {
 bool MAVLinkSimulationLink::connect()
 {
     _isConnected = true;
+    emit connected();
+    emit connected(true);
 
     start(LowPriority);
     //    timer->start(rate);

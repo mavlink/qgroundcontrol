@@ -75,6 +75,10 @@ public slots:
     void MAVLINKfilterEnabled(bool filter);
     /** @brief Freeze input, do not store new incoming data */
     void hold(bool hold);
+    /** @brief Set connection state of the current link */
+    void setConnectionState(bool);
+    /** @brief Handle the connect button */
+    void handleConnectButton();
     /** @brief Enable auto-freeze mode if traffic intensity is too high to display */
     void setAutoHold(bool hold);
     /** @brief Receive plain text message to output to the user */

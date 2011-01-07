@@ -22,8 +22,16 @@ public:
 public slots:
     void startEditMode();
     void endEditMode();
+    /** @brief Send the parameter to the MAV */
+    void sendParameter();
 
 protected:
+    QString parameterName;         ///< Key/Name of the parameter
+    float parameterValue;          ///< Value of the parameter
+    double parameterScalingFactor; ///< Factor to scale the parameter between slider and true value
+    float parameterMin;
+    float parameterMax;
+    int component;                 ///< ID of the MAV component to address
     void changeEvent(QEvent *e);
 
 private:

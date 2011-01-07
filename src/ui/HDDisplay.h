@@ -64,7 +64,7 @@ public:
 
 public slots:
     /** @brief Update a HDD value */
-    void updateValue(int uasId, QString name, double value, quint64 msec);
+    void updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
     void setActiveUAS(UASInterface* uas);
 
     /** @brief Removes a plot item by the action data */
@@ -89,8 +89,11 @@ protected slots:
     //void render(QPainter* painter, const QRectF& target = QRectF(), const QRect& source = QRect(), Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio);
     void renderOverlay();
     void triggerUpdate();
+    /** @brief Adjust the size hint for the current gauge layout */
+    void adjustGaugeAspectRatio();
 
 protected:
+    QSize sizeHint() const;
     void changeEvent(QEvent* e);
     void paintEvent(QPaintEvent* event);
     void showEvent(QShowEvent* event);
@@ -111,7 +114,7 @@ protected:
 
     void drawChangeRateStrip(float xRef, float yRef, float height, float minRate, float maxRate, float value, QPainter* painter);
     void drawChangeIndicatorGauge(float xRef, float yRef, float radius, float expectedMaxChange, float value, const QColor& color, QPainter* painter, bool solid=true);
-    void drawGauge(float xRef, float yRef, float radius, float min, float max, const QString name, float value, const QColor& color, QPainter* painter, QPair<float, float> goodRange, QPair<float, float> criticalRange, bool solid=true);
+    void drawGauge(float xRef, float yRef, float radius, float min, float max, const QString name, float value, const QColor& color, QPainter* painter, bool symmetric, QPair<float, float> goodRange, QPair<float, float> criticalRange, bool solid=true);
     void drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter);
     void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
 
@@ -134,12 +137,14 @@ protected:
 
     UASInterface* uas;                 ///< The uas currently monitored
     QMap<QString, float> values;       ///< The variables this HUD displays
+    QMap<QString, float> units;       ///< The units
     QMap<QString, float> valuesDot;    ///< First derivative of the variable
     QMap<QString, float> valuesMean;   ///< Mean since system startup for this variable
     QMap<QString, int> valuesCount;    ///< Number of values received so far
     QMap<QString, quint64> lastUpdate; ///< The last update time for this variable
     QMap<QString, float> minValues;    ///< The minimum value this variable is assumed to have
     QMap<QString, float> maxValues;    ///< The maximum value this variable is assumed to have
+    QMap<QString, bool> symmetric;    ///< Draw the gauge / dial symmetric bool = yes
     QMap<QString, QPair<float, float> > goodRanges; ///< The range of good values
     QMap<QString, QPair<float, float> > critRanges; ///< The range of critical values
     double scalingFactor;      ///< Factor used to scale all absolute values to screen coordinates
@@ -173,7 +178,8 @@ protected:
     float normalStrokeWidth;   ///< Normal line stroke width, used throughout the HUD
     float fineStrokeWidth;     ///< Fine line stroke width, used throughout the HUD
 
-    QStringList* acceptList;   ///< Variable names to plot
+    QStringList* acceptList;       ///< Variable names to plot
+    QStringList* acceptUnitList;   ///< Unit names to plot
 
     quint64 lastPaintTime;     ///< Last time this widget was refreshed
     int columns;               ///< Number of instrument columns

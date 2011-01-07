@@ -50,7 +50,7 @@ void QGCToolWidget::addUAS(UASInterface* uas)
 void QGCToolWidget::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
-    menu.addAction(addParamAction);
+    //menu.addAction(addParamAction);
     menu.addAction(addButtonAction);
     menu.addAction(setTitleAction);
     menu.exec(event->globalPos());

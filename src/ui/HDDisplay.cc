@@ -58,6 +58,7 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
         normalStrokeWidth(1.0f),
         fineStrokeWidth(0.5f),
         acceptList(new QStringList()),
+        acceptUnitList(new QStringList()),
         lastPaintTime(0),
         columns(3),
         m_ui(new Ui::HDDisplay)
@@ -75,6 +76,11 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     }
 
     restoreState();
+
+    // Set minimum size
+    setMinimumSize(80, 80);
+    // Set preferred size
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     createActions();
 
@@ -144,6 +150,11 @@ HDDisplay::~HDDisplay()
     delete m_ui;
 }
 
+QSize HDDisplay::sizeHint() const
+{
+    return QSize(400, 400*(vwidth/vheight));
+}
+
 void HDDisplay::enableGLRendering(bool enable)
 {
     Q_UNUSED(enable);
@@ -184,10 +195,10 @@ void HDDisplay::saveState()
     for (int i = 0; i < acceptList->count(); i++)
     {
         QString key = acceptList->at(i);
-        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+QString::number(maxValues.value(key, +1.0));
+        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+acceptUnitList->at(i)+","+QString::number(maxValues.value(key, +1.0))+","+((symmetric.value(key, false)) ? "s" : "");
     }
 
-    qDebug() << "Saving" << instruments;
+   // qDebug() << "Saving" << instruments;
 
     settings.setValue(windowTitle()+"_gauges", instruments);
     settings.sync();
@@ -230,6 +241,8 @@ void HDDisplay::removeItemByAction()
         acceptList->removeAt(index);
         minValues.remove(item);
         maxValues.remove(item);
+        symmetric.remove(item);
+        adjustGaugeAspectRatio();
     }
 }
 
@@ -238,7 +251,7 @@ void HDDisplay::addGauge()
     QStringList items;
     for (int i = 0; i < values.count(); ++i)
     {
-        items.append(QString("%1,%2,%3").arg("-180").arg(values.keys().at(i)).arg("+180"));
+        items.append(QString("%1,%2,%3,%4").arg("-180").arg(values.keys().at(i)).arg(units.keys().at(i)).arg("+180"));
     }
     bool ok;
     QString item = QInputDialog::getItem(this, tr("Add Gauge Instrument"),
@@ -254,33 +267,51 @@ void HDDisplay::addGauge(const QString& gauge)
     if (gauge.length() > 0)
     {
         QStringList parts = gauge.split(',');
-        if (parts.count() > 1)
+        if (parts.count() > 2)
         {
             double val;
             bool ok;
+            bool success = true;
 
             QString key = parts.at(1);
+            QString unit = parts.at(2);
 
             if (!acceptList->contains(key))
             {
                 // Convert min to double number
                 val = parts.first().toDouble(&ok);
+                success &= ok;
                 if (ok) minValues.insert(key, val);
                 // Convert max to double number
-                val = parts.last().toDouble(&ok);
+                val = parts.at(3).toDouble(&ok);
+                success &= ok;
                 if (ok) maxValues.insert(key, val);
-                // Add value to acceptlist
-                acceptList->append(key);
+                // Convert symmetric flag
+                if (parts.length() >= 5)
+                {
+                    if (parts.at(4).contains("s"))
+                    {
+                        symmetric.insert(key, true);
+                    }
+                }
+                if (success)
+                {
+                    // Add value to acceptlist
+                    acceptList->append(key);
+                    acceptUnitList->append(unit);
+                }
             }
         }
-        else
+        else if (parts.count() > 1)
         {
             if (!acceptList->contains(gauge))
             {
-                acceptList->append(parts.first());
+                acceptList->append(parts.at(0));
+                acceptUnitList->append(parts.at(1));
             }
         }
     }
+    adjustGaugeAspectRatio();
 }
 
 void HDDisplay::createActions()
@@ -313,6 +344,16 @@ void HDDisplay::setColumns()
 void HDDisplay::setColumns(int cols)
 {
     columns = cols;
+    adjustGaugeAspectRatio();
+}
+
+void HDDisplay::adjustGaugeAspectRatio()
+{
+    // Adjust vheight dynamically according to the number of rows
+    float vColWidth = vwidth / columns;
+    int vRows = ceil(acceptList->length()/(float)columns);
+    // Assuming square instruments, vheight is column width*row count
+    vheight = vColWidth * vRows;
 }
 
 void HDDisplay::setTitle()
@@ -349,12 +390,6 @@ void HDDisplay::renderOverlay()
     // adjust scaling to fit both horizontally and vertically
     scalingFactor = this->width()/vwidth;
 
-    // Adjust vheight dynamically according to the number of rows
-    float vColWidth = vwidth / columns;
-    int vRows = ceil(acceptList->length()/(float)columns);
-    // Assuming square instruments, vheight is column width*row count
-    vheight = vColWidth * vRows;
-
     double scalingFactorH = this->height()/vheight;
     if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
 
@@ -379,7 +414,7 @@ void HDDisplay::renderOverlay()
     for (int i = 0; i < acceptList->size(); ++i)
     {
         QString value = acceptList->at(i);
-        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
+        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, symmetric.value(value, false), goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
         xCoord += gaugeWidth + leftSpacing;
         // Move one row down if necessary
         if (xCoord + gaugeWidth*0.9f > vwidth)
@@ -400,14 +435,14 @@ void HDDisplay::setActiveUAS(UASInterface* uas)
     if (this->uas != NULL)
     {
         // Disconnect any previously connected active MAV
-        disconnect(this->uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(updateValue(int,QString,double,quint64)));
+        disconnect(this->uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
     }
 
     // Now connect the new UAS
 
     //qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
     // Setup communication
-    connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(updateValue(int,QString,double,quint64)));
+    connect(uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
     this->uas = uas;
 }
 
@@ -498,17 +533,33 @@ void HDDisplay::drawChangeRateStrip(float xRef, float yRef, float height, float 
     paintText(label, defaultColor, 3.0f, xRef+width/2.0f, yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
 }
 
-void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float max, QString name, float value, const QColor& color, QPainter* painter, QPair<float, float> goodRange, QPair<float, float> criticalRange, bool solid)
+void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float max, QString name, float value, const QColor& color, QPainter* painter, bool symmetric, QPair<float, float> goodRange, QPair<float, float> criticalRange, bool solid)
 {
     // Draw the circle
     QPen circlePen(Qt::SolidLine);
 
     // Rotate the whole gauge with this angle (in radians) for the zero position
-    const float zeroRotation = 0.49f;
+    float zeroRotation;
+    if (symmetric)
+    {
+        zeroRotation = 1.35f;
+    }
+    else
+    {
+        zeroRotation = 0.49f;
+    }
 
     // Scale the rotation so that the gauge does one revolution
     // per max. change
-    const float rangeScale = ((2.0f * M_PI) / (max - min)) * 0.72f;
+    float rangeScale;
+    if (symmetric)
+    {
+        rangeScale = ((2.0f * M_PI) / (max - min)) * 0.57f;
+    }
+    else
+    {
+        rangeScale = ((2.0f * M_PI) / (max - min)) * 0.72f;
+    }
 
     const float scaledValue = (value-min)*rangeScale;
 
@@ -543,7 +594,15 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     QBrush brush(QGC::colorBackground, Qt::SolidPattern);
     painter->setBrush(brush);
     painter->setPen(Qt::NoPen);
-    painter->drawRect(refToScreenX(xRef-radius/2.5f), refToScreenY(yRef+nameHeight+radius/4.0f), refToScreenX(radius+radius/2.0f), refToScreenY((radius - radius/4.0f)*1.2f));
+
+    if (symmetric)
+    {
+        painter->drawRect(refToScreenX(xRef-radius), refToScreenY(yRef+nameHeight+radius/4.0f), refToScreenX(radius+radius), refToScreenY((radius - radius/4.0f)*1.2f));
+    }
+    else
+    {
+        painter->drawRect(refToScreenX(xRef-radius/2.5f), refToScreenY(yRef+nameHeight+radius/4.0f), refToScreenX(radius+radius/2.0f), refToScreenY((radius - radius/4.0f)*1.2f));
+    }
 
     // Draw good value and crit. value markers
     if (goodRange.first != goodRange.second)
@@ -750,7 +809,7 @@ float HDDisplay::refLineWidthToPen(float line)
     return line * 2.50f;
 }
 
-void HDDisplay::updateValue(int uasId, QString name, double value, quint64 msec)
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec)
 {
     Q_UNUSED(uasId);
     // Update mean
