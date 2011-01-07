@@ -113,9 +113,9 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "vis. roll", "rad", pos.roll, time);
                 emit valueChanged(uasId, "vis. pitch", "rad", pos.pitch, time);
                 emit valueChanged(uasId, "vis. yaw", "rad", pos.yaw, time);
-                emit valueChanged(uasId, "vis. x", "rad/s", pos.x, time);
-                emit valueChanged(uasId, "vis. y", "rad/s", pos.y, time);
-                emit valueChanged(uasId, "vis. z", "rad/s", pos.z, time);
+                emit valueChanged(uasId, "vis. x", "m", pos.x, time);
+                emit valueChanged(uasId, "vis. y", "m", pos.y, time);
+                emit valueChanged(uasId, "vis. z", "m", pos.z, time);
             }
             break;
         case MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE:
@@ -127,9 +127,9 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     emit valueChanged(uasId, "vicon roll", "rad", pos.roll, time);
                     emit valueChanged(uasId, "vicon pitch", "rad", pos.pitch, time);
                     emit valueChanged(uasId, "vicon yaw", "rad", pos.yaw, time);
-                    emit valueChanged(uasId, "vicon x", "rad/s", pos.x, time);
-                    emit valueChanged(uasId, "vicon y", "rad/s", pos.y, time);
-                    emit valueChanged(uasId, "vicon z", "rad/s", pos.z, time);
+                    emit valueChanged(uasId, "vicon x", "m", pos.x, time);
+                    emit valueChanged(uasId, "vicon y", "m", pos.y, time);
+                    emit valueChanged(uasId, "vicon z", "m", pos.z, time);
                     emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
                 }
                 break;

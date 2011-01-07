@@ -313,9 +313,26 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // Emit in angles
                 emit valueChanged(uasId, "roll", "deg", (attitude.roll/M_PI)*180.0, time);
                 emit valueChanged(uasId, "pitch", "deg", (attitude.pitch/M_PI)*180.0, time);
-                emit valueChanged(uasId, "yaw", "deg", (attitude.yaw/M_PI)*180.0, time);
+
                 emit valueChanged(uasId, "rollspeed", "deg/s", (attitude.rollspeed/M_PI)*180.0, time);
                 emit valueChanged(uasId, "pitchspeed", "deg/s", (attitude.pitchspeed/M_PI)*180.0, time);
+
+                // Force yaw to 180 deg range
+                double yaw = ((attitude.yaw/M_PI)*180.0);
+                double sign = 1.0;
+                if (yaw < 0)
+                {
+                    sign = -1.0;
+                    yaw = -yaw;
+                }
+                while (yaw > 180.0)
+                {
+                    yaw -= 180.0;
+                }
+
+                yaw *= sign;
+
+                emit valueChanged(uasId, "yaw", "deg", yaw, time);
                 emit valueChanged(uasId, "yawspeed", "deg/s", (attitude.yawspeed/M_PI)*180.0, time);
 
                 emit attitudeChanged(this, attitude.roll, attitude.pitch, attitude.yaw, time);
