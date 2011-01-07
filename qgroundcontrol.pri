@@ -189,7 +189,7 @@ linux-g++ {
     DEFINES += QGC_OSG_ENABLED
     }
 
-    exists(/usr/include/osgEarth) | exists(/usr/local/include/osgEarth) {
+    exists(/usr/include/osgEarth):exists(/usr/include/osg) | exists(/usr/local/include/osgEarth):exists(/usr/include/osg) {
     message("Building support for osgEarth")
     DEPENDENCIES_PRESENT += osgearth
     # Include osgEarth libraries
