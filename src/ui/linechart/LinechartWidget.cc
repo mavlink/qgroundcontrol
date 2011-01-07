@@ -70,6 +70,7 @@ curveMenu(new QMenu(this)),
 logFile(new QFile()),
 logindex(1),
 logging(false),
+logStartTime(0),
 updateTimer(new QTimer())
 {
     // Add elements defined in Qt Designer
@@ -90,8 +91,9 @@ updateTimer(new QTimer())
     curvesWidgetLayout->setColumnStretch(2, 80);
     curvesWidgetLayout->setColumnStretch(3, 50);
     curvesWidgetLayout->setColumnStretch(4, 50);
-//    horizontalLayout->setColumnStretch(median, 50);
     curvesWidgetLayout->setColumnStretch(5, 50);
+//    horizontalLayout->setColumnStretch(median, 50);
+    curvesWidgetLayout->setColumnStretch(6, 50);
 
     curvesWidget->setLayout(curvesWidgetLayout);
 
@@ -105,7 +107,7 @@ updateTimer(new QTimer())
 
     int labelRow = curvesWidgetLayout->rowCount();
 
-    curvesWidgetLayout->addWidget(new QLabel("On"), labelRow, 0, 1, 2);
+    curvesWidgetLayout->addWidget(new QLabel(tr("On")), labelRow, 0, 1, 2);
 
     label = new QLabel(this);
     label->setText("Name");
@@ -116,15 +118,19 @@ updateTimer(new QTimer())
     value->setText("Val");
     curvesWidgetLayout->addWidget(value, labelRow, 3);
 
+    // Unit
+    label->setText("Unit");
+    curvesWidgetLayout->addWidget(new QLabel(tr("Unit")), labelRow, 4);
+
     // Mean
     mean = new QLabel(this);
     mean->setText("Mean");
-    curvesWidgetLayout->addWidget(mean, labelRow, 4);
+    curvesWidgetLayout->addWidget(mean, labelRow, 5);
 
     // Variance
     variance = new QLabel(this);
     variance->setText("Variance");
-    curvesWidgetLayout->addWidget(variance, labelRow, 5);
+    curvesWidgetLayout->addWidget(variance, labelRow, 6);
 
     // Add and customize plot elements (right side)
 
@@ -266,16 +272,17 @@ void LinechartWidget::createLayout()
 
 void LinechartWidget::appendData(int uasId, QString curve, double value, quint64 usec)
 {
+    static const QString unit("-");
     if (isVisible())
     {
         // Order matters here, first append to plot, then update curve list
-        activePlot->appendData(curve, usec, value);
+        activePlot->appendData(curve+unit, usec, value);
         // Store data
-        QLabel* label = curveLabels->value(curve, NULL);
+        QLabel* label = curveLabels->value(curve+unit, NULL);
         // Make sure the curve will be created if it does not yet exist
         if(!label)
         {
-            addCurve(curve);
+            addCurve(curve, unit);
         }
     }
 
@@ -284,16 +291,74 @@ void LinechartWidget::appendData(int uasId, QString curve, double value, quint64
     {
         if (activePlot->isVisible(curve))
         {
-            quint64 time = 0;
-            // Adjust time
-            if (activePlot->groundTime())
-            {
-                time = QGC::groundTimeUsecs() - logStartTime;
-            }
-            else
-            {
-                time = usec - logStartTime;
-            }
+            if (logStartTime == 0) logStartTime = usec;
+            qint64 time = usec - logStartTime;
+            if (time < 0) time = 0;
+
+            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
+            logFile->flush();
+        }
+    }
+}
+
+
+void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, double value, quint64 usec)
+{
+    if (isVisible())
+    {
+        // Order matters here, first append to plot, then update curve list
+        activePlot->appendData(curve+unit, usec, value);
+        // Store data
+        QLabel* label = curveLabels->value(curve+unit, NULL);
+        // Make sure the curve will be created if it does not yet exist
+        if(!label)
+        {
+            qDebug() << "ADDING CURVE IN APPENDDATE DOUBLE";
+            addCurve(curve, unit);
+        }
+    }
+
+    // Log data
+    if (logging)
+    {
+        if (activePlot->isVisible(curve+unit))
+        {
+            if (logStartTime == 0) logStartTime = usec;
+            qint64 time = usec - logStartTime;
+            if (time < 0) time = 0;
+
+            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
+            logFile->flush();
+        }
+    }
+}
+
+void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, int value, quint64 usec)
+{
+    if (isVisible())
+    {
+        // Order matters here, first append to plot, then update curve list
+        activePlot->appendData(curve+unit, usec, value);
+        // Store data
+        QLabel* label = curveLabels->value(curve+unit, NULL);
+        // Make sure the curve will be created if it does not yet exist
+        if(!label)
+        {
+            addCurve(curve, unit);
+        }
+
+        // Add int data
+        intData.insert(curve+unit, value);
+    }
+
+    // Log data
+    if (logging)
+    {
+        if (activePlot->isVisible(curve))
+        {
+            if (logStartTime == 0) logStartTime = usec;
+            qint64 time = usec - logStartTime;
+            if (time < 0) time = 0;
 
             logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value) + "\n").toLatin1());
             logFile->flush();
@@ -304,18 +369,27 @@ void LinechartWidget::appendData(int uasId, QString curve, double value, quint64
 void LinechartWidget::refresh()
 {
     QString str;
-
+    // Value
     QMap<QString, QLabel*>::iterator i;
     for (i = curveLabels->begin(); i != curveLabels->end(); ++i)
     {
         double val = activePlot->getCurrentValue(i.key());
-        if (val > 9999 || val < 0.002)
+        int intval = static_cast<int>(val);
+        if (intval >= 100000 || intval <= -100000)
         {
-            str.sprintf("% 10e", val);
+            str.sprintf("% 11i", intval);
+        }
+        else if (intval >= 10000 || intval <= -10000)
+        {
+            str.sprintf("% 11.2f", val);
+        }
+        else if (intval >= 1000 || intval <= -1000)
+        {
+            str.sprintf("% 11.4f", val);
         }
         else
         {
-            str.sprintf("% 10f", val);
+            str.sprintf("% 11.6f", val);
         }
         // Value
         i.value()->setText(str);
@@ -324,7 +398,19 @@ void LinechartWidget::refresh()
     QMap<QString, QLabel*>::iterator j;
     for (j = curveMeans->begin(); j != curveMeans->end(); ++j)
     {
-        str.sprintf("% 8.2e", activePlot->getMean(j.key()));
+        double val = activePlot->getCurrentValue(j.key());
+        if (val > 9999 || val < -9999)
+        {
+            str.sprintf("% 11.2f", val);
+        }
+        else if (val > 99999 || val < -99999)
+        {
+            str.sprintf("% 11d", (int)val);
+        }
+        else
+        {
+            str.sprintf("% 11.6f", val);
+        }
         j.value()->setText(str);
     }
 //    QMap<QString, QLabel*>::iterator k;
@@ -338,7 +424,7 @@ void LinechartWidget::refresh()
     for (l = curveVariances->begin(); l != curveVariances->end(); ++l)
     {
       // Variance
-       str.sprintf("% 8e", activePlot->getVariance(l.key()));
+       str.sprintf("% 9.4e", activePlot->getVariance(l.key()));
       l.value()->setText(str);
    }
 }
@@ -398,7 +484,8 @@ void LinechartWidget::startLogging()
         if (logFile->open(QIODevice::WriteOnly | QIODevice::Text))
         {
             logging = true;
-            logStartTime = QGC::groundTimeUsecs();
+            logStartTime = 0;
+            curvesWidget->setEnabled(false);
             logindex++;
             logButton->setText(tr("Stop logging"));
             disconnect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
@@ -410,6 +497,7 @@ void LinechartWidget::startLogging()
 void LinechartWidget::stopLogging()
 {
     logging = false;
+    curvesWidget->setEnabled(true);
     if (logFile->isOpen())
     {
         logFile->flush();
@@ -449,18 +537,16 @@ void LinechartWidget::createActions()
  * @param curve The id-string of the curve
  * @see removeCurve()
  **/
-void LinechartWidget::addCurve(QString curve)
+void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 {
-    createCurveItem(curve);
-}
+    intData.insert(curve+unit, 0);
 
-void LinechartWidget::createCurveItem(QString curve)
-{
     LinechartPlot* plot = activePlot;
 //    QHBoxLayout *horizontalLayout;
     QCheckBox *checkBox;
     QLabel* label;
     QLabel* value;
+    QLabel* unitLabel;
     QLabel* mean;
     QLabel* variance;
 
@@ -468,7 +554,7 @@ void LinechartWidget::createCurveItem(QString curve)
 
     checkBox = new QCheckBox(this);
     checkBox->setCheckable(true);
-    checkBox->setObjectName(curve);
+    checkBox->setObjectName(curve+unit);
     checkBox->setToolTip(tr("Enable the curve in the graph window"));
     checkBox->setWhatsThis(tr("Enable the curve in the graph window"));
 
@@ -485,7 +571,7 @@ void LinechartWidget::createCurveItem(QString curve)
 
     //checkBox->setText(QString());
     label->setText(curve);
-    QColor color = plot->getColorForCurve(curve);
+    QColor color = plot->getColorForCurve(curve+unit);
     if(color.isValid()) {
         QString colorstyle;
         colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
@@ -496,18 +582,28 @@ void LinechartWidget::createCurveItem(QString curve)
     // Value
     value = new QLabel(this);
     value->setNum(0.00);
+    value->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
     value->setToolTip(tr("Current value of ") + curve);
     value->setWhatsThis(tr("Current value of ") + curve);
-    curveLabels->insert(curve, value);
+    curveLabels->insert(curve+unit, value);
     curvesWidgetLayout->addWidget(value, labelRow, 3);
+
+    // Unit
+    unitLabel = new QLabel(this);
+    unitLabel->setText(unit);
+    unitLabel->setStyleSheet(QString("QLabel {color: %1;}").arg("#AAAAAA"));
+    qDebug() << "UNIT" << unit;
+    unitLabel->setToolTip(tr("Unit of ") + curve);
+    unitLabel->setWhatsThis(tr("Unit of ") + curve);
+    curvesWidgetLayout->addWidget(unitLabel, labelRow, 4);
 
     // Mean
     mean = new QLabel(this);
     mean->setNum(0.00);
     mean->setToolTip(tr("Arithmetic mean of ") + curve);
     mean->setWhatsThis(tr("Arithmetic mean of ") + curve);
-    curveMeans->insert(curve, mean);
-    curvesWidgetLayout->addWidget(mean, labelRow, 4);
+    curveMeans->insert(curve+unit, mean);
+    curvesWidgetLayout->addWidget(mean, labelRow, 5);
 
 //    // Median
 //    median = new QLabel(form);
@@ -520,8 +616,8 @@ void LinechartWidget::createCurveItem(QString curve)
     variance->setNum(0.00);
     variance->setToolTip(tr("Variance of ") + curve);
     variance->setWhatsThis(tr("Variance of ") + curve);
-    curveVariances->insert(curve, variance);
-    curvesWidgetLayout->addWidget(variance, labelRow, 5);
+    curveVariances->insert(curve+unit, variance);
+    curvesWidgetLayout->addWidget(variance, labelRow, 6);
 
     /* Color picker
     QColor color = QColorDialog::getColor(Qt::green, this);
@@ -540,7 +636,7 @@ void LinechartWidget::createCurveItem(QString curve)
 
     // Set UI components to initial state
     checkBox->setChecked(false);
-    plot->setVisible(curve, false);
+    plot->setVisible(curve+unit, false);
 }
 
 /**

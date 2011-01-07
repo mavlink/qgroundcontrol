@@ -214,7 +214,7 @@ void LogCompressor::run()
             }
         }
 
-        if (index % (dataLines/100) == 0) emit logProcessingStatusChanged(tr("Log compressor: Processed %1% of %2 lines").arg(index/(float)dataLines*100, 0, 'f', 2).arg(dataLines));
+        if (dataLines > 100) if (index % (dataLines/100) == 0) emit logProcessingStatusChanged(tr("Log compressor: Processed %1% of %2 lines").arg(index/(float)dataLines*100, 0, 'f', 2).arg(dataLines));
         
         if (!failed)
         {

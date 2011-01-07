@@ -628,7 +628,6 @@ void MainWindow::showToolWidget()
     QAction* temp = qobject_cast<QAction *>(sender());
     int tool = temp->data().toInt();
 
-
     if (temp && dockWidgets[tool])
     {
         if (temp->isChecked())
@@ -640,9 +639,6 @@ void MainWindow::showToolWidget()
         {
             removeDockWidget(qobject_cast<QDockWidget *>(dockWidgets[tool]));
         }
-        QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(tool), currentView);
-        settings.setValue(chKey,temp->isChecked());
-        settings.sync();
     }
 }
 
@@ -1306,6 +1302,25 @@ void MainWindow::clearView()
     // Save current state
     if (UASManager::instance()->getActiveUAS()) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
     settings.setValue(getWindowGeometryKey(), saveGeometry());
+
+    QAction* temp;
+
+    // Set tool widget visibility settings for this view
+    foreach (int key, toolsMenuActions.keys())
+    {
+        temp = toolsMenuActions[key];
+        QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(key), currentView);
+
+        if (temp)
+        {
+            settings.setValue(chKey,temp->isChecked());
+        }
+        else
+        {
+            settings.setValue(chKey,false);
+        }
+    }
+
     settings.sync();
 
     // Remove all dock widgets from main window
@@ -1500,8 +1515,13 @@ void MainWindow::showTheCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SE
 void MainWindow::loadDataView(QString fileName)
 {
     clearView();
+
+    // Unload line chart
+    QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(CENTRAL_LINECHART), currentView);
+    settings.setValue(chKey,false);
+
     // Set data plot in settings as current widget and then run usual update procedure
-    QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(CENTRAL_DATA_PLOT), currentView);
+    chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(CENTRAL_DATA_PLOT), currentView);
     settings.setValue(chKey,true);
 
     presentView();

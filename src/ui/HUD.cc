@@ -250,6 +250,10 @@ void HUD::setActiveUAS(UASInterface* uas)
         disconnect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
         disconnect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+
+        disconnect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        disconnect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        disconnect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
     }
 
     // Now connect the new UAS
@@ -260,11 +264,15 @@ void HUD::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
     connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
+    connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+    connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+    connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+
     // Set new UAS
     this->uas = uas;
 }
 
-void HUD::updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)
+void HUD::updateAttitudeThrustSetPoint(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)
 {
     updateValue(uas, "roll desired", rollDesired, msec);
     updateValue(uas, "pitch desired", pitchDesired, msec);
@@ -711,7 +719,9 @@ void HUD::paintHUD()
     QString yawAngle;
 
 //    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
-    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f);
+
+    // YAW is in compass-human readable format, so 0 - 360deg. This is normal in aviation, not -180 - +180.
+    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.0f;
     yawAngle.sprintf("%03d", (int)yawDeg);
     paintText(yawAngle, defaultColor, 3.5f, -3.7f, compassY+ 0.9f, &painter);
 
@@ -729,6 +739,9 @@ void HUD::paintHUD()
     // Right speed gauge
     drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, values.value("xSpeed", 0.0f), defaultColor, &painter, false);
 
+
+    // Waypoint name
+    if (waypointName != "") paintText(waypointName, defaultColor, 2.0f, (-vwidth/3.0) + 10, +vheight/3.0 + 15, &painter);
 
     // MOVING PARTS
 
@@ -1351,12 +1364,10 @@ void HUD::resizeGL(int w, int h)
     paintHUD();
 }
 
-void HUD::selectWaypoint(UASInterface* uas, int id)
+void HUD::selectWaypoint(int uasId, int id)
 {
-    if (uas == this->uas)
-    {
-        waypointName = tr("WP") + QString::number(id);
-    }
+    Q_UNUSED(uasId);
+    waypointName = tr("WP") + QString::number(id);
 }
 
 void HUD::setImageSize(int width, int height, int depth, int channels)
