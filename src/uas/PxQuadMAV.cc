@@ -60,8 +60,8 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_raw_aux_t raw;
                 mavlink_msg_raw_aux_decode(&message, &raw);
                 quint64 time = getUnixTime(0);
-                emit valueChanged(uasId, "Pressure", raw.baro, time);
-                emit valueChanged(uasId, "Temperature", raw.temp, time);
+                emit valueChanged(uasId, "Pressure", "raw", raw.baro, time);
+                emit valueChanged(uasId, "Temperature", "raw", raw.temp, time);
             }
             break;
         case MAVLINK_MSG_ID_PATTERN_DETECTED:
@@ -110,12 +110,12 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_vision_position_estimate_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.usec);
                 //emit valueChanged(uasId, "vis. time", pos.usec, time);
-                emit valueChanged(uasId, "vis. roll", pos.roll, time);
-                emit valueChanged(uasId, "vis. pitch", pos.pitch, time);
-                emit valueChanged(uasId, "vis. yaw", pos.yaw, time);
-                emit valueChanged(uasId, "vis. x", pos.x, time);
-                emit valueChanged(uasId, "vis. y", pos.y, time);
-                emit valueChanged(uasId, "vis. z", pos.z, time);
+                emit valueChanged(uasId, "vis. roll", "rad", pos.roll, time);
+                emit valueChanged(uasId, "vis. pitch", "rad", pos.pitch, time);
+                emit valueChanged(uasId, "vis. yaw", "rad", pos.yaw, time);
+                emit valueChanged(uasId, "vis. x", "rad/s", pos.x, time);
+                emit valueChanged(uasId, "vis. y", "rad/s", pos.y, time);
+                emit valueChanged(uasId, "vis. z", "rad/s", pos.z, time);
             }
             break;
         case MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE:
@@ -124,12 +124,12 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     mavlink_msg_vicon_position_estimate_decode(&message, &pos);
                     quint64 time = getUnixTime(pos.usec);
                     //emit valueChanged(uasId, "vis. time", pos.usec, time);
-                    emit valueChanged(uasId, "vicon roll", pos.roll, time);
-                    emit valueChanged(uasId, "vicon pitch", pos.pitch, time);
-                    emit valueChanged(uasId, "vicon yaw", pos.yaw, time);
-                    emit valueChanged(uasId, "vicon x", pos.x, time);
-                    emit valueChanged(uasId, "vicon y", pos.y, time);
-                    emit valueChanged(uasId, "vicon z", pos.z, time);
+                    emit valueChanged(uasId, "vicon roll", "rad", pos.roll, time);
+                    emit valueChanged(uasId, "vicon pitch", "rad", pos.pitch, time);
+                    emit valueChanged(uasId, "vicon yaw", "rad", pos.yaw, time);
+                    emit valueChanged(uasId, "vicon x", "rad/s", pos.x, time);
+                    emit valueChanged(uasId, "vicon y", "rad/s", pos.y, time);
+                    emit valueChanged(uasId, "vicon z", "rad/s", pos.z, time);
                     emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
                 }
                 break;
@@ -143,7 +143,7 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit errCountChanged(uasId, "IMU", "SPI0", status.spi0_err_count);
                 emit errCountChanged(uasId, "IMU", "SPI1", status.spi1_err_count);
                 emit errCountChanged(uasId, "IMU", "UART", status.uart_total_err_count);
-                emit UAS::valueChanged(this, "Load", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
+                emit valueChanged(uasId, "Load", "%", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
             }
             break;
         case MAVLINK_MSG_ID_CONTROL_STATUS:
