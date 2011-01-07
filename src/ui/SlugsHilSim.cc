@@ -60,6 +60,11 @@ SlugsHilSim::SlugsHilSim(QWidget *parent) :
     memset(&tmpGpsTime, 0, sizeof(mavlink_gps_date_time_t));
     memset(&tmpLocalPositionData, 0, sizeof(mavlink_sensor_bias_t));
     memset(&tmpRawImuData, 0, sizeof(mavlink_raw_imu_t));
+
+    foreach (LinkInterface* link, LinkManager::instance()->getLinks())
+    {
+        addToCombo(link);
+    }
 }
 
 SlugsHilSim::~SlugsHilSim()
@@ -261,6 +266,8 @@ uint16_t SlugsHilSim::getUint16FromDatagram (const QByteArray* datagram, unsigne
 void SlugsHilSim::linkSelected(int cbIndex){
   //hilLink = linksAvailable
     // FIXME Mariano
+
+    hilLink = LinkManager::instance()->getLinkForId(cbIndex);
 }
 
 void SlugsHilSim::sendMessageToSlugs()
@@ -315,24 +322,26 @@ void SlugsHilSim::commandDatagramToSimulink()
 {
     //mavlink_pwm_commands_t* pwdC = (static_cast<SlugsMAV*>(activeUas))->getPwmCommands();
 
-    //mavlink_pwm_commands_t* pwdC;
-    //pwdC->dt_c = 1;
+    mavlink_pwm_commands_t* pwdC;
+
+    if(pwdC != NULL){
+    }
 
     QByteArray data;
     data.resize(22);
 
     unsigned char i=0;
-    setUInt16ToDatagram(data, &i, rand());//pwdC->dt_c);
-    setUInt16ToDatagram(data, &i, rand());//pwdC->dla_c);
-    setUInt16ToDatagram(data, &i, rand());//pwdC->dra_c);
-    setUInt16ToDatagram(data, &i, rand());//pwdC->dr_c);
-    setUInt16ToDatagram(data, &i, rand());//pwdC->dle_c);
-    setUInt16ToDatagram(data, &i, rand());//pwdC->dre_c);
-    setUInt16ToDatagram(data, &i, rand());//pwdC->dlf_c);
-    setUInt16ToDatagram(data, &i, rand());//pwdC->drf_c);
-    setUInt16ToDatagram(data, &i, rand());//pwdC->aux1);
-    setUInt16ToDatagram(data, &i, rand());//pwdC->aux2);
-    setUInt16ToDatagram(data, &i, rand());//value default
+    setUInt16ToDatagram(data, &i, 1);//pwdC->dt_c);
+    setUInt16ToDatagram(data, &i, 2);//pwdC->dla_c);
+    setUInt16ToDatagram(data, &i, 3);//pwdC->dra_c);
+    setUInt16ToDatagram(data, &i, 4);//pwdC->dr_c);
+    setUInt16ToDatagram(data, &i, 5);//pwdC->dle_c);
+    setUInt16ToDatagram(data, &i, 6);//pwdC->dre_c);
+    setUInt16ToDatagram(data, &i, 7);//pwdC->dlf_c);
+    setUInt16ToDatagram(data, &i, 8);//pwdC->drf_c);
+    setUInt16ToDatagram(data, &i, 9);//pwdC->aux1);
+    setUInt16ToDatagram(data, &i, 10);//pwdC->aux2);
+    setUInt16ToDatagram(data, &i, 11);//value default
 
     txSocket->writeDatagram(data, QHostAddress::Broadcast, ui->ed_txPort->text().toInt());
 }
