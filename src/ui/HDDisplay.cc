@@ -58,6 +58,7 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
         normalStrokeWidth(1.0f),
         fineStrokeWidth(0.5f),
         acceptList(new QStringList()),
+        acceptUnitList(new QStringList()),
         lastPaintTime(0),
         columns(3),
         m_ui(new Ui::HDDisplay)
@@ -194,7 +195,7 @@ void HDDisplay::saveState()
     for (int i = 0; i < acceptList->count(); i++)
     {
         QString key = acceptList->at(i);
-        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+QString::number(maxValues.value(key, +1.0))+","+((symmetric.value(key, false)) ? "s" : "");
+        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+acceptUnitList->at(i)+","+QString::number(maxValues.value(key, +1.0))+","+((symmetric.value(key, false)) ? "s" : "");
     }
 
    // qDebug() << "Saving" << instruments;
@@ -250,7 +251,7 @@ void HDDisplay::addGauge()
     QStringList items;
     for (int i = 0; i < values.count(); ++i)
     {
-        items.append(QString("%1,%2,%3").arg("-180").arg(values.keys().at(i)).arg("+180"));
+        items.append(QString("%1,%2,%3,%4").arg("-180").arg(values.keys().at(i)).arg(units.keys().at(i)).arg("+180"));
     }
     bool ok;
     QString item = QInputDialog::getItem(this, tr("Add Gauge Instrument"),
@@ -266,38 +267,47 @@ void HDDisplay::addGauge(const QString& gauge)
     if (gauge.length() > 0)
     {
         QStringList parts = gauge.split(',');
-        if (parts.count() > 1)
+        if (parts.count() > 2)
         {
             double val;
             bool ok;
+            bool success = true;
 
             QString key = parts.at(1);
+            QString unit = parts.at(2);
 
             if (!acceptList->contains(key))
             {
                 // Convert min to double number
                 val = parts.first().toDouble(&ok);
+                success &= ok;
                 if (ok) minValues.insert(key, val);
                 // Convert max to double number
-                val = parts.at(2).toDouble(&ok);
+                val = parts.at(3).toDouble(&ok);
+                success &= ok;
                 if (ok) maxValues.insert(key, val);
                 // Convert symmetric flag
-                if (parts.length() >= 4)
+                if (parts.length() >= 5)
                 {
-                    if (parts.at(3).contains("s"))
+                    if (parts.at(4).contains("s"))
                     {
                         symmetric.insert(key, true);
                     }
                 }
-                // Add value to acceptlist
-                acceptList->append(key);
+                if (success)
+                {
+                    // Add value to acceptlist
+                    acceptList->append(key);
+                    acceptUnitList->append(unit);
+                }
             }
         }
-        else
+        else if (parts.count() > 1)
         {
             if (!acceptList->contains(gauge))
             {
-                acceptList->append(parts.first());
+                acceptList->append(parts.at(0));
+                acceptUnitList->append(parts.at(1));
             }
         }
     }
@@ -425,14 +435,14 @@ void HDDisplay::setActiveUAS(UASInterface* uas)
     if (this->uas != NULL)
     {
         // Disconnect any previously connected active MAV
-        disconnect(this->uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(updateValue(int,QString,double,quint64)));
+        disconnect(this->uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
     }
 
     // Now connect the new UAS
 
     //qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
     // Setup communication
-    connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(updateValue(int,QString,double,quint64)));
+    connect(uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
     this->uas = uas;
 }
 
@@ -799,7 +809,7 @@ float HDDisplay::refLineWidthToPen(float line)
     return line * 2.50f;
 }
 
-void HDDisplay::updateValue(int uasId, QString name, double value, quint64 msec)
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec)
 {
     Q_UNUSED(uasId);
     // Update mean

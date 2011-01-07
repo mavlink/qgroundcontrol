@@ -64,7 +64,7 @@ public:
 
 public slots:
     /** @brief Update a HDD value */
-    void updateValue(int uasId, QString name, double value, quint64 msec);
+    void updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
     void setActiveUAS(UASInterface* uas);
 
     /** @brief Removes a plot item by the action data */
@@ -137,6 +137,7 @@ protected:
 
     UASInterface* uas;                 ///< The uas currently monitored
     QMap<QString, float> values;       ///< The variables this HUD displays
+    QMap<QString, float> units;       ///< The units
     QMap<QString, float> valuesDot;    ///< First derivative of the variable
     QMap<QString, float> valuesMean;   ///< Mean since system startup for this variable
     QMap<QString, int> valuesCount;    ///< Number of values received so far
@@ -177,7 +178,8 @@ protected:
     float normalStrokeWidth;   ///< Normal line stroke width, used throughout the HUD
     float fineStrokeWidth;     ///< Fine line stroke width, used throughout the HUD
 
-    QStringList* acceptList;   ///< Variable names to plot
+    QStringList* acceptList;       ///< Variable names to plot
+    QStringList* acceptUnitList;   ///< Unit names to plot
 
     quint64 lastPaintTime;     ///< Last time this widget was refreshed
     int columns;               ///< Number of instrument columns

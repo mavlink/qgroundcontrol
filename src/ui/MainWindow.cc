@@ -290,19 +290,19 @@ void MainWindow::buildPxWidgets()
 {
     //FIXME: memory of acceptList will never be freed again
     QStringList* acceptList = new QStringList();
-    acceptList->append("-180,roll (deg),+180");
-    acceptList->append("-180,pitch (deg),+180");
-    acceptList->append("-180,yaw (deg),+180");
+    acceptList->append("-105,roll,deg,+105,s");
+    acceptList->append("-105,pitch,deg,+105,s");
+    acceptList->append("-105,yaw,deg,+105,s");
 
-    acceptList->append("-500,roll V (deg/s),+500");
-    acceptList->append("-500,pitch V (deg/s),+500");
-    acceptList->append("-500,yaw V (deg/s),+500");
+    acceptList->append("-260,rollspeed,deg/s,+260,s");
+    acceptList->append("-260,pitchspeed,deg/s,+260,s");
+    acceptList->append("-260,yawspeed,deg/s,+260,s");
 
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
-    acceptList2->append("0,Abs pressure,65500");
-    acceptList2->append("-2000,Accel. X, 2000");
-    acceptList2->append("-2000,Accel. Y, 2000");
+    acceptList2->append("0,abs pressure,hPa,65500");
+    acceptList2->append("-2000,accel. X,raw,2000,s");
+    acceptList2->append("-2000,accel. Y,raw,2000,s");
 
     if (!linechartWidget)
     {

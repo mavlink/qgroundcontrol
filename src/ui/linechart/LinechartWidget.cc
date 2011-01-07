@@ -344,6 +344,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
         // Make sure the curve will be created if it does not yet exist
         if(!label)
         {
+            intData.insert(curve+unit, 0);
             addCurve(curve, unit);
         }
 
@@ -373,7 +374,39 @@ void LinechartWidget::refresh()
     QMap<QString, QLabel*>::iterator i;
     for (i = curveLabels->begin(); i != curveLabels->end(); ++i)
     {
-        double val = activePlot->getCurrentValue(i.key());
+        if (intData.contains(i.key()))
+        {
+            str.sprintf("% 11i", intData.value(i.key()));
+        }
+        else
+        {
+            double val = activePlot->getCurrentValue(i.key());
+            int intval = static_cast<int>(val);
+            if (intval >= 100000 || intval <= -100000)
+            {
+                str.sprintf("% 11i", intval);
+            }
+            else if (intval >= 10000 || intval <= -10000)
+            {
+                str.sprintf("% 11.2f", val);
+            }
+            else if (intval >= 1000 || intval <= -1000)
+            {
+                str.sprintf("% 11.4f", val);
+            }
+            else
+            {
+                str.sprintf("% 11.6f", val);
+            }
+        }
+        // Value
+        i.value()->setText(str);
+    }
+    // Mean
+    QMap<QString, QLabel*>::iterator j;
+    for (j = curveMeans->begin(); j != curveMeans->end(); ++j)
+    {
+        double val = activePlot->getCurrentValue(j.key());
         int intval = static_cast<int>(val);
         if (intval >= 100000 || intval <= -100000)
         {
@@ -386,26 +419,6 @@ void LinechartWidget::refresh()
         else if (intval >= 1000 || intval <= -1000)
         {
             str.sprintf("% 11.4f", val);
-        }
-        else
-        {
-            str.sprintf("% 11.6f", val);
-        }
-        // Value
-        i.value()->setText(str);
-    }
-    // Mean
-    QMap<QString, QLabel*>::iterator j;
-    for (j = curveMeans->begin(); j != curveMeans->end(); ++j)
-    {
-        double val = activePlot->getCurrentValue(j.key());
-        if (val > 9999 || val < -9999)
-        {
-            str.sprintf("% 11.2f", val);
-        }
-        else if (val > 99999 || val < -99999)
-        {
-            str.sprintf("% 11d", (int)val);
         }
         else
         {
@@ -424,7 +437,7 @@ void LinechartWidget::refresh()
     for (l = curveVariances->begin(); l != curveVariances->end(); ++l)
     {
       // Variance
-       str.sprintf("% 9.4e", activePlot->getVariance(l.key()));
+       str.sprintf("% 8.3e", activePlot->getVariance(l.key()));
       l.value()->setText(str);
    }
 }
@@ -539,8 +552,6 @@ void LinechartWidget::createActions()
  **/
 void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 {
-    intData.insert(curve+unit, 0);
-
     LinechartPlot* plot = activePlot;
 //    QHBoxLayout *horizontalLayout;
     QCheckBox *checkBox;
@@ -600,6 +611,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     // Mean
     mean = new QLabel(this);
     mean->setNum(0.00);
+    mean->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
     mean->setToolTip(tr("Arithmetic mean of ") + curve);
     mean->setWhatsThis(tr("Arithmetic mean of ") + curve);
     curveMeans->insert(curve+unit, mean);
@@ -614,6 +626,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     // Variance
     variance = new QLabel(this);
     variance->setNum(0.00);
+    variance->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
     variance->setToolTip(tr("Variance of ") + curve);
     variance->setWhatsThis(tr("Variance of ") + curve);
     curveVariances->insert(curve+unit, variance);
