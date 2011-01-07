@@ -228,7 +228,8 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     datalock.lock();
 
     /* Check if dataset identifier already exists */
-    if(!data.contains(dataname)) {
+    if(!data.contains(dataname))
+    {
         addCurve(dataname);
     }
 

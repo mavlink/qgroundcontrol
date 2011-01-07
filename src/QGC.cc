@@ -34,4 +34,9 @@ quint64 groundTimeUsecs()
     return static_cast<quint64>(microseconds + (time.time().msec()*1000));
 }
 
+int applicationVersion()
+{
+    return APPLICATIONVERSION;
+}
+
 }

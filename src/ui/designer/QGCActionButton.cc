@@ -42,14 +42,11 @@ const char* kActionLabels[MAV_ACTION_NB] =
  "RESET MAP"};
 
 QGCActionButton::QGCActionButton(QWidget *parent) :
-    QGCToolWidgetItem(parent),
+    QGCToolWidgetItem("Button", parent),
     ui(new Ui::QGCActionButton),
     uas(NULL)
 {
     ui->setupUi(this);
-
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-            this, SLOT(setActiveUAS(UASInterface*)));
 
     connect(ui->actionButton, SIGNAL(clicked()), this, SLOT(sendAction()));
     connect(ui->editFinishButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
@@ -71,12 +68,16 @@ QGCActionButton::~QGCActionButton()
 
 void QGCActionButton::sendAction()
 {
-    if (uas)
+    if (QGCToolWidgetItem::uas)
     {
         MAV_ACTION action = static_cast<MAV_ACTION>(
                 ui->editActionComboBox->currentIndex());
 
-        uas->setAction(action);
+        QGCToolWidgetItem::uas->setAction(action);
+    }
+    else
+    {
+        qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }
 }
 
@@ -90,6 +91,8 @@ void QGCActionButton::startEditMode()
     ui->editActionComboBox->show();
     ui->editActionsRefreshButton->show();
     ui->editFinishButton->show();
+    ui->editNameLabel->show();
+    ui->editButtonName->show();
     isInEditMode = true;
 }
 
@@ -98,10 +101,11 @@ void QGCActionButton::endEditMode()
     ui->editActionComboBox->hide();
     ui->editActionsRefreshButton->hide();
     ui->editFinishButton->hide();
-    isInEditMode = false;
-}
+    ui->editNameLabel->hide();
+    ui->editButtonName->hide();
 
-void QGCActionButton::setActiveUAS(UASInterface *uas)
-{
-    this->uas = uas;
+    // Write to settings
+
+
+    isInEditMode = false;
 }
