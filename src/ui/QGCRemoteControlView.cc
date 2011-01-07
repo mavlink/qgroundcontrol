@@ -176,6 +176,7 @@ void QGCRemoteControlView::appendChannelWidget(int channelId)
     // Add content
     layout->addWidget(new QLabel(QString("Channel %1").arg(channelId + 1), this));
     QLabel* raw = new QLabel(this);
+
     // Append raw label
     rawLabels.append(raw);
     layout->addWidget(raw);
@@ -196,7 +197,7 @@ void QGCRemoteControlView::redraw()
         // Update raw values
         for(int i = 0; i < rawLabels.count(); i++)
         {
-            rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i)));
+            rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4, 10, QChar('0')));
         }
 
         // Update percent bars

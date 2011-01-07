@@ -77,7 +77,7 @@ public slots:
     void updateState(UASInterface*,QString);
     void updateMode(int id,QString mode, QString description);
     void updateLoad(UASInterface*, double);
-    void selectWaypoint(UASInterface* uas, int id);
+    void selectWaypoint(int uasId, int id);
 
     void startImage(int imgid, int width, int height, int depth, int channels);
     void setPixels(int imgid, const unsigned char* imageData, int length, int startIndex);
@@ -118,6 +118,8 @@ protected:
     float refLineWidthToPen(float line);
     /** @brief Rotate a polygon around a point clockwise */
     void rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin);
+    /** @brief Preferred Size */
+    QSize sizeHint() const;
     /** @brief Start updating widget */
     void showEvent(QShowEvent* event);
     /** @brief Stop updating widget */
@@ -183,6 +185,10 @@ protected:
     float fineStrokeWidth;     ///< Fine line stroke width, used throughout the HUD
 
     QString waypointName;      ///< Waypoint name displayed in HUD
+    float roll;
+    float pitch;
+    float yaw;
+    float yawDiff;
     void paintEvent(QPaintEvent *event);
 
 };

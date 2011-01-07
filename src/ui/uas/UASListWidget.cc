@@ -81,6 +81,8 @@ void UASListWidget::changeEvent(QEvent *e)
     }
 }
 
+
+
 void UASListWidget::addUAS(UASInterface* uas)
 {
     if (uasViews.isEmpty())

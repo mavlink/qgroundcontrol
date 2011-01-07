@@ -162,6 +162,9 @@ public:
 
 public slots:
 
+    /** @brief Sets an action **/
+    virtual void setAction(MAV_ACTION action) = 0;
+
     /** @brief Launches the system/Liftof **/
     virtual void launch() = 0;
     /** @brief Set a new waypoint **/
@@ -211,7 +214,7 @@ public slots:
      * @warning The length of the ID string is limited by the MAVLink format! Take care to not exceed it
      * @param value Value of the parameter, IEEE 754 single precision floating point
      */
-    virtual void setParameter(int component, QString id, float value) = 0;
+    virtual void setParameter(const int component, const QString& id, const float value) = 0;
 
     /**
      * @brief Add a link to the list of current links
@@ -324,8 +327,14 @@ signals:
       * @param value the value that changed
       * @param msec the timestamp of the message, in milliseconds
       */
-    void valueChanged(int uasId, QString name, double value, quint64 msec);
-    void valueChanged(UASInterface* uas, QString name, double value, quint64 msec);
+
+    //void valueChanged(const int uasId, const QString& name, const double value, const quint64 msec);
+    void valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
+    void valueChanged(const int uasId, const QString& name, const QString& unit, const int value, const quint64 msec);
+
+//    void valueChanged(const int uasId, const QString& name, const double value, const quint64 msec);
+//    //void valueChanged(UASInterface* uas, QString name, double value, quint64 msec);
+
     void voltageChanged(int uasId, double voltage);
     void waypointUpdated(int uasId, int id, double x, double y, double z, double yaw, bool autocontinue, bool active);
     void waypointSelected(int uasId, int id);

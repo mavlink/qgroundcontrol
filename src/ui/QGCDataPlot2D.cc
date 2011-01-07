@@ -307,7 +307,8 @@ void QGCDataPlot2D::selectFile()
 
 void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFilter)
 {
-    qDebug() << "LOADING RAW LOG!";
+    Q_UNUSED(xAxisName);
+    Q_UNUSED(yAxisFilter);
 
     if (logFile != NULL)
     {
@@ -320,23 +321,6 @@ void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFil
     connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
     connect(compressor, SIGNAL(finishedFile(QString)), this, SLOT(loadFile(QString)));
     compressor->startCompression();
-
-//    // Block UI
-//    QProgressDialog progress("Transforming RAW log file to CSV", "Abort Transformation", 0, 1, this);
-//    progress.setWindowModality(Qt::WindowModal);
-
-//    while (!compressor->isFinished())
-//    {
-//        MG::SLEEP::usleep(100000);
-////        progress.setMaximum(compressor->getDataLines());
-////        progress.setValue(compressor->getCurrentLine());
-//    }
-//    // Enforce end
-//    progress.setMaximum(compressor->getDataLines());
-//    progress.setValue(compressor->getDataLines());
-
-    // Done with preprocessing - now load csv log
-    //loadFile(logFile->fileName());
 }
 
 /**
