@@ -15,9 +15,11 @@ namespace QGC
 
     /** @brief Get the current ground time in microseconds */
     quint64 groundTimeUsecs();
+    int applicationVersion();
 
     const QString APPNAME = "QGROUNDCONTROL";
     const QString COMPANYNAME = "OPENMAV";
+    const int APPLICATIONVERSION = 80; // 0.8.0
 }
 
 #define QGC_EVENTLOOP_DEBUG 0

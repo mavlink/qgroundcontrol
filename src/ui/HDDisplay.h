@@ -114,7 +114,7 @@ protected:
 
     void drawChangeRateStrip(float xRef, float yRef, float height, float minRate, float maxRate, float value, QPainter* painter);
     void drawChangeIndicatorGauge(float xRef, float yRef, float radius, float expectedMaxChange, float value, const QColor& color, QPainter* painter, bool solid=true);
-    void drawGauge(float xRef, float yRef, float radius, float min, float max, const QString name, float value, const QColor& color, QPainter* painter, QPair<float, float> goodRange, QPair<float, float> criticalRange, bool solid=true);
+    void drawGauge(float xRef, float yRef, float radius, float min, float max, const QString name, float value, const QColor& color, QPainter* painter, bool symmetric, QPair<float, float> goodRange, QPair<float, float> criticalRange, bool solid=true);
     void drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter);
     void paintText(QString text, QColor color, float fontSize, float refX, float refY, QPainter* painter);
 
@@ -143,6 +143,7 @@ protected:
     QMap<QString, quint64> lastUpdate; ///< The last update time for this variable
     QMap<QString, float> minValues;    ///< The minimum value this variable is assumed to have
     QMap<QString, float> maxValues;    ///< The maximum value this variable is assumed to have
+    QMap<QString, bool> symmetric;    ///< Draw the gauge / dial symmetric bool = yes
     QMap<QString, QPair<float, float> > goodRanges; ///< The range of good values
     QMap<QString, QPair<float, float> > critRanges; ///< The range of critical values
     double scalingFactor;      ///< Factor used to scale all absolute values to screen coordinates

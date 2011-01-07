@@ -328,9 +328,9 @@ signals:
       * @param msec the timestamp of the message, in milliseconds
       */
 
-    // FIXME Exchange the lines below against the commented ones
-    void valueChanged(int uasId, QString name, double value, quint64 msec);
-    void valueChanged(UASInterface* uas, QString name, double value, quint64 msec);
+    //void valueChanged(const int uasId, const QString& name, const double value, const quint64 msec);
+    void valueChanged(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
+    void valueChanged(const int uasId, const QString& name, const QString& unit, const int value, const quint64 msec);
 
 //    void valueChanged(const int uasId, const QString& name, const double value, const quint64 msec);
 //    //void valueChanged(UASInterface* uas, QString name, double value, quint64 msec);

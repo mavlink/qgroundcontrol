@@ -50,6 +50,7 @@
     <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
+    <addaction name="actionReloadStyle"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuNetwork">
@@ -100,7 +101,6 @@
     <addaction name="actionPilotsView"/>
     <addaction name="separator"/>
     <addaction name="actionMavlinkView"/>
-    <addaction name="actionReloadStyle"/>
    </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
@@ -179,33 +179,6 @@
     <string>Open UAS Preferences</string>
    </property>
   </action>
-  <action name="actionEngineerView">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Show engineer view</string>
-   </property>
-  </action>
-  <action name="actionPilotView">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/status/weather-overcast.svg</normaloff>:/images/status/weather-overcast.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Show pilot view</string>
-   </property>
-  </action>
-  <action name="actionStyleConfig">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Reload visual style</string>
-   </property>
-  </action>
   <action name="actionJoystickSettings">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
@@ -216,30 +189,6 @@
    </property>
    <property name="visible">
     <bool>true</bool>
-   </property>
-  </action>
-  <action name="actionOperatorView">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/status/network-wireless-encrypted.svg</normaloff>:/images/status/network-wireless-encrypted.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Show operator view</string>
-   </property>
-   <property name="toolTip">
-    <string>Shop the 2D map and system status</string>
-   </property>
-  </action>
-  <action name="action3DView">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Show 3D Local View</string>
-   </property>
-   <property name="toolTip">
-    <string>Show 3D view</string>
    </property>
   </action>
   <action name="actionSimulate">
@@ -255,87 +204,6 @@
    </property>
    <property name="toolTip">
     <string>Simulate one vehicle to test and evaluate this application</string>
-   </property>
-  </action>
-  <action name="actionShow_full_view">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/status/network-transmit-receive.svg</normaloff>:/images/status/network-transmit-receive.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Show full view</string>
-   </property>
-  </action>
-  <action name="actionShow_MAVLink_view">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/devices/network-wired.svg</normaloff>:/images/devices/network-wired.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Show MAVLink view</string>
-   </property>
-  </action>
-  <action name="actionOnline_documentation">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Online documentation</string>
-   </property>
-  </action>
-  <action name="actionShow_data_analysis_view">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Show data analysis view</string>
-   </property>
-  </action>
-  <action name="actionProject_Roadmap">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Project Roadmap</string>
-   </property>
-  </action>
-  <action name="actionCredits_Developers">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Credits / Developers</string>
-   </property>
-  </action>
-  <action name="actionGlobalOperatorView">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Show 2D Map View</string>
-   </property>
-  </action>
-  <action name="action3DMapView">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Show 3D Global View</string>
-   </property>
-  </action>
-  <action name="actionGoogleEarthView">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/mapproviders/googleearth.svg</normaloff>:/images/mapproviders/googleearth.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Google Earth View</string>
    </property>
   </action>
   <action name="actionShow_Slugs_View">
@@ -387,6 +255,9 @@
    </property>
   </action>
   <action name="actionOperatorsView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../mavground.qrc">
      <normaloff>:/images/status/weather-overcast.svg</normaloff>:/images/status/weather-overcast.svg</iconset>
@@ -396,6 +267,9 @@
    </property>
   </action>
   <action name="actionEngineersView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../mavground.qrc">
      <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
@@ -405,6 +279,9 @@
    </property>
   </action>
   <action name="actionMavlinkView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../mavground.qrc">
      <normaloff>:/images/devices/network-wired.svg</normaloff>:/images/devices/network-wired.svg</iconset>
@@ -419,10 +296,13 @@
      <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
-    <string>Reload Style</string>
+    <string>Reload Stylesheet</string>
    </property>
   </action>
   <action name="actionPilotsView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../mavground.qrc">
      <normaloff>:/images/status/network-wireless-encrypted.svg</normaloff>:/images/status/network-wireless-encrypted.svg</iconset>

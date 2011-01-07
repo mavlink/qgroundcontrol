@@ -454,18 +454,10 @@ void DebugConsole::handleConnectButton()
         if (currLink->isConnected())
         {
             currLink->disconnect();
-            m_ui->connectButton->setText(tr("Connect"));
         }
         else
         {
-            if (currLink->connect())
-            {
-                m_ui->connectButton->setText(tr("Disconn."));
-            }
-            else
-            {
-                m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>").arg(QGC::colorRed.name(), tr("Could not connect link %1 ! Please check link hardware.").arg(currLink->getName())));
-            }
+            currLink->connect();
         }
     }
 }

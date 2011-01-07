@@ -77,7 +77,7 @@ public slots:
     void updateState(UASInterface*,QString);
     void updateMode(int id,QString mode, QString description);
     void updateLoad(UASInterface*, double);
-    void selectWaypoint(UASInterface* uas, int id);
+    void selectWaypoint(int uasId, int id);
 
     void startImage(int imgid, int width, int height, int depth, int channels);
     void setPixels(int imgid, const unsigned char* imageData, int length, int startIndex);
@@ -188,6 +188,7 @@ protected:
     float roll;
     float pitch;
     float yaw;
+    float yawDiff;
     void paintEvent(QPaintEvent *event);
 
 };

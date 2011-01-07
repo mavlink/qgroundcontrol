@@ -197,7 +197,7 @@ void QGCRemoteControlView::redraw()
         // Update raw values
         for(int i = 0; i < rawLabels.count(); i++)
         {
-            rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4));
+            rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4, 10, QChar('0')));
         }
 
         // Update percent bars
