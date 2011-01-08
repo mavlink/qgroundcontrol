@@ -97,8 +97,8 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     LinkManager::instance()->add(this);
 
     // Open packet log
-    mavlinkLogFile = new QFile(MAVLinkProtocol::getLogfileName());
-    mavlinkLogFile->open(QIODevice::ReadOnly);
+    mavlinkLogFile = new QFile();
+    //mavlinkLogFile->open(QIODevice::ReadOnly);
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
@@ -141,7 +141,7 @@ void MAVLinkSimulationLink::run()
             }
             last = MG::TIME::getGroundTimeNow();
         }
-        MG::SLEEP::msleep(2);
+        MG::SLEEP::msleep(3);
 
     }
 }

@@ -84,6 +84,8 @@ engineOn(false)
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
     ui.modeComboBox->setCurrentIndex(0);
+
+    ui.gridLayout->setAlignment(Qt::AlignTop);
 }
 
 void UASControlWidget::setUAS(UASInterface* uas)

@@ -663,12 +663,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_nav_filter_bias_t bias;
                 mavlink_msg_nav_filter_bias_decode(&message, &bias);
                 quint64 time = MG::TIME::getGroundTimeNow();
-                emit valueChanged(uasId, "b_f[0]", bias.accel_0, time);
-                emit valueChanged(uasId, "b_f[1]", bias.accel_1, time);
-                emit valueChanged(uasId, "b_f[2]", bias.accel_2, time);
-                emit valueChanged(uasId, "b_w[0]", bias.gyro_0, time);
-                emit valueChanged(uasId, "b_w[1]", bias.gyro_1, time);
-                emit valueChanged(uasId, "b_w[2]", bias.gyro_2, time);
+                emit valueChanged(uasId, "b_f[0]", "raw", bias.accel_0, time);
+                emit valueChanged(uasId, "b_f[1]", "raw", bias.accel_1, time);
+                emit valueChanged(uasId, "b_f[2]", "raw", bias.accel_2, time);
+                emit valueChanged(uasId, "b_w[0]", "raw", bias.gyro_0, time);
+                emit valueChanged(uasId, "b_w[1]", "raw", bias.gyro_1, time);
+                emit valueChanged(uasId, "b_w[2]", "raw", bias.gyro_2, time);
             }
             break;
        case MAVLINK_MSG_ID_RADIO_CALIBRATION:

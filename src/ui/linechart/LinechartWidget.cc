@@ -119,8 +119,7 @@ updateTimer(new QTimer())
     curvesWidgetLayout->addWidget(value, labelRow, 3);
 
     // Unit
-    label->setText("Unit");
-    curvesWidgetLayout->addWidget(new QLabel(tr("Unit")), labelRow, 4);
+    //curvesWidgetLayout->addWidget(new QLabel(tr("Unit")), labelRow, 4);
 
     // Mean
     mean = new QLabel(this);
@@ -216,9 +215,8 @@ void LinechartWidget::createLayout()
     connect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
 
     // Ground time button
-    QToolButton* timeButton = new QToolButton(this);
+    QCheckBox* timeButton = new QCheckBox(this);
     timeButton->setText(tr("Ground Time"));
-    timeButton->setCheckable(true);
     timeButton->setToolTip(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     timeButton->setWhatsThis(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     bool gTimeDefault = true;
@@ -227,6 +225,13 @@ void LinechartWidget::createLayout()
     layout->addWidget(timeButton, 1, 4);
     layout->setColumnStretch(4, 0);
     connect(timeButton, SIGNAL(clicked(bool)), activePlot, SLOT(enforceGroundTime(bool)));
+
+    unitsCheckBox = new QCheckBox(this);
+    unitsCheckBox->setText(tr("Show units"));
+    unitsCheckBox->setChecked(true);
+    unitsCheckBox->setToolTip(tr("Enable unit display in curve list"));
+    unitsCheckBox->setWhatsThis(tr("Enable unit display in curve list"));
+    layout->addWidget(unitsCheckBox, 1, 5);
 
     // Create the scroll bar
     //scrollbar = new QScrollBar(Qt::Horizontal, ui.diagramGroupBox);
@@ -241,7 +246,7 @@ void LinechartWidget::createLayout()
 
     // Add scroll bar to layout and make sure it gets all available space
     //layout->addWidget(scrollbar, 1, 5);
-    layout->setColumnStretch(5, 10);
+    //layout->setColumnStretch(5, 10);
 
     ui.diagramGroupBox->setLayout(layout);
 
@@ -254,8 +259,8 @@ void LinechartWidget::createLayout()
     // FIXME
 
     // Connect notifications from the plot to the user interface
-    connect(activePlot, SIGNAL(curveAdded(QString)), this, SLOT(addCurve(QString)));
-    connect(activePlot, SIGNAL(curveRemoved(QString)), this, SLOT(removeCurve(QString)));
+    //connect(activePlot, SIGNAL(curveAdded(QString)), this, SLOT(addCurve(QString)));
+    //connect(activePlot, SIGNAL(curveRemoved(QString)), this, SLOT(removeCurve(QString)));
 
     // Scrollbar
 
@@ -313,7 +318,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
         // Make sure the curve will be created if it does not yet exist
         if(!label)
         {
-            qDebug() << "ADDING CURVE IN APPENDDATE DOUBLE";
+            //qDebug() << "ADDING CURVE IN APPENDDATE DOUBLE";
             addCurve(curve, unit);
         }
     }
@@ -594,8 +599,8 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     value = new QLabel(this);
     value->setNum(0.00);
     value->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
-    value->setToolTip(tr("Current value of ") + curve);
-    value->setWhatsThis(tr("Current value of ") + curve);
+    value->setToolTip(tr("Current value of %1 in %2 units").arg(curve, unit));
+    value->setWhatsThis(tr("Current value of %1 in %2 units").arg(curve, unit));
     curveLabels->insert(curve+unit, value);
     curvesWidgetLayout->addWidget(value, labelRow, 3);
 
@@ -603,17 +608,18 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     unitLabel = new QLabel(this);
     unitLabel->setText(unit);
     unitLabel->setStyleSheet(QString("QLabel {color: %1;}").arg("#AAAAAA"));
-    qDebug() << "UNIT" << unit;
+    //qDebug() << "UNIT" << unit;
     unitLabel->setToolTip(tr("Unit of ") + curve);
     unitLabel->setWhatsThis(tr("Unit of ") + curve);
     curvesWidgetLayout->addWidget(unitLabel, labelRow, 4);
+    connect(unitsCheckBox, SIGNAL(clicked(bool)), unitLabel, SLOT(setVisible(bool)));
 
     // Mean
     mean = new QLabel(this);
     mean->setNum(0.00);
     mean->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
-    mean->setToolTip(tr("Arithmetic mean of ") + curve);
-    mean->setWhatsThis(tr("Arithmetic mean of ") + curve);
+    mean->setToolTip(tr("Arithmetic mean of %1 in %2 units").arg(curve, unit));
+    mean->setWhatsThis(tr("Arithmetic mean of %1 in %2 units").arg(curve, unit));
     curveMeans->insert(curve+unit, mean);
     curvesWidgetLayout->addWidget(mean, labelRow, 5);
 
@@ -627,8 +633,8 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     variance = new QLabel(this);
     variance->setNum(0.00);
     variance->setStyleSheet(QString("QLabel {font-family:\"Courier\"; font-weight: bold;}"));
-    variance->setToolTip(tr("Variance of ") + curve);
-    variance->setWhatsThis(tr("Variance of ") + curve);
+    variance->setToolTip(tr("Variance of %1 in (%2)^2 units").arg(curve, unit));
+    variance->setWhatsThis(tr("Variance of %1 in (%2)^2 units").arg(curve, unit));
     curveVariances->insert(curve+unit, variance);
     curvesWidgetLayout->addWidget(variance, labelRow, 6);
 

@@ -104,6 +104,9 @@ public slots:
     void addLink();
     void addLink(LinkInterface* link);
     void configure();
+    /** @brief Set the currently controlled UAS */
+    void setActiveUAS(UASInterface* uas);
+    /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
     void startVideoCapture();
     void stopVideoCapture();
@@ -208,6 +211,7 @@ protected:
       MENU_SLUGS_PID,
       MENU_SLUGS_HIL,
       MENU_SLUGS_CAMERA,
+      MENU_MAVLINK_LOG_PLAYER,
       CENTRAL_SEPARATOR= 255, // do not change
       CENTRAL_LINECHART,
       CENTRAL_PROTOCOL,
@@ -297,6 +301,7 @@ protected:
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
     bool aboutToCloseFlag;
+    bool changingViewsFlag;
 
     void clearView();
 
@@ -360,6 +365,7 @@ protected:
     QPointer<QDockWidget> watchdogControlDockWidget;
 
     QPointer<QDockWidget> headUpDockWidget;
+    QPointer<QDockWidget> logPlayerDockWidget;
 
     QPointer<QDockWidget> hsiDockWidget;
     QPointer<QDockWidget> rcViewDockWidget;

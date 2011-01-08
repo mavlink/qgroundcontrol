@@ -59,7 +59,7 @@ MAVLinkProtocol::MAVLinkProtocol() :
         heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
         m_heartbeatsEnabled(false),
         m_loggingEnabled(false),
-        m_logfile(NULL),
+        m_logfile(new QFile(QCoreApplication::applicationDirPath()+"/mavlink.log")),
         m_enable_version_check(true),
         versionMismatchIgnore(false)
 {
@@ -99,7 +99,7 @@ void MAVLinkProtocol::run()
 
 QString MAVLinkProtocol::getLogfileName()
 {
-    return QCoreApplication::applicationDirPath()+"/mavlink.log";
+    return m_logfile->fileName();
 }
 
 /**
@@ -391,21 +391,27 @@ void MAVLinkProtocol::enableLogging(bool enabled)
 {
     if (enabled && !m_loggingEnabled)
     {
-       m_logfile = new QFile(getLogfileName());
+       if (m_logfile->isOpen()) m_logfile->close();
        m_logfile->open(QIODevice::WriteOnly | QIODevice::Append);
     }
-    else
+    else if (!enabled)
     {
        m_logfile->close();
-       delete m_logfile;
-       m_logfile = NULL;
     }
     m_loggingEnabled = enabled;
+    emit loggingChanged(enabled);
+}
+
+void MAVLinkProtocol::setLogfileName(const QString& filename)
+{
+    m_logfile->close();
+    m_logfile->setFileName(filename);
 }
 
 void MAVLinkProtocol::enableVersionCheck(bool enabled)
 {
     m_enable_version_check = enabled;
+    emit versionCheckChanged(enabled);
 }
 
 bool MAVLinkProtocol::heartbeatsEnabled(void)
