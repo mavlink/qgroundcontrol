@@ -132,6 +132,7 @@ protected:
     QToolButton* scalingLinearButton;
     QToolButton* scalingLogButton;
     QToolButton* logButton;
+    QPointer<QCheckBox> unitsCheckBox;
 
     QFile* logFile;
     unsigned int logindex;

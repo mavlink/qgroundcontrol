@@ -812,6 +812,7 @@ float HDDisplay::refLineWidthToPen(float line)
 void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec)
 {
     Q_UNUSED(uasId);
+    Q_UNUSED(unit);
     // Update mean
     const float oldMean = valuesMean.value(name, 0.0f);
     const int meanCount = valuesCount.value(name, 0);

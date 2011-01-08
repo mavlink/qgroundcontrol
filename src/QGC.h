@@ -3,6 +3,7 @@
 
 #include <QDateTime>
 #include <QColor>
+#include <QThread>
 
 namespace QGC
 {
@@ -20,6 +21,36 @@ namespace QGC
     const QString APPNAME = "QGROUNDCONTROL";
     const QString COMPANYNAME = "OPENMAV";
     const int APPLICATIONVERSION = 80; // 0.8.0
+
+    class SLEEP : public QThread
+    {
+    public:
+        /**
+         * @brief Set a thread to sleep for seconds
+         * @param s time in seconds to sleep
+         **/
+        static void sleep(unsigned long s)
+        {
+            QThread::sleep(s);
+        }
+        /**
+         * @brief Set a thread to sleep for milliseconds
+         * @param ms time in milliseconds to sleep
+         **/
+        static void msleep(unsigned long ms)
+        {
+            QThread::msleep(ms);
+        }
+        /**
+         * @brief Set a thread to sleep for microseconds
+         * @param us time in microseconds to sleep
+         **/
+        static void usleep(unsigned long us)
+        {
+            QThread::usleep(us);
+        }
+    };
+
 }
 
 #define QGC_EVENTLOOP_DEBUG 0

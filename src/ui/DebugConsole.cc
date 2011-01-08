@@ -105,6 +105,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     connect(m_ui->holdButton, SIGNAL(toggled(bool)), this, SLOT(hold(bool)));
     // Connect connect button
     connect(m_ui->connectButton, SIGNAL(clicked()), this, SLOT(handleConnectButton()));
+    // Connect the special chars combo box
+    connect(m_ui->specialComboBox, SIGNAL(activated(QString)), this, SLOT(appendSpecialSymbol(QString)));
 
     this->setVisible(false);
 }
@@ -327,8 +329,78 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
     }
 }
 
+QByteArray DebugConsole::symbolNameToBytes(const QString& text)
+{
+    QByteArray b;
+    if (text == "LF")
+    {
+        b.append(static_cast<char>(0x0A));
+    }
+    else if (text == "FF")
+    {
+        b.append(static_cast<char>(0x0C));
+    }
+    else if (text == "CR")
+    {
+        b.append(static_cast<char>(0x0D));
+    }
+    else if (text == "CR+LF")
+    {
+        b.append(static_cast<char>(0x0D));
+        b.append(static_cast<char>(0x0A));
+    }
+    else if (text == "TAB")
+    {
+        b.append(static_cast<char>(0x09));
+    }
+    else if (text == "NUL")
+    {
+        b.append(static_cast<char>(0x00));
+    }
+    else if (text == "ESC")
+    {
+        b.append(static_cast<char>(0x1B));
+    }
+    else if (text == "~")
+    {
+        b.append(static_cast<char>(0x7E));
+    }
+    else if (text == "<Space>")
+    {
+        b.append(static_cast<char>(0x20));
+    }
+    return b;
+}
+
+void DebugConsole::appendSpecialSymbol(const QString& text)
+{
+    QString line = m_ui->sendText->text();
+    QByteArray symbols = symbolNameToBytes(text);
+    // The text is appended to the enter field
+    if (convertToAscii)
+    {
+        line.append(symbols);
+    }
+    else
+    {
+
+        for (int i = 0; i < symbols.size(); i++)
+        {
+            QString add(" 0x%1");
+            line.append(add.arg(static_cast<char>(symbols.at(i)), 2, 16, QChar('0')));
+        }
+    }
+    m_ui->sendText->setText(line);
+}
+
 void DebugConsole::sendBytes()
 {
+    if (!currLink->isConnected())
+    {
+        m_ui->sentText->setText(tr("Nothing sent. The link %1 is unconnected. Please connect first.").arg(currLink->getName()));
+        return;
+    }
+
     QByteArray transmit;
     QString feedback;
     bool ok = true;
@@ -382,8 +454,16 @@ void DebugConsole::sendBytes()
     if (ok && m_ui->sendText->text().toLatin1().size() > 0)
     {
         // Transmit only if conversion succeeded
-        currLink->writeBytes(transmit, transmit.size());
-        m_ui->sentText->setText(tr("Sent: ") + feedback);
+//        int transmitted =
+                currLink->writeBytes(transmit, transmit.size());
+//        if (transmit.size() == transmitted)
+//        {
+            m_ui->sentText->setText(tr("Sent: ") + feedback);
+//        }
+//        else
+//        {
+//            m_ui->sentText->setText(tr("Error during sending: Transmitted only %1 bytes instead of %2.").arg(transmitted, transmit.size()));
+//        }
     }
     else if (m_ui->sendText->text().toLatin1().size() > 0)
     {
@@ -403,6 +483,8 @@ void DebugConsole::hexModeEnabled(bool mode)
 {
     convertToAscii = !mode;
     m_ui->receiveText->clear();
+    m_ui->sendText->clear();
+    m_ui->sentText->clear();
 }
 
 /**

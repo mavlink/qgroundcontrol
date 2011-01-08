@@ -49,23 +49,30 @@
     <addaction name="actionNewCustomWidget"/>
     <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionSimulate"/>
+    <addaction name="actionPreferences"/>
     <addaction name="separator"/>
     <addaction name="actionReloadStyle"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuNetwork">
     <property name="title">
-     <string>Network</string>
+     <string>Communication</string>
     </property>
     <addaction name="actionAdd_Link"/>
     <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuConnected_Systems">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>Select System</string>
     </property>
    </widget>
    <widget class="QMenu" name="menuUnmanned_System">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>Unmanned System</string>
     </property>
@@ -76,8 +83,6 @@
     <addaction name="actionLand"/>
     <addaction name="actionEmergency_Land"/>
     <addaction name="actionEmergency_Kill"/>
-    <addaction name="separator"/>
-    <addaction name="actionConfiguration"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -124,6 +129,9 @@
    </property>
   </action>
   <action name="actionLiftoff">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../../mavground.qrc">
      <normaloff>:/images/control/launch.svg</normaloff>
@@ -143,6 +151,10 @@
    </property>
   </action>
   <action name="actionEmergency_Land">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
+   </property>
    <property name="text">
     <string>Emergency Land</string>
    </property>
@@ -151,6 +163,10 @@
    </property>
   </action>
   <action name="actionEmergency_Kill">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
+   </property>
    <property name="text">
     <string>Kill UAS</string>
    </property>
@@ -312,6 +328,10 @@
    </property>
   </action>
   <action name="actionNewCustomWidget">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
+   </property>
    <property name="text">
     <string>New Custom Widget</string>
    </property>
@@ -330,6 +350,18 @@
    </property>
    <property name="text">
     <string>Mute Audio Output</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Preferences</string>
+   </property>
+   <property name="toolTip">
+    <string>QGroundControl global settings</string>
    </property>
   </action>
  </widget>

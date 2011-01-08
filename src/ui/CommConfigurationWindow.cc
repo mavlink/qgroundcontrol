@@ -106,7 +106,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
         layout->addWidget(conf);
         ui.linkGroupBox->setLayout(layout);
-        ui.linkGroupBox->setTitle(tr("serial link"));
+        ui.linkGroupBox->setTitle(tr("Serial Link"));
         //ui.linkGroupBox->setTitle(link->getName());
         //connect(link, SIGNAL(nameChanged(QString)), ui.linkGroupBox, SLOT(setTitle(QString)));
     }
@@ -142,13 +142,13 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 
     // Open details pane for MAVLink if necessary
     MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
-    if(mavlink != 0)
+    if (mavlink != 0)
     {
         QWidget* conf = new MAVLinkSettingsWidget(mavlink, this);
         QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.protocolGroupBox);
         layout->addWidget(conf);
         ui.protocolGroupBox->setLayout(layout);
-        ui.protocolGroupBox->setTitle(protocol->getName());
+        ui.protocolGroupBox->setTitle(protocol->getName()+" (Global Settings)");
     }
     else
     {

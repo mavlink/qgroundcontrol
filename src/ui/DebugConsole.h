@@ -83,6 +83,8 @@ public slots:
     void setAutoHold(bool hold);
     /** @brief Receive plain text message to output to the user */
     void receiveTextMessage(int id, int component, int severity, QString text);
+    /** @brief Append a special symbol */
+    void appendSpecialSymbol(const QString& text);
 
     protected slots:
     /** @brief Draw information overlay */
@@ -92,6 +94,7 @@ public slots:
 
 protected:
     void changeEvent(QEvent *e);
+    QByteArray symbolNameToBytes(const QString& symbol);
 
     QList<LinkInterface*> links;
     LinkInterface* currLink;
