@@ -46,12 +46,12 @@
      <string>File</string>
     </property>
     <addaction name="actionJoystick_Settings"/>
-    <addaction name="actionNewCustomWidget"/>
-    <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionSimulate"/>
-    <addaction name="actionPreferences"/>
     <addaction name="separator"/>
+    <addaction name="actionMuteAudioOutput"/>
+    <addaction name="actionPreferences"/>
     <addaction name="actionReloadStyle"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuNetwork">
@@ -88,6 +88,7 @@
     <property name="title">
      <string>Tools</string>
     </property>
+    <addaction name="actionNewCustomWidget"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -312,7 +313,7 @@
      <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
-    <string>Reload Stylesheet</string>
+    <string>Load Stylesheet</string>
    </property>
   </action>
   <action name="actionPilotsView">
