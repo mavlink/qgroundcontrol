@@ -261,6 +261,7 @@ void MainWindow::buildCommonWidgets()
     {
         infoDockWidget = new QDockWidget(tr("Status Details"), this);
         infoDockWidget->setWidget( new UASInfoWidget(this) );
+        infoDockWidget->setObjectName("UAS_STATUS_DETAILS_DOCKWIDGET");
         addToToolsMenu (infoDockWidget, tr("Status Details"), SLOT(showToolWidget()), MENU_STATUS, Qt::RightDockWidgetArea);
     }
 
@@ -369,6 +370,7 @@ void MainWindow::buildPxWidgets()
     {
         detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
         detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
+        detectionDockWidget->setObjectName("OBJECT_DETECTION_DOCK_WIDGET");
         addToToolsMenu (detectionDockWidget, tr("Object Recognition"), SLOT(showToolWidget()), MENU_DETECTION, Qt::RightDockWidgetArea);
     }
 
@@ -376,6 +378,7 @@ void MainWindow::buildPxWidgets()
     {
         parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
         parametersDockWidget->setWidget( new ParameterInterface(this) );
+        parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
         addToToolsMenu (parametersDockWidget, tr("Onboard Parameters"), SLOT(showToolWidget()), MENU_PARAMETERS, Qt::RightDockWidgetArea);
     }
 
@@ -383,6 +386,7 @@ void MainWindow::buildPxWidgets()
     {
         watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
         watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
+        watchdogControlDockWidget->setObjectName("WATCHDOG_CONTROL_DOCKWIDGET");
         addToToolsMenu (watchdogControlDockWidget, tr("Process Control"), SLOT(showToolWidget()), MENU_WATCHDOG, Qt::BottomDockWidgetArea);
     }
 
@@ -448,6 +452,7 @@ void MainWindow::buildSlugsWidgets()
         // Dock widgets
         headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
         headUpDockWidget->setWidget( new HUD(320, 240, this));
+        headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
         addToToolsMenu (headUpDockWidget, tr("HUD"), SLOT(showToolWidget()), MENU_HUD, Qt::LeftDockWidgetArea);
     }
 
@@ -455,6 +460,7 @@ void MainWindow::buildSlugsWidgets()
     {
         rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
         rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
+        rcViewDockWidget->setObjectName("RADIO_CONTROL_CHANNELS_DOCK_WIDGET");
         addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget()), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
     }
 
@@ -463,6 +469,7 @@ void MainWindow::buildSlugsWidgets()
         // Dialog widgets
         slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
         slugsDataWidget->setWidget( new SlugsDataSensorView(this));
+        slugsDataWidget->setObjectName("SLUGS_DATA_DOCK_WIDGET");
         addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget()), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
     }
 
@@ -470,6 +477,7 @@ void MainWindow::buildSlugsWidgets()
     {
         slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
         slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
+        slugsPIDControlWidget->setObjectName("SLUGS_PID_CONTROL_DOCK_WIDGET");
         addToToolsMenu (slugsPIDControlWidget, tr("PID Configuration"), SLOT(showToolWidget()), MENU_SLUGS_PID, Qt::LeftDockWidgetArea);
     }
 
@@ -477,6 +485,7 @@ void MainWindow::buildSlugsWidgets()
     {
         slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
         slugsHilSimWidget->setWidget( new SlugsHilSim(this));
+        slugsHilSimWidget->setObjectName("SLUGS_HIL_SIM_DOCK_WIDGET");
         addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
     }
 
@@ -484,6 +493,7 @@ void MainWindow::buildSlugsWidgets()
     {
         slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
         slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
+        slugsCamControlWidget->setObjectName("SLUGS_CAM_CONTROL_DOCK_WIDGET");
         addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget()), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
     }
 }

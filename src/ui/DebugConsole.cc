@@ -62,6 +62,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
 {
     // Setup basic user interface
     m_ui->setupUi(this);
+    // Hide sent text field - it is only useful after send has been hit
+    m_ui->sentText->setVisible(false);
     // Make text area not editable
     m_ui->receiveText->setReadOnly(true);
     // Limit to 500 lines
@@ -395,6 +397,11 @@ void DebugConsole::appendSpecialSymbol(const QString& text)
 
 void DebugConsole::sendBytes()
 {
+    if (!m_ui->sentText->isVisible())
+    {
+        m_ui->sentText->setVisible(true);
+    }
+
     if (!currLink->isConnected())
     {
         m_ui->sentText->setText(tr("Nothing sent. The link %1 is unconnected. Please connect first.").arg(currLink->getName()));
