@@ -74,6 +74,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     // clear them if they mismatch
     // QGC then falls back to default
     QSettings settings;
+    settings.sync();
     if (settings.contains("QGC_APPLICATION_VERSION_INT"))
     {
         QString qgcVersion = settings.value("QGC_APPLICATION_VERSION").toString();
