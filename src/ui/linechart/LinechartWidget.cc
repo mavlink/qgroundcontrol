@@ -142,13 +142,39 @@ updateTimer(new QTimer())
 
     updateTimer->setInterval(300);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
-    updateTimer->start();
+    readSettings();
 }
 
-LinechartWidget::~LinechartWidget() {
+LinechartWidget::~LinechartWidget()
+{
+    writeSettings();
     stopLogging();
     delete listedCurves;
     listedCurves = NULL;
+}
+
+void LinechartWidget::writeSettings()
+{
+    QSettings settings;
+    settings.beginGroup("LINECHART");
+    if (timeButton) settings.setValue("ENFORCE_GROUNDTIME", timeButton->isChecked());
+    if (unitsCheckBox) settings.setValue("SHOW_UNITS", unitsCheckBox->isChecked());
+    settings.endGroup();
+    settings.sync();
+}
+
+void LinechartWidget::readSettings()
+{
+    QSettings settings;
+    settings.sync();
+    settings.beginGroup("LINECHART");
+    if (activePlot)
+    {
+        timeButton->setChecked(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
+        activePlot->enforceGroundTime(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
+    }
+    if (unitsCheckBox) unitsCheckBox->setChecked(settings.value("SHOW_UNITS").toBool());
+    settings.endGroup();
 }
 
 void LinechartWidget::createLayout()
@@ -215,7 +241,7 @@ void LinechartWidget::createLayout()
     connect(logButton, SIGNAL(clicked()), this, SLOT(startLogging()));
 
     // Ground time button
-    QCheckBox* timeButton = new QCheckBox(this);
+    timeButton = new QCheckBox(this);
     timeButton->setText(tr("Ground Time"));
     timeButton->setToolTip(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
     timeButton->setWhatsThis(tr("Overwrite timestamp of data from vehicle with ground receive time. Helps if the plots are not visible because of missing or invalid onboard time."));
@@ -225,6 +251,7 @@ void LinechartWidget::createLayout()
     layout->addWidget(timeButton, 1, 4);
     layout->setColumnStretch(4, 0);
     connect(timeButton, SIGNAL(clicked(bool)), activePlot, SLOT(enforceGroundTime(bool)));
+    connect(timeButton, SIGNAL(clicked()), this, SLOT(writeSettings()));
 
     unitsCheckBox = new QCheckBox(this);
     unitsCheckBox->setText(tr("Show units"));
@@ -232,21 +259,7 @@ void LinechartWidget::createLayout()
     unitsCheckBox->setToolTip(tr("Enable unit display in curve list"));
     unitsCheckBox->setWhatsThis(tr("Enable unit display in curve list"));
     layout->addWidget(unitsCheckBox, 1, 5);
-
-    // Create the scroll bar
-    //scrollbar = new QScrollBar(Qt::Horizontal, ui.diagramGroupBox);
-    //scrollbar->setMinimum(MIN_TIME_SCROLLBAR_VALUE);
-    //scrollbar->setMaximum(MAX_TIME_SCROLLBAR_VALUE);
-    //scrollbar->setPageStep(PAGESTEP_TIME_SCROLLBAR_VALUE);
-    // Set scrollbar to maximum and disable it
-    //scrollbar->setValue(MIN_TIME_SCROLLBAR_VALUE);
-    //scrollbar->setDisabled(true);
-    //    scrollbar->setFixedHeight(20);
-
-
-    // Add scroll bar to layout and make sure it gets all available space
-    //layout->addWidget(scrollbar, 1, 5);
-    //layout->setColumnStretch(5, 10);
+    connect(unitsCheckBox, SIGNAL(clicked()), this, SLOT(writeSettings()));
 
     ui.diagramGroupBox->setLayout(layout);
 
@@ -255,14 +268,6 @@ void LinechartWidget::createLayout()
 
     // Connect notifications from the user interface to the plot
     connect(this, SIGNAL(curveRemoved(QString)), activePlot, SLOT(hideCurve(QString)));
-    //connect(this, SIGNAL(curveSet(QString, int)), activePlot, SLOT(showshowCurveCurve(QString, int)));
-    // FIXME
-
-    // Connect notifications from the plot to the user interface
-    //connect(activePlot, SIGNAL(curveAdded(QString)), this, SLOT(addCurve(QString)));
-    //connect(activePlot, SIGNAL(curveRemoved(QString)), this, SLOT(removeCurve(QString)));
-
-    // Scrollbar
 
     // Update scrollbar when plot window changes (via translator method setPlotWindowPosition()
     connect(activePlot, SIGNAL(windowPositionChanged(quint64)), this, SLOT(setPlotWindowPosition(quint64)));
@@ -612,6 +617,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     unitLabel->setToolTip(tr("Unit of ") + curve);
     unitLabel->setWhatsThis(tr("Unit of ") + curve);
     curvesWidgetLayout->addWidget(unitLabel, labelRow, 4);
+    unitLabel->setVisible(unitsCheckBox->isChecked());
     connect(unitsCheckBox, SIGNAL(clicked(bool)), unitLabel, SLOT(setVisible(bool)));
 
     // Mean
@@ -648,6 +654,10 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
         */
 
     // Set stretch factors so that the label gets the whole space
+
+
+    // Load visibility settings
+    // TODO
 
     // Connect actions
     QObject::connect(checkBox, SIGNAL(clicked(bool)), this, SLOT(takeButtonClick(bool)));
@@ -691,7 +701,7 @@ void LinechartWidget::setActive(bool active)
     }
     if (active)
     {
-        updateTimer->start();
+        updateTimer->start(updateInterval);
     }
     else
     {

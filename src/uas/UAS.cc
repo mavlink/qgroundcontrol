@@ -434,7 +434,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     {
                         emit valueChanged(uasId, "speed", "m/s", pos.v, time);
                         //qDebug() << "GOT GPS RAW";
-                        emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
+                       // emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
                     }
                     else
                     {

@@ -49,15 +49,15 @@ border: 1px solid #777777;
     }
 
  QCheckBox::indicator:checked {
-     background-color: #555555;
+     background-color: #379AC3;
  }
 
  QCheckBox::indicator:checked:hover {
-     background-color: #555555;
+     background-color: #379AC3;
  }
 
  QCheckBox::indicator:checked:pressed {
-     background-color: #555555;
+     background-color: #379AC3;
  }
 
  QCheckBox::indicator:indeterminate:hover {
@@ -189,10 +189,12 @@ QPushButton {
 
 QPushButton:checked {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #404040, stop: 1 #808080);
+    border: 2px solid #379AC3;
 }
 
 QPushButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
+    border: 2px solid #379AC3;
 }
 
 QToolButton {
@@ -207,10 +209,12 @@ QToolButton {
 
 QToolButton:checked {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #090909, stop: 1 #353535);
+    border: 2px solid #379AC3;
 }
 
 QToolButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
+    border: 2px solid #379AC3;
 }
 
 QToolTip {
