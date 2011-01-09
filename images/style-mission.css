@@ -222,6 +222,21 @@ QToolTip {
 	border-radius: 3px;
 }
 
+QSlider::groove:horizontal {
+     border: 1px solid #999999;
+     height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
+     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4A4A4F, stop:1 #4A4A4F);
+     margin: 2px 0;
+ }
+
+ QSlider::handle:horizontal {
+     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
+     border: 2px solid #379AC3;
+     width: 18px;
+     margin: -5px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+     border-radius: 3px;
+ }
+
 QPushButton#forceLandButton {
 	font-weight: bold;
 	min-height: 30px;
