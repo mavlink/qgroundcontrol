@@ -114,7 +114,7 @@ void QGCMAVLinkLogPlayer::setAccelerationFactorInt(int factor)
 
     //qDebug() << "FACTOR:" << accelerationFactor;
 
-    ui->speedLabel->setText(tr("Speed: %1X").arg(accelerationFactor, 0, 'f', 2));
+    ui->speedLabel->setText(tr("Speed: %1X").arg(accelerationFactor, 5, 'f', 2, '0'));
 }
 
 void QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
