@@ -137,7 +137,7 @@ protected:
 
     UASInterface* uas;                 ///< The uas currently monitored
     QMap<QString, float> values;       ///< The variables this HUD displays
-    QMap<QString, float> units;       ///< The units
+    QMap<QString, QString> units;       ///< The units
     QMap<QString, float> valuesDot;    ///< First derivative of the variable
     QMap<QString, float> valuesMean;   ///< Mean since system startup for this variable
     QMap<QString, int> valuesCount;    ///< Number of values received so far

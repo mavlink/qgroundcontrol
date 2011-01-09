@@ -95,6 +95,10 @@ public slots:
     void stopLogging();
     /** @brief Refresh the view */
     void refresh();
+    /** @brief Write the current configuration to disk */
+    void writeSettings();
+    /** @brief Read the current configuration from disk */
+    void readSettings();
 
 protected:
     void addCurveToList(QString curve);
@@ -133,6 +137,7 @@ protected:
     QToolButton* scalingLogButton;
     QToolButton* logButton;
     QPointer<QCheckBox> unitsCheckBox;
+    QPointer<QCheckBox> timeButton;
 
     QFile* logFile;
     unsigned int logindex;
@@ -140,6 +145,7 @@ protected:
     quint64 logStartTime;
     QTimer* updateTimer;
     LogCompressor* compressor;
+    static const int updateInterval = 400; ///< Time between number updates, in milliseconds
 
     static const int MAX_CURVE_MENUITEM_NUMBER = 8;
     static const int PAGESTEP_TIME_SCROLLBAR_VALUE = (MAX_TIME_SCROLLBAR_VALUE - MIN_TIME_SCROLLBAR_VALUE) / 10;

@@ -86,7 +86,10 @@ MainWindow::MainWindow(QWidget *parent):
     }
     else
     {
-        currentView = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", currentView).toInt();
+        if (settings.value("CURRENT_VIEW", VIEW_PILOT) != VIEW_PILOT)
+        {
+            currentView = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", currentView).toInt();
+        }
     }
 
     // Check if the settings exist, instantiate defaults if necessary
@@ -316,8 +319,8 @@ void MainWindow::buildPxWidgets()
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
     acceptList2->append("0,abs pressure,hPa,65500");
-    acceptList2->append("-2000,accel. X,raw,2000,s");
-    acceptList2->append("-2000,accel. Y,raw,2000,s");
+    acceptList2->append("-999,accel. X,raw,999,s");
+    acceptList2->append("-999,accel. Y,raw,999,s");
 
     if (!linechartWidget)
     {

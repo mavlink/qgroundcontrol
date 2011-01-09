@@ -63,11 +63,8 @@ public slots:
     /** @brief Set the currently monitored UAS */
     void setActiveUAS(UASInterface* uas);
 
-    /** @brief Update a HUD value */
-    void updateValue(UASInterface* uas, QString name, double value, quint64 msec);
-
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp);
-    void updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
+//    void updateAttitudeThrustSetPoint(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     void updateBattery(UASInterface*, double, double, int);
     void receiveHeartbeat(UASInterface*);
     void updateThrust(UASInterface*, double);
@@ -103,8 +100,6 @@ protected slots:
 
     void drawChangeRateStrip(float xRef, float yRef, float height, float minRate, float maxRate, float value, QPainter* painter);
     void drawChangeIndicatorGauge(float xRef, float yRef, float radius, float expectedMaxChange, float value, const QColor& color, QPainter* painter, bool solid=true);
-    void drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter);
-
 
     void drawPolygon(QPolygonF refPolygon, QPainter* painter);
 
@@ -130,11 +125,6 @@ protected:
     QImage* image; ///< Double buffer image
     QImage glImage; ///< The background / camera image
     UASInterface* uas; ///< The uas currently monitored
-    QMap<QString, float> values; ///< The variables this HUD displays
-    QMap<QString, float> valuesDot; ///< First derivative of the variable
-    QMap<QString, float> valuesMean; ///< Mean since system startup for this variable
-    QMap<QString, int> valuesCount; ///< Number of values received so far
-    QMap<QString, quint64> lastUpdate; ///< The last update time for this variable
     float yawInt; ///< The yaw integral. Used to damp the yaw indication.
     QString mode; ///< The current vehicle mode
     QString state; ///< The current vehicle state
@@ -188,7 +178,20 @@ protected:
     float roll;
     float pitch;
     float yaw;
-    float yawDiff;
+    float rollLP;
+    float pitchLP;
+    float yawLP;
+    double yawDiff;
+    double xPos;
+    double yPos;
+    double zPos;
+    double xSpeed;
+    double ySpeed;
+    double zSpeed;
+    double lat;
+    double lon;
+    double alt;
+    float load;
     void paintEvent(QPaintEvent *event);
 
 };

@@ -66,6 +66,8 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     setWindowTitle(title);
     //m_ui->setupUi(this);
 
+    setAutoFillBackground(true);
+
     // Add all items in accept list to gauge
     if (plotList)
     {
@@ -150,7 +152,7 @@ HDDisplay::~HDDisplay()
 
 QSize HDDisplay::sizeHint() const
 {
-    return QSize(400, 400*(vwidth/vheight));
+    return QSize(400, 400.0f*(vwidth/vheight)*1.1f);
 }
 
 void HDDisplay::enableGLRendering(bool enable)
@@ -163,6 +165,35 @@ void HDDisplay::triggerUpdate()
     // Only repaint the regions necessary
     update(this->geometry());
 }
+
+//void HDDisplay::updateValue(UASInterface* uas, const QString& name, const QString& unit, double value, quint64 msec)
+//{
+//    // UAS is not needed
+//    Q_UNUSED(uas);
+
+//    if (!isnan(value) && !isinf(value))
+//    {
+//        // Update mean
+//        const float oldMean = valuesMean.value(name, 0.0f);
+//        const int meanCount = valuesCount.value(name, 0);
+//        double mean = (oldMean * meanCount +  value) / (meanCount + 1);
+//        if (isnan(mean) || isinf(mean)) mean = 0.0;
+//        valuesMean.insert(name, mean);
+//        valuesCount.insert(name, meanCount + 1);
+//        // Two-value sliding average
+//        double dot = (valuesDot.value(name) + (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f))/2.0f;
+//        if (isnan(dot) || isinf(dot))
+//        {
+//            dot = 0.0;
+//        }
+//        valuesDot.insert(name, dot);
+//        values.insert(name, value);
+//        lastUpdate.insert(name, msec);
+//        //}
+
+//        //qDebug() << __FILE__ << __LINE__ << "VALUE:" << value << "MEAN:" << mean << "DOT:" << dot << "COUNT:" << meanCount;
+//    }
+//}
 
 void HDDisplay::paintEvent(QPaintEvent * event)
 {
@@ -180,7 +211,12 @@ void HDDisplay::contextMenuEvent (QContextMenuEvent* event)
     menu.addActions(getItemRemoveActions());
     menu.addSeparator();
     menu.addAction(setColumnsAction);
-    menu.addAction(setTitleAction);
+    // Title change would ruin settings
+    // this can only be allowed once
+    // HDDisplays are instantiated
+    // by a factory method based on
+    // QSettings
+    //menu.addAction(setTitleAction);
     menu.exec(event->globalPos());
 }
 
@@ -249,11 +285,20 @@ void HDDisplay::addGauge()
     QStringList items;
     for (int i = 0; i < values.count(); ++i)
     {
-        items.append(QString("%1,%2,%3,%4").arg("-180").arg(values.keys().at(i)).arg(units.keys().at(i)).arg("+180"));
+        QString key = values.keys().at(i);
+        QString unit = units.value(key);
+        if (unit.contains("deg") || unit.contains("rad"))
+        {
+            items.append(QString("%1,%2,%3,%4,s").arg("-180").arg(key).arg(unit).arg("+180"));
+        }
+        else
+        {
+            items.append(QString("%1,%2,%3,%4").arg("-180").arg(key).arg(unit).arg("+180"));
+        }
     }
     bool ok;
     QString item = QInputDialog::getItem(this, tr("Add Gauge Instrument"),
-                                         tr("Format: min, curve name, max"), items, 0, true, &ok);
+                                         tr("Format: min, curve name, max[,s]"), items, 0, true, &ok);
     if (ok && !item.isEmpty())
     {
         addGauge(item);
@@ -573,6 +618,11 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     }
     circlePen.setWidth(refLineWidthToPen(radius/12.0f));
     circlePen.setColor(color);
+
+    if (symmetric)
+    {
+        circlePen.setStyle(Qt::DashLine);
+    }
     painter->setBrush(Qt::NoBrush);
     painter->setPen(circlePen);
     drawCircle(xRef, yRef+nameHeight, radius, 0.0f, color, painter);
@@ -634,8 +684,8 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     QPolygonF p(6);
 
     p.replace(0, QPointF(xRef-maxWidth/2.0f, yRef+nameHeight+radius * 0.05f));
-    p.replace(1, QPointF(xRef-minWidth/2.0f, yRef+nameHeight+radius * 0.9f));
-    p.replace(2, QPointF(xRef+minWidth/2.0f, yRef+nameHeight+radius * 0.9f));
+    p.replace(1, QPointF(xRef-minWidth/2.0f, yRef+nameHeight+radius * 0.89f));
+    p.replace(2, QPointF(xRef+minWidth/2.0f, yRef+nameHeight+radius * 0.89f));
     p.replace(3, QPointF(xRef+maxWidth/2.0f, yRef+nameHeight+radius * 0.05f));
     p.replace(4, QPointF(xRef,               yRef+nameHeight+radius * 0.0f));
     p.replace(5, QPointF(xRef-maxWidth/2.0f, yRef+nameHeight+radius * 0.05f));
@@ -818,6 +868,7 @@ void HDDisplay::updateValue(const int uasId, const QString& name, const QString&
     valuesCount.insert(name, meanCount + 1);
     valuesDot.insert(name, (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f));
     values.insert(name, value);
+    units.insert(name, unit);
     lastUpdate.insert(name, msec);
 }
 

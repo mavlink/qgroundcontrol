@@ -5,6 +5,7 @@
 #include <QFile>
 
 #include "MAVLinkProtocol.h"
+#include "MAVLinkSimulationLink.h"
 
 namespace Ui {
     class QGCMAVLinkLogPlayer;
@@ -30,22 +31,30 @@ public slots:
     void play();
     /** @brief Pause the logfile */
     void pause();
+    /** @brief Reset the logfile */
+    void reset();
     /** @brief Select logfile */
     void selectLogFile();
     /** @brief Load log file */
     void loadLogFile(const QString& file);
+    /** @brief The logging mainloop */
+    void logLoop();
+    /** @brief Set acceleration factor in percent */
+    void setAccelerationFactorInt(int factor);
 
 protected:
     int lineCounter;
     int totalLines;
     quint64 startTime;
     quint64 endTime;
-    quint64 currentTime;
+    quint64 currentStartTime;
+    float accelerationFactor;
     MAVLinkProtocol* mavlink;
+    MAVLinkSimulationLink* logLink;
     QFile logFile;
     QTimer loopTimer;
+    int loopCounter;
     void changeEvent(QEvent *e);
-    void readLine();
 
 private:
     Ui::QGCMAVLinkLogPlayer *ui;
