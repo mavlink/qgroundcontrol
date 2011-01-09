@@ -80,7 +80,7 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     restoreState();
 
     // Set minimum size
-    setMinimumSize(80, 80);
+    setMinimumSize(60, 60);
     // Set preferred size
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
