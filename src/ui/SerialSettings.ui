@@ -26,6 +26,15 @@
    </item>
    <item row="0" column="1">
     <widget class="QComboBox" name="portName">
+     <property name="toolTip">
+      <string>The serial port to which the system is connected. All ports listed here should work.</string>
+     </property>
+     <property name="statusTip">
+      <string>The serial port to which the system is connected. All ports listed here should work.</string>
+     </property>
+     <property name="whatsThis">
+      <string>The serial port to which the system is connected. All ports listed here should work.</string>
+     </property>
      <property name="editable">
       <bool>true</bool>
      </property>
@@ -48,6 +57,15 @@
    </item>
    <item row="1" column="1">
     <widget class="QComboBox" name="baudRate">
+     <property name="toolTip">
+      <string>The data transmission rate. If unsure 57600 and 115200 are very common rates.</string>
+     </property>
+     <property name="statusTip">
+      <string>The data transmission rate. If unsure 57600 and 115200 are very common rates.</string>
+     </property>
+     <property name="whatsThis">
+      <string>The data transmission rate. If unsure 57600 and 115200 are very common rates.</string>
+     </property>
      <property name="editable">
       <bool>false</bool>
      </property>
@@ -190,6 +208,15 @@
    </item>
    <item row="2" column="1">
     <widget class="QCheckBox" name="flowControlCheckBox">
+     <property name="toolTip">
+      <string>Activate / deactivate hardware flow control. Commonly deactivated</string>
+     </property>
+     <property name="statusTip">
+      <string>Activate / deactivate hardware flow control. Commonly deactivated</string>
+     </property>
+     <property name="whatsThis">
+      <string>Activate / deactivate hardware flow control. Commonly deactivated</string>
+     </property>
      <property name="text">
       <string>Active</string>
      </property>
@@ -206,6 +233,15 @@
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QRadioButton" name="parNone">
+       <property name="toolTip">
+        <string>Set the parity. In most cases no parity (None) is used.</string>
+       </property>
+       <property name="statusTip">
+        <string>Set the parity. In most cases no parity (None) is used.</string>
+       </property>
+       <property name="whatsThis">
+        <string>Set the parity. In most cases no parity (None) is used.</string>
+       </property>
        <property name="text">
         <string>None</string>
        </property>
@@ -216,6 +252,15 @@
      </item>
      <item>
       <widget class="QRadioButton" name="parOdd">
+       <property name="toolTip">
+        <string>Set the parity. In most cases no parity (None) is used.</string>
+       </property>
+       <property name="statusTip">
+        <string>Set the parity. In most cases no parity (None) is used.</string>
+       </property>
+       <property name="whatsThis">
+        <string>Set the parity. In most cases no parity (None) is used.</string>
+       </property>
        <property name="text">
         <string>Odd</string>
        </property>
@@ -223,6 +268,15 @@
      </item>
      <item>
       <widget class="QRadioButton" name="parEven">
+       <property name="toolTip">
+        <string>Set the parity. In most cases no parity (None) is used.</string>
+       </property>
+       <property name="statusTip">
+        <string>Set the parity. In most cases no parity (None) is used.</string>
+       </property>
+       <property name="whatsThis">
+        <string>Set the parity. In most cases no parity (None) is used.</string>
+       </property>
        <property name="text">
         <string>Even</string>
        </property>
@@ -251,6 +305,15 @@
        <height>0</height>
       </size>
      </property>
+     <property name="toolTip">
+      <string>Number of data bits per symbol. This is almost always 8.</string>
+     </property>
+     <property name="statusTip">
+      <string>Number of data bits per symbol. This is almost always 8.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Number of data bits per symbol. This is almost always 8.</string>
+     </property>
      <property name="minimum">
       <number>5</number>
      </property>
@@ -276,6 +339,15 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="toolTip">
+      <string>Number of stop bits per symbol. This is almost always 2.</string>
+     </property>
+     <property name="statusTip">
+      <string>Number of stop bits per symbol. This is almost always 2.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Number of stop bits per symbol. This is almost always 2.</string>
      </property>
      <property name="frame">
       <bool>true</bool>
@@ -315,6 +387,12 @@
    <property name="toolTip">
     <string>Delete this link</string>
    </property>
+   <property name="statusTip">
+    <string>Delete this link</string>
+   </property>
+   <property name="whatsThis">
+    <string>Link delete button</string>
+   </property>
   </action>
   <action name="actionConnect">
    <property name="text">
@@ -323,12 +401,24 @@
    <property name="toolTip">
     <string>Connect this link</string>
    </property>
+   <property name="statusTip">
+    <string>Connect this link</string>
+   </property>
+   <property name="whatsThis">
+    <string>Connect this link</string>
+   </property>
   </action>
   <action name="actionClose">
    <property name="text">
     <string>Close</string>
    </property>
    <property name="toolTip">
+    <string>Close the configuration window</string>
+   </property>
+   <property name="statusTip">
+    <string>Close the configuration window</string>
+   </property>
+   <property name="whatsThis">
     <string>Close the configuration window</string>
    </property>
   </action>

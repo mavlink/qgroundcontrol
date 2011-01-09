@@ -26,6 +26,15 @@
    </item>
    <item row="0" column="3" colspan="3">
     <widget class="QPushButton" name="selectFileButton">
+     <property name="toolTip">
+      <string>Select the logfile to replay</string>
+     </property>
+     <property name="statusTip">
+      <string>Select the logfile to replay</string>
+     </property>
+     <property name="whatsThis">
+      <string>Select the logfile to replay</string>
+     </property>
      <property name="text">
       <string>Select File</string>
      </property>
@@ -33,6 +42,15 @@
    </item>
    <item row="1" column="1" colspan="5">
     <widget class="QSlider" name="speedSlider">
+     <property name="toolTip">
+      <string>Set the replay speed</string>
+     </property>
+     <property name="statusTip">
+      <string>Set the replay speed</string>
+     </property>
+     <property name="whatsThis">
+      <string>Set the replay speed</string>
+     </property>
      <property name="minimum">
       <number>1</number>
      </property>
@@ -59,6 +77,15 @@
    </item>
    <item row="3" column="5">
     <widget class="QToolButton" name="pauseButton">
+     <property name="toolTip">
+      <string>Pause the logfile</string>
+     </property>
+     <property name="statusTip">
+      <string>Pause the logfile</string>
+     </property>
+     <property name="whatsThis">
+      <string>Pause the logfile</string>
+     </property>
      <property name="text">
       <string>...</string>
      </property>
@@ -76,6 +103,15 @@
    </item>
    <item row="4" column="0" colspan="6">
     <widget class="QProgressBar" name="progressBar">
+     <property name="toolTip">
+      <string>Percent of the logfile replayed</string>
+     </property>
+     <property name="statusTip">
+      <string>Percent of the logfile replayed</string>
+     </property>
+     <property name="whatsThis">
+      <string>Percent of the logfile replayed</string>
+     </property>
      <property name="value">
       <number>0</number>
      </property>
@@ -83,6 +119,15 @@
    </item>
    <item row="1" column="0">
     <widget class="QLabel" name="speedLabel">
+     <property name="toolTip">
+      <string>Current replay speed</string>
+     </property>
+     <property name="statusTip">
+      <string>Current replay speed</string>
+     </property>
+     <property name="whatsThis">
+      <string>Current replay speed</string>
+     </property>
      <property name="text">
       <string>Speed</string>
      </property>
@@ -90,6 +135,15 @@
    </item>
    <item row="3" column="4">
     <widget class="QToolButton" name="playButton">
+     <property name="toolTip">
+      <string>Start to replay the logfile</string>
+     </property>
+     <property name="statusTip">
+      <string>Start to replay the logfile</string>
+     </property>
+     <property name="whatsThis">
+      <string>Start to replay the logfile</string>
+     </property>
      <property name="text">
       <string>...</string>
      </property>

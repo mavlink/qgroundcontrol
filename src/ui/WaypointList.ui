@@ -36,8 +36,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>466</width>
-        <height>163</height>
+        <width>464</width>
+        <height>158</height>
        </rect>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
@@ -48,7 +48,17 @@
         <number>4</number>
        </property>
        <item>
-        <widget class="QWidget" name="listWidget" native="true"/>
+        <widget class="QWidget" name="listWidget" native="true">
+         <property name="toolTip">
+          <string>Waypoint list. The list is empty until you issue a read command or add waypoints.</string>
+         </property>
+         <property name="statusTip">
+          <string>Waypoint list. The list is empty until you issue a read command or add waypoints.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Waypoint list. The list is empty until you issue a read command or add waypoints.</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -56,6 +66,15 @@
    </item>
    <item row="2" column="8">
     <widget class="QPushButton" name="readButton">
+     <property name="toolTip">
+      <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
+     </property>
+     <property name="statusTip">
+      <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
+     </property>
      <property name="text">
       <string>Read</string>
      </property>
@@ -67,6 +86,15 @@
    </item>
    <item row="2" column="9">
     <widget class="QPushButton" name="transmitButton">
+     <property name="toolTip">
+      <string>Transmit all waypoints on this list to the MAV.</string>
+     </property>
+     <property name="statusTip">
+      <string>Transmit all waypoints on this list to the MAV.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Transmit all waypoints on this list to the MAV.</string>
+     </property>
      <property name="text">
       <string>Write</string>
      </property>
@@ -78,6 +106,15 @@
    </item>
    <item row="3" column="0" colspan="10">
     <widget class="QLabel" name="statusLabel">
+     <property name="toolTip">
+      <string>The current waypoint transmission status</string>
+     </property>
+     <property name="statusTip">
+      <string>The current waypoint transmission status</string>
+     </property>
+     <property name="whatsThis">
+      <string>The current waypoint transmission status</string>
+     </property>
      <property name="text">
       <string>TextLabel</string>
      </property>
@@ -85,6 +122,15 @@
    </item>
    <item row="2" column="6">
     <widget class="QToolButton" name="addButton">
+     <property name="toolTip">
+      <string>Add a new waypoint to this list. Transmit via write to the MAV.</string>
+     </property>
+     <property name="statusTip">
+      <string>Add a new waypoint to this list. Transmit via write to the MAV.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Add a new waypoint to this list. Transmit via write to the MAV.</string>
+     </property>
      <property name="text">
       <string>...</string>
      </property>
@@ -96,6 +142,15 @@
    </item>
    <item row="2" column="3">
     <widget class="QPushButton" name="loadButton">
+     <property name="toolTip">
+      <string>Load waypoints from a file on the local harddisk. Does not load the waypoints on the MAV.</string>
+     </property>
+     <property name="statusTip">
+      <string>Load waypoints from a file on the local harddisk. Does not load the waypoints on the MAV.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Load waypoints from a file on the local harddisk. Does not load the waypoints on the MAV.</string>
+     </property>
      <property name="text">
       <string>Load WPs</string>
      </property>
@@ -103,6 +158,15 @@
    </item>
    <item row="2" column="2">
     <widget class="QPushButton" name="saveButton">
+     <property name="toolTip">
+      <string>Save waypoints to a file on the local harddisk. Does not save them on the MAV.</string>
+     </property>
+     <property name="statusTip">
+      <string>Save waypoints to a file on the local harddisk. Does not save them on the MAV.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Save waypoints to a file on the local harddisk. Does not save them on the MAV.</string>
+     </property>
      <property name="text">
       <string>Save WPs</string>
      </property>
@@ -126,6 +190,12 @@
      <property name="toolTip">
       <string>Set the current vehicle position as new waypoint</string>
      </property>
+     <property name="statusTip">
+      <string>Set the current vehicle position as new waypoint</string>
+     </property>
+     <property name="whatsThis">
+      <string>Set the current vehicle position as new waypoint</string>
+     </property>
      <property name="text">
       <string>...</string>
      </property>
@@ -136,9 +206,18 @@
     </widget>
    </item>
    <item row="2" column="7">
-    <widget class="QPushButton" name="clearWPListButton">
+    <widget class="QToolButton" name="clearWPListButton">
+     <property name="toolTip">
+      <string>Delete all waypoints from this list. You have to click write to clear the list on the MAV as well.</string>
+     </property>
+     <property name="statusTip">
+      <string>Delete all waypoints from this list. You have to click write to clear the list on the MAV as well.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Delete all waypoints from this list. You have to click write to clear the list on the MAV as well.</string>
+     </property>
      <property name="text">
-      <string/>
+      <string>...</string>
      </property>
      <property name="icon">
       <iconset resource="../../mavground.qrc">
