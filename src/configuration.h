@@ -2,6 +2,7 @@
 #define CONFIGURATION_H
 
 #include "mavlink.h"
+#include <QString>
 
 /** @brief Polling interval in ms */
 #ifdef MAVLINK_ENABLED_SLUGS
@@ -16,6 +17,14 @@
 #define WITH_TEXT_TO_SPEECH 1
 
 #define QGC_APPLICATION_NAME "QGroundControl"
-#define QGC_APPLICATION_VERSION "v. 0.8.0 (Beta)"
+#define QGC_APPLICATION_VERSION "v. 0.8.1 (Alpha)"
+
+namespace QGC
+
+{
+    const QString APPNAME = "QGROUNDCONTROL";
+    const QString COMPANYNAME = "OPENMAV";
+    const int APPLICATIONVERSION = 80; // 0.8.0
+}
 
 #endif // CONFIGURATION_H

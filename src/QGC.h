@@ -5,6 +5,8 @@
 #include <QColor>
 #include <QThread>
 
+#include "configuration.h"
+
 namespace QGC
 {
     const QColor colorCyan(55, 154, 195);
@@ -18,9 +20,7 @@ namespace QGC
     quint64 groundTimeUsecs();
     int applicationVersion();
 
-    const QString APPNAME = "QGROUNDCONTROL";
-    const QString COMPANYNAME = "OPENMAV";
-    const int APPLICATIONVERSION = 80; // 0.8.0
+
 
     class SLEEP : public QThread
     {

@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QAction>
 
 #include "configuration.h"
+#include "QGC.h"
 #include "Core.h"
 #include "MG.h"
 #include "MainWindow.h"
@@ -68,6 +69,25 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
     this->setOrganizationName(QLatin1String("OPENMAV"));
     this->setOrganizationDomain("http://qgroundcontrol.org");
+
+    // Check application settings
+    // clear them if they mismatch
+    // QGC then falls back to default
+    QSettings settings;
+    if (settings.contains("QGC_APPLICATION_VERSION_INT"))
+    {
+        QString qgcVersion = settings.value("QGC_APPLICATION_VERSION").toString();
+        if (qgcVersion != QGC_APPLICATION_VERSION)
+        {
+            settings.clear();
+        }
+    }
+    else
+    {
+        // If application version is not set, clear settings anyway
+        settings.clear();
+    }
+    settings.sync();
 
     // Show splash screen
     QPixmap splashImage(":images/splash.png");
