@@ -305,6 +305,7 @@ protected:
 
     void clearView();
 
+    void buildCustomWidget();
     void buildCommonWidgets();
     void buildPxWidgets();
     void buildSlugsWidgets();

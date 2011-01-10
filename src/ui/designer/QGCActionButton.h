@@ -22,6 +22,8 @@ public slots:
     void setActionButtonName(QString text);
     void startEditMode();
     void endEditMode();
+    void writeSettings(QSettings& settings);
+    void readSettings(const QSettings& settings);
 
 private:
     Ui::QGCActionButton *ui;

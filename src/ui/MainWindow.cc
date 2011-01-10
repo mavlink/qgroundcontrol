@@ -66,12 +66,8 @@ MainWindow::MainWindow(QWidget *parent):
         toolsMenuActions(),
         currentView(VIEW_ENGINEER),
         aboutToCloseFlag(false),
-        changingViewsFlag(false),
-        settings()
+        changingViewsFlag(false)
 {
-    // Get current settings
-    settings.sync();
-
     if (!settings.contains("CURRENT_VIEW"))
     {
         // Set this view as default view
@@ -132,6 +128,7 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Setup user interface
     ui.setupUi(this);
+    ui.actionNewCustomWidget->setEnabled(false);
 
     setVisible(false);
 
@@ -222,6 +219,43 @@ QString MainWindow::getWindowStateKey()
 QString MainWindow::getWindowGeometryKey()
 {
     return QString::number(currentView)+"/geometry";
+}
+
+void MainWindow::buildCustomWidget()
+{
+    // Show custom widgets only if UAS is connected
+    if (UASManager::instance()->getActiveUAS() != NULL)
+    {
+        // Enable custom widgets
+        ui.actionNewCustomWidget->setEnabled(true);
+
+        // Create custom widgets
+        QList<QGCToolWidget*> widgets = QGCToolWidget::createWidgetsFromSettings(this);
+
+        if (widgets.size() > 0)
+        {
+            ui.menuTools->addSeparator();
+        }
+
+        for(int i = 0; i < widgets.size(); ++i)
+        {
+            qDebug() << "ADDING WIDGET #" << i << widgets.at(i);
+            // Check if this widget already has a parent, do not create it in this case
+            QDockWidget* dock = dynamic_cast<QDockWidget*>(widgets.at(i)->parentWidget());
+            if (!dock)
+            {
+                QDockWidget* dock = new QDockWidget(widgets.at(i)->windowTitle(), this);
+                dock->setWidget(widgets.at(i));
+                connect(widgets.at(i), SIGNAL(destroyed()), dock, SLOT(deleteLater()));
+                QAction* showAction = new QAction(widgets.at(i)->windowTitle(), this);
+                connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
+                connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
+                widgets.at(i)->setMainMenuAction(showAction);
+                ui.menuTools->addAction(showAction);
+                addDockWidget(Qt::BottomDockWidgetArea, dock);
+            }
+        }
+    }
 }
 
 void MainWindow::buildCommonWidgets()
@@ -824,10 +858,23 @@ void MainWindow::connectCommonWidgets()
 void MainWindow::createCustomWidget()
 {
     //qDebug() << "ADDING CUSTOM WIDGET";
-    QGCToolWidget* tool = new QGCToolWidget(this);
+    QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool", this);
+
+    if (QGCToolWidget::instances()->size() < 2)
+    {
+        // This is the first widget
+        ui.menuTools->addSeparator();
+    }
+
     QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
+    connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
     dock->setWidget(tool);
-    this->addDockWidget(Qt::LeftDockWidgetArea, dock);
+    QAction* showAction = new QAction("Show Unnamed Tool", this);
+    connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
+    connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
+    tool->setMainMenuAction(showAction);
+    ui.menuTools->addAction(showAction);
+    this->addDockWidget(Qt::BottomDockWidgetArea, dock);
     dock->setVisible(true);
 }
 
@@ -1346,6 +1393,9 @@ void MainWindow::UASCreated(UASInterface* uas)
     }
 
     if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
+
+    // Custom widgets, added last to all menus and layouts
+    buildCustomWidget();
 }
 
 /**

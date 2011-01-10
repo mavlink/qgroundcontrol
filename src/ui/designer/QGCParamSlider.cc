@@ -53,6 +53,7 @@ void QGCParamSlider::endEditMode()
     ui->maxSpinBox->hide();
     ui->typeComboBox->hide();
     isInEditMode = false;
+    emit editingFinished();
 }
 
 void QGCParamSlider::sendParameter()
@@ -77,4 +78,14 @@ void QGCParamSlider::changeEvent(QEvent *e)
     default:
         break;
     }
+}
+
+void QGCParamSlider::writeSettings(QSettings& settings)
+{
+
+}
+
+void QGCParamSlider::readSettings(const QSettings& settings)
+{
+
 }
