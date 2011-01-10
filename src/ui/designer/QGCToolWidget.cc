@@ -208,7 +208,10 @@ QList<QGCToolWidgetItem*>* QGCToolWidget::itemList()
 void QGCToolWidget::addParam()
 {
     QGCParamSlider* slider = new QGCParamSlider(this);
-    if (ui->hintLabel) delete ui->hintLabel;
+    if (ui->hintLabel)
+    {
+        ui->hintLabel->deleteLater();
+    }
     toolLayout->addWidget(slider);
     slider->startEditMode();
 }
@@ -216,14 +219,20 @@ void QGCToolWidget::addParam()
 void QGCToolWidget::addAction()
 {
     QGCActionButton* button = new QGCActionButton(this);
-    if (ui->hintLabel) delete ui->hintLabel;
+    if (ui->hintLabel)
+    {
+        ui->hintLabel->deleteLater();
+    }
     toolLayout->addWidget(button);
     button->startEditMode();
 }
 
 void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
 {
-    if (ui->hintLabel) delete ui->hintLabel;
+    if (ui->hintLabel)
+    {
+        ui->hintLabel->deleteLater();
+    }
     toolLayout->addWidget(widget);
 }
 
