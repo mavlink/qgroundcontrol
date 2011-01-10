@@ -80,14 +80,20 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     // clear them if they mismatch
     // QGC then falls back to default
     QSettings settings;
+
+    // Show user an upgrade message if QGC got upgraded
+    bool upgraded = false;
+    QString lastApplicationVersion("");
     if (settings.contains("QGC_APPLICATION_VERSION"))
     {
         QString qgcVersion = settings.value("QGC_APPLICATION_VERSION").toString();
         if (qgcVersion != QGC_APPLICATION_VERSION)
         {
+            lastApplicationVersion = qgcVersion;
             settings.clear();
             // Write current application version
             settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
+            upgraded = true;
         }
     }
     else
@@ -156,8 +162,11 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     //mainWindow->addLink(simulationLink);
 
     mainWindow = MainWindow::instance();
-        // Remove splash screen
+
+    // Remove splash screen
     splashScreen->finish(mainWindow);
+
+    if (upgraded) mainWindow->showInfoMessage(tr("Default Settings Loaded"), tr("QGroundControl has been upgraded from version %1 to version %2. Some of your user preferences have been reset to defaults for safety reasons. Please adjust them where needed.").arg(lastApplicationVersion).arg(QGC_APPLICATION_VERSION));
 
     // Check if link could be connected
     if (!udpLink->connect())
