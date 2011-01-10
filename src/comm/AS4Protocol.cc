@@ -43,6 +43,8 @@ This file is part of the QGROUNDCONTROL project
 #include <inttypes.h>
 #include <iostream>
 
+#include "QGC.h"
+
 
 AS4Protocol::AS4Protocol()
 {
@@ -84,6 +86,10 @@ AS4Protocol::~AS4Protocol()
 
 void AS4Protocol::run()
 {
+    forever
+    {
+        QGC::SLEEP::msleep(5000);
+    }
 }
 
 

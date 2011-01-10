@@ -1,24 +1,4 @@
-/*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
+/*===================================================================
 ======================================================================*/
 
 /**
@@ -59,7 +39,7 @@ MAVLinkProtocol::MAVLinkProtocol() :
         heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
         m_heartbeatsEnabled(false),
         m_loggingEnabled(false),
-        m_logfile(NULL),
+        m_logfile(new QFile(QCoreApplication::applicationDirPath()+"/mavlink_packetlog.mavlink")),
         m_enable_version_check(true),
         versionMismatchIgnore(false)
 {
@@ -86,6 +66,7 @@ MAVLinkProtocol::~MAVLinkProtocol()
 {
     if (m_logfile)
     {
+        m_logfile->flush();
         m_logfile->close();
         delete m_logfile;
     }
@@ -95,11 +76,15 @@ MAVLinkProtocol::~MAVLinkProtocol()
 
 void MAVLinkProtocol::run()
 {
+    forever
+    {
+        QGC::SLEEP::msleep(5000);
+    }
 }
 
 QString MAVLinkProtocol::getLogfileName()
 {
-    return QCoreApplication::applicationDirPath()+"/mavlink.log";
+    return m_logfile->fileName();
 }
 
 /**
@@ -124,12 +109,18 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Log data
             if (m_loggingEnabled)
             {
-                uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-                quint64 time = MG::TIME::getGroundTimeNowUsecs();
+                int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);
+                uint8_t buf[len];
+                quint64 time = QGC::groundTimeUsecs();
                 memcpy(buf, (void*)&time, sizeof(quint64));
+                //                int packetlen =
+//                quint64 checktime = *((quint64*)buf);
+//                qDebug() << "TIME" << time << "CHECKTIME:" << checktime;
                 mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
-                m_logfile->write((const char*) buf);
-                qDebug() << "WROTE LOGFILE";
+                QByteArray b((const char*)buf, len);
+                //int packetlen =
+                if(m_logfile->write(b) < MAVLINK_MAX_PACKET_LEN+sizeof(quint64)) qDebug() << "WRITING TO LOG FAILED!";
+                //qDebug() << "WROTE LOGFILE";
             }
 
             // ORDER MATTERS HERE!
@@ -170,7 +161,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     if (!versionMismatchIgnore)
                     {
                         emit protocolStatusMessage(tr("The MAVLink protocol version on the MAV and QGroundControl mismatch!"),
-                                                                 tr("It is unsafe to use different MAVLink versions. QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
+                                                   tr("It is unsafe to use different MAVLink versions. QGroundControl therefore refuses to connect to system %1, which sends MAVLink version %2 (QGroundControl uses version %3).").arg(message.sysid).arg(heartbeat.mavlink_version).arg(MAVLINK_VERSION));
                         versionMismatchIgnore = true;
                     }
 
@@ -189,37 +180,37 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     break;
                 case MAV_AUTOPILOT_PIXHAWK:
                     {
-                    // Fixme differentiate between quadrotor and coaxial here
-                    PxQuadMAV* mav = new PxQuadMAV(this, message.sysid);
-                    // Connect this robot to the UAS object
-                    // it is IMPORTANT here to use the right object type,
-                    // else the slot of the parent object is called (and thus the special
-                    // packets never reach their goal)
-                    connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                    uas = mav;
-                }
+                        // Fixme differentiate between quadrotor and coaxial here
+                        PxQuadMAV* mav = new PxQuadMAV(this, message.sysid);
+                        // Connect this robot to the UAS object
+                        // it is IMPORTANT here to use the right object type,
+                        // else the slot of the parent object is called (and thus the special
+                        // packets never reach their goal)
+                        connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+                        uas = mav;
+                    }
                     break;
                 case MAV_AUTOPILOT_SLUGS:
                     {
-                    SlugsMAV* mav = new SlugsMAV(this, message.sysid);
-                    // Connect this robot to the UAS object
-                    // it is IMPORTANT here to use the right object type,
-                    // else the slot of the parent object is called (and thus the special
-                    // packets never reach their goal)
-                    connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                    uas = mav;
-                }
+                        SlugsMAV* mav = new SlugsMAV(this, message.sysid);
+                        // Connect this robot to the UAS object
+                        // it is IMPORTANT here to use the right object type,
+                        // else the slot of the parent object is called (and thus the special
+                        // packets never reach their goal)
+                        connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+                        uas = mav;
+                    }
                     break;
                 case MAV_AUTOPILOT_ARDUPILOTMEGA:
                     {
-                    ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(this, message.sysid);
-                    // Connect this robot to the UAS object
-                    // it is IMPORTANT here to use the right object type,
-                    // else the slot of the parent object is called (and thus the special
-                    // packets never reach their goal)
-                    connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                    uas = mav;
-                }
+                        ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(this, message.sysid);
+                        // Connect this robot to the UAS object
+                        // it is IMPORTANT here to use the right object type,
+                        // else the slot of the parent object is called (and thus the special
+                        // packets never reach their goal)
+                        connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+                        uas = mav;
+                    }
                     break;
                 default:
                     uas = new UAS(this, message.sysid);
@@ -390,23 +381,43 @@ void MAVLinkProtocol::enableHeartbeats(bool enabled)
 
 void MAVLinkProtocol::enableLogging(bool enabled)
 {
-    if (enabled && !m_loggingEnabled)
+    bool changed = false;
+    if (enabled != m_loggingEnabled) changed = true;
+
+    if (enabled)
     {
-       m_logfile = new QFile(getLogfileName());
-       m_logfile->open(QIODevice::WriteOnly | QIODevice::Append);
+        if (m_logfile->isOpen())
+        {
+            m_logfile->flush();
+            m_logfile->close();
+        }
+        if (!m_logfile->open(QIODevice::WriteOnly | QIODevice::Append))
+        {
+            emit protocolStatusMessage(tr("Opening MAVLink logfile for writing failed"), tr("MAVLink cannot log to the file %1, please choose a different file.").arg(m_logfile->fileName()));
+            qDebug() << "OPENING LOGFILE FAILED!";
+        }
     }
-    else
+    else if (!enabled)
     {
-       m_logfile->close();
-       delete m_logfile;
-       m_logfile = NULL;
+        m_logfile->flush();
+        m_logfile->close();
     }
     m_loggingEnabled = enabled;
+    if (changed) emit loggingChanged(enabled);
+}
+
+void MAVLinkProtocol::setLogfileName(const QString& filename)
+{
+    m_logfile->flush();
+    m_logfile->close();
+    m_logfile->setFileName(filename);
+    enableLogging(m_loggingEnabled);
 }
 
 void MAVLinkProtocol::enableVersionCheck(bool enabled)
 {
     m_enable_version_check = enabled;
+    emit versionCheckChanged(enabled);
 }
 
 bool MAVLinkProtocol::heartbeatsEnabled(void)

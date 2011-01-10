@@ -83,6 +83,9 @@ macx {
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
     # Copy google earth starter file
     QMAKE_POST_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
+    # Copy CSS stylesheets
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-mission.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/style-indoor.css
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-outdoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
     # Copy model files
     #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
 
@@ -189,7 +192,7 @@ linux-g++ {
     DEFINES += QGC_OSG_ENABLED
     }
 
-    exists(/usr/include/osgEarth) | exists(/usr/local/include/osgEarth) {
+    exists(/usr/include/osgEarth):exists(/usr/include/osg) | exists(/usr/local/include/osgEarth):exists(/usr/include/osg) {
     message("Building support for osgEarth")
     DEPENDENCIES_PRESENT += osgearth
     # Include osgEarth libraries
