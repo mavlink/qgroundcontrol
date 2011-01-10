@@ -108,8 +108,9 @@ void SerialLink::loadSettings()
         setPortName(settings.value("SERIALLINK_COMM_PORT").toString());
         setBaudRateType(settings.value("SERIALLINK_COMM_BAUD").toInt());
         setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
-        setStopBitsType(settings.value("SERIALLINK_COMM_STOPBITS").toInt());
-        setDataBitsType(settings.value("SERIALLINK_COMM_DATABITS").toInt());
+        setStopBits(settings.value("SERIALLINK_COMM_STOPBITS").toInt());
+        setDataBits(settings.value("SERIALLINK_COMM_DATABITS").toInt());
+        setFlowType(settings.value("SERIALLINK_COMM_FLOW_CONTROL").toInt());
     }
 }
 
@@ -120,8 +121,9 @@ void SerialLink::writeSettings()
     settings.setValue("SERIALLINK_COMM_PORT", this->porthandle);
     settings.setValue("SERIALLINK_COMM_BAUD", getBaudRateType());
     settings.setValue("SERIALLINK_COMM_PARITY", getParityType());
-    settings.setValue("SERIALLINK_COMM_STOPBITS", getStopBitsType());
-    settings.setValue("SERIALLINK_COMM_DATABITS", getDataBitsType());
+    settings.setValue("SERIALLINK_COMM_STOPBITS", getStopBits());
+    settings.setValue("SERIALLINK_COMM_DATABITS", getDataBits());
+    settings.setValue("SERIALLINK_COMM_FLOW_CONTROL", getFlowType());
     settings.sync();
 }
 
@@ -316,9 +318,9 @@ bool SerialLink::hardwareConnect()
     {
         emit connected();
         emit connected(true);
-
-        writeSettings();
     }
+
+    writeSettings();
 
     return connectionUp;
 }
@@ -529,6 +531,48 @@ int SerialLink::getDataBitsType()
 int SerialLink::getStopBitsType()
 {
     return stopBits;
+}
+
+int SerialLink::getDataBits()
+{
+    int ret;
+    switch (dataBits)
+    {
+    case DATA_5:
+        ret = 5;
+        break;
+    case DATA_6:
+        ret = 6;
+        break;
+    case DATA_7:
+        ret = 7;
+        break;
+    case DATA_8:
+        ret = 8;
+        break;
+    default:
+        ret = 0;
+        break;
+    }
+    return ret;
+}
+
+int SerialLink::getStopBits()
+{
+    int ret;
+    switch (stopBits)
+    {
+    case STOP_1:
+        ret = 1;
+        break;
+    case STOP_2:
+        ret = 2;
+        break;
+    default:
+        ret = 0;
+        break;
+    }
+    return ret;
 }
 
 bool SerialLink::setPortName(QString portName)
@@ -845,8 +889,7 @@ bool SerialLink::setParityType(int parity)
 }
 
 
-// FIXME Works not as anticipated by user!
-bool SerialLink::setDataBitsType(int dataBits)
+bool SerialLink::setDataBits(int dataBits)
 {
     bool accepted = true;
 
@@ -879,12 +922,12 @@ bool SerialLink::setDataBitsType(int dataBits)
     return accepted;
 }
 
-// FIXME WORKS NOT AS ANTICIPATED BY USER!
-bool SerialLink::setStopBitsType(int stopBits)
+bool SerialLink::setStopBits(int stopBits)
 {
     bool reconnect = false;
     bool accepted = true;
-    if(isConnected()) {
+    if(isConnected())
+    {
         disconnect();
         reconnect = true;
     }
@@ -904,6 +947,54 @@ bool SerialLink::setStopBitsType(int stopBits)
     }
 
     port->setStopBits(this->stopBits);
+    if(reconnect) connect();
+    return accepted;
+}
+
+bool SerialLink::setDataBitsType(int dataBits)
+{
+    bool reconnect = false;
+    bool accepted = false;
+
+    if (isConnected())
+    {
+        disconnect();
+        reconnect = true;
+    }
+
+    if (dataBits >= (int)DATA_5 && dataBits <= (int)DATA_8)
+    {
+        DataBitsType newBits = (DataBitsType) dataBits;
+
+        port->setDataBits(newBits);
+        if(reconnect)
+        {
+            connect();
+        }
+        accepted = true;
+    }
+
+    return accepted;
+}
+
+bool SerialLink::setStopBitsType(int stopBits)
+{
+    bool reconnect = false;
+    bool accepted = false;
+    if(isConnected())
+    {
+        disconnect();
+        reconnect = true;
+    }
+
+    if (stopBits >= (int)STOP_1 && dataBits <= (int)STOP_2)
+    {
+        StopBitsType newBits = (StopBitsType) stopBits;
+
+        port->setStopBits(newBits);
+        accepted = true;
+    }
+
     if(reconnect) connect();
     return accepted;
 }

@@ -104,6 +104,9 @@ public slots:
     void addLink();
     void addLink(LinkInterface* link);
     void configure();
+    /** @brief Set the currently controlled UAS */
+    void setActiveUAS(UASInterface* uas);
+    /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
     void startVideoCapture();
     void stopVideoCapture();
@@ -142,19 +145,19 @@ public slots:
     ==========================================================
     */
 
-    void loadWidgets();
+//    void loadWidgets();
 
     /** @brief Load data view, allowing to plot flight data */
     void loadDataView(QString fileName);
 
-    /** @brief Load 3D map view */
-    void load3DMapView();
+//    /** @brief Load 3D map view */
+//    void load3DMapView();
 
-    /** @brief Load 3D Google Earth view */
-    void loadGoogleEarthView();
+//    /** @brief Load 3D Google Earth view */
+//    void loadGoogleEarthView();
 
-    /** @brief Load 3D view */
-    void load3DView();
+//    /** @brief Load 3D view */
+//    void load3DView();
 
     /**
      * @brief Shows a Docked Widget based on the action sender
@@ -208,6 +211,7 @@ protected:
       MENU_SLUGS_PID,
       MENU_SLUGS_HIL,
       MENU_SLUGS_CAMERA,
+      MENU_MAVLINK_LOG_PLAYER,
       CENTRAL_SEPARATOR= 255, // do not change
       CENTRAL_LINECHART,
       CENTRAL_PROTOCOL,
@@ -297,6 +301,7 @@ protected:
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
     bool aboutToCloseFlag;
+    bool changingViewsFlag;
 
     void clearView();
 
@@ -360,6 +365,7 @@ protected:
     QPointer<QDockWidget> watchdogControlDockWidget;
 
     QPointer<QDockWidget> headUpDockWidget;
+    QPointer<QDockWidget> logPlayerDockWidget;
 
     QPointer<QDockWidget> hsiDockWidget;
     QPointer<QDockWidget> rcViewDockWidget;
@@ -393,6 +399,8 @@ private:
     Ui::MainWindow ui;
 
     QString buildMenuKey (SETTINGS_SECTIONS section , TOOLS_WIDGET_NAMES tool, VIEW_SECTIONS view);
+    QString getWindowStateKey();
+    QString getWindowGeometryKey();
 
 };
 

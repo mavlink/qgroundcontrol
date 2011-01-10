@@ -70,9 +70,14 @@ public:
     static const int MAX_TIME_SCROLLBAR_VALUE = 16383; ///< The maximum scrollbar value
 
 public slots:
-    void addCurve(QString curve);
+    void addCurve(const QString& curve, const QString& unit);
     void removeCurve(QString curve);
+    /** @brief Append data without unit */
     void appendData(int uasId, QString curve, double data, quint64 usec);
+    /** @brief Append data with unit */
+    void appendData(int uasId, const QString& curve, const QString& unit, double value, quint64 usec);
+    /** @brief Append data as int with unit */
+    void appendData(int uasId, const QString& curve, const QString& unit, int value, quint64 usec);
     void takeButtonClick(bool checked);
     void setPlotWindowPosition(int scrollBarValue);
     void setPlotWindowPosition(quint64 position);
@@ -90,12 +95,16 @@ public slots:
     void stopLogging();
     /** @brief Refresh the view */
     void refresh();
+    /** @brief Write the current configuration to disk */
+    void writeSettings();
+    /** @brief Read the current configuration from disk */
+    void readSettings();
 
 protected:
     void addCurveToList(QString curve);
     void removeCurveFromList(QString curve);
     QToolButton* createButton(QWidget* parent);
-    QWidget* createCurveItem(QString curve);
+    void createCurveItem(QString curve);
     void createLayout();
 
     int sysid;                            ///< ID of the unmanned system this plot belongs to
@@ -110,9 +119,10 @@ protected:
     QMap<QString, QLabel*>* curveMeans;   ///< References to the curve means
     QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
     QMap<QString, QLabel*>* curveVariances; ///< References to the curve variances
+    QMap<QString, int> intData;           ///< Current values for integer-valued curves
 
     QWidget* curvesWidget;                ///< The QWidget containing the curve selection button
-    QVBoxLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
+    QGridLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
     QScrollBar* scrollbar;                ///< The plot window scroll bar
     QSpinBox* averageSpinBox;             ///< Spin box to setup average window filter size
 
@@ -126,13 +136,16 @@ protected:
     QToolButton* scalingLinearButton;
     QToolButton* scalingLogButton;
     QToolButton* logButton;
+    QPointer<QCheckBox> unitsCheckBox;
+    QPointer<QCheckBox> timeButton;
 
     QFile* logFile;
     unsigned int logindex;
     bool logging;
+    quint64 logStartTime;
     QTimer* updateTimer;
     LogCompressor* compressor;
-    quint64 logStartTime;
+    static const int updateInterval = 400; ///< Time between number updates, in milliseconds
 
     static const int MAX_CURVE_MENUITEM_NUMBER = 8;
     static const int PAGESTEP_TIME_SCROLLBAR_VALUE = (MAX_TIME_SCROLLBAR_VALUE - MIN_TIME_SCROLLBAR_VALUE) / 10;

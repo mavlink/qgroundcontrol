@@ -33,10 +33,12 @@ This file is part of the QGROUNDCONTROL project
 #include <QMessageBox>
 #include <QTimer>
 #include "UAS.h"
-#include <UASInterface.h>
-#include <UASManager.h>
+#include "UASInterface.h"
+#include "UASManager.h"
+#include "QGC.h"
 
-UASManager* UASManager::instance() {
+UASManager* UASManager::instance()
+{
     static UASManager* _instance = 0;
     if(_instance == 0) {
         _instance = new UASManager();
@@ -67,6 +69,10 @@ UASManager::~UASManager()
 
 void UASManager::run()
 {
+    forever
+    {
+        QGC::SLEEP::msleep(5000);
+    }
 }
 
 void UASManager::addUAS(UASInterface* uas)
@@ -104,12 +110,6 @@ QList<UASInterface*> UASManager::getUASList()
 
 UASInterface* UASManager::getActiveUAS()
 {
-//    if(!activeUAS)
-//    {
-//        QMessageBox msgBox;
-//        msgBox.setText(tr("No Micro Air Vehicle connected. Please connect one first."));
-//        msgBox.exec();
-//    }
     return activeUAS; ///< Return zero pointer if no UAS has been loaded
 }
 
@@ -192,8 +192,6 @@ void UASManager::setActiveUAS(UASInterface* uas)
         }
         activeUAS = uas;
         activeUASMutex.unlock();
-
-        qDebug() << __FILE__ << ":" << __LINE__ << " ACTIVE UAS SET TO: " << uas->getUASName();
 
         emit activeUASSet(uas);
         emit activeUASSet(uas->getUASID());
