@@ -24,6 +24,8 @@ public slots:
     void endEditMode();
     /** @brief Send the parameter to the MAV */
     void sendParameter();
+    void writeSettings(QSettings& settings);
+    void readSettings(const QSettings& settings);
 
 protected:
     QString parameterName;         ///< Key/Name of the parameter

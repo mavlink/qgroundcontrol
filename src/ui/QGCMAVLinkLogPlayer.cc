@@ -119,6 +119,13 @@ void QGCMAVLinkLogPlayer::setAccelerationFactorInt(int factor)
 
 void QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
 {
+    // Check if logging is still enabled
+    if (mavlink->loggingEnabled())
+    {
+        mavlink->enableLogging(false);
+        MainWindow::instance()->showInfoMessage(tr("MAVLink Logging Stopped during Replay"), tr("MAVLink logging has been stopped during the log replay. To re-enable logging, use the link properties in the communication menu."));
+    }
+
     // Ensure that the playback process is stopped
     if (logFile.isOpen())
     {
