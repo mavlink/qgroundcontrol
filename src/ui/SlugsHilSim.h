@@ -30,14 +30,19 @@ This file is part of the QGROUNDCONTROL project
 #ifndef SLUGSHILSIM_H
 #define SLUGSHILSIM_H
 
+#include <stdint.h>
+
 #include <QWidget>
 #include <QHostAddress>
 #include <QUdpSocket>
 #include <QMessageBox>
+#include <QByteArray>
+
 
 #include "LinkInterface.h"
 #include "UAS.h"
-#include <stdint.h>
+#include "LinkManager.h"
+#include "SlugsMAV.h"
 
 
 namespace Ui {
