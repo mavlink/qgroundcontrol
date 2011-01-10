@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QAction>
+#include <QSettings>
 
 #include "UASInterface.h"
 
@@ -19,11 +20,17 @@ public slots:
     virtual void startEditMode() {}
     virtual void endEditMode() {}
     virtual void setComponent(int comp) {_component = comp;}
+    virtual void writeSettings(QSettings& settings) = 0;
+    virtual void readSettings(const QSettings& settings) = 0;
     void setActiveUAS(UASInterface *uas);
+
+signals:
+    void editingFinished();
 
 protected:
     QAction* startEditAction;
     QAction* stopEditAction;
+    QAction* deleteAction;
     bool isInEditMode;
     QString qgcToolWidgetItemName;
     UASInterface* uas;

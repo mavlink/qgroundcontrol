@@ -81,7 +81,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     // QGC then falls back to default
     QSettings settings;
 
-    // Show user an upgrade message if QGC got upgraded
+    // Show user an upgrade message if QGC got upgraded (see code below, after splash screen)
     bool upgraded = false;
     QString lastApplicationVersion("");
     if (settings.contains("QGC_APPLICATION_VERSION"))
