@@ -25,16 +25,13 @@ This file is part of the QGROUNDCONTROL project
  * @file
  *   @brief Configuration Window for Slugs' HIL Simulator
  *   @author Mariano Lizarraga <malife@gmail.com>
+ *   @author Alejandro Molina <am.alex09@gmail.com>
  */
 
 
 #include "SlugsHilSim.h"
 #include "ui_SlugsHilSim.h"
-#include "LinkManager.h"
 
-#include "SlugsMAV.h"
-#include "qbytearray.h"
-#include "qhostaddress.h"
 
 SlugsHilSim::SlugsHilSim(QWidget *parent) :
     QWidget(parent),
@@ -75,8 +72,8 @@ SlugsHilSim::~SlugsHilSim()
 
 void SlugsHilSim::addToCombo(LinkInterface* theLink){
 
-  ui->cb_mavlinkLinks->addItem(theLink->getName());
   linksAvailable.insert(ui->cb_mavlinkLinks->count(),theLink);
+  ui->cb_mavlinkLinks->addItem(theLink->getName());
 
   if (hilLink == NULL){
     hilLink = theLink;
@@ -161,7 +158,6 @@ void SlugsHilSim::processHilDatagram(const QByteArray* datagram)
     #ifdef MAVLINK_ENABLED_SLUGS
   unsigned char i = 0;
 
-  mavlink_message_t msg;
 
   tmpGpsTime.year  = datagram->at(i++);
   tmpGpsTime.month = datagram->at(i++);
@@ -217,15 +213,6 @@ void SlugsHilSim::processHilDatagram(const QByteArray* datagram)
   tmpLocalPositionData.vy = getFloatFromDatagram(datagram, &i);
   tmpLocalPositionData.vz = getFloatFromDatagram(datagram, &i);
 
-
-//  mavlink_msg_gps_date_time_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &tmpGpsTime);
-//  activeUas->sendMessage(hilLink, msg);
-
-//  memset(&msg, 0, sizeof(mavlink_message_t));
-
-//  mavlink_msg_gps_raw_encode(MG::SYSTEM::ID,MG::SYSTEM::COMPID, &msg, &tmpGpsRaw);
-//  activeUas->sendMessage(hilLink,msg);
-
   // TODO: this is legacy of old HIL datagram. Need to remove from Simulink model
   i++;
 
@@ -269,7 +256,9 @@ void SlugsHilSim::linkSelected(int cbIndex){
   //hilLink = linksAvailable
     // FIXME Mariano
 
-    hilLink = LinkManager::instance()->getLinkForId(cbIndex);
+    hilLink =linksAvailable.value(cbIndex);
+
+  #endif
 }
 
 void SlugsHilSim::sendMessageToSlugs()

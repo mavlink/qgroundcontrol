@@ -1,9 +1,11 @@
 #include <QMenu>
 #include <QContextMenuEvent>
+#include <QSettings>
 
 #include "QGCParamSlider.h"
 #include "ui_QGCParamSlider.h"
 #include "UASInterface.h"
+
 
 QGCParamSlider::QGCParamSlider(QWidget *parent) :
     QGCToolWidgetItem("Slider", parent),
@@ -82,10 +84,11 @@ void QGCParamSlider::changeEvent(QEvent *e)
 
 void QGCParamSlider::writeSettings(QSettings& settings)
 {
+  Q_UNUSED(settings);
 
 }
 
 void QGCParamSlider::readSettings(const QSettings& settings)
 {
-
+  Q_UNUSED(settings);
 }
