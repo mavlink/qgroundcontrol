@@ -39,6 +39,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QStyleFactory>
 #include <QAction>
 
+#include <QDebug>
+
 #include "configuration.h"
 #include "QGC.h"
 #include "Core.h"
@@ -65,29 +67,37 @@ This file is part of the QGROUNDCONTROL project
 
 Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 {
+    // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
     this->setOrganizationName(QLatin1String("OPENMAV"));
-    this->setOrganizationDomain("http://qgroundcontrol.org");
+    this->setOrganizationDomain("org.qgroundcontrol");
+
+    // Set settings format
+    QSettings::setDefaultFormat(QSettings::IniFormat);
 
     // Check application settings
     // clear them if they mismatch
     // QGC then falls back to default
     QSettings settings;
-    settings.sync();
-    if (settings.contains("QGC_APPLICATION_VERSION_INT"))
+    if (settings.contains("QGC_APPLICATION_VERSION"))
     {
         QString qgcVersion = settings.value("QGC_APPLICATION_VERSION").toString();
         if (qgcVersion != QGC_APPLICATION_VERSION)
         {
             settings.clear();
+            // Write current application version
+            settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
         }
     }
     else
     {
         // If application version is not set, clear settings anyway
         settings.clear();
+        // Write current application version
+        settings.setValue("QGC_APPLICATION_VERSION", QGC_APPLICATION_VERSION);
     }
+
     settings.sync();
 
     // Show splash screen
@@ -98,7 +108,6 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
     splashScreen->show();
     splashScreen->showMessage(tr("Loading application fonts"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
-    QSettings::setDefaultFormat(QSettings::IniFormat);
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
 
