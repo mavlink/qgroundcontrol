@@ -66,12 +66,8 @@ MainWindow::MainWindow(QWidget *parent):
         toolsMenuActions(),
         currentView(VIEW_ENGINEER),
         aboutToCloseFlag(false),
-        changingViewsFlag(false),
-        settings()
+        changingViewsFlag(false)
 {
-    // Get current settings
-    settings.sync();
-
     if (!settings.contains("CURRENT_VIEW"))
     {
         // Set this view as default view
