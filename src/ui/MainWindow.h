@@ -297,6 +297,8 @@ protected:
      */
     void showTheCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SECTIONS view);
 
+    /** @brief Catch window resize events */
+    void resizeEvent(QResizeEvent * event);
 
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
