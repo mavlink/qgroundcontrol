@@ -36,12 +36,15 @@ class SlugsMAV : public UAS
 public:
     SlugsMAV(MAVLinkProtocol* mavlink, int id = 0);
 
+
+
 public slots:
     /** @brief Receive a MAVLink message from this MAV */
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
 
     void emitSignals (void);
 
+    mavlink_pwm_commands_t* getPwmCommands();
 
 
 signals:
@@ -67,6 +70,8 @@ signals:
 
     void slugsBootMsg(int uasId, mavlink_boot_t& boot);
     void slugsAttitude(int uasId, mavlink_attitude_t& attitude);
+
+
 
 
 

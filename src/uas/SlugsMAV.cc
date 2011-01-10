@@ -256,4 +256,10 @@ void SlugsMAV::emitPidSignal()
 
 }
 
+
+mavlink_pwm_commands_t* SlugsMAV::getPwmCommands()
+{
+    return &mlPwmCommands;
+}
+
 #endif // MAVLINK_ENABLED_SLUGS

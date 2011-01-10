@@ -292,6 +292,21 @@ void MainWindow::buildCommonWidgets()
         addToCentralWidgetsMenu (protocolWidget, "Mavlink Generator", SLOT(showCentralWidget()),CENTRAL_PROTOCOL);
     }
 
+    //TODO temporaly debug
+    if (!slugsHilSimWidget)
+    {
+        slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
+        slugsHilSimWidget->setWidget( new SlugsHilSim(this));
+        addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
+    }
+
+    //TODO temporaly debug
+    if (!slugsCamControlWidget)
+    {
+        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
+        slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
+        addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget()), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
+    }
     if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
@@ -797,6 +812,12 @@ void MainWindow::connectCommonWidgets()
 
         // it notifies that a waypoint global goes to do create and a map graphic too
         connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
+    }
+
+    //TODO temporaly debug
+    if (slugsHilSimWidget && slugsHilSimWidget->widget()){
+        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+                slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
     }
 }
 
