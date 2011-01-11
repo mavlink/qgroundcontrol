@@ -6,50 +6,84 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>267</width>
-    <height>123</height>
+    <width>361</width>
+    <height>145</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <property name="margin">
-    <number>6</number>
-   </property>
-   <item>
+  <layout class="QGridLayout" name="gridLayout" columnstretch="1,100,1">
+   <item row="0" column="0" colspan="3">
     <widget class="QCheckBox" name="heartbeatCheckBox">
      <property name="text">
       <string>Emit heartbeat</string>
      </property>
     </widget>
    </item>
-   <item>
+   <item row="1" column="0" colspan="3">
     <widget class="QCheckBox" name="loggingCheckBox">
      <property name="text">
       <string>Log all MAVLink packets</string>
      </property>
     </widget>
    </item>
-   <item>
+   <item row="3" column="0">
+    <spacer name="logFileSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::MinimumExpanding</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>8</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="4" column="0" colspan="3">
     <widget class="QCheckBox" name="versionCheckBox">
      <property name="text">
       <string>Only accept MAVs with same protocol version</string>
      </property>
     </widget>
    </item>
-   <item>
-    <spacer name="verticalSpacer">
+   <item row="5" column="0">
+    <spacer name="versionSpacer">
      <property name="orientation">
-      <enum>Qt::Vertical</enum>
+      <enum>Qt::Horizontal</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>20</width>
-       <height>84</height>
+       <width>8</width>
+       <height>0</height>
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="5" column="1" colspan="2">
+    <widget class="QLabel" name="versionLabel">
+     <property name="text">
+      <string>MAVLINK_VERSION: </string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QLabel" name="logFileLabel">
+     <property name="text">
+      <string>Logfile name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QPushButton" name="logFileButton">
+     <property name="text">
+      <string>Select..</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

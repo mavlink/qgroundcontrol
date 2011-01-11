@@ -84,6 +84,8 @@ engineOn(false)
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
     ui.modeComboBox->setCurrentIndex(0);
+
+    ui.gridLayout->setAlignment(Qt::AlignTop);
 }
 
 void UASControlWidget::setUAS(UASInterface* uas)
@@ -114,18 +116,18 @@ void UASControlWidget::setUAS(UASInterface* uas)
     // Check if additional controls should be loaded
     UAS* mav = dynamic_cast<UAS*>(uas);
     if (mav)
-    {
+    {     
         QPushButton* startRecButton = new QPushButton(tr("Record"));
         connect(startRecButton, SIGNAL(clicked()), mav, SLOT(startDataRecording()));
-        ui.gridLayout->addWidget(startRecButton, 10, 1);
+        ui.gridLayout->addWidget(startRecButton, 7, 1);
 
         QPushButton* pauseRecButton = new QPushButton(tr("Pause"));
         connect(pauseRecButton, SIGNAL(clicked()), mav, SLOT(pauseDataRecording()));
-        ui.gridLayout->addWidget(pauseRecButton, 10, 2);
+        ui.gridLayout->addWidget(pauseRecButton, 7, 3);
 
         QPushButton* stopRecButton = new QPushButton(tr("Stop"));
         connect(stopRecButton, SIGNAL(clicked()), mav, SLOT(stopDataRecording()));
-        ui.gridLayout->addWidget(stopRecButton, 10, 3);
+        ui.gridLayout->addWidget(stopRecButton, 7, 4);
     }
 
 

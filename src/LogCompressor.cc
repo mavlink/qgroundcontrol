@@ -63,7 +63,7 @@ void LogCompressor::run()
     
     if (!file.exists() || !file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        qDebug() << "LOG COMPRESSOR: INPUT FILE DOES NOT EXIST";
+        //qDebug() << "LOG COMPRESSOR: INPUT FILE DOES NOT EXIST";
         emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since input file %1 is not readable").arg(QFileInfo(fileName).absoluteFilePath()));
         return;
     }
@@ -71,7 +71,7 @@ void LogCompressor::run()
         // Check if file is writeable
         if (outFileName == ""/* || !QFileInfo(outfile).isWritable()*/)
         {
-            qDebug() << "LOG COMPRESSOR: OUTPUT FILE DOES NOT EXIST" << outFileName;
+            //qDebug() << "LOG COMPRESSOR: OUTPUT FILE DOES NOT EXIST" << outFileName;
             emit logProcessingStatusChanged(tr("Log Compressor: Cannot start/compress log file, since output file %1 is not writable").arg(QFileInfo(outFileName).absoluteFilePath()));
             return;
         }
@@ -214,7 +214,7 @@ void LogCompressor::run()
             }
         }
 
-        if (index % (dataLines/100) == 0) emit logProcessingStatusChanged(tr("Log compressor: Processed %1% of %2 lines").arg(index/(float)dataLines*100, 0, 'f', 2).arg(dataLines));
+        if (dataLines > 100) if (index % (dataLines/100) == 0) emit logProcessingStatusChanged(tr("Log compressor: Processed %1% of %2 lines").arg(index/(float)dataLines*100, 0, 'f', 2).arg(dataLines));
         
         if (!failed)
         {
@@ -233,14 +233,16 @@ void LogCompressor::run()
     // Add header, write out file
     file.close();
     
-    if (outFileName == "")
+    if (outFileName == logFileName)
     {
         QFile::remove(file.fileName());
         outfile.setFileName(file.fileName());
+
     }
     if (!outfile.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
     outfile.write(QString(QString("unix_timestamp") + separator + header.replace(" ", "_") + QString("\n")).toLatin1());
+    emit logProcessingStatusChanged(tr("Log Compressor: Writing output to file %1").arg(QFileInfo(outFileName).absoluteFilePath()));
     //QString fileHeader = QString("unix_timestamp") + header.replace(" ", "_") + QString("\n");
     
     // File output

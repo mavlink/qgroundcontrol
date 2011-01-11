@@ -41,7 +41,7 @@ namespace OpalRT
       Configuration info for the model
      */
 
-    const unsigned short NUM_OUTPUT_SIGNALS=42;
+    const unsigned short NUM_OUTPUT_SIGNALS=48;
 
     /*  ------------------------------ Outputs ------------------------------
     *
@@ -103,7 +103,13 @@ namespace OpalRT
         NORM_CHANNEL_7,
         NORM_CHANNEL_8,
         CONTROLLER_AILERON,
-        CONTROLLER_ELEVATOR
+        CONTROLLER_ELEVATOR,
+        AIL_POUT,
+        AIL_IOUT,
+        AIL_DOUT,
+        ELE_POUT,
+        ELE_IOUT,
+        ELE_DOUT
     };       
 
     /** Component IDs of the parameters.  Currently they are all 1 becuase there is no advantage
@@ -112,9 +118,9 @@ namespace OpalRT
        */
     enum SubsystemIds
     {
-        NAV_ID = 1,
-        LOG_ID,
-        CONTROLLER_ID,
+        NAV = 1,
+        LOG,
+        CONTROLLER,
         SERVO_OUTPUTS,
         SERVO_INPUTS
     };
