@@ -26,7 +26,7 @@
 #include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
-#include "MainWindow.h"
+//#include "MainWindow.h"
 #include <QGCMAVLink.h>
 #include "QGC.h"
 
