@@ -98,6 +98,8 @@ namespace qmapcontrol
                         // QGC FIXME Error is currently undetected
                         // TODO Error is currently undetected
                         //qDebug() << "NETWORK_PIXMAP_ERROR: " << ax;
+                        qDebug() << "QMapControl external library: ERROR loading map:" << "width:" << pm.width() << "heigh:" << pm.height() << "at " << __FILE__ << __LINE__;
+                        qDebug() << "HTML ERROR MESSAGE:" << ax << "at " << __FILE__ << __LINE__;
                     }
                 }
 

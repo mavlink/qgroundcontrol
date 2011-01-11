@@ -59,6 +59,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         lon(0),
         alt(0),
         groundDistance(0),
+        localFrame(false),
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
@@ -109,6 +110,19 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     // Heartbeat fade
     refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+
+    // Hide kill and shutdown buttons per default
+    m_ui->killButton->hide();
+    m_ui->shutdownButton->hide();
+
+    if (localFrame)
+    {
+        m_ui->gpsLabel->hide();
+    }
+    else
+    {
+        m_ui->positionLabel->hide();
+    }
 }
 
 UASView::~UASView()
@@ -135,7 +149,7 @@ void UASView::setBackgroundColor()
     {
         uasColor = uasColor.darker(675);
     }
-    colorstyle = colorstyle.sprintf("QGroupBox { border-radius: 5px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X; border: 2px solid %s; }",
+    colorstyle = colorstyle.sprintf("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X; border: 2px solid %s; }",
                                     uasColor.red(), uasColor.green(), uasColor.blue(), borderColor.toStdString().c_str());
     m_ui->uasViewFrame->setStyleSheet(colorstyle);
 }
@@ -286,11 +300,15 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
 void UASView::updateLocalPosition(UASInterface* uas, double x, double y, double z, quint64 usec)
 {
     Q_UNUSED(usec);
-    if (uas == this->uas)
+    Q_UNUSED(uas);
+    this->x = x;
+    this->y = y;
+    this->z = z;
+    if (!localFrame)
     {
-        this->x = x;
-        this->y = y;
-        this->z = z;
+        localFrame = true;
+        m_ui->gpsLabel->hide();
+        m_ui->positionLabel->show();
     }
 }
 
@@ -404,7 +422,7 @@ void UASView::refresh()
 
         // Position
         QString position;
-        position = position.sprintf("%02.2f %02.2f %02.2f m", x, y, z);
+        position = position.sprintf("%05.1f %05.1f %05.1f m", x, y, z);
         m_ui->positionLabel->setText(position);
         QString globalPosition;
         QString latIndicator;
@@ -425,23 +443,22 @@ void UASView::refresh()
         {
             lonIndicator = "W";
         }
-        globalPosition = globalPosition.sprintf("%02.2f%s %02.2f%s %02.2f m", lon, lonIndicator.toStdString().c_str(), lat, latIndicator.toStdString().c_str(), alt);
+        globalPosition = globalPosition.sprintf("%05.1f%s %05.1f%s %05.1f m", lon, lonIndicator.toStdString().c_str(), lat, latIndicator.toStdString().c_str(), alt);
         m_ui->gpsLabel->setText(globalPosition);
 
         // Altitude
         if (groundDistance == 0 && alt != 0)
         {
-            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(alt));
+            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(alt, 5, 'f', 1, '0'));
         }
         else
         {
-            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(groundDistance));
+            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(groundDistance, 5, 'f', 1, '0'));
         }
 
         // Speed
-        QString speed;
-        speed = speed.sprintf("%02.2f m/s", totalSpeed);
-        m_ui->speedLabel->setText(speed);
+        QString speed("%1 m/s");
+        m_ui->speedLabel->setText(speed.arg(totalSpeed, 4, 'f', 1, '0'));
 
         // Thrust
         m_ui->thrustBar->setValue(thrust * 100);
@@ -461,7 +478,7 @@ void UASView::refresh()
         }
         else
         {
-            m_ui->timeRemainingLabel->setText(tr("Calculating"));
+            m_ui->timeRemainingLabel->setText(tr("Calc.."));
         }
 
         // Time Elapsed
@@ -482,7 +499,7 @@ void UASView::refresh()
     heartbeatColor = heartbeatColor.darker(150);
 
     QString colorstyle;
-    colorstyle = colorstyle.sprintf("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",
+    colorstyle = colorstyle.sprintf("QGroupBox { border: 1px solid #EEEEEE; border-radius: 8px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",
                                     heartbeatColor.red(), heartbeatColor.green(), heartbeatColor.blue());
     m_ui->heartbeatIcon->setStyleSheet(colorstyle);
     m_ui->heartbeatIcon->setAutoFillBackground(true);
