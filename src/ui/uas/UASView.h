@@ -99,6 +99,7 @@ protected:
     float lon;
     float alt;
     float groundDistance;
+    bool localFrame;
     static const int updateInterval = 300;
 
 

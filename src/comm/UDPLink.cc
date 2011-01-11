@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <iostream>
 #include "UDPLink.h"
 #include "LinkManager.h"
-#include "MG.h"
+#include "QGC.h"
 //#include <netinet/in.h>
 
 UDPLink::UDPLink(QHostAddress host, quint16 port)
@@ -49,7 +49,7 @@ UDPLink::UDPLink(QHostAddress host, quint16 port)
 
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
-    this->name = tr("UDP link ") + QString::number(getId());
+    this->name = tr("UDP Link (port:%1)").arg(14550);
     LinkManager::instance()->add(this);
 }
 
@@ -64,6 +64,10 @@ UDPLink::~UDPLink()
  **/
 void UDPLink::run()
 {
+    forever
+    {
+        QGC::SLEEP::msleep(5000);
+    }
 }
 
 void UDPLink::setAddress(QString address)
@@ -242,7 +246,7 @@ bool UDPLink::connect()
     if (connectState)
     {
         emit connected();
-        connectionStartTime = MG::TIME::getGroundTimeNow();
+        connectionStartTime = QGC::groundTimeUsecs()/1000;
     }
 
     start(HighPriority);
@@ -281,7 +285,7 @@ qint64 UDPLink::getNominalDataRate() {
 
 qint64 UDPLink::getTotalUpstream() {
     statisticsMutex.lock();
-    qint64 totalUpstream = bitsSentTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
+    qint64 totalUpstream = bitsSentTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
     statisticsMutex.unlock();
     return totalUpstream;
 }
@@ -304,7 +308,7 @@ qint64 UDPLink::getBitsReceived() {
 
 qint64 UDPLink::getTotalDownstream() {
     statisticsMutex.lock();
-    qint64 totalDownstream = bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
+    qint64 totalDownstream = bitsReceivedTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
     statisticsMutex.unlock();
     return totalDownstream;
 }

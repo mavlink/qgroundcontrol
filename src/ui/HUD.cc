@@ -73,11 +73,6 @@ inline bool isinf(T value)
 HUD::HUD(int width, int height, QWidget* parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
     uas(NULL),
-    values(QMap<QString, float>()),
-    valuesDot(QMap<QString, float>()),
-    valuesMean(QMap<QString, float>()),
-    valuesCount(QMap<QString, int>()),
-    lastUpdate(QMap<QString, quint64>()),
     yawInt(0.0f),
     mode(tr("UNKNOWN MODE")),
     state(tr("UNKNOWN STATE")),
@@ -115,7 +110,21 @@ HUD::HUD(int width, int height, QWidget* parent)
     waypointName(""),
     roll(0.0f),
     pitch(0.0f),
-    yaw(0.0f)
+    yaw(0.0f),
+    rollLP(0.0f),
+    pitchLP(0.0f),
+    yawLP(0.0f),
+    yawDiff(0.0f),
+    xPos(0.0),
+    yPos(0.0),
+    zPos(0.0),
+    xSpeed(0.0),
+    ySpeed(0.0),
+    zSpeed(0.0),
+    lat(0.0),
+    lon(0.0),
+    alt(0.0),
+    load(0.0f)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -173,8 +182,9 @@ HUD::HUD(int width, int height, QWidget* parent)
     }
 
     // Connect with UAS
-    UASManager* manager = UASManager::instance();
-    connect(manager, SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
+    setVisible(false);
 }
 
 HUD::~HUD()
@@ -184,7 +194,7 @@ HUD::~HUD()
 
 QSize HUD::sizeHint() const
 {
-    return QSize(800, 600);
+    return QSize(width(), (width()*3.0f)/4);
 }
 
 void HUD::showEvent(QShowEvent* event)
@@ -192,48 +202,15 @@ void HUD::showEvent(QShowEvent* event)
     // React only to internal (pre-display)
     // events
     Q_UNUSED(event)
-    {
-        refreshTimer->start(updateInterval);
-    }
+    refreshTimer->start(updateInterval);
 }
 
 void HUD::hideEvent(QHideEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    Q_UNUSED(event)
-    {
-        refreshTimer->stop();
-    }
-}
-
-void HUD::updateValue(UASInterface* uas, QString name, double value, quint64 msec)
-{
-    // UAS is not needed
-    Q_UNUSED(uas);
-
-    if (!isnan(value) && !isinf(value))
-    {
-        // Update mean
-        const float oldMean = valuesMean.value(name, 0.0f);
-        const int meanCount = valuesCount.value(name, 0);
-        double mean = (oldMean * meanCount +  value) / (meanCount + 1);
-        if (isnan(mean) || isinf(mean)) mean = 0.0;
-        valuesMean.insert(name, mean);
-        valuesCount.insert(name, meanCount + 1);
-        // Two-value sliding average
-        double dot = (valuesDot.value(name) + (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f))/2.0f;
-        if (isnan(dot) || isinf(dot))
-        {
-            dot = 0.0;
-        }
-        valuesDot.insert(name, dot);
-        values.insert(name, value);
-        lastUpdate.insert(name, msec);
-        //}
-
-        //qDebug() << __FILE__ << __LINE__ << "VALUE:" << value << "MEAN:" << mean << "DOT:" << dot << "COUNT:" << meanCount;
-    }
+    Q_UNUSED(event);
+    refreshTimer->stop();
 }
 
 /**
@@ -272,27 +249,29 @@ void HUD::setActiveUAS(UASInterface* uas)
     this->uas = uas;
 }
 
-void HUD::updateAttitudeThrustSetPoint(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)
-{
-    updateValue(uas, "roll desired", rollDesired, msec);
-    updateValue(uas, "pitch desired", pitchDesired, msec);
-    updateValue(uas, "yaw desired", yawDesired, msec);
-    updateValue(uas, "thrust desired", thrustDesired, msec);
-}
+//void HUD::updateAttitudeThrustSetPoint(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)
+//{
+////    updateValue(uas, "roll desired", rollDesired, msec);
+////    updateValue(uas, "pitch desired", pitchDesired, msec);
+////    updateValue(uas, "yaw desired", yawDesired, msec);
+////    updateValue(uas, "thrust desired", thrustDesired, msec);
+//}
 
 void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 timestamp)
 {
-    //qDebug() << __FILE__ << __LINE__ << "YAW" << yaw;
-    updateValue(uas, "roll", roll, timestamp);
-    updateValue(uas, "pitch", pitch, timestamp);
-    updateValue(uas, "yaw", yaw, timestamp);
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    this->roll = roll;
+    this->pitch = pitch;
+    this->yaw = yaw;
 }
 
 void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
-    updateValue(uas, "voltage", voltage, MG::TIME::getGroundTimeNow());
-    updateValue(uas, "time remaining", seconds, MG::TIME::getGroundTimeNow());
-    updateValue(uas, "charge level", percent, MG::TIME::getGroundTimeNow());
+    Q_UNUSED(uas);
+//    this->voltage = voltage;
+//    this->timeRemaining = seconds;
+//    this->percentRemaining = percent;
 
     fuelStatus.sprintf("BAT [%02.0f \%% | %05.2fV] (%02dm:%02ds)", percent, voltage, seconds/60, seconds%60);
 
@@ -314,30 +293,38 @@ void HUD::receiveHeartbeat(UASInterface*)
 {
 }
 
-void HUD::updateThrust(UASInterface*, double thrust)
+void HUD::updateThrust(UASInterface* uas, double thrust)
 {
-    updateValue(uas, "thrust", thrust, MG::TIME::getGroundTimeNow());
+    Q_UNUSED(uas);
+    Q_UNUSED(thrust);
+//    updateValue(uas, "thrust", thrust, MG::TIME::getGroundTimeNow());
 }
 
 void HUD::updateLocalPosition(UASInterface* uas,double x,double y,double z,quint64 timestamp)
 {
-    updateValue(uas, "x", x, timestamp);
-    updateValue(uas, "y", y, timestamp);
-    updateValue(uas, "z", z, timestamp);
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    this->xPos = x;
+    this->yPos = y;
+    this->zPos = z;
 }
 
 void HUD::updateGlobalPosition(UASInterface* uas,double lat, double lon, double altitude, quint64 timestamp)
 {
-    updateValue(uas, "lat", lat, timestamp);
-    updateValue(uas, "lon", lon, timestamp);
-    updateValue(uas, "altitude", altitude, timestamp);
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    this->lat = lat;
+    this->lon = lon;
+    this->alt = altitude;
 }
 
 void HUD::updateSpeed(UASInterface* uas,double x,double y,double z,quint64 timestamp)
 {
-    updateValue(uas, "xSpeed", x, timestamp);
-    updateValue(uas, "ySpeed", y, timestamp);
-    updateValue(uas, "zSpeed", z, timestamp);
+    Q_UNUSED(uas);
+    Q_UNUSED(timestamp);
+    this->xSpeed = x;
+    this->ySpeed = y;
+    this->zSpeed = z;
 }
 
 /**
@@ -369,7 +356,9 @@ void HUD::updateMode(int id,QString mode, QString description)
 
 void HUD::updateLoad(UASInterface* uas, double load)
 {
-    updateValue(uas, "load", load, MG::TIME::getGroundTimeNow());
+    Q_UNUSED(uas);
+    this->load = load;
+    //updateValue(uas, "load", load, MG::TIME::getGroundTimeNow());
 }
 
 /**
@@ -572,14 +561,14 @@ void HUD::paintHUD()
 
     // Read out most important values to limit hash table lookups
     // Low-pass roll, pitch and yaw
-    roll = roll * 0.2f + 0.8f * values.value("roll", 0.0f);
-    pitch = pitch * 0.2f + 0.8f * values.value("pitch", 0.0f);
-    yaw = yaw * 0.2f + 0.8f * values.value("yaw", 0.0f);
+    rollLP = rollLP * 0.2f + 0.8f * roll;
+    pitchLP = pitchLP * 0.2f + 0.8f * pitch;
+    yawLP = yawLP * 0.2f + 0.8f * yaw;
 
     // Translate for yaw
     const float maxYawTrans = 60.0f;
 
-    float newYawDiff = valuesDot.value("yaw", 0.0f);
+    float newYawDiff = yawDiff;
     if (isinf(newYawDiff)) newYawDiff = yawDiff;
     if (newYawDiff > M_PI) newYawDiff = newYawDiff - M_PI;
 
@@ -721,23 +710,23 @@ void HUD::paintHUD()
 //    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
 
     // YAW is in compass-human readable format, so 0 - 360deg. This is normal in aviation, not -180 - +180.
-    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.0f;
+    const float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f;
     yawAngle.sprintf("%03d", (int)yawDeg);
     paintText(yawAngle, defaultColor, 3.5f, -3.7f, compassY+ 0.9f, &painter);
 
     // CHANGE RATE STRIPS
-    drawChangeRateStrip(-51.0f, -50.0f, 15.0f, -1.0f, 1.0f, valuesDot.value("z", 0.0f), &painter);
+    drawChangeRateStrip(-51.0f, -50.0f, 15.0f, -1.0f, 1.0f, -zSpeed, &painter);
 
     // CHANGE RATE STRIPS
-    drawChangeRateStrip(49.0f, -50.0f, 15.0f, -1.0f, 1.0f, valuesDot.value("x", 0.0f), &painter);
+    drawChangeRateStrip(49.0f, -50.0f, 15.0f, -1.0f, 1.0f, xSpeed, &painter);
 
     // GAUGES
 
     // Left altitude gauge
-    drawChangeIndicatorGauge(-vGaugeSpacing, -15.0f, 10.0f, 2.0f, -values.value("z", 0.0f), defaultColor, &painter, false);
+    drawChangeIndicatorGauge(-vGaugeSpacing, -15.0f, 10.0f, 2.0f, -zPos, defaultColor, &painter, false);
 
     // Right speed gauge
-    drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, values.value("xSpeed", 0.0f), defaultColor, &painter, false);
+    drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, xSpeed, defaultColor, &painter, false);
 
 
     // Waypoint name
@@ -749,15 +738,15 @@ void HUD::paintHUD()
     painter.translate(refToScreenX(yawTrans), 0);
 
     // Rotate view and draw all roll-dependent indicators
-    painter.rotate((roll/M_PI)* -180.0f);
+    painter.rotate((rollLP/M_PI)* -180.0f);
 
-    painter.translate(0, (-pitch/M_PI)* -180.0f * refToScreenY(1.8));
+    painter.translate(0, (-pitchLP/M_PI)* -180.0f * refToScreenY(1.8));
 
     //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 
     // PITCH
 
-    paintPitchLines(pitch, &painter);
+    paintPitchLines(pitchLP, &painter);
     painter.end();
     //glDisable(GL_MULTISAMPLE);
 
@@ -1206,82 +1195,82 @@ void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRat
     paintText(label, defaultColor, 3.0f, xRef+width/2.0f, yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
 }
 
-void HUD::drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter)
-{
-    Q_UNUSED(maxWidth);
-    Q_UNUSED(maxHeight);
-    if (values.size() > 0)
-    {
-        QString selectedKey = values.begin().key();
-        //   | | | | | |
-        //   | | | | | |
-        //   x speed: 2.54
+//void HUD::drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter)
+//{
+//    Q_UNUSED(maxWidth);
+//    Q_UNUSED(maxHeight);
+//    if (values.size() > 0)
+//    {
+//        QString selectedKey = values.begin().key();
+//        //   | | | | | |
+//        //   | | | | | |
+//        //   x speed: 2.54
 
-        // One column per value
-        QMapIterator<QString, float> value(values);
+//        // One column per value
+//        QMapIterator<QString, float> value(values);
 
-        float x = xRef;
-        float y = yRef;
+//        float x = xRef;
+//        float y = yRef;
 
-        const float vspacing = 1.0f;
-        float width = 1.5f;
-        float height = 1.5f;
-        const float hspacing = 0.6f;
+//        const float vspacing = 1.0f;
+//        float width = 1.5f;
+//        float height = 1.5f;
+//        const float hspacing = 0.6f;
 
-        // TODO ensure that instrument stays smaller than maxWidth and maxHeight
-
-
-        int i = 0;
-        while (value.hasNext() && i < maxNum)
-        {
-            value.next();
-            QBrush brush(Qt::SolidPattern);
+//        // TODO ensure that instrument stays smaller than maxWidth and maxHeight
 
 
-            if (value.value() < 0.01f && value.value() > -0.01f)
-            {
-                brush.setColor(Qt::gray);
-            }
-            else if (value.value() > 0.01f)
-            {
-                brush.setColor(Qt::blue);
-            }
-            else
-            {
-                brush.setColor(Qt::yellow);
-            }
+//        int i = 0;
+//        while (value.hasNext() && i < maxNum)
+//        {
+//            value.next();
+//            QBrush brush(Qt::SolidPattern);
 
-            painter->setBrush(brush);
-            painter->setPen(Qt::NoPen);
 
-            // Draw current value colormap
-            painter->drawRect(refToScreenX(x), refToScreenY(y), refToScreenX(width), refToScreenY(height));
+//            if (value.value() < 0.01f && value.value() > -0.01f)
+//            {
+//                brush.setColor(Qt::gray);
+//            }
+//            else if (value.value() > 0.01f)
+//            {
+//                brush.setColor(Qt::blue);
+//            }
+//            else
+//            {
+//                brush.setColor(Qt::yellow);
+//            }
 
-            // Draw change rate colormap
-            painter->drawRect(refToScreenX(x), refToScreenY(y+height+hspacing), refToScreenX(width), refToScreenY(height));
+//            painter->setBrush(brush);
+//            painter->setPen(Qt::NoPen);
 
-            // Draw mean value colormap
-            painter->drawRect(refToScreenX(x), refToScreenY(y+2.0f*(height+hspacing)), refToScreenX(width), refToScreenY(height));
+//            // Draw current value colormap
+//            painter->drawRect(refToScreenX(x), refToScreenY(y), refToScreenX(width), refToScreenY(height));
 
-            // Add spacing
-            x += width+vspacing;
+//            // Draw change rate colormap
+//            painter->drawRect(refToScreenX(x), refToScreenY(y+height+hspacing), refToScreenX(width), refToScreenY(height));
 
-            // Iterate
-            i++;
-        }
+//            // Draw mean value colormap
+//            painter->drawRect(refToScreenX(x), refToScreenY(y+2.0f*(height+hspacing)), refToScreenX(width), refToScreenY(height));
 
-        // Draw detail label
-        QString detail = "NO DATA AVAILABLE";
+//            // Add spacing
+//            x += width+vspacing;
 
-        if (values.contains(selectedKey))
-        {
-            detail = values.find(selectedKey).key();
-            detail.append(": ");
-            detail.append(QString::number(values.find(selectedKey).value()));
-        }
-        paintText(detail, QColor(255, 255, 255), 3.0f, xRef, yRef+3.0f*(height+hspacing)+1.0f, painter);
-    }
-}
+//            // Iterate
+//            i++;
+//        }
+
+//        // Draw detail label
+//        QString detail = "NO DATA AVAILABLE";
+
+//        if (values.contains(selectedKey))
+//        {
+//            detail = values.find(selectedKey).key();
+//            detail.append(": ");
+//            detail.append(QString::number(values.find(selectedKey).value()));
+//        }
+//        paintText(detail, QColor(255, 255, 255), 3.0f, xRef, yRef+3.0f*(height+hspacing)+1.0f, painter);
+//    }
+//}
 
 void HUD::drawChangeIndicatorGauge(float xRef, float yRef, float radius, float expectedMaxChange, float value, const QColor& color, QPainter* painter, bool solid)
 {

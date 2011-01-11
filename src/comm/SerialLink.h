@@ -74,6 +74,10 @@ public:
      */
     QString getName();
     int getBaudRate();
+    int getDataBits();
+    int getStopBits();
+
+    // ENUM values
     int getBaudRateType();
     int getFlowType();
     int getParityType();
@@ -103,6 +107,10 @@ public:
 public slots:
     bool setPortName(QString portName);
     bool setBaudRate(int rate);
+    bool setDataBits(int dataBits);
+    bool setStopBits(int stopBits);
+
+    // Set ENUM values
     bool setBaudRateType(int rateIndex);
     bool setFlowType(int flow);
     bool setParityType(int parity);

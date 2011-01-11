@@ -50,14 +50,17 @@ UASListWidget::UASListWidget(QWidget *parent) : QWidget(parent), m_ui(new Ui::UA
     m_ui->setupUi(this);
 
     listLayout = new QVBoxLayout(this);
+    listLayout->setMargin(0);
+    listLayout->setSpacing(3);
     listLayout->setAlignment(Qt::AlignTop);
     this->setLayout(listLayout);
+    setObjectName("UNMANNED_SYSTEMS_LIST");
 
     // Construct initial widget
     uWidget = new QGCUnconnectedInfoWidget(this);
     listLayout->addWidget(uWidget);
 
-    this->setMinimumWidth(250);
+    this->setMinimumWidth(262);
 
     uasViews = QMap<UASInterface*, UASView*>();
 

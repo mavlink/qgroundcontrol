@@ -434,7 +434,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     {
                         emit valueChanged(uasId, "speed", "m/s", pos.v, time);
                         //qDebug() << "GOT GPS RAW";
-                        emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
+                       // emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
                     }
                     else
                     {
@@ -663,12 +663,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_nav_filter_bias_t bias;
                 mavlink_msg_nav_filter_bias_decode(&message, &bias);
                 quint64 time = MG::TIME::getGroundTimeNow();
-                emit valueChanged(uasId, "b_f[0]", bias.accel_0, time);
-                emit valueChanged(uasId, "b_f[1]", bias.accel_1, time);
-                emit valueChanged(uasId, "b_f[2]", bias.accel_2, time);
-                emit valueChanged(uasId, "b_w[0]", bias.gyro_0, time);
-                emit valueChanged(uasId, "b_w[1]", bias.gyro_1, time);
-                emit valueChanged(uasId, "b_w[2]", bias.gyro_2, time);
+                emit valueChanged(uasId, "b_f[0]", "raw", bias.accel_0, time);
+                emit valueChanged(uasId, "b_f[1]", "raw", bias.accel_1, time);
+                emit valueChanged(uasId, "b_f[2]", "raw", bias.accel_2, time);
+                emit valueChanged(uasId, "b_w[0]", "raw", bias.gyro_0, time);
+                emit valueChanged(uasId, "b_w[1]", "raw", bias.gyro_1, time);
+                emit valueChanged(uasId, "b_w[2]", "raw", bias.gyro_2, time);
             }
             break;
        case MAVLINK_MSG_ID_RADIO_CALIBRATION:
@@ -956,27 +956,27 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
     {
     case MAV_STATE_UNINIT:
         uasState = tr("UNINIT");
-        stateDescription = tr("Not initialized");
+        stateDescription = tr("Waiting..");
         break;
     case MAV_STATE_BOOT:
         uasState = tr("BOOT");
-        stateDescription = tr("Booting system, please wait..");
+        stateDescription = tr("Booting..");
         break;
     case MAV_STATE_CALIBRATING:
         uasState = tr("CALIBRATING");
-        stateDescription = tr("Calibrating sensors..");
+        stateDescription = tr("Calibrating..");
         break;
     case MAV_STATE_ACTIVE:
         uasState = tr("ACTIVE");
-        stateDescription = tr("Normal operation mode");
+        stateDescription = tr("Normal");
         break;
     case MAV_STATE_STANDBY:
         uasState = tr("STANDBY");
-        stateDescription = tr("Standby, operational");
+        stateDescription = tr("Standby, OK");
         break;
     case MAV_STATE_CRITICAL:
         uasState = tr("CRITICAL");
-        stateDescription = tr("Failure occured!");
+        stateDescription = tr("FAILURE: Continue");
         break;
     case MAV_STATE_EMERGENCY:
         uasState = tr("EMERGENCY");
@@ -984,11 +984,11 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         break;
     case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");
-        stateDescription = tr("Powering off system");
+        stateDescription = tr("Powering off");
         break;
     default:
         uasState = tr("UNKNOWN");
-        stateDescription = tr("FAILURE: Unknown system state");
+        stateDescription = tr("Unknown state");
         break;
     }
 }

@@ -27,6 +27,7 @@
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
 #include "QGCToolWidget.h"
+#include "QGCMAVLinkLogPlayer.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -65,11 +66,8 @@ MainWindow::MainWindow(QWidget *parent):
         toolsMenuActions(),
         currentView(VIEW_ENGINEER),
         aboutToCloseFlag(false),
-        settings()
+        changingViewsFlag(false)
 {
-    // Get current settings
-    settings.sync();
-
     if (!settings.contains("CURRENT_VIEW"))
     {
         // Set this view as default view
@@ -84,7 +82,10 @@ MainWindow::MainWindow(QWidget *parent):
     }
     else
     {
-        currentView = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", currentView).toInt();
+        if (settings.value("CURRENT_VIEW", VIEW_PILOT) != VIEW_PILOT)
+        {
+            currentView = (VIEW_SECTIONS) settings.value("CURRENT_VIEW", currentView).toInt();
+        }
     }
 
     // Check if the settings exist, instantiate defaults if necessary
@@ -127,6 +128,9 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Setup user interface
     ui.setupUi(this);
+    ui.actionNewCustomWidget->setEnabled(false);
+
+    setVisible(false);
 
     // Bind together the perspective actions
     QActionGroup* perspectives = new QActionGroup(ui.menuPerspectives);
@@ -145,7 +149,6 @@ MainWindow::MainWindow(QWidget *parent):
     // The pilot view is not available on startup
     ui.actionPilotsView->setEnabled(false);
 
-
     buildCommonWidgets();
 
     connectCommonWidgets();
@@ -153,9 +156,6 @@ MainWindow::MainWindow(QWidget *parent):
     arrangeCommonCenterStack();
 
     configureWindowName();
-
-    // Add status bar
-    //setStatusBar(createStatusBar());
 
     // Set the application style (not the same as a style sheet)
     // Set the style to Plastique
@@ -205,6 +205,8 @@ MainWindow::MainWindow(QWidget *parent):
         this->addLink(link);
     }
 
+    connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
+
     // Enable and update view
     presentView();
 }
@@ -212,6 +214,19 @@ MainWindow::MainWindow(QWidget *parent):
 MainWindow::~MainWindow()
 {
 
+}
+
+void MainWindow::resizeEvent(QResizeEvent * event)
+{
+    Q_UNUSED(event);
+    if (height() < 800)
+    {
+        ui.statusBar->setVisible(false);
+    }
+    else
+    {
+        ui.statusBar->setVisible(true);
+    }
 }
 
 QString MainWindow::getWindowStateKey()
@@ -224,6 +239,43 @@ QString MainWindow::getWindowGeometryKey()
     return QString::number(currentView)+"/geometry";
 }
 
+void MainWindow::buildCustomWidget()
+{
+    // Show custom widgets only if UAS is connected
+    if (UASManager::instance()->getActiveUAS() != NULL)
+    {
+        // Enable custom widgets
+        ui.actionNewCustomWidget->setEnabled(true);
+
+        // Create custom widgets
+        QList<QGCToolWidget*> widgets = QGCToolWidget::createWidgetsFromSettings(this);
+
+        if (widgets.size() > 0)
+        {
+            ui.menuTools->addSeparator();
+        }
+
+        for(int i = 0; i < widgets.size(); ++i)
+        {
+            qDebug() << "ADDING WIDGET #" << i << widgets.at(i);
+            // Check if this widget already has a parent, do not create it in this case
+            QDockWidget* dock = dynamic_cast<QDockWidget*>(widgets.at(i)->parentWidget());
+            if (!dock)
+            {
+                QDockWidget* dock = new QDockWidget(widgets.at(i)->windowTitle(), this);
+                dock->setWidget(widgets.at(i));
+                connect(widgets.at(i), SIGNAL(destroyed()), dock, SLOT(deleteLater()));
+                QAction* showAction = new QAction(widgets.at(i)->windowTitle(), this);
+                connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
+                connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
+                widgets.at(i)->setMainMenuAction(showAction);
+                ui.menuTools->addAction(showAction);
+                addDockWidget(Qt::BottomDockWidgetArea, dock);
+            }
+        }
+    }
+}
+
 void MainWindow::buildCommonWidgets()
 {
     //TODO:  move protocol outside UI
@@ -234,6 +286,7 @@ void MainWindow::buildCommonWidgets()
     if (!controlDockWidget)
     {
         controlDockWidget = new QDockWidget(tr("Control"), this);
+        controlDockWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_DOCKWIDGET");
         controlDockWidget->setWidget( new UASControlWidget(this) );
         addToToolsMenu (controlDockWidget, tr("Control"), SLOT(showToolWidget()), MENU_UAS_CONTROL, Qt::LeftDockWidgetArea);
     }
@@ -242,6 +295,7 @@ void MainWindow::buildCommonWidgets()
     {
         listDockWidget = new QDockWidget(tr("Unmanned Systems"), this);
         listDockWidget->setWidget( new UASListWidget(this) );
+        listDockWidget->setObjectName("UNMANNED_SYSTEMS_LIST_DOCKWIDGET");
         addToToolsMenu (listDockWidget, tr("Unmanned Systems"), SLOT(showToolWidget()), MENU_UAS_LIST, Qt::RightDockWidgetArea);
     }
 
@@ -249,6 +303,7 @@ void MainWindow::buildCommonWidgets()
     {
         waypointsDockWidget = new QDockWidget(tr("Waypoint List"), this);
         waypointsDockWidget->setWidget( new WaypointList(this, NULL) );
+        waypointsDockWidget->setObjectName("WAYPOINT_LIST_DOCKWIDGET");
         addToToolsMenu (waypointsDockWidget, tr("Waypoints List"), SLOT(showToolWidget()), MENU_WAYPOINTS, Qt::BottomDockWidgetArea);
     }
 
@@ -256,6 +311,7 @@ void MainWindow::buildCommonWidgets()
     {
         infoDockWidget = new QDockWidget(tr("Status Details"), this);
         infoDockWidget->setWidget( new UASInfoWidget(this) );
+        infoDockWidget->setObjectName("UAS_STATUS_DETAILS_DOCKWIDGET");
         addToToolsMenu (infoDockWidget, tr("Status Details"), SLOT(showToolWidget()), MENU_STATUS, Qt::RightDockWidgetArea);
     }
 
@@ -263,7 +319,16 @@ void MainWindow::buildCommonWidgets()
     {
         debugConsoleDockWidget = new QDockWidget(tr("Communication Console"), this);
         debugConsoleDockWidget->setWidget( new DebugConsole(this) );
+        debugConsoleDockWidget->setObjectName("COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET");
         addToToolsMenu (debugConsoleDockWidget, tr("Communication Console"), SLOT(showToolWidget()), MENU_DEBUG_CONSOLE, Qt::BottomDockWidgetArea);
+    }
+
+    if (!logPlayerDockWidget)
+    {
+        logPlayerDockWidget = new QDockWidget(tr("MAVLink Log Player"), this);
+        logPlayerDockWidget->setWidget( new QGCMAVLinkLogPlayer(mavlink, this) );
+        logPlayerDockWidget->setObjectName("MAVLINK_LOG_PLAYER_DOCKWIDGET");
+        addToToolsMenu(logPlayerDockWidget, tr("MAVLink Log Replay"), SLOT(showToolWidget()), MENU_MAVLINK_LOG_PLAYER, Qt::RightDockWidgetArea);
     }
 
     // Center widgets
@@ -301,8 +366,8 @@ void MainWindow::buildPxWidgets()
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
     acceptList2->append("0,abs pressure,hPa,65500");
-    acceptList2->append("-2000,accel. X,raw,2000,s");
-    acceptList2->append("-2000,accel. Y,raw,2000,s");
+    acceptList2->append("-999,accel. X,raw,999,s");
+    acceptList2->append("-999,accel. Y,raw,999,s");
 
     if (!linechartWidget)
     {
@@ -355,6 +420,7 @@ void MainWindow::buildPxWidgets()
     {
         detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
         detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
+        detectionDockWidget->setObjectName("OBJECT_DETECTION_DOCK_WIDGET");
         addToToolsMenu (detectionDockWidget, tr("Object Recognition"), SLOT(showToolWidget()), MENU_DETECTION, Qt::RightDockWidgetArea);
     }
 
@@ -362,6 +428,7 @@ void MainWindow::buildPxWidgets()
     {
         parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
         parametersDockWidget->setWidget( new ParameterInterface(this) );
+        parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
         addToToolsMenu (parametersDockWidget, tr("Onboard Parameters"), SLOT(showToolWidget()), MENU_PARAMETERS, Qt::RightDockWidgetArea);
     }
 
@@ -369,6 +436,7 @@ void MainWindow::buildPxWidgets()
     {
         watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
         watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
+        watchdogControlDockWidget->setObjectName("WATCHDOG_CONTROL_DOCKWIDGET");
         addToToolsMenu (watchdogControlDockWidget, tr("Process Control"), SLOT(showToolWidget()), MENU_WATCHDOG, Qt::BottomDockWidgetArea);
     }
 
@@ -376,6 +444,7 @@ void MainWindow::buildPxWidgets()
     {
         hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
         hsiDockWidget->setWidget( new HSIDisplay(this) );
+        hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
         addToToolsMenu (hsiDockWidget, tr("HSI"), SLOT(showToolWidget()), MENU_HSI, Qt::BottomDockWidgetArea);
     }
 
@@ -383,6 +452,7 @@ void MainWindow::buildPxWidgets()
     {
         headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
         headDown1DockWidget->setWidget( new HDDisplay(acceptList, "Flight Display", this) );
+        headDown1DockWidget->setObjectName("HEAD_DOWN_DISPLAY_1_DOCK_WIDGET");
         addToToolsMenu (headDown1DockWidget, tr("Flight Display"), SLOT(showToolWidget()), MENU_HDD_1, Qt::RightDockWidgetArea);
     }
 
@@ -390,6 +460,7 @@ void MainWindow::buildPxWidgets()
     {
         headDown2DockWidget = new QDockWidget(tr("Payload Status"), this);
         headDown2DockWidget->setWidget( new HDDisplay(acceptList2, "Payload Status", this) );
+        headDown2DockWidget->setObjectName("HEAD_DOWN_DISPLAY_2_DOCK_WIDGET");
         addToToolsMenu (headDown2DockWidget, tr("Payload Status"), SLOT(showToolWidget()), MENU_HDD_2, Qt::RightDockWidgetArea);
     }
 
@@ -397,6 +468,7 @@ void MainWindow::buildPxWidgets()
     {
         rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
         rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
+        rcViewDockWidget->setObjectName("RADIO_CONTROL_CHANNELS_DOCK_WIDGET");
         addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget()), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
     }
 
@@ -404,6 +476,7 @@ void MainWindow::buildPxWidgets()
     {
         headUpDockWidget = new QDockWidget(tr("HUD"), this);
         headUpDockWidget->setWidget( new HUD(320, 240, this));
+        headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
         addToToolsMenu (headUpDockWidget, tr("Control Indicator"), SLOT(showToolWidget()), MENU_HUD, Qt::LeftDockWidgetArea);
     }
 
@@ -429,6 +502,7 @@ void MainWindow::buildSlugsWidgets()
         // Dock widgets
         headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
         headUpDockWidget->setWidget( new HUD(320, 240, this));
+        headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
         addToToolsMenu (headUpDockWidget, tr("HUD"), SLOT(showToolWidget()), MENU_HUD, Qt::LeftDockWidgetArea);
     }
 
@@ -436,6 +510,7 @@ void MainWindow::buildSlugsWidgets()
     {
         rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
         rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
+        rcViewDockWidget->setObjectName("RADIO_CONTROL_CHANNELS_DOCK_WIDGET");
         addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget()), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
     }
 
@@ -444,6 +519,7 @@ void MainWindow::buildSlugsWidgets()
         // Dialog widgets
         slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
         slugsDataWidget->setWidget( new SlugsDataSensorView(this));
+        slugsDataWidget->setObjectName("SLUGS_DATA_DOCK_WIDGET");
         addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget()), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
     }
 
@@ -451,6 +527,7 @@ void MainWindow::buildSlugsWidgets()
     {
         slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
         slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
+        slugsPIDControlWidget->setObjectName("SLUGS_PID_CONTROL_DOCK_WIDGET");
         addToToolsMenu (slugsPIDControlWidget, tr("PID Configuration"), SLOT(showToolWidget()), MENU_SLUGS_PID, Qt::LeftDockWidgetArea);
     }
 
@@ -458,6 +535,7 @@ void MainWindow::buildSlugsWidgets()
     {
         slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
         slugsHilSimWidget->setWidget( new SlugsHilSim(this));
+        slugsHilSimWidget->setObjectName("SLUGS_HIL_SIM_DOCK_WIDGET");
         addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
     }
 
@@ -465,6 +543,7 @@ void MainWindow::buildSlugsWidgets()
     {
         slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
         slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
+        slugsCamControlWidget->setObjectName("SLUGS_CAM_CONTROL_DOCK_WIDGET");
         addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget()), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
     }
 }
@@ -525,10 +604,12 @@ void MainWindow::showCentralWidget()
 
         // uncheck all central widget actions
         QHashIterator<int, QAction*> i(toolsMenuActions);
-        while (i.hasNext()) {
+        while (i.hasNext())
+        {
             i.next();
-            qDebug() << "shCW" << i.key() << "read";
-            if (i.value() && i.value()->data().toInt() > 255){
+            //qDebug() << "shCW" << i.key() << "read";
+            if (i.value() && i.value()->data().toInt() > 255)
+            {
                 i.value()->setChecked(false);
 
                 // update the settings
@@ -538,7 +619,7 @@ void MainWindow::showCentralWidget()
         }
 
         // check the current action
-        qDebug() << senderAction->text();
+        //qDebug() << senderAction->text();
         senderAction->setChecked(true);
 
         // update the central widget
@@ -547,7 +628,6 @@ void MainWindow::showCentralWidget()
         // store the selected central widget
         chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(tool), currentView);
         settings.setValue(chKey,true);
-        settings.sync();
 
         presentView();
     }
@@ -584,7 +664,7 @@ void MainWindow::addToToolsMenu ( QWidget* widget,
     // populate the Hashes
     toolsMenuActions[tool] = tempAction;
     dockWidgets[tool] = widget;
-    qDebug() << widget;
+    //qDebug() << widget;
 
     posKey = buildMenuKey (SUB_SECTION_LOCATION,tool, currentView);
 
@@ -649,7 +729,7 @@ void MainWindow::showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view)
     Qt::DockWidgetArea tempLocation;
     QDockWidget* tempWidget = static_cast <QDockWidget *>(dockWidgets[widget]);
 
-    tempVisible =  settings.value(buildMenuKey (SUB_SECTION_CHECKED,widget,view), false).toBool();
+    tempVisible =  settings.value(buildMenuKey(SUB_SECTION_CHECKED,widget,view), false).toBool();
 
     if (tempWidget)
     {
@@ -708,16 +788,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-/**
- * Stores the visibility setting of each widget. This method
- * will only change the settings if the application is not
- * about to close.
- */
+
 void MainWindow::updateVisibilitySettings (bool vis)
 {
-    if (!aboutToCloseFlag)
+    if (!aboutToCloseFlag && !changingViewsFlag)
     {
-
         QDockWidget* temp = qobject_cast<QDockWidget *>(sender());
 
         if (temp)
@@ -730,7 +805,6 @@ void MainWindow::updateVisibilitySettings (bool vis)
                 {
                     QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(i.key()), currentView);
                     settings.setValue(chKey,vis);
-                    settings.sync();
                     toolsMenuActions[i.key()]->setChecked(vis);
                     break;
                 }
@@ -781,11 +855,24 @@ void MainWindow::connectCommonWidgets()
 
 void MainWindow::createCustomWidget()
 {
-    qDebug() << "ADDING CUSTOM WIDGET";
-    QGCToolWidget* tool = new QGCToolWidget(this);
+    //qDebug() << "ADDING CUSTOM WIDGET";
+    QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool", this);
+
+    if (QGCToolWidget::instances()->size() < 2)
+    {
+        // This is the first widget
+        ui.menuTools->addSeparator();
+    }
+
     QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
+    connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
     dock->setWidget(tool);
-    this->addDockWidget(Qt::LeftDockWidgetArea, dock);
+    QAction* showAction = new QAction("Show Unnamed Tool", this);
+    connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
+    connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
+    tool->setMainMenuAction(showAction);
+    ui.menuTools->addAction(showAction);
+    this->addDockWidget(Qt::BottomDockWidgetArea, dock);
     dock->setVisible(true);
 }
 
@@ -1028,6 +1115,7 @@ void MainWindow::connectCommonActions()
 
     // Connect internal actions
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(UASCreated(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     // Unmanned System controls
     connect(ui.actionLiftoff, SIGNAL(triggered()), UASManager::instance(), SLOT(launchActiveUAS()));
@@ -1132,6 +1220,8 @@ void MainWindow::addLink(LinkInterface *link)
     CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
     ui.menuNetwork->addAction(commWidget->getAction());
 
+    //qDebug() << "ADDING LINK:" << link->getName() << "ACTION IS: " << commWidget->getAction();
+
     // Special case for simulationlink
     MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
     if (sim)
@@ -1139,6 +1229,13 @@ void MainWindow::addLink(LinkInterface *link)
         //connect(sim, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
         connect(ui.actionSimulate, SIGNAL(triggered(bool)), sim, SLOT(connectLink(bool)));
     }
+}
+
+void MainWindow::setActiveUAS(UASInterface* uas)
+{
+    // Enable and rename menu
+    ui.menuUnmanned_System->setTitle(uas->getUASName());
+    if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
 }
 
 void MainWindow::UASCreated(UASInterface* uas)
@@ -1269,7 +1366,7 @@ void MainWindow::UASCreated(UASInterface* uas)
         // the currently active UAS
         if (UASManager::instance()->getActiveUAS() == uas)
         {
-            qDebug() << "UPDATING THE VIEW SINCE THIS IS THE FIRST CONNECTED SYSTEM";
+            //qDebug() << "UPDATING THE VIEW SINCE THIS IS THE FIRST CONNECTED SYSTEM";
 
             // Load last view if setting is present
             if (settings.contains("CURRENT_VIEW_WITH_UAS_CONNECTED"))
@@ -1292,6 +1389,11 @@ void MainWindow::UASCreated(UASInterface* uas)
         }
 
     }
+
+    if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
+
+    // Custom widgets, added last to all menus and layouts
+    buildCustomWidget();
 }
 
 /**
@@ -1313,16 +1415,17 @@ void MainWindow::clearView()
 
         if (temp)
         {
+            //qDebug() << "TOOL:" << chKey << "IS:" << temp->isChecked();
             settings.setValue(chKey,temp->isChecked());
         }
         else
         {
+            //qDebug() << "TOOL:" << chKey << "IS DEFAULT AND UNCHECKED";
             settings.setValue(chKey,false);
         }
     }
 
-    settings.sync();
-
+    changingViewsFlag = true;
     // Remove all dock widgets from main window
     QObjectList childList( this->children() );
 
@@ -1341,6 +1444,7 @@ void MainWindow::clearView()
             // Is there a way to unset a widget from QDockWidget?
         }
     }
+    changingViewsFlag = false;
 }
 
 void MainWindow::loadEngineerView()
@@ -1490,6 +1594,9 @@ void MainWindow::presentView()
     // HEAD DOWN 2
     showTheWidget(MENU_HDD_2, currentView);
 
+    // MAVLINK LOG PLAYER
+    showTheWidget(MENU_MAVLINK_LOG_PLAYER, currentView);
+
     this->show();
 
 }
@@ -1500,7 +1607,7 @@ void MainWindow::showTheCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SE
     QWidget* tempWidget = dockWidgets[centralWidget];
 
     tempVisible =  settings.value(buildMenuKey (SUB_SECTION_CHECKED,centralWidget,view), false).toBool();
-    qDebug() << buildMenuKey (SUB_SECTION_CHECKED,centralWidget,view) << tempVisible;
+    //qDebug() << buildMenuKey (SUB_SECTION_CHECKED,centralWidget,view) << tempVisible;
     if (toolsMenuActions[centralWidget])
     {
         toolsMenuActions[centralWidget]->setChecked(tempVisible);

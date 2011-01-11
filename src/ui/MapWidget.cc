@@ -14,6 +14,7 @@
 #include <QGridLayout>
 #include <QDir>
 
+#include "QGC.h"
 #include "MapWidget.h"
 #include "ui_MapWidget.h"
 #include "UASInterface.h"
@@ -34,6 +35,19 @@ MapWidget::MapWidget(QWidget *parent) :
         m_ui(new Ui::MapWidget)
 {
     m_ui->setupUi(this);
+    mc = new qmapcontrol::MapControl(QSize(320, 240));
+
+    //   VISUAL MAP STYLE
+    QString buttonStyle("QAbstractButton { background-color: rgba(20, 20, 20, 45%); border-color: rgba(10, 10, 10, 50%)}");
+    mc->setPen(QGC::colorCyan.darker(400));
+
+
+
+
+
+
+
+
 
     waypointIsDrag = false;
 
@@ -41,7 +55,7 @@ MapWidget::MapWidget(QWidget *parent) :
     this->setFocusPolicy(Qt::StrongFocus);
 
     // create MapControl
-    mc = new qmapcontrol::MapControl(QSize(320, 240));
+
     mc->showScale(true);
     mc->showCoord(true);
     mc->enablePersistentCache();
@@ -126,32 +140,35 @@ MapWidget::MapWidget(QWidget *parent) :
     mapButton = new QPushButton(this);
     mapButton->setText("Map Source");
     mapButton->setMenu(mapMenu);
+    mapButton->setStyleSheet(buttonStyle);
 
     // display the MapControl in the application
     QGridLayout* layout = new QGridLayout(this);
     layout->setMargin(0);
-    layout->setSpacing(2);
-    layout->addWidget(mc, 0, 0, 1, 2);
-    layout->addWidget(mapButton, 1, 0);
-    layout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 1, 1);
-    layout->setRowStretch(0, 100);
-    layout->setRowStretch(1, 1);
-    layout->setColumnStretch(0, 1);
-    layout->setColumnStretch(1, 50);
+    layout->setSpacing(0);
+    layout->addWidget(mc, 0, 0);
     setLayout(layout);
 
     // create buttons to control the map (zoom, GPS tracking and WP capture)
     QPushButton* zoomin = new QPushButton(QIcon(":/images/actions/list-add.svg"), "", this);
+    zoomin->setStyleSheet(buttonStyle);
     QPushButton* zoomout = new QPushButton(QIcon(":/images/actions/list-remove.svg"), "", this);
+    zoomout->setStyleSheet(buttonStyle);
     createPath = new QPushButton(QIcon(":/images/actions/go-bottom.svg"), "", this);
+    createPath->setStyleSheet(buttonStyle);
     clearTracking = new QPushButton(QIcon(""), "", this);
+    clearTracking->setStyleSheet(buttonStyle);
     followgps = new QPushButton(QIcon(":/images/actions/system-lock-screen.svg"), "", this);
+    followgps->setStyleSheet(buttonStyle);
+    QPushButton* goToButton = new QPushButton(QIcon(""), "T", this);
+    goToButton->setStyleSheet(buttonStyle);
 
     zoomin->setMaximumWidth(30);
     zoomout->setMaximumWidth(30);
     createPath->setMaximumWidth(30);
     clearTracking->setMaximumWidth(30);
     followgps->setMaximumWidth(30);
+    goToButton->setMaximumWidth(30);
 
     // Set checkable buttons
     // TODO: Currently checked buttons are are very difficult to distinguish when checked.
@@ -161,8 +178,8 @@ MapWidget::MapWidget(QWidget *parent) :
 
     // add buttons to control the map (zoom, GPS tracking and WP capture)
     QGridLayout* innerlayout = new QGridLayout(mc);
-    innerlayout->setMargin(5);
-    innerlayout->setSpacing(5);
+    innerlayout->setMargin(3);
+    innerlayout->setSpacing(3);
     innerlayout->addWidget(zoomin, 0, 0);
     innerlayout->addWidget(zoomout, 1, 0);
     innerlayout->addWidget(followgps, 2, 0);
@@ -170,7 +187,9 @@ MapWidget::MapWidget(QWidget *parent) :
     innerlayout->addWidget(clearTracking, 4, 0);
     // Add spacers to compress buttons on the top left
     innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 5, 0);
-    innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 1, 0, 6);
+    innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 1, 0, 7);
+    innerlayout->addWidget(mapButton, 0, 6);
+    innerlayout->addWidget(goToButton, 0, 7);
     innerlayout->setRowStretch(0, 1);
     innerlayout->setRowStretch(1, 100);
     mc->setLayout(innerlayout);
@@ -182,6 +201,8 @@ MapWidget::MapWidget(QWidget *parent) :
 
     connect(zoomout, SIGNAL(clicked(bool)),
             mc, SLOT(zoomOut()));
+
+    connect(goToButton, SIGNAL(clicked()), this, SLOT(goTo()));
 
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
     foreach(UASInterface* system, systems)
@@ -227,6 +248,31 @@ MapWidget::MapWidget(QWidget *parent) :
 
     drawCamBorder = false;
     radioCamera = 10;
+}
+
+void MapWidget::goTo()
+{
+    bool ok;
+         QString text = QInputDialog::getText(this, tr("Please enter coordinates"),
+                                              tr("Coordinates (Lat,Lon):"), QLineEdit::Normal,
+                                              QString("%1,%2").arg(mc->currentCoordinate().x()).arg(mc->currentCoordinate().y()), &ok);
+         if (ok && !text.isEmpty())
+         {
+             QStringList split = text.split(",");
+             if (split.length() == 2)
+             {
+                 bool convert;
+                 double latitude = split.first().toDouble(&convert);
+                 ok &= convert;
+                 double longitude = split.last().toDouble(&convert);
+                 ok &= convert;
+
+                 if (ok)
+                 {
+                     mc->setView(QPointF(latitude, longitude));
+                 }
+             }
+         }
 }
 
 

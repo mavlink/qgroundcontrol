@@ -70,8 +70,10 @@ public:
     bool loggingEnabled(void);
     /** @brief Get protocol version check state */
     bool versionCheckEnabled(void);
+    /** @brief Get the protocol version */
+    int getVersion() { return MAVLINK_VERSION; }
     /** @brief Get the name of the packet log file */
-    static QString getLogfileName();
+    QString getLogfileName();
 
 public slots:
     /** @brief Receive bytes from a communication interface */
@@ -88,6 +90,9 @@ public slots:
 
     /** @brief Enable/disable binary packet logging */
     void enableLogging(bool enabled);
+
+    /** @brief Set log file name */
+    void setLogfileName(const QString& filename);
 
     /** @brief Enable / disable version check */
     void enableVersionCheck(bool enabled);

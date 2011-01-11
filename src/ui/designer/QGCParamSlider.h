@@ -24,6 +24,12 @@ public slots:
     void endEditMode();
     /** @brief Send the parameter to the MAV */
     void sendParameter();
+    /** @brief Set the slider value as parameter value */
+    void setSliderValue(int sliderValue);
+    /** @brief Update the UI with the new parameter value */
+    void setParameterValue(int uas, int component, QString parameterName, float value);
+    void writeSettings(QSettings& settings);
+    void readSettings(const QSettings& settings);
 
 protected:
     QString parameterName;         ///< Key/Name of the parameter
@@ -32,7 +38,13 @@ protected:
     float parameterMin;
     float parameterMax;
     int component;                 ///< ID of the MAV component to address
+    double scaledInt;
     void changeEvent(QEvent *e);
+
+    /** @brief Convert scaled int to float */
+
+    float scaledIntToFloat(int sliderValue);
+    int floatToScaledInt(float value);
 
 private:
     Ui::QGCParamSlider *ui;

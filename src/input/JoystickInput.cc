@@ -36,6 +36,7 @@ This file is part of the PIXHAWK project
 #include <limits.h>
 #include "UAS.h"
 #include "UASManager.h"
+#include "QGC.h"
 
 /**
  * The coordinate frame of the joystick axis is the aeronautical frame like shown on this image:
@@ -276,7 +277,7 @@ void JoystickInput::run()
         }
 
         // Sleep, update rate of joystick is approx. 50 Hz (1000 ms / 50 = 20 ms)
-        MG::SLEEP::msleep(20);
+        QGC::SLEEP::msleep(20);
 
     }
 
