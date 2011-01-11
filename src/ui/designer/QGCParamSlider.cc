@@ -22,7 +22,7 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     ui->editDoneButton->show();
     ui->editMaxLabel->show();
     ui->editMinLabel->show();
-    ui->editNameLineEdit->show();
+    ui->editNameLabel->show();
     ui->editInstructionsLabel->show();
     ui->editRefreshParamsButton->show();
     ui->editSelectParamComboBox->show();
@@ -30,7 +30,6 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     ui->editStatusLabel->show();
     ui->editMinSpinBox->show();
     ui->editMaxSpinBox->show();
-    ui->editTypeComboBox->show();
     connect(ui->editDoneButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
 }
 
@@ -44,7 +43,7 @@ void QGCParamSlider::startEditMode()
     ui->editDoneButton->show();
     ui->editMaxLabel->show();
     ui->editMinLabel->show();
-    ui->editNameLineEdit->show();
+    ui->editNameLabel->show();
     ui->editInstructionsLabel->show();
     ui->editRefreshParamsButton->show();
     ui->editSelectParamComboBox->show();
@@ -60,7 +59,7 @@ void QGCParamSlider::endEditMode()
     ui->editDoneButton->hide();
     ui->editMaxLabel->hide();
     ui->editMinLabel->hide();
-    ui->editNameLineEdit->hide();
+    ui->editNameLabel->hide();
     ui->editInstructionsLabel->hide();
     ui->editRefreshParamsButton->hide();
     ui->editSelectParamComboBox->hide();
@@ -68,7 +67,6 @@ void QGCParamSlider::endEditMode()
     ui->editStatusLabel->hide();
     ui->editMinSpinBox->hide();
     ui->editMaxSpinBox->hide();
-    ui->editTypeComboBox->hide();
     isInEditMode = false;
     emit editingFinished();
 }
@@ -138,9 +136,9 @@ void QGCParamSlider::readSettings(const QSettings& settings)
 {
     ui->nameLabel->setText(settings.value("QGC_PARAM_SLIDER_DESCRIPTION").toString());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
-    ui->editSelectParamComboBox->setCurrentText(settings.value("QGC_PARAM_SLIDER_PARAMID").toString());
-    ui->editSelectComponentsComboBox->setCurrentText(settings.value("QGC_PARAM_SLIDER_COMPONENTID").toString());
-    ui->editMinSpinBox(settings.value("QGC_PARAM_SLIDER_MIN").toFloat());
-    ui->editMaxSpinBox(settings.value("QGC_PARAM_SLIDER_MAX").toFloat());
+    ui->editSelectParamComboBox->setEditText(settings.value("QGC_PARAM_SLIDER_PARAMID").toString());
+    ui->editSelectComponentComboBox->setEditText(settings.value("QGC_PARAM_SLIDER_COMPONENTID").toString());
+    ui->editMinSpinBox->setValue(settings.value("QGC_PARAM_SLIDER_MIN").toFloat());
+    ui->editMaxSpinBox->setValue(settings.value("QGC_PARAM_SLIDER_MAX").toFloat());
     qDebug() << "DONE READING SETTINGS";
 }

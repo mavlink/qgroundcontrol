@@ -222,6 +222,13 @@ namespace qmapcontrol
          */
         void showCoord ( bool show );
 
+        //! Set the pen for overlay text
+        /*!
+         *
+         * @param pen The new QPen
+         */
+        void setPen(QPen pen);
+
     private:
         LayerManager* layermanager;
         QPoint screen_middle; // middle of the widget (half size)
@@ -239,6 +246,7 @@ namespace qmapcontrol
         MouseMode mymousemode;
         bool scaleVisible;
         bool cursorPosVisible;
+        QPen mapPen;
 
         bool m_loadingFlag;
 

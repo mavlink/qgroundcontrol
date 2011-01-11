@@ -77,6 +77,8 @@ public slots:
     void clearPath();
     void changeGlobalWaypointPositionBySpinBox(int index, float lat, float lon);
     void drawBorderCamAtMap(bool status);
+    /** @brief Bring up dialog to go to a specific location */
+    void goTo();
 
 protected:
     void changeEvent(QEvent* e);
