@@ -109,7 +109,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Log data
             if (m_loggingEnabled)
             {
-                int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);
+                const int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);
                 uint8_t buf[len];
                 quint64 time = QGC::groundTimeUsecs();
                 memcpy(buf, (void*)&time, sizeof(quint64));
