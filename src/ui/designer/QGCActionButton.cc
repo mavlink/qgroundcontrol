@@ -52,7 +52,13 @@ QGCActionButton::QGCActionButton(QWidget *parent) :
     connect(ui->editFinishButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
     connect(ui->editButtonName, SIGNAL(textChanged(QString)), this, SLOT(setActionButtonName(QString)));
     connect(ui->editActionComboBox, SIGNAL(currentIndexChanged(QString)), ui->nameLabel, SLOT(setText(QString)));
-    endEditMode();
+
+    // Hide all edit items
+    ui->editActionComboBox->hide();
+    ui->editActionsRefreshButton->hide();
+    ui->editFinishButton->hide();
+    ui->editNameLabel->hide();
+    ui->editButtonName->hide();
 
     // add action labels to combobox
     for (int i = 0; i < MAV_ACTION_NB; i++)
@@ -105,7 +111,28 @@ void QGCActionButton::endEditMode()
     ui->editButtonName->hide();
 
     // Write to settings
-
+    emit editingFinished();
 
     isInEditMode = false;
+}
+
+void QGCActionButton::writeSettings(QSettings& settings)
+{
+    settings.setValue("TYPE", "BUTTON");
+    settings.setValue("QGC_ACTION_BUTTON_DESCRIPTION", ui->nameLabel->text());
+    settings.setValue("QGC_ACTION_BUTTON_BUTTONTEXT", ui->actionButton->text());
+    settings.setValue("QGC_ACTION_BUTTON_ACTIONID", ui->editActionComboBox->currentIndex());
+    settings.sync();
+}
+
+void QGCActionButton::readSettings(const QSettings& settings)
+{
+    ui->editNameLabel->setText(settings.value("QGC_ACTION_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
+    ui->editButtonName->setText(settings.value("QGC_ACTION_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
+    ui->editActionComboBox->setCurrentIndex(settings.value("QGC_ACTION_BUTTON_ACTIONID", 0).toInt());
+
+    ui->nameLabel->setText(settings.value("QGC_ACTION_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
+    ui->actionButton->setText(settings.value("QGC_ACTION_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
+    ui->editActionComboBox->setCurrentIndex(settings.value("QGC_ACTION_BUTTON_ACTIONID", 0).toInt());
+    qDebug() << "DONE READING SETTINGS";
 }

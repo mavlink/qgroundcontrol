@@ -46,7 +46,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
-        HDDisplay(NULL, "", parent),
+        HDDisplay(NULL, "HSI", parent),
         gpsSatellites(),
         satellitesUsed(0),
         attXSet(0),
@@ -102,11 +102,17 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     refreshTimer->setInterval(updateInterval);
 
+    columns = 1;
+
 
     //    this->setScene(new QGraphicsScene(-metricWidth/2.0f, -metricWidth/2.0f, metricWidth, metricWidth, this));
 
+    vwidth = 80;
+    vheight = 80;
+
     xCenterPos = vwidth/2.0f;
     yCenterPos = vheight/2.0f + topMargin - bottomMargin;
+    qDebug() << "CENTER" << xCenterPos << yCenterPos;
 
     // Add interaction elements
     QHBoxLayout* layout = new QHBoxLayout(this);

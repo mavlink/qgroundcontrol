@@ -239,12 +239,17 @@ userConfigured(false)
 
         // Setup the user interface according to link type
         ui.setupUi(this);
+        //this->setVisible(false);
+        //this->hide();
 
         // Create action to open this menu
         // Create configuration action for this link
         // Connect the current UAS
         action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", link);
         setLinkName(link->getName());
+
+        setupPortList();
+
         connect(action, SIGNAL(triggered()), this, SLOT(configureCommunication()));
 
         // Make sure that a change in the link name will be reflected in the UI
@@ -258,10 +263,8 @@ userConfigured(false)
         connect(ui.parNone, SIGNAL(toggled(bool)), this, SLOT(setParityNone()));
         connect(ui.parOdd, SIGNAL(toggled(bool)), this, SLOT(setParityOdd()));
         connect(ui.parEven, SIGNAL(toggled(bool)), this, SLOT(setParityEven()));
-        connect(ui.dataBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setDataBitsType(int)));
-        connect(ui.stopBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setStopBitsType(int)));
-
-        setupPortList();
+        connect(ui.dataBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setDataBits(int)));
+        connect(ui.stopBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setStopBits(int)));
 
         //connect(this->link, SIGNAL(connected(bool)), this, SLOT());
         ui.portName->setSizeAdjustPolicy(QComboBox::AdjustToContentsOnFirstShow);
@@ -299,8 +302,8 @@ userConfigured(false)
 
         ui.baudRate->setCurrentIndex(this->link->getBaudRateType());
 
-        ui.dataBitsSpinBox->setValue(this->link->getDataBitsType() + 5);
-        ui.stopBitsSpinBox->setValue(this->link->getStopBitsType() + 1);
+        ui.dataBitsSpinBox->setValue(this->link->getDataBits());
+        ui.stopBitsSpinBox->setValue(this->link->getStopBits());
 
         portCheckTimer = new QTimer(this);
         portCheckTimer->setInterval(1000);
@@ -308,7 +311,7 @@ userConfigured(false)
 
         // Display the widget
         this->window()->setWindowTitle(tr("Serial Communication Settings"));
-        this->show();
+        //this->show();
     }
     else
     {
@@ -323,18 +326,14 @@ SerialConfigurationWindow::~SerialConfigurationWindow() {
 
 void SerialConfigurationWindow::showEvent(QShowEvent* event)
 {
-    if (event->isAccepted())
-    {
-        portCheckTimer->start();
-    }
+    Q_UNUSED(event);
+    portCheckTimer->start();
 }
 
 void SerialConfigurationWindow::hideEvent(QHideEvent* event)
 {
-    if (event->isAccepted())
-    {
-        portCheckTimer->stop();
-    }
+    Q_UNUSED(event);
+    portCheckTimer->stop();
 }
 
 QAction* SerialConfigurationWindow::getAction()

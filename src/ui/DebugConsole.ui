@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>463</width>
-    <height>159</height>
+    <width>469</width>
+    <height>190</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,7 +24,7 @@
     <number>6</number>
    </property>
    <item row="0" column="0" colspan="2">
-    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="10,0,0,0,0">
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="10,0,0,0,0,0">
      <item>
       <widget class="QComboBox" name="linkComboBox">
        <property name="maximumSize">
@@ -81,6 +81,19 @@
        </property>
       </widget>
      </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
     </layout>
    </item>
    <item row="1" column="0" colspan="2">
@@ -106,24 +119,80 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QLineEdit" name="sendText">
-     <property name="minimumSize">
-      <size>
-       <width>80</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="toolTip">
-      <string>Type the bytes to send here, use 0xAA format for HEX (Check HEX checkbox above)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,10,10,0">
+   <item row="4" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="100,1,10,1,1,1">
      <property name="spacing">
       <number>5</number>
      </property>
+     <item>
+      <widget class="QComboBox" name="specialComboBox">
+       <property name="maximumSize">
+        <size>
+         <width>100</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="maxVisibleItems">
+        <number>10</number>
+       </property>
+       <property name="sizeAdjustPolicy">
+        <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+       </property>
+       <property name="minimumContentsLength">
+        <number>1</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>Add..</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CR+LF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>LF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>FF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CR</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>TAB</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>NUL</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>ESC</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>~</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>&lt;Space&gt;</string>
+        </property>
+       </item>
+      </widget>
+     </item>
      <item>
       <widget class="QPushButton" name="transmitButton">
        <property name="toolTip">
@@ -137,6 +206,22 @@
          <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
        </property>
       </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>5</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
      </item>
      <item>
       <widget class="QPushButton" name="holdButton">
@@ -163,6 +248,19 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QLineEdit" name="sendText">
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Type the bytes to send here, use 0xAA format for HEX (Check HEX checkbox above)</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
