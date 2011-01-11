@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QFile>
 #include <QDebug>
 #include <MG.h>
+#include "QGC.h"
 
 /**
  * Create a simulated link. This link is connected to an input and output file.
@@ -92,6 +93,10 @@ void SerialSimulationLink::run()
 
                 msleep(rate);
         }*/
+    forever
+    {
+        QGC::SLEEP::msleep(5000);
+    }
 }
 
 void SerialSimulationLink::enableLoopBackMode(SerialLink* loop)

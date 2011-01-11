@@ -43,6 +43,9 @@ class SerialLinkInterface : public LinkInterface {
 public:
 	virtual QString getPortName() = 0;
 	virtual int getBaudRate() = 0;
+        virtual int getDataBits() = 0;
+        virtual int getStopBits() = 0;
+
 	virtual int getBaudRateType() = 0;
 	virtual int getFlowType() = 0;
 	virtual int getParityType() = 0;

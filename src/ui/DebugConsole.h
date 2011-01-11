@@ -75,10 +75,16 @@ public slots:
     void MAVLINKfilterEnabled(bool filter);
     /** @brief Freeze input, do not store new incoming data */
     void hold(bool hold);
+    /** @brief Set connection state of the current link */
+    void setConnectionState(bool);
+    /** @brief Handle the connect button */
+    void handleConnectButton();
     /** @brief Enable auto-freeze mode if traffic intensity is too high to display */
     void setAutoHold(bool hold);
     /** @brief Receive plain text message to output to the user */
     void receiveTextMessage(int id, int component, int severity, QString text);
+    /** @brief Append a special symbol */
+    void appendSpecialSymbol(const QString& text);
 
     protected slots:
     /** @brief Draw information overlay */
@@ -88,6 +94,7 @@ public slots:
 
 protected:
     void changeEvent(QEvent *e);
+    QByteArray symbolNameToBytes(const QString& symbol);
 
     QList<LinkInterface*> links;
     LinkInterface* currLink;

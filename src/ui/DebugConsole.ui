@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>402</width>
-    <height>185</height>
+    <width>447</width>
+    <height>181</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="0,0">
    <property name="horizontalSpacing">
     <number>6</number>
    </property>
@@ -51,7 +51,7 @@
         <string>Ignore MAVLINK protocol messages in display</string>
        </property>
        <property name="text">
-        <string>No MAVLINK</string>
+        <string>Hide MAVLINK</string>
        </property>
       </widget>
      </item>
@@ -77,7 +77,7 @@
         <string>Enable auto hold to lower the CPU consumption</string>
        </property>
        <property name="text">
-        <string>Hold</string>
+        <string>Auto Hold</string>
        </property>
       </widget>
      </item>
@@ -106,24 +106,74 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
-    <widget class="QLineEdit" name="sendText">
-     <property name="minimumSize">
-      <size>
-       <width>80</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="toolTip">
-      <string>Type the bytes to send here, use 0xAA format for HEX (Check HEX checkbox above)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,10,10">
+   <item row="4" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,10,10,10,0">
      <property name="spacing">
       <number>5</number>
      </property>
+     <item>
+      <widget class="QComboBox" name="specialComboBox">
+       <property name="maxVisibleItems">
+        <number>10</number>
+       </property>
+       <property name="sizeAdjustPolicy">
+        <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+       </property>
+       <property name="minimumContentsLength">
+        <number>1</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>Add..</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CR+LF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>LF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>FF</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>CR</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>TAB</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>NUL</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>ESC</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>~</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>&lt;Space&gt;</string>
+        </property>
+       </item>
+      </widget>
+     </item>
      <item>
       <widget class="QPushButton" name="transmitButton">
        <property name="toolTip">
@@ -155,7 +205,27 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="connectButton">
+       <property name="text">
+        <string>Disconn.</string>
+       </property>
+      </widget>
+     </item>
     </layout>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QLineEdit" name="sendText">
+     <property name="minimumSize">
+      <size>
+       <width>80</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Type the bytes to send here, use 0xAA format for HEX (Check HEX checkbox above)</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

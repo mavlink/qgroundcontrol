@@ -152,7 +152,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/designer/QGCToolWidget.ui \
     src/ui/designer/QGCParamSlider.ui \
-    src/ui/designer/QGCActionButton.ui
+    src/ui/designer/QGCActionButton.ui \
+    src/ui/QGCMAVLinkLogPlayer.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -258,7 +259,8 @@ HEADERS += src/MG.h \
     src/ui/designer/QGCToolWidget.h \
     src/ui/designer/QGCParamSlider.h \
     src/ui/designer/QGCActionButton.h \
-    src/ui/designer/QGCToolWidgetItem.h
+    src/ui/designer/QGCToolWidgetItem.h \
+    src/ui/QGCMAVLinkLogPlayer.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008: {
@@ -379,7 +381,8 @@ SOURCES += src/main.cc \
     src/ui/designer/QGCToolWidget.cc \
     src/ui/designer/QGCParamSlider.cc \
     src/ui/designer/QGCActionButton.cc \
-    src/ui/designer/QGCToolWidgetItem.cc
+    src/ui/designer/QGCToolWidgetItem.cc \
+    src/ui/QGCMAVLinkLogPlayer.cc
 
 macx|win32-msvc2008: {
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -421,9 +424,9 @@ contains(DEPENDENCIES_PRESENT, libfreenect) {
 RESOURCES += mavground.qrc
 
 # Include RT-LAB Library
-win32:exists(src/lib/opalrt/OpalApi.h):exists(C:\OPAL-RT\RT-LAB7.2.4\Common\bin) { 
+win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
     message("Building support for Opal-RT")
-    LIBS += -LC:\OPAL-RT\RT-LAB7.2.4\Common\bin \
+    LIBS += -LC:/OPAL-RT/RT-LAB7.2.4/Common/bin \
         -lOpalApi
     INCLUDEPATH += src/lib/opalrt
     HEADERS += src/comm/OpalRT.h \

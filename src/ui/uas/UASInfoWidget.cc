@@ -29,6 +29,8 @@ This file is part of the PIXHAWK project
  *
  */
 
+#include <QtGlobal>
+
 #include <float.h>
 #include <UASInfoWidget.h>
 #include <UASManager.h>
@@ -69,19 +71,35 @@ UASInfoWidget::UASInfoWidget(QWidget *parent, QString name) : QWidget(parent)
     this->load = 0;
     receiveLoss = 0;
     sendLoss = 0;
+    changed = true;
     errors = QMap<QString, int>();
 
     updateTimer = new QTimer(this);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
-    updateTimer->start(50);
+    updateTimer->start(updateInterval);
 
     this->setVisible(false);
-
 }
 
 UASInfoWidget::~UASInfoWidget()
 {
 
+}
+
+void UASInfoWidget::showEvent(QShowEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event);
+    updateTimer->start(updateInterval);
+}
+
+void UASInfoWidget::hideEvent(QHideEvent* event)
+{
+    // React only to internal (pre-display)
+    // events
+    Q_UNUSED(event);
+    updateTimer->stop();
 }
 
 void UASInfoWidget::addUAS(UASInterface* uas)
@@ -172,13 +190,13 @@ void UASInfoWidget::setTimeRemaining(UASInterface* uas, double seconds)
 void UASInfoWidget::refresh()
 {
     ui.voltageLabel->setText(QString::number(this->voltage, 'f', voltageDecimals));
-    ui.batteryBar->setValue(static_cast<int>(this->chargeLevel));
+    ui.batteryBar->setValue(qMax(0,qMin(static_cast<int>(this->chargeLevel), 100)));
 
     ui.loadLabel->setText(QString::number(this->load, 'f', loadDecimals));
-    ui.loadBar->setValue(static_cast<int>(this->load));
+    ui.loadBar->setValue(qMax(0, qMin(static_cast<int>(this->load), 100)));
 
-    ui.receiveLossBar->setValue(receiveLoss);
-    ui.receiveLossLabel->setText(QString::number(receiveLoss,'f', 2));
+    ui.receiveLossBar->setValue(qMax(0, qMin(static_cast<int>(receiveLoss), 100)));
+    ui.receiveLossLabel->setText(QString::number(receiveLoss, 'f', 2));
 
     ui.sendLossBar->setValue(sendLoss);
     ui.sendLossLabel->setText(QString::number(sendLoss, 'f', 2));

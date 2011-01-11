@@ -2,14 +2,14 @@
 QWidget#colorIcon {}
 
 QWidget {
-background-color: #050508;
-color: #DDDDDF;
+background-color: #F6F6F6;
+color: #000000;
 background-clip: border;
 font-size: 11px;
 }
 
 QGroupBox {
-border: 1px solid #66666B;
+border: 1px solid #222216;
 border-radius: 3px;
 padding: 10px 0px 0px 0px;
 margin-top: 1ex; /* leave space at the top for the title */
@@ -17,47 +17,47 @@ margin-top: 1ex; /* leave space at the top for the title */
 
 QCheckBox {
 /*background-color: #252528;*/
-color: #DDDDDF;
+color: #222221;
 }
 
 QCheckBox::indicator {
-    border: 1px solid #777777;
+    border: 1px solid #111111;
     border-radius: 2px;
-    color: #DDDDDF;
+    color: #222221;
          width: 10px;
      height: 10px;
 }
 
 QLineEdit {
-border: 1px solid #777777;
+border: 1px solid #111111;
     border-radius: 2px;
 }
 
 QTextEdit {
-border: 1px solid #777777;
+border: 1px solid #111111;
     border-radius: 2px;
 }
 
 QPlainTextEdit {
-border: 1px solid #777777;
+border: 1px solid #111111;
     border-radius: 2px;
 }
 
 QComboBox {
-border: 1px solid #777777;
+border: 1px solid #111111;
     border-radius: 2px;
     }
 
  QCheckBox::indicator:checked {
-     background-color: #379AC3;
+     background-color: #222222;
  }
 
  QCheckBox::indicator:checked:hover {
-     background-color: #379AC3;
+     background-color: #222222;
  }
 
  QCheckBox::indicator:checked:pressed {
-     background-color: #379AC3;
+     background-color: #222222;
  }
 
  QCheckBox::indicator:indeterminate:hover {
@@ -126,7 +126,7 @@ QDockWidget::title {
     color: #4A4A4F;
     padding-left: 5px;
     height: 10px;
-	border-bottom: 1px solid #555555;
+	border-bottom: 1px solid #222222;
 }
 
 QSeparator {
@@ -182,19 +182,17 @@ QPushButton {
 	max-height: 18px;
 	border: 2px solid #4A4A4F;
 	border-radius: 5px;
-	padding-left: 5px;
-	padding-right: 5px;
+	padding-left: 10px;
+	padding-right: 10px;
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
 }
 
 QPushButton:checked {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #404040, stop: 1 #808080);
-    border: 2px solid #379AC3;
 }
 
 QPushButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
-    border: 2px solid #379AC3;
 }
 
 QToolButton {
@@ -209,48 +207,16 @@ QToolButton {
 
 QToolButton:checked {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #090909, stop: 1 #353535);
-    border: 2px solid #379AC3;
 }
 
 QToolButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #bbbbbb, stop: 1 #b0b0b0);
-    border: 2px solid #379AC3;
 }
 
 QToolTip {
-        background-color: #090909;
-        border: 1px solid #379AC3;
+        background-color: #404040;
 	border-radius: 3px;
-    color: #DDDDDF;
 }
-
-QMenu {
-    border: 1px solid #379AC3;
-}
-
-QMenu::separator {
-     height: 1px;
-     background: #379AC3;
-     margin-top: 8px;
-     margin-bottom: 4px;
-     margin-left: 5px;
-     margin-right: 5px;
- }
-
-QSlider::groove:horizontal {
-     border: 1px solid #999999;
-     height: 4px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
-     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4A4A4F, stop:1 #4A4A4F);
-     margin: 2px 0;
- }
-
- QSlider::handle:horizontal {
-     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
-     border: 2px solid #379AC3;
-     width: 18px;
-     margin: -5px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
-     border-radius: 3px;
- }
 
 QPushButton#forceLandButton {
 	font-weight: bold;
@@ -260,7 +226,7 @@ QPushButton#forceLandButton {
                              stop:0 #ffee01, stop:1 #ae8f00) url("ICONDIR/control/emergency-button.png");
 	background-clip: border;
 	border-width: 1px;
-	border-color: #555555;
+	border-color: #222222;
 	border-radius: 5px;
 }
 
@@ -272,7 +238,7 @@ QPushButton:pressed#forceLandButton {
                              stop:0 #bbaa00, stop:1 #a05b00) url("ICONDIR/control/emergency-button.png");
 	background-clip: border;
 	border-width: 1px;
-	border-color: #555555;
+	border-color: #222222;
 	border-radius: 5px;
 }
 
@@ -284,7 +250,7 @@ QPushButton#killButton {
                              stop:0 #ffb917, stop:1 #b37300) url("ICONDIR/control/emergency-button.png");
 	background-clip: border;
 	border-width: 1px;
-	border-color: #555555;
+	border-color: #222222;
 	border-radius: 5px;
 }
 
@@ -296,7 +262,7 @@ QPushButton:pressed#killButton {
                              stop:0 #bb8500, stop:1 #903000) url("ICONDIR/control/emergency-button.png");
 	background-clip: border;
 	border-width: 1px;
-	border-color: #555555;
+	border-color: #222222;
 	border-radius: 5px;
 }
 
