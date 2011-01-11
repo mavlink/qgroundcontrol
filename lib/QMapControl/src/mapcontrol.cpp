@@ -27,7 +27,7 @@
 namespace qmapcontrol
 {
     MapControl::MapControl(QSize size, MouseMode mousemode)
-        : size(size), mymousemode(mousemode), scaleVisible(false), cursorPosVisible(false)
+        : size(size), mymousemode(mousemode), scaleVisible(false), cursorPosVisible(false), mapPen(Qt::black)
     {
         layermanager = new LayerManager(this, size);
         screen_middle = QPoint(size.width()/2, size.height()/2);
@@ -126,6 +126,11 @@ namespace qmapcontrol
         }
     }
 
+    void MapControl::setPen(QPen pen)
+    {
+        this->mapPen = pen;
+    }
+
     void MapControl::paintEvent(QPaintEvent* evnt)
     {
         QWidget::paintEvent(evnt);
@@ -160,7 +165,7 @@ namespace qmapcontrol
                 line = distanceList.at( currentZoom() ) / pow(2.0, 18-currentZoom() ) / 0.597164;
 
                 // draw the scale
-                painter.setPen(Qt::black);
+                painter.setPen(mapPen);
                 QPoint p1(10,size.height()-20);
                 QPoint p2((int)line,size.height()-20);
                 painter.drawLine(p1,p2);
@@ -209,7 +214,10 @@ namespace qmapcontrol
 
 
         // Draw the Lat and Lon if needed
-        if (cursorPosVisible) {
+
+        // FIXME Mariano
+        if (cursorPosVisible && currentZoom() < 19)
+        {
           line = distanceList.at( currentZoom() ) / pow(2.0, 18-currentZoom() ) / 0.597164;
 
           QString str;
@@ -336,6 +344,9 @@ namespace qmapcontrol
     void MapControl::setZoom(int zoomlevel)
     {
         layermanager->setZoom(zoomlevel);
+
+        qDebug() << "MAPCONTROL: Set zoomlevel to:" << zoomlevel << "at " << __FILE__ << __LINE__;
+
         update();
     }
     int MapControl::currentZoom() const
