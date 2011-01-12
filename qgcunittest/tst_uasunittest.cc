@@ -21,6 +21,21 @@ private Q_SLOTS:
     void getUASName_test();
     void getUpTime_test();
     void getCommunicationStatus_test();
+    void filterVoltage_test();
+    void getAutopilotType_test();
+    void setAutopilotType_test();
+    void getStatusForCode_test();
+    void getLocalX_test();
+    void getLocalY_test();
+    void getLocalZ_test();
+    void getLatitude_test();
+    void getLongitude_test();
+    void getAltitude_test();
+    void getRoll_test();
+    void getPitch_test();
+    void getYaw_test();
+    void calculateTimeRemaining_test();
+
 
 private:
 
@@ -90,6 +105,82 @@ void UASUnitTest::getCommunicationStatus_test()
   QCOMPARE(uas->getCommunicationStatus(), static_cast<int>(UASInterface::COMM_DISCONNECTED));
 }
 
+void UASUnitTest::filterVoltage_test()
+{
+    float verificar=uas->filterVoltage(0.4f);
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(verificar, 8.52f);
+}
+void UASUnitTest:: getAutopilotType_test()
+{
+    int verificar=uas->getAutopilotType();
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(verificar, -1);
+}
+void UASUnitTest::setAutopilotType_test()
+{
+  uas->setAutopilotType(2);
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getAutopilotType(), 2);
+}
+void UASUnitTest::getStatusForCode_test()
+{
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getYaw(), 0.0);
+}
+void UASUnitTest::getLocalX_test()
+{
+
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getLocalX(), 0.0);
+}
+void UASUnitTest::getLocalY_test()
+{
+
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getLocalY(), 0.0);
+}
+void UASUnitTest::getLocalZ_test()
+{
+
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getLocalZ(), 0.0);
+}
+void UASUnitTest::getLatitude_test()
+{
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getLatitude(), 0.0);
+}
+void UASUnitTest::getLongitude_test()
+{
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getLongitude(), 0.0);
+}
+void UASUnitTest::getAltitude_test()
+{
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getAltitude(), 0.0);
+}
+void UASUnitTest::getRoll_test()
+{
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getRoll(), 0.0);
+}
+void UASUnitTest::getPitch_test()
+{
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getPitch(), 0.0);
+}
+void UASUnitTest::getYaw_test()
+{
+  // Verify that upon construction the Comm status is disconnected
+  QCOMPARE(uas->getYaw(), 0.0);
+}
+void UASUnitTest::calculateTimeRemaining_test()
+{
+  /*
+   */
+}
 QTEST_APPLESS_MAIN(UASUnitTest);
 
 #include "tst_uasunittest.moc"
