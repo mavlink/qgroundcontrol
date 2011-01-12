@@ -164,8 +164,10 @@ linux-g++ {
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
 
+message("Compiling for linux 32")
+
     INCLUDEPATH += /usr/include \
-                                   /usr/local/include \
+                   /usr/local/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
               # $$BASEDIR/lib/flite/lang
