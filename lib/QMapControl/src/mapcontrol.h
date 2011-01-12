@@ -342,6 +342,8 @@ namespace qmapcontrol
          */
         void updateRequest ( QRect rect );
 
+        void drawGeometries();
+
         //! updates the hole map by creating a new offscreen image
         /*!
          *

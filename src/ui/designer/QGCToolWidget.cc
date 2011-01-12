@@ -28,7 +28,17 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
     if (dock)
     {
         dock->setWindowTitle(title);
+        dock->setObjectName(title+"DOCK");
     }
+
+    // Try with parent
+    dock = dynamic_cast<QDockWidget*>(this->parentWidget());
+    if (dock)
+    {
+        dock->setWindowTitle(title);
+        dock->setObjectName(title+"DOCK");
+    }
+
     this->setWindowTitle(title);
 
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
