@@ -14,6 +14,9 @@ private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
     void testCase1();
+
+protected:
+    UAS *prueba;
 };
 
 UASUnitTest::UASUnitTest()
@@ -23,7 +26,7 @@ UASUnitTest::UASUnitTest()
 void UASUnitTest::initTestCase()
 {
   MAVLinkProtocol *mav= new MAVLinkProtocol();
-  UAS *prueba=new UAS(mav,0);
+   prueba=new UAS(mav,0);
 }
 
 void UASUnitTest::cleanupTestCase()
@@ -32,7 +35,9 @@ void UASUnitTest::cleanupTestCase()
 
 void UASUnitTest::testCase1()
 {
+
     QVERIFY2(true, "Failure");
+
 }
 
 QTEST_APPLESS_MAIN(UASUnitTest);
