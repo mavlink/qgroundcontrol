@@ -166,6 +166,8 @@ namespace qmapcontrol
          */
         int currentZoom() const;
 
+
+        void drawGeoms();
         void drawGeoms(QPainter* painter);
         void drawImage(QPainter* painter);
 

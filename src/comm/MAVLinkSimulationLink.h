@@ -89,6 +89,7 @@ public slots:
     virtual void mainloop();
     bool connectLink(bool connect);
     void connectLink();
+    void sendMAVLinkMessage(const mavlink_message_t* msg);
 
 
 protected:
@@ -106,7 +107,7 @@ protected:
     QString simulationHeader;
     /** File where the commands sent by the groundstation are stored **/
     QFile* receiveFile;
-    QTextStream stream;
+    QTextStream textStream;
     QTextStream* fileStream;
     QTextStream* outStream;
     /** Buffer which can be read from connected protocols through readBytes(). **/
@@ -115,6 +116,10 @@ protected:
     quint64 rate;
     int maxTimeNoise;
     quint64 lastSent;
+    static const int streamlength = 4096;
+    unsigned int streampointer;
+    //const int testoffset = 0;
+    uint8_t stream[streamlength];
 
     int readyBytes;
     QQueue<uint8_t> readyBuffer;
@@ -133,6 +138,7 @@ protected:
 
 signals:
     void valueChanged(int uasId, QString curve, double value, quint64 usec);
+    void messageReceived(const mavlink_message_t& message);
 
 };
 

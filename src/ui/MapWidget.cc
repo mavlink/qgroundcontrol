@@ -630,6 +630,10 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, ""));
     }
 
+    mc->drawGeometries();
+
+    //mc->updateRequest(QRect(QPoint(0, 0), QPoint(600, 600)));
+
     //mc->updateRequestNew();//(uasTrails.value(uas->getUASID())->boundingBox().toRect());
 
 

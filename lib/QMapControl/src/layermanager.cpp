@@ -229,7 +229,7 @@ namespace qmapcontrol
 
         if (clearImage)
         {
-            composedOffscreenImage2.fill(Qt::white);
+            composedOffscreenImage2.fill(Qt::black);
         }
 
         QPainter painter(&composedOffscreenImage2);
@@ -428,6 +428,20 @@ namespace qmapcontrol
         forceRedraw();
     }
 
+    void LayerManager::drawGeoms()
+    {
+        QPainter painter(&composedOffscreenImage);
+        QListIterator<Layer*> it(mylayers);
+        while (it.hasNext())
+        {
+            Layer* l = it.next();
+            if (l->layertype() == Layer::GeometryLayer && l->isVisible())
+            {
+                l->drawYourGeometries(&painter, mapmiddle_px, layer()->offscreenViewport());
+            }
+        }
+    }
+
     void LayerManager::drawGeoms(QPainter* painter)
     {
         QListIterator<Layer*> it(mylayers);
@@ -440,6 +454,8 @@ namespace qmapcontrol
             }
         }
     }
+
+
     void LayerManager::drawImage(QPainter* painter)
     {
         painter->drawPixmap(-scroll.x()-screenmiddle.x(),
