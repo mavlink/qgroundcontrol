@@ -24,6 +24,8 @@ private Q_SLOTS:
 
 private:
 
+protected:
+    UAS *prueba;
 };
 
 UASUnitTest::UASUnitTest()
