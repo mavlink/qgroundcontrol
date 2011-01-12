@@ -44,7 +44,7 @@ public slots:
 
     void emitSignals (void);
 
-    mavlink_pwm_commands_t* getPwmCommands();
+    //mavlink_pwm_commands_t* getPwmCommands();
 
 
 signals:

@@ -92,7 +92,7 @@ public:
 
 
 friend class UASWaypointManager;
-protected:
+protected: //COMMENTS FOR TEST UNIT
     int uasId;                    ///< Unique system ID
     unsigned char type;           ///< UAS type (from type enum)
     quint64 startTime;            ///< The time the UAS was switched on
