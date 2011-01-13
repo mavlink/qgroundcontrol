@@ -47,6 +47,7 @@ namespace qmapcontrol
         offFactor = factor;
         composedOffscreenImage = QPixmap(offSize);
         composedOffscreenImage2 = QPixmap(offSize);
+        resize(size);
     }
 
     float LayerManager::offscreenImageFactor()
@@ -219,7 +220,7 @@ namespace qmapcontrol
     {
         mylayers.append(layer);
 
-        layer->setSize(size);
+        layer->setSize(size, screenmiddle);
 
         connect(layer, SIGNAL(updateRequest(QRectF)),
                 this, SLOT(updateRequest(QRectF)));
@@ -438,6 +439,20 @@ namespace qmapcontrol
         forceRedraw();
     }
 
+    void LayerManager::drawGeoms()
+    {
+        QPainter painter(&composedOffscreenImage);
+        QListIterator<Layer*> it(mylayers);
+        while (it.hasNext())
+        {
+            Layer* l = it.next();
+            if (l->layertype() == Layer::GeometryLayer && l->isVisible())
+            {
+                l->drawYourGeometries(&painter, mapmiddle_px, layer()->offscreenViewport());
+            }
+        }
+    }
+
     void LayerManager::drawGeoms(QPainter* painter)
     {
         QListIterator<Layer*> it(mylayers);
@@ -450,6 +465,8 @@ namespace qmapcontrol
             }
         }
     }
+
+
     void LayerManager::drawImage(QPainter* painter)
     {
         painter->drawPixmap(-scroll.x()-screenmiddle.x(),
@@ -477,7 +494,7 @@ namespace qmapcontrol
         while (it.hasNext())
         {
             Layer* l = it.next();
-            l->setSize(newSize);
+            l->setSize(newSize, screenmiddle);
         }
 
         newOffscreenImage();

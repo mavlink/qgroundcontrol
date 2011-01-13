@@ -350,6 +350,12 @@ namespace qmapcontrol
     {
         update(rect);
     }
+
+    void MapControl::drawGeometries()
+    {
+        layermanager->drawGeoms();
+    }
+
     void MapControl::updateRequestNew()
     {
         // qDebug() << "MapControl::updateRequestNew()";

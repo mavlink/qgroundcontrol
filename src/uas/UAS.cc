@@ -271,6 +271,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     GAudioOutput::instance()->stopEmergency();
                     GAudioOutput::instance()->say(audiostring);
                 }
+
+                if (state.status == MAV_STATE_POWEROFF)
+                {
+                    emit systemRemoved(this);
+                    emit systemRemoved();
+                }
             }
             break;
         case MAVLINK_MSG_ID_RAW_IMU:

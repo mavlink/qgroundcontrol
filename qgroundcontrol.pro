@@ -261,7 +261,9 @@ HEADERS += src/MG.h \
     src/ui/designer/QGCParamSlider.h \
     src/ui/designer/QGCActionButton.h \
     src/ui/designer/QGCToolWidgetItem.h \
-    src/ui/QGCMAVLinkLogPlayer.h
+    src/ui/QGCMAVLinkLogPlayer.h \
+    src/comm/MAVLinkSimulationWaypointPlanner.h \
+    src/comm/MAVLinkSimulationMAV.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008: {
@@ -383,7 +385,9 @@ SOURCES += src/main.cc \
     src/ui/designer/QGCParamSlider.cc \
     src/ui/designer/QGCActionButton.cc \
     src/ui/designer/QGCToolWidgetItem.cc \
-    src/ui/QGCMAVLinkLogPlayer.cc
+    src/ui/QGCMAVLinkLogPlayer.cc \
+    src/comm/MAVLinkSimulationWaypointPlanner.cc \
+    src/comm/MAVLinkSimulationMAV.cc
 
 macx|win32-msvc2008: {
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

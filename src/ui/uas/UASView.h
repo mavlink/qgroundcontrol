@@ -82,6 +82,8 @@ protected:
     QTimer* refreshTimer;
     QColor heartbeatColor;
     quint64 startTime;
+    quint64 lastHeartbeat;
+    bool iconIsRed;
     int timeRemaining;
     float chargeLevel;
     UASInterface* uas;
@@ -100,6 +102,7 @@ protected:
     float alt;
     float groundDistance;
     bool localFrame;
+    QAction* removeAction;
     static const int updateInterval = 300;
 
 
@@ -112,6 +115,7 @@ protected:
     void showEvent(QShowEvent* event);
     /** @brief Stop widget updating */
     void hideEvent(QHideEvent* event);
+    void contextMenuEvent(QContextMenuEvent* event);
 
 private:
     Ui::UASView *m_ui;
