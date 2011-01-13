@@ -121,6 +121,11 @@ namespace qmapcontrol
          */
         void setZoom(int zoomlevel);
 
+        //! Sets the factor the offscreen image should be larger than the visible area
+        void setOffscreenImageFactor(float factor);
+        //! Get the factor the offscreen image is larger than the screen
+        float offscreenImageFactor();
+
         //! The Viewport of the display
         /*!
          * Returns the visible viewport in world coordinates
@@ -174,7 +179,7 @@ namespace qmapcontrol
     private:
         LayerManager& operator=(const LayerManager& rhs);
         LayerManager(const LayerManager& old);
-        //! This method have to be invoked to draw a new offscreen image
+        //! This method has to be invoked to draw a new offscreen image
         /*!
          * @param clearImage if the current offscreeen image should be cleared
          * @param showZoomImage if a zoom image should be painted
@@ -190,8 +195,9 @@ namespace qmapcontrol
         QPoint scroll; // scrollvalue of the offscreen image
         QPoint zoomImageScroll; // scrollvalue of the zoom image
 
-        QSize size; // widget size
-        QSize offSize; // size of the offscreen image
+        QSize size;      ///< widget size
+        QSize offSize;   ///< size of the offscreen image
+        float offFactor; ///< Size of the offscreen image
 
         QPixmap composedOffscreenImage;
         QPixmap composedOffscreenImage2;
