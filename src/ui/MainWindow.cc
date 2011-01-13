@@ -402,17 +402,17 @@ void MainWindow::buildPxWidgets()
 #ifdef QGC_OSG_ENABLED
     if (!_3DWidget)
     {
-        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-        addToCentralWidgetsMenu(_3DWidget, "Local 3D", SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
+//        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+//        addToCentralWidgetsMenu(_3DWidget, "Local 3D", SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
     }
 #endif
 
 #ifdef QGC_OSGEARTH_ENABLED
-    if (!_3DMapWidget)
-    {
-        _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
-        addToCentralWidgetsMenu(_3DMapWidget, "OSG Earth 3D", SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
-    }
+//    if (!_3DMapWidget)
+//    {
+//        _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
+//        addToCentralWidgetsMenu(_3DMapWidget, "OSG Earth 3D", SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
+//    }
 #endif
 
 #if (defined _MSC_VER) | (defined Q_OS_MAC)

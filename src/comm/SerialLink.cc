@@ -593,15 +593,9 @@ bool SerialLink::setPortName(QString portName)
     if(portName.trimmed().length() > 0)
     {
         bool reconnect = false;
-        if (port)
-        {
-            if (port->isOpen())
-            {
-                reconnect = true;
-            }
-            port->close();
-            delete port;
-        }
+        if (isConnected()) reconnect = true;
+        disconnect();
+
         this->porthandle = portName.trimmed();
         setName(tr("serial port ") + portName.trimmed());
 #ifdef _WIN32
@@ -614,14 +608,6 @@ bool SerialLink::setPortName(QString portName)
         }
 #endif
 
-        port = new QextSerialPort(porthandle, QextSerialPort::Polling);
-
-        port->setBaudRate(baudrate);
-        port->setFlowControl(flow);
-        port->setParity(parity);
-        port->setDataBits(dataBits);
-        port->setStopBits(stopBits);
-        port->setTimeout(timeout);
         if(reconnect) connect();
         return true;
     }
@@ -636,10 +622,9 @@ bool SerialLink::setBaudRateType(int rateIndex)
 {
     bool reconnect = false;
     bool accepted = true; // This is changed if none of the data rates matches
-    if(isConnected()) {
-        disconnect();
-        reconnect = true;
-    }
+    if(isConnected()) reconnect = true;
+    disconnect();
+
     switch (rateIndex) {
     case 0:
         baudrate = BAUD50;
@@ -722,9 +707,6 @@ bool SerialLink::setBaudRateType(int rateIndex)
         break;
     }
 
-    dataMutex.lock();
-    port->setBaudRate(this->baudrate);
-    dataMutex.unlock();
     if(reconnect) connect();
     return accepted;
 }
@@ -737,9 +719,9 @@ bool SerialLink::setBaudRate(int rate)
     bool accepted = true; // This is changed if none of the data rates matches
     if(isConnected())
     {
-        disconnect();
         reconnect = true;
     }
+    disconnect();
 
     switch (rate)
     {
@@ -824,27 +806,17 @@ bool SerialLink::setBaudRate(int rate)
         break;
     }
 
-    if (port)
-    {
-        port->setBaudRate(this->baudrate);
-        if(reconnect) connect();
-        return accepted;
-    }
-    else
-    {
-        return false;
-    }
+    if(reconnect) connect();
+    return accepted;
+
 }
 
 bool SerialLink::setFlowType(int flow)
 {
     bool reconnect = false;
     bool accepted = true;
-    if(isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if(isConnected()) reconnect = true;
+    disconnect();
 
     switch (flow)
     {
@@ -862,7 +834,7 @@ bool SerialLink::setFlowType(int flow)
         accepted = false;
         break;
     }
-    port->setFlowControl(this->flow);
+
     if(reconnect) connect();
     return accepted;
 }
@@ -871,27 +843,24 @@ bool SerialLink::setParityType(int parity)
 {
     bool reconnect = false;
     bool accepted = true;
-    if(isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if (isConnected()) reconnect = true;
+    disconnect();
 
     switch (parity)
     {
-    case PAR_NONE:
+    case (int)PAR_NONE:
         this->parity = PAR_NONE;
         break;
-    case PAR_ODD:
+    case (int)PAR_ODD:
         this->parity = PAR_ODD;
         break;
-    case PAR_EVEN:
+    case (int)PAR_EVEN:
         this->parity = PAR_EVEN;
         break;
-    case PAR_MARK:
+    case (int)PAR_MARK:
         this->parity = PAR_MARK;
         break;
-    case PAR_SPACE:
+    case (int)PAR_SPACE:
         this->parity = PAR_SPACE;
         break;
     default:
@@ -900,15 +869,17 @@ bool SerialLink::setParityType(int parity)
         break;
     }
 
-    port->setParity(this->parity);
-    if(reconnect) connect();
+    if (reconnect) connect();
     return accepted;
 }
 
 
 bool SerialLink::setDataBits(int dataBits)
 {
+    bool reconnect = false;
+    if (isConnected()) reconnect = true;
     bool accepted = true;
+    disconnect();
 
     switch (dataBits)
     {
@@ -930,11 +901,7 @@ bool SerialLink::setDataBits(int dataBits)
         break;
     }
 
-    port->setDataBits(this->dataBits);
-    if(isConnected()) {
-        disconnect();
-        connect();
-    }
+    if(reconnect) connect();
 
     return accepted;
 }
@@ -943,11 +910,8 @@ bool SerialLink::setStopBits(int stopBits)
 {
     bool reconnect = false;
     bool accepted = true;
-    if(isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if(isConnected()) reconnect = true;
+    disconnect();
 
     switch (stopBits)
     {
@@ -963,7 +927,6 @@ bool SerialLink::setStopBits(int stopBits)
         break;
     }
 
-    port->setStopBits(this->stopBits);
     if(reconnect) connect();
     return accepted;
 }
@@ -973,21 +936,14 @@ bool SerialLink::setDataBitsType(int dataBits)
     bool reconnect = false;
     bool accepted = false;
 
-    if (isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if (isConnected()) reconnect = true;
+    disconnect();
 
     if (dataBits >= (int)DATA_5 && dataBits <= (int)DATA_8)
     {
-        DataBitsType newBits = (DataBitsType) dataBits;
+        this->dataBits = (DataBitsType) dataBits;
 
-        port->setDataBits(newBits);
-        if(reconnect)
-        {
-            connect();
-        }
+        if(reconnect) connect();
         accepted = true;
     }
 
@@ -998,11 +954,8 @@ bool SerialLink::setStopBitsType(int stopBits)
 {
     bool reconnect = false;
     bool accepted = false;
-    if(isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if(isConnected()) reconnect = true;
+    disconnect();
 
     if (stopBits >= (int)STOP_1 && dataBits <= (int)STOP_2)
     {
