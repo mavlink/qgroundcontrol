@@ -42,14 +42,6 @@ MapWidget::MapWidget(QWidget *parent) :
     QString buttonStyle("QAbstractButton { background-color: rgba(20, 20, 20, 45%); border-color: rgba(10, 10, 10, 50%)}  QDoubleSpinBox { background-color: rgba(20, 20, 20, 45%); border-color: rgba(10, 10, 10, 50%)}");
     mc->setPen(QGC::colorCyan.darker(400));
 
-
-
-
-
-
-
-
-
     waypointIsDrag = false;
 
     // Accept focus by clicking or keyboard
@@ -266,6 +258,10 @@ MapWidget::MapWidget(QWidget *parent) :
 
     drawCamBorder = false;
     radioCamera = 10;
+
+//    mc->setZoom(20);
+//    //mc->resize(QSize(7025, 4968));
+//    mc->resize(QSize(3000, 2000));
 
     //mc->setOffscreenImageFactor(15);
 }

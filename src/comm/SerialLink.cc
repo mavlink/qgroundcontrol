@@ -87,9 +87,6 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
 #endif
 
     loadSettings();
-
-    // Link is setup, register it with link manager
-    LinkManager::instance()->add(this);
 }
 
 SerialLink::~SerialLink()

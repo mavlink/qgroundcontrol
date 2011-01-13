@@ -1205,18 +1205,27 @@ void MainWindow::addLink()
     SerialLink* link = new SerialLink();
     // TODO This should be only done in the dialog itself
 
+    LinkManager::instance()->add(link);
     LinkManager::instance()->addProtocol(link, mavlink);
 
-    CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
+    // Go fishing for this link's configuration window
+    QList<QAction*> actions = ui.menuNetwork->actions();
 
-    ui.menuNetwork->addAction(commWidget->getAction());
-
-    commWidget->show();
+    foreach (QAction* act, actions)
+    {
+        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(link))
+        {
+            act->trigger();
+            break;
+        }
+    }
 }
 
 void MainWindow::addLink(LinkInterface *link)
 {
+    LinkManager::instance()->add(link);
     LinkManager::instance()->addProtocol(link, mavlink);
+
     CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
     ui.menuNetwork->addAction(commWidget->getAction());
 

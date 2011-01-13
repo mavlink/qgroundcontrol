@@ -320,7 +320,8 @@ userConfigured(false)
     }
 }
 
-SerialConfigurationWindow::~SerialConfigurationWindow() {
+SerialConfigurationWindow::~SerialConfigurationWindow()
+{
 
 }
 
