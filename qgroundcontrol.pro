@@ -54,6 +54,7 @@ exists(user_config.pri) {
     message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
     message("------------------------------------------------------------------------")
 }
+
 INCLUDEPATH += $$BASEDIR/../mavlink/include/common
 contains(MAVLINK_CONF, pixhawk) { 
     # Remove the default set - it is included anyway

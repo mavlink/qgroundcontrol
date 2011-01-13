@@ -172,11 +172,6 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Create actions
     connectCommonActions();
-    // Add option for custom widgets
-    connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
-    // Allow to mute audio
-    ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
-    connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
 
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
@@ -344,6 +339,21 @@ void MainWindow::buildCommonWidgets()
         addToCentralWidgetsMenu (protocolWidget, "Mavlink Generator", SLOT(showCentralWidget()),CENTRAL_PROTOCOL);
     }
 
+    //TODO temporaly debug
+    if (!slugsHilSimWidget)
+    {
+        slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
+        slugsHilSimWidget->setWidget( new SlugsHilSim(this));
+        addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
+    }
+
+    //TODO temporaly debug
+    if (!slugsCamControlWidget)
+    {
+        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
+        slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
+        addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget()), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
+    }
     if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
@@ -695,8 +705,8 @@ void MainWindow::addToToolsMenu ( QWidget* widget,
     // connect the action
     connect(tempAction,SIGNAL(triggered()),this, slotName);
 
-    connect(qobject_cast <QDockWidget *>(dockWidgets[tool]),
-            SIGNAL(visibilityChanged(bool)), this, SLOT(updateVisibilitySettings(bool)));
+//  connect(qobject_cast <QDockWidget *>(dockWidgets[tool]),
+//          SIGNAL(visibilityChanged(bool)), this, SLOT(updateVisibilitySettings(bool)));
 
     connect(qobject_cast <QDockWidget *>(dockWidgets[tool]),
             SIGNAL(dockLocationChanged(Qt::DockWidgetArea)), this, SLOT(updateLocationSettings(Qt::DockWidgetArea)));
@@ -720,6 +730,7 @@ void MainWindow::showToolWidget()
             removeDockWidget(qobject_cast<QDockWidget *>(dockWidgets[tool]));
         }
     }
+
 }
 
 
@@ -798,11 +809,9 @@ void MainWindow::updateVisibilitySettings (bool vis)
         if (temp)
         {
             QHashIterator<int, QWidget*> i(dockWidgets);
-            while (i.hasNext())
-            {
+        while (i.hasNext()) {
                 i.next();
-                if ((static_cast <QDockWidget *>(dockWidgets[i.key()])) == temp)
-                {
+          if ((static_cast <QDockWidget *>(dockWidgets[i.key()])) == temp) {
                     QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(i.key()), currentView);
                     settings.setValue(chKey,vis);
                     toolsMenuActions[i.key()]->setChecked(vis);
@@ -850,6 +859,12 @@ void MainWindow::connectCommonWidgets()
 
         // it notifies that a waypoint global goes to do create and a map graphic too
         connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
+    }
+
+    //TODO temporaly debug
+    if (slugsHilSimWidget && slugsHilSimWidget->widget()){
+        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+                slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
     }
 }
 
@@ -1363,10 +1378,10 @@ void MainWindow::UASCreated(UASInterface* uas)
 
                 // Connect Pixhawk Actions
                 connectPxActions();
-
             }
             break;
 
+        loadOperatorView();
         }
 
         // Change the view only if this is the first UAS
@@ -1388,7 +1403,7 @@ void MainWindow::UASCreated(UASInterface* uas)
                 if (settings.contains(getWindowStateKey()))
                 {
                     restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
-                }
+            }
 
             }
             else
@@ -1460,11 +1475,11 @@ void MainWindow::loadEngineerView()
 {
     if (currentView != VIEW_ENGINEER)
     {
-        clearView();
+    clearView();
 
-        currentView = VIEW_ENGINEER;
+    currentView = VIEW_ENGINEER;
 
-        presentView();
+    presentView();
     }
 }
 
@@ -1472,11 +1487,11 @@ void MainWindow::loadOperatorView()
 {
     if (currentView != VIEW_OPERATOR)
     {
-        clearView();
+    clearView();
 
-        currentView = VIEW_OPERATOR;
+    currentView = VIEW_OPERATOR;
 
-        presentView();
+    presentView();
     }
 }
 
@@ -1484,11 +1499,11 @@ void MainWindow::loadPilotView()
 {
     if (currentView != VIEW_PILOT)
     {
-        clearView();
+    clearView();
 
-        currentView = VIEW_PILOT;
+    currentView = VIEW_PILOT;
 
-        presentView();
+    presentView();
     }
 }
 
@@ -1496,11 +1511,11 @@ void MainWindow::loadMAVLinkView()
 {
     if (currentView != VIEW_MAVLINK)
     {
-        clearView();
+    clearView();
 
-        currentView = VIEW_MAVLINK;
+    currentView = VIEW_MAVLINK;
 
-        presentView();
+    presentView();
     }
 }
 
@@ -1568,7 +1583,7 @@ void MainWindow::presentView()
             if (settings.value(buildMenuKey (SUB_SECTION_CHECKED,MENU_HUD,currentView)).toBool())
             {
                 addDockWidget(static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,MENU_HUD, currentView)).toInt()),
-                              hsiDockWidget);
+                        headUpDockWidget);
                 headUpDockWidget->show();
             }
             else
@@ -1646,7 +1661,7 @@ void MainWindow::loadDataView(QString fileName)
     if (dataplotWidget)
     {
         dataplotWidget->loadFile(fileName);
-    }
+        }
 //        QStackedWidget *centerStack = dynamic_cast<QStackedWidget*>(centralWidget());
 //        if (centerStack)
 //        {

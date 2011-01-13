@@ -1,9 +1,11 @@
 #include <QMenu>
 #include <QContextMenuEvent>
+#include <QSettings>
 
 #include "QGCParamSlider.h"
 #include "ui_QGCParamSlider.h"
 #include "UASInterface.h"
+
 
 QGCParamSlider::QGCParamSlider(QWidget *parent) :
     QGCToolWidgetItem("Slider", parent),
