@@ -155,7 +155,7 @@ protected: //COMMENTS FOR TEST UNIT
     QTimer* statusTimeout;      ///< Timer for various status timeouts
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
-
+public:
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
     /** @brief Estimate how much flight time is remaining */
