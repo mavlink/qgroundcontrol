@@ -26,7 +26,7 @@
 #include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
-#include "MainWindow.h"
+//#include "MainWindow.h"
 #include <QGCMAVLink.h>
 #include "QGC.h"
 
@@ -242,6 +242,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
                 else
                 {
+                    // TODO: This if-else block can (should) be greatly simplified
                     if (lastIndex[message.sysid][message.compid] == 255)
                     {
                         lastIndex[message.sysid][message.compid] = 0;
