@@ -297,6 +297,7 @@ bool SerialLink::connect()
             this->start(LowPriority);
         }
     }
+	return true;
 }
 
 /**
