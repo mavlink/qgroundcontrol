@@ -151,7 +151,7 @@ void SerialLink::run()
 void SerialLink::checkForBytes()
 {
     /* Check if bytes are available */
-    if(port && port->isOpen())
+    if(port && port->isOpen() && port->isWritable())
     {
         dataMutex.lock();
         qint64 available = port->bytesAvailable();

@@ -262,6 +262,9 @@ signals:
      * @param description longer textual description. Should be however limited to a short text, e.g. 200 chars.
      */
     void statusChanged(UASInterface* uas, QString status, QString description);
+    /** @brief System has been removed / disconnected / shutdown cleanly, remove */
+    void systemRemoved(UASInterface* uas);
+    void systemRemoved();
     /**
      * @brief Received a plain text message from the robot
      * This signal should NOT be used for standard communication, but rather for VERY IMPORTANT

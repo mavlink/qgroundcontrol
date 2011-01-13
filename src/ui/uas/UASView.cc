@@ -31,6 +31,7 @@ This file is part of the PIXHAWK project
 #include <cmath>
 #include <QDateTime>
 #include <QDebug>
+#include <QMenu>
 
 #include "QGC.h"
 #include "MG.h"
@@ -42,6 +43,8 @@ This file is part of the PIXHAWK project
 UASView::UASView(UASInterface* uas, QWidget *parent) :
         QWidget(parent),
         startTime(0),
+        lastHeartbeat(0),
+        iconIsRed(true),
         timeRemaining(0),
         chargeLevel(0),
         uas(uas),
@@ -60,6 +63,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         alt(0),
         groundDistance(0),
         localFrame(false),
+        removeAction(new QAction("Remove this system", this)),
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
@@ -92,6 +96,10 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(m_ui->abortButton, SIGNAL(clicked()), uas, SLOT(emergencySTOP()));
     connect(m_ui->killButton, SIGNAL(clicked()), uas, SLOT(emergencyKILL()));
     connect(m_ui->shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
+
+    // Allow to delete this widget
+    connect(removeAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
+    connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
     
     // Set static values
     
@@ -230,12 +238,11 @@ void UASView::hideEvent(QHideEvent* event)
 void UASView::receiveHeartbeat(UASInterface* uas)
 {
     Q_UNUSED(uas);
-    QString colorstyle;
     heartbeatColor = QColor(20, 200, 20);
-    colorstyle = colorstyle.sprintf("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",
-                                    heartbeatColor.red(), heartbeatColor.green(), heartbeatColor.blue());
-    m_ui->heartbeatIcon->setStyleSheet(colorstyle);
-    m_ui->heartbeatIcon->setAutoFillBackground(true);
+    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 2px; border: 0px; background-color: %1; }");
+    m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
+    lastHeartbeat = QGC::groundTimeUsecs();
+    //m_ui->heartbeatIcon->setAutoFillBackground(true);
 }
 
 /**
@@ -391,6 +398,16 @@ void UASView::updateLoad(UASInterface* uas, double load)
     }
 }
 
+void UASView::contextMenuEvent (QContextMenuEvent* event)
+{
+    if (QGC::groundTimeUsecs() - lastHeartbeat > 1500000)
+    {
+        QMenu menu(this);
+        menu.addAction(removeAction);
+        menu.exec(event->globalPos());
+    }
+}
+
 void UASView::refresh()
 {
     //setUpdatesEnabled(false);
@@ -494,15 +511,44 @@ void UASView::refresh()
     }
     generalUpdateCount++;
 
+    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 2px; border: 0px; background-color: %1; }");
+
+    if (QGC::groundTimeUsecs() - lastHeartbeat > 1500000)
+    {
+        // CRITICAL CONDITION, NO HEARTBEAT
+
+        if (iconIsRed)
+        {
+            QColor warnColor(Qt::red);
+            m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(warnColor.name()));
+            QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; background-color: %1; }").arg(warnColor.name());
+            m_ui->uasViewFrame->setStyleSheet(style);
+        }
+        else
+        {
+            QColor warnColor(Qt::black);
+            m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(warnColor.name()));
+            QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; background-color: %1; }").arg(warnColor.name());
+            m_ui->uasViewFrame->setStyleSheet(style);
+        }
+        iconIsRed = !iconIsRed;
+    }
+    else
+    {
+        // Break alert once everything is back to normal
+        if (!iconIsRed)
+        {
+            setBackgroundColor();
+            iconIsRed = true;
+        }
+
     // Fade heartbeat icon
     // Make color darker
     heartbeatColor = heartbeatColor.darker(150);
 
-    QString colorstyle;
-    colorstyle = colorstyle.sprintf("QGroupBox { border: 1px solid #EEEEEE; border-radius: 8px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",
-                                    heartbeatColor.red(), heartbeatColor.green(), heartbeatColor.blue());
-    m_ui->heartbeatIcon->setStyleSheet(colorstyle);
-    m_ui->heartbeatIcon->setAutoFillBackground(true);
+    //m_ui->heartbeatIcon->setAutoFillBackground(true);
+    m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
+    }
     //setUpdatesEnabled(true);
 
     //setUpdatesEnabled(false);
