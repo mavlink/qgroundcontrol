@@ -181,7 +181,31 @@ QProgressBar::chunk#speedBar {
 
 QProgressBar::chunk#thrustBar {
 	background-color: orange;
-}</string>
+}
+
+QToolTip {
+        background-color: #090909;
+        border: 1px solid #379AC3;
+	border-radius: 3px;
+    color: #DDDDDF;
+}
+
+QMenu {
+    border: 1px solid #379AC3;
+background-color: #050508;
+color: #DDDDDF;
+background-clip: border;
+font-size: 11px;
+}
+
+QMenu::separator {
+     height: 1px;
+     background: #379AC3;
+     margin-top: 8px;
+     margin-bottom: 4px;
+     margin-left: 5px;
+     margin-right: 5px;
+ }</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <property name="spacing">

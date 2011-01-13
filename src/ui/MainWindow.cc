@@ -402,17 +402,17 @@ void MainWindow::buildPxWidgets()
 #ifdef QGC_OSG_ENABLED
     if (!_3DWidget)
     {
-        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-        addToCentralWidgetsMenu(_3DWidget, "Local 3D", SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
+//        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+//        addToCentralWidgetsMenu(_3DWidget, "Local 3D", SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
     }
 #endif
 
 #ifdef QGC_OSGEARTH_ENABLED
-    if (!_3DMapWidget)
-    {
-        _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
-        addToCentralWidgetsMenu(_3DMapWidget, "OSG Earth 3D", SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
-    }
+//    if (!_3DMapWidget)
+//    {
+//        _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
+//        addToCentralWidgetsMenu(_3DMapWidget, "OSG Earth 3D", SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
+//    }
 #endif
 
 #if (defined _MSC_VER) | (defined Q_OS_MAC)
@@ -1220,18 +1220,27 @@ void MainWindow::addLink()
     SerialLink* link = new SerialLink();
     // TODO This should be only done in the dialog itself
 
+    LinkManager::instance()->add(link);
     LinkManager::instance()->addProtocol(link, mavlink);
 
-    CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
+    // Go fishing for this link's configuration window
+    QList<QAction*> actions = ui.menuNetwork->actions();
 
-    ui.menuNetwork->addAction(commWidget->getAction());
-
-    commWidget->show();
+    foreach (QAction* act, actions)
+    {
+        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(link))
+        {
+            act->trigger();
+            break;
+        }
+    }
 }
 
 void MainWindow::addLink(LinkInterface *link)
 {
+    LinkManager::instance()->add(link);
     LinkManager::instance()->addProtocol(link, mavlink);
+
     CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
     ui.menuNetwork->addAction(commWidget->getAction());
 
@@ -1290,7 +1299,11 @@ void MainWindow::UASCreated(UASInterface* uas)
             break;
         }
 
-        ui.menuConnected_Systems->addAction(icon, tr("Select %1 for control").arg(uas->getUASName()), uas, SLOT(setSelected()));
+        QAction* uasAction = new QAction(icon, tr("Select %1 for control").arg(uas->getUASName()), ui.menuConnected_Systems);
+        connect(uas, SIGNAL(systemRemoved()), uasAction, SLOT(deleteLater()));
+        connect(uasAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
+
+        ui.menuConnected_Systems->addAction(uasAction);
 
         // FIXME Should be not inside the mainwindow
         if (debugConsoleDockWidget)

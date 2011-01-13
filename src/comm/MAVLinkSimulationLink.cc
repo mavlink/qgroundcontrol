@@ -40,9 +40,9 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
-// MAVLINK includes
-#include <QGCMAVLink.h>
+#include "QGCMAVLink.h"
 #include "QGC.h"
+#include "MAVLinkSimulationMAV.h"
 
 /**
  * Create a simulated link. This link is connected to an input and output file.
@@ -90,15 +90,13 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
         this->name = "MAVLink simulation link";
     }
 
+
+
     // Initialize the pseudo-random number generator
     srand(QTime::currentTime().msec());
     maxTimeNoise = 0;
     this->id = getNextLinkId();
     LinkManager::instance()->add(this);
-
-    // Open packet log
-    mavlinkLogFile = new QFile();
-    //mavlinkLogFile->open(QIODevice::ReadOnly);
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
@@ -117,6 +115,8 @@ void MAVLinkSimulationLink::run()
     status.vbat = 0;
     status.motor_block = 1;
     status.packet_drop = 0;
+
+
 
     forever
     {
@@ -146,6 +146,23 @@ void MAVLinkSimulationLink::run()
     }
 }
 
+void MAVLinkSimulationLink::sendMAVLinkMessage(const mavlink_message_t* msg)
+{
+    // Allocate buffer with packet data
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    unsigned int bufferlength = mavlink_msg_to_send_buffer(buf, msg);
+
+    // Pack to link buffer
+    readyBufferMutex.lock();
+    for (unsigned int i = 0; i < bufferlength; i++)
+    {
+        readyBuffer.enqueue(*(buf + i));
+    }
+    readyBufferMutex.unlock();
+
+    //qDebug() << "SENT MAVLINK MESSAGE FROM SYSTEM" << msg->sysid << "COMP" << msg->compid;
+}
+
 void MAVLinkSimulationLink::enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg)
 {
     // Allocate buffer with packet data
@@ -162,10 +179,7 @@ void MAVLinkSimulationLink::mainloop()
     // Test for encoding / decoding packets
 
     // Test data stream
-    const int streamlength = 4096;
-    int streampointer = 0;
-    //const int testoffset = 0;
-    uint8_t stream[streamlength] = {};
+    streampointer = 0;
 
     // Fake system values
 
@@ -673,7 +687,7 @@ void MAVLinkSimulationLink::mainloop()
     }*/
 
     readyBufferMutex.lock();
-    for (int i = 0; i < streampointer; i++)
+    for (unsigned int i = 0; i < streampointer; i++)
     {
         readyBuffer.enqueue(*(stream + i));
     }
@@ -717,6 +731,8 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
         if (mavlink_parse_char(this->id, data[i], &msg, &comm))
         {
             // MESSAGE RECEIVED!
+            qDebug() << "SIMULATION LINK RECEIVED MESSAGE!";
+            emit messageReceived(msg);
 
             switch (msg.msgid)
             {
@@ -937,6 +953,8 @@ bool MAVLinkSimulationLink::connect()
     emit connected(true);
 
     start(LowPriority);
+    MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1);
+    Q_UNUSED(mav1);
     //    timer->start(rate);
     return true;
 }
