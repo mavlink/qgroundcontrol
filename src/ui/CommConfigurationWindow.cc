@@ -68,6 +68,8 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // Create configuration action for this link
     // Connect the current UAS
     action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", link);
+    LinkManager::instance()->add(link);
+    action->setData(LinkManager::instance()->getLinks().indexOf(link));
     setLinkName(link->getName());
     connect(action, SIGNAL(triggered()), this, SLOT(show()));
 
@@ -209,11 +211,12 @@ void CommConfigurationWindow::remove()
         link->disconnect(); //disconnect port, and also calls terminate() to stop the thread
         if (link->isRunning()) link->terminate(); // terminate() the serial thread just in case it is still running
         link->wait(); // wait() until thread is stoped before deleting
-        delete link;
+        link->deleteLater();
     }
     link=NULL;
 
     this->window()->close();
+    this->deleteLater();
 }
 
 void CommConfigurationWindow::connectionState(bool connect)

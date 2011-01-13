@@ -154,7 +154,7 @@ void MAVLinkSimulationLink::sendMAVLinkMessage(const mavlink_message_t* msg)
 
     // Pack to link buffer
     readyBufferMutex.lock();
-    for (int i = 0; i < bufferlength; i++)
+    for (unsigned int i = 0; i < bufferlength; i++)
     {
         readyBuffer.enqueue(*(buf + i));
     }
@@ -954,6 +954,7 @@ bool MAVLinkSimulationLink::connect()
 
     start(LowPriority);
     MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1);
+    Q_UNUSED(mav1);
     //    timer->start(rate);
     return true;
 }

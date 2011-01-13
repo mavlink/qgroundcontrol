@@ -47,6 +47,7 @@ namespace qmapcontrol
         offFactor = factor;
         composedOffscreenImage = QPixmap(offSize);
         composedOffscreenImage2 = QPixmap(offSize);
+        resize(size);
     }
 
     float LayerManager::offscreenImageFactor()
@@ -219,7 +220,7 @@ namespace qmapcontrol
     {
         mylayers.append(layer);
 
-        layer->setSize(size);
+        layer->setSize(size, screenmiddle);
 
         connect(layer, SIGNAL(updateRequest(QRectF)),
                 this, SLOT(updateRequest(QRectF)));
@@ -493,7 +494,7 @@ namespace qmapcontrol
         while (it.hasNext())
         {
             Layer* l = it.next();
-            l->setSize(newSize);
+            l->setSize(newSize, screenmiddle);
         }
 
         newOffscreenImage();
