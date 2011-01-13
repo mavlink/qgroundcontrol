@@ -1299,7 +1299,11 @@ void MainWindow::UASCreated(UASInterface* uas)
             break;
         }
 
-        ui.menuConnected_Systems->addAction(icon, tr("Select %1 for control").arg(uas->getUASName()), uas, SLOT(setSelected()));
+        QAction* uasAction = new QAction(icon, tr("Select %1 for control").arg(uas->getUASName()), ui.menuConnected_Systems);
+        connect(uas, SIGNAL(systemRemoved()), uasAction, SLOT(deleteLater()));
+        connect(uasAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
+
+        ui.menuConnected_Systems->addAction(uasAction);
 
         // FIXME Should be not inside the mainwindow
         if (debugConsoleDockWidget)
