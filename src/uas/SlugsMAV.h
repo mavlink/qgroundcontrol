@@ -36,7 +36,7 @@ class SlugsMAV : public UAS
 public:
     SlugsMAV(MAVLinkProtocol* mavlink, int id = 0);
 
-
+    mavlink_pwm_commands_t* getPwmCommands();
 
 public slots:
     /** @brief Receive a MAVLink message from this MAV */
