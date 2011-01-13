@@ -194,7 +194,7 @@ HUD::~HUD()
 
 QSize HUD::sizeHint() const
 {
-    return QSize(800, 600);
+    return QSize(width(), (width()*3.0f)/4);
 }
 
 void HUD::showEvent(QShowEvent* event)

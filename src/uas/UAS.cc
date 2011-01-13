@@ -956,27 +956,27 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
     {
     case MAV_STATE_UNINIT:
         uasState = tr("UNINIT");
-        stateDescription = tr("Not initialized");
+        stateDescription = tr("Waiting..");
         break;
     case MAV_STATE_BOOT:
         uasState = tr("BOOT");
-        stateDescription = tr("Booting system, please wait..");
+        stateDescription = tr("Booting..");
         break;
     case MAV_STATE_CALIBRATING:
         uasState = tr("CALIBRATING");
-        stateDescription = tr("Calibrating sensors..");
+        stateDescription = tr("Calibrating..");
         break;
     case MAV_STATE_ACTIVE:
         uasState = tr("ACTIVE");
-        stateDescription = tr("Normal operation mode");
+        stateDescription = tr("Normal");
         break;
     case MAV_STATE_STANDBY:
         uasState = tr("STANDBY");
-        stateDescription = tr("Standby, operational");
+        stateDescription = tr("Standby, OK");
         break;
     case MAV_STATE_CRITICAL:
         uasState = tr("CRITICAL");
-        stateDescription = tr("Failure occured!");
+        stateDescription = tr("FAILURE: Continue");
         break;
     case MAV_STATE_EMERGENCY:
         uasState = tr("EMERGENCY");
@@ -984,11 +984,11 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         break;
     case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");
-        stateDescription = tr("Powering off system");
+        stateDescription = tr("Powering off");
         break;
     default:
         uasState = tr("UNKNOWN");
-        stateDescription = tr("FAILURE: Unknown system state");
+        stateDescription = tr("Unknown state");
         break;
     }
 }

@@ -211,6 +211,19 @@ MainWindow::~MainWindow()
 
 }
 
+void MainWindow::resizeEvent(QResizeEvent * event)
+{
+    Q_UNUSED(event);
+    if (height() < 800)
+    {
+        ui.statusBar->setVisible(false);
+    }
+    else
+    {
+        ui.statusBar->setVisible(true);
+    }
+}
+
 QString MainWindow::getWindowStateKey()
 {
     return QString::number(currentView)+"/windowstate";

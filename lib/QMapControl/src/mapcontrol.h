@@ -92,6 +92,9 @@ namespace qmapcontrol
          */
         Layer* layer ( const QString& layername ) const;
 
+        //! The factor the offscreen image is larger than the current viewport
+        float offscreenImageFactor();
+
         //! returns the names of all layers
         /*!
          * @return returns a QList with the names of all layers
@@ -222,6 +225,13 @@ namespace qmapcontrol
          */
         void showCoord ( bool show );
 
+        //! Set the pen for overlay text
+        /*!
+         *
+         * @param pen The new QPen
+         */
+        void setPen(QPen pen);
+
     private:
         LayerManager* layermanager;
         QPoint screen_middle; // middle of the widget (half size)
@@ -239,6 +249,7 @@ namespace qmapcontrol
         MouseMode mymousemode;
         bool scaleVisible;
         bool cursorPosVisible;
+        QPen mapPen;
 
         bool m_loadingFlag;
 
@@ -345,6 +356,12 @@ namespace qmapcontrol
          * @param newSize The new size
          */
         void resize(const QSize newSize);
+
+        //! Open a popup to save the current offscreen image to disk
+        void openImageSaveDialog();
+
+        //! Sets the factor the offscreen image should be larger than the visible area */
+        void setOffscreenImageFactor(double factor);
 
     private slots:
         void tick();
