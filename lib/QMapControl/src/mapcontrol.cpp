@@ -23,6 +23,9 @@
 *
 */
 
+#include <QDialog>
+#include <QDesktopServices>
+
 #include "mapcontrol.h"
 namespace qmapcontrol
 {
@@ -59,6 +62,29 @@ namespace qmapcontrol
     Layer* MapControl::layer(const QString& layername) const
     {
         return layermanager->layer(layername);
+    }
+
+    void MapControl::setOffscreenImageFactor(double factor)
+    {
+        layermanager->setOffscreenImageFactor(factor);
+    }
+
+    float MapControl::offscreenImageFactor()
+    {
+        return layermanager->offscreenImageFactor();
+    }
+
+    void MapControl::openImageSaveDialog()
+    {
+        QString fileName = QFileDialog::getSaveFileName(this, tr("Save Image as"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Image file (*.jpg *.png);;"));
+        if (fileName != "")
+        {
+            if (!fileName.contains(".png") && !fileName.contains(".jpg"))
+            {
+                fileName.append(".png");
+            }
+            layermanager->getImage().save(fileName, fileName.split(".").last().toUpper().toAscii(), 95);
+        }
     }
 
     QList<QString> MapControl::layers() const
