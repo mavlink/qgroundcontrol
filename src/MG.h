@@ -41,7 +41,7 @@ This file is part of the PIXHAWK project
 
 namespace MG
 {
-    const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 365 * 2;
+    const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;
 
     class VERSION
     {

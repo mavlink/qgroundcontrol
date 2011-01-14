@@ -11,7 +11,7 @@ QT       += network \
 
 TEMPLATE = app
 
-TARGET = tst_uasunittest
+TARGET = qgcunittest
 
 BASEDIR = $$IN_PWD
 TESTDIR = $$BASEDIR/qgcunittest
@@ -97,8 +97,7 @@ INCLUDEPATH += . \
     $$BASEDIR/src/ui/ \
 
 
-SOURCES += $$TESTDIR/tst_uasunittest.cc \
-            src/uas/UAS.cc \
+SOURCES +=  src/uas/UAS.cc \
             src/comm/MAVLinkProtocol.cc \
             src/uas/UASWaypointManager.cc \
             src/Waypoint.cc \
@@ -111,6 +110,10 @@ SOURCES += $$TESTDIR/tst_uasunittest.cc \
             src/comm/LinkManager.cc \
             src/QGC.cc \
             src/comm/SerialLink.cc \
+            $$TESTDIR/SlugsMavUnitTest.cc \
+            $$TESTDIR/testSuite.cc \
+            $$TESTDIR/UASUnitTest.cc
+
 
 HEADERS += src/uas/UASInterface.h \
             src/uas/UAS.h \
@@ -129,6 +132,9 @@ HEADERS += src/uas/UASInterface.h \
             src/QGC.h \
             src/comm/SerialLinkInterface.h \
             src/comm/SerialLink.h \
+            $$TESTDIR//SlugsMavUnitTest.h \
+            $$TESTDIR/AutoTest.h \
+            $$TESTDIR/UASUnitTest.h
 
 
 

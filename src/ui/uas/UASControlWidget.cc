@@ -97,7 +97,7 @@ void UASControlWidget::setUAS(UASInterface* uas)
         disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
         disconnect(ui.landButton, SIGNAL(clicked()), oldUAS, SLOT(home()));
         disconnect(ui.shutdownButton, SIGNAL(clicked()), oldUAS, SLOT(shutdown()));
-        connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
+        //connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
         disconnect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
     }
@@ -107,28 +107,28 @@ void UASControlWidget::setUAS(UASInterface* uas)
     connect(ui.liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
     connect(ui.landButton, SIGNAL(clicked()), uas, SLOT(home()));
     connect(ui.shutdownButton, SIGNAL(clicked()), uas, SLOT(shutdown()));
-    connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
+    //connect(ui.setHomeButton, SIGNAL(clicked()), uas, SLOT(setLocalOriginAtCurrentGPSPosition()));
     connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
     connect(uas, SIGNAL(statusChanged(int)), this, SLOT(updateState(int)));
 
     ui.controlStatusLabel->setText(tr("Connected to ") + uas->getUASName());
 
-    // Check if additional controls should be loaded
-    UAS* mav = dynamic_cast<UAS*>(uas);
-    if (mav)
-    {     
-        QPushButton* startRecButton = new QPushButton(tr("Record"));
-        connect(startRecButton, SIGNAL(clicked()), mav, SLOT(startDataRecording()));
-        ui.gridLayout->addWidget(startRecButton, 7, 1);
+//    // Check if additional controls should be loaded
+//    UAS* mav = dynamic_cast<UAS*>(uas);
+//    if (mav)
+//    {
+//        QPushButton* startRecButton = new QPushButton(tr("Record"));
+//        connect(startRecButton, SIGNAL(clicked()), mav, SLOT(startDataRecording()));
+//        ui.gridLayout->addWidget(startRecButton, 7, 1);
 
-        QPushButton* pauseRecButton = new QPushButton(tr("Pause"));
-        connect(pauseRecButton, SIGNAL(clicked()), mav, SLOT(pauseDataRecording()));
-        ui.gridLayout->addWidget(pauseRecButton, 7, 3);
+//        QPushButton* pauseRecButton = new QPushButton(tr("Pause"));
+//        connect(pauseRecButton, SIGNAL(clicked()), mav, SLOT(pauseDataRecording()));
+//        ui.gridLayout->addWidget(pauseRecButton, 7, 3);
 
-        QPushButton* stopRecButton = new QPushButton(tr("Stop"));
-        connect(stopRecButton, SIGNAL(clicked()), mav, SLOT(stopDataRecording()));
-        ui.gridLayout->addWidget(stopRecButton, 7, 4);
-    }
+//        QPushButton* stopRecButton = new QPushButton(tr("Stop"));
+//        connect(stopRecButton, SIGNAL(clicked()), mav, SLOT(stopDataRecording()));
+//        ui.gridLayout->addWidget(stopRecButton, 7, 4);
+//    }
 
 
     this->uas = uas->getUASID();
@@ -138,6 +138,19 @@ void UASControlWidget::setUAS(UASInterface* uas)
 UASControlWidget::~UASControlWidget()
 {
 
+}
+
+void UASControlWidget::updateStatemachine()
+{
+
+    if (engineOn)
+    {
+        ui.controlButton->setText(tr("Stop Engine"));
+    }
+    else
+    {
+        ui.controlButton->setText(tr("Activate Engine"));
+    }
 }
 
 /**
@@ -258,16 +271,20 @@ void UASControlWidget::cycleContextButton()
 
         if (!engineOn)
         {
-            ui.controlButton->setText(tr("Stop Engine"));
             mav->enable_motors();
-            ui.lastActionLabel->setText(QString("Attempted to enable motors on %1").arg(mav->getUASName()));
+            ui.lastActionLabel->setText(QString("Enabled motors on %1").arg(mav->getUASName()));
         }
         else
         {
-            ui.controlButton->setText(tr("Activate Engine"));
             mav->disable_motors();
-            ui.lastActionLabel->setText(QString("Attempted to disable motors on %1").arg(mav->getUASName()));
+            ui.lastActionLabel->setText(QString("Disabled motors on %1").arg(mav->getUASName()));
         }
+        // Update state now and in several intervals when MAV might have changed state
+        updateStatemachine();
+
+        QTimer::singleShot(50, this, SLOT(updateStatemachine()));
+        QTimer::singleShot(200, this, SLOT(updateStatemachine()));
+
         //ui.controlButton->setText(tr("Force Landing"));
         //ui.controlButton->setText(tr("KILL VEHICLE"));
     }

@@ -152,6 +152,7 @@ protected: //COMMENTS FOR TEST UNIT
     double roll;
     double pitch;
     double yaw;
+    quint64 lastHeartbeat;      ///< Time of the last heartbeat message
     QTimer* statusTimeout;      ///< Timer for various status timeouts
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
@@ -174,7 +175,10 @@ public:
     void setAutopilotType(int apType) { autopilot = apType;}
 
 public slots:
-    /** @brief Sets an action **/
+
+    /** @brief Set a new name **/
+    void setUASName(const QString& name);
+    /** @brief Executes an action **/
     void setAction(MAV_ACTION action);
 
     /** @brief Launches the system **/

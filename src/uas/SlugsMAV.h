@@ -46,7 +46,6 @@ public slots:
     mavlink_pwm_commands_t* getPwmCommands();
 #endif
 
-
 signals:
 
     void slugsRawImu(int uasId, const mavlink_raw_imu_t& rawData);

@@ -92,7 +92,8 @@ public:
         COMM_CONNECTED = 2,
         /** The connection is closed **/
         COMM_DISCONNECTING = 3,
-        COMM_FAIL = 4, ///< Communication link failed
+        COMM_FAIL = 4,
+        COMM_TIMEDOUT = 5///< Communication link failed
     };
 
 
@@ -162,6 +163,8 @@ public:
 
 public slots:
 
+    /** @brief Set a new name for the system */
+    virtual void setUASName(const QString& name) = 0;
     /** @brief Sets an action **/
     virtual void setAction(MAV_ACTION action) = 0;
 
@@ -409,9 +412,18 @@ signals:
      */
     void irUltraSoundLocalizationChanged(UASInterface* uas, int fix);
 
+    // ERROR AND STATUS SIGNALS
+    /** @brief Heartbeat timed out */
+    void heartbeatTimeout();
+    /** @brief Heartbeat timed out */
+    void heartbeatTimeout(unsigned int ms);
+    /** @brief Name of system changed */
+    void nameChanged(QString newName);
 
+protected:
 
-
+    // TIMEOUT CONSTANTS
+    static const unsigned int timeoutIntervalHeartbeat = 2000 * 1000; ///< Heartbeat timeout is 1.5 seconds
 
 };
 

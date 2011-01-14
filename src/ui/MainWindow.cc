@@ -436,10 +436,10 @@ void MainWindow::buildPxWidgets()
 
     if (!parametersDockWidget)
     {
-        parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
+        parametersDockWidget = new QDockWidget(tr("Calibration and Onboard Parameters"), this);
         parametersDockWidget->setWidget( new ParameterInterface(this) );
         parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
-        addToToolsMenu (parametersDockWidget, tr("Onboard Parameters"), SLOT(showToolWidget()), MENU_PARAMETERS, Qt::RightDockWidgetArea);
+        addToToolsMenu (parametersDockWidget, tr("Calibration and Parameters"), SLOT(showToolWidget()), MENU_PARAMETERS, Qt::RightDockWidgetArea);
     }
 
     if (!watchdogControlDockWidget)
@@ -1099,7 +1099,7 @@ void MainWindow::showStatusMessage(const QString& status)
 
 void MainWindow::showCriticalMessage(const QString& title, const QString& message)
 {
-    QMessageBox msgBox(MainWindow::instance());
+    QMessageBox msgBox(this);
     msgBox.setIcon(QMessageBox::Critical);
     msgBox.setText(title);
     msgBox.setInformativeText(message);
@@ -1110,7 +1110,7 @@ void MainWindow::showCriticalMessage(const QString& title, const QString& messag
 
 void MainWindow::showInfoMessage(const QString& title, const QString& message)
 {
-    QMessageBox msgBox(MainWindow::instance());
+    QMessageBox msgBox(this);
     msgBox.setIcon(QMessageBox::Information);
     msgBox.setText(title);
     msgBox.setInformativeText(message);
@@ -1152,6 +1152,9 @@ void MainWindow::connectCommonActions()
     connect(ui.actionOnline_Documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
     connect(ui.actionDeveloper_Credits, SIGNAL(triggered()), this, SLOT(showCredits()));
     connect(ui.actionProject_Roadmap_2, SIGNAL(triggered()), this, SLOT(showRoadMap()));
+
+    // Custom widget actions
+    connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
 }
 
 void MainWindow::connectPxActions()

@@ -20,7 +20,7 @@ namespace QGC
     quint64 groundTimeUsecs();
     int applicationVersion();
 
-
+    const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;
 
     class SLEEP : public QThread
     {
