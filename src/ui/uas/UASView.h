@@ -50,6 +50,8 @@ public:
     ~UASView();
 
 public slots:
+    /** @brief Update the name of the system */
+    void updateName(const QString& name);
     void receiveHeartbeat(UASInterface* uas);
     void updateThrust(UASInterface* uas, double thrust);
     void updateBattery(UASInterface* uas, double voltage, double percent, int seconds);
@@ -74,15 +76,19 @@ public slots:
     void setUASasActive(bool);
     /** @brief Update the view if an UAS has been set to active */
     void updateActiveUAS(UASInterface* uas, bool active);
+    /** @brief Set the widget into critical mode */
+    void heartbeatTimeout();
     /** @brief Set the background color for the widget */
     void setBackgroundColor();
+    /** @brief Bring up the dialog to rename the system */
+    void rename();
 
 protected:
     void changeEvent(QEvent *e);
     QTimer* refreshTimer;
     QColor heartbeatColor;
     quint64 startTime;
-    quint64 lastHeartbeat;
+    bool timeout;
     bool iconIsRed;
     int timeRemaining;
     float chargeLevel;
@@ -103,6 +109,7 @@ protected:
     float groundDistance;
     bool localFrame;
     QAction* removeAction;
+    QAction* renameAction;
     static const int updateInterval = 300;
 
 

@@ -32,6 +32,7 @@ This file is part of the PIXHAWK project
 #include <QDateTime>
 #include <QDebug>
 #include <QMenu>
+#include <QInputDialog>
 
 #include "QGC.h"
 #include "MG.h"
@@ -43,7 +44,7 @@ This file is part of the PIXHAWK project
 UASView::UASView(UASInterface* uas, QWidget *parent) :
         QWidget(parent),
         startTime(0),
-        lastHeartbeat(0),
+        timeout(false),
         iconIsRed(true),
         timeRemaining(0),
         chargeLevel(0),
@@ -63,7 +64,8 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         alt(0),
         groundDistance(0),
         localFrame(false),
-        removeAction(new QAction("Remove this system", this)),
+        removeAction(new QAction("Delete this system", this)),
+        renameAction(new QAction("Rename..", this)),
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
@@ -79,7 +81,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString,QString)));
     connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
     connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateLoad(UASInterface*, double)));
-    //connect(uas, SIGNAL(waypointUpdated(int,int,double,double,double,double,bool,bool)), this, SLOT(setWaypoint(int,int,double,double,double,double,bool,bool)));
+    connect(uas, SIGNAL(heartbeatTimeout()), this, SLOT(heartbeatTimeout()));
     connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int,int)));
     connect(&(uas->getWaypointManager()), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
@@ -99,7 +101,11 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 
     // Allow to delete this widget
     connect(removeAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
+    connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
     connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
+
+    // Name changes
+    connect(uas, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
     
     // Set static values
     
@@ -136,6 +142,11 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 UASView::~UASView()
 {
     delete m_ui;
+}
+
+void UASView::heartbeatTimeout()
+{
+    timeout = true;
 }
 
 /**
@@ -241,8 +252,13 @@ void UASView::receiveHeartbeat(UASInterface* uas)
     heartbeatColor = QColor(20, 200, 20);
     QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 2px; border: 0px; background-color: %1; }");
     m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
-    lastHeartbeat = QGC::groundTimeUsecs();
-    //m_ui->heartbeatIcon->setAutoFillBackground(true);
+    if (timeout) setBackgroundColor();
+    timeout = false;
+}
+
+void UASView::updateName(const QString& name)
+{
+    if (uas) m_ui->nameLabel->setText(uas->getUASName());
 }
 
 /**
@@ -400,11 +416,25 @@ void UASView::updateLoad(UASInterface* uas, double load)
 
 void UASView::contextMenuEvent (QContextMenuEvent* event)
 {
-    if (QGC::groundTimeUsecs() - lastHeartbeat > 1500000)
+    QMenu menu(this);
+    menu.addAction(renameAction);
+    if (timeout)
     {
-        QMenu menu(this);
         menu.addAction(removeAction);
-        menu.exec(event->globalPos());
+    }
+    menu.exec(event->globalPos());
+}
+
+void UASView::rename()
+{
+    if (uas)
+    {
+        bool ok;
+        QString newName = QInputDialog::getText(this, tr("Rename System %1").arg(uas->getUASName()),
+                                                tr("System Name:"), QLineEdit::Normal,
+                                                uas->getUASName(), &ok);
+
+        if (ok && !newName.isEmpty()) uas->setUASName(newName);
     }
 }
 
@@ -480,7 +510,7 @@ void UASView::refresh()
         // Thrust
         m_ui->thrustBar->setValue(thrust * 100);
 
-        if(this->timeRemaining > 1 && this->timeRemaining < MG::MAX_FLIGHT_TIME)
+        if(this->timeRemaining > 1 && this->timeRemaining < QGC::MAX_FLIGHT_TIME)
         {
             // Filter output to get a higher stability
             static double filterTime = static_cast<int>(this->timeRemaining);
@@ -513,41 +543,40 @@ void UASView::refresh()
 
     QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 2px; border: 0px; background-color: %1; }");
 
-    if (QGC::groundTimeUsecs() - lastHeartbeat > 1500000)
+    if (timeout)
     {
         // CRITICAL CONDITION, NO HEARTBEAT
+
+        QString borderColor = "#FFFF00";
+        if (isActive)
+        {
+            borderColor = "#FA4A4F";
+        }
 
         if (iconIsRed)
         {
             QColor warnColor(Qt::red);
             m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(warnColor.name()));
-            QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; background-color: %1; }").arg(warnColor.name());
+            QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; border: 2px solid %1; background-color: %2; }").arg(borderColor, warnColor.name());
             m_ui->uasViewFrame->setStyleSheet(style);
         }
         else
         {
             QColor warnColor(Qt::black);
             m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(warnColor.name()));
-            QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; background-color: %1; }").arg(warnColor.name());
+            QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; border: 2px solid %1; background-color: %2; }").arg(borderColor, warnColor.name());
             m_ui->uasViewFrame->setStyleSheet(style);
         }
         iconIsRed = !iconIsRed;
     }
     else
     {
-        // Break alert once everything is back to normal
-        if (!iconIsRed)
-        {
-            setBackgroundColor();
-            iconIsRed = true;
-        }
+        // Fade heartbeat icon
+        // Make color darker
+        heartbeatColor = heartbeatColor.darker(150);
 
-    // Fade heartbeat icon
-    // Make color darker
-    heartbeatColor = heartbeatColor.darker(150);
-
-    //m_ui->heartbeatIcon->setAutoFillBackground(true);
-    m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
+        //m_ui->heartbeatIcon->setAutoFillBackground(true);
+        m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
     }
     //setUpdatesEnabled(true);
 

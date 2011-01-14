@@ -162,7 +162,7 @@ public slots:
 
 protected:
     UASManager();
-    QMap<int, UASInterface*> systems;
+    QList<UASInterface*> systems;
     UASInterface* activeUAS;
     QMutex activeUASMutex;
 
@@ -172,6 +172,8 @@ signals:
     void activeUASSet(UASInterface* UAS);
     /** @brief The UAS currently under main operator control changed */
     void activeUASSet(int systemId);
+    /** @brief The UAS currently under main operator control changed */
+    void activeUASSetListIndex(int listIndex);
     /** @brief The UAS currently under main operator control changed */
     void activeUASStatusChanged(UASInterface* UAS, bool active);
     /** @brief The UAS currently under main operator control changed */

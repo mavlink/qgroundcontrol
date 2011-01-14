@@ -84,8 +84,8 @@ paramsOnceRequested(false)
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
-    statusTimeout->setInterval(500);
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
+    statusTimeout->start(500);
 }
 
 UAS::~UAS()
@@ -101,6 +101,14 @@ int UAS::getUASID() const
 
 void UAS::updateState()
 {
+    // Check if heartbeat timed out
+    quint64 heartbeatInterval = QGC::groundTimeUsecs() - lastHeartbeat;
+    if (heartbeatInterval > timeoutIntervalHeartbeat)
+    {
+        emit heartbeatTimeout(heartbeatInterval);
+        emit heartbeatTimeout();
+    }
+
     // Position lock is set by the MAVLink message handler
     // if no position lock is available, indicate an error
     if (positionLock)
@@ -144,6 +152,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         switch (message.msgid)
         {
         case MAVLINK_MSG_ID_HEARTBEAT:
+            lastHeartbeat = QGC::groundTimeUsecs();
             emit heartbeat(this);
             // Set new type if it has changed
             if (this->type != mavlink_msg_heartbeat_get_type(&message))
@@ -1315,6 +1324,12 @@ void UAS::setParameter(const int component, const QString& id, const float value
     mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
     sendMessage(msg);
     }
+}
+
+void UAS::setUASName(const QString& name)
+{
+    this->name = name;
+    emit nameChanged(name);
 }
 
 /**
