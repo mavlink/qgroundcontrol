@@ -44,7 +44,7 @@ class Waypoint : public QObject
 
 public:
     Waypoint(quint16 id = 0, float x = 0.0f, float y = 0.0f, float z = 0.0f, float yaw = 0.0f, bool autocontinue = false,
-             bool current = false, float orbit = 0.1f, int holdTime = 2000,
+             bool current = false, float orbit = 0.15f, int holdTime = 0,
              MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_ACTION action=MAV_ACTION_NAVIGATE);
     ~Waypoint();
 
