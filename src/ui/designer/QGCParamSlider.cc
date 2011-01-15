@@ -92,12 +92,22 @@ void QGCParamSlider::setSliderValue(int sliderValue)
     ui->valueLabel->setText(QString("%1 %2").arg(parameterValue, 0, 'f', 3).arg(unit));
 }
 
+/**
+ * @brief uas Unmanned system sending the parameter
+ * @brief component UAS component sending the parameter
+ * @brief parameterName Key/name of the parameter
+ * @brief value Value of the parameter
+ */
 void QGCParamSlider::setParameterValue(int uas, int component, QString parameterName, float value)
 {
-    parameterValue = value;
-    QString unit("");
-    ui->valueLabel->setText(QString("%1 %2").arg(value, 0, 'f', 3).arg(unit));
-    ui->valueSlider->setValue(floatToScaledInt(value));
+    Q_UNUSED(uas);
+    if (component == this->component && parameterName == this->parameterName)
+    {
+        parameterValue = value;
+        QString unit("");
+        ui->valueLabel->setText(QString("%1 %2").arg(value, 0, 'f', 3).arg(unit));
+        ui->valueSlider->setValue(floatToScaledInt(value));
+    }
 }
 
 void QGCParamSlider::changeEvent(QEvent *e)
