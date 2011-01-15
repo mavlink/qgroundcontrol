@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASWaypointManager.h"
 #include "UAS.h"
 #include "mavlink_types.h"
+#include "MainWindow.h"
 
 #define PROTOCOL_TIMEOUT_MS 2000    ///< maximum time to wait for pending messages until timeout
 #define PROTOCOL_DELAY_MS 40        ///< minimum delay between sent messages
@@ -164,7 +165,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
         }
         else
         {
-            //TODO: error handling
+            //MainWindow::instance()->showStatusMessage(tr("Waypoint ID mismatch, rejecting waypoint"));
         }
     }
 }
@@ -356,6 +357,10 @@ void UASWaypointManager::saveWaypoints(const QString &saveFile)
         return;
 
     QTextStream out(&file);
+
+    //write the waypoint list version to the first line for compatibility check
+    out << "QGC WPL 100\r\n";
+
     for (int i = 0; i < waypoints.size(); i++)
     {
         waypoints[i]->save(out);
@@ -377,20 +382,35 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
     }
 
     QTextStream in(&file);
-    while (!in.atEnd())
+
+    const QStringList &version = in.readLine().split(" ");
+
+    if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "100"))
     {
-        Waypoint *t = new Waypoint();
-        if(t->load(in))
+        MainWindow::instance()->showCriticalMessage(tr("Error loading waypoint file"),tr("The waypoint file is not compatible with the current version of QGroundControl."));
+    }
+    else
+    {
+        while (!in.atEnd())
         {
-            t->setId(waypoints.size());
-            waypoints.insert(waypoints.size(), t);
+            Waypoint *t = new Waypoint();
+            if(t->load(in))
+            {
+                t->setId(waypoints.size());
+                waypoints.insert(waypoints.size(), t);
+            }
+            else
+            {
+                MainWindow::instance()->showCriticalMessage(tr("Error loading waypoint file"),tr("The waypoint file is corrupted. Load operation only partly succesful."));
+                break;
+            }
         }
     }
+
     file.close();
 
     emit loadWPFile();
     emit waypointListChanged();
-
 }
 
 
@@ -430,8 +450,7 @@ void UASWaypointManager::readWaypoints()
     {
         while(waypoints.size()>0)
         {
-            Waypoint *t = waypoints.back();
-            delete t;
+            delete waypoints.back();
             waypoints.pop_back();
 
         }
@@ -465,7 +484,7 @@ void UASWaypointManager::writeWaypoints()
             current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
 
             //clear local buffer
-            //TODO: Why not replace with waypoint_buffer.clear() ?
+            //TODO: Why not replace with waypoint_buffer.clear() ? - because this will lead to memory leaks, the waypoint-structs have to be deleted, clear() would only delete the pointers.
             while(!waypoint_buffer.empty())
             {
                 delete waypoint_buffer.back();
@@ -503,6 +522,10 @@ void UASWaypointManager::writeWaypoints()
             //send the waypoint count to UAS (this starts the send transaction)
             sendWaypointCount();
         }
+    }
+    else if (waypoints.count() == 0)
+    {
+        sendWaypointClearAll();
     }
     else
     {
