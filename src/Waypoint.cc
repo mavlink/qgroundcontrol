@@ -55,23 +55,27 @@ Waypoint::~Waypoint()
 
 void Waypoint::save(QTextStream &saveStream)
 {
-    saveStream << "\t" << this->getId() << "\t" << this->getX() << "\t" << this->getY()  << "\t" << this->getZ()  << "\t" << this->getYaw()  << "\t" << this->getAutoContinue() << "\t" << this->getCurrent() << "\t" << this->getOrbit() << "\t" << this->getHoldTime() << "\n";
+    saveStream << this->getId() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << this->getOrbit() << "\t" << /*Orbit Direction*/ 0 << "\t" << this->getOrbit() << "\t" << this->getHoldTime() << "\t" << this->getCurrent() << "\t" << this->getX() << "\t" << this->getY()  << "\t" << this->getZ()  << "\t" << this->getYaw()  << "\t" << this->getAutoContinue() << "\r\n";
 }
 
 bool Waypoint::load(QTextStream &loadStream)
 {
     const QStringList &wpParams = loadStream.readLine().split("\t");
-    if (wpParams.size() == 10)
+    if (wpParams.size() == 13)
     {
-        this->id = wpParams[1].toInt();
-        this->x = wpParams[2].toDouble();
-        this->y = wpParams[3].toDouble();
-        this->z = wpParams[4].toDouble();
-        this->yaw = wpParams[5].toDouble();
-        this->autocontinue = (wpParams[6].toInt() == 1 ? true : false);
+        this->id = wpParams[0].toInt();
+        this->frame = (MAV_FRAME) wpParams[1].toInt();
+        this->action = (MAV_ACTION) wpParams[2].toInt();
+        this->orbit = wpParams[3].toDouble();
+        //TODO: orbit direction
+        //TODO: param1
+        this->holdTime = wpParams[6].toInt();
         this->current = (wpParams[7].toInt() == 1 ? true : false);
-        this->orbit = wpParams[8].toDouble();
-        this->holdTime = wpParams[9].toInt();
+        this->x = wpParams[8].toDouble();
+        this->y = wpParams[9].toDouble();
+        this->z = wpParams[10].toDouble();
+        this->yaw = wpParams[11].toDouble();
+        this->autocontinue = (wpParams[12].toInt() == 1 ? true : false);
         return true;
     }
     return false;
