@@ -303,6 +303,10 @@ signals:
     protected:
     /** @brief Get the UNIX timestamp in microseconds */
     quint64 getUnixTime(quint64 time);
+    /** @brief Write settings to disk */
+    void writeSettings();
+    /** @brief Read settings from disk */
+    void readSettings();
 };
 
 

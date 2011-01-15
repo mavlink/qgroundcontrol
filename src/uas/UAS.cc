@@ -12,13 +12,14 @@
 #include <QList>
 #include <QMessageBox>
 #include <QTimer>
+#include <QSettings>
 #include <iostream>
 #include <QDebug>
 #include <cmath>
 #include "UAS.h"
 #include "LinkInterface.h"
 #include "UASManager.h"
-#include "MG.h"
+//#include "MG.h"
 #include "QGC.h"
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
@@ -86,12 +87,31 @@ paramsOnceRequested(false)
     setBattery(LIPOLY, 3);
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     statusTimeout->start(500);
+    readSettings();
 }
 
 UAS::~UAS()
 {
+    writeSettings();
     delete links;
     links=NULL;
+}
+
+void UAS::writeSettings()
+{
+    QSettings settings;
+    settings.beginGroup(QString("MAV%1").arg(uasId));
+    settings.setValue("NAME", this->name);
+    settings.endGroup();
+    settings.sync();
+}
+
+void UAS::readSettings()
+{
+    QSettings settings;
+    settings.beginGroup(QString("MAV%1").arg(uasId));
+    this->name = settings.value("NAME", this->name).toString();
+    settings.endGroup();
 }
 
 int UAS::getUASID() const
@@ -1329,6 +1349,7 @@ void UAS::setParameter(const int component, const QString& id, const float value
 void UAS::setUASName(const QString& name)
 {
     this->name = name;
+    writeSettings();
     emit nameChanged(name);
 }
 

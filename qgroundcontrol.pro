@@ -234,7 +234,6 @@ HEADERS += src/MG.h \
     src/QGC.h \
     src/ui/QGCFirmwareUpdate.h \
     src/ui/QGCPxImuFirmwareUpdate.h \
-    src/comm/MAVLinkLightProtocol.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/map/Waypoint2DIcon.h \
@@ -359,7 +358,6 @@ SOURCES += src/main.cc \
     src/QGC.cc \
     src/ui/QGCFirmwareUpdate.cc \
     src/ui/QGCPxImuFirmwareUpdate.cc \
-    src/comm/MAVLinkLightProtocol.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc \
     src/ui/map/Waypoint2DIcon.cc \

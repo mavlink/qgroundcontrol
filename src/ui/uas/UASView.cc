@@ -258,7 +258,7 @@ void UASView::receiveHeartbeat(UASInterface* uas)
 
 void UASView::updateName(const QString& name)
 {
-    if (uas) m_ui->nameLabel->setText(uas->getUASName());
+    if (uas) m_ui->nameLabel->setText(name);
 }
 
 /**
