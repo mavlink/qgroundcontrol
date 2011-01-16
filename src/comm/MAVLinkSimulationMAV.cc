@@ -17,7 +17,7 @@ MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int sy
 void MAVLinkSimulationMAV::mainloop()
 {
     mavlink_message_t msg;
-    mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_SLUGS);
+    mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK);
     link->sendMAVLinkMessage(&msg);
 }
 
