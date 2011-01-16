@@ -72,10 +72,12 @@ contains(MAVLINK_CONF, ardupilotmega) {
     DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
 }
 
-# Include general settings for MAVGround
+# Include general settings for QGroundControl
 # necessary as last include to override any non-acceptable settings
 # done by the plugins above
 include(qgroundcontrol.pri)
+# Reset QMAKE_POST_LINK to prevent file copy operations
+QMAKE_POST_LINK = ""
 
 # QWT plot and QExtSerial depend on paths set by qgroundcontrol.pri
 # Include serial port library

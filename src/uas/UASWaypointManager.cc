@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASWaypointManager.h"
 #include "UAS.h"
 #include "mavlink_types.h"
-#include "MainWindow.h"
+//#include "MainWindow.h"
 
 #define PROTOCOL_TIMEOUT_MS 2000    ///< maximum time to wait for pending messages until timeout
 #define PROTOCOL_DELAY_MS 40        ///< minimum delay between sent messages
@@ -387,7 +387,8 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
 
     if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "100"))
     {
-        MainWindow::instance()->showCriticalMessage(tr("Error loading waypoint file"),tr("The waypoint file is not compatible with the current version of QGroundControl."));
+        emit updateStatusString(tr("The waypoint file is not compatible with the current version of QGroundControl."));
+        //MainWindow::instance()->showCriticalMessage(tr("Error loading waypoint file"),tr("The waypoint file is not compatible with the current version of QGroundControl."));
     }
     else
     {
@@ -401,7 +402,8 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
             }
             else
             {
-                MainWindow::instance()->showCriticalMessage(tr("Error loading waypoint file"),tr("The waypoint file is corrupted. Load operation only partly succesful."));
+                emit updateStatusString(tr("The waypoint file is corrupted. Load operation only partly succesful."));
+                //MainWindow::instance()->showCriticalMessage(tr("Error loading waypoint file"),);
                 break;
             }
         }
