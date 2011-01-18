@@ -55,7 +55,12 @@ Waypoint::~Waypoint()
 
 void Waypoint::save(QTextStream &saveStream)
 {
-    saveStream << this->getId() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << this->getOrbit() << "\t" << /*Orbit Direction*/ 0 << "\t" << this->getOrbit() << "\t" << this->getHoldTime() << "\t" << this->getCurrent() << "\t" << this->getX() << "\t" << this->getY()  << "\t" << this->getZ()  << "\t" << this->getYaw()  << "\t" << this->getAutoContinue() << "\r\n";
+    QString position("%1\t%2\t%3\t%4");
+    position = position.arg(x, 0, 'g', 18);
+    position = position.arg(y, 0, 'g', 18);
+    position = position.arg(z, 0, 'g', 18);
+    position = position.arg(yaw, 0, 'g', 8);
+    saveStream << this->getId() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << this->getOrbit() << "\t" << /*Orbit Direction*/ 0 << "\t" << this->getOrbit() << "\t" << this->getHoldTime() << "\t" << this->getCurrent() << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n";
 }
 
 bool Waypoint::load(QTextStream &loadStream)

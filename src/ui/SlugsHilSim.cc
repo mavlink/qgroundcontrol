@@ -252,7 +252,8 @@ uint16_t SlugsHilSim::getUint16FromDatagram (const QByteArray* datagram, unsigne
 
 }
 
-void SlugsHilSim::linkSelected(int cbIndex){
+void SlugsHilSim::linkSelected(int cbIndex)
+{
   #ifdef MAVLINK_ENABLED_SLUGS
     // HIL code to go here...
   //hilLink = linksAvailable
@@ -260,6 +261,8 @@ void SlugsHilSim::linkSelected(int cbIndex){
 
     hilLink =linksAvailable.value(cbIndex);
 
+#else
+    Q_UNUSED(cbIndex)
   #endif
 }
 

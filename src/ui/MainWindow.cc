@@ -1155,6 +1155,10 @@ void MainWindow::connectCommonActions()
 
     // Custom widget actions
     connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
+
+    // Audio output
+    ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
+    connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
 }
 
 void MainWindow::connectPxActions()
@@ -1388,14 +1392,14 @@ void MainWindow::UASCreated(UASInterface* uas)
             }
             break;
 
-        loadOperatorView();
+            loadOperatorView();
         }
 
         // Change the view only if this is the first UAS
 
         // If this is the first connected UAS, it is both created as well as
         // the currently active UAS
-        if (UASManager::instance()->getActiveUAS() == uas)
+        if (UASManager::instance()->getUASList().size() == 1)
         {
             //qDebug() << "UPDATING THE VIEW SINCE THIS IS THE FIRST CONNECTED SYSTEM";
 
@@ -1410,8 +1414,7 @@ void MainWindow::UASCreated(UASInterface* uas)
                 if (settings.contains(getWindowStateKey()))
                 {
                     restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
-            }
-
+                }
             }
             else
             {

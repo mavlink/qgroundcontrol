@@ -137,6 +137,8 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     {
         m_ui->positionLabel->hide();
     }
+
+    setSystemType(uas, uas->getSystemType());
 }
 
 UASView::~UASView()
