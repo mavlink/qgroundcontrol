@@ -123,6 +123,10 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
             qDebug() << "No waypoints on UAS " << systemId;
         }
     }
+    else
+    {
+            qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
+    }
 }
 
 void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_waypoint_t *wp)
@@ -165,8 +169,12 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
         }
         else
         {
-            //MainWindow::instance()->showStatusMessage(tr("Waypoint ID mismatch, rejecting waypoint"));
+            emit updateStatusString(tr("Waypoint ID mismatch, rejecting waypoint"));
         }
+    }
+    else
+    {
+            qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
     }
 }
 
@@ -209,6 +217,10 @@ void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, m
         {
             //TODO: Error message or something
         }
+    }
+    else
+    {
+            qDebug("Rejecting message, check mismatch: current_state: %d == %d, system id %d == %d, comp id %d == %d", current_state, WP_GETLIST, current_partner_systemid, systemId, current_partner_compid, compId);
     }
 }
 

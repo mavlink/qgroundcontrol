@@ -153,14 +153,14 @@ void MAVLinkSimulationLink::sendMAVLinkMessage(const mavlink_message_t* msg)
     unsigned int bufferlength = mavlink_msg_to_send_buffer(buf, msg);
 
     // Pack to link buffer
-    readyBufferMutex.lock();
+//    readyBufferMutex.lock();
     for (unsigned int i = 0; i < bufferlength; i++)
     {
         readyBuffer.enqueue(*(buf + i));
     }
-    readyBufferMutex.unlock();
+//    readyBufferMutex.unlock();
 
-    //qDebug() << "SENT MAVLINK MESSAGE FROM SYSTEM" << msg->sysid << "COMP" << msg->compid;
+    qDebug() << "SENT MAVLINK MESSAGE FROM SYSTEM" << msg->sysid << "COMP" << msg->compid;
 }
 
 void MAVLinkSimulationLink::enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg)

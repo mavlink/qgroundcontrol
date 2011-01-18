@@ -172,10 +172,12 @@ public:
     UASWaypointManager &getWaypointManager(void) { return waypointManager; }
     int getSystemType();
     int getAutopilotType() {return autopilot;}
-    void setAutopilotType(int apType) { autopilot = apType;}
 
 public slots:
-
+    /** @brief Set the autopilot type */
+    void setAutopilotType(int apType) { autopilot = apType; }
+    /** @brief Set the type of airframe */
+    void setSystemType(int systemType) { type = systemType; }
     /** @brief Set a new name **/
     void setUASName(const QString& name);
     /** @brief Executes an action **/
@@ -307,6 +309,10 @@ signals:
     void writeSettings();
     /** @brief Read settings from disk */
     void readSettings();
+
+    // MESSAGE RECEPTION
+    /** @brief Receive a named value message */
+    void receiveMessageNamedValue(const mavlink_message_t& message);
 };
 
 

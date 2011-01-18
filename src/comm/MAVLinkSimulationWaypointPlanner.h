@@ -24,6 +24,7 @@ public:
     explicit MAVLinkSimulationWaypointPlanner(MAVLinkSimulationLink *parent, int systemid);
 
 signals:
+    void messageSent(const mavlink_message_t& msg);
 
 public slots:
     void handleMessage(const mavlink_message_t& msg);

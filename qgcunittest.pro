@@ -114,7 +114,8 @@ SOURCES +=  src/uas/UAS.cc \
             src/comm/SerialLink.cc \
             $$TESTDIR/SlugsMavUnitTest.cc \
             $$TESTDIR/testSuite.cc \
-            $$TESTDIR/UASUnitTest.cc
+            $$TESTDIR/UASUnitTest.cc \
+    src/uas/QGCMAVLinkUASFactory.cc
 
 
 HEADERS += src/uas/UASInterface.h \
@@ -136,7 +137,8 @@ HEADERS += src/uas/UASInterface.h \
             src/comm/SerialLink.h \
             $$TESTDIR//SlugsMavUnitTest.h \
             $$TESTDIR/AutoTest.h \
-            $$TESTDIR/UASUnitTest.h
+            $$TESTDIR/UASUnitTest.h \
+    src/uas/QGCMAVLinkUASFactory.h
 
 
 

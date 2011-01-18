@@ -149,6 +149,18 @@ void UAS::setSelected()
     UASManager::instance()->setActiveUAS(this);
 }
 
+void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
+{
+    if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
+    {
+
+    }
+    else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
+    {
+
+    }
+}
+
 void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
     if (!link) return;
