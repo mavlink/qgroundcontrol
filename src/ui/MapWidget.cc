@@ -13,7 +13,6 @@
 #include <QComboBox>
 #include <QGridLayout>
 #include <QDir>
-#include <QDoubleSpinBox>
 
 #include "QGC.h"
 #include "MapWidget.h"
@@ -39,8 +38,16 @@ MapWidget::MapWidget(QWidget *parent) :
     mc = new qmapcontrol::MapControl(QSize(320, 240));
 
     //   VISUAL MAP STYLE
-    QString buttonStyle("QAbstractButton { background-color: rgba(20, 20, 20, 45%); border-color: rgba(10, 10, 10, 50%)}  QDoubleSpinBox { background-color: rgba(20, 20, 20, 45%); border-color: rgba(10, 10, 10, 50%)}");
+    QString buttonStyle("QAbstractButton { background-color: rgba(20, 20, 20, 45%); border-color: rgba(10, 10, 10, 50%)}");
     mc->setPen(QGC::colorCyan.darker(400));
+
+
+
+
+
+
+
+
 
     waypointIsDrag = false;
 
@@ -156,19 +163,6 @@ MapWidget::MapWidget(QWidget *parent) :
     QPushButton* goToButton = new QPushButton(QIcon(""), "T", this);
     goToButton->setStyleSheet(buttonStyle);
 
-    // SAVE FILES
-    QPushButton* saveButton = new QPushButton(QIcon(""), "S", this);
-    saveButton->setStyleSheet(buttonStyle);
-
-    // SET OFFSCREEN BUFFER SIZE
-    QDoubleSpinBox* offscreenSpinBox = new QDoubleSpinBox(this);
-    offscreenSpinBox->setStyleSheet(buttonStyle);
-    offscreenSpinBox->setMinimum(2);
-    offscreenSpinBox->setMaximum(30);
-    offscreenSpinBox->setValue(mc->offscreenImageFactor());
-    connect(offscreenSpinBox, SIGNAL(valueChanged(double)), mc, SLOT(setOffscreenImageFactor(double)));
-
-
     zoomin->setMaximumWidth(30);
     zoomout->setMaximumWidth(30);
     createPath->setMaximumWidth(30);
@@ -194,10 +188,8 @@ MapWidget::MapWidget(QWidget *parent) :
     // Add spacers to compress buttons on the top left
     innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 5, 0);
     innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 1, 0, 7);
-    innerlayout->addWidget(mapButton, 0, 2);
-    innerlayout->addWidget(goToButton, 0, 3);
-    innerlayout->addWidget(saveButton, 0, 4);
-    innerlayout->addWidget(offscreenSpinBox, 0, 5);
+    innerlayout->addWidget(mapButton, 0, 6);
+    innerlayout->addWidget(goToButton, 0, 7);
     innerlayout->setRowStretch(0, 1);
     innerlayout->setRowStretch(1, 100);
     mc->setLayout(innerlayout);
@@ -211,8 +203,6 @@ MapWidget::MapWidget(QWidget *parent) :
             mc, SLOT(zoomOut()));
 
     connect(goToButton, SIGNAL(clicked()), this, SLOT(goTo()));
-
-    connect(saveButton, SIGNAL(clicked()), mc, SLOT(openImageSaveDialog()));
 
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
     foreach(UASInterface* system, systems)
@@ -258,12 +248,6 @@ MapWidget::MapWidget(QWidget *parent) :
 
     drawCamBorder = false;
     radioCamera = 10;
-
-//    mc->setZoom(20);
-//    //mc->resize(QSize(7025, 4968));
-//    mc->resize(QSize(3000, 2000));
-
-    //mc->setOffscreenImageFactor(15);
 }
 
 void MapWidget::goTo()
@@ -646,10 +630,6 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, ""));
     }
 
-    mc->drawGeometries();
-
-    //mc->updateRequest(QRect(QPoint(0, 0), QPoint(600, 600)));
-
     //mc->updateRequestNew();//(uasTrails.value(uas->getUASID())->boundingBox().toRect());
 
 
@@ -813,8 +793,7 @@ void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, floa
 
 void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
 {
-  Q_UNUSED(bearing);
-  Q_UNUSED(dir);
+    // FIXME Mariano
     //camPoints.clear();
     QPointF currentPos = mc->currentCoordinate();
     //    QPointF actualPos = getPointxBearing_Range(currentPos.y(),currentPos.x(),bearing,distance);
