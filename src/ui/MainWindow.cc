@@ -345,21 +345,6 @@ void MainWindow::buildCommonWidgets()
         addToCentralWidgetsMenu (protocolWidget, "Mavlink Generator", SLOT(showCentralWidget()),CENTRAL_PROTOCOL);
     }
 
-    //TODO temporaly debug
-    if (!slugsHilSimWidget)
-    {
-        slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
-        slugsHilSimWidget->setWidget( new SlugsHilSim(this));
-        addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
-    }
-
-    //TODO temporaly debug
-    if (!slugsCamControlWidget)
-    {
-        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
-        slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
-        addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget()), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
-    }
     if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
@@ -525,38 +510,38 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget()), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
     }
 
-    if (!slugsDataWidget)
-    {
-        // Dialog widgets
-        slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
-        slugsDataWidget->setWidget( new SlugsDataSensorView(this));
-        slugsDataWidget->setObjectName("SLUGS_DATA_DOCK_WIDGET");
-        addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget()), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
-    }
+//    if (!slugsDataWidget)
+//    {
+//        // Dialog widgets
+//        slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
+//        slugsDataWidget->setWidget( new SlugsDataSensorView(this));
+//        slugsDataWidget->setObjectName("SLUGS_DATA_DOCK_WIDGET");
+//        addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget()), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
+//    }
 
-    if (!slugsPIDControlWidget)
-    {
-        slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
-        slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
-        slugsPIDControlWidget->setObjectName("SLUGS_PID_CONTROL_DOCK_WIDGET");
-        addToToolsMenu (slugsPIDControlWidget, tr("PID Configuration"), SLOT(showToolWidget()), MENU_SLUGS_PID, Qt::LeftDockWidgetArea);
-    }
+//    if (!slugsPIDControlWidget)
+//    {
+//        slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
+//        slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
+//        slugsPIDControlWidget->setObjectName("SLUGS_PID_CONTROL_DOCK_WIDGET");
+//        addToToolsMenu (slugsPIDControlWidget, tr("PID Configuration"), SLOT(showToolWidget()), MENU_SLUGS_PID, Qt::LeftDockWidgetArea);
+//    }
 
-    if (!slugsHilSimWidget)
-    {
-        slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
-        slugsHilSimWidget->setWidget( new SlugsHilSim(this));
-        slugsHilSimWidget->setObjectName("SLUGS_HIL_SIM_DOCK_WIDGET");
-        addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
-    }
+//    if (!slugsHilSimWidget)
+//    {
+//        slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
+//        slugsHilSimWidget->setWidget( new SlugsHilSim(this));
+//        slugsHilSimWidget->setObjectName("SLUGS_HIL_SIM_DOCK_WIDGET");
+//        addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
+//    }
 
-    if (!slugsCamControlWidget)
-    {
-        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
-        slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
-        slugsCamControlWidget->setObjectName("SLUGS_CAM_CONTROL_DOCK_WIDGET");
-        addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget()), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
-    }
+//    if (!slugsCamControlWidget)
+//    {
+//        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
+//        slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
+//        slugsCamControlWidget->setObjectName("SLUGS_CAM_CONTROL_DOCK_WIDGET");
+//        addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget()), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
+//    }
 }
 
 
