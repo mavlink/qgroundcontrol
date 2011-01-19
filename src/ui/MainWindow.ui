@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -62,6 +62,7 @@
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="actionMuteAudioOutput"/>
+    <addaction name="actionJoystickSettings"/>
     <addaction name="actionPreferences"/>
     <addaction name="actionReloadStyle"/>
     <addaction name="separator"/>
@@ -215,7 +216,7 @@
      <normaloff>:/images/devices/input-gaming.svg</normaloff>:/images/devices/input-gaming.svg</iconset>
    </property>
    <property name="text">
-    <string>Joystick settings</string>
+    <string>Joystick Test</string>
    </property>
    <property name="visible">
     <bool>true</bool>

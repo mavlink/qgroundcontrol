@@ -35,6 +35,7 @@ void Waypoint2DIcon::setPen(QPen* pen)
 void Waypoint2DIcon::setYaw(float yaw)
 {
     this->yaw = yaw;
+    drawIcon(mypen);
 }
 
 void Waypoint2DIcon::drawIcon(QPen* pen)

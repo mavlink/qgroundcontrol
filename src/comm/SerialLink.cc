@@ -180,13 +180,13 @@ void SerialLink::writeBytes(const char* data, qint64 size)
         // Increase write counter
         bitsSentTotal += size * 8;
 
-        //        int i;
-        //        for (i=0; i<size; i++)
-        //        {
-        //            unsigned char v=data[i];
-
-        //            //fprintf(stderr,"%02x ", v);
-        //        }
+        int i;
+        for (i=0; i<size; i++)
+        {
+            unsigned char v =data[i];
+            qDebug("%02x ", v);
+        }
+        qDebug("\n");
     }
 }
 

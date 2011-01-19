@@ -377,7 +377,7 @@ namespace qmapcontrol
     {
         layermanager->setZoom(zoomlevel);
 
-        qDebug() << "MAPCONTROL: Set zoomlevel to:" << zoomlevel << "at " << __FILE__ << __LINE__;
+        //qDebug() << "MAPCONTROL: Set zoomlevel to:" << zoomlevel << "at " << __FILE__ << __LINE__;
 
         update();
     }

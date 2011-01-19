@@ -202,6 +202,12 @@ MainWindow::MainWindow(QWidget *parent):
 
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
 
+    // Connect user interface devices
+    if (!joystick)
+    {
+        joystick = new JoystickInput();
+    }
+
     // Enable and update view
     presentView();
 }
@@ -492,11 +498,6 @@ void MainWindow::buildPxWidgets()
 
     // Dialogue widgets
     //FIXME: free memory in destructor
-    if (!joystick)
-    {
-        joystick    = new JoystickInput();
-    }
-
 }
 
 void MainWindow::buildSlugsWidgets()
@@ -1159,14 +1160,20 @@ void MainWindow::connectCommonActions()
     // Audio output
     ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
     connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
+
+    // User interaction
+    // NOTE: Joystick thread is not started and
+    // configuration widget is not instantiated
+    // unless it is actually used
+    // so no ressources spend on this.
+    ui.actionJoystickSettings->setVisible(true);
+    // Joystick configuration
+    connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
 }
 
 void MainWindow::connectPxActions()
 {
-    ui.actionJoystickSettings->setVisible(true);
 
-    // Joystick configuration
-    connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
 
 }
 
@@ -1219,7 +1226,15 @@ void MainWindow::showRoadMap()
 
 void MainWindow::configure()
 {
-    joystickWidget = new JoystickWidget(joystick, this);
+    if (!joystickWidget)
+    {
+        if (!joystick->isRunning())
+        {
+            joystick->start();
+        }
+        joystickWidget = new JoystickWidget(joystick);
+    }
+    joystickWidget->show();
 }
 
 void MainWindow::addLink()

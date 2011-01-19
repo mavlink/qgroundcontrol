@@ -93,30 +93,16 @@ void UDPLink::writeBytes(const char* data, qint64 size)
     {
         QHostAddress currentHost = hosts->at(h);
         quint16 currentPort = ports->at(h);
-        //        QList<quint16> currentPorts = ports->values(currentHost);
-        //        for (int p = 0; p < currentPorts.size(); p++)
-        //        {
-        //            quint16 currentPort = currentPorts.at(p);
-        //qDebug() << "Sent message to " << currentHost << ":" << currentPort << "at" << __FILE__ << ":" << __LINE__;
+
+        for (int i=0; i<size; i++)
+        {
+            unsigned char v =data[i];
+            qDebug("%02x ", v);
+        }
+        qDebug("\n");
+
         socket->writeDatagram(data, size, currentHost, currentPort);
-        //        }
     }
-
-
-    //if(socket->write(data, size) > 0) {
-
-//    qDebug() << "Transmitted " << size << "bytes:";
-//
-//    /* Increase write counter */
-//    bitsSentTotal += size * 8;
-//
-//    int i;
-//    for (i=0; i<size; i++){
-//        unsigned int v=data[i];
-//
-//        fprintf(stderr,"%02x ", v);
-//    }
-    //}
 }
 
 /**
