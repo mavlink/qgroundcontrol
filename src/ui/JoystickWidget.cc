@@ -136,5 +136,5 @@ void JoystickWidget::pressKey(int key)
 
 void JoystickWidget::updateStatus(const QString& status)
 {
-
+    m_ui->statusLabel->setText(status);
 }

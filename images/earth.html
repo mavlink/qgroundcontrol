@@ -250,9 +250,9 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
     }
         
                 
-    //planeLoc.setLatitude(lat);
-    //planeLoc.setLongitude(lon);
-    //planeLoc.setAltitude(alt);
+    planeLoc.setLatitude(lat);
+    planeLoc.setLongitude(lon);
+    planeLoc.setAltitude(alt);
 	
 }
 
@@ -297,13 +297,7 @@ function updateFollowAircraft()
 
 	currView.setRange(currViewRange);
 	currView.setTilt(currFollowTilt);
-	currFollowHeading = 0;// 0.9*currFollowHeading+0.1*((Math.atan2(lastLat-currLat, lastLon-currLon)/M_PI)+1.0)*360.0;
-	currView.setHeading(currFollowHeading-0.0);
-	
-	// FIXME Shouldn't update aircraft in here, but works for now
-	planeLoc.setLatitude(lastLat);
-    planeLoc.setLongitude(lastLon);
-    planeLoc.setAltitude(lastAlt);
+	currView.setHeading(currFollowHeading-90.0);
 	
 	ge.getView().setAbstractView(currView);
 }

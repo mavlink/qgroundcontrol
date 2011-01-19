@@ -223,6 +223,8 @@ public slots:
 
     /** @brief Add a link associated with this robot */
     void addLink(LinkInterface* link);
+    /** @brief Remove a link associated with this robot */
+    void removeLink(QObject* object);
 
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(LinkInterface* link, mavlink_message_t message);

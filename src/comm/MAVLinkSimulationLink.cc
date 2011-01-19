@@ -97,6 +97,7 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     maxTimeNoise = 0;
     this->id = getNextLinkId();
     LinkManager::instance()->add(this);
+    QObject::connect(this, SIGNAL(destroyed(QObject*)), LinkManager::instance(), SLOT(removeLink(QObject*)));
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
