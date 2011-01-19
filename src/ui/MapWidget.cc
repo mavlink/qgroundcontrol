@@ -469,7 +469,7 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
         qDebug()<<"Funcion createWaypointGraphAtMap WP= "<<str<<" -> x= "<<tempPoint->latitude()<<" y= "<<tempPoint->longitude();
 
         // Refresh the screen
-        mc->updateRequest(tempPoint->boundingBox().toRect());
+        mc->updateRequestNew();//(tempPoint->boundingBox().toRect());
     }
 
     ////    // emit signal mouse was clicked
@@ -630,6 +630,8 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, ""));
     }
 
+    mc->updateRequest(p->boundingBox().toRect());
+
     //mc->updateRequestNew();//(uasTrails.value(uas->getUASID())->boundingBox().toRect());
 
 
@@ -745,7 +747,7 @@ void MapWidget::clearWaypoints()
     waypointPath->setPoints(wps);
     mc->layer("Waypoints")->addGeometry(waypointPath);
     wpIndex.clear();
-    mc->updateRequest(waypointPath->boundingBox().toRect());
+    mc->updateRequestNew();//(waypointPath->boundingBox().toRect());
 
     if(createPath->isChecked())
     {
@@ -764,7 +766,7 @@ void MapWidget::clearPath()
         mc->layer("Tracking")->addGeometry(lsNew);
     }
     // FIXME update this with update request only for bounding box of trails
-    mc->updateRequest(QRect(0, 0, width(), height()));
+    mc->updateRequestNew();//(QRect(0, 0, width(), height()));
 }
 
 void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, float lon)
@@ -785,7 +787,7 @@ void MapWidget::changeGlobalWaypointPositionBySpinBox(int index, float lat, floa
         point2Find->setCoordinate(coordinate);
 
         // Refresh the screen
-        mc->updateRequest(point2Find->boundingBox().toRect());
+        mc->updateRequestNew();//(point2Find->boundingBox().toRect());
     }
 
 

@@ -50,6 +50,8 @@ public:
     JoystickInput();
     void run();
 
+    const QString& getName();
+
     const double sdlJoystickMin;
     const double sdlJoystickMax;
 
@@ -68,6 +70,7 @@ protected:
     int yAxis;
     int yawAxis;
     SDL_Event event;
+    QString joystickName;
 
     void init();
 

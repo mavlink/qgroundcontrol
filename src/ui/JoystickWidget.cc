@@ -9,12 +9,13 @@ JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
     m_ui->setupUi(this);
     this->joystick = joystick;
 
-
     connect(this->joystick, SIGNAL(joystickChanged(double,double,double,double,int,int)), this, SLOT(updateJoystick(double,double,double,double,int,int)));
     connect(this->joystick, SIGNAL(buttonPressed(int)), this, SLOT(pressKey(int)));
 
     // Display the widget
     this->window()->setWindowTitle(tr("Joystick Settings"));
+    if (joystick) updateStatus(tr("Found joystick: %1").arg(joystick->getName()));
+
     this->show();
 }
 
@@ -69,15 +70,71 @@ void JoystickWidget::setZ(float z)
 void JoystickWidget::setHat(float x, float y)
 {
     qDebug() << __FILE__ << __LINE__ << "HAT X:" << x << "HAT Y:" << y;
+    updateStatus(tr("Hat position: x: %1, y: %2").arg(x, y));
+}
+
+void JoystickWidget::clearKeys()
+{
+    QString colorstyle;
+    QColor buttonStyleColor = QColor(200, 20, 20);
+    colorstyle = QString("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: %1;}").arg(buttonStyleColor.name());
+
+    m_ui->buttonLabel0->setStyleSheet(colorstyle);
+    m_ui->buttonLabel1->setStyleSheet(colorstyle);
+    m_ui->buttonLabel2->setStyleSheet(colorstyle);
+    m_ui->buttonLabel3->setStyleSheet(colorstyle);
+    m_ui->buttonLabel4->setStyleSheet(colorstyle);
+    m_ui->buttonLabel5->setStyleSheet(colorstyle);
+    m_ui->buttonLabel6->setStyleSheet(colorstyle);
+    m_ui->buttonLabel7->setStyleSheet(colorstyle);
+    m_ui->buttonLabel8->setStyleSheet(colorstyle);
+    m_ui->buttonLabel9->setStyleSheet(colorstyle);
 }
 
 void JoystickWidget::pressKey(int key)
 {
     QString colorstyle;
-    QColor heartbeatColor = QColor(20, 200, 20);
-    colorstyle = colorstyle.sprintf("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X;}",
-                                    heartbeatColor.red(), heartbeatColor.green(), heartbeatColor.blue());
-    m_ui->button0Label->setStyleSheet(colorstyle);
-    m_ui->button0Label->setAutoFillBackground(true);
+    QColor buttonStyleColor = QColor(20, 200, 20);
+    colorstyle = QString("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: %1;}").arg(buttonStyleColor.name());
+    switch(key)
+    {
+    case 0:
+        m_ui->buttonLabel0->setStyleSheet(colorstyle);
+        break;
+    case 1:
+        m_ui->buttonLabel1->setStyleSheet(colorstyle);
+        break;
+    case 2:
+        m_ui->buttonLabel2->setStyleSheet(colorstyle);
+        break;
+    case 3:
+        m_ui->buttonLabel3->setStyleSheet(colorstyle);
+        break;
+    case 4:
+        m_ui->buttonLabel4->setStyleSheet(colorstyle);
+        break;
+    case 5:
+        m_ui->buttonLabel5->setStyleSheet(colorstyle);
+        break;
+    case 6:
+        m_ui->buttonLabel6->setStyleSheet(colorstyle);
+        break;
+    case 7:
+        m_ui->buttonLabel7->setStyleSheet(colorstyle);
+        break;
+    case 8:
+        m_ui->buttonLabel8->setStyleSheet(colorstyle);
+        break;
+    case 9:
+        m_ui->buttonLabel9->setStyleSheet(colorstyle);
+        break;
+    }
+    QTimer::singleShot(20, this, SLOT(clearKeys()));
     qDebug() << __FILE__ << __LINE__ << "KEY" << key << " pressed on joystick";
+    updateStatus(tr("Key %1 pressed").arg(key));
+}
+
+void JoystickWidget::updateStatus(const QString& status)
+{
+
 }

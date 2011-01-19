@@ -48,9 +48,15 @@ void MAVLinkSimulationMAV::mainloop()
 
     if (!firstWP)
     {
-        x += (nextSPX - previousSPX) * 0.01;
-        y += (nextSPY - previousSPY) * 0.01;
-        z += (nextSPZ - previousSPZ) * 0.1;
+        double xm = (nextSPX - x) * 0.01;
+        double ym = (nextSPY - y) * 0.01;
+        double zm = (nextSPZ - z) * 0.1;
+
+        x += xm;
+        y += ym;
+        z += zm;
+
+        //if (xm < 0.001) xm
     }
     else
     {
