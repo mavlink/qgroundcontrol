@@ -143,11 +143,9 @@ bool LinkManager::disconnectLink(LinkInterface* link)
 void LinkManager::removeLink(QObject* link)
 {
     LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
-    // Add link to link list
-    if (links.contains(linkInterface))
+    if (linkInterface)
     {
-        int linkIndex = links.indexOf(linkInterface);
-        links.removeAt(linkIndex);
+        removeLink(linkInterface);
     }
 }
 
@@ -161,6 +159,12 @@ bool LinkManager::removeLink(LinkInterface* link)
                 {
                     links.removeAt(i); //remove from link list
                 }
+            }
+            // Remove link from protocol map
+            QList<ProtocolInterface* > protocols = protocolLinks.keys(link);
+            foreach (ProtocolInterface* proto, protocols)
+            {
+                protocolLinks.remove(proto, link);
             }
             return true;
         }

@@ -142,9 +142,9 @@ HUD::HUD(int width, int height, QWidget* parent)
     fill.setColor(2, qRgb(0, 0, 0));
     fill.fill(0);
 
-    //QString imagePath = MG::DIR::getIconDirectory() + "hud-template.png";
-    //qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
-    //fill = QImage(imagePath);
+    QString imagePath = "/Users/user/Desktop/frame0000.png";
+    qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
+    fill = QImage(imagePath);
 
     glImage = QGLWidget::convertToGLFormat(fill);
 

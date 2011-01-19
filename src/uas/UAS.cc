@@ -956,18 +956,22 @@ void UAS::forwardMessage(mavlink_message_t message)
 {
     // Emit message on all links that are currently connected
     QList<LinkInterface*>link_list = LinkManager::instance()->getLinksForProtocol(mavlink);
+
     foreach(LinkInterface* link, link_list)
     {
-        SerialLink* serial = dynamic_cast<SerialLink*>(link);
-        if(serial != 0)
+        if (link)
         {
-
-            for(int i=0;i<links->size();i++)
+            SerialLink* serial = dynamic_cast<SerialLink*>(link);
+            if(serial != 0)
             {
-                if(serial != links->at(i))
+
+                for(int i=0;i<links->size();i++)
                 {
-                    qDebug()<<"Forwarding Over link: "<<serial->getName()<<" "<<serial;
-                    sendMessage(serial, message);
+                    if(serial != links->at(i))
+                    {
+                        qDebug()<<"Forwarding Over link: "<<serial->getName()<<" "<<serial;
+                        sendMessage(serial, message);
+                    }
                 }
             }
         }
@@ -1671,9 +1675,19 @@ void UAS::addLink(LinkInterface* link)
     if (!links->contains(link))
     {
         links->append(link);
+        connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeLink(QObject*)));
     }
     //links->append(link);
     //qDebug() << link<<" ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK ADDED LINK";
+}
+
+void UAS::removeLink(QObject* object)
+{
+    LinkInterface* link = dynamic_cast<LinkInterface*>(object);
+    if (link)
+    {
+        links->removeAt(links->indexOf(link));
+    }
 }
 
 /**
