@@ -486,7 +486,13 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
                     wpIcons.at(wp->getId())->setCoordinate(coordinate);
                     //mc->layer("Waypoints")->addGeometry(wpIcons.at(wp->getId()));
                     // Then waypoint line coordinate
-                    Point* linesegment = waypointPath->points().at(mav->getWaypointManager()->getWaypointList().indexOf(wp));
+                    int linesegmentId = mav->getWaypointManager()->getWaypointList().indexOf(wp);
+                    qDebug() << "SEGMENT" << linesegmentId;
+                    Point* linesegment = NULL;
+                    if (waypointPath->points().size() > linesegmentId)
+                    {
+                        linesegment = waypointPath->points().at(linesegmentId);
+                    }
 
                     if (linesegment)
                     {
@@ -761,7 +767,10 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
     //pointpen->setWidth(3);
     //points.append(new CirclePoint(lat, lon, 10, uas->getUASName(), Point::Middle, pointpen));
 
-    MAV2DIcon* p;
+    qmapcontrol::Point* p;
+    QPointF coordinate;
+    coordinate.setX(lat);
+    coordinate.setY(lon);
 
     if (!uasIcons.contains(uas->getUASID()))
     {
@@ -769,40 +778,42 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         QColor uasColor = uas->getColor();
 
         // Icon
-        QPen* pointpen = new QPen(uasColor);
-        qDebug() << uas->getUASName();
-        p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, pointpen);
+        //QPen* pointpen = new QPen(uasColor);
+        qDebug() << "2D MAP: ADDING" << uas->getUASName() << __FILE__ << __LINE__;
+        //p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, mavPens.value(uas->getUASID()));
+        p = new Waypoint2DIcon(lat, lon, 20, QString("%1").arg(uas->getUASID()), qmapcontrol::Point::Middle);
         uasIcons.insert(uas->getUASID(), p);
-        tracks->addGeometry(p);
+        mc->layer("Waypoints")->addGeometry(p);
 
         // Line
         // A QPen also can use transparency
 
         QList<qmapcontrol::Point*> points;
-        points.append(new qmapcontrol::Point(lat, lon, ""));
+        points.append(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
         QPen* linepen = new QPen(uasColor.darker());
         linepen->setWidth(2);
 
         // Create tracking line string
-        qmapcontrol::LineString* ls = new qmapcontrol::LineString(points, uas->getUASName(), linepen);
+        qmapcontrol::LineString* ls = new qmapcontrol::LineString(points, QString("%1").arg(uas->getUASID()), linepen);
         uasTrails.insert(uas->getUASID(), ls);
 
         // Add the LineString to the layer
-        mc->layer("Tracking")->addGeometry(ls);
+        mc->layer("Waypoints")->addGeometry(ls);
     }
     else
     {
-        p = dynamic_cast<MAV2DIcon*>(uasIcons.value(uas->getUASID()));
-        if (p)
-        {
+//        p = dynamic_cast<MAV2DIcon*>(uasIcons.value(uas->getUASID()));
+//        if (p)
+//        {
+         p = uasIcons.value(uas->getUASID());
             p->setCoordinate(QPointF(lat, lon));
-            p->setYaw(uas->getYaw());
-        }
+            //p->setYaw(uas->getYaw());
+//        }
         // Extend trail
-        uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(lat, lon, ""));
+        uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
     }
 
-    mc->updateRequest(p->boundingBox().toRect());
+mc->updateRequest(p->boundingBox().toRect());
 
     //mc->updateRequestNew();//(uasTrails.value(uas->getUASID())->boundingBox().toRect());
 
