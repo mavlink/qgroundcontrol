@@ -441,18 +441,24 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
 }
 
 
-void UASWaypointManager::globalAddWaypoint(Waypoint *wp)
-{
-    // FIXME Will be removed
-    Q_UNUSED(wp);
-}
+//void UASWaypointManager::globalAddWaypoint(Waypoint *wp)
+//{
+//    // FIXME Will be removed
+//    Q_UNUSED(wp);
+//}
 
-int UASWaypointManager::globalRemoveWaypoint(quint16 seq)
-{
-    // FIXME Will be removed
-    Q_UNUSED(seq);
-    return 0;
-}
+//int UASWaypointManager::globalRemoveWaypoint(quint16 seq)
+//{
+//    // FIXME Will be removed
+//    Q_UNUSED(seq);
+//    return 0;
+//}
+
+//void UASWaypointManager::waypointUpdated(Waypoint*)
+//{
+//    // FIXME Add rate limiter
+//    emit waypointListChanged(uas.getUASID());
+//}
 
 void UASWaypointManager::clearWaypointList()
 {

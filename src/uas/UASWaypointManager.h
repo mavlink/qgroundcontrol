@@ -101,12 +101,12 @@ public:
 
     UAS& getUAS() { return this->uas; }                         ///< Returns the owning UAS
 
-    /** @name Global waypoint list operations */
-    /*@{*/
-    const QVector<Waypoint *> &getGlobalWaypointList(void) { return waypoints; }  ///< Returns a const reference to the global waypoint list.
-    void globalAddWaypoint(Waypoint *wp);                        ///< locally adds a new waypoint to the end of the list and changes its sequence number accordingly
-    int globalRemoveWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
-    /*@}*/
+//    /** @name Global waypoint list operations */
+//    /*@{*/
+//    const QVector<Waypoint *> &getGlobalWaypointList(void) { return waypoints; }  ///< Returns a const reference to the global waypoint list.
+//    void globalAddWaypoint(Waypoint *wp);                        ///< locally adds a new waypoint to the end of the list and changes its sequence number accordingly
+//    int globalRemoveWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
+//    /*@}*/
 
 private:
     /** @name Message send functions */
