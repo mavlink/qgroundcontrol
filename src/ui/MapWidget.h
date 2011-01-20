@@ -44,6 +44,7 @@ This file is part of the QGROUNDCONTROL project
 
 
 class QMenu;
+class Waypoint;
 
 namespace Ui {
     class MapWidget;
@@ -72,10 +73,18 @@ public slots:
     QPointF getPointxBearing_Range(double lat1, double lon1, double bearing, double distance);
 
     /** @brief Clear the waypoints overlay layer */
-    void clearWaypoints();
+    void clearWaypoints(int uas=0);
     /** @brief Clear the UAV tracks on the map */
-    void clearPath();
-    void changeGlobalWaypointPositionBySpinBox(int index, float lat, float lon);
+    void clearPath(int uas=0);
+
+    /** @brief Update waypoint list */
+    void updateWaypointList(int uas);
+    /** @brief Clear all waypoints and re-add them from updated list */
+    void redoWaypoints(int uas=0);
+
+    /** @brief Update waypoint */
+    void updateWaypoint(int uas, Waypoint* wp);
+
     void drawBorderCamAtMap(bool status);
     /** @brief Bring up dialog to go to a specific location */
     void goTo();
@@ -105,12 +114,12 @@ protected:
     QMenu* mapMenu;
     QPushButton* mapButton;
 
-    qmapcontrol::MapControl* mc;                   ///< QMapControl widget
-    qmapcontrol::MapAdapter* mapadapter;           ///< Adapter to load the map data
-    qmapcontrol::Layer* l;            ///< Current map layer (background)
-    qmapcontrol::Layer* overlay;      ///< Street overlay (foreground)
-    qmapcontrol::Layer* tracks;      ///< Layer for UAV tracks
-    qmapcontrol::GeometryLayer* geomLayer; ///< Layer for waypoints
+    qmapcontrol::MapControl* mc;            ///< QMapControl widget
+    qmapcontrol::MapAdapter* mapadapter;    ///< Adapter to load the map data
+    qmapcontrol::Layer* l;                  ///< Current map layer (background)
+    qmapcontrol::Layer* overlay;            ///< Street overlay (foreground)
+    qmapcontrol::Layer* tracks;             ///< Layer for UAV tracks
+    qmapcontrol::GeometryLayer* geomLayer;  ///< Layer for waypoints
 
     //only for experiment
     qmapcontrol::GeometryLayer* camLayer; ///< Layer for camera indicator
@@ -124,6 +133,9 @@ protected:
 
     QMap<int, qmapcontrol::Point*> uasIcons;
     QMap<int, qmapcontrol::LineString*> uasTrails;
+    QMap<int, QPen*> mavPens;
+    //QMap<int, QList<qmapcontrol::Point*> > mavWps;
+    //QMap<int, qmapcontrol::LineString*> waypointPaths;
     UASInterface* mav;
     quint64 lastUpdate;
 
@@ -135,13 +147,14 @@ protected:
 
     void createPathButtonClicked(bool checked);
 
-    void createWaypointGraphAtMap (const QPointF coordinate);
+    void createWaypointGraphAtMap(const QPointF coordinate);
     void mapproviderSelected(QAction* action);
 
   signals:
     //void movePoint(QPointF newCoord);
-    void captureMapCoordinateClick(const QPointF coordinate); //ROCA
-    void createGlobalWP(bool value, QPointF centerCoordinate);
+    //void captureMapCoordinateClick(const QPointF coordinate); //ROCA
+    //void createGlobalWP(bool value, QPointF centerCoordinate);
+    void waypointCreated(Waypoint* wp);
     void sendGeometryEndDrag(const QPointF coordinate, const int index);
 
 

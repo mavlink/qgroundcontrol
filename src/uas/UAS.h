@@ -169,7 +169,7 @@ public:
     bool isAuto();
 
 public:
-    UASWaypointManager &getWaypointManager(void) { return waypointManager; }
+    UASWaypointManager* getWaypointManager() { return &waypointManager; }
     int getSystemType();
     int getAutopilotType() {return autopilot;}
 
@@ -303,6 +303,7 @@ signals:
     void loadChanged(UASInterface* uas, double load);
     /** @brief Propagate a heartbeat received from the system */
     void heartbeat(UASInterface* uas);
+    void imageStarted(quint64 timestamp);
 
     protected:
     /** @brief Get the UNIX timestamp in microseconds */
