@@ -319,7 +319,7 @@ void QGCMAVLinkLogPlayer::logLoop()
 
         //qDebug() << "nextExecutionTime:" << nextExecutionTime << "QGC START TIME:" << currentStartTime << "LOG START TIME:" << startTime;
 
-        if (nextExecutionTime < 5)
+        if (nextExecutionTime < 2)
         {
             logLoop();
         }

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1389</width>
-    <height>33</height>
+    <height>39</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -375,7 +375,7 @@ QProgressBar::chunk#thrustBar {
          <string>m</string>
         </property>
         <property name="decimals">
-         <number>7</number>
+         <number>2</number>
         </property>
         <property name="minimum">
          <double>-100000.000000000000000</double>

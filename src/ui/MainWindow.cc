@@ -408,17 +408,17 @@ void MainWindow::buildPxWidgets()
 #ifdef QGC_OSG_ENABLED
     if (!_3DWidget)
     {
-//        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-//        addToCentralWidgetsMenu(_3DWidget, "Local 3D", SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
+        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+        addToCentralWidgetsMenu(_3DWidget, "Local 3D", SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
     }
 #endif
 
 #ifdef QGC_OSGEARTH_ENABLED
-//    if (!_3DMapWidget)
-//    {
-//        _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
-//        addToCentralWidgetsMenu(_3DMapWidget, "OSG Earth 3D", SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
-//    }
+    if (!_3DMapWidget)
+    {
+        _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
+        addToCentralWidgetsMenu(_3DMapWidget, "OSG Earth 3D", SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
+    }
 #endif
 
 #if (defined _MSC_VER) | (defined Q_OS_MAC)
@@ -853,13 +853,7 @@ void MainWindow::connectCommonWidgets()
 
     if (mapWidget && waypointsDockWidget->widget())
     {
-        // clear path create on the map
-        connect(waypointsDockWidget->widget(), SIGNAL(clearPathclicked()), mapWidget, SLOT(clearWaypoints()));
-        // add Waypoint widget in the WaypointList widget when mouse clicked
-        connect(mapWidget, SIGNAL(captureMapCoordinateClick(QPointF)), waypointsDockWidget->widget(), SLOT(addWaypointMouse(QPointF)));
 
-        // it notifies that a waypoint global goes to do create and a map graphic too
-        connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
     }
 
     //TODO temporaly debug
