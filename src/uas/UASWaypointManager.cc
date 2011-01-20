@@ -476,6 +476,11 @@ void UASWaypointManager::clearWaypointList()
     }
 }
 
+int UASWaypointManager::getIndexOf(Waypoint* wp)
+{
+    return waypoints.indexOf(wp);
+}
+
 void UASWaypointManager::readWaypoints()
 {
     emit readGlobalWPFromUAS(true);

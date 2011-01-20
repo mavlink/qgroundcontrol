@@ -96,7 +96,7 @@ public:
     void localMoveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
     void localSaveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
     void localLoadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
-
+    int getIndexOf(Waypoint* wp);                               ///< Get the index of a waypoint in the list
     /*@}*/
 
     UAS& getUAS() { return this->uas; }                         ///< Returns the owning UAS

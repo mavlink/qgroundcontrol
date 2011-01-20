@@ -401,7 +401,6 @@ void MapWidget::createPathButtonClicked(bool checked)
 
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate)
 {
-    //qDebug() << mc->mouseMode();
     if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked())
     {
         // Create waypoint name
@@ -413,11 +412,6 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
         if (mav)
         {
             mav->getWaypointManager()->addWaypoint(new Waypoint(mav->getWaypointManager()->getWaypointList().count(), coordinate.x(), coordinate.y()));
-            //            QVector<Waypoint*> mavWps = mav->getWaypointManager()->getWaypointList();
-            //            str = QString("%1").arg(mavWps.count());
-
-            //            tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle, new QPen(mav->getColor()));
-            //            //mav->getWaypointManager()->addWaypoint(new Waypoint(mavWps.count(), coordinate.x(), coordinate.y()));
         }
         else
         {
@@ -429,14 +423,6 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
             qmapcontrol::Point* tempPoint = new qmapcontrol::Point(coordinate.x(), coordinate.y(),str);
             wps.append(tempPoint);
             waypointPath->addPoint(tempPoint);
-            //        if (mav)
-            //        {
-            //            QPen* pathPen = new QPen(mav->getColor());
-            //            pathPen->setWidth(2);
-            //            waypointPath->setPen(pathPen);
-            //        }
-
-            //wpIndex.insert(str,tempPoint);
 
             // Refresh the screen
             mc->updateRequest(tempPoint->boundingBox().toRect());
@@ -449,18 +435,19 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
 void MapWidget::updateWaypoint(int uas, Waypoint* wp)
 {
-    qDebug() << "UPDATING WP" << wp->getId() << __FILE__ << __LINE__;
+    //qDebug() << "UPDATING WP" << wp->getId() << __FILE__ << __LINE__;
     if (uas == this->mav->getUASID())
     {
+        int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getIndexOf(wp);
         // Create waypoint name
-        QString str = QString("%1").arg(wp->getId());
+        QString str = QString("%1").arg(wpindex);
         // Check if wp exists yet
-        if (!(wps.count() > wp->getId()))
+        if (!(wps.count() > wpindex))
         {
             QPointF coordinate;
             coordinate.setX(wp->getX());
             coordinate.setY(wp->getY());
-            createWaypointGraphAtMap(wp->getId(), coordinate);
+            createWaypointGraphAtMap(wpindex, coordinate);
 
             qDebug() << "Waypoint Index did not contain" << str;
         }
@@ -469,29 +456,27 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
             // Waypoint exists, update it
             if(!waypointIsDrag)
             {
-                qDebug() <<"indice WP= "<< wp->getId() <<"\n";
+                qDebug() <<"indice WP= "<< wpindex <<"\n";
 
                 QPointF coordinate;
                 coordinate.setX(wp->getX());
                 coordinate.setY(wp->getY());
 
                 Point* waypoint;
-                waypoint = wps.at(wp->getId());//wpIndex[str];
+                waypoint = wps.at(wpindex);//wpIndex[str];
                 if (waypoint)
                 {
                     // First set waypoint coordinate
                     waypoint->setCoordinate(coordinate);
                     // Now update icon position
-                    //mc->layer("Waypoints")->removeGeometry(wpIcons.at(wp->getId()));
-                    wpIcons.at(wp->getId())->setCoordinate(coordinate);
-                    //mc->layer("Waypoints")->addGeometry(wpIcons.at(wp->getId()));
+                    //mc->layer("Waypoints")->removeGeometry(wpIcons.at(wpindex));
+                    wpIcons.at(wpindex)->setCoordinate(coordinate);
+                    //mc->layer("Waypoints")->addGeometry(wpIcons.at(wpindex));
                     // Then waypoint line coordinate
-                    int linesegmentId = mav->getWaypointManager()->getWaypointList().indexOf(wp);
-                    qDebug() << "SEGMENT" << linesegmentId;
                     Point* linesegment = NULL;
-                    if (waypointPath->points().size() > linesegmentId)
+                    if (waypointPath->points().size() > wpindex)
                     {
-                        linesegment = waypointPath->points().at(linesegmentId);
+                        linesegment = waypointPath->points().at(wpindex);
                     }
 
                     if (linesegment)
@@ -499,7 +484,7 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
                         linesegment->setCoordinate(coordinate);
                     }
 
-                    //point2Find = dynamic_cast <Point*> (mc->layer("Waypoints")->get_Geometry(wp->getId()));
+                    //point2Find = dynamic_cast <Point*> (mc->layer("Waypoints")->get_Geometry(wpindex));
                     //point2Find->setCoordinate(coordinate);
                     mc->updateRequest(waypoint->boundingBox().toRect());
                 }
@@ -925,7 +910,7 @@ void MapWidget::clearWaypoints(int uas)
 {
     // Clear the previous WP track
 
-    mc->layer("Waypoints")->clearGeometries();
+    //mc->layer("Waypoints")->clearGeometries();
     wps.clear();
     waypointPath->points().clear();
     //delete waypointPath;
