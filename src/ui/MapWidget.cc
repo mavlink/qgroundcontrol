@@ -436,7 +436,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
             //            waypointPath->setPen(pathPen);
             //        }
 
-            wpIndex.insert(str,tempPoint);
+            //wpIndex.insert(str,tempPoint);
 
             // Refresh the screen
             mc->updateRequest(tempPoint->boundingBox().toRect());
@@ -449,17 +449,19 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
 void MapWidget::updateWaypoint(int uas, Waypoint* wp)
 {
+    qDebug() << "UPDATING WP" << wp->getId() << __FILE__ << __LINE__;
     if (uas == this->mav->getUASID())
     {
         // Create waypoint name
         QString str = QString("%1").arg(wp->getId());
         // Check if wp exists yet
-        if (!wpIndex.contains(str))
+        if (!(wps.count() > wp->getId()))
         {
             QPointF coordinate;
             coordinate.setX(wp->getX());
             coordinate.setY(wp->getY());
-            createWaypointGraphAtMap(coordinate);
+            createWaypointGraphAtMap(wp->getId(), coordinate);
+
             qDebug() << "Waypoint Index did not contain" << str;
         }
         else
@@ -474,7 +476,7 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
                 coordinate.setY(wp->getY());
 
                 Point* waypoint;
-                waypoint = wpIndex[str];
+                waypoint = wps.at(wp->getId());//wpIndex[str];
                 if (waypoint)
                 {
                     // First set waypoint coordinate
@@ -496,15 +498,12 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
     }
 }
 
-void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
+void MapWidget::createWaypointGraphAtMap(int id, const QPointF coordinate)
 {
     if (!wpExists(coordinate))
     {
         // Create waypoint name
         QString str;
-
-
-
 
         // create the WP and set everything in the LineString to display the path
         //CirclePoint* tempCirclePoint = new CirclePoint(coordinate.x(), coordinate.y(), 10, str);
@@ -513,13 +512,13 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
         if (mav)
         {
             int uas = mav->getUASID();
-            str = QString("%1").arg(mav->getWaypointManager()->getWaypointList().count());
+            str = QString("%1").arg(id);
             qDebug() << "Waypoint list count:" << str;
             tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle, mavPens.value(uas));
         }
         else
         {
-            str = QString("%1").arg(waypointPath->numberOfPoints());
+            str = QString("%1").arg(id);
             tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
         }
 
@@ -530,7 +529,7 @@ void MapWidget::createWaypointGraphAtMap(const QPointF coordinate)
         wps.append(tempPoint);
         waypointPath->addPoint(tempPoint);
 
-        wpIndex.insert(str,tempPoint);
+        //wpIndex.insert(str,tempPoint);
         qDebug()<<"Funcion createWaypointGraphAtMap WP= "<<str<<" -> x= "<<tempPoint->latitude()<<" y= "<<tempPoint->longitude();
 
         // Refresh the screen
@@ -576,7 +575,7 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
     int index = geom->name().toInt(&wpIndexOk);
 
     qmapcontrol::Point* point2Find;
-    point2Find = wpIndex[geom->name()];
+    point2Find = wps.at(geom->name().toInt());
 
     if (point2Find)
     {
@@ -662,11 +661,10 @@ void MapWidget::updateWaypointList(int uas)
         }
 
         // Delete now unused wps
-        if (wpIndex.count() > wpList.count())
+        if (wps.count() > wpList.count())
         {
-            for (int i = wpList.count(); i < wpIndex.count(); ++i)
+            for (int i = wpList.count(); i < wps.count(); ++i)
             {
-                wpIndex.remove(QString("%i").arg(i));
                 QRect updateRect = wps.at(i)->boundingBox().toRect();
                 wps.removeAt(i);
                 waypointPath->points().removeAt(i);
@@ -906,8 +904,10 @@ void MapWidget::clearWaypoints(int uas)
     mc->layer("Waypoints")->clearGeometries();
     wps.clear();
     waypointPath->points().clear();
+    //delete waypointPath;
+    //waypointPath = new
     mc->layer("Waypoints")->addGeometry(waypointPath);
-    wpIndex.clear();
+    //wpIndex.clear();
     mc->updateRequestNew();//(waypointPath->boundingBox().toRect());
 
     if(createPath->isChecked())

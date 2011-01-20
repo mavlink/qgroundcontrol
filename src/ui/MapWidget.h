@@ -147,7 +147,8 @@ protected:
 
     void createPathButtonClicked(bool checked);
 
-    void createWaypointGraphAtMap(const QPointF coordinate);
+    /** @brief Create the graphic representation of the waypoint */
+    void createWaypointGraphAtMap(int id, const QPointF coordinate);
     void mapproviderSelected(QAction* action);
 
   signals:
@@ -162,7 +163,7 @@ private:
     Ui::MapWidget *m_ui;
     QList<qmapcontrol::Point*> wps;
     qmapcontrol::LineString* waypointPath;
-    QHash <QString, qmapcontrol::Point*> wpIndex;
+    //QHash <QString, qmapcontrol::Point*> wpIndex;
     QPen* pointPen;
     int wpExists(const QPointF coordinate);
     bool waypointIsDrag;

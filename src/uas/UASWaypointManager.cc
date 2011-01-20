@@ -321,6 +321,8 @@ void UASWaypointManager::addWaypoint(Waypoint *wp)
 
         emit waypointListChanged();
         emit waypointListChanged(uas.getUASID());
+
+        qDebug() << "ADDED WAYPOINT WITH ID:" << wp->getId();
     }
 }
 
