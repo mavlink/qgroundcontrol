@@ -45,6 +45,7 @@ This file is part of the QGROUNDCONTROL project
 
 class QMenu;
 class Waypoint;
+class Waypoint2DIcon;
 
 namespace Ui {
     class MapWidget;
@@ -162,6 +163,7 @@ protected:
 private:
     Ui::MapWidget *m_ui;
     QList<qmapcontrol::Point*> wps;
+    QList<Waypoint2DIcon*>wpIcons;
     qmapcontrol::LineString* waypointPath;
     //QHash <QString, qmapcontrol::Point*> wpIndex;
     QPen* pointPen;

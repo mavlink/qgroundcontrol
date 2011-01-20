@@ -94,7 +94,7 @@ MapWidget::MapWidget(QWidget *parent) :
 
     // SET INITIAL POSITION AND ZOOM
     // Set default zoom level
-    mc->setZoom(16);
+    mc->setZoom(17);
     // Zurich, ETH
     mc->setView(QPointF(8.548056,47.376389));
 
@@ -481,8 +481,12 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
                 {
                     // First set waypoint coordinate
                     waypoint->setCoordinate(coordinate);
+                    // Now update icon position
+                    //mc->layer("Waypoints")->removeGeometry(wpIcons.at(wp->getId()));
+                    wpIcons.at(wp->getId())->setCoordinate(coordinate);
+                    //mc->layer("Waypoints")->addGeometry(wpIcons.at(wp->getId()));
                     // Then waypoint line coordinate
-                    Point* linesegment = waypointPath->points().at(wp->getId());
+                    Point* linesegment = waypointPath->points().at(mav->getWaypointManager()->getWaypointList().indexOf(wp));
 
                     if (linesegment)
                     {
@@ -524,6 +528,7 @@ void MapWidget::createWaypointGraphAtMap(int id, const QPointF coordinate)
 
 
         mc->layer("Waypoints")->addGeometry(tempCirclePoint);
+        wpIcons.append(tempCirclePoint);
 
         Point* tempPoint = new Point(coordinate.x(), coordinate.y(),str);
         wps.append(tempPoint);
@@ -663,14 +668,22 @@ void MapWidget::updateWaypointList(int uas)
         // Delete now unused wps
         if (wps.count() > wpList.count())
         {
+            mc->layer("Waypoints")->removeGeometry(waypointPath);
             for (int i = wpList.count(); i < wps.count(); ++i)
             {
                 QRect updateRect = wps.at(i)->boundingBox().toRect();
                 wps.removeAt(i);
+                mc->layer("Waypoints")->removeGeometry(wpIcons.at(i));
                 waypointPath->points().removeAt(i);
+                //Point* linesegment = waypointPath->points().at(mav->getWaypointManager()->getWaypointList().indexOf(wp));
+
                 mc->updateRequest(updateRect);
             }
+            mc->layer("Waypoints")->addGeometry(waypointPath);
         }
+
+        // Clear and rebuild linestring
+
     }
 }
 
