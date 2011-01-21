@@ -152,7 +152,7 @@ HDDisplay::~HDDisplay()
 
 QSize HDDisplay::sizeHint() const
 {
-    return QSize(400, 400.0f*(vwidth/vheight)*1.1f);
+    return QSize(400, 400.0f*(vwidth/vheight)*1.2f);
 }
 
 void HDDisplay::enableGLRendering(bool enable)

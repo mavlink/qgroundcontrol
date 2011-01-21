@@ -100,7 +100,7 @@
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
-     <string>Tools</string>
+     <string>Widgets</string>
     </property>
     <addaction name="actionNewCustomWidget"/>
    </widget>
@@ -121,11 +121,18 @@
     <addaction name="actionPilotsView"/>
     <addaction name="separator"/>
     <addaction name="actionMavlinkView"/>
+    <addaction name="actionUnconnectedView"/>
+   </widget>
+   <widget class="QMenu" name="menuMain">
+    <property name="title">
+     <string>Main</string>
+    </property>
    </widget>
    <addaction name="menuMGround"/>
    <addaction name="menuNetwork"/>
    <addaction name="menuConnected_Systems"/>
    <addaction name="menuUnmanned_System"/>
+   <addaction name="menuMain"/>
    <addaction name="menuTools"/>
    <addaction name="menuPerspectives"/>
    <addaction name="menuHelp"/>
@@ -296,6 +303,9 @@
    <property name="text">
     <string>Operator</string>
    </property>
+   <property name="shortcut">
+    <string>Meta+O</string>
+   </property>
   </action>
   <action name="actionEngineersView">
    <property name="checkable">
@@ -308,6 +318,9 @@
    <property name="text">
     <string>Engineer</string>
    </property>
+   <property name="shortcut">
+    <string>Meta+E</string>
+   </property>
   </action>
   <action name="actionMavlinkView">
    <property name="checkable">
@@ -319,6 +332,9 @@
    </property>
    <property name="text">
     <string>Mavlink</string>
+   </property>
+   <property name="shortcut">
+    <string>Meta+M</string>
    </property>
   </action>
   <action name="actionReloadStyle">
@@ -340,6 +356,9 @@
    </property>
    <property name="text">
     <string>Pilot</string>
+   </property>
+   <property name="shortcut">
+    <string>Meta+P</string>
    </property>
   </action>
   <action name="actionNewCustomWidget">
@@ -377,6 +396,21 @@
    </property>
    <property name="toolTip">
     <string>QGroundControl global settings</string>
+   </property>
+  </action>
+  <action name="actionUnconnectedView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Unconnected</string>
+   </property>
+   <property name="shortcut">
+    <string>Meta+U</string>
    </property>
   </action>
  </widget>
