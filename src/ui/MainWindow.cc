@@ -214,8 +214,8 @@ void MainWindow::setDefaultSettingsForAp()
 
         // ENABLE UAS LIST
         settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_UAS_LIST,VIEW_OPERATOR), true);
-        // ENABLE COMMUNICATION CONSOLE
-        settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_DEBUG_CONSOLE,VIEW_OPERATOR), true);
+        // ENABLE HUD TOOL WIDGET
+        settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_HUD,VIEW_OPERATOR), true);
     }
 
     // ENGINEER VIEW DEFAULT
@@ -516,7 +516,7 @@ void MainWindow::buildPxWidgets()
         headUpDockWidget = new QDockWidget(tr("HUD"), this);
         headUpDockWidget->setWidget( new HUD(320, 240, this));
         headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
-        addToToolsMenu (headUpDockWidget, tr("Control Indicator"), SLOT(showToolWidget(bool)), MENU_HUD, Qt::LeftDockWidgetArea);
+        addToToolsMenu (headUpDockWidget, tr("Head Up Display"), SLOT(showToolWidget(bool)), MENU_HUD, Qt::RightDockWidgetArea);
     }
 
     if (!video1DockWidget)
@@ -766,7 +766,7 @@ void MainWindow::addToToolsMenu ( QWidget* widget,
     connect(tempAction,SIGNAL(toggled(bool)),this, slotName);
 
     connect(qobject_cast <QDockWidget *>(dockWidgets[tool]),
-            SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
+            SIGNAL(visibilityChanged(bool)), this, SLOT(showToolWidget(bool)));
 
     //  connect(qobject_cast <QDockWidget *>(dockWidgets[tool]),
     //          SIGNAL(visibilityChanged(bool)), this, SLOT(updateVisibilitySettings(bool)));
@@ -780,23 +780,29 @@ void MainWindow::showToolWidget(bool visible)
     if (!aboutToCloseFlag && !changingViewsFlag)
     {
         QAction* action = qobject_cast<QAction *>(sender());
-        int tool = action->data().toInt();
 
-        QDockWidget* dockWidget = qobject_cast<QDockWidget *> (dockWidgets[tool]);
-
-        if (action && dockWidget)
+        // Prevent this to fire if undocked
+        if (action)
         {
-            if (visible)
-            {
-                addDockWidget(dockWidgetLocations[tool], dockWidget);
-                dockWidget->show();
-            }
+            int tool = action->data().toInt();
 
-            if (!visible && dockWidget->isVisible())
-            {
-                removeDockWidget(dockWidget);
-            }
+            QDockWidget* dockWidget = qobject_cast<QDockWidget *> (dockWidgets[tool]);
 
+            qDebug() << "DATA:" << tool << "FLOATING" << dockWidget->isFloating() << "checked" << action->isChecked() << "visible" << dockWidget->isVisible() << "action vis:" << action->isVisible();
+            if (dockWidget && dockWidget->isVisible() != visible)
+            {
+                if (visible)
+                {
+                    qDebug() << "DOCK WIDGET ADDED";
+                    addDockWidget(dockWidgetLocations[tool], dockWidget);
+                    dockWidget->show();
+                }
+                else
+                {
+                    qDebug() << "DOCK WIDGET REMOVED";
+                    removeDockWidget(dockWidget);
+                    //dockWidget->hide();
+                }
 
                 QHashIterator<int, QWidget*> i(dockWidgets);
                 while (i.hasNext())
@@ -810,6 +816,37 @@ void MainWindow::showToolWidget(bool visible)
                         break;
                     }
                 }
+            }
+        }
+
+        QDockWidget* dockWidget = qobject_cast<QDockWidget*>(QObject::sender());
+
+        qDebug() << "Trying to cast dockwidget" << dockWidget << "isvisible" << visible;
+
+        if (dockWidget)
+        {
+            // Get action
+            int tool = dockWidgets.key(dockWidget);
+
+            qDebug() << "Updating widget setting" << tool << "to" << visible;
+
+            QAction* action = toolsMenuActions[tool];
+            action->blockSignals(true);
+            action->setChecked(visible);
+            action->blockSignals(false);
+
+            QHashIterator<int, QWidget*> i(dockWidgets);
+            while (i.hasNext())
+            {
+                i.next();
+                if ((static_cast <QDockWidget *>(dockWidgets[i.key()])) == dockWidget)
+                {
+                    QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(i.key()), currentView);
+                    settings.setValue(chKey,visible);
+                    qDebug() << "showToolWidget(): Set key" << chKey << "to" << visible;
+                    break;
+                }
+            }
         }
     }
 }
@@ -1778,19 +1815,20 @@ void MainWindow::presentView()
     this->show();
 
     // Restore window state
-//    if (UASManager::instance()->getUASList().count() > 0)
-//    {
-//        // Restore the widget positions and size
-//        if (settings.contains(getWindowStateKey()))
-//        {
-//            restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
-//        }
-
+    if (UASManager::instance()->getUASList().count() > 0)
+    {
+        // Restore the mainwindow size
         if (settings.contains(getWindowGeometryKey()))
         {
             restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
         }
-//    }
+
+        // Restore the widget positions and size
+        if (settings.contains(getWindowStateKey()))
+        {
+            restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
+        }
+    }
 }
 
 void MainWindow::showTheCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SECTIONS view)
