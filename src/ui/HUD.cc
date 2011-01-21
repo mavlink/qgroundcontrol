@@ -230,6 +230,10 @@ void HUD::hideEvent(QHideEvent* event)
 void HUD::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
+    // Update actions
+    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableVideoAction->setChecked(videoEnabled);
+
     menu.addAction(enableHUDAction);
     //menu.addAction(selectHUDColorAction);
     menu.addAction(enableVideoAction);
