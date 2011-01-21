@@ -127,11 +127,11 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),  this, SLOT(updatePosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),       this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
-        connect(&uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
-        connect(&uas->getWaypointManager(), SIGNAL(waypointListChanged(void)),                  this, SLOT(waypointListChanged(void)));
-        connect(&uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointChanged(quint16)));
-        connect(&uas->getWaypointManager(),SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
-        connect(&uas->getWaypointManager(),SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
+        connect(uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
+        connect(uas->getWaypointManager(), SIGNAL(waypointListChanged(void)),                  this, SLOT(waypointListChanged(void)));
+        connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointChanged(quint16)));
+        connect(uas->getWaypointManager(),SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
+        connect(uas->getWaypointManager(),SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
 
     }
 }
@@ -141,7 +141,7 @@ void WaypointList::saveWaypoints()
     if (uas)
     {
         QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./waypoints.txt", tr("Waypoint File (*.txt)"));
-        uas->getWaypointManager().saveWaypoints(fileName);
+        uas->getWaypointManager()->saveWaypoints(fileName);
     }
 }
 
@@ -152,7 +152,7 @@ void WaypointList::loadWaypoints()
 
 
         QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
-        uas->getWaypointManager().loadWaypoints(fileName);
+        uas->getWaypointManager()->loadWaypoints(fileName);
      }
 }
 
@@ -160,7 +160,7 @@ void WaypointList::transmit()
 {
     if (uas)
     {
-        uas->getWaypointManager().writeWaypoints();
+        uas->getWaypointManager()->writeWaypoints();
     }
 }
 
@@ -168,7 +168,7 @@ void WaypointList::read()
 {
     if (uas)
     {
-        uas->getWaypointManager().readWaypoints();
+        uas->getWaypointManager()->readWaypoints();
     }
 }
 
@@ -178,17 +178,17 @@ void WaypointList::add()
     {
 //        if(isGlobalWP)
 //        {
-//            const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+//            const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
 //            if (waypoints.size() > 0)
 //            {
 //                Waypoint *last = waypoints.at(waypoints.size()-1);
 //                Waypoint *wp = new Waypoint(0, centerMapCoordinate.x(), centerMapCoordinate.y(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime());
-//                uas->getWaypointManager().addWaypoint(wp);
+//                uas->getWaypointManager()->addWaypoint(wp);
 //            }
 //            else
 //            {
 //                Waypoint *wp = new Waypoint(0, centerMapCoordinate.x(), centerMapCoordinate.y(), -0.8, 0.0, true, true, 0.15, 2000);
-//                uas->getWaypointManager().addWaypoint(wp);
+//                uas->getWaypointManager()->addWaypoint(wp);
 //            }
 //
 //            emit createWaypointAtMap(centerMapCoordinate);
@@ -196,7 +196,7 @@ void WaypointList::add()
 //        else
         {
 
-            const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+            const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
             Waypoint *wp;
 
 
@@ -206,13 +206,13 @@ void WaypointList::add()
                 Waypoint *last = waypoints.at(waypoints.size()-1);
                 wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(),
                                             last->getHoldTime(), last->getFrame(), last->getAction());
-                uas->getWaypointManager().addWaypoint(wp);
+                uas->getWaypointManager()->addWaypoint(wp);
             }
             else
             {
                     // Create global frame waypoint per default
                     wp = new Waypoint(0, uas->getLongitude(), uas->getLatitude(), uas->getAltitude(), 0.0, true, true, 0.15, 0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
-                    uas->getWaypointManager().addWaypoint(wp);
+                    uas->getWaypointManager()->addWaypoint(wp);
             }
             if (wp->getFrame() == MAV_FRAME_GLOBAL)
             {
@@ -234,17 +234,17 @@ void WaypointList::addCurrentPositonWaypoint()
         //}
         //else
         {
-            const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+            const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
             if (waypoints.size() > 0)
             {
                 Waypoint *last = waypoints.at(waypoints.size()-1);
                 Waypoint *wp = new Waypoint(0, (qRound(mavX*100))/100., (qRound(mavY*100))/100., (qRound(mavZ*100))/100., (qRound(mavYaw*100))/100., last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime());
-                uas->getWaypointManager().addWaypoint(wp);
+                uas->getWaypointManager()->addWaypoint(wp);
             }
             else
             {
                 Waypoint *wp = new Waypoint(0, (qRound(mavX*100))/100., (qRound(mavY*100))/100., (qRound(mavZ*100))/100., (qRound(mavYaw*100))/100., true, true, 0.15, 2000);
-                uas->getWaypointManager().addWaypoint(wp);
+                uas->getWaypointManager()->addWaypoint(wp);
             }
 
              //isLocalWP = true;
@@ -264,7 +264,7 @@ void WaypointList::changeCurrentWaypoint(quint16 seq)
 {
     if (uas)
     {
-        uas->getWaypointManager().setCurrentWaypoint(seq);
+        uas->getWaypointManager()->setCurrentWaypoint(seq);
     }
 }
 
@@ -272,7 +272,7 @@ void WaypointList::currentWaypointChanged(quint16 seq)
 {
     if (uas)
     {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
 
         if (seq < waypoints.size())
         {
@@ -297,124 +297,125 @@ void WaypointList::waypointListChanged()
 {
     if (uas)
     {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+        // Prevent updates to prevent visual flicker
+        this->setUpdatesEnabled(false);
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
 
-            // For Global Waypoints
-            //if(isGlobalWP)
-            //{
-                //isLocalWP = false;
-                //// first remove all views of non existing waypoints
-                //if (!wpGlobalViews.empty())
-                //{
-                    //QMapIterator<Waypoint*,WaypointGlobalView*> viewIt(wpGlobalViews);
-                    //viewIt.toFront();
-                    //while(viewIt.hasNext())
-                    //{
-                        //viewIt.next();
-                        //Waypoint *cur = viewIt.key();
-                        //int i;
-                        //for (i = 0; i < waypoints.size(); i++)
-                        //{
-                            //if (waypoints[i] == cur)
-                            //{
-                                //break;
-                            //}
-                        //}
-                        //if (i == waypoints.size())
-                        //{
-                            //WaypointGlobalView* widget = wpGlobalViews.find(cur).value();
-                            //widget->hide();
-                            //listLayout->removeWidget(widget);
-                            //wpGlobalViews.remove(cur);
-                        //}
-                    //}
-                //}
+        // For Global Waypoints
+        //if(isGlobalWP)
+        //{
+        //isLocalWP = false;
+        //// first remove all views of non existing waypoints
+        //if (!wpGlobalViews.empty())
+        //{
+        //QMapIterator<Waypoint*,WaypointGlobalView*> viewIt(wpGlobalViews);
+        //viewIt.toFront();
+        //while(viewIt.hasNext())
+        //{
+        //viewIt.next();
+        //Waypoint *cur = viewIt.key();
+        //int i;
+        //for (i = 0; i < waypoints.size(); i++)
+        //{
+        //if (waypoints[i] == cur)
+        //{
+        //break;
+        //}
+        //}
+        //if (i == waypoints.size())
+        //{
+        //WaypointGlobalView* widget = wpGlobalViews.find(cur).value();
+        //widget->hide();
+        //listLayout->removeWidget(widget);
+        //wpGlobalViews.remove(cur);
+        //}
+        //}
+        //}
 
-                //// then add/update the views for each waypoint in the list
-                //for(int i = 0; i < waypoints.size(); i++)
-                //{
-                    //Waypoint *wp = waypoints[i];
-                    //if (!wpGlobalViews.contains(wp))
-                    //{
-                        //WaypointGlobalView* wpview = new WaypointGlobalView(wp, this);
-                        //wpGlobalViews.insert(wp, wpview);
-                        //connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
-                        //connect(wpview, SIGNAL(changePositionWP(Waypoint*)), this, SLOT(changeWPPositionBySpinBox(Waypoint*)));
-////                        connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
-////                        connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
-                       //// connect(wpview, SIGNAL(changePositionWP(Waypoint*)), this, SLOT(waypointGlobalPositionChanged(Waypoint*)));
-////                        connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
-////                        connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
-                    //}
-                //WaypointGlobalView *wpgv = wpGlobalViews.value(wp);
-                //wpgv->updateValues();
-                //listLayout->addWidget(wpgv);
-            //}
+        //// then add/update the views for each waypoint in the list
+        //for(int i = 0; i < waypoints.size(); i++)
+        //{
+        //Waypoint *wp = waypoints[i];
+        //if (!wpGlobalViews.contains(wp))
+        //{
+        //WaypointGlobalView* wpview = new WaypointGlobalView(wp, this);
+        //wpGlobalViews.insert(wp, wpview);
+        //connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
+        //connect(wpview, SIGNAL(changePositionWP(Waypoint*)), this, SLOT(changeWPPositionBySpinBox(Waypoint*)));
+        ////                        connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
+        ////                        connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
+        //// connect(wpview, SIGNAL(changePositionWP(Waypoint*)), this, SLOT(waypointGlobalPositionChanged(Waypoint*)));
+        ////                        connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
+        ////                        connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
+        //}
+        //WaypointGlobalView *wpgv = wpGlobalViews.value(wp);
+        //wpgv->updateValues();
+        //listLayout->addWidget(wpgv);
+        //}
 
-            //}
-            //else
+        //}
+        //else
+        //{
+            // for local Waypoints
+            // first remove all views of non existing waypoints
+            if (!wpViews.empty())
             {
-                // for local Waypoints
-                // first remove all views of non existing waypoints
-                if (!wpViews.empty())
+                QMapIterator<Waypoint*,WaypointView*> viewIt(wpViews);
+                viewIt.toFront();
+                while(viewIt.hasNext())
                 {
-                    QMapIterator<Waypoint*,WaypointView*> viewIt(wpViews);
-                    viewIt.toFront();
-                    while(viewIt.hasNext())
+                    viewIt.next();
+                    Waypoint *cur = viewIt.key();
+                    int i;
+                    for (i = 0; i < waypoints.size(); i++)
                     {
-                        viewIt.next();
-                        Waypoint *cur = viewIt.key();
-                        int i;
-                        for (i = 0; i < waypoints.size(); i++)
+                        if (waypoints[i] == cur)
                         {
-                            if (waypoints[i] == cur)
-                            {
-                                break;
-                            }
+                            break;
                         }
-                        if (i == waypoints.size())
-                        {
-                            WaypointView* widget = wpViews.find(cur).value();
-                            widget->hide();
-                            listLayout->removeWidget(widget);
-                            wpViews.remove(cur);
-                        }
+                    }
+                    if (i == waypoints.size())
+                    {
+                        WaypointView* widget = wpViews.find(cur).value();
+                        widget->hide();
+                        listLayout->removeWidget(widget);
+                        wpViews.remove(cur);
                     }
                 }
+            }
 
-                // then add/update the views for each waypoint in the list
-                for(int i = 0; i < waypoints.size(); i++)
+            // then add/update the views for each waypoint in the list
+            for(int i = 0; i < waypoints.size(); i++)
+            {
+                Waypoint *wp = waypoints[i];
+                if (!wpViews.contains(wp))
                 {
-                    Waypoint *wp = waypoints[i];
-                    if (!wpViews.contains(wp))
-                    {
-                        WaypointView* wpview = new WaypointView(wp, this);
-                        wpViews.insert(wp, wpview);
-                        connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
-                        connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
-                        connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
-                        connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
-                        connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
-                    }
+                    WaypointView* wpview = new WaypointView(wp, this);
+                    wpViews.insert(wp, wpview);
+                    connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
+                    connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
+                    connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
+                    connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
+                    connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
+                }
                 WaypointView *wpv = wpViews.value(wp);
                 wpv->updateValues();    // update the values of the ui elements in the view
                 listLayout->addWidget(wpv);
 
             }
-            }
-
-
-            loadFileGlobalWP = false;
+                    this->setUpdatesEnabled(true);
         }
 
 
+        loadFileGlobalWP = false;
+    //}
 }
 
 void WaypointList::moveUp(Waypoint* wp)
 {
     if (uas)
     {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
 
         //get the current position of wp in the local storage
         int i;
@@ -427,7 +428,7 @@ void WaypointList::moveUp(Waypoint* wp)
         // if wp was found and its not the first entry, move it
         if (i < waypoints.size() && i > 0)
         {
-            uas->getWaypointManager().moveWaypoint(i, i-1);
+            uas->getWaypointManager()->moveWaypoint(i, i-1);
         }
     }
 }
@@ -436,7 +437,7 @@ void WaypointList::moveDown(Waypoint* wp)
 {
     if (uas)
     {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
 
         //get the current position of wp in the local storage
         int i;
@@ -449,7 +450,7 @@ void WaypointList::moveDown(Waypoint* wp)
         // if wp was found and its not the last entry, move it
         if (i < waypoints.size()-1)
         {
-            uas->getWaypointManager().moveWaypoint(i, i+1);
+            uas->getWaypointManager()->moveWaypoint(i, i+1);
         }
     }
 }
@@ -458,7 +459,7 @@ void WaypointList::removeWaypoint(Waypoint* wp)
 {
     if (uas)
     {
-        uas->getWaypointManager().removeWaypoint(wp->getId());
+        uas->getWaypointManager()->removeWaypoint(wp->getId());
     }
 }
 
@@ -482,7 +483,7 @@ void WaypointList::on_clearWPListButton_clicked()
     if (uas)
     {
            emit clearPathclicked();
-          const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+          const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
             while(!waypoints.isEmpty())//for(int i = 0; i <= waypoints.size(); i++)
             {
                 WaypointView* widget = wpViews.find(waypoints[0]).value();
@@ -503,17 +504,17 @@ void WaypointList::addWaypointMouse(QPointF coordinate)
 {
     if (uas)
     {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
         if (waypoints.size() > 0)
         {
             Waypoint *last = waypoints.at(waypoints.size()-1);
             Waypoint *wp = new Waypoint(0, coordinate.x(), coordinate.y(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime());
-            uas->getWaypointManager().addWaypoint(wp);
+            uas->getWaypointManager()->addWaypoint(wp);
         }
         else
         {
             Waypoint *wp = new Waypoint(0, coordinate.x(), coordinate.y(), -0.8, 0.0, true, true, 0.15, 2000);
-            uas->getWaypointManager().addWaypoint(wp);
+            uas->getWaypointManager()->addWaypoint(wp);
         }
 
 
@@ -527,7 +528,7 @@ void WaypointList::waypointGlobalChanged(QPointF coordinate, int indexWP)
 {
     if (uas)
     {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
         if (waypoints.size() > 0)
         {
             Waypoint *temp = waypoints.at(indexWP);
@@ -560,7 +561,7 @@ void WaypointList::clearWPWidget()
 {
   if (uas)
   {
-    const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+    const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
       while(!waypoints.isEmpty())//for(int i = 0; i <= waypoints.size(); i++)
       {
           WaypointView* widget = wpViews.find(waypoints[0]).value();

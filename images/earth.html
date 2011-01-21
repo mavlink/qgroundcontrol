@@ -192,40 +192,38 @@ function setViewRange(dist)
 function addTrailPosition(id, lat, lon, alt)
 {
 	trails[id].setExtrude(false);
-trails[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+    trails[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 
-// Add LineString points
+    // Add LineString points
 	trails[id].getCoordinates().pushLatLngAlt(lat, lon, alt);
 
-// Create a style and set width and color of line
-trailPlacemarks[id].setStyleSelector(ge.createStyle(''));
-lineStyle = trailPlacemarks[id].getStyleSelector().getLineStyle();
-lineStyle.setWidth(5);
-lineStyle.getColor().set(trailColors[id]);  // aabbggrr format
-//lineStyle.getColor().set(color);  // aabbggrr format
+    // Create a style and set width and color of line
+    trailPlacemarks[id].setStyleSelector(ge.createStyle(''));
+    lineStyle = trailPlacemarks[id].getStyleSelector().getLineStyle();
+    lineStyle.setWidth(5);
+    lineStyle.getColor().set(trailColors[id]);  // aabbggrr format
+    //lineStyle.getColor().set(color);  // aabbggrr format
 
-// Add the feature to Earth
-if (trailsVisible[id] == true) ge.getFeatures().replaceChild(trailPlacemarks[id], trailPlacemarks[id]);
+    // Add the feature to Earth
+    if (trailsVisible[id] == true) ge.getFeatures().replaceChild(trailPlacemarks[id], trailPlacemarks[id]);
 }
 
 function initCallback(object)
 {
-  ge = object;
-  ge.getWindow().setVisibility(true);
-          ge.getOptions().setStatusBarVisibility(true); 
-        ge.getOptions().setScaleLegendVisibility(true);
-		ge.getOptions().setFlyToSpeed(5.0); 
-        //ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT); 
-        ge.getNavigationControl().setVisibility(ge.VISIBILITY_AUTO);
+    ge = object;
+    ge.getWindow().setVisibility(true);
+    ge.getOptions().setStatusBarVisibility(true); 
+    ge.getOptions().setScaleLegendVisibility(true);
+    ge.getOptions().setFlyToSpeed(5.0); 
+    //ge.getOptions().setFlyToSpeed(ge.SPEED_TELEPORT); 
+    ge.getNavigationControl().setVisibility(ge.VISIBILITY_AUTO);
         
-        ge.getLayerRoot().enableLayerById(ge.LAYER_TERRAIN, true); 
-        ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true); 
-        ge.getLayerRoot().enableLayerById(ge.LAYER_BORDERS, true); 
-        ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
+    ge.getLayerRoot().enableLayerById(ge.LAYER_TERRAIN, true); 
+    ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true); 
+    ge.getLayerRoot().enableLayerById(ge.LAYER_BORDERS, true); 
+    ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
 
-        initialized = true;
-        
-        
+    initialized = true;
 }
 
 function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
@@ -247,13 +245,12 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 	planeOrient.setRoll(((roll/M_PI)+1.0)*360.0);
 	planeOrient.setTilt(((pitch/M_PI)+1.0)*360.0);
 	planeOrient.setHeading(((yaw/M_PI)+1.0)*360.0);
-    }
-        
-                
+    
     planeLoc.setLatitude(lat);
     planeLoc.setLongitude(lon);
     planeLoc.setAltitude(alt);
-	
+    planeModel.setLocation(planeLoc);
+    }
 }
 
 function enableDaylight(enabled)

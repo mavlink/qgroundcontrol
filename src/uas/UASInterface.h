@@ -79,7 +79,7 @@ public:
     virtual double getYaw() const = 0;
 
     /** @brief Get reference to the waypoint manager **/
-    virtual UASWaypointManager &getWaypointManager(void) = 0;
+    virtual UASWaypointManager* getWaypointManager(void) = 0;
 
     /* COMMUNICATION FLAGS */
 

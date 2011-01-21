@@ -464,6 +464,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "latitude", "deg", pos.lat, time);
                 emit valueChanged(uasId, "longitude", "deg", pos.lon, time);
 
+                // FIXME REMOVE
+                longitude = pos.lon;
+                latitude = pos.lat;
+                altitude = pos.alt;
+                emit globalPositionChanged(this, longitude, latitude, altitude, time);
+
                 if (pos.fix_type > 0)
                 {
                     emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
