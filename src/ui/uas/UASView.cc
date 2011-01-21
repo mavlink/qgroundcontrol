@@ -83,7 +83,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateLoad(UASInterface*, double)));
     connect(uas, SIGNAL(heartbeatTimeout()), this, SLOT(heartbeatTimeout()));
     connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int,int)));
-    connect(&(uas->getWaypointManager()), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
+    connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
     connect(UASManager::instance(), SIGNAL(activeUASStatusChanged(UASInterface*,bool)), this, SLOT(updateActiveUAS(UASInterface*,bool)));
     
