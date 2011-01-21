@@ -112,6 +112,8 @@ public slots:
     void stopVideoCapture();
     void saveScreen();
 
+    /** @brief Load default view when no MAV is connected */
+    void loadUnconnectedView();
     /** @brief Load view for pilot */
     void loadPilotView();
     /** @brief Load view for engineer */
@@ -166,7 +168,7 @@ public slots:
      * It shows the QDockedWidget based on the action sender
      *
      */
-    void showToolWidget();
+    void showToolWidget(bool visible);
 
     /**
      * @brief Shows a Widget from the center stack based on the action sender
@@ -177,8 +179,10 @@ public slots:
      */
     void showCentralWidget();
 
+    /** @brief Change actively a QDockWidgets visibility by an action */
+    void showDockWidget(bool vis);
     /** @brief Updates a QDockWidget's checked status based on its visibility */
-    void updateVisibilitySettings (bool vis);
+    void updateVisibilitySettings(bool vis);
 
     /** @brief Updates a QDockWidget's location */
     void updateLocationSettings (Qt::DockWidgetArea location);
@@ -186,6 +190,9 @@ public slots:
 protected:
 
     MainWindow(QWidget *parent = 0);
+
+    /** @brief Set default window settings for the current autopilot type */
+    void setDefaultSettingsForAp();
 
     // These defines are used to save the settings when selecting with
     // which widgets populate the views
@@ -212,6 +219,8 @@ protected:
       MENU_SLUGS_HIL,
       MENU_SLUGS_CAMERA,
       MENU_MAVLINK_LOG_PLAYER,
+      MENU_VIDEO_STREAM_1,
+      MENU_VIDEO_STREAM_2,
       CENTRAL_SEPARATOR= 255, // do not change
       CENTRAL_LINECHART,
       CENTRAL_PROTOCOL,
@@ -238,6 +247,7 @@ protected:
       VIEW_OPERATOR,
       VIEW_PILOT,
       VIEW_MAVLINK,
+      VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
     } VIEW_SECTIONS;
 
 
@@ -368,6 +378,8 @@ protected:
     QPointer<QDockWidget> watchdogControlDockWidget;
 
     QPointer<QDockWidget> headUpDockWidget;
+    QPointer<QDockWidget> video1DockWidget;
+    QPointer<QDockWidget> video2DockWidget;
     QPointer<QDockWidget> logPlayerDockWidget;
 
     QPointer<QDockWidget> hsiDockWidget;

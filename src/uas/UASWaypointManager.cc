@@ -265,6 +265,13 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
     }
 }
 
+void UASWaypointManager::notifyOfChange(Waypoint* wp)
+{
+    Q_UNUSED(wp);
+    emit waypointListChanged();
+    emit waypointListChanged(uas.getUASID());
+}
+
 int UASWaypointManager::setCurrentWaypoint(quint16 seq)
 {
     if (seq < waypoints.size())
@@ -313,6 +320,9 @@ void UASWaypointManager::addWaypoint(Waypoint *wp)
         waypoints.insert(waypoints.size(), wp);
 
         emit waypointListChanged();
+        emit waypointListChanged(uas.getUASID());
+
+        qDebug() << "ADDED WAYPOINT WITH ID:" << wp->getId();
     }
 }
 
@@ -329,6 +339,7 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
             waypoints[i]->setId(i);
         }
         emit waypointListChanged();
+        emit waypointListChanged(uas.getUASID());
         return 0;
     }
     return -1;
@@ -359,6 +370,7 @@ void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
         //waypoints[new_seq]->setId(new_seq);
 
         emit waypointListChanged();
+        emit waypointListChanged(uas.getUASID());
     }
 }
 
@@ -425,21 +437,28 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
 
     emit loadWPFile();
     emit waypointListChanged();
+    emit waypointListChanged(uas.getUASID());
 }
 
 
-void UASWaypointManager::globalAddWaypoint(Waypoint *wp)
-{
-    // FIXME Will be removed
-    Q_UNUSED(wp);
-}
+//void UASWaypointManager::globalAddWaypoint(Waypoint *wp)
+//{
+//    // FIXME Will be removed
+//    Q_UNUSED(wp);
+//}
 
-int UASWaypointManager::globalRemoveWaypoint(quint16 seq)
-{
-    // FIXME Will be removed
-    Q_UNUSED(seq);
-    return 0;
-}
+//int UASWaypointManager::globalRemoveWaypoint(quint16 seq)
+//{
+//    // FIXME Will be removed
+//    Q_UNUSED(seq);
+//    return 0;
+//}
+
+//void UASWaypointManager::waypointUpdated(Waypoint*)
+//{
+//    // FIXME Add rate limiter
+//    emit waypointListChanged(uas.getUASID());
+//}
 
 void UASWaypointManager::clearWaypointList()
 {
@@ -455,6 +474,11 @@ void UASWaypointManager::clearWaypointList()
 
         sendWaypointClearAll();
     }
+}
+
+int UASWaypointManager::getIndexOf(Waypoint* wp)
+{
+    return waypoints.indexOf(wp);
 }
 
 void UASWaypointManager::readWaypoints()
