@@ -496,6 +496,30 @@ void MainWindow::buildPxWidgets()
         addToToolsMenu (headUpDockWidget, tr("Control Indicator"), SLOT(showToolWidget()), MENU_HUD, Qt::LeftDockWidgetArea);
     }
 
+    if (!video1DockWidget)
+    {
+        video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
+        HUD* video1 =  new HUD(160, 120, this);
+        video1->enableHUDInstruments(false);
+        video1->enableVideo(true);
+        // FIXME select video stream as well
+        video1DockWidget->setWidget(video1);
+        video1DockWidget->setObjectName("VIDEO_STREAM_1_DOCK_WIDGET");
+        addToToolsMenu (video1DockWidget, tr("Video Stream 1"), SLOT(showToolWidget()), MENU_VIDEO_STREAM_1, Qt::LeftDockWidgetArea);
+    }
+
+    if (!video2DockWidget)
+    {
+        video2DockWidget = new QDockWidget(tr("Video Stream 2"), this);
+        HUD* video2 =  new HUD(160, 120, this);
+        video2->enableHUDInstruments(false);
+        video2->enableVideo(true);
+        // FIXME select video stream as well
+        video2DockWidget->setWidget(video2);
+        video2DockWidget->setObjectName("VIDEO_STREAM_2_DOCK_WIDGET");
+        addToToolsMenu (video2DockWidget, tr("Video Stream 2"), SLOT(showToolWidget()), MENU_VIDEO_STREAM_2, Qt::LeftDockWidgetArea);
+    }
+
     // Dialogue widgets
     //FIXME: free memory in destructor
 }

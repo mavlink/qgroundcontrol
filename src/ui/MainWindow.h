@@ -212,6 +212,8 @@ protected:
       MENU_SLUGS_HIL,
       MENU_SLUGS_CAMERA,
       MENU_MAVLINK_LOG_PLAYER,
+      MENU_VIDEO_STREAM_1,
+      MENU_VIDEO_STREAM_2,
       CENTRAL_SEPARATOR= 255, // do not change
       CENTRAL_LINECHART,
       CENTRAL_PROTOCOL,
@@ -368,6 +370,8 @@ protected:
     QPointer<QDockWidget> watchdogControlDockWidget;
 
     QPointer<QDockWidget> headUpDockWidget;
+    QPointer<QDockWidget> video1DockWidget;
+    QPointer<QDockWidget> video2DockWidget;
     QPointer<QDockWidget> logPlayerDockWidget;
 
     QPointer<QDockWidget> hsiDockWidget;
