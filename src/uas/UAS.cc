@@ -1038,7 +1038,7 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         break;
     case MAV_STATE_EMERGENCY:
         uasState = tr("EMERGENCY");
-        stateDescription = tr("EMERGENCY: Please land");
+        stateDescription = tr("EMERGENCY: Land!");
         break;
     case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");

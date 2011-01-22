@@ -77,7 +77,7 @@
    </widget>
    <widget class="QMenu" name="menuConnected_Systems">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <property name="title">
      <string>Select System</string>
@@ -85,7 +85,7 @@
    </widget>
    <widget class="QMenu" name="menuUnmanned_System">
     <property name="enabled">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
     <property name="title">
      <string>Unmanned System</string>
@@ -93,6 +93,7 @@
     <property name="separatorsCollapsible">
      <bool>false</bool>
     </property>
+    <addaction name="actionShutdownMAV"/>
     <addaction name="actionLiftoff"/>
     <addaction name="actionLand"/>
     <addaction name="actionEmergency_Land"/>
@@ -411,6 +412,21 @@
    </property>
    <property name="shortcut">
     <string>Meta+U</string>
+   </property>
+  </action>
+  <action name="actionShutdownMAV">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Shutdown MAV</string>
+   </property>
+   <property name="toolTip">
+    <string>Shutdown the onboard computer - works not during flight</string>
+   </property>
+   <property name="statusTip">
+    <string>Shutdown the onboard computer - works not during flight</string>
    </property>
   </action>
  </widget>

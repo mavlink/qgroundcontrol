@@ -1,5 +1,4 @@
-/*=====================================================================
-
+/*===================================================================
 QGroundControl Open Source Ground Control Station
 
 (c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -10,15 +9,15 @@ This file is part of the QGROUNDCONTROL project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
+    
     QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
+    
     You should have received a copy of the GNU General Public License
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
+    
 ======================================================================*/
 
 /**
@@ -34,23 +33,24 @@ This file is part of the QGROUNDCONTROL project
 #include <QStringList>
 
 Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _autocontinue, bool _current, float _orbit, int _holdTime, MAV_FRAME _frame, MAV_ACTION _action)
-: id(_id),
-  x(_x),
-  y(_y),
-  z(_z),
-  yaw(_yaw),
-  frame(_frame),
-  action(_action),
-  autocontinue(_autocontinue),
-  current(_current),
-  orbit(_orbit),
-  holdTime(_holdTime)
+    : id(_id),
+    x(_x),
+    y(_y),
+    z(_z),
+    yaw(_yaw),
+    frame(_frame),
+    action(_action),
+    autocontinue(_autocontinue),
+    current(_current),
+    orbit(_orbit),
+    holdTime(_holdTime),
+    name(QString("WP%1").arg(id, 2, 10, QChar('0')))
 {
 }
 
 Waypoint::~Waypoint()
 {
-
+    
 }
 
 void Waypoint::save(QTextStream &saveStream)
@@ -90,79 +90,141 @@ bool Waypoint::load(QTextStream &loadStream)
 void Waypoint::setId(quint16 id)
 {
     this->id = id;
+    this->name = QString("WP%1").arg(id, 2, 10, QChar('0'));
+    emit changed(this);
 }
 
 void Waypoint::setX(float x)
 {
-    this->x = x;
+    if (this->x != x)
+    {
+        this->x = x;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setY(float y)
 {
-    this->y = y;
+    if (this->y != y)
+    {
+        this->y = y;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setZ(float z)
 {
-    this->z = z;
+    if (this->z != z)
+    {
+        this->z = z;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setYaw(float yaw)
 {
-    this->yaw = yaw;
+    if (this->yaw != yaw)
+    {
+        this->yaw = yaw;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setAction(MAV_ACTION action)
 {
-    this->action = action;
+    if (this->action != action)
+    {
+        this->action = action;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setFrame(MAV_FRAME frame)
 {
-    this->frame = frame;
+    if (this->frame != frame)
+    {
+        this->frame = frame;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setAutocontinue(bool autoContinue)
 {
-    this->autocontinue = autoContinue;
+    if (this->autocontinue != autocontinue)
+    {
+        this->autocontinue = autoContinue;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setCurrent(bool current)
 {
-    this->current = current;
+    if (this->current != current)
+    {
+        this->current = current;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setOrbit(float orbit)
 {
-    this->orbit = orbit;
+    if (this->orbit != orbit)
+    {
+        this->orbit = orbit;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setHoldTime(int holdTime)
 {
-    this->holdTime = holdTime;
+    if (this->holdTime != holdTime)
+    {
+        this->holdTime = holdTime;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setX(double x)
 {
-    this->x = x;
+    if (this->x != static_cast<float>(x))
+    {
+        this->x = x;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setY(double y)
 {
-    this->y = y;
+    if (this->y != static_cast<float>(y))
+    {
+        this->y = y;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setZ(double z)
 {
-    this->z = z;
+    if (this->z != static_cast<float>(z))
+    {
+        this->z = z;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setYaw(double yaw)
 {
-    this->yaw = yaw;
+    if (this->yaw != static_cast<float>(yaw))
+    {
+        this->yaw = yaw;
+        emit changed(this);
+    }
 }
 
 void Waypoint::setOrbit(double orbit)
 {
-    this->orbit = orbit;
+    if (this->orbit != static_cast<float>(orbit))
+    {
+        this->orbit = orbit;
+        emit changed(this);
+    }
 }

@@ -68,6 +68,8 @@ public:
 public slots:
     void addUAS(UASInterface* uas);
     void activeUASSet(UASInterface* uas);
+    /** @brief Update the attitude */
+    void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 usec);
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     void updatePosition(float time, double lat, double lon);
     void updateCameraPosition(double distance, double bearing, QString dir);

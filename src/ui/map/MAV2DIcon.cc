@@ -1,23 +1,27 @@
 #include "MAV2DIcon.h"
 #include <QPainter>
 
-MAV2DIcon::MAV2DIcon(qreal x, qreal y, int radius, QString name, Alignment alignment, QPen* pen)
+#include <qmath.h>
+
+MAV2DIcon::MAV2DIcon(qreal x, qreal y, int radius, int type, const QColor& color, QString name, Alignment alignment, QPen* pen)
     : Point(x, y, name, alignment),
-    yaw(0.0f)
+    yaw(0.0f),
+    radius(radius),
+    type(type),
+    iconColor(color)
 {
     size = QSize(radius, radius);
     drawIcon(pen);
 }
 
 MAV2DIcon::MAV2DIcon(qreal x, qreal y, QString name, Alignment alignment, QPen* pen)
-    : Point(x, y, name, alignment)
+    : Point(x, y, name, alignment),
+    radius(20),
+    type(0),
+    iconColor(Qt::yellow)
 {
-    int radius = 10;
     size = QSize(radius, radius);
-    if (pen)
-    {
-        drawIcon(pen);
-    }
+    drawIcon(pen);
 }
 
 MAV2DIcon::~MAV2DIcon()
@@ -27,69 +31,110 @@ MAV2DIcon::~MAV2DIcon()
 
 void MAV2DIcon::setPen(QPen* pen)
 {
-    if (pen)
-    {
-        mypen = pen;
-        drawIcon(pen);
-    }
+    mypen = pen;
+    drawIcon(pen);
 }
 
 /**
+ * Yaw changes of less than ±15 degrees are ignored.
+ *
  * @param yaw in radians, 0 = north, positive = clockwise
  */
 void MAV2DIcon::setYaw(float yaw)
 {
-    this->yaw = yaw;
-    drawIcon(mypen);
+    float diff = fabs(yaw - this->yaw);
+    while (diff > M_PI)
+    {
+        diff -= M_PI;
+    }
+
+    if (diff > 0.25)
+    {
+        this->yaw = yaw;
+        drawIcon(mypen);
+    }
 }
 
 void MAV2DIcon::drawIcon(QPen* pen)
 {
-
-    mypixmap = new QPixmap(radius+1, radius+1);
-    mypixmap->fill(Qt::transparent);
-    QPainter painter(mypixmap);
-
-    // DRAW WAYPOINT
-    QPointF p(radius/2, radius/2);
-
-    float waypointSize = radius;
-    QPolygonF poly(4);
-    // Top point
-    poly.replace(0, QPointF(p.x(), p.y()-waypointSize/2.0f));
-    // Right point
-    poly.replace(1, QPointF(p.x()+waypointSize/2.0f, p.y()));
-    // Bottom point
-    poly.replace(2, QPointF(p.x(), p.y() + waypointSize/2.0f));
-    poly.replace(3, QPointF(p.x() - waypointSize/2.0f, p.y()));
-
-//    // Select color based on if this is the current waypoint
-//    if (list.at(i)->getCurrent())
-//    {
-//        color = QGC::colorCyan;//uas->getColor();
-//        pen.setWidthF(refLineWidthToPen(0.8f));
-//    }
-//    else
-//    {
-//        color = uas->getColor();
-//        pen.setWidthF(refLineWidthToPen(0.4f));
-//    }
-
-    //pen.setColor(color);
-    if (pen)
+    switch (type)
     {
-        pen->setWidthF(2);
-        painter.setPen(*pen);
-    }
-    else
-    {
-        QPen pen2(Qt::red);
-        pen2.setWidth(2);
-        painter.setPen(pen2);
-    }
-    painter.setBrush(Qt::NoBrush);
+    case MAV_ICON_GENERIC:
+    case MAV_ICON_AIRPLANE:
+    case MAV_ICON_QUADROTOR:
+    case MAV_ICON_ROTARY_WING:
+    default:
+        {
+            mypixmap = new QPixmap(radius+1, radius+1);
+            mypixmap->fill(Qt::transparent);
+            QPainter painter(mypixmap);
+            painter.setRenderHint(QPainter::TextAntialiasing);
+            painter.setRenderHint(QPainter::Antialiasing);
+            painter.setRenderHint(QPainter::HighQualityAntialiasing);
 
-    float rad = (waypointSize/2.0f) * 0.8 * (1/sqrt(2.0f));
-    painter.drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * rad);
-    painter.drawPolygon(poly);
+            // Rotate by yaw
+            painter.translate(radius/2, radius/2);
+            painter.rotate(((yaw/(float)M_PI)+1.0f)*360.0f);
+
+            // DRAW AIRPLANE
+
+            qDebug() << "ICON SIZE:" << radius;
+
+            float iconSize = radius*0.9f;
+            QPolygonF poly(24);
+            poly.replace(0, QPointF(0.000000f*iconSize, -0.312500f*iconSize));
+            poly.replace(1, QPointF(0.025000f*iconSize, -0.287500f*iconSize));
+            poly.replace(2, QPointF(0.037500f*iconSize, -0.237500f*iconSize));
+            poly.replace(3, QPointF(0.031250f*iconSize, -0.187500f*iconSize));
+            poly.replace(4, QPointF(0.025000f*iconSize, -0.043750f*iconSize));
+            poly.replace(5, QPointF(0.500000f*iconSize, -0.025000f*iconSize));
+            poly.replace(6, QPointF(0.500000f*iconSize, 0.025000f*iconSize));
+            poly.replace(7, QPointF(0.025000f*iconSize, 0.043750f*iconSize));
+            poly.replace(8, QPointF(0.025000f*iconSize, 0.162500f*iconSize));
+            poly.replace(9, QPointF(0.137500f*iconSize, 0.181250f*iconSize));
+            poly.replace(10, QPointF(0.137500f*iconSize, 0.218750f*iconSize));
+            poly.replace(11, QPointF(0.025000f*iconSize, 0.206250f*iconSize));
+            poly.replace(12, QPointF(-0.025000f*iconSize, 0.206250f*iconSize));
+            poly.replace(13, QPointF(-0.137500f*iconSize, 0.218750f*iconSize));
+            poly.replace(14, QPointF(-0.137500f*iconSize, 0.181250f*iconSize));
+            poly.replace(15, QPointF(-0.025000f*iconSize, 0.162500f*iconSize));
+            poly.replace(16, QPointF(-0.025000f*iconSize, 0.043750f*iconSize));
+            poly.replace(17, QPointF(-0.500000f*iconSize, 0.025000f*iconSize));
+            poly.replace(18, QPointF(-0.500000f*iconSize, -0.025000f*iconSize));
+            poly.replace(19, QPointF(-0.025000f*iconSize, -0.043750f*iconSize));
+            poly.replace(20, QPointF(-0.031250f*iconSize, -0.187500f*iconSize));
+            poly.replace(21, QPointF(-0.037500f*iconSize, -0.237500f*iconSize));
+            poly.replace(22, QPointF(-0.031250f*iconSize, -0.262500f*iconSize));
+            poly.replace(23, QPointF(0.000000f*iconSize, -0.312500f*iconSize));
+
+            //    // Select color based on if this is the current waypoint
+            //    if (list.at(i)->getCurrent())
+            //    {
+            //        color = QGC::colorCyan;//uas->getColor();
+            //        pen.setWidthF(refLineWidthToPen(0.8f));
+            //    }
+            //    else
+            //    {
+            //        color = uas->getColor();
+            //        pen.setWidthF(refLineWidthToPen(0.4f));
+            //    }
+
+            //pen.setColor(color);
+//            if (pen)
+//            {
+//                pen->setWidthF(2);
+//                painter.setPen(*pen);
+//            }
+//            else
+//            {
+//                QPen pen2(Qt::red);
+//                pen2.setWidth(0);
+//                painter.setPen(pen2);
+//            }
+            painter.setBrush(QBrush(iconColor));
+
+            painter.drawPolygon(poly);
+        }
+        break;
+    }
 }

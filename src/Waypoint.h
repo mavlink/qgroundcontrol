@@ -59,6 +59,7 @@ public:
     float getHoldTime() const { return holdTime; }
     MAV_FRAME getFrame() const { return frame; }
     MAV_ACTION getAction() const { return action; }
+    const QString& getName() const { return name; }
 
     void save(QTextStream &saveStream);
     bool load(QTextStream &loadStream);
@@ -76,6 +77,7 @@ protected:
     bool current;
     float orbit;
     int holdTime;
+    QString name;
 
 public slots:
     void setId(quint16 id);
@@ -97,6 +99,10 @@ public slots:
     void setZ(double z);
     void setYaw(double yaw);
     void setOrbit(double orbit);
+
+signals:
+    /** @brief Announces a change to the waypoint data */
+    void changed(Waypoint* wp);
 };
 
 #endif // WAYPOINT_H
