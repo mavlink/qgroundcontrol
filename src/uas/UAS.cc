@@ -326,15 +326,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_raw_imu_decode(&message, &raw);
                 quint64 time = getUnixTime(raw.usec);
 
-                emit valueChanged(uasId, "accel x", "raw", raw.xacc, time);
-                emit valueChanged(uasId, "accel y", "raw", raw.yacc, time);
-                emit valueChanged(uasId, "accel z", "raw", raw.zacc, time);
+                emit valueChanged(uasId, "accel x", "raw", static_cast<double>(raw.xacc), time);
+                emit valueChanged(uasId, "accel y", "raw", static_cast<double>(raw.yacc), time);
+                emit valueChanged(uasId, "accel z", "raw", static_cast<double>(raw.zacc), time);
                 emit valueChanged(uasId, "gyro roll", "raw", static_cast<double>(raw.xgyro), time);
                 emit valueChanged(uasId, "gyro pitch", "raw", static_cast<double>(raw.ygyro), time);
                 emit valueChanged(uasId, "gyro yaw", "raw", static_cast<double>(raw.zgyro), time);
-                emit valueChanged(uasId, "mag x", "raw", raw.xmag, time);
-                emit valueChanged(uasId, "mag y", "raw", raw.ymag, time);
-                emit valueChanged(uasId, "mag z", "raw", raw.zmag, time);
+                emit valueChanged(uasId, "mag x", "raw", static_cast<double>(raw.xmag), time);
+                emit valueChanged(uasId, "mag y", "raw", static_cast<double>(raw.ymag), time);
+                emit valueChanged(uasId, "mag z", "raw", static_cast<double>(raw.zmag), time);
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
