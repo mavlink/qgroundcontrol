@@ -293,12 +293,11 @@ namespace qmapcontrol
 
         emit(positionChanged(this));
     }
-    QList<Point*> Point::points()
+    QList<Point*>& Point::points()
     {
-        //TODO: assigning temp?!
-        QList<Point*> points;
-        points.append(this);
-        return points;
+        // FIXME TODO: THIS IS ABSOLUTELY WRONG IN THE ORIGINAL LIBRARY
+        // NEEDS AN INHERITANCE REWRITE!!!!
+        return m_points;
     }
 
     QWidget* Point::widget()

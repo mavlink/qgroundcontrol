@@ -417,6 +417,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
         {
             str = QString("%1").arg(waypointPath->numberOfPoints());
             tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
+            wpIcons.append(tempCirclePoint);
 
             mc->layer("Waypoints")->addGeometry(tempCirclePoint);
 
@@ -435,7 +436,12 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
 void MapWidget::updateWaypoint(int uas, Waypoint* wp)
 {
-    //qDebug() << "UPDATING WP" << wp->getId() << __FILE__ << __LINE__;
+    updateWaypoint(uas, wp, true);
+}
+
+void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
+{
+    qDebug() << "UPDATING WP" << wp->getId() << wp <<  __FILE__ << __LINE__;
     if (uas == this->mav->getUASID())
     {
         int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getIndexOf(wp);
@@ -448,8 +454,6 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
             coordinate.setX(wp->getX());
             coordinate.setY(wp->getY());
             createWaypointGraphAtMap(wpindex, coordinate);
-
-            qDebug() << "Waypoint Index did not contain" << str;
         }
         else
         {
@@ -478,6 +482,10 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
                     {
                         linesegment = waypointPath->points().at(wpindex);
                     }
+                    else
+                    {
+                        waypointPath->addPoint(waypoint);
+                    }
 
                     if (linesegment)
                     {
@@ -486,7 +494,7 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
 
                     //point2Find = dynamic_cast <Point*> (mc->layer("Waypoints")->get_Geometry(wpindex));
                     //point2Find->setCoordinate(coordinate);
-                    mc->updateRequest(waypoint->boundingBox().toRect());
+                    if (updateView) mc->updateRequest(waypoint->boundingBox().toRect());
                 }
             }
         }
@@ -642,6 +650,9 @@ void MapWidget::updateWaypointList(int uas)
     UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
     if (uasInstance)
     {
+        // Get update rect of old content
+        QRect updateRect = waypointPath->boundingBox().toRect();
+
         QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getWaypointList();
 
         // Clear if necessary
@@ -654,28 +665,26 @@ void MapWidget::updateWaypointList(int uas)
         // Load all existing waypoints into map view
         foreach (Waypoint* wp, wpList)
         {
-            updateWaypoint(mav->getUASID(), wp);
+            // Block updates, since we update everything in the next step
+            updateWaypoint(mav->getUASID(), wp, false);
         }
 
         // Delete now unused wps
         if (wps.count() > wpList.count())
         {
-            mc->layer("Waypoints")->removeGeometry(waypointPath);
             for (int i = wpList.count(); i < wps.count(); ++i)
             {
-                QRect updateRect = wps.at(i)->boundingBox().toRect();
                 wps.removeAt(i);
                 mc->layer("Waypoints")->removeGeometry(wpIcons.at(i));
                 waypointPath->points().removeAt(i);
                 //Point* linesegment = waypointPath->points().at(mav->getWaypointManager()->getWaypointList().indexOf(wp));
 
-                mc->updateRequest(updateRect);
+
             }
-            mc->layer("Waypoints")->addGeometry(waypointPath);
         }
 
-        // Clear and rebuild linestring
-
+        // Update view
+        mc->updateRequest(updateRect);
     }
 }
 
@@ -703,7 +712,7 @@ void MapWidget::activeUASSet(UASInterface* uas)
     {
         // Disconnect the waypoint manager / data storage from the UI
         disconnect(mav->getWaypointManager(), SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
-        disconnect(mav->getWaypointManager(), SIGNAL(waypointUpdated(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+        disconnect(mav->getWaypointManager(), SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         disconnect(this, SIGNAL(waypointCreated(Waypoint*)), mav->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
     }
 
@@ -723,7 +732,7 @@ void MapWidget::activeUASSet(UASInterface* uas)
 
         // Connect the waypoint manager / data storage to the UI
         connect(mav->getWaypointManager(), SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
-        connect(mav->getWaypointManager(), SIGNAL(waypointUpdated(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+        connect(mav->getWaypointManager(), SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(this, SIGNAL(waypointCreated(Waypoint*)), mav->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
     }
 }
@@ -925,12 +934,23 @@ void MapWidget::clearWaypoints(int uas)
 
     //mc->layer("Waypoints")->clearGeometries();
     wps.clear();
+    foreach (Point* p, wpIcons)
+    {
+        mc->layer("Waypoints")->removeGeometry(p);
+    }
+    wpIcons.clear();
+
+    // Get bounding box of this object BEFORE deleting the content
+    QRect box = waypointPath->boundingBox().toRect();
+
+    // Delete the content
     waypointPath->points().clear();
+
     //delete waypointPath;
     //waypointPath = new
-    mc->layer("Waypoints")->addGeometry(waypointPath);
+    //mc->layer("Waypoints")->addGeometry(waypointPath);
     //wpIndex.clear();
-    mc->updateRequestNew();//(waypointPath->boundingBox().toRect());
+    mc->updateRequest(box);//(waypointPath->boundingBox().toRect());
 
     if(createPath->isChecked())
     {
