@@ -205,10 +205,15 @@ void WaypointView::changedCurrent(int state)
 
 void WaypointView::updateValues()
 {
+    // Deactivate signals from the WP
+    wp->blockSignals(true);
     // update frame
     MAV_FRAME frame = wp->getFrame();
     int frame_index = m_ui->comboBox_frame->findData(frame);
-    m_ui->comboBox_frame->setCurrentIndex(frame_index);
+    if (m_ui->comboBox_frame->currentIndex() != frame_index)
+    {
+        m_ui->comboBox_frame->setCurrentIndex(frame_index);
+    }
     switch(frame)
     {
     case(MAV_FRAME_LOCAL):
@@ -249,6 +254,7 @@ void WaypointView::updateValues()
     m_ui->idLabel->setText(QString("%1").arg(wp->getId()));\
     m_ui->orbitSpinBox->setValue(wp->getOrbit());
     m_ui->holdTimeSpinBox->setValue(wp->getHoldTime());
+    wp->blockSignals(false);
 }
 
 void WaypointView::setCurrent(bool state)
