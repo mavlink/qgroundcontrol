@@ -43,20 +43,20 @@ class Waypoint : public QObject
     Q_OBJECT
 
 public:
-    Waypoint(quint16 id = 0, float x = 0.0f, float y = 0.0f, float z = 0.0f, float yaw = 0.0f, bool autocontinue = false,
-             bool current = false, float orbit = 0.15f, int holdTime = 0,
+    Waypoint(quint16 id = 0, double x = 0.0f, double y = 0.0f, double z = 0.0f, double yaw = 0.0f, bool autocontinue = false,
+             bool current = false, double orbit = 0.15f, int holdTime = 0,
              MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_ACTION action=MAV_ACTION_NAVIGATE);
     ~Waypoint();
 
     quint16 getId() const { return id; }
-    float getX() const { return x; }
-    float getY() const { return y; }
-    float getZ() const { return z; }
-    float getYaw() const { return yaw; }
+    double getX() const { return x; }
+    double getY() const { return y; }
+    double getZ() const { return z; }
+    double getYaw() const { return yaw; }
     bool getAutoContinue() const { return autocontinue; }
     bool getCurrent() const { return current; }
-    float getOrbit() const { return orbit; }
-    float getHoldTime() const { return holdTime; }
+    double getOrbit() const { return orbit; }
+    double getHoldTime() const { return holdTime; }
     MAV_FRAME getFrame() const { return frame; }
     MAV_ACTION getAction() const { return action; }
     const QString& getName() const { return name; }
@@ -67,38 +67,38 @@ public:
 
 protected:
     quint16 id;
-    float x;
-    float y;
-    float z;
-    float yaw;
+    double x;
+    double y;
+    double z;
+    double yaw;
     MAV_FRAME frame;
     MAV_ACTION action;
     bool autocontinue;
     bool current;
-    float orbit;
+    double orbit;
     int holdTime;
     QString name;
 
 public slots:
     void setId(quint16 id);
-    void setX(float x);
-    void setY(float y);
-    void setZ(float z);
-    void setYaw(float yaw);
-    void setAction(MAV_ACTION action);
-    void setFrame(MAV_FRAME frame);
-    void setAutocontinue(bool autoContinue);
-    void setCurrent(bool current);
-    void setOrbit(float orbit);
-    void setHoldTime(int holdTime);
-
-
-    //for QDoubleSpin
     void setX(double x);
     void setY(double y);
     void setZ(double z);
     void setYaw(double yaw);
+    void setAction(MAV_ACTION action);
+    void setFrame(MAV_FRAME frame);
+    void setAutocontinue(bool autoContinue);
+    void setCurrent(bool current);
     void setOrbit(double orbit);
+    void setHoldTime(int holdTime);
+
+
+//    //for QDoubleSpin
+//    void setX(double x);
+//    void setY(double y);
+//    void setZ(double z);
+//    void setYaw(double yaw);
+//    void setOrbit(double orbit);
 
 signals:
     /** @brief Announces a change to the waypoint data */

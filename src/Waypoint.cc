@@ -9,15 +9,15 @@ This file is part of the QGROUNDCONTROL project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-    
+
     QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-    
+
     You should have received a copy of the GNU General Public License
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-    
+
 ======================================================================*/
 
 /**
@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include <QStringList>
 
-Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _autocontinue, bool _current, float _orbit, int _holdTime, MAV_FRAME _frame, MAV_ACTION _action)
+Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _yaw, bool _autocontinue, bool _current, double _orbit, int _holdTime, MAV_FRAME _frame, MAV_ACTION _action)
     : id(_id),
     x(_x),
     y(_y),
@@ -50,7 +50,7 @@ Waypoint::Waypoint(quint16 _id, float _x, float _y, float _z, float _yaw, bool _
 
 Waypoint::~Waypoint()
 {
-    
+
 }
 
 void Waypoint::save(QTextStream &saveStream)
@@ -94,7 +94,7 @@ void Waypoint::setId(quint16 id)
     emit changed(this);
 }
 
-void Waypoint::setX(float x)
+void Waypoint::setX(double x)
 {
     if (this->x != x)
     {
@@ -103,7 +103,7 @@ void Waypoint::setX(float x)
     }
 }
 
-void Waypoint::setY(float y)
+void Waypoint::setY(double y)
 {
     if (this->y != y)
     {
@@ -112,7 +112,7 @@ void Waypoint::setY(float y)
     }
 }
 
-void Waypoint::setZ(float z)
+void Waypoint::setZ(double z)
 {
     if (this->z != z)
     {
@@ -121,7 +121,7 @@ void Waypoint::setZ(float z)
     }
 }
 
-void Waypoint::setYaw(float yaw)
+void Waypoint::setYaw(double yaw)
 {
     if (this->yaw != yaw)
     {
@@ -166,7 +166,7 @@ void Waypoint::setCurrent(bool current)
     }
 }
 
-void Waypoint::setOrbit(float orbit)
+void Waypoint::setOrbit(double orbit)
 {
     if (this->orbit != orbit)
     {
@@ -184,47 +184,47 @@ void Waypoint::setHoldTime(int holdTime)
     }
 }
 
-void Waypoint::setX(double x)
-{
-    if (this->x != static_cast<float>(x))
-    {
-        this->x = x;
-        emit changed(this);
-    }
-}
+//void Waypoint::setX(double x)
+//{
+//    if (this->x != static_cast<double>(x))
+//    {
+//        this->x = x;
+//        emit changed(this);
+//    }
+//}
 
-void Waypoint::setY(double y)
-{
-    if (this->y != static_cast<float>(y))
-    {
-        this->y = y;
-        emit changed(this);
-    }
-}
+//void Waypoint::setY(double y)
+//{
+//    if (this->y != static_cast<double>(y))
+//    {
+//        this->y = y;
+//        emit changed(this);
+//    }
+//}
 
-void Waypoint::setZ(double z)
-{
-    if (this->z != static_cast<float>(z))
-    {
-        this->z = z;
-        emit changed(this);
-    }
-}
+//void Waypoint::setZ(double z)
+//{
+//    if (this->z != static_cast<double>(z))
+//    {
+//        this->z = z;
+//        emit changed(this);
+//    }
+//}
 
-void Waypoint::setYaw(double yaw)
-{
-    if (this->yaw != static_cast<float>(yaw))
-    {
-        this->yaw = yaw;
-        emit changed(this);
-    }
-}
+//void Waypoint::setYaw(double yaw)
+//{
+//    if (this->yaw != static_cast<double>(yaw))
+//    {
+//        this->yaw = yaw;
+//        emit changed(this);
+//    }
+//}
 
-void Waypoint::setOrbit(double orbit)
-{
-    if (this->orbit != static_cast<float>(orbit))
-    {
-        this->orbit = orbit;
-        emit changed(this);
-    }
-}
+//void Waypoint::setOrbit(double orbit)
+//{
+//    if (this->orbit != static_cast<double>(orbit))
+//    {
+//        this->orbit = orbit;
+//        emit changed(this);
+//    }
+//}
