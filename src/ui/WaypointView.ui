@@ -234,6 +234,9 @@ QProgressBar::chunk#thrustBar {
         <property name="toolTip">
          <string>Position X coordinate</string>
         </property>
+        <property name="wrapping">
+         <bool>false</bool>
+        </property>
         <property name="prefix">
          <string>N </string>
         </property>

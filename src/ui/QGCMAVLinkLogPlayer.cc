@@ -18,6 +18,8 @@ QGCMAVLinkLogPlayer::QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *pare
     mavlink(mavlink),
     logLink(NULL),
     loopCounter(0),
+    mavlinkLogFormat(true),
+    binaryBaudRate(57600),
     ui(new Ui::QGCMAVLinkLogPlayer)
 {
     ui->setupUi(this);
@@ -62,7 +64,20 @@ void QGCMAVLinkLogPlayer::play()
         logLink = new MAVLinkSimulationLink("");
 
         // Start timer
-        loopTimer.start(1);
+        if (mavlinkLogFormat)
+        {
+            loopTimer.start(1);
+        }
+        else
+        {
+            // Read len bytes at a time
+            int len = 100;
+            // Calculate the number of times to read 100 bytes per second
+            // to guarantee the baud rate, then divide 1000 by the number of read
+            // operations to obtain the interval in milliseconds
+            int interval = 1000 / ((binaryBaudRate / 10) / len);
+            loopTimer.start(interval);
+        }
     }
     else
     {
@@ -124,7 +139,7 @@ bool QGCMAVLinkLogPlayer::reset(int packetIndex)
 
 void QGCMAVLinkLogPlayer::selectLogFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify MAVLink log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink Logfile (*.mavlink);;"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify MAVLink log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink or Binary Logfile (*.mavlink; *.bin);;"));
 
     loadLogFile(fileName);
 }
@@ -180,6 +195,11 @@ void QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
         startTime = 0;
         ui->logFileNameLabel->setText(tr("%1").arg(logFileInfo.baseName()));
 
+        // Select if binary or MAVLink log format is used
+        mavlinkLogFormat = file.endsWith(".mavlink");
+
+        if (mavlinkLogFormat)
+        {
         // Get the time interval from the logfile
         QByteArray timestamp = logFile.read(timeLen);
 
@@ -204,6 +224,32 @@ void QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
 
         QString timelabel = tr("%1h:%2m:%3s").arg(hours, 2).arg(minutes, 2).arg(seconds, 2);
         ui->logStatsLabel->setText(tr("%2 MB, %3 packets, %4").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(logFileInfo.size()/(MAVLINK_MAX_PACKET_LEN+sizeof(quint64))).arg(timelabel));
+    }
+        else
+        {
+            QStringList parts = file.split("_");
+
+            if (parts.count() > 1)
+            {
+                bool ok;
+                int rate = parts.last().toInt(&ok);
+                // 9600 baud to 100 MBit
+                if (ok && (rate > 9600 && rate < 100000000))
+                {
+                    // Accept this as valid baudrate
+                    binaryBaudRate = rate;
+                }
+            }
+
+            int seconds = logFileInfo.size() / (binaryBaudRate / 10);
+            int minutes = seconds / 60;
+            int hours = minutes / 60;
+            seconds -= 60*minutes;
+            minutes -= 60*hours;
+
+            QString timelabel = tr("%1h:%2m:%3s").arg(hours, 2).arg(minutes, 2).arg(seconds, 2);
+            ui->logStatsLabel->setText(tr("%2 MB, %4 at %5 KB/s").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(timelabel).arg(binaryBaudRate/10/1024));
+        }
     }
 }
 
@@ -236,6 +282,8 @@ void QGCMAVLinkLogPlayer::jumpToSliderVal(int slidervalue)
  */
 void QGCMAVLinkLogPlayer::logLoop()
 {
+    if (mavlinkLogFormat)
+    {
     bool ok;
 
     // First check initialization
@@ -344,6 +392,30 @@ void QGCMAVLinkLogPlayer::logLoop()
 
         // Update status label
         // Update progress bar
+    }
+}
+    else
+    {
+        // Binary format - read at fixed rate
+        const int len = 100;
+        QByteArray chunk = logFile.read(len);
+
+        // Emit this packet
+        emit bytesReady(logLink, chunk);
+
+        // Check if reached end of file before reading next timestamp
+        if (chunk.length() < len || logFile.atEnd())
+        {
+            // Reached end of file
+            reset();
+
+            QString status = tr("Reached end of binary log file.");
+            ui->logStatsLabel->setText(status);
+            MainWindow::instance()->showStatusMessage(status);
+            return;
+        }
+
+
     }
 }
 
