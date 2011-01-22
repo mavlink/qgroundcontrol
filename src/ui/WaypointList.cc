@@ -129,6 +129,7 @@ void WaypointList::setUAS(UASInterface* uas)
 
         connect(uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
         connect(uas->getWaypointManager(), SIGNAL(waypointListChanged(void)),                  this, SLOT(waypointListChanged(void)));
+        connect(uas->getWaypointManager(), SIGNAL(waypointChanged(int,Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointChanged(quint16)));
         connect(uas->getWaypointManager(),SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
         connect(uas->getWaypointManager(),SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
@@ -214,10 +215,10 @@ void WaypointList::add()
                     wp = new Waypoint(0, uas->getLongitude(), uas->getLatitude(), uas->getAltitude(), 0.0, true, true, 0.15, 0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
                     uas->getWaypointManager()->addWaypoint(wp);
             }
-            if (wp->getFrame() == MAV_FRAME_GLOBAL)
-            {
-                emit createWaypointAtMap(QPointF(wp->getX(), wp->getY()));
-            }
+//            if (wp->getFrame() == MAV_FRAME_GLOBAL)
+//            {
+//                emit createWaypointAtMap(QPointF(wp->getX(), wp->getY()));
+//            }
         }
     }
 }
@@ -291,6 +292,13 @@ void WaypointList::currentWaypointChanged(quint16 seq)
             }
         }
     }
+}
+
+void WaypointList::updateWaypoint(int uas, Waypoint* wp)
+{
+    Q_UNUSED(uas);
+    WaypointView *wpv = wpViews.value(wp);
+    wpv->updateValues();
 }
 
 void WaypointList::waypointListChanged()

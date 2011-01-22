@@ -267,9 +267,16 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
 
 void UASWaypointManager::notifyOfChange(Waypoint* wp)
 {
-    Q_UNUSED(wp);
-    emit waypointListChanged();
-    emit waypointListChanged(uas.getUASID());
+    // If only one waypoint was changed, emit only WP signal
+    if (wp != NULL)
+    {
+        emit waypointChanged(uas.getUASID(), wp);
+    }
+    else
+    {
+        emit waypointListChanged();
+        emit waypointListChanged(uas.getUASID());
+    }
 }
 
 int UASWaypointManager::setCurrentWaypoint(quint16 seq)
@@ -318,11 +325,10 @@ void UASWaypointManager::addWaypoint(Waypoint *wp)
     {
         wp->setId(waypoints.size());
         waypoints.insert(waypoints.size(), wp);
+        connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChange(Waypoint*)));
 
         emit waypointListChanged();
         emit waypointListChanged(uas.getUASID());
-
-        qDebug() << "ADDED WAYPOINT WITH ID:" << wp->getId();
     }
 }
 

@@ -65,7 +65,7 @@ public slots:
     /** @brief Save the local waypoint list to a file */
     void saveWaypoints();
     /** @brief Load a waypoint list from a file */
-    void    loadWaypoints();
+    void loadWaypoints();
     /** @brief Transmit the local waypoint list to the UAS */
     void transmit();
     /** @brief Read the remote waypoint list */
@@ -87,6 +87,8 @@ public slots:
     void changeCurrentWaypoint(quint16 seq);
     /** @brief The waypoint planner changed the current waypoint */
     void currentWaypointChanged(quint16 seq);
+    /** @brief The waypoint manager informs that one waypoint was changed */
+    void updateWaypoint(int uas, Waypoint* wp);
     /** @brief The waypoint manager informs that the waypoint list was changed */
     void waypointListChanged(void);
 
@@ -111,10 +113,6 @@ public slots:
 signals:
   void clearPathclicked();
   void createWaypointAtMap(const QPointF coordinate);
- // void ChangeWaypointGlobalPosition(int index, QPointF coord);
-  void changePositionWPBySpinBox(int indexWP, float lat, float lon);
-
-
 
 protected:
     virtual void changeEvent(QEvent *e);

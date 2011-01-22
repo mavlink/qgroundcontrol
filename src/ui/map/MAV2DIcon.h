@@ -1,11 +1,19 @@
 #ifndef MAV2DICON_H
 #define MAV2DICON_H
 
+#include <QGraphicsItem>
 #include "qmapcontrol.h"
 
 class MAV2DIcon : public qmapcontrol::Point
 {
 public:
+    enum
+    {
+        MAV_ICON_GENERIC = 0,
+        MAV_ICON_AIRPLANE,
+        MAV_ICON_QUADROTOR,
+        MAV_ICON_ROTARY_WING
+    } MAV_ICON_TYPE;
     /*!
      *
      * @param x longitude
@@ -26,7 +34,7 @@ public:
      * @param alignment alignment (Middle or TopLeft)
      * @param pen QPen for drawing
      */
-    MAV2DIcon(qreal x, qreal y, int radius = 10, QString name = QString(), Alignment alignment = Middle, QPen* pen=0);
+    MAV2DIcon(qreal x, qreal y, int radius = 10, int type=0, const QColor& color=QColor(Qt::red), QString name = QString(), Alignment alignment = Middle, QPen* pen=0);
     virtual ~MAV2DIcon();
 
     //! sets the QPen which is used for drawing the circle
@@ -38,12 +46,14 @@ public:
     virtual void setPen(QPen* pen);
 
     void setYaw(float yaw);
+
     void drawIcon(QPen* pen);
 
 protected:
-    float yaw;  ///< Yaw angle of the MAV
-    int radius; ///< Maximum dimension of the MAV icon
-
+    float yaw;      ///< Yaw angle of the MAV
+    int radius;     ///< Radius / width of the icon
+    int type;       ///< Type of aircraft: 0: generic, 1: airplane, 2: quadrotor, 3-n: rotary wing
+    QColor iconColor; ///< Color to be used for the icon
 
 };
 

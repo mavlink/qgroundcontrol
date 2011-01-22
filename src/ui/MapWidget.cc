@@ -632,6 +632,7 @@ MapWidget::~MapWidget()
 void MapWidget::addUAS(UASInterface* uas)
 {
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+    connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
     //connect(uas->getWaypointManager(), SIGNAL(waypointListChanged()), this, SLOT(redoWaypoints()));
 }
 
@@ -700,14 +701,10 @@ void MapWidget::activeUASSet(UASInterface* uas)
     // Disconnect old MAV
     if (mav)
     {
-        // clear path create on the map
+        // Disconnect the waypoint manager / data storage from the UI
         disconnect(mav->getWaypointManager(), SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
-        // add Waypoint widget in the WaypointList widget when mouse clicked
+        disconnect(mav->getWaypointManager(), SIGNAL(waypointUpdated(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         disconnect(this, SIGNAL(waypointCreated(Waypoint*)), mav->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
-
-
-        // it notifies that a waypoint global goes to do create and a map graphic too
-        //connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
     }
 
     if (uas)
@@ -721,13 +718,29 @@ void MapWidget::activeUASSet(UASInterface* uas)
         // FIXME Remove after refactoring
         waypointPath->setPen(pen);
 
-        // Delete all waypoints and start fresh
+        // Delete all waypoints and add waypoint from new system
         redoWaypoints();
 
-        // clear path create on the map
+        // Connect the waypoint manager / data storage to the UI
         connect(mav->getWaypointManager(), SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
-        // add Waypoint widget in the WaypointList widget when mouse clicked
+        connect(mav->getWaypointManager(), SIGNAL(waypointUpdated(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(this, SIGNAL(waypointCreated(Waypoint*)), mav->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
+    }
+}
+
+void MapWidget::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 usec)
+{
+    Q_UNUSED(roll);
+    Q_UNUSED(pitch);
+    Q_UNUSED(usec);
+
+    if (uas)
+    {
+        MAV2DIcon* icon = dynamic_cast<MAV2DIcon*>(uasIcons.value(uas->getUASID(), NULL));
+        if (icon)
+        {
+            icon->setYaw(yaw);
+        }
     }
 }
 
@@ -766,24 +779,24 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         //QPen* pointpen = new QPen(uasColor);
         qDebug() << "2D MAP: ADDING" << uas->getUASName() << __FILE__ << __LINE__;
         //p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, mavPens.value(uas->getUASID()));
-        p = new Waypoint2DIcon(lat, lon, 20, QString("%1").arg(uas->getUASID()), qmapcontrol::Point::Middle);
+        p = new MAV2DIcon(lat, lon, 50, uas->getSystemType(), uas->getColor(), QString("%1").arg(uas->getUASID()), qmapcontrol::Point::Middle);
         uasIcons.insert(uas->getUASID(), p);
         mc->layer("Waypoints")->addGeometry(p);
 
         // Line
         // A QPen also can use transparency
 
-        QList<qmapcontrol::Point*> points;
-        points.append(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
-        QPen* linepen = new QPen(uasColor.darker());
-        linepen->setWidth(2);
+//        QList<qmapcontrol::Point*> points;
+//        points.append(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
+//        QPen* linepen = new QPen(uasColor.darker());
+//        linepen->setWidth(2);
 
-        // Create tracking line string
-        qmapcontrol::LineString* ls = new qmapcontrol::LineString(points, QString("%1").arg(uas->getUASID()), linepen);
-        uasTrails.insert(uas->getUASID(), ls);
+//        // Create tracking line string
+//        qmapcontrol::LineString* ls = new qmapcontrol::LineString(points, QString("%1").arg(uas->getUASID()), linepen);
+//        uasTrails.insert(uas->getUASID(), ls);
 
-        // Add the LineString to the layer
-        mc->layer("Waypoints")->addGeometry(ls);
+//        // Add the LineString to the layer
+//        mc->layer("Waypoints")->addGeometry(ls);
     }
     else
     {
@@ -795,7 +808,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
             //p->setYaw(uas->getYaw());
 //        }
         // Extend trail
-        uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
+//        uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
     }
 
 mc->updateRequest(p->boundingBox().toRect());

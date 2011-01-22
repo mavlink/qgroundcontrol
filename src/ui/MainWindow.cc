@@ -38,7 +38,7 @@
 #include "SlugsMAV.h"
 
 
-#include "LogCompressor.h"
+#include "LogCompressor.h"s
 
 MainWindow* MainWindow::instance()
 {
@@ -72,13 +72,6 @@ MainWindow::MainWindow(QWidget *parent):
     {
         // Set this view as default view
         settings.setValue("CURRENT_VIEW", currentView);
-
-        // Enable default tools
-
-        // ENABLE UAS LIST
-        settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_UAS_LIST,currentView), true);
-        // ENABLE COMMUNICATION CONSOLE
-        settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_DEBUG_CONSOLE,currentView), true);
     }
     else
     {
@@ -98,31 +91,8 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Setup user interface
     ui.setupUi(this);
-    ui.actionNewCustomWidget->setEnabled(false);
 
     setVisible(false);
-
-    // Bind together the perspective actions
-    QActionGroup* perspectives = new QActionGroup(ui.menuPerspectives);
-    perspectives->addAction(ui.actionEngineersView);
-    perspectives->addAction(ui.actionMavlinkView);
-    perspectives->addAction(ui.actionPilotsView);
-    perspectives->addAction(ui.actionOperatorsView);
-    perspectives->addAction(ui.actionUnconnectedView);
-    perspectives->setExclusive(true);
-
-    // Mark the right one as selected
-    if (currentView == VIEW_ENGINEER) ui.actionEngineersView->setChecked(true);
-    if (currentView == VIEW_MAVLINK) ui.actionMavlinkView->setChecked(true);
-    if (currentView == VIEW_PILOT) ui.actionPilotsView->setChecked(true);
-    if (currentView == VIEW_OPERATOR) ui.actionOperatorsView->setChecked(true);
-    if (currentView == VIEW_UNCONNECTED) ui.actionUnconnectedView->setChecked(true);
-
-    // The pilot, engineer and operator view are not available on startup
-    // since they only make sense with a system connected.
-    ui.actionPilotsView->setEnabled(false);
-    ui.actionOperatorsView->setEnabled(false);
-    ui.actionEngineersView->setEnabled(false);
 
     buildCommonWidgets();
 
@@ -204,6 +174,11 @@ void MainWindow::setDefaultSettingsForAp()
     if (!settings.contains(centralKey))
     {
         settings.setValue(centralKey,true);
+
+        // ENABLE UAS LIST
+        settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_UAS_LIST, VIEW_UNCONNECTED), true);
+        // ENABLE COMMUNICATION CONSOLE
+        settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_DEBUG_CONSOLE, VIEW_UNCONNECTED), true);
     }
 
     // OPERATOR VIEW DEFAULT
@@ -223,6 +198,8 @@ void MainWindow::setDefaultSettingsForAp()
     if (!settings.contains(centralKey))
     {
         settings.setValue(centralKey,true);
+        // Enable Parameter widget
+        settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_PARAMETERS,VIEW_ENGINEER), true);
     }
 
     // MAVLINK VIEW DEFAULT
@@ -237,6 +214,8 @@ void MainWindow::setDefaultSettingsForAp()
     if (!settings.contains(centralKey))
     {
         settings.setValue(centralKey,true);
+        // Enable Flight display
+        settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_HDD_1,VIEW_PILOT), true);
     }
 }
 
@@ -895,9 +874,11 @@ QString MainWindow::buildMenuKey(SETTINGS_SECTIONS section, TOOLS_WIDGET_NAMES t
     // Key is built as follows: autopilot_type/section_menu/view/tool/section
     int apType;
 
-    apType = (UASManager::instance() && UASManager::instance()->silentGetActiveUAS())?
-             UASManager::instance()->getActiveUAS()->getAutopilotType():
-             -1;
+//    apType = (UASManager::instance() && UASManager::instance()->silentGetActiveUAS())?
+//             UASManager::instance()->getActiveUAS()->getAutopilotType():
+//             -1;
+
+    apType = 1;
 
     return (QString::number(apType) + "_" +
             QString::number(SECTION_MENU) + "_" +
@@ -1266,6 +1247,36 @@ void MainWindow::showInfoMessage(const QString& title, const QString& message)
 **/
 void MainWindow::connectCommonActions()
 {
+    ui.actionNewCustomWidget->setEnabled(false);
+
+    // Bind together the perspective actions
+    QActionGroup* perspectives = new QActionGroup(ui.menuPerspectives);
+    perspectives->addAction(ui.actionEngineersView);
+    perspectives->addAction(ui.actionMavlinkView);
+    perspectives->addAction(ui.actionPilotsView);
+    perspectives->addAction(ui.actionOperatorsView);
+    perspectives->addAction(ui.actionUnconnectedView);
+    perspectives->setExclusive(true);
+
+    // Mark the right one as selected
+    if (currentView == VIEW_ENGINEER) ui.actionEngineersView->setChecked(true);
+    if (currentView == VIEW_MAVLINK) ui.actionMavlinkView->setChecked(true);
+    if (currentView == VIEW_PILOT) ui.actionPilotsView->setChecked(true);
+    if (currentView == VIEW_OPERATOR) ui.actionOperatorsView->setChecked(true);
+    if (currentView == VIEW_UNCONNECTED) ui.actionUnconnectedView->setChecked(true);
+
+    // The pilot, engineer and operator view are not available on startup
+    // since they only make sense with a system connected.
+    ui.actionPilotsView->setEnabled(false);
+    ui.actionOperatorsView->setEnabled(false);
+    ui.actionEngineersView->setEnabled(false);
+    // The UAS actions are not enabled without connection to system
+    ui.actionLiftoff->setEnabled(false);
+    ui.actionLand->setEnabled(false);
+    ui.actionEmergency_Kill->setEnabled(false);
+    ui.actionEmergency_Land->setEnabled(false);
+    ui.actionShutdownMAV->setEnabled(false);
+
     // Connect actions from ui
     connect(ui.actionAdd_Link, SIGNAL(triggered()), this, SLOT(addLink()));
 
@@ -1278,7 +1289,7 @@ void MainWindow::connectCommonActions()
     connect(ui.actionLand, SIGNAL(triggered()), UASManager::instance(), SLOT(returnActiveUAS()));
     connect(ui.actionEmergency_Land, SIGNAL(triggered()), UASManager::instance(), SLOT(stopActiveUAS()));
     connect(ui.actionEmergency_Kill, SIGNAL(triggered()), UASManager::instance(), SLOT(killActiveUAS()));
-
+    connect(ui.actionShutdownMAV, SIGNAL(triggered()), UASManager::instance(), SLOT(shutdownActiveUAS()));
     connect(ui.actionConfiguration, SIGNAL(triggered()), UASManager::instance(), SLOT(configureActiveUAS()));
 
     // Views actions
@@ -1439,6 +1450,12 @@ void MainWindow::UASCreated(UASInterface* uas)
         ui.actionPilotsView->setEnabled(true);
         ui.actionOperatorsView->setEnabled(true);
         ui.actionEngineersView->setEnabled(true);
+        // The UAS actions are not enabled without connection to system
+        ui.actionLiftoff->setEnabled(true);
+        ui.actionLand->setEnabled(true);
+        ui.actionEmergency_Kill->setEnabled(true);
+        ui.actionEmergency_Land->setEnabled(true);
+        ui.actionShutdownMAV->setEnabled(true);
 
         QIcon icon;
         // Set matching icon
@@ -1644,6 +1661,7 @@ void MainWindow::clearView()
         {
             // Remove dock widget from main window
             removeDockWidget(dockWidget);
+            dockWidget->hide();
             //dockWidget->setVisible(false);
         }
     }
