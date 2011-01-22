@@ -139,7 +139,7 @@ namespace qmapcontrol
          */
         QPointF coordinate() const;
 
-        virtual QList<Point*> points();
+        virtual QList<Point*>& points();
 
         /*! \brief returns the widget of the point
         @return the widget of the point
@@ -191,6 +191,7 @@ namespace qmapcontrol
         QSize displaysize;
         QSize minsize;
         QSize maxsize;
+        QList<Point*> m_points;
 
 
         void drawWidget(const MapAdapter* mapadapter, const QPoint offset);

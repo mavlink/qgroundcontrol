@@ -336,6 +336,9 @@ QProgressBar::chunk#thrustBar {
         <property name="maximum">
          <double>90.000000000000000</double>
         </property>
+        <property name="singleStep">
+         <double>0.000010000000000</double>
+        </property>
        </widget>
       </item>
       <item>
@@ -360,6 +363,9 @@ QProgressBar::chunk#thrustBar {
         </property>
         <property name="maximum">
          <double>180.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.000010000000000</double>
         </property>
        </widget>
       </item>

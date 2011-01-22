@@ -267,6 +267,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
 
 void UASWaypointManager::notifyOfChange(Waypoint* wp)
 {
+    qDebug() << "WAYPOINT CHANGED: ID:" << wp->getId();
     // If only one waypoint was changed, emit only WP signal
     if (wp != NULL)
     {

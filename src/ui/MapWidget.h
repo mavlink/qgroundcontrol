@@ -87,6 +87,7 @@ public slots:
 
     /** @brief Update waypoint */
     void updateWaypoint(int uas, Waypoint* wp);
+    void updateWaypoint(int uas, Waypoint* wp, bool updateView);
 
     void drawBorderCamAtMap(bool status);
     /** @brief Bring up dialog to go to a specific location */
