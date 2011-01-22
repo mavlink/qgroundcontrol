@@ -930,6 +930,7 @@ void MapWidget::changeEvent(QEvent *e)
 
 void MapWidget::clearWaypoints(int uas)
 {
+    Q_UNUSED(uas);
     // Clear the previous WP track
 
     //mc->layer("Waypoints")->clearGeometries();
@@ -962,6 +963,7 @@ void MapWidget::clearWaypoints(int uas)
 
 void MapWidget::clearPath(int uas)
 {
+    Q_UNUSED(uas);
     mc->layer("Tracking")->clearGeometries();
     foreach (qmapcontrol::LineString* ls, uasTrails)
     {
@@ -976,6 +978,8 @@ void MapWidget::clearPath(int uas)
 
 void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
 {
+    Q_UNUSED(dir);
+    Q_UNUSED(bearing);
     // FIXME Mariano
     //camPoints.clear();
     QPointF currentPos = mc->currentCoordinate();

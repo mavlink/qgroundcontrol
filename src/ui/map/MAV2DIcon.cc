@@ -57,6 +57,7 @@ void MAV2DIcon::setYaw(float yaw)
 
 void MAV2DIcon::drawIcon(QPen* pen)
 {
+    Q_UNUSED(pen);
     switch (type)
     {
     case MAV_ICON_GENERIC:
