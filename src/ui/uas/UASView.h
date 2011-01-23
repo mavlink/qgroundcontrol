@@ -110,6 +110,7 @@ protected:
     bool localFrame;
     QAction* removeAction;
     QAction* renameAction;
+    QAction* selectAction;
     static const int updateInterval = 300;
 
 

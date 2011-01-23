@@ -90,27 +90,24 @@ void MAV2DIcon::drawIcon(QPen* pen)
 //        QPen selPen(color);
 //        int width = 5;
 //        selPen.setWidth(width);
-        painter.setPen(Qt::yellow);
+        QPen pen(Qt::yellow);
+        pen.setWidth(2);
+        painter.setPen(pen);
         painter.drawEllipse(QPoint(0, 0), radius/2-1, radius/2-1);
         //qDebug() << "Painting ellipse" << radius/2-width << width;
         //selPen->deleteLater();
     }
 
-    float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f+180.0f;
-
-    painter.rotate(yawRotate);
-
-    if (this->name() == "1") qDebug() << "uas icon" << name() << "yaw in:" << yaw << "rotate:" << yawRotate;
-
     switch (type)
     {
-    case MAV_ICON_GENERIC:
     case MAV_ICON_AIRPLANE:
-    case MAV_ICON_QUADROTOR:
-    case MAV_ICON_ROTARY_WING:
-    default:
         {
             // DRAW AIRPLANE
+
+            // Rotate 180 degs more since the icon is oriented downwards
+            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f+180.0f;
+
+            painter.rotate(yawRotate);
 
             //qDebug() << "ICON SIZE:" << radius;
 
@@ -141,30 +138,70 @@ void MAV2DIcon::drawIcon(QPen* pen)
             poly.replace(22, QPointF(-0.031250f*iconSize, -0.262500f*iconSize));
             poly.replace(23, QPointF(0.000000f*iconSize, -0.312500f*iconSize));
 
-            //    // Select color based on if this is the current waypoint
-            //    if (list.at(i)->getCurrent())
-            //    {
-            //        color = QGC::colorCyan;//uas->getColor();
-            //        pen.setWidthF(refLineWidthToPen(0.8f));
-            //    }
-            //    else
-            //    {
-            //        color = uas->getColor();
-            //        pen.setWidthF(refLineWidthToPen(0.4f));
-            //    }
+            painter.setBrush(QBrush(iconColor));
+            QPen iconPen(Qt::black);
+            iconPen.setWidthF(1.0f);
+            painter.setPen(iconPen);
 
-            //pen.setColor(color);
-//            if (pen)
-//            {
-//                pen->setWidthF(2);
-//                painter.setPen(*pen);
-//            }
-//            else
-//            {
-//                QPen pen2(Qt::red);
-//                pen2.setWidth(0);
-//                painter.setPen(pen2);
-//            }
+            painter.drawPolygon(poly);
+        }
+        break;
+    case MAV_ICON_QUADROTOR:
+        {
+            // QUADROTOR
+            float iconSize = radius*0.9f;
+            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f;
+
+            painter.rotate(yawRotate);
+
+            //qDebug() << "ICON SIZE:" << radius;
+
+            QPointF front(0, 0.2);
+            front = front *iconSize;
+            QPointF left(-0.2, 0);
+            left = left * iconSize;
+            QPointF right(0.2, 0.0);
+            right *= iconSize;
+            QPointF back(0, -0.2);
+            back *= iconSize;
+
+            QPolygonF poly(0);
+
+
+
+            painter.setBrush(QBrush(iconColor));
+            QPen iconPen(Qt::black);
+            iconPen.setWidthF(1.0f);
+            painter.setPen(iconPen);
+
+            painter.drawPolygon(poly);
+
+            painter.drawEllipse(left, radius/4/2, radius/4/2);
+            painter.drawEllipse(right, radius/4/2, radius/4/2);
+            painter.drawEllipse(back, radius/4/2, radius/4/2);
+
+            painter.setBrush(Qt::red);
+            painter.drawEllipse(front, radius/4/2, radius/4/2);
+        }
+        break;
+    case MAV_ICON_ROTARY_WING:
+        case MAV_ICON_GENERIC:
+    default:
+        {
+            // GENERIC
+
+            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f;
+
+            painter.rotate(yawRotate);
+
+            //qDebug() << "ICON SIZE:" << radius;
+
+            float iconSize = radius*0.9f;
+            QPolygonF poly(3);
+            poly.replace(0, QPointF(0.0f*iconSize, 0.3f*iconSize));
+            poly.replace(1, QPointF(-0.2f*iconSize, -0.2f*iconSize));
+            poly.replace(2, QPointF(0.2f*iconSize, -0.2f*iconSize));
+
             painter.setBrush(QBrush(iconColor));
             QPen iconPen(Qt::black);
             iconPen.setWidthF(1.0f);
