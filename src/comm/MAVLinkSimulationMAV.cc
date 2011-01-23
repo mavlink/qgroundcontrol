@@ -158,6 +158,61 @@ void MAVLinkSimulationMAV::mainloop()
     // 25 Hz execution
     if (timer25Hz <= 0)
     {
+
+        // Send a named value with name "FLOAT" and 0.5f as value
+
+        // The message container to be used for sending
+        mavlink_message_t ret;
+        // The C-struct holding the data to be sent
+        mavlink_named_value_float_t val;
+
+        // Fill in the data
+        // Name of the value, maximum 10 characters
+        // see full message specs at:
+        // http://pixhawk.ethz.ch/wiki/mavlink/
+        strcpy(val.name, "FLOAT");
+        // Value, in this case 0.5
+        val.value = 0.5f;
+
+        // Encode the data (adding header and checksums, etc.)
+        mavlink_msg_named_value_float_encode(systemid, MAV_COMP_ID_IMU, &ret, &val);
+        // And send it
+        link->sendMAVLinkMessage(&ret);
+
+        // MICROCONTROLLER SEND CODE:
+
+        // uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+        // int16_t len = mavlink_msg_to_send_buffer(buf, &ret);
+        // uart0_transmit(buf, len);
+
+
+        // SEND INTEGER VALUE
+
+        // We are reusing the "mavlink_message_t ret"
+        // message buffer
+
+        // The C-struct holding the data to be sent
+        mavlink_named_value_int_t valint;
+
+        // Fill in the data
+        // Name of the value, maximum 10 characters
+        // see full message specs at:
+        // http://pixhawk.ethz.ch/wiki/mavlink/
+        strcpy(valint.name, "INTEGER");
+        // Value, in this case 18000
+        valint.value = 18000;
+
+        // Encode the data (adding header and checksums, etc.)
+        mavlink_msg_named_value_int_encode(systemid, MAV_COMP_ID_IMU, &ret, &valint);
+        // And send it
+        link->sendMAVLinkMessage(&ret);
+
+        // MICROCONTROLLER SEND CODE:
+
+        // uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+        // int16_t len = mavlink_msg_to_send_buffer(buf, &ret);
+        // uart0_transmit(buf, len);
+
         timer25Hz = 2;
     }
 

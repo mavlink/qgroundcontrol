@@ -563,7 +563,6 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
 
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
         {
-                        qDebug() << "GOT GLOBAL POS" << "sys:" << msg->sysid << "wpid" << current_active_wp_id << "wpsize" << waypoints->size();
                 if(msg->sysid == systemid && current_active_wp_id < waypoints->size())
                 {
                         mavlink_waypoint_t *wp = waypoints->at(current_active_wp_id);
