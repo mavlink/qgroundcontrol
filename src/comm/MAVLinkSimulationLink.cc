@@ -154,12 +154,12 @@ void MAVLinkSimulationLink::sendMAVLinkMessage(const mavlink_message_t* msg)
     unsigned int bufferlength = mavlink_msg_to_send_buffer(buf, msg);
 
     // Pack to link buffer
-//    readyBufferMutex.lock();
+    readyBufferMutex.lock();
     for (unsigned int i = 0; i < bufferlength; i++)
     {
         readyBuffer.enqueue(*(buf + i));
     }
-//    readyBufferMutex.unlock();
+    readyBufferMutex.unlock();
 }
 
 void MAVLinkSimulationLink::enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg)
@@ -891,8 +891,7 @@ void MAVLinkSimulationLink::readBytes() {
     readyBufferMutex.lock();
     const qint64 maxLength = 2048;
     char data[maxLength];
-    qint64 len = maxLength;
-    if (maxLength > readyBuffer.size()) len = readyBuffer.size();
+    qint64 len = qMin((qint64)readyBuffer.size(), maxLength);
 
     for (unsigned int i = 0; i < len; i++)
     {
