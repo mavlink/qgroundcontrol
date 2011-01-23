@@ -309,63 +309,6 @@ void WaypointList::waypointListChanged()
         this->setUpdatesEnabled(false);
         const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
 
-        // For Global Waypoints
-        //if(isGlobalWP)
-        //{
-        //isLocalWP = false;
-        //// first remove all views of non existing waypoints
-        //if (!wpGlobalViews.empty())
-        //{
-        //QMapIterator<Waypoint*,WaypointGlobalView*> viewIt(wpGlobalViews);
-        //viewIt.toFront();
-        //while(viewIt.hasNext())
-        //{
-        //viewIt.next();
-        //Waypoint *cur = viewIt.key();
-        //int i;
-        //for (i = 0; i < waypoints.size(); i++)
-        //{
-        //if (waypoints[i] == cur)
-        //{
-        //break;
-        //}
-        //}
-        //if (i == waypoints.size())
-        //{
-        //WaypointGlobalView* widget = wpGlobalViews.find(cur).value();
-        //widget->hide();
-        //listLayout->removeWidget(widget);
-        //wpGlobalViews.remove(cur);
-        //}
-        //}
-        //}
-
-        //// then add/update the views for each waypoint in the list
-        //for(int i = 0; i < waypoints.size(); i++)
-        //{
-        //Waypoint *wp = waypoints[i];
-        //if (!wpGlobalViews.contains(wp))
-        //{
-        //WaypointGlobalView* wpview = new WaypointGlobalView(wp, this);
-        //wpGlobalViews.insert(wp, wpview);
-        //connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
-        //connect(wpview, SIGNAL(changePositionWP(Waypoint*)), this, SLOT(changeWPPositionBySpinBox(Waypoint*)));
-        ////                        connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
-        ////                        connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
-        //// connect(wpview, SIGNAL(changePositionWP(Waypoint*)), this, SLOT(waypointGlobalPositionChanged(Waypoint*)));
-        ////                        connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
-        ////                        connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
-        //}
-        //WaypointGlobalView *wpgv = wpGlobalViews.value(wp);
-        //wpgv->updateValues();
-        //listLayout->addWidget(wpgv);
-        //}
-
-        //}
-        //else
-        //{
-            // for local Waypoints
-            // first remove all views of non existing waypoints
             if (!wpViews.empty())
             {
                 QMapIterator<Waypoint*,WaypointView*> viewIt(wpViews);
@@ -416,7 +359,6 @@ void WaypointList::waypointListChanged()
 
 
         loadFileGlobalWP = false;
-    //}
 }
 
 void WaypointList::moveUp(Waypoint* wp)
