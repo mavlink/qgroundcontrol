@@ -162,11 +162,15 @@ void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
 {
     if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
     {
-
+        mavlink_named_value_float_t val;
+        mavlink_msg_named_value_float_decode(&message, &val);
+        emit valueChanged(this->getUASID(), QString(val.name), tr("raw"), val.value, getUnixTime(0));
     }
     else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
     {
-
+        mavlink_named_value_int_t val;
+        mavlink_msg_named_value_int_decode(&message, &val);
+        emit valueChanged(this->getUASID(), QString(val.name), tr("raw"), (float)val.value, getUnixTime(0));
     }
 }
 
@@ -190,6 +194,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         QString uasState;
         QString stateDescription;
         QString patternPath;
+
+        // Receive named value message
+        receiveMessageNamedValue(message);
+
         switch (message.msgid)
         {
         case MAVLINK_MSG_ID_HEARTBEAT:
