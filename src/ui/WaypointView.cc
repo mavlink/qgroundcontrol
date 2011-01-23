@@ -170,13 +170,13 @@ void WaypointView::changedCurrent(int state)
 {
     if (state == 0)
     {
-        //m_ui->selectedBox->setChecked(true);
-        //m_ui->selectedBox->setCheckState(Qt::Checked);
-        //wp->setCurrent(false);
+        m_ui->selectedBox->setChecked(true);
+        m_ui->selectedBox->setCheckState(Qt::Checked);
+        wp->setCurrent(false);
     }
     else
     {
-        //wp->setCurrent(true);
+        wp->setCurrent(true);
         emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
     }
 }
@@ -255,8 +255,14 @@ void WaypointView::updateValues()
     {
         m_ui->yawSpinBox->setValue(wp->getYaw()/M_PI*180.);
     }
-    m_ui->selectedBox->setChecked(wp->getCurrent());
-    m_ui->autoContinue->setChecked(wp->getAutoContinue());
+    if (m_ui->selectedBox->isChecked() != wp->getCurrent())
+    {
+        m_ui->selectedBox->setChecked(wp->getCurrent());
+    }
+    if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
+    {
+        m_ui->autoContinue->setChecked(wp->getAutoContinue());
+    }
     m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
     if (m_ui->orbitSpinBox->value() != wp->getOrbit())
     {

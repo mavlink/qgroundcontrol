@@ -114,7 +114,7 @@ public slots:
     void timeout();                                 ///< Called by the timer if a response times out. Handles send retries.
     /** @name Waypoint list operations */
     /*@{*/
-    void addWaypoint(Waypoint *wp);                 ///< adds a new waypoint to the end of the list and changes its sequence number accordingly
+    void addWaypoint(Waypoint *wp, bool enforceFirstActive=true);                 ///< adds a new waypoint to the end of the list and changes its sequence number accordingly
     int removeWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
     void moveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
     void saveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile

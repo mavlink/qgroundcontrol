@@ -75,10 +75,6 @@ public slots:
     /** @brief Add a waypoint at the current MAV position */
     void addCurrentPositonWaypoint();
     /** @brief Add a waypoint by mouse click over the map */
-    void addWaypointMouse(QPointF coordinate);
-    /** @brief it notifies that a global waypoint goes to do created */
-    //void setIsWPGlobal(bool value, QPointF centerCoordinate);
-
 
     //Update events
     /** @brief sets statusLabel string */

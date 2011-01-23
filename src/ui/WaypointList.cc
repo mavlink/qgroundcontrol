@@ -507,29 +507,6 @@ void WaypointList::on_clearWPListButton_clicked()
     }
 }
 
-/** @brief Add a waypoint by mouse click over the map */
-void WaypointList::addWaypointMouse(QPointF coordinate)
-{
-    if (uas)
-    {
-        const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
-        if (waypoints.size() > 0)
-        {
-            Waypoint *last = waypoints.at(waypoints.size()-1);
-            Waypoint *wp = new Waypoint(0, coordinate.x(), coordinate.y(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime());
-            uas->getWaypointManager()->addWaypoint(wp);
-        }
-        else
-        {
-            Waypoint *wp = new Waypoint(0, coordinate.x(), coordinate.y(), -0.8, 0.0, true, true, 0.15, 2000);
-            uas->getWaypointManager()->addWaypoint(wp);
-        }
-
-
-    }
-
-}
-
 /** @brief The MapWidget informs that a waypoint global was changed on the map */
 
 void WaypointList::waypointGlobalChanged(QPointF coordinate, int indexWP)

@@ -11,24 +11,24 @@ MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int sy
     timer25Hz(0),
     timer10Hz(0),
     timer1Hz(0),
-    latitude(0.0),
-    longitude(0.0),
+    latitude(47.376389),
+    longitude(8.548056),
     altitude(0.0),
-    x(0.0),
-    y(0.0),
-    z(0.0),
+    x(8.548056),
+    y(47.376389),
+    z(550),
     roll(0.0),
     pitch(0.0),
     yaw(0.0),
     globalNavigation(true),
     firstWP(false),
-    previousSPX(0.0),
-    previousSPY(0.0),
-    previousSPZ(0.0),
+    previousSPX(8.548056),
+    previousSPY(47.376389),
+    previousSPZ(550),
     previousSPYaw(0.0),
-    nextSPX(0.0),
-    nextSPY(0.0),
-    nextSPZ(0.0),
+    nextSPX(8.548056),
+    nextSPY(47.376389),
+    nextSPZ(550),
     nextSPYaw(0.0)
 {
     // Please note: The waypoint planner is running
@@ -46,38 +46,54 @@ void MAVLinkSimulationMAV::mainloop()
 
 //        double xNew = // (nextSPX - previousSPX)
 
-    if (!firstWP)
-    {
-        double xm = (nextSPX - x) * 0.01;
-        double ym = (nextSPY - y) * 0.01;
-        double zm = (nextSPZ - z) * 0.1;
-
-        x += xm;
-        y += ym;
-        z += zm;
-
-        //if (xm < 0.001) xm
-    }
-    else
-    {
-        x = nextSPX;
-        y = nextSPY;
-        z = nextSPZ;
-        firstWP = false;
-    }
-
     // 1 Hz execution
     if (timer1Hz <= 0)
     {
         mavlink_message_t msg;
         mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK);
         link->sendMAVLinkMessage(&msg);
+        planner.handleMessage(msg);
         timer1Hz = 50;
     }
 
     // 10 Hz execution
     if (timer10Hz <= 0)
     {
+        if (!firstWP)
+        {
+            double radPer100ms = 0.0002;
+            double altPer100ms = 0.1;
+            double xm = (nextSPX - x);
+            double ym = (nextSPY - y);
+            double zm = (nextSPZ - z);
+
+            float zsign = (zm < 0) ? -1.0f : 1.0f;
+
+            //float trueyaw = atan2f(xm, ym);
+
+            yaw = yaw*0.9 + 0.1*atan2f(xm, ym);
+
+            qDebug() << "SIMULATION MAV: x:" << xm << "y:" << ym << "z:" << zm << "yaw:" << yaw;
+
+            if (sqrt(xm*xm+ym*ym) > 0.0001)
+            {
+                x += cos(yaw)*radPer100ms;
+                y += sin(yaw)*radPer100ms;
+                z += altPer100ms*zsign;
+            }
+
+            //if (xm < 0.001) xm
+        }
+        else
+        {
+            x = nextSPX;
+            y = nextSPY;
+            z = nextSPZ;
+            firstWP = false;
+            qDebug() << "INIT STEP";
+        }
+
+
         mavlink_message_t msg;
         mavlink_global_position_int_t pos;
         pos.alt = z*1000.0;
@@ -87,6 +103,16 @@ void MAVLinkSimulationMAV::mainloop()
         pos.vy = 0;
         pos.vz = 0;
         mavlink_msg_global_position_int_encode(systemid, MAV_COMP_ID_IMU, &msg, &pos);
+        link->sendMAVLinkMessage(&msg);
+        planner.handleMessage(msg);
+        mavlink_attitude_t attitude;
+        attitude.roll = 0.0f;
+        attitude.pitch = 0.0f;
+        attitude.yaw = yaw;
+
+        qDebug() << "YAW" << yaw;
+
+        mavlink_msg_attitude_encode(systemid, MAV_COMP_ID_IMU, &msg, &attitude);
         link->sendMAVLinkMessage(&msg);
         timer10Hz = 5;
     }
@@ -127,9 +153,9 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
                 //nextSPYaw = sp.yaw;
 
                 // Airplane
-                yaw = atan2(previousSPX-nextSPX, previousSPY-nextSPY);
+                //yaw = atan2(previousSPX-nextSPX, previousSPY-nextSPY);
 
-                if (!firstWP) firstWP = true;
+                //if (!firstWP) firstWP = true;
             }
             //qDebug() << "UPDATED SP:" << "X" << nextSPX << "Y" << nextSPY << "Z" << nextSPZ;
         }
