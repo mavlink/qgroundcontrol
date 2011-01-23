@@ -451,6 +451,11 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
+        // ATTITUDE VEHICLE 2
+        mavlink_msg_attitude_pack(54, MAV_COMP_ID_IMU, &ret, 0, 0, 0, atan2((y/2)+0.3, (x+0.002)), 0, 0, 0);
+        sendMAVLinkMessage(&ret);
+
+
 //        // GLOBAL POSITION VEHICLE 3
 //        mavlink_msg_global_position_int_pack(60, componentId, &ret, (473780.28137103+(x/2+0.002))*1E3, (85489.9892510421+((y*2)+0.3))*1E3, (z+590.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
 //        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);

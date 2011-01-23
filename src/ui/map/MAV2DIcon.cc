@@ -42,17 +42,18 @@ void MAV2DIcon::setPen(QPen* pen)
  */
 void MAV2DIcon::setYaw(float yaw)
 {
-    float diff = fabs(yaw - this->yaw);
-    while (diff > M_PI)
-    {
-        diff -= M_PI;
-    }
+    //qDebug() << "MAV2Icon" << yaw;
+    //float diff = fabs(yaw - this->yaw);
+//    while (diff > M_PI)
+//    {
+//        diff -= M_PI;
+//    }
 
-    if (diff > 0.25)
-    {
+//    if (diff > 0.25)
+//    {
         this->yaw = yaw;
         drawIcon(mypen);
-    }
+//    }
 }
 
 void MAV2DIcon::drawIcon(QPen* pen)

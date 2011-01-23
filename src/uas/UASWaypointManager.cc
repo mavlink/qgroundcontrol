@@ -138,9 +138,9 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id)
         {
-            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->yaw << wp->autocontinue << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_ACTION) wp->action;
+            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->yaw << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_ACTION) wp->action;
             Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_ACTION) wp->action);
-            addWaypoint(lwp);
+            addWaypoint(lwp, false);
 
             //get next waypoint
             current_wp_id++;
@@ -320,11 +320,15 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
     return -1;
 }
 
-void UASWaypointManager::addWaypoint(Waypoint *wp)
+/**
+ * @param enforceFirstActive Enforces that the first waypoint is set as active
+ */
+void UASWaypointManager::addWaypoint(Waypoint *wp, bool enforceFirstActive)
 {
     if (wp)
     {
         wp->setId(waypoints.size());
+        if (enforceFirstActive && waypoints.size() == 0) wp->setCurrent(true);
         waypoints.insert(waypoints.size(), wp);
         connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChange(Waypoint*)));
 
@@ -517,6 +521,7 @@ void UASWaypointManager::writeWaypoints()
 {
     if (current_state == WP_IDLE)
     {
+        // Send clear all if count == 0
         if (waypoints.count() > 0)
         {
             protocol_timer.start(PROTOCOL_TIMEOUT_MS);
@@ -529,7 +534,9 @@ void UASWaypointManager::writeWaypoints()
             current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
 
             //clear local buffer
-            //TODO: Why not replace with waypoint_buffer.clear() ? - because this will lead to memory leaks, the waypoint-structs have to be deleted, clear() would only delete the pointers.
+            // Why not replace with waypoint_buffer.clear() ?
+            // because this will lead to memory leaks, the waypoint-structs
+            // have to be deleted, clear() would only delete the pointers.
             while(!waypoint_buffer.empty())
             {
                 delete waypoint_buffer.back();

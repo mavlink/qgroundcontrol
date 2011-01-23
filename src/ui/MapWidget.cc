@@ -94,9 +94,9 @@ MapWidget::MapWidget(QWidget *parent) :
 
     // SET INITIAL POSITION AND ZOOM
     // Set default zoom level
-    mc->setZoom(17);
+    mc->setZoom(16);
     // Zurich, ETH
-    mc->setView(QPointF(8.548056,47.376389));
+    mc->setView(QPointF(8.548056,47.376889));
 
     // Veracruz Mexico
     //mc->setView(QPointF(-96.105208,19.138955));
@@ -411,7 +411,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
         if (mav)
         {
-            mav->getWaypointManager()->addWaypoint(new Waypoint(mav->getWaypointManager()->getWaypointList().count(), coordinate.x(), coordinate.y()));
+            mav->getWaypointManager()->addWaypoint(new Waypoint(mav->getWaypointManager()->getWaypointList().count(), coordinate.x(), coordinate.y(), 0.0f, 0.0f, true));
         }
         else
         {
@@ -824,7 +824,8 @@ mc->updateRequest(p->boundingBox().toRect());
 
     //mc->updateRequestNew();//(uasTrails.value(uas->getUASID())->boundingBox().toRect());
 
-
+    if (uas->getUASID() == this->mav->getUASID())
+{
     // Limit the position update rate
     quint64 currTime = MG::TIME::getGroundTimeNow();
     if (currTime - lastUpdate > 120)
@@ -841,6 +842,7 @@ mc->updateRequest(p->boundingBox().toRect());
             //mc->updateRequestNew();
         }
     }
+}
 }
 
 /**
