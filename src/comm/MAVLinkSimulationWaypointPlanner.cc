@@ -463,7 +463,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
 
         //check for timed-out operations
 
-        qDebug() << "MAV: %d WAYPOINTPLANNER GOT MESSAGE" << systemid;
+        //qDebug() << "MAV: %d WAYPOINTPLANNER GOT MESSAGE" << systemid;
 
         uint64_t now = QGC::groundTimeUsecs()/1000;
         if (now-protocol_timestamp_lastaction > protocol_timeout && current_state != PX_WPP_IDLE)
@@ -584,7 +584,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
 
                                 // FIXME big hack for simulation!
                                 //float oneDegreeOfLatMeters = 111131.745f;
-                                float orbit = 0.0001;
+                                float orbit = 0.00008;
 
                                 // compare current position (given in message) with current waypoint
                                 //float orbit = wp->param1;
@@ -1009,7 +1009,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                                         {
                                                 //the last waypoint was reached, if auto continue is
                                                 //activated restart the waypoint list from the beginning
-                                                current_active_wp_id = 1;
+                                                current_active_wp_id = 0;
                                         }
                                         else
                                         {

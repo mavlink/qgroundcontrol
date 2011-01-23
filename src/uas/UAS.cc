@@ -146,7 +146,16 @@ void UAS::updateState()
 
 void UAS::setSelected()
 {
-    UASManager::instance()->setActiveUAS(this);
+    if (UASManager::instance()->getActiveUAS() != this)
+    {
+        UASManager::instance()->setActiveUAS(this);
+        emit systemSelected(true);
+    }
+}
+
+bool UAS::getSelected() const
+{
+    return (UASManager::instance()->getActiveUAS() == this);
 }
 
 void UAS::receiveMessageNamedValue(const mavlink_message_t& message)

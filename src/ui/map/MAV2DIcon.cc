@@ -3,13 +3,16 @@
 
 #include <qmath.h>
 
-MAV2DIcon::MAV2DIcon(qreal x, qreal y, int radius, int type, const QColor& color, QString name, Alignment alignment, QPen* pen)
-    : Point(x, y, name, alignment),
+MAV2DIcon::MAV2DIcon(UASInterface* uas, int radius, int type, const QColor& color, QString name, Alignment alignment, QPen* pen)
+    : Point(uas->getLatitude(), uas->getLongitude(), name, alignment),
     yaw(0.0f),
     radius(radius),
     type(type),
-    iconColor(color)
+    iconColor(color),
+    selected(uas->getSelected()),
+    uasid(uas->getUASID())
 {
+    //connect
     size = QSize(radius, radius);
     drawIcon(pen);
 }
@@ -18,7 +21,9 @@ MAV2DIcon::MAV2DIcon(qreal x, qreal y, QString name, Alignment alignment, QPen* 
     : Point(x, y, name, alignment),
     radius(20),
     type(0),
-    iconColor(Qt::yellow)
+    iconColor(Qt::yellow),
+    selected(false),
+    uasid(0)
 {
     size = QSize(radius, radius);
     drawIcon(pen);
@@ -35,6 +40,12 @@ void MAV2DIcon::setPen(QPen* pen)
     drawIcon(pen);
 }
 
+void MAV2DIcon::setSelectedUAS(bool selected)
+{
+    this->selected = selected;
+    drawIcon(mypen);
+}
+
 /**
  * Yaw changes of less than ±15 degrees are ignored.
  *
@@ -43,22 +54,54 @@ void MAV2DIcon::setPen(QPen* pen)
 void MAV2DIcon::setYaw(float yaw)
 {
     //qDebug() << "MAV2Icon" << yaw;
-    //float diff = fabs(yaw - this->yaw);
-//    while (diff > M_PI)
-//    {
-//        diff -= M_PI;
-//    }
+    float diff = fabs(yaw - this->yaw);
+    while (diff > M_PI)
+    {
+        diff -= M_PI;
+    }
 
-//    if (diff > 0.25)
-//    {
+    if (diff > 0.1)
+    {
         this->yaw = yaw;
         drawIcon(mypen);
-//    }
+    }
 }
 
 void MAV2DIcon::drawIcon(QPen* pen)
 {
     Q_UNUSED(pen);
+    if (!mypixmap) mypixmap = new QPixmap(radius+1, radius+1);
+    mypixmap->fill(Qt::transparent);
+    QPainter painter(mypixmap);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+
+    // Rotate by yaw
+    painter.translate(radius/2, radius/2);
+
+    // Draw selected indicator
+    if (selected)
+    {
+//        qDebug() << "SYSTEM IS NOW SELECTED";
+//        QColor color(Qt::yellow);
+//        color.setAlpha(0.3f);
+        painter.setBrush(Qt::NoBrush);
+//        QPen selPen(color);
+//        int width = 5;
+//        selPen.setWidth(width);
+        painter.setPen(Qt::yellow);
+        painter.drawEllipse(QPoint(0, 0), radius/2-1, radius/2-1);
+        //qDebug() << "Painting ellipse" << radius/2-width << width;
+        //selPen->deleteLater();
+    }
+
+    float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f+180.0f;
+
+    painter.rotate(yawRotate);
+
+    if (this->name() == "1") qDebug() << "uas icon" << name() << "yaw in:" << yaw << "rotate:" << yawRotate;
+
     switch (type)
     {
     case MAV_ICON_GENERIC:
@@ -67,20 +110,9 @@ void MAV2DIcon::drawIcon(QPen* pen)
     case MAV_ICON_ROTARY_WING:
     default:
         {
-            mypixmap = new QPixmap(radius+1, radius+1);
-            mypixmap->fill(Qt::transparent);
-            QPainter painter(mypixmap);
-            painter.setRenderHint(QPainter::TextAntialiasing);
-            painter.setRenderHint(QPainter::Antialiasing);
-            painter.setRenderHint(QPainter::HighQualityAntialiasing);
-
-            // Rotate by yaw
-            painter.translate(radius/2, radius/2);
-            painter.rotate(((yaw/(float)M_PI)+1.0f)*360.0f);
-
             // DRAW AIRPLANE
 
-            qDebug() << "ICON SIZE:" << radius;
+            //qDebug() << "ICON SIZE:" << radius;
 
             float iconSize = radius*0.9f;
             QPolygonF poly(24);
@@ -134,6 +166,9 @@ void MAV2DIcon::drawIcon(QPen* pen)
 //                painter.setPen(pen2);
 //            }
             painter.setBrush(QBrush(iconColor));
+            QPen iconPen(Qt::black);
+            iconPen.setWidthF(1.0f);
+            painter.setPen(iconPen);
 
             painter.drawPolygon(poly);
         }
