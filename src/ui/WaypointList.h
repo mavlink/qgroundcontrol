@@ -41,7 +41,6 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include "UASInterface.h"
 #include "WaypointView.h"
-#include "WaypointGlobalView.h"
 
 
 namespace Ui {
@@ -115,7 +114,6 @@ protected:
 
 protected:
     QMap<Waypoint*, WaypointView*> wpViews;
-    //QMap<Waypoint*, WaypointGlobalView*> wpGlobalViews;
     QVBoxLayout* listLayout;
     UASInterface* uas;
     double mavX;
