@@ -632,7 +632,7 @@ void MAVLinkSimulationLink::mainloop()
         // HEARTBEAT VEHICLE 2
 
         // Pack message and get size of encoded byte string
-        messageSize = mavlink_msg_heartbeat_pack(54, componentId, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_ARDUPILOTMEGA);
+        messageSize = mavlink_msg_heartbeat_pack(54, componentId, &msg, MAV_HELICOPTER, MAV_AUTOPILOT_ARDUPILOTMEGA);
         // Allocate buffer with packet data
         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
         //add data into datastream

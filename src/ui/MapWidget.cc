@@ -157,8 +157,8 @@ MapWidget::MapWidget(QWidget *parent) :
     zoomout->setStyleSheet(buttonStyle);
     createPath = new QPushButton(QIcon(":/images/actions/go-bottom.svg"), "", this);
     createPath->setStyleSheet(buttonStyle);
-    clearTracking = new QPushButton(QIcon(""), "", this);
-    clearTracking->setStyleSheet(buttonStyle);
+//    clearTracking = new QPushButton(QIcon(""), "", this);
+//    clearTracking->setStyleSheet(buttonStyle);
     followgps = new QPushButton(QIcon(":/images/actions/system-lock-screen.svg"), "", this);
     followgps->setStyleSheet(buttonStyle);
     QPushButton* goToButton = new QPushButton(QIcon(""), "T", this);
@@ -167,7 +167,7 @@ MapWidget::MapWidget(QWidget *parent) :
     zoomin->setMaximumWidth(30);
     zoomout->setMaximumWidth(30);
     createPath->setMaximumWidth(30);
-    clearTracking->setMaximumWidth(30);
+//    clearTracking->setMaximumWidth(30);
     followgps->setMaximumWidth(30);
     goToButton->setMaximumWidth(30);
 
@@ -185,7 +185,7 @@ MapWidget::MapWidget(QWidget *parent) :
     innerlayout->addWidget(zoomout, 1, 0);
     innerlayout->addWidget(followgps, 2, 0);
     innerlayout->addWidget(createPath, 3, 0);
-    innerlayout->addWidget(clearTracking, 4, 0);
+    //innerlayout->addWidget(clearTracking, 4, 0);
     // Add spacers to compress buttons on the top left
     innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 5, 0);
     innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 0, 1, 0, 7);
@@ -692,7 +692,7 @@ void MapWidget::redoWaypoints(int uas)
     // Get waypoint list for this MAV
 
     // Clear all waypoints
-    clearWaypoints();
+    //clearWaypoints();
     // Re-add the updated waypoints
 
     //    }
@@ -714,16 +714,17 @@ void MapWidget::activeUASSet(UASInterface* uas)
     if (uas)
     {
         mav = uas;
-        QColor color = mav->getColor().lighter(100);
-        color.setAlphaF(0.6);
+        QColor color = mav->getColor();
+        color.setAlphaF(0.9);
         QPen* pen = new QPen(color);
-        pen->setWidth(2.0);
+        pen->setWidth(3.0);
         mavPens.insert(mav->getUASID(), pen);
         // FIXME Remove after refactoring
         waypointPath->setPen(pen);
 
         // Delete all waypoints and add waypoint from new system
-        redoWaypoints();
+        //redoWaypoints();
+        updateWaypointList(uas->getUASID());
 
         // Connect the waypoint manager / data storage to the UI
         connect(mav->getWaypointManager(), SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
@@ -731,6 +732,7 @@ void MapWidget::activeUASSet(UASInterface* uas)
         connect(this, SIGNAL(waypointCreated(Waypoint*)), mav->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
 
         updateSelectedSystem(mav->getUASID());
+        mc->updateRequest(waypointPath->boundingBox().toRect());
     }
 }
 

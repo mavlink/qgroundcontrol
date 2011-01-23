@@ -50,6 +50,13 @@ void MAVLinkSimulationMAV::mainloop()
 
     //        double xNew = // (nextSPX - previousSPX)
 
+    if (flying)
+    {
+        sys_state = MAV_STATE_ACTIVE;
+        sys_mode = MAV_MODE_AUTO;
+        nav_mode = MAV_NAV_WAYPOINT;
+    }
+
     // 1 Hz execution
     if (timer1Hz <= 0)
     {
@@ -76,17 +83,6 @@ void MAVLinkSimulationMAV::mainloop()
             //float trueyaw = atan2f(xm, ym);
 
             float newYaw = atan2f(xm, ym);
-            // Choose shortest direction
-//            if (yaw - newYaw < -180.0f)
-//            {
-//                yaw = newYaw + 180.0f;
-//            }
-
-//            if (yaw - newYaw > 180.0f)
-//            {
-//                yaw = newYaw - 180.0f;
-//            }
-
 
             if (fabs(yaw - newYaw) < 90)
             {
@@ -152,6 +148,7 @@ void MAVLinkSimulationMAV::mainloop()
         status.status = sys_state;
 
         mavlink_msg_sys_status_encode(systemid, MAV_COMP_ID_IMU, &msg, &status);
+        link->sendMAVLinkMessage(&msg);
         timer10Hz = 5;
     }
 

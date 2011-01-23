@@ -66,6 +66,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         localFrame(false),
         removeAction(new QAction("Delete this system", this)),
         renameAction(new QAction("Rename..", this)),
+        selectAction(new QAction("Select this system", this )),
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
@@ -102,6 +103,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     // Allow to delete this widget
     connect(removeAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
+    connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
     connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
 
     // Name changes
@@ -135,6 +137,9 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 UASView::~UASView()
 {
     delete m_ui;
+    delete removeAction;
+    delete renameAction;
+    delete selectAction;
 }
 
 void UASView::heartbeatTimeout()
@@ -413,6 +418,7 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
     {
         menu.addAction(removeAction);
     }
+    menu.addAction(selectAction);
     menu.exec(event->globalPos());
 }
 
