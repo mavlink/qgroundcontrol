@@ -235,7 +235,7 @@ QProgressBar::chunk#thrustBar {
          </sizepolicy>
         </property>
         <property name="focusPolicy">
-         <enum>Qt::ClickFocus</enum>
+         <enum>Qt::WheelFocus</enum>
         </property>
         <property name="toolTip">
          <string>Position X coordinate</string>
@@ -275,7 +275,7 @@ QProgressBar::chunk#thrustBar {
          </sizepolicy>
         </property>
         <property name="focusPolicy">
-         <enum>Qt::StrongFocus</enum>
+         <enum>Qt::WheelFocus</enum>
         </property>
         <property name="toolTip">
          <string>Position Y coordinate</string>
@@ -309,7 +309,7 @@ QProgressBar::chunk#thrustBar {
          </sizepolicy>
         </property>
         <property name="focusPolicy">
-         <enum>Qt::StrongFocus</enum>
+         <enum>Qt::WheelFocus</enum>
         </property>
         <property name="toolTip">
          <string>Position Z coordinate (negative)</string>
@@ -340,7 +340,7 @@ QProgressBar::chunk#thrustBar {
          </sizepolicy>
         </property>
         <property name="focusPolicy">
-         <enum>Qt::StrongFocus</enum>
+         <enum>Qt::WheelFocus</enum>
         </property>
         <property name="prefix">
          <string>lat </string>
@@ -371,7 +371,7 @@ QProgressBar::chunk#thrustBar {
          </sizepolicy>
         </property>
         <property name="focusPolicy">
-         <enum>Qt::StrongFocus</enum>
+         <enum>Qt::WheelFocus</enum>
         </property>
         <property name="prefix">
          <string>lon </string>

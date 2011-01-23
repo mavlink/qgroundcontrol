@@ -203,6 +203,7 @@ void UASManager::setActiveUAS(UASInterface* uas)
         activeUAS = uas;
         activeUASMutex.unlock();
 
+        activeUAS->setSelected();
         emit activeUASSet(uas);
         emit activeUASSet(uas->getUASID());
         emit activeUASSetListIndex(systems.indexOf(uas));

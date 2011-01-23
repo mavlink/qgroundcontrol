@@ -89,9 +89,10 @@ public:
     double getRoll() const { return roll; }
     double getPitch() const { return pitch; }
     double getYaw() const { return yaw; }
-
+    bool getSelected() const;
 
 friend class UASWaypointManager;
+
 protected: //COMMENTS FOR TEST UNIT
     int uasId;                    ///< Unique system ID
     unsigned char type;           ///< UAS type (from type enum)

@@ -68,6 +68,8 @@ public:
 public slots:
     void addUAS(UASInterface* uas);
     void activeUASSet(UASInterface* uas);
+    /** @brief Update the selected system */
+    void updateSelectedSystem(int uas);
     /** @brief Update the attitude */
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 usec);
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);

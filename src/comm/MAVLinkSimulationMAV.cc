@@ -4,32 +4,36 @@
 #include "MAVLinkSimulationMAV.h"
 
 MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int systemid) :
-    QObject(parent),
-    link(parent),
-    planner(parent, systemid),
-    systemid(systemid),
-    timer25Hz(0),
-    timer10Hz(0),
-    timer1Hz(0),
-    latitude(47.376389),
-    longitude(8.548056),
-    altitude(0.0),
-    x(8.548056),
-    y(47.376389),
-    z(550),
-    roll(0.0),
-    pitch(0.0),
-    yaw(0.0),
-    globalNavigation(true),
-    firstWP(false),
-    previousSPX(8.548056),
-    previousSPY(47.376389),
-    previousSPZ(550),
-    previousSPYaw(0.0),
-    nextSPX(8.548056),
-    nextSPY(47.376389),
-    nextSPZ(550),
-    nextSPYaw(0.0)
+        QObject(parent),
+        link(parent),
+        planner(parent, systemid),
+        systemid(systemid),
+        timer25Hz(0),
+        timer10Hz(0),
+        timer1Hz(0),
+        latitude(47.376389),
+        longitude(8.548056),
+        altitude(0.0),
+        x(8.548056),
+        y(47.376389),
+        z(550),
+        roll(0.0),
+        pitch(0.0),
+        yaw(0.0),
+        globalNavigation(true),
+        firstWP(false),
+        previousSPX(8.548056),
+        previousSPY(47.376389),
+        previousSPZ(550),
+        previousSPYaw(0.0),
+        nextSPX(8.548056),
+        nextSPY(47.376389),
+        nextSPZ(550),
+        nextSPYaw(0.0),
+        sys_mode(MAV_MODE_READY),
+        sys_state(MAV_STATE_STANDBY),
+        nav_mode(MAV_NAV_GROUNDED),
+        flying(false)
 {
     // Please note: The waypoint planner is running
     connect(&mainloopTimer, SIGNAL(timeout()), this, SLOT(mainloop()));
@@ -42,9 +46,9 @@ MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int sy
 void MAVLinkSimulationMAV::mainloop()
 {
     // Calculate new simulator values
-//    double maxSpeed = 0.0001; // rad/s in earth coordinate frame
+    //    double maxSpeed = 0.0001; // rad/s in earth coordinate frame
 
-//        double xNew = // (nextSPX - previousSPX)
+    //        double xNew = // (nextSPX - previousSPX)
 
     // 1 Hz execution
     if (timer1Hz <= 0)
@@ -61,8 +65,8 @@ void MAVLinkSimulationMAV::mainloop()
     {
         if (!firstWP)
         {
-            double radPer100ms = 0.0002;
-            double altPer100ms = 0.1;
+            double radPer100ms = 0.00006;
+            double altPer100ms = 1.0;
             double xm = (nextSPX - x);
             double ym = (nextSPY - y);
             double zm = (nextSPZ - z);
@@ -71,14 +75,35 @@ void MAVLinkSimulationMAV::mainloop()
 
             //float trueyaw = atan2f(xm, ym);
 
-            yaw = yaw*0.9 + 0.1*atan2f(xm, ym);
+            float newYaw = atan2f(xm, ym);
+            // Choose shortest direction
+//            if (yaw - newYaw < -180.0f)
+//            {
+//                yaw = newYaw + 180.0f;
+//            }
 
-            qDebug() << "SIMULATION MAV: x:" << xm << "y:" << ym << "z:" << zm << "yaw:" << yaw;
+//            if (yaw - newYaw > 180.0f)
+//            {
+//                yaw = newYaw - 180.0f;
+//            }
 
-            if (sqrt(xm*xm+ym*ym) > 0.0001)
+
+            if (fabs(yaw - newYaw) < 90)
             {
-                x += cos(yaw)*radPer100ms;
-                y += sin(yaw)*radPer100ms;
+                yaw = yaw*0.7 + 0.3*newYaw;
+            }
+            else
+            {
+                yaw = newYaw;
+            }
+
+            //qDebug() << "SIMULATION MAV: x:" << xm << "y:" << ym << "z:" << zm << "yaw:" << yaw;
+
+            //if (sqrt(xm*xm+ym*ym) > 0.0000001)
+            if (flying)
+            {
+                x += sin(yaw)*radPer100ms;
+                y += cos(yaw)*radPer100ms;
                 z += altPer100ms*zsign;
             }
 
@@ -94,6 +119,7 @@ void MAVLinkSimulationMAV::mainloop()
         }
 
 
+        // GLOBAL POSITION
         mavlink_message_t msg;
         mavlink_global_position_int_t pos;
         pos.alt = z*1000.0;
@@ -105,15 +131,27 @@ void MAVLinkSimulationMAV::mainloop()
         mavlink_msg_global_position_int_encode(systemid, MAV_COMP_ID_IMU, &msg, &pos);
         link->sendMAVLinkMessage(&msg);
         planner.handleMessage(msg);
+
+        // ATTITUDE
         mavlink_attitude_t attitude;
         attitude.roll = 0.0f;
         attitude.pitch = 0.0f;
         attitude.yaw = yaw;
 
-        qDebug() << "YAW" << yaw;
-
         mavlink_msg_attitude_encode(systemid, MAV_COMP_ID_IMU, &msg, &attitude);
         link->sendMAVLinkMessage(&msg);
+
+        // SYSTEM STATUS
+        mavlink_sys_status_t status;
+        status.load = 300;
+        status.motor_block = 1;
+        status.mode = sys_mode;
+        status.nav_mode = nav_mode;
+        status.packet_drop = 0;
+        status.vbat = 10500;
+        status.status = sys_state;
+
+        mavlink_msg_sys_status_encode(systemid, MAV_COMP_ID_IMU, &msg, &status);
         timer10Hz = 5;
     }
 
@@ -135,6 +173,37 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
     switch(msg.msgid)
     {
     case MAVLINK_MSG_ID_ATTITUDE:
+        break;
+    case MAVLINK_MSG_ID_SET_MODE:
+        {
+            mavlink_set_mode_t mode;
+            mavlink_msg_set_mode_decode(&msg, &mode);
+            if (systemid == mode.target) sys_mode = mode.mode;
+        }
+        break;
+    case MAVLINK_MSG_ID_ACTION:
+        {
+            mavlink_action_t action;
+            mavlink_msg_action_decode(&msg, &action);
+            if (systemid == action.target && (action.target_component == 0 || action.target_component == MAV_COMP_ID_IMU))
+            {
+                switch (action.action)
+                {
+                case MAV_ACTION_LAUNCH:
+                    flying = true;
+                    break;
+                default:
+                    {
+                        mavlink_statustext_t text;
+                        mavlink_message_t r_msg;
+                        sprintf((char*)text.text, "MAV%d ignored unknown action %d", systemid, action.action);
+                        mavlink_msg_statustext_encode(systemid, MAV_COMP_ID_IMU, &r_msg, &text);
+                        link->sendMAVLinkMessage(&r_msg);
+                    }
+                    break;
+                }
+            }
+        }
         break;
     case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET:
         {

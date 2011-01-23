@@ -36,7 +36,7 @@ MapWidget::MapWidget(QWidget *parent) :
         m_ui(new Ui::MapWidget)
 {
     m_ui->setupUi(this);
-    mc = new qmapcontrol::MapControl(QSize(320, 240));
+    mc = new qmapcontrol::MapControl(this->size());
 
     //   VISUAL MAP STYLE
     QString buttonStyle("QAbstractButton { background-color: rgba(20, 20, 20, 45%); border-color: rgba(10, 10, 10, 50%)} QAbstractButton:checked { border: 2px solid #379AC3; }");
@@ -254,26 +254,26 @@ MapWidget::MapWidget(QWidget *parent) :
 void MapWidget::goTo()
 {
     bool ok;
-         QString text = QInputDialog::getText(this, tr("Please enter coordinates"),
-                                              tr("Coordinates (Lat,Lon):"), QLineEdit::Normal,
-                                              QString("%1,%2").arg(mc->currentCoordinate().x()).arg(mc->currentCoordinate().y()), &ok);
-         if (ok && !text.isEmpty())
-         {
-             QStringList split = text.split(",");
-             if (split.length() == 2)
-             {
-                 bool convert;
-                 double latitude = split.first().toDouble(&convert);
-                 ok &= convert;
-                 double longitude = split.last().toDouble(&convert);
-                 ok &= convert;
+    QString text = QInputDialog::getText(this, tr("Please enter coordinates"),
+                                         tr("Coordinates (Lat,Lon):"), QLineEdit::Normal,
+                                         QString("%1,%2").arg(mc->currentCoordinate().x()).arg(mc->currentCoordinate().y()), &ok);
+    if (ok && !text.isEmpty())
+    {
+        QStringList split = text.split(",");
+        if (split.length() == 2)
+        {
+            bool convert;
+            double latitude = split.first().toDouble(&convert);
+            ok &= convert;
+            double longitude = split.last().toDouble(&convert);
+            ok &= convert;
 
-                 if (ok)
-                 {
-                     mc->setView(QPointF(latitude, longitude));
-                 }
-             }
-         }
+            if (ok)
+            {
+                mc->setView(QPointF(latitude, longitude));
+            }
+        }
+    }
 }
 
 
@@ -290,7 +290,7 @@ void MapWidget::mapproviderSelected(QAction* action)
         l->setMapAdapter(mapadapter);
         geomLayer->setMapAdapter(mapadapter);
 
-        mc->updateRequestNew();
+        if (isVisible()) mc->updateRequestNew();
         mc->setZoom(zoom);
         //        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
@@ -306,7 +306,7 @@ void MapWidget::mapproviderSelected(QAction* action)
         l->setMapAdapter(mapadapter);
         geomLayer->setMapAdapter(mapadapter);
 
-        mc->updateRequestNew();
+        if (isVisible()) mc->updateRequestNew();
         mc->setZoom(zoom);
         //        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
@@ -321,7 +321,7 @@ void MapWidget::mapproviderSelected(QAction* action)
         mapadapter = new qmapcontrol::YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
         l->setMapAdapter(mapadapter);
 
-        mc->updateRequestNew();
+        if (isVisible()) mc->updateRequestNew();
         mc->setZoom(zoom);
         //        yahooActionOverlay->setEnabled(true);
     }
@@ -333,7 +333,7 @@ void MapWidget::mapproviderSelected(QAction* action)
         l->setMapAdapter(mapadapter);
         geomLayer->setMapAdapter(mapadapter);
 
-        mc->updateRequestNew();
+        if (isVisible()) mc->updateRequestNew();
         mc->setZoom(zoom);
         //        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
@@ -347,7 +347,7 @@ void MapWidget::mapproviderSelected(QAction* action)
         l->setMapAdapter(mapadapter);
         geomLayer->setMapAdapter(mapadapter); 
 
-        mc->updateRequestNew();
+        if (isVisible()) mc->updateRequestNew();
         mc->setZoom(zoom);
         //        yahooActionOverlay->setEnabled(false);
         overlay->setVisible(false);
@@ -426,7 +426,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
             waypointPath->addPoint(tempPoint);
 
             // Refresh the screen
-            mc->updateRequest(tempPoint->boundingBox().toRect());
+            if (isVisible()) mc->updateRequest(tempPoint->boundingBox().toRect());
         }
 
         // emit signal mouse was clicked
@@ -445,10 +445,11 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
     if (uas == this->mav->getUASID())
     {
         int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getIndexOf(wp);
+        if (wpindex == -1) return;
         // Create waypoint name
-        QString str = QString("%1").arg(wpindex);
+        //QString str = QString("%1").arg(wpindex);
         // Check if wp exists yet
-        if (!(wps.count() > wpindex))
+        if (!(wpIcons.count() > wpindex))
         {
             QPointF coordinate;
             coordinate.setX(wp->getX());
@@ -494,7 +495,7 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
 
                     //point2Find = dynamic_cast <Point*> (mc->layer("Waypoints")->get_Geometry(wpindex));
                     //point2Find->setCoordinate(coordinate);
-                    if (updateView) mc->updateRequest(waypoint->boundingBox().toRect());
+                    if (updateView) if (isVisible()) mc->updateRequest(waypoint->boundingBox().toRect());
                 }
             }
         }
@@ -537,7 +538,7 @@ void MapWidget::createWaypointGraphAtMap(int id, const QPointF coordinate)
         qDebug()<<"Funcion createWaypointGraphAtMap WP= "<<str<<" -> x= "<<tempPoint->latitude()<<" y= "<<tempPoint->longitude();
 
         // Refresh the screen
-        mc->updateRequest(tempPoint->boundingBox().toRect());
+        if (isVisible()) if (isVisible()) mc->updateRequest(tempPoint->boundingBox().toRect());
     }
 
     ////    // emit signal mouse was clicked
@@ -570,7 +571,7 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
     waypointIsDrag = true;
 
     // Refresh the screen
-    mc->updateRequest(geom->boundingBox().toRect());
+    if (isVisible()) mc->updateRequest(geom->boundingBox().toRect());
 
     int temp = 0;
 
@@ -578,40 +579,35 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
     bool wpIndexOk;
     int index = geom->name().toInt(&wpIndexOk);
 
-    qmapcontrol::Point* point2Find;
-    point2Find = wps.at(geom->name().toInt());
+    Waypoint2DIcon* point2Find = dynamic_cast <Waypoint2DIcon*> (geom);
 
-    if (point2Find)
+    if (wpIndexOk && point2Find && wps.count() > index)
     {
+        // Update visual
         point2Find->setCoordinate(coordinate);
+        waypointPath->points().at(index)->setCoordinate(coordinate);
+        if (isVisible()) mc->updateRequest(waypointPath->boundingBox().toRect());
 
-        point2Find = dynamic_cast <qmapcontrol::Point*> (geom);
-        if (point2Find)
+        // Update waypoint data storage
+        if (mav)
         {
-            point2Find->setCoordinate(coordinate);
+            QVector<Waypoint*> wps = mav->getWaypointManager()->getWaypointList();
 
-            if (wpIndexOk)
+            if (wps.size() > index)
             {
-                mc->updateRequest(point2Find->boundingBox().toRect());
-                if (mav)
-                {
-                        QVector<Waypoint*> wps = mav->getWaypointManager()->getWaypointList();
-
-                    if (wps.size() > index)
-                    {
-                        wps.at(index)->setX(coordinate.x());
-                        wps.at(index)->setY(coordinate.y());
-                        mav->getWaypointManager()->notifyOfChange(wps.at(index));
-                    }
-                }
+                wps.at(index)->setX(coordinate.x());
+                wps.at(index)->setY(coordinate.y());
+                mav->getWaypointManager()->notifyOfChange(wps.at(index));
             }
-            // qDebug() << geom->name();
-            temp = geom->get_myIndex();
-            //qDebug() << temp;
-            emit sendGeometryEndDrag(coordinate,temp);
         }
+
+        // qDebug() << geom->name();
+        temp = geom->get_myIndex();
+        //qDebug() << temp;
+        emit sendGeometryEndDrag(coordinate,temp);
     }
 
+    waypointIsDrag = false;
 }
 
 void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
@@ -670,21 +666,20 @@ void MapWidget::updateWaypointList(int uas)
         }
 
         // Delete now unused wps
-        if (wps.count() > wpList.count())
+        if (waypointPath->points().count() > wpList.count())
         {
-            for (int i = wpList.count(); i < wps.count(); ++i)
+            int overSize = waypointPath->points().count() - wpList.count();
+            for (int i = 0; i < overSize; ++i)
             {
-                wps.removeAt(i);
-                mc->layer("Waypoints")->removeGeometry(wpIcons.at(i));
-                waypointPath->points().removeAt(i);
-                //Point* linesegment = waypointPath->points().at(mav->getWaypointManager()->getWaypointList().indexOf(wp));
-
-
+                wps.removeLast();
+                mc->layer("Waypoints")->removeGeometry(wpIcons.last());
+                wpIcons.removeLast();
+                waypointPath->points().removeLast();
             }
         }
 
         // Update view
-        mc->updateRequest(updateRect);
+        if (isVisible()) mc->updateRequest(updateRect);
     }
 }
 
@@ -734,6 +729,21 @@ void MapWidget::activeUASSet(UASInterface* uas)
         connect(mav->getWaypointManager(), SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
         connect(mav->getWaypointManager(), SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(this, SIGNAL(waypointCreated(Waypoint*)), mav->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
+
+        updateSelectedSystem(mav->getUASID());
+    }
+}
+
+void MapWidget::updateSelectedSystem(int uas)
+{
+    foreach (qmapcontrol::Point* p, uasIcons.values())
+    {
+        MAV2DIcon* icon = dynamic_cast<MAV2DIcon*>(p);
+        if (icon)
+        {
+            // Set as selected if ids match
+            icon->setSelectedUAS((icon->getUASId() == uas));
+        }
     }
 }
 
@@ -787,62 +797,61 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         // Icon
         //QPen* pointpen = new QPen(uasColor);
         qDebug() << "2D MAP: ADDING" << uas->getUASName() << __FILE__ << __LINE__;
-        //p = new MAV2DIcon(lat, lon, 20, uas->getUASName(), qmapcontrol::Point::Middle, mavPens.value(uas->getUASID()));
-        p = new MAV2DIcon(lat, lon, 50, uas->getSystemType(), uas->getColor(), QString("%1").arg(uas->getUASID()), qmapcontrol::Point::Middle);
+        p = new MAV2DIcon(uas, 50, uas->getSystemType(), uas->getColor(), QString("%1").arg(uas->getUASID()), qmapcontrol::Point::Middle);
         uasIcons.insert(uas->getUASID(), p);
         mc->layer("Waypoints")->addGeometry(p);
 
         // Line
         // A QPen also can use transparency
 
-//        QList<qmapcontrol::Point*> points;
-//        points.append(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
-//        QPen* linepen = new QPen(uasColor.darker());
-//        linepen->setWidth(2);
+        //        QList<qmapcontrol::Point*> points;
+        //        points.append(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
+        //        QPen* linepen = new QPen(uasColor.darker());
+        //        linepen->setWidth(2);
 
-//        // Create tracking line string
-//        qmapcontrol::LineString* ls = new qmapcontrol::LineString(points, QString("%1").arg(uas->getUASID()), linepen);
-//        uasTrails.insert(uas->getUASID(), ls);
+        //        // Create tracking line string
+        //        qmapcontrol::LineString* ls = new qmapcontrol::LineString(points, QString("%1").arg(uas->getUASID()), linepen);
+        //        uasTrails.insert(uas->getUASID(), ls);
 
-//        // Add the LineString to the layer
-//        mc->layer("Waypoints")->addGeometry(ls);
+        //        // Add the LineString to the layer
+        //        mc->layer("Waypoints")->addGeometry(ls);
     }
     else
     {
-//        p = dynamic_cast<MAV2DIcon*>(uasIcons.value(uas->getUASID()));
-//        if (p)
-//        {
-         p = uasIcons.value(uas->getUASID());
-            p->setCoordinate(QPointF(lat, lon));
-            //p->setYaw(uas->getYaw());
-//        }
+        //        p = dynamic_cast<MAV2DIcon*>(uasIcons.value(uas->getUASID()));
+        //        if (p)
+        //        {
+        p = uasIcons.value(uas->getUASID());
+        p->setCoordinate(QPointF(lat, lon));
+        //p->setYaw(uas->getYaw());
+        //        }
         // Extend trail
-//        uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
+        //        uasTrails.value(uas->getUASID())->addPoint(new qmapcontrol::Point(coordinate.x(), coordinate.y()));
     }
 
-mc->updateRequest(p->boundingBox().toRect());
+    if (isVisible()) mc->updateRequest(p->boundingBox().toRect());
 
-    //mc->updateRequestNew();//(uasTrails.value(uas->getUASID())->boundingBox().toRect());
+    //if (isVisible()) mc->updateRequestNew();//(uasTrails.value(uas->getUASID())->boundingBox().toRect());
 
-    if (uas->getUASID() == this->mav->getUASID())
-{
-    // Limit the position update rate
-    quint64 currTime = MG::TIME::getGroundTimeNow();
-    if (currTime - lastUpdate > 120)
+    if (this->mav && uas->getUASID() == this->mav->getUASID())
     {
-        lastUpdate = currTime;
-        // Sets the view to the interesting area
-        if (followgps->isChecked())
+        // Limit the position update rate
+        quint64 currTime = MG::TIME::getGroundTimeNow();
+        if (currTime - lastUpdate > 120)
         {
-            updatePosition(0, lat, lon);
-        }
-        else
-        {
-            // Refresh the screen
-            //mc->updateRequestNew();
+            lastUpdate = currTime;
+            // Sets the view to the interesting area
+            if (followgps->isChecked())
+            {
+                updatePosition(0, lat, lon);
+            }
+            else
+            {
+                // Refresh the screen
+                //if (isVisible()) mc->updateRequestNew();
+            }
         }
     }
-}
 }
 
 /**
@@ -953,7 +962,7 @@ void MapWidget::clearWaypoints(int uas)
     //waypointPath = new
     //mc->layer("Waypoints")->addGeometry(waypointPath);
     //wpIndex.clear();
-    mc->updateRequest(box);//(waypointPath->boundingBox().toRect());
+    if (isVisible()) mc->updateRequest(box);//(waypointPath->boundingBox().toRect());
 
     if(createPath->isChecked())
     {
@@ -975,7 +984,7 @@ void MapWidget::clearPath(int uas)
         mc->layer("Tracking")->addGeometry(lsNew);
     }
     // FIXME update this with update request only for bounding box of trails
-    mc->updateRequestNew();//(QRect(0, 0, width(), height()));
+    if (isVisible()) mc->updateRequestNew();//(QRect(0, 0, width(), height()));
 }
 
 void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
@@ -1012,14 +1021,14 @@ void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
 
         mc->layer("Camera")->addGeometry(camBorder);
         // mc->layer("Camera")->addGeometry(camLine);
-        mc->updateRequestNew();
+        if (isVisible()) mc->updateRequestNew();
 
     }
     else
     {
         //clear camera borders
         mc->layer("Camera")->clearGeometries();
-        mc->updateRequestNew();
+        if (isVisible()) mc->updateRequestNew();
 
     }
 
