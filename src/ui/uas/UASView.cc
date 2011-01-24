@@ -51,7 +51,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         uas(uas),
         load(0),
         state("UNKNOWN"),
-        stateDesc(tr("Unknown system state")),
+        stateDesc(tr("Unknown state")),
         mode("MAV_MODE_UNKNOWN"),
         thrust(0),
         isActive(false),
@@ -66,6 +66,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         localFrame(false),
         removeAction(new QAction("Delete this system", this)),
         renameAction(new QAction("Rename..", this)),
+        selectAction(new QAction("Select this system", this )),
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
@@ -102,6 +103,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     // Allow to delete this widget
     connect(removeAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
+    connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
     connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
 
     // Name changes
@@ -129,21 +131,15 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     m_ui->killButton->hide();
     m_ui->shutdownButton->hide();
 
-    if (localFrame)
-    {
-        m_ui->gpsLabel->hide();
-    }
-    else
-    {
-        m_ui->positionLabel->hide();
-    }
-
     setSystemType(uas, uas->getSystemType());
 }
 
 UASView::~UASView()
 {
     delete m_ui;
+    delete removeAction;
+    delete renameAction;
+    delete selectAction;
 }
 
 void UASView::heartbeatTimeout()
@@ -332,8 +328,6 @@ void UASView::updateLocalPosition(UASInterface* uas, double x, double y, double 
     if (!localFrame)
     {
         localFrame = true;
-        m_ui->gpsLabel->hide();
-        m_ui->positionLabel->show();
     }
 }
 
@@ -424,6 +418,7 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
     {
         menu.addAction(removeAction);
     }
+    menu.addAction(selectAction);
     menu.exec(event->globalPos());
 }
 
@@ -471,7 +466,7 @@ void UASView::refresh()
 
         // Position
         QString position;
-        position = position.sprintf("%05.1f %05.1f %05.1f m", x, y, z);
+        position = position.sprintf("%05.1f %05.1f %06.1f m", x, y, z);
         m_ui->positionLabel->setText(position);
         QString globalPosition;
         QString latIndicator;
@@ -492,17 +487,17 @@ void UASView::refresh()
         {
             lonIndicator = "W";
         }
-        globalPosition = globalPosition.sprintf("%05.1f%s %05.1f%s %05.1f m", lon, lonIndicator.toStdString().c_str(), lat, latIndicator.toStdString().c_str(), alt);
-        m_ui->gpsLabel->setText(globalPosition);
+        globalPosition = globalPosition.sprintf("%05.1f%s %05.1f%s %06.1f m", lon, lonIndicator.toStdString().c_str(), lat, latIndicator.toStdString().c_str(), alt);
+        m_ui->positionLabel->setText(globalPosition);
 
         // Altitude
         if (groundDistance == 0 && alt != 0)
         {
-            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(alt, 5, 'f', 1, '0'));
+            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(alt, 6, 'f', 1, '0'));
         }
         else
         {
-            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(groundDistance, 5, 'f', 1, '0'));
+            m_ui->groundDistanceLabel->setText(QString("%1 m").arg(groundDistance, 6, 'f', 1, '0'));
         }
 
         // Speed

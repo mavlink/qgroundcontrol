@@ -56,7 +56,12 @@ namespace qmapcontrol
         vertices.append(point);
     }
 
-    QList<Point*> LineString::points()
+    void LineString::clearPoints()
+    {
+        vertices.clear();
+    }
+
+    QList<Point*>& LineString::points()
     {
         return vertices;
     }

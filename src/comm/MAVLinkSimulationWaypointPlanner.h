@@ -68,6 +68,7 @@ protected:
     void send_waypoint_reached(uint16_t seq);
     float distanceToSegment(uint16_t seq, float x, float y, float z);
     float distanceToPoint(uint16_t seq, float x, float y, float z);
+    float distanceToPoint(uint16_t seq, float x, float y);
     void mavlink_handler(const mavlink_message_t* msg);
 
 };

@@ -4,6 +4,8 @@
 #include <QGraphicsItem>
 #include "qmapcontrol.h"
 
+#include "Waypoint.h"
+
 class Waypoint2DIcon : public qmapcontrol::Point
 {
 public:
@@ -27,7 +29,19 @@ public:
      * @param alignment alignment (Middle or TopLeft)
      * @param pen QPen for drawing
      */
-    Waypoint2DIcon(qreal x, qreal y, int radius = 10, QString name = QString(), Alignment alignment = Middle, QPen* pen=0);
+    Waypoint2DIcon(qreal x, qreal y, int radius = 20, QString name = QString(), Alignment alignment = Middle, QPen* pen=0);
+
+    /**
+     *
+     * @param wp Waypoint
+     * @param listIndex Index in the waypoint list
+     * @param radius the radius of the circle
+     * @param name name of the circle point
+     * @param alignment alignment (Middle or TopLeft)
+     * @param pen QPen for drawing
+     */
+    Waypoint2DIcon(Waypoint* wp, int listIndex, int radius = 20, Alignment alignment = Middle, QPen* pen=0);
+
     virtual ~Waypoint2DIcon();
 
     //! sets the QPen which is used for drawing the circle
@@ -42,9 +56,13 @@ public:
 
     void drawIcon(QPen* pen);
 
+public slots:
+    void updateWaypoint();
+
 protected:
     float yaw;      ///< Yaw angle of the MAV
-    int radius;     ///<
+    int radius;     ///< Radius / diameter of the icon in pixels
+    Waypoint* waypoint;   ///< Waypoint data container this icon represents
 
 };
 

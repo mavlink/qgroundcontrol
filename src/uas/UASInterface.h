@@ -78,6 +78,8 @@ public:
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
 
+    virtual bool getSelected() const = 0;
+
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager* getWaypointManager(void) = 0;
 
@@ -419,6 +421,8 @@ signals:
     void heartbeatTimeout(unsigned int ms);
     /** @brief Name of system changed */
     void nameChanged(QString newName);
+    /** @brief System has been selected as focused system */
+    void systemSelected(bool selected);
 
 protected:
 

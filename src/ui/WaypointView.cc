@@ -1,24 +1,4 @@
-/*=====================================================================
-
-PIXHAWK Micro Air Vehicle Flying Robotics Toolkit
-
-(c) 2009, 2010 PIXHAWK PROJECT  <http://pixhawk.ethz.ch>
-
-This file is part of the PIXHAWK project
-
-    PIXHAWK is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    PIXHAWK is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-
+/*===================================================================
 ======================================================================*/
 
 /**
@@ -43,8 +23,8 @@ This file is part of the PIXHAWK project
 #include "ui_WaypointView.h"
 
 WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
-    QWidget(parent),
-    m_ui(new Ui::WaypointView)
+        QWidget(parent),
+        m_ui(new Ui::WaypointView)
 {
     m_ui->setupUi(this);
 
@@ -146,7 +126,7 @@ void WaypointView::changedAction(int index)
         break;
     case MAV_ACTION_NAVIGATE:
         m_ui->autoContinue->show();
-		m_ui->orbitSpinBox->show();
+        m_ui->orbitSpinBox->show();
         break;
     case MAV_ACTION_LOITER:
         m_ui->orbitSpinBox->show();
@@ -159,14 +139,6 @@ void WaypointView::changedAction(int index)
 
 void WaypointView::changedFrame(int index)
 {
-    // hide everything to start
-    m_ui->lonSpinBox->hide();
-    m_ui->latSpinBox->hide();
-    m_ui->altSpinBox->hide();
-    m_ui->posNSpinBox->hide();
-    m_ui->posESpinBox->hide();
-    m_ui->posDSpinBox->hide();
-
     // set waypoint action
     MAV_FRAME frame = (MAV_FRAME)m_ui->comboBox_frame->itemData(index).toUInt();
     wp->setFrame(frame);
@@ -174,11 +146,17 @@ void WaypointView::changedFrame(int index)
     switch(frame)
     {
     case MAV_FRAME_GLOBAL:
+        m_ui->posNSpinBox->hide();
+        m_ui->posESpinBox->hide();
+        m_ui->posDSpinBox->hide();
         m_ui->lonSpinBox->show();
         m_ui->latSpinBox->show();
         m_ui->altSpinBox->show();
         break;
     case MAV_FRAME_LOCAL:
+        m_ui->lonSpinBox->hide();
+        m_ui->latSpinBox->hide();
+        m_ui->altSpinBox->hide();
         m_ui->posNSpinBox->show();
         m_ui->posESpinBox->show();
         m_ui->posDSpinBox->show();
@@ -192,34 +170,61 @@ void WaypointView::changedCurrent(int state)
 {
     if (state == 0)
     {
-        //m_ui->selectedBox->setChecked(true);
-        //m_ui->selectedBox->setCheckState(Qt::Checked);
-        //wp->setCurrent(false);
+        m_ui->selectedBox->setChecked(true);
+        m_ui->selectedBox->setCheckState(Qt::Checked);
+        wp->setCurrent(false);
     }
     else
     {
-        //wp->setCurrent(true);
+        wp->setCurrent(true);
         emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
     }
 }
 
 void WaypointView::updateValues()
 {
+    // Deactivate signals from the WP
+    wp->blockSignals(true);
     // update frame
     MAV_FRAME frame = wp->getFrame();
     int frame_index = m_ui->comboBox_frame->findData(frame);
-    m_ui->comboBox_frame->setCurrentIndex(frame_index);
+    if (m_ui->comboBox_frame->currentIndex() != frame_index)
+    {
+        m_ui->comboBox_frame->setCurrentIndex(frame_index);
+    }
     switch(frame)
     {
     case(MAV_FRAME_LOCAL):
-        m_ui->posNSpinBox->setValue(wp->getX());
-        m_ui->posESpinBox->setValue(wp->getY());
-        m_ui->posDSpinBox->setValue(wp->getZ());
+        {
+            if (m_ui->posNSpinBox->value() != wp->getX())
+            {
+                m_ui->posNSpinBox->setValue(wp->getX());
+            }
+            if (m_ui->posESpinBox->value() != wp->getY())
+            {
+                m_ui->posESpinBox->setValue(wp->getY());
+            }
+            if (m_ui->posDSpinBox->value() != wp->getZ())
+            {
+                m_ui->posDSpinBox->setValue(wp->getZ());
+            }
+        }
         break;
     case(MAV_FRAME_GLOBAL):
-        m_ui->lonSpinBox->setValue(wp->getX());
-        m_ui->latSpinBox->setValue(wp->getY());
-        m_ui->altSpinBox->setValue(wp->getZ());
+        {
+            if (m_ui->lonSpinBox->value() != wp->getX())
+            {
+                m_ui->lonSpinBox->setValue(wp->getX());
+            }
+            if (m_ui->latSpinBox->value() != wp->getY())
+            {
+                m_ui->latSpinBox->setValue(wp->getY());
+            }
+            if (m_ui->altSpinBox->value() != wp->getZ())
+            {
+                m_ui->altSpinBox->setValue(wp->getZ());
+            }
+        }
         break;
     }
     changedFrame(frame_index);
@@ -227,7 +232,10 @@ void WaypointView::updateValues()
     // update action
     MAV_ACTION action = wp->getAction();
     int action_index = m_ui->comboBox_action->findData(action);
-    m_ui->comboBox_action->setCurrentIndex(action_index);
+    if (m_ui->comboBox_action->currentIndex() != action_index)
+    {
+        m_ui->comboBox_action->setCurrentIndex(action_index);
+    }
     switch(action)
     {
     case MAV_ACTION_TAKEOFF:
@@ -243,12 +251,28 @@ void WaypointView::updateValues()
     }
     changedAction(action_index);
 
-    m_ui->yawSpinBox->setValue(wp->getYaw()/M_PI*180.);
-    m_ui->selectedBox->setChecked(wp->getCurrent());
-    m_ui->autoContinue->setChecked(wp->getAutoContinue());
-    m_ui->idLabel->setText(QString("%1").arg(wp->getId()));\
-    m_ui->orbitSpinBox->setValue(wp->getOrbit());
-    m_ui->holdTimeSpinBox->setValue(wp->getHoldTime());
+    if (m_ui->yawSpinBox->value() != wp->getYaw()/M_PI*180.)
+    {
+        m_ui->yawSpinBox->setValue(wp->getYaw()/M_PI*180.);
+    }
+    if (m_ui->selectedBox->isChecked() != wp->getCurrent())
+    {
+        m_ui->selectedBox->setChecked(wp->getCurrent());
+    }
+    if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
+    {
+        m_ui->autoContinue->setChecked(wp->getAutoContinue());
+    }
+    m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
+    if (m_ui->orbitSpinBox->value() != wp->getOrbit())
+    {
+        m_ui->orbitSpinBox->setValue(wp->getOrbit());
+    }
+    if (m_ui->holdTimeSpinBox->value() != wp->getHoldTime())
+    {
+        m_ui->holdTimeSpinBox->setValue(wp->getHoldTime());
+    }
+    wp->blockSignals(false);
 }
 
 void WaypointView::setCurrent(bool state)
@@ -259,7 +283,7 @@ void WaypointView::setCurrent(bool state)
     }
     else
     {
-         m_ui->selectedBox->setCheckState(Qt::Unchecked);
+        m_ui->selectedBox->setCheckState(Qt::Unchecked);
     }
 }
 

@@ -119,7 +119,7 @@ namespace qmapcontrol
         virtual bool hasClickedPoints() const;
         virtual void setPen(QPen* pen);
         virtual QList<Geometry*> clickedPoints();
-        virtual QList<Point*> points()=0;
+        virtual QList<Point*>& points()=0;
 
     private:
         Geometry* myparentGeometry;
