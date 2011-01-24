@@ -175,18 +175,29 @@ void SerialLink::writeBytes(const char* data, qint64 size)
     if(port && port->isOpen())
     {
         int b = port->write(data, size);
-        qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
 
-        // Increase write counter
-        bitsSentTotal += size * 8;
-
-        int i;
-        for (i=0; i<size; i++)
+        if (b > 0)
         {
-            unsigned char v =data[i];
-            qDebug("%02x ", v);
+
+            qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
+
+            // Increase write counter
+            bitsSentTotal += size * 8;
+
+            int i;
+            for (i=0; i<size; i++)
+            {
+                unsigned char v =data[i];
+                qDebug("%02x ", v);
+            }
+            qDebug("\n");
         }
-        qDebug("\n");
+        else
+        {
+            disconnect();
+            // Error occured
+            emit communicationError(this->getName(), tr("Could not send data - link %1 is disconnected!").arg(this->getName()));
+        }
     }
 }
 

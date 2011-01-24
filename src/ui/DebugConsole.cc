@@ -108,7 +108,9 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Connect connect button
     connect(m_ui->connectButton, SIGNAL(clicked()), this, SLOT(handleConnectButton()));
     // Connect the special chars combo box
-    connect(m_ui->specialComboBox, SIGNAL(activated(QString)), this, SLOT(appendSpecialSymbol(QString)));
+    connect(m_ui->addSymbolButton, SIGNAL(clicked()), this, SLOT(appendSpecialSymbol()));
+
+    hold(false);
 
     this->setVisible(false);
 }
@@ -261,7 +263,7 @@ void DebugConsole::paintEvent(QPaintEvent *event)
 void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
 {
     snapShotBytes += bytes.size();
-    // Only add date from current link
+    // Only add data from current link
     if (link == currLink && !holdOn)
     {
         // Parse all bytes
@@ -395,6 +397,11 @@ void DebugConsole::appendSpecialSymbol(const QString& text)
     m_ui->sendText->setText(line);
 }
 
+void DebugConsole::appendSpecialSymbol()
+{
+    appendSpecialSymbol(m_ui->specialComboBox->currentText());
+}
+
 void DebugConsole::sendBytes()
 {
     if (!m_ui->sentText->isVisible())
@@ -510,12 +517,23 @@ void DebugConsole::hold(bool hold)
     // Check if we need to append bytes from the hold buffer
     if (this->holdOn && !hold)
     {
+        // TODO No conversion is done to the bytes in the hold buffer
         m_ui->receiveText->appendPlainText(QString(holdBuffer));
         holdBuffer.clear();
         lowpassDataRate = 0.0f;
     }
 
     this->holdOn = hold;
+
+    // Change text interaction mode
+    if (hold)
+    {
+        m_ui->receiveText->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse | Qt::LinksAccessibleByKeyboard | Qt::LinksAccessibleByMouse);
+    }
+    else
+    {
+        m_ui->receiveText->setTextInteractionFlags(Qt::NoTextInteraction);
+    }
 }
 
 /**

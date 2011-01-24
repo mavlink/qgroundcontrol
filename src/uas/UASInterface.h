@@ -80,6 +80,9 @@ public:
 
     virtual bool getSelected() const = 0;
 
+    /** @brief Set the airframe of this MAV */
+    virtual int getAirframe() const = 0;
+
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager* getWaypointManager(void) = 0;
 
@@ -98,7 +101,17 @@ public:
         COMM_TIMEDOUT = 5///< Communication link failed
     };
 
-
+    enum Airframe {
+        QGC_AIRFRAME_GENERIC = 0,
+        QGC_AIRFRAME_EASYSTAR = 1,
+        QGC_AIRFRAME_TWINSTAR = 2,
+        QGC_AIRFRAME_MERLIN = 3,
+        QGC_AIRFRAME_CHEETAH = 4,
+        QGC_AIRFRAME_MIKROKOPTER = 5,
+        QGC_AIRFRAME_REAPER = 6,
+        QGC_AIRFRAME_PREDATOR = 7,
+        QGC_AIRFRAME_COAXIAL = 8
+    };
 
     /**
          * @brief Get the links associated with this robot
@@ -169,6 +182,9 @@ public slots:
     virtual void setUASName(const QString& name) = 0;
     /** @brief Sets an action **/
     virtual void setAction(MAV_ACTION action) = 0;
+
+    /** @brief Selects the airframe */
+    virtual void setAirframe(int airframe) = 0;
 
     /** @brief Launches the system/Liftof **/
     virtual void launch() = 0;
@@ -423,6 +439,8 @@ signals:
     void nameChanged(QString newName);
     /** @brief System has been selected as focused system */
     void systemSelected(bool selected);
+    /** @brief Core specifications have changed */
+    void systemSpecsChanged(int uasId);
 
 protected:
 
