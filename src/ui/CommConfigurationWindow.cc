@@ -63,6 +63,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     ui.linkType->addItem("Serial Forwarding",QGC_LINK_FORWARDING);
 
     ui.connectionType->addItem("MAVLink", QGC_PROTOCOL_MAVLINK);
+    ui.connectionType->addItem("GPS NMEA", QGC_PROTOCOL_NMEA);
 
     // Create action to open this menu
     // Create configuration action for this link
@@ -142,6 +143,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         qDebug() << "Link is NOT a known link, can't open configuration window";
     }
 
+
     // Open details pane for MAVLink if necessary
     MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
     if (mavlink != 0)
@@ -178,6 +180,11 @@ void CommConfigurationWindow::setLinkType(int linktype)
 {
     // Adjust the form layout per link type
     Q_UNUSED(linktype);
+}
+
+void CommConfigurationWindow::setProtocol(int protocol)
+{
+    qDebug() << "Changing to protocol" << protocol;
 }
 
 void CommConfigurationWindow::setConnection()

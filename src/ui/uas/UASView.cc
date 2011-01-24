@@ -67,6 +67,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         removeAction(new QAction("Delete this system", this)),
         renameAction(new QAction("Rename..", this)),
         selectAction(new QAction("Select this system", this )),
+        selectAirframeAction(new QAction("Select Airframe", this)),
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
@@ -104,6 +105,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(removeAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
     connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
+    connect(selectAirframeAction, SIGNAL(triggered()), this, SLOT(selectAirframe()));
     connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
 
     // Name changes
@@ -419,6 +421,7 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
         menu.addAction(removeAction);
     }
     menu.addAction(selectAction);
+    menu.addAction(selectAirframeAction);
     menu.exec(event->globalPos());
 }
 
@@ -432,6 +435,34 @@ void UASView::rename()
                                                 uas->getUASName(), &ok);
 
         if (ok && !newName.isEmpty()) uas->setUASName(newName);
+    }
+}
+
+void UASView::selectAirframe()
+{
+    if (uas)
+    {
+        // Get list of airframes from UAS
+        QStringList airframes;
+        airframes << "Generic"
+                << "Multiplex Easystar"
+                << "Multiplex Twinstar"
+                << "Multiplex Merlin"
+                << "Pixhawk Cheetah"
+                << "Mikrokopter"
+                << "Reaper"
+                << "Predator"
+                << "Coaxial"
+                << "Pteryx";
+
+        bool ok;
+        QString item = QInputDialog::getItem(this, tr("Select Airframe for %1").arg(uas->getUASName()),
+                                             tr("Airframe"), airframes, uas->getAirframe(), false, &ok);
+        if (ok && !item.isEmpty())
+        {
+            // Set this airframe as UAS airframe
+            uas->setAirframe(airframes.indexOf(item));
+        }
     }
 }
 
