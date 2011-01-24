@@ -64,6 +64,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     m_ui->setupUi(this);
     // Hide sent text field - it is only useful after send has been hit
     m_ui->sentText->setVisible(false);
+    // Hide auto-send checkbox
+    m_ui->specialCheckBox->setVisible(false);
     // Make text area not editable
     m_ui->receiveText->setReadOnly(true);
     // Limit to 500 lines
@@ -108,7 +110,11 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Connect connect button
     connect(m_ui->connectButton, SIGNAL(clicked()), this, SLOT(handleConnectButton()));
     // Connect the special chars combo box
-    connect(m_ui->specialComboBox, SIGNAL(activated(QString)), this, SLOT(appendSpecialSymbol(QString)));
+    connect(m_ui->addSymbolButton, SIGNAL(clicked()), this, SLOT(appendSpecialSymbol()));
+    // Connect Checkbox
+    connect(m_ui->specialComboBox, SIGNAL(highlighted(QString)), this, SLOT(specialSymbolSelected(QString)));
+
+    hold(false);
 
     this->setVisible(false);
 }
@@ -261,14 +267,14 @@ void DebugConsole::paintEvent(QPaintEvent *event)
 void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
 {
     snapShotBytes += bytes.size();
-    // Only add date from current link
+    // Only add data from current link
     if (link == currLink && !holdOn)
     {
         // Parse all bytes
         for (int j = 0; j < bytes.size(); j++)
         {
             unsigned char byte = bytes.at(j);
-            // Filter MAVLink (http://pixhawk.ethz.ch/mavlink) messages out of the stream.
+            // Filter MAVLink (http://pixhawk.ethz.ch/wiki/mavlink/) messages out of the stream.
             if (filterMAVLINK && bytes.size() > 1)
             {
                 // Filtering is done by setting an ignore counter based on the MAVLINK packet length
@@ -286,12 +292,13 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                         switch (byte)
                         {
                             // Catch line feed
-                        case (unsigned char)'\n':
-                            m_ui->receiveText->appendPlainText(str);
-                            str = "";
-                            break;
-                            // Catch carriage return
-                        case (unsigned char)'\r':
+//                        case (unsigned char)'\n':
+//                            m_ui->receiveText->appendPlainText(str);
+//                            str = "";
+//                            break;
+                            // Catch carriage return and line feed
+                        case (unsigned char)0xD:
+                        case (unsigned char)0xA:
                             // Ignore
                             break;
                         default:
@@ -321,7 +328,7 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
             }
 
         }
-        m_ui->receiveText->appendPlainText(lineBuffer);
+        if (lineBuffer.length() > 0) m_ui->receiveText->appendPlainText(lineBuffer);
         lineBuffer.clear();
 
     }
@@ -374,6 +381,12 @@ QByteArray DebugConsole::symbolNameToBytes(const QString& text)
     return b;
 }
 
+void DebugConsole::specialSymbolSelected(const QString& text)
+{
+    Q_UNUSED(text);
+    m_ui->specialCheckBox->setVisible(true);
+}
+
 void DebugConsole::appendSpecialSymbol(const QString& text)
 {
     QString line = m_ui->sendText->text();
@@ -395,6 +408,11 @@ void DebugConsole::appendSpecialSymbol(const QString& text)
     m_ui->sendText->setText(line);
 }
 
+void DebugConsole::appendSpecialSymbol()
+{
+    appendSpecialSymbol(m_ui->specialComboBox->currentText());
+}
+
 void DebugConsole::sendBytes()
 {
     if (!m_ui->sentText->isVisible())
@@ -406,6 +424,12 @@ void DebugConsole::sendBytes()
     {
         m_ui->sentText->setText(tr("Nothing sent. The link %1 is unconnected. Please connect first.").arg(currLink->getName()));
         return;
+    }
+
+    // Append special symbol if checkbox is checked
+    if (m_ui->specialCheckBox->isChecked())
+    {
+        appendSpecialSymbol(m_ui->specialComboBox->currentText());
     }
 
     QByteArray transmit;
@@ -510,12 +534,23 @@ void DebugConsole::hold(bool hold)
     // Check if we need to append bytes from the hold buffer
     if (this->holdOn && !hold)
     {
+        // TODO No conversion is done to the bytes in the hold buffer
         m_ui->receiveText->appendPlainText(QString(holdBuffer));
         holdBuffer.clear();
         lowpassDataRate = 0.0f;
     }
 
     this->holdOn = hold;
+
+    // Change text interaction mode
+    if (hold)
+    {
+        m_ui->receiveText->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse | Qt::LinksAccessibleByKeyboard | Qt::LinksAccessibleByMouse);
+    }
+    else
+    {
+        m_ui->receiveText->setTextInteractionFlags(Qt::NoTextInteraction);
+    }
 }
 
 /**

@@ -82,6 +82,9 @@ public slots:
      **/
     void addUAS(UASInterface* UAS);
 
+    /** @brief Remove a system from the list */
+    void removeUAS(QObject* uas);
+
 
     /**
       * @brief Set a UAS as currently selected

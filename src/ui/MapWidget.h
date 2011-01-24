@@ -68,6 +68,8 @@ public:
 public slots:
     void addUAS(UASInterface* uas);
     void activeUASSet(UASInterface* uas);
+    /** @brief Update the system specs of one system */
+    void updateSystemSpecs(int uas);
     /** @brief Update the selected system */
     void updateSelectedSystem(int uas);
     /** @brief Update the attitude */

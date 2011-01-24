@@ -637,7 +637,7 @@ void MapWidget::addUAS(UASInterface* uas)
 {
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
-    //connect(uas->getWaypointManager(), SIGNAL(waypointListChanged()), this, SLOT(redoWaypoints()));
+    connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
 }
 
 void MapWidget::updateWaypointList(int uas)
@@ -731,8 +731,23 @@ void MapWidget::activeUASSet(UASInterface* uas)
         connect(mav->getWaypointManager(), SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(this, SIGNAL(waypointCreated(Waypoint*)), mav->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
 
+        updateSystemSpecs(mav->getUASID());
         updateSelectedSystem(mav->getUASID());
         mc->updateRequest(waypointPath->boundingBox().toRect());
+    }
+}
+
+void MapWidget::updateSystemSpecs(int uas)
+{
+    foreach (qmapcontrol::Point* p, uasIcons.values())
+    {
+        MAV2DIcon* icon = dynamic_cast<MAV2DIcon*>(p);
+        if (icon && icon->getUASId() == uas)
+        {
+            // Set new airframe
+            icon->setAirframe(UASManager::instance()->getUASForId(uas)->getAirframe());
+            icon->drawIcon();
+        }
     }
 }
 
