@@ -61,6 +61,8 @@ protected:
     QFile logFile;
     QTimer loopTimer;
     int loopCounter;
+    bool mavlinkLogFormat;
+    int binaryBaudRate;
     static const int packetLen = MAVLINK_MAX_PACKET_LEN;
     static const int timeLen = sizeof(quint64);
     void changeEvent(QEvent *e);

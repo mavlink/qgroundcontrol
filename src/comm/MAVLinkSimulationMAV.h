@@ -49,6 +49,10 @@ protected:
     double nextSPY;
     double nextSPZ;
     double nextSPYaw;
+    uint8_t sys_mode;
+    uint8_t sys_state;
+    uint8_t nav_mode;
+    bool flying;
 
 };
 

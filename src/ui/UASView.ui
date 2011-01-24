@@ -146,10 +146,20 @@ QPushButton:pressed#killButton {
 }
 
 
-QProgressBar {
+QProgressBar:horizontal {
 	border: 1px solid #4A4A4F;
 	border-radius: 4px;
 	text-align: center;
+	padding: 2px;
+	color: #DDDDDF;
+	background-color: #111118;
+}
+
+QProgressBar:vertical {
+	border: 1px solid #4A4A4F;
+	border-radius: 4px;
+	text-align: center;
+	font-size: 7px;
 	padding: 2px;
 	color: #DDDDDF;
 	background-color: #111118;
@@ -159,12 +169,16 @@ QProgressBar:horizontal {
 	height: 10px;
 }
 
-QProgressBar QLabel {
-	font-size: 8px;
+QProgressBar:horizontal QLabel {
+	font-size: 9px;
+}
+
+QProgressBar:vertical QLabel {
+	font-size: 7px;
 }
 
 QProgressBar:vertical {
-	width: 12px;
+	width: 14px;
 }
 
 QProgressBar::chunk {
@@ -231,7 +245,7 @@ QMenu::separator {
      <property name="title">
       <string/>
      </property>
-     <layout class="QGridLayout" name="gridLayout">
+     <layout class="QGridLayout" name="gridLayout" columnstretch="10,10,1,10,10,10,100,100">
       <property name="horizontalSpacing">
        <number>4</number>
       </property>
@@ -281,9 +295,12 @@ QMenu::separator {
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::MinimumExpanding</enum>
+        </property>
         <property name="sizeHint" stdset="0">
          <size>
-          <width>6</width>
+          <width>4</width>
           <height>88</height>
          </size>
         </property>
@@ -327,7 +344,7 @@ QMenu::separator {
          </font>
         </property>
         <property name="text">
-         <string>Waiting for first update..</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -466,7 +483,7 @@ QMenu::separator {
          </font>
         </property>
         <property name="text">
-         <string>UNINIT</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -481,14 +498,14 @@ QMenu::separator {
          </font>
         </property>
         <property name="text">
-         <string>WPX</string>
+         <string>---</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
         </property>
        </widget>
       </item>
-      <item row="2" column="6">
+      <item row="2" column="6" colspan="2">
        <widget class="QLabel" name="positionLabel">
         <property name="minimumSize">
          <size>
@@ -515,33 +532,6 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="2" column="7">
-       <widget class="QLabel" name="gpsLabel">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>12</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>12</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>-1</pointsize>
-          <weight>50</weight>
-          <italic>false</italic>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>00 00 00 N  00 00 00 E</string>
-        </property>
-       </widget>
-      </item>
       <item row="5" column="6" colspan="2">
        <widget class="QLabel" name="statusTextLabel">
         <property name="maximumSize">
@@ -556,7 +546,7 @@ QMenu::separator {
          </font>
         </property>
         <property name="text">
-         <string>Unknown status</string>
+         <string/>
         </property>
        </widget>
       </item>

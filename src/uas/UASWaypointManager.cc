@@ -138,9 +138,9 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id)
         {
-            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->yaw << wp->autocontinue << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_ACTION) wp->action;
+            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->yaw << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_ACTION) wp->action;
             Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_ACTION) wp->action);
-            addWaypoint(lwp);
+            addWaypoint(lwp, false);
 
             //get next waypoint
             current_wp_id++;
@@ -267,9 +267,17 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
 
 void UASWaypointManager::notifyOfChange(Waypoint* wp)
 {
-    Q_UNUSED(wp);
-    emit waypointListChanged();
-    emit waypointListChanged(uas.getUASID());
+    qDebug() << "WAYPOINT CHANGED: ID:" << wp->getId();
+    // If only one waypoint was changed, emit only WP signal
+    if (wp != NULL)
+    {
+        emit waypointChanged(uas.getUASID(), wp);
+    }
+    else
+    {
+        emit waypointListChanged();
+        emit waypointListChanged(uas.getUASID());
+    }
 }
 
 int UASWaypointManager::setCurrentWaypoint(quint16 seq)
@@ -312,17 +320,20 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
     return -1;
 }
 
-void UASWaypointManager::addWaypoint(Waypoint *wp)
+/**
+ * @param enforceFirstActive Enforces that the first waypoint is set as active
+ */
+void UASWaypointManager::addWaypoint(Waypoint *wp, bool enforceFirstActive)
 {
     if (wp)
     {
         wp->setId(waypoints.size());
+        if (enforceFirstActive && waypoints.size() == 0) wp->setCurrent(true);
         waypoints.insert(waypoints.size(), wp);
+        connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChange(Waypoint*)));
 
         emit waypointListChanged();
         emit waypointListChanged(uas.getUASID());
-
-        qDebug() << "ADDED WAYPOINT WITH ID:" << wp->getId();
     }
 }
 
@@ -510,6 +521,7 @@ void UASWaypointManager::writeWaypoints()
 {
     if (current_state == WP_IDLE)
     {
+        // Send clear all if count == 0
         if (waypoints.count() > 0)
         {
             protocol_timer.start(PROTOCOL_TIMEOUT_MS);
@@ -522,7 +534,9 @@ void UASWaypointManager::writeWaypoints()
             current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
 
             //clear local buffer
-            //TODO: Why not replace with waypoint_buffer.clear() ? - because this will lead to memory leaks, the waypoint-structs have to be deleted, clear() would only delete the pointers.
+            // Why not replace with waypoint_buffer.clear() ?
+            // because this will lead to memory leaks, the waypoint-structs
+            // have to be deleted, clear() would only delete the pointers.
             while(!waypoint_buffer.empty())
             {
                 delete waypoint_buffer.back();

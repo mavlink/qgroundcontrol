@@ -146,18 +146,31 @@ void UAS::updateState()
 
 void UAS::setSelected()
 {
-    UASManager::instance()->setActiveUAS(this);
+    if (UASManager::instance()->getActiveUAS() != this)
+    {
+        UASManager::instance()->setActiveUAS(this);
+        emit systemSelected(true);
+    }
+}
+
+bool UAS::getSelected() const
+{
+    return (UASManager::instance()->getActiveUAS() == this);
 }
 
 void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
 {
     if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
     {
-
+        mavlink_named_value_float_t val;
+        mavlink_msg_named_value_float_decode(&message, &val);
+        emit valueChanged(this->getUASID(), QString(val.name), tr("raw"), val.value, getUnixTime(0));
     }
     else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
     {
-
+        mavlink_named_value_int_t val;
+        mavlink_msg_named_value_int_decode(&message, &val);
+        emit valueChanged(this->getUASID(), QString(val.name), tr("raw"), (float)val.value, getUnixTime(0));
     }
 }
 
@@ -181,6 +194,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         QString uasState;
         QString stateDescription;
         QString patternPath;
+
+        // Receive named value message
+        receiveMessageNamedValue(message);
+
         switch (message.msgid)
         {
         case MAVLINK_MSG_ID_HEARTBEAT:
@@ -326,15 +343,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_raw_imu_decode(&message, &raw);
                 quint64 time = getUnixTime(raw.usec);
 
-                emit valueChanged(uasId, "accel x", "raw", raw.xacc, time);
-                emit valueChanged(uasId, "accel y", "raw", raw.yacc, time);
-                emit valueChanged(uasId, "accel z", "raw", raw.zacc, time);
+                emit valueChanged(uasId, "accel x", "raw", static_cast<double>(raw.xacc), time);
+                emit valueChanged(uasId, "accel y", "raw", static_cast<double>(raw.yacc), time);
+                emit valueChanged(uasId, "accel z", "raw", static_cast<double>(raw.zacc), time);
                 emit valueChanged(uasId, "gyro roll", "raw", static_cast<double>(raw.xgyro), time);
                 emit valueChanged(uasId, "gyro pitch", "raw", static_cast<double>(raw.ygyro), time);
                 emit valueChanged(uasId, "gyro yaw", "raw", static_cast<double>(raw.zgyro), time);
-                emit valueChanged(uasId, "mag x", "raw", raw.xmag, time);
-                emit valueChanged(uasId, "mag y", "raw", raw.ymag, time);
-                emit valueChanged(uasId, "mag z", "raw", raw.zmag, time);
+                emit valueChanged(uasId, "mag x", "raw", static_cast<double>(raw.xmag), time);
+                emit valueChanged(uasId, "mag y", "raw", static_cast<double>(raw.ymag), time);
+                emit valueChanged(uasId, "mag z", "raw", static_cast<double>(raw.zmag), time);
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
@@ -1038,7 +1055,7 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         break;
     case MAV_STATE_EMERGENCY:
         uasState = tr("EMERGENCY");
-        stateDescription = tr("EMERGENCY: Please land");
+        stateDescription = tr("EMERGENCY: Land!");
         break;
     case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");

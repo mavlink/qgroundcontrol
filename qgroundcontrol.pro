@@ -140,7 +140,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui \
-    src/ui/WaypointGlobalView.ui \
     src/ui/QMap3D.ui \
     src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
