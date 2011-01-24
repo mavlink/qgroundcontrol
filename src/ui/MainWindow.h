@@ -108,6 +108,8 @@ public slots:
     void setActiveUAS(UASInterface* uas);
     /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
+    /** @brief Update system specs of a UAS */
+    void UASSpecsChanged(int uas);
     void startVideoCapture();
     void stopVideoCapture();
     void saveScreen();

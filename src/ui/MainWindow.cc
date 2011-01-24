@@ -38,7 +38,7 @@
 #include "SlugsMAV.h"
 
 
-#include "LogCompressor.h"s
+#include "LogCompressor.h"
 
 MainWindow* MainWindow::instance()
 {
@@ -347,6 +347,7 @@ void MainWindow::buildCommonWidgets()
         addToCentralWidgetsMenu (protocolWidget, "Mavlink Generator", SLOT(showCentralWidget()),CENTRAL_PROTOCOL);
     }
 
+#ifdef MAVLINK_ENABLED_SLUGS
     //TODO temporaly debug
     if (!slugsHilSimWidget)
     {
@@ -362,12 +363,15 @@ void MainWindow::buildCommonWidgets()
         slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
         addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget(bool)), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
     }
+#endif
+
     if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
         addToCentralWidgetsMenu (dataplotWidget, "Data Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
     }
 }
+
 
 void MainWindow::buildPxWidgets()
 {
@@ -1418,6 +1422,9 @@ void MainWindow::addLink(LinkInterface *link)
     CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
     ui.menuNetwork->addAction(commWidget->getAction());
 
+    // Error handling
+    connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
+
     //qDebug() << "ADDING LINK:" << link->getName() << "ACTION IS: " << commWidget->getAction();
 
     // Special case for simulationlink
@@ -1434,6 +1441,18 @@ void MainWindow::setActiveUAS(UASInterface* uas)
     // Enable and rename menu
     ui.menuUnmanned_System->setTitle(uas->getUASName());
     if (!ui.menuUnmanned_System->isEnabled()) ui.menuUnmanned_System->setEnabled(true);
+}
+
+void MainWindow::UASSpecsChanged(int uas)
+{
+    UASInterface* activeUAS = UASManager::instance()->getActiveUAS();
+    if (activeUAS)
+    {
+        if (activeUAS->getUASID() == uas)
+        {
+            ui.menuUnmanned_System->setTitle(activeUAS->getUASName());
+        }
+    }
 }
 
 void MainWindow::UASCreated(UASInterface* uas)
@@ -1487,6 +1506,7 @@ void MainWindow::UASCreated(UASInterface* uas)
         QAction* uasAction = new QAction(icon, tr("Select %1 for control").arg(uas->getUASName()), ui.menuConnected_Systems);
         connect(uas, SIGNAL(systemRemoved()), uasAction, SLOT(deleteLater()));
         connect(uasAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
+        connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(UASSpecsChanged(int)));
 
         ui.menuConnected_Systems->addAction(uasAction);
 

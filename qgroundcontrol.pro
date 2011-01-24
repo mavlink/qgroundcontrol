@@ -25,6 +25,7 @@
 # Include bundled version if necessary
 
 include(lib/QMapControl/QMapControl.pri)
+include(lib/nmea/nmea.pri)
 
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
 QT += network \

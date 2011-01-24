@@ -51,7 +51,7 @@
         <string>Ignore MAVLINK protocol messages in display</string>
        </property>
        <property name="text">
-        <string>Hide MAVLINK</string>
+        <string>Hide MAVLink</string>
        </property>
       </widget>
      </item>
@@ -120,7 +120,7 @@
     </widget>
    </item>
    <item row="4" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="100,1,10,1,1,1">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="100,0,1,10,1,1,1">
      <property name="spacing">
       <number>5</number>
      </property>
@@ -191,6 +191,17 @@
          <string>&lt;Space&gt;</string>
         </property>
        </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="addSymbolButton">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="../../mavground.qrc">
+         <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
+       </property>
       </widget>
      </item>
      <item>

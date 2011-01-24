@@ -8,6 +8,7 @@ MAV2DIcon::MAV2DIcon(UASInterface* uas, int radius, int type, const QColor& colo
     yaw(0.0f),
     radius(radius),
     type(type),
+    airframe(uas->getAirframe()),
     iconColor(color),
     selected(uas->getSelected()),
     uasid(uas->getUASID())
@@ -21,6 +22,7 @@ MAV2DIcon::MAV2DIcon(qreal x, qreal y, QString name, Alignment alignment, QPen* 
     : Point(x, y, name, alignment),
     radius(20),
     type(0),
+    airframe(0),
     iconColor(Qt::yellow),
     selected(false),
     uasid(0)
@@ -98,9 +100,10 @@ void MAV2DIcon::drawIcon(QPen* pen)
         //selPen->deleteLater();
     }
 
-    switch (type)
+    switch (airframe)
     {
-    case MAV_ICON_AIRPLANE:
+    case UASInterface::QGC_AIRFRAME_PREDATOR:
+    case UASInterface::QGC_AIRFRAME_REAPER:
         {
             // DRAW AIRPLANE
 
@@ -146,7 +149,8 @@ void MAV2DIcon::drawIcon(QPen* pen)
             painter.drawPolygon(poly);
         }
         break;
-    case MAV_ICON_QUADROTOR:
+    case UASInterface::QGC_AIRFRAME_MIKROKOPTER:
+    case UASInterface::QGC_AIRFRAME_CHEETAH:
         {
             // QUADROTOR
             float iconSize = radius*0.9f;
@@ -184,8 +188,63 @@ void MAV2DIcon::drawIcon(QPen* pen)
             painter.drawEllipse(front, radius/4/2, radius/4/2);
         }
         break;
-    case MAV_ICON_ROTARY_WING:
-        case MAV_ICON_GENERIC:
+    case UASInterface::QGC_AIRFRAME_EASYSTAR:
+    case UASInterface::QGC_AIRFRAME_MERLIN:
+    case UASInterface::QGC_AIRFRAME_TWINSTAR:
+        {
+            // DRAW AIRPLANE
+
+            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f;
+
+            painter.rotate(yawRotate);
+
+            //qDebug() << "ICON SIZE:" << radius;
+
+            float iconSize = radius*0.7f;
+
+            QPolygonF poly(32);
+            poly.replace(0, QPointF(0.000000f*iconSize, 0.362319f*iconSize));
+            poly.replace(1, QPointF(0.018116f*iconSize, 0.340580f*iconSize));
+            poly.replace(2, QPointF(0.028986f*iconSize, 0.318841f*iconSize));
+            poly.replace(3, QPointF(0.036232f*iconSize, 0.166667f*iconSize));
+            poly.replace(4, QPointF(0.326087f*iconSize, 0.170290f*iconSize));
+            poly.replace(5, QPointF(0.420290f*iconSize, 0.130435f*iconSize));
+            poly.replace(6, QPointF(0.456522f*iconSize, 0.108696f*iconSize));
+            poly.replace(7, QPointF(0.500000f*iconSize, 0.000000f*iconSize));
+            poly.replace(8, QPointF(0.456522f*iconSize, 0.021739f*iconSize));
+            poly.replace(9, QPointF(0.391304f*iconSize, 0.021739f*iconSize));
+            poly.replace(10, QPointF(0.028986f*iconSize, 0.021739f*iconSize));
+            poly.replace(11, QPointF(0.021739f*iconSize, -0.239130f*iconSize));
+            poly.replace(12, QPointF(0.094203f*iconSize, -0.246377f*iconSize));
+            poly.replace(13, QPointF(0.123188f*iconSize, -0.268116f*iconSize));
+            poly.replace(14, QPointF(0.144928f*iconSize, -0.304348f*iconSize));
+            poly.replace(15, QPointF(0.000000f*iconSize, -0.307971f*iconSize));
+            poly.replace(16, QPointF(0.000000f*iconSize, -0.307971f*iconSize));
+            poly.replace(17, QPointF(-0.144928f*iconSize, -0.304348f*iconSize));
+            poly.replace(18, QPointF(-0.123188f*iconSize, -0.268116f*iconSize));
+            poly.replace(19, QPointF(-0.094203f*iconSize, -0.246377f*iconSize));
+            poly.replace(20, QPointF(-0.021739f*iconSize, -0.239130f*iconSize));
+            poly.replace(21, QPointF(-0.028986f*iconSize, 0.021739f*iconSize));
+            poly.replace(22, QPointF(-0.391304f*iconSize, 0.021739f*iconSize));
+            poly.replace(23, QPointF(-0.456522f*iconSize, 0.021739f*iconSize));
+            poly.replace(24, QPointF(-0.500000f*iconSize, 0.000000f*iconSize));
+            poly.replace(25, QPointF(-0.456522f*iconSize, 0.108696f*iconSize));
+            poly.replace(26, QPointF(-0.420290f*iconSize, 0.130435f*iconSize));
+            poly.replace(27, QPointF(-0.326087f*iconSize, 0.170290f*iconSize));
+            poly.replace(28, QPointF(-0.036232f*iconSize, 0.166667f*iconSize));
+            poly.replace(29, QPointF(-0.028986f*iconSize, 0.318841f*iconSize));
+            poly.replace(30, QPointF(-0.018116f*iconSize, 0.340580f*iconSize));
+            poly.replace(31, QPointF(-0.000000f*iconSize, 0.362319f*iconSize));
+
+            painter.setBrush(QBrush(iconColor));
+            QPen iconPen(Qt::black);
+            iconPen.setWidthF(1.0f);
+            painter.setPen(iconPen);
+
+            painter.drawPolygon(poly);
+        }
+        break;
+        case UASInterface::QGC_AIRFRAME_GENERIC:
     default:
         {
             // GENERIC

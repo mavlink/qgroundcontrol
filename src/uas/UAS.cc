@@ -81,11 +81,13 @@ roll(0.0),
 pitch(0.0),
 yaw(0.0),
 statusTimeout(new QTimer(this)),
-paramsOnceRequested(false)
+paramsOnceRequested(false),
+airframe(0)
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
+    connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
     readSettings();
 }
@@ -102,6 +104,8 @@ void UAS::writeSettings()
     QSettings settings;
     settings.beginGroup(QString("MAV%1").arg(uasId));
     settings.setValue("NAME", this->name);
+    settings.setValue("AIRFRAME", this->airframe);
+    settings.setValue("AP_TYPE", this->autopilot);
     settings.endGroup();
     settings.sync();
 }
@@ -111,6 +115,8 @@ void UAS::readSettings()
     QSettings settings;
     settings.beginGroup(QString("MAV%1").arg(uasId));
     this->name = settings.value("NAME", this->name).toString();
+    this->airframe = settings.value("AIRFRAME", this->airframe).toInt();
+    this->autopilot = settings.value("AP_TYPE", this->autopilot).toInt();
     settings.endGroup();
 }
 
@@ -1391,6 +1397,7 @@ void UAS::setUASName(const QString& name)
     this->name = name;
     writeSettings();
     emit nameChanged(name);
+    emit systemSpecsChanged(uasId);
 }
 
 /**

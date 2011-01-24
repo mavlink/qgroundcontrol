@@ -85,6 +85,8 @@ public slots:
     void receiveTextMessage(int id, int component, int severity, QString text);
     /** @brief Append a special symbol */
     void appendSpecialSymbol(const QString& text);
+    /** @brief Append the special symbol currently selected in combo box */
+    void appendSpecialSymbol();
 
     protected slots:
     /** @brief Draw information overlay */
