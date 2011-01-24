@@ -22,7 +22,7 @@
 #include "UDPLink.h"
 #include "MAVLinkProtocol.h"
 #include "CommConfigurationWindow.h"
-#include "WaypointList.h"
+#include "QGCWaypointListMulti.h"
 #include "MainWindow.h"
 #include "JoystickWidget.h"
 #include "GAudioOutput.h"
@@ -305,7 +305,7 @@ void MainWindow::buildCommonWidgets()
     if (!waypointsDockWidget)
     {
         waypointsDockWidget = new QDockWidget(tr("Waypoint List"), this);
-        waypointsDockWidget->setWidget( new WaypointList(this, NULL) );
+        waypointsDockWidget->setWidget( new QGCWaypointListMulti(this) );
         waypointsDockWidget->setObjectName("WAYPOINT_LIST_DOCKWIDGET");
         addToToolsMenu (waypointsDockWidget, tr("Waypoints List"), SLOT(showToolWidget(bool)), MENU_WAYPOINTS, Qt::BottomDockWidgetArea);
     }

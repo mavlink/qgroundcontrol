@@ -444,16 +444,16 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
-        // GLOBAL POSITION VEHICLE 2
-        mavlink_msg_global_position_int_pack(54, componentId, &ret, (473780.28137103+(x+0.002))*1E3, (85489.9892510421+((y/2)+0.3))*1E3, (z+570.0)*1000.0, xSpeed, ySpeed, zSpeed);
-        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
-        //add data into datastream
-        memcpy(stream+streampointer,buffer, bufferlength);
-        streampointer += bufferlength;
+//        // GLOBAL POSITION VEHICLE 2
+//        mavlink_msg_global_position_int_pack(54, componentId, &ret, (473780.28137103+(x+0.002))*1E3, (85489.9892510421+((y/2)+0.3))*1E3, (z+570.0)*1000.0, xSpeed, ySpeed, zSpeed);
+//        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+//        //add data into datastream
+//        memcpy(stream+streampointer,buffer, bufferlength);
+//        streampointer += bufferlength;
 
-        // ATTITUDE VEHICLE 2
-        mavlink_msg_attitude_pack(54, MAV_COMP_ID_IMU, &ret, 0, 0, 0, atan2((y/2)+0.3, (x+0.002)), 0, 0, 0);
-        sendMAVLinkMessage(&ret);
+//        // ATTITUDE VEHICLE 2
+//        mavlink_msg_attitude_pack(54, MAV_COMP_ID_IMU, &ret, 0, 0, 0, atan2((y/2)+0.3, (x+0.002)), 0, 0, 0);
+//        sendMAVLinkMessage(&ret);
 
 
 //        // GLOBAL POSITION VEHICLE 3
@@ -629,15 +629,15 @@ void MAVLinkSimulationLink::mainloop()
 
 
 
-        // HEARTBEAT VEHICLE 2
+//        // HEARTBEAT VEHICLE 2
 
-        // Pack message and get size of encoded byte string
-        messageSize = mavlink_msg_heartbeat_pack(54, componentId, &msg, MAV_HELICOPTER, MAV_AUTOPILOT_ARDUPILOTMEGA);
-        // Allocate buffer with packet data
-        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
-        //add data into datastream
-        memcpy(stream+streampointer,buffer, bufferlength);
-        streampointer += bufferlength;
+//        // Pack message and get size of encoded byte string
+//        messageSize = mavlink_msg_heartbeat_pack(54, componentId, &msg, MAV_HELICOPTER, MAV_AUTOPILOT_ARDUPILOTMEGA);
+//        // Allocate buffer with packet data
+//        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+//        //add data into datastream
+//        memcpy(stream+streampointer,buffer, bufferlength);
+//        streampointer += bufferlength;
 
 //        // HEARTBEAT VEHICLE 3
 
@@ -956,8 +956,8 @@ bool MAVLinkSimulationLink::connect()
     emit connected(true);
 
     start(LowPriority);
-    MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1);
-    MAVLinkSimulationMAV* mav3 = new MAVLinkSimulationMAV(this, 2);
+    MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1, 47.376, 8.548);
+    MAVLinkSimulationMAV* mav2 = new MAVLinkSimulationMAV(this, 2);
     Q_UNUSED(mav1);
     //    timer->start(rate);
     return true;
