@@ -191,6 +191,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
     case UASInterface::QGC_AIRFRAME_EASYSTAR:
     case UASInterface::QGC_AIRFRAME_MERLIN:
     case UASInterface::QGC_AIRFRAME_TWINSTAR:
+    case UASInterface::QGC_AIRFRAME_PTERYX:
         {
             // DRAW AIRPLANE
 

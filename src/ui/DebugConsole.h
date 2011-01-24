@@ -87,6 +87,8 @@ public slots:
     void appendSpecialSymbol(const QString& text);
     /** @brief Append the special symbol currently selected in combo box */
     void appendSpecialSymbol();
+    /** @brief A new special symbol is selected */
+    void specialSymbolSelected(const QString& text);
 
     protected slots:
     /** @brief Draw information overlay */

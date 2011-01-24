@@ -221,6 +221,7 @@ void QGCToolWidget::addParam()
     if (ui->hintLabel)
     {
         ui->hintLabel->deleteLater();
+        ui->hintLabel = NULL;
     }
     toolLayout->addWidget(slider);
     slider->startEditMode();
@@ -232,6 +233,7 @@ void QGCToolWidget::addAction()
     if (ui->hintLabel)
     {
         ui->hintLabel->deleteLater();
+        ui->hintLabel = NULL;
     }
     toolLayout->addWidget(button);
     button->startEditMode();
@@ -242,6 +244,7 @@ void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
     if (ui->hintLabel)
     {
         ui->hintLabel->deleteLater();
+        ui->hintLabel = NULL;
     }
     toolLayout->addWidget(widget);
 }
