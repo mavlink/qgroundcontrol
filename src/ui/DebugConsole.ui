@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>469</width>
+    <width>466</width>
     <height>190</height>
    </rect>
   </property>
@@ -120,7 +120,7 @@
     </widget>
    </item>
    <item row="4" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="100,0,1,10,1,1,1">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="100,0,0,1,10,1,1,1">
      <property name="spacing">
       <number>5</number>
      </property>
@@ -201,6 +201,16 @@
        <property name="icon">
         <iconset resource="../../mavground.qrc">
          <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="specialCheckBox">
+       <property name="toolTip">
+        <string>Automatically send special char at end of message</string>
+       </property>
+       <property name="text">
+        <string>Auto-Add</string>
        </property>
       </widget>
      </item>
