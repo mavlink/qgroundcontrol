@@ -3,7 +3,7 @@
 
 #include "MAVLinkSimulationMAV.h"
 
-MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int systemid) :
+MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int systemid, double lat, double lon) :
         QObject(parent),
         link(parent),
         planner(parent, systemid),
@@ -11,11 +11,11 @@ MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int sy
         timer25Hz(0),
         timer10Hz(0),
         timer1Hz(0),
-        latitude(47.376389),
-        longitude(8.548056),
+        latitude(lat),
+        longitude(lon),
         altitude(0.0),
-        x(8.548056),
-        y(47.376389),
+        x(lon),
+        y(lat),
         z(550),
         roll(0.0),
         pitch(0.0),

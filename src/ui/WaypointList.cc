@@ -57,8 +57,6 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     listLayout->setAlignment(Qt::AlignTop);
     m_ui->listWidget->setLayout(listLayout);
 
-    this->uas = NULL;
-
     // ADD WAYPOINT
     // Connect add action, set right button icon and connect action to this class
     connect(m_ui->addButton, SIGNAL(clicked()), m_ui->actionAddWaypoint, SIGNAL(triggered()));
@@ -77,7 +75,7 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     connect(m_ui->saveButton, SIGNAL(clicked()), this, SLOT(saveWaypoints()));
     connect(m_ui->loadButton, SIGNAL(clicked()), this, SLOT(loadWaypoints()));
 
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
+    //connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
 
 
 
