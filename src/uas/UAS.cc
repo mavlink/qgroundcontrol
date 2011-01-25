@@ -213,6 +213,21 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (this->type != mavlink_msg_heartbeat_get_type(&message))
             {
                 this->type = mavlink_msg_heartbeat_get_type(&message);
+                if (airframe == 0)
+                {
+                    switch (type)
+                    {
+                    case MAV_FIXED_WING:
+                        setAirframe(UASInterface::QGC_AIRFRAME_EASYSTAR);
+                        break;
+                    case MAV_QUADROTOR:
+                        setAirframe(UASInterface::QGC_AIRFRAME_CHEETAH);
+                        break;
+                    default:
+                        // Do nothing
+                        break;
+                    }
+                }
                 this->autopilot = mavlink_msg_heartbeat_get_autopilot(&message);
                 emit systemTypeSet(this, type);
             }
