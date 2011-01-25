@@ -328,11 +328,13 @@ namespace qmapcontrol
         layermanager->zoomIn();
         update();
     }
+
     void MapControl::zoomOut()
     {
         layermanager->zoomOut();
         update();
     }
+
     void MapControl::setZoom(int zoomlevel)
     {
         layermanager->setZoom(zoomlevel);

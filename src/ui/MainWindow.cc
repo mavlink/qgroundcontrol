@@ -826,6 +826,7 @@ void MainWindow::updateLocationSettings (Qt::DockWidgetArea location)
     }
 }
 
+
 /**
  * Connect the signals and slots of the common window widgets
  */
@@ -841,11 +842,17 @@ void MainWindow::connectCommonWidgets()
     {
         // clear path create on the map
         connect(waypointsDockWidget->widget(), SIGNAL(clearPathclicked()), mapWidget, SLOT(clearWaypoints()));
+
+        //
+        connect(waypointsDockWidget->widget(), SIGNAL(changePointList()), mapWidget, SLOT(clearWaypoints()));
+
         // add Waypoint widget in the WaypointList widget when mouse clicked
         connect(mapWidget, SIGNAL(captureMapCoordinateClick(QPointF)), waypointsDockWidget->widget(), SLOT(addWaypointMouse(QPointF)));
 
         // it notifies that a waypoint global goes to do create and a map graphic too
         connect(waypointsDockWidget->widget(), SIGNAL(createWaypointAtMap(QPointF)), mapWidget, SLOT(createWaypointGraphAtMap(QPointF)));
+
+
     }
 
     //TODO temporaly debug
