@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>466</width>
+    <width>566</width>
     <height>190</height>
    </rect>
   </property>
@@ -169,11 +169,6 @@
        <item>
         <property name="text">
          <string>TAB</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>NUL</string>
         </property>
        </item>
        <item>
