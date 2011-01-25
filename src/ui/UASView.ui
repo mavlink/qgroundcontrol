@@ -285,6 +285,12 @@ QMenu::separator {
           <height>30</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>System Type</string>
+        </property>
+        <property name="statusTip">
+         <string>System Type</string>
+        </property>
         <property name="text">
          <string>...</string>
         </property>
@@ -332,6 +338,12 @@ QMenu::separator {
           <bold>true</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>System Name</string>
+        </property>
+        <property name="statusTip">
+         <string>System Name</string>
+        </property>
         <property name="text">
          <string>UAS001</string>
         </property>
@@ -368,6 +380,12 @@ QMenu::separator {
           <bold>false</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Remaining flight time</string>
+        </property>
+        <property name="statusTip">
+         <string>Remaining flight time</string>
+        </property>
         <property name="text">
          <string>00:00:00</string>
         </property>
@@ -383,6 +401,12 @@ QMenu::separator {
           <bold>false</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Uptime</string>
+        </property>
+        <property name="statusTip">
+         <string>Uptime</string>
+        </property>
         <property name="text">
          <string>00:00:00</string>
         </property>
@@ -394,6 +418,12 @@ QMenu::separator {
          <font>
           <pointsize>-1</pointsize>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>Current throttle</string>
+        </property>
+        <property name="statusTip">
+         <string>Current throttle</string>
         </property>
         <property name="value">
          <number>0</number>
@@ -410,6 +440,12 @@ QMenu::separator {
           <bold>false</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Altitude</string>
+        </property>
+        <property name="statusTip">
+         <string>Altitude</string>
+        </property>
         <property name="text">
          <string>00.00 m</string>
         </property>
@@ -424,6 +460,12 @@ QMenu::separator {
           <italic>false</italic>
           <bold>false</bold>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>Ground Speed</string>
+        </property>
+        <property name="statusTip">
+         <string>Ground Speed</string>
         </property>
         <property name="text">
          <string>00.0 m/s</string>
@@ -450,6 +492,12 @@ QMenu::separator {
           <height>40</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Heartbeat</string>
+        </property>
+        <property name="statusTip">
+         <string>Heartbeat</string>
+        </property>
         <property name="title">
          <string/>
         </property>
@@ -473,6 +521,12 @@ QMenu::separator {
          <font>
           <pointsize>-1</pointsize>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>Battery Fuel</string>
+        </property>
+        <property name="statusTip">
+         <string>Battery Fuel</string>
         </property>
         <property name="value">
          <number>0</number>
@@ -507,6 +561,12 @@ QMenu::separator {
           <bold>false</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Current Waypoint</string>
+        </property>
+        <property name="statusTip">
+         <string>Current Waypoint</string>
+        </property>
         <property name="text">
          <string>---</string>
         </property>
@@ -536,6 +596,12 @@ QMenu::separator {
           <italic>false</italic>
           <bold>false</bold>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>Current Position</string>
+        </property>
+        <property name="statusTip">
+         <string>Current Position</string>
         </property>
         <property name="text">
          <string>00.0  00.0  00.0 m</string>
@@ -576,6 +642,12 @@ QMenu::separator {
             <height>22</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Liftoff / Launch</string>
+          </property>
+          <property name="statusTip">
+           <string>Liftoff / Launch</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -592,6 +664,12 @@ QMenu::separator {
             <width>26</width>
             <height>22</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>Loiter / Wait at current position</string>
+          </property>
+          <property name="statusTip">
+           <string>Loiter / Wait at current position</string>
           </property>
           <property name="text">
            <string/>
@@ -610,6 +688,12 @@ QMenu::separator {
             <height>22</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Continue flightplan</string>
+          </property>
+          <property name="statusTip">
+           <string>Continue flightplan</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -627,6 +711,12 @@ QMenu::separator {
             <height>22</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Fly straight to landing location</string>
+          </property>
+          <property name="statusTip">
+           <string>Fly straight to landing location</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -638,6 +728,12 @@ QMenu::separator {
         </item>
         <item>
          <widget class="QPushButton" name="shutdownButton">
+          <property name="toolTip">
+           <string>Only in standby mode: Power off system</string>
+          </property>
+          <property name="statusTip">
+           <string>Only in standby mode: Power off system</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -655,6 +751,12 @@ QMenu::separator {
             <height>22</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Emergency land system at closest possible site</string>
+          </property>
+          <property name="statusTip">
+           <string>Emergency land system at closest possible site</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -671,6 +773,12 @@ QMenu::separator {
             <width>26</width>
             <height>22</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>Kill immediately all onboard power</string>
+          </property>
+          <property name="statusTip">
+           <string>Kill immediately all onboard power</string>
           </property>
           <property name="text">
            <string/>
