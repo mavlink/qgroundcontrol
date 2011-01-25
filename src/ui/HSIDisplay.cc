@@ -678,7 +678,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
 {
     if (uas)
     {
-        const QVector<Waypoint*>& list = uas->getWaypointManager().getWaypointList();
+		const QVector<Waypoint*>& list = uas->getWaypointManager()->getWaypointList();
         //        for (int i = 0; i < list.size(); i++)
         //        {
         //            QPointF in(list.at(i)->getX(), list.at(i)->getY());

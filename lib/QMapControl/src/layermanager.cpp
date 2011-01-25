@@ -29,12 +29,9 @@ namespace qmapcontrol
     LayerManager::LayerManager(MapControl* mapcontrol, QSize size)
         :mapcontrol(mapcontrol), scroll(QPoint(0,0)), size(size), whilenewscroll(QPoint(0,0))
     {
-        // genauer berechnen?
-        offSize = size *2;
-        composedOffscreenImage = QPixmap(offSize);
-        composedOffscreenImage2 = QPixmap(offSize);
+        setOffscreenImageFactor(2);
         zoomImage = QPixmap(size);
-        zoomImage.fill(Qt::white);
+        zoomImage.fill(Qt::black);
         screenmiddle = QPoint(size.width()/2, size.height()/2);
     }
 
@@ -42,6 +39,20 @@ namespace qmapcontrol
     LayerManager::~LayerManager()
     {
         mylayers.clear();
+    }
+
+    void LayerManager::setOffscreenImageFactor(float factor)
+    {
+        offSize = size * factor;
+        offFactor = factor;
+        composedOffscreenImage = QPixmap(offSize);
+        composedOffscreenImage2 = QPixmap(offSize);
+        resize(size);
+    }
+
+    float LayerManager::offscreenImageFactor()
+    {
+        return offFactor;
     }
 
     QPointF LayerManager::currentCoordinate() const
@@ -209,7 +220,7 @@ namespace qmapcontrol
     {
         mylayers.append(layer);
 
-        layer->setSize(size);
+        layer->setSize(size, screenmiddle);
 
         connect(layer, SIGNAL(updateRequest(QRectF)),
                 this, SLOT(updateRequest(QRectF)));
@@ -229,7 +240,7 @@ namespace qmapcontrol
 
         if (clearImage)
         {
-            composedOffscreenImage2.fill(Qt::white);
+            composedOffscreenImage2.fill(Qt::black);
         }
 
         QPainter painter(&composedOffscreenImage2);
@@ -264,7 +275,7 @@ namespace qmapcontrol
         // layer rendern abbrechen?
         zoomImageScroll = QPoint(0,0);
 
-        zoomImage.fill(Qt::white);
+        zoomImage.fill(Qt::black);
         QPixmap tmpImg = composedOffscreenImage.copy(screenmiddle.x()+scroll.x(),screenmiddle.y()+scroll.y(), size.width(), size.height());
 
         QPainter painter(&zoomImage);
@@ -428,6 +439,20 @@ namespace qmapcontrol
         forceRedraw();
     }
 
+    void LayerManager::drawGeoms()
+    {
+        QPainter painter(&composedOffscreenImage);
+        QListIterator<Layer*> it(mylayers);
+        while (it.hasNext())
+        {
+            Layer* l = it.next();
+            if (l->layertype() == Layer::GeometryLayer && l->isVisible())
+            {
+                l->drawYourGeometries(&painter, mapmiddle_px, layer()->offscreenViewport());
+            }
+        }
+    }
+
     void LayerManager::drawGeoms(QPainter* painter)
     {
         QListIterator<Layer*> it(mylayers);
@@ -440,6 +465,8 @@ namespace qmapcontrol
             }
         }
     }
+
+
     void LayerManager::drawImage(QPainter* painter)
     {
         painter->drawPixmap(-scroll.x()-screenmiddle.x(),
@@ -455,11 +482,11 @@ namespace qmapcontrol
     void LayerManager::resize(QSize newSize)
     {
         size = newSize;
-        offSize = newSize *2;
+        offSize = newSize *offFactor;
         composedOffscreenImage = QPixmap(offSize);
         composedOffscreenImage2 = QPixmap(offSize);
         zoomImage = QPixmap(newSize);
-        zoomImage.fill(Qt::white);
+        zoomImage.fill(Qt::black);
 
         screenmiddle = QPoint(newSize.width()/2, newSize.height()/2);
 
@@ -467,7 +494,7 @@ namespace qmapcontrol
         while (it.hasNext())
         {
             Layer* l = it.next();
-            l->setSize(newSize);
+            l->setSize(newSize, screenmiddle);
         }
 
         newOffscreenImage();

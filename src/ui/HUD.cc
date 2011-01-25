@@ -30,6 +30,10 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include <QShowEvent>
+#include <QContextMenuEvent>
+#include <QMenu>
+#include <QDesktopServices>
+#include <QFileDialog>
 
 #include <QDebug>
 #include <cmath>
@@ -39,6 +43,7 @@ This file is part of the QGROUNDCONTROL project
 #include <limits>
 
 #include "UASManager.h"
+#include "UAS.h"
 #include "HUD.h"
 #include "MG.h"
 #include "QGC.h"
@@ -124,7 +129,13 @@ HUD::HUD(int width, int height, QWidget* parent)
     lat(0.0),
     lon(0.0),
     alt(0.0),
-    load(0.0f)
+    load(0.0f),
+    offlineDirectory(""),
+    nextOfflineImage(""),
+    hudInstrumentsEnabled(true),
+    videoEnabled(false),
+    xImageFactor(1.0),
+    yImageFactor(1.0)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -142,11 +153,11 @@ HUD::HUD(int width, int height, QWidget* parent)
     fill.setColor(2, qRgb(0, 0, 0));
     fill.fill(0);
 
-    //QString imagePath = MG::DIR::getIconDirectory() + "hud-template.png";
+    //QString imagePath = "/Users/user/Desktop/frame0000.png";
     //qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
     //fill = QImage(imagePath);
 
-    glImage = QGLWidget::convertToGLFormat(fill);
+    //glImage = QGLWidget::convertToGLFormat(fill);
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
@@ -154,8 +165,7 @@ HUD::HUD(int width, int height, QWidget* parent)
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
 
     // Resize to correct size and fill with image
-    resize(fill.size());
-    glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+    //glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
 
     // Set size once
     //setFixedSize(fill.size());
@@ -184,17 +194,21 @@ HUD::HUD(int width, int height, QWidget* parent)
     // Connect with UAS
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
+    createActions();
+
+    if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
+
     setVisible(false);
 }
 
 HUD::~HUD()
 {
-
+    refreshTimer->stop();
 }
 
 QSize HUD::sizeHint() const
 {
-    return QSize(800, 600);
+    return QSize(width(), (width()*3.0f)/4);
 }
 
 void HUD::showEvent(QShowEvent* event)
@@ -213,6 +227,40 @@ void HUD::hideEvent(QHideEvent* event)
     refreshTimer->stop();
 }
 
+void HUD::contextMenuEvent (QContextMenuEvent* event)
+{
+    QMenu menu(this);
+    // Update actions
+    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    enableVideoAction->setChecked(videoEnabled);
+
+    menu.addAction(enableHUDAction);
+    //menu.addAction(selectHUDColorAction);
+    menu.addAction(enableVideoAction);
+    menu.addAction(selectOfflineDirectoryAction);
+    //menu.addAction(selectVideoChannelAction);
+    menu.exec(event->globalPos());
+}
+
+void HUD::createActions()
+{
+    enableHUDAction = new QAction(tr("Enable HUD"), this);
+    enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
+    enableHUDAction->setCheckable(true);
+    enableHUDAction->setChecked(hudInstrumentsEnabled);
+    connect(enableHUDAction, SIGNAL(triggered(bool)), this, SLOT(enableHUDInstruments(bool)));
+
+    enableVideoAction = new QAction(tr("Enable Video Live feed"), this);
+    enableVideoAction->setStatusTip(tr("Show the video live feed"));
+    enableVideoAction->setCheckable(true);
+    enableVideoAction->setChecked(videoEnabled);
+    connect(enableVideoAction, SIGNAL(triggered(bool)), this, SLOT(enableVideo(bool)));
+
+    selectOfflineDirectoryAction = new QAction(tr("Select image log"), this);
+    selectOfflineDirectoryAction->setStatusTip(tr("Load previously logged images into simulation / replay"));
+    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
+}
+
 /**
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
@@ -222,31 +270,48 @@ void HUD::setActiveUAS(UASInterface* uas)
     if (this->uas != NULL)
     {
         // Disconnect any previously connected active MAV
-        disconnect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
-        disconnect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
-        disconnect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
-        disconnect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-        disconnect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+        disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        disconnect(this->uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
+        disconnect(this->uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
-        disconnect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-        disconnect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
-        disconnect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+        disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+
+        // Try to disconnect the image link
+        UAS* u = dynamic_cast<UAS*>(this->uas);
+        if (u)
+        {
+            disconnect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
+        }
     }
 
-    // Now connect the new UAS
-    // Setup communication
-    connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
-    connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
-    connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
-    connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
-    connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
+    if (uas)
+    {
+        // Now connect the new UAS
+        // Setup communication
+        connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
+        connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
+        connect(uas, SIGNAL(statusChanged(UASInterface*,QString,QString)), this, SLOT(updateState(UASInterface*,QString)));
+        connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+        connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
-    connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
-    connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
-    connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
+        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
-    // Set new UAS
-    this->uas = uas;
+        // Try to connect the image link
+        UAS* u = dynamic_cast<UAS*>(uas);
+        if (u)
+        {
+            connect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
+        }
+
+        // Set new UAS
+        this->uas = uas;
+    }
 }
 
 //void HUD::updateAttitudeThrustSetPoint(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 msec)
@@ -551,206 +616,244 @@ void HUD::paintEvent(QPaintEvent *event)
 
 void HUD::paintHUD()
 {
-    //    static quint64 interval = 0;
-    //    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
-    //    interval = MG::TIME::getGroundTimeNow();
+    if (isVisible())
+    {
+        //    static quint64 interval = 0;
+        //    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
+        //    interval = MG::TIME::getGroundTimeNow();
 
 #if (QGC_EVENTLOOP_DEBUG)
-    qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+        qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
 #endif
 
-    // Read out most important values to limit hash table lookups
-    // Low-pass roll, pitch and yaw
-    rollLP = rollLP * 0.2f + 0.8f * roll;
-    pitchLP = pitchLP * 0.2f + 0.8f * pitch;
-    yawLP = yawLP * 0.2f + 0.8f * yaw;
+        // Read out most important values to limit hash table lookups
+        // Low-pass roll, pitch and yaw
+        rollLP = rollLP * 0.2f + 0.8f * roll;
+        pitchLP = pitchLP * 0.2f + 0.8f * pitch;
+        yawLP = yawLP * 0.2f + 0.8f * yaw;
 
-    // Translate for yaw
-    const float maxYawTrans = 60.0f;
+        // Translate for yaw
+        const float maxYawTrans = 60.0f;
 
-    float newYawDiff = yawDiff;
-    if (isinf(newYawDiff)) newYawDiff = yawDiff;
-    if (newYawDiff > M_PI) newYawDiff = newYawDiff - M_PI;
+        float newYawDiff = yawDiff;
+        if (isinf(newYawDiff)) newYawDiff = yawDiff;
+        if (newYawDiff > M_PI) newYawDiff = newYawDiff - M_PI;
 
-    if (newYawDiff < -M_PI) newYawDiff = newYawDiff + M_PI;
+        if (newYawDiff < -M_PI) newYawDiff = newYawDiff + M_PI;
 
-    newYawDiff = yawDiff * 0.8 + newYawDiff * 0.2;
+        newYawDiff = yawDiff * 0.8 + newYawDiff * 0.2;
 
-    yawDiff = newYawDiff;
+        yawDiff = newYawDiff;
 
-    yawInt += newYawDiff;
+        yawInt += newYawDiff;
 
-    if (yawInt > M_PI) yawInt = M_PI;
-    if (yawInt < -M_PI) yawInt = -M_PI;
+        if (yawInt > M_PI) yawInt = M_PI;
+        if (yawInt < -M_PI) yawInt = -M_PI;
 
-    float yawTrans = yawInt * (double)maxYawTrans;
-    yawInt *= 0.6f;
+        float yawTrans = yawInt * (double)maxYawTrans;
+        yawInt *= 0.6f;
 
-    if ((yawTrans < 5.0) && (yawTrans > -5.0)) yawTrans = 0;
+        if ((yawTrans < 5.0) && (yawTrans > -5.0)) yawTrans = 0;
 
-    // Negate to correct direction
-    yawTrans = -yawTrans;
+        // Negate to correct direction
+        yawTrans = -yawTrans;
 
-    //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw;
+        //qDebug() << "yaw translation" << yawTrans << "integral" << yawInt << "difference" << yawDiff << "yaw" << yaw;
 
-    // Update scaling factor
-    // adjust scaling to fit both horizontally and vertically
-    scalingFactor = this->width()/vwidth;
-    double scalingFactorH = this->height()/vheight;
-    if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
-
-
-
-    // OPEN GL PAINTING
-    // Store model view matrix to be able to reset it to the previous state
-    makeCurrent();
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // Blue / Brown background
-    if (noCamera) paintCenterBackground(roll, pitch, yawTrans);
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    // END OF OPENGL PAINTING
+        // Update scaling factor
+        // adjust scaling to fit both horizontally and vertically
+        scalingFactor = this->width()/vwidth;
+        double scalingFactorH = this->height()/vheight;
+        if (scalingFactorH < scalingFactor) scalingFactor = scalingFactorH;
 
 
 
-    //glEnable(GL_MULTISAMPLE);
+        // OPEN GL PAINTING
+        // Store model view matrix to be able to reset it to the previous state
+        makeCurrent();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // QT PAINTING
-    //makeCurrent();
-    QPainter painter;
-    painter.begin(this);
-    painter.setRenderHint(QPainter::Antialiasing, true);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
-    painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
+        // Fill with black background
+        if (videoEnabled)
+        {
+            if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists())
+            {
+                qDebug() << __FILE__ << __LINE__ << "template image:" << nextOfflineImage;
+                QImage fill = QImage(nextOfflineImage);
 
+                xImageFactor = width() / (float)fill.width();
+                yImageFactor = height() / (float)fill.height();
 
+                glImage = QGLWidget::convertToGLFormat(fill);
 
-    // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
+                // Reset to save load efforts
+                nextOfflineImage = "";
+            }
 
+            glPixelZoom(xImageFactor, yImageFactor);
+            // Resize to correct size and fill with image
+            glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+        }
+        else
+        {
+            // Blue / brown background
+            paintCenterBackground(roll, pitch, yawTrans);
+        }
 
-    // Draw all fixed indicators
-    // MODE
-    paintText(mode, infoColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 10, &painter);
-    // STATE
-    paintText(state, infoColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 15, &painter);
-    // BATTERY
-    paintText(fuelStatus, fuelColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 20, &painter);
-    // Waypoint
-    paintText(waypointName, defaultColor, 2.0f, (-vwidth/3.0) + 10, +vheight/3.0 + 15, &painter);
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
 
-    // YAW INDICATOR
-    //
-    //      .
-    //    .   .
-    //   .......
-    //
-    const float yawIndicatorWidth = 4.0f;
-    const float yawIndicatorY = vheight/2.0f - 10.0f;
-    QPolygon yawIndicator(4);
-    yawIndicator.setPoint(0, QPoint(refToScreenX(0.0f), refToScreenY(yawIndicatorY)));
-    yawIndicator.setPoint(1, QPoint(refToScreenX(yawIndicatorWidth/2.0f), refToScreenY(yawIndicatorY+yawIndicatorWidth)));
-    yawIndicator.setPoint(2, QPoint(refToScreenX(-yawIndicatorWidth/2.0f), refToScreenY(yawIndicatorY+yawIndicatorWidth)));
-    yawIndicator.setPoint(3, QPoint(refToScreenX(0.0f), refToScreenY(yawIndicatorY)));
-    painter.setPen(defaultColor);
-    painter.drawPolyline(yawIndicator);
+        // END OF OPENGL PAINTING
 
-    // CENTER
+        if (hudInstrumentsEnabled)
+        {
 
-    // HEADING INDICATOR
-    //
-    //    __      __
-    //       \/\/
-    //
-    const float hIndicatorWidth = 7.0f;
-    const float hIndicatorY = -25.0f;
-    const float hIndicatorYLow = hIndicatorY + hIndicatorWidth / 6.0f;
-    const float hIndicatorSegmentWidth = hIndicatorWidth / 7.0f;
-    QPolygon hIndicator(7);
-    hIndicator.setPoint(0, QPoint(refToScreenX(0.0f-hIndicatorWidth/2.0f), refToScreenY(hIndicatorY)));
-    hIndicator.setPoint(1, QPoint(refToScreenX(0.0f-hIndicatorWidth/2.0f+hIndicatorSegmentWidth*1.75f), refToScreenY(hIndicatorY)));
-    hIndicator.setPoint(2, QPoint(refToScreenX(0.0f-hIndicatorSegmentWidth*1.0f), refToScreenY(hIndicatorYLow)));
-    hIndicator.setPoint(3, QPoint(refToScreenX(0.0f), refToScreenY(hIndicatorY)));
-    hIndicator.setPoint(4, QPoint(refToScreenX(0.0f+hIndicatorSegmentWidth*1.0f), refToScreenY(hIndicatorYLow)));
-    hIndicator.setPoint(5, QPoint(refToScreenX(0.0f+hIndicatorWidth/2.0f-hIndicatorSegmentWidth*1.75f), refToScreenY(hIndicatorY)));
-    hIndicator.setPoint(6, QPoint(refToScreenX(0.0f+hIndicatorWidth/2.0f), refToScreenY(hIndicatorY)));
-    painter.setPen(defaultColor);
-    painter.drawPolyline(hIndicator);
+            //glEnable(GL_MULTISAMPLE);
 
-
-    // SETPOINT
-    const float centerWidth = 4.0f;
-    painter.setPen(defaultColor);
-    painter.setBrush(Qt::NoBrush);
-    // TODO
-    //painter.drawEllipse(QPointF(refToScreenX(qMin(10.0f, values.value("roll desired", 0.0f) * 10.0f)), refToScreenY(qMin(10.0f, values.value("pitch desired", 0.0f) * 10.0f))), refToScreenX(centerWidth/2.0f), refToScreenX(centerWidth/2.0f));
-
-    const float centerCrossWidth = 10.0f;
-    // left
-    painter.drawLine(QPointF(refToScreenX(-centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(-centerCrossWidth / 2.0f), refToScreenY(0.0f)));
-    // right
-    painter.drawLine(QPointF(refToScreenX(centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(centerCrossWidth / 2.0f), refToScreenY(0.0f)));
-    // top
-    painter.drawLine(QPointF(refToScreenX(0.0f), refToScreenY(-centerWidth / 2.0f)), QPointF(refToScreenX(0.0f), refToScreenY(-centerCrossWidth / 2.0f)));
+            // QT PAINTING
+            //makeCurrent();
+            QPainter painter;
+            painter.begin(this);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+            painter.translate((this->vwidth/2.0+xCenterOffset)*scalingFactor, (this->vheight/2.0+yCenterOffset)*scalingFactor);
 
 
 
-    // COMPASS
-    const float compassY = -vheight/2.0f + 10.0f;
-    QRectF compassRect(QPointF(refToScreenX(-5.0f), refToScreenY(compassY)), QSizeF(refToScreenX(10.0f), refToScreenY(5.0f)));
-    painter.setBrush(Qt::NoBrush);
-    painter.setPen(Qt::SolidLine);
-    painter.setPen(defaultColor);
-    painter.drawRoundedRect(compassRect, 2, 2);
-    QString yawAngle;
-
-//    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
-
-    // YAW is in compass-human readable format, so 0 - 360deg. This is normal in aviation, not -180 - +180.
-    const float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f;
-    yawAngle.sprintf("%03d", (int)yawDeg);
-    paintText(yawAngle, defaultColor, 3.5f, -3.7f, compassY+ 0.9f, &painter);
-
-    // CHANGE RATE STRIPS
-    drawChangeRateStrip(-51.0f, -50.0f, 15.0f, -1.0f, 1.0f, -zSpeed, &painter);
-
-    // CHANGE RATE STRIPS
-    drawChangeRateStrip(49.0f, -50.0f, 15.0f, -1.0f, 1.0f, xSpeed, &painter);
-
-    // GAUGES
-
-    // Left altitude gauge
-    drawChangeIndicatorGauge(-vGaugeSpacing, -15.0f, 10.0f, 2.0f, -zPos, defaultColor, &painter, false);
-
-    // Right speed gauge
-    drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, xSpeed, defaultColor, &painter, false);
+            // COORDINATE FRAME IS NOW (0,0) at CENTER OF WIDGET
 
 
-    // Waypoint name
-    if (waypointName != "") paintText(waypointName, defaultColor, 2.0f, (-vwidth/3.0) + 10, +vheight/3.0 + 15, &painter);
+            // Draw all fixed indicators
+            // MODE
+            paintText(mode, infoColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 10, &painter);
+            // STATE
+            paintText(state, infoColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 15, &painter);
+            // BATTERY
+            paintText(fuelStatus, fuelColor, 2.0f, (-vwidth/2.0) + 10, -vheight/2.0 + 20, &painter);
+            // Waypoint
+            paintText(waypointName, defaultColor, 2.0f, (-vwidth/3.0) + 10, +vheight/3.0 + 15, &painter);
 
-    // MOVING PARTS
+            // YAW INDICATOR
+            //
+            //      .
+            //    .   .
+            //   .......
+            //
+            const float yawIndicatorWidth = 4.0f;
+            const float yawIndicatorY = vheight/2.0f - 10.0f;
+            QPolygon yawIndicator(4);
+            yawIndicator.setPoint(0, QPoint(refToScreenX(0.0f), refToScreenY(yawIndicatorY)));
+            yawIndicator.setPoint(1, QPoint(refToScreenX(yawIndicatorWidth/2.0f), refToScreenY(yawIndicatorY+yawIndicatorWidth)));
+            yawIndicator.setPoint(2, QPoint(refToScreenX(-yawIndicatorWidth/2.0f), refToScreenY(yawIndicatorY+yawIndicatorWidth)));
+            yawIndicator.setPoint(3, QPoint(refToScreenX(0.0f), refToScreenY(yawIndicatorY)));
+            painter.setPen(defaultColor);
+            painter.drawPolyline(yawIndicator);
+
+            // CENTER
+
+            // HEADING INDICATOR
+            //
+            //    __      __
+            //       \/\/
+            //
+            const float hIndicatorWidth = 7.0f;
+            const float hIndicatorY = -25.0f;
+            const float hIndicatorYLow = hIndicatorY + hIndicatorWidth / 6.0f;
+            const float hIndicatorSegmentWidth = hIndicatorWidth / 7.0f;
+            QPolygon hIndicator(7);
+            hIndicator.setPoint(0, QPoint(refToScreenX(0.0f-hIndicatorWidth/2.0f), refToScreenY(hIndicatorY)));
+            hIndicator.setPoint(1, QPoint(refToScreenX(0.0f-hIndicatorWidth/2.0f+hIndicatorSegmentWidth*1.75f), refToScreenY(hIndicatorY)));
+            hIndicator.setPoint(2, QPoint(refToScreenX(0.0f-hIndicatorSegmentWidth*1.0f), refToScreenY(hIndicatorYLow)));
+            hIndicator.setPoint(3, QPoint(refToScreenX(0.0f), refToScreenY(hIndicatorY)));
+            hIndicator.setPoint(4, QPoint(refToScreenX(0.0f+hIndicatorSegmentWidth*1.0f), refToScreenY(hIndicatorYLow)));
+            hIndicator.setPoint(5, QPoint(refToScreenX(0.0f+hIndicatorWidth/2.0f-hIndicatorSegmentWidth*1.75f), refToScreenY(hIndicatorY)));
+            hIndicator.setPoint(6, QPoint(refToScreenX(0.0f+hIndicatorWidth/2.0f), refToScreenY(hIndicatorY)));
+            painter.setPen(defaultColor);
+            painter.drawPolyline(hIndicator);
 
 
-    painter.translate(refToScreenX(yawTrans), 0);
+            // SETPOINT
+            const float centerWidth = 4.0f;
+            painter.setPen(defaultColor);
+            painter.setBrush(Qt::NoBrush);
+            // TODO
+            //painter.drawEllipse(QPointF(refToScreenX(qMin(10.0f, values.value("roll desired", 0.0f) * 10.0f)), refToScreenY(qMin(10.0f, values.value("pitch desired", 0.0f) * 10.0f))), refToScreenX(centerWidth/2.0f), refToScreenX(centerWidth/2.0f));
 
-    // Rotate view and draw all roll-dependent indicators
-    painter.rotate((rollLP/M_PI)* -180.0f);
+            const float centerCrossWidth = 10.0f;
+            // left
+            painter.drawLine(QPointF(refToScreenX(-centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(-centerCrossWidth / 2.0f), refToScreenY(0.0f)));
+            // right
+            painter.drawLine(QPointF(refToScreenX(centerWidth / 2.0f), refToScreenY(0.0f)), QPointF(refToScreenX(centerCrossWidth / 2.0f), refToScreenY(0.0f)));
+            // top
+            painter.drawLine(QPointF(refToScreenX(0.0f), refToScreenY(-centerWidth / 2.0f)), QPointF(refToScreenX(0.0f), refToScreenY(-centerCrossWidth / 2.0f)));
 
-    painter.translate(0, (-pitchLP/M_PI)* -180.0f * refToScreenY(1.8));
 
-    //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 
-    // PITCH
+            // COMPASS
+            const float compassY = -vheight/2.0f + 10.0f;
+            QRectF compassRect(QPointF(refToScreenX(-5.0f), refToScreenY(compassY)), QSizeF(refToScreenX(10.0f), refToScreenY(5.0f)));
+            painter.setBrush(Qt::NoBrush);
+            painter.setPen(Qt::SolidLine);
+            painter.setPen(defaultColor);
+            painter.drawRoundedRect(compassRect, 2, 2);
+            QString yawAngle;
 
-    paintPitchLines(pitchLP, &painter);
-    painter.end();
-    //glDisable(GL_MULTISAMPLE);
+            //    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
 
-    //glFlush();
+            // YAW is in compass-human readable format, so 0 - 360deg. This is normal in aviation, not -180 - +180.
+            const float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f;
+            yawAngle.sprintf("%03d", (int)yawDeg);
+            paintText(yawAngle, defaultColor, 3.5f, -3.7f, compassY+ 0.9f, &painter);
+
+            // CHANGE RATE STRIPS
+            drawChangeRateStrip(-51.0f, -50.0f, 15.0f, -1.0f, 1.0f, -zSpeed, &painter);
+
+            // CHANGE RATE STRIPS
+            drawChangeRateStrip(49.0f, -50.0f, 15.0f, -1.0f, 1.0f, xSpeed, &painter);
+
+            // GAUGES
+
+            // Left altitude gauge
+            drawChangeIndicatorGauge(-vGaugeSpacing, -15.0f, 10.0f, 2.0f, -zPos, defaultColor, &painter, false);
+
+            // Right speed gauge
+            drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, xSpeed, defaultColor, &painter, false);
+
+
+            // Waypoint name
+            if (waypointName != "") paintText(waypointName, defaultColor, 2.0f, (-vwidth/3.0) + 10, +vheight/3.0 + 15, &painter);
+
+            // MOVING PARTS
+
+
+            painter.translate(refToScreenX(yawTrans), 0);
+
+            // Rotate view and draw all roll-dependent indicators
+            painter.rotate((rollLP/M_PI)* -180.0f);
+
+            painter.translate(0, (-pitchLP/M_PI)* -180.0f * refToScreenY(1.8));
+
+            //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
+
+            // PITCH
+
+            paintPitchLines(pitchLP, &painter);
+            painter.end();
+        }
+        else
+        {
+            QPainter painter;
+            painter.begin(this);
+            painter.end();
+        }
+        //glDisable(GL_MULTISAMPLE);
+
+
+
+        //glFlush();
+    }
 }
 
 /*
@@ -1487,6 +1590,34 @@ void HUD::saveImage()
     //Bring up popup
     QString fileName = "output.png";
     saveImage(fileName);
+}
+
+void HUD::startImage(quint64 timestamp)
+{
+    if (videoEnabled && offlineDirectory != "")
+    {
+        // Load and diplay image file
+        nextOfflineImage = QString(offlineDirectory + "/%1.bmp").arg(timestamp);
+    }
+}
+
+void HUD::selectOfflineDirectory()
+{
+    QString fileName = QFileDialog::getExistingDirectory(this, tr("Select image directory"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
+    if (fileName != "")
+    {
+        offlineDirectory = fileName;
+    }
+}
+
+void HUD::enableHUDInstruments(bool enabled)
+{
+    hudInstrumentsEnabled = enabled;
+}
+
+void HUD::enableVideo(bool enabled)
+{
+    videoEnabled = enabled;
 }
 
 void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int startIndex)

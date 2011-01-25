@@ -153,7 +153,7 @@ void GAudioOutput::mute(bool mute)
 {
     this->muted = mute;
     QSettings settings;
-    settings.setValue(QGC_GAUDIOOUTPUT_KEY+"muted", muted);
+    settings.setValue(QGC_GAUDIOOUTPUT_KEY+"muted", this->muted);
     settings.sync();
 }
 

@@ -1131,7 +1131,9 @@ qint64 Posix_QextSerialPort::writeData(const char * data, qint64 maxSize)
     int retVal = 0;
     retVal = ::write(fd, data, maxSize);
     if (retVal == -1)
+    {
         lastErr = E_WRITE_FAILED;
+    }
     UNLOCK_MUTEX();
     
     return (qint64)retVal;

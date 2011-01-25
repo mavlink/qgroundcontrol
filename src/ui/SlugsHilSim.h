@@ -69,9 +69,13 @@ protected:
     mavlink_local_position_t tmpLocalPositionData;
     mavlink_attitude_t tmpAttitudeData;
     mavlink_raw_imu_t tmpRawImuData;
+#ifdef MAVLINK_ENABLED_SLUGS
     mavlink_air_data_t tmpAirData;
+#endif
     mavlink_gps_raw_t tmpGpsData;
+	#ifdef MAVLINK_ENABLED_SLUGS
     mavlink_gps_date_time_t tmpGpsTime;
+#endif
 
 public slots:
 

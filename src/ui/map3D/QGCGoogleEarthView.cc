@@ -185,6 +185,7 @@ void QGCGoogleEarthView::follow(bool follow)
 {
     ui->followAirplaneCheckbox->setChecked(follow);
     followCamera = follow;
+    if (gEarthInitialized) javaScript(QString("setFollowEnabled(%1)").arg(follow));
 }
 
 void QGCGoogleEarthView::goHome()
@@ -353,6 +354,8 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             // Start update timer
             updateTimer->start(refreshRateMs);
 
+            follow(this->followCamera);
+
             gEarthInitialized = true;
         }
     }
@@ -394,11 +397,6 @@ void QGCGoogleEarthView::updateState()
                        .arg(roll, 0, 'f', 9)
                        .arg(pitch, 0, 'f', 9)
                        .arg(yaw, 0, 'f', 9));
-        }
-
-        if (followCamera)
-        {
-            javaScript(QString("updateFollowAircraft()"));
         }
     }
 }

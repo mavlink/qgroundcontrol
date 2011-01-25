@@ -139,7 +139,7 @@ namespace qmapcontrol
         void moveWidgets(const QPoint mapmiddle_px) const;
         void drawYourImage(QPainter* painter, const QPoint mapmiddle_px) const;
         void drawYourGeometries(QPainter* painter, const QPoint mapmiddle_px, QRect viewport) const;
-        void setSize(QSize size);
+        void setSize(QSize size, QPoint screenmiddle);
         QRect offscreenViewport() const;
         bool takesMouseEvents() const;
         void mouseEvent(const QMouseEvent*, const QPoint mapmiddle_px);

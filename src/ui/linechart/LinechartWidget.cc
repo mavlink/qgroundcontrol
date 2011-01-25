@@ -199,7 +199,7 @@ void LinechartWidget::createLayout()
 
     layout->addWidget(activePlot, 0, 0, 1, 6);
     layout->setRowStretch(0, 10);
-    layout->setRowStretch(1, 0);
+    layout->setRowStretch(1, 1);
 
     // Linear scaling button
     scalingLinearButton = createButton(this);
@@ -483,7 +483,7 @@ void LinechartWidget::startLogging()
         fileName.append(".csv");
     }
 
-    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort)
+    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort && fileName != "")
     {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);

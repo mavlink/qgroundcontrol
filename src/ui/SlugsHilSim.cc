@@ -51,12 +51,14 @@ SlugsHilSim::SlugsHilSim(QWidget *parent) :
 
     linksAvailable.clear();
 
+	#ifdef MAVLINK_ENABLED_SLUGS
     memset(&tmpAirData, 0, sizeof(mavlink_air_data_t));
     memset(&tmpAttitudeData, 0, sizeof(mavlink_attitude_t));
     memset(&tmpGpsData, 0, sizeof(mavlink_gps_raw_t));
     memset(&tmpGpsTime, 0, sizeof(mavlink_gps_date_time_t));
     memset(&tmpLocalPositionData, 0, sizeof(mavlink_sensor_bias_t));
     memset(&tmpRawImuData, 0, sizeof(mavlink_raw_imu_t));
+	#endif
 
     foreach (LinkInterface* link, LinkManager::instance()->getLinks())
     {
@@ -250,7 +252,8 @@ uint16_t SlugsHilSim::getUint16FromDatagram (const QByteArray* datagram, unsigne
 
 }
 
-void SlugsHilSim::linkSelected(int cbIndex){
+void SlugsHilSim::linkSelected(int cbIndex)
+{
   #ifdef MAVLINK_ENABLED_SLUGS
     // HIL code to go here...
   //hilLink = linksAvailable
@@ -258,11 +261,14 @@ void SlugsHilSim::linkSelected(int cbIndex){
 
     hilLink =linksAvailable.value(cbIndex);
 
+#else
+    Q_UNUSED(cbIndex)
   #endif
 }
 
 void SlugsHilSim::sendMessageToSlugs()
 {
+	#ifdef MAVLINK_ENABLED_SLUGS
     mavlink_message_t msg;
 
     mavlink_msg_local_position_encode(MG::SYSTEM::ID,
@@ -306,11 +312,13 @@ void SlugsHilSim::sendMessageToSlugs()
                                     &tmpGpsTime);
     activeUas->sendMessage(hilLink, msg);
     memset(&msg, 0, sizeof(mavlink_message_t));
+#endif
 }
 
 
 void SlugsHilSim::commandDatagramToSimulink()
 {
+	#ifdef MAVLINK_ENABLED_SLUGS
     //mavlink_pwm_commands_t* pwdC = (static_cast<SlugsMAV*>(activeUas))->getPwmCommands();
 
     mavlink_pwm_commands_t* pwdC;
@@ -335,6 +343,7 @@ void SlugsHilSim::commandDatagramToSimulink()
     setUInt16ToDatagram(data, &i, 11);//value default
 
     txSocket->writeDatagram(data, QHostAddress::Broadcast, ui->ed_txPort->text().toInt());
+#endif
 }
 
 void SlugsHilSim::setUInt16ToDatagram(QByteArray& datagram, unsigned char* pos, uint16_t value)

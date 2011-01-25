@@ -5,6 +5,7 @@
 #include <QFile>
 
 #include "MAVLinkProtocol.h"
+#include "LinkInterface.h"
 #include "MAVLinkSimulationLink.h"
 
 namespace Ui {
@@ -32,15 +33,21 @@ public slots:
     /** @brief Pause the logfile */
     void pause();
     /** @brief Reset the logfile */
-    void reset();
+    bool reset(int packetIndex=0);
     /** @brief Select logfile */
     void selectLogFile();
     /** @brief Load log file */
     void loadLogFile(const QString& file);
+    /** @brief Jump to a position in the logfile */
+    void jumpToSliderVal(int slidervalue);
     /** @brief The logging mainloop */
     void logLoop();
     /** @brief Set acceleration factor in percent */
     void setAccelerationFactorInt(int factor);
+
+signals:
+    /** @brief Send ready bytes */
+    void bytesReady(LinkInterface* link, const QByteArray& bytes);
 
 protected:
     int lineCounter;
@@ -54,6 +61,10 @@ protected:
     QFile logFile;
     QTimer loopTimer;
     int loopCounter;
+    bool mavlinkLogFormat;
+    int binaryBaudRate;
+    static const int packetLen = MAVLINK_MAX_PACKET_LEN;
+    static const int timeLen = sizeof(quint64);
     void changeEvent(QEvent *e);
 
 private:

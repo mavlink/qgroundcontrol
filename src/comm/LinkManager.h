@@ -34,7 +34,7 @@ This file is part of the PIXHAWK project
 
 #include <QThread>
 #include <QList>
-#include <QMap>
+#include <QMultiMap>
 #include <LinkInterface.h>
 #include <ProtocolInterface.h>
 
@@ -79,7 +79,7 @@ public slots:
 protected:
     LinkManager();
     QList<LinkInterface*> links;
-    QMap<ProtocolInterface*,LinkInterface*> protocolLinks;
+    QMultiMap<ProtocolInterface*,LinkInterface*> protocolLinks;
 
 private:
     static LinkManager* _instance;
