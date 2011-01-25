@@ -228,6 +228,9 @@ signals:
      */
     void nameChanged(QString name);
 
+    /** @brief Communication error occured */
+    void communicationError(const QString& linkname, const QString& error);
+
 protected:
     static int getNextLinkId()
     {

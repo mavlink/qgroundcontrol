@@ -39,10 +39,10 @@ namespace qmapcontrol
         delete mapAdapter;
     }
 
-    void Layer::setSize(QSize size)
+    void Layer::setSize(QSize size, QPoint screenmiddle)
     {
         this->size = size;
-        screenmiddle = QPoint(size.width()/2, size.height()/2);
+        this->screenmiddle = screenmiddle;// QPoint(size.width()/2, size.height()/2);
         //QMatrix mat;
         //mat.translate(480/2, 640/2);
         //mat.rotate(45);
@@ -292,10 +292,12 @@ namespace qmapcontrol
 
 
         // PREFETCHING
-        int upper = mapmiddle_tile_y-tiles_above-1;
-        int right = mapmiddle_tile_x+tiles_right+1;
-        int left = mapmiddle_tile_x-tiles_right-1;
-        int lower = mapmiddle_tile_y+tiles_bottom+1;
+
+        // FIXME Make prefetching a parameter
+        int upper = mapmiddle_tile_y-tiles_above-2;
+        int right = mapmiddle_tile_x+tiles_right+2;
+        int left = mapmiddle_tile_x-tiles_right-2;
+        int lower = mapmiddle_tile_y+tiles_bottom+2;
 
         int j = upper;
         for (int i=left; i<=right; i++)

@@ -39,7 +39,8 @@ const char* kActionLabels[MAV_ACTION_NB] =
  //"GET IMAGE",
  //"START VIDEO",
  //"STOP VIDEO",
- "RESET MAP"};
+ "RESET MAP",
+ "RESET PLAN"};
 
 QGCActionButton::QGCActionButton(QWidget *parent) :
     QGCToolWidgetItem("Button", parent),

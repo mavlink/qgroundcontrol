@@ -189,6 +189,15 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
             QTimer::singleShot(200, mainWindow, SLOT(close()));
         }
     }
+
+//    forever
+//    {
+//        QGC::SLEEP::msleep(5000);
+//    }
+
+//    mainWindow->close();
+//    mainWindow->deleteLater();
+//    QGC::SLEEP::msleep(200);
 }
 
 /**

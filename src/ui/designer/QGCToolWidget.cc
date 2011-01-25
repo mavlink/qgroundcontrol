@@ -28,7 +28,17 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
     if (dock)
     {
         dock->setWindowTitle(title);
+        dock->setObjectName(title+"DOCK");
     }
+
+    // Try with parent
+    dock = dynamic_cast<QDockWidget*>(this->parentWidget());
+    if (dock)
+    {
+        dock->setWindowTitle(title);
+        dock->setObjectName(title+"DOCK");
+    }
+
     this->setWindowTitle(title);
 
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
@@ -211,6 +221,7 @@ void QGCToolWidget::addParam()
     if (ui->hintLabel)
     {
         ui->hintLabel->deleteLater();
+        ui->hintLabel = NULL;
     }
     toolLayout->addWidget(slider);
     slider->startEditMode();
@@ -222,6 +233,7 @@ void QGCToolWidget::addAction()
     if (ui->hintLabel)
     {
         ui->hintLabel->deleteLater();
+        ui->hintLabel = NULL;
     }
     toolLayout->addWidget(button);
     button->startEditMode();
@@ -232,6 +244,7 @@ void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
     if (ui->hintLabel)
     {
         ui->hintLabel->deleteLater();
+        ui->hintLabel = NULL;
     }
     toolLayout->addWidget(widget);
 }

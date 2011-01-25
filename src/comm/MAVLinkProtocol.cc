@@ -27,7 +27,8 @@
 #include "configuration.h"
 #include "LinkManager.h"
 //#include "MainWindow.h"
-#include <QGCMAVLink.h>
+#include "QGCMAVLink.h"
+#include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
 
 /**
@@ -109,7 +110,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // Log data
             if (m_loggingEnabled)
             {
-                int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);
+                const int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);
                 uint8_t buf[len];
                 quint64 time = QGC::groundTimeUsecs();
                 memcpy(buf, (void*)&time, sizeof(quint64));
@@ -169,63 +170,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     continue;
                 }
 
-                switch (heartbeat.autopilot)
-                {
-                case MAV_AUTOPILOT_GENERIC:
-
-                    uas = new UAS(this, message.sysid);
-
-                    // Connect this robot to the UAS object
-                    connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), uas, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                    break;
-                case MAV_AUTOPILOT_PIXHAWK:
-                    {
-                        // Fixme differentiate between quadrotor and coaxial here
-                        PxQuadMAV* mav = new PxQuadMAV(this, message.sysid);
-                        // Connect this robot to the UAS object
-                        // it is IMPORTANT here to use the right object type,
-                        // else the slot of the parent object is called (and thus the special
-                        // packets never reach their goal)
-                        connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                        uas = mav;
-                    }
-                    break;
-                case MAV_AUTOPILOT_SLUGS:
-                    {
-                        SlugsMAV* mav = new SlugsMAV(this, message.sysid);
-                        // Connect this robot to the UAS object
-                        // it is IMPORTANT here to use the right object type,
-                        // else the slot of the parent object is called (and thus the special
-                        // packets never reach their goal)
-                        connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                        uas = mav;
-                    }
-                    break;
-                case MAV_AUTOPILOT_ARDUPILOTMEGA:
-                    {
-                        ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(this, message.sysid);
-                        // Connect this robot to the UAS object
-                        // it is IMPORTANT here to use the right object type,
-                        // else the slot of the parent object is called (and thus the special
-                        // packets never reach their goal)
-                        connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                        uas = mav;
-                    }
-                    break;
-                default:
-                    uas = new UAS(this, message.sysid);
-                    break;
-                }
-
-                // Set the autopilot type
-                uas->setAutopilotType((int)heartbeat.autopilot);
-
-                // Make UAS aware that this link can be used to communicate with the actual robot
-                uas->addLink(link);
-
-                // Now add UAS to "official" list, which makes the whole application aware of it
-                UASManager::instance()->addUAS(uas);
-
+                // Create a new UAS object
+                uas = QGCMAVLinkUASFactory::createUAS(this, link, message.sysid, &heartbeat);
             }
 
             // Only count message if UAS exists for this message

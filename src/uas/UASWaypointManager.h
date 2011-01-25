@@ -86,25 +86,17 @@ public:
     /** @name Waypoint list operations */
     /*@{*/
     const QVector<Waypoint *> &getWaypointList(void) { return waypoints; }  ///< Returns a const reference to the waypoint list.
-    void addWaypoint(Waypoint *wp);                        ///< adds a new waypoint to the end of the list and changes its sequence number accordingly
-    int removeWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
-    void moveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
-    void saveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
-    void loadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
-    void localAddWaypoint(Waypoint *wp);                        ///< locally adds a new waypoint to the end of the list and changes its sequence number accordingly
-    int localRemoveWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
-    void localMoveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
-    void localSaveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
-    void localLoadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
-
+    int getIndexOf(Waypoint* wp);                               ///< Get the index of a waypoint in the list
     /*@}*/
 
-    /** @name Global waypoint list operations */
-    /*@{*/
-    const QVector<Waypoint *> &getGlobalWaypointList(void) { return waypoints; }  ///< Returns a const reference to the global waypoint list.
-    void globalAddWaypoint(Waypoint *wp);                        ///< locally adds a new waypoint to the end of the list and changes its sequence number accordingly
-    int globalRemoveWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
-    /*@}*/
+    UAS& getUAS() { return this->uas; }                         ///< Returns the owning UAS
+
+//    /** @name Global waypoint list operations */
+//    /*@{*/
+//    const QVector<Waypoint *> &getGlobalWaypointList(void) { return waypoints; }  ///< Returns a const reference to the global waypoint list.
+//    void globalAddWaypoint(Waypoint *wp);                        ///< locally adds a new waypoint to the end of the list and changes its sequence number accordingly
+//    int globalRemoveWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
+//    /*@}*/
 
 private:
     /** @name Message send functions */
@@ -120,14 +112,25 @@ private:
 
 public slots:
     void timeout();                                 ///< Called by the timer if a response times out. Handles send retries.
+    /** @name Waypoint list operations */
+    /*@{*/
+    void addWaypoint(Waypoint *wp, bool enforceFirstActive=true);                 ///< adds a new waypoint to the end of the list and changes its sequence number accordingly
+    int removeWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
+    void moveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
+    void saveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
+    void loadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
+    void notifyOfChange(Waypoint* wp);                     ///< Notifies manager to changes to a waypoint
+    /*@}*/
 
 signals:
-    void waypointListChanged(void);                 ///< emits signal that the local waypoint list has been changed
+    void waypointListChanged(void);                 ///< emits signal that the waypoint list has been changed
+    void waypointListChanged(int uasid);            ///< Emits signal that list has been changed
+    void waypointChanged(int uasid, Waypoint* wp);  ///< emits signal that waypoint has been changed
     void currentWaypointChanged(quint16);           ///< emits the new current waypoint sequence number
     void updateStatusString(const QString &);       ///< emits the current status string
 
-    void loadWPFile();                                ///< emits signal that a file wp has been load
-    void readGlobalWPFromUAS(bool value);                            ///< emits signal when finish to read Global WP from UAS
+    void loadWPFile();                              ///< emits signal that a file wp has been load
+    void readGlobalWPFromUAS(bool value);           ///< emits signal when finish to read Global WP from UAS
 
 private:
     UAS &uas;                                       ///< Reference to the corresponding UAS

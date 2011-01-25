@@ -76,11 +76,19 @@ public slots:
     void updateLoad(UASInterface*, double);
     void selectWaypoint(int uasId, int id);
 
+    void startImage(quint64 timestamp);
     void startImage(int imgid, int width, int height, int depth, int channels);
     void setPixels(int imgid, const unsigned char* imageData, int length, int startIndex);
     void finishImage();
     void saveImage();
     void saveImage(QString fileName);
+    /** @brief Select directory where to load the offline files from */
+    void selectOfflineDirectory();
+    /** @brief Enable the HUD instruments */
+    void enableHUDInstruments(bool enabled);
+    /** @brief Enable Video */
+    void enableVideo(bool enabled);
+
 
 protected slots:
     void paintCenterBackground(float roll, float pitch, float yaw);
@@ -119,6 +127,8 @@ protected:
     void showEvent(QShowEvent* event);
     /** @brief Stop updating widget */
     void hideEvent(QHideEvent* event);
+    void contextMenuEvent (QContextMenuEvent* event);
+    void createActions();
 
     static const int updateInterval = 50;
 
@@ -192,6 +202,16 @@ protected:
     double lon;
     double alt;
     float load;
+    QString offlineDirectory;
+    QString nextOfflineImage;
+    bool hudInstrumentsEnabled;
+    bool videoEnabled;
+    float xImageFactor;
+    float yImageFactor;
+    QAction* enableHUDAction;
+    QAction* enableVideoAction;
+    QAction* selectOfflineDirectoryAction;
+    QAction* selectVideoChannelAction;
     void paintEvent(QPaintEvent *event);
 
 };

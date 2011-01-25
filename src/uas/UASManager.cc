@@ -58,7 +58,7 @@ UASManager* UASManager::instance()
 UASManager::UASManager() :
         activeUAS(NULL)
 {
-    systems = QMap<int, UASInterface*>();
+    systems = QList<UASInterface*>();
     start(QThread::LowPriority);
 }
 
@@ -90,9 +90,10 @@ void UASManager::addUAS(UASInterface* uas)
     }
 
     // Only execute if there is no UAS at this index
-    if (!systems.contains(uas->getUASID()))
+    if (!systems.contains(uas))
     {
-        systems.insert(uas->getUASID(), uas);
+        systems.append(uas);
+        connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
         emit UASCreated(uas);
     }
 
@@ -103,9 +104,46 @@ void UASManager::addUAS(UASInterface* uas)
     }
 }
 
+void UASManager::removeUAS(QObject* uas)
+{
+    UASInterface* mav = qobject_cast<UASInterface*>(uas);
+
+    if (mav)
+    {
+        int listindex = systems.indexOf(mav);
+
+        if (mav == activeUAS)
+        {
+            if (systems.count() > 1)
+            {
+                // We only set a new UAS if more than one is present
+                if (listindex != 0)
+                {
+                    // The system to be removed is not at position 1
+                    // set position one as new active system
+                    setActiveUAS(systems.first());
+                }
+                else
+                {
+                    // The system to be removed is at position 1,
+                    // select the next system
+                    setActiveUAS(systems.at(1));
+                }
+            }
+            else
+            {
+                // TODO send a null pointer if no UAS is present any more
+                // This has to be proberly tested however, since it might
+                // crash code parts not handling null pointers correctly.
+            }
+        }
+        systems.removeAt(listindex);
+    }
+}
+
 QList<UASInterface*> UASManager::getUASList()
 {
-    return systems.values();
+    return systems;
 }
 
 UASInterface* UASManager::getActiveUAS()
@@ -176,8 +214,18 @@ void UASManager::configureActiveUAS()
 
 UASInterface* UASManager::getUASForId(int id)
 {
-    // Return NULL pointer if UAS does not exist
-    return systems.value(id, NULL);
+    UASInterface* system = NULL;
+
+    foreach(UASInterface* sys, systems)
+    {
+        if (sys->getUASID() == id)
+        {
+            system = sys;
+        }
+    }
+
+    // Return NULL if not found
+    return system;
 }
 
 void UASManager::setActiveUAS(UASInterface* uas)
@@ -193,8 +241,10 @@ void UASManager::setActiveUAS(UASInterface* uas)
         activeUAS = uas;
         activeUASMutex.unlock();
 
+        activeUAS->setSelected();
         emit activeUASSet(uas);
         emit activeUASSet(uas->getUASID());
+        emit activeUASSetListIndex(systems.indexOf(uas));
         emit activeUASStatusChanged(uas, true);
         emit activeUASStatusChanged(uas->getUASID(), true);
     }

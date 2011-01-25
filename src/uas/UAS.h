@@ -70,6 +70,8 @@ public:
     QString getUASName(void) const;
     /** @brief Get the unique system id */
     int getUASID() const;
+    /** @brief Get the airframe */
+    int getAirframe() const { return airframe; }
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
     /** @brief Get the status flag for the communication */
@@ -89,10 +91,11 @@ public:
     double getRoll() const { return roll; }
     double getPitch() const { return pitch; }
     double getYaw() const { return yaw; }
-
+    bool getSelected() const;
 
 friend class UASWaypointManager;
-protected:
+
+protected: //COMMENTS FOR TEST UNIT
     int uasId;                    ///< Unique system ID
     unsigned char type;           ///< UAS type (from type enum)
     quint64 startTime;            ///< The time the UAS was switched on
@@ -152,10 +155,12 @@ protected:
     double roll;
     double pitch;
     double yaw;
+    quint64 lastHeartbeat;      ///< Time of the last heartbeat message
     QTimer* statusTimeout;      ///< Timer for various status timeouts
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
-
+    int airframe;               ///< The airframe type
+public:
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
     /** @brief Estimate how much flight time is remaining */
@@ -168,13 +173,20 @@ protected:
     bool isAuto();
 
 public:
-    UASWaypointManager &getWaypointManager(void) { return waypointManager; }
+    UASWaypointManager* getWaypointManager() { return &waypointManager; }
     int getSystemType();
     int getAutopilotType() {return autopilot;}
-    void setAutopilotType(int apType) { autopilot = apType;}
 
 public slots:
-    /** @brief Sets an action **/
+    /** @brief Set the autopilot type */
+    void setAutopilotType(int apType) { autopilot = apType; emit systemSpecsChanged(uasId); }
+    /** @brief Set the type of airframe */
+    void setSystemType(int systemType) { type = systemType; emit systemSpecsChanged(uasId); }
+    /** @brief Set the specific airframe type */
+    void setAirframe(int airframe) { this->airframe = airframe; emit systemSpecsChanged(uasId); }
+    /** @brief Set a new name **/
+    void setUASName(const QString& name);
+    /** @brief Executes an action **/
     void setAction(MAV_ACTION action);
 
     /** @brief Launches the system **/
@@ -217,6 +229,8 @@ public slots:
 
     /** @brief Add a link associated with this robot */
     void addLink(LinkInterface* link);
+    /** @brief Remove a link associated with this robot */
+    void removeLink(QObject* object);
 
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(LinkInterface* link, mavlink_message_t message);
@@ -295,10 +309,21 @@ signals:
     void loadChanged(UASInterface* uas, double load);
     /** @brief Propagate a heartbeat received from the system */
     void heartbeat(UASInterface* uas);
+    void imageStarted(quint64 timestamp);
 
     protected:
     /** @brief Get the UNIX timestamp in microseconds */
     quint64 getUnixTime(quint64 time);
+
+protected slots:
+    /** @brief Write settings to disk */
+    void writeSettings();
+    /** @brief Read settings from disk */
+    void readSettings();
+
+    // MESSAGE RECEPTION
+    /** @brief Receive a named value message */
+    void receiveMessageNamedValue(const mavlink_message_t& message);
 };
 
 

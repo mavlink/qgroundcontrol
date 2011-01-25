@@ -64,6 +64,15 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "Temperature", "raw", raw.temp, time);
             }
             break;
+        case MAVLINK_MSG_ID_IMAGE_TRIGGERED:
+            {
+                // FIXME Kind of a hack to load data from disk
+                mavlink_image_triggered_t img;
+                mavlink_msg_image_triggered_decode(&message, &img);
+                qDebug() << "IMAGE AVAILABLE:" << img.timestamp;
+                emit imageStarted(img.timestamp);
+            }
+            break;
         case MAVLINK_MSG_ID_PATTERN_DETECTED:
             {
                 mavlink_pattern_detected_t detected;

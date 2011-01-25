@@ -25,7 +25,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_2">
+  <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="10,20">
    <property name="spacing">
     <number>3</number>
    </property>
@@ -51,8 +51,14 @@
      </property>
      <property name="minimumSize">
       <size>
-       <width>250</width>
-       <height>300</height>
+       <width>90</width>
+       <height>200</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>370</width>
+       <height>16777215</height>
       </size>
      </property>
      <property name="title">
@@ -71,21 +77,21 @@
       <item>
        <widget class="QScrollArea" name="curveListWidget">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>240</width>
-          <height>250</height>
+          <width>60</width>
+          <height>150</height>
          </size>
         </property>
         <property name="baseSize">
          <size>
-          <width>150</width>
-          <height>200</height>
+          <width>60</width>
+          <height>150</height>
          </size>
         </property>
         <property name="autoFillBackground">
@@ -108,7 +114,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>242</width>
+           <width>210</width>
            <height>361</height>
           </rect>
          </property>
@@ -122,14 +128,14 @@
     <widget class="QGroupBox" name="diagramGroupBox">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-       <horstretch>9</horstretch>
+       <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="minimumSize">
       <size>
-       <width>400</width>
-       <height>300</height>
+       <width>200</width>
+       <height>200</height>
       </size>
      </property>
      <property name="baseSize">
