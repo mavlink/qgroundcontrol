@@ -138,7 +138,7 @@ protected:
 
   signals:
     //void movePoint(QPointF newCoord);
-    void captureMapCoordinateClick(const QPointF coordinate); //ROCA
+    void captureMapCoordinateClick(const QPointF coordinate);
     void createGlobalWP(bool value, QPointF centerCoordinate);
     void sendGeometryEndDrag(const QPointF coordinate, const int index);
 

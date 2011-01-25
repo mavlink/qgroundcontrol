@@ -107,6 +107,7 @@ void WaypointView::moveDown()
     emit moveDownWaypoint(wp);
 }
 
+
 void WaypointView::remove()
 {
     emit removeWaypoint(wp);

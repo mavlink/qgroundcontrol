@@ -113,7 +113,7 @@ signals:
   void createWaypointAtMap(const QPointF coordinate);
  // void ChangeWaypointGlobalPosition(int index, QPointF coord);
   void changePositionWPBySpinBox(int indexWP, float lat, float lon);
-
+    void changePointList();
 
 
 protected:

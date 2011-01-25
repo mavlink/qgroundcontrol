@@ -177,11 +177,9 @@ MapWidget::MapWidget(QWidget *parent) :
 
 
     // Connect the required signals-slots
-    connect(zoomin, SIGNAL(clicked(bool)),
-            mc, SLOT(zoomIn()));
+    connect(zoomin, SIGNAL(clicked(bool)), mc, SLOT(zoomIn()));
 
-    connect(zoomout, SIGNAL(clicked(bool)),
-            mc, SLOT(zoomOut()));
+    connect(zoomout, SIGNAL(clicked(bool)), mc, SLOT(zoomOut()));
 
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
     foreach(UASInterface* system, systems)
@@ -351,7 +349,6 @@ void MapWidget::createPathButtonClicked(bool checked)
  * @param coordinate The coordinate in which it occured the mouse event
  * @note  This slot is connected to the mouseEventCoordinate of the QMapControl object
  */
-
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate)
 {
     //qDebug() << mc->mouseMode();
@@ -373,6 +370,8 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
         {
             tempCirclePoint = new Waypoint2DIcon(coordinate.x(), coordinate.y(), 20, str, qmapcontrol::Point::Middle);
         }
+
+        //draw WP in map
         mc->layer("Waypoints")->addGeometry(tempCirclePoint);
 
         qmapcontrol::Point* tempPoint = new qmapcontrol::Point(coordinate.x(), coordinate.y(),str);
@@ -500,6 +499,7 @@ MapWidget::~MapWidget()
 {
     delete m_ui;
 }
+
 /**
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
