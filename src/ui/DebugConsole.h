@@ -98,7 +98,10 @@ public slots:
 
 protected:
     void changeEvent(QEvent *e);
+    /** @brief Convert a symbol name to the byte representation */
     QByteArray symbolNameToBytes(const QString& symbol);
+    /** @brief Convert a symbol byte to the name */
+    QString bytesToSymbolNames(const QByteArray& b);
 
     QList<LinkInterface*> links;
     LinkInterface* currLink;

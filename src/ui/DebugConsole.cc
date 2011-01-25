@@ -113,6 +113,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     connect(m_ui->addSymbolButton, SIGNAL(clicked()), this, SLOT(appendSpecialSymbol()));
     // Connect Checkbox
     connect(m_ui->specialComboBox, SIGNAL(highlighted(QString)), this, SLOT(specialSymbolSelected(QString)));
+    // Set add button invisible if auto add checkbox is checked
+    connect(m_ui->specialCheckBox, SIGNAL(clicked(bool)), m_ui->addSymbolButton, SLOT(setHidden(bool)));
 
     hold(false);
 
@@ -341,44 +343,90 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
 QByteArray DebugConsole::symbolNameToBytes(const QString& text)
 {
     QByteArray b;
-    if (text == "LF")
+    if (text.contains("CR+LF"))
+    {
+        b.append(static_cast<char>(0x0D));
+        b.append(static_cast<char>(0x0A));
+    }
+    else if (text.contains("LF"))
     {
         b.append(static_cast<char>(0x0A));
     }
-    else if (text == "FF")
+    else if (text.contains("FF"))
     {
         b.append(static_cast<char>(0x0C));
     }
-    else if (text == "CR")
+    else if (text.contains("CR"))
     {
         b.append(static_cast<char>(0x0D));
     }
-    else if (text == "CR+LF")
-    {
-        b.append(static_cast<char>(0x0D));
-        b.append(static_cast<char>(0x0A));
-    }
-    else if (text == "TAB")
+    else if (text.contains("TAB"))
     {
         b.append(static_cast<char>(0x09));
     }
-    else if (text == "NUL")
+    else if (text.contains("NUL"))
     {
         b.append(static_cast<char>(0x00));
     }
-    else if (text == "ESC")
+    else if (text.contains("ESC"))
     {
         b.append(static_cast<char>(0x1B));
     }
-    else if (text == "~")
+    else if (text.contains("~"))
     {
         b.append(static_cast<char>(0x7E));
     }
-    else if (text == "<Space>")
+    else if (text.contains("<Space>"))
     {
         b.append(static_cast<char>(0x20));
     }
     return b;
+}
+
+QString DebugConsole::bytesToSymbolNames(const QByteArray& b)
+{
+    QString text;
+    if (b.size() > 1 && b.contains(0x0D) && b.contains(0x0A))
+    {
+        text = "<CR+LF>";
+    }
+    else if (b.contains(0x0A))
+    {
+        text = "<LF>";
+    }
+    else if (b.contains(0x0C))
+    {
+        text = "<FF>";
+    }
+    else if (b.contains(0x0D))
+    {
+        text = "<CR>";
+    }
+    else if (b.contains(0x09))
+    {
+        text = "<TAB>";
+    }
+    else if (b.contains((char)0x00))
+    {
+        text == "<NUL>";
+    }
+    else if (b.contains(0x1B))
+    {
+        text = "<ESC>";
+    }
+    else if (b.contains(0x7E))
+    {
+        text = "<~>";
+    }
+    else if (b.contains(0x20))
+    {
+        text = "<Space>";
+    }
+    else
+    {
+        text.append(b);
+    }
+    return text;
 }
 
 void DebugConsole::specialSymbolSelected(const QString& text)
@@ -426,10 +474,27 @@ void DebugConsole::sendBytes()
         return;
     }
 
+    QString transmitUnconverted = m_ui->sendText->text();
+    QByteArray specialSymbol;
+
     // Append special symbol if checkbox is checked
     if (m_ui->specialCheckBox->isChecked())
     {
-        appendSpecialSymbol(m_ui->specialComboBox->currentText());
+        // Get auto-add special symbols
+        specialSymbol = symbolNameToBytes(m_ui->specialComboBox->currentText());
+
+        // Convert them if needed
+        if (!convertToAscii)
+        {
+            QString specialSymbolConverted;
+            for (int i = 0; i < specialSymbol.length(); i++)
+            {
+                QString add(" 0x%1");
+                specialSymbolConverted.append(add.arg(static_cast<char>(specialSymbol.at(i)), 2, 16, QChar('0')));
+            }
+            specialSymbol.clear();
+            specialSymbol.append(specialSymbolConverted);
+        }
     }
 
     QByteArray transmit;
@@ -438,13 +503,27 @@ void DebugConsole::sendBytes()
     if (convertToAscii)
     {
         // ASCII text is not converted
-        transmit = m_ui->sendText->text().toLatin1();
-        feedback = transmit;
+        transmit = transmitUnconverted.toLatin1();
+        // Auto-add special symbol handling
+        transmit.append(specialSymbol);
+
+        QString translated;
+
+        // Replace every occurence of a special symbol with its text name
+        for (int i = 0; i < transmit.size(); ++i)
+        {
+            QByteArray specialChar;
+            specialChar.append(transmit.at(i));
+            translated.append(bytesToSymbolNames(specialChar));
+        }
+
+        feedback.append(translated);
     }
     else
     {
         // HEX symbols are converted to bytes
-        QString str = m_ui->sendText->text().toLatin1();
+        QString str = transmitUnconverted.toLatin1();
+        str.append(specialSymbol);
         str.remove(' ');
         str.remove("0x");
         str.simplified();
@@ -485,16 +564,16 @@ void DebugConsole::sendBytes()
     if (ok && m_ui->sendText->text().toLatin1().size() > 0)
     {
         // Transmit only if conversion succeeded
-//        int transmitted =
-                currLink->writeBytes(transmit, transmit.size());
-//        if (transmit.size() == transmitted)
-//        {
-            m_ui->sentText->setText(tr("Sent: ") + feedback);
-//        }
-//        else
-//        {
-//            m_ui->sentText->setText(tr("Error during sending: Transmitted only %1 bytes instead of %2.").arg(transmitted, transmit.size()));
-//        }
+        //        int transmitted =
+        currLink->writeBytes(transmit, transmit.size());
+        //        if (transmit.size() == transmitted)
+        //        {
+        m_ui->sentText->setText(tr("Sent: ") + feedback);
+        //        }
+        //        else
+        //        {
+        //            m_ui->sentText->setText(tr("Error during sending: Transmitted only %1 bytes instead of %2.").arg(transmitted, transmit.size()));
+        //        }
     }
     else if (m_ui->sendText->text().toLatin1().size() > 0)
     {
