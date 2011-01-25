@@ -66,8 +66,8 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         localFrame(false),
         removeAction(new QAction("Delete this system", this)),
         renameAction(new QAction("Rename..", this)),
-        selectAction(new QAction("Select this system", this )),
-        selectAirframeAction(new QAction("Select Airframe", this)),
+        selectAction(new QAction("Control this system", this )),
+        selectAirframeAction(new QAction("Choose Airframe", this)),
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
@@ -415,12 +415,13 @@ void UASView::updateLoad(UASInterface* uas, double load)
 void UASView::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
+    menu.addAction(selectAction);
+    menu.addSeparator();
     menu.addAction(renameAction);
     if (timeout)
     {
         menu.addAction(removeAction);
     }
-    menu.addAction(selectAction);
     menu.addAction(selectAirframeAction);
     menu.exec(event->globalPos());
 }
