@@ -385,6 +385,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 roll = attitude.roll;
                 pitch = attitude.pitch;
                 yaw = attitude.yaw;
+
+                roll = QGC::limitAngleToPMPI(roll);
+                pitch = QGC::limitAngleToPMPI(pitch);
+                yaw = QGC::limitAngleToPMPI(yaw);
+
 //                emit valueChanged(uasId, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
 //                emit valueChanged(uasId, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
 //                emit valueChanged(uasId, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);

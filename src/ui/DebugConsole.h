@@ -96,6 +96,8 @@ public slots:
     void paintEvent(QPaintEvent *event);
     /** @brief Update traffic measurements */
     void updateTrafficMeasurements();
+    void loadSettings();
+    void storeSettings();
 
 protected:
     void changeEvent(QEvent *e);
@@ -109,14 +111,12 @@ protected:
     void cycleCommandHistory(bool up);
 
     QList<LinkInterface*> links;
-    QStringList commandHistory;
-    QString currCommand;
-    int commandIndex;
     LinkInterface* currLink;
 
     bool holdOn;              ///< Hold current view, ignore new data
     bool convertToAscii;      ///< Convert data to ASCII
     bool filterMAVLINK;       ///< Set true to filter out MAVLink in output
+    bool autoHold;            ///< Auto-hold mode sets view into hold if the data rate is too high
     int bytesToIgnore;        ///< Number of bytes to ignore
     char lastByte;            ///< The last received byte
     QList<QString> sentBytes; ///< Transmitted bytes, per transmission
@@ -129,7 +129,9 @@ protected:
     float dataRate;           ///< Current data rate
     float lowpassDataRate;    ///< Lowpass filtered data rate
     float dataRateThreshold;  ///< Threshold where to enable auto-hold
-    bool autoHold;            ///< Auto-hold mode sets view into hold if the data rate is too high
+    QStringList commandHistory;
+    QString currCommand;
+    int commandIndex;
 
 private:
     Ui::DebugConsole *m_ui;
