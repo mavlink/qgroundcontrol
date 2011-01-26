@@ -58,6 +58,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
         lowpassDataRate(0.0f),
         dataRateThreshold(500),
         autoHold(true),
+        commandIndex(0),
         m_ui(new Ui::DebugConsole)
 {
     // Setup basic user interface
@@ -471,6 +472,12 @@ void DebugConsole::appendSpecialSymbol()
 
 void DebugConsole::sendBytes()
 {
+    // Store command history
+    commandHistory.append(m_ui->sendText->text());
+    // Since text was just sent, we're at position commandHistory.length()
+    // which is the current text
+    commandIndex = commandHistory.length();
+
     if (!m_ui->sentText->isVisible())
     {
         m_ui->sentText->setVisible(true);
@@ -678,17 +685,11 @@ void DebugConsole::keyPressEvent(QKeyEvent * event)
 {
     if (event->key() == Qt::Key_Up)
     {
-        qDebug() << "UP KEY PRESSED";
         cycleCommandHistory(true);
     }
     else if (event->key() == Qt::Key_Down)
     {
-        qDebug() << "DOWN KEY PRESSED";
         cycleCommandHistory(false);
-    }
-    else if (event->key() == Qt::Key_Enter)
-    {
-        this->sendBytes();
     }
     else
     {
@@ -698,40 +699,54 @@ void DebugConsole::keyPressEvent(QKeyEvent * event)
 
 void DebugConsole::cycleCommandHistory(bool up)
 {
-    // Store current command if we're not in history yet
-    if (commandIndex == commandHistory.length())
+    // Only cycle if there is a history
+    if (commandHistory.length() > 0)
     {
-        currCommand = m_ui->sendText->text();
-    }
-
-    if (up)
-    {
-        // UP
-        commandIndex--;
-        if (commandIndex >= 0)
+        // Store current command if we're not in history yet
+        if (commandIndex == commandHistory.length() && up)
         {
-            m_ui->sendText->setText(commandHistory.at(commandIndex));
+            currCommand = m_ui->sendText->text();
         }
 
-        // If the index
-    }
-    else
-    {
-        // DOWN
-        commandIndex++;
-        if (commandIndex < commandHistory.length())
+        if (up)
         {
-            m_ui->sendText->setText(commandHistory.at(commandIndex));
+            // UP
+            commandIndex--;
+            if (commandIndex >= 0)
+            {
+                m_ui->sendText->setText(commandHistory.at(commandIndex));
+            }
+
+            // If the index
         }
-        // If the index is at history length, load the last current command
+        else
+        {
+            // DOWN
+            commandIndex++;
+            if (commandIndex < commandHistory.length())
+            {
+                m_ui->sendText->setText(commandHistory.at(commandIndex));
+            }
+            // If the index is at history length, load the last current command
 
-    }
+        }
 
-    // If we are too far down or too far up, wrap around to current command
-    if (commandIndex < 0 || commandIndex > commandHistory.length())
-    {
-        commandIndex = commandHistory.length();
-        m_ui->sendText->setText(currCommand);
+        // Restore current command if we went out of history
+        if (commandIndex == commandHistory.length())
+        {
+            m_ui->sendText->setText(currCommand);
+        }
+
+        // If we are too far down or too far up, wrap around to current command
+        if (commandIndex < 0 || commandIndex > commandHistory.length())
+        {
+            commandIndex = commandHistory.length();
+            m_ui->sendText->setText(currCommand);
+        }
+
+        // Bound the index
+        if (commandIndex < 0) commandIndex = 0;
+        if (commandIndex > commandHistory.length()) commandIndex = commandHistory.length();
     }
 }
 
