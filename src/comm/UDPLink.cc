@@ -64,10 +64,11 @@ UDPLink::~UDPLink()
  **/
 void UDPLink::run()
 {
-    forever
-    {
-        QGC::SLEEP::msleep(5000);
-    }
+//    forever
+//    {
+//        QGC::SLEEP::msleep(5000);
+//    }
+    exec();
 }
 
 void UDPLink::setAddress(QString address)

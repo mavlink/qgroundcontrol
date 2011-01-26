@@ -69,10 +69,11 @@ UASManager::~UASManager()
 
 void UASManager::run()
 {
-    forever
-    {
-        QGC::SLEEP::msleep(5000);
-    }
+//    forever
+//    {
+//        QGC::SLEEP::msleep(5000);
+//    }
+    exec();
 }
 
 void UASManager::addUAS(UASInterface* uas)

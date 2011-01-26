@@ -29,6 +29,7 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 #include <QPainter>
+#include <QSettings>
 
 #include "DebugConsole.h"
 #include "ui_DebugConsole.h"
@@ -45,6 +46,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
         holdOn(false),
         convertToAscii(true),
         filterMAVLINK(false),
+        autoHold(true),
         bytesToIgnore(0),
         lastByte(-1),
         sentBytes(),
@@ -57,7 +59,6 @@ DebugConsole::DebugConsole(QWidget *parent) :
         dataRate(0.0f),
         lowpassDataRate(0.0f),
         dataRateThreshold(500),
-        autoHold(true),
         commandIndex(0),
         m_ui(new Ui::DebugConsole)
 {
@@ -121,12 +122,55 @@ DebugConsole::DebugConsole(QWidget *parent) :
 
     hold(false);
 
-    this->setVisible(false);
+    loadSettings();
+
+    // Warn user about not activated hold
+    if (!m_ui->holdCheckBox->isChecked())
+    {
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console is huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
+    }
 }
 
 DebugConsole::~DebugConsole()
 {
+    storeSettings();
     delete m_ui;
+}
+
+void DebugConsole::loadSettings()
+{
+    // Load defaults from settings
+    QSettings settings;
+    settings.sync();
+    settings.beginGroup("QGC_DEBUG_CONSOLE");
+    m_ui->specialComboBox->setCurrentIndex(settings.value("SPECIAL_SYMBOL", m_ui->specialComboBox->currentIndex()).toInt());
+    m_ui->specialCheckBox->setChecked(settings.value("SPECIAL_SYMBOL_CHECKBOX_STATE", m_ui->specialCheckBox->isChecked()).toBool());
+    hexModeEnabled(settings.value("HEX_MODE_ENABLED", m_ui->hexCheckBox->isChecked()).toBool());
+    MAVLINKfilterEnabled(settings.value("MAVLINK_FILTER_ENABLED", m_ui->mavlinkCheckBox->isChecked()).toBool());
+    setAutoHold(settings.value("AUTO_HOLD_ENABLED", m_ui->holdCheckBox->isChecked()).toBool());
+    settings.endGroup();
+
+    // Update visibility settings
+    if (m_ui->specialCheckBox->isChecked())
+    {
+        m_ui->specialCheckBox->setVisible(true);
+        m_ui->addSymbolButton->setVisible(false);
+    }
+}
+
+void DebugConsole::storeSettings()
+{
+    // Store settings
+    QSettings settings;
+    settings.beginGroup("QGC_DEBUG_CONSOLE");
+    settings.setValue("SPECIAL_SYMBOL", m_ui->specialComboBox->currentIndex());
+    settings.setValue("SPECIAL_SYMBOL_CHECKBOX_STATE", m_ui->specialCheckBox->isChecked());
+    settings.setValue("HEX_MODE_ENABLED", m_ui->hexCheckBox->isChecked());
+    settings.setValue("MAVLINK_FILTER_ENABLED", m_ui->mavlinkCheckBox->isChecked());
+    settings.setValue("AUTO_HOLD_ENABLED", m_ui->holdCheckBox->isChecked());
+    settings.endGroup();
+    settings.sync();
+    //qDebug() << "Storing settings!";
 }
 
 /**
@@ -480,6 +524,12 @@ void DebugConsole::appendSpecialSymbol()
 
 void DebugConsole::sendBytes()
 {
+    // FIXME This store settings should be removed
+    // once all threading issues have been resolved
+    // since its called in the destructor, which
+    // is absolutely sufficient
+    storeSettings();
+
     // Store command history
     commandHistory.append(m_ui->sendText->text());
     // Since text was just sent, we're at position commandHistory.length()
@@ -614,11 +664,18 @@ void DebugConsole::sendBytes()
  */
 void DebugConsole::hexModeEnabled(bool mode)
 {
-    convertToAscii = !mode;
-    m_ui->receiveText->clear();
-    m_ui->sendText->clear();
-    m_ui->sentText->clear();
-    commandHistory.clear();
+    if (convertToAscii == mode)
+    {
+        convertToAscii = !mode;
+        if (m_ui->hexCheckBox->isChecked() != mode)
+        {
+            m_ui->hexCheckBox->setChecked(mode);
+        }
+        m_ui->receiveText->clear();
+        m_ui->sendText->clear();
+        m_ui->sentText->clear();
+        commandHistory.clear();
+    }
 }
 
 /**
@@ -626,14 +683,23 @@ void DebugConsole::hexModeEnabled(bool mode)
  */
 void DebugConsole::MAVLINKfilterEnabled(bool filter)
 {
-    filterMAVLINK = filter;
-    bytesToIgnore = 0;
+    if (filterMAVLINK != filter)
+    {
+        filterMAVLINK = filter;
+        bytesToIgnore = 0;
+        if (m_ui->mavlinkCheckBox->isChecked() != filter)
+        {
+            m_ui->mavlinkCheckBox->setChecked(filter);
+        }
+    }
 }
 /**
  * @param hold Freeze the input and thus any scrolling
  */
 void DebugConsole::hold(bool hold)
 {
+    if (holdOn != hold)
+    {
     // Check if we need to append bytes from the hold buffer
     if (this->holdOn && !hold)
     {
@@ -654,6 +720,11 @@ void DebugConsole::hold(bool hold)
     {
         m_ui->receiveText->setTextInteractionFlags(Qt::NoTextInteraction);
     }
+    if (m_ui->holdCheckBox->isChecked() != hold)
+    {
+        m_ui->holdCheckBox->setChecked(hold);
+    }
+}
 }
 
 /**
