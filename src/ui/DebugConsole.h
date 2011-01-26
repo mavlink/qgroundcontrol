@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QByteArray>
 #include <QTimer>
+#include <QKeyEvent>
 
 #include "LinkInterface.h"
 
@@ -102,8 +103,15 @@ protected:
     QByteArray symbolNameToBytes(const QString& symbol);
     /** @brief Convert a symbol byte to the name */
     QString bytesToSymbolNames(const QByteArray& b);
+    /** @brief Handle keypress events */
+    void keyPressEvent(QKeyEvent * event);
+    /** @brief Cycle through the command history */
+    void cycleCommandHistory(bool up);
 
     QList<LinkInterface*> links;
+    QStringList commandHistory;
+    QString currCommand;
+    int commandIndex;
     LinkInterface* currLink;
 
     bool holdOn;              ///< Hold current view, ignore new data

@@ -115,6 +115,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     connect(m_ui->specialComboBox, SIGNAL(highlighted(QString)), this, SLOT(specialSymbolSelected(QString)));
     // Set add button invisible if auto add checkbox is checked
     connect(m_ui->specialCheckBox, SIGNAL(clicked(bool)), m_ui->addSymbolButton, SLOT(setHidden(bool)));
+    // Allow to send via return
+    connect(m_ui->sendText, SIGNAL(returnPressed()), this, SLOT(sendBytes()));
 
     hold(false);
 
@@ -205,7 +207,8 @@ void DebugConsole::setAutoHold(bool hold)
 void DebugConsole::receiveTextMessage(int id, int component, int severity, QString text)
 {
     Q_UNUSED(severity);
-    m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(MAV%2:%3) %4</font>").arg(UASManager::instance()->getUASForId(id)->getColor().name(), QString::number(id), QString::number(component), text));
+    m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(MAV%2:%3) %4</font>\n").arg(UASManager::instance()->getUASForId(id)->getColor().name(), QString::number(id), QString::number(component), text));
+    //m_ui->receiveText->appendPlainText("");
 }
 
 void DebugConsole::updateTrafficMeasurements()
@@ -293,14 +296,13 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                     {
                         switch (byte)
                         {
-                            // Catch line feed
-//                        case (unsigned char)'\n':
-//                            m_ui->receiveText->appendPlainText(str);
-//                            str = "";
-//                            break;
-                            // Catch carriage return and line feed
-                        case (unsigned char)0xD:
-                        case (unsigned char)0xA:
+                        // Accept line feed and tab
+                        case (unsigned char)'\n':
+                        case (unsigned char)'\t':
+                            str.append(byte);
+                            break;
+                        // Catch and ignore carriage return
+                        case (unsigned char)'\r':
                             // Ignore
                             break;
                         default:
@@ -330,8 +332,14 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
             }
 
         }
-        if (lineBuffer.length() > 0) m_ui->receiveText->appendPlainText(lineBuffer);
-        lineBuffer.clear();
+        if (lineBuffer.length() > 0)
+        {
+            m_ui->receiveText->insertPlainText(lineBuffer);
+            // Ensure text area scrolls correctly
+            m_ui->receiveText->ensureCursorVisible();
+            lineBuffer.clear();
+        }
+
 
     }
     else if (link == currLink && holdOn)
@@ -595,6 +603,7 @@ void DebugConsole::hexModeEnabled(bool mode)
     m_ui->receiveText->clear();
     m_ui->sendText->clear();
     m_ui->sentText->clear();
+    commandHistory.clear();
 }
 
 /**
@@ -640,12 +649,12 @@ void DebugConsole::setConnectionState(bool connected)
     if(connected)
     {
         m_ui->connectButton->setText(tr("Disconn."));
-        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>").arg(QGC::colorGreen.name(), tr("Link %1 is connected.").arg(currLink->getName())));
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QGC::colorGreen.name(), tr("Link %1 is connected.").arg(currLink->getName())));
     }
     else
     {
         m_ui->connectButton->setText(tr("Connect"));
-        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>").arg(QGC::colorYellow.name(), tr("Link %1 is unconnected.").arg(currLink->getName())));
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QGC::colorYellow.name(), tr("Link %1 is unconnected.").arg(currLink->getName())));
     }
 }
 
@@ -662,6 +671,67 @@ void DebugConsole::handleConnectButton()
         {
             currLink->connect();
         }
+    }
+}
+
+void DebugConsole::keyPressEvent(QKeyEvent * event)
+{
+    if (event->key() == Qt::Key_Up)
+    {
+        qDebug() << "UP KEY PRESSED";
+        cycleCommandHistory(true);
+    }
+    else if (event->key() == Qt::Key_Down)
+    {
+        qDebug() << "DOWN KEY PRESSED";
+        cycleCommandHistory(false);
+    }
+    else if (event->key() == Qt::Key_Enter)
+    {
+        this->sendBytes();
+    }
+    else
+    {
+        QWidget::keyPressEvent(event);
+    }
+}
+
+void DebugConsole::cycleCommandHistory(bool up)
+{
+    // Store current command if we're not in history yet
+    if (commandIndex == commandHistory.length())
+    {
+        currCommand = m_ui->sendText->text();
+    }
+
+    if (up)
+    {
+        // UP
+        commandIndex--;
+        if (commandIndex >= 0)
+        {
+            m_ui->sendText->setText(commandHistory.at(commandIndex));
+        }
+
+        // If the index
+    }
+    else
+    {
+        // DOWN
+        commandIndex++;
+        if (commandIndex < commandHistory.length())
+        {
+            m_ui->sendText->setText(commandHistory.at(commandIndex));
+        }
+        // If the index is at history length, load the last current command
+
+    }
+
+    // If we are too far down or too far up, wrap around to current command
+    if (commandIndex < 0 || commandIndex > commandHistory.length())
+    {
+        commandIndex = commandHistory.length();
+        m_ui->sendText->setText(currCommand);
     }
 }
 

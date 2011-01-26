@@ -179,18 +179,18 @@ void SerialLink::writeBytes(const char* data, qint64 size)
         if (b > 0)
         {
 
-            qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
+//            qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
 
             // Increase write counter
             bitsSentTotal += size * 8;
 
-            int i;
-            for (i=0; i<size; i++)
-            {
-                unsigned char v =data[i];
-                qDebug("%02x ", v);
-            }
-            qDebug("\n");
+//            int i;
+//            for (i=0; i<size; i++)
+//            {
+//                unsigned char v =data[i];
+//                qDebug("%02x ", v);
+//            }
+//            qDebug("\n");
         }
         else
         {
