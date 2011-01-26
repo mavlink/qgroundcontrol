@@ -299,12 +299,21 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                         {
                         // Accept line feed and tab
                         case (unsigned char)'\n':
+                            {
+                                if (lastByte != '\r')
+                                {
+                                    // Do not break line again for CR+LF
+                                    // only break line for single LF bytes
+                                    str.append(byte);
+                                }
+                            }
+                            break;
                         case (unsigned char)'\t':
                             str.append(byte);
                             break;
                         // Catch and ignore carriage return
                         case (unsigned char)'\r':
-                            // Ignore
+                            str.append(byte);
                             break;
                         default:
                             str.append(QChar(QChar::ReplacementCharacter));
@@ -324,6 +333,7 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                     str.append(str2);
                 }
                 lineBuffer.append(str);
+                lastByte = byte;
             }
             else
             {
@@ -340,8 +350,6 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
             m_ui->receiveText->ensureCursorVisible();
             lineBuffer.clear();
         }
-
-
     }
     else if (link == currLink && holdOn)
     {
