@@ -38,6 +38,9 @@ release {
 
 QMAKE_POST_LINK += echo "Copying files"
 
+# Turn off serial port warnings
+DEFINES += _TTY_NOWARN_
+
 #QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
 #QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 
