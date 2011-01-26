@@ -142,7 +142,8 @@ function createAircraft(id, type, color)
           aircraft[id] = planePlacemark;
           attitudes[id] = planeOrient;
           aircraftLocations[id] = planeLoc;
-		  aircraftLastLocations[id] = ge.createLocation('');
+	aircraftLastLocations[id] = ge.createLocation('');
+	aircraftColors[id] = color;
           //planeColor = color;
           
           createTrail(id, color);
@@ -186,6 +187,12 @@ function clearTrail(id)
 function showTrail(id)
 {
 	ge.getFeatures().appendChild(trailPlacemarks[id]);
+	trailsVisible[id] = true;
+}
+
+function startTrail(id)
+{
+	createTrail(id, trailColors[id]);
 	trailsVisible[id] = true;
 }
 
