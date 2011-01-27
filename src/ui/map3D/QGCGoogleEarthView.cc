@@ -151,20 +151,6 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lon, dou
     //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }
 
-void QGCGoogleEarthView::clearTrail()
-{
-    // Check if the current trail has to be hidden
-    if (trailEnabled && !state)
-    {
-        QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-        foreach (UASInterface* currMav, mavs)
-        {
-            javaScript(QString("clearTrail(%1);").arg(currMav->getUASID()));
-            javaScript(QString("startTrail(%1);").arg(currMav->getUASID()));
-        }
-    }
-}
-
 void QGCGoogleEarthView::showTrail(bool state)
 {
     // Check if the current trail has to be hidden
@@ -173,7 +159,7 @@ void QGCGoogleEarthView::showTrail(bool state)
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
         foreach (UASInterface* currMav, mavs)
         {
-            javaScript(QString("clearTrail(%1);").arg(currMav->getUASID()));
+            javaScript(QString("hideTrail(%1);").arg(currMav->getUASID()));
         }
     }
 
@@ -357,9 +343,6 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             // Trail checkbox
             ui->trailCheckbox->setChecked(trailEnabled);
             connect(ui->trailCheckbox, SIGNAL(toggled(bool)), this, SLOT(showTrail(bool)));
-
-            // Clear trail button
-            connect(ui->clearTrailButton, SIGNAL(clicked()), this, SLOT(clearTrail()));
 
             // Go home
             connect(ui->goHomeButton, SIGNAL(clicked()), this, SLOT(goHome()));

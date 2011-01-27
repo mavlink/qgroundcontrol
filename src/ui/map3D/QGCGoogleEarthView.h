@@ -82,8 +82,6 @@ public slots:
     void setActiveUAS(UASInterface* uas);
     /** @brief Update the global position */
     void updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec);
-    /** @brief Clear the existing vehicle trails */
-    void clearTrail();
     /** @brief Show the vehicle trail */
     void showTrail(bool state);
     /** @brief Show the waypoints */
