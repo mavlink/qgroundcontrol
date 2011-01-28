@@ -175,7 +175,7 @@ void WaypointList::add()
 {
     if (uas)
     {
-                const QVector<Waypoint *> &waypoints = uas->getWaypointManager().getWaypointList();
+                const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
             Waypoint *wp;
 
 

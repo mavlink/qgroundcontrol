@@ -193,7 +193,11 @@ void UASView::updateActiveUAS(UASInterface* uas, bool active)
 void UASView::updateMode(int sysId, QString status, QString description)
 {
     Q_UNUSED(description);
+
+    int aa=this->uas->getUASID();
     if (sysId == this->uas->getUASID()) m_ui->modeLabel->setText(status);
+
+    m_ui->modeLabel->setText(status);
 }
 
 void UASView::mouseDoubleClickEvent (QMouseEvent * event)

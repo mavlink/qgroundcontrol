@@ -997,6 +997,7 @@ void MainWindow::createCustomWidget()
     QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
     connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
     dock->setWidget(tool);
+
     QAction* showAction = new QAction("Show Unnamed Tool", this);
     connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
     connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
@@ -1547,17 +1548,17 @@ void MainWindow::UASCreated(UASInterface* uas)
                 connectSlugsActions();
 
                 // FIXME: This type checking might be redundant
-                //            if (slugsDataWidget) {
-                //              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
-                //              if (dataWidget) {
-                //                SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
-                //                if (mav2) {
-                (dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget()))->addUAS(uas);
-                //                  //loadSlugsView();
-                //                  loadGlobalOperatorView();
-                //                }
-                //              }
-                //            }
+//                //            if (slugsDataWidget) {
+//                //              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+//                //              if (dataWidget) {
+//                //                SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
+//                //                if (mav2) {
+//                (dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget()))->addUAS(uas);
+//                //                  //loadSlugsView();
+//                //                  loadGlobalOperatorView();
+//                //                }
+//                //              }
+//                //            }
 
             }
             break;
