@@ -264,6 +264,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     stateAudio = " changed status to " + uasState;
                 }
 
+                qDebug() << "Remote Mode: " << state.mode;
+                qDebug() << "Loclal Mode: " << this->mode;
                 if (this->mode != static_cast<unsigned int>(state.mode))
                 {
                     modechanged = true;

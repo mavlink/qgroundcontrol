@@ -380,7 +380,8 @@ win32-g++ {
     message(Building for Windows Platform (32bit))
 
     # Special settings for debug
-    #CONFIG += CONSOLE
+    CONFIG += CONSOLE
+    OUTPUT += CONSOLE
 
     INCLUDEPATH += $$BASEDIR/lib/sdl/include \
                    $$BASEDIR/lib/opal/include #\ #\
