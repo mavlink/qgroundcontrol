@@ -388,6 +388,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //                emit valueChanged(uasId, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
 //                emit valueChanged(uasId, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
 //                emit valueChanged(uasId, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
+
+                //emit batteryChanged(this, 25, 15, time*1000);
+                //emit thrustChanged(this, 30);
+                //emit modeChanged(1, "miModo", "Descripcion");
+
+
                 emit valueChanged(uasId, "roll", "rad", mavlink_msg_attitude_get_roll(&message), time);
                 emit valueChanged(uasId, "pitch", "rad", mavlink_msg_attitude_get_pitch(&message), time);
                 emit valueChanged(uasId, "yaw", "rad", mavlink_msg_attitude_get_yaw(&message), time);
