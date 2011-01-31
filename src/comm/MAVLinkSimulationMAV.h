@@ -11,7 +11,7 @@ class MAVLinkSimulationMAV : public QObject
 {
     Q_OBJECT
 public:
-    explicit MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int systemid);
+    explicit MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int systemid, double lat=47.376389, double lon=8.548056);
 
 signals:
 
@@ -49,6 +49,10 @@ protected:
     double nextSPY;
     double nextSPZ;
     double nextSPYaw;
+    uint8_t sys_mode;
+    uint8_t sys_state;
+    uint8_t nav_mode;
+    bool flying;
 
 };
 

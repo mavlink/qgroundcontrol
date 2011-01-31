@@ -81,11 +81,13 @@ roll(0.0),
 pitch(0.0),
 yaw(0.0),
 statusTimeout(new QTimer(this)),
-paramsOnceRequested(false)
+paramsOnceRequested(false),
+airframe(0)
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
+    connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
     readSettings();
 }
@@ -102,6 +104,8 @@ void UAS::writeSettings()
     QSettings settings;
     settings.beginGroup(QString("MAV%1").arg(uasId));
     settings.setValue("NAME", this->name);
+    settings.setValue("AIRFRAME", this->airframe);
+    settings.setValue("AP_TYPE", this->autopilot);
     settings.endGroup();
     settings.sync();
 }
@@ -111,6 +115,8 @@ void UAS::readSettings()
     QSettings settings;
     settings.beginGroup(QString("MAV%1").arg(uasId));
     this->name = settings.value("NAME", this->name).toString();
+    this->airframe = settings.value("AIRFRAME", this->airframe).toInt();
+    this->autopilot = settings.value("AP_TYPE", this->autopilot).toInt();
     settings.endGroup();
 }
 
@@ -146,18 +152,31 @@ void UAS::updateState()
 
 void UAS::setSelected()
 {
-    UASManager::instance()->setActiveUAS(this);
+    if (UASManager::instance()->getActiveUAS() != this)
+    {
+        UASManager::instance()->setActiveUAS(this);
+        emit systemSelected(true);
+    }
+}
+
+bool UAS::getSelected() const
+{
+    return (UASManager::instance()->getActiveUAS() == this);
 }
 
 void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
 {
     if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_FLOAT)
     {
-
+        mavlink_named_value_float_t val;
+        mavlink_msg_named_value_float_decode(&message, &val);
+        emit valueChanged(this->getUASID(), QString(val.name), tr("raw"), val.value, getUnixTime(0));
     }
     else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
     {
-
+        mavlink_named_value_int_t val;
+        mavlink_msg_named_value_int_decode(&message, &val);
+        emit valueChanged(this->getUASID(), QString(val.name), tr("raw"), (float)val.value, getUnixTime(0));
     }
 }
 
@@ -181,6 +200,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         QString uasState;
         QString stateDescription;
         QString patternPath;
+
+        // Receive named value message
+        receiveMessageNamedValue(message);
+
         switch (message.msgid)
         {
         case MAVLINK_MSG_ID_HEARTBEAT:
@@ -190,6 +213,21 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (this->type != mavlink_msg_heartbeat_get_type(&message))
             {
                 this->type = mavlink_msg_heartbeat_get_type(&message);
+                if (airframe == 0)
+                {
+                    switch (type)
+                    {
+                    case MAV_FIXED_WING:
+                        setAirframe(UASInterface::QGC_AIRFRAME_EASYSTAR);
+                        break;
+                    case MAV_QUADROTOR:
+                        setAirframe(UASInterface::QGC_AIRFRAME_CHEETAH);
+                        break;
+                    default:
+                        // Do nothing
+                        break;
+                    }
+                }
                 this->autopilot = mavlink_msg_heartbeat_get_autopilot(&message);
                 emit systemTypeSet(this, type);
             }
@@ -326,15 +364,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_raw_imu_decode(&message, &raw);
                 quint64 time = getUnixTime(raw.usec);
 
-                emit valueChanged(uasId, "accel x", "raw", raw.xacc, time);
-                emit valueChanged(uasId, "accel y", "raw", raw.yacc, time);
-                emit valueChanged(uasId, "accel z", "raw", raw.zacc, time);
+                emit valueChanged(uasId, "accel x", "raw", static_cast<double>(raw.xacc), time);
+                emit valueChanged(uasId, "accel y", "raw", static_cast<double>(raw.yacc), time);
+                emit valueChanged(uasId, "accel z", "raw", static_cast<double>(raw.zacc), time);
                 emit valueChanged(uasId, "gyro roll", "raw", static_cast<double>(raw.xgyro), time);
                 emit valueChanged(uasId, "gyro pitch", "raw", static_cast<double>(raw.ygyro), time);
                 emit valueChanged(uasId, "gyro yaw", "raw", static_cast<double>(raw.zgyro), time);
-                emit valueChanged(uasId, "mag x", "raw", raw.xmag, time);
-                emit valueChanged(uasId, "mag y", "raw", raw.ymag, time);
-                emit valueChanged(uasId, "mag z", "raw", raw.zmag, time);
+                emit valueChanged(uasId, "mag x", "raw", static_cast<double>(raw.xmag), time);
+                emit valueChanged(uasId, "mag y", "raw", static_cast<double>(raw.ymag), time);
+                emit valueChanged(uasId, "mag z", "raw", static_cast<double>(raw.zmag), time);
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
@@ -347,6 +385,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 roll = attitude.roll;
                 pitch = attitude.pitch;
                 yaw = attitude.yaw;
+
+                roll = QGC::limitAngleToPMPI(roll);
+                pitch = QGC::limitAngleToPMPI(pitch);
+                yaw = QGC::limitAngleToPMPI(yaw);
+
 //                emit valueChanged(uasId, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
 //                emit valueChanged(uasId, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
 //                emit valueChanged(uasId, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
@@ -1038,7 +1081,7 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         break;
     case MAV_STATE_EMERGENCY:
         uasState = tr("EMERGENCY");
-        stateDescription = tr("EMERGENCY: Please land");
+        stateDescription = tr("EMERGENCY: Land!");
         break;
     case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");
@@ -1374,6 +1417,7 @@ void UAS::setUASName(const QString& name)
     this->name = name;
     writeSettings();
     emit nameChanged(name);
+    emit systemSpecsChanged(uasId);
 }
 
 /**

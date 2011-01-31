@@ -86,16 +86,6 @@ public:
     /** @name Waypoint list operations */
     /*@{*/
     const QVector<Waypoint *> &getWaypointList(void) { return waypoints; }  ///< Returns a const reference to the waypoint list.
-    int removeWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
-    void moveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
-    void saveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
-    void loadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
-    void notifyOfChange(Waypoint* wp);                     ///< Notifies manager to changes to a waypoint
-    void localAddWaypoint(Waypoint *wp);                        ///< locally adds a new waypoint to the end of the list and changes its sequence number accordingly
-    int localRemoveWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
-    void localMoveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
-    void localSaveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
-    void localLoadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
     int getIndexOf(Waypoint* wp);                               ///< Get the index of a waypoint in the list
     /*@}*/
 
@@ -122,7 +112,15 @@ private:
 
 public slots:
     void timeout();                                 ///< Called by the timer if a response times out. Handles send retries.
-    void addWaypoint(Waypoint *wp);                 ///< adds a new waypoint to the end of the list and changes its sequence number accordingly
+    /** @name Waypoint list operations */
+    /*@{*/
+    void addWaypoint(Waypoint *wp, bool enforceFirstActive=true);                 ///< adds a new waypoint to the end of the list and changes its sequence number accordingly
+    int removeWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
+    void moveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
+    void saveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
+    void loadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
+    void notifyOfChange(Waypoint* wp);                     ///< Notifies manager to changes to a waypoint
+    /*@}*/
 
 signals:
     void waypointListChanged(void);                 ///< emits signal that the waypoint list has been changed

@@ -437,6 +437,20 @@ float MAVLinkSimulationWaypointPlanner::distanceToPoint(uint16_t seq, float x, f
         return -1.f;
 }
 
+float MAVLinkSimulationWaypointPlanner::distanceToPoint(uint16_t seq, float x, float y)
+{
+        if (seq < waypoints->size())
+        {
+                mavlink_waypoint_t *cur = waypoints->at(seq);
+
+                const PxVector3 A(cur->x, cur->y, 0);
+                const PxVector3 C(x, y, 0);
+
+                return (C-A).length();
+        }
+        return -1.f;
+}
+
 void MAVLinkSimulationWaypointPlanner::handleMessage(const mavlink_message_t& msg)
 {
     mavlink_handler(&msg);
@@ -449,7 +463,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
 
         //check for timed-out operations
 
-        qDebug() << "MAV: %d WAYPOINTPLANNER GOT MESSAGE" << systemid;
+        //qDebug() << "MAV: %d WAYPOINTPLANNER GOT MESSAGE" << systemid;
 
         uint64_t now = QGC::groundTimeUsecs()/1000;
         if (now-protocol_timestamp_lastaction > protocol_timeout && current_state != PX_WPP_IDLE)
@@ -502,6 +516,10 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                                                 if (att.yaw - yaw_tolerance < wp->yaw || wp->yaw < upperBound)
                                                         yawReached = true;
                                         }
+
+                                        // FIXME HACK: Ignore yaw:
+
+                                        yawReached = true;
                                 }
                         }
                         break;
@@ -542,6 +560,49 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                         }
                         break;
                 }
+
+        case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+        {
+                if(msg->sysid == systemid && current_active_wp_id < waypoints->size())
+                {
+                        mavlink_waypoint_t *wp = waypoints->at(current_active_wp_id);
+
+                        if(wp->frame == 0)
+                        {
+                                mavlink_global_position_int_t pos;
+                                mavlink_msg_global_position_int_decode(msg, &pos);
+
+                                float x = static_cast<double>(pos.lon)/1E7;
+                                float y = static_cast<double>(pos.lat)/1E7;
+                                float z = static_cast<double>(pos.alt)/1000;
+
+                                qDebug() << "Received new position: x:" << x << "| y:" << y << "| z:" << z;
+
+                                posReached = false;
+                                yawReached = true;
+
+                                // FIXME big hack for simulation!
+                                //float oneDegreeOfLatMeters = 111131.745f;
+                                float orbit = 0.00008;
+
+                                // compare current position (given in message) with current waypoint
+                                //float orbit = wp->param1;
+
+                                // Convert to degrees
+
+
+                                float dist;
+                                dist = distanceToPoint(current_active_wp_id, x, y);
+
+                                if (dist >= 0.f && dist <= orbit && yawReached)
+                                {
+                                        posReached = true;
+                                        qDebug() << "WP PLANNER: REACHED POSITION";
+                                }
+                        }
+                }
+                break;
+        }
 
                 case MAVLINK_MSG_ID_ACTION: // special action from ground station
                 {
@@ -947,7 +1008,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                                         {
                                                 //the last waypoint was reached, if auto continue is
                                                 //activated restart the waypoint list from the beginning
-                                                current_active_wp_id = 1;
+                                                current_active_wp_id = 0;
                                         }
                                         else
                                         {

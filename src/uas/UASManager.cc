@@ -69,10 +69,11 @@ UASManager::~UASManager()
 
 void UASManager::run()
 {
-    forever
-    {
-        QGC::SLEEP::msleep(5000);
-    }
+//    forever
+//    {
+//        QGC::SLEEP::msleep(5000);
+//    }
+    exec();
 }
 
 void UASManager::addUAS(UASInterface* uas)
@@ -93,6 +94,7 @@ void UASManager::addUAS(UASInterface* uas)
     if (!systems.contains(uas))
     {
         systems.append(uas);
+        connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
         emit UASCreated(uas);
     }
 
@@ -100,6 +102,43 @@ void UASManager::addUAS(UASInterface* uas)
     if (firstUAS)
     {
         setActiveUAS(uas);
+    }
+}
+
+void UASManager::removeUAS(QObject* uas)
+{
+    UASInterface* mav = qobject_cast<UASInterface*>(uas);
+
+    if (mav)
+    {
+        int listindex = systems.indexOf(mav);
+
+        if (mav == activeUAS)
+        {
+            if (systems.count() > 1)
+            {
+                // We only set a new UAS if more than one is present
+                if (listindex != 0)
+                {
+                    // The system to be removed is not at position 1
+                    // set position one as new active system
+                    setActiveUAS(systems.first());
+                }
+                else
+                {
+                    // The system to be removed is at position 1,
+                    // select the next system
+                    setActiveUAS(systems.at(1));
+                }
+            }
+            else
+            {
+                // TODO send a null pointer if no UAS is present any more
+                // This has to be proberly tested however, since it might
+                // crash code parts not handling null pointers correctly.
+            }
+        }
+        systems.removeAt(listindex);
     }
 }
 
@@ -203,6 +242,7 @@ void UASManager::setActiveUAS(UASInterface* uas)
         activeUAS = uas;
         activeUASMutex.unlock();
 
+        activeUAS->setSelected();
         emit activeUASSet(uas);
         emit activeUASSet(uas->getUASID());
         emit activeUASSetListIndex(systems.indexOf(uas));

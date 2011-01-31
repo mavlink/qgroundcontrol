@@ -77,10 +77,7 @@ MAVLinkProtocol::~MAVLinkProtocol()
 
 void MAVLinkProtocol::run()
 {
-    forever
-    {
-        QGC::SLEEP::msleep(5000);
-    }
+    exec();
 }
 
 QString MAVLinkProtocol::getLogfileName()

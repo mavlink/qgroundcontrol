@@ -70,6 +70,8 @@ public:
     QString getUASName(void) const;
     /** @brief Get the unique system id */
     int getUASID() const;
+    /** @brief Get the airframe */
+    int getAirframe() const { return airframe; }
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
     /** @brief Get the status flag for the communication */
@@ -89,9 +91,10 @@ public:
     double getRoll() const { return roll; }
     double getPitch() const { return pitch; }
     double getYaw() const { return yaw; }
-
+    bool getSelected() const;
 
 friend class UASWaypointManager;
+
 protected: //COMMENTS FOR TEST UNIT
     int uasId;                    ///< Unique system ID
     unsigned char type;           ///< UAS type (from type enum)
@@ -156,6 +159,7 @@ protected: //COMMENTS FOR TEST UNIT
     QTimer* statusTimeout;      ///< Timer for various status timeouts
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
+    int airframe;               ///< The airframe type
 public:
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
@@ -175,9 +179,11 @@ public:
 
 public slots:
     /** @brief Set the autopilot type */
-    void setAutopilotType(int apType) { autopilot = apType; }
+    void setAutopilotType(int apType) { autopilot = apType; emit systemSpecsChanged(uasId); }
     /** @brief Set the type of airframe */
-    void setSystemType(int systemType) { type = systemType; }
+    void setSystemType(int systemType) { type = systemType; emit systemSpecsChanged(uasId); }
+    /** @brief Set the specific airframe type */
+    void setAirframe(int airframe) { this->airframe = airframe; emit systemSpecsChanged(uasId); }
     /** @brief Set a new name **/
     void setUASName(const QString& name);
     /** @brief Executes an action **/
@@ -308,6 +314,8 @@ signals:
     protected:
     /** @brief Get the UNIX timestamp in microseconds */
     quint64 getUnixTime(quint64 time);
+
+protected slots:
     /** @brief Write settings to disk */
     void writeSettings();
     /** @brief Read settings from disk */

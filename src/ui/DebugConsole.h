@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QByteArray>
 #include <QTimer>
+#include <QKeyEvent>
 
 #include "LinkInterface.h"
 
@@ -85,16 +86,29 @@ public slots:
     void receiveTextMessage(int id, int component, int severity, QString text);
     /** @brief Append a special symbol */
     void appendSpecialSymbol(const QString& text);
+    /** @brief Append the special symbol currently selected in combo box */
+    void appendSpecialSymbol();
+    /** @brief A new special symbol is selected */
+    void specialSymbolSelected(const QString& text);
 
     protected slots:
     /** @brief Draw information overlay */
     void paintEvent(QPaintEvent *event);
     /** @brief Update traffic measurements */
     void updateTrafficMeasurements();
+    void loadSettings();
+    void storeSettings();
 
 protected:
     void changeEvent(QEvent *e);
+    /** @brief Convert a symbol name to the byte representation */
     QByteArray symbolNameToBytes(const QString& symbol);
+    /** @brief Convert a symbol byte to the name */
+    QString bytesToSymbolNames(const QByteArray& b);
+    /** @brief Handle keypress events */
+    void keyPressEvent(QKeyEvent * event);
+    /** @brief Cycle through the command history */
+    void cycleCommandHistory(bool up);
 
     QList<LinkInterface*> links;
     LinkInterface* currLink;
@@ -102,6 +116,7 @@ protected:
     bool holdOn;              ///< Hold current view, ignore new data
     bool convertToAscii;      ///< Convert data to ASCII
     bool filterMAVLINK;       ///< Set true to filter out MAVLink in output
+    bool autoHold;            ///< Auto-hold mode sets view into hold if the data rate is too high
     int bytesToIgnore;        ///< Number of bytes to ignore
     char lastByte;            ///< The last received byte
     QList<QString> sentBytes; ///< Transmitted bytes, per transmission
@@ -114,7 +129,9 @@ protected:
     float dataRate;           ///< Current data rate
     float lowpassDataRate;    ///< Lowpass filtered data rate
     float dataRateThreshold;  ///< Threshold where to enable auto-hold
-    bool autoHold;            ///< Auto-hold mode sets view into hold if the data rate is too high
+    QStringList commandHistory;
+    QString currCommand;
+    int commandIndex;
 
 private:
     Ui::DebugConsole *m_ui;
