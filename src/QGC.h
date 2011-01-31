@@ -18,6 +18,8 @@ namespace QGC
 
     /** @brief Get the current ground time in microseconds */
     quint64 groundTimeUsecs();
+    /** @brief Returns the angle limited to -pi - pi */
+    double limitAngleToPMPI(double angle);
     int applicationVersion();
 
     const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;

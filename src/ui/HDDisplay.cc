@@ -152,7 +152,7 @@ HDDisplay::~HDDisplay()
 
 QSize HDDisplay::sizeHint() const
 {
-    return QSize(400, 400.0f*(vwidth/vheight)*1.1f);
+    return QSize(400, 400.0f*(vwidth/vheight)*1.2f);
 }
 
 void HDDisplay::enableGLRendering(bool enable)
@@ -293,12 +293,12 @@ void HDDisplay::addGauge()
         }
         else
         {
-            items.append(QString("%1,%2,%3,%4").arg("-180").arg(key).arg(unit).arg("+180"));
+            items.append(QString("%1,%2,%3,%4").arg("0").arg(key).arg(unit).arg("+100"));
         }
     }
     bool ok;
     QString item = QInputDialog::getItem(this, tr("Add Gauge Instrument"),
-                                         tr("Format: min, curve name, max[,s]"), items, 0, true, &ok);
+                                         tr("Format: min, curve name, unit, max[,s]"), items, 0, true, &ok);
     if (ok && !item.isEmpty())
     {
         addGauge(item);

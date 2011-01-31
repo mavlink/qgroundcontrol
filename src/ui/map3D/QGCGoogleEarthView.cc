@@ -151,6 +151,20 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lon, dou
     //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }
 
+void QGCGoogleEarthView::clearTrail()
+{
+    // Check if the current trail has to be hidden
+    if (trailEnabled && !state)
+    {
+        QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+        foreach (UASInterface* currMav, mavs)
+        {
+            javaScript(QString("clearTrail(%1);").arg(currMav->getUASID()));
+            javaScript(QString("startTrail(%1);").arg(currMav->getUASID()));
+        }
+    }
+}
+
 void QGCGoogleEarthView::showTrail(bool state)
 {
     // Check if the current trail has to be hidden
@@ -159,7 +173,7 @@ void QGCGoogleEarthView::showTrail(bool state)
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
         foreach (UASInterface* currMav, mavs)
         {
-            javaScript(QString("hideTrail(%1);").arg(currMav->getUASID()));
+            javaScript(QString("clearTrail(%1);").arg(currMav->getUASID()));
         }
     }
 
@@ -185,6 +199,7 @@ void QGCGoogleEarthView::follow(bool follow)
 {
     ui->followAirplaneCheckbox->setChecked(follow);
     followCamera = follow;
+    if (gEarthInitialized) javaScript(QString("setFollowEnabled(%1)").arg(follow));
 }
 
 void QGCGoogleEarthView::goHome()
@@ -343,6 +358,9 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             ui->trailCheckbox->setChecked(trailEnabled);
             connect(ui->trailCheckbox, SIGNAL(toggled(bool)), this, SLOT(showTrail(bool)));
 
+            // Clear trail button
+            connect(ui->clearTrailButton, SIGNAL(clicked()), this, SLOT(clearTrail()));
+
             // Go home
             connect(ui->goHomeButton, SIGNAL(clicked()), this, SLOT(goHome()));
 
@@ -352,6 +370,8 @@ void QGCGoogleEarthView::initializeGoogleEarth()
 
             // Start update timer
             updateTimer->start(refreshRateMs);
+
+            follow(this->followCamera);
 
             gEarthInitialized = true;
         }
@@ -394,11 +414,6 @@ void QGCGoogleEarthView::updateState()
                        .arg(roll, 0, 'f', 9)
                        .arg(pitch, 0, 'f', 9)
                        .arg(yaw, 0, 'f', 9));
-        }
-
-        if (followCamera)
-        {
-            javaScript(QString("updateFollowAircraft()"));
         }
     }
 }

@@ -78,7 +78,7 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             removeChild(0, getNumChildren());
         }
 
-        const QVector<Waypoint *>& list = uas->getWaypointManager().getWaypointList();
+        const QVector<Waypoint *>& list = uas->getWaypointManager()->getWaypointList();
 
         for (int i = 0; i < list.size(); i++)
         {

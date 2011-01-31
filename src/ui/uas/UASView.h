@@ -82,6 +82,8 @@ public slots:
     void setBackgroundColor();
     /** @brief Bring up the dialog to rename the system */
     void rename();
+    /** @brief Select airframe for this vehicle */
+    void selectAirframe();
 
 protected:
     void changeEvent(QEvent *e);
@@ -110,6 +112,8 @@ protected:
     bool localFrame;
     QAction* removeAction;
     QAction* renameAction;
+    QAction* selectAction;
+    QAction* selectAirframeAction;
     static const int updateInterval = 300;
 
 
