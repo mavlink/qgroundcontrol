@@ -244,13 +244,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_sys_status_decode(&message, &state);
 
                 // FIXME
-                //qDebug() << "SYSTEM NAV MODE:" << state.nav_mode;
+                qDebug() << "1 SYSTEM STATUS:" << state.status;
 
                 QString audiostring = "System " + QString::number(this->getUASID());
                 QString stateAudio = "";
                 QString modeAudio = "";
                 bool statechanged = false;
-                bool modechanged = false;
+                bool modechanged = false;         
 
                 if (state.status != this->status)
                 {
@@ -264,6 +264,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     stateAudio = " changed status to " + uasState;
                 }
 
+                qDebug() << "1 SYSTEM MODE:" << state.mode;
+                qDebug() << "1 THIS MODE:" << this->mode;
                 if (this->mode != static_cast<unsigned int>(state.mode))
                 {
                     modechanged = true;
@@ -305,6 +307,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     }
 
                     emit modeChanged(this->getUASID(), mode, "");
+
+                    qDebug() << "2 SYSTEM MODE:" << mode;
+
                     modeAudio = " is now in " + mode;
                 }
                 currentVoltage = state.vbat/1000.0f;
@@ -984,11 +989,15 @@ void UAS::setMode(int mode)
 {
     if ((uint8_t)mode >= MAV_MODE_LOCKED && (uint8_t)mode <= MAV_MODE_RC_TRAINING)
     {
-        this->mode = mode;
+        //this->mode = mode; //no call assignament, update receive message from UAS
         mavlink_message_t msg;
         mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, (uint8_t)mode);
         sendMessage(msg);
         qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << (uint8_t)mode;
+    }
+    else
+    {
+        qDebug() << "uas Mode not assign: " << mode;
     }
 }
 

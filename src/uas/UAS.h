@@ -126,7 +126,7 @@ protected: //COMMENTS FOR TEST UNIT
     double currentVoltage;      ///< Voltage currently measured
     float lpVoltage;            ///< Low-pass filtered voltage
     int timeRemaining;          ///< Remaining time calculated based on previous and current
-    unsigned int mode;          ///< The current mode of the MAV
+    //unsigned int mode;          ///< The current mode of the MAV
     int status;                 ///< The current status of the MAV
     quint64 onboardTimeOffset;
 
@@ -324,6 +324,9 @@ protected slots:
     // MESSAGE RECEPTION
     /** @brief Receive a named value message */
     void receiveMessageNamedValue(const mavlink_message_t& message);
+
+private:
+    unsigned int mode;          ///< The current mode of the MAV
 };
 
 
