@@ -40,8 +40,8 @@ This file is part of the PIXHAWK project
 #endif
 #ifdef Q_OS_LINUX
 //#include <flite/flite.h>
-#include <phonon/MediaObject>
-#include <phonon/AudioOutput>
+#include <Phonon/MediaObject>
+#include <Phonon/AudioOutput>
 #endif
 #ifdef Q_OS_WIN
 #include <Phonon/MediaObject>
