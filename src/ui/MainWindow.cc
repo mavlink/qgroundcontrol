@@ -159,7 +159,7 @@ MainWindow::MainWindow(QWidget *parent):
 
 MainWindow::~MainWindow()
 {
-
+    delete mavlink;
 }
 
 /**
@@ -896,6 +896,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     settings.setValue(getWindowGeometryKey(), saveGeometry());
     //settings.setValue("windowState", saveState());
     aboutToCloseFlag = true;
+    mavlink->storeSettings();
     // Save the last current view in any case
     settings.setValue("CURRENT_VIEW", currentView);
     // Save the current window state, but only if a system is connected (else no real number of widgets would be present)

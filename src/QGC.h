@@ -9,6 +9,9 @@
 
 namespace QGC
 {
+    const static int defaultSystemId = 255;
+    const static int defaultComponentId = 0;
+
     const QColor colorCyan(55, 154, 195);
     const QColor colorRed(154, 20, 20);
     const QColor colorGreen(20, 200, 20);
@@ -19,7 +22,9 @@ namespace QGC
     /** @brief Get the current ground time in microseconds */
     quint64 groundTimeUsecs();
     /** @brief Returns the angle limited to -pi - pi */
-    double limitAngleToPMPI(double angle);
+    float limitAngleToPMPIf(float angle);
+    /** @brief Returns the angle limited to -pi - pi */
+    double limitAngleToPMPId(double angle);
     int applicationVersion();
 
     const static int MAX_FLIGHT_TIME = 60 * 60 * 24 * 21;

@@ -269,7 +269,10 @@ public slots:
     virtual void startGyroscopeCalibration() = 0;
     virtual void startPressureCalibration() = 0;
 
-
+    /** @brief Set the current battery type and voltages */
+    virtual void setBatterySpecs(const QString& specs) = 0;
+    /** @brief Get the current battery type and specs */
+    virtual QString getBatterySpecs() = 0;
 
 protected:
     QColor color;
@@ -382,6 +385,7 @@ signals:
     void thrustChanged(UASInterface*, double thrust);
     void heartbeat(UASInterface* uas);
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
+    void attitudeSpeedChanged(int uas, double rollspeed, double pitchspeed, double yawspeed, quint64 usec);
     void attitudeThrustSetPointChanged(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     void positionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);

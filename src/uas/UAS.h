@@ -120,9 +120,10 @@ protected: //COMMENTS FOR TEST UNIT
     double thrustMax;           ///< Maximum forward/up thrust of this vehicle, in Newtons
 
     // Battery stats
-    double fullVoltage;         ///< Voltage of the fully charged battery (100%)
-    double emptyVoltage;        ///< Voltage of the empty battery (0%)
-    double startVoltage;        ///< Voltage at system start
+    float fullVoltage;          ///< Voltage of the fully charged battery (100%)
+    float emptyVoltage;         ///< Voltage of the empty battery (0%)
+    float warnVoltage;          ///< Voltage where QGC will start to warn about low battery
+    float startVoltage;         ///< Voltage at system start
     double currentVoltage;      ///< Voltage currently measured
     float lpVoltage;            ///< Low-pass filtered voltage
     int timeRemaining;          ///< Remaining time calculated based on previous and current
@@ -172,7 +173,6 @@ public:
     /** @brief Check if vehicle is in autonomous mode */
     bool isAuto();
 
-public:
     UASWaypointManager* getWaypointManager() { return &waypointManager; }
     int getSystemType();
     int getAutopilotType() {return autopilot;}
@@ -188,6 +188,10 @@ public slots:
     void setUASName(const QString& name);
     /** @brief Executes an action **/
     void setAction(MAV_ACTION action);
+    /** @brief Set the current battery type and voltages */
+    void setBatterySpecs(const QString& specs);
+    /** @brief Get the current battery type and specs */
+    QString getBatterySpecs();
 
     /** @brief Launches the system **/
     void launch();

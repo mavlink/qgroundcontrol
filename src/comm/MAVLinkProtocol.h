@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ProtocolInterface.h"
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
+#include "QGC.h"
 
 /**
  * @brief MAVLink micro air vehicle protocol reference implementation.
@@ -84,6 +85,8 @@ public slots:
     void sendMessage(LinkInterface* link, mavlink_message_t message);
     /** @brief Set the rate at which heartbeats are emitted */
     void setHeartbeatRate(int rate);
+    /** @brief Set the system id of this application */
+    void setSystemId(int id);
 
     /** @brief Enable / disable the heartbeat emission */
     void enableHeartbeats(bool enabled);
@@ -100,6 +103,11 @@ public slots:
     /** @brief Send an extra heartbeat to all connected units */
     void sendHeartbeat();
 
+    /** @brief Load protocol settings */
+    void loadSettings();
+    /** @brief Store protocol settings */
+    void storeSettings();
+
 protected:
     QTimer* heartbeatTimer;    ///< Timer to emit heartbeats
     int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
@@ -114,6 +122,7 @@ protected:
     int currReceiveCounter;
     int currLossCounter;
     bool versionMismatchIgnore;
+    int systemId;
 
 signals:
     /** @brief Message received and directly copied via signal */

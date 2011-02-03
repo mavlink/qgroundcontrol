@@ -68,6 +68,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         renameAction(new QAction("Rename..", this)),
         selectAction(new QAction("Control this system", this )),
         selectAirframeAction(new QAction("Choose Airframe", this)),
+        setBatterySpecsAction(new QAction("Set Battery Options", this)),
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
@@ -106,6 +107,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
     connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
     connect(selectAirframeAction, SIGNAL(triggered()), this, SLOT(selectAirframe()));
+    connect(setBatterySpecsAction, SIGNAL(triggered()), this, SLOT(setBatterySpecs()));
     connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
 
     // Name changes
@@ -423,7 +425,21 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
         menu.addAction(removeAction);
     }
     menu.addAction(selectAirframeAction);
+    menu.addAction(setBatterySpecsAction);
     menu.exec(event->globalPos());
+}
+
+void UASView::setBatterySpecs()
+{
+    if (uas)
+    {
+        bool ok;
+        QString newName = QInputDialog::getText(this, tr("Set Battery Specifications for %1").arg(uas->getUASName()),
+                                                tr("Specs: (empty,warn,full), e.g. (9V,9.5V,12.6V)"), QLineEdit::Normal,
+                                                uas->getBatterySpecs(), &ok);
+
+        if (ok && !newName.isEmpty()) uas->setBatterySpecs(newName);
+    }
 }
 
 void UASView::rename()
