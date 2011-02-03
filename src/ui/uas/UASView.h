@@ -84,6 +84,8 @@ public slots:
     void rename();
     /** @brief Select airframe for this vehicle */
     void selectAirframe();
+    /** @brief Select the battery type */
+    void setBatterySpecs();
 
 protected:
     void changeEvent(QEvent *e);
@@ -114,6 +116,7 @@ protected:
     QAction* renameAction;
     QAction* selectAction;
     QAction* selectAirframeAction;
+    QAction* setBatterySpecsAction;
     static const int updateInterval = 300;
 
 

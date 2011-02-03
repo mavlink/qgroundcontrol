@@ -106,6 +106,7 @@ void UAS::writeSettings()
     settings.setValue("NAME", this->name);
     settings.setValue("AIRFRAME", this->airframe);
     settings.setValue("AP_TYPE", this->autopilot);
+    settings.setValue("BATTERY_SPECS", getBatterySpecs());
     settings.endGroup();
     settings.sync();
 }
@@ -117,6 +118,10 @@ void UAS::readSettings()
     this->name = settings.value("NAME", this->name).toString();
     this->airframe = settings.value("AIRFRAME", this->airframe).toInt();
     this->autopilot = settings.value("AP_TYPE", this->autopilot).toInt();
+    if (settings.contains("BATTERY_SPECS"))
+    {
+        setBatterySpecs(settings.value("BATTERY_SPECS").toString());
+    }
     settings.endGroup();
 }
 
@@ -382,50 +387,28 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
                 quint64 time = getUnixTime(attitude.usec);
-                roll = attitude.roll;
-                pitch = attitude.pitch;
-                yaw = attitude.yaw;
 
-                roll = QGC::limitAngleToPMPI(roll);
-                pitch = QGC::limitAngleToPMPI(pitch);
-                yaw = QGC::limitAngleToPMPI(yaw);
+                roll = QGC::limitAngleToPMPIf(attitude.roll);
+                pitch = QGC::limitAngleToPMPIf(attitude.pitch);
+                yaw = QGC::limitAngleToPMPIf(attitude.yaw);
 
-//                emit valueChanged(uasId, "roll IMU", mavlink_msg_attitude_get_roll(&message), time);
-//                emit valueChanged(uasId, "pitch IMU", mavlink_msg_attitude_get_pitch(&message), time);
-//                emit valueChanged(uasId, "yaw IMU", mavlink_msg_attitude_get_yaw(&message), time);
-                emit valueChanged(uasId, "roll", "rad", mavlink_msg_attitude_get_roll(&message), time);
-                emit valueChanged(uasId, "pitch", "rad", mavlink_msg_attitude_get_pitch(&message), time);
-                emit valueChanged(uasId, "yaw", "rad", mavlink_msg_attitude_get_yaw(&message), time);
+                emit valueChanged(uasId, "roll", "rad", roll, time);
+                emit valueChanged(uasId, "pitch", "rad", pitch, time);
+                emit valueChanged(uasId, "yaw", "rad", yaw, time);
                 emit valueChanged(uasId, "rollspeed", "rad/s", attitude.rollspeed, time);
                 emit valueChanged(uasId, "pitchspeed", "rad/s", attitude.pitchspeed, time);
                 emit valueChanged(uasId, "yawspeed", "rad/s", attitude.yawspeed, time);
 
                 // Emit in angles
-                emit valueChanged(uasId, "roll", "deg", (attitude.roll/M_PI)*180.0, time);
-                emit valueChanged(uasId, "pitch", "deg", (attitude.pitch/M_PI)*180.0, time);
-
+                emit valueChanged(uasId, "roll", "deg", (roll/M_PI)*180.0, time);
+                emit valueChanged(uasId, "pitch", "deg", (pitch/M_PI)*180.0, time);
+                emit valueChanged(uasId, "yaw", "deg", (yaw/M_PI)*180.0, time);
                 emit valueChanged(uasId, "rollspeed", "deg/s", (attitude.rollspeed/M_PI)*180.0, time);
                 emit valueChanged(uasId, "pitchspeed", "deg/s", (attitude.pitchspeed/M_PI)*180.0, time);
-
-                // Force yaw to 180 deg range
-                double yaw = ((attitude.yaw/M_PI)*180.0);
-                double sign = 1.0;
-                if (yaw < 0)
-                {
-                    sign = -1.0;
-                    yaw = -yaw;
-                }
-                while (yaw > 180.0)
-                {
-                    yaw -= 180.0;
-                }
-
-                yaw *= sign;
-
-                emit valueChanged(uasId, "yaw", "deg", yaw, time);
                 emit valueChanged(uasId, "yawspeed", "deg/s", (attitude.yawspeed/M_PI)*180.0, time);
 
-                emit attitudeChanged(this, attitude.roll, attitude.pitch, attitude.yaw, time);
+                emit attitudeChanged(this, roll, pitch, yaw, time);
+                emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
             }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION:
@@ -1772,6 +1755,33 @@ void UAS::setBattery(BatteryType type, int cells)
     case AGZN:
         break;
     }
+}
+
+void UAS::setBatterySpecs(const QString& specs)
+{
+    QString stringList = specs;
+    stringList = stringList.remove("V");
+    stringList = stringList.remove("v");
+    QStringList parts = stringList.split(",");
+    if (parts.length() == 3)
+    {
+        float temp;
+        bool ok;
+        // Get the empty voltage
+        temp = parts.at(0).toFloat(&ok);
+        if (ok) emptyVoltage = temp;
+        // Get the warning voltage
+        temp = parts.at(1).toFloat(&ok);
+        if (ok) warnVoltage = temp;
+        // Get the full voltage
+        temp = parts.at(2).toFloat(&ok);
+        if (ok) fullVoltage = temp;
+    }
+}
+
+QString UAS::getBatterySpecs()
+{
+    return QString("%1V,%2V,%3V").arg(emptyVoltage).arg(warnVoltage).arg(fullVoltage);
 }
 
 int UAS::calculateTimeRemaining()
