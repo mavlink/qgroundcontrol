@@ -492,6 +492,36 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 forwardMessage(message);
             }
             break;
+        case MAVLINK_MSG_ID_GLOBAL_POSITION:
+            {
+                mavlink_global_position_t pos;
+                mavlink_msg_global_position_decode(&message, &pos);
+                quint64 time = QGC::groundTimeUsecs()/1000;
+                latitude = pos.lat;
+                longitude = pos.lon;
+                altitude = pos.alt;
+                speedX = pos.vx;
+                speedY = pos.vy;
+                speedZ = pos.vz;
+                emit valueChanged(uasId, "latitude", "deg", latitude, time);
+                emit valueChanged(uasId, "longitude", "deg", longitude, time);
+                emit valueChanged(uasId, "altitude", "m", altitude, time);
+                emit valueChanged(uasId, "gps x speed", "m/s", speedX, time);
+                emit valueChanged(uasId, "gps y speed", "m/s", speedY, time);
+                emit valueChanged(uasId, "gps z speed", "m/s", speedZ, time);
+                emit globalPositionChanged(this, longitude, latitude, altitude, time);
+                emit speedChanged(this, speedX, speedY, speedZ, time);
+                // Set internal state
+                if (!positionLock)
+                {
+                    // If position was not locked before, notify positive
+                    GAudioOutput::instance()->notifyPositive();
+                }
+                positionLock = true;
+                //TODO fix this hack for forwarding of global position for patch antenna tracking
+                forwardMessage(message);
+            }
+            break;
         case MAVLINK_MSG_ID_GPS_RAW:
             //std::cerr << std::endl;
             //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
