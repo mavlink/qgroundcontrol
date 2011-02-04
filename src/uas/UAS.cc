@@ -176,13 +176,13 @@ void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
     {
         mavlink_named_value_float_t val;
         mavlink_msg_named_value_float_decode(&message, &val);
-        emit valueChanged(this->getUASID(), QString(val.name), tr("raw"), val.value, getUnixTime(0));
+        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), val.value, getUnixTime(0));
     }
     else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
     {
         mavlink_named_value_int_t val;
         mavlink_msg_named_value_int_decode(&message, &val);
-        emit valueChanged(this->getUASID(), QString(val.name), tr("raw"), (float)val.value, getUnixTime(0));
+        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), (float)val.value, getUnixTime(0));
     }
 }
 
@@ -457,6 +457,36 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 speedX = pos.vx/100.0;
                 speedY = pos.vy/100.0;
                 speedZ = pos.vz/100.0;
+                emit valueChanged(uasId, "latitude", "deg", latitude, time);
+                emit valueChanged(uasId, "longitude", "deg", longitude, time);
+                emit valueChanged(uasId, "altitude", "m", altitude, time);
+                emit valueChanged(uasId, "gps x speed", "m/s", speedX, time);
+                emit valueChanged(uasId, "gps y speed", "m/s", speedY, time);
+                emit valueChanged(uasId, "gps z speed", "m/s", speedZ, time);
+                emit globalPositionChanged(this, longitude, latitude, altitude, time);
+                emit speedChanged(this, speedX, speedY, speedZ, time);
+                // Set internal state
+                if (!positionLock)
+                {
+                    // If position was not locked before, notify positive
+                    GAudioOutput::instance()->notifyPositive();
+                }
+                positionLock = true;
+                //TODO fix this hack for forwarding of global position for patch antenna tracking
+                forwardMessage(message);
+            }
+            break;
+        case MAVLINK_MSG_ID_GLOBAL_POSITION:
+            {
+                mavlink_global_position_t pos;
+                mavlink_msg_global_position_decode(&message, &pos);
+                quint64 time = QGC::groundTimeUsecs()/1000;
+                latitude = pos.lat;
+                longitude = pos.lon;
+                altitude = pos.alt;
+                speedX = pos.vx;
+                speedY = pos.vy;
+                speedZ = pos.vz;
                 emit valueChanged(uasId, "latitude", "deg", latitude, time);
                 emit valueChanged(uasId, "longitude", "deg", longitude, time);
                 emit valueChanged(uasId, "altitude", "m", altitude, time);
