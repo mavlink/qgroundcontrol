@@ -291,12 +291,12 @@ void HSIDisplay::renderOverlay()
 
     // Draw speed to top left
     paintText(tr("SPEED"), QGC::colorCyan, 2.2f, 2, 11, &painter);
-    paintText(tr("%1 m/s").arg(speed, 2, 'f', 2, '0'), Qt::white, 2.2f, 14, 11, &painter);
+    paintText(tr("%1 m/s").arg(speed, 5, 'f', 2, '0'), Qt::white, 2.2f, 12, 11, &painter);
 
     // Draw crosstrack error to top right
     float crossTrackError = 0;
-    paintText(tr("XTRACK"), QGC::colorCyan, 2.2f, 62, 11, &painter);
-    paintText(tr("%1 m").arg(crossTrackError, 2, 'f', 2, '0'), Qt::white, 2.2f, 75, 11, &painter);
+    paintText(tr("XTRACK"), QGC::colorCyan, 2.2f, 57, 11, &painter);
+    paintText(tr("%1 m").arg(crossTrackError, 5, 'f', 2, '0'), Qt::white, 2.2f, 70, 11, &painter);
 
     // Draw position to bottom left
     if (localAvailable > 0 && globalAvailable == 0)
