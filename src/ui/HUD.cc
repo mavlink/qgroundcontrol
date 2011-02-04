@@ -692,6 +692,8 @@ void HUD::paintHUD()
                 nextOfflineImage = "";
             }
 
+            glRasterPos2i(0, 0);
+
             glPixelZoom(xImageFactor, yImageFactor);
             // Resize to correct size and fill with image
             glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
