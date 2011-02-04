@@ -210,6 +210,8 @@ void MainWindow::setDefaultSettingsForAp()
         settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_UAS_LIST,VIEW_OPERATOR), true);
         // ENABLE HUD TOOL WIDGET
         settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_HUD,VIEW_OPERATOR), true);
+        // ENABLE WAYPOINTS
+        settings.setValue(buildMenuKey(SUB_SECTION_CHECKED,MainWindow::MENU_WAYPOINTS,VIEW_OPERATOR), true);
     }
 
     // ENGINEER VIEW DEFAULT
@@ -399,15 +401,19 @@ void MainWindow::buildPxWidgets()
     acceptList->append("-105,pitch,deg,+105,s");
     acceptList->append("-105,yaw,deg,+105,s");
 
-    acceptList->append("-260,rollspeed,deg/s,+260,s");
-    acceptList->append("-260,pitchspeed,deg/s,+260,s");
-    acceptList->append("-260,yawspeed,deg/s,+260,s");
+    acceptList->append("-60,rollspeed,deg/s,+60,s");
+    acceptList->append("-60,pitchspeed,deg/s,+60,s");
+    acceptList->append("-60,yawspeed,deg/s,+60,s");
+    acceptList->append("0,airspeed,m/s,30");
+    acceptList->append("0,gpsspeed,m/s,30");
+    acceptList->append("0,truespeed,m/s,30");
 
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
     acceptList2->append("0,abs pressure,hPa,65500");
-    acceptList2->append("-999,accel. X,raw,999,s");
-    acceptList2->append("-999,accel. Y,raw,999,s");
+    acceptList2->append("-2048,accel. x,raw,2048,s");
+    acceptList2->append("-2048,accel. y,raw,2048,s");
+    acceptList2->append("-2048,accel. z,raw,2048,s");
 
     if (!linechartWidget)
     {

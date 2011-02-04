@@ -157,12 +157,18 @@ MapWidget::MapWidget(QWidget *parent) :
     zoomout->setStyleSheet(buttonStyle);
     createPath = new QPushButton(QIcon(":/images/actions/go-bottom.svg"), "", this);
     createPath->setStyleSheet(buttonStyle);
+    createPath->setToolTip(tr("Start / end waypoint add mode"));
+    createPath->setStatusTip(tr("Start / end waypoint add mode"));
 //    clearTracking = new QPushButton(QIcon(""), "", this);
 //    clearTracking->setStyleSheet(buttonStyle);
     followgps = new QPushButton(QIcon(":/images/actions/system-lock-screen.svg"), "", this);
     followgps->setStyleSheet(buttonStyle);
+    followgps->setToolTip(tr("Follow the position of the current MAV with the map center"));
+    followgps->setStatusTip(tr("Follow the position of the current MAV with the map center"));
     QPushButton* goToButton = new QPushButton(QIcon(""), "T", this);
     goToButton->setStyleSheet(buttonStyle);
+    goToButton->setToolTip(tr("Enter a latitude/longitude position to move the map to"));
+    goToButton->setStatusTip(tr("Enter a latitude/longitude position to move the map to"));
 
     zoomin->setMaximumWidth(30);
     zoomout->setMaximumWidth(30);

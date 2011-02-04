@@ -121,8 +121,8 @@ void MAVLinkSimulationMAV::mainloop()
         pos.alt = z*1000.0;
         pos.lat = y*1E7;
         pos.lon = x*1E7;
-        pos.vx = 0;
-        pos.vy = 0;
+        pos.vx = sin(yaw)*10.0f;
+        pos.vy = cos(yaw)*10.0f;
         pos.vz = 0;
         mavlink_msg_global_position_int_encode(systemid, MAV_COMP_ID_IMU, &msg, &pos);
         link->sendMAVLinkMessage(&msg);
@@ -164,18 +164,21 @@ void MAVLinkSimulationMAV::mainloop()
         control_status.control_pos_xy = 1;
         control_status.control_pos_yaw = 1;
         control_status.control_pos_z = 1;
+        control_status.gps_fix = 2;        // 2D GPS fix
+        control_status.position_fix = 3;   // 3D fix from GPS + barometric pressure
+        control_status.vision_fix = 0;     // no fix from vision system
         mavlink_msg_control_status_encode(systemid, MAV_COMP_ID_IMU, &ret, &control_status);
         link->sendMAVLinkMessage(&ret);
 
         // Send actual controller outputs
         // This message just shows the direction
         // and magnitude of the control output
-        mavlink_position_controller_output_t pos;
-        pos.x = sin(yaw)*127.0f;
-        pos.y = cos(yaw)*127.0f;
-        pos.z = 0;
-        mavlink_msg_position_controller_output_encode(systemid, MAV_COMP_ID_IMU, &ret, &pos);
-        link->sendMAVLinkMessage(&ret);
+//        mavlink_position_controller_output_t pos;
+//        pos.x = sin(yaw)*127.0f;
+//        pos.y = cos(yaw)*127.0f;
+//        pos.z = 0;
+//        mavlink_msg_position_controller_output_encode(systemid, MAV_COMP_ID_IMU, &ret, &pos);
+//        link->sendMAVLinkMessage(&ret);
 
         // Send a named value with name "FLOAT" and 0.5f as value
 
