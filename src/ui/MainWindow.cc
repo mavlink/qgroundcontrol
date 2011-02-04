@@ -397,13 +397,13 @@ void MainWindow::buildPxWidgets()
 {
     //FIXME: memory of acceptList will never be freed again
     QStringList* acceptList = new QStringList();
-    acceptList->append("-105,roll,deg,+105,s");
-    acceptList->append("-105,pitch,deg,+105,s");
-    acceptList->append("-105,yaw,deg,+105,s");
+    acceptList->append("-105,roll deg,deg,+105,s");
+    acceptList->append("-105,pitch deg,deg,+105,s");
+    acceptList->append("-105,heading deg,deg,+105,s");
 
-    acceptList->append("-60,rollspeed,deg/s,+60,s");
-    acceptList->append("-60,pitchspeed,deg/s,+60,s");
-    acceptList->append("-60,yawspeed,deg/s,+60,s");
+    acceptList->append("-60,rollspeed d/s,deg/s,+60,s");
+    acceptList->append("-60,pitchspeed d/s,deg/s,+60,s");
+    acceptList->append("-60,yawspeed d/s,deg/s,+60,s");
     acceptList->append("0,airspeed,m/s,30");
     acceptList->append("0,gpsspeed,m/s,30");
     acceptList->append("0,truespeed,m/s,30");
