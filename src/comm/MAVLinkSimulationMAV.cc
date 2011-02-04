@@ -155,11 +155,32 @@ void MAVLinkSimulationMAV::mainloop()
     // 25 Hz execution
     if (timer25Hz <= 0)
     {
+        // The message container to be used for sending
+        mavlink_message_t ret;
+
+        // Send which controllers are active
+        mavlink_control_status_t control_status;
+        control_status.control_att = 1;
+        control_status.control_pos_xy = 1;
+        control_status.control_pos_yaw = 1;
+        control_status.control_pos_z = 1;
+        mavlink_msg_control_status_encode(systemid, MAV_COMP_ID_IMU, &ret, &control_status);
+        link->sendMAVLinkMessage(&ret);
+
+        // Send actual controller outputs
+        // This message just shows the direction
+        // and magnitude of the control output
+        mavlink_position_controller_output_t pos;
+        pos.x = sin(yaw)*127.0f;
+        pos.y = cos(yaw)*127.0f;
+        pos.z = 0;
+        mavlink_msg_position_controller_output_encode(systemid, MAV_COMP_ID_IMU, &ret, &pos);
+        link->sendMAVLinkMessage(&ret);
 
         // Send a named value with name "FLOAT" and 0.5f as value
 
         // The message container to be used for sending
-        mavlink_message_t ret;
+        //mavlink_message_t ret;
         // The C-struct holding the data to be sent
         mavlink_named_value_float_t val;
 

@@ -253,9 +253,9 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 	// FIXME Currently invalid conversion from right-handed z-down to z-up frame
 	planeOrient.setRoll(((roll/M_PI))*180.0+180.0);
 	planeOrient.setTilt(((pitch/M_PI))*180.0+180.0);
-	planeOrient.setHeading(((yaw/M_PI))*180.0-90.0+180.0);
+	planeOrient.setHeading(((yaw/M_PI))*180.0-90.0);
 	
-	currFollowHeading = ((yaw/M_PI))*180.0+180.0;
+	currFollowHeading = ((yaw/M_PI))*180.0;
     
     planeLoc.setLatitude(lastLat);
     planeLoc.setLongitude(lastLon);

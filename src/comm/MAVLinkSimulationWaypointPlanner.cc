@@ -535,7 +535,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                                 {
                                         mavlink_local_position_t pos;
                                         mavlink_msg_local_position_decode(msg, &pos);
-                                        qDebug() << "Received new position: x:" << pos.x << "| y:" << pos.y << "| z:" << pos.z;
+                                        //qDebug() << "Received new position: x:" << pos.x << "| y:" << pos.y << "| z:" << pos.z;
 
                                         posReached = false;
 
@@ -1004,7 +1004,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                                 if (cur_wp->autocontinue)
                                 {
                                         cur_wp->current = 0;
-                                        if (current_active_wp_id == waypoints->size() - 1 && waypoints->size() > 1)
+                                        if (current_active_wp_id == waypoints->size() - 1 && waypoints->size() > 0)
                                         {
                                                 //the last waypoint was reached, if auto continue is
                                                 //activated restart the waypoint list from the beginning

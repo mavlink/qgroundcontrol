@@ -81,6 +81,8 @@ public slots:
     /** @brief Update state from joystick */
     void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);
     void pressKey(int key);
+    /** @brief Reset the state of the view */
+    void resetMAVState();
 
 signals:
     void metricWidthChanged(double width);
@@ -92,8 +94,10 @@ protected slots:
     void drawPositionDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
     void drawAttitudeDirection(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
     void drawAltitudeSetpoint(float xRef, float yRef, float radius, const QColor& color, QPainter* painter);
-    void drawStatusFlag(float x, float y, QString label, bool status, QPainter& painter);
-    void drawPositionLock(float x, float y, QString label, int status, QPainter& painter);
+    /** @brief Draw a status flag indicator */
+    void drawStatusFlag(float x, float y, QString label, bool status, bool known, QPainter& painter);
+    /** @brief Draw a position lock indicator */
+    void drawPositionLock(float x, float y, QString label, int status, bool known, QPainter& painter);
     void setBodySetpointCoordinateXY(double x, double y);
     void setBodySetpointCoordinateZ(double z);
     /** @brief Send the current ui setpoint coordinates as new setpoint to the MAV */
@@ -230,6 +234,20 @@ protected:
     bool mavInitialized;      ///< The MAV is initialized once the setpoint has been received
     float bottomMargin;       ///< Margin on the bottom of the page, in virtual coordinates
     float topMargin;          ///< Margin on top of the page, in virtual coordinates
+
+    bool attControlKnown;     ///< Attitude control status known flag
+    bool xyControlKnown;      ///< XY control status known flag
+    bool zControlKnown;       ///< Z control status known flag
+    bool yawControlKnown;     ///< Yaw control status known flag
+
+    // Position lock indicators
+    bool positionFixKnown;    ///< Position fix status known flag
+    bool visionFixKnown;      ///< Vision fix status known flag
+    bool gpsFixKnown;         ///< GPS fix status known flag
+    bool iruFixKnown;         ///< Infrared/Ultrasound fix status known flag
+
+    // Data indicators
+    bool setPointKnown;       ///< Controller setpoint known status flag
 
 private:
 };

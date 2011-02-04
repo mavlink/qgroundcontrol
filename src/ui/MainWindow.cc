@@ -160,6 +160,25 @@ MainWindow::MainWindow(QWidget *parent):
 MainWindow::~MainWindow()
 {
     delete mavlink;
+    delete joystick;
+
+    // Get and delete all dockwidgets and contained
+    // widgets
+    QObjectList childList( this->children() );
+
+    QObjectList::iterator i;
+    QDockWidget* dockWidget;
+    for (i = childList.begin(); i != childList.end(); ++i)
+    {
+        dockWidget = dynamic_cast<QDockWidget*>(*i);
+        if (dockWidget)
+        {
+            // Remove dock widget from main window
+            removeDockWidget(dockWidget);
+            delete dockWidget->widget();
+            delete dockWidget;
+        }
+    }
 }
 
 /**
@@ -884,7 +903,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     //settings.setValue("windowState", saveState());
     aboutToCloseFlag = true;
     mavlink->storeSettings();
-    joystick->deleteLater();
     // Save the last current view in any case
     settings.setValue("CURRENT_VIEW", currentView);
     // Save the current window state, but only if a system is connected (else no real number of widgets would be present)
