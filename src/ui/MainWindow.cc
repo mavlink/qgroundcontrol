@@ -260,7 +260,6 @@ void MainWindow::buildCustomWidget()
 
         for(int i = 0; i < widgets.size(); ++i)
         {
-            qDebug() << "ADDING WIDGET #" << i << widgets.at(i);
             // Check if this widget already has a parent, do not create it in this case
             QDockWidget* dock = dynamic_cast<QDockWidget*>(widgets.at(i)->parentWidget());
             if (!dock)
@@ -771,20 +770,16 @@ void MainWindow::showToolWidget(bool visible)
 
             QDockWidget* dockWidget = qobject_cast<QDockWidget *> (dockWidgets[tool]);
 
-            qDebug() << "DATA:" << tool << "FLOATING" << dockWidget->isFloating() << "checked" << action->isChecked() << "visible" << dockWidget->isVisible() << "action vis:" << action->isVisible();
             if (dockWidget && dockWidget->isVisible() != visible)
             {
                 if (visible)
                 {
-                    qDebug() << "DOCK WIDGET ADDED";
                     addDockWidget(dockWidgetLocations[tool], dockWidget);
                     dockWidget->show();
                 }
                 else
                 {
-                    qDebug() << "DOCK WIDGET REMOVED";
                     removeDockWidget(dockWidget);
-                    //dockWidget->hide();
                 }
 
                 QHashIterator<int, QWidget*> i(dockWidgets);
@@ -795,7 +790,7 @@ void MainWindow::showToolWidget(bool visible)
                     {
                         QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(i.key()), currentView);
                         settings.setValue(chKey,visible);
-                        qDebug() << "showToolWidget(): Set key" << chKey << "to" << visible;
+                        //qDebug() << "showToolWidget(): Set key" << chKey << "to" << visible;
                         break;
                     }
                 }
@@ -804,14 +799,14 @@ void MainWindow::showToolWidget(bool visible)
 
         QDockWidget* dockWidget = qobject_cast<QDockWidget*>(QObject::sender());
 
-        qDebug() << "Trying to cast dockwidget" << dockWidget << "isvisible" << visible;
+        //qDebug() << "Trying to cast dockwidget" << dockWidget << "isvisible" << visible;
 
         if (dockWidget)
         {
             // Get action
             int tool = dockWidgets.key(dockWidget);
 
-            qDebug() << "Updating widget setting" << tool << "to" << visible;
+            //qDebug() << "Updating widget setting" << tool << "to" << visible;
 
             QAction* action = toolsMenuActions[tool];
             action->blockSignals(true);
@@ -826,7 +821,7 @@ void MainWindow::showToolWidget(bool visible)
                 {
                     QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(i.key()), currentView);
                     settings.setValue(chKey,visible);
-                    qDebug() << "showToolWidget(): Set key" << chKey << "to" << visible;
+                   // qDebug() << "showToolWidget(): Set key" << chKey << "to" << visible;
                     break;
                 }
             }
@@ -843,7 +838,7 @@ void MainWindow::showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view)
 
     tempVisible =  settings.value(buildMenuKey(SUB_SECTION_CHECKED,widget,view), false).toBool();
 
-     qDebug() << "showTheWidget(): Set key" << buildMenuKey(SUB_SECTION_CHECKED,widget,view) << "to" << tempVisible;
+     //qDebug() << "showTheWidget(): Set key" << buildMenuKey(SUB_SECTION_CHECKED,widget,view) << "to" << tempVisible;
 
     if (tempWidget)
     {
@@ -854,14 +849,6 @@ void MainWindow::showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view)
     //qDebug() <<  buildMenuKey (SUB_SECTION_CHECKED,widget,view) << tempVisible;
 
     tempLocation = static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,widget, view), QVariant(Qt::RightDockWidgetArea)).toInt());
-
-    //    if (widget == MainWindow::MENU_UAS_LIST)
-    //    {
-    //        if (!settings.contains(buildMenuKey (SUB_SECTION_LOCATION,widget, view)))
-    //        {
-    //            tempLocation = Qt::RightDockWidgetArea;
-    //        }
-    //    }
 
     if (tempWidget != NULL)
     {
@@ -897,6 +884,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     //settings.setValue("windowState", saveState());
     aboutToCloseFlag = true;
     mavlink->storeSettings();
+    joystick->deleteLater();
     // Save the last current view in any case
     settings.setValue("CURRENT_VIEW", currentView);
     // Save the current window state, but only if a system is connected (else no real number of widgets would be present)
@@ -997,7 +985,6 @@ void MainWindow::connectCommonWidgets()
 
 void MainWindow::createCustomWidget()
 {
-    //qDebug() << "ADDING CUSTOM WIDGET";
     QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool", this);
 
     if (QGCToolWidget::instances()->size() < 2)
@@ -1425,9 +1412,6 @@ void MainWindow::addLink(LinkInterface *link)
 
     // Error handling
     connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
-
-    //qDebug() << "ADDING LINK:" << link->getName() << "ACTION IS: " << commWidget->getAction();
-
     // Special case for simulationlink
     MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
     if (sim)
@@ -1599,8 +1583,6 @@ void MainWindow::UASCreated(UASInterface* uas)
         // the currently active UAS
         if (UASManager::instance()->getUASList().size() == 1)
         {
-            //qDebug() << "UPDATING THE VIEW SINCE THIS IS THE FIRST CONNECTED SYSTEM";
-
             // Load last view if setting is present
             if (settings.contains("CURRENT_VIEW_WITH_UAS_CONNECTED"))
             {
@@ -1659,12 +1641,12 @@ void MainWindow::clearView()
 
         if (temp)
         {
-            qDebug() << "TOOL:" << chKey << "IS:" << temp->isChecked();
+            //qDebug() << "TOOL:" << chKey << "IS:" << temp->isChecked();
             settings.setValue(chKey,temp->isChecked());
         }
         else
         {
-            qDebug() << "TOOL:" << chKey << "IS DEFAULT AND UNCHECKED";
+            //qDebug() << "TOOL:" << chKey << "IS DEFAULT AND UNCHECKED";
             settings.setValue(chKey,false);
         }
     }
@@ -1876,16 +1858,16 @@ void MainWindow::showTheCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SE
     QWidget* tempWidget = dockWidgets[centralWidget];
 
     tempVisible =  settings.value(buildMenuKey(SUB_SECTION_CHECKED,centralWidget,view), false).toBool();
-    qDebug() << buildMenuKey (SUB_SECTION_CHECKED,centralWidget,view) << tempVisible;
+    //qDebug() << buildMenuKey (SUB_SECTION_CHECKED,centralWidget,view) << tempVisible;
     if (toolsMenuActions[centralWidget])
     {
-        qDebug() << "SETTING TO:" << tempVisible;
+        //qDebug() << "SETTING TO:" << tempVisible;
         toolsMenuActions[centralWidget]->setChecked(tempVisible);
     }
 
     if (centerStack && tempWidget && tempVisible)
     {
-        qDebug() << "ACTIVATING MAIN WIDGET";
+        //qDebug() << "ACTIVATING MAIN WIDGET";
         centerStack->setCurrentWidget(tempWidget);
     }
 }

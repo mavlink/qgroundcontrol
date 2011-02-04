@@ -73,15 +73,16 @@ void MAVLinkProtocol::loadSettings()
     QSettings settings;
     settings.sync();
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
-    m_heartbeatsEnabled = settings.value("HEARTBEATS_ENABLED", m_heartbeatsEnabled).toBool();
-    m_loggingEnabled = settings.value("LOGGING_ENABLED", m_loggingEnabled).toBool();
-    m_enable_version_check = settings.value("VERION_CHECK_ENABLED", m_enable_version_check).toBool();
+    enableHeartbeats(settings.value("HEARTBEATS_ENABLED", m_heartbeatsEnabled).toBool());
+    enableVersionCheck(settings.value("VERION_CHECK_ENABLED", m_enable_version_check).toBool());
 
     // Only set logfile if there is a name present in settings
     if (settings.contains("LOGFILE_NAME") && m_logfile == NULL)
     {
         m_logfile = new QFile(settings.value("LOGFILE_NAME").toString());
     }
+    // Enable logging
+    enableLogging(settings.value("LOGGING_ENABLED", m_loggingEnabled).toBool());
 
     // Only set system id if it was valid
     int temp = settings.value("GCS_SYSTEM_ID", systemId).toInt();
@@ -116,8 +117,11 @@ MAVLinkProtocol::~MAVLinkProtocol()
     storeSettings();
     if (m_logfile)
     {
-        m_logfile->flush();
-        m_logfile->close();
+        if (m_logfile->isOpen())
+        {
+            m_logfile->flush();
+            m_logfile->close();
+        }
         delete m_logfile;
     }
 }
@@ -137,7 +141,7 @@ QString MAVLinkProtocol::getLogfileName()
     }
     else
     {
-        return QDesktopServices::storageLocation(QDesktopServices::HomeLocation) + "qgrouncontrol_packetlog.mavlink";
+        return QDesktopServices::storageLocation(QDesktopServices::HomeLocation) + "/qgrouncontrol_packetlog.mavlink";
     }
 }
 
@@ -161,20 +165,21 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         if (decodeState == 1)
         {
             // Log data
-            if (m_loggingEnabled)
+            if (m_loggingEnabled && m_logfile)
             {
                 const int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);
                 uint8_t buf[len];
                 quint64 time = QGC::groundTimeUsecs();
                 memcpy(buf, (void*)&time, sizeof(quint64));
-                //                int packetlen =
-//                quint64 checktime = *((quint64*)buf);
-//                qDebug() << "TIME" << time << "CHECKTIME:" << checktime;
+                // Write message to buffer
                 mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
                 QByteArray b((const char*)buf, len);
-                //int packetlen =
-                if(m_logfile->write(b) < MAVLINK_MAX_PACKET_LEN+sizeof(quint64)) qDebug() << "WRITING TO LOG FAILED!";
-                //qDebug() << "WROTE LOGFILE";
+                if(m_logfile->write(b) < MAVLINK_MAX_PACKET_LEN+sizeof(quint64))
+                {
+                    emit protocolStatusMessage(tr("MAVLink Logging failed"), tr("Could not write to file %1, disabling logging.").arg(m_logfile->fileName()));
+                    // Stop logging
+                    enableLogging(false);
+                }
             }
 
             // ORDER MATTERS HERE!
@@ -399,8 +404,8 @@ void MAVLinkProtocol::enableLogging(bool enabled)
         {
             if (!m_logfile->open(QIODevice::WriteOnly | QIODevice::Append))
             {
-                emit protocolStatusMessage(tr("Opening MAVLink logfile for writing failed"), tr("MAVLink cannot log to the file %1, please choose a different file.").arg(m_logfile->fileName()));
-                qDebug() << "OPENING LOGFILE FAILED!";
+                emit protocolStatusMessage(tr("Opening MAVLink logfile for writing failed"), tr("MAVLink cannot log to the file %1, please choose a different file. Stopping logging.").arg(m_logfile->fileName()));
+                m_loggingEnabled = false;
             }
         }
     }
@@ -408,8 +413,11 @@ void MAVLinkProtocol::enableLogging(bool enabled)
     {
         if (m_logfile)
         {
-            m_logfile->flush();
-            m_logfile->close();
+            if (m_logfile->isOpen())
+            {
+                m_logfile->flush();
+                m_logfile->close();
+            }
             delete m_logfile;
             m_logfile = NULL;
         }

@@ -16,30 +16,16 @@
 #include <iostream>
 #include <QDebug>
 #include <cmath>
+#include <qmath.h>
 #include "UAS.h"
 #include "LinkInterface.h"
 #include "UASManager.h"
-//#include "MG.h"
 #include "QGC.h"
 #include "GAudioOutput.h"
 #include "MAVLinkProtocol.h"
 #include "QGCMAVLink.h"
 #include "LinkManager.h"
 #include "SerialLink.h"
-
-#ifndef M_PI
-#define M_PI        3.14159265358979323846  /* pi */
-#endif
-
-#ifndef M_PI_2
-#define M_PI_2      1.57079632679489661923  /* pi/2 */
-#endif
-
-#ifndef M_PI_4
-#define M_PI_4      0.78539816339744830962  /* pi/4 */
-#endif
-
-
 
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 uasId(id),
@@ -322,8 +308,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit voltageChanged(message.sysid, state.vbat/1000.0f);
 
                 // LOW BATTERY ALARM
-                float chargeLevel = getChargeLevel();
-                if (chargeLevel <= 20.0f)
+                if (lpVoltage < warnVoltage)
                 {
                     startLowBattAlarm();
                 }
@@ -1424,6 +1409,25 @@ void UAS::setParameter(const int component, const QString& id, const float value
     mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
     sendMessage(msg);
     }
+}
+
+void UAS::setSystemType(int systemType)
+{
+    type = systemType;
+    // If the airframe is still generic, change it to a close default type
+    if (airframe == 0)
+    {
+        switch (systemType)
+        {
+        case MAV_FIXED_WING:
+            airframe = QGC_AIRFRAME_EASYSTAR;
+            break;
+        case MAV_QUADROTOR:
+            airframe = QGC_AIRFRAME_MIKROKOPTER;
+            break;
+        }
+    }
+    emit systemSpecsChanged(uasId);
 }
 
 void UAS::setUASName(const QString& name)
