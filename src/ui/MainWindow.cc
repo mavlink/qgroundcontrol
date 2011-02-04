@@ -255,12 +255,12 @@ void MainWindow::resizeEvent(QResizeEvent * event)
 
 QString MainWindow::getWindowStateKey()
 {
-    return QString::number(currentView)+"/windowstate";
+    return QString::number(currentView)+"_windowstate";
 }
 
 QString MainWindow::getWindowGeometryKey()
 {
-    return QString::number(currentView)+"/geometry";
+    return QString::number(currentView)+"_geometry";
 }
 
 void MainWindow::buildCustomWidget()
@@ -912,7 +912,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     // Save the last current view in any case
     settings.setValue("CURRENT_VIEW", currentView);
     // Save the current window state, but only if a system is connected (else no real number of widgets would be present)
-    if (UASManager::instance()->getActiveUAS()) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
+    if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
     // Save the current view only if a UAS is connected
     if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
     settings.sync();
