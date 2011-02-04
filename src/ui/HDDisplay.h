@@ -65,7 +65,7 @@ public:
 public slots:
     /** @brief Update a HDD value */
     void updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
-    void setActiveUAS(UASInterface* uas);
+    virtual void setActiveUAS(UASInterface* uas);
 
     /** @brief Removes a plot item by the action data */
     void removeItemByAction();

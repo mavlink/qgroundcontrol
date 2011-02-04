@@ -38,6 +38,9 @@ release {
 
 QMAKE_POST_LINK += echo "Copying files"
 
+# Turn off serial port warnings
+DEFINES += _TTY_NOWARN_
+
 #QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
 #QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 
@@ -58,12 +61,18 @@ macx {
                 debug {
                         #QMAKE_CXXFLAGS += -finstrument-functions
                         #LIBS += -lSaturn
+                        CONFIG += console
                 }
     } else {
         # x64 Mac OS X Snow Leopard 10.6 and later
         CONFIG += x86_64 cocoa
         CONFIG -= x86 phonon
         message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
+                debug {
+                        #QMAKE_CXXFLAGS += -finstrument-functions
+                        #LIBS += -lSaturn
+                        CONFIG += console
+                }
     }
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
@@ -80,12 +89,12 @@ macx {
     ICON = $$BASEDIR/images/icons/macx.icns
 
     # Copy audio files if needed
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy google earth starter file
-    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy CSS stylesheets
-    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-mission.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOs/style-indoor.css
-    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-outdoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-mission.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS/style-indoor.css
+    QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-outdoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy model files
     #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
 
@@ -154,18 +163,21 @@ linux-g++ {
 
     debug {
         DESTDIR = $$TARGETDIR/debug
-        CONFIG += debug
+        CONFIG += debug console
     }
 
     release {
         DESTDIR = $$TARGETDIR/release
         DEFINES += QT_NO_DEBUG
+        CONFIG -= console
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
 
+message("Compiling for linux 32")
+
     INCLUDEPATH += /usr/include \
-                                   /usr/local/include \
+                   /usr/local/include \
                    /usr/include/qt4/phonon
               # $$BASEDIR/lib/flite/include \
               # $$BASEDIR/lib/flite/lang
@@ -224,12 +236,13 @@ linux-g++-64 {
 
     debug {
         DESTDIR = $$TARGETDIR/debug
-        CONFIG += debug
+        CONFIG += debug console
     }
 
     release {
         DESTDIR = $$TARGETDIR/release
         DEFINES += QT_NO_DEBUG
+        CONFIG -= console
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.

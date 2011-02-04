@@ -49,8 +49,10 @@ enum qgc_link_t
 
 enum qgc_protocol_t
 {
-    QGC_PROTOCOL_MAVLINK
+    QGC_PROTOCOL_MAVLINK,
+    QGC_PROTOCOL_NMEA
 };
+
 
 #ifdef OPAL_RT
 #include "OpalLink.h"
@@ -71,6 +73,8 @@ public:
 
 public slots:
     void setLinkType(int linktype);
+    /** @brief Set the protocol for this link */
+    void setProtocol(int protocol);
     void setConnection();
     void connectionState(bool connect);
     void setLinkName(QString name);

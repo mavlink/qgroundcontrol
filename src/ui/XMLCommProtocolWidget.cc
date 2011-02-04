@@ -35,8 +35,9 @@ void XMLCommProtocolWidget::selectXMLFile()
     QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
     const QString mavlinkXML = "MAVLINK_XML_FILE";
     QString dirPath = settings.value(mavlinkXML, QCoreApplication::applicationDirPath() + "../").toString();
+    QFileInfo dir(dirPath);
     QFileDialog dialog;
-    dialog.setDirectory(dirPath);
+    dialog.setDirectory(dir.absoluteDir());
     dialog.setFileMode(QFileDialog::AnyFile);
     dialog.setFilter(tr("MAVLink XML (*.xml)"));
     dialog.setViewMode(QFileDialog::Detail);
@@ -100,7 +101,6 @@ void XMLCommProtocolWidget::selectOutputDirectory()
     QFileDialog dialog;
     dialog.setDirectory(dirPath);
     dialog.setFileMode(QFileDialog::Directory);
-    dialog.setFilter(tr("MAVLink XML (*.xml)"));
     dialog.setViewMode(QFileDialog::Detail);
     QStringList fileNames;
     if (dialog.exec())

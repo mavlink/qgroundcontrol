@@ -22,7 +22,8 @@
 #endif
 
 
-SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, ParityType parity, DataBitsType dataBits, StopBitsType stopBits)
+SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, ParityType parity, DataBitsType dataBits, StopBitsType stopBits) :
+        port(NULL)
 {
     // Setup settings
     this->porthandle = portname.trimmed();
@@ -39,7 +40,7 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
     this->id = getNextLinkId();
 
     // *nix (Linux, MacOS tested) serial port support
-    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
+//    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
     //port = new QextSerialPort(porthandle, QextSerialPort::EventDriven);
 
     this->baudrate = baudrate;
@@ -48,12 +49,12 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
     this->dataBits = dataBits;
     this->stopBits = stopBits;
     this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
-    port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
-    port->setBaudRate(baudrate);
-    port->setFlowControl(flow);
-    port->setParity(parity);
-    port->setDataBits(dataBits);
-    port->setStopBits(stopBits);
+//    port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
+//    port->setBaudRate(baudrate);
+//    port->setFlowControl(flow);
+//    port->setParity(parity);
+//    port->setDataBits(dataBits);
+//    port->setStopBits(stopBits);
 
     // Set the port name
     if (porthandle == "")
@@ -86,9 +87,6 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
 #endif
 
     loadSettings();
-
-    // Link is setup, register it with link manager
-    LinkManager::instance()->add(this);
 }
 
 SerialLink::~SerialLink()
@@ -153,7 +151,7 @@ void SerialLink::run()
 void SerialLink::checkForBytes()
 {
     /* Check if bytes are available */
-    if(port->isOpen())
+    if(port && port->isOpen() && port->isWritable())
     {
         dataMutex.lock();
         qint64 available = port->bytesAvailable();
@@ -174,21 +172,32 @@ void SerialLink::checkForBytes()
 
 void SerialLink::writeBytes(const char* data, qint64 size)
 {
-    if(port->isOpen())
+    if(port && port->isOpen())
     {
         int b = port->write(data, size);
-        qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
 
-        // Increase write counter
-        bitsSentTotal += size * 8;
+        if (b > 0)
+        {
 
-        //        int i;
-        //        for (i=0; i<size; i++)
-        //        {
-        //            unsigned char v=data[i];
+//            qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
 
-        //            //fprintf(stderr,"%02x ", v);
-        //        }
+            // Increase write counter
+            bitsSentTotal += size * 8;
+
+//            int i;
+//            for (i=0; i<size; i++)
+//            {
+//                unsigned char v =data[i];
+//                qDebug("%02x ", v);
+//            }
+//            qDebug("\n");
+        }
+        else
+        {
+            disconnect();
+            // Error occured
+            emit communicationError(this->getName(), tr("Could not send data - link %1 is disconnected!").arg(this->getName()));
+        }
     }
 }
 
@@ -201,7 +210,7 @@ void SerialLink::writeBytes(const char* data, qint64 size)
 void SerialLink::readBytes()
 {
     dataMutex.lock();
-    if(port->isOpen())
+    if(port && port->isOpen())
     {
         const qint64 maxLength = 2048;
         char data[maxLength];
@@ -238,7 +247,14 @@ void SerialLink::readBytes()
  **/
 qint64 SerialLink::bytesAvailable()
 {
-    return port->bytesAvailable();
+    if (port)
+    {
+        return port->bytesAvailable();
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 /**
@@ -248,23 +264,33 @@ qint64 SerialLink::bytesAvailable()
  **/
 bool SerialLink::disconnect()
 {
-    //#if !defined _WIN32 || !defined _WIN64
-    /* Block the thread until it returns from run() */
-    //#endif
-    dataMutex.lock();
-    port->flush();
-    port->close();
-    dataMutex.unlock();
+    if (port)
+    {
+        //#if !defined _WIN32 || !defined _WIN64
+        /* Block the thread until it returns from run() */
+        //#endif
+//        dataMutex.lock();
+        port->flush();
+        port->close();
+        delete port;
+        port = NULL;
+//        dataMutex.unlock();
 
-    if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
+        if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
 
-    bool closed = true;
-    //port->isOpen();
+        bool closed = true;
+        //port->isOpen();
 
-    emit disconnected();
-    emit connected(false);
+        emit disconnected();
+        emit connected(false);
+        return ! closed;
+    }
+    else
+    {
+        // No port, so we're disconnected
+        return true;
+    }
 
-    return ! closed;
 }
 
 /**
@@ -274,21 +300,15 @@ bool SerialLink::disconnect()
  **/
 bool SerialLink::connect()
 {
-    qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "with settings" << porthandle << baudrate << dataBits << parity << stopBits;
-    if (!this->isRunning())
+    if (!isConnected())
     {
-        this->start(LowPriority);
-    }
-    else
-    {
-        if(isConnected())
+        qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "with settings" << porthandle << baudrate << dataBits << parity << stopBits;
+        if (!this->isRunning())
         {
-            disconnect();
+            this->start(LowPriority);
         }
-        hardwareConnect();
     }
-
-    return port->isOpen();
+	return true;
 }
 
 /**
@@ -301,6 +321,12 @@ bool SerialLink::connect()
  **/
 bool SerialLink::hardwareConnect()
 {
+    if(port)
+    {
+        port->close();
+        delete port;
+    }
+    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
     QObject::connect(port, SIGNAL(aboutToClose()), this, SIGNAL(disconnected()));
 
     port->open(QIODevice::ReadWrite);
@@ -308,10 +334,9 @@ bool SerialLink::hardwareConnect()
     port->setParity(this->parity);
     port->setStopBits(this->stopBits);
     port->setDataBits(this->dataBits);
+    port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
 
-    statisticsMutex.lock();
     connectionStartTime = MG::TIME::getGroundTimeNow();
-    statisticsMutex.unlock();
 
     bool connectionUp = isConnected();
     if(connectionUp)
@@ -580,11 +605,9 @@ bool SerialLink::setPortName(QString portName)
     if(portName.trimmed().length() > 0)
     {
         bool reconnect = false;
-        if(isConnected())
-        {
-            disconnect();
-            reconnect = true;
-        }
+        if (isConnected()) reconnect = true;
+        disconnect();
+
         this->porthandle = portName.trimmed();
         setName(tr("serial port ") + portName.trimmed());
 #ifdef _WIN32
@@ -596,15 +619,7 @@ bool SerialLink::setPortName(QString portName)
             this->porthandle = "\\\\.\\" + this->porthandle;
         }
 #endif
-        if(port) delete port;
-        port = new QextSerialPort(porthandle, QextSerialPort::Polling);
 
-        port->setBaudRate(baudrate);
-        port->setFlowControl(flow);
-        port->setParity(parity);
-        port->setDataBits(dataBits);
-        port->setStopBits(stopBits);
-        port->setTimeout(timeout);
         if(reconnect) connect();
         return true;
     }
@@ -619,10 +634,9 @@ bool SerialLink::setBaudRateType(int rateIndex)
 {
     bool reconnect = false;
     bool accepted = true; // This is changed if none of the data rates matches
-    if(isConnected()) {
-        disconnect();
-        reconnect = true;
-    }
+    if(isConnected()) reconnect = true;
+    disconnect();
+
     switch (rateIndex) {
     case 0:
         baudrate = BAUD50;
@@ -705,9 +719,6 @@ bool SerialLink::setBaudRateType(int rateIndex)
         break;
     }
 
-    dataMutex.lock();
-    port->setBaudRate(this->baudrate);
-    dataMutex.unlock();
     if(reconnect) connect();
     return accepted;
 }
@@ -720,9 +731,9 @@ bool SerialLink::setBaudRate(int rate)
     bool accepted = true; // This is changed if none of the data rates matches
     if(isConnected())
     {
-        disconnect();
         reconnect = true;
     }
+    disconnect();
 
     switch (rate)
     {
@@ -807,27 +818,17 @@ bool SerialLink::setBaudRate(int rate)
         break;
     }
 
-    if (port)
-    {
-        port->setBaudRate(this->baudrate);
-        if(reconnect) connect();
-        return accepted;
-    }
-    else
-    {
-        return false;
-    }
+    if(reconnect) connect();
+    return accepted;
+
 }
 
 bool SerialLink::setFlowType(int flow)
 {
     bool reconnect = false;
     bool accepted = true;
-    if(isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if(isConnected()) reconnect = true;
+    disconnect();
 
     switch (flow)
     {
@@ -845,7 +846,7 @@ bool SerialLink::setFlowType(int flow)
         accepted = false;
         break;
     }
-    port->setFlowControl(this->flow);
+
     if(reconnect) connect();
     return accepted;
 }
@@ -854,27 +855,24 @@ bool SerialLink::setParityType(int parity)
 {
     bool reconnect = false;
     bool accepted = true;
-    if(isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if (isConnected()) reconnect = true;
+    disconnect();
 
     switch (parity)
     {
-    case PAR_NONE:
+    case (int)PAR_NONE:
         this->parity = PAR_NONE;
         break;
-    case PAR_ODD:
+    case (int)PAR_ODD:
         this->parity = PAR_ODD;
         break;
-    case PAR_EVEN:
+    case (int)PAR_EVEN:
         this->parity = PAR_EVEN;
         break;
-    case PAR_MARK:
+    case (int)PAR_MARK:
         this->parity = PAR_MARK;
         break;
-    case PAR_SPACE:
+    case (int)PAR_SPACE:
         this->parity = PAR_SPACE;
         break;
     default:
@@ -883,15 +881,17 @@ bool SerialLink::setParityType(int parity)
         break;
     }
 
-    port->setParity(this->parity);
-    if(reconnect) connect();
+    if (reconnect) connect();
     return accepted;
 }
 
 
 bool SerialLink::setDataBits(int dataBits)
 {
+    bool reconnect = false;
+    if (isConnected()) reconnect = true;
     bool accepted = true;
+    disconnect();
 
     switch (dataBits)
     {
@@ -913,11 +913,7 @@ bool SerialLink::setDataBits(int dataBits)
         break;
     }
 
-    port->setDataBits(this->dataBits);
-    if(isConnected()) {
-        disconnect();
-        connect();
-    }
+    if(reconnect) connect();
 
     return accepted;
 }
@@ -926,11 +922,8 @@ bool SerialLink::setStopBits(int stopBits)
 {
     bool reconnect = false;
     bool accepted = true;
-    if(isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if(isConnected()) reconnect = true;
+    disconnect();
 
     switch (stopBits)
     {
@@ -946,7 +939,6 @@ bool SerialLink::setStopBits(int stopBits)
         break;
     }
 
-    port->setStopBits(this->stopBits);
     if(reconnect) connect();
     return accepted;
 }
@@ -956,21 +948,14 @@ bool SerialLink::setDataBitsType(int dataBits)
     bool reconnect = false;
     bool accepted = false;
 
-    if (isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if (isConnected()) reconnect = true;
+    disconnect();
 
     if (dataBits >= (int)DATA_5 && dataBits <= (int)DATA_8)
     {
-        DataBitsType newBits = (DataBitsType) dataBits;
+        this->dataBits = (DataBitsType) dataBits;
 
-        port->setDataBits(newBits);
-        if(reconnect)
-        {
-            connect();
-        }
+        if(reconnect) connect();
         accepted = true;
     }
 
@@ -981,11 +966,8 @@ bool SerialLink::setStopBitsType(int stopBits)
 {
     bool reconnect = false;
     bool accepted = false;
-    if(isConnected())
-    {
-        disconnect();
-        reconnect = true;
-    }
+    if(isConnected()) reconnect = true;
+    disconnect();
 
     if (stopBits >= (int)STOP_1 && dataBits <= (int)STOP_2)
     {

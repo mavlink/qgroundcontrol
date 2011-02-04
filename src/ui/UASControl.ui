@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>222</width>
-    <height>172</height>
+    <width>200</width>
+    <height>228</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,14 +18,14 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>222</width>
-    <height>172</height>
+    <width>200</width>
+    <height>150</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>267</width>
-    <height>194</height>
+    <height>16777215</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -34,8 +34,11 @@
   <property name="toolTip">
    <string>Control widget to send basic control actions to the micro air vehicle</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="60,150,80,80,80,100" columnstretch="1,100,40,40,100,1" rowminimumheight="0,0,0,0,0,0">
-   <item row="0" column="0" rowspan="6">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="5,1,40,1,40,40,40,1000" columnstretch="5,20,20,25,5">
+   <property name="margin">
+    <number>4</number>
+   </property>
+   <item row="0" column="0" rowspan="7">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -48,13 +51,19 @@
      </property>
     </spacer>
    </item>
-   <item row="0" column="1" colspan="4">
+   <item row="0" column="1" rowspan="2" colspan="3">
     <widget class="QLabel" name="controlStatusLabel">
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>0</height>
+       <height>10</height>
       </size>
+     </property>
+     <property name="toolTip">
+      <string>Currently controlled system</string>
+     </property>
+     <property name="statusTip">
+      <string>Currently controlled system</string>
      </property>
      <property name="text">
       <string>UNCONNECTED</string>
@@ -67,7 +76,157 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="5" rowspan="6">
+   <item row="3" column="1" colspan="3">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>216</width>
+       <height>17</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="4" column="1" colspan="3">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="QPushButton" name="liftoffButton">
+       <property name="minimumSize">
+        <size>
+         <width>25</width>
+         <height>16</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Liftoff / Launch</string>
+       </property>
+       <property name="statusTip">
+        <string>Liftoff / Launch</string>
+       </property>
+       <property name="text">
+        <string>Start</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../mavground.qrc">
+         <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="landButton">
+       <property name="minimumSize">
+        <size>
+         <width>25</width>
+         <height>16</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Fly straight to landing spot</string>
+       </property>
+       <property name="statusTip">
+        <string>Fly straight to landing spot</string>
+       </property>
+       <property name="text">
+        <string>Land</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../mavground.qrc">
+         <normaloff>:/images/control/land.svg</normaloff>:/images/control/land.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="shutdownButton">
+       <property name="minimumSize">
+        <size>
+         <width>25</width>
+         <height>16</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Only active on the ground: Poweroff system</string>
+       </property>
+       <property name="statusTip">
+        <string>Only active on the ground: Poweroff system</string>
+       </property>
+       <property name="text">
+        <string>Halt</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../mavground.qrc">
+         <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="5" column="1" colspan="2">
+    <widget class="QComboBox" name="modeComboBox">
+     <property name="minimumSize">
+      <size>
+       <width>25</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Select MAV operation mode</string>
+     </property>
+     <property name="statusTip">
+      <string>Select MAV operation mode</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="3">
+    <widget class="QPushButton" name="setModeButton">
+     <property name="minimumSize">
+      <size>
+       <width>25</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Transmit and enable mode on MAV</string>
+     </property>
+     <property name="statusTip">
+      <string>Transmit and enable mode on MAV</string>
+     </property>
+     <property name="text">
+      <string>Set</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../mavground.qrc">
+       <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1" colspan="3">
+    <widget class="QLabel" name="lastActionLabel">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>10</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Status label</string>
+     </property>
+     <property name="statusTip">
+      <string>Status label</string>
+     </property>
+     <property name="text">
+      <string>No actions executed so far</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4" rowspan="6">
     <spacer name="horizontalSpacer_2">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -80,129 +239,37 @@
      </property>
     </spacer>
    </item>
-   <item row="1" column="1" colspan="4">
+   <item row="2" column="1" colspan="3">
     <widget class="QPushButton" name="controlButton">
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>12</height>
+       <height>30</height>
       </size>
+     </property>
+     <property name="toolTip">
+      <string>Main control button</string>
+     </property>
+     <property name="statusTip">
+      <string>Main control button</string>
      </property>
      <property name="text">
       <string>Activate Engine</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="1">
-    <widget class="QPushButton" name="liftoffButton">
-     <property name="minimumSize">
+   <item row="7" column="1" colspan="3">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
       <size>
-       <width>40</width>
-       <height>12</height>
+       <width>20</width>
+       <height>5</height>
       </size>
      </property>
-     <property name="text">
-      <string>Start</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="2" colspan="2">
-    <widget class="QPushButton" name="landButton">
-     <property name="minimumSize">
-      <size>
-       <width>40</width>
-       <height>12</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>Land</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/control/land.svg</normaloff>:/images/control/land.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="4">
-    <widget class="QPushButton" name="shutdownButton">
-     <property name="minimumSize">
-      <size>
-       <width>40</width>
-       <height>12</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>Halt</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="1" colspan="2">
-    <widget class="QComboBox" name="modeComboBox">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>12</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="3" colspan="2">
-    <widget class="QPushButton" name="setModeButton">
-     <property name="minimumSize">
-      <size>
-       <width>40</width>
-       <height>12</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>Set Mode</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="3" colspan="2">
-    <widget class="QPushButton" name="setHomeButton">
-     <property name="minimumSize">
-      <size>
-       <width>40</width>
-       <height>16</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>Set Origin</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/actions/go-home.svg</normaloff>:/images/actions/go-home.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="1" colspan="4">
-    <widget class="QLabel" name="lastActionLabel">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>12</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>No actions executed so far</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-     </property>
-    </widget>
+    </spacer>
    </item>
   </layout>
  </widget>

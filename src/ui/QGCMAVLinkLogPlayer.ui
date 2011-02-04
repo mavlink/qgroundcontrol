@@ -7,13 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>407</width>
-    <height>144</height>
+    <height>152</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="1,10,10,1,1,0">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="1,0,0,0,0,0">
    <property name="horizontalSpacing">
     <number>12</number>
    </property>
@@ -101,22 +101,6 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0" colspan="6">
-    <widget class="QProgressBar" name="progressBar">
-     <property name="toolTip">
-      <string>Percent of the logfile replayed</string>
-     </property>
-     <property name="statusTip">
-      <string>Percent of the logfile replayed</string>
-     </property>
-     <property name="whatsThis">
-      <string>Percent of the logfile replayed</string>
-     </property>
-     <property name="value">
-      <number>0</number>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0">
     <widget class="QLabel" name="speedLabel">
      <property name="toolTip">
@@ -153,6 +137,22 @@
      </property>
      <property name="checkable">
       <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="6">
+    <widget class="QSlider" name="positionSlider">
+     <property name="maximum">
+      <number>10000</number>
+     </property>
+     <property name="pageStep">
+      <number>100</number>
+     </property>
+     <property name="tracking">
+      <bool>false</bool>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>

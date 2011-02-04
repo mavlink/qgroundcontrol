@@ -25,6 +25,7 @@
 # Include bundled version if necessary
 
 include(lib/QMapControl/QMapControl.pri)
+include(lib/nmea/nmea.pri)
 
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
 QT += network \
@@ -39,7 +40,6 @@ BASEDIR = $$IN_PWD
 TARGETDIR = $$OUT_PWD
 BUILDDIR = $$TARGETDIR/build
 LANGUAGE = C++
-CONFIG += console
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = src/ui/generated
@@ -55,6 +55,7 @@ exists(user_config.pri) {
     message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
     message("------------------------------------------------------------------------")
 }
+
 INCLUDEPATH += $$BASEDIR/../mavlink/include/common
 contains(MAVLINK_CONF, pixhawk) { 
     # Remove the default set - it is included anyway
@@ -140,7 +141,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCPxImuFirmwareUpdate.ui \
     src/ui/QGCDataPlot2D.ui \
     src/ui/QGCRemoteControlView.ui \
-    src/ui/WaypointGlobalView.ui \
     src/ui/QMap3D.ui \
     src/ui/QGCWebView.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
@@ -154,7 +154,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/designer/QGCToolWidget.ui \
     src/ui/designer/QGCParamSlider.ui \
     src/ui/designer/QGCActionButton.ui \
-    src/ui/QGCMAVLinkLogPlayer.ui
+    src/ui/QGCMAVLinkLogPlayer.ui \
+    src/ui/QGCWaypointListMulti.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -234,7 +235,6 @@ HEADERS += src/MG.h \
     src/QGC.h \
     src/ui/QGCFirmwareUpdate.h \
     src/ui/QGCPxImuFirmwareUpdate.h \
-    src/comm/MAVLinkLightProtocol.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/linechart/IncrementalPlot.h \
     src/ui/map/Waypoint2DIcon.h \
@@ -261,7 +261,11 @@ HEADERS += src/MG.h \
     src/ui/designer/QGCParamSlider.h \
     src/ui/designer/QGCActionButton.h \
     src/ui/designer/QGCToolWidgetItem.h \
-    src/ui/QGCMAVLinkLogPlayer.h
+    src/ui/QGCMAVLinkLogPlayer.h \
+    src/comm/MAVLinkSimulationWaypointPlanner.h \
+    src/comm/MAVLinkSimulationMAV.h \
+    src/uas/QGCMAVLinkUASFactory.h \
+    src/ui/QGCWaypointListMulti.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008: {
@@ -357,7 +361,6 @@ SOURCES += src/main.cc \
     src/QGC.cc \
     src/ui/QGCFirmwareUpdate.cc \
     src/ui/QGCPxImuFirmwareUpdate.cc \
-    src/comm/MAVLinkLightProtocol.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc \
     src/ui/map/Waypoint2DIcon.cc \
@@ -383,7 +386,11 @@ SOURCES += src/main.cc \
     src/ui/designer/QGCParamSlider.cc \
     src/ui/designer/QGCActionButton.cc \
     src/ui/designer/QGCToolWidgetItem.cc \
-    src/ui/QGCMAVLinkLogPlayer.cc
+    src/ui/QGCMAVLinkLogPlayer.cc \
+    src/comm/MAVLinkSimulationWaypointPlanner.cc \
+    src/comm/MAVLinkSimulationMAV.cc \
+    src/uas/QGCMAVLinkUASFactory.cc \
+    src/ui/QGCWaypointListMulti.cc
 
 macx|win32-msvc2008: {
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

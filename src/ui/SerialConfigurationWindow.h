@@ -55,9 +55,9 @@ public:
 public slots:
     void configureCommunication();
     void enableFlowControl(bool flow);
-    void setParityNone();
-    void setParityOdd();
-    void setParityEven();
+    void setParityNone(bool accept);
+    void setParityOdd(bool accept);
+    void setParityEven(bool accept);
     void setPortName(QString port);
     void setLinkName(QString name);
     void setupPortList();

@@ -52,7 +52,8 @@ JoystickInput::JoystickInput() :
         thrustAxis(3),
         xAxis(1),
         yAxis(0),
-        yawAxis(2)
+        yawAxis(2),
+        joystickName(tr("Unitinialized"))
 {
     for (int i = 0; i < 10; i++)
     {
@@ -63,7 +64,7 @@ JoystickInput::JoystickInput() :
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 
     // Enter main loop
-    start();
+    //start();
 }
 
 void JoystickInput::setActiveUAS(UASInterface* uas)
@@ -88,7 +89,10 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
         connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double)));
         connect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
     }
-
+    if (!isRunning())
+    {
+        start();
+    }
 }
 
 void JoystickInput::init()
@@ -118,6 +122,7 @@ void JoystickInput::init()
     for(int i=0; i < SDL_NumJoysticks(); i++ )
     {
         printf("\t- %s\n", SDL_JoystickName(i));
+        joystickName = QString(SDL_JoystickName(i));
     }
 
     printf("\nOpened %s\n", SDL_JoystickName(defaultIndex));
@@ -125,6 +130,9 @@ void JoystickInput::init()
     SDL_JoystickEventState(SDL_ENABLE);
 
     joystick = SDL_JoystickOpen(defaultIndex);
+
+    // Make sure active UAS is set
+    setActiveUAS(UASManager::instance()->getActiveUAS());
 }
 
 /**
@@ -281,4 +289,9 @@ void JoystickInput::run()
 
     }
 
+}
+
+const QString& JoystickInput::getName()
+{
+    return joystickName;
 }

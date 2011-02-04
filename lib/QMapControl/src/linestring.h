@@ -56,13 +56,16 @@ namespace qmapcontrol
         /*!
          * @return  a list with the points of the LineString
          */
-        QList<Point*>	points();
+        QList<Point*>&	points();
 
         //! adds a point at the end of the LineString
         /*!
          * @param point the point which should be added to the LineString
          */
         void addPoint ( Point* point );
+
+        //! Remove all points from the LineString
+        void clearPoints();
 
         //! sets the given list as points of the LineString
         /*!

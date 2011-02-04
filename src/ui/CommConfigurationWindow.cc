@@ -63,11 +63,14 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     ui.linkType->addItem("Serial Forwarding",QGC_LINK_FORWARDING);
 
     ui.connectionType->addItem("MAVLink", QGC_PROTOCOL_MAVLINK);
+    ui.connectionType->addItem("GPS NMEA", QGC_PROTOCOL_NMEA);
 
     // Create action to open this menu
     // Create configuration action for this link
     // Connect the current UAS
     action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", link);
+    LinkManager::instance()->add(link);
+    action->setData(LinkManager::instance()->getLinks().indexOf(link));
     setLinkName(link->getName());
     connect(action, SIGNAL(triggered()), this, SLOT(show()));
 
@@ -140,6 +143,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         qDebug() << "Link is NOT a known link, can't open configuration window";
     }
 
+
     // Open details pane for MAVLink if necessary
     MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
     if (mavlink != 0)
@@ -178,6 +182,11 @@ void CommConfigurationWindow::setLinkType(int linktype)
     Q_UNUSED(linktype);
 }
 
+void CommConfigurationWindow::setProtocol(int protocol)
+{
+    qDebug() << "Changing to protocol" << protocol;
+}
+
 void CommConfigurationWindow::setConnection()
 {
     if(!link->isConnected())
@@ -209,11 +218,12 @@ void CommConfigurationWindow::remove()
         link->disconnect(); //disconnect port, and also calls terminate() to stop the thread
         if (link->isRunning()) link->terminate(); // terminate() the serial thread just in case it is still running
         link->wait(); // wait() until thread is stoped before deleting
-        delete link;
+        link->deleteLater();
     }
     link=NULL;
 
     this->window()->close();
+    this->deleteLater();
 }
 
 void CommConfigurationWindow::connectionState(bool connect)

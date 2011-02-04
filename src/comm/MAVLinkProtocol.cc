@@ -14,8 +14,10 @@
 #include <QTime>
 #include <QApplication>
 #include <QMessageBox>
+#include <QSettings>
+#include <QDesktopServices>
 
-#include "MG.h"
+//#include "MG.h"
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
 #include "UASManager.h"
@@ -26,8 +28,9 @@
 #include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
-#include "MainWindow.h"
-#include <QGCMAVLink.h>
+//#include "MainWindow.h"
+#include "QGCMAVLink.h"
+#include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
 
 /**
@@ -39,11 +42,13 @@ MAVLinkProtocol::MAVLinkProtocol() :
         heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
         m_heartbeatsEnabled(false),
         m_loggingEnabled(false),
-        m_logfile(new QFile(QCoreApplication::applicationDirPath()+"/mavlink_packetlog.mavlink")),
+        m_logfile(NULL),
         m_enable_version_check(true),
-        versionMismatchIgnore(false)
+        versionMismatchIgnore(false),
+        systemId(QGC::defaultSystemId)
 {
-    start(QThread::LowPriority);
+    loadSettings();
+    //start(QThread::LowPriority);
     // Start heartbeat timer, emitting a heartbeat at the configured rate
     connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT(sendHeartbeat()));
     heartbeatTimer->start(1000/heartbeatRate);
@@ -62,12 +67,61 @@ MAVLinkProtocol::MAVLinkProtocol() :
     emit versionCheckChanged(m_enable_version_check);
 }
 
-MAVLinkProtocol::~MAVLinkProtocol()
+void MAVLinkProtocol::loadSettings()
 {
+    // Load defaults from settings
+    QSettings settings;
+    settings.sync();
+    settings.beginGroup("QGC_MAVLINK_PROTOCOL");
+    enableHeartbeats(settings.value("HEARTBEATS_ENABLED", m_heartbeatsEnabled).toBool());
+    enableVersionCheck(settings.value("VERION_CHECK_ENABLED", m_enable_version_check).toBool());
+
+    // Only set logfile if there is a name present in settings
+    if (settings.contains("LOGFILE_NAME") && m_logfile == NULL)
+    {
+        m_logfile = new QFile(settings.value("LOGFILE_NAME").toString());
+    }
+    // Enable logging
+    enableLogging(settings.value("LOGGING_ENABLED", m_loggingEnabled).toBool());
+
+    // Only set system id if it was valid
+    int temp = settings.value("GCS_SYSTEM_ID", systemId).toInt();
+    if (temp > 0 && temp < 256)
+    {
+        systemId = temp;
+    }
+    settings.endGroup();
+}
+
+void MAVLinkProtocol::storeSettings()
+{
+    // Store settings
+    QSettings settings;
+    settings.beginGroup("QGC_MAVLINK_PROTOCOL");
+    settings.setValue("HEARTBEATS_ENABLED", m_heartbeatsEnabled);
+    settings.setValue("LOGGING_ENABLED", m_loggingEnabled);
+    settings.setValue("VERION_CHECK_ENABLED", m_enable_version_check);
+    settings.setValue("GCS_SYSTEM_ID", systemId);
     if (m_logfile)
     {
-        m_logfile->flush();
-        m_logfile->close();
+        // Logfile exists, store the name
+        settings.setValue("LOGFILE_NAME", m_logfile->fileName());
+    }
+    settings.endGroup();
+    settings.sync();
+    //qDebug() << "Storing settings!";
+}
+
+MAVLinkProtocol::~MAVLinkProtocol()
+{
+    storeSettings();
+    if (m_logfile)
+    {
+        if (m_logfile->isOpen())
+        {
+            m_logfile->flush();
+            m_logfile->close();
+        }
         delete m_logfile;
     }
 }
@@ -76,15 +130,19 @@ MAVLinkProtocol::~MAVLinkProtocol()
 
 void MAVLinkProtocol::run()
 {
-    forever
-    {
-        QGC::SLEEP::msleep(5000);
-    }
+    exec();
 }
 
 QString MAVLinkProtocol::getLogfileName()
 {
-    return m_logfile->fileName();
+    if (m_logfile)
+    {
+        return m_logfile->fileName();
+    }
+    else
+    {
+        return QDesktopServices::storageLocation(QDesktopServices::HomeLocation) + "/qgrouncontrol_packetlog.mavlink";
+    }
 }
 
 /**
@@ -107,20 +165,21 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         if (decodeState == 1)
         {
             // Log data
-            if (m_loggingEnabled)
+            if (m_loggingEnabled && m_logfile)
             {
-                int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);
+                const int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);
                 uint8_t buf[len];
                 quint64 time = QGC::groundTimeUsecs();
                 memcpy(buf, (void*)&time, sizeof(quint64));
-                //                int packetlen =
-//                quint64 checktime = *((quint64*)buf);
-//                qDebug() << "TIME" << time << "CHECKTIME:" << checktime;
+                // Write message to buffer
                 mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
                 QByteArray b((const char*)buf, len);
-                //int packetlen =
-                if(m_logfile->write(b) < MAVLINK_MAX_PACKET_LEN+sizeof(quint64)) qDebug() << "WRITING TO LOG FAILED!";
-                //qDebug() << "WROTE LOGFILE";
+                if(m_logfile->write(b) < MAVLINK_MAX_PACKET_LEN+sizeof(quint64))
+                {
+                    emit protocolStatusMessage(tr("MAVLink Logging failed"), tr("Could not write to file %1, disabling logging.").arg(m_logfile->fileName()));
+                    // Stop logging
+                    enableLogging(false);
+                }
             }
 
             // ORDER MATTERS HERE!
@@ -169,63 +228,8 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     continue;
                 }
 
-                switch (heartbeat.autopilot)
-                {
-                case MAV_AUTOPILOT_GENERIC:
-
-                    uas = new UAS(this, message.sysid);
-
-                    // Connect this robot to the UAS object
-                    connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), uas, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                    break;
-                case MAV_AUTOPILOT_PIXHAWK:
-                    {
-                        // Fixme differentiate between quadrotor and coaxial here
-                        PxQuadMAV* mav = new PxQuadMAV(this, message.sysid);
-                        // Connect this robot to the UAS object
-                        // it is IMPORTANT here to use the right object type,
-                        // else the slot of the parent object is called (and thus the special
-                        // packets never reach their goal)
-                        connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                        uas = mav;
-                    }
-                    break;
-                case MAV_AUTOPILOT_SLUGS:
-                    {
-                        SlugsMAV* mav = new SlugsMAV(this, message.sysid);
-                        // Connect this robot to the UAS object
-                        // it is IMPORTANT here to use the right object type,
-                        // else the slot of the parent object is called (and thus the special
-                        // packets never reach their goal)
-                        connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                        uas = mav;
-                    }
-                    break;
-                case MAV_AUTOPILOT_ARDUPILOTMEGA:
-                    {
-                        ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(this, message.sysid);
-                        // Connect this robot to the UAS object
-                        // it is IMPORTANT here to use the right object type,
-                        // else the slot of the parent object is called (and thus the special
-                        // packets never reach their goal)
-                        connect(this, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-                        uas = mav;
-                    }
-                    break;
-                default:
-                    uas = new UAS(this, message.sysid);
-                    break;
-                }
-
-                // Set the autopilot type
-                uas->setAutopilotType((int)heartbeat.autopilot);
-
-                // Make UAS aware that this link can be used to communicate with the actual robot
-                uas->addLink(link);
-
-                // Now add UAS to "official" list, which makes the whole application aware of it
-                UASManager::instance()->addUAS(uas);
-
+                // Create a new UAS object
+                uas = QGCMAVLinkUASFactory::createUAS(this, link, message.sysid, &heartbeat);
             }
 
             // Only count message if UAS exists for this message
@@ -242,6 +246,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 }
                 else
                 {
+                    // TODO: This if-else block can (should) be greatly simplified
                     if (lastIndex[message.sysid][message.compid] == 255)
                     {
                         lastIndex[message.sysid][message.compid] = 0;
@@ -310,13 +315,18 @@ QString MAVLinkProtocol::getName()
 /** @return System id of this application */
 int MAVLinkProtocol::getSystemId()
 {
-    return MG::SYSTEM::ID;
+    return systemId;
+}
+
+void MAVLinkProtocol::setSystemId(int id)
+{
+    systemId = id;
 }
 
 /** @return Component id of this application */
 int MAVLinkProtocol::getComponentId()
 {
-    return MG::SYSTEM::COMPID;
+    return QGC::defaultComponentId;
 }
 
 /**
@@ -385,21 +395,32 @@ void MAVLinkProtocol::enableLogging(bool enabled)
 
     if (enabled)
     {
-        if (m_logfile->isOpen())
+        if (m_logfile && m_logfile->isOpen())
         {
             m_logfile->flush();
             m_logfile->close();
         }
-        if (!m_logfile->open(QIODevice::WriteOnly | QIODevice::Append))
+        if (m_logfile)
         {
-            emit protocolStatusMessage(tr("Opening MAVLink logfile for writing failed"), tr("MAVLink cannot log to the file %1, please choose a different file.").arg(m_logfile->fileName()));
-            qDebug() << "OPENING LOGFILE FAILED!";
+            if (!m_logfile->open(QIODevice::WriteOnly | QIODevice::Append))
+            {
+                emit protocolStatusMessage(tr("Opening MAVLink logfile for writing failed"), tr("MAVLink cannot log to the file %1, please choose a different file. Stopping logging.").arg(m_logfile->fileName()));
+                m_loggingEnabled = false;
+            }
         }
     }
     else if (!enabled)
     {
-        m_logfile->flush();
-        m_logfile->close();
+        if (m_logfile)
+        {
+            if (m_logfile->isOpen())
+            {
+                m_logfile->flush();
+                m_logfile->close();
+            }
+            delete m_logfile;
+            m_logfile = NULL;
+        }
     }
     m_loggingEnabled = enabled;
     if (changed) emit loggingChanged(enabled);
@@ -407,8 +428,15 @@ void MAVLinkProtocol::enableLogging(bool enabled)
 
 void MAVLinkProtocol::setLogfileName(const QString& filename)
 {
-    m_logfile->flush();
-    m_logfile->close();
+    if (!m_logfile)
+    {
+        m_logfile = new QFile(filename);
+    }
+    else
+    {
+        m_logfile->flush();
+        m_logfile->close();
+    }
     m_logfile->setFileName(filename);
     enableLogging(m_loggingEnabled);
 }

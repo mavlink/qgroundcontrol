@@ -48,6 +48,7 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     m_ui->heartbeatCheckBox->setChecked(protocol->heartbeatsEnabled());
     m_ui->loggingCheckBox->setChecked(protocol->loggingEnabled());
     m_ui->versionCheckBox->setChecked(protocol->versionCheckEnabled());
+    m_ui->systemIdSpinBox->setValue(protocol->getSystemId());
 
     // Connect actions
     connect(protocol, SIGNAL(heartbeatChanged(bool)), m_ui->heartbeatCheckBox, SLOT(setChecked(bool)));
@@ -57,6 +58,7 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     connect(protocol, SIGNAL(versionCheckChanged(bool)), m_ui->versionCheckBox, SLOT(setChecked(bool)));
     connect(m_ui->versionCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableVersionCheck(bool)));
     connect(m_ui->logFileButton, SIGNAL(clicked()), this, SLOT(chooseLogfileName()));
+    connect(m_ui->systemIdSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setSystemId(int)));
 
     // Update values
     m_ui->versionLabel->setText(tr("MAVLINK_VERSION: %1").arg(protocol->getVersion()));

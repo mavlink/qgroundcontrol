@@ -83,10 +83,10 @@
       <string>Distance of the chase camera to the MAV</string>
      </property>
      <property name="minimum">
-      <number>30</number>
+      <number>100</number>
      </property>
      <property name="maximum">
-      <number>10000</number>
+      <number>20000</number>
      </property>
      <property name="value">
       <number>3000</number>
@@ -158,7 +158,7 @@
     </widget>
    </item>
    <item row="1" column="7">
-    <widget class="QPushButton" name="clearWPButton">
+    <widget class="QPushButton" name="clearTrailsButton">
      <property name="toolTip">
       <string>Delete all waypoints</string>
      </property>
@@ -169,7 +169,7 @@
       <string>Delete all waypoints</string>
      </property>
      <property name="text">
-      <string>Clear WPs</string>
+      <string>Clear Trails</string>
      </property>
     </widget>
    </item>
