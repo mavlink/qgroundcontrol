@@ -122,8 +122,8 @@ protected: //COMMENTS FOR TEST UNIT
     // Battery stats
     float fullVoltage;          ///< Voltage of the fully charged battery (100%)
     float emptyVoltage;         ///< Voltage of the empty battery (0%)
-    float warnVoltage;          ///< Voltage where QGC will start to warn about low battery
     float startVoltage;         ///< Voltage at system start
+    float warnVoltage;          ///< Voltage where QGC will start to warn about low battery
     double currentVoltage;      ///< Voltage currently measured
     float lpVoltage;            ///< Low-pass filtered voltage
     int timeRemaining;          ///< Remaining time calculated based on previous and current
@@ -181,7 +181,7 @@ public slots:
     /** @brief Set the autopilot type */
     void setAutopilotType(int apType) { autopilot = apType; emit systemSpecsChanged(uasId); }
     /** @brief Set the type of airframe */
-    void setSystemType(int systemType) { type = systemType; emit systemSpecsChanged(uasId); }
+    void setSystemType(int systemType);
     /** @brief Set the specific airframe type */
     void setAirframe(int airframe) { this->airframe = airframe; emit systemSpecsChanged(uasId); }
     /** @brief Set a new name **/

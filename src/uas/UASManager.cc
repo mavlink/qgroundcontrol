@@ -64,6 +64,11 @@ UASManager::UASManager() :
 
 UASManager::~UASManager()
 {
+    // Delete all systems
+    foreach (UASInterface* mav, systems)
+    {
+        delete mav;
+    }
 }
 
 
