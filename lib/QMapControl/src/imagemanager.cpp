@@ -153,7 +153,7 @@ namespace qmapcontrol
         QBuffer buffer(&bytes);
         buffer.open(QIODevice::WriteOnly);
         tileData.save(&buffer, "PNG");
-
+        // FIXME This is weird - why first write in buffer and then in file?
         file.write(bytes);
         file.close();
         return true;

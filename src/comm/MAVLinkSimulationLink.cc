@@ -40,9 +40,9 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
-// MAVLINK includes
-#include <QGCMAVLink.h>
+#include "QGCMAVLink.h"
 #include "QGC.h"
+#include "MAVLinkSimulationMAV.h"
 
 /**
  * Create a simulated link. This link is connected to an input and output file.
@@ -90,15 +90,14 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
         this->name = "MAVLink simulation link";
     }
 
+
+
     // Initialize the pseudo-random number generator
     srand(QTime::currentTime().msec());
     maxTimeNoise = 0;
     this->id = getNextLinkId();
     LinkManager::instance()->add(this);
-
-    // Open packet log
-    mavlinkLogFile = new QFile();
-    //mavlinkLogFile->open(QIODevice::ReadOnly);
+    QObject::connect(this, SIGNAL(destroyed(QObject*)), LinkManager::instance(), SLOT(removeLink(QObject*)));
 }
 
 MAVLinkSimulationLink::~MAVLinkSimulationLink()
@@ -117,6 +116,8 @@ void MAVLinkSimulationLink::run()
     status.vbat = 0;
     status.motor_block = 1;
     status.packet_drop = 0;
+
+
 
     forever
     {
@@ -146,6 +147,21 @@ void MAVLinkSimulationLink::run()
     }
 }
 
+void MAVLinkSimulationLink::sendMAVLinkMessage(const mavlink_message_t* msg)
+{
+    // Allocate buffer with packet data
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    unsigned int bufferlength = mavlink_msg_to_send_buffer(buf, msg);
+
+    // Pack to link buffer
+    readyBufferMutex.lock();
+    for (unsigned int i = 0; i < bufferlength; i++)
+    {
+        readyBuffer.enqueue(*(buf + i));
+    }
+    readyBufferMutex.unlock();
+}
+
 void MAVLinkSimulationLink::enqueue(uint8_t* stream, uint8_t* index, mavlink_message_t* msg)
 {
     // Allocate buffer with packet data
@@ -162,10 +178,7 @@ void MAVLinkSimulationLink::mainloop()
     // Test for encoding / decoding packets
 
     // Test data stream
-    const int streamlength = 4096;
-    int streampointer = 0;
-    //const int testoffset = 0;
-    uint8_t stream[streamlength] = {};
+    streampointer = 0;
 
     // Fake system values
 
@@ -431,12 +444,17 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
-        // GLOBAL POSITION VEHICLE 2
-        mavlink_msg_global_position_int_pack(54, componentId, &ret, (473780.28137103+(x+0.002))*1E3, (85489.9892510421+((y/2)+0.3))*1E3, (z+570.0)*1000.0, xSpeed, ySpeed, zSpeed);
-        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
-        //add data into datastream
-        memcpy(stream+streampointer,buffer, bufferlength);
-        streampointer += bufferlength;
+//        // GLOBAL POSITION VEHICLE 2
+//        mavlink_msg_global_position_int_pack(54, componentId, &ret, (473780.28137103+(x+0.002))*1E3, (85489.9892510421+((y/2)+0.3))*1E3, (z+570.0)*1000.0, xSpeed, ySpeed, zSpeed);
+//        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+//        //add data into datastream
+//        memcpy(stream+streampointer,buffer, bufferlength);
+//        streampointer += bufferlength;
+
+//        // ATTITUDE VEHICLE 2
+//        mavlink_msg_attitude_pack(54, MAV_COMP_ID_IMU, &ret, 0, 0, 0, atan2((y/2)+0.3, (x+0.002)), 0, 0, 0);
+//        sendMAVLinkMessage(&ret);
+
 
 //        // GLOBAL POSITION VEHICLE 3
 //        mavlink_msg_global_position_int_pack(60, componentId, &ret, (473780.28137103+(x/2+0.002))*1E3, (85489.9892510421+((y*2)+0.3))*1E3, (z+590.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
@@ -611,15 +629,15 @@ void MAVLinkSimulationLink::mainloop()
 
 
 
-        // HEARTBEAT VEHICLE 2
+//        // HEARTBEAT VEHICLE 2
 
-        // Pack message and get size of encoded byte string
-        messageSize = mavlink_msg_heartbeat_pack(54, componentId, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_ARDUPILOTMEGA);
-        // Allocate buffer with packet data
-        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
-        //add data into datastream
-        memcpy(stream+streampointer,buffer, bufferlength);
-        streampointer += bufferlength;
+//        // Pack message and get size of encoded byte string
+//        messageSize = mavlink_msg_heartbeat_pack(54, componentId, &msg, MAV_HELICOPTER, MAV_AUTOPILOT_ARDUPILOTMEGA);
+//        // Allocate buffer with packet data
+//        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+//        //add data into datastream
+//        memcpy(stream+streampointer,buffer, bufferlength);
+//        streampointer += bufferlength;
 
 //        // HEARTBEAT VEHICLE 3
 
@@ -673,7 +691,7 @@ void MAVLinkSimulationLink::mainloop()
     }*/
 
     readyBufferMutex.lock();
-    for (int i = 0; i < streampointer; i++)
+    for (unsigned int i = 0; i < streampointer; i++)
     {
         readyBuffer.enqueue(*(stream + i));
     }
@@ -717,6 +735,8 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
         if (mavlink_parse_char(this->id, data[i], &msg, &comm))
         {
             // MESSAGE RECEIVED!
+            qDebug() << "SIMULATION LINK RECEIVED MESSAGE!";
+            emit messageReceived(msg);
 
             switch (msg.msgid)
             {
@@ -871,8 +891,7 @@ void MAVLinkSimulationLink::readBytes() {
     readyBufferMutex.lock();
     const qint64 maxLength = 2048;
     char data[maxLength];
-    qint64 len = maxLength;
-    if (maxLength > readyBuffer.size()) len = readyBuffer.size();
+    qint64 len = qMin((qint64)readyBuffer.size(), maxLength);
 
     for (unsigned int i = 0; i < len; i++)
     {
@@ -937,6 +956,10 @@ bool MAVLinkSimulationLink::connect()
     emit connected(true);
 
     start(LowPriority);
+    MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1, 47.376, 8.548);
+    MAVLinkSimulationMAV* mav2 = new MAVLinkSimulationMAV(this, 2);
+    Q_UNUSED(mav1);
+    Q_UNUSED(mav2);
     //    timer->start(rate);
     return true;
 }

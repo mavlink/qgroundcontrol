@@ -483,7 +483,7 @@ void LinechartWidget::startLogging()
         fileName.append(".csv");
     }
 
-    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort)
+    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort && fileName != "")
     {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);

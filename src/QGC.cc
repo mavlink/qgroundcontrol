@@ -23,6 +23,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include "QGC.h"
 
+#include <qmath.h>
+#include <float.h>
+
 namespace QGC {
 
 quint64 groundTimeUsecs()
@@ -32,6 +35,40 @@ quint64 groundTimeUsecs()
     /* Return seconds and milliseconds, in milliseconds unit */
     quint64 microseconds = time.toTime_t() * static_cast<quint64>(1000000);
     return static_cast<quint64>(microseconds + (time.time().msec()*1000));
+}
+
+float limitAngleToPMPIf(float angle)
+{
+    while (angle > (M_PI+FLT_EPSILON))
+    {
+        angle -= 2 * M_PI;
+    }
+
+    while (angle <= -(M_PI+FLT_EPSILON))
+    {
+        angle += 2 * M_PI;
+    }
+
+    return angle;
+}
+
+double limitAngleToPMPId(double angle)
+{
+    if (angle < -M_PI)
+    {
+        while (angle < -M_PI)
+        {
+            angle += M_PI;
+        }
+    }
+    else if (angle > M_PI)
+    {
+        while (angle > M_PI)
+        {
+            angle -= M_PI;
+        }
+    }
+    return angle;
 }
 
 int applicationVersion()

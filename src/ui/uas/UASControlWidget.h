@@ -63,6 +63,8 @@ public slots:
     void updateMode(int uas,QString mode,QString description);
     /** @brief Update state */
     void updateState(int state);
+    /** @brief Update internal state machine */
+    void updateStatemachine();
 
 protected slots:
     /** @brief Set the background color for the widget */

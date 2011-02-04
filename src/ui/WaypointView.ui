@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1389</width>
-    <height>33</height>
+    <height>39</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -170,7 +170,13 @@ QProgressBar::chunk#thrustBar {
       </property>
       <item>
        <widget class="QCheckBox" name="selectedBox">
+        <property name="focusPolicy">
+         <enum>Qt::TabFocus</enum>
+        </property>
         <property name="toolTip">
+         <string>Currently selected waypoint</string>
+        </property>
+        <property name="statusTip">
          <string>Currently selected waypoint</string>
         </property>
         <property name="text">
@@ -211,6 +217,12 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="toolTip">
+         <string>Action at Waypoint</string>
+        </property>
+        <property name="statusTip">
+         <string>Action at Waypoint</string>
+        </property>
        </widget>
       </item>
       <item>
@@ -220,6 +232,12 @@ QProgressBar::chunk#thrustBar {
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Coordinate frame</string>
+        </property>
+        <property name="statusTip">
+         <string>Coordinate frame</string>
         </property>
        </widget>
       </item>
@@ -231,8 +249,23 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::WheelFocus</enum>
+        </property>
         <property name="toolTip">
          <string>Position X coordinate</string>
+        </property>
+        <property name="statusTip">
+         <string>Position X corrdinate</string>
+        </property>
+        <property name="wrapping">
+         <bool>false</bool>
+        </property>
+        <property name="frame">
+         <bool>true</bool>
+        </property>
+        <property name="accelerated">
+         <bool>true</bool>
         </property>
         <property name="prefix">
          <string>N </string>
@@ -259,8 +292,14 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::WheelFocus</enum>
+        </property>
         <property name="toolTip">
-         <string>Position Y coordinate</string>
+         <string>Position Y/Longitude coordinate</string>
+        </property>
+        <property name="statusTip">
+         <string>Position Y/Longitude coordinate</string>
         </property>
         <property name="prefix">
          <string>E </string>
@@ -290,8 +329,14 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::WheelFocus</enum>
+        </property>
         <property name="toolTip">
-         <string>Position Z coordinate (negative)</string>
+         <string>Position Z coordinate (local frame, negative)</string>
+        </property>
+        <property name="statusTip">
+         <string/>
         </property>
         <property name="prefix">
          <string>D </string>
@@ -318,6 +363,15 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::WheelFocus</enum>
+        </property>
+        <property name="toolTip">
+         <string>Latitude in degrees</string>
+        </property>
+        <property name="statusTip">
+         <string>Latitude in degrees</string>
+        </property>
         <property name="prefix">
          <string>lat </string>
         </property>
@@ -333,6 +387,9 @@ QProgressBar::chunk#thrustBar {
         <property name="maximum">
          <double>90.000000000000000</double>
         </property>
+        <property name="singleStep">
+         <double>0.000010000000000</double>
+        </property>
        </widget>
       </item>
       <item>
@@ -342,6 +399,15 @@ QProgressBar::chunk#thrustBar {
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::WheelFocus</enum>
+        </property>
+        <property name="toolTip">
+         <string>Longitude in degrees</string>
+        </property>
+        <property name="statusTip">
+         <string>Longitude in degrees</string>
         </property>
         <property name="prefix">
          <string>lon </string>
@@ -358,6 +424,9 @@ QProgressBar::chunk#thrustBar {
         <property name="maximum">
          <double>180.000000000000000</double>
         </property>
+        <property name="singleStep">
+         <double>0.000010000000000</double>
+        </property>
        </widget>
       </item>
       <item>
@@ -368,6 +437,12 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="toolTip">
+         <string>Altitude in meters</string>
+        </property>
+        <property name="statusTip">
+         <string>Altitude in meters</string>
+        </property>
         <property name="prefix">
          <string>alt </string>
         </property>
@@ -375,7 +450,7 @@ QProgressBar::chunk#thrustBar {
          <string>m</string>
         </property>
         <property name="decimals">
-         <number>7</number>
+         <number>2</number>
         </property>
         <property name="minimum">
          <double>-100000.000000000000000</double>
@@ -393,8 +468,14 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
         <property name="toolTip">
-         <string>Yaw angle</string>
+         <string>Rotary wing only: Desired yaw angle at waypoint</string>
+        </property>
+        <property name="statusTip">
+         <string>Rotary wing only: Desired yaw angle at waypoint</string>
         </property>
         <property name="wrapping">
          <bool>true</bool>
@@ -421,8 +502,14 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
         <property name="toolTip">
-         <string>Orbit radius</string>
+         <string>Orbit (navigate waypoint) /Loiter (loiter waypoint) radius</string>
+        </property>
+        <property name="statusTip">
+         <string>Orbit (navigate waypoint) /Loiter (loiter waypoint) radius</string>
         </property>
         <property name="suffix">
          <string> m</string>
@@ -449,11 +536,14 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
         <property name="toolTip">
          <string>Time in milliseconds that the MAV has to stay inside the orbit before advancing</string>
         </property>
         <property name="statusTip">
-         <string/>
+         <string>Time in milliseconds that the MAV has to stay inside the orbit before advancing</string>
         </property>
         <property name="suffix">
          <string> ms</string>
@@ -477,7 +567,13 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::StrongFocus</enum>
+        </property>
         <property name="toolTip">
+         <string>Take off angle</string>
+        </property>
+        <property name="statusTip">
          <string>Take off angle</string>
         </property>
         <property name="prefix">
@@ -493,6 +589,9 @@ QProgressBar::chunk#thrustBar {
         <property name="toolTip">
          <string>Automatically continue after this waypoint</string>
         </property>
+        <property name="statusTip">
+         <string>Automatically continue after this waypoint</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -506,8 +605,14 @@ QProgressBar::chunk#thrustBar {
           <height>22</height>
          </size>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
         <property name="toolTip">
-         <string>Move Up</string>
+         <string>Move Up in List</string>
+        </property>
+        <property name="statusTip">
+         <string>Move Up in List</string>
         </property>
         <property name="text">
          <string/>
@@ -526,8 +631,14 @@ QProgressBar::chunk#thrustBar {
           <height>22</height>
          </size>
         </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
         <property name="toolTip">
-         <string>Move Down</string>
+         <string>Move Down in List</string>
+        </property>
+        <property name="statusTip">
+         <string>Move Down in List</string>
         </property>
         <property name="text">
          <string/>
@@ -545,6 +656,9 @@ QProgressBar::chunk#thrustBar {
           <width>28</width>
           <height>22</height>
          </size>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
         </property>
         <property name="toolTip">
          <string>Delete</string>

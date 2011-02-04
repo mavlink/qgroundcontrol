@@ -78,8 +78,13 @@ public:
     virtual double getPitch() const = 0;
     virtual double getYaw() const = 0;
 
+    virtual bool getSelected() const = 0;
+
+    /** @brief Set the airframe of this MAV */
+    virtual int getAirframe() const = 0;
+
     /** @brief Get reference to the waypoint manager **/
-    virtual UASWaypointManager &getWaypointManager(void) = 0;
+    virtual UASWaypointManager* getWaypointManager(void) = 0;
 
     /* COMMUNICATION FLAGS */
 
@@ -92,10 +97,22 @@ public:
         COMM_CONNECTED = 2,
         /** The connection is closed **/
         COMM_DISCONNECTING = 3,
-        COMM_FAIL = 4, ///< Communication link failed
+        COMM_FAIL = 4,
+        COMM_TIMEDOUT = 5///< Communication link failed
     };
 
-
+    enum Airframe {
+        QGC_AIRFRAME_GENERIC = 0,
+        QGC_AIRFRAME_EASYSTAR,
+        QGC_AIRFRAME_TWINSTAR,
+        QGC_AIRFRAME_MERLIN,
+        QGC_AIRFRAME_CHEETAH,
+        QGC_AIRFRAME_MIKROKOPTER,
+        QGC_AIRFRAME_REAPER,
+        QGC_AIRFRAME_PREDATOR,
+        QGC_AIRFRAME_COAXIAL,
+        QGC_AIRFRAME_PTERYX
+    };
 
     /**
          * @brief Get the links associated with this robot
@@ -162,8 +179,13 @@ public:
 
 public slots:
 
+    /** @brief Set a new name for the system */
+    virtual void setUASName(const QString& name) = 0;
     /** @brief Sets an action **/
     virtual void setAction(MAV_ACTION action) = 0;
+
+    /** @brief Selects the airframe */
+    virtual void setAirframe(int airframe) = 0;
 
     /** @brief Launches the system/Liftof **/
     virtual void launch() = 0;
@@ -247,7 +269,10 @@ public slots:
     virtual void startGyroscopeCalibration() = 0;
     virtual void startPressureCalibration() = 0;
 
-
+    /** @brief Set the current battery type and voltages */
+    virtual void setBatterySpecs(const QString& specs) = 0;
+    /** @brief Get the current battery type and specs */
+    virtual QString getBatterySpecs() = 0;
 
 protected:
     QColor color;
@@ -262,6 +287,9 @@ signals:
      * @param description longer textual description. Should be however limited to a short text, e.g. 200 chars.
      */
     void statusChanged(UASInterface* uas, QString status, QString description);
+    /** @brief System has been removed / disconnected / shutdown cleanly, remove */
+    void systemRemoved(UASInterface* uas);
+    void systemRemoved();
     /**
      * @brief Received a plain text message from the robot
      * This signal should NOT be used for standard communication, but rather for VERY IMPORTANT
@@ -357,6 +385,7 @@ signals:
     void thrustChanged(UASInterface*, double thrust);
     void heartbeat(UASInterface* uas);
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
+    void attitudeSpeedChanged(int uas, double rollspeed, double pitchspeed, double yawspeed, quint64 usec);
     void attitudeThrustSetPointChanged(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     void positionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
@@ -406,9 +435,22 @@ signals:
      */
     void irUltraSoundLocalizationChanged(UASInterface* uas, int fix);
 
+    // ERROR AND STATUS SIGNALS
+    /** @brief Heartbeat timed out */
+    void heartbeatTimeout();
+    /** @brief Heartbeat timed out */
+    void heartbeatTimeout(unsigned int ms);
+    /** @brief Name of system changed */
+    void nameChanged(QString newName);
+    /** @brief System has been selected as focused system */
+    void systemSelected(bool selected);
+    /** @brief Core specifications have changed */
+    void systemSpecsChanged(int uasId);
 
+protected:
 
-
+    // TIMEOUT CONSTANTS
+    static const unsigned int timeoutIntervalHeartbeat = 2000 * 1000; ///< Heartbeat timeout is 1.5 seconds
 
 };
 

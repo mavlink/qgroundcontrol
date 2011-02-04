@@ -30,14 +30,19 @@ This file is part of the QGROUNDCONTROL project
 #ifndef SLUGSHILSIM_H
 #define SLUGSHILSIM_H
 
+#include <stdint.h>
+
 #include <QWidget>
 #include <QHostAddress>
 #include <QUdpSocket>
 #include <QMessageBox>
+#include <QByteArray>
+
 
 #include "LinkInterface.h"
 #include "UAS.h"
-#include <stdint.h>
+#include "LinkManager.h"
+#include "SlugsMAV.h"
 
 
 namespace Ui {
@@ -52,12 +57,25 @@ public:
     explicit SlugsHilSim(QWidget *parent = 0);
     ~SlugsHilSim();
 
+
+
 protected:
     LinkInterface* hilLink;
     QHostAddress* simulinkIp;
     QUdpSocket* txSocket;
     QUdpSocket* rxSocket;
     UAS* activeUas;
+
+    mavlink_local_position_t tmpLocalPositionData;
+    mavlink_attitude_t tmpAttitudeData;
+    mavlink_raw_imu_t tmpRawImuData;
+#ifdef MAVLINK_ENABLED_SLUGS
+    mavlink_air_data_t tmpAirData;
+#endif
+    mavlink_gps_raw_t tmpGpsData;
+	#ifdef MAVLINK_ENABLED_SLUGS
+    mavlink_gps_date_time_t tmpGpsTime;
+#endif
 
 public slots:
 
@@ -121,11 +139,18 @@ private:
 	} tUint16ToChar;
 
     Ui::SlugsHilSim *ui;
+
     QHash <int, LinkInterface*> linksAvailable;
 
     void processHilDatagram (const QByteArray* datagram);
     float getFloatFromDatagram (const QByteArray* datagram, unsigned char * i);
     uint16_t getUint16FromDatagram (const QByteArray* datagram, unsigned char * i);
+    void setUInt16ToDatagram(QByteArray& datagram, unsigned char* pos, uint16_t value);
+
+
+    void sendMessageToSlugs();
+
+    void commandDatagramToSimulink();
 
 };
 

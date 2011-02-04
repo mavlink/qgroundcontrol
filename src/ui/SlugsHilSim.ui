@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>325</width>
+    <width>337</width>
     <height>278</height>
    </rect>
   </property>
@@ -346,6 +346,19 @@
         <bool>true</bool>
        </property>
       </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_6">
+     <item>
+      <widget class="QLineEdit" name="tbA"/>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="tbB"/>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="tbC"/>
      </item>
     </layout>
    </item>

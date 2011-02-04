@@ -67,8 +67,12 @@ public:
     void setZ(float z);
     /** @brief Hat switch position */
     void setHat(float x, float y);
+    /** @brief Clear keys */
+    void clearKeys();
     /** @brief Joystick keys, as labeled on the joystick */
     void pressKey(int key);
+    /** @brief Update status string */
+    void updateStatus(const QString& status);
 
 protected:
     /** @brief UI change event */

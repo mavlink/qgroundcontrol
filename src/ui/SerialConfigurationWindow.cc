@@ -260,9 +260,9 @@ userConfigured(false)
         connect(ui.portName, SIGNAL(currentIndexChanged(QString)), this, SLOT(setPortName(QString)));
         connect(ui.baudRate, SIGNAL(activated(int)), this->link, SLOT(setBaudRateType(int)));
         connect(ui.flowControlCheckBox, SIGNAL(toggled(bool)), this, SLOT(enableFlowControl(bool)));
-        connect(ui.parNone, SIGNAL(toggled(bool)), this, SLOT(setParityNone()));
-        connect(ui.parOdd, SIGNAL(toggled(bool)), this, SLOT(setParityOdd()));
-        connect(ui.parEven, SIGNAL(toggled(bool)), this, SLOT(setParityEven()));
+        connect(ui.parNone, SIGNAL(toggled(bool)), this, SLOT(setParityNone(bool)));
+        connect(ui.parOdd, SIGNAL(toggled(bool)), this, SLOT(setParityOdd(bool)));
+        connect(ui.parEven, SIGNAL(toggled(bool)), this, SLOT(setParityEven(bool)));
         connect(ui.dataBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setDataBits(int)));
         connect(ui.stopBitsSpinBox, SIGNAL(valueChanged(int)), this->link, SLOT(setStopBits(int)));
 
@@ -283,7 +283,7 @@ userConfigured(false)
             break;
         default:
             // Enforce default: no parity in link
-            setParityNone();
+            setParityNone(true);
             ui.parNone->setChecked(true);
             break;
         }
@@ -320,7 +320,8 @@ userConfigured(false)
     }
 }
 
-SerialConfigurationWindow::~SerialConfigurationWindow() {
+SerialConfigurationWindow::~SerialConfigurationWindow()
+{
 
 }
 
@@ -472,19 +473,19 @@ void SerialConfigurationWindow::enableFlowControl(bool flow)
     }
 }
 
-void SerialConfigurationWindow::setParityNone()
+void SerialConfigurationWindow::setParityNone(bool accept)
 {
-    link->setParityType(0);
+    if (accept) link->setParityType(0);
 }
 
-void SerialConfigurationWindow::setParityOdd()
+void SerialConfigurationWindow::setParityOdd(bool accept)
 {
-    link->setParityType(1);
+    if (accept) link->setParityType(1);
 }
 
-void SerialConfigurationWindow::setParityEven()
+void SerialConfigurationWindow::setParityEven(bool accept)
 {
-    link->setParityType(2);
+    if (accept) link->setParityType(2);
 }
 
 void SerialConfigurationWindow::setPortName(QString port)

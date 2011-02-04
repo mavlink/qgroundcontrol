@@ -42,7 +42,9 @@ public slots:
 
     void emitSignals (void);
 
-
+#ifdef MAVLINK_ENABLED_SLUGS
+    mavlink_pwm_commands_t* getPwmCommands();
+#endif
 
 signals:
 
@@ -67,6 +69,8 @@ signals:
 
     void slugsBootMsg(int uasId, mavlink_boot_t& boot);
     void slugsAttitude(int uasId, mavlink_attitude_t& attitude);
+
+
 
 
 
