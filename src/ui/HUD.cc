@@ -805,9 +805,10 @@ void HUD::paintHUD()
             //    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
 
             // YAW is in compass-human readable format, so 0 - 360deg. This is normal in aviation, not -180 - +180.
-            const float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f;
-            yawAngle.sprintf("%03d", (int)yawDeg);
-            paintText(yawAngle, defaultColor, 3.5f, -3.7f, compassY+ 0.9f, &painter);
+            const float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f+180.0f;
+            int yawCompass = static_cast<int>(yawDeg) % 360;
+            yawAngle.sprintf("%03d", yawCompass);
+            paintText(yawAngle, defaultColor, 3.5f, -4.3f, compassY+ 0.97f, &painter);
 
             // CHANGE RATE STRIPS
             drawChangeRateStrip(-51.0f, -50.0f, 15.0f, -1.0f, 1.0f, -zSpeed, &painter);

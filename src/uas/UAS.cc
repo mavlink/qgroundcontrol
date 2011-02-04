@@ -402,12 +402,21 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "yawspeed", "rad/s", attitude.yawspeed, time);
 
                 // Emit in angles
-                emit valueChanged(uasId, "roll", "deg", (roll/M_PI)*180.0, time);
-                emit valueChanged(uasId, "pitch", "deg", (pitch/M_PI)*180.0, time);
-                emit valueChanged(uasId, "yaw", "deg", (yaw/M_PI)*180.0, time);
-                emit valueChanged(uasId, "rollspeed", "deg/s", (attitude.rollspeed/M_PI)*180.0, time);
-                emit valueChanged(uasId, "pitchspeed", "deg/s", (attitude.pitchspeed/M_PI)*180.0, time);
-                emit valueChanged(uasId, "yawspeed", "deg/s", (attitude.yawspeed/M_PI)*180.0, time);
+
+                // Convert yaw angle to compass value
+                // in 0 - 360 deg range
+                float compass = (yaw/M_PI)*180.0+360.0f;
+                while (compass > 360.0f)
+                {
+                    compass -= 360.0f;
+                }
+
+                emit valueChanged(uasId, "roll deg", "deg", (roll/M_PI)*180.0, time);
+                emit valueChanged(uasId, "pitch deg", "deg", (pitch/M_PI)*180.0, time);
+                emit valueChanged(uasId, "yaw deg", "deg", compass, time);
+                emit valueChanged(uasId, "rollspeed d/s", "deg/s", (attitude.rollspeed/M_PI)*180.0, time);
+                emit valueChanged(uasId, "pitchspeed d/s", "deg/s", (attitude.pitchspeed/M_PI)*180.0, time);
+                emit valueChanged(uasId, "yawspeed d/s", "deg/s", (attitude.yawspeed/M_PI)*180.0, time);
 
                 emit attitudeChanged(this, roll, pitch, yaw, time);
                 emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
