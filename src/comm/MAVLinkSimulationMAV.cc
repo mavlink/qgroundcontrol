@@ -167,7 +167,7 @@ void MAVLinkSimulationMAV::mainloop()
         // Name of the value, maximum 10 characters
         // see full message specs at:
         // http://pixhawk.ethz.ch/wiki/mavlink/
-        strcpy(val.name, "FLOAT");
+        strcpy((char *)val.name, "FLOAT");
         // Value, in this case 0.5
         val.value = 0.5f;
 
@@ -195,7 +195,7 @@ void MAVLinkSimulationMAV::mainloop()
         // Name of the value, maximum 10 characters
         // see full message specs at:
         // http://pixhawk.ethz.ch/wiki/mavlink/
-        strcpy(valint.name, "INTEGER");
+        strcpy((char *)valint.name, "INTEGER");
         // Value, in this case 18000
         valint.value = 18000;
 
