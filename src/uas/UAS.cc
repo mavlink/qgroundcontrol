@@ -349,6 +349,22 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
             break;
+        case MAVLINK_MSG_ID_CONTROL_STATUS:
+            {
+                mavlink_control_status_t status;
+                mavlink_msg_control_status_decode(&message, &status);
+                // Emit control status vector
+                emit attitudeControlEnabled(static_cast<bool>(status.control_att));
+                emit positionXYControlEnabled(static_cast<bool>(status.control_pos_xy));
+                emit positionZControlEnabled(static_cast<bool>(status.control_pos_z));
+                emit positionYawControlEnabled(static_cast<bool>(status.control_pos_yaw));
+
+                // Emit localization status vector
+                emit localizationChanged(this, status.position_fix);
+                emit visionLocalizationChanged(this, status.vision_fix);
+                emit gpsLocalizationChanged(this, status.gps_fix);
+            }
+            break;
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 mavlink_raw_imu_t raw;
@@ -480,6 +496,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "gps z speed", "m/s", speedZ, time);
                 emit globalPositionChanged(this, longitude, latitude, altitude, time);
                 emit speedChanged(this, speedX, speedY, speedZ, time);
+                emit valueChanged(uasId, "gpsspeed", "m/s", sqrt(speedX*speedX+speedY*speedY+speedZ*speedZ), time);
                 // Set internal state
                 if (!positionLock)
                 {
@@ -506,15 +523,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "latitude", "deg", pos.lat, time);
                 emit valueChanged(uasId, "longitude", "deg", pos.lon, time);
 
-                // FIXME REMOVE
-                longitude = pos.lon;
-                latitude = pos.lat;
-                altitude = pos.alt;
-                emit globalPositionChanged(this, longitude, latitude, altitude, time);
-
                 if (pos.fix_type > 0)
                 {
                     emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
+                    emit valueChanged(uasId, "gpsspeed", "m/s", pos.v, time);
 
                     // Check for NaN
                     int alt = pos.alt;
@@ -560,9 +572,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_raw_pressure_t pressure;
                 mavlink_msg_raw_pressure_decode(&message, &pressure);
                 quint64 time = this->getUnixTime(0);
-                emit valueChanged(uasId, "abs pressure", "hP", pressure.press_abs, time);
-                emit valueChanged(uasId, "diff pressure 1", "hP", pressure.press_diff1, time);
-                emit valueChanged(uasId, "diff pressure 2", "hP", pressure.press_diff2, time);
+                emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
+                emit valueChanged(uasId, "diff pressure 1", "hPa", pressure.press_diff1, time);
+                emit valueChanged(uasId, "diff pressure 2", "hPa", pressure.press_diff2, time);
             }
             break;
         case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
@@ -1017,7 +1029,7 @@ void UAS::forwardMessage(mavlink_message_t message)
                 {
                     if(serial != links->at(i))
                     {
-                        qDebug()<<"Forwarding Over link: "<<serial->getName()<<" "<<serial;
+                        qDebug()<<"Antenna tracking: Forwarding Over link: "<<serial->getName()<<" "<<serial;
                         sendMessage(serial, message);
                     }
                 }

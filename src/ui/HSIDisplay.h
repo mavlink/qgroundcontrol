@@ -248,6 +248,8 @@ protected:
 
     // Data indicators
     bool setPointKnown;       ///< Controller setpoint known status flag
+    bool positionSetPointKnown; ///< Position setpoint known status flag
+    bool userSetPointSet;
 
 private:
 };

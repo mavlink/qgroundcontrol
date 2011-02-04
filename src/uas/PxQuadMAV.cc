@@ -50,9 +50,9 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
     if (message.sysid == uasId)
     {
-        QString uasState;
-        QString stateDescription;
-        QString patternPath;
+//        QString uasState;
+//        QString stateDescription;
+//        QString patternPath;
         switch (message.msgid)
         {
         case MAVLINK_MSG_ID_RAW_AUX:
@@ -153,22 +153,6 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit errCountChanged(uasId, "IMU", "SPI1", status.spi1_err_count);
                 emit errCountChanged(uasId, "IMU", "UART", status.uart_total_err_count);
                 emit valueChanged(uasId, "Load", "%", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
-            }
-            break;
-        case MAVLINK_MSG_ID_CONTROL_STATUS:
-            {
-                mavlink_control_status_t status;
-                mavlink_msg_control_status_decode(&message, &status);
-                // Emit control status vector
-                emit attitudeControlEnabled(static_cast<bool>(status.control_att));
-                emit positionXYControlEnabled(static_cast<bool>(status.control_pos_xy));
-                emit positionZControlEnabled(static_cast<bool>(status.control_pos_z));
-                emit positionYawControlEnabled(static_cast<bool>(status.control_pos_yaw));
-
-                // Emit localization status vector
-                emit localizationChanged(this, status.position_fix);
-                emit visionLocalizationChanged(this, status.vision_fix);
-                emit gpsLocalizationChanged(this, status.gps_fix);
             }
             break;
     default:
