@@ -413,7 +413,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 emit valueChanged(uasId, "roll deg", "deg", (roll/M_PI)*180.0, time);
                 emit valueChanged(uasId, "pitch deg", "deg", (pitch/M_PI)*180.0, time);
-                emit valueChanged(uasId, "yaw deg", "deg", compass, time);
+                emit valueChanged(uasId, "heading deg", "deg", compass, time);
                 emit valueChanged(uasId, "rollspeed d/s", "deg/s", (attitude.rollspeed/M_PI)*180.0, time);
                 emit valueChanged(uasId, "pitchspeed d/s", "deg/s", (attitude.pitchspeed/M_PI)*180.0, time);
                 emit valueChanged(uasId, "yawspeed d/s", "deg/s", (attitude.yawspeed/M_PI)*180.0, time);

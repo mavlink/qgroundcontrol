@@ -252,7 +252,30 @@ void DebugConsole::setAutoHold(bool hold)
 void DebugConsole::receiveTextMessage(int id, int component, int severity, QString text)
 {
     Q_UNUSED(severity);
-    m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(MAV%2:%3) %4</font>\n").arg(UASManager::instance()->getUASForId(id)->getColor().name(), QString::number(id), QString::number(component), text));
+    QString name = UASManager::instance()->getUASForId(id)->getUASName();
+    QString comp;
+    // Get a human readable name if possible
+    switch (component)
+    {
+        // TODO: To be completed
+    case MAV_COMP_ID_IMU:
+        comp = tr("IMU");
+        break;
+    case MAV_COMP_ID_MAPPER:
+        comp = tr("MAPPER");
+        break;
+    case MAV_COMP_ID_WAYPOINTPLANNER:
+        comp = tr("WP-PLANNER");
+        break;
+    case MAV_COMP_ID_AIRSLAM:
+        comp = tr("AIRSLAM");
+        break;
+    default:
+        comp = QString::number(component);
+        break;
+    }
+
+    m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(%2:%3) %4</font>\n").arg(UASManager::instance()->getUASForId(id)->getColor().name(), name, comp, text));
     //m_ui->receiveText->appendPlainText("");
 }
 
