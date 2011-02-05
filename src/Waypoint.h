@@ -55,8 +55,14 @@ public:
     double getYaw() const { return yaw; }
     bool getAutoContinue() const { return autocontinue; }
     bool getCurrent() const { return current; }
-    double getOrbit() const { return orbit; }
-    double getHoldTime() const { return holdTime; }
+    double getLoiterOrbit() const { return orbit; }
+    double getAcceptanceRadius() const { return param1; }
+    double getHoldTime() const { return param2; }
+    double getParam1() const { return param1; }
+    double getParam2() const { return param2; }
+    double getParam3() const { return x; }
+    double getParam4() const { return y; }
+    int getTurns() const { return param1; }
     MAV_FRAME getFrame() const { return frame; }
     MAV_ACTION getAction() const { return action; }
     const QString& getName() const { return name; }
@@ -76,7 +82,10 @@ protected:
     bool autocontinue;
     bool current;
     double orbit;
-    int holdTime;
+    int orbitDirection;
+    double param1;
+    double param2;
+    int turns;
     QString name;
 
 public slots:
@@ -85,20 +94,21 @@ public slots:
     void setY(double y);
     void setZ(double z);
     void setYaw(double yaw);
+    /** @brief Set the waypoint action */
+    void setAction(int action);
     void setAction(MAV_ACTION action);
     void setFrame(MAV_FRAME frame);
     void setAutocontinue(bool autoContinue);
     void setCurrent(bool current);
-    void setOrbit(double orbit);
+    void setLoiterOrbit(double orbit);
+    void setParam1(double param1);
+    void setParam2(double param2);
+    void setParam3(double param3);
+    void setParam4(double param4);
+    void setAcceptanceRadius(double radius);
     void setHoldTime(int holdTime);
-
-
-//    //for QDoubleSpin
-//    void setX(double x);
-//    void setY(double y);
-//    void setZ(double z);
-//    void setYaw(double yaw);
-//    void setOrbit(double orbit);
+    /** @brief Number of turns for loiter waypoints */
+    void setTurns(int turns);
 
 signals:
     /** @brief Announces a change to the waypoint data */

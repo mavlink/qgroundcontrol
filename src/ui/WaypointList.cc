@@ -203,7 +203,7 @@ void WaypointList::add()
             {
                 // Create waypoint with last frame
                 Waypoint *last = waypoints.at(waypoints.size()-1);
-                wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getOrbit(),
+                wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getAcceptanceRadius(),
                                             last->getHoldTime(), last->getFrame(), last->getAction());
                 uas->getWaypointManager()->addWaypoint(wp);
             }

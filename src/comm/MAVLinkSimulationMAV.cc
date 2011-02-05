@@ -265,7 +265,7 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
             {
                 switch (action.action)
                 {
-                case MAV_ACTION_LAUNCH:
+                case MAV_ACTION_TAKEOFF:
                     flying = true;
                     break;
                 default:

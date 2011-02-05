@@ -1480,7 +1480,7 @@ void UAS::launch()
 {
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_LAUNCH);
+    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_TAKEOFF);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
@@ -1494,7 +1494,7 @@ void UAS::enable_motors()
 {
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_MOTORS_START);
+    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_MOTORS_START);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
@@ -1508,7 +1508,7 @@ void UAS::disable_motors()
 {
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_MOTORS_STOP);
+    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_MOTORS_STOP);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);

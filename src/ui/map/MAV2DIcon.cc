@@ -99,7 +99,11 @@ void MAV2DIcon::drawIcon(QPen* pen)
         //qDebug() << "Painting ellipse" << radius/2-width << width;
         //selPen->deleteLater();
     }
+    drawAirframePolygon(airframe, painter, radius, iconColor, yaw);
+}
 
+void MAV2DIcon::drawAirframePolygon(int airframe, QPainter& painter, int radius, QColor& iconColor, float yaw)
+{
     switch (airframe)
     {
     case UASInterface::QGC_AIRFRAME_PREDATOR:
@@ -147,6 +151,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
             painter.setPen(iconPen);
 
             painter.drawPolygon(poly);
+            painter.rotate(-yawRotate);
         }
         break;
     case UASInterface::QGC_AIRFRAME_MIKROKOPTER:
@@ -186,6 +191,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
 
             painter.setBrush(Qt::red);
             painter.drawEllipse(front, radius/4/2, radius/4/2);
+            painter.rotate(-yawRotate);
         }
         break;
     case UASInterface::QGC_AIRFRAME_EASYSTAR:
@@ -243,6 +249,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
             painter.setPen(iconPen);
 
             painter.drawPolygon(poly);
+            painter.rotate(-yawRotate);
         }
         break;
         case UASInterface::QGC_AIRFRAME_GENERIC:
@@ -268,6 +275,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
             painter.setPen(iconPen);
 
             painter.drawPolygon(poly);
+            painter.rotate(-yawRotate);
         }
         break;
     }

@@ -42,8 +42,10 @@ Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _yaw, bo
     action(_action),
     autocontinue(_autocontinue),
     current(_current),
-    orbit(_orbit),
-    holdTime(_holdTime),
+    orbit(0),
+    orbitDirection(0),
+    param1(_orbit),
+    param2(_holdTime),
     name(QString("WP%1").arg(id, 2, 10, QChar('0')))
 {
 }
@@ -60,7 +62,7 @@ void Waypoint::save(QTextStream &saveStream)
     position = position.arg(y, 0, 'g', 18);
     position = position.arg(z, 0, 'g', 18);
     position = position.arg(yaw, 0, 'g', 8);
-    saveStream << this->getId() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << this->getOrbit() << "\t" << /*Orbit Direction*/ 0 << "\t" << this->getOrbit() << "\t" << this->getHoldTime() << "\t" << this->getCurrent() << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n";
+    saveStream << this->getId() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << orbit << "\t" << orbitDirection << "\t" << param1 << "\t" << param2 << "\t" << this->getCurrent() << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n";
 }
 
 bool Waypoint::load(QTextStream &loadStream)
@@ -72,9 +74,9 @@ bool Waypoint::load(QTextStream &loadStream)
         this->frame = (MAV_FRAME) wpParams[1].toInt();
         this->action = (MAV_ACTION) wpParams[2].toInt();
         this->orbit = wpParams[3].toDouble();
-        //TODO: orbit direction
-        //TODO: param1
-        this->holdTime = wpParams[6].toInt();
+        this->orbitDirection = wpParams[4].toInt();
+        this->param1 = wpParams[5].toDouble();
+        this->param2 = wpParams[6].toDouble();
         this->current = (wpParams[7].toInt() == 1 ? true : false);
         this->x = wpParams[8].toDouble();
         this->y = wpParams[9].toDouble();
@@ -130,6 +132,15 @@ void Waypoint::setYaw(double yaw)
     }
 }
 
+void Waypoint::setAction(int action)
+{
+    if (this->action != (MAV_ACTION)action)
+    {
+        this->action = (MAV_ACTION)action;
+        emit changed(this);
+    }
+}
+
 void Waypoint::setAction(MAV_ACTION action)
 {
     if (this->action != action)
@@ -166,7 +177,52 @@ void Waypoint::setCurrent(bool current)
     }
 }
 
-void Waypoint::setOrbit(double orbit)
+void Waypoint::setAcceptanceRadius(double radius)
+{
+    if (this->param1 != radius)
+    {
+        this->param1 = radius;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setParam1(double param1)
+{
+    if (this->param1 != param1)
+    {
+        this->param1 = param1;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setParam2(double param2)
+{
+    if (this->param2 != param2)
+    {
+        this->param2 = param2;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setParam3(double param3)
+{
+    if (this->x != param3)
+    {
+        this->x = param3;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setParam4(double param4)
+{
+    if (this->y != param4)
+    {
+        this->y = param4;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setLoiterOrbit(double orbit)
 {
     if (this->orbit != orbit)
     {
@@ -177,9 +233,18 @@ void Waypoint::setOrbit(double orbit)
 
 void Waypoint::setHoldTime(int holdTime)
 {
-    if (this->holdTime != holdTime)
+    if (this->param2 != holdTime)
     {
-        this->holdTime = holdTime;
+        this->param2 = holdTime;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setTurns(int turns)
+{
+    if (this->param1 != turns)
+    {
+        this->param1 = turns;
         emit changed(this);
     }
 }
