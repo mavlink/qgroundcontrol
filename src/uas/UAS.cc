@@ -349,6 +349,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
             break;
+
+        #ifdef MAVLINK_ENABLED_PIXHAWK
         case MAVLINK_MSG_ID_CONTROL_STATUS:
             {
                 mavlink_control_status_t status;
@@ -365,6 +367,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit gpsLocalizationChanged(this, status.gps_fix);
             }
             break;
+		#endif // PIXHAWK 
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 mavlink_raw_imu_t raw;
