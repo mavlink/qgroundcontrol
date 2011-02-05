@@ -450,6 +450,18 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
     qDebug() << "UPDATING WP" << wp->getId() << wp <<  __FILE__ << __LINE__;
     if (uas == this->mav->getUASID())
     {
+        // TODO The map widget is not yet aware of non-global, non-navigation WPs
+        if (wp->getFrame() == MAV_FRAME_GLOBAL && wp->getAction() == MAV_ACTION_NAVIGATE)
+        {
+            // We're good, this is a global waypoint
+            // This is where the code below should be executed in
+        }
+        else
+        {
+            // We're screwed, this is not a global waypoint
+            qDebug() << "WARNING: The map widget is not prepared yet for non-navigation WPs" << __FILE__ << __LINE__;
+        }
+
         int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getIndexOf(wp);
         if (wpindex == -1) return;
         // Create waypoint name
@@ -467,8 +479,6 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
             // Waypoint exists, update it
             if(!waypointIsDrag)
             {
-                qDebug() <<"indice WP= "<< wpindex <<"\n";
-
                 QPointF coordinate;
                 coordinate.setX(wp->getX());
                 coordinate.setY(wp->getY());
@@ -482,6 +492,7 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
                     // Now update icon position
                     //mc->layer("Waypoints")->removeGeometry(wpIcons.at(wpindex));
                     wpIcons.at(wpindex)->setCoordinate(coordinate);
+                    wpIcons.at(wpindex)->setPen(mavPens.value(uas));
                     //mc->layer("Waypoints")->addGeometry(wpIcons.at(wpindex));
                     // Then waypoint line coordinate
                     Point* linesegment = NULL;
@@ -505,12 +516,29 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
                 }
             }
         }
+        // Set unvisible
+        if (wp->getFrame() != MAV_FRAME_GLOBAL || !(wp->getAction() == MAV_ACTION_NAVIGATE
+                                                 || wp->getAction() == MAV_ACTION_LOITER
+                                                 || wp->getAction() == MAV_ACTION_LOITER_MAX_TIME
+                                                 || wp->getAction() == MAV_ACTION_LOITER_MAX_TURNS
+                                                 || wp->getAction() == MAV_ACTION_TAKEOFF
+                                                 || wp->getAction() == MAV_ACTION_LAND
+                                                 || wp->getAction() == MAV_ACTION_RETURN))
+        {
+            wpIcons.at(wpindex)->setVisible(false);
+            waypointPath->points().at(wpindex)->setVisible(false);
+        }
+        else
+        {
+            wpIcons.at(wpindex)->setVisible(true);
+            waypointPath->points().at(wpindex)->setVisible(true);
+        }
     }
 }
 
 void MapWidget::createWaypointGraphAtMap(int id, const QPointF coordinate)
 {
-    if (!wpExists(coordinate))
+    //if (!wpExists(coordinate))
     {
         // Create waypoint name
         QString str;
@@ -820,7 +848,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         // Icon
         //QPen* pointpen = new QPen(uasColor);
         qDebug() << "2D MAP: ADDING" << uas->getUASName() << __FILE__ << __LINE__;
-        p = new MAV2DIcon(uas, 50, uas->getSystemType(), uas->getColor(), QString("%1").arg(uas->getUASID()), qmapcontrol::Point::Middle);
+        p = new MAV2DIcon(uas, 68, uas->getSystemType(), uas->getColor(), QString("%1").arg(uas->getUASID()), qmapcontrol::Point::Middle);
         uasIcons.insert(uas->getUASID(), p);
         mc->layer("Waypoints")->addGeometry(p);
 

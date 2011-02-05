@@ -155,7 +155,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/designer/QGCParamSlider.ui \
     src/ui/designer/QGCActionButton.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
-    src/ui/QGCWaypointListMulti.ui
+    src/ui/QGCWaypointListMulti.ui \
+    src/ui/mission/QGCCustomWaypointAction.ui
 
 INCLUDEPATH += src \
     src/ui \

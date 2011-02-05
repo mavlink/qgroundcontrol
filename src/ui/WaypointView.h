@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 namespace Ui {
     class WaypointView;
 }
+class Ui_QGCCustomWaypointAction;
 
 class WaypointView : public QWidget {
     Q_OBJECT
@@ -57,7 +58,9 @@ public slots:
     void moveDown();
     void remove();
     void changedAutoContinue(int);
+    void updateFrameView(int frame);
     void changedFrame(int state);
+    void updateActionView(int action);
     void changedAction(int state);
     void changedCurrent(int);
     void updateValues(void);
@@ -67,6 +70,9 @@ public slots:
 protected:
     virtual void changeEvent(QEvent *e);
     Waypoint* wp;
+    // Special widgets extendending the
+    // waypoint view to mission capabilities
+    Ui_QGCCustomWaypointAction* customCommand;
 
 private:
     Ui::WaypointView *m_ui;

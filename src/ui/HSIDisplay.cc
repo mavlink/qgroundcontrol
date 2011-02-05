@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include "UASWaypointManager.h"
 #include "Waypoint2DIcon.h"
+#include "MAV2DIcon.h"
 
 #include <QDebug>
 
@@ -229,11 +230,21 @@ void HSIDisplay::renderOverlay()
     painter.translate(-(xCenterPos)*scalingFactor, -(yCenterPos)*scalingFactor);
 
     // Draw center indicator
-    QPolygonF p(3);
-    p.replace(0, QPointF(xCenterPos, yCenterPos-4.0f));
-    p.replace(1, QPointF(xCenterPos-4.0f, yCenterPos+3.5f));
-    p.replace(2, QPointF(xCenterPos+4.0f, yCenterPos+3.5f));
-    drawPolygon(p, &painter);
+//    QPolygonF p(3);
+//    p.replace(0, QPointF(xCenterPos, yCenterPos-4.0f));
+//    p.replace(1, QPointF(xCenterPos-4.0f, yCenterPos+3.5f));
+//    p.replace(2, QPointF(xCenterPos+4.0f, yCenterPos+3.5f));
+//    drawPolygon(p, &painter);
+
+    if (uas)
+    {
+        // Translate to center
+        painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
+        QColor uasColor = uas->getColor();
+        MAV2DIcon::drawAirframePolygon(uas->getAirframe(), painter, static_cast<int>((vwidth/4.0f)*scalingFactor*1.1f), uasColor, 0.0f);
+        // Translate back
+        painter.translate(-(xCenterPos)*scalingFactor, -(yCenterPos)*scalingFactor);
+    }
 
     // ----------------------
 

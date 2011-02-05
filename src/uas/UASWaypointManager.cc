@@ -555,10 +555,10 @@ void UASWaypointManager::writeWaypoints()
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent() & noCurrent;   //make sure only one current waypoint is selected, the first selected will be chosen
-                cur_d->orbit = 0;
+                cur_d->orbit = cur_s->getLoiterOrbit();
                 cur_d->orbit_direction = 0;
-                cur_d->param1 = cur_s->getOrbit();
-                cur_d->param2 = cur_s->getHoldTime();
+                cur_d->param1 = cur_s->getParam1();
+                cur_d->param2 = cur_s->getParam2();
                 cur_d->frame = cur_s->getFrame();
                 cur_d->action = cur_s->getAction();
                 cur_d->seq = i;     // don't read out the sequence number of the waypoint class
