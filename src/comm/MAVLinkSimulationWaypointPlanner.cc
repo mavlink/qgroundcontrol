@@ -584,7 +584,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
 
                                 // FIXME big hack for simulation!
                                 //float oneDegreeOfLatMeters = 111131.745f;
-                                float orbit = 0.00008;
+                                float orbit = 0.00008f;
 
                                 // compare current position (given in message) with current waypoint
                                 //float orbit = wp->param1;

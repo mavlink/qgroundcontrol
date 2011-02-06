@@ -338,7 +338,7 @@ void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int s
 //    this->timeRemaining = seconds;
 //    this->percentRemaining = percent;
 
-    fuelStatus.sprintf("BAT [%02.0f \%% | %05.2fV] (%02dm:%02ds)", percent, voltage, seconds/60, seconds%60);
+    fuelStatus.sprintf("BAT [%02.0f % | %05.2fV] (%02dm:%02ds)", percent, voltage, seconds/60, seconds%60);
 
     if (percent < 20.0f)
     {
@@ -647,10 +647,10 @@ void HUD::paintHUD()
 
         yawInt += newYawDiff;
 
-        if (yawInt > M_PI) yawInt = M_PI;
-        if (yawInt < -M_PI) yawInt = -M_PI;
+        if (yawInt > M_PI) yawInt = (float)M_PI;
+        if (yawInt < -M_PI) yawInt = (float)-M_PI;
 
-        float yawTrans = yawInt * (double)maxYawTrans;
+        float yawTrans = yawInt * (float)maxYawTrans;
         yawInt *= 0.6f;
 
         if ((yawTrans < 5.0) && (yawTrans > -5.0)) yawTrans = 0;
@@ -836,7 +836,7 @@ void HUD::paintHUD()
             // Rotate view and draw all roll-dependent indicators
             painter.rotate((rollLP/M_PI)* -180.0f);
 
-            painter.translate(0, (-pitchLP/M_PI)* -180.0f * refToScreenY(1.8));
+            painter.translate(0, (-pitchLP/(float)M_PI)* -180.0f * refToScreenY(1.8f));
 
             //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 
