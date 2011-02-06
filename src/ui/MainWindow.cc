@@ -325,10 +325,10 @@ void MainWindow::buildCommonWidgets()
 
     if (!waypointsDockWidget)
     {
-        waypointsDockWidget = new QDockWidget(tr("Waypoint List"), this);
+        waypointsDockWidget = new QDockWidget(tr("Mission Plan"), this);
         waypointsDockWidget->setWidget( new QGCWaypointListMulti(this) );
         waypointsDockWidget->setObjectName("WAYPOINT_LIST_DOCKWIDGET");
-        addToToolsMenu (waypointsDockWidget, tr("Waypoints List"), SLOT(showToolWidget(bool)), MENU_WAYPOINTS, Qt::BottomDockWidgetArea);
+        addToToolsMenu (waypointsDockWidget, tr("Mission Plan"), SLOT(showToolWidget(bool)), MENU_WAYPOINTS, Qt::BottomDockWidgetArea);
     }
 
     if (!infoDockWidget)
