@@ -445,93 +445,81 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp)
     updateWaypoint(uas, wp, true);
 }
 
+/**
+ * This function is called if a a single waypoint is updated and
+ * also if the whole list changes.
+ */
 void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
 {
-    qDebug() << "UPDATING WP" << wp->getId() << wp <<  __FILE__ << __LINE__;
+    // Make sure this is the right UAS
     if (uas == this->mav->getUASID())
     {
         // TODO The map widget is not yet aware of non-global, non-navigation WPs
-        if (wp->getFrame() == MAV_FRAME_GLOBAL && wp->getAction() == MAV_ACTION_NAVIGATE)
+        if (wp->getFrame() == MAV_FRAME_GLOBAL)
         {
             // We're good, this is a global waypoint
-            // This is where the code below should be executed in
-        }
-        else
-        {
-            // We're screwed, this is not a global waypoint
-            qDebug() << "WARNING: The map widget is not prepared yet for non-navigation WPs" << __FILE__ << __LINE__;
-        }
 
-        int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getIndexOf(wp);
-        if (wpindex == -1) return;
-        // Create waypoint name
-        //QString str = QString("%1").arg(wpindex);
-        // Check if wp exists yet
-        if (!(wpIcons.count() > wpindex))
-        {
-            QPointF coordinate;
-            coordinate.setX(wp->getX());
-            coordinate.setY(wp->getY());
-            createWaypointGraphAtMap(wpindex, coordinate);
-        }
-        else
-        {
-            // Waypoint exists, update it
-            if(!waypointIsDrag)
+            int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameIndexOf(wp);
+            if (wpindex == -1) return;
+            // Check if wp exists yet
+            if (!(wpIcons.count() > wpindex))
             {
                 QPointF coordinate;
                 coordinate.setX(wp->getX());
                 coordinate.setY(wp->getY());
-
-                Point* waypoint;
-                waypoint = wps.at(wpindex);//wpIndex[str];
-                if (waypoint)
+                createWaypointGraphAtMap(wpindex, coordinate);
+            }
+            else
+            {
+                // Waypoint exists, update it
+                if(!waypointIsDrag)
                 {
-                    // First set waypoint coordinate
-                    waypoint->setCoordinate(coordinate);
-                    // Now update icon position
-                    //mc->layer("Waypoints")->removeGeometry(wpIcons.at(wpindex));
-                    wpIcons.at(wpindex)->setCoordinate(coordinate);
-                    wpIcons.at(wpindex)->setPen(mavPens.value(uas));
-                    //mc->layer("Waypoints")->addGeometry(wpIcons.at(wpindex));
-                    // Then waypoint line coordinate
-                    Point* linesegment = NULL;
-                    if (waypointPath->points().size() > wpindex)
-                    {
-                        linesegment = waypointPath->points().at(wpindex);
-                    }
-                    else
-                    {
-                        waypointPath->addPoint(waypoint);
-                    }
+                    QPointF coordinate;
+                    coordinate.setX(wp->getX());
+                    coordinate.setY(wp->getY());
 
-                    if (linesegment)
+                    Point* waypoint;
+                    waypoint = wps.at(wpindex);//wpIndex[str];
+                    if (waypoint)
                     {
-                        linesegment->setCoordinate(coordinate);
-                    }
+                        // First set waypoint coordinate
+                        waypoint->setCoordinate(coordinate);
+                        // Now update icon position
+                        //mc->layer("Waypoints")->removeGeometry(wpIcons.at(wpindex));
+                        wpIcons.at(wpindex)->setCoordinate(coordinate);
+                        wpIcons.at(wpindex)->setPen(mavPens.value(uas));
+                        //mc->layer("Waypoints")->addGeometry(wpIcons.at(wpindex));
+                        // Then waypoint line coordinate
+                        Point* linesegment = NULL;
+                        if (waypointPath->points().size() > wpindex)
+                        {
+                            linesegment = waypointPath->points().at(wpindex);
+                        }
+                        else
+                        {
+                            waypointPath->addPoint(waypoint);
+                        }
 
-                    //point2Find = dynamic_cast <Point*> (mc->layer("Waypoints")->get_Geometry(wpindex));
-                    //point2Find->setCoordinate(coordinate);
-                    if (updateView) if (isVisible()) mc->updateRequest(waypoint->boundingBox().toRect());
+                        if (linesegment)
+                        {
+                            linesegment->setCoordinate(coordinate);
+                        }
+
+                        //point2Find = dynamic_cast <Point*> (mc->layer("Waypoints")->get_Geometry(wpindex));
+                        //point2Find->setCoordinate(coordinate);
+                        if (updateView) if (isVisible()) mc->updateRequest(waypoint->boundingBox().toRect());
+                    }
                 }
             }
         }
-        // Set unvisible
-        if (wp->getFrame() != MAV_FRAME_GLOBAL || !(wp->getAction() == MAV_ACTION_NAVIGATE
-                                                 || wp->getAction() == MAV_ACTION_LOITER
-                                                 || wp->getAction() == MAV_ACTION_LOITER_MAX_TIME
-                                                 || wp->getAction() == MAV_ACTION_LOITER_MAX_TURNS
-                                                 || wp->getAction() == MAV_ACTION_TAKEOFF
-                                                 || wp->getAction() == MAV_ACTION_LAND
-                                                 || wp->getAction() == MAV_ACTION_RETURN))
-        {
-            wpIcons.at(wpindex)->setVisible(false);
-            waypointPath->points().at(wpindex)->setVisible(false);
-        }
         else
         {
-            wpIcons.at(wpindex)->setVisible(true);
-            waypointPath->points().at(wpindex)->setVisible(true);
+            // We're screwed, this is not a global waypoint
+            // Delete from list if the list is now too long
+            if (waypointPath->points().count() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameCount())
+            {
+                updateWaypointList(uas);
+            }
         }
     }
 }
@@ -625,13 +613,14 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
         // Update waypoint data storage
         if (mav)
         {
-            QVector<Waypoint*> wps = mav->getWaypointManager()->getWaypointList();
+            QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameWaypointList();
 
             if (wps.size() > index)
             {
-                wps.at(index)->setX(coordinate.x());
-                wps.at(index)->setY(coordinate.y());
-                mav->getWaypointManager()->notifyOfChange(wps.at(index));
+                Waypoint* wp = wps.at(index);
+                wp->setX(coordinate.x());
+                wp->setY(coordinate.y());
+                mav->getWaypointManager()->notifyOfChange(wp);
             }
         }
 
@@ -692,17 +681,10 @@ void MapWidget::updateWaypointList(int uas)
             return;
         }
 
-        // Load all existing waypoints into map view
-        foreach (Waypoint* wp, wpList)
+        // Delete unused waypoints first
+        int overSize = waypointPath->points().count() - uasInstance->getWaypointManager()->getGlobalFrameCount();
+        if (overSize > 0)
         {
-            // Block updates, since we update everything in the next step
-            updateWaypoint(mav->getUASID(), wp, false);
-        }
-
-        // Delete now unused wps
-        if (waypointPath->points().count() > wpList.count())
-        {
-            int overSize = waypointPath->points().count() - wpList.count();
             for (int i = 0; i < overSize; ++i)
             {
                 wps.removeLast();
@@ -710,6 +692,13 @@ void MapWidget::updateWaypointList(int uas)
                 wpIcons.removeLast();
                 waypointPath->points().removeLast();
             }
+        }
+
+        // Load all existing waypoints into map view
+        foreach (Waypoint* wp, wpList)
+        {
+            // Block updates, since we update everything in the next step
+            updateWaypoint(mav->getUASID(), wp, false);
         }
 
         // Update view
