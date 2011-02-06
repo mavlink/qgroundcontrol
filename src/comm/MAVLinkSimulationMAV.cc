@@ -158,6 +158,7 @@ void MAVLinkSimulationMAV::mainloop()
         // The message container to be used for sending
         mavlink_message_t ret;
 
+        #ifdef MAVLINK_ENABLED_PIXHAWK
         // Send which controllers are active
         mavlink_control_status_t control_status;
         control_status.control_att = 1;
@@ -169,6 +170,7 @@ void MAVLinkSimulationMAV::mainloop()
         control_status.vision_fix = 0;     // no fix from vision system
         mavlink_msg_control_status_encode(systemid, MAV_COMP_ID_IMU, &ret, &control_status);
         link->sendMAVLinkMessage(&ret);
+        #endif //MAVLINK_ENABLED_PIXHAWK
 
         // Send actual controller outputs
         // This message just shows the direction
