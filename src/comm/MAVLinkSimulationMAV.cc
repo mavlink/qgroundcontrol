@@ -70,16 +70,16 @@ void MAVLinkSimulationMAV::mainloop()
     // 10 Hz execution
     if (timer10Hz <= 0)
     {
+        double radPer100ms = 0.00006;
+        double altPer100ms = 0.4;
+        double xm = (nextSPX - x);
+        double ym = (nextSPY - y);
+        double zm = (nextSPZ - z);
+
+        float zsign = (zm < 0) ? -1.0f : 1.0f;
+
         if (!firstWP)
         {
-            double radPer100ms = 0.00006;
-            double altPer100ms = 1.0;
-            double xm = (nextSPX - x);
-            double ym = (nextSPY - y);
-            double zm = (nextSPZ - z);
-
-            float zsign = (zm < 0) ? -1.0f : 1.0f;
-
             //float trueyaw = atan2f(xm, ym);
 
             float newYaw = atan2f(xm, ym);
@@ -121,9 +121,9 @@ void MAVLinkSimulationMAV::mainloop()
         pos.alt = z*1000.0;
         pos.lat = y*1E7;
         pos.lon = x*1E7;
-        pos.vx = sin(yaw)*10.0f;
-        pos.vy = cos(yaw)*10.0f;
-        pos.vz = 0;
+        pos.vx = sin(yaw)*10.0f*100.0f;
+        pos.vy = cos(yaw)*10.0f*100.0f;
+        pos.vz = altPer100ms*10.0f*100.0f*zsign*-1.0f;
         mavlink_msg_global_position_int_encode(systemid, MAV_COMP_ID_IMU, &msg, &pos);
         link->sendMAVLinkMessage(&msg);
         planner.handleMessage(msg);
