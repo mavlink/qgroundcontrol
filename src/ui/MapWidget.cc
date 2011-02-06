@@ -442,6 +442,7 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
 void MapWidget::updateWaypoint(int uas, Waypoint* wp)
 {
+    // Update waypoint list and redraw map (last parameter)
     updateWaypoint(uas, wp, true);
 }
 
@@ -454,16 +455,22 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
     // Make sure this is the right UAS
     if (uas == this->mav->getUASID())
     {
-        // TODO The map widget is not yet aware of non-global, non-navigation WPs
+        // Only accept waypoints in global coordinate frame
         if (wp->getFrame() == MAV_FRAME_GLOBAL)
         {
             // We're good, this is a global waypoint
 
+            // Get the index of this waypoint
+            // note the call to getGlobalFrameIndexOf()
+            // as we're only handling global waypoints
             int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameIndexOf(wp);
+            // If not found, return (this should never happen, but helps safety)
             if (wpindex == -1) return;
-            // Check if wp exists yet
+
+            // Check if wp exists yet in map
             if (!(wpIcons.count() > wpindex))
             {
+                // Waypoint is new, a new icon is created
                 QPointF coordinate;
                 coordinate.setX(wp->getX());
                 coordinate.setY(wp->getY());
@@ -471,7 +478,8 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
             }
             else
             {
-                // Waypoint exists, update it
+                // Waypoint exists, update it if we're not
+                // currently dragging it with the mouse
                 if(!waypointIsDrag)
                 {
                     QPointF coordinate;
@@ -479,34 +487,30 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
                     coordinate.setY(wp->getY());
 
                     Point* waypoint;
-                    waypoint = wps.at(wpindex);//wpIndex[str];
+                    waypoint = wps.at(wpindex);
                     if (waypoint)
                     {
                         // First set waypoint coordinate
                         waypoint->setCoordinate(coordinate);
                         // Now update icon position
-                        //mc->layer("Waypoints")->removeGeometry(wpIcons.at(wpindex));
                         wpIcons.at(wpindex)->setCoordinate(coordinate);
+                        // Update pen
                         wpIcons.at(wpindex)->setPen(mavPens.value(uas));
-                        //mc->layer("Waypoints")->addGeometry(wpIcons.at(wpindex));
                         // Then waypoint line coordinate
                         Point* linesegment = NULL;
+                        // If the line segment already exists, just update it
+                        // else create a new one
                         if (waypointPath->points().size() > wpindex)
                         {
                             linesegment = waypointPath->points().at(wpindex);
+                            if (linesegment) linesegment->setCoordinate(coordinate);
                         }
                         else
                         {
                             waypointPath->addPoint(waypoint);
                         }
 
-                        if (linesegment)
-                        {
-                            linesegment->setCoordinate(coordinate);
-                        }
-
-                        //point2Find = dynamic_cast <Point*> (mc->layer("Waypoints")->get_Geometry(wpindex));
-                        //point2Find->setCoordinate(coordinate);
+                        // Update view
                         if (updateView) if (isVisible()) mc->updateRequest(waypoint->boundingBox().toRect());
                     }
                 }
@@ -514,8 +518,10 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
         }
         else
         {
-            // We're screwed, this is not a global waypoint
-            // Delete from list if the list is now too long
+            // Check if the index of this waypoint is larger than the global
+            // waypoint list. This implies that the coordinate frame of this
+            // waypoint was changed and the list containing only global
+            // waypoints was shortened. Thus update the whole list
             if (waypointPath->points().count() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameCount())
             {
                 updateWaypointList(uas);
@@ -663,15 +669,22 @@ void MapWidget::addUAS(UASInterface* uas)
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
 }
 
+/**
+ * Update the whole list of waypoints. This is e.g. necessary if the list order changed.
+ * The UAS manager will emit the appropriate signal whenever updating the list
+ * is necessary.
+ */
 void MapWidget::updateWaypointList(int uas)
 {
     // Get already existing waypoints
     UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
     if (uasInstance)
     {
-        // Get update rect of old content
+        // Get update rect of old content, this is what will be redrawn
+        // in the last step
         QRect updateRect = waypointPath->boundingBox().toRect();
 
+        // Get all waypoints, including non-global waypoints
         QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getWaypointList();
 
         // Clear if necessary
@@ -681,10 +694,13 @@ void MapWidget::updateWaypointList(int uas)
             return;
         }
 
-        // Delete unused waypoints first
+        // Trim internal list to number of global waypoints in the waypoint manager list
         int overSize = waypointPath->points().count() - uasInstance->getWaypointManager()->getGlobalFrameCount();
         if (overSize > 0)
         {
+            // Remove n waypoints at the end of the list
+            // the remaining waypoints will be updated
+            // in the next step
             for (int i = 0; i < overSize; ++i)
             {
                 wps.removeLast();
@@ -697,7 +713,9 @@ void MapWidget::updateWaypointList(int uas)
         // Load all existing waypoints into map view
         foreach (Waypoint* wp, wpList)
         {
-            // Block updates, since we update everything in the next step
+            // Block map draw updates, since we update everything in the next step
+            // but update internal data structures.
+            // Please note that updateWaypoint() ignores non-global waypoints
             updateWaypoint(mav->getUASID(), wp, false);
         }
 
