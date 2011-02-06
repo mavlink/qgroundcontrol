@@ -37,9 +37,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QDebug>
 #include <cmath>
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include <qmath.h>
 #include <limits>
 
 #include "UASManager.h"
@@ -126,6 +124,9 @@ HUD::HUD(int width, int height, QWidget* parent)
     xSpeed(0.0),
     ySpeed(0.0),
     zSpeed(0.0),
+    lastSpeedUpdate(0),
+    totalSpeed(0.0),
+    totalAcc(0.0),
     lat(0.0),
     lon(0.0),
     alt(0.0),
@@ -277,6 +278,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
@@ -299,6 +301,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
@@ -334,12 +337,7 @@ void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double ya
 void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
     Q_UNUSED(uas);
-//    this->voltage = voltage;
-//    this->timeRemaining = seconds;
-//    this->percentRemaining = percent;
-
-    fuelStatus.sprintf("BAT [%02.0f % | %05.2fV] (%02dm:%02ds)", percent, voltage, seconds/60, seconds%60);
-
+    fuelStatus = tr("BAT [%1% | %2V] (%3:%4)").arg(percent, 2, 'f', 0, QChar('0')).arg(voltage, 4, 'f', 1, QChar('0')).arg(seconds/60, 2, 10, QChar('0')).arg(seconds%60, 2, 10, QChar('0'));
     if (percent < 20.0f)
     {
         fuelColor = warningColor;
@@ -390,6 +388,9 @@ void HUD::updateSpeed(UASInterface* uas,double x,double y,double z,quint64 times
     this->xSpeed = x;
     this->ySpeed = y;
     this->zSpeed = z;
+    double newTotalSpeed = sqrt(xSpeed*xSpeed + ySpeed*ySpeed + zSpeed*zSpeed);
+    totalAcc = (newTotalSpeed - totalSpeed) / ((double)(lastSpeedUpdate - timestamp)/1000.0);
+    totalSpeed = newTotalSpeed;
 }
 
 /**
@@ -814,15 +815,26 @@ void HUD::paintHUD()
             drawChangeRateStrip(-51.0f, -50.0f, 15.0f, -1.0f, 1.0f, -zSpeed, &painter);
 
             // CHANGE RATE STRIPS
-            drawChangeRateStrip(49.0f, -50.0f, 15.0f, -1.0f, 1.0f, xSpeed, &painter);
+            drawChangeRateStrip(49.0f, -50.0f, 15.0f, -1.0f, 1.0f, totalAcc, &painter);
 
             // GAUGES
 
             // Left altitude gauge
-            drawChangeIndicatorGauge(-vGaugeSpacing, -15.0f, 10.0f, 2.0f, -zPos, defaultColor, &painter, false);
+            float gaugeAltitude;
+
+            if (this->alt != 0)
+            {
+                gaugeAltitude = alt;
+            }
+            else
+            {
+                gaugeAltitude = -zPos;
+            }
+
+            drawChangeIndicatorGauge(-vGaugeSpacing, -15.0f, 10.0f, 2.0f, gaugeAltitude, defaultColor, &painter, false);
 
             // Right speed gauge
-            drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, xSpeed, defaultColor, &painter, false);
+            drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, totalSpeed, defaultColor, &painter, false);
 
 
             // Waypoint name
