@@ -205,6 +205,7 @@ MAVLinkSimulationWaypointPlanner::MAVLinkSimulationWaypointPlanner(MAVLinkSimula
     silent(false)
 {
     connect(parent, SIGNAL(messageReceived(mavlink_message_t)), this, SLOT(handleMessage(mavlink_message_t)));
+    qDebug() << "PLANNER FOR SYSTEM" << systemid << "INITIALIZED";
 }
 
 
@@ -705,6 +706,10 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                                                 if (verbose) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT: Index out of bounds\n");
                                         }
                                 }
+                        }
+                        else
+                        {
+                            qDebug() << "SYSTEM / COMPONENT ID MISMATCH: target sys:" << wpc.target_system << "this system:" << systemid << "target comp:" << wpc.target_component << "this comp:" << compid;
                         }
                         break;
                 }

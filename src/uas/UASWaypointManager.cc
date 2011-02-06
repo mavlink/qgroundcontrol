@@ -487,9 +487,117 @@ void UASWaypointManager::clearWaypointList()
     }
 }
 
+const QVector<Waypoint *> UASWaypointManager::getGlobalFrameWaypointList()
+{
+    // TODO Keep this global frame list up to date
+    // with complete waypoint list
+    // instead of filtering on each request
+    QVector<Waypoint*> wps;
+    foreach (Waypoint* wp, waypoints)
+    {
+        if (wp->getFrame() == MAV_FRAME_GLOBAL)
+        {
+            wps.append(wp);
+        }
+    }
+    return wps;
+}
+
 int UASWaypointManager::getIndexOf(Waypoint* wp)
 {
     return waypoints.indexOf(wp);
+}
+
+int UASWaypointManager::getGlobalFrameIndexOf(Waypoint* wp)
+{
+    // Search through all waypoints,
+    // counting only those in global frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_GLOBAL)
+        {
+            if (p == wp)
+            {
+                return i;
+            }
+            i++;
+        }
+    }
+
+    return -1;
+}
+
+int UASWaypointManager::getGlobalFrameCount()
+{
+    // Search through all waypoints,
+    // counting only those in global frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_GLOBAL)
+        {
+            i++;
+        }
+    }
+
+    return i;
+}
+
+int UASWaypointManager::getLocalFrameCount()
+{
+    // Search through all waypoints,
+    // counting only those in global frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_GLOBAL)
+        {
+            i++;
+        }
+    }
+
+    return i;
+}
+
+int UASWaypointManager::getLocalFrameIndexOf(Waypoint* wp)
+{
+    // Search through all waypoints,
+    // counting only those in local frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_LOCAL)
+        {
+            if (p == wp)
+            {
+                return i;
+            }
+            i++;
+        }
+    }
+
+    return -1;
+}
+
+int UASWaypointManager::getMissionFrameIndexOf(Waypoint* wp)
+{
+    // Search through all waypoints,
+    // counting only those in mission frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_MISSION)
+        {
+            if (p == wp)
+            {
+                return i;
+            }
+            i++;
+        }
+    }
+
+    return -1;
 }
 
 void UASWaypointManager::readWaypoints()

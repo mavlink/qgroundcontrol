@@ -957,9 +957,9 @@ bool MAVLinkSimulationLink::connect()
 
     start(LowPriority);
     MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1, 47.376, 8.548);
-    MAVLinkSimulationMAV* mav2 = new MAVLinkSimulationMAV(this, 2);
+    //MAVLinkSimulationMAV* mav2 = new MAVLinkSimulationMAV(this, 2);
     Q_UNUSED(mav1);
-    Q_UNUSED(mav2);
+    //Q_UNUSED(mav2);
     //    timer->start(rate);
     return true;
 }
