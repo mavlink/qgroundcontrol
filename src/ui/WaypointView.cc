@@ -251,6 +251,8 @@ void WaypointView::changedAction(int index)
     case MAV_ACTION_RELAY_OFF:
         // Back to global frame
         if (wp->getFrame() == MAV_FRAME_MISSION) changedFrame(0);
+        // Update view
+        updateActionView(actionIndex);
         break;
     case MAV_ACTION_NB:
     default:
