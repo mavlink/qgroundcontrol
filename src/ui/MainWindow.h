@@ -137,6 +137,8 @@ public slots:
 
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
+    /** @brief Let the user select the CSS style sheet */
+    void selectStylesheet();
 
     /** @brief Add a custom tool widget */
     void createCustomWidget();
@@ -411,6 +413,7 @@ protected:
     LogCompressor* comp;
     QString screenFileName;
     QTimer* videoTimer;
+    QString styleFileName;
 
 private:
     Ui::MainWindow ui;

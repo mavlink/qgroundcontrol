@@ -49,7 +49,7 @@ border: 1px solid #111111;
     }
 
  QCheckBox::indicator:checked {
-     background-color: #222222;
+     background-color: #333333;
  }
 
  QCheckBox::indicator:checked:hover {
@@ -92,12 +92,14 @@ border: 1px solid #111111;
   /*   titlebar-close-icon: url(close.png);
      titlebar-normal-icon: url(undock.png);*/
  }
-
  QDockWidget::title {
-     text-align: left; /* align the text to the left */
-     background: lightgray;
-     padding-left: 5px;
- }
+    text-align: left;
+    background: #EEEEEE;
+    color: #111111;
+    padding-left: 5px;
+    height: 10px;
+	border-bottom: 1px solid #222222;
+}
 
  QDockWidget::close-button, QDockWidget::float-button {
      border: 1px solid transparent;
@@ -118,15 +120,6 @@ border: 1px solid #111111;
 QDockWidget::close-button, QDockWidget::float-button {
 	background-color: #181820;
 	color: #EEEEEE;
-}
-
-QDockWidget::title {
-    text-align: left;
-    background: #121214;
-    color: #4A4A4F;
-    padding-left: 5px;
-    height: 10px;
-	border-bottom: 1px solid #222222;
 }
 
 QSeparator {
@@ -184,7 +177,7 @@ QPushButton {
 	border-radius: 5px;
 	padding-left: 10px;
 	padding-right: 10px;
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #C3C2C8, stop: 1 #828288);
 }
 
 QPushButton:checked {
@@ -202,7 +195,7 @@ QToolButton {
 	max-height: 18px;
 	border: 2px solid #4A4A4F;
 	border-radius: 5px;
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #232228, stop: 1 #020208);
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #C3C2C8, stop: 1 #828288);
 }
 
 QToolButton:checked {

@@ -66,7 +66,8 @@ MainWindow::MainWindow(QWidget *parent):
         toolsMenuActions(),
         currentView(VIEW_UNCONNECTED),
         aboutToCloseFlag(false),
-        changingViewsFlag(false)
+        changingViewsFlag(false),
+        styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css")
 {
     if (!settings.contains("CURRENT_VIEW"))
     {
@@ -1163,20 +1164,12 @@ void MainWindow::saveScreen()
     }
 }
 
-/**
- * Reload the style sheet from disk. The function tries to load "qgroundcontrol.css" from the application
- * directory (which by default does not exist). If it fails, it will load the bundled default CSS
- * from memory.
- * To customize the application, just create a qgroundcontrol.css file in the application directory
- */
-void MainWindow::reloadStylesheet()
+void MainWindow::selectStylesheet()
 {
-    QString fileName = QCoreApplication::applicationDirPath() + "/style-indoor.css";
-
     // Let user select style sheet
-    fileName = QFileDialog::getOpenFileName(this, tr("Specify stylesheet"), fileName, tr("CSS Stylesheet (*.css);;"));
+    styleFileName = QFileDialog::getOpenFileName(this, tr("Specify stylesheet"), styleFileName, tr("CSS Stylesheet (*.css);;"));
 
-    if (!fileName.endsWith(".css"))
+    if (!styleFileName.endsWith(".css"))
     {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Information);
@@ -1189,7 +1182,13 @@ void MainWindow::reloadStylesheet()
     }
 
     // Load style sheet
-    QFile* styleSheet = new QFile(fileName);
+    reloadStylesheet();
+}
+
+void MainWindow::reloadStylesheet()
+{
+    // Load style sheet
+    QFile* styleSheet = new QFile(styleFileName);
     if (!styleSheet->exists())
     {
         styleSheet = new QFile(":/images/style-mission.css");
@@ -1205,7 +1204,7 @@ void MainWindow::reloadStylesheet()
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Information);
         msgBox.setText(tr("QGroundControl did lot load a new style"));
-        msgBox.setInformativeText(tr("Stylesheet file %1 was not readable").arg(fileName));
+        msgBox.setInformativeText(tr("Stylesheet file %1 was not readable").arg(styleFileName));
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
         msgBox.exec();
@@ -1315,7 +1314,8 @@ void MainWindow::connectCommonActions()
     connect(ui.actionUnconnectedView, SIGNAL(triggered()), this, SLOT(loadUnconnectedView()));
 
     connect(ui.actionMavlinkView, SIGNAL(triggered()), this, SLOT(loadMAVLinkView()));
-    connect(ui.actionReloadStyle, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
+    connect(ui.actionReloadStylesheet, SIGNAL(triggered()), this, SLOT(reloadStylesheet()));
+    connect(ui.actionSelectStylesheet, SIGNAL(triggered()), this, SLOT(selectStylesheet()));
 
     // Help Actions
     connect(ui.actionOnline_Documentation, SIGNAL(triggered()), this, SLOT(showHelp()));
