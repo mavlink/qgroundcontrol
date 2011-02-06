@@ -182,10 +182,10 @@ void MAVLinkSimulationLink::mainloop()
 
     // Fake system values
 
-    static float fullVoltage = 4.2 * 3;
-    static float emptyVoltage = 3.35 * 3;
+    static float fullVoltage = 4.2f * 3.0f;
+    static float emptyVoltage = 3.35f * 3.0f;
     static float voltage = fullVoltage;
-    static float drainRate = 0.025; // x.xx% of the capacity is linearly drained per second
+    static float drainRate = 0.025f; // x.xx% of the capacity is linearly drained per second
 
     mavlink_attitude_t attitude;
     memset(&attitude, 0, sizeof(mavlink_attitude_t));
@@ -212,7 +212,7 @@ void MAVLinkSimulationLink::mainloop()
     // VOLTAGE
     // The battery is drained constantly
     voltage = voltage - ((fullVoltage - emptyVoltage) * drainRate / rate);
-    if (voltage < 3.550 * 3) voltage = 3.550 * 3;
+    if (voltage < 3.550f * 3.0f) voltage = 3.550f * 3.0f;
 
     static int state = 0;
 
