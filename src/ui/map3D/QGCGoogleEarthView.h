@@ -58,12 +58,10 @@ protected:
 #endif
 
 namespace Ui {
-#ifdef _MSC_VER
     class QGCGoogleEarthView;
-#else
-    class QGCGoogleEarthView;
-#endif
 }
+
+class Waypoint;
 
 class QGCGoogleEarthView : public QWidget
 {
@@ -82,6 +80,10 @@ public slots:
     void setActiveUAS(UASInterface* uas);
     /** @brief Update the global position */
     void updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec);
+    /** @brief Update a single waypoint */
+    void updateWaypoint(int uas, Waypoint* wp);
+    /** @brief Update the waypoint list */
+    void updateWaypointList(int uas);
     /** @brief Show the vehicle trail */
     void showTrail(bool state);
     /** @brief Show the waypoints */
@@ -96,6 +98,8 @@ public slots:
     void setViewRange(float range);
     /** @brief Set camera view range to aircraft in centimeters */
     void setViewRangeScaledInt(int range);
+    /** @brief Reset Google Earth View */
+    void reloadHTML();
 
     /** @brief Initialize Google Earth */
     void initializeGoogleEarth();
