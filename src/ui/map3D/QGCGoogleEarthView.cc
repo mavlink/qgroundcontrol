@@ -23,6 +23,7 @@
 #include "QGC.h"
 #include "ui_QGCGoogleEarthView.h"
 #include "QGCGoogleEarthView.h"
+#include "UASWaypointManager.h"
 
 #define QGCGOOGLEEARTHVIEWSETTINGS QString("GoogleEarthViewSettings_")
 
@@ -82,6 +83,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 #endif
 
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateState()));
+    connect(ui->resetButton, SIGNAL(clicked()), this, SLOT(reloadHTML()));
 }
 
 QGCGoogleEarthView::~QGCGoogleEarthView()
@@ -107,6 +109,15 @@ void QGCGoogleEarthView::setViewRangeScaledInt(int range)
     setViewRange(range/100.0f);
 }
 
+void QGCGoogleEarthView::reloadHTML()
+{
+    hide();
+    webViewInitialized = false;
+    jScriptInitialized = false;
+    gEarthInitialized = false;
+    show();
+}
+
 /**
  * @param range in meters (SI-units)
  */
@@ -129,9 +140,14 @@ void QGCGoogleEarthView::addUAS(UASInterface* uas)
 
     if (trailEnabled) javaScript(QString("showTrail(%1);").arg(uas->getUASID()));
 
-    //javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg("0"));
     // Automatically receive further position updates
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+    // Receive waypoint updates
+    // Connect the waypoint manager / data storage to the UI
+    connect(uas->getWaypointManager(), SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
+    connect(uas->getWaypointManager(), SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+    //connect(this, SIGNAL(waypointCreated(Waypoint*)), uas->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
+    // TODO Update waypoint list on UI changes here
 }
 
 void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
@@ -140,6 +156,70 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
     {
         mav = uas;
         javaScript(QString("setCurrAircraft(%1);").arg(uas->getUASID()));
+    }
+}
+
+/**
+ * This function is called if a a single waypoint is updated and
+ * also if the whole list changes.
+ */
+void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
+{
+    // Only accept waypoints in global coordinate frame
+    if (wp->getFrame() == MAV_FRAME_GLOBAL)
+    {
+        // We're good, this is a global waypoint
+
+        // Get the index of this waypoint
+        // note the call to getGlobalFrameIndexOf()
+        // as we're only handling global waypoints
+        int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameIndexOf(wp);
+        // If not found, return (this should never happen, but helps safety)
+        if (wpindex == -1)
+        {
+            return;
+        }
+        else
+        {
+            javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getY()).arg(wp->getX()).arg(wp->getZ()).arg(wp->getAction()));
+        }
+
+    }
+    else
+    {
+        // Check if the index of this waypoint is larger than the global
+        // waypoint list. This implies that the coordinate frame of this
+        // waypoint was changed and the list containing only global
+        // waypoints was shortened. Thus update the whole list
+        //            if (waypointPath->points().count() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameCount())
+        //            {
+        //                updateWaypointList(uas);
+        //            }
+    }
+}
+
+/**
+ * Update the whole list of waypoints. This is e.g. necessary if the list order changed.
+ * The UAS manager will emit the appropriate signal whenever updating the list
+ * is necessary.
+ */
+void QGCGoogleEarthView::updateWaypointList(int uas)
+{
+    // Get already existing waypoints
+    UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+    if (uasInstance)
+    {
+        // Get all waypoints, including non-global waypoints
+        QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getGlobalFrameWaypointList();
+
+        // Trim internal list to number of global waypoints in the waypoint manager list
+        javaScript(QString("updateWaypointListLength(%1,%2);").arg(uas).arg(wpList.count()));
+
+        // Load all existing waypoints into map view
+        foreach (Waypoint* wp, wpList)
+        {
+            updateWaypoint(uas, wp);
+        }
     }
 }
 
