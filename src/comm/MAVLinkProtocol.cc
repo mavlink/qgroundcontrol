@@ -74,7 +74,8 @@ void MAVLinkProtocol::loadSettings()
     settings.sync();
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
     enableHeartbeats(settings.value("HEARTBEATS_ENABLED", m_heartbeatsEnabled).toBool());
-    enableVersionCheck(settings.value("VERION_CHECK_ENABLED", m_enable_version_check).toBool());
+    enableVersionCheck(settings.value("VERSION_CHECK_ENABLED", m_enable_version_check).toBool());
+    enableMultiplexing(settings.value("MULTIPLEXING_ENABLED", m_multiplexingEnabled).toBool());
 
     // Only set logfile if there is a name present in settings
     if (settings.contains("LOGFILE_NAME") && m_logfile == NULL)
@@ -100,7 +101,8 @@ void MAVLinkProtocol::storeSettings()
     settings.beginGroup("QGC_MAVLINK_PROTOCOL");
     settings.setValue("HEARTBEATS_ENABLED", m_heartbeatsEnabled);
     settings.setValue("LOGGING_ENABLED", m_loggingEnabled);
-    settings.setValue("VERION_CHECK_ENABLED", m_enable_version_check);
+    settings.setValue("VERSION_CHECK_ENABLED", m_enable_version_check);
+    settings.setValue("MULTIPLEXING_ENABLED", m_multiplexingEnabled);
     settings.setValue("GCS_SYSTEM_ID", systemId);
     if (m_logfile)
     {
@@ -298,6 +300,21 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // kind of inefficient, but no issue for a groundstation pc.
                 // It buys as reentrancy for the whole code over all threads
                 emit messageReceived(link, message);
+
+                // Multiplex message if enabled
+                if (m_multiplexingEnabled)
+                {
+                    // Get all links connected to this unit
+                    QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(this);
+
+                    // Emit message on all links that are currently connected
+                    foreach (LinkInterface* currLink, links)
+                    {
+                        // Only forward this message to the other links,
+                        // not the link the message was received on
+                        if (currLink != link) sendMessage(currLink, message);
+                    }
+                }
             }
         }
     }
@@ -388,6 +405,15 @@ void MAVLinkProtocol::enableHeartbeats(bool enabled)
     emit heartbeatChanged(enabled);
 }
 
+void MAVLinkProtocol::enableMultiplexing(bool enabled)
+{
+    bool changed = false;
+    if (enabled != m_multiplexingEnabled) changed = true;
+
+    m_multiplexingEnabled = enabled;
+    if (changed) emit multiplexingChanged(m_multiplexingEnabled);
+}
+
 void MAVLinkProtocol::enableLogging(bool enabled)
 {
     bool changed = false;
@@ -445,21 +471,6 @@ void MAVLinkProtocol::enableVersionCheck(bool enabled)
 {
     m_enable_version_check = enabled;
     emit versionCheckChanged(enabled);
-}
-
-bool MAVLinkProtocol::heartbeatsEnabled(void)
-{
-    return m_heartbeatsEnabled;
-}
-
-bool MAVLinkProtocol::loggingEnabled(void)
-{
-    return m_loggingEnabled;
-}
-
-bool MAVLinkProtocol::versionCheckEnabled(void)
-{
-    return m_enable_version_check;
 }
 
 /**

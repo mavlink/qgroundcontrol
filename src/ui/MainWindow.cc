@@ -406,8 +406,9 @@ void MainWindow::buildPxWidgets()
     acceptList->append("-60,pitchspeed d/s,deg/s,+60,s");
     acceptList->append("-60,yawspeed d/s,deg/s,+60,s");
     acceptList->append("0,airspeed,m/s,30");
-    acceptList->append("0,gpsspeed,m/s,30");
-    acceptList->append("0,truespeed,m/s,30");
+    acceptList->append("0,groundspeed,m/s,30");
+    acceptList->append("0,climbrate,m/s,30");
+    acceptList->append("0,throttle,m/s,100");
 
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
@@ -1440,7 +1441,8 @@ void MainWindow::addLink(LinkInterface *link)
     LinkManager::instance()->addProtocol(link, mavlink);
 
     CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
-    ui.menuNetwork->addAction(commWidget->getAction());
+    QAction* action = commWidget->getAction();
+    ui.menuNetwork->addAction(action);
 
     // Error handling
     connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);

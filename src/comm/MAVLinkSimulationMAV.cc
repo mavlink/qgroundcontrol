@@ -162,6 +162,29 @@ void MAVLinkSimulationMAV::mainloop()
         mavlink_msg_sys_status_encode(systemid, MAV_COMP_ID_IMU, &msg, &status);
         link->sendMAVLinkMessage(&msg);
         timer10Hz = 5;
+
+        // VFR HUD
+        mavlink_vfr_hud_t hud;
+        hud.airspeed = 10;
+        hud.groundspeed = 9;
+        hud.alt = 123;
+        hud.heading = 90;
+        hud.climb = 0.1;
+        hud.throttle = 90;
+        mavlink_msg_vfr_hud_encode(systemid, MAV_COMP_ID_IMU, &msg, &hud);
+        link->sendMAVLinkMessage(&msg);
+
+        // NAV CONTROLLER
+        mavlink_nav_controller_output_t nav;
+        nav.nav_roll = roll;
+        nav.nav_pitch = pitch;
+        nav.nav_bearing = yaw;
+        nav.target_bearing = yaw;
+        nav.wp_dist = 2;
+        nav.alt_error = 0.5;
+        // xtrack
+        mavlink_msg_nav_controller_output_encode(systemid, MAV_COMP_ID_IMU, &msg, &nav);
+        link->sendMAVLinkMessage(&msg);
     }
 
     // 25 Hz execution
