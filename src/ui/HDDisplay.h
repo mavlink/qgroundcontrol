@@ -63,8 +63,10 @@ public:
     ~HDDisplay();
 
 public slots:
-    /** @brief Update a HDD value */
+    /** @brief Update a HDD double value */
     void updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
+    /** @brief Update a HDD integer value */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const int value, const quint64 msec);
     virtual void setActiveUAS(UASInterface* uas);
 
     /** @brief Removes a plot item by the action data */
@@ -137,14 +139,15 @@ protected:
 
     UASInterface* uas;                 ///< The uas currently monitored
     QMap<QString, float> values;       ///< The variables this HUD displays
-    QMap<QString, QString> units;       ///< The units
+    QMap<QString, QString> units;      ///< The units
     QMap<QString, float> valuesDot;    ///< First derivative of the variable
     QMap<QString, float> valuesMean;   ///< Mean since system startup for this variable
     QMap<QString, int> valuesCount;    ///< Number of values received so far
     QMap<QString, quint64> lastUpdate; ///< The last update time for this variable
     QMap<QString, float> minValues;    ///< The minimum value this variable is assumed to have
     QMap<QString, float> maxValues;    ///< The maximum value this variable is assumed to have
-    QMap<QString, bool> symmetric;    ///< Draw the gauge / dial symmetric bool = yes
+    QMap<QString, bool> symmetric;     ///< Draw the gauge / dial symmetric bool = yes
+    QMap<QString, bool> intValues;     ///< Is the gauge value an integer?
     QMap<QString, QPair<float, float> > goodRanges; ///< The range of good values
     QMap<QString, QPair<float, float> > critRanges; ///< The range of critical values
     double scalingFactor;      ///< Factor used to scale all absolute values to screen coordinates

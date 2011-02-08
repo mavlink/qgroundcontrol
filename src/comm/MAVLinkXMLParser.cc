@@ -285,12 +285,13 @@ bool MAVLinkXMLParser::generate()
                                                 if (e2.text().length() > 0)
                                                 {
                                                     fieldComment = " /* " + e2.text() + "*/";
+                                                    fieldComment = fieldComment.replace("\n", " ");
                                                 }
                                                 currEnum += "\t" + fieldName.toUpper() + "=" + fieldValue + "," + fieldComment + "\n";
                                             }
                                             else if(!e2.isNull() && e2.tagName() == "description")
                                             {
-                                                comment = e2.text() + comment;
+                                                comment = e2.text().replace("\n", " ") + comment;
                                             }
                                             f = f.nextSibling();
                                         }
@@ -407,7 +408,7 @@ bool MAVLinkXMLParser::generate()
                                                 {
                                                     // Send arguments are the same for integral types and arrays
                                                     sendArguments += ", " + fieldName;
-                                                    commentLines += commentEntry.arg(fieldName, fieldText);
+                                                    commentLines += commentEntry.arg(fieldName, fieldText.replace("\n", " "));
                                                 }
 
                                                 // MAVLink version field
