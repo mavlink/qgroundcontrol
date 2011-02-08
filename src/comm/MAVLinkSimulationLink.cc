@@ -114,7 +114,6 @@ void MAVLinkSimulationLink::run()
     status.mode = MAV_MODE_UNINIT;
     status.status = MAV_STATE_UNINIT;
     status.vbat = 0;
-    status.motor_block = 1;
     status.packet_drop = 0;
 
 

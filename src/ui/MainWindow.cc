@@ -411,10 +411,18 @@ void MainWindow::buildPxWidgets()
 
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
+    acceptList2->append("900,servo #1,us,2100,s");
+    acceptList2->append("900,servo #2,us,2100,s");
+    acceptList2->append("900,servo #3,us,2100,s");
+    acceptList2->append("900,servo #4,us,2100,s");
+    acceptList2->append("900,servo #5,us,2100,s");
+    acceptList2->append("900,servo #6,us,2100,s");
+    acceptList2->append("900,servo #7,us,2100,s");
+    acceptList2->append("900,servo #8,us,2100,s");
     acceptList2->append("0,abs pressure,hPa,65500");
-    acceptList2->append("-2048,accel. x,raw,2048,s");
-    acceptList2->append("-2048,accel. y,raw,2048,s");
-    acceptList2->append("-2048,accel. z,raw,2048,s");
+    //acceptList2->append("-2048,accel. x,raw,2048,s");
+    //acceptList2->append("-2048,accel. y,raw,2048,s");
+    //acceptList2->append("-2048,accel. z,raw,2048,s");
 
     if (!linechartWidget)
     {
@@ -505,10 +513,10 @@ void MainWindow::buildPxWidgets()
 
     if (!headDown2DockWidget)
     {
-        headDown2DockWidget = new QDockWidget(tr("Payload Status"), this);
-        headDown2DockWidget->setWidget( new HDDisplay(acceptList2, "Payload Status", this) );
+        headDown2DockWidget = new QDockWidget(tr("Actuator Status"), this);
+        headDown2DockWidget->setWidget( new HDDisplay(acceptList2, "Actuator Status", this) );
         headDown2DockWidget->setObjectName("HEAD_DOWN_DISPLAY_2_DOCK_WIDGET");
-        addToToolsMenu (headDown2DockWidget, tr("Payload Status"), SLOT(showToolWidget(bool)), MENU_HDD_2, Qt::RightDockWidgetArea);
+        addToToolsMenu (headDown2DockWidget, tr("Actuator Status"), SLOT(showToolWidget(bool)), MENU_HDD_2, Qt::RightDockWidgetArea);
     }
 
     if (!rcViewDockWidget)

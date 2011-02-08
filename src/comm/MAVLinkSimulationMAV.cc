@@ -64,6 +64,19 @@ void MAVLinkSimulationMAV::mainloop()
         mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK);
         link->sendMAVLinkMessage(&msg);
         planner.handleMessage(msg);
+
+        mavlink_servo_output_raw_t servos;
+        servos.servo1_raw = 1000;
+        servos.servo2_raw = 1250;
+        servos.servo3_raw = 1400;
+        servos.servo4_raw = 1500;
+        servos.servo5_raw = 1800;
+        servos.servo6_raw = 1500;
+        servos.servo7_raw = 1500;
+        servos.servo8_raw = 2000;
+
+        mavlink_msg_servo_output_raw_encode(systemid, MAV_COMP_ID_IMU, &msg, &servos);
+        link->sendMAVLinkMessage(&msg);
         timer1Hz = 50;
     }
 
@@ -140,7 +153,6 @@ void MAVLinkSimulationMAV::mainloop()
         // SYSTEM STATUS
         mavlink_sys_status_t status;
         status.load = 300;
-        status.motor_block = 1;
         status.mode = sys_mode;
         status.nav_mode = nav_mode;
         status.packet_drop = 0;

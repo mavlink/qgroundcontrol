@@ -191,7 +191,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
     {
         QString uasState;
         QString stateDescription;
-        QString patternPath;
 
         // Receive named value message
         receiveMessageNamedValue(message);
@@ -735,7 +734,22 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit positionSetPointsChanged(uasId, p.x, p.y, p.z, p.yaw, QGC::groundTimeUsecs());
             }
             break;
-
+        case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
+            {
+                qDebug() << "Received servo raw message";
+                mavlink_servo_output_raw_t servos;
+                mavlink_msg_servo_output_raw_decode(&message, &servos);
+                quint64 time = getUnixTime(0);
+                emit valueChanged(uasId, "servo #1", "us", servos.servo1_raw, time);
+                emit valueChanged(uasId, "servo #2", "us", servos.servo2_raw, time);
+                emit valueChanged(uasId, "servo #3", "us", servos.servo3_raw, time);
+                emit valueChanged(uasId, "servo #4", "us", servos.servo4_raw, time);
+                emit valueChanged(uasId, "servo #5", "us", servos.servo5_raw, time);
+                emit valueChanged(uasId, "servo #6", "us", servos.servo6_raw, time);
+                emit valueChanged(uasId, "servo #7", "us", servos.servo7_raw, time);
+                emit valueChanged(uasId, "servo #8", "us", servos.servo8_raw, time);
+            }
+            break;
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
@@ -826,7 +840,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (!unknownPackets.contains(message.msgid))
                 {
                     unknownPackets.append(message.msgid);
-                    //GAudioOutput::instance()->say("UNABLE TO DECODE MESSAGE WITH ID " + QString::number(message.msgid) + " FROM SYSTEM " + QString::number(message.sysid));
+                    QString errString = tr("UNABLE TO DECODE MESSAGE WITH ID %1").arg(message.msgid);
+                    GAudioOutput::instance()->say(errString+tr(", please check the communication console for details."));
+                    emit textMessageReceived(uasId, message.compid, 255, errString);
                     std::cout << "Unable to decode message from system " << std::dec << static_cast<int>(message.sysid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
                     //qDebug() << std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.acid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
                 }
