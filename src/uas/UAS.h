@@ -316,8 +316,8 @@ signals:
     void imageStarted(quint64 timestamp);
 
     protected:
-    /** @brief Get the UNIX timestamp in microseconds */
-    quint64 getUnixTime(quint64 time);
+    /** @brief Get the UNIX timestamp in milliseconds */
+    quint64 getUnixTime(quint64 time=0);
 
 protected slots:
     /** @brief Write settings to disk */

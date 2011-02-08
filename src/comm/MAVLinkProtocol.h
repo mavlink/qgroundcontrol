@@ -66,11 +66,13 @@ public:
     /** @brief The auto heartbeat emission rate in Hertz */
     int getHeartbeatRate();
     /** @brief Get heartbeat state */
-    bool heartbeatsEnabled(void);
+    bool heartbeatsEnabled() const { return m_heartbeatsEnabled; }
     /** @brief Get logging state */
-    bool loggingEnabled(void);
+    bool loggingEnabled() const { return m_loggingEnabled; }
     /** @brief Get protocol version check state */
-    bool versionCheckEnabled(void);
+    bool versionCheckEnabled() const { return m_enable_version_check; }
+    /** @brief Get the multiplexing state */
+    bool multiplexingEnabled() const { return m_multiplexingEnabled; }
     /** @brief Get the protocol version */
     int getVersion() { return MAVLINK_VERSION; }
     /** @brief Get the name of the packet log file */
@@ -94,6 +96,9 @@ public slots:
     /** @brief Enable/disable binary packet logging */
     void enableLogging(bool enabled);
 
+    /** @brief Enabled/disable packet multiplexing */
+    void enableMultiplexing(bool enabled);
+
     /** @brief Set log file name */
     void setLogfileName(const QString& filename);
 
@@ -113,6 +118,7 @@ protected:
     int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
     bool m_loggingEnabled;     ///< Enable/disable packet logging
+    bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
     QFile* m_logfile;           ///< Logfile
     bool m_enable_version_check; ///< Enable checking of version match of MAV and QGC
     QMutex receiveMutex;       ///< Mutex to protect receiveBytes function
@@ -131,6 +137,8 @@ signals:
     void heartbeatChanged(bool heartbeats);
     /** @brief Emitted if logging is started / stopped */
     void loggingChanged(bool enabled);
+    /** @brief Emitted if multiplexing is started / stopped */
+    void multiplexingChanged(bool enabled);
     /** @brief Emitted if version check is enabled / disabled */
     void versionCheckChanged(bool enabled);
     /** @brief Emitted if a message from the protocol should reach the user */

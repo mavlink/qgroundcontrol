@@ -64,6 +64,7 @@
      </property>
      <addaction name="actionSelectStylesheet"/>
      <addaction name="actionReloadStylesheet"/>
+     <addaction name="actionSettings"/>
     </widget>
     <addaction name="actionJoystick_Settings"/>
     <addaction name="actionSimulate"/>
@@ -429,6 +430,11 @@
    </property>
    <property name="shortcut">
     <string>Meta+R</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
    </property>
   </action>
  </widget>

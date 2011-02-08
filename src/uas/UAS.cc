@@ -162,13 +162,13 @@ void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
     {
         mavlink_named_value_float_t val;
         mavlink_msg_named_value_float_decode(&message, &val);
-        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), val.value, getUnixTime(0));
+        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), val.value, getUnixTime());
     }
     else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
     {
         mavlink_named_value_int_t val;
         mavlink_msg_named_value_int_decode(&message, &val);
-        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), (float)val.value, getUnixTime(0));
+        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), val.value, getUnixTime());
     }
 }
 
@@ -422,6 +422,37 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 emit attitudeChanged(this, roll, pitch, yaw, time);
                 emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
+            }
+            break;
+            case MAVLINK_MSG_ID_VFR_HUD:
+            {
+                mavlink_vfr_hud_t hud;
+                mavlink_msg_vfr_hud_decode(&message, &hud);
+                quint64 time = getUnixTime();
+                // Display updated values
+                emit valueChanged(uasId, "airspeed", "m/s", hud.airspeed, time);
+                emit valueChanged(uasId, "groundspeed", "m/s", hud.groundspeed, time);
+                emit valueChanged(uasId, "altitude", "m", hud.alt, time);
+                emit valueChanged(uasId, "heading", "deg", hud.heading, time);
+                emit valueChanged(uasId, "climbrate", "m/s", hud.climb, time);
+                emit valueChanged(uasId, "throttle", "m/s", hud.throttle, time);
+                emit thrustChanged(this, hud.throttle/100.0);
+            }
+            break;
+            case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
+            {
+                mavlink_nav_controller_output_t nav;
+                mavlink_msg_nav_controller_output_decode(&message, &nav);
+                quint64 time = getUnixTime();
+                // Update UI
+                emit valueChanged(uasId, "nav roll", "deg", nav.nav_roll, time);
+                emit valueChanged(uasId, "nav pitch", "deg", nav.nav_pitch, time);
+                emit valueChanged(uasId, "nav bearing", "deg", nav.nav_bearing, time);
+                emit valueChanged(uasId, "target bearing", "deg", nav.target_bearing, time);
+                emit valueChanged(uasId, "wp dist", "m", nav.wp_dist, time);
+                emit valueChanged(uasId, "alt err", "m", nav.alt_error, time);
+                emit valueChanged(uasId, "airspeed err", "m/s", nav.alt_error, time);
+                //emit valueChanged(uasId, "xtrack err", "m", nav.xtrack_error, time);
             }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION:
@@ -736,7 +767,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
             {
-                qDebug() << "Received servo raw message";
                 mavlink_servo_output_raw_t servos;
                 mavlink_msg_servo_output_raw_decode(&message, &servos);
                 quint64 time = getUnixTime(0);

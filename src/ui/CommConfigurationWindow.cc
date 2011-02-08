@@ -47,6 +47,7 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSettingsWidget.h"
+#include "QGCUDPLinkConfiguration.h"
 #include "LinkManager.h"
 
 CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolInterface* protocol, QWidget *parent, Qt::WindowFlags flags) : QWidget(parent, flags)
@@ -57,20 +58,24 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     ui.setupUi(this);
 
     // add link types
-    ui.linkType->addItem("Serial",QGC_LINK_SERIAL);
-    ui.linkType->addItem("UDP",QGC_LINK_UDP);
-    ui.linkType->addItem("Simulation",QGC_LINK_SIMULATION);
-    ui.linkType->addItem("Serial Forwarding",QGC_LINK_FORWARDING);
+    ui.linkType->addItem(tr("Serial"), QGC_LINK_SERIAL);
+    ui.linkType->addItem(tr("UDP"), QGC_LINK_UDP);
+    ui.linkType->addItem(tr("Simulation"), QGC_LINK_SIMULATION);
+    ui.linkType->addItem(tr("Opal-RT Link"), QGC_LINK_OPAL);
+    ui.linkType->setEditable(false);
+    //ui.linkType->setEnabled(false);
 
     ui.connectionType->addItem("MAVLink", QGC_PROTOCOL_MAVLINK);
-    ui.connectionType->addItem("GPS NMEA", QGC_PROTOCOL_NMEA);
+    //ui.connectionType->addItem("GPS NMEA", QGC_PROTOCOL_NMEA);
 
     // Create action to open this menu
     // Create configuration action for this link
     // Connect the current UAS
-    action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", link);
+    action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", this);
     LinkManager::instance()->add(link);
     action->setData(LinkManager::instance()->getLinks().indexOf(link));
+    action->setEnabled(true);
+    action->setVisible(true);
     setLinkName(link->getName());
     connect(action, SIGNAL(triggered()), this, SLOT(show()));
 
@@ -110,17 +115,24 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         layout->addWidget(conf);
         ui.linkGroupBox->setLayout(layout);
         ui.linkGroupBox->setTitle(tr("Serial Link"));
+        ui.linkType->setCurrentIndex(0);
         //ui.linkGroupBox->setTitle(link->getName());
         //connect(link, SIGNAL(nameChanged(QString)), ui.linkGroupBox, SLOT(setTitle(QString)));
     }
     UDPLink* udp = dynamic_cast<UDPLink*>(link);
     if (udp != 0)
     {
+        QWidget* conf = new QGCUDPLinkConfiguration(udp, this);
+        QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
+        layout->addWidget(conf);
+        ui.linkGroupBox->setLayout(layout);
         ui.linkGroupBox->setTitle(tr("UDP Link"));
+        ui.linkType->setCurrentIndex(1);
     }
     MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
     if (sim != 0)
     {
+        ui.linkType->setCurrentIndex(2);
         ui.linkGroupBox->setTitle(tr("MAVLink Simulation Link"));
     }
 #ifdef OPAL_RT
@@ -131,6 +143,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
         layout->addWidget(conf);
         ui.linkGroupBox->setLayout(layout);
+        ui.linkType->setCurrentIndex(3);
         ui.linkGroupBox->setTitle(tr("Opal-RT Link"));
     }
 #endif
@@ -201,10 +214,9 @@ void CommConfigurationWindow::setConnection()
 
 void CommConfigurationWindow::setLinkName(QString name)
 {
-    Q_UNUSED(name); // FIXME
-    action->setText(tr("Configure ") + link->getName());
-    action->setStatusTip(tr("Configure ") + link->getName());
-    this->window()->setWindowTitle(tr("Settings for ") + this->link->getName());
+    action->setText(tr("%1 Settings").arg(name));
+    action->setStatusTip(tr("Adjust setting for link %1").arg(name));
+    this->window()->setWindowTitle(tr("Settings for %1").arg(name));
 }
 
 void CommConfigurationWindow::remove()

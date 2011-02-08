@@ -48,6 +48,7 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     m_ui->heartbeatCheckBox->setChecked(protocol->heartbeatsEnabled());
     m_ui->loggingCheckBox->setChecked(protocol->loggingEnabled());
     m_ui->versionCheckBox->setChecked(protocol->versionCheckEnabled());
+    m_ui->multiplexingCheckBox->setChecked(protocol->multiplexingEnabled());
     m_ui->systemIdSpinBox->setValue(protocol->getSystemId());
 
     // Connect actions
@@ -59,6 +60,7 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     connect(m_ui->versionCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableVersionCheck(bool)));
     connect(m_ui->logFileButton, SIGNAL(clicked()), this, SLOT(chooseLogfileName()));
     connect(m_ui->systemIdSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setSystemId(int)));
+    connect(m_ui->multiplexingCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableMultiplexing(bool)));
 
     // Update values
     m_ui->versionLabel->setText(tr("MAVLINK_VERSION: %1").arg(protocol->getVersion()));
@@ -73,6 +75,15 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     m_ui->logFileLabel->setVisible(protocol->loggingEnabled());
     connect(protocol, SIGNAL(loggingChanged(bool)), m_ui->logFileButton, SLOT(setVisible(bool)));
     m_ui->logFileButton->setVisible(protocol->loggingEnabled());
+    connect(protocol, SIGNAL(multiplexingChanged(bool)), m_ui->multiplexingFilterCheckBox, SLOT(setVisible(bool)));
+    m_ui->multiplexingFilterCheckBox->setVisible(protocol->multiplexingEnabled());
+    connect(protocol, SIGNAL(multiplexingChanged(bool)), m_ui->multiplexingFilterLineEdit, SLOT(setVisible(bool)));
+    m_ui->multiplexingFilterLineEdit->setVisible(protocol->multiplexingEnabled());
+
+    // TODO implement filtering
+    // and then remove these two lines
+    m_ui->multiplexingFilterCheckBox->setVisible(false);
+    m_ui->multiplexingFilterLineEdit->setVisible(false);
 
     // Update settings
     m_ui->loggingCheckBox->setChecked(protocol->loggingEnabled());
