@@ -29,6 +29,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->setupUi(this);
 
     this->wp = wp;
+    connect(wp, SIGNAL(destroyed(QObject*)), this, SLOT(deleted(QObject*)));
 
     // CUSTOM COMMAND WIDGET
     customCommand->setupUi(m_ui->customActionWidget);
@@ -320,6 +321,14 @@ void WaypointView::updateFrameView(int frame)
     }
 }
 
+void WaypointView::deleted(QObject* waypoint)
+{
+    if (waypoint == this->wp)
+    {
+        deleteLater();
+    }
+}
+
 void WaypointView::changedFrame(int index)
 {
     // set waypoint action
@@ -346,6 +355,13 @@ void WaypointView::changedCurrent(int state)
 
 void WaypointView::updateValues()
 {
+    // Check if we just lost the wp, delete the widget
+    // accordingly
+    if (!wp)
+    {
+        deleteLater();
+        return;
+    }
     // Deactivate signals from the WP
     wp->blockSignals(true);
     // update frame
