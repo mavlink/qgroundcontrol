@@ -129,8 +129,8 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(uas->getWaypointManager(), SIGNAL(waypointListChanged(void)),                  this, SLOT(waypointListChanged(void)));
         connect(uas->getWaypointManager(), SIGNAL(waypointChanged(int,Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointChanged(quint16)));
-        connect(uas->getWaypointManager(),SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
-        connect(uas->getWaypointManager(),SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
+        //connect(uas->getWaypointManager(),SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
+        //connect(uas->getWaypointManager(),SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
 
     }
 }
@@ -148,11 +148,9 @@ void WaypointList::loadWaypoints()
 {
     if (uas)
     {
-
-
         QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
         uas->getWaypointManager()->loadWaypoints(fileName);
-     }
+    }
 }
 
 void WaypointList::transmit()
