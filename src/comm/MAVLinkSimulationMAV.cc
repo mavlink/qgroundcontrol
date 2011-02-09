@@ -169,7 +169,7 @@ void MAVLinkSimulationMAV::mainloop()
         hud.groundspeed = 9;
         hud.alt = 123;
         hud.heading = 90;
-        hud.climb = 0.1;
+        hud.climb = 0.1f;
         hud.throttle = 90;
         mavlink_msg_vfr_hud_encode(systemid, MAV_COMP_ID_IMU, &msg, &hud);
         link->sendMAVLinkMessage(&msg);
