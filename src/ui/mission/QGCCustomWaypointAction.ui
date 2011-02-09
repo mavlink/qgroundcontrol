@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>791</width>
+    <width>1105</width>
     <height>25</height>
    </rect>
   </property>
@@ -102,7 +102,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QDoubleSpinBox" name="doubleSpinBox">
+    <widget class="QDoubleSpinBox" name="param6SpinBox">
      <property name="prefix">
       <string>Z/P6 </string>
      </property>

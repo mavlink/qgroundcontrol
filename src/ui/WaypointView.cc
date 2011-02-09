@@ -103,6 +103,8 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(customCommand->param2SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam2(double)));
     connect(customCommand->param3SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam3(double)));
     connect(customCommand->param4SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam4(double)));
+    connect(customCommand->param5SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam5(double)));
+    connect(customCommand->param6SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam6(double)));
 
     // MISSION ELEMENT WIDGET
     // TODO
@@ -126,7 +128,7 @@ void WaypointView::moveDown()
 void WaypointView::remove()
 {
     emit removeWaypoint(wp);
-    delete this;
+    deleteLater();
 }
 
 void WaypointView::changedAutoContinue(int state)
@@ -473,8 +475,6 @@ void WaypointView::updateValues()
 
     // UPDATE CUSTOM ACTION WIDGET
 
-    qDebug() << "UPDATING CUSTOM ACTION WIDGET";
-
     if (customCommand->commandSpinBox->value() != wp->getAction())
     {
         customCommand->commandSpinBox->setValue(wp->getAction());
@@ -499,6 +499,16 @@ void WaypointView::updateValues()
     if (customCommand->param4SpinBox->value() != wp->getParam4())
     {
         customCommand->param4SpinBox->setValue(wp->getParam4());
+    }
+    // Param 5
+    if (customCommand->param5SpinBox->value() != wp->getParam5())
+    {
+        customCommand->param5SpinBox->setValue(wp->getParam5());
+    }
+    // Param 6
+    if (customCommand->param6SpinBox->value() != wp->getParam6())
+    {
+        customCommand->param6SpinBox->setValue(wp->getParam6());
     }
 
     wp->blockSignals(false);

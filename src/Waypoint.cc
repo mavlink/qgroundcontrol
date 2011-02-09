@@ -206,18 +206,36 @@ void Waypoint::setParam2(double param2)
 
 void Waypoint::setParam3(double param3)
 {
-    if (this->x != param3)
+    if (this->orbit != param3)
     {
-        this->x = param3;
+        this->orbit = param3;
         emit changed(this);
     }
 }
 
 void Waypoint::setParam4(double param4)
 {
-    if (this->y != param4)
+    if (this->x != param4)
     {
-        this->y = param4;
+        this->x = param4;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setParam5(double param5)
+{
+    if (this->y != param5)
+    {
+        this->y = param5;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setParam6(double param6)
+{
+    if (this->z != param6)
+    {
+        this->z = param6;
         emit changed(this);
     }
 }

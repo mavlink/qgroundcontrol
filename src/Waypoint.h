@@ -60,8 +60,10 @@ public:
     double getHoldTime() const { return param2; }
     double getParam1() const { return param1; }
     double getParam2() const { return param2; }
-    double getParam3() const { return x; }
-    double getParam4() const { return y; }
+    double getParam3() const { return orbit; }
+    double getParam4() const { return x; }
+    double getParam5() const { return y; }
+    double getParam6() const { return z; }
     int getTurns() const { return param1; }
     MAV_FRAME getFrame() const { return frame; }
     MAV_ACTION getAction() const { return action; }
@@ -105,6 +107,8 @@ public slots:
     void setParam2(double param2);
     void setParam3(double param3);
     void setParam4(double param4);
+    void setParam5(double param5);
+    void setParam6(double param6);
     void setAcceptanceRadius(double radius);
     void setHoldTime(int holdTime);
     /** @brief Number of turns for loiter waypoints */
