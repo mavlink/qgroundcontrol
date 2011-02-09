@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,10,10,10,10,10,0">
    <property name="spacing">
     <number>5</number>
    </property>
@@ -23,7 +23,7 @@
    <item>
     <widget class="QSpinBox" name="commandSpinBox">
      <property name="prefix">
-      <string>CMD </string>
+      <string>CMD/ACT </string>
      </property>
      <property name="minimum">
       <number>0</number>
@@ -65,7 +65,7 @@
    <item>
     <widget class="QDoubleSpinBox" name="param3SpinBox">
      <property name="prefix">
-      <string>P3 </string>
+      <string>Orbit/P3 </string>
      </property>
      <property name="minimum">
       <double>-2147483647.000000000000000</double>
@@ -78,7 +78,33 @@
    <item>
     <widget class="QDoubleSpinBox" name="param4SpinBox">
      <property name="prefix">
-      <string>P4 </string>
+      <string>X/P4 </string>
+     </property>
+     <property name="minimum">
+      <double>-2147483647.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>2147483647.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="param5SpinBox">
+     <property name="prefix">
+      <string>Y/P5 </string>
+     </property>
+     <property name="minimum">
+      <double>-2147483647.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>2147483647.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="doubleSpinBox">
+     <property name="prefix">
+      <string>Z/P6 </string>
      </property>
      <property name="minimum">
       <double>-2147483647.000000000000000</double>
