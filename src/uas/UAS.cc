@@ -441,8 +441,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "throttle", "m/s", hud.throttle, time);
                 emit thrustChanged(this, hud.throttle/100.0);
                 emit altitudeChanged(uasId, hud.alt);
-                yaw = (hud.heading-180.0f/360.0f)*M_PI;
-                emit attitudeChanged(this, roll, pitch, yaw, getUnixTime());
+                //yaw = (hud.heading-180.0f/360.0f)*M_PI;
+                //emit attitudeChanged(this, roll, pitch, yaw, getUnixTime());
                 emit speedChanged(this, hud.airspeed, 0.0f, hud.climb, getUnixTime());
             }
             break;
