@@ -39,14 +39,14 @@ quint64 groundTimeUsecs()
 
 float limitAngleToPMPIf(float angle)
 {
-    while (angle > (M_PI+FLT_EPSILON))
+    while (angle > ((float)M_PI+FLT_EPSILON))
     {
-        angle -= 2 * M_PI;
+        angle -= 2.0f * (float)M_PI;
     }
 
-    while (angle <= -(M_PI+FLT_EPSILON))
+    while (angle <= -((float)M_PI+FLT_EPSILON))
     {
-        angle += 2 * M_PI;
+        angle += 2.0f * (float)M_PI;
     }
 
     return angle;

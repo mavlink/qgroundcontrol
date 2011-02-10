@@ -49,30 +49,30 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         HDDisplay(NULL, "HSI", parent),
         gpsSatellites(),
         satellitesUsed(0),
-        attXSet(0),
-        attYSet(0),
-        attYawSet(0),
-        altitudeSet(1.0),
-        posXSet(0),
-        posYSet(0),
-        posZSet(0),
+        attXSet(0.0f),
+        attYSet(0.0f),
+        attYawSet(0.0f),
+        altitudeSet(1.0f),
+        posXSet(0.0f),
+        posYSet(0.0f),
+        posZSet(0.0f),
         attXSaturation(0.5f),
         attYSaturation(0.5f),
         attYawSaturation(0.5f),
-        posXSaturation(0.05),
-        posYSaturation(0.05),
-        altitudeSaturation(1.0),
-        lat(0),
-        lon(0),
-        alt(0),
+        posXSaturation(0.05f),
+        posYSaturation(0.05f),
+        altitudeSaturation(1.0f),
+        lat(0.0f),
+        lon(0.0f),
+        alt(0.0f),
         globalAvailable(0),
-        x(0),
-        y(0),
-        z(0),
-        vx(0),
-        vy(0),
-        vz(0),
-        speed(0),
+        x(0.0f),
+        y(0.0f),
+        z(0.0f),
+        vx(0.0f),
+        vy(0.0f),
+        vz(0.0f),
+        speed(0.0f),
         localAvailable(0),
         roll(0.0f),
         pitch(0.0f),
@@ -85,7 +85,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
         uiYSetCoordinate(0.0f),
         uiZSetCoordinate(0.0f),
         uiYawSet(0.0f),
-        metricWidth(4.0f),
+        metricWidth(4.0),
         positionLock(false),
         attControlEnabled(false),
         xyControlEnabled(false),
@@ -105,8 +105,8 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     columns = 1;
     this->setAutoFillBackground(true);
 
-    vwidth = 80;
-    vheight = 80;
+    vwidth = 80.0f;
+    vheight = 80.0f;
 
     xCenterPos = vwidth/2.0f;
     yCenterPos = vheight/2.0f + topMargin - bottomMargin;
@@ -797,7 +797,7 @@ void HSIDisplay::drawSetpointXY(float x, float y, float yaw, const QColor &color
         // Scale from metric to screen reference coordinates
         QPointF p = metricBodyToRef(in);
         drawCircle(p.x(), p.y(), radius, 0.4f, color, &painter);
-        radius *= 0.8;
+        radius *= 0.8f;
         drawLine(p.x(), p.y(), p.x()+sin(yaw) * radius, p.y()-cos(yaw) * radius, refLineWidthToPen(0.4f), color, &painter);
         painter.setBrush(color);
         drawCircle(p.x(), p.y(), radius * 0.1f, 0.1f, color, &painter);
@@ -984,7 +984,7 @@ void HSIDisplay::drawPositionDirection(float xRef, float yRef, float radius, con
         const float minWidth = maxWidth * 0.3f;
 
         float angle = atan2(posXSet, -posYSet);
-        angle -= M_PI/2.0f;
+        angle -= (float)M_PI/2.0f;
 
         QPolygonF p(6);
 
@@ -1022,7 +1022,7 @@ void HSIDisplay::drawAttitudeDirection(float xRef, float yRef, float radius, con
         const float minWidth = maxWidth * 0.3f;
 
         float angle = atan2(attXSet, attYSet);
-        angle -= M_PI/2.0f;
+        angle -= (float)M_PI/2.0f;
 
         radius *= sqrt(pow(attXSet, 2) + pow(attYSet, 2)) / sqrt(attXSaturation + attYSaturation);
 
