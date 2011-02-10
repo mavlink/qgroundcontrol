@@ -43,7 +43,6 @@ Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _yaw, bo
     autocontinue(_autocontinue),
     current(_current),
     orbit(0),
-    orbitDirection(0),
     param1(_orbit),
     param2(_holdTime),
     name(QString("WP%1").arg(id, 2, 10, QChar('0')))
@@ -57,32 +56,35 @@ Waypoint::~Waypoint()
 
 void Waypoint::save(QTextStream &saveStream)
 {
-    QString position("%1\t%2\t%3\t%4");
+    QString position("%1\t%2\t%3");
     position = position.arg(x, 0, 'g', 18);
     position = position.arg(y, 0, 'g', 18);
     position = position.arg(z, 0, 'g', 18);
-    position = position.arg(yaw, 0, 'g', 8);
-    saveStream << this->getId() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << orbit << "\t" << orbitDirection << "\t" << param1 << "\t" << param2 << "\t" << this->getCurrent() << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n";
+    QString parameters("%1\t%2\t%3\t%4");
+    parameters = parameters.arg(param1, 0, 'g', 18);
+    parameters = parameters.arg(param2, 0, 'g', 18);
+    parameters = parameters.arg(orbit, 0, 'g', 18);
+    parameters = parameters.arg(yaw, 0, 'g', 18);
+    saveStream << this->getId() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << this->getCurrent() << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n";
 }
 
 bool Waypoint::load(QTextStream &loadStream)
 {
     const QStringList &wpParams = loadStream.readLine().split("\t");
-    if (wpParams.size() == 13)
+    if (wpParams.size() == 12)
     {
         this->id = wpParams[0].toInt();
         this->frame = (MAV_FRAME) wpParams[1].toInt();
         this->action = (MAV_COMMAND) wpParams[2].toInt();
-        this->orbit = wpParams[3].toDouble();
-        this->orbitDirection = wpParams[4].toInt();
-        this->param1 = wpParams[5].toDouble();
-        this->param2 = wpParams[6].toDouble();
+        this->param1 = wpParams[3].toDouble();
+        this->param2 = wpParams[4].toDouble();
+        this->orbit = wpParams[5].toDouble();
+        this->yaw = wpParams[6].toDouble();
         this->current = (wpParams[7].toInt() == 1 ? true : false);
         this->x = wpParams[8].toDouble();
         this->y = wpParams[9].toDouble();
         this->z = wpParams[10].toDouble();
-        this->yaw = wpParams[11].toDouble();
-        this->autocontinue = (wpParams[12].toInt() == 1 ? true : false);
+        this->autocontinue = (wpParams[11].toInt() == 1 ? true : false);
         return true;
     }
     return false;
@@ -215,18 +217,18 @@ void Waypoint::setParam3(double param3)
 
 void Waypoint::setParam4(double param4)
 {
-    if (this->x != param4)
+    if (this->yaw != param4)
     {
-        this->x = param4;
+        this->yaw = param4;
         emit changed(this);
     }
 }
 
 void Waypoint::setParam5(double param5)
 {
-    if (this->y != param5)
+    if (this->x != param5)
     {
-        this->y = param5;
+        this->x = param5;
         emit changed(this);
     }
 }
@@ -236,6 +238,15 @@ void Waypoint::setParam6(double param6)
     if (this->z != param6)
     {
         this->z = param6;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setParam7(double param7)
+{
+    if (this->z != param7)
+    {
+        this->z = param7;
         emit changed(this);
     }
 }
@@ -266,48 +277,3 @@ void Waypoint::setTurns(int turns)
         emit changed(this);
     }
 }
-
-//void Waypoint::setX(double x)
-//{
-//    if (this->x != static_cast<double>(x))
-//    {
-//        this->x = x;
-//        emit changed(this);
-//    }
-//}
-
-//void Waypoint::setY(double y)
-//{
-//    if (this->y != static_cast<double>(y))
-//    {
-//        this->y = y;
-//        emit changed(this);
-//    }
-//}
-
-//void Waypoint::setZ(double z)
-//{
-//    if (this->z != static_cast<double>(z))
-//    {
-//        this->z = z;
-//        emit changed(this);
-//    }
-//}
-
-//void Waypoint::setYaw(double yaw)
-//{
-//    if (this->yaw != static_cast<double>(yaw))
-//    {
-//        this->yaw = yaw;
-//        emit changed(this);
-//    }
-//}
-
-//void Waypoint::setOrbit(double orbit)
-//{
-//    if (this->orbit != static_cast<double>(orbit))
-//    {
-//        this->orbit = orbit;
-//        emit changed(this);
-//    }
-//}
