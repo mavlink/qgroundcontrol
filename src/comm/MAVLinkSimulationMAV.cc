@@ -143,9 +143,13 @@ void MAVLinkSimulationMAV::mainloop()
 
         // ATTITUDE
         mavlink_attitude_t attitude;
+        attitude.usec = 0;
         attitude.roll = 0.0f;
         attitude.pitch = 0.0f;
         attitude.yaw = yaw;
+        attitude.rollspeed = 0.0f;
+        attitude.pitchspeed = 0.0f;
+        attitude.yawspeed = 0.0f;
 
         mavlink_msg_attitude_encode(systemid, MAV_COMP_ID_IMU, &msg, &attitude);
         link->sendMAVLinkMessage(&msg);
@@ -158,7 +162,7 @@ void MAVLinkSimulationMAV::mainloop()
         status.packet_drop = 0;
         status.vbat = 10500;
         status.status = sys_state;
-
+        status.battery_remaining = 900;
         mavlink_msg_sys_status_encode(systemid, MAV_COMP_ID_IMU, &msg, &status);
         link->sendMAVLinkMessage(&msg);
         timer10Hz = 5;
@@ -183,7 +187,18 @@ void MAVLinkSimulationMAV::mainloop()
         nav.wp_dist = 2.0f;
         nav.alt_error = 0.5f;
         nav.xtrack_error = 0.2f;
+        nav.aspd_error = 0.0f;
         mavlink_msg_nav_controller_output_encode(systemid, MAV_COMP_ID_IMU, &msg, &nav);
+        link->sendMAVLinkMessage(&msg);
+
+        // RAW PRESSURE
+        mavlink_raw_pressure_t pressure;
+        pressure.press_abs = 1000;
+        pressure.press_diff1 = 2000;
+        pressure.press_diff2 = 5000;
+        pressure.temperature = 18150; // 18.15 deg Celsius
+        pressure.usec = 0; // Works also with zero timestamp
+        mavlink_msg_raw_pressure_encode(systemid, MAV_COMP_ID_IMU, &msg, &pressure);
         link->sendMAVLinkMessage(&msg);
     }
 
@@ -203,6 +218,7 @@ void MAVLinkSimulationMAV::mainloop()
         control_status.gps_fix = 2;        // 2D GPS fix
         control_status.position_fix = 3;   // 3D fix from GPS + barometric pressure
         control_status.vision_fix = 0;     // no fix from vision system
+        control_status.ahrs_health = 230;
         mavlink_msg_control_status_encode(systemid, MAV_COMP_ID_IMU, &ret, &control_status);
         link->sendMAVLinkMessage(&ret);
         #endif //MAVLINK_ENABLED_PIXHAWK
