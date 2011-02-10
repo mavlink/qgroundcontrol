@@ -65,7 +65,7 @@ macx {
                 }
     } else {
         # x64 Mac OS X Snow Leopard 10.6 and later
-        CONFIG += x86_64 x86 cocoa
+        CONFIG += x86_64 x86 cocoa phonon
         #CONFIG -= x86 # phonon
         #message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
                 debug {

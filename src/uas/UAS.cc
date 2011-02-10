@@ -192,9 +192,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         QString uasState;
         QString stateDescription;
 
-        // Receive named value message
-        receiveMessageNamedValue(message);
-
         switch (message.msgid)
         {
         case MAVLINK_MSG_ID_HEARTBEAT:
@@ -224,6 +221,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
 
             break;
+        case MAVLINK_MSG_ID_NAMED_VALUE_FLOAT:
+        case MAVLINK_MSG_ID_NAMED_VALUE_INT:
+            // Receive named value message
+            receiveMessageNamedValue(message);
+            break;
         case MAVLINK_MSG_ID_BOOT:
             getStatusForCode((int)MAV_STATE_BOOT, uasState, stateDescription);
             emit statusChanged(this, uasState, stateDescription);
@@ -237,7 +239,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // FIXME
                 //qDebug() << "SYSTEM NAV MODE:" << state.nav_mode;
 
-                QString audiostring = "System " + QString::number(this->getUASID());
+                QString audiostring = "System " + getUASName();
                 QString stateAudio = "";
                 QString modeAudio = "";
                 bool statechanged = false;
@@ -277,7 +279,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                         mode = "GUIDED MODE";
                         break;
                     case (uint8_t)MAV_MODE_READY:
-                        mode = "READY";
+                        mode = "READY MODE";
                         break;
                     case (uint8_t)MAV_MODE_TEST1:
                         mode = "TEST1 MODE";
@@ -748,6 +750,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_waypoint_reached_t wpr;
                 mavlink_msg_waypoint_reached_decode(&message, &wpr);
                 waypointManager.handleWaypointReached(message.sysid, message.compid, &wpr);
+                GAudioOutput::instance()->say(QString("System %1 reached waypoint %2").arg(getUASName()).arg(wpr.seq));
             }
             break;
 
@@ -866,12 +869,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
 #endif
+            // Messages to ignore
+            case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET:
+            break;
         default:
             {
                 if (!unknownPackets.contains(message.msgid))
                 {
                     unknownPackets.append(message.msgid);
-                    QString errString = tr("UNABLE TO DECODE MESSAGE WITH ID %1").arg(message.msgid);
+                    QString errString = tr("UNABLE TO DECODE MESSAGE NUMBER %1").arg(message.msgid);
                     GAudioOutput::instance()->say(errString+tr(", please check the communication console for details."));
                     emit textMessageReceived(uasId, message.compid, 255, errString);
                     std::cout << "Unable to decode message from system " << std::dec << static_cast<int>(message.sysid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
@@ -1928,7 +1934,7 @@ void UAS::startLowBattAlarm()
 {
     if (!lowBattAlarm)
     {
-        GAudioOutput::instance()->alert("LOW BATTERY");
+        GAudioOutput::instance()->alert(tr("SYSTEM %1 HAS LOW BATTERY").arg(getUASName()));
         QTimer::singleShot(2000, GAudioOutput::instance(), SLOT(startEmergency()));
         lowBattAlarm = true;
     }

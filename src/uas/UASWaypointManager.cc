@@ -138,8 +138,8 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id)
         {
-            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->yaw << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_ACTION) wp->action;
-            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_ACTION) wp->action);
+            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_ACTION) wp->action;
+            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_ACTION) wp->action);
             addWaypoint(lwp, false);
 
             //get next waypoint
@@ -663,8 +663,7 @@ void UASWaypointManager::writeWaypoints()
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent() & noCurrent;   //make sure only one current waypoint is selected, the first selected will be chosen
-                cur_d->orbit = cur_s->getLoiterOrbit();
-                cur_d->orbit_direction = 0;
+                cur_d->param3 = cur_s->getLoiterOrbit();
                 cur_d->param1 = cur_s->getParam1();
                 cur_d->param2 = cur_s->getParam2();
                 cur_d->frame = cur_s->getFrame();
@@ -673,7 +672,7 @@ void UASWaypointManager::writeWaypoints()
                 cur_d->x = cur_s->getX();
                 cur_d->y = cur_s->getY();
                 cur_d->z = cur_s->getZ();
-                cur_d->yaw = cur_s->getYaw();
+                cur_d->param4 = cur_s->getYaw();
 
                 if (cur_s->getCurrent() && noCurrent)
                     noCurrent = false;
