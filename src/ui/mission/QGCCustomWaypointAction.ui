@@ -23,7 +23,7 @@
    <item>
     <widget class="QSpinBox" name="commandSpinBox">
      <property name="prefix">
-      <string>CMD/ACT </string>
+      <string>CMD </string>
      </property>
      <property name="minimum">
       <number>0</number>
@@ -65,7 +65,7 @@
    <item>
     <widget class="QDoubleSpinBox" name="param3SpinBox">
      <property name="prefix">
-      <string>Orbit/P3 </string>
+      <string>P3 </string>
      </property>
      <property name="minimum">
       <double>-2147483647.000000000000000</double>
@@ -78,7 +78,7 @@
    <item>
     <widget class="QDoubleSpinBox" name="param4SpinBox">
      <property name="prefix">
-      <string>X/P4 </string>
+      <string>P4 </string>
      </property>
      <property name="minimum">
       <double>-2147483647.000000000000000</double>
@@ -91,7 +91,7 @@
    <item>
     <widget class="QDoubleSpinBox" name="param5SpinBox">
      <property name="prefix">
-      <string>Y/P5 </string>
+      <string>P5 </string>
      </property>
      <property name="minimum">
       <double>-2147483647.000000000000000</double>
@@ -104,7 +104,7 @@
    <item>
     <widget class="QDoubleSpinBox" name="param6SpinBox">
      <property name="prefix">
-      <string>Z/P6 </string>
+      <string>P6 </string>
      </property>
      <property name="minimum">
       <double>-2147483647.000000000000000</double>
