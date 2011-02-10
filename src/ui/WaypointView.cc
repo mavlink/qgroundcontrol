@@ -105,9 +105,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(customCommand->param4SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam4(double)));
     connect(customCommand->param5SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam5(double)));
     connect(customCommand->param6SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam6(double)));
-
-    // MISSION ELEMENT WIDGET
-    // TODO
+    connect(customCommand->param7SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam7(double)));
 }
 
 void WaypointView::setYaw(int yawDegree)
@@ -506,6 +504,11 @@ void WaypointView::updateValues()
     if (customCommand->param6SpinBox->value() != wp->getParam6())
     {
         customCommand->param6SpinBox->setValue(wp->getParam6());
+    }
+    // Param 7
+    if (customCommand->param7SpinBox->value() != wp->getParam7())
+    {
+        customCommand->param7SpinBox->setValue(wp->getParam7());
     }
 
     wp->blockSignals(false);

@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,10,10,10,10,10,0">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,10,10,10,10,10,0,0">
    <property name="spacing">
     <number>5</number>
    </property>
@@ -105,6 +105,19 @@
     <widget class="QDoubleSpinBox" name="param6SpinBox">
      <property name="prefix">
       <string>P6 </string>
+     </property>
+     <property name="minimum">
+      <double>-2147483647.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>2147483647.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="param7SpinBox">
+     <property name="prefix">
+      <string>P7 </string>
      </property>
      <property name="minimum">
       <double>-2147483647.000000000000000</double>
