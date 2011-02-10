@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>237</width>
+    <width>307</width>
     <height>221</height>
    </rect>
   </property>
@@ -134,7 +134,7 @@
       <item row="1" column="1">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Extended</string>
+         <string>Ext. Status</string>
         </property>
        </widget>
       </item>
@@ -148,7 +148,7 @@
       <item row="5" column="1">
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>Controller</string>
+         <string>Raw Contr.</string>
         </property>
        </widget>
       </item>
@@ -183,7 +183,7 @@
       <item row="0" column="3">
        <widget class="QLabel" name="label_5">
         <property name="text">
-         <string>RC Values</string>
+         <string>RC Chan.</string>
         </property>
        </widget>
       </item>

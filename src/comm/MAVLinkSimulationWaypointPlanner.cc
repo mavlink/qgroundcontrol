@@ -284,7 +284,7 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
                         PControlSetPoint.x = cur->x;
                         PControlSetPoint.y = cur->y;
                         PControlSetPoint.z = cur->z;
-                        PControlSetPoint.yaw = cur->yaw;
+                        PControlSetPoint.yaw = cur->param4;
 
                         mavlink_msg_local_position_setpoint_set_encode(systemid, compid, &msg, &PControlSetPoint);
                         link->sendMAVLinkMessage(&msg);
@@ -299,7 +299,7 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
                         PControlSetPoint.x = cur->x;
                         PControlSetPoint.y = cur->y;
                         PControlSetPoint.z = cur->z;
-                        PControlSetPoint.yaw = cur->yaw;
+                        PControlSetPoint.yaw = cur->param4;
 
                         mavlink_msg_local_position_setpoint_set_encode(systemid, compid, &msg, &PControlSetPoint);
                         link->sendMAVLinkMessage(&msg);
@@ -337,7 +337,7 @@ void MAVLinkSimulationWaypointPlanner::send_waypoint(uint8_t target_systemid, ui
                 wp->target_system = target_systemid;
                 wp->target_component = target_compid;
 
-                if (verbose) qDebug("Sent waypoint %u (%u / %u / %u / %u / %u / %f / %u / %f / %f / %u / %f / %f / %f / %f / %u)\n", wp->seq, wp->target_system, wp->target_component, wp->seq, wp->frame, wp->action, wp->orbit, wp->orbit_direction, wp->param1, wp->param2, wp->current, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue);
+                if (verbose) qDebug("Sent waypoint %u (%u / %u / %u / %u / %u / %f / %f / %f / %u / %f / %f / %f / %f / %u)\n", wp->seq, wp->target_system, wp->target_component, wp->seq, wp->frame, wp->action, wp->param3, wp->param1, wp->param2, wp->current, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue);
 
                 mavlink_msg_waypoint_encode(systemid, compid, &msg, wp);
                 link->sendMAVLinkMessage(&msg);
@@ -502,19 +502,19 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                                         //compare current yaw
                                         if (att.yaw - yaw_tolerance >= 0.0f && att.yaw + yaw_tolerance < 2.f*M_PI)
                                         {
-                                                if (att.yaw - yaw_tolerance <= wp->yaw && att.yaw + yaw_tolerance >= wp->yaw)
+                                                if (att.yaw - yaw_tolerance <= wp->param4 && att.yaw + yaw_tolerance >= wp->param4)
                                                         yawReached = true;
                                         }
                                         else if(att.yaw - yaw_tolerance < 0.0f)
                                         {
                                                 float lowerBound = 360.0f + att.yaw - yaw_tolerance;
-                                                if (lowerBound < wp->yaw || wp->yaw < att.yaw + yaw_tolerance)
+                                                if (lowerBound < wp->param4 || wp->param4 < att.yaw + yaw_tolerance)
                                                         yawReached = true;
                                         }
                                         else
                                         {
                                                 float upperBound = att.yaw + yaw_tolerance - 2.f*M_PI;
-                                                if (att.yaw - yaw_tolerance < wp->yaw || wp->yaw < upperBound)
+                                                if (att.yaw - yaw_tolerance < wp->param4 || wp->param4 < upperBound)
                                                         yawReached = true;
                                         }
 

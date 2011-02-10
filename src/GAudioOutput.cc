@@ -295,11 +295,12 @@ void GAudioOutput::beep()
 {
     if (!muted)
     {
-    // Use QFile to transform path for all OS
-    QFile f(QCoreApplication::applicationDirPath()+QString("/audio/alert.wav"));
-    m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
-    m_media->play();
-}
+        // Use QFile to transform path for all OS
+        QFile f(QCoreApplication::applicationDirPath()+QString("/audio/alert.wav"));
+        qDebug() << "FILE:" << f.fileName();
+        m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
+        m_media->play();
+    }
 }
 
 void GAudioOutput::selectFemaleVoice()
