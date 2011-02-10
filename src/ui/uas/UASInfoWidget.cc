@@ -201,6 +201,9 @@ void UASInfoWidget::refresh()
     ui.sendLossBar->setValue(sendLoss);
     ui.sendLossLabel->setText(QString::number(sendLoss, 'f', 2));
 
+    ui.label_5->setText(QString::number(this->load, 'f', loadDecimals));
+    ui.progressBar->setValue(qMax(0, qMin(static_cast<int>(this->load), 100)));
+
     QString errorString;
     QMapIterator<QString, int> i(errors);
     while (i.hasNext())

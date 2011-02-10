@@ -43,13 +43,11 @@ void SlugsDataSensorView::addUAS(UASInterface* uas)
     connect(slugsMav, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(slugsGlobalPositionChanged(UASInterface*,double,double,double,quint64)));
     connect(slugsMav,SIGNAL(slugsGPSCogSog(int,double,double)),this,SLOT(slugsGPSCogSog(int,double,double)));
 
-
-
-
-     //connect slugs especial messages
+    //connect slugs especial messages
     connect(slugsMav, SIGNAL(slugsSensorBias(int,const mavlink_sensor_bias_t&)), this, SLOT(slugsSensorBiasChanged(int,const mavlink_sensor_bias_t&)));
     connect(slugsMav, SIGNAL(slugsDiagnostic(int,const mavlink_diagnostic_t&)), this, SLOT(slugsDiagnosticMessageChanged(int,const mavlink_diagnostic_t&)));
     connect(slugsMav, SIGNAL(slugsCPULoad(int,const mavlink_cpu_load_t&)), this, SLOT(slugsCpuLoadChanged(int,const mavlink_cpu_load_t&)));
+
     connect(slugsMav, SIGNAL(slugsNavegation(int,const mavlink_slugs_navigation_t&)),this,SLOT(slugsNavegationChanged(int,const mavlink_slugs_navigation_t&)));
     connect(slugsMav, SIGNAL(slugsDataLog(int,const mavlink_data_log_t&)), this, SLOT(slugsDataLogChanged(int,const mavlink_data_log_t&)));
     connect(slugsMav, SIGNAL(slugsPWM(int,const mavlink_pwm_commands_t&)),this,SLOT(slugsPWMChanged(int,const mavlink_pwm_commands_t&)));
@@ -86,6 +84,7 @@ void SlugsDataSensorView::slugRawDataChanged(int uasId, const mavlink_raw_imu_t 
 
 void SlugsDataSensorView::setActiveUAS(UASInterface* uas){
     activeUAS = uas;
+    addUAS(activeUAS);
 }
 
 #ifdef MAVLINK_ENABLED_SLUGS
@@ -97,8 +96,6 @@ void SlugsDataSensorView::slugsGlobalPositionChanged(UASInterface *uas,
                                                      quint64 time) {
  Q_UNUSED(uas);
  Q_UNUSED(time);
-
-
 
  ui->m_GpsLatitude->setText(QString::number(lat));
  ui->m_GpsLongitude->setText(QString::number(lon));
@@ -116,9 +113,10 @@ void SlugsDataSensorView::slugLocalPositionChanged(UASInterface* uas,
   Q_UNUSED(uas);
   Q_UNUSED(time);
 
-  ui->ed_x->setPlainText(QString::number(x));
-  ui->ed_y->setPlainText(QString::number(y));
-  ui->ed_z->setPlainText(QString::number(z));
+
+  ui->ed_x->setText(QString::number(x));
+  ui->ed_y->setText(QString::number(y));
+  ui->ed_z->setText(QString::number(z));
 
   //qDebug()<<"Local Position = "<<x<<" - "<<y<<" - "<<z;
 
@@ -132,9 +130,9 @@ void SlugsDataSensorView::slugSpeedLocalPositionChanged(UASInterface* uas,
     Q_UNUSED( uas);
   Q_UNUSED(time);
 
-  ui->ed_vx->setPlainText(QString::number(vx));
-  ui->ed_vy->setPlainText(QString::number(vy));
-  ui->ed_vz->setPlainText(QString::number(vz));
+  ui->ed_vx->setText(QString::number(vx));
+  ui->ed_vy->setText(QString::number(vy));
+  ui->ed_vz->setText(QString::number(vz));
 
   //qDebug()<<"Speed Local Position = "<<vx<<" - "<<vy<<" - "<<vz;
 
@@ -150,9 +148,9 @@ void SlugsDataSensorView::slugAttitudeChanged(UASInterface* uas,
     Q_UNUSED( uas);
     Q_UNUSED(time);
 
-    ui->m_Roll->setPlainText(QString::number(slugroll));
-    ui->m_Pitch->setPlainText(QString::number(slugpitch));
-    ui->m_Yaw->setPlainText(QString::number(slugyaw));
+    ui->m_Roll->setText(QString::number(slugroll));
+    ui->m_Pitch->setText(QString::number(slugpitch));
+    ui->m_Yaw->setText(QString::number(slugyaw));
 
     // qDebug()<<"Attitude change = "<<slugroll<<" - "<<slugpitch<<" - "<<slugyaw;
 

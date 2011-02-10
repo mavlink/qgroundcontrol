@@ -452,3 +452,6 @@ win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin)
     FORMS += src/ui/OpalLinkSettings.ui
     DEFINES += OPAL_RT
 }
+
+TRANSLATIONS  += es-MX.ts \
+    en-US.ts

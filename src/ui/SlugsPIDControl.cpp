@@ -23,12 +23,12 @@ SlugsPIDControl::SlugsPIDControl(QWidget *parent) :
     setGreenColorStyle();
 
     refreshTimerGet = new QTimer(this);
-    refreshTimerGet->setInterval(100); // 10 Hz
+    refreshTimerGet->setInterval(200);//100); // 10 Hz
     connect(refreshTimerGet, SIGNAL(timeout()), this, SLOT(slugsGetGeneral()));
 
 
     refreshTimerSet = new QTimer(this);
-    refreshTimerSet->setInterval(100); // 20 Hz
+    refreshTimerSet->setInterval(200);//100); // 20 Hz
     connect(refreshTimerSet, SIGNAL(timeout()), this, SLOT(slugsSetGeneral()));
 
 
