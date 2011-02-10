@@ -440,6 +440,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "climbrate", "m/s", hud.climb, time);
                 emit valueChanged(uasId, "throttle", "m/s", hud.throttle, time);
                 emit thrustChanged(this, hud.throttle/100.0);
+                emit altitudeChanged(uasId, hud.alt);
+                yaw = (hud.heading-180.0f/360.0f)*M_PI;
+                emit attitudeChanged(this, roll, pitch, yaw, getUnixTime());
+                emit speedChanged(this, hud.airspeed, 0.0f, hud.climb, getUnixTime());
             }
             break;
             case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
@@ -455,7 +459,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "wp dist", "m", nav.wp_dist, time);
                 emit valueChanged(uasId, "alt err", "m", nav.alt_error, time);
                 emit valueChanged(uasId, "airspeed err", "m/s", nav.alt_error, time);
-                //emit valueChanged(uasId, "xtrack err", "m", nav.xtrack_error, time);
+                emit valueChanged(uasId, "xtrack err", "m", nav.xtrack_error, time);
             }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION:
@@ -1337,27 +1341,27 @@ void UAS::enableRawControllerDataTransmission(int rate)
     sendMessage(msg);
 }
 
-void UAS::enableRawSensorFusionTransmission(int rate)
-{
-    // Buffers to write data to
-    mavlink_message_t msg;
-    mavlink_request_data_stream_t stream;
-    // Select the message to request from now on
-    stream.req_stream_id = MAV_DATA_STREAM_RAW_SENSOR_FUSION;
-    // Select the update rate in Hz the message should be send
-    stream.req_message_rate = rate;
-    // Start / stop the message
-    stream.start_stop = (rate) ? 1 : 0;
-    // The system which should take this command
-    stream.target_system = uasId;
-    // The component / subsystem which should take this command
-    stream.target_component = 0;
-    // Encode and send the message
-    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
-}
+//void UAS::enableRawSensorFusionTransmission(int rate)
+//{
+//    // Buffers to write data to
+//    mavlink_message_t msg;
+//    mavlink_request_data_stream_t stream;
+//    // Select the message to request from now on
+//    stream.req_stream_id = MAV_DATA_STREAM_RAW_SENSOR_FUSION;
+//    // Select the update rate in Hz the message should be send
+//    stream.req_message_rate = rate;
+//    // Start / stop the message
+//    stream.start_stop = (rate) ? 1 : 0;
+//    // The system which should take this command
+//    stream.target_system = uasId;
+//    // The component / subsystem which should take this command
+//    stream.target_component = 0;
+//    // Encode and send the message
+//    mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
+//}
 
 void UAS::enablePositionTransmission(int rate)
 {

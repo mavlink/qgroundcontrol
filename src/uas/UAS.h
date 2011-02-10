@@ -275,7 +275,7 @@ public slots:
     void enableExtendedSystemStatusTransmission(int rate);
     void enableRCChannelDataTransmission(int rate);
     void enableRawControllerDataTransmission(int rate);
-    void enableRawSensorFusionTransmission(int rate);
+    //void enableRawSensorFusionTransmission(int rate);
     void enablePositionTransmission(int rate);
     void enableExtra1Transmission(int rate);
     void enableExtra2Transmission(int rate);

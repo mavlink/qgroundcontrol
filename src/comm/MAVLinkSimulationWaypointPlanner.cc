@@ -337,7 +337,7 @@ void MAVLinkSimulationWaypointPlanner::send_waypoint(uint8_t target_systemid, ui
                 wp->target_system = target_systemid;
                 wp->target_component = target_compid;
 
-                if (verbose) qDebug("Sent waypoint %u (%u / %u / %u / %u / %u / %f / %f / %f / %u / %f / %f / %f / %f / %u)\n", wp->seq, wp->target_system, wp->target_component, wp->seq, wp->frame, wp->action, wp->param3, wp->param1, wp->param2, wp->current, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue);
+                if (verbose) qDebug("Sent waypoint %u (%u / %u / %u / %u / %u / %f / %f / %f / %u / %f / %f / %f / %f / %u)\n", wp->seq, wp->target_system, wp->target_component, wp->seq, wp->frame, wp->command, wp->param3, wp->param1, wp->param2, wp->current, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue);
 
                 mavlink_msg_waypoint_encode(systemid, compid, &msg, wp);
                 link->sendMAVLinkMessage(&msg);

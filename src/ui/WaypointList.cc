@@ -188,7 +188,7 @@ void WaypointList::add()
         else
         {
             // Create global frame waypoint per default
-            wp = new Waypoint(0, uas->getLongitude(), uas->getLatitude(), uas->getAltitude(), 0.0, true, true, 0.15, 0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
+            wp = new Waypoint(0, uas->getLongitude(), uas->getLatitude(), uas->getAltitude(), 0.0, true, true, 0.15, 0, MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT);
             uas->getWaypointManager()->addWaypoint(wp);
         }
     }

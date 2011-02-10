@@ -180,7 +180,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                 // Write message to buffer
                 mavlink_msg_to_send_buffer(buf+sizeof(quint64), &message);
                 QByteArray b((const char*)buf, len);
-                if(m_logfile->write(b) < MAVLINK_MAX_PACKET_LEN+sizeof(quint64))
+                if(m_logfile->write(b) < static_cast<int>(MAVLINK_MAX_PACKET_LEN+sizeof(quint64)))
                 {
                     emit protocolStatusMessage(tr("MAVLink Logging failed"), tr("Could not write to file %1, disabling logging.").arg(m_logfile->fileName()));
                     // Stop logging
