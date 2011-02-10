@@ -140,7 +140,6 @@ void MAVLinkSimulationMAV::mainloop()
         // SYSTEM STATUS
         mavlink_sys_status_t status;
         status.load = 300;
-        status.motor_block = 1;
         status.mode = sys_mode;
         status.nav_mode = nav_mode;
         status.packet_drop = 0;

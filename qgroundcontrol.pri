@@ -48,14 +48,14 @@ DEFINES += _TTY_NOWARN_
 macx {
 
     COMPILER_VERSION = $$system(gcc -v)
-    message(Using compiler $$COMPILER_VERSION)
+    #message(Using compiler $$COMPILER_VERSION)
 
     HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || contains( HARDWARE_PLATFORM, 9.9.0 ) {
+    contains( $$HARDWARE_PLATFORM, "9.6.0" ) || contains( $$HARDWARE_PLATFORM, "9.7.0" ) || contains( $$HARDWARE_PLATFORM, "9.8.0" ) || contains( $$HARDWARE_PLATFORM, "9.9.0" ) {
         # x86 Mac OS X Leopard 10.5 and earlier
-        CONFIG += x86 cocoa phonon
-        CONFIG -= x86_64
-        message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
+        CONFIG += x86 x86_64 cocoa phonon
+        #CONFIG -= x86_64
+        #message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
 
                 # Enable function-profiling with the OS X saturn tool
                 debug {
@@ -65,9 +65,9 @@ macx {
                 }
     } else {
         # x64 Mac OS X Snow Leopard 10.6 and later
-        CONFIG += x86_64 cocoa
-        CONFIG -= x86 phonon
-        message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
+        CONFIG += x86_64 x86 cocoa
+        #CONFIG -= x86 # phonon
+        #message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
                 debug {
                         #QMAKE_CXXFLAGS += -finstrument-functions
                         #LIBS += -lSaturn

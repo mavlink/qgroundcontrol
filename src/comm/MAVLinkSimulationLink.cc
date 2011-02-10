@@ -114,7 +114,6 @@ void MAVLinkSimulationLink::run()
     status.mode = MAV_MODE_UNINIT;
     status.status = MAV_STATE_UNINIT;
     status.vbat = 0;
-    status.motor_block = 1;
     status.packet_drop = 0;
 
 
@@ -619,8 +618,9 @@ void MAVLinkSimulationLink::mainloop()
 
                 uint8_t gpsLock = 2;
                 uint8_t visLock = 3;
+                uint8_t ahrsHealth = 200;
                 uint8_t posLock = qMax(gpsLock, visLock);
-        messageSize = mavlink_msg_control_status_pack(systemId, componentId, &msg, posLock, visLock, gpsLock, attControl, posXYControl, posZControl, posYawControl);
+        messageSize = mavlink_msg_control_status_pack(systemId, componentId, &msg, posLock, visLock, gpsLock, ahrsHealth, attControl,posXYControl, posZControl, posYawControl);
         #endif
 
         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
