@@ -53,7 +53,7 @@ public:
 public slots:
     void setUASId(int id);
     void setChannelRaw(int channelId, float raw);
-    void setChannelScaled(int channelId, float normalized);
+    //void setChannelScaled(int channelId, float normalized);
     void setRemoteRSSI(float rssiNormalized);
     void redraw();
 

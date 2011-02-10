@@ -43,33 +43,17 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
     uasId(-1),
     rssi(0.0f),
     updated(false),
-    channelLayout(new QVBoxLayout()),
-    ui(new Ui::QGCRemoteControlView)
+    channelLayout(new QVBoxLayout())//,
+    //ui(new Ui::QGCRemoteControlView)
 {
-
-    //ui->setupUi(this);
+    ui->setupUi(this);
     QGridLayout* layout = new QGridLayout(this);
     layout->addLayout(channelLayout, 1, 0, 1, 2);
-    // Name label
     nameLabel = new QLabel(this);
-    nameLabel->setText("No MAV selected yet..");
     layout->addWidget(nameLabel, 0, 0, 1, 2);
 
-    // RSSI bar
-    // Create new layout
-    QHBoxLayout* rssiLayout = new QHBoxLayout();
-    rssiLayout->setSpacing(5);
-    // Add content
-    rssiLayout->addWidget(new QLabel(tr("Signal"), this));
-    // Append raw label
-    // Append progress bar
-    rssiBar = new QProgressBar(this);
-    rssiBar->setMinimum(0);
-    rssiBar->setMaximum(100);
-    rssiBar->setValue(0);
-    rssiLayout->addWidget(rssiBar);
-    layout->addItem(rssiLayout, 2, 0, 1, 2);
-    setVisible(false);
+    this->setVisible(false);
+    //setVisible(false);
 
     calibrate = new QPushButton(tr("Calibrate"), this);
     QHBoxLayout *calibrateButtonLayout = new QHBoxLayout();
@@ -112,13 +96,13 @@ void QGCRemoteControlView::setUASId(int id)
         nameLabel->setText(QString("RC Input of %1").arg(newUAS->getUASName()));
         calibrationWindow->setUASId(id);
         connect(newUAS, SIGNAL(radioCalibrationReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
+
         connect(newUAS, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
-
         connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), this, SLOT(setChannelRaw(int,float)));
-//        connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannelRaw(int,float)));
 
-        connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), this, SLOT(setChannelScaled(int,float)));
-//        connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), calibrationWindow, SLOT(setChannelScaled(int,float)));
+        //now comment//connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannelRaw(int,float)));
+        //connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), this, SLOT(setChannelScaled(int,float)));
+        //now comment//connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), calibrationWindow, SLOT(setChannelScaled(int,float)));
     }
 }
 
@@ -129,7 +113,7 @@ void QGCRemoteControlView::setChannelRaw(int channelId, float raw)
     {
         // This is a new channel, append it
         this->raw.append(raw);
-        this->normalized.append(0);
+        //this->normalized.append(0);
         appendChannelWidget(channelId);
     }
     else
@@ -143,25 +127,25 @@ void QGCRemoteControlView::setChannelRaw(int channelId, float raw)
     redraw();
 }
 
-void QGCRemoteControlView::setChannelScaled(int channelId, float normalized)
-{
-    if (this->raw.size() <= channelId) // using raw vector as size indicator
-    {
-        // This is a new channel, append it
-        this->normalized.append(normalized);
-        this->raw.append(0);
-        appendChannelWidget(channelId);
-    }
-    else
-    {
-        // This is an existing channel, update it
-        this->normalized[channelId] = normalized;
-    }
-    updated = true;
+//void QGCRemoteControlView::setChannelScaled(int channelId, float normalized)
+//{
+//    if (this->raw.size() <= channelId) // using raw vector as size indicator
+//    {
+//        // This is a new channel, append it
+//        this->normalized.append(normalized);
+//        this->raw.append(0);
+//        appendChannelWidget(channelId);
+//    }
+//    else
+//    {
+//        // This is an existing channel, update it
+//        this->normalized[channelId] = normalized;
+//    }
+//    updated = true;
 
-    // FIXME Will be timer based in the future
-    redraw();
-}
+//    // FIXME Will be timer based in the future
+//    redraw();
+//}
 
 void QGCRemoteControlView::setRemoteRSSI(float rssiNormalized)
 {
@@ -195,15 +179,19 @@ void QGCRemoteControlView::redraw()
     if(isVisible() && updated)
     {
         // Update raw values
-        for(int i = 0; i < rawLabels.count(); i++)
-        {
-            rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4, 10, QChar('0')));
-        }
+        //for(int i = 0; i < rawLabels.count(); i++)
+        //{
+            //rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4, 10, QChar('0')));
+        //}
 
         // Update percent bars
         for(int i = 0; i < progressBars.count(); i++)
         {
-            progressBars.at(i)->setValue(normalized.at(i)*100.0f);
+            rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4, 10, QChar('0')));
+            //int vv = normalized.at(i)*100.0f;
+            //progressBars.at(i)->setValue(vv);
+            int vv = raw.at(i)*1.0f;
+            progressBars.at(i)->setValue(vv);
         }
         updated = false;
     }

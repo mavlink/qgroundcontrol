@@ -194,7 +194,7 @@ void UASView::updateMode(int sysId, QString status, QString description)
 {
     Q_UNUSED(description);
 
-    int aa=this->uas->getUASID();
+    //int aa=this->uas->getUASID();
     if (sysId == this->uas->getUASID()) m_ui->modeLabel->setText(status);
 
     m_ui->modeLabel->setText(status);

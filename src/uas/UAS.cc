@@ -244,7 +244,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_sys_status_decode(&message, &state);
 
                 // FIXME
-                qDebug() << "1 SYSTEM STATUS:" << state.status;
+                //qDebug() << "1 SYSTEM STATUS:" << state.status;
 
                 QString audiostring = "System " + QString::number(this->getUASID());
                 QString stateAudio = "";
@@ -260,12 +260,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     emit statusChanged(this, uasState, stateDescription);
                     emit statusChanged(this->status);
                     emit loadChanged(this,state.load/10.0f);
+
                     emit valueChanged(uasId, "Load", "%", ((float)state.load)/1000.0f, MG::TIME::getGroundTimeNow());
                     stateAudio = " changed status to " + uasState;
                 }
 
-                qDebug() << "1 SYSTEM MODE:" << state.mode;
-                qDebug() << "1 THIS MODE:" << this->mode;
+                //qDebug() << "1 SYSTEM MODE:" << state.mode;
+                //qDebug() << "1 THIS MODE:" << this->mode;
                 if (this->mode != static_cast<unsigned int>(state.mode))
                 {
                     modechanged = true;
@@ -308,7 +309,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                     emit modeChanged(this->getUASID(), mode, "");
 
-                    qDebug() << "2 SYSTEM MODE:" << mode;
+                    //qDebug() << "2 SYSTEM MODE:" << mode;
 
                     modeAudio = " is now in " + mode;
                 }
@@ -333,6 +334,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 // COMMUNICATIONS DROP RATE
                 emit dropRateChanged(this->getUASID(), state.packet_drop/1000.0f);
+
+
+                //add for development
+                emit remoteControlRSSIChanged(state.packet_drop/1000.0f);
+
+                float en = state.packet_drop/1000.0f;
+                emit remoteControlChannelRawChanged(0, en);//MAVLINK_MSG_ID_RC_CHANNELS_RAW
+                emit remoteControlChannelScaledChanged(0, en/100.0f);//MAVLINK_MSG_ID_RC_CHANNELS_SCALED
+
+
                 //qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;
 
                 // AUDIO
