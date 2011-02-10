@@ -1,5 +1,6 @@
 #include <QDebug>
 #include <cmath>
+#include <qmath.h>
 
 #include "MAVLinkSimulationMAV.h"
 
