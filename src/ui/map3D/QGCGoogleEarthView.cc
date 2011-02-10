@@ -183,18 +183,6 @@ void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
         {
             javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getY()).arg(wp->getX()).arg(wp->getZ()).arg(wp->getAction()));
         }
-
-    }
-    else
-    {
-        // Check if the index of this waypoint is larger than the global
-        // waypoint list. This implies that the coordinate frame of this
-        // waypoint was changed and the list containing only global
-        // waypoints was shortened. Thus update the whole list
-        //            if (waypointPath->points().count() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameCount())
-        //            {
-        //                updateWaypointList(uas);
-        //            }
     }
 }
 
@@ -355,7 +343,7 @@ void QGCGoogleEarthView::initializeGoogleEarth()
 #endif
 #ifdef _MSC_VER
         QAxObject* doc = webViewWin->querySubObject("Document()");
-        IDispatch* Disp;
+        //IDispatch* Disp;
         IDispatch* winDoc = NULL;
 
         //332C4425-26CB-11D0-B483-00C04FD90119 IHTMLDocument2
