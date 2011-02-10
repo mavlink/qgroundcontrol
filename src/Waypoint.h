@@ -61,9 +61,10 @@ public:
     double getParam1() const { return param1; }
     double getParam2() const { return param2; }
     double getParam3() const { return orbit; }
-    double getParam4() const { return x; }
-    double getParam5() const { return y; }
-    double getParam6() const { return z; }
+    double getParam4() const { return yaw; }
+    double getParam5() const { return x; }
+    double getParam6() const { return y; }
+    double getParam7() const { return z; }
     int getTurns() const { return param1; }
     MAV_FRAME getFrame() const { return frame; }
     MAV_COMMAND getAction() const { return action; }
@@ -84,7 +85,6 @@ protected:
     bool autocontinue;
     bool current;
     double orbit;
-    int orbitDirection;
     double param1;
     double param2;
     int turns;
@@ -109,6 +109,7 @@ public slots:
     void setParam4(double param4);
     void setParam5(double param5);
     void setParam6(double param6);
+    void setParam7(double param7);
     void setAcceptanceRadius(double radius);
     void setHoldTime(int holdTime);
     /** @brief Number of turns for loiter waypoints */
