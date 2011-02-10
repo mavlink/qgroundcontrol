@@ -35,14 +35,14 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     customCommand->setupUi(m_ui->customActionWidget);
 
     // add actions
-    m_ui->comboBox_action->addItem(tr("Navigate"),MAV_ACTION_NAVIGATE);
-    m_ui->comboBox_action->addItem(tr("TakeOff"),MAV_ACTION_TAKEOFF);
-    m_ui->comboBox_action->addItem(tr("Loiter Unlim."),MAV_ACTION_LOITER);
-    m_ui->comboBox_action->addItem(tr("Loiter Time"),MAV_ACTION_LOITER_MAX_TIME);
-    m_ui->comboBox_action->addItem(tr("Loiter Turns"),MAV_ACTION_LOITER_MAX_TURNS);
-    m_ui->comboBox_action->addItem(tr("Return to Launch"),MAV_ACTION_RETURN);
-    m_ui->comboBox_action->addItem(tr("Land"),MAV_ACTION_LAND);
-    m_ui->comboBox_action->addItem(tr("Other"), MAV_ACTION_NB);
+    m_ui->comboBox_action->addItem(tr("Navigate"),MAV_CMD_NAV_WAYPOINT);
+    m_ui->comboBox_action->addItem(tr("TakeOff"),MAV_CMD_NAV_TAKEOFF);
+    m_ui->comboBox_action->addItem(tr("Loiter Unlim."),MAV_CMD_NAV_LOITER_UNLIM);
+    m_ui->comboBox_action->addItem(tr("Loiter Time"),MAV_CMD_NAV_LOITER_TIME);
+    m_ui->comboBox_action->addItem(tr("Loiter Turns"),MAV_CMD_NAV_LOITER_TURNS);
+    m_ui->comboBox_action->addItem(tr("Return to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
+    m_ui->comboBox_action->addItem(tr("Land"),MAV_CMD_NAV_LAND);
+    m_ui->comboBox_action->addItem(tr("Other"), MAV_COMMAND_ENUM_END);
     //    m_ui->comboBox_action->addItem(tr("Delay"), MAV_ACTION_DELAY_BEFORE_COMMAND);
     //    m_ui->comboBox_action->addItem(tr("Ascend/Descent"), MAV_ACTION_ASCEND_AT_RATE);
     //    m_ui->comboBox_action->addItem(tr("Change Mode"), MAV_ACTION_CHANGE_MODE);
@@ -145,7 +145,7 @@ void WaypointView::updateActionView(int action)
 
     switch(action)
     {
-    case MAV_ACTION_TAKEOFF:
+    case MAV_CMD_NAV_TAKEOFF:
         m_ui->orbitSpinBox->hide();
         m_ui->yawSpinBox->hide();
         m_ui->turnsSpinBox->hide();
@@ -155,7 +155,7 @@ void WaypointView::updateActionView(int action)
         m_ui->customActionWidget->hide();
         m_ui->takeOffAngleSpinBox->show();
         break;
-    case MAV_ACTION_LAND:
+    case MAV_CMD_NAV_LAND:
         m_ui->orbitSpinBox->hide();
         m_ui->takeOffAngleSpinBox->hide();
         m_ui->yawSpinBox->hide();
@@ -165,7 +165,7 @@ void WaypointView::updateActionView(int action)
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
         break;
-    case MAV_ACTION_RETURN:
+    case MAV_CMD_NAV_RETURN_TO_LAUNCH:
         m_ui->orbitSpinBox->hide();
         m_ui->takeOffAngleSpinBox->hide();
         m_ui->yawSpinBox->hide();
@@ -175,7 +175,7 @@ void WaypointView::updateActionView(int action)
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
         break;
-    case MAV_ACTION_NAVIGATE:
+    case MAV_CMD_NAV_WAYPOINT:
         m_ui->orbitSpinBox->hide();
         m_ui->takeOffAngleSpinBox->hide();
         m_ui->turnsSpinBox->hide();
@@ -186,7 +186,7 @@ void WaypointView::updateActionView(int action)
         m_ui->acceptanceSpinBox->show();
         m_ui->yawSpinBox->show();
         break;
-    case MAV_ACTION_LOITER:
+    case MAV_CMD_NAV_LOITER_UNLIM:
         m_ui->takeOffAngleSpinBox->hide();
         m_ui->yawSpinBox->hide();
         m_ui->turnsSpinBox->hide();
@@ -196,7 +196,7 @@ void WaypointView::updateActionView(int action)
         m_ui->customActionWidget->hide();
         m_ui->orbitSpinBox->show();
         break;
-    case MAV_ACTION_LOITER_MAX_TURNS:
+    case MAV_CMD_NAV_LOITER_TURNS:
         m_ui->takeOffAngleSpinBox->hide();
         m_ui->yawSpinBox->hide();
         m_ui->autoContinue->hide();
@@ -206,7 +206,7 @@ void WaypointView::updateActionView(int action)
         m_ui->orbitSpinBox->show();
         m_ui->turnsSpinBox->show();
         break;
-    case MAV_ACTION_LOITER_MAX_TIME:
+    case MAV_CMD_NAV_LOITER_TIME:
         m_ui->takeOffAngleSpinBox->hide();
         m_ui->yawSpinBox->hide();
         m_ui->turnsSpinBox->hide();
@@ -228,9 +228,9 @@ void WaypointView::changedAction(int index)
 {
     // set waypoint action
     int actionIndex = m_ui->comboBox_action->itemData(index).toUInt();
-    if (actionIndex < MAV_ACTION_NB && actionIndex >= 0)
+    if (actionIndex < MAV_COMMAND_ENUM_END && actionIndex >= 0)
     {
-        MAV_ACTION action = (MAV_ACTION) actionIndex;
+        MAV_COMMAND action = (MAV_COMMAND) actionIndex;
         wp->setAction(action);
     }
 
@@ -240,24 +240,21 @@ void WaypointView::changedAction(int index)
 
     switch(actionIndex)
     {
-    case MAV_ACTION_TAKEOFF:
-    case MAV_ACTION_LAND:
-    case MAV_ACTION_RETURN:
-    case MAV_ACTION_NAVIGATE:
-    case MAV_ACTION_LOITER:
-    case MAV_ACTION_LOITER_MAX_TURNS:
-    case MAV_ACTION_LOITER_MAX_TIME:
-    case MAV_ACTION_DELAY_BEFORE_COMMAND:
-    case MAV_ACTION_CHANGE_MODE:
-    case MAV_ACTION_SET_ORIGIN:
-    case MAV_ACTION_RELAY_ON:
-    case MAV_ACTION_RELAY_OFF:
+    case MAV_CMD_NAV_TAKEOFF:
+    case MAV_CMD_NAV_LAND:
+    case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+    case MAV_CMD_NAV_WAYPOINT:
+    case MAV_CMD_NAV_LOITER_UNLIM:
+    case MAV_CMD_NAV_LOITER_TURNS:
+    case MAV_CMD_NAV_LOITER_TIME:
+    case MAV_CMD_NAV_DELAY:
+    case MAV_CMD_SYS_SET_MODE:
         // Back to global frame
         if (wp->getFrame() == MAV_FRAME_MISSION) changedFrame(0);
         // Update view
         updateActionView(actionIndex);
         break;
-    case MAV_ACTION_NB:
+    case MAV_COMMAND_ENUM_END:
     default:
         // Switch to mission frame
         changedFrame(MAV_FRAME_MISSION);
@@ -435,13 +432,13 @@ void WaypointView::updateValues()
     }
     switch(action)
     {
-    case MAV_ACTION_TAKEOFF:
+    case MAV_CMD_NAV_TAKEOFF:
         break;
-    case MAV_ACTION_LAND:
+    case MAV_CMD_NAV_LAND:
         break;
-    case MAV_ACTION_NAVIGATE:
+    case MAV_CMD_NAV_WAYPOINT:
         break;
-    case MAV_ACTION_LOITER:
+    case MAV_CMD_NAV_LOITER_UNLIM:
         break;
     default:
         std::cerr << "unknown action" << std::endl;

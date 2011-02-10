@@ -168,7 +168,7 @@ void MAVLinkSimulationMAV::mainloop()
         hud.airspeed = pos.vx;
         hud.groundspeed = pos.vx;
         hud.alt = pos.alt;
-        hud.heading = ((yaw/M_PI)*180.0f+180.0f);
+        hud.heading = static_cast<int>((yaw/M_PI)*180.0f+180.0f) % 360;
         hud.climb = pos.vz;
         hud.throttle = 90;
         mavlink_msg_vfr_hud_encode(systemid, MAV_COMP_ID_IMU, &msg, &hud);
