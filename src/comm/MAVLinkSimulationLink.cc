@@ -610,18 +610,18 @@ void MAVLinkSimulationLink::mainloop()
         // Send controller states
 
 
-        #ifdef MAVLINK_ENABLED_PIXHAWK
-                uint8_t attControl = 1;
-                uint8_t posXYControl = 1;
-                uint8_t posZControl = 0;
-                uint8_t posYawControl = 1;
+#ifdef MAVLINK_ENABLED_PIXHAWK
+        uint8_t attControl = 1;
+        uint8_t posXYControl = 1;
+        uint8_t posZControl = 0;
+        uint8_t posYawControl = 1;
 
-                uint8_t gpsLock = 2;
-                uint8_t visLock = 3;
-                uint8_t posLock = qMax(gpsLock, visLock);
-                uint8_t ahrsHealth = 240;
+        uint8_t gpsLock = 2;
+        uint8_t visLock = 3;
+        uint8_t ahrsHealth = 200;
+        uint8_t posLock = qMax(gpsLock, visLock);
         messageSize = mavlink_msg_control_status_pack(systemId, componentId, &msg, posLock, visLock, gpsLock, ahrsHealth, attControl, posXYControl, posZControl, posYawControl);
-        #endif
+#endif
 
         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
         memcpy(stream+streampointer, buffer, bufferlength);

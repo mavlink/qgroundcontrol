@@ -250,10 +250,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     getStatusForCode((int)state.status, uasState, stateDescription);
                     emit statusChanged(this, uasState, stateDescription);
                     emit statusChanged(this->status);
-                    emit loadChanged(this,state.load/10.0f);
-                    emit valueChanged(uasId, "Load", "%", ((float)state.load)/1000.0f, MG::TIME::getGroundTimeNow());
                     stateAudio = " changed status to " + uasState;
                 }
+
+                emit loadChanged(this,state.load/10.0f);
+                emit valueChanged(uasId, "Load", "%", ((float)state.load)/1000.0f, getUnixTime());
 
                 if (this->mode != static_cast<unsigned int>(state.mode))
                 {
