@@ -36,7 +36,7 @@ This file is part of the PIXHAWK project
 #include <QObject>
 #include <QString>
 #include <QTextStream>
-#include "mavlink_types.h"
+#include "QGCMAVLink.h"
 
 class Waypoint : public QObject
 {
@@ -45,7 +45,7 @@ class Waypoint : public QObject
 public:
     Waypoint(quint16 id = 0, double x = 0.0f, double y = 0.0f, double z = 0.0f, double yaw = 0.0f, bool autocontinue = false,
              bool current = false, double orbit = 0.15f, int holdTime = 0,
-             MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_ACTION action=MAV_ACTION_NAVIGATE);
+             MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_COMMAND action=MAV_CMD_NAV_WAYPOINT);
     ~Waypoint();
 
     quint16 getId() const { return id; }
@@ -66,7 +66,7 @@ public:
     double getParam6() const { return z; }
     int getTurns() const { return param1; }
     MAV_FRAME getFrame() const { return frame; }
-    MAV_ACTION getAction() const { return action; }
+    MAV_COMMAND getAction() const { return action; }
     const QString& getName() const { return name; }
 
     void save(QTextStream &saveStream);
@@ -80,7 +80,7 @@ protected:
     double z;
     double yaw;
     MAV_FRAME frame;
-    MAV_ACTION action;
+    MAV_COMMAND action;
     bool autocontinue;
     bool current;
     double orbit;
@@ -98,7 +98,7 @@ public slots:
     void setYaw(double yaw);
     /** @brief Set the waypoint action */
     void setAction(int action);
-    void setAction(MAV_ACTION action);
+    void setAction(MAV_COMMAND action);
     void setFrame(MAV_FRAME frame);
     void setAutocontinue(bool autoContinue);
     void setCurrent(bool current);

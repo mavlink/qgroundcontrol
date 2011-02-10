@@ -247,7 +247,7 @@ bool MAVLinkXMLParser::generate()
 
                                         // Everything sane, starting with enum content
                                         currEnum = "enum " + enumName.toUpper() + "\n{\n";
-                                        currEnumEnd = "};\n\n";
+                                        currEnumEnd = QString("\n%1_ENUM_END\n};\n\n").arg(enumName.toUpper());
 
                                         int nextEnumValue = 0;
 

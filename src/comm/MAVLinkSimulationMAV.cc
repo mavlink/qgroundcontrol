@@ -134,8 +134,8 @@ void MAVLinkSimulationMAV::mainloop()
         pos.alt = z*1000.0;
         pos.lat = y*1E7;
         pos.lon = x*1E7;
-        pos.vx = sin(yaw)*10.0f*100.0f;
-        pos.vy = cos(yaw)*10.0f*100.0f;
+        pos.vx = 10.0f*100.0f;
+        pos.vy = 0;
         pos.vz = altPer100ms*10.0f*100.0f*zsign*-1.0f;
         mavlink_msg_global_position_int_encode(systemid, MAV_COMP_ID_IMU, &msg, &pos);
         link->sendMAVLinkMessage(&msg);
@@ -165,11 +165,11 @@ void MAVLinkSimulationMAV::mainloop()
 
         // VFR HUD
         mavlink_vfr_hud_t hud;
-        hud.airspeed = 10;
-        hud.groundspeed = 9;
-        hud.alt = 123;
-        hud.heading = 90;
-        hud.climb = 0.1f;
+        hud.airspeed = pos.vx;
+        hud.groundspeed = pos.vx;
+        hud.alt = pos.alt;
+        hud.heading = ((yaw/M_PI)*180.0f+180.0f);
+        hud.climb = pos.vz;
         hud.throttle = 90;
         mavlink_msg_vfr_hud_encode(systemid, MAV_COMP_ID_IMU, &msg, &hud);
         link->sendMAVLinkMessage(&msg);
@@ -180,9 +180,9 @@ void MAVLinkSimulationMAV::mainloop()
         nav.nav_pitch = pitch;
         nav.nav_bearing = yaw;
         nav.target_bearing = yaw;
-        nav.wp_dist = 2;
-        nav.alt_error = 0.5;
-        // xtrack
+        nav.wp_dist = 2.0f;
+        nav.alt_error = 0.5f;
+        nav.xtrack_error = 0.2f;
         mavlink_msg_nav_controller_output_encode(systemid, MAV_COMP_ID_IMU, &msg, &nav);
         link->sendMAVLinkMessage(&msg);
     }

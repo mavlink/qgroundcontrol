@@ -416,12 +416,12 @@ void WaypointView::updateValues()
     }
 
     // Update action
-    MAV_ACTION action = wp->getAction();
+    MAV_COMMAND action = wp->getAction();
     int action_index = m_ui->comboBox_action->findData(action);
     // Set to "Other" action if it was -1
     if (action_index == -1)
     {
-        action_index = m_ui->comboBox_action->findData(MAV_ACTION_NB);
+        action_index = m_ui->comboBox_action->findData(MAV_COMMAND_ENUM_END);
     }
     // Only update if changed
     if (m_ui->comboBox_action->currentIndex() != action_index)
