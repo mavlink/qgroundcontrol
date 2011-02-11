@@ -76,8 +76,8 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(m_ui->posESpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
     connect(m_ui->posDSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
 
-    connect(m_ui->lonSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
-    connect(m_ui->latSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
+    connect(m_ui->latSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
+    connect(m_ui->lonSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
     connect(m_ui->altSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
 
     //hidden degree to radian conversion of the yaw angle
@@ -267,6 +267,10 @@ void WaypointView::changeViewMode(QGC_WAYPOINTVIEW_MODE mode)
     switch (mode)
     {
     case QGC_WAYPOINTVIEW_MODE_NAV:
+    case QGC_WAYPOINTVIEW_MODE_CONDITION:
+        // Hide everything, show condition widget
+        // TODO
+    case QGC_WAYPOINTVIEW_MODE_DO:
 
         break;
     case QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING:
@@ -399,13 +403,13 @@ void WaypointView::updateValues()
         break;
     case(MAV_FRAME_GLOBAL):
         {
-            if (m_ui->lonSpinBox->value() != wp->getX())
+            if (m_ui->latSpinBox->value() != wp->getX())
             {
-                m_ui->lonSpinBox->setValue(wp->getX());
+                m_ui->latSpinBox->setValue(wp->getX());
             }
-            if (m_ui->latSpinBox->value() != wp->getY())
+            if (m_ui->lonSpinBox->value() != wp->getY())
             {
-                m_ui->latSpinBox->setValue(wp->getY());
+                m_ui->lonSpinBox->setValue(wp->getY());
             }
             if (m_ui->altSpinBox->value() != wp->getZ())
             {

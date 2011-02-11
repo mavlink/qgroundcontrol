@@ -124,6 +124,33 @@ void Waypoint::setZ(double z)
     }
 }
 
+void Waypoint::setLatitude(double lat)
+{
+    if (this->x != lat)
+    {
+        this->x = lat;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setLongitude(double lon)
+{
+    if (this->y != lon)
+    {
+        this->y = lon;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setAltitude(double altitude)
+{
+    if (this->z != altitude)
+    {
+        this->z = altitude;
+        emit changed(this);
+    }
+}
+
 void Waypoint::setYaw(double yaw)
 {
     if (this->yaw != yaw)
