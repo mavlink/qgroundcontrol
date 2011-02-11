@@ -8,5 +8,5 @@ mkdir -p qgroundcontrol.app/Contents/Frameworks/
 cp -r /Library/Frameworks/SDL.framework qgroundcontrol.app/Contents/Frameworks/.
 echo -e '\n\nStarting to create disk image. This may take a while..\n'
 macdeployqt qgroundcontrol.app -dmg
-#rm -rf qgroundcontrol.app
+rm -rf qgroundcontrol.app
 echo -e '\n\n QGroundControl .DMG file is now ready for publishing\n'
