@@ -24,6 +24,7 @@
 WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
         QWidget(parent),
         customCommand(new Ui_QGCCustomWaypointAction),
+        viewMode(QGC_WAYPOINTVIEW_MODE_NAV),
         m_ui(new Ui::WaypointView)
 {
     m_ui->setupUi(this);
@@ -247,16 +248,51 @@ void WaypointView::changedAction(int index)
     case MAV_CMD_NAV_LOITER_TIME:
     case MAV_CMD_CONDITION_DELAY:
     case MAV_CMD_DO_SET_MODE:
-        // Back to global frame
-        if (wp->getFrame() == MAV_FRAME_MISSION) changedFrame(0);
+        changeViewMode(QGC_WAYPOINTVIEW_MODE_NAV);
+        // Update frame view
+        updateFrameView(m_ui->comboBox_frame->currentIndex());
         // Update view
         updateActionView(actionIndex);
         break;
     case MAV_CMD_ENUM_END:
     default:
         // Switch to mission frame
-        changedFrame(MAV_FRAME_MISSION);
-        wp->setFrame(MAV_FRAME_MISSION);
+        changeViewMode(QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING);
+        break;
+    }
+}
+
+void WaypointView::changeViewMode(QGC_WAYPOINTVIEW_MODE mode)
+{
+    switch (mode)
+    {
+    case QGC_WAYPOINTVIEW_MODE_NAV:
+
+        break;
+    case QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING:
+        // Hide almost everything
+        m_ui->orbitSpinBox->hide();
+        m_ui->takeOffAngleSpinBox->hide();
+        m_ui->yawSpinBox->hide();
+        m_ui->turnsSpinBox->hide();
+        m_ui->holdTimeSpinBox->hide();
+        m_ui->acceptanceSpinBox->hide();
+        m_ui->posDSpinBox->hide();
+        m_ui->posESpinBox->hide();
+        m_ui->posNSpinBox->hide();
+        m_ui->latSpinBox->hide();
+        m_ui->lonSpinBox->hide();
+        m_ui->altSpinBox->hide();
+
+        // Show action widget
+        if (!m_ui->customActionWidget->isVisible())
+        {
+            m_ui->customActionWidget->show();
+        }
+        if (!m_ui->autoContinue->isVisible())
+        {
+            m_ui->autoContinue->show();
+        }
         break;
     }
 }
@@ -286,32 +322,6 @@ void WaypointView::updateFrameView(int frame)
         // Coordinate frame
         m_ui->comboBox_frame->show();
         m_ui->customActionWidget->hide();
-        break;
-    case MAV_FRAME_MISSION:
-        // Hide almost everything
-        m_ui->orbitSpinBox->hide();
-        m_ui->takeOffAngleSpinBox->hide();
-        m_ui->yawSpinBox->hide();
-        m_ui->turnsSpinBox->hide();
-        m_ui->holdTimeSpinBox->hide();
-        m_ui->acceptanceSpinBox->hide();
-        m_ui->posDSpinBox->hide();
-        m_ui->posESpinBox->hide();
-        m_ui->posNSpinBox->hide();
-        m_ui->latSpinBox->hide();
-        m_ui->lonSpinBox->hide();
-        m_ui->altSpinBox->hide();
-        m_ui->comboBox_frame->hide();
-
-        // Show action widget
-        if (!m_ui->customActionWidget->isVisible())
-        {
-            m_ui->customActionWidget->show();
-        }
-        if (!m_ui->autoContinue->isVisible())
-        {
-            m_ui->autoContinue->show();
-        }
         break;
     default:
         std::cerr << "unknown frame" << std::endl;
@@ -403,10 +413,8 @@ void WaypointView::updateValues()
             }
         }
         break;
-    case (MAV_FRAME_MISSION):
-        {
-            // TODO Change to mission view
-        }
+    default:
+        // Do nothing
         break;
     }
 
