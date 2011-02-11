@@ -4,10 +4,13 @@
 #include <QObject>
 #include <QtCore/QString>
 #include <QtTest/QtTest>
+#include <QApplication>
+
 #include "UAS.h"
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
 #include "AutoTest.h"
+#include "LinkManager.h"
 
 class UASUnitTest : public QObject
 {
@@ -23,6 +26,8 @@ signals:
 private slots:
   void initTestCase();
   void cleanupTestCase();
+
+
   void getUASID_test();
   void getUASName_test();
   void getUpTime_test();
@@ -40,6 +45,15 @@ private slots:
   void getRoll_test();
   void getPitch_test();
   void getYaw_test();
+
+  void getSelected_test();
+  void getSystemType_test();
+  void getAirframe_test();
+
+  void getLinks_test();
+  void getWaypointList_test();
+
+  void battery_test();
 
 protected:
    UAS *prueba;
