@@ -47,35 +47,35 @@ DEFINES += _TTY_NOWARN_
 # MAC OS X
 macx {
 
-    COMPILER_VERSION = $$system(gcc -v)
+   # COMPILER_VERSION = $$system(gcc -v)
     #message(Using compiler $$COMPILER_VERSION)
 
         CONFIG += x86 cocoa phonon
         CONFIG -= x86_64
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( $$HARDWARE_PLATFORM, "9.6.0" ) || contains( $$HARDWARE_PLATFORM, "9.7.0" ) || contains( $$HARDWARE_PLATFORM, "9.8.0" ) || contains( $$HARDWARE_PLATFORM, "9.9.0" ) {
+    #HARDWARE_PLATFORM = $$system(uname -a)
+    #contains( $$HARDWARE_PLATFORM, "9.6.0" ) || contains( $$HARDWARE_PLATFORM, "9.7.0" ) || contains( $$HARDWARE_PLATFORM, "9.8.0" ) || contains( $$HARDWARE_PLATFORM, "9.9.0" ) {
         # x86 Mac OS X Leopard 10.5 and earlier
 
         #message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
 
                 # Enable function-profiling with the OS X saturn tool
-                debug {
+                #debug {
                         #QMAKE_CXXFLAGS += -finstrument-functions
                         #LIBS += -lSaturn
-                        CONFIG += console
-                }
-    } else {
+                       # CONFIG += console
+                #}
+    #} else {
         # x64 Mac OS X Snow Leopard 10.6 and later
-        CONFIG += x86_64 x86 cocoa phonon
+     #   CONFIG += x86_64 x86 cocoa phonon
         #CONFIG -= x86 # phonon
         #message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
-                debug {
+      #          debug {
                         #QMAKE_CXXFLAGS += -finstrument-functions
                         #LIBS += -lSaturn
                         CONFIG += console
-                }
-    }
+      #          }
+    #}
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 

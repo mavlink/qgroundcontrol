@@ -179,7 +179,21 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     // Get component
     if (!components->contains(component))
     {
-        addComponent(uas, component, "Component #" + QString::number(component));
+        QString componentName;
+        switch (component)
+        {
+        case MAV_COMP_ID_CAMERA:
+            componentName = tr("Camera (#%1)").arg(component);
+            break;
+        case MAV_COMP_ID_IMU:
+            componentName = tr("IMU (#%1)").arg(component);
+            break;
+        default:
+            componentName = tr("Component #").arg(component);
+            break;
+        }
+
+        addComponent(uas, component, componentName);
     }
 
     // Replace value in map
@@ -227,7 +241,9 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             QStringList plist;
             plist.append(parameterName);
             plist.append(QString::number(value));
+            // CREATE PARAMETER ITEM
             parameterItem = new QTreeWidgetItem(plist);
+            // CONFIGURE PARAMETER ITEM
 
             compParamGroups->value(parent)->addChild(parameterItem);
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
@@ -256,7 +272,9 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             QStringList plist;
             plist.append(parameterName);
             plist.append(QString::number(value));
+            // CREATE PARAMETER ITEM
             parameterItem = new QTreeWidgetItem(plist);
+            // CONFIGURE PARAMETER ITEM
 
             components->value(component)->addChild(parameterItem);
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
@@ -356,7 +374,9 @@ void QGCParamWidget::saveParameters()
             QMap<QString, float>::iterator j;
             for (j = comp->begin(); j != comp->end(); ++j)
             {
-                in << mav->getUASID() << "\t" << compid << "\t" << j.key() << "\t" << j.value() << "\n";
+                QString paramValue("%1");
+                paramValue = paramValue.arg(j.value(), 18, 'g');
+                in << mav->getUASID() << "\t" << compid << "\t" << j.key() << "\t" << paramValue << "\n";
                 in.flush();
             }
         }

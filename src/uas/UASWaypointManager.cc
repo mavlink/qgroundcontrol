@@ -138,8 +138,8 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id)
         {
-            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_COMMAND) wp->command;
-            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_COMMAND) wp->command);
+            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_CMD) wp->command;
+            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
             addWaypoint(lwp, false);
 
             //get next waypoint
