@@ -164,13 +164,15 @@ void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
     {
         mavlink_named_value_float_t val;
         mavlink_msg_named_value_float_decode(&message, &val);
-        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), val.value, getUnixTime());
+        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN);
+        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
     }
     else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
     {
         mavlink_named_value_int_t val;
         mavlink_msg_named_value_int_decode(&message, &val);
-        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), val.value, getUnixTime());
+        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_INT_FIELD_NAME_LEN);
+        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
     }
 }
 
@@ -590,7 +592,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // SANITY CHECK
                 // only accept values in a realistic range
                 // quint64 time = getUnixTime(pos.usec);
-                quint64 time = MG::TIME::getGroundTimeNow();
+                quint64 time = getUnixTime();
 
                 emit valueChanged(uasId, "latitude", "deg", pos.lat, time);
                 emit valueChanged(uasId, "longitude", "deg", pos.lon, time);
@@ -828,7 +830,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
-                b.resize(256);
+                b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
                 mavlink_msg_statustext_get_text(&message, (int8_t*)b.data());
                 //b.append('\0');
                 QString text = QString(b);
