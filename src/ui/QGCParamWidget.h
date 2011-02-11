@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QMap>
+#include <QLabel>
 
 #include "UASInterface.h"
 
@@ -53,6 +54,8 @@ signals:
 public slots:
     /** @brief Add a component to the list */
     void addComponent(int uas, int component, QString componentName);
+    /** @brief Add a parameter to the list with retransmission / safety checks */
+    void addParameter(int uas, int component, int paramCount, int paramId, QString parameterName, float value);
     /** @brief Add a parameter to the list */
     void addParameter(int uas, int component, QString parameterName, float value);
     /** @brief Request list of parameters from MAV */
@@ -75,14 +78,19 @@ public slots:
     /** @brief Load parameters from a file */
     void loadParameters();
 protected:
-    UASInterface* mav;  ///< The MAV this widget is controlling
-    QTreeWidget* tree;  ///< The parameter tree
+    UASInterface* mav;   ///< The MAV this widget is controlling
+    QTreeWidget* tree;   ///< The parameter tree
+    QLabel* statusLabel; ///< Parameter transmission label
     QMap<int, QTreeWidgetItem*>* components; ///< The list of components
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups
     QMap<int, QMap<QString, float>* > changedValues; ///< Changed values
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     QVector<bool> received; ///< Successfully received parameters
-
+    QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
+    bool transmissionListMode;       ///< Currently requesting list
+    QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
+    bool transmissionActive;         ///< Missing packets, working on list?
+    quint64 transmissionStarted;     ///< Timeout
 };
 
 #endif // QGCPARAMWIDGET_H
