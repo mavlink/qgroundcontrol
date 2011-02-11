@@ -30,6 +30,11 @@ void UASUnitTest::getUASID_test()
     // Make sure that no other ID was sert
     QEXPECT_FAIL("", "When you set an ID it does not use the default ID of 0", Continue);
     QCOMPARE(uas->getUASID(), 0);
+
+    // Make sure that ID >= 0
+    QCOMPARE(uas->getUASID(), -1);
+
+
 }
 
 void UASUnitTest::getUASName_test()
@@ -153,4 +158,112 @@ void UASUnitTest::getPitch_test()
 void UASUnitTest::getYaw_test()
 {
   QCOMPARE(uas->getYaw(), 0.0);
+}
+
+void UASUnitTest::getSelected_test()
+{
+    QCOMPARE(uas->getSelected(), false);
+
+    //QCOMPARE(uas->getSelected(), true);
+}
+
+void UASUnitTest::getSystemType_test()
+{
+    //QCOMPARE(uas->getSystemType(), -1);
+
+    QEXPECT_FAIL("", "uas->getSystemType(), 0", Continue);
+    QCOMPARE(uas->getSystemType(), 0);
+
+    QEXPECT_FAIL("", "uas->getSystemType(), 1", Continue);
+    QCOMPARE(uas->getSystemType(), 1);
+
+    int systemType = uas->getSystemType();
+    QCOMPARE(uas->getSystemType(), systemType);
+}
+
+void UASUnitTest::getAirframe_test()
+{
+    //QCOMPARE(uas->getAirframe(), -1);
+
+    QCOMPARE(uas->getAirframe(), 0);
+
+    uas->setAirframe(25);
+    QCOMPARE(uas->getAirframe(), 1);
+
+    QVERIFY(uas->getAirframe() == 25);
+}
+
+void UASUnitTest::getLinks_test()
+{
+    // Compare that the links count equal to 0
+    QCOMPARE(uas->getLinks()->count(), 0);
+
+    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    // Compare that the links in LinkManager count equal to 0
+    QCOMPARE(links.count(), 0);
+
+    LinkInterface* l;
+    uas->getLinks()->append(l);
+
+    // Compare that the links in LinkManager count equal to 1
+    QCOMPARE(uas->getLinks()->count(), 1);
+
+    QList<LinkInterface*> links2 = LinkManager::instance()->getLinks();
+
+    // Compare that the links count equals after update add link in uas
+    QCOMPARE(uas->getLinks()->count(), links2.count()+1);
+
+    // Compare that the link l is equal to link[0] from links in uas
+    QCOMPARE(l, static_cast<LinkInterface*>(uas->getLinks()->at(0)));
+
+    // Compare that the link l is equal to link[0] from links in uas through count links
+    QCOMPARE(l, static_cast<LinkInterface*>(uas->getLinks()->at(uas->getLinks()->count()-1)));
+
+    uas->addLink(l);
+    QCOMPARE(uas->getLinks()->count(), 1);
+
+    uas->removeLink(0);// dynamic_cast<QObject*>(l));
+    QCOMPARE(uas->getLinks()->count(), 0);
+}
+
+void UASUnitTest::getWaypointList_test()
+{
+    QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 0);
+
+    Waypoint* wp = new Waypoint(0,0,0,0,0,false, false, 0,0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
+    uas->getWaypointManager()->addWaypoint(wp, true);
+
+    kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 1);
+
+    wp = new Waypoint();
+    uas->getWaypointManager()->addWaypoint(wp, false);
+
+    kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 2);
+
+    uas->getWaypointManager()->removeWaypoint(1);
+    kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 1);
+
+    uas->getWaypointManager()->removeWaypoint(0);
+    kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 0);
+
+    wp = new Waypoint();
+    uas->getWaypointManager()->addWaypoint(wp, true);
+
+    wp = new Waypoint();
+    uas->getWaypointManager()->addWaypoint(wp, false);
+
+    // Fail clearWaypointList
+    //uas->getWaypointManager()->clearWaypointList();
+    //kk = uas->getWaypointManager()->getWaypointList();
+    //QCOMPARE(kk.count(), 1);
+}
+
+void UASUnitTest::battery_test()
+{
+    QCOMPARE(uas->getCommunicationStatus(), 0);
 }
