@@ -92,11 +92,24 @@ MapWidget::MapWidget(QWidget *parent) :
     //    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
     //    mc->addLayer(gsatLayer);
 
+
+    // Zurich, ETH
+
+    int lastZoom = 16;
+    double lastLat = 47.376889;
+    double lastLon = 8.548056;
+
+    QSettings settings;
+    settings.beginGroup("QGC_MAPWIDGET");
+    lastLat = settings.value("LAST_LATITUDE", lastLat).toDouble();
+    lastLon = settings.value("LAST_LONGITUDE", lastLon).toDouble();
+    lastZoom = settings.value("LAST_ZOOM", lastZoom).toInt();
+    settings.endGroup();
+
     // SET INITIAL POSITION AND ZOOM
     // Set default zoom level
-    mc->setZoom(16);
-    // Zurich, ETH
-    mc->setView(QPointF(8.548056,47.376889));
+    mc->setZoom(lastZoom);
+    mc->setView(QPointF(lastLon, lastLat));
 
     // Veracruz Mexico
     //mc->setView(QPointF(-96.105208,19.138955));
@@ -262,7 +275,7 @@ void MapWidget::goTo()
     bool ok;
     QString text = QInputDialog::getText(this, tr("Please enter coordinates"),
                                          tr("Coordinates (Lat,Lon):"), QLineEdit::Normal,
-                                         QString("%1,%2").arg(mc->currentCoordinate().x()).arg(mc->currentCoordinate().y()), &ok);
+                                         QString("%1,%2").arg(mc->currentCoordinate().y()).arg(mc->currentCoordinate().x()), &ok);
     if (ok && !text.isEmpty())
     {
         QStringList split = text.split(",");
@@ -276,7 +289,7 @@ void MapWidget::goTo()
 
             if (ok)
             {
-                mc->setView(QPointF(latitude, longitude));
+                mc->setView(QPointF(longitude, latitude));
             }
         }
     }
@@ -990,6 +1003,14 @@ void MapWidget::showEvent(QShowEvent* event)
 void MapWidget::hideEvent(QHideEvent* event)
 {
     Q_UNUSED(event);
+    QSettings settings;
+    settings.beginGroup("QGC_MAPWIDGET");
+    QPointF currentPos = mc->currentCoordinate();
+    settings.setValue("LAST_LATITUDE", currentPos.y());
+    settings.setValue("LAST_LONGITUDE", currentPos.x());
+    settings.setValue("LAST_ZOOM", mc->currentZoom());
+    settings.endGroup();
+    settings.sync();
 }
 
 
