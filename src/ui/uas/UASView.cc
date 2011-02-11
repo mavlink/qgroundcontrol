@@ -435,7 +435,7 @@ void UASView::setBatterySpecs()
     {
         bool ok;
         QString newName = QInputDialog::getText(this, tr("Set Battery Specifications for %1").arg(uas->getUASName()),
-                                                tr("Specs: (empty,warn,full), e.g. (9V,9.5V,12.6V)"), QLineEdit::Normal,
+                                                tr("Specs: (empty,warn,full), e.g. (9V,9.5V,12.6V) or just warn level in percent (e.g. 15%) to use estimate from MAV"), QLineEdit::Normal,
                                                 uas->getBatterySpecs(), &ok);
 
         if (ok && !newName.isEmpty()) uas->setBatterySpecs(newName);
