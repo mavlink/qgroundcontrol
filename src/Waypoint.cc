@@ -61,11 +61,10 @@ void Waypoint::save(QTextStream &saveStream)
     position = position.arg(y, 0, 'g', 18);
     position = position.arg(z, 0, 'g', 18);
     QString parameters("%1\t%2\t%3\t%4");
-    parameters = parameters.arg(param1, 0, 'g', 18);
-    parameters = parameters.arg(param2, 0, 'g', 18);
-    parameters = parameters.arg(orbit, 0, 'g', 18);
-    parameters = parameters.arg(yaw, 0, 'g', 18);
-    saveStream << this->getId() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << this->getCurrent() << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n";
+    parameters = parameters.arg(param1, 0, 'g', 18).arg(param2, 0, 'g', 18).arg(orbit, 0, 'g', 18).arg(yaw, 0, 'g', 18);
+    // FORMAT: <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE>
+    // as documented here: http://qgroundcontrol.org/waypoint_protocol
+    saveStream << this->getId() << "\t" << this->getCurrent() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n";
 }
 
 bool Waypoint::load(QTextStream &loadStream)
@@ -74,13 +73,13 @@ bool Waypoint::load(QTextStream &loadStream)
     if (wpParams.size() == 12)
     {
         this->id = wpParams[0].toInt();
-        this->frame = (MAV_FRAME) wpParams[1].toInt();
-        this->action = (MAV_CMD) wpParams[2].toInt();
-        this->param1 = wpParams[3].toDouble();
-        this->param2 = wpParams[4].toDouble();
-        this->orbit = wpParams[5].toDouble();
-        this->yaw = wpParams[6].toDouble();
-        this->current = (wpParams[7].toInt() == 1 ? true : false);
+        this->current = (wpParams[1].toInt() == 1 ? true : false);
+        this->frame = (MAV_FRAME) wpParams[2].toInt();
+        this->action = (MAV_CMD) wpParams[3].toInt();
+        this->param1 = wpParams[4].toDouble();
+        this->param2 = wpParams[5].toDouble();
+        this->orbit = wpParams[6].toDouble();
+        this->yaw = wpParams[7].toDouble();
         this->x = wpParams[8].toDouble();
         this->y = wpParams[9].toDouble();
         this->z = wpParams[10].toDouble();
