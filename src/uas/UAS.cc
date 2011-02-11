@@ -41,8 +41,10 @@ thrustSum(0),
 thrustMax(10),
 startVoltage(0),
 warnVoltage(9.5f),
+warnLevelPercent(20.0f),
 currentVoltage(12.0f),
 lpVoltage(12.0f),
+batteryRemainingEstimateEnabled(true),
 mode(MAV_MODE_UNINIT),
 status(MAV_STATE_UNINIT),
 onboardTimeOffset(0),
@@ -305,6 +307,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 lpVoltage = filterVoltage(currentVoltage);
                 if (startVoltage == 0) startVoltage = currentVoltage;
                 timeRemaining = calculateTimeRemaining();
+                if (!batteryRemainingEstimateEnabled)
+                {
+                    chargeLevel = state.battery_remaining/10.0f;
+                }
                 //qDebug() << "Voltage: " << currentVoltage << " Chargelevel: " << getChargeLevel() << " Time remaining " << timeRemaining;
                 emit batteryChanged(this, lpVoltage, getChargeLevel(), timeRemaining);
                 emit voltageChanged(message.sysid, state.vbat/1000.0f);
@@ -1906,29 +1912,49 @@ void UAS::setBattery(BatteryType type, int cells)
 
 void UAS::setBatterySpecs(const QString& specs)
 {
-    QString stringList = specs;
-    stringList = stringList.remove("V");
-    stringList = stringList.remove("v");
-    QStringList parts = stringList.split(",");
-    if (parts.length() == 3)
+    if (specs.length() == 0 || specs.contains("%"))
     {
-        float temp;
+        batteryRemainingEstimateEnabled = false;
         bool ok;
-        // Get the empty voltage
-        temp = parts.at(0).toFloat(&ok);
-        if (ok) emptyVoltage = temp;
-        // Get the warning voltage
-        temp = parts.at(1).toFloat(&ok);
-        if (ok) warnVoltage = temp;
-        // Get the full voltage
-        temp = parts.at(2).toFloat(&ok);
-        if (ok) fullVoltage = temp;
+        QString percent = specs;
+        percent = percent.remove("%");
+        float temp = percent.toFloat(&ok);
+        if (ok) warnLevelPercent = temp;
+    }
+    else
+    {
+        batteryRemainingEstimateEnabled = true;
+        QString stringList = specs;
+        stringList = stringList.remove("V");
+        stringList = stringList.remove("v");
+        QStringList parts = stringList.split(",");
+        if (parts.length() == 3)
+        {
+            float temp;
+            bool ok;
+            // Get the empty voltage
+            temp = parts.at(0).toFloat(&ok);
+            if (ok) emptyVoltage = temp;
+            // Get the warning voltage
+            temp = parts.at(1).toFloat(&ok);
+            if (ok) warnVoltage = temp;
+            // Get the full voltage
+            temp = parts.at(2).toFloat(&ok);
+            if (ok) fullVoltage = temp;
+        }
     }
 }
 
 QString UAS::getBatterySpecs()
 {
-    return QString("%1V,%2V,%3V").arg(emptyVoltage).arg(warnVoltage).arg(fullVoltage);
+    if (batteryRemainingEstimateEnabled)
+    {
+        return QString("%1V,%2V,%3V").arg(emptyVoltage).arg(warnVoltage).arg(fullVoltage);
+    }
+    else
+    {
+        return QString("%1%").arg(warnLevelPercent);
+    }
 }
 
 int UAS::calculateTimeRemaining()
@@ -1947,20 +1973,22 @@ int UAS::calculateTimeRemaining()
 /**
  * @return charge level in percent - 0 - 100
  */
-double UAS::getChargeLevel()
+float UAS::getChargeLevel()
 {
-    float chargeLevel;
-    if (lpVoltage < emptyVoltage)
+    if (batteryRemainingEstimateEnabled)
     {
-        chargeLevel = 0.0f;
-    }
-    else if (lpVoltage > fullVoltage)
-    {
-        chargeLevel = 100.0f;
-    }
-    else
-    {
-        chargeLevel = 100.0f * ((lpVoltage - emptyVoltage)/(fullVoltage - emptyVoltage));
+        if (lpVoltage < emptyVoltage)
+        {
+            chargeLevel = 0.0f;
+        }
+        else if (lpVoltage > fullVoltage)
+        {
+            chargeLevel = 100.0f;
+        }
+        else
+        {
+            chargeLevel = 100.0f * ((lpVoltage - emptyVoltage)/(fullVoltage - emptyVoltage));
+        }
     }
     return chargeLevel;
 }

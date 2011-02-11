@@ -124,8 +124,11 @@ protected: //COMMENTS FOR TEST UNIT
     float emptyVoltage;         ///< Voltage of the empty battery (0%)
     float startVoltage;         ///< Voltage at system start
     float warnVoltage;          ///< Voltage where QGC will start to warn about low battery
+    float warnLevelPercent;     ///< Warning level, in percent
     double currentVoltage;      ///< Voltage currently measured
     float lpVoltage;            ///< Low-pass filtered voltage
+    bool batteryRemainingEstimateEnabled; ///< If the estimate is enabled, QGC will try to estimate the remaining battery life
+    float chargeLevel;          ///< Charge level of battery, in percent
     int timeRemaining;          ///< Remaining time calculated based on previous and current
     unsigned int mode;          ///< The current mode of the MAV
     int status;                 ///< The current status of the MAV
@@ -167,7 +170,7 @@ public:
     /** @brief Estimate how much flight time is remaining */
     int calculateTimeRemaining();
     /** @brief Get the current charge level */
-    double getChargeLevel();
+    float getChargeLevel();
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
     /** @brief Check if vehicle is in autonomous mode */

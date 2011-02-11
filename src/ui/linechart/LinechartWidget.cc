@@ -416,7 +416,7 @@ void LinechartWidget::refresh()
     QMap<QString, QLabel*>::iterator j;
     for (j = curveMeans->begin(); j != curveMeans->end(); ++j)
     {
-        double val = activePlot->getCurrentValue(j.key());
+        double val = activePlot->getMean(j.key());
         int intval = static_cast<int>(val);
         if (intval >= 100000 || intval <= -100000)
         {

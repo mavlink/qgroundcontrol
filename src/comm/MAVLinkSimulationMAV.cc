@@ -163,7 +163,7 @@ void MAVLinkSimulationMAV::mainloop()
         status.packet_drop = 0;
         status.vbat = 10500;
         status.status = sys_state;
-        status.battery_remaining = 900;
+        status.battery_remaining = 912;
         mavlink_msg_sys_status_encode(systemid, MAV_COMP_ID_IMU, &msg, &status);
         link->sendMAVLinkMessage(&msg);
         timer10Hz = 5;
