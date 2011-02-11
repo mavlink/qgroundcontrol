@@ -365,7 +365,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     // Log data
     if (logging)
     {
-        if (activePlot->isVisible(curve))
+        if (activePlot->isVisible(curve+unit))
         {
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
