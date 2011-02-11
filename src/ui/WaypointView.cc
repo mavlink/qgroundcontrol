@@ -42,7 +42,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_action->addItem(tr("Loiter Turns"),MAV_CMD_NAV_LOITER_TURNS);
     m_ui->comboBox_action->addItem(tr("Return to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
     m_ui->comboBox_action->addItem(tr("Land"),MAV_CMD_NAV_LAND);
-    m_ui->comboBox_action->addItem(tr("Other"), MAV_COMMAND_ENUM_END);
+    m_ui->comboBox_action->addItem(tr("Other"), MAV_CMD_ENUM_END);
     //    m_ui->comboBox_action->addItem(tr("Delay"), MAV_ACTION_DELAY_BEFORE_COMMAND);
     //    m_ui->comboBox_action->addItem(tr("Ascend/Descent"), MAV_ACTION_ASCEND_AT_RATE);
     //    m_ui->comboBox_action->addItem(tr("Change Mode"), MAV_ACTION_CHANGE_MODE);
@@ -226,9 +226,9 @@ void WaypointView::changedAction(int index)
 {
     // set waypoint action
     int actionIndex = m_ui->comboBox_action->itemData(index).toUInt();
-    if (actionIndex < MAV_COMMAND_ENUM_END && actionIndex >= 0)
+    if (actionIndex < MAV_CMD_ENUM_END && actionIndex >= 0)
     {
-        MAV_COMMAND action = (MAV_COMMAND) actionIndex;
+        MAV_CMD action = (MAV_CMD) actionIndex;
         wp->setAction(action);
     }
 
@@ -245,14 +245,14 @@ void WaypointView::changedAction(int index)
     case MAV_CMD_NAV_LOITER_UNLIM:
     case MAV_CMD_NAV_LOITER_TURNS:
     case MAV_CMD_NAV_LOITER_TIME:
-    case MAV_CMD_NAV_DELAY:
-    case MAV_CMD_SYS_SET_MODE:
+    case MAV_CMD_CONDITION_DELAY:
+    case MAV_CMD_DO_SET_MODE:
         // Back to global frame
         if (wp->getFrame() == MAV_FRAME_MISSION) changedFrame(0);
         // Update view
         updateActionView(actionIndex);
         break;
-    case MAV_COMMAND_ENUM_END:
+    case MAV_CMD_ENUM_END:
     default:
         // Switch to mission frame
         changedFrame(MAV_FRAME_MISSION);
@@ -411,12 +411,12 @@ void WaypointView::updateValues()
     }
 
     // Update action
-    MAV_COMMAND action = wp->getAction();
+    MAV_CMD action = wp->getAction();
     int action_index = m_ui->comboBox_action->findData(action);
     // Set to "Other" action if it was -1
     if (action_index == -1)
     {
-        action_index = m_ui->comboBox_action->findData(MAV_COMMAND_ENUM_END);
+        action_index = m_ui->comboBox_action->findData(MAV_CMD_ENUM_END);
     }
     // Only update if changed
     if (m_ui->comboBox_action->currentIndex() != action_index)

@@ -32,7 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include <QStringList>
 
-Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _yaw, bool _autocontinue, bool _current, double _orbit, int _holdTime, MAV_FRAME _frame, MAV_COMMAND _action)
+Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _yaw, bool _autocontinue, bool _current, double _orbit, int _holdTime, MAV_FRAME _frame, MAV_CMD _action)
     : id(_id),
     x(_x),
     y(_y),
@@ -75,7 +75,7 @@ bool Waypoint::load(QTextStream &loadStream)
     {
         this->id = wpParams[0].toInt();
         this->frame = (MAV_FRAME) wpParams[1].toInt();
-        this->action = (MAV_COMMAND) wpParams[2].toInt();
+        this->action = (MAV_CMD) wpParams[2].toInt();
         this->param1 = wpParams[3].toDouble();
         this->param2 = wpParams[4].toDouble();
         this->orbit = wpParams[5].toDouble();
@@ -136,14 +136,14 @@ void Waypoint::setYaw(double yaw)
 
 void Waypoint::setAction(int action)
 {
-    if (this->action != (MAV_COMMAND)action)
+    if (this->action != (MAV_CMD)action)
     {
-        this->action = (MAV_COMMAND)action;
+        this->action = (MAV_CMD)action;
         emit changed(this);
     }
 }
 
-void Waypoint::setAction(MAV_COMMAND action)
+void Waypoint::setAction(MAV_CMD action)
 {
     if (this->action != action)
     {
