@@ -1919,7 +1919,14 @@ void UAS::setBatterySpecs(const QString& specs)
         QString percent = specs;
         percent = percent.remove("%");
         float temp = percent.toFloat(&ok);
-        if (ok) warnLevelPercent = temp;
+        if (ok)
+        {
+            warnLevelPercent = temp;
+        }
+        else
+        {
+            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
+        }
     }
     else
     {
@@ -1941,6 +1948,10 @@ void UAS::setBatterySpecs(const QString& specs)
             // Get the full voltage
             temp = parts.at(2).toFloat(&ok);
             if (ok) fullVoltage = temp;
+        }
+        else
+        {
+            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
         }
     }
 }
