@@ -186,13 +186,6 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
 void QGCParamWidget::addParameter(int uas, int component, int paramCount, int paramId, QString parameterName, float value)
 {
     addParameter(uas, component, parameterName, value);
-    int missCount = 0;
-    foreach (int key, transmissionMissingPackets.keys())
-    {
-        missCount +=  transmissionMissingPackets.value(key)->count();
-    }
-
-    statusLabel->setText(tr("Got Param #%1/%2: %3 (%4 missing)").arg(paramId).arg(parameterName).arg(value).arg(missCount));
 
     // List mode is different from single parameter transfers
     if (transmissionListMode)
@@ -225,9 +218,16 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
     // If the MAV sent the parameter without request, it wont be in missing list
     if (index != -1) transmissionMissingPackets.value(component)->removeAt(index);
 
+    int missCount = 0;
+    foreach (int key, transmissionMissingPackets.keys())
+    {
+        missCount +=  transmissionMissingPackets.value(key)->count();
+    }
+
+    statusLabel->setText(tr("Got Param (#%1 of %5) %2: %3 (%4 missing)").arg(paramId+1).arg(parameterName).arg(value).arg(missCount).arg(paramCount));
 
     // Check if last parameter was received
-    if (transmissionMissingPackets.count() == 0)
+    if (missCount == 0)
     {
         this->transmissionActive = false;
         this->transmissionListMode = false;
@@ -541,7 +541,7 @@ void QGCParamWidget::loadParameters()
 void QGCParamWidget::setParameter(int component, QString parameterName, float value)
 {
     emit parameterChanged(component, parameterName, value);
-    qDebug() << "SENT PARAM" << parameterName << value;
+
 }
 
 /**
@@ -550,6 +550,7 @@ void QGCParamWidget::setParameter(int component, QString parameterName, float va
 void QGCParamWidget::setParameters()
 {
     // Iterate through all components, through all parameters and emit them
+    int parametersSent = 0;
     QMap<int, QMap<QString, float>*>::iterator i;
     for (i = changedValues.begin(); i != changedValues.end(); ++i)
     {
@@ -561,12 +562,22 @@ void QGCParamWidget::setParameters()
             for (j = comp->begin(); j != comp->end(); ++j)
             {
                 setParameter(compid, j.key(), j.value());
+                parametersSent++;
             }
         }
     }
 
+    // Update stats label
+    if (parametersSent == 0)
+    {
+        statusLabel->setText(tr("No transmission: No changed values."));
+    }
+    else
+    {
+        statusLabel->setText(tr("Transmitting %1 parameters.").arg(parametersSent));
+    }
+
     changedValues.clear();
-    qDebug() << __FILE__ << __LINE__ << "SETTING ALL PARAMETERS";
 }
 
 /**
