@@ -417,7 +417,15 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
         if (mav)
         {
-            mav->getWaypointManager()->addWaypoint(new Waypoint(mav->getWaypointManager()->getWaypointList().count(), coordinate.x(), coordinate.y(), 0.0f, 0.0f, true));
+            double altitude = 0.0;
+            double yaw = 0.0;
+            int wpListCount = mav->getWaypointManager()->getWaypointList().count();
+            if (wpListCount > 0)
+            {
+                altitude = mav->getWaypointManager()->getWaypointList().at(wpListCount-1)->getAltitude();
+                yaw = mav->getWaypointManager()->getWaypointList().at(wpListCount-1)->getYaw();
+            }
+            mav->getWaypointManager()->addWaypoint(new Waypoint(wpListCount, coordinate.y(), coordinate.x(), altitude, yaw, true));
         }
         else
         {
@@ -472,8 +480,8 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
             {
                 // Waypoint is new, a new icon is created
                 QPointF coordinate;
-                coordinate.setX(wp->getX());
-                coordinate.setY(wp->getY());
+                coordinate.setX(wp->getLongitude());
+                coordinate.setY(wp->getLatitude());
                 createWaypointGraphAtMap(wpindex, coordinate);
             }
             else
@@ -483,8 +491,8 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
                 if(!waypointIsDrag)
                 {
                     QPointF coordinate;
-                    coordinate.setX(wp->getX());
-                    coordinate.setY(wp->getY());
+                    coordinate.setX(wp->getLongitude());
+                    coordinate.setY(wp->getLatitude());
 
                     Point* waypoint;
                     waypoint = wps.at(wpindex);
@@ -624,8 +632,8 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
             if (wps.size() > index)
             {
                 Waypoint* wp = wps.at(index);
-                wp->setX(coordinate.x());
-                wp->setY(coordinate.y());
+                wp->setLatitude(coordinate.y());
+                wp->setLongitude(coordinate.x());
                 mav->getWaypointManager()->notifyOfChange(wp);
             }
         }

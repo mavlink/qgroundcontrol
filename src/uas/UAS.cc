@@ -678,8 +678,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_param_value_t value;
                 mavlink_msg_param_value_decode(&message, &value);
-
-                QString parameterName = QString((char*)value.param_id);
+                QByteArray bytes((char*)value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
+                QString parameterName = QString(bytes);
                 int component = message.compid;
                 float val = value.param_value;
 

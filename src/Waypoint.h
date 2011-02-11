@@ -52,6 +52,9 @@ public:
     double getX() const { return x; }
     double getY() const { return y; }
     double getZ() const { return z; }
+    double getLatitude() const { return x; }
+    double getLongitude() const { return y; }
+    double getAltitude() const { return z; }
     double getYaw() const { return yaw; }
     bool getAutoContinue() const { return autocontinue; }
     bool getCurrent() const { return current; }
@@ -95,6 +98,9 @@ public slots:
     void setX(double x);
     void setY(double y);
     void setZ(double z);
+    void setLatitude(double lat);
+    void setLongitude(double lon);
+    void setAltitude(double alt);
     void setYaw(double yaw);
     /** @brief Set the waypoint action */
     void setAction(int action);

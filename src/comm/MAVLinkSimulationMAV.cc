@@ -15,8 +15,8 @@ MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int sy
         latitude(lat),
         longitude(lon),
         altitude(0.0),
-        x(lon),
-        y(lat),
+        x(lat),
+        y(lon),
         z(550),
         roll(0.0),
         pitch(0.0),
@@ -133,8 +133,8 @@ void MAVLinkSimulationMAV::mainloop()
         mavlink_message_t msg;
         mavlink_global_position_int_t pos;
         pos.alt = z*1000.0;
-        pos.lat = y*1E7;
-        pos.lon = x*1E7;
+        pos.lat = x*1E7;
+        pos.lon = y*1E7;
         pos.vx = 10.0f*100.0f;
         pos.vy = 0;
         pos.vz = altPer100ms*10.0f*100.0f*zsign*-1.0f;
@@ -147,7 +147,7 @@ void MAVLinkSimulationMAV::mainloop()
         attitude.usec = 0;
         attitude.roll = 0.0f;
         attitude.pitch = 0.0f;
-        attitude.yaw = yaw;
+        attitude.yaw = yaw-M_PI_2;
         attitude.rollspeed = 0.0f;
         attitude.pitchspeed = 0.0f;
         attitude.yawspeed = 0.0f;
