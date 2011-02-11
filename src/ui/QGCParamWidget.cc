@@ -42,14 +42,19 @@ This file is part of the QGROUNDCONTROL project
  */
 QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
         QWidget(parent),
+
         mav(uas),
         components(new QMap<int, QTreeWidgetItem*>()),
         paramGroups(),
         changedValues(),
-        parameters()
+        parameters(),
+        transmissionListMode(false),
+        transmissionActive(false),
+        transmissionStarted(0)
 {
     // Create tree widget
     tree = new QTreeWidget(this);
+    statusLabel = new QLabel();
     tree->setColumnWidth(0, 150);
 
     // Set tree widget as widget onto this component
@@ -60,42 +65,50 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     horizontalLayout->setMargin(0);
     horizontalLayout->setSizeConstraint(QLayout::SetMinimumSize);
 
+    // Parameter tree
     horizontalLayout->addWidget(tree, 0, 0, 1, 3);
+
+    // Status line
+    statusLabel->setText(tr("Click read to get parameters"));
+    horizontalLayout->addWidget(statusLabel, 1, 0, 1, 3);
+
+
+    // BUTTONS
     QPushButton* refreshButton = new QPushButton(tr("Refresh"));
     refreshButton->setToolTip(tr("Load parameters currently in non-permanent memory of aircraft."));
     refreshButton->setWhatsThis(tr("Load parameters currently in non-permanent memory of aircraft."));
     connect(refreshButton, SIGNAL(clicked()), this, SLOT(requestParameterList()));
-    horizontalLayout->addWidget(refreshButton, 1, 0);
+    horizontalLayout->addWidget(refreshButton, 2, 0);
 
     QPushButton* setButton = new QPushButton(tr("Transmit"));
     setButton->setToolTip(tr("Set current parameters in non-permanent onboard memory"));
     setButton->setWhatsThis(tr("Set current parameters in non-permanent onboard memory"));
     connect(setButton, SIGNAL(clicked()), this, SLOT(setParameters()));
-    horizontalLayout->addWidget(setButton, 1, 1);
+    horizontalLayout->addWidget(setButton, 2, 1);
 
     QPushButton* writeButton = new QPushButton(tr("Write (ROM)"));
     writeButton->setToolTip(tr("Copy current parameters in non-permanent memory of the aircraft to permanent memory. Transmit your parameters first to write these."));
     writeButton->setWhatsThis(tr("Copy current parameters in non-permanent memory of the aircraft to permanent memory. Transmit your parameters first to write these."));
     connect(writeButton, SIGNAL(clicked()), this, SLOT(writeParameters()));
-    horizontalLayout->addWidget(writeButton, 1, 2);
-
-    QPushButton* readButton = new QPushButton(tr("Read (ROM)"));
-    readButton->setToolTip(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
-    readButton->setWhatsThis(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
-    connect(readButton, SIGNAL(clicked()), this, SLOT(readParameters()));
-    horizontalLayout->addWidget(readButton, 2, 2);
+    horizontalLayout->addWidget(writeButton, 2, 2);
 
     QPushButton* loadFileButton = new QPushButton(tr("Load File"));
     loadFileButton->setToolTip(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
     loadFileButton->setWhatsThis(tr("Load parameters from a file on this computer in the view. To write them to the aircraft, use transmit after loading them."));
     connect(loadFileButton, SIGNAL(clicked()), this, SLOT(loadParameters()));
-    horizontalLayout->addWidget(loadFileButton, 2, 0);
+    horizontalLayout->addWidget(loadFileButton, 3, 0);
 
     QPushButton* saveFileButton = new QPushButton(tr("Save File"));
     saveFileButton->setToolTip(tr("Save parameters in this view to a file on this computer."));
     saveFileButton->setWhatsThis(tr("Save parameters in this view to a file on this computer."));
     connect(saveFileButton, SIGNAL(clicked()), this, SLOT(saveParameters()));
-    horizontalLayout->addWidget(saveFileButton, 2, 1);
+    horizontalLayout->addWidget(saveFileButton, 3, 1);
+
+    QPushButton* readButton = new QPushButton(tr("Read (ROM)"));
+    readButton->setToolTip(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
+    readButton->setWhatsThis(tr("Copy parameters from permanent memory to non-permanent current memory of aircraft. DOES NOT update the parameters in this view, click refresh after copying them to get them."));
+    connect(readButton, SIGNAL(clicked()), this, SLOT(readParameters()));
+    horizontalLayout->addWidget(readButton, 3, 2);
 
     // Set layout
     this->setLayout(horizontalLayout);
@@ -113,7 +126,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(tree, SIGNAL(itemChanged(QTreeWidgetItem*,int)), this, SLOT(parameterItemChanged(QTreeWidgetItem*,int)));
 
     // New parameters from UAS
-    connect(uas, SIGNAL(parameterChanged(int,int,QString,float)), this, SLOT(addParameter(int,int,QString,float)));
+    connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,float)), this, SLOT(addParameter(int,int,int,int,QString,float)));
 }
 
 /**
@@ -161,6 +174,67 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
         if (!changedValues.contains(component))
         {
             changedValues.insert(component, new QMap<QString, float>());
+        }
+    }
+}
+
+/**
+ * @param uas System which has the component
+ * @param component id of the component
+ * @param parameterName human friendly name of the parameter
+ */
+void QGCParamWidget::addParameter(int uas, int component, int paramCount, int paramId, QString parameterName, float value)
+{
+    addParameter(uas, component, parameterName, value);
+    int missCount = 0;
+    foreach (int key, transmissionMissingPackets.keys())
+    {
+        missCount +=  transmissionMissingPackets.value(key)->count();
+    }
+
+    statusLabel->setText(tr("Got Param #%1/%2: %3 (%4 missing)").arg(paramId).arg(parameterName).arg(value).arg(missCount));
+
+    // List mode is different from single parameter transfers
+    if (transmissionListMode)
+    {
+        // Only accept the list size once on the first packet from
+        // each component
+        if (!transmissionListSizeKnown.contains(component))
+        {
+            // If this was the first packet to announce the list size
+            // set all packets not received yet as missing to enforce
+            // retransmission until full list is received
+            if (!transmissionMissingPackets.contains(component))
+            {
+                transmissionMissingPackets.insert(component, new QList<int>());
+            }
+
+            for (int i = 0; i < paramCount; ++i)
+            {
+                if (!transmissionMissingPackets.value(component)->contains(i))
+                {
+                    transmissionMissingPackets.value(component)->append(i);
+                }
+            }
+            transmissionListSizeKnown.insert(component, true);
+        }
+    }
+
+    // Mark this parameter as received
+    int index = transmissionMissingPackets.value(component)->indexOf(paramId);
+    // If the MAV sent the parameter without request, it wont be in missing list
+    if (index != -1) transmissionMissingPackets.value(component)->removeAt(index);
+
+
+    // Check if last parameter was received
+    if (transmissionMissingPackets.count() == 0)
+    {
+        this->transmissionActive = false;
+        this->transmissionListMode = false;
+        transmissionListSizeKnown.clear();
+        foreach (int key, transmissionMissingPackets.keys())
+        {
+            transmissionMissingPackets.value(key)->clear();
         }
     }
 }
@@ -298,6 +372,15 @@ void QGCParamWidget::requestParameterList()
     clear();
     parameters.clear();
     received.clear();
+    // Clear transmission state
+    transmissionListMode = true;
+    transmissionListSizeKnown.clear();
+    foreach (int key, transmissionMissingPackets.keys())
+    {
+        transmissionMissingPackets.value(key)->clear();
+    }
+    transmissionActive = true;
+    transmissionStarted = QGC::groundTimeUsecs();
     mav->requestParameters();
 }
 
@@ -322,12 +405,13 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
             bool ok;
             QString str = current->data(0, Qt::DisplayRole).toString();
             float value = current->data(1, Qt::DisplayRole).toDouble(&ok);
-            // Send parameter to MAV
+            // Set parameter on changed list to be transmitted to MAV
             if (ok)
             {
                 if (ok)
                 {
-                    qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
+                    statusLabel->setText(tr("Changed Param %1:%2: %3").arg(key).arg(str).arg(value));
+                    //qDebug() << "PARAM CHANGED: COMP:" << key << "KEY:" << str << "VALUE:" << value;
                     // Changed values list
                     if (map->contains(str)) map->remove(str);
                     map->insert(str, value);
@@ -375,7 +459,7 @@ void QGCParamWidget::saveParameters()
             for (j = comp->begin(); j != comp->end(); ++j)
             {
                 QString paramValue("%1");
-                paramValue = paramValue.arg(j.value(), 18, 'g');
+                paramValue = paramValue.arg(j.value(), 25, 'g', 12);
                 in << mav->getUASID() << "\t" << compid << "\t" << j.key() << "\t" << paramValue << "\n";
                 in.flush();
             }

@@ -317,21 +317,25 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
             mavlink_msg_action_decode(&msg, &action);
             if (systemid == action.target && (action.target_component == 0 || action.target_component == MAV_COMP_ID_IMU))
             {
+                mavlink_action_ack_t ack;
+                ack.action = action.action;
                 switch (action.action)
                 {
                 case MAV_ACTION_TAKEOFF:
                     flying = true;
+                    ack.result = 1;
                     break;
                 default:
                     {
-                        mavlink_statustext_t text;
-                        mavlink_message_t r_msg;
-                        sprintf((char*)text.text, "MAV%d ignored unknown action %d", systemid, action.action);
-                        mavlink_msg_statustext_encode(systemid, MAV_COMP_ID_IMU, &r_msg, &text);
-                        link->sendMAVLinkMessage(&r_msg);
+                        ack.result = 0;
                     }
                     break;
                 }
+
+                // Give feedback about action
+                mavlink_message_t r_msg;
+                mavlink_msg_action_ack_encode(systemid, MAV_COMP_ID_IMU, &r_msg, &ack);
+                link->sendMAVLinkMessage(&r_msg);
             }
         }
         break;

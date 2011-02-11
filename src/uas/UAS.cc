@@ -256,7 +256,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
 
                 emit loadChanged(this,state.load/10.0f);
-                emit valueChanged(uasId, "Load", "%", ((float)state.load)/1000.0f, getUnixTime());
+                emit valueChanged(uasId, "Load", "%", ((float)state.load)/10.0f, getUnixTime());
 
                 if (this->mode != static_cast<unsigned int>(state.mode))
                 {
@@ -369,7 +369,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit gpsLocalizationChanged(this, status.gps_fix);
             }
             break;
-		#endif // PIXHAWK 
+#endif // PIXHAWK
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 mavlink_raw_imu_t raw;
@@ -385,6 +385,23 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "mag x", "raw", static_cast<double>(raw.xmag), time);
                 emit valueChanged(uasId, "mag y", "raw", static_cast<double>(raw.ymag), time);
                 emit valueChanged(uasId, "mag z", "raw", static_cast<double>(raw.zmag), time);
+            }
+            break;
+         case MAVLINK_MSG_ID_SCALED_IMU:
+            {
+                mavlink_scaled_imu_t scaled;
+                mavlink_msg_scaled_imu_decode(&message, &scaled);
+                quint64 time = getUnixTime(scaled.usec);
+
+                emit valueChanged(uasId, "accel x", "g", scaled.xacc/1000.0f, time);
+                emit valueChanged(uasId, "accel y", "g", scaled.yacc/1000.0f, time);
+                emit valueChanged(uasId, "accel z", "g", scaled.zacc/1000.0f, time);
+                emit valueChanged(uasId, "gyro roll", "rad/s", scaled.xgyro/1000.0f, time);
+                emit valueChanged(uasId, "gyro pitch", "rad/s", scaled.ygyro/1000.0f, time);
+                emit valueChanged(uasId, "gyro yaw", "rad/s", scaled.zgyro/1000.0f, time);
+                emit valueChanged(uasId, "mag x", "tesla", scaled.xmag/1000.0f, time);
+                emit valueChanged(uasId, "mag y", "tesla", scaled.ymag/1000.0f, time);
+                emit valueChanged(uasId, "mag z", "tesla", scaled.zmag/1000.0f, time);
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
@@ -678,6 +695,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 // Emit change
                 emit parameterChanged(uasId, message.compid, parameterName, val);
+                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val);
+            }
+            break;
+        case MAVLINK_MSG_ID_ACTION_ACK:
+            mavlink_action_ack_t ack;
+            mavlink_msg_action_ack_decode(&message, &ack);
+            if (ack.result == 1)
+            {
+                emit textMessageReceived(uasId, message.compid, 0, tr("SUCCESS: Executed action: %1").arg(ack.action));
+            }
+            else
+            {
+                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Rejected action: %1").arg(ack.action));
             }
             break;
         case MAVLINK_MSG_ID_DEBUG:
