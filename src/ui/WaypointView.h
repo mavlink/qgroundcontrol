@@ -37,6 +37,13 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include <iostream>
 
+enum QGC_WAYPOINTVIEW_MODE {
+    QGC_WAYPOINTVIEW_MODE_NAV,
+    QGC_WAYPOINTVIEW_MODE_CONDITION,
+    QGC_WAYPOINTVIEW_MODE_DO,
+    QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING
+};
+
 namespace Ui {
     class WaypointView;
 }
@@ -68,12 +75,16 @@ public slots:
     
     void setYaw(int);   //hidden degree to radian conversion
     
+protected slots:
+    void changeViewMode(QGC_WAYPOINTVIEW_MODE mode);
+
 protected:
     virtual void changeEvent(QEvent *e);
     Waypoint* wp;
     // Special widgets extendending the
     // waypoint view to mission capabilities
     Ui_QGCCustomWaypointAction* customCommand;
+    QGC_WAYPOINTVIEW_MODE viewMode;
     
 private:
     Ui::WaypointView *m_ui;

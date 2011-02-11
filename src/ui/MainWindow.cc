@@ -408,7 +408,7 @@ void MainWindow::buildPxWidgets()
     acceptList->append("0,airspeed,m/s,30");
     acceptList->append("0,groundspeed,m/s,30");
     acceptList->append("0,climbrate,m/s,30");
-    acceptList->append("0,throttle,m/s,100");
+    acceptList->append("0,throttle,%,100");
 
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
