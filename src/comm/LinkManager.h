@@ -62,6 +62,9 @@ public:
     /** @brief Get a list of all links */
     const QList<LinkInterface*> getLinks();
 
+    /** @brief Get a list of all protocols */
+    const QList<ProtocolInterface*> getProtocols() { return protocolLinks.uniqueKeys(); }
+
 public slots:
 
     void add(LinkInterface* link);
