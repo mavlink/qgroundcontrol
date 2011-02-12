@@ -391,7 +391,7 @@ void MainWindow::buildCommonWidgets()
     if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
-        addToCentralWidgetsMenu (dataplotWidget, "Data Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
+        addToCentralWidgetsMenu (dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
     }
 }
 
@@ -431,27 +431,27 @@ void MainWindow::buildPxWidgets()
     {
         // Center widgets
         linechartWidget   = new Linecharts(this);
-        addToCentralWidgetsMenu(linechartWidget, "Line Plots", SLOT(showCentralWidget()), CENTRAL_LINECHART);
+        addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
     }
 
 
     if (!hudWidget)
     {
         hudWidget         = new HUD(320, 240, this);
-        addToCentralWidgetsMenu(hudWidget, "HUD", SLOT(showCentralWidget()), CENTRAL_HUD);
+        addToCentralWidgetsMenu(hudWidget, tr("Head Up Display"), SLOT(showCentralWidget()), CENTRAL_HUD);
     }
 
     if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
-        addToCentralWidgetsMenu(dataplotWidget, "Data Plots", SLOT(showCentralWidget()), CENTRAL_DATA_PLOT);
+        addToCentralWidgetsMenu(dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()), CENTRAL_DATA_PLOT);
     }
 
 #ifdef QGC_OSG_ENABLED
     if (!_3DWidget)
     {
         _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-        addToCentralWidgetsMenu(_3DWidget, "Local 3D", SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
+        addToCentralWidgetsMenu(_3DWidget, tr("Local 3D"), SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
     }
 #endif
 
@@ -459,7 +459,7 @@ void MainWindow::buildPxWidgets()
     if (!_3DMapWidget)
     {
         _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
-        addToCentralWidgetsMenu(_3DMapWidget, "OSG Earth 3D", SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
+        addToCentralWidgetsMenu(_3DMapWidget, tr("OSG Earth 3D"), SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
     }
 #endif
 
@@ -467,7 +467,7 @@ void MainWindow::buildPxWidgets()
     if (!gEarthWidget)
     {
         gEarthWidget = new QGCGoogleEarthView(this);
-        addToCentralWidgetsMenu(gEarthWidget, "Google Earth", SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
+        addToCentralWidgetsMenu(gEarthWidget, tr("Google Earth"), SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
     }
 
 #endif
@@ -503,7 +503,7 @@ void MainWindow::buildPxWidgets()
         hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
         hsiDockWidget->setWidget( new HSIDisplay(this) );
         hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
-        addToToolsMenu (hsiDockWidget, tr("HSI"), SLOT(showToolWidget(bool)), MENU_HSI, Qt::BottomDockWidgetArea);
+        addToToolsMenu (hsiDockWidget, tr("Horizontal Situation"), SLOT(showToolWidget(bool)), MENU_HSI, Qt::BottomDockWidgetArea);
     }
 
     if (!headDown1DockWidget)
@@ -572,6 +572,7 @@ void MainWindow::buildSlugsWidgets()
     {
         // Center widgets
         linechartWidget   = new Linecharts(this);
+        addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
     }
 
     if (!headUpDockWidget)
@@ -580,7 +581,7 @@ void MainWindow::buildSlugsWidgets()
         headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
         headUpDockWidget->setWidget( new HUD(320, 240, this));
         headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
-        addToToolsMenu (headUpDockWidget, tr("HUD"), SLOT(showToolWidget(bool)), MENU_HUD, Qt::LeftDockWidgetArea);
+        addToToolsMenu (headUpDockWidget, tr("Head Up Display"), SLOT(showToolWidget(bool)), MENU_HUD, Qt::LeftDockWidgetArea);
     }
 
     if (!rcViewDockWidget)

@@ -259,6 +259,9 @@ public slots:
     /** @brief Request all parameters */
     void requestParameters();
 
+    /** @brief Request a single parameter by index */
+    void requestParameter(int component, int parameter);
+
     /** @brief Set a system parameter */
     void setParameter(const int component, const QString& id, const float value);
 

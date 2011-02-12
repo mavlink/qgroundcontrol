@@ -535,9 +535,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "latitude", "deg", latitude, time);
                 emit valueChanged(uasId, "longitude", "deg", longitude, time);
                 emit valueChanged(uasId, "altitude", "m", altitude, time);
-                emit valueChanged(uasId, "gps x speed", "m/s", speedX, time);
-                emit valueChanged(uasId, "gps y speed", "m/s", speedY, time);
-                emit valueChanged(uasId, "gps z speed", "m/s", speedZ, time);
+                double totalSpeed = sqrt(speedX*speedX + speedY*speedY + speedZ*speedZ);
+                emit valueChanged(uasId, "gps speed", "m/s", totalSpeed, time);
                 emit globalPositionChanged(this, longitude, latitude, altitude, time);
                 emit speedChanged(this, speedX, speedY, speedZ, time);
                 // Set internal state
@@ -565,12 +564,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "latitude", "deg", latitude, time);
                 emit valueChanged(uasId, "longitude", "deg", longitude, time);
                 emit valueChanged(uasId, "altitude", "m", altitude, time);
-                emit valueChanged(uasId, "gps x speed", "m/s", speedX, time);
-                emit valueChanged(uasId, "gps y speed", "m/s", speedY, time);
-                emit valueChanged(uasId, "gps z speed", "m/s", speedZ, time);
+                double totalSpeed = sqrt(speedX*speedX + speedY*speedY + speedZ*speedZ);
+                emit valueChanged(uasId, "gps speed", "m/s", totalSpeed, time);
                 emit globalPositionChanged(this, longitude, latitude, altitude, time);
                 emit speedChanged(this, speedX, speedY, speedZ, time);
-                emit valueChanged(uasId, "gpsspeed", "m/s", sqrt(speedX*speedX+speedY*speedY+speedZ*speedZ), time);
                 // Set internal state
                 if (!positionLock)
                 {
@@ -600,7 +597,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (pos.fix_type > 0)
                 {
                     emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
-                    emit valueChanged(uasId, "gpsspeed", "m/s", pos.v, time);
+                    emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
 
                     // Check for NaN
                     int alt = pos.alt;
@@ -1515,11 +1512,11 @@ void UAS::setParameter(const int component, const QString& id, const float value
         {
             p.param_id[i] = id.toAscii()[i];
         }
-        // Null termination at end of string or end of buffer
-        else if ((int)i == id.length() || i == (sizeof(p.param_id) - 1))
-        {
-            p.param_id[i] = '\0';
-        }
+//        // Null termination at end of string or end of buffer
+//        else if ((int)i == id.length() || i == (sizeof(p.param_id) - 1))
+//        {
+//            p.param_id[i] = '\0';
+//        }
         // Zero fill
         else
         {
@@ -1529,6 +1526,18 @@ void UAS::setParameter(const int component, const QString& id, const float value
     mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
     sendMessage(msg);
     }
+}
+
+void UAS::requestParameter(int component, int parameter)
+{
+    mavlink_message_t msg;
+    mavlink_param_request_read_t read;
+    read.param_index = parameter;
+    read.target_system = uasId;
+    read.target_component = component;
+    mavlink_msg_param_request_read_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &read);
+    sendMessage(msg);
+    qDebug() << __FILE__ << __LINE__ << "REQUESTING PARAM RETRANSMISSION FROM COMPONENT" << component << "FOR PARAM ID" << parameter;
 }
 
 void UAS::setSystemType(int systemType)

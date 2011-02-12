@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QTreeWidgetItem>
 #include <QMap>
 #include <QLabel>
+#include <QTimer>
 
 #include "UASInterface.h"
 
@@ -51,6 +52,8 @@ public:
 signals:
     /** @brief A parameter was changed in the widget, NOT onboard */
     void parameterChanged(int component, QString parametername, float value);
+    /** @brief Request a single parameter */
+    void requestParameter(int component, int parameter);
 public slots:
     /** @brief Add a component to the list */
     void addComponent(int uas, int component, QString componentName);
@@ -77,6 +80,10 @@ public slots:
     void saveParameters();
     /** @brief Load parameters from a file */
     void loadParameters();
+
+    /** @brief Check for missing parameters */
+    void retransmissionGuardTick();
+
 protected:
     UASInterface* mav;   ///< The MAV this widget is controlling
     QTreeWidget* tree;   ///< The parameter tree
@@ -91,6 +98,11 @@ protected:
     QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
     bool transmissionActive;         ///< Missing packets, working on list?
     quint64 transmissionStarted;     ///< Timeout
+    QTimer retransmissionTimer;      ///< Timer handling parameter retransmission
+    const static int retransmissionTimeout = 100; ///< Retransmission request timeout, in milliseconds
+
+    /** @brief Activate / deactivate parameter retransmission */
+    void setRetransmissionGuardEnabled(bool enabled);
 };
 
 #endif // QGCPARAMWIDGET_H

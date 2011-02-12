@@ -826,13 +826,16 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         int j = 0;
                         for (i = onboardParams.begin(); i != onboardParams.end(); ++i)
                         {
-                            // Pack message and get size of encoded byte string
-                            mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)i.key().toStdString().c_str(), i.value(), onboardParams.size(), j);
-                            // Allocate buffer with packet data
-                            bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
-                            //add data into datastream
-                            memcpy(stream+streampointer,buffer, bufferlength);
-                            streampointer+=bufferlength;
+                            if (j != 5)
+                            {
+                                // Pack message and get size of encoded byte string
+                                mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)i.key().toStdString().c_str(), i.value(), onboardParams.size(), j);
+                                // Allocate buffer with packet data
+                                bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+                                //add data into datastream
+                                memcpy(stream+streampointer,buffer, bufferlength);
+                                streampointer+=bufferlength;
+                            }
                             j++;
                         }
 
@@ -854,7 +857,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                             onboardParams.insert(key, set.param_value);
 
                             // Pack message and get size of encoded byte string
-                            mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)key.toStdString().c_str(), set.param_value, onboardParams.size(), 0);
+                            mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)key.toStdString().c_str(), set.param_value, onboardParams.size(), onboardParams.keys().indexOf(key));
                             // Allocate buffer with packet data
                             bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
                             //add data into datastream
@@ -863,15 +866,48 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         }
                     }
                 }
+            case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
+                {
+                    qDebug() << "SIMULATION RECEIVED COMMAND TO SEND PARAMETER";
+                    mavlink_param_request_read_t read;
+                    mavlink_msg_param_request_read_decode(&msg, &read);
+                    QByteArray bytes((char*)read.param_id, MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN);
+                    QString key = QString(bytes);
+                    if (onboardParams.contains(key))
+                    {
+                        float paramValue = onboardParams.value(key);
+
+                        // Pack message and get size of encoded byte string
+                        mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)key.toStdString().c_str(), paramValue, onboardParams.size(), onboardParams.keys().indexOf(key));
+                        // Allocate buffer with packet data
+                        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+                        //add data into datastream
+                        memcpy(stream+streampointer,buffer, bufferlength);
+                        streampointer+=bufferlength;
+                    }
+                    else if (read.param_index < onboardParams.size())
+                    {
+                        key = onboardParams.keys().at(read.param_index);
+                        float paramValue = onboardParams.value(key);
+
+                        // Pack message and get size of encoded byte string
+                        mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)key.toStdString().c_str(), paramValue, onboardParams.size(), onboardParams.keys().indexOf(key));
+                        // Allocate buffer with packet data
+                        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+                        //add data into datastream
+                        memcpy(stream+streampointer,buffer, bufferlength);
+                        streampointer+=bufferlength;
+                    }
+                }
                 break;
             }
 
 
         }
-        //unsigned char v=data[i];
-        //fprintf(stderr,"%02x ", v);
+        unsigned char v=data[i];
+        fprintf(stderr,"%02x ", v);
     }
-    //fprintf(stderr,"\n");
+    fprintf(stderr,"\n");
 
     readyBufferMutex.lock();
     for (int i = 0; i < streampointer; i++)
@@ -903,22 +939,22 @@ void MAVLinkSimulationLink::readBytes() {
 
     readyBufferMutex.unlock();
 
-    //    if (len > 0)
-    //    {
-    //        qDebug() << "Simulation sent " << len << " bytes to groundstation: ";
-    //
-    //        /* Increase write counter */
-    //        //bitsSentTotal += size * 8;
-    //
-    //        //Output all bytes as hex digits
-    //        int i;
-    //        for (i=0; i<len; i++)
-    //        {
-    //            unsigned int v=data[i];
-    //            fprintf(stderr,"%02x ", v);
-    //        }
-    //        fprintf(stderr,"\n");
-    //    }
+//    if (len > 0)
+//    {
+//        qDebug() << "Simulation sent " << len << " bytes to groundstation: ";
+
+//        /* Increase write counter */
+//        //bitsSentTotal += size * 8;
+
+//        //Output all bytes as hex digits
+//        int i;
+//        for (i=0; i<len; i++)
+//        {
+//            unsigned int v=data[i];
+//            fprintf(stderr,"%02x ", v);
+//        }
+//        fprintf(stderr,"\n");
+//    }
 }
 
 /**

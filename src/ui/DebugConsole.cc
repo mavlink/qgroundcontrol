@@ -85,10 +85,10 @@ DebugConsole::DebugConsole(QWidget *parent) :
     snapShotTimer.setInterval(snapShotInterval);
     snapShotTimer.start();
 
-    // Set hex checkbox checked
-    m_ui->hexCheckBox->setChecked(!convertToAscii);
-    m_ui->mavlinkCheckBox->setChecked(filterMAVLINK);
-    m_ui->holdCheckBox->setChecked(autoHold);
+//    // Set hex checkbox checked
+//    m_ui->hexCheckBox->setChecked(!convertToAscii);
+//    m_ui->mavlinkCheckBox->setChecked(filterMAVLINK);
+//    m_ui->holdCheckBox->setChecked(autoHold);
 
     // Get a list of all existing links
     links = QList<LinkInterface*>();
@@ -120,8 +120,6 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Allow to send via return
     connect(m_ui->sendText, SIGNAL(returnPressed()), this, SLOT(sendBytes()));
 
-    hold(false);
-
     loadSettings();
 
     // Warn user about not activated hold
@@ -146,8 +144,8 @@ void DebugConsole::loadSettings()
     m_ui->specialComboBox->setCurrentIndex(settings.value("SPECIAL_SYMBOL", m_ui->specialComboBox->currentIndex()).toInt());
     m_ui->specialCheckBox->setChecked(settings.value("SPECIAL_SYMBOL_CHECKBOX_STATE", m_ui->specialCheckBox->isChecked()).toBool());
     hexModeEnabled(settings.value("HEX_MODE_ENABLED", m_ui->hexCheckBox->isChecked()).toBool());
-    MAVLINKfilterEnabled(settings.value("MAVLINK_FILTER_ENABLED", m_ui->mavlinkCheckBox->isChecked()).toBool());
-    setAutoHold(settings.value("AUTO_HOLD_ENABLED", m_ui->holdCheckBox->isChecked()).toBool());
+    MAVLINKfilterEnabled(settings.value("MAVLINK_FILTER_ENABLED", filterMAVLINK).toBool());
+    setAutoHold(settings.value("AUTO_HOLD_ENABLED", autoHold).toBool());
     settings.endGroup();
 
     // Update visibility settings
@@ -166,8 +164,8 @@ void DebugConsole::storeSettings()
     settings.setValue("SPECIAL_SYMBOL", m_ui->specialComboBox->currentIndex());
     settings.setValue("SPECIAL_SYMBOL_CHECKBOX_STATE", m_ui->specialCheckBox->isChecked());
     settings.setValue("HEX_MODE_ENABLED", m_ui->hexCheckBox->isChecked());
-    settings.setValue("MAVLINK_FILTER_ENABLED", m_ui->mavlinkCheckBox->isChecked());
-    settings.setValue("AUTO_HOLD_ENABLED", m_ui->holdCheckBox->isChecked());
+    settings.setValue("MAVLINK_FILTER_ENABLED", filterMAVLINK);
+    settings.setValue("AUTO_HOLD_ENABLED", autoHold);
     settings.endGroup();
     settings.sync();
     //qDebug() << "Storing settings!";
@@ -242,8 +240,16 @@ void DebugConsole::setAutoHold(bool hold)
         this->hold(false);
         m_ui->holdButton->setChecked(false);
     }
+    // Set auto hold checkbox
+    if (m_ui->holdCheckBox->isChecked() != hold)
+    {
+        m_ui->holdCheckBox->setChecked(hold);
+    }
     // Set new state
     autoHold = hold;
+
+    // FIXME REMOVE THIS HERE
+    storeSettings();
 }
 
 /**
@@ -699,6 +705,8 @@ void DebugConsole::hexModeEnabled(bool mode)
         m_ui->sentText->clear();
         commandHistory.clear();
     }
+    // FIXME REMOVE THIS HERE
+    storeSettings();
 }
 
 /**
@@ -715,6 +723,8 @@ void DebugConsole::MAVLINKfilterEnabled(bool filter)
             m_ui->mavlinkCheckBox->setChecked(filter);
         }
     }
+    // FIXME REMOVE THIS HERE
+    storeSettings();
 }
 /**
  * @param hold Freeze the input and thus any scrolling
