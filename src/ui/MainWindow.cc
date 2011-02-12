@@ -28,6 +28,7 @@
 #include "GAudioOutput.h"
 #include "QGCToolWidget.h"
 #include "QGCMAVLinkLogPlayer.h"
+#include "QGCSettingsWidget.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -261,7 +262,8 @@ QString MainWindow::getWindowStateKey()
 
 QString MainWindow::getWindowGeometryKey()
 {
-    return QString::number(currentView)+"_geometry";
+    //return QString::number(currentView)+"_geometry";
+    return "_geometry";
 }
 
 void MainWindow::buildCustomWidget()
@@ -1344,8 +1346,12 @@ void MainWindow::connectCommonActions()
     // unless it is actually used
     // so no ressources spend on this.
     ui.actionJoystickSettings->setVisible(true);
-    // Joystick configuration
+
+    // Configuration
+    // Joystick
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
+    // Application Settings
+    connect(ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
 }
 
 void MainWindow::connectPxActions()
@@ -1412,6 +1418,12 @@ void MainWindow::configure()
         joystickWidget = new JoystickWidget(joystick);
     }
     joystickWidget->show();
+}
+
+void MainWindow::showSettings()
+{
+    QGCSettingsWidget* settings = new QGCSettingsWidget(this);
+    settings->show();
 }
 
 void MainWindow::addLink()
