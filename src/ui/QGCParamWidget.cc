@@ -216,12 +216,13 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
                 }
             }
 
-            // Start retransmission guard
-            setRetransmissionGuardEnabled(true);
-
             // Mark list size as known
             transmissionListSizeKnown.insert(component, true);
         }
+
+        // Start retransmission guard
+        // or reset timer
+        setRetransmissionGuardEnabled(true);
     }
 
     // Mark this parameter as received

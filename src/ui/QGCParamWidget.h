@@ -99,7 +99,7 @@ protected:
     bool transmissionActive;         ///< Missing packets, working on list?
     quint64 transmissionStarted;     ///< Timeout
     QTimer retransmissionTimer;      ///< Timer handling parameter retransmission
-    const static int retransmissionTimeout = 800; ///< Retransmission request timeout, in milliseconds
+    const static int retransmissionTimeout = 250; ///< Retransmission request timeout, in milliseconds
 
     /** @brief Activate / deactivate parameter retransmission */
     void setRetransmissionGuardEnabled(bool enabled);
