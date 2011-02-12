@@ -580,7 +580,7 @@ void QGCParamWidget::retransmissionGuardTick()
             if (paramList)
             {
                 int count = 0;
-                int maxCount = 5;
+                int maxCount = 1;
                 foreach (int id, *paramList)
                 {
                     if (count < maxCount)
