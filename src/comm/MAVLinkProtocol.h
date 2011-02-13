@@ -77,6 +77,16 @@ public:
     int getVersion() { return MAVLINK_VERSION; }
     /** @brief Get the name of the packet log file */
     QString getLogfileName();
+    /** @brief Get state of parameter retransmission */
+    bool paramGuardEnabled() { return m_paramGuardEnabled; }
+    /** @brief Get parameter read timeout */
+    int getParamRetransmissionTimeout() { return m_paramRetransmissionTimeout; }
+    /** @brief Get parameter write timeout */
+    int getParamRewriteTimeout() { return m_paramRewriteTimeout; }
+    /** @brief Get state of action retransmission */
+    bool actionGuardEnabled() { return m_actionGuardEnabled; }
+    /** @brief Get parameter read timeout */
+    int getActionRetransmissionTimeout() { return m_actionRetransmissionTimeout; }
 
 public slots:
     /** @brief Receive bytes from a communication interface */
@@ -98,6 +108,21 @@ public slots:
 
     /** @brief Enabled/disable packet multiplexing */
     void enableMultiplexing(bool enabled);
+
+    /** @brief Enable / disable parameter retransmission */
+    void enableParamGuard(bool enabled);
+
+    /** @brief Enable / disable action retransmission */
+    void enableActionGuard(bool enabled);
+
+    /** @brief Set parameter read timeout */
+    void setParamRetransmissionTimeout(int ms);
+
+    /** @brief Set parameter write timeout */
+    void setParamRewriteTimeout(int ms);
+
+    /** @brief Set parameter read timeout */
+    void setActionRetransmissionTimeout(int ms);
 
     /** @brief Set log file name */
     void setLogfileName(const QString& filename);
@@ -121,6 +146,11 @@ protected:
     bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
     QFile* m_logfile;           ///< Logfile
     bool m_enable_version_check; ///< Enable checking of version match of MAV and QGC
+    int m_paramRetransmissionTimeout; ///< Timeout for parameter retransmission
+    int m_paramRewriteTimeout;    ///< Timeout for sending re-write request
+    bool m_paramGuardEnabled;       ///< Parameter retransmission/rewrite enabled
+    bool m_actionGuardEnabled;       ///< Action request retransmission enabled
+    int m_actionRetransmissionTimeout; ///< Timeout for parameter retransmission
     QMutex receiveMutex;       ///< Mutex to protect receiveBytes function
     int lastIndex[256][256];
     int totalReceiveCounter;
@@ -143,6 +173,18 @@ signals:
     void versionCheckChanged(bool enabled);
     /** @brief Emitted if a message from the protocol should reach the user */
     void protocolStatusMessage(const QString& title, const QString& message);
+    /** @brief Emitted if a new system ID was set */
+    void systemIdChanged(int systemId);
+    /** @brief Emitted if param guard status changed */
+    void paramGuardChanged(bool enabled);
+    /** @brief Emitted if param read timeout changed */
+    void paramRetransmissionTimeoutChanged(int ms);
+    /** @brief Emitted if param write timeout changed */
+    void paramRewriteTimeoutChanged(int ms);
+    /** @brief Emitted if action guard status changed */
+    void actionGuardChanged(bool enabled);
+    /** @brief Emitted if actiion request timeout changed */
+    void actionRetransmissionTimeoutChanged(int ms);
 };
 
 #endif // MAVLINKPROTOCOL_H_

@@ -79,7 +79,7 @@ public slots:
     /** @brief Set the currently selected UAS */
     void setActiveUAS(UASInterface* uas);
     /** @brief Update the global position */
-    void updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec);
+    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     /** @brief Update a single waypoint */
     void updateWaypoint(int uas, Waypoint* wp);
     /** @brief Update the waypoint list */

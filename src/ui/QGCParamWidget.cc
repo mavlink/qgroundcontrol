@@ -30,6 +30,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QPushButton>
 #include <QFileDialog>
 #include <QFile>
+#include <QList>
+#include <QSettings>
 
 #include "QGCParamWidget.h"
 #include "UASInterface.h"
@@ -50,8 +52,13 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
         parameters(),
         transmissionListMode(false),
         transmissionActive(false),
-        transmissionStarted(0)
+        transmissionStarted(0),
+        retransmissionTimeout(350),
+        rewriteTimeout(500)
 {
+    // Load settings
+    loadSettings();
+
     // Create tree widget
     tree = new QTreeWidget(this);
     statusLabel = new QLabel();
@@ -127,6 +134,22 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
 
     // New parameters from UAS
     connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,float)), this, SLOT(addParameter(int,int,int,int,QString,float)));
+
+    // Connect retransmission guard
+    connect(this, SIGNAL(requestParameter(int,int)), uas, SLOT(requestParameter(int,int)));
+    connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
+}
+
+void QGCParamWidget::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_MAVLINK_PROTOCOL");
+    bool ok;
+    int temp = settings.value("PARAMETER_RETRANSMISSION_TIMEOUT", retransmissionTimeout).toInt(&ok);
+    if (ok) retransmissionTimeout = temp;
+    temp = settings.value("PARAMETER_REWRITE_TIMEOUT", rewriteTimeout).toInt(&ok);
+    if (ok) rewriteTimeout = temp;
+    settings.endGroup();
 }
 
 /**
@@ -202,6 +225,7 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
                 transmissionMissingPackets.insert(component, new QList<int>());
             }
 
+            // Mark all parameters as missing
             for (int i = 0; i < paramCount; ++i)
             {
                 if (!transmissionMissingPackets.value(component)->contains(i))
@@ -209,8 +233,14 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
                     transmissionMissingPackets.value(component)->append(i);
                 }
             }
+
+            // Mark list size as known
             transmissionListSizeKnown.insert(component, true);
         }
+
+        // Start retransmission guard
+        // or reset timer
+        setRetransmissionGuardEnabled(true);
     }
 
     // Mark this parameter as received
@@ -368,6 +398,13 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
  */
 void QGCParamWidget::requestParameterList()
 {
+    // FIXME This call does not belong here
+    // Once the comm handling is moved to a new
+    // Param manager class the settings can be directly
+    // loaded from MAVLink protocol
+    loadSettings();
+    // End of FIXME
+
     // Clear view and request param list
     clear();
     parameters.clear();
@@ -532,6 +569,68 @@ void QGCParamWidget::loadParameters()
 
 }
 
+/**
+ * Enabling the retransmission guard enables the parameter widget to track
+ * dropped parameters and to re-request them. This works for both individual
+ * parameter reads as well for whole list requests.
+ *
+ * @param enabled True if retransmission checking should be enabled, false else
+ */
+void QGCParamWidget::setRetransmissionGuardEnabled(bool enabled)
+{
+    if (enabled)
+    {
+        retransmissionTimer.start(retransmissionTimeout);
+    }
+    else
+    {
+        retransmissionTimer.stop();
+    }
+}
+
+void QGCParamWidget::retransmissionGuardTick()
+{
+    if (transmissionActive)
+    {
+        qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
+        // Re-request at maximum five parameters at once
+        // to prevent link flooding
+
+        QMap<int, QMap<QString, float>*>::iterator i;
+        for (i = parameters.begin(); i != parameters.end(); ++i)
+        {
+            // Iterate through the parameters of the component
+            int component = i.key();
+            // Request five parameters from this component (at maximum)
+            QList<int> * paramList = transmissionMissingPackets.value(component, NULL);
+            if (paramList)
+            {
+                int count = 0;
+                int maxCount = 1;
+                foreach (int id, *paramList)
+                {
+                    if (count < maxCount)
+                    {
+                        qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << id << "FROM COMPONENT #" << component;
+                        emit requestParameter(component, id);
+                        statusLabel->setText(tr("Requ. retransmission of #%1").arg(id));
+                        count++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        qDebug() << __FILE__ << __LINE__ << "STOPPING RETRANSMISSION GUARD GRACEFULLY";
+        setRetransmissionGuardEnabled(false);
+    }
+}
+
 
 /**
  * @param component the subsystem which has the parameter
@@ -541,7 +640,23 @@ void QGCParamWidget::loadParameters()
 void QGCParamWidget::setParameter(int component, QString parameterName, float value)
 {
     emit parameterChanged(component, parameterName, value);
+//    // Wait for parameter to be written back
+//    // mark it therefore as missing
+//    if (!transmissionMissingPackets.contains(component))
+//    {
+//        transmissionMissingPackets.insert(component, new QList<int>());
+//    }
 
+//    for (int i = 0; i < paramCount; ++i)
+//    {
+//        if (!transmissionMissingPackets.value(component)->contains(i))
+//        {
+//            transmissionMissingPackets.value(component)->append(i);
+//        }
+//    }
+//    transmissionActive = true;
+//    transmissionStarted = QGC::groundTimeUsecs();
+//    setRetransmissionGuardEnabled(true);
 }
 
 /**

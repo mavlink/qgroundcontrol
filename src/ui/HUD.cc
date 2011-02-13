@@ -1309,7 +1309,7 @@ void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRat
 
     // Text
     QString label;
-    label.sprintf("< %06.2f", value);
+    label.sprintf("< %+06.2f", value);
     paintText(label, defaultColor, 3.0f, xRef+width/2.0f, yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
 }
 

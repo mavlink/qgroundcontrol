@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>431</width>
-    <height>256</height>
+    <height>387</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -148,6 +148,143 @@
     <widget class="QCheckBox" name="multiplexingCheckBox">
      <property name="text">
       <string>Enable Multiplexing: Forward packets to all other links</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="0" colspan="3">
+    <widget class="QCheckBox" name="paramGuardCheckBox">
+     <property name="text">
+      <string>Enable retransmission of parameter read/write requests</string>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="0">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>8</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="13" column="0">
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>8</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="12" column="1">
+    <widget class="QLabel" name="paramRetransmissionLabel">
+     <property name="text">
+      <string>Read request retransmission timeout</string>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="1">
+    <widget class="QLabel" name="paramRewriteLabel">
+     <property name="text">
+      <string>Write request retransmission timeout</string>
+     </property>
+    </widget>
+   </item>
+   <item row="12" column="2">
+    <widget class="QSpinBox" name="paramRetransmissionSpinBox">
+     <property name="toolTip">
+      <string>Time in milliseconds after which a not acknowledged read request is sent again.</string>
+     </property>
+     <property name="statusTip">
+      <string>Time in milliseconds after which a not acknowledged read request is sent again.</string>
+     </property>
+     <property name="suffix">
+      <string> ms</string>
+     </property>
+     <property name="minimum">
+      <number>50</number>
+     </property>
+     <property name="maximum">
+      <number>60000</number>
+     </property>
+     <property name="singleStep">
+      <number>50</number>
+     </property>
+     <property name="value">
+      <number>50</number>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="2">
+    <widget class="QSpinBox" name="paramRewriteSpinBox">
+     <property name="toolTip">
+      <string>Time in milliseconds after which a not acknowledged write request is sent again.</string>
+     </property>
+     <property name="statusTip">
+      <string>Time in milliseconds after which a not acknowledged write request is sent again.</string>
+     </property>
+     <property name="suffix">
+      <string> ms</string>
+     </property>
+     <property name="minimum">
+      <number>50</number>
+     </property>
+     <property name="maximum">
+      <number>60000</number>
+     </property>
+     <property name="singleStep">
+      <number>50</number>
+     </property>
+    </widget>
+   </item>
+   <item row="14" column="0" colspan="3">
+    <widget class="QCheckBox" name="actionGuardCheckBox">
+     <property name="text">
+      <string>Enable retransmission of actions / commands</string>
+     </property>
+    </widget>
+   </item>
+   <item row="15" column="0">
+    <spacer name="horizontalSpacer_3">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>8</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="15" column="1">
+    <widget class="QLabel" name="actionRetransmissionLabel">
+     <property name="text">
+      <string>Action request retransmission timeout</string>
+     </property>
+    </widget>
+   </item>
+   <item row="15" column="2">
+    <widget class="QSpinBox" name="actionRetransmissionSpinBox">
+     <property name="suffix">
+      <string> ms</string>
+     </property>
+     <property name="minimum">
+      <number>20</number>
+     </property>
+     <property name="maximum">
+      <number>1000</number>
+     </property>
+     <property name="singleStep">
+      <number>10</number>
      </property>
     </widget>
    </item>
