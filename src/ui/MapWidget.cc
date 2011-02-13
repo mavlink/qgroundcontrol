@@ -339,9 +339,11 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mapadapter = new qmapcontrol::YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
         l->setMapAdapter(mapadapter);
+        geomLayer->setMapAdapter(mapadapter);
 
         if (isVisible()) mc->updateRequestNew();
         mc->setZoom(zoom);
+        overlay->setVisible(false);
         //        yahooActionOverlay->setEnabled(true);
     }
     else if (action == googleActionMap)
