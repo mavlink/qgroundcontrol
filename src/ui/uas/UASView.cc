@@ -365,7 +365,7 @@ void UASView::updateGlobalPosition(UASInterface* uas, double lon, double lat, do
 void UASView::updateSpeed(UASInterface*, double x, double y, double z, quint64 usec)
 {
     Q_UNUSED(usec);
-    totalSpeed = sqrt((pow(x, 2) + pow(y, 2) + pow(z, 2)));
+    totalSpeed = sqrt(x*x + y*y + z*z);
 }
 
 void UASView::currentWaypointUpdated(quint16 waypoint)
