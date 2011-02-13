@@ -628,6 +628,46 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
             break;
+        case MAVLINK_MSG_ID_GPS_RAW_INT:
+            {
+                mavlink_gps_raw_int_t pos;
+                mavlink_msg_gps_raw_int_decode(&message, &pos);
+
+                // SANITY CHECK
+                // only accept values in a realistic range
+                // quint64 time = getUnixTime(pos.usec);
+                quint64 time = getUnixTime();
+
+                emit valueChanged(uasId, "latitude", "deg", pos.lat/(double)1E7, time);
+                emit valueChanged(uasId, "longitude", "deg", pos.lon/(double)1E7, time);
+
+                if (pos.fix_type > 0)
+                {
+                    emit globalPositionChanged(this, pos.lat/(double)1E7, pos.lon/(double)1E7, pos.alt/1000.0, time);
+                    emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
+
+                    // Check for NaN
+                    int alt = pos.alt;
+                    if (alt != alt)
+                    {
+                        alt = 0;
+                        emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
+                    }
+                    emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E7, time);
+                    // Smaller than threshold and not NaN
+                    if (pos.v < 1000000 && pos.v == pos.v)
+                    {
+                        emit valueChanged(uasId, "speed", "m/s", pos.v, time);
+                        //qDebug() << "GOT GPS RAW";
+                       // emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
+                    }
+                    else
+                    {
+                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(pos.v));
+                    }
+                }
+            }
+            break;
         case MAVLINK_MSG_ID_GPS_STATUS:
             {
                 mavlink_gps_status_t pos;
