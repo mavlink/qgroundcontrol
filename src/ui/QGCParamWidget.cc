@@ -31,6 +31,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QFileDialog>
 #include <QFile>
 #include <QList>
+#include <QSettings>
 
 #include "QGCParamWidget.h"
 #include "UASInterface.h"
@@ -51,8 +52,13 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
         parameters(),
         transmissionListMode(false),
         transmissionActive(false),
-        transmissionStarted(0)
+        transmissionStarted(0),
+        retransmissionTimeout(350),
+        rewriteTimeout(500)
 {
+    // Load settings
+    loadSettings();
+
     // Create tree widget
     tree = new QTreeWidget(this);
     statusLabel = new QLabel();
@@ -132,6 +138,18 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     // Connect retransmission guard
     connect(this, SIGNAL(requestParameter(int,int)), uas, SLOT(requestParameter(int,int)));
     connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
+}
+
+void QGCParamWidget::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_MAVLINK_PROTOCOL");
+    bool ok;
+    int temp = settings.value("PARAMETER_RETRANSMISSION_TIMEOUT", retransmissionTimeout).toInt(&ok);
+    if (ok) retransmissionTimeout = temp;
+    temp = settings.value("PARAMETER_REWRITE_TIMEOUT", rewriteTimeout).toInt(&ok);
+    if (ok) rewriteTimeout = temp;
+    settings.endGroup();
 }
 
 /**
@@ -380,6 +398,13 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
  */
 void QGCParamWidget::requestParameterList()
 {
+    // FIXME This call does not belong here
+    // Once the comm handling is moved to a new
+    // Param manager class the settings can be directly
+    // loaded from MAVLink protocol
+    loadSettings();
+    // End of FIXME
+
     // Clear view and request param list
     clear();
     parameters.clear();

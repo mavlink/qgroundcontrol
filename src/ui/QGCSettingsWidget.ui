@@ -15,7 +15,29 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QTabWidget" name="tabWidget"/>
+    <widget class="QTabWidget" name="tabWidget">
+     <widget class="QWidget" name="general">
+      <attribute name="title">
+       <string>General</string>
+      </attribute>
+      <attribute name="toolTip">
+       <string>General Settings</string>
+      </attribute>
+      <layout class="QGridLayout" name="generalPaneGridLayout">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="audioMuteCheckBox">
+         <property name="text">
+          <string>Mute all audio output</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../../mavground.qrc">
+           <normaloff>:/images/status/audio-volume-muted.svg</normaloff>:/images/status/audio-volume-muted.svg</iconset>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
@@ -29,7 +51,9 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../mavground.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

@@ -1339,6 +1339,7 @@ void MainWindow::connectCommonActions()
 
     // Audio output
     ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
+    connect(GAudioOutput::instance(), SIGNAL(mutedChanged(bool)), ui.actionMuteAudioOutput, SLOT(setChecked(bool)));
     connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
 
     // User interaction
