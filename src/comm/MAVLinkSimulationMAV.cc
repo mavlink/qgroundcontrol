@@ -147,7 +147,7 @@ void MAVLinkSimulationMAV::mainloop()
         attitude.usec = 0;
         attitude.roll = 0.0f;
         attitude.pitch = 0.0f;
-        attitude.yaw = yaw-M_PI_2;
+        attitude.yaw = yaw-(M_PI/2.0);
         attitude.rollspeed = 0.0f;
         attitude.pitchspeed = 0.0f;
         attitude.yawspeed = 0.0f;
