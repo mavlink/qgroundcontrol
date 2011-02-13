@@ -45,8 +45,9 @@ warnLevelPercent(20.0f),
 currentVoltage(12.0f),
 lpVoltage(12.0f),
 batteryRemainingEstimateEnabled(false),
-mode(MAV_MODE_UNINIT),
-status(MAV_STATE_UNINIT),
+mode(-1),
+status(-1),
+navMode(-1),
 onboardTimeOffset(0),
 controlRollManual(true),
 controlPitchManual(true),
@@ -252,20 +253,26 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (state.status != this->status)
                 {
                     statechanged = true;
-                    this->status = (int)state.status;
+                    this->status = state.status;
                     getStatusForCode((int)state.status, uasState, stateDescription);
                     emit statusChanged(this, uasState, stateDescription);
                     emit statusChanged(this->status);
                     stateAudio = " changed status to " + uasState;
                 }
 
+                if (navMode != state.nav_mode)
+                {
+                    emit navModeChanged(uasId, state.nav_mode, getNavModeText(state.nav_mode));
+                    navMode = state.nav_mode;
+                }
+
                 emit loadChanged(this,state.load/10.0f);
                 emit valueChanged(uasId, "Load", "%", ((float)state.load)/10.0f, getUnixTime());
 
-                if (this->mode != static_cast<unsigned int>(state.mode))
+                if (this->mode != static_cast<int>(state.mode))
                 {
                     modechanged = true;
-                    this->mode = static_cast<unsigned int>(state.mode);
+                    this->mode = static_cast<int>(state.mode);
                     QString mode;
 
                     switch (state.mode)
@@ -537,7 +544,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "altitude", "m", altitude, time);
                 double totalSpeed = sqrt(speedX*speedX + speedY*speedY + speedZ*speedZ);
                 emit valueChanged(uasId, "gps speed", "m/s", totalSpeed, time);
-                emit globalPositionChanged(this, longitude, latitude, altitude, time);
+                emit globalPositionChanged(this, latitude, longitude, altitude, time);
                 emit speedChanged(this, speedX, speedY, speedZ, time);
                 // Set internal state
                 if (!positionLock)
@@ -566,7 +573,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "altitude", "m", altitude, time);
                 double totalSpeed = sqrt(speedX*speedX + speedY*speedY + speedZ*speedZ);
                 emit valueChanged(uasId, "gps speed", "m/s", totalSpeed, time);
-                emit globalPositionChanged(this, longitude, latitude, altitude, time);
+                emit globalPositionChanged(this, latitude, longitude, altitude, time);
                 emit speedChanged(this, speedX, speedY, speedZ, time);
                 // Set internal state
                 if (!positionLock)
@@ -596,7 +603,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 if (pos.fix_type > 0)
                 {
-                    emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
+                    emit globalPositionChanged(this, pos.lat, pos.lon, pos.alt, time);
                     emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
 
                     // Check for NaN
@@ -790,7 +797,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_waypoint_reached_t wpr;
                 mavlink_msg_waypoint_reached_decode(&message, &wpr);
                 waypointManager.handleWaypointReached(message.sysid, message.compid, &wpr);
-                GAudioOutput::instance()->say(QString("System %1 reached waypoint %2").arg(getUASName()).arg(wpr.seq));
+                QString text = QString("System %1 reached waypoint %2").arg(getUASName()).arg(wpr.seq);
+                GAudioOutput::instance()->say(text);
+                emit textMessageReceived(message.sysid, message.compid, 0, text);
             }
             break;
 
@@ -1167,45 +1176,81 @@ float UAS::filterVoltage(float value) const
     return lpVoltage * 0.7f + value * 0.3f;
 }
 
+QString UAS::getNavModeText(int mode)
+{
+    switch (mode)
+    {
+    case MAV_NAV_GROUNDED:
+        return QString("GROUNDED");
+        break;
+    case MAV_NAV_HOLD:
+        return QString("HOLD");
+        break;
+    case MAV_NAV_LANDING:
+        return QString("LANDING");
+        break;
+    case MAV_NAV_LIFTOFF:
+        return QString("LIFTOFF");
+        break;
+    case MAV_NAV_LOITER:
+        return QString("LOITER");
+        break;
+    case MAV_NAV_LOST:
+        return QString("LOST");
+        break;
+    case MAV_NAV_RETURNING:
+        return QString("RETURNING");
+        break;
+    case MAV_NAV_VECTOR:
+        return QString("VECTOR");
+        break;
+    case MAV_NAV_WAYPOINT:
+        return QString("WAYPOINT");
+        break;
+    default:
+        return QString("UNKNOWN");
+    }
+}
+
 void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDescription)
 {
     switch (statusCode)
     {
     case MAV_STATE_UNINIT:
         uasState = tr("UNINIT");
-        stateDescription = tr("Waiting..");
+        stateDescription = tr("Unitialized, booting up.");
         break;
     case MAV_STATE_BOOT:
         uasState = tr("BOOT");
-        stateDescription = tr("Booting..");
+        stateDescription = tr("Booting system, please wait.");
         break;
     case MAV_STATE_CALIBRATING:
         uasState = tr("CALIBRATING");
-        stateDescription = tr("Calibrating..");
+        stateDescription = tr("Calibrating sensors, please wait.");
         break;
     case MAV_STATE_ACTIVE:
         uasState = tr("ACTIVE");
-        stateDescription = tr("Normal");
+        stateDescription = tr("Active, normal operation.");
         break;
     case MAV_STATE_STANDBY:
         uasState = tr("STANDBY");
-        stateDescription = tr("Standby, OK");
+        stateDescription = tr("Standby mode, ready for liftoff.");
         break;
     case MAV_STATE_CRITICAL:
         uasState = tr("CRITICAL");
-        stateDescription = tr("FAILURE: Continue");
+        stateDescription = tr("FAILURE: Continuing operation.");
         break;
     case MAV_STATE_EMERGENCY:
         uasState = tr("EMERGENCY");
-        stateDescription = tr("EMERGENCY: Land!");
+        stateDescription = tr("EMERGENCY: Land Immediately!");
         break;
     case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");
-        stateDescription = tr("Powering off");
+        stateDescription = tr("Powering off system.");
         break;
     default:
         uasState = tr("UNKNOWN");
-        stateDescription = tr("Unknown state");
+        stateDescription = tr("Unknown system state");
         break;
     }
 }

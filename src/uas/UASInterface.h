@@ -306,7 +306,11 @@ signals:
     void poiFound(UASInterface* uas, int type, int colorIndex, QString message, float x, float y, float z);
     void poiConnectionFound(UASInterface* uas, int type, int colorIndex, QString message, float x1, float y1, float z1, float x2, float y2, float z2);
 
+    /** @brief A text message from the system has been received */
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
+
+    void navModeChanged(int uasid, int mode, const QString& text);
+
     /**
      * @brief Update the error count of a device
      *

@@ -323,7 +323,7 @@ void HSIDisplay::renderOverlay()
     {
         // Position
         QString str;
-        str.sprintf("%05.2f lat %06.2f lon %06.2f alt", lat, lon, alt);
+        str.sprintf("lat: %05.2f lon: %06.2f alt: %06.2f", lat, lon, alt);
         paintText(tr("GPS"), QGC::colorCyan, 2.6f, 2, vheight- 5.0f, &painter);
         paintText(str, Qt::white, 2.6f, 10, vheight - 5.0f, &painter);
     }

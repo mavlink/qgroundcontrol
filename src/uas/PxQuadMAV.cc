@@ -143,7 +143,7 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit errCountChanged(uasId, "IMU", "SPI0", status.spi0_err_count);
                 emit errCountChanged(uasId, "IMU", "SPI1", status.spi1_err_count);
                 emit errCountChanged(uasId, "IMU", "UART", status.uart_total_err_count);
-                emit valueChanged(uasId, "Load", "%", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
+                emit valueChanged(uasId, "Load", "%", ((float)status.load)/10.0f, getUnixTime());
             }
             break;
         default:
