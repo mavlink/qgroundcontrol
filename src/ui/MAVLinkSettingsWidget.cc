@@ -50,9 +50,13 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     m_ui->versionCheckBox->setChecked(protocol->versionCheckEnabled());
     m_ui->multiplexingCheckBox->setChecked(protocol->multiplexingEnabled());
     m_ui->systemIdSpinBox->setValue(protocol->getSystemId());
+
     m_ui->paramGuardCheckBox->setChecked(protocol->paramGuardEnabled());
     m_ui->paramRetransmissionSpinBox->setValue(protocol->getParamRetransmissionTimeout());
     m_ui->paramRewriteSpinBox->setValue(protocol->getParamRewriteTimeout());
+
+    m_ui->actionGuardCheckBox->setChecked(protocol->actionGuardEnabled());
+    m_ui->actionRetransmissionSpinBox->setValue(protocol->getActionRetransmissionTimeout());
 
     // Connect actions
     // Heartbeat
@@ -79,6 +83,12 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     connect(m_ui->paramRetransmissionSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setParamRetransmissionTimeout(int)));
     connect(protocol, SIGNAL(paramRewriteTimeoutChanged(int)), m_ui->paramRewriteSpinBox, SLOT(setValue(int)));
     connect(m_ui->paramRewriteSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setParamRewriteTimeout(int)));
+    // Action guard
+    connect(protocol, SIGNAL(actionGuardChanged(bool)), m_ui->actionGuardCheckBox, SLOT(setChecked(bool)));
+    connect(m_ui->actionGuardCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableActionGuard(bool)));
+    connect(protocol, SIGNAL(actionRetransmissionTimeoutChanged(int)), m_ui->actionRetransmissionSpinBox, SLOT(setValue(int)));
+    connect(m_ui->actionRetransmissionSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setActionRetransmissionTimeout(int)));
+
 
     // Update values
     m_ui->versionLabel->setText(tr("MAVLINK_VERSION: %1").arg(protocol->getVersion()));
@@ -87,8 +97,6 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     // Connect visibility updates
     connect(protocol, SIGNAL(versionCheckChanged(bool)), m_ui->versionLabel, SLOT(setVisible(bool)));
     m_ui->versionLabel->setVisible(protocol->versionCheckEnabled());
-    //connect(m_ui->versionCheckBox, SIGNAL(toggled(bool)), m_ui->versionSpacer, SLOT(setVisible(bool)));
-    //connect(m_ui->loggingCheckBox, SIGNAL(toggled(bool)), m_ui->logFileSpacer, SLOT(setVisible(bool)));
     // Logging visibility
     connect(protocol, SIGNAL(loggingChanged(bool)), m_ui->logFileLabel, SLOT(setVisible(bool)));
     m_ui->logFileLabel->setVisible(protocol->loggingEnabled());
@@ -108,6 +116,11 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     m_ui->paramRewriteSpinBox->setVisible(protocol->paramGuardEnabled());
     connect(protocol, SIGNAL(paramGuardChanged(bool)), m_ui->paramRewriteLabel, SLOT(setVisible(bool)));
     m_ui->paramRewriteLabel->setVisible(protocol->paramGuardEnabled());
+    // Action guard visibility
+    connect(protocol, SIGNAL(actionGuardChanged(bool)), m_ui->actionRetransmissionSpinBox, SLOT(setVisible(bool)));
+    m_ui->actionRetransmissionSpinBox->setVisible(protocol->actionGuardEnabled());
+    connect(protocol, SIGNAL(actionGuardChanged(bool)), m_ui->actionRetransmissionLabel, SLOT(setVisible(bool)));
+    m_ui->actionRetransmissionLabel->setVisible(protocol->actionGuardEnabled());
 
     // TODO implement filtering
     // and then remove these two lines

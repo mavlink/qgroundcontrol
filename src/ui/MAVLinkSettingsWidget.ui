@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>431</width>
-    <height>349</height>
+    <height>387</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -242,6 +242,49 @@
      </property>
      <property name="singleStep">
       <number>50</number>
+     </property>
+    </widget>
+   </item>
+   <item row="14" column="0" colspan="3">
+    <widget class="QCheckBox" name="actionGuardCheckBox">
+     <property name="text">
+      <string>Enable retransmission of actions / commands</string>
+     </property>
+    </widget>
+   </item>
+   <item row="15" column="0">
+    <spacer name="horizontalSpacer_3">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>8</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="15" column="1">
+    <widget class="QLabel" name="actionRetransmissionLabel">
+     <property name="text">
+      <string>Action request retransmission timeout</string>
+     </property>
+    </widget>
+   </item>
+   <item row="15" column="2">
+    <widget class="QSpinBox" name="actionRetransmissionSpinBox">
+     <property name="suffix">
+      <string> ms</string>
+     </property>
+     <property name="minimum">
+      <number>20</number>
+     </property>
+     <property name="maximum">
+      <number>1000</number>
+     </property>
+     <property name="singleStep">
+      <number>10</number>
      </property>
     </widget>
    </item>

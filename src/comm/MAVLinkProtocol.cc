@@ -47,6 +47,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
         m_paramRetransmissionTimeout(350),
         m_paramRewriteTimeout(500),
         m_paramGuardEnabled(true),
+        m_actionGuardEnabled(false),
+        m_actionRetransmissionTimeout(100),
         versionMismatchIgnore(false),
         systemId(QGC::defaultSystemId)
 {
@@ -442,6 +444,15 @@ void MAVLinkProtocol::enableParamGuard(bool enabled)
     }
 }
 
+void MAVLinkProtocol::enableActionGuard(bool enabled)
+{
+    if (enabled != m_actionGuardEnabled)
+    {
+        m_actionGuardEnabled = enabled;
+        emit actionGuardChanged(m_actionGuardEnabled);
+    }
+}
+
 void MAVLinkProtocol::setParamRetransmissionTimeout(int ms)
 {
     if (ms != m_paramRetransmissionTimeout)
@@ -457,6 +468,15 @@ void MAVLinkProtocol::setParamRewriteTimeout(int ms)
     {
         m_paramRewriteTimeout = ms;
         emit paramRewriteTimeoutChanged(m_paramRewriteTimeout);
+    }
+}
+
+void MAVLinkProtocol::setActionRetransmissionTimeout(int ms)
+{
+    if (ms != m_actionRetransmissionTimeout)
+    {
+        m_actionRetransmissionTimeout = ms;
+        emit actionRetransmissionTimeoutChanged(m_actionRetransmissionTimeout);
     }
 }
 
