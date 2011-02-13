@@ -236,6 +236,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
 {
     if (systemId == uas.getUASID() && compId == MAV_COMP_ID_WAYPOINTPLANNER)
     {
+        // FIXME Petri
         if (current_state == WP_SETCURRENT)
         {
             protocol_timer.stop();
@@ -257,10 +258,11 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
                 }
             }
 
-            emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
-            //emit update to UI widgets
-            emit currentWaypointChanged(wpc->seq);
+            qDebug() << "Updated waypoints list";
         }
+        emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
+        //emit update to UI widgets
+        emit currentWaypointChanged(wpc->seq);
         qDebug() << "new current waypoint" << wpc->seq;
     }
 }

@@ -101,6 +101,7 @@ public slots:
 
 protected:
     void changeEvent(QEvent *e);
+    void hideEvent(QHideEvent* event);
     /** @brief Convert a symbol name to the byte representation */
     QByteArray symbolNameToBytes(const QString& symbol);
     /** @brief Convert a symbol byte to the name */

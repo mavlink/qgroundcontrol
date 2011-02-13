@@ -528,14 +528,9 @@ void WaypointView::updateValues()
 
 void WaypointView::setCurrent(bool state)
 {
-    if (state)
-    {
-        m_ui->selectedBox->setCheckState(Qt::Checked);
-    }
-    else
-    {
-        m_ui->selectedBox->setCheckState(Qt::Unchecked);
-    }
+    m_ui->selectedBox->blockSignals(true);
+    m_ui->selectedBox->setChecked(state);;
+    m_ui->selectedBox->blockSignals(false);
 }
 
 WaypointView::~WaypointView()

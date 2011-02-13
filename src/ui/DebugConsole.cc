@@ -67,7 +67,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Hide sent text field - it is only useful after send has been hit
     m_ui->sentText->setVisible(false);
     // Hide auto-send checkbox
-    m_ui->specialCheckBox->setVisible(false);
+    //m_ui->specialCheckBox->setVisible(false);
     // Make text area not editable
     m_ui->receiveText->setReadOnly(true);
     // Limit to 500 lines
@@ -116,7 +116,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Connect Checkbox
     connect(m_ui->specialComboBox, SIGNAL(highlighted(QString)), this, SLOT(specialSymbolSelected(QString)));
     // Set add button invisible if auto add checkbox is checked
-    connect(m_ui->specialCheckBox, SIGNAL(clicked(bool)), m_ui->addSymbolButton, SLOT(setHidden(bool)));
+    //connect(m_ui->specialCheckBox, SIGNAL(clicked(bool)), m_ui->addSymbolButton, SLOT(setHidden(bool)));
     // Allow to send via return
     connect(m_ui->sendText, SIGNAL(returnPressed()), this, SLOT(sendBytes()));
 
@@ -127,6 +127,12 @@ DebugConsole::DebugConsole(QWidget *parent) :
     {
         m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console is huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
     }
+}
+
+void DebugConsole::hideEvent(QHideEvent* event)
+{
+    Q_UNUSED(event);
+    storeSettings();
 }
 
 DebugConsole::~DebugConsole()
@@ -148,12 +154,12 @@ void DebugConsole::loadSettings()
     setAutoHold(settings.value("AUTO_HOLD_ENABLED", autoHold).toBool());
     settings.endGroup();
 
-    // Update visibility settings
-    if (m_ui->specialCheckBox->isChecked())
-    {
-        m_ui->specialCheckBox->setVisible(true);
-        m_ui->addSymbolButton->setVisible(false);
-    }
+//    // Update visibility settings
+//    if (m_ui->specialCheckBox->isChecked())
+//    {
+//        m_ui->specialCheckBox->setVisible(true);
+//        m_ui->addSymbolButton->setVisible(false);
+//    }
 }
 
 void DebugConsole::storeSettings()
@@ -247,9 +253,6 @@ void DebugConsole::setAutoHold(bool hold)
     }
     // Set new state
     autoHold = hold;
-
-    // FIXME REMOVE THIS HERE
-    storeSettings();
 }
 
 /**
@@ -522,7 +525,7 @@ QString DebugConsole::bytesToSymbolNames(const QByteArray& b)
 void DebugConsole::specialSymbolSelected(const QString& text)
 {
     Q_UNUSED(text);
-    m_ui->specialCheckBox->setVisible(true);
+    //m_ui->specialCheckBox->setVisible(true);
 }
 
 void DebugConsole::appendSpecialSymbol(const QString& text)
@@ -705,8 +708,6 @@ void DebugConsole::hexModeEnabled(bool mode)
         m_ui->sentText->clear();
         commandHistory.clear();
     }
-    // FIXME REMOVE THIS HERE
-    storeSettings();
 }
 
 /**
@@ -723,8 +724,6 @@ void DebugConsole::MAVLINKfilterEnabled(bool filter)
             m_ui->mavlinkCheckBox->setChecked(filter);
         }
     }
-    // FIXME REMOVE THIS HERE
-    storeSettings();
 }
 /**
  * @param hold Freeze the input and thus any scrolling

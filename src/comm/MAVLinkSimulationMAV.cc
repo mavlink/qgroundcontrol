@@ -323,6 +323,7 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
                 {
                 case MAV_ACTION_TAKEOFF:
                     flying = true;
+                    nav_mode = MAV_NAV_LIFTOFF;
                     ack.result = 1;
                     break;
                 default:
@@ -345,6 +346,7 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
             mavlink_msg_local_position_setpoint_set_decode(&msg, &sp);
             if (sp.target_system == this->systemid)
             {
+                nav_mode = MAV_NAV_WAYPOINT;
                 previousSPX = nextSPX;
                 previousSPY = nextSPY;
                 previousSPZ = nextSPZ;
