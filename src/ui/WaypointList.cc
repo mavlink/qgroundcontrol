@@ -276,49 +276,113 @@ void WaypointList::waypointListChanged()
     {
         // Prevent updates to prevent visual flicker
         this->setUpdatesEnabled(false);
-        // Get all waypoints
         const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
 
-        // Store the current state, then check which widgets to update
-        // and which ones to delete
-        QList<Waypoint*> oldWaypoints = wpViews.keys();
-
-        foreach (Waypoint* wp, waypoints)
-        {
-            // Create any new waypoint
-            if (!wpViews.contains(wp))
+            if (!wpViews.empty())
             {
-                WaypointView* wpview = new WaypointView(wp, this);
-                wpViews.insert(wp, wpview);
-                connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
-                connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
-                connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
-                connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
-                connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
+                QMapIterator<Waypoint*,WaypointView*> viewIt(wpViews);
+                viewIt.toFront();
+                while(viewIt.hasNext())
+                {
+                    viewIt.next();
+                    Waypoint *cur = viewIt.key();
+                    int i;
+                    for (i = 0; i < waypoints.size(); i++)
+                    {
+                        if (waypoints[i] == cur)
+                        {
+                            break;
+                        }
+                    }
+                    if (i == waypoints.size())
+                    {
+                        WaypointView* widget = wpViews.find(cur).value();
+                        widget->hide();
+                        listLayout->removeWidget(widget);
+                        wpViews.remove(cur);
+                    }
+                }
             }
-            else
-            {
-                // Update existing waypoints
 
-                // Mark as updated by removing from old list
-                oldWaypoints.removeAt(oldWaypoints.indexOf(wp));
+            // then add/update the views for each waypoint in the list
+            for(int i = 0; i < waypoints.size(); i++)
+            {
+                Waypoint *wp = waypoints[i];
+                if (!wpViews.contains(wp))
+                {
+                    WaypointView* wpview = new WaypointView(wp, this);
+                    wpViews.insert(wp, wpview);
+                    connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
+                    connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
+                    connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
+                    connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
+                    connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
+                }
+                WaypointView *wpv = wpViews.value(wp);
+                wpv->updateValues();    // update the values of the ui elements in the view
+                listLayout->addWidget(wpv);
+
             }
-            WaypointView *wpv = wpViews.value(wp);
-            wpv->updateValues();    // update the values of the ui elements in the view
-            listLayout->addWidget(wpv);
+                    this->setUpdatesEnabled(true);
         }
 
-        // The old list now contains all wps to be deleted
-        foreach (Waypoint* wp, oldWaypoints)
-        {
-            // Delete waypoint view and entry in list
-            WaypointView* wpv = wpViews.value(wp);
-            if (wpv)
-            {
-                wpv->deleteLater();
-            }
-            wpViews.remove(wp);
-        }
+
+        loadFileGlobalWP = false;
+}
+
+//void WaypointList::waypointListChanged()
+//{
+//    if (uas)
+//    {
+//        // Prevent updates to prevent visual flicker
+//        this->setUpdatesEnabled(false);
+//        // Get all waypoints
+//        const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
+
+////        // Store the current state, then check which widgets to update
+////        // and which ones to delete
+////        QList<Waypoint*> oldWaypoints = wpViews.keys();
+
+////        foreach (Waypoint* wp, waypoints)
+////        {
+////            WaypointView* wpview;
+////            // Create any new waypoint
+////            if (!wpViews.contains(wp))
+////            {
+////                wpview = new WaypointView(wp, this);
+////                wpViews.insert(wp, wpview);
+////                connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
+////                connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
+////                connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
+////                connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
+////                connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
+////                listLayout->addWidget(wpview);
+////            }
+////            else
+////            {
+////                // Update existing waypoints
+////                wpview = wpViews.value(wp);
+
+////            }
+////            // Mark as updated by removing from old list
+////            oldWaypoints.removeAt(oldWaypoints.indexOf(wp));
+
+////            wpview->updateValues();    // update the values of the ui elements in the view
+
+////        }
+
+////        // The old list now contains all wps to be deleted
+////        foreach (Waypoint* wp, oldWaypoints)
+////        {
+////            // Delete waypoint view and entry in list
+////            WaypointView* wpv = wpViews.value(wp);
+////            if (wpv)
+////            {
+////                listLayout->removeWidget(wpv);
+////                delete wpv;
+////            }
+////            wpViews.remove(wp);
+////        }
 
 //        if (!wpViews.empty())
 //        {
@@ -339,8 +403,11 @@ void WaypointList::waypointListChanged()
 //                if (i == waypoints.size())
 //                {
 //                    WaypointView* widget = wpViews.find(cur).value();
-//                    widget->hide();
-//                    listLayout->removeWidget(widget);
+//                    if (widget)
+//                    {
+//                        widget->hide();
+//                        listLayout->removeWidget(widget);
+//                    }
 //                    wpViews.remove(cur);
 //                }
 //            }
@@ -365,10 +432,10 @@ void WaypointList::waypointListChanged()
 //            listLayout->addWidget(wpv);
 
 //        }
-        this->setUpdatesEnabled(true);
-    }
-    loadFileGlobalWP = false;
-}
+//        this->setUpdatesEnabled(true);
+//    }
+////    loadFileGlobalWP = false;
+//}
 
 void WaypointList::moveUp(Waypoint* wp)
 {
