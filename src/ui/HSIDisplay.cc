@@ -221,12 +221,14 @@ void HSIDisplay::renderOverlay()
     // Draw orientation labels
     // Translate and rotate coordinate frame
     painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
-    painter.rotate((yaw/(M_PI))*180.0f);
+    const float yawDeg = ((yaw/M_PI)*180.0f);
+    int yawRotate = static_cast<int>(yawDeg) % 360;
+    painter.rotate(-yawRotate);
     paintText(tr("N"), ringColor, 3.5f, - 1.0f, - baseRadius - 5.5f, &painter);
     paintText(tr("S"), ringColor, 3.5f, - 1.0f, + baseRadius + 1.5f, &painter);
-    paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.25f, &painter);
+    paintText(tr("E"), ringColor, 3.5f, + baseRadius + 3.0f, - 1.25f, &painter);
     paintText(tr("W"), ringColor, 3.5f, - baseRadius - 5.5f, - 1.75f, &painter);
-    painter.rotate((-yaw/(M_PI))*180.0f);
+    painter.rotate(+yawRotate);
     painter.translate(-(xCenterPos)*scalingFactor, -(yCenterPos)*scalingFactor);
 
     // Draw center indicator

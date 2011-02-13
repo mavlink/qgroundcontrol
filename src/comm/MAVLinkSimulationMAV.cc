@@ -96,7 +96,7 @@ void MAVLinkSimulationMAV::mainloop()
         {
             //float trueyaw = atan2f(xm, ym);
 
-            float newYaw = atan2f(xm, ym);
+            float newYaw = atan2f(ym, xm);
 
             if (fabs(yaw - newYaw) < 90)
             {
@@ -112,8 +112,8 @@ void MAVLinkSimulationMAV::mainloop()
             //if (sqrt(xm*xm+ym*ym) > 0.0000001)
             if (flying)
             {
-                x += sin(yaw)*radPer100ms;
-                y += cos(yaw)*radPer100ms;
+                x += cos(yaw)*radPer100ms;
+                y += sin(yaw)*radPer100ms;
                 z += altPer100ms*zsign;
             }
 
@@ -135,7 +135,7 @@ void MAVLinkSimulationMAV::mainloop()
         pos.alt = z*1000.0;
         pos.lat = x*1E7;
         pos.lon = y*1E7;
-        pos.vx = 10.0f*100.0f;
+        pos.vx = sin(yaw)*10.0f*100.0f;
         pos.vy = 0;
         pos.vz = altPer100ms*10.0f*100.0f*zsign*-1.0f;
         mavlink_msg_global_position_int_encode(systemid, MAV_COMP_ID_IMU, &msg, &pos);
@@ -147,7 +147,7 @@ void MAVLinkSimulationMAV::mainloop()
         attitude.usec = 0;
         attitude.roll = 0.0f;
         attitude.pitch = 0.0f;
-        attitude.yaw = yaw-M_PI_2;
+        attitude.yaw = yaw;
         attitude.rollspeed = 0.0f;
         attitude.pitchspeed = 0.0f;
         attitude.yawspeed = 0.0f;
@@ -170,11 +170,11 @@ void MAVLinkSimulationMAV::mainloop()
 
         // VFR HUD
         mavlink_vfr_hud_t hud;
-        hud.airspeed = pos.vx;
-        hud.groundspeed = pos.vx;
-        hud.alt = pos.alt;
+        hud.airspeed = pos.vx/100.0f;
+        hud.groundspeed = pos.vx/100.0f;
+        hud.alt = z;
         hud.heading = static_cast<int>((yaw/M_PI)*180.0f+180.0f) % 360;
-        hud.climb = pos.vz;
+        hud.climb = pos.vz/100.0f;
         hud.throttle = 90;
         mavlink_msg_vfr_hud_encode(systemid, MAV_COMP_ID_IMU, &msg, &hud);
         link->sendMAVLinkMessage(&msg);
