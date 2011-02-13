@@ -575,7 +575,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
 
                                 float x = static_cast<double>(pos.lat)/1E7;
                                 float y = static_cast<double>(pos.lon)/1E7;
-                                float z = static_cast<double>(pos.alt)/1000;
+                                //float z = static_cast<double>(pos.alt)/1000;
 
                                 //qDebug() << "Received new position: x:" << x << "| y:" << y << "| z:" << z;
 
