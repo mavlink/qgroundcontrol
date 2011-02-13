@@ -44,12 +44,6 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
         m_ui(new Ui::parameterWidget)
 {
     m_ui->setupUi(this);
-    // Make sure the combo box is empty
-    // because else indices get messed up
-    //m_ui->vehicleComboBox->clear();
-
-    // Setup UI connections
-    //connect(m_ui->vehicleComboBox, SIGNAL(activated(int)), this, SLOT(selectUAS(int)));
 
     // Get current MAV list
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
@@ -84,8 +78,6 @@ void ParameterInterface::selectUAS(int index)
  */
 void ParameterInterface::addUAS(UASInterface* uas)
 {
-    //m_ui->vehicleComboBox->addItem(uas->getUASName());
-
     QGCParamWidget* param = new QGCParamWidget(uas, this);
     paramWidgets->insert(uas->getUASID(), param);
     m_ui->stackedWidget->addWidget(param);

@@ -44,6 +44,11 @@ MAVLinkProtocol::MAVLinkProtocol() :
         m_loggingEnabled(false),
         m_logfile(NULL),
         m_enable_version_check(true),
+        m_paramRetransmissionTimeout(350),
+        m_paramRewriteTimeout(500),
+        m_paramGuardEnabled(true),
+        m_actionGuardEnabled(false),
+        m_actionRetransmissionTimeout(100),
         versionMismatchIgnore(false),
         systemId(QGC::defaultSystemId)
 {
@@ -95,6 +100,14 @@ void MAVLinkProtocol::loadSettings()
     {
         systemId = temp;
     }
+
+    // Parameter interface settings
+    bool ok;
+    temp = settings.value("PARAMETER_RETRANSMISSION_TIMEOUT", m_paramRetransmissionTimeout).toInt(&ok);
+    if (ok) m_paramRetransmissionTimeout = temp;
+    temp = settings.value("PARAMETER_REWRITE_TIMEOUT", m_paramRewriteTimeout).toInt(&ok);
+    if (ok) m_paramRewriteTimeout = temp;
+    m_paramGuardEnabled = settings.value("PARAMETER_TRANSMISSION_GUARD_ENABLED", m_paramGuardEnabled).toBool();
     settings.endGroup();
 }
 
@@ -113,6 +126,10 @@ void MAVLinkProtocol::storeSettings()
         // Logfile exists, store the name
         settings.setValue("LOGFILE_NAME", m_logfile->fileName());
     }
+    // Parameter interface settings
+    settings.setValue("PARAMETER_RETRANSMISSION_TIMEOUT", m_paramRetransmissionTimeout);
+    settings.setValue("PARAMETER_REWRITE_TIMEOUT", m_paramRewriteTimeout);
+    settings.setValue("PARAMETER_TRANSMISSION_GUARD_ENABLED", m_paramGuardEnabled);
     settings.endGroup();
     settings.sync();
     //qDebug() << "Storing settings!";
@@ -416,6 +433,51 @@ void MAVLinkProtocol::enableMultiplexing(bool enabled)
 
     m_multiplexingEnabled = enabled;
     if (changed) emit multiplexingChanged(m_multiplexingEnabled);
+}
+
+void MAVLinkProtocol::enableParamGuard(bool enabled)
+{
+    if (enabled != m_paramGuardEnabled)
+    {
+        m_paramGuardEnabled = enabled;
+        emit paramGuardChanged(m_paramGuardEnabled);
+    }
+}
+
+void MAVLinkProtocol::enableActionGuard(bool enabled)
+{
+    if (enabled != m_actionGuardEnabled)
+    {
+        m_actionGuardEnabled = enabled;
+        emit actionGuardChanged(m_actionGuardEnabled);
+    }
+}
+
+void MAVLinkProtocol::setParamRetransmissionTimeout(int ms)
+{
+    if (ms != m_paramRetransmissionTimeout)
+    {
+        m_paramRetransmissionTimeout = ms;
+        emit paramRetransmissionTimeoutChanged(m_paramRetransmissionTimeout);
+    }
+}
+
+void MAVLinkProtocol::setParamRewriteTimeout(int ms)
+{
+    if (ms != m_paramRewriteTimeout)
+    {
+        m_paramRewriteTimeout = ms;
+        emit paramRewriteTimeoutChanged(m_paramRewriteTimeout);
+    }
+}
+
+void MAVLinkProtocol::setActionRetransmissionTimeout(int ms)
+{
+    if (ms != m_actionRetransmissionTimeout)
+    {
+        m_actionRetransmissionTimeout = ms;
+        emit actionRetransmissionTimeoutChanged(m_actionRetransmissionTimeout);
+    }
 }
 
 void MAVLinkProtocol::enableLogging(bool enabled)

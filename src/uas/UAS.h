@@ -130,8 +130,9 @@ protected: //COMMENTS FOR TEST UNIT
     bool batteryRemainingEstimateEnabled; ///< If the estimate is enabled, QGC will try to estimate the remaining battery life
     float chargeLevel;          ///< Charge level of battery, in percent
     int timeRemaining;          ///< Remaining time calculated based on previous and current
-    unsigned int mode;          ///< The current mode of the MAV
+    int mode;                   ///< The current mode of the MAV
     int status;                 ///< The current status of the MAV
+    int navMode;                ///< The current navigation mode of the MAV
     quint64 onboardTimeOffset;
 
     bool controlRollManual;     ///< status flag, true if roll is controlled manually
@@ -173,6 +174,8 @@ public:
     float getChargeLevel();
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
+    /** @brief Get the human-readable navigation mode translation for this mode */
+    QString getNavModeText(int mode);
     /** @brief Check if vehicle is in autonomous mode */
     bool isAuto();
 
@@ -258,6 +261,9 @@ public slots:
 
     /** @brief Request all parameters */
     void requestParameters();
+
+    /** @brief Request a single parameter by index */
+    void requestParameter(int component, int parameter);
 
     /** @brief Set a system parameter */
     void setParameter(const int component, const QString& id, const float value);

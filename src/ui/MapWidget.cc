@@ -339,9 +339,11 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mapadapter = new qmapcontrol::YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
         l->setMapAdapter(mapadapter);
+        geomLayer->setMapAdapter(mapadapter);
 
         if (isVisible()) mc->updateRequestNew();
         mc->setZoom(zoom);
+        overlay->setVisible(false);
         //        yahooActionOverlay->setEnabled(true);
     }
     else if (action == googleActionMap)
@@ -865,8 +867,8 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 
     qmapcontrol::Point* p;
     QPointF coordinate;
-    coordinate.setX(lat);
-    coordinate.setY(lon);
+    coordinate.setX(lon);
+    coordinate.setY(lat);
 
     if (!uasIcons.contains(uas->getUASID()))
     {
@@ -901,7 +903,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         //        if (p)
         //        {
         p = uasIcons.value(uas->getUASID());
-        p->setCoordinate(QPointF(lat, lon));
+        p->setCoordinate(QPointF(lon, lat));
         //p->setYaw(uas->getYaw());
         //        }
         // Extend trail
@@ -922,7 +924,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
             // Sets the view to the interesting area
             if (followgps->isChecked())
             {
-                updatePosition(0, lat, lon);
+                updatePosition(0, lon, lat);
             }
             else
             {

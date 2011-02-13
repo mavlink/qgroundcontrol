@@ -89,7 +89,9 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
     connect(UASManager::instance(), SIGNAL(activeUASStatusChanged(UASInterface*,bool)), this, SLOT(updateActiveUAS(UASInterface*,bool)));
-    
+    connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(showStatusText(int, int, int, QString)));
+    connect(uas, SIGNAL(navModeChanged(int, int, QString)), this, SLOT(updateNavMode(int, int, QString)));
+
     // Setup UAS selection
     connect(m_ui->uasViewFrame, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
     
@@ -149,6 +151,22 @@ UASView::~UASView()
 void UASView::heartbeatTimeout()
 {
     timeout = true;
+}
+
+void UASView::updateNavMode(int uasid, int mode, const QString& text)
+{
+    Q_UNUSED(uasid);
+    Q_UNUSED(mode);
+    m_ui->navLabel->setText(text);
+}
+
+void UASView::showStatusText(int uasid, int componentid, int severity, QString text)
+{
+    Q_UNUSED(uasid);
+    Q_UNUSED(componentid);
+    Q_UNUSED(severity);
+    //m_ui->statusTextLabel->setText(text);
+    stateDesc = text;
 }
 
 /**
@@ -347,7 +365,7 @@ void UASView::updateGlobalPosition(UASInterface* uas, double lon, double lat, do
 void UASView::updateSpeed(UASInterface*, double x, double y, double z, quint64 usec)
 {
     Q_UNUSED(usec);
-    totalSpeed = sqrt((pow(x, 2) + pow(y, 2) + pow(z, 2)));
+    totalSpeed = sqrt(x*x + y*y + z*z);
 }
 
 void UASView::currentWaypointUpdated(quint16 waypoint)

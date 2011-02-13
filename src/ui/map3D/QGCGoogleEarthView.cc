@@ -211,10 +211,10 @@ void QGCGoogleEarthView::updateWaypointList(int uas)
     }
 }
 
-void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec)
+void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
-    javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
+    javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 18).arg(lon, 0, 'f', 18).arg(alt, 0, 'f', 15));
 
     //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }

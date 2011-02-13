@@ -86,6 +86,10 @@ public slots:
     void selectAirframe();
     /** @brief Select the battery type */
     void setBatterySpecs();
+    /** @brief Show a status text message */
+    void showStatusText(int uasid, int componentid, int severity, QString text);
+    /** @brief Update the navigation mode state */
+    void updateNavMode(int uasid, int mode, const QString& text);
 
 protected:
     void changeEvent(QEvent *e);

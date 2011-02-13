@@ -107,7 +107,9 @@ updateTimer(new QTimer())
 
     int labelRow = curvesWidgetLayout->rowCount();
 
-    curvesWidgetLayout->addWidget(new QLabel(tr("On")), labelRow, 0, 1, 2);
+    selectAllCheckBox = new QCheckBox("", this);
+    connect(selectAllCheckBox, SIGNAL(clicked(bool)), this, SLOT(selectAllCurves(bool)));
+    curvesWidgetLayout->addWidget(selectAllCheckBox, labelRow, 0, 1, 2);
 
     label = new QLabel(this);
     label->setText("Name");
@@ -151,6 +153,15 @@ LinechartWidget::~LinechartWidget()
     stopLogging();
     delete listedCurves;
     listedCurves = NULL;
+}
+
+void LinechartWidget::selectAllCurves(bool all)
+{
+    QMap<QString, QLabel*>::iterator i;
+    for (i = curveLabels->begin(); i != curveLabels->end(); ++i)
+    {
+        activePlot->setVisible(i.key(), all);
+    }
 }
 
 void LinechartWidget::writeSettings()
@@ -299,7 +310,7 @@ void LinechartWidget::appendData(int uasId, QString curve, double value, quint64
     // Log data
     if (logging)
     {
-        if (activePlot->isVisible(curve))
+        if (activePlot->isVisible(curve+unit))
         {
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
@@ -365,7 +376,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     // Log data
     if (logging)
     {
-        if (activePlot->isVisible(curve))
+        if (activePlot->isVisible(curve+unit))
         {
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
@@ -660,6 +671,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     // TODO
 
     // Connect actions
+    connect(selectAllCheckBox, SIGNAL(clicked(bool)), checkBox, SLOT(setChecked(bool)));
     QObject::connect(checkBox, SIGNAL(clicked(bool)), this, SLOT(takeButtonClick(bool)));
     QObject::connect(this, SIGNAL(curveVisible(QString, bool)), plot, SLOT(setVisible(QString, bool)));
 
