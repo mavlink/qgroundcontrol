@@ -39,22 +39,12 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
 
-    // *nix (Linux, MacOS tested) serial port support
-//    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
-    //port = new QextSerialPort(porthandle, QextSerialPort::EventDriven);
-
     this->baudrate = baudrate;
     this->flow = flow;
     this->parity = parity;
     this->dataBits = dataBits;
     this->stopBits = stopBits;
     this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
-//    port->setTimeout(timeout); // Timeout of 0 ms, we don't want to wait for data, we just poll again next time
-//    port->setBaudRate(baudrate);
-//    port->setFlowControl(flow);
-//    port->setParity(parity);
-//    port->setDataBits(dataBits);
-//    port->setStopBits(stopBits);
 
     // Set the port name
     if (porthandle == "")
@@ -103,7 +93,7 @@ void SerialLink::loadSettings()
     settings.sync();
     if (settings.contains("SERIALLINK_COMM_PORT"))
     {
-        setPortName(settings.value("SERIALLINK_COMM_PORT").toString());
+        if (porthandle == "") setPortName(settings.value("SERIALLINK_COMM_PORT").toString());
         setBaudRateType(settings.value("SERIALLINK_COMM_BAUD").toInt());
         setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
         setStopBits(settings.value("SERIALLINK_COMM_STOPBITS").toInt());

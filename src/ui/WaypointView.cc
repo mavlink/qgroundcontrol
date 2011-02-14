@@ -334,6 +334,7 @@ void WaypointView::updateFrameView(int frame)
 
 void WaypointView::deleted(QObject* waypoint)
 {
+    Q_UNUSED(waypoint);
 //    if (waypoint == this->wp)
 //    {
 //        deleteLater();

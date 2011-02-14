@@ -104,6 +104,9 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
 
     columns = 1;
     this->setAutoFillBackground(true);
+    QPalette pal = palette();
+    pal.setColor(backgroundRole(), QGC::colorBlack);
+    setPalette(pal);
 
     vwidth = 80.0f;
     vheight = 80.0f;

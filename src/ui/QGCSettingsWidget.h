@@ -15,6 +15,8 @@ public:
     QGCSettingsWidget(QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
     ~QGCSettingsWidget();
 
+public slots:
+
 private:
     Ui::QGCSettingsWidget *ui;
 };

@@ -772,7 +772,7 @@ void DebugConsole::setConnectionState(bool connected)
     else
     {
         m_ui->connectButton->setText(tr("Connect"));
-        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QGC::colorYellow.name(), tr("Link %1 is unconnected.").arg(currLink->getName())));
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QGC::colorOrange.name(), tr("Link %1 is unconnected.").arg(currLink->getName())));
     }
 }
 
