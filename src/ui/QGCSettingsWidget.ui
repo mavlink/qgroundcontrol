@@ -35,6 +35,41 @@
          </property>
         </widget>
        </item>
+       <item row="1" column="0">
+        <widget class="QCheckBox" name="reconnectCheckBox">
+         <property name="text">
+          <string>Automatically reconnect last link on application startup</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../../mavground.qrc">
+           <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QRadioButton" name="nativeStyle">
+         <property name="text">
+          <string>Use native platform look and feel (Windows/Linux/Mac OS)</string>
+         </property>
+         <property name="autoExclusive">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QRadioButton" name="indoorStyle">
+         <property name="text">
+          <string>Use indoor mission style (black background)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QRadioButton" name="outdoorStyle">
+         <property name="text">
+          <string>Use outdoor mission style (light background)</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>

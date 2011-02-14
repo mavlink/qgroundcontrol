@@ -1,4 +1,7 @@
+#include <QSettings>
+
 #include "QGCSettingsWidget.h"
+#include "MainWindow.h"
 #include "ui_QGCSettingsWidget.h"
 
 #include "LinkManager.h"
@@ -32,6 +35,28 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     ui->audioMuteCheckBox->setChecked(GAudioOutput::instance()->isMuted());
     connect(ui->audioMuteCheckBox, SIGNAL(toggled(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
     connect(GAudioOutput::instance(), SIGNAL(mutedChanged(bool)), ui->audioMuteCheckBox, SLOT(setChecked(bool)));
+
+    // Reconnect
+    ui->reconnectCheckBox->setChecked(MainWindow::instance()->autoReconnectEnabled());
+    connect(ui->reconnectCheckBox, SIGNAL(clicked(bool)), MainWindow::instance(), SLOT(enableAutoReconnect(bool)));
+
+    // Style
+    MainWindow::QGC_MAINWINDOW_STYLE style = (MainWindow::QGC_MAINWINDOW_STYLE)MainWindow::instance()->getStyle();
+    switch (style)
+    {
+    case MainWindow::QGC_MAINWINDOW_STYLE_NATIVE:
+        ui->nativeStyle->setChecked(true);
+        break;
+    case MainWindow::QGC_MAINWINDOW_STYLE_INDOOR:
+        ui->indoorStyle->setChecked(true);
+        break;
+    case MainWindow::QGC_MAINWINDOW_STYLE_OUTDOOR:
+        ui->outdoorStyle->setChecked(true);
+        break;
+    }
+    connect(ui->nativeStyle, SIGNAL(clicked()), MainWindow::instance(), SLOT(loadNativeStyle()));
+    connect(ui->indoorStyle, SIGNAL(clicked()), MainWindow::instance(), SLOT(loadIndoorStyle()));
+    connect(ui->outdoorStyle, SIGNAL(clicked()), MainWindow::instance(), SLOT(loadOutdoorStyle()));
 
     // Close / destroy
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(deleteLater()));
