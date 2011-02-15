@@ -138,8 +138,8 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id)
         {
-            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->yaw << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_ACTION) wp->action;
-            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->yaw, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_ACTION) wp->action);
+            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_CMD) wp->command;
+            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
             addWaypoint(lwp, false);
 
             //get next waypoint
@@ -236,6 +236,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
 {
     if (systemId == uas.getUASID() && compId == MAV_COMP_ID_WAYPOINTPLANNER)
     {
+        // FIXME Petri
         if (current_state == WP_SETCURRENT)
         {
             protocol_timer.stop();
@@ -257,11 +258,12 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
                 }
             }
 
-            emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
-            //emit update to UI widgets
-            emit currentWaypointChanged(wpc->seq);
+            //qDebug() << "Updated waypoints list";
         }
-        qDebug() << "new current waypoint" << wpc->seq;
+        emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
+        //emit update to UI widgets
+        emit currentWaypointChanged(wpc->seq);
+        //qDebug() << "new current waypoint" << wpc->seq;
     }
 }
 
@@ -394,7 +396,7 @@ void UASWaypointManager::saveWaypoints(const QString &saveFile)
     QTextStream out(&file);
 
     //write the waypoint list version to the first line for compatibility check
-    out << "QGC WPL 100\r\n";
+    out << "QGC WPL 110\r\n";
 
     for (int i = 0; i < waypoints.size(); i++)
     {
@@ -420,7 +422,7 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
 
     const QStringList &version = in.readLine().split(" ");
 
-    if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "100"))
+    if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "110"))
     {
         emit updateStatusString(tr("The waypoint file is not compatible with the current version of QGroundControl."));
         //MainWindow::instance()->showCriticalMessage(tr("Error loading waypoint file"),tr("The waypoint file is not compatible with the current version of QGroundControl."));
@@ -487,9 +489,117 @@ void UASWaypointManager::clearWaypointList()
     }
 }
 
+const QVector<Waypoint *> UASWaypointManager::getGlobalFrameWaypointList()
+{
+    // TODO Keep this global frame list up to date
+    // with complete waypoint list
+    // instead of filtering on each request
+    QVector<Waypoint*> wps;
+    foreach (Waypoint* wp, waypoints)
+    {
+        if (wp->getFrame() == MAV_FRAME_GLOBAL)
+        {
+            wps.append(wp);
+        }
+    }
+    return wps;
+}
+
 int UASWaypointManager::getIndexOf(Waypoint* wp)
 {
     return waypoints.indexOf(wp);
+}
+
+int UASWaypointManager::getGlobalFrameIndexOf(Waypoint* wp)
+{
+    // Search through all waypoints,
+    // counting only those in global frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_GLOBAL)
+        {
+            if (p == wp)
+            {
+                return i;
+            }
+            i++;
+        }
+    }
+
+    return -1;
+}
+
+int UASWaypointManager::getGlobalFrameCount()
+{
+    // Search through all waypoints,
+    // counting only those in global frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_GLOBAL)
+        {
+            i++;
+        }
+    }
+
+    return i;
+}
+
+int UASWaypointManager::getLocalFrameCount()
+{
+    // Search through all waypoints,
+    // counting only those in global frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_GLOBAL)
+        {
+            i++;
+        }
+    }
+
+    return i;
+}
+
+int UASWaypointManager::getLocalFrameIndexOf(Waypoint* wp)
+{
+    // Search through all waypoints,
+    // counting only those in local frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_LOCAL)
+        {
+            if (p == wp)
+            {
+                return i;
+            }
+            i++;
+        }
+    }
+
+    return -1;
+}
+
+int UASWaypointManager::getMissionFrameIndexOf(Waypoint* wp)
+{
+    // Search through all waypoints,
+    // counting only those in mission frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_MISSION)
+        {
+            if (p == wp)
+            {
+                return i;
+            }
+            i++;
+        }
+    }
+
+    return -1;
 }
 
 void UASWaypointManager::readWaypoints()
@@ -555,17 +665,16 @@ void UASWaypointManager::writeWaypoints()
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent() & noCurrent;   //make sure only one current waypoint is selected, the first selected will be chosen
-                cur_d->orbit = 0;
-                cur_d->orbit_direction = 0;
-                cur_d->param1 = cur_s->getOrbit();
-                cur_d->param2 = cur_s->getHoldTime();
+                cur_d->param3 = cur_s->getLoiterOrbit();
+                cur_d->param1 = cur_s->getParam1();
+                cur_d->param2 = cur_s->getParam2();
                 cur_d->frame = cur_s->getFrame();
-                cur_d->action = cur_s->getAction();
+                cur_d->command = cur_s->getAction();
                 cur_d->seq = i;     // don't read out the sequence number of the waypoint class
                 cur_d->x = cur_s->getX();
                 cur_d->y = cur_s->getY();
                 cur_d->z = cur_s->getZ();
-                cur_d->yaw = cur_s->getYaw();
+                cur_d->param4 = cur_s->getYaw();
 
                 if (cur_s->getCurrent() && noCurrent)
                     noCurrent = false;

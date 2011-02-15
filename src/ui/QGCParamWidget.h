@@ -34,6 +34,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
 #include <QMap>
+#include <QLabel>
+#include <QTimer>
 
 #include "UASInterface.h"
 
@@ -50,9 +52,13 @@ public:
 signals:
     /** @brief A parameter was changed in the widget, NOT onboard */
     void parameterChanged(int component, QString parametername, float value);
+    /** @brief Request a single parameter */
+    void requestParameter(int component, int parameter);
 public slots:
     /** @brief Add a component to the list */
     void addComponent(int uas, int component, QString componentName);
+    /** @brief Add a parameter to the list with retransmission / safety checks */
+    void addParameter(int uas, int component, int paramCount, int paramId, QString parameterName, float value);
     /** @brief Add a parameter to the list */
     void addParameter(int uas, int component, QString parameterName, float value);
     /** @brief Request list of parameters from MAV */
@@ -74,15 +80,34 @@ public slots:
     void saveParameters();
     /** @brief Load parameters from a file */
     void loadParameters();
+
+    /** @brief Check for missing parameters */
+    void retransmissionGuardTick();
+
 protected:
-    UASInterface* mav;  ///< The MAV this widget is controlling
-    QTreeWidget* tree;  ///< The parameter tree
+    UASInterface* mav;   ///< The MAV this widget is controlling
+    QTreeWidget* tree;   ///< The parameter tree
+    QLabel* statusLabel; ///< Parameter transmission label
     QMap<int, QTreeWidgetItem*>* components; ///< The list of components
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups
     QMap<int, QMap<QString, float>* > changedValues; ///< Changed values
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     QVector<bool> received; ///< Successfully received parameters
+    QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
+    QMap<int, QMap<QString, float>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
+    bool transmissionListMode;       ///< Currently requesting list
+    QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
+    bool transmissionActive;         ///< Missing packets, working on list?
+    quint64 transmissionTimeout;     ///< Timeout
+    QTimer retransmissionTimer;      ///< Timer handling parameter retransmission
+    int retransmissionTimeout; ///< Retransmission request timeout, in milliseconds
+    int rewriteTimeout; ///< Write request timeout, in milliseconds
+    int retransmissionBurstRequestSize; ///< Number of packets requested for retransmission per burst
 
+    /** @brief Activate / deactivate parameter retransmission */
+    void setRetransmissionGuardEnabled(bool enabled);
+    /** @brief Load  settings */
+    void loadSettings();
 };
 
 #endif // QGCPARAMWIDGET_H

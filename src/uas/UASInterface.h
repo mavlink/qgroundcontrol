@@ -226,6 +226,8 @@ public slots:
     virtual void setLocalOriginAtCurrentGPSPosition() = 0;
     /** @brief Request all onboard parameters of all components */
     virtual void requestParameters() = 0;
+    /** @brief Request one specific onboard parameter */
+    virtual void requestParameter(int component, int parameter) = 0;
     /** @brief Write parameter to permanent storage */
     virtual void writeParametersToStorage() = 0;
     /** @brief Read parameter from permanent storage */
@@ -259,7 +261,7 @@ public slots:
     virtual void enableExtendedSystemStatusTransmission(int rate) = 0;
     virtual void enableRCChannelDataTransmission(int rate) = 0;
     virtual void enableRawControllerDataTransmission(int rate) = 0;
-    virtual void enableRawSensorFusionTransmission(int rate) = 0;
+    //virtual void enableRawSensorFusionTransmission(int rate) = 0;
 
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;
@@ -269,7 +271,10 @@ public slots:
     virtual void startGyroscopeCalibration() = 0;
     virtual void startPressureCalibration() = 0;
 
-
+    /** @brief Set the current battery type and voltages */
+    virtual void setBatterySpecs(const QString& specs) = 0;
+    /** @brief Get the current battery type and specs */
+    virtual QString getBatterySpecs() = 0;
 
 protected:
     QColor color;
@@ -301,7 +306,11 @@ signals:
     void poiFound(UASInterface* uas, int type, int colorIndex, QString message, float x, float y, float z);
     void poiConnectionFound(UASInterface* uas, int type, int colorIndex, QString message, float x1, float y1, float z1, float x2, float y2, float z2);
 
+    /** @brief A text message from the system has been received */
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
+
+    void navModeChanged(int uasid, int mode, const QString& text);
+
     /**
      * @brief Update the error count of a device
      *
@@ -366,6 +375,7 @@ signals:
     void waypointReached(UASInterface* uas, int id);
     void autoModeChanged(bool autoMode);
     void parameterChanged(int uas, int component, QString parameterName, float value);
+    void parameterChanged(int uas, int component, int parameterCount, int parameterId, QString parameterName, float value);
     void patternDetected(int uasId, QString patternPath, float confidence, bool detected);
     void letterDetected(int uasId, QString letter, float confidence, bool detected);
     /**
@@ -382,10 +392,12 @@ signals:
     void thrustChanged(UASInterface*, double thrust);
     void heartbeat(UASInterface* uas);
     void attitudeChanged(UASInterface*, double roll, double pitch, double yaw, quint64 usec);
+    void attitudeSpeedChanged(int uas, double rollspeed, double pitchspeed, double yawspeed, quint64 usec);
     void attitudeThrustSetPointChanged(UASInterface*, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec);
     void positionSetPointsChanged(int uasid, float xDesired, float yDesired, float zDesired, float yawDesired, quint64 usec);
     void localPositionChanged(UASInterface*, double x, double y, double z, quint64 usec);
     void globalPositionChanged(UASInterface*, double lat, double lon, double alt, quint64 usec);
+    void altitudeChanged(int uasid, double altitude);
     /** @brief Update the status of one satellite used for localization */
     void gpsSatelliteStatusChanged(int uasid, int satid, float azimuth, float direction, float snr, bool used);
     void speedChanged(UASInterface*, double x, double y, double z, quint64 usec);

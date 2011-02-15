@@ -44,7 +44,8 @@ enum qgc_link_t
     QGC_LINK_SERIAL,
     QGC_LINK_UDP,
     QGC_LINK_SIMULATION,
-    QGC_LINK_FORWARDING
+    QGC_LINK_FORWARDING,
+    QGC_LINK_OPAL
 };
 
 enum qgc_protocol_t

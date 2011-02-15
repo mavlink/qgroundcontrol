@@ -101,7 +101,7 @@ void Linecharts::addSystem(UASInterface* uas)
         // Values with unit as double
         connect(uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), widget, SLOT(appendData(int,QString,QString,double,quint64)));
         // Values with unit as integer
-        connect(uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), widget, SLOT(appendData(int,QString,QString,double,quint64)));
+        connect(uas, SIGNAL(valueChanged(int,QString,QString,int,quint64)), widget, SLOT(appendData(int,QString,QString,int,quint64)));
 #endif
         connect(widget, SIGNAL(logfileWritten(QString)), this, SIGNAL(logfileWritten(QString)));
         // Set system active if this is the only system

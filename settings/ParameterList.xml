@@ -36,7 +36,7 @@
        />
     <Parameter
        SimulinkPath="avionics_src/sm_avionics/Attitude_Controller/PID_AIL/Angle_Norm/Max_Min_Angle/"
-       SimulinkParameterName="Constant Value"
+       SimulinkParameterName="Value"
        QGCParamID="ANG_AIL_MAX"
        />
     <!-- Elevator Control Parameters -->
@@ -57,7 +57,7 @@
        />
     <Parameter
        SimulinkPath="avionics_src/sm_avionics/Attitude_Controller/PID_ELE/Angle_Norm/Max_Min_Angle/"
-       SimulinkParameterName="Constant Value"
+       SimulinkParameterName="Value"
        QGCParamID="ANG_ELE_MAX"
        />
   </Block>
@@ -199,7 +199,7 @@
        />
     <Parameter
        SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/AileronMix/Controller_Mix/"
-       SimulinkParameterName="Constant Value"
+       SimulinkParameterName="Value"
        QGCParamID="MIX_AIL"
        />
     <!-- Settings for Elevator Servo -->
@@ -220,7 +220,7 @@
        />
     <Parameter
        SimulinkPath="avionics_src/sm_avionics/Servo_Outputs/ElevatorMix/Controller_Mix/"
-       SimulinkParameterName="Constant Value"
+       SimulinkParameterName="Value"
        QGCParamID="MIX_ELE"
        />
   </Block>

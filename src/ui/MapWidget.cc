@@ -92,11 +92,24 @@ MapWidget::MapWidget(QWidget *parent) :
     //    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
     //    mc->addLayer(gsatLayer);
 
+
+    // Zurich, ETH
+
+    int lastZoom = 16;
+    double lastLat = 47.376889;
+    double lastLon = 8.548056;
+
+    QSettings settings;
+    settings.beginGroup("QGC_MAPWIDGET");
+    lastLat = settings.value("LAST_LATITUDE", lastLat).toDouble();
+    lastLon = settings.value("LAST_LONGITUDE", lastLon).toDouble();
+    lastZoom = settings.value("LAST_ZOOM", lastZoom).toInt();
+    settings.endGroup();
+
     // SET INITIAL POSITION AND ZOOM
     // Set default zoom level
-    mc->setZoom(16);
-    // Zurich, ETH
-    mc->setView(QPointF(8.548056,47.376889));
+    mc->setZoom(lastZoom);
+    mc->setView(QPointF(lastLon, lastLat));
 
     // Veracruz Mexico
     //mc->setView(QPointF(-96.105208,19.138955));
@@ -157,12 +170,18 @@ MapWidget::MapWidget(QWidget *parent) :
     zoomout->setStyleSheet(buttonStyle);
     createPath = new QPushButton(QIcon(":/images/actions/go-bottom.svg"), "", this);
     createPath->setStyleSheet(buttonStyle);
+    createPath->setToolTip(tr("Start / end waypoint add mode"));
+    createPath->setStatusTip(tr("Start / end waypoint add mode"));
 //    clearTracking = new QPushButton(QIcon(""), "", this);
 //    clearTracking->setStyleSheet(buttonStyle);
     followgps = new QPushButton(QIcon(":/images/actions/system-lock-screen.svg"), "", this);
     followgps->setStyleSheet(buttonStyle);
+    followgps->setToolTip(tr("Follow the position of the current MAV with the map center"));
+    followgps->setStatusTip(tr("Follow the position of the current MAV with the map center"));
     QPushButton* goToButton = new QPushButton(QIcon(""), "T", this);
     goToButton->setStyleSheet(buttonStyle);
+    goToButton->setToolTip(tr("Enter a latitude/longitude position to move the map to"));
+    goToButton->setStatusTip(tr("Enter a latitude/longitude position to move the map to"));
 
     zoomin->setMaximumWidth(30);
     zoomout->setMaximumWidth(30);
@@ -256,7 +275,7 @@ void MapWidget::goTo()
     bool ok;
     QString text = QInputDialog::getText(this, tr("Please enter coordinates"),
                                          tr("Coordinates (Lat,Lon):"), QLineEdit::Normal,
-                                         QString("%1,%2").arg(mc->currentCoordinate().x()).arg(mc->currentCoordinate().y()), &ok);
+                                         QString("%1,%2").arg(mc->currentCoordinate().y()).arg(mc->currentCoordinate().x()), &ok);
     if (ok && !text.isEmpty())
     {
         QStringList split = text.split(",");
@@ -270,7 +289,7 @@ void MapWidget::goTo()
 
             if (ok)
             {
-                mc->setView(QPointF(latitude, longitude));
+                mc->setView(QPointF(longitude, latitude));
             }
         }
     }
@@ -320,9 +339,11 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mapadapter = new qmapcontrol::YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
         l->setMapAdapter(mapadapter);
+        geomLayer->setMapAdapter(mapadapter);
 
         if (isVisible()) mc->updateRequestNew();
         mc->setZoom(zoom);
+        overlay->setVisible(false);
         //        yahooActionOverlay->setEnabled(true);
     }
     else if (action == googleActionMap)
@@ -411,7 +432,15 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
         if (mav)
         {
-            mav->getWaypointManager()->addWaypoint(new Waypoint(mav->getWaypointManager()->getWaypointList().count(), coordinate.x(), coordinate.y(), 0.0f, 0.0f, true));
+            double altitude = 0.0;
+            double yaw = 0.0;
+            int wpListCount = mav->getWaypointManager()->getWaypointList().count();
+            if (wpListCount > 0)
+            {
+                altitude = mav->getWaypointManager()->getWaypointList().at(wpListCount-1)->getAltitude();
+                yaw = mav->getWaypointManager()->getWaypointList().at(wpListCount-1)->getYaw();
+            }
+            mav->getWaypointManager()->addWaypoint(new Waypoint(wpListCount, coordinate.y(), coordinate.x(), altitude, yaw, true));
         }
         else
         {
@@ -436,67 +465,89 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
 void MapWidget::updateWaypoint(int uas, Waypoint* wp)
 {
+    // Update waypoint list and redraw map (last parameter)
     updateWaypoint(uas, wp, true);
 }
 
+/**
+ * This function is called if a a single waypoint is updated and
+ * also if the whole list changes.
+ */
 void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
 {
-    qDebug() << "UPDATING WP" << wp->getId() << wp <<  __FILE__ << __LINE__;
+    // Make sure this is the right UAS
     if (uas == this->mav->getUASID())
     {
-        int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getIndexOf(wp);
-        if (wpindex == -1) return;
-        // Create waypoint name
-        //QString str = QString("%1").arg(wpindex);
-        // Check if wp exists yet
-        if (!(wpIcons.count() > wpindex))
+        // Only accept waypoints in global coordinate frame
+        if (wp->getFrame() == MAV_FRAME_GLOBAL)
         {
-            QPointF coordinate;
-            coordinate.setX(wp->getX());
-            coordinate.setY(wp->getY());
-            createWaypointGraphAtMap(wpindex, coordinate);
+            // We're good, this is a global waypoint
+
+            // Get the index of this waypoint
+            // note the call to getGlobalFrameIndexOf()
+            // as we're only handling global waypoints
+            int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameIndexOf(wp);
+            // If not found, return (this should never happen, but helps safety)
+            if (wpindex == -1) return;
+
+            // Check if wp exists yet in map
+            if (!(wpIcons.count() > wpindex))
+            {
+                // Waypoint is new, a new icon is created
+                QPointF coordinate;
+                coordinate.setX(wp->getLongitude());
+                coordinate.setY(wp->getLatitude());
+                createWaypointGraphAtMap(wpindex, coordinate);
+            }
+            else
+            {
+                // Waypoint exists, update it if we're not
+                // currently dragging it with the mouse
+                if(!waypointIsDrag)
+                {
+                    QPointF coordinate;
+                    coordinate.setX(wp->getLongitude());
+                    coordinate.setY(wp->getLatitude());
+
+                    Point* waypoint;
+                    waypoint = wps.at(wpindex);
+                    if (waypoint)
+                    {
+                        // First set waypoint coordinate
+                        waypoint->setCoordinate(coordinate);
+                        // Now update icon position
+                        wpIcons.at(wpindex)->setCoordinate(coordinate);
+                        // Update pen
+                        wpIcons.at(wpindex)->setPen(mavPens.value(uas));
+                        // Then waypoint line coordinate
+                        Point* linesegment = NULL;
+                        // If the line segment already exists, just update it
+                        // else create a new one
+                        if (waypointPath->points().size() > wpindex)
+                        {
+                            linesegment = waypointPath->points().at(wpindex);
+                            if (linesegment) linesegment->setCoordinate(coordinate);
+                        }
+                        else
+                        {
+                            waypointPath->addPoint(waypoint);
+                        }
+
+                        // Update view
+                        if (updateView) if (isVisible()) mc->updateRequest(waypoint->boundingBox().toRect());
+                    }
+                }
+            }
         }
         else
         {
-            // Waypoint exists, update it
-            if(!waypointIsDrag)
+            // Check if the index of this waypoint is larger than the global
+            // waypoint list. This implies that the coordinate frame of this
+            // waypoint was changed and the list containing only global
+            // waypoints was shortened. Thus update the whole list
+            if (waypointPath->points().count() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameCount())
             {
-                qDebug() <<"indice WP= "<< wpindex <<"\n";
-
-                QPointF coordinate;
-                coordinate.setX(wp->getX());
-                coordinate.setY(wp->getY());
-
-                Point* waypoint;
-                waypoint = wps.at(wpindex);//wpIndex[str];
-                if (waypoint)
-                {
-                    // First set waypoint coordinate
-                    waypoint->setCoordinate(coordinate);
-                    // Now update icon position
-                    //mc->layer("Waypoints")->removeGeometry(wpIcons.at(wpindex));
-                    wpIcons.at(wpindex)->setCoordinate(coordinate);
-                    //mc->layer("Waypoints")->addGeometry(wpIcons.at(wpindex));
-                    // Then waypoint line coordinate
-                    Point* linesegment = NULL;
-                    if (waypointPath->points().size() > wpindex)
-                    {
-                        linesegment = waypointPath->points().at(wpindex);
-                    }
-                    else
-                    {
-                        waypointPath->addPoint(waypoint);
-                    }
-
-                    if (linesegment)
-                    {
-                        linesegment->setCoordinate(coordinate);
-                    }
-
-                    //point2Find = dynamic_cast <Point*> (mc->layer("Waypoints")->get_Geometry(wpindex));
-                    //point2Find->setCoordinate(coordinate);
-                    if (updateView) if (isVisible()) mc->updateRequest(waypoint->boundingBox().toRect());
-                }
+                updateWaypointList(uas);
             }
         }
     }
@@ -504,7 +555,7 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
 
 void MapWidget::createWaypointGraphAtMap(int id, const QPointF coordinate)
 {
-    if (!wpExists(coordinate))
+    //if (!wpExists(coordinate))
     {
         // Create waypoint name
         QString str;
@@ -591,13 +642,14 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
         // Update waypoint data storage
         if (mav)
         {
-            QVector<Waypoint*> wps = mav->getWaypointManager()->getWaypointList();
+            QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameWaypointList();
 
             if (wps.size() > index)
             {
-                wps.at(index)->setX(coordinate.x());
-                wps.at(index)->setY(coordinate.y());
-                mav->getWaypointManager()->notifyOfChange(wps.at(index));
+                Waypoint* wp = wps.at(index);
+                wp->setLatitude(coordinate.y());
+                wp->setLongitude(coordinate.x());
+                mav->getWaypointManager()->notifyOfChange(wp);
             }
         }
 
@@ -640,15 +692,22 @@ void MapWidget::addUAS(UASInterface* uas)
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
 }
 
+/**
+ * Update the whole list of waypoints. This is e.g. necessary if the list order changed.
+ * The UAS manager will emit the appropriate signal whenever updating the list
+ * is necessary.
+ */
 void MapWidget::updateWaypointList(int uas)
 {
     // Get already existing waypoints
     UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
     if (uasInstance)
     {
-        // Get update rect of old content
+        // Get update rect of old content, this is what will be redrawn
+        // in the last step
         QRect updateRect = waypointPath->boundingBox().toRect();
 
+        // Get all waypoints, including non-global waypoints
         QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getWaypointList();
 
         // Clear if necessary
@@ -658,17 +717,13 @@ void MapWidget::updateWaypointList(int uas)
             return;
         }
 
-        // Load all existing waypoints into map view
-        foreach (Waypoint* wp, wpList)
+        // Trim internal list to number of global waypoints in the waypoint manager list
+        int overSize = waypointPath->points().count() - uasInstance->getWaypointManager()->getGlobalFrameCount();
+        if (overSize > 0)
         {
-            // Block updates, since we update everything in the next step
-            updateWaypoint(mav->getUASID(), wp, false);
-        }
-
-        // Delete now unused wps
-        if (waypointPath->points().count() > wpList.count())
-        {
-            int overSize = waypointPath->points().count() - wpList.count();
+            // Remove n waypoints at the end of the list
+            // the remaining waypoints will be updated
+            // in the next step
             for (int i = 0; i < overSize; ++i)
             {
                 wps.removeLast();
@@ -676,6 +731,15 @@ void MapWidget::updateWaypointList(int uas)
                 wpIcons.removeLast();
                 waypointPath->points().removeLast();
             }
+        }
+
+        // Load all existing waypoints into map view
+        foreach (Waypoint* wp, wpList)
+        {
+            // Block map draw updates, since we update everything in the next step
+            // but update internal data structures.
+            // Please note that updateWaypoint() ignores non-global waypoints
+            updateWaypoint(mav->getUASID(), wp, false);
         }
 
         // Update view
@@ -803,8 +867,8 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 
     qmapcontrol::Point* p;
     QPointF coordinate;
-    coordinate.setX(lat);
-    coordinate.setY(lon);
+    coordinate.setX(lon);
+    coordinate.setY(lat);
 
     if (!uasIcons.contains(uas->getUASID()))
     {
@@ -814,7 +878,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         // Icon
         //QPen* pointpen = new QPen(uasColor);
         qDebug() << "2D MAP: ADDING" << uas->getUASName() << __FILE__ << __LINE__;
-        p = new MAV2DIcon(uas, 50, uas->getSystemType(), uas->getColor(), QString("%1").arg(uas->getUASID()), qmapcontrol::Point::Middle);
+        p = new MAV2DIcon(uas, 68, uas->getSystemType(), uas->getColor(), QString("%1").arg(uas->getUASID()), qmapcontrol::Point::Middle);
         uasIcons.insert(uas->getUASID(), p);
         mc->layer("Waypoints")->addGeometry(p);
 
@@ -839,7 +903,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         //        if (p)
         //        {
         p = uasIcons.value(uas->getUASID());
-        p->setCoordinate(QPointF(lat, lon));
+        p->setCoordinate(QPointF(lon, lat));
         //p->setYaw(uas->getYaw());
         //        }
         // Extend trail
@@ -860,7 +924,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
             // Sets the view to the interesting area
             if (followgps->isChecked())
             {
-                updatePosition(0, lat, lon);
+                updatePosition(0, lon, lat);
             }
             else
             {
@@ -941,6 +1005,14 @@ void MapWidget::showEvent(QShowEvent* event)
 void MapWidget::hideEvent(QHideEvent* event)
 {
     Q_UNUSED(event);
+    QSettings settings;
+    settings.beginGroup("QGC_MAPWIDGET");
+    QPointF currentPos = mc->currentCoordinate();
+    settings.setValue("LAST_LATITUDE", currentPos.y());
+    settings.setValue("LAST_LONGITUDE", currentPos.x());
+    settings.setValue("LAST_ZOOM", mc->currentZoom());
+    settings.endGroup();
+    settings.sync();
 }
 
 
