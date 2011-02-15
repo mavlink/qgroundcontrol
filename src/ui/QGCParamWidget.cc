@@ -44,7 +44,6 @@ This file is part of the QGROUNDCONTROL project
  */
 QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
         QWidget(parent),
-
         mav(uas),
         components(new QMap<int, QTreeWidgetItem*>()),
         paramGroups(),
@@ -52,9 +51,10 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
         parameters(),
         transmissionListMode(false),
         transmissionActive(false),
-        transmissionStarted(0),
+        transmissionTimeout(0),
         retransmissionTimeout(350),
-        rewriteTimeout(500)
+        rewriteTimeout(500),
+        retransmissionBurstRequestSize(2)
 {
     // Load settings
     loadSettings();
@@ -210,6 +210,12 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
 {
     addParameter(uas, component, parameterName, value);
 
+    // Missing packets list has to be instantiated for all components
+    if (!transmissionMissingPackets.contains(component))
+    {
+        transmissionMissingPackets.insert(component, new QList<int>());
+    }
+
     // List mode is different from single parameter transfers
     if (transmissionListMode)
     {
@@ -217,13 +223,8 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
         // each component
         if (!transmissionListSizeKnown.contains(component))
         {
-            // If this was the first packet to announce the list size
-            // set all packets not received yet as missing to enforce
-            // retransmission until full list is received
-            if (!transmissionMissingPackets.contains(component))
-            {
-                transmissionMissingPackets.insert(component, new QList<int>());
-            }
+            // Mark list size as known
+            transmissionListSizeKnown.insert(component, true);
 
             // Mark all parameters as missing
             for (int i = 0; i < paramCount; ++i)
@@ -234,8 +235,14 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
                 }
             }
 
-            // Mark list size as known
-            transmissionListSizeKnown.insert(component, true);
+            // There is only one transmission timeout for all components
+            // since components do not manage their transmission,
+            // the longest timeout is safe for all components.
+            quint64 thisTransmissionTimeout = QGC::groundTimeMilliseconds() + ((paramCount/retransmissionBurstRequestSize+5)*retransmissionTimeout);
+            if (thisTransmissionTimeout > transmissionTimeout)
+            {
+                transmissionTimeout = thisTransmissionTimeout;
+            }
         }
 
         // Start retransmission guard
@@ -243,10 +250,24 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
         setRetransmissionGuardEnabled(true);
     }
 
-    // Mark this parameter as received
+    // Mark this parameter as received in read list
     int index = transmissionMissingPackets.value(component)->indexOf(paramId);
     // If the MAV sent the parameter without request, it wont be in missing list
     if (index != -1) transmissionMissingPackets.value(component)->removeAt(index);
+
+    bool justWritten = false;
+    bool writeMismatch = false;
+    // Mark this parameter as received in write ACK list
+    QMap<QString, float>* map = transmissionMissingWriteAckPackets.value(component);
+    if (map && map->contains(parameterName))
+    {
+        justWritten = true;
+        if (map->value(parameterName) != value)
+        {
+            writeMismatch = true;
+        }
+        map->remove(parameterName);
+    }
 
     int missCount = 0;
     foreach (int key, transmissionMissingPackets.keys())
@@ -254,7 +275,19 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
         missCount +=  transmissionMissingPackets.value(key)->count();
     }
 
-    statusLabel->setText(tr("Got Param (#%1 of %5) %2: %3 (%4 missing)").arg(paramId+1).arg(parameterName).arg(value).arg(missCount).arg(paramCount));
+    if (justWritten && !writeMismatch)
+    {
+        statusLabel->setText(tr("SUCCESS: Wrote %2 (#%1/%4): %3").arg(paramId+1).arg(parameterName).arg(value).arg(paramCount));
+    }
+    else if (justWritten && writeMismatch)
+    {
+        // Mismatch, tell user
+        statusLabel->setText(tr("FAILURE: Wrote %1: sent %2 != onboard %3").arg(parameterName).arg(map->value(parameterName), value));
+    }
+    else
+    {
+        statusLabel->setText(tr("Got %2 (#%1/%5): %3 (%4 missing)").arg(paramId+1).arg(parameterName).arg(value).arg(missCount).arg(paramCount));
+    }
 
     // Check if last parameter was received
     if (missCount == 0)
@@ -417,7 +450,13 @@ void QGCParamWidget::requestParameterList()
         transmissionMissingPackets.value(key)->clear();
     }
     transmissionActive = true;
-    transmissionStarted = QGC::groundTimeUsecs();
+
+    // Set status text
+    statusLabel->setText(tr("Requested param list.. waiting"));
+
+    // Request twice as mean of forward error correction
+    mav->requestParameters();
+    QGC::SLEEP::msleep(10);
     mav->requestParameters();
 }
 
@@ -456,8 +495,8 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
                     // Check if the value was numerically changed
                     if (!parameters.value(key)->contains(str) || parameters.value(key)->value(str, 0.0f) != value)
                     {
-                        current->setBackground(0, QBrush(QColor(QGC::colorGreen)));
-                        current->setBackground(1, QBrush(QColor(QGC::colorGreen)));
+                        current->setBackground(0, QBrush(QColor(QGC::colorOrange)));
+                        current->setBackground(1, QBrush(QColor(QGC::colorOrange)));
                     }
 
                     // All parameters list
@@ -593,33 +632,84 @@ void QGCParamWidget::retransmissionGuardTick()
     if (transmissionActive)
     {
         qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD ACTIVE, CHECKING FOR DROPS..";
-        // Re-request at maximum five parameters at once
-        // to prevent link flooding
 
+        // Check for timeout
+        // stop retransmission attempts on timeout
+        if (QGC::groundTimeMilliseconds() > transmissionTimeout)
+        {
+            setRetransmissionGuardEnabled(false);
+            transmissionActive = false;
+
+            // Empty read retransmission list
+            // Empty write retransmission list
+            int missingReadCount = 0;
+            QList<int> readKeys = transmissionMissingPackets.keys();
+            foreach (int component, readKeys)
+            {
+                missingReadCount += transmissionMissingPackets.value(component)->count();
+                transmissionMissingPackets.value(component)->clear();
+            }
+
+            // Empty write retransmission list
+            int missingWriteCount = 0;
+            QList<int> writeKeys = transmissionMissingWriteAckPackets.keys();
+            foreach (int component, writeKeys)
+            {
+                missingWriteCount += transmissionMissingWriteAckPackets.value(component)->count();
+                transmissionMissingWriteAckPackets.value(component)->clear();
+            }
+            statusLabel->setText(tr("TIMEOUT! MISSING: %1 read, %2 write.").arg(missingReadCount).arg(missingWriteCount));
+        }
+
+        // Re-request at maximum retransmissionBurstRequestSize parameters at once
+        // to prevent link flooding
         QMap<int, QMap<QString, float>*>::iterator i;
         for (i = parameters.begin(); i != parameters.end(); ++i)
         {
             // Iterate through the parameters of the component
             int component = i.key();
-            // Request five parameters from this component (at maximum)
+            // Request n parameters from this component (at maximum)
             QList<int> * paramList = transmissionMissingPackets.value(component, NULL);
             if (paramList)
             {
                 int count = 0;
-                int maxCount = 1;
                 foreach (int id, *paramList)
                 {
-                    if (count < maxCount)
+                    if (count < retransmissionBurstRequestSize)
                     {
                         qDebug() << __FILE__ << __LINE__ << "RETRANSMISSION GUARD REQUESTS RETRANSMISSION OF PARAM #" << id << "FROM COMPONENT #" << component;
                         emit requestParameter(component, id);
-                        statusLabel->setText(tr("Requ. retransmission of #%1").arg(id));
+                        statusLabel->setText(tr("Requested retransmission of #%1").arg(id+1));
                         count++;
                     }
                     else
                     {
                         break;
                     }
+                }
+            }
+        }
+
+        // Re-request at maximum retransmissionBurstRequestSize parameters at once
+        // to prevent write-request link flooding
+        // Empty write retransmission list
+        QList<int> writeKeys = transmissionMissingWriteAckPackets.keys();
+        foreach (int component, writeKeys)
+        {
+            int count = 0;
+            QMap <QString, float>* missingParams = transmissionMissingWriteAckPackets.value(component);
+            foreach (QString key, missingParams->keys())
+            {
+                if (count < retransmissionBurstRequestSize)
+                {
+                    // Re-request write operation
+                    emit parameterChanged(component, key, missingParams->value(key));
+                    statusLabel->setText(tr("Re-requested write: %1: %2").arg(key).arg(missingParams->value(key)));
+                    count++;
+                }
+                else
+                {
+                    break;
                 }
             }
         }
@@ -640,23 +730,25 @@ void QGCParamWidget::retransmissionGuardTick()
 void QGCParamWidget::setParameter(int component, QString parameterName, float value)
 {
     emit parameterChanged(component, parameterName, value);
-//    // Wait for parameter to be written back
-//    // mark it therefore as missing
-//    if (!transmissionMissingPackets.contains(component))
-//    {
-//        transmissionMissingPackets.insert(component, new QList<int>());
-//    }
+    // Wait for parameter to be written back
+    // mark it therefore as missing
+    if (!transmissionMissingWriteAckPackets.contains(component))
+    {
+        transmissionMissingWriteAckPackets.insert(component, new QMap<QString, float>());
+    }
 
-//    for (int i = 0; i < paramCount; ++i)
-//    {
-//        if (!transmissionMissingPackets.value(component)->contains(i))
-//        {
-//            transmissionMissingPackets.value(component)->append(i);
-//        }
-//    }
-//    transmissionActive = true;
-//    transmissionStarted = QGC::groundTimeUsecs();
-//    setRetransmissionGuardEnabled(true);
+    // Insert it in missing write ACK list
+    transmissionMissingWriteAckPackets.value(component)->insert(parameterName, value);
+
+    // Set timeouts
+    transmissionActive = true;
+    quint64 newTransmissionTimeout = QGC::groundTimeMilliseconds() + 5*rewriteTimeout;
+    if (newTransmissionTimeout > transmissionTimeout)
+    {
+        transmissionTimeout = newTransmissionTimeout;
+    }
+    // Enable guard / reset timeouts
+    setRetransmissionGuardEnabled(true);
 }
 
 /**
@@ -682,7 +774,7 @@ void QGCParamWidget::setParameters()
         }
     }
 
-    // Update stats label
+    // Change transmission status if necessary
     if (parametersSent == 0)
     {
         statusLabel->setText(tr("No transmission: No changed values."));
@@ -690,6 +782,15 @@ void QGCParamWidget::setParameters()
     else
     {
         statusLabel->setText(tr("Transmitting %1 parameters.").arg(parametersSent));
+        // Set timeouts
+        transmissionActive = true;
+        quint64 newTransmissionTimeout = QGC::groundTimeMilliseconds() + (parametersSent/retransmissionBurstRequestSize+5)*rewriteTimeout;
+        if (newTransmissionTimeout > transmissionTimeout)
+        {
+            transmissionTimeout = newTransmissionTimeout;
+        }
+        // Enable guard
+        setRetransmissionGuardEnabled(true);
     }
 
     changedValues.clear();
