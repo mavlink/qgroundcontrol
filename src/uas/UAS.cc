@@ -888,7 +888,53 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
-    case MAVLINK_MSG_ID_DEBUG_VECT:
+
+        case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
+            {
+                qDebug() << "RECIEVED ACK TO GET IMAGE";
+                mavlink_data_transmission_handshake_t p;
+                mavlink_msg_data_transmission_handshake_decode(&message, &p);
+                imageSize = p.size;
+                imagePackets = p.packets;
+                imagePayload = p.payload;
+                imageQuality = p.jpg_quality;
+                imageStart = MG::TIME::getGroundTimeNow();
+            }
+            break;
+
+        case MAVLINK_MSG_ID_ENCAPSULATED_DATA:
+            {
+                mavlink_encapsulated_data_t img;
+                mavlink_msg_encapsulated_data_decode(&message, &img);
+                int seq = img.seqnr;
+                int pos = seq * imagePayload;
+
+                for (int i = 0; i < imagePayload; ++i)
+                {
+                    if (pos <= imageSize)
+                    {
+                        imageRecBuffer[pos] = img.data[i];
+                    }
+                    ++pos;
+                }
+
+                ++imagePacketsArrived;
+
+                // emit signal if all packets arrived
+                if ((imagePacketsArrived == imagePackets))
+                {
+                    image.loadFromData(imageRecBuffer);
+                    emit imageReady(this);
+                    // Restart statemachine
+                    imagePacketsArrived = 0;
+
+                    //this->requestImage();
+                    //qDebug() << "SENDING REQUEST TO GET NEW IMAGE FROM SYSTEM" << uasId;
+                }
+            }
+            break;
+
+        case MAVLINK_MSG_ID_DEBUG_VECT:
             {
                 mavlink_debug_vect_t vect;
                 mavlink_msg_debug_vect_decode(&message, &vect);
@@ -1297,6 +1343,32 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
     }
 }
 
+QImage UAS::getImage()
+{
+    return image;
+}
+
+void UAS::requestImage()
+{
+    qDebug() << "trying to get an image from the uas...";
+
+    if (imagePacketsArrived == 0)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 50);
+        sendMessage(msg);
+    }
+    else if (MG::TIME::getGroundTimeNow() - imageStart >= 1000)
+    {
+        // handshake happened more than 1 second ago, packets should have arrived by now
+        // maybe we missed some packets (dropped along the way)
+        image.loadFromData(imageRecBuffer);
+        emit imageReady(this);
+        // Restart statemachine
+        imagePacketsArrived = 0;
+    }
+    // default else, wait?
+}
 
 
 /* MANAGEMENT */
