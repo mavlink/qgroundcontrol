@@ -76,7 +76,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     horizontalLayout->addWidget(tree, 0, 0, 1, 3);
 
     // Status line
-    statusLabel->setText(tr("Click read to get parameters"));
+    statusLabel->setText(tr("Click refresh to download parameters"));
     horizontalLayout->addWidget(statusLabel, 1, 0, 1, 3);
 
 
