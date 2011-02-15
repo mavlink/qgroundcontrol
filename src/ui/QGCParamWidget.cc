@@ -62,6 +62,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     // Create tree widget
     tree = new QTreeWidget(this);
     statusLabel = new QLabel();
+    statusLabel->setAutoFillBackground(true);
     tree->setColumnWidth(0, 150);
 
     // Set tree widget as widget onto this component
@@ -257,6 +258,7 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
 
     bool justWritten = false;
     bool writeMismatch = false;
+    bool lastWritten = false;
     // Mark this parameter as received in write ACK list
     QMap<QString, float>* map = transmissionMissingWriteAckPackets.value(component);
     if (map && map->contains(parameterName))
@@ -275,22 +277,54 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
         missCount +=  transmissionMissingPackets.value(key)->count();
     }
 
-    if (justWritten && !writeMismatch)
+    int missWriteCount = 0;
+    foreach (int key, transmissionMissingWriteAckPackets.keys())
+    {
+        missWriteCount += transmissionMissingWriteAckPackets.value(key)->count();
+    }
+
+    if (justWritten && !writeMismatch && missWriteCount == 0)
+    {
+        // Just wrote one and count went to 0 - this was the last missing write parameter
+        statusLabel->setText(tr("SUCCESS: WROTE ALL PARAMETERS"));
+        QPalette pal = statusLabel->palette();
+        pal.setColor(backgroundRole(), QGC::colorGreen);
+        statusLabel->setPalette(pal);
+    }
+    else if (justWritten && !writeMismatch)
     {
         statusLabel->setText(tr("SUCCESS: Wrote %2 (#%1/%4): %3").arg(paramId+1).arg(parameterName).arg(value).arg(paramCount));
+        QPalette pal = statusLabel->palette();
+        pal.setColor(backgroundRole(), QGC::colorGreen);
+        statusLabel->setPalette(pal);
     }
     else if (justWritten && writeMismatch)
     {
         // Mismatch, tell user
+        QPalette pal = statusLabel->palette();
+        pal.setColor(backgroundRole(), QGC::colorRed);
+        statusLabel->setPalette(pal);
         statusLabel->setText(tr("FAILURE: Wrote %1: sent %2 != onboard %3").arg(parameterName).arg(map->value(parameterName)).arg(value));
     }
     else
     {
+        if (missCount > 0)
+        {
+            QPalette pal = statusLabel->palette();
+            pal.setColor(backgroundRole(), QGC::colorOrange);
+            statusLabel->setPalette(pal);
+        }
+        else
+        {
+            QPalette pal = statusLabel->palette();
+            pal.setColor(backgroundRole(), QGC::colorGreen);
+            statusLabel->setPalette(pal);
+        }
         statusLabel->setText(tr("Got %2 (#%1/%5): %3 (%4 missing)").arg(paramId+1).arg(parameterName).arg(value).arg(missCount).arg(paramCount));
     }
 
     // Check if last parameter was received
-    if (missCount == 0)
+    if (missCount == 0 && missWriteCount == 0)
     {
         this->transmissionActive = false;
         this->transmissionListMode = false;
