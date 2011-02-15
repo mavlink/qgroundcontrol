@@ -157,6 +157,16 @@ protected: //COMMENTS FOR TEST UNIT
     double yaw;
     quint64 lastHeartbeat;      ///< Time of the last heartbeat message
     QTimer* statusTimeout;      ///< Timer for various status timeouts
+
+    int imageSize;              ///< Image size being transmitted (bytes)
+    int imagePackets;           ///< Number of data packets being sent for this image
+    int imagePacketsArrived;    ///< Number of data packets recieved
+    int imagePayload;           ///< Payload size per transmitted packet (bytes). Standard is 254, and decreases when image resolution increases.
+    int imageQuality;           ///< JPEG-Quality of the transmitted image (percentage)
+    QByteArray imageRecBuffer;  ///< Buffer for the incoming bytestream
+    QImage image;               ///< Image data of last completely transmitted image
+    quint64 imageStart;
+
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
     int airframe;               ///< The airframe type
@@ -175,6 +185,8 @@ public:
 public:
     UASWaypointManager* getWaypointManager() { return &waypointManager; }
     int getSystemType();
+    QImage getImage();
+    void requestImage(); // ?
     int getAutopilotType() {return autopilot;}
 
 public slots:
@@ -310,6 +322,8 @@ signals:
     /** @brief Propagate a heartbeat received from the system */
     void heartbeat(UASInterface* uas);
     void imageStarted(quint64 timestamp);
+    /** @brief A new camera image has arrived */
+    void imageReady(UASInterface* uas);
 
     protected:
     /** @brief Get the UNIX timestamp in microseconds */
