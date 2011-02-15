@@ -845,11 +845,14 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                 break;
             case MAVLINK_MSG_ID_PARAM_SET:
                 {
-                    qDebug() << "SIMULATION RECEIVED COMMAND TO SET PARAMETER";
-                    mavlink_param_set_t set;
-                    mavlink_msg_param_set_decode(&msg, &set);
-//                    if (set.target_system == systemId)
-//                    {
+                    // Drop on even milliseconds
+                    if (QGC::groundTimeMilliseconds() % 2 == 0)
+                    {
+                        qDebug() << "SIMULATION RECEIVED COMMAND TO SET PARAMETER";
+                        mavlink_param_set_t set;
+                        mavlink_msg_param_set_decode(&msg, &set);
+                        //                    if (set.target_system == systemId)
+                        //                    {
                         QString key = QString((char*)set.param_id);
                         if (onboardParams.contains(key))
                         {
@@ -864,8 +867,10 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                             memcpy(stream+streampointer,buffer, bufferlength);
                             streampointer+=bufferlength;
                         }
-//                    }
+                        //                    }
+                    }
                 }
+                break;
             case MAVLINK_MSG_ID_PARAM_REQUEST_READ:
                 {
                     qDebug() << "SIMULATION RECEIVED COMMAND TO SEND PARAMETER";
