@@ -18,28 +18,17 @@
 #include <QMouseEvent>
 #include <QMenu>
 #include <QSettings>
+#include <qmath.h>
 #include "UASManager.h"
 #include "HDDisplay.h"
 #include "ui_HDDisplay.h"
 #include "MG.h"
 #include "QGC.h"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 #include <QDebug>
 
 HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
         QGraphicsView(parent),
         uas(NULL),
-        values(QMap<QString, float>()),
-        valuesDot(QMap<QString, float>()),
-        valuesMean(QMap<QString, float>()),
-        valuesCount(QMap<QString, int>()),
-        lastUpdate(QMap<QString, quint64>()),
-        minValues(),
-        maxValues(),
-        goodRanges(),
-        critRanges(),
         xCenterOffset(0.0f),
         yCenterOffset(0.0f),
         vwidth(80.0f),
@@ -474,18 +463,17 @@ void HDDisplay::renderOverlay()
  */
 void HDDisplay::setActiveUAS(UASInterface* uas)
 {
-    //qDebug() << "ATTEMPTING TO SET UAS";
     if (this->uas != NULL)
     {
         // Disconnect any previously connected active MAV
         disconnect(this->uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
+        disconnect(this->uas, SIGNAL(valueChanged(int,QString,QString,int,quint64)), this, SLOT(updateValue(int,QString,QString,int,quint64)));
     }
 
     // Now connect the new UAS
-
-    //qDebug() << "UAS SET!" << "ID:" << uas->getUASID();
     // Setup communication
     connect(uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
+    connect(uas, SIGNAL(valueChanged(int,QString,QString,int,quint64)), this, SLOT(updateValue(int,QString,QString,int,quint64)));
     this->uas = uas;
 }
 
@@ -629,7 +617,16 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     //drawCircle(xRef, yRef+nameHeight, radius, 0.0f, 170.0f, 1.0f, color, painter);
 
     QString label;
-    label.sprintf("% 06.1f", value);
+
+    // Show integer values without decimal places
+    if (intValues.contains(name))
+    {
+        label.sprintf("% 05d", (int)value);
+    }
+    else
+    {
+        label.sprintf("% 06.1f", value);
+    }
 
 
     // Text
@@ -855,6 +852,12 @@ void HDDisplay::paintText(QString text, QColor color, float fontSize, float refX
 float HDDisplay::refLineWidthToPen(float line)
 {
     return line * 2.50f;
+}
+
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const int value, const quint64 msec)
+{
+    if (!intValues.contains(name)) intValues.insert(name, true);
+    updateValue(uasId, name, unit, (double)value, msec);
 }
 
 void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec)

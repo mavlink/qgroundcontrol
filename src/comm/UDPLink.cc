@@ -78,9 +78,32 @@ void UDPLink::setAddress(QString address)
     //socket->setLocalAddress(QHostAddress(address));
 }
 
-void UDPLink::setPort(quint16 port)
+void UDPLink::setPort(int port)
 {
     this->port = port;
+    disconnect();
+    connect();
+}
+
+/**
+ * @param host Hostname in standard formatting, e.g. localhost:14551 or 192.168.1.1:14551
+ */
+void UDPLink::addHost(const QString& host)
+{
+    if (host.contains(":"))
+    {
+        // Add host
+        hosts->append(QHostAddress(host.split(":").first()));
+        // Set port according to user input
+        ports->append(host.split(":").last().toInt());
+    }
+    else
+    {
+        // Add host
+        hosts->append(QHostAddress(host));
+        // Set port according to default (this port)
+        ports->append(port);
+    }
 }
 
 

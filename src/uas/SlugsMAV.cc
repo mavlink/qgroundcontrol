@@ -64,11 +64,12 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
     if (message.sysid == uasId)
     {
-    // Handle your special messages mavlink_message_t* msg = &message;
+#ifdef MAVLINK_ENABLED_SLUGS 
+		// Handle your special messages mavlink_message_t* msg = &message;
     switch (message.msgid)
     {
 
-#ifdef MAVLINK_ENABLED_SLUGS
+
 
       case MAVLINK_MSG_ID_RAW_IMU:
         mavlink_msg_raw_imu_decode(&message, &mlRawImuData);
@@ -151,12 +152,11 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
       break;
 
-#endif
-
       default:
             //        qDebug() << "\nSLUGS RECEIVED MESSAGE WITH ID" << message.msgid;
             break;
         }
+	#endif
     }
 }
 

@@ -130,7 +130,7 @@ protected:
     void contextMenuEvent (QContextMenuEvent* event);
     void createActions();
 
-    static const int updateInterval = 50;
+    static const int updateInterval = 40;
 
     QImage* image; ///< Double buffer image
     QImage glImage; ///< The background / camera image
@@ -198,6 +198,9 @@ protected:
     double xSpeed;
     double ySpeed;
     double zSpeed;
+    quint64 lastSpeedUpdate;
+    double totalSpeed;
+    double totalAcc;
     double lat;
     double lon;
     double alt;

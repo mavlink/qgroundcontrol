@@ -40,8 +40,8 @@ This file is part of the PIXHAWK project
 #endif
 #ifdef Q_OS_LINUX
 //#include <flite/flite.h>
-#include <phonon/MediaObject>
-#include <phonon/AudioOutput>
+#include <Phonon/MediaObject>
+#include <Phonon/AudioOutput>
 #endif
 #ifdef Q_OS_WIN
 #include <Phonon/MediaObject>
@@ -80,6 +80,9 @@ public:
         VOICE_FEMALE
     } QGVoice;
 
+    /** @brief Get the mute state */
+    bool isMuted();
+
 public slots:
     /** @brief Say this text if current output priority matches */
     bool say(QString text, int severity=1);
@@ -101,8 +104,9 @@ public slots:
     void notifyNegative();
     /** @brief Mute/unmute sound */
     void mute(bool mute);
-    /** @brief Get the mute state */
-    bool isMuted();
+
+signals:
+    void mutedChanged(bool);
 
 protected:
 #ifdef Q_OS_MAC

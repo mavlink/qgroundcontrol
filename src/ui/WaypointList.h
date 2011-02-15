@@ -87,8 +87,8 @@ public slots:
     /** @brief The waypoint manager informs that the waypoint list was changed */
     void waypointListChanged(void);
 
-    /** @brief The MapWidget informs that a waypoint global was changed on the map */
-    void waypointGlobalChanged(const QPointF coordinate, const int indexWP);
+//    /** @brief The MapWidget informs that a waypoint global was changed on the map */
+//    void waypointGlobalChanged(const QPointF coordinate, const int indexWP);
 
     void clearWPWidget();
 
@@ -99,8 +99,8 @@ public slots:
     void moveDown(Waypoint* wp);
     void removeWaypoint(Waypoint* wp);
 
-    void setIsLoadFileWP();
-    void setIsReadGlobalWP(bool value);
+//    void setIsLoadFileWP();
+//    void setIsReadGlobalWP(bool value);
 
 
 

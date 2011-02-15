@@ -90,7 +90,7 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
             osg::ref_ptr<osg::Cylinder> cylinder =
                     new osg::Cylinder(osg::Vec3d(0.0, 0.0, -wpZ / 2.0),
-                                      wp->getOrbit(),
+                                      wp->getAcceptanceRadius(),
                                       fabs(wpZ));
 
             sd->setShape(cylinder);

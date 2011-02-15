@@ -61,6 +61,7 @@ public:
 
     void drawIcon(QPen* pen);
     void drawIcon() { drawIcon(mypen); }
+    static void drawAirframePolygon(int airframe, QPainter& painter, int radius, QColor& iconColor, float yaw);
 
 protected:
     float yaw;      ///< Yaw angle of the MAV

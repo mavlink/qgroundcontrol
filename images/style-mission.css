@@ -356,3 +356,38 @@ QProgressBar::chunk#speedBar {
 QProgressBar::chunk#thrustBar {
 	background-color: orange;
 }
+
+QDialog {
+  border: 1px solid #62676B;
+  border-radius: 2px;
+}
+
+ QTabWidget::pane { /* The tab widget frame */
+     border: 1px solid #62676B;
+     border-radius: 2px;
+     position: absolute;
+     top: -0.5em;
+ }
+
+ QTabWidget::tab-bar {
+     alignment: center;
+ }
+
+ /* Style the tab using the tab sub-control. Note that
+     it reads QTabBar _not_ QTabWidget */
+ QTabBar::tab {
+     	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #090909, stop: 1 #353535);
+    border: 2px solid #62676B;
+     border-radius: 4px;
+     min-width: 8ex;
+     padding: 2px;
+ }
+
+ QTabBar::tab:selected, QTabBar::tab:hover {
+	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #090909, stop: 1 #353535);
+    border: 2px solid #379AC3;
+ }
+
+ QTabBar::tab:selected {
+     border: 2px solid #379AC3;
+ }
