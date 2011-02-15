@@ -282,7 +282,7 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
     else if (justWritten && writeMismatch)
     {
         // Mismatch, tell user
-        statusLabel->setText(tr("FAILURE: Wrote %1: sent %2 != onboard %3").arg(parameterName).arg(map->value(parameterName), value));
+        statusLabel->setText(tr("FAILURE: Wrote %1: sent %2 != onboard %3").arg(parameterName).arg(map->value(parameterName)).arg(value));
     }
     else
     {
@@ -704,7 +704,7 @@ void QGCParamWidget::retransmissionGuardTick()
                 {
                     // Re-request write operation
                     emit parameterChanged(component, key, missingParams->value(key));
-                    statusLabel->setText(tr("Re-requested write: %1: %2").arg(key).arg(missingParams->value(key)));
+                    statusLabel->setText(tr("Requested rewrite of: %1: %2").arg(key).arg(missingParams->value(key)));
                     count++;
                 }
                 else
