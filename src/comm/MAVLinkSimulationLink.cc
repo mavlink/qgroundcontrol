@@ -884,6 +884,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         //add data into datastream
                         memcpy(stream+streampointer,buffer, bufferlength);
                         streampointer+=bufferlength;
+                        //qDebug() << "Sending PARAM" << key;
                     }
                     else if (read.param_index < onboardParams.size())
                     {
@@ -891,12 +892,13 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
                         float paramValue = onboardParams.value(key);
 
                         // Pack message and get size of encoded byte string
-                        mavlink_msg_param_value_pack(systemId, componentId, &msg, (int8_t*)key.toStdString().c_str(), paramValue, onboardParams.size(), onboardParams.keys().indexOf(key));
+                        mavlink_msg_param_value_pack(read.target_system, componentId, &msg, (int8_t*)key.toStdString().c_str(), paramValue, onboardParams.size(), onboardParams.keys().indexOf(key));
                         // Allocate buffer with packet data
                         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
                         //add data into datastream
                         memcpy(stream+streampointer,buffer, bufferlength);
                         streampointer+=bufferlength;
+                        //qDebug() << "Sending PARAM #ID" << (read.param_index) << "KEY:" << key;
                     }
                 }
                 break;

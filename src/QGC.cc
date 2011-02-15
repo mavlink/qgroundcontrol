@@ -37,6 +37,15 @@ quint64 groundTimeUsecs()
     return static_cast<quint64>(microseconds + (time.time().msec()*1000));
 }
 
+quint64 groundTimeMilliseconds()
+{
+    QDateTime time = QDateTime::currentDateTime();
+    time = time.toUTC();
+    /* Return seconds and milliseconds, in milliseconds unit */
+    quint64 seconds = time.toTime_t() * static_cast<quint64>(1000);
+    return static_cast<quint64>(seconds + (time.time().msec()));
+}
+
 float limitAngleToPMPIf(float angle)
 {
     while (angle > ((float)M_PI+FLT_EPSILON))

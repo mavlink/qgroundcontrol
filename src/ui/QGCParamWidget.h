@@ -94,14 +94,15 @@ protected:
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     QVector<bool> received; ///< Successfully received parameters
     QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
-    QMap<int, QList<float>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
+    QMap<int, QMap<QString, float>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
     bool transmissionListMode;       ///< Currently requesting list
     QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
     bool transmissionActive;         ///< Missing packets, working on list?
-    quint64 transmissionStarted;     ///< Timeout
+    quint64 transmissionTimeout;     ///< Timeout
     QTimer retransmissionTimer;      ///< Timer handling parameter retransmission
     int retransmissionTimeout; ///< Retransmission request timeout, in milliseconds
     int rewriteTimeout; ///< Write request timeout, in milliseconds
+    int retransmissionBurstRequestSize; ///< Number of packets requested for retransmission per burst
 
     /** @brief Activate / deactivate parameter retransmission */
     void setRetransmissionGuardEnabled(bool enabled);
