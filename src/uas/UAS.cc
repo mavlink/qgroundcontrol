@@ -898,7 +898,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 imagePackets = p.packets;
                 imagePayload = p.payload;
                 imageQuality = p.jpg_quality;
-                imageStart = MG::TIME::getGroundTimeNow();
+                imageStart = QGC::groundTimeMilliseconds();
             }
             break;
 

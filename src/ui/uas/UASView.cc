@@ -132,6 +132,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     // Heartbeat fade
     refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+    refreshTimer->start(updateInterval);
 
     // Hide kill and shutdown buttons per default
     m_ui->killButton->hide();
@@ -270,7 +271,7 @@ void UASView::receiveHeartbeat(UASInterface* uas)
 {
     Q_UNUSED(uas);
     heartbeatColor = QColor(20, 200, 20);
-    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 2px; border: 0px; background-color: %1; }");
+    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 0px; border: 0px; background-color: %1; }");
     m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
     if (timeout) setBackgroundColor();
     timeout = false;
@@ -604,7 +605,7 @@ void UASView::refresh()
     }
     generalUpdateCount++;
 
-    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 2px; border: 0px; background-color: %1; }");
+    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 0px; border: 0px; background-color: %1; }");
 
     if (timeout)
     {
