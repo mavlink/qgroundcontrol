@@ -36,6 +36,7 @@ var currViewRange = 50.0;	///<< The current viewing range from this position (in
 var currTilt = 40.0;		///<< The tilt angle (in degrees)
 var currFollowTilt = 40.0;
 var currView = null;
+var distanceMode = 0;
 
 var viewMode = 0;
 var lastTilt = 0;
@@ -92,6 +93,11 @@ function getGlobal(variable)
 function getDraggingAllowed()
 {
 	return draggingAllowed;
+}
+
+function setDistanceMode(mode)
+{
+	distanceMode = mode;
 }
 
 function setDraggingAllowed(allowed)

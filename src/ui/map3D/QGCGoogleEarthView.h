@@ -102,8 +102,12 @@ public slots:
     void goHome();
     /** @brief Set the home location */
     void setHome(double lat, double lon, double alt);
+    /** @brief Allow waypoint editing */
+    void enableEditMode(bool mode);
     /** @brief Set camera view range to aircraft in meters */
     void setViewRange(float range);
+    /** @brief Set the distance mode - either to ground or to MAV */
+    void setDistanceMode(int mode);
     /** @brief Set the view mode */
     void setViewMode(VIEW_MODE mode);
     /** @brief Toggle through the different view modes */

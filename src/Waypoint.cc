@@ -210,9 +210,9 @@ void Waypoint::setCurrent(bool current)
 
 void Waypoint::setAcceptanceRadius(double radius)
 {
-    if (this->param1 != radius)
+    if (this->param2 != radius)
     {
-        this->param1 = radius;
+        this->param2 = radius;
         emit changed(this);
     }
 }
@@ -291,9 +291,9 @@ void Waypoint::setLoiterOrbit(double orbit)
 
 void Waypoint::setHoldTime(int holdTime)
 {
-    if (this->param2 != holdTime)
+    if (this->param1 != holdTime)
     {
-        this->param2 = holdTime;
+        this->param1 = holdTime;
         emit changed(this);
     }
 }

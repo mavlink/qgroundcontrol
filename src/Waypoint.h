@@ -59,8 +59,8 @@ public:
     bool getAutoContinue() const { return autocontinue; }
     bool getCurrent() const { return current; }
     double getLoiterOrbit() const { return orbit; }
-    double getAcceptanceRadius() const { return param1; }
-    double getHoldTime() const { return param2; }
+    double getAcceptanceRadius() const { return param2; }
+    double getHoldTime() const { return param1; }
     double getParam1() const { return param1; }
     double getParam2() const { return param2; }
     double getParam3() const { return orbit; }

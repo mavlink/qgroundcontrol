@@ -121,12 +121,22 @@ void QGCGoogleEarthView::reloadHTML()
     show();
 }
 
+void QGCGoogleEarthView::enableEditMode(bool mode)
+{
+    javaScript(QString("setDraggingAllowed(%1);").arg(mode));
+}
+
 /**
  * @param range in meters (SI-units)
  */
 void QGCGoogleEarthView::setViewRange(float range)
 {
     javaScript(QString("setViewRange(%1);").arg(range, 0, 'f', 5));
+}
+
+void QGCGoogleEarthView::setDistanceMode(int mode)
+{
+    javaScript(QString("setDistanceMode(%1);").arg(mode));
 }
 
 void QGCGoogleEarthView::toggleViewMode()
@@ -469,25 +479,30 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             setActiveUAS(UASManager::instance()->getActiveUAS());
 
             // Add any further MAV automatically
-            connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
-            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+            connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
+            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)), Qt::UniqueConnection);
 
             // Connect UI signals/slots
 
             // Follow checkbox
             ui->followAirplaneCheckbox->setChecked(followCamera);
-            connect(ui->followAirplaneCheckbox, SIGNAL(toggled(bool)), this, SLOT(follow(bool)));
+            connect(ui->followAirplaneCheckbox, SIGNAL(toggled(bool)), this, SLOT(follow(bool)), Qt::UniqueConnection);
 
             // Trail checkbox
             ui->trailCheckbox->setChecked(trailEnabled);
-            connect(ui->trailCheckbox, SIGNAL(toggled(bool)), this, SLOT(showTrail(bool)));
+            connect(ui->trailCheckbox, SIGNAL(toggled(bool)), this, SLOT(showTrail(bool)), Qt::UniqueConnection);
 
             // Go home
             connect(ui->goHomeButton, SIGNAL(clicked()), this, SLOT(goHome()));
 
             // Cam distance slider
-            connect(ui->camDistanceSlider, SIGNAL(valueChanged(int)), this, SLOT(setViewRangeScaledInt(int)));
+            connect(ui->camDistanceSlider, SIGNAL(valueChanged(int)), this, SLOT(setViewRangeScaledInt(int)), Qt::UniqueConnection);
             setViewRangeScaledInt(ui->camDistanceSlider->value());
+
+            // Distance combo box
+            connect(ui->camDistanceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setDistanceMode(int)), Qt::UniqueConnection);
+            // Edit mode button
+            connect(ui->editButton, SIGNAL(clicked(bool)), this, SLOT(enableEditMode(bool)), Qt::UniqueConnection);
 
             // Update waypoint list
             if (mav) updateWaypointList(mav->getUASID());
@@ -497,7 +512,8 @@ void QGCGoogleEarthView::initializeGoogleEarth()
 
             // Set current view mode
             setViewMode(currentViewMode);
-
+            setDistanceMode(ui->camDistanceComboBox->currentIndex());
+            enableEditMode(ui->editButton->isChecked());
             follow(this->followCamera);
 
             gEarthInitialized = true;

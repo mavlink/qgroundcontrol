@@ -33,9 +33,14 @@ MapWidget::MapWidget(QWidget *parent) :
         uasTrails(),
         mav(NULL),
         lastUpdate(0),
+        initialized(false),
         m_ui(new Ui::MapWidget)
 {
     m_ui->setupUi(this);
+}
+
+void MapWidget::init()
+{
     mc = new qmapcontrol::MapControl(this->size());
 
     //   VISUAL MAP STYLE
@@ -268,6 +273,9 @@ MapWidget::MapWidget(QWidget *parent) :
 
     drawCamBorder = false;
     radioCamera = 10;
+
+    // Done set state
+    initialized = true;
 }
 
 void MapWidget::goTo()
@@ -1013,6 +1021,8 @@ void MapWidget::hideEvent(QHideEvent* event)
     settings.setValue("LAST_ZOOM", mc->currentZoom());
     settings.endGroup();
     settings.sync();
+
+    if (!initialized) init();
 }
 
 
