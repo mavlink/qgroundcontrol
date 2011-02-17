@@ -61,6 +61,48 @@ var lineStyle;
 // Aircraft class
 var planeColor = '6600ffff';
 
+// Enable / disable dragging
+var draggingAllowed = true;
+
+// Waypoint interaction flags
+var dragInfo = null;
+
+var dragWaypointIndex = "";
+var dragWaypointLatitude = 0;
+var dragWaypointLongitude = 0;
+var dragWaypointAltitude = 0;
+var dragWaypointPending = false;
+
+// Waypoint creation flags
+var newWaypointLatitude = 0;
+var newWaypointLongitude = 0;
+var newWaypointAltitude = 0;
+var newWaypointPending = false;
+
+function getGlobal(variable)
+{
+	return variable;
+}
+
+function getDraggingAllowed()
+{
+	return draggingAllowed;
+}
+
+function setDraggingAllowed(allowed)
+{
+	draggingAllowed = allowed;
+}
+
+function setNewWaypointPending(pending)
+{
+	newWaypointPending = pending;
+}
+
+function setDragWaypointPending(pending)
+{
+	dragWaypointPending = pending;
+}
 
 function isInitialized()
 {
@@ -76,6 +118,84 @@ function init()
 function setFollowEnabled(enable)
 {
 	followEnabled = enable;
+}
+
+function enableEventListener()
+{
+// listen for mousedown on the window (look specifically for point placemarks)
+google.earth.addEventListener(ge.getWindow(), 'mousedown', function(event)
+{
+  if (draggingAllowed)
+  {
+  if (event.getTarget().getType() == 'KmlPlacemark' &&
+      event.getTarget().getGeometry().getType() == 'KmlPoint') {
+    //event.preventDefault();
+    var placemark = event.getTarget();
+    
+    dragInfo = {
+      placemark: event.getTarget(),
+      dragged: false
+    };
+  }
+  }
+});
+
+// listen for mousemove on the globe
+google.earth.addEventListener(ge.getGlobe(), 'mousemove', function(event)
+{
+  if (draggingAllowed)
+  {
+  if (dragInfo) {
+    event.preventDefault();
+    var point = dragInfo.placemark.getGeometry();
+    point.setLatitude(event.getLatitude());
+    point.setLongitude(event.getLongitude());
+    dragInfo.dragged = true;
+    dragWaypointIndex = dragInfo.placemark.getDescription();
+	dragWaypointLatitude = event.getLatitude();
+	dragWaypointLongitude = event.getLongitude();
+	dragWaypointAltitude = point.getAltitude();
+	dragWaypointPending = true;
+  }
+  }
+});
+
+// listen for mouseup on the window
+google.earth.addEventListener(ge.getWindow(), 'mouseup', function(event)
+{
+  if (draggingAllowed)
+  {
+  if (dragInfo) {
+    if (dragInfo.dragged)
+    {
+      	// if the placemark was dragged, prevent balloons from popping up
+      	event.preventDefault();
+      	// Get drag end location
+      	dragWaypointIndex = dragInfo.placemark.getDescription();
+      	var point = dragInfo.placemark.getGeometry();
+      	dragWaypointLatitude = event.getLatitude();
+		dragWaypointLongitude = event.getLongitude();
+		dragWaypointAltitude = point.getAltitude();
+    	dragWaypointPending = true;
+    }
+    
+    dragInfo = null;
+  }
+  }
+});
+
+// Listen for wp creation request on the globe
+
+google.earth.addEventListener(ge.getGlobe(), 'dblclick', function(event){
+	if (draggingAllowed)
+	{
+       event.preventDefault();
+       newWaypointLatitude = event.getLatitude();
+       newWaypointLongitude = event.getLongitude();
+       newWaypointAltitude = ge.getGlobe().getGroundAltitude(newWaypointLatitude, newWaypointLongitude);
+       newWaypointPending = true;
+    }
+}); 
 }
 
 
@@ -143,6 +263,7 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    location.setLongitude(lon);
 	    location.setAltitude(alt); 
 	    waypoints[index].setGeometry(location);
+	    waypoints[index].setDescription(index+"");
 	    console.log('WP LOC:' + lat + lon + alt);
 	}
 	else
@@ -157,7 +278,8 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    console.log('WP ICON created:' + 'http://google-maps-icons.googlecode.com/files/red' + numberstring +'.png');
 	    style.getIconStyle().setIcon(icon); 
 	    //style.getIconStyle().setScale(0.5); 
-	    placemark.setStyleSelector(style);  
+	    placemark.setStyleSelector(style);
+	    placemark.setDescription(index+"");
 
 	    // Set the placemark's location.   
 	    var location = ge.createPoint(''); 
@@ -285,6 +407,8 @@ function initCallback(object)
     ge.getLayerRoot().enableLayerById(ge.LAYER_BUILDINGS, true); 
     ge.getLayerRoot().enableLayerById(ge.LAYER_BORDERS, true); 
     ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
+    
+    enableEventListener();
 
     initialized = true;
 }
@@ -300,7 +424,15 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 		}
 		currLat = lat;
 		currLon = lon;
-		currAlt = alt;
+		var trueGroundAlt = ge.getGlobe().getGroundAltitude(lat, lon);
+		if (trueGroundAlt < alt)
+		{
+		  currAlt = alt;
+	    }
+	    else
+	    {
+	      currAlt = trueGroundAlt+0.1;
+	    }
 		// Interpolate between t-1 and t and set new states
 		lastLat = lastLat*0.8+currLat*0.2;
 		lastLon = lastLon*0.8+currLon*0.2;
@@ -350,6 +482,15 @@ function goHome()
 function setCurrentAircraft(id)
 {
 	currAircraft = id;
+}
+
+/** @brief Set the current view mode
+ *
+ * @param mode 0: map view, 1: chase cam, fixed, 2: chase cam, free
+ */
+function setViewMode(mode)
+{
+
 }
 
 function updateFollowAircraft()

@@ -11,6 +11,7 @@
 #ifdef Q_OS_MAC
 #include <QWebFrame>
 #include <QWebPage>
+#include <QWebElement>
 #include "QGCWebPage.h"
 #endif
 
@@ -337,6 +338,30 @@ QVariant QGCGoogleEarthView::javaScript(QString javaScript)
 #endif
 }
 
+QVariant QGCGoogleEarthView::documentElement(QString name)
+{
+#ifdef Q_OS_MAC
+    QString javaScript("getGlobal(%1)");
+    QVariant result = webViewMac->page()->currentFrame()->evaluateJavaScript(javaScript.arg(name));
+    //qDebug() << "DOC ELEM:" << name << ":" << result;
+    return result;
+#endif
+#ifdef _MSC_VER
+    if(!jScriptInitialized)
+    {
+        qDebug() << "TOO EARLY JAVASCRIPT CALL, ABORTING";
+        return QVariant(false);
+    }
+    else
+    {
+        //QVariantList params;
+        //params.append(javaScript);
+        //params.append("JScript");
+        //return jScriptWin->dynamicCall("execScript(QString, QString)", params);
+    }
+#endif
+}
+
 void QGCGoogleEarthView::initializeGoogleEarth()
 {
     if (!jScriptInitialized)
@@ -422,6 +447,9 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             connect(ui->camDistanceSlider, SIGNAL(valueChanged(int)), this, SLOT(setViewRangeScaledInt(int)));
             setViewRangeScaledInt(ui->camDistanceSlider->value());
 
+            // Update waypoint list
+            if (mav) updateWaypointList(mav->getUASID());
+
             // Start update timer
             updateTimer->start(refreshRateMs);
 
@@ -470,6 +498,91 @@ void QGCGoogleEarthView::updateState()
                        .arg(roll, 0, 'f', 9)
                        .arg(pitch, 0, 'f', 9)
                        .arg(yaw, 0, 'f', 9));
+        }
+
+
+        // Read out new waypoint positions and waypoint create events
+        // this is polling (bad) but forced because of the crappy
+        // Microsoft API available in Qt - improvements wanted
+
+        // First check if a new WP should be created
+//        bool newWaypointPending = .to
+        bool newWaypointPending = documentElement("newWaypointPending").toBool();
+        if (newWaypointPending)
+        {
+            bool coordsOk = true;
+            bool ok;
+            double latitude = documentElement("newWaypointLatitude").toDouble(&ok);
+            coordsOk &= ok;
+            double longitude = documentElement("newWaypointLongitude").toDouble(&ok);
+            coordsOk &= ok;
+            double altitude = documentElement("newWaypointAltitude").toDouble(&ok);
+            coordsOk &= ok;
+            if (coordsOk)
+            {
+                // Add new waypoint
+                if (mav)
+                {
+                    int nextIndex = mav->getWaypointManager()->getWaypointList().count();
+                    Waypoint* wp = new Waypoint(nextIndex, latitude, longitude, altitude, true);
+                    wp->setFrame(MAV_FRAME_GLOBAL);
+//                    wp.setLatitude(latitude);
+//                    wp.setLongitude(longitude);
+//                    wp.setAltitude(altitude);
+                    mav->getWaypointManager()->addWaypoint(wp);
+                }
+            }
+            javaScript("setNewWaypointPending(false);");
+        }
+
+        // Check if a waypoint should be moved
+        bool dragWaypointPending = documentElement("dragWaypointPending").toBool();
+
+        if (dragWaypointPending)
+        {
+            bool coordsOk = true;
+            bool ok;
+            double latitude = documentElement("dragWaypointLatitude").toDouble(&ok);
+            coordsOk &= ok;
+            double longitude = documentElement("dragWaypointLongitude").toDouble(&ok);
+            coordsOk &= ok;
+            double altitude = documentElement("dragWaypointAltitude").toDouble(&ok);
+            coordsOk &= ok;
+            if (coordsOk)
+            {
+                // Add new waypoint
+                if (mav)
+                {
+                    QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameWaypointList();
+
+                    QString idText = documentElement("dragWaypointIndex").toString();
+
+                    bool ok;
+                    int index = idText.toInt(&ok);
+
+                    if (ok && index >= 0 && index < wps.count())
+                    {
+                        Waypoint* wp = wps.at(index);
+                        wp->setLatitude(latitude);
+                        wp->setLongitude(longitude);
+                        wp->setAltitude(altitude);
+                        //                    Waypoint wp;
+                        //                    wp.setFrame(MAV_FRAME_GLOBAL);
+                        //                    wp.setLatitude(latitude);
+                        //                    wp.setLongitude(longitude);
+                        //                    wp.setAltitude(altitude);
+                        //                    mav->getWaypointManager()->addWaypoint(wp);
+                        mav->getWaypointManager()->notifyOfChange(wp);
+                    }
+                }
+            }
+            else
+            {
+                // If coords were not ok, move the view in google earth back
+                // to last acceptable location
+                updateWaypointList(mav->getUASID());
+            }
+            javaScript("setDragWaypointPending(false);");
         }
     }
 }
