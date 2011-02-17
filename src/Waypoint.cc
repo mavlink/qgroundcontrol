@@ -129,6 +129,7 @@ void Waypoint::setLatitude(double lat)
     if (this->x != lat)
     {
         this->x = lat;
+        this->frame = MAV_FRAME_GLOBAL;
         emit changed(this);
     }
 }
@@ -138,6 +139,7 @@ void Waypoint::setLongitude(double lon)
     if (this->y != lon)
     {
         this->y = lon;
+        this->frame = MAV_FRAME_GLOBAL;
         emit changed(this);
     }
 }
@@ -147,6 +149,7 @@ void Waypoint::setAltitude(double altitude)
     if (this->z != altitude)
     {
         this->z = altitude;
+        this->frame = MAV_FRAME_GLOBAL;
         emit changed(this);
     }
 }

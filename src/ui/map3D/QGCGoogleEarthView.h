@@ -109,6 +109,8 @@ public slots:
 public:
     /** @brief Execute java script inside the Google Earth window */
     QVariant javaScript(QString javascript);
+    /** @brief Get a document element */
+    QVariant documentElement(QString name);
 
 protected:
     void changeEvent(QEvent *e);
