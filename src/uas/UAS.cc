@@ -661,7 +661,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                         alt = 0;
                         emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
                     }
-                    emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E7, time);
+                    emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E3, time);
                     // Smaller than threshold and not NaN
                     if (pos.v < 1000000 && pos.v == pos.v)
                     {

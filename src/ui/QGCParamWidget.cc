@@ -258,7 +258,7 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
 
     bool justWritten = false;
     bool writeMismatch = false;
-    bool lastWritten = false;
+    //bool lastWritten = false;
     // Mark this parameter as received in write ACK list
     QMap<QString, float>* map = transmissionMissingWriteAckPackets.value(component);
     if (map && map->contains(parameterName))

@@ -71,6 +71,14 @@ public:
     explicit QGCGoogleEarthView(QWidget *parent = 0);
     ~QGCGoogleEarthView();
 
+    enum VIEW_MODE
+    {
+        VIEW_MODE_SIDE, ///< View from above, orientation is free
+        VIEW_MODE_MAP, ///< View from above, orientation is north (map view)
+        VIEW_MODE_CHASE_LOCKED, ///< Locked chase camera
+        VIEW_MODE_CHASE_FREE, ///< Position is chasing object, but view can rotate around object
+    };
+
 public slots:
     /** @brief Update the internal state. Does not trigger a redraw */
     void updateState();
@@ -96,6 +104,10 @@ public slots:
     void setHome(double lat, double lon, double alt);
     /** @brief Set camera view range to aircraft in meters */
     void setViewRange(float range);
+    /** @brief Set the view mode */
+    void setViewMode(VIEW_MODE mode);
+    /** @brief Toggle through the different view modes */
+    void toggleViewMode();
     /** @brief Set camera view range to aircraft in centimeters */
     void setViewRangeScaledInt(int range);
     /** @brief Reset Google Earth View */
@@ -123,6 +135,7 @@ protected:
     bool webViewInitialized;
     bool jScriptInitialized;
     bool gEarthInitialized;
+    VIEW_MODE currentViewMode;
 #ifdef _MSC_VER
     QGCWebAxWidget* webViewWin;
     QAxObject* jScriptWin;

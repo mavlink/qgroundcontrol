@@ -37,6 +37,11 @@ var currTilt = 40.0;		///<< The tilt angle (in degrees)
 var currFollowTilt = 40.0;
 var currView = null;
 
+var viewMode = 0;
+var lastTilt = 0;
+var lastRoll = 0;
+var lastHeading = 0;
+
 var M_PI = 3.14159265;
 
 
@@ -486,11 +491,34 @@ function setCurrentAircraft(id)
 
 /** @brief Set the current view mode
  *
- * @param mode 0: map view, 1: chase cam, fixed, 2: chase cam, free
+ * @param mode 0: side map view, 1: top/north map view, 2: fixed chase cam, 3: free chase cam
  */
 function setViewMode(mode)
 {
-
+	viewMode = mode;
+	
+	var currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
+	
+	if (mode == 0)
+	{
+		currView.setTilt(0);
+		currView.setHeading(0);
+	}
+	if (mode == 1)
+	{
+		lastTilt = currView.getTilt();
+		lastHeading = currView.getHeading();
+		var lastLat2 = currView.getLatitude();
+		var lastLon2 = currView.getLongitude();
+		var lastAlt2 = currView.getAltitude();
+		currView.setTilt(0);
+		currView.setHeading(0);
+		currView.setLatitude(lastLat2);
+		currView.setLongitude(lastLon2);
+		currView.setAltitude(lastAlt2);
+	}
+	
+	ge.getView().setAbstractView(currView);
 }
 
 function updateFollowAircraft()

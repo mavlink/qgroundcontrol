@@ -38,6 +38,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         webViewInitialized(false),
         jScriptInitialized(false),
         gEarthInitialized(false),
+        currentViewMode(QGCGoogleEarthView::VIEW_MODE_SIDE),
 #if (defined Q_OS_MAC)
         webViewMac(new QWebView(this)),
 #endif
@@ -85,6 +86,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(ui->resetButton, SIGNAL(clicked()), this, SLOT(reloadHTML()));
+    connect(ui->changeViewButton, SIGNAL(clicked()), this, SLOT(toggleViewMode()));
 }
 
 QGCGoogleEarthView::~QGCGoogleEarthView()
@@ -125,6 +127,46 @@ void QGCGoogleEarthView::reloadHTML()
 void QGCGoogleEarthView::setViewRange(float range)
 {
     javaScript(QString("setViewRange(%1);").arg(range, 0, 'f', 5));
+}
+
+void QGCGoogleEarthView::toggleViewMode()
+{
+    switch (currentViewMode)
+    {
+    case VIEW_MODE_MAP:
+        setViewMode(VIEW_MODE_SIDE);
+        break;
+    case VIEW_MODE_SIDE:
+        setViewMode(VIEW_MODE_MAP);
+        break;
+    case VIEW_MODE_CHASE_LOCKED:
+        setViewMode(VIEW_MODE_CHASE_FREE);
+        break;
+    case VIEW_MODE_CHASE_FREE:
+        setViewMode(VIEW_MODE_CHASE_LOCKED);
+        break;
+    }
+}
+
+void QGCGoogleEarthView::setViewMode(QGCGoogleEarthView::VIEW_MODE mode)
+{
+    switch (mode)
+    {
+    case VIEW_MODE_MAP:
+        ui->changeViewButton->setText("Free View");
+        break;
+    case VIEW_MODE_SIDE:
+        ui->changeViewButton->setText("Map View");
+        break;
+    case VIEW_MODE_CHASE_LOCKED:
+        ui->changeViewButton->setText("Free Chase");
+        break;
+    case VIEW_MODE_CHASE_FREE:
+        ui->changeViewButton->setText("Fixed Chase");
+        break;
+    }
+    currentViewMode = mode;
+    javaScript(QString("setViewMode(%1);").arg(mode));
 }
 
 void QGCGoogleEarthView::addUAS(UASInterface* uas)
@@ -183,7 +225,7 @@ void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
         else
         {
             javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction()));
-            qDebug() << QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction());
+            //qDebug() << QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction());
         }
     }
 }
@@ -452,6 +494,9 @@ void QGCGoogleEarthView::initializeGoogleEarth()
 
             // Start update timer
             updateTimer->start(refreshRateMs);
+
+            // Set current view mode
+            setViewMode(currentViewMode);
 
             follow(this->followCamera);
 
