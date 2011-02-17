@@ -161,7 +161,7 @@ QProgressBar::chunk#thrustBar {
      <property name="title">
       <string/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,2,2,10,10,10,10,10,10,10,10,10,10,10,10,10,1,1,1,1">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,2,3,10,10,10,10,10,10,10,10,10,10,10,10,10,1,1,1,1">
       <property name="spacing">
        <number>2</number>
       </property>
