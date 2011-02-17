@@ -153,6 +153,11 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
     }
 
+#else
+    // Let UAS handle the default message set
+    UAS::receiveMessage(link, message);
+    Q_UNUSED(link);
+    Q_UNUSED(message);
 #endif
 }
 
