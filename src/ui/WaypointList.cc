@@ -278,56 +278,61 @@ void WaypointList::waypointListChanged()
         this->setUpdatesEnabled(false);
         const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
 
-            if (!wpViews.empty())
+        if (!wpViews.empty())
+        {
+            QMapIterator<Waypoint*,WaypointView*> viewIt(wpViews);
+            viewIt.toFront();
+            while(viewIt.hasNext())
             {
-                QMapIterator<Waypoint*,WaypointView*> viewIt(wpViews);
-                viewIt.toFront();
-                while(viewIt.hasNext())
+                viewIt.next();
+                Waypoint *cur = viewIt.key();
+                int i;
+                for (i = 0; i < waypoints.size(); i++)
                 {
-                    viewIt.next();
-                    Waypoint *cur = viewIt.key();
-                    int i;
-                    for (i = 0; i < waypoints.size(); i++)
+                    if (waypoints[i] == cur)
                     {
-                        if (waypoints[i] == cur)
-                        {
-                            break;
-                        }
-                    }
-                    if (i == waypoints.size())
-                    {
-                        WaypointView* widget = wpViews.find(cur).value();
-                        widget->hide();
-                        listLayout->removeWidget(widget);
-                        wpViews.remove(cur);
+                        break;
                     }
                 }
-            }
-
-            // then add/update the views for each waypoint in the list
-            for(int i = 0; i < waypoints.size(); i++)
-            {
-                Waypoint *wp = waypoints[i];
-                if (!wpViews.contains(wp))
+                if (i == waypoints.size())
                 {
-                    WaypointView* wpview = new WaypointView(wp, this);
-                    wpViews.insert(wp, wpview);
-                    connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
-                    connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
-                    connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
-                    connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
-                    connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
+                    WaypointView* widget = wpViews.find(cur).value();
+                    widget->hide();
+                    listLayout->removeWidget(widget);
+                    wpViews.remove(cur);
                 }
-                WaypointView *wpv = wpViews.value(wp);
-                wpv->updateValues();    // update the values of the ui elements in the view
-                listLayout->addWidget(wpv);
-
             }
-                    this->setUpdatesEnabled(true);
         }
 
+        // then add/update the views for each waypoint in the list
+        for(int i = 0; i < waypoints.size(); i++)
+        {
+            Waypoint *wp = waypoints[i];
+            if (!wpViews.contains(wp))
+            {
+                WaypointView* wpview = new WaypointView(wp, this);
+                wpViews.insert(wp, wpview);
+                connect(wpview, SIGNAL(moveDownWaypoint(Waypoint*)),    this, SLOT(moveDown(Waypoint*)));
+                connect(wpview, SIGNAL(moveUpWaypoint(Waypoint*)),      this, SLOT(moveUp(Waypoint*)));
+                connect(wpview, SIGNAL(removeWaypoint(Waypoint*)),      this, SLOT(removeWaypoint(Waypoint*)));
+                connect(wpview, SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointChanged(quint16)));
+                connect(wpview, SIGNAL(changeCurrentWaypoint(quint16)), this, SLOT(changeCurrentWaypoint(quint16)));
+                listLayout->insertWidget(i, wpview);
+            }
+            WaypointView *wpv = wpViews.value(wp);
 
+            //check if ordering has changed
+            if(listLayout->itemAt(i)->widget() != wpv)
+            {
+                listLayout->removeWidget(wpv);
+                listLayout->insertWidget(i, wpv);
+            }
+
+            wpv->updateValues();    // update the values of the ui elements in the view
+        }
+        this->setUpdatesEnabled(true);
         loadFileGlobalWP = false;
+    }
 }
 
 //void WaypointList::waypointListChanged()
