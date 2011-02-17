@@ -30,7 +30,7 @@
 QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         QWidget(parent),
         updateTimer(new QTimer(this)),
-        refreshRateMs(40),
+        refreshRateMs(100),
         mav(NULL),
         followCamera(true),
         trailEnabled(true),
@@ -216,7 +216,7 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, dou
     Q_UNUSED(usec);
     javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 18).arg(lon, 0, 'f', 18).arg(alt, 0, 'f', 15));
 
-    //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
+    qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }
 
 void QGCGoogleEarthView::showTrail(bool state)
@@ -456,6 +456,8 @@ void QGCGoogleEarthView::updateState()
             roll = currMav->getRoll();
             pitch = currMav->getPitch();
             yaw = currMav->getYaw();
+
+            //qDebug() << "SETTING POSITION FOR" << uasId << lat << lon << alt << roll << pitch << yaw;
 
             javaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
                        .arg(uasId)

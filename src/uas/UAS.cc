@@ -605,6 +605,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 {
                     emit globalPositionChanged(this, pos.lat, pos.lon, pos.alt, time);
                     emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
+                    latitude = pos.lat;
+                    longitude = pos.lon;
+                    altitude = pos.alt;
                     positionLock = true;
 
                     // Check for NaN
@@ -646,6 +649,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 {
                     emit globalPositionChanged(this, pos.lat/(double)1E7, pos.lon/(double)1E7, pos.alt/1000.0, time);
                     emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
+                    latitude = pos.lat/(double)1E7;
+                    longitude = pos.lon/(double)1E7;
+                    altitude = pos.alt/1000.0;
                     positionLock = true;
 
                     // Check for NaN
