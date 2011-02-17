@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,1,1,1,1,30,1,100,1,1,1,1,1,1">
    <property name="horizontalSpacing">
     <number>8</number>
    </property>
@@ -23,7 +23,7 @@
    <property name="margin">
     <number>2</number>
    </property>
-   <item row="0" column="0" colspan="14">
+   <item row="0" column="0" colspan="15">
     <layout class="QVBoxLayout" name="webViewLayout"/>
    </item>
    <item row="1" column="1">
@@ -58,7 +58,7 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="13">
+   <item row="1" column="14">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -71,7 +71,7 @@
      </property>
     </spacer>
    </item>
-   <item row="1" column="9">
+   <item row="1" column="8">
     <widget class="QSlider" name="camDistanceSlider">
      <property name="toolTip">
       <string>Distance of the chase camera to the MAV</string>
@@ -96,22 +96,6 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="8">
-    <widget class="QLabel" name="camDistanceLabel">
-     <property name="toolTip">
-      <string>Distance of the chase camera to the MAV</string>
-     </property>
-     <property name="statusTip">
-      <string>Distance of the chase camera to the MAV</string>
-     </property>
-     <property name="whatsThis">
-      <string>Distance of the chase camera to the MAV</string>
-     </property>
-     <property name="text">
-      <string>Dist</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="4">
     <widget class="QCheckBox" name="waypointsCheckbox">
      <property name="toolTip">
@@ -128,7 +112,7 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="10">
+   <item row="1" column="9">
     <widget class="QCheckBox" name="followAirplaneCheckbox">
      <property name="toolTip">
       <string>Chase the MAV</string>
@@ -145,7 +129,7 @@
     </widget>
    </item>
    <item row="1" column="6">
-    <widget class="QComboBox" name="mavComboBox">
+    <widget class="QComboBox" name="camDistanceComboBox">
      <property name="toolTip">
       <string>Select the MAV to chase</string>
      </property>
@@ -155,9 +139,40 @@
      <property name="whatsThis">
       <string>Select the MAV to chase</string>
      </property>
+     <item>
+      <property name="text">
+       <string>Ground Distance</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>MAV Distance</string>
+      </property>
+     </item>
     </widget>
    </item>
-   <item row="1" column="7">
+   <item row="1" column="5">
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="13">
+    <widget class="QPushButton" name="resetButton">
+     <property name="text">
+      <string>Reset</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="10">
+    <widget class="QPushButton" name="changeViewButton">
+     <property name="text">
+      <string>Overhead</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="12">
     <widget class="QPushButton" name="clearTrailsButton">
      <property name="toolTip">
       <string>Delete all waypoints</string>
@@ -173,24 +188,26 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="5">
-    <widget class="Line" name="line">
+   <item row="1" column="11">
+    <widget class="Line" name="line_2">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
     </widget>
    </item>
-   <item row="1" column="12">
-    <widget class="QPushButton" name="resetButton">
-     <property name="text">
-      <string>Reset</string>
+   <item row="1" column="2">
+    <widget class="QPushButton" name="editButton">
+     <property name="toolTip">
+      <string>Enable waypoint and home location edit mode</string>
      </property>
-    </widget>
-   </item>
-   <item row="1" column="11">
-    <widget class="QPushButton" name="changeViewButton">
+     <property name="statusTip">
+      <string>Enable waypoint and home location edit mode</string>
+     </property>
      <property name="text">
-      <string>Overhead</string>
+      <string>Edit</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
     </widget>
    </item>

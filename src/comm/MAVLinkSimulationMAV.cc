@@ -4,7 +4,7 @@
 
 #include "MAVLinkSimulationMAV.h"
 
-MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int systemid, double lat, double lon) :
+MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int systemid, double lat, double lon, int version) :
         QObject(parent),
         link(parent),
         planner(parent, systemid),
@@ -34,7 +34,8 @@ MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int sy
         sys_mode(MAV_MODE_READY),
         sys_state(MAV_STATE_STANDBY),
         nav_mode(MAV_NAV_GROUNDED),
-        flying(false)
+        flying(false),
+        mavlink_version(version)
 {
     // Please note: The waypoint planner is running
     connect(&mainloopTimer, SIGNAL(timeout()), this, SLOT(mainloop()));
@@ -62,7 +63,7 @@ void MAVLinkSimulationMAV::mainloop()
     if (timer1Hz <= 0)
     {
         mavlink_message_t msg;
-        mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK);
+        mavlink_msg_heartbeat_pack_version_free(systemid, MAV_COMP_ID_IMU, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK, mavlink_version);
         link->sendMAVLinkMessage(&msg);
         planner.handleMessage(msg);
 

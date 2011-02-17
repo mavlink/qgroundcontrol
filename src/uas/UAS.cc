@@ -894,7 +894,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
-
+#ifdef MAVLINK_ENABLED_PIXHAWK
         case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
             {
                 qDebug() << "RECIEVED ACK TO GET IMAGE";
@@ -939,7 +939,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
             break;
-
+#endif
         case MAVLINK_MSG_ID_DEBUG_VECT:
             {
                 mavlink_debug_vect_t vect;
@@ -1363,6 +1363,7 @@ QImage UAS::getImage()
 
 void UAS::requestImage()
 {
+    #ifdef MAVLINK_ENABLED_PIXHAWK
     qDebug() << "trying to get an image from the uas...";
 
     if (imagePacketsArrived == 0)
@@ -1371,7 +1372,7 @@ void UAS::requestImage()
         mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 50);
         sendMessage(msg);
     }
-    else if (MG::TIME::getGroundTimeNow() - imageStart >= 1000)
+    else if (QGC::groundTimeMilliseconds() - imageStart >= 1000)
     {
         // handshake happened more than 1 second ago, packets should have arrived by now
         // maybe we missed some packets (dropped along the way)
@@ -1380,6 +1381,7 @@ void UAS::requestImage()
         // Restart statemachine
         imagePacketsArrived = 0;
     }
+#endif
     // default else, wait?
 }
 

@@ -97,6 +97,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(m_ui->acceptanceSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setAcceptanceRadius(double)));
     connect(m_ui->holdTimeSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setHoldTime(int)));
     connect(m_ui->turnsSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setTurns(int)));
+    connect(m_ui->takeOffAngleSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam1(double)));
 
     // Connect actions
     connect(customCommand->commandSpinBox, SIGNAL(valueChanged(int)),   wp, SLOT(setAction(int)));
@@ -246,8 +247,6 @@ void WaypointView::changedAction(int index)
     case MAV_CMD_NAV_LOITER_UNLIM:
     case MAV_CMD_NAV_LOITER_TURNS:
     case MAV_CMD_NAV_LOITER_TIME:
-    case MAV_CMD_CONDITION_DELAY:
-    case MAV_CMD_DO_SET_MODE:
         changeViewMode(QGC_WAYPOINTVIEW_MODE_NAV);
         // Update frame view
         updateFrameView(m_ui->comboBox_frame->currentIndex());
@@ -434,9 +433,14 @@ void WaypointView::updateValues()
     // Only update if changed
     if (m_ui->comboBox_action->currentIndex() != action_index)
     {
-        // TODO Action and frame should not be coupled
-        if (wp->getFrame() != MAV_FRAME_MISSION)
+        // If action is unknown, set direct editing mode
+        if (wp->getAction() < 0 || wp->getAction() > MAV_CMD_NAV_TAKEOFF)
         {
+            changeViewMode(QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING);
+        }
+        else
+        {
+            // Action ID known, update
             m_ui->comboBox_action->setCurrentIndex(action_index);
             updateActionView(action);
         }
@@ -479,6 +483,14 @@ void WaypointView::updateValues()
     if (m_ui->holdTimeSpinBox->value() != wp->getHoldTime())
     {
         m_ui->holdTimeSpinBox->setValue(wp->getHoldTime());
+    }
+    if (m_ui->turnsSpinBox->value() != wp->getTurns())
+    {
+        m_ui->turnsSpinBox->setValue(wp->getTurns());
+    }
+    if (m_ui->takeOffAngleSpinBox->value() != wp->getParam1())
+    {
+        m_ui->takeOffAngleSpinBox->setValue(wp->getParam1());
     }
 
     // UPDATE CUSTOM ACTION WIDGET
