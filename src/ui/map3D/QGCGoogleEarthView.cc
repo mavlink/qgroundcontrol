@@ -181,7 +181,8 @@ void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
         }
         else
         {
-            javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getY()).arg(wp->getX()).arg(wp->getZ()).arg(wp->getAction()));
+            javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction()));
+            qDebug() << QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction());
         }
     }
 }
@@ -203,6 +204,8 @@ void QGCGoogleEarthView::updateWaypointList(int uas)
         // Trim internal list to number of global waypoints in the waypoint manager list
         javaScript(QString("updateWaypointListLength(%1,%2);").arg(uas).arg(wpList.count()));
 
+        qDebug() << QString("updateWaypointListLength(%1,%2);").arg(uas).arg(wpList.count());
+
         // Load all existing waypoints into map view
         foreach (Waypoint* wp, wpList)
         {
@@ -216,7 +219,7 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, dou
     Q_UNUSED(usec);
     javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 18).arg(lon, 0, 'f', 18).arg(alt, 0, 'f', 15));
 
-    qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
+    //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }
 
 void QGCGoogleEarthView::showTrail(bool state)
