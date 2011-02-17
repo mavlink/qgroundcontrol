@@ -530,7 +530,7 @@ void WaypointView::updateValues()
 void WaypointView::setCurrent(bool state)
 {
     m_ui->selectedBox->blockSignals(true);
-    m_ui->selectedBox->setChecked(state);;
+    m_ui->selectedBox->setChecked(state);
     m_ui->selectedBox->blockSignals(false);
 }
 
