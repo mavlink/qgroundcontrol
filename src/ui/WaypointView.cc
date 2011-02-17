@@ -41,7 +41,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_action->addItem(tr("Loiter Unlim."),MAV_CMD_NAV_LOITER_UNLIM);
     m_ui->comboBox_action->addItem(tr("Loiter Time"),MAV_CMD_NAV_LOITER_TIME);
     m_ui->comboBox_action->addItem(tr("Loiter Turns"),MAV_CMD_NAV_LOITER_TURNS);
-    m_ui->comboBox_action->addItem(tr("Return to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
+    m_ui->comboBox_action->addItem(tr("Ret. to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
     m_ui->comboBox_action->addItem(tr("Land"),MAV_CMD_NAV_LAND);
     m_ui->comboBox_action->addItem(tr("Other"), MAV_CMD_ENUM_END);
     //    m_ui->comboBox_action->addItem(tr("Delay"), MAV_ACTION_DELAY_BEFORE_COMMAND);
