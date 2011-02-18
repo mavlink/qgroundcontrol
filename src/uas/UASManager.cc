@@ -58,7 +58,6 @@ UASManager* UASManager::instance()
 UASManager::UASManager() :
         activeUAS(NULL)
 {
-    systems = QList<UASInterface*>();
     start(QThread::LowPriority);
 }
 
