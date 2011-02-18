@@ -143,6 +143,7 @@ protected:
 #ifdef _MSC_VER
     QGCWebAxWidget* webViewWin;
     QAxObject* jScriptWin;
+	QAxObject* documentWin;
 #endif
 #if (defined Q_OS_MAC)
     QWebView* webViewMac;
