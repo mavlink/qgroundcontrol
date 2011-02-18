@@ -28,13 +28,13 @@
 
 MapWidget::MapWidget(QWidget *parent) :
         QWidget(parent),
+        mc(NULL),
         zoomLevel(0),
         uasIcons(),
         uasTrails(),
         mav(NULL),
         lastUpdate(0),
         initialized(false),
-		mc(NULL),
         m_ui(new Ui::MapWidget)
 {
     m_ui->setupUi(this);
@@ -47,14 +47,6 @@ void MapWidget::init()
     //   VISUAL MAP STYLE
     QString buttonStyle("QAbstractButton { background-color: rgba(20, 20, 20, 45%); border-color: rgba(10, 10, 10, 50%)} QAbstractButton:checked { border: 2px solid #379AC3; }");
     mc->setPen(QGC::colorCyan.darker(400));
-
-
-
-
-
-
-
-
 
     waypointIsDrag = false;
 
@@ -220,6 +212,26 @@ void MapWidget::init()
     innerlayout->setRowStretch(1, 100);
     mc->setLayout(innerlayout);
 
+    // Configure the WP Path's pen
+    pointPen = new QPen(QColor(0, 255,0));
+    pointPen->setWidth(3);
+    waypointPath = new qmapcontrol::LineString (wps, "Waypoint path", pointPen);
+    mc->layer("Waypoints")->addGeometry(waypointPath);
+
+    //Camera Control
+    // CAMERA INDICATOR LAYER
+    // create a layer with the mapadapter and type GeometryLayer (for camera indicator)
+    camLayer = new qmapcontrol::GeometryLayer("Camera", mapadapter);
+    mc->addLayer(camLayer);
+
+    //camLine = new qmapcontrol::LineString(camPoints,"Camera Eje", camBorderPen);
+
+    drawCamBorder = false;
+    radioCamera = 10;
+
+    // Done set state
+    initialized = true;
+
 
     // Connect the required signals-slots
     connect(zoomin, SIGNAL(clicked(bool)),
@@ -257,26 +269,6 @@ void MapWidget::init()
 
     connect(geomLayer, SIGNAL(geometryEndDrag(Geometry*, QPointF)),
             this, SLOT(captureGeometryEndDrag(Geometry*, QPointF)));
-
-    // Configure the WP Path's pen
-    pointPen = new QPen(QColor(0, 255,0));
-    pointPen->setWidth(3);
-    waypointPath = new qmapcontrol::LineString (wps, "Waypoint path", pointPen);
-    mc->layer("Waypoints")->addGeometry(waypointPath);
-
-    //Camera Control
-    // CAMERA INDICATOR LAYER
-    // create a layer with the mapadapter and type GeometryLayer (for camera indicator)
-    camLayer = new qmapcontrol::GeometryLayer("Camera", mapadapter);
-    mc->addLayer(camLayer);
-
-    //camLine = new qmapcontrol::LineString(camPoints,"Camera Eje", camBorderPen);
-
-    drawCamBorder = false;
-    radioCamera = 10;
-
-    // Done set state
-    initialized = true;
 }
 
 void MapWidget::goTo()
