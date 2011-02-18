@@ -44,16 +44,12 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 #endif
 #ifdef _MSC_VER
         webViewWin(new QGCWebAxWidget(this)),
+		documentWin(NULL),
 #endif
-#if (defined _MSC_VER)
         ui(new Ui::QGCGoogleEarthView)
-#else
-        ui(new Ui::QGCGoogleEarthView)
-#endif
 {
 #ifdef _MSC_VER
     // Create layout and attach webViewWin
-
 
     QFile file("doc.html");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
@@ -406,6 +402,16 @@ QVariant QGCGoogleEarthView::documentElement(QString name)
     }
     else
     {
+		if (documentWin)
+		{
+			// Get HTMLElement object
+			QVariantList params;
+			params.append(name);
+			//QAxObject* elementWin = documentWin->dynamicCall("getElementById(QString)", params);
+			QVariant result =documentWin->dynamicCall("toString()");
+			qDebug() << "GOT RESULT" << result;
+			return QVariant(0);//QVariant(result);
+		}
         //QVariantList params;
         //params.append(javaScript);
         //params.append("JScript");
@@ -425,6 +431,7 @@ void QGCGoogleEarthView::initializeGoogleEarth()
         QAxObject* doc = webViewWin->querySubObject("Document()");
         //IDispatch* Disp;
         IDispatch* winDoc = NULL;
+		IHTMLDocument2* document = NULL;
 
         //332C4425-26CB-11D0-B483-00C04FD90119 IHTMLDocument2
         //25336920-03F9-11CF-8FD0-00AA00686F13 HTMLDocument
@@ -435,11 +442,11 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             // CoInternetSetFeatureEnabled
             // (FEATURE_LOCALMACHINE_LOCKDOWN, SET_FEATURE_ON_PROCESS, TRUE);
             //
-            IHTMLDocument2* document = NULL;
+            document = NULL;
             winDoc->QueryInterface( IID_IHTMLDocument2, (void**)&document );
             IHTMLWindow2 *window = NULL;
             document->get_parentWindow( &window );
-
+			documentWin = new QAxObject(document, webViewWin);
             jScriptWin = new QAxObject(window, webViewWin);
             connect(jScriptWin, SIGNAL(exception(int,QString,QString,QString)), this, SLOT(printWinException(int,QString,QString,QString)));
             jScriptInitialized = true;

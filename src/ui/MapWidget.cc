@@ -34,6 +34,7 @@ MapWidget::MapWidget(QWidget *parent) :
         mav(NULL),
         lastUpdate(0),
         initialized(false),
+		mc(NULL),
         m_ui(new Ui::MapWidget)
 {
     m_ui->setupUi(this);
@@ -952,7 +953,7 @@ void MapWidget::updatePosition(float time, double lat, double lon)
     //gpsposition->setText(QString::number(time) + " / " + QString::number(lat) + " / " + QString::number(lon));
     if (followgps->isChecked() && isVisible())
     {
-        mc->setView(QPointF(lat, lon));
+        if (mc) mc->setView(QPointF(lat, lon));
     }
 }
 
@@ -975,6 +976,8 @@ void MapWidget::wheelEvent(QWheelEvent *event)
 
 void MapWidget::keyPressEvent(QKeyEvent *event)
 {
+	if (mc)
+	{
     switch (event->key()) {
     case Qt::Key_Plus:
         mc->zoomIn();
@@ -997,17 +1000,23 @@ void MapWidget::keyPressEvent(QKeyEvent *event)
     default:
         QWidget::keyPressEvent(event);
     }
+	}
 }
 
 void MapWidget::resizeEvent(QResizeEvent* event )
 {
     Q_UNUSED(event);
-    mc->resize(this->size());
+    if (mc) mc->resize(this->size());
 }
 
 void MapWidget::showEvent(QShowEvent* event)
 {
     Q_UNUSED(event);
+	if (!initialized)
+	{
+		initialized = true;
+		init();
+	}
 }
 
 void MapWidget::hideEvent(QHideEvent* event)
