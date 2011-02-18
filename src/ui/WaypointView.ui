@@ -161,7 +161,7 @@ QProgressBar::chunk#thrustBar {
      <property name="title">
       <string/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,2,6,10,10,10,10,10,10,1,4,4,4,2,4,1,1,1,1,1">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,20,20,20,20,20,20,1,8,8,1,4,8,1,1,1,1,1">
       <property name="spacing">
        <number>2</number>
       </property>
@@ -512,10 +512,10 @@ QProgressBar::chunk#thrustBar {
          <enum>Qt::StrongFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Orbit (navigate waypoint) /Loiter (loiter waypoint) radius</string>
+         <string>Loiter radius</string>
         </property>
         <property name="statusTip">
-         <string>Orbit (navigate waypoint) /Loiter (loiter waypoint) radius</string>
+         <string>Loiter radius</string>
         </property>
         <property name="suffix">
          <string> m</string>
@@ -536,6 +536,13 @@ QProgressBar::chunk#thrustBar {
       </item>
       <item>
        <widget class="QDoubleSpinBox" name="acceptanceSpinBox">
+        <property name="toolTip">
+         <string>Uncertainty radius in meters
+where to accept this waypoint as reached</string>
+        </property>
+        <property name="statusTip">
+         <string>Uncertainty radius in meters where to accept this waypoint as reached</string>
+        </property>
         <property name="suffix">
          <string> m</string>
         </property>
@@ -545,33 +552,19 @@ QProgressBar::chunk#thrustBar {
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="holdTimeSpinBox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::StrongFocus</enum>
-        </property>
+       <widget class="QDoubleSpinBox" name="holdTimeSpinBox">
         <property name="toolTip">
-         <string>Time in milliseconds that the MAV has to stay inside the orbit before advancing</string>
+         <string>Rotaty wing and ground vehicles only:
+Time to stay at this position before advancing</string>
         </property>
         <property name="statusTip">
-         <string>Time in milliseconds that the MAV has to stay inside the orbit before advancing</string>
+         <string>Rotaty wing and ground vehicles only: Time to stay at this position before advancing</string>
         </property>
         <property name="suffix">
-         <string> ms</string>
+         <string> s</string>
         </property>
         <property name="maximum">
-         <number>60000</number>
-        </property>
-        <property name="singleStep">
-         <number>500</number>
-        </property>
-        <property name="value">
-         <number>0</number>
+         <double>9999.989999999999782</double>
         </property>
        </widget>
       </item>
@@ -610,6 +603,9 @@ QProgressBar::chunk#thrustBar {
         </property>
         <property name="suffix">
          <string>°</string>
+        </property>
+        <property name="decimals">
+         <number>0</number>
         </property>
        </widget>
       </item>

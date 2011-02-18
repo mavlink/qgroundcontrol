@@ -138,8 +138,8 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id)
         {
-            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_CMD) wp->command;
-            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
+            //qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_CMD) wp->command;
+            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
             addWaypoint(lwp, false);
 
             //get next waypoint
@@ -665,16 +665,16 @@ void UASWaypointManager::writeWaypoints()
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent() & noCurrent;   //make sure only one current waypoint is selected, the first selected will be chosen
-                cur_d->param3 = cur_s->getLoiterOrbit();
                 cur_d->param1 = cur_s->getParam1();
                 cur_d->param2 = cur_s->getParam2();
+                cur_d->param3 = cur_s->getParam3();
+                cur_d->param4 = cur_s->getParam4();
                 cur_d->frame = cur_s->getFrame();
                 cur_d->command = cur_s->getAction();
                 cur_d->seq = i;     // don't read out the sequence number of the waypoint class
                 cur_d->x = cur_s->getX();
                 cur_d->y = cur_s->getY();
                 cur_d->z = cur_s->getZ();
-                cur_d->param4 = cur_s->getYaw();
 
                 if (cur_s->getCurrent() && noCurrent)
                     noCurrent = false;

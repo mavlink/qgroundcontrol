@@ -43,9 +43,8 @@ class Waypoint : public QObject
     Q_OBJECT
 
 public:
-    Waypoint(quint16 id = 0, double x = 0.0f, double y = 0.0f, double z = 0.0f, double yaw = 0.0f, bool autocontinue = false,
-             bool current = false, double orbit = 0.15f, int holdTime = 0,
-             MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_CMD action=MAV_CMD_NAV_WAYPOINT);
+    Waypoint(quint16 id = 0, double x = 0.0, double y = 0.0, double z = 0.0, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0,
+             bool autocontinue = true, bool current = false, MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_CMD action=MAV_CMD_NAV_WAYPOINT);
     ~Waypoint();
 
     quint16 getId() const { return id; }
@@ -101,6 +100,9 @@ public slots:
     void setLatitude(double lat);
     void setLongitude(double lon);
     void setAltitude(double alt);
+    /** @brief Yaw angle in COMPASS DEGREES: 0-360 */
+    void setYaw(int yaw);
+    /** @brief Yaw angle in COMPASS DEGREES: 0-360 */
     void setYaw(double yaw);
     /** @brief Set the waypoint action */
     void setAction(int action);
@@ -118,6 +120,7 @@ public slots:
     void setParam7(double param7);
     void setAcceptanceRadius(double radius);
     void setHoldTime(int holdTime);
+    void setHoldTime(double holdTime);
     /** @brief Number of turns for loiter waypoints */
     void setTurns(int turns);
 

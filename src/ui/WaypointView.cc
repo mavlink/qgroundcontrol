@@ -68,10 +68,6 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
         m_ui->comboBox_action->setCurrentIndex(m_ui->comboBox_action->count()-1);
     }
 
-    // defaults
-    //changedAction(wp->getAction());
-    //changedFrame(wp->getFrame());
-
     connect(m_ui->posNSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
     connect(m_ui->posESpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
     connect(m_ui->posDSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
@@ -79,10 +75,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(m_ui->latSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
     connect(m_ui->lonSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
     connect(m_ui->altSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
-
-    //hidden degree to radian conversion of the yaw angle
-    connect(m_ui->yawSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setYaw(int)));
-    connect(this, SIGNAL(setYaw(double)), wp, SLOT(setYaw(double)));
+    connect(m_ui->yawSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setYaw(int)));
 
     connect(m_ui->upButton, SIGNAL(clicked()), this, SLOT(moveUp()));
     connect(m_ui->downButton, SIGNAL(clicked()), this, SLOT(moveDown()));
@@ -95,7 +88,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
 
     connect(m_ui->orbitSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setLoiterOrbit(double)));
     connect(m_ui->acceptanceSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setAcceptanceRadius(double)));
-    connect(m_ui->holdTimeSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setHoldTime(int)));
+    connect(m_ui->holdTimeSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setHoldTime(double)));
     connect(m_ui->turnsSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setTurns(int)));
     connect(m_ui->takeOffAngleSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam1(double)));
 
@@ -108,11 +101,6 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(customCommand->param5SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam5(double)));
     connect(customCommand->param6SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam6(double)));
     connect(customCommand->param7SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam7(double)));
-}
-
-void WaypointView::setYaw(int yawDegree)
-{
-    emit setYaw((double)yawDegree*M_PI/180.);
 }
 
 void WaypointView::moveUp()
@@ -179,7 +167,7 @@ void WaypointView::updateActionView(int action)
         m_ui->orbitSpinBox->hide();
         m_ui->takeOffAngleSpinBox->hide();
         m_ui->turnsSpinBox->hide();
-        m_ui->holdTimeSpinBox->hide();
+        m_ui->holdTimeSpinBox->show();
         m_ui->customActionWidget->hide();
 
         m_ui->autoContinue->show();
@@ -459,9 +447,9 @@ void WaypointView::updateValues()
         std::cerr << "unknown action" << std::endl;
     }
 
-    if (m_ui->yawSpinBox->value() != wp->getYaw()/M_PI*180.)
+    if (m_ui->yawSpinBox->value() != wp->getYaw())
     {
-        m_ui->yawSpinBox->setValue(wp->getYaw()/M_PI*180.);
+        m_ui->yawSpinBox->setValue(wp->getYaw());
     }
     if (m_ui->selectedBox->isChecked() != wp->getCurrent())
     {
