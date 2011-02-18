@@ -28,6 +28,7 @@
 #include "GAudioOutput.h"
 #include "QGCToolWidget.h"
 #include "QGCMAVLinkLogPlayer.h"
+#include "QGCSettingsWidget.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -67,8 +68,11 @@ MainWindow::MainWindow(QWidget *parent):
         currentView(VIEW_UNCONNECTED),
         aboutToCloseFlag(false),
         changingViewsFlag(false),
-        styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css")
+        styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
+        autoReconnect(false),
+        currentStyle(QGC_MAINWINDOW_STYLE_INDOOR)
 {
+    loadSettings();
     if (!settings.contains("CURRENT_VIEW"))
     {
         // Set this view as default view
@@ -103,18 +107,20 @@ MainWindow::MainWindow(QWidget *parent):
 
     configureWindowName();
 
-    // Set the application style (not the same as a style sheet)
-    // Set the style to Plastique
-    qApp->setStyle("plastique");
+    loadStyle(currentStyle);
 
-    // Set style sheet as last step
-    QFile* styleSheet = new QFile(":/images/style-mission.css");
-    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        QString style = QString(styleSheet->readAll());
-        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "/images/");
-        qApp->setStyleSheet(style);
-    }
+//    // Set the application style (not the same as a style sheet)
+//    // Set the style to Plastique
+//    qApp->setStyle("plastique");
+
+//    // Set style sheet as last step
+//    QFile* styleSheet = new QFile(":/images/style-mission.css");
+//    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
+//    {
+//        QString style = QString(styleSheet->readAll());
+//        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "/images/");
+//        qApp->setStyleSheet(style);
+//    }
 
     // Create actions
     connectCommonActions();
@@ -156,10 +162,23 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Enable and update view
     presentView();
+
+    // Connect link
+    if (autoReconnect)
+    {
+        SerialLink* link = new SerialLink();
+        // Add to registry
+        LinkManager::instance()->add(link);
+        LinkManager::instance()->addProtocol(link, mavlink);
+        link->connect();
+    }
 }
 
 MainWindow::~MainWindow()
 {
+    // Store settings
+    storeSettings();
+
     delete mavlink;
     delete joystick;
 
@@ -261,7 +280,8 @@ QString MainWindow::getWindowStateKey()
 
 QString MainWindow::getWindowGeometryKey()
 {
-    return QString::number(currentView)+"_geometry";
+    //return QString::number(currentView)+"_geometry";
+    return "_geometry";
 }
 
 void MainWindow::buildCustomWidget()
@@ -389,7 +409,7 @@ void MainWindow::buildCommonWidgets()
     if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
-        addToCentralWidgetsMenu (dataplotWidget, "Data Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
+        addToCentralWidgetsMenu (dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
     }
 }
 
@@ -408,7 +428,7 @@ void MainWindow::buildPxWidgets()
     acceptList->append("0,airspeed,m/s,30");
     acceptList->append("0,groundspeed,m/s,30");
     acceptList->append("0,climbrate,m/s,30");
-    acceptList->append("0,throttle,m/s,100");
+    acceptList->append("0,throttle,%,100");
 
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
@@ -429,27 +449,27 @@ void MainWindow::buildPxWidgets()
     {
         // Center widgets
         linechartWidget   = new Linecharts(this);
-        addToCentralWidgetsMenu(linechartWidget, "Line Plots", SLOT(showCentralWidget()), CENTRAL_LINECHART);
+        addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
     }
 
 
     if (!hudWidget)
     {
         hudWidget         = new HUD(320, 240, this);
-        addToCentralWidgetsMenu(hudWidget, "HUD", SLOT(showCentralWidget()), CENTRAL_HUD);
+        addToCentralWidgetsMenu(hudWidget, tr("Head Up Display"), SLOT(showCentralWidget()), CENTRAL_HUD);
     }
 
     if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
-        addToCentralWidgetsMenu(dataplotWidget, "Data Plots", SLOT(showCentralWidget()), CENTRAL_DATA_PLOT);
+        addToCentralWidgetsMenu(dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()), CENTRAL_DATA_PLOT);
     }
 
 #ifdef QGC_OSG_ENABLED
     if (!_3DWidget)
     {
         _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-        addToCentralWidgetsMenu(_3DWidget, "Local 3D", SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
+        addToCentralWidgetsMenu(_3DWidget, tr("Local 3D"), SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
     }
 #endif
 
@@ -457,7 +477,7 @@ void MainWindow::buildPxWidgets()
     if (!_3DMapWidget)
     {
         _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
-        addToCentralWidgetsMenu(_3DMapWidget, "OSG Earth 3D", SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
+        addToCentralWidgetsMenu(_3DMapWidget, tr("OSG Earth 3D"), SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
     }
 #endif
 
@@ -465,7 +485,7 @@ void MainWindow::buildPxWidgets()
     if (!gEarthWidget)
     {
         gEarthWidget = new QGCGoogleEarthView(this);
-        addToCentralWidgetsMenu(gEarthWidget, "Google Earth", SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
+        addToCentralWidgetsMenu(gEarthWidget, tr("Google Earth"), SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
     }
 
 #endif
@@ -501,7 +521,7 @@ void MainWindow::buildPxWidgets()
         hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
         hsiDockWidget->setWidget( new HSIDisplay(this) );
         hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
-        addToToolsMenu (hsiDockWidget, tr("HSI"), SLOT(showToolWidget(bool)), MENU_HSI, Qt::BottomDockWidgetArea);
+        addToToolsMenu (hsiDockWidget, tr("Horizontal Situation"), SLOT(showToolWidget(bool)), MENU_HSI, Qt::BottomDockWidgetArea);
     }
 
     if (!headDown1DockWidget)
@@ -570,6 +590,7 @@ void MainWindow::buildSlugsWidgets()
     {
         // Center widgets
         linechartWidget   = new Linecharts(this);
+        addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
     }
 
     if (!headUpDockWidget)
@@ -578,7 +599,7 @@ void MainWindow::buildSlugsWidgets()
         headUpDockWidget = new QDockWidget(tr("Control Indicator"), this);
         headUpDockWidget->setWidget( new HUD(320, 240, this));
         headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
-        addToToolsMenu (headUpDockWidget, tr("HUD"), SLOT(showToolWidget(bool)), MENU_HUD, Qt::LeftDockWidgetArea);
+        addToToolsMenu (headUpDockWidget, tr("Head Up Display"), SLOT(showToolWidget(bool)), MENU_HUD, Qt::LeftDockWidgetArea);
     }
 
     if (!rcViewDockWidget)
@@ -915,17 +936,9 @@ QString MainWindow::buildMenuKey(SETTINGS_SECTIONS section, TOOLS_WIDGET_NAMES t
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    settings.setValue(getWindowGeometryKey(), saveGeometry());
-    //settings.setValue("windowState", saveState());
+    storeSettings();
     aboutToCloseFlag = true;
     mavlink->storeSettings();
-    // Save the last current view in any case
-    settings.setValue("CURRENT_VIEW", currentView);
-    // Save the current window state, but only if a system is connected (else no real number of widgets would be present)
-    if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
-    // Save the current view only if a UAS is connected
-    if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
-    settings.sync();
     QMainWindow::closeEvent(event);
 }
 
@@ -1110,6 +1123,32 @@ void MainWindow::arrangeSlugsCenterStack()
 
 }
 
+void MainWindow::loadSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_MAINWINDOW");
+    autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
+    currentStyle = (QGC_MAINWINDOW_STYLE)settings.value("CURRENT_STYLE", currentStyle).toInt();
+    settings.endGroup();
+}
+
+void MainWindow::storeSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_MAINWINDOW");
+    settings.setValue("AUTO_RECONNECT", autoReconnect);
+    settings.setValue("CURRENT_STYLE", currentStyle);
+    settings.endGroup();
+    settings.setValue(getWindowGeometryKey(), saveGeometry());
+    // Save the last current view in any case
+    settings.setValue("CURRENT_VIEW", currentView);
+    // Save the current window state, but only if a system is connected (else no real number of widgets would be present)
+    if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
+    // Save the current view only if a UAS is connected
+    if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
+    settings.sync();
+}
+
 void MainWindow::configureWindowName()
 {
     QList<QHostAddress> hostAddresses = QNetworkInterface::allAddresses();
@@ -1171,6 +1210,57 @@ void MainWindow::saveScreen()
     {
         window.save(screenFileName, format.toAscii());
     }
+}
+
+void MainWindow::enableAutoReconnect(bool enabled)
+{
+    autoReconnect = enabled;
+}
+
+void MainWindow::loadNativeStyle()
+{
+    loadStyle(QGC_MAINWINDOW_STYLE_NATIVE);
+}
+
+void MainWindow::loadIndoorStyle()
+{
+    loadStyle(QGC_MAINWINDOW_STYLE_INDOOR);
+}
+
+void MainWindow::loadOutdoorStyle()
+{
+    loadStyle(QGC_MAINWINDOW_STYLE_OUTDOOR);
+}
+
+void MainWindow::loadStyle(QGC_MAINWINDOW_STYLE style)
+{
+    switch (style)
+    {
+    case QGC_MAINWINDOW_STYLE_NATIVE:
+        {
+            // Native mode means setting no style
+            // so if we were already in native mode
+            // take no action
+            // Only if a style was set, remove it.
+            if (style != currentStyle)
+            {
+                qApp->setStyleSheet("");
+                showInfoMessage(tr("Please restart QGroundControl"), tr("Please restart QGroundControl to switch to fully native look and feel. Currently you have loaded Qt's plastique style."));
+            }
+        }
+        break;
+    case QGC_MAINWINDOW_STYLE_INDOOR:
+        qApp->setStyle("plastique");
+        styleFileName = ":/images/style-mission.css";
+        reloadStylesheet();
+        break;
+    case QGC_MAINWINDOW_STYLE_OUTDOOR:
+        qApp->setStyle("plastique");
+        styleFileName = ":/images/style-outdoor.css";
+        reloadStylesheet();
+        break;
+    }
+    currentStyle = style;
 }
 
 void MainWindow::selectStylesheet()
@@ -1336,6 +1426,7 @@ void MainWindow::connectCommonActions()
 
     // Audio output
     ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
+    connect(GAudioOutput::instance(), SIGNAL(mutedChanged(bool)), ui.actionMuteAudioOutput, SLOT(setChecked(bool)));
     connect(ui.actionMuteAudioOutput, SIGNAL(triggered(bool)), GAudioOutput::instance(), SLOT(mute(bool)));
 
     // User interaction
@@ -1344,8 +1435,12 @@ void MainWindow::connectCommonActions()
     // unless it is actually used
     // so no ressources spend on this.
     ui.actionJoystickSettings->setVisible(true);
-    // Joystick configuration
+
+    // Configuration
+    // Joystick
     connect(ui.actionJoystickSettings, SIGNAL(triggered()), this, SLOT(configure()));
+    // Application Settings
+    connect(ui.actionSettings, SIGNAL(triggered()), this, SLOT(showSettings()));
 }
 
 void MainWindow::connectPxActions()
@@ -1414,6 +1509,12 @@ void MainWindow::configure()
     joystickWidget->show();
 }
 
+void MainWindow::showSettings()
+{
+    QGCSettingsWidget* settings = new QGCSettingsWidget(this);
+    settings->show();
+}
+
 void MainWindow::addLink()
 {
     SerialLink* link = new SerialLink();
@@ -1437,21 +1538,43 @@ void MainWindow::addLink()
 
 void MainWindow::addLink(LinkInterface *link)
 {
+    // IMPORTANT! KEEP THESE TWO LINES
+    // THEY MAKE SURE THE LINK IS PROPERLY REGISTERED
+    // BEFORE LINKING THE UI AGAINST IT
+    // Register (does nothing if already registered)
     LinkManager::instance()->add(link);
     LinkManager::instance()->addProtocol(link, mavlink);
 
-    CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
-    QAction* action = commWidget->getAction();
-    ui.menuNetwork->addAction(action);
+    // Go fishing for this link's configuration window
+    QList<QAction*> actions = ui.menuNetwork->actions();
 
-    // Error handling
-    connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
-    // Special case for simulationlink
-    MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
-    if (sim)
+    bool found = false;
+
+    foreach (QAction* act, actions)
     {
-        //connect(sim, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
-        connect(ui.actionSimulate, SIGNAL(triggered(bool)), sim, SLOT(connectLink(bool)));
+        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(link))
+        {
+            found = true;
+        }
+    }
+
+    UDPLink* udp = dynamic_cast<UDPLink*>(link);
+
+    if (!found || udp)
+    {
+        CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
+        QAction* action = commWidget->getAction();
+        ui.menuNetwork->addAction(action);
+
+        // Error handling
+        connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
+        // Special case for simulationlink
+        MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
+        if (sim)
+        {
+            //connect(sim, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
+            connect(ui.actionSimulate, SIGNAL(triggered(bool)), sim, SLOT(connectLink(bool)));
+        }
     }
 }
 

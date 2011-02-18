@@ -67,7 +67,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Hide sent text field - it is only useful after send has been hit
     m_ui->sentText->setVisible(false);
     // Hide auto-send checkbox
-    m_ui->specialCheckBox->setVisible(false);
+    //m_ui->specialCheckBox->setVisible(false);
     // Make text area not editable
     m_ui->receiveText->setReadOnly(true);
     // Limit to 500 lines
@@ -85,10 +85,10 @@ DebugConsole::DebugConsole(QWidget *parent) :
     snapShotTimer.setInterval(snapShotInterval);
     snapShotTimer.start();
 
-    // Set hex checkbox checked
-    m_ui->hexCheckBox->setChecked(!convertToAscii);
-    m_ui->mavlinkCheckBox->setChecked(filterMAVLINK);
-    m_ui->holdCheckBox->setChecked(autoHold);
+//    // Set hex checkbox checked
+//    m_ui->hexCheckBox->setChecked(!convertToAscii);
+//    m_ui->mavlinkCheckBox->setChecked(filterMAVLINK);
+//    m_ui->holdCheckBox->setChecked(autoHold);
 
     // Get a list of all existing links
     links = QList<LinkInterface*>();
@@ -116,11 +116,9 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Connect Checkbox
     connect(m_ui->specialComboBox, SIGNAL(highlighted(QString)), this, SLOT(specialSymbolSelected(QString)));
     // Set add button invisible if auto add checkbox is checked
-    connect(m_ui->specialCheckBox, SIGNAL(clicked(bool)), m_ui->addSymbolButton, SLOT(setHidden(bool)));
+    //connect(m_ui->specialCheckBox, SIGNAL(clicked(bool)), m_ui->addSymbolButton, SLOT(setHidden(bool)));
     // Allow to send via return
     connect(m_ui->sendText, SIGNAL(returnPressed()), this, SLOT(sendBytes()));
-
-    hold(false);
 
     loadSettings();
 
@@ -129,6 +127,12 @@ DebugConsole::DebugConsole(QWidget *parent) :
     {
         m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console is huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
     }
+}
+
+void DebugConsole::hideEvent(QHideEvent* event)
+{
+    Q_UNUSED(event);
+    storeSettings();
 }
 
 DebugConsole::~DebugConsole()
@@ -146,16 +150,16 @@ void DebugConsole::loadSettings()
     m_ui->specialComboBox->setCurrentIndex(settings.value("SPECIAL_SYMBOL", m_ui->specialComboBox->currentIndex()).toInt());
     m_ui->specialCheckBox->setChecked(settings.value("SPECIAL_SYMBOL_CHECKBOX_STATE", m_ui->specialCheckBox->isChecked()).toBool());
     hexModeEnabled(settings.value("HEX_MODE_ENABLED", m_ui->hexCheckBox->isChecked()).toBool());
-    MAVLINKfilterEnabled(settings.value("MAVLINK_FILTER_ENABLED", m_ui->mavlinkCheckBox->isChecked()).toBool());
-    setAutoHold(settings.value("AUTO_HOLD_ENABLED", m_ui->holdCheckBox->isChecked()).toBool());
+    MAVLINKfilterEnabled(settings.value("MAVLINK_FILTER_ENABLED", filterMAVLINK).toBool());
+    setAutoHold(settings.value("AUTO_HOLD_ENABLED", autoHold).toBool());
     settings.endGroup();
 
-    // Update visibility settings
-    if (m_ui->specialCheckBox->isChecked())
-    {
-        m_ui->specialCheckBox->setVisible(true);
-        m_ui->addSymbolButton->setVisible(false);
-    }
+//    // Update visibility settings
+//    if (m_ui->specialCheckBox->isChecked())
+//    {
+//        m_ui->specialCheckBox->setVisible(true);
+//        m_ui->addSymbolButton->setVisible(false);
+//    }
 }
 
 void DebugConsole::storeSettings()
@@ -166,8 +170,8 @@ void DebugConsole::storeSettings()
     settings.setValue("SPECIAL_SYMBOL", m_ui->specialComboBox->currentIndex());
     settings.setValue("SPECIAL_SYMBOL_CHECKBOX_STATE", m_ui->specialCheckBox->isChecked());
     settings.setValue("HEX_MODE_ENABLED", m_ui->hexCheckBox->isChecked());
-    settings.setValue("MAVLINK_FILTER_ENABLED", m_ui->mavlinkCheckBox->isChecked());
-    settings.setValue("AUTO_HOLD_ENABLED", m_ui->holdCheckBox->isChecked());
+    settings.setValue("MAVLINK_FILTER_ENABLED", filterMAVLINK);
+    settings.setValue("AUTO_HOLD_ENABLED", autoHold);
     settings.endGroup();
     settings.sync();
     //qDebug() << "Storing settings!";
@@ -241,6 +245,11 @@ void DebugConsole::setAutoHold(bool hold)
     {
         this->hold(false);
         m_ui->holdButton->setChecked(false);
+    }
+    // Set auto hold checkbox
+    if (m_ui->holdCheckBox->isChecked() != hold)
+    {
+        m_ui->holdCheckBox->setChecked(hold);
     }
     // Set new state
     autoHold = hold;
@@ -516,7 +525,7 @@ QString DebugConsole::bytesToSymbolNames(const QByteArray& b)
 void DebugConsole::specialSymbolSelected(const QString& text)
 {
     Q_UNUSED(text);
-    m_ui->specialCheckBox->setVisible(true);
+    //m_ui->specialCheckBox->setVisible(true);
 }
 
 void DebugConsole::appendSpecialSymbol(const QString& text)
@@ -763,7 +772,7 @@ void DebugConsole::setConnectionState(bool connected)
     else
     {
         m_ui->connectButton->setText(tr("Connect"));
-        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QGC::colorYellow.name(), tr("Link %1 is unconnected.").arg(currLink->getName())));
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QGC::colorOrange.name(), tr("Link %1 is unconnected.").arg(currLink->getName())));
     }
 }
 

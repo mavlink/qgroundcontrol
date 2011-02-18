@@ -24,6 +24,7 @@ public slots:
 protected:
     MAVLinkProtocol* protocol;
     void changeEvent(QEvent *e);
+    void hideEvent(QHideEvent* event);
 
 private:
     Ui::MAVLinkSettingsWidget *m_ui;

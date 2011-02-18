@@ -85,6 +85,7 @@
         <file>images/earth.html</file>
         <file>images/mapproviders/googleearth.svg</file>
         <file>images/contrib/slugs.png</file>
+        <file>images/style-outdoor.css</file>
     </qresource>
     <qresource prefix="/general">
         <file alias="vera.ttf">images/Vera.ttf</file>

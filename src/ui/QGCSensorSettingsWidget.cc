@@ -37,6 +37,7 @@ QGCSensorSettingsWidget::QGCSensorSettingsWidget(UASInterface* uas, QWidget *par
     ui(new Ui::QGCSensorSettingsWidget)
 {
     ui->setupUi(this);
+    // FIXME James Goppert
     // XXX: This might be a bad idea sending a message every time the value changes
     connect(ui->spinBox_rawSensor, SIGNAL(valueChanged(int)), mav, SLOT(enableRawSensorDataTransmission(int)));
     connect(ui->spinBox_controller, SIGNAL(valueChanged(int)), mav, SLOT(enableRawControllerDataTransmission(int)));

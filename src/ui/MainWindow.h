@@ -88,6 +88,18 @@ public:
     static MainWindow* instance();
     ~MainWindow();
 
+    enum QGC_MAINWINDOW_STYLE
+    {
+        QGC_MAINWINDOW_STYLE_NATIVE,
+        QGC_MAINWINDOW_STYLE_INDOOR,
+        QGC_MAINWINDOW_STYLE_OUTDOOR
+    };
+
+    /** @brief Get current visual style */
+    int getStyle() { return currentStyle; }
+    /** @brief Get auto link reconnect setting */
+    bool autoReconnectEnabled() { return autoReconnect; }
+
 public slots:
 //    /** @brief Store the mainwindow settings */
 //    void storeSettings();
@@ -101,6 +113,9 @@ public slots:
     /** @brief Shows an info message as popup or as widget */
     void showInfoMessage(const QString& title, const QString& message);
 
+    /** @brief Show the application settings */
+    void showSettings();
+    /** @brief Add a communication link */
     void addLink();
     void addLink(LinkInterface* link);
     void configure();
@@ -139,31 +154,24 @@ public slots:
     void reloadStylesheet();
     /** @brief Let the user select the CSS style sheet */
     void selectStylesheet();
+    /** @brief Automatically reconnect last link */
+    void enableAutoReconnect(bool enabled);
+    /** @brief Switch to native application style */
+    void loadNativeStyle();
+    /** @brief Switch to indoor mission style */
+    void loadIndoorStyle();
+    /** @brief Switch to outdoor mission style */
+    void loadOutdoorStyle();
+    /** @brief Load a specific style */
+    void loadStyle(QGC_MAINWINDOW_STYLE style);
 
     /** @brief Add a custom tool widget */
     void createCustomWidget();
 
     void closeEvent(QCloseEvent* event);
 
-    /*
-    ==========================================================
-                  Potentially Deprecated
-    ==========================================================
-    */
-
-//    void loadWidgets();
-
     /** @brief Load data view, allowing to plot flight data */
     void loadDataView(QString fileName);
-
-//    /** @brief Load 3D map view */
-//    void load3DMapView();
-
-//    /** @brief Load 3D Google Earth view */
-//    void loadGoogleEarthView();
-
-//    /** @brief Load 3D view */
-//    void load3DView();
 
     /**
      * @brief Shows a Docked Widget based on the action sender
@@ -340,6 +348,8 @@ protected:
 
 
     void configureWindowName();
+    void loadSettings();
+    void storeSettings();
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
@@ -414,6 +424,8 @@ protected:
     QString screenFileName;
     QTimer* videoTimer;
     QString styleFileName;
+    bool autoReconnect;
+    QGC_MAINWINDOW_STYLE currentStyle;
 
 private:
     Ui::MainWindow ui;

@@ -573,11 +573,11 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                                 mavlink_global_position_int_t pos;
                                 mavlink_msg_global_position_int_decode(msg, &pos);
 
-                                float x = static_cast<double>(pos.lon)/1E7;
-                                float y = static_cast<double>(pos.lat)/1E7;
-                                float z = static_cast<double>(pos.alt)/1000;
+                                float x = static_cast<double>(pos.lat)/1E7;
+                                float y = static_cast<double>(pos.lon)/1E7;
+                                //float z = static_cast<double>(pos.alt)/1000;
 
-                                qDebug() << "Received new position: x:" << x << "| y:" << y << "| z:" << z;
+                                //qDebug() << "Received new position: x:" << x << "| y:" << y << "| z:" << z;
 
                                 posReached = false;
                                 yawReached = true;

@@ -104,6 +104,9 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
 
     columns = 1;
     this->setAutoFillBackground(true);
+    QPalette pal = palette();
+    pal.setColor(backgroundRole(), QGC::colorBlack);
+    setPalette(pal);
 
     vwidth = 80.0f;
     vheight = 80.0f;
@@ -221,12 +224,14 @@ void HSIDisplay::renderOverlay()
     // Draw orientation labels
     // Translate and rotate coordinate frame
     painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
-    painter.rotate((yaw/(M_PI))*180.0f);
+    const float yawDeg = ((yaw/M_PI)*180.0f);
+    int yawRotate = static_cast<int>(yawDeg) % 360;
+    painter.rotate(-yawRotate);
     paintText(tr("N"), ringColor, 3.5f, - 1.0f, - baseRadius - 5.5f, &painter);
     paintText(tr("S"), ringColor, 3.5f, - 1.0f, + baseRadius + 1.5f, &painter);
-    paintText(tr("E"), ringColor, 3.5f, + baseRadius + 2.0f, - 1.25f, &painter);
+    paintText(tr("E"), ringColor, 3.5f, + baseRadius + 3.0f, - 1.25f, &painter);
     paintText(tr("W"), ringColor, 3.5f, - baseRadius - 5.5f, - 1.75f, &painter);
-    painter.rotate((-yaw/(M_PI))*180.0f);
+    painter.rotate(+yawRotate);
     painter.translate(-(xCenterPos)*scalingFactor, -(yCenterPos)*scalingFactor);
 
     // Draw center indicator
@@ -323,7 +328,7 @@ void HSIDisplay::renderOverlay()
     {
         // Position
         QString str;
-        str.sprintf("%05.2f lat %06.2f lon %06.2f alt", lat, lon, alt);
+        str.sprintf("lat: %05.2f lon: %06.2f alt: %06.2f", lat, lon, alt);
         paintText(tr("GPS"), QGC::colorCyan, 2.6f, 2, vheight- 5.0f, &painter);
         paintText(str, Qt::white, 2.6f, 10, vheight - 5.0f, &painter);
     }
