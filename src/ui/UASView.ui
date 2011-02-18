@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>260</width>
-    <height>111</height>
+    <width>360</width>
+    <height>119</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -56,10 +56,11 @@ QLabel#modeLabel {
 
 QLabel#stateLabel {
 	font: 12px;
+	color: #3C7B9E;
 }
 
-QLabel#gpsLabel {
-	font: 8px;
+QLabel#navLabel {
+	font: 12px;
 }
 
 QLabel#positionLabel {
@@ -255,7 +256,7 @@ QMenu::separator {
      <property name="title">
       <string/>
      </property>
-     <layout class="QGridLayout" name="gridLayout" columnstretch="10,10,1,10,10,10,100,100">
+     <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,10,10,10,10,80">
       <property name="horizontalSpacing">
        <number>4</number>
       </property>
@@ -306,23 +307,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="0" column="2" rowspan="8">
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::MinimumExpanding</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>4</width>
-          <height>88</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="3" colspan="3">
+      <item row="0" column="2" colspan="3">
        <widget class="QLabel" name="nameLabel">
         <property name="maximumSize">
          <size>
@@ -349,7 +334,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="0" column="6" colspan="2">
+      <item row="0" column="5" colspan="2">
        <widget class="QLabel" name="modeLabel">
         <property name="maximumSize">
          <size>
@@ -366,11 +351,11 @@ QMenu::separator {
          </font>
         </property>
         <property name="text">
-         <string/>
+         <string>MODE</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="3" rowspan="3">
+      <item row="1" column="2" rowspan="3">
        <widget class="QLabel" name="timeRemainingLabel">
         <property name="font">
          <font>
@@ -391,7 +376,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="1" column="4" rowspan="3" colspan="2">
+      <item row="1" column="3" rowspan="3" colspan="2">
        <widget class="QLabel" name="timeElapsedLabel">
         <property name="font">
          <font>
@@ -412,7 +397,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="3" column="6" rowspan="2" colspan="2">
+      <item row="3" column="5" rowspan="2" colspan="2">
        <widget class="QProgressBar" name="thrustBar">
         <property name="font">
          <font>
@@ -430,7 +415,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="4" column="3">
+      <item row="4" column="2">
        <widget class="QLabel" name="groundDistanceLabel">
         <property name="font">
          <font>
@@ -451,7 +436,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="4" column="4" colspan="2">
+      <item row="4" column="3" colspan="2">
        <widget class="QLabel" name="speedLabel">
         <property name="font">
          <font>
@@ -536,22 +521,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="5" column="3" rowspan="2" colspan="2">
-       <widget class="QLabel" name="stateLabel">
-        <property name="font">
-         <font>
-          <pointsize>-1</pointsize>
-          <weight>50</weight>
-          <italic>false</italic>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="3" colspan="2">
+      <item row="7" column="2">
        <widget class="QLabel" name="waypointLabel">
         <property name="font">
          <font>
@@ -575,7 +545,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="2" column="6" colspan="2">
+      <item row="2" column="5" colspan="2">
        <widget class="QLabel" name="positionLabel">
         <property name="minimumSize">
          <size>
@@ -608,25 +578,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="5" column="6" colspan="2">
-       <widget class="QLabel" name="statusTextLabel">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>12</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>-1</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="5" rowspan="2" colspan="3">
+      <item row="7" column="3" colspan="4">
        <layout class="QHBoxLayout" name="horizontalLayout">
         <property name="spacing">
          <number>4</number>
@@ -790,6 +742,49 @@ QMenu::separator {
          </widget>
         </item>
        </layout>
+      </item>
+      <item row="5" column="2" rowspan="2" colspan="2">
+       <widget class="QLabel" name="navLabel">
+        <property name="font">
+         <font>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>NAV</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0" colspan="7">
+       <widget class="QLabel" name="statusTextLabel">
+        <property name="text">
+         <string>Waiting for first status update..</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="5">
+       <widget class="QLabel" name="stateLabel">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>12</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>STATE</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

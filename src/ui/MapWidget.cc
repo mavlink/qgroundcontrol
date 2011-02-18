@@ -92,11 +92,24 @@ MapWidget::MapWidget(QWidget *parent) :
     //    Layer* gsatLayer = new Layer("Google Satellite", gsat, Layer::MapLayer);
     //    mc->addLayer(gsatLayer);
 
+
+    // Zurich, ETH
+
+    int lastZoom = 16;
+    double lastLat = 47.376889;
+    double lastLon = 8.548056;
+
+    QSettings settings;
+    settings.beginGroup("QGC_MAPWIDGET");
+    lastLat = settings.value("LAST_LATITUDE", lastLat).toDouble();
+    lastLon = settings.value("LAST_LONGITUDE", lastLon).toDouble();
+    lastZoom = settings.value("LAST_ZOOM", lastZoom).toInt();
+    settings.endGroup();
+
     // SET INITIAL POSITION AND ZOOM
     // Set default zoom level
-    mc->setZoom(16);
-    // Zurich, ETH
-    mc->setView(QPointF(8.548056,47.376889));
+    mc->setZoom(lastZoom);
+    mc->setView(QPointF(lastLon, lastLat));
 
     // Veracruz Mexico
     //mc->setView(QPointF(-96.105208,19.138955));
@@ -262,7 +275,7 @@ void MapWidget::goTo()
     bool ok;
     QString text = QInputDialog::getText(this, tr("Please enter coordinates"),
                                          tr("Coordinates (Lat,Lon):"), QLineEdit::Normal,
-                                         QString("%1,%2").arg(mc->currentCoordinate().x()).arg(mc->currentCoordinate().y()), &ok);
+                                         QString("%1,%2").arg(mc->currentCoordinate().y()).arg(mc->currentCoordinate().x()), &ok);
     if (ok && !text.isEmpty())
     {
         QStringList split = text.split(",");
@@ -276,7 +289,7 @@ void MapWidget::goTo()
 
             if (ok)
             {
-                mc->setView(QPointF(latitude, longitude));
+                mc->setView(QPointF(longitude, latitude));
             }
         }
     }
@@ -326,9 +339,11 @@ void MapWidget::mapproviderSelected(QAction* action)
 
         mapadapter = new qmapcontrol::YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
         l->setMapAdapter(mapadapter);
+        geomLayer->setMapAdapter(mapadapter);
 
         if (isVisible()) mc->updateRequestNew();
         mc->setZoom(zoom);
+        overlay->setVisible(false);
         //        yahooActionOverlay->setEnabled(true);
     }
     else if (action == googleActionMap)
@@ -417,7 +432,15 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
 
         if (mav)
         {
-            mav->getWaypointManager()->addWaypoint(new Waypoint(mav->getWaypointManager()->getWaypointList().count(), coordinate.x(), coordinate.y(), 0.0f, 0.0f, true));
+            double altitude = 0.0;
+            double yaw = 0.0;
+            int wpListCount = mav->getWaypointManager()->getWaypointList().count();
+            if (wpListCount > 0)
+            {
+                altitude = mav->getWaypointManager()->getWaypointList().at(wpListCount-1)->getAltitude();
+                yaw = mav->getWaypointManager()->getWaypointList().at(wpListCount-1)->getYaw();
+            }
+            mav->getWaypointManager()->addWaypoint(new Waypoint(wpListCount, coordinate.y(), coordinate.x(), altitude, yaw, true));
         }
         else
         {
@@ -472,8 +495,8 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
             {
                 // Waypoint is new, a new icon is created
                 QPointF coordinate;
-                coordinate.setX(wp->getX());
-                coordinate.setY(wp->getY());
+                coordinate.setX(wp->getLongitude());
+                coordinate.setY(wp->getLatitude());
                 createWaypointGraphAtMap(wpindex, coordinate);
             }
             else
@@ -483,8 +506,8 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
                 if(!waypointIsDrag)
                 {
                     QPointF coordinate;
-                    coordinate.setX(wp->getX());
-                    coordinate.setY(wp->getY());
+                    coordinate.setX(wp->getLongitude());
+                    coordinate.setY(wp->getLatitude());
 
                     Point* waypoint;
                     waypoint = wps.at(wpindex);
@@ -624,8 +647,8 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
             if (wps.size() > index)
             {
                 Waypoint* wp = wps.at(index);
-                wp->setX(coordinate.x());
-                wp->setY(coordinate.y());
+                wp->setLatitude(coordinate.y());
+                wp->setLongitude(coordinate.x());
                 mav->getWaypointManager()->notifyOfChange(wp);
             }
         }
@@ -844,8 +867,8 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
 
     qmapcontrol::Point* p;
     QPointF coordinate;
-    coordinate.setX(lat);
-    coordinate.setY(lon);
+    coordinate.setX(lon);
+    coordinate.setY(lat);
 
     if (!uasIcons.contains(uas->getUASID()))
     {
@@ -880,7 +903,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
         //        if (p)
         //        {
         p = uasIcons.value(uas->getUASID());
-        p->setCoordinate(QPointF(lat, lon));
+        p->setCoordinate(QPointF(lon, lat));
         //p->setYaw(uas->getYaw());
         //        }
         // Extend trail
@@ -901,7 +924,7 @@ void MapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, 
             // Sets the view to the interesting area
             if (followgps->isChecked())
             {
-                updatePosition(0, lat, lon);
+                updatePosition(0, lon, lat);
             }
             else
             {
@@ -982,6 +1005,14 @@ void MapWidget::showEvent(QShowEvent* event)
 void MapWidget::hideEvent(QHideEvent* event)
 {
     Q_UNUSED(event);
+    QSettings settings;
+    settings.beginGroup("QGC_MAPWIDGET");
+    QPointF currentPos = mc->currentCoordinate();
+    settings.setValue("LAST_LATITUDE", currentPos.y());
+    settings.setValue("LAST_LONGITUDE", currentPos.x());
+    settings.setValue("LAST_ZOOM", mc->currentZoom());
+    settings.endGroup();
+    settings.sync();
 }
 
 

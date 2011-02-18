@@ -247,11 +247,11 @@ bool MAVLinkXMLParser::generate()
 
                                         // Everything sane, starting with enum content
                                         currEnum = "enum " + enumName.toUpper() + "\n{\n";
-                                        currEnumEnd = QString("\n%1_ENUM_END\n};\n\n").arg(enumName.toUpper());
+                                        currEnumEnd = QString("\t%1_ENUM_END\n};\n\n").arg(enumName.toUpper());
 
                                         int nextEnumValue = 0;
 
-                                        // Get the message fields
+                                        // Get the enum fields
                                         QDomNode f = e.firstChild();
                                         while (!f.isNull())
                                         {
@@ -298,8 +298,9 @@ bool MAVLinkXMLParser::generate()
                                     }
                                     // Add the last parsed enum
                                     // Remove the last comma, as the last value has none
-                                    int commaPosition = currEnum.lastIndexOf(",");
-                                    currEnum.remove(commaPosition, 1);
+                                    // ENUM END MARKER IS LAST ENTRY, COMMA REMOVAL NOT NEEDED
+                                    //int commaPosition = currEnum.lastIndexOf(",");
+                                    //currEnum.remove(commaPosition, 1);
 
                                     enums += "/** @brief " + comment  + " */\n" + currEnum + currEnumEnd;
                                 } // Element is non-zero and element name is <enum>

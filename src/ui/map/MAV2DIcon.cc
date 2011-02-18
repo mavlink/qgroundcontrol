@@ -3,6 +3,8 @@
 
 #include <qmath.h>
 
+#include "QGC.h"
+
 MAV2DIcon::MAV2DIcon(UASInterface* uas, int radius, int type, const QColor& color, QString name, Alignment alignment, QPen* pen)
     : Point(uas->getLatitude(), uas->getLongitude(), name, alignment),
     yaw(0.0f),
@@ -112,7 +114,10 @@ void MAV2DIcon::drawAirframePolygon(int airframe, QPainter& painter, int radius,
             // DRAW AIRPLANE
 
             // Rotate 180 degs more since the icon is oriented downwards
-            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f+180.0f;
+            //float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f+180.0f;
+
+            const float yawDeg = ((yaw/M_PI)*180.0f)+180.0f+180.0f;
+            int yawRotate = static_cast<int>(yawDeg) % 360;
 
             painter.rotate(yawRotate);
 
@@ -159,7 +164,8 @@ void MAV2DIcon::drawAirframePolygon(int airframe, QPainter& painter, int radius,
         {
             // QUADROTOR
             float iconSize = radius*0.9f;
-            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f;
+            const float yawDeg = ((yaw/M_PI)*180.0f)+180.0f;
+            int yawRotate = static_cast<int>(yawDeg) % 360;
 
             painter.rotate(yawRotate);
 
@@ -201,8 +207,8 @@ void MAV2DIcon::drawAirframePolygon(int airframe, QPainter& painter, int radius,
         {
             // DRAW AIRPLANE
 
-            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f;
-
+            const float yawDeg = ((yaw/M_PI)*180.0f)+180.0f;
+            int yawRotate = static_cast<int>(yawDeg) % 360;
             painter.rotate(yawRotate);
 
             //qDebug() << "ICON SIZE:" << radius;

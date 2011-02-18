@@ -226,6 +226,8 @@ public slots:
     virtual void setLocalOriginAtCurrentGPSPosition() = 0;
     /** @brief Request all onboard parameters of all components */
     virtual void requestParameters() = 0;
+    /** @brief Request one specific onboard parameter */
+    virtual void requestParameter(int component, int parameter) = 0;
     /** @brief Write parameter to permanent storage */
     virtual void writeParametersToStorage() = 0;
     /** @brief Read parameter from permanent storage */
@@ -304,7 +306,11 @@ signals:
     void poiFound(UASInterface* uas, int type, int colorIndex, QString message, float x, float y, float z);
     void poiConnectionFound(UASInterface* uas, int type, int colorIndex, QString message, float x1, float y1, float z1, float x2, float y2, float z2);
 
+    /** @brief A text message from the system has been received */
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
+
+    void navModeChanged(int uasid, int mode, const QString& text);
+
     /**
      * @brief Update the error count of a device
      *
@@ -369,6 +375,7 @@ signals:
     void waypointReached(UASInterface* uas, int id);
     void autoModeChanged(bool autoMode);
     void parameterChanged(int uas, int component, QString parameterName, float value);
+    void parameterChanged(int uas, int component, int parameterCount, int parameterId, QString parameterName, float value);
     void patternDetected(int uasId, QString patternPath, float confidence, bool detected);
     void letterDetected(int uasId, QString letter, float confidence, bool detected);
     /**

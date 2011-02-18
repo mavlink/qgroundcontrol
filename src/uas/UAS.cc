@@ -41,10 +41,13 @@ thrustSum(0),
 thrustMax(10),
 startVoltage(0),
 warnVoltage(9.5f),
+warnLevelPercent(20.0f),
 currentVoltage(12.0f),
 lpVoltage(12.0f),
-mode(MAV_MODE_UNINIT),
-status(MAV_STATE_UNINIT),
+batteryRemainingEstimateEnabled(false),
+mode(-1),
+status(-1),
+navMode(-1),
 onboardTimeOffset(0),
 controlRollManual(true),
 controlPitchManual(true),
@@ -162,13 +165,15 @@ void UAS::receiveMessageNamedValue(const mavlink_message_t& message)
     {
         mavlink_named_value_float_t val;
         mavlink_msg_named_value_float_decode(&message, &val);
-        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), val.value, getUnixTime());
+        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_FLOAT_FIELD_NAME_LEN);
+        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
     }
     else if (message.msgid == MAVLINK_MSG_ID_NAMED_VALUE_INT)
     {
         mavlink_named_value_int_t val;
         mavlink_msg_named_value_int_decode(&message, &val);
-        emit valueChanged(this->getUASID(), QString((char *)val.name), tr("raw"), val.value, getUnixTime());
+        QByteArray bytes(val.name, MAVLINK_MSG_NAMED_VALUE_INT_FIELD_NAME_LEN);
+        emit valueChanged(this->getUASID(), QString(bytes), tr("raw"), val.value, getUnixTime());
     }
 }
 
@@ -248,20 +253,26 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if (state.status != this->status)
                 {
                     statechanged = true;
-                    this->status = (int)state.status;
+                    this->status = state.status;
                     getStatusForCode((int)state.status, uasState, stateDescription);
                     emit statusChanged(this, uasState, stateDescription);
                     emit statusChanged(this->status);
                     stateAudio = " changed status to " + uasState;
                 }
 
-                emit loadChanged(this,state.load/10.0f);
-                emit valueChanged(uasId, "Load", "%", ((float)state.load)/1000.0f, getUnixTime());
+                if (navMode != state.nav_mode)
+                {
+                    emit navModeChanged(uasId, state.nav_mode, getNavModeText(state.nav_mode));
+                    navMode = state.nav_mode;
+                }
 
-                if (this->mode != static_cast<unsigned int>(state.mode))
+                emit loadChanged(this,state.load/10.0f);
+                emit valueChanged(uasId, "Load", "%", ((float)state.load)/10.0f, getUnixTime());
+
+                if (this->mode != static_cast<int>(state.mode))
                 {
                     modechanged = true;
-                    this->mode = static_cast<unsigned int>(state.mode);
+                    this->mode = static_cast<int>(state.mode);
                     QString mode;
 
                     switch (state.mode)
@@ -305,6 +316,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 lpVoltage = filterVoltage(currentVoltage);
                 if (startVoltage == 0) startVoltage = currentVoltage;
                 timeRemaining = calculateTimeRemaining();
+                if (!batteryRemainingEstimateEnabled)
+                {
+                    chargeLevel = state.battery_remaining/10.0f;
+                }
                 //qDebug() << "Voltage: " << currentVoltage << " Chargelevel: " << getChargeLevel() << " Time remaining " << timeRemaining;
                 emit batteryChanged(this, lpVoltage, getChargeLevel(), timeRemaining);
                 emit voltageChanged(message.sysid, state.vbat/1000.0f);
@@ -369,7 +384,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit gpsLocalizationChanged(this, status.gps_fix);
             }
             break;
-		#endif // PIXHAWK 
+#endif // PIXHAWK
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 mavlink_raw_imu_t raw;
@@ -385,6 +400,23 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "mag x", "raw", static_cast<double>(raw.xmag), time);
                 emit valueChanged(uasId, "mag y", "raw", static_cast<double>(raw.ymag), time);
                 emit valueChanged(uasId, "mag z", "raw", static_cast<double>(raw.zmag), time);
+            }
+            break;
+         case MAVLINK_MSG_ID_SCALED_IMU:
+            {
+                mavlink_scaled_imu_t scaled;
+                mavlink_msg_scaled_imu_decode(&message, &scaled);
+                quint64 time = getUnixTime(scaled.usec);
+
+                emit valueChanged(uasId, "accel x", "g", scaled.xacc/1000.0f, time);
+                emit valueChanged(uasId, "accel y", "g", scaled.yacc/1000.0f, time);
+                emit valueChanged(uasId, "accel z", "g", scaled.zacc/1000.0f, time);
+                emit valueChanged(uasId, "gyro roll", "rad/s", scaled.xgyro/1000.0f, time);
+                emit valueChanged(uasId, "gyro pitch", "rad/s", scaled.ygyro/1000.0f, time);
+                emit valueChanged(uasId, "gyro yaw", "rad/s", scaled.zgyro/1000.0f, time);
+                emit valueChanged(uasId, "mag x", "tesla", scaled.xmag/1000.0f, time);
+                emit valueChanged(uasId, "mag y", "tesla", scaled.ymag/1000.0f, time);
+                emit valueChanged(uasId, "mag z", "tesla", scaled.zmag/1000.0f, time);
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
@@ -438,7 +470,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "altitude", "m", hud.alt, time);
                 emit valueChanged(uasId, "heading", "deg", hud.heading, time);
                 emit valueChanged(uasId, "climbrate", "m/s", hud.climb, time);
-                emit valueChanged(uasId, "throttle", "m/s", hud.throttle, time);
+                emit valueChanged(uasId, "throttle", "%", hud.throttle, time);
                 emit thrustChanged(this, hud.throttle/100.0);
                 emit altitudeChanged(uasId, hud.alt);
                 //yaw = (hud.heading-180.0f/360.0f)*M_PI;
@@ -510,10 +542,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "latitude", "deg", latitude, time);
                 emit valueChanged(uasId, "longitude", "deg", longitude, time);
                 emit valueChanged(uasId, "altitude", "m", altitude, time);
-                emit valueChanged(uasId, "gps x speed", "m/s", speedX, time);
-                emit valueChanged(uasId, "gps y speed", "m/s", speedY, time);
-                emit valueChanged(uasId, "gps z speed", "m/s", speedZ, time);
-                emit globalPositionChanged(this, longitude, latitude, altitude, time);
+                double totalSpeed = sqrt(speedX*speedX + speedY*speedY + speedZ*speedZ);
+                emit valueChanged(uasId, "gps speed", "m/s", totalSpeed, time);
+                emit globalPositionChanged(this, latitude, longitude, altitude, time);
                 emit speedChanged(this, speedX, speedY, speedZ, time);
                 // Set internal state
                 if (!positionLock)
@@ -540,12 +571,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "latitude", "deg", latitude, time);
                 emit valueChanged(uasId, "longitude", "deg", longitude, time);
                 emit valueChanged(uasId, "altitude", "m", altitude, time);
-                emit valueChanged(uasId, "gps x speed", "m/s", speedX, time);
-                emit valueChanged(uasId, "gps y speed", "m/s", speedY, time);
-                emit valueChanged(uasId, "gps z speed", "m/s", speedZ, time);
-                emit globalPositionChanged(this, longitude, latitude, altitude, time);
+                double totalSpeed = sqrt(speedX*speedX + speedY*speedY + speedZ*speedZ);
+                emit valueChanged(uasId, "gps speed", "m/s", totalSpeed, time);
+                emit globalPositionChanged(this, latitude, longitude, altitude, time);
                 emit speedChanged(this, speedX, speedY, speedZ, time);
-                emit valueChanged(uasId, "gpsspeed", "m/s", sqrt(speedX*speedX+speedY*speedY+speedZ*speedZ), time);
                 // Set internal state
                 if (!positionLock)
                 {
@@ -567,15 +596,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // SANITY CHECK
                 // only accept values in a realistic range
                 // quint64 time = getUnixTime(pos.usec);
-                quint64 time = MG::TIME::getGroundTimeNow();
+                quint64 time = getUnixTime();
 
                 emit valueChanged(uasId, "latitude", "deg", pos.lat, time);
                 emit valueChanged(uasId, "longitude", "deg", pos.lon, time);
 
                 if (pos.fix_type > 0)
                 {
-                    emit globalPositionChanged(this, pos.lon, pos.lat, pos.alt, time);
-                    emit valueChanged(uasId, "gpsspeed", "m/s", pos.v, time);
+                    emit globalPositionChanged(this, pos.lat, pos.lon, pos.alt, time);
+                    emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
+                    positionLock = true;
 
                     // Check for NaN
                     int alt = pos.alt;
@@ -585,6 +615,47 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                         emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
                     }
                     emit valueChanged(uasId, "altitude", "m", pos.alt, time);
+                    // Smaller than threshold and not NaN
+                    if (pos.v < 1000000 && pos.v == pos.v)
+                    {
+                        emit valueChanged(uasId, "speed", "m/s", pos.v, time);
+                        //qDebug() << "GOT GPS RAW";
+                       // emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
+                    }
+                    else
+                    {
+                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(pos.v));
+                    }
+                }
+            }
+            break;
+        case MAVLINK_MSG_ID_GPS_RAW_INT:
+            {
+                mavlink_gps_raw_int_t pos;
+                mavlink_msg_gps_raw_int_decode(&message, &pos);
+
+                // SANITY CHECK
+                // only accept values in a realistic range
+                // quint64 time = getUnixTime(pos.usec);
+                quint64 time = getUnixTime();
+
+                emit valueChanged(uasId, "latitude", "deg", pos.lat/(double)1E7, time);
+                emit valueChanged(uasId, "longitude", "deg", pos.lon/(double)1E7, time);
+
+                if (pos.fix_type > 0)
+                {
+                    emit globalPositionChanged(this, pos.lat/(double)1E7, pos.lon/(double)1E7, pos.alt/1000.0, time);
+                    emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
+                    positionLock = true;
+
+                    // Check for NaN
+                    int alt = pos.alt;
+                    if (alt != alt)
+                    {
+                        alt = 0;
+                        emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
+                    }
+                    emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E7, time);
                     // Smaller than threshold and not NaN
                     if (pos.v < 1000000 && pos.v == pos.v)
                     {
@@ -620,10 +691,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_raw_pressure_t pressure;
                 mavlink_msg_raw_pressure_decode(&message, &pressure);
-                quint64 time = this->getUnixTime(0);
+                quint64 time = this->getUnixTime(pressure.usec);
                 emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
                 emit valueChanged(uasId, "diff pressure 1", "hPa", pressure.press_diff1, time);
                 emit valueChanged(uasId, "diff pressure 2", "hPa", pressure.press_diff2, time);
+                emit valueChanged(uasId, "temperature", "deg C", pressure.temperature/100.0f, time);
             }
             break;
         case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
@@ -660,8 +732,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_param_value_t value;
                 mavlink_msg_param_value_decode(&message, &value);
-
-                QString parameterName = QString((char*)value.param_id);
+                QByteArray bytes((char*)value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
+                QString parameterName = QString(bytes);
                 int component = message.compid;
                 float val = value.param_value;
 
@@ -677,6 +749,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 // Emit change
                 emit parameterChanged(uasId, message.compid, parameterName, val);
+                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val);
+            }
+            break;
+        case MAVLINK_MSG_ID_ACTION_ACK:
+            mavlink_action_ack_t ack;
+            mavlink_msg_action_ack_decode(&message, &ack);
+            if (ack.result == 1)
+            {
+                emit textMessageReceived(uasId, message.compid, 0, tr("SUCCESS: Executed action: %1").arg(ack.action));
+            }
+            else
+            {
+                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Rejected action: %1").arg(ack.action));
             }
             break;
         case MAVLINK_MSG_ID_DEBUG:
@@ -754,7 +839,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_waypoint_reached_t wpr;
                 mavlink_msg_waypoint_reached_decode(&message, &wpr);
                 waypointManager.handleWaypointReached(message.sysid, message.compid, &wpr);
-                GAudioOutput::instance()->say(QString("System %1 reached waypoint %2").arg(getUASName()).arg(wpr.seq));
+                QString text = QString("System %1 reached waypoint %2").arg(getUASName()).arg(wpr.seq);
+                GAudioOutput::instance()->say(text);
+                emit textMessageReceived(message.sysid, message.compid, 0, text);
             }
             break;
 
@@ -791,7 +878,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
-                b.resize(256);
+                b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
                 mavlink_msg_statustext_get_text(&message, (int8_t*)b.data());
                 //b.append('\0');
                 QString text = QString(b);
@@ -801,7 +888,53 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, severity, text);
             }
             break;
-    case MAVLINK_MSG_ID_DEBUG_VECT:
+
+        case MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE:
+            {
+                qDebug() << "RECIEVED ACK TO GET IMAGE";
+                mavlink_data_transmission_handshake_t p;
+                mavlink_msg_data_transmission_handshake_decode(&message, &p);
+                imageSize = p.size;
+                imagePackets = p.packets;
+                imagePayload = p.payload;
+                imageQuality = p.jpg_quality;
+                imageStart = MG::TIME::getGroundTimeNow();
+            }
+            break;
+
+        case MAVLINK_MSG_ID_ENCAPSULATED_DATA:
+            {
+                mavlink_encapsulated_data_t img;
+                mavlink_msg_encapsulated_data_decode(&message, &img);
+                int seq = img.seqnr;
+                int pos = seq * imagePayload;
+
+                for (int i = 0; i < imagePayload; ++i)
+                {
+                    if (pos <= imageSize)
+                    {
+                        imageRecBuffer[pos] = img.data[i];
+                    }
+                    ++pos;
+                }
+
+                ++imagePacketsArrived;
+
+                // emit signal if all packets arrived
+                if ((imagePacketsArrived == imagePackets))
+                {
+                    image.loadFromData(imageRecBuffer);
+                    emit imageReady(this);
+                    // Restart statemachine
+                    imagePacketsArrived = 0;
+
+                    //this->requestImage();
+                    //qDebug() << "SENDING REQUEST TO GET NEW IMAGE FROM SYSTEM" << uasId;
+                }
+            }
+            break;
+
+        case MAVLINK_MSG_ID_DEBUG_VECT:
             {
                 mavlink_debug_vect_t vect;
                 mavlink_msg_debug_vect_decode(&message, &vect);
@@ -1131,49 +1264,111 @@ float UAS::filterVoltage(float value) const
     return lpVoltage * 0.7f + value * 0.3f;
 }
 
+QString UAS::getNavModeText(int mode)
+{
+    switch (mode)
+    {
+    case MAV_NAV_GROUNDED:
+        return QString("GROUNDED");
+        break;
+    case MAV_NAV_HOLD:
+        return QString("HOLD");
+        break;
+    case MAV_NAV_LANDING:
+        return QString("LANDING");
+        break;
+    case MAV_NAV_LIFTOFF:
+        return QString("LIFTOFF");
+        break;
+    case MAV_NAV_LOITER:
+        return QString("LOITER");
+        break;
+    case MAV_NAV_LOST:
+        return QString("LOST");
+        break;
+    case MAV_NAV_RETURNING:
+        return QString("RETURNING");
+        break;
+    case MAV_NAV_VECTOR:
+        return QString("VECTOR");
+        break;
+    case MAV_NAV_WAYPOINT:
+        return QString("WAYPOINT");
+        break;
+    default:
+        return QString("UNKNOWN");
+    }
+}
+
 void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDescription)
 {
     switch (statusCode)
     {
     case MAV_STATE_UNINIT:
         uasState = tr("UNINIT");
-        stateDescription = tr("Waiting..");
+        stateDescription = tr("Unitialized, booting up.");
         break;
     case MAV_STATE_BOOT:
         uasState = tr("BOOT");
-        stateDescription = tr("Booting..");
+        stateDescription = tr("Booting system, please wait.");
         break;
     case MAV_STATE_CALIBRATING:
         uasState = tr("CALIBRATING");
-        stateDescription = tr("Calibrating..");
+        stateDescription = tr("Calibrating sensors, please wait.");
         break;
     case MAV_STATE_ACTIVE:
         uasState = tr("ACTIVE");
-        stateDescription = tr("Normal");
+        stateDescription = tr("Active, normal operation.");
         break;
     case MAV_STATE_STANDBY:
         uasState = tr("STANDBY");
-        stateDescription = tr("Standby, OK");
+        stateDescription = tr("Standby mode, ready for liftoff.");
         break;
     case MAV_STATE_CRITICAL:
         uasState = tr("CRITICAL");
-        stateDescription = tr("FAILURE: Continue");
+        stateDescription = tr("FAILURE: Continuing operation.");
         break;
     case MAV_STATE_EMERGENCY:
         uasState = tr("EMERGENCY");
-        stateDescription = tr("EMERGENCY: Land!");
+        stateDescription = tr("EMERGENCY: Land Immediately!");
         break;
     case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");
-        stateDescription = tr("Powering off");
+        stateDescription = tr("Powering off system.");
         break;
     default:
         uasState = tr("UNKNOWN");
-        stateDescription = tr("Unknown state");
+        stateDescription = tr("Unknown system state");
         break;
     }
 }
 
+QImage UAS::getImage()
+{
+    return image;
+}
+
+void UAS::requestImage()
+{
+    qDebug() << "trying to get an image from the uas...";
+
+    if (imagePacketsArrived == 0)
+    {
+        mavlink_message_t msg;
+        mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 50);
+        sendMessage(msg);
+    }
+    else if (MG::TIME::getGroundTimeNow() - imageStart >= 1000)
+    {
+        // handshake happened more than 1 second ago, packets should have arrived by now
+        // maybe we missed some packets (dropped along the way)
+        image.loadFromData(imageRecBuffer);
+        emit imageReady(this);
+        // Restart statemachine
+        imagePacketsArrived = 0;
+    }
+    // default else, wait?
+}
 
 
 /* MANAGEMENT */
@@ -1476,11 +1671,11 @@ void UAS::setParameter(const int component, const QString& id, const float value
         {
             p.param_id[i] = id.toAscii()[i];
         }
-        // Null termination at end of string or end of buffer
-        else if ((int)i == id.length() || i == (sizeof(p.param_id) - 1))
-        {
-            p.param_id[i] = '\0';
-        }
+//        // Null termination at end of string or end of buffer
+//        else if ((int)i == id.length() || i == (sizeof(p.param_id) - 1))
+//        {
+//            p.param_id[i] = '\0';
+//        }
         // Zero fill
         else
         {
@@ -1490,6 +1685,18 @@ void UAS::setParameter(const int component, const QString& id, const float value
     mavlink_msg_param_set_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &p);
     sendMessage(msg);
     }
+}
+
+void UAS::requestParameter(int component, int parameter)
+{
+    mavlink_message_t msg;
+    mavlink_param_request_read_t read;
+    read.param_index = parameter;
+    read.target_system = uasId;
+    read.target_component = component;
+    mavlink_msg_param_request_read_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &read);
+    sendMessage(msg);
+    qDebug() << __FILE__ << __LINE__ << "REQUESTING PARAM RETRANSMISSION FROM COMPONENT" << component << "FOR PARAM ID" << parameter;
 }
 
 void UAS::setSystemType(int systemType)
@@ -1875,29 +2082,60 @@ void UAS::setBattery(BatteryType type, int cells)
 
 void UAS::setBatterySpecs(const QString& specs)
 {
-    QString stringList = specs;
-    stringList = stringList.remove("V");
-    stringList = stringList.remove("v");
-    QStringList parts = stringList.split(",");
-    if (parts.length() == 3)
+    if (specs.length() == 0 || specs.contains("%"))
     {
-        float temp;
+        batteryRemainingEstimateEnabled = false;
         bool ok;
-        // Get the empty voltage
-        temp = parts.at(0).toFloat(&ok);
-        if (ok) emptyVoltage = temp;
-        // Get the warning voltage
-        temp = parts.at(1).toFloat(&ok);
-        if (ok) warnVoltage = temp;
-        // Get the full voltage
-        temp = parts.at(2).toFloat(&ok);
-        if (ok) fullVoltage = temp;
+        QString percent = specs;
+        percent = percent.remove("%");
+        float temp = percent.toFloat(&ok);
+        if (ok)
+        {
+            warnLevelPercent = temp;
+        }
+        else
+        {
+            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
+        }
+    }
+    else
+    {
+        batteryRemainingEstimateEnabled = true;
+        QString stringList = specs;
+        stringList = stringList.remove("V");
+        stringList = stringList.remove("v");
+        QStringList parts = stringList.split(",");
+        if (parts.length() == 3)
+        {
+            float temp;
+            bool ok;
+            // Get the empty voltage
+            temp = parts.at(0).toFloat(&ok);
+            if (ok) emptyVoltage = temp;
+            // Get the warning voltage
+            temp = parts.at(1).toFloat(&ok);
+            if (ok) warnVoltage = temp;
+            // Get the full voltage
+            temp = parts.at(2).toFloat(&ok);
+            if (ok) fullVoltage = temp;
+        }
+        else
+        {
+            emit textMessageReceived(0, 0, 0, "Could not set battery options, format is wrong");
+        }
     }
 }
 
 QString UAS::getBatterySpecs()
 {
-    return QString("%1V,%2V,%3V").arg(emptyVoltage).arg(warnVoltage).arg(fullVoltage);
+    if (batteryRemainingEstimateEnabled)
+    {
+        return QString("%1V,%2V,%3V").arg(emptyVoltage).arg(warnVoltage).arg(fullVoltage);
+    }
+    else
+    {
+        return QString("%1%").arg(warnLevelPercent);
+    }
 }
 
 int UAS::calculateTimeRemaining()
@@ -1916,20 +2154,22 @@ int UAS::calculateTimeRemaining()
 /**
  * @return charge level in percent - 0 - 100
  */
-double UAS::getChargeLevel()
+float UAS::getChargeLevel()
 {
-    float chargeLevel;
-    if (lpVoltage < emptyVoltage)
+    if (batteryRemainingEstimateEnabled)
     {
-        chargeLevel = 0.0f;
-    }
-    else if (lpVoltage > fullVoltage)
-    {
-        chargeLevel = 100.0f;
-    }
-    else
-    {
-        chargeLevel = 100.0f * ((lpVoltage - emptyVoltage)/(fullVoltage - emptyVoltage));
+        if (lpVoltage < emptyVoltage)
+        {
+            chargeLevel = 0.0f;
+        }
+        else if (lpVoltage > fullVoltage)
+        {
+            chargeLevel = 100.0f;
+        }
+        else
+        {
+            chargeLevel = 100.0f * ((lpVoltage - emptyVoltage)/(fullVoltage - emptyVoltage));
+        }
     }
     return chargeLevel;
 }

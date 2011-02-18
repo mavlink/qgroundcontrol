@@ -138,8 +138,8 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id)
         {
-            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_COMMAND) wp->command;
-            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_COMMAND) wp->command);
+            qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << (MAV_FRAME) wp->frame << (MAV_CMD) wp->command;
+            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue, wp->current, wp->param1, wp->param2, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
             addWaypoint(lwp, false);
 
             //get next waypoint
@@ -236,6 +236,7 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
 {
     if (systemId == uas.getUASID() && compId == MAV_COMP_ID_WAYPOINTPLANNER)
     {
+        // FIXME Petri
         if (current_state == WP_SETCURRENT)
         {
             protocol_timer.stop();
@@ -257,11 +258,12 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
                 }
             }
 
-            emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
-            //emit update to UI widgets
-            emit currentWaypointChanged(wpc->seq);
+            //qDebug() << "Updated waypoints list";
         }
-        qDebug() << "new current waypoint" << wpc->seq;
+        emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
+        //emit update to UI widgets
+        emit currentWaypointChanged(wpc->seq);
+        //qDebug() << "new current waypoint" << wpc->seq;
     }
 }
 
