@@ -398,6 +398,7 @@ void UASWaypointManager::saveWaypoints(const QString &saveFile)
 
     for (int i = 0; i < waypoints.size(); i++)
     {
+        waypoints[i]->setId(i);
         waypoints[i]->save(out);
     }
     file.close();
