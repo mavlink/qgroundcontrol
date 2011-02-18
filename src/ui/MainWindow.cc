@@ -1990,8 +1990,6 @@ void MainWindow::presentView()
     // VIDEO 2
     showTheWidget(MENU_VIDEO_STREAM_2, currentView);
 
-    this->show();
-
     // Restore window state
     if (UASManager::instance()->getUASList().count() > 0)
     {
@@ -2007,6 +2005,18 @@ void MainWindow::presentView()
             restoreState(settings.value(getWindowStateKey()).toByteArray(), QGC::applicationVersion());
         }
     }
+
+    // ACTIVATE MAP WIDGET
+    if (headUpDockWidget)
+    {
+        HUD* tmpHud = dynamic_cast<HUD*>( headUpDockWidget->widget() );
+        if (tmpHud)
+        {
+
+        }
+    }
+
+    this->show();
 }
 
 void MainWindow::showTheCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SECTIONS view)
