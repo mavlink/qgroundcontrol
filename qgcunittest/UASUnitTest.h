@@ -11,12 +11,15 @@
 #include "UASInterface.h"
 #include "AutoTest.h"
 #include "LinkManager.h"
+#include "UASWaypointManager.h"
+#include "SerialLink.h"
+#include "LinkInterface.h"
 
 class UASUnitTest : public QObject
 {
     Q_OBJECT
 public:
-  #define  UASID  50
+  #define  UASID  100
   MAVLinkProtocol* mav;
   UAS* uas;
   UASUnitTest();
@@ -50,10 +53,13 @@ private slots:
   void getSystemType_test();
   void getAirframe_test();
 
-  void getLinks_test();
-  void getWaypointList_test();
 
-  void battery_test();
+  void getWaypointList_test();
+  void getWaypoint_test();
+
+  void signalWayPoint_test();
+  void signalUASLink_test();
+  void signalIdUASLink_test();
 
 protected:
    UAS *prueba;

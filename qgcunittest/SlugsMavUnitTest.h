@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QtCore/QString>
 #include <QtTest/QtTest>
+
 #include "UAS.h"
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
@@ -24,6 +25,8 @@ private slots:
   void initTestCase();
   void cleanupTestCase();
   void first_test();
+
+  void getPwmCommands_test();
 
 };
 

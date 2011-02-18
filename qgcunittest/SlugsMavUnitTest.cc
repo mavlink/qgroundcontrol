@@ -21,3 +21,14 @@ void SlugsMavUnitTest::first_test()
   QCOMPARE(1,1);
 }
 
+void SlugsMavUnitTest::getPwmCommands_test()
+{
+    mavlink_pwm_commands_t* k = slugsMav->getPwmCommands();
+    k->aux1=80;
+
+    mavlink_pwm_commands_t* k2 = slugsMav->getPwmCommands();
+    k2->aux1=81;
+
+    QCOMPARE(k->aux1, k2->aux1);
+}
+
