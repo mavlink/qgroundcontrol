@@ -181,14 +181,14 @@ void WaypointList::add()
         {
             // Create waypoint with last frame
             Waypoint *last = waypoints.at(waypoints.size()-1);
-            wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getYaw(), last->getAutoContinue(), false, last->getAcceptanceRadius(),
-                              last->getHoldTime(), last->getFrame(), last->getAction());
+            wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getParam1(), last->getParam2(), last->getParam3(), last->getParam4(),
+                              last->getAutoContinue(), false, last->getFrame(), last->getAction());
             uas->getWaypointManager()->addWaypoint(wp);
         }
         else
         {
             // Create global frame waypoint per default
-            wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0.0, true, true, 0.15, 0, MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT);
+            wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0.0, 0.0, 0.0, 0.0, true, true, MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT);
             uas->getWaypointManager()->addWaypoint(wp);
         }
     }

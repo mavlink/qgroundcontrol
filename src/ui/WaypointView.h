@@ -73,8 +73,6 @@ public slots:
     void changedCurrent(int);
     void updateValues(void);
     
-    void setYaw(int);   //hidden degree to radian conversion
-    
 protected slots:
     void changeViewMode(QGC_WAYPOINTVIEW_MODE mode);
 

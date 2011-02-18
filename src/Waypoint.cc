@@ -32,19 +32,20 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include <QStringList>
 
-Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _yaw, bool _autocontinue, bool _current, double _orbit, int _holdTime, MAV_FRAME _frame, MAV_CMD _action)
+Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _param1, double _param2, double _param3, double _param4,
+                            bool _autocontinue, bool _current, MAV_FRAME _frame, MAV_CMD _action)
     : id(_id),
     x(_x),
     y(_y),
     z(_z),
-    yaw(_yaw),
+    yaw(_param4),
     frame(_frame),
     action(_action),
     autocontinue(_autocontinue),
     current(_current),
-    orbit(0),
-    param1(_orbit),
-    param2(_holdTime),
+    orbit(_param3),
+    param1(_param1),
+    param2(_param2),
     name(QString("WP%1").arg(id, 2, 10, QChar('0')))
 {
 }
@@ -150,6 +151,15 @@ void Waypoint::setAltitude(double altitude)
     {
         this->z = altitude;
         this->frame = MAV_FRAME_GLOBAL;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setYaw(int yaw)
+{
+    if (this->yaw != yaw)
+    {
+        this->yaw = yaw;
         emit changed(this);
     }
 }
@@ -290,6 +300,15 @@ void Waypoint::setLoiterOrbit(double orbit)
 }
 
 void Waypoint::setHoldTime(int holdTime)
+{
+    if (this->param1 != holdTime)
+    {
+        this->param1 = holdTime;
+        emit changed(this);
+    }
+}
+
+void Waypoint::setHoldTime(double holdTime)
 {
     if (this->param1 != holdTime)
     {
