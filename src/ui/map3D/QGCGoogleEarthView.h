@@ -106,6 +106,10 @@ public slots:
     void setHome(double lat, double lon, double alt);
     /** @brief Allow waypoint editing */
     void enableEditMode(bool mode);
+    /** @brief Enable daylight/night */
+    void enableDaylight(bool enable);
+    /** @brief Enable atmosphere */
+    void enableAtmosphere(bool enable);
     /** @brief Set camera view range to aircraft in meters */
     void setViewRange(float range);
     /** @brief Set the distance mode - either to ground or to MAV */

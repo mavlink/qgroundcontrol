@@ -39,7 +39,7 @@ var currView = null;
 var distanceMode = 0;
 
 var viewMode = 0;
-var lastTilt = 0;
+var lastTilt = currTilt;
 var lastRoll = 0;
 var lastHeading = 0;
 
@@ -84,6 +84,8 @@ var newWaypointLatitude = 0;
 var newWaypointLongitude = 0;
 var newWaypointAltitude = 0;
 var newWaypointPending = false;
+
+var homePlacemark = null;
 
 function getGlobal(variable)
 {
@@ -136,13 +138,12 @@ function enableEventListener()
 // listen for mousedown on the window (look specifically for point placemarks)
 google.earth.addEventListener(ge.getWindow(), 'mousedown', function(event)
 {
-  if (draggingAllowed)
-  {
   if (event.getTarget().getType() == 'KmlPlacemark' &&
       event.getTarget().getGeometry().getType() == 'KmlPoint') {
-    //event.preventDefault();
     var placemark = event.getTarget();
-    
+    event.preventDefault();
+      if (draggingAllowed)
+  {
     dragInfo = {
       placemark: event.getTarget(),
       dragged: false
@@ -223,14 +224,16 @@ function setGCSHome(lat, lon, alt)
 	homeAlt = alt;
 	
 	
-	
+	if (homePlacemark == null)
+	{
 	var placemark = ge.createPlacemark(''); 
 	    var icon = ge.createIcon(''); 
 	    icon.setHref('http://google-maps-icons.googlecode.com/files/blackH.png'); 
 	    var style = ge.createStyle(''); 
 	    style.getIconStyle().setIcon(icon); 
 	    //style.getIconStyle().setScale(0.5); 
-	    placemark.setStyleSelector(style);  
+	    placemark.setStyleSelector(style);
+	    placemark.setDescription('HOME');
 
 	    // Set the placemark's location.   
 	    homeLocation = ge.createPoint(''); 
@@ -240,7 +243,19 @@ function setGCSHome(lat, lon, alt)
 	    placemark.setGeometry(homeLocation);  
 
 	    // Add the placemark to Earth. 
-	    ge.getFeatures().appendChild(placemark); 
+	    ge.getFeatures().appendChild(placemark);
+	    
+	    homePlacemark = placemark;
+	    }
+	    else
+	    {
+	    	var location = ge.createPoint(''); 
+	    location.setLatitude(lat); 
+	    location.setLongitude(lon);
+	    location.setAltitude(alt); 
+	    homePlacemark.setGeometry(location);
+	    homePlacemark.setDescription('HOME');
+	    }
 
 	    homeGroundLevel = ge.getGlobe().getGroundAltitude(lat,lon);
 	    if (homeGroundLevel == 0)
@@ -490,6 +505,11 @@ function enableDaylight(enabled)
 		ge.getSun().setVisibility(false);
 	}
 }
+
+function enableAtmosphere(enabled)
+{
+	ge.getOptions().setAtmosphereVisibility(enabled);
+}
 		
 function goHome()
 {
@@ -513,7 +533,7 @@ function setCurrentAircraft(id)
  */
 function setViewMode(mode)
 {
-	var currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
+	var currView = ge.getView().copyAsLookAt(ge.ALTITUDE_RELATIVE_TO_GROUND);
 	
 	if (mode == 0)
 	{
@@ -524,14 +544,14 @@ function setViewMode(mode)
 	{
 		lastTilt = currView.getTilt();
 		lastHeading = currView.getHeading();
-		var lastLat2 = currView.getLatitude();
-		var lastLon2 = currView.getLongitude();
-		var lastAlt2 = currView.getAltitude();
+		//var lastLat2 = currView.getLatitude();
+		//var lastLon2 = currView.getLongitude();
+		//var lastAlt2 = currView.getAltitude();
 		currView.setTilt(0);
 		currView.setHeading(0);
-		currView.setLatitude(lastLat2);
-		currView.setLongitude(lastLon2);
-		currView.setAltitude(lastAlt2);
+		//currView.setLatitude(lastLat2);
+		//currView.setLongitude(lastLon2);
+		//currView.setAltitude(lastAlt2);
 	}
 	
 	viewMode = mode;
