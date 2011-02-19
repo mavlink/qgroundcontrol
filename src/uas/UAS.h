@@ -175,6 +175,8 @@ protected: //COMMENTS FOR TEST UNIT
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
     int airframe;               ///< The airframe type
+    bool attitudeKnown;         ///< True if attitude was received, false else
+
 public:
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);

@@ -72,7 +72,8 @@ pitch(0.0),
 yaw(0.0),
 statusTimeout(new QTimer(this)),
 paramsOnceRequested(false),
-airframe(0)
+airframe(0),
+attitudeKnown(false)
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
@@ -448,6 +449,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     compass -= 360.0f;
                 }
 
+                attitudeKnown = true;
+
                 emit valueChanged(uasId, "roll deg", "deg", (roll/M_PI)*180.0, time);
                 emit valueChanged(uasId, "pitch deg", "deg", (pitch/M_PI)*180.0, time);
                 emit valueChanged(uasId, "heading deg", "deg", compass, time);
@@ -472,6 +475,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "climbrate", "m/s", hud.climb, time);
                 emit valueChanged(uasId, "throttle", "%", hud.throttle, time);
                 emit thrustChanged(this, hud.throttle/100.0);
+
+                if (!attitudeKnown)
+                {
+                    yaw = QGC::limitAngleToPMPId((((double)hud.heading-180.0)/360.0)*M_PI);
+                    emit attitudeChanged(this, roll, pitch, yaw, time);
+                }
+
                 emit altitudeChanged(uasId, hud.alt);
                 //yaw = (hud.heading-180.0f/360.0f)*M_PI;
                 //emit attitudeChanged(this, roll, pitch, yaw, getUnixTime());
