@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>828</width>
-    <height>300</height>
+    <width>1089</width>
+    <height>302</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="1,0,0,0,0,0,0,0,0,0,0,0,0,0">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="1,10,10,10,10,5,1,100,10,10,10,10,10,5,2,2">
    <property name="horizontalSpacing">
     <number>8</number>
    </property>
@@ -23,7 +23,7 @@
    <property name="margin">
     <number>2</number>
    </property>
-   <item row="0" column="0" colspan="14">
+   <item row="0" column="0" colspan="16">
     <layout class="QVBoxLayout" name="webViewLayout"/>
    </item>
    <item row="1" column="1">
@@ -63,9 +63,12 @@
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Expanding</enum>
+     </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>177</width>
+       <width>5</width>
        <height>20</height>
       </size>
      </property>
@@ -192,6 +195,32 @@
      </property>
      <property name="checkable">
       <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="14">
+    <widget class="QCheckBox" name="atmosphereCheckBox">
+     <property name="toolTip">
+      <string>Enable the atmosphere visualization. Not recommended for mission execution, only for visualization</string>
+     </property>
+     <property name="statusTip">
+      <string>Enable the atmosphere visualization. Not recommended for mission execution, only for visualization</string>
+     </property>
+     <property name="text">
+      <string>Sky</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="15">
+    <widget class="QCheckBox" name="daylightCheckBox">
+     <property name="toolTip">
+      <string>Enable day/night light. Not recommended for mission execution, only for visualization.</string>
+     </property>
+     <property name="statusTip">
+      <string>Enable day/night light. Not recommended for mission execution, only for visualization.</string>
+     </property>
+     <property name="text">
+      <string>Day/Night</string>
      </property>
     </widget>
    </item>

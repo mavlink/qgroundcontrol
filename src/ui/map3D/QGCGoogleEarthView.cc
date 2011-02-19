@@ -84,6 +84,8 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     connect(ui->resetButton, SIGNAL(clicked()), this, SLOT(reloadHTML()));
     connect(ui->changeViewButton, SIGNAL(clicked()), this, SLOT(toggleViewMode()));
     connect(ui->clearTrailsButton, SIGNAL(clicked()), this, SLOT(clearTrails()));
+    connect(ui->atmosphereCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableAtmosphere(bool)));
+    connect(ui->daylightCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableDaylight(bool)));
 }
 
 QGCGoogleEarthView::~QGCGoogleEarthView()
@@ -121,6 +123,16 @@ void QGCGoogleEarthView::reloadHTML()
 void QGCGoogleEarthView::enableEditMode(bool mode)
 {
     javaScript(QString("setDraggingAllowed(%1);").arg(mode));
+}
+
+void QGCGoogleEarthView::enableDaylight(bool enable)
+{
+    javaScript(QString("enableDaylight(%1);").arg(enable));
+}
+
+void QGCGoogleEarthView::enableAtmosphere(bool enable)
+{
+    javaScript(QString("enableAtmosphere(%1);").arg(enable));
 }
 
 /**
@@ -554,6 +566,8 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             setViewMode(currentViewMode);
             setDistanceMode(ui->camDistanceComboBox->currentIndex());
             enableEditMode(ui->editButton->isChecked());
+            enableAtmosphere(ui->atmosphereCheckBox->isChecked());
+            enableDaylight(ui->daylightCheckBox->isChecked());
             follow(this->followCamera);
         }
     }
@@ -647,31 +661,33 @@ void QGCGoogleEarthView::updateState()
             coordsOk &= ok;
             double altitude = documentElement("dragWaypointAltitude").toDouble(&ok);
             coordsOk &= ok;
+
+            // UPDATE WAYPOINTS, HOME LOCATION AND OTHER LOCATIONS
             if (coordsOk)
             {
-                // Add new waypoint
-                if (mav)
+                QString idText = documentElement("dragWaypointIndex").toString();
+                if (idText == "HOME")
                 {
-                    QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameWaypointList();
-
-                    QString idText = documentElement("dragWaypointIndex").toString();
-
-                    bool ok;
-                    int index = idText.toInt(&ok);
-
-                    if (ok && index >= 0 && index < wps.count())
+                    setHome(latitude, longitude, altitude);
+                }
+                else
+                {
+                    // Update waypoint or symbol
+                    if (mav)
                     {
-                        Waypoint* wp = wps.at(index);
-                        wp->setLatitude(latitude);
-                        wp->setLongitude(longitude);
-                        wp->setAltitude(altitude);
-                        //                    Waypoint wp;
-                        //                    wp.setFrame(MAV_FRAME_GLOBAL);
-                        //                    wp.setLatitude(latitude);
-                        //                    wp.setLongitude(longitude);
-                        //                    wp.setAltitude(altitude);
-                        //                    mav->getWaypointManager()->addWaypoint(wp);
-                        mav->getWaypointManager()->notifyOfChange(wp);
+                        QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameWaypointList();
+
+                        bool ok;
+                        int index = idText.toInt(&ok);
+
+                        if (ok && index >= 0 && index < wps.count())
+                        {
+                            Waypoint* wp = wps.at(index);
+                            wp->setLatitude(latitude);
+                            wp->setLongitude(longitude);
+                            wp->setAltitude(altitude);
+                            mav->getWaypointManager()->notifyOfChange(wp);
+                        }
                     }
                 }
             }
