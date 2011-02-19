@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>466</width>
+    <width>566</width>
     <height>190</height>
    </rect>
   </property>
@@ -50,6 +50,9 @@
        <property name="toolTip">
         <string>Ignore MAVLINK protocol messages in display</string>
        </property>
+       <property name="statusTip">
+        <string>Ignore MAVLINK protocol messages in display</string>
+       </property>
        <property name="text">
         <string>Hide MAVLink</string>
        </property>
@@ -58,7 +61,10 @@
      <item>
       <widget class="QCheckBox" name="hexCheckBox">
        <property name="toolTip">
-        <string>Display and send bytes in HEX representation</string>
+        <string>Display and enter bytes in HEX representation (e.g. 0xAA)</string>
+       </property>
+       <property name="statusTip">
+        <string>Display and enter bytes in HEX representation (e.g. 0xAA)</string>
        </property>
        <property name="text">
         <string>HEX</string>
@@ -169,11 +175,6 @@
        <item>
         <property name="text">
          <string>TAB</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>NUL</string>
         </property>
        </item>
        <item>

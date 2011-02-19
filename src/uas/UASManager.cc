@@ -58,21 +58,26 @@ UASManager* UASManager::instance()
 UASManager::UASManager() :
         activeUAS(NULL)
 {
-    systems = QList<UASInterface*>();
     start(QThread::LowPriority);
 }
 
 UASManager::~UASManager()
 {
+    // Delete all systems
+    foreach (UASInterface* mav, systems)
+    {
+        delete mav;
+    }
 }
 
 
 void UASManager::run()
 {
-    forever
-    {
-        QGC::SLEEP::msleep(5000);
-    }
+//    forever
+//    {
+//        QGC::SLEEP::msleep(5000);
+//    }
+    exec();
 }
 
 void UASManager::addUAS(UASInterface* uas)

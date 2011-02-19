@@ -58,13 +58,20 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuPreferences">
+     <property name="title">
+      <string>Display</string>
+     </property>
+     <addaction name="actionSelectStylesheet"/>
+     <addaction name="actionReloadStylesheet"/>
+    </widget>
     <addaction name="actionJoystick_Settings"/>
     <addaction name="actionSimulate"/>
     <addaction name="separator"/>
     <addaction name="actionMuteAudioOutput"/>
     <addaction name="actionJoystickSettings"/>
-    <addaction name="actionPreferences"/>
-    <addaction name="actionReloadStyle"/>
+    <addaction name="actionSettings"/>
+    <addaction name="menuPreferences"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -338,13 +345,13 @@
     <string>Meta+M</string>
    </property>
   </action>
-  <action name="actionReloadStyle">
+  <action name="actionSelectStylesheet">
    <property name="icon">
     <iconset resource="../../mavground.qrc">
      <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
-    <string>Load Stylesheet</string>
+    <string>Select Stylesheet</string>
    </property>
   </action>
   <action name="actionPilotsView">
@@ -387,18 +394,6 @@
     <string>Mute Audio Output</string>
    </property>
   </action>
-  <action name="actionPreferences">
-   <property name="icon">
-    <iconset resource="../../mavground.qrc">
-     <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Preferences</string>
-   </property>
-   <property name="toolTip">
-    <string>QGroundControl global settings</string>
-   </property>
-  </action>
   <action name="actionUnconnectedView">
    <property name="checkable">
     <bool>true</bool>
@@ -427,6 +422,19 @@
    </property>
    <property name="statusTip">
     <string>Shutdown the onboard computer - works not during flight</string>
+   </property>
+  </action>
+  <action name="actionReloadStylesheet">
+   <property name="text">
+    <string>Reload Stylesheet</string>
+   </property>
+   <property name="shortcut">
+    <string>Meta+R</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings</string>
    </property>
   </action>
  </widget>

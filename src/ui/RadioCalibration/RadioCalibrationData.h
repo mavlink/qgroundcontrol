@@ -67,8 +67,12 @@ public:
     };
 
     const float* operator[](int i) const;
+#ifdef _MSC_VER
+	const QVector<float>& operator()(int i) const;
+#else
     const QVector<float>& operator()(int i) const throw(std::out_of_range);
-    void set(int element, int index, float value) {(*data)[element][index] = value;}
+#endif
+	void set(int element, int index, float value) {(*data)[element][index] = value;}
 
 public slots:
     void setAileron(int index, float value) {set(AILERON, index, value);}

@@ -11,6 +11,7 @@
 #ifdef Q_OS_MAC
 #include <QWebFrame>
 #include <QWebPage>
+#include <QWebElement>
 #include "QGCWebPage.h"
 #endif
 
@@ -23,34 +24,32 @@
 #include "QGC.h"
 #include "ui_QGCGoogleEarthView.h"
 #include "QGCGoogleEarthView.h"
+#include "UASWaypointManager.h"
 
 #define QGCGOOGLEEARTHVIEWSETTINGS QString("GoogleEarthViewSettings_")
 
 QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
         QWidget(parent),
         updateTimer(new QTimer(this)),
-        refreshRateMs(40),
+        refreshRateMs(100),
         mav(NULL),
         followCamera(true),
         trailEnabled(true),
         webViewInitialized(false),
         jScriptInitialized(false),
         gEarthInitialized(false),
+        currentViewMode(QGCGoogleEarthView::VIEW_MODE_SIDE),
 #if (defined Q_OS_MAC)
         webViewMac(new QWebView(this)),
 #endif
 #ifdef _MSC_VER
         webViewWin(new QGCWebAxWidget(this)),
+		documentWin(NULL),
 #endif
-#if (defined _MSC_VER)
         ui(new Ui::QGCGoogleEarthView)
-#else
-        ui(new Ui::QGCGoogleEarthView)
-#endif
 {
 #ifdef _MSC_VER
     // Create layout and attach webViewWin
-
 
     QFile file("doc.html");
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
@@ -82,6 +81,11 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 #endif
 
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateState()));
+    connect(ui->resetButton, SIGNAL(clicked()), this, SLOT(reloadHTML()));
+    connect(ui->changeViewButton, SIGNAL(clicked()), this, SLOT(toggleViewMode()));
+    connect(ui->clearTrailsButton, SIGNAL(clicked()), this, SLOT(clearTrails()));
+    connect(ui->atmosphereCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableAtmosphere(bool)));
+    connect(ui->daylightCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableDaylight(bool)));
 }
 
 QGCGoogleEarthView::~QGCGoogleEarthView()
@@ -107,12 +111,81 @@ void QGCGoogleEarthView::setViewRangeScaledInt(int range)
     setViewRange(range/100.0f);
 }
 
+void QGCGoogleEarthView::reloadHTML()
+{
+    hide();
+    webViewInitialized = false;
+    jScriptInitialized = false;
+    gEarthInitialized = false;
+    show();
+}
+
+void QGCGoogleEarthView::enableEditMode(bool mode)
+{
+    javaScript(QString("setDraggingAllowed(%1);").arg(mode));
+}
+
+void QGCGoogleEarthView::enableDaylight(bool enable)
+{
+    javaScript(QString("enableDaylight(%1);").arg(enable));
+}
+
+void QGCGoogleEarthView::enableAtmosphere(bool enable)
+{
+    javaScript(QString("enableAtmosphere(%1);").arg(enable));
+}
+
 /**
  * @param range in meters (SI-units)
  */
 void QGCGoogleEarthView::setViewRange(float range)
 {
     javaScript(QString("setViewRange(%1);").arg(range, 0, 'f', 5));
+}
+
+void QGCGoogleEarthView::setDistanceMode(int mode)
+{
+    javaScript(QString("setDistanceMode(%1);").arg(mode));
+}
+
+void QGCGoogleEarthView::toggleViewMode()
+{
+    switch (currentViewMode)
+    {
+    case VIEW_MODE_MAP:
+        setViewMode(VIEW_MODE_SIDE);
+        break;
+    case VIEW_MODE_SIDE:
+        setViewMode(VIEW_MODE_MAP);
+        break;
+    case VIEW_MODE_CHASE_LOCKED:
+        setViewMode(VIEW_MODE_CHASE_FREE);
+        break;
+    case VIEW_MODE_CHASE_FREE:
+        setViewMode(VIEW_MODE_CHASE_LOCKED);
+        break;
+    }
+}
+
+void QGCGoogleEarthView::setViewMode(QGCGoogleEarthView::VIEW_MODE mode)
+{
+    switch (mode)
+    {
+    case VIEW_MODE_MAP:
+        ui->changeViewButton->setText("Free View");
+        break;
+    case VIEW_MODE_SIDE:
+        ui->changeViewButton->setText("Map View");
+        break;
+    case VIEW_MODE_CHASE_LOCKED:
+        ui->changeViewButton->setText("Free Chase");
+        break;
+    case VIEW_MODE_CHASE_FREE:
+        ui->changeViewButton->setText("Fixed Chase");
+        break;
+    }
+    currentViewMode = mode;
+    javaScript(QString("setViewMode(%1);").arg(mode));
 }
 
 void QGCGoogleEarthView::addUAS(UASInterface* uas)
@@ -129,9 +202,14 @@ void QGCGoogleEarthView::addUAS(UASInterface* uas)
 
     if (trailEnabled) javaScript(QString("showTrail(%1);").arg(uas->getUASID()));
 
-    //javaScript(QString("createAircraft(%1, %2, %3);").arg(uas->getUASID()).arg(uas->getSystemType()).arg("0"));
     // Automatically receive further position updates
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
+    // Receive waypoint updates
+    // Connect the waypoint manager / data storage to the UI
+    connect(uas->getWaypointManager(), SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
+    connect(uas->getWaypointManager(), SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+    //connect(this, SIGNAL(waypointCreated(Waypoint*)), uas->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
+    // TODO Update waypoint list on UI changes here
 }
 
 void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
@@ -140,15 +218,80 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
     {
         mav = uas;
         javaScript(QString("setCurrAircraft(%1);").arg(uas->getUASID()));
+        updateWaypointList(uas->getUASID());
     }
 }
 
-void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec)
+/**
+ * This function is called if a a single waypoint is updated and
+ * also if the whole list changes.
+ */
+void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
+{
+    // Only accept waypoints in global coordinate frame
+    if (wp->getFrame() == MAV_FRAME_GLOBAL)
+    {
+        // We're good, this is a global waypoint
+
+        // Get the index of this waypoint
+        // note the call to getGlobalFrameIndexOf()
+        // as we're only handling global waypoints
+        int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameIndexOf(wp);
+        // If not found, return (this should never happen, but helps safety)
+        if (wpindex == -1)
+        {
+            return;
+        }
+        else
+        {
+            javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction()));
+            //qDebug() << QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction());
+        }
+    }
+}
+
+/**
+ * Update the whole list of waypoints. This is e.g. necessary if the list order changed.
+ * The UAS manager will emit the appropriate signal whenever updating the list
+ * is necessary.
+ */
+void QGCGoogleEarthView::updateWaypointList(int uas)
+{
+    // Get already existing waypoints
+    UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+    if (uasInstance)
+    {
+        // Get all waypoints, including non-global waypoints
+        QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getGlobalFrameWaypointList();
+
+        // Trim internal list to number of global waypoints in the waypoint manager list
+        javaScript(QString("updateWaypointListLength(%1,%2);").arg(uas).arg(wpList.count()));
+
+        qDebug() << QString("updateWaypointListLength(%1,%2);").arg(uas).arg(wpList.count());
+
+        // Load all existing waypoints into map view
+        foreach (Waypoint* wp, wpList)
+        {
+            updateWaypoint(uas, wp);
+        }
+    }
+}
+
+void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
-    javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
+    javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 18).arg(lon, 0, 'f', 18).arg(alt, 0, 'f', 15));
 
     //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
+}
+
+void QGCGoogleEarthView::clearTrails()
+{
+    QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+    foreach (UASInterface* currMav, mavs)
+    {
+        javaScript(QString("clearTrail(%1);").arg(currMav->getUASID()));
+    }
 }
 
 void QGCGoogleEarthView::showTrail(bool state)
@@ -184,8 +327,19 @@ void QGCGoogleEarthView::showWaypoints(bool state)
 void QGCGoogleEarthView::follow(bool follow)
 {
     ui->followAirplaneCheckbox->setChecked(follow);
+    if (follow != followCamera)
+    {
+        if (follow)
+        {
+            setViewMode(VIEW_MODE_CHASE_LOCKED);
+        }
+        else
+        {
+            setViewMode(VIEW_MODE_SIDE);
+        }
+    }
     followCamera = follow;
-    if (gEarthInitialized) javaScript(QString("setFollowEnabled(%1)").arg(follow));
+    javaScript(QString("setFollowEnabled(%1)").arg(follow));
 }
 
 void QGCGoogleEarthView::goHome()
@@ -248,7 +402,14 @@ void QGCGoogleEarthView::printWinException(int no, QString str1, QString str2, Q
 QVariant QGCGoogleEarthView::javaScript(QString javaScript)
 {
 #ifdef Q_OS_MAC
-    return webViewMac->page()->currentFrame()->evaluateJavaScript(javaScript);
+    if (!gEarthInitialized)
+    {
+        return QVariant(false);
+    }
+    else
+    {
+        return webViewMac->page()->currentFrame()->evaluateJavaScript(javaScript);
+    }
 #endif
 #ifdef _MSC_VER
     if(!jScriptInitialized)
@@ -261,7 +422,43 @@ QVariant QGCGoogleEarthView::javaScript(QString javaScript)
         QVariantList params;
         params.append(javaScript);
         params.append("JScript");
-        return jScriptWin->dynamicCall("execScript(QString, QString)", params);
+        QVariant result = jScriptWin->dynamicCall("execScript(QString, QString)", params);
+        return result;
+    }
+#endif
+}
+
+QVariant QGCGoogleEarthView::documentElement(QString name)
+{
+#ifdef Q_OS_MAC
+    QString javaScript("getGlobal(%1)");
+    QVariant result = webViewMac->page()->currentFrame()->evaluateJavaScript(javaScript.arg(name));
+    return result;
+#endif
+#ifdef _MSC_VER
+    if(!jScriptInitialized)
+    {
+        qDebug() << "TOO EARLY JAVASCRIPT CALL, ABORTING";
+        return QVariant(false);
+    }
+    else
+    {
+        QVariantList params;
+        QString javaScript("getGlobal(%1)");
+        params.append(javaScript.arg(name));
+        params.append("JScript");
+        QVariant result = jScriptWin->dynamicCall("execScript(QString, QString)", params);
+        qDebug() << "JScript result: " << result << result.toDouble();
+//		if (documentWin)
+//		{
+//			// Get HTMLElement object
+//			QVariantList params;
+//			params.append(name);
+//			//QAxObject* elementWin = documentWin->dynamicCall("getElementById(QString)", params);
+//			QVariant result =documentWin->dynamicCall("toString()");
+//			qDebug() << "GOT RESULT" << result;
+//			return QVariant(0);//QVariant(result);
+//		}
     }
 #endif
 }
@@ -275,8 +472,9 @@ void QGCGoogleEarthView::initializeGoogleEarth()
 #endif
 #ifdef _MSC_VER
         QAxObject* doc = webViewWin->querySubObject("Document()");
-        IDispatch* Disp;
+        //IDispatch* Disp;
         IDispatch* winDoc = NULL;
+		IHTMLDocument2* document = NULL;
 
         //332C4425-26CB-11D0-B483-00C04FD90119 IHTMLDocument2
         //25336920-03F9-11CF-8FD0-00AA00686F13 HTMLDocument
@@ -287,11 +485,11 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             // CoInternetSetFeatureEnabled
             // (FEATURE_LOCALMACHINE_LOCKDOWN, SET_FEATURE_ON_PROCESS, TRUE);
             //
-            IHTMLDocument2* document = NULL;
+            document = NULL;
             winDoc->QueryInterface( IID_IHTMLDocument2, (void**)&document );
             IHTMLWindow2 *window = NULL;
             document->get_parentWindow( &window );
-
+			documentWin = new QAxObject(document, webViewWin);
             jScriptWin = new QAxObject(window, webViewWin);
             connect(jScriptWin, SIGNAL(exception(int,QString,QString,QString)), this, SLOT(printWinException(int,QString,QString,QString)));
             jScriptInitialized = true;
@@ -314,6 +512,8 @@ void QGCGoogleEarthView::initializeGoogleEarth()
         }
         else
         {
+            gEarthInitialized = true;
+
             // Set home location
             setHome(47.3769, 8.549444, 500);
 
@@ -331,32 +531,44 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             setActiveUAS(UASManager::instance()->getActiveUAS());
 
             // Add any further MAV automatically
-            connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
-            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+            connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
+            connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)), Qt::UniqueConnection);
 
             // Connect UI signals/slots
 
             // Follow checkbox
             ui->followAirplaneCheckbox->setChecked(followCamera);
-            connect(ui->followAirplaneCheckbox, SIGNAL(toggled(bool)), this, SLOT(follow(bool)));
+            connect(ui->followAirplaneCheckbox, SIGNAL(toggled(bool)), this, SLOT(follow(bool)), Qt::UniqueConnection);
 
             // Trail checkbox
             ui->trailCheckbox->setChecked(trailEnabled);
-            connect(ui->trailCheckbox, SIGNAL(toggled(bool)), this, SLOT(showTrail(bool)));
+            connect(ui->trailCheckbox, SIGNAL(toggled(bool)), this, SLOT(showTrail(bool)), Qt::UniqueConnection);
 
             // Go home
             connect(ui->goHomeButton, SIGNAL(clicked()), this, SLOT(goHome()));
 
             // Cam distance slider
-            connect(ui->camDistanceSlider, SIGNAL(valueChanged(int)), this, SLOT(setViewRangeScaledInt(int)));
+            connect(ui->camDistanceSlider, SIGNAL(valueChanged(int)), this, SLOT(setViewRangeScaledInt(int)), Qt::UniqueConnection);
             setViewRangeScaledInt(ui->camDistanceSlider->value());
+
+            // Distance combo box
+            connect(ui->camDistanceComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setDistanceMode(int)), Qt::UniqueConnection);
+            // Edit mode button
+            connect(ui->editButton, SIGNAL(clicked(bool)), this, SLOT(enableEditMode(bool)), Qt::UniqueConnection);
+
+            // Update waypoint list
+            if (mav) updateWaypointList(mav->getUASID());
 
             // Start update timer
             updateTimer->start(refreshRateMs);
 
+            // Set current view mode
+            setViewMode(currentViewMode);
+            setDistanceMode(ui->camDistanceComboBox->currentIndex());
+            enableEditMode(ui->editButton->isChecked());
+            enableAtmosphere(ui->atmosphereCheckBox->isChecked());
+            enableDaylight(ui->daylightCheckBox->isChecked());
             follow(this->followCamera);
-
-            gEarthInitialized = true;
         }
     }
 }
@@ -389,6 +601,8 @@ void QGCGoogleEarthView::updateState()
             pitch = currMav->getPitch();
             yaw = currMav->getYaw();
 
+            //qDebug() << "SETTING POSITION FOR" << uasId << lat << lon << alt << roll << pitch << yaw;
+
             javaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
                        .arg(uasId)
                        .arg(lat, 0, 'f', 15)
@@ -397,6 +611,93 @@ void QGCGoogleEarthView::updateState()
                        .arg(roll, 0, 'f', 9)
                        .arg(pitch, 0, 'f', 9)
                        .arg(yaw, 0, 'f', 9));
+        }
+
+
+        // Read out new waypoint positions and waypoint create events
+        // this is polling (bad) but forced because of the crappy
+        // Microsoft API available in Qt - improvements wanted
+
+        // First check if a new WP should be created
+//        bool newWaypointPending = .to
+        bool newWaypointPending = documentElement("newWaypointPending").toBool();
+        if (newWaypointPending)
+        {
+            bool coordsOk = true;
+            bool ok;
+            double latitude = documentElement("newWaypointLatitude").toDouble(&ok);
+            coordsOk &= ok;
+            double longitude = documentElement("newWaypointLongitude").toDouble(&ok);
+            coordsOk &= ok;
+            double altitude = documentElement("newWaypointAltitude").toDouble(&ok);
+            coordsOk &= ok;
+            if (coordsOk)
+            {
+                // Add new waypoint
+                if (mav)
+                {
+                    int nextIndex = mav->getWaypointManager()->getWaypointList().count();
+                    Waypoint* wp = new Waypoint(nextIndex, latitude, longitude, altitude, true);
+                    wp->setFrame(MAV_FRAME_GLOBAL);
+//                    wp.setLatitude(latitude);
+//                    wp.setLongitude(longitude);
+//                    wp.setAltitude(altitude);
+                    mav->getWaypointManager()->addWaypoint(wp);
+                }
+            }
+            javaScript("setNewWaypointPending(false);");
+        }
+
+        // Check if a waypoint should be moved
+        bool dragWaypointPending = documentElement("dragWaypointPending").toBool();
+
+        if (dragWaypointPending)
+        {
+            bool coordsOk = true;
+            bool ok;
+            double latitude = documentElement("dragWaypointLatitude").toDouble(&ok);
+            coordsOk &= ok;
+            double longitude = documentElement("dragWaypointLongitude").toDouble(&ok);
+            coordsOk &= ok;
+            double altitude = documentElement("dragWaypointAltitude").toDouble(&ok);
+            coordsOk &= ok;
+
+            // UPDATE WAYPOINTS, HOME LOCATION AND OTHER LOCATIONS
+            if (coordsOk)
+            {
+                QString idText = documentElement("dragWaypointIndex").toString();
+                if (idText == "HOME")
+                {
+                    setHome(latitude, longitude, altitude);
+                }
+                else
+                {
+                    // Update waypoint or symbol
+                    if (mav)
+                    {
+                        QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameWaypointList();
+
+                        bool ok;
+                        int index = idText.toInt(&ok);
+
+                        if (ok && index >= 0 && index < wps.count())
+                        {
+                            Waypoint* wp = wps.at(index);
+                            wp->setLatitude(latitude);
+                            wp->setLongitude(longitude);
+                            wp->setAltitude(altitude);
+                            mav->getWaypointManager()->notifyOfChange(wp);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // If coords were not ok, move the view in google earth back
+                // to last acceptable location
+                updateWaypointList(mav->getUASID());
+            }
+            javaScript("setDragWaypointPending(false);");
         }
     }
 }

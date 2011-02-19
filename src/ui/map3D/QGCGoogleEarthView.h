@@ -58,12 +58,10 @@ protected:
 #endif
 
 namespace Ui {
-#ifdef _MSC_VER
     class QGCGoogleEarthView;
-#else
-    class QGCGoogleEarthView;
-#endif
 }
+
+class Waypoint;
 
 class QGCGoogleEarthView : public QWidget
 {
@@ -73,6 +71,14 @@ public:
     explicit QGCGoogleEarthView(QWidget *parent = 0);
     ~QGCGoogleEarthView();
 
+    enum VIEW_MODE
+    {
+        VIEW_MODE_SIDE = 0, ///< View from above, orientation is free
+        VIEW_MODE_MAP, ///< View from above, orientation is north (map view)
+        VIEW_MODE_CHASE_LOCKED, ///< Locked chase camera
+        VIEW_MODE_CHASE_FREE, ///< Position is chasing object, but view can rotate around object
+    };
+
 public slots:
     /** @brief Update the internal state. Does not trigger a redraw */
     void updateState();
@@ -81,9 +87,15 @@ public slots:
     /** @brief Set the currently selected UAS */
     void setActiveUAS(UASInterface* uas);
     /** @brief Update the global position */
-    void updateGlobalPosition(UASInterface* uas, double lon, double lat, double alt, quint64 usec);
+    void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
+    /** @brief Update a single waypoint */
+    void updateWaypoint(int uas, Waypoint* wp);
+    /** @brief Update the waypoint list */
+    void updateWaypointList(int uas);
     /** @brief Show the vehicle trail */
     void showTrail(bool state);
+    /** @brief Clear the current vehicle trails and start with new ones */
+    void clearTrails();
     /** @brief Show the waypoints */
     void showWaypoints(bool state);
     /** @brief Follow the aircraft during flight */
@@ -92,10 +104,24 @@ public slots:
     void goHome();
     /** @brief Set the home location */
     void setHome(double lat, double lon, double alt);
+    /** @brief Allow waypoint editing */
+    void enableEditMode(bool mode);
+    /** @brief Enable daylight/night */
+    void enableDaylight(bool enable);
+    /** @brief Enable atmosphere */
+    void enableAtmosphere(bool enable);
     /** @brief Set camera view range to aircraft in meters */
     void setViewRange(float range);
+    /** @brief Set the distance mode - either to ground or to MAV */
+    void setDistanceMode(int mode);
+    /** @brief Set the view mode */
+    void setViewMode(VIEW_MODE mode);
+    /** @brief Toggle through the different view modes */
+    void toggleViewMode();
     /** @brief Set camera view range to aircraft in centimeters */
     void setViewRangeScaledInt(int range);
+    /** @brief Reset Google Earth View */
+    void reloadHTML();
 
     /** @brief Initialize Google Earth */
     void initializeGoogleEarth();
@@ -105,6 +131,8 @@ public slots:
 public:
     /** @brief Execute java script inside the Google Earth window */
     QVariant javaScript(QString javascript);
+    /** @brief Get a document element */
+    QVariant documentElement(QString name);
 
 protected:
     void changeEvent(QEvent *e);
@@ -117,9 +145,11 @@ protected:
     bool webViewInitialized;
     bool jScriptInitialized;
     bool gEarthInitialized;
+    VIEW_MODE currentViewMode;
 #ifdef _MSC_VER
     QGCWebAxWidget* webViewWin;
     QAxObject* jScriptWin;
+	QAxObject* documentWin;
 #endif
 #if (defined Q_OS_MAC)
     QWebView* webViewMac;

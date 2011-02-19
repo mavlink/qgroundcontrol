@@ -40,6 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ProtocolInterface.h"
 #include "LinkInterface.h"
 #include "QGCMAVLink.h"
+#include "QGC.h"
 
 /**
  * @brief MAVLink micro air vehicle protocol reference implementation.
@@ -65,15 +66,27 @@ public:
     /** @brief The auto heartbeat emission rate in Hertz */
     int getHeartbeatRate();
     /** @brief Get heartbeat state */
-    bool heartbeatsEnabled(void);
+    bool heartbeatsEnabled() const { return m_heartbeatsEnabled; }
     /** @brief Get logging state */
-    bool loggingEnabled(void);
+    bool loggingEnabled() const { return m_loggingEnabled; }
     /** @brief Get protocol version check state */
-    bool versionCheckEnabled(void);
+    bool versionCheckEnabled() const { return m_enable_version_check; }
+    /** @brief Get the multiplexing state */
+    bool multiplexingEnabled() const { return m_multiplexingEnabled; }
     /** @brief Get the protocol version */
     int getVersion() { return MAVLINK_VERSION; }
     /** @brief Get the name of the packet log file */
     QString getLogfileName();
+    /** @brief Get state of parameter retransmission */
+    bool paramGuardEnabled() { return m_paramGuardEnabled; }
+    /** @brief Get parameter read timeout */
+    int getParamRetransmissionTimeout() { return m_paramRetransmissionTimeout; }
+    /** @brief Get parameter write timeout */
+    int getParamRewriteTimeout() { return m_paramRewriteTimeout; }
+    /** @brief Get state of action retransmission */
+    bool actionGuardEnabled() { return m_actionGuardEnabled; }
+    /** @brief Get parameter read timeout */
+    int getActionRetransmissionTimeout() { return m_actionRetransmissionTimeout; }
 
 public slots:
     /** @brief Receive bytes from a communication interface */
@@ -84,12 +97,32 @@ public slots:
     void sendMessage(LinkInterface* link, mavlink_message_t message);
     /** @brief Set the rate at which heartbeats are emitted */
     void setHeartbeatRate(int rate);
+    /** @brief Set the system id of this application */
+    void setSystemId(int id);
 
     /** @brief Enable / disable the heartbeat emission */
     void enableHeartbeats(bool enabled);
 
     /** @brief Enable/disable binary packet logging */
     void enableLogging(bool enabled);
+
+    /** @brief Enabled/disable packet multiplexing */
+    void enableMultiplexing(bool enabled);
+
+    /** @brief Enable / disable parameter retransmission */
+    void enableParamGuard(bool enabled);
+
+    /** @brief Enable / disable action retransmission */
+    void enableActionGuard(bool enabled);
+
+    /** @brief Set parameter read timeout */
+    void setParamRetransmissionTimeout(int ms);
+
+    /** @brief Set parameter write timeout */
+    void setParamRewriteTimeout(int ms);
+
+    /** @brief Set parameter read timeout */
+    void setActionRetransmissionTimeout(int ms);
 
     /** @brief Set log file name */
     void setLogfileName(const QString& filename);
@@ -100,13 +133,24 @@ public slots:
     /** @brief Send an extra heartbeat to all connected units */
     void sendHeartbeat();
 
+    /** @brief Load protocol settings */
+    void loadSettings();
+    /** @brief Store protocol settings */
+    void storeSettings();
+
 protected:
     QTimer* heartbeatTimer;    ///< Timer to emit heartbeats
     int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
     bool m_loggingEnabled;     ///< Enable/disable packet logging
+    bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
     QFile* m_logfile;           ///< Logfile
     bool m_enable_version_check; ///< Enable checking of version match of MAV and QGC
+    int m_paramRetransmissionTimeout; ///< Timeout for parameter retransmission
+    int m_paramRewriteTimeout;    ///< Timeout for sending re-write request
+    bool m_paramGuardEnabled;       ///< Parameter retransmission/rewrite enabled
+    bool m_actionGuardEnabled;       ///< Action request retransmission enabled
+    int m_actionRetransmissionTimeout; ///< Timeout for parameter retransmission
     QMutex receiveMutex;       ///< Mutex to protect receiveBytes function
     int lastIndex[256][256];
     int totalReceiveCounter;
@@ -114,6 +158,7 @@ protected:
     int currReceiveCounter;
     int currLossCounter;
     bool versionMismatchIgnore;
+    int systemId;
 
 signals:
     /** @brief Message received and directly copied via signal */
@@ -122,10 +167,24 @@ signals:
     void heartbeatChanged(bool heartbeats);
     /** @brief Emitted if logging is started / stopped */
     void loggingChanged(bool enabled);
+    /** @brief Emitted if multiplexing is started / stopped */
+    void multiplexingChanged(bool enabled);
     /** @brief Emitted if version check is enabled / disabled */
     void versionCheckChanged(bool enabled);
     /** @brief Emitted if a message from the protocol should reach the user */
     void protocolStatusMessage(const QString& title, const QString& message);
+    /** @brief Emitted if a new system ID was set */
+    void systemIdChanged(int systemId);
+    /** @brief Emitted if param guard status changed */
+    void paramGuardChanged(bool enabled);
+    /** @brief Emitted if param read timeout changed */
+    void paramRetransmissionTimeoutChanged(int ms);
+    /** @brief Emitted if param write timeout changed */
+    void paramRewriteTimeoutChanged(int ms);
+    /** @brief Emitted if action guard status changed */
+    void actionGuardChanged(bool enabled);
+    /** @brief Emitted if actiion request timeout changed */
+    void actionRetransmissionTimeoutChanged(int ms);
 };
 
 #endif // MAVLINKPROTOCOL_H_

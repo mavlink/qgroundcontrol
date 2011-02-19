@@ -24,6 +24,7 @@ doc/html
 doc/doxy.log
 deploy/mac
 deploy/linux
+deploy/qgroundcontrol*
 controller_log*
 user_config.pri
 *.app

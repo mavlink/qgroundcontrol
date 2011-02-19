@@ -120,14 +120,19 @@ protected: //COMMENTS FOR TEST UNIT
     double thrustMax;           ///< Maximum forward/up thrust of this vehicle, in Newtons
 
     // Battery stats
-    double fullVoltage;         ///< Voltage of the fully charged battery (100%)
-    double emptyVoltage;        ///< Voltage of the empty battery (0%)
-    double startVoltage;        ///< Voltage at system start
+    float fullVoltage;          ///< Voltage of the fully charged battery (100%)
+    float emptyVoltage;         ///< Voltage of the empty battery (0%)
+    float startVoltage;         ///< Voltage at system start
+    float warnVoltage;          ///< Voltage where QGC will start to warn about low battery
+    float warnLevelPercent;     ///< Warning level, in percent
     double currentVoltage;      ///< Voltage currently measured
     float lpVoltage;            ///< Low-pass filtered voltage
+    bool batteryRemainingEstimateEnabled; ///< If the estimate is enabled, QGC will try to estimate the remaining battery life
+    float chargeLevel;          ///< Charge level of battery, in percent
     int timeRemaining;          ///< Remaining time calculated based on previous and current
-    unsigned int mode;          ///< The current mode of the MAV
+    int mode;                   ///< The current mode of the MAV
     int status;                 ///< The current status of the MAV
+    int navMode;                ///< The current navigation mode of the MAV
     quint64 onboardTimeOffset;
 
     bool controlRollManual;     ///< status flag, true if roll is controlled manually
@@ -157,37 +162,56 @@ protected: //COMMENTS FOR TEST UNIT
     double yaw;
     quint64 lastHeartbeat;      ///< Time of the last heartbeat message
     QTimer* statusTimeout;      ///< Timer for various status timeouts
+
+    int imageSize;              ///< Image size being transmitted (bytes)
+    int imagePackets;           ///< Number of data packets being sent for this image
+    int imagePacketsArrived;    ///< Number of data packets recieved
+    int imagePayload;           ///< Payload size per transmitted packet (bytes). Standard is 254, and decreases when image resolution increases.
+    int imageQuality;           ///< JPEG-Quality of the transmitted image (percentage)
+    QByteArray imageRecBuffer;  ///< Buffer for the incoming bytestream
+    QImage image;               ///< Image data of last completely transmitted image
+    quint64 imageStart;
+
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
     int airframe;               ///< The airframe type
+    bool attitudeKnown;         ///< True if attitude was received, false else
+
 public:
     /** @brief Set the current battery type */
     void setBattery(BatteryType type, int cells);
     /** @brief Estimate how much flight time is remaining */
     int calculateTimeRemaining();
     /** @brief Get the current charge level */
-    double getChargeLevel();
+    float getChargeLevel();
     /** @brief Get the human-readable status message for this code */
     void getStatusForCode(int statusCode, QString& uasState, QString& stateDescription);
+    /** @brief Get the human-readable navigation mode translation for this mode */
+    QString getNavModeText(int mode);
     /** @brief Check if vehicle is in autonomous mode */
     bool isAuto();
 
-public:
     UASWaypointManager* getWaypointManager() { return &waypointManager; }
     int getSystemType();
+    QImage getImage();
+    void requestImage(); // ?
     int getAutopilotType() {return autopilot;}
 
 public slots:
     /** @brief Set the autopilot type */
     void setAutopilotType(int apType) { autopilot = apType; emit systemSpecsChanged(uasId); }
     /** @brief Set the type of airframe */
-    void setSystemType(int systemType) { type = systemType; emit systemSpecsChanged(uasId); }
+    void setSystemType(int systemType);
     /** @brief Set the specific airframe type */
     void setAirframe(int airframe) { this->airframe = airframe; emit systemSpecsChanged(uasId); }
     /** @brief Set a new name **/
     void setUASName(const QString& name);
     /** @brief Executes an action **/
     void setAction(MAV_ACTION action);
+    /** @brief Set the current battery type and voltages */
+    void setBatterySpecs(const QString& specs);
+    /** @brief Get the current battery type and specs */
+    QString getBatterySpecs();
 
     /** @brief Launches the system **/
     void launch();
@@ -252,6 +276,9 @@ public slots:
     /** @brief Request all parameters */
     void requestParameters();
 
+    /** @brief Request a single parameter by index */
+    void requestParameter(int component, int parameter);
+
     /** @brief Set a system parameter */
     void setParameter(const int component, const QString& id, const float value);
 
@@ -271,7 +298,7 @@ public slots:
     void enableExtendedSystemStatusTransmission(int rate);
     void enableRCChannelDataTransmission(int rate);
     void enableRawControllerDataTransmission(int rate);
-    void enableRawSensorFusionTransmission(int rate);
+    //void enableRawSensorFusionTransmission(int rate);
     void enablePositionTransmission(int rate);
     void enableExtra1Transmission(int rate);
     void enableExtra2Transmission(int rate);
@@ -310,10 +337,12 @@ signals:
     /** @brief Propagate a heartbeat received from the system */
     void heartbeat(UASInterface* uas);
     void imageStarted(quint64 timestamp);
+    /** @brief A new camera image has arrived */
+    void imageReady(UASInterface* uas);
 
     protected:
-    /** @brief Get the UNIX timestamp in microseconds */
-    quint64 getUnixTime(quint64 time);
+    /** @brief Get the UNIX timestamp in milliseconds */
+    quint64 getUnixTime(quint64 time=0);
 
 protected slots:
     /** @brief Write settings to disk */

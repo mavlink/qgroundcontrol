@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>260</width>
-    <height>111</height>
+    <width>360</width>
+    <height>121</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -56,10 +56,11 @@ QLabel#modeLabel {
 
 QLabel#stateLabel {
 	font: 12px;
+	color: #3C7B9E;
 }
 
-QLabel#gpsLabel {
-	font: 8px;
+QLabel#navLabel {
+	font: 12px;
 }
 
 QLabel#positionLabel {
@@ -110,11 +111,12 @@ QToolButton#typeButton {
 	font-size: 12px;
 	border: 0px solid #999999;
 	border-radius: 5px;
-	min-width:44px;
-	max-width: 80px;
-	min-height: 44px;
-	max-height: 44px;
+	min-width:42px;
+	max-width: 42px;
+	min-height: 42px;
+	max-height: 42px;
 	padding: 0px;
+	margin: 0px;
 	background-color: none;
 }
 
@@ -122,12 +124,13 @@ QPushButton {
 	font-weight: bold;
 	font-size: 12px;
 	border: 1px solid #999999;
-	border-radius: 10px;
+	border-radius: 8px;
 	min-width: 20px;
-	max-width: 80px;
+	max-width: 32px;
 	min-height: 16px;
 	max-height: 16px;
 	padding: 2px;
+	spacing: 10px;
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777777, stop: 1 #555555);
 }
 
@@ -161,7 +164,7 @@ QProgressBar:horizontal {
 	border-radius: 4px;
 	text-align: center;
 	padding: 2px;
-	color: #DDDDDF;
+	color: #111111;
 	background-color: #111118;
 }
 
@@ -172,6 +175,7 @@ QProgressBar:vertical {
 	font-size: 7px;
 	padding: 2px;
 	color: #DDDDDF;
+    min-width: 16px;
 	background-color: #111118;
 }
 
@@ -181,6 +185,7 @@ QProgressBar:horizontal {
 
 QProgressBar:horizontal QLabel {
 	font-size: 9px;
+	color: #111111;
 }
 
 QProgressBar:vertical QLabel {
@@ -235,8 +240,17 @@ QMenu::separator {
    <property name="spacing">
     <number>2</number>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
     <number>2</number>
+   </property>
+   <property name="topMargin">
+    <number>2</number>
+   </property>
+   <property name="rightMargin">
+    <number>2</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
    </property>
    <item>
     <widget class="QGroupBox" name="uasViewFrame">
@@ -252,12 +266,18 @@ QMenu::separator {
        <height>0</height>
       </size>
      </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>130</height>
+      </size>
+     </property>
      <property name="title">
       <string/>
      </property>
-     <layout class="QGridLayout" name="gridLayout" columnstretch="10,10,1,10,10,10,100,100">
+     <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,10,10,10,0,90,90">
       <property name="horizontalSpacing">
-       <number>4</number>
+       <number>5</number>
       </property>
       <property name="verticalSpacing">
        <number>2</number>
@@ -269,14 +289,14 @@ QMenu::separator {
        <widget class="QToolButton" name="typeButton">
         <property name="minimumSize">
          <size>
-          <width>44</width>
-          <height>44</height>
+          <width>42</width>
+          <height>42</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>80</width>
-          <height>44</height>
+          <width>42</width>
+          <height>42</height>
          </size>
         </property>
         <property name="baseSize">
@@ -284,6 +304,12 @@ QMenu::separator {
           <width>30</width>
           <height>30</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>System Type</string>
+        </property>
+        <property name="statusTip">
+         <string>System Type</string>
         </property>
         <property name="text">
          <string>...</string>
@@ -300,23 +326,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="0" column="2" rowspan="8">
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::MinimumExpanding</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>4</width>
-          <height>88</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="3" colspan="3">
+      <item row="0" column="2" colspan="3">
        <widget class="QLabel" name="nameLabel">
         <property name="maximumSize">
          <size>
@@ -331,6 +341,12 @@ QMenu::separator {
           <italic>false</italic>
           <bold>true</bold>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>System Name</string>
+        </property>
+        <property name="statusTip">
+         <string>System Name</string>
         </property>
         <property name="text">
          <string>UAS001</string>
@@ -354,11 +370,14 @@ QMenu::separator {
          </font>
         </property>
         <property name="text">
-         <string/>
+         <string>MODE</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="1" column="3" rowspan="3">
+      <item row="1" column="2" rowspan="3">
        <widget class="QLabel" name="timeRemainingLabel">
         <property name="font">
          <font>
@@ -368,12 +387,21 @@ QMenu::separator {
           <bold>false</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Remaining flight time</string>
+        </property>
+        <property name="statusTip">
+         <string>Remaining flight time</string>
+        </property>
         <property name="text">
          <string>00:00:00</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
        </widget>
       </item>
-      <item row="1" column="4" rowspan="3" colspan="2">
+      <item row="1" column="3" rowspan="3" colspan="2">
        <widget class="QLabel" name="timeElapsedLabel">
         <property name="font">
          <font>
@@ -383,8 +411,17 @@ QMenu::separator {
           <bold>false</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Uptime</string>
+        </property>
+        <property name="statusTip">
+         <string>Uptime</string>
+        </property>
         <property name="text">
          <string>00:00:00</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
@@ -395,12 +432,21 @@ QMenu::separator {
           <pointsize>-1</pointsize>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Current throttle</string>
+        </property>
+        <property name="statusTip">
+         <string>Current throttle</string>
+        </property>
         <property name="value">
          <number>0</number>
         </property>
+        <property name="format">
+         <string>throttle %p%</string>
+        </property>
        </widget>
       </item>
-      <item row="4" column="3">
+      <item row="4" column="2">
        <widget class="QLabel" name="groundDistanceLabel">
         <property name="font">
          <font>
@@ -410,12 +456,21 @@ QMenu::separator {
           <bold>false</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Altitude</string>
+        </property>
+        <property name="statusTip">
+         <string>Altitude</string>
+        </property>
         <property name="text">
          <string>00.00 m</string>
         </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
        </widget>
       </item>
-      <item row="4" column="4" colspan="2">
+      <item row="4" column="3" colspan="2">
        <widget class="QLabel" name="speedLabel">
         <property name="font">
          <font>
@@ -425,8 +480,17 @@ QMenu::separator {
           <bold>false</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Ground Speed</string>
+        </property>
+        <property name="statusTip">
+         <string>Ground Speed</string>
+        </property>
         <property name="text">
          <string>00.0 m/s</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
@@ -449,6 +513,12 @@ QMenu::separator {
           <width>18</width>
           <height>40</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>Heartbeat</string>
+        </property>
+        <property name="statusTip">
+         <string>Heartbeat</string>
         </property>
         <property name="title">
          <string/>
@@ -474,6 +544,12 @@ QMenu::separator {
           <pointsize>-1</pointsize>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Battery Fuel</string>
+        </property>
+        <property name="statusTip">
+         <string>Battery Fuel</string>
+        </property>
         <property name="value">
          <number>0</number>
         </property>
@@ -482,22 +558,7 @@ QMenu::separator {
         </property>
        </widget>
       </item>
-      <item row="5" column="3" rowspan="2" colspan="2">
-       <widget class="QLabel" name="stateLabel">
-        <property name="font">
-         <font>
-          <pointsize>-1</pointsize>
-          <weight>50</weight>
-          <italic>false</italic>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="3" colspan="2">
+      <item row="7" column="2">
        <widget class="QLabel" name="waypointLabel">
         <property name="font">
          <font>
@@ -506,6 +567,12 @@ QMenu::separator {
           <italic>false</italic>
           <bold>false</bold>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>Current Waypoint</string>
+        </property>
+        <property name="statusTip">
+         <string>Current Waypoint</string>
         </property>
         <property name="text">
          <string>---</string>
@@ -537,31 +604,19 @@ QMenu::separator {
           <bold>false</bold>
          </font>
         </property>
+        <property name="toolTip">
+         <string>Current Position</string>
+        </property>
+        <property name="statusTip">
+         <string>Current Position</string>
+        </property>
         <property name="text">
          <string>00.0  00.0  00.0 m</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="6" colspan="2">
-       <widget class="QLabel" name="statusTextLabel">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>12</height>
-         </size>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>-1</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="5" rowspan="2" colspan="3">
-       <layout class="QHBoxLayout" name="horizontalLayout">
+      <item row="7" column="3" colspan="5">
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,1,1,1">
         <property name="spacing">
          <number>4</number>
         </property>
@@ -575,6 +630,18 @@ QMenu::separator {
             <width>26</width>
             <height>22</height>
            </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Liftoff / Launch</string>
+          </property>
+          <property name="statusTip">
+           <string>Liftoff / Launch</string>
           </property>
           <property name="text">
            <string/>
@@ -593,6 +660,18 @@ QMenu::separator {
             <height>22</height>
            </size>
           </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Loiter / Wait at current position</string>
+          </property>
+          <property name="statusTip">
+           <string>Loiter / Wait at current position</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -609,6 +688,18 @@ QMenu::separator {
             <width>26</width>
             <height>22</height>
            </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Continue flightplan</string>
+          </property>
+          <property name="statusTip">
+           <string>Continue flightplan</string>
           </property>
           <property name="text">
            <string/>
@@ -627,6 +718,18 @@ QMenu::separator {
             <height>22</height>
            </size>
           </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Fly straight to landing location</string>
+          </property>
+          <property name="statusTip">
+           <string>Fly straight to landing location</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -638,6 +741,18 @@ QMenu::separator {
         </item>
         <item>
          <widget class="QPushButton" name="shutdownButton">
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Only in standby mode: Power off system</string>
+          </property>
+          <property name="statusTip">
+           <string>Only in standby mode: Power off system</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -649,11 +764,29 @@ QMenu::separator {
         </item>
         <item>
          <widget class="QPushButton" name="abortButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="minimumSize">
            <size>
             <width>26</width>
             <height>22</height>
            </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Emergency land system at closest possible site</string>
+          </property>
+          <property name="statusTip">
+           <string>Emergency land system at closest possible site</string>
           </property>
           <property name="text">
            <string/>
@@ -672,6 +805,18 @@ QMenu::separator {
             <height>22</height>
            </size>
           </property>
+          <property name="maximumSize">
+           <size>
+            <width>38</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Kill immediately all onboard power</string>
+          </property>
+          <property name="statusTip">
+           <string>Kill immediately all onboard power</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -682,6 +827,62 @@ QMenu::separator {
          </widget>
         </item>
        </layout>
+      </item>
+      <item row="8" column="0" colspan="8">
+       <widget class="QLabel" name="statusTextLabel">
+        <property name="text">
+         <string>Waiting for first status update..</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="6">
+       <widget class="QLabel" name="stateLabel">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>12</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>STATE</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="2" colspan="3">
+       <widget class="QLabel" name="navLabel">
+        <property name="font">
+         <font>
+          <pointsize>-1</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>NAV</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5" rowspan="7">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>8</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </widget>

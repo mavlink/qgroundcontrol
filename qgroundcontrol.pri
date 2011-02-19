@@ -38,39 +38,44 @@ release {
 
 QMAKE_POST_LINK += echo "Copying files"
 
+# Turn off serial port warnings
+DEFINES += _TTY_NOWARN_
+
 #QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
 #QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 
 # MAC OS X
 macx {
 
-    COMPILER_VERSION = $$system(gcc -v)
-    message(Using compiler $$COMPILER_VERSION)
+   # COMPILER_VERSION = $$system(gcc -v)
+    #message(Using compiler $$COMPILER_VERSION)
 
-    HARDWARE_PLATFORM = $$system(uname -a)
-    contains( HARDWARE_PLATFORM, 9.6.0 ) || contains( HARDWARE_PLATFORM, 9.7.0 ) || contains( HARDWARE_PLATFORM, 9.8.0 ) || contains( HARDWARE_PLATFORM, 9.9.0 ) {
-        # x86 Mac OS X Leopard 10.5 and earlier
         CONFIG += x86 cocoa phonon
         CONFIG -= x86_64
-        message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
+
+    #HARDWARE_PLATFORM = $$system(uname -a)
+    #contains( $$HARDWARE_PLATFORM, "9.6.0" ) || contains( $$HARDWARE_PLATFORM, "9.7.0" ) || contains( $$HARDWARE_PLATFORM, "9.8.0" ) || contains( $$HARDWARE_PLATFORM, "9.9.0" ) {
+        # x86 Mac OS X Leopard 10.5 and earlier
+
+        #message(Building for Mac OS X 32bit/Leopard 10.5 and earlier)
 
                 # Enable function-profiling with the OS X saturn tool
-                debug {
+                #debug {
                         #QMAKE_CXXFLAGS += -finstrument-functions
                         #LIBS += -lSaturn
-                        CONFIG += console
-                }
-    } else {
+                       # CONFIG += console
+                #}
+    #} else {
         # x64 Mac OS X Snow Leopard 10.6 and later
-        CONFIG += x86_64 cocoa
-        CONFIG -= x86 phonon
-        message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
-                debug {
+     #   CONFIG += x86_64 x86 cocoa phonon
+        #CONFIG -= x86 # phonon
+        #message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
+      #          debug {
                         #QMAKE_CXXFLAGS += -finstrument-functions
                         #LIBS += -lSaturn
                         CONFIG += console
-                }
-    }
+      #          }
+    #}
 
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 

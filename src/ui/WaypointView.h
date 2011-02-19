@@ -1,5 +1,4 @@
-/*=====================================================================
-
+/*===================================================================
 QGroundControl Open Source Ground Control Station
 
 (c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -10,15 +9,15 @@ This file is part of the QGROUNDCONTROL project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
+    
     QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
+    
     You should have received a copy of the GNU General Public License
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
+    
 ======================================================================*/
 
 /**
@@ -38,39 +37,56 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 #include <iostream>
 
+enum QGC_WAYPOINTVIEW_MODE {
+    QGC_WAYPOINTVIEW_MODE_NAV,
+    QGC_WAYPOINTVIEW_MODE_CONDITION,
+    QGC_WAYPOINTVIEW_MODE_DO,
+    QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING
+};
+
 namespace Ui {
     class WaypointView;
 }
+class Ui_QGCCustomWaypointAction;
 
 class WaypointView : public QWidget {
     Q_OBJECT
     Q_DISABLE_COPY(WaypointView)
-        public:
-            explicit WaypointView(Waypoint* wp, QWidget* parent);
+public:
+    explicit WaypointView(Waypoint* wp, QWidget* parent);
     virtual ~WaypointView();
-
+    
 public:
     void setCurrent(bool state);
-
+    
 public slots:
     void moveUp();
     void moveDown();
     void remove();
+    /** @brief Waypoint matching this widget has been deleted */
+    void deleted(QObject* waypoint);
     void changedAutoContinue(int);
+    void updateFrameView(int frame);
     void changedFrame(int state);
+    void updateActionView(int action);
     void changedAction(int state);
     void changedCurrent(int);
     void updateValues(void);
-
-    void setYaw(int);   //hidden degree to radian conversion
+    
+protected slots:
+    void changeViewMode(QGC_WAYPOINTVIEW_MODE mode);
 
 protected:
     virtual void changeEvent(QEvent *e);
     Waypoint* wp;
-
+    // Special widgets extendending the
+    // waypoint view to mission capabilities
+    Ui_QGCCustomWaypointAction* customCommand;
+    QGC_WAYPOINTVIEW_MODE viewMode;
+    
 private:
     Ui::WaypointView *m_ui;
-
+    
 signals:
     void moveUpWaypoint(Waypoint*);
     void moveDownWaypoint(Waypoint*);

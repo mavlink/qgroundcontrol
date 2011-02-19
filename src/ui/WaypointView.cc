@@ -14,50 +14,68 @@
 #include <QDoubleSpinBox>
 #include <QDebug>
 
-#include <cmath>    //M_PI
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include <cmath>
+#include <qmath.h>
 
 #include "WaypointView.h"
 #include "ui_WaypointView.h"
+#include "ui_QGCCustomWaypointAction.h"
 
 WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
         QWidget(parent),
+        customCommand(new Ui_QGCCustomWaypointAction),
+        viewMode(QGC_WAYPOINTVIEW_MODE_NAV),
         m_ui(new Ui::WaypointView)
 {
     m_ui->setupUi(this);
 
     this->wp = wp;
+    connect(wp, SIGNAL(destroyed(QObject*)), this, SLOT(deleted(QObject*)));
+
+    // CUSTOM COMMAND WIDGET
+    customCommand->setupUi(m_ui->customActionWidget);
 
     // add actions
-    m_ui->comboBox_action->addItem("Navigate",MAV_ACTION_NAVIGATE);
-    m_ui->comboBox_action->addItem("TakeOff",MAV_ACTION_TAKEOFF);
-    m_ui->comboBox_action->addItem("Land",MAV_ACTION_LAND);
-    m_ui->comboBox_action->addItem("Loiter",MAV_ACTION_LOITER);
+    m_ui->comboBox_action->addItem(tr("Navigate"),MAV_CMD_NAV_WAYPOINT);
+    m_ui->comboBox_action->addItem(tr("TakeOff"),MAV_CMD_NAV_TAKEOFF);
+    m_ui->comboBox_action->addItem(tr("Loiter Unlim."),MAV_CMD_NAV_LOITER_UNLIM);
+    m_ui->comboBox_action->addItem(tr("Loiter Time"),MAV_CMD_NAV_LOITER_TIME);
+    m_ui->comboBox_action->addItem(tr("Loiter Turns"),MAV_CMD_NAV_LOITER_TURNS);
+    m_ui->comboBox_action->addItem(tr("Ret. to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
+    m_ui->comboBox_action->addItem(tr("Land"),MAV_CMD_NAV_LAND);
+    m_ui->comboBox_action->addItem(tr("Other"), MAV_CMD_ENUM_END);
+    //    m_ui->comboBox_action->addItem(tr("Delay"), MAV_ACTION_DELAY_BEFORE_COMMAND);
+    //    m_ui->comboBox_action->addItem(tr("Ascend/Descent"), MAV_ACTION_ASCEND_AT_RATE);
+    //    m_ui->comboBox_action->addItem(tr("Change Mode"), MAV_ACTION_CHANGE_MODE);
+    //    m_ui->comboBox_action->addItem(tr("Relay ON"), MAV_ACTION_RELAY_ON);
+    //    m_ui->comboBox_action->addItem(tr("Relay OFF"), MAV_ACTION_RELAY_OFF);
 
     // add frames 
     m_ui->comboBox_frame->addItem("Global",MAV_FRAME_GLOBAL);
     m_ui->comboBox_frame->addItem("Local",MAV_FRAME_LOCAL);
+    m_ui->comboBox_frame->addItem("Mission",MAV_FRAME_MISSION);
+
+    // Initialize view correctly
+    updateActionView(wp->getAction());
+    updateFrameView(wp->getFrame());
 
     // Read values and set user interface
     updateValues();
 
-    // defaults
-    //changedAction(wp->getAction());
-    //changedFrame(wp->getFrame());
+    // Check for mission frame
+    if (wp->getFrame() == MAV_FRAME_MISSION)
+    {
+        m_ui->comboBox_action->setCurrentIndex(m_ui->comboBox_action->count()-1);
+    }
 
     connect(m_ui->posNSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
     connect(m_ui->posESpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
     connect(m_ui->posDSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
 
-    connect(m_ui->lonSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
-    connect(m_ui->latSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
+    connect(m_ui->latSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
+    connect(m_ui->lonSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
     connect(m_ui->altSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
-
-    //hidden degree to radian conversion of the yaw angle
-    connect(m_ui->yawSpinBox, SIGNAL(valueChanged(int)), this, SLOT(setYaw(int)));
-    connect(this, SIGNAL(setYaw(double)), wp, SLOT(setYaw(double)));
+    connect(m_ui->yawSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setYaw(int)));
 
     connect(m_ui->upButton, SIGNAL(clicked()), this, SLOT(moveUp()));
     connect(m_ui->downButton, SIGNAL(clicked()), this, SLOT(moveDown()));
@@ -68,13 +86,21 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(m_ui->comboBox_action, SIGNAL(activated(int)), this, SLOT(changedAction(int)));
     connect(m_ui->comboBox_frame, SIGNAL(activated(int)), this, SLOT(changedFrame(int)));
 
-    connect(m_ui->orbitSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setOrbit(double)));
-    connect(m_ui->holdTimeSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setHoldTime(int)));
-}
+    connect(m_ui->orbitSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setLoiterOrbit(double)));
+    connect(m_ui->acceptanceSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setAcceptanceRadius(double)));
+    connect(m_ui->holdTimeSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setHoldTime(double)));
+    connect(m_ui->turnsSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setTurns(int)));
+    connect(m_ui->takeOffAngleSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam1(double)));
 
-void WaypointView::setYaw(int yawDegree)
-{
-    emit setYaw((double)yawDegree*M_PI/180.);
+    // Connect actions
+    connect(customCommand->commandSpinBox, SIGNAL(valueChanged(int)),   wp, SLOT(setAction(int)));
+    connect(customCommand->param1SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam1(double)));
+    connect(customCommand->param2SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam2(double)));
+    connect(customCommand->param3SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam3(double)));
+    connect(customCommand->param4SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam4(double)));
+    connect(customCommand->param5SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam5(double)));
+    connect(customCommand->param6SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam6(double)));
+    connect(customCommand->param7SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam7(double)));
 }
 
 void WaypointView::moveUp()
@@ -90,7 +116,7 @@ void WaypointView::moveDown()
 void WaypointView::remove()
 {
     emit removeWaypoint(wp);
-    delete this;
+    deleteLater();
 }
 
 void WaypointView::changedAutoContinue(int state)
@@ -101,48 +127,169 @@ void WaypointView::changedAutoContinue(int state)
         wp->setAutocontinue(true);
 }
 
-void WaypointView::changedAction(int index)
+void WaypointView::updateActionView(int action)
 {
-    // set action for waypoint
-
-
-    // hide everything to start
-    m_ui->orbitSpinBox->hide();
-    m_ui->takeOffAngleSpinBox->hide();
-    m_ui->autoContinue->hide();
-    m_ui->holdTimeSpinBox->hide();
-
-    // set waypoint action
-    MAV_ACTION action = (MAV_ACTION) m_ui->comboBox_action->itemData(index).toUInt();
-    wp->setAction(action);
-
     // expose ui based on action
+
     switch(action)
     {
-    case MAV_ACTION_TAKEOFF:
+    case MAV_CMD_NAV_TAKEOFF:
+        m_ui->orbitSpinBox->hide();
+        m_ui->yawSpinBox->hide();
+        m_ui->turnsSpinBox->hide();
+        m_ui->autoContinue->hide();
+        m_ui->holdTimeSpinBox->hide();
+        m_ui->acceptanceSpinBox->hide();
+        m_ui->customActionWidget->hide();
         m_ui->takeOffAngleSpinBox->show();
         break;
-    case MAV_ACTION_LAND:
+    case MAV_CMD_NAV_LAND:
+        m_ui->orbitSpinBox->hide();
+        m_ui->takeOffAngleSpinBox->hide();
+        m_ui->yawSpinBox->hide();
+        m_ui->turnsSpinBox->hide();
+        m_ui->autoContinue->hide();
+        m_ui->holdTimeSpinBox->hide();
+        m_ui->acceptanceSpinBox->hide();
+        m_ui->customActionWidget->hide();
         break;
-    case MAV_ACTION_NAVIGATE:
+    case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+        m_ui->orbitSpinBox->hide();
+        m_ui->takeOffAngleSpinBox->hide();
+        m_ui->yawSpinBox->hide();
+        m_ui->turnsSpinBox->hide();
+        m_ui->autoContinue->hide();
+        m_ui->holdTimeSpinBox->hide();
+        m_ui->acceptanceSpinBox->hide();
+        m_ui->customActionWidget->hide();
+        break;
+    case MAV_CMD_NAV_WAYPOINT:
+        m_ui->orbitSpinBox->hide();
+        m_ui->takeOffAngleSpinBox->hide();
+        m_ui->turnsSpinBox->hide();
+        m_ui->holdTimeSpinBox->show();
+        m_ui->customActionWidget->hide();
+
         m_ui->autoContinue->show();
+        m_ui->acceptanceSpinBox->show();
+        m_ui->yawSpinBox->show();
+        break;
+    case MAV_CMD_NAV_LOITER_UNLIM:
+        m_ui->takeOffAngleSpinBox->hide();
+        m_ui->yawSpinBox->hide();
+        m_ui->turnsSpinBox->hide();
+        m_ui->autoContinue->hide();
+        m_ui->holdTimeSpinBox->hide();
+        m_ui->acceptanceSpinBox->hide();
+        m_ui->customActionWidget->hide();
         m_ui->orbitSpinBox->show();
         break;
-    case MAV_ACTION_LOITER:
+    case MAV_CMD_NAV_LOITER_TURNS:
+        m_ui->takeOffAngleSpinBox->hide();
+        m_ui->yawSpinBox->hide();
+        m_ui->autoContinue->hide();
+        m_ui->holdTimeSpinBox->hide();
+        m_ui->acceptanceSpinBox->hide();
+        m_ui->customActionWidget->hide();
+        m_ui->orbitSpinBox->show();
+        m_ui->turnsSpinBox->show();
+        break;
+    case MAV_CMD_NAV_LOITER_TIME:
+        m_ui->takeOffAngleSpinBox->hide();
+        m_ui->yawSpinBox->hide();
+        m_ui->turnsSpinBox->hide();
+        m_ui->autoContinue->hide();
+        m_ui->acceptanceSpinBox->hide();
+        m_ui->customActionWidget->hide();
         m_ui->orbitSpinBox->show();
         m_ui->holdTimeSpinBox->show();
         break;
     default:
-        std::cerr << "unknown action" << std::endl;
+        break;
     }
 }
 
-void WaypointView::changedFrame(int index)
+/**
+ * @param index The index of the combo box of the action entry, NOT the action ID
+ */
+void WaypointView::changedAction(int index)
 {
     // set waypoint action
-    MAV_FRAME frame = (MAV_FRAME)m_ui->comboBox_frame->itemData(index).toUInt();
-    wp->setFrame(frame);
+    int actionIndex = m_ui->comboBox_action->itemData(index).toUInt();
+    if (actionIndex < MAV_CMD_ENUM_END && actionIndex >= 0)
+    {
+        MAV_CMD action = (MAV_CMD) actionIndex;
+        wp->setAction(action);
+    }
 
+    // Expose ui based on action
+    // Change to mission frame
+    // if action is unknown
+
+    switch(actionIndex)
+    {
+    case MAV_CMD_NAV_TAKEOFF:
+    case MAV_CMD_NAV_LAND:
+    case MAV_CMD_NAV_RETURN_TO_LAUNCH:
+    case MAV_CMD_NAV_WAYPOINT:
+    case MAV_CMD_NAV_LOITER_UNLIM:
+    case MAV_CMD_NAV_LOITER_TURNS:
+    case MAV_CMD_NAV_LOITER_TIME:
+        changeViewMode(QGC_WAYPOINTVIEW_MODE_NAV);
+        // Update frame view
+        updateFrameView(m_ui->comboBox_frame->currentIndex());
+        // Update view
+        updateActionView(actionIndex);
+        break;
+    case MAV_CMD_ENUM_END:
+    default:
+        // Switch to mission frame
+        changeViewMode(QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING);
+        break;
+    }
+}
+
+void WaypointView::changeViewMode(QGC_WAYPOINTVIEW_MODE mode)
+{
+    switch (mode)
+    {
+    case QGC_WAYPOINTVIEW_MODE_NAV:
+    case QGC_WAYPOINTVIEW_MODE_CONDITION:
+        // Hide everything, show condition widget
+        // TODO
+    case QGC_WAYPOINTVIEW_MODE_DO:
+
+        break;
+    case QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING:
+        // Hide almost everything
+        m_ui->orbitSpinBox->hide();
+        m_ui->takeOffAngleSpinBox->hide();
+        m_ui->yawSpinBox->hide();
+        m_ui->turnsSpinBox->hide();
+        m_ui->holdTimeSpinBox->hide();
+        m_ui->acceptanceSpinBox->hide();
+        m_ui->posDSpinBox->hide();
+        m_ui->posESpinBox->hide();
+        m_ui->posNSpinBox->hide();
+        m_ui->latSpinBox->hide();
+        m_ui->lonSpinBox->hide();
+        m_ui->altSpinBox->hide();
+
+        // Show action widget
+        if (!m_ui->customActionWidget->isVisible())
+        {
+            m_ui->customActionWidget->show();
+        }
+        if (!m_ui->autoContinue->isVisible())
+        {
+            m_ui->autoContinue->show();
+        }
+        break;
+    }
+}
+
+void WaypointView::updateFrameView(int frame)
+{
     switch(frame)
     {
     case MAV_FRAME_GLOBAL:
@@ -152,6 +299,9 @@ void WaypointView::changedFrame(int index)
         m_ui->lonSpinBox->show();
         m_ui->latSpinBox->show();
         m_ui->altSpinBox->show();
+        // Coordinate frame
+        m_ui->comboBox_frame->show();
+        m_ui->customActionWidget->hide();
         break;
     case MAV_FRAME_LOCAL:
         m_ui->lonSpinBox->hide();
@@ -160,10 +310,31 @@ void WaypointView::changedFrame(int index)
         m_ui->posNSpinBox->show();
         m_ui->posESpinBox->show();
         m_ui->posDSpinBox->show();
+        // Coordinate frame
+        m_ui->comboBox_frame->show();
+        m_ui->customActionWidget->hide();
         break;
     default:
         std::cerr << "unknown frame" << std::endl;
     }
+}
+
+void WaypointView::deleted(QObject* waypoint)
+{
+    Q_UNUSED(waypoint);
+//    if (waypoint == this->wp)
+//    {
+//        deleteLater();
+//    }
+}
+
+void WaypointView::changedFrame(int index)
+{
+    // set waypoint action
+    MAV_FRAME frame = (MAV_FRAME)m_ui->comboBox_frame->itemData(index).toUInt();
+    wp->setFrame(frame);
+
+    updateFrameView(frame);
 }
 
 void WaypointView::changedCurrent(int state)
@@ -183,6 +354,13 @@ void WaypointView::changedCurrent(int state)
 
 void WaypointView::updateValues()
 {
+    // Check if we just lost the wp, delete the widget
+    // accordingly
+    if (!wp)
+    {
+        deleteLater();
+        return;
+    }
     // Deactivate signals from the WP
     wp->blockSignals(true);
     // update frame
@@ -191,6 +369,7 @@ void WaypointView::updateValues()
     if (m_ui->comboBox_frame->currentIndex() != frame_index)
     {
         m_ui->comboBox_frame->setCurrentIndex(frame_index);
+        updateFrameView(frame);
     }
     switch(frame)
     {
@@ -212,13 +391,13 @@ void WaypointView::updateValues()
         break;
     case(MAV_FRAME_GLOBAL):
         {
-            if (m_ui->lonSpinBox->value() != wp->getX())
+            if (m_ui->latSpinBox->value() != wp->getX())
             {
-                m_ui->lonSpinBox->setValue(wp->getX());
+                m_ui->latSpinBox->setValue(wp->getX());
             }
-            if (m_ui->latSpinBox->value() != wp->getY())
+            if (m_ui->lonSpinBox->value() != wp->getY())
             {
-                m_ui->latSpinBox->setValue(wp->getY());
+                m_ui->lonSpinBox->setValue(wp->getY());
             }
             if (m_ui->altSpinBox->value() != wp->getZ())
             {
@@ -226,34 +405,51 @@ void WaypointView::updateValues()
             }
         }
         break;
+    default:
+        // Do nothing
+        break;
     }
-    changedFrame(frame_index);
 
-    // update action
-    MAV_ACTION action = wp->getAction();
+    // Update action
+    MAV_CMD action = wp->getAction();
     int action_index = m_ui->comboBox_action->findData(action);
+    // Set to "Other" action if it was -1
+    if (action_index == -1)
+    {
+        action_index = m_ui->comboBox_action->findData(MAV_CMD_ENUM_END);
+    }
+    // Only update if changed
     if (m_ui->comboBox_action->currentIndex() != action_index)
     {
-        m_ui->comboBox_action->setCurrentIndex(action_index);
+        // If action is unknown, set direct editing mode
+        if (wp->getAction() < 0 || wp->getAction() > MAV_CMD_NAV_TAKEOFF)
+        {
+            changeViewMode(QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING);
+        }
+        else
+        {
+            // Action ID known, update
+            m_ui->comboBox_action->setCurrentIndex(action_index);
+            updateActionView(action);
+        }
     }
     switch(action)
     {
-    case MAV_ACTION_TAKEOFF:
+    case MAV_CMD_NAV_TAKEOFF:
         break;
-    case MAV_ACTION_LAND:
+    case MAV_CMD_NAV_LAND:
         break;
-    case MAV_ACTION_NAVIGATE:
+    case MAV_CMD_NAV_WAYPOINT:
         break;
-    case MAV_ACTION_LOITER:
+    case MAV_CMD_NAV_LOITER_UNLIM:
         break;
     default:
         std::cerr << "unknown action" << std::endl;
     }
-    changedAction(action_index);
 
-    if (m_ui->yawSpinBox->value() != wp->getYaw()/M_PI*180.)
+    if (m_ui->yawSpinBox->value() != wp->getYaw())
     {
-        m_ui->yawSpinBox->setValue(wp->getYaw()/M_PI*180.);
+        m_ui->yawSpinBox->setValue(wp->getYaw());
     }
     if (m_ui->selectedBox->isChecked() != wp->getCurrent())
     {
@@ -264,27 +460,78 @@ void WaypointView::updateValues()
         m_ui->autoContinue->setChecked(wp->getAutoContinue());
     }
     m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
-    if (m_ui->orbitSpinBox->value() != wp->getOrbit())
+    if (m_ui->orbitSpinBox->value() != wp->getLoiterOrbit())
     {
-        m_ui->orbitSpinBox->setValue(wp->getOrbit());
+        m_ui->orbitSpinBox->setValue(wp->getLoiterOrbit());
+    }
+    if (m_ui->acceptanceSpinBox->value() != wp->getAcceptanceRadius())
+    {
+        m_ui->acceptanceSpinBox->setValue(wp->getAcceptanceRadius());
     }
     if (m_ui->holdTimeSpinBox->value() != wp->getHoldTime())
     {
         m_ui->holdTimeSpinBox->setValue(wp->getHoldTime());
     }
+    if (m_ui->turnsSpinBox->value() != wp->getTurns())
+    {
+        m_ui->turnsSpinBox->setValue(wp->getTurns());
+    }
+    if (m_ui->takeOffAngleSpinBox->value() != wp->getParam1())
+    {
+        m_ui->takeOffAngleSpinBox->setValue(wp->getParam1());
+    }
+
+    // UPDATE CUSTOM ACTION WIDGET
+
+    if (customCommand->commandSpinBox->value() != wp->getAction())
+    {
+        customCommand->commandSpinBox->setValue(wp->getAction());
+        qDebug() << "Changed action";
+    }
+    // Param 1
+    if (customCommand->param1SpinBox->value() != wp->getParam1())
+    {
+        customCommand->param1SpinBox->setValue(wp->getParam1());
+    }
+    // Param 2
+    if (customCommand->param2SpinBox->value() != wp->getParam2())
+    {
+        customCommand->param2SpinBox->setValue(wp->getParam2());
+    }
+    // Param 3
+    if (customCommand->param3SpinBox->value() != wp->getParam3())
+    {
+        customCommand->param3SpinBox->setValue(wp->getParam3());
+    }
+    // Param 4
+    if (customCommand->param4SpinBox->value() != wp->getParam4())
+    {
+        customCommand->param4SpinBox->setValue(wp->getParam4());
+    }
+    // Param 5
+    if (customCommand->param5SpinBox->value() != wp->getParam5())
+    {
+        customCommand->param5SpinBox->setValue(wp->getParam5());
+    }
+    // Param 6
+    if (customCommand->param6SpinBox->value() != wp->getParam6())
+    {
+        customCommand->param6SpinBox->setValue(wp->getParam6());
+    }
+    // Param 7
+    if (customCommand->param7SpinBox->value() != wp->getParam7())
+    {
+        customCommand->param7SpinBox->setValue(wp->getParam7());
+    }
+
     wp->blockSignals(false);
 }
 
 void WaypointView::setCurrent(bool state)
 {
-    if (state)
-    {
-        m_ui->selectedBox->setCheckState(Qt::Checked);
-    }
-    else
-    {
-        m_ui->selectedBox->setCheckState(Qt::Unchecked);
-    }
+    m_ui->selectedBox->blockSignals(true);
+    m_ui->selectedBox->setChecked(state);
+    m_ui->selectedBox->blockSignals(false);
 }
 
 WaypointView::~WaypointView()
