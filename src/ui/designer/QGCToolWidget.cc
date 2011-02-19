@@ -32,7 +32,7 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
     }
 
     // Try with parent
-    dock = dynamic_cast<QDockWidget*>(this->parentWidget());
+    dock = dynamic_cast<QDockWidget*>(parent);
     if (dock)
     {
         dock->setWindowTitle(title);

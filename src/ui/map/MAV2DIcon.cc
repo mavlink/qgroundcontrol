@@ -3,6 +3,8 @@
 
 #include <qmath.h>
 
+#include "QGC.h"
+
 MAV2DIcon::MAV2DIcon(UASInterface* uas, int radius, int type, const QColor& color, QString name, Alignment alignment, QPen* pen)
     : Point(uas->getLatitude(), uas->getLongitude(), name, alignment),
     yaw(0.0f),
@@ -57,12 +59,12 @@ void MAV2DIcon::setYaw(float yaw)
 {
     //qDebug() << "MAV2Icon" << yaw;
     float diff = fabs(yaw - this->yaw);
-    while (diff > M_PI)
+    while (diff > (float)M_PI)
     {
-        diff -= M_PI;
+        diff -= (float)M_PI;
     }
 
-    if (diff > 0.1)
+    if (diff > 0.1f)
     {
         this->yaw = yaw;
         drawIcon(mypen);
@@ -99,7 +101,11 @@ void MAV2DIcon::drawIcon(QPen* pen)
         //qDebug() << "Painting ellipse" << radius/2-width << width;
         //selPen->deleteLater();
     }
+    drawAirframePolygon(airframe, painter, radius, iconColor, yaw);
+}
 
+void MAV2DIcon::drawAirframePolygon(int airframe, QPainter& painter, int radius, QColor& iconColor, float yaw)
+{
     switch (airframe)
     {
     case UASInterface::QGC_AIRFRAME_PREDATOR:
@@ -108,7 +114,10 @@ void MAV2DIcon::drawIcon(QPen* pen)
             // DRAW AIRPLANE
 
             // Rotate 180 degs more since the icon is oriented downwards
-            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f+180.0f;
+            //float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f+180.0f;
+
+            const float yawDeg = ((yaw/M_PI)*180.0f)+180.0f+180.0f;
+            int yawRotate = static_cast<int>(yawDeg) % 360;
 
             painter.rotate(yawRotate);
 
@@ -147,6 +156,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
             painter.setPen(iconPen);
 
             painter.drawPolygon(poly);
+            painter.rotate(-yawRotate);
         }
         break;
     case UASInterface::QGC_AIRFRAME_MIKROKOPTER:
@@ -154,7 +164,8 @@ void MAV2DIcon::drawIcon(QPen* pen)
         {
             // QUADROTOR
             float iconSize = radius*0.9f;
-            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f;
+            const float yawDeg = ((yaw/M_PI)*180.0f)+180.0f;
+            int yawRotate = static_cast<int>(yawDeg) % 360;
 
             painter.rotate(yawRotate);
 
@@ -186,6 +197,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
 
             painter.setBrush(Qt::red);
             painter.drawEllipse(front, radius/4/2, radius/4/2);
+            painter.rotate(-yawRotate);
         }
         break;
     case UASInterface::QGC_AIRFRAME_EASYSTAR:
@@ -195,8 +207,8 @@ void MAV2DIcon::drawIcon(QPen* pen)
         {
             // DRAW AIRPLANE
 
-            float yawRotate = (yaw/(float)M_PI)*180.0f + 180.0f;
-
+            const float yawDeg = ((yaw/M_PI)*180.0f)+180.0f;
+            int yawRotate = static_cast<int>(yawDeg) % 360;
             painter.rotate(yawRotate);
 
             //qDebug() << "ICON SIZE:" << radius;
@@ -243,6 +255,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
             painter.setPen(iconPen);
 
             painter.drawPolygon(poly);
+            painter.rotate(-yawRotate);
         }
         break;
         case UASInterface::QGC_AIRFRAME_GENERIC:
@@ -268,6 +281,7 @@ void MAV2DIcon::drawIcon(QPen* pen)
             painter.setPen(iconPen);
 
             painter.drawPolygon(poly);
+            painter.rotate(-yawRotate);
         }
         break;
     }

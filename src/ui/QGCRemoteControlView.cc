@@ -97,7 +97,7 @@ void QGCRemoteControlView::setUASId(int id)
         {
             // The UAS exists, disconnect any existing connections
             disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
-            disconnect(uas, SIGNAL(remoteControlRSSIRawChanged(float)), this, SLOT(setRemoteRSSI(float)));
+            disconnect(uas, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
             disconnect(uas, SIGNAL(radioCalibrationRawReceived(const QPointer<RadioCalibrationData>)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
             disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannelRaw(int,float)));
             disconnect(uas, SIGNAL(remoteControlChannelScaledChanged(int,float,float)), calibrationWindow, SLOT(setChannelScaled(int,float)));
@@ -115,10 +115,8 @@ void QGCRemoteControlView::setUASId(int id)
         connect(newUAS, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
 
         connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), this, SLOT(setChannelRaw(int,float)));
-//        connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannelRaw(int,float)));
-
+        connect(newUAS, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannel(int,float)));
         connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), this, SLOT(setChannelScaled(int,float)));
-//        connect(newUAS, SIGNAL(remoteControlChannelScaledChanged(int,float)), calibrationWindow, SLOT(setChannelScaled(int,float)));
     }
 }
 
@@ -205,6 +203,8 @@ void QGCRemoteControlView::redraw()
         {
             progressBars.at(i)->setValue(normalized.at(i)*100.0f);
         }
+        // Update RSSI
+        rssiBar->setValue(rssi*100);
         updated = false;
     }
 }

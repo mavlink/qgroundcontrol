@@ -7,6 +7,8 @@ Files:
 http://github.com/pixhawk/qgroundcontrol
 http://github.com/pixhawk/mavlink
 
+Credits:
+http://qgroundcontrol.org/credits
 
 **********************************************************************************************
 * PLEASE NOTE: YOU NEED TO DOWNLOAD THE MAVLINK LIBRARY IN ORDER TO COMPILE THIS APPLICATION *
@@ -49,9 +51,9 @@ Linux
 
 To build on Linux:
 
-sudo apt-get install phonon libqt4-dev libqt4-phonon-dev \
-libqt4-phonon libphonon-dev libphonon4 phonon-backend-gstreamer \
-qt-creator libsdl1.2-dev libflite1 flite1-dev
+sudo apt-get install phonon libqt4-dev \
+ libphonon-dev libphonon4 phonon-backend-gstreamer \
+qtcreator libsdl1.2-dev libflite1 flite1-dev build-essential
 
 cd directory
 

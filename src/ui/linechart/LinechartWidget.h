@@ -99,6 +99,8 @@ public slots:
     void writeSettings();
     /** @brief Read the current configuration from disk */
     void readSettings();
+    /** @brief Select all curves */
+    void selectAllCurves(bool all);
 
 protected:
     void addCurveToList(QString curve);
@@ -145,6 +147,7 @@ protected:
     quint64 logStartTime;
     QTimer* updateTimer;
     LogCompressor* compressor;
+    QCheckBox* selectAllCheckBox;
     static const int updateInterval = 400; ///< Time between number updates, in milliseconds
 
     static const int MAX_CURVE_MENUITEM_NUMBER = 8;

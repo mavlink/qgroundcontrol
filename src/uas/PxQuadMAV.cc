@@ -1,5 +1,4 @@
 /*=====================================================================
-
 QGroundControl Open Source Ground Control Station
 
 (c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
@@ -10,15 +9,15 @@ This file is part of the QGROUNDCONTROL project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
+    
     QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
+    
     You should have received a copy of the GNU General Public License
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
+    
 ======================================================================*/
 
 #include "PxQuadMAV.h"
@@ -39,20 +38,12 @@ PxQuadMAV::PxQuadMAV(MAVLinkProtocol* mavlink, int id) :
  */
 void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 {
-    // Let UAS handle the default message set
-    UAS::receiveMessage(link, message);
-
-    //qDebug() << "PX RECEIVED" << msg->sysid << msg->compid << msg->msgid;
-
-// Only compile this portion if matching MAVLink packets have been compiled
+    // Only compile this portion if matching MAVLink packets have been compiled
 #ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_message_t* msg = &message;
 
     if (message.sysid == uasId)
     {
-        QString uasState;
-        QString stateDescription;
-        QString patternPath;
         switch (message.msgid)
         {
         case MAVLINK_MSG_ID_RAW_AUX:
@@ -88,7 +79,7 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     emit letterDetected(uasId, name, detected.confidence, detected.detected);
             }
             break;
-    case MAVLINK_MSG_ID_WATCHDOG_HEARTBEAT:
+        case MAVLINK_MSG_ID_WATCHDOG_HEARTBEAT:
             {
                 mavlink_watchdog_heartbeat_t payload;
                 mavlink_msg_watchdog_heartbeat_decode(msg, &payload);
@@ -97,7 +88,7 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
-    case MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO:
+        case MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO:
             {
                 mavlink_watchdog_process_info_t payload;
                 mavlink_msg_watchdog_process_info_decode(msg, &payload);
@@ -106,14 +97,14 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
-    case MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS:
+        case MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS:
             {
                 mavlink_watchdog_process_status_t payload;
                 mavlink_msg_watchdog_process_status_decode(msg, &payload);
                 emit processChanged(this->uasId, payload.watchdog_id, payload.process_id, payload.state, (payload.muted == 1) ? true : false, payload.crashes, payload.pid);
             }
             break;
-    case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE:
+        case MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE:
             {
                 mavlink_vision_position_estimate_t pos;
                 mavlink_msg_vision_position_estimate_decode(&message, &pos);
@@ -128,21 +119,21 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
         case MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE:
-                {
-                    mavlink_vicon_position_estimate_t pos;
-                    mavlink_msg_vicon_position_estimate_decode(&message, &pos);
-                    quint64 time = getUnixTime(pos.usec);
-                    //emit valueChanged(uasId, "vis. time", pos.usec, time);
-                    emit valueChanged(uasId, "vicon roll", "rad", pos.roll, time);
-                    emit valueChanged(uasId, "vicon pitch", "rad", pos.pitch, time);
-                    emit valueChanged(uasId, "vicon yaw", "rad", pos.yaw, time);
-                    emit valueChanged(uasId, "vicon x", "m", pos.x, time);
-                    emit valueChanged(uasId, "vicon y", "m", pos.y, time);
-                    emit valueChanged(uasId, "vicon z", "m", pos.z, time);
-                    emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
-                }
-                break;
-    case MAVLINK_MSG_ID_AUX_STATUS:
+            {
+                mavlink_vicon_position_estimate_t pos;
+                mavlink_msg_vicon_position_estimate_decode(&message, &pos);
+                quint64 time = getUnixTime(pos.usec);
+                //emit valueChanged(uasId, "vis. time", pos.usec, time);
+                emit valueChanged(uasId, "vicon roll", "rad", pos.roll, time);
+                emit valueChanged(uasId, "vicon pitch", "rad", pos.pitch, time);
+                emit valueChanged(uasId, "vicon yaw", "rad", pos.yaw, time);
+                emit valueChanged(uasId, "vicon x", "m", pos.x, time);
+                emit valueChanged(uasId, "vicon y", "m", pos.y, time);
+                emit valueChanged(uasId, "vicon z", "m", pos.z, time);
+                emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+            }
+            break;
+        case MAVLINK_MSG_ID_AUX_STATUS:
             {
                 mavlink_aux_status_t status;
                 mavlink_msg_aux_status_decode(&message, &status);
@@ -152,31 +143,21 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit errCountChanged(uasId, "IMU", "SPI0", status.spi0_err_count);
                 emit errCountChanged(uasId, "IMU", "SPI1", status.spi1_err_count);
                 emit errCountChanged(uasId, "IMU", "UART", status.uart_total_err_count);
-                emit valueChanged(uasId, "Load", "%", ((float)status.load)/1000.0f, MG::TIME::getGroundTimeNow());
+                emit valueChanged(uasId, "Load", "%", ((float)status.load)/10.0f, getUnixTime());
             }
             break;
-        case MAVLINK_MSG_ID_CONTROL_STATUS:
-            {
-                mavlink_control_status_t status;
-                mavlink_msg_control_status_decode(&message, &status);
-                // Emit control status vector
-                emit attitudeControlEnabled(static_cast<bool>(status.control_att));
-                emit positionXYControlEnabled(static_cast<bool>(status.control_pos_xy));
-                emit positionZControlEnabled(static_cast<bool>(status.control_pos_z));
-                emit positionYawControlEnabled(static_cast<bool>(status.control_pos_yaw));
-
-                // Emit localization status vector
-                emit localizationChanged(this, status.position_fix);
-                emit visionLocalizationChanged(this, status.vision_fix);
-                emit gpsLocalizationChanged(this, status.gps_fix);
-            }
-            break;
-    default:
-            // Do nothing
+        default:
+            // Let UAS handle the default message set
+            UAS::receiveMessage(link, message);
             break;
         }
     }
 
+#else
+    // Let UAS handle the default message set
+    UAS::receiveMessage(link, message);
+    Q_UNUSED(link);
+    Q_UNUSED(message);
 #endif
 }
 

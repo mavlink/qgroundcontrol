@@ -51,6 +51,7 @@ public:
 
     bool isConnected();
     qint64 bytesAvailable();
+    int getPort() const { return port; }
 
     /**
      * @brief The human readable port name
@@ -82,7 +83,9 @@ public:
 
 public slots:
     void setAddress(QString address);
-    void setPort(quint16 port);
+    void setPort(int port);
+    /** @brief Add a new host to broadcast messages to */
+    void addHost(const QString& host);
     //    void readPendingDatagrams();
 
     void readBytes();

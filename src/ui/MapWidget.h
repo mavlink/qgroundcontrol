@@ -146,6 +146,10 @@ protected:
     //QMap<int, qmapcontrol::LineString*> waypointPaths;
     UASInterface* mav;
     quint64 lastUpdate;
+    bool initialized;
+
+    /** @brief Initialize view */
+    void init();
 
   protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);

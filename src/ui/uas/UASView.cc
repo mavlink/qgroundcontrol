@@ -66,8 +66,9 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         localFrame(false),
         removeAction(new QAction("Delete this system", this)),
         renameAction(new QAction("Rename..", this)),
-        selectAction(new QAction("Select this system", this )),
-        selectAirframeAction(new QAction("Select Airframe", this)),
+        selectAction(new QAction("Control this system", this )),
+        selectAirframeAction(new QAction("Choose Airframe", this)),
+        setBatterySpecsAction(new QAction("Set Battery Options", this)),
         m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
@@ -88,7 +89,9 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(currentWaypointUpdated(quint16)));
     connect(uas, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
     connect(UASManager::instance(), SIGNAL(activeUASStatusChanged(UASInterface*,bool)), this, SLOT(updateActiveUAS(UASInterface*,bool)));
-    
+    connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(showStatusText(int, int, int, QString)));
+    connect(uas, SIGNAL(navModeChanged(int, int, QString)), this, SLOT(updateNavMode(int, int, QString)));
+
     // Setup UAS selection
     connect(m_ui->uasViewFrame, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
     
@@ -106,6 +109,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
     connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
     connect(selectAirframeAction, SIGNAL(triggered()), this, SLOT(selectAirframe()));
+    connect(setBatterySpecsAction, SIGNAL(triggered()), this, SLOT(setBatterySpecs()));
     connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
 
     // Name changes
@@ -128,6 +132,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     // Heartbeat fade
     refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
+    refreshTimer->start(updateInterval);
 
     // Hide kill and shutdown buttons per default
     m_ui->killButton->hide();
@@ -147,6 +152,22 @@ UASView::~UASView()
 void UASView::heartbeatTimeout()
 {
     timeout = true;
+}
+
+void UASView::updateNavMode(int uasid, int mode, const QString& text)
+{
+    Q_UNUSED(uasid);
+    Q_UNUSED(mode);
+    m_ui->navLabel->setText(text);
+}
+
+void UASView::showStatusText(int uasid, int componentid, int severity, QString text)
+{
+    Q_UNUSED(uasid);
+    Q_UNUSED(componentid);
+    Q_UNUSED(severity);
+    //m_ui->statusTextLabel->setText(text);
+    stateDesc = text;
 }
 
 /**
@@ -250,7 +271,7 @@ void UASView::receiveHeartbeat(UASInterface* uas)
 {
     Q_UNUSED(uas);
     heartbeatColor = QColor(20, 200, 20);
-    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 2px; border: 0px; background-color: %1; }");
+    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 0px; border: 0px; background-color: %1; }");
     m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
     if (timeout) setBackgroundColor();
     timeout = false;
@@ -345,7 +366,7 @@ void UASView::updateGlobalPosition(UASInterface* uas, double lon, double lat, do
 void UASView::updateSpeed(UASInterface*, double x, double y, double z, quint64 usec)
 {
     Q_UNUSED(usec);
-    totalSpeed = sqrt((pow(x, 2) + pow(y, 2) + pow(z, 2)));
+    totalSpeed = sqrt(x*x + y*y + z*z);
 }
 
 void UASView::currentWaypointUpdated(quint16 waypoint)
@@ -415,14 +436,29 @@ void UASView::updateLoad(UASInterface* uas, double load)
 void UASView::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
+    menu.addAction(selectAction);
+    menu.addSeparator();
     menu.addAction(renameAction);
     if (timeout)
     {
         menu.addAction(removeAction);
     }
-    menu.addAction(selectAction);
     menu.addAction(selectAirframeAction);
+    menu.addAction(setBatterySpecsAction);
     menu.exec(event->globalPos());
+}
+
+void UASView::setBatterySpecs()
+{
+    if (uas)
+    {
+        bool ok;
+        QString newName = QInputDialog::getText(this, tr("Set Battery Specifications for %1").arg(uas->getUASName()),
+                                                tr("Specs: (empty,warn,full), e.g. (9V,9.5V,12.6V) or just warn level in percent (e.g. 15%) to use estimate from MAV"), QLineEdit::Normal,
+                                                uas->getBatterySpecs(), &ok);
+
+        if (ok && !newName.isEmpty()) uas->setBatterySpecs(newName);
+    }
 }
 
 void UASView::rename()
@@ -569,7 +605,7 @@ void UASView::refresh()
     }
     generalUpdateCount++;
 
-    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 2px; border: 0px; background-color: %1; }");
+    QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 0px; border: 0px; background-color: %1; }");
 
     if (timeout)
     {

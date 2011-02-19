@@ -789,13 +789,13 @@ void TimeSeriesData::append(quint64 ms, double value)
     this->value[count] = value;
     this->lastValue = value;
     this->mean = 0;
-    QList<double> medianList = QList<double>();
+    //QList<double> medianList = QList<double>();
     for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i)
     {
         this->mean += this->value[count-i];
-        medianList.append(this->value[count-i]);
+        //medianList.append(this->value[count-i]);
     }
-    mean = mean / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
+    this->mean = mean / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
 
     this->variance = 0;
     for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i)
@@ -804,19 +804,19 @@ void TimeSeriesData::append(quint64 ms, double value)
     }
     this->variance = this->variance / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
 
-    qSort(medianList);
+//    qSort(medianList);
 
-    if (medianList.count() > 2)
-    {
-        if (medianList.count() % 2 == 0)
-        {
-            median = (medianList.at(medianList.count()/2) + medianList.at(medianList.count()/2+1)) / 2.0;
-        }
-        else
-        {
-            median = medianList.at(medianList.count()/2+1);
-        }
-    }
+//    if (medianList.count() > 2)
+//    {
+//        if (medianList.count() % 2 == 0)
+//        {
+//            median = (medianList.at(medianList.count()/2) + medianList.at(medianList.count()/2+1)) / 2.0;
+//        }
+//        else
+//        {
+//            median = medianList.at(medianList.count()/2+1);
+//        }
+//    }
 
     // Update statistical values
     if(ms < startTime) startTime = ms;

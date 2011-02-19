@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1389</width>
+    <width>2208</width>
     <height>39</height>
    </rect>
   </property>
@@ -161,7 +161,7 @@ QProgressBar::chunk#thrustBar {
      <property name="title">
       <string/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,20,20,20,20,20,20,1,8,8,1,4,8,1,1,1,1,1">
       <property name="spacing">
        <number>2</number>
       </property>
@@ -174,6 +174,9 @@ QProgressBar::chunk#thrustBar {
          <enum>Qt::TabFocus</enum>
         </property>
         <property name="toolTip">
+         <string>Currently selected waypoint</string>
+        </property>
+        <property name="statusTip">
          <string>Currently selected waypoint</string>
         </property>
         <property name="text">
@@ -199,7 +202,7 @@ QProgressBar::chunk#thrustBar {
          <string>Waypoint Sequence Number</string>
         </property>
         <property name="text">
-         <string>TextLabel</string>
+         <string>ID</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -214,6 +217,15 @@ QProgressBar::chunk#thrustBar {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="toolTip">
+         <string>Action at Waypoint</string>
+        </property>
+        <property name="statusTip">
+         <string>Action at Waypoint</string>
+        </property>
+        <property name="sizeAdjustPolicy">
+         <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+        </property>
        </widget>
       </item>
       <item>
@@ -223,6 +235,15 @@ QProgressBar::chunk#thrustBar {
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Coordinate frame</string>
+        </property>
+        <property name="statusTip">
+         <string>Coordinate frame</string>
+        </property>
+        <property name="sizeAdjustPolicy">
+         <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
         </property>
        </widget>
       </item>
@@ -239,6 +260,9 @@ QProgressBar::chunk#thrustBar {
         </property>
         <property name="toolTip">
          <string>Position X coordinate</string>
+        </property>
+        <property name="statusTip">
+         <string>Position X corrdinate</string>
         </property>
         <property name="wrapping">
          <bool>false</bool>
@@ -278,7 +302,10 @@ QProgressBar::chunk#thrustBar {
          <enum>Qt::WheelFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Position Y coordinate</string>
+         <string>Position Y/Longitude coordinate</string>
+        </property>
+        <property name="statusTip">
+         <string>Position Y/Longitude coordinate</string>
         </property>
         <property name="prefix">
          <string>E </string>
@@ -312,7 +339,10 @@ QProgressBar::chunk#thrustBar {
          <enum>Qt::WheelFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Position Z coordinate (negative)</string>
+         <string>Position Z coordinate (local frame, negative)</string>
+        </property>
+        <property name="statusTip">
+         <string/>
         </property>
         <property name="prefix">
          <string>D </string>
@@ -341,6 +371,12 @@ QProgressBar::chunk#thrustBar {
         </property>
         <property name="focusPolicy">
          <enum>Qt::WheelFocus</enum>
+        </property>
+        <property name="toolTip">
+         <string>Latitude in degrees</string>
+        </property>
+        <property name="statusTip">
+         <string>Latitude in degrees</string>
         </property>
         <property name="prefix">
          <string>lat </string>
@@ -373,6 +409,12 @@ QProgressBar::chunk#thrustBar {
         <property name="focusPolicy">
          <enum>Qt::WheelFocus</enum>
         </property>
+        <property name="toolTip">
+         <string>Longitude in degrees</string>
+        </property>
+        <property name="statusTip">
+         <string>Longitude in degrees</string>
+        </property>
         <property name="prefix">
          <string>lon </string>
         </property>
@@ -400,6 +442,12 @@ QProgressBar::chunk#thrustBar {
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Altitude in meters</string>
+        </property>
+        <property name="statusTip">
+         <string>Altitude in meters</string>
         </property>
         <property name="prefix">
          <string>alt </string>
@@ -430,7 +478,10 @@ QProgressBar::chunk#thrustBar {
          <enum>Qt::StrongFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Yaw angle</string>
+         <string>Rotary wing only: Desired yaw angle at waypoint</string>
+        </property>
+        <property name="statusTip">
+         <string>Rotary wing only: Desired yaw angle at waypoint</string>
         </property>
         <property name="wrapping">
          <bool>true</bool>
@@ -461,7 +512,10 @@ QProgressBar::chunk#thrustBar {
          <enum>Qt::StrongFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Orbit radius</string>
+         <string>Loiter radius</string>
+        </property>
+        <property name="statusTip">
+         <string>Loiter radius</string>
         </property>
         <property name="suffix">
          <string> m</string>
@@ -481,33 +535,49 @@ QProgressBar::chunk#thrustBar {
        </widget>
       </item>
       <item>
-       <widget class="QSpinBox" name="holdTimeSpinBox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::StrongFocus</enum>
-        </property>
+       <widget class="QDoubleSpinBox" name="acceptanceSpinBox">
         <property name="toolTip">
-         <string>Time in milliseconds that the MAV has to stay inside the orbit before advancing</string>
+         <string>Uncertainty radius in meters
+where to accept this waypoint as reached</string>
         </property>
         <property name="statusTip">
-         <string/>
+         <string>Uncertainty radius in meters where to accept this waypoint as reached</string>
         </property>
         <property name="suffix">
-         <string> ms</string>
-        </property>
-        <property name="maximum">
-         <number>60000</number>
-        </property>
-        <property name="singleStep">
-         <number>500</number>
+         <string> m</string>
         </property>
         <property name="value">
-         <number>0</number>
+         <double>0.200000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="holdTimeSpinBox">
+        <property name="toolTip">
+         <string>Rotaty wing and ground vehicles only:
+Time to stay at this position before advancing</string>
+        </property>
+        <property name="statusTip">
+         <string>Rotaty wing and ground vehicles only: Time to stay at this position before advancing</string>
+        </property>
+        <property name="suffix">
+         <string> s</string>
+        </property>
+        <property name="maximum">
+         <double>9999.989999999999782</double>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="turnsSpinBox">
+        <property name="toolTip">
+         <string>Number of turns to loiter</string>
+        </property>
+        <property name="statusTip">
+         <string>Number of turns to loiter</string>
+        </property>
+        <property name="suffix">
+         <string> turns</string>
         </property>
        </widget>
       </item>
@@ -525,17 +595,36 @@ QProgressBar::chunk#thrustBar {
         <property name="toolTip">
          <string>Take off angle</string>
         </property>
+        <property name="statusTip">
+         <string>Take off angle</string>
+        </property>
         <property name="prefix">
          <string/>
         </property>
         <property name="suffix">
          <string>°</string>
         </property>
+        <property name="decimals">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="customActionWidget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
        </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="autoContinue">
         <property name="toolTip">
+         <string>Automatically continue after this waypoint</string>
+        </property>
+        <property name="statusTip">
          <string>Automatically continue after this waypoint</string>
         </property>
         <property name="text">
@@ -555,7 +644,10 @@ QProgressBar::chunk#thrustBar {
          <enum>Qt::NoFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Move Up</string>
+         <string>Move Up in List</string>
+        </property>
+        <property name="statusTip">
+         <string>Move Up in List</string>
         </property>
         <property name="text">
          <string/>
@@ -578,7 +670,10 @@ QProgressBar::chunk#thrustBar {
          <enum>Qt::NoFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Move Down</string>
+         <string>Move Down in List</string>
+        </property>
+        <property name="statusTip">
+         <string>Move Down in List</string>
         </property>
         <property name="text">
          <string/>

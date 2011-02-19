@@ -37,9 +37,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QDebug>
 #include <cmath>
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include <qmath.h>
 #include <limits>
 
 #include "UASManager.h"
@@ -126,6 +124,9 @@ HUD::HUD(int width, int height, QWidget* parent)
     xSpeed(0.0),
     ySpeed(0.0),
     zSpeed(0.0),
+    lastSpeedUpdate(0),
+    totalSpeed(0.0),
+    totalAcc(0.0),
     lat(0.0),
     lon(0.0),
     alt(0.0),
@@ -277,6 +278,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
         disconnect(this->uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        disconnect(this->uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         disconnect(this->uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
@@ -299,6 +301,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         connect(uas, SIGNAL(heartbeat(UASInterface*)), this, SLOT(receiveHeartbeat(UASInterface*)));
 
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateLocalPosition(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateSpeed(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(waypointSelected(int,int)), this, SLOT(selectWaypoint(int, int)));
 
@@ -334,12 +337,7 @@ void HUD::updateAttitude(UASInterface* uas, double roll, double pitch, double ya
 void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
     Q_UNUSED(uas);
-//    this->voltage = voltage;
-//    this->timeRemaining = seconds;
-//    this->percentRemaining = percent;
-
-    fuelStatus.sprintf("BAT [%02.0f \%% | %05.2fV] (%02dm:%02ds)", percent, voltage, seconds/60, seconds%60);
-
+    fuelStatus = tr("BAT [%1% | %2V] (%3:%4)").arg(percent, 2, 'f', 0, QChar('0')).arg(voltage, 4, 'f', 1, QChar('0')).arg(seconds/60, 2, 10, QChar('0')).arg(seconds%60, 2, 10, QChar('0'));
     if (percent < 20.0f)
     {
         fuelColor = warningColor;
@@ -390,6 +388,9 @@ void HUD::updateSpeed(UASInterface* uas,double x,double y,double z,quint64 times
     this->xSpeed = x;
     this->ySpeed = y;
     this->zSpeed = z;
+    double newTotalSpeed = sqrt(xSpeed*xSpeed + ySpeed*ySpeed + zSpeed*zSpeed);
+    totalAcc = (newTotalSpeed - totalSpeed) / ((double)(lastSpeedUpdate - timestamp)/1000.0);
+    totalSpeed = newTotalSpeed;
 }
 
 /**
@@ -647,10 +648,10 @@ void HUD::paintHUD()
 
         yawInt += newYawDiff;
 
-        if (yawInt > M_PI) yawInt = M_PI;
-        if (yawInt < -M_PI) yawInt = -M_PI;
+        if (yawInt > M_PI) yawInt = (float)M_PI;
+        if (yawInt < -M_PI) yawInt = (float)-M_PI;
 
-        float yawTrans = yawInt * (double)maxYawTrans;
+        float yawTrans = yawInt * (float)maxYawTrans;
         yawInt *= 0.6f;
 
         if ((yawTrans < 5.0) && (yawTrans > -5.0)) yawTrans = 0;
@@ -691,6 +692,8 @@ void HUD::paintHUD()
                 // Reset to save load efforts
                 nextOfflineImage = "";
             }
+
+            glRasterPos2i(0, 0);
 
             glPixelZoom(xImageFactor, yImageFactor);
             // Resize to correct size and fill with image
@@ -803,23 +806,35 @@ void HUD::paintHUD()
             //    const float yawDeg = ((values.value("yaw", 0.0f)/M_PI)*180.0f)+180.f;
 
             // YAW is in compass-human readable format, so 0 - 360deg. This is normal in aviation, not -180 - +180.
-            const float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f;
-            yawAngle.sprintf("%03d", (int)yawDeg);
-            paintText(yawAngle, defaultColor, 3.5f, -3.7f, compassY+ 0.9f, &painter);
+            const float yawDeg = ((yawLP/M_PI)*180.0f)+180.0f+180.0f;
+            int yawCompass = static_cast<int>(yawDeg) % 360;
+            yawAngle.sprintf("%03d", yawCompass);
+            paintText(yawAngle, defaultColor, 3.5f, -4.3f, compassY+ 0.97f, &painter);
 
             // CHANGE RATE STRIPS
             drawChangeRateStrip(-51.0f, -50.0f, 15.0f, -1.0f, 1.0f, -zSpeed, &painter);
 
             // CHANGE RATE STRIPS
-            drawChangeRateStrip(49.0f, -50.0f, 15.0f, -1.0f, 1.0f, xSpeed, &painter);
+            drawChangeRateStrip(49.0f, -50.0f, 15.0f, -1.0f, 1.0f, totalAcc, &painter);
 
             // GAUGES
 
             // Left altitude gauge
-            drawChangeIndicatorGauge(-vGaugeSpacing, -15.0f, 10.0f, 2.0f, -zPos, defaultColor, &painter, false);
+            float gaugeAltitude;
+
+            if (this->alt != 0)
+            {
+                gaugeAltitude = alt;
+            }
+            else
+            {
+                gaugeAltitude = -zPos;
+            }
+
+            drawChangeIndicatorGauge(-vGaugeSpacing, -15.0f, 10.0f, 2.0f, gaugeAltitude, defaultColor, &painter, false);
 
             // Right speed gauge
-            drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, xSpeed, defaultColor, &painter, false);
+            drawChangeIndicatorGauge(vGaugeSpacing, -15.0f, 10.0f, 5.0f, totalSpeed, defaultColor, &painter, false);
 
 
             // Waypoint name
@@ -833,7 +848,7 @@ void HUD::paintHUD()
             // Rotate view and draw all roll-dependent indicators
             painter.rotate((rollLP/M_PI)* -180.0f);
 
-            painter.translate(0, (-pitchLP/M_PI)* -180.0f * refToScreenY(1.8));
+            painter.translate(0, (-pitchLP/(float)M_PI)* -180.0f * refToScreenY(1.8f));
 
             //qDebug() << "ROLL" << roll << "PITCH" << pitch << "YAW DIFF" << valuesDot.value("roll", 0.0f);
 
@@ -1294,7 +1309,7 @@ void HUD::drawChangeRateStrip(float xRef, float yRef, float height, float minRat
 
     // Text
     QString label;
-    label.sprintf("< %06.2f", value);
+    label.sprintf("< %+06.2f", value);
     paintText(label, defaultColor, 3.0f, xRef+width/2.0f, yRef+height-((scaledValue - minRate)/(maxRate-minRate))*height - 1.6f, painter);
 }
 
