@@ -102,7 +102,7 @@ function setDistanceMode(mode)
 
 function setDraggingAllowed(allowed)
 {
-	//draggingAllowed = allowed;
+	draggingAllowed = allowed;
 }
 
 function setNewWaypointPending(pending)
@@ -370,6 +370,18 @@ trailsVisible[id] = false;
 
 function clearTrail(id)
 {
+	ge.getFeatures().removeChild(trailPlacemarks[id]);
+	trailPlacemarks[id] = null;
+	var isVisible = trailsVisible[id];
+	createTrail(id, trailColors[id]);
+	if (isVisible)
+	{
+		showTrail(id);
+	}
+}
+
+function hideTrail(id)
+{
 	trailsVisible[id] = false;
 	ge.getFeatures().removeChild(trailPlacemarks[id]);
 }
@@ -501,16 +513,14 @@ function setCurrentAircraft(id)
  */
 function setViewMode(mode)
 {
-	viewMode = mode;
-	
 	var currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
 	
 	if (mode == 0)
 	{
-		currView.setTilt(0);
-		currView.setHeading(0);
+		currView.setTilt(lastTilt);
+		currView.setHeading(lastHeading);
 	}
-	if (mode == 1)
+	if (mode == 1 && viewMode != mode)
 	{
 		lastTilt = currView.getTilt();
 		lastHeading = currView.getHeading();
@@ -524,6 +534,8 @@ function setViewMode(mode)
 		currView.setAltitude(lastAlt2);
 	}
 	
+	viewMode = mode;
+	
 	ge.getView().setAbstractView(currView);
 }
 
@@ -532,11 +544,22 @@ function updateFollowAircraft()
 	currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
 	currView.setLatitude(lastLat);
 	currView.setLongitude(lastLon);
-	currView.setAltitude(lastAlt);
+	
+	if (distanceMode == 1)
+	{
+		var groundAltitude = ge.getGlobe().getGroundAltitude(lastLat, lastLon);
+		currView.setAltitude(groundAltitude);
+	}
+	
+	if (distanceMode == 0) currView.setAltitude(lastAlt);
 
 	currView.setRange(currViewRange);
-	currView.setTilt(currFollowTilt);
-	currView.setHeading(currFollowHeading);
+	
+	if (viewMode != 3) // VIEW_MODE_CHASE_FREE
+	{
+		currView.setTilt(currFollowTilt);
+		currView.setHeading(currFollowHeading);
+	}
 	
 	ge.getView().setAbstractView(currView);
 }
