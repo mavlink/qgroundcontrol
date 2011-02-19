@@ -388,7 +388,7 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
             // Reloading the webpage, this resets Google Earth
             gEarthInitialized = false;
 
-            QTimer::singleShot(10000, this, SLOT(initializeGoogleEarth()));
+            QTimer::singleShot(3000, this, SLOT(initializeGoogleEarth()));
         }
         else
         {
@@ -404,7 +404,7 @@ void QGCGoogleEarthView::printWinException(int no, QString str1, QString str2, Q
 QVariant QGCGoogleEarthView::javaScript(QString javaScript)
 {
 #ifdef Q_OS_MAC
-    if (!gEarthInitialized)
+    if (!jEarthInitialized)
     {
         return QVariant(false);
     }
@@ -461,22 +461,33 @@ QVariant QGCGoogleEarthView::documentElement(QString name)
 			documentWin->queryInterface( IID_IHTMLDocument3, (void**)&doc);
 			params.append(name);
 			IHTMLElement* element = NULL;
-
-			HRESULT res = doc->getElementById(L"JScript_dragWaypointIndex", &element);
+			// Append alias
+			name.prepend("JScript_");
+			HRESULT res = doc->getElementById(QStringToBSTR(name), &element);
 			//BSTR elemString;
 			if (element)
 			{
 				//element->get_innerHTML(&elemString);
-				VARIANT value;
-				element->getAttribute(L"value", 0, &value);
-				QVariant qtValue;
-				bool success = QVariantToVARIANT(qtValue, value);
-				qDebug() << "Convert MS VARIANT to QVariant:" << success;
-				if (success)
+				VARIANT var;
+				var.vt = VT_BSTR;
+				HRESULT res = element->getAttribute(L"value", 0, &var);
+				if (SUCCEEDED(res) && (var.vt != VT_NULL))
 				{
-					qDebug() << "initialized is:"<< qtValue.toInt();
-					return qtValue;
+					//VariantChangeType(&var, &var, 0, VT_BSTR);
+					//qDebug() << "GOT ATTRIBUTE";
+					//_bstr_t bstrHello(var.bstrVal); // passing true means
+                                    // you should not call
+                                    // SysFreeString
+
+			        //qDebug() << "BSTR:" << LPCSTR(bstrHello);
 				}
+				else
+				{
+					qDebug() << "JAVASCRIPT ATTRIBUTE" << name << "NOT FOUND";
+				}
+				QByteArray typeName;
+				QVariant qtValue = VARIANTToQVariant(var,typeName);
+				return qtValue;
 
 			//element->toString(&elemString);
 
@@ -543,15 +554,15 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             qDebug() << "COULD NOT GET DOCUMENT OBJECT! Aborting";
         }
 #endif
-        QTimer::singleShot(2500, this, SLOT(initializeGoogleEarth()));
+        QTimer::singleShot(1500, this, SLOT(initializeGoogleEarth()));
         return;
     }
 
     if (!gEarthInitialized)
     {
-        if (0 == 1)//(!javaScript("isInitialized();").toBool())
+		if (!documentElement("initialized").toBool())
         {
-            QTimer::singleShot(500, this, SLOT(initializeGoogleEarth()));
+            QTimer::singleShot(300, this, SLOT(initializeGoogleEarth()));
             qDebug() << "NOT INITIALIZED, WAITING";
         }
         else
