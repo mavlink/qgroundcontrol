@@ -19,6 +19,8 @@
 #include <QAxObject>
 #include <QUuid>
 #include <mshtml.h>
+#include <comdef.h>
+#include <qaxtypes.h>
 #endif
 
 #include "QGC.h"
@@ -443,22 +445,64 @@ QVariant QGCGoogleEarthView::documentElement(QString name)
     }
     else
     {
-        QVariantList params;
-        QString javaScript("getGlobal(%1)");
-        params.append(javaScript.arg(name));
-        params.append("JScript");
-        QVariant result = jScriptWin->dynamicCall("execScript(QString, QString)", params);
-        qDebug() << "JScript result: " << result << result.toDouble();
-//		if (documentWin)
-//		{
-//			// Get HTMLElement object
-//			QVariantList params;
-//			params.append(name);
-//			//QAxObject* elementWin = documentWin->dynamicCall("getElementById(QString)", params);
-//			QVariant result =documentWin->dynamicCall("toString()");
-//			qDebug() << "GOT RESULT" << result;
-//			return QVariant(0);//QVariant(result);
-//		}
+//        QVariantList params;
+//        QString javaScript("getGlobal(%1)");
+//       params.append(javaScript.arg(name));
+//        params.append("JScript");
+//        QVariant result = jScriptWin->dynamicCall("execScript(QString, QString)", params);
+//        qDebug() << "JScript result: " << result << result.toDouble();
+		if (documentWin)
+		{
+			QString resultString;
+
+			// Get HTMLElement object
+			QVariantList params;
+			IHTMLDocument3* doc;
+			documentWin->queryInterface( IID_IHTMLDocument3, (void**)&doc);
+			params.append(name);
+			IHTMLElement* element = NULL;
+
+			HRESULT res = doc->getElementById(L"JScript_dragWaypointIndex", &element);
+			//BSTR elemString;
+			if (element)
+			{
+				//element->get_innerHTML(&elemString);
+				VARIANT value;
+				element->getAttribute(L"value", 0, &value);
+				QVariant qtValue;
+				bool success = QVariantToVARIANT(qtValue, value);
+				qDebug() << "Convert MS VARIANT to QVariant:" << success;
+				if (success)
+				{
+					qDebug() << "initialized is:"<< qtValue.toInt();
+					return qtValue;
+				}
+
+			//element->toString(&elemString);
+
+			//_bstr_t bstrHello(elemString, true); // passing true means
+                                    // you should not call
+                                    // SysFreeString
+
+			//qDebug() << "BSTR:" << LPCSTR(bstrHello);
+
+			//QAxObject* elementWin = new QAxObject(element, documentWin);
+			//if (elementWin)
+			//{
+			//	QVariant result = elementWin->dynamicCall("toString()");
+			//	qDebug() << "GOT RESULT" << result << result.toString();
+			//}
+			//else
+			//{
+			//	qDebug() << "CREATING HTML ELEMENT FAILED";
+			//}
+			}
+			else
+			{
+				qDebug() << "DID NOT GET HTML ELEMENT";
+			}
+			return QVariant(0);//QVariant(result);
+		}
     }
 #endif
 }

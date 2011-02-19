@@ -447,7 +447,7 @@ function initCallback(object)
     ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
     
     enableEventListener();
-
+	document.getElementById('JScript_initialized').setAttribute('value','true')
     initialized = true;
 }
 
@@ -602,5 +602,7 @@ function failureCallback(object)
     <center>
       <div id='map3d' style='margin: 0; spacing: 0; height: 100%; width: 100%'></div>
     </center>
+	<input type="hidden" id="JScript_initialized" value="false"/>
+    <input type="hidden" id="JScript_dragWaypointIndex" value="581" />
   </body>
 </html>
