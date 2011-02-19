@@ -404,7 +404,7 @@ void QGCGoogleEarthView::printWinException(int no, QString str1, QString str2, Q
 QVariant QGCGoogleEarthView::javaScript(QString javaScript)
 {
 #ifdef Q_OS_MAC
-    if (!jEarthInitialized)
+    if (!jScriptInitialized)
     {
         return QVariant(false);
     }
