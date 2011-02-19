@@ -83,6 +83,7 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(ui->resetButton, SIGNAL(clicked()), this, SLOT(reloadHTML()));
     connect(ui->changeViewButton, SIGNAL(clicked()), this, SLOT(toggleViewMode()));
+    connect(ui->clearTrailsButton, SIGNAL(clicked()), this, SLOT(clearTrails()));
 }
 
 QGCGoogleEarthView::~QGCGoogleEarthView()
@@ -205,6 +206,7 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
     {
         mav = uas;
         javaScript(QString("setCurrAircraft(%1);").arg(uas->getUASID()));
+        updateWaypointList(uas->getUASID());
     }
 }
 
@@ -271,6 +273,15 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, dou
     //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }
 
+void QGCGoogleEarthView::clearTrails()
+{
+    QList<UASInterface*> mavs = UASManager::instance()->getUASList();
+    foreach (UASInterface* currMav, mavs)
+    {
+        javaScript(QString("clearTrail(%1);").arg(currMav->getUASID()));
+    }
+}
+
 void QGCGoogleEarthView::showTrail(bool state)
 {
     // Check if the current trail has to be hidden
@@ -304,8 +315,19 @@ void QGCGoogleEarthView::showWaypoints(bool state)
 void QGCGoogleEarthView::follow(bool follow)
 {
     ui->followAirplaneCheckbox->setChecked(follow);
+    if (follow != followCamera)
+    {
+        if (follow)
+        {
+            setViewMode(VIEW_MODE_CHASE_LOCKED);
+        }
+        else
+        {
+            setViewMode(VIEW_MODE_SIDE);
+        }
+    }
     followCamera = follow;
-    if (gEarthInitialized) javaScript(QString("setFollowEnabled(%1)").arg(follow));
+    javaScript(QString("setFollowEnabled(%1)").arg(follow));
 }
 
 void QGCGoogleEarthView::goHome()
@@ -368,7 +390,14 @@ void QGCGoogleEarthView::printWinException(int no, QString str1, QString str2, Q
 QVariant QGCGoogleEarthView::javaScript(QString javaScript)
 {
 #ifdef Q_OS_MAC
-    return webViewMac->page()->currentFrame()->evaluateJavaScript(javaScript);
+    if (!gEarthInitialized)
+    {
+        return QVariant(false);
+    }
+    else
+    {
+        return webViewMac->page()->currentFrame()->evaluateJavaScript(javaScript);
+    }
 #endif
 #ifdef _MSC_VER
     if(!jScriptInitialized)
@@ -381,7 +410,8 @@ QVariant QGCGoogleEarthView::javaScript(QString javaScript)
         QVariantList params;
         params.append(javaScript);
         params.append("JScript");
-        return jScriptWin->dynamicCall("execScript(QString, QString)", params);
+        QVariant result = jScriptWin->dynamicCall("execScript(QString, QString)", params);
+        return result;
     }
 #endif
 }
@@ -391,7 +421,6 @@ QVariant QGCGoogleEarthView::documentElement(QString name)
 #ifdef Q_OS_MAC
     QString javaScript("getGlobal(%1)");
     QVariant result = webViewMac->page()->currentFrame()->evaluateJavaScript(javaScript.arg(name));
-    //qDebug() << "DOC ELEM:" << name << ":" << result;
     return result;
 #endif
 #ifdef _MSC_VER
@@ -402,20 +431,22 @@ QVariant QGCGoogleEarthView::documentElement(QString name)
     }
     else
     {
-		if (documentWin)
-		{
-			// Get HTMLElement object
-			QVariantList params;
-			params.append(name);
-			//QAxObject* elementWin = documentWin->dynamicCall("getElementById(QString)", params);
-			QVariant result =documentWin->dynamicCall("toString()");
-			qDebug() << "GOT RESULT" << result;
-			return QVariant(0);//QVariant(result);
-		}
-        //QVariantList params;
-        //params.append(javaScript);
-        //params.append("JScript");
-        //return jScriptWin->dynamicCall("execScript(QString, QString)", params);
+        QVariantList params;
+        QString javaScript("getGlobal(%1)");
+        params.append(javaScript.arg(name));
+        params.append("JScript");
+        QVariant result = jScriptWin->dynamicCall("execScript(QString, QString)", params);
+        qDebug() << "JScript result: " << result << result.toDouble();
+//		if (documentWin)
+//		{
+//			// Get HTMLElement object
+//			QVariantList params;
+//			params.append(name);
+//			//QAxObject* elementWin = documentWin->dynamicCall("getElementById(QString)", params);
+//			QVariant result =documentWin->dynamicCall("toString()");
+//			qDebug() << "GOT RESULT" << result;
+//			return QVariant(0);//QVariant(result);
+//		}
     }
 #endif
 }
@@ -469,6 +500,8 @@ void QGCGoogleEarthView::initializeGoogleEarth()
         }
         else
         {
+            gEarthInitialized = true;
+
             // Set home location
             setHome(47.3769, 8.549444, 500);
 
@@ -522,8 +555,6 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             setDistanceMode(ui->camDistanceComboBox->currentIndex());
             enableEditMode(ui->editButton->isChecked());
             follow(this->followCamera);
-
-            gEarthInitialized = true;
         }
     }
 }

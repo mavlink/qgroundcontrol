@@ -73,7 +73,7 @@ public:
 
     enum VIEW_MODE
     {
-        VIEW_MODE_SIDE, ///< View from above, orientation is free
+        VIEW_MODE_SIDE = 0, ///< View from above, orientation is free
         VIEW_MODE_MAP, ///< View from above, orientation is north (map view)
         VIEW_MODE_CHASE_LOCKED, ///< Locked chase camera
         VIEW_MODE_CHASE_FREE, ///< Position is chasing object, but view can rotate around object
@@ -94,6 +94,8 @@ public slots:
     void updateWaypointList(int uas);
     /** @brief Show the vehicle trail */
     void showTrail(bool state);
+    /** @brief Clear the current vehicle trails and start with new ones */
+    void clearTrails();
     /** @brief Show the waypoints */
     void showWaypoints(bool state);
     /** @brief Follow the aircraft during flight */
