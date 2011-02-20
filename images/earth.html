@@ -7,7 +7,7 @@
 <!-- QGroundControl -->
     <title>QGroundControl Google Earth View</title>
     <!-- *** Replace the key below below with your own API key, available at http://code.google.com/apis/maps/signup.html *** -->
-    <script type="text/javascript" src="https://getfirebug.com/firebug-lite-beta.js"></script>
+    <!--<script type="text/javascript" src="https://getfirebug.com/firebug-lite-beta.js"></script>-->
     <script type="text/javascript" src="http://www.google.com/jsapi?key=ABQIAAAAwbkbZLyhsmTCWXbTcjbgbRSzHs7K5SvaUdm8ua-Xxy_-2dYwMxQMhnagaawTo7L1FE1-amhuQxIlXw"></script>
     <script type="text/javascript">
 google.load("earth", "1", { 'language': 'en'});
@@ -23,12 +23,17 @@ var lastAlt = 0;
 var currLat = 47.3769;
 var currLon = 8.549444;
 var currAlt = 470;
+
+var currentCameraLatitude = 0;
+var currentCameraLongitude = 0;
+var currentCameraAltitude = 0;
+
 var currFollowHeading = 0.0;
 
 var homeLat = 0;
 var homeLon = 0;
 var homeAlt = 0;
-var homeViewRange = 500;
+var homeViewRange = 800;
 var homeLocation = null;
 var homeGroundLevel = 0;
 
@@ -85,6 +90,8 @@ var newWaypointLongitude = 0;
 var newWaypointAltitude = 0;
 var newWaypointPending = false;
 
+var clickMode = 0;
+
 var homePlacemark = null;
 
 function getGlobal(variable)
@@ -107,14 +114,38 @@ function setDraggingAllowed(allowed)
 	draggingAllowed = allowed;
 }
 
+function sampleCurrentPosition()
+{
+    var thisView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
+	currentCameraLatitude = thisView.getLatitude();
+	currentCameraLongitude = thisView.getLongitude();
+	currentCameraGroundAltitude = ge.getGlobe().getGroundAltitude(currentCameraLatitude, currentCameraLongitude);
+}
+
+function enableSetHomeMode()
+{
+	clickMode = 1;
+}
+
+function setLookAtLatLon(lat, lon)
+{
+	// Keep the current altitude above ground, just move the position
+	currView = ge.getView().copyAsLookAt(ge.ALTITUDE_RELATIVE_TO_GROUND);
+	currView.setLatitude(lat);
+	currView.setLongitude(lon);
+	ge.getView().setAbstractView(currView);
+}
+
 function setNewWaypointPending(pending)
 {
 	newWaypointPending = pending;
+	document.getElementById('JScript_newWaypointPending').setAttribute('value',pending);
 }
 
 function setDragWaypointPending(pending)
 {
 	dragWaypointPending = pending;
+	document.getElementById('JScript_dragWaypointPending').setAttribute('value',pending);
 }
 
 function isInitialized()
@@ -138,16 +169,35 @@ function enableEventListener()
 // listen for mousedown on the window (look specifically for point placemarks)
 google.earth.addEventListener(ge.getWindow(), 'mousedown', function(event)
 {
+if (clickMode == 1)
+    {
+    	// Set home mode
+    	dragWaypointIndex = 'HOME';
+    	document.getElementById('JScript_dragWaypointIndex').setAttribute('value',dragWaypointIndex);
+		dragWaypointLatitude = event.getLatitude();
+		dragWaypointLongitude = event.getLongitude();
+		dragWaypointAltitude = ge.getGlobe().getGroundAltitude(dragWaypointLatitude, dragWaypointLongitude);
+		dragWaypointPending = true;
+		document.getElementById('JScript_dragWaypointLatitude').setAttribute('value',dragWaypointLatitude);
+	   document.getElementById('JScript_dragWaypointLongitude').setAttribute('value',dragWaypointLongitude);
+	   document.getElementById('JScript_dragWaypointAltitude').setAttribute('value',dragWaypointAltitude);
+	   document.getElementById('JScript_dragWaypointPending').setAttribute('value',true);
+	   setGCSHome(dragWaypointLatitude, dragWaypointLongitude, dragWaypointAltitude);
+}
+    
   if (event.getTarget().getType() == 'KmlPlacemark' &&
       event.getTarget().getGeometry().getType() == 'KmlPoint') {
     var placemark = event.getTarget();
     event.preventDefault();
       if (draggingAllowed)
   {
+  	if (clickMode == 0)
+  	{
     dragInfo = {
       placemark: event.getTarget(),
       dragged: false
     };
+    }
   }
   }
 });
@@ -155,7 +205,7 @@ google.earth.addEventListener(ge.getWindow(), 'mousedown', function(event)
 // listen for mousemove on the globe
 google.earth.addEventListener(ge.getGlobe(), 'mousemove', function(event)
 {
-  if (draggingAllowed)
+  if (draggingAllowed && (clickMode == 0))
   {
   if (dragInfo) {
     event.preventDefault();
@@ -164,10 +214,15 @@ google.earth.addEventListener(ge.getGlobe(), 'mousemove', function(event)
     point.setLongitude(event.getLongitude());
     dragInfo.dragged = true;
     dragWaypointIndex = dragInfo.placemark.getDescription();
+	document.getElementById('JScript_dragWaypointIndex').setAttribute('value',dragWaypointIndex);
 	dragWaypointLatitude = event.getLatitude();
 	dragWaypointLongitude = event.getLongitude();
 	dragWaypointAltitude = point.getAltitude();
 	dragWaypointPending = true;
+	document.getElementById('JScript_dragWaypointLatitude').setAttribute('value',dragWaypointLatitude);
+	   document.getElementById('JScript_dragWaypointLongitude').setAttribute('value',dragWaypointLongitude);
+	   document.getElementById('JScript_dragWaypointAltitude').setAttribute('value',dragWaypointAltitude);
+	   document.getElementById('JScript_dragWaypointPending').setAttribute('value',true);
   }
   }
 });
@@ -175,7 +230,7 @@ google.earth.addEventListener(ge.getGlobe(), 'mousemove', function(event)
 // listen for mouseup on the window
 google.earth.addEventListener(ge.getWindow(), 'mouseup', function(event)
 {
-  if (draggingAllowed)
+  if (draggingAllowed && (clickMode == 0))
   {
   if (dragInfo) {
     if (dragInfo.dragged)
@@ -184,16 +239,22 @@ google.earth.addEventListener(ge.getWindow(), 'mouseup', function(event)
       	event.preventDefault();
       	// Get drag end location
       	dragWaypointIndex = dragInfo.placemark.getDescription();
+		document.getElementById('JScript_dragWaypointIndex').setAttribute('value',dragWaypointIndex);
       	var point = dragInfo.placemark.getGeometry();
       	dragWaypointLatitude = event.getLatitude();
 		dragWaypointLongitude = event.getLongitude();
 		dragWaypointAltitude = point.getAltitude();
     	dragWaypointPending = true;
+		document.getElementById('JScript_dragWaypointLatitude').setAttribute('value',dragWaypointLatitude);
+	   document.getElementById('JScript_dragWaypointLongitude').setAttribute('value',dragWaypointLongitude);
+	   document.getElementById('JScript_dragWaypointAltitude').setAttribute('value',dragWaypointAltitude);
+	   document.getElementById('JScript_dragWaypointPending').setAttribute('value',true);
     }
     
     dragInfo = null;
   }
   }
+      clickMode = 0;
 });
 
 // Listen for wp creation request on the globe
@@ -206,6 +267,10 @@ google.earth.addEventListener(ge.getGlobe(), 'dblclick', function(event){
        newWaypointLongitude = event.getLongitude();
        newWaypointAltitude = ge.getGlobe().getGroundAltitude(newWaypointLatitude, newWaypointLongitude);
        newWaypointPending = true;
+	   document.getElementById('JScript_newWaypointLatitude').setAttribute('value',newWaypointLatitude);
+	   document.getElementById('JScript_newWaypointLongitude').setAttribute('value',newWaypointLongitude);
+	   document.getElementById('JScript_newWaypointAltitude').setAttribute('value',newWaypointAltitude);
+	   document.getElementById('JScript_newWaypointPending').setAttribute('value',true);
     }
 }); 
 }
@@ -219,6 +284,9 @@ function setCurrAircraft(id)
 
 function setGCSHome(lat, lon, alt)
 {
+	// Only update if position actually changed
+	if (lat != homeLat || lon != homeLon || alt != homeAlt)
+	{
 	homeLat = lat;
 	homeLon = lon;
 	homeAlt = alt;
@@ -249,12 +317,15 @@ function setGCSHome(lat, lon, alt)
 	    }
 	    else
 	    {
-	    	var location = ge.createPoint(''); 
-	    location.setLatitude(lat); 
-	    location.setLongitude(lon);
-	    location.setAltitude(alt); 
-	    homePlacemark.setGeometry(location);
-	    homePlacemark.setDescription('HOME');
+	    	var location = ge.createPoint('');
+	    	if (location.getLatitude() != lat || location.getLongitude() != lon || location.getAltitude() != alt)
+	    	{
+	    		location.setLatitude(lat); 
+	    		location.setLongitude(lon);
+	    		location.setAltitude(alt); 
+	    		homePlacemark.setGeometry(location);
+	    		homePlacemark.setDescription('HOME');
+	    	}
 	    }
 
 	    homeGroundLevel = ge.getGlobe().getGroundAltitude(lat,lon);
@@ -262,6 +333,7 @@ function setGCSHome(lat, lon, alt)
 	    {
 		    homeGroundLevel = alt;
 	    }
+	}
 }
 
 function updateWaypointListLength(id, len)
@@ -447,7 +519,7 @@ function initCallback(object)
     ge.getLayerRoot().enableLayerById(ge.LAYER_TREES, true);
     
     enableEventListener();
-
+	document.getElementById('JScript_initialized').setAttribute('value','true');
     initialized = true;
 }
 
@@ -544,14 +616,8 @@ function setViewMode(mode)
 	{
 		lastTilt = currView.getTilt();
 		lastHeading = currView.getHeading();
-		//var lastLat2 = currView.getLatitude();
-		//var lastLon2 = currView.getLongitude();
-		//var lastAlt2 = currView.getAltitude();
 		currView.setTilt(0);
 		currView.setHeading(0);
-		//currView.setLatitude(lastLat2);
-		//currView.setLongitude(lastLon2);
-		//currView.setAltitude(lastAlt2);
 	}
 	
 	viewMode = mode;
@@ -602,5 +668,18 @@ function failureCallback(object)
     <center>
       <div id='map3d' style='margin: 0; spacing: 0; height: 100%; width: 100%'></div>
     </center>
+	<input type="hidden" id="JScript_initialized" value="false" />
+    <input type="hidden" id="JScript_dragWaypointIndex" value="0" />
+	<input type="hidden" id="JScript_dragWaypointLatitude" value="0" />
+	<input type="hidden" id="JScript_dragWaypointLongitude" value="0" />
+	<input type="hidden" id="JScript_dragWaypointAltitude" value="0" />
+	<input type="hidden" id="JScript_dragWaypointPending" value="false" />
+	<input type="hidden" id="JScript_newWaypointLatitude" value="0" />
+	<input type="hidden" id="JScript_newWaypointLongitude" value="0" />
+	<input type="hidden" id="JScript_newWaypointAltitude" value="0" />
+	<input type="hidden" id="JScript_newWaypointPending" value="false" />
+	<input type="hidden" id="JScript_currentCameraLatitude" value="0" />
+	<input type="hidden" id="JScript_currentCameraLongitude" value="0" />
+	<input type="hidden" id="JScript_currentCameraGroundAltitude" value="0" />
   </body>
 </html>

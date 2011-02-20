@@ -32,6 +32,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QApplication>
 #include <QMessageBox>
 #include <QTimer>
+#include <QSettings>
 #include "UAS.h"
 #include "UASInterface.h"
 #include "UASManager.h"
@@ -50,19 +51,64 @@ UASManager* UASManager::instance()
     return _instance;
 }
 
+void UASManager::storeSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_UASMANAGER");
+    settings.setValue("HOMELAT", homeLat);
+    settings.setValue("HOMELON", homeLon);
+    settings.setValue("HOMEALT", homeAlt);
+    settings.endGroup();
+    settings.sync();
+}
+
+void UASManager::loadSettings()
+{
+    QSettings settings;
+    settings.sync();
+    settings.beginGroup("QGC_UASMANAGER");
+    setHomePosition(settings.value("HOMELAT", homeLat).toDouble(),
+                    settings.value("HOMELON", homeLon).toDouble(),
+                    settings.value("HOMEALT", homeAlt).toDouble());
+    settings.endGroup();
+}
+
+void UASManager::setHomePosition(double lat, double lon, double alt)
+{
+    // Checking for NaN and infitiny
+    if (lat == lat && lon == lon && alt == alt && !std::isinf(lat) && !std::isinf(lon) && !std::isinf(alt))
+    {
+        bool changed = false;
+        if (homeLat != lat) changed = true;
+        if (homeLon != lon) changed = true;
+        if (homeAlt != alt) changed = true;
+
+        homeLat = lat;
+        homeLon = lon;
+        homeAlt = alt;
+
+        if (changed) emit homePositionChanged(homeLat, homeLon, homeAlt);
+    }
+}
+
 /**
  * @brief Private singleton constructor
  *
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
 UASManager::UASManager() :
-        activeUAS(NULL)
+        activeUAS(NULL),
+        homeLat(47.3769),
+        homeLon(8.549444),
+        homeAlt(470.0)
 {
     start(QThread::LowPriority);
+    loadSettings();
 }
 
 UASManager::~UASManager()
 {
+    storeSettings();
     // Delete all systems
     foreach (UASInterface* mav, systems)
     {
@@ -99,6 +145,7 @@ void UASManager::addUAS(UASInterface* uas)
     {
         systems.append(uas);
         connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
+        connect(this, SIGNAL(homePositionChanged(double,double,double)), uas, SLOT(setHomePosition(double,double,double)));
         emit UASCreated(uas);
     }
 

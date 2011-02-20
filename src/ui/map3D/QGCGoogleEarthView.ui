@@ -6,16 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1089</width>
+    <width>1409</width>
     <height>302</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="1,10,10,10,10,5,1,100,10,10,10,10,10,5,2,2">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="1,10,10,10,10,5,10,1000,10,10,10,10,10,5,2,2,0,0">
    <property name="horizontalSpacing">
-    <number>8</number>
+    <number>4</number>
    </property>
    <property name="verticalSpacing">
     <number>2</number>
@@ -23,7 +23,7 @@
    <property name="margin">
     <number>2</number>
    </property>
-   <item row="0" column="0" colspan="16">
+   <item row="0" column="0" colspan="18">
     <layout class="QVBoxLayout" name="webViewLayout"/>
    </item>
    <item row="1" column="1">
@@ -43,6 +43,32 @@
     </widget>
    </item>
    <item row="1" column="3">
+    <widget class="QPushButton" name="setHomeButton">
+     <property name="text">
+      <string>Set Home</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="2">
+    <widget class="QPushButton" name="editButton">
+     <property name="toolTip">
+      <string>Enable waypoint and home location edit mode</string>
+     </property>
+     <property name="statusTip">
+      <string>Enable waypoint and home location edit mode</string>
+     </property>
+     <property name="text">
+      <string>Edit</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4">
     <widget class="QCheckBox" name="trailCheckbox">
      <property name="toolTip">
       <string>Show MAV trajectories</string>
@@ -58,21 +84,35 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="13">
-    <spacer name="horizontalSpacer">
+   <item row="1" column="5">
+    <widget class="Line" name="line">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Expanding</enum>
+    </widget>
+   </item>
+   <item row="1" column="6">
+    <widget class="QComboBox" name="camDistanceComboBox">
+     <property name="toolTip">
+      <string>Select the MAV to chase</string>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>5</width>
-       <height>20</height>
-      </size>
+     <property name="statusTip">
+      <string>Select the MAV to chase</string>
      </property>
-    </spacer>
+     <property name="whatsThis">
+      <string>Select the MAV to chase</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>MAV Distance</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Ground Distance</string>
+      </property>
+     </item>
+    </widget>
    </item>
    <item row="1" column="7">
     <widget class="QSlider" name="camDistanceSlider">
@@ -115,47 +155,17 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="5">
-    <widget class="QComboBox" name="camDistanceComboBox">
-     <property name="toolTip">
-      <string>Select the MAV to chase</string>
-     </property>
-     <property name="statusTip">
-      <string>Select the MAV to chase</string>
-     </property>
-     <property name="whatsThis">
-      <string>Select the MAV to chase</string>
-     </property>
-     <item>
-      <property name="text">
-       <string>MAV Distance</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>Ground Distance</string>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="1" column="4">
-    <widget class="Line" name="line">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="12">
-    <widget class="QPushButton" name="resetButton">
-     <property name="text">
-      <string>Reset</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="9">
     <widget class="QPushButton" name="changeViewButton">
      <property name="text">
       <string>Overhead</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="10">
+    <widget class="Line" name="line_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
     </widget>
    </item>
@@ -175,28 +185,28 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="10">
-    <widget class="Line" name="line_2">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+   <item row="1" column="12">
+    <widget class="QPushButton" name="resetButton">
+     <property name="text">
+      <string>Reset</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="2">
-    <widget class="QPushButton" name="editButton">
-     <property name="toolTip">
-      <string>Enable waypoint and home location edit mode</string>
+   <item row="1" column="13">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
-     <property name="statusTip">
-      <string>Enable waypoint and home location edit mode</string>
+     <property name="sizeType">
+      <enum>QSizePolicy::MinimumExpanding</enum>
      </property>
-     <property name="text">
-      <string>Edit</string>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>10</width>
+       <height>20</height>
+      </size>
      </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-    </widget>
+    </spacer>
    </item>
    <item row="1" column="14">
     <widget class="QCheckBox" name="atmosphereCheckBox">
@@ -221,6 +231,13 @@
      </property>
      <property name="text">
       <string>Day/Night</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QPushButton" name="toLatLonButton">
+     <property name="text">
+      <string>Lat/Lon</string>
      </property>
     </widget>
    </item>

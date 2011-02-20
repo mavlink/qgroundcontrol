@@ -309,6 +309,8 @@ public slots:
 
     /** @brief Set world frame origin at current GPS position */
     void setLocalOriginAtCurrentGPSPosition();
+    /** @brief Set world frame origin / home position at this GPS position */
+    void setHomePosition(double lat, double lon, double alt);
     /** @brief Set local position setpoint */
     void setLocalPositionSetpoint(float x, float y, float z, float yaw);
     /** @brief Add an offset in body frame to the setpoint */

@@ -104,6 +104,10 @@ public slots:
     void goHome();
     /** @brief Set the home location */
     void setHome(double lat, double lon, double alt);
+    /** @brief Set the home location interactively in the UI */
+    void setHome();
+    /** @brief Move the view to a latitude / longitude position */
+    void moveToPosition();
     /** @brief Allow waypoint editing */
     void enableEditMode(bool mode);
     /** @brief Enable daylight/night */
