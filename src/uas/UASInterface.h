@@ -224,6 +224,8 @@ public slots:
     //virtual void clearWaypointList() = 0;
     /** @brief Set world frame origin at current GPS position */
     virtual void setLocalOriginAtCurrentGPSPosition() = 0;
+    /** @brief Set world frame origin / home position at this GPS position */
+    virtual void setHomePosition(double lat, double lon, double alt) = 0;
     /** @brief Request all onboard parameters of all components */
     virtual void requestParameters() = 0;
     /** @brief Request one specific onboard parameter */
