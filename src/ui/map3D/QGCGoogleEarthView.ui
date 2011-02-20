@@ -38,7 +38,7 @@
       <string>Go to home location</string>
      </property>
      <property name="text">
-      <string>To Home</string>
+      <string>Home</string>
      </property>
     </widget>
    </item>
@@ -237,7 +237,7 @@
    <item row="1" column="0">
     <widget class="QPushButton" name="toLatLonButton">
      <property name="text">
-      <string>To Lat/Lon</string>
+      <string>Lat/Lon</string>
      </property>
     </widget>
    </item>
