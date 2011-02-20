@@ -2,6 +2,7 @@
 #include <QDir>
 #include <QShowEvent>
 #include <QSettings>
+#include <QInputDialog>
 
 #include <QDebug>
 #include <QFile>
@@ -88,6 +89,8 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
     connect(ui->clearTrailsButton, SIGNAL(clicked()), this, SLOT(clearTrails()));
     connect(ui->atmosphereCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableAtmosphere(bool)));
     connect(ui->daylightCheckBox, SIGNAL(clicked(bool)), this, SLOT(enableDaylight(bool)));
+
+    connect(UASManager::instance(), SIGNAL(homePositionChanged(double,double,double)), this, SLOT(setHome(double,double,double)));
 }
 
 QGCGoogleEarthView::~QGCGoogleEarthView()
@@ -355,7 +358,41 @@ void QGCGoogleEarthView::goHome()
 
 void QGCGoogleEarthView::setHome(double lat, double lon, double alt)
 {
+    qDebug() << "SETTING GCS HOME IN GOOGLE MAPS" << lat << lon << alt;
     javaScript(QString("setGCSHome(%1,%2,%3);").arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15));
+}
+
+void QGCGoogleEarthView::setHome()
+{
+    javaScript(QString("enableSetHomeMode();"));
+}
+
+void QGCGoogleEarthView::moveToPosition()
+{
+    bool ok;
+    javaScript("sampleCurrentPosition();");
+    double latitude = documentElement("currentCameraLatitude").toDouble();
+    double longitude = documentElement("currentCameraLongitude").toDouble();
+    QString text = QInputDialog::getText(this, tr("Please enter coordinates"),
+                                         tr("Coordinates (Lat,Lon):"), QLineEdit::Normal,
+                                         QString("%1,%2").arg(latitude).arg(longitude), &ok);
+    if (ok && !text.isEmpty())
+    {
+        QStringList split = text.split(",");
+        if (split.length() == 2)
+        {
+            bool convert;
+            double latitude = split.first().toDouble(&convert);
+            ok &= convert;
+            double longitude = split.last().toDouble(&convert);
+            ok &= convert;
+
+            if (ok)
+            {
+                javaScript(QString("setLookAtLatLon(%1,%2);").arg(latitude, 0, 'f', 15).arg(longitude, 0, 'f', 15));
+            }
+        }
+    }
 }
 
 void QGCGoogleEarthView::hideEvent(QHideEvent* event)
@@ -441,80 +478,47 @@ QVariant QGCGoogleEarthView::documentElement(QString name)
     if(!jScriptInitialized)
     {
         qDebug() << "TOO EARLY JAVASCRIPT CALL, ABORTING";
-        return QVariant(false);
     }
     else
     {
-//        QVariantList params;
-//        QString javaScript("getGlobal(%1)");
-//       params.append(javaScript.arg(name));
-//        params.append("JScript");
-//        QVariant result = jScriptWin->dynamicCall("execScript(QString, QString)", params);
-//        qDebug() << "JScript result: " << result << result.toDouble();
-		if (documentWin)
-		{
-			QString resultString;
+        if (documentWin)
+        {
+            QString resultString;
 
-			// Get HTMLElement object
-			QVariantList params;
-			IHTMLDocument3* doc;
-			documentWin->queryInterface( IID_IHTMLDocument3, (void**)&doc);
-			params.append(name);
-			IHTMLElement* element = NULL;
-			// Append alias
-			name.prepend("JScript_");
-			HRESULT res = doc->getElementById(QStringToBSTR(name), &element);
-			//BSTR elemString;
-			if (element)
-			{
-				//element->get_innerHTML(&elemString);
-				VARIANT var;
-				var.vt = VT_BSTR;
-				HRESULT res = element->getAttribute(L"value", 0, &var);
-				if (SUCCEEDED(res) && (var.vt != VT_NULL))
-				{
-					//VariantChangeType(&var, &var, 0, VT_BSTR);
-					//qDebug() << "GOT ATTRIBUTE";
-					//_bstr_t bstrHello(var.bstrVal); // passing true means
-                                    // you should not call
-                                    // SysFreeString
-
-			        //qDebug() << "BSTR:" << LPCSTR(bstrHello);
-				}
-				else
-				{
-					qDebug() << "JAVASCRIPT ATTRIBUTE" << name << "NOT FOUND";
-				}
-				QByteArray typeName;
-				QVariant qtValue = VARIANTToQVariant(var,typeName);
-				return qtValue;
-
-			//element->toString(&elemString);
-
-			//_bstr_t bstrHello(elemString, true); // passing true means
-                                    // you should not call
-                                    // SysFreeString
-
-			//qDebug() << "BSTR:" << LPCSTR(bstrHello);
-
-			//QAxObject* elementWin = new QAxObject(element, documentWin);
-			//if (elementWin)
-			//{
-			//	QVariant result = elementWin->dynamicCall("toString()");
-			//	qDebug() << "GOT RESULT" << result << result.toString();
-			//}
-			//else
-			//{
-			//	qDebug() << "CREATING HTML ELEMENT FAILED";
-			//}
-			}
-			else
-			{
-				qDebug() << "DID NOT GET HTML ELEMENT";
-			}
-			return QVariant(0);//QVariant(result);
-		}
+            // Get HTMLElement object
+            QVariantList params;
+            IHTMLDocument3* doc;
+            documentWin->queryInterface( IID_IHTMLDocument3, (void**)&doc);
+            params.append(name);
+            IHTMLElement* element = NULL;
+            // Append alias
+            name.prepend("JScript_");
+            HRESULT res = doc->getElementById(QStringToBSTR(name), &element);
+            //BSTR elemString;
+            if (element)
+            {
+                //element->get_innerHTML(&elemString);
+                VARIANT var;
+                var.vt = VT_BSTR;
+                HRESULT res = element->getAttribute(L"value", 0, &var);
+                if (SUCCEEDED(res) && (var.vt != VT_NULL))
+                {
+                    QByteArray typeName;
+                    QVariant qtValue = VARIANTToQVariant(var,typeName);
+                    return qtValue;
+                }
+                else
+                {
+                    qDebug() << __FILE__ << __LINE__ << "JAVASCRIPT ATTRIBUTE" << name << "NOT FOUND";
+                }
+            }
+            else
+            {
+                qDebug() << __FILE__ << __LINE__ << "DID NOT GET HTML ELEMENT" << name;
+            }
+        }
     }
+    return QVariant(0);
 #endif
 }
 
@@ -529,22 +533,18 @@ void QGCGoogleEarthView::initializeGoogleEarth()
         QAxObject* doc = webViewWin->querySubObject("Document()");
         //IDispatch* Disp;
         IDispatch* winDoc = NULL;
-		IHTMLDocument2* document = NULL;
+        IHTMLDocument2* document = NULL;
 
         //332C4425-26CB-11D0-B483-00C04FD90119 IHTMLDocument2
         //25336920-03F9-11CF-8FD0-00AA00686F13 HTMLDocument
         doc->queryInterface(QUuid("{332C4425-26CB-11D0-B483-00C04FD90119}"), (void**)(&winDoc));
         if (winDoc)
         {
-            // Security:
-            // CoInternetSetFeatureEnabled
-            // (FEATURE_LOCALMACHINE_LOCKDOWN, SET_FEATURE_ON_PROCESS, TRUE);
-            //
             document = NULL;
             winDoc->QueryInterface( IID_IHTMLDocument2, (void**)&document );
             IHTMLWindow2 *window = NULL;
             document->get_parentWindow( &window );
-			documentWin = new QAxObject(document, webViewWin);
+            documentWin = new QAxObject(document, webViewWin);
             jScriptWin = new QAxObject(window, webViewWin);
             connect(jScriptWin, SIGNAL(exception(int,QString,QString,QString)), this, SLOT(printWinException(int,QString,QString,QString)));
             jScriptInitialized = true;
@@ -570,10 +570,7 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             gEarthInitialized = true;
 
             // Set home location
-            setHome(47.3769, 8.549444, 500);
-
-            // Move to home location
-            goHome();
+            setHome(UASManager::instance()->getHomeLatitude(), UASManager::instance()->getHomeLongitude(), UASManager::instance()->getHomeAltitude());
 
             // Add all MAVs
             QList<UASInterface*> mavs = UASManager::instance()->getUASList();
@@ -601,6 +598,15 @@ void QGCGoogleEarthView::initializeGoogleEarth()
 
             // Go home
             connect(ui->goHomeButton, SIGNAL(clicked()), this, SLOT(goHome()));
+            // Set home
+            connect(ui->setHomeButton, SIGNAL(clicked()), this, SLOT(setHome()));
+
+            // Visibility of set home button
+            connect(ui->editButton, SIGNAL(clicked(bool)), ui->setHomeButton, SLOT(setVisible(bool)));
+            ui->setHomeButton->setVisible(ui->editButton->isChecked());
+
+            // To Lat/Lon button
+            connect(ui->toLatLonButton, SIGNAL(clicked()), this, SLOT(moveToPosition()));
 
             // Cam distance slider
             connect(ui->camDistanceSlider, SIGNAL(valueChanged(int)), this, SLOT(setViewRangeScaledInt(int)), Qt::UniqueConnection);
@@ -624,6 +630,9 @@ void QGCGoogleEarthView::initializeGoogleEarth()
             enableAtmosphere(ui->atmosphereCheckBox->isChecked());
             enableDaylight(ui->daylightCheckBox->isChecked());
             follow(this->followCamera);
+
+            // Move to home location
+            goHome();
         }
     }
 }
@@ -723,7 +732,9 @@ void QGCGoogleEarthView::updateState()
                 QString idText = documentElement("dragWaypointIndex").toString();
                 if (idText == "HOME")
                 {
-                    setHome(latitude, longitude, altitude);
+                    qDebug() << "HOME UPDATED!";
+                    UASManager::instance()->setHomePosition(latitude, longitude, altitude);
+                    ui->setHomeButton->setChecked(false);
                 }
                 else
                 {

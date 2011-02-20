@@ -1042,6 +1042,20 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
     }
 }
 
+void UAS::setHomePosition(double lat, double lon, double alt)
+{
+    // Send new home position to UAS
+    mavlink_gps_set_global_origin_t home;
+    home.target_system = uasId;
+    home.target_component = 0; // ALL components
+    home.latitude = lat*1E7;
+    home.longitude = lon*1E7;
+    home.altitude = alt*1000;
+    mavlink_message_t msg;
+    mavlink_msg_gps_set_global_origin_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &home);
+    sendMessage(msg);
+}
+
 void UAS::setLocalOriginAtCurrentGPSPosition()
 {
 
@@ -1061,7 +1075,7 @@ void UAS::setLocalOriginAtCurrentGPSPosition()
     if (ret == QMessageBox::Yes)
     {
         mavlink_message_t msg;
-        mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getSystemId(), &msg, this->getUASID(), 0, MAV_ACTION_SET_ORIGIN);
+        mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_ACTION_SET_ORIGIN);
         // Send message twice to increase chance that it reaches its goal
         sendMessage(msg);
         // Wait 5 ms

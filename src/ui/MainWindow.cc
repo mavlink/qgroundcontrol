@@ -939,6 +939,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     storeSettings();
     aboutToCloseFlag = true;
     mavlink->storeSettings();
+    UASManager::instance()->storeSettings();
     QMainWindow::closeEvent(event);
 }
 

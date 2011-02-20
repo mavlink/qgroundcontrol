@@ -70,6 +70,12 @@ public:
     UASInterface* getUASForId(int id);
 
     QList<UASInterface*> getUASList();
+    /** @brief Get home position latitude */
+    double getHomeLatitude() const { return homeLat; }
+    /** @brief Get home position longitude */
+    double getHomeLongitude() const { return homeLon; }
+    /** @brief Get home position altitude */
+    double getHomeAltitude() const { return homeAlt; }
 
 
 public slots:
@@ -162,12 +168,23 @@ public slots:
     /** @brief Shut down the onboard operating system down */
     bool shutdownActiveUAS();
 
+    /** @brief Set the current home position */
+    void setHomePosition(double lat, double lon, double alt);
+
+    /** @brief Load settings */
+    void loadSettings();
+    /** @brief Store settings */
+    void storeSettings();
+
 
 protected:
     UASManager();
     QList<UASInterface*> systems;
     UASInterface* activeUAS;
     QMutex activeUASMutex;
+    double homeLat;
+    double homeLon;
+    double homeAlt;
 
 signals:
     void UASCreated(UASInterface* UAS);
@@ -181,6 +198,8 @@ signals:
     void activeUASStatusChanged(UASInterface* UAS, bool active);
     /** @brief The UAS currently under main operator control changed */
     void activeUASStatusChanged(int systemId, bool active);
+    /** @brief Current home position changed */
+    void homePositionChanged(double lat, double lon, double alt);
 
 };
 
