@@ -1,3 +1,3 @@
-[submodule "MAVLink"]
-	path = MAVLink
-	url = git://github.com/pixhawk/mavlink.git
+[submodule "thirdParty/mavlink"]
+	path = thirdParty/mavlink
+	url = https://github.com/pixhawk/mavlink.git
