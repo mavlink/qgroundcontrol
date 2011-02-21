@@ -31,11 +31,11 @@ else(PHONON_FOUND)
    endif(PHONON_INCLUDE_DIR AND PHONON_LIBRARY)
 
    # As discussed on kde-buildsystem: first look at CMAKE_PREFIX_PATH, then at the suggested PATHS (kde4 install dir)
-   find_library(PHONON_LIBRARY NAMES phonon phonon4 PATHS ${KDE4_LIB_INSTALL_DIR} ${QT_LIBRARY_DIR} NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH)
+   find_library(PHONON_LIBRARY NAMES phonon phonon4 PATHS /usr/lib ${KDE4_LIB_INSTALL_DIR} ${QT_LIBRARY_DIR})
    # then at the default system locations (CMAKE_SYSTEM_PREFIX_PATH, i.e. /usr etc.)
    find_library(PHONON_LIBRARY NAMES phonon phonon4)
 
-   find_path(PHONON_INCLUDE_DIR NAMES phonon/phonon_export.h PATHS ${KDE4_INCLUDE_INSTALL_DIR} ${QT_INCLUDE_DIR} ${INCLUDE_INSTALL_DIR} ${QT_LIBRARY_DIR} NO_SYSTEM_ENVIRONMENT_PATH NO_CMAKE_SYSTEM_PATH)
+   find_path(PHONON_INCLUDE_DIR NAMES phonon/phonon_export.h PATHS /usr/include ${KDE4_INCLUDE_INSTALL_DIR} ${QT_INCLUDE_DIR} ${INCLUDE_INSTALL_DIR} ${QT_LIBRARY_DIR})
    find_path(PHONON_INCLUDE_DIR NAMES phonon/phonon_export.h)
 
    if(PHONON_INCLUDE_DIR AND PHONON_LIBRARY)
