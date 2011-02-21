@@ -176,6 +176,7 @@ protected: //COMMENTS FOR TEST UNIT
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
     int airframe;               ///< The airframe type
     bool attitudeKnown;         ///< True if attitude was received, false else
+    QGCUASParamManager* paramManager; ///< Parameter manager class
 
 public:
     /** @brief Set the current battery type */
@@ -192,6 +193,11 @@ public:
     bool isAuto();
 
     UASWaypointManager* getWaypointManager() { return &waypointManager; }
+    /** @brief Get reference to the param manager **/
+    QGCUASParamManager* getParamManager() const { return paramManager; }
+    // TODO Will be removed
+    /** @brief Set reference to the param manager **/
+    void setParamManager(QGCUASParamManager* manager) { paramManager = manager; }
     int getSystemType();
     QImage getImage();
     void requestImage(); // ?

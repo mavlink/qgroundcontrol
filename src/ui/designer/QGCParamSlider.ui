@@ -7,14 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>499</width>
-    <height>173</height>
+    <height>175</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0">
+   <item row="1" column="0" colspan="4">
     <widget class="QLineEdit" name="editNameLabel">
      <property name="text">
       <string>Informal Name..</string>
@@ -69,24 +69,69 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="0" colspan="6">
+   <item row="5" column="0" colspan="7">
     <widget class="QLabel" name="editStatusLabel">
      <property name="text">
-      <string>TextLabel</string>
+      <string>Please click on refresh to update list..</string>
      </property>
     </widget>
    </item>
    <item row="3" column="0" colspan="3">
-    <widget class="QComboBox" name="editSelectComponentComboBox"/>
-   </item>
-   <item row="5" column="6">
-    <widget class="QPushButton" name="editDoneButton">
-     <property name="text">
-      <string>Done</string>
+    <widget class="QComboBox" name="editSelectComponentComboBox">
+     <property name="toolTip">
+      <string>Select component</string>
+     </property>
+     <property name="statusTip">
+      <string>Select component</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="6">
+   <item row="3" column="4" colspan="3">
+    <widget class="QComboBox" name="editSelectParamComboBox">
+     <property name="toolTip">
+      <string>Select parameter</string>
+     </property>
+     <property name="statusTip">
+      <string>Select parameter</string>
+     </property>
+     <item>
+      <property name="text">
+       <string>Click on refresh..</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="2" column="7">
+    <widget class="QPushButton" name="writeButton">
+     <property name="toolTip">
+      <string>Transmit the current slider value to the system</string>
+     </property>
+     <property name="statusTip">
+      <string>Transmit the current slider value to the system</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="icon">
+      <iconset resource="../../../mavground.qrc">
+       <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="8">
+    <widget class="QPushButton" name="readButton">
+     <property name="toolTip">
+      <string>Read the current parameter value on the system</string>
+     </property>
+     <property name="statusTip">
+      <string>Read the current parameter value on the system</string>
+     </property>
+     <property name="text">
+      <string>R</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="7" colspan="2">
     <widget class="QPushButton" name="editRefreshParamsButton">
      <property name="enabled">
       <bool>true</bool>
@@ -96,17 +141,17 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="4" colspan="2">
-    <widget class="QComboBox" name="editSelectParamComboBox">
-     <item>
-      <property name="text">
-       <string>Select Parameter..</string>
-      </property>
-     </item>
+   <item row="5" column="7" colspan="2">
+    <widget class="QPushButton" name="editDoneButton">
+     <property name="text">
+      <string>Done</string>
+     </property>
     </widget>
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../../mavground.qrc"/>
+ </resources>
  <connections/>
 </ui>

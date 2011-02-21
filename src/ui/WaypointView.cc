@@ -36,19 +36,18 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     customCommand->setupUi(m_ui->customActionWidget);
 
     // add actions
-    m_ui->comboBox_action->addItem(tr("Navigate"),MAV_CMD_NAV_WAYPOINT);
-    m_ui->comboBox_action->addItem(tr("TakeOff"),MAV_CMD_NAV_TAKEOFF);
-    m_ui->comboBox_action->addItem(tr("Loiter Unlim."),MAV_CMD_NAV_LOITER_UNLIM);
-    m_ui->comboBox_action->addItem(tr("Loiter Time"),MAV_CMD_NAV_LOITER_TIME);
-    m_ui->comboBox_action->addItem(tr("Loiter Turns"),MAV_CMD_NAV_LOITER_TURNS);
-    m_ui->comboBox_action->addItem(tr("Ret. to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
-    m_ui->comboBox_action->addItem(tr("Land"),MAV_CMD_NAV_LAND);
+    m_ui->comboBox_action->addItem(tr("NAV: Waypoint"),MAV_CMD_NAV_WAYPOINT);
+    m_ui->comboBox_action->addItem(tr("NAV: TakeOff"),MAV_CMD_NAV_TAKEOFF);
+    m_ui->comboBox_action->addItem(tr("NAV: Loiter Unlim."),MAV_CMD_NAV_LOITER_UNLIM);
+    m_ui->comboBox_action->addItem(tr("NAV: Loiter Time"),MAV_CMD_NAV_LOITER_TIME);
+    m_ui->comboBox_action->addItem(tr("NAV: Loiter Turns"),MAV_CMD_NAV_LOITER_TURNS);
+    m_ui->comboBox_action->addItem(tr("NAV: Ret. to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
+    m_ui->comboBox_action->addItem(tr("NAV: Land"),MAV_CMD_NAV_LAND);
+    m_ui->comboBox_action->addItem(tr("NAV: Target"),MAV_CMD_NAV_TARGET);
+    m_ui->comboBox_action->addItem(tr("IF: Delay over"),MAV_CMD_CONDITION_DELAY);
+    m_ui->comboBox_action->addItem(tr("IF: Yaw angle is"),MAV_CMD_CONDITION_YAW);
+    m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);
     m_ui->comboBox_action->addItem(tr("Other"), MAV_CMD_ENUM_END);
-    //    m_ui->comboBox_action->addItem(tr("Delay"), MAV_ACTION_DELAY_BEFORE_COMMAND);
-    //    m_ui->comboBox_action->addItem(tr("Ascend/Descent"), MAV_ACTION_ASCEND_AT_RATE);
-    //    m_ui->comboBox_action->addItem(tr("Change Mode"), MAV_ACTION_CHANGE_MODE);
-    //    m_ui->comboBox_action->addItem(tr("Relay ON"), MAV_ACTION_RELAY_ON);
-    //    m_ui->comboBox_action->addItem(tr("Relay OFF"), MAV_ACTION_RELAY_OFF);
 
     // add frames 
     m_ui->comboBox_frame->addItem("Global",MAV_FRAME_GLOBAL);
@@ -203,6 +202,17 @@ void WaypointView::updateActionView(int action)
         m_ui->customActionWidget->hide();
         m_ui->orbitSpinBox->show();
         m_ui->holdTimeSpinBox->show();
+        break;
+    case MAV_CMD_NAV_TARGET:
+        m_ui->orbitSpinBox->hide();
+        m_ui->takeOffAngleSpinBox->hide();
+        m_ui->turnsSpinBox->hide();
+        m_ui->holdTimeSpinBox->show();
+        m_ui->customActionWidget->hide();
+
+        m_ui->autoContinue->show();
+        m_ui->acceptanceSpinBox->hide();
+        m_ui->yawSpinBox->hide();
         break;
     default:
         break;
