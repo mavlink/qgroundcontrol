@@ -22,7 +22,7 @@ public slots:
     virtual void setComponent(int comp) {_component = comp;}
     virtual void writeSettings(QSettings& settings) = 0;
     virtual void readSettings(const QSettings& settings) = 0;
-    void setActiveUAS(UASInterface *uas);
+    virtual void setActiveUAS(UASInterface *uas);
 
 signals:
     void editingFinished();
