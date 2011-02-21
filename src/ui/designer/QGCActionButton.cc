@@ -35,10 +35,10 @@ const char* kActionLabels[MAV_ACTION_NB] =
  "LOITER",
  "SET ORIGIN",
  "RELAY ON",
- "RELAY OFF",
- "GET IMAGE",
- "START VIDEO",
- "STOP VIDEO",
+ //"RELAY OFF",
+ //"GET IMAGE",
+ //"START VIDEO",
+ //"STOP VIDEO",
  "RESET MAP",
  "RESET PLAN"};
 

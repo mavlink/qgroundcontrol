@@ -592,30 +592,30 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget(bool)), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
     }
 
-//    if (!slugsDataWidget)
-//    {
-//        // Dialog widgets
-//        slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
-//        slugsDataWidget->setWidget( new SlugsDataSensorView(this));
-//        slugsDataWidget->setObjectName("SLUGS_DATA_DOCK_WIDGET");
-//        addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget()), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
-//    }
+    if (!slugsDataWidget)
+    {
+        // Dialog widgets
+        slugsDataWidget = new QDockWidget(tr("Slugs Data"), this);
+        slugsDataWidget->setWidget( new SlugsDataSensorView(this));
+        slugsDataWidget->setObjectName("SLUGS_DATA_DOCK_WIDGET");
+        addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget(bool)), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
+    }
 
-//    if (!slugsPIDControlWidget)
-//    {
-//        slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
-//        slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
-//        slugsPIDControlWidget->setObjectName("SLUGS_PID_CONTROL_DOCK_WIDGET");
-//        addToToolsMenu (slugsPIDControlWidget, tr("PID Configuration"), SLOT(showToolWidget()), MENU_SLUGS_PID, Qt::LeftDockWidgetArea);
-//    }
+    if (!slugsPIDControlWidget)
+    {
+        slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
+        slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
+        slugsPIDControlWidget->setObjectName("SLUGS_PID_CONTROL_DOCK_WIDGET");
+        addToToolsMenu (slugsPIDControlWidget, tr("PID Configuration"), SLOT(showToolWidget(bool)), MENU_SLUGS_PID, Qt::LeftDockWidgetArea);
+    }
 
-//    if (!slugsHilSimWidget)
-//    {
-//        slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
-//        slugsHilSimWidget->setWidget( new SlugsHilSim(this));
-//        slugsHilSimWidget->setObjectName("SLUGS_HIL_SIM_DOCK_WIDGET");
-//        addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget()), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
-//    }
+    if (!slugsHilSimWidget)
+    {
+        slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
+        slugsHilSimWidget->setWidget( new SlugsHilSim(this));
+        slugsHilSimWidget->setObjectName("SLUGS_HIL_SIM_DOCK_WIDGET");
+        addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget(bool)), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
+    }
 
 //    if (!slugsCamControlWidget)
 //    {
@@ -990,6 +990,7 @@ void MainWindow::updateLocationSettings (Qt::DockWidgetArea location)
     }
 }
 
+
 /**
  * Connect the signals and slots of the common window widgets
  */
@@ -1003,6 +1004,12 @@ void MainWindow::connectCommonWidgets()
 
     if (mapWidget && waypointsDockWidget->widget())
     {
+
+        //
+        connect(waypointsDockWidget->widget(), SIGNAL(changePointList()), mapWidget, SLOT(clearWaypoints()));
+
+
+
 
     }
 
@@ -1026,6 +1033,7 @@ void MainWindow::createCustomWidget()
     QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
     connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
     dock->setWidget(tool);
+
     QAction* showAction = new QAction("Show Unnamed Tool", this);
     connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
     connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
@@ -1052,7 +1060,10 @@ void MainWindow::connectSlugsWidgets()
                 slugsDataWidget->widget(), SLOT(setActiveUAS(UASInterface*)));
     }
 
-
+    if (slugsPIDControlWidget && slugsPIDControlWidget->widget()){
+        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+                slugsPIDControlWidget->widget(), SLOT(activeUasSet(UASInterface*)));
+    }
 }
 
 void MainWindow::arrangeCommonCenterStack()
@@ -1682,18 +1693,27 @@ void MainWindow::UASCreated(UASInterface* uas)
                 // Connect Slugs Actions
                 connectSlugsActions();
 
+//                if(slugsDataWidget)
+//                {
+//                    SlugsDataSensorView *mm = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+//                    if(mm)
+//                    {
+//                        mm->addUAS(uas);
+//                    }
+//                }
+
                 // FIXME: This type checking might be redundant
-                //            if (slugsDataWidget) {
-                //              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
-                //              if (dataWidget) {
-                //                SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
-                //                if (mav2) {
-                (dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget()))->addUAS(uas);
-                //                  //loadSlugsView();
-                //                  loadGlobalOperatorView();
-                //                }
-                //              }
-                //            }
+//                //            if (slugsDataWidget) {
+//                //              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+//                //              if (dataWidget) {
+//                //                SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
+//                //                if (mav2) {
+//                (dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget()))->addUAS(uas);
+//                //                  //loadSlugsView();
+//                //                  loadGlobalOperatorView();
+//                //                }
+//                //              }
+//                //            }
 
             }
             break;
