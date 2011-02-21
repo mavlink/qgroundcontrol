@@ -211,23 +211,28 @@ include_directories(
     src/lib/qextserialport
     src/lib/qwt
     lib/QMapControl
+    ${PROJECT_BINARY_DIR}
     ${SDL_INCLUDE_DIR}
     ${OPENGL_INCLUDE_DIR}
-    ${PROJECT_BINARY_DIR}
     ${OPENSCENEGRAPH_INCLUDE_DIRS}
     ${QT_INCLUDE_DIRS}
     ${PHONON_INCLUDE_DIR}/phonon
     ${MAVLINK_INCLUDE_DIRS}
     )
+
 link_libraries(
+    ${SDL_LIBRARY}
     ${OPENGL_LIBRARIES}
     ${OSG_LIBRARIES}
     ${QT_LIBRARIES}
-    ${SDL_LIBRARY}
     ${PHONON_LIBS}
+    qextserialport
+    qmapcontrol
+    qwt
     )
 add_definitions(-D_TTY_POSIX_)
 
+# forms
 set(qgroundcontrolUiSrc
     src/ui/MainWindow.ui
     src/ui/CommSettings.ui
@@ -275,105 +280,137 @@ set(qgroundcontrolUiSrc
     src/ui/QGCSettingsWidget.ui
     )
 
+# non qt object headers
 set(qgroundcontrolHdrs
-    src/MG.h
     src/Core.h
-    src/uas/UASInterface.h
-    src/uas/UAS.h
-    src/uas/UASManager.h
-    src/comm/LinkManager.h
-    src/comm/LinkInterface.h
-    src/comm/SerialLinkInterface.h
-    src/comm/SerialLink.h
-    src/comm/SerialSimulationLink.h
-    src/comm/ProtocolInterface.h
-    src/comm/MAVLinkProtocol.h
-    src/comm/AS4Protocol.h
-    src/ui/CommConfigurationWindow.h
-    src/ui/SerialConfigurationWindow.h
-    src/ui/MainWindow.h
-    src/ui/uas/UASControlWidget.h
-    src/ui/uas/UASListWidget.h
-    src/ui/uas/UASInfoWidget.h
-    src/ui/HUD.h
-    src/ui/linechart/LinechartWidget.h
-    src/ui/linechart/LinechartPlot.h
-    src/ui/linechart/Scrollbar.h
-    src/ui/linechart/ScrollZoomer.h
-    src/configuration.h
-    src/ui/uas/UASView.h
-    src/ui/CameraView.h
-    src/comm/MAVLinkSimulationLink.h
-    src/comm/UDPLink.h
-    src/ui/ParameterInterface.h
-    src/ui/WaypointList.h
-    src/Waypoint.h
-    src/ui/WaypointView.h
-    src/ui/ObjectDetectionView.h
-    src/input/JoystickInput.h
-    src/ui/JoystickWidget.h
-    src/ui/DebugConsole.h
-    src/ui/MapWidget.h
-    src/ui/XMLCommProtocolWidget.h
-    src/ui/mavlink/DomItem.h
-    src/ui/mavlink/DomModel.h
-    src/comm/MAVLinkXMLParser.h
-    src/ui/HDDisplay.h
-    src/ui/MAVLinkSettingsWidget.h
-    src/ui/AudioOutputWidget.h
     src/GAudioOutput.h
     src/LogCompressor.h
-    src/ui/QGCParamWidget.h
-    src/ui/QGCSensorSettingsWidget.h
-    src/ui/linechart/Linecharts.h
-    src/uas/SlugsMAV.h
-    src/uas/PxQuadMAV.h
-    src/uas/ArduPilotMegaMAV.h
-    src/comm/MAVLinkSyntaxHighlighter.h
-    src/ui/watchdog/WatchdogControl.h
-    src/ui/watchdog/WatchdogProcessView.h
-    src/ui/watchdog/WatchdogView.h
-    src/uas/UASWaypointManager.h
-    src/ui/HSIDisplay.h
+    src/MG.h
     src/QGC.h
-    src/ui/QGCFirmwareUpdate.h
-    src/ui/QGCPxImuFirmwareUpdate.h
-    src/ui/QGCDataPlot2D.h
-    src/ui/linechart/IncrementalPlot.h
+    src/Waypoint.h
+    src/comm/AS4Protocol.h
+    src/comm/LinkInterface.h
+    src/comm/LinkManager.h
+    src/comm/MAVLinkProtocol.h
+    src/comm/MAVLinkSimulationLink.h
+    src/comm/MAVLinkSimulationMAV.h
+    src/comm/MAVLinkSimulationWaypointPlanner.h
+    src/comm/MAVLinkSwarmSimulationLink.h
+    src/comm/MAVLinkSyntaxHighlighter.h
+    src/comm/MAVLinkXMLParser.h
+    src/comm/ProtocolInterface.h
+    src/comm/QGCMAVLink.h
+    src/comm/SerialLink.h
+    src/comm/SerialLinkInterface.h
+    src/comm/SerialSimulationLink.h
+    src/comm/UDPLink.h
+    src/configuration.h
+    src/input/JoystickInput.h
+    src/uas/ArduPilotMegaMAV.h
+    src/uas/PxQuadMAV.h
+    src/uas/QGCMAVLinkUASFactory.h
+    src/uas/SlugsMAV.h
+    src/uas/UAS.h
+    src/uas/UASInterface.h
+    src/uas/UASManager.h
+    src/uas/UASWaypointManager.h
     src/ui/map/Waypoint2DIcon.h
     src/ui/map/MAV2DIcon.h
+    )
+
+# qt object headers
+set (qgroundcontrolMocSrc
+    src/ui/AudioOutputWidget.h
+    src/ui/CameraView.h
+    src/ui/CommConfigurationWindow.h
+    src/ui/DebugConsole.h
+    src/ui/HDDisplay.h
+    src/ui/HSIDisplay.h
+    src/ui/HUD.h
+    src/ui/JoystickWidget.h
+    src/ui/MAVLinkSettingsWidget.h
+    src/ui/MainWindow.h
+    src/ui/MapWidget.h
+    src/ui/ObjectDetectionView.h
+    src/ui/ParameterInterface.h
+    src/ui/QGCDataPlot2D.h
+    src/ui/QGCFirmwareUpdate.h
+    src/ui/QGCMAVLinkLogPlayer.h
+    src/ui/QGCMainWindowAPConfigurator.h
+    src/ui/QGCParamWidget.h
+    src/ui/QGCPxImuFirmwareUpdate.h
     src/ui/QGCRemoteControlView.h
+    src/ui/QGCSensorSettingsWidget.h
+    src/ui/QGCSettingsWidget.h
+    src/ui/QGCUDPLinkConfiguration.h
+    src/ui/QGCWaypointListMulti.h
+    src/ui/QGCWebView.h
+    src/ui/RadioCalibration/AbstractCalibrator.h
+    src/ui/RadioCalibration/AirfoilServoCalibrator.h
+    src/ui/RadioCalibration/CurveCalibrator.h
     src/ui/RadioCalibration/RadioCalibrationData.h
     src/ui/RadioCalibration/RadioCalibrationWindow.h
-    src/ui/RadioCalibration/AirfoilServoCalibrator.h
     src/ui/RadioCalibration/SwitchCalibrator.h
-    src/ui/RadioCalibration/CurveCalibrator.h
-    src/ui/RadioCalibration/AbstractCalibrator.h
-    src/comm/QGCMAVLink.h
-    src/ui/QGCWebView.h
-    src/ui/map3D/QGCWebPage.h
+    src/ui/SerialConfigurationWindow.h
     src/ui/SlugsDataSensorView.h
     src/ui/SlugsHilSim.h
     src/ui/SlugsPIDControl.h
-    src/ui/SlugsVideoCamControl.h
     src/ui/SlugsPadCameraControl.h
-    src/ui/QGCMainWindowAPConfigurator.h
-    src/comm/MAVLinkSwarmSimulationLink.h
-    src/ui/uas/QGCUnconnectedInfoWidget.h
-    src/ui/designer/QGCToolWidget.h
-    src/ui/designer/QGCParamSlider.h
+    src/ui/SlugsVideoCamControl.h
+    src/ui/WaypointList.h
+    src/ui/WaypointView.h
+    src/ui/XMLCommProtocolWidget.h
     src/ui/designer/QGCActionButton.h
+    src/ui/designer/QGCParamSlider.h
+    src/ui/designer/QGCToolWidget.h
     src/ui/designer/QGCToolWidgetItem.h
-    src/ui/QGCMAVLinkLogPlayer.h
-    src/comm/MAVLinkSimulationWaypointPlanner.h
-    src/comm/MAVLinkSimulationMAV.h
-    src/uas/QGCMAVLinkUASFactory.h
-    src/ui/QGCWaypointListMulti.h
-    src/ui/QGCUDPLinkConfiguration.h
-    src/ui/QGCSettingsWidget.h
+    src/ui/linechart/IncrementalPlot.h
+    src/ui/linechart/LinechartPlot.h
+    src/ui/linechart/LinechartWidget.h
+    src/ui/linechart/Linecharts.h
+    src/ui/linechart/ScrollZoomer.h
+    src/ui/linechart/Scrollbar.h
+    src/ui/map3D/QGCWebPage.h
+    src/ui/mavlink/DomItem.h
+    src/ui/mavlink/DomModel.h
+    src/ui/uas/QGCUnconnectedInfoWidget.h
+    src/ui/uas/UASControlWidget.h
+    src/ui/uas/UASInfoWidget.h
+    src/ui/uas/UASListWidget.h
+    src/ui/uas/UASView.h
+    src/ui/watchdog/WatchdogControl.h
+    src/ui/watchdog/WatchdogProcessView.h
+    src/ui/watchdog/WatchdogView.h
     )
 
-set (qgroundcontrolMocSrc
+# source
+set (qgroundcontrolSrc
+    src/main.cc
+    src/Core.cc
+    src/GAudioOutput.cc
+    src/LogCompressor.cc
+    src/QGC.cc
+    src/Waypoint.cc
+    src/comm/AS4Protocol.cc
+    src/comm/LinkManager.cc
+    src/comm/MAVLinkProtocol.cc
+    src/comm/MAVLinkSimulationLink.cc
+    src/comm/MAVLinkSimulationMAV.cc
+    src/comm/MAVLinkSimulationWaypointPlanner.cc
+    src/comm/MAVLinkSwarmSimulationLink.cc
+    src/comm/MAVLinkSyntaxHighlighter.cc
+    src/comm/MAVLinkXMLParser.cc
+    src/comm/SerialLink.cc
+    src/comm/SerialSimulationLink.cc
+    src/comm/UDPLink.cc
+    src/input/JoystickInput.cc
+    src/uas/ArduPilotMegaMAV.cc
+    src/uas/PxQuadMAV.cc
+    src/uas/QGCMAVLinkUASFactory.cc
+    src/uas/SlugsMAV.cc
+    src/uas/UAS.cc
+    src/uas/UASManager.cc
+    src/uas/UASWaypointManager.cc
     src/ui/AudioOutputWidget.cc
     src/ui/CameraView.cc
     src/ui/CommConfigurationWindow.cc
@@ -439,34 +476,223 @@ set (qgroundcontrolMocSrc
     src/ui/watchdog/WatchdogView.cc
     )
 
-set (qgroundcontrolSrc
-    src/main.cc
-    src/Core.cc
-    src/GAudioOutput.cc
-    src/LogCompressor.cc
-    src/QGC.cc
-    src/Waypoint.cc
-    src/comm/AS4Protocol.cc
-    src/comm/LinkManager.cc
-    src/comm/MAVLinkProtocol.cc
-    src/comm/MAVLinkSimulationLink.cc
-    src/comm/MAVLinkSimulationMAV.cc
-    src/comm/MAVLinkSimulationWaypointPlanner.cc
-    src/comm/MAVLinkSwarmSimulationLink.cc
-    src/comm/MAVLinkSyntaxHighlighter.cc
-    src/comm/MAVLinkXMLParser.cc
-    src/comm/SerialLink.cc
-    src/comm/SerialSimulationLink.cc
-    src/comm/UDPLink.cc
-    src/input/JoystickInput.cc
-    src/uas/ArduPilotMegaMAV.cc
-    src/uas/PxQuadMAV.cc
-    src/uas/QGCMAVLinkUASFactory.cc
-    src/uas/SlugsMAV.cc
-    src/uas/UAS.cc
-    src/uas/UASManager.cc
-    src/uas/UASWaypointManager.cc
+set (qmapcontrolHdrs
+    lib/QMapControl/src/googlemapadapter.h
+    lib/QMapControl/src/circlepoint.h
+    lib/QMapControl/src/mapnetwork.h
+    lib/QMapControl/src/wmsmapadapter.h
+    lib/QMapControl/src/mapadapter.h
+    lib/QMapControl/src/geometrylayer.h
+    lib/QMapControl/src/linestring.h
+    lib/QMapControl/src/mapcontrol.h
+    lib/QMapControl/src/tilemapadapter.h
+    lib/QMapControl/src/curve.h
+    lib/QMapControl/src/imagemanager.h
+    lib/QMapControl/src/layer.h
+    lib/QMapControl/src/maplayer.h
+    lib/QMapControl/src/geometry.h
+    lib/QMapControl/src/googlesatmapadapter.h
+    lib/QMapControl/src/point.h
+    lib/QMapControl/src/osmmapadapter.h
+    lib/QMapControl/src/gps_position.h
+    lib/QMapControl/src/layermanager.h
+    lib/QMapControl/src/fixedimageoverlay.h
+    lib/QMapControl/src/openaerialmapadapter.h
+    lib/QMapControl/src/emptymapadapter.h
+    lib/QMapControl/src/yahoomapadapter.h
+    lib/QMapControl/src/imagepoint.h
+    lib/QMapControl/qmapcontrol.h
     )
+
+set (qmapcontrolSrc
+    lib/QMapControl/src/point.cpp
+    lib/QMapControl/src/imagepoint.cpp
+    lib/QMapControl/src/yahoomapadapter.cpp
+    lib/QMapControl/src/layermanager.cpp
+    lib/QMapControl/src/circlepoint.cpp
+    lib/QMapControl/src/imagemanager.cpp
+    lib/QMapControl/src/maplayer.cpp
+    lib/QMapControl/src/geometrylayer.cpp
+    lib/QMapControl/src/mapadapter.cpp
+    lib/QMapControl/src/mapnetwork.cpp
+    lib/QMapControl/src/linestring.cpp
+    lib/QMapControl/src/osmmapadapter.cpp
+    lib/QMapControl/src/fixedimageoverlay.cpp
+    lib/QMapControl/src/layer.cpp
+    lib/QMapControl/src/openaerialmapadapter.cpp
+    lib/QMapControl/src/geometry.cpp
+    lib/QMapControl/src/mapcontrol.cpp
+    lib/QMapControl/src/tilemapadapter.cpp
+    lib/QMapControl/src/googlemapadapter.cpp
+    lib/QMapControl/src/wmsmapadapter.cpp
+    lib/QMapControl/src/googlesatmapadapter.cpp
+    lib/QMapControl/src/curve.cpp
+    lib/QMapControl/src/emptymapadapter.cpp
+    lib/QMapControl/src/gps_position.cpp
+    )
+
+set (qwtHdrs
+    src/lib/qwt/qwt_plot_panner.h
+    src/lib/qwt/qwt_plot_marker.h
+    src/lib/qwt/qwt_plot_curve.h
+    src/lib/qwt/qwt_double_range.h
+    src/lib/qwt/qwt_symbol.h
+    src/lib/qwt/qwt_event_pattern.h
+    src/lib/qwt/qwt_abstract_scale_draw.h
+    src/lib/qwt/qwt_clipper.h
+    src/lib/qwt/qwt_compass_rose.h
+    src/lib/qwt/qwt_wheel.h
+    src/lib/qwt/qwt_raster_data.h
+    src/lib/qwt/qwt.h
+    src/lib/qwt/qwt_text_label.h
+    src/lib/qwt/qwt_legend_itemmanager.h
+    src/lib/qwt/qwt_picker.h
+    src/lib/qwt/qwt_layout_metrics.h
+    src/lib/qwt/qwt_curve_fitter.h
+    src/lib/qwt/qwt_picker_machine.h
+    src/lib/qwt/qwt_magnifier.h
+    src/lib/qwt/qwt_round_scale_draw.h
+    src/lib/qwt/qwt_knob.h
+    src/lib/qwt/qwt_plot_svgitem.h
+    src/lib/qwt/qwt_plot_picker.h
+    src/lib/qwt/qwt_valuelist.h
+    src/lib/qwt/qwt_global.h
+    src/lib/qwt/qwt_plot_zoomer.h
+    src/lib/qwt/qwt_counter.h
+    src/lib/qwt/qwt_plot.h
+    src/lib/qwt/qwt_painter.h
+    src/lib/qwt/qwt_plot_canvas.h
+    src/lib/qwt/qwt_plot_item.h
+    src/lib/qwt/qwt_double_interval.h
+    src/lib/qwt/qwt_plot_magnifier.h
+    src/lib/qwt/qwt_arrow_button.h
+    src/lib/qwt/qwt_color_map.h
+    src/lib/qwt/qwt_math.h
+    src/lib/qwt/qwt_scale_map.h
+    src/lib/qwt/qwt_text_engine.h
+    src/lib/qwt/qwt_interval_data.h
+    src/lib/qwt/qwt_dial.h
+    src/lib/qwt/qwt_data.h
+    src/lib/qwt/qwt_text.h
+    src/lib/qwt/qwt_polygon.h
+    src/lib/qwt/qwt_plot_spectrogram.h
+    src/lib/qwt/qwt_plot_grid.h
+    src/lib/qwt/qwt_spline.h
+    src/lib/qwt/qwt_scale_widget.h
+    src/lib/qwt/qwt_legend.h
+    src/lib/qwt/qwt_plot_layout.h
+    src/lib/qwt/qwt_dial_needle.h
+    src/lib/qwt/qwt_rect.h
+    src/lib/qwt/qwt_analog_clock.h
+    src/lib/qwt/qwt_dyngrid_layout.h
+    src/lib/qwt/qwt_slider.h
+    src/lib/qwt/qwt_scale_draw.h
+    src/lib/qwt/qwt_plot_rasteritem.h
+    src/lib/qwt/qwt_legend_item.h
+    src/lib/qwt/qwt_scale_engine.h
+    src/lib/qwt/qwt_double_rect.h
+    src/lib/qwt/qwt_abstract_scale.h
+    src/lib/qwt/qwt_abstract_slider.h
+    src/lib/qwt/qwt_compass.h
+    src/lib/qwt/qwt_plot_scaleitem.h
+    src/lib/qwt/qwt_panner.h
+    src/lib/qwt/qwt_thermo.h
+    src/lib/qwt/qwt_plot_dict.h
+    src/lib/qwt/qwt_scale_div.h
+    src/lib/qwt/qwt_paint_buffer.h
+    src/lib/qwt/qwt_plot_printfilter.h
+    src/lib/qwt/qwt_array.h
+    )
+
+set (qwtSrc
+    src/lib/qwt/qwt_plot_magnifier.cpp
+    src/lib/qwt/qwt_plot_curve.cpp
+    src/lib/qwt/qwt_panner.cpp
+    src/lib/qwt/qwt_round_scale_draw.cpp
+    src/lib/qwt/qwt_clipper.cpp
+    src/lib/qwt/qwt_plot_printfilter.cpp
+    src/lib/qwt/qwt_data.cpp
+    src/lib/qwt/qwt_text_engine.cpp
+    src/lib/qwt/qwt_dial.cpp
+    src/lib/qwt/qwt_plot_rasteritem.cpp
+    src/lib/qwt/qwt_spline.cpp
+    src/lib/qwt/qwt_rect.cpp
+    src/lib/qwt/qwt_plot_canvas.cpp
+    src/lib/qwt/qwt_magnifier.cpp
+    src/lib/qwt/qwt_analog_clock.cpp
+    src/lib/qwt/qwt_knob.cpp
+    src/lib/qwt/qwt_counter.cpp
+    src/lib/qwt/qwt_plot_axis.cpp
+    src/lib/qwt/qwt_interval_data.cpp
+    src/lib/qwt/qwt_scale_map.cpp
+    src/lib/qwt/qwt_slider.cpp
+    src/lib/qwt/qwt_compass_rose.cpp
+    src/lib/qwt/qwt_plot_print.cpp
+    src/lib/qwt/qwt_plot_layout.cpp
+    src/lib/qwt/qwt_abstract_scale_draw.cpp
+    src/lib/qwt/qwt_abstract_slider.cpp
+    src/lib/qwt/qwt_picker.cpp
+    src/lib/qwt/qwt_raster_data.cpp
+    src/lib/qwt/qwt_picker_machine.cpp
+    src/lib/qwt/qwt_plot_marker.cpp
+    src/lib/qwt/qwt_scale_draw.cpp
+    src/lib/qwt/qwt_thermo.cpp
+    src/lib/qwt/qwt_layout_metrics.cpp
+    src/lib/qwt/qwt_dial_needle.cpp
+    src/lib/qwt/qwt_plot_xml.cpp
+    src/lib/qwt/qwt_legend.cpp
+    src/lib/qwt/qwt_plot_picker.cpp
+    src/lib/qwt/qwt_event_pattern.cpp
+    src/lib/qwt/qwt_curve_fitter.cpp
+    src/lib/qwt/qwt_double_range.cpp
+    src/lib/qwt/qwt_painter.cpp
+    src/lib/qwt/qwt_double_interval.cpp
+    src/lib/qwt/qwt_math.cpp
+    src/lib/qwt/qwt_plot_item.cpp
+    src/lib/qwt/qwt_plot_zoomer.cpp
+    src/lib/qwt/qwt_symbol.cpp
+    src/lib/qwt/qwt_scale_div.cpp
+    src/lib/qwt/qwt_color_map.cpp
+    src/lib/qwt/qwt_plot.cpp
+    src/lib/qwt/qwt_plot_spectrogram.cpp
+    src/lib/qwt/qwt_paint_buffer.cpp
+    src/lib/qwt/qwt_plot_dict.cpp
+    src/lib/qwt/qwt_scale_widget.cpp
+    src/lib/qwt/qwt_text.cpp
+    src/lib/qwt/qwt_dyngrid_layout.cpp
+    src/lib/qwt/qwt_abstract_scale.cpp
+    src/lib/qwt/qwt_plot_svgitem.cpp
+    src/lib/qwt/qwt_arrow_button.cpp
+    src/lib/qwt/qwt_double_rect.cpp
+    src/lib/qwt/qwt_compass.cpp
+    src/lib/qwt/qwt_wheel.cpp
+    src/lib/qwt/qwt_legend_item.cpp
+    src/lib/qwt/qwt_plot_scaleitem.cpp
+    src/lib/qwt/qwt_text_label.cpp
+    src/lib/qwt/qwt_plot_panner.cpp
+    src/lib/qwt/qwt_scale_engine.cpp
+    src/lib/qwt/qwt_plot_grid.cpp
+    )
+
+set (qextserialportHdrs
+    src/lib/qextserialport/qextserialport.h
+    src/lib/qextserialport/qextserialbase.h
+    src/lib/qextserialport/posix_qextserialport.h
+    #src/lib/qextserialport/win_qextserialport.h
+    src/lib/qextserialport/qextserialenumerator.h
+)
+
+set (qextserialportSrc
+    src/lib/qextserialport/posix_qextserialport.cpp
+    src/lib/qextserialport/qextserialport.cpp
+    src/lib/qextserialport/qextserialbase.cpp
+    #src/lib/qextserialport/win_qextserialport.cpp
+    src/lib/qextserialport/qextserialenumerator.cpp
+)
+
+add_library(qextserialport ${qextserialportSrc})
+add_library(qmapcontrol ${qmapcontrolSrc})
+add_library(qwt ${qwtSrc})
 
 # process qt files
 qt4_wrap_cpp(qgroundcontrolMoc ${qgroundcontrolMocSrc})
