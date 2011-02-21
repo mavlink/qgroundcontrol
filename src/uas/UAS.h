@@ -357,7 +357,7 @@ protected slots:
     void receiveMessageNamedValue(const mavlink_message_t& message);
 
 private:
-    unsigned int mode;          ///< The current mode of the MAV
+//    unsigned int mode;          ///< The current mode of the MAV
 };
 
 
