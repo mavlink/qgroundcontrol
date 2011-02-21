@@ -191,11 +191,12 @@ void WaypointList::add()
             wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0.0, 0.0, 0.0, 0.0, true, true, MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT);
             uas->getWaypointManager()->addWaypoint(wp);
 
+        }
     }
 }
 
-void WaypointList::addCurrentPositonWaypoint()
-{
+void WaypointList::addCurrentPositonWaypoint(){
+
     /* TODO: implement with new waypoint structure
     if (uas)
     {
