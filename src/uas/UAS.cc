@@ -29,7 +29,7 @@
 
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 uasId(id),
-startTime(MG::TIME::getGroundTimeNow()),
+startTime(QGC::groundTimeMilliseconds()),
 commStatus(COMM_DISCONNECTED),
 name(""),
 autopilot(-1),
@@ -73,7 +73,8 @@ yaw(0.0),
 statusTimeout(new QTimer(this)),
 paramsOnceRequested(false),
 airframe(0),
-attitudeKnown(false)
+attitudeKnown(false),
+paramManager(NULL)
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);

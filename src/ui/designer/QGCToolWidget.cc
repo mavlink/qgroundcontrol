@@ -175,7 +175,7 @@ void QGCToolWidget::addUAS(UASInterface* uas)
 void QGCToolWidget::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
-    //menu.addAction(addParamAction);
+    menu.addAction(addParamAction);
     menu.addAction(addButtonAction);
     menu.addAction(setTitleAction);
     menu.addAction(deleteAction);
@@ -188,7 +188,7 @@ void QGCToolWidget::createActions()
     addParamAction->setStatusTip(tr("Add a parameter setting slider widget to the tool"));
     connect(addParamAction, SIGNAL(triggered()), this, SLOT(addParam()));
 
-    addButtonAction = new QAction(tr("New MAV &Action Button"), this);
+    addButtonAction = new QAction(tr("New MAV &Command Button"), this);
     addButtonAction->setStatusTip(tr("Add a new action button to the tool"));
     connect(addButtonAction, SIGNAL(triggered()), this, SLOT(addAction()));
 
@@ -199,6 +199,14 @@ void QGCToolWidget::createActions()
     deleteAction = new QAction(tr("Delete this widget"), this);
     deleteAction->setStatusTip(tr("Delete this widget permanently"));
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(deleteWidget()));
+
+    exportAction = new QAction(tr("Export this widget"), this);
+    exportAction->setStatusTip(tr("Export this widget to be reused by others"));
+    connect(exportAction, SIGNAL(triggered()), this, SLOT(exportWidget()));
+
+    importAction = new QAction(tr("Import widget"), this);
+    importAction->setStatusTip(tr("Import this widget from a file (current content will be removed)"));
+    connect(exportAction, SIGNAL(triggered()), this, SLOT(importWidget()));
 }
 
 QMap<QString, QGCToolWidget*>* QGCToolWidget::instances()
@@ -247,6 +255,16 @@ void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
         ui->hintLabel = NULL;
     }
     toolLayout->addWidget(widget);
+}
+
+void QGCToolWidget::exportWidget()
+{
+
+}
+
+void QGCToolWidget::importWidget(const QString& fileName)
+{
+
 }
 
 const QString QGCToolWidget::getTitle()
