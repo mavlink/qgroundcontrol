@@ -105,6 +105,11 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent)
                     item = new QGCActionButton(newWidgets.at(i));
                     qDebug() << "CREATED BUTTON";
                 }
+                else if (type == "SLIDER")
+                {
+                    item = new QGCParamSlider(newWidgets.at(i));
+                    qDebug() << "CREATED PARAM SLIDER";
+                }
 
                 if (item)
                 {

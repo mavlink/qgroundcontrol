@@ -22,6 +22,9 @@ public:
     /** @brief Request an update for this specific parameter */
     void requestParameterUpdate(int component, const QString& parameter);
 
+    /** @brief Request list of parameters from MAV */
+    virtual void requestParameterList() = 0;
+
 signals:
     void parameterChanged(int component, QString parameter, float value);
     void parameterChanged(int component, int parameterIndex, float value);
