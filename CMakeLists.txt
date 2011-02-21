@@ -56,7 +56,7 @@ set(CMAKE_LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 # only find static libraries
 if(STATIC_LINKING)
-    message(WARNING "static linking is not yet fully functional and will have linking errors")
+    message(WARNING "static linking is not yet tested and may have linking errors")
     if(WIN32)
         set(CMAKE_FIND_LIBRARY_SUFFIXES .lib .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
     else(WIN32)
@@ -186,7 +186,6 @@ if (PHONON_FOUND)
 else()
     message(STATUS "\t\tPHONON\t\tNO")
 endif (PHONON_FOUND)
-message(${PHONON_INCLUDE_DIR})
 message(STATUS "=======================================")
 
 # project flags
@@ -519,6 +518,9 @@ set (qgroundcontrolSrc
     src/ui/watchdog/WatchdogProcessView.cc
     src/ui/watchdog/WatchdogView.cc
     )
+
+# qgroundcontrol resource files
+set(qgroundcontrolRscSrc mavground.qrc)
 
 # qgroundcontrol linking
 qt4_wrap_cpp(qgroundcontrolMoc ${qgroundcontrolMocSrc})
