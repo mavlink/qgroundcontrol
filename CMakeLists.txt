@@ -121,9 +121,9 @@ find_package(Qt4 COMPONENTS QtGui QtCore QtNetwork QtOpenGL QtSVG QtXML QtPhonon
 set(PHONON_FIND_QUIETLY FALSE)
 find_package(Phonon)
 find_package(SDL REQUIRED)
-if (LINUX)
+if (UNIX)
     find_package(Flite)
-endif(LINUX)
+endif(UNIX)
 find_package(OpenGL REQUIRED)
 find_package(OpenSceneGraph 2.8.3 COMPONENTS osgGA osgDB osgUtil osgViewer)
 find_or_build_from_source(MAVLINK thirdParty/mavlink FOUND_GIT_REPO)
@@ -228,15 +228,15 @@ else()
     message(STATUS "\t\tOPENGL\t\tNO")
 endif (OPENGL_FOUND)
 
-# linux only dependencies
-if (LINUX)
+# unix only dependencies
+if (UNIX)
     if (FLITE_FOUND)
         message(STATUS "\t\tFLITE\t\tYES")
         list(APPEND qgroundcontrolIncludes ${FLITE_INCLUDE_DIR})
     else()
         message(STATUS "\t\tFLITE\t\tNO")
     endif (FLITE_FOUND)
-endif(LINUX)
+endif(UNIX)
 
 # set include directories
 include_directories(${qgroundcontrolIncludes})
@@ -354,14 +354,15 @@ set (qgroundcontrolHdrs
 # r !grep -Rl Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed "s/^/\t/g"
 set(qgroundcontrolMocSrc 
 	src/Core.h
-	src/uas/UASManager.h
-	src/uas/UASWaypointManager.h
-	src/uas/UASInterface.h
-	src/uas/PxQuadMAV.h
-	src/uas/QGCMAVLinkUASFactory.h
-	src/uas/SlugsMAV.h
-	src/uas/UAS.h
-	src/uas/ArduPilotMegaMAV.h
+    src/uas/ArduPilotMegaMAV.h
+    src/uas/PxQuadMAV.h
+    src/uas/QGCMAVLinkUASFactory.h
+    src/uas/QGCUASParamManager.h
+    src/uas/SlugsMAV.h
+    src/uas/UAS.h
+    src/uas/UASInterface.h
+    src/uas/UASManager.h
+    src/uas/UASWaypointManager.h
 	src/Waypoint.h
 	src/LogCompressor.h
     src/GAudioOutput.h
@@ -476,6 +477,7 @@ set (qgroundcontrolSrc
     src/uas/ArduPilotMegaMAV.cc
     src/uas/PxQuadMAV.cc
     src/uas/QGCMAVLinkUASFactory.cc
+    src/uas/QGCUASParamManager.cc
     src/uas/SlugsMAV.cc
     src/uas/UAS.cc
     src/uas/UASManager.cc
