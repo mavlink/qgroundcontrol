@@ -189,7 +189,7 @@ bool GAudioOutput::say(QString text, int severity)
         file.setFileTemplate("XXXXXX.wav");
         if (file.open())
         {
-            cst_voice* v = new_voice();
+            cst_voice* v = register_cmu_us_kal(NULL);
             cst_wave* wav = flite_text_to_wave(text.toStdString().c_str(), v);
             // file.fileName() returns the unique file name
             cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
