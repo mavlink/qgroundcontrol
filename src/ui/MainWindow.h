@@ -121,6 +121,7 @@ public slots:
     void configure();
     /** @brief Set the currently controlled UAS */
     void setActiveUAS(UASInterface* uas);
+
     /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
     /** @brief Update system specs of a UAS */

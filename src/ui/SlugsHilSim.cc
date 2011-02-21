@@ -151,6 +151,8 @@ void SlugsHilSim::activeUasSet(UASInterface* uas){
 
   if (uas != NULL) {
     activeUas = static_cast <UAS *>(uas);
+
+    //connect(uas, SIGNAL())
   }
 }
 

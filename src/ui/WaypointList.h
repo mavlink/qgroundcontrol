@@ -108,7 +108,7 @@ public slots:
 signals:
   void clearPathclicked();
   void createWaypointAtMap(const QPointF coordinate);
-
+    void changePointList();
 protected:
     virtual void changeEvent(QEvent *e);
 

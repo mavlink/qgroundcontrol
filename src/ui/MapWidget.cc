@@ -430,7 +430,6 @@ void MapWidget::createPathButtonClicked(bool checked)
  * @param coordinate The coordinate in which it occured the mouse event
  * @note  This slot is connected to the mouseEventCoordinate of the QMapControl object
  */
-
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate)
 {
     if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked())
@@ -468,7 +467,6 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
             // Refresh the screen
             if (isVisible()) mc->updateRequest(tempPoint->boundingBox().toRect());
         }
-
         // emit signal mouse was clicked
         //emit captureMapCoordinateClick(coordinate);
     }
@@ -699,6 +697,7 @@ MapWidget::~MapWidget()
     delete mc;
     delete m_ui;
 }
+
 /**
  *
  * @param uas the UAS/MAV to monitor/display with the HUD

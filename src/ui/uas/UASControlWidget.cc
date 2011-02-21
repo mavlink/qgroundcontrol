@@ -41,6 +41,7 @@ This file is part of the PIXHAWK project
 #include "UASControlWidget.h"
 #include <UASManager.h>
 #include <UAS.h>
+#include "QGC.h"
 
 #define CONTROL_MODE_LOCKED "MODE LOCKED"
 #define CONTROL_MODE_MANUAL "MODE MANUAL"

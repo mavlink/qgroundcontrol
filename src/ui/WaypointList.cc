@@ -190,7 +190,7 @@ void WaypointList::add()
             // Create global frame waypoint per default
             wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0.0, 0.0, 0.0, 0.0, true, true, MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT);
             uas->getWaypointManager()->addWaypoint(wp);
-        }
+
     }
 }
 
@@ -462,6 +462,9 @@ void WaypointList::moveUp(Waypoint* wp)
             uas->getWaypointManager()->moveWaypoint(i, i-1);
         }
     }
+
+    //emitir seal de cambio orden en la lista,
+    //la debe capturar el mapwidget para volver a dibujar la ruta
 }
 
 void WaypointList::moveDown(Waypoint* wp)
@@ -520,13 +523,6 @@ void WaypointList::on_clearWPListButton_clicked()
                 WaypointView* widget = wpViews.find(waypoints[0]).value();
                 widget->remove();
         }
-    }
-    else
-    {
-//        if(isGlobalWP)
-//        {
-//           emit clearPathclicked();
-//        }
     }
 }
 

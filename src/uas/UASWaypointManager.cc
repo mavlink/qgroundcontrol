@@ -351,6 +351,7 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
         {
             waypoints[i]->setId(i);
         }
+
         emit waypointListChanged();
         emit waypointListChanged(uas.getUASID());
         return 0;

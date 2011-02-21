@@ -99,7 +99,7 @@ protected:
    mavlink_diagnostic_t 		mlDiagnosticData;
    mavlink_pilot_console_t 		mlPilotConsoleData;
    mavlink_filtered_data_t 		mlFilteredData;
-   mavlink_boot_t 				mlBoot;
+   mavlink_boot_t 			mlBoot;
    mavlink_gps_date_time_t 		mlGpsDateTime;
    mavlink_mid_lvl_cmds_t 		mlMidLevelCommands;
    mavlink_set_mode_t 			mlApMode;

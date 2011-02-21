@@ -243,13 +243,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_sys_status_decode(&message, &state);
 
                 // FIXME
-                //qDebug() << "SYSTEM NAV MODE:" << state.nav_mode;
+                //qDebug() << "1 SYSTEM STATUS:" << state.status;
 
                 QString audiostring = "System " + getUASName();
                 QString stateAudio = "";
                 QString modeAudio = "";
                 bool statechanged = false;
-                bool modechanged = false;
+                bool modechanged = false;         
 
                 if (state.status != this->status)
                 {
@@ -258,6 +258,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     getStatusForCode((int)state.status, uasState, stateDescription);
                     emit statusChanged(this, uasState, stateDescription);
                     emit statusChanged(this->status);
+
                     stateAudio = " changed status to " + uasState;
                 }
 
@@ -311,6 +312,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     }
 
                     emit modeChanged(this->getUASID(), mode, "");
+
+                    //qDebug() << "2 SYSTEM MODE:" << mode;
+
                     modeAudio = " is now in " + mode;
                 }
                 currentVoltage = state.vbat/1000.0f;
@@ -337,6 +341,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 // COMMUNICATIONS DROP RATE
                 emit dropRateChanged(this->getUASID(), state.packet_drop/1000.0f);
+
+
+                //add for development
+                emit remoteControlRSSIChanged(state.packet_drop/1000.0f);
+
+                float en = state.packet_drop/1000.0f;
+                emit remoteControlChannelRawChanged(0, en);//MAVLINK_MSG_ID_RC_CHANNELS_RAW
+                emit remoteControlChannelScaledChanged(0, en/100.0f);//MAVLINK_MSG_ID_RC_CHANNELS_SCALED
+
+
                 //qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;
 
                 // AUDIO
@@ -427,11 +441,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
                 quint64 time = getUnixTime(attitude.usec);
-
                 roll = QGC::limitAngleToPMPIf(attitude.roll);
                 pitch = QGC::limitAngleToPMPIf(attitude.pitch);
                 yaw = QGC::limitAngleToPMPIf(attitude.yaw);
-
                 emit valueChanged(uasId, "roll", "rad", roll, time);
                 emit valueChanged(uasId, "pitch", "rad", pitch, time);
                 emit valueChanged(uasId, "yaw", "rad", yaw, time);
@@ -1226,11 +1238,15 @@ void UAS::setMode(int mode)
 {
     if ((uint8_t)mode >= MAV_MODE_LOCKED && (uint8_t)mode <= MAV_MODE_RC_TRAINING)
     {
-        this->mode = mode;
+        //this->mode = mode; //no call assignament, update receive message from UAS
         mavlink_message_t msg;
         mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, (uint8_t)mode);
         sendMessage(msg);
         qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << (uint8_t)mode;
+    }
+    else
+    {
+        qDebug() << "uas Mode not assign: " << mode;
     }
 }
 

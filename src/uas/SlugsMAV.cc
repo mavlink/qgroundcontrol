@@ -7,7 +7,8 @@ SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
         // Place other initializers here
 {
   widgetTimer = new QTimer (this);
-  widgetTimer->setInterval(SLUGS_UPDATE_RATE);
+  widgetTimer->setInterval(200);//SLUGS_UPDATE_RATE);
+  qDebug() << "SLUGS_UPDATE_RATE: " << SLUGS_UPDATE_RATE;
 
   connect (widgetTimer, SIGNAL(timeout()),
            this, SLOT(emitSignals()));
@@ -72,6 +73,7 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 
       case MAVLINK_MSG_ID_RAW_IMU:
+        //mavlink_raw_imu_t t;
         mavlink_msg_raw_imu_decode(&message, &mlRawImuData);
       break;
 
