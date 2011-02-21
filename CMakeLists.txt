@@ -119,8 +119,9 @@ endif()
 # find libraries with cmake modules
 find_package(Qt4 COMPONENTS QtGui QtCore QtNetwork QtOpenGL QtSVG QtXML QtPhonon QtWebKit REQUIRED)
 set(PHONON_FIND_QUIETLY FALSE)
-find_packagE(Phonon)
+find_package(Phonon)
 find_package(SDL)
+find_package(Flite)
 find_package(OpenGL)
 find_package(OpenSceneGraph 2.8.3 COMPONENTS osgGA osgDB osgUtil osgViewer)
 find_or_build_from_source(MAVLINK thirdParty/mavlink FOUND_GIT_REPO)
@@ -216,15 +217,11 @@ include_directories(
     ${OPENSCENEGRAPH_INCLUDE_DIRS}
     ${QT_INCLUDE_DIRS}
     ${PHONON_INCLUDE_DIR}/phonon
+    ${FLITE_INCLUDE_DIR}
     ${MAVLINK_INCLUDE_DIRS}
     )
 set (commonLibs
-    ${SDL_LIBRARY}
-    ${OPENGL_LIBRARIES}
-    ${OSG_LIBRARIES}
-    ${QT_LIBRARIES}
-    ${PHONON_LIBS}
-    )
+        )
 add_definitions(-D_TTY_POSIX_)
 
 # qgrouncontrol forms
@@ -258,7 +255,7 @@ set(qgroundcontrolUiSrc
     src/ui/QGCRemoteControlView.ui
     src/ui/QMap3D.ui
     src/ui/QGCWebView.ui
-    src/ui/map3D/QGCGoogleEarthView.ui
+    #src/ui/map3D/QGCGoogleEarthView.ui
     src/ui/SlugsDataSensorView.ui
     src/ui/SlugsHilSim.ui
     src/ui/SlugsPIDControl.ui
@@ -276,7 +273,8 @@ set(qgroundcontrolUiSrc
     )
 
 # qgroundcontrol headers without Q_OBJECT
-set (qgroundcontrolHdrs # r !grep -RL Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed -e "s/^/\t/g"
+# r !grep -RL Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed -e "s/^/\t/g"
+set (qgroundcontrolHdrs 
 	src/QGC.h
 	src/configuration.h
 	src/comm/OpalRT.h
@@ -328,12 +326,12 @@ set (qgroundcontrolHdrs # r !grep -RL Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed 
 )
 
 # qgroundcontrol headers with Q_OBJECT
-set(qgroundcontrolMocSrc # r !grep -Rl Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed "s/^/\t/g"
+# r !grep -Rl Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed "s/^/\t/g"
+set(qgroundcontrolMocSrc 
 	src/Core.h
 	src/uas/UASManager.h
 	src/uas/UASWaypointManager.h
 	src/uas/UASInterface.h
-	src/uas/Logfile.h
 	src/uas/PxQuadMAV.h
 	src/uas/QGCMAVLinkUASFactory.h
 	src/uas/SlugsMAV.h
@@ -341,7 +339,7 @@ set(qgroundcontrolMocSrc # r !grep -Rl Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed
 	src/uas/ArduPilotMegaMAV.h
 	src/Waypoint.h
 	src/LogCompressor.h
-	src/GAudioOutput.h
+    src/GAudioOutput.h
 	src/comm/AS4Protocol.h
 	src/comm/MAVLinkSwarmSimulationLink.h
 	src/comm/ProtocolInterface.h
@@ -360,8 +358,8 @@ set(qgroundcontrolMocSrc # r !grep -Rl Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed
 	#src/comm/QGCNMEAProtocol.h
 	src/comm/SerialLink.h
 	src/ui/QGCSettingsWidget.h
-	src/ui/map3D/WebImageCache.h
-	src/ui/map3D/QGCGoogleEarthView.h
+	#src/ui/map3D/WebImageCache.h
+	#src/ui/map3D/QGCGoogleEarthView.h
 	src/ui/map3D/QMap3D.h
 	#src/ui/map3D/Pixhawk3DWidget.h
 	#src/ui/map3D/Q3DWidget.h
@@ -417,7 +415,6 @@ set(qgroundcontrolMocSrc # r !grep -Rl Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed
 	src/ui/QGCWaypointListMulti.h
 	src/ui/CameraView.h
 	src/ui/QGCSensorSettingsWidget.h
-	src/ui/designer/QGCParamSliderPlugin.h
 	src/ui/designer/QGCToolWidgetItem.h
 	src/ui/designer/QGCParamSlider.h
 	src/ui/designer/QGCActionButton.h
@@ -426,7 +423,7 @@ set(qgroundcontrolMocSrc # r !grep -Rl Q_OBJECT src | grep "^.*\.[h|hpp]$" | sed
 	src/ui/MapWidget.h
 	src/ui/QGCRemoteControlView.h
 	src/ui/AudioOutputWidget.h
-	src/standalone/mavlinkgen/MAVLinkGen.h
+	#src/standalone/mavlinkgen/MAVLinkGen.h
 	src/input/JoystickInput.h
     )
 
@@ -534,7 +531,14 @@ add_executable(qgroundcontrol
     ${qgroundcontrolRsc}
     )
 add_dependencies(qgroundcontrol MAVLINK)
-target_link_libraries(qgroundcontrol ${commonLibs} qextserialport qmapcontrol qwt)
+target_link_libraries(qgroundcontrol
+    ${SDL_LIBRARY}
+    ${OPENGL_LIBRARIES}
+    ${OSG_LIBRARIES}
+    ${QT_LIBRARIES}
+    ${FLITE_LIBRARIES}
+    ${PHONON_LIBS}
+    qextserialport qmapcontrol qwt)
 
 # qgroundcontrol install
 install(TARGETS qgroundcontrol DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
@@ -543,7 +547,8 @@ install(TARGETS qgroundcontrol DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 #----------------------------------------------------------------------------
 
 # qwt headers without Q_OBJECT
-set (qwtHdrs # r !grep -L Q_OBJECT src/lib/qwt/*.h*
+# r !grep -L Q_OBJECT src/lib/qwt | grep "^.*\.[h|hpp]$" | sed "s/^/\t/g"
+set (qwtHdrs 
     src/lib/qwt/qwt_abstract_scale_draw.h
     src/lib/qwt/qwt_abstract_scale.h
     src/lib/qwt/qwt_array.h
@@ -594,7 +599,8 @@ set (qwtHdrs # r !grep -L Q_OBJECT src/lib/qwt/*.h*
     )
 
 # qwt headers with Q_OBJECT
-set (qwtMocSrc # r !grep -l Q_OBJECT src/lib/qwt/*.h*
+# r !grep -l Q_OBJECT src/lib/qwt | grep "^.*\.[h|hpp]$" | sed "s/^/\t/g"
+set (qwtMocSrc 
     src/lib/qwt/qwt_abstract_slider.h
     src/lib/qwt/qwt_analog_clock.h
     src/lib/qwt/qwt_compass.h
@@ -694,92 +700,74 @@ set (qwtSrc
 # qwt linking
 qt4_wrap_cpp(qwtMoc ${qwtMocSrc})
 add_library(qwt ${qwtMoc} ${qwtSrc})
-target_link_libraries(qwt ${commonLibs})
+target_link_libraries(qwt ${QT_LIBRARIES})
 
-# qextserial library
+# qextserialport library
 #----------------------------------------------------------------------------
 
-# qextserial headers without Q_OBJECT
+# qextserialport headers without Q_OBJECT
+# r !grep -RL Q_OBJECT src/lib/qextserialport | grep "^.*\.[h|hpp]$" | sed "s/^/\t/g"
 set (qextserialportHdrs
-    src/lib/qextserialport/qextserialport.h
-    src/lib/qextserialport/qextserialbase.h
     src/lib/qextserialport/posix_qextserialport.h
-    #src/lib/qextserialport/win_qextserialport.h
     src/lib/qextserialport/qextserialenumerator.h
+    )
+# qextserialport headers with Q_OBJECT
+# r !grep -Rl Q_OBJECT src/lib/qextserialport | grep "^.*\.[h|hpp]$" | sed "s/^/\t/g"
+set (qextserialportMocSrc
+    src/lib/qextserialport/qextserialbase.h
+    src/lib/qextserialport/qextserialport.h
+    #src/lib/qextserialport/win_qextserialport.h
 )
-
-# qextserial headers with Q_OBJECT
+# qextserialport src
 set (qextserialportSrc
     src/lib/qextserialport/posix_qextserialport.cpp
     src/lib/qextserialport/qextserialport.cpp
     src/lib/qextserialport/qextserialbase.cpp
     #src/lib/qextserialport/win_qextserialport.cpp
     src/lib/qextserialport/qextserialenumerator.cpp
-)
+    )
 
 # qextserial linking
-add_library(qextserialport ${qextserialportSrc})
-target_link_libraries(qextserialport ${commonLibs})
+qt4_wrap_cpp(qextserialportMoc ${qextserialportMocSrc})
+add_library(qextserialport ${qextserialportMoc} ${qextserialportSrc})
+target_link_libraries(qextserialport ${QT_LIBRARIES})
 
 # qmapcontrol library
 #----------------------------------------------------------------------------
 
 # qmapcontrol headers without Q_OBJECT
+# r !grep -RL Q_OBJECT lib/QMapControl | grep "^.*\.[h|hpp]$" | sed "s/^/\t/g"
 set (qmapcontrolHdrs
-    lib/QMapControl/src/googlemapadapter.h
-    lib/QMapControl/src/circlepoint.h
-    lib/QMapControl/src/mapnetwork.h
-    lib/QMapControl/src/wmsmapadapter.h
-    lib/QMapControl/src/mapadapter.h
-    lib/QMapControl/src/geometrylayer.h
-    lib/QMapControl/src/linestring.h
-    lib/QMapControl/src/mapcontrol.h
-    lib/QMapControl/src/tilemapadapter.h
-    lib/QMapControl/src/curve.h
-    lib/QMapControl/src/imagemanager.h
-    lib/QMapControl/src/layer.h
-    lib/QMapControl/src/maplayer.h
-    lib/QMapControl/src/geometry.h
-    lib/QMapControl/src/googlesatmapadapter.h
-    lib/QMapControl/src/point.h
-    lib/QMapControl/src/osmmapadapter.h
-    lib/QMapControl/src/gps_position.h
-    lib/QMapControl/src/layermanager.h
-    lib/QMapControl/src/fixedimageoverlay.h
-    lib/QMapControl/src/openaerialmapadapter.h
-    lib/QMapControl/src/emptymapadapter.h
-    lib/QMapControl/src/yahoomapadapter.h
-    lib/QMapControl/src/imagepoint.h
-    lib/QMapControl/qmapcontrol.h
+	lib/QMapControl/src/circlepoint.h
+	lib/QMapControl/src/wmsmapadapter.h
+	lib/QMapControl/src/gps_position.h
+	lib/QMapControl/src/fixedimageoverlay.h
+	lib/QMapControl/src/imagepoint.h
+	lib/QMapControl/qmapcontrol.h
     )
 
 # qmapcontorl headers with Q_OBJECT
+# r !grep -Rl Q_OBJECT lib/QMapControl | grep "^.*\.[h|hpp]$" | sed "s/^/\t/g"
 set (qmapcontrolMocSrc
-    lib/QMapControl/src/googlemapadapter.h
-    lib/QMapControl/src/circlepoint.h
-    lib/QMapControl/src/mapnetwork.h
-    lib/QMapControl/src/wmsmapadapter.h
-    lib/QMapControl/src/mapadapter.h
-    lib/QMapControl/src/geometrylayer.h
-    lib/QMapControl/src/linestring.h
-    lib/QMapControl/src/mapcontrol.h
-    lib/QMapControl/src/tilemapadapter.h
-    lib/QMapControl/src/curve.h
-    lib/QMapControl/src/imagemanager.h
-    lib/QMapControl/src/layer.h
-    lib/QMapControl/src/maplayer.h
-    lib/QMapControl/src/geometry.h
-    lib/QMapControl/src/googlesatmapadapter.h
-    lib/QMapControl/src/point.h
-    lib/QMapControl/src/osmmapadapter.h
-    lib/QMapControl/src/gps_position.h
-    lib/QMapControl/src/layermanager.h
-    lib/QMapControl/src/fixedimageoverlay.h
-    lib/QMapControl/src/openaerialmapadapter.h
-    lib/QMapControl/src/emptymapadapter.h
-    lib/QMapControl/src/yahoomapadapter.h
-    lib/QMapControl/src/imagepoint.h
-    lib/QMapControl/qmapcontrol.h
+	lib/QMapControl/src/googlemapadapter.h
+	lib/QMapControl/src/mapnetwork.h
+	lib/QMapControl/src/mapadapter.h
+	lib/QMapControl/src/geometrylayer.h
+	lib/QMapControl/src/linestring.h
+	lib/QMapControl/src/mapcontrol.h
+	lib/QMapControl/src/tilemapadapter.h
+	lib/QMapControl/src/curve.h
+	lib/QMapControl/src/imagemanager.h
+	lib/QMapControl/src/layer.h
+	lib/QMapControl/src/maplayer.h
+	lib/QMapControl/src/geometry.h
+	lib/QMapControl/src/googlesatmapadapter.h
+	lib/QMapControl/src/point.h
+	lib/QMapControl/src/osmmapadapter.h
+	lib/QMapControl/src/layermanager.h
+	lib/QMapControl/src/openaerialmapadapter.h
+	lib/QMapControl/src/emptymapadapter.h
+	lib/QMapControl/src/yahoomapadapter.h
     )
 
 # qmapcontrol source
@@ -811,7 +799,8 @@ set (qmapcontrolSrc
     )
 
 # qmapcontrol linking
-add_library(qmapcontrol ${qmapcontrolSrc})
-target_link_libraries(qmapcontrol ${commonLibs})
+qt4_wrap_cpp(qmapcontrolMoc ${qmapcontrolMocSrc})
+add_library(qmapcontrol ${qmapcontrolMoc} ${qmapcontrolSrc})
+target_link_libraries(qmapcontrol ${QT_LIBRARIES})
 
 # vim:ts=4:sw=4:expandtab
