@@ -65,8 +65,11 @@ This file is part of the QGROUNDCONTROL project
  * @param argv The string array of parameters
  **/
 
+
 Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
 {
+
+
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
