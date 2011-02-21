@@ -1,3 +1,5 @@
+*.swp
+CMakeFiles
 *Makefile*
 tags
 build
