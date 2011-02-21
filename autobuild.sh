@@ -28,8 +28,7 @@ do
 	elif [ $OPT = "grab_debian_dependencies" ] &> /dev/null
 	then
 		echo you chose to install debian dependencies
-		sudo apt-get install cmake libqt4-dev libboost-all-dev libopenscenegraph-dev
-		sudo apt-get install scicoslab-gtk
+		sudo apt-get install cmake libqt4-dev flite1-dev libphonon-dev libopenscenegraph-dev
 		exit 0
 
 	elif [ $OPT = "remake" ] &> /dev/null

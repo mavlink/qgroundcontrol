@@ -120,9 +120,11 @@ endif()
 find_package(Qt4 COMPONENTS QtGui QtCore QtNetwork QtOpenGL QtSVG QtXML QtPhonon QtWebKit REQUIRED)
 set(PHONON_FIND_QUIETLY FALSE)
 find_package(Phonon)
-find_package(SDL)
-find_package(Flite)
-find_package(OpenGL)
+find_package(SDL REQUIRED)
+if (LINUX)
+    find_package(Flite)
+endif(LINUX)
+find_package(OpenGL REQUIRED)
 find_package(OpenSceneGraph 2.8.3 COMPONENTS osgGA osgDB osgUtil osgViewer)
 find_or_build_from_source(MAVLINK thirdParty/mavlink FOUND_GIT_REPO)
 
@@ -159,32 +161,8 @@ install(DIRECTORY "${PROJECT_SOURCE_DIR}/data"
     DESTINATION share/qgroundcontrol
     PATTERN "*.git*" EXCLUDE)
 
-# dependency summary
-message(STATUS "=======================================")
-message(STATUS "\tLIBRARY\t\t\tBUILDING")
-message(STATUS "=======================================")
-message(STATUS "\t\tMavlink\t\tYES")
-if (OPENSCENEGRAPH_FOUND)
-    list(APPEND qgroundcontrol_LIBRARIES qgroundcontrolVisualization)
-    message(STATUS "\t\tOpenSceneGraph\tYES")
-else()
-    message(STATUS "\t\tOpenSceneGraph\t\tNO")
-endif (OPENSCENEGRAPH_FOUND)
-if (QT4_FOUND)
-    message(STATUS "\t\tQT4\t\tYES")
-else()
-    message(STATUS "\t\tQT4\t\tNO")
-endif (QT4_FOUND)
-if (PHONON_FOUND)
-    message(STATUS "\t\tPHONON\t\tYES")
-else()
-    message(STATUS "\t\tPHONON\t\tNO")
-endif (PHONON_FOUND)
-message(STATUS "=======================================")
-
-# project flags
-include (${QT_USE_FILE})
-include_directories(
+# include directories
+set(qgroundcontrolIncludes
     src
     src/ui
     src/ui/linechart
@@ -205,14 +183,68 @@ include_directories(
     src/lib/qwt
     lib/QMapControl
     ${PROJECT_BINARY_DIR}
-    ${SDL_INCLUDE_DIR}
-    ${OPENGL_INCLUDE_DIR}
-    ${OPENSCENEGRAPH_INCLUDE_DIRS}
-    ${QT_INCLUDE_DIRS}
-    ${PHONON_INCLUDE_DIR}/phonon
-    ${FLITE_INCLUDE_DIR}
-    ${MAVLINK_INCLUDE_DIRS}
     )
+
+# dependency summary
+message(STATUS "=======================================")
+message(STATUS "\tDEPENDENCY\t\tFOUND")
+message(STATUS "=======================================")
+
+# common dependencies
+if (MAVLINK_FOUND)
+    message(STATUS "\t\tMAVLINK\t\tYES")
+    list(APPEND qgroundcontrolIncludes ${MAVLINK_INCLUDE_DIRS})
+else()
+    message(STATUS "\t\tOpenSceneGraph\t\tNO")
+endif (MAVLINK_FOUND)
+if (OPENSCENEGRAPH_FOUND)
+    message(STATUS "\t\tOpenSceneGraph\tYES")
+    list(APPEND qgroundcontrolIncludes ${OPENSCENEGRAPH_INCLUDE_DIRS})
+else()
+    message(STATUS "\t\tOpenSceneGraph\t\tNO")
+endif (OPENSCENEGRAPH_FOUND)
+if (QT4_FOUND)
+    message(STATUS "\t\tQT4\t\tYES")
+    list(APPEND qgroundcontrolIncludes ${QT_INCLUDE_DIRS})
+else()
+    message(STATUS "\t\tQT4\t\tNO")
+endif (QT4_FOUND)
+if (PHONON_FOUND)
+    message(STATUS "\t\tPHONON\t\tYES")
+    list(APPEND qgroundcontrolIncludes ${PHONON_INCLUDE_DIR}/phonon)
+else()
+    message(STATUS "\t\tPHONON\t\tNO")
+endif (PHONON_FOUND)
+if (SDL_FOUND)
+    message(STATUS "\t\tSDL\t\tYES")
+    list(APPEND qgroundcontrolIncludes ${SDL_INCLUDE_DIR})
+else()
+    message(STATUS "\t\tSDL\t\tNO")
+endif (SDL_FOUND)
+if (OPENGL_FOUND)
+    message(STATUS "\t\tOPENGL\t\tYES")
+    list(APPEND qgroundcontrolIncludes ${OPENGL_INCLUDE_DIR})
+else()
+    message(STATUS "\t\tOPENGL\t\tNO")
+endif (OPENGL_FOUND)
+
+# linux only dependencies
+if (LINUX)
+    if (FLITE_FOUND)
+        message(STATUS "\t\tFLITE\t\tYES")
+        list(APPEND qgroundcontrolIncludes ${FLITE_INCLUDE_DIR})
+    else()
+        message(STATUS "\t\tFLITE\t\tNO")
+    endif (FLITE_FOUND)
+endif(LINUX)
+
+# set include directories
+include_directories(${qgroundcontrolIncludes})
+
+message(STATUS "=======================================")
+
+# project flags
+include (${QT_USE_FILE})
 set (commonLibs
         )
 add_definitions(-D_TTY_POSIX_)
