@@ -40,8 +40,8 @@ endif()
 
 # settings
 set(qgroundcontrol_VERSION_MAJOR 0)
-set(qgroundcontrol_VERSION_MINOR 2)
-set(qgroundcontrol_VERSION_PATCH 0)
+set(qgroundcontrol_VERSION_MINOR 8)
+set(qgroundcontrol_VERSION_PATCH 3)
 set(qgroundcontrol_SOVERSION 0)
 
 set_default(MAVLINK_BUILD_FROM_SOURCE FALSE)
@@ -158,12 +158,6 @@ endif()
 install(DIRECTORY "${PROJECT_SOURCE_DIR}/data"
     DESTINATION share/qgroundcontrol
     PATTERN "*.git*" EXCLUDE)
-
-# pkgconfig
-install(FILES
-    qgroundcontrol.pc
-    DESTINATION lib/pkgconfig
-    )
 
 # dependency summary
 message(STATUS "=======================================")

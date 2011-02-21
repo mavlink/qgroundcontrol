@@ -1,4 +1,5 @@
 *.swp
+*.nfs
 CMakeFiles
 *Makefile*
 tags
