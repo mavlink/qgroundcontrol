@@ -6,29 +6,35 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>606</width>
+    <width>839</width>
     <height>179</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" columnstretch="100,0,0,0,0,0,0,0,0,0">
-   <item row="1" column="1" colspan="4">
+  <layout class="QGridLayout" name="gridLayout" columnstretch="100,0,0,0,0,0,0,0,0">
+   <property name="horizontalSpacing">
+    <number>6</number>
+   </property>
+   <property name="verticalSpacing">
+    <number>12</number>
+   </property>
+   <item row="1" column="1" colspan="3">
     <widget class="QLineEdit" name="editNameLabel">
      <property name="text">
       <string>Informal Name..</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="5">
+   <item row="1" column="4">
     <widget class="QLabel" name="editMinLabel">
      <property name="text">
       <string>Min</string>
      </property>
     </widget>
    </item>
-   <item row="1" column="7">
+   <item row="1" column="6">
     <widget class="QLabel" name="editMaxLabel">
      <property name="text">
       <string>Max</string>
@@ -45,14 +51,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="2">
-    <widget class="QLabel" name="valueLabel">
-     <property name="text">
-      <string>0.00</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="4" colspan="2">
+   <item row="2" column="3" colspan="2">
     <widget class="QDoubleSpinBox" name="editMinSpinBox">
      <property name="minimum">
       <double>-999999999.000000000000000</double>
@@ -62,11 +61,11 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="6">
+   <item row="2" column="5">
     <widget class="QSlider" name="valueSlider">
      <property name="maximumSize">
       <size>
-       <width>300</width>
+       <width>250</width>
        <height>16777215</height>
       </size>
      </property>
@@ -78,7 +77,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="7">
+   <item row="2" column="6">
     <widget class="QDoubleSpinBox" name="editMaxSpinBox">
      <property name="minimum">
       <double>-999999999.000000000000000</double>
@@ -88,22 +87,25 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="1" colspan="7">
+   <item row="0" column="1" colspan="6">
     <widget class="QLabel" name="editInstructionsLabel">
      <property name="text">
       <string>Please configure the parameter slider now:</string>
      </property>
     </widget>
    </item>
-   <item row="5" column="1" colspan="7">
+   <item row="5" column="1" colspan="6">
     <widget class="QLabel" name="editStatusLabel">
      <property name="text">
       <string>Please click first on refresh to update selection menus..</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="1" colspan="3">
+   <item row="3" column="1" colspan="2">
     <widget class="QComboBox" name="editSelectComponentComboBox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="toolTip">
       <string>Select component</string>
      </property>
@@ -112,8 +114,11 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="5" colspan="3">
+   <item row="3" column="4" colspan="3">
     <widget class="QComboBox" name="editSelectParamComboBox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="toolTip">
       <string>Select parameter</string>
      </property>
@@ -123,7 +128,78 @@
     </widget>
    </item>
    <item row="2" column="8">
+    <widget class="QPushButton" name="readButton">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Read the current parameter value on the system</string>
+     </property>
+     <property name="statusTip">
+      <string>Read the current parameter value on the system</string>
+     </property>
+     <property name="text">
+      <string>R</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="7" colspan="2">
+    <widget class="QPushButton" name="editRefreshParamsButton">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Refresh</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="7" colspan="2">
+    <widget class="QPushButton" name="editDoneButton">
+     <property name="text">
+      <string>Done</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QDoubleSpinBox" name="valueSpinBox">
+     <property name="minimum">
+      <double>-999999999.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>999999999.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="7">
     <widget class="QPushButton" name="writeButton">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
      <property name="toolTip">
       <string>Transmit the current slider value to the system</string>
      </property>
@@ -138,52 +214,6 @@
        <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
      </property>
     </widget>
-   </item>
-   <item row="2" column="9">
-    <widget class="QPushButton" name="readButton">
-     <property name="toolTip">
-      <string>Read the current parameter value on the system</string>
-     </property>
-     <property name="statusTip">
-      <string>Read the current parameter value on the system</string>
-     </property>
-     <property name="text">
-      <string>R</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="8" colspan="2">
-    <widget class="QPushButton" name="editRefreshParamsButton">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="text">
-      <string>Refresh</string>
-     </property>
-    </widget>
-   </item>
-   <item row="5" column="8" colspan="2">
-    <widget class="QPushButton" name="editDoneButton">
-     <property name="text">
-      <string>Done</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="3">
-    <widget class="QDoubleSpinBox" name="valueSpinBox"/>
-   </item>
-   <item row="2" column="0">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>

@@ -23,10 +23,4 @@ void QGCUASParamManager::requestParameterListUpdate(int component)
 
 }
 
-/**
- * The .. signal is emitted
- */
-void QGCUASParamManager::requestParameterUpdate(int component, const QString& parameter)
-{
 
-}

@@ -20,10 +20,7 @@ public:
     /** @brief Request an update for the parameter list */
     void requestParameterListUpdate(int component = 0);
     /** @brief Request an update for this specific parameter */
-    void requestParameterUpdate(int component, const QString& parameter);
-
-    /** @brief Request list of parameters from MAV */
-    virtual void requestParameterList() = 0;
+    virtual void requestParameterUpdate(int component, const QString& parameter) = 0;
 
 signals:
     void parameterChanged(int component, QString parameter, float value);
@@ -31,6 +28,10 @@ signals:
     void parameterListUpToDate(int component);
 
 public slots:
+    /** @brief Write one parameter to the MAV */
+    virtual void setParameter(int component, QString parameterName, float value) = 0;
+    /** @brief Request list of parameters from MAV */
+    virtual void requestParameterList() = 0;
 
 protected:
     UASInterface* mav;   ///< The MAV this widget is controlling

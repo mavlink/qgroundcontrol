@@ -23,6 +23,7 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
     createActions();
     toolLayout = ui->toolLayout;
     toolLayout->setAlignment(Qt::AlignTop);
+    toolLayout->setSpacing(8);
 
     QDockWidget* dock = dynamic_cast<QDockWidget*>(this->parentWidget());
     if (dock)
