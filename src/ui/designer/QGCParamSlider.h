@@ -30,9 +30,11 @@ public slots:
     void setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, float value);
     void writeSettings(QSettings& settings);
     void readSettings(const QSettings& settings);
+    void refreshParamList();
     void setActiveUAS(UASInterface *uas);
     void selectComponent(int componentIndex);
     void selectParameter(int paramIndex);
+    void setParamValue(double value);
 
 protected slots:
     /** @brief Request the parameter of this widget from the MAV */

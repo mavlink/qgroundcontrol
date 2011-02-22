@@ -747,6 +747,15 @@ void QGCParamWidget::retransmissionGuardTick()
 
 
 /**
+ * The .. signal is emitted
+ */
+void QGCParamWidget::requestParameterUpdate(int component, const QString& parameter)
+{
+
+}
+
+
+/**
  * @param component the subsystem which has the parameter
  * @param parameterName name of the parameter, as delivered by the system
  * @param value value of the parameter

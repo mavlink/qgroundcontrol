@@ -64,6 +64,8 @@ public slots:
     void addParameter(int uas, int component, QString parameterName, float value);
     /** @brief Request list of parameters from MAV */
     void requestParameterList();
+    /** @brief Request one single parameter */
+    void requestParameterUpdate(int component, const QString& parameter);
     /** @brief Set one parameter, changes value in RAM of MAV */
     void setParameter(int component, QString parameterName, float value);
     /** @brief Set all parameters, changes the value in RAM of MAV */
