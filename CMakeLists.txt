@@ -569,12 +569,7 @@ add_executable(qgroundcontrol
     )
 add_dependencies(qgroundcontrol MAVLINK)
 target_link_libraries(qgroundcontrol
-    ${SDL_LIBRARY}
-    ${OPENGL_LIBRARIES}
-    ${OSG_LIBRARIES}
-    ${QT_LIBRARIES}
-    ${FLITE_LIBRARIES}
-    ${PHONON_LIBS}
+    ${qgroundcontrolLibs}
     qextserialport qmapcontrol qwt)
 
 # qgroundcontrol install
