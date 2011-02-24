@@ -335,6 +335,14 @@ void MainWindow::buildCommonWidgets()
         addToToolsMenu (controlDockWidget, tr("Control"), SLOT(showToolWidget(bool)), MENU_UAS_CONTROL, Qt::LeftDockWidgetArea);
     }
 
+    if (!controlParameterWidget)
+    {
+        controlParameterWidget = new QDockWidget(tr("Control Parameters"), this);
+        controlParameterWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_PARAMETERWIDGET");
+        controlParameterWidget->setWidget( new UASControlParameters(this) );
+        addToToolsMenu (controlParameterWidget, tr("Control Parameters"), SLOT(showToolWidget(bool)), MENU_UAS_CONTROL_PARAM, Qt::LeftDockWidgetArea);
+    }
+
     if (!listDockWidget)
     {
         listDockWidget = new QDockWidget(tr("Unmanned Systems"), this);
@@ -818,7 +826,7 @@ void MainWindow::showToolWidget(bool visible)
                 else
                 {
                     removeDockWidget(dockWidget);
-                }
+                }              
 
                 QHashIterator<int, QWidget*> i(dockWidgets);
                 while (i.hasNext())
@@ -1007,16 +1015,22 @@ void MainWindow::connectCommonWidgets()
 
         //
         connect(waypointsDockWidget->widget(), SIGNAL(changePointList()), mapWidget, SLOT(clearWaypoints()));
+    }
 
-
-
-
+    if(controlDockWidget && controlParameterWidget)
+    {
+       connect(controlDockWidget->widget(), SIGNAL(changedMode(int)), controlParameterWidget->widget(), SLOT(changedMode(int)));
     }
 
     //TODO temporaly debug
     if (slugsHilSimWidget && slugsHilSimWidget->widget()){
         connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
                 slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
+    }
+
+    if (controlParameterWidget && controlParameterWidget->widget()){
+        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+                controlParameterWidget->widget(), SLOT(activeUasSet(UASInterface*)));
     }
 }
 
@@ -1064,6 +1078,8 @@ void MainWindow::connectSlugsWidgets()
         connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
                 slugsPIDControlWidget->widget(), SLOT(activeUasSet(UASInterface*)));
     }
+
+
 }
 
 void MainWindow::arrangeCommonCenterStack()

@@ -75,7 +75,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SlugsHilSim.h"
 
 #include "SlugsVideoCamControl.h"
-
+#include "UASControlParameters.h"
 
 /**
  * @brief Main Application Window
@@ -212,6 +212,7 @@ protected:
     // FIXME: DO NOT PUT CUSTOM VALUES IN THIS ENUM since it is iterated over
     // this will be fixed in a future release.
     typedef enum _TOOLS_WIDGET_NAMES {
+      MENU_UAS_CONTROL_PARAM,
       MENU_UAS_CONTROL,
       MENU_UAS_INFO,
       MENU_CAMERA,
@@ -381,6 +382,7 @@ protected:
 #endif
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
+    QPointer<QDockWidget> controlParameterWidget;
     QPointer<QDockWidget> infoDockWidget;
     QPointer<QDockWidget> cameraDockWidget;
     QPointer<QDockWidget> listDockWidget;

@@ -157,7 +157,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCWaypointListMulti.ui \
     src/ui/mission/QGCCustomWaypointAction.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
-    src/ui/QGCSettingsWidget.ui
+    src/ui/QGCSettingsWidget.ui \
+    src/ui/UASControlParameters.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -269,7 +270,8 @@ HEADERS += src/MG.h \
     src/uas/QGCMAVLinkUASFactory.h \
     src/ui/QGCWaypointListMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
-    src/ui/QGCSettingsWidget.h
+    src/ui/QGCSettingsWidget.h \
+    src/ui/uas/UASControlParameters.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008: {
@@ -396,7 +398,8 @@ SOURCES += src/main.cc \
     src/uas/QGCMAVLinkUASFactory.cc \
     src/ui/QGCWaypointListMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
-    src/ui/QGCSettingsWidget.cc
+    src/ui/QGCSettingsWidget.cc \
+    src/ui/uas/UASControlParameters.cpp
 
 macx|win32-msvc2008: {
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
