@@ -249,6 +249,8 @@ void UASControlWidget::setMode(int mode)
 
 
     qDebug() << "SET MODE REQUESTED" << uasMode;
+
+    emit changedMode(mode);
 }
 
 void UASControlWidget::transmitMode()
