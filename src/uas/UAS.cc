@@ -1766,6 +1766,15 @@ void UAS::setUASName(const QString& name)
     emit systemSpecsChanged(uasId);
 }
 
+void UAS::executeCommand(MAV_CMD command)
+{
+    mavlink_message_t msg;
+    mavlink_command_t cmd;
+    //mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, action);
+    // Send message twice to increase chance that it reaches its goal
+    sendMessage(msg);
+}
+
 /**
  * Sets an action
  *
