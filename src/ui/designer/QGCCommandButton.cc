@@ -68,6 +68,10 @@ void QGCCommandButton::setCommandButtonName(QString text)
 
 void QGCCommandButton::startEditMode()
 {
+    // Hide elements
+    ui->commandButton->hide();
+    ui->nameLabel->hide();
+
     ui->editCommandComboBox->show();
     ui->editFinishButton->show();
     ui->editNameLabel->show();
@@ -79,6 +83,7 @@ void QGCCommandButton::startEditMode()
     ui->editParam2SpinBox->show();
     ui->editParam3SpinBox->show();
     ui->editParam4SpinBox->show();
+    //setStyleSheet("QGroupBox { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
     isInEditMode = true;
 }
 
@@ -99,9 +104,12 @@ void QGCCommandButton::endEditMode()
         ui->editParam4SpinBox->hide();
     }
 
+    ui->commandButton->show();
+    ui->nameLabel->show();
+
     // Write to settings
     emit editingFinished();
-
+    //setStyleSheet("");
     isInEditMode = false;
 }
 
