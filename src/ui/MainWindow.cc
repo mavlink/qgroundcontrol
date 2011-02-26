@@ -307,9 +307,11 @@ void MainWindow::buildCustomWidget()
             if (!dock)
             {
                 QDockWidget* dock = new QDockWidget(widgets.at(i)->windowTitle(), this);
+                dock->setObjectName(widgets.at(i)->objectName()+"_DOCK");
                 dock->setWidget(widgets.at(i));
                 connect(widgets.at(i), SIGNAL(destroyed()), dock, SLOT(deleteLater()));
                 QAction* showAction = new QAction(widgets.at(i)->windowTitle(), this);
+                showAction->setCheckable(true);
                 connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
                 connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
                 widgets.at(i)->setMainMenuAction(showAction);
@@ -1045,6 +1047,7 @@ void MainWindow::createCustomWidget()
     connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
     dock->setWidget(tool);
     QAction* showAction = new QAction("Show Unnamed Tool", this);
+    showAction->setCheckable(true);
     connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
     connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
     tool->setMainMenuAction(showAction);
