@@ -196,7 +196,12 @@ else()
     message(STATUS "\t\tMAVLINK\tNO")
 endif ()
 
-if (${OSG_LIBRARY} STREQUAL "OSG_LIBRARY-NOTFOUND")
+# fix for osg found bug
+if (NOT ${OSG_LIBRARY} STREQUAL "OSG_LIBRARY-NOTFOUND")
+	set(OPENSCENEGRAPH_FOUND FALSE)
+endif()
+
+if (OPENSCENEGRAPH_FOUND)
     message(STATUS "\t\tOpenSceneGraph\tNO")
 else()
     message(STATUS "\t\tOpenSceneGraph\tYES")
