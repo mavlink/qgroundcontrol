@@ -112,6 +112,12 @@ void QGCParamSlider::selectParameter(int paramIndex)
 
 void QGCParamSlider::startEditMode()
 {
+    ui->valueSlider->hide();
+    ui->valueSpinBox->hide();
+    ui->nameLabel->hide();
+    ui->writeButton->hide();
+    ui->readButton->hide();
+
     ui->editDoneButton->show();
     ui->editMaxLabel->show();
     ui->editMinLabel->show();
@@ -153,6 +159,9 @@ void QGCParamSlider::endEditMode()
     ui->editMaxSpinBox->hide();
     ui->writeButton->show();
     ui->readButton->show();
+    ui->valueSlider->show();
+    ui->valueSpinBox->show();
+    ui->nameLabel->show();
     isInEditMode = false;
     emit editingFinished();
 }
