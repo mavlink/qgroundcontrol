@@ -86,6 +86,13 @@ border: 1px solid #777777;
  QMainWindow::separator:hover {
      background: white;
  }
+ 
+ QGCToolWidgetItem {
+	border: 1px solid #66666B;
+	border-radius: 3px;
+	padding: 10px 0px 0px 0px;
+	margin-top: 1ex; /* leave space at the top for the title */
+ }
 
  QDockWidget {
      border: 1px solid #32345E;

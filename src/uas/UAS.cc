@@ -1059,7 +1059,6 @@ void UAS::setHomePosition(double lat, double lon, double alt)
 
 void UAS::setLocalOriginAtCurrentGPSPosition()
 {
-
     bool result = false;
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);

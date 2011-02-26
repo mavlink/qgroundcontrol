@@ -203,7 +203,7 @@ void WaypointView::updateActionView(int action)
         m_ui->orbitSpinBox->show();
         m_ui->holdTimeSpinBox->show();
         break;
-    case MAV_CMD_NAV_TARGET:
+    case MAV_CMD_NAV_ORIENTATION_TARGET:
         m_ui->orbitSpinBox->hide();
         m_ui->takeOffAngleSpinBox->hide();
         m_ui->turnsSpinBox->hide();
