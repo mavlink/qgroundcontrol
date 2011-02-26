@@ -189,6 +189,8 @@ public slots:
     virtual void setUASName(const QString& name) = 0;
     /** @brief Sets an action **/
     virtual void setAction(MAV_ACTION action) = 0;
+    /** @brief Execute command immediately **/
+    virtual void executeCommand(MAV_CMD command) = 0;
 
     /** @brief Selects the airframe */
     virtual void setAirframe(int airframe) = 0;
