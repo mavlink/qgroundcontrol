@@ -43,10 +43,10 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     m_ui->comboBox_action->addItem(tr("NAV: Loiter Turns"),MAV_CMD_NAV_LOITER_TURNS);
     m_ui->comboBox_action->addItem(tr("NAV: Ret. to Launch"),MAV_CMD_NAV_RETURN_TO_LAUNCH);
     m_ui->comboBox_action->addItem(tr("NAV: Land"),MAV_CMD_NAV_LAND);
-    m_ui->comboBox_action->addItem(tr("NAV: Target"),MAV_CMD_NAV_TARGET);
-    m_ui->comboBox_action->addItem(tr("IF: Delay over"),MAV_CMD_CONDITION_DELAY);
-    m_ui->comboBox_action->addItem(tr("IF: Yaw angle is"),MAV_CMD_CONDITION_YAW);
-    m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);
+//    m_ui->comboBox_action->addItem(tr("NAV: Target"),MAV_CMD_NAV_TARGET);
+    //m_ui->comboBox_action->addItem(tr("IF: Delay over"),MAV_CMD_CONDITION_DELAY);
+    //m_ui->comboBox_action->addItem(tr("IF: Yaw angle is"),MAV_CMD_CONDITION_YAW);
+    //m_ui->comboBox_action->addItem(tr("DO: Jump to Index"),MAV_CMD_DO_JUMP);
     m_ui->comboBox_action->addItem(tr("Other"), MAV_CMD_ENUM_END);
 
     // add frames 
@@ -261,6 +261,7 @@ void WaypointView::changedAction(int index)
 
 void WaypointView::changeViewMode(QGC_WAYPOINTVIEW_MODE mode)
 {
+    viewMode = mode;
     switch (mode)
     {
     case QGC_WAYPOINTVIEW_MODE_NAV:
@@ -285,6 +286,9 @@ void WaypointView::changeViewMode(QGC_WAYPOINTVIEW_MODE mode)
         m_ui->lonSpinBox->hide();
         m_ui->altSpinBox->hide();
 
+        int action_index = m_ui->comboBox_action->findData(MAV_CMD_ENUM_END);
+        m_ui->comboBox_action->setCurrentIndex(action_index);
+
         // Show action widget
         if (!m_ui->customActionWidget->isVisible())
         {
@@ -296,6 +300,7 @@ void WaypointView::changeViewMode(QGC_WAYPOINTVIEW_MODE mode)
         }
         break;
     }
+
 }
 
 void WaypointView::updateFrameView(int frame)
@@ -438,9 +443,12 @@ void WaypointView::updateValues()
         }
         else
         {
-            // Action ID known, update
-            m_ui->comboBox_action->setCurrentIndex(action_index);
-            updateActionView(action);
+            if (viewMode != QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING)
+            {
+                // Action ID known, update
+                m_ui->comboBox_action->setCurrentIndex(action_index);
+                updateActionView(action);
+            }
         }
     }
     switch(action)
@@ -459,7 +467,9 @@ void WaypointView::updateValues()
 
     if (m_ui->yawSpinBox->value() != wp->getYaw())
     {
+        if (!m_ui->yawSpinBox->isVisible()) m_ui->yawSpinBox->blockSignals(true);
         m_ui->yawSpinBox->setValue(wp->getYaw());
+        if (!m_ui->yawSpinBox->isVisible()) m_ui->yawSpinBox->blockSignals(false);
     }
     if (m_ui->selectedBox->isChecked() != wp->getCurrent())
     {
@@ -472,23 +482,33 @@ void WaypointView::updateValues()
     m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
     if (m_ui->orbitSpinBox->value() != wp->getLoiterOrbit())
     {
+        if (!m_ui->orbitSpinBox->isVisible()) m_ui->orbitSpinBox->blockSignals(true);
         m_ui->orbitSpinBox->setValue(wp->getLoiterOrbit());
+        if (!m_ui->orbitSpinBox->isVisible()) m_ui->orbitSpinBox->blockSignals(false);
     }
     if (m_ui->acceptanceSpinBox->value() != wp->getAcceptanceRadius())
     {
+        if (!m_ui->acceptanceSpinBox->isVisible()) m_ui->acceptanceSpinBox->blockSignals(true);
         m_ui->acceptanceSpinBox->setValue(wp->getAcceptanceRadius());
+        if (!m_ui->acceptanceSpinBox->isVisible()) m_ui->acceptanceSpinBox->blockSignals(false);
     }
     if (m_ui->holdTimeSpinBox->value() != wp->getHoldTime())
     {
+        if (!m_ui->holdTimeSpinBox->isVisible()) m_ui->holdTimeSpinBox->blockSignals(true);
         m_ui->holdTimeSpinBox->setValue(wp->getHoldTime());
+        if (!m_ui->holdTimeSpinBox->isVisible()) m_ui->holdTimeSpinBox->blockSignals(false);
     }
     if (m_ui->turnsSpinBox->value() != wp->getTurns())
     {
+        if (!m_ui->turnsSpinBox->isVisible()) m_ui->turnsSpinBox->blockSignals(true);
         m_ui->turnsSpinBox->setValue(wp->getTurns());
+        if (!m_ui->turnsSpinBox->isVisible()) m_ui->turnsSpinBox->blockSignals(false);
     }
     if (m_ui->takeOffAngleSpinBox->value() != wp->getParam1())
     {
+        if (!m_ui->takeOffAngleSpinBox->isVisible()) m_ui->takeOffAngleSpinBox->blockSignals(true);
         m_ui->takeOffAngleSpinBox->setValue(wp->getParam1());
+        if (!m_ui->takeOffAngleSpinBox->isVisible()) m_ui->takeOffAngleSpinBox->blockSignals(false);
     }
 
     // UPDATE CUSTOM ACTION WIDGET

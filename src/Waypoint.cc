@@ -29,8 +29,10 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#include "Waypoint.h"
 #include <QStringList>
+#include <QDebug>
+
+#include "Waypoint.h"
 
 Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _param1, double _param2, double _param3, double _param4,
                             bool _autocontinue, bool _current, MAV_FRAME _frame, MAV_CMD _action)
@@ -229,6 +231,8 @@ void Waypoint::setAcceptanceRadius(double radius)
 
 void Waypoint::setParam1(double param1)
 {
+    qDebug() << "SENDER:" << QObject::sender();
+    qDebug() << "PARAM1 SET REQ:" << param1;
     if (this->param1 != param1)
     {
         this->param1 = param1;
