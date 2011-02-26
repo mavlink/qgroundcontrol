@@ -5,7 +5,7 @@
 #include "UASManager.h"
 
 QGCCommandButton::QGCCommandButton(QWidget *parent) :
-    QGCToolWidgetItem("CommandButton", parent),
+    QGCToolWidgetItem("Command Button", parent),
     ui(new Ui::QGCCommandButton),
     uas(NULL)
 {
@@ -21,6 +21,13 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
     ui->editFinishButton->hide();
     ui->editNameLabel->hide();
     ui->editButtonName->hide();
+    ui->editConfirmationCheckBox->hide();
+    ui->editComponentSpinBox->hide();
+    ui->editParamsVisibleCheckBox->hide();
+    ui->editParam1SpinBox->hide();
+    ui->editParam2SpinBox->hide();
+    ui->editParam3SpinBox->hide();
+    ui->editParam4SpinBox->hide();
 
     // Add commands to combo box
     ui->editCommandComboBox->addItem("DO: Control Video", MAV_CMD_DO_CONTROL_VIDEO);
@@ -37,10 +44,16 @@ void QGCCommandButton::sendCommand()
     if (QGCToolWidgetItem::uas)
     {
         // FIXME
-        int index = 0;//ui->editCommandComboBox->userData()
+        int index = ui->editCommandComboBox->itemData(ui->editCommandComboBox->currentIndex()).toInt();
         MAV_CMD command = static_cast<MAV_CMD>(index);
+        int confirm = (ui->editConfirmationCheckBox->isChecked()) ? 1 : 0;
+        float param1 = ui->editParam1SpinBox->value();
+        float param2 = ui->editParam2SpinBox->value();
+        float param3 = ui->editParam3SpinBox->value();
+        float param4 = ui->editParam4SpinBox->value();
+        int component = ui->editComponentSpinBox->value();
 
-        QGCToolWidgetItem::uas->executeCommand(command);
+        QGCToolWidgetItem::uas->executeCommand(command, confirm, param1, param2, param3, param4, component);
     }
     else
     {
@@ -59,6 +72,13 @@ void QGCCommandButton::startEditMode()
     ui->editFinishButton->show();
     ui->editNameLabel->show();
     ui->editButtonName->show();
+    ui->editConfirmationCheckBox->show();
+    ui->editComponentSpinBox->show();
+    ui->editParamsVisibleCheckBox->show();
+    ui->editParam1SpinBox->show();
+    ui->editParam2SpinBox->show();
+    ui->editParam3SpinBox->show();
+    ui->editParam4SpinBox->show();
     isInEditMode = true;
 }
 
@@ -68,6 +88,16 @@ void QGCCommandButton::endEditMode()
     ui->editFinishButton->hide();
     ui->editNameLabel->hide();
     ui->editButtonName->hide();
+    ui->editConfirmationCheckBox->hide();
+    ui->editComponentSpinBox->hide();
+    ui->editParamsVisibleCheckBox->hide();
+    if (!ui->editParamsVisibleCheckBox->isChecked())
+    {
+        ui->editParam1SpinBox->hide();
+        ui->editParam2SpinBox->hide();
+        ui->editParam3SpinBox->hide();
+        ui->editParam4SpinBox->hide();
+    }
 
     // Write to settings
     emit editingFinished();
@@ -81,6 +111,7 @@ void QGCCommandButton::writeSettings(QSettings& settings)
     settings.setValue("QGC_ACTION_BUTTON_DESCRIPTION", ui->nameLabel->text());
     settings.setValue("QGC_ACTION_BUTTON_BUTTONTEXT", ui->commandButton->text());
     settings.setValue("QGC_ACTION_BUTTON_ACTIONID", ui->editCommandComboBox->currentIndex());
+    settings.setValue("QGC_COMMAND_BUTTON_PARAMS_VISIBLE", ui->editParamsVisibleCheckBox->isChecked());
     settings.sync();
 }
 
@@ -93,5 +124,20 @@ void QGCCommandButton::readSettings(const QSettings& settings)
     ui->nameLabel->setText(settings.value("QGC_ACTION_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
     ui->commandButton->setText(settings.value("QGC_ACTION_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
     ui->editCommandComboBox->setCurrentIndex(settings.value("QGC_ACTION_BUTTON_ACTIONID", 0).toInt());
+    ui->editParamsVisibleCheckBox->setChecked(settings.value("QGC_COMMAND_BUTTON_PARAMS_VISIBLE").toBool());
+    if (ui->editParamsVisibleCheckBox->isChecked())
+    {
+        ui->editParam1SpinBox->show();
+        ui->editParam2SpinBox->show();
+        ui->editParam3SpinBox->show();
+        ui->editParam4SpinBox->show();
+    }
+    else
+    {
+        ui->editParam1SpinBox->hide();
+        ui->editParam2SpinBox->hide();
+        ui->editParam3SpinBox->hide();
+        ui->editParam4SpinBox->hide();
+    }
     qDebug() << "DONE READING SETTINGS";
 }
