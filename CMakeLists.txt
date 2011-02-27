@@ -284,6 +284,7 @@ set(qgroundcontrolUiSrc
     src/ui/HDDisplay.ui
     src/ui/MAVLinkSettingsWidget.ui
     src/ui/AudioOutputWidget.ui
+    src/ui/designer/QGCCommandButton.ui
     src/ui/QGCSensorSettingsWidget.ui
     src/ui/watchdog/WatchdogControl.ui
     src/ui/watchdog/WatchdogProcessView.ui
@@ -406,6 +407,7 @@ set(qgroundcontrolMocSrc
 	src/ui/map3D/QGCWebPage.h
 	src/ui/ObjectDetectionView.h
 	src/ui/SerialConfigurationWindow.h
+    src/ui/designer/QGCCommandButton.h
 	src/ui/QGCFirmwareUpdate.h
 	src/ui/CommConfigurationWindow.h
 	src/ui/MAVLinkSettingsWidget.h
@@ -510,6 +512,7 @@ set (qgroundcontrolSrc
     src/ui/ObjectDetectionView.cc
     src/ui/ParameterInterface.cc
     src/ui/QGCDataPlot2D.cc
+    src/ui/designer/QGCCommandButton.cc
     src/ui/QGCFirmwareUpdate.cc
     src/ui/QGCMAVLinkLogPlayer.cc
     src/ui/QGCMainWindowAPConfigurator.cc
