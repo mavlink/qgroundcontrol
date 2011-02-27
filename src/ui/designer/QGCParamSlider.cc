@@ -26,16 +26,19 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     scaledInt = ui->valueSlider->maximum() - ui->valueSlider->minimum();
 
     ui->editDoneButton->hide();
-    ui->editMaxLabel->hide();
-    ui->editMinLabel->hide();
     ui->editNameLabel->hide();
-    ui->editInstructionsLabel->hide();
     ui->editRefreshParamsButton->hide();
     ui->editSelectParamComboBox->hide();
     ui->editSelectComponentComboBox->hide();
     ui->editStatusLabel->hide();
     ui->editMinSpinBox->hide();
     ui->editMaxSpinBox->hide();
+    ui->editLine1->hide();
+    ui->editLine2->hide();
+
+    ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
+    ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
+
     connect(ui->editDoneButton, SIGNAL(clicked()), this, SLOT(endEditMode()));
 
     // Sending actions
@@ -119,10 +122,7 @@ void QGCParamSlider::startEditMode()
     ui->readButton->hide();
 
     ui->editDoneButton->show();
-    ui->editMaxLabel->show();
-    ui->editMinLabel->show();
     ui->editNameLabel->show();
-    ui->editInstructionsLabel->show();
     ui->editRefreshParamsButton->show();
     ui->editSelectParamComboBox->show();
     ui->editSelectComponentComboBox->show();
@@ -131,6 +131,8 @@ void QGCParamSlider::startEditMode()
     ui->editMaxSpinBox->show();
     ui->writeButton->hide();
     ui->readButton->hide();
+    ui->editLine1->show();
+    ui->editLine2->show();
     isInEditMode = true;
 }
 
@@ -147,16 +149,15 @@ void QGCParamSlider::endEditMode()
     parameterMax = ui->editMaxSpinBox->value();
 
     ui->editDoneButton->hide();
-    ui->editMaxLabel->hide();
-    ui->editMinLabel->hide();
     ui->editNameLabel->hide();
-    ui->editInstructionsLabel->hide();
     ui->editRefreshParamsButton->hide();
     ui->editSelectParamComboBox->hide();
     ui->editSelectComponentComboBox->hide();
     ui->editStatusLabel->hide();
     ui->editMinSpinBox->hide();
     ui->editMaxSpinBox->hide();
+    ui->editLine1->hide();
+    ui->editLine2->hide();
     ui->writeButton->show();
     ui->readButton->show();
     ui->valueSlider->show();

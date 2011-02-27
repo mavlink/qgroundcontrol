@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>688</width>
-    <height>190</height>
+    <width>882</width>
+    <height>430</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,35 +26,35 @@
    <property name="bottomMargin">
     <number>3</number>
    </property>
-   <item row="5" column="0" colspan="3">
+   <item row="7" column="0" colspan="3">
     <widget class="QComboBox" name="editCommandComboBox"/>
    </item>
-   <item row="5" column="3">
+   <item row="7" column="3">
     <widget class="QPushButton" name="editFinishButton">
      <property name="text">
       <string>Done</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="3">
+   <item row="2" column="3">
     <widget class="QLineEdit" name="editButtonName">
      <property name="text">
       <string>&lt;Button Label&gt;</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="3">
+   <item row="2" column="0" colspan="3">
     <widget class="QLineEdit" name="editNameLabel">
      <property name="text">
       <string>&lt;Button Description Label (in front of button)&gt;</string>
      </property>
     </widget>
    </item>
-   <item row="2" column="3">
+   <item row="4" column="3">
     <widget class="QPushButton" name="commandButton">
      <property name="minimumSize">
       <size>
-       <width>30</width>
+       <width>60</width>
        <height>0</height>
       </size>
      </property>
@@ -63,7 +63,7 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
+   <item row="6" column="0">
     <widget class="QSpinBox" name="editComponentSpinBox">
      <property name="prefix">
       <string>Component ID: </string>
@@ -76,7 +76,7 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="2" colspan="2">
+   <item row="6" column="2" colspan="2">
     <widget class="QCheckBox" name="editConfirmationCheckBox">
      <property name="toolTip">
       <string>Set the confirm flag for this button. Some commands require that first one command is sent without confirm flag and then a second, equal command with confirm flag. This ensures safety.</string>
@@ -86,7 +86,7 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="4">
+   <item row="3" column="0" colspan="4">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QDoubleSpinBox" name="editParam1SpinBox">
@@ -166,7 +166,7 @@
      </item>
     </layout>
    </item>
-   <item row="2" column="0" colspan="3">
+   <item row="4" column="0" colspan="3">
     <widget class="QLabel" name="nameLabel">
      <property name="minimumSize">
       <size>
@@ -182,10 +182,36 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
+   <item row="6" column="1">
     <widget class="QCheckBox" name="editParamsVisibleCheckBox">
      <property name="text">
       <string>Keep parameters visible</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="4">
+    <widget class="Line" name="editLine1">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0" colspan="4">
+    <widget class="Line" name="editLine2">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
