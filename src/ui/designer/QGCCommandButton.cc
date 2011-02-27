@@ -28,6 +28,11 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
     ui->editParam2SpinBox->hide();
     ui->editParam3SpinBox->hide();
     ui->editParam4SpinBox->hide();
+    ui->editLine1->hide();
+    ui->editLine2->hide();
+
+    ui->editLine1->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
+    ui->editLine2->setStyleSheet("QWidget { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
 
     // Add commands to combo box
     ui->editCommandComboBox->addItem("DO: Control Video", MAV_CMD_DO_CONTROL_VIDEO);
@@ -83,6 +88,8 @@ void QGCCommandButton::startEditMode()
     ui->editParam2SpinBox->show();
     ui->editParam3SpinBox->show();
     ui->editParam4SpinBox->show();
+    ui->editLine1->show();
+    ui->editLine2->show();
     //setStyleSheet("QGroupBox { border: 1px solid #66666B; border-radius: 3px; padding: 10px 0px 0px 0px; background: #111122; }");
     isInEditMode = true;
 }
@@ -96,6 +103,8 @@ void QGCCommandButton::endEditMode()
     ui->editConfirmationCheckBox->hide();
     ui->editComponentSpinBox->hide();
     ui->editParamsVisibleCheckBox->hide();
+    ui->editLine1->hide();
+    ui->editLine2->hide();
     if (!ui->editParamsVisibleCheckBox->isChecked())
     {
         ui->editParam1SpinBox->hide();
