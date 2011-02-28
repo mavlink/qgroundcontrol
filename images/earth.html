@@ -362,7 +362,6 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    location.setAltitude(alt); 
 	    waypoints[index].setGeometry(location);
 	    waypoints[index].setDescription(index+"");
-	    console.log('WP LOC:' + lat + lon + alt);
 	}
 	else
 	{
@@ -373,7 +372,7 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    if (index < 10) numberstring = '0' + numberstring
 	    icon.setHref('http://google-maps-icons.googlecode.com/files/red' + numberstring +'.png'); 
 	    var style = ge.createStyle('');
-	    console.log('WP ICON created:' + 'http://google-maps-icons.googlecode.com/files/red' + numberstring +'.png');
+	    //console.log('WP ICON created:' + 'http://google-maps-icons.googlecode.com/files/red' + numberstring +'.png');
 	    style.getIconStyle().setIcon(icon); 
 	    //style.getIconStyle().setScale(0.5); 
 	    placemark.setStyleSelector(style);
@@ -424,7 +423,7 @@ function createAircraft(id, type, color)
           //planeColor = color;
           
           createTrail(id, color);
-          console.log(color);
+          //console.log(color);
 }
 
 function createTrail(id, color)
