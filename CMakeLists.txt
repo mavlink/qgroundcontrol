@@ -78,8 +78,9 @@ enable_language(CXX)
 # installer
 include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${qgroundcontrol_VERSION}")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${qgroundcontrol_VERSION}")
 set(CPACK_GENERATOR "DEB")
-set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
+set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 set(CPACK_SET_DESTDIR TRUE)
 set(CPACK_PACKAGE_CONTACT "James Goppert james.goppert@gmail.com")
@@ -89,7 +90,8 @@ set(CPACK_PACKAGE_DESCRITION_SUMMARY "
     A qt based ground-control program for unmanned systems.
     ")
 set(CPACK_SOURCE_IGNORE_FILES ${CPACK_SOURCE_IGNORE_FILES}
-    /.git/;/build/;~$;.*\\\\.bin$;.*\\\\.swp$)
+    "/.git/";"/build/";"~$";".*\\\\.bin$";".*\\\\.swp$"
+    )
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/license.txt")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README")
 set(CPACK_PACKAGE_VERSION_MAJOR ${qgroundcontrol_VERSION_MAJOR})
@@ -195,11 +197,6 @@ if (MAVLINK_FOUND)
 else()
     message(STATUS "\t\tMAVLINK\tNO")
 endif ()
-
-# fix for osg found bug
-if (NOT ${OSG_LIBRARY} STREQUAL "OSG_LIBRARY-NOTFOUND")
-	set(OPENSCENEGRAPH_FOUND FALSE)
-endif()
 
 if (OPENSCENEGRAPH_FOUND)
     message(STATUS "\t\tOpenSceneGraph\tNO")
