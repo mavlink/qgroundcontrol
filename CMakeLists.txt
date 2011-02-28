@@ -78,8 +78,9 @@ enable_language(CXX)
 # installer
 include(InstallRequiredSystemLibraries)
 set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${qgroundcontrol_VERSION}")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${qgroundcontrol_VERSION}")
 set(CPACK_GENERATOR "DEB")
-set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
+set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 set(CPACK_SET_DESTDIR TRUE)
 set(CPACK_PACKAGE_CONTACT "James Goppert james.goppert@gmail.com")
@@ -89,7 +90,8 @@ set(CPACK_PACKAGE_DESCRITION_SUMMARY "
     A qt based ground-control program for unmanned systems.
     ")
 set(CPACK_SOURCE_IGNORE_FILES ${CPACK_SOURCE_IGNORE_FILES}
-    /.git/;/build/;~$;.*\\\\.bin$;.*\\\\.swp$)
+    "/.git/";"/build/";"~$";".*\\\\.bin$";".*\\\\.swp$"
+    )
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/license.txt")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README")
 set(CPACK_PACKAGE_VERSION_MAJOR ${qgroundcontrol_VERSION_MAJOR})
@@ -121,8 +123,13 @@ if (UNIX)
     find_package(Flite)
 endif(UNIX)
 find_package(OpenGL REQUIRED)
-set(OpenSceneGraph_FIND_QUIETLY FALSE)
 find_package(OpenSceneGraph 2.9.9 COMPONENTS osgGA osgDB osgUtil osgViewer)
+if ("OSG_LIBRARY" STREQUAL "${OSG_LIBRARY}")
+    set(OPENSCENEGRAPH_FOUND FALSE)
+else()
+    set(OPENSCENEGRAPH_FOUND TRUE)
+endif()
+
 find_or_build_from_source(MAVLINK thirdParty/mavlink FOUND_GIT_REPO)
 
 # build libraries from source if not found on system
@@ -189,68 +196,49 @@ message(STATUS "\tDEPENDENCY\t\tFOUND")
 message(STATUS "=======================================")
 
 # common dependencies
+message(STATUS "\t\tMAVLINK\t\t${MAVLINK_FOUND}")
 if (MAVLINK_FOUND)
-    message(STATUS "\t\tMAVLINK\t\tYES")
     list(APPEND qgroundcontrolIncludes ${MAVLINK_INCLUDE_DIRS})
-else()
-    message(STATUS "\t\tMAVLINK\tNO")
-endif ()
-
-# fix for osg found bug
-if (NOT ${OSG_LIBRARY} STREQUAL "OSG_LIBRARY-NOTFOUND")
-	set(OPENSCENEGRAPH_FOUND FALSE)
 endif()
 
+message(STATUS "\t\tOpenSceneGraph\t${OPENSCENEGRAPH_FOUND}")
 if (OPENSCENEGRAPH_FOUND)
-    message(STATUS "\t\tOpenSceneGraph\tNO")
-else()
-    message(STATUS "\t\tOpenSceneGraph\tYES")
     list(APPEND qgroundcontrolIncludes ${OPENSCENEGRAPH_INCLUDE_DIRS})
     list(APPEND qgroundcontrolLibs ${OPENSCENEGRAPH_LIBRARIES})
-endif ()
+endif()
 
+message(STATUS "\t\tQT4\t\t${QT4_FOUND}")
 if (QT4_FOUND)
-    message(STATUS "\t\tQT4\t\tYES")
     list(APPEND qgroundcontrolIncludes ${QT_INCLUDE_DIRS})
     list(APPEND qgroundcontrolLibs ${QT_LIBRARIES})
-else()
-    message(STATUS "\t\tQT4\t\tNO")
-endif ()
+endif()
 
+message(STATUS "\t\tPHONON\t\t${PHONON_FOUND}")
 if (PHONON_FOUND)
-    message(STATUS "\t\tPHONON\t\tYES")
     list(APPEND qgroundcontrolIncludes ${PHONON_INCLUDES})
     list(APPEND qgroundcontrolLibs ${PHONON_LIBS})
-else()
-    message(STATUS "\t\tPHONON\t\tNO")
-endif ()
+endif()
 
+message(STATUS "\t\tSDL\t\t${SDL_FOUND}")
 if (SDL_FOUND)
-    message(STATUS "\t\tSDL\t\tYES")
     list(APPEND qgroundcontrolIncludes ${SDL_INCLUDE_DIR})
     list(APPEND qgroundcontrolLibs ${SDL_LIBRARY})
-else()
-    message(STATUS "\t\tSDL\t\tNO")
-endif ()
+endif()
 
+message(STATUS "\t\tOPENGL\t\t${OPENGL_FOUND}")
 if (OPENGL_FOUND)
-    message(STATUS "\t\tOPENGL\t\tYES")
     list(APPEND qgroundcontrolIncludes ${OPENGL_INCLUDE_DIR})
     list(APPEND qgroundcontrolLibs ${OPENGL_LIBRARIES})
-else()
-    message(STATUS "\t\tOPENGL\t\tNO")
 endif()
 
 # unix only dependencies
 if (UNIX)
+    message(STATUS "\t\tFLITE\t\t${FLITE_FOUND}")
     if (FLITE_FOUND)
-        message(STATUS "\t\tFLITE\t\tYES")
         list(APPEND qgroundcontrolIncludes ${FLITE_INCLUDE_DIR})
         list(APPEND qgroundcontrolLibs ${FLITE_LIBRARIES})
-    else()
-        message(STATUS "\t\tFLITE\t\tNO")
     endif ()
-endif(UNIX)
+endif()
 
 # set include directories
 include_directories(${qgroundcontrolIncludes})
@@ -284,6 +272,7 @@ set(qgroundcontrolUiSrc
     src/ui/HDDisplay.ui
     src/ui/MAVLinkSettingsWidget.ui
     src/ui/AudioOutputWidget.ui
+    src/ui/designer/QGCCommandButton.ui
     src/ui/QGCSensorSettingsWidget.ui
     src/ui/watchdog/WatchdogControl.ui
     src/ui/watchdog/WatchdogProcessView.ui
@@ -406,6 +395,7 @@ set(qgroundcontrolMocSrc
 	src/ui/map3D/QGCWebPage.h
 	src/ui/ObjectDetectionView.h
 	src/ui/SerialConfigurationWindow.h
+    src/ui/designer/QGCCommandButton.h
 	src/ui/QGCFirmwareUpdate.h
 	src/ui/CommConfigurationWindow.h
 	src/ui/MAVLinkSettingsWidget.h
@@ -510,6 +500,7 @@ set (qgroundcontrolSrc
     src/ui/ObjectDetectionView.cc
     src/ui/ParameterInterface.cc
     src/ui/QGCDataPlot2D.cc
+    src/ui/designer/QGCCommandButton.cc
     src/ui/QGCFirmwareUpdate.cc
     src/ui/QGCMAVLinkLogPlayer.cc
     src/ui/QGCMainWindowAPConfigurator.cc
