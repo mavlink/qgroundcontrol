@@ -27,7 +27,11 @@ public slots:
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 time);
     void setCommands();
     void getCommands();
+
+    void setPassthrough();
     void updateMode(int uas,QString mode,QString description);
+    void thrustChanged(UASInterface* uas,double throttle);
+    void radioChanged(const QPointer<RadioCalibrationData>& radio);
 
 private:
     Ui::UASControlParameters *ui;
@@ -36,8 +40,13 @@ private:
     double speed;
     double roll;
     double altitude;
+    double throttle;
     QString mode;
     QString REDcolorStyle;
+    QPointer<RadioCalibrationData> radio;
+    LinkInterface* hilLink;
+    mavlink_mid_lvl_cmds_t tempCmds;
+    mavlink_ctrl_srfc_pt_t tempCtrl;
 };
 
 #endif // UASCONTROLPARAMETERS_H

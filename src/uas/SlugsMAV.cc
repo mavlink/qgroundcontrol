@@ -135,11 +135,11 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 
       case MAVLINK_MSG_ID_MID_LVL_CMDS:     //180
-
+        mavlink_msg_mid_lvl_cmds_decode(&message, &mlMidLevelCommands);
       break;
 
       case MAVLINK_MSG_ID_CTRL_SRFC_PT:     //181
-
+        mavlink_msg_ctrl_srfc_pt_decode(&message, &mlPassthrough);
             break;
 
       case MAVLINK_MSG_ID_PID:              //182

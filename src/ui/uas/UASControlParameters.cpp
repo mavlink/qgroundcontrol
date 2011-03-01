@@ -27,14 +27,9 @@ UASControlParameters::UASControlParameters(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    //this->mode = "MAV_MODE_UNKNOWN";
-    //connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUasSet(UASInterface*)));
-
     connect(ui->btGetCommands, SIGNAL(clicked()), this, SLOT(getCommands()));
 
-    //QColor groupColor = QColor(231,72,28);
-    //QString borderColor = "#FA4A4F";
-    //groupColor = groupColor.darker(475);
+    connect(ui->btSetCtrl, SIGNAL(clicked()), this, SLOT(setPassthrough()));
 }
 
 UASControlParameters::~UASControlParameters()
@@ -46,46 +41,48 @@ void UASControlParameters::changedMode(int mode)
 {
     QString modeTemp;
 
-    if (mode == CONTROL_MODE_LOCKED_INDEX)
+    switch (mode)
     {
-        modeTemp= CONTROL_MODE_LOCKED;
-    }
-    else if (mode == CONTROL_MODE_MANUAL_INDEX)
-    {
-        modeTemp= CONTROL_MODE_MANUAL;
-    }
-    else if (mode == CONTROL_MODE_GUIDED_INDEX)
-    {
-        modeTemp= CONTROL_MODE_GUIDED;
-    }
-    else if (mode == CONTROL_MODE_AUTO_INDEX)
-    {
-        modeTemp= CONTROL_MODE_AUTO;
-    }
-    else if (mode == CONTROL_MODE_TEST1_INDEX)
-    {
-        modeTemp= CONTROL_MODE_TEST1;
-    }
-    else if (mode == CONTROL_MODE_TEST2_INDEX)
-    {
-        modeTemp= CONTROL_MODE_TEST2;
-    }
-    else if (mode == CONTROL_MODE_TEST3_INDEX)
-    {
-        modeTemp= CONTROL_MODE_TEST3;
-    }
-    else if (mode == CONTROL_MODE_RC_TRAINING_INDEX)
-    {
-        modeTemp= CONTROL_MODE_RC_TRAINING;
+    case (uint8_t)MAV_MODE_LOCKED:
+        modeTemp = "LOCKED MODE";
+        break;
+    case (uint8_t)MAV_MODE_MANUAL:
+        modeTemp = "MANUAL MODE";
+        break;
+    case (uint8_t)MAV_MODE_AUTO:
+        modeTemp = "AUTO MODE";
+        break;
+    case (uint8_t)MAV_MODE_GUIDED:
+        modeTemp = "GUIDED MODE";
+        break;
+    case (uint8_t)MAV_MODE_READY:
+        modeTemp = "READY MODE";
+        break;
+    case (uint8_t)MAV_MODE_TEST1:
+        modeTemp = "TEST1 MODE";
+        break;
+    case (uint8_t)MAV_MODE_TEST2:
+        modeTemp = "TEST2 MODE";
+        break;
+    case (uint8_t)MAV_MODE_TEST3:
+        modeTemp = "TEST3 MODE";
+        break;
+    case (uint8_t)MAV_MODE_RC_TRAINING:
+        modeTemp = "RC TRAINING MODE";
+        break;
+    default:
+        modeTemp = "UNINIT MODE";
+        break;
     }
 
-    if( static_cast<QString>(modeTemp) != this->mode)
+
+    if(modeTemp != this->mode)
     {
         ui->lbMode->setStyleSheet("background-color: rgb(255, 0, 0)");
     }
     else
     {
-        ui->lbMode->setStyleSheet("");
+        ui->lbMode->setStyleSheet("background-color: rgb(0, 255, 0)");
     }
 }
 
@@ -94,7 +91,11 @@ void UASControlParameters::activeUasSet(UASInterface *uas)
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(speedChanged(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
+
     connect(uas, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
+
+    connect(uas, SIGNAL(thrustChanged(UASInterface*,double)), this, SLOT(thrustChanged(UASInterface*,double)) );
+    //connect(uas, SIGNAL(radioCalibrationReceived(QPointer<RadioCalibrationData>)), this, SLOT(radioChanged(QPointer<RadioCalibrationData>)));
 
     activeUAS= uas;
 }
@@ -120,7 +121,18 @@ void UASControlParameters::updateAttitude(UASInterface *uas, double roll, double
 }
 
 void UASControlParameters::setCommands()
-{}
+{
+    UAS* myUas= static_cast<UAS*>(this->activeUAS);
+
+    mavlink_message_t msg;
+
+    tempCmds.uCommand = ui->sbAirSpeed->value();
+    tempCmds.hCommand = ui->sbHeight->value();
+    tempCmds.rCommand = ui->sbTurnRate->value();
+
+    mavlink_msg_mid_lvl_cmds_encode(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, &this->tempCmds);
+    myUas->sendMessage(msg);
+}
 
 void UASControlParameters::getCommands()
 {
@@ -129,10 +141,91 @@ void UASControlParameters::getCommands()
     ui->sbTurnRate->setValue(this->roll);
 }
 
+void UASControlParameters::setPassthrough()
+{
+    //UAS* myUas= static_cast<UAS*>(this->activeUAS);
+
+    //mavlink_message_t msg;
+
+    int8_t tmpBit=0;
+
+    if(ui->cxAilerons->isChecked())
+    {
+        tmpBit+=1;
+    }
+    if(ui->cxElevator->isChecked())
+    {
+        tmpBit+=2;
+    }
+    if(ui->cxLeftFlap->isChecked())
+    {
+        tmpBit+=4;
+    }
+    if(ui->cxRightAileron->isChecked())
+    {
+        tmpBit+=8;
+    }
+    if(ui->cxRightElevator->isChecked())
+    {
+        tmpBit+=16;
+    }
+    if(ui->cxRightFlap->isChecked())
+    {
+        tmpBit+=32;
+    }
+    if(ui->cxRudder->isChecked())
+    {
+        tmpBit+=64;
+    }
+    if(ui->cxThrottle->isChecked())
+    {
+        tmpBit+=128;
+    }
+
+    generic_16bit r;
+    r.b[1] = 0;
+    r.b[0] = tmpBit;//255;
+
+    tempCtrl.bitfieldPt= (uint16_t)r.s;
+
+    //mavlink_msg_ctrl_srfc_pt_encode(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, &this->tempCtrl);
+    //myUas->sendMessage(msg);
+    qDebug()<<tempCtrl.bitfieldPt;
+}
+
 void UASControlParameters::updateMode(int uas,QString mode,QString description)
 {
     Q_UNUSED(uas);
     Q_UNUSED(description);
     this->mode = mode;
     ui->lbMode->setText(this->mode);
+
+    ui->lbMode->setStyleSheet("background-color: rgb(0, 255, 0)");
+}
+
+void UASControlParameters::thrustChanged(UASInterface *uas, double throttle)
+{
+    Q_UNUSED(uas);
+    this->throttle= throttle;
+}
+
+
+void UASControlParameters::radioChanged(const QPointer<RadioCalibrationData>& radio)
+{
+    if (radio)
+    {
+        if (this->radio)
+        {
+            delete this->radio;
+        }
+
+        this->radio = new RadioCalibrationData(*radio);
+
+//        aileron->set((*radio)(RadioCalibrationData::AILERON));
+//        elevator->set((*radio)(RadioCalibrationData::ELEVATOR));
+//        rudder->set((*radio)(RadioCalibrationData::RUDDER));
+//        gyro->set((*radio)(RadioCalibrationData::GYRO));
+//        pitch->set((*radio)(RadioCalibrationData::PITCH));
+//        throttle->set((*radio)(RadioCalibrationData::THROTTLE));
+    }
 }
