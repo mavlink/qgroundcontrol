@@ -625,6 +625,7 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget(bool)), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
     }
 
+
 //    if (!slugsCamControlWidget)
 //    {
 //        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
@@ -1017,11 +1018,6 @@ void MainWindow::connectCommonWidgets()
         connect(waypointsDockWidget->widget(), SIGNAL(changePointList()), mapWidget, SLOT(clearWaypoints()));
     }
 
-    if(controlDockWidget && controlParameterWidget)
-    {
-       connect(controlDockWidget->widget(), SIGNAL(changedMode(int)), controlParameterWidget->widget(), SLOT(changedMode(int)));
-    }
-
     //TODO temporaly debug
     if (slugsHilSimWidget && slugsHilSimWidget->widget()){
         connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
@@ -1031,6 +1027,11 @@ void MainWindow::connectCommonWidgets()
     if (controlParameterWidget && controlParameterWidget->widget()){
         connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
                 controlParameterWidget->widget(), SLOT(activeUasSet(UASInterface*)));
+    }
+
+    if(controlDockWidget && controlParameterWidget)
+    {
+       connect(controlDockWidget->widget(), SIGNAL(changedMode(int)), controlParameterWidget->widget(), SLOT(changedMode(int)));
     }
 }
 
