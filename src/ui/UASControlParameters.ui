@@ -84,7 +84,7 @@
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -184,70 +184,34 @@
       </attribute>
       <layout class="QGridLayout" name="gridLayout_3">
        <item row="0" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <layout class="QVBoxLayout" name="verticalLayout">
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_2">
-           <item>
-            <widget class="QCheckBox" name="cxElevator">
-             <property name="text">
-              <string>Elevator</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="cxRudder">
-             <property name="text">
-              <string>Rudder</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="cxThrottle">
-             <property name="text">
-              <string>Throttle</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="cxAilerons">
-             <property name="text">
-              <string>Ailerons</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QCheckBox" name="cxdle_c">
+           <property name="text">
+            <string>Elevator</string>
+           </property>
+          </widget>
          </item>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout">
-           <item>
-            <widget class="QCheckBox" name="cxRightAileron">
-             <property name="text">
-              <string>Right Aileron</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="cxRightElevator">
-             <property name="text">
-              <string>Right Elevator</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="cxLeftFlap">
-             <property name="text">
-              <string>Left Flap</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QCheckBox" name="cxRightFlap">
-             <property name="text">
-              <string>Right Flap</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QCheckBox" name="cxdr_c">
+           <property name="text">
+            <string>Rudder</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="cxdt_c">
+           <property name="text">
+            <string>Throttle</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="cxdla_c">
+           <property name="text">
+            <string>Ailerons</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>

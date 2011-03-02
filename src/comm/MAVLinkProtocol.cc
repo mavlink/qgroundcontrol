@@ -315,6 +315,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                     currLossCounter = 0;
                     currReceiveCounter = 0;
                     emit receiveLossChanged(message.sysid, receiveLoss);
+                    qDebug() << "LOSSCHANGED" << message.sysid<<" "<<receiveLoss;
                 }
 
                 // The packet is emitted as a whole, as it is only 255 - 261 bytes short

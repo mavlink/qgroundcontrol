@@ -333,15 +333,7 @@ void MainWindow::buildCommonWidgets()
         controlDockWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_DOCKWIDGET");
         controlDockWidget->setWidget( new UASControlWidget(this) );
         addToToolsMenu (controlDockWidget, tr("Control"), SLOT(showToolWidget(bool)), MENU_UAS_CONTROL, Qt::LeftDockWidgetArea);
-    }
-
-    if (!controlParameterWidget)
-    {
-        controlParameterWidget = new QDockWidget(tr("Control Parameters"), this);
-        controlParameterWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_PARAMETERWIDGET");
-        controlParameterWidget->setWidget( new UASControlParameters(this) );
-        addToToolsMenu (controlParameterWidget, tr("Control Parameters"), SLOT(showToolWidget(bool)), MENU_UAS_CONTROL_PARAM, Qt::LeftDockWidgetArea);
-    }
+    }  
 
     if (!listDockWidget)
     {
@@ -400,6 +392,14 @@ void MainWindow::buildCommonWidgets()
     {
         dataplotWidget    = new QGCDataPlot2D(this);
         addToCentralWidgetsMenu (dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
+    }
+
+    if (!controlParameterWidget)
+    {
+        controlParameterWidget = new QDockWidget(tr("Control Parameters"), this);
+        controlParameterWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_PARAMETERWIDGET");
+        controlParameterWidget->setWidget( new UASControlParameters(this) );
+        addToToolsMenu (controlParameterWidget, tr("Control Parameters"), SLOT(showToolWidget(bool)), MENU_UAS_CONTROL_PARAM, Qt::LeftDockWidgetArea);
     }
 }
 
