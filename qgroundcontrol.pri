@@ -202,7 +202,12 @@ message("Compiling for linux 32")
     DEPENDENCIES_PRESENT += osg
     # Include OpenSceneGraph libraries
     LIBS += -losg \
-            -losgViewer
+            -losgViewer \
+            -losgGA \
+            -losgDB \
+            -losgText \
+            -lOpenThreads
+
     DEFINES += QGC_OSG_ENABLED
     }
 
@@ -273,7 +278,12 @@ linux-g++-64 {
     DEPENDENCIES_PRESENT += osg
     # Include OpenSceneGraph libraries
     LIBS += -losg \
-            -losgViewer
+            -losgViewer \
+            -losgGA \
+            -losgDB \
+            -losgText \
+            -lOpenThreads
+
     DEFINES += QGC_OSG_ENABLED
     }
 
@@ -342,10 +352,10 @@ INCLUDEPATH += $$BASEDIR/lib/osgEarth/win32/include \
 LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
     -losg \
     -losgViewer \
-        -losgGA \
-        -losgDB \
-        -losgText \
-        -lOpenThreads
+    -losgGA \
+    -losgDB \
+    -losgText \
+    -lOpenThreads
 DEFINES += QGC_OSG_ENABLED
 exists($$BASEDIR/lib/osgEarth123) {
     DEPENDENCIES_PRESENT += osgearth
@@ -401,7 +411,7 @@ win32-g++ {
 
     debug {
         #DESTDIR = $$BUILDDIR/debug
-		CONFIG += console
+    CONFIG += console
     }
 
     release {
@@ -455,3 +465,4 @@ win32-g++ {
     # see http://osgearth.org/wiki/FAQ for details.
     QMAKE_CXXFLAGS += -Wl,-E
 }
+# vim:ts=4:sw=4:expandtab

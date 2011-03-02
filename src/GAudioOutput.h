@@ -36,7 +36,8 @@ This file is part of the PIXHAWK project
 #include <QTimer>
 #include <QStringList>
 #ifdef Q_OS_MAC
-#include <Phonon>
+#include <MediaObject>
+#include <AudioOutput>
 #endif
 #ifdef Q_OS_LINUX
 //#include <flite/flite.h>

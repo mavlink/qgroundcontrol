@@ -32,6 +32,10 @@ public slots:
     void addUAS(UASInterface* uas);
     /** @brief Delete this widget */
     void deleteWidget();
+    /** @brief Export this widget to a file */
+    void exportWidget();
+    /** @brief Import settings for this widget from a file */
+    void importWidget(const QString& fileName);
     /** @brief Store all widgets of this type to QSettings */
     static void storeWidgetsToSettings();
 
@@ -41,8 +45,11 @@ signals:
 protected:
     QAction* addParamAction;
     QAction* addButtonAction;
+    QAction* addCommandAction;
     QAction* setTitleAction;
     QAction* deleteAction;
+    QAction* exportAction;
+    QAction* importAction;
     QVBoxLayout* toolLayout;
     UAS* mav;
     QAction* mainMenuAction;
@@ -56,7 +63,9 @@ protected:
 
 protected slots:
     void addParam();
+    /** @deprecated */
     void addAction();
+    void addCommand();
     void setTitle();
 
 

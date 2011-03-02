@@ -176,6 +176,7 @@ protected: //COMMENTS FOR TEST UNIT
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
     int airframe;               ///< The airframe type
     bool attitudeKnown;         ///< True if attitude was received, false else
+    QGCUASParamManager* paramManager; ///< Parameter manager class
 
 public:
     /** @brief Set the current battery type */
@@ -192,6 +193,11 @@ public:
     bool isAuto();
 
     UASWaypointManager* getWaypointManager() { return &waypointManager; }
+    /** @brief Get reference to the param manager **/
+    QGCUASParamManager* getParamManager() const { return paramManager; }
+    // TODO Will be removed
+    /** @brief Set reference to the param manager **/
+    void setParamManager(QGCUASParamManager* manager) { paramManager = manager; }
     int getSystemType();
     QImage getImage();
     void requestImage(); // ?
@@ -208,6 +214,10 @@ public slots:
     void setUASName(const QString& name);
     /** @brief Executes an action **/
     void setAction(MAV_ACTION action);
+    /** @brief Executes a command **/
+    void executeCommand(MAV_CMD command);
+    /** @brief Executes a command **/
+    void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component);
     /** @brief Set the current battery type and voltages */
     void setBatterySpecs(const QString& specs);
     /** @brief Get the current battery type and specs */
