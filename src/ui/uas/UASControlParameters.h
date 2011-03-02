@@ -31,7 +31,6 @@ public slots:
     void setPassthrough();
     void updateMode(int uas,QString mode,QString description);
     void thrustChanged(UASInterface* uas,double throttle);
-    void radioChanged(const QPointer<RadioCalibrationData>& radio);
 
 private:
     Ui::UASControlParameters *ui;

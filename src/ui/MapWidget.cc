@@ -93,6 +93,8 @@ void MapWidget::init()
         geomLayer = new qmapcontrol::GeometryLayer("Waypoints", mapadapter);
         mc->addLayer(geomLayer);
 
+        homePosition = new qmapcontrol::GeometryLayer("Station", mapadapter);
+        mc->addLayer(homePosition);
 
 
         //
@@ -183,11 +185,17 @@ void MapWidget::init()
         goToButton->setToolTip(tr("Enter a latitude/longitude position to move the map to"));
         goToButton->setStatusTip(tr("Enter a latitude/longitude position to move the map to"));
 
+        setHome = new QPushButton(QIcon(":/images/actions/go-home.svg"), "", this);
+        setHome->setStyleSheet(buttonStyle);
+        setHome->setToolTip(tr("Set home"));
+        setHome->setStatusTip(tr("Set home"));
+
         zoomin->setMaximumWidth(30);
         zoomout->setMaximumWidth(30);
         createPath->setMaximumWidth(30);
         //    clearTracking->setMaximumWidth(30);
         followgps->setMaximumWidth(30);
+        setHome->setMaximumWidth(30);
         goToButton->setMaximumWidth(30);
 
         // Set checkable buttons
@@ -195,6 +203,7 @@ void MapWidget::init()
         //       create a style and the slots to change the background so it is easier to distinguish
         followgps->setCheckable(true);
         createPath->setCheckable(true);
+        setHome->setCheckable(true);
 
         // add buttons to control the map (zoom, GPS tracking and WP capture)
         QGridLayout* innerlayout = new QGridLayout(mc);
@@ -204,6 +213,7 @@ void MapWidget::init()
         innerlayout->addWidget(zoomout, 1, 0);
         innerlayout->addWidget(followgps, 2, 0);
         innerlayout->addWidget(createPath, 3, 0);
+        innerlayout->addWidget(setHome, 4, 0);
         //innerlayout->addWidget(clearTracking, 4, 0);
         // Add spacers to compress buttons on the top left
         innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 5, 0);
@@ -261,6 +271,12 @@ void MapWidget::init()
 
         connect(createPath, SIGNAL(clicked(bool)),
                 this, SLOT(createPathButtonClicked(bool)));
+
+        connect(setHome, SIGNAL(clicked(bool)), this, SLOT(createHomePositionClick(bool)));
+
+        connect(mc, SIGNAL(mouseEventCoordinate(const QMouseEvent*,QPointF)), this,
+                SLOT(createHomePosition(const QMouseEvent*,QPointF)));
+        //connect(setHome, SIGNAL(clicked(bool)), this, SLOT(createHomePosition(bool)));
 
 
         connect(geomLayer, SIGNAL(geometryClicked(Geometry*,QPoint)),
@@ -1199,3 +1215,46 @@ QPointF MapWidget::getPointxBearing_Range(double lat1, double lon1, double beari
     return temp;
 }
 
+void MapWidget::createHomePosition(const QMouseEvent *event, const QPointF coordinate)
+{
+    if (QEvent::MouseButtonRelease == event->type() && setHome->isChecked())
+    {
+        homeCoordinate= coordinate;
+        Waypoint2DIcon* tempCirclePoint;
+
+        double latitud = homeCoordinate.x();
+        double longitud = homeCoordinate.y();
+
+        tempCirclePoint = new Waypoint2DIcon(
+                 latitud,
+                 longitud,
+                 20, "g", qmapcontrol::Point::Middle);
+
+        QPen* pencil = new QPen(Qt::blue);
+        tempCirclePoint->setPen(pencil);
+
+        mc->layer("Station")->clearGeometries();
+        mc->layer("Station")->addGeometry(tempCirclePoint);
+
+        qmapcontrol::Point* tempPoint = new qmapcontrol::Point(latitud, longitud,"g");
+
+        if (isVisible())
+        {
+            mc->updateRequest(tempPoint->boundingBox().toRect());
+        }
+    }
+}
+
+void MapWidget::createHomePositionClick(bool click)
+{
+    Q_UNUSED(click);
+
+    if (!setHome->isChecked())
+    {
+        UASManager::instance()->setHomePosition(
+                    static_cast<double>(homeCoordinate.x()),
+                    static_cast<double>(homeCoordinate.y()), 0);
+
+        qDebug()<<"Set home position "<<homeCoordinate.x()<<" "<<homeCoordinate.y();
+    }
+}

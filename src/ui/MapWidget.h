@@ -118,6 +118,7 @@ protected:
     QPushButton* followgps;
     QPushButton* createPath;
     QPushButton* clearTracking;
+    QPushButton* setHome;
     QLabel* gpsposition;
     QMenu* mapMenu;
     QPushButton* mapButton;
@@ -128,7 +129,7 @@ protected:
     qmapcontrol::Layer* overlay;            ///< Street overlay (foreground)
     qmapcontrol::Layer* tracks;             ///< Layer for UAV tracks
     qmapcontrol::GeometryLayer* geomLayer;  ///< Layer for waypoints
-
+    qmapcontrol::GeometryLayer* homePosition;       ///< Layer for station control
     //only for experiment
     qmapcontrol::GeometryLayer* camLayer; ///< Layer for camera indicator
 
@@ -163,6 +164,9 @@ protected:
     void createWaypointGraphAtMap(int id, const QPointF coordinate);
     void mapproviderSelected(QAction* action);
 
+    void createHomePosition(const QMouseEvent* event, const QPointF coordinate);
+    void createHomePositionClick(bool click);
+
   signals:
     //void movePoint(QPointF newCoord);
     //void captureMapCoordinateClick(const QPointF coordinate); //ROCA
@@ -188,6 +192,7 @@ private:
     bool drawCamBorder;
     int radioCamera;
 
+    QPointF homeCoordinate;
 };
 
 #endif // MAPWIDGET_H
