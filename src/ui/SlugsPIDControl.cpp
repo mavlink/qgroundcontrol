@@ -23,7 +23,7 @@ SlugsPIDControl::SlugsPIDControl(QWidget *parent) :
     setGreenColorStyle();
 
     refreshTimerGet = new QTimer(this);
-    refreshTimerGet->setInterval(200);//100); // 10 Hz
+    refreshTimerGet->setInterval(200);//100); // 5 Hz
     connect(refreshTimerGet, SIGNAL(timeout()), this, SLOT(slugsGetGeneral()));
 
 
@@ -51,7 +51,7 @@ void SlugsPIDControl::activeUasSet(UASInterface* uas)
 
     if (slugsMav)
     {
-        connect(slugsMav,SIGNAL(slugsActionAck(int,const mavlink_action_ack_t&)),this,SLOT(recibeMensaje(int,mavlink_action_ack_t)));
+        connect(slugsMav,SIGNAL(slugsActionAck(int,const mavlink_action_ack_t&)),this,SLOT(receiveMessage(int,mavlink_action_ack_t)));
         connect(slugsMav,SIGNAL(slugsPidValues(int,mavlink_pid_t)),this, SLOT(receivePidValues(int,mavlink_pid_t)) );
 
         connect(ui->setGeneral_pushButton,SIGNAL(clicked()),this,SLOT(slugsTimerStartSet()));
@@ -504,7 +504,7 @@ void SlugsPIDControl::get_Pitch2dT_PID()
 
 #ifdef MAVLINK_ENABLED_SLUGS
 
-void SlugsPIDControl::recibeMensaje(int systemId, const mavlink_action_ack_t& action)
+void SlugsPIDControl::receiveMessage(int systemId, const mavlink_action_ack_t& action)
 {
   Q_UNUSED(systemId);
     ui->recepcion_label->setText(QString::number(action.action) + ":" + QString::number(action.result));
