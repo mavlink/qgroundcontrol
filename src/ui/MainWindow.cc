@@ -592,6 +592,15 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget(bool)), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
     }
 
+#if (defined _MSC_VER) | (defined Q_OS_MAC)
+    if (!gEarthWidget)
+    {
+        gEarthWidget = new QGCGoogleEarthView(this);
+        addToCentralWidgetsMenu(gEarthWidget, tr("Google Earth"), SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
+    }
+
+#endif
+
     if (!slugsDataWidget)
     {
         // Dialog widgets
@@ -1114,6 +1123,10 @@ void MainWindow::arrangeSlugsCenterStack()
 
     if (linechartWidget && (centerStack->indexOf(linechartWidget) == -1)) centerStack->addWidget(linechartWidget);
     if (hudWidget && (centerStack->indexOf(hudWidget) == -1)) centerStack->addWidget(hudWidget);
+
+#if (defined _MSC_VER) | (defined Q_OS_MAC)
+    if (gEarthWidget && (centerStack->indexOf(gEarthWidget) == -1)) centerStack->addWidget(gEarthWidget);
+#endif
 
 }
 

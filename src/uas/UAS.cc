@@ -300,9 +300,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     case (uint8_t)MAV_MODE_TEST2:
                         mode = "TEST2 MODE";
                         break;
+                    #ifdef MAVLINK_ENABLED_SLUGS
+                    case (uint8_t)MAV_MODE_TEST3:
+                        mode = "HIL MODE";
+                        break;
+                    #else
                     case (uint8_t)MAV_MODE_TEST3:
                         mode = "TEST3 MODE";
                         break;
+                    #endif
                     case (uint8_t)MAV_MODE_RC_TRAINING:
                         mode = "RC TRAINING MODE";
                         break;

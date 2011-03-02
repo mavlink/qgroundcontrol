@@ -257,7 +257,7 @@ public slots:
     // void createMessagePID();
 #ifdef MAVLINK_ENABLED_SLUGS
 
-     void recibeMensaje(int systemId, const mavlink_action_ack_t& action);
+     void receiveMessage(int systemId, const mavlink_action_ack_t& action);
      void receivePidValues(int systemId, const mavlink_pid_t& pidValues);
 
 #endif // MAVLINK_ENABLED_SLUG
