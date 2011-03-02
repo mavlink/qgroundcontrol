@@ -153,11 +153,14 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/designer/QGCToolWidget.ui \
     src/ui/designer/QGCParamSlider.ui \
     src/ui/designer/QGCActionButton.ui \
+    src/ui/designer/QGCCommandButton.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCWaypointListMulti.ui \
     src/ui/mission/QGCCustomWaypointAction.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
-    src/ui/QGCSettingsWidget.ui
+    src/ui/QGCSettingsWidget.ui \
+    src/ui/mission/QGCMissionDoWidget.ui \
+    src/ui/mission/QGCMissionConditionWidget.ui
 
 INCLUDEPATH += src \
     src/ui \
@@ -262,6 +265,7 @@ HEADERS += src/MG.h \
     src/ui/designer/QGCToolWidget.h \
     src/ui/designer/QGCParamSlider.h \
     src/ui/designer/QGCActionButton.h \
+    src/ui/designer/QGCCommandButton.h \
     src/ui/designer/QGCToolWidgetItem.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/comm/MAVLinkSimulationWaypointPlanner.h \
@@ -269,7 +273,10 @@ HEADERS += src/MG.h \
     src/uas/QGCMAVLinkUASFactory.h \
     src/ui/QGCWaypointListMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
-    src/ui/QGCSettingsWidget.h
+    src/ui/QGCSettingsWidget.h \
+    src/ui/mission/QGCMissionDoWidget.h \
+    src/ui/mission/QGCMissionConditionWidget.h \
+    src/uas/QGCUASParamManager.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008: {
@@ -389,6 +396,7 @@ SOURCES += src/main.cc \
     src/ui/designer/QGCToolWidget.cc \
     src/ui/designer/QGCParamSlider.cc \
     src/ui/designer/QGCActionButton.cc \
+    src/ui/designer/QGCCommandButton.cc \
     src/ui/designer/QGCToolWidgetItem.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
     src/comm/MAVLinkSimulationWaypointPlanner.cc \
@@ -396,7 +404,10 @@ SOURCES += src/main.cc \
     src/uas/QGCMAVLinkUASFactory.cc \
     src/ui/QGCWaypointListMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
-    src/ui/QGCSettingsWidget.cc
+    src/ui/QGCSettingsWidget.cc \
+    src/ui/mission/QGCMissionDoWidget.cc \
+    src/ui/mission/QGCMissionConditionWidget.cc \
+    src/uas/QGCUASParamManager.cc
 
 macx|win32-msvc2008: {
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

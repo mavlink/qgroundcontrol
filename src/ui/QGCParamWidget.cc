@@ -43,18 +43,8 @@ This file is part of the QGROUNDCONTROL project
  * @param parent Parent widget
  */
 QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
-        QWidget(parent),
-        mav(uas),
-        components(new QMap<int, QTreeWidgetItem*>()),
-        paramGroups(),
-        changedValues(),
-        parameters(),
-        transmissionListMode(false),
-        transmissionActive(false),
-        transmissionTimeout(0),
-        retransmissionTimeout(350),
-        rewriteTimeout(500),
-        retransmissionBurstRequestSize(2)
+        QGCUASParamManager(uas, parent),
+        components(new QMap<int, QTreeWidgetItem*>())
 {
     // Load settings
     loadSettings();
@@ -753,6 +743,15 @@ void QGCParamWidget::retransmissionGuardTick()
         qDebug() << __FILE__ << __LINE__ << "STOPPING RETRANSMISSION GUARD GRACEFULLY";
         setRetransmissionGuardEnabled(false);
     }
+}
+
+
+/**
+ * The .. signal is emitted
+ */
+void QGCParamWidget::requestParameterUpdate(int component, const QString& parameter)
+{
+
 }
 
 

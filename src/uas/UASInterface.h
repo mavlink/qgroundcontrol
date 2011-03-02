@@ -41,6 +41,7 @@ This file is part of the QGROUNDCONTROL project
 #include "LinkInterface.h"
 #include "ProtocolInterface.h"
 #include "UASWaypointManager.h"
+#include "QGCUASParamManager.h"
 #include "RadioCalibration/RadioCalibrationData.h"
 
 /**
@@ -85,6 +86,11 @@ public:
 
     /** @brief Get reference to the waypoint manager **/
     virtual UASWaypointManager* getWaypointManager(void) = 0;
+    /** @brief Get reference to the param manager **/
+    virtual QGCUASParamManager* getParamManager() const = 0;
+    // TODO Will be removed
+    /** @brief Set reference to the param manager **/
+    virtual void setParamManager(QGCUASParamManager* manager) = 0;
 
     /* COMMUNICATION FLAGS */
 
@@ -183,6 +189,10 @@ public slots:
     virtual void setUASName(const QString& name) = 0;
     /** @brief Sets an action **/
     virtual void setAction(MAV_ACTION action) = 0;
+    /** @brief Execute command immediately **/
+    virtual void executeCommand(MAV_CMD command) = 0;
+    /** @brief Executes a command **/
+    virtual void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component) = 0;
 
     /** @brief Selects the airframe */
     virtual void setAirframe(int airframe) = 0;

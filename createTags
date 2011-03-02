@@ -1,0 +1,5 @@
+#!/bin/bash
+ctags -RV --c++-kinds=+p --fields=+iaS --extra=+q  \
+	. \
+	/usr/include/qt4 \
+	/usr/include/osg*

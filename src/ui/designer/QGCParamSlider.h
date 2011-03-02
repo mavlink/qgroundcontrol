@@ -27,9 +27,18 @@ public slots:
     /** @brief Set the slider value as parameter value */
     void setSliderValue(int sliderValue);
     /** @brief Update the UI with the new parameter value */
-    void setParameterValue(int uas, int component, QString parameterName, float value);
+    void setParameterValue(int uas, int component, int paramCount, int paramIndex, QString parameterName, float value);
     void writeSettings(QSettings& settings);
     void readSettings(const QSettings& settings);
+    void refreshParamList();
+    void setActiveUAS(UASInterface *uas);
+    void selectComponent(int componentIndex);
+    void selectParameter(int paramIndex);
+    void setParamValue(double value);
+
+protected slots:
+    /** @brief Request the parameter of this widget from the MAV */
+    void requestParameter();
 
 protected:
     QString parameterName;         ///< Key/Name of the parameter
@@ -38,6 +47,7 @@ protected:
     float parameterMin;
     float parameterMax;
     int component;                 ///< ID of the MAV component to address
+    int parameterIndex;
     double scaledInt;
     void changeEvent(QEvent *e);
 

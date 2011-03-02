@@ -29,7 +29,7 @@
 
 UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
 uasId(id),
-startTime(MG::TIME::getGroundTimeNow()),
+startTime(QGC::groundTimeMilliseconds()),
 commStatus(COMM_DISCONNECTED),
 name(""),
 autopilot(-1),
@@ -73,7 +73,8 @@ yaw(0.0),
 statusTimeout(new QTimer(this)),
 paramsOnceRequested(false),
 airframe(0),
-attitudeKnown(false)
+attitudeKnown(false),
+paramManager(NULL)
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
@@ -1076,7 +1077,6 @@ void UAS::setHomePosition(double lat, double lon, double alt)
 
 void UAS::setLocalOriginAtCurrentGPSPosition()
 {
-
     bool result = false;
     QMessageBox msgBox;
     msgBox.setIcon(QMessageBox::Warning);
@@ -1785,6 +1785,38 @@ void UAS::setUASName(const QString& name)
     writeSettings();
     emit nameChanged(name);
     emit systemSpecsChanged(uasId);
+}
+
+void UAS::executeCommand(MAV_CMD command)
+{
+    mavlink_message_t msg;
+    mavlink_command_t cmd;
+    cmd.command = (uint8_t)command;
+    cmd.confirmation = 0;
+    cmd.param1 = 0.0f;
+    cmd.param2 = 0.0f;
+    cmd.param3 = 0.0f;
+    cmd.param4 = 0.0f;
+    cmd.target_system = uasId;
+    cmd.target_component = 0;
+    mavlink_msg_command_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    sendMessage(msg);
+}
+
+void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component)
+{
+    mavlink_message_t msg;
+    mavlink_command_t cmd;
+    cmd.command = (uint8_t)command;
+    cmd.confirmation = confirmation;
+    cmd.param1 = param1;
+    cmd.param2 = param2;
+    cmd.param3 = param3;
+    cmd.param4 = param4;
+    cmd.target_system = uasId;
+    cmd.target_component = component;
+    mavlink_msg_command_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    sendMessage(msg);
 }
 
 /**
