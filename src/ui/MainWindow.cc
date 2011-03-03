@@ -394,13 +394,7 @@ void MainWindow::buildCommonWidgets()
         addToCentralWidgetsMenu (dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
     }
 
-    if (!controlParameterWidget)
-    {
-        controlParameterWidget = new QDockWidget(tr("Control Parameters"), this);
-        controlParameterWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_PARAMETERWIDGET");
-        controlParameterWidget->setWidget( new UASControlParameters(this) );
-        addToToolsMenu (controlParameterWidget, tr("Control Parameters"), SLOT(showToolWidget(bool)), MENU_UAS_CONTROL_PARAM, Qt::LeftDockWidgetArea);
-    }
+
 }
 
 
@@ -625,14 +619,22 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget(bool)), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
     }
 
+    if (!controlParameterWidget)
+    {
+        controlParameterWidget = new QDockWidget(tr("Control Parameters"), this);
+        controlParameterWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_PARAMETERWIDGET");
+        controlParameterWidget->setWidget( new UASControlParameters(this) );
+        addToToolsMenu (controlParameterWidget, tr("Control Parameters"), SLOT(showToolWidget(bool)), MENU_UAS_CONTROL_PARAM, Qt::LeftDockWidgetArea);
+    }
 
-//    if (!slugsCamControlWidget)
-//    {
-//        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
-//        slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
-//        slugsCamControlWidget->setObjectName("SLUGS_CAM_CONTROL_DOCK_WIDGET");
-//        addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget()), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
-//    }
+    if (!slugsCamControlWidget)
+    {
+        slugsCamControlWidget = new QDockWidget(tr("Camera Control"), this);
+        slugsCamControlWidget->setWidget(new SlugsPadCameraControl(this));
+        slugsCamControlWidget->setObjectName("SLUGS_CAM_CONTROL_DOCK_WIDGET");
+        addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget(bool)), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
+    }
+
 }
 
 
@@ -1024,15 +1026,7 @@ void MainWindow::connectCommonWidgets()
                 slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
     }
 
-    if (controlParameterWidget && controlParameterWidget->widget()){
-        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-                controlParameterWidget->widget(), SLOT(activeUasSet(UASInterface*)));
-    }
 
-    if(controlDockWidget && controlParameterWidget)
-    {
-       connect(controlDockWidget->widget(), SIGNAL(changedMode(int)), controlParameterWidget->widget(), SLOT(changedMode(int)));
-    }
 }
 
 void MainWindow::createCustomWidget()
@@ -1080,7 +1074,15 @@ void MainWindow::connectSlugsWidgets()
                 slugsPIDControlWidget->widget(), SLOT(activeUasSet(UASInterface*)));
     }
 
+    if (controlParameterWidget && controlParameterWidget->widget()){
+        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+                controlParameterWidget->widget(), SLOT(activeUasSet(UASInterface*)));
+    }
 
+    if(controlDockWidget && controlParameterWidget)
+    {
+       connect(controlDockWidget->widget(), SIGNAL(changedMode(int)), controlParameterWidget->widget(), SLOT(changedMode(int)));
+    }
 }
 
 void MainWindow::arrangeCommonCenterStack()
@@ -1934,6 +1936,8 @@ void MainWindow::presentView()
 
     // UAS CONTROL
     showTheWidget(MENU_UAS_CONTROL, currentView);
+
+    showTheWidget(MENU_UAS_CONTROL_PARAM, currentView);
 
     // UAS LIST
     showTheWidget(MENU_UAS_LIST, currentView);

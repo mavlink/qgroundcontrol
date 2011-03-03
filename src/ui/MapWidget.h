@@ -131,7 +131,7 @@ protected:
     qmapcontrol::GeometryLayer* geomLayer;  ///< Layer for waypoints
     qmapcontrol::GeometryLayer* homePosition;       ///< Layer for station control
     //only for experiment
-    qmapcontrol::GeometryLayer* camLayer; ///< Layer for camera indicator
+    //qmapcontrol::GeometryLayer* camLayer; ///< Layer for camera indicator
 
     int zoomLevel;
     int detailZoom; ///< Steps zoomed in further than qMapControl allows
