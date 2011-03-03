@@ -233,8 +233,8 @@ void MapWidget::init()
         //Camera Control
         // CAMERA INDICATOR LAYER
         // create a layer with the mapadapter and type GeometryLayer (for camera indicator)
-        camLayer = new qmapcontrol::GeometryLayer("Camera", mapadapter);
-        mc->addLayer(camLayer);
+        //camLayer = new qmapcontrol::GeometryLayer("Camera", mapadapter);
+        //mc->addLayer(camLayer);
 
         //camLine = new qmapcontrol::LineString(camPoints,"Camera Eje", camBorderPen);
 

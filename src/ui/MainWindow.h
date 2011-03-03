@@ -74,7 +74,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "SlugsHilSim.h"
 
-#include "SlugsVideoCamControl.h"
+#include "SlugsPadCameraControl.h"
 #include "UASControlParameters.h"
 
 /**
