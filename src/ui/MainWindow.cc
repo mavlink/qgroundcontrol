@@ -628,6 +628,14 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget(bool)), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
     }
 
+    if (!parametersDockWidget)
+    {
+        parametersDockWidget = new QDockWidget(tr("Calibration and Onboard Parameters"), this);
+        parametersDockWidget->setWidget( new ParameterInterface(this) );
+        parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
+        addToToolsMenu (parametersDockWidget, tr("Calibration and Parameters"), SLOT(showToolWidget(bool)), MENU_PARAMETERS, Qt::RightDockWidgetArea);
+    }
+
 //    if (!slugsCamControlWidget)
 //    {
 //        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
