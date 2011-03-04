@@ -230,17 +230,6 @@ void MapWidget::init()
         waypointPath = new qmapcontrol::LineString (wps, "Waypoint path", pointPen);
         mc->layer("Waypoints")->addGeometry(waypointPath);
 
-        //Camera Control
-        // CAMERA INDICATOR LAYER
-        // create a layer with the mapadapter and type GeometryLayer (for camera indicator)
-        //camLayer = new qmapcontrol::GeometryLayer("Camera", mapadapter);
-        //mc->addLayer(camLayer);
-
-        //camLine = new qmapcontrol::LineString(camPoints,"Camera Eje", camBorderPen);
-
-        drawCamBorder = false;
-        radioCamera = 10;
-
         // Done set state
         initialized = true;
 
@@ -332,6 +321,7 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::OSMMapAdapter();
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -348,6 +338,7 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::YahooMapAdapter();
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -364,6 +355,7 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -377,6 +369,7 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::GoogleMapAdapter();
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -391,6 +384,7 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::GoogleSatMapAdapter();
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -1010,7 +1004,7 @@ void MapWidget::wheelEvent(QWheelEvent *event)
         detailZoom = qAbs(qMin(0, mc->currentZoom()-newZoom));
 
         // visual field of camera
-        updateCameraPosition(20*newZoom,0,"no");
+        //updateCameraPosition(20*newZoom,0,"no");
     }
 }
 
@@ -1144,75 +1138,6 @@ void MapWidget::clearPath(int uas)
         // FIXME update this with update request only for bounding box of trails
         if (isVisible()) mc->updateRequestNew();//(QRect(0, 0, width(), height()));
     }
-}
-
-void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
-{
-    Q_UNUSED(dir);
-    Q_UNUSED(bearing);
-    if (mc)
-    {
-        // FIXME Mariano
-        //camPoints.clear();
-        QPointF currentPos = mc->currentCoordinate();
-        //    QPointF actualPos = getPointxBearing_Range(currentPos.y(),currentPos.x(),bearing,distance);
-
-        //    qmapcontrol::Point* tempPoint1 = new qmapcontrol::Point(currentPos.x(), currentPos.y(),"inicial",qmapcontrol::Point::Middle);
-        //    qmapcontrol::Point* tempPoint2 = new qmapcontrol::Point(actualPos.x(), actualPos.y(),"final",qmapcontrol::Point::Middle);
-
-        //    camPoints.append(tempPoint1);
-        //    camPoints.append(tempPoint2);
-
-        //    camLine->setPoints(camPoints);
-
-        QPen* camBorderPen = new QPen(QColor(255,0,0));
-        camBorderPen->setWidth(2);
-
-        //radio = mc->currentZoom()
-
-        if(drawCamBorder)
-        {
-            //clear camera borders
-            mc->layer("Camera")->clearGeometries();
-
-            //create a camera borders
-            qmapcontrol::CirclePoint* camBorder = new qmapcontrol::CirclePoint(currentPos.x(), currentPos.y(), radio, "camBorder", qmapcontrol::Point::Middle, camBorderPen);
-
-            //camBorder->setCoordinate(currentPos);
-
-            mc->layer("Camera")->addGeometry(camBorder);
-            // mc->layer("Camera")->addGeometry(camLine);
-            if (isVisible()) mc->updateRequestNew();
-
-        }
-        else
-        {
-            //clear camera borders
-            mc->layer("Camera")->clearGeometries();
-            if (isVisible()) mc->updateRequestNew();
-
-        }
-    }
-}
-
-void MapWidget::drawBorderCamAtMap(bool status)
-{
-    drawCamBorder = status;
-    updateCameraPosition(20,0,"no");
-
-}
-
-QPointF MapWidget::getPointxBearing_Range(double lat1, double lon1, double bearing, double distance)
-{
-    QPointF temp;
-
-    double rad = M_PI/180;
-
-    bearing = bearing*rad;
-    temp.setX((lon1 + ((distance/60) * (sin(bearing)))));
-    temp.setY((lat1 + ((distance/60) * (cos(bearing)))));
-
-    return temp;
 }
 
 void MapWidget::createHomePosition(const QMouseEvent *event, const QPointF coordinate)
