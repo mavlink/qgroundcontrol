@@ -191,7 +191,11 @@ void QGCRemoteControlView::redraw()
             progressBars.at(i)->setValue(vv);
         }
         // Update RSSI
-        rssiBar->setValue(rssi*100);
+        if(rssi>0)
+        {
+            rssiBar->setValue(rssi*100);
+        }
+
         updated = false;
     }
 }

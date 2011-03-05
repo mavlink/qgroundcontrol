@@ -30,10 +30,10 @@ SlugsVideoCamControl::SlugsVideoCamControl(QWidget *parent) :
 
     ui->gridLayout->addWidget(padCamera);
 
-    connect(padCamera,SIGNAL(mouseMoveCoord(int,int)),this,SLOT(mousePadMoveEvent(int,int)));
-    connect(padCamera,SIGNAL(mousePressCoord(int,int)),this,SLOT(mousePadPressEvent(int,int)));
-    connect(padCamera,SIGNAL(mouseReleaseCoord(int,int)),this,SLOT(mousePadReleaseEvent(int,int)));
-    connect(padCamera,SIGNAL(changeCursorPosition(double,double,QString)),this,SLOT(getDeltaPositionPad(double,double,QString)));
+    //connect(padCamera,SIGNAL(mouseMoveCoord(int,int)),this,SLOT(mousePadMoveEvent(int,int)));
+    //connect(padCamera,SIGNAL(mousePressCoord(int,int)),this,SLOT(mousePadPressEvent(int,int)));
+    //connect(padCamera,SIGNAL(mouseReleaseCoord(int,int)),this,SLOT(mousePadReleaseEvent(int,int)));
+    //connect(padCamera,SIGNAL(changeCursorPosition(double,double,QString)),this,SLOT(getDeltaPositionPad(double,double,QString)));
 
 
 }
@@ -90,6 +90,6 @@ void SlugsVideoCamControl::getDeltaPositionPad(double bearing, double distance, 
     ui->label_x->setText("Distancia= " + QString::number(distance));
     ui->label_y->setText("Bearing= " + QString::number(bearing));
 
-    emit changeCamPosition(20, bearing, dirText);
+    //emit changeCamPosition(20, bearing, dirText);
 }
 
