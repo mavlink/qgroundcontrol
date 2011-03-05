@@ -33,6 +33,25 @@ class SlugsMAV : public UAS
 {
     Q_OBJECT
     Q_INTERFACES(UASInterface)
+
+    enum SLUGS_ACTION {
+        SLUGS_ACTION_NONE,
+        SLUGS_ACTION_SUCCESS,
+        SLUGS_ACTION_FAIL,
+        SLUGS_ACTION_EEPROM,
+        SLUGS_ACTION_MODE_CHANGE,
+        SLUGS_ACTION_MODE_REPORT,
+        SLUGS_ACTION_PT_CHANGE,
+        SLUGS_ACTION_PT_REPORT,
+        SLUGS_ACTION_PID_CHANGE,
+        SLUGS_ACTION_PID_REPORT,
+        SLUGS_ACTION_WP_CHANGE,
+        SLUGS_ACTION_WP_REPORT,
+        SLUGS_ACTION_MLC_CHANGE,
+        SLUGS_ACTION_MLC_REPORT
+    };
+
+
 public:
     SlugsMAV(MAVLinkProtocol* mavlink, int id = 0);
 
