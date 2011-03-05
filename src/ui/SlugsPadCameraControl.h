@@ -1,8 +1,14 @@
 #ifndef SLUGSPADCAMERACONTROL_H
 #define SLUGSPADCAMERACONTROL_H
 
-#include <QWidget>
+#include <QtGui/QWidget>
 #include <QGraphicsView>
+#include <QMouseEvent>
+#include <QKeyEvent>
+#include <QDebug>
+#include <qmath.h>
+#include <QPainter>
+#include "UASManager.h"
 
 namespace Ui {
     class SlugsPadCameraControl;
@@ -17,43 +23,45 @@ public:
 
     ~SlugsPadCameraControl();
 
+    enum MotionCamera {
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT,
+        RIGHT_UP,
+        RIGHT_DOWN,
+        LEFT_UP,
+        LEFT_DOWN,
+        NONE
+    };
+
 public slots:
     void getDeltaPositionPad(int x, int y);
-
-
-
-    double getDistPixel(int x1, int y1, int x2, int y2);
     QPointF ObtenerMarcacionDistanciaPixel(double lon1, double lat1, double lon2, double lat2);
-    QPointF getPointBy_BearingDistance(double lat1, double lon1, double rumbo, double distancia);
-
-
-
+    void activeUasSet(UASInterface *uas);
 
 signals:
-    void mouseMoveCoord(int x, int y);
-    void mousePressCoord(int x, int y);
-    void mouseReleaseCoord(int x, int y);
-    void dirCursorText(QString dir);
-    void distance_Bearing(double dist, double bearing);
-     void changeCursorPosition(double bearing, double distance, QString textDir);
+    void changeMotionCamera(MotionCamera);
 
 protected:
     void mousePressEvent(QMouseEvent* event);
     void mouseReleaseEvent(QMouseEvent* event);
     void mouseMoveEvent(QMouseEvent* event);
-    void paintEvent(QPaintEvent *pe);
+    void keyPressEvent(QKeyEvent *event);
+    //void paintEvent(QPaintEvent *pe);
 
 
 private:
     Ui::SlugsPadCameraControl *ui;
-      bool dragging;
-      int x1;
-      int y1;
-      int xFin;
-      int yFin;
-      double bearingPad;
-      double distancePad;
-      QString directionPad;
+    bool dragging;
+    int x1;
+    int y1;
+    int xFin;
+    int yFin;
+    QString directionPad;
+    MotionCamera motion;
+    UASInterface* activeUAS;
+    QPoint movePad;
 
 };
 

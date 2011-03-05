@@ -147,7 +147,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/SlugsDataSensorView.ui \
     src/ui/SlugsHilSim.ui \
     src/ui/SlugsPIDControl.ui \
-    src/ui/SlugsVideoCamControl.ui \
     src/ui/SlugsPadCameraControl.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/designer/QGCToolWidget.ui \
@@ -159,6 +158,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/mission/QGCCustomWaypointAction.ui \
     src/ui/QGCUDPLinkConfiguration.ui \
     src/ui/QGCSettingsWidget.ui \
+    src/ui/UASControlParameters.ui
     src/ui/mission/QGCMissionDoWidget.ui \
     src/ui/mission/QGCMissionConditionWidget.ui
 
@@ -257,7 +257,6 @@ HEADERS += src/MG.h \
     src/ui/SlugsDataSensorView.h \
     src/ui/SlugsHilSim.h \
     src/ui/SlugsPIDControl.h \
-    src/ui/SlugsVideoCamControl.h \
     src/ui/SlugsPadCameraControl.h \
     src/ui/QGCMainWindowAPConfigurator.h \
     src/comm/MAVLinkSwarmSimulationLink.h \
@@ -274,6 +273,7 @@ HEADERS += src/MG.h \
     src/ui/QGCWaypointListMulti.h \
     src/ui/QGCUDPLinkConfiguration.h \
     src/ui/QGCSettingsWidget.h \
+    src/ui/uas/UASControlParameters.h
     src/ui/mission/QGCMissionDoWidget.h \
     src/ui/mission/QGCMissionConditionWidget.h \
     src/uas/QGCUASParamManager.h
@@ -388,7 +388,6 @@ SOURCES += src/main.cc \
     src/ui/SlugsDataSensorView.cc \
     src/ui/SlugsHilSim.cc \
     src/ui/SlugsPIDControl.cpp \
-    src/ui/SlugsVideoCamControl.cpp \
     src/ui/SlugsPadCameraControl.cpp \
     src/ui/QGCMainWindowAPConfigurator.cc \
     src/comm/MAVLinkSwarmSimulationLink.cc \
@@ -405,6 +404,7 @@ SOURCES += src/main.cc \
     src/ui/QGCWaypointListMulti.cc \
     src/ui/QGCUDPLinkConfiguration.cc \
     src/ui/QGCSettingsWidget.cc \
+    src/ui/uas/UASControlParameters.cpp
     src/ui/mission/QGCMissionDoWidget.cc \
     src/ui/mission/QGCMissionConditionWidget.cc \
     src/uas/QGCUASParamManager.cc
