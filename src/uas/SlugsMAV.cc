@@ -90,10 +90,6 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
         mavlink_msg_gps_raw_decode(&message, &mlGpsData);
             break;
 
-      case MAVLINK_MSG_ID_ACTION_ACK:      // 62
-        mavlink_msg_action_ack_decode(&message,&mlActionAck);
-            break;
-
       case MAVLINK_MSG_ID_CPU_LOAD:       //170
         mavlink_msg_cpu_load_decode(&message,&mlCpuLoadData);
             break;
@@ -151,6 +147,27 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
       break;
 
       case MAVLINK_MSG_ID_SLUGS_ACTION:     //183
+         mavlink_msg_slugs_action_decode(&message, &mlAction);
+
+         switch (mlAction.actionId){
+            case SLUGS_ACTION_EEPROM:
+                 if (mlAction.actionVal == SLUGS_ACTION_FAIL){
+                    emit textMessageReceived(message.sysid, message.compid, 255, "EEPROM Write Fail, Data was not saved in Memory!");
+                 }
+            break;
+
+            case SLUGS_ACTION_PT_CHANGE:
+                if (mlAction.actionVal == SLUGS_ACTION_SUCCESS){
+                   emit textMessageReceived(message.sysid, message.compid, 0, "Passthrough Succesfully Changed");
+                }
+            break;
+
+            case SLUGS_ACTION_MLC_CHANGE:
+                if (mlAction.actionVal == SLUGS_ACTION_SUCCESS){
+                   emit textMessageReceived(message.sysid, message.compid, 0, "Mid-level Commands Succesfully Changed");
+                }
+            break;
+         }// switch actionId
 
       break;
 
