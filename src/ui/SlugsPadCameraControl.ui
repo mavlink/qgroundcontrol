@@ -41,7 +41,7 @@
       <bool>true</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgba(255, 0, 0,50%);</string>
+      <string notr="true">background-color: rgb(135, 206, 235);</string>
      </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
@@ -67,6 +67,9 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QLabel" name="lbPixel">
+          <property name="styleSheet">
+           <string notr="true">font-color:rgb(0, 0, 0);</string>
+          </property>
           <property name="text">
            <string>----</string>
           </property>

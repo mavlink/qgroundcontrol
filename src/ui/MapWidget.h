@@ -40,8 +40,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QPointF"
 
 #include <qmath.h>
-
-
+#include <QSettings>
 
 class QMenu;
 class Waypoint;
@@ -154,6 +153,8 @@ protected:
     void captureGeometryDrag(Geometry* geom, QPointF coordinate);
     void captureGeometryEndDrag(Geometry* geom, QPointF coordinate);
 
+    void captureGeometryDragHome(Geometry* geom, QPointF coordinate);
+
     void createPathButtonClicked(bool checked);
 
     /** @brief Create the graphic representation of the waypoint */
@@ -161,12 +162,13 @@ protected:
     void mapproviderSelected(QAction* action);
 
     void createHomePosition(const QMouseEvent* event, const QPointF coordinate);
+    void createHomePosition(const QPointF coordinate);
     void createHomePositionClick(bool click);
+    void loadSettingsMap(QSettings &);
 
   signals:
     void waypointCreated(Waypoint* wp);
     void sendGeometryEndDrag(const QPointF coordinate, const int index);
-
 
 private:
     Ui::MapWidget *m_ui;
@@ -178,6 +180,7 @@ private:
     int wpExists(const QPointF coordinate);
     bool waypointIsDrag;
     QPointF homeCoordinate;
+    int8_t index;
 };
 
 #endif // MAPWIDGET_H
