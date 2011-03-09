@@ -1,4 +1,4 @@
-#include "src\ui\uas\UASControlParameters.h"
+#include "UASControlParameters.h"
 #include "ui_UASControlParameters.h"
 
 #define CONTROL_MODE_LOCKED "MODE LOCKED"
