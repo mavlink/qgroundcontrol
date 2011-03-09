@@ -80,11 +80,11 @@ void UASControlParameters::changedMode(int mode)
 
     if(modeTemp != this->mode)
     {
-        ui->lbMode->setStyleSheet("background-color: rgb(255, 0, 0)");
+        ui->lbMode->setStyleSheet("background-color: rgb(165, 42, 42)");
     }
     else
     {
-        ui->lbMode->setStyleSheet("background-color: rgb(0, 255, 0)");
+        ui->lbMode->setStyleSheet("background-color: rgb(85, 107, 47)");
     }
 }
 
@@ -104,12 +104,17 @@ void UASControlParameters::activeUasSet(UASInterface *uas)
 
 void UASControlParameters::updateGlobalPosition(UASInterface * a, double b, double c, double aa, quint64 ab)
 {
-    //ui->sbHeight->setValue(aa);
+    Q_UNUSED(a);
+    Q_UNUSED(b);
+    Q_UNUSED(c);
+    Q_UNUSED(ab);
     this->altitude=aa;
 }
 
 void UASControlParameters::speedChanged(UASInterface* uas, double vx, double vy, double vz, quint64 time)
 {
+    Q_UNUSED(time);
+    Q_UNUSED(uas);
     this->speed = sqrt(pow(vx, 2.0) + pow(vy, 2.0) + pow(vz, 2.0));
     //ui->sbAirSpeed->setValue(speed);
 }
@@ -117,6 +122,8 @@ void UASControlParameters::speedChanged(UASInterface* uas, double vx, double vy,
 void UASControlParameters::updateAttitude(UASInterface *uas, double roll, double pitch, double yaw, quint64 time)
 {
     Q_UNUSED(uas);
+    Q_UNUSED(pitch);
+    Q_UNUSED(yaw);
     Q_UNUSED(time);
     //ui->sbTurnRate->setValue(roll);
     this->roll = roll;
@@ -194,7 +201,7 @@ void UASControlParameters::updateMode(int uas,QString mode,QString description)
     this->mode = mode;
     ui->lbMode->setText(this->mode);
 
-    ui->lbMode->setStyleSheet("background-color: rgb(0, 255, 0)");
+    ui->lbMode->setStyleSheet("background-color: rgb(85, 107, 47)");
 }
 
 void UASControlParameters::thrustChanged(UASInterface *uas, double throttle)
