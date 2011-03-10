@@ -765,8 +765,8 @@ void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
         {
             // Update homePosition
             UASManager::instance()->setHomePosition(
-                                static_cast<double>(homeCoordinate.x()),
-                                static_cast<double>(homeCoordinate.y()), 0);
+                                static_cast<double>(homeCoordinate.y()),
+                                static_cast<double>(homeCoordinate.x()), 0);
         }
     }
 
