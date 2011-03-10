@@ -61,10 +61,6 @@ public slots:
 
     void emitSignals (void);
 
-#ifdef MAVLINK_ENABLED_SLUGS
-    mavlink_pwm_commands_t* getPwmCommands();
-#endif
-
 signals:
 
     void slugsRawImu(int uasId, const mavlink_raw_imu_t& rawData);
@@ -76,11 +72,8 @@ signals:
     void slugsAirData(int systemId, const mavlink_air_data_t& airData);
     void slugsSensorBias(int systemId, const mavlink_sensor_bias_t& sensorBias);
     void slugsDiagnostic(int systemId, const mavlink_diagnostic_t& diagnostic);
-    void slugsPilotConsolePWM(int systemId, const mavlink_pilot_console_t& pilotConsole);
-    void slugsPWM(int systemId, const mavlink_pwm_commands_t& pwmCommands);
     void slugsNavegation(int systemId, const mavlink_slugs_navigation_t& slugsNavigation);
     void slugsDataLog(int systemId, const mavlink_data_log_t& dataLog);
-    void slugsFilteredData(int systemId, const mavlink_filtered_data_t& filteredData);
     void slugsGPSDateTime(int systemId, const mavlink_gps_date_time_t& gpsDateTime);
     void slugsActionAck(int systemId, const mavlink_action_ack_t& actionAck);
 
@@ -97,11 +90,6 @@ signals:
 
 protected:
 
-   typedef struct _mavlink_pid_values_t {
-         float P[11];
-         float I[11];
-         float D[11];
-     }mavlink_pid_values_t;
 
    unsigned char updateRoundRobin;
    QTimer* widgetTimer;
@@ -116,15 +104,10 @@ protected:
    mavlink_air_data_t 			mlAirData;
    mavlink_sensor_bias_t 		mlSensorBiasData;
    mavlink_diagnostic_t 		mlDiagnosticData;
-   mavlink_pilot_console_t 		mlPilotConsoleData;
-   mavlink_filtered_data_t 		mlFilteredData;
    mavlink_boot_t               mlBoot;
    mavlink_gps_date_time_t 		mlGpsDateTime;
    mavlink_mid_lvl_cmds_t 		mlMidLevelCommands;
    mavlink_set_mode_t 			mlApMode;
-   mavlink_pwm_commands_t		mlPwmCommands;
-   mavlink_pid_values_t			mlPidValues;
-   mavlink_pid_t                mlSinglePid;
 
    mavlink_slugs_navigation_t	mlNavigation;
    mavlink_data_log_t			mlDataLog;

@@ -1070,6 +1070,7 @@ void UAS::setHomePosition(double lat, double lon, double alt)
     home.latitude = lat*1E7;
     home.longitude = lon*1E7;
     home.altitude = alt*1000;
+    qDebug() << "lat:" << home.latitude << " lon:" << home.longitude;
     mavlink_message_t msg;
     mavlink_msg_gps_set_global_origin_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &home);
     sendMessage(msg);

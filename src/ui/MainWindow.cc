@@ -614,13 +614,6 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget(bool)), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
     }
 
-    if (!slugsPIDControlWidget)
-    {
-        slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
-        slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
-        slugsPIDControlWidget->setObjectName("SLUGS_PID_CONTROL_DOCK_WIDGET");
-        addToToolsMenu (slugsPIDControlWidget, tr("PID Configuration"), SLOT(showToolWidget(bool)), MENU_SLUGS_PID, Qt::LeftDockWidgetArea);
-    }
 
     if (!slugsHilSimWidget)
     {
@@ -1086,11 +1079,6 @@ void MainWindow::connectSlugsWidgets()
     if (slugsDataWidget && slugsDataWidget->widget()){
         connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
                 slugsDataWidget->widget(), SLOT(setActiveUAS(UASInterface*)));
-    }
-
-    if (slugsPIDControlWidget && slugsPIDControlWidget->widget()){
-        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-                slugsPIDControlWidget->widget(), SLOT(activeUasSet(UASInterface*)));
     }
 
     if (controlParameterWidget && controlParameterWidget->widget()){
