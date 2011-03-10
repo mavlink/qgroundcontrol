@@ -70,8 +70,6 @@ This file is part of the QGROUNDCONTROL project
 #include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
 
-#include "SlugsPIDControl.h"
-
 #include "SlugsHilSim.h"
 
 #include "SlugsPadCameraControl.h"
@@ -403,7 +401,6 @@ protected:
     QPointer<QDockWidget> rcViewDockWidget;
     QPointer<QDockWidget> hudDockWidget;
     QPointer<QDockWidget> slugsDataWidget;
-    QPointer<QDockWidget> slugsPIDControlWidget;
     QPointer<QDockWidget> slugsHilSimWidget;
     QPointer<QDockWidget> slugsCamControlWidget;
 

@@ -26,14 +26,9 @@ SlugsMAV::SlugsMAV(MAVLinkProtocol* mavlink, int id) :
     memset(&mlAirData, 0, sizeof(mavlink_air_data_t));
     memset(&mlSensorBiasData, 0, sizeof(mavlink_sensor_bias_t));
     memset(&mlDiagnosticData, 0, sizeof(mavlink_diagnostic_t));
-    memset(&mlPilotConsoleData, 0, sizeof(mavlink_pilot_console_t));
-    memset(&mlFilteredData ,0, sizeof(mavlink_filtered_data_t));
     memset(&mlBoot ,0, sizeof(mavlink_boot_t));
     memset(&mlGpsDateTime ,0, sizeof(mavlink_gps_date_time_t));
     memset(&mlApMode ,0, sizeof(mavlink_set_mode_t));
-    memset(&mlPwmCommands ,0, sizeof(mavlink_pwm_commands_t));
-    memset(&mlPidValues ,0, sizeof(mavlink_pid_values_t));
-    memset(&mlSinglePid ,0, sizeof(mavlink_pid_t));
     memset(&mlNavigation ,0, sizeof(mavlink_slugs_navigation_t));
     memset(&mlDataLog ,0, sizeof(mavlink_data_log_t));
     memset(&mlPassthrough ,0, sizeof(mavlink_ctrl_srfc_pt_t));
@@ -106,24 +101,12 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
         mavlink_msg_diagnostic_decode(&message,&mlDiagnosticData);
       break;
 
-      case MAVLINK_MSG_ID_PILOT_CONSOLE:  //174
-        mavlink_msg_pilot_console_decode(&message,&mlPilotConsoleData);
-            break;
-
-      case MAVLINK_MSG_ID_PWM_COMMANDS:   //175
-        mavlink_msg_pwm_commands_decode(&message,&mlPwmCommands);
-      break;
-
       case MAVLINK_MSG_ID_SLUGS_NAVIGATION://176
         mavlink_msg_slugs_navigation_decode(&message,&mlNavigation);
             break;
 
       case MAVLINK_MSG_ID_DATA_LOG:       //177
         mavlink_msg_data_log_decode(&message,&mlDataLog);
-      break;
-
-      case MAVLINK_MSG_ID_FILTERED_DATA:  //178
-        mavlink_msg_filtered_data_decode(&message,&mlFilteredData);
       break;
 
       case MAVLINK_MSG_ID_GPS_DATE_TIME:    //179
@@ -137,14 +120,6 @@ void SlugsMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
       case MAVLINK_MSG_ID_CTRL_SRFC_PT:     //181
         mavlink_msg_ctrl_srfc_pt_decode(&message, &mlPassthrough);
             break;
-
-      case MAVLINK_MSG_ID_PID:              //182
-          memset(&mlSinglePid,0,sizeof(mavlink_pid_t));
-          mavlink_msg_pid_decode(&message, &mlSinglePid);
-        //  qDebug() << "\nSLUGS RECEIVED PID Message = "<<mlSinglePid.idx;
-
-          emit slugsPidValues(uasId, mlSinglePid);
-      break;
 
       case MAVLINK_MSG_ID_SLUGS_ACTION:     //183
          mavlink_msg_slugs_action_decode(&message, &mlAction);
@@ -196,26 +171,16 @@ void SlugsMAV::emitSignals (void){
     break;
 
     case 3:
-      emit remoteControlChannelScaledChanged(0,(mlPilotConsoleData.de- 1000.0f)/1000.0f);
-       emit remoteControlChannelScaledChanged(1,(mlPilotConsoleData.dla- 1000.0f)/1000.0f);
-        emit remoteControlChannelScaledChanged(2,(mlPilotConsoleData.dr- 1000.0f)/1000.0f);
-         emit remoteControlChannelScaledChanged(3,(mlPilotConsoleData.dra- 1000.0f)/1000.0f);
-
-      emit slugsPWM(uasId, mlPwmCommands);
-    break;
-
-    case 4:
       emit slugsNavegation(uasId, mlNavigation);
       emit slugsDataLog(uasId, mlDataLog);
     break;
 
-    case 5:
-      emit slugsFilteredData(uasId,mlFilteredData);
+    case 4:
       emit slugsGPSDateTime(uasId, mlGpsDateTime);
 
     break;
 
-    case 6:
+    case 5:
       emit slugsActionAck(uasId,mlActionAck);
       emit emitGpsSignals();
 
@@ -256,29 +221,8 @@ void SlugsMAV::emitGpsSignals (void){
 
      emit slugsGPSCogSog(uasId,mlGpsData.hdg, mlGpsData.v);
 
-//        // Smaller than threshold and not NaN
-//        if (mlGpsData.v < 1000000 && mlGpsData.v == mlGpsData.v){
-//            // emit speedChanged(this, (double)mlGpsData.v, 0.0, 0.0, 0.0);
-
-//         }
-//         else {
-//              emit textMessageReceived(uasId, uasId, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(mlGpsData.v));
-//         }
-  //}
-
-}
-
-void SlugsMAV::emitPidSignal()
-{
-    // qDebug() << "\nSLUGS RECEIVED PID Message";
-    emit slugsPidValues(uasId, mlSinglePid);
-
 }
 
 
-mavlink_pwm_commands_t* SlugsMAV::getPwmCommands()
-{
-    return &mlPwmCommands;
-}
 
 #endif // MAVLINK_ENABLED_SLUGS

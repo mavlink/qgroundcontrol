@@ -146,7 +146,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/map3D/QGCGoogleEarthView.ui \
     src/ui/SlugsDataSensorView.ui \
     src/ui/SlugsHilSim.ui \
-    src/ui/SlugsPIDControl.ui \
     src/ui/SlugsPadCameraControl.ui \
     src/ui/uas/QGCUnconnectedInfoWidget.ui \
     src/ui/designer/QGCToolWidget.ui \
@@ -256,7 +255,6 @@ HEADERS += src/MG.h \
     src/ui/map3D/QGCWebPage.h \
     src/ui/SlugsDataSensorView.h \
     src/ui/SlugsHilSim.h \
-    src/ui/SlugsPIDControl.h \
     src/ui/SlugsPadCameraControl.h \
     src/ui/QGCMainWindowAPConfigurator.h \
     src/comm/MAVLinkSwarmSimulationLink.h \
@@ -387,7 +385,6 @@ SOURCES += src/main.cc \
     src/ui/map3D/QGCWebPage.cc \
     src/ui/SlugsDataSensorView.cc \
     src/ui/SlugsHilSim.cc \
-    src/ui/SlugsPIDControl.cpp \
     src/ui/SlugsPadCameraControl.cpp \
     src/ui/QGCMainWindowAPConfigurator.cc \
     src/comm/MAVLinkSwarmSimulationLink.cc \
