@@ -115,6 +115,11 @@ void MapWidget::init()
         lastZoom = settings.value("LAST_ZOOM", lastZoom).toInt();
         settings.endGroup();
 
+        index = 0;
+        settings.beginGroup("QGC_MAPINDEX");
+        index = settings.value("MAP_INDEX", index).toInt();
+        settings.endGroup();
+
         settings.beginGroup("QGC_HOMEPOSITION");
         homeCoordinate.setY(settings.value("HOME_LATITUDE", homeCoordinate.y()).toDouble());
         homeCoordinate.setX(settings.value("HOME_LONGITUDE", homeCoordinate.x()).toDouble());
@@ -299,20 +304,15 @@ void MapWidget::init()
         connect(homePosition, SIGNAL(geometryEndDrag(Geometry*, QPointF)),
                 this, SLOT(captureGeometryEndDrag(Geometry*, QPointF)));
 
-        this->loadSettingsMap(settings);
+        this->loadSettingsMap(index);
         this->createHomePosition(homeCoordinate);
 
         qDebug() << "CHECK END";
     }
 }
 
-void MapWidget::loadSettingsMap(QSettings &settings)
+void MapWidget::loadSettingsMap(int8_t index)
 {
-    index = 0;
-    settings.beginGroup("QGC_MAPINDEX");
-    index = settings.value("MAP_INDEX", index).toInt();
-    settings.endGroup();
-
     switch(index)
     {
     case 0:
@@ -1289,7 +1289,7 @@ void MapWidget::createHomePositionClick(bool click)
                     static_cast<double>(homeCoordinate.x()), 0);
 
 
-            qDebug()<<"Set home position "<<homeCoordinate.y()<<" "<<homeCoordinate.x();
+            //qDebug()<<"Set home position "<<homeCoordinate.y()<<" "<<homeCoordinate.x();
         }
     }
 }

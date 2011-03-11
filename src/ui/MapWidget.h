@@ -164,7 +164,7 @@ protected:
     void createHomePosition(const QMouseEvent* event, const QPointF coordinate);
     void createHomePosition(const QPointF coordinate);
     void createHomePositionClick(bool click);
-    void loadSettingsMap(QSettings &);
+    void loadSettingsMap(int8_t index);
 
   signals:
     void waypointCreated(Waypoint* wp);
