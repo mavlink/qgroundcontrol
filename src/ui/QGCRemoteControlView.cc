@@ -193,7 +193,7 @@ void QGCRemoteControlView::redraw()
         // Update RSSI
         if(rssi>0)
         {
-            rssiBar->setValue(rssi*100);
+            //rssiBar->setValue(rssi);//*100);
         }
 
         updated = false;

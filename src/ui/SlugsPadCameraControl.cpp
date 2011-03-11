@@ -128,7 +128,7 @@ void SlugsPadCameraControl::getDeltaPositionPad(int x2, int y2)
         ui->lbPixel->setText(QString::number(localMeasures.y()));
         ui->lbDirection->setText(dir);
 
-        qDebug()<<dir;
+        //qDebug()<<dir;
         update();
     }
 }

@@ -28,7 +28,7 @@ This file is part of the QGROUNDCONTROL project
 #include "mavlink.h"
 #include <QTimer>
 
-#define SLUGS_UPDATE_RATE   100   // in ms
+#define SLUGS_UPDATE_RATE   200   // in ms
 class SlugsMAV : public UAS
 {
     Q_OBJECT
@@ -82,41 +82,39 @@ signals:
     void slugsBootMsg(int uasId, mavlink_boot_t& boot);
     void slugsAttitude(int uasId, mavlink_attitude_t& attitude);
 
-
-
-
+    void slugsScaled(int uasId, const mavlink_scaled_imu_t& scaled);
+    void slugsServo(int uasId, const mavlink_servo_output_raw_t& servo);
+    void slugsChannels(int uasId, const mavlink_rc_channels_raw_t& channels);
 
 #endif
 
 protected:
+    unsigned char updateRoundRobin;
+    QTimer* widgetTimer;
+    mavlink_raw_imu_t mlRawImuData;
 
+    #ifdef MAVLINK_ENABLED_SLUGS
+    mavlink_gps_raw_t mlGpsData;
+    mavlink_attitude_t mlAttitude;
+    mavlink_cpu_load_t mlCpuLoadData;
+    mavlink_air_data_t mlAirData;
+    mavlink_sensor_bias_t mlSensorBiasData;
+    mavlink_diagnostic_t mlDiagnosticData;
+    mavlink_boot_t mlBoot;
+    mavlink_gps_date_time_t mlGpsDateTime;
+    mavlink_mid_lvl_cmds_t mlMidLevelCommands;
+    mavlink_set_mode_t mlApMode;
 
-   unsigned char updateRoundRobin;
-   QTimer* widgetTimer;
+    mavlink_slugs_navigation_t mlNavigation;
+    mavlink_data_log_t mlDataLog;
+    mavlink_ctrl_srfc_pt_t mlPassthrough;
+    mavlink_action_ack_t mlActionAck;
 
+    mavlink_slugs_action_t mlAction;
 
-   mavlink_raw_imu_t 			mlRawImuData;
-
-#ifdef MAVLINK_ENABLED_SLUGS
-   mavlink_gps_raw_t			mlGpsData;
-   mavlink_attitude_t           mlAttitude;
-   mavlink_cpu_load_t 			mlCpuLoadData;
-   mavlink_air_data_t 			mlAirData;
-   mavlink_sensor_bias_t 		mlSensorBiasData;
-   mavlink_diagnostic_t 		mlDiagnosticData;
-   mavlink_boot_t               mlBoot;
-   mavlink_gps_date_time_t 		mlGpsDateTime;
-   mavlink_mid_lvl_cmds_t 		mlMidLevelCommands;
-   mavlink_set_mode_t 			mlApMode;
-
-   mavlink_slugs_navigation_t	mlNavigation;
-   mavlink_data_log_t			mlDataLog;
-   mavlink_ctrl_srfc_pt_t		mlPassthrough;
-   mavlink_action_ack_t			mlActionAck;
-
-   mavlink_slugs_action_t		mlAction;
-
-
+    mavlink_scaled_imu_t mlScaled;
+    mavlink_servo_output_raw_t mlServo;
+    mavlink_rc_channels_raw_t mlChannels;
 
 
    // Standart messages MAVLINK used by SLUGS

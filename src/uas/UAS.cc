@@ -351,11 +351,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
 
                 //add for development
-                emit remoteControlRSSIChanged(state.packet_drop/1000.0f);
+                //emit remoteControlRSSIChanged(state.packet_drop/1000.0f);
 
-                float en = state.packet_drop/1000.0f;
-                emit remoteControlChannelRawChanged(0, en);//MAVLINK_MSG_ID_RC_CHANNELS_RAW
-                emit remoteControlChannelScaledChanged(0, en/100.0f);//MAVLINK_MSG_ID_RC_CHANNELS_SCALED
+                //float en = state.packet_drop/1000.0f;
+                //emit remoteControlChannelRawChanged(0, en);//MAVLINK_MSG_ID_RC_CHANNELS_RAW
+                //emit remoteControlChannelScaledChanged(0, en/100.0f);//MAVLINK_MSG_ID_RC_CHANNELS_SCALED
 
 
                 //qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;

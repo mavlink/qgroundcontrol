@@ -68,7 +68,7 @@
         <item>
          <widget class="QLabel" name="lbPixel">
           <property name="styleSheet">
-           <string notr="true">font-color:rgb(0, 0, 0);</string>
+           <string notr="true"/>
           </property>
           <property name="text">
            <string>----</string>
