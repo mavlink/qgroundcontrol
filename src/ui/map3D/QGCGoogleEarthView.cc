@@ -234,14 +234,14 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
 void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
 {
     // Only accept waypoints in global coordinate frame
-    if (wp->getFrame() == MAV_FRAME_GLOBAL)
+    if (wp->getFrame() == MAV_FRAME_GLOBAL && wp->isNavigationType())
     {
         // We're good, this is a global waypoint
 
         // Get the index of this waypoint
-        // note the call to getGlobalFrameIndexOf()
+        // note the call to getGlobalFrameAndNavTypeIndexOf()
         // as we're only handling global waypoints
-        int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameIndexOf(wp);
+        int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
         // If not found, return (this should never happen, but helps safety)
         if (wpindex == -1)
         {
@@ -267,7 +267,7 @@ void QGCGoogleEarthView::updateWaypointList(int uas)
     if (uasInstance)
     {
         // Get all waypoints, including non-global waypoints
-        QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getGlobalFrameWaypointList();
+        QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getGlobalFrameAndNavTypeWaypointList();
 
         // Trim internal list to number of global waypoints in the waypoint manager list
         javaScript(QString("updateWaypointListLength(%1,%2);").arg(uas).arg(wpList.count()));
@@ -741,7 +741,7 @@ void QGCGoogleEarthView::updateState()
                     // Update waypoint or symbol
                     if (mav)
                     {
-                        QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameWaypointList();
+                        QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameAndNavTypeWaypointList();
 
                         bool ok;
                         int index = idText.toInt(&ok);

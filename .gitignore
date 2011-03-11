@@ -44,3 +44,4 @@ user_config.pri
 *.cproject
 *.sln
 *.suo
+*thirdParty*
