@@ -727,12 +727,24 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_raw_pressure_t pressure;
                 mavlink_msg_raw_pressure_decode(&message, &pressure);
                 quint64 time = this->getUnixTime(pressure.usec);
-                emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
-                emit valueChanged(uasId, "diff pressure 1", "hPa", pressure.press_diff1, time);
-                emit valueChanged(uasId, "diff pressure 2", "hPa", pressure.press_diff2, time);
-                emit valueChanged(uasId, "temperature", "deg C", pressure.temperature/100.0f, time);
+                emit valueChanged(uasId, "abs pressure", "raw", pressure.press_abs, time);
+                emit valueChanged(uasId, "diff pressure 1", "raw", pressure.press_diff1, time);
+                emit valueChanged(uasId, "diff pressure 2", "raw", pressure.press_diff2, time);
+                emit valueChanged(uasId, "temperature", "raw", pressure.temperature, time);
             }
             break;
+
+            case MAVLINK_MSG_ID_SCALED_PRESSURE:
+            {
+                mavlink_scaled_pressure_t pressure;
+                mavlink_msg_scaled_pressure_decode(&message, &pressure);
+                quint64 time = this->getUnixTime(pressure.usec);
+                emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
+                emit valueChanged(uasId, "diff pressure", "hPa", pressure.press_diff, time);
+                emit valueChanged(uasId, "temperature", "C", pressure.temperature/100.0, time);
+            }
+            break;
+
         case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
             {
                 mavlink_rc_channels_raw_t channels;

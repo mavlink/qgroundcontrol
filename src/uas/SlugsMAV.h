@@ -77,8 +77,6 @@ signals:
     void slugsGPSDateTime(int systemId, const mavlink_gps_date_time_t& gpsDateTime);
     void slugsActionAck(int systemId, const mavlink_action_ack_t& actionAck);
 
-    void slugsPidValues(int systemId, const mavlink_pid_t& pidValues);
-
     void slugsBootMsg(int uasId, mavlink_boot_t& boot);
     void slugsAttitude(int uasId, mavlink_attitude_t& attitude);
 
