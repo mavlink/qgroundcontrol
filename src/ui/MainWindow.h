@@ -426,6 +426,7 @@ protected:
     QString styleFileName;
     bool autoReconnect;
     QGC_MAINWINDOW_STYLE currentStyle;
+    Qt::WindowStates windowStateVal;
 
 private:
     Ui::MainWindow ui;

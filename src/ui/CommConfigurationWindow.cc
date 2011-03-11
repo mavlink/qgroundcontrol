@@ -111,9 +111,10 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     if(serial != 0)
     {
         QWidget* conf = new SerialConfigurationWindow(serial, this);
-        QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
-        layout->addWidget(conf);
-        ui.linkGroupBox->setLayout(layout);
+        //QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
+        //layout->addWidget(conf);
+        ui.linkScrollArea->setWidget(conf);
+        //ui.linkScrollArea->setLayout(layout);
         ui.linkGroupBox->setTitle(tr("Serial Link"));
         ui.linkType->setCurrentIndex(0);
         //ui.linkGroupBox->setTitle(link->getName());
@@ -123,9 +124,10 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     if (udp != 0)
     {
         QWidget* conf = new QGCUDPLinkConfiguration(udp, this);
-        QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
-        layout->addWidget(conf);
-        ui.linkGroupBox->setLayout(layout);
+        //QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
+        //layout->addWidget(conf);
+        //ui.linkGroupBox->setLayout(layout);
+        ui.linkScrollArea->setWidget(conf);
         ui.linkGroupBox->setTitle(tr("UDP Link"));
         ui.linkType->setCurrentIndex(1);
     }
@@ -162,9 +164,10 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     if (mavlink != 0)
     {
         QWidget* conf = new MAVLinkSettingsWidget(mavlink, this);
-        QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.protocolGroupBox);
-        layout->addWidget(conf);
-        ui.protocolGroupBox->setLayout(layout);
+        //QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.protocolGroupBox);
+        //layout->addWidget(conf);
+        //ui.protocolGroupBox->setLayout(layout);
+        ui.protocolScrollArea->setWidget(conf);
         ui.protocolGroupBox->setTitle(protocol->getName()+" (Global Settings)");
     }
     else
