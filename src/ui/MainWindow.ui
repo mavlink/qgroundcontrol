@@ -445,7 +445,7 @@
     <string>Fullscreen</string>
    </property>
    <property name="shortcut">
-    <string>Alt+Return</string>
+    <string>Meta+Return</string>
    </property>
   </action>
   <action name="actionNormal">
