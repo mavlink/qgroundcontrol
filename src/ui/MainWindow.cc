@@ -172,6 +172,9 @@ MainWindow::MainWindow(QWidget *parent):
         LinkManager::instance()->addProtocol(link, mavlink);
         link->connect();
     }
+
+    // Initialize window state
+    windowStateVal = windowState();
 }
 
 MainWindow::~MainWindow()
@@ -1810,6 +1813,11 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     // Custom widgets, added last to all menus and layouts
     buildCustomWidget();
+    // Restore the mainwindow size
+    if (settings.contains(getWindowGeometryKey()))
+    {
+        restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
+    }
 }
 
 /**
@@ -1819,6 +1827,10 @@ void MainWindow::clearView()
 {
     // Save current state
     if (UASManager::instance()->getUASList().count() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
+    // Although we want save the state of the window, we do not want to change the top-leve state (minimized, maximized, etc)
+    // therefore this state is stored here and restored after applying the rest of the settings in the new
+    // perspective.
+    windowStateVal = this->windowState();
     settings.setValue(getWindowGeometryKey(), saveGeometry());
 
     QAction* temp;
@@ -2028,11 +2040,11 @@ void MainWindow::presentView()
     // Restore window state
     if (UASManager::instance()->getUASList().count() > 0)
     {
-        // Restore the mainwindow size
-        if (settings.contains(getWindowGeometryKey()))
-        {
-            restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
-        }
+//        // Restore the mainwindow size
+//        if (settings.contains(getWindowGeometryKey()))
+//        {
+//            restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
+//        }
 
         // Restore the widget positions and size
         if (settings.contains(getWindowStateKey()))
@@ -2051,6 +2063,7 @@ void MainWindow::presentView()
         }
     }
 
+    this->setWindowState(windowStateVal);
     this->show();
 }
 
