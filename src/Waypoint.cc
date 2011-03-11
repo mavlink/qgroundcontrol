@@ -57,6 +57,11 @@ Waypoint::~Waypoint()
 
 }
 
+bool Waypoint::isNavigationType()
+{
+    return (action < MAV_CMD_NAV_LAST);
+}
+
 void Waypoint::save(QTextStream &saveStream)
 {
     QString position("%1\t%2\t%3");
