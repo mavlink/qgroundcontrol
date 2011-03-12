@@ -87,11 +87,14 @@ public:
     /*@{*/
     const QVector<Waypoint *> &getWaypointList(void) { return waypoints; }  ///< Returns a const reference to the waypoint list.
     const QVector<Waypoint *> getGlobalFrameWaypointList();  ///< Returns a global waypoint list
+    const QVector<Waypoint *> getGlobalFrameAndNavTypeWaypointList(); ///< Returns a global waypoint list containing only waypoints suitable for navigation. Actions and other mission items are filtered out.
     int getIndexOf(Waypoint* wp);                   ///< Get the index of a waypoint in the list
     int getGlobalFrameIndexOf(Waypoint* wp);    ///< Get the index of a waypoint in the list, counting only global waypoints
+    int getGlobalFrameAndNavTypeIndexOf(Waypoint* wp); ///< Get the index of a waypoint in the list, counting only global AND navigation mode waypoints
     int getLocalFrameIndexOf(Waypoint* wp);     ///< Get the index of a waypoint in the list, counting only local waypoints
     int getMissionFrameIndexOf(Waypoint* wp);   ///< Get the index of a waypoint in the list, counting only mission waypoints
     int getGlobalFrameCount(); ///< Get the count of global waypoints in the list
+    int getGlobalFrameAndNavTypeCount(); ///< Get the count of global waypoints in navigation mode in the list
     int getLocalFrameCount();   ///< Get the count of local waypoints in the list
     /*@}*/
 

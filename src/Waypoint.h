@@ -71,6 +71,8 @@ public:
     MAV_FRAME getFrame() const { return frame; }
     MAV_CMD getAction() const { return action; }
     const QString& getName() const { return name; }
+    /** @brief Returns true if x, y, z contain reasonable navigation data */
+    bool isNavigationType();
 
     void save(QTextStream &saveStream);
     bool load(QTextStream &loadStream);

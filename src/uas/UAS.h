@@ -214,6 +214,10 @@ public slots:
     void setUASName(const QString& name);
     /** @brief Executes an action **/
     void setAction(MAV_ACTION action);
+    /** @brief Executes a command **/
+    void executeCommand(MAV_CMD command);
+    /** @brief Executes a command **/
+    void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component);
     /** @brief Set the current battery type and voltages */
     void setBatterySpecs(const QString& specs);
     /** @brief Get the current battery type and specs */

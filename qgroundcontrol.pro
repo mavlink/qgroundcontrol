@@ -153,6 +153,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/designer/QGCToolWidget.ui \
     src/ui/designer/QGCParamSlider.ui \
     src/ui/designer/QGCActionButton.ui \
+    src/ui/designer/QGCCommandButton.ui \
     src/ui/QGCMAVLinkLogPlayer.ui \
     src/ui/QGCWaypointListMulti.ui \
     src/ui/mission/QGCCustomWaypointAction.ui \
@@ -264,6 +265,7 @@ HEADERS += src/MG.h \
     src/ui/designer/QGCToolWidget.h \
     src/ui/designer/QGCParamSlider.h \
     src/ui/designer/QGCActionButton.h \
+    src/ui/designer/QGCCommandButton.h \
     src/ui/designer/QGCToolWidgetItem.h \
     src/ui/QGCMAVLinkLogPlayer.h \
     src/comm/MAVLinkSimulationWaypointPlanner.h \
@@ -394,6 +396,7 @@ SOURCES += src/main.cc \
     src/ui/designer/QGCToolWidget.cc \
     src/ui/designer/QGCParamSlider.cc \
     src/ui/designer/QGCActionButton.cc \
+    src/ui/designer/QGCCommandButton.cc \
     src/ui/designer/QGCToolWidgetItem.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
     src/comm/MAVLinkSimulationWaypointPlanner.cc \
