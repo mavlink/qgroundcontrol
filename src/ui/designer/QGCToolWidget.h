@@ -45,6 +45,7 @@ signals:
 protected:
     QAction* addParamAction;
     QAction* addButtonAction;
+    QAction* addCommandAction;
     QAction* setTitleAction;
     QAction* deleteAction;
     QAction* exportAction;
@@ -62,7 +63,9 @@ protected:
 
 protected slots:
     void addParam();
+    /** @deprecated */
     void addAction();
+    void addCommand();
     void setTitle();
 
 

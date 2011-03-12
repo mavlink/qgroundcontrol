@@ -10,6 +10,7 @@
 
 #include "QGCParamSlider.h"
 #include "QGCActionButton.h"
+#include "QGCCommandButton.h"
 #include "UASManager.h"
 
 QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
@@ -106,6 +107,11 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent)
                     item = new QGCActionButton(newWidgets.at(i));
                     qDebug() << "CREATED BUTTON";
                 }
+                else if (type == "COMMANDBUTTON")
+                {
+                    item = new QGCCommandButton(newWidgets.at(i));
+                    qDebug() << "CREATED COMMANDBUTTON";
+                }
                 else if (type == "SLIDER")
                 {
                     item = new QGCParamSlider(newWidgets.at(i));
@@ -182,9 +188,11 @@ void QGCToolWidget::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
     menu.addAction(addParamAction);
-    menu.addAction(addButtonAction);
+    menu.addAction(addCommandAction);
     menu.addAction(setTitleAction);
     menu.addAction(deleteAction);
+    menu.addSeparator();
+    menu.addAction(addButtonAction);
     menu.exec(event->globalPos());
 }
 
@@ -194,9 +202,9 @@ void QGCToolWidget::createActions()
     addParamAction->setStatusTip(tr("Add a parameter setting slider widget to the tool"));
     connect(addParamAction, SIGNAL(triggered()), this, SLOT(addParam()));
 
-    addButtonAction = new QAction(tr("New MAV &Command Button"), this);
-    addButtonAction->setStatusTip(tr("Add a new action button to the tool"));
-    connect(addButtonAction, SIGNAL(triggered()), this, SLOT(addAction()));
+    addCommandAction = new QAction(tr("New MAV &Command Button"), this);
+    addCommandAction->setStatusTip(tr("Add a new action button to the tool"));
+    connect(addCommandAction, SIGNAL(triggered()), this, SLOT(addCommand()));
 
     setTitleAction = new QAction(tr("Set Widget Title"), this);
     setTitleAction->setStatusTip(tr("Set the title caption of this tool widget"));
@@ -213,6 +221,10 @@ void QGCToolWidget::createActions()
     importAction = new QAction(tr("Import widget"), this);
     importAction->setStatusTip(tr("Import this widget from a file (current content will be removed)"));
     connect(exportAction, SIGNAL(triggered()), this, SLOT(importWidget()));
+
+    addButtonAction = new QAction(tr("New MAV Action Button (Deprecated)"), this);
+    addButtonAction->setStatusTip(tr("Add a new action button to the tool"));
+    connect(addButtonAction, SIGNAL(triggered()), this, SLOT(addAction()));
 }
 
 QMap<QString, QGCToolWidget*>* QGCToolWidget::instances()
@@ -244,6 +256,18 @@ void QGCToolWidget::addParam()
 void QGCToolWidget::addAction()
 {
     QGCActionButton* button = new QGCActionButton(this);
+    if (ui->hintLabel)
+    {
+        ui->hintLabel->deleteLater();
+        ui->hintLabel = NULL;
+    }
+    toolLayout->addWidget(button);
+    button->startEditMode();
+}
+
+void QGCToolWidget::addCommand()
+{
+    QGCCommandButton* button = new QGCCommandButton(this);
     if (ui->hintLabel)
     {
         ui->hintLabel->deleteLater();

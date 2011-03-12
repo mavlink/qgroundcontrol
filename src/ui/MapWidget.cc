@@ -492,14 +492,14 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
         if (uas == this->mav->getUASID())
         {
             // Only accept waypoints in global coordinate frame
-            if (wp->getFrame() == MAV_FRAME_GLOBAL)
+            if (wp->getFrame() == MAV_FRAME_GLOBAL && wp->isNavigationType())
             {
                 // We're good, this is a global waypoint
 
                 // Get the index of this waypoint
-                // note the call to getGlobalFrameIndexOf()
+                // note the call to getGlobalFrameAndNavTypeIndexOf()
                 // as we're only handling global waypoints
-                int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameIndexOf(wp);
+                int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
                 // If not found, return (this should never happen, but helps safety)
                 if (wpindex == -1) return;
 
@@ -558,7 +558,7 @@ void MapWidget::updateWaypoint(int uas, Waypoint* wp, bool updateView)
                 // waypoint list. This implies that the coordinate frame of this
                 // waypoint was changed and the list containing only global
                 // waypoints was shortened. Thus update the whole list
-                if (waypointPath->points().count() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameCount())
+                if (waypointPath->points().count() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeCount())
                 {
                     updateWaypointList(uas);
                 }
@@ -659,7 +659,7 @@ void MapWidget::captureGeometryDrag(Geometry* geom, QPointF coordinate)
         // Update waypoint data storage
         if (mav)
         {
-            QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameWaypointList();
+            QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameAndNavTypeWaypointList();
 
             if (wps.size() > index)
             {
@@ -738,7 +738,7 @@ void MapWidget::updateWaypointList(int uas)
             }
 
             // Trim internal list to number of global waypoints in the waypoint manager list
-            int overSize = waypointPath->points().count() - uasInstance->getWaypointManager()->getGlobalFrameCount();
+            int overSize = waypointPath->points().count() - uasInstance->getWaypointManager()->getGlobalFrameAndNavTypeCount();
             if (overSize > 0)
             {
                 // Remove n waypoints at the end of the list

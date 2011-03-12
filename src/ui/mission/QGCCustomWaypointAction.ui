@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1105</width>
+    <width>1228</width>
     <height>25</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,10,10,10,10,10,0,0">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="10,0,10,10,10,10,0,0">
    <property name="spacing">
     <number>5</number>
    </property>
