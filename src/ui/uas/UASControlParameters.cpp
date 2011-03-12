@@ -3,11 +3,19 @@
 
 #define CONTROL_MODE_LOCKED "MODE LOCKED"
 #define CONTROL_MODE_MANUAL "MODE MANUAL"
-#define CONTROL_MODE_GUIDED "MODE GUIDED"
-#define CONTROL_MODE_AUTO   "MODE AUTO"
-#define CONTROL_MODE_TEST1  "MODE TEST1"
-#define CONTROL_MODE_TEST2  "MODE TEST2"
-#define CONTROL_MODE_TEST3  "MODE TEST3"
+
+#ifdef MAVLINK_ENABLED_SLUGS
+    #define CONTROL_MODE_GUIDED "MODE MID-L CMDS"
+    #define CONTROL_MODE_AUTO   "MODE WAYPOINT"
+    #define CONTROL_MODE_TEST1  "MODE PASST"
+    #define CONTROL_MODE_TEST2  "MODE SEL PT"
+#else
+    #define CONTROL_MODE_GUIDED "MODE GUIDED"
+    #define CONTROL_MODE_AUTO   "MODE AUTO"
+    #define CONTROL_MODE_TEST1  "MODE TEST1"
+    #define CONTROL_MODE_TEST2  "MODE TEST2"
+#endif
+
 #define CONTROL_MODE_READY  "MODE TEST3"
 #define CONTROL_MODE_RC_TRAINING  "RC SIMULATION"
 
@@ -51,20 +59,38 @@ void UASControlParameters::changedMode(int mode)
     case (uint8_t)MAV_MODE_MANUAL:
         modeTemp = "MANUAL MODE";
         break;
+#ifdef MAVLINK_ENABLED_SLUGS
     case (uint8_t)MAV_MODE_AUTO:
-        modeTemp = "AUTO MODE";
+        modeTemp = "WAYPOINT MODE";
         break;
     case (uint8_t)MAV_MODE_GUIDED:
-        modeTemp = "GUIDED MODE";
+        modeTemp = "MID-L CMDS MODE";
         break;
+
+    case (uint8_t)MAV_MODE_TEST1:
+        modeTemp = "PASST MODE";
+        break;
+    case (uint8_t)MAV_MODE_TEST2:
+        modeTemp = "SEL PT MODE";
+        break;
+#else
+    case (uint8_t)MAV_MODE_AUTO:
+        mode = "AUTO MODE";
+        break;
+    case (uint8_t)MAV_MODE_GUIDED:
+        mode = "GUIDED MODE";
+        break;
+
+    case (uint8_t)MAV_MODE_TEST1:
+        mode = "TEST1 MODE";
+        break;
+    case (uint8_t)MAV_MODE_TEST2:
+        mode = "TEST2 MODE";
+        break;
+#endif
     case (uint8_t)MAV_MODE_READY:
         modeTemp = "READY MODE";
         break;
-    case (uint8_t)MAV_MODE_TEST1:
-        modeTemp = "TEST1 MODE";
-        break;
-    case (uint8_t)MAV_MODE_TEST2:
-        modeTemp = "TEST2 MODE";
         break;
     case (uint8_t)MAV_MODE_TEST3:
         modeTemp = "TEST3 MODE";

@@ -233,6 +233,13 @@ public slots:
     void home();
     void halt();
     void go();
+    /** @brief Places the UAV in Hardware-in-the-Loop simulation status **/
+    void startHil();
+
+    /** @brief Stops the UAV's Hardware-in-the-Loop simulation status **/
+    void stopHil();
+
+
     /** @brief Stops the robot system. If it is an MAV, the robot starts the emergency landing procedure **/
     void emergencySTOP();
 

@@ -286,30 +286,44 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     case (uint8_t)MAV_MODE_MANUAL:
                         mode = "MANUAL MODE";
                         break;
+
+                    #ifdef MAVLINK_ENABLED_SLUGS
+                    case (uint8_t)MAV_MODE_AUTO:
+                        mode = "WAYPOINT MODE";
+                        break;
+                    case (uint8_t)MAV_MODE_GUIDED:
+                        mode = "MID-L CMDS MODE";
+                        break;
+
+                    case (uint8_t)MAV_MODE_TEST1:
+                        mode = "PASST MODE";
+                        break;
+                    case (uint8_t)MAV_MODE_TEST2:
+                        mode = "SEL PT MODE";
+                        break;
+                    #else
                     case (uint8_t)MAV_MODE_AUTO:
                         mode = "AUTO MODE";
                         break;
                     case (uint8_t)MAV_MODE_GUIDED:
                         mode = "GUIDED MODE";
                         break;
-                    case (uint8_t)MAV_MODE_READY:
-                        mode = "READY MODE";
-                        break;
+
                     case (uint8_t)MAV_MODE_TEST1:
                         mode = "TEST1 MODE";
                         break;
                     case (uint8_t)MAV_MODE_TEST2:
                         mode = "TEST2 MODE";
                         break;
-                    #ifdef MAVLINK_ENABLED_SLUGS
-                    case (uint8_t)MAV_MODE_TEST3:
-                        mode = "HIL MODE";
+                    #endif
+                    case (uint8_t)MAV_MODE_READY:
+                        mode = "READY MODE";
                         break;
-                    #else
+
                     case (uint8_t)MAV_MODE_TEST3:
                         mode = "TEST3 MODE";
-                        break;
-                    #endif
+                    break;
+
                     case (uint8_t)MAV_MODE_RC_TRAINING:
                         mode = "RC TRAINING MODE";
                         break;
@@ -1404,10 +1418,16 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         uasState = tr("EMERGENCY");
         stateDescription = tr("EMERGENCY: Land Immediately!");
         break;
+    case MAV_STATE_HILSIM:
+        uasState = tr("HIL SIM");
+        stateDescription = tr("HIL Simulation, Sensors read from SIM");
+        break;
+
     case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");
         stateDescription = tr("Powering off system.");
         break;
+
     default:
         uasState = tr("UNKNOWN");
         stateDescription = tr("Unknown system state");
@@ -2000,12 +2020,14 @@ void UAS::clearWaypointList()
 
 void UAS::halt()
 {
+
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
     mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_HALT);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+
 }
 
 void UAS::go()
@@ -2035,6 +2057,7 @@ void UAS::home()
  */
 void UAS::emergencySTOP()
 {
+
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
     mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_EMCY_LAND);
@@ -2077,6 +2100,29 @@ bool UAS::emergencyKILL()
     return result;
 }
 
+void UAS::startHil(){
+
+    mavlink_message_t msg;
+  // TODO Replace MG System ID with static function call and allow to change ID in GUI
+  mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_START_HILSIM);
+  // Send message twice to increase chance of reception
+  sendMessage(msg);
+  sendMessage(msg);
+
+}
+
+void UAS::stopHil(){
+
+    mavlink_message_t msg;
+  // TODO Replace MG System ID with static function call and allow to change ID in GUI
+  mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_STOP_HILSIM);
+  // Send message twice to increase chance of reception
+  sendMessage(msg);
+  sendMessage(msg);
+
+}
+
+
 void UAS::shutdown()
 {
     bool result = false;
@@ -2084,6 +2130,7 @@ void UAS::shutdown()
     msgBox.setIcon(QMessageBox::Critical);
     msgBox.setText("Shutting down the UAS");
     msgBox.setInformativeText("Do you want to shut down the onboard computer?");
+
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     int ret = msgBox.exec();
@@ -2101,6 +2148,7 @@ void UAS::shutdown()
         // Send message twice to increase chance of reception
         sendMessage(msg);
         sendMessage(msg);
+
         result = true;
     }
 }

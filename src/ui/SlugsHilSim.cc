@@ -108,6 +108,8 @@ void SlugsHilSim::putInHilMode(void){
 
       ui->bt_startHil->setText(buttonCaption);
 
+      activeUas->startHil();
+
     } else {
       ui->bt_startHil->setChecked(false);
     }
@@ -120,6 +122,7 @@ void SlugsHilSim::putInHilMode(void){
     ui->bt_startHil->setText(buttonCaption);
 
     rxSocket->disconnectFromHost();
+    activeUas->stopHil();
   }
 }
 
@@ -151,8 +154,6 @@ void SlugsHilSim::activeUasSet(UASInterface* uas){
 
   if (uas != NULL) {
     activeUas = static_cast <UAS *>(uas);
-
-    //connect(uas, SIGNAL())
   }
 }
 
