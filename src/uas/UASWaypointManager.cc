@@ -737,7 +737,12 @@ void UASWaypointManager::writeWaypoints()
 
                 if (cur_s->getCurrent() && noCurrent)
                     noCurrent = false;
+                if (i == (current_count - 1) && noCurrent == true) //not a single waypoint was set as "current"
+                    cur_d->current = true; // set the last waypoint as current. Or should it better be the first waypoint ?
             }
+
+
+
 
             //send the waypoint count to UAS (this starts the send transaction)
             sendWaypointCount();
