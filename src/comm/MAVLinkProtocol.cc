@@ -41,6 +41,8 @@ MAVLinkProtocol::MAVLinkProtocol() :
         heartbeatTimer(new QTimer(this)),
         heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
         m_heartbeatsEnabled(false),
+        m_multiplexingEnabled(false),
+        m_authEnabled(false),
         m_loggingEnabled(false),
         m_logfile(NULL),
         m_enable_version_check(true),
@@ -52,6 +54,7 @@ MAVLinkProtocol::MAVLinkProtocol() :
         versionMismatchIgnore(false),
         systemId(QGC::defaultSystemId)
 {
+    m_authKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     loadSettings();
     //start(QThread::LowPriority);
     // Start heartbeat timer, emitting a heartbeat at the configured rate
@@ -101,6 +104,10 @@ void MAVLinkProtocol::loadSettings()
         systemId = temp;
     }
 
+    // Set auth key
+    m_authKey = settings.value("GCS_AUTH_KEY", m_authKey).toString();
+    enableAuth(settings.value("GCS_AUTH_ENABLED", m_authEnabled).toBool());
+
     // Parameter interface settings
     bool ok;
     temp = settings.value("PARAMETER_RETRANSMISSION_TIMEOUT", m_paramRetransmissionTimeout).toInt(&ok);
@@ -121,6 +128,8 @@ void MAVLinkProtocol::storeSettings()
     settings.setValue("VERSION_CHECK_ENABLED", m_enable_version_check);
     settings.setValue("MULTIPLEXING_ENABLED", m_multiplexingEnabled);
     settings.setValue("GCS_SYSTEM_ID", systemId);
+    settings.setValue("GCS_AUTH_KEY", m_authKey);
+    settings.setValue("GCS_AUTH_ENABLED", m_authEnabled);
     if (m_logfile)
     {
         // Logfile exists, store the name
@@ -417,6 +426,15 @@ void MAVLinkProtocol::sendHeartbeat()
         mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, OCU, MAV_AUTOPILOT_GENERIC);
         sendMessage(beat);
     }
+    if (m_authEnabled)
+    {
+        mavlink_message_t msg;
+        mavlink_auth_key_t auth;
+        if (m_authKey.length() != MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN) m_authKey.resize(MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN);
+        strcpy(auth.key, m_authKey.toStdString().c_str());
+        mavlink_msg_auth_key_encode(getSystemId(), getComponentId(), &msg, &auth);
+        sendMessage(msg);
+    }
 }
 
 /** @param enabled true to enable heartbeats emission at heartbeatRate, false to disable */
@@ -433,6 +451,17 @@ void MAVLinkProtocol::enableMultiplexing(bool enabled)
 
     m_multiplexingEnabled = enabled;
     if (changed) emit multiplexingChanged(m_multiplexingEnabled);
+}
+
+void MAVLinkProtocol::enableAuth(bool enable)
+{
+    bool changed = false;
+    m_authEnabled = enable;
+    if (m_authEnabled != enable)
+    {
+        changed = true;
+    }
+    if (changed) emit authChanged(m_authEnabled);
 }
 
 void MAVLinkProtocol::enableParamGuard(bool enabled)
