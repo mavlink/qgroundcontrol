@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UDPLink.h"
 #include "LinkManager.h"
 #include "QGC.h"
+#include <QHostInfo>
 //#include <netinet/in.h>
 
 UDPLink::UDPLink(QHostAddress host, quint16 port)
@@ -43,10 +44,6 @@ UDPLink::UDPLink(QHostAddress host, quint16 port)
     this->host = host;
     this->port = port;
     this->connectState = false;
-    this->hosts = new QList<QHostAddress>();
-    //this->ports = new QMap<QHostAddress, quint16>();
-    this->ports = new QList<quint16>();
-
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
     this->name = tr("UDP Link (port:%1)").arg(14550);
@@ -74,8 +71,6 @@ void UDPLink::run()
 void UDPLink::setAddress(QString address)
 {
     Q_UNUSED(address);
-    // FIXME TODO Implement address
-    //socket->setLocalAddress(QHostAddress(address));
 }
 
 void UDPLink::setPort(int port)
@@ -90,19 +85,60 @@ void UDPLink::setPort(int port)
  */
 void UDPLink::addHost(const QString& host)
 {
+    qDebug() << "UDP:" << "ADDING HOST:" << host;
     if (host.contains(":"))
     {
+        qDebug() << "HOST: " << host.split(":").first();
+        QHostInfo info = QHostInfo::fromName(host.split(":").first());
         // Add host
-        hosts->append(QHostAddress(host.split(":").first()));
+        QList<QHostAddress> hostAddresses = info.addresses();
+        QHostAddress address;
+        for (int i = 0; i < hostAddresses.size(); i++)
+        {
+            // Exclude loopback IPv4 and all IPv6 addresses
+            if (!hostAddresses.at(i).toString().contains(":"))
+            {
+                address = hostAddresses.at(i);
+            }
+        }
+        hosts.append(address);
+        qDebug() << "Address:" << address.toString();
         // Set port according to user input
-        ports->append(host.split(":").last().toInt());
+        ports.append(host.split(":").last().toInt());
     }
     else
     {
+        QHostInfo info = QHostInfo::fromName(host);
         // Add host
-        hosts->append(QHostAddress(host));
+        hosts.append(info.addresses().first());
         // Set port according to default (this port)
-        ports->append(port);
+        ports.append(port);
+    }
+}
+
+void UDPLink::removeHost(const QString& hostname)
+{
+    QString host = hostname;
+    if (host.contains(":")) host = host.split(":").first();
+    host = host.trimmed();
+    QHostInfo info = QHostInfo::fromName(host);
+    QHostAddress address;
+    QList<QHostAddress> hostAddresses = info.addresses();
+    for (int i = 0; i < hostAddresses.size(); i++)
+    {
+        // Exclude loopback IPv4 and all IPv6 addresses
+        if (!hostAddresses.at(i).toString().contains(":"))
+        {
+            address = hostAddresses.at(i);
+        }
+    }
+    for (int i = 0; i < hosts.count(); ++i)
+    {
+        if (hosts.at(i) == address)
+        {
+            hosts.removeAt(i);
+            ports.removeAt(i);
+        }
     }
 }
 
@@ -113,11 +149,13 @@ void UDPLink::writeBytes(const char* data, qint64 size)
     //QList<QHostAddress>::iterator h;
     // for (h = hosts->begin(); h != hosts->end(); ++h)
 
-    for (int h = 0; h < hosts->size(); h++)
-    {
-        QHostAddress currentHost = hosts->at(h);
-        quint16 currentPort = ports->at(h);
 
+    for (int h = 0; h < hosts.size(); h++)
+    {
+        QHostAddress currentHost = hosts.at(h);
+        quint16 currentPort = ports.at(h);
+
+        qDebug() << "WRITING TO" << currentHost.toIPv4Address() << currentPort;
         for (int i=0; i<size; i++)
         {
             unsigned char v =data[i];
@@ -162,16 +200,16 @@ void UDPLink::readBytes()
 
 
     // Add host to broadcast list if not yet present
-    if (!hosts->contains(sender))
+    if (!hosts.contains(sender))
     {
-        hosts->append(sender);
-        ports->append(senderPort);
+        hosts.append(sender);
+        ports.append(senderPort);
         //        ports->insert(sender, senderPort);
     }
     else
     {
-        int index = hosts->indexOf(sender);
-        ports->replace(index, senderPort);
+        int index = hosts.indexOf(sender);
+        ports.replace(index, senderPort);
     }
 
 }

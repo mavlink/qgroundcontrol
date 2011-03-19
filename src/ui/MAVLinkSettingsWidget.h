@@ -20,6 +20,12 @@ public slots:
     void updateLogfileName(const QString& fileName);
     /** @brief Start the file select dialog for the log file */
     void chooseLogfileName();
+    /** @brief Enable DroneOS forwarding */
+    void enableDroneOS(bool enable);
+
+    void setDroneOSKey(QString key);
+
+    void setDroneOSHost(QString host);
 
 protected:
     MAVLinkProtocol* protocol;

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>431</width>
-    <height>387</height>
+    <height>530</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -286,6 +286,66 @@
      <property name="singleStep">
       <number>10</number>
      </property>
+    </widget>
+   </item>
+   <item row="16" column="0" colspan="3">
+    <widget class="Line" name="line">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="midLineWidth">
+      <number>0</number>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="17" column="0" colspan="3">
+    <widget class="QCheckBox" name="droneOSCheckBox">
+     <property name="text">
+      <string>Forward MAVLink packets of all links to http://droneos.com</string>
+     </property>
+    </widget>
+   </item>
+   <item row="18" column="0">
+    <spacer name="horizontalSpacer_4">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>8</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="18" column="1" colspan="2">
+    <widget class="QLineEdit" name="droneOSLineEdit">
+     <property name="text">
+      <string>Enter your DroneOS API Token/Key</string>
+     </property>
+     <property name="maxLength">
+      <number>32</number>
+     </property>
+    </widget>
+   </item>
+   <item row="19" column="1" colspan="2">
+    <widget class="QComboBox" name="droneOSComboBox">
+     <item>
+      <property name="text">
+       <string>droneos.com:14555</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>localhost:14555</string>
+      </property>
+     </item>
     </widget>
    </item>
   </layout>

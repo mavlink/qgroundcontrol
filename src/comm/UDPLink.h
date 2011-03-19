@@ -63,6 +63,7 @@ public:
     int getParityType();
     int getDataBitsType();
     int getStopBitsType();
+    QList<QHostAddress> getHosts() { return hosts; }
 
     /* Extensive statistics for scientific purposes */
     qint64 getNominalDataRate();
@@ -86,6 +87,8 @@ public slots:
     void setPort(int port);
     /** @brief Add a new host to broadcast messages to */
     void addHost(const QString& host);
+    /** @brief Remove a host from broadcasting messages to */
+    void removeHost(const QString& host);
     //    void readPendingDatagrams();
 
     void readBytes();
@@ -106,9 +109,8 @@ protected:
     int id;
     QUdpSocket* socket;
     bool connectState;
-    QList<QHostAddress>* hosts;
-    //    QMap<QHostAddress, quint16>* ports;
-    QList<quint16>* ports;
+    QList<QHostAddress> hosts;
+    QList<quint16> ports;
 
     quint64 bitsSentTotal;
     quint64 bitsSentCurrent;

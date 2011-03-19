@@ -73,8 +73,12 @@ public:
     bool versionCheckEnabled() const { return m_enable_version_check; }
     /** @brief Get the multiplexing state */
     bool multiplexingEnabled() const { return m_multiplexingEnabled; }
+    /** @brief Get the authentication state */
+    bool getAuthEnabled() { return m_authEnabled; }
     /** @brief Get the protocol version */
     int getVersion() { return MAVLINK_VERSION; }
+    /** @brief Get the auth key */
+    QString getAuthKey() { return m_authKey; }
     /** @brief Get the name of the packet log file */
     QString getLogfileName();
     /** @brief Get state of parameter retransmission */
@@ -130,6 +134,12 @@ public slots:
     /** @brief Enable / disable version check */
     void enableVersionCheck(bool enabled);
 
+    /** @brief Enable / disable authentication */
+    void enableAuth(bool enable);
+
+    /** @brief Set authentication token */
+    void setAuthKey(QString key) { m_authKey = key;}
+
     /** @brief Send an extra heartbeat to all connected units */
     void sendHeartbeat();
 
@@ -142,8 +152,10 @@ protected:
     QTimer* heartbeatTimer;    ///< Timer to emit heartbeats
     int heartbeatRate;         ///< Heartbeat rate, controls the timer interval
     bool m_heartbeatsEnabled;  ///< Enabled/disable heartbeat emission
-    bool m_loggingEnabled;     ///< Enable/disable packet logging
     bool m_multiplexingEnabled; ///< Enable/disable packet multiplexing
+    bool m_authEnabled;        ///< Enable authentication token broadcast
+    QString m_authKey;         ///< Authentication key
+    bool m_loggingEnabled;     ///< Enable/disable packet logging
     QFile* m_logfile;           ///< Logfile
     bool m_enable_version_check; ///< Enable checking of version match of MAV and QGC
     int m_paramRetransmissionTimeout; ///< Timeout for parameter retransmission
@@ -169,6 +181,10 @@ signals:
     void loggingChanged(bool enabled);
     /** @brief Emitted if multiplexing is started / stopped */
     void multiplexingChanged(bool enabled);
+    /** @brief Emitted if authentication support is enabled / disabled */
+    void authKeyChanged(QString key);
+    /** @brief Authentication changed */
+    void authChanged(bool enabled);
     /** @brief Emitted if version check is enabled / disabled */
     void versionCheckChanged(bool enabled);
     /** @brief Emitted if a message from the protocol should reach the user */

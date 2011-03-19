@@ -33,7 +33,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QDesktopServices>
 
 #include "MAVLinkSettingsWidget.h"
+#include "LinkManager.h"
+#include "UDPLink.h"
 #include "ui_MAVLinkSettingsWidget.h"
+#include <QSettings>
 
 MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget *parent) :
     QWidget(parent),
@@ -57,6 +60,12 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
 
     m_ui->actionGuardCheckBox->setChecked(protocol->actionGuardEnabled());
     m_ui->actionRetransmissionSpinBox->setValue(protocol->getActionRetransmissionTimeout());
+
+    // AUTH
+    m_ui->droneOSCheckBox->setChecked(protocol->getAuthEnabled());
+    QSettings settings;
+    m_ui->droneOSComboBox->setCurrentIndex(m_ui->droneOSComboBox->findText(settings.value("DRONEOS_HOST", "droneos.com:14555").toString()));
+    m_ui->droneOSLineEdit->setText(protocol->getAuthKey());
 
     // Connect actions
     // Heartbeat
@@ -88,7 +97,16 @@ MAVLinkSettingsWidget::MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget 
     connect(m_ui->actionGuardCheckBox, SIGNAL(toggled(bool)), protocol, SLOT(enableActionGuard(bool)));
     connect(protocol, SIGNAL(actionRetransmissionTimeoutChanged(int)), m_ui->actionRetransmissionSpinBox, SLOT(setValue(int)));
     connect(m_ui->actionRetransmissionSpinBox, SIGNAL(valueChanged(int)), protocol, SLOT(setActionRetransmissionTimeout(int)));
+    // MAVLink AUTH
+    connect(protocol, SIGNAL(authChanged(bool)), m_ui->droneOSCheckBox, SLOT(setChecked(bool)));
+    connect(m_ui->droneOSCheckBox, SIGNAL(toggled(bool)), this, SLOT(enableDroneOS(bool)));
+    connect(protocol, SIGNAL(authKeyChanged(QString)), m_ui->droneOSLineEdit, SLOT(setText(QString)));
+    connect(m_ui->droneOSLineEdit, SIGNAL(textChanged(QString)), this, SLOT(setDroneOSKey(QString)));
 
+    // Drone OS
+    connect(m_ui->droneOSComboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(setDroneOSHost(QString)));
+    // FIXME Manually trigger this action here, this brings control code to UI = BAD!
+    setDroneOSHost(m_ui->droneOSComboBox->currentText());
 
     // Update values
     m_ui->versionLabel->setText(tr("MAVLINK_VERSION: %1").arg(protocol->getVersion()));
@@ -164,6 +182,59 @@ void MAVLinkSettingsWidget::chooseLogfileName()
         updateLogfileName(fileName);
         protocol->setLogfileName(fileName);
     }
+}
+
+void MAVLinkSettingsWidget::enableDroneOS(bool enable)
+{
+    // Get current selected host and port
+    QString hostString = m_ui->droneOSComboBox->currentText();
+    QString host = hostString.split(":").first();
+
+    // Delete from all lists first
+    UDPLink* firstUdp = NULL;
+    QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(protocol);
+    foreach (LinkInterface* link, links)
+    {
+        UDPLink* udp = dynamic_cast<UDPLink*>(link);
+        if (udp)
+        {
+            if (!firstUdp) firstUdp = udp;
+            // Remove current hosts
+            for (int i = 0; i < m_ui->droneOSComboBox->count(); ++i)
+            {
+                QString oldHostString = m_ui->droneOSComboBox->itemText(i);
+                oldHostString = hostString.split(":").first();
+                udp->removeHost(oldHostString);
+            }
+        }
+    }
+
+    // Re-add if enabled
+    if (enable)
+    {
+        if (firstUdp)
+        {
+            firstUdp->addHost(hostString);
+        }
+        // Set key
+        protocol->setAuthKey(m_ui->droneOSLineEdit->text().trimmed());
+        QSettings settings;
+        settings.setValue("DRONEOS_HOST", m_ui->droneOSComboBox->currentText());
+        settings.sync();
+    }
+    protocol->enableAuth(enable);
+}
+
+void MAVLinkSettingsWidget::setDroneOSKey(QString key)
+{
+    Q_UNUSED(key);
+    enableDroneOS(m_ui->droneOSCheckBox->isChecked());
+}
+
+void MAVLinkSettingsWidget::setDroneOSHost(QString host)
+{
+    Q_UNUSED(host);
+    enableDroneOS(m_ui->droneOSCheckBox->isChecked());
 }
 
 MAVLinkSettingsWidget::~MAVLinkSettingsWidget()
