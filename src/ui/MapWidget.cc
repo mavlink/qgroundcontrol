@@ -93,6 +93,8 @@ void MapWidget::init()
         geomLayer = new qmapcontrol::GeometryLayer("Waypoints", mapadapter);
         mc->addLayer(geomLayer);
 
+        homePosition = new qmapcontrol::GeometryLayer("Station", mapadapter);
+        mc->addLayer(homePosition);
 
 
         //
@@ -111,6 +113,16 @@ void MapWidget::init()
         lastLat = settings.value("LAST_LATITUDE", lastLat).toDouble();
         lastLon = settings.value("LAST_LONGITUDE", lastLon).toDouble();
         lastZoom = settings.value("LAST_ZOOM", lastZoom).toInt();
+        settings.endGroup();
+
+        index = 0;
+        settings.beginGroup("QGC_MAPINDEX");
+        index = settings.value("MAP_INDEX", index).toInt();
+        settings.endGroup();
+
+        settings.beginGroup("QGC_HOMEPOSITION");
+        homeCoordinate.setY(settings.value("HOME_LATITUDE", homeCoordinate.y()).toDouble());
+        homeCoordinate.setX(settings.value("HOME_LONGITUDE", homeCoordinate.x()).toDouble());
         settings.endGroup();
 
         // SET INITIAL POSITION AND ZOOM
@@ -137,6 +149,14 @@ void MapWidget::init()
         googleSatAction->setChecked(true);
         connect(mapproviderGroup, SIGNAL(triggered(QAction*)),
                 this, SLOT(mapproviderSelected(QAction*)));
+
+
+        //mapSettings.beginGroup("Map_Widget");
+        //QAction *act = new QAction(mapSettings.value("QAction").toString(), this);
+        //mapproviderSelected(act);
+        //mapSettings.endGroup();
+
+
 
         // Overlay seems currently broken
         //    yahooActionOverlay = new QAction(tr("Yahoo: street overlay"), this);
@@ -183,11 +203,17 @@ void MapWidget::init()
         goToButton->setToolTip(tr("Enter a latitude/longitude position to move the map to"));
         goToButton->setStatusTip(tr("Enter a latitude/longitude position to move the map to"));
 
+        setHome = new QPushButton(QIcon(":/images/actions/go-home.svg"), "", this);
+        setHome->setStyleSheet(buttonStyle);
+        setHome->setToolTip(tr("Set home"));
+        setHome->setStatusTip(tr("Set home"));
+
         zoomin->setMaximumWidth(30);
         zoomout->setMaximumWidth(30);
         createPath->setMaximumWidth(30);
         //    clearTracking->setMaximumWidth(30);
         followgps->setMaximumWidth(30);
+        setHome->setMaximumWidth(30);
         goToButton->setMaximumWidth(30);
 
         // Set checkable buttons
@@ -195,6 +221,7 @@ void MapWidget::init()
         //       create a style and the slots to change the background so it is easier to distinguish
         followgps->setCheckable(true);
         createPath->setCheckable(true);
+        setHome->setCheckable(true);
 
         // add buttons to control the map (zoom, GPS tracking and WP capture)
         QGridLayout* innerlayout = new QGridLayout(mc);
@@ -204,6 +231,7 @@ void MapWidget::init()
         innerlayout->addWidget(zoomout, 1, 0);
         innerlayout->addWidget(followgps, 2, 0);
         innerlayout->addWidget(createPath, 3, 0);
+        innerlayout->addWidget(setHome, 4, 0);
         //innerlayout->addWidget(clearTracking, 4, 0);
         // Add spacers to compress buttons on the top left
         innerlayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Expanding), 5, 0);
@@ -219,17 +247,6 @@ void MapWidget::init()
         pointPen->setWidth(3);
         waypointPath = new qmapcontrol::LineString (wps, "Waypoint path", pointPen);
         mc->layer("Waypoints")->addGeometry(waypointPath);
-
-        //Camera Control
-        // CAMERA INDICATOR LAYER
-        // create a layer with the mapadapter and type GeometryLayer (for camera indicator)
-        camLayer = new qmapcontrol::GeometryLayer("Camera", mapadapter);
-        mc->addLayer(camLayer);
-
-        //camLine = new qmapcontrol::LineString(camPoints,"Camera Eje", camBorderPen);
-
-        drawCamBorder = false;
-        radioCamera = 10;
 
         // Done set state
         initialized = true;
@@ -262,6 +279,12 @@ void MapWidget::init()
         connect(createPath, SIGNAL(clicked(bool)),
                 this, SLOT(createPathButtonClicked(bool)));
 
+        connect(setHome, SIGNAL(clicked(bool)), this, SLOT(createHomePositionClick(bool)));
+
+        connect(mc, SIGNAL(mouseEventCoordinate(const QMouseEvent*,QPointF)), this,
+                SLOT(createHomePosition(const QMouseEvent*,QPointF)));
+        //connect(setHome, SIGNAL(clicked(bool)), this, SLOT(createHomePosition(bool)));
+
 
         connect(geomLayer, SIGNAL(geometryClicked(Geometry*,QPoint)),
                 this, SLOT(captureGeometryClick(Geometry*, QPoint)));
@@ -272,7 +295,41 @@ void MapWidget::init()
         connect(geomLayer, SIGNAL(geometryEndDrag(Geometry*, QPointF)),
                 this, SLOT(captureGeometryEndDrag(Geometry*, QPointF)));
 
+        connect(homePosition, SIGNAL(geometryClicked(Geometry*,QPoint)),
+                this, SLOT(captureGeometryClick(Geometry*, QPoint)));
+
+        connect(homePosition, SIGNAL(geometryDragged(Geometry*, QPointF)),
+                this, SLOT(captureGeometryDragHome(Geometry*, QPointF)));
+
+        connect(homePosition, SIGNAL(geometryEndDrag(Geometry*, QPointF)),
+                this, SLOT(captureGeometryEndDrag(Geometry*, QPointF)));
+
+        this->loadSettingsMap(index);
+        this->createHomePosition(homeCoordinate);
+
         qDebug() << "CHECK END";
+    }
+}
+
+void MapWidget::loadSettingsMap(int8_t index)
+{
+    switch(index)
+    {
+    case 0:
+        mapproviderSelected(osmAction);
+        break;
+    case 1:
+        mapproviderSelected(yahooActionMap);
+        break;
+    case 2:
+        mapproviderSelected(yahooActionSatellite);
+        break;
+    case 3:
+        mapproviderSelected(googleActionMap);
+        break;
+    case 4:
+        mapproviderSelected(googleSatAction);
+        break;
     }
 }
 
@@ -316,6 +373,8 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::OSMMapAdapter();
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
+            index = 0;
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -332,6 +391,8 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::YahooMapAdapter();
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
+            index = 1;
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -348,6 +409,8 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::YahooMapAdapter("us.maps3.yimg.com", "/aerial.maps.yimg.com/png?v=1.7&t=a&s=256&x=%2&y=%3&z=%1");
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
+            index = 2;
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -361,6 +424,8 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::GoogleMapAdapter();
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
+            index = 3;
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -375,6 +440,8 @@ void MapWidget::mapproviderSelected(QAction* action)
             mapadapter = new qmapcontrol::GoogleSatMapAdapter();
             l->setMapAdapter(mapadapter);
             geomLayer->setMapAdapter(mapadapter);
+            homePosition->setMapAdapter(mapadapter);
+            index = 4;
 
             if (isVisible()) mc->updateRequestNew();
             mc->setZoom(zoom);
@@ -430,7 +497,6 @@ void MapWidget::createPathButtonClicked(bool checked)
  * @param coordinate The coordinate in which it occured the mouse event
  * @note  This slot is connected to the mouseEventCoordinate of the QMapControl object
  */
-
 void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordinate)
 {
     if (QEvent::MouseButtonRelease == event->type() && createPath->isChecked())
@@ -468,7 +534,6 @@ void MapWidget::captureMapClick(const QMouseEvent* event, const QPointF coordina
             // Refresh the screen
             if (isVisible()) mc->updateRequest(tempPoint->boundingBox().toRect());
         }
-
         // emit signal mouse was clicked
         //emit captureMapCoordinateClick(coordinate);
     }
@@ -692,6 +757,38 @@ void MapWidget::captureGeometryEndDrag(Geometry* geom, QPointF coordinate)
         mc->setMouseMode(qmapcontrol::MapControl::Panning);
     }
 
+    if (!setHome->isChecked())
+    {
+        mc->setMouseMode(qmapcontrol::MapControl::Panning);
+
+        if(mav)
+        {
+            // Update homePosition
+            UASManager::instance()->setHomePosition(
+                                static_cast<double>(homeCoordinate.y()),
+                                static_cast<double>(homeCoordinate.x()), 0);
+        }
+    }
+
+}
+
+void MapWidget::captureGeometryDragHome(Geometry *geom, QPointF coordinate)
+{
+    if (isVisible()) mc->updateRequest(geom->boundingBox().toRect());
+
+    Waypoint2DIcon* point2Find = dynamic_cast <Waypoint2DIcon*> (geom);
+
+    if (point2Find)// && wps.count() > index)
+    {
+        // Update visual
+        point2Find->setCoordinate(coordinate);
+        homeCoordinate.setX(coordinate.x());
+        homeCoordinate.setY(coordinate.y());
+
+        qmapcontrol::Point* tempPoint = new qmapcontrol::Point(homeCoordinate.x(), homeCoordinate.y(),"g");
+
+        if (isVisible()) mc->updateRequest(tempPoint->boundingBox().toRect());
+    }
 }
 
 MapWidget::~MapWidget()
@@ -699,6 +796,7 @@ MapWidget::~MapWidget()
     delete mc;
     delete m_ui;
 }
+
 /**
  *
  * @param uas the UAS/MAV to monitor/display with the HUD
@@ -995,7 +1093,7 @@ void MapWidget::wheelEvent(QWheelEvent *event)
         detailZoom = qAbs(qMin(0, mc->currentZoom()-newZoom));
 
         // visual field of camera
-        updateCameraPosition(20*newZoom,0,"no");
+        //updateCameraPosition(20*newZoom,0,"no");
     }
 }
 
@@ -1062,7 +1160,19 @@ void MapWidget::hideEvent(QHideEvent* event)
         settings.setValue("LAST_LONGITUDE", currentPos.x());
         settings.setValue("LAST_ZOOM", mc->currentZoom());
         settings.endGroup();
+
+        settings.beginGroup("QGC_MAPINDEX");
+        settings.setValue("MAP_INDEX", index);
+        settings.endGroup();
+
+        settings.beginGroup("QGC_HOMEPOSITION");
+        settings.setValue("HOME_LATITUDE", homeCoordinate.y());
+        settings.setValue("HOME_LONGITUDE", homeCoordinate.x());
+        settings.endGroup();
+
         settings.sync();
+
+
     }
 }
 
@@ -1131,72 +1241,55 @@ void MapWidget::clearPath(int uas)
     }
 }
 
-void MapWidget::updateCameraPosition(double radio, double bearing, QString dir)
+void MapWidget::createHomePosition(const QMouseEvent *event, const QPointF coordinate)
 {
-    Q_UNUSED(dir);
-    Q_UNUSED(bearing);
-    if (mc)
+    if (QEvent::MouseButtonRelease == event->type() && setHome->isChecked())
     {
-        // FIXME Mariano
-        //camPoints.clear();
-        QPointF currentPos = mc->currentCoordinate();
-        //    QPointF actualPos = getPointxBearing_Range(currentPos.y(),currentPos.x(),bearing,distance);
-
-        //    qmapcontrol::Point* tempPoint1 = new qmapcontrol::Point(currentPos.x(), currentPos.y(),"inicial",qmapcontrol::Point::Middle);
-        //    qmapcontrol::Point* tempPoint2 = new qmapcontrol::Point(actualPos.x(), actualPos.y(),"final",qmapcontrol::Point::Middle);
-
-        //    camPoints.append(tempPoint1);
-        //    camPoints.append(tempPoint2);
-
-        //    camLine->setPoints(camPoints);
-
-        QPen* camBorderPen = new QPen(QColor(255,0,0));
-        camBorderPen->setWidth(2);
-
-        //radio = mc->currentZoom()
-
-        if(drawCamBorder)
-        {
-            //clear camera borders
-            mc->layer("Camera")->clearGeometries();
-
-            //create a camera borders
-            qmapcontrol::CirclePoint* camBorder = new qmapcontrol::CirclePoint(currentPos.x(), currentPos.y(), radio, "camBorder", qmapcontrol::Point::Middle, camBorderPen);
-
-            //camBorder->setCoordinate(currentPos);
-
-            mc->layer("Camera")->addGeometry(camBorder);
-            // mc->layer("Camera")->addGeometry(camLine);
-            if (isVisible()) mc->updateRequestNew();
-
-        }
-        else
-        {
-            //clear camera borders
-            mc->layer("Camera")->clearGeometries();
-            if (isVisible()) mc->updateRequestNew();
-
-        }
+        this->createHomePosition(coordinate);
     }
 }
 
-void MapWidget::drawBorderCamAtMap(bool status)
+void MapWidget::createHomePosition(const QPointF coordinate)
 {
-    drawCamBorder = status;
-    updateCameraPosition(20,0,"no");
+    homeCoordinate= coordinate;
+    Waypoint2DIcon* tempCirclePoint;
 
+    double latitude = homeCoordinate.y();
+    double longitude = homeCoordinate.x();
+
+    tempCirclePoint = new Waypoint2DIcon(
+             longitude,
+             latitude,
+             20, "g", qmapcontrol::Point::Middle);
+
+    QPen* pencil = new QPen(Qt::blue);
+    tempCirclePoint->setPen(pencil);
+
+    mc->layer("Station")->clearGeometries();
+    mc->layer("Station")->addGeometry(tempCirclePoint);
+
+    qmapcontrol::Point* tempPoint = new qmapcontrol::Point(latitude, longitude,"g");
+
+    if (isVisible())
+    {
+        mc->updateRequest(tempPoint->boundingBox().toRect());
+    }
 }
 
-QPointF MapWidget::getPointxBearing_Range(double lat1, double lon1, double bearing, double distance)
+void MapWidget::createHomePositionClick(bool click)
 {
-    QPointF temp;
+    Q_UNUSED(click);
 
-    double rad = M_PI/180;
+    if (!setHome->isChecked())
+    {
+        if(mav)
+        {
+            UASManager::instance()->setHomePosition(
+                    static_cast<double>(homeCoordinate.y()),
+                    static_cast<double>(homeCoordinate.x()), 0);
 
-    bearing = bearing*rad;
-    temp.setX((lon1 + ((distance/60) * (sin(bearing)))));
-    temp.setY((lat1 + ((distance/60) * (cos(bearing)))));
 
-    return temp;
+            //qDebug()<<"Set home position "<<homeCoordinate.y()<<" "<<homeCoordinate.x();
+        }
+    }
 }
-

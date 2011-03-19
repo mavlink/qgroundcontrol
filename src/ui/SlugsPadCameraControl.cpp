@@ -1,22 +1,15 @@
 #include "SlugsPadCameraControl.h"
 #include "ui_SlugsPadCameraControl.h"
-#include <QMouseEvent>
-#include <QDebug>
-#include <qmath.h>
-#include <QPainter>
 
 SlugsPadCameraControl::SlugsPadCameraControl(QWidget *parent) :
-   QWidget(parent), //QGraphicsView(parent),
+   QWidget(parent),
     ui(new Ui::SlugsPadCameraControl),
      dragging(0)
 {
     ui->setupUi(this);
     x1= 0;
     y1 = 0;
-    bearingPad = 0;
-    distancePad = 0;
-    directionPad = "no";
-
+    motion = NONE;
 }
 
 SlugsPadCameraControl::~SlugsPadCameraControl()
@@ -24,199 +17,126 @@ SlugsPadCameraControl::~SlugsPadCameraControl()
     delete ui;
 }
 
+void SlugsPadCameraControl::activeUasSet(UASInterface *uas)
+{
+    if(uas)
+    {
+         this->activeUAS= uas;
+    }
+}
+
 void SlugsPadCameraControl::mouseMoveEvent(QMouseEvent *event)
 {
-  Q_UNUSED(event);
-    //emit mouseMoveCoord(event->x(),event->y());
+    Q_UNUSED(event);
 
     if(dragging)
     {
-
-      // getDeltaPositionPad(event->x(), event->y());
-
+        getDeltaPositionPad(event->x(), event->y());
     }
-
-
 }
 
 void SlugsPadCameraControl::mousePressEvent(QMouseEvent *event)
 {
-    //emit mousePressCoord(event->x(),event->y());
-    dragging = true;
-    x1 = event->x();
-    y1 = event->y();
-
+    if(!dragging)
+    {
+        dragging = true;
+        x1 = event->x();
+        y1 = event->y();
+    }
 }
 
 void SlugsPadCameraControl::mouseReleaseEvent(QMouseEvent *event)
 {
-     dragging = false;
-    //emit mouseReleaseCoord(event->x(),event->y());
-    getDeltaPositionPad(event->x(), event->y());
+    if(dragging)
+    {
+        dragging = false;
+        getDeltaPositionPad(event->x(), event->y());
 
-     xFin = event->x();
-     yFin = event->y();
-
-
-}
-
-void SlugsPadCameraControl::paintEvent(QPaintEvent *pe)
-{
-    Q_UNUSED(pe);
-    QPainter painter(this);
-    painter.setPen(Qt::blue);
-    painter.setFont(QFont("Arial", 30));
-
-//    QRectF rectangle(tL.x(), tL.y(), ui->padCamContro_frame->width(), ui->padCamContro_frame->height());
-//     int startAngle = 30 * 16;
-//     int spanAngle = 120 * 16;
-
-    painter.drawLine(QPoint(ui->frame->width()/2,ui->frame->geometry().topLeft().y()),
-                     QPoint(ui->frame->width()/2,ui->frame->geometry().bottomRight().y()));
-
-    painter.drawLine(QPoint(ui->frame->geometry().topLeft().x(),ui->frame->height()/2),
-                     QPoint(ui->frame->geometry().bottomRight().x(),ui->frame->height()/2));
-
-    painter.setPen(Qt::white);
-
-    //QPointF coordTemp = getPointBy_BearingDistance(ui->frame->width()/2,ui->frame->height()/2,bearingPad,distancePad);
-
-    painter.drawLine(QPoint(ui->frame->width()/2,ui->frame->height()/2),
-                     QPoint(xFin,yFin));
-
-
-   // painter.drawLine(QPoint());
-    //painter.drawLines(padLines);
-
-
-    // painter.drawPie(rectangle, startAngle, spanAngle);
-
-    //painter.drawText(rect(), Qt::AlignCenter, "Qt");
+        xFin = event->x();
+        yFin = event->y();
+    }
 }
 
 void SlugsPadCameraControl::getDeltaPositionPad(int x2, int y2)
 {
-
-    QString dir = "nd";
     QPointF localMeasures = ObtenerMarcacionDistanciaPixel(y1,x1,y2,x2);
 
-    double bearing = localMeasures.x();
-    double dist = getDistPixel(y1,x1,y2,x2);
-
-    // this only convert real bearing to frame widget bearing
-    bearing = bearing +90;
-    if(bearing>= 360) bearing = bearing - 360;
-
-
-
-    if(((bearing > 330)&&(bearing < 360)) || ((bearing >= 0)&&(bearing <= 30)))
+    if(localMeasures.y()>10)
     {
-         emit dirCursorText("up");
-        //bearing = 315;
-        dir = "up";
-    }
-    else
-    {
-        if((bearing > 30)&&(bearing <= 60) )
+        QString dir = "nd";
+
+        double bearing = localMeasures.x();
+
+        bearing = bearing +90;
+
+        if(bearing>= 360)
         {
-            emit dirCursorText("right up");
-            //bearing = 315;
-            dir = "right up";
-        }
-        else
-        {
-            if((bearing > 60)&&(bearing <= 105) )
-            {
-               emit dirCursorText("right");
-                //bearing = 315;
-                dir = "right";
-            }
-            else
-            {
-                if((bearing > 105)&&(bearing <= 150) )
-                {
-                   emit dirCursorText("right down");
-                    //bearing = 315;
-                    dir = "right down";
-                }
-                else
-                {
-                    if((bearing > 150)&&(bearing <= 195) )
-                    {
-                       emit dirCursorText("down");
-                        //bearing = 315;
-                        dir = "down";
-                    }
-                    else
-                    {
-                        if((bearing > 195)&&(bearing <= 240) )
-                        {
-                            emit dirCursorText("left down");
-                            //bearing = 315;
-                            dir = "left down";
-                        }
-                        else
-                        {
-                            if((bearing > 240)&&(bearing <= 300) )
-                            {
-                               emit dirCursorText("left");
-                                //bearing = 315;
-                                dir = "left";
-                            }
-                            else
-                            {
-                                if((bearing > 300)&&(bearing <= 330) )
-                                {
-                                    emit dirCursorText("left up");
-                                    //bearing = 315;
-                                    dir = "left up";
-                                }
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
+            bearing = bearing - 360;
         }
 
+        if(bearing >337.5 || bearing <=22.5)
+        {
+            motion= UP;
+            movePad = QPoint(0, 1);
+            dir = "UP";
+        }
+        else if(bearing >22.5 && bearing <=67.5)
+        {
+            motion= RIGHT_UP;
+            movePad = QPoint(1, 1);
+            dir = "RIGHT UP";
+        }
+        else if(bearing >67.5 && bearing <=112.5)
+        {
+            motion= RIGHT;
+            movePad = QPoint(1, 0);
+            dir = "RIGHT";
+        }
+        else if(bearing >112.5 && bearing <= 157.5)
+        {
+            motion= RIGHT_DOWN;
+            movePad = QPoint(1, -1);
+            dir = "RIGHT DOWN";
+        }
+        else if(bearing >157.5 && bearing <=202.5)
+        {
+            motion= DOWN;
+            movePad = QPoint(0, -1);
+            dir = "DOWN";
+        }
+        else if(bearing >202.5 && bearing <=247.5)
+        {
+            motion= LEFT_DOWN;
+            movePad = QPoint(-1, -1);
+            dir = "LEFT DOWN";
+        }
+        else if(bearing >247.5 && bearing <=292.5)
+        {
+            motion= LEFT;
+            movePad = QPoint(-1, 0);
+            dir = "LEFT";
+        }
+        else if(bearing >292.5 && bearing <=337.5)
+        {
+            motion= LEFT_UP;
+            movePad = QPoint(-1, 1);
+            dir = "LEFT UP";
+        }
+
+        emit changeMotionCamera(motion);
+
+        ui->lbPixel->setText(QString::number(localMeasures.y()));
+        ui->lbDirection->setText(dir);
+
+        //qDebug()<<dir;
+        update();
     }
-
-
-    bearingPad = bearing;
-    distancePad = dist;
-    directionPad = dir;
-    emit changeCursorPosition(bearing, dist, dir);
-
-    update();
-
-
-
 }
-
-double SlugsPadCameraControl::getDistPixel(int x1, int y1, int x2, int y2)
-{
-    double cateto_opuesto,cateto_adyacente;
-     //latitud y longitud del primer punto
-
-
-    cateto_opuesto = abs((x1-x2)); //diferencia de latitudes entre PCR1 y PCR2
-    cateto_adyacente = abs((y1-y2));//diferencia de longitudes entre PCR1 y PCR2
-
-    return  sqrt(pow(cateto_opuesto,2) + pow(cateto_adyacente,2));
-
-      // distancia = (float) hipotenusa;
-}
-
 
 QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, double lat1,
                                                               double lon2, double lat2)
 {
-    double cateto_opuesto,cateto_adyacente, hipotenusa, distancia;
+    double cateto_opuesto,cateto_adyacente, hipotenusa;//, distancia;
     double marcacion = 0.0;
 
     //latitude and longitude first point
@@ -230,7 +150,7 @@ QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, doubl
     cateto_adyacente = abs((lon1-lon2));
 
     hipotenusa = sqrt(pow(cateto_opuesto,2) + pow(cateto_adyacente,2));
-    distancia = hipotenusa*60.0;
+    //distancia = hipotenusa*60.0;
 
 
     if ((lat1 < lat2) && (lon1 > lon2)) //primer cuadrante
@@ -252,24 +172,30 @@ QPointF SlugsPadCameraControl::ObtenerMarcacionDistanciaPixel(double lon1, doubl
     else if((lat1 == lat2) && (lon1 == lon2)) //0
         marcacion = 0.0;
 
-
-
-    return QPointF(marcacion,distancia);
-
+    return QPointF(marcacion,hipotenusa);// distancia);
 }
 
-
-
-QPointF SlugsPadCameraControl::getPointBy_BearingDistance(double lat1, double lon1, double rumbo, double distancia)
+void SlugsPadCameraControl::keyPressEvent(QKeyEvent *event)
 {
-    double lon2 = 0;
-    double lat2 = 0;
-    double rad= M_PI/180;
+    switch (event->key())
+    {
+        case Qt::Key_Left:
+            emit changeMotionCamera(LEFT);
+        break;
 
-    rumbo = rumbo*rad;
-    lon2=(lon1 + ((distancia/60) * (sin(rumbo))));
-    lat2=(lat1 + ((distancia/60) * (cos(rumbo))));
+        case Qt::Key_Right:
+            emit changeMotionCamera(RIGHT);
+        break;
 
-    return QPointF(lon2,lat2);
+        case Qt::Key_Down:
+            emit changeMotionCamera(DOWN);
+        break;
+
+        case Qt::Key_Up:
+            emit changeMotionCamera(UP);
+        break;
+
+        default:
+        QWidget::keyPressEvent(event);
+    }
 }
-

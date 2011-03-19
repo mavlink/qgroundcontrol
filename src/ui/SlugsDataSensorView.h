@@ -166,17 +166,17 @@ public slots:
    void  slugsDataLogChanged(int systemId,
                              const mavlink_data_log_t& dataLog);
 
-   /**
-        * @brief Updates the PWM Commands widget - 175
-   */
-   void slugsPWMChanged(int systemId,
-                        const mavlink_pwm_commands_t& pwmCommands);
+//   /**
+//        * @brief Updates the PWM Commands widget - 175
+//   */
+//   void slugsPWMChanged(int systemId,
+//                        const mavlink_servo_output_raw_t& pwmCommands);
 
    /**
         * @brief Updates the filtered sensor measurements widget - 178
    */
    void slugsFilteredDataChanged(int systemId,
-                                 const mavlink_filtered_data_t& filteredData);
+                                 const mavlink_scaled_imu_t& filteredData);
 
 
    /**
@@ -186,8 +186,11 @@ public slots:
                                  const mavlink_gps_date_time_t& gpsDateTime);
 
 
+    void slugsRCRawChannels(int systemId,
+                            const mavlink_rc_channels_raw_t& gpsDateTime);
 
-
+    void slugsRCServo(int systemId,
+                            const mavlink_servo_output_raw_t& gpsDateTime);
 
 
 #endif // MAVLINK_ENABLED_SLUGS

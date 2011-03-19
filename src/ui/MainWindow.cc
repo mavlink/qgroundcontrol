@@ -393,29 +393,13 @@ void MainWindow::buildCommonWidgets()
         addToCentralWidgetsMenu (protocolWidget, "Mavlink Generator", SLOT(showCentralWidget()),CENTRAL_PROTOCOL);
     }
 
-#ifdef MAVLINK_ENABLED_SLUGS
-    //TODO temporaly debug
-    if (!slugsHilSimWidget)
-    {
-        slugsHilSimWidget = new QDockWidget(tr("Slugs Hil Sim"), this);
-        slugsHilSimWidget->setWidget( new SlugsHilSim(this));
-        addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget(bool)), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
-    }
-
-    //TODO temporaly debug
-    if (!slugsCamControlWidget)
-    {
-        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
-        slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
-        addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget(bool)), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
-    }
-#endif
-
     if (!dataplotWidget)
     {
         dataplotWidget    = new QGCDataPlot2D(this);
         addToCentralWidgetsMenu (dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
     }
+
+
 }
 
 
@@ -615,6 +599,15 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget(bool)), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
     }
 
+#if (defined _MSC_VER) | (defined Q_OS_MAC)
+    if (!gEarthWidget)
+    {
+        gEarthWidget = new QGCGoogleEarthView(this);
+        addToCentralWidgetsMenu(gEarthWidget, tr("Google Earth"), SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
+    }
+
+#endif
+
     if (!slugsDataWidget)
     {
         // Dialog widgets
@@ -624,13 +617,6 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (slugsDataWidget, tr("Telemetry Data"), SLOT(showToolWidget(bool)), MENU_SLUGS_DATA, Qt::RightDockWidgetArea);
     }
 
-    if (!slugsPIDControlWidget)
-    {
-        slugsPIDControlWidget = new QDockWidget(tr("Slugs PID Control"), this);
-        slugsPIDControlWidget->setWidget(new SlugsPIDControl(this));
-        slugsPIDControlWidget->setObjectName("SLUGS_PID_CONTROL_DOCK_WIDGET");
-        addToToolsMenu (slugsPIDControlWidget, tr("PID Configuration"), SLOT(showToolWidget(bool)), MENU_SLUGS_PID, Qt::LeftDockWidgetArea);
-    }
 
     if (!slugsHilSimWidget)
     {
@@ -640,13 +626,29 @@ void MainWindow::buildSlugsWidgets()
         addToToolsMenu (slugsHilSimWidget, tr("HIL Sim Configuration"), SLOT(showToolWidget(bool)), MENU_SLUGS_HIL, Qt::LeftDockWidgetArea);
     }
 
+    if (!controlParameterWidget){
+		controlParameterWidget = new QDockWidget(tr("Control Parameters"), this);
+        controlParameterWidget->setObjectName("UNMANNED_SYSTEM_CONTROL_PARAMETERWIDGET");
+        controlParameterWidget->setWidget( new UASControlParameters(this) );
+        addToToolsMenu (controlParameterWidget, tr("Control Parameters"), SLOT(showToolWidget(bool)), MENU_UAS_CONTROL_PARAM, Qt::LeftDockWidgetArea);
+	}
+
+    if (!parametersDockWidget)
+    {       
+        parametersDockWidget = new QDockWidget(tr("Calibration and Onboard Parameters"), this);
+        parametersDockWidget->setWidget( new ParameterInterface(this) );
+        parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
+        addToToolsMenu (parametersDockWidget, tr("Calibration and Parameters"), SLOT(showToolWidget(bool)), MENU_PARAMETERS, Qt::RightDockWidgetArea);
+    }
+
     if (!slugsCamControlWidget)
     {
-        slugsCamControlWidget = new QDockWidget(tr("Slugs Video Camera Control"), this);
-        slugsCamControlWidget->setWidget(new SlugsVideoCamControl(this));
+        slugsCamControlWidget = new QDockWidget(tr("Camera Control"), this);
+        slugsCamControlWidget->setWidget(new SlugsPadCameraControl(this));
         slugsCamControlWidget->setObjectName("SLUGS_CAM_CONTROL_DOCK_WIDGET");
         addToToolsMenu (slugsCamControlWidget, tr("Camera Control"), SLOT(showToolWidget(bool)), MENU_SLUGS_CAMERA, Qt::BottomDockWidgetArea);
     }
+
 }
 
 
@@ -1013,6 +1015,7 @@ void MainWindow::updateLocationSettings (Qt::DockWidgetArea location)
     }
 }
 
+
 /**
  * Connect the signals and slots of the common window widgets
  */
@@ -1027,6 +1030,8 @@ void MainWindow::connectCommonWidgets()
     if (mapWidget && waypointsDockWidget->widget())
     {
 
+        //
+        connect(waypointsDockWidget->widget(), SIGNAL(changePointList()), mapWidget, SLOT(clearWaypoints()));
     }
 
     //TODO temporaly debug
@@ -1034,6 +1039,8 @@ void MainWindow::connectCommonWidgets()
         connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
                 slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
     }
+
+
 }
 
 void MainWindow::createCustomWidget()
@@ -1049,6 +1056,7 @@ void MainWindow::createCustomWidget()
     QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
     connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
     dock->setWidget(tool);
+
     QAction* showAction = new QAction("Show Unnamed Tool", this);
     showAction->setCheckable(true);
     connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
@@ -1076,7 +1084,15 @@ void MainWindow::connectSlugsWidgets()
                 slugsDataWidget->widget(), SLOT(setActiveUAS(UASInterface*)));
     }
 
+    if (controlParameterWidget && controlParameterWidget->widget()){
+        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+                controlParameterWidget->widget(), SLOT(activeUasSet(UASInterface*)));
+    }
 
+    if(controlDockWidget && controlParameterWidget)
+    {
+       connect(controlDockWidget->widget(), SIGNAL(changedMode(int)), controlParameterWidget->widget(), SLOT(changedMode(int)));
+    }
 }
 
 void MainWindow::arrangeCommonCenterStack()
@@ -1127,6 +1143,10 @@ void MainWindow::arrangeSlugsCenterStack()
 
     if (linechartWidget && (centerStack->indexOf(linechartWidget) == -1)) centerStack->addWidget(linechartWidget);
     if (hudWidget && (centerStack->indexOf(hudWidget) == -1)) centerStack->addWidget(hudWidget);
+
+#if (defined _MSC_VER) | (defined Q_OS_MAC)
+    if (gEarthWidget && (centerStack->indexOf(gEarthWidget) == -1)) centerStack->addWidget(gEarthWidget);
+#endif
 
 }
 
@@ -1706,18 +1726,27 @@ void MainWindow::UASCreated(UASInterface* uas)
                 // Connect Slugs Actions
                 connectSlugsActions();
 
+//                if(slugsDataWidget)
+//                {
+//                    SlugsDataSensorView *mm = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+//                    if(mm)
+//                    {
+//                        mm->addUAS(uas);
+//                    }
+//                }
+
                 // FIXME: This type checking might be redundant
-                //            if (slugsDataWidget) {
-                //              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
-                //              if (dataWidget) {
-                //                SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
-                //                if (mav2) {
-                (dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget()))->addUAS(uas);
-                //                  //loadSlugsView();
-                //                  loadGlobalOperatorView();
-                //                }
-                //              }
-                //            }
+//                //            if (slugsDataWidget) {
+//                //              SlugsDataSensorView* dataWidget = dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget());
+//                //              if (dataWidget) {
+//                //                SlugsMAV* mav2 = dynamic_cast<SlugsMAV*>(uas);
+//                //                if (mav2) {
+//                (dynamic_cast<SlugsDataSensorView*>(slugsDataWidget->widget()))->addUAS(uas);
+//                //                  //loadSlugsView();
+//                //                  loadGlobalOperatorView();
+//                //                }
+//                //              }
+//                //            }
 
             }
             break;
@@ -1930,6 +1959,8 @@ void MainWindow::presentView()
 
     // UAS CONTROL
     showTheWidget(MENU_UAS_CONTROL, currentView);
+
+    showTheWidget(MENU_UAS_CONTROL_PARAM, currentView);
 
     // UAS LIST
     showTheWidget(MENU_UAS_LIST, currentView);

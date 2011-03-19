@@ -244,13 +244,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_sys_status_decode(&message, &state);
 
                 // FIXME
-                //qDebug() << "SYSTEM NAV MODE:" << state.nav_mode;
+                //qDebug() << "1 SYSTEM STATUS:" << state.status;
 
                 QString audiostring = "System " + getUASName();
                 QString stateAudio = "";
                 QString modeAudio = "";
                 bool statechanged = false;
-                bool modechanged = false;
+                bool modechanged = false;         
 
                 if (state.status != this->status)
                 {
@@ -259,6 +259,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     getStatusForCode((int)state.status, uasState, stateDescription);
                     emit statusChanged(this, uasState, stateDescription);
                     emit statusChanged(this->status);
+
                     stateAudio = " changed status to " + uasState;
                 }
 
@@ -285,24 +286,44 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     case (uint8_t)MAV_MODE_MANUAL:
                         mode = "MANUAL MODE";
                         break;
+
+                    #ifdef MAVLINK_ENABLED_SLUGS
+                    case (uint8_t)MAV_MODE_AUTO:
+                        mode = "WAYPOINT MODE";
+                        break;
+                    case (uint8_t)MAV_MODE_GUIDED:
+                        mode = "MID-L CMDS MODE";
+                        break;
+
+                    case (uint8_t)MAV_MODE_TEST1:
+                        mode = "PASST MODE";
+                        break;
+                    case (uint8_t)MAV_MODE_TEST2:
+                        mode = "SEL PT MODE";
+                        break;
+                    #else
                     case (uint8_t)MAV_MODE_AUTO:
                         mode = "AUTO MODE";
                         break;
                     case (uint8_t)MAV_MODE_GUIDED:
                         mode = "GUIDED MODE";
                         break;
-                    case (uint8_t)MAV_MODE_READY:
-                        mode = "READY MODE";
-                        break;
+
                     case (uint8_t)MAV_MODE_TEST1:
                         mode = "TEST1 MODE";
                         break;
                     case (uint8_t)MAV_MODE_TEST2:
                         mode = "TEST2 MODE";
                         break;
+                    #endif
+                    case (uint8_t)MAV_MODE_READY:
+                        mode = "READY MODE";
+                        break;
+
                     case (uint8_t)MAV_MODE_TEST3:
                         mode = "TEST3 MODE";
-                        break;
+                    break;
+
                     case (uint8_t)MAV_MODE_RC_TRAINING:
                         mode = "RC TRAINING MODE";
                         break;
@@ -312,6 +333,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     }
 
                     emit modeChanged(this->getUASID(), mode, "");
+
+                    //qDebug() << "2 SYSTEM MODE:" << mode;
+
                     modeAudio = " is now in " + mode;
                 }
                 currentVoltage = state.vbat/1000.0f;
@@ -338,6 +362,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 // COMMUNICATIONS DROP RATE
                 emit dropRateChanged(this->getUASID(), state.packet_drop/1000.0f);
+
+
+                //add for development
+                //emit remoteControlRSSIChanged(state.packet_drop/1000.0f);
+
+                //float en = state.packet_drop/1000.0f;
+                //emit remoteControlChannelRawChanged(0, en);//MAVLINK_MSG_ID_RC_CHANNELS_RAW
+                //emit remoteControlChannelScaledChanged(0, en/100.0f);//MAVLINK_MSG_ID_RC_CHANNELS_SCALED
+
+
                 //qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;
 
                 // AUDIO
@@ -428,11 +462,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
                 quint64 time = getUnixTime(attitude.usec);
-
                 roll = QGC::limitAngleToPMPIf(attitude.roll);
                 pitch = QGC::limitAngleToPMPIf(attitude.pitch);
                 yaw = QGC::limitAngleToPMPIf(attitude.yaw);
-
                 emit valueChanged(uasId, "roll", "rad", roll, time);
                 emit valueChanged(uasId, "pitch", "rad", pitch, time);
                 emit valueChanged(uasId, "yaw", "rad", yaw, time);
@@ -709,12 +741,24 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_raw_pressure_t pressure;
                 mavlink_msg_raw_pressure_decode(&message, &pressure);
                 quint64 time = this->getUnixTime(pressure.usec);
-                emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
-                emit valueChanged(uasId, "diff pressure 1", "hPa", pressure.press_diff1, time);
-                emit valueChanged(uasId, "diff pressure 2", "hPa", pressure.press_diff2, time);
-                emit valueChanged(uasId, "temperature", "deg C", pressure.temperature/100.0f, time);
+                emit valueChanged(uasId, "abs pressure", "raw", pressure.press_abs, time);
+                emit valueChanged(uasId, "diff pressure 1", "raw", pressure.press_diff1, time);
+                emit valueChanged(uasId, "diff pressure 2", "raw", pressure.press_diff2, time);
+                emit valueChanged(uasId, "temperature", "raw", pressure.temperature, time);
             }
             break;
+
+            case MAVLINK_MSG_ID_SCALED_PRESSURE:
+            {
+                mavlink_scaled_pressure_t pressure;
+                mavlink_msg_scaled_pressure_decode(&message, &pressure);
+                quint64 time = this->getUnixTime(pressure.usec);
+                emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
+                emit valueChanged(uasId, "diff pressure", "hPa", pressure.press_diff, time);
+                emit valueChanged(uasId, "temperature", "C", pressure.temperature/100.0, time);
+            }
+            break;
+
         case MAVLINK_MSG_ID_RC_CHANNELS_RAW:
             {
                 mavlink_rc_channels_raw_t channels;
@@ -1052,6 +1096,7 @@ void UAS::setHomePosition(double lat, double lon, double alt)
     home.latitude = lat*1E7;
     home.longitude = lon*1E7;
     home.altitude = alt*1000;
+    qDebug() << "lat:" << home.latitude << " lon:" << home.longitude;
     mavlink_message_t msg;
     mavlink_msg_gps_set_global_origin_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &home);
     sendMessage(msg);
@@ -1226,11 +1271,15 @@ void UAS::setMode(int mode)
 {
     if ((uint8_t)mode >= MAV_MODE_LOCKED && (uint8_t)mode <= MAV_MODE_RC_TRAINING)
     {
-        this->mode = mode;
+        //this->mode = mode; //no call assignament, update receive message from UAS
         mavlink_message_t msg;
         mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, (uint8_t)mode);
         sendMessage(msg);
         qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << (uint8_t)mode;
+    }
+    else
+    {
+        qDebug() << "uas Mode not assign: " << mode;
     }
 }
 
@@ -1369,10 +1418,16 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         uasState = tr("EMERGENCY");
         stateDescription = tr("EMERGENCY: Land Immediately!");
         break;
+    case MAV_STATE_HILSIM:
+        uasState = tr("HIL SIM");
+        stateDescription = tr("HIL Simulation, Sensors read from SIM");
+        break;
+
     case MAV_STATE_POWEROFF:
         uasState = tr("SHUTDOWN");
         stateDescription = tr("Powering off system.");
         break;
+
     default:
         uasState = tr("UNKNOWN");
         stateDescription = tr("Unknown system state");
@@ -1965,12 +2020,14 @@ void UAS::clearWaypointList()
 
 void UAS::halt()
 {
+
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
     mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_HALT);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);
+
 }
 
 void UAS::go()
@@ -2000,6 +2057,7 @@ void UAS::home()
  */
 void UAS::emergencySTOP()
 {
+
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
     mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_EMCY_LAND);
@@ -2042,6 +2100,29 @@ bool UAS::emergencyKILL()
     return result;
 }
 
+void UAS::startHil(){
+
+    mavlink_message_t msg;
+  // TODO Replace MG System ID with static function call and allow to change ID in GUI
+  mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_START_HILSIM);
+  // Send message twice to increase chance of reception
+  sendMessage(msg);
+  sendMessage(msg);
+
+}
+
+void UAS::stopHil(){
+
+    mavlink_message_t msg;
+  // TODO Replace MG System ID with static function call and allow to change ID in GUI
+  mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_STOP_HILSIM);
+  // Send message twice to increase chance of reception
+  sendMessage(msg);
+  sendMessage(msg);
+
+}
+
+
 void UAS::shutdown()
 {
     bool result = false;
@@ -2049,6 +2130,7 @@ void UAS::shutdown()
     msgBox.setIcon(QMessageBox::Critical);
     msgBox.setText("Shutting down the UAS");
     msgBox.setInformativeText("Do you want to shut down the onboard computer?");
+
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Cancel);
     int ret = msgBox.exec();
@@ -2066,6 +2148,7 @@ void UAS::shutdown()
         // Send message twice to increase chance of reception
         sendMessage(msg);
         sendMessage(msg);
+
         result = true;
     }
 }

@@ -161,7 +161,7 @@ void UDPLink::writeBytes(const char* data, qint64 size)
             unsigned char v =data[i];
             qDebug("%02x ", v);
         }
-        qDebug("\n");
+        qDebug() <<"Sent to " << currentHost.toString() << ":" << currentPort;
 
         socket->writeDatagram(data, size, currentHost, currentPort);
     }

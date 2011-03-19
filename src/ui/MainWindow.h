@@ -70,12 +70,10 @@ This file is part of the QGROUNDCONTROL project
 #include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
 
-#include "SlugsPIDControl.h"
-
 #include "SlugsHilSim.h"
 
-#include "SlugsVideoCamControl.h"
-
+#include "SlugsPadCameraControl.h"
+#include "UASControlParameters.h"
 
 /**
  * @brief Main Application Window
@@ -121,6 +119,7 @@ public slots:
     void configure();
     /** @brief Set the currently controlled UAS */
     void setActiveUAS(UASInterface* uas);
+
     /** @brief Add a new UAS */
     void UASCreated(UASInterface* uas);
     /** @brief Update system specs of a UAS */
@@ -211,6 +210,7 @@ protected:
     // FIXME: DO NOT PUT CUSTOM VALUES IN THIS ENUM since it is iterated over
     // this will be fixed in a future release.
     typedef enum _TOOLS_WIDGET_NAMES {
+      MENU_UAS_CONTROL_PARAM,
       MENU_UAS_CONTROL,
       MENU_UAS_INFO,
       MENU_CAMERA,
@@ -380,6 +380,7 @@ protected:
 #endif
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
+    QPointer<QDockWidget> controlParameterWidget;
     QPointer<QDockWidget> infoDockWidget;
     QPointer<QDockWidget> cameraDockWidget;
     QPointer<QDockWidget> listDockWidget;
@@ -400,7 +401,6 @@ protected:
     QPointer<QDockWidget> rcViewDockWidget;
     QPointer<QDockWidget> hudDockWidget;
     QPointer<QDockWidget> slugsDataWidget;
-    QPointer<QDockWidget> slugsPIDControlWidget;
     QPointer<QDockWidget> slugsHilSimWidget;
     QPointer<QDockWidget> slugsCamControlWidget;
 
