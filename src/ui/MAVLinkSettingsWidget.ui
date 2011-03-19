@@ -338,7 +338,7 @@
     <widget class="QComboBox" name="droneOSComboBox">
      <item>
       <property name="text">
-       <string>droneos.com:14555</string>
+       <string>mavlink.droneos.com:14555</string>
       </property>
      </item>
      <item>
