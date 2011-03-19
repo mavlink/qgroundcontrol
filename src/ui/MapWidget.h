@@ -40,7 +40,8 @@ This file is part of the QGROUNDCONTROL project
 #include "QPointF"
 
 #include <qmath.h>
-#include <QSettings>
+
+
 
 class QMenu;
 class Waypoint;
@@ -75,8 +76,8 @@ public slots:
     void updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 usec);
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
     void updatePosition(float time, double lat, double lon);
-    //void updateCameraPosition(double distance, double bearing, QString dir);
-    //QPointF getPointxBearing_Range(double lat1, double lon1, double bearing, double distance);
+    void updateCameraPosition(double distance, double bearing, QString dir);
+    QPointF getPointxBearing_Range(double lat1, double lon1, double bearing, double distance);
 
     /** @brief Clear the waypoints overlay layer */
     void clearWaypoints(int uas=0);
@@ -92,7 +93,7 @@ public slots:
     void updateWaypoint(int uas, Waypoint* wp);
     void updateWaypoint(int uas, Waypoint* wp, bool updateView);
 
-    //void drawBorderCamAtMap(bool status);
+    void drawBorderCamAtMap(bool status);
     /** @brief Bring up dialog to go to a specific location */
     void goTo();
 
@@ -117,7 +118,6 @@ protected:
     QPushButton* followgps;
     QPushButton* createPath;
     QPushButton* clearTracking;
-    QPushButton* setHome;
     QLabel* gpsposition;
     QMenu* mapMenu;
     QPushButton* mapButton;
@@ -128,7 +128,9 @@ protected:
     qmapcontrol::Layer* overlay;            ///< Street overlay (foreground)
     qmapcontrol::Layer* tracks;             ///< Layer for UAV tracks
     qmapcontrol::GeometryLayer* geomLayer;  ///< Layer for waypoints
-    qmapcontrol::GeometryLayer* homePosition;       ///< Layer for station control
+
+    //only for experiment
+    qmapcontrol::GeometryLayer* camLayer; ///< Layer for camera indicator
 
     int zoomLevel;
     int detailZoom; ///< Steps zoomed in further than qMapControl allows
@@ -140,6 +142,8 @@ protected:
     QMap<int, qmapcontrol::Point*> uasIcons;
     QMap<int, qmapcontrol::LineString*> uasTrails;
     QMap<int, QPen*> mavPens;
+    //QMap<int, QList<qmapcontrol::Point*> > mavWps;
+    //QMap<int, qmapcontrol::LineString*> waypointPaths;
     UASInterface* mav;
     quint64 lastUpdate;
     bool initialized;
@@ -153,22 +157,19 @@ protected:
     void captureGeometryDrag(Geometry* geom, QPointF coordinate);
     void captureGeometryEndDrag(Geometry* geom, QPointF coordinate);
 
-    void captureGeometryDragHome(Geometry* geom, QPointF coordinate);
-
     void createPathButtonClicked(bool checked);
 
     /** @brief Create the graphic representation of the waypoint */
     void createWaypointGraphAtMap(int id, const QPointF coordinate);
     void mapproviderSelected(QAction* action);
 
-    void createHomePosition(const QMouseEvent* event, const QPointF coordinate);
-    void createHomePosition(const QPointF coordinate);
-    void createHomePositionClick(bool click);
-    void loadSettingsMap(int8_t index);
-
   signals:
+    //void movePoint(QPointF newCoord);
+    //void captureMapCoordinateClick(const QPointF coordinate); //ROCA
+    //void createGlobalWP(bool value, QPointF centerCoordinate);
     void waypointCreated(Waypoint* wp);
     void sendGeometryEndDrag(const QPointF coordinate, const int index);
+
 
 private:
     Ui::MapWidget *m_ui;
@@ -179,8 +180,14 @@ private:
     QPen* pointPen;
     int wpExists(const QPointF coordinate);
     bool waypointIsDrag;
-    QPointF homeCoordinate;
-    int8_t index;
+
+
+    qmapcontrol::LineString* camLine;
+    QList<qmapcontrol::Point*> camPoints;
+    QPointF lastCamBorderPos;
+    bool drawCamBorder;
+    int radioCamera;
+
 };
 
 #endif // MAPWIDGET_H
