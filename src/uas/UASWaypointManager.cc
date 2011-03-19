@@ -119,8 +119,14 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
         }
         else
         {
+            protocol_timer.stop();
             emit updateStatusString("done.");
             qDebug() << "No waypoints on UAS " << systemId;
+            current_state = WP_IDLE;
+            current_count = 0;
+            current_wp_id = 0;
+            current_partner_systemid = 0;
+            current_partner_compid = 0;
         }
     }
     else
@@ -732,7 +738,12 @@ void UASWaypointManager::writeWaypoints()
 
                 if (cur_s->getCurrent() && noCurrent)
                     noCurrent = false;
+                if (i == (current_count - 1) && noCurrent == true) //not a single waypoint was set as "current"
+                    cur_d->current = true; // set the last waypoint as current. Or should it better be the first waypoint ?
             }
+
+
+
 
             //send the waypoint count to UAS (this starts the send transaction)
             sendWaypointCount();
