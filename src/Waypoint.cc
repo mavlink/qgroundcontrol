@@ -283,9 +283,9 @@ void Waypoint::setParam5(double param5)
 
 void Waypoint::setParam6(double param6)
 {
-    if (this->z != param6)
+    if (this->y != param6)
     {
-        this->z = param6;
+        this->y = param6;
         emit changed(this);
     }
 }
