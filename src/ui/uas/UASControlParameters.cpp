@@ -75,17 +75,17 @@ void UASControlParameters::changedMode(int mode)
         break;
 #else
     case (uint8_t)MAV_MODE_AUTO:
-        mode = "AUTO MODE";
+        modeTemp = "AUTO MODE";
         break;
     case (uint8_t)MAV_MODE_GUIDED:
-        mode = "GUIDED MODE";
+        modeTemp = "GUIDED MODE";
         break;
 
     case (uint8_t)MAV_MODE_TEST1:
-        mode = "TEST1 MODE";
+        modeTemp = "TEST1 MODE";
         break;
     case (uint8_t)MAV_MODE_TEST2:
-        mode = "TEST2 MODE";
+        modeTemp = "TEST2 MODE";
         break;
 #endif
     case (uint8_t)MAV_MODE_READY:
@@ -157,6 +157,7 @@ void UASControlParameters::updateAttitude(UASInterface *uas, double roll, double
 
 void UASControlParameters::setCommands()
 {
+    #ifdef MAVLINK_ENABLED_SLUGS
     if(this->activeUAS)
     {
         UAS* myUas= static_cast<UAS*>(this->activeUAS);
@@ -170,6 +171,7 @@ void UASControlParameters::setCommands()
         mavlink_msg_mid_lvl_cmds_encode(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, &this->tempCmds);
         myUas->sendMessage(msg);
     }
+#endif
 }
 
 void UASControlParameters::getCommands()
@@ -181,6 +183,7 @@ void UASControlParameters::getCommands()
 
 void UASControlParameters::setPassthrough()
 {
+    #ifdef MAVLINK_ENABLED_SLUGS
     if(this->activeUAS)
     {
         UAS* myUas= static_cast<UAS*>(this->activeUAS);
@@ -218,6 +221,7 @@ void UASControlParameters::setPassthrough()
         myUas->sendMessage(msg);
         //qDebug()<<tempCtrl.bitfieldPt;
     }
+#endif
 }
 
 void UASControlParameters::updateMode(int uas,QString mode,QString description)

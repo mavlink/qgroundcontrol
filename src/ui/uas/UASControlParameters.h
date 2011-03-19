@@ -44,8 +44,10 @@ private:
     QString REDcolorStyle;
     QPointer<RadioCalibrationData> radio;
     LinkInterface* hilLink;
+#ifdef MAVLINK_ENABLED_SLUGS
     mavlink_mid_lvl_cmds_t tempCmds;
     mavlink_ctrl_srfc_pt_t tempCtrl;
+#endif
 };
 
 #endif // UASCONTROLPARAMETERS_H

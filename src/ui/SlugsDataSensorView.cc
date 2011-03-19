@@ -86,7 +86,7 @@ void SlugsDataSensorView::slugRawDataChanged(int uasId, const mavlink_raw_imu_t 
 
 }
 
-
+#ifdef MAVLINK_ENABLED_SLUGS
 void SlugsDataSensorView::slugsRCRawChannels(int systemId, const mavlink_rc_channels_raw_t &gpsDateTime)
 {Q_UNUSED(systemId);
 
@@ -109,6 +109,7 @@ void SlugsDataSensorView::slugsRCServo(int systemId, const mavlink_servo_output_
     ui->m_pwmRuddTrim->setText(QString::number(gpsDateTime.servo7_raw));
     ui->m_pwmElevTrim->setText(QString::number(gpsDateTime.servo8_raw));
 }
+#endif
 
 void SlugsDataSensorView::setActiveUAS(UASInterface* uas){
     activeUAS = uas;
