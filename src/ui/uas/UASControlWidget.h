@@ -66,6 +66,10 @@ public slots:
     /** @brief Update internal state machine */
     void updateStatemachine();
 
+signals:
+    void changedMode(int);
+
+
 protected slots:
     /** @brief Set the background color for the widget */
     void setBackgroundColor(QColor color);

@@ -108,6 +108,8 @@ void SlugsHilSim::putInHilMode(void){
 
       ui->bt_startHil->setText(buttonCaption);
 
+      activeUas->startHil();
+
     } else {
       ui->bt_startHil->setChecked(false);
     }
@@ -120,6 +122,7 @@ void SlugsHilSim::putInHilMode(void){
     ui->bt_startHil->setText(buttonCaption);
 
     rxSocket->disconnectFromHost();
+    activeUas->stopHil();
   }
 }
 
@@ -321,10 +324,10 @@ void SlugsHilSim::commandDatagramToSimulink()
 	#ifdef MAVLINK_ENABLED_SLUGS
     //mavlink_pwm_commands_t* pwdC = (static_cast<SlugsMAV*>(activeUas))->getPwmCommands();
 
-    mavlink_pwm_commands_t* pwdC;
+    //mavlink_pwm_commands_t* pwdC;
 
-    if(pwdC != NULL){
-    }
+//    if(pwdC != NULL){
+//    }
 
     QByteArray data;
     data.resize(22);

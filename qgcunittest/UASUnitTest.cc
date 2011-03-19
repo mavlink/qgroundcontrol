@@ -13,9 +13,8 @@ void UASUnitTest::initTestCase()
 
 void UASUnitTest::cleanupTestCase()
 {
-    delete uas;
-    delete mav;
-
+  delete uas;
+  delete mav;
 }
 
 void UASUnitTest::getUASID_test()
@@ -31,12 +30,15 @@ void UASUnitTest::getUASID_test()
     // Make sure that no other ID was sert
     QEXPECT_FAIL("", "When you set an ID it does not use the default ID of 0", Continue);
     QCOMPARE(uas->getUASID(), 0);
+
+    // Make sure that ID >= 0
+    QCOMPARE(uas->getUASID(), 100);
 }
 
 void UASUnitTest::getUASName_test()
 {
-    // Test that the name is build as MAV + ID
-    QCOMPARE(uas->getUASName(), "MAV 0" + QString::number(UASID));
+  // Test that the name is build as MAV + ID
+  QCOMPARE(uas->getUASName(), "MAV " + QString::number(UASID));
 
 }
 
@@ -119,7 +121,6 @@ void UASUnitTest::getStatusForCode_test()
     QVERIFY(state == "UNKNOWN");
 }
 
-
 void UASUnitTest::getLocalX_test()
 {
     QCOMPARE(uas->getLocalX(), 0.0);
@@ -155,124 +156,180 @@ void UASUnitTest::getYaw_test()
 {
     QCOMPARE(uas->getYaw(), 0.0);
 }
-void UASUnitTest::attitudeLimitsZero_test()
-{
-    mavlink_message_t msg;
-    mavlink_attitude_t att;
 
-    // Set zero values and encode them
-    att.roll  = 0.0f;
-    att.pitch = 0.0f;
-    att.yaw   = 0.0f;
-    mavlink_msg_attitude_encode(uas->getUASID(), MAV_COMP_ID_IMU, &msg, &att);
-    // Let UAS decode message
-    uas->receiveMessage(link, msg);
-    // Check result
-    QCOMPARE(uas->getRoll(), 0.0);
-    QCOMPARE(uas->getPitch(), 0.0);
-    QCOMPARE(uas->getYaw(), 0.0);
+void UASUnitTest::getSelected_test()
+{
+    QCOMPARE(uas->getSelected(), false);
 }
 
-void UASUnitTest::attitudeLimitsPi_test()
+void UASUnitTest::getSystemType_test()
 {
-    mavlink_message_t msg;
-    mavlink_attitude_t att;
-    // Set PI values and encode them
-    att.roll  = M_PI;
-    att.pitch = M_PI;
-    att.yaw   = M_PI;
-    mavlink_msg_attitude_encode(uas->getUASID(), MAV_COMP_ID_IMU, &msg, &att);
-    // Let UAS decode message
-    uas->receiveMessage(link, msg);
-    // Check result
-    QVERIFY((uas->getRoll() < M_PI+0.000001) && (uas->getRoll() > M_PI+-0.000001));
-    QVERIFY((uas->getPitch() < M_PI+0.000001) && (uas->getPitch() > M_PI+-0.000001));
-    QVERIFY((uas->getYaw() < M_PI+0.000001) && (uas->getYaw() > M_PI+-0.000001));
+    QCOMPARE(uas->getSystemType(), 13);
 }
 
-void UASUnitTest::attitudeLimitsMinusPi_test()
+void UASUnitTest::getAirframe_test()
 {
-    mavlink_message_t msg;
-    mavlink_attitude_t att;
-    // Set -PI values and encode them
-    att.roll  = -M_PI;
-    att.pitch = -M_PI;
-    att.yaw   = -M_PI;
-    mavlink_msg_attitude_encode(uas->getUASID(), MAV_COMP_ID_IMU, &msg, &att);
-    // Let UAS decode message
-    uas->receiveMessage(link, msg);
-    // Check result
-    QVERIFY((uas->getRoll() > -M_PI-0.000001) && (uas->getRoll() < -M_PI+0.000001));
-    QVERIFY((uas->getPitch() > -M_PI-0.000001) && (uas->getPitch() < -M_PI+0.000001));
-    QVERIFY((uas->getYaw() > -M_PI-0.000001) && (uas->getYaw() < -M_PI+0.000001));
+    QCOMPARE(uas->getAirframe(), 0);
+
+    uas->setAirframe(25);
+    QVERIFY(uas->getAirframe() == 25);
 }
 
-void UASUnitTest::attitudeLimitsTwoPi_test()
+void UASUnitTest::getWaypointList_test()
 {
-    mavlink_message_t msg;
-    mavlink_attitude_t att;
-    // Set off-limit values and check
-    // correct wrapping
-    // Set 2PI values and encode them
-    att.roll  = 2*M_PI;
-    att.pitch = 2*M_PI;
-    att.yaw   = 2*M_PI;
-    mavlink_msg_attitude_encode(uas->getUASID(), MAV_COMP_ID_IMU, &msg, &att);
-    // Let UAS decode message
-    uas->receiveMessage(link, msg);
-    // Check result
-    QVERIFY((uas->getRoll() < 0.000001) && (uas->getRoll() > -0.000001));
-    QVERIFY((uas->getPitch() < 0.000001) && (uas->getPitch() > -0.000001));
-    QVERIFY((uas->getYaw() < 0.000001) && (uas->getYaw() > -0.000001));
+    QVector<Waypoint*> kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 0);
+
+    Waypoint* wp = new Waypoint(0,0,0,0,0,false, false, 0,0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
+    uas->getWaypointManager()->addWaypoint(wp, true);
+
+    kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 1);
+
+    wp = new Waypoint();
+    uas->getWaypointManager()->addWaypoint(wp, false);
+
+    kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 2);
+
+    uas->getWaypointManager()->removeWaypoint(1);
+    kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 1);
+
+    uas->getWaypointManager()->removeWaypoint(0);
+    kk = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(kk.count(), 0);
+
+    qDebug()<<"disconnect SIGNAL waypointListChanged";
 }
 
-void UASUnitTest::attitudeLimitsMinusTwoPi_test()
+void UASUnitTest::getWaypoint_test()
 {
-    mavlink_message_t msg;
-    mavlink_attitude_t att;
-    // Set -2PI values and encode them
-    att.roll  = -2*M_PI;
-    att.pitch = -2*M_PI;
-    att.yaw   = -2*M_PI;
-    mavlink_msg_attitude_encode(uas->getUASID(), MAV_COMP_ID_IMU, &msg, &att);
-    // Let UAS decode message
-    uas->receiveMessage(link, msg);
-    // Check result
-    QVERIFY((uas->getRoll() < 0.000001) && (uas->getRoll() > -0.000001));
-    QVERIFY((uas->getPitch() < 0.000001) && (uas->getPitch() > -0.000001));
-    QVERIFY((uas->getYaw() < 0.000001) && (uas->getYaw() > -0.000001));
+    Waypoint* wp = new Waypoint(0,5.6,0,0,0,false, false, 0,0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
+
+    uas->getWaypointManager()->addWaypoint(wp, true);
+
+    QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointList();
+
+    QCOMPARE(wpList.count(), 1);
+    QCOMPARE(static_cast<quint16>(0), static_cast<Waypoint*>(wpList.at(0))->getId());
+
+    wp = new Waypoint(0, 5.6, 2, 3);
+    uas->getWaypointManager()->addWaypoint(wp, true);
+    Waypoint* wp2 = static_cast<Waypoint*>(wpList.at(0));
+
+    QCOMPARE(wp->getX(), wp2->getX());
+    QCOMPARE(wp->getFrame(), MAV_FRAME_GLOBAL);
+    QCOMPARE(wp->getFrame(), wp2->getFrame());
 }
 
-void UASUnitTest::attitudeLimitsTwoPiOne_test()
+void UASUnitTest::signalWayPoint_test()
 {
-    mavlink_message_t msg;
-    mavlink_attitude_t att;
-    // Set over 2 PI values and encode them
-    att.roll  = 2*M_PI+1.0f;
-    att.pitch = 2*M_PI+1.0f;
-    att.yaw   = 2*M_PI+1.0f;
-    mavlink_msg_attitude_encode(uas->getUASID(), MAV_COMP_ID_IMU, &msg, &att);
-    // Let UAS decode message
-    uas->receiveMessage(link, msg);
-    // Check result
-    QVERIFY((uas->getRoll() < 1.000001) && (uas->getRoll() > 0.999999));
-    QVERIFY((uas->getPitch() < 1.000001) && (uas->getPitch() > 0.999999));
-    QVERIFY((uas->getYaw() < 1.000001) && (uas->getYaw() > 0.999999));
+    QSignalSpy spy(uas->getWaypointManager(), SIGNAL(waypointListChanged()));
+
+    Waypoint* wp = new Waypoint(0,5.6,0,0,0,false, false, 0,0, MAV_FRAME_GLOBAL, MAV_ACTION_NAVIGATE);
+    uas->getWaypointManager()->addWaypoint(wp, true);
+
+    QCOMPARE(spy.count(), 1); // 1 listChanged for add wayPoint
+    uas->getWaypointManager()->removeWaypoint(0);
+    QCOMPARE(spy.count(), 2); // 2 listChanged for remove wayPoint
+
+    QSignalSpy spyDestroyed(uas->getWaypointManager(), SIGNAL(destroyed()));
+    QVERIFY(spyDestroyed.isValid());
+    QCOMPARE( spyDestroyed.count(), 0 );
+
+    delete uas;// delete(destroyed) uas for validating
+    QCOMPARE(spyDestroyed.count(), 1);// count destroyed uas should are 1
+
+    uas = new UAS(mav,UASID);
+    QSignalSpy spy2(uas->getWaypointManager(), SIGNAL(waypointListChanged()));
+    QCOMPARE(spy2.count(), 0);
+
+    uas->getWaypointManager()->addWaypoint(wp, true);
+    QCOMPARE(spy2.count(), 1);
+
+    uas->getWaypointManager()->clearWaypointList();
+    QVector<Waypoint*> wpList = uas->getWaypointManager()->getWaypointList();
+    QCOMPARE(wpList.count(), 1);
 }
 
-void UASUnitTest::attitudeLimitsMinusTwoPiOne_test()
+void UASUnitTest::signalUASLink_test()
 {
-    mavlink_message_t msg;
-    mavlink_attitude_t att;
-    // Set 3PI values and encode them
-    att.roll  = -2*M_PI-1.0f;
-    att.pitch = -2*M_PI-1.0f;
-    att.yaw   = -2*M_PI-1.0f;
-    mavlink_msg_attitude_encode(uas->getUASID(), MAV_COMP_ID_IMU, &msg, &att);
-    // Let UAS decode message
-    uas->receiveMessage(link, msg);
-    // Check result
-    QVERIFY((uas->getRoll() > -1.000001) && (uas->getRoll() < -0.999999));
-    QVERIFY((uas->getPitch() > -1.000001) && (uas->getPitch() < -0.999999));
-    QVERIFY((uas->getYaw() > -1.000001) && (uas->getYaw() < -0.999999));
+    QSignalSpy spy(uas, SIGNAL(modeChanged(int,QString,QString)));
+    uas->setMode(2);
+    QCOMPARE(spy.count(), 0);// not solve for UAS not receiving message from UAS
+
+    QSignalSpy spyS(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)));
+    SerialLink* link = new SerialLink();
+    LinkManager::instance()->add(link);
+    LinkManager::instance()->addProtocol(link, mav);
+    QCOMPARE(spyS.count(), 1);
+
+    LinkManager::instance()->add(link);
+    LinkManager::instance()->addProtocol(link, mav);
+    QCOMPARE(spyS.count(), 1);// not add SerialLink, exist in list
+
+    SerialLink* link2 = new SerialLink();
+    LinkManager::instance()->add(link2);
+    LinkManager::instance()->addProtocol(link2, mav);
+    QCOMPARE(spyS.count(), 2);// add SerialLink, not exist in list
+
+    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+    foreach(LinkInterface* link, links)
+    {
+        qDebug()<< link->getName();
+        qDebug()<< QString::number(link->getId());
+        qDebug()<< QString::number(link->getNominalDataRate());
+        QVERIFY(link != NULL);
+        uas->addLink(link);
+    }
+
+    SerialLink* ff = static_cast<SerialLink*>(uas->getLinks()->at(0));
+
+    QCOMPARE(ff->isConnected(), false);
+
+    QCOMPARE(ff->isRunning(), false);
+
+    QCOMPARE(ff->isFinished(), false);
+
+    QCOMPARE(links.count(), uas->getLinks()->count());
+    QCOMPARE(uas->getLinks()->count(), 2);
+
+    LinkInterface* ff99 = static_cast<LinkInterface*>(links.at(1));
+    LinkManager::instance()->removeLink(ff99);
+
+    QCOMPARE(LinkManager::instance()->getLinks().count(), 1);
+    QCOMPARE(uas->getLinks()->count(), 2);
+
+
+    QCOMPARE(static_cast<LinkInterface*>(LinkManager::instance()->getLinks().at(0))->getId(),
+             static_cast<LinkInterface*>(uas->getLinks()->at(0))->getId());
+
+    link = new SerialLink();
+    LinkManager::instance()->add(link);
+    LinkManager::instance()->addProtocol(link, mav);
+    QCOMPARE(spyS.count(), 3);
+}
+
+void UASUnitTest::signalIdUASLink_test()
+{
+    SerialLink* myLink = new SerialLink();
+    myLink->setPortName("COM 17");
+    LinkManager::instance()->add(myLink);
+    LinkManager::instance()->addProtocol(myLink, mav);
+
+    myLink = new SerialLink();
+    myLink->setPortName("COM 18");
+    LinkManager::instance()->add(myLink);
+    LinkManager::instance()->addProtocol(myLink, mav);
+
+    QCOMPARE(LinkManager::instance()->getLinks().count(), 4);
+
+    QList<LinkInterface*> links = LinkManager::instance()->getLinks();
+
+    LinkInterface* a = static_cast<LinkInterface*>(links.at(2));
+    LinkInterface* b = static_cast<LinkInterface*>(links.at(3));
+
+    QCOMPARE(a->getName(), QString("serial port COM 17"));
+    QCOMPARE(b->getName(), QString("serial port COM 18"));
 }

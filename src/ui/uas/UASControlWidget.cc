@@ -41,15 +41,25 @@ This file is part of the PIXHAWK project
 #include "UASControlWidget.h"
 #include <UASManager.h>
 #include <UAS.h>
+#include "QGC.h"
 
 #define CONTROL_MODE_LOCKED "MODE LOCKED"
 #define CONTROL_MODE_MANUAL "MODE MANUAL"
-#define CONTROL_MODE_GUIDED "MODE GUIDED"
-#define CONTROL_MODE_AUTO   "MODE AUTO"
-#define CONTROL_MODE_TEST1  "MODE TEST1"
-#define CONTROL_MODE_TEST2  "MODE TEST2"
+
+#ifdef MAVLINK_ENABLED_SLUGS
+    #define CONTROL_MODE_GUIDED "MODE MID-L CMDS"
+    #define CONTROL_MODE_AUTO   "MODE WAYPOINT"
+    #define CONTROL_MODE_TEST1  "MODE PASST"
+    #define CONTROL_MODE_TEST2  "MODE SEL PT"
+#else
+    #define CONTROL_MODE_GUIDED "MODE GUIDED"
+    #define CONTROL_MODE_AUTO   "MODE AUTO"
+    #define CONTROL_MODE_TEST1  "MODE TEST1"
+    #define CONTROL_MODE_TEST2  "MODE TEST2"
+#endif
+
 #define CONTROL_MODE_TEST3  "MODE TEST3"
-#define CONTROL_MODE_READY  "MODE TEST3"
+#define CONTROL_MODE_READY  "MODE READY"
 #define CONTROL_MODE_RC_TRAINING  "RC SIMULATION"
 
 #define CONTROL_MODE_LOCKED_INDEX 1
@@ -86,6 +96,7 @@ engineOn(false)
     ui.modeComboBox->setCurrentIndex(0);
 
     ui.gridLayout->setAlignment(Qt::AlignTop);
+
 }
 
 void UASControlWidget::setUAS(UASInterface* uas)
@@ -248,6 +259,8 @@ void UASControlWidget::setMode(int mode)
 
 
     qDebug() << "SET MODE REQUESTED" << uasMode;
+
+    emit changedMode(mode);
 }
 
 void UASControlWidget::transmitMode()
