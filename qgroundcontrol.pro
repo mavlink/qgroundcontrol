@@ -26,6 +26,7 @@
 
 include(lib/QMapControl/QMapControl.pri)
 include(lib/nmea/nmea.pri)
+#include(lib/opmapcontrol/opmapcontrol.pri)
 
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
 QT += network \
@@ -105,9 +106,12 @@ include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
     lib/QMapControl \
     lib/QMapControl/src \
+    lib/opmapcontrol \
+    lib/opmapcontrol/src \
     plugins
 INCLUDEPATH += . \
     lib/QMapControl \
+    lib/opmapcontrol \
     $$BASEDIR/../mavlink/include
 
 # ../mavlink/include \
