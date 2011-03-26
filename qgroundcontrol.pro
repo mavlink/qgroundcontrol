@@ -24,9 +24,9 @@
 # include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
 # Include bundled version if necessary
 
-include(lib/QMapControl/QMapControl.pri)
+#include(lib/QMapControl/QMapControl.pri)
 include(lib/nmea/nmea.pri)
-#include(lib/opmapcontrol/opmapcontrol.pri)
+include(lib/opmapcontrol/opmapcontrol.pri)
 
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
 QT += network \
@@ -34,7 +34,8 @@ QT += network \
     svg \
     xml \
     phonon \
-    webkit
+    webkit \
+    sql
 TEMPLATE = app
 TARGET = qgroundcontrol
 BASEDIR = $$IN_PWD
@@ -104,13 +105,13 @@ include(src/lib/qextserialport/qextserialport.pri)
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
-    lib/QMapControl \
-    lib/QMapControl/src \
+#    lib/QMapControl \
+#    lib/QMapControl/src \
     lib/opmapcontrol \
     lib/opmapcontrol/src \
     plugins
 INCLUDEPATH += . \
-    lib/QMapControl \
+#    lib/QMapControl \
     lib/opmapcontrol \
     $$BASEDIR/../mavlink/include
 
@@ -132,7 +133,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/ObjectDetectionView.ui \
     src/ui/JoystickWidget.ui \
     src/ui/DebugConsole.ui \
-    src/ui/MapWidget.ui \
+#    src/ui/MapWidget.ui \
     src/ui/XMLCommProtocolWidget.ui \
     src/ui/HDDisplay.ui \
     src/ui/MAVLinkSettingsWidget.ui \
@@ -182,7 +183,7 @@ INCLUDEPATH += src \
     src/ui/designer
 
 HEADERS += src/MG.h \
-    src/Core.h \
+    src/QGCCore.h \
     src/uas/UASInterface.h \
     src/uas/UAS.h \
     src/uas/UASManager.h \
@@ -218,7 +219,7 @@ HEADERS += src/MG.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
     src/ui/DebugConsole.h \
-    src/ui/MapWidget.h \
+#    src/ui/MapWidget.h \
     src/ui/XMLCommProtocolWidget.h \
     src/ui/mavlink/DomItem.h \
     src/ui/mavlink/DomModel.h \
@@ -245,8 +246,8 @@ HEADERS += src/MG.h \
     src/ui/QGCPxImuFirmwareUpdate.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/linechart/IncrementalPlot.h \
-    src/ui/map/Waypoint2DIcon.h \
-    src/ui/map/MAV2DIcon.h \
+#    src/ui/map/Waypoint2DIcon.h \
+#    src/ui/map/MAV2DIcon.h \
     src/ui/QGCRemoteControlView.h \
     src/ui/RadioCalibration/RadioCalibrationData.h \
     src/ui/RadioCalibration/RadioCalibrationWindow.h \
@@ -278,7 +279,8 @@ HEADERS += src/MG.h \
     src/ui/uas/UASControlParameters.h \
     src/ui/mission/QGCMissionDoWidget.h \
     src/ui/mission/QGCMissionConditionWidget.h \
-    src/uas/QGCUASParamManager.h
+    src/uas/QGCUASParamManager.h \
+    src/ui/QGCMapWidget.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008: {
@@ -318,7 +320,7 @@ contains(DEPENDENCIES_PRESENT, libfreenect) {
 }
 
 SOURCES += src/main.cc \
-    src/Core.cc \
+    src/QGCCore.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
     src/comm/LinkManager.cc \
@@ -349,7 +351,7 @@ SOURCES += src/main.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
     src/ui/DebugConsole.cc \
-    src/ui/MapWidget.cc \
+#    src/ui/MapWidget.cc \
     src/ui/XMLCommProtocolWidget.cc \
     src/ui/mavlink/DomItem.cc \
     src/ui/mavlink/DomModel.cc \
@@ -376,8 +378,8 @@ SOURCES += src/main.cc \
     src/ui/QGCPxImuFirmwareUpdate.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc \
-    src/ui/map/Waypoint2DIcon.cc \
-    src/ui/map/MAV2DIcon.cc \
+#    src/ui/map/Waypoint2DIcon.cc \
+#    src/ui/map/MAV2DIcon.cc \
     src/ui/QGCRemoteControlView.cc \
     src/ui/RadioCalibration/RadioCalibrationWindow.cc \
     src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
@@ -408,7 +410,8 @@ SOURCES += src/main.cc \
     src/ui/uas/UASControlParameters.cpp \
     src/ui/mission/QGCMissionDoWidget.cc \
     src/ui/mission/QGCMissionConditionWidget.cc \
-    src/uas/QGCUASParamManager.cc
+    src/uas/QGCUASParamManager.cc \
+    src/ui/QGCMapWidget.cc
 
 macx|win32-msvc2008: {
     SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

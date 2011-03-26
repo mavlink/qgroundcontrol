@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Implementation of class Core
+ *   @brief Implementation of class QGCCore
  *
  *   @author Lorenz Meier <mavteam@student.ethz.ch>
  *
@@ -43,7 +43,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "configuration.h"
 #include "QGC.h"
-#include "Core.h"
+#include "QGCCore.h"
 #include "MG.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
@@ -66,7 +66,7 @@ This file is part of the QGROUNDCONTROL project
  **/
 
 
-Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
+QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 {
 
 
@@ -207,7 +207,7 @@ Core::Core(int &argc, char* argv[]) : QApplication(argc, argv)
  * @brief Destructor for the groundstation. It destroys all loaded instances.
  *
  **/
-Core::~Core()
+QGCCore::~QGCCore()
 {
     //mainWindow->storeSettings();
     mainWindow->hide();
@@ -223,7 +223,7 @@ Core::~Core()
  * The link manager keeps track of all communication links and provides the global
  * packet queue. It is the main communication hub
  **/
-void Core::startLinkManager()
+void QGCCore::startLinkManager()
 {
     LinkManager::instance();
 }
@@ -232,7 +232,7 @@ void Core::startLinkManager()
  * @brief Start the Unmanned Air System Manager
  *
  **/
-void Core::startUASManager()
+void QGCCore::startUASManager()
 {
     // Load UAS plugins
     QDir pluginsDir = QDir(qApp->applicationDirPath());

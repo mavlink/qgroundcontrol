@@ -383,7 +383,7 @@ void MainWindow::buildCommonWidgets()
     // Center widgets
     if (!mapWidget)
     {
-        mapWidget = new MapWidget(this);
+        mapWidget = new mapcontrol::OPMapWidget(this);//new MapWidget(this);
         addToCentralWidgetsMenu (mapWidget, "Maps", SLOT(showCentralWidget()),CENTRAL_MAP);
     }
 

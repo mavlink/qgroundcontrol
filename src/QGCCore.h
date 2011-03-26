@@ -30,8 +30,8 @@ This file is part of the PIXHAWK project
  */
 
 
-#ifndef _CORE_H_
-#define _CORE_H_
+#ifndef QGC_CORE_H
+#define QGC_CORE_H
 
 #include <QApplication>
 
@@ -51,13 +51,13 @@ This file is part of the PIXHAWK project
  * the central management unit of the groundstation application.
  *
  **/
-class Core : public QApplication
+class QGCCore : public QApplication
 {
 	Q_OBJECT
 
 public:
-        Core(int &argc, char* argv[]);
-        ~Core();
+        QGCCore(int &argc, char* argv[]);
+        ~QGCCore();
 
 protected:
 	void startLinkManager();

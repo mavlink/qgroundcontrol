@@ -2,11 +2,10 @@
 #define MAV2DICON_H
 
 #include <QGraphicsItem>
-#include "qmapcontrol.h"
 
 #include "UASInterface.h"
 
-class MAV2DIcon : public qmapcontrol::Point
+class MAV2DIcon : public QGraphicsItem
 {
 public:
     enum

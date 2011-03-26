@@ -2,11 +2,10 @@
 #define WAYPOINT2DICON_H
 
 #include <QGraphicsItem>
-#include "qmapcontrol.h"
 
 #include "Waypoint.h"
 
-class Waypoint2DIcon : public qmapcontrol::Point
+class Waypoint2DIcon : public QGraphicsItem
 {
 public:
     /*!
