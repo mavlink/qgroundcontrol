@@ -287,8 +287,8 @@ set(qgroundcontrolUiSrc
     #src/ui/map3D/QGCGoogleEarthView.ui
     src/ui/SlugsDataSensorView.ui
     src/ui/SlugsHilSim.ui
-    src/ui/SlugsPIDControl.ui
-    src/ui/SlugsVideoCamControl.ui
+    #src/ui/SlugsPIDControl.ui
+    #src/ui/SlugsVideoCamControl.ui
     src/ui/SlugsPadCameraControl.ui
     src/ui/uas/QGCUnconnectedInfoWidget.ui
     src/ui/designer/QGCToolWidget.ui
@@ -298,6 +298,7 @@ set(qgroundcontrolUiSrc
     src/ui/QGCWaypointListMulti.ui
     src/ui/mission/QGCCustomWaypointAction.ui
     src/ui/QGCUDPLinkConfiguration.ui
+    src/ui/UASControlParameters.ui
     src/ui/QGCSettingsWidget.ui
     )
 
@@ -387,6 +388,7 @@ set(qgroundcontrolMocSrc
 	src/comm/MAVLinkSimulationMAV.h
 	#src/comm/QGCNMEAProtocol.h
 	src/comm/SerialLink.h
+    src/ui/uas/UASControlParameters.h
 	src/ui/QGCSettingsWidget.h
 	#src/ui/map3D/WebImageCache.h
 	#src/ui/map3D/QGCGoogleEarthView.h
@@ -409,7 +411,7 @@ set(qgroundcontrolMocSrc
 	src/ui/SlugsPadCameraControl.h
 	src/ui/QGCMainWindowAPConfigurator.h
 	src/ui/MainWindow.h
-	src/ui/SlugsVideoCamControl.h
+	#src/ui/SlugsVideoCamControl.h
 	src/ui/DebugConsole.h
 	src/ui/XMLCommProtocolWidget.h
 	src/ui/uas/UASListWidget.h
@@ -417,7 +419,7 @@ set(qgroundcontrolMocSrc
 	src/ui/uas/QGCUnconnectedInfoWidget.h
 	src/ui/uas/UASControlWidget.h
 	src/ui/uas/UASView.h
-	src/ui/SlugsPIDControl.h
+	#src/ui/SlugsPIDControl.h
 	src/ui/HUD.h
 	src/ui/RadioCalibration/RadioCalibrationWindow.h
 	src/ui/RadioCalibration/RadioCalibrationData.h
@@ -509,6 +511,7 @@ set (qgroundcontrolSrc
     src/ui/QGCPxImuFirmwareUpdate.cc
     src/ui/QGCRemoteControlView.cc
     src/ui/QGCSensorSettingsWidget.cc
+    src/ui/uas/UASControlParameters.cpp
     src/ui/QGCSettingsWidget.cc
     src/ui/QGCUDPLinkConfiguration.cc
     src/ui/QGCWaypointListMulti.cc
@@ -522,9 +525,9 @@ set (qgroundcontrolSrc
     src/ui/SerialConfigurationWindow.cc
     src/ui/SlugsDataSensorView.cc
     src/ui/SlugsHilSim.cc
-    src/ui/SlugsPIDControl.cpp
+    #src/ui/SlugsPIDControl.cpp
     src/ui/SlugsPadCameraControl.cpp
-    src/ui/SlugsVideoCamControl.cpp
+    #src/ui/SlugsVideoCamControl.cpp
     src/ui/WaypointList.cc
     src/ui/WaypointView.cc
     src/ui/XMLCommProtocolWidget.cc
