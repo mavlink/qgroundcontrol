@@ -55,7 +55,7 @@ This file is part of the QGROUNDCONTROL project
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
 #include "DebugConsole.h"
-#include "MapWidget.h"
+//#include "MapWidget.h"
 #include "ParameterInterface.h"
 #include "XMLCommProtocolWidget.h"
 #include "HDDisplay.h"
@@ -63,6 +63,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
+#include "opmapcontrol.h"
 #if (defined Q_OS_MAC) | (defined _MSC_VER)
 #include "QGCGoogleEarthView.h"
 #endif
@@ -366,7 +367,7 @@ protected:
 
     QPointer<HUD> hudWidget;
 
-    QPointer<MapWidget> mapWidget;
+    QPointer<mapcontrol::OPMapWidget> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
     #ifdef QGC_OSG_ENABLED

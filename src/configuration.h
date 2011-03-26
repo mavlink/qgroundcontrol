@@ -1,5 +1,5 @@
-#ifndef CONFIGURATION_H
-#define CONFIGURATION_H
+#ifndef QGC_CONFIGURATION_H
+#define QGC_CONFIGURATION_H
 
 #include "mavlink.h"
 #include <QString>
@@ -27,4 +27,4 @@ namespace QGC
     const int APPLICATIONVERSION = 83; // 0.8.0
 }
 
-#endif // CONFIGURATION_H
+#endif // QGC_CONFIGURATION_H
