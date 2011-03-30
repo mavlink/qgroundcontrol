@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QIODevice>
 #include "qextserialport.h"
 #include <QtSerialPort/QSerialPort>
+#include <iostream>
 
 /**
  * @brief The SerialInterface abstracts low level serial calls
@@ -116,7 +117,7 @@ public:
     };
 
     virtual bool isOpen() = 0;
-    virtual bool isWriteable() = 0;
+    virtual bool isWritable() = 0;
     virtual bool bytesAvailable() = 0;
     virtual int write(const char * data, qint64 size) = 0;
     virtual void read(char * data, qint64 numBytes) = 0;
@@ -128,7 +129,7 @@ public:
     virtual void setStopBits(stopBitsType stopBits) = 0;
     virtual void setDataBits(dataBitsType dataBits) = 0;
     virtual void setTimeout(qint64 timeout) = 0;
-
+    virtual void setFlow(flowType flow) = 0;
 };
 
 class SerialQextserial : public SerialInterface
@@ -140,14 +141,15 @@ signals:
     void aboutToClose();
 public:
     SerialQextserial(QString porthandle, QextSerialPort::QueryMode mode) : _port(NULL) {
+        std::cout << "DEBUG: " << porthandle.toStdString() << std::endl;
         _port = new QextSerialPort(porthandle, QextSerialPort::Polling);
         QObject::connect(_port,SIGNAL(aboutToClose()),this,SIGNAL(aboutToClose()));
     }
     virtual bool isOpen() {
         return _port->isOpen();
     }
-    virtual bool isWriteable() {
-        return _port->isWritable();    // yess, that is mis-spelled, writable
+    virtual bool isWritable() {
+        return _port->isWritable();
     }
     virtual bool bytesAvailable() {
         return _port->bytesAvailable();
@@ -182,6 +184,9 @@ public:
     virtual void setTimeout(qint64 timeout) {
         _port->setTimeout(timeout);
     };
+    virtual void setFlow(SerialInterface::flowType flow) {
+        // TODO implement
+    };
 };
 
 using namespace TNX;
@@ -196,13 +201,19 @@ signals:
     void aboutToClose();
 public:
     SerialQserial(QString porthandle, QIODevice::OpenModeFlag flag=QIODevice::ReadWrite)
-        : _port(new QSerialPort(porthandle,settings)) {
+        : _port(NULL) {
         QObject::connect(_port,SIGNAL(aboutToClose()),this,SIGNAL(aboutToClose()));
+        settings.setBaudRate(QPortSettings::BAUDR_38400);
+        settings.setStopBits(QPortSettings::STOP_2);
+        settings.setDataBits(QPortSettings::DB_8);
+        settings.setFlowControl(QPortSettings::FLOW_OFF);
+        settings.setParity(QPortSettings::PAR_NONE);
+        _port = new QSerialPort(porthandle,settings);
     }
     virtual bool isOpen() {
         return _port->isOpen();
     }
-    virtual bool isWriteable() {
+    virtual bool isWritable() {
         _port->isWritable();
     }
     virtual bool bytesAvailable() {
@@ -223,21 +234,30 @@ public:
     }
     virtual void open(QIODevice::OpenModeFlag flag) {
         _port->open(flag);
+        std::cout << "opened port" << std::endl;
     }
     virtual void setBaudRate(SerialInterface::baudRateType baudrate) {
-        //_port->setBaudRate((BaudRateType)baudrate);
+        // TODO get the baudrate enum to map to one another
+        settings.setBaudRate(QPortSettings::BAUDR_38400);
     }
     virtual void setParity(SerialInterface::parityType parity) {
-        //_port->setParity((ParityType)parity);
+        settings.setParity(QPortSettings::PAR_NONE);
     }
     virtual void setStopBits(SerialInterface::stopBitsType stopBits) {
-        //_port->setStopBits((StopBitsType)stopBits);
+        // TODO map
+        settings.setStopBits(QPortSettings::STOP_1);
     }
     virtual void setDataBits(SerialInterface::dataBitsType dataBits) {
-        //_port->setDataBits((DataBitsType)dataBits);
+        // TODO map
+        settings.setDataBits(QPortSettings::DB_8);
     }
     virtual void setTimeout(qint64 timeout) {
+        // TODO implement
         //_port->setTimeout(timeout);
+    };
+    virtual void setFlow(SerialInterface::flowType flow) {
+        // TODO map
+        settings.setFlowControl(QPortSettings::FLOW_OFF);
     };
 };
 
