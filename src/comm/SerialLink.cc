@@ -21,6 +21,7 @@
 #include "windows.h"
 #endif
 
+//#define USE_QEXTSERIAL // this allows us to revert to old serial library during transition
 
 SerialLink::SerialLink(QString portname, SerialInterface::baudRateType baudrate, SerialInterface::flowType flow, SerialInterface::parityType parity,
                        SerialInterface::dataBitsType dataBits, SerialInterface::stopBitsType stopBits) :
@@ -136,7 +137,7 @@ void SerialLink::run()
 void SerialLink::checkForBytes()
 {
     /* Check if bytes are available */
-    if(port && port->isOpen() && port->isWriteable()) {
+    if(port && port->isOpen() && port->isWritable()) {
         dataMutex.lock();
         qint64 available = port->bytesAvailable();
         dataMutex.unlock();
@@ -291,9 +292,12 @@ bool SerialLink::hardwareConnect()
         port->close();
         delete port;
     }
+#ifdef USE_QEXTSERIAL
     port = new SerialQextserial(porthandle, QextSerialPort::Polling);
+#else
+    port = new SerialQserial(porthandle, QIODevice::ReadWrite);
+#endif
     QObject::connect(port, SIGNAL(aboutToClose()), this, SIGNAL(disconnected()));
-
     port->open(QIODevice::ReadWrite);
     port->setBaudRate(this->baudrate);
     port->setParity(this->parity);
