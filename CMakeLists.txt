@@ -132,6 +132,7 @@ else()
 endif()
 
 find_or_build_from_source(MAVLINK thirdParty/mavlink FOUND_GIT_REPO)
+find_or_build_from_source(QSERIAL thirdParty/qserial FOUND_GIT_REPO)
 
 # build libraries from source if not found on system
 if(MAVLINK_BUILD_FROM_SOURCE)
@@ -146,6 +147,16 @@ if(MAVLINK_BUILD_FROM_SOURCE)
 
     add_custom_command(OUTPUT MAVLINK_BUILD.stamp 
         COMMAND touch MAVLINK_BUILD.stamp)
+endif()
+
+if(QSERIAL_BUILD_FROM_SOURCE)
+    set(QSERIAL_INCLUDE_DIRS
+        ${PROJECT_SOURCE_DIR}/thirdParty/qserial/include
+        ${PROJECT_SOURCE_DIR}/thirdParty/qserial/include/QtSerialPort
+        ${PROJECT_SOURCE_DIR}/thirdParty/qserial/src
+        )
+    add_custom_command(OUTPUT QSERIAL_BUILD.stamp 
+        COMMAND touch QSERIAL_BUILD.stamp)
 endif()
 
 # data directory
@@ -200,6 +211,11 @@ message(STATUS "=======================================")
 message(STATUS "\t\tMAVLINK\t\t${MAVLINK_FOUND}")
 if (MAVLINK_FOUND)
     list(APPEND qgroundcontrolIncludes ${MAVLINK_INCLUDE_DIRS})
+endif()
+
+message(STATUS "\t\tQSERIAL\t\t${QSERIAL_FOUND}")
+if (QSERIAL_FOUND)
+    list(APPEND qgroundcontrolIncludes ${QSERIAL_INCLUDE_DIRS})
 endif()
 
 message(STATUS "\t\tOpenSceneGraph\t${OPENSCENEGRAPH_FOUND}")
@@ -765,6 +781,64 @@ set (qextserialportSrc
 qt4_wrap_cpp(qextserialportMoc ${qextserialportMocSrc})
 add_library(qextserialport ${qextserialportMoc} ${qextserialportSrc})
 target_link_libraries(qextserialport ${QT_LIBRARIES})
+
+# qserial library
+#----------------------------------------------------------------------------
+
+# qserial headers without Q_OBJECT
+# r !grep -RL Q_OBJECT thirdParty/qserial/include
+set (qserialHdrs
+    thirdParty/qserial/include/QtSerialPort/qserialport_export.h
+    thirdParty/qserial/include/QtSerialPort/QSerialPort
+    thirdParty/qserial/include/QtSerialPort/qportsettings.h
+    )
+# qserial headers with Q_OBJECT
+# r !grep -Rl Q_OBJECT thirdParty/qserial
+set (qserialMocSrc
+    thirdParty/qserial/include/QtSerialPort/qserialport.h
+    thirdParty/qserial/include/QtSerialPort/qserialportnative.h
+)
+# qserial src
+set (qserialSrc
+    thirdParty/qserial/src/common/qserialport.cpp
+    thirdParty/qserial/src/common/qportsettings.cpp
+)
+
+# qserial resources
+set(qserialRscSrc
+    thirdParty/qserial/src/QtSerialPortd_resource.rc
+    thirdParty/qserial/src/QtSerialPort_resource.rc
+)
+
+# qserial native code
+if (WIN32)
+    list(APPEND qSerialMocSrc
+        thirdParty/qserial/src/win32/qwincommevtnotifier.h
+        thirdParty/qserial/src/win32/wincommevtbreaker.h
+    )
+    list(APPEND qSerialSrc
+        thirdParty/qserial/src/win32/qserialportnative_win32.cpp
+        thirdParty/qserial/src/win32/commdcbhelper.h
+        thirdParty/qserial/src/win32/commdcbhelper.cpp
+        thirdParty/qserial/src/win32/qserialportnative_wince.cpp
+        thirdParty/qserial/src/win32/wincommevtbreaker.cpp
+        thirdParty/qserial/src/win32/qwincommevtnotifier.cpp
+        )
+elseif(UNIX OR APPLE)
+    list(APPEND qSerialSrc    
+        thirdParty/qserial/src/posix/termioshelper.h
+        thirdParty/qserial/src/posix/termioshelper.cpp
+        thirdParty/qserial/src/posix/qserialportnative_posix.cpp
+        )
+else()
+    message(FATAL_ERROR "unknown OS")
+endif()
+
+# qserial linking
+qt4_wrap_cpp(qserialMoc ${qserialMocSrc})
+qt4_add_resources(qserialRsc ${qserialRscSrc})
+add_library(qserial ${qserialMoc} ${qserialSrc})
+target_link_libraries(qserial ${QT_LIBRARIES})
 
 # qmapcontrol library
 #----------------------------------------------------------------------------

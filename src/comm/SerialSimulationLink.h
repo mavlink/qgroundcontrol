@@ -39,7 +39,6 @@ This file is part of the QGROUNDCONTROL project
 #include <QTextStream>
 #include <QMutex>
 #include <SerialLinkInterface.h>
-#include <SerialLink.h>
 
 /**
  * The serial simulation link class simulates a robot connected to the groundstation.
@@ -72,7 +71,7 @@ public:
 	qint64 getBitsSent();
 	qint64 getBitsReceived();
 
-	void enableLoopBackMode(SerialLink* loop);
+	void enableLoopBackMode(SerialLinkInterface * loop);
 	QString getPortName();
 	int getBaudRate();
 	int getBaudRateType();
@@ -104,7 +103,7 @@ public slots:
 
 protected:
 	QTimer* timer;
-	SerialLink* loopBack;
+	SerialLinkInterface* loopBack;
 	/** File which contains the input data (simulated robot messages) **/
 	QFile* simulationFile;
 	/** File where the commands sent by the groundstation are stored **/

@@ -99,7 +99,7 @@ void SerialSimulationLink::run()
     }
 }
 
-void SerialSimulationLink::enableLoopBackMode(SerialLink* loop)
+void SerialSimulationLink::enableLoopBackMode(SerialLinkInterface* loop)
 {
     // Lock the data
     readyBufferMutex.lock();
