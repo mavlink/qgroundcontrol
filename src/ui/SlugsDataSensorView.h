@@ -39,8 +39,9 @@ This file is part of the QGROUNDCONTROL project
 #include "mavlink.h"
 
 
-namespace Ui {
-    class SlugsDataSensorView;
+namespace Ui
+{
+class SlugsDataSensorView;
 }
 
 class SlugsDataSensorView : public QWidget
@@ -163,8 +164,8 @@ public slots:
     /**
          * @brief Updates the Data Log widget - 177
     */
-   void  slugsDataLogChanged(int systemId,
-                             const mavlink_data_log_t& dataLog);
+    void  slugsDataLogChanged(int systemId,
+                              const mavlink_data_log_t& dataLog);
 
 //   /**
 //        * @brief Updates the PWM Commands widget - 175
@@ -172,16 +173,16 @@ public slots:
 //   void slugsPWMChanged(int systemId,
 //                        const mavlink_servo_output_raw_t& pwmCommands);
 
-   /**
-        * @brief Updates the filtered sensor measurements widget - 178
-   */
-   void slugsFilteredDataChanged(int systemId,
-                                 const mavlink_scaled_imu_t& filteredData);
+    /**
+         * @brief Updates the filtered sensor measurements widget - 178
+    */
+    void slugsFilteredDataChanged(int systemId,
+                                  const mavlink_scaled_imu_t& filteredData);
 
 
-   /**
-        * @brief Updates the gps Date Time widget - 179
-   */
+    /**
+         * @brief Updates the gps Date Time widget - 179
+    */
     void slugsGPSDateTimeChanged(int systemId,
                                  const mavlink_gps_date_time_t& gpsDateTime);
 
@@ -190,13 +191,13 @@ public slots:
                             const mavlink_rc_channels_raw_t& gpsDateTime);
 
     void slugsRCServo(int systemId,
-                            const mavlink_servo_output_raw_t& gpsDateTime);
+                      const mavlink_servo_output_raw_t& gpsDateTime);
 
 
 #endif // MAVLINK_ENABLED_SLUGS
 
 protected:
-     UASInterface* activeUAS;
+    UASInterface* activeUAS;
 
 private:
     Ui::SlugsDataSensorView *ui;

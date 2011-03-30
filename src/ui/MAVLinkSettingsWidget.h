@@ -5,11 +5,13 @@
 
 #include "MAVLinkProtocol.h"
 
-namespace Ui {
-    class MAVLinkSettingsWidget;
+namespace Ui
+{
+class MAVLinkSettingsWidget;
 }
 
-class MAVLinkSettingsWidget : public QWidget {
+class MAVLinkSettingsWidget : public QWidget
+{
     Q_OBJECT
 public:
     MAVLinkSettingsWidget(MAVLinkProtocol* protocol, QWidget *parent = 0);

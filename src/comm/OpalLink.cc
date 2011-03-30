@@ -30,20 +30,20 @@ This file is part of the QGROUNDCONTROL project
 #include "OpalLink.h"
 
 OpalLink::OpalLink() :
-        connectState(false),
-        heartbeatTimer(new QTimer(this)),
-        heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
-        m_heartbeatsEnabled(true),
-        getSignalsTimer(new QTimer(this)),
-        getSignalsPeriod(10),
-        receiveBuffer(new QQueue<QByteArray>()),
-        systemID(1),
-        componentID(1),
-        params(NULL),
-        opalInstID(101),
-        sendRCValues(false),
-        sendRawController(false),
-        sendPosition(false)
+    connectState(false),
+    heartbeatTimer(new QTimer(this)),
+    heartbeatRate(MAVLINK_HEARTBEAT_DEFAULT_RATE),
+    m_heartbeatsEnabled(true),
+    getSignalsTimer(new QTimer(this)),
+    getSignalsPeriod(10),
+    receiveBuffer(new QQueue<QByteArray>()),
+    systemID(1),
+    componentID(1),
+    params(NULL),
+    opalInstID(101),
+    sendRCValues(false),
+    sendRawController(false),
+    sendPosition(false)
 {
     start(QThread::LowPriority);
 
@@ -74,68 +74,62 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
 {
     /* decode the message */
     mavlink_message_t msg;
-    mavlink_status_t status;        
+    mavlink_status_t status;
     int decodeSuccess = 0;
-    for (int i=0; (!(decodeSuccess=mavlink_parse_char(this->getId(), bytes[i], &msg, &status))&& i<length); ++i);    
+    for (int i=0; (!(decodeSuccess=mavlink_parse_char(this->getId(), bytes[i], &msg, &status))&& i<length); ++i);
 
     /* perform the appropriate action */
-    if (decodeSuccess)
-    {
-        switch(msg.msgid)
-        {
-        case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:
-            {
-                qDebug() << "OpalLink::writeBytes(): request params";
+    if (decodeSuccess) {
+        switch(msg.msgid) {
+        case MAVLINK_MSG_ID_PARAM_REQUEST_LIST: {
+            qDebug() << "OpalLink::writeBytes(): request params";
 
-                mavlink_message_t param;
+            mavlink_message_t param;
 
 
-                OpalRT::ParameterList::const_iterator paramIter;
-                for (paramIter = params->begin(); paramIter != params->end(); ++paramIter)
-                {
-                    mavlink_msg_param_value_pack(systemID,
-                                                 (*paramIter).getComponentID(),
-                                                 &param,
-                                                 (*paramIter).getParamID().toInt8_t(),
-                                                 (static_cast<OpalRT::Parameter>(*paramIter)).getValue(),
-                                                 params->count(),
-                                                 params->indexOf(*paramIter));
-                    receiveMessage(param);
-                }
-
-
+            OpalRT::ParameterList::const_iterator paramIter;
+            for (paramIter = params->begin(); paramIter != params->end(); ++paramIter) {
+                mavlink_msg_param_value_pack(systemID,
+                                             (*paramIter).getComponentID(),
+                                             &param,
+                                             (*paramIter).getParamID().toInt8_t(),
+                                             (static_cast<OpalRT::Parameter>(*paramIter)).getValue(),
+                                             params->count(),
+                                             params->indexOf(*paramIter));
+                receiveMessage(param);
             }
-        case MAVLINK_MSG_ID_PARAM_SET:
-            {
+
+
+        }
+        case MAVLINK_MSG_ID_PARAM_SET: {
 
 //                qDebug() << "OpalLink::writeBytes(): Attempt to set a parameter";
 
-                mavlink_param_set_t param;
-                mavlink_msg_param_set_decode(&msg, &param);
-                OpalRT::QGCParamID paramName((char*)param.param_id);
+            mavlink_param_set_t param;
+            mavlink_msg_param_set_decode(&msg, &param);
+            OpalRT::QGCParamID paramName((char*)param.param_id);
 
 //                qDebug() << "OpalLink::writeBytes():paramName: " << paramName;
 
-                if ((*params).contains(param.target_component, paramName))
-                {
-                    OpalRT::Parameter p = (*params)(param.target_component, paramName);
+            if ((*params).contains(param.target_component, paramName)) {
+                OpalRT::Parameter p = (*params)(param.target_component, paramName);
 //                    qDebug() << __FILE__ << ":" << __LINE__ << ": "  << p;
-                    // Set the param value in Opal-RT
-                    p.setValue(param.param_value);
+                // Set the param value in Opal-RT
+                p.setValue(param.param_value);
 
-                    // Get the param value from Opal-RT to make sure it was set properly
-                    mavlink_message_t paramMsg;
-                    mavlink_msg_param_value_pack(systemID,
-                                                 p.getComponentID(),
-                                                 &paramMsg,
-                                                 p.getParamID().toInt8_t(),
-                                                 p.getValue(),
-                                                 params->count(),
-                                                 params->indexOf(p));
-                    receiveMessage(paramMsg);
-                }
+                // Get the param value from Opal-RT to make sure it was set properly
+                mavlink_message_t paramMsg;
+                mavlink_msg_param_value_pack(systemID,
+                                             p.getComponentID(),
+                                             &paramMsg,
+                                             p.getParamID().toInt8_t(),
+                                             p.getValue(),
+                                             params->count(),
+                                             params->indexOf(p));
+                receiveMessage(paramMsg);
             }
-            break;
+        }
+        break;
 //        case MAVLINK_MSG_ID_REQUEST_RC_CHANNELS:
 //        {
 //        	mavlink_request_rc_channels_t rc;
@@ -144,8 +138,7 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
 //        }
 //        break;
 #ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
-        case MAVLINK_MSG_ID_RADIO_CALIBRATION:
-        {
+        case MAVLINK_MSG_ID_RADIO_CALIBRATION: {
             mavlink_radio_calibration_t radio;
             mavlink_msg_radio_calibration_decode(&msg, &radio);
 //            qDebug() << "RADIO CALIBRATION RECEIVED";
@@ -220,12 +213,10 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
         break;
 #endif
 #ifdef MAVLINK_ENABLED_PIXHAWK
-        case MAVLINK_MSG_ID_REQUEST_DATA_STREAM:
-        {
+        case MAVLINK_MSG_ID_REQUEST_DATA_STREAM: {
             mavlink_request_data_stream_t stream;
             mavlink_msg_request_data_stream_decode(&msg, &stream);
-            switch (stream.req_stream_id)
-            {
+            switch (stream.req_stream_id) {
             case 0: // All data types
                 break;
             case 1: // Raw Sensor Data
@@ -257,10 +248,9 @@ void OpalLink::writeBytes(const char *bytes, qint64 length)
             }
         }
         break;
-        default:
-            {
-                qDebug() << "OpalLink::writeBytes(): Unknown mavlink packet";
-            }
+        default: {
+            qDebug() << "OpalLink::writeBytes(): Unknown mavlink packet";
+        }
         }
 #endif
     }
@@ -283,8 +273,7 @@ void OpalLink::receiveMessage(mavlink_message_t message)
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer((uint8_t*)(buffer), &message);
     // If link is connected
-    if (isConnected())
-    {
+    if (isConnected()) {
         receiveDataMutex.lock();
         receiveBuffer->enqueue(QByteArray(buffer, len));
         receiveDataMutex.unlock();
@@ -296,8 +285,7 @@ void OpalLink::receiveMessage(mavlink_message_t message)
 void OpalLink::heartbeat()
 {
 
-    if (m_heartbeatsEnabled)
-    {
+    if (m_heartbeatsEnabled) {
         mavlink_message_t beat;
         mavlink_msg_heartbeat_pack(systemID, componentID,&beat, MAV_HELICOPTER, MAV_AUTOPILOT_GENERIC);
         receiveMessage(beat);
@@ -312,8 +300,7 @@ void OpalLink::setSignals(double *values)
 
     int returnValue;
     returnValue =  OpalSetSignals( numSignals, logicalId, signalIndex, values);
-    if (returnValue != EOK)
-    {
+    if (returnValue != EOK) {
         OpalRT::OpalErrorMsg::displayLastErrorMsg();
     }
 }
@@ -327,16 +314,13 @@ void OpalLink::getSignals()
     unsigned short *lastValues = new unsigned short(false);
     unsigned short *decimation = new unsigned short(0);
 
-    while (!(*lastValues))
-    {
+    while (!(*lastValues)) {
         int returnVal = OpalGetSignals(timeout, acqGroup, OpalRT::NUM_OUTPUT_SIGNALS, numSignals, timestep,
                                        values, lastValues, decimation);
 
-        if (returnVal == EOK )
-        {            
+        if (returnVal == EOK ) {
             /* Send position info to qgroundcontrol */
-            if (sendPosition)
-            {
+            if (sendPosition) {
                 mavlink_message_t local_position;
                 mavlink_msg_local_position_pack(systemID, componentID, &local_position,
                                                 (*timestep)*1000000,
@@ -358,7 +342,7 @@ void OpalLink::getSignals()
                                       values[OpalRT::ROLL_SPEED],
                                       values[OpalRT::PITCH_SPEED],
                                       values[OpalRT::YAW_SPEED]
-                                      );
+                                     );
             receiveMessage(attitude);
 
             /* send bias info to qgroundcontrol */
@@ -371,41 +355,37 @@ void OpalLink::getSignals()
                                              values[OpalRT::B_W_0],
                                              values[OpalRT::B_W_1],
                                              values[OpalRT::B_W_2]
-                                             );
+                                            );
             receiveMessage(bias);
 
             /* send radio outputs */
-            if (sendRCValues)
-            {
+            if (sendRCValues) {
                 mavlink_message_t rc;
                 mavlink_msg_rc_channels_raw_pack(systemID, componentID, &rc,
-                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_1]),
-                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_2]),
-                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_3]),
-                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_4]),
-                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_5]),
-                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_6]),
-                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_7]),
-                                             duty2PulseMicros(values[OpalRT::RAW_CHANNEL_8]),
-                                             0 //rssi unused
-                                             );
+                                                 duty2PulseMicros(values[OpalRT::RAW_CHANNEL_1]),
+                                                 duty2PulseMicros(values[OpalRT::RAW_CHANNEL_2]),
+                                                 duty2PulseMicros(values[OpalRT::RAW_CHANNEL_3]),
+                                                 duty2PulseMicros(values[OpalRT::RAW_CHANNEL_4]),
+                                                 duty2PulseMicros(values[OpalRT::RAW_CHANNEL_5]),
+                                                 duty2PulseMicros(values[OpalRT::RAW_CHANNEL_6]),
+                                                 duty2PulseMicros(values[OpalRT::RAW_CHANNEL_7]),
+                                                 duty2PulseMicros(values[OpalRT::RAW_CHANNEL_8]),
+                                                 0 //rssi unused
+                                                );
                 receiveMessage(rc);
             }
-            if (sendRawController)
-            {
+            if (sendRawController) {
                 mavlink_message_t rawController;
                 mavlink_msg_attitude_controller_output_pack(systemID, componentID, &rawController,
-                                                            1,
-                                                            rescaleControllerOutput(values[OpalRT::CONTROLLER_AILERON]),
-                                                            rescaleControllerOutput(values[OpalRT::CONTROLLER_ELEVATOR]),
-                                                            0, // yaw not used
-                                                            0 // thrust not used
-                                                            );
+                        1,
+                        rescaleControllerOutput(values[OpalRT::CONTROLLER_AILERON]),
+                        rescaleControllerOutput(values[OpalRT::CONTROLLER_ELEVATOR]),
+                        0, // yaw not used
+                        0 // thrust not used
+                                                           );
                 receiveMessage(rawController);
             }
-        }        
-        else if (returnVal != EAGAIN) // if returnVal == EAGAIN => data just wasn't ready
-        {
+        } else if (returnVal != EAGAIN) { // if returnVal == EAGAIN => data just wasn't ready
             getSignalsTimer->stop();
             OpalRT::OpalErrorMsg::displayLastErrorMsg();
         }
@@ -447,7 +427,8 @@ void OpalLink::setName(QString name)
     emit nameChanged(this->name);
 }
 
-bool OpalLink::isConnected() {    
+bool OpalLink::isConnected()
+{
     return connectState;
 }
 
@@ -459,8 +440,7 @@ uint16_t OpalLink::duty2PulseMicros(double duty)
 
 uint8_t OpalLink::rescaleNorm(double norm, int ch)
 {
-    switch(ch)
-    {
+    switch(ch) {
     case OpalRT::NORM_CHANNEL_1:
     case OpalRT::NORM_CHANNEL_2:
     case OpalRT::NORM_CHANNEL_4:
@@ -471,7 +451,7 @@ uint8_t OpalLink::rescaleNorm(double norm, int ch)
     case OpalRT::NORM_CHANNEL_5:
         //two setpoints
     case OpalRT::NORM_CHANNEL_3:
-    case OpalRT::NORM_CHANNEL_6:        
+    case OpalRT::NORM_CHANNEL_6:
         return static_cast<uint8_t>(norm*255);
         break;
     }
@@ -487,9 +467,8 @@ bool OpalLink::connect()
     short modelState;
 
     if ((OpalConnect(opalInstID, false, &modelState) == EOK)
-        && (OpalGetSignalControl(0, true) == EOK)
-        && (OpalGetParameterControl(true) == EOK))
-    {
+            && (OpalGetSignalControl(0, true) == EOK)
+            && (OpalGetParameterControl(true) == EOK)) {
         connectState = true;
         if (params)
             delete params;
@@ -497,9 +476,7 @@ bool OpalLink::connect()
         emit connected();
         heartbeatTimer->start(1000/heartbeatRate);
         getSignalsTimer->start(getSignalsPeriod);
-    }
-    else
-    {
+    } else {
         connectState = false;
         OpalRT::OpalErrorMsg::displayLastErrorMsg();
     }
@@ -546,7 +523,8 @@ qint64 OpalLink::getTotalUpstream()
     return totalUpstream;
 }
 
-qint64 OpalLink::getTotalDownstream() {
+qint64 OpalLink::getTotalDownstream()
+{
     statisticsMutex.lock();
     qint64 totalDownstream = bitsReceivedTotal / ((MG::TIME::getGroundTimeNow() - connectionStartTime) / 1000);
     statisticsMutex.unlock();
@@ -563,11 +541,13 @@ qint64 OpalLink::getMaxUpstream()
     return 0; //unknown
 }
 
-qint64 OpalLink::getBitsSent() {
+qint64 OpalLink::getBitsSent()
+{
     return bitsSentTotal;
 }
 
-qint64 OpalLink::getBitsReceived() {
+qint64 OpalLink::getBitsReceived()
+{
     return bitsReceivedTotal;
 }
 

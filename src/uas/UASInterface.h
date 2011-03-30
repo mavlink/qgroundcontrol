@@ -137,14 +137,12 @@ public:
      * @return The next color in the color map. The map holds 20 colors and starts from the beginning
      *         if the colors are exceeded.
      */
-    static QColor getNextColor()
-    {
+    static QColor getNextColor() {
         /* Create color map */
         static QList<QColor> colors = QList<QColor>();
         static int nextColor = -1;
 
-        if (nextColor == -1)
-        {
+        if (nextColor == -1) {
             ///> Color map for plots, includes 20 colors
             ///> Map will start from beginning when the first 20 colors are exceeded
 
@@ -175,8 +173,7 @@ public:
     /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
     virtual int getSystemType() = 0;
 
-    QColor getColor()
-    {
+    QColor getColor() {
         return color;
     }
 

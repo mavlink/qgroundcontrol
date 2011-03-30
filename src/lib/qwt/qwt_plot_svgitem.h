@@ -13,8 +13,8 @@
 #include <qglobal.h>
 
 #include <qstring.h>
-#include "qwt_double_rect.h" 
-#include "qwt_plot_item.h" 
+#include "qwt_double_rect.h"
+#include "qwt_plot_item.h"
 
 #if QT_VERSION >= 0x040100
 class QSvgRenderer;
@@ -22,7 +22,7 @@ class QByteArray;
 #endif
 
 /*!
-  \brief A plot item, which displays 
+  \brief A plot item, which displays
          data in Scalable Vector Graphics (SVG) format.
 
   SVG images are often used to display maps
@@ -41,8 +41,8 @@ public:
     virtual QwtDoubleRect boundingRect() const;
 
     virtual void draw(QPainter *p,
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-        const QRect &rect) const;
+                      const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                      const QRect &rect) const;
 
     virtual int rtti() const;
 
@@ -53,7 +53,7 @@ protected:
 #endif
 
     void render(QPainter *painter,
-        const QwtDoubleRect &viewBox, const QRect &rect) const;
+                const QwtDoubleRect &viewBox, const QRect &rect) const;
     QwtDoubleRect viewBox(const QwtDoubleRect &area) const;
 
 private:

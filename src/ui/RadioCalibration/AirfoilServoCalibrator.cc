@@ -1,7 +1,7 @@
 #include "AirfoilServoCalibrator.h"
 
 AirfoilServoCalibrator::AirfoilServoCalibrator(AirfoilType type, QWidget *parent) :
-    AbstractCalibrator(parent),    
+    AbstractCalibrator(parent),
     highPulseWidth(new QLabel()),
     centerPulseWidth(new QLabel()),
     lowPulseWidth(new QLabel())
@@ -11,20 +11,13 @@ AirfoilServoCalibrator::AirfoilServoCalibrator(AirfoilType type, QWidget *parent
     /* Add title */
     QHBoxLayout *titleLayout = new QHBoxLayout();
     QLabel* title;
-    if (type == AILERON)
-    {
+    if (type == AILERON) {
         title = new QLabel(tr("Aileron"));
-    }
-    else if (type == ELEVATOR)
-    {
+    } else if (type == ELEVATOR) {
         title = new QLabel(tr("Elevator"));
-    }
-    else if (type == RUDDER)
-    {
+    } else if (type == RUDDER) {
         title = new QLabel(tr("Rudder"));
-    }
-    else
-    {
+    } else {
         title = new QLabel(tr("Unknown"));
     }
 
@@ -41,26 +34,19 @@ AirfoilServoCalibrator::AirfoilServoCalibrator(AirfoilType type, QWidget *parent
     QLabel *highPulseString;
     QLabel *centerPulseString;
     QLabel *lowPulseString;
-    if (type == AILERON)
-    {
+    if (type == AILERON) {
         highPulseString = new QLabel(tr("Bank Right"));
         centerPulseString = new QLabel(tr("Center"));
         lowPulseString = new QLabel(tr("Bank Left"));
-    }
-    else if (type == ELEVATOR)
-    {
+    } else if (type == ELEVATOR) {
         highPulseString = new QLabel(tr("Nose Up"));
         centerPulseString = new QLabel(tr("Center"));
         lowPulseString = new QLabel(tr("Nose Down"));
-    }
-    else if (type == RUDDER)
-    {
+    } else if (type == RUDDER) {
         highPulseString = new QLabel(tr("Nose Right"));
         centerPulseString = new QLabel(tr("Center"));
         lowPulseString = new QLabel(tr("Nose Left"));
-    }
-    else
-    {
+    } else {
         highPulseString = new QLabel(tr("High"));
         centerPulseString = new QLabel(tr("Center"));
         lowPulseString = new QLabel(tr("Low"));
@@ -110,8 +96,7 @@ void AirfoilServoCalibrator::setLow()
 
 void AirfoilServoCalibrator::set(const QVector<float> &data)
 {
-    if (data.size() == 3)
-    {
+    if (data.size() == 3) {
         lowPulseWidth->setText(QString::number(data[0]));
         centerPulseWidth->setText(QString::number(data[1]));
         highPulseWidth->setText(QString::number(data[2]));

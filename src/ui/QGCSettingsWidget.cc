@@ -19,11 +19,9 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
 
     // Add all protocols
     QList<ProtocolInterface*> protocols = LinkManager::instance()->getProtocols();
-    foreach (ProtocolInterface* protocol, protocols)
-    {
+    foreach (ProtocolInterface* protocol, protocols) {
         MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
-        if (mavlink)
-        {
+        if (mavlink) {
             MAVLinkSettingsWidget* msettings = new MAVLinkSettingsWidget(mavlink, this);
             ui->tabWidget->addTab(msettings, "MAVLink");
         }
@@ -42,8 +40,7 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
 
     // Style
     MainWindow::QGC_MAINWINDOW_STYLE style = (MainWindow::QGC_MAINWINDOW_STYLE)MainWindow::instance()->getStyle();
-    switch (style)
-    {
+    switch (style) {
     case MainWindow::QGC_MAINWINDOW_STYLE_NATIVE:
         ui->nativeStyle->setChecked(true);
         break;

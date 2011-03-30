@@ -10,80 +10,71 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
 {
     QPointer<QObject> p;
 
-    if (parent != NULL)
-    {
+    if (parent != NULL) {
         p = parent;
-    }
-    else
-    {
+    } else {
         p = mavlink;
     }
 
     UASInterface* uas;
 
-    switch (heartbeat->autopilot)
-    {
-    case MAV_AUTOPILOT_GENERIC:
-        {
+    switch (heartbeat->autopilot) {
+    case MAV_AUTOPILOT_GENERIC: {
         UAS* mav = new UAS(mavlink, sysid);
         // Set the system type
         mav->setSystemType((int)heartbeat->type);
         // Connect this robot to the UAS object
         connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
         uas = mav;
-        }
-        break;
-    case MAV_AUTOPILOT_PIXHAWK:
-        {
-            PxQuadMAV* mav = new PxQuadMAV(mavlink, sysid);
-            // Set the system type
-            mav->setSystemType((int)heartbeat->type);
-            // Connect this robot to the UAS object
-            // it is IMPORTANT here to use the right object type,
-            // else the slot of the parent object is called (and thus the special
-            // packets never reach their goal)
-            connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-            uas = mav;
-        }
-        break;
-    case MAV_AUTOPILOT_SLUGS:
-        {
-            SlugsMAV* mav = new SlugsMAV(mavlink, sysid);
-            // Set the system type
-            mav->setSystemType((int)heartbeat->type);
-            // Connect this robot to the UAS object
-            // it is IMPORTANT here to use the right object type,
-            // else the slot of the parent object is called (and thus the special
-            // packets never reach their goal)
-            connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-            uas = mav;
-        }
-        break;
-    case MAV_AUTOPILOT_ARDUPILOTMEGA:
-        {
-            ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(mavlink, sysid);
-            // Set the system type
-            mav->setSystemType((int)heartbeat->type);
-            // Connect this robot to the UAS object
-            // it is IMPORTANT here to use the right object type,
-            // else the slot of the parent object is called (and thus the special
-            // packets never reach their goal)
-            connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-            uas = mav;
-        }
-        break;
-    default:
-        {
-            UAS* mav = new UAS(mavlink, sysid);
-            mav->setSystemType((int)heartbeat->type);
-            // Connect this robot to the UAS object
-            // it is IMPORTANT here to use the right object type,
-            // else the slot of the parent object is called (and thus the special
-            // packets never reach their goal)
-            connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
-            uas = mav;
-        }
-        break;
+    }
+    break;
+    case MAV_AUTOPILOT_PIXHAWK: {
+        PxQuadMAV* mav = new PxQuadMAV(mavlink, sysid);
+        // Set the system type
+        mav->setSystemType((int)heartbeat->type);
+        // Connect this robot to the UAS object
+        // it is IMPORTANT here to use the right object type,
+        // else the slot of the parent object is called (and thus the special
+        // packets never reach their goal)
+        connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+        uas = mav;
+    }
+    break;
+    case MAV_AUTOPILOT_SLUGS: {
+        SlugsMAV* mav = new SlugsMAV(mavlink, sysid);
+        // Set the system type
+        mav->setSystemType((int)heartbeat->type);
+        // Connect this robot to the UAS object
+        // it is IMPORTANT here to use the right object type,
+        // else the slot of the parent object is called (and thus the special
+        // packets never reach their goal)
+        connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+        uas = mav;
+    }
+    break;
+    case MAV_AUTOPILOT_ARDUPILOTMEGA: {
+        ArduPilotMegaMAV* mav = new ArduPilotMegaMAV(mavlink, sysid);
+        // Set the system type
+        mav->setSystemType((int)heartbeat->type);
+        // Connect this robot to the UAS object
+        // it is IMPORTANT here to use the right object type,
+        // else the slot of the parent object is called (and thus the special
+        // packets never reach their goal)
+        connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+        uas = mav;
+    }
+    break;
+    default: {
+        UAS* mav = new UAS(mavlink, sysid);
+        mav->setSystemType((int)heartbeat->type);
+        // Connect this robot to the UAS object
+        // it is IMPORTANT here to use the right object type,
+        // else the slot of the parent object is called (and thus the special
+        // packets never reach their goal)
+        connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+        uas = mav;
+    }
+    break;
     }
 
     // Set the autopilot type

@@ -77,8 +77,12 @@ public:
 
     virtual ~QOSGWidget() {}
 
-    osgViewer::GraphicsWindow* getGraphicsWindow() { return _gw.get(); }
-    const osgViewer::GraphicsWindow* getGraphicsWindow() const { return _gw.get(); }
+    osgViewer::GraphicsWindow* getGraphicsWindow() {
+        return _gw.get();
+    }
+    const osgViewer::GraphicsWindow* getGraphicsWindow() const {
+        return _gw.get();
+    }
 
 protected:
 
@@ -88,7 +92,7 @@ protected:
     //  The GraphincsWindowWin32 implementation already takes care of message handling.
     //  We don't want to relay these on Windows, it will just cause duplicate messages
     //  with further problems downstream (i.e. not being able to throw the trackball
-#ifndef WIN32 
+#ifndef WIN32
     virtual void mouseDoubleClickEvent ( QMouseEvent * event );
     virtual void closeEvent( QCloseEvent * event );
     virtual void destroyEvent( bool destroyWindow = true, bool destroySubWindows = true);
@@ -108,22 +112,23 @@ class ViewerQOSG : public osgViewer::Viewer, public QOSGWidget
 public:
 
     ViewerQOSG(QWidget * parent = 0, const char * name = 0, WindowFlags f = 0, int fps = 20):
-            QOSGWidget( parent, name, f )
-    {
+        QOSGWidget( parent, name, f ) {
         setThreadingModel(osgViewer::Viewer::SingleThreaded);
 
         connect(&_timer, SIGNAL(timeout()), this, SLOT(update()));
         _timer.start(1000.0f/fps);
     }
 
-    void updateCamera()
-    {
+    void updateCamera() {
         getCamera()->setViewport(new osg::Viewport(0,0,width(),height()));
         getCamera()->setProjectionMatrixAsPerspective(30.0f, 1.0f , static_cast<double>(width())/static_cast<double>(height()), 10000.0f);
         getCamera()->setGraphicsContext(getGraphicsWindow());
     }
 
-    virtual void paintEvent( QPaintEvent * event ) { Q_UNUSED(event); frame(); }
+    virtual void paintEvent( QPaintEvent * event ) {
+        Q_UNUSED(event);
+        frame();
+    }
 
 protected:
 
@@ -135,8 +140,7 @@ class CompositeViewerQOSG : public osgViewer::CompositeViewer, public QOSGWidget
 {
 public:
     CompositeViewerQOSG(QWidget * parent = 0, const char * name = 0, WindowFlags f = 0, int fps = 20)
-        : QOSGWidget( parent, name, f )
-    {
+        : QOSGWidget( parent, name, f ) {
         setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
 
         connect(&_timer, SIGNAL(timeout()), this, SLOT(repaint()));
@@ -158,17 +162,17 @@ public:
         _timer.start(1000.0f/fps);
     }
 
-    virtual void paintEvent( QPaintEvent * event ) { Q_UNUSED(event); frame(); }
+    virtual void paintEvent( QPaintEvent * event ) {
+        Q_UNUSED(event);
+        frame();
+    }
 
-    void keyPressEvent( QKeyEvent* event )
-    {
-        if ( event->text() == "a" )
-        {
+    void keyPressEvent( QKeyEvent* event ) {
+        if ( event->text() == "a" ) {
             AddView( _scene.get() );
         }
 
-        if ( event->text() == "r" )
-        {
+        if ( event->text() == "r" ) {
             RemoveView();
         }
 

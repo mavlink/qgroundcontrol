@@ -41,17 +41,17 @@ using namespace OpalRT;
 //}
 Parameter::Parameter(QString simulinkPath, QString simulinkName, uint8_t componentID,
                      QGCParamID paramID, unsigned short opalID)
-                         : simulinkPath(new QString(simulinkPath)),
-                         simulinkName(new QString(simulinkName)),
-                         componentID(componentID),
-                         paramID(new QGCParamID(paramID)),
-                         opalID(opalID)
+    : simulinkPath(new QString(simulinkPath)),
+      simulinkName(new QString(simulinkName)),
+      componentID(componentID),
+      paramID(new QGCParamID(paramID)),
+      opalID(opalID)
 
 {
 }
 Parameter::Parameter(const Parameter &other)
     : componentID(other.componentID),
-    opalID(other.opalID)
+      opalID(other.opalID)
 {
     simulinkPath = new QString(*other.simulinkPath);
     simulinkName = new QString(*other.simulinkName);
@@ -68,11 +68,11 @@ Parameter::~Parameter()
 bool Parameter::operator ==(const Parameter& other) const
 {
     return
-            (*simulinkPath) == *(other.simulinkPath)
-            && *simulinkName == *(other.simulinkName)
-            && componentID == other.componentID
-            && *paramID == *(other.paramID)
-            && opalID == other.opalID;
+        (*simulinkPath) == *(other.simulinkPath)
+        && *simulinkName == *(other.simulinkName)
+        && componentID == other.componentID
+        && *paramID == *(other.paramID)
+        && opalID == other.opalID;
 
 }
 
@@ -87,8 +87,7 @@ float Parameter::getValue()
     int returnVal = OpalGetParameters(allocatedParams, &numParams, &opalID,
                                       numValues, &returnedNumValues, &value);
 
-    if (returnVal != EOK)
-    {
+    if (returnVal != EOK) {
         OpalRT::OpalErrorMsg::displayLastErrorMsg();
         return FLT_MAX;
     }
@@ -106,8 +105,7 @@ void Parameter::setValue(float val)
 
     int returnVal = OpalSetParameters(allocatedParams, &numParams, &opalID,
                                       numValues, &returnedNumValues, &value);
-    if (returnVal != EOK)
-    {
+    if (returnVal != EOK) {
         //qDebug() << __FILE__ << ":" << __LINE__ << ": Error numer: " << QString::number(returnVal);
         OpalErrorMsg::displayLastErrorMsg();
     }
@@ -116,5 +114,5 @@ void Parameter::setValue(float val)
 Parameter::operator QString() const
 {
     return *simulinkPath + *simulinkName + " " + QString::number(componentID)
-            + " " + *paramID + " " + QString::number(opalID);
+           + " " + *paramID + " " + QString::number(opalID);
 }

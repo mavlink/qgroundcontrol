@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -22,12 +22,12 @@ class QCursor;
   QwtPanner grabs the contents of a widget, that can be dragged
   in all directions. The offset between the start and the end position
   is emitted by the panned signal.
-   
+
   QwtPanner grabs the content of the widget into a pixmap and moves
   the pixmap around, without initiating any repaint events for the widget.
   Areas, that are not part of content are not painted  while panning
-  in in process. This makes panning fast enough for widgets, where 
-  repaints are too slow for mouse movements. 
+  in in process. This makes panning fast enough for widgets, where
+  repaints are too slow for mouse movements.
 
   For widgets, where repaints are very fast it might be better to
   implement panning manually by mapping mouse events into paint events.

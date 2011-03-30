@@ -74,7 +74,7 @@ public:
         it is only available for owners of a commercial Qt license.
       - TeXText\n
         Use a TeX (http://en.wikipedia.org/wiki/TeX) render engine
-        to display the text. 
+        to display the text.
       - OtherFormat\n
         The number of text formats can be extended using setTextEngine.
         Formats >= OtherFormat are not used by Qwt.
@@ -82,10 +82,9 @@ public:
       \sa QwtTextEngine, setTextEngine
     */
 
-    enum TextFormat
-    {
+    enum TextFormat {
         AutoText = 0,
-        
+
         PlainText,
         RichText,
 
@@ -98,7 +97,7 @@ public:
     /*!
       \brief Paint Attributes
 
-      Font and color and background are optional attributes of a QwtText. 
+      Font and color and background are optional attributes of a QwtText.
       The paint attributes hold the information, if they are set.
 
       - PaintUsingTextFont\n
@@ -108,8 +107,7 @@ public:
       - PaintBackground\n
         The text has an individual background.
     */
-    enum PaintAttribute
-    {
+    enum PaintAttribute {
         PaintUsingTextFont = 1,
         PaintUsingTextColor = 2,
         PaintBackground = 4
@@ -126,13 +124,12 @@ public:
         If QwtTextEngine::textMargins is not implemented for the format
         of the text, MinimumLayout has no effect.
     */
-    enum LayoutAttribute
-    {
+    enum LayoutAttribute {
         MinimumLayout = 1
     };
 
-    QwtText(const QString & = QString::null, 
-        TextFormat textFormat = AutoText);
+    QwtText(const QString & = QString::null,
+            TextFormat textFormat = AutoText);
     QwtText(const QwtText &);
     ~QwtText();
 
@@ -141,15 +138,19 @@ public:
     int operator==(const QwtText &) const;
     int operator!=(const QwtText &) const;
 
-    void setText(const QString &, 
-        QwtText::TextFormat textFormat = AutoText);
+    void setText(const QString &,
+                 QwtText::TextFormat textFormat = AutoText);
     QString text() const;
 
     //! \return text().isNull()
-    inline bool isNull() const { return text().isNull(); }
+    inline bool isNull() const {
+        return text().isNull();
+    }
 
     //! \return text().isEmpty()
-    inline bool isEmpty() const { return text().isEmpty(); }
+    inline bool isEmpty() const {
+        return text().isEmpty();
+    }
 
     void setFont(const QFont &);
     QFont font() const;
@@ -182,7 +183,7 @@ public:
     void draw(QPainter *painter, const QRect &rect) const;
 
     static const QwtTextEngine *textEngine(const QString &text,
-        QwtText::TextFormat = AutoText);
+                                           QwtText::TextFormat = AutoText);
 
     static const QwtTextEngine *textEngine(QwtText::TextFormat);
     static void setTextEngine(QwtText::TextFormat, QwtTextEngine *);

@@ -20,7 +20,7 @@ This file is part of the QGROUNDCONTROL project
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
- 
+
 /**
  * @file
  *   @brief Brief Description
@@ -36,29 +36,30 @@ This file is part of the QGROUNDCONTROL project
 #include <QString>
 #include <LinkInterface.h>
 
-class SerialLinkInterface : public LinkInterface {
-	Q_OBJECT
+class SerialLinkInterface : public LinkInterface
+{
+    Q_OBJECT
 
 public:
-	virtual QString getPortName() = 0;
-	virtual int getBaudRate() = 0;
+    virtual QString getPortName() = 0;
+    virtual int getBaudRate() = 0;
     virtual int getDataBits() = 0;
     virtual int getStopBits() = 0;
 
-	virtual int getBaudRateType() = 0;
-	virtual int getFlowType() = 0;
-	virtual int getParityType() = 0;
-	virtual int getDataBitsType() = 0;
-	virtual int getStopBitsType() = 0;
+    virtual int getBaudRateType() = 0;
+    virtual int getFlowType() = 0;
+    virtual int getParityType() = 0;
+    virtual int getDataBitsType() = 0;
+    virtual int getStopBitsType() = 0;
 
 public slots:
-	virtual bool setPortName(QString portName) = 0;
-	virtual bool setBaudRate(int rate) = 0;
-	virtual bool setBaudRateType(int rateIndex) = 0;
-	virtual bool setFlowType(int flow) = 0;
-	virtual bool setParityType(int parity) = 0;
-	virtual bool setDataBitsType(int dataBits) = 0;
-	virtual bool setStopBitsType(int stopBits) = 0;
+    virtual bool setPortName(QString portName) = 0;
+    virtual bool setBaudRate(int rate) = 0;
+    virtual bool setBaudRateType(int rateIndex) = 0;
+    virtual bool setFlowType(int flow) = 0;
+    virtual bool setParityType(int parity) = 0;
+    virtual bool setDataBitsType(int dataBits) = 0;
+    virtual bool setStopBitsType(int stopBits) = 0;
     virtual void loadSettings() = 0;
     virtual void writeSettings() = 0;
 

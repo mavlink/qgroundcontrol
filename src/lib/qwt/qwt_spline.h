@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -39,13 +39,13 @@ template class QWT_EXPORT QwtArray<QwtDoublePoint>;
 
   The QwtSpline class is used for cubical spline interpolation.
   Two types of splines, natural and periodic, are supported.
-  
+
   \par Usage:
   <ol>
-  <li>First call setPoints() to determine the spline coefficients 
+  <li>First call setPoints() to determine the spline coefficients
       for a tabulated function y(x).
   <li>After the coefficients have been set up, the interpolated
-      function value for an argument x can be determined by calling 
+      function value for an argument x can be determined by calling
       QwtSpline::value().
   </ol>
 
@@ -56,12 +56,12 @@ template class QWT_EXPORT QwtArray<QwtDoublePoint>;
 QPolygonF interpolate(const QPolygonF& points, int numValues)
 {
     QwtSpline spline;
-    if ( !spline.setPoints(points) ) 
+    if ( !spline.setPoints(points) )
         return points;
 
     QPolygonF interpolatedPoints(numValues);
 
-    const double delta = 
+    const double delta =
         (points[numPoints - 1].x() - points[0].x()) / (points.size() - 1);
     for(i = 0; i < points.size(); i++)  / interpolate
     {
@@ -77,8 +77,7 @@ QPolygonF interpolate(const QPolygonF& points, int numValues)
 class QWT_EXPORT QwtSpline
 {
 public:
-    enum SplineType
-    {
+    enum SplineType {
         Natural,
         Periodic
     };

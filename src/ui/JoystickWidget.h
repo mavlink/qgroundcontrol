@@ -34,18 +34,20 @@ This file is part of the PIXHAWK project
 #include <QtGui/QDialog>
 #include "JoystickInput.h"
 
-namespace Ui {
-    class JoystickWidget;
+namespace Ui
+{
+class JoystickWidget;
 }
 
-class JoystickWidget : public QDialog {
+class JoystickWidget : public QDialog
+{
     Q_OBJECT
     Q_DISABLE_COPY(JoystickWidget)
 public:
     explicit JoystickWidget(JoystickInput* joystick, QWidget *parent = 0);
     virtual ~JoystickWidget();
 
-    public slots:
+public slots:
     /**
      * @brief Receive raw joystick values
      *

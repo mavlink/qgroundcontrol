@@ -56,15 +56,11 @@ void QwtAnalogClock::initClock()
     QColor handColor;
     int width;
 
-    for ( int i = 0; i < NHands; i++ )
-    {
-        if ( i == SecondHand )
-        {
+    for ( int i = 0; i < NHands; i++ ) {
+        if ( i == SecondHand ) {
             width = 2;
             handColor = knobColor.dark(120);
-        }
-        else
-        {
+        } else {
             width = 8;
             handColor = knobColor;
         }
@@ -85,7 +81,7 @@ QwtAnalogClock::~QwtAnalogClock()
         delete d_hand[i];
 }
 
-/*! 
+/*!
   Nop method, use setHand instead
   \sa QwtAnalogClock::setHand
 */
@@ -103,8 +99,7 @@ void QwtAnalogClock::setNeedle(QwtDialNeedle *)
 */
 void QwtAnalogClock::setHand(Hand hand, QwtDialNeedle *needle)
 {
-    if ( hand >= 0 || hand < NHands )
-    {
+    if ( hand >= 0 || hand < NHands ) {
         delete d_hand[hand];
         d_hand[hand] = needle;
     }
@@ -140,26 +135,24 @@ const QwtDialNeedle *QwtAnalogClock::hand(Hand hd) const
   can't handle default parameters for slots.
 */
 void QwtAnalogClock::setCurrentTime()
-{ 
-    setTime(QTime::currentTime()); 
+{
+    setTime(QTime::currentTime());
 }
 
 /*!
-  Set a time 
+  Set a time
   \param time Time to display
 */
 void QwtAnalogClock::setTime(const QTime &time)
 {
-    if ( time.isValid() )
-    {
-        setValue((time.hour() % 12) * 60.0 * 60.0 
-            + time.minute() * 60.0 + time.second());
-    }
-    else
+    if ( time.isValid() ) {
+        setValue((time.hour() % 12) * 60.0 * 60.0
+                 + time.minute() * 60.0 + time.second());
+    } else
         setValid(false);
 }
 
-/*! 
+/*!
   Find the scale label for a given value
 
   \param value Value
@@ -189,21 +182,20 @@ QwtText QwtAnalogClock::scaleLabel(double value) const
   \sa QwtAnalogClock::drawHand()
 */
 void QwtAnalogClock::drawNeedle(QPainter *painter, const QPoint &center,
-        int radius, double, QPalette::ColorGroup cg) const
+                                int radius, double, QPalette::ColorGroup cg) const
 {
-    if ( isValid() )
-    {
+    if ( isValid() ) {
         const double hours = value() / (60.0 * 60.0);
         const double minutes = (value() - (int)hours * 60.0 * 60.0) / 60.0;
-        const double seconds = value() - (int)hours * 60.0 * 60.0 
-            - (int)minutes * 60.0;
+        const double seconds = value() - (int)hours * 60.0 * 60.0
+                               - (int)minutes * 60.0;
 
         drawHand(painter, HourHand, center, radius,
-            360.0 - (origin() + 360.0 * hours / 12.0), cg);
+                 360.0 - (origin() + 360.0 * hours / 12.0), cg);
         drawHand(painter, MinuteHand, center, radius,
-            360.0 - (origin() + 360.0 * minutes / 60.0), cg);
+                 360.0 - (origin() + 360.0 * minutes / 60.0), cg);
         drawHand(painter, SecondHand, center, radius,
-            360.0 - (origin() + 360.0 * seconds / 60.0), cg);
+                 360.0 - (origin() + 360.0 * seconds / 60.0), cg);
     }
 }
 
@@ -218,12 +210,11 @@ void QwtAnalogClock::drawNeedle(QPainter *painter, const QPoint &center,
   \param cg ColorGroup
 */
 void QwtAnalogClock::drawHand(QPainter *painter, Hand hd,
-    const QPoint &center, int radius, double direction, 
-    QPalette::ColorGroup cg) const
+                              const QPoint &center, int radius, double direction,
+                              QPalette::ColorGroup cg) const
 {
     const QwtDialNeedle *needle = hand(hd);
-    if ( needle )
-    {
+    if ( needle ) {
         if ( hd == HourHand )
             radius = qRound(0.8 * radius);
 

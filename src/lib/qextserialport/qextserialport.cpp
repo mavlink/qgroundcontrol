@@ -45,7 +45,7 @@ The object will be associated with the first port in the system, e.g. COM1 on Wi
 See the other constructors if you need to use a port other than the first.
 */
 QextSerialPort::QextSerialPort(QueryMode mode)
- : QextBaseType(mode)
+    : QextBaseType(mode)
 {}
 
 /*!
@@ -56,7 +56,7 @@ e.g."COM1" or "/dev/ttyS0".
 \see setQueryMode().
 */
 QextSerialPort::QextSerialPort(const QString & name, QueryMode mode)
- : QextBaseType(name, mode)
+    : QextBaseType(name, mode)
 {
 }
 
@@ -66,7 +66,7 @@ Constructs a port with default name and settings specified by the settings param
 \see setQueryMode().
 */
 QextSerialPort::QextSerialPort(PortSettings const& settings, QueryMode mode)
- : QextBaseType(settings, mode)
+    : QextBaseType(settings, mode)
 {}
 
 /*!
@@ -75,7 +75,7 @@ Constructs a port with the name and settings specified.
 \see setQueryMode().
 */
 QextSerialPort::QextSerialPort(const QString & name, PortSettings const& settings, QueryMode mode)
- : QextBaseType(name, settings, mode)
+    : QextBaseType(name, settings, mode)
 {}
 
 /*!
@@ -84,7 +84,7 @@ Copy constructor.
 \deprecated
 */
 QextSerialPort::QextSerialPort(const QextSerialPort& s)
- : QextBaseType(s)
+    : QextBaseType(s)
 {}
 
 /*!

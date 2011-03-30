@@ -39,7 +39,8 @@ along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
 * with the groundstation application.
 *
 **/
-class LinkInterface : public QThread {
+class LinkInterface : public QThread
+{
     Q_OBJECT
 public:
     LinkInterface(QObject* parent = 0) : QThread(parent) {}
@@ -232,21 +233,20 @@ signals:
     void communicationError(const QString& linkname, const QString& error);
 
 protected:
-    static int getNextLinkId()
-    {
+    static int getNextLinkId() {
         static int nextId = 0;
         return nextId++;
     }
 
 protected slots:
 
-/**
- * @brief Read a number of bytes from the interface.
- *
- * @param bytes The pointer to write the bytes to
- * @param maxLength The maximum length which can be written
- **/
-virtual void readBytes() = 0;
+    /**
+     * @brief Read a number of bytes from the interface.
+     *
+     * @param bytes The pointer to write the bytes to
+     * @param maxLength The maximum length which can be written
+     **/
+    virtual void readBytes() = 0;
 
 };
 

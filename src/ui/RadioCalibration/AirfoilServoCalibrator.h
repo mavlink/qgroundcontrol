@@ -47,10 +47,9 @@ This file is part of the QGROUNDCONTROL project
   */
 class AirfoilServoCalibrator : public AbstractCalibrator
 {
-Q_OBJECT
+    Q_OBJECT
 public:
-    enum AirfoilType
-    {
+    enum AirfoilType {
         AILERON,
         ELEVATOR,
         RUDDER
@@ -66,7 +65,7 @@ protected slots:
     void setCenter();
     void setLow();
 
-protected:    
+protected:
     QLabel *highPulseWidth;
     QLabel *centerPulseWidth;
     QLabel *lowPulseWidth;

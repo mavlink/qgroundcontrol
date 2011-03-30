@@ -20,7 +20,7 @@ This file is part of the QGROUNDCONTROL project
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
- 
+
 /**
  * @file
  *   @brief Brief Description
@@ -52,17 +52,18 @@ This file is part of the QGROUNDCONTROL project
  * safe.
  *
  */
-class SerialLink : public SerialLinkInterface {
+class SerialLink : public SerialLinkInterface
+{
     Q_OBJECT
     //Q_INTERFACES(SerialLinkInterface:LinkInterface)
 
 public:
-    SerialLink(QString portname = "", 
-			SerialInterface::baudRateType baudrate=SerialInterface::BAUD57600,
-			SerialInterface::flowType flow=SerialInterface::FLOW_OFF, 
-			SerialInterface::parityType parity=SerialInterface::PAR_NONE,
-			SerialInterface::dataBitsType dataBits=SerialInterface::DATA_8,
-			SerialInterface::stopBitsType stopBits=SerialInterface::STOP_1);
+    SerialLink(QString portname = "",
+               SerialInterface::baudRateType baudrate=SerialInterface::BAUD57600,
+               SerialInterface::flowType flow=SerialInterface::FLOW_OFF,
+               SerialInterface::parityType parity=SerialInterface::PAR_NONE,
+               SerialInterface::dataBitsType dataBits=SerialInterface::DATA_8,
+               SerialInterface::stopBitsType stopBits=SerialInterface::STOP_1);
     ~SerialLink();
 
     static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in configuration.h
@@ -144,11 +145,11 @@ protected:
 #endif
     QString porthandle;
     QString name;
-	SerialInterface::baudRateType baudrate;
-	SerialInterface::flowType flow;
-	SerialInterface::parityType parity;
-	SerialInterface::dataBitsType dataBits;
-	SerialInterface::stopBitsType stopBits;
+    SerialInterface::baudRateType baudrate;
+    SerialInterface::flowType flow;
+    SerialInterface::parityType parity;
+    SerialInterface::dataBitsType dataBits;
+    SerialInterface::stopBitsType stopBits;
     int timeout;
     int id;
 
@@ -168,7 +169,7 @@ protected:
     bool hardwareConnect();
 
 signals:
-	void aboutToCloseFlag();
+    void aboutToCloseFlag();
 
 };
 

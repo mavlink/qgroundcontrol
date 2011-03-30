@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -19,8 +19,7 @@
 class QWT_EXPORT QwtScaleTransformation
 {
 public:
-    enum Type
-    {
+    enum Type {
         Linear,
         Log10,
 
@@ -31,12 +30,14 @@ public:
     virtual ~QwtScaleTransformation();
 
     virtual double xForm(double x, double s1, double s2,
-        double p1, double p2) const;
+                         double p1, double p2) const;
     virtual double invXForm(double x, double s1, double s2,
-        double p1, double p2) const;
+                            double p1, double p2) const;
 
-    inline Type type() const { return d_type; }
-    
+    inline Type type() const {
+        return d_type;
+    }
+
     virtual QwtScaleTransformation *copy() const;
 
 private:
@@ -49,7 +50,7 @@ private:
 /*!
    \brief A scale map
 
-   QwtScaleMap offers transformations from a scale 
+   QwtScaleMap offers transformations from a scale
    into a paint interval and vice versa.
 */
 class QWT_EXPORT QwtScaleMap
@@ -87,7 +88,7 @@ public:
     QT_STATIC_CONST double LogMax;
 
 private:
-    void newFactor();   
+    void newFactor();
 
     double d_s1, d_s2;     // scale interval boundaries
     double d_p1, d_p2;     // paint device interval boundaries
@@ -100,7 +101,7 @@ private:
 /*!
     \return First border of the scale interval
 */
-inline double QwtScaleMap::s1() const 
+inline double QwtScaleMap::s1() const
 {
     return d_s1;
 }
@@ -108,7 +109,7 @@ inline double QwtScaleMap::s1() const
 /*!
     \return Second border of the scale interval
 */
-inline double QwtScaleMap::s2() const 
+inline double QwtScaleMap::s2() const
 {
     return d_s2;
 }
@@ -116,7 +117,7 @@ inline double QwtScaleMap::s2() const
 /*!
     \return First border of the paint interval
 */
-inline double QwtScaleMap::p1() const 
+inline double QwtScaleMap::p1() const
 {
     return d_p1;
 }
@@ -124,7 +125,7 @@ inline double QwtScaleMap::p1() const
 /*!
     \return Second border of the paint interval
 */
-inline double QwtScaleMap::p2() const 
+inline double QwtScaleMap::p2() const
 {
     return d_p2;
 }
@@ -140,7 +141,7 @@ inline double QwtScaleMap::sDist() const
 }
 
 /*!
-  Transform a point related to the scale interval into an point 
+  Transform a point related to the scale interval into an point
   related to the interval of the paint device
 */
 inline double QwtScaleMap::xTransform(double s) const
@@ -166,7 +167,7 @@ inline double QwtScaleMap::invTransform(double p) const
 }
 
 /*!
-  Transform a point related to the scale interval into an point 
+  Transform a point related to the scale interval into an point
   related to the interval of the paint device and round it to
   an integer. (In Qt <= 3.x paint devices are integer based. )
 

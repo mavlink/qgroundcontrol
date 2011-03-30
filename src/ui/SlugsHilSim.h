@@ -45,8 +45,9 @@ This file is part of the QGROUNDCONTROL project
 #include "SlugsMAV.h"
 
 
-namespace Ui {
-    class SlugsHilSim;
+namespace Ui
+{
+class SlugsHilSim;
 }
 
 class SlugsHilSim : public QWidget
@@ -73,7 +74,7 @@ protected:
     mavlink_air_data_t tmpAirData;
 #endif
     mavlink_gps_raw_t tmpGpsData;
-	#ifdef MAVLINK_ENABLED_SLUGS
+#ifdef MAVLINK_ENABLED_SLUGS
     mavlink_gps_date_time_t tmpGpsTime;
 #endif
 
@@ -128,15 +129,15 @@ public slots:
 
 private:
 
-	typedef union _tFloatToChar {
-		unsigned char   chData[4];
-		float   		flData;
-	} tFloatToChar;
+    typedef union _tFloatToChar {
+        unsigned char   chData[4];
+        float   		flData;
+    } tFloatToChar;
 
-	typedef union _tUint16ToChar {
-		unsigned char   chData[2];
-		uint16_t   		uiData;
-	} tUint16ToChar;
+    typedef union _tUint16ToChar {
+        unsigned char   chData[2];
+        uint16_t   		uiData;
+    } tUint16ToChar;
 
     Ui::SlugsHilSim *ui;
 

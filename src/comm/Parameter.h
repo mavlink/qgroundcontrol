@@ -43,40 +43,50 @@ This file is part of the QGROUNDCONTROL project
 
 namespace OpalRT
 {
-    class Parameter
-    {
-    public:
+class Parameter
+{
+public:
 //        Parameter(char *simulinkPath = "",
 //                  char *simulinkName = "",
 //                  uint8_t componentID = 0,
 //                  QGCParamID paramID = QGCParamID(),
 //                  unsigned short opalID = 0);
-        Parameter(QString simulinkPath = QString(),
-                  QString simulinkName = QString(),
-                  uint8_t componentID = 0,
-                  QGCParamID paramID = QGCParamID(),
-                  unsigned short opalID = 0);
-        Parameter(const Parameter& other);
-        ~Parameter();
+    Parameter(QString simulinkPath = QString(),
+              QString simulinkName = QString(),
+              uint8_t componentID = 0,
+              QGCParamID paramID = QGCParamID(),
+              unsigned short opalID = 0);
+    Parameter(const Parameter& other);
+    ~Parameter();
 
-        const QGCParamID& getParamID() const {return *paramID;}
-        void setOpalID(unsigned short opalID) {this->opalID = opalID;}
-        const QString& getSimulinkPath() const {return *simulinkPath;}
-        const QString& getSimulinkName() const {return *simulinkName;}
-        uint8_t getComponentID() const {return componentID;}
-        float getValue();
-        void setValue(float value);
+    const QGCParamID& getParamID() const {
+        return *paramID;
+    }
+    void setOpalID(unsigned short opalID) {
+        this->opalID = opalID;
+    }
+    const QString& getSimulinkPath() const {
+        return *simulinkPath;
+    }
+    const QString& getSimulinkName() const {
+        return *simulinkName;
+    }
+    uint8_t getComponentID() const {
+        return componentID;
+    }
+    float getValue();
+    void setValue(float value);
 
-        bool operator==(const Parameter& other) const;
-        operator QString() const;
+    bool operator==(const Parameter& other) const;
+    operator QString() const;
 
-    protected:
-        QString *simulinkPath;
-        QString *simulinkName;
-        uint8_t componentID;
-        QGCParamID *paramID;
-        unsigned short opalID;
-    };
+protected:
+    QString *simulinkPath;
+    QString *simulinkName;
+    uint8_t componentID;
+    QGCParamID *paramID;
+    unsigned short opalID;
+};
 }
 
 #endif // PARAMETER_H

@@ -38,8 +38,9 @@ This file is part of the QGROUNDCONTROL project
 #include <QMouseEvent>
 #include <UASInterface.h>
 
-namespace Ui {
-    class UASView;
+namespace Ui
+{
+class UASView;
 }
 
 class UASView : public QWidget

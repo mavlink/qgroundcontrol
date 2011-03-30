@@ -86,18 +86,15 @@ void UDPLink::setPort(int port)
 void UDPLink::addHost(const QString& host)
 {
     qDebug() << "UDP:" << "ADDING HOST:" << host;
-    if (host.contains(":"))
-    {
+    if (host.contains(":")) {
         qDebug() << "HOST: " << host.split(":").first();
         QHostInfo info = QHostInfo::fromName(host.split(":").first());
         // Add host
         QList<QHostAddress> hostAddresses = info.addresses();
         QHostAddress address;
-        for (int i = 0; i < hostAddresses.size(); i++)
-        {
+        for (int i = 0; i < hostAddresses.size(); i++) {
             // Exclude loopback IPv4 and all IPv6 addresses
-            if (!hostAddresses.at(i).toString().contains(":"))
-            {
+            if (!hostAddresses.at(i).toString().contains(":")) {
                 address = hostAddresses.at(i);
             }
         }
@@ -105,9 +102,7 @@ void UDPLink::addHost(const QString& host)
         qDebug() << "Address:" << address.toString();
         // Set port according to user input
         ports.append(host.split(":").last().toInt());
-    }
-    else
-    {
+    } else {
         QHostInfo info = QHostInfo::fromName(host);
         // Add host
         hosts.append(info.addresses().first());
@@ -124,18 +119,14 @@ void UDPLink::removeHost(const QString& hostname)
     QHostInfo info = QHostInfo::fromName(host);
     QHostAddress address;
     QList<QHostAddress> hostAddresses = info.addresses();
-    for (int i = 0; i < hostAddresses.size(); i++)
-    {
+    for (int i = 0; i < hostAddresses.size(); i++) {
         // Exclude loopback IPv4 and all IPv6 addresses
-        if (!hostAddresses.at(i).toString().contains(":"))
-        {
+        if (!hostAddresses.at(i).toString().contains(":")) {
             address = hostAddresses.at(i);
         }
     }
-    for (int i = 0; i < hosts.count(); ++i)
-    {
-        if (hosts.at(i) == address)
-        {
+    for (int i = 0; i < hosts.count(); ++i) {
+        if (hosts.at(i) == address) {
             hosts.removeAt(i);
             ports.removeAt(i);
         }
@@ -150,14 +141,12 @@ void UDPLink::writeBytes(const char* data, qint64 size)
     // for (h = hosts->begin(); h != hosts->end(); ++h)
 
 
-    for (int h = 0; h < hosts.size(); h++)
-    {
+    for (int h = 0; h < hosts.size(); h++) {
         QHostAddress currentHost = hosts.at(h);
         quint16 currentPort = ports.at(h);
 
         qDebug() << "WRITING TO" << currentHost.toIPv4Address() << currentPort;
-        for (int i=0; i<size; i++)
-        {
+        for (int i=0; i<size; i++) {
             unsigned char v =data[i];
             qDebug("%02x ", v);
         }
@@ -200,14 +189,11 @@ void UDPLink::readBytes()
 
 
     // Add host to broadcast list if not yet present
-    if (!hosts.contains(sender))
-    {
+    if (!hosts.contains(sender)) {
         hosts.append(sender);
         ports.append(senderPort);
         //        ports->insert(sender, senderPort);
-    }
-    else
-    {
+    } else {
         int index = hosts.indexOf(sender);
         ports.replace(index, senderPort);
     }
@@ -220,7 +206,8 @@ void UDPLink::readBytes()
  *
  * @return The number of bytes to read
  **/
-qint64 UDPLink::bytesAvailable() {
+qint64 UDPLink::bytesAvailable()
+{
     return socket->pendingDatagramSize();
 }
 
@@ -259,7 +246,7 @@ bool UDPLink::connect()
 //    }
 //    else
 //    {
-        connectState = socket->bind(host, port);
+    connectState = socket->bind(host, port);
 //    }
 
     //Provides Multicast functionality to UdpSocket
@@ -291,8 +278,7 @@ bool UDPLink::connect()
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
     emit connected(connectState);
-    if (connectState)
-    {
+    if (connectState) {
         emit connected();
         connectionStartTime = QGC::groundTimeUsecs()/1000;
     }
@@ -306,7 +292,8 @@ bool UDPLink::connect()
  *
  * @return True if link is connected, false otherwise.
  **/
-bool UDPLink::isConnected() {
+bool UDPLink::isConnected()
+{
     return connectState;
 }
 
@@ -327,53 +314,64 @@ void UDPLink::setName(QString name)
 }
 
 
-qint64 UDPLink::getNominalDataRate() {
+qint64 UDPLink::getNominalDataRate()
+{
     return 54000000; // 54 Mbit
 }
 
-qint64 UDPLink::getTotalUpstream() {
+qint64 UDPLink::getTotalUpstream()
+{
     statisticsMutex.lock();
     qint64 totalUpstream = bitsSentTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
     statisticsMutex.unlock();
     return totalUpstream;
 }
 
-qint64 UDPLink::getCurrentUpstream() {
+qint64 UDPLink::getCurrentUpstream()
+{
     return 0; // TODO
 }
 
-qint64 UDPLink::getMaxUpstream() {
+qint64 UDPLink::getMaxUpstream()
+{
     return 0; // TODO
 }
 
-qint64 UDPLink::getBitsSent() {
+qint64 UDPLink::getBitsSent()
+{
     return bitsSentTotal;
 }
 
-qint64 UDPLink::getBitsReceived() {
+qint64 UDPLink::getBitsReceived()
+{
     return bitsReceivedTotal;
 }
 
-qint64 UDPLink::getTotalDownstream() {
+qint64 UDPLink::getTotalDownstream()
+{
     statisticsMutex.lock();
     qint64 totalDownstream = bitsReceivedTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
     statisticsMutex.unlock();
     return totalDownstream;
 }
 
-qint64 UDPLink::getCurrentDownstream() {
+qint64 UDPLink::getCurrentDownstream()
+{
     return 0; // TODO
 }
 
-qint64 UDPLink::getMaxDownstream() {
+qint64 UDPLink::getMaxDownstream()
+{
     return 0; // TODO
 }
 
-bool UDPLink::isFullDuplex() {
+bool UDPLink::isFullDuplex()
+{
     return true;
 }
 
-int UDPLink::getLinkQuality() {
+int UDPLink::getLinkQuality()
+{
     /* This feature is not supported with this interface */
     return -1;
 }

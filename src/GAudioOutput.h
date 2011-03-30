@@ -59,7 +59,7 @@ This file is part of the PIXHAWK project
 extern "C" {
     cst_voice *REGISTER_VOX(const char *voxdir);
     void UNREGISTER_VOX(cst_voice *vox);
-cst_voice* register_cmu_us_kal16(const char *voxdir);
+    cst_voice* register_cmu_us_kal16(const char *voxdir);
 }
 #endif
 
@@ -124,7 +124,7 @@ protected:
     bool muted;
 private:
     GAudioOutput(QObject* parent=NULL);
-	~GAudioOutput();
+    ~GAudioOutput();
 };
 
 #endif // AUDIOOUTPUT_H

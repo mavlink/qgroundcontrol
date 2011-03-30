@@ -3,8 +3,9 @@
 
 #include <QWidget>
 
-namespace Ui {
-    class QGCWebView;
+namespace Ui
+{
+class QGCWebView;
 }
 
 class QGCWebView : public QWidget

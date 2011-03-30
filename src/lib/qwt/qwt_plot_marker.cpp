@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -26,13 +26,11 @@ public:
         align(Qt::AlignCenter),
         style(NoLine),
         xValue(0.0),
-        yValue(0.0)
-    {
+        yValue(0.0) {
         symbol = new QwtSymbol();
     }
 
-    ~PrivateData()
-    {
+    ~PrivateData() {
         delete symbol;
     }
 
@@ -77,15 +75,15 @@ QwtDoublePoint QwtPlotMarker::value() const
 }
 
 //! Return x Value
-double QwtPlotMarker::xValue() const 
-{ 
-    return d_data->xValue; 
+double QwtPlotMarker::xValue() const
+{
+    return d_data->xValue;
 }
 
 //! Return y Value
-double QwtPlotMarker::yValue() const 
-{ 
-    return d_data->yValue; 
+double QwtPlotMarker::yValue() const
+{
+    return d_data->yValue;
 }
 
 //! Set Value
@@ -95,25 +93,24 @@ void QwtPlotMarker::setValue(const QwtDoublePoint& pos)
 }
 
 //! Set Value
-void QwtPlotMarker::setValue(double x, double y) 
+void QwtPlotMarker::setValue(double x, double y)
 {
-    if ( x != d_data->xValue || y != d_data->yValue )
-    {
-        d_data->xValue = x; 
-        d_data->yValue = y; 
-        itemChanged(); 
+    if ( x != d_data->xValue || y != d_data->yValue ) {
+        d_data->xValue = x;
+        d_data->yValue = y;
+        itemChanged();
     }
 }
 
 //! Set X Value
-void QwtPlotMarker::setXValue(double x) 
-{ 
+void QwtPlotMarker::setXValue(double x)
+{
     setValue(x, d_data->yValue);
 }
 
 //! Set Y Value
-void QwtPlotMarker::setYValue(double y) 
-{ 
+void QwtPlotMarker::setYValue(double y)
+{
     setValue(d_data->xValue, y);
 }
 
@@ -125,15 +122,14 @@ void QwtPlotMarker::setYValue(double y)
   \param r Bounding rect, where to paint
 */
 void QwtPlotMarker::draw(QPainter *p,
-    const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-    const QRect &r) const
+                         const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                         const QRect &r) const
 {
     const int x = xMap.transform(d_data->xValue);
     const int y = yMap.transform(d_data->yValue);
 
     // draw lines
-    if (d_data->style != NoLine)
-    {
+    if (d_data->style != NoLine) {
         p->setPen(d_data->pen);
         if ((d_data->style == HLine) || (d_data->style == Cross))
             QwtPainter::drawLine(p, r.left(), y, r.right(), y);
@@ -143,34 +139,29 @@ void QwtPlotMarker::draw(QPainter *p,
 
     // draw symbol
     QSize sSym(0, 0);
-    if (d_data->symbol->style() != QwtSymbol::NoSymbol)
-    {
+    if (d_data->symbol->style() != QwtSymbol::NoSymbol) {
         sSym = d_data->symbol->size();
         d_data->symbol->draw(p, x, y);
     }
 
     // draw label
-    if (!d_data->label.isEmpty())
-    {
+    if (!d_data->label.isEmpty()) {
         int xlw = qwtMax(int(d_data->pen.width()), 1);
         int ylw = xlw;
         int xlw1;
         int ylw1;
 
-        const int xLabelDist = 
+        const int xLabelDist =
             QwtPainter::metricsMap().screenToLayoutX(LabelDist);
-        const int yLabelDist = 
+        const int yLabelDist =
             QwtPainter::metricsMap().screenToLayoutY(LabelDist);
 
-        if ((d_data->style == VLine) || (d_data->style == HLine))
-        {
+        if ((d_data->style == VLine) || (d_data->style == HLine)) {
             xlw1 = (xlw + 1) / 2 + xLabelDist;
             xlw = xlw / 2 + xLabelDist;
             ylw1 = (ylw + 1) / 2 + yLabelDist;
             ylw = ylw / 2 + yLabelDist;
-        }
-        else 
-        {
+        } else {
             xlw1 = qwtMax((xlw + 1) / 2, (sSym.width() + 1) / 2) + xLabelDist;
             xlw = qwtMax(xlw / 2, (sSym.width() + 1) / 2) + xLabelDist;
             ylw1 = qwtMax((ylw + 1) / 2, (sSym.height() + 1) / 2) + yLabelDist;
@@ -183,17 +174,14 @@ void QwtPlotMarker::draw(QPainter *p,
         int dx = x;
         int dy = y;
 
-        if (d_data->style == VLine)
-        {
+        if (d_data->style == VLine) {
             if (d_data->align & (int) Qt::AlignTop)
                 dy = r.top() + yLabelDist - tr.y();
             else if (d_data->align & (int) Qt::AlignBottom)
                 dy = r.bottom() - yLabelDist + tr.y();
             else
                 dy = r.top() + r.height() / 2;
-        }
-        else
-        {
+        } else {
             if (d_data->align & (int) Qt::AlignTop)
                 dy += tr.y() - ylw1;
             else if (d_data->align & (int) Qt::AlignBottom)
@@ -201,17 +189,14 @@ void QwtPlotMarker::draw(QPainter *p,
         }
 
 
-        if (d_data->style == HLine)
-        {
+        if (d_data->style == HLine) {
             if (d_data->align & (int) Qt::AlignLeft)
                 dx = r.left() + xLabelDist - tr.x();
             else if (d_data->align & (int) Qt::AlignRight)
                 dx = r.right() - xLabelDist + tr.x();
             else
                 dx = r.left() + r.width() / 2;
-        }
-        else
-        {
+        } else {
             if (d_data->align & (int) Qt::AlignLeft)
                 dx += tr.x() - xlw1;
             else if (d_data->align & (int) Qt::AlignRight)
@@ -235,8 +220,7 @@ void QwtPlotMarker::draw(QPainter *p,
 */
 void QwtPlotMarker::setLineStyle(QwtPlotMarker::LineStyle st)
 {
-    if ( st != d_data->style )
-    {
+    if ( st != d_data->style ) {
         d_data->style = st;
         itemChanged();
     }
@@ -246,14 +230,14 @@ void QwtPlotMarker::setLineStyle(QwtPlotMarker::LineStyle st)
   \return the line style
   \sa For a description of line styles, see QwtPlotMarker::setLineStyle()
 */
-QwtPlotMarker::LineStyle QwtPlotMarker::lineStyle() const 
-{ 
-    return d_data->style; 
+QwtPlotMarker::LineStyle QwtPlotMarker::lineStyle() const
+{
+    return d_data->style;
 }
 
 /*!
   \brief Assign a symbol
-  \param s New symbol 
+  \param s New symbol
   \sa symbol()
 */
 void QwtPlotMarker::setSymbol(const QwtSymbol &s)
@@ -267,9 +251,9 @@ void QwtPlotMarker::setSymbol(const QwtSymbol &s)
   \return the symbol
   \sa setSymbol(), QwtSymbol
 */
-const QwtSymbol &QwtPlotMarker::symbol() const 
-{ 
-    return *d_data->symbol; 
+const QwtSymbol &QwtPlotMarker::symbol() const
+{
+    return *d_data->symbol;
 }
 
 /*!
@@ -279,8 +263,7 @@ const QwtSymbol &QwtPlotMarker::symbol() const
 */
 void QwtPlotMarker::setLabel(const QwtText& label)
 {
-    if ( label != d_data->label )
-    {
+    if ( label != d_data->label ) {
         d_data->label = label;
         itemChanged();
     }
@@ -290,9 +273,9 @@ void QwtPlotMarker::setLabel(const QwtText& label)
   \return the label
   \sa setLabel()
 */
-QwtText QwtPlotMarker::label() const 
-{ 
-    return d_data->label; 
+QwtText QwtPlotMarker::label() const
+{
+    return d_data->label;
 }
 
 /*!
@@ -303,7 +286,7 @@ QwtText QwtPlotMarker::label() const
 
   \param align Alignment. A combination of AlignTop, AlignBottom,
     AlignLeft, AlignRight, AlignCenter, AlgnHCenter,
-    AlignVCenter.  
+    AlignVCenter.
   \sa labelAlignment()
 */
 #if QT_VERSION < 0x040000
@@ -314,7 +297,7 @@ void QwtPlotMarker::setLabelAlignment(Qt::Alignment align)
 {
     if ( align == d_data->align )
         return;
-    
+
     d_data->align = align;
     itemChanged();
 }
@@ -324,12 +307,12 @@ void QwtPlotMarker::setLabelAlignment(Qt::Alignment align)
   \sa setLabelAlignment()
 */
 #if QT_VERSION < 0x040000
-int QwtPlotMarker::labelAlignment() const 
+int QwtPlotMarker::labelAlignment() const
 #else
-Qt::Alignment QwtPlotMarker::labelAlignment() const 
+Qt::Alignment QwtPlotMarker::labelAlignment() const
 #endif
-{ 
-    return d_data->align; 
+{
+    return d_data->align;
 }
 
 /*!
@@ -339,8 +322,7 @@ Qt::Alignment QwtPlotMarker::labelAlignment() const
 */
 void QwtPlotMarker::setLinePen(const QPen &p)
 {
-    if ( p != d_data->pen )
-    {
+    if ( p != d_data->pen ) {
         d_data->pen = p;
         itemChanged();
     }
@@ -350,9 +332,9 @@ void QwtPlotMarker::setLinePen(const QPen &p)
   \return the line pen
   \sa setLinePen()
 */
-const QPen &QwtPlotMarker::linePen() const 
-{ 
-    return d_data->pen; 
+const QPen &QwtPlotMarker::linePen() const
+{
+    return d_data->pen;
 }
 
 QwtDoubleRect QwtPlotMarker::boundingRect() const

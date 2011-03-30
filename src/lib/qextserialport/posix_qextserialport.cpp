@@ -123,7 +123,7 @@ Posix_QextSerialPort::Posix_QextSerialPort(const QString & name, const PortSetti
 Override the = operator.
 */
 Posix_QextSerialPort& Posix_QextSerialPort::operator=(const Posix_QextSerialPort& s)
-                                                     {
+{
     setOpenMode(s.openMode());
     port = s.port;
     Settings.BaudRate=s.Settings.BaudRate;
@@ -534,10 +534,9 @@ void Posix_QextSerialPort::setDataBits(DataBitsType dataBits)
     LOCK_MUTEX();
     if (Settings.DataBits!=dataBits) {
         if ((Settings.StopBits==STOP_2 && dataBits==DATA_5) ||
-            (Settings.StopBits==STOP_1_5 && dataBits!=DATA_5) ||
-            (Settings.Parity==PAR_SPACE && dataBits==DATA_8)) {
-        }
-        else {
+                (Settings.StopBits==STOP_1_5 && dataBits!=DATA_5) ||
+                (Settings.Parity==PAR_SPACE && dataBits==DATA_8)) {
+        } else {
             Settings.DataBits=dataBits;
         }
     }
@@ -548,8 +547,7 @@ void Posix_QextSerialPort::setDataBits(DataBitsType dataBits)
         case DATA_5:
             if (Settings.StopBits==STOP_2) {
                 TTY_WARNING("Posix_QextSerialPort: 5 Data bits cannot be used with 2 stop bits.");
-            }
-            else {
+            } else {
                 Settings.DataBits=dataBits;
                 Posix_CommConfig.c_cflag&=(~CSIZE);
                 Posix_CommConfig.c_cflag|=CS5;
@@ -558,11 +556,10 @@ void Posix_QextSerialPort::setDataBits(DataBitsType dataBits)
             break;
 
             /*6 data bits*/
-            case DATA_6:
+        case DATA_6:
             if (Settings.StopBits==STOP_1_5) {
                 TTY_WARNING("Posix_QextSerialPort: 6 Data bits cannot be used with 1.5 stop bits.");
-            }
-            else {
+            } else {
                 Settings.DataBits=dataBits;
                 Posix_CommConfig.c_cflag&=(~CSIZE);
                 Posix_CommConfig.c_cflag|=CS6;
@@ -571,11 +568,10 @@ void Posix_QextSerialPort::setDataBits(DataBitsType dataBits)
             break;
 
             /*7 data bits*/
-            case DATA_7:
+        case DATA_7:
             if (Settings.StopBits==STOP_1_5) {
                 TTY_WARNING("Posix_QextSerialPort: 7 Data bits cannot be used with 1.5 stop bits.");
-            }
-            else {
+            } else {
                 Settings.DataBits=dataBits;
                 Posix_CommConfig.c_cflag&=(~CSIZE);
                 Posix_CommConfig.c_cflag|=CS7;
@@ -584,11 +580,10 @@ void Posix_QextSerialPort::setDataBits(DataBitsType dataBits)
             break;
 
             /*8 data bits*/
-            case DATA_8:
+        case DATA_8:
             if (Settings.StopBits==STOP_1_5) {
                 TTY_WARNING("Posix_QextSerialPort: 8 Data bits cannot be used with 1.5 stop bits.");
-            }
-            else {
+            } else {
                 Settings.DataBits=dataBits;
                 Posix_CommConfig.c_cflag&=(~CSIZE);
                 Posix_CommConfig.c_cflag|=CS8;
@@ -625,8 +620,7 @@ void Posix_QextSerialPort::setParity(ParityType parity)
     LOCK_MUTEX();
     if (Settings.Parity!=parity) {
         if (parity==PAR_MARK || (parity==PAR_SPACE && Settings.DataBits==DATA_8)) {
-        }
-        else {
+        } else {
             Settings.Parity=parity;
         }
     }
@@ -637,8 +631,7 @@ void Posix_QextSerialPort::setParity(ParityType parity)
         case PAR_SPACE:
             if (Settings.DataBits==DATA_8) {
                 TTY_PORTABILITY_WARNING("Posix_QextSerialPort:  Space parity is only supported in POSIX with 7 or fewer data bits");
-            }
-            else {
+            } else {
 
                 /*space parity not directly supported - add an extra data bit to simulate it*/
                 Posix_CommConfig.c_cflag&=~(PARENB|CSIZE);
@@ -666,25 +659,25 @@ void Posix_QextSerialPort::setParity(ParityType parity)
             break;
 
             /*mark parity - WINDOWS ONLY*/
-            case PAR_MARK:
+        case PAR_MARK:
             TTY_WARNING("Posix_QextSerialPort: Mark parity is not supported by POSIX.");
             break;
 
             /*no parity*/
-            case PAR_NONE:
+        case PAR_NONE:
             Posix_CommConfig.c_cflag&=(~PARENB);
             tcsetattr(fd, TCSAFLUSH, &Posix_CommConfig);
             break;
 
             /*even parity*/
-            case PAR_EVEN:
+        case PAR_EVEN:
             Posix_CommConfig.c_cflag&=(~PARODD);
             Posix_CommConfig.c_cflag|=PARENB;
             tcsetattr(fd, TCSAFLUSH, &Posix_CommConfig);
             break;
 
             /*odd parity*/
-            case PAR_ODD:
+        case PAR_ODD:
             Posix_CommConfig.c_cflag|=(PARENB|PARODD);
             tcsetattr(fd, TCSAFLUSH, &Posix_CommConfig);
             break;
@@ -737,8 +730,7 @@ void Posix_QextSerialPort::setStopBits(StopBitsType stopBits)
         case STOP_2:
             if (Settings.DataBits==DATA_5) {
                 TTY_WARNING("Posix_QextSerialPort: 2 stop bits cannot be used with 5 data bits");
-            }
-            else {
+            } else {
                 Settings.StopBits=stopBits;
                 Posix_CommConfig.c_cflag|=CSTOPB;
                 tcsetattr(fd, TCSAFLUSH, &Posix_CommConfig);
@@ -842,7 +834,7 @@ bool Posix_QextSerialPort::open(OpenMode mode)
 {
     LOCK_MUTEX();
     if (mode == QIODevice::NotOpen)
-    	return isOpen();
+        return isOpen();
     if (!isOpen()) {
         /*open the port*/
         qDebug("trying to open file");
@@ -850,10 +842,10 @@ bool Posix_QextSerialPort::open(OpenMode mode)
         if ((fd = ::open(port.toAscii() ,O_RDWR | O_NOCTTY | O_NDELAY)) != -1) {
             qDebug("file opened succesfully");
 
-	    setOpenMode(mode);			// Flag the port as opened
-	    tcgetattr(fd, &old_termios);	// Save the old termios
-	    Posix_CommConfig = old_termios;	// Make a working copy
-	    cfmakeraw(&Posix_CommConfig);	// Enable raw access
+            setOpenMode(mode);			// Flag the port as opened
+            tcgetattr(fd, &old_termios);	// Save the old termios
+            Posix_CommConfig = old_termios;	// Make a working copy
+            cfmakeraw(&Posix_CommConfig);	// Enable raw access
 
             /*set up other port settings*/
             Posix_CommConfig.c_cflag|=CREAD|CLOCAL;
@@ -862,14 +854,14 @@ bool Posix_QextSerialPort::open(OpenMode mode)
             Posix_CommConfig.c_oflag&=(~OPOST);
             Posix_CommConfig.c_cc[VMIN]= 0;
 #ifdef _POSIX_VDISABLE	// Is a disable character available on this system?
-	    // Some systems allow for per-device disable-characters, so get the
-	    //  proper value for the configured device
-	    const long vdisable = fpathconf(fd, _PC_VDISABLE);
-	    Posix_CommConfig.c_cc[VINTR] = vdisable;
-	    Posix_CommConfig.c_cc[VQUIT] = vdisable;
-	    Posix_CommConfig.c_cc[VSTART] = vdisable;
-	    Posix_CommConfig.c_cc[VSTOP] = vdisable;
-	    Posix_CommConfig.c_cc[VSUSP] = vdisable;
+            // Some systems allow for per-device disable-characters, so get the
+            //  proper value for the configured device
+            const long vdisable = fpathconf(fd, _PC_VDISABLE);
+            Posix_CommConfig.c_cc[VINTR] = vdisable;
+            Posix_CommConfig.c_cc[VQUIT] = vdisable;
+            Posix_CommConfig.c_cc[VSTART] = vdisable;
+            Posix_CommConfig.c_cc[VSTOP] = vdisable;
+            Posix_CommConfig.c_cc[VSUSP] = vdisable;
 #endif //_POSIX_VDISABLE
             setBaudRate(Settings.BaudRate);
             setDataBits(Settings.DataBits);
@@ -894,17 +886,16 @@ is not currently open.
 void Posix_QextSerialPort::close()
 {
     LOCK_MUTEX();
-    if( isOpen() )
-    {
-	// Force a flush and then restore the original termios
-	flush();
-	// Using both TCSAFLUSH and TCSANOW here discards any pending input
-	tcsetattr(fd, TCSAFLUSH | TCSANOW, &old_termios);   // Restore termios
-	// Be a good QIODevice and call QIODevice::close() before POSIX close()
-	//  so the aboutToClose() signal is emitted at the proper time
-	QIODevice::close();	// Flag the device as closed
-	// QIODevice::close() doesn't actually close the port, so do that here
-	::close(fd);
+    if( isOpen() ) {
+        // Force a flush and then restore the original termios
+        flush();
+        // Using both TCSAFLUSH and TCSANOW here discards any pending input
+        tcsetattr(fd, TCSAFLUSH | TCSANOW, &old_termios);   // Restore termios
+        // Be a good QIODevice and call QIODevice::close() before POSIX close()
+        //  so the aboutToClose() signal is emitted at the proper time
+        QIODevice::close();	// Flag the device as closed
+        // QIODevice::close() doesn't actually close the port, so do that here
+        ::close(fd);
     }
     UNLOCK_MUTEX();
 }
@@ -918,7 +909,7 @@ void Posix_QextSerialPort::flush()
 {
     LOCK_MUTEX();
     if (isOpen())
-	tcflush(fd, TCIOFLUSH);
+        tcflush(fd, TCIOFLUSH);
     UNLOCK_MUTEX();
 }
 
@@ -1006,8 +997,7 @@ void Posix_QextSerialPort::setDtr(bool set)
         ioctl(fd, TIOCMGET, &status);
         if (set) {
             status|=TIOCM_DTR;
-        }
-        else {
+        } else {
             status&=~TIOCM_DTR;
         }
         ioctl(fd, TIOCMSET, &status);
@@ -1028,8 +1018,7 @@ void Posix_QextSerialPort::setRts(bool set)
         ioctl(fd, TIOCMGET, &status);
         if (set) {
             status|=TIOCM_RTS;
-        }
-        else {
+        } else {
             status&=~TIOCM_RTS;
         }
         ioctl(fd, TIOCMSET, &status);
@@ -1130,11 +1119,10 @@ qint64 Posix_QextSerialPort::writeData(const char * data, qint64 maxSize)
     LOCK_MUTEX();
     int retVal = 0;
     retVal = ::write(fd, data, maxSize);
-    if (retVal == -1)
-    {
+    if (retVal == -1) {
         lastErr = E_WRITE_FAILED;
     }
     UNLOCK_MUTEX();
-    
+
     return (qint64)retVal;
 }

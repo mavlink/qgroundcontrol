@@ -34,14 +34,16 @@ This file is part of the QGROUNDCONTROL project
 #include <QtGui/QWidget>
 #include <QMap>
 
-namespace Ui {
-    class WatchdogProcessView;
+namespace Ui
+{
+class WatchdogProcessView;
 }
 
 /**
  * @brief Represents one process monitored by the linux onboard watchdog
  */
-class WatchdogProcessView : public QWidget {
+class WatchdogProcessView : public QWidget
+{
     Q_OBJECT
 public:
     WatchdogProcessView(int processid, QWidget *parent = 0);

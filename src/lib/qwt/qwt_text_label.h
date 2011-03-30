@@ -24,7 +24,7 @@ class QPainter;
 
 class QWT_EXPORT QwtTextLabel : public QFrame
 {
-    Q_OBJECT 
+    Q_OBJECT
 
     Q_PROPERTY( int indent READ indent WRITE setIndent )
     Q_PROPERTY( int margin READ margin WRITE setMargin )
@@ -38,8 +38,8 @@ public:
     virtual ~QwtTextLabel();
 
 public slots:
-    void setText(const QString &, 
-        QwtText::TextFormat textFormat = QwtText::AutoText);
+    void setText(const QString &,
+                 QwtText::TextFormat textFormat = QwtText::AutoText);
     virtual void setText(const QwtText &);
 
     void clear();

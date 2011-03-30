@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -15,13 +15,13 @@ QwtIntervalData::QwtIntervalData()
 }
 
 QwtIntervalData::QwtIntervalData(
-        const QwtArray<QwtDoubleInterval> &intervals, 
-        const QwtArray<double> &values):
+    const QwtArray<QwtDoubleInterval> &intervals,
+    const QwtArray<double> &values):
     d_intervals(intervals),
     d_values(values)
 {
 }
-    
+
 void QwtIntervalData::setData(
     const QwtArray<QwtDoubleInterval> &intervals,
     const QwtArray<double> &values)
@@ -38,24 +38,20 @@ QwtDoubleRect QwtIntervalData::boundingRect() const
     bool isValid = false;
 
     const size_t sz = size();
-    for ( size_t i = 0; i < sz; i++ )
-    {
+    for ( size_t i = 0; i < sz; i++ ) {
         const QwtDoubleInterval intv = interval(i);
         if ( !intv.isValid() )
             continue;
 
         const double v = value(i);
 
-        if ( !isValid )
-        {
+        if ( !isValid ) {
             minX = intv.minValue();
             maxX = intv.maxValue();
             minY = maxY = v;
 
             isValid = true;
-        }
-        else
-        {
+        } else {
             if ( intv.minValue() < minX )
                 minX = intv.minValue();
             if ( intv.maxValue() > maxX )

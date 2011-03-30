@@ -28,8 +28,7 @@ public:
     QLabel *nameLabel;
     QWidget *processListWidget;
 
-    void setupUi(QWidget *WatchdogView)
-    {
+    void setupUi(QWidget *WatchdogView) {
         if (WatchdogView->objectName().isEmpty())
             WatchdogView->setObjectName(QString::fromUtf8("WatchdogView"));
         WatchdogView->resize(400, 300);
@@ -52,16 +51,16 @@ public:
         QMetaObject::connectSlotsByName(WatchdogView);
     } // setupUi
 
-    void retranslateUi(QWidget *WatchdogView)
-    {
+    void retranslateUi(QWidget *WatchdogView) {
         WatchdogView->setWindowTitle(QApplication::translate("WatchdogView", "Form", 0, QApplication::UnicodeUTF8));
         nameLabel->setText(QApplication::translate("WatchdogView", "Watchdog", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
 
-namespace Ui {
-    class WatchdogView: public Ui_WatchdogView {};
+namespace Ui
+{
+class WatchdogView: public Ui_WatchdogView {};
 } // namespace Ui
 
 QT_END_NAMESPACE

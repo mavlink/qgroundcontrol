@@ -34,11 +34,13 @@ This file is part of the QGROUNDCONTROL project
 
 #include "UASInterface.h"
 
-namespace Ui {
-    class QGCSensorSettingsWidget;
+namespace Ui
+{
+class QGCSensorSettingsWidget;
 }
 
-class QGCSensorSettingsWidget : public QWidget {
+class QGCSensorSettingsWidget : public QWidget
+{
     Q_OBJECT
 public:
     QGCSensorSettingsWidget(UASInterface* uas, QWidget *parent = 0);

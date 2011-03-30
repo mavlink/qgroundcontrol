@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -30,8 +30,7 @@ class QwtDoubleInterval;
 class QWT_EXPORT QwtScaleDiv
 {
 public:
-    enum TickType
-    {
+    enum TickType {
         NoTick = -1,
 
         MinorTick,
@@ -43,13 +42,13 @@ public:
 
     explicit QwtScaleDiv();
     explicit QwtScaleDiv(const QwtDoubleInterval &,
-        QwtValueList[NTickTypes]);
+                         QwtValueList[NTickTypes]);
     explicit QwtScaleDiv(double lBound, double rBound,
-        QwtValueList[NTickTypes]);
+                         QwtValueList[NTickTypes]);
 
     int operator==(const QwtScaleDiv &s) const;
     int operator!=(const QwtScaleDiv &s) const;
-    
+
     void setInterval(double lBound, double rBound);
     void setInterval(const QwtDoubleInterval &);
     QwtDoubleInterval interval() const;
@@ -65,7 +64,7 @@ public:
 
     void invalidate();
     bool isValid() const;
- 
+
     void invert();
 
 private:
@@ -87,7 +86,7 @@ inline void QwtScaleDiv::setInterval(double lBound, double hBound)
     d_hBound = hBound;
 }
 
-/*! 
+/*!
   \return lBound -> hBound
 */
 inline QwtDoubleInterval QwtScaleDiv::interval() const
@@ -95,29 +94,29 @@ inline QwtDoubleInterval QwtScaleDiv::interval() const
     return QwtDoubleInterval(d_lBound, d_hBound);
 }
 
-/*! 
+/*!
   \return left bound
   \sa QwtScaleDiv::hBound
 */
-inline double QwtScaleDiv::lBound() const 
-{ 
+inline double QwtScaleDiv::lBound() const
+{
     return d_lBound;
 }
 
-/*! 
+/*!
   \return right bound
   \sa QwtScaleDiv::lBound
 */
-inline double QwtScaleDiv::hBound() const 
-{ 
+inline double QwtScaleDiv::hBound() const
+{
     return d_hBound;
 }
 
-/*! 
+/*!
   \return hBound() - lBound()
 */
-inline double QwtScaleDiv::range() const 
-{ 
+inline double QwtScaleDiv::range() const
+{
     return d_hBound - d_lBound;
 }
 #endif

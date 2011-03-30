@@ -14,7 +14,7 @@
 #include <qstring.h>
 #include <qimage.h>
 
-#include "qwt_plot_item.h" 
+#include "qwt_plot_item.h"
 
 /*!
   \brief A class, which displays raster data
@@ -53,8 +53,7 @@ public:
 
       The default policy is NoCache
      */
-    enum CachePolicy
-    {
+    enum CachePolicy {
         NoCache,
         PaintCache,
         ScreenCache
@@ -73,26 +72,26 @@ public:
     void invalidateCache();
 
     virtual void draw(QPainter *p,
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-        const QRect &rect) const;
+                      const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                      const QRect &rect) const;
 
     virtual QSize rasterHint(const QwtDoubleRect &) const;
 
 protected:
 
-     /*!
-      Renders an image for an area
+    /*!
+     Renders an image for an area
 
-      The format of the image must be QImage::Format_Indexed8,
-      QImage::Format_RGB32 or QImage::Format_ARGB32
-      
-      \param xMap Maps x-values into pixel coordinates.
-      \param yMap Maps y-values into pixel coordinates.
-      \param area Requested area for the image in scale coordinates
-     */
-    virtual QImage renderImage(const QwtScaleMap &xMap, 
-        const QwtScaleMap &yMap, const QwtDoubleRect &area
-        ) const = 0;
+     The format of the image must be QImage::Format_Indexed8,
+     QImage::Format_RGB32 or QImage::Format_ARGB32
+
+     \param xMap Maps x-values into pixel coordinates.
+     \param yMap Maps y-values into pixel coordinates.
+     \param area Requested area for the image in scale coordinates
+    */
+    virtual QImage renderImage(const QwtScaleMap &xMap,
+                               const QwtScaleMap &yMap, const QwtDoubleRect &area
+                              ) const = 0;
 
 private:
     QwtPlotRasterItem( const QwtPlotRasterItem & );

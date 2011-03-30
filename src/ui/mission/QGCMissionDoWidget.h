@@ -3,8 +3,9 @@
 
 #include <QWidget>
 
-namespace Ui {
-    class QGCMissionDoWidget;
+namespace Ui
+{
+class QGCMissionDoWidget;
 }
 
 class QGCMissionDoWidget : public QWidget

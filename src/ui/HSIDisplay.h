@@ -43,7 +43,8 @@ This file is part of the QGROUNDCONTROL project
 #include "HDDisplay.h"
 #include "MG.h"
 
-class HSIDisplay : public HDDisplay {
+class HSIDisplay : public HDDisplay
+{
     Q_OBJECT
 public:
     HSIDisplay(QWidget *parent = 0);
@@ -139,18 +140,16 @@ protected:
     {
     public:
         GPSSatellite(int id, float elevation, float azimuth, float snr, bool used) :
-                id(id),
-                elevation(elevation),
-                azimuth(azimuth),
-                snr(snr),
-                used(used),
-                lastUpdate(MG::TIME::getGroundTimeNowUsecs())
-        {
+            id(id),
+            elevation(elevation),
+            azimuth(azimuth),
+            snr(snr),
+            used(used),
+            lastUpdate(MG::TIME::getGroundTimeNowUsecs()) {
 
         }
 
-        void update(int id, float elevation, float azimuth, float snr, bool used)
-        {
+        void update(int id, float elevation, float azimuth, float snr, bool used) {
             this->id = id;
             this->elevation = elevation;
             this->azimuth = azimuth;

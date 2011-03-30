@@ -7,8 +7,9 @@
 #include <QTimer>
 #include <QTabWidget>
 
-namespace Ui {
-    class UASControlParameters;
+namespace Ui
+{
+class UASControlParameters;
 }
 
 class UASControlParameters : public QWidget

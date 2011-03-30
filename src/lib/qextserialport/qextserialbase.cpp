@@ -5,7 +5,7 @@
 Default constructor.
 */
 QextSerialBase::QextSerialBase()
- : QIODevice()
+    : QIODevice()
 {
 
 #ifdef _TTY_WIN_
@@ -41,7 +41,7 @@ QextSerialBase::QextSerialBase()
 Construct a port and assign it to the device specified by the name parameter.
 */
 QextSerialBase::QextSerialBase(const QString & name)
- : QIODevice()
+    : QIODevice()
 {
     setPortName(name);
     construct();
@@ -53,7 +53,7 @@ Standard destructor.
 */
 QextSerialBase::~QextSerialBase()
 {
-	delete mutex;
+    delete mutex;
 }
 
 /*!
@@ -63,20 +63,20 @@ Common constructor function for setting up default port settings.
 */
 void QextSerialBase::construct()
 {
-	lastErr = E_NO_ERROR;
+    lastErr = E_NO_ERROR;
     Settings.BaudRate=BAUD115200;
     Settings.DataBits=DATA_8;
     Settings.Parity=PAR_NONE;
     Settings.StopBits=STOP_1;
     Settings.FlowControl=FLOW_HARDWARE;
     Settings.Timeout_Millisec=500;
-	mutex = new QMutex( QMutex::Recursive );
-	setOpenMode(QIODevice::NotOpen);
+    mutex = new QMutex( QMutex::Recursive );
+    setOpenMode(QIODevice::NotOpen);
 }
 
 void QextSerialBase::setQueryMode(QueryMode mechanism)
 {
-	_queryMode = mechanism;
+    _queryMode = mechanism;
 }
 
 /*!
@@ -150,12 +150,12 @@ FlowType QextSerialBase::flowControl() const
 /*!
 \fn bool QextSerialBase::isSequential() const
 Returns true if device is sequential, otherwise returns false. Serial port is sequential device
-so this function always returns true. Check QIODevice::isSequential() documentation for more 
+so this function always returns true. Check QIODevice::isSequential() documentation for more
 information.
 */
 bool QextSerialBase::isSequential() const
 {
-	return true;
+    return true;
 }
 
 /*!
@@ -182,8 +182,8 @@ qint64 QextSerialBase::readLine(char * data, qint64 maxSize)
     qint64 numBytes = bytesAvailable();
     char* pData = data;
 
-	if (maxSize < 2)	//maxSize must be larger than 1
-		return -1;
+    if (maxSize < 2)	//maxSize must be larger than 1
+        return -1;
 
     /*read a byte at a time for MIN(bytesAvail, maxSize - 1) iterations, or until a newline*/
     while (pData<(data+numBytes) && --maxSize) {

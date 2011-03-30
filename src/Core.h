@@ -53,25 +53,25 @@ This file is part of the PIXHAWK project
  **/
 class Core : public QApplication
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-        Core(int &argc, char* argv[]);
-        ~Core();
+    Core(int &argc, char* argv[]);
+    ~Core();
 
 protected:
-	void startLinkManager();
+    void startLinkManager();
 
-        /**
-         * @brief Start the robot managing system
-         *
-         * The robot manager keeps track of the configured robots.
-         **/
-        void startUASManager();
+    /**
+     * @brief Start the robot managing system
+     *
+     * The robot manager keeps track of the configured robots.
+     **/
+    void startUASManager();
 
 private:
-        MainWindow* mainWindow;
-        //ViconTarsusProtocol* tarsus;
+    MainWindow* mainWindow;
+    //ViconTarsusProtocol* tarsus;
 };
 
 #endif /* _CORE_H_ */

@@ -20,7 +20,7 @@
 #include <QSizeF>
 #include <QRectF>
 
-/*! 
+/*!
   \typedef QPointF QwtDoublePoint
   \brief This is a typedef, see Trolltech Documentation for QPointF
          in QT assistant 4.x. As soon as Qt3 compatibility is dropped
@@ -28,7 +28,7 @@
 */
 typedef QPointF QwtDoublePoint;
 
-/*! 
+/*!
    \typedef QSizeF QwtDoubleSize
    \brief This is a typedef, see Trolltech Documentation for QSizeF
           in QT assistant 4.x. As soon as Qt3 compatibility is dropped
@@ -36,7 +36,7 @@ typedef QPointF QwtDoublePoint;
 */
 typedef QSizeF QwtDoubleSize;
 
-/*! 
+/*!
    \typedef QRectF QwtDoubleRect
    \brief This is a typedef, see Trolltech Documentation for QRectF
           in QT assistant 4.x. As soon as Qt3 compatibility is dropped
@@ -139,7 +139,7 @@ private:
   The QwtDoubleRect class defines a size in double coordinates.
 */
 
-class QWT_EXPORT QwtDoubleRect  
+class QWT_EXPORT QwtDoubleRect
 {
 public:
     QwtDoubleRect();
@@ -201,7 +201,7 @@ public:
     bool operator!=( const QwtDoubleRect &) const;
 
     bool contains(const QwtDoublePoint &p, bool proper = false) const;
-    bool contains(double x, double y, bool proper = false) const; 
+    bool contains(double x, double y, bool proper = false) const;
     bool contains(const QwtDoubleRect &r, bool proper=false) const;
 
     QwtDoubleRect unite(const QwtDoubleRect &) const;
@@ -220,27 +220,27 @@ private:
     double d_bottom;
 };
 
-/*! 
+/*!
     Returns true if the point is null; otherwise returns false.
 
-    A point is considered to be null if both the x- and y-coordinates 
+    A point is considered to be null if both the x- and y-coordinates
     are equal to zero.
 */
 inline bool QwtDoublePoint::isNull() const
-{ 
-    return d_x == 0.0 && d_y == 0.0; 
+{
+    return d_x == 0.0 && d_y == 0.0;
 }
 
 //! Returns the x-coordinate of the point.
 inline double QwtDoublePoint::x() const
-{ 
-    return d_x; 
+{
+    return d_x;
 }
 
 //! Returns the y-coordinate of the point.
 inline double QwtDoublePoint::y() const
-{   
-    return d_y; 
+{
+    return d_y;
 }
 
 //! Returns a reference to the x-coordinate of the point.
@@ -257,18 +257,18 @@ inline double &QwtDoublePoint::ry()
 
 //! Sets the x-coordinate of the point to the value specified by x.
 inline void QwtDoublePoint::setX(double x)
-{ 
-    d_x = x; 
+{
+    d_x = x;
 }
 
 //! Sets the y-coordinate of the point to the value specified by y.
 inline void QwtDoublePoint::setY(double y)
-{ 
-    d_y = y; 
+{
+    d_y = y;
 }
 
 /*!
-   Rounds the coordinates of this point to the nearest integer and 
+   Rounds the coordinates of this point to the nearest integer and
    returns a QPoint with these rounded coordinates.
 */
 inline QPoint QwtDoublePoint::toPoint() const
@@ -277,54 +277,54 @@ inline QPoint QwtDoublePoint::toPoint() const
 }
 
 /*!
-  Returns true if the width is 0 and the height is 0; 
+  Returns true if the width is 0 and the height is 0;
   otherwise returns false.
 */
 inline bool QwtDoubleSize::isNull() const
-{ 
-    return d_width == 0.0 && d_height == 0.0; 
-}
-
-/*! 
-  Returns true if the width is <= 0.0 or the height is <= 0.0, 
-  otherwise false. 
-*/
-inline bool QwtDoubleSize::isEmpty() const
-{ 
-    return d_width <= 0.0 || d_height <= 0.0; 
+{
+    return d_width == 0.0 && d_height == 0.0;
 }
 
 /*!
-  Returns true if the width is equal to or greater than 0.0 and the height 
+  Returns true if the width is <= 0.0 or the height is <= 0.0,
+  otherwise false.
+*/
+inline bool QwtDoubleSize::isEmpty() const
+{
+    return d_width <= 0.0 || d_height <= 0.0;
+}
+
+/*!
+  Returns true if the width is equal to or greater than 0.0 and the height
   is equal to or greater than 0.0; otherwise returns false.
 */
 inline bool QwtDoubleSize::isValid() const
-{ 
-    return d_width >= 0.0 && d_height >= 0.0; 
+{
+    return d_width >= 0.0 && d_height >= 0.0;
 }
 
-//! Returns the width. 
+//! Returns the width.
 inline double QwtDoubleSize::width() const
-{ 
-    return d_width; 
+{
+    return d_width;
 }
 
-//! Returns the height. 
+//! Returns the height.
 inline double QwtDoubleSize::height() const
-{ 
-    return d_height; 
+{
+    return d_height;
 }
 
-//! Sets the width to width. 
+//! Sets the width to width.
 inline void QwtDoubleSize::setWidth(double width)
-{ 
-    d_width = width; 
+{
+    d_width = width;
 }
 
-//! Sets the height to height. 
+//! Sets the height to height.
 inline void QwtDoubleSize::setHeight(double height)
-{ 
-    d_height = height; 
+{
+    d_height = height;
 }
 
 /*!
@@ -335,7 +335,7 @@ inline void QwtDoubleSize::setHeight(double height)
     \sa QwtDoubleRect::isEmpty, QwtDoubleRect::isValid
 */
 inline bool QwtDoubleRect::isNull() const
-{ 
+{
     return d_right == d_left && d_bottom == d_top;
 }
 
@@ -347,110 +347,110 @@ inline bool QwtDoubleRect::isNull() const
     \sa QwtDoubleRect::isNull, QwtDoubleRect::isValid
 */
 inline bool QwtDoubleRect::isEmpty() const
-{ 
-    return d_left >= d_right || d_top >= d_bottom; 
+{
+    return d_left >= d_right || d_top >= d_bottom;
 }
 
 /*!
     Returns true if the rectangle is valid; otherwise returns false.
     A valid rectangle has a width() > 0 and height() > 0.
-    Note that non-trivial operations like intersections are not defined 
+    Note that non-trivial operations like intersections are not defined
     for invalid rectangles.  isValid() == !isEmpty()
 
     \sa isNull(), isEmpty(), and normalized().
 */
 inline bool QwtDoubleRect::isValid() const
-{ 
-    return d_left < d_right && d_top < d_bottom; 
+{
+    return d_left < d_right && d_top < d_bottom;
 }
 
 //! Returns x
 inline double QwtDoubleRect::x() const
-{ 
-    return d_left; 
+{
+    return d_left;
 }
 
 //! Returns y
 inline double QwtDoubleRect::y() const
-{ 
-    return d_top; 
+{
+    return d_top;
 }
 
 //! Returns left
 inline double QwtDoubleRect::left() const
-{ 
-    return d_left; 
+{
+    return d_left;
 }
 
 //! Returns right
 inline double QwtDoubleRect::right() const
-{ 
-    return d_right; 
+{
+    return d_right;
 }
 
 //! Returns top
 inline double QwtDoubleRect::top() const
-{ 
-    return d_top; 
+{
+    return d_top;
 }
 
 //! Returns bottom
 inline double QwtDoubleRect::bottom() const
-{ 
-    return d_bottom; 
+{
+    return d_bottom;
 }
 
-//! Set left  
+//! Set left
 inline void QwtDoubleRect::setX(double x)
-{ 
+{
     d_left = x;
 }
 
-//! Set left  
+//! Set left
 inline void QwtDoubleRect::setY(double y)
-{ 
+{
     d_top = y;
 }
 
-//! Set left  
+//! Set left
 inline void QwtDoubleRect::setLeft(double x)
-{ 
+{
     d_left = x;
 }
 
-//! Set right  
+//! Set right
 inline void QwtDoubleRect::setRight(double x)
-{ 
+{
     d_right = x;
 }
 
-//! Set top  
+//! Set top
 inline void QwtDoubleRect::setTop(double y)
-{ 
+{
     d_top = y;
 }
 
-//! Set bottom  
+//! Set bottom
 inline void QwtDoubleRect::setBottom(double y)
-{ 
+{
     d_bottom = y;
 }
 
 //! Returns the width
 inline double QwtDoubleRect::width() const
-{ 
-    return  d_right - d_left; 
+{
+    return  d_right - d_left;
 }
 
 //! Returns the height
 inline double QwtDoubleRect::height() const
-{ 
-    return  d_bottom - d_top; 
+{
+    return  d_bottom - d_top;
 }
 
 //! Returns the size
 inline QwtDoubleSize QwtDoubleRect::size() const
-{ 
+{
     return QwtDoubleSize(width(), height());
 }
 
@@ -466,8 +466,8 @@ inline void QwtDoubleRect::setHeight(double h)
     d_bottom = d_top + h;
 }
 
-/*! 
-    Moves the top left corner of the rectangle to p, 
+/*!
+    Moves the top left corner of the rectangle to p,
     without changing the rectangles size.
 */
 inline void QwtDoubleRect::moveTo(const QwtDoublePoint &p)

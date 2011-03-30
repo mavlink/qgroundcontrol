@@ -76,8 +76,7 @@ void UASManager::loadSettings()
 void UASManager::setHomePosition(double lat, double lon, double alt)
 {
     // Checking for NaN and infitiny
-    if (lat == lat && lon == lon && alt == alt && !std::isinf(lat) && !std::isinf(lon) && !std::isinf(alt))
-    {
+    if (lat == lat && lon == lon && alt == alt && !std::isinf(lat) && !std::isinf(lon) && !std::isinf(alt)) {
         bool changed = false;
         if (homeLat != lat) changed = true;
         if (homeLon != lon) changed = true;
@@ -97,10 +96,10 @@ void UASManager::setHomePosition(double lat, double lon, double alt)
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
 UASManager::UASManager() :
-        activeUAS(NULL),
-        homeLat(47.3769),
-        homeLon(8.549444),
-        homeAlt(470.0)
+    activeUAS(NULL),
+    homeLat(47.3769),
+    homeLon(8.549444),
+    homeAlt(470.0)
 {
     start(QThread::LowPriority);
     loadSettings();
@@ -110,8 +109,7 @@ UASManager::~UASManager()
 {
     storeSettings();
     // Delete all systems
-    foreach (UASInterface* mav, systems)
-    {
+    foreach (UASInterface* mav, systems) {
         delete mav;
     }
 }
@@ -134,15 +132,13 @@ void UASManager::addUAS(UASInterface* uas)
     // returns the UAS once the UASCreated() signal
     // is emitted. The code is thus NOT redundant.
     bool firstUAS = false;
-    if (activeUAS == NULL)
-    {
+    if (activeUAS == NULL) {
         firstUAS = true;
         activeUAS = uas;
     }
 
     // Only execute if there is no UAS at this index
-    if (!systems.contains(uas))
-    {
+    if (!systems.contains(uas)) {
         systems.append(uas);
         connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
         connect(this, SIGNAL(homePositionChanged(double,double,double)), uas, SLOT(setHomePosition(double,double,double)));
@@ -150,8 +146,7 @@ void UASManager::addUAS(UASInterface* uas)
     }
 
     // If there is no active UAS yet, set the first one as the active UAS
-    if (firstUAS)
-    {
+    if (firstUAS) {
         setActiveUAS(uas);
     }
 }
@@ -160,30 +155,22 @@ void UASManager::removeUAS(QObject* uas)
 {
     UASInterface* mav = qobject_cast<UASInterface*>(uas);
 
-    if (mav)
-    {
+    if (mav) {
         int listindex = systems.indexOf(mav);
 
-        if (mav == activeUAS)
-        {
-            if (systems.count() > 1)
-            {
+        if (mav == activeUAS) {
+            if (systems.count() > 1) {
                 // We only set a new UAS if more than one is present
-                if (listindex != 0)
-                {
+                if (listindex != 0) {
                     // The system to be removed is not at position 1
                     // set position one as new active system
                     setActiveUAS(systems.first());
-                }
-                else
-                {
+                } else {
                     // The system to be removed is at position 1,
                     // select the next system
                     setActiveUAS(systems.at(1));
                 }
-            }
-            else
-            {
+            } else {
                 // TODO send a null pointer if no UAS is present any more
                 // This has to be proberly tested however, since it might
                 // crash code parts not handling null pointers correctly.
@@ -258,8 +245,7 @@ bool UASManager::shutdownActiveUAS()
 void UASManager::configureActiveUAS()
 {
     UASInterface* actUAS = getActiveUAS();
-    if(actUAS)
-    {
+    if(actUAS) {
         // Do something
     }
 }
@@ -268,10 +254,8 @@ UASInterface* UASManager::getUASForId(int id)
 {
     UASInterface* system = NULL;
 
-    foreach(UASInterface* sys, systems)
-    {
-        if (sys->getUASID() == id)
-        {
+    foreach(UASInterface* sys, systems) {
+        if (sys->getUASID() == id) {
             system = sys;
         }
     }
@@ -282,11 +266,9 @@ UASInterface* UASManager::getUASForId(int id)
 
 void UASManager::setActiveUAS(UASInterface* uas)
 {
-    if (uas != NULL)
-    {
+    if (uas != NULL) {
         activeUASMutex.lock();
-        if (activeUAS != NULL)
-        {
+        if (activeUAS != NULL) {
             emit activeUASStatusChanged(activeUAS, false);
             emit activeUASStatusChanged(activeUAS->getUASID(), false);
         }

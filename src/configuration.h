@@ -6,9 +6,9 @@
 
 /** @brief Polling interval in ms */
 #ifdef MAVLINK_ENABLED_SLUGS
-  #define SERIAL_POLL_INTERVAL 7
+#define SERIAL_POLL_INTERVAL 7
 #else
-  #define SERIAL_POLL_INTERVAL 7
+#define SERIAL_POLL_INTERVAL 7
 #endif
 
 /** @brief Heartbeat emission rate, in Hertz (times per second) */
@@ -22,9 +22,9 @@
 namespace QGC
 
 {
-    const QString APPNAME = "QGROUNDCONTROL";
-    const QString COMPANYNAME = "OPENMAV";
-    const int APPLICATIONVERSION = 83; // 0.8.0
+const QString APPNAME = "QGROUNDCONTROL";
+const QString COMPANYNAME = "OPENMAV";
+const int APPLICATIONVERSION = 83; // 0.8.0
 }
 
 #endif // CONFIGURATION_H

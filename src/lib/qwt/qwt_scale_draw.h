@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -30,7 +30,7 @@
 class QWT_EXPORT QwtScaleDraw: public QwtAbstractScaleDraw
 {
 public:
-    /*! 
+    /*!
         Alignment of the scale draw
         \sa setAlignment(), alignment()
      */
@@ -86,9 +86,9 @@ protected:
 
 #if QT_VERSION < 0x040000
     QWMatrix labelMatrix(const QPoint &, const QSize &) const;
-#else   
+#else
     QMatrix labelMatrix(const QPoint &, const QSize &) const;
-#endif  
+#endif
 
     virtual void drawTick(QPainter *p, double val, int len) const;
     virtual void drawBackbone(QPainter *p) const;

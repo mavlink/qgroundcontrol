@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -35,7 +35,7 @@ QwtScaleTransformation *QwtScaleTransformation::copy() const
   \param x2 first border of source interval
   \param y1 first border of target interval
   \param y2 first border of target interval
-  \return 
+  \return
   <dl>
   <dt>linear mapping:<dd>y1 + (y2 - y1) / (x2 - x1) * (x - x1)</dd>
   </dl>
@@ -47,9 +47,9 @@ QwtScaleTransformation *QwtScaleTransformation::copy() const
 double QwtScaleTransformation::xForm(
     double s, double s1, double s2, double p1, double p2) const
 {
-    if ( d_type == Log10 )  
+    if ( d_type == Log10 )
         return p1 + (p2 - p1) / log(s2 / s1) * log(s / s1);
-    else 
+    else
         return p1 + (p2 - p1) / (s2 - s1) * (s - s1);
 }
 
@@ -61,16 +61,16 @@ double QwtScaleTransformation::xForm(
   \param p2 first border of linear interval
   \param s1 first border of logarithmic interval
   \param s2 first border of logarithmic interval
-  \return 
+  \return
   <dl>
   <dt>exp((x - p1) / (p2 - p1) * log(s2 / s1)) * s1;
   </dl>
 */
 
-double QwtScaleTransformation::invXForm(double p, double p1, double p2, 
-    double s1, double s2) const
+double QwtScaleTransformation::invXForm(double p, double p1, double p2,
+                                        double s1, double s2) const
 {
-    if ( d_type == Log10 )  
+    if ( d_type == Log10 )
         return exp((p - p1) / (p2 - p1) * log(s2 / s1)) * s1;
     else
         return s1 + (s2 - s1) / (p2 - p1) * (p - p1);
@@ -147,22 +147,21 @@ const QwtScaleTransformation *QwtScaleMap::transformation() const
 /*!
   \brief Specify the borders of the scale interval
   \param s1 first border
-  \param s2 second border 
+  \param s2 second border
   \warning logarithmic scales might be aligned to [LogMin, LogMax]
 */
 void QwtScaleMap::setScaleInterval(double s1, double s2)
 {
-    if (d_transformation->type() == QwtScaleTransformation::Log10 )
-    {
-        if (s1 < LogMin) 
-           s1 = LogMin;
-        else if (s1 > LogMax) 
-           s1 = LogMax;
-        
-        if (s2 < LogMin) 
-           s2 = LogMin;
-        else if (s2 > LogMax) 
-           s2 = LogMax;
+    if (d_transformation->type() == QwtScaleTransformation::Log10 ) {
+        if (s1 < LogMin)
+            s1 = LogMin;
+        else if (s1 > LogMax)
+            s1 = LogMax;
+
+        if (s2 < LogMin)
+            s2 = LogMin;
+        else if (s2 > LogMax)
+            s2 = LogMax;
     }
 
     d_s1 = s1;
@@ -211,14 +210,14 @@ void QwtScaleMap::newFactor()
         return;
 #endif
 
-    switch( d_transformation->type() )
-    {
-        case QwtScaleTransformation::Linear:
-            d_cnv = (d_p2 - d_p1) / (d_s2 - d_s1); 
-            break;
-        case QwtScaleTransformation::Log10:
-            d_cnv = (d_p2 - d_p1) / log(d_s2 / d_s1);
-            break;
-        default:;
+    switch( d_transformation->type() ) {
+    case QwtScaleTransformation::Linear:
+        d_cnv = (d_p2 - d_p1) / (d_s2 - d_s1);
+        break;
+    case QwtScaleTransformation::Log10:
+        d_cnv = (d_p2 - d_p1) / log(d_s2 / d_s1);
+        break;
+    default:
+        ;
     }
 }

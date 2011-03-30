@@ -4,7 +4,7 @@
 #include <QtPlugin>
 
 QGCParamSliderPlugin::QGCParamSliderPlugin(QObject *parent) :
-        QObject(parent)
+    QObject(parent)
 {
     initialized = false;
 }
@@ -60,17 +60,17 @@ bool QGCParamSliderPlugin::isContainer() const
 QString QGCParamSliderPlugin::domXml() const
 {
     return "<ui language=\"c++\">\n"
-            " <widget class=\"QGCParamSlider\" name=\"paramSlider\">\n"
-            "  <property name=\"geometry\">\n"
-            "   <rect>\n"
-            "    <x>0</x>\n"
-            "    <y>0</y>\n"
-            "    <width>150</width>\n"
-            "    <height>16</height>\n"
-            "   </rect>\n"
-            "  </property>\n"
-            " </widget>\n"
-            "</ui>";
+           " <widget class=\"QGCParamSlider\" name=\"paramSlider\">\n"
+           "  <property name=\"geometry\">\n"
+           "   <rect>\n"
+           "    <x>0</x>\n"
+           "    <y>0</y>\n"
+           "    <width>150</width>\n"
+           "    <height>16</height>\n"
+           "   </rect>\n"
+           "  </property>\n"
+           " </widget>\n"
+           "</ui>";
 }
 
 QString QGCParamSliderPlugin::includeFile() const

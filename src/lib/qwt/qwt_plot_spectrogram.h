@@ -12,9 +12,9 @@
 
 #include <qglobal.h>
 
-#include "qwt_valuelist.h" 
-#include "qwt_raster_data.h" 
-#include "qwt_plot_rasteritem.h" 
+#include "qwt_valuelist.h"
+#include "qwt_raster_data.h"
+#include "qwt_plot_rasteritem.h"
 
 class QwtColorMap;
 
@@ -26,7 +26,7 @@ class QwtColorMap;
   from the values using a color map.
 
   In ContourMode contour lines are painted for the contour levels.
-  
+
   \image html spectrogram3.png
 
   \sa QwtRasterData, QwtColorMap
@@ -48,8 +48,7 @@ public:
       \sa setDisplayMode(), testDisplayMode()
     */
 
-    enum DisplayMode
-    {
+    enum DisplayMode {
         ImageMode = 1,
         ContourMode = 2
     };
@@ -83,12 +82,12 @@ public:
     virtual int rtti() const;
 
     virtual void draw(QPainter *p,
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-        const QRect &rect) const;
+                      const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                      const QRect &rect) const;
 
 protected:
     virtual QImage renderImage(
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap, 
+        const QwtScaleMap &xMap, const QwtScaleMap &yMap,
         const QwtDoubleRect &rect) const;
 
     virtual QSize contourRasterSize(
@@ -98,8 +97,8 @@ protected:
         const QwtDoubleRect &rect, const QSize &raster) const;
 
     virtual void drawContourLines(QPainter *p,
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-        const QwtRasterData::ContourLines& lines) const;
+                                  const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                                  const QwtRasterData::ContourLines& lines) const;
 
 private:
     class PrivateData;

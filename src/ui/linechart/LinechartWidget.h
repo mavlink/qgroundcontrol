@@ -59,7 +59,8 @@ This file is part of the PIXHAWK project
  * @brief The linechart widget allows to visualize different timeseries as lineplot.
  * The display interval, the timeseries and the scaling can be changed interactively
  **/
-class LinechartWidget : public QWidget {
+class LinechartWidget : public QWidget
+{
     Q_OBJECT
 
 public:

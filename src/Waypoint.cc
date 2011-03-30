@@ -35,20 +35,20 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 
 Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _param1, double _param2, double _param3, double _param4,
-                            bool _autocontinue, bool _current, MAV_FRAME _frame, MAV_CMD _action)
+                   bool _autocontinue, bool _current, MAV_FRAME _frame, MAV_CMD _action)
     : id(_id),
-    x(_x),
-    y(_y),
-    z(_z),
-    yaw(_param4),
-    frame(_frame),
-    action(_action),
-    autocontinue(_autocontinue),
-    current(_current),
-    orbit(_param3),
-    param1(_param1),
-    param2(_param2),
-    name(QString("WP%1").arg(id, 2, 10, QChar('0')))
+      x(_x),
+      y(_y),
+      z(_z),
+      yaw(_param4),
+      frame(_frame),
+      action(_action),
+      autocontinue(_autocontinue),
+      current(_current),
+      orbit(_param3),
+      param1(_param1),
+      param2(_param2),
+      name(QString("WP%1").arg(id, 2, 10, QChar('0')))
 {
 }
 
@@ -78,8 +78,7 @@ void Waypoint::save(QTextStream &saveStream)
 bool Waypoint::load(QTextStream &loadStream)
 {
     const QStringList &wpParams = loadStream.readLine().split("\t");
-    if (wpParams.size() == 12)
-    {
+    if (wpParams.size() == 12) {
         this->id = wpParams[0].toInt();
         this->current = (wpParams[1].toInt() == 1 ? true : false);
         this->frame = (MAV_FRAME) wpParams[2].toInt();
@@ -107,8 +106,7 @@ void Waypoint::setId(quint16 id)
 
 void Waypoint::setX(double x)
 {
-    if (this->x != x)
-    {
+    if (this->x != x) {
         this->x = x;
         emit changed(this);
     }
@@ -116,8 +114,7 @@ void Waypoint::setX(double x)
 
 void Waypoint::setY(double y)
 {
-    if (this->y != y)
-    {
+    if (this->y != y) {
         this->y = y;
         emit changed(this);
     }
@@ -125,8 +122,7 @@ void Waypoint::setY(double y)
 
 void Waypoint::setZ(double z)
 {
-    if (this->z != z)
-    {
+    if (this->z != z) {
         this->z = z;
         emit changed(this);
     }
@@ -134,8 +130,7 @@ void Waypoint::setZ(double z)
 
 void Waypoint::setLatitude(double lat)
 {
-    if (this->x != lat)
-    {
+    if (this->x != lat) {
         this->x = lat;
         this->frame = MAV_FRAME_GLOBAL;
         emit changed(this);
@@ -144,8 +139,7 @@ void Waypoint::setLatitude(double lat)
 
 void Waypoint::setLongitude(double lon)
 {
-    if (this->y != lon)
-    {
+    if (this->y != lon) {
         this->y = lon;
         this->frame = MAV_FRAME_GLOBAL;
         emit changed(this);
@@ -154,8 +148,7 @@ void Waypoint::setLongitude(double lon)
 
 void Waypoint::setAltitude(double altitude)
 {
-    if (this->z != altitude)
-    {
+    if (this->z != altitude) {
         this->z = altitude;
         this->frame = MAV_FRAME_GLOBAL;
         emit changed(this);
@@ -164,8 +157,7 @@ void Waypoint::setAltitude(double altitude)
 
 void Waypoint::setYaw(int yaw)
 {
-    if (this->yaw != yaw)
-    {
+    if (this->yaw != yaw) {
         this->yaw = yaw;
         emit changed(this);
     }
@@ -173,8 +165,7 @@ void Waypoint::setYaw(int yaw)
 
 void Waypoint::setYaw(double yaw)
 {
-    if (this->yaw != yaw)
-    {
+    if (this->yaw != yaw) {
         this->yaw = yaw;
         emit changed(this);
     }
@@ -182,8 +173,7 @@ void Waypoint::setYaw(double yaw)
 
 void Waypoint::setAction(int action)
 {
-    if (this->action != (MAV_CMD)action)
-    {
+    if (this->action != (MAV_CMD)action) {
         this->action = (MAV_CMD)action;
         emit changed(this);
     }
@@ -191,8 +181,7 @@ void Waypoint::setAction(int action)
 
 void Waypoint::setAction(MAV_CMD action)
 {
-    if (this->action != action)
-    {
+    if (this->action != action) {
         this->action = action;
         emit changed(this);
     }
@@ -200,8 +189,7 @@ void Waypoint::setAction(MAV_CMD action)
 
 void Waypoint::setFrame(MAV_FRAME frame)
 {
-    if (this->frame != frame)
-    {
+    if (this->frame != frame) {
         this->frame = frame;
         emit changed(this);
     }
@@ -209,8 +197,7 @@ void Waypoint::setFrame(MAV_FRAME frame)
 
 void Waypoint::setAutocontinue(bool autoContinue)
 {
-    if (this->autocontinue != autocontinue)
-    {
+    if (this->autocontinue != autocontinue) {
         this->autocontinue = autoContinue;
         emit changed(this);
     }
@@ -218,8 +205,7 @@ void Waypoint::setAutocontinue(bool autoContinue)
 
 void Waypoint::setCurrent(bool current)
 {
-    if (this->current != current)
-    {
+    if (this->current != current) {
         this->current = current;
         emit changed(this);
     }
@@ -227,8 +213,7 @@ void Waypoint::setCurrent(bool current)
 
 void Waypoint::setAcceptanceRadius(double radius)
 {
-    if (this->param2 != radius)
-    {
+    if (this->param2 != radius) {
         this->param2 = radius;
         emit changed(this);
     }
@@ -238,8 +223,7 @@ void Waypoint::setParam1(double param1)
 {
     qDebug() << "SENDER:" << QObject::sender();
     qDebug() << "PARAM1 SET REQ:" << param1;
-    if (this->param1 != param1)
-    {
+    if (this->param1 != param1) {
         this->param1 = param1;
         emit changed(this);
     }
@@ -247,8 +231,7 @@ void Waypoint::setParam1(double param1)
 
 void Waypoint::setParam2(double param2)
 {
-    if (this->param2 != param2)
-    {
+    if (this->param2 != param2) {
         this->param2 = param2;
         emit changed(this);
     }
@@ -256,8 +239,7 @@ void Waypoint::setParam2(double param2)
 
 void Waypoint::setParam3(double param3)
 {
-    if (this->orbit != param3)
-    {
+    if (this->orbit != param3) {
         this->orbit = param3;
         emit changed(this);
     }
@@ -265,8 +247,7 @@ void Waypoint::setParam3(double param3)
 
 void Waypoint::setParam4(double param4)
 {
-    if (this->yaw != param4)
-    {
+    if (this->yaw != param4) {
         this->yaw = param4;
         emit changed(this);
     }
@@ -274,8 +255,7 @@ void Waypoint::setParam4(double param4)
 
 void Waypoint::setParam5(double param5)
 {
-    if (this->x != param5)
-    {
+    if (this->x != param5) {
         this->x = param5;
         emit changed(this);
     }
@@ -283,8 +263,7 @@ void Waypoint::setParam5(double param5)
 
 void Waypoint::setParam6(double param6)
 {
-    if (this->y != param6)
-    {
+    if (this->y != param6) {
         this->y = param6;
         emit changed(this);
     }
@@ -292,8 +271,7 @@ void Waypoint::setParam6(double param6)
 
 void Waypoint::setParam7(double param7)
 {
-    if (this->z != param7)
-    {
+    if (this->z != param7) {
         this->z = param7;
         emit changed(this);
     }
@@ -301,8 +279,7 @@ void Waypoint::setParam7(double param7)
 
 void Waypoint::setLoiterOrbit(double orbit)
 {
-    if (this->orbit != orbit)
-    {
+    if (this->orbit != orbit) {
         this->orbit = orbit;
         emit changed(this);
     }
@@ -310,8 +287,7 @@ void Waypoint::setLoiterOrbit(double orbit)
 
 void Waypoint::setHoldTime(int holdTime)
 {
-    if (this->param1 != holdTime)
-    {
+    if (this->param1 != holdTime) {
         this->param1 = holdTime;
         emit changed(this);
     }
@@ -319,8 +295,7 @@ void Waypoint::setHoldTime(int holdTime)
 
 void Waypoint::setHoldTime(double holdTime)
 {
-    if (this->param1 != holdTime)
-    {
+    if (this->param1 != holdTime) {
         this->param1 = holdTime;
         emit changed(this);
     }
@@ -328,8 +303,7 @@ void Waypoint::setHoldTime(double holdTime)
 
 void Waypoint::setTurns(int turns)
 {
-    if (this->param1 != turns)
-    {
+    if (this->param1 != turns) {
         this->param1 = turns;
         emit changed(this);
     }

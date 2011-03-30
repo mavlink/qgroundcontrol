@@ -34,8 +34,7 @@ public:
     QLabel *nameLabel;
     QPushButton *clearButton;
 
-    void setupUi(QWidget *ObjectDetectionView)
-    {
+    void setupUi(QWidget *ObjectDetectionView) {
         if (ObjectDetectionView->objectName().isEmpty())
             ObjectDetectionView->setObjectName(QString::fromUtf8("ObjectDetectionView"));
         ObjectDetectionView->resize(246, 403);
@@ -72,7 +71,7 @@ public:
         letterLabel->setSizeIncrement(QSize(2, 2));
         letterLabel->setBaseSize(QSize(10, 10));
         letterLabel->setStyleSheet(QString::fromUtf8("font: 72pt;\n"
-"color: white;"));
+                                   "color: white;"));
         letterLabel->setAlignment(Qt::AlignCenter);
 
         gridLayout->addWidget(letterLabel, 2, 1, 1, 2);
@@ -94,8 +93,7 @@ public:
         QMetaObject::connectSlotsByName(ObjectDetectionView);
     } // setupUi
 
-    void retranslateUi(QWidget *ObjectDetectionView)
-    {
+    void retranslateUi(QWidget *ObjectDetectionView) {
         ObjectDetectionView->setWindowTitle(QApplication::translate("ObjectDetectionView", "Form", 0, QApplication::UnicodeUTF8));
         imageLabel->setText(QString());
         letterLabel->setText(QString());
@@ -105,8 +103,9 @@ public:
 
 };
 
-namespace Ui {
-    class ObjectDetectionView: public Ui_ObjectDetectionView {};
+namespace Ui
+{
+class ObjectDetectionView: public Ui_ObjectDetectionView {};
 } // namespace Ui
 
 QT_END_NAMESPACE

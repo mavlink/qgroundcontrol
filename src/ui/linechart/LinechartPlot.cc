@@ -32,15 +32,15 @@
  * @param interval The maximum interval for which data is stored (default: 30 minutes) in milliseconds
  **/
 LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): QwtPlot(parent),
-minTime(QUINT64_MAX),
-maxTime(QUINT64_MIN),
-maxInterval(MAX_STORAGE_INTERVAL),
-timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
-automaticScrollActive(false),
-m_active(false),
-m_groundTime(true),
-d_data(NULL),
-d_curve(NULL)
+    minTime(QUINT64_MAX),
+    maxTime(QUINT64_MIN),
+    maxInterval(MAX_STORAGE_INTERVAL),
+    timeScaleStep(DEFAULT_SCALE_INTERVAL), // 10 seconds
+    automaticScrollActive(false),
+    m_active(false),
+    m_groundTime(true),
+    d_data(NULL),
+    d_curve(NULL)
 {
     this->plotid = plotid;
     this->plotInterval = interval;
@@ -228,8 +228,7 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     datalock.lock();
 
     /* Check if dataset identifier already exists */
-    if(!data.contains(dataname))
-    {
+    if(!data.contains(dataname)) {
         addCurve(dataname);
     }
 
@@ -239,13 +238,10 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     quint64 time;
 
     // Append data
-    if (m_groundTime)
-    {
+    if (m_groundTime) {
         // Use the current (receive) time
         time = QGC::groundTimeUsecs()/1000;
-    }
-    else
-    {
+    } else {
         // Use timestamp from dataset
         time = ms;
     }
@@ -478,10 +474,8 @@ bool LinechartPlot::isVisible(QString id)
 bool LinechartPlot::anyCurveVisible()
 {
     bool visible = false;
-    foreach (QString key, curves.keys())
-    {
-        if (curves.value(key)->isVisible())
-        {
+    foreach (QString key, curves.keys()) {
+        if (curves.value(key)->isVisible()) {
             visible = true;
         }
     }
@@ -600,8 +594,7 @@ void LinechartPlot::setLinearScaling()
 void LinechartPlot::setAverageWindow(int windowSize)
 {
     this->averageWindowSize = windowSize;
-    foreach(TimeSeriesData* series, data)
-    {
+    foreach(TimeSeriesData* series, data) {
         series->setAverageWindowSize(windowSize);
     }
 }
@@ -613,8 +606,7 @@ void LinechartPlot::setAverageWindow(int windowSize)
  **/
 void LinechartPlot::paintRealtime()
 {
-    if (m_active)
-    {
+    if (m_active) {
 #if (QGC_EVENTLOOP_DEBUG)
         static quint64 timestamp = 0;
         qDebug() << "EVENTLOOP: (" << MG::TIME::getGroundTimeNow() - timestamp << ")" << __FILE__ << __LINE__;
@@ -622,8 +614,7 @@ void LinechartPlot::paintRealtime()
 #endif
         // Update plot window value to new max time if the last time was also the max time
         windowLock.lock();
-        if (automaticScrollActive)
-        {
+        if (automaticScrollActive) {
 
             // FIXME Check, but commenting this out should have been
             // beneficial (does only add complexity)
@@ -640,8 +631,8 @@ void LinechartPlot::paintRealtime()
             // FIXME Last fix for scroll zoomer is here
             //setAxisScale(QwtPlot::yLeft, minValue + minValue * 0.05, maxValue + maxValue * 0.05f, (maxValue - minValue) / 10.0);
             /* Notify about change. Even if the window position was not changed
-         * itself, the relative position of the window to the interval must
-         * have changed, as the interval likely increased in length */
+                     * itself, the relative position of the window to the interval must
+                     * have changed, as the interval likely increased in length */
             emit windowPositionChanged(getWindowPosition());
         }
 
@@ -653,12 +644,11 @@ void LinechartPlot::paintRealtime()
         //    const bool cacheMode =
         //            canvas()->testPaintAttribute(QwtPlotCanvas::PaintCached);
         const bool oldDirectPaint =
-                canvas()->testAttribute(Qt::WA_PaintOutsidePaintEvent);
+            canvas()->testAttribute(Qt::WA_PaintOutsidePaintEvent);
 
         const QPaintEngine *pe = canvas()->paintEngine();
         bool directPaint = pe->hasFeature(QPaintEngine::PaintOutsidePaintEvent);
-        if ( pe->type() == QPaintEngine::X11 )
-        {
+        if ( pe->type() == QPaintEngine::X11 ) {
             // Even if not recommended by TrollTech, Qt::WA_PaintOutsidePaintEvent
             // works on X11. This has an tremendous effect on the performance..
             directPaint = true;
@@ -669,12 +659,9 @@ void LinechartPlot::paintRealtime()
         // Only set current view as zoombase if zoomer is not active
         // else we could not zoom out any more
 
-        if(zoomer->zoomStack().size() < 2)
-        {
+        if(zoomer->zoomStack().size() < 2) {
             zoomer->setZoomBase(true);
-        }
-        else
-        {
+        } else {
             replot();
         }
 
@@ -732,14 +719,14 @@ void LinechartPlot::removeAllData()
 
 
 TimeSeriesData::TimeSeriesData(QwtPlot* plot, QString friendlyName, quint64 plotInterval, quint64 maxInterval, double zeroValue):
-        minValue(DBL_MAX),
-        maxValue(DBL_MIN),
-        zeroValue(0),
-        count(0),
-        mean(0.0),
-        median(0.0),
-        variance(0.0),
-        averageWindow(50)
+    minValue(DBL_MAX),
+    maxValue(DBL_MIN),
+    zeroValue(0),
+    count(0),
+    mean(0.0),
+    median(0.0),
+    variance(0.0),
+    averageWindow(50)
 {
     this->plot = plot;
     this->friendlyName = friendlyName;
@@ -780,8 +767,7 @@ void TimeSeriesData::append(quint64 ms, double value)
     dataMutex.lock();
     // Pre- allocate new space
     // FIXME Check this for validity
-    if(static_cast<quint64>(size()) < (count + 100))
-    {
+    if(static_cast<quint64>(size()) < (count + 100)) {
         this->ms.resize(size() + 10000);
         this->value.resize(size() + 10000);
     }
@@ -790,16 +776,14 @@ void TimeSeriesData::append(quint64 ms, double value)
     this->lastValue = value;
     this->mean = 0;
     //QList<double> medianList = QList<double>();
-    for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i)
-    {
+    for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i) {
         this->mean += this->value[count-i];
         //medianList.append(this->value[count-i]);
     }
     this->mean = mean / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
 
     this->variance = 0;
-    for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i)
-    {
+    for (unsigned int i = 0; (i < averageWindow) && (((int)count - (int)i) >= 0); ++i) {
         this->variance += (this->value[count-i] - mean) * (this->value[count-i] - mean);
     }
     this->variance = this->variance / static_cast<double>(qMin(averageWindow,static_cast<unsigned int>(count)));
@@ -823,10 +807,8 @@ void TimeSeriesData::append(quint64 ms, double value)
     if(ms > stopTime) stopTime = ms;
     interval = stopTime - startTime;
 
-    if (interval > plotInterval)
-    {
-        while (this->ms[count - plotCount] < stopTime - plotInterval)
-        {
+    if (interval > plotInterval) {
+        while (this->ms[count - plotCount] < stopTime - plotInterval) {
             plotCount--;
         }
     }
@@ -838,17 +820,15 @@ void TimeSeriesData::append(quint64 ms, double value)
     if(maxValue < value) maxValue = value;
 
     // Trim dataset if necessary
-    if(maxInterval > 0)
-    { // maxInterval = 0 means infinite
+    if(maxInterval > 0) {
+        // maxInterval = 0 means infinite
 
-        if(interval > maxInterval && !this->ms.isEmpty() && !this->value.isEmpty())
-        {
+        if(interval > maxInterval && !this->ms.isEmpty() && !this->value.isEmpty()) {
             // The time at which this time series should be cut
             double minTime = stopTime - maxInterval;
             // Delete elements from the start of the list as long the time
             // value of this elements is before the cut time
-            while(this->ms.first() < minTime)
-            {
+            while(this->ms.first() < minTime) {
                 this->ms.pop_front();
                 this->value.pop_front();
             }

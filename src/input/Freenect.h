@@ -56,8 +56,7 @@ public:
     QSharedPointer<QByteArray> getColoredDepthData(void);
     QSharedPointer< QVector<QVector3D> > get3DPointCloudData(void);
 
-    typedef struct
-    {
+    typedef struct {
         double x;
         double y;
         double z;
@@ -71,8 +70,7 @@ public:
     void setTiltAngle(int angle);
 
 private:
-    typedef struct
-    {
+    typedef struct {
         // coordinates of principal point
         double cx;
         double cy;

@@ -22,8 +22,7 @@ public:
 #endif
     {
     public:
-        void insertItem(QwtPlotItem *item)
-        {
+        void insertItem(QwtPlotItem *item) {
             if ( item == NULL )
                 return;
 
@@ -39,13 +38,11 @@ public:
 #else
             QList<QwtPlotItem *>::Iterator it;
 #endif
-            for ( it = begin(); it != end(); ++it )
-            {
+            for ( it = begin(); it != end(); ++it ) {
                 if ( *it == item )
                     return;
 
-                if ( (*it)->z() > item->z() )
-                {
+                if ( (*it)->z() > item->z() ) {
                     insert(it, item);
                     return;
                 }
@@ -53,8 +50,7 @@ public:
             append(item);
         }
 
-        void removeItem(QwtPlotItem *item)
-        {
+        void removeItem(QwtPlotItem *item) {
             if ( item == NULL )
                 return;
 
@@ -65,10 +61,8 @@ public:
 #else
             QList<QwtPlotItem *>::Iterator it;
 #endif
-            for ( it = begin(); it != end(); ++it )
-            {
-                if ( item == *it )
-                {
+            for ( it = begin(); it != end(); ++it ) {
+                if ( item == *it ) {
 #if QT_VERSION < 0x040000
                     remove(it);
 #else
@@ -85,8 +79,8 @@ public:
     bool autoDelete;
 };
 
-/*! 
-   Constructor 
+/*!
+   Constructor
 
    Auto deletion is enabled.
    \sa setAutoDelete, attachItem
@@ -97,7 +91,7 @@ QwtPlotDict::QwtPlotDict()
     d_data->autoDelete = true;
 }
 
-/*! 
+/*!
    Destructor
 
    If autoDelete is on, all attached items will be deleted
@@ -154,7 +148,7 @@ void QwtPlotDict::attachItem(QwtPlotItem *item, bool on)
 /*!
    Detach items from the dictionary
 
-   \param rtti In case of QwtPlotItem::Rtti_PlotItem detach all items 
+   \param rtti In case of QwtPlotItem::Rtti_PlotItem detach all items
                otherwise only those items of the type rtti.
    \param autoDelete If true, delete all detached items
 */
@@ -162,14 +156,12 @@ void QwtPlotDict::detachItems(int rtti, bool autoDelete)
 {
     PrivateData::ItemList list = d_data->itemList;
     QwtPlotItemIterator it = list.begin();
-    while ( it != list.end() )
-    {
+    while ( it != list.end() ) {
         QwtPlotItem *item = *it;
 
         ++it; // increment before removing item from the list
 
-        if ( rtti == QwtPlotItem::Rtti_PlotItem || item->rtti() == rtti )
-        {
+        if ( rtti == QwtPlotItem::Rtti_PlotItem || item->rtti() == rtti ) {
             item->attach(NULL);
             if ( autoDelete )
                 delete item;

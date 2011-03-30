@@ -47,11 +47,12 @@ class QMenu;
 class Waypoint;
 class Waypoint2DIcon;
 
-namespace Ui {
-    class MapWidget;
+namespace Ui
+{
+class MapWidget;
 }
 
-    using namespace qmapcontrol;
+using namespace qmapcontrol;
 
 /**
  * @brief 2D Moving map
@@ -59,7 +60,8 @@ namespace Ui {
  * This map displays street maps, aerial images and the MAV position,
  * waypoints and trails on top.
  */
-class MapWidget : public QWidget {
+class MapWidget : public QWidget
+{
     Q_OBJECT
 public:
     MapWidget(QWidget *parent = 0);
@@ -151,7 +153,7 @@ protected:
     /** @brief Initialize view */
     void init();
 
-  protected slots:
+protected slots:
     void captureMapClick (const QMouseEvent* event, const QPointF coordinate);
     void captureGeometryClick(Geometry*, QPoint);
     void captureGeometryDrag(Geometry* geom, QPointF coordinate);
@@ -163,7 +165,7 @@ protected:
     void createWaypointGraphAtMap(int id, const QPointF coordinate);
     void mapproviderSelected(QAction* action);
 
-  signals:
+signals:
     //void movePoint(QPointF newCoord);
     //void captureMapCoordinateClick(const QPointF coordinate); //ROCA
     //void createGlobalWP(bool value, QPointF centerCoordinate);
