@@ -794,12 +794,12 @@ set (qserialHdrs
     thirdParty/qserial/include/QtSerialPort/qserialport_export.h
     thirdParty/qserial/include/QtSerialPort/QSerialPort
     thirdParty/qserial/include/QtSerialPort/qportsettings.h
-    thirdParty/qserial/include/QtSerialPort/qserialport.h
-    thirdParty/qserial/include/QtSerialPort/qserialportnative.h
     )
 # qserial headers with Q_OBJECT
 # r !grep -Rl Q_OBJECT thirdParty/qserial
 set (qserialMocSrc
+    thirdParty/qserial/include/QtSerialPort/qserialport.h
+    thirdParty/qserial/include/QtSerialPort/qserialportnative.h
     )
 # qserial src
 set (qserialSrc
@@ -807,29 +807,23 @@ set (qserialSrc
     thirdParty/qserial/src/common/qportsettings.cpp
 )
 
-# qserial resources
-set(qserialRscSrc
-    thirdParty/qserial/src/QtSerialPortd_resource.rc
-    thirdParty/qserial/src/QtSerialPort_resource.rc
-)
-
 # qserial native code
-#if (WIN32)
-    #list(APPEND qserialHdrs
-        #thirdParty/qserial/src/win32/commdcbhelper.h
-        #)
-    #list(APPEND qserialMocSrc
-        #thirdParty/qserial/src/win32/qwincommevtnotifier.h
-        #thirdParty/qserial/src/win32/wincommevtbreaker.h
-    #)
-    #list(APPEND qserialSrc
-        #thirdParty/qserial/src/win32/qserialportnative_win32.cpp
-        #thirdParty/qserial/src/win32/commdcbhelper.cpp
-        #thirdParty/qserial/src/win32/qwincommevtnotifier.cpp
-        ##thirdParty/qserial/src/win32/qserialportnative_wince.cpp
-        ##thirdParty/qserial/src/win32/wincommevtbreaker.cpp
-        #)
-#elseif(UNIX OR APPLE)
+if (WIN32)
+    list(APPEND qserialHdrs
+        thirdParty/qserial/src/win32/commdcbhelper.h
+        )
+    list(APPEND qserialMocSrc
+        thirdParty/qserial/src/win32/qwincommevtnotifier.h
+        thirdParty/qserial/src/win32/wincommevtbreaker.h
+    )
+    list(APPEND qserialSrc
+        thirdParty/qserial/src/win32/qserialportnative_win32.cpp
+        thirdParty/qserial/src/win32/commdcbhelper.cpp
+        thirdParty/qserial/src/win32/qwincommevtnotifier.cpp
+        #thirdParty/qserial/src/win32/qserialportnative_wince.cpp
+        #thirdParty/qserial/src/win32/wincommevtbreaker.cpp
+        )
+elseif(UNIX OR APPLE)
     list(APPEND qserialHdrs
         thirdParty/qserial/src/posix/termioshelper.h
         )
@@ -837,13 +831,12 @@ set(qserialRscSrc
         thirdParty/qserial/src/posix/termioshelper.cpp
         thirdParty/qserial/src/posix/qserialportnative_posix.cpp
         )
-#else()
-    #message(FATAL_ERROR "unknown OS")
-#endif()
+else()
+    message(FATAL_ERROR "unknown OS")
+endif()
 
 # qserial linking
 qt4_wrap_cpp(qserialMoc ${qserialMocSrc})
-qt4_add_resources(qserialRsc ${qserialRscSrc})
 add_library(qserial ${qserialMoc} ${qserialSrc})
 target_link_libraries(qserial ${QT_LIBRARIES})
 
