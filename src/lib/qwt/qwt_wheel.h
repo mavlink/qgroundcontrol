@@ -24,13 +24,13 @@
 */
 class QWT_EXPORT QwtWheel : public QwtAbstractSlider
 {
-    Q_OBJECT 
+    Q_OBJECT
     Q_PROPERTY( double totalAngle READ totalAngle WRITE setTotalAngle )
     Q_PROPERTY( double viewAngle READ viewAngle WRITE setViewAngle )
     Q_PROPERTY( int    tickCnt READ tickCnt WRITE setTickCnt )
     Q_PROPERTY( int    internalBorder READ internalBorder WRITE setInternalBorder )
     Q_PROPERTY( double mass READ mass WRITE setMass )
-            
+
 public:
     explicit QwtWheel(QWidget *parent = NULL);
 #if QT_VERSION < 0x040000
@@ -71,8 +71,8 @@ protected:
     virtual void paletteChange( const QPalette &);
 
     virtual double getValue(const QPoint &p);
-    virtual void getScrollMode(const QPoint &p, 
-        int &scrollMode, int &direction);
+    virtual void getScrollMode(const QPoint &p,
+                               int &scrollMode, int &direction);
 
 private:
     void initWheel();

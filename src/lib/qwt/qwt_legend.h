@@ -59,16 +59,14 @@ public:
        \sa setDisplayPolicy(), displayPolicy(), QwtLegendItem::IdentifierMode
      */
 
-    enum LegendDisplayPolicy
-    {
+    enum LegendDisplayPolicy {
         NoIdentifier = 0,
         FixedIdentifier = 1,
         AutoIdentifier = 2
     };
 
     //!  Interaction mode for the legend items
-    enum LegendItemMode
-    {
+    enum LegendItemMode {
         ReadOnlyItem,
         ClickableItem,
         CheckableItem
@@ -76,7 +74,7 @@ public:
 
     explicit QwtLegend(QWidget *parent = NULL);
     virtual ~QwtLegend();
-    
+
     void setDisplayPolicy(LegendDisplayPolicy policy, int mode);
     LegendDisplayPolicy displayPolicy() const;
 
@@ -101,7 +99,7 @@ public:
 #endif
 
     void clear();
-    
+
     bool isEmpty() const;
     uint itemCount() const;
 

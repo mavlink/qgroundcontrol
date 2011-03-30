@@ -104,8 +104,7 @@ void UASInfoWidget::hideEvent(QHideEvent* event)
 
 void UASInfoWidget::addUAS(UASInterface* uas)
 {
-    if (uas != NULL)
-    {
+    if (uas != NULL) {
         connect(uas, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBattery(UASInterface*,double,double,int)));
         connect(uas, SIGNAL(dropRateChanged(int,float)), this, SLOT(updateReceiveLoss(int,float)));
         connect(uas, SIGNAL(loadChanged(UASInterface*, double)), this, SLOT(updateCPULoad(UASInterface*,double)));
@@ -131,8 +130,7 @@ void UASInfoWidget::updateBattery(UASInterface* uas, double voltage, double perc
 void UASInfoWidget::updateErrorCount(int uasid, QString component, QString device, int count)
 {
     //qDebug() << __FILE__ << __LINE__ << activeUAS->getUASID() << "=" << uasid;
-    if (activeUAS->getUASID() == uasid)
-    {
+    if (activeUAS->getUASID() == uasid) {
         errors.remove(component + ":" + device);
         errors.insert(component + ":" + device, count);
     }
@@ -143,8 +141,7 @@ void UASInfoWidget::updateErrorCount(int uasid, QString component, QString devic
  */
 void UASInfoWidget::updateCPULoad(UASInterface* uas, double load)
 {
-    if (activeUAS == uas)
-    {
+    if (activeUAS == uas) {
         this->load = load;
     }
 }
@@ -173,16 +170,14 @@ void UASInfoWidget::setVoltage(UASInterface* uas, double voltage)
 
 void UASInfoWidget::setChargeLevel(UASInterface* uas, double chargeLevel)
 {
-    if (activeUAS == uas)
-    {
+    if (activeUAS == uas) {
         this->chargeLevel = chargeLevel;
     }
 }
 
 void UASInfoWidget::setTimeRemaining(UASInterface* uas, double seconds)
 {
-    if (activeUAS == uas)
-    {
+    if (activeUAS == uas) {
         this->timeRemaining = seconds;
     }
 }
@@ -206,8 +201,7 @@ void UASInfoWidget::refresh()
 
     QString errorString;
     QMapIterator<QString, int> i(errors);
-    while (i.hasNext())
-    {
+    while (i.hasNext()) {
         i.next();
         errorString += QString(i.key() + ": %1 ").arg(i.value());
 

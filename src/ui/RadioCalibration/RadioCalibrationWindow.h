@@ -60,7 +60,7 @@ This file is part of the QGROUNDCONTROL project
   */
 class RadioCalibrationWindow : public QWidget
 {
-Q_OBJECT
+    Q_OBJECT
 
 public:
     explicit RadioCalibrationWindow(QWidget *parent = 0);
@@ -75,7 +75,9 @@ public slots:
     void send();
     void request();
     void receive(const QPointer<RadioCalibrationData>& radio);
-    void setUASId(int id) {this->uasId = id;}
+    void setUASId(int id) {
+        this->uasId = id;
+    }
 
 
 protected:

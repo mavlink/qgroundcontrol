@@ -32,11 +32,13 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QWidget>
 
-namespace Ui {
-    class QGCPxImuFirmwareUpdate;
+namespace Ui
+{
+class QGCPxImuFirmwareUpdate;
 }
 
-class QGCPxImuFirmwareUpdate : public QWidget {
+class QGCPxImuFirmwareUpdate : public QWidget
+{
     Q_OBJECT
 public:
     QGCPxImuFirmwareUpdate(QWidget *parent = 0);

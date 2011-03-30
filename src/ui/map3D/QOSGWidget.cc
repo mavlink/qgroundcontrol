@@ -29,7 +29,7 @@ QOSGWidget::QOSGWidget( QWidget * parent, const char * name, WindowFlags f, bool
     Q_UNUSED(name);
     setAttribute(Qt::WA_PaintOnScreen);
     setAttribute(Qt::WA_NoSystemBackground);
-    setFocusPolicy(Qt::ClickFocus);   
+    setFocusPolicy(Qt::ClickFocus);
 }
 
 void QOSGWidget::createContext()
@@ -55,7 +55,7 @@ void QOSGWidget::createContext()
     traits->sampleBuffers = ds->getMultiSamples();
     traits->samples = ds->getNumMultiSamples();
 
-#if defined(__APPLE__) 
+#if defined(__APPLE__)
     // Extract a WindowPtr from the HIViewRef that QWidget::winId() returns.
     // Without this change, the peer tries to call GetWindowPort on the HIViewRef
     // which returns 0 and we only render white.
@@ -66,15 +66,18 @@ void QOSGWidget::createContext()
 #endif
 
 
-    if (ds->getStereo())
-    {
-        switch(ds->getStereoMode())
-        {
-            case(osg::DisplaySettings::QUAD_BUFFER): traits->quadBufferStereo = true; break;
-            case(osg::DisplaySettings::VERTICAL_INTERLACE):
-            case(osg::DisplaySettings::CHECKERBOARD):
-            case(osg::DisplaySettings::HORIZONTAL_INTERLACE): traits->stencil = 8; break;
-            default: break;
+    if (ds->getStereo()) {
+        switch(ds->getStereoMode()) {
+        case(osg::DisplaySettings::QUAD_BUFFER):
+            traits->quadBufferStereo = true;
+            break;
+        case(osg::DisplaySettings::VERTICAL_INTERLACE):
+        case(osg::DisplaySettings::CHECKERBOARD):
+        case(osg::DisplaySettings::HORIZONTAL_INTERLACE):
+            traits->stencil = 8;
+            break;
+        default:
+            break;
         }
     }
 
@@ -82,8 +85,7 @@ void QOSGWidget::createContext()
     _gw = dynamic_cast<osgViewer::GraphicsWindow*>(gc.get());
 
     // get around dearanged traits on X11 (MTCompositeViewer only)
-    if (_overrideTraits)
-    {
+    if (_overrideTraits) {
         traits->x = x();
         traits->y = y();
         traits->width = width();
@@ -92,9 +94,9 @@ void QOSGWidget::createContext()
 
 }
 
-#ifndef WIN32 
+#ifndef WIN32
 void QOSGWidget::destroyEvent(bool destroyWindow, bool destroySubWindows)
-{   
+{
     Q_UNUSED(destroyWindow);
     Q_UNUSED(destroySubWindows);
     _gw->getEventQueue()->closeWindow();
@@ -131,39 +133,66 @@ void QOSGWidget::keyReleaseEvent( QKeyEvent* event )
 void QOSGWidget::mousePressEvent( QMouseEvent* event )
 {
     int button = 0;
-    switch(event->button())
-    {
-        case(Qt::LeftButton): button = 1; break;
-        case(Qt::MidButton): button = 2; break;
-        case(Qt::RightButton): button = 3; break;
-        case(Qt::NoButton): button = 0; break;
-        default: button = 0; break;
+    switch(event->button()) {
+    case(Qt::LeftButton):
+        button = 1;
+        break;
+    case(Qt::MidButton):
+        button = 2;
+        break;
+    case(Qt::RightButton):
+        button = 3;
+        break;
+    case(Qt::NoButton):
+        button = 0;
+        break;
+    default:
+        button = 0;
+        break;
     }
     _gw->getEventQueue()->mouseButtonPress(event->x(), event->y(), button);
 }
 void QOSGWidget::mouseDoubleClickEvent ( QMouseEvent * event )
 {
     int button = 0;
-    switch(event->button())
-    {
-        case(Qt::LeftButton): button = 1; break;
-        case(Qt::MidButton): button = 2; break;
-        case(Qt::RightButton): button = 3; break;
-        case(Qt::NoButton): button = 0; break;
-        default: button = 0; break;
+    switch(event->button()) {
+    case(Qt::LeftButton):
+        button = 1;
+        break;
+    case(Qt::MidButton):
+        button = 2;
+        break;
+    case(Qt::RightButton):
+        button = 3;
+        break;
+    case(Qt::NoButton):
+        button = 0;
+        break;
+    default:
+        button = 0;
+        break;
     }
     _gw->getEventQueue()->mouseDoubleButtonPress(event->x(), event->y(), button);
 }
 void QOSGWidget::mouseReleaseEvent( QMouseEvent* event )
 {
     int button = 0;
-    switch(event->button())
-    {
-        case(Qt::LeftButton): button = 1; break;
-        case(Qt::MidButton): button = 2; break;
-        case(Qt::RightButton): button = 3; break;
-        case(Qt::NoButton): button = 0; break;
-        default: button = 0; break;
+    switch(event->button()) {
+    case(Qt::LeftButton):
+        button = 1;
+        break;
+    case(Qt::MidButton):
+        button = 2;
+        break;
+    case(Qt::RightButton):
+        button = 3;
+        break;
+    case(Qt::NoButton):
+        button = 0;
+        break;
+    default:
+        button = 0;
+        break;
     }
     _gw->getEventQueue()->mouseButtonRelease(event->x(), event->y(), button);
 }
@@ -179,41 +208,39 @@ void QOSGWidget::mouseMoveEvent( QMouseEvent* event )
 
 void CompositeViewerQOSG::Tile()
 {
-  int n = getNumViews() - 1; // -1 to account for dummy view
+    int n = getNumViews() - 1; // -1 to account for dummy view
 
-  for ( int i = 0; i < n; ++i )
-  {
-    osgViewer::View * view = getView(i+1);  // +1 to account for dummy view
-    view->getCamera()->setViewport( new osg::Viewport( 0, i*height()/n , width(), height()/n ) );
-    view->getCamera()->setProjectionMatrixAsPerspective( 30.0f, double( width() ) / double( height()/n ), 1.0f, 10000.0f );
-  }
+    for ( int i = 0; i < n; ++i ) {
+        osgViewer::View * view = getView(i+1);  // +1 to account for dummy view
+        view->getCamera()->setViewport( new osg::Viewport( 0, i*height()/n , width(), height()/n ) );
+        view->getCamera()->setProjectionMatrixAsPerspective( 30.0f, double( width() ) / double( height()/n ), 1.0f, 10000.0f );
+    }
 }
 
 
 void CompositeViewerQOSG::AddView( osg::Node * scene )
 {
-  osgViewer::View* view = new osgViewer::View;
-  addView(view);
+    osgViewer::View* view = new osgViewer::View;
+    addView(view);
 
-  view->setSceneData( scene );
-  view->setCameraManipulator(new osgGA::TrackballManipulator);
+    view->setSceneData( scene );
+    view->setCameraManipulator(new osgGA::TrackballManipulator);
 
-  // add the state manipulator
-  osg::ref_ptr<osgGA::StateSetManipulator> statesetManipulator = new osgGA::StateSetManipulator;
-  statesetManipulator->setStateSet(view->getCamera()->getOrCreateStateSet());
+    // add the state manipulator
+    osg::ref_ptr<osgGA::StateSetManipulator> statesetManipulator = new osgGA::StateSetManipulator;
+    statesetManipulator->setStateSet(view->getCamera()->getOrCreateStateSet());
 
-  view->getCamera()->setGraphicsContext( getGraphicsWindow() );
-  view->getCamera()->setClearColor( osg::Vec4( 0.08, 0.08, 0.5, 1.0 ) );
-  Tile();
+    view->getCamera()->setGraphicsContext( getGraphicsWindow() );
+    view->getCamera()->setClearColor( osg::Vec4( 0.08, 0.08, 0.5, 1.0 ) );
+    Tile();
 }
 
 void CompositeViewerQOSG::RemoveView()
 {
-  if ( getNumViews() > 1 )
-  {
-    removeView( getView( getNumViews() - 1 ) );
-  }
-  Tile();
+    if ( getNumViews() > 1 ) {
+        removeView( getView( getNumViews() - 1 ) );
+    }
+    Tile();
 }
 
 // we use this wrapper for CompositeViewer ONLY because of the timer
@@ -222,26 +249,27 @@ void CompositeViewerQOSG::RemoveView()
 class QViewerTimer : public QWidget
 {
 
-    public:
+public:
 
-        QViewerTimer (int fps = 20, QWidget * parent = 0, WindowFlags f = 0):
-            QWidget (parent, f)
-    {
+    QViewerTimer (int fps = 20, QWidget * parent = 0, WindowFlags f = 0):
+        QWidget (parent, f) {
         _viewer = new osgViewer::CompositeViewer ();
         _viewer->setThreadingModel(osgViewer::CompositeViewer::DrawThreadPerContext);
         connect(&_timer, SIGNAL(timeout()), this, SLOT(repaint()));
         _timer.start(1000.0f/fps);
     }
 
-    ~QViewerTimer ()
-    {
+    ~QViewerTimer () {
         _timer.stop ();
     }
 
-        virtual void paintEvent (QPaintEvent * event) { Q_UNUSED(event); _viewer->frame(); }
+    virtual void paintEvent (QPaintEvent * event) {
+        Q_UNUSED(event);
+        _viewer->frame();
+    }
 
-        osg::ref_ptr <osgViewer::CompositeViewer> _viewer;
-        QTimer _timer;
+    osg::ref_ptr <osgViewer::CompositeViewer> _viewer;
+    QTimer _timer;
 
 };
 

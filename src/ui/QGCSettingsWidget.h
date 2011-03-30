@@ -3,8 +3,9 @@
 
 #include <QDialog>
 
-namespace Ui {
-    class QGCSettingsWidget;
+namespace Ui
+{
+class QGCSettingsWidget;
 }
 
 class QGCSettingsWidget : public QDialog

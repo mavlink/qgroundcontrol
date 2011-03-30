@@ -3,8 +3,8 @@
 #include <QDebug>
 
 JoystickWidget::JoystickWidget(JoystickInput* joystick, QWidget *parent) :
-        QDialog(parent),
-        m_ui(new Ui::JoystickWidget)
+    QDialog(parent),
+    m_ui(new Ui::JoystickWidget)
 {
     m_ui->setupUi(this);
     this->joystick = joystick;
@@ -96,8 +96,7 @@ void JoystickWidget::pressKey(int key)
     QString colorstyle;
     QColor buttonStyleColor = QColor(20, 200, 20);
     colorstyle = QString("QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: %1;}").arg(buttonStyleColor.name());
-    switch(key)
-    {
+    switch(key) {
     case 0:
         m_ui->buttonLabel0->setStyleSheet(colorstyle);
         break;

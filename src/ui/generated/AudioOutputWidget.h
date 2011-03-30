@@ -30,8 +30,7 @@ public:
     QSpacerItem *verticalSpacer;
     QPushButton *muteButton;
 
-    void setupUi(QWidget *AudioOutputWidget)
-    {
+    void setupUi(QWidget *AudioOutputWidget) {
         if (AudioOutputWidget->objectName().isEmpty())
             AudioOutputWidget->setObjectName(QString::fromUtf8("AudioOutputWidget"));
         AudioOutputWidget->resize(195, 95);
@@ -61,16 +60,16 @@ public:
         QMetaObject::connectSlotsByName(AudioOutputWidget);
     } // setupUi
 
-    void retranslateUi(QWidget *AudioOutputWidget)
-    {
+    void retranslateUi(QWidget *AudioOutputWidget) {
         AudioOutputWidget->setWindowTitle(QApplication::translate("AudioOutputWidget", "Form", 0, QApplication::UnicodeUTF8));
         muteButton->setText(QApplication::translate("AudioOutputWidget", "Mute", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
 
-namespace Ui {
-    class AudioOutputWidget: public Ui_AudioOutputWidget {};
+namespace Ui
+{
+class AudioOutputWidget: public Ui_AudioOutputWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE

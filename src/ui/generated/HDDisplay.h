@@ -27,8 +27,7 @@ public:
     QHBoxLayout *horizontalLayout;
     QGraphicsView *view;
 
-    void setupUi(QWidget *HDDisplay)
-    {
+    void setupUi(QWidget *HDDisplay) {
         if (HDDisplay->objectName().isEmpty())
             HDDisplay->setObjectName(QString::fromUtf8("HDDisplay"));
         HDDisplay->resize(400, 300);
@@ -45,15 +44,15 @@ public:
         QMetaObject::connectSlotsByName(HDDisplay);
     } // setupUi
 
-    void retranslateUi(QWidget *HDDisplay)
-    {
+    void retranslateUi(QWidget *HDDisplay) {
         HDDisplay->setWindowTitle(QApplication::translate("HDDisplay", "Form", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
 
-namespace Ui {
-    class HDDisplay: public Ui_HDDisplay {};
+namespace Ui
+{
+class HDDisplay: public Ui_HDDisplay {};
 } // namespace Ui
 
 QT_END_NAMESPACE

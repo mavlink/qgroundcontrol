@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -17,15 +17,15 @@ class QwtPlotCanvas;
 class QwtPlot;
 
 /*!
-  \brief QwtPlotPanner provides panning of a plot canvas 
+  \brief QwtPlotPanner provides panning of a plot canvas
 
-  QwtPlotPanner is a panner for a QwtPlotCanvas, that 
+  QwtPlotPanner is a panner for a QwtPlotCanvas, that
   adjusts the scales of the axes after dropping
   the canvas on its new position.
 
-  Together with QwtPlotZoomer and QwtPlotMagnifier powerful ways 
+  Together with QwtPlotZoomer and QwtPlotMagnifier powerful ways
   of navigating on a QwtPlot widget can be implemented easily.
-  
+
   \note The axes are not updated, while dragging the canvas
   \sa QwtPlotZoomer, QwtPlotMagnifier
 */

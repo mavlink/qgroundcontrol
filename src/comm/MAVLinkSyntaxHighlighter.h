@@ -5,7 +5,7 @@
 
 class MAVLinkSyntaxHighlighter : public QSyntaxHighlighter
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     explicit MAVLinkSyntaxHighlighter(QObject *parent = 0);
 

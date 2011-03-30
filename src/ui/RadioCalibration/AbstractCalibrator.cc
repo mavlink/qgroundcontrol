@@ -23,19 +23,14 @@ float AbstractCalibrator::logAverage()
 float AbstractCalibrator::logExtrema()
 {
     float extrema = logAverage();
-    if (logAverage() < 1500)
-    {
-        for (int i=0; i<log->size(); ++i)
-        {
+    if (logAverage() < 1500) {
+        for (int i=0; i<log->size(); ++i) {
             if (log->value(i) < extrema)
                 extrema = log->value(i);
         }
         extrema -= 5; // add 5us to prevent integer overflow
-    }
-    else
-    {
-        for (int i=0; i<log->size(); ++i)
-        {
+    } else {
+        for (int i=0; i<log->size(); ++i) {
             if (log->value(i) > extrema)
                 extrema = log->value(i);
         }

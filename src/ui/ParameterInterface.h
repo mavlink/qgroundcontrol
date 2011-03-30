@@ -38,8 +38,9 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "QGCParamWidget.h"
 
-namespace Ui {
-    class ParameterInterface;
+namespace Ui
+{
+class ParameterInterface;
 }
 
 /**

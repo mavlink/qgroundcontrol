@@ -17,8 +17,7 @@
 class QwtPlotPanner::PrivateData
 {
 public:
-    PrivateData()
-    {
+    PrivateData() {
         for ( int axis = 0; axis < QwtPlot::axisCnt; axis++ )
             isAxisEnabled[axis] = true;
     }
@@ -41,7 +40,7 @@ QwtPlotPanner::QwtPlotPanner(QwtPlotCanvas *canvas):
     d_data = new PrivateData();
 
     connect(this, SIGNAL(panned(int, int)),
-        SLOT(moveCanvas(int, int)));
+            SLOT(moveCanvas(int, int)));
 }
 
 //! Destructor
@@ -72,7 +71,7 @@ void QwtPlotPanner::setAxisEnabled(int axis, bool on)
 
    \param axis Axis, see QwtPlot::Axis
    \return True, if the axis is enabled
-   
+
    \sa setAxisEnabled, moveCanvas
 */
 bool QwtPlotPanner::isAxisEnabled(int axis) const
@@ -103,8 +102,7 @@ const QwtPlotCanvas *QwtPlotPanner::canvas() const
 QwtPlot *QwtPlotPanner::plot()
 {
     QObject *w = canvas();
-    if ( w )
-    {
+    if ( w ) {
         w = w->parent();
         if ( w && w->inherits("QwtPlot") )
             return (QwtPlot *)w;
@@ -135,12 +133,11 @@ void QwtPlotPanner::moveCanvas(int dx, int dy)
     QwtPlot *plot = QwtPlotPanner::plot();
     if ( plot == NULL )
         return;
-    
+
     const bool doAutoReplot = plot->autoReplot();
     plot->setAutoReplot(false);
 
-    for ( int axis = 0; axis < QwtPlot::axisCnt; axis++ )
-    {
+    for ( int axis = 0; axis < QwtPlot::axisCnt; axis++ ) {
         if ( !d_data->isAxisEnabled[axis] )
             continue;
 
@@ -150,13 +147,10 @@ void QwtPlotPanner::moveCanvas(int dx, int dy)
         const int i2 = map.transform(plot->axisScaleDiv(axis)->hBound());
 
         double d1, d2;
-        if ( axis == QwtPlot::xBottom || axis == QwtPlot::xTop )
-        {
+        if ( axis == QwtPlot::xBottom || axis == QwtPlot::xTop ) {
             d1 = map.invTransform(i1 - dx);
             d2 = map.invTransform(i2 - dx);
-        }
-        else
-        {
+        } else {
             d1 = map.invTransform(i1 - dy);
             d2 = map.invTransform(i2 - dy);
         }

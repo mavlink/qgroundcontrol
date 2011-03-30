@@ -3,8 +3,9 @@
 
 #include <QWidget>
 
-namespace Ui {
-    class QGCUnconnectedInfoWidget;
+namespace Ui
+{
+class QGCUnconnectedInfoWidget;
 }
 
 /**

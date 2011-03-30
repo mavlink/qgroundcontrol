@@ -50,7 +50,7 @@ class UAS;
  */
 class UASWaypointManager : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 private:
     enum WaypointState {
         WP_IDLE = 0,        ///< Waiting for commands
@@ -85,7 +85,9 @@ public:
 
     /** @name Waypoint list operations */
     /*@{*/
-    const QVector<Waypoint *> &getWaypointList(void) { return waypoints; }  ///< Returns a const reference to the waypoint list.
+    const QVector<Waypoint *> &getWaypointList(void) {
+        return waypoints;    ///< Returns a const reference to the waypoint list.
+    }
     const QVector<Waypoint *> getGlobalFrameWaypointList();  ///< Returns a global waypoint list
     const QVector<Waypoint *> getGlobalFrameAndNavTypeWaypointList(); ///< Returns a global waypoint list containing only waypoints suitable for navigation. Actions and other mission items are filtered out.
     int getIndexOf(Waypoint* wp);                   ///< Get the index of a waypoint in the list
@@ -98,7 +100,9 @@ public:
     int getLocalFrameCount();   ///< Get the count of local waypoints in the list
     /*@}*/
 
-    UAS& getUAS() { return this->uas; }                         ///< Returns the owning UAS
+    UAS& getUAS() {
+        return this->uas;    ///< Returns the owning UAS
+    }
 
 //    /** @name Global waypoint list operations */
 //    /*@{*/

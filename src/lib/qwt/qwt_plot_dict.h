@@ -51,7 +51,7 @@ public:
     const QwtPlotItemList& itemList() const;
 
     void detachItems(int rtti = QwtPlotItem::Rtti_PlotItem,
-        bool autoDelete = true);
+                     bool autoDelete = true);
 
 private:
     friend class QwtPlotItem;

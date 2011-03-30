@@ -33,8 +33,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QtGui/QWidget>
 
-namespace Ui {
-    class AudioOutputWidget;
+namespace Ui
+{
+class AudioOutputWidget;
 }
 
 /**

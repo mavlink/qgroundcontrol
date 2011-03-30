@@ -20,7 +20,7 @@ This file is part of the QGROUNDCONTROL project
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
- 
+
 /**
  * @file
  *   @brief Brief Description
@@ -46,87 +46,88 @@ This file is part of the QGROUNDCONTROL project
  * by communicating with a simulation.
  *
  **/
-class SerialSimulationLink : public SerialLinkInterface {
-	Q_OBJECT
+class SerialSimulationLink : public SerialLinkInterface
+{
+    Q_OBJECT
 
 public:
-        SerialSimulationLink(QFile* inputFile=NULL, QFile* outputFile=NULL, int sendrate=20);
-	~SerialSimulationLink();
+    SerialSimulationLink(QFile* inputFile=NULL, QFile* outputFile=NULL, int sendrate=20);
+    ~SerialSimulationLink();
 
-	bool isConnected();
-	qint64 bytesAvailable();
+    bool isConnected();
+    qint64 bytesAvailable();
 
-	void run();
+    void run();
 
-	/* Extensive statistics for scientific purposes */
-	qint64 getNominalDataRate();
-	qint64 getTotalUpstream();
-	qint64 getShortTermUpstream();
-	qint64 getCurrentUpstream();
-	qint64 getMaxUpstream();
-	qint64 getTotalDownstream();
-	qint64 getShortTermDownstream();
-	qint64 getCurrentDownstream();
-	qint64 getMaxDownstream();
-	qint64 getBitsSent();
-	qint64 getBitsReceived();
+    /* Extensive statistics for scientific purposes */
+    qint64 getNominalDataRate();
+    qint64 getTotalUpstream();
+    qint64 getShortTermUpstream();
+    qint64 getCurrentUpstream();
+    qint64 getMaxUpstream();
+    qint64 getTotalDownstream();
+    qint64 getShortTermDownstream();
+    qint64 getCurrentDownstream();
+    qint64 getMaxDownstream();
+    qint64 getBitsSent();
+    qint64 getBitsReceived();
 
-	void enableLoopBackMode(SerialLinkInterface * loop);
-	QString getPortName();
-	int getBaudRate();
-	int getBaudRateType();
-	int getFlowType();
-	int getParityType();
-	int getDataBitsType();
-	int getStopBitsType();
+    void enableLoopBackMode(SerialLinkInterface * loop);
+    QString getPortName();
+    int getBaudRate();
+    int getBaudRateType();
+    int getFlowType();
+    int getParityType();
+    int getDataBitsType();
+    int getStopBitsType();
 
-	int getLinkQuality();
-	bool isFullDuplex();
+    int getLinkQuality();
+    bool isFullDuplex();
 
 public slots:
-	bool setPortName(QString portName);
-	bool setBaudRateType(int rateIndex);
-	bool setBaudRate(int rate);
-	bool setFlowType(int flow);
-	bool setParityType(int parity);
-	bool setDataBitsType(int dataBits);
-	bool setStopBitsType(int stopBits);
+    bool setPortName(QString portName);
+    bool setBaudRateType(int rateIndex);
+    bool setBaudRate(int rate);
+    bool setFlowType(int flow);
+    bool setParityType(int parity);
+    bool setDataBitsType(int dataBits);
+    bool setStopBitsType(int stopBits);
 
-	void readLine();
-        void writeBytes(char *bytes, qint64 length);
-        void readBytes();
+    void readLine();
+    void writeBytes(char *bytes, qint64 length);
+    void readBytes();
 
-	bool connect();
-	bool disconnect();
+    bool connect();
+    bool disconnect();
 
-	void setMaximumTimeNoise(int milliseconds);
+    void setMaximumTimeNoise(int milliseconds);
 
 protected:
-	QTimer* timer;
-	SerialLinkInterface* loopBack;
-	/** File which contains the input data (simulated robot messages) **/
-	QFile* simulationFile;
-	/** File where the commands sent by the groundstation are stored **/
-	QFile* receiveFile;
-	QTextStream stream;
-	QTextStream* fileStream;
-	QTextStream* outStream;
-	/** Buffer for next line. The next line is read ahead */
-	QByteArray lineBuffer;
-	/** Buffer which can be read from connected protocols through readBytes(). **/
-	QByteArray readyBuffer;
-	QMutex readyBufferMutex;
-	bool _isConnected;
-	quint64 rate;
-	int maxTimeNoise;
-	quint64 lastSent;
+    QTimer* timer;
+    SerialLinkInterface* loopBack;
+    /** File which contains the input data (simulated robot messages) **/
+    QFile* simulationFile;
+    /** File where the commands sent by the groundstation are stored **/
+    QFile* receiveFile;
+    QTextStream stream;
+    QTextStream* fileStream;
+    QTextStream* outStream;
+    /** Buffer for next line. The next line is read ahead */
+    QByteArray lineBuffer;
+    /** Buffer which can be read from connected protocols through readBytes(). **/
+    QByteArray readyBuffer;
+    QMutex readyBufferMutex;
+    bool _isConnected;
+    quint64 rate;
+    int maxTimeNoise;
+    quint64 lastSent;
 
-	void addTimeNoise();
+    void addTimeNoise();
 
 signals:
-	//void connected();
-	//void disconnected();
-	//void bytesReady(LinkInterface *link);
+    //void connected();
+    //void disconnected();
+    //void bytesReady(LinkInterface *link);
 
 };
 

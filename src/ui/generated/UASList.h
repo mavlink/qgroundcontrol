@@ -23,8 +23,7 @@ class Ui_UASList
 {
 public:
 
-    void setupUi(QWidget *UASList)
-    {
+    void setupUi(QWidget *UASList) {
         if (UASList->objectName().isEmpty())
             UASList->setObjectName(QString::fromUtf8("UASList"));
         UASList->resize(400, 300);
@@ -35,15 +34,15 @@ public:
         QMetaObject::connectSlotsByName(UASList);
     } // setupUi
 
-    void retranslateUi(QWidget *UASList)
-    {
+    void retranslateUi(QWidget *UASList) {
         UASList->setWindowTitle(QApplication::translate("UASList", "Form", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
 
-namespace Ui {
-    class UASList: public Ui_UASList {};
+namespace Ui
+{
+class UASList: public Ui_UASList {};
 } // namespace Ui
 
 QT_END_NAMESPACE

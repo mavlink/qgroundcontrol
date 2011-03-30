@@ -7,8 +7,7 @@
 #include "MAVLinkSimulationLink.h"
 #include "QGCMAVLink.h"
 
-enum PX_WAYPOINTPLANNER_STATES
-{
+enum PX_WAYPOINTPLANNER_STATES {
     PX_WPP_IDLE = 0,
     PX_WPP_SENDLIST,
     PX_WPP_SENDLIST_SENDWPS,

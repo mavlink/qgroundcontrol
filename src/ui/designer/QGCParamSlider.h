@@ -7,8 +7,9 @@
 
 #include "QGCToolWidgetItem.h"
 
-namespace Ui {
-    class QGCParamSlider;
+namespace Ui
+{
+class QGCParamSlider;
 }
 
 class QGCParamSlider : public QGCToolWidgetItem

@@ -43,30 +43,40 @@ This file is part of the QGROUNDCONTROL project
 
 namespace OpalRT
 {
-    /** Stores a param_id for the mavlink parameter packets.  This class adds the convenience
-      of storing the id as a string (e.g., easy comparison).
+/** Stores a param_id for the mavlink parameter packets.  This class adds the convenience
+  of storing the id as a string (e.g., easy comparison).
 
-      \todo Fix: warning: deprecated conversion from string constant to 'char*'
-      */
-    class QGCParamID
-    {
+  \todo Fix: warning: deprecated conversion from string constant to 'char*'
+  */
+class QGCParamID
+{
 //        friend QDataStream& operator<<(QDataStream& stream, const QGCParamID& paramid);
-    public:
+public:
 
-        QGCParamID(const char[]);
-        QGCParamID(const QString);
-        QGCParamID() {}
-        QGCParamID(const QGCParamID& other);
+    QGCParamID(const char[]);
+    QGCParamID(const QString);
+    QGCParamID() {}
+    QGCParamID(const QGCParamID& other);
 
-        bool operator<(const QGCParamID& other) const {return data<other.data;}
-        bool operator==(const QGCParamID& other) const {return data == other.data;}
-        operator QString() const {return data;}
+    bool operator<(const QGCParamID& other) const {
+        return data<other.data;
+    }
+    bool operator==(const QGCParamID& other) const {
+        return data == other.data;
+    }
+    operator QString() const {
+        return data;
+    }
 
-        const QString getParamString() const {return static_cast<const QString>(data);}
-        int8_t* toInt8_t() const {return (int8_t*)data.toAscii().data();}
+    const QString getParamString() const {
+        return static_cast<const QString>(data);
+    }
+    int8_t* toInt8_t() const {
+        return (int8_t*)data.toAscii().data();
+    }
 
-    protected:
-        QString data;
-    };
+protected:
+    QString data;
+};
 }
 #endif // QGCPARAMID_H

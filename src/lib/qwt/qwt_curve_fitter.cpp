@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -26,8 +26,7 @@ class QwtSplineCurveFitter::PrivateData
 public:
     PrivateData():
         fitMode(QwtSplineCurveFitter::Auto),
-        splineSize(250)
-    {
+        splineSize(250) {
     }
 
     QwtSpline spline;
@@ -66,7 +65,7 @@ const QwtSpline &QwtSplineCurveFitter::spline() const
     return d_data->spline;
 }
 
-QwtSpline &QwtSplineCurveFitter::spline() 
+QwtSpline &QwtSplineCurveFitter::spline()
 {
     return d_data->spline;
 }
@@ -94,15 +93,12 @@ QPolygonF QwtSplineCurveFitter::fitCurve(
         return points;
 
     FitMode fitMode = d_data->fitMode;
-    if ( fitMode == Auto )
-    {
+    if ( fitMode == Auto ) {
         fitMode = Spline;
 
         const QwtDoublePoint *p = points.data();
-        for ( int i = 1; i < size; i++ )
-        {
-            if ( p[i].x() <= p[i-1].x() )
-            {
+        for ( int i = 1; i < size; i++ ) {
+            if ( p[i].x() <= p[i-1].x() ) {
                 fitMode = ParametricSpline;
                 break;
             }
@@ -138,8 +134,7 @@ QPolygonF QwtSplineCurveFitter::fitSpline(
     const double dx = x2 - x1;
     const double delta = dx / (d_data->splineSize - 1);
 
-    for (int i = 0; i < d_data->splineSize; i++)
-    {
+    for (int i = 0; i < d_data->splineSize; i++) {
         QwtDoublePoint &p = fittedPoints[i];
 
         const double v = x1 + i * delta;
@@ -179,14 +174,12 @@ QPolygonF QwtSplineCurveFitter::fitParametric(
     QwtDoublePoint *spY = splinePointsY.data();
 
     double param = 0.0;
-    for (i = 0; i < size; i++)
-    {
+    for (i = 0; i < size; i++) {
         const double x = p[i].x();
         const double y = p[i].y();
-        if ( i > 0 )
-        {
+        if ( i > 0 ) {
             const double delta = sqrt( qwtSqr(x - spX[i-1].y())
-                      + qwtSqr( y - spY[i-1].y() ) );
+                                       + qwtSqr( y - spY[i-1].y() ) );
             param += qwtMax(delta, 1.0);
         }
         spX[i].setX(param);
@@ -201,8 +194,7 @@ QPolygonF QwtSplineCurveFitter::fitParametric(
 
     const double deltaX =
         splinePointsX[size - 1].x() / (d_data->splineSize-1);
-    for (i = 0; i < d_data->splineSize; i++)
-    {
+    for (i = 0; i < d_data->splineSize; i++) {
         const double dtmp = i * deltaX;
         fittedPoints[i].setX(qRound(d_data->spline.value(dtmp)));
     }
@@ -213,8 +205,7 @@ QPolygonF QwtSplineCurveFitter::fitParametric(
 
     const double deltaY =
         splinePointsY[size - 1].x() / (d_data->splineSize-1);
-    for (i = 0; i < d_data->splineSize; i++)
-    {
+    for (i = 0; i < d_data->splineSize; i++) {
         const double dtmp = i * deltaY;
         fittedPoints[i].setY(qRound(d_data->spline.value(dtmp)));
     }

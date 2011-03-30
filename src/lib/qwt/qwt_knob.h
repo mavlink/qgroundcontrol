@@ -33,7 +33,7 @@ class QwtRoundScaleDraw;
 
 class QWT_EXPORT QwtKnob : public QwtAbstractSlider, public QwtAbstractScale
 {
-    Q_OBJECT 
+    Q_OBJECT
     Q_ENUMS (Symbol)
     Q_PROPERTY( int knobWidth READ knobWidth WRITE setKnobWidth )
     Q_PROPERTY( int borderWidth READ borderWidth WRITE setBorderWidth )
@@ -68,7 +68,7 @@ public:
 
     virtual QSize sizeHint() const;
     virtual QSize minimumSizeHint() const;
-    
+
     void setScaleDraw(QwtRoundScaleDraw *);
     const QwtRoundScaleDraw *scaleDraw() const;
     QwtRoundScaleDraw *scaleDraw();
@@ -87,7 +87,7 @@ private:
     double getValue(const QPoint &p);
     void getScrollMode( const QPoint &p, int &scrollMode, int &direction );
     void recalcAngle();
-    
+
     virtual void valueChange();
     virtual void rangeChange();
     virtual void scaleChange();

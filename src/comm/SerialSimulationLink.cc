@@ -93,8 +93,7 @@ void SerialSimulationLink::run()
 
                 msleep(rate);
         }*/
-    forever
-    {
+    forever {
         QGC::SLEEP::msleep(5000);
     }
 }
@@ -107,8 +106,7 @@ void SerialSimulationLink::enableLoopBackMode(SerialLinkInterface* loop)
     disconnect();
 
     // Delete previous loopback link if exists
-    if(loopBack != NULL)
-    {
+    if(loopBack != NULL) {
         delete loopBack;
         loopBack = NULL;
     }
@@ -129,12 +127,9 @@ qint64 SerialSimulationLink::bytesAvailable()
 {
     readyBufferMutex.lock();
     qint64 size = 0;
-    if(loopBack == 0)
-    {
+    if(loopBack == 0) {
         size = readyBuffer.size();
-    }
-    else
-    {
+    } else {
         size = loopBack->bytesAvailable();
     }
     readyBufferMutex.unlock();
@@ -145,8 +140,7 @@ qint64 SerialSimulationLink::bytesAvailable()
 void SerialSimulationLink::writeBytes(char* data, qint64 length)
 {
     /* Write bytes to one line */
-    for(qint64 i = 0; i < length; i++)
-    {
+    for(qint64 i = 0; i < length; i++) {
         outStream->operator <<(data[i]);
         outStream->flush();
     }
@@ -160,15 +154,12 @@ void SerialSimulationLink::readBytes()
     char data[maxLength];
     /* Lock concurrent resource readyBuffer */
     readyBufferMutex.lock();
-    if(loopBack == NULL)
-    {
+    if(loopBack == NULL) {
         // FIXME Maxlength has no meaning here
         /* copy leftmost maxLength bytes and remove them from buffer */
         qstrncpy(data, readyBuffer.left(maxLength).data(), maxLength);
         readyBuffer.remove(0, maxLength);
-    }
-    else
-    {
+    } else {
         //loopBack->readBytes(data, maxLength);
     }
     readyBufferMutex.unlock();
@@ -188,8 +179,7 @@ void SerialSimulationLink::readBytes()
 void SerialSimulationLink::readLine()
 {
 
-    if(_isConnected)
-    {
+    if(_isConnected) {
         /* The order of operations in this method is arranged to
                  * minimize the impact of slow file read operations on the
                  * message emit timing. The functions should be kept in this order
@@ -200,19 +190,15 @@ void SerialSimulationLink::readLine()
 
         /* (2) Save content of line buffer in readyBuffer (has to be lock for thread safety)*/
         readyBufferMutex.lock();
-        if(loopBack == NULL)
-        {
+        if(loopBack == NULL) {
             readyBuffer.append(lineBuffer);
             //qDebug() << "readLine readyBuffer: " << readyBuffer;
-        }
-        else
-        {
+        } else {
             loopBack->writeBytes(lineBuffer.data(), lineBuffer.size());
         }
         readyBufferMutex.unlock();
 
-        if(loopBack == NULL)
-        {
+        if(loopBack == NULL) {
             readBytes();
         }
 
@@ -290,7 +276,8 @@ void SerialSimulationLink::addTimeNoise()
  * @return True if connection has been disconnected, false if connection
  * couldn't be disconnected.
  **/
-bool SerialSimulationLink::disconnect() {
+bool SerialSimulationLink::disconnect()
+{
 
     if(isConnected()) {
         timer->stop();

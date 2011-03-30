@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -65,17 +65,17 @@ public:
     void setMinPen(const QPen &p);
     const QPen& minPen() const;
 
-    virtual void draw(QPainter *p, 
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-        const QRect &rect) const;
+    virtual void draw(QPainter *p,
+                      const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                      const QRect &rect) const;
 
     virtual void updateScaleDiv(const QwtScaleDiv &xMap,
-        const QwtScaleDiv &yMap);
+                                const QwtScaleDiv &yMap);
 
 private:
     void drawLines(QPainter *painter, const QRect &,
-        Qt::Orientation orientation, const QwtScaleMap &, 
-        const QwtValueList &) const;
+                   Qt::Orientation orientation, const QwtScaleMap &,
+                   const QwtValueList &) const;
 
     class PrivateData;
     PrivateData *d_data;

@@ -91,7 +91,7 @@ protected:
     QTimer* widgetTimer;
     mavlink_raw_imu_t mlRawImuData;
 
-    #ifdef MAVLINK_ENABLED_SLUGS
+#ifdef MAVLINK_ENABLED_SLUGS
     mavlink_gps_raw_t mlGpsData;
     mavlink_attitude_t mlAttitude;
     mavlink_cpu_load_t mlCpuLoadData;
@@ -115,14 +115,14 @@ protected:
     mavlink_rc_channels_raw_t mlChannels;
 
 
-   // Standart messages MAVLINK used by SLUGS
+    // Standart messages MAVLINK used by SLUGS
 private:
 
 
-   void emitGpsSignals (void);
-   void emitPidSignal(void);
+    void emitGpsSignals (void);
+    void emitPidSignal(void);
 
-   int uasId;
+    int uasId;
 
 #endif // if SLUGS
 

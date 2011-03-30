@@ -27,10 +27,10 @@ template class QWT_EXPORT QwtArray<double>;
 #endif
 
 /*!
-  \brief QwtColorMap is used to map values into colors. 
+  \brief QwtColorMap is used to map values into colors.
 
   For displaying 3D data on a 2D plane the 3rd dimension is often
-  displayed using colors, like f.e in a spectrogram. 
+  displayed using colors, like f.e in a spectrogram.
 
   Each color map is optimized to return colors for only one of the
   following image formats:
@@ -44,7 +44,7 @@ template class QWT_EXPORT QwtArray<double>;
 class QWT_EXPORT QwtColorMap
 {
 public:
-    /*! 
+    /*!
         - RGB\n
         The map is intended to map into QRgb values.
         - Indexed\n
@@ -54,8 +54,7 @@ public:
         \sa rgb(), colorIndex(), colorTable()
     */
 
-    enum Format
-    {
+    enum Format {
         RGB,
         Indexed
     };
@@ -68,7 +67,7 @@ public:
     //! Clone the color map
     virtual QwtColorMap *copy() const = 0;
 
-    /*!  
+    /*!
        Map a value of a given interval into a rgb value.
        \param interval Range for the values
        \param value Value
@@ -77,7 +76,7 @@ public:
     virtual QRgb rgb(
         const QwtDoubleInterval &interval, double value) const = 0;
 
-    /*!  
+    /*!
        Map a value of a given interval into a color index
        \param interval Range for the values
        \param value Value
@@ -100,13 +99,13 @@ private:
 
 /*!
   \brief QwtLinearColorMap builds a color map from color stops.
-  
+
   A color stop is a color at a specific position. The valid
   range for the positions is [0.0, 1.0]. When mapping a value
-  into a color it is translated into this interval. If 
+  into a color it is translated into this interval. If
   mode() == FixedColors the color is calculated from the next lower
   color stop. If mode() == ScaledColors the color is calculated
-  by interpolating the colors of the adjacent stops. 
+  by interpolating the colors of the adjacent stops.
 */
 class QWT_EXPORT QwtLinearColorMap: public QwtColorMap
 {
@@ -115,15 +114,14 @@ public:
        Mode of color map
        \sa setMode(), mode()
     */
-    enum Mode
-    {
+    enum Mode {
         FixedColors,
         ScaledColors
     };
 
     QwtLinearColorMap(QwtColorMap::Format = QwtColorMap::RGB);
     QwtLinearColorMap( const QColor &from, const QColor &to,
-        QwtColorMap::Format = QwtColorMap::RGB);
+                       QwtColorMap::Format = QwtColorMap::RGB);
 
     QwtLinearColorMap(const QwtLinearColorMap &);
 
@@ -198,12 +196,9 @@ private:
 inline QColor QwtColorMap::color(
     const QwtDoubleInterval &interval, double value) const
 {
-    if ( d_format == RGB )
-    {
+    if ( d_format == RGB ) {
         return QColor( rgb(interval, value) );
-    }
-    else
-    {
+    } else {
         const unsigned int index = colorIndex(interval, value);
         return colorTable(interval)[index]; // slow
     }

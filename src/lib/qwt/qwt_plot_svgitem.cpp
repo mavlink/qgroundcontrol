@@ -27,8 +27,7 @@
 class QwtPlotSvgItem::PrivateData
 {
 public:
-    PrivateData()
-    {
+    PrivateData() {
     }
 
     QwtDoubleRect boundingRect;
@@ -41,7 +40,7 @@ public:
 
 /*!
    \brief Constructor
- 
+
    Sets the following item attributes:
    - QwtPlotItem::AutoScale: true
    - QwtPlotItem::Legend:    false
@@ -56,7 +55,7 @@ QwtPlotSvgItem::QwtPlotSvgItem(const QString& title):
 
 /*!
    \brief Constructor
- 
+
    Sets the following item attributes:
    - QwtPlotItem::AutoScale: true
    - QwtPlotItem::Legend:    false
@@ -99,8 +98,8 @@ int QwtPlotSvgItem::rtti() const
 
    \return true, if the SVG file could be loaded
 */
-bool QwtPlotSvgItem::loadFile(const QwtDoubleRect &rect, 
-    const QString &fileName)
+bool QwtPlotSvgItem::loadFile(const QwtDoubleRect &rect,
+                              const QString &fileName)
 {
     d_data->boundingRect = rect;
 #if QT_VERSION >= 0x040100
@@ -113,15 +112,15 @@ bool QwtPlotSvgItem::loadFile(const QwtDoubleRect &rect,
 }
 
 /*!
-   Load SVG data 
+   Load SVG data
 
    \param rect Bounding rectangle
    \param data in SVG format
 
    \return true, if the SVG data could be loaded
 */
-bool QwtPlotSvgItem::loadData(const QwtDoubleRect &rect, 
-    const QByteArray &data)
+bool QwtPlotSvgItem::loadData(const QwtDoubleRect &rect,
+                              const QByteArray &data)
 {
     d_data->boundingRect = rect;
 #if QT_VERSION >= 0x040100
@@ -168,13 +167,12 @@ QSvgRenderer &QwtPlotSvgItem::renderer()
   \param canvasRect Contents rect of the plot canvas
 */
 void QwtPlotSvgItem::draw(QPainter *painter,
-    const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-    const QRect &canvasRect) const
+                          const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                          const QRect &canvasRect) const
 {
     const QwtDoubleRect cRect = invTransform(xMap, yMap, canvasRect);
     const QwtDoubleRect bRect = boundingRect();
-    if ( bRect.isValid() && cRect.isValid() )
-    {
+    if ( bRect.isValid() && cRect.isValid() ) {
         QwtDoubleRect rect = bRect;
         if ( bRect.contains(cRect) )
             rect = cRect;
@@ -192,7 +190,7 @@ void QwtPlotSvgItem::draw(QPainter *painter,
   \param rect Traget rectangle on the paint device
 */
 void QwtPlotSvgItem::render(QPainter *painter,
-        const QwtDoubleRect &viewBox, const QRect &rect) const
+                            const QwtDoubleRect &viewBox, const QRect &rect) const
 {
     if ( !viewBox.isValid() )
         return;
@@ -205,7 +203,7 @@ void QwtPlotSvgItem::render(QPainter *painter,
 
 #if QT_VERSION >= 0x040100
     const QSize paintSize(painter->window().width(),
-        painter->window().height());
+                          painter->window().height());
     if ( !paintSize.isValid() )
         return;
 
@@ -237,7 +235,7 @@ void QwtPlotSvgItem::render(QPainter *painter,
 
     painter->translate(dx, dy);
     painter->scale(mx, my);
-    
+
     d_data->picture.play(painter);
 
     painter->restore();
@@ -257,8 +255,8 @@ QwtDoubleRect QwtPlotSvgItem::viewBox(const QwtDoubleRect &rect) const
     const QSize sz = d_data->renderer.defaultSize();
 #else
 #if QT_VERSION > 0x040000
-    const QSize sz(d_data->picture.width(), 
-        d_data->picture.height());
+    const QSize sz(d_data->picture.width(),
+                   d_data->picture.height());
 #else
     QPaintDeviceMetrics metrics(&d_data->picture);
     const QSize sz(metrics.width(), metrics.height());

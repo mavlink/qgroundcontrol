@@ -41,8 +41,7 @@ public:
     QPushButton *saveButton;
     QPushButton *generateButton;
 
-    void setupUi(QWidget *XMLCommProtocolWidget)
-    {
+    void setupUi(QWidget *XMLCommProtocolWidget) {
         if (XMLCommProtocolWidget->objectName().isEmpty())
             XMLCommProtocolWidget->setObjectName(QString::fromUtf8("XMLCommProtocolWidget"));
         XMLCommProtocolWidget->resize(846, 480);
@@ -129,8 +128,7 @@ public:
         QMetaObject::connectSlotsByName(XMLCommProtocolWidget);
     } // setupUi
 
-    void retranslateUi(QWidget *XMLCommProtocolWidget)
-    {
+    void retranslateUi(QWidget *XMLCommProtocolWidget) {
         XMLCommProtocolWidget->setWindowTitle(QApplication::translate("XMLCommProtocolWidget", "Form", 0, QApplication::UnicodeUTF8));
         fileNameLabel->setText(QApplication::translate("XMLCommProtocolWidget", "Select input file", 0, QApplication::UnicodeUTF8));
         selectFileButton->setText(QApplication::translate("XMLCommProtocolWidget", "Select input file", 0, QApplication::UnicodeUTF8));
@@ -144,8 +142,9 @@ public:
 
 };
 
-namespace Ui {
-    class XMLCommProtocolWidget: public Ui_XMLCommProtocolWidget {};
+namespace Ui
+{
+class XMLCommProtocolWidget: public Ui_XMLCommProtocolWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE

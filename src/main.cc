@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 
 /* SDL does ugly things to main() */
 #ifdef main
-  #undef main
+#undef main
 #endif
 
 

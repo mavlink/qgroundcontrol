@@ -7,37 +7,35 @@
 
 class OgreWidget : public QGLWidget
 {
-  //Q_OBJECT;
+    //Q_OBJECT;
 
- public:
-  OgreWidget( QWidget *parent=0 ):
-    QGLWidget( parent ),
-    mOgreWindow(NULL)
-    {
-      init( "../bin/plugins.cfg", "../bin/ogre.cfg", "../bin/ogre.log" );
+public:
+    OgreWidget( QWidget *parent=0 ):
+        QGLWidget( parent ),
+        mOgreWindow(NULL) {
+        init( "../bin/plugins.cfg", "../bin/ogre.cfg", "../bin/ogre.log" );
     }
 
-  virtual ~OgreWidget()
-    {
-      mOgreRoot->shutdown();
-      delete mOgreRoot;
-      destroy();
+    virtual ~OgreWidget() {
+        mOgreRoot->shutdown();
+        delete mOgreRoot;
+        destroy();
     }
 
- protected:
-  virtual void initializeGL();
-  virtual void resizeGL( int, int );
-  virtual void paintGL();
+protected:
+    virtual void initializeGL();
+    virtual void resizeGL( int, int );
+    virtual void paintGL();
 
-  void init( std::string, std::string, std::string );
+    void init( std::string, std::string, std::string );
 
-  virtual Ogre::RenderSystem* chooseRenderer( Ogre::RenderSystemList* );
+    virtual Ogre::RenderSystem* chooseRenderer( Ogre::RenderSystemList* );
 
-  Ogre::Root *mOgreRoot;
-  Ogre::RenderWindow *mOgreWindow;
-  Ogre::Camera *mCamera;
-  Ogre::Viewport *mViewport;
-  Ogre::SceneManager *mSceneMgr;
+    Ogre::Root *mOgreRoot;
+    Ogre::RenderWindow *mOgreWindow;
+    Ogre::Camera *mCamera;
+    Ogre::Viewport *mViewport;
+    Ogre::SceneManager *mSceneMgr;
 };
 
 #endif

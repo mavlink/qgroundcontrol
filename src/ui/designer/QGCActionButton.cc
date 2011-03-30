@@ -4,43 +4,44 @@
 #include "MAVLinkProtocol.h"
 #include "UASManager.h"
 
-const char* kActionLabels[MAV_ACTION_NB] =
-{"HOLD",
- "START MOTORS",
- "LAUNCH",
- "RETURN",
- "EMERGENCY LAND",
- "EMERGENCY KILL",
- "CONFIRM KILL",
- "CONTINUE",
- "STOP MOTORS",
- "HALT",
- "SHUTDOWN",
- "REBOOT",
- "SET MANUAL",
- "SET AUTO",
- "READ STORAGE",
- "WRITE STORAGE",
- "CALIBRATE RC",
- "CALIBRATE GYRO",
- "CALIBRATE MAG",
- "CALIBRATE ACC",
- "CALIBRATE PRESSURE",
- "START REC",
- "PAUSE REC",
- "STOP REC",
- "TAKEOFF",
- "NAVIGATE",
- "LAND",
- "LOITER",
- "SET ORIGIN",
- "RELAY ON",
- //"RELAY OFF",
- //"GET IMAGE",
- //"START VIDEO",
- //"STOP VIDEO",
- "RESET MAP",
- "RESET PLAN"};
+const char* kActionLabels[MAV_ACTION_NB] = {
+    "HOLD",
+    "START MOTORS",
+    "LAUNCH",
+    "RETURN",
+    "EMERGENCY LAND",
+    "EMERGENCY KILL",
+    "CONFIRM KILL",
+    "CONTINUE",
+    "STOP MOTORS",
+    "HALT",
+    "SHUTDOWN",
+    "REBOOT",
+    "SET MANUAL",
+    "SET AUTO",
+    "READ STORAGE",
+    "WRITE STORAGE",
+    "CALIBRATE RC",
+    "CALIBRATE GYRO",
+    "CALIBRATE MAG",
+    "CALIBRATE ACC",
+    "CALIBRATE PRESSURE",
+    "START REC",
+    "PAUSE REC",
+    "STOP REC",
+    "TAKEOFF",
+    "NAVIGATE",
+    "LAND",
+    "LOITER",
+    "SET ORIGIN",
+    "RELAY ON",
+//"RELAY OFF",
+//"GET IMAGE",
+//"START VIDEO",
+//"STOP VIDEO",
+    "RESET MAP",
+    "RESET PLAN"
+};
 
 QGCActionButton::QGCActionButton(QWidget *parent) :
     QGCToolWidgetItem("Button", parent),
@@ -62,8 +63,7 @@ QGCActionButton::QGCActionButton(QWidget *parent) :
     ui->editButtonName->hide();
 
     // add action labels to combobox
-    for (int i = 0; i < MAV_ACTION_NB; i++)
-    {
+    for (int i = 0; i < MAV_ACTION_NB; i++) {
         ui->editActionComboBox->addItem(kActionLabels[i]);
     }
 }
@@ -75,15 +75,12 @@ QGCActionButton::~QGCActionButton()
 
 void QGCActionButton::sendAction()
 {
-    if (QGCToolWidgetItem::uas)
-    {
+    if (QGCToolWidgetItem::uas) {
         MAV_ACTION action = static_cast<MAV_ACTION>(
-                ui->editActionComboBox->currentIndex());
+                                ui->editActionComboBox->currentIndex());
 
         QGCToolWidgetItem::uas->setAction(action);
-    }
-    else
-    {
+    } else {
         qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }
 }

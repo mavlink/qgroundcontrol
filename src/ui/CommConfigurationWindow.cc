@@ -93,14 +93,11 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     if(this->link->isConnected()) ui.connectButton->setChecked(true);
     //connect(this->link, SIGNAL(connected(bool)), ui.connectButton, SLOT(setChecked(bool)));
 
-    if(this->link->isConnected())
-    {
+    if(this->link->isConnected()) {
         ui.connectionStatusLabel->setText(tr("Connected"));
 
         // TODO Deactivate all settings to force user to manually disconnect first
-    }
-    else
-    {
+    } else {
         ui.connectionStatusLabel->setText(tr("Disconnected"));
     }
 
@@ -108,8 +105,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 
     // Open details pane for serial link if necessary
     SerialLink* serial = dynamic_cast<SerialLink*>(link);
-    if(serial != 0)
-    {
+    if(serial != 0) {
         QWidget* conf = new SerialConfigurationWindow(serial, this);
         //QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
         //layout->addWidget(conf);
@@ -121,8 +117,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         //connect(link, SIGNAL(nameChanged(QString)), ui.linkGroupBox, SLOT(setTitle(QString)));
     }
     UDPLink* udp = dynamic_cast<UDPLink*>(link);
-    if (udp != 0)
-    {
+    if (udp != 0) {
         QWidget* conf = new QGCUDPLinkConfiguration(udp, this);
         //QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
         //layout->addWidget(conf);
@@ -132,15 +127,13 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkType->setCurrentIndex(1);
     }
     MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
-    if (sim != 0)
-    {
+    if (sim != 0) {
         ui.linkType->setCurrentIndex(2);
         ui.linkGroupBox->setTitle(tr("MAVLink Simulation Link"));
     }
 #ifdef OPAL_RT
     OpalLink* opal = dynamic_cast<OpalLink*>(link);
-    if (opal != 0)
-    {
+    if (opal != 0) {
         QWidget* conf = new OpalLinkConfigurationWindow(opal, this);
         QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.linkGroupBox);
         layout->addWidget(conf);
@@ -151,27 +144,23 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 #endif
     if (serial == 0 && udp == 0 && sim == 0
 #ifdef OPAL_RT
-        && opal == 0
+            && opal == 0
 #endif
-        )
-    {
+       ) {
         qDebug() << "Link is NOT a known link, can't open configuration window";
     }
 
 
     // Open details pane for MAVLink if necessary
     MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
-    if (mavlink != 0)
-    {
+    if (mavlink != 0) {
         QWidget* conf = new MAVLinkSettingsWidget(mavlink, this);
         //QBoxLayout* layout = new QBoxLayout(QBoxLayout::LeftToRight, ui.protocolGroupBox);
         //layout->addWidget(conf);
         //ui.protocolGroupBox->setLayout(layout);
         ui.protocolScrollArea->setWidget(conf);
         ui.protocolGroupBox->setTitle(protocol->getName()+" (Global Settings)");
-    }
-    else
-    {
+    } else {
         qDebug() << "Protocol is NOT MAVLink, can't open configuration window";
     }
 
@@ -183,7 +172,8 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     this->hide();
 }
 
-CommConfigurationWindow::~CommConfigurationWindow() {
+CommConfigurationWindow::~CommConfigurationWindow()
+{
 
 }
 
@@ -205,12 +195,9 @@ void CommConfigurationWindow::setProtocol(int protocol)
 
 void CommConfigurationWindow::setConnection()
 {
-    if(!link->isConnected())
-    {
+    if(!link->isConnected()) {
         link->connect();
-    }
-    else
-    {
+    } else {
         link->disconnect();
     }
 }
@@ -227,8 +214,7 @@ void CommConfigurationWindow::remove()
     if(action) delete action; //delete action first since it has a pointer to link
     action=NULL;
 
-    if(link)
-    {
+    if(link) {
         LinkManager::instance()->removeLink(link); //remove link from LinkManager list
         link->disconnect(); //disconnect port, and also calls terminate() to stop the thread
         if (link->isRunning()) link->terminate(); // terminate() the serial thread just in case it is still running
@@ -244,13 +230,10 @@ void CommConfigurationWindow::remove()
 void CommConfigurationWindow::connectionState(bool connect)
 {
     ui.connectButton->setChecked(connect);
-    if(connect)
-    {
+    if(connect) {
         ui.connectionStatusLabel->setText(tr("Connected"));
         ui.connectButton->setText(tr("Disconnect"));
-    }
-    else
-    {
+    } else {
         ui.connectionStatusLabel->setText(tr("Disconnected"));
         ui.connectButton->setText(tr("Connect"));
     }

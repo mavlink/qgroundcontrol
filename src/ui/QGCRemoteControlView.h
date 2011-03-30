@@ -36,15 +36,17 @@ This file is part of the QGROUNDCONTROL project
 
 #include "RadioCalibration/RadioCalibrationWindow.h"
 
-namespace Ui {
-    class QGCRemoteControlView;
+namespace Ui
+{
+class QGCRemoteControlView;
 }
 
 class QVBoxLayout;
 class QLabel;
 class QProgressBar;
 
-class QGCRemoteControlView : public QWidget {
+class QGCRemoteControlView : public QWidget
+{
     Q_OBJECT
 public:
     QGCRemoteControlView(QWidget *parent = 0);

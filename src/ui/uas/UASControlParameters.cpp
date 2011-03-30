@@ -5,15 +5,15 @@
 #define CONTROL_MODE_MANUAL "MODE MANUAL"
 
 #ifdef MAVLINK_ENABLED_SLUGS
-    #define CONTROL_MODE_GUIDED "MODE MID-L CMDS"
-    #define CONTROL_MODE_AUTO   "MODE WAYPOINT"
-    #define CONTROL_MODE_TEST1  "MODE PASST"
-    #define CONTROL_MODE_TEST2  "MODE SEL PT"
+#define CONTROL_MODE_GUIDED "MODE MID-L CMDS"
+#define CONTROL_MODE_AUTO   "MODE WAYPOINT"
+#define CONTROL_MODE_TEST1  "MODE PASST"
+#define CONTROL_MODE_TEST2  "MODE SEL PT"
 #else
-    #define CONTROL_MODE_GUIDED "MODE GUIDED"
-    #define CONTROL_MODE_AUTO   "MODE AUTO"
-    #define CONTROL_MODE_TEST1  "MODE TEST1"
-    #define CONTROL_MODE_TEST2  "MODE TEST2"
+#define CONTROL_MODE_GUIDED "MODE GUIDED"
+#define CONTROL_MODE_AUTO   "MODE AUTO"
+#define CONTROL_MODE_TEST1  "MODE TEST1"
+#define CONTROL_MODE_TEST2  "MODE TEST2"
 #endif
 
 #define CONTROL_MODE_READY  "MODE TEST3"
@@ -51,8 +51,7 @@ void UASControlParameters::changedMode(int mode)
 {
     QString modeTemp;
 
-    switch (mode)
-    {
+    switch (mode) {
     case (uint8_t)MAV_MODE_LOCKED:
         modeTemp = "LOCKED MODE";
         break;
@@ -104,20 +103,16 @@ void UASControlParameters::changedMode(int mode)
     }
 
 
-    if(modeTemp != this->mode)
-    {
+    if(modeTemp != this->mode) {
         ui->lbMode->setStyleSheet("background-color: rgb(165, 42, 42)");
-    }
-    else
-    {
+    } else {
         ui->lbMode->setStyleSheet("background-color: rgb(85, 107, 47)");
     }
 }
 
 void UASControlParameters::activeUasSet(UASInterface *uas)
 {
-    if(uas)
-    {
+    if(uas) {
         connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(speedChanged(UASInterface*,double,double,double,quint64)), this, SLOT(speedChanged(UASInterface*,double,double,double,quint64)));
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
@@ -157,9 +152,8 @@ void UASControlParameters::updateAttitude(UASInterface *uas, double roll, double
 
 void UASControlParameters::setCommands()
 {
-    #ifdef MAVLINK_ENABLED_SLUGS
-    if(this->activeUAS)
-    {
+#ifdef MAVLINK_ENABLED_SLUGS
+    if(this->activeUAS) {
         UAS* myUas= static_cast<UAS*>(this->activeUAS);
 
         mavlink_message_t msg;
@@ -183,30 +177,25 @@ void UASControlParameters::getCommands()
 
 void UASControlParameters::setPassthrough()
 {
-    #ifdef MAVLINK_ENABLED_SLUGS
-    if(this->activeUAS)
-    {
+#ifdef MAVLINK_ENABLED_SLUGS
+    if(this->activeUAS) {
         UAS* myUas= static_cast<UAS*>(this->activeUAS);
 
         mavlink_message_t msg;
 
         int8_t tmpBit=0;
 
-        if(ui->cxdle_c->isChecked())//left elevator command
-        {
+        if(ui->cxdle_c->isChecked()) { //left elevator command
             tmpBit+=8;
         }
-        if(ui->cxdr_c->isChecked())//rudder command
-        {
+        if(ui->cxdr_c->isChecked()) { //rudder command
             tmpBit+=16;
         }
 
-        if(ui->cxdla_c->isChecked())//left aileron command
-        {
+        if(ui->cxdla_c->isChecked()) { //left aileron command
             tmpBit+=64;
         }
-        if(ui->cxdt_c->isChecked())//throttle command
-        {
+        if(ui->cxdt_c->isChecked()) { //throttle command
             tmpBit+=128;
         }
 

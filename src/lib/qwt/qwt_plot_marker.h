@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -51,7 +51,7 @@ public:
         \sa QwtPlotMarker::setLineStyle, QwtPlotMarker::lineStyle
     */
     enum LineStyle {NoLine, HLine, VLine, Cross};
-   
+
     explicit QwtPlotMarker();
     virtual ~QwtPlotMarker();
 
@@ -86,10 +86,10 @@ public:
     Qt::Alignment labelAlignment() const;
 #endif
 
-    virtual void draw(QPainter *p, 
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-        const QRect &) const;
-    
+    virtual void draw(QPainter *p,
+                      const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                      const QRect &) const;
+
     virtual QwtDoubleRect boundingRect() const;
 
 private:

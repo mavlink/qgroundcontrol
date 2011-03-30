@@ -41,26 +41,26 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 
 DebugConsole::DebugConsole(QWidget *parent) :
-        QWidget(parent),
-        currLink(NULL),
-        holdOn(false),
-        convertToAscii(true),
-        filterMAVLINK(false),
-        autoHold(true),
-        bytesToIgnore(0),
-        lastByte(-1),
-        sentBytes(),
-        holdBuffer(),
-        lineBuffer(""),
-        lineBufferTimer(),
-        snapShotTimer(),
-        snapShotInterval(500),
-        snapShotBytes(0),
-        dataRate(0.0f),
-        lowpassDataRate(0.0f),
-        dataRateThreshold(500),
-        commandIndex(0),
-        m_ui(new Ui::DebugConsole)
+    QWidget(parent),
+    currLink(NULL),
+    holdOn(false),
+    convertToAscii(true),
+    filterMAVLINK(false),
+    autoHold(true),
+    bytesToIgnore(0),
+    lastByte(-1),
+    sentBytes(),
+    holdBuffer(),
+    lineBuffer(""),
+    lineBufferTimer(),
+    snapShotTimer(),
+    snapShotInterval(500),
+    snapShotBytes(0),
+    dataRate(0.0f),
+    lowpassDataRate(0.0f),
+    dataRateThreshold(500),
+    commandIndex(0),
+    m_ui(new Ui::DebugConsole)
 {
     // Setup basic user interface
     m_ui->setupUi(this);
@@ -92,8 +92,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
 
     // Get a list of all existing links
     links = QList<LinkInterface*>();
-    foreach (LinkInterface* link, LinkManager::instance()->getLinks())
-    {
+    foreach (LinkInterface* link, LinkManager::instance()->getLinks()) {
         addLink(link);
     }
 
@@ -123,8 +122,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     loadSettings();
 
     // Warn user about not activated hold
-    if (!m_ui->holdCheckBox->isChecked())
-    {
+    if (!m_ui->holdCheckBox->isChecked()) {
         m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console is huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
     }
 }
@@ -199,8 +197,7 @@ void DebugConsole::removeLink(QObject* link)
 {
     LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
     // Add link to link list
-    if (links.contains(linkInterface))
-    {
+    if (links.contains(linkInterface)) {
         int linkIndex = links.indexOf(linkInterface);
 
         links.removeAt(linkIndex);
@@ -213,8 +210,7 @@ void DebugConsole::removeLink(QObject* link)
 void DebugConsole::linkSelected(int linkId)
 {
     // Disconnect
-    if (currLink)
-    {
+    if (currLink) {
         disconnect(currLink, SIGNAL(bytesReceived(LinkInterface*,QByteArray)), this, SLOT(receiveBytes(LinkInterface*, QByteArray)));
         disconnect(currLink, SIGNAL(connected(bool)), this, SLOT(setConnectionState(bool)));
     }
@@ -241,14 +237,12 @@ void DebugConsole::updateLinkName(QString name)
 void DebugConsole::setAutoHold(bool hold)
 {
     // Disable current hold if hold had been enabled
-    if (autoHold && holdOn && !hold)
-    {
+    if (autoHold && holdOn && !hold) {
         this->hold(false);
         m_ui->holdButton->setChecked(false);
     }
     // Set auto hold checkbox
-    if (m_ui->holdCheckBox->isChecked() != hold)
-    {
+    if (m_ui->holdCheckBox->isChecked() != hold) {
         m_ui->holdCheckBox->setChecked(hold);
     }
     // Set new state
@@ -264,8 +258,7 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
     QString name = UASManager::instance()->getUASForId(id)->getUASName();
     QString comp;
     // Get a human readable name if possible
-    switch (component)
-    {
+    switch (component) {
         // TODO: To be completed
     case MAV_COMP_ID_IMU:
         comp = tr("IMU");
@@ -295,8 +288,7 @@ void DebugConsole::updateTrafficMeasurements()
     snapShotBytes = 0;
 
     // Check if limit has been exceeded
-    if ((lowpassDataRate > dataRateThreshold) && autoHold)
-    {
+    if ((lowpassDataRate > dataRateThreshold) && autoHold) {
         // Enable auto-old
         m_ui->holdButton->setChecked(true);
         hold(true);
@@ -306,8 +298,7 @@ void DebugConsole::updateTrafficMeasurements()
     speed = speed.sprintf("%04.1f kB/s", dataRate/1000.0f);
     m_ui->speedLabel->setText(speed);
 
-    if (holdOn)
-    {
+    if (holdOn) {
         //repaint();
     }
 }
@@ -350,44 +341,35 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
 {
     snapShotBytes += bytes.size();
     // Only add data from current link
-    if (link == currLink && !holdOn)
-    {
+    if (link == currLink && !holdOn) {
         // Parse all bytes
-        for (int j = 0; j < bytes.size(); j++)
-        {
+        for (int j = 0; j < bytes.size(); j++) {
             unsigned char byte = bytes.at(j);
             // Filter MAVLink (http://pixhawk.ethz.ch/wiki/mavlink/) messages out of the stream.
-            if (filterMAVLINK && bytes.size() > 1)
-            {
+            if (filterMAVLINK && bytes.size() > 1) {
                 // Filtering is done by setting an ignore counter based on the MAVLINK packet length
                 if (static_cast<unsigned char>(bytes[0]) == MAVLINK_STX) bytesToIgnore = static_cast<unsigned int>(bytes[1]) + MAVLINK_NUM_NON_PAYLOAD_BYTES; // Payload plus header
             }
 
-            if (bytesToIgnore <= 0)
-            {
+            if (bytesToIgnore <= 0) {
                 QString str;
                 // Convert to ASCII for readability
-                if (convertToAscii)
-                {
-                    if ((byte < 32) || (byte > 126))
-                    {
-                        switch (byte)
-                        {
-                        // Accept line feed and tab
-                        case (unsigned char)'\n':
-                            {
-                                if (lastByte != '\r')
-                                {
-                                    // Do not break line again for CR+LF
-                                    // only break line for single LF bytes
-                                    str.append(byte);
-                                }
+                if (convertToAscii) {
+                    if ((byte < 32) || (byte > 126)) {
+                        switch (byte) {
+                            // Accept line feed and tab
+                        case (unsigned char)'\n': {
+                            if (lastByte != '\r') {
+                                // Do not break line again for CR+LF
+                                // only break line for single LF bytes
+                                str.append(byte);
                             }
-                            break;
+                        }
+                        break;
                         case (unsigned char)'\t':
                             str.append(byte);
                             break;
-                        // Catch and ignore carriage return
+                            // Catch and ignore carriage return
                         case (unsigned char)'\r':
                             str.append(byte);
                             break;
@@ -395,40 +377,31 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                             str.append(QChar(QChar::ReplacementCharacter));
                             break;
                         }// Append replacement character (box) if char is not ASCII
-                    }
-                    else
-                    {
+                    } else {
                         // Append original character
                         str.append(byte);
                     }
-                }
-                else
-                {
+                } else {
                     QString str2;
                     str2.sprintf("%02x ", byte);
                     str.append(str2);
                 }
                 lineBuffer.append(str);
                 lastByte = byte;
-            }
-            else
-            {
+            } else {
                 if (filterMAVLINK) bytesToIgnore--;
                 // Constrain bytes to positive range
                 bytesToIgnore = qMax(0, bytesToIgnore);
             }
 
         }
-        if (lineBuffer.length() > 0)
-        {
+        if (lineBuffer.length() > 0) {
             m_ui->receiveText->insertPlainText(lineBuffer);
             // Ensure text area scrolls correctly
             m_ui->receiveText->ensureCursorVisible();
             lineBuffer.clear();
         }
-    }
-    else if (link == currLink && holdOn)
-    {
+    } else if (link == currLink && holdOn) {
         holdBuffer.append(bytes);
     }
 }
@@ -436,41 +409,24 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
 QByteArray DebugConsole::symbolNameToBytes(const QString& text)
 {
     QByteArray b;
-    if (text.contains("CR+LF"))
-    {
+    if (text.contains("CR+LF")) {
         b.append(static_cast<char>(0x0D));
         b.append(static_cast<char>(0x0A));
-    }
-    else if (text.contains("LF"))
-    {
+    } else if (text.contains("LF")) {
         b.append(static_cast<char>(0x0A));
-    }
-    else if (text.contains("FF"))
-    {
+    } else if (text.contains("FF")) {
         b.append(static_cast<char>(0x0C));
-    }
-    else if (text.contains("CR"))
-    {
+    } else if (text.contains("CR")) {
         b.append(static_cast<char>(0x0D));
-    }
-    else if (text.contains("TAB"))
-    {
+    } else if (text.contains("TAB")) {
         b.append(static_cast<char>(0x09));
-    }
-    else if (text.contains("NUL"))
-    {
+    } else if (text.contains("NUL")) {
         b.append(static_cast<char>(0x00));
-    }
-    else if (text.contains("ESC"))
-    {
+    } else if (text.contains("ESC")) {
         b.append(static_cast<char>(0x1B));
-    }
-    else if (text.contains("~"))
-    {
+    } else if (text.contains("~")) {
         b.append(static_cast<char>(0x7E));
-    }
-    else if (text.contains("<Space>"))
-    {
+    } else if (text.contains("<Space>")) {
         b.append(static_cast<char>(0x20));
     }
     return b;
@@ -479,44 +435,25 @@ QByteArray DebugConsole::symbolNameToBytes(const QString& text)
 QString DebugConsole::bytesToSymbolNames(const QByteArray& b)
 {
     QString text;
-    if (b.size() > 1 && b.contains(0x0D) && b.contains(0x0A))
-    {
+    if (b.size() > 1 && b.contains(0x0D) && b.contains(0x0A)) {
         text = "<CR+LF>";
-    }
-    else if (b.contains(0x0A))
-    {
+    } else if (b.contains(0x0A)) {
         text = "<LF>";
-    }
-    else if (b.contains(0x0C))
-    {
+    } else if (b.contains(0x0C)) {
         text = "<FF>";
-    }
-    else if (b.contains(0x0D))
-    {
+    } else if (b.contains(0x0D)) {
         text = "<CR>";
-    }
-    else if (b.contains(0x09))
-    {
+    } else if (b.contains(0x09)) {
         text = "<TAB>";
-    }
-    else if (b.contains((char)0x00))
-    {
+    } else if (b.contains((char)0x00)) {
         text == "<NUL>";
-    }
-    else if (b.contains(0x1B))
-    {
+    } else if (b.contains(0x1B)) {
         text = "<ESC>";
-    }
-    else if (b.contains(0x7E))
-    {
+    } else if (b.contains(0x7E)) {
         text = "<~>";
-    }
-    else if (b.contains(0x20))
-    {
+    } else if (b.contains(0x20)) {
         text = "<Space>";
-    }
-    else
-    {
+    } else {
         text.append(b);
     }
     return text;
@@ -533,15 +470,11 @@ void DebugConsole::appendSpecialSymbol(const QString& text)
     QString line = m_ui->sendText->text();
     QByteArray symbols = symbolNameToBytes(text);
     // The text is appended to the enter field
-    if (convertToAscii)
-    {
+    if (convertToAscii) {
         line.append(symbols);
-    }
-    else
-    {
+    } else {
 
-        for (int i = 0; i < symbols.size(); i++)
-        {
+        for (int i = 0; i < symbols.size(); i++) {
             QString add(" 0x%1");
             line.append(add.arg(static_cast<char>(symbols.at(i)), 2, 16, QChar('0')));
         }
@@ -568,13 +501,11 @@ void DebugConsole::sendBytes()
     // which is the current text
     commandIndex = commandHistory.length();
 
-    if (!m_ui->sentText->isVisible())
-    {
+    if (!m_ui->sentText->isVisible()) {
         m_ui->sentText->setVisible(true);
     }
 
-    if (!currLink->isConnected())
-    {
+    if (!currLink->isConnected()) {
         m_ui->sentText->setText(tr("Nothing sent. The link %1 is unconnected. Please connect first.").arg(currLink->getName()));
         return;
     }
@@ -583,17 +514,14 @@ void DebugConsole::sendBytes()
     QByteArray specialSymbol;
 
     // Append special symbol if checkbox is checked
-    if (m_ui->specialCheckBox->isChecked())
-    {
+    if (m_ui->specialCheckBox->isChecked()) {
         // Get auto-add special symbols
         specialSymbol = symbolNameToBytes(m_ui->specialComboBox->currentText());
 
         // Convert them if needed
-        if (!convertToAscii)
-        {
+        if (!convertToAscii) {
             QString specialSymbolConverted;
-            for (int i = 0; i < specialSymbol.length(); i++)
-            {
+            for (int i = 0; i < specialSymbol.length(); i++) {
                 QString add(" 0x%1");
                 specialSymbolConverted.append(add.arg(static_cast<char>(specialSymbol.at(i)), 2, 16, QChar('0')));
             }
@@ -605,8 +533,7 @@ void DebugConsole::sendBytes()
     QByteArray transmit;
     QString feedback;
     bool ok = true;
-    if (convertToAscii)
-    {
+    if (convertToAscii) {
         // ASCII text is not converted
         transmit = transmitUnconverted.toLatin1();
         // Auto-add special symbol handling
@@ -615,17 +542,14 @@ void DebugConsole::sendBytes()
         QString translated;
 
         // Replace every occurence of a special symbol with its text name
-        for (int i = 0; i < transmit.size(); ++i)
-        {
+        for (int i = 0; i < transmit.size(); ++i) {
             QByteArray specialChar;
             specialChar.append(transmit.at(i));
             translated.append(bytesToSymbolNames(specialChar));
         }
 
         feedback.append(translated);
-    }
-    else
-    {
+    } else {
         // HEX symbols are converted to bytes
         QString str = transmitUnconverted.toLatin1();
         str.append(specialSymbol);
@@ -633,10 +557,8 @@ void DebugConsole::sendBytes()
         str.remove("0x");
         str.simplified();
         int bufferIndex = 0;
-        if ((str.size() % 2) == 0)
-        {
-            for (int i = 0; i < str.size(); i=i+2)
-            {
+        if ((str.size() % 2) == 0) {
+            for (int i = 0; i < str.size(); i=i+2) {
                 bool okByte;
                 QString strBuf = QString(str.at(i));
                 strBuf.append(str.at(i+1));
@@ -644,30 +566,24 @@ void DebugConsole::sendBytes()
                 ok = (ok && okByte);
                 transmit[bufferIndex++] = hex;
 
-                if (okByte)
-                {
+                if (okByte) {
                     // Feedback
                     //feedback.append("0x");
                     feedback.append(str.at(i).toUpper());
                     feedback.append(str.at(i+1).toUpper());
                     feedback.append(" ");
-                }
-                else
-                {
+                } else {
                     feedback = tr("HEX format error near \"") + strBuf + "\"";
                 }
             }
-        }
-        else
-        {
+        } else {
             ok = false;
             feedback = tr("HEX values have to be in pairs, e.g. AA or AA 05");
         }
     }
 
     // Transmit ASCII or HEX formatted text, only if more than one symbol
-    if (ok && m_ui->sendText->text().toLatin1().size() > 0)
-    {
+    if (ok && m_ui->sendText->text().toLatin1().size() > 0) {
         // Transmit only if conversion succeeded
         //        int transmitted =
         currLink->writeBytes(transmit, transmit.size());
@@ -679,9 +595,7 @@ void DebugConsole::sendBytes()
         //        {
         //            m_ui->sentText->setText(tr("Error during sending: Transmitted only %1 bytes instead of %2.").arg(transmitted, transmit.size()));
         //        }
-    }
-    else if (m_ui->sendText->text().toLatin1().size() > 0)
-    {
+    } else if (m_ui->sendText->text().toLatin1().size() > 0) {
         // Conversion failed, display error message
         m_ui->sentText->setText(tr("Not sent: ") + feedback);
     }
@@ -696,11 +610,9 @@ void DebugConsole::sendBytes()
  */
 void DebugConsole::hexModeEnabled(bool mode)
 {
-    if (convertToAscii == mode)
-    {
+    if (convertToAscii == mode) {
         convertToAscii = !mode;
-        if (m_ui->hexCheckBox->isChecked() != mode)
-        {
+        if (m_ui->hexCheckBox->isChecked() != mode) {
             m_ui->hexCheckBox->setChecked(mode);
         }
         m_ui->receiveText->clear();
@@ -715,12 +627,10 @@ void DebugConsole::hexModeEnabled(bool mode)
  */
 void DebugConsole::MAVLINKfilterEnabled(bool filter)
 {
-    if (filterMAVLINK != filter)
-    {
+    if (filterMAVLINK != filter) {
         filterMAVLINK = filter;
         bytesToIgnore = 0;
-        if (m_ui->mavlinkCheckBox->isChecked() != filter)
-        {
+        if (m_ui->mavlinkCheckBox->isChecked() != filter) {
             m_ui->mavlinkCheckBox->setChecked(filter);
         }
     }
@@ -730,33 +640,27 @@ void DebugConsole::MAVLINKfilterEnabled(bool filter)
  */
 void DebugConsole::hold(bool hold)
 {
-    if (holdOn != hold)
-    {
-    // Check if we need to append bytes from the hold buffer
-    if (this->holdOn && !hold)
-    {
-        // TODO No conversion is done to the bytes in the hold buffer
-        m_ui->receiveText->appendPlainText(QString(holdBuffer));
-        holdBuffer.clear();
-        lowpassDataRate = 0.0f;
-    }
+    if (holdOn != hold) {
+        // Check if we need to append bytes from the hold buffer
+        if (this->holdOn && !hold) {
+            // TODO No conversion is done to the bytes in the hold buffer
+            m_ui->receiveText->appendPlainText(QString(holdBuffer));
+            holdBuffer.clear();
+            lowpassDataRate = 0.0f;
+        }
 
-    this->holdOn = hold;
+        this->holdOn = hold;
 
-    // Change text interaction mode
-    if (hold)
-    {
-        m_ui->receiveText->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse | Qt::LinksAccessibleByKeyboard | Qt::LinksAccessibleByMouse);
+        // Change text interaction mode
+        if (hold) {
+            m_ui->receiveText->setTextInteractionFlags(Qt::TextSelectableByKeyboard | Qt::TextSelectableByMouse | Qt::LinksAccessibleByKeyboard | Qt::LinksAccessibleByMouse);
+        } else {
+            m_ui->receiveText->setTextInteractionFlags(Qt::NoTextInteraction);
+        }
+        if (m_ui->holdCheckBox->isChecked() != hold) {
+            m_ui->holdCheckBox->setChecked(hold);
+        }
     }
-    else
-    {
-        m_ui->receiveText->setTextInteractionFlags(Qt::NoTextInteraction);
-    }
-    if (m_ui->holdCheckBox->isChecked() != hold)
-    {
-        m_ui->holdCheckBox->setChecked(hold);
-    }
-}
 }
 
 /**
@@ -764,13 +668,10 @@ void DebugConsole::hold(bool hold)
  */
 void DebugConsole::setConnectionState(bool connected)
 {
-    if(connected)
-    {
+    if(connected) {
         m_ui->connectButton->setText(tr("Disconn."));
         m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QGC::colorGreen.name(), tr("Link %1 is connected.").arg(currLink->getName())));
-    }
-    else
-    {
+    } else {
         m_ui->connectButton->setText(tr("Connect"));
         m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QGC::colorOrange.name(), tr("Link %1 is unconnected.").arg(currLink->getName())));
     }
@@ -779,14 +680,10 @@ void DebugConsole::setConnectionState(bool connected)
 /** @brief Handle the connect button */
 void DebugConsole::handleConnectButton()
 {
-    if (currLink)
-    {
-        if (currLink->isConnected())
-        {
+    if (currLink) {
+        if (currLink->isConnected()) {
             currLink->disconnect();
-        }
-        else
-        {
+        } else {
             currLink->connect();
         }
     }
@@ -794,16 +691,11 @@ void DebugConsole::handleConnectButton()
 
 void DebugConsole::keyPressEvent(QKeyEvent * event)
 {
-    if (event->key() == Qt::Key_Up)
-    {
+    if (event->key() == Qt::Key_Up) {
         cycleCommandHistory(true);
-    }
-    else if (event->key() == Qt::Key_Down)
-    {
+    } else if (event->key() == Qt::Key_Down) {
         cycleCommandHistory(false);
-    }
-    else
-    {
+    } else {
         QWidget::keyPressEvent(event);
     }
 }
@@ -811,31 +703,24 @@ void DebugConsole::keyPressEvent(QKeyEvent * event)
 void DebugConsole::cycleCommandHistory(bool up)
 {
     // Only cycle if there is a history
-    if (commandHistory.length() > 0)
-    {
+    if (commandHistory.length() > 0) {
         // Store current command if we're not in history yet
-        if (commandIndex == commandHistory.length() && up)
-        {
+        if (commandIndex == commandHistory.length() && up) {
             currCommand = m_ui->sendText->text();
         }
 
-        if (up)
-        {
+        if (up) {
             // UP
             commandIndex--;
-            if (commandIndex >= 0)
-            {
+            if (commandIndex >= 0) {
                 m_ui->sendText->setText(commandHistory.at(commandIndex));
             }
 
             // If the index
-        }
-        else
-        {
+        } else {
             // DOWN
             commandIndex++;
-            if (commandIndex < commandHistory.length())
-            {
+            if (commandIndex < commandHistory.length()) {
                 m_ui->sendText->setText(commandHistory.at(commandIndex));
             }
             // If the index is at history length, load the last current command
@@ -843,14 +728,12 @@ void DebugConsole::cycleCommandHistory(bool up)
         }
 
         // Restore current command if we went out of history
-        if (commandIndex == commandHistory.length())
-        {
+        if (commandIndex == commandHistory.length()) {
             m_ui->sendText->setText(currCommand);
         }
 
         // If we are too far down or too far up, wrap around to current command
-        if (commandIndex < 0 || commandIndex > commandHistory.length())
-        {
+        if (commandIndex < 0 || commandIndex > commandHistory.length()) {
             commandIndex = commandHistory.length();
             m_ui->sendText->setText(currCommand);
         }

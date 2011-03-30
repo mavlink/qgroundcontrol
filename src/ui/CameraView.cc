@@ -80,8 +80,7 @@ void CameraView::addUAS(UASInterface* uas)
 void CameraView::setImageSize(int width, int height, int depth, int channels)
 {
     // Allocate raw image in correct size
-    if (width != receivedWidth || height != receivedHeight || depth != receivedDepth || channels != receivedChannels || image == NULL)
-    {
+    if (width != receivedWidth || height != receivedHeight || depth != receivedDepth || channels != receivedChannels || image == NULL) {
         // Set new size
         if (width > 0) receivedWidth  = width;
         if (height > 0) receivedHeight = height;
@@ -102,21 +101,18 @@ void CameraView::setImageSize(int width, int height, int depth, int channels)
 
         // Set image format
         // 8 BIT GREYSCALE IMAGE
-        if (depth <= 8 && channels == 1)
-        {
+        if (depth <= 8 && channels == 1) {
             image = new QImage(receivedWidth, receivedHeight, QImage::Format_Indexed8);
             // Create matching color table
             image->setNumColors(256);
-            for (int i = 0; i < 256; i++)
-            {
+            for (int i = 0; i < 256; i++) {
                 image->setColor(i, qRgb(i, i, i));
                 //qDebug() << __FILE__ << __LINE__ << std::hex << i;
             }
 
         }
         // 32 BIT COLOR IMAGE WITH ALPHA VALUES (#ARGB)
-        else
-        {
+        else {
             image = new QImage(receivedWidth, receivedHeight, QImage::Format_ARGB32);
         }
 
@@ -152,8 +148,7 @@ void CameraView::startImage(int imgid, int width, int height, int depth, int cha
 
 void CameraView::finishImage()
 {
-    if (imageStarted)
-    {
+    if (imageStarted) {
         commitRawDataToGL();
         imageStarted = false;
     }
@@ -162,16 +157,13 @@ void CameraView::finishImage()
 void CameraView::commitRawDataToGL()
 {
     //qDebug() << __FILE__ << __LINE__ << "Copying raw data to GL buffer:" << rawImage << receivedWidth << receivedHeight << image->format();
-    if (image != NULL)
-    {
+    if (image != NULL) {
         QImage::Format format = image->format();
         QImage* newImage = new QImage(rawImage, receivedWidth, receivedHeight, format);
-        if (format == QImage::Format_Indexed8)
-        {
+        if (format == QImage::Format_Indexed8) {
             // Create matching color table
             newImage->setNumColors(256);
-            for (int i = 0; i < 256; i++)
-            {
+            for (int i = 0; i < 256; i++) {
                 newImage->setColor(i, qRgb(i, i, i));
                 //qDebug() << __FILE__ << __LINE__ << std::hex << i;
             }
@@ -181,13 +173,10 @@ void CameraView::commitRawDataToGL()
         delete image;
         image = newImage;
         // Switch buffers
-        if (rawImage == rawBuffer1)
-        {
+        if (rawImage == rawBuffer1) {
             rawImage = rawBuffer2;
             //qDebug() << "Now buffer 2";
-        }
-        else
-        {
+        } else {
             rawImage = rawBuffer1;
             //qDebug() << "Now buffer 1";
         }
@@ -215,23 +204,18 @@ void CameraView::setPixels(int imgid, const unsigned char* imageData, int length
 
     //    qDebug() << "at" << __FILE__ << __LINE__ << ": Received startindex" << startIndex << "and length" << length << "(" << startIndex+length << "of" << rawExpectedBytes << "bytes)";
 
-    if (imageStarted)
-    {
+    if (imageStarted) {
         //if (rawLastIndex != startIndex) qDebug() << "PACKET LOSS!";
 
-        if (startIndex+length > rawExpectedBytes)
-        {
+        if (startIndex+length > rawExpectedBytes) {
             qDebug() << "CAMERAVIEW: OVERFLOW! startIndex:" << startIndex << "length:" << length << "image raw size" << ((receivedWidth * receivedHeight * receivedChannels * receivedDepth) / 8) - 1;
-        }
-        else
-        {
+        } else {
             memcpy(rawImage+startIndex, imageData, length);
 
             rawLastIndex = startIndex+length;
 
             // Check if we just reached the end of the image
-            if (startIndex+length == rawExpectedBytes)
-            {
+            if (startIndex+length == rawExpectedBytes) {
                 //qDebug() << "CAMERAVIEW: END OF IMAGE REACHED!";
                 finishImage();
                 rawLastIndex = 0;

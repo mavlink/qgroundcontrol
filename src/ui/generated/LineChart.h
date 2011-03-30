@@ -33,8 +33,7 @@ public:
     QWidget *scrollAreaWidgetContents;
     QGroupBox *diagramGroupBox;
 
-    void setupUi(QWidget *linechart)
-    {
+    void setupUi(QWidget *linechart) {
         if (linechart->objectName().isEmpty())
             linechart->setObjectName(QString::fromUtf8("linechart"));
         linechart->resize(662, 381);
@@ -103,8 +102,7 @@ public:
         QMetaObject::connectSlotsByName(linechart);
     } // setupUi
 
-    void retranslateUi(QWidget *linechart)
-    {
+    void retranslateUi(QWidget *linechart) {
         linechart->setWindowTitle(QApplication::translate("linechart", "Form", 0, QApplication::UnicodeUTF8));
         curveGroupBox->setTitle(QApplication::translate("linechart", "Curve Selection", 0, QApplication::UnicodeUTF8));
         diagramGroupBox->setTitle(QApplication::translate("linechart", "Diagram", 0, QApplication::UnicodeUTF8));
@@ -112,8 +110,9 @@ public:
 
 };
 
-namespace Ui {
-    class linechart: public Ui_linechart {};
+namespace Ui
+{
+class linechart: public Ui_linechart {};
 } // namespace Ui
 
 QT_END_NAMESPACE

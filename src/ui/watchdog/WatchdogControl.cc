@@ -39,10 +39,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 
 WatchdogControl::WatchdogControl(QWidget *parent) :
-        QWidget(parent),
-        mav(NULL),
-        updateInterval(2000000),
-        ui(new Ui::WatchdogControl)
+    QWidget(parent),
+    mav(NULL),
+    updateInterval(2000000),
+    ui(new Ui::WatchdogControl)
 {
     ui->setupUi(this);
 
@@ -67,8 +67,7 @@ void WatchdogControl::setUAS(UASInterface* uas)
 {
     PxQuadMAV* qmav = dynamic_cast<PxQuadMAV*>(uas);
 
-    if (qmav)
-    {
+    if (qmav) {
         connect(qmav, SIGNAL(processReceived(int,int,int,QString,QString,int)), this, SLOT(addProcess(int,int,int,QString,QString,int)));
         connect(qmav, SIGNAL(watchdogReceived(int,int,uint)), this, SLOT(updateWatchdog(int,int,uint)));
         connect(qmav, SIGNAL(processChanged(int,int,int,int,bool,int,int)), this, SLOT(updateProcess(int,int,int,int,bool,int,int)));
@@ -82,8 +81,7 @@ void WatchdogControl::updateWatchdog(int systemId, int watchdogId, unsigned int 
     WatchdogInfo& watchdog = this->getWatchdog(systemId, watchdogId);
 
     // if the proces count doesn't match, the watchdog is either new or has changed - create a new vector with new (and empty) ProcessInfo structs.
-    if (watchdog.processes_.size() != processCount)
-    {
+    if (watchdog.processes_.size() != processCount) {
         watchdog.processes_ = std::vector<ProcessInfo>(processCount);
         // Create new UI widget
         //WatchdogView* view = new WatchdogView(this);
@@ -140,13 +138,10 @@ WatchdogControl::WatchdogInfo& WatchdogControl::getWatchdog(uint8_t systemId, ui
     WatchdogID id(systemId, watchdogId);
 
     std::map<WatchdogID, WatchdogInfo>::iterator it = this->watchdogs_.find(id);
-    if (it != this->watchdogs_.end())
-    {
+    if (it != this->watchdogs_.end()) {
         // the WatchdogInfo struct already exists in the map, return it
         return it->second;
-    }
-    else
-    {
+    } else {
         // the WatchdogInfo struct doesn't exist - request info and status for all processes and create the struct
         this->sendCommand(id, WatchdogControl::ALL, Command::RequestInfo);
         this->sendCommand(id, WatchdogControl::ALL, Command::RequestStatus);

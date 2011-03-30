@@ -75,68 +75,68 @@ inline bool isinf(T value)
  */
 HUD::HUD(int width, int height, QWidget* parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-    uas(NULL),
-    yawInt(0.0f),
-    mode(tr("UNKNOWN MODE")),
-    state(tr("UNKNOWN STATE")),
-    fuelStatus(tr("00.0V (00m:00s)")),
-    xCenterOffset(0.0f),
-    yCenterOffset(0.0f),
-    vwidth(200.0f),
-    vheight(150.0f),
-    vGaugeSpacing(50.0f),
-    vPitchPerDeg(6.0f), ///< 4 mm y translation per degree)
-    rawBuffer1(NULL),
-    rawBuffer2(NULL),
-    rawImage(NULL),
-    rawLastIndex(0),
-    rawExpectedBytes(0),
-    bytesPerLine(1),
-    imageStarted(false),
-    receivedDepth(8),
-    receivedChannels(1),
-    receivedWidth(640),
-    receivedHeight(480),
-    defaultColor(QColor(70, 200, 70)),
-    setPointColor(QColor(200, 20, 200)),
-    warningColor(Qt::yellow),
-    criticalColor(Qt::red),
-    infoColor(QColor(20, 200, 20)),
-    fuelColor(criticalColor),
-    warningBlinkRate(5),
-    refreshTimer(new QTimer(this)),
-    noCamera(true),
-    hardwareAcceleration(true),
-    strongStrokeWidth(1.5f),
-    normalStrokeWidth(1.0f),
-    fineStrokeWidth(0.5f),
-    waypointName(""),
-    roll(0.0f),
-    pitch(0.0f),
-    yaw(0.0f),
-    rollLP(0.0f),
-    pitchLP(0.0f),
-    yawLP(0.0f),
-    yawDiff(0.0f),
-    xPos(0.0),
-    yPos(0.0),
-    zPos(0.0),
-    xSpeed(0.0),
-    ySpeed(0.0),
-    zSpeed(0.0),
-    lastSpeedUpdate(0),
-    totalSpeed(0.0),
-    totalAcc(0.0),
-    lat(0.0),
-    lon(0.0),
-    alt(0.0),
-    load(0.0f),
-    offlineDirectory(""),
-    nextOfflineImage(""),
-    hudInstrumentsEnabled(true),
-    videoEnabled(false),
-    xImageFactor(1.0),
-    yImageFactor(1.0)
+      uas(NULL),
+      yawInt(0.0f),
+      mode(tr("UNKNOWN MODE")),
+      state(tr("UNKNOWN STATE")),
+      fuelStatus(tr("00.0V (00m:00s)")),
+      xCenterOffset(0.0f),
+      yCenterOffset(0.0f),
+      vwidth(200.0f),
+      vheight(150.0f),
+      vGaugeSpacing(50.0f),
+      vPitchPerDeg(6.0f), ///< 4 mm y translation per degree)
+      rawBuffer1(NULL),
+      rawBuffer2(NULL),
+      rawImage(NULL),
+      rawLastIndex(0),
+      rawExpectedBytes(0),
+      bytesPerLine(1),
+      imageStarted(false),
+      receivedDepth(8),
+      receivedChannels(1),
+      receivedWidth(640),
+      receivedHeight(480),
+      defaultColor(QColor(70, 200, 70)),
+      setPointColor(QColor(200, 20, 200)),
+      warningColor(Qt::yellow),
+      criticalColor(Qt::red),
+      infoColor(QColor(20, 200, 20)),
+      fuelColor(criticalColor),
+      warningBlinkRate(5),
+      refreshTimer(new QTimer(this)),
+      noCamera(true),
+      hardwareAcceleration(true),
+      strongStrokeWidth(1.5f),
+      normalStrokeWidth(1.0f),
+      fineStrokeWidth(0.5f),
+      waypointName(""),
+      roll(0.0f),
+      pitch(0.0f),
+      yaw(0.0f),
+      rollLP(0.0f),
+      pitchLP(0.0f),
+      yawLP(0.0f),
+      yawDiff(0.0f),
+      xPos(0.0),
+      yPos(0.0),
+      zPos(0.0),
+      xSpeed(0.0),
+      ySpeed(0.0),
+      zSpeed(0.0),
+      lastSpeedUpdate(0),
+      totalSpeed(0.0),
+      totalAcc(0.0),
+      lat(0.0),
+      lon(0.0),
+      alt(0.0),
+      load(0.0f),
+      offlineDirectory(""),
+      nextOfflineImage(""),
+      hudInstrumentsEnabled(true),
+      videoEnabled(false),
+      xImageFactor(1.0),
+      yImageFactor(1.0)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -183,12 +183,9 @@ HUD::HUD(int width, int height, QWidget* parent)
     fontDatabase.addApplicationFont(fontFileName);
     font = fontDatabase.font(fontFamilyName, "Roman", qMax(5,(int)(10.0f*scalingFactor*1.2f+0.5f)));
     QFont* fontPtr = &font;
-    if (!fontPtr)
-    {
+    if (!fontPtr) {
         qDebug() << "ERROR! FONT NOT LOADED!";
-    }
-    else
-    {
+    } else {
         if (font.family() != fontFamilyName) qDebug() << "ERROR! WRONG FONT LOADED: " << fontFamilyName;
     }
 
@@ -268,8 +265,7 @@ void HUD::createActions()
  */
 void HUD::setActiveUAS(UASInterface* uas)
 {
-    if (this->uas != NULL)
-    {
+    if (this->uas != NULL) {
         // Disconnect any previously connected active MAV
         disconnect(this->uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
         disconnect(this->uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
@@ -284,14 +280,12 @@ void HUD::setActiveUAS(UASInterface* uas)
 
         // Try to disconnect the image link
         UAS* u = dynamic_cast<UAS*>(this->uas);
-        if (u)
-        {
+        if (u) {
             disconnect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
         }
     }
 
-    if (uas)
-    {
+    if (uas) {
         // Now connect the new UAS
         // Setup communication
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*, double, double, double, quint64)));
@@ -307,8 +301,7 @@ void HUD::setActiveUAS(UASInterface* uas)
 
         // Try to connect the image link
         UAS* u = dynamic_cast<UAS*>(uas);
-        if (u)
-        {
+        if (u) {
             connect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
         }
 
@@ -338,16 +331,11 @@ void HUD::updateBattery(UASInterface* uas, double voltage, double percent, int s
 {
     Q_UNUSED(uas);
     fuelStatus = tr("BAT [%1% | %2V] (%3:%4)").arg(percent, 2, 'f', 0, QChar('0')).arg(voltage, 4, 'f', 1, QChar('0')).arg(seconds/60, 2, 10, QChar('0')).arg(seconds%60, 2, 10, QChar('0'));
-    if (percent < 20.0f)
-    {
+    if (percent < 20.0f) {
         fuelColor = warningColor;
-    }
-    else if (percent < 10.0f)
-    {
+    } else if (percent < 10.0f) {
         fuelColor = criticalColor;
-    }
-    else
-    {
+    } else {
         fuelColor = infoColor;
     }
 }
@@ -549,8 +537,7 @@ void HUD::initializeGL()
     bool antialiasing = true;
 
     // Antialiasing setup
-    if(antialiasing)
-    {
+    if(antialiasing) {
         glEnable(GL_MULTISAMPLE);
         glEnable(GL_BLEND);
 
@@ -561,9 +548,7 @@ void HUD::initializeGL()
 
         glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
         glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    }
-    else
-    {
+    } else {
         glDisable(GL_BLEND);
         glDisable(GL_POINT_SMOOTH);
         glDisable(GL_LINE_SMOOTH);
@@ -617,8 +602,7 @@ void HUD::paintEvent(QPaintEvent *event)
 
 void HUD::paintHUD()
 {
-    if (isVisible())
-    {
+    if (isVisible()) {
         //    static quint64 interval = 0;
         //    qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
         //    interval = MG::TIME::getGroundTimeNow();
@@ -677,10 +661,8 @@ void HUD::paintHUD()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Fill with black background
-        if (videoEnabled)
-        {
-            if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists())
-            {
+        if (videoEnabled) {
+            if (nextOfflineImage != "" && QFileInfo(nextOfflineImage).exists()) {
                 qDebug() << __FILE__ << __LINE__ << "template image:" << nextOfflineImage;
                 QImage fill = QImage(nextOfflineImage);
 
@@ -698,9 +680,7 @@ void HUD::paintHUD()
             glPixelZoom(xImageFactor, yImageFactor);
             // Resize to correct size and fill with image
             glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
-        }
-        else
-        {
+        } else {
             // Blue / brown background
             paintCenterBackground(roll, pitch, yawTrans);
         }
@@ -710,8 +690,7 @@ void HUD::paintHUD()
 
         // END OF OPENGL PAINTING
 
-        if (hudInstrumentsEnabled)
-        {
+        if (hudInstrumentsEnabled) {
 
             //glEnable(GL_MULTISAMPLE);
 
@@ -822,12 +801,9 @@ void HUD::paintHUD()
             // Left altitude gauge
             float gaugeAltitude;
 
-            if (this->alt != 0)
-            {
+            if (this->alt != 0) {
                 gaugeAltitude = alt;
-            }
-            else
-            {
+            } else {
                 gaugeAltitude = -zPos;
             }
 
@@ -856,9 +832,7 @@ void HUD::paintHUD()
 
             paintPitchLines(pitchLP, &painter);
             painter.end();
-        }
-        else
-        {
+        } else {
             QPainter painter;
             painter.begin(this);
             painter.end();
@@ -1085,8 +1059,7 @@ void HUD::paintPitchLines(float pitch, QPainter* painter)
     float offset = pitch;
     if (offset < 0) offset = -offset;
     int offsetCount = 0;
-    while (offset > lineDistance)
-    {
+    while (offset > lineDistance) {
         offset -= lineDistance;
         offsetCount++;
     }
@@ -1101,8 +1074,7 @@ void HUD::paintPitchLines(float pitch, QPainter* painter)
 
     posY = -offsetAbs + posIncrement; //+ 100;// + lineDistance;
 
-    while (posY < posLimit)
-    {
+    while (posY < posLimit) {
         paintPitchLinePos(label.sprintf("%3d", iPos), 0.0f, -posY, painter);
         posY += posIncrement;
         iPos += (int)lineDistance;
@@ -1132,8 +1104,7 @@ void HUD::paintPitchLines(float pitch, QPainter* painter)
     posY = offsetAbs  + posIncrement;
 
 
-    while (posY < posLimit)
-    {
+    while (posY < posLimit) {
         paintPitchLineNeg(label.sprintf("%3d", iNeg), 0.0f, posY, painter);
         posY += posIncrement;
         iNeg -= (int)lineDistance;
@@ -1189,8 +1160,7 @@ void HUD::paintPitchLineNeg(QString text, float refPosX, float refPosY, QPainter
     // Left vertical line
     drawLine(refPosX-pitchGap/2.0, refPosY, refPosX-pitchGap/2.0, refPosY-pitchHeight, lineWidth, defaultColor, painter);
     // Left horizontal line with four segments
-    for (int i = 0; i < 7; i+=2)
-    {
+    for (int i = 0; i < 7; i+=2) {
         drawLine(refPosX-pitchWidth/2.0+(i*segmentWidth), refPosY, refPosX-pitchWidth/2.0+(i*segmentWidth)+segmentWidth, refPosY, lineWidth, defaultColor, painter);
     }
     // Text left
@@ -1199,8 +1169,7 @@ void HUD::paintPitchLineNeg(QString text, float refPosX, float refPosY, QPainter
     // Right vertical line
     drawLine(refPosX+pitchGap/2.0, refPosY, refPosX+pitchGap/2.0, refPosY-pitchHeight, lineWidth, defaultColor, painter);
     // Right horizontal line with four segments
-    for (int i = 0; i < 7; i+=2)
-    {
+    for (int i = 0; i < 7; i+=2) {
         drawLine(refPosX+pitchWidth/2.0f-(i*segmentWidth), refPosY, refPosX+pitchWidth/2.0f-(i*segmentWidth)-segmentWidth, refPosY, lineWidth, defaultColor, painter);
     }
 }
@@ -1241,8 +1210,7 @@ void HUD::rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF origin)
     //   |  cos(phi)   sin(phi) |
     //   | -sin(phi)   cos(phi) |
     //
-    for (int i = 0; i < p.size(); i++)
-    {
+    for (int i = 0; i < p.size(); i++) {
         QPointF curr = p.at(i);
 
         const float x = curr.x();
@@ -1258,8 +1226,7 @@ void HUD::drawPolygon(QPolygonF refPolygon, QPainter* painter)
 {
     // Scale coordinates
     QPolygonF draw(refPolygon.size());
-    for (int i = 0; i < refPolygon.size(); i++)
-    {
+    for (int i = 0; i < refPolygon.size(); i++) {
         QPointF curr;
         curr.setX(refToScreenX(refPolygon.at(i).x()));
         curr.setY(refToScreenY(refPolygon.at(i).y()));
@@ -1480,8 +1447,7 @@ void HUD::selectWaypoint(int uasId, int id)
 void HUD::setImageSize(int width, int height, int depth, int channels)
 {
     // Allocate raw image in correct size
-    if (width != receivedWidth || height != receivedHeight || depth != receivedDepth || channels != receivedChannels || image == NULL)
-    {
+    if (width != receivedWidth || height != receivedHeight || depth != receivedDepth || channels != receivedChannels || image == NULL) {
         // Set new size
         if (width > 0) receivedWidth  = width;
         if (height > 0) receivedHeight = height;
@@ -1502,21 +1468,18 @@ void HUD::setImageSize(int width, int height, int depth, int channels)
 
         // Set image format
         // 8 BIT GREYSCALE IMAGE
-        if (depth <= 8 && channels == 1)
-        {
+        if (depth <= 8 && channels == 1) {
             image = new QImage(receivedWidth, receivedHeight, QImage::Format_Indexed8);
             // Create matching color table
             image->setNumColors(256);
-            for (int i = 0; i < 256; i++)
-            {
+            for (int i = 0; i < 256; i++) {
                 image->setColor(i, qRgb(i, i, i));
                 //qDebug() << __FILE__ << __LINE__ << std::hex << i;
             }
 
         }
         // 32 BIT COLOR IMAGE WITH ALPHA VALUES (#ARGB)
-        else
-        {
+        else {
             image = new QImage(receivedWidth, receivedHeight, QImage::Format_ARGB32);
         }
 
@@ -1552,8 +1515,7 @@ void HUD::startImage(int imgid, int width, int height, int depth, int channels)
 
 void HUD::finishImage()
 {
-    if (imageStarted)
-    {
+    if (imageStarted) {
         commitRawDataToGL();
         imageStarted = false;
     }
@@ -1562,16 +1524,13 @@ void HUD::finishImage()
 void HUD::commitRawDataToGL()
 {
     qDebug() << __FILE__ << __LINE__ << "Copying raw data to GL buffer:" << rawImage << receivedWidth << receivedHeight << image->format();
-    if (image != NULL)
-    {
+    if (image != NULL) {
         QImage::Format format = image->format();
         QImage* newImage = new QImage(rawImage, receivedWidth, receivedHeight, format);
-        if (format == QImage::Format_Indexed8)
-        {
+        if (format == QImage::Format_Indexed8) {
             // Create matching color table
             newImage->setNumColors(256);
-            for (int i = 0; i < 256; i++)
-            {
+            for (int i = 0; i < 256; i++) {
                 newImage->setColor(i, qRgb(i, i, i));
                 //qDebug() << __FILE__ << __LINE__ << std::hex << i;
             }
@@ -1581,13 +1540,10 @@ void HUD::commitRawDataToGL()
         delete image;
         image = newImage;
         // Switch buffers
-        if (rawImage == rawBuffer1)
-        {
+        if (rawImage == rawBuffer1) {
             rawImage = rawBuffer2;
             //qDebug() << "Now buffer 2";
-        }
-        else
-        {
+        } else {
             rawImage = rawBuffer1;
             //qDebug() << "Now buffer 1";
         }
@@ -1609,8 +1565,7 @@ void HUD::saveImage()
 
 void HUD::startImage(quint64 timestamp)
 {
-    if (videoEnabled && offlineDirectory != "")
-    {
+    if (videoEnabled && offlineDirectory != "") {
         // Load and diplay image file
         nextOfflineImage = QString(offlineDirectory + "/%1.bmp").arg(timestamp);
     }
@@ -1619,8 +1574,7 @@ void HUD::startImage(quint64 timestamp)
 void HUD::selectOfflineDirectory()
 {
     QString fileName = QFileDialog::getExistingDirectory(this, tr("Select image directory"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation));
-    if (fileName != "")
-    {
+    if (fileName != "") {
         offlineDirectory = fileName;
     }
 }
@@ -1640,23 +1594,18 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
     Q_UNUSED(imgid);
     //    qDebug() << "at" << __FILE__ << __LINE__ << ": Received startindex" << startIndex << "and length" << length << "(" << startIndex+length << "of" << rawExpectedBytes << "bytes)";
 
-    if (imageStarted)
-    {
+    if (imageStarted) {
         //if (rawLastIndex != startIndex) qDebug() << "PACKET LOSS!";
 
-        if (startIndex+length > rawExpectedBytes)
-        {
+        if (startIndex+length > rawExpectedBytes) {
             qDebug() << "HUD: OVERFLOW! startIndex:" << startIndex << "length:" << length << "image raw size" << ((receivedWidth * receivedHeight * receivedChannels * receivedDepth) / 8) - 1;
-        }
-        else
-        {
+        } else {
             memcpy(rawImage+startIndex, imageData, length);
 
             rawLastIndex = startIndex+length;
 
             // Check if we just reached the end of the image
-            if (startIndex+length == rawExpectedBytes)
-            {
+            if (startIndex+length == rawExpectedBytes) {
                 //qDebug() << "HUD: END OF IMAGE REACHED!";
                 finishImage();
                 rawLastIndex = 0;

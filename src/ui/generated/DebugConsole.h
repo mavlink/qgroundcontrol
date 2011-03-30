@@ -45,8 +45,7 @@ public:
     QPushButton *holdButton;
     QPushButton *clearButton;
 
-    void setupUi(QWidget *DebugConsole)
-    {
+    void setupUi(QWidget *DebugConsole) {
         if (DebugConsole->objectName().isEmpty())
             DebugConsole->setObjectName(QString::fromUtf8("DebugConsole"));
         DebugConsole->resize(435, 185);
@@ -134,8 +133,7 @@ public:
         QMetaObject::connectSlotsByName(DebugConsole);
     } // setupUi
 
-    void retranslateUi(QWidget *DebugConsole)
-    {
+    void retranslateUi(QWidget *DebugConsole) {
         DebugConsole->setWindowTitle(QApplication::translate("DebugConsole", "Form", 0, QApplication::UnicodeUTF8));
 #ifndef QT_NO_TOOLTIP
         linkComboBox->setToolTip(QApplication::translate("DebugConsole", "Select the link to monitor", 0, QApplication::UnicodeUTF8));
@@ -173,8 +171,9 @@ public:
 
 };
 
-namespace Ui {
-    class DebugConsole: public Ui_DebugConsole {};
+namespace Ui
+{
+class DebugConsole: public Ui_DebugConsole {};
 } // namespace Ui
 
 QT_END_NAMESPACE

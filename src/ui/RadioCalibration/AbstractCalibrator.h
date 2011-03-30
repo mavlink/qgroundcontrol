@@ -44,7 +44,7 @@ This file is part of the QGROUNDCONTROL project
   */
 class AbstractCalibrator : public QWidget
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     explicit AbstractCalibrator(QWidget *parent = 0);
     ~AbstractCalibrator();

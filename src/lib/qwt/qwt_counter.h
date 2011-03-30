@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -76,12 +76,11 @@ public:
         Button index
     */
 
-    enum Button 
-    {   
-        Button1,    
-        Button2,    
-        Button3,    
-        ButtonCnt   
+    enum Button {
+        Button1,
+        Button2,
+        Button3,
+        ButtonCnt
     };
 
     explicit QwtCounter(QWidget *parent = NULL);
@@ -92,10 +91,10 @@ public:
 
     bool editable() const;
     void setEditable(bool);
- 
+
     void setNumButtons(int n);
     int numButtons() const;
-    
+
     void setIncSteps(QwtCounter::Button btn, int nSteps);
     int incSteps(QwtCounter::Button btn) const;
 
@@ -125,7 +124,7 @@ signals:
         This signal is emitted when a button has been released
         \param value The new value
     */
-    void buttonReleased (double value);  
+    void buttonReleased (double value);
 
     /*!
         This signal is emitted when the counter's value has changed
@@ -149,7 +148,7 @@ private:
     void updateButtons();
     void showNum(double);
     virtual void valueChange();
-    
+
     class PrivateData;
     PrivateData *d_data;
 };

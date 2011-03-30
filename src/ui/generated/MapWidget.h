@@ -23,8 +23,7 @@ class Ui_MapWidget
 {
 public:
 
-    void setupUi(QWidget *MapWidget)
-    {
+    void setupUi(QWidget *MapWidget) {
         if (MapWidget->objectName().isEmpty())
             MapWidget->setObjectName(QString::fromUtf8("MapWidget"));
         MapWidget->resize(400, 300);
@@ -34,15 +33,15 @@ public:
         QMetaObject::connectSlotsByName(MapWidget);
     } // setupUi
 
-    void retranslateUi(QWidget *MapWidget)
-    {
+    void retranslateUi(QWidget *MapWidget) {
         MapWidget->setWindowTitle(QApplication::translate("MapWidget", "Form", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
 
-namespace Ui {
-    class MapWidget: public Ui_MapWidget {};
+namespace Ui
+{
+class MapWidget: public Ui_MapWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE

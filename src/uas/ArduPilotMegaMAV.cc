@@ -9,15 +9,15 @@ This file is part of the QGROUNDCONTROL project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-    
+
     QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-    
+
     You should have received a copy of the GNU General Public License
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-    
+
 ======================================================================*/
 
 /**
@@ -29,8 +29,8 @@ This file is part of the QGROUNDCONTROL project
 #include "ArduPilotMegaMAV.h"
 
 ArduPilotMegaMAV::ArduPilotMegaMAV(MAVLinkProtocol* mavlink, int id) :
-        UAS(mavlink, id)//,
-        // place other initializers here
+    UAS(mavlink, id)//,
+    // place other initializers here
 {
 }
 
@@ -46,17 +46,14 @@ void ArduPilotMegaMAV::receiveMessage(LinkInterface* link, mavlink_message_t mes
 {
     // Let UAS handle the default message set
     UAS::receiveMessage(link, message);
-    
-    if (message.sysid == uasId)
-    {
+
+    if (message.sysid == uasId) {
         // Handle your special messages
-        switch (message.msgid)
-        {
-        case MAVLINK_MSG_ID_HEARTBEAT:
-            {
-                //qDebug() << "ARDUPILOT RECEIVED HEARTBEAT";
-                break;
-            }
+        switch (message.msgid) {
+        case MAVLINK_MSG_ID_HEARTBEAT: {
+            //qDebug() << "ARDUPILOT RECEIVED HEARTBEAT";
+            break;
+        }
         default:
             //qDebug() << "\nARDUPILOT RECEIVED MESSAGE WITH ID" << message.msgid;
             break;

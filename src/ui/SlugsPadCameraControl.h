@@ -10,8 +10,9 @@
 #include <QPainter>
 #include "UASManager.h"
 
-namespace Ui {
-    class SlugsPadCameraControl;
+namespace Ui
+{
+class SlugsPadCameraControl;
 }
 
 class SlugsPadCameraControl : public QWidget //QGraphicsView//

@@ -9,15 +9,15 @@ This file is part of the PIXHAWK project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-    
+
     PIXHAWK is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-    
+
     You should have received a copy of the GNU General Public License
     along with PIXHAWK. If not, see <http://www.gnu.org/licenses/>.
-    
+
 ======================================================================*/
 
 /**
@@ -42,37 +42,37 @@ This file is part of the PIXHAWK project
 #include "ui_UASView.h"
 
 UASView::UASView(UASInterface* uas, QWidget *parent) :
-        QWidget(parent),
-        startTime(0),
-        timeout(false),
-        iconIsRed(true),
-        timeRemaining(0),
-        chargeLevel(0),
-        uas(uas),
-        load(0),
-        state("UNKNOWN"),
-        stateDesc(tr("Unknown state")),
-        mode("MAV_MODE_UNKNOWN"),
-        thrust(0),
-        isActive(false),
-        x(0),
-        y(0),
-        z(0),
-        totalSpeed(0),
-        lat(0),
-        lon(0),
-        alt(0),
-        groundDistance(0),
-        localFrame(false),
-        removeAction(new QAction("Delete this system", this)),
-        renameAction(new QAction("Rename..", this)),
-        selectAction(new QAction("Control this system", this )),
-        selectAirframeAction(new QAction("Choose Airframe", this)),
-        setBatterySpecsAction(new QAction("Set Battery Options", this)),
-        m_ui(new Ui::UASView)
+    QWidget(parent),
+    startTime(0),
+    timeout(false),
+    iconIsRed(true),
+    timeRemaining(0),
+    chargeLevel(0),
+    uas(uas),
+    load(0),
+    state("UNKNOWN"),
+    stateDesc(tr("Unknown state")),
+    mode("MAV_MODE_UNKNOWN"),
+    thrust(0),
+    isActive(false),
+    x(0),
+    y(0),
+    z(0),
+    totalSpeed(0),
+    lat(0),
+    lon(0),
+    alt(0),
+    groundDistance(0),
+    localFrame(false),
+    removeAction(new QAction("Delete this system", this)),
+    renameAction(new QAction("Rename..", this)),
+    selectAction(new QAction("Control this system", this )),
+    selectAirframeAction(new QAction("Choose Airframe", this)),
+    setBatterySpecsAction(new QAction("Set Battery Options", this)),
+    m_ui(new Ui::UASView)
 {
     m_ui->setupUi(this);
-    
+
     // Setup communication
     //connect(uas, SIGNAL(valueChanged(int,QString,double,quint64)), this, SLOT(receiveValue(int,QString,double,quint64)));
     connect(uas, SIGNAL(batteryChanged(UASInterface*, double, double, int)), this, SLOT(updateBattery(UASInterface*, double, double, int)));
@@ -94,7 +94,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 
     // Setup UAS selection
     connect(m_ui->uasViewFrame, SIGNAL(clicked(bool)), this, SLOT(setUASasActive(bool)));
-    
+
     // Setup user interaction
     connect(m_ui->liftoffButton, SIGNAL(clicked()), uas, SLOT(launch()));
     connect(m_ui->haltButton, SIGNAL(clicked()), uas, SLOT(halt()));
@@ -114,21 +114,18 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
 
     // Name changes
     connect(uas, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
-    
+
     // Set static values
-    
+
     // Name
-    if (uas->getUASName() == "")
-    {
+    if (uas->getUASName() == "") {
         m_ui->nameLabel->setText(tr("UAS") + QString::number(uas->getUASID()));
-    }
-    else
-    {
+    } else {
         m_ui->nameLabel->setText(uas->getUASName());
     }
-    
+
     setBackgroundColor();
-    
+
     // Heartbeat fade
     refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -180,13 +177,10 @@ void UASView::setBackgroundColor()
     QColor uasColor = uas->getColor();
     QString colorstyle;
     QString borderColor = "#4A4A4F";
-    if (isActive)
-    {
+    if (isActive) {
         borderColor = "#FA4A4F";
         uasColor = uasColor.darker(475);
-    }
-    else
-    {
+    } else {
         uasColor = uasColor.darker(675);
     }
     colorstyle = colorstyle.sprintf("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; background-color: #%02X%02X%02X; border: 2px solid %s; }",
@@ -196,16 +190,14 @@ void UASView::setBackgroundColor()
 
 void UASView::setUASasActive(bool active)
 {
-    if (active)
-    {
+    if (active) {
         UASManager::instance()->setActiveUAS(this->uas);
     }
 }
 
 void UASView::updateActiveUAS(UASInterface* uas, bool active)
 {
-    if (uas == this->uas)
-    {
+    if (uas == this->uas) {
         this->isActive = active;
         setBackgroundColor();
     }
@@ -230,26 +222,22 @@ void UASView::mouseDoubleClickEvent (QMouseEvent * event)
 
 void UASView::enterEvent(QEvent* event)
 {
-    if (event->type() == QEvent::MouseMove)
-    {
+    if (event->type() == QEvent::MouseMove) {
         emit uasInFocus(uas);
-        if (uas != UASManager::instance()->getActiveUAS())
-        {
+        if (uas != UASManager::instance()->getActiveUAS()) {
             grabMouse(QCursor(Qt::PointingHandCursor));
         }
     }
     qDebug() << __FILE__ << __LINE__ << "IN FOCUS";
-    
-    if (event->type() == QEvent::MouseButtonDblClick)
-    {
+
+    if (event->type() == QEvent::MouseButtonDblClick) {
         qDebug() << __FILE__ << __LINE__ << "UAS CLICKED!";
     }
 }
 
 void UASView::leaveEvent(QEvent* event)
 {
-    if (event->type() == QEvent::MouseMove)
-    {
+    if (event->type() == QEvent::MouseMove) {
         emit uasOutFocus(uas);
         releaseMouse();
     }
@@ -295,11 +283,9 @@ void UASView::updateName(const QString& name)
  */
 void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
 {
-    if (uas == this->uas)
-    {
+    if (uas == this->uas) {
         // Set matching icon
-        switch (systemType)
-        {
+        switch (systemType) {
         case 0:
             m_ui->typeButton->setIcon(QIcon(":/images/mavs/generic.svg"));
             break;
@@ -318,26 +304,25 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
         case 5:
             m_ui->typeButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
             break;
-        case 6:
-            {
-                // A groundstation is a special system type, update widget
-                QString result;
-                m_ui->nameLabel->setText(tr("OCU ") + result.sprintf("%03d", uas->getUASID()));
-                m_ui->waypointLabel->setText("");
-                m_ui->timeRemainingLabel->setText("Online:");
-                m_ui->batteryBar->hide();
-                m_ui->thrustBar->hide();
-                m_ui->stateLabel->hide();
-                m_ui->statusTextLabel->hide();
-                m_ui->waypointLabel->hide();
-                m_ui->liftoffButton->hide();
-                m_ui->haltButton->hide();
-                m_ui->landButton->hide();
-                m_ui->shutdownButton->hide();
-                m_ui->abortButton->hide();
-                m_ui->typeButton->setIcon(QIcon(":/images/mavs/groundstation.svg"));
-            }
-            break;
+        case 6: {
+            // A groundstation is a special system type, update widget
+            QString result;
+            m_ui->nameLabel->setText(tr("OCU ") + result.sprintf("%03d", uas->getUASID()));
+            m_ui->waypointLabel->setText("");
+            m_ui->timeRemainingLabel->setText("Online:");
+            m_ui->batteryBar->hide();
+            m_ui->thrustBar->hide();
+            m_ui->stateLabel->hide();
+            m_ui->statusTextLabel->hide();
+            m_ui->waypointLabel->hide();
+            m_ui->liftoffButton->hide();
+            m_ui->haltButton->hide();
+            m_ui->landButton->hide();
+            m_ui->shutdownButton->hide();
+            m_ui->abortButton->hide();
+            m_ui->typeButton->setIcon(QIcon(":/images/mavs/groundstation.svg"));
+        }
+        break;
         default:
             m_ui->typeButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
             break;
@@ -352,8 +337,7 @@ void UASView::updateLocalPosition(UASInterface* uas, double x, double y, double 
     this->x = x;
     this->y = y;
     this->z = z;
-    if (!localFrame)
-    {
+    if (!localFrame) {
         localFrame = true;
     }
 }
@@ -385,10 +369,8 @@ void UASView::setWaypoint(int uasId, int id, double x, double y, double z, doubl
     Q_UNUSED(z);
     Q_UNUSED(yaw);
     Q_UNUSED(autocontinue);
-    if (uasId == this->uas->getUASID())
-    {
-        if (current)
-        {
+    if (uasId == this->uas->getUASID()) {
+        if (current) {
             m_ui->waypointLabel->setText(tr("WP") + QString::number(id));
         }
     }
@@ -396,16 +378,14 @@ void UASView::setWaypoint(int uasId, int id, double x, double y, double z, doubl
 
 void UASView::selectWaypoint(int uasId, int id)
 {
-    if (uasId == this->uas->getUASID())
-    {
+    if (uasId == this->uas->getUASID()) {
         m_ui->waypointLabel->setText(tr("WP") + QString::number(id));
     }
 }
 
 void UASView::updateThrust(UASInterface* uas, double thrust)
 {
-    if (this->uas == uas)
-    {
+    if (this->uas == uas) {
         this->thrust = thrust;
     }
 }
@@ -413,8 +393,7 @@ void UASView::updateThrust(UASInterface* uas, double thrust)
 void UASView::updateBattery(UASInterface* uas, double voltage, double percent, int seconds)
 {
     Q_UNUSED(voltage);
-    if (this->uas == uas)
-    {
+    if (this->uas == uas) {
         timeRemaining = seconds;
         chargeLevel = percent;
     }
@@ -422,8 +401,7 @@ void UASView::updateBattery(UASInterface* uas, double voltage, double percent, i
 
 void UASView::updateState(UASInterface* uas, QString uasState, QString stateDescription)
 {
-    if (this->uas == uas)
-    {
+    if (this->uas == uas) {
         state = uasState;
         stateDesc = stateDescription;
     }
@@ -431,8 +409,7 @@ void UASView::updateState(UASInterface* uas, QString uasState, QString stateDesc
 
 void UASView::updateLoad(UASInterface* uas, double load)
 {
-    if (this->uas == uas)
-    {
+    if (this->uas == uas) {
         this->load = load;
     }
 }
@@ -443,8 +420,7 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
     menu.addAction(selectAction);
     menu.addSeparator();
     menu.addAction(renameAction);
-    if (timeout)
-    {
+    if (timeout) {
         menu.addAction(removeAction);
     }
     menu.addAction(selectAirframeAction);
@@ -454,8 +430,7 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
 
 void UASView::setBatterySpecs()
 {
-    if (uas)
-    {
+    if (uas) {
         bool ok;
         QString newName = QInputDialog::getText(this, tr("Set Battery Specifications for %1").arg(uas->getUASName()),
                                                 tr("Specs: (empty,warn,full), e.g. (9V,9.5V,12.6V) or just warn level in percent (e.g. 15%) to use estimate from MAV"), QLineEdit::Normal,
@@ -467,8 +442,7 @@ void UASView::setBatterySpecs()
 
 void UASView::rename()
 {
-    if (uas)
-    {
+    if (uas) {
         bool ok;
         QString newName = QInputDialog::getText(this, tr("Rename System %1").arg(uas->getUASName()),
                                                 tr("System Name:"), QLineEdit::Normal,
@@ -480,26 +454,24 @@ void UASView::rename()
 
 void UASView::selectAirframe()
 {
-    if (uas)
-    {
+    if (uas) {
         // Get list of airframes from UAS
         QStringList airframes;
         airframes << "Generic"
-                << "Multiplex Easystar"
-                << "Multiplex Twinstar"
-                << "Multiplex Merlin"
-                << "Pixhawk Cheetah"
-                << "Mikrokopter"
-                << "Reaper"
-                << "Predator"
-                << "Coaxial"
-                << "Pteryx";
+                  << "Multiplex Easystar"
+                  << "Multiplex Twinstar"
+                  << "Multiplex Merlin"
+                  << "Pixhawk Cheetah"
+                  << "Mikrokopter"
+                  << "Reaper"
+                  << "Predator"
+                  << "Coaxial"
+                  << "Pteryx";
 
         bool ok;
         QString item = QInputDialog::getItem(this, tr("Select Airframe for %1").arg(uas->getUASName()),
                                              tr("Airframe"), airframes, uas->getAirframe(), false, &ok);
-        if (ok && !item.isEmpty())
-        {
+        if (ok && !item.isEmpty()) {
             // Set this airframe as UAS airframe
             uas->setAirframe(airframes.indexOf(item));
         }
@@ -519,8 +491,7 @@ void UASView::refresh()
     // FIXME
     static int generalUpdateCount = 0;
 
-    if (generalUpdateCount == 4)
-    {
+    if (generalUpdateCount == 4) {
 #if (QGC_EVENTLOOP_DEBUG)
         qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
 #endif
@@ -541,33 +512,24 @@ void UASView::refresh()
         m_ui->positionLabel->setText(position);
         QString globalPosition;
         QString latIndicator;
-        if (lat > 0)
-        {
+        if (lat > 0) {
             latIndicator = "N";
-        }
-        else
-        {
+        } else {
             latIndicator = "S";
         }
         QString lonIndicator;
-        if (lon > 0)
-        {
+        if (lon > 0) {
             lonIndicator = "E";
-        }
-        else
-        {
+        } else {
             lonIndicator = "W";
         }
         globalPosition = globalPosition.sprintf("%05.1f%s %05.1f%s %06.1f m", lon, lonIndicator.toStdString().c_str(), lat, latIndicator.toStdString().c_str(), alt);
         m_ui->positionLabel->setText(globalPosition);
 
         // Altitude
-        if (groundDistance == 0 && alt != 0)
-        {
+        if (groundDistance == 0 && alt != 0) {
             m_ui->groundDistanceLabel->setText(QString("%1 m").arg(alt, 6, 'f', 1, '0'));
-        }
-        else
-        {
+        } else {
             m_ui->groundDistanceLabel->setText(QString("%1 m").arg(groundDistance, 6, 'f', 1, '0'));
         }
 
@@ -578,8 +540,7 @@ void UASView::refresh()
         // Thrust
         m_ui->thrustBar->setValue(thrust * 100);
 
-        if(this->timeRemaining > 1 && this->timeRemaining < QGC::MAX_FLIGHT_TIME)
-        {
+        if(this->timeRemaining > 1 && this->timeRemaining < QGC::MAX_FLIGHT_TIME) {
             // Filter output to get a higher stability
             static double filterTime = static_cast<int>(this->timeRemaining);
             filterTime = 0.8 * filterTime + 0.2 * static_cast<int>(this->timeRemaining);
@@ -590,9 +551,7 @@ void UASView::refresh()
             QString timeText;
             timeText = timeText.sprintf("%02d:%02d:%02d", hours, min, sec);
             m_ui->timeRemainingLabel->setText(timeText);
-        }
-        else
-        {
+        } else {
             m_ui->timeRemainingLabel->setText(tr("Calc.."));
         }
 
@@ -611,34 +570,27 @@ void UASView::refresh()
 
     QString colorstyle("QGroupBox { border-radius: 5px; padding: 2px; margin: 0px; border: 0px; background-color: %1; }");
 
-    if (timeout)
-    {
+    if (timeout) {
         // CRITICAL CONDITION, NO HEARTBEAT
 
         QString borderColor = "#FFFF00";
-        if (isActive)
-        {
+        if (isActive) {
             borderColor = "#FA4A4F";
         }
 
-        if (iconIsRed)
-        {
+        if (iconIsRed) {
             QColor warnColor(Qt::red);
             m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(warnColor.name()));
             QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; border: 2px solid %1; background-color: %2; }").arg(borderColor, warnColor.name());
             m_ui->uasViewFrame->setStyleSheet(style);
-        }
-        else
-        {
+        } else {
             QColor warnColor(Qt::black);
             m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(warnColor.name()));
             QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; border: 2px solid %1; background-color: %2; }").arg(borderColor, warnColor.name());
             m_ui->uasViewFrame->setStyleSheet(style);
         }
         iconIsRed = !iconIsRed;
-    }
-    else
-    {
+    } else {
         // Fade heartbeat icon
         // Make color darker
         heartbeatColor = heartbeatColor.darker(150);

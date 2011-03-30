@@ -6,17 +6,16 @@
 #include "MainWindow.h"
 
 Linecharts::Linecharts(QWidget *parent) :
-        QStackedWidget(parent),
-        plots(),
-        active(true)
+    QStackedWidget(parent),
+    plots(),
+    active(true)
 {
     this->setVisible(false);
     // Get current MAV list
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
 
     // Add each of them
-    foreach (UASInterface* sys, systems)
-    {
+    foreach (UASInterface* sys, systems) {
         addSystem(sys);
     }
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)),
@@ -31,14 +30,11 @@ void Linecharts::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    Q_UNUSED(event)
-    {
+    Q_UNUSED(event) {
         QWidget* prevWidget = currentWidget();
-        if (prevWidget)
-        {
+        if (prevWidget) {
             LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
-            if (chart)
-            {
+            if (chart) {
                 this->active = true;
                 chart->setActive(true);
             }
@@ -50,14 +46,11 @@ void Linecharts::hideEvent(QHideEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    Q_UNUSED(event)
-    {
+    Q_UNUSED(event) {
         QWidget* prevWidget = currentWidget();
-        if (prevWidget)
-        {
+        if (prevWidget) {
             LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
-            if (chart)
-            {
+            if (chart) {
                 this->active = false;
                 chart->setActive(false);
             }
@@ -68,21 +61,17 @@ void Linecharts::hideEvent(QHideEvent* event)
 void Linecharts::selectSystem(int systemid)
 {
     QWidget* prevWidget = currentWidget();
-    if (prevWidget)
-    {
+    if (prevWidget) {
         LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
-        if (chart)
-        {
+        if (chart) {
             chart->setActive(false);
         }
     }
     QWidget* widget = plots.value(systemid, NULL);
-    if (widget)
-    {
+    if (widget) {
         setCurrentWidget(widget);
         LinechartWidget* chart = dynamic_cast<LinechartWidget*>(widget);
-        if (chart)
-        {
+        if (chart) {
             chart->setActive(true);
         }
     }
@@ -90,8 +79,7 @@ void Linecharts::selectSystem(int systemid)
 
 void Linecharts::addSystem(UASInterface* uas)
 {
-    if (!plots.contains(uas->getUASID()))
-    {
+    if (!plots.contains(uas->getUASID())) {
         LinechartWidget* widget = new LinechartWidget(uas->getUASID(), this);
         addWidget(widget);
         plots.insert(uas->getUASID(), widget);
@@ -104,10 +92,8 @@ void Linecharts::addSystem(UASInterface* uas)
 
         connect(widget, SIGNAL(logfileWritten(QString)), this, SIGNAL(logfileWritten(QString)));
         // Set system active if this is the only system
-        if (active)
-        {
-            if (plots.size() == 1)
-            {
+        if (active) {
+            if (plots.size() == 1) {
                 selectSystem(uas->getUASID());
             }
         }

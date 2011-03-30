@@ -1,7 +1,7 @@
 #include "SwitchCalibrator.h"
 
 SwitchCalibrator::SwitchCalibrator(QString titleString, QWidget *parent) :
-    AbstractCalibrator(parent),    
+    AbstractCalibrator(parent),
     defaultPulseWidth(new QLabel()),
     toggledPulseWidth(new QLabel())
 {
@@ -11,7 +11,7 @@ SwitchCalibrator::SwitchCalibrator(QString titleString, QWidget *parent) :
     grid->addWidget(title, 0, 0, 1, 3);
 
     /* Add current Pulse Width Display */
-    QLabel *pulseWidthTitle = new QLabel(tr("Pulse Width (us)"));    
+    QLabel *pulseWidthTitle = new QLabel(tr("Pulse Width (us)"));
     QHBoxLayout *pulseLayout = new QHBoxLayout();
     pulseLayout->addWidget(pulseWidthTitle);
     pulseLayout->addWidget(pulseWidth);
@@ -50,8 +50,7 @@ void SwitchCalibrator::setToggled()
 
 void SwitchCalibrator::set(const QVector<float> &data)
 {
-    if (data.size() == 2)
-    {
+    if (data.size() == 2) {
         defaultPulseWidth->setText(QString::number(data[0]));
         toggledPulseWidth->setText(QString::number(data[1]));
     }

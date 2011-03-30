@@ -63,11 +63,11 @@ MAVLinkGen::MAVLinkGen(int &argc, char* argv[]) : QApplication(argc, argv)
     this->setApplicationVersion("v. 0.1.0 (Beta)");
     this->setOrganizationName(QLatin1String("OpenMAV Association"));
     this->setOrganizationDomain("http://qgroundcontrol.org");
-	
+
     QSettings::setDefaultFormat(QSettings::IniFormat);
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
-	
+
     // Set application font
     QFontDatabase fontDatabase = QFontDatabase();
     const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app

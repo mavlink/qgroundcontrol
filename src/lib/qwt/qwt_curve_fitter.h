@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -65,8 +65,7 @@ private:
 class QWT_EXPORT QwtSplineCurveFitter: public QwtCurveFitter
 {
 public:
-    enum FitMode
-    {
+    enum FitMode {
         Auto,
         Spline,
         ParametricSpline
@@ -102,7 +101,7 @@ private:
     QPolygonF fitSpline(const QPolygonF &) const;
     QPolygonF fitParametric(const QPolygonF &) const;
 #endif
-    
+
     class PrivateData;
     PrivateData *d_data;
 };

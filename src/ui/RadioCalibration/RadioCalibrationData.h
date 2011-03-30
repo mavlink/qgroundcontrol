@@ -43,7 +43,7 @@ This file is part of the QGROUNDCONTROL project
   */
 class RadioCalibrationData : public QObject
 {
-Q_OBJECT
+    Q_OBJECT
 
 public:
     explicit RadioCalibrationData();
@@ -56,8 +56,7 @@ public:
                          const QVector<float>& throttle);
     ~RadioCalibrationData();
 
-    enum RadioElement
-    {
+    enum RadioElement {
         AILERON=0,
         ELEVATOR,
         RUDDER,
@@ -68,19 +67,33 @@ public:
 
     const float* operator[](int i) const;
 #ifdef _MSC_VER
-	const QVector<float>& operator()(int i) const;
+    const QVector<float>& operator()(int i) const;
 #else
     const QVector<float>& operator()(int i) const throw(std::out_of_range);
 #endif
-	void set(int element, int index, float value) {(*data)[element][index] = value;}
+    void set(int element, int index, float value) {
+        (*data)[element][index] = value;
+    }
 
 public slots:
-    void setAileron(int index, float value) {set(AILERON, index, value);}
-    void setElevator(int index, float value) {set(ELEVATOR, index, value);}
-    void setRudder(int index, float value) {set(RUDDER, index, value);}
-    void setGyro(int index, float value) {set(GYRO, index, value);}
-    void setPitch(int index, float value) {set(PITCH, index, value);}
-    void setThrottle(int index, float value) {set(THROTTLE, index, value);}
+    void setAileron(int index, float value) {
+        set(AILERON, index, value);
+    }
+    void setElevator(int index, float value) {
+        set(ELEVATOR, index, value);
+    }
+    void setRudder(int index, float value) {
+        set(RUDDER, index, value);
+    }
+    void setGyro(int index, float value) {
+        set(GYRO, index, value);
+    }
+    void setPitch(int index, float value) {
+        set(PITCH, index, value);
+    }
+    void setThrottle(int index, float value) {
+        set(THROTTLE, index, value);
+    }
 
 public:
     /// Creates a comma seperated list of the values for a particular element
