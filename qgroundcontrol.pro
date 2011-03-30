@@ -101,6 +101,9 @@ include(qgroundcontrol.pri)
 # Include serial port library
 include(src/lib/qextserialport/qextserialport.pri)
 
+# include qserial library
+include(thirdParty/qserial/qserialport.prf)
+
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
