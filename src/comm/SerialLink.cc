@@ -22,7 +22,8 @@
 #endif
 
 
-SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, ParityType parity, DataBitsType dataBits, StopBitsType stopBits) :
+SerialLink::SerialLink(QString portname, SerialInterface::baudRateType baudrate, SerialInterface::flowType flow, SerialInterface::parityType parity, 
+		SerialInterface::dataBitsType dataBits, SerialInterface::stopBitsType stopBits) :
         port(NULL)
 {
     // Setup settings
@@ -141,7 +142,7 @@ void SerialLink::run()
 void SerialLink::checkForBytes()
 {
     /* Check if bytes are available */
-    if(port && port->isOpen() && port->isWritable())
+    if(port && port->isOpen() && port->isWriteable())
     {
         dataMutex.lock();
         qint64 available = port->bytesAvailable();
@@ -158,7 +159,6 @@ void SerialLink::checkForBytes()
     }
 
 }
-
 
 void SerialLink::writeBytes(const char* data, qint64 size)
 {
@@ -316,7 +316,7 @@ bool SerialLink::hardwareConnect()
         port->close();
         delete port;
     }
-    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
+    port = new SerialQextserial(porthandle, QextSerialPort::Polling);
     QObject::connect(port, SIGNAL(aboutToClose()), this, SIGNAL(disconnected()));
 
     port->open(QIODevice::ReadWrite);
@@ -380,77 +380,77 @@ qint64 SerialLink::getNominalDataRate()
     qint64 dataRate = 0;
     switch (baudrate)
     {
-    case BAUD50:
+    case SerialInterface::BAUD50:
         dataRate = 50;
         break;
-    case BAUD75:
+    case SerialInterface::BAUD75:
         dataRate = 75;
         break;
-    case BAUD110:
+    case SerialInterface::BAUD110:
         dataRate = 110;
         break;
-    case BAUD134:
+    case SerialInterface::BAUD134:
         dataRate = 134;
         break;
-    case BAUD150:
+    case SerialInterface::BAUD150:
         dataRate = 150;
         break;
-    case BAUD200:
+    case SerialInterface::BAUD200:
         dataRate = 200;
         break;
-    case BAUD300:
+    case SerialInterface::BAUD300:
         dataRate = 300;
         break;
-    case BAUD600:
+    case SerialInterface::BAUD600:
         dataRate = 600;
         break;
-    case BAUD1200:
+    case SerialInterface::BAUD1200:
         dataRate = 1200;
         break;
-    case BAUD1800:
+    case SerialInterface::BAUD1800:
         dataRate = 1800;
         break;
-    case BAUD2400:
+    case SerialInterface::BAUD2400:
         dataRate = 2400;
         break;
-    case BAUD4800:
+    case SerialInterface::BAUD4800:
         dataRate = 4800;
         break;
-    case BAUD9600:
+    case SerialInterface::BAUD9600:
         dataRate = 9600;
         break;
-    case BAUD14400:
+    case SerialInterface::BAUD14400:
         dataRate = 14400;
         break;
-    case BAUD19200:
+    case SerialInterface::BAUD19200:
         dataRate = 19200;
         break;
-    case BAUD38400:
+    case SerialInterface::BAUD38400:
         dataRate = 38400;
         break;
-    case BAUD56000:
+    case SerialInterface::BAUD56000:
         dataRate = 56000;
         break;
-    case BAUD57600:
+    case SerialInterface::BAUD57600:
         dataRate = 57600;
         break;
-    case BAUD76800:
+    case SerialInterface::BAUD76800:
         dataRate = 76800;
         break;
-    case BAUD115200:
+    case SerialInterface::BAUD115200:
         dataRate = 115200;
         break;
-    case BAUD128000:
+    case SerialInterface::BAUD128000:
         dataRate = 128000;
         break;
-    case BAUD256000:
+    case SerialInterface::BAUD256000:
         dataRate = 256000;
         // Windows-specific high-end baudrates
-    case BAUD230400:
+    case SerialInterface::BAUD230400:
         dataRate = 230400;
-    case BAUD460800:
+    case SerialInterface::BAUD460800:
         dataRate = 460800;
-    case BAUD921600:
+    case SerialInterface::BAUD921600:
         dataRate = 921600;
         break;
     }
@@ -553,16 +553,16 @@ int SerialLink::getDataBits()
     int ret;
     switch (dataBits)
     {
-    case DATA_5:
+    case SerialInterface::DATA_5:
         ret = 5;
         break;
-    case DATA_6:
+    case SerialInterface::DATA_6:
         ret = 6;
         break;
-    case DATA_7:
+    case SerialInterface::DATA_7:
         ret = 7;
         break;
-    case DATA_8:
+    case SerialInterface::DATA_8:
         ret = 8;
         break;
     default:
@@ -577,10 +577,10 @@ int SerialLink::getStopBits()
     int ret;
     switch (stopBits)
     {
-    case STOP_1:
+    case SerialInterface::STOP_1:
         ret = 1;
         break;
-    case STOP_2:
+    case SerialInterface::STOP_2:
         ret = 2;
         break;
     default:
@@ -629,79 +629,79 @@ bool SerialLink::setBaudRateType(int rateIndex)
 
     switch (rateIndex) {
     case 0:
-        baudrate = BAUD50;
+        baudrate = SerialInterface::BAUD50;
         break;
     case 1:
-        baudrate = BAUD75;
+        baudrate = SerialInterface::BAUD75;
         break;
     case 2:
-        baudrate = BAUD110;
+        baudrate = SerialInterface::BAUD110;
         break;
     case 3:
-        baudrate = BAUD134;
+        baudrate = SerialInterface::BAUD134;
         break;
     case 4:
-        baudrate = BAUD150;
+        baudrate = SerialInterface::BAUD150;
         break;
     case 5:
-        baudrate = BAUD200;
+        baudrate = SerialInterface::BAUD200;
         break;
     case 6:
-        baudrate = BAUD300;
+        baudrate = SerialInterface::BAUD300;
         break;
     case 7:
-        baudrate = BAUD600;
+        baudrate = SerialInterface::BAUD600;
         break;
     case 8:
-        baudrate = BAUD1200;
+        baudrate = SerialInterface::BAUD1200;
         break;
     case 9:
-        baudrate = BAUD1800;
+        baudrate = SerialInterface::BAUD1800;
         break;
     case 10:
-        baudrate = BAUD2400;
+        baudrate = SerialInterface::BAUD2400;
         break;
     case 11:
-        baudrate = BAUD4800;
+        baudrate = SerialInterface::BAUD4800;
         break;
     case 12:
-        baudrate = BAUD9600;
+        baudrate = SerialInterface::BAUD9600;
         break;
     case 13:
-        baudrate = BAUD14400;
+        baudrate = SerialInterface::BAUD14400;
         break;
     case 14:
-        baudrate = BAUD19200;
+        baudrate = SerialInterface::BAUD19200;
         break;
     case 15:
-        baudrate = BAUD38400;
+        baudrate = SerialInterface::BAUD38400;
         break;
     case 16:
-        baudrate = BAUD56000;
+        baudrate = SerialInterface::BAUD56000;
         break;
     case 17:
-        baudrate = BAUD57600;
+        baudrate = SerialInterface::BAUD57600;
         break;
     case 18:
-        baudrate = BAUD76800;
+        baudrate = SerialInterface::BAUD76800;
         break;
     case 19:
-        baudrate = BAUD115200;
+        baudrate = SerialInterface::BAUD115200;
         break;
     case 20:
-        baudrate = BAUD128000;
+        baudrate = SerialInterface::BAUD128000;
         break;
     case 21:
-        baudrate = BAUD230400;
+        baudrate = SerialInterface::BAUD230400;
         break;
     case 22:
-        baudrate = BAUD256000;
+        baudrate = SerialInterface::BAUD256000;
         break;
     case 23:
-        baudrate = BAUD460800;
+        baudrate = SerialInterface::BAUD460800;
         break;
     case 24:
-        baudrate = BAUD921600;
+        baudrate = SerialInterface::BAUD921600;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -728,79 +728,79 @@ bool SerialLink::setBaudRate(int rate)
     switch (rate)
     {
     case 50:
-        baudrate = BAUD50;
+        baudrate = SerialInterface::BAUD50;
         break;
     case 75:
-        baudrate = BAUD75;
+        baudrate = SerialInterface::BAUD75;
         break;
     case 110:
-        baudrate = BAUD110;
+        baudrate = SerialInterface::BAUD110;
         break;
     case 134:
-        baudrate = BAUD134;
+        baudrate = SerialInterface::BAUD134;
         break;
     case 150:
-        baudrate = BAUD150;
+        baudrate = SerialInterface::BAUD150;
         break;
     case 200:
-        baudrate = BAUD200;
+        baudrate = SerialInterface::BAUD200;
         break;
     case 300:
-        baudrate = BAUD300;
+        baudrate = SerialInterface::BAUD300;
         break;
     case 600:
-        baudrate = BAUD600;
+        baudrate = SerialInterface::BAUD600;
         break;
     case 1200:
-        baudrate = BAUD1200;
+        baudrate = SerialInterface::BAUD1200;
         break;
     case 1800:
-        baudrate = BAUD1800;
+        baudrate = SerialInterface::BAUD1800;
         break;
     case 2400:
-        baudrate = BAUD2400;
+        baudrate = SerialInterface::BAUD2400;
         break;
     case 4800:
-        baudrate = BAUD4800;
+        baudrate = SerialInterface::BAUD4800;
         break;
     case 9600:
-        baudrate = BAUD9600;
+        baudrate = SerialInterface::BAUD9600;
         break;
     case 14400:
-        baudrate = BAUD14400;
+        baudrate = SerialInterface::BAUD14400;
         break;
     case 19200:
-        baudrate = BAUD19200;
+        baudrate = SerialInterface::BAUD19200;
         break;
     case 38400:
-        baudrate = BAUD38400;
+        baudrate = SerialInterface::BAUD38400;
         break;
     case 56000:
-        baudrate = BAUD56000;
+        baudrate = SerialInterface::BAUD56000;
         break;
     case 57600:
-        baudrate = BAUD57600;
+        baudrate = SerialInterface::BAUD57600;
         break;
     case 76800:
-        baudrate = BAUD76800;
+        baudrate = SerialInterface::BAUD76800;
         break;
     case 115200:
-        baudrate = BAUD115200;
+        baudrate = SerialInterface::BAUD115200;
         break;
     case 128000:
-        baudrate = BAUD128000;
+        baudrate = SerialInterface::BAUD128000;
         break;
     case 230400:
-        baudrate = BAUD230400;
+        baudrate = SerialInterface::BAUD230400;
         break;
     case 256000:
-        baudrate = BAUD256000;
+        baudrate = SerialInterface::BAUD256000;
         break;
     case 460800:
-        baudrate = BAUD460800;
+        baudrate = SerialInterface::BAUD460800;
         break;
     case 921600:
-        baudrate = BAUD921600;
+        baudrate = SerialInterface::BAUD921600;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -822,14 +822,14 @@ bool SerialLink::setFlowType(int flow)
 
     switch (flow)
     {
-    case FLOW_OFF:
-        this->flow = FLOW_OFF;
+    case SerialInterface::FLOW_OFF:
+        this->flow = SerialInterface::FLOW_OFF;
         break;
-    case FLOW_HARDWARE:
-        this->flow = FLOW_HARDWARE;
+    case SerialInterface::FLOW_HARDWARE:
+        this->flow = SerialInterface::FLOW_HARDWARE;
         break;
-    case FLOW_XONXOFF:
-        this->flow = FLOW_XONXOFF;
+    case SerialInterface::FLOW_XONXOFF:
+        this->flow = SerialInterface::FLOW_XONXOFF;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -851,19 +851,19 @@ bool SerialLink::setParityType(int parity)
     switch (parity)
     {
     case (int)PAR_NONE:
-        this->parity = PAR_NONE;
+        this->parity = SerialInterface::PAR_NONE;
         break;
     case (int)PAR_ODD:
-        this->parity = PAR_ODD;
+        this->parity = SerialInterface::PAR_ODD;
         break;
     case (int)PAR_EVEN:
-        this->parity = PAR_EVEN;
+        this->parity = SerialInterface::PAR_EVEN;
         break;
     case (int)PAR_MARK:
-        this->parity = PAR_MARK;
+        this->parity = SerialInterface::PAR_MARK;
         break;
     case (int)PAR_SPACE:
-        this->parity = PAR_SPACE;
+        this->parity = SerialInterface::PAR_SPACE;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -886,16 +886,16 @@ bool SerialLink::setDataBits(int dataBits)
     switch (dataBits)
     {
     case 5:
-        this->dataBits = DATA_5;
+        this->dataBits = SerialInterface::DATA_5;
         break;
     case 6:
-        this->dataBits = DATA_6;
+        this->dataBits = SerialInterface::DATA_6;
         break;
     case 7:
-        this->dataBits = DATA_7;
+        this->dataBits = SerialInterface::DATA_7;
         break;
     case 8:
-        this->dataBits = DATA_8;
+        this->dataBits = SerialInterface::DATA_8;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -918,10 +918,10 @@ bool SerialLink::setStopBits(int stopBits)
     switch (stopBits)
     {
     case 1:
-        this->stopBits = STOP_1;
+        this->stopBits = SerialInterface::STOP_1;
         break;
     case 2:
-        this->stopBits = STOP_2;
+        this->stopBits = SerialInterface::STOP_2;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -941,9 +941,9 @@ bool SerialLink::setDataBitsType(int dataBits)
     if (isConnected()) reconnect = true;
     disconnect();
 
-    if (dataBits >= (int)DATA_5 && dataBits <= (int)DATA_8)
+    if (dataBits >= (int)SerialInterface::DATA_5 && dataBits <= (int)SerialInterface::DATA_8)
     {
-        this->dataBits = (DataBitsType) dataBits;
+        this->dataBits = (SerialInterface::dataBitsType) dataBits;
 
         if(reconnect) connect();
         accepted = true;
@@ -959,9 +959,9 @@ bool SerialLink::setStopBitsType(int stopBits)
     if(isConnected()) reconnect = true;
     disconnect();
 
-    if (stopBits >= (int)STOP_1 && dataBits <= (int)STOP_2)
+    if (stopBits >= (int)SerialInterface::STOP_1 && dataBits <= (int)SerialInterface::STOP_2)
     {
-        StopBitsType newBits = (StopBitsType) stopBits;
+		SerialInterface::stopBitsType newBits = (SerialInterface::stopBitsType) stopBits;
 
         port->setStopBits(newBits);
         accepted = true;

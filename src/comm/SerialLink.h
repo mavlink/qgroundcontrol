@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QThread>
 #include <QMutex>
 #include <QString>
-#include <qextserialport.h>
+#include "SerialInterface.h"
 #include <configuration.h>
 #include "SerialLinkInterface.h"
 #ifdef _WIN32
@@ -57,7 +57,12 @@ class SerialLink : public SerialLinkInterface {
     //Q_INTERFACES(SerialLinkInterface:LinkInterface)
 
 public:
-    SerialLink(QString portname = "", BaudRateType baudrate=BAUD57600, FlowType flow=FLOW_OFF, ParityType parity=PAR_NONE, DataBitsType dataBits=DATA_8, StopBitsType stopBits=STOP_1);
+    SerialLink(QString portname = "", 
+			SerialInterface::baudRateType baudrate=SerialInterface::BAUD57600,
+			SerialInterface::flowType flow=SerialInterface::FLOW_OFF, 
+			SerialInterface::parityType parity=SerialInterface::PAR_NONE,
+			SerialInterface::dataBitsType dataBits=SerialInterface::DATA_8,
+			SerialInterface::stopBitsType stopBits=SerialInterface::STOP_1);
     ~SerialLink();
 
     static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in configuration.h
@@ -132,18 +137,18 @@ protected slots:
     void checkForBytes();
 
 protected:
-    QextSerialPort* port;
+    SerialInterface * port;
 #ifdef _WIN32
     HANDLE winPort;
     DCB winPortSettings;
 #endif
     QString porthandle;
     QString name;
-    BaudRateType baudrate;
-    FlowType flow;
-    ParityType parity;
-    DataBitsType dataBits;
-    StopBitsType stopBits;
+	SerialInterface::baudRateType baudrate;
+	SerialInterface::flowType flow;
+	SerialInterface::parityType parity;
+	SerialInterface::dataBitsType dataBits;
+	SerialInterface::stopBitsType stopBits;
     int timeout;
     int id;
 
@@ -163,7 +168,7 @@ protected:
     bool hardwareConnect();
 
 signals:
-    // Signals are defined by LinkInterface
+	void aboutToCloseFlag();
 
 };
 
