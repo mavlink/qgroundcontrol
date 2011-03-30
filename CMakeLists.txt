@@ -394,6 +394,7 @@ set(qgroundcontrolMocSrc
 	#src/comm/OpalLink.h
 	src/comm/MAVLinkProtocol.h
 	src/comm/SerialLinkInterface.h
+	src/comm/SerialInterface.h
 	src/comm/UDPLink.h
 	src/comm/LinkManager.h
 	src/comm/LinkInterface.h
