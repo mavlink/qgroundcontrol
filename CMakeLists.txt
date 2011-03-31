@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 2.6)
 project (qgroundcontrol)
 
 # marcos
-macro(find_or_build_from_source PACKAGE PACKAGE_PATH IS_GIT_SUBMODULE)
+macro(find_or_build_from_source PACKAGE PACKAGE_PATH)
     add_custom_target(${PACKAGE})
     if (NOT ${PACKAGE}_BUILD_FROM_SOURCE)
         find_package(${PACKAGE})
@@ -14,11 +14,6 @@ macro(find_or_build_from_source PACKAGE PACKAGE_PATH IS_GIT_SUBMODULE)
         add_custom_target(${PACKAGE}_BUILD DEPENDS ${PACKAGE}_BUILD.stamp)
         add_dependencies(${PACKAGE} ${PACKAGE}_BUILD)
         set(${PACKAGE}_FOUND TRUE)
-        if (${IS_GIT_SUBMODULE})
-            message(STATUS "${PACKAGE} detected as git submodule, will attempt to initialize it")
-            list(APPEND GIT_SUBMODULES ${PACKAGE_PATH})
-            add_dependencies(${PACKAGE}_BUILD GIT)
-        endif()
     endif()
 endmacro(find_or_build_from_source)
 
@@ -103,18 +98,6 @@ include(CPack)
 # add make dist target
 add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
-# git submodules
-if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git)
-    message(STATUS "git repository detected, will attempt to load submodules")
-    set(FOUND_GIT_REPO TRUE)
-    add_custom_command(OUTPUT GIT.stamp 
-        COMMAND cd ${PROJECT_SOURCE_DIR} && git submodule init ${GIT_SUBMODULES}
-        COMMAND cd ${PROJECT_SOURCE_DIR} && git submodule update ${GIT_SUBMODULES})
-    add_custom_target(GIT DEPENDS GIT.stamp)
-else()
-    set(FOUND_GIT_REPO FALSE)
-endif()
-
 # find libraries with cmake modules
 find_package(Qt4 COMPONENTS QtGui QtCore QtNetwork QtOpenGL QtSVG QtXML QtPhonon QtWebKit REQUIRED)
 set(PHONON_FIND_QUIETLY FALSE)
@@ -131,8 +114,8 @@ else()
     set(OPENSCENEGRAPH_FOUND TRUE)
 endif()
 
-find_or_build_from_source(MAVLINK thirdParty/mavlink FOUND_GIT_REPO)
-find_or_build_from_source(QSERIAL thirdParty/qserial FOUND_GIT_REPO)
+find_or_build_from_source(MAVLINK thirdParty/mavlink)
+find_or_build_from_source(QSERIAL thirdParty/qserial)
 
 # build libraries from source if not found on system
 if(MAVLINK_BUILD_FROM_SOURCE)
@@ -201,7 +184,6 @@ if(QSERIAL_BUILD_FROM_SOURCE)
     qt4_wrap_cpp(qserialMoc ${qserialMocSrc})
     add_library(qserial ${qserialMoc} ${qserialSrc})
     target_link_libraries(qserial ${QT_LIBRARIES})
-
 
     set(QSERIAL_INCLUDE_DIRS
         ${PROJECT_SOURCE_DIR}/thirdParty/qserial/include
