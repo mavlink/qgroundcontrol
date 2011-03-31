@@ -390,14 +390,14 @@ void MAVLinkProtocol::sendHeartbeat()
         mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, OCU, MAV_AUTOPILOT_GENERIC);
         sendMessage(beat);
     }
-    //if (m_authEnabled) {
-        //mavlink_message_t msg;
-        //mavlink_auth_key_t auth;
-        //if (m_authKey.length() != MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN) m_authKey.resize(MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN);
-        //strcpy(auth.key, m_authKey.toStdString().c_str());
-        //mavlink_msg_auth_key_encode(getSystemId(), getComponentId(), &msg, &auth);
-        //sendMessage(msg);
-    //}
+    if (m_authEnabled) {
+        mavlink_message_t msg;
+        mavlink_auth_key_t auth;
+        if (m_authKey.length() != MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN) m_authKey.resize(MAVLINK_MSG_AUTH_KEY_FIELD_KEY_LEN);
+        strcpy(auth.key, m_authKey.toStdString().c_str());
+        mavlink_msg_auth_key_encode(getSystemId(), getComponentId(), &msg, &auth);
+        sendMessage(msg);
+    }
 }
 
 /** @param enabled true to enable heartbeats emission at heartbeatRate, false to disable */
