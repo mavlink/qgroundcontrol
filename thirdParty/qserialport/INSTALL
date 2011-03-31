@@ -1,0 +1,46 @@
+Installing QSerialPort
+----------------------
+
+QSerialPort requires Qt 4.6 or greater.
+
+For Mac/Unix/Linux/Embedded Linux:
+
+  ./configure
+  make
+  make install
+  /sbin/ldconfig, if necessary
+
+For Windows:
+
+  configure
+  nmake (or make)
+  installwin
+
+For Wince:
+  qmake -r qserialport.pro -spec <platform-name>
+  nmake	  	
+   	
+  i.e "qmake -r qserialport.pro -spec wince50standard-x86-msvc2005" for wince 5.0 standard sdk 
+
+
+Notes
+-----
+  - On unix, use --prefix=$PWD to build in-place
+
+  - if 'configure' doesn't work on Mac OSX (it doesn't work if QT is installed as SDK), use the following instead:
+	qmake -r qserialport.pro -spec macx-g++
+	make
+	make install
+
+    Optionally add lib_bundle config value to build it as framework: 
+	qmake -r qserialport.pro -spec macx-g++ CONFIG+=lib_bundle   		
+  
+  - To build QSerialPort as static library try CONFIG+=static with qmake or add it into conf.pri file.
+
+  - Visual Studio 2005 solution and project files are included into the package. Current solution is prepared for WIN32 builds. 
+    If you want to build QSerialPort for WINCE using Visual Studio then do the following:
+      o replace qserialportnative_win32.cpp with qserialportnative_wince.cpp
+      o add wincommevtbreaker.cpp and wincommevtbreaker.h files into the project
+
+Please report problems to:
+  labs@inbiza.com

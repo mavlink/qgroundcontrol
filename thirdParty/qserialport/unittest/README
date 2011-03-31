@@ -1,0 +1,22 @@
+This directory holds simple unit tests for QSerialPort.
+
+Write the serial port name into "serport" file before starting the unit test.
+
+You can run the unit test suite by doing "make test" in this
+directory.
+
+The drivers of USB to Serial dongles do not work properly on all platforms. QSerialPort have been tested with couple different chipsets, here are the results:
+ 
+ o FTDI based usb dongle with official drivers on Mac OSX 10.6.4 - Not super stable. USB port crash happens occasionally.
+
+ o Prolific based usb dongle with open source drivers on Mac OSX 10.6.4 - Don't even try.
+ 
+ o FTDI based usb dongle on Linux Ubuntu 9.10 - Doesn't work. Tested under Fusion VM on a Mac system, not sure if VMware 3.x is causing it or not.
+ 
+ o FTDI based usb dongle with official drivers on Windows XP - Stable.
+
+ o Prolific based usb dongle with official drivers on Windows XP - Stable.
+ 
+ o FTDI based usb dongle with official drivers on Wince 5.0 - Stable.
+
+ o FTDI based usb dongle on Embedded Linux (Angstrom on ARM) - Stable.
