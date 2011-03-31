@@ -1,14 +1,14 @@
-# - Try to find  QSERIAL
+# - Try to find  QSERIALPORT
 # Once done, this will define
 #
-#  QSERIAL_FOUND - system has scicoslab 
-#  QSERIAL_INCLUDE_DIRS - the scicoslab include directories
-#  QSERIAL_LIBRARIES - libraries to link to
+#  QSERIALPORT_FOUND - system has scicoslab 
+#  QSERIALPORT_INCLUDE_DIRS - the scicoslab include directories
+#  QSERIALPORT_LIBRARIES - libraries to link to
 
 include(LibFindMacros)
 
 # Include dir
-find_path(QSERIAL_INCLUDE_DIR
+find_path(QSERIALPORT_INCLUDE_DIR
 	NAMES QSerialPort
 	PATHS 
 		/usr/include/QtSerialPort
@@ -17,7 +17,7 @@ find_path(QSERIAL_INCLUDE_DIR
 )
 
 # Finally the library itself
-find_library(QSERIAL_LIBRARY
+find_library(QSERIALPORT_LIBRARY
 	NAMES
 		QtSerialPort
 	PATHS 
@@ -28,6 +28,6 @@ find_library(QSERIAL_LIBRARY
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.
-set(QSERIAL_PROCESS_INCLUDES QSERIAL_INCLUDE_DIR)
-set(QSERIAL_PROCESS_LIBS QSERIAL_LIBRARY QSERIAL_LIBRARIES)
-libfind_process(QSERIAL)
+set(QSERIALPORT_PROCESS_INCLUDES QSERIALPORT_INCLUDE_DIR)
+set(QSERIALPORT_PROCESS_LIBS QSERIALPORT_LIBRARY QSERIALPORT_LIBRARIES)
+libfind_process(QSERIALPORT)

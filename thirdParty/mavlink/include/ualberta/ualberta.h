@@ -1,7 +1,7 @@
 /** @file
  *	@brief MAVLink comm protocol.
  *	@see http://pixhawk.ethz.ch/software/mavlink
- *	 Generated on Tuesday, February 15 2011, 15:58 UTC
+ *	 Generated on Thursday, March 31 2011, 22:06 UTC
  */
 #ifndef UALBERTA_H
 #define UALBERTA_H
