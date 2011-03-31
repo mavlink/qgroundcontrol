@@ -7,8 +7,9 @@
 #include "WaypointList.h"
 #include "UASInterface.h"
 
-namespace Ui {
-    class QGCWaypointListMulti;
+namespace Ui
+{
+class QGCWaypointListMulti;
 }
 
 class QGCWaypointListMulti : public QWidget

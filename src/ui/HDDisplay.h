@@ -43,8 +43,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include "UASInterface.h"
 
-namespace Ui {
-    class HDDisplay;
+namespace Ui
+{
+class HDDisplay;
 }
 
 /**

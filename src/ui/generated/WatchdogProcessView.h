@@ -32,8 +32,7 @@ public:
     QToolButton *startButton;
     QToolButton *restartButton;
 
-    void setupUi(QWidget *WatchdogProcessView)
-    {
+    void setupUi(QWidget *WatchdogProcessView) {
         if (WatchdogProcessView->objectName().isEmpty())
             WatchdogProcessView->setObjectName(QString::fromUtf8("WatchdogProcessView"));
         WatchdogProcessView->resize(400, 44);
@@ -70,8 +69,7 @@ public:
         QMetaObject::connectSlotsByName(WatchdogProcessView);
     } // setupUi
 
-    void retranslateUi(QWidget *WatchdogProcessView)
-    {
+    void retranslateUi(QWidget *WatchdogProcessView) {
         WatchdogProcessView->setWindowTitle(QApplication::translate("WatchdogProcessView", "Form", 0, QApplication::UnicodeUTF8));
         nameLabel->setText(QApplication::translate("WatchdogProcessView", "TextLabel", 0, QApplication::UnicodeUTF8));
         pidLabel->setText(QApplication::translate("WatchdogProcessView", "TextLabel", 0, QApplication::UnicodeUTF8));
@@ -82,8 +80,9 @@ public:
 
 };
 
-namespace Ui {
-    class WatchdogProcessView: public Ui_WatchdogProcessView {};
+namespace Ui
+{
+class WatchdogProcessView: public Ui_WatchdogProcessView {};
 } // namespace Ui
 
 QT_END_NAMESPACE

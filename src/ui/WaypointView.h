@@ -9,15 +9,15 @@ This file is part of the QGROUNDCONTROL project
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-    
+
     QGROUNDCONTROL is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-    
+
     You should have received a copy of the GNU General Public License
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-    
+
 ======================================================================*/
 
 /**
@@ -44,21 +44,23 @@ enum QGC_WAYPOINTVIEW_MODE {
     QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING
 };
 
-namespace Ui {
-    class WaypointView;
+namespace Ui
+{
+class WaypointView;
 }
 class Ui_QGCCustomWaypointAction;
 
-class WaypointView : public QWidget {
+class WaypointView : public QWidget
+{
     Q_OBJECT
     Q_DISABLE_COPY(WaypointView)
 public:
     explicit WaypointView(Waypoint* wp, QWidget* parent);
     virtual ~WaypointView();
-    
+
 public:
     void setCurrent(bool state);
-    
+
 public slots:
     void moveUp();
     void moveDown();
@@ -72,7 +74,7 @@ public slots:
     void changedAction(int state);
     void changedCurrent(int);
     void updateValues(void);
-    
+
 protected slots:
     void changeViewMode(QGC_WAYPOINTVIEW_MODE mode);
 
@@ -83,10 +85,10 @@ protected:
     // waypoint view to mission capabilities
     Ui_QGCCustomWaypointAction* customCommand;
     QGC_WAYPOINTVIEW_MODE viewMode;
-    
+
 private:
     Ui::WaypointView *m_ui;
-    
+
 signals:
     void moveUpWaypoint(Waypoint*);
     void moveDownWaypoint(Waypoint*);

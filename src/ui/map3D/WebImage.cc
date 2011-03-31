@@ -87,18 +87,14 @@ bool
 WebImage::setData(const QByteArray& data)
 {
     QImage tempImage;
-    if (tempImage.loadFromData(data))
-    {
-        if (image.isNull())
-        {
+    if (tempImage.loadFromData(data)) {
+        if (image.isNull()) {
             image.reset(new QImage);
         }
         *image = QGLWidget::convertToGLFormat(tempImage);
 
         return true;
-    }
-    else
-    {
+    } else {
         return false;
     }
 }
@@ -107,18 +103,14 @@ bool
 WebImage::setData(const QString& filename)
 {
     QImage tempImage;
-    if (tempImage.load(filename))
-    {
-        if (image.isNull())
-        {
+    if (tempImage.load(filename)) {
+        if (image.isNull()) {
             image.reset(new QImage);
         }
         *image = QGLWidget::convertToGLFormat(tempImage);
 
         return true;
-    }
-    else
-    {
+    } else {
         return false;
     }
 }

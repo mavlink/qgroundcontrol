@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -26,8 +26,7 @@ public:
         tmrID(0),
         updTime(150),
         mass(0.0),
-        readOnly(false)
-    {
+        readOnly(false) {
     }
 
     int scrollMode;
@@ -45,14 +44,14 @@ public:
     bool readOnly;
 };
 
-/*! 
+/*!
    \brief Constructor
 
    \param orientation Orientation
    \param parent Parent widget
 */
 QwtAbstractSlider::QwtAbstractSlider(
-        Qt::Orientation orientation, QWidget *parent): 
+    Qt::Orientation orientation, QWidget *parent):
     QWidget(parent, NULL)
 {
     d_data = new QwtAbstractSlider::PrivateData;
@@ -67,7 +66,7 @@ QwtAbstractSlider::QwtAbstractSlider(
 //! Destructor
 QwtAbstractSlider::~QwtAbstractSlider()
 {
-    if(d_data->tmrID) 
+    if(d_data->tmrID)
         killTimer(d_data->tmrID);
 
     delete d_data;
@@ -110,7 +109,7 @@ void QwtAbstractSlider::setOrientation(Qt::Orientation o)
     d_data->orientation = o;
 }
 
-/*! 
+/*!
   \return Orientation
   \sa setOrientation()
 */
@@ -121,10 +120,9 @@ Qt::Orientation QwtAbstractSlider::orientation() const
 
 //! Stop updating if automatic scrolling is active
 
-void QwtAbstractSlider::stopMoving() 
+void QwtAbstractSlider::stopMoving()
 {
-    if(d_data->tmrID)
-    {
+    if(d_data->tmrID) {
         killTimer(d_data->tmrID);
         d_data->tmrID = 0;
     }
@@ -135,19 +133,18 @@ void QwtAbstractSlider::stopMoving()
   \param t update interval in milliseconds
   \sa getScrollMode()
 */
-void QwtAbstractSlider::setUpdateTime(int t) 
+void QwtAbstractSlider::setUpdateTime(int t)
 {
-    if (t < 50) 
+    if (t < 50)
         t = 50;
     d_data->updTime = t;
 }
 
 
 //! Mouse press event handler
-void QwtAbstractSlider::mousePressEvent(QMouseEvent *e) 
+void QwtAbstractSlider::mousePressEvent(QMouseEvent *e)
 {
-    if ( isReadOnly() )
-    {
+    if ( isReadOnly() ) {
         e->ignore();
         return;
     }
@@ -160,26 +157,25 @@ void QwtAbstractSlider::mousePressEvent(QMouseEvent *e)
 
     getScrollMode(p, d_data->scrollMode, d_data->direction);
     stopMoving();
-    
-    switch(d_data->scrollMode)
-    {
-        case ScrPage:
-        case ScrTimer:
-            d_data->mouseOffset = 0;
-            d_data->tmrID = startTimer(qwtMax(250, 2 * d_data->updTime));
-            break;
-        
-        case ScrMouse:
-            d_data->time.start();
-            d_data->speed = 0;
-            d_data->mouseOffset = getValue(p) - value();
-            emit sliderPressed();
-            break;
-        
-        default:
-            d_data->mouseOffset = 0;
-            d_data->direction = 0;
-            break;
+
+    switch(d_data->scrollMode) {
+    case ScrPage:
+    case ScrTimer:
+        d_data->mouseOffset = 0;
+        d_data->tmrID = startTimer(qwtMax(250, 2 * d_data->updTime));
+        break;
+
+    case ScrMouse:
+        d_data->time.start();
+        d_data->speed = 0;
+        d_data->mouseOffset = getValue(p) - value();
+        emit sliderPressed();
+        break;
+
+    default:
+        d_data->mouseOffset = 0;
+        d_data->direction = 0;
+        break;
     }
 }
 
@@ -195,8 +191,7 @@ void QwtAbstractSlider::buttonReleased()
 //! Mouse Release Event handler
 void QwtAbstractSlider::mouseReleaseEvent(QMouseEvent *e)
 {
-    if ( isReadOnly() )
-    {
+    if ( isReadOnly() ) {
         e->ignore();
         return;
     }
@@ -204,67 +199,58 @@ void QwtAbstractSlider::mouseReleaseEvent(QMouseEvent *e)
         return;
 
     const double inc = step();
-    
-    switch(d_data->scrollMode) 
-    {
-        case ScrMouse:
-        {
-            setPosition(e->pos());
-            d_data->direction = 0;
-            d_data->mouseOffset = 0;
-            if (d_data->mass > 0.0) 
-            {
-                const int ms = d_data->time.elapsed();
-                if ((fabs(d_data->speed) >  0.0) && (ms < 50))
-                    d_data->tmrID = startTimer(d_data->updTime);
-            }
-            else
-            {
-                d_data->scrollMode = ScrNone;
-                buttonReleased();
-            }
-            emit sliderReleased();
-            
-            break;
-        }
 
-        case ScrDirect:
-        {
-            setPosition(e->pos());
-            d_data->direction = 0;
-            d_data->mouseOffset = 0;
-            d_data->scrollMode = ScrNone;
-            buttonReleased();
-            break;
-        }
-
-        case ScrPage:
-        {
-            stopMoving();
-            if (!d_data->timerTick)
-                QwtDoubleRange::incPages(d_data->direction);
-            d_data->timerTick = 0;
-            buttonReleased();
-            d_data->scrollMode = ScrNone;
-            break;
-        }
-
-        case ScrTimer:
-        {
-            stopMoving();
-            if (!d_data->timerTick)
-                QwtDoubleRange::fitValue(value() + double(d_data->direction) * inc);
-            d_data->timerTick = 0;
-            buttonReleased();
-            d_data->scrollMode = ScrNone;
-            break;
-        }
-
-        default:
-        {
+    switch(d_data->scrollMode) {
+    case ScrMouse: {
+        setPosition(e->pos());
+        d_data->direction = 0;
+        d_data->mouseOffset = 0;
+        if (d_data->mass > 0.0) {
+            const int ms = d_data->time.elapsed();
+            if ((fabs(d_data->speed) >  0.0) && (ms < 50))
+                d_data->tmrID = startTimer(d_data->updTime);
+        } else {
             d_data->scrollMode = ScrNone;
             buttonReleased();
         }
+        emit sliderReleased();
+
+        break;
+    }
+
+    case ScrDirect: {
+        setPosition(e->pos());
+        d_data->direction = 0;
+        d_data->mouseOffset = 0;
+        d_data->scrollMode = ScrNone;
+        buttonReleased();
+        break;
+    }
+
+    case ScrPage: {
+        stopMoving();
+        if (!d_data->timerTick)
+            QwtDoubleRange::incPages(d_data->direction);
+        d_data->timerTick = 0;
+        buttonReleased();
+        d_data->scrollMode = ScrNone;
+        break;
+    }
+
+    case ScrTimer: {
+        stopMoving();
+        if (!d_data->timerTick)
+            QwtDoubleRange::fitValue(value() + double(d_data->direction) * inc);
+        d_data->timerTick = 0;
+        buttonReleased();
+        d_data->scrollMode = ScrNone;
+        break;
+    }
+
+    default: {
+        d_data->scrollMode = ScrNone;
+        buttonReleased();
+    }
     }
 }
 
@@ -273,7 +259,7 @@ void QwtAbstractSlider::mouseReleaseEvent(QMouseEvent *e)
   Move the slider to a specified point, adjust the value
   and emit signals if necessary.
 */
-void QwtAbstractSlider::setPosition(const QPoint &p) 
+void QwtAbstractSlider::setPosition(const QPoint &p)
 {
     QwtDoubleRange::fitValue(getValue(p) - d_data->mouseOffset);
 }
@@ -298,14 +284,13 @@ void QwtAbstractSlider::setTracking(bool enable)
     d_data->tracking = enable;
 }
 
-/*! 
+/*!
    Mouse Move Event handler
    \param e Mouse event
 */
 void QwtAbstractSlider::mouseMoveEvent(QMouseEvent *e)
 {
-    if ( isReadOnly() )
-    {
+    if ( isReadOnly() ) {
         e->ignore();
         return;
     }
@@ -313,13 +298,11 @@ void QwtAbstractSlider::mouseMoveEvent(QMouseEvent *e)
     if ( !isValid() )
         return;
 
-    if (d_data->scrollMode == ScrMouse )
-    {
+    if (d_data->scrollMode == ScrMouse ) {
         setPosition(e->pos());
-        if (d_data->mass > 0.0) 
-        {
+        if (d_data->mass > 0.0) {
             double ms = double(d_data->time.elapsed());
-            if (ms < 1.0) 
+            if (ms < 1.0)
                 ms = 1.0;
             d_data->speed = (exactValue() - exactPrevValue()) / ms;
             d_data->time.start();
@@ -329,14 +312,13 @@ void QwtAbstractSlider::mouseMoveEvent(QMouseEvent *e)
     }
 }
 
-/*! 
+/*!
    Wheel Event handler
    \param e Whell event
 */
 void QwtAbstractSlider::wheelEvent(QWheelEvent *e)
 {
-    if ( isReadOnly() )
-    {
+    if ( isReadOnly() ) {
         e->ignore();
         return;
     }
@@ -348,8 +330,7 @@ void QwtAbstractSlider::wheelEvent(QWheelEvent *e)
 
     // Give derived classes a chance to say ScrNone
     getScrollMode(e->pos(), mode, direction);
-    if ( mode != ScrNone )
-    {
+    if ( mode != ScrNone ) {
         const int inc = e->delta() / WHEEL_DELTA;
         QwtDoubleRange::incPages(inc);
         if (value() != prevValue())
@@ -370,8 +351,7 @@ void QwtAbstractSlider::wheelEvent(QWheelEvent *e)
 */
 void QwtAbstractSlider::keyPressEvent(QKeyEvent *e)
 {
-    if ( isReadOnly() )
-    {
+    if ( isReadOnly() ) {
         e->ignore();
         return;
     }
@@ -380,37 +360,36 @@ void QwtAbstractSlider::keyPressEvent(QKeyEvent *e)
         return;
 
     int increment = 0;
-    switch ( e->key() ) 
-    {
-        case Qt::Key_Down:
-            if ( orientation() == Qt::Vertical )
-                increment = -1;
-            break;
-        case Qt::Key_Up:
-            if ( orientation() == Qt::Vertical )
-                increment = 1;
-            break;
-        case Qt::Key_Left:
-            if ( orientation() == Qt::Horizontal )
-                increment = -1;
-            break;
-        case Qt::Key_Right:
-            if ( orientation() == Qt::Horizontal )
-                increment = 1;
-            break;
-        default:;
-            e->ignore();
+    switch ( e->key() ) {
+    case Qt::Key_Down:
+        if ( orientation() == Qt::Vertical )
+            increment = -1;
+        break;
+    case Qt::Key_Up:
+        if ( orientation() == Qt::Vertical )
+            increment = 1;
+        break;
+    case Qt::Key_Left:
+        if ( orientation() == Qt::Horizontal )
+            increment = -1;
+        break;
+    case Qt::Key_Right:
+        if ( orientation() == Qt::Horizontal )
+            increment = 1;
+        break;
+    default:
+        ;
+        e->ignore();
     }
 
-    if ( increment != 0 )
-    {
+    if ( increment != 0 ) {
         QwtDoubleRange::incValue(increment);
         if (value() != prevValue())
             emit sliderMoved(value());
     }
 }
 
-/*! 
+/*!
    Qt timer event
    \param e Timer event
 */
@@ -418,55 +397,45 @@ void QwtAbstractSlider::timerEvent(QTimerEvent *)
 {
     const double inc = step();
 
-    switch (d_data->scrollMode)
-    {
-        case ScrMouse:
-        {
-            if (d_data->mass > 0.0)
-            {
-                d_data->speed *= exp( - double(d_data->updTime) * 0.001 / d_data->mass );
-                const double newval = 
-                    exactValue() + d_data->speed * double(d_data->updTime);
-                QwtDoubleRange::fitValue(newval);
-                // stop if d_data->speed < one step per second
-                if (fabs(d_data->speed) < 0.001 * fabs(step()))
-                {
-                    d_data->speed = 0;
-                    stopMoving();
-                    buttonReleased();
-                }
+    switch (d_data->scrollMode) {
+    case ScrMouse: {
+        if (d_data->mass > 0.0) {
+            d_data->speed *= exp( - double(d_data->updTime) * 0.001 / d_data->mass );
+            const double newval =
+                exactValue() + d_data->speed * double(d_data->updTime);
+            QwtDoubleRange::fitValue(newval);
+            // stop if d_data->speed < one step per second
+            if (fabs(d_data->speed) < 0.001 * fabs(step())) {
+                d_data->speed = 0;
+                stopMoving();
+                buttonReleased();
+            }
 
-            }
-            else
-               stopMoving();
-            break;
-        }
-
-        case ScrPage:
-        {
-            QwtDoubleRange::incPages(d_data->direction);
-            if (!d_data->timerTick) 
-            {
-                killTimer(d_data->tmrID);
-                d_data->tmrID = startTimer(d_data->updTime);
-            }
-            break;
-        }
-        case ScrTimer:
-        {
-            QwtDoubleRange::fitValue(value() +  double(d_data->direction) * inc);
-            if (!d_data->timerTick) 
-            {
-                killTimer(d_data->tmrID);
-                d_data->tmrID = startTimer(d_data->updTime);
-            }
-            break;
-        }
-        default:
-        {
+        } else
             stopMoving();
-            break;
+        break;
+    }
+
+    case ScrPage: {
+        QwtDoubleRange::incPages(d_data->direction);
+        if (!d_data->timerTick) {
+            killTimer(d_data->tmrID);
+            d_data->tmrID = startTimer(d_data->updTime);
         }
+        break;
+    }
+    case ScrTimer: {
+        QwtDoubleRange::fitValue(value() +  double(d_data->direction) * inc);
+        if (!d_data->timerTick) {
+            killTimer(d_data->tmrID);
+            d_data->tmrID = startTimer(d_data->updTime);
+        }
+        break;
+    }
+    default: {
+        stopMoving();
+        break;
+    }
     }
 
     d_data->timerTick = 1;
@@ -481,10 +450,10 @@ void QwtAbstractSlider::timerEvent(QTimerEvent *)
   The default implementation emits a valueChanged() signal
   if tracking is enabled.
 */
-void QwtAbstractSlider::valueChange() 
+void QwtAbstractSlider::valueChange()
 {
     if (d_data->tracking)
-       emit valueChanged(value());  
+        emit valueChanged(value());
 }
 
 /*!
@@ -507,11 +476,11 @@ void QwtAbstractSlider::valueChange()
 void QwtAbstractSlider::setMass(double val)
 {
     if (val < 0.001)
-       d_data->mass = 0.0;
+        d_data->mass = 0.0;
     else if (val > 100.0)
-       d_data->mass = 100.0;
+        d_data->mass = 100.0;
     else
-       d_data->mass = val;
+        d_data->mass = val;
 }
 
 /*!
@@ -519,8 +488,8 @@ void QwtAbstractSlider::setMass(double val)
     \sa setMass()
 */
 double QwtAbstractSlider::mass() const
-{   
-    return d_data->mass; 
+{
+    return d_data->mass;
 }
 
 
@@ -534,7 +503,7 @@ double QwtAbstractSlider::mass() const
 */
 void QwtAbstractSlider::setValue(double val)
 {
-    if (d_data->scrollMode == ScrMouse) 
+    if (d_data->scrollMode == ScrMouse)
         stopMoving();
     QwtDoubleRange::setValue(val);
 }
@@ -549,7 +518,7 @@ void QwtAbstractSlider::setValue(double val)
 */
 void QwtAbstractSlider::fitValue(double value)
 {
-    if (d_data->scrollMode == ScrMouse) 
+    if (d_data->scrollMode == ScrMouse)
         stopMoving();
     QwtDoubleRange::fitValue(value);
 }
@@ -561,7 +530,7 @@ void QwtAbstractSlider::fitValue(double value)
 */
 void QwtAbstractSlider::incValue(int steps)
 {
-    if (d_data->scrollMode == ScrMouse) 
+    if (d_data->scrollMode == ScrMouse)
         stopMoving();
     QwtDoubleRange::incValue(steps);
 }
@@ -569,7 +538,7 @@ void QwtAbstractSlider::incValue(int steps)
 void QwtAbstractSlider::setMouseOffset(double offset)
 {
     d_data->mouseOffset = offset;
-} 
+}
 
 double QwtAbstractSlider::mouseOffset() const
 {

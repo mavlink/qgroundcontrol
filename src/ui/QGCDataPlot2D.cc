@@ -46,10 +46,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 
 QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
-        QWidget(parent),
-        plot(new IncrementalPlot()),
-        logFile(NULL),
-        ui(new Ui::QGCDataPlot2D)
+    QWidget(parent),
+    plot(new IncrementalPlot()),
+    logFile(NULL),
+    ui(new Ui::QGCDataPlot2D)
 {
     ui->setupUi(this);
 
@@ -74,14 +74,10 @@ QGCDataPlot2D::QGCDataPlot2D(QWidget *parent) :
 
 void QGCDataPlot2D::reloadFile()
 {
-    if (QFileInfo(fileName).isReadable())
-    {
-        if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW"))
-        {
+    if (QFileInfo(fileName).isReadable()) {
+        if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW")) {
             loadRawLog(fileName, ui->xAxis->currentText(), ui->yAxis->text());
-        }
-        else if (ui->inputFileType->currentText().contains("CSV"))
-        {
+        } else if (ui->inputFileType->currentText().contains("CSV")) {
             loadCsvLog(fileName, ui->xAxis->currentText(), ui->yAxis->text());
         }
     }
@@ -90,14 +86,10 @@ void QGCDataPlot2D::reloadFile()
 void QGCDataPlot2D::loadFile()
 {
     qDebug() << "DATA PLOT: Loading file:" << fileName;
-    if (QFileInfo(fileName).isReadable())
-    {
-        if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW"))
-        {
+    if (QFileInfo(fileName).isReadable()) {
+        if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW")) {
             loadRawLog(fileName);
-        }
-        else if (ui->inputFileType->currentText().contains("CSV"))
-        {
+        } else if (ui->inputFileType->currentText().contains("CSV")) {
             loadCsvLog(fileName);
         }
     }
@@ -106,14 +98,10 @@ void QGCDataPlot2D::loadFile()
 void QGCDataPlot2D::loadFile(QString file)
 {
     fileName = file;
-    if (QFileInfo(fileName).isReadable())
-    {
-        if (fileName.contains(".raw") || fileName.contains(".imu"))
-        {
+    if (QFileInfo(fileName).isReadable()) {
+        if (fileName.contains(".raw") || fileName.contains(".imu")) {
             loadRawLog(fileName);
-        }
-        else if (fileName.contains(".txt") || fileName.contains(".csv") || fileName.contains(".csv"))
-        {
+        } else if (fileName.contains(".txt") || fileName.contains(".csv") || fileName.contains(".csv")) {
             loadCsvLog(fileName);
         }
     }
@@ -126,17 +114,15 @@ void QGCDataPlot2D::savePlot()
 {
     QString fileName = "plot.svg";
     fileName = QFileDialog::getSaveFileName(
-            this, "Export File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
-            "PDF Documents (*.pdf);;SVG Images (*.svg)");
+                   this, "Export File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
+                   "PDF Documents (*.pdf);;SVG Images (*.svg)");
 
-    if (!fileName.contains("."))
-    {
+    if (!fileName.contains(".")) {
         // .pdf is default extension
         fileName.append(".pdf");
     }
 
-    while(!(fileName.endsWith(".svg") || fileName.endsWith(".pdf")))
-    {
+    while(!(fileName.endsWith(".svg") || fileName.endsWith(".pdf"))) {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Unsuitable file extension for PDF or SVG");
@@ -146,16 +132,13 @@ void QGCDataPlot2D::savePlot()
         // Abort if cancelled
         if(msgBox.exec() == QMessageBox::Cancel) return;
         fileName = QFileDialog::getSaveFileName(
-                this, "Export File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
-                "PDF Documents (*.pdf);;SVG Images (*.svg)");
+                       this, "Export File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
+                       "PDF Documents (*.pdf);;SVG Images (*.svg)");
     }
 
-    if (fileName.endsWith(".pdf"))
-    {
+    if (fileName.endsWith(".pdf")) {
         exportPDF(fileName);
-    }
-    else if (fileName.endsWith(".svg"))
-    {
+    } else if (fileName.endsWith(".svg")) {
         exportSVG(fileName);
     }
 }
@@ -169,8 +152,7 @@ void QGCDataPlot2D::print()
     //    printer.setOutputFileName(fileName);
 
     QString docName = plot->title().text();
-    if ( !docName.isEmpty() )
-    {
+    if ( !docName.isEmpty() ) {
         docName.replace (QRegExp (QString::fromLatin1 ("\n")), tr (" -- "));
         printer.setDocName (docName);
     }
@@ -179,8 +161,7 @@ void QGCDataPlot2D::print()
     printer.setOrientation(QPrinter::Landscape);
 
     QPrintDialog dialog(&printer);
-    if ( dialog.exec() )
-    {
+    if ( dialog.exec() ) {
         plot->setStyleSheet("QWidget { background-color: #FFFFFF; color: #000000; background-clip: border; font-size: 10pt;}");
         plot->setCanvasBackground(Qt::white);
         QwtPlotPrintFilter filter;
@@ -189,8 +170,7 @@ void QGCDataPlot2D::print()
         filter.color(Qt::black, QwtPlotPrintFilter::AxisTitle);
         filter.color(Qt::black, QwtPlotPrintFilter::MajorGrid);
         filter.color(Qt::black, QwtPlotPrintFilter::MinorGrid);
-        if ( printer.colorMode() == QPrinter::GrayScale )
-        {
+        if ( printer.colorMode() == QPrinter::GrayScale ) {
             int options = QwtPlotPrintFilter::PrintAll;
             options &= ~QwtPlotPrintFilter::PrintBackground;
             options |= QwtPlotPrintFilter::PrintFrameWithScales;
@@ -212,8 +192,7 @@ void QGCDataPlot2D::exportPDF(QString fileName)
     printer.setPageSize(QPrinter::A4);
 
     QString docName = plot->title().text();
-    if ( !docName.isEmpty() )
-    {
+    if ( !docName.isEmpty() ) {
         docName.replace (QRegExp (QString::fromLatin1 ("\n")), tr (" -- "));
         printer.setDocName (docName);
     }
@@ -243,8 +222,7 @@ void QGCDataPlot2D::exportPDF(QString fileName)
 
 void QGCDataPlot2D::exportSVG(QString fileName)
 {
-    if ( !fileName.isEmpty() )
-    {
+    if ( !fileName.isEmpty() ) {
         plot->setStyleSheet("QWidget { background-color: #FFFFFF; color: #000000; background-clip: border; font-size: 10pt;}");
         //plot->setCanvasBackground(Qt::white);
         QSvgGenerator generator;
@@ -272,12 +250,9 @@ void QGCDataPlot2D::selectFile()
     //QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
 
-    if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW"))
-    {
+    if (ui->inputFileType->currentText().contains("pxIMU") || ui->inputFileType->currentText().contains("RAW")) {
         fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.imu *.raw)");
-    }
-    else
-    {
+    } else {
         fileName = QFileDialog::getOpenFileName(this, tr("Specify log file name"), QString(), "Logfile (*.csv *.txt *.log)");
     }
 
@@ -285,8 +260,7 @@ void QGCDataPlot2D::selectFile()
 
     QFileInfo fileInfo(fileName);
 
-    if (!fileInfo.isReadable())
-    {
+    if (!fileInfo.isReadable()) {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not open file");
@@ -295,9 +269,7 @@ void QGCDataPlot2D::selectFile()
         msgBox.setDefaultButton(QMessageBox::Ok);
         msgBox.exec();
         ui->filenameLabel->setText(tr("Could not open %1").arg(fileInfo.baseName()+"."+fileInfo.completeSuffix()));
-    }
-    else
-    {
+    } else {
         ui->filenameLabel->setText(tr("Opened %1").arg(fileInfo.completeBaseName()+"."+fileInfo.completeSuffix()));
         // Open and import the file
         loadFile();
@@ -310,8 +282,7 @@ void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFil
     Q_UNUSED(xAxisName);
     Q_UNUSED(yAxisFilter);
 
-    if (logFile != NULL)
-    {
+    if (logFile != NULL) {
         logFile->close();
         delete logFile;
     }
@@ -343,8 +314,7 @@ void QGCDataPlot2D::loadRawLog(QString file, QString xAxisName, QString yAxisFil
  */
 void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFilter)
 {
-    if (logFile != NULL)
-    {
+    if (logFile != NULL) {
         logFile->close();
         delete logFile;
         curveNames.clear();
@@ -381,18 +351,13 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     // Iterate until separator is found
     // or full header is parsed
-    for (int i = 0; i < header.length(); i++)
-    {
-        if (sepCandidates.contains(header.at(i)))
-        {
+    for (int i = 0; i < header.length(); i++) {
+        if (sepCandidates.contains(header.at(i))) {
             // Separator found
-            if (charRead)
-            {
+            if (charRead) {
                 separator += header[i];
             }
-        }
-        else
-        {
+        } else {
             // Char found
             charRead = true;
             // If the separator is not empty, this char
@@ -428,30 +393,23 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
     //int xValueIndex = curveNames.indexOf(xAxisName);
 
     QString xAxisFilter;
-    if (xAxisName == "")
-    {
+    if (xAxisName == "") {
         xAxisFilter = curveNames.first();
-    }
-    else
-    {
+    } else {
         xAxisFilter = xAxisName;
     }
 
-    foreach(curveName, curveNames)
-    {
+    foreach(curveName, curveNames) {
         // Add to plot x axis selection
         ui->xAxis->addItem(curveName);
         // Add to regression selection
         ui->xRegressionComboBox->addItem(curveName);
         ui->yRegressionComboBox->addItem(curveName);
-        if (curveName != xAxisFilter)
-        {
-            if ((yAxisFilter == "") || yAxisFilter.contains(curveName))
-            {
+        if (curveName != xAxisFilter) {
+            if ((yAxisFilter == "") || yAxisFilter.contains(curveName)) {
                 yValues.insert(curveName, new QVector<double>());
                 // Add separator starting with second item
-                if (curveNameIndex > 0 && curveNameIndex < curveNames.count())
-                {
+                if (curveNameIndex > 0 && curveNameIndex < curveNames.count()) {
                     ui->yAxis->setText(ui->yAxis->text()+"|");
                 }
                 ui->yAxis->setText(ui->yAxis->text()+curveName);
@@ -467,36 +425,28 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     double x,y;
 
-    while (!in.atEnd())
-    {
+    while (!in.atEnd()) {
         QString line = in.readLine();
 
         QStringList values = line.split(separator, QString::SkipEmptyParts);
 
-        foreach(curveName, curveNames)
-        {
+        foreach(curveName, curveNames) {
             bool okx;
-            if (curveName == xAxisFilter)
-            {
+            if (curveName == xAxisFilter) {
                 // X  AXIS HANDLING
 
                 // Take this value as x if it is selected
                 x = values.at(curveNames.indexOf(curveName)).toDouble(&okx);
                 xValues.append(x);// - 1270125570000ULL);
-            }
-            else
-            {
+            } else {
                 // Y  AXIS HANDLING
 
-                if(yAxisFilter == "" || yAxisFilter.contains(curveName))
-                {
+                if(yAxisFilter == "" || yAxisFilter.contains(curveName)) {
                     // Only append y values where a valid x value is present
-                    if (yValues.value(curveName)->count() == xValues.count() - 1)
-                    {
+                    if (yValues.value(curveName)->count() == xValues.count() - 1) {
                         bool oky;
                         int curveNameIndex = curveNames.indexOf(curveName);
-                        if (values.count() > curveNameIndex)
-                        {
+                        if (values.count() > curveNameIndex) {
                             y = values.at(curveNameIndex).toDouble(&oky);
                             yValues.value(curveName)->append(y);
                         }
@@ -508,8 +458,7 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     // Add data array of each curve to the plot at once (fast)
     // Iterates through all x-y curve combinations
-    for (int i = 0; i < yValues.count(); i++)
-    {
+    for (int i = 0; i < yValues.count(); i++) {
         plot->appendData(yValues.keys().at(i), xValues.data(), yValues.values().at(i)->data(), xValues.count());
     }
     plot->setStyleText(ui->style->currentText());
@@ -530,10 +479,8 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
 {
     bool result = false;
     QString function;
-    if (xName != yName)
-    {
-        if (QFileInfo(fileName).isReadable())
-        {
+    if (xName != yName) {
+        if (QFileInfo(fileName).isReadable()) {
             loadCsvLog(fileName, xName, yName);
             ui->xRegressionComboBox->setCurrentIndex(curveNames.indexOf(xName));
             ui->yRegressionComboBox->setCurrentIndex(curveNames.indexOf(yName));
@@ -543,14 +490,12 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
         double y[size];
         int copied = plot->data(yName, x, y, size);
 
-        if (method == "linear")
-        {
+        if (method == "linear") {
             double a;  // Y-axis crossing
             double b;  // Slope
             double r;  // Regression coefficient
             int lin = linearRegression(x, y, copied, &a, &b, &r);
-            if(lin == 1)
-            {
+            if(lin == 1) {
                 function = tr("%1 = %2 * %3 + %4 | R-coefficient: %5").arg(yName, QString::number(b), xName, QString::number(a), QString::number(r));
 
                 // Plot curve
@@ -561,29 +506,19 @@ bool QGCDataPlot2D::calculateRegression(QString xName, QString yName, QString me
                 // x-value of the current rightmost x position in the plot
                 plot->appendData(tr("regression %1-%2").arg(xName, yName), plot->invTransform(QwtPlot::xBottom, plot->width() - plot->width()*0.08f), (a + b*plot->invTransform(QwtPlot::xBottom, plot->width() - plot->width() * 0.08f)));
                 result = true;
-            }
-            else
-            {
+            } else {
                 function = tr("Linear regression failed. (Limit: %1 data points. Try with less)").arg(size);
                 result = false;
             }
-        }
-        else if (method == "quadratic")
-        {
+        } else if (method == "quadratic") {
 
-        }
-        else if (method == "cubic")
-        {
+        } else if (method == "cubic") {
 
-        }
-        else
-        {
+        } else {
             function = tr("Regression method %1 not found").arg(method);
             result = false;
         }
-    }
-    else
-    {
+    } else {
         // xName == yName
         function = tr("Please select different X and Y dimensions, not %1 = %2").arg(xName, yName);
     }
@@ -619,7 +554,7 @@ int QGCDataPlot2D::linearRegression(double* x,double* y,int n,double* a,double* 
         return(FALSE);
 
     /* Conpute some things we need */
-    for (i=0;i<n;i++) {
+    for (i=0; i<n; i++) {
         sumx += x[i];
         sumy += y[i];
         sumx2 += (x[i] * x[i]);
@@ -651,11 +586,10 @@ void QGCDataPlot2D::saveCsvLog()
 {
     QString fileName = "export.csv";
     fileName = QFileDialog::getSaveFileName(
-            this, "Export CSV File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
-            "CSV file (*.csv);;Text file (*.txt)");
+                   this, "Export CSV File Name", QDesktopServices::storageLocation(QDesktopServices::DesktopLocation),
+                   "CSV file (*.csv);;Text file (*.txt)");
 
-    if (!fileName.contains("."))
-    {
+    if (!fileName.contains(".")) {
         // .csv is default extension
         fileName.append(".csv");
     }

@@ -35,7 +35,7 @@ void QwtPickerMachine::setState(int state)
 }
 
 //! Set the current state to 0.
-void QwtPickerMachine::reset() 
+void QwtPickerMachine::reset()
 {
     setState(0);
 }
@@ -43,35 +43,30 @@ void QwtPickerMachine::reset()
 //! Transition
 QwtPickerMachine::CommandList QwtPickerClickPointMachine::transition(
     const QwtEventPattern &eventPattern, const QEvent *e)
-{   
+{
     QwtPickerMachine::CommandList cmdList;
 
-    switch(e->type())
-    {
-        case QEvent::MouseButtonPress:
-        {
-            if ( eventPattern.mouseMatch(
-                QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) )
-            {
-                cmdList += Begin;
-                cmdList += Append;
-                cmdList += End;
-            }
-            break;
+    switch(e->type()) {
+    case QEvent::MouseButtonPress: {
+        if ( eventPattern.mouseMatch(
+                    QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) ) {
+            cmdList += Begin;
+            cmdList += Append;
+            cmdList += End;
         }
-        case QEvent::KeyPress:
-        {   
-            if ( eventPattern.keyMatch(
-                QwtEventPattern::KeySelect1, (const QKeyEvent *)e) )
-            {
-                cmdList += Begin;
-                cmdList += Append;
-                cmdList += End;
-            }   
-            break;
+        break;
+    }
+    case QEvent::KeyPress: {
+        if ( eventPattern.keyMatch(
+                    QwtEventPattern::KeySelect1, (const QKeyEvent *)e) ) {
+            cmdList += Begin;
+            cmdList += Append;
+            cmdList += End;
         }
-        default:
-            break;
+        break;
+    }
+    default:
+        break;
     }
 
     return cmdList;
@@ -80,62 +75,50 @@ QwtPickerMachine::CommandList QwtPickerClickPointMachine::transition(
 //! Transition
 QwtPickerMachine::CommandList QwtPickerDragPointMachine::transition(
     const QwtEventPattern &eventPattern, const QEvent *e)
-{   
+{
     QwtPickerMachine::CommandList cmdList;
 
-    switch(e->type())
-    {
-        case QEvent::MouseButtonPress:
-        {
-            if ( eventPattern.mouseMatch(
-                QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) )
-            {
-                if ( state() == 0 )
-                {
-                    cmdList += Begin;
-                    cmdList += Append;
-                    setState(1);
-                }
+    switch(e->type()) {
+    case QEvent::MouseButtonPress: {
+        if ( eventPattern.mouseMatch(
+                    QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) ) {
+            if ( state() == 0 ) {
+                cmdList += Begin;
+                cmdList += Append;
+                setState(1);
             }
-            break;
         }
-        case QEvent::MouseMove:
-        case QEvent::Wheel:
-        {
-            if ( state() != 0 )
-                cmdList += Move;
-            break;
+        break;
+    }
+    case QEvent::MouseMove:
+    case QEvent::Wheel: {
+        if ( state() != 0 )
+            cmdList += Move;
+        break;
+    }
+    case QEvent::MouseButtonRelease: {
+        if ( state() != 0 ) {
+            cmdList += End;
+            setState(0);
         }
-        case QEvent::MouseButtonRelease:
-        {
-            if ( state() != 0 )
-            {
+        break;
+    }
+    case QEvent::KeyPress: {
+        if ( eventPattern.keyMatch(
+                    QwtEventPattern::KeySelect1, (const QKeyEvent *)e) ) {
+            if ( state() == 0 ) {
+                cmdList += Begin;
+                cmdList += Append;
+                setState(1);
+            } else {
                 cmdList += End;
                 setState(0);
             }
-            break;
         }
-        case QEvent::KeyPress:
-        {
-            if ( eventPattern.keyMatch(
-                QwtEventPattern::KeySelect1, (const QKeyEvent *)e) )
-            {
-                if ( state() == 0 )
-                {
-                    cmdList += Begin;
-                    cmdList += Append;
-                    setState(1);
-                }
-                else
-                {
-                    cmdList += End;
-                    setState(0);
-                }
-            }
-            break;
-        }
-        default:
-            break;
+        break;
+    }
+    default:
+        break;
     }
 
     return cmdList;
@@ -144,87 +127,68 @@ QwtPickerMachine::CommandList QwtPickerDragPointMachine::transition(
 //! Transition
 QwtPickerMachine::CommandList QwtPickerClickRectMachine::transition(
     const QwtEventPattern &eventPattern, const QEvent *e)
-{   
+{
     QwtPickerMachine::CommandList cmdList;
 
-    switch(e->type())
-    {
-        case QEvent::MouseButtonPress:
-        {
-            if ( eventPattern.mouseMatch(
-                QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) )
-            {
-                switch(state())
-                {
-                    case 0:
-                    {   
-                        cmdList += Begin;
-                        cmdList += Append;
-                        setState(1);
-                        break;
-                    }
-                    case 1:
-                    {
-                        // Uh, strange we missed the MouseButtonRelease
-                        break; 
-                    }
-                    default:
-                    {
-                        cmdList += End;
-                        setState(0);
-                    }
-                }
+    switch(e->type()) {
+    case QEvent::MouseButtonPress: {
+        if ( eventPattern.mouseMatch(
+                    QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) ) {
+            switch(state()) {
+            case 0: {
+                cmdList += Begin;
+                cmdList += Append;
+                setState(1);
+                break;
+            }
+            case 1: {
+                // Uh, strange we missed the MouseButtonRelease
+                break;
+            }
+            default: {
+                cmdList += End;
+                setState(0);
+            }
             }
         }
-        case QEvent::MouseMove:
-        case QEvent::Wheel:
-        {
-            if ( state() != 0 )
-                cmdList += Move;
-            break;
+    }
+    case QEvent::MouseMove:
+    case QEvent::Wheel: {
+        if ( state() != 0 )
+            cmdList += Move;
+        break;
+    }
+    case QEvent::MouseButtonRelease: {
+        if ( eventPattern.mouseMatch(
+                    QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) ) {
+            if ( state() == 1 ) {
+                cmdList += Append;
+                setState(2);
+            }
         }
-        case QEvent::MouseButtonRelease:
-        {
-            if ( eventPattern.mouseMatch(
-                QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) )
-            {
-                if ( state() == 1 )
-                {
+        break;
+    }
+    case QEvent::KeyPress: {
+        if ( eventPattern.keyMatch(
+                    QwtEventPattern::KeySelect1, (const QKeyEvent *)e) ) {
+            if ( state() == 0 ) {
+                cmdList += Begin;
+                cmdList += Append;
+                setState(1);
+            } else {
+                if ( state() == 1 ) {
                     cmdList += Append;
                     setState(2);
+                } else if ( state() == 2 ) {
+                    cmdList += End;
+                    setState(0);
                 }
             }
-            break;
         }
-        case QEvent::KeyPress:
-        {   
-            if ( eventPattern.keyMatch(
-                QwtEventPattern::KeySelect1, (const QKeyEvent *)e) )
-            {
-                if ( state() == 0 )
-                {
-                    cmdList += Begin;
-                    cmdList += Append;
-                    setState(1);
-                }
-                else
-                {
-                    if ( state() == 1 )
-                    {
-                        cmdList += Append;
-                        setState(2);
-                    }
-                    else if ( state() == 2 )
-                    {
-                        cmdList += End;
-                        setState(0);
-                    }
-                }
-            }   
-            break;
-        }
-        default:
-            break;
+        break;
+    }
+    default:
+        break;
     }
 
     return cmdList;
@@ -233,64 +197,52 @@ QwtPickerMachine::CommandList QwtPickerClickRectMachine::transition(
 //! Transition
 QwtPickerMachine::CommandList QwtPickerDragRectMachine::transition(
     const QwtEventPattern &eventPattern, const QEvent *e)
-{   
+{
     QwtPickerMachine::CommandList cmdList;
 
-    switch(e->type())
-    {
-        case QEvent::MouseButtonPress:
-        {
-            if ( eventPattern.mouseMatch(
-                QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) )
-            {
-                if ( state() == 0 )
-                {
-                    cmdList += Begin;
-                    cmdList += Append;
-                    cmdList += Append;
-                    setState(2);
-                }
+    switch(e->type()) {
+    case QEvent::MouseButtonPress: {
+        if ( eventPattern.mouseMatch(
+                    QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) ) {
+            if ( state() == 0 ) {
+                cmdList += Begin;
+                cmdList += Append;
+                cmdList += Append;
+                setState(2);
             }
-            break;
         }
-        case QEvent::MouseMove:
-        case QEvent::Wheel:
-        {
-            if ( state() != 0 )
-                cmdList += Move;
-            break;
+        break;
+    }
+    case QEvent::MouseMove:
+    case QEvent::Wheel: {
+        if ( state() != 0 )
+            cmdList += Move;
+        break;
+    }
+    case QEvent::MouseButtonRelease: {
+        if ( state() == 2 ) {
+            cmdList += End;
+            setState(0);
         }
-        case QEvent::MouseButtonRelease:
-        {
-            if ( state() == 2 )
-            {
+        break;
+    }
+    case QEvent::KeyPress: {
+        if ( eventPattern.keyMatch(
+                    QwtEventPattern::KeySelect1, (const QKeyEvent *)e) ) {
+            if ( state() == 0 ) {
+                cmdList += Begin;
+                cmdList += Append;
+                cmdList += Append;
+                setState(2);
+            } else {
                 cmdList += End;
                 setState(0);
             }
-            break;
         }
-        case QEvent::KeyPress:
-        {
-            if ( eventPattern.keyMatch(
-                QwtEventPattern::KeySelect1, (const QKeyEvent *)e) )
-            {
-                if ( state() == 0 )
-                {
-                    cmdList += Begin;
-                    cmdList += Append;
-                    cmdList += Append;
-                    setState(2);
-                }
-                else
-                {
-                    cmdList += End;
-                    setState(0);
-                }
-            }
-            break;
-        }
-        default:
-            break;
+        break;
+    }
+    default:
+        break;
     }
 
     return cmdList;
@@ -302,69 +254,54 @@ QwtPickerMachine::CommandList QwtPickerPolygonMachine::transition(
 {
     QwtPickerMachine::CommandList cmdList;
 
-    switch(e->type())
-    {
-        case QEvent::MouseButtonPress:
-        {
-            if ( eventPattern.mouseMatch(
-                QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) )
-            {
-                if (state() == 0)
-                {
-                    cmdList += Begin;
-                    cmdList += Append;
-                    cmdList += Append;
-                    setState(1);
-                }
-                else
-                {
-                    cmdList += End;
-                    setState(0);
-                }
+    switch(e->type()) {
+    case QEvent::MouseButtonPress: {
+        if ( eventPattern.mouseMatch(
+                    QwtEventPattern::MouseSelect1, (const QMouseEvent *)e) ) {
+            if (state() == 0) {
+                cmdList += Begin;
+                cmdList += Append;
+                cmdList += Append;
+                setState(1);
+            } else {
+                cmdList += End;
+                setState(0);
             }
-            if ( eventPattern.mouseMatch(
-                QwtEventPattern::MouseSelect2, (const QMouseEvent *)e) )
-            {
-                if (state() == 1)
-                    cmdList += Append;
-            }
-            break;
         }
-        case QEvent::MouseMove:
-        case QEvent::Wheel:
-        {
-            if ( state() != 0 )
-                cmdList += Move;
-            break;
+        if ( eventPattern.mouseMatch(
+                    QwtEventPattern::MouseSelect2, (const QMouseEvent *)e) ) {
+            if (state() == 1)
+                cmdList += Append;
         }
-        case QEvent::KeyPress:
-        {
-            if ( eventPattern.keyMatch(
-                QwtEventPattern::KeySelect1, (const QKeyEvent *)e) )
-            {
-                if ( state() == 0 )
-                {
-                    cmdList += Begin;
-                    cmdList += Append;
-                    cmdList += Append;
-                    setState(1);
-                }
-                else
-                {
-                    cmdList += End;
-                    setState(0);
-                }
+        break;
+    }
+    case QEvent::MouseMove:
+    case QEvent::Wheel: {
+        if ( state() != 0 )
+            cmdList += Move;
+        break;
+    }
+    case QEvent::KeyPress: {
+        if ( eventPattern.keyMatch(
+                    QwtEventPattern::KeySelect1, (const QKeyEvent *)e) ) {
+            if ( state() == 0 ) {
+                cmdList += Begin;
+                cmdList += Append;
+                cmdList += Append;
+                setState(1);
+            } else {
+                cmdList += End;
+                setState(0);
             }
-            else if ( eventPattern.keyMatch(
-                QwtEventPattern::KeySelect2, (const QKeyEvent *)e) )
-            {
-                if ( state() == 1 )
-                    cmdList += Append;
-            }
-            break;
+        } else if ( eventPattern.keyMatch(
+                        QwtEventPattern::KeySelect2, (const QKeyEvent *)e) ) {
+            if ( state() == 1 )
+                cmdList += Append;
         }
-        default:
-            break;
+        break;
+    }
+    default:
+        break;
     }
 
     return cmdList;

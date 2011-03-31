@@ -43,15 +43,17 @@ This file is part of the QGROUNDCONTROL project
 #include "WaypointView.h"
 
 
-namespace Ui {
-    class WaypointList;
+namespace Ui
+{
+class WaypointList;
 }
 
-class WaypointList : public QWidget {
+class WaypointList : public QWidget
+{
     Q_OBJECT
     Q_DISABLE_COPY(WaypointList)
-        public:
-            WaypointList(QWidget* parent = NULL, UASInterface* uas = NULL);
+public:
+    WaypointList(QWidget* parent = NULL, UASInterface* uas = NULL);
     virtual ~WaypointList();
 
 public slots:
@@ -106,8 +108,8 @@ public slots:
 
 
 signals:
-  void clearPathclicked();
-  void createWaypointAtMap(const QPointF coordinate);
+    void clearPathclicked();
+    void createWaypointAtMap(const QPointF coordinate);
 
 protected:
     virtual void changeEvent(QEvent *e);

@@ -3,8 +3,9 @@
 
 #include "QGCToolWidgetItem.h"
 
-namespace Ui {
-    class QGCActionButton;
+namespace Ui
+{
+class QGCActionButton;
 }
 
 class UASInterface;

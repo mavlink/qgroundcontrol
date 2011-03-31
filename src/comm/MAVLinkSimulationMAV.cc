@@ -5,37 +5,37 @@
 #include "MAVLinkSimulationMAV.h"
 
 MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int systemid, double lat, double lon, int version) :
-        QObject(parent),
-        link(parent),
-        planner(parent, systemid),
-        systemid(systemid),
-        timer25Hz(0),
-        timer10Hz(0),
-        timer1Hz(0),
-        latitude(lat),
-        longitude(lon),
-        altitude(0.0),
-        x(lat),
-        y(lon),
-        z(550),
-        roll(0.0),
-        pitch(0.0),
-        yaw(0.0),
-        globalNavigation(true),
-        firstWP(false),
-        previousSPX(8.548056),
-        previousSPY(47.376389),
-        previousSPZ(550),
-        previousSPYaw(0.0),
-        nextSPX(8.548056),
-        nextSPY(47.376389),
-        nextSPZ(550),
-        nextSPYaw(0.0),
-        sys_mode(MAV_MODE_READY),
-        sys_state(MAV_STATE_STANDBY),
-        nav_mode(MAV_NAV_GROUNDED),
-        flying(false),
-        mavlink_version(version)
+    QObject(parent),
+    link(parent),
+    planner(parent, systemid),
+    systemid(systemid),
+    timer25Hz(0),
+    timer10Hz(0),
+    timer1Hz(0),
+    latitude(lat),
+    longitude(lon),
+    altitude(0.0),
+    x(lat),
+    y(lon),
+    z(550),
+    roll(0.0),
+    pitch(0.0),
+    yaw(0.0),
+    globalNavigation(true),
+    firstWP(false),
+    previousSPX(8.548056),
+    previousSPY(47.376389),
+    previousSPZ(550),
+    previousSPYaw(0.0),
+    nextSPX(8.548056),
+    nextSPY(47.376389),
+    nextSPZ(550),
+    nextSPYaw(0.0),
+    sys_mode(MAV_MODE_READY),
+    sys_state(MAV_STATE_STANDBY),
+    nav_mode(MAV_NAV_GROUNDED),
+    flying(false),
+    mavlink_version(version)
 {
     // Please note: The waypoint planner is running
     connect(&mainloopTimer, SIGNAL(timeout()), this, SLOT(mainloop()));
@@ -52,16 +52,14 @@ void MAVLinkSimulationMAV::mainloop()
 
     //        double xNew = // (nextSPX - previousSPX)
 
-    if (flying)
-    {
+    if (flying) {
         sys_state = MAV_STATE_ACTIVE;
         sys_mode = MAV_MODE_AUTO;
         nav_mode = MAV_NAV_WAYPOINT;
     }
 
     // 1 Hz execution
-    if (timer1Hz <= 0)
-    {
+    if (timer1Hz <= 0) {
         mavlink_message_t msg;
         mavlink_msg_heartbeat_pack_version_free(systemid, MAV_COMP_ID_IMU, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK, mavlink_version);
         link->sendMAVLinkMessage(&msg);
@@ -83,8 +81,7 @@ void MAVLinkSimulationMAV::mainloop()
     }
 
     // 10 Hz execution
-    if (timer10Hz <= 0)
-    {
+    if (timer10Hz <= 0) {
         double radPer100ms = 0.00006;
         double altPer100ms = 0.4;
         double xm = (nextSPX - x);
@@ -93,35 +90,28 @@ void MAVLinkSimulationMAV::mainloop()
 
         float zsign = (zm < 0) ? -1.0f : 1.0f;
 
-        if (!firstWP)
-        {
+        if (!firstWP) {
             //float trueyaw = atan2f(xm, ym);
 
             float newYaw = atan2f(ym, xm);
 
-            if (fabs(yaw - newYaw) < 90)
-            {
+            if (fabs(yaw - newYaw) < 90) {
                 yaw = yaw*0.7 + 0.3*newYaw;
-            }
-            else
-            {
+            } else {
                 yaw = newYaw;
             }
 
             //qDebug() << "SIMULATION MAV: x:" << xm << "y:" << ym << "z:" << zm << "yaw:" << yaw;
 
             //if (sqrt(xm*xm+ym*ym) > 0.0000001)
-            if (flying)
-            {
+            if (flying) {
                 x += cos(yaw)*radPer100ms;
                 y += sin(yaw)*radPer100ms;
                 z += altPer100ms*zsign;
             }
 
             //if (xm < 0.001) xm
-        }
-        else
-        {
+        } else {
             x = nextSPX;
             y = nextSPY;
             z = nextSPZ;
@@ -205,12 +195,11 @@ void MAVLinkSimulationMAV::mainloop()
     }
 
     // 25 Hz execution
-    if (timer25Hz <= 0)
-    {
+    if (timer25Hz <= 0) {
         // The message container to be used for sending
         mavlink_message_t ret;
 
-        #ifdef MAVLINK_ENABLED_PIXHAWK
+#ifdef MAVLINK_ENABLED_PIXHAWK
         // Send which controllers are active
         mavlink_control_status_t control_status;
         control_status.control_att = 1;
@@ -223,7 +212,7 @@ void MAVLinkSimulationMAV::mainloop()
         control_status.ahrs_health = 230;
         mavlink_msg_control_status_encode(systemid, MAV_COMP_ID_IMU, &ret, &control_status);
         link->sendMAVLinkMessage(&ret);
-        #endif //MAVLINK_ENABLED_PIXHAWK
+#endif //MAVLINK_ENABLED_PIXHAWK
 
         // Send actual controller outputs
         // This message just shows the direction
@@ -301,70 +290,62 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
 {
     //qDebug() << "MAV:" << systemid << "RECEIVED MESSAGE FROM" << msg.sysid << "COMP" << msg.compid;
 
-    switch(msg.msgid)
-    {
+    switch(msg.msgid) {
     case MAVLINK_MSG_ID_ATTITUDE:
         break;
-    case MAVLINK_MSG_ID_SET_MODE:
-        {
-            mavlink_set_mode_t mode;
-            mavlink_msg_set_mode_decode(&msg, &mode);
-            if (systemid == mode.target) sys_mode = mode.mode;
-        }
-        break;
-    case MAVLINK_MSG_ID_ACTION:
-        {
-            mavlink_action_t action;
-            mavlink_msg_action_decode(&msg, &action);
-            if (systemid == action.target && (action.target_component == 0 || action.target_component == MAV_COMP_ID_IMU))
-            {
-                mavlink_action_ack_t ack;
-                ack.action = action.action;
-                switch (action.action)
-                {
-                case MAV_ACTION_TAKEOFF:
-                    flying = true;
-                    nav_mode = MAV_NAV_LIFTOFF;
-                    ack.result = 1;
-                    break;
-                default:
-                    {
-                        ack.result = 0;
-                    }
-                    break;
-                }
-
-                // Give feedback about action
-                mavlink_message_t r_msg;
-                mavlink_msg_action_ack_encode(systemid, MAV_COMP_ID_IMU, &r_msg, &ack);
-                link->sendMAVLinkMessage(&r_msg);
+    case MAVLINK_MSG_ID_SET_MODE: {
+        mavlink_set_mode_t mode;
+        mavlink_msg_set_mode_decode(&msg, &mode);
+        if (systemid == mode.target) sys_mode = mode.mode;
+    }
+    break;
+    case MAVLINK_MSG_ID_ACTION: {
+        mavlink_action_t action;
+        mavlink_msg_action_decode(&msg, &action);
+        if (systemid == action.target && (action.target_component == 0 || action.target_component == MAV_COMP_ID_IMU)) {
+            mavlink_action_ack_t ack;
+            ack.action = action.action;
+            switch (action.action) {
+            case MAV_ACTION_TAKEOFF:
+                flying = true;
+                nav_mode = MAV_NAV_LIFTOFF;
+                ack.result = 1;
+                break;
+            default: {
+                ack.result = 0;
             }
-        }
-        break;
-    case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET:
-        {
-            mavlink_local_position_setpoint_set_t sp;
-            mavlink_msg_local_position_setpoint_set_decode(&msg, &sp);
-            if (sp.target_system == this->systemid)
-            {
-                nav_mode = MAV_NAV_WAYPOINT;
-                previousSPX = nextSPX;
-                previousSPY = nextSPY;
-                previousSPZ = nextSPZ;
-                nextSPX = sp.x;
-                nextSPY = sp.y;
-                nextSPZ = sp.z;
-
-                // Rotary wing
-                //nextSPYaw = sp.yaw;
-
-                // Airplane
-                //yaw = atan2(previousSPX-nextSPX, previousSPY-nextSPY);
-
-                //if (!firstWP) firstWP = true;
+            break;
             }
-            //qDebug() << "UPDATED SP:" << "X" << nextSPX << "Y" << nextSPY << "Z" << nextSPZ;
+
+            // Give feedback about action
+            mavlink_message_t r_msg;
+            mavlink_msg_action_ack_encode(systemid, MAV_COMP_ID_IMU, &r_msg, &ack);
+            link->sendMAVLinkMessage(&r_msg);
         }
-        break;
+    }
+    break;
+    case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET: {
+        mavlink_local_position_setpoint_set_t sp;
+        mavlink_msg_local_position_setpoint_set_decode(&msg, &sp);
+        if (sp.target_system == this->systemid) {
+            nav_mode = MAV_NAV_WAYPOINT;
+            previousSPX = nextSPX;
+            previousSPY = nextSPY;
+            previousSPZ = nextSPZ;
+            nextSPX = sp.x;
+            nextSPY = sp.y;
+            nextSPZ = sp.z;
+
+            // Rotary wing
+            //nextSPYaw = sp.yaw;
+
+            // Airplane
+            //yaw = atan2(previousSPX-nextSPX, previousSPY-nextSPY);
+
+            //if (!firstWP) firstWP = true;
+        }
+        //qDebug() << "UPDATED SP:" << "X" << nextSPX << "Y" << nextSPY << "Z" << nextSPZ;
+    }
+    break;
     }
 }

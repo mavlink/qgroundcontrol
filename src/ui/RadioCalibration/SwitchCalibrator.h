@@ -45,7 +45,7 @@ This file is part of the QGROUNDCONTROL project
   */
 class SwitchCalibrator : public AbstractCalibrator
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     explicit SwitchCalibrator(QString title=QString(), QWidget *parent = 0);
 
@@ -55,9 +55,9 @@ protected slots:
     void setDefault();
     void setToggled();
 
-protected:   
+protected:
     QLabel *defaultPulseWidth;
-    QLabel *toggledPulseWidth;    
+    QLabel *toggledPulseWidth;
 
 };
 

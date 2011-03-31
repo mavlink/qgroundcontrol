@@ -1,11 +1,11 @@
 #include "AudioOutput.h"
 
 #ifdef Q_OS_MAC
-	#include <ApplicationServices/ApplicationServices.h>
+#include <ApplicationServices/ApplicationServices.h>
 #else
-	#include <flite.h>
-	#include <phonon/mediaobject.h>
-	#include <QTemporaryFile>
+#include <flite.h>
+#include <phonon/mediaobject.h>
+#include <QTemporaryFile>
 #endif
 
 #include <QDebug>
@@ -25,17 +25,16 @@ extern "C" {
 };
 #endif
 
-AudioOutput::AudioOutput(QString voice, QObject* parent) 
-	: QObject(parent),
-	  voice(NULL),
-	  voiceIndex(0)
+AudioOutput::AudioOutput(QString voice, QObject* parent)
+    : QObject(parent),
+      voice(NULL),
+      voiceIndex(0)
 {
 #if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
     flite_init();
 #endif
 
-    switch (voiceIndex)
-    {
+    switch (voiceIndex) {
     case 0:
         selectFemaleVoice();
         break;
@@ -73,20 +72,19 @@ bool AudioOutput::say(QString text, int severity)
 #if defined(Q_OS_WIN32)
     qDebug() << "Synthesized: " << text << ", NO OUTPUT SUPPORT ON WINDOWS!";
 #elif defined(Q_OS_MAC)
-	// FIXME, copy string, set callback to free the copy
-	SpeakString((const unsigned char*)text.toAscii().data());
-	qDebug() << "Synthesized: " << text;
+    // FIXME, copy string, set callback to free the copy
+    SpeakString((const unsigned char*)text.toAscii().data());
+    qDebug() << "Synthesized: " << text;
 #else
     QTemporaryFile file;
     file.setFileTemplate("XXXXXX.wav");
-    if (file.open())
-    {
+    if (file.open()) {
         cst_wave* wav = flite_text_to_wave(text.toStdString().c_str(), this->voice);
         // file.fileName() returns the unique file name
         cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
         Phonon::MediaObject *music =
-                Phonon::createPlayer(Phonon::MusicCategory,
-                                     Phonon::MediaSource(file.fileName().toStdString().c_str()));
+            Phonon::createPlayer(Phonon::MusicCategory,
+                                 Phonon::MediaSource(file.fileName().toStdString().c_str()));
         music->play();
         qDebug() << "Synthesized: " << text << ", tmp file:" << file.fileName().toStdString().c_str();
     }
@@ -155,9 +153,9 @@ extern "C" {
             l.append(s);
         }
         printf("\n");
-*/
+        */
 #endif
-		return l;
+        return l;
     }
 #ifdef __cplusplus
 }

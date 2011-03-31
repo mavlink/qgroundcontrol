@@ -37,8 +37,9 @@ This file is part of the QGROUNDCONTROL project
 #include "QOSGWidget.h"
 #include "ui_QMap3D.h"
 
-namespace Ui {
-    class QMap3D;
+namespace Ui
+{
+class QMap3D;
 }
 
 class QMap3D : public QWidget, private Ui::QMap3D

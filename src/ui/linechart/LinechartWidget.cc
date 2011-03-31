@@ -55,23 +55,23 @@ This file is part of the PIXHAWK project
 
 
 LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent),
-sysid(systemid),
-activePlot(NULL),
-curvesLock(new QReadWriteLock()),
-plotWindowLock(),
-curveListIndex(0),
-curveListCounter(0),
-listedCurves(new QList<QString>()),
-curveLabels(new QMap<QString, QLabel*>()),
-curveMeans(new QMap<QString, QLabel*>()),
-curveMedians(new QMap<QString, QLabel*>()),
-curveVariances(new QMap<QString, QLabel*>()),
-curveMenu(new QMenu(this)),
-logFile(new QFile()),
-logindex(1),
-logging(false),
-logStartTime(0),
-updateTimer(new QTimer())
+    sysid(systemid),
+    activePlot(NULL),
+    curvesLock(new QReadWriteLock()),
+    plotWindowLock(),
+    curveListIndex(0),
+    curveListCounter(0),
+    listedCurves(new QList<QString>()),
+    curveLabels(new QMap<QString, QLabel*>()),
+    curveMeans(new QMap<QString, QLabel*>()),
+    curveMedians(new QMap<QString, QLabel*>()),
+    curveVariances(new QMap<QString, QLabel*>()),
+    curveMenu(new QMenu(this)),
+    logFile(new QFile()),
+    logindex(1),
+    logging(false),
+    logStartTime(0),
+    updateTimer(new QTimer())
 {
     // Add elements defined in Qt Designer
     ui.setupUi(this);
@@ -137,7 +137,7 @@ updateTimer(new QTimer())
 
     // Create the layout
     createLayout();
-    
+
     // Add the last actions
     //connect(this, SIGNAL(plotWindowPositionUpdated(int)), scrollbar, SLOT(setValue(int)));
     //connect(scrollbar, SIGNAL(sliderMoved(int)), this, SLOT(setPlotWindowPosition(int)));
@@ -158,8 +158,7 @@ LinechartWidget::~LinechartWidget()
 void LinechartWidget::selectAllCurves(bool all)
 {
     QMap<QString, QLabel*>::iterator i;
-    for (i = curveLabels->begin(); i != curveLabels->end(); ++i)
-    {
+    for (i = curveLabels->begin(); i != curveLabels->end(); ++i) {
         activePlot->setVisible(i.key(), all);
     }
 }
@@ -179,8 +178,7 @@ void LinechartWidget::readSettings()
     QSettings settings;
     settings.sync();
     settings.beginGroup("LINECHART");
-    if (activePlot)
-    {
+    if (activePlot) {
         timeButton->setChecked(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
         activePlot->enforceGroundTime(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
     }
@@ -294,24 +292,20 @@ void LinechartWidget::createLayout()
 void LinechartWidget::appendData(int uasId, QString curve, double value, quint64 usec)
 {
     static const QString unit("-");
-    if (isVisible())
-    {
+    if (isVisible()) {
         // Order matters here, first append to plot, then update curve list
         activePlot->appendData(curve+unit, usec, value);
         // Store data
         QLabel* label = curveLabels->value(curve+unit, NULL);
         // Make sure the curve will be created if it does not yet exist
-        if(!label)
-        {
+        if(!label) {
             addCurve(curve, unit);
         }
     }
 
     // Log data
-    if (logging)
-    {
-        if (activePlot->isVisible(curve+unit))
-        {
+    if (logging) {
+        if (activePlot->isVisible(curve+unit)) {
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
@@ -325,25 +319,21 @@ void LinechartWidget::appendData(int uasId, QString curve, double value, quint64
 
 void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, double value, quint64 usec)
 {
-    if (isVisible())
-    {
+    if (isVisible()) {
         // Order matters here, first append to plot, then update curve list
         activePlot->appendData(curve+unit, usec, value);
         // Store data
         QLabel* label = curveLabels->value(curve+unit, NULL);
         // Make sure the curve will be created if it does not yet exist
-        if(!label)
-        {
+        if(!label) {
             //qDebug() << "ADDING CURVE IN APPENDDATE DOUBLE";
             addCurve(curve, unit);
         }
     }
 
     // Log data
-    if (logging)
-    {
-        if (activePlot->isVisible(curve+unit))
-        {
+    if (logging) {
+        if (activePlot->isVisible(curve+unit)) {
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
@@ -356,15 +346,13 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
 
 void LinechartWidget::appendData(int uasId, const QString& curve, const QString& unit, int value, quint64 usec)
 {
-    if (isVisible())
-    {
+    if (isVisible()) {
         // Order matters here, first append to plot, then update curve list
         activePlot->appendData(curve+unit, usec, value);
         // Store data
         QLabel* label = curveLabels->value(curve+unit, NULL);
         // Make sure the curve will be created if it does not yet exist
-        if(!label)
-        {
+        if(!label) {
             intData.insert(curve+unit, 0);
             addCurve(curve, unit);
         }
@@ -374,10 +362,8 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     }
 
     // Log data
-    if (logging)
-    {
-        if (activePlot->isVisible(curve+unit))
-        {
+    if (logging) {
+        if (activePlot->isVisible(curve+unit)) {
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
@@ -393,30 +379,19 @@ void LinechartWidget::refresh()
     QString str;
     // Value
     QMap<QString, QLabel*>::iterator i;
-    for (i = curveLabels->begin(); i != curveLabels->end(); ++i)
-    {
-        if (intData.contains(i.key()))
-        {
+    for (i = curveLabels->begin(); i != curveLabels->end(); ++i) {
+        if (intData.contains(i.key())) {
             str.sprintf("% 11i", intData.value(i.key()));
-        }
-        else
-        {
+        } else {
             double val = activePlot->getCurrentValue(i.key());
             int intval = static_cast<int>(val);
-            if (intval >= 100000 || intval <= -100000)
-            {
+            if (intval >= 100000 || intval <= -100000) {
                 str.sprintf("% 11i", intval);
-            }
-            else if (intval >= 10000 || intval <= -10000)
-            {
+            } else if (intval >= 10000 || intval <= -10000) {
                 str.sprintf("% 11.2f", val);
-            }
-            else if (intval >= 1000 || intval <= -1000)
-            {
+            } else if (intval >= 1000 || intval <= -1000) {
                 str.sprintf("% 11.4f", val);
-            }
-            else
-            {
+            } else {
                 str.sprintf("% 11.6f", val);
             }
         }
@@ -425,24 +400,16 @@ void LinechartWidget::refresh()
     }
     // Mean
     QMap<QString, QLabel*>::iterator j;
-    for (j = curveMeans->begin(); j != curveMeans->end(); ++j)
-    {
+    for (j = curveMeans->begin(); j != curveMeans->end(); ++j) {
         double val = activePlot->getMean(j.key());
         int intval = static_cast<int>(val);
-        if (intval >= 100000 || intval <= -100000)
-        {
+        if (intval >= 100000 || intval <= -100000) {
             str.sprintf("% 11i", intval);
-        }
-        else if (intval >= 10000 || intval <= -10000)
-        {
+        } else if (intval >= 10000 || intval <= -10000) {
             str.sprintf("% 11.2f", val);
-        }
-        else if (intval >= 1000 || intval <= -1000)
-        {
+        } else if (intval >= 1000 || intval <= -1000) {
             str.sprintf("% 11.4f", val);
-        }
-        else
-        {
+        } else {
             str.sprintf("% 11.6f", val);
         }
         j.value()->setText(str);
@@ -455,12 +422,11 @@ void LinechartWidget::refresh()
 //        k.value()->setText(str);
 //    }
     QMap<QString, QLabel*>::iterator l;
-    for (l = curveVariances->begin(); l != curveVariances->end(); ++l)
-    {
-      // Variance
-       str.sprintf("% 8.3e", activePlot->getVariance(l.key()));
-      l.value()->setText(str);
-   }
+    for (l = curveVariances->begin(); l != curveVariances->end(); ++l) {
+        // Variance
+        str.sprintf("% 8.3e", activePlot->getVariance(l.key()));
+        l.value()->setText(str);
+    }
 }
 
 
@@ -471,8 +437,7 @@ void LinechartWidget::startLogging()
     bool abort = false;
 
     // Check if any curve is enabled
-    if (!activePlot->anyCurveVisible())
-    {
+    if (!activePlot->anyCurveVisible()) {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("No curves selected for logging.");
@@ -488,22 +453,19 @@ void LinechartWidget::startLogging()
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
     QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.csv *.txt);;"));
 
-    if (!fileName.contains("."))
-    {
+    if (!fileName.contains(".")) {
         // .csv is default extension
         fileName.append(".csv");
     }
 
-    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort && fileName != "")
-    {
+    while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort && fileName != "") {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Unsuitable file extension for logfile");
         msgBox.setInformativeText("Please choose .txt or .csv as file extension. Click OK to change the file extension, cancel to not start logging.");
         msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        if(msgBox.exec() == QMessageBox::Cancel)
-        {
+        if(msgBox.exec() == QMessageBox::Cancel) {
             abort = true;
             break;
         }
@@ -512,11 +474,9 @@ void LinechartWidget::startLogging()
     }
 
     // Check if the user did not abort the file save dialog
-    if (!abort && fileName != "")
-    {
+    if (!abort && fileName != "") {
         logFile = new QFile(fileName);
-        if (logFile->open(QIODevice::WriteOnly | QIODevice::Text))
-        {
+        if (logFile->open(QIODevice::WriteOnly | QIODevice::Text)) {
             logging = true;
             logStartTime = 0;
             curvesWidget->setEnabled(false);
@@ -532,8 +492,7 @@ void LinechartWidget::stopLogging()
 {
     logging = false;
     curvesWidget->setEnabled(true);
-    if (logFile->isOpen())
-    {
+    if (logFile->isOpen()) {
         logFile->flush();
         logFile->close();
         // Postprocess log file
@@ -691,7 +650,7 @@ void LinechartWidget::removeCurve(QString curve)
     Q_UNUSED(curve)
     //TODO @todo Ensure that the button for a curve gets deleted when the original curve is deleted
     // Remove name
-    }
+}
 
 void LinechartWidget::showEvent(QShowEvent* event)
 {
@@ -707,16 +666,12 @@ void LinechartWidget::hideEvent(QHideEvent* event)
 
 void LinechartWidget::setActive(bool active)
 {
-    if (activePlot)
-    {
+    if (activePlot) {
         activePlot->setActive(active);
     }
-    if (active)
-    {
+    if (active) {
         updateTimer->start(updateInterval);
-    }
-    else
-    {
+    } else {
         updateTimer->stop();
     }
 }
@@ -729,7 +684,8 @@ void LinechartWidget::setActive(bool active)
  *
  * @param scrollBarValue The value of the scrollbar, in the range from MIN_TIME_SCROLLBAR_VALUE to MAX_TIME_SCROLLBAR_VALUE
  **/
-void LinechartWidget::setPlotWindowPosition(int scrollBarValue) {
+void LinechartWidget::setPlotWindowPosition(int scrollBarValue)
+{
     plotWindowLock.lockForWrite();
     // Disable automatic scrolling immediately
     int scrollBarRange = (MAX_TIME_SCROLLBAR_VALUE - MIN_TIME_SCROLLBAR_VALUE);
@@ -775,7 +731,8 @@ void LinechartWidget::setPlotWindowPosition(int scrollBarValue) {
  *
  * @param position The absolute position of the right edge of the plot window, in milliseconds
  **/
-void LinechartWidget::setPlotWindowPosition(quint64 position) {
+void LinechartWidget::setPlotWindowPosition(quint64 position)
+{
     plotWindowLock.lockForWrite();
     // Calculate the relative position
     double pos;
@@ -823,8 +780,7 @@ void LinechartWidget::takeButtonClick(bool checked)
 
     QCheckBox* button = qobject_cast<QCheckBox*>(QObject::sender());
 
-    if(button != NULL)
-    {
+    if(button != NULL) {
         activePlot->setVisible(button->objectName(), checked);
     }
 }

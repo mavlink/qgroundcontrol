@@ -1,3 +1,6 @@
 [submodule "thirdParty/mavlink"]
 	path = thirdParty/mavlink
 	url = https://github.com/pixhawk/mavlink.git
+[submodule "thirdParty/qserial"]
+	path = thirdParty/qserial
+	url = git://gitorious.org/inbiza-labs/qserialport.git

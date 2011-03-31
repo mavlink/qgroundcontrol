@@ -51,13 +51,11 @@ WaypointGroupNode::init(void)
 void
 WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
 {
-    if (uas)
-    {
+    if (uas) {
         double robotX = 0.0;
         double robotY = 0.0;
         double robotZ = 0.0;
-        if (frame == MAV_FRAME_GLOBAL)
-        {
+        if (frame == MAV_FRAME_GLOBAL) {
             double latitude = uas->getLatitude();
             double longitude = uas->getLongitude();
             double altitude = uas->getAltitude();
@@ -65,23 +63,19 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             QString utmZone;
             Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);
             robotZ = -altitude;
-        }
-        else if (frame == MAV_FRAME_LOCAL)
-        {
+        } else if (frame == MAV_FRAME_LOCAL) {
             robotX = uas->getLocalX();
             robotY = uas->getLocalY();
             robotZ = uas->getLocalZ();
         }
 
-        if (getNumChildren() > 0)
-        {
+        if (getNumChildren() > 0) {
             removeChild(0, getNumChildren());
         }
 
         const QVector<Waypoint *>& list = uas->getWaypointManager()->getWaypointList();
 
-        for (int i = 0; i < list.size(); i++)
-        {
+        for (int i = 0; i < list.size(); i++) {
             Waypoint* wp = list.at(i);
 
             double wpX, wpY, wpZ;
@@ -89,19 +83,16 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
 
             osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable;
             osg::ref_ptr<osg::Cylinder> cylinder =
-                    new osg::Cylinder(osg::Vec3d(0.0, 0.0, -wpZ / 2.0),
-                                      wp->getAcceptanceRadius(),
-                                      fabs(wpZ));
+                new osg::Cylinder(osg::Vec3d(0.0, 0.0, -wpZ / 2.0),
+                                  wp->getAcceptanceRadius(),
+                                  fabs(wpZ));
 
             sd->setShape(cylinder);
             sd->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
 
-            if (wp->getCurrent())
-            {
+            if (wp->getCurrent()) {
                 sd->setColor(osg::Vec4(1.0f, 0.3f, 0.3f, 0.5f));
-            }
-            else
-            {
+            } else {
                 sd->setColor(osg::Vec4(0.0f, 1.0f, 0.0f, 0.5f));
             }
 
@@ -112,8 +103,7 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             sprintf(wpLabel, "wp%d", i);
             geode->setName(wpLabel);
 
-            if (i < list.size() - 1)
-            {
+            if (i < list.size() - 1) {
                 double nextWpX, nextWpY, nextWpZ;
                 getPosition(list.at(i + 1), nextWpX, nextWpY, nextWpZ);
 
@@ -141,7 +131,7 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             }
 
             osg::ref_ptr<osg::PositionAttitudeTransform> pat =
-                    new osg::PositionAttitudeTransform;
+                new osg::PositionAttitudeTransform;
 
             pat->setPosition(osg::Vec3d(wpY - robotY,
                                         wpX - robotX,
@@ -156,8 +146,7 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
 void
 WaypointGroupNode::getPosition(Waypoint* wp, double &x, double &y, double &z)
 {
-    if (wp->getFrame() == MAV_FRAME_GLOBAL)
-    {
+    if (wp->getFrame() == MAV_FRAME_GLOBAL) {
         double latitude = wp->getY();
         double longitude = wp->getX();
         double altitude = wp->getZ();
@@ -165,9 +154,7 @@ WaypointGroupNode::getPosition(Waypoint* wp, double &x, double &y, double &z)
         QString utmZone;
         Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
         z = -altitude;
-    }
-    else if (wp->getFrame() == MAV_FRAME_LOCAL)
-    {
+    } else if (wp->getFrame() == MAV_FRAME_LOCAL) {
         x = wp->getX();
         y = wp->getY();
         z = wp->getZ();

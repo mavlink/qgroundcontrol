@@ -14,12 +14,16 @@ public:
     QGCToolWidgetItem(const QString& name, QWidget *parent = 0);
     ~QGCToolWidgetItem();
 
-    int component() {return _component;}
+    int component() {
+        return _component;
+    }
 
 public slots:
     virtual void startEditMode() {}
     virtual void endEditMode() {}
-    virtual void setComponent(int comp) {_component = comp;}
+    virtual void setComponent(int comp) {
+        _component = comp;
+    }
     virtual void writeSettings(QSettings& settings) = 0;
     virtual void readSettings(const QSettings& settings) = 0;
     virtual void setActiveUAS(UASInterface *uas);

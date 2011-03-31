@@ -46,7 +46,8 @@ This file is part of the QGROUNDCONTROL project
  * for more information, please see the official website.
  * @ref http://pixhawk.ethz.ch/software/mavlink/
  **/
-class QGCNMEAProtocol : public ProtocolInterface {
+class QGCNMEAProtocol : public ProtocolInterface
+{
     Q_OBJECT
 
 public:
@@ -55,7 +56,9 @@ public:
 
     void run();
     /** @brief Get the human-friendly name of this protocol */
-    QString getName() { return QString("NMEA (GPS)"); }
+    QString getName() {
+        return QString("NMEA (GPS)");
+    }
 
 public slots:
     /** @brief Receive bytes from a communication interface */

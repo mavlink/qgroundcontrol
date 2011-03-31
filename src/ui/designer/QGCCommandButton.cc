@@ -46,8 +46,7 @@ QGCCommandButton::~QGCCommandButton()
 
 void QGCCommandButton::sendCommand()
 {
-    if (QGCToolWidgetItem::uas)
-    {
+    if (QGCToolWidgetItem::uas) {
         // FIXME
         int index = ui->editCommandComboBox->itemData(ui->editCommandComboBox->currentIndex()).toInt();
         MAV_CMD command = static_cast<MAV_CMD>(index);
@@ -59,9 +58,7 @@ void QGCCommandButton::sendCommand()
         int component = ui->editComponentSpinBox->value();
 
         QGCToolWidgetItem::uas->executeCommand(command, confirm, param1, param2, param3, param4, component);
-    }
-    else
-    {
+    } else {
         qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }
 }
@@ -105,8 +102,7 @@ void QGCCommandButton::endEditMode()
     ui->editParamsVisibleCheckBox->hide();
     ui->editLine1->hide();
     ui->editLine2->hide();
-    if (!ui->editParamsVisibleCheckBox->isChecked())
-    {
+    if (!ui->editParamsVisibleCheckBox->isChecked()) {
         ui->editParam1SpinBox->hide();
         ui->editParam2SpinBox->hide();
         ui->editParam3SpinBox->hide();
@@ -142,15 +138,12 @@ void QGCCommandButton::readSettings(const QSettings& settings)
     ui->commandButton->setText(settings.value("QGC_ACTION_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
     ui->editCommandComboBox->setCurrentIndex(settings.value("QGC_ACTION_BUTTON_ACTIONID", 0).toInt());
     ui->editParamsVisibleCheckBox->setChecked(settings.value("QGC_COMMAND_BUTTON_PARAMS_VISIBLE").toBool());
-    if (ui->editParamsVisibleCheckBox->isChecked())
-    {
+    if (ui->editParamsVisibleCheckBox->isChecked()) {
         ui->editParam1SpinBox->show();
         ui->editParam2SpinBox->show();
         ui->editParam3SpinBox->show();
         ui->editParam4SpinBox->show();
-    }
-    else
-    {
+    } else {
         ui->editParam1SpinBox->hide();
         ui->editParam2SpinBox->hide();
         ui->editParam3SpinBox->hide();

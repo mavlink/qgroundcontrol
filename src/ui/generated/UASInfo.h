@@ -57,8 +57,7 @@ public:
     QProgressBar *progressBar;
     QSpacerItem *horizontalSpacer;
 
-    void setupUi(QWidget *uasInfo)
-    {
+    void setupUi(QWidget *uasInfo) {
         if (uasInfo->objectName().isEmpty())
             uasInfo->setObjectName(QString::fromUtf8("uasInfo"));
         uasInfo->resize(455, 220);
@@ -261,8 +260,7 @@ public:
         QMetaObject::connectSlotsByName(uasInfo);
     } // setupUi
 
-    void retranslateUi(QWidget *uasInfo)
-    {
+    void retranslateUi(QWidget *uasInfo) {
         uasInfo->setWindowTitle(QApplication::translate("uasInfo", "Form", 0, QApplication::UnicodeUTF8));
         label->setText(QApplication::translate("uasInfo", "Battery", 0, QApplication::UnicodeUTF8));
         voltageLabel->setText(QApplication::translate("uasInfo", "12", 0, QApplication::UnicodeUTF8));
@@ -288,8 +286,9 @@ public:
 
 };
 
-namespace Ui {
-    class uasInfo: public Ui_uasInfo {};
+namespace Ui
+{
+class uasInfo: public Ui_uasInfo {};
 } // namespace Ui
 
 QT_END_NAMESPACE

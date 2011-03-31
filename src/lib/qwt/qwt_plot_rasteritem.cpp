@@ -20,15 +20,13 @@ class QwtPlotRasterItem::PrivateData
 {
 public:
     PrivateData():
-        alpha(-1)
-    {
+        alpha(-1) {
         cache.policy = QwtPlotRasterItem::NoCache;
     }
 
     int alpha;
 
-    struct ImageCache
-    {
+    struct ImageCache {
         QwtPlotRasterItem::CachePolicy policy;
         QwtDoubleRect rect;
         QSize size;
@@ -38,7 +36,7 @@ public:
 
 static QImage toRgba(const QImage& image, int alpha)
 {
-    if ( alpha < 0 || alpha >= 255 )  
+    if ( alpha < 0 || alpha >= 255 )
         return image;
 
 #if QT_VERSION < 0x040000
@@ -55,26 +53,20 @@ static QImage toRgba(const QImage& image, int alpha)
     const int w = image.size().width();
     const int h = image.size().height();
 
-    if ( image.depth() == 8 )
-    {
-        for ( int y = 0; y < h; y++ )
-        {
+    if ( image.depth() == 8 ) {
+        for ( int y = 0; y < h; y++ ) {
             QRgb* alphaLine = (QRgb*)alphaImage.scanLine(y);
             const unsigned char *line = image.scanLine(y);
 
             for ( int x = 0; x < w; x++ )
                 *alphaLine++ = (image.color(*line++) & mask2) | mask1;
         }
-    }
-    else if ( image.depth() == 32 )
-    {
-        for ( int y = 0; y < h; y++ )
-        {
+    } else if ( image.depth() == 32 ) {
+        for ( int y = 0; y < h; y++ ) {
             QRgb* alphaLine = (QRgb*)alphaImage.scanLine(y);
             const QRgb* line = (const QRgb*) image.scanLine(y);
 
-            for ( int x = 0; x < w; x++ )
-            {
+            for ( int x = 0; x < w; x++ ) {
                 const QRgb rgb = *line++;
                 if ( rgb & mask3 ) // alpha != 0
                     *alphaLine++ = (rgb & mask2) | mask1;
@@ -125,14 +117,14 @@ void QwtPlotRasterItem::init()
    Using setAlpha() raster items can be stacked easily.
 
    The alpha value is a value [0, 255] to
-   control the transparency of the image. 0 represents a fully 
+   control the transparency of the image. 0 represents a fully
    transparent color, while 255 represents a fully opaque color.
-   
+
    \param alpha Alpha value
 
    - alpha >= 0\n
-     All alpha values of the pixels returned by renderImage() will be set to 
-     alpha, beside those with an alpha value of 0 (invalid pixels). 
+     All alpha values of the pixels returned by renderImage() will be set to
+     alpha, beside those with an alpha value of 0 (invalid pixels).
    - alpha < 0
      The alpha values returned by renderImage() are not changed.
 
@@ -148,8 +140,7 @@ void QwtPlotRasterItem::setAlpha(int alpha)
     if ( alpha > 255 )
         alpha = 255;
 
-    if ( alpha != d_data->alpha )
-    {
+    if ( alpha != d_data->alpha ) {
         d_data->alpha = alpha;
 
         itemChanged();
@@ -176,8 +167,7 @@ int QwtPlotRasterItem::alpha() const
 void QwtPlotRasterItem::setCachePolicy(
     QwtPlotRasterItem::CachePolicy policy)
 {
-    if ( d_data->cache.policy != policy )
-    {
+    if ( d_data->cache.policy != policy ) {
         d_data->cache.policy = policy;
 
         invalidateCache();
@@ -227,8 +217,8 @@ QSize QwtPlotRasterItem::rasterHint(const QwtDoubleRect &) const
   \param canvasRect Contents rect of the plot canvas
 */
 void QwtPlotRasterItem::draw(QPainter *painter,
-    const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-    const QRect &canvasRect) const
+                             const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                             const QRect &canvasRect) const
 {
     if ( canvasRect.isEmpty() || d_data->alpha == 0 )
         return;
@@ -244,24 +234,19 @@ void QwtPlotRasterItem::draw(QPainter *painter,
     QImage image;
 
     bool doCache = true;
-    if ( painter->device()->devType() == QInternal::Printer 
-            || painter->device()->devType() == QInternal::Picture )
-    {
+    if ( painter->device()->devType() == QInternal::Printer
+            || painter->device()->devType() == QInternal::Picture ) {
         doCache = false;
     }
 
-    if ( !doCache || d_data->cache.policy == NoCache )
-    {
+    if ( !doCache || d_data->cache.policy == NoCache ) {
         image = renderImage(xMap, yMap, area);
         if ( d_data->alpha >= 0 && d_data->alpha < 255 )
             image = toRgba(image, d_data->alpha);
 
-    }
-    else if ( d_data->cache.policy == PaintCache )
-    {
+    } else if ( d_data->cache.policy == PaintCache ) {
         if ( d_data->cache.image.isNull() || d_data->cache.rect != area
-            || d_data->cache.size != paintRect.size() )
-        {
+                || d_data->cache.size != paintRect.size() ) {
             d_data->cache.image = renderImage(xMap, yMap, area);
             d_data->cache.rect = area;
             d_data->cache.size = paintRect.size();
@@ -270,21 +255,15 @@ void QwtPlotRasterItem::draw(QPainter *painter,
         image = d_data->cache.image;
         if ( d_data->alpha >= 0 && d_data->alpha < 255 )
             image = toRgba(image, d_data->alpha);
-    }
-    else if ( d_data->cache.policy == ScreenCache )
-    {
+    } else if ( d_data->cache.policy == ScreenCache ) {
         const QSize screenSize =
             QApplication::desktop()->screenGeometry().size();
 
         if ( paintRect.width() > screenSize.width() ||
-            paintRect.height() > screenSize.height() )
-        {
+                paintRect.height() > screenSize.height() ) {
             image = renderImage(xMap, yMap, area);
-        }
-        else
-        {
-            if ( d_data->cache.image.isNull() || d_data->cache.rect != area )
-            {
+        } else {
+            if ( d_data->cache.image.isNull() || d_data->cache.rect != area ) {
                 QwtScaleMap cacheXMap = xMap;
                 cacheXMap.setPaintInterval( 0, screenSize.width());
 
@@ -292,7 +271,7 @@ void QwtPlotRasterItem::draw(QPainter *painter,
                 cacheYMap.setPaintInterval(screenSize.height(), 0);
 
                 d_data->cache.image = renderImage(
-                    cacheXMap, cacheYMap, area);
+                                          cacheXMap, cacheYMap, area);
                 d_data->cache.rect = area;
                 d_data->cache.size = paintRect.size();
             }

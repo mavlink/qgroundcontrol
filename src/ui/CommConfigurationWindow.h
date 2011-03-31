@@ -39,8 +39,7 @@ This file is part of the QGROUNDCONTROL project
 #include "ProtocolInterface.h"
 #include "ui_CommSettings.h"
 
-enum qgc_link_t
-{
+enum qgc_link_t {
     QGC_LINK_SERIAL,
     QGC_LINK_UDP,
     QGC_LINK_SIMULATION,
@@ -48,8 +47,7 @@ enum qgc_link_t
     QGC_LINK_OPAL
 };
 
-enum qgc_protocol_t
-{
+enum qgc_protocol_t {
     QGC_PROTOCOL_MAVLINK,
     QGC_PROTOCOL_NMEA
 };

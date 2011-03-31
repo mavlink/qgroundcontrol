@@ -111,8 +111,8 @@ public:
      * @return A pair of values containing the world 3D cursor coordinates.
      */
     std::pair<double,double> getGlobalCursorPosition(int32_t cursorX,
-                                                     int32_t cursorY,
-                                                     double z);
+            int32_t cursorY,
+            double z);
 
 protected slots:
     /**
@@ -250,8 +250,7 @@ protected:
 
     QTimer timer; /**< Timer which draws graphics based on specified fps. */
 
-    struct CameraParams
-    {
+    struct CameraParams {
         float minZoomRange;
         float cameraFov;
         float minClipRange;

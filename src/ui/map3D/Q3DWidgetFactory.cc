@@ -39,18 +39,15 @@ This file is part of the QGROUNDCONTROL project
 QPointer<QWidget>
 Q3DWidgetFactory::get(const std::string& type)
 {
-    if (type == "PIXHAWK")
-    {
+    if (type == "PIXHAWK") {
         return QPointer<QWidget>(new Pixhawk3DWidget());
     }
 #ifdef QGC_OSGEARTH_ENABLED
-    else if (type == "MAP3D")
-    {
+    else if (type == "MAP3D") {
         return QPointer<QWidget>(new QMap3D());
     }
 #endif
-    else
-    {
+    else {
         return QPointer<QWidget>(new Q3DWidget());
     }
 }

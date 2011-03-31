@@ -48,7 +48,7 @@ class QWT_EXPORT QwtData
 {
 public:
     QwtData();
-    virtual ~QwtData(); 
+    virtual ~QwtData();
 
     //! \return Pointer to a copy (virtual copy constructor)
     virtual QwtData *copy() const = 0;
@@ -80,7 +80,7 @@ protected:
 
 
 /*!
-  \brief Data class containing a single QwtArray<QwtDoublePoint> object. 
+  \brief Data class containing a single QwtArray<QwtDoublePoint> object.
  */
 class QWT_EXPORT QwtPolygonFData: public QwtData
 {

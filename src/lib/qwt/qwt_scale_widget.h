@@ -33,7 +33,7 @@ class QwtColorMap;
 
 class QWT_EXPORT QwtScaleWidget : public QWidget
 {
-    Q_OBJECT 
+    Q_OBJECT
 
 public:
     explicit QwtScaleWidget(QWidget *parent = NULL);
@@ -102,8 +102,8 @@ public:
 
     void drawColorBar(QPainter *painter, const QRect &rect) const;
     void drawTitle(QPainter *painter, QwtScaleDraw::Alignment,
-        const QRect &rect) const;
-        
+                   const QRect &rect) const;
+
     void setAlignment(QwtScaleDraw::Alignment);
     QwtScaleDraw::Alignment alignment() const;
 

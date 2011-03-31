@@ -34,20 +34,19 @@ public:
 
     }
     /*
-	QAxObject* document()
-	{
-		return _document;
-	}*/
+    QAxObject* document()
+    {
+    	return _document;
+    }*/
 
 protected:
     /*
-	void setDocument(IDispatch* dispatch, QVariant& variant)
-	{
-		_document = this->querySubObject("Document()");
-	}
-	QAxObject* _document;*/
-    virtual bool translateKeyEvent(int message, int keycode) const
+    void setDocument(IDispatch* dispatch, QVariant& variant)
     {
+    	_document = this->querySubObject("Document()");
+    }
+    QAxObject* _document;*/
+    virtual bool translateKeyEvent(int message, int keycode) const {
         if (message >= WM_KEYFIRST && message <= WM_KEYLAST)
             return true;
         else
@@ -57,8 +56,9 @@ protected:
 };
 #endif
 
-namespace Ui {
-    class QGCGoogleEarthView;
+namespace Ui
+{
+class QGCGoogleEarthView;
 }
 
 class Waypoint;
@@ -71,8 +71,7 @@ public:
     explicit QGCGoogleEarthView(QWidget *parent = 0);
     ~QGCGoogleEarthView();
 
-    enum VIEW_MODE
-    {
+    enum VIEW_MODE {
         VIEW_MODE_SIDE = 0, ///< View from above, orientation is free
         VIEW_MODE_MAP, ///< View from above, orientation is north (map view)
         VIEW_MODE_CHASE_LOCKED, ///< Locked chase camera
@@ -153,7 +152,7 @@ protected:
 #ifdef _MSC_VER
     QGCWebAxWidget* webViewWin;
     QAxObject* jScriptWin;
-	QAxObject* documentWin;
+    QAxObject* documentWin;
 #endif
 #if (defined Q_OS_MAC)
     QWebView* webViewMac;

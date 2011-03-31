@@ -5,8 +5,9 @@
 
 #include "UDPLink.h"
 
-namespace Ui {
-    class QGCUDPLinkConfiguration;
+namespace Ui
+{
+class QGCUDPLinkConfiguration;
 }
 
 class QGCUDPLinkConfiguration : public QWidget

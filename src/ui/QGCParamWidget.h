@@ -45,7 +45,7 @@ This file is part of the QGROUNDCONTROL project
  */
 class QGCParamWidget : public QGCUASParamManager
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     QGCParamWidget(UASInterface* uas, QWidget *parent = 0);
     /** @brief Get the UAS of this widget */

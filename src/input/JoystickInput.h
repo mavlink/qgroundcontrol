@@ -74,7 +74,7 @@ protected:
 
     void init();
 
-    signals:
+signals:
 
     /**
      * @brief Signal containing all joystick raw positions
@@ -95,52 +95,52 @@ protected:
      */
     void thrustChanged(int thrust);
 
-   /**
-     * @brief X-Axis / forward-backward axis has changed
-     *
-     * @param x forward / pitch / x axis, front: +1.0, center: 0.0, back: -1.0
-     */
+    /**
+      * @brief X-Axis / forward-backward axis has changed
+      *
+      * @param x forward / pitch / x axis, front: +1.0, center: 0.0, back: -1.0
+      */
     void xChanged(int x);
 
-   /**
-     * @brief Y-Axis / left-right axis has changed
-     *
-     * @param y left / roll / y axis, left: -1.0, middle: 0.0, right: +1.0
-     */
+    /**
+      * @brief Y-Axis / left-right axis has changed
+      *
+      * @param y left / roll / y axis, left: -1.0, middle: 0.0, right: +1.0
+      */
     void yChanged(int y);
 
-   /**
-     * @brief Yaw / left-right turn has changed
-     *
-     * @param yaw turn axis, left-turn: -1.0, middle: 0.0, right-turn: +1.0
-     */
+    /**
+      * @brief Yaw / left-right turn has changed
+      *
+      * @param yaw turn axis, left-turn: -1.0, middle: 0.0, right-turn: +1.0
+      */
     void yawChanged(int yaw);
 
-   /**
-     * @brief Joystick button has been pressed
-     *
-     * @param key index of the pressed key
-     */
+    /**
+      * @brief Joystick button has been pressed
+      *
+      * @param key index of the pressed key
+      */
     void buttonPressed(int key);
 
-   /**
-     * @brief Hat (8-way switch on the top) has changed position
-     *
-     * Coordinate frame for joystick hat:
-     *
-     *    y
-     *    ^
-     *    |
-     *    |
-     *    0 ----> x
-     *
-     *
-     * @param x vector in left-right direction
-     * @param y vector in forward-backward direction
-     */
+    /**
+      * @brief Hat (8-way switch on the top) has changed position
+      *
+      * Coordinate frame for joystick hat:
+      *
+      *    y
+      *    ^
+      *    |
+      *    |
+      *    0 ----> x
+      *
+      *
+      * @param x vector in left-right direction
+      * @param y vector in forward-backward direction
+      */
     void hatDirectionChanged(int x, int y);
 
-    public slots:
+public slots:
     void setActiveUAS(UASInterface* uas);
 };
 

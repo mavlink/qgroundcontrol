@@ -161,14 +161,12 @@ void MAVLinkSettingsWidget::chooseLogfileName()
 {
     QString fileName = QFileDialog::getSaveFileName(this, tr("Specify MAVLink log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink Logfile (*.mavlink);;"));
 
-    if (!fileName.endsWith(".mavlink"))
-    {
+    if (!fileName.endsWith(".mavlink")) {
         fileName.append(".mavlink");
     }
 
     QFileInfo file(fileName);
-    if (file.exists() && !file.isWritable())
-    {
+    if (file.exists() && !file.isWritable()) {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText(tr("The selected logfile is not writable"));
@@ -176,9 +174,7 @@ void MAVLinkSettingsWidget::chooseLogfileName()
         msgBox.setStandardButtons(QMessageBox::Ok);
         msgBox.setDefaultButton(QMessageBox::Ok);
         msgBox.exec();
-    }
-    else
-    {
+    } else {
         updateLogfileName(fileName);
         protocol->setLogfileName(fileName);
     }
@@ -193,15 +189,12 @@ void MAVLinkSettingsWidget::enableDroneOS(bool enable)
     // Delete from all lists first
     UDPLink* firstUdp = NULL;
     QList<LinkInterface*> links = LinkManager::instance()->getLinksForProtocol(protocol);
-    foreach (LinkInterface* link, links)
-    {
+    foreach (LinkInterface* link, links) {
         UDPLink* udp = dynamic_cast<UDPLink*>(link);
-        if (udp)
-        {
+        if (udp) {
             if (!firstUdp) firstUdp = udp;
             // Remove current hosts
-            for (int i = 0; i < m_ui->droneOSComboBox->count(); ++i)
-            {
+            for (int i = 0; i < m_ui->droneOSComboBox->count(); ++i) {
                 QString oldHostString = m_ui->droneOSComboBox->itemText(i);
                 oldHostString = hostString.split(":").first();
                 udp->removeHost(oldHostString);
@@ -210,10 +203,8 @@ void MAVLinkSettingsWidget::enableDroneOS(bool enable)
     }
 
     // Re-add if enabled
-    if (enable)
-    {
-        if (firstUdp)
-        {
+    if (enable) {
+        if (firstUdp) {
             firstUdp->addHost(hostString);
         }
         // Set key
@@ -245,8 +236,7 @@ MAVLinkSettingsWidget::~MAVLinkSettingsWidget()
 void MAVLinkSettingsWidget::changeEvent(QEvent *e)
 {
     QWidget::changeEvent(e);
-    switch (e->type())
-    {
+    switch (e->type()) {
     case QEvent::LanguageChange:
         m_ui->retranslateUi(this);
         break;

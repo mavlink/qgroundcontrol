@@ -32,8 +32,8 @@ using namespace OpalRT;
 
 ParameterList::ParameterList()
     :params(new QMap<int, QMap<QGCParamID, Parameter> >),
-    paramList(new QList<QList<Parameter*> >()),
-    reqdServoParams(new QStringList())
+     paramList(new QList<QList<Parameter*> >()),
+     reqdServoParams(new QStringList())
 {
 
     QDir settingsDir = QDir(qApp->applicationDirPath());
@@ -59,8 +59,7 @@ ParameterList::ParameterList()
     reqdServoParams->append("RUD_RIGHT_IN");
 
     QString filename(settingsDir.path() + "/ParameterList.xml");
-    if ((QFile::exists(filename)) && open(filename))
-    {
+    if ((QFile::exists(filename)) && open(filename)) {
 
         /* Get a list of the available parameters from opal-rt */
         QMap<QString, unsigned short> *opalParams = new QMap<QString, unsigned short>;
@@ -70,20 +69,15 @@ ParameterList::ParameterList()
         QMap<int, QMap<QGCParamID, Parameter> >::iterator componentIter;
         QMap<QGCParamID, Parameter>::iterator paramIter;
         QString s;
-        for (componentIter = params->begin(); componentIter != params->end(); ++componentIter)
-        {
+        for (componentIter = params->begin(); componentIter != params->end(); ++componentIter) {
             paramList->append(QList<Parameter*>());
-            for (paramIter = (*componentIter).begin(); paramIter != (*componentIter).end(); ++paramIter)
-            {
+            for (paramIter = (*componentIter).begin(); paramIter != (*componentIter).end(); ++paramIter) {
                 paramList->last().append(paramIter.operator ->());
                 s = (*paramIter).getSimulinkPath() + (*paramIter).getSimulinkName();
-                if (opalParams->contains(s))
-                {
+                if (opalParams->contains(s)) {
                     (*paramIter).setOpalID(opalParams->value(s));
                     //                qDebug() << __FILE__ << " Line:" << __LINE__ << ": Successfully added " << s;
-                }
-                else
-                {
+                } else {
                     qWarning() << __FILE__ << " Line:" << __LINE__ << ": " << s << " was not found in param list";
                 }
             }
@@ -125,11 +119,10 @@ void ParameterList::getParameterList(QMap<QString, unsigned short> *opalParams)
     int returnValue;
 
     returnValue = OpalGetParameterList(allocatedParams, &numParams, idParam,
-                             allocatedPathLen, &maxPathLen, paths,
-                             allocatedNameLen, &maxNameLen, names,
-                             allocatedVarLen, &maxVarLen, var);
-    if (returnValue!=E2BIG)
-    {
+                                       allocatedPathLen, &maxPathLen, paths,
+                                       allocatedNameLen, &maxNameLen, names,
+                                       allocatedVarLen, &maxVarLen, var);
+    if (returnValue!=E2BIG) {
 //        OpalRT::setLastErrorMsg();
         OpalRT::OpalErrorMsg::displayLastErrorMsg();
         return;
@@ -156,20 +149,18 @@ void ParameterList::getParameterList(QMap<QString, unsigned short> *opalParams)
     allocatedVarLen = maxVarLen;
 
     returnValue = OpalGetParameterList(allocatedParams, &numParams, idParam,
-                             allocatedPathLen, &maxPathLen, paths,
-                             allocatedNameLen, &maxNameLen, names,
-                             allocatedVarLen, &maxVarLen, var);
+                                       allocatedPathLen, &maxPathLen, paths,
+                                       allocatedNameLen, &maxNameLen, names,
+                                       allocatedVarLen, &maxVarLen, var);
 
-    if (returnValue != EOK)
-    {
+    if (returnValue != EOK) {
 //        OpalRT::setLastErrorMsg();
         OpalRT::OpalErrorMsg::displayLastErrorMsg();
         return;
     }
 
     QString path, name;
-    for (int i=0; i<numParams; ++i)
-    {
+    for (int i=0; i<numParams; ++i) {
         path.clear();
         path.append(paths[i]);
         name.clear();
@@ -194,8 +185,7 @@ int ParameterList::indexOf(const Parameter &p)
 
     QList<QList<Parameter*> >::const_iterator iter;
     int index = -1;
-    for (iter = paramList->begin(); iter != paramList->end(); ++iter)
-    {
+    for (iter = paramList->begin(); iter != paramList->end(); ++iter) {
         if ((index = (*iter).indexOf(pPtr)) != -1)
             return index;
     }
@@ -245,14 +235,12 @@ int ParameterList::count()
 bool ParameterList::open(QString filename)
 {
     QFile paramFile(filename);
-    if (!paramFile.exists())
-    {
+    if (!paramFile.exists()) {
         /// \todo open dialog box (maybe: that could also go in  comm config window)
         return false;
     }
 
-    if (!paramFile.open(QIODevice::ReadOnly))
-    {
+    if (!paramFile.open(QIODevice::ReadOnly)) {
         return false;
     }
 
@@ -272,8 +260,7 @@ bool ParameterList::read(QIODevice *device)
     int errorColumn;
 
     if (!paramConfig->setContent(device, true, &errorStr, &errorLine,
-                                &errorColumn))
-    {
+                                 &errorColumn)) {
         qDebug() << "Error reading XML Parameter File on line: " << errorLine << errorStr;
         return false;
     }
@@ -285,17 +272,14 @@ bool ParameterList::read(QIODevice *device)
     }
 
     QDomElement child = root.firstChildElement("Block");
-    while (!child.isNull())
-    {
+    while (!child.isNull()) {
         parseBlock(child);
         child = child.nextSiblingElement("Block");
     }
 
-    if (!reqdServoParams->empty())
-    {
+    if (!reqdServoParams->empty()) {
         qDebug() << __FILE__ << __LINE__ << "Missing the following required servo parameters";
-        foreach(QString s, *reqdServoParams)
-        {
+        foreach(QString s, *reqdServoParams) {
             qDebug() << s;
         }
     }
@@ -320,32 +304,28 @@ void ParameterList::parseBlock(const QDomElement &block)
     else if (block.attribute("name") == "ServoInputs")
         id = OpalRT::SERVO_INPUTS;
 
-        paramList = block.elementsByTagName("Parameter");
-        for (int i=0; i < paramList.size(); ++i)
-        {
-            e = paramList.item(i).toElement();
-            if (e.hasAttribute("SimulinkPath") &&
+    paramList = block.elementsByTagName("Parameter");
+    for (int i=0; i < paramList.size(); ++i) {
+        e = paramList.item(i).toElement();
+        if (e.hasAttribute("SimulinkPath") &&
                 e.hasAttribute("SimulinkParameterName") &&
-                e.hasAttribute("QGCParamID"))
-            {
+                e.hasAttribute("QGCParamID")) {
 
-                p = new Parameter(e.attribute("SimulinkPath"),
-                                  e.attribute("SimulinkParameterName"),
-                                  static_cast<uint8_t>(id),
-                                  QGCParamID(e.attribute("QGCParamID")));
-                (*params)[id].insert(p->getParamID(), *p);
-                if (reqdServoParams->contains((QString)p->getParamID()))
-                    reqdServoParams->removeAt(reqdServoParams->indexOf((QString)p->getParamID()));
+            p = new Parameter(e.attribute("SimulinkPath"),
+                              e.attribute("SimulinkParameterName"),
+                              static_cast<uint8_t>(id),
+                              QGCParamID(e.attribute("QGCParamID")));
+            (*params)[id].insert(p->getParamID(), *p);
+            if (reqdServoParams->contains((QString)p->getParamID()))
+                reqdServoParams->removeAt(reqdServoParams->indexOf((QString)p->getParamID()));
 
-                delete p;
+            delete p;
 
 
-            }            
-            else
-            {
-                qDebug() << __FILE__ << ":" << __LINE__ << ": error in xml doc in block" << block.attribute("name");
-            }
+        } else {
+            qDebug() << __FILE__ << ":" << __LINE__ << ": error in xml doc in block" << block.attribute("name");
         }
+    }
 
 
 

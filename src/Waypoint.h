@@ -47,30 +47,78 @@ public:
              bool autocontinue = true, bool current = false, MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_CMD action=MAV_CMD_NAV_WAYPOINT);
     ~Waypoint();
 
-    quint16 getId() const { return id; }
-    double getX() const { return x; }
-    double getY() const { return y; }
-    double getZ() const { return z; }
-    double getLatitude() const { return x; }
-    double getLongitude() const { return y; }
-    double getAltitude() const { return z; }
-    double getYaw() const { return yaw; }
-    bool getAutoContinue() const { return autocontinue; }
-    bool getCurrent() const { return current; }
-    double getLoiterOrbit() const { return orbit; }
-    double getAcceptanceRadius() const { return param2; }
-    double getHoldTime() const { return param1; }
-    double getParam1() const { return param1; }
-    double getParam2() const { return param2; }
-    double getParam3() const { return orbit; }
-    double getParam4() const { return yaw; }
-    double getParam5() const { return x; }
-    double getParam6() const { return y; }
-    double getParam7() const { return z; }
-    int getTurns() const { return param1; }
-    MAV_FRAME getFrame() const { return frame; }
-    MAV_CMD getAction() const { return action; }
-    const QString& getName() const { return name; }
+    quint16 getId() const {
+        return id;
+    }
+    double getX() const {
+        return x;
+    }
+    double getY() const {
+        return y;
+    }
+    double getZ() const {
+        return z;
+    }
+    double getLatitude() const {
+        return x;
+    }
+    double getLongitude() const {
+        return y;
+    }
+    double getAltitude() const {
+        return z;
+    }
+    double getYaw() const {
+        return yaw;
+    }
+    bool getAutoContinue() const {
+        return autocontinue;
+    }
+    bool getCurrent() const {
+        return current;
+    }
+    double getLoiterOrbit() const {
+        return orbit;
+    }
+    double getAcceptanceRadius() const {
+        return param2;
+    }
+    double getHoldTime() const {
+        return param1;
+    }
+    double getParam1() const {
+        return param1;
+    }
+    double getParam2() const {
+        return param2;
+    }
+    double getParam3() const {
+        return orbit;
+    }
+    double getParam4() const {
+        return yaw;
+    }
+    double getParam5() const {
+        return x;
+    }
+    double getParam6() const {
+        return y;
+    }
+    double getParam7() const {
+        return z;
+    }
+    int getTurns() const {
+        return param1;
+    }
+    MAV_FRAME getFrame() const {
+        return frame;
+    }
+    MAV_CMD getAction() const {
+        return action;
+    }
+    const QString& getName() const {
+        return name;
+    }
     /** @brief Returns true if x, y, z contain reasonable navigation data */
     bool isNavigationType();
 

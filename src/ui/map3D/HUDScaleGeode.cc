@@ -59,12 +59,12 @@ HUDScaleGeode::init(void)
     outlineGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     outlineGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
-                                                         0, 6));
+                                     0, 6));
 
     osg::ref_ptr<osg::LineWidth> outlineWidth(new osg::LineWidth());
     outlineWidth->setWidth(4.0f);
     outlineGeometry->getOrCreateStateSet()->
-            setAttributeAndModes(outlineWidth, osg::StateAttribute::ON);
+    setAttributeAndModes(outlineWidth, osg::StateAttribute::ON);
 
     addDrawable(outlineGeometry);
 
@@ -85,12 +85,12 @@ HUDScaleGeode::init(void)
     markerGeometry->setColorBinding(osg::Geometry::BIND_OVERALL);
 
     markerGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
-                                                        0, 6));
+                                    0, 6));
 
     osg::ref_ptr<osg::LineWidth> markerWidth(new osg::LineWidth());
     markerWidth->setWidth(1.5f);
     markerGeometry->getOrCreateStateSet()->
-            setAttributeAndModes(markerWidth, osg::StateAttribute::ON);
+    setAttributeAndModes(markerWidth, osg::StateAttribute::ON);
 
     addDrawable(markerGeometry);
 
@@ -112,12 +112,9 @@ HUDScaleGeode::update(int windowHeight, float cameraFov, float cameraDistance,
               / tanf(cameraFov / 180.0f * M_PI / 2.0f);
     float dist = cameraDistance / f * 80.0f;
 
-    if (darkBackground)
-    {
+    if (darkBackground) {
         text->setColor(osg::Vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    }
-    else
-    {
+    } else {
         text->setColor(osg::Vec4(0.0f, 0.0f, 0.0f, 1.0f));
     }
 

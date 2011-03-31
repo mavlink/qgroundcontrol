@@ -8,8 +8,7 @@
 class MAV2DIcon : public QGraphicsItem
 {
 public:
-    enum
-    {
+    enum {
         MAV_ICON_GENERIC = 0,
         MAV_ICON_AIRPLANE,
         MAV_ICON_QUADROTOR,
@@ -53,13 +52,19 @@ public:
     void setSelectedUAS(bool selected);
     void setYaw(float yaw);
     /** @brief Set the airframe this MAV uses */
-    void setAirframe(int airframe) { this->airframe = airframe; }
+    void setAirframe(int airframe) {
+        this->airframe = airframe;
+    }
 
     /** @brief Get system id */
-    int getUASId() const { return uasid; }
+    int getUASId() const {
+        return uasid;
+    }
 
     void drawIcon(QPen* pen);
-    void drawIcon() { drawIcon(mypen); }
+    void drawIcon() {
+        drawIcon(mypen);
+    }
     static void drawAirframePolygon(int airframe, QPainter& painter, int radius, QColor& iconColor, float yaw);
 
 protected:

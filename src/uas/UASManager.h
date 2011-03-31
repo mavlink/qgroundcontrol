@@ -71,11 +71,17 @@ public:
 
     QList<UASInterface*> getUASList();
     /** @brief Get home position latitude */
-    double getHomeLatitude() const { return homeLat; }
+    double getHomeLatitude() const {
+        return homeLat;
+    }
     /** @brief Get home position longitude */
-    double getHomeLongitude() const { return homeLon; }
+    double getHomeLongitude() const {
+        return homeLon;
+    }
     /** @brief Get home position altitude */
-    double getHomeAltitude() const { return homeAlt; }
+    double getHomeAltitude() const {
+        return homeAlt;
+    }
 
 
 public slots:

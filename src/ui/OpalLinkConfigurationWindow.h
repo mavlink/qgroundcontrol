@@ -10,7 +10,7 @@
 
 class OpalLinkConfigurationWindow : public QWidget
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     explicit OpalLinkConfigurationWindow(OpalLink* link, QWidget *parent = 0, Qt::WindowFlags flags = Qt::Sheet);
 signals:

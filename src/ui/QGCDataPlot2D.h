@@ -6,11 +6,13 @@
 #include "IncrementalPlot.h"
 #include "LogCompressor.h"
 
-namespace Ui {
-    class QGCDataPlot2D;
+namespace Ui
+{
+class QGCDataPlot2D;
 }
 
-class QGCDataPlot2D : public QWidget {
+class QGCDataPlot2D : public QWidget
+{
     Q_OBJECT
 public:
     QGCDataPlot2D(QWidget *parent = 0);

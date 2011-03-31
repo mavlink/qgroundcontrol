@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -34,11 +34,11 @@ public:
     explicit QwtPlotPicker(QwtPlotCanvas *);
 
     explicit QwtPlotPicker(int xAxis, int yAxis,
-        QwtPlotCanvas *);
+                           QwtPlotCanvas *);
 
-    explicit QwtPlotPicker(int xAxis, int yAxis, int selectionFlags, 
-        RubberBand rubberBand, DisplayMode trackerMode, 
-        QwtPlotCanvas *);
+    explicit QwtPlotPicker(int xAxis, int yAxis, int selectionFlags,
+                           RubberBand rubberBand, DisplayMode trackerMode,
+                           QwtPlotCanvas *);
 
     virtual void setAxis(int xAxis, int yAxis);
 
@@ -47,7 +47,7 @@ public:
 
     QwtPlot *plot();
     const QwtPlot *plot() const;
-    
+
     QwtPlotCanvas *canvas();
     const QwtPlotCanvas *canvas() const;
 
@@ -86,7 +86,7 @@ signals:
       selection has been moved.
 
       \param pos Position of the moved last point of the selection.
-      \sa move(), appended() 
+      \sa move(), appended()
     */
     void moved(const QwtDoublePoint &pos);
 
@@ -110,5 +110,5 @@ private:
     int d_xAxis;
     int d_yAxis;
 };
-            
+
 #endif

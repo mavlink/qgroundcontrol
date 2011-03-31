@@ -13,9 +13,15 @@ class QGCUASParamManager : public QWidget
 public:
     QGCUASParamManager(UASInterface* uas, QWidget *parent = 0);
 
-    QList<QString> getParameterNames(int component) const { return parameters.value(component)->keys(); }
-    QList<float> getParameterValues(int component) const { return parameters.value(component)->values(); }
-    float getParameterValue(int component, const QString& parameter) const { return parameters.value(component)->value(parameter); }
+    QList<QString> getParameterNames(int component) const {
+        return parameters.value(component)->keys();
+    }
+    QList<float> getParameterValues(int component) const {
+        return parameters.value(component)->values();
+    }
+    float getParameterValue(int component, const QString& parameter) const {
+        return parameters.value(component)->value(parameter);
+    }
 
     /** @brief Request an update for the parameter list */
     void requestParameterListUpdate(int component = 0);

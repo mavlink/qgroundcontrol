@@ -47,15 +47,15 @@ This file is part of the PIXHAWK project
 #define CONTROL_MODE_MANUAL "MODE MANUAL"
 
 #ifdef MAVLINK_ENABLED_SLUGS
-    #define CONTROL_MODE_GUIDED "MODE MID-L CMDS"
-    #define CONTROL_MODE_AUTO   "MODE WAYPOINT"
-    #define CONTROL_MODE_TEST1  "MODE PASST"
-    #define CONTROL_MODE_TEST2  "MODE SEL PT"
+#define CONTROL_MODE_GUIDED "MODE MID-L CMDS"
+#define CONTROL_MODE_AUTO   "MODE WAYPOINT"
+#define CONTROL_MODE_TEST1  "MODE PASST"
+#define CONTROL_MODE_TEST2  "MODE SEL PT"
 #else
-    #define CONTROL_MODE_GUIDED "MODE GUIDED"
-    #define CONTROL_MODE_AUTO   "MODE AUTO"
-    #define CONTROL_MODE_TEST1  "MODE TEST1"
-    #define CONTROL_MODE_TEST2  "MODE TEST2"
+#define CONTROL_MODE_GUIDED "MODE GUIDED"
+#define CONTROL_MODE_AUTO   "MODE AUTO"
+#define CONTROL_MODE_TEST1  "MODE TEST1"
+#define CONTROL_MODE_TEST2  "MODE TEST2"
 #endif
 
 #define CONTROL_MODE_TEST3  "MODE TEST3"
@@ -73,8 +73,8 @@ This file is part of the PIXHAWK project
 #define CONTROL_MODE_RC_TRAINING_INDEX  9
 
 UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
-uas(0),
-engineOn(false)
+    uas(0),
+    engineOn(false)
 {
     ui.setupUi(this);
 
@@ -101,8 +101,7 @@ engineOn(false)
 
 void UASControlWidget::setUAS(UASInterface* uas)
 {
-    if (this->uas != 0)
-    {
+    if (this->uas != 0) {
         UASInterface* oldUAS = UASManager::instance()->getUASForId(this->uas);
         disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(enable_motors()));
         disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
@@ -154,12 +153,9 @@ UASControlWidget::~UASControlWidget()
 void UASControlWidget::updateStatemachine()
 {
 
-    if (engineOn)
-    {
+    if (engineOn) {
         ui.controlButton->setText(tr("Stop Engine"));
-    }
-    else
-    {
+    } else {
         ui.controlButton->setText(tr("Activate Engine"));
     }
 }
@@ -195,8 +191,7 @@ void UASControlWidget::updateMode(int uas,QString mode,QString description)
 
 void UASControlWidget::updateState(int state)
 {
-    switch (state)
-    {
+    switch (state) {
     case (int)MAV_STATE_ACTIVE:
         engineOn = true;
         ui.controlButton->setText(tr("Stop Engine"));
@@ -211,48 +206,31 @@ void UASControlWidget::updateState(int state)
 void UASControlWidget::setMode(int mode)
 {
     // Adapt context button mode
-    if (mode == CONTROL_MODE_LOCKED_INDEX)
-    {
+    if (mode == CONTROL_MODE_LOCKED_INDEX) {
         uasMode = (unsigned int)MAV_MODE_LOCKED;
         ui.modeComboBox->setCurrentIndex(mode);
-    }
-    else if (mode == CONTROL_MODE_MANUAL_INDEX)
-    {
+    } else if (mode == CONTROL_MODE_MANUAL_INDEX) {
         uasMode = (unsigned int)MAV_MODE_MANUAL;
         ui.modeComboBox->setCurrentIndex(mode);
-    }
-    else if (mode == CONTROL_MODE_GUIDED_INDEX)
-    {
+    } else if (mode == CONTROL_MODE_GUIDED_INDEX) {
         uasMode = (unsigned int)MAV_MODE_GUIDED;
         ui.modeComboBox->setCurrentIndex(mode);
-    }
-    else if (mode == CONTROL_MODE_AUTO_INDEX)
-    {
+    } else if (mode == CONTROL_MODE_AUTO_INDEX) {
         uasMode = (unsigned int)MAV_MODE_AUTO;
         ui.modeComboBox->setCurrentIndex(mode);
-    }
-    else if (mode == CONTROL_MODE_TEST1_INDEX)
-    {
+    } else if (mode == CONTROL_MODE_TEST1_INDEX) {
         uasMode = (unsigned int)MAV_MODE_TEST1;
         ui.modeComboBox->setCurrentIndex(mode);
-    }
-    else if (mode == CONTROL_MODE_TEST2_INDEX)
-    {
+    } else if (mode == CONTROL_MODE_TEST2_INDEX) {
         uasMode = (unsigned int)MAV_MODE_TEST2;
         ui.modeComboBox->setCurrentIndex(mode);
-    }
-    else if (mode == CONTROL_MODE_TEST3_INDEX)
-    {
+    } else if (mode == CONTROL_MODE_TEST3_INDEX) {
         uasMode = (unsigned int)MAV_MODE_TEST3;
         ui.modeComboBox->setCurrentIndex(mode);
-    }
-    else if (mode == CONTROL_MODE_RC_TRAINING_INDEX)
-    {
+    } else if (mode == CONTROL_MODE_RC_TRAINING_INDEX) {
         uasMode = (unsigned int)MAV_MODE_RC_TRAINING;
         ui.modeComboBox->setCurrentIndex(mode);
-    }
-    else
-    {
+    } else {
         qDebug() << "ERROR! MODE NOT FOUND";
         uasMode = 0;
     }
@@ -265,11 +243,9 @@ void UASControlWidget::setMode(int mode)
 
 void UASControlWidget::transmitMode()
 {
-    if (uasMode != 0)
-    {
+    if (uasMode != 0) {
         UASInterface* mav = UASManager::instance()->getUASForId(this->uas);
-        if (mav)
-        {
+        if (mav) {
             mav->setMode(uasMode);
             ui.lastActionLabel->setText(QString("Set new mode for system %1").arg(mav->getUASName()));
         }
@@ -279,16 +255,12 @@ void UASControlWidget::transmitMode()
 void UASControlWidget::cycleContextButton()
 {
     UAS* mav = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(this->uas));
-    if (mav)
-    {
+    if (mav) {
 
-        if (!engineOn)
-        {
+        if (!engineOn) {
             mav->enable_motors();
             ui.lastActionLabel->setText(QString("Enabled motors on %1").arg(mav->getUASName()));
-        }
-        else
-        {
+        } else {
             mav->disable_motors();
             ui.lastActionLabel->setText(QString("Disabled motors on %1").arg(mav->getUASName()));
         }

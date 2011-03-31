@@ -9,7 +9,7 @@
 
 class Linecharts : public QStackedWidget
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     explicit Linecharts(QWidget *parent = 0);
 

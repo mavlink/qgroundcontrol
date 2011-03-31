@@ -20,7 +20,7 @@ This file is part of the QGROUNDCONTROL project
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
- 
+
 /**
  * @file
  *   @brief Brief Description
@@ -54,26 +54,26 @@ AS4Protocol::AS4Protocol()
 //    heartbeatTimer = new QTimer(this);
 //    connect(heartbeatTimer, SIGNAL(timeout()), this, SLOT());
 //    heartbeatTimer->start(1000/heartbeatRate);
-/*
-    // Start the node manager
-    configData = new FileLoader("nodeManager.conf");
-    handler = new MyHandler();
+    /*
+        // Start the node manager
+        configData = new FileLoader("nodeManager.conf");
+        handler = new MyHandler();
 
-        try
-        {
-                nodeManager = new NodeManager(configData, handler);
-                qDebug() << "SAE AS-4 NODE MANAGER constructed";
-        }
-        catch(char *exceptionString)
-        {
-                printf("%s", exceptionString);
-                printf("Terminating Program...\n");
-        }
-        catch(...)
-        {
-                printf("Node Manager Construction Failed. Terminating Program...\n");
-        }
-        */
+            try
+            {
+                    nodeManager = new NodeManager(configData, handler);
+                    qDebug() << "SAE AS-4 NODE MANAGER constructed";
+            }
+            catch(char *exceptionString)
+            {
+                    printf("%s", exceptionString);
+                    printf("Terminating Program...\n");
+            }
+            catch(...)
+            {
+                    printf("Node Manager Construction Failed. Terminating Program...\n");
+            }
+            */
 
 }
 
@@ -86,8 +86,7 @@ AS4Protocol::~AS4Protocol()
 
 void AS4Protocol::run()
 {
-    forever
-    {
+    forever {
         QGC::SLEEP::msleep(5000);
     }
 }
@@ -126,8 +125,7 @@ void AS4Protocol::receiveBytes(LinkInterface* link)
 //    qDebug() << __FILE__ << __LINE__ << ": buffer size:" << maxlen << "bytes:" << bytesToRead;
 //
 
-    for (int position = 0; position < bytesToRead; position++)
-    {
+    for (int position = 0; position < bytesToRead; position++) {
     }
 //    receiveMutex.unlock();
 

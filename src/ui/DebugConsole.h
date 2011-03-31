@@ -40,8 +40,9 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LinkInterface.h"
 
-namespace Ui {
-    class DebugConsole;
+namespace Ui
+{
+class DebugConsole;
 }
 
 /**
@@ -91,7 +92,7 @@ public slots:
     /** @brief A new special symbol is selected */
     void specialSymbolSelected(const QString& text);
 
-    protected slots:
+protected slots:
     /** @brief Draw information overlay */
     void paintEvent(QPaintEvent *event);
     /** @brief Update traffic measurements */

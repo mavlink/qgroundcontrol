@@ -1,8 +1,8 @@
 #include "RadioCalibrationWindow.h"
 
 RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
-        QWidget(parent, Qt::Window),
-        radio(new RadioCalibrationData())
+    QWidget(parent, Qt::Window),
+    radio(new RadioCalibrationData())
 {
     QGridLayout *grid = new QGridLayout();
 
@@ -84,8 +84,8 @@ RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
 
 //void RadioCalibrationWindow::setChannelScaled(int ch, float normalized)
 //{
-    // FIXME James
-    // FIXME Bryan
+// FIXME James
+// FIXME Bryan
 
 //    /** this expects a particular channel to function mapping
 //       \todo allow run-time channel mapping
@@ -120,8 +120,7 @@ void RadioCalibrationWindow::setChannel(int ch, float raw)
     /** this expects a particular channel to function mapping
        \todo allow run-time channel mapping
        */
-    switch (ch)
-    {
+    switch (ch) {
     case 0:
         aileron->channelChanged(raw);
         break;
@@ -148,21 +147,19 @@ void RadioCalibrationWindow::setChannel(int ch, float raw)
 void RadioCalibrationWindow::saveFile()
 {
     QString fileName(QFileDialog::getSaveFileName(this,
-                                                  tr("Save RC Calibration"),
-                                                  "settings/",
-                                                  tr("XML Files (*.xml)")));
+                     tr("Save RC Calibration"),
+                     "settings/",
+                     tr("XML Files (*.xml)")));
     if (fileName.isEmpty())
         return;
 
     QDomDocument *rcConfig = new QDomDocument();
 
     QFile rcFile(fileName);
-    if (rcFile.exists())
-    {
-            rcFile.remove();
+    if (rcFile.exists()) {
+        rcFile.remove();
     }
-    if (!rcFile.open(QFile::WriteOnly | QFile::Text))
-    {
+    if (!rcFile.open(QFile::WriteOnly | QFile::Text)) {
         qDebug() << __FILE__ << __LINE__ << "could not open"  << rcFile.fileName() << "for writing";
         return;
     }
@@ -226,21 +223,19 @@ void RadioCalibrationWindow::saveFile()
 void RadioCalibrationWindow::loadFile()
 {
     QString fileName(QFileDialog::getOpenFileName(this,
-                                                  tr("Load RC Calibration"),
-                                                  "settings/",
-                                                  tr("XML Files (*.xml)")));
+                     tr("Load RC Calibration"),
+                     "settings/",
+                     tr("XML Files (*.xml)")));
 
     if (fileName.isEmpty())
         return;
 
     QFile rcFile(fileName);
-    if (!rcFile.exists())
-    {        
+    if (!rcFile.exists()) {
         return;
     }
 
-    if (!rcFile.open(QIODevice::ReadOnly))
-    {
+    if (!rcFile.open(QIODevice::ReadOnly)) {
         return;
     }
 
@@ -251,8 +246,7 @@ void RadioCalibrationWindow::loadFile()
     int errorColumn;
 
     if (!rcConfig->setContent(&rcFile, true, &errorStr, &errorLine,
-                                &errorColumn))
-    {
+                              &errorColumn)) {
         qDebug() << "Error reading XML Parameter File on line: " << errorLine << errorStr;
         return;
     }
@@ -267,8 +261,7 @@ void RadioCalibrationWindow::loadFile()
 
     QPointer<RadioCalibrationData> newRadio = new RadioCalibrationData();
     QDomElement child = root.firstChildElement();
-    while (!child.isNull())
-    {
+    while (!child.isNull()) {
         parseSetpoint(child, newRadio);
         child = child.nextSiblingElement();
     }
@@ -284,15 +277,13 @@ void RadioCalibrationWindow::parseSetpoint(const QDomElement &setpoint, const QP
     QVector<float> setpoints;
     QStringList setpointList = setpoint.text().split(",", QString::SkipEmptyParts);
     foreach (QString setpoint, setpointList)
-        setpoints << setpoint.trimmed().toFloat();
+    setpoints << setpoint.trimmed().toFloat();
 
 //    qDebug() << __FILE__ << __LINE__ << ": " << setpoint.tagName() << ": " << setpoint.attribute("name") ;
-    if (setpoint.tagName() == "threeSetpoint")
-    {
+    if (setpoint.tagName() == "threeSetpoint") {
         if (setpoints.isEmpty())
             setpoints << 0 << 0 << 0;
-        for (int i=0; i<3; ++i)
-        {
+        for (int i=0; i<3; ++i) {
             if (setpoint.attribute("name").toUpper() == "AILERON")
                 newRadio->setAileron(i, setpoints[i]);
             else if(setpoint.attribute("name").toUpper() == "ELEVATOR")
@@ -300,23 +291,17 @@ void RadioCalibrationWindow::parseSetpoint(const QDomElement &setpoint, const QP
             else if(setpoint.attribute("name").toUpper() == "RUDDER")
                 newRadio->setRudder(i, setpoints[i]);
         }
-    }    
-    else if (setpoint.tagName() == "twoSetpoint")
-    {
+    } else if (setpoint.tagName() == "twoSetpoint") {
         if (setpoints.isEmpty())
             setpoints << 0 << 0;
-        for (int i=0; i<2; ++i)
-        {
+        for (int i=0; i<2; ++i) {
             if (setpoint.attribute("name").toUpper() == "GYRO")
                 newRadio->setGyro(i, setpoints[i]);
         }
-    }
-    else if (setpoint.tagName() == "fiveSetpoint")
-    {
+    } else if (setpoint.tagName() == "fiveSetpoint") {
         if (setpoints.isEmpty())
             setpoints << 0 << 0 << 0 << 0 << 0;
-        for (int i=0; i<5; ++i)
-        {
+        for (int i=0; i<5; ++i) {
             if (setpoint.attribute("name").toUpper() == "PITCH")
                 newRadio->setPitch(i, setpoints[i]);
             else if (setpoint.attribute("name").toUpper() == "THROTTLE")
@@ -330,8 +315,7 @@ void RadioCalibrationWindow::send()
     qDebug() << __FILE__ << __LINE__ << "uasId = " << uasId;
 #ifdef MAVLINK_ENABLED_UALBERTA_MESSAGES
     UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(uasId));
-    if (uas)
-    {
+    if (uas) {
         mavlink_message_t msg;
         mavlink_msg_radio_calibration_pack(uasId, 0, &msg,
                                            (*radio)[RadioCalibrationData::AILERON],
@@ -349,8 +333,7 @@ void RadioCalibrationWindow::request()
 {
     qDebug() << __FILE__ << __LINE__ << "READ FROM UAV";
     UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(uasId));
-    if (uas)
-    {
+    if (uas) {
         mavlink_message_t msg;
         mavlink_msg_action_pack(uasId, 0, &msg, 0, 0, ::MAV_ACTION_CALIBRATE_RC);
         uas->sendMessage(msg);
@@ -359,8 +342,7 @@ void RadioCalibrationWindow::request()
 
 void RadioCalibrationWindow::receive(const QPointer<RadioCalibrationData>& radio)
 {
-    if (radio)
-    {
+    if (radio) {
         if (this->radio)
             delete this->radio;
         this->radio = new RadioCalibrationData(*radio);
@@ -371,5 +353,5 @@ void RadioCalibrationWindow::receive(const QPointer<RadioCalibrationData>& radio
         gyro->set((*radio)(RadioCalibrationData::GYRO));
         pitch->set((*radio)(RadioCalibrationData::PITCH));
         throttle->set((*radio)(RadioCalibrationData::THROTTLE));
-    }        
+    }
 }

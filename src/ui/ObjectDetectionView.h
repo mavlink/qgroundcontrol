@@ -38,23 +38,26 @@ This file is part of the QGROUNDCONTROL project
 #include <QMap>
 #include "UASInterface.h"
 
-namespace Ui {
-    class ObjectDetectionView;
+namespace Ui
+{
+class ObjectDetectionView;
 }
 
 /**
  * @brief Lists the detected objects and their confidence
  */
-class ObjectDetectionView : public QWidget {
+class ObjectDetectionView : public QWidget
+{
     Q_OBJECT
     Q_DISABLE_COPY(ObjectDetectionView)
 
-    struct Pattern
-    {
+    struct Pattern {
         Pattern() : name(QString()), confidence(0.0f), count(0) {}
         Pattern(QString name, float confidence) : name(name), confidence(confidence), count(1) {}
 
-        bool operator<(const Pattern& other) const { return this->confidence > other.confidence; } // this comparison is intentionally wrong to sort the QList from highest confidence to lowest
+        bool operator<(const Pattern& other) const {
+            return this->confidence > other.confidence;    // this comparison is intentionally wrong to sort the QList from highest confidence to lowest
+        }
 
         QString name;
         float confidence;

@@ -42,9 +42,9 @@ This file is part of the PIXHAWK project
  *
  * This class defines the interface for
  * communication packets transported by the LinkManager.
- * 
+ *
  * @see LinkManager.
- * 
+ *
  **/
 class ProtocolInterface : public QThread
 {

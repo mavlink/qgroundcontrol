@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -31,8 +31,7 @@ class QwtScaleDiv;
 class QWT_EXPORT QwtPlotItem: public QwtLegendItemManager
 {
 public:
-    enum RttiValues
-    { 
+    enum RttiValues {
         Rtti_PlotItem = 0,
 
         Rtti_PlotGrid,
@@ -46,15 +45,13 @@ public:
         Rtti_PlotUserItem = 1000
     };
 
-    enum ItemAttribute
-    {
+    enum ItemAttribute {
         Legend = 1,
         AutoScale = 2
     };
 
 #if QT_VERSION >= 0x040000
-    enum RenderHint
-    {
+    enum RenderHint {
         RenderAntialiased = 1
     };
 #endif
@@ -71,10 +68,12 @@ public:
        detach() is equivalent to calling attach( NULL )
        \sa attach( QwtPlot* plot )
     */
-    void detach() { attach(NULL); }
+    void detach() {
+        attach(NULL);
+    }
 
     QwtPlot *plot() const;
-    
+
     void setTitle(const QString &title);
     void setTitle(const QwtText &title);
     const QwtText &title() const;
@@ -89,7 +88,7 @@ public:
     bool testRenderHint(RenderHint) const;
 #endif
 
-    double z() const; 
+    double z() const;
     void setZ(double z);
 
     void show();
@@ -115,25 +114,25 @@ public:
       \param yMap Maps y-values into pixel coordinates.
       \param canvasRect Contents rect of the canvas in painter coordinates
     */
-    virtual void draw(QPainter *painter, 
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-        const QRect &canvasRect) const = 0;
+    virtual void draw(QPainter *painter,
+                      const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                      const QRect &canvasRect) const = 0;
 
     virtual QwtDoubleRect boundingRect() const;
 
     virtual void updateLegend(QwtLegend *) const;
     virtual void updateScaleDiv(const QwtScaleDiv&,
-        const QwtScaleDiv&);
+                                const QwtScaleDiv&);
 
     virtual QWidget *legendItem() const;
 
     QwtDoubleRect scaleRect(const QwtScaleMap &, const QwtScaleMap &) const;
     QRect paintRect(const QwtScaleMap &, const QwtScaleMap &) const;
-    
-    QRect transform(const QwtScaleMap &, const QwtScaleMap &, 
-        const QwtDoubleRect&) const; 
+
+    QRect transform(const QwtScaleMap &, const QwtScaleMap &,
+                    const QwtDoubleRect&) const;
     QwtDoubleRect invTransform(const QwtScaleMap &, const QwtScaleMap &,
-        const QRect&) const; 
+                               const QRect&) const;
 
 private:
     // Disabled copy constructor and operator=
@@ -143,5 +142,5 @@ private:
     class PrivateData;
     PrivateData *d_data;
 };
-            
+
 #endif

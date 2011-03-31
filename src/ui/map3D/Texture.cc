@@ -58,7 +58,7 @@ Texture::Texture(unsigned int _id)
     geometry->setTexCoordArray(0, textureCoords);
 
     geometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::LINES,
-                                                  0, 4));
+                              0, 4));
 
     osg::ref_ptr<osg::Vec4Array> colors(new osg::Vec4Array);
     colors->push_back(osg::Vec4(0.0f, 0.0f, 1.0f, 1.0f));
@@ -70,9 +70,9 @@ Texture::Texture(unsigned int _id)
     osg::ref_ptr<osg::LineWidth> linewidth(new osg::LineWidth);
     linewidth->setWidth(2.0f);
     geometry->getOrCreateStateSet()->
-            setAttributeAndModes(linewidth, osg::StateAttribute::ON);
+    setAttributeAndModes(linewidth, osg::StateAttribute::ON);
     geometry->getOrCreateStateSet()->
-            setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+    setMode(GL_LIGHTING, osg::StateAttribute::OFF);
 }
 
 const QString&
@@ -87,17 +87,14 @@ Texture::sync(const WebImagePtr& image)
     state = static_cast<State>(image->getState());
 
     if (image->getState() != WebImage::UNINITIALIZED &&
-        sourceURL != image->getSourceURL())
-    {
+            sourceURL != image->getSourceURL()) {
         sourceURL = image->getSourceURL();
     }
 
-    if (image->getState() == WebImage::READY && image->getSyncFlag())
-    {
+    if (image->getState() == WebImage::READY && image->getSyncFlag()) {
         image->setSyncFlag(false);
 
-        if (texture2D->getImage() != NULL)
-        {
+        if (texture2D->getImage() != NULL) {
             texture2D->getImage()->setImage(image->getWidth(),
                                             image->getHeight(),
                                             1,
@@ -126,35 +123,31 @@ Texture::draw(double x1, double y1, double x2, double y2,
               bool smoothInterpolation) const
 {
     osg::Vec3dArray* vertices =
-            static_cast<osg::Vec3dArray*>(geometry->getVertexArray());
+        static_cast<osg::Vec3dArray*>(geometry->getVertexArray());
     (*vertices)[0].set(x1, y1, z);
     (*vertices)[1].set(x2, y2, z);
     (*vertices)[2].set(x3, y3, z);
     (*vertices)[3].set(x4, y4, z);
 
     osg::DrawArrays* drawarrays =
-            static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
+        static_cast<osg::DrawArrays*>(geometry->getPrimitiveSet(0));
     osg::Vec4Array* colors =
-            static_cast<osg::Vec4Array*>(geometry->getColorArray());
+        static_cast<osg::Vec4Array*>(geometry->getColorArray());
 
-    if (state == REQUESTED)
-    {
+    if (state == REQUESTED) {
         drawarrays->set(osg::PrimitiveSet::LINE_LOOP, 0, 4);
         (*colors)[0].set(0.0f, 0.0f, 1.0f, 1.0f);
-        
+
         geometry->getOrCreateStateSet()->
-                setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::OFF);
+        setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::OFF);
 
         return geometry;
     }
 
-    if (smoothInterpolation)
-    {
+    if (smoothInterpolation) {
         texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR);
         texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
-    }
-    else
-    {
+    } else {
         texture2D->setFilter(osg::Texture::MIN_FILTER, osg::Texture::NEAREST);
         texture2D->setFilter(osg::Texture::MAG_FILTER, osg::Texture::NEAREST);
     }
@@ -163,7 +156,7 @@ Texture::draw(double x1, double y1, double x2, double y2,
     (*colors)[0].set(1.0f, 1.0f, 1.0f, 1.0f);
 
     geometry->getOrCreateStateSet()->
-            setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
+    setTextureAttributeAndModes(0, texture2D, osg::StateAttribute::ON);
 
     return geometry;
 }

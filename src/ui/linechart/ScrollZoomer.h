@@ -14,8 +14,7 @@ class ScrollZoomer: public QwtPlotZoomer
 {
     Q_OBJECT
 public:
-    enum ScrollBarPosition
-    {
+    enum ScrollBarPosition {
         AttachedToScale,
         OppositeToScale
     };
@@ -47,8 +46,8 @@ public:
     ScrollBarPosition vScrollBarPosition() const;
 
     QWidget* cornerWidget() const;
-    virtual void setCornerWidget(QWidget *); 
-    
+    virtual void setCornerWidget(QWidget *);
+
     virtual bool eventFilter(QObject *, QEvent *);
 
     virtual void rescale();
@@ -72,5 +71,5 @@ private:
 
     bool d_inZoom;
 };
-            
+
 #endif

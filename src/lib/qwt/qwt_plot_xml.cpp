@@ -24,4 +24,4 @@ QString QwtPlot::grabProperties() const
     // Temporary dummy code, for designer tests
     return title().text();
 #endif
-}   
+}

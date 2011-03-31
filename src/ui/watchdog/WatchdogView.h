@@ -33,14 +33,16 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QtGui/QWidget>
 
-namespace Ui {
-    class WatchdogView;
+namespace Ui
+{
+class WatchdogView;
 }
 
 /**
  * @brief Represents one onboard watchdog
  */
-class WatchdogView : public QWidget {
+class WatchdogView : public QWidget
+{
     Q_OBJECT
 public:
     WatchdogView(QWidget *parent = 0);

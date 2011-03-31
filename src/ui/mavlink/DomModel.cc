@@ -5,7 +5,7 @@
 #include "DomModel.h"
 
 DomModel::DomModel(QDomDocument document, QObject *parent)
-        : QAbstractItemModel(parent), domDocument(document)
+    : QAbstractItemModel(parent), domDocument(document)
 {
     rootItem = new DomItem(domDocument, 0);
 }
@@ -35,18 +35,18 @@ QVariant DomModel::data(const QModelIndex &index, int role) const
     QDomNamedNodeMap attributeMap = node.attributes();
 
     switch (index.column()) {
-         case 0:
+    case 0:
         return node.nodeName();
-         case 1:
+    case 1:
         for (int i = 0; i < attributeMap.count(); ++i) {
             QDomNode attribute = attributeMap.item(i);
             attributes << attribute.nodeName() + "=\""
-                    +attribute.nodeValue() + "\"";
+                       +attribute.nodeValue() + "\"";
         }
         return attributes.join(" ");
-         case 2:
+    case 2:
         return node.nodeValue().split("\n").join(" ");
-         default:
+    default:
         return QVariant();
     }
 }
@@ -64,13 +64,13 @@ QVariant DomModel::headerData(int section, Qt::Orientation orientation,
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         switch (section) {
-             case 0:
+        case 0:
             return tr("Name");
-             case 1:
+        case 1:
             return tr("Attributes");
-             case 2:
+        case 2:
             return tr("Value");
-             default:
+        default:
             return QVariant();
         }
     }
@@ -79,7 +79,7 @@ QVariant DomModel::headerData(int section, Qt::Orientation orientation,
 }
 
 QModelIndex DomModel::index(int row, int column, const QModelIndex &parent)
-        const
+const
 {
     if (!hasIndex(row, column, parent))
         return QModelIndex();

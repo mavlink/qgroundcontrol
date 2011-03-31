@@ -45,14 +45,14 @@ This file is part of the QGROUNDCONTROL project
  * automatically updated by the comm architecture, so when writing code to e.g. control the vehicle
  * no knowledge of the communication infrastructure is needed.
  */
-class UAS : public UASInterface {
+class UAS : public UASInterface
+{
     Q_OBJECT
 public:
     UAS(MAVLinkProtocol* protocol, int id = 0);
     ~UAS();
 
-    enum BatteryType
-    {
+    enum BatteryType {
         NICD = 0,
         NIMH = 1,
         LIION = 2,
@@ -71,7 +71,9 @@ public:
     /** @brief Get the unique system id */
     int getUASID() const;
     /** @brief Get the airframe */
-    int getAirframe() const { return airframe; }
+    int getAirframe() const {
+        return airframe;
+    }
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
     /** @brief Get the status flag for the communication */
@@ -81,19 +83,37 @@ public:
     /** @brief Get the links associated with this robot */
     QList<LinkInterface*>* getLinks();
 
-    double getLocalX() const { return localX; }
-    double getLocalY() const { return localY; }
-    double getLocalZ() const { return localZ; }
-    double getLatitude() const { return latitude; }
-    double getLongitude() const { return longitude; }
-    double getAltitude() const { return altitude; }
+    double getLocalX() const {
+        return localX;
+    }
+    double getLocalY() const {
+        return localY;
+    }
+    double getLocalZ() const {
+        return localZ;
+    }
+    double getLatitude() const {
+        return latitude;
+    }
+    double getLongitude() const {
+        return longitude;
+    }
+    double getAltitude() const {
+        return altitude;
+    }
 
-    double getRoll() const { return roll; }
-    double getPitch() const { return pitch; }
-    double getYaw() const { return yaw; }
+    double getRoll() const {
+        return roll;
+    }
+    double getPitch() const {
+        return pitch;
+    }
+    double getYaw() const {
+        return yaw;
+    }
     bool getSelected() const;
 
-friend class UASWaypointManager;
+    friend class UASWaypointManager;
 
 protected: //COMMENTS FOR TEST UNIT
     int uasId;                    ///< Unique system ID
@@ -192,24 +212,38 @@ public:
     /** @brief Check if vehicle is in autonomous mode */
     bool isAuto();
 
-    UASWaypointManager* getWaypointManager() { return &waypointManager; }
+    UASWaypointManager* getWaypointManager() {
+        return &waypointManager;
+    }
     /** @brief Get reference to the param manager **/
-    QGCUASParamManager* getParamManager() const { return paramManager; }
+    QGCUASParamManager* getParamManager() const {
+        return paramManager;
+    }
     // TODO Will be removed
     /** @brief Set reference to the param manager **/
-    void setParamManager(QGCUASParamManager* manager) { paramManager = manager; }
+    void setParamManager(QGCUASParamManager* manager) {
+        paramManager = manager;
+    }
     int getSystemType();
     QImage getImage();
     void requestImage(); // ?
-    int getAutopilotType() {return autopilot;}
+    int getAutopilotType() {
+        return autopilot;
+    }
 
 public slots:
     /** @brief Set the autopilot type */
-    void setAutopilotType(int apType) { autopilot = apType; emit systemSpecsChanged(uasId); }
+    void setAutopilotType(int apType) {
+        autopilot = apType;
+        emit systemSpecsChanged(uasId);
+    }
     /** @brief Set the type of airframe */
     void setSystemType(int systemType);
     /** @brief Set the specific airframe type */
-    void setAirframe(int airframe) { this->airframe = airframe; emit systemSpecsChanged(uasId); }
+    void setAirframe(int airframe) {
+        this->airframe = airframe;
+        emit systemSpecsChanged(uasId);
+    }
     /** @brief Set a new name **/
     void setUASName(const QString& name);
     /** @brief Executes an action **/
@@ -359,7 +393,7 @@ signals:
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
 
-    protected:
+protected:
     /** @brief Get the UNIX timestamp in milliseconds */
     quint64 getUnixTime(quint64 time=0);
 

@@ -60,8 +60,7 @@ public:
                                      bool smoothInterpolation) const;
 
 private:
-    enum State
-    {
+    enum State {
         UNINITIALIZED = 0,
         REQUESTED = 1,
         READY = 2

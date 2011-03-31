@@ -96,7 +96,9 @@ public:
 
     void run();
 
-    int getOpalInstID() {return static_cast<int>(opalInstID);}
+    int getOpalInstID() {
+        return static_cast<int>(opalInstID);
+    }
 
 public slots:
 
@@ -108,7 +110,9 @@ public slots:
 
     void getSignals();
 
-    void setOpalInstID(int instID) {opalInstID = static_cast<unsigned short>(instID);}
+    void setOpalInstID(int instID) {
+        opalInstID = static_cast<unsigned short>(instID);
+    }
 
 protected slots:
 

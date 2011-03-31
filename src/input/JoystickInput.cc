@@ -43,20 +43,19 @@ This file is part of the PIXHAWK project
  * @image html http://pixhawk.ethz.ch/wiki/_media/standards/body-frame.png Aeronautical frame
  */
 JoystickInput::JoystickInput() :
-        sdlJoystickMin(-32768.0f),
-        sdlJoystickMax(32767.0f),
-        defaultIndex(0),
-        uas(NULL),
-        uasButtonList(QList<int>()),
-        done(false),
-        thrustAxis(3),
-        xAxis(1),
-        yAxis(0),
-        yawAxis(2),
-        joystickName(tr("Unitinialized"))
+    sdlJoystickMin(-32768.0f),
+    sdlJoystickMax(32767.0f),
+    defaultIndex(0),
+    uas(NULL),
+    uasButtonList(QList<int>()),
+    done(false),
+    thrustAxis(3),
+    xAxis(1),
+    yAxis(0),
+    yawAxis(2),
+    joystickName(tr("Unitinialized"))
 {
-    for (int i = 0; i < 10; i++)
-    {
+    for (int i = 0; i < 10; i++) {
         calibrationPositive[i] = sdlJoystickMax;
         calibrationNegative[i] = sdlJoystickMin;
     }
@@ -71,11 +70,9 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
 {
     // Only connect / disconnect is the UAS is of a controllable UAS class
     UAS* tmp = 0;
-    if (this->uas)
-    {
+    if (this->uas) {
         tmp = dynamic_cast<UAS*>(this->uas);
-        if(tmp)
-        {
+        if(tmp) {
             disconnect(this, SIGNAL(joystickChanged(double,double,double,double,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double)));
             disconnect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
         }
@@ -84,13 +81,11 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
     this->uas = uas;
 
     tmp = dynamic_cast<UAS*>(this->uas);
-    if(tmp)
-    {
+    if(tmp) {
         connect(this, SIGNAL(joystickChanged(double,double,double,double,int,int)), tmp, SLOT(setManualControlCommands(double,double,double,double)));
         connect(this, SIGNAL(buttonPressed(int)), tmp, SLOT(receiveButton(int)));
     }
-    if (!isRunning())
-    {
+    if (!isRunning()) {
         start();
     }
 }
@@ -98,8 +93,7 @@ void JoystickInput::setActiveUAS(UASInterface* uas)
 void JoystickInput::init()
 {
     // INITIALIZE SDL Joystick support
-    if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0)
-    {
+    if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0) {
         printf("Couldn't initialize SimpleDirectMediaLayer: %s\n", SDL_GetError());
     }
 
@@ -107,20 +101,17 @@ void JoystickInput::init()
     int numJoysticks = SDL_NumJoysticks();
 
     // Wait for joysticks if none is connected
-    while (numJoysticks == 0)
-    {
+    while (numJoysticks == 0) {
         MG::SLEEP::msleep(200);
         // INITIALIZE SDL Joystick support
-        if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0)
-        {
+        if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE) < 0) {
             printf("Couldn't initialize SimpleDirectMediaLayer: %s\n", SDL_GetError());
         }
         numJoysticks = SDL_NumJoysticks();
     }
 
     printf("%d Input devices found:\n", numJoysticks);
-    for(int i=0; i < SDL_NumJoysticks(); i++ )
-    {
+    for(int i=0; i < SDL_NumJoysticks(); i++ ) {
         printf("\t- %s\n", SDL_JoystickName(i));
         joystickName = QString(SDL_JoystickName(i));
     }
@@ -143,16 +134,13 @@ void JoystickInput::run()
 
     init();
 
-    while(!done)
-    {
-        while(SDL_PollEvent(&event))
-        {
+    while(!done) {
+        while(SDL_PollEvent(&event)) {
 
             SDL_JoystickUpdate();
 
             // Todo check if it would be more beneficial to use the event structure
-            switch(event.type)
-            {
+            switch(event.type) {
             case SDL_KEYDOWN:
                 /* handle keyboard stuff here */
                 qDebug() << "KEY PRESSED!";
@@ -164,22 +152,18 @@ void JoystickInput::run()
                 break;
 
             case SDL_JOYBUTTONDOWN:  /* Handle Joystick Button Presses */
-                if ( event.jbutton.button == 0 )
-                {
+                if ( event.jbutton.button == 0 ) {
                     qDebug() << "BUTTON PRESSED!";
                 }
                 break;
 
             case SDL_JOYAXISMOTION:  /* Handle Joystick Motion */
-                if ( ( event.jaxis.value < -3200 ) || (event.jaxis.value > 3200 ) )
-                {
-                    if( event.jaxis.axis == 0)
-                    {
+                if ( ( event.jaxis.value < -3200 ) || (event.jaxis.value > 3200 ) ) {
+                    if( event.jaxis.axis == 0) {
                         /* Left-right movement code goes here */
                     }
 
-                    if( event.jaxis.axis == 1)
-                    {
+                    if( event.jaxis.axis == 1) {
                         /* Up-Down movement code goes here */
                     }
                 }
@@ -192,8 +176,7 @@ void JoystickInput::run()
         }
 
         // Display all axes
-        for(int i = 0; i < SDL_JoystickNumAxes(joystick); i++)
-        {
+        for(int i = 0; i < SDL_JoystickNumAxes(joystick); i++) {
             //qDebug() << "\rAXIS" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
         }
 
@@ -264,19 +247,15 @@ void JoystickInput::run()
 
 
         // Display all buttons
-        for(int i = 0; i < SDL_JoystickNumButtons(joystick); i++)
-        {
+        for(int i = 0; i < SDL_JoystickNumButtons(joystick); i++) {
             //qDebug() << "BUTTON" << i << "is: " << SDL_JoystickGetAxis(joystick, i);
-            if(SDL_JoystickGetButton(joystick, i))
-            {
+            if(SDL_JoystickGetButton(joystick, i)) {
                 emit buttonPressed(i);
                 // Check if button is a UAS select button
 
-                if (uasButtonList.contains(i))
-                {
+                if (uasButtonList.contains(i)) {
                     UASInterface* uas = UASManager::instance()->getUASForId(i);
-                    if (uas)
-                    {
+                    if (uas) {
                         UASManager::instance()->setActiveUAS(uas);
                     }
                 }

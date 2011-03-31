@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -27,11 +27,9 @@
 */
 QwtDoubleInterval QwtDoubleInterval::normalized() const
 {
-    if ( !isValid() )
-    {
+    if ( !isValid() ) {
         return QwtDoubleInterval(d_maxValue, d_minValue);
-    }
-    else
+    } else
         return *this;
 }
 
@@ -63,8 +61,7 @@ bool QwtDoubleInterval::contains(double value) const
 QwtDoubleInterval QwtDoubleInterval::unite(
     const QwtDoubleInterval &interval) const
 {
-    if ( !isValid() )
-    {
+    if ( !isValid() ) {
         if ( !interval.isValid() )
             return QwtDoubleInterval();
         else
@@ -95,8 +92,8 @@ QwtDoubleInterval QwtDoubleInterval::intersect(
     if ( i1.maxValue() < i2.minValue() )
         return QwtDoubleInterval();
 
-    return QwtDoubleInterval(i2.minValue(), 
-                qwtMin(i1.maxValue(), i2.maxValue()));
+    return QwtDoubleInterval(i2.minValue(),
+                             qwtMin(i1.maxValue(), i2.maxValue()));
 }
 
 QwtDoubleInterval& QwtDoubleInterval::operator|=(
@@ -107,7 +104,7 @@ QwtDoubleInterval& QwtDoubleInterval::operator|=(
 }
 
 QwtDoubleInterval& QwtDoubleInterval::operator&=(
-    const QwtDoubleInterval &interval) 
+    const QwtDoubleInterval &interval)
 {
     *this = *this & interval;
     return *this;
@@ -188,7 +185,7 @@ QwtDoubleInterval QwtDoubleInterval::extend(double value) const
         return *this;
 
     return QwtDoubleInterval(
-        qwtMin(value, d_minValue), qwtMax(value, d_maxValue) );
+               qwtMin(value, d_minValue), qwtMax(value, d_maxValue) );
 }
 
 QwtDoubleInterval& QwtDoubleInterval::operator|=(double value)

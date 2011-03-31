@@ -20,13 +20,13 @@ class QRect;
 class QString;
 class QPainter;
 
-/*! 
+/*!
   \brief Abstract base class for rendering text strings
 
   A text engine is responsible for rendering texts for a
-  specific text format. They are used by QwtText to render a text. 
+  specific text format. They are used by QwtText to render a text.
 
-  QwtPlainTextEngine and QwtRichTextEngine are part of the Qwt library. 
+  QwtPlainTextEngine and QwtRichTextEngine are part of the Qwt library.
 
   QwtMathMLTextEngine can be found in Qwt MathML extension, that
   needs the MathML renderer of the Qt solutions package. Unfortunately
@@ -46,12 +46,12 @@ public:
       \param font Font of the text
       \param flags Bitwise OR of the flags used like in QPainter::drawText
       \param text Text to be rendered
-      \param width Width 
+      \param width Width
 
       \return Calculated height
      */
-    virtual int heightForWidth(const QFont &font, int flags, 
-        const QString &text, int width) const = 0;
+    virtual int heightForWidth(const QFont &font, int flags,
+                               const QString &text, int width) const = 0;
 
     /*!
       Returns the size, that is needed to render text
@@ -63,9 +63,9 @@ public:
       \return Caluclated size
      */
     virtual QSize textSize(const QFont &font, int flags,
-        const QString &text) const = 0;
+                           const QString &text) const = 0;
 
-    /*! 
+    /*!
       Test if a string can be rendered by this text engine
 
       \param text Text to be tested
@@ -76,7 +76,7 @@ public:
     /*!
       Return margins around the texts
 
-      The textSize might include margins around the 
+      The textSize might include margins around the
       text, like QFontMetrics::descent. In situations
       where texts need to be aligend in detail, knowing
       these margins might improve the layout calculations.
@@ -89,7 +89,7 @@ public:
       \param bottom Return value for the bottom margin
      */
     virtual void textMargins(const QFont &font, const QString &text,
-        int &left, int &right, int &top, int &bottom) const = 0;
+                             int &left, int &right, int &top, int &bottom) const = 0;
 
     /*!
       Draw the text in a clipping rectangle
@@ -98,9 +98,9 @@ public:
       \param rect Clipping rectangle
       \param flags Bitwise OR of the flags like in for QPainter::drawText
       \param text Text to be rendered
-     */ 
+     */
     virtual void draw(QPainter *painter, const QRect &rect,
-        int flags, const QString &text) const = 0;
+                      int flags, const QString &text) const = 0;
 
 protected:
     QwtTextEngine();
@@ -111,7 +111,7 @@ protected:
   \brief A text engine for plain texts
 
   QwtPlainTextEngine renders texts using the basic Qt classes
-  QPainter and QFontMetrics. 
+  QPainter and QFontMetrics.
 */
 class QWT_EXPORT QwtPlainTextEngine: public QwtTextEngine
 {
@@ -119,22 +119,22 @@ public:
     QwtPlainTextEngine();
     virtual ~QwtPlainTextEngine();
 
-    virtual int heightForWidth(const QFont &font, int flags, 
-        const QString &text, int width) const;
+    virtual int heightForWidth(const QFont &font, int flags,
+                               const QString &text, int width) const;
 
     virtual QSize textSize(const QFont &font, int flags,
-        const QString &text) const;
+                           const QString &text) const;
 
     virtual void draw(QPainter *painter, const QRect &rect,
-        int flags, const QString &text) const;
+                      int flags, const QString &text) const;
 
     virtual bool mightRender(const QString &) const;
 
     virtual void textMargins(const QFont &, const QString &,
-        int &left, int &right, int &top, int &bottom) const;
+                             int &left, int &right, int &top, int &bottom) const;
 
 private:
-    class PrivateData; 
+    class PrivateData;
     PrivateData *d_data;
 };
 
@@ -152,19 +152,19 @@ class QWT_EXPORT QwtRichTextEngine: public QwtTextEngine
 public:
     QwtRichTextEngine();
 
-    virtual int heightForWidth(const QFont &font, int flags, 
-        const QString &text, int width) const;
+    virtual int heightForWidth(const QFont &font, int flags,
+                               const QString &text, int width) const;
 
     virtual QSize textSize(const QFont &font, int flags,
-        const QString &text) const;
+                           const QString &text) const;
 
     virtual void draw(QPainter *painter, const QRect &rect,
-        int flags, const QString &text) const;
+                      int flags, const QString &text) const;
 
     virtual bool mightRender(const QString &) const;
 
     virtual void textMargins(const QFont &, const QString &,
-        int &left, int &right, int &top, int &bottom) const;
+                             int &left, int &right, int &top, int &bottom) const;
 private:
     QString taggedText(const QString &, int flags) const;
 };

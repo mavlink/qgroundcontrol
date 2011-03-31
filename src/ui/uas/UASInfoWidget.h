@@ -20,7 +20,7 @@ This file is part of the QGROUNDCONTROL project
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
- 
+
 /**
  * @file
  *   @brief Detail information of one MAV
@@ -43,7 +43,8 @@ This file is part of the QGROUNDCONTROL project
  * @brief Info indicator for the currently active UAS
  *
  **/
-class UASInfoWidget : public QWidget {
+class UASInfoWidget : public QWidget
+{
     Q_OBJECT
 public:
     UASInfoWidget(QWidget *parent = 0, QString name = "");
