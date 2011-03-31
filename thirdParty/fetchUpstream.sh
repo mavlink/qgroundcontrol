@@ -4,9 +4,11 @@ PS3='Please enter your choice: '
 LIST="all mavlink qserialport end"
 echo 
 echo this script grabs upstream releases
+echo
 
 function fetch_qserialport
 {
+	echo
 	rm -rf qserialport
 	git clone git://gitorious.org/inbiza-labs/qserialport.git
 	rm -rf qserialport/.git
@@ -14,8 +16,7 @@ function fetch_qserialport
 
 function fetch_mavlink
 {
-	echo you chose  mavlink
-	echo fetching mavlink
+	echo
 	rm -rf mavlink
 	git clone git@github.com:openmav/mavlink.git
 	rm -rf mavlink/.git

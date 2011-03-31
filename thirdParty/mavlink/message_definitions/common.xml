@@ -355,6 +355,11 @@
     <field name="ack" type="uint8_t">0: ACK, 1: NACK: Wrong passkey, 2: NACK: Unsupported passkey encryption method, 3: NACK: Already under control</field>
   </message>
   
+  <message name="AUTH_KEY" id="7">
+    <description>Emit an encrypted signature / key identifying this system. PLEASE NOTE: This protocol has been kept simple, so transmitting the key requires an encrypted channel for true safety.</description>
+    <field name="key" type="char[32]">key</field>
+  </message>
+  
    <message name="ACTION_ACK" id="9">
 	<description>This message acknowledges an action. IMPORTANT: The acknowledgement can be also negative, e.g. the MAV rejects a reset message because it is in-flight. The action ids are defined in ENUM MAV_ACTION in mavlink/include/mavlink_types.h</description>
      <field name="action" type="uint8_t">The action id</field>
@@ -463,13 +468,22 @@ NOT the global position estimate of the sytem, but rather a RAW sensor value. Se
    </message>
 
   <message name="RAW_PRESSURE" id="29">
-     <description>The RAW pressure readings for the typical setup of one absolute pressure and one differential pressure sensor. The sensor values should be the raw, unscaled ADC values.</description>
+     <description>The RAW pressure readings for the typical setup of one absolute pressure and one differential pressure sensor. The sensor values should be the raw, UNSCALED ADC values.</description>
+     <field name="usec"  type="uint64_t">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+     <field name="press_abs"    type="int16_t">Absolute pressure (raw)</field>
+     <field name="press_diff1"  type="int16_t">Differential pressure 1 (raw)</field>
+     <field name="press_diff2"  type="int16_t">Differential pressure 2 (raw)</field>
+     <field name="temperature"  type="int16_t">Raw Temperature measurement (raw)</field>
+   </message>
+
+  <message name="SCALED_PRESSURE" id="38">
+     <description>The pressure readings for the typical setup of one absolute and differential pressure sensor. The units are as specified in each field.</description>
      <field name="usec"  type="uint64_t">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
      <field name="press_abs"  type="float">Absolute pressure (hectopascal)</field>
-     <field name="press_diff1"  type="float">Differential pressure 1 (hectopascal)</field>
-     <field name="press_diff2"  type="float">Differential pressure 2 (hectopascal)</field>
-     <field name="temperature"  type="int16_t">Raw Temperature measurement (0.01 degrees celsius per tick is default unit)</field>
+     <field name="press_diff"  type="float">Differential pressure 1 (hectopascal)</field>
+     <field name="temperature"  type="int16_t">Temperature measurement (0.01 degrees celsius)</field>
    </message>
+
 
    <message name="ATTITUDE" id="30">
     <description>The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right).</description>
@@ -493,6 +507,7 @@ NOT the global position estimate of the sytem, but rather a RAW sensor value. Se
      <field name="vz"  type="float">Z Speed</field>
    </message>
    
+
    <message name="GLOBAL_POSITION" id="33">
      <description>The filtered global position (e.g. fused GPS and accelerometers). Coordinate frame is right-handed, Z-axis up (GPS frame)</description>
      <field name="usec" type="uint64_t">Timestamp (microseconds since unix epoch)</field>
@@ -640,9 +655,9 @@ NOT the global position estimate of the sytem, but rather a RAW sensor value. Se
      <description>As local waypoints exist, the global waypoint reference allows to transform between the local coordinate frame and the global (GPS) coordinate frame. This can be necessary when e.g. in- and outdoor settings are connected and the MAV should move from in- to outdoor.</description>
      <field name="target_system" type="uint8_t">System ID</field>
      <field name="target_component" type="uint8_t">Component ID</field>
-     <field name="latitude" type="uint32_t">global position * 1E7</field>
-     <field name="longitude" type="uint32_t">global position * 1E7</field>
-     <field name="altitude" type="uint32_t">global position * 1000</field>
+     <field name="latitude" type="int32_t">global position * 1E7</field>
+     <field name="longitude" type="int32_t">global position * 1E7</field>
+     <field name="altitude" type="int32_t">global position * 1000</field>
    </message>
    
    <message name="GPS_LOCAL_ORIGIN_SET" id="49">
