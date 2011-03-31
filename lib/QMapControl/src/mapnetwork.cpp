@@ -100,7 +100,8 @@ namespace qmapcontrol
                         // Silently ignore map request for a
                         // 0xn pixel map
                         qDebug() << "QMapControl: IGNORED 0x0 pixel map request, widthxheight:" << pm.width() << "x" << pm.height();
-                        qDebug() << "QMapControl: HTML ERROR MESSAGE:" << ax << "at " << __FILE__ << __LINE__;
+						// showing this html error message is horribly time consuming
+                        //qDebug() << "QMapControl: HTML ERROR MESSAGE:" << ax << "at " << __FILE__ << __LINE__;
                     }
                     else
                     {
@@ -108,7 +109,8 @@ namespace qmapcontrol
                         // TODO Error is currently undetected
                         //qDebug() << "NETWORK_PIXMAP_ERROR: " << ax;
                         qDebug() << "QMapControl external library: ERROR loading map:" << "width:" << pm.width() << "heigh:" << pm.height() << "at " << __FILE__ << __LINE__;
-                        qDebug() << "QMapControl: HTML ERROR MESSAGE:" << ax << "at " << __FILE__ << __LINE__;
+						// showing this html error message is horribly time consuming
+                        //qDebug() << "QMapControl: HTML ERROR MESSAGE:" << ax << "at " << __FILE__ << __LINE__;
                     }
                 }
 
