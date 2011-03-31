@@ -1,7 +1,9 @@
 #ifndef QGCMAPWIDGET_H
 #define QGCMAPWIDGET_H
 
-class QGCMapWidget : public OPMapWidget
+#include "opmapcontrol.h"
+
+class QGCMapWidget : public mapcontrol::OPMapWidget
 {
     Q_OBJECT
 public:

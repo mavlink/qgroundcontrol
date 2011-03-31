@@ -1027,20 +1027,11 @@ void MainWindow::connectCommonWidgets()
                 infoDockWidget->widget(), SLOT(updateSendLoss(int, float)));
     }
 
-    if (mapWidget && waypointsDockWidget->widget())
-    {
-
-        //
-        connect(waypointsDockWidget->widget(), SIGNAL(changePointList()), mapWidget, SLOT(clearWaypoints()));
-    }
-
     //TODO temporaly debug
     if (slugsHilSimWidget && slugsHilSimWidget->widget()){
         connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
                 slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
     }
-
-
 }
 
 void MainWindow::createCustomWidget()
