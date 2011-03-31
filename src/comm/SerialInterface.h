@@ -118,7 +118,7 @@ public:
 
     virtual bool isOpen() = 0;
     virtual bool isWritable() = 0;
-    virtual bool bytesAvailable() = 0;
+    virtual qint64 bytesAvailable() = 0;
     virtual int write(const char * data, qint64 size) = 0;
     virtual void read(char * data, qint64 numBytes) = 0;
     virtual void flush() = 0;
@@ -141,9 +141,12 @@ signals:
     void aboutToClose();
 public:
     SerialQextserial(QString porthandle, QextSerialPort::QueryMode mode) : _port(NULL) {
-        std::cout << "DEBUG: " << porthandle.toStdString() << std::endl;
         _port = new QextSerialPort(porthandle, QextSerialPort::Polling);
         QObject::connect(_port,SIGNAL(aboutToClose()),this,SIGNAL(aboutToClose()));
+    }
+    ~SerialQextserial() {
+        delete _port;
+        _port = NULL;
     }
     virtual bool isOpen() {
         return _port->isOpen();
@@ -151,7 +154,7 @@ public:
     virtual bool isWritable() {
         return _port->isWritable();
     }
-    virtual bool bytesAvailable() {
+    virtual qint64 bytesAvailable() {
         return _port->bytesAvailable();
     }
     virtual int write(const char * data, qint64 size) {
@@ -203,12 +206,17 @@ public:
     SerialQserial(QString porthandle, QIODevice::OpenModeFlag flag=QIODevice::ReadWrite)
         : _port(NULL) {
         QObject::connect(_port,SIGNAL(aboutToClose()),this,SIGNAL(aboutToClose()));
-        settings.setBaudRate(QPortSettings::BAUDR_38400);
-        settings.setStopBits(QPortSettings::STOP_2);
+        settings.setBaudRate(QPortSettings::BAUDR_57600);
+        settings.setStopBits(QPortSettings::STOP_1);
         settings.setDataBits(QPortSettings::DB_8);
         settings.setFlowControl(QPortSettings::FLOW_OFF);
         settings.setParity(QPortSettings::PAR_NONE);
         _port = new QSerialPort(porthandle,settings);
+        _port->setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead);
+    }
+    ~SerialQserial() {
+        delete _port;
+        _port = NULL;
     }
     virtual bool isOpen() {
         return _port->isOpen();
@@ -216,7 +224,7 @@ public:
     virtual bool isWritable() {
         _port->isWritable();
     }
-    virtual bool bytesAvailable() {
+    virtual qint64 bytesAvailable() {
         return _port->bytesAvailable();
     }
     virtual int write(const char * data, qint64 size) {
@@ -234,11 +242,11 @@ public:
     }
     virtual void open(QIODevice::OpenModeFlag flag) {
         _port->open(flag);
-        std::cout << "opened port" << std::endl;
+        //flush();
     }
     virtual void setBaudRate(SerialInterface::baudRateType baudrate) {
         // TODO get the baudrate enum to map to one another
-        settings.setBaudRate(QPortSettings::BAUDR_38400);
+        settings.setBaudRate(QPortSettings::BAUDR_57600);
     }
     virtual void setParity(SerialInterface::parityType parity) {
         settings.setParity(QPortSettings::PAR_NONE);
