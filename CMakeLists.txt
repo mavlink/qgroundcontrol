@@ -150,6 +150,59 @@ if(MAVLINK_BUILD_FROM_SOURCE)
 endif()
 
 if(QSERIAL_BUILD_FROM_SOURCE)
+    # qserial headers without Q_OBJECT
+    # r !grep -RL Q_OBJECT thirdParty/qserial/include
+    set (qserialHdrs
+        thirdParty/qserial/include/QtSerialPort/qserialport_export.h
+        thirdParty/qserial/include/QtSerialPort/QSerialPort
+        thirdParty/qserial/include/QtSerialPort/qportsettings.h
+        )
+    # qserial headers with Q_OBJECT
+    # r !grep -Rl Q_OBJECT thirdParty/qserial
+    set (qserialMocSrc
+        thirdParty/qserial/include/QtSerialPort/qserialport.h
+        thirdParty/qserial/include/QtSerialPort/qserialportnative.h
+        )
+    # qserial src
+    set (qserialSrc
+        thirdParty/qserial/src/common/qserialport.cpp
+        thirdParty/qserial/src/common/qportsettings.cpp
+    )
+
+    # qserial native code
+    if (WIN32)
+        list(APPEND qserialHdrs
+            thirdParty/qserial/src/win32/commdcbhelper.h
+            )
+        list(APPEND qserialMocSrc
+            thirdParty/qserial/src/win32/qwincommevtnotifier.h
+            thirdParty/qserial/src/win32/wincommevtbreaker.h
+        )
+        list(APPEND qserialSrc
+            thirdParty/qserial/src/win32/qserialportnative_win32.cpp
+            thirdParty/qserial/src/win32/commdcbhelper.cpp
+            thirdParty/qserial/src/win32/qwincommevtnotifier.cpp
+            #thirdParty/qserial/src/win32/qserialportnative_wince.cpp
+            #thirdParty/qserial/src/win32/wincommevtbreaker.cpp
+            )
+    elseif(UNIX OR APPLE)
+        list(APPEND qserialHdrs
+            thirdParty/qserial/src/posix/termioshelper.h
+            )
+        list(APPEND qserialSrc    
+            thirdParty/qserial/src/posix/termioshelper.cpp
+            thirdParty/qserial/src/posix/qserialportnative_posix.cpp
+            )
+    else()
+        message(FATAL_ERROR "unknown OS")
+    endif()
+
+    # qserial linking
+    qt4_wrap_cpp(qserialMoc ${qserialMocSrc})
+    add_library(qserial ${qserialMoc} ${qserialSrc})
+    target_link_libraries(qserial ${QT_LIBRARIES})
+
+
     set(QSERIAL_INCLUDE_DIRS
         ${PROJECT_SOURCE_DIR}/thirdParty/qserial/include
         ${PROJECT_SOURCE_DIR}/thirdParty/qserial/include/QtSerialPort
@@ -784,61 +837,6 @@ set (qextserialportSrc
 qt4_wrap_cpp(qextserialportMoc ${qextserialportMocSrc})
 add_library(qextserialport ${qextserialportMoc} ${qextserialportSrc})
 target_link_libraries(qextserialport ${QT_LIBRARIES})
-
-# qserial library
-#----------------------------------------------------------------------------
-
-# qserial headers without Q_OBJECT
-# r !grep -RL Q_OBJECT thirdParty/qserial/include
-set (qserialHdrs
-    thirdParty/qserial/include/QtSerialPort/qserialport_export.h
-    thirdParty/qserial/include/QtSerialPort/QSerialPort
-    thirdParty/qserial/include/QtSerialPort/qportsettings.h
-    )
-# qserial headers with Q_OBJECT
-# r !grep -Rl Q_OBJECT thirdParty/qserial
-set (qserialMocSrc
-    thirdParty/qserial/include/QtSerialPort/qserialport.h
-    thirdParty/qserial/include/QtSerialPort/qserialportnative.h
-    )
-# qserial src
-set (qserialSrc
-    thirdParty/qserial/src/common/qserialport.cpp
-    thirdParty/qserial/src/common/qportsettings.cpp
-)
-
-# qserial native code
-if (WIN32)
-    list(APPEND qserialHdrs
-        thirdParty/qserial/src/win32/commdcbhelper.h
-        )
-    list(APPEND qserialMocSrc
-        thirdParty/qserial/src/win32/qwincommevtnotifier.h
-        thirdParty/qserial/src/win32/wincommevtbreaker.h
-    )
-    list(APPEND qserialSrc
-        thirdParty/qserial/src/win32/qserialportnative_win32.cpp
-        thirdParty/qserial/src/win32/commdcbhelper.cpp
-        thirdParty/qserial/src/win32/qwincommevtnotifier.cpp
-        #thirdParty/qserial/src/win32/qserialportnative_wince.cpp
-        #thirdParty/qserial/src/win32/wincommevtbreaker.cpp
-        )
-elseif(UNIX OR APPLE)
-    list(APPEND qserialHdrs
-        thirdParty/qserial/src/posix/termioshelper.h
-        )
-    list(APPEND qserialSrc    
-        thirdParty/qserial/src/posix/termioshelper.cpp
-        thirdParty/qserial/src/posix/qserialportnative_posix.cpp
-        )
-else()
-    message(FATAL_ERROR "unknown OS")
-endif()
-
-# qserial linking
-qt4_wrap_cpp(qserialMoc ${qserialMocSrc})
-add_library(qserial ${qserialMoc} ${qserialSrc})
-target_link_libraries(qserial ${QT_LIBRARIES})
 
 # qmapcontrol library
 #----------------------------------------------------------------------------
