@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -31,8 +31,7 @@ class QWT_EXPORT QwtPlotPrintFilter
 {
 public:
     //! Print options
-    enum Options 
-    {
+    enum Options {
         PrintMargin = 1,
         PrintTitle = 2,
         PrintLegend = 4,
@@ -41,11 +40,10 @@ public:
         PrintFrameWithScales = 32,
 
         PrintAll = ~PrintFrameWithScales
-    }; 
+    };
 
     //! Print items
-    enum Item
-    {
+    enum Item {
         Title,
         Legend,
         Curve,
@@ -61,7 +59,7 @@ public:
     };
 
     explicit QwtPlotPrintFilter();
-    virtual ~QwtPlotPrintFilter(); 
+    virtual ~QwtPlotPrintFilter();
 
     virtual QColor color(const QColor &, Item item) const;
     virtual QFont font(const QFont &, Item item) const;

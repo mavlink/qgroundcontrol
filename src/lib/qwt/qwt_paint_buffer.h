@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -23,7 +23,7 @@ class QPainter;
 
   QwtPaintBuffer offers a simple way to en/disable double buffering.
   Double buffering is enabled as default and in general there will be
-  no reason to change this. 
+  no reason to change this.
 */
 
 class QWT_EXPORT QwtPaintBuffer
@@ -39,12 +39,14 @@ public:
 
     QPainter *painter();
     const QPaintDevice *device();
-    
+
     static void setEnabled(bool enable);
     static bool isEnabled();
 
     //! Return Buffer used for double buffering
-    const QPixmap &buffer() const { return d_pixBuffer; }
+    const QPixmap &buffer() const {
+        return d_pixBuffer;
+    }
 
 protected:
     void flush();

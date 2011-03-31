@@ -28,8 +28,7 @@ public:
     QWidget *mainWidget;
     QLabel *processInfoLabel;
 
-    void setupUi(QWidget *WatchdogControl)
-    {
+    void setupUi(QWidget *WatchdogControl) {
         if (WatchdogControl->objectName().isEmpty())
             WatchdogControl->setObjectName(QString::fromUtf8("WatchdogControl"));
         WatchdogControl->resize(400, 300);
@@ -52,16 +51,16 @@ public:
         QMetaObject::connectSlotsByName(WatchdogControl);
     } // setupUi
 
-    void retranslateUi(QWidget *WatchdogControl)
-    {
+    void retranslateUi(QWidget *WatchdogControl) {
         WatchdogControl->setWindowTitle(QApplication::translate("WatchdogControl", "Form", 0, QApplication::UnicodeUTF8));
         processInfoLabel->setText(QApplication::translate("WatchdogControl", "0 Processes  Core 1: 0%  Core 2: 0%", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
 
-namespace Ui {
-    class WatchdogControl: public Ui_WatchdogControl {};
+namespace Ui
+{
+class WatchdogControl: public Ui_WatchdogControl {};
 } // namespace Ui
 
 QT_END_NAMESPACE

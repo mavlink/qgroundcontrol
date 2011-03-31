@@ -8,8 +8,9 @@
 #include "LinkInterface.h"
 #include "MAVLinkSimulationLink.h"
 
-namespace Ui {
-    class QGCMAVLinkLogPlayer;
+namespace Ui
+{
+class QGCMAVLinkLogPlayer;
 }
 
 /**

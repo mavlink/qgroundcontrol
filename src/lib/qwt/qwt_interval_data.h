@@ -35,11 +35,11 @@ class QWT_EXPORT QwtIntervalData
 {
 public:
     QwtIntervalData();
-    QwtIntervalData(const QwtArray<QwtDoubleInterval> &, 
-        const QwtArray<double> &);
-    
-    void setData(const QwtArray<QwtDoubleInterval> &, 
-        const QwtArray<double> &);
+    QwtIntervalData(const QwtArray<QwtDoubleInterval> &,
+                    const QwtArray<double> &);
+
+    void setData(const QwtArray<QwtDoubleInterval> &,
+                 const QwtArray<double> &);
 
     size_t size() const;
     const QwtDoubleInterval &interval(size_t i) const;
@@ -67,4 +67,4 @@ inline double QwtIntervalData::value(size_t i) const
     return d_values[int(i)];
 }
 
-#endif 
+#endif

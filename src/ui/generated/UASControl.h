@@ -41,8 +41,7 @@ public:
     QLabel *lastActionLabel;
     QSpacerItem *verticalSpacer;
 
-    void setupUi(QWidget *uasControl)
-    {
+    void setupUi(QWidget *uasControl) {
         if (uasControl->objectName().isEmpty())
             uasControl->setObjectName(QString::fromUtf8("uasControl"));
         uasControl->resize(280, 164);
@@ -131,8 +130,7 @@ public:
         QMetaObject::connectSlotsByName(uasControl);
     } // setupUi
 
-    void retranslateUi(QWidget *uasControl)
-    {
+    void retranslateUi(QWidget *uasControl) {
         uasControl->setWindowTitle(QApplication::translate("uasControl", "Form", 0, QApplication::UnicodeUTF8));
         controlStatusLabel->setText(QApplication::translate("uasControl", "UNCONNECTED", 0, QApplication::UnicodeUTF8));
         controlButton->setText(QApplication::translate("uasControl", "Activate Engine", 0, QApplication::UnicodeUTF8));
@@ -145,8 +143,9 @@ public:
 
 };
 
-namespace Ui {
-    class uasControl: public Ui_uasControl {};
+namespace Ui
+{
+class uasControl: public Ui_uasControl {};
 } // namespace Ui
 
 QT_END_NAMESPACE

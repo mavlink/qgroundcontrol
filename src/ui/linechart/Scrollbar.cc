@@ -8,15 +8,15 @@ ScrollBar::ScrollBar(QWidget * parent):
     init();
 }
 
-ScrollBar::ScrollBar(Qt::Orientation o, 
-        QWidget *parent):
+ScrollBar::ScrollBar(Qt::Orientation o,
+                     QWidget *parent):
     QScrollBar(o, parent)
 {
     init();
 }
 
-ScrollBar::ScrollBar(double minBase, double maxBase, 
-        Qt::Orientation o, QWidget *parent):
+ScrollBar::ScrollBar(double minBase, double maxBase,
+                     Qt::Orientation o, QWidget *parent):
     QScrollBar(o, parent)
 {
     init();
@@ -38,8 +38,7 @@ void ScrollBar::init()
 
 void ScrollBar::setInverted(bool inverted)
 {
-    if ( d_inverted != inverted )
-    {
+    if ( d_inverted != inverted ) {
         d_inverted = inverted;
         moveSlider(minSliderValue(), maxSliderValue());
     }
@@ -52,8 +51,7 @@ bool ScrollBar::isInverted() const
 
 void ScrollBar::setBase(double min, double max)
 {
-    if ( min != d_minBase || max != d_maxBase )
-    {
+    if ( min != d_minBase || max != d_maxBase ) {
         d_minBase = min;
         d_maxBase = max;
 
@@ -63,8 +61,8 @@ void ScrollBar::setBase(double min, double max)
 
 void ScrollBar::moveSlider(double min, double max)
 {
-    const int sliderTicks = qRound((max - min) / 
-        (d_maxBase - d_minBase) * d_baseTicks);
+    const int sliderTicks = qRound((max - min) /
+                                   (d_maxBase - d_minBase) * d_baseTicks);
 
     // setRange initiates a valueChanged of the scrollbars
     // in some situations. So we block
@@ -135,12 +133,12 @@ double ScrollBar::maxSliderValue() const
 }
 
 int ScrollBar::mapToTick(double v) const
-{   
+{
     return (int) ( ( v - d_minBase) / (d_maxBase - d_minBase ) * d_baseTicks );
 }
 
 double ScrollBar::mapFromTick(int tick) const
-{   
+{
     return d_minBase + ( d_maxBase - d_minBase ) * tick / d_baseTicks;
 }
 

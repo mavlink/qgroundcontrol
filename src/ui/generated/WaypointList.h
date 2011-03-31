@@ -46,8 +46,7 @@ public:
     QSpacerItem *horizontalSpacer;
     QToolButton *positionAddButton;
 
-    void setupUi(QWidget *WaypointList)
-    {
+    void setupUi(QWidget *WaypointList) {
         if (WaypointList->objectName().isEmpty())
             WaypointList->setObjectName(QString::fromUtf8("WaypointList"));
         WaypointList->resize(476, 218);
@@ -142,8 +141,7 @@ public:
         QMetaObject::connectSlotsByName(WaypointList);
     } // setupUi
 
-    void retranslateUi(QWidget *WaypointList)
-    {
+    void retranslateUi(QWidget *WaypointList) {
         WaypointList->setWindowTitle(QApplication::translate("WaypointList", "Form", 0, QApplication::UnicodeUTF8));
         actionAddWaypoint->setText(QApplication::translate("WaypointList", "Add Waypoint", 0, QApplication::UnicodeUTF8));
 #ifndef QT_NO_TOOLTIP
@@ -168,8 +166,9 @@ public:
 
 };
 
-namespace Ui {
-    class WaypointList: public Ui_WaypointList {};
+namespace Ui
+{
+class WaypointList: public Ui_WaypointList {};
 } // namespace Ui
 
 QT_END_NAMESPACE

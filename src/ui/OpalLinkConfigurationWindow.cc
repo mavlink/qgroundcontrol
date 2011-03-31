@@ -1,8 +1,8 @@
 #include "OpalLinkConfigurationWindow.h"
 
 OpalLinkConfigurationWindow::OpalLinkConfigurationWindow(OpalLink* link,
-                                                         QWidget *parent,
-                                                         Qt::WindowFlags flags) :
+        QWidget *parent,
+        Qt::WindowFlags flags) :
     QWidget(parent, flags),
     link(link)
 

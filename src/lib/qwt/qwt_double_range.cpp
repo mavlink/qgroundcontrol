@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -41,8 +41,7 @@ QwtDoubleRange::~QwtDoubleRange()
 //! Set the value to be valid/invalid
 void QwtDoubleRange::setValid(bool isValid)
 {
-    if ( isValid != d_isValid )
-    {
+    if ( isValid != d_isValid ) {
         d_isValid = isValid;
         valueChange();
     }
@@ -56,7 +55,7 @@ bool QwtDoubleRange::isValid() const
 
 /*!
   \brief No docs
-  
+
   Description
   \param x ???
   \param align
@@ -65,48 +64,41 @@ bool QwtDoubleRange::isValid() const
 void QwtDoubleRange::setNewValue(double x, bool align)
 {
     double vmin,vmax;
-    
+
     d_prevValue = d_value;
 
     vmin = qwtMin(d_minValue, d_maxValue);
     vmax = qwtMax(d_minValue, d_maxValue);
 
-    // 
+    //
     // Range check
     //
-    if (x < vmin)
-    {
+    if (x < vmin) {
         if ((d_periodic) && (vmin != vmax))
-           d_value = x + ::ceil( (vmin - x) / (vmax - vmin ) ) 
-              * (vmax - vmin);
+            d_value = x + ::ceil( (vmin - x) / (vmax - vmin ) )
+                      * (vmax - vmin);
         else
-           d_value = vmin;
-    }
-    else if (x > vmax)
-    {
+            d_value = vmin;
+    } else if (x > vmax) {
         if ((d_periodic) && (vmin != vmax))
-           d_value = x - ::ceil( ( x - vmax) / (vmax - vmin )) 
-              * (vmax - vmin);
+            d_value = x - ::ceil( ( x - vmax) / (vmax - vmin ))
+                      * (vmax - vmin);
         else
-           d_value = vmax;
-    }
-    else
-       d_value = x;
+            d_value = vmax;
+    } else
+        d_value = x;
 
     d_exactPrevValue = d_exactValue;
     d_exactValue = d_value;
-    
+
     // align to grid
-    if (align)
-    {
-        if (d_step != 0.0)
-        {
-           d_value = d_minValue +
-             qwtRound((d_value - d_minValue) / d_step) * d_step;
-        }
-        else
+    if (align) {
+        if (d_step != 0.0) {
+            d_value = d_minValue +
+                      qwtRound((d_value - d_minValue) / d_step) * d_step;
+        } else
             d_value = d_minValue;
-        
+
         // correct rounding error at the border
         if (fabs(d_value - d_maxValue) < MinEps * qwtAbs(d_step))
             d_value = d_maxValue;
@@ -116,8 +108,7 @@ void QwtDoubleRange::setNewValue(double x, bool align)
             d_value = 0.0;
     }
 
-    if (!d_isValid || d_prevValue != d_value)
-    {
+    if (!d_isValid || d_prevValue != d_value) {
         d_isValid = true;
         valueChange();
     }
@@ -172,15 +163,14 @@ void QwtDoubleRange::setValue(double x)
 void QwtDoubleRange::setRange(double vmin, double vmax, double vstep, int pageSize)
 {
     bool rchg = ((d_maxValue != vmax) || (d_minValue != vmin));
-    
-    if (rchg) 
-    {
+
+    if (rchg) {
         d_minValue = vmin;
         d_maxValue = vmax;
     }
-    
+
     //
-    // look if the step width has an acceptable 
+    // look if the step width has an acceptable
     // value or otherwise change it.
     //
     setStep(vstep);
@@ -188,46 +178,44 @@ void QwtDoubleRange::setRange(double vmin, double vmax, double vstep, int pageSi
     //
     // limit page size
     //
-    d_pageSize = qwtLim(pageSize,0, 
-        int(qwtAbs((d_maxValue - d_minValue) / d_step))); 
-    
-    // 
-    // If the value lies out of the range, it 
-    // will be changed. Note that it will not be adjusted to 
+    d_pageSize = qwtLim(pageSize,0,
+                        int(qwtAbs((d_maxValue - d_minValue) / d_step)));
+
+    //
+    // If the value lies out of the range, it
+    // will be changed. Note that it will not be adjusted to
     // the new step width.
     setNewValue(d_value, false);
-    
-    // call notifier after the step width has been 
+
+    // call notifier after the step width has been
     // adjusted.
     if (rchg)
-       rangeChange();
+        rangeChange();
 }
 
 /*!
-  \brief Change the step raster     
+  \brief Change the step raster
   \param vstep new step width
   \warning The value will \e not be adjusted to the new step raster.
 */
 void QwtDoubleRange::setStep(double vstep)
 {
     double intv = d_maxValue - d_minValue;
-    
+
     double newStep;
     if (vstep == 0.0)
-       newStep = intv * DefaultRelStep;
-    else
-    {
+        newStep = intv * DefaultRelStep;
+    else {
         if (((intv > 0) && (vstep < 0)) || ((intv < 0) && (vstep > 0)))
-           newStep = -vstep;
+            newStep = -vstep;
         else
-           newStep = vstep;
-        
+            newStep = vstep;
+
         if ( fabs(newStep) < fabs(MinRelStep * intv) )
-           newStep = MinRelStep * intv;
+            newStep = MinRelStep * intv;
     }
-    
-    if (newStep != d_step)
-    {
+
+    if (newStep != d_step) {
         d_step = newStep;
         stepChange();
     }
@@ -323,46 +311,46 @@ double QwtDoubleRange::step() const
 
   maxValue returns the value which has been specified
   as the second parameter in  QwtDoubleRange::setRange.
-    
-  \sa QwtDoubleRange::setRange()
-*/  
-double QwtDoubleRange::maxValue() const
-{   
-    return d_maxValue;
-} 
-    
-/*!
-  \brief Returns the value at the first border of the range
-    
-  minValue returns the value which has been specified
-  as the first parameter in  setRange().
-    
+
   \sa QwtDoubleRange::setRange()
 */
-double QwtDoubleRange::minValue() const 
+double QwtDoubleRange::maxValue() const
 {
-    return d_minValue; 
-}   
+    return d_maxValue;
+}
+
+/*!
+  \brief Returns the value at the first border of the range
+
+  minValue returns the value which has been specified
+  as the first parameter in  setRange().
+
+  \sa QwtDoubleRange::setRange()
+*/
+double QwtDoubleRange::minValue() const
+{
+    return d_minValue;
+}
 
 /*!
   \brief Returns true if the range is periodic
   \sa QwtDoubleRange::setPeriodic()
 */
-bool QwtDoubleRange::periodic() const 
-{ 
-    return d_periodic; 
+bool QwtDoubleRange::periodic() const
+{
+    return d_periodic;
 }
 
 //! Returns the page size in steps.
-int QwtDoubleRange::pageSize() const 
-{ 
-    return d_pageSize; 
+int QwtDoubleRange::pageSize() const
+{
+    return d_pageSize;
 }
 
 //! Returns the current value.
-double QwtDoubleRange::value() const 
-{ 
-    return d_value; 
+double QwtDoubleRange::value() const
+{
+    return d_value;
 }
 
 /*!
@@ -374,19 +362,19 @@ double QwtDoubleRange::value() const
   QwtDoubleRange::incValue have been used before. This function
   is intended for internal use in derived classes.
 */
-double QwtDoubleRange::exactValue() const 
-{ 
-    return d_exactValue; 
+double QwtDoubleRange::exactValue() const
+{
+    return d_exactValue;
 }
 
 //! Returns the exact previous value
-double QwtDoubleRange::exactPrevValue() const 
-{ 
-    return d_exactPrevValue; 
+double QwtDoubleRange::exactPrevValue() const
+{
+    return d_exactPrevValue;
 }
 
 //! Returns the previous value
-double QwtDoubleRange::prevValue() const 
-{ 
-    return d_prevValue; 
+double QwtDoubleRange::prevValue() const
+{
+    return d_prevValue;
 }

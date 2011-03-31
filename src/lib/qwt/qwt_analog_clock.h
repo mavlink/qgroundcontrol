@@ -47,13 +47,12 @@ class QWT_EXPORT QwtAnalogClock: public QwtDial
     Q_OBJECT
 
 public:
-    /*! 
+    /*!
         Hand type
         \sa setHand(), hand()
     */
 
-    enum Hand
-    {
+    enum Hand {
         SecondHand,
         MinuteHand,
         HourHand,
@@ -79,10 +78,10 @@ protected:
     virtual QwtText scaleLabel(double) const;
 
     virtual void drawNeedle(QPainter *, const QPoint &,
-        int radius, double direction, QPalette::ColorGroup) const;
+                            int radius, double direction, QPalette::ColorGroup) const;
 
     virtual void drawHand(QPainter *, Hand, const QPoint &,
-        int radius, double direction, QPalette::ColorGroup) const;
+                          int radius, double direction, QPalette::ColorGroup) const;
 
 private:
     virtual void setNeedle(QwtDialNeedle *);

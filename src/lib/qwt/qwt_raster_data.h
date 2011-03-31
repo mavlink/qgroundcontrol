@@ -59,8 +59,7 @@ public:
     typedef QMap<double, QwtArray<QwtDoublePoint> > ContourLines;
 #endif
 
-    enum ConrecAttribute
-    {
+    enum ConrecAttribute {
         IgnoreAllVerticesOnLevel = 1,
         IgnoreOutOfRange = 2
     };
@@ -88,12 +87,12 @@ public:
 
 #if QT_VERSION >= 0x040000
     virtual ContourLines contourLines(const QwtDoubleRect &rect,
-        const QSize &raster, const QList<double> &levels, 
-        int flags) const;
+                                      const QSize &raster, const QList<double> &levels,
+                                      int flags) const;
 #else
     virtual ContourLines contourLines(const QwtDoubleRect &rect,
-        const QSize &raster, const QValueList<double> &levels, 
-        int flags) const;
+                                      const QSize &raster, const QValueList<double> &levels,
+                                      int flags) const;
 #endif
 
     class Contour3DPoint;

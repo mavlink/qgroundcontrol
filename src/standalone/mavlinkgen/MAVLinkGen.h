@@ -44,11 +44,11 @@ This file is part of the PIXHAWK project
  **/
 class MAVLinkGen : public QApplication
 {
-	Q_OBJECT
+    Q_OBJECT
 
 public:
-        MAVLinkGen(int &argc, char* argv[]);
-        ~MAVLinkGen();
+    MAVLinkGen(int &argc, char* argv[]);
+    ~MAVLinkGen();
 
 protected:
 

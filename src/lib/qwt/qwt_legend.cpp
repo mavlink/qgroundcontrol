@@ -2,17 +2,17 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
 
 // vim: expandtab
 
-#include <qapplication.h> 
-#include <qmap.h> 
+#include <qapplication.h>
+#include <qmap.h>
 #if QT_VERSION >= 0x040000
-#include <qscrollbar.h> 
+#include <qscrollbar.h>
 #endif
 #include "qwt_math.h"
 #include "qwt_dyngrid_layout.h"
@@ -66,8 +66,7 @@ class QwtLegend::PrivateData::LegendView: public QScrollView
 {
 public:
     LegendView(QWidget *parent):
-        QScrollView(parent)
-    {
+        QScrollView(parent) {
         setResizePolicy(Manual);
 
         viewport()->setBackgroundMode(Qt::NoBackground); // Avoid flicker
@@ -77,16 +76,15 @@ public:
         addChild(contentsWidget);
     }
 
-    void viewportResizeEvent(QResizeEvent *e)
-    {
+    void viewportResizeEvent(QResizeEvent *e) {
         QScrollView::viewportResizeEvent(e);
 
         // It's not safe to update the layout now, because
         // we are in an internal update of the scrollview framework.
         // So we delay the update by posting a LayoutHint.
 
-        QApplication::postEvent(contentsWidget, 
-            new QEvent(QEvent::LayoutHint));
+        QApplication::postEvent(contentsWidget,
+                                new QEvent(QEvent::LayoutHint));
     }
 
     QWidget *contentsWidget;
@@ -100,8 +98,7 @@ class QwtLegend::PrivateData::LegendView: public QScrollArea
 {
 public:
     LegendView(QWidget *parent):
-        QScrollArea(parent)
-    {
+        QScrollArea(parent) {
         contentsWidget = new QWidget(this);
 
         setWidget(contentsWidget);
@@ -109,23 +106,20 @@ public:
         setFocusPolicy(Qt::NoFocus);
     }
 
-    virtual bool viewportEvent(QEvent *e) 
-    {
+    virtual bool viewportEvent(QEvent *e) {
         bool ok = QScrollArea::viewportEvent(e);
 
-        if ( e->type() == QEvent::Resize )
-        {
+        if ( e->type() == QEvent::Resize ) {
             QEvent event(QEvent::LayoutRequest);
             QApplication::sendEvent(contentsWidget, &event);
         }
         return ok;
     }
 
-    QSize viewportSize(int w, int h) const
-    {
+    QSize viewportSize(int w, int h) const {
         const int sbHeight = horizontalScrollBar()->sizeHint().height();
         const int sbWidth = verticalScrollBar()->sizeHint().width();
-    
+
         const int cw = contentsRect().width();
         const int ch = contentsRect().height();
 
@@ -135,8 +129,7 @@ public:
         if ( w > vw )
             vh -= sbHeight;
 
-        if ( h > vh )
-        {
+        if ( h > vh ) {
             vw -= sbWidth;
             if ( w > vw && vh == ch )
                 vh -= sbHeight;
@@ -173,7 +166,7 @@ void QwtLegend::PrivateData::LegendMap::remove(QWidget *widget)
 
 void QwtLegend::PrivateData::LegendMap::clear()
 {
-    
+
     /*
        We can't delete the widgets in the following loop, because
        we would get ChildRemoved events, changing d_itemMap, while
@@ -184,13 +177,13 @@ void QwtLegend::PrivateData::LegendMap::clear()
     QValueList<QWidget *> widgets;
 
     QMap<const QwtLegendItemManager *, QWidget *>::const_iterator it;
-    for ( it = d_itemMap.begin(); it != d_itemMap.end(); ++it ) 
+    for ( it = d_itemMap.begin(); it != d_itemMap.end(); ++it )
         widgets.append(it.data());
 #else
     QList<QWidget *> widgets;
 
     QMap<const QwtLegendItemManager *, QWidget *>::const_iterator it;
-    for ( it = d_itemMap.begin(); it != d_itemMap.end(); ++it ) 
+    for ( it = d_itemMap.begin(); it != d_itemMap.end(); ++it )
         widgets.append(it.value());
 #endif
 
@@ -241,21 +234,21 @@ inline QwtLegendItemManager *QwtLegend::PrivateData::LegendMap::find(
 }
 
 inline const QMap<QWidget *, const QwtLegendItemManager *> &
-    QwtLegend::PrivateData::LegendMap::widgetMap() const
+QwtLegend::PrivateData::LegendMap::widgetMap() const
 {
     return d_widgetMap;
-} 
+}
 
 inline QMap<QWidget *, const QwtLegendItemManager *> &
-    QwtLegend::PrivateData::LegendMap::widgetMap() 
+QwtLegend::PrivateData::LegendMap::widgetMap()
 {
     return d_widgetMap;
-} 
+}
 
 /*!
   \param parent Parent widget
 */
-QwtLegend::QwtLegend(QWidget *parent): 
+QwtLegend::QwtLegend(QWidget *parent):
     QFrame(parent)
 {
     setFrameStyle(NoFrame);
@@ -263,8 +256,8 @@ QwtLegend::QwtLegend(QWidget *parent):
     d_data = new QwtLegend::PrivateData;
     d_data->itemMode = QwtLegend::ReadOnlyItem;
     d_data->displayPolicy = QwtLegend::AutoIdentifier;
-    d_data->identifierMode = QwtLegendItem::ShowLine | 
-        QwtLegendItem::ShowSymbol | QwtLegendItem::ShowText;
+    d_data->identifierMode = QwtLegendItem::ShowLine |
+                             QwtLegendItem::ShowSymbol | QwtLegendItem::ShowText;
 
     d_data->view = new QwtLegend::PrivateData::LegendView(this);
     d_data->view->setFrameStyle(NoFrame);
@@ -297,14 +290,13 @@ void QwtLegend::setDisplayPolicy(LegendDisplayPolicy policy, int mode)
 {
     d_data->displayPolicy = policy;
     if (-1 != mode)
-       d_data->identifierMode = mode;
+        d_data->identifierMode = mode;
 
-    QMap<QWidget *, const QwtLegendItemManager *> &map = 
+    QMap<QWidget *, const QwtLegendItemManager *> &map =
         d_data->map.widgetMap();
 
     QMap<QWidget *, const QwtLegendItemManager *>::iterator it;
-    for ( it = map.begin(); it != map.end(); ++it ) 
-    {
+    for ( it = map.begin(); it != map.end(); ++it ) {
 #if QT_VERSION < 0x040000
         QwtLegendItemManager *item = (QwtLegendItemManager *)it.data();
 #else
@@ -315,15 +307,15 @@ void QwtLegend::setDisplayPolicy(LegendDisplayPolicy policy, int mode)
     }
 }
 
-/*! 
+/*!
   \return the legend display policy.
   Default is LegendDisplayPolicy::Auto.
   \sa setDisplayPolicy, LegendDisplayPolicy
-*/ 
+*/
 
-QwtLegend::LegendDisplayPolicy QwtLegend::displayPolicy() const 
-{ 
-    return d_data->displayPolicy; 
+QwtLegend::LegendDisplayPolicy QwtLegend::displayPolicy() const
+{
+    return d_data->displayPolicy;
 }
 
 void QwtLegend::setItemMode(LegendItemMode mode)
@@ -348,13 +340,13 @@ int QwtLegend::identifierMode() const
     return d_data->identifierMode;
 }
 
-/*! 
+/*!
   The contents widget is the only child of the viewport() and
   the parent widget of all legend items.
 */
-QWidget *QwtLegend::contentsWidget() 
-{ 
-    return d_data->view->contentsWidget; 
+QWidget *QwtLegend::contentsWidget()
+{
+    return d_data->view->contentsWidget;
 }
 
 QScrollBar *QwtLegend::horizontalScrollBar() const
@@ -367,14 +359,14 @@ QScrollBar *QwtLegend::verticalScrollBar() const
     return d_data->view->verticalScrollBar();
 }
 
-/*!  
+/*!
   The contents widget is the only child of the viewport() and
   the parent widget of all legend items.
 */
 
-const QWidget *QwtLegend::contentsWidget() const 
-{ 
-    return d_data->view->contentsWidget; 
+const QWidget *QwtLegend::contentsWidget() const
+{
+    return d_data->view->contentsWidget;
 }
 
 /*!
@@ -390,8 +382,7 @@ void QwtLegend::insert(const QwtLegendItemManager *plotItem, QWidget *legendItem
 
     QWidget *contentsWidget = d_data->view->contentsWidget;
 
-    if ( legendItem->parent() != contentsWidget )
-    {
+    if ( legendItem->parent() != contentsWidget ) {
 #if QT_VERSION >= 0x040000
         legendItem->setParent(contentsWidget);
 #else
@@ -405,8 +396,7 @@ void QwtLegend::insert(const QwtLegendItemManager *plotItem, QWidget *legendItem
 
     layoutContents();
 
-    if ( contentsWidget->layout() )
-    {
+    if ( contentsWidget->layout() ) {
 #if QT_VERSION >= 0x040000
         contentsWidget->layout()->addWidget(legendItem);
 #endif
@@ -416,37 +406,33 @@ void QwtLegend::insert(const QwtLegendItemManager *plotItem, QWidget *legendItem
         QWidget *w = NULL;
 
 #if QT_VERSION < 0x040000
-        QLayoutIterator layoutIterator = 
+        QLayoutIterator layoutIterator =
             contentsWidget->layout()->iterator();
         for ( QLayoutItem *item = layoutIterator.current();
-            item != 0; item = ++layoutIterator)
-        {
+                item != 0; item = ++layoutIterator) {
 #else
-        for (int i = 0; i < contentsWidget->layout()->count(); i++)
-        {
+        for (int i = 0; i < contentsWidget->layout()->count(); i++) {
             QLayoutItem *item = contentsWidget->layout()->itemAt(i);
 #endif
-            if ( w && item->widget() )
-            {
+            if ( w && item->widget() ) {
                 QWidget::setTabOrder(w, item->widget());
                 w = item->widget();
             }
         }
     }
-    if ( parentWidget() && parentWidget()->layout() == NULL )
-    {
-       /*
-          updateGeometry() doesn't post LayoutRequest in certain
-          situations, like when we are hidden. But we want the
-          parent widget notified, so it can show/hide the legend
-          depending on its items.
-        */
+    if ( parentWidget() && parentWidget()->layout() == NULL ) {
+        /*
+           updateGeometry() doesn't post LayoutRequest in certain
+           situations, like when we are hidden. But we want the
+           parent widget notified, so it can show/hide the legend
+           depending on its items.
+         */
 #if QT_VERSION < 0x040000
         QApplication::postEvent(parentWidget(),
-            new QEvent(QEvent::LayoutHint));
+                                new QEvent(QEvent::LayoutHint));
 #else
         QApplication::postEvent(parentWidget(),
-            new QEvent(QEvent::LayoutRequest));
+                                new QEvent(QEvent::LayoutRequest));
 #endif
     }
 }
@@ -473,16 +459,16 @@ QwtLegendItemManager *QwtLegend::find(const QWidget *legendItem) const
     return d_data->map.find(legendItem);
 }
 
-/*! 
-   Find the corresponding item for a plotItem and remove it 
+/*!
+   Find the corresponding item for a plotItem and remove it
    from the item list.
 
    \param plotItem Plot item
 */
 void QwtLegend::remove(const QwtLegendItemManager *plotItem)
-{ 
+{
     QWidget *legendItem = d_data->map.find(plotItem);
-    d_data->map.remove(legendItem); 
+    d_data->map.remove(legendItem);
     delete legendItem;
 }
 
@@ -522,10 +508,9 @@ int QwtLegend::heightForWidth(int width) const
     int h = d_data->view->contentsWidget->heightForWidth(width);
 #if QT_VERSION < 0x040000
 
-    // Asking the layout is the default implementation in Qt4 
+    // Asking the layout is the default implementation in Qt4
 
-    if ( h <= 0 ) 
-    {
+    if ( h <= 0 ) {
         QLayout *l = d_data->view->contentsWidget->layout();
         if ( l && l->hasHeightForWidth() )
             h = l->heightForWidth(width);
@@ -545,8 +530,7 @@ void QwtLegend::layoutContents()
     const QSize visibleSize = d_data->view->viewport()->size();
 
     const QLayout *l = d_data->view->contentsWidget->layout();
-    if ( l && l->inherits("QwtDynGridLayout") )
-    {
+    if ( l && l->inherits("QwtDynGridLayout") ) {
         const QwtDynGridLayout *tl = (const QwtDynGridLayout *)l;
 
         const int minW = int(tl->maxItemWidth()) + 2 * tl->margin();
@@ -555,8 +539,7 @@ void QwtLegend::layoutContents()
         int h = qwtMax(tl->heightForWidth(w), visibleSize.height());
 
         const int vpWidth = d_data->view->viewportSize(w, h).width();
-        if ( w > vpWidth )
-        {
+        if ( w > vpWidth ) {
             w = qwtMax(vpWidth, minW);
             h = qwtMax(tl->heightForWidth(w), visibleSize.height());
         }
@@ -577,38 +560,34 @@ void QwtLegend::layoutContents()
 
 bool QwtLegend::eventFilter(QObject *o, QEvent *e)
 {
-    if ( o == d_data->view->contentsWidget )
-    {
-        switch(e->type())
-        {
-            case QEvent::ChildRemoved:
-            {   
-                const QChildEvent *ce = (const QChildEvent *)e;
-                if ( ce->child()->isWidgetType() )
-                    d_data->map.remove((QWidget *)ce->child());
-                break;
-            }
+    if ( o == d_data->view->contentsWidget ) {
+        switch(e->type()) {
+        case QEvent::ChildRemoved: {
+            const QChildEvent *ce = (const QChildEvent *)e;
+            if ( ce->child()->isWidgetType() )
+                d_data->map.remove((QWidget *)ce->child());
+            break;
+        }
 #if QT_VERSION < 0x040000
-            case QEvent::LayoutHint:
+        case QEvent::LayoutHint:
 #else
-            case QEvent::LayoutRequest:
+        case QEvent::LayoutRequest:
 #endif
             {
                 layoutContents();
                 break;
             }
 #if QT_VERSION < 0x040000
-            case QEvent::Resize:
-            {
-                updateGeometry();
-                break;
-            }
+        case QEvent::Resize: {
+            updateGeometry();
+            break;
+        }
 #endif
-            default:
-                break;
+        default:
+            break;
         }
     }
-    
+
     return QFrame::eventFilter(o, e);
 }
 
@@ -631,7 +610,7 @@ QValueList<QWidget *> QwtLegend::legendItems() const
 QList<QWidget *> QwtLegend::legendItems() const
 #endif
 {
-    const QMap<QWidget *, const QwtLegendItemManager *> &map = 
+    const QMap<QWidget *, const QwtLegendItemManager *> &map =
         d_data->map.widgetMap();
 
 #if QT_VERSION < 0x040000
@@ -641,7 +620,7 @@ QList<QWidget *> QwtLegend::legendItems() const
 #endif
 
     QMap<QWidget *, const QwtLegendItemManager *>::const_iterator it;
-    for ( it = map.begin(); it != map.end(); ++it ) 
+    for ( it = map.begin(); it != map.end(); ++it )
         list += it.key();
 
     return list;

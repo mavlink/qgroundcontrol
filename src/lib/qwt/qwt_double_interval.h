@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -15,7 +15,7 @@
 /*!
   \brief A class representing an interval
 
-  The interval is represented by 2 doubles, the lower and the upper limit. 
+  The interval is represented by 2 doubles, the lower and the upper limit.
 */
 
 class QWT_EXPORT QwtDoubleInterval
@@ -35,7 +35,7 @@ public:
 
     inline double minValue() const;
     inline double maxValue() const;
-    
+
     inline double width() const;
 
     inline void setMinValue(double);
@@ -110,7 +110,7 @@ inline void QwtDoubleInterval::setInterval(double minValue, double maxValue)
    \param minValue Minimum value
 */
 inline void QwtDoubleInterval::setMinValue(double minValue)
-{   
+{
     d_minValue = minValue;
 }
 
@@ -125,15 +125,15 @@ inline void QwtDoubleInterval::setMaxValue(double maxValue)
 }
 
 //! \return Lower limit of the interval
-inline double QwtDoubleInterval::minValue() const 
-{ 
-    return d_minValue; 
+inline double QwtDoubleInterval::minValue() const
+{
+    return d_minValue;
 }
 
 //! \return Upper limit of the interval
-inline double QwtDoubleInterval::maxValue() const 
-{ 
-    return d_maxValue; 
+inline double QwtDoubleInterval::maxValue() const
+{
+    return d_maxValue;
 }
 
 /*!
@@ -143,12 +143,12 @@ inline double QwtDoubleInterval::maxValue() const
 
    \sa isValid
 */
-inline double QwtDoubleInterval::width() const 
-{ 
-    return isValid() ? (d_maxValue - d_minValue) : 0.0; 
+inline double QwtDoubleInterval::width() const
+{
+    return isValid() ? (d_maxValue - d_minValue) : 0.0;
 }
 
-/*! 
+/*!
    Intersection of two intervals
    \sa intersect
 */
@@ -158,7 +158,7 @@ inline QwtDoubleInterval QwtDoubleInterval::operator&(
     return intersect(interval);
 }
 
-/*! 
+/*!
    Union of two intervals
    \sa unite
 */
@@ -172,7 +172,7 @@ inline QwtDoubleInterval QwtDoubleInterval::operator|(
 inline int QwtDoubleInterval::operator==(const QwtDoubleInterval &other) const
 {
     return (d_minValue == other.d_minValue) &&
-        (d_maxValue == other.d_maxValue);
+           (d_maxValue == other.d_maxValue);
 }
 
 //! Compare two intervals

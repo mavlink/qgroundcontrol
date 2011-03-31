@@ -32,7 +32,7 @@ CurveCalibrator::CurveCalibrator(QString titleString, QWidget *parent) :
 
     curve = new QwtPlotCurve();
     curve->setPen(QPen(QColor(QString("lime"))));
-    curve->setData(*positions, *setpoints);    
+    curve->setData(*positions, *setpoints);
     curve->attach(plot);
 
     plot->replot();
@@ -73,13 +73,10 @@ CurveCalibrator::~CurveCalibrator()
 }
 
 void CurveCalibrator::setSetpoint(int setpoint)
-{   
-    if (setpoint == 0 || setpoint == 4)
-    {
+{
+    if (setpoint == 0 || setpoint == 4) {
         setpoints->replace(setpoint, static_cast<double>(logExtrema()));
-    }
-    else
-    {
+    } else {
         setpoints->replace(setpoint, static_cast<double>(logAverage()));
     }
     curve->setData(*positions, *setpoints);
@@ -90,15 +87,12 @@ void CurveCalibrator::setSetpoint(int setpoint)
 
 void CurveCalibrator::set(const QVector<float> &data)
 {
-    if (data.size() == 5)
-    {
+    if (data.size() == 5) {
         for (int i=0; i<data.size(); ++i)
             setpoints->replace(i, static_cast<double>(data[i]));
         curve->setData(*positions, *setpoints);
         plot->replot();
-    }
-    else
-    {
+    } else {
         qDebug() << __FILE__ << __LINE__ << ": wrong data vector size";
     }
 }

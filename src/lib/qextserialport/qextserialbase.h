@@ -58,8 +58,7 @@
 /*!
  * Enums for port settings.
  */
-enum NamingConvention 
-{
+enum NamingConvention {
     WIN_NAMES,
     IRIX_NAMES,
     HPUX_NAMES,
@@ -70,8 +69,7 @@ enum NamingConvention
     LINUX_NAMES
 };
 
-enum BaudRateType 
-{
+enum BaudRateType {
     BAUD50,                //POSIX ONLY
     BAUD75,                //POSIX ONLY
     BAUD110,
@@ -99,16 +97,14 @@ enum BaudRateType
     BAUD921600             // WINDOWS ONLY
 };
 
-enum DataBitsType 
-{
+enum DataBitsType {
     DATA_5,
     DATA_6,
     DATA_7,
     DATA_8
 };
 
-enum ParityType 
-{
+enum ParityType {
     PAR_NONE,
     PAR_ODD,
     PAR_EVEN,
@@ -116,15 +112,13 @@ enum ParityType
     PAR_SPACE
 };
 
-enum StopBitsType 
-{
+enum StopBitsType {
     STOP_1,
     STOP_1_5,               //WINDOWS ONLY
     STOP_2
 };
 
-enum FlowType 
-{
+enum FlowType {
     FLOW_OFF,
     FLOW_HARDWARE,
     FLOW_XONXOFF
@@ -133,8 +127,7 @@ enum FlowType
 /**
  * structure to contain port settings
  */
-struct PortSettings 
-{
+struct PortSettings {
     BaudRateType BaudRate;
     DataBitsType DataBits;
     ParityType Parity;
@@ -146,115 +139,117 @@ struct PortSettings
 /*!
  * \author Stefan Sander
  * \author Michal Policht
- * 
+ *
  * A common base class for Win_QextSerialBase, Posix_QextSerialBase and QextSerialPort.
  */
-class QextSerialBase : public QIODevice 
+class QextSerialBase : public QIODevice
 {
-	Q_OBJECT
+    Q_OBJECT
 
-	public:
-		enum QueryMode {
-			Polling,
-			EventDriven
-		};
+public:
+    enum QueryMode {
+        Polling,
+        EventDriven
+    };
 
-	protected:
-	    QMutex* mutex;
-	    QString port;
-	    PortSettings Settings;
-	    ulong lastErr;
-		QextSerialBase::QueryMode _queryMode;
+protected:
+    QMutex* mutex;
+    QString port;
+    PortSettings Settings;
+    ulong lastErr;
+    QextSerialBase::QueryMode _queryMode;
 
-	    virtual qint64 readData(char * data, qint64 maxSize)=0;
-	    virtual qint64 writeData(const char * data, qint64 maxSize)=0;
+    virtual qint64 readData(char * data, qint64 maxSize)=0;
+    virtual qint64 writeData(const char * data, qint64 maxSize)=0;
 
-	public:
-	    QextSerialBase();
-	    QextSerialBase(const QString & name);
-	    virtual ~QextSerialBase();
-	    virtual void construct();
-	    virtual void setPortName(const QString & name);
-	    virtual QString portName() const;
-	    
-	    /**!
-	     * Get query mode.
-	     * 	\return query mode.
-	     */
-		inline QextSerialBase::QueryMode queryMode() const { return _queryMode; };
+public:
+    QextSerialBase();
+    QextSerialBase(const QString & name);
+    virtual ~QextSerialBase();
+    virtual void construct();
+    virtual void setPortName(const QString & name);
+    virtual QString portName() const;
 
-		/*!
-		 * Set desired serial communication handling style. You may choose from polling 
-		 * or event driven approach. This function does nothing when port is open; to 
-		 * apply changes port must be reopened.
-		 * 
-		 * In event driven approach read() and write() functions are acting
-		 * asynchronously. They return immediately and the operation is performed in 
-		 * the background, so they doesn't freeze the calling thread.
-		 * To determine when operation is finished, QextSerialPort runs separate thread 
-		 * and monitors serial port events. Whenever the event occurs, adequate signal 
-		 * is emitted.
-		 * 
-		 * When polling is set, read() and write() are acting synchronously. Signals are
-		 * not working in this mode and some functions may not be available. The advantage
-		 * of polling is that it generates less overhead due to lack of signals emissions
-		 * and it doesn't start separate thread to monitor events.
-		 * 
-		 * Generally event driven approach is more capable and friendly, although some 
-		 * applications may need as low overhead as possible and then polling comes.
-		 * 
-		 * \param mode query mode.
-		 */
-		virtual void setQueryMode(QueryMode mode);
+    /**!
+     * Get query mode.
+     * 	\return query mode.
+     */
+    inline QextSerialBase::QueryMode queryMode() const {
+        return _queryMode;
+    };
 
-	    virtual void setBaudRate(BaudRateType)=0;
-	    virtual BaudRateType baudRate() const;
-	    virtual void setDataBits(DataBitsType)=0;
-	    virtual DataBitsType dataBits() const;
-	    virtual void setParity(ParityType)=0;
-	    virtual ParityType parity() const;
-	    virtual void setStopBits(StopBitsType)=0;
-	    virtual StopBitsType stopBits() const;
-	    virtual void setFlowControl(FlowType)=0;
-	    virtual FlowType flowControl() const;
-	    virtual void setTimeout(long)=0;
-	
-	    virtual bool open(OpenMode mode)=0;
-	    virtual bool isSequential() const;
-	    virtual void close()=0;
-	    virtual void flush()=0;
-	
-	    virtual qint64 size() const = 0;
-	    virtual qint64 bytesAvailable() const = 0;
-	    virtual bool atEnd() const;
-	
-	    virtual void ungetChar(char c)=0;
-	    virtual qint64 readLine(char * data, qint64 maxSize);
-	
-	    virtual ulong lastError() const;
-	    virtual void translateError(ulong error)=0;
-	
-	    virtual void setDtr(bool set=true)=0;
-	    virtual void setRts(bool set=true)=0;
-	    virtual ulong lineStatus()=0;
+    /*!
+     * Set desired serial communication handling style. You may choose from polling
+     * or event driven approach. This function does nothing when port is open; to
+     * apply changes port must be reopened.
+     *
+     * In event driven approach read() and write() functions are acting
+     * asynchronously. They return immediately and the operation is performed in
+     * the background, so they doesn't freeze the calling thread.
+     * To determine when operation is finished, QextSerialPort runs separate thread
+     * and monitors serial port events. Whenever the event occurs, adequate signal
+     * is emitted.
+     *
+     * When polling is set, read() and write() are acting synchronously. Signals are
+     * not working in this mode and some functions may not be available. The advantage
+     * of polling is that it generates less overhead due to lack of signals emissions
+     * and it doesn't start separate thread to monitor events.
+     *
+     * Generally event driven approach is more capable and friendly, although some
+     * applications may need as low overhead as possible and then polling comes.
+     *
+     * \param mode query mode.
+     */
+    virtual void setQueryMode(QueryMode mode);
 
-	signals:
-		/**
-		 * This signal is emitted whenever port settings are updated.
-		 * 	\param valid \p true if settings are valid, \p false otherwise.
-		 * 
-		 * 	@todo implement.
-		 */
+    virtual void setBaudRate(BaudRateType)=0;
+    virtual BaudRateType baudRate() const;
+    virtual void setDataBits(DataBitsType)=0;
+    virtual DataBitsType dataBits() const;
+    virtual void setParity(ParityType)=0;
+    virtual ParityType parity() const;
+    virtual void setStopBits(StopBitsType)=0;
+    virtual StopBitsType stopBits() const;
+    virtual void setFlowControl(FlowType)=0;
+    virtual FlowType flowControl() const;
+    virtual void setTimeout(long)=0;
+
+    virtual bool open(OpenMode mode)=0;
+    virtual bool isSequential() const;
+    virtual void close()=0;
+    virtual void flush()=0;
+
+    virtual qint64 size() const = 0;
+    virtual qint64 bytesAvailable() const = 0;
+    virtual bool atEnd() const;
+
+    virtual void ungetChar(char c)=0;
+    virtual qint64 readLine(char * data, qint64 maxSize);
+
+    virtual ulong lastError() const;
+    virtual void translateError(ulong error)=0;
+
+    virtual void setDtr(bool set=true)=0;
+    virtual void setRts(bool set=true)=0;
+    virtual ulong lineStatus()=0;
+
+signals:
+    /**
+     * This signal is emitted whenever port settings are updated.
+     * 	\param valid \p true if settings are valid, \p false otherwise.
+     *
+     * 	@todo implement.
+     */
 //		void validSettings(bool valid);
 
-		/*!
-		 * This signal is emitted whenever dsr line has changed its state. You may
-		 * use this signal to check if device is connected.
-		 * 	\param status \p true when DSR signal is on, \p false otherwise.
-		 * 
-		 * 	\see lineStatus().
-		 */
-		void dsrChanged(bool status);
+    /*!
+     * This signal is emitted whenever dsr line has changed its state. You may
+     * use this signal to check if device is connected.
+     * 	\param status \p true when DSR signal is on, \p false otherwise.
+     *
+     * 	\see lineStatus().
+     */
+    void dsrChanged(bool status);
 };
 
 #endif

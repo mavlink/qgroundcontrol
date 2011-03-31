@@ -41,8 +41,7 @@ This file is part of the QGROUNDCONTROL project
 class Imagery : public osg::Geode
 {
 public:
-    enum ImageryType
-    {
+    enum ImageryType {
         BLANK_MAP = 0,
         GOOGLE_MAP = 1,
         GOOGLE_SATELLITE = 2,

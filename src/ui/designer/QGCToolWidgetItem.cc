@@ -21,8 +21,7 @@ QGCToolWidgetItem::QGCToolWidgetItem(const QString& name, QWidget *parent) :
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
 
     QGCToolWidget* tool = dynamic_cast<QGCToolWidget*>(parent);
-    if (tool)
-    {
+    if (tool) {
         connect(this, SIGNAL(editingFinished()), tool, SLOT(storeWidgetsToSettings()));
     }
 
@@ -42,13 +41,10 @@ QGCToolWidgetItem::~QGCToolWidgetItem()
 void QGCToolWidgetItem::contextMenuEvent (QContextMenuEvent* event)
 {
     QMenu menu(this);
-    if (!isInEditMode)
-    {
+    if (!isInEditMode) {
         menu.addAction(startEditAction);
         menu.addAction(deleteAction);
-    }
-    else
-    {
+    } else {
         menu.addAction(stopEditAction);
     }
     menu.exec(event->globalPos());

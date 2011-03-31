@@ -37,8 +37,7 @@ public:
     QDial *dial;
     QGroupBox *button0Label;
 
-    void setupUi(QDialog *JoystickWidget)
-    {
+    void setupUi(QDialog *JoystickWidget) {
         if (JoystickWidget->objectName().isEmpty())
             JoystickWidget->setObjectName(QString::fromUtf8("JoystickWidget"));
         JoystickWidget->resize(400, 300);
@@ -92,8 +91,7 @@ public:
         QMetaObject::connectSlotsByName(JoystickWidget);
     } // setupUi
 
-    void retranslateUi(QDialog *JoystickWidget)
-    {
+    void retranslateUi(QDialog *JoystickWidget) {
         JoystickWidget->setWindowTitle(QApplication::translate("JoystickWidget", "Dialog", 0, QApplication::UnicodeUTF8));
         button0Label->setStyleSheet(QApplication::translate("JoystickWidget", "QGroupBox { border: 1px solid #EEEEEE; border-radius: 4px; padding: 0px; margin: 0px; background-color: #FF2222;}", 0, QApplication::UnicodeUTF8));
         button0Label->setTitle(QString());
@@ -101,8 +99,9 @@ public:
 
 };
 
-namespace Ui {
-    class JoystickWidget: public Ui_JoystickWidget {};
+namespace Ui
+{
+class JoystickWidget: public Ui_JoystickWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE

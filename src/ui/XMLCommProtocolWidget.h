@@ -35,15 +35,17 @@ This file is part of the QGROUNDCONTROL project
 #include "DomModel.h"
 #include "MAVLinkSyntaxHighlighter.h"
 
-namespace Ui {
-    class XMLCommProtocolWidget;
+namespace Ui
+{
+class XMLCommProtocolWidget;
 }
 
 /**
  * @brief Tool to generate MAVLink code out of XML protocol definitions
  * @see http://doc.trolltech.com/4.6/itemviews-simpledommodel.html for a XML view tutorial
  */
-class XMLCommProtocolWidget : public QWidget {
+class XMLCommProtocolWidget : public QWidget
+{
     Q_OBJECT
 public:
     XMLCommProtocolWidget(QWidget *parent = 0);

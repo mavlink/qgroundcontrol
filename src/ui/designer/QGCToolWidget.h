@@ -9,8 +9,9 @@
 
 #include "UAS.h"
 
-namespace Ui {
-    class QGCToolWidget;
+namespace Ui
+{
+class QGCToolWidget;
 }
 
 class QGCToolWidget : public QWidget

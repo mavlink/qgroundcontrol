@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 }
 \endcode
 
-  \todo Improve the support for a logarithmic range and/or scale. 
+  \todo Improve the support for a logarithmic range and/or scale.
 */
 class QWT_EXPORT QwtThermo: public QWidget, public QwtAbstractScale
 {
@@ -77,7 +77,7 @@ class QWT_EXPORT QwtThermo: public QWidget, public QwtAbstractScale
     Q_PROPERTY( bool alarmEnabled READ alarmEnabled WRITE setAlarmEnabled )
     Q_PROPERTY( double alarmLevel READ alarmLevel WRITE setAlarmLevel )
     Q_PROPERTY( ScalePos scalePosition READ scalePosition
-        WRITE setScalePosition )
+                WRITE setScalePosition )
     Q_PROPERTY( int borderWidth READ borderWidth WRITE setBorderWidth )
     Q_PROPERTY( QBrush fillBrush READ fillBrush WRITE setFillBrush )
     Q_PROPERTY( QColor fillColor READ fillColor WRITE setFillColor )
@@ -92,15 +92,14 @@ public:
       orientation and scale position:
       - Qt::Horizonal combines with NoScale, TopScale and BottomScale
       - Qt::Vertical combines with NoScale, LeftScale and RightScale
-      
+
       \sa setOrientation, setScalePosition
     */
-    enum ScalePos 
-    {
-        NoScale, 
-        LeftScale, 
-        RightScale, 
-        TopScale, 
+    enum ScalePos {
+        NoScale,
+        LeftScale,
+        RightScale,
+        TopScale,
         BottomScale
     };
 
@@ -123,7 +122,7 @@ public:
 
     void setFillColor(const QColor &c);
     const QColor &fillColor() const;
- 
+
     void setAlarmBrush(const QBrush &b);
     const QBrush &alarmBrush() const;
 
@@ -158,7 +157,7 @@ public:
 
 public slots:
     void setValue(double val);
-    
+
 protected:
     void draw(QPainter *p, const QRect& update_rect);
     void drawThermo(QPainter *p);
@@ -174,7 +173,7 @@ protected:
 private:
     void initThermo();
     int transform(double v) const;
-    
+
     class PrivateData;
     PrivateData *d_data;
 };

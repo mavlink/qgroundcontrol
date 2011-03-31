@@ -38,10 +38,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 
 ParameterInterface::ParameterInterface(QWidget *parent) :
-        QWidget(parent),
-        paramWidgets(new QMap<int, QGCParamWidget*>()),
-        curr(-1),
-        m_ui(new Ui::parameterWidget)
+    QWidget(parent),
+    paramWidgets(new QMap<int, QGCParamWidget*>()),
+    curr(-1),
+    m_ui(new Ui::parameterWidget)
 {
     m_ui->setupUi(this);
 
@@ -49,8 +49,7 @@ ParameterInterface::ParameterInterface(QWidget *parent) :
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
 
     // Add each of them
-    foreach (UASInterface* sys, systems)
-    {
+    foreach (UASInterface* sys, systems) {
         addUAS(sys);
     }
 
@@ -87,8 +86,7 @@ void ParameterInterface::addUAS(UASInterface* uas)
     m_ui->sensorSettings->addWidget(sensor);
 
     // Set widgets as default
-    if (curr == -1)
-    {
+    if (curr == -1) {
         // Clear
         m_ui->sensorSettings->setCurrentWidget(sensor);
         m_ui->stackedWidget->setCurrentWidget(param);

@@ -20,7 +20,7 @@ This file is part of the QGROUNDCONTROL project
     along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
 
 ======================================================================*/
- 
+
 /**
  * @file
  *   @brief Brief Description
@@ -36,27 +36,28 @@ This file is part of the QGROUNDCONTROL project
 
 #include <QDebug>
 
-LinkManager* LinkManager::instance() {
-	static LinkManager* _instance = 0;
-	if(_instance == 0) {
-		_instance = new LinkManager();
-		
-		/* Set the application as parent to ensure that this object
-		 * will be destroyed when the main application exits */
-		_instance->setParent(qApp);
-	}
-	return _instance;
+LinkManager* LinkManager::instance()
+{
+    static LinkManager* _instance = 0;
+    if(_instance == 0) {
+        _instance = new LinkManager();
+
+        /* Set the application as parent to ensure that this object
+         * will be destroyed when the main application exits */
+        _instance->setParent(qApp);
+    }
+    return _instance;
 }
 
 /**
  * @brief Private singleton constructor
- * 
+ *
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
 LinkManager::LinkManager()
 {
-        links = QList<LinkInterface*>();
-        protocolLinks = QMap<ProtocolInterface*, LinkInterface*>();
+    links = QList<LinkInterface*>();
+    protocolLinks = QMap<ProtocolInterface*, LinkInterface*>();
 }
 
 LinkManager::~LinkManager()
@@ -66,8 +67,7 @@ LinkManager::~LinkManager()
 
 void LinkManager::add(LinkInterface* link)
 {
-    if (!links.contains(link))
-    {
+    if (!links.contains(link)) {
         if(!link) return;
         connect(link, SIGNAL(destroyed(QObject*)), this, SLOT(removeLink(QObject*)));
         links.append(link);
@@ -85,8 +85,7 @@ void LinkManager::addProtocol(LinkInterface* link, ProtocolInterface* protocol)
 
     // If protocol has not been added before (list length == 0)
     // OR if link has not been added to protocol, add
-    if ((linkList.length() > 0 && !linkList.contains(link)) || linkList.length() == 0)
-    {
+    if ((linkList.length() > 0 && !linkList.contains(link)) || linkList.length() == 0) {
         // Protocol is new, add
         connect(link, SIGNAL(bytesReceived(LinkInterface*, QByteArray)), protocol, SLOT(receiveBytes(LinkInterface*, QByteArray)));
         // Store the connection information in the protocol links map
@@ -103,72 +102,65 @@ QList<LinkInterface*> LinkManager::getLinksForProtocol(ProtocolInterface* protoc
 
 bool LinkManager::connectAll()
 {
-	bool allConnected = true;
-	
-        foreach (LinkInterface* link, links)
-        {
-            if(!link) {}
-            else if(!link->connect()) allConnected = false;
-	}
-	
-	return allConnected;
+    bool allConnected = true;
+
+    foreach (LinkInterface* link, links) {
+        if(!link) {}
+        else if(!link->connect()) allConnected = false;
+    }
+
+    return allConnected;
 }
 
 bool LinkManager::disconnectAll()
 {
-	bool allDisconnected = true;
-	
-        foreach (LinkInterface* link, links)
-        {
-            //static int i=0;
-            if(!link){}
-            else if(!link->disconnect()) allDisconnected = false;
-	}
-	
-	return allDisconnected;
+    bool allDisconnected = true;
+
+    foreach (LinkInterface* link, links) {
+        //static int i=0;
+        if(!link) {}
+        else if(!link->disconnect()) allDisconnected = false;
+    }
+
+    return allDisconnected;
 }
 
 bool LinkManager::connectLink(LinkInterface* link)
 {
-        if(!link) return false;
-	return link->connect();
+    if(!link) return false;
+    return link->connect();
 }
 
 bool LinkManager::disconnectLink(LinkInterface* link)
 {
-        if(!link) return false;
-	return link->disconnect();
+    if(!link) return false;
+    return link->disconnect();
 }
 
 void LinkManager::removeLink(QObject* link)
 {
     LinkInterface* linkInterface = dynamic_cast<LinkInterface*>(link);
-    if (linkInterface)
-    {
+    if (linkInterface) {
         removeLink(linkInterface);
     }
 }
 
 bool LinkManager::removeLink(LinkInterface* link)
 {
-        if(link)
-        {
-            for (int i=0; i < QList<LinkInterface*>(links).size(); i++)
-            {
-                if(link==links.at(i))
-                {
-                    links.removeAt(i); //remove from link list
-                }
+    if(link) {
+        for (int i=0; i < QList<LinkInterface*>(links).size(); i++) {
+            if(link==links.at(i)) {
+                links.removeAt(i); //remove from link list
             }
-            // Remove link from protocol map
-            QList<ProtocolInterface* > protocols = protocolLinks.keys(link);
-            foreach (ProtocolInterface* proto, protocols)
-            {
-                protocolLinks.remove(proto, link);
-            }
-            return true;
         }
-        return false;
+        // Remove link from protocol map
+        QList<ProtocolInterface* > protocols = protocolLinks.keys(link);
+        foreach (ProtocolInterface* proto, protocols) {
+            protocolLinks.remove(proto, link);
+        }
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -179,8 +171,7 @@ bool LinkManager::removeLink(LinkInterface* link)
  */
 LinkInterface* LinkManager::getLinkForId(int id)
 {
-    foreach (LinkInterface* link, links)
-    {
+    foreach (LinkInterface* link, links) {
         if (link->getId() == id) return link;
     }
     return NULL;

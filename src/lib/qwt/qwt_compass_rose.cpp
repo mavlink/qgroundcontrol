@@ -23,15 +23,13 @@ static QPoint cutPoint(QPoint p11, QPoint p12, QPoint p21, QPoint p22)
     if ( dx1 == 0.0 && dx2 == 0.0 )
         return QPoint();
 
-    if ( dx1 == 0.0 )
-    {
+    if ( dx1 == 0.0 ) {
         const double m = dy2 / dx2;
         const double t = p21.y() - m * p21.x();
         return QPoint(p11.x(), qRound(m * p11.x() + t));
     }
 
-    if ( dx2 == 0 )
-    {
+    if ( dx2 == 0 ) {
         const double m = dy1 / dx1;
         const double t = p11.y() - m * p11.x();
         return QPoint(p21.x(), qRound(m * p21.x() + t));
@@ -66,20 +64,19 @@ QwtSimpleCompassRose::QwtSimpleCompassRose(int numThorns, int numThornLevels):
 {
     const QColor dark(128,128,255);
     const QColor light(192,255,255);
-    
+
     QPalette palette;
-    for ( int i = 0; i < QPalette::NColorGroups; i++ )
-    {
+    for ( int i = 0; i < QPalette::NColorGroups; i++ ) {
 #if QT_VERSION < 0x040000
         palette.setColor((QPalette::ColorGroup)i,
-            QColorGroup::Dark, dark);
+                         QColorGroup::Dark, dark);
         palette.setColor((QPalette::ColorGroup)i,
-            QColorGroup::Light, light);
+                         QColorGroup::Light, light);
 #else
         palette.setColor((QPalette::ColorGroup)i,
-            QPalette::Dark, dark);
+                         QPalette::Dark, dark);
         palette.setColor((QPalette::ColorGroup)i,
-            QPalette::Light, light);
+                         QPalette::Light, light);
 #endif
     }
 
@@ -95,28 +92,27 @@ QwtSimpleCompassRose::QwtSimpleCompassRose(int numThorns, int numThornLevels):
    \param north Position
    \param cg Color group
 */
-void QwtSimpleCompassRose::draw(QPainter *painter, const QPoint &center, 
-    int radius, double north, QPalette::ColorGroup cg) const
+void QwtSimpleCompassRose::draw(QPainter *painter, const QPoint &center,
+                                int radius, double north, QPalette::ColorGroup cg) const
 {
 #if QT_VERSION < 0x040000
     QColorGroup colorGroup;
-    switch(cg)
-    {
-        case QPalette::Disabled:
-            colorGroup = palette().disabled();
-        case QPalette::Inactive:
-            colorGroup = palette().inactive();
-        default:
-            colorGroup = palette().active();
+    switch(cg) {
+    case QPalette::Disabled:
+        colorGroup = palette().disabled();
+    case QPalette::Inactive:
+        colorGroup = palette().inactive();
+    default:
+        colorGroup = palette().active();
     }
 
-    drawRose(painter, colorGroup, center, radius, north, d_width, 
-        d_numThorns, d_numThornLevels, d_shrinkFactor);
+    drawRose(painter, colorGroup, center, radius, north, d_width,
+             d_numThorns, d_numThornLevels, d_shrinkFactor);
 #else
     QPalette pal = palette();
     pal.setCurrentColorGroup(cg);
-    drawRose(painter, pal, center, radius, north, d_width, 
-        d_numThorns, d_numThornLevels, d_shrinkFactor);
+    drawRose(painter, pal, center, radius, north, d_width,
+             d_numThorns, d_numThornLevels, d_shrinkFactor);
 #endif
 }
 
@@ -134,7 +130,7 @@ void QwtSimpleCompassRose::draw(QPainter *painter, const QPoint &center,
    \param shrinkFactor Factor to shrink the thorns with each level
 */
 void QwtSimpleCompassRose::drawRose(
-    QPainter *painter, 
+    QPainter *painter,
 #if QT_VERSION < 0x040000
     const QColorGroup &cg,
 #else
@@ -162,15 +158,13 @@ void QwtSimpleCompassRose::drawRose(
 
     painter->setPen(Qt::NoPen);
 
-    for ( int j = 1; j <= numThornLevels; j++ )
-    {
+    for ( int j = 1; j <= numThornLevels; j++ ) {
         double step =  pow(2.0, j) * M_PI / (double)numThorns;
         if ( step > M_PI_2 )
             break;
 
         double r = radius;
-        for ( int k = 0; k < 3; k++ )
-        {
+        for ( int k = 0; k < 3; k++ ) {
             if ( j + k < numThornLevels )
                 r *= shrinkFactor;
         }
@@ -180,9 +174,8 @@ void QwtSimpleCompassRose::drawRose(
             leafWidth = 16;
 
         const double origin = north / 180.0 * M_PI;
-        for ( double angle = origin; 
-            angle < 2.0 * M_PI + origin; angle += step)
-        {
+        for ( double angle = origin;
+                angle < 2.0 * M_PI + origin; angle += step) {
             const QPoint p = qwtPolar2Pos(center, r, angle);
             QPoint p1 = qwtPolar2Pos(center, leafWidth, angle + M_PI_2);
             QPoint p2 = qwtPolar2Pos(center, leafWidth, angle - M_PI_2);
@@ -223,24 +216,24 @@ void QwtSimpleCompassRose::drawRose(
    \param width Width
 */
 
-void QwtSimpleCompassRose::setWidth(double width) 
+void QwtSimpleCompassRose::setWidth(double width)
 {
-   d_width = width;
-   if (d_width < 0.03) 
+    d_width = width;
+    if (d_width < 0.03)
         d_width = 0.03;
 
-   if (d_width > 0.4) 
+    if (d_width > 0.4)
         d_width = 0.4;
 }
 
 /*!
   Set the number of thorns on one level
-  The number is aligned to a multiple of 4, with a minimum of 4 
+  The number is aligned to a multiple of 4, with a minimum of 4
 
   \param numThorns Number of thorns
   \sa numThorns(), setNumThornLevels()
 */
-void QwtSimpleCompassRose::setNumThorns(int numThorns) 
+void QwtSimpleCompassRose::setNumThorns(int numThorns)
 {
     if ( numThorns < 4 )
         numThorns = 4;
@@ -257,7 +250,7 @@ void QwtSimpleCompassRose::setNumThorns(int numThorns)
 */
 int QwtSimpleCompassRose::numThorns() const
 {
-   return d_numThorns;
+    return d_numThorns;
 }
 
 /*!
@@ -266,7 +259,7 @@ int QwtSimpleCompassRose::numThorns() const
   \param numThornLevels Number of thorns levels
   \sa setNumThorns(), numThornLevels()
 */
-void QwtSimpleCompassRose::setNumThornLevels(int numThornLevels) 
+void QwtSimpleCompassRose::setNumThornLevels(int numThornLevels)
 {
     d_numThornLevels = numThornLevels;
 }

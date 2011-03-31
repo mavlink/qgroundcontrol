@@ -45,23 +45,23 @@ This file is part of the QGROUNDCONTROL project
 
 #include "UASInterface.h"
 
-namespace Ui {
-    class WatchdogControl;
+namespace Ui
+{
+class WatchdogControl;
 }
 
 /**
  * @brief Overall widget for controlling all watchdogs of all connected MAVs
  */
-class WatchdogControl : public QWidget {
+class WatchdogControl : public QWidget
+{
     Q_OBJECT
 public:
 
 
     ///! Command codes, used to send and receive commands over lcm
-    struct Command
-    {
-        enum Enum
-        {
+    struct Command {
+        enum Enum {
             Start         = 0,
             Restart       = 1,
             Stop          = 2,
@@ -70,23 +70,20 @@ public:
 
             RequestInfo   = 254,
             RequestStatus = 255
-                        };
+        };
     };
 
     ///! This struct represents a process on the watchdog. Used to store all values.
-    struct ProcessInfo
-    {
+    struct ProcessInfo {
         ///! Process state - each process is in exactly one of those states (except unknown, that's just to initialize it)
-        struct State
-        {
-            enum Enum
-            {
+        struct State {
+            enum Enum {
                 Unknown       = 0,
                 Running       = 1,
                 Stopped       = 2,
                 Stopped_OK    = 3,
                 Stopped_ERROR = 4
-                            };
+            };
         };
 
         ///! Constructor - initialize the values
@@ -108,8 +105,7 @@ public:
     };
 
     ///! This struct identifies a watchdog. It's a combination of system-ID and watchdog-ID. implements operator< to be used as key in a std::map
-    struct WatchdogID
-    {
+    struct WatchdogID {
         ///! Constructor - initialize the values
         WatchdogID(uint8_t system_id, uint16_t watchdog_id) : system_id_(system_id), watchdog_id_(watchdog_id) {}
 
@@ -117,14 +113,14 @@ public:
         uint16_t watchdog_id_;  ///< The watchdog-ID
 
         ///! Comparison operator which is used by std::map
-        inline bool operator<(const WatchdogID& other) const
-        { return (this->system_id_ != other.system_id_) ? (this->system_id_ < other.system_id_) : (this->watchdog_id_ < other.watchdog_id_); }
+        inline bool operator<(const WatchdogID& other) const {
+            return (this->system_id_ != other.system_id_) ? (this->system_id_ < other.system_id_) : (this->watchdog_id_ < other.watchdog_id_);
+        }
 
     };
 
     ///! This struct represents a watchdog
-    struct WatchdogInfo
-    {
+    struct WatchdogInfo {
         ProcessInfo& getProcess(uint16_t index);
 
         std::vector<ProcessInfo> processes_;    ///< A vector containing all processes running on this watchdog
@@ -171,7 +167,7 @@ private:
 
 ///! Convert a value to std::string
 template <class T>
-        std::string convertToString(T value)
+std::string convertToString(T value)
 {
     std::ostringstream oss;
     oss << value;

@@ -3,8 +3,9 @@
 
 #include <QWidget>
 
-namespace Ui {
-    class QGCMissionConditionWidget;
+namespace Ui
+{
+class QGCMissionConditionWidget;
 }
 
 class QGCMissionConditionWidget : public QWidget

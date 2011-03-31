@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -36,7 +36,7 @@ public:
     bool isIdentity() const;
 
     void setMetrics(const QPaintDevice *layoutMetrics,
-        const QPaintDevice *deviceMetrics);
+                    const QPaintDevice *deviceMetrics);
 
     int layoutToDeviceX(int x) const;
     int deviceToLayoutX(int x) const;
@@ -64,10 +64,10 @@ public:
     QRect screenToLayout(const QRect &) const;
     QRect layoutToScreen(const QRect &) const;
 
-    QwtPolygon layoutToDevice(const QwtPolygon &, 
-        const QPainter * = NULL) const;
-    QwtPolygon deviceToLayout(const QwtPolygon &, 
-        const QPainter * = NULL) const;
+    QwtPolygon layoutToDevice(const QwtPolygon &,
+                              const QPainter * = NULL) const;
+    QwtPolygon deviceToLayout(const QwtPolygon &,
+                              const QPainter * = NULL) const;
 
 #if QT_VERSION < 0x040000
     static QwtPolygon translate(const QWMatrix &, const QwtPolygon &);
@@ -132,26 +132,26 @@ inline int QwtMetricsMap::layoutToScreenY(int y) const
 
 inline QSize QwtMetricsMap::layoutToDevice(const QSize &size) const
 {
-    return QSize(layoutToDeviceX(size.width()), 
-        layoutToDeviceY(size.height()));
+    return QSize(layoutToDeviceX(size.width()),
+                 layoutToDeviceY(size.height()));
 }
 
 inline QSize QwtMetricsMap::deviceToLayout(const QSize &size) const
 {
-    return QSize(deviceToLayoutX(size.width()), 
-        deviceToLayoutY(size.height()));
+    return QSize(deviceToLayoutX(size.width()),
+                 deviceToLayoutY(size.height()));
 }
 
 inline QSize QwtMetricsMap::screenToLayout(const QSize &size) const
 {
-    return QSize(screenToLayoutX(size.width()), 
-        screenToLayoutY(size.height()));
+    return QSize(screenToLayoutX(size.width()),
+                 screenToLayoutY(size.height()));
 }
 
 inline QSize QwtMetricsMap::layoutToScreen(const QSize &size) const
 {
-    return QSize(layoutToScreenX(size.width()), 
-        layoutToScreenY(size.height()));
+    return QSize(layoutToScreenX(size.width()),
+                 layoutToScreenY(size.height()));
 }
 
 #endif

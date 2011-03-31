@@ -18,9 +18,9 @@
 
 #if defined(QT_NO_STL) || QT_VERSION < 0x040000 || QT_VERSION > 0x040001
 /*
-  Unfortunately Qt 4.0.0/Qt 4.0.1 contains uncompilable 
-  code in the STL adaptors of qmap.h. The declaration below 
-  instantiates this code resulting in compiler errors. 
+  Unfortunately Qt 4.0.0/Qt 4.0.1 contains uncompilable
+  code in the STL adaptors of qmap.h. The declaration below
+  instantiates this code resulting in compiler errors.
   If you really need the map to be exported, remove the condition above
   and fix the qmap.h
 */
@@ -38,14 +38,14 @@ class QwtCompassRose;
   \brief A Compass Widget
 
   QwtCompass is a widget to display and enter directions. It consists
-  of a scale, an optional needle and rose. 
+  of a scale, an optional needle and rose.
 
-  \image html dials1.png 
+  \image html dials1.png
 
   \note The examples/dials example shows how to use QwtCompass.
 */
 
-class QWT_EXPORT QwtCompass: public QwtDial 
+class QWT_EXPORT QwtCompass: public QwtDial
 {
     Q_OBJECT
 
@@ -68,10 +68,10 @@ protected:
     virtual QwtText scaleLabel(double value) const;
 
     virtual void drawRose(QPainter *, const QPoint &center,
-        int radius, double north, QPalette::ColorGroup) const;
+                          int radius, double north, QPalette::ColorGroup) const;
 
-    virtual void drawScaleContents(QPainter *, 
-        const QPoint &center, int radius) const; 
+    virtual void drawScaleContents(QPainter *,
+                                   const QPoint &center, int radius) const;
 
     virtual void keyPressEvent(QKeyEvent *);
 

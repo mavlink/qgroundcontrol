@@ -35,8 +35,8 @@ void QGCUDPLinkConfiguration::addHost()
 {
     bool ok;
     QString hostName = QInputDialog::getText(this, tr("Add a new IP address / hostname to MAVLink"),
-                                         tr("Host (hostname:port):"), QLineEdit::Normal,
-                                         "localhost:14555", &ok);
+                       tr("Host (hostname:port):"), QLineEdit::Normal,
+                       "localhost:14555", &ok);
     if (ok && !hostName.isEmpty())
-    link->addHost(hostName);
+        link->addHost(hostName);
 }

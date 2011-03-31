@@ -44,21 +44,19 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 
 CurveData::CurveData():
-        d_count(0)
+    d_count(0)
 {
 }
 
 void CurveData::append(double *x, double *y, int count)
 {
     int newSize = ( (d_count + count) / 1000 + 1 ) * 1000;
-    if ( newSize > size() )
-    {
+    if ( newSize > size() ) {
         d_x.resize(newSize);
         d_y.resize(newSize);
     }
 
-    for ( register int i = 0; i < count; i++ )
-    {
+    for ( register int i = 0; i < count; i++ ) {
         d_x[d_count + i] = x[i];
         d_y[d_count + i] = y[i];
     }
@@ -86,12 +84,12 @@ const double* CurveData::y() const
 }
 
 IncrementalPlot::IncrementalPlot(QWidget *parent):
-        QwtPlot(parent),
-        symbolWidth(1.2f),
-        curveWidth(1.0f),
-        gridWidth(0.8f),
-        scaleWidth(1.0f),
-        symmetric(false)
+    QwtPlot(parent),
+    symbolWidth(1.2f),
+    curveWidth(1.0f),
+    gridWidth(0.8f),
+    scaleWidth(1.0f),
+    symmetric(false)
 {
     setAutoReplot(false);
 
@@ -175,18 +173,14 @@ void IncrementalPlot::handleLegendClick(QwtPlotItem* item, bool on)
 
 void IncrementalPlot::showLegend(bool show)
 {
-    if (show)
-    {
-        if (legend == NULL)
-        {
+    if (show) {
+        if (legend == NULL) {
             legend = new QwtLegend;
             legend->setFrameStyle(QFrame::Box);
             legend->setItemMode(QwtLegend::CheckableItem);
         }
         insertLegend(legend, QwtPlot::RightLegend);
-    }
-    else
-    {
+    } else {
         delete legend;
         legend = NULL;
     }
@@ -208,46 +202,31 @@ void IncrementalPlot::showLegend(bool show)
  */
 void IncrementalPlot::setStyleText(QString style)
 {
-    foreach (QwtPlotCurve* curve, d_curve)
-    {
+    foreach (QwtPlotCurve* curve, d_curve) {
         // Style of datapoints
-        if (style.toLower().contains("circles"))
-        {
+        if (style.toLower().contains("circles")) {
             curve->setSymbol(QwtSymbol(QwtSymbol::Ellipse,
                                        Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
-        }
-        else if (style.toLower().contains("crosses"))
-        {
+        } else if (style.toLower().contains("crosses")) {
             curve->setSymbol(QwtSymbol(QwtSymbol::XCross,
                                        Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(5, 5)) );
-        }
-        else if (style.toLower().contains("rect"))
-        {
+        } else if (style.toLower().contains("rect")) {
             curve->setSymbol(QwtSymbol(QwtSymbol::Rect,
                                        Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
-        }
-        else if (style.toLower().contains("line")) // Show no symbol
-        {
+        } else if (style.toLower().contains("line")) { // Show no symbol
             curve->setSymbol(QwtSymbol(QwtSymbol::NoSymbol,
                                        Qt::NoBrush, QPen(QBrush(curve->symbol().pen().color()), symbolWidth), QSize(6, 6)) );
         }
 
         curve->setPen(QPen(QBrush(curve->symbol().pen().color().darker()), curveWidth));
         // Style of lines
-        if (style.toLower().contains("dotted"))
-        {
+        if (style.toLower().contains("dotted")) {
             curve->setStyle(QwtPlotCurve::Dots);
-        }
-        else if (style.toLower().contains("line") || style.toLower().contains("solid"))
-        {
+        } else if (style.toLower().contains("line") || style.toLower().contains("solid")) {
             curve->setStyle(QwtPlotCurve::Lines);
-        }
-        else if (style.toLower().contains("dashed") || style.toLower().contains("solid"))
-        {
+        } else if (style.toLower().contains("dashed") || style.toLower().contains("solid")) {
             curve->setStyle(QwtPlotCurve::Steps);
-        }
-        else
-        {
+        } else {
             curve->setStyle(QwtPlotCurve::NoCurve);
         }
 
@@ -284,8 +263,7 @@ void IncrementalPlot::updateScale()
     double xMaxRange = xmax+(xmax*margin);
     double yMinRange = ymin+(ymin*margin);
     double yMaxRange = ymax+(ymax*margin);
-    if (symmetric)
-    {
+    if (symmetric) {
         double xRange = xMaxRange - xMinRange;
         double yRange = yMaxRange - yMinRange;
 
@@ -296,17 +274,14 @@ void IncrementalPlot::updateScale()
 
         float aspectRatio = xSize / ySize;
 
-        if (xRange > yRange)
-        {
+        if (xRange > yRange) {
             double yCenter = yMinRange + yRange/2.0;
             double xCenter = xMinRange + xRange/2.0;
             yMinRange = yCenter - xRange/2.0;
             yMaxRange = yCenter + xRange/2.0;
             xMinRange = xCenter - (xRange*aspectRatio)/2.0;
             xMaxRange = xCenter + (xRange*aspectRatio)/2.0;
-        }
-        else
-        {
+        } else {
             double xCenter = xMinRange + xRange/2.0;
             xMinRange = xCenter - (yRange*aspectRatio)/2.0;
             xMaxRange = xCenter + (yRange*aspectRatio)/2.0;
@@ -326,18 +301,14 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
 {
     CurveData* data;
     QwtPlotCurve* curve;
-    if (!d_data.contains(key))
-    {
+    if (!d_data.contains(key)) {
         data = new CurveData;
         d_data.insert(key, data);
-    }
-    else
-    {
+    } else {
         data = d_data.value(key);
     }
 
-    if (!d_curve.contains(key))
-    {
+    if (!d_curve.contains(key)) {
         curve = new QwtPlotCurve(key);
         d_curve.insert(key, curve);
         curve->setStyle(QwtPlotCurve::NoCurve);
@@ -348,9 +319,7 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
                                    QBrush(c), QPen(c, 1.2f), QSize(5, 5)) );
 
         curve->attach(this);
-    }
-    else
-    {
+    } else {
         curve = d_curve.value(key);
     }
 
@@ -360,26 +329,21 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
     bool scaleChanged = false;
 
     // Update scales
-    for (int i = 0; i<size; i++)
-    {
-        if (x[i] < xmin)
-        {
+    for (int i = 0; i<size; i++) {
+        if (x[i] < xmin) {
             xmin = x[i];
             scaleChanged = true;
         }
-        if (x[i] > xmax)
-        {
+        if (x[i] > xmax) {
             xmax = x[i];
             scaleChanged = true;
         }
 
-        if (y[i] < ymin)
-        {
+        if (y[i] < ymin) {
             ymin = y[i];
             scaleChanged = true;
         }
-        if (y[i] > ymax)
-        {
+        if (y[i] > ymax) {
             ymax = y[i];
             scaleChanged = true;
         }
@@ -393,15 +357,12 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
 
     //replot();
 
-    if(scaleChanged)
-    {
+    if(scaleChanged) {
         updateScale();
-    }
-    else
-    {
+    } else {
 
         const bool cacheMode =
-                canvas()->testPaintAttribute(QwtPlotCanvas::PaintCached);
+            canvas()->testPaintAttribute(QwtPlotCanvas::PaintCached);
 
 #if QT_VERSION >= 0x040000 && defined(Q_WS_X11)
         // Even if not recommended by TrollTech, Qt::WA_PaintOutsidePaintEvent
@@ -433,17 +394,13 @@ void IncrementalPlot::appendData(QString key, double *x, double *y, int size)
 int IncrementalPlot::data(QString key, double* r_x, double* r_y, int maxSize)
 {
     int result = 0;
-    if (d_data.contains(key))
-    {
+    if (d_data.contains(key)) {
         CurveData* d = d_data.value(key);
-        if (maxSize >= d->count())
-        {
+        if (maxSize >= d->count()) {
             result = d->count();
             memcpy(r_x, d->x(), sizeof(double) * d->count());
             memcpy(r_y, d->y(), sizeof(double) * d->count());
-        }
-        else
-        {
+        } else {
             result = 0;
         }
     }
@@ -484,14 +441,12 @@ QColor IncrementalPlot::getColorForCurve(QString id)
 
 void IncrementalPlot::removeData()
 {
-    foreach (QwtPlotCurve* curve, d_curve)
-    {
+    foreach (QwtPlotCurve* curve, d_curve) {
         delete curve;
     }
     d_curve.clear();
 
-    foreach (CurveData* data, d_data)
-    {
+    foreach (CurveData* data, d_data) {
         delete data;
     }
     d_data.clear();

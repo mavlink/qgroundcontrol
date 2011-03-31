@@ -51,7 +51,9 @@ public:
 
     bool isConnected();
     qint64 bytesAvailable();
-    int getPort() const { return port; }
+    int getPort() const {
+        return port;
+    }
 
     /**
      * @brief The human readable port name
@@ -63,7 +65,9 @@ public:
     int getParityType();
     int getDataBitsType();
     int getStopBitsType();
-    QList<QHostAddress> getHosts() { return hosts; }
+    QList<QHostAddress> getHosts() {
+        return hosts;
+    }
 
     /* Extensive statistics for scientific purposes */
     qint64 getNominalDataRate();

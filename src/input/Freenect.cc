@@ -50,8 +50,7 @@ Freenect::Freenect()
 
 Freenect::~Freenect()
 {
-    if (device != NULL)
-    {
+    if (device != NULL) {
         freenect_stop_depth(device);
         freenect_stop_video(device);
     }
@@ -68,18 +67,15 @@ Freenect::init(int userDeviceNumber)
     readConfigFile();
 
     // populate gamma lookup table
-    for (int i = 0; i < 2048; ++i)
-    {
+    for (int i = 0; i < 2048; ++i) {
         float v = static_cast<float>(i) / 2048.0f;
         v = powf(v, 3.0f) * 6.0f;
         gammaTable[i] = static_cast<unsigned short>(v * 6.0f * 256.0f);
     }
 
     // populate depth projection matrix
-    for (int i = 0; i < FREENECT_FRAME_H; ++i)
-    {
-        for (int j = 0; j < FREENECT_FRAME_W; ++j)
-        {
+    for (int i = 0; i < FREENECT_FRAME_H; ++i) {
+        for (int j = 0; j < FREENECT_FRAME_W; ++j) {
             QVector2D originalPoint(j, i);
             QVector2D rectifiedPoint;
             rectifyPoint(originalPoint, rectifiedPoint, depthCameraParameters);
@@ -94,20 +90,17 @@ Freenect::init(int userDeviceNumber)
         }
     }
 
-    if (freenect_init(&context, NULL) < 0)
-    {
+    if (freenect_init(&context, NULL) < 0) {
         return false;
     }
 
     freenect_set_log_level(context, FREENECT_LOG_DEBUG);
 
-    if (freenect_num_devices(context) < 1)
-    {
+    if (freenect_num_devices(context) < 1) {
         return false;
     }
 
-    if (freenect_open_device(context, &device, userDeviceNumber) < 0)
-    {
+    if (freenect_open_device(context, &device, userDeviceNumber) < 0) {
         return false;
     }
 
@@ -117,31 +110,25 @@ Freenect::init(int userDeviceNumber)
     memset(depth, 0, FREENECT_DEPTH_11BIT_SIZE);
 
     // set Kinect parameters
-    if (freenect_set_tilt_degs(device, tiltAngle) != 0)
-    {
+    if (freenect_set_tilt_degs(device, tiltAngle) != 0) {
         return false;
     }
-    if (freenect_set_led(device, LED_RED) != 0)
-    {
+    if (freenect_set_led(device, LED_RED) != 0) {
         return false;
     }
-    if (freenect_set_video_format(device, FREENECT_VIDEO_RGB) != 0)
-    {
+    if (freenect_set_video_format(device, FREENECT_VIDEO_RGB) != 0) {
         return false;
     }
-    if (freenect_set_depth_format(device, FREENECT_DEPTH_11BIT) != 0)
-    {
+    if (freenect_set_depth_format(device, FREENECT_DEPTH_11BIT) != 0) {
         return false;
     }
     freenect_set_video_callback(device, videoCallback);
     freenect_set_depth_callback(device, depthCallback);
 
-    if (freenect_start_depth(device) != 0)
-    {
+    if (freenect_start_depth(device) != 0) {
         return false;
     }
-    if (freenect_start_video(device) != 0)
-    {
+    if (freenect_start_video(device) != 0) {
         return false;
     }
 
@@ -154,8 +141,7 @@ Freenect::init(int userDeviceNumber)
 bool
 Freenect::process(void)
 {
-    if (freenect_process_events(context) < 0)
-    {
+    if (freenect_process_events(context) < 0) {
         return false;
     }
 
@@ -204,16 +190,13 @@ Freenect::get3DPointCloudData(void)
 
     pointCloud3D->clear();
     unsigned short* data = reinterpret_cast<unsigned short*>(depth);
-    for (int i = 0; i < FREENECT_FRAME_PIX; ++i)
-    {
-        if (data[i] > 0 && data[i] <= 2048)
-        {
+    for (int i = 0; i < FREENECT_FRAME_PIX; ++i) {
+        if (data[i] > 0 && data[i] <= 2048) {
             double range = baseline * depthCameraParameters.fx
                            / (1.0 / 8.0 * (disparityOffset
                                            - static_cast<double>(data[i])));
 
-            if (range > 0.0f)
-            {
+            if (range > 0.0f) {
                 QVector3D ray = depthProjectionMatrix[i];
                 ray *= range;
 
@@ -231,8 +214,7 @@ Freenect::get6DPointCloudData(void)
     get3DPointCloudData();
 
     pointCloud6D->clear();
-    for (int i = 0; i < pointCloud3D->size(); ++i)
-    {
+    for (int i = 0; i < pointCloud3D->size(); ++i) {
         Vector6D point;
 
         point.x = pointCloud3D->at(i).x();
@@ -249,8 +231,7 @@ Freenect::get6DPointCloudData(void)
         unrectifyPoint(rectifiedPoint, originalPoint, rgbCameraParameters);
 
         if (originalPoint.x() >= 0.0 && originalPoint.x() < FREENECT_FRAME_W &&
-            originalPoint.y() >= 0.0 && originalPoint.y() < FREENECT_FRAME_H)
-        {
+                originalPoint.y() >= 0.0 && originalPoint.y() < FREENECT_FRAME_H) {
             int x = static_cast<int>(originalPoint.x());
             int y = static_cast<int>(originalPoint.y());
             unsigned char* pixel = reinterpret_cast<unsigned char*>(rgb)
@@ -276,12 +257,10 @@ Freenect::getTiltAngle(void) const
 void
 Freenect::setTiltAngle(int angle)
 {
-    if (angle > 30)
-    {
+    if (angle > 30) {
         angle = 30;
     }
-    if (angle < -30)
-    {
+    if (angle < -30) {
         angle = -30;
     }
 
@@ -297,8 +276,7 @@ void
 Freenect::FreenectThread::run(void)
 {
     Freenect* freenect = static_cast<Freenect *>(freenect_get_user(device));
-    while (1)
-    {
+    while (1) {
         freenect->process();
     }
 }
@@ -359,8 +337,7 @@ Freenect::rectifyPoint(const QVector2D& originalPoint,
     double y0 = y;
 
     // eliminate lens distortion iteratively
-    for (int i = 0; i < 4; ++i)
-    {
+    for (int i = 0; i < 4; ++i) {
         double r2 = x * x + y * y;
 
         // tangential distortion vector [dx dy]
@@ -428,12 +405,10 @@ Freenect::depthCallback(freenect_device* device, void* depth, uint32_t timestamp
     QMutexLocker coloredDepthLocker(&freenect->coloredDepthMutex);
     unsigned short* src = reinterpret_cast<unsigned short *>(data);
     unsigned char* dst = reinterpret_cast<unsigned char *>(freenect->coloredDepth);
-    for (int i = 0; i < FREENECT_FRAME_PIX; ++i)
-    {
+    for (int i = 0; i < FREENECT_FRAME_PIX; ++i) {
         unsigned short pval = freenect->gammaTable[src[i]];
         unsigned short lb = pval & 0xFF;
-        switch (pval >> 8)
-        {
+        switch (pval >> 8) {
         case 0:
             dst[3 * i] = 255;
             dst[3 * i + 1] = 255 - lb;

@@ -67,18 +67,15 @@ void QGCParamSlider::refreshParamList()
 {
     ui->editSelectParamComboBox->setEnabled(true);
     ui->editSelectComponentComboBox->setEnabled(true);
-    if (uas)
-    {
+    if (uas) {
         uas->getParamManager()->requestParameterList();
     }
 }
 
 void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
 {
-    if (activeUas)
-    {
-        if (uas)
-        {
+    if (activeUas) {
+        if (uas) {
             disconnect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,float)), this, SLOT(setParameterValue(int,int,int,int,QString,float)));
         }
 
@@ -90,8 +87,7 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
 
 void QGCParamSlider::requestParameter()
 {
-    if (parameterIndex != -1)
-    {
+    if (parameterIndex != -1) {
         uas->requestParameter(this->component, this->parameterIndex);
     }
 }
@@ -169,13 +165,10 @@ void QGCParamSlider::endEditMode()
 
 void QGCParamSlider::sendParameter()
 {
-    if (uas)
-    {
+    if (uas) {
         // Set value, param manager handles retransmission
         uas->getParamManager()->setParameter(component, parameterName, parameterValue);
-    }
-    else
-    {
+    } else {
         qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }
 }
@@ -199,37 +192,30 @@ void QGCParamSlider::setParameterValue(int uas, int component, int paramCount, i
     Q_UNUSED(paramCount);
     // Check if this component and parameter are part of the list
     bool found = false;
-    for (int i = 0; i< ui->editSelectComponentComboBox->count(); ++i)
-    {
-        if (component == ui->editSelectComponentComboBox->itemData(i).toInt())
-        {
+    for (int i = 0; i< ui->editSelectComponentComboBox->count(); ++i) {
+        if (component == ui->editSelectComponentComboBox->itemData(i).toInt()) {
             found = true;
         }
     }
 
-    if (!found)
-    {
+    if (!found) {
         ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(component), component);
     }
 
     // Parameter checking
     found = false;
-    for (int i = 0; i < ui->editSelectParamComboBox->count(); ++i)
-    {
-        if (parameterName == ui->editSelectParamComboBox->itemText(i))
-        {
+    for (int i = 0; i < ui->editSelectParamComboBox->count(); ++i) {
+        if (parameterName == ui->editSelectParamComboBox->itemText(i)) {
             found = true;
         }
     }
 
-    if (!found)
-    {
+    if (!found) {
         ui->editSelectParamComboBox->addItem(parameterName, paramIndex);
     }
 
     Q_UNUSED(uas);
-    if (component == this->component && parameterName == this->parameterName)
-    {
+    if (component == this->component && parameterName == this->parameterName) {
         parameterValue = value;
         ui->valueSpinBox->setValue(value);
         ui->valueSlider->setValue(floatToScaledInt(value));

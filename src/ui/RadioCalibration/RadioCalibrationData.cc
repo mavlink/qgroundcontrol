@@ -12,11 +12,11 @@ RadioCalibrationData::RadioCalibrationData()
 }
 
 RadioCalibrationData::RadioCalibrationData(const QVector<float> &aileron,
-                                                                   const QVector<float> &elevator,
-                                                                   const QVector<float> &rudder,
-                                                                   const QVector<float> &gyro,
-                                                                   const QVector<float> &pitch,
-                                                                   const QVector<float> &throttle)
+        const QVector<float> &elevator,
+        const QVector<float> &rudder,
+        const QVector<float> &gyro,
+        const QVector<float> &pitch,
+        const QVector<float> &throttle)
 {
     data = new QVector<QVector<float> >();
     (*data) << aileron
@@ -40,8 +40,7 @@ RadioCalibrationData::~RadioCalibrationData()
 
 const float* RadioCalibrationData::operator [](int i) const
 {
-    if (i < data->size())
-    {
+    if (i < data->size()) {
         return (*data)[i].constData();
     }
 
@@ -50,8 +49,7 @@ const float* RadioCalibrationData::operator [](int i) const
 
 const QVector<float>& RadioCalibrationData::operator ()(const int i) const throw(std::out_of_range)
 {
-    if ((i < data->size()) && (i >=0))
-    {
+    if ((i < data->size()) && (i >=0)) {
         return (*data)[i];
     }
 
@@ -61,8 +59,7 @@ const QVector<float>& RadioCalibrationData::operator ()(const int i) const throw
 QString RadioCalibrationData::toString(RadioElement element) const
 {
     QString s;
-    foreach (float f, (*data)[element])
-    {
+    foreach (float f, (*data)[element]) {
         s += QString::number(f) + ", ";
     }
     return s.mid(0, s.length()-2);

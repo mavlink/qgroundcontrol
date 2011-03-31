@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -19,15 +19,15 @@ QwtScaleDiv::QwtScaleDiv():
 {
 }
 
-/*! 
+/*!
   Construct QwtScaleDiv instance.
 
   \param interval Interval
   \param ticks List of major, medium and minor ticks
 */
 QwtScaleDiv::QwtScaleDiv(
-        const QwtDoubleInterval &interval, 
-        QwtValueList ticks[NTickTypes]):
+    const QwtDoubleInterval &interval,
+    QwtValueList ticks[NTickTypes]):
     d_lBound(interval.minValue()),
     d_hBound(interval.maxValue()),
     d_isValid(true)
@@ -36,7 +36,7 @@ QwtScaleDiv::QwtScaleDiv(
         d_ticks[i] = ticks[i];
 }
 
-/*! 
+/*!
   Construct QwtScaleDiv instance.
 
   \param lBound First interval limit
@@ -44,8 +44,8 @@ QwtScaleDiv::QwtScaleDiv(
   \param ticks List of major, medium and minor ticks
 */
 QwtScaleDiv::QwtScaleDiv(
-        double lBound, double hBound,
-        QwtValueList ticks[NTickTypes]):
+    double lBound, double hBound,
+    QwtValueList ticks[NTickTypes]):
     d_lBound(lBound),
     d_hBound(hBound),
     d_isValid(true)
@@ -70,14 +70,12 @@ void QwtScaleDiv::setInterval(const QwtDoubleInterval &interval)
 int QwtScaleDiv::operator==(const QwtScaleDiv &other) const
 {
     if ( d_lBound != other.d_lBound ||
-        d_hBound != other.d_hBound ||
-        d_isValid != other.d_isValid )
-    {
+            d_hBound != other.d_hBound ||
+            d_isValid != other.d_isValid ) {
         return false;
     }
 
-    for ( int i = 0; i < NTickTypes; i++ )
-    {
+    for ( int i = 0; i < NTickTypes; i++ ) {
         if ( d_ticks[i] != other.d_ticks[i] )
             return false;
     }
@@ -128,13 +126,12 @@ void QwtScaleDiv::invert()
 {
     qSwap(d_lBound, d_hBound);
 
-    for ( int i = 0; i < NTickTypes; i++ )
-    {
+    for ( int i = 0; i < NTickTypes; i++ ) {
         QwtValueList& ticks = d_ticks[i];
 
         const int size = ticks.count();
         const int size2 = size / 2;
- 
+
         for (int i=0; i < size2; i++)
             qSwap(ticks[i], ticks[size - 1 - i]);
     }

@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -10,7 +10,7 @@
 #ifndef QWT_MATH_H
 #define QWT_MATH_H
 
-#include <math.h> 
+#include <math.h>
 #include <qpoint.h>
 #include "qwt_global.h"
 #include "qwt_double_rect.h"
@@ -111,16 +111,16 @@ QWT_EXPORT double qwtGetMin(const double *array, int size);
 QWT_EXPORT double qwtGetMax(const double *array, int size);
 
 
-//! Return the sign 
+//! Return the sign
 inline int qwtSign(double x)
 {
     if (x > 0.0)
-       return 1;
+        return 1;
     else if (x < 0.0)
-       return (-1);
+        return (-1);
     else
-       return 0;
-}            
+        return 0;
+}
 
 //! Return the square of a number
 inline double qwtSqr(const double x)
@@ -132,29 +132,29 @@ inline double qwtSqr(const double x)
   \brief Limit a value to fit into a specified interval
   \param x Input value
   \param x1 First interval boundary
-  \param x2 Second interval boundary  
+  \param x2 Second interval boundary
 */
 template <class T>
 T qwtLim(const T& x, const T& x1, const T& x2)
 {
     T rv;
     T xmin, xmax;
-    
+
     xmin = qwtMin(x1, x2);
     xmax = qwtMax(x1, x2);
 
     if ( x < xmin )
-       rv = xmin;
+        rv = xmin;
     else if ( x > xmax )
-       rv = xmax;
+        rv = xmax;
     else
-       rv = x;
+        rv = x;
 
     return rv;
 }
 
 inline QPoint qwtPolar2Pos(const QPoint &pole,
-    double radius, double angle)
+                           double radius, double angle)
 {
     const double x = pole.x() + radius * ::cos(angle);
     const double y = pole.y() - radius * ::sin(angle);
@@ -163,13 +163,13 @@ inline QPoint qwtPolar2Pos(const QPoint &pole,
 }
 
 inline QPoint qwtDegree2Pos(const QPoint &pole,
-    double radius, double angle)
+                            double radius, double angle)
 {
     return qwtPolar2Pos(pole, radius, angle / 180.0 * M_PI);
 }
 
 inline QwtDoublePoint qwtPolar2Pos(const QwtDoublePoint &pole,
-    double radius, double angle)
+                                   double radius, double angle)
 {
     const double x = pole.x() + radius * ::cos(angle);
     const double y = pole.y() - radius * ::sin(angle);
@@ -178,7 +178,7 @@ inline QwtDoublePoint qwtPolar2Pos(const QwtDoublePoint &pole,
 }
 
 inline QwtDoublePoint qwtDegree2Pos(const QwtDoublePoint &pole,
-    double radius, double angle)
+                                    double radius, double angle)
 {
     return qwtPolar2Pos(pole, radius, angle / 180.0 * M_PI);
 }

@@ -30,8 +30,7 @@ public:
     QCheckBox *loggingCheckBox;
     QSpacerItem *verticalSpacer;
 
-    void setupUi(QWidget *MAVLinkSettingsWidget)
-    {
+    void setupUi(QWidget *MAVLinkSettingsWidget) {
         if (MAVLinkSettingsWidget->objectName().isEmpty())
             MAVLinkSettingsWidget->setObjectName(QString::fromUtf8("MAVLinkSettingsWidget"));
         MAVLinkSettingsWidget->resize(267, 123);
@@ -58,8 +57,7 @@ public:
         QMetaObject::connectSlotsByName(MAVLinkSettingsWidget);
     } // setupUi
 
-    void retranslateUi(QWidget *MAVLinkSettingsWidget)
-    {
+    void retranslateUi(QWidget *MAVLinkSettingsWidget) {
         MAVLinkSettingsWidget->setWindowTitle(QApplication::translate("MAVLinkSettingsWidget", "Form", 0, QApplication::UnicodeUTF8));
         heartbeatCheckBox->setText(QApplication::translate("MAVLinkSettingsWidget", "Emit heartbeat", 0, QApplication::UnicodeUTF8));
         loggingCheckBox->setText(QApplication::translate("MAVLinkSettingsWidget", "Log all MAVLink packets", 0, QApplication::UnicodeUTF8));
@@ -67,8 +65,9 @@ public:
 
 };
 
-namespace Ui {
-    class MAVLinkSettingsWidget: public Ui_MAVLinkSettingsWidget {};
+namespace Ui
+{
+class MAVLinkSettingsWidget: public Ui_MAVLinkSettingsWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE

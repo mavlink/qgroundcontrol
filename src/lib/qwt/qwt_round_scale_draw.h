@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -21,7 +21,7 @@ class QPen;
 
   QwtRoundScaleDraw can be used to draw round scales.
   The circle segment can be adjusted by QwtRoundScaleDraw::setAngleRange().
-  The geometry of the scale can be specified with 
+  The geometry of the scale can be specified with
   QwtRoundScaleDraw::moveCenter() and QwtRoundScaleDraw::setRadius().
 
   After a scale division has been specified as a QwtScaleDiv object

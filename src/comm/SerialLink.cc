@@ -21,17 +21,18 @@
 #include "windows.h"
 #endif
 
+//#define USE_QEXTSERIAL // this allows us to revert to old serial library during transition
 
-SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, ParityType parity, DataBitsType dataBits, StopBitsType stopBits) :
-        port(NULL)
+SerialLink::SerialLink(QString portname, SerialInterface::baudRateType baudrate, SerialInterface::flowType flow, SerialInterface::parityType parity,
+                       SerialInterface::dataBitsType dataBits, SerialInterface::stopBitsType stopBits) :
+    port(NULL)
 {
     // Setup settings
     this->porthandle = portname.trimmed();
 #ifdef _WIN32
     // Port names above 20 need the network path format - if the port name is not already in this format
     // catch this special case
-    if (this->porthandle.size() > 0 && !this->porthandle.startsWith("\\"))
-    {
+    if (this->porthandle.size() > 0 && !this->porthandle.startsWith("\\")) {
         // Append \\.\ before the port handle. Additional backslashes are used for escaping.
         this->porthandle = "\\\\.\\" + this->porthandle;
     }
@@ -47,13 +48,10 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
     this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
 
     // Set the port name
-    if (porthandle == "")
-    {
+    if (porthandle == "") {
         //        name = tr("serial link ") + QString::number(getId()) + tr(" (unconfigured)");
         name = tr("Serial Link ") + QString::number(getId());
-    }
-    else
-    {
+    } else {
         name = portname.trimmed();
     }
 
@@ -66,8 +64,8 @@ SerialLink::SerialLink(QString portname, BaudRateType baudrate, FlowType flow, P
                          OPEN_EXISTING,
                          FILE_ATTRIBUTE_NORMAL,
                          0);
-    if(winPort==INVALID_HANDLE_VALUE){
-        if(GetLastError()==ERROR_FILE_NOT_FOUND){
+    if(winPort==INVALID_HANDLE_VALUE) {
+        if(GetLastError()==ERROR_FILE_NOT_FOUND) {
             //serial port does not exist. Inform user.
         }
         //some other error occurred. Inform user.
@@ -91,8 +89,7 @@ void SerialLink::loadSettings()
     // Load defaults from settings
     QSettings settings(QGC::COMPANYNAME, QGC::APPNAME);
     settings.sync();
-    if (settings.contains("SERIALLINK_COMM_PORT"))
-    {
+    if (settings.contains("SERIALLINK_COMM_PORT")) {
         if (porthandle == "") setPortName(settings.value("SERIALLINK_COMM_PORT").toString());
         setBaudRateType(settings.value("SERIALLINK_COMM_BAUD").toInt());
         setParityType(settings.value("SERIALLINK_COMM_PARITY").toInt());
@@ -126,8 +123,7 @@ void SerialLink::run()
     hardwareConnect();
 
     // Qt way to make clear what a while(1) loop does
-    forever
-    {
+    forever {
         // Check if new bytes have arrived, if yes, emit the notification signal
         checkForBytes();
         /* Serial data isn't arriving that fast normally, this saves the thread
@@ -141,33 +137,26 @@ void SerialLink::run()
 void SerialLink::checkForBytes()
 {
     /* Check if bytes are available */
-    if(port && port->isOpen() && port->isWritable())
-    {
+    if(port && port->isOpen() && port->isWritable()) {
         dataMutex.lock();
         qint64 available = port->bytesAvailable();
         dataMutex.unlock();
 
-        if(available > 0)
-        {
+        if(available > 0) {
             readBytes();
         }
-    }
-    else
-    {
+    } else {
         emit disconnected();
     }
 
 }
 
-
 void SerialLink::writeBytes(const char* data, qint64 size)
 {
-    if(port && port->isOpen())
-    {
+    if(port && port->isOpen()) {
         int b = port->write(data, size);
 
-        if (b > 0)
-        {
+        if (b > 0) {
 
 //            qDebug() << "Serial link " << this->getName() << "transmitted" << b << "bytes:";
 
@@ -181,9 +170,7 @@ void SerialLink::writeBytes(const char* data, qint64 size)
 //                qDebug("%02x ", v);
 //            }
 //            qDebug("\n");
-        }
-        else
-        {
+        } else {
             disconnect();
             // Error occured
             emit communicationError(this->getName(), tr("Could not send data - link %1 is disconnected!").arg(this->getName()));
@@ -200,14 +187,13 @@ void SerialLink::writeBytes(const char* data, qint64 size)
 void SerialLink::readBytes()
 {
     dataMutex.lock();
-    if(port && port->isOpen())
-    {
+    if(port && port->isOpen()) {
         const qint64 maxLength = 2048;
         char data[maxLength];
         qint64 numBytes = port->bytesAvailable();
+		//qDebug() << "numBytes: " << numBytes; 
 
-        if(numBytes > 0)
-        {
+        if(numBytes > 0) {
             /* Read as much data in buffer as possible without overflow */
             if(maxLength < numBytes) numBytes = maxLength;
 
@@ -237,12 +223,9 @@ void SerialLink::readBytes()
  **/
 qint64 SerialLink::bytesAvailable()
 {
-    if (port)
-    {
+    if (port) {
         return port->bytesAvailable();
-    }
-    else
-    {
+    } else {
         return 0;
     }
 }
@@ -254,8 +237,7 @@ qint64 SerialLink::bytesAvailable()
  **/
 bool SerialLink::disconnect()
 {
-    if (port)
-    {
+    if (port) {
         //#if !defined _WIN32 || !defined _WIN64
         /* Block the thread until it returns from run() */
         //#endif
@@ -274,9 +256,7 @@ bool SerialLink::disconnect()
         emit disconnected();
         emit connected(false);
         return ! closed;
-    }
-    else
-    {
+    } else {
         // No port, so we're disconnected
         return true;
     }
@@ -290,15 +270,13 @@ bool SerialLink::disconnect()
  **/
 bool SerialLink::connect()
 {
-    if (!isConnected())
-    {
+    if (!isConnected()) {
         qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "with settings" << porthandle << baudrate << dataBits << parity << stopBits;
-        if (!this->isRunning())
-        {
+        if (!this->isRunning()) {
             this->start(LowPriority);
         }
     }
-	return true;
+    return true;
 }
 
 /**
@@ -311,14 +289,16 @@ bool SerialLink::connect()
  **/
 bool SerialLink::hardwareConnect()
 {
-    if(port)
-    {
+    if(port) {
         port->close();
         delete port;
     }
-    port = new QextSerialPort(porthandle, QextSerialPort::Polling);
+#ifdef USE_QEXTSERIAL
+    port = new SerialQextserial(porthandle, QextSerialPort::Polling);
+#else
+    port = new SerialQserial(porthandle, QIODevice::ReadWrite);
+#endif
     QObject::connect(port, SIGNAL(aboutToClose()), this, SIGNAL(disconnected()));
-
     port->open(QIODevice::ReadWrite);
     port->setBaudRate(this->baudrate);
     port->setParity(this->parity);
@@ -329,8 +309,7 @@ bool SerialLink::hardwareConnect()
     connectionStartTime = MG::TIME::getGroundTimeNow();
 
     bool connectionUp = isConnected();
-    if(connectionUp)
-    {
+    if(connectionUp) {
         emit connected();
         emit connected(true);
     }
@@ -348,12 +327,9 @@ bool SerialLink::hardwareConnect()
  **/
 bool SerialLink::isConnected()
 {
-    if (port)
-    {
+    if (port) {
         return port->isOpen();
-    }
-    else
-    {
+    } else {
         return false;
     }
 }
@@ -378,79 +354,78 @@ void SerialLink::setName(QString name)
 qint64 SerialLink::getNominalDataRate()
 {
     qint64 dataRate = 0;
-    switch (baudrate)
-    {
-    case BAUD50:
+    switch (baudrate) {
+    case SerialInterface::BAUD50:
         dataRate = 50;
         break;
-    case BAUD75:
+    case SerialInterface::BAUD75:
         dataRate = 75;
         break;
-    case BAUD110:
+    case SerialInterface::BAUD110:
         dataRate = 110;
         break;
-    case BAUD134:
+    case SerialInterface::BAUD134:
         dataRate = 134;
         break;
-    case BAUD150:
+    case SerialInterface::BAUD150:
         dataRate = 150;
         break;
-    case BAUD200:
+    case SerialInterface::BAUD200:
         dataRate = 200;
         break;
-    case BAUD300:
+    case SerialInterface::BAUD300:
         dataRate = 300;
         break;
-    case BAUD600:
+    case SerialInterface::BAUD600:
         dataRate = 600;
         break;
-    case BAUD1200:
+    case SerialInterface::BAUD1200:
         dataRate = 1200;
         break;
-    case BAUD1800:
+    case SerialInterface::BAUD1800:
         dataRate = 1800;
         break;
-    case BAUD2400:
+    case SerialInterface::BAUD2400:
         dataRate = 2400;
         break;
-    case BAUD4800:
+    case SerialInterface::BAUD4800:
         dataRate = 4800;
         break;
-    case BAUD9600:
+    case SerialInterface::BAUD9600:
         dataRate = 9600;
         break;
-    case BAUD14400:
+    case SerialInterface::BAUD14400:
         dataRate = 14400;
         break;
-    case BAUD19200:
+    case SerialInterface::BAUD19200:
         dataRate = 19200;
         break;
-    case BAUD38400:
+    case SerialInterface::BAUD38400:
         dataRate = 38400;
         break;
-    case BAUD56000:
+    case SerialInterface::BAUD56000:
         dataRate = 56000;
         break;
-    case BAUD57600:
+    case SerialInterface::BAUD57600:
         dataRate = 57600;
         break;
-    case BAUD76800:
+    case SerialInterface::BAUD76800:
         dataRate = 76800;
         break;
-    case BAUD115200:
+    case SerialInterface::BAUD115200:
         dataRate = 115200;
         break;
-    case BAUD128000:
+    case SerialInterface::BAUD128000:
         dataRate = 128000;
         break;
-    case BAUD256000:
+    case SerialInterface::BAUD256000:
         dataRate = 256000;
         // Windows-specific high-end baudrates
-    case BAUD230400:
+    case SerialInterface::BAUD230400:
         dataRate = 230400;
-    case BAUD460800:
+    case SerialInterface::BAUD460800:
         dataRate = 460800;
-    case BAUD921600:
+    case SerialInterface::BAUD921600:
         dataRate = 921600;
         break;
     }
@@ -551,18 +526,17 @@ int SerialLink::getStopBitsType()
 int SerialLink::getDataBits()
 {
     int ret;
-    switch (dataBits)
-    {
-    case DATA_5:
+    switch (dataBits) {
+    case SerialInterface::DATA_5:
         ret = 5;
         break;
-    case DATA_6:
+    case SerialInterface::DATA_6:
         ret = 6;
         break;
-    case DATA_7:
+    case SerialInterface::DATA_7:
         ret = 7;
         break;
-    case DATA_8:
+    case SerialInterface::DATA_8:
         ret = 8;
         break;
     default:
@@ -575,12 +549,11 @@ int SerialLink::getDataBits()
 int SerialLink::getStopBits()
 {
     int ret;
-    switch (stopBits)
-    {
-    case STOP_1:
+    switch (stopBits) {
+    case SerialInterface::STOP_1:
         ret = 1;
         break;
-    case STOP_2:
+    case SerialInterface::STOP_2:
         ret = 2;
         break;
     default:
@@ -592,8 +565,7 @@ int SerialLink::getStopBits()
 
 bool SerialLink::setPortName(QString portName)
 {
-    if(portName.trimmed().length() > 0)
-    {
+    if(portName.trimmed().length() > 0) {
         bool reconnect = false;
         if (isConnected()) reconnect = true;
         disconnect();
@@ -603,8 +575,7 @@ bool SerialLink::setPortName(QString portName)
 #ifdef _WIN32
         // Port names above 20 need the network path format - if the port name is not already in this format
         // catch this special case
-        if (!this->porthandle.startsWith("\\"))
-        {
+        if (!this->porthandle.startsWith("\\")) {
             // Append \\.\ before the port handle. Additional backslashes are used for escaping.
             this->porthandle = "\\\\.\\" + this->porthandle;
         }
@@ -612,9 +583,7 @@ bool SerialLink::setPortName(QString portName)
 
         if(reconnect) connect();
         return true;
-    }
-    else
-    {
+    } else {
         return false;
     }
 }
@@ -629,79 +598,79 @@ bool SerialLink::setBaudRateType(int rateIndex)
 
     switch (rateIndex) {
     case 0:
-        baudrate = BAUD50;
+        baudrate = SerialInterface::BAUD50;
         break;
     case 1:
-        baudrate = BAUD75;
+        baudrate = SerialInterface::BAUD75;
         break;
     case 2:
-        baudrate = BAUD110;
+        baudrate = SerialInterface::BAUD110;
         break;
     case 3:
-        baudrate = BAUD134;
+        baudrate = SerialInterface::BAUD134;
         break;
     case 4:
-        baudrate = BAUD150;
+        baudrate = SerialInterface::BAUD150;
         break;
     case 5:
-        baudrate = BAUD200;
+        baudrate = SerialInterface::BAUD200;
         break;
     case 6:
-        baudrate = BAUD300;
+        baudrate = SerialInterface::BAUD300;
         break;
     case 7:
-        baudrate = BAUD600;
+        baudrate = SerialInterface::BAUD600;
         break;
     case 8:
-        baudrate = BAUD1200;
+        baudrate = SerialInterface::BAUD1200;
         break;
     case 9:
-        baudrate = BAUD1800;
+        baudrate = SerialInterface::BAUD1800;
         break;
     case 10:
-        baudrate = BAUD2400;
+        baudrate = SerialInterface::BAUD2400;
         break;
     case 11:
-        baudrate = BAUD4800;
+        baudrate = SerialInterface::BAUD4800;
         break;
     case 12:
-        baudrate = BAUD9600;
+        baudrate = SerialInterface::BAUD9600;
         break;
     case 13:
-        baudrate = BAUD14400;
+        baudrate = SerialInterface::BAUD14400;
         break;
     case 14:
-        baudrate = BAUD19200;
+        baudrate = SerialInterface::BAUD19200;
         break;
     case 15:
-        baudrate = BAUD38400;
+        baudrate = SerialInterface::BAUD38400;
         break;
     case 16:
-        baudrate = BAUD56000;
+        baudrate = SerialInterface::BAUD56000;
         break;
     case 17:
-        baudrate = BAUD57600;
+        baudrate = SerialInterface::BAUD57600;
         break;
     case 18:
-        baudrate = BAUD76800;
+        baudrate = SerialInterface::BAUD76800;
         break;
     case 19:
-        baudrate = BAUD115200;
+        baudrate = SerialInterface::BAUD115200;
         break;
     case 20:
-        baudrate = BAUD128000;
+        baudrate = SerialInterface::BAUD128000;
         break;
     case 21:
-        baudrate = BAUD230400;
+        baudrate = SerialInterface::BAUD230400;
         break;
     case 22:
-        baudrate = BAUD256000;
+        baudrate = SerialInterface::BAUD256000;
         break;
     case 23:
-        baudrate = BAUD460800;
+        baudrate = SerialInterface::BAUD460800;
         break;
     case 24:
-        baudrate = BAUD921600;
+        baudrate = SerialInterface::BAUD921600;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -719,88 +688,86 @@ bool SerialLink::setBaudRate(int rate)
 {
     bool reconnect = false;
     bool accepted = true; // This is changed if none of the data rates matches
-    if(isConnected())
-    {
+    if(isConnected()) {
         reconnect = true;
     }
     disconnect();
 
-    switch (rate)
-    {
+    switch (rate) {
     case 50:
-        baudrate = BAUD50;
+        baudrate = SerialInterface::BAUD50;
         break;
     case 75:
-        baudrate = BAUD75;
+        baudrate = SerialInterface::BAUD75;
         break;
     case 110:
-        baudrate = BAUD110;
+        baudrate = SerialInterface::BAUD110;
         break;
     case 134:
-        baudrate = BAUD134;
+        baudrate = SerialInterface::BAUD134;
         break;
     case 150:
-        baudrate = BAUD150;
+        baudrate = SerialInterface::BAUD150;
         break;
     case 200:
-        baudrate = BAUD200;
+        baudrate = SerialInterface::BAUD200;
         break;
     case 300:
-        baudrate = BAUD300;
+        baudrate = SerialInterface::BAUD300;
         break;
     case 600:
-        baudrate = BAUD600;
+        baudrate = SerialInterface::BAUD600;
         break;
     case 1200:
-        baudrate = BAUD1200;
+        baudrate = SerialInterface::BAUD1200;
         break;
     case 1800:
-        baudrate = BAUD1800;
+        baudrate = SerialInterface::BAUD1800;
         break;
     case 2400:
-        baudrate = BAUD2400;
+        baudrate = SerialInterface::BAUD2400;
         break;
     case 4800:
-        baudrate = BAUD4800;
+        baudrate = SerialInterface::BAUD4800;
         break;
     case 9600:
-        baudrate = BAUD9600;
+        baudrate = SerialInterface::BAUD9600;
         break;
     case 14400:
-        baudrate = BAUD14400;
+        baudrate = SerialInterface::BAUD14400;
         break;
     case 19200:
-        baudrate = BAUD19200;
+        baudrate = SerialInterface::BAUD19200;
         break;
     case 38400:
-        baudrate = BAUD38400;
+        baudrate = SerialInterface::BAUD38400;
         break;
     case 56000:
-        baudrate = BAUD56000;
+        baudrate = SerialInterface::BAUD56000;
         break;
     case 57600:
-        baudrate = BAUD57600;
+        baudrate = SerialInterface::BAUD57600;
         break;
     case 76800:
-        baudrate = BAUD76800;
+        baudrate = SerialInterface::BAUD76800;
         break;
     case 115200:
-        baudrate = BAUD115200;
+        baudrate = SerialInterface::BAUD115200;
         break;
     case 128000:
-        baudrate = BAUD128000;
+        baudrate = SerialInterface::BAUD128000;
         break;
     case 230400:
-        baudrate = BAUD230400;
+        baudrate = SerialInterface::BAUD230400;
         break;
     case 256000:
-        baudrate = BAUD256000;
+        baudrate = SerialInterface::BAUD256000;
         break;
     case 460800:
-        baudrate = BAUD460800;
+        baudrate = SerialInterface::BAUD460800;
         break;
     case 921600:
-        baudrate = BAUD921600;
+        baudrate = SerialInterface::BAUD921600;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -820,16 +787,15 @@ bool SerialLink::setFlowType(int flow)
     if(isConnected()) reconnect = true;
     disconnect();
 
-    switch (flow)
-    {
-    case FLOW_OFF:
-        this->flow = FLOW_OFF;
+    switch (flow) {
+    case SerialInterface::FLOW_OFF:
+        this->flow = SerialInterface::FLOW_OFF;
         break;
-    case FLOW_HARDWARE:
-        this->flow = FLOW_HARDWARE;
+    case SerialInterface::FLOW_HARDWARE:
+        this->flow = SerialInterface::FLOW_HARDWARE;
         break;
-    case FLOW_XONXOFF:
-        this->flow = FLOW_XONXOFF;
+    case SerialInterface::FLOW_XONXOFF:
+        this->flow = SerialInterface::FLOW_XONXOFF;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -848,22 +814,21 @@ bool SerialLink::setParityType(int parity)
     if (isConnected()) reconnect = true;
     disconnect();
 
-    switch (parity)
-    {
+    switch (parity) {
     case (int)PAR_NONE:
-        this->parity = PAR_NONE;
+        this->parity = SerialInterface::PAR_NONE;
         break;
     case (int)PAR_ODD:
-        this->parity = PAR_ODD;
+        this->parity = SerialInterface::PAR_ODD;
         break;
     case (int)PAR_EVEN:
-        this->parity = PAR_EVEN;
+        this->parity = SerialInterface::PAR_EVEN;
         break;
     case (int)PAR_MARK:
-        this->parity = PAR_MARK;
+        this->parity = SerialInterface::PAR_MARK;
         break;
     case (int)PAR_SPACE:
-        this->parity = PAR_SPACE;
+        this->parity = SerialInterface::PAR_SPACE;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -883,19 +848,18 @@ bool SerialLink::setDataBits(int dataBits)
     bool accepted = true;
     disconnect();
 
-    switch (dataBits)
-    {
+    switch (dataBits) {
     case 5:
-        this->dataBits = DATA_5;
+        this->dataBits = SerialInterface::DATA_5;
         break;
     case 6:
-        this->dataBits = DATA_6;
+        this->dataBits = SerialInterface::DATA_6;
         break;
     case 7:
-        this->dataBits = DATA_7;
+        this->dataBits = SerialInterface::DATA_7;
         break;
     case 8:
-        this->dataBits = DATA_8;
+        this->dataBits = SerialInterface::DATA_8;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -915,13 +879,12 @@ bool SerialLink::setStopBits(int stopBits)
     if(isConnected()) reconnect = true;
     disconnect();
 
-    switch (stopBits)
-    {
+    switch (stopBits) {
     case 1:
-        this->stopBits = STOP_1;
+        this->stopBits = SerialInterface::STOP_1;
         break;
     case 2:
-        this->stopBits = STOP_2;
+        this->stopBits = SerialInterface::STOP_2;
         break;
     default:
         // If none of the above cases matches, there must be an error
@@ -941,9 +904,8 @@ bool SerialLink::setDataBitsType(int dataBits)
     if (isConnected()) reconnect = true;
     disconnect();
 
-    if (dataBits >= (int)DATA_5 && dataBits <= (int)DATA_8)
-    {
-        this->dataBits = (DataBitsType) dataBits;
+    if (dataBits >= (int)SerialInterface::DATA_5 && dataBits <= (int)SerialInterface::DATA_8) {
+        this->dataBits = (SerialInterface::dataBitsType) dataBits;
 
         if(reconnect) connect();
         accepted = true;
@@ -959,9 +921,8 @@ bool SerialLink::setStopBitsType(int stopBits)
     if(isConnected()) reconnect = true;
     disconnect();
 
-    if (stopBits >= (int)STOP_1 && dataBits <= (int)STOP_2)
-    {
-        StopBitsType newBits = (StopBitsType) stopBits;
+    if (stopBits >= (int)SerialInterface::STOP_1 && dataBits <= (int)SerialInterface::STOP_2) {
+        SerialInterface::stopBitsType newBits = (SerialInterface::stopBitsType) stopBits;
 
         port->setStopBits(newBits);
         accepted = true;

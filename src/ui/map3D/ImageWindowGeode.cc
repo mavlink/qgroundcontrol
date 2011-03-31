@@ -55,7 +55,7 @@ ImageWindowGeode::ImageWindowGeode(const QString& caption,
     imageGeometry->setTexCoordArray(0, textureCoords);
 
     imageGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,
-                                                       0, imageVertices->size()));
+                                   0, imageVertices->size()));
 
     osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D;
     texture->setDataVariance(osg::Object::DYNAMIC);
@@ -63,7 +63,7 @@ ImageWindowGeode::ImageWindowGeode(const QString& caption,
     texture->setResizeNonPowerOfTwoHint(false);
 
     imageGeometry->getOrCreateStateSet()->
-            setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
+    setTextureAttributeAndModes(0, texture, osg::StateAttribute::ON);
     imageGeometry->setUseDisplayList(false);
 
     // background
@@ -71,7 +71,7 @@ ImageWindowGeode::ImageWindowGeode(const QString& caption,
     backgroundVertices = new osg::Vec3Array(4);
     backgroundGeometry->setVertexArray(backgroundVertices);
     backgroundGeometry->addPrimitiveSet(new osg::DrawArrays(osg::PrimitiveSet::POLYGON,
-                                                            0, backgroundVertices->size()));
+                                        0, backgroundVertices->size()));
     osg::ref_ptr<osg::Vec4Array> backgroundColors(new osg::Vec4Array);
     backgroundColors->push_back(backgroundColor);
     backgroundGeometry->setColorArray(backgroundColors);

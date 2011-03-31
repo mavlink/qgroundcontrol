@@ -40,8 +40,7 @@ WebImageCache::WebImageCache(QObject* parent, uint32_t _cacheSize)
     , currentReference(0)
     , networkManager(new QNetworkAccessManager)
 {
-    for (uint32_t i = 0; i < cacheSize; ++i)
-    {
+    for (uint32_t i = 0; i < cacheSize; ++i) {
         WebImagePtr image(new WebImage);
 
         webImages.push_back(image);
@@ -56,24 +55,19 @@ WebImageCache::lookup(const QString& url)
 {
     QPair<WebImagePtr, int32_t> cacheEntry;
 
-    for (int32_t i = 0; i < webImages.size(); ++i)
-    {
+    for (int32_t i = 0; i < webImages.size(); ++i) {
         if (webImages[i]->getState() != WebImage::UNINITIALIZED &&
-            webImages[i]->getSourceURL() == url)
-        {
+                webImages[i]->getSourceURL() == url) {
             cacheEntry.first = webImages[i];
             cacheEntry.second = i;
             break;
         }
     }
 
-    if (cacheEntry.first.isNull())
-    {
-        for (int32_t i = 0; i < webImages.size(); ++i)
-        {
+    if (cacheEntry.first.isNull()) {
+        for (int32_t i = 0; i < webImages.size(); ++i) {
             // get uninitialized image
-            if (webImages[i]->getState() == WebImage::UNINITIALIZED)
-            {
+            if (webImages[i]->getState() == WebImage::UNINITIALIZED) {
                 cacheEntry.first = webImages[i];
                 cacheEntry.second = i;
                 break;
@@ -82,21 +76,16 @@ WebImageCache::lookup(const QString& url)
             else if (webImages[i]->getState() == WebImage::READY &&
                      (cacheEntry.first.isNull() ||
                       webImages[i]->getLastReference() <
-                      cacheEntry.first->getLastReference()))
-            {
+                      cacheEntry.first->getLastReference())) {
                 cacheEntry.first = webImages[i];
                 cacheEntry.second = i;
             }
         }
 
-        if (cacheEntry.first.isNull())
-        {
+        if (cacheEntry.first.isNull()) {
             return qMakePair(WebImagePtr(), -1);
-        }
-        else
-        {
-            if (cacheEntry.first->getState() == WebImage::READY)
-            {
+        } else {
+            if (cacheEntry.first->getState() == WebImage::READY) {
                 cacheEntry.first->clear();
             }
             cacheEntry.first->setSourceURL(url);
@@ -104,36 +93,25 @@ WebImageCache::lookup(const QString& url)
             ++currentReference;
             cacheEntry.first->setState(WebImage::REQUESTED);
 
-            if (url.left(4).compare("http") == 0)
-            {
+            if (url.left(4).compare("http") == 0) {
                 networkManager->get(QNetworkRequest(QUrl(url)));
-            }
-            else
-            {
-                if (cacheEntry.first->setData(url))
-                {
+            } else {
+                if (cacheEntry.first->setData(url)) {
                     cacheEntry.first->setSyncFlag(true);
                     cacheEntry.first->setState(WebImage::READY);
-                }
-                else
-                {
+                } else {
                     cacheEntry.first->setState(WebImage::UNINITIALIZED);
                 }
             }
 
             return cacheEntry;
         }
-    }
-    else
-    {
-        if (cacheEntry.first->getState() == WebImage::READY)
-        {
+    } else {
+        if (cacheEntry.first->getState() == WebImage::READY) {
             cacheEntry.first->setLastReference(currentReference);
             ++currentReference;
             return cacheEntry;
-        }
-        else
-        {
+        } else {
             return qMakePair(WebImagePtr(), -1);
         }
     }
@@ -150,21 +128,17 @@ WebImageCache::downloadFinished(QNetworkReply* reply)
 {
     reply->deleteLater();
 
-    if (reply->error() != QNetworkReply::NoError)
-    {
+    if (reply->error() != QNetworkReply::NoError) {
         return;
     }
     QVariant attribute = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
-    if (attribute.isValid())
-    {
+    if (attribute.isValid()) {
         return;
     }
 
     WebImagePtr image;
-    foreach(image, webImages)
-    {
-        if (reply->url().toString() == image->getSourceURL())
-        {
+    foreach(image, webImages) {
+        if (reply->url().toString() == image->getSourceURL()) {
             image->setData(reply->readAll());
             image->setSyncFlag(true);
             image->setState(WebImage::READY);

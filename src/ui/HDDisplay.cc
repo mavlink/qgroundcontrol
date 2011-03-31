@@ -27,30 +27,30 @@
 #include <QDebug>
 
 HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
-        QGraphicsView(parent),
-        uas(NULL),
-        xCenterOffset(0.0f),
-        yCenterOffset(0.0f),
-        vwidth(80.0f),
-        vheight(80.0f),
-        backgroundColor(QColor(0, 0, 0)),
-        defaultColor(QColor(70, 200, 70)),
-        setPointColor(QColor(200, 20, 200)),
-        warningColor(Qt::yellow),
-        criticalColor(Qt::red),
-        infoColor(QColor(20, 200, 20)),
-        fuelColor(criticalColor),
-        warningBlinkRate(5),
-        refreshTimer(new QTimer(this)),
-        hardwareAcceleration(true),
-        strongStrokeWidth(1.5f),
-        normalStrokeWidth(1.0f),
-        fineStrokeWidth(0.5f),
-        acceptList(new QStringList()),
-        acceptUnitList(new QStringList()),
-        lastPaintTime(0),
-        columns(3),
-        m_ui(new Ui::HDDisplay)
+    QGraphicsView(parent),
+    uas(NULL),
+    xCenterOffset(0.0f),
+    yCenterOffset(0.0f),
+    vwidth(80.0f),
+    vheight(80.0f),
+    backgroundColor(QColor(0, 0, 0)),
+    defaultColor(QColor(70, 200, 70)),
+    setPointColor(QColor(200, 20, 200)),
+    warningColor(Qt::yellow),
+    criticalColor(Qt::red),
+    infoColor(QColor(20, 200, 20)),
+    fuelColor(criticalColor),
+    warningBlinkRate(5),
+    refreshTimer(new QTimer(this)),
+    hardwareAcceleration(true),
+    strongStrokeWidth(1.5f),
+    normalStrokeWidth(1.0f),
+    fineStrokeWidth(0.5f),
+    acceptList(new QStringList()),
+    acceptUnitList(new QStringList()),
+    lastPaintTime(0),
+    columns(3),
+    m_ui(new Ui::HDDisplay)
 {
     setWindowTitle(title);
     //m_ui->setupUi(this);
@@ -58,10 +58,8 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     setAutoFillBackground(true);
 
     // Add all items in accept list to gauge
-    if (plotList)
-    {
-        for(int i = 0; i < plotList->length(); ++i)
-        {
+    if (plotList) {
+        for(int i = 0; i < plotList->length(); ++i) {
             addGauge(plotList->at(i));
         }
     }
@@ -215,13 +213,12 @@ void HDDisplay::saveState()
 
     QString instruments;
     // Restore instrument settings
-    for (int i = 0; i < acceptList->count(); i++)
-    {
+    for (int i = 0; i < acceptList->count(); i++) {
         QString key = acceptList->at(i);
         instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+acceptUnitList->at(i)+","+QString::number(maxValues.value(key, +1.0))+","+((symmetric.value(key, false)) ? "s" : "");
     }
 
-   // qDebug() << "Saving" << instruments;
+    // qDebug() << "Saving" << instruments;
 
     settings.setValue(windowTitle()+"_gauges", instruments);
     settings.sync();
@@ -233,8 +230,7 @@ void HDDisplay::restoreState()
     settings.sync();
 
     QStringList instruments = settings.value(windowTitle()+"_gauges").toString().split('|');
-    for (int i = 0; i < instruments.count(); i++)
-    {
+    for (int i = 0; i < instruments.count(); i++) {
         addGauge(instruments.at(i));
     }
 }
@@ -242,8 +238,7 @@ void HDDisplay::restoreState()
 QList<QAction*> HDDisplay::getItemRemoveActions()
 {
     QList<QAction*> actions;
-    for(int i = 0; i < acceptList->length(); ++i)
-    {
+    for(int i = 0; i < acceptList->length(); ++i) {
         QString gauge = acceptList->at(i);
         QAction* remove = new QAction(tr("Remove %1 gauge").arg(gauge), this);
         remove->setStatusTip(tr("Removes the %1 gauge from the view.").arg(gauge));
@@ -257,8 +252,7 @@ QList<QAction*> HDDisplay::getItemRemoveActions()
 void HDDisplay::removeItemByAction()
 {
     QAction* trigger = qobject_cast<QAction*>(QObject::sender());
-    if (trigger)
-    {
+    if (trigger) {
         QString item = trigger->data().toString();
         int index = acceptList->indexOf(item);
         acceptList->removeAt(index);
@@ -272,35 +266,28 @@ void HDDisplay::removeItemByAction()
 void HDDisplay::addGauge()
 {
     QStringList items;
-    for (int i = 0; i < values.count(); ++i)
-    {
+    for (int i = 0; i < values.count(); ++i) {
         QString key = values.keys().at(i);
         QString unit = units.value(key);
-        if (unit.contains("deg") || unit.contains("rad"))
-        {
+        if (unit.contains("deg") || unit.contains("rad")) {
             items.append(QString("%1,%2,%3,%4,s").arg("-180").arg(key).arg(unit).arg("+180"));
-        }
-        else
-        {
+        } else {
             items.append(QString("%1,%2,%3,%4").arg("0").arg(key).arg(unit).arg("+100"));
         }
     }
     bool ok;
     QString item = QInputDialog::getItem(this, tr("Add Gauge Instrument"),
                                          tr("Format: min, curve name, unit, max[,s]"), items, 0, true, &ok);
-    if (ok && !item.isEmpty())
-    {
+    if (ok && !item.isEmpty()) {
         addGauge(item);
     }
 }
 
 void HDDisplay::addGauge(const QString& gauge)
 {
-    if (gauge.length() > 0)
-    {
+    if (gauge.length() > 0) {
         QStringList parts = gauge.split(',');
-        if (parts.count() > 2)
-        {
+        if (parts.count() > 2) {
             double val;
             bool ok;
             bool success = true;
@@ -308,8 +295,7 @@ void HDDisplay::addGauge(const QString& gauge)
             QString key = parts.at(1);
             QString unit = parts.at(2);
 
-            if (!acceptList->contains(key))
-            {
+            if (!acceptList->contains(key)) {
                 // Convert min to double number
                 val = parts.first().toDouble(&ok);
                 success &= ok;
@@ -319,25 +305,19 @@ void HDDisplay::addGauge(const QString& gauge)
                 success &= ok;
                 if (ok) maxValues.insert(key, val);
                 // Convert symmetric flag
-                if (parts.length() >= 5)
-                {
-                    if (parts.at(4).contains("s"))
-                    {
+                if (parts.length() >= 5) {
+                    if (parts.at(4).contains("s")) {
                         symmetric.insert(key, true);
                     }
                 }
-                if (success)
-                {
+                if (success) {
                     // Add value to acceptlist
                     acceptList->append(key);
                     acceptUnitList->append(unit);
                 }
             }
-        }
-        else if (parts.count() > 1)
-        {
-            if (!acceptList->contains(gauge))
-            {
+        } else if (parts.count() > 1) {
+            if (!acceptList->contains(gauge)) {
                 acceptList->append(parts.at(0));
                 acceptUnitList->append(parts.at(1));
             }
@@ -367,8 +347,7 @@ void HDDisplay::setColumns()
     bool ok;
     int i = QInputDialog::getInt(this, tr("Number of Instrument Columns"),
                                  tr("Columns:"), columns, 1, 15, 1, &ok);
-    if (ok)
-    {
+    if (ok) {
         columns = i;
     }
 }
@@ -391,8 +370,7 @@ void HDDisplay::adjustGaugeAspectRatio()
 void HDDisplay::setTitle()
 {
     QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
-    if (parent)
-    {
+    if (parent) {
         bool ok;
         QString text = QInputDialog::getText(this, tr("New title"),
                                              tr("Widget title:"), QLineEdit::Normal,
@@ -410,8 +388,7 @@ void HDDisplay::renderOverlay()
 #endif
     quint64 refreshInterval = 100;
     quint64 currTime = MG::TIME::getGroundTimeNow();
-    if (currTime - lastPaintTime < refreshInterval)
-    {
+    if (currTime - lastPaintTime < refreshInterval) {
         // FIXME Need to find the source of the spurious paint events
         //return;
     }
@@ -443,14 +420,12 @@ void HDDisplay::renderOverlay()
     float topSpacing = leftSpacing;
     float yCoord = topSpacing + gaugeWidth/2.0f;
 
-    for (int i = 0; i < acceptList->size(); ++i)
-    {
+    for (int i = 0; i < acceptList->size(); ++i) {
         QString value = acceptList->at(i);
         drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, symmetric.value(value, false), goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
         xCoord += gaugeWidth + leftSpacing;
         // Move one row down if necessary
-        if (xCoord + gaugeWidth*0.9f > vwidth)
-        {
+        if (xCoord + gaugeWidth*0.9f > vwidth) {
             yCoord += topSpacing + gaugeWidth;
             xCoord = leftSpacing + gaugeWidth/2.0f;
         }
@@ -463,8 +438,7 @@ void HDDisplay::renderOverlay()
  */
 void HDDisplay::setActiveUAS(UASInterface* uas)
 {
-    if (this->uas != NULL)
-    {
+    if (this->uas != NULL) {
         // Disconnect any previously connected active MAV
         disconnect(this->uas, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
         disconnect(this->uas, SIGNAL(valueChanged(int,QString,QString,int,quint64)), this, SLOT(updateValue(int,QString,QString,int,quint64)));
@@ -492,8 +466,7 @@ void HDDisplay::rotatePolygonClockWiseRad(QPolygonF& p, float angle, QPointF ori
     //   |  cos(phi)   sin(phi) |
     //   | -sin(phi)   cos(phi) |
     //
-    for (int i = 0; i < p.size(); i++)
-    {
+    for (int i = 0; i < p.size(); i++) {
         QPointF curr = p.at(i);
 
         const float x = curr.x();
@@ -509,8 +482,7 @@ void HDDisplay::drawPolygon(QPolygonF refPolygon, QPainter* painter)
 {
     // Scale coordinates
     QPolygonF draw(refPolygon.size());
-    for (int i = 0; i < refPolygon.size(); i++)
-    {
+    for (int i = 0; i < refPolygon.size(); i++) {
         QPointF curr;
         curr.setX(refToScreenX(refPolygon.at(i).x()));
         curr.setY(refToScreenY(refPolygon.at(i).y()));
@@ -571,24 +543,18 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
 
     // Rotate the whole gauge with this angle (in radians) for the zero position
     float zeroRotation;
-    if (symmetric)
-    {
+    if (symmetric) {
         zeroRotation = 1.35f;
-    }
-    else
-    {
+    } else {
         zeroRotation = 0.49f;
     }
 
     // Scale the rotation so that the gauge does one revolution
     // per max. change
     float rangeScale;
-    if (symmetric)
-    {
+    if (symmetric) {
         rangeScale = ((2.0f * M_PI) / (max - min)) * 0.57f;
-    }
-    else
-    {
+    } else {
         rangeScale = ((2.0f * M_PI) / (max - min)) * 0.72f;
     }
 
@@ -600,15 +566,13 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     // Ensure some space
     nameHeight *= 1.2f;
 
-    if (!solid)
-    {
+    if (!solid) {
         circlePen.setStyle(Qt::DotLine);
     }
     circlePen.setWidth(refLineWidthToPen(radius/12.0f));
     circlePen.setColor(color);
 
-    if (symmetric)
-    {
+    if (symmetric) {
         circlePen.setStyle(Qt::DashLine);
     }
     painter->setBrush(Qt::NoBrush);
@@ -619,12 +583,9 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     QString label;
 
     // Show integer values without decimal places
-    if (intValues.contains(name))
-    {
+    if (intValues.contains(name)) {
         label.sprintf("% 05d", (int)value);
-    }
-    else
-    {
+    } else {
         label.sprintf("% 06.1f", value);
     }
 
@@ -640,18 +601,14 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
     painter->setBrush(brush);
     painter->setPen(Qt::NoPen);
 
-    if (symmetric)
-    {
+    if (symmetric) {
         painter->drawRect(refToScreenX(xRef-radius), refToScreenY(yRef+nameHeight+radius/4.0f), refToScreenX(radius+radius), refToScreenY((radius - radius/4.0f)*1.2f));
-    }
-    else
-    {
+    } else {
         painter->drawRect(refToScreenX(xRef-radius/2.5f), refToScreenY(yRef+nameHeight+radius/4.0f), refToScreenX(radius+radius/2.0f), refToScreenY((radius - radius/4.0f)*1.2f));
     }
 
     // Draw good value and crit. value markers
-    if (goodRange.first != goodRange.second)
-    {
+    if (goodRange.first != goodRange.second) {
         QRectF rectangle(refToScreenX(xRef-radius/2.0f), refToScreenY(yRef+nameHeight-radius/2.0f), refToScreenX(radius*2.0f), refToScreenX(radius*2.0f));
         painter->setPen(Qt::green);
         //int start = ((goodRange.first*rangeScale+zeroRotation)/M_PI)*180.0f * 16.0f;// + 16.0f * 60.0f;
@@ -659,8 +616,7 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
         //painter->drawArc(rectangle, start, span);
     }
 
-    if (criticalRange.first != criticalRange.second)
-    {
+    if (criticalRange.first != criticalRange.second) {
         QRectF rectangle(refToScreenX(xRef-radius/2.0f-3.0f), refToScreenY(yRef+nameHeight-radius/2.0f-3.0f), refToScreenX(radius*2.0f), refToScreenX(radius*2.0f));
         painter->setPen(Qt::yellow);
         //int start = ((criticalRange.first*rangeScale+zeroRotation)/M_PI)*180.0f * 16.0f - 180.0f*16.0f;// + 16.0f * 60.0f;
@@ -701,8 +657,7 @@ void HDDisplay::drawGauge(float xRef, float yRef, float radius, float min, float
 
 void HDDisplay::drawSystemIndicator(float xRef, float yRef, int maxNum, float maxWidth, float maxHeight, QPainter* painter)
 {
-    if (values.size() > 0)
-    {
+    if (values.size() > 0) {
         QString selectedKey = values.begin().key();
         //   | | | | | |
         //   | | | | | |
@@ -720,22 +675,16 @@ void HDDisplay::drawSystemIndicator(float xRef, float yRef, int maxNum, float ma
         const float hspacing = 0.6f;
 
         int i = 0;
-        while (value.hasNext() && i < maxNum && x < maxWidth && y < maxHeight)
-        {
+        while (value.hasNext() && i < maxNum && x < maxWidth && y < maxHeight) {
             value.next();
             QBrush brush(Qt::SolidPattern);
 
 
-            if (value.value() < 0.01f && value.value() > -0.01f)
-            {
+            if (value.value() < 0.01f && value.value() > -0.01f) {
                 brush.setColor(Qt::gray);
-            }
-            else if (value.value() > 0.01f)
-            {
+            } else if (value.value() > 0.01f) {
                 brush.setColor(Qt::blue);
-            }
-            else
-            {
+            } else {
                 brush.setColor(Qt::yellow);
             }
 
@@ -761,8 +710,7 @@ void HDDisplay::drawSystemIndicator(float xRef, float yRef, int maxNum, float ma
         // Draw detail label
         QString detail = "NO DATA AVAILABLE";
 
-        if (values.contains(selectedKey))
-        {
+        if (values.contains(selectedKey)) {
             detail = values.find(selectedKey).key();
             detail.append(": ");
             detail.append(QString::number(values.find(selectedKey).value()));

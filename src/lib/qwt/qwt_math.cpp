@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -19,11 +19,11 @@
 double qwtGetMin(const double *array, int size)
 {
     if (size <= 0)
-       return 0.0;
+        return 0.0;
 
     double rv = array[0];
     for (int i = 1; i < size; i++)
-       rv = qwtMin(rv, array[i]);
+        rv = qwtMin(rv, array[i]);
 
     return rv;
 }
@@ -37,11 +37,11 @@ double qwtGetMin(const double *array, int size)
 double qwtGetMax(const double *array, int size)
 {
     if (size <= 0)
-       return 0.0;
-    
+        return 0.0;
+
     double rv = array[0];
     for (int i = 1; i < size; i++)
-       rv = qwtMax(rv, array[i]);
+        rv = qwtMax(rv, array[i]);
 
     return rv;
 }

@@ -41,14 +41,14 @@ This file is part of the PIXHAWK project
 #include <QMap>
 
 ObjectDetectionView::ObjectDetectionView(QString folder, QWidget *parent) :
-        QWidget(parent),
-        patternList(),
-        letterList(),
-        letterTimer(),
-        uas(NULL),
-        patternFolder(folder),
-        separator(" "),
-        m_ui(new Ui::ObjectDetectionView)
+    QWidget(parent),
+    patternList(),
+    letterList(),
+    letterTimer(),
+    uas(NULL),
+    patternFolder(folder),
+    separator(" "),
+    m_ui(new Ui::ObjectDetectionView)
 {
     m_ui->setupUi(this);
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
@@ -77,8 +77,7 @@ void ObjectDetectionView::changeEvent(QEvent *e)
 
 void ObjectDetectionView::setUAS(UASInterface* uas)
 {
-    if (this->uas != NULL)
-    {
+    if (this->uas != NULL) {
         disconnect(this->uas, SIGNAL(patternDetected(int, QString, float, bool)), this, SLOT(newPattern(int, QString, float, bool)));
         disconnect(this->uas, SIGNAL(letterDetected(int, QString, float, bool)), this, SLOT(newLetter(int, QString, float, bool)));
     }
@@ -90,17 +89,13 @@ void ObjectDetectionView::setUAS(UASInterface* uas)
 
 void ObjectDetectionView::newPattern(int uasId, QString patternPath, float confidence, bool detected)
 {
-    if (detected)
-    {
-        if (!patternList.contains(patternPath))
-        {
+    if (detected) {
+        if (!patternList.contains(patternPath)) {
             // Emit audio message on detection
             if (detected) GAudioOutput::instance()->say("System " + QString::number(uasId) + " detected pattern " + QString(patternPath.split("/", QString::SkipEmptyParts).last()).split(".", QString::SkipEmptyParts).first());
 
             patternList.insert(patternPath, Pattern(patternPath, confidence));
-        }
-        else
-        {
+        } else {
             Pattern pattern = patternList.value(patternPath);
             if (confidence > pattern.confidence)
                 pattern.confidence = confidence;
@@ -111,11 +106,11 @@ void ObjectDetectionView::newPattern(int uasId, QString patternPath, float confi
         // set list items
         QList<Pattern> templist;
         foreach (Pattern pattern, patternList)
-            templist.push_back(pattern);
+        templist.push_back(pattern);
         qSort(templist);
         m_ui->listWidget->clear();
         foreach (Pattern pattern, templist)
-            m_ui->listWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
+        m_ui->listWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
 
         // load image
         QString filePath = patternFolder + "/" + patternPath.split("/", QString::SkipEmptyParts).last();
@@ -137,17 +132,13 @@ void ObjectDetectionView::newLetter(int uasId, QString letter, float confidence,
 {
     Q_UNUSED(confidence);
 
-    if (detected)
-    {
-        if (!letterList.contains(letter))
-        {
+    if (detected) {
+        if (!letterList.contains(letter)) {
             // Emit audio message on detection
             if (detected) GAudioOutput::instance()->say("System " + QString::number(uasId) + " detected letter " + letter);
 
             letterList.insert(letter, Pattern(letter, 0));
-        }
-        else
-        {
+        } else {
             Pattern pattern = letterList.value(letter);
             pattern.confidence = 0;
             ++pattern.count;
@@ -166,8 +157,7 @@ void ObjectDetectionView::newLetter(int uasId, QString letter, float confidence,
 
 void ObjectDetectionView::decreaseLetterTime()
 {
-    foreach (Pattern pattern, letterList)
-    {
+    foreach (Pattern pattern, letterList) {
         pattern.confidence -= 1;
         letterList.insert(pattern.name, pattern);
     }
@@ -180,11 +170,11 @@ void ObjectDetectionView::updateLetterList()
     // set list items
     QList<Pattern> templist;
     foreach (Pattern pattern, letterList)
-        templist.push_back(pattern);
+    templist.push_back(pattern);
     qSort(templist);
     m_ui->letterListWidget->clear();
     foreach (Pattern pattern, templist)
-        m_ui->letterListWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
+    m_ui->letterListWidget->addItem(pattern.name + separator + "(" + QString::number(pattern.count) + ")" + separator + QString::number(pattern.confidence));
 }
 
 void ObjectDetectionView::clearLists()
@@ -203,8 +193,7 @@ void ObjectDetectionView::clearLists()
 void ObjectDetectionView::takeAction()
 {
     QAction* act = dynamic_cast<QAction*>(sender());
-    if (act)
-    {
+    if (act) {
         QString patternPath = act->text().trimmed().split(separator, QString::SkipEmptyParts).first(); // Remove additional information
         QString patternName = patternPath.split("//", QString::SkipEmptyParts).last(); // Remove preceding folder names
         patternName = patternName.split(".", QString::SkipEmptyParts).first(); // Remove file ending
@@ -217,8 +206,7 @@ void ObjectDetectionView::takeAction()
 
 void ObjectDetectionView::resizeEvent(QResizeEvent * event )
 {
-    if (event->isAccepted())
-    {
+    if (event->isAccepted()) {
         // Enforce square shape of image label
         m_ui->imageLabel->resize(m_ui->imageLabel->width(), m_ui->imageLabel->width());
     }

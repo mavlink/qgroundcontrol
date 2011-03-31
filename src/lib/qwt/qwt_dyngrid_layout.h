@@ -23,9 +23,9 @@
 /*!
   \brief The QwtDynGridLayout class lays out widgets in a grid,
          adjusting the number of columns and rows to the current size.
-         
-  QwtDynGridLayout takes the space it gets, divides it up into rows and 
-  columns, and puts each of the widgets it manages into the correct cell(s). 
+
+  QwtDynGridLayout takes the space it gets, divides it up into rows and
+  columns, and puts each of the widgets it manages into the correct cell(s).
   It lays out as many number of columns as possible (limited by maxCols()).
 */
 
@@ -46,7 +46,7 @@ public:
     void setMaxCols(uint maxCols);
     uint maxCols() const;
 
-    uint numRows () const; 
+    uint numRows () const;
     uint numCols () const;
 
     virtual void addItem(QLayoutItem *);
@@ -84,9 +84,9 @@ public:
 protected:
 
     void layoutGrid(uint numCols,
-        QwtArray<int>& rowHeight, QwtArray<int>& colWidth) const;
-    void stretchGrid(const QRect &rect, uint numCols, 
-        QwtArray<int>& rowHeight, QwtArray<int>& colWidth) const;
+                    QwtArray<int>& rowHeight, QwtArray<int>& colWidth) const;
+    void stretchGrid(const QRect &rect, uint numCols,
+                     QwtArray<int>& rowHeight, QwtArray<int>& colWidth) const;
 
 
 private:
@@ -98,7 +98,7 @@ private:
 // xlC 5.1, the IBM/AIX C++ compiler, needs it to be public
 public:
 #endif
-   class PrivateData;
+    class PrivateData;
 
 private:
     PrivateData *d_data;

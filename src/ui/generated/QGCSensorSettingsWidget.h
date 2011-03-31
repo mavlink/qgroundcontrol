@@ -45,8 +45,7 @@ public:
     QPushButton *magCalButton;
     QLabel *magCalLabel;
 
-    void setupUi(QWidget *QGCSensorSettingsWidget)
-    {
+    void setupUi(QWidget *QGCSensorSettingsWidget) {
         if (QGCSensorSettingsWidget->objectName().isEmpty())
             QGCSensorSettingsWidget->setObjectName(QString::fromUtf8("QGCSensorSettingsWidget"));
         QGCSensorSettingsWidget->resize(350, 545);
@@ -135,8 +134,7 @@ public:
         QMetaObject::connectSlotsByName(QGCSensorSettingsWidget);
     } // setupUi
 
-    void retranslateUi(QWidget *QGCSensorSettingsWidget)
-    {
+    void retranslateUi(QWidget *QGCSensorSettingsWidget) {
         QGCSensorSettingsWidget->setWindowTitle(QApplication::translate("QGCSensorSettingsWidget", "Form", 0, QApplication::UnicodeUTF8));
         groupBox->setTitle(QApplication::translate("QGCSensorSettingsWidget", "Activate Extended Output", 0, QApplication::UnicodeUTF8));
         sendRawCheckBox->setText(QApplication::translate("QGCSensorSettingsWidget", "Send RAW Sensor data", 0, QApplication::UnicodeUTF8));
@@ -156,8 +154,9 @@ public:
 
 };
 
-namespace Ui {
-    class QGCSensorSettingsWidget: public Ui_QGCSensorSettingsWidget {};
+namespace Ui
+{
+class QGCSensorSettingsWidget: public Ui_QGCSensorSettingsWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE

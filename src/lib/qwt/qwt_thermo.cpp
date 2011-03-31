@@ -34,8 +34,7 @@ public:
         maxValue(1.0),
         value(0.0),
         alarmLevel(0.0),
-        alarmEnabled(false)
-    {
+        alarmEnabled(false) {
         map.setScaleInterval(minValue, maxValue);
     }
 
@@ -57,23 +56,23 @@ public:
     bool alarmEnabled;
 };
 
-/*! 
+/*!
   Constructor
   \param parent Parent widget
 */
-QwtThermo::QwtThermo(QWidget *parent): 
+QwtThermo::QwtThermo(QWidget *parent):
     QWidget(parent)
 {
     initThermo();
 }
 
 #if QT_VERSION < 0x040000
-/*! 
+/*!
   Constructor
   \param parent Parent widget
   \param name Object name
 */
-QwtThermo::QwtThermo(QWidget *parent, const char *name): 
+QwtThermo::QwtThermo(QWidget *parent, const char *name):
     QWidget(parent, name)
 {
     initThermo();
@@ -89,11 +88,11 @@ void QwtThermo::initThermo()
     setRange(d_data->minValue, d_data->maxValue, false);
 
     QSizePolicy policy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
-    if (d_data->orientation == Qt::Vertical) 
+    if (d_data->orientation == Qt::Vertical)
         policy.transpose();
 
     setSizePolicy(policy);
-    
+
 #if QT_VERSION >= 0x040000
     setAttribute(Qt::WA_WState_OwnSizePolicy, false);
 #else
@@ -108,43 +107,42 @@ QwtThermo::~QwtThermo()
 }
 
 //! Set the maximum value.
-void QwtThermo::setMaxValue(double v) 
-{ 
-    setRange(d_data->minValue, v); 
+void QwtThermo::setMaxValue(double v)
+{
+    setRange(d_data->minValue, v);
 }
 
 //! Return the maximum value.
-double QwtThermo::maxValue() const 
-{ 
-    return d_data->maxValue; 
+double QwtThermo::maxValue() const
+{
+    return d_data->maxValue;
 }
 
 //! Set the minimum value.
-void QwtThermo::setMinValue(double v) 
-{ 
-    setRange(v, d_data->maxValue); 
+void QwtThermo::setMinValue(double v)
+{
+    setRange(v, d_data->maxValue);
 }
 
 //! Return the minimum value.
-double QwtThermo::minValue() const 
-{ 
-    return d_data->minValue; 
+double QwtThermo::minValue() const
+{
+    return d_data->minValue;
 }
 
 //! Set the current value.
 void QwtThermo::setValue(double v)
 {
-    if (d_data->value != v)
-    {
+    if (d_data->value != v) {
         d_data->value = v;
         update();
     }
 }
 
 //! Return the value.
-double QwtThermo::value() const 
-{ 
-    return d_data->value; 
+double QwtThermo::value() const
+{
+    return d_data->value;
 }
 
 /*!
@@ -154,8 +152,8 @@ double QwtThermo::value() const
   is necessary to derive from QwtScaleDraw and
   overload QwtScaleDraw::label().
 
-  \param scaleDraw ScaleDraw object, that has to be created with 
-                   new and will be deleted in ~QwtThermo or the next 
+  \param scaleDraw ScaleDraw object, that has to be created with
+                   new and will be deleted in ~QwtThermo or the next
                    call of setScaleDraw().
 */
 void QwtThermo::setScaleDraw(QwtScaleDraw *scaleDraw)
@@ -176,7 +174,7 @@ const QwtScaleDraw *QwtThermo::scaleDraw() const
    \return the scale draw of the thermo
    \sa setScaleDraw()
 */
-QwtScaleDraw *QwtThermo::scaleDraw() 
+QwtScaleDraw *QwtThermo::scaleDraw()
 {
     return (QwtScaleDraw *)abstractScaleDraw();
 }
@@ -186,8 +184,7 @@ void QwtThermo::paintEvent(QPaintEvent *e)
 {
     // Use double-buffering
     const QRect &ur = e->rect();
-    if ( ur.isValid() )
-    {
+    if ( ur.isValid() ) {
 #if QT_VERSION < 0x040000
         QwtPaintBuffer paintBuffer(this, ur);
         draw(paintBuffer.painter(), ur);
@@ -201,10 +198,8 @@ void QwtThermo::paintEvent(QPaintEvent *e)
 //! Draw the whole QwtThermo.
 void QwtThermo::draw(QPainter *p, const QRect& ur)
 {
-    if ( !d_data->thermoRect.contains(ur) )
-    {
-        if (d_data->scalePos != NoScale)
-        {
+    if ( !d_data->thermoRect.contains(ur) ) {
+        if (d_data->scalePos != NoScale) {
 #if QT_VERSION < 0x040000
             scaleDraw()->draw(p, colorGroup());
 #else
@@ -213,16 +208,16 @@ void QwtThermo::draw(QPainter *p, const QRect& ur)
         }
 
         qDrawShadePanel(p,
-            d_data->thermoRect.x() - d_data->borderWidth,
-            d_data->thermoRect.y() - d_data->borderWidth,
-            d_data->thermoRect.width() + 2*d_data->borderWidth,
-            d_data->thermoRect.height() + 2*d_data->borderWidth,
+                        d_data->thermoRect.x() - d_data->borderWidth,
+                        d_data->thermoRect.y() - d_data->borderWidth,
+                        d_data->thermoRect.width() + 2*d_data->borderWidth,
+                        d_data->thermoRect.height() + 2*d_data->borderWidth,
 #if QT_VERSION < 0x040000
-            colorGroup(), 
+                        colorGroup(),
 #else
-            palette(), 
+                        palette(),
 #endif
-            true, d_data->borderWidth,0);
+                        true, d_data->borderWidth,0);
     }
     drawThermo(p);
 }
@@ -243,102 +238,93 @@ void QwtThermo::layoutThermo( bool update_geometry )
 {
     QRect r = rect();
     int mbd = 0;
-    if ( d_data->scalePos != NoScale )
-    {
+    if ( d_data->scalePos != NoScale ) {
         int d1, d2;
         scaleDraw()->getBorderDistHint(font(), d1, d2);
         mbd = qwtMax(d1, d2);
     }
 
-    if ( d_data->orientation == Qt::Horizontal )
-    {
-        switch ( d_data->scalePos )
-        {
-            case TopScale:
-            {
-                d_data->thermoRect.setRect(
-                    r.x() + mbd + d_data->borderWidth,
-                    r.y() + r.height()
-                    - d_data->thermoWidth - 2*d_data->borderWidth,
-                    r.width() - 2*(d_data->borderWidth + mbd),
-                    d_data->thermoWidth);
-                scaleDraw()->setAlignment(QwtScaleDraw::TopScale);
-                scaleDraw()->move( d_data->thermoRect.x(),
-                    d_data->thermoRect.y() - d_data->borderWidth 
-                        - d_data->scaleDist);
-                scaleDraw()->setLength(d_data->thermoRect.width());
-                break;
-            }
+    if ( d_data->orientation == Qt::Horizontal ) {
+        switch ( d_data->scalePos ) {
+        case TopScale: {
+            d_data->thermoRect.setRect(
+                r.x() + mbd + d_data->borderWidth,
+                r.y() + r.height()
+                - d_data->thermoWidth - 2*d_data->borderWidth,
+                r.width() - 2*(d_data->borderWidth + mbd),
+                d_data->thermoWidth);
+            scaleDraw()->setAlignment(QwtScaleDraw::TopScale);
+            scaleDraw()->move( d_data->thermoRect.x(),
+                               d_data->thermoRect.y() - d_data->borderWidth
+                               - d_data->scaleDist);
+            scaleDraw()->setLength(d_data->thermoRect.width());
+            break;
+        }
 
-            case BottomScale:
-            case NoScale: // like Bottom but without scale
-            default:   // inconsistent orientation and scale position
-                       // Mapping between values and pixels requires
-                       // initialization of the scale geometry
-            {
-                d_data->thermoRect.setRect(
-                    r.x() + mbd + d_data->borderWidth,
-                    r.y() + d_data->borderWidth,
-                    r.width() - 2*(d_data->borderWidth + mbd),
-                    d_data->thermoWidth);
-                scaleDraw()->setAlignment(QwtScaleDraw::BottomScale);
-                scaleDraw()->move(
-                    d_data->thermoRect.x(),
-                    d_data->thermoRect.y() + d_data->thermoRect.height()
-                        + d_data->borderWidth + d_data->scaleDist );
-                scaleDraw()->setLength(d_data->thermoRect.width());
-                break;
-            }
+        case BottomScale:
+        case NoScale: // like Bottom but without scale
+        default:   // inconsistent orientation and scale position
+            // Mapping between values and pixels requires
+            // initialization of the scale geometry
+        {
+            d_data->thermoRect.setRect(
+                r.x() + mbd + d_data->borderWidth,
+                r.y() + d_data->borderWidth,
+                r.width() - 2*(d_data->borderWidth + mbd),
+                d_data->thermoWidth);
+            scaleDraw()->setAlignment(QwtScaleDraw::BottomScale);
+            scaleDraw()->move(
+                d_data->thermoRect.x(),
+                d_data->thermoRect.y() + d_data->thermoRect.height()
+                + d_data->borderWidth + d_data->scaleDist );
+            scaleDraw()->setLength(d_data->thermoRect.width());
+            break;
+        }
         }
         d_data->map.setPaintInterval(d_data->thermoRect.x(),
-            d_data->thermoRect.x() + d_data->thermoRect.width() - 1);
-    }
-    else // Qt::Vertical
-    {
-        switch ( d_data->scalePos )
-        {
-            case RightScale:
-            {
-                d_data->thermoRect.setRect(
-                    r.x() + d_data->borderWidth,
-                    r.y() + mbd + d_data->borderWidth,
-                    d_data->thermoWidth,
-                    r.height() - 2*(d_data->borderWidth + mbd));
-                scaleDraw()->setAlignment(QwtScaleDraw::RightScale);
-                scaleDraw()->move(
-                    d_data->thermoRect.x() + d_data->thermoRect.width()
-                        + d_data->borderWidth + d_data->scaleDist,
-                    d_data->thermoRect.y());
-                scaleDraw()->setLength(d_data->thermoRect.height());
-                break;
-            }
+                                     d_data->thermoRect.x() + d_data->thermoRect.width() - 1);
+    } else { // Qt::Vertical
+        switch ( d_data->scalePos ) {
+        case RightScale: {
+            d_data->thermoRect.setRect(
+                r.x() + d_data->borderWidth,
+                r.y() + mbd + d_data->borderWidth,
+                d_data->thermoWidth,
+                r.height() - 2*(d_data->borderWidth + mbd));
+            scaleDraw()->setAlignment(QwtScaleDraw::RightScale);
+            scaleDraw()->move(
+                d_data->thermoRect.x() + d_data->thermoRect.width()
+                + d_data->borderWidth + d_data->scaleDist,
+                d_data->thermoRect.y());
+            scaleDraw()->setLength(d_data->thermoRect.height());
+            break;
+        }
 
-            case LeftScale:
-            case NoScale: // like Left but without scale
-            default:   // inconsistent orientation and scale position
-                       // Mapping between values and pixels requires
-                       // initialization of the scale geometry
-            {
-                d_data->thermoRect.setRect(
-                    r.x() + r.width() - 2*d_data->borderWidth - d_data->thermoWidth,
-                    r.y() + mbd + d_data->borderWidth,
-                    d_data->thermoWidth,
-                    r.height() - 2*(d_data->borderWidth + mbd));
-                scaleDraw()->setAlignment(QwtScaleDraw::LeftScale);
-                scaleDraw()->move(
-                    d_data->thermoRect.x() - d_data->scaleDist 
-                        - d_data->borderWidth,
-                    d_data->thermoRect.y() );
-                scaleDraw()->setLength(d_data->thermoRect.height());
-                break;
-            }
+        case LeftScale:
+        case NoScale: // like Left but without scale
+        default:   // inconsistent orientation and scale position
+            // Mapping between values and pixels requires
+            // initialization of the scale geometry
+        {
+            d_data->thermoRect.setRect(
+                r.x() + r.width() - 2*d_data->borderWidth - d_data->thermoWidth,
+                r.y() + mbd + d_data->borderWidth,
+                d_data->thermoWidth,
+                r.height() - 2*(d_data->borderWidth + mbd));
+            scaleDraw()->setAlignment(QwtScaleDraw::LeftScale);
+            scaleDraw()->move(
+                d_data->thermoRect.x() - d_data->scaleDist
+                - d_data->borderWidth,
+                d_data->thermoRect.y() );
+            scaleDraw()->setLength(d_data->thermoRect.height());
+            break;
+        }
         }
         d_data->map.setPaintInterval(
             d_data->thermoRect.y() + d_data->thermoRect.height() - 1,
             d_data->thermoRect.y());
     }
-    if ( update_geometry )
-    {
+    if ( update_geometry ) {
         updateGeometry();
         update();
     }
@@ -354,9 +340,9 @@ void QwtThermo::layoutThermo( bool update_geometry )
          The default value is NoScale.
 
   A valid combination of scale position and orientation is enforced:
-  - a horizontal thermometer can have the scale positions TopScale, 
+  - a horizontal thermometer can have the scale positions TopScale,
     BottomScale or NoScale;
-  - a vertical thermometer can have the scale positions LeftScale, 
+  - a vertical thermometer can have the scale positions LeftScale,
     RightScale or NoScale;
   - an invalid scale position will default to NoScale.
 
@@ -367,28 +353,24 @@ void QwtThermo::setOrientation(Qt::Orientation o, ScalePos s)
     if ( o == d_data->orientation && s == d_data->scalePos )
         return;
 
-    switch(o)
-    {
-        case Qt::Horizontal:
-        {
-            if ((s == NoScale) || (s == BottomScale) || (s == TopScale))
-                d_data->scalePos = s;
-            else
-                d_data->scalePos = NoScale;
-            break;
-        }
-        case Qt::Vertical:
-        {
-            if ((s == NoScale) || (s == LeftScale) || (s == RightScale))
-                d_data->scalePos = s;
-            else
-                d_data->scalePos = NoScale;
-            break;
-        }
+    switch(o) {
+    case Qt::Horizontal: {
+        if ((s == NoScale) || (s == BottomScale) || (s == TopScale))
+            d_data->scalePos = s;
+        else
+            d_data->scalePos = NoScale;
+        break;
+    }
+    case Qt::Vertical: {
+        if ((s == NoScale) || (s == LeftScale) || (s == RightScale))
+            d_data->scalePos = s;
+        else
+            d_data->scalePos = NoScale;
+        break;
+    }
     }
 
-    if ( o != d_data->orientation )
-    {
+    if ( o != d_data->orientation ) {
 #if QT_VERSION >= 0x040000
         if ( !testAttribute(Qt::WA_WState_OwnSizePolicy) )
 #else
@@ -415,11 +397,11 @@ void QwtThermo::setOrientation(Qt::Orientation o, ScalePos s)
   \brief Change the scale position (and thermometer orientation).
 
   \param s Position of the scale.
-  
+
   A valid combination of scale position and orientation is enforced:
-  - if the new scale position is LeftScale or RightScale, the 
+  - if the new scale position is LeftScale or RightScale, the
     scale orientation will become Qt::Vertical;
-  - if the new scale position is BottomScale or TopScale, the scale 
+  - if the new scale position is BottomScale or TopScale, the scale
     orientation will become Qt::Horizontal;
   - if the new scale position is NoScale, the scale orientation will not change.
 
@@ -471,20 +453,16 @@ void QwtThermo::drawThermo(QPainter *p)
     //  Note: The alarm value is allowed to lie
     //        outside the interval (minValue, maxValue).
     //
-    if (d_data->alarmEnabled)
-    {
-        if (inverted)
-        {
+    if (d_data->alarmEnabled) {
+        if (inverted) {
             alarm = ((d_data->alarmLevel >= d_data->maxValue)
-                 && (d_data->alarmLevel <= d_data->minValue)
-                 && (d_data->value >= d_data->alarmLevel));
-        
-        }
-        else
-        {
+                     && (d_data->alarmLevel <= d_data->minValue)
+                     && (d_data->value >= d_data->alarmLevel));
+
+        } else {
             alarm = (( d_data->alarmLevel >= d_data->minValue)
-                 && (d_data->alarmLevel <= d_data->maxValue)
-                 && (d_data->value >= d_data->alarmLevel));
+                     && (d_data->alarmLevel <= d_data->maxValue)
+                     && (d_data->value >= d_data->alarmLevel));
         }
     }
 
@@ -494,110 +472,88 @@ void QwtThermo::drawThermo(QPainter *p)
     int tval = transform(d_data->value);
 
     if (alarm)
-       taval = transform(d_data->alarmLevel);
+        taval = transform(d_data->alarmLevel);
 
     //
     //  calculate recangles
     //
-    if ( d_data->orientation == Qt::Horizontal )
-    {
-        if (inverted)
-        {
+    if ( d_data->orientation == Qt::Horizontal ) {
+        if (inverted) {
             bRect.setRect(d_data->thermoRect.x(), d_data->thermoRect.y(),
-                  tval - d_data->thermoRect.x(),
-                  d_data->thermoRect.height());
-        
-            if (alarm)
-            {
+                          tval - d_data->thermoRect.x(),
+                          d_data->thermoRect.height());
+
+            if (alarm) {
                 aRect.setRect(tval, d_data->thermoRect.y(),
-                      taval - tval + 1,
-                      d_data->thermoRect.height());
+                              taval - tval + 1,
+                              d_data->thermoRect.height());
                 fRect.setRect(taval + 1, d_data->thermoRect.y(),
-                      d_data->thermoRect.x() + d_data->thermoRect.width() - (taval + 1),
-                      d_data->thermoRect.height());
-            }
-            else
-            {
+                              d_data->thermoRect.x() + d_data->thermoRect.width() - (taval + 1),
+                              d_data->thermoRect.height());
+            } else {
                 fRect.setRect(tval, d_data->thermoRect.y(),
-                      d_data->thermoRect.x() + d_data->thermoRect.width() - tval,
-                      d_data->thermoRect.height());
+                              d_data->thermoRect.x() + d_data->thermoRect.width() - tval,
+                              d_data->thermoRect.height());
             }
-        }
-        else
-        {
+        } else {
             bRect.setRect(tval + 1, d_data->thermoRect.y(),
-                  d_data->thermoRect.width() - (tval + 1 - d_data->thermoRect.x()),
-                  d_data->thermoRect.height());
-        
-            if (alarm)
-            {
+                          d_data->thermoRect.width() - (tval + 1 - d_data->thermoRect.x()),
+                          d_data->thermoRect.height());
+
+            if (alarm) {
                 aRect.setRect(taval, d_data->thermoRect.y(),
-                      tval - taval + 1,
-                      d_data->thermoRect.height());
+                              tval - taval + 1,
+                              d_data->thermoRect.height());
                 fRect.setRect(d_data->thermoRect.x(), d_data->thermoRect.y(),
-                      taval - d_data->thermoRect.x(),
-                      d_data->thermoRect.height());
-            }
-            else
-            {
+                              taval - d_data->thermoRect.x(),
+                              d_data->thermoRect.height());
+            } else {
                 fRect.setRect(d_data->thermoRect.x(), d_data->thermoRect.y(),
-                      tval - d_data->thermoRect.x() + 1,
-                      d_data->thermoRect.height());
+                              tval - d_data->thermoRect.x() + 1,
+                              d_data->thermoRect.height());
             }
-        
+
         }
-    }
-    else // Qt::Vertical
-    {
+    } else { // Qt::Vertical
         if (tval < d_data->thermoRect.y())
             tval = d_data->thermoRect.y();
-        else 
-        {
+        else {
             if (tval > d_data->thermoRect.y() + d_data->thermoRect.height())
                 tval = d_data->thermoRect.y() + d_data->thermoRect.height();
         }
 
-        if (inverted)
-        {
+        if (inverted) {
             bRect.setRect(d_data->thermoRect.x(), tval + 1,
-            d_data->thermoRect.width(),
-            d_data->thermoRect.height() - (tval + 1 - d_data->thermoRect.y()));
+                          d_data->thermoRect.width(),
+                          d_data->thermoRect.height() - (tval + 1 - d_data->thermoRect.y()));
 
-            if (alarm)
-            {
+            if (alarm) {
                 aRect.setRect(d_data->thermoRect.x(), taval,
-                    d_data->thermoRect.width(),
-                    tval - taval + 1);
+                              d_data->thermoRect.width(),
+                              tval - taval + 1);
                 fRect.setRect(d_data->thermoRect.x(), d_data->thermoRect.y(),
-                    d_data->thermoRect.width(),
-                taval - d_data->thermoRect.y());
-            }
-            else
-            {
+                              d_data->thermoRect.width(),
+                              taval - d_data->thermoRect.y());
+            } else {
                 fRect.setRect(d_data->thermoRect.x(), d_data->thermoRect.y(),
-                    d_data->thermoRect.width(),
-                    tval - d_data->thermoRect.y() + 1);
+                              d_data->thermoRect.width(),
+                              tval - d_data->thermoRect.y() + 1);
             }
-        }
-        else
-        {
+        } else {
             bRect.setRect(d_data->thermoRect.x(), d_data->thermoRect.y(),
-            d_data->thermoRect.width(),
-            tval - d_data->thermoRect.y());
-            if (alarm)
-            {
+                          d_data->thermoRect.width(),
+                          tval - d_data->thermoRect.y());
+            if (alarm) {
                 aRect.setRect(d_data->thermoRect.x(),tval,
-                    d_data->thermoRect.width(),
-                    taval - tval + 1);
+                              d_data->thermoRect.width(),
+                              taval - tval + 1);
                 fRect.setRect(d_data->thermoRect.x(),taval + 1,
-                    d_data->thermoRect.width(),
-                    d_data->thermoRect.y() + d_data->thermoRect.height() - (taval + 1));
-            }
-            else
-            {
+                              d_data->thermoRect.width(),
+                              d_data->thermoRect.y() + d_data->thermoRect.height() - (taval + 1));
+            } else {
                 fRect.setRect(d_data->thermoRect.x(),tval,
-                    d_data->thermoRect.width(),
-                d_data->thermoRect.y() + d_data->thermoRect.height() - tval);
+                              d_data->thermoRect.width(),
+                              d_data->thermoRect.y() + d_data->thermoRect.height() - tval);
             }
         }
     }
@@ -614,7 +570,7 @@ void QwtThermo::drawThermo(QPainter *p)
     p->fillRect(bRect, bgColor);
 
     if (alarm)
-       p->fillRect(aRect, d_data->alarmBrush);
+        p->fillRect(aRect, d_data->alarmBrush);
 
     p->fillRect(fRect, d_data->fillBrush);
 }
@@ -622,9 +578,8 @@ void QwtThermo::drawThermo(QPainter *p)
 //! Set the border width of the pipe.
 void QwtThermo::setBorderWidth(int w)
 {
-    if ((w >= 0) && (w < (qwtMin(d_data->thermoRect.width(), 
-        d_data->thermoRect.height()) + d_data->borderWidth) / 2  - 1))
-    {
+    if ((w >= 0) && (w < (qwtMin(d_data->thermoRect.width(),
+                                 d_data->thermoRect.height()) + d_data->borderWidth) / 2  - 1)) {
         d_data->borderWidth = w;
         layoutThermo();
     }
@@ -640,7 +595,7 @@ int QwtThermo::borderWidth() const
   \brief Set the range
   \param vmin value corresponding lower or left end of the thermometer
   \param vmax value corresponding to the upper or right end of the thermometer
-  \param logarithmic logarithmic mapping, true or false 
+  \param logarithmic logarithmic mapping, true or false
 */
 void QwtThermo::setRange(double vmin, double vmax, bool logarithmic)
 {
@@ -748,8 +703,7 @@ double QwtThermo::alarmLevel() const
 //! Change the width of the pipe.
 void QwtThermo::setPipeWidth(int w)
 {
-    if (w > 0)
-    {
+    if (w > 0) {
         d_data->thermoWidth = w;
         layoutThermo();
     }
@@ -815,18 +769,15 @@ QSize QwtThermo::minimumSizeHint() const
 {
     int w = 0, h = 0;
 
-    if ( d_data->scalePos != NoScale )
-    {
+    if ( d_data->scalePos != NoScale ) {
         const int sdExtent = scaleDraw()->extent( QPen(), font() );
         const int sdLength = scaleDraw()->minLength( QPen(), font() );
 
         w = sdLength;
-        h = d_data->thermoWidth + sdExtent + 
+        h = d_data->thermoWidth + sdExtent +
             d_data->borderWidth + d_data->scaleDist;
 
-    }
-    else // no scale
-    {
+    } else { // no scale
         w = 200;
         h = d_data->thermoWidth;
     }

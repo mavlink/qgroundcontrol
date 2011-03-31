@@ -53,7 +53,7 @@ This file is part of the QGROUNDCONTROL project
   */
 class CurveCalibrator : public AbstractCalibrator
 {
-Q_OBJECT
+    Q_OBJECT
 public:
     explicit CurveCalibrator(QString title = QString(), QWidget *parent = 0);
     ~CurveCalibrator();
@@ -63,7 +63,7 @@ public:
 protected slots:
     void setSetpoint(int setpoint);
 
-protected:    
+protected:
     QVector<double> *setpoints;
     QVector<double> *positions;
     /** Plot to display calibration curve */

@@ -43,8 +43,7 @@ public:
     QVBoxLayout *verticalLayout_2;
     QWidget *page_4;
 
-    void setupUi(QWidget *parameterWidget)
-    {
+    void setupUi(QWidget *parameterWidget) {
         if (parameterWidget->objectName().isEmpty())
             parameterWidget->setObjectName(QString::fromUtf8("parameterWidget"));
         parameterWidget->resize(350, 545);
@@ -103,8 +102,7 @@ public:
         QMetaObject::connectSlotsByName(parameterWidget);
     } // setupUi
 
-    void retranslateUi(QWidget *parameterWidget)
-    {
+    void retranslateUi(QWidget *parameterWidget) {
         parameterWidget->setWindowTitle(QApplication::translate("parameterWidget", "Form", 0, QApplication::UnicodeUTF8));
         label->setText(QApplication::translate("parameterWidget", "Vehicle", 0, QApplication::UnicodeUTF8));
         groupBox_2->setTitle(QApplication::translate("parameterWidget", "Onboard Parameters", 0, QApplication::UnicodeUTF8));
@@ -112,8 +110,9 @@ public:
 
 };
 
-namespace Ui {
-    class parameterWidget: public Ui_parameterWidget {};
+namespace Ui
+{
+class parameterWidget: public Ui_parameterWidget {};
 } // namespace Ui
 
 QT_END_NAMESPACE

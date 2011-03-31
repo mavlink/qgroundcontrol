@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QFileDialog>
 
 QMap3D::QMap3D(QWidget * parent, const char * name, WindowFlags f) :
-        QWidget(parent,f)
+    QWidget(parent,f)
 {
     Q_UNUSED(name);
     setupUi(this);
@@ -57,15 +57,15 @@ QMap3D::~QMap3D()
 void QMap3D::on_pushButton_map_clicked()
 {
     QString mapName = QFileDialog::getOpenFileName(this, tr("Select an OsgEarth map file"),
-        QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("OsgEarth file (*.earth);;"));
+                      QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("OsgEarth file (*.earth);;"));
     graphicsView->getSceneData()->asGroup()->addChild(osgDB::readNodeFile(mapName.toStdString()));
-    graphicsView->updateCamera();  
+    graphicsView->updateCamera();
 }
 
 void QMap3D::on_pushButton_vehicle_clicked()
 {
     QString vehicleName = QFileDialog::getOpenFileName(this, tr("Select a 3D model for your vehicle"),
-        QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("OsgEarth file (*.osg, *.ac, *.3ds);;"));
+                          QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("OsgEarth file (*.osg, *.ac, *.3ds);;"));
     graphicsView->getSceneData()->asGroup()->addChild(osgDB::readNodeFile(vehicleName.toStdString()));
     graphicsView->updateCamera();
 }

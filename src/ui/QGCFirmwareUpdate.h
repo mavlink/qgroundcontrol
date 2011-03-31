@@ -3,11 +3,13 @@
 
 #include <QWidget>
 
-namespace Ui {
-    class QGCFirmwareUpdate;
+namespace Ui
+{
+class QGCFirmwareUpdate;
 }
 
-class QGCFirmwareUpdate : public QWidget {
+class QGCFirmwareUpdate : public QWidget
+{
     Q_OBJECT
 public:
     QGCFirmwareUpdate(QWidget *parent = 0);

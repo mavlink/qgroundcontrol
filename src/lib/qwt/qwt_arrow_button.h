@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -38,11 +38,11 @@ protected:
 #endif
 
     virtual void drawButtonLabel(QPainter *p);
-    virtual void drawArrow(QPainter *, 
-        const QRect &, Qt::ArrowType) const;
+    virtual void drawArrow(QPainter *,
+                           const QRect &, Qt::ArrowType) const;
     virtual QRect labelRect() const;
     virtual QSize arrowSize(Qt::ArrowType,
-        const QSize &boundingSize) const;
+                            const QSize &boundingSize) const;
 
     virtual void keyPressEvent(QKeyEvent *);
 

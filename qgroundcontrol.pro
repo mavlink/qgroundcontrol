@@ -102,6 +102,9 @@ include(qgroundcontrol.pri)
 # Include serial port library
 include(src/lib/qextserialport/qextserialport.pri)
 
+# include qserial library
+include(thirdParty/qserial/qserialport.prf)
+
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
@@ -190,6 +193,7 @@ HEADERS += src/MG.h \
     src/comm/LinkManager.h \
     src/comm/LinkInterface.h \
     src/comm/SerialLinkInterface.h \
+    src/comm/SerialInterface.h \
     src/comm/SerialLink.h \
     src/comm/SerialSimulationLink.h \
     src/comm/ProtocolInterface.h \

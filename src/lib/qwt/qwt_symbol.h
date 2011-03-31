@@ -2,7 +2,7 @@
  * Qwt Widget Library
  * Copyright (C) 1997   Josef Wilgen
  * Copyright (C) 2002   Uwe Rathmann
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the Qwt License, Version 1.0
  *****************************************************************************/
@@ -26,34 +26,33 @@ public:
         Style
         \sa setStyle(), style()
      */
-    enum Style 
-    { 
-        NoSymbol = -1, 
+    enum Style {
+        NoSymbol = -1,
 
-        Ellipse, 
-        Rect, 
-        Diamond, 
-        Triangle, 
+        Ellipse,
+        Rect,
+        Diamond,
+        Triangle,
         DTriangle,
-        UTriangle, 
-        LTriangle, 
-        RTriangle, 
-        Cross, 
-        XCross, 
-        HLine, 
-        VLine, 
-        Star1, 
-        Star2, 
-        Hexagon, 
+        UTriangle,
+        LTriangle,
+        RTriangle,
+        Cross,
+        XCross,
+        HLine,
+        VLine,
+        Star1,
+        Star2,
+        Hexagon,
 
-        StyleCnt 
+        StyleCnt
     };
-   
+
 public:
     QwtSymbol();
     QwtSymbol(Style st, const QBrush &bd, const QPen &pn, const QSize &s);
     virtual ~QwtSymbol();
-    
+
     bool operator!=(const QwtSymbol &) const;
     virtual bool operator==(const QwtSymbol &) const;
 
@@ -66,15 +65,23 @@ public:
     void setStyle (Style s);
 
     //! Return Brush
-    const QBrush& brush() const { return d_brush; }
+    const QBrush& brush() const {
+        return d_brush;
+    }
     //! Return Pen
-    const QPen& pen() const { return d_pen; }
+    const QPen& pen() const {
+        return d_pen;
+    }
     //! Return Size
-    const QSize& size() const { return d_size; }
+    const QSize& size() const {
+        return d_size;
+    }
     //! Return Style
-    Style style() const { return d_style; } 
-    
-    void draw(QPainter *p, const QPoint &pt) const; 
+    Style style() const {
+        return d_style;
+    }
+
+    void draw(QPainter *p, const QPoint &pt) const;
     void draw(QPainter *p, int x, int y) const;
     virtual void draw(QPainter *p, const QRect &r) const;
 
