@@ -1,0 +1,11 @@
+* 1.0.0 Alpha
+
+o Symbian support
+o mingw test/support
+o Increase testing coverage - see TestPlan for details
+o Make sure that QSerialPort works properly when created by a thread other than the main thread
+o Add breakState() method
+o Test line signal related methods
+o Code cleanup
+o Better documentation
+

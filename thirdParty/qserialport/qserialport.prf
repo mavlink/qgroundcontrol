@@ -1,0 +1,72 @@
+##
+## Unofficial Qt Serial Port Library
+##
+## Copyright (c) 2010 Inbiza Systems Inc. All rights reserved.
+##
+## This program is free software: you can redistribute it and/or modify it
+## under the terms of the GNU Lesser General Public License as published by the
+## Free Software Foundation, either version 3 of the License, or (at your
+## option) any later version.
+##
+## This program is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+## FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+## more details.
+##
+## You should have received a copy of the GNU Lesser General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>
+##
+##
+## @file qserialport.prf
+## www.inbiza.com
+##
+
+QSERIALPORT_INCDIR = /usr/local/qserialport/include
+QSERIALPORT_LIBDIR = /usr/local/qserialport/lib
+QSERIALPORT_FRAMEWORKDIR = /Library/Frameworks
+# prepend this file with QSERIALPORT_INCDIR/QSERIALPORT_LIBDIR definitions
+
+# NOTE: any changes made to this file need to be tracked in qcm/qserialport.qcm
+
+CONFIG *= qt
+
+# if we are including qserialport.prf from the qserialport tree (and not utilizing it as
+# an installed qmake CONFIG feature), then point to the tree.  this allows our
+# qserialport tree apps to build before qserialport itself is installed.
+exists($$PWD/qserialport.pro) {
+  QSERIALPORT_INCDIR = $$PWD/include
+  QSERIALPORT_LIBDIR = $$PWD/lib
+}
+
+LINKAGE =
+
+# on mac, if qserialport was built as a framework, link against it
+macx: {
+  framework_dir = $$QSERIALPORT_FRAMEWORKDIR
+  exists($$framework_dir/QtSerialPort.framework) {
+    LINKAGE += -framework QtSerialPort
+    INCLUDEPATH += $$framework_dir/QtSerialPort.framework/Headers
+  }
+  isEmpty(LINKAGE) {
+    exists($$QSERIALPORT_LIBDIR/QtSerialPort.framework) {
+      QMAKE_LFLAGS += -F/$$QSERIALPORT_LIBDIR/
+      LINKAGE += -framework QtSerialPort
+      INCLUDEPATH += $$QSERIALPORT_LIBDIR/QtSerialPort.framework/Headers
+    }
+  }
+}
+
+# else, link normally
+isEmpty(LINKAGE) {
+  INCLUDEPATH += $$QSERIALPORT_INCDIR/QtSerialPort
+  LIBS += -L$$QSERIALPORT_LIBDIR
+  LINKAGE = -lQtSerialPort
+  CONFIG(debug, debug|release) {
+    windows:LINKAGE = -lQtSerialPortd
+    macx:LINKAGE = -lQtSerialPort_debug
+    unix:!macx:LINKAGE = -lQtSerialPort.debug
+  }
+}
+
+LIBS += $$LINKAGE
+

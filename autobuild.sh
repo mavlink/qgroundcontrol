@@ -18,12 +18,12 @@ do
 	if [ $OPT = "in_source_build" ] &> /dev/null
 	then
 		echo you chose in source build
-		mkdir -p build && cd build && cmake -DIN_SRC_BUILD:bool=TRUE .. && make $MAKEARGS
+		git submodule init && git submodule update && mkdir -p build && cd build && cmake -DIN_SRC_BUILD:bool=TRUE .. && make $MAKEARGS
 		exit 0
 	elif [ $OPT = "install_build" ] &> /dev/null
 	then
 		echo you chose install build
-		mkdir -p build && cd build && cmake .. && make $MAKEARGS
+		git submodule init && git submodule update mkdir -p build && cd build && cmake .. && make $MAKEARGS
 		exit 0
 	elif [ $OPT = "grab_debian_dependencies" ] &> /dev/null
 	then
@@ -40,13 +40,13 @@ do
 	elif [ $OPT = "package_source" ] &> /dev/null
 	then
 		echo you chose to package the source
-		mkdir -p build && cd build && cmake .. && make package_source
+		git submodule init && git submodule update && mkdir -p build && cd build && cmake .. && make package_source
 		exit 0
 
 	elif [ $OPT = "package" ] &> /dev/null
 	then
 		echo you chose to package the binary
-		mkdir -p build && cd build && cmake .. && make package
+		git submodule init && git submodule update && mkdir -p build && cd build && cmake .. && make package
 		exit 0
 
 	elif [ $OPT = "clean" ] &> /dev/null

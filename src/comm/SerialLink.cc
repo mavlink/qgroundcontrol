@@ -48,32 +48,14 @@ SerialLink::SerialLink(QString portname, SerialInterface::baudRateType baudrate,
     this->timeout = 1; ///< The timeout controls how long the program flow should wait for new serial bytes. As we're polling, we don't want to wait at all.
 
     // Set the port name
-    if (porthandle == "") {
-        //        name = tr("serial link ") + QString::number(getId()) + tr(" (unconfigured)");
+    if (porthandle == "")
+    {
         name = tr("Serial Link ") + QString::number(getId());
-    } else {
+    }
+    else
+    {
         name = portname.trimmed();
     }
-
-#ifdef _WIN3232
-    // Windows 32bit & 64bit serial connection
-    winPort = CreateFile(porthandle,
-                         GENERIC_READ | GENERIC_WRITE,
-                         0,
-                         0,
-                         OPEN_EXISTING,
-                         FILE_ATTRIBUTE_NORMAL,
-                         0);
-    if(winPort==INVALID_HANDLE_VALUE) {
-        if(GetLastError()==ERROR_FILE_NOT_FOUND) {
-            //serial port does not exist. Inform user.
-        }
-        //some other error occurred. Inform user.
-    }
-#else
-
-#endif
-
     loadSettings();
 }
 

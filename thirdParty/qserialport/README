@@ -1,0 +1,37 @@
+Unofficial Qt Serial Port library version 1.0.0 alpha
+-----------------------------------------------------
+Date: October 15th, 2010
+Website: http://www.inbiza.com/labs
+
+Description
+-----------
+  QSerialPort is a high performance cross platform serial library based on the QIODevice class from the Qt framework. Building this library on QIODevice allows for a much more integrated and native experience when developing Qt based applications.
+
+  The project stems from our work on high performance embedded systems where we need to squeeze out as much IO performance as possible from hardware with limited resources.
+
+  This library has been tested on:
+   Ð Linux on x86 and ARM ;
+   Ð Windows XP and CE 5 on x86;
+   Ð OS X 10.6 on x86 with a FTDI USB to Serial bridge.
+
+  API Documentation is located in the 'apidocs' subdirectory. Run 'make doc' to generate the documentation on a Linux system with Doxygen installed. 
+
+Special Thanks
+--------------
+  We used Qt Cryptographic Architecture (QCA) project's layout
+  and qmake configuration as a model for our project. We thank to 
+  Justin Karneges and QCA team for their great work.    
+  
+Install
+-------
+  For installation or compiling instructions, see the INSTALL file.
+
+License
+-------
+  This software is distributed under the terms of the GNU Lesser General Public License version 2.1.
+
+Changes
+-------
+  <none>
+   
+  
