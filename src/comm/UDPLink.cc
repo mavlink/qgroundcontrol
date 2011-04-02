@@ -85,29 +85,32 @@ void UDPLink::setPort(int port)
  */
 void UDPLink::addHost(const QString& host)
 {
-    qDebug() << "UDP:" << "ADDING HOST:" << host;
-    if (host.contains(":")) {
-        qDebug() << "HOST: " << host.split(":").first();
-        QHostInfo info = QHostInfo::fromName(host.split(":").first());
-        // Add host
-        QList<QHostAddress> hostAddresses = info.addresses();
-        QHostAddress address;
-        for (int i = 0; i < hostAddresses.size(); i++) {
-            // Exclude loopback IPv4 and all IPv6 addresses
-            if (!hostAddresses.at(i).toString().contains(":")) {
-                address = hostAddresses.at(i);
+    if (host != "")
+    {
+        qDebug() << "UDP:" << "ADDING HOST:" << host;
+        if (host.contains(":")) {
+            qDebug() << "HOST: " << host.split(":").first();
+            QHostInfo info = QHostInfo::fromName(host.split(":").first());
+            // Add host
+            QList<QHostAddress> hostAddresses = info.addresses();
+            QHostAddress address;
+            for (int i = 0; i < hostAddresses.size(); i++) {
+                // Exclude loopback IPv4 and all IPv6 addresses
+                if (!hostAddresses.at(i).toString().contains(":")) {
+                    address = hostAddresses.at(i);
+                }
             }
+            hosts.append(address);
+            qDebug() << "Address:" << address.toString();
+            // Set port according to user input
+            ports.append(host.split(":").last().toInt());
+        } else {
+            QHostInfo info = QHostInfo::fromName(host);
+            // Add host
+            hosts.append(info.addresses().first());
+            // Set port according to default (this port)
+            ports.append(port);
         }
-        hosts.append(address);
-        qDebug() << "Address:" << address.toString();
-        // Set port according to user input
-        ports.append(host.split(":").last().toInt());
-    } else {
-        QHostInfo info = QHostInfo::fromName(host);
-        // Add host
-        hosts.append(info.addresses().first());
-        // Set port according to default (this port)
-        ports.append(port);
     }
 }
 
