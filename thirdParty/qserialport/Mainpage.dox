@@ -1,0 +1,67 @@
+/**
+   \mainpage Unofficial Qt Serial Port Library
+
+   %QSerialPort is a cross-platform serial port library, using Qt datatypes and
+   conventions. %QSerialPort inherits from <a href="http://doc.trolltech.com/4.7/qiodevice.html">QIODevice
+   </a> and works natively with any Qt class that uses QIODevice objects as input or output.
+
+   %QSerialPort should work everywhere %Qt does, including Windows/Unix/Linux/Embedded Linux/WinCE/MacOSX. This
+   version of %QSerialPort is for Qt4, and requires no Qt3 compatibility code.
+
+   \section Characteristics Device Characteristics
+
+   %QSerialPort has the following QIODevice characteristics:
+     - Supports event-driven and polling programming models
+     - It is a sequential device like <a href="http://doc.trolltech.com/4.7/qprocess.html">QProcess</a> and
+       <a href="http://doc.trolltech.com/4.7/qtcpsocket.html">QTcpSocket</a>
+     - It is an unbuffered device
+
+   \section using Using QSerialPort
+
+   The application simply includes &lt;QSerialPort> and links to
+   libqserialport. There are additional examples available in the "examples" directory.
+
+   You will notice that %QSerialPort is part of TNX namespace. TNX stands for Tonix
+   which is a Qt based cross-platform hardware control framework with built in JavaScript support. Since Tonix
+   is specially designed for embedded system development and robotics projects %QSerialPort is an essential part of it.
+
+   Example:
+  \code
+  #include <QSerialPort>
+
+  int main(int argc, char *argv[])
+  {
+    using namespace TNX;
+
+    QCoreApplication a(argc, argv);
+
+    QSerialPort serport("COM5", "9600,8,n,1");
+    if ( !serport.open() )
+      qFatal("Cannot open serial port %s. Exiting..", qPrintable(portName));
+
+    if ( !serport.setCommTimeouts(QSerialPort::CtScheme_NonBlockingRead) )
+      qWarning("Cannot set communications timeout values at port %s.", qPrintable(portName));
+
+    int byteCounter = 0;
+    forever {
+      if ( serport.waitForReadyRead(5000) ) { // 5sec
+        QByteArray data = serport.read(512);
+        byteCounter += data.size();
+        std::cout << "Received data @ " << qPrintable(QDateTime::currentDateTime().toString("hh:mm:ss.zzz")) <<
+            ". Echo back." << std::endl;
+        serport.write(data);
+        if ( byteCounter >= 4096 )
+          break;
+      }
+      else {
+        std::cout << "Timeout while waiting for incoming data @ " <<
+            qPrintable(QDateTime::currentDateTime().toString("hh:mm:ss.zzz")) << std::endl;
+      }
+    }
+
+    std::cout << "Polling example is terminated successfully." << std::endl;
+    return 0;
+  }
+  \endcode
+
+*/

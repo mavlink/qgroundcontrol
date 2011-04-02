@@ -1,0 +1,3 @@
+#include "qportsettings.h"
+#include "qserialportnative.h"
+#include "qserialport.h"
