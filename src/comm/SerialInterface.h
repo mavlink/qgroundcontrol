@@ -49,7 +49,8 @@ signals:
 
 public:
 
-    enum baudRateType {
+    enum baudRateType
+    {
         BAUD50,                //POSIX ONLY
         BAUD75,                //POSIX ONLY
         BAUD110,
@@ -77,14 +78,16 @@ public:
         BAUD921600             // WINDOWS ONLY
     };
 
-    enum dataBitsType {
+    enum dataBitsType
+    {
         DATA_5,
         DATA_6,
         DATA_7,
         DATA_8
     };
 
-    enum parityType {
+    enum parityType
+    {
         PAR_NONE,
         PAR_ODD,
         PAR_EVEN,
@@ -92,13 +95,15 @@ public:
         PAR_SPACE
     };
 
-    enum stopBitsType {
+    enum stopBitsType
+    {
         STOP_1,
         STOP_1_5,               //WINDOWS ONLY
         STOP_2
     };
 
-    enum flowType {
+    enum flowType
+    {
         FLOW_OFF,
         FLOW_HARDWARE,
         FLOW_XONXOFF
@@ -107,7 +112,8 @@ public:
     /**
      * structure to contain port settings
      */
-    struct portSettings {
+    struct portSettings
+    {
         baudRateType BaudRate;
         dataBitsType DataBits;
         parityType Parity;
@@ -186,10 +192,11 @@ public:
     }
     virtual void setTimeout(qint64 timeout) {
         _port->setTimeout(timeout);
-    };
+    }
     virtual void setFlow(SerialInterface::flowType flow) {
         // TODO implement
-    };
+        _port->setFlowControl((FlowType)flow);
+    }
 };
 
 using namespace TNX;
@@ -262,11 +269,11 @@ public:
     virtual void setTimeout(qint64 timeout) {
         // TODO implement
         //_port->setTimeout(timeout);
-    };
+    }
     virtual void setFlow(SerialInterface::flowType flow) {
         // TODO map
         settings.setFlowControl(QPortSettings::FLOW_OFF);
-    };
+    }
 };
 
 #endif // SERIALINTERFACE_H
