@@ -58,36 +58,47 @@ exists(user_config.pri) {
 }
 
 INCLUDEPATH += $$BASEDIR/../mavlink/include/common
+INCLUDEPATH += $$BASEDIR/../mavlink/include
+INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/common
+INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include
 contains(MAVLINK_CONF, pixhawk) { 
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
     
     # PIXHAWK SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/pixhawk
+    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/pixhawk
     DEFINES += QGC_USE_PIXHAWK_MESSAGES
 }
 contains(MAVLINK_CONF, slugs) { 
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
     
     # SLUGS SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/slugs
+    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/slugs
     DEFINES += QGC_USE_SLUGS_MESSAGES
 }
 contains(MAVLINK_CONF, ualberta) { 
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
     
     # UALBERTA SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/ualberta
+    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/ualberta
     DEFINES += QGC_USE_UALBERTA_MESSAGES
 }
 contains(MAVLINK_CONF, ardupilotmega) { 
     # Remove the default set - it is included anyway
     INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
     
     # UALBERTA SPECIAL MESSAGES
     INCLUDEPATH += $$BASEDIR/../mavlink/include/ardupilotmega
+    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/ardupilotmega
     DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
 }
 
@@ -97,13 +108,6 @@ contains(MAVLINK_CONF, ardupilotmega) {
 # done by the plugins above
 include(qgroundcontrol.pri)
 
-# QWT plot and QExtSerial depend on paths set by qgroundcontrol.pri
-# Include serial port library
-include(src/lib/qextserialport/qextserialport.pri)
-
-# include qserial library
-include(thirdParty/qserial/qserialport.prf)
-
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
@@ -111,11 +115,22 @@ DEPENDPATH += . \
     lib/QMapControl/src \
     lib/opmapcontrol \
     lib/opmapcontrol/src \
-    plugins
+    plugins \
+    thirdParty/qserialport/include \
+    thirdParty/qserialport/include/QtSerialPort \
+    thirdParty/qserialport
 INCLUDEPATH += . \
     lib/QMapControl \
     lib/opmapcontrol \
-    $$BASEDIR/../mavlink/include
+    thirdParty/qserialport/include \
+    thirdParty/qserialport/include/QtSerialPort \
+    thirdParty/qserialport/src
+
+# Include serial port library
+include(src/lib/qextserialport/qextserialport.pri)
+# include qserial library
+include(thirdParty/qserialport/qgroundcontrol-qserialport.pri)
+
 
 # ../mavlink/include \
 # MAVLink/include \

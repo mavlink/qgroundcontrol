@@ -44,3 +44,7 @@ user_config.pri
 *.cproject
 *.sln
 *.suo
+
+thirdParty/qserialport-build-desktop/
+thirdParty/qserialport/bin/
+thirdParty/qserialport/lib/
