@@ -690,15 +690,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         }
         break;
 
-        //case MAVLINK_MSG_ID_SCALED_PRESSURE: {
-            //mavlink_scaled_pressure_t pressure;
-            //mavlink_msg_scaled_pressure_decode(&message, &pressure);
-            //quint64 time = this->getUnixTime(pressure.usec);
-            //emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
-            //emit valueChanged(uasId, "diff pressure", "hPa", pressure.press_diff, time);
-            //emit valueChanged(uasId, "temperature", "C", pressure.temperature/100.0, time);
-        //}
-        //break;
+        case MAVLINK_MSG_ID_SCALED_PRESSURE: {
+            mavlink_scaled_pressure_t pressure;
+            mavlink_msg_scaled_pressure_decode(&message, &pressure);
+            quint64 time = this->getUnixTime(pressure.usec);
+            emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
+            emit valueChanged(uasId, "diff pressure", "hPa", pressure.press_diff, time);
+            emit valueChanged(uasId, "temperature", "C", pressure.temperature/100.0, time);
+        }
+        break;
 
         case MAVLINK_MSG_ID_RC_CHANNELS_RAW: {
             mavlink_rc_channels_raw_t channels;
@@ -1304,7 +1304,7 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
         uasState = tr("EMERGENCY");
         stateDescription = tr("EMERGENCY: Land Immediately!");
         break;
-    //case MAV_STATE_HILSIM:
+        //case MAV_STATE_HILSIM:
         //uasState = tr("HIL SIM");
         //stateDescription = tr("HIL Simulation, Sensors read from SIM");
         //break;
@@ -1975,24 +1975,24 @@ bool UAS::emergencyKILL()
 void UAS::startHil()
 {
 
-    //mavlink_message_t msg;
-    //// TODO Replace MG System ID with static function call and allow to change ID in GUI
-    //mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_START_HILSIM);
-    //// Send message twice to increase chance of reception
-    //sendMessage(msg);
-    //sendMessage(msg);
+    mavlink_message_t msg;
+    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_START_HILSIM);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
 
 }
 
 void UAS::stopHil()
 {
 
-    //mavlink_message_t msg;
-    //// TODO Replace MG System ID with static function call and allow to change ID in GUI
-    //mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_STOP_HILSIM);
-    //// Send message twice to increase chance of reception
-    //sendMessage(msg);
-    //sendMessage(msg);
+    mavlink_message_t msg;
+    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_STOP_HILSIM);
+    // Send message twice to increase chance of reception
+    sendMessage(msg);
+    sendMessage(msg);
 
 }
 
