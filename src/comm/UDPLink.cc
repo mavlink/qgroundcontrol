@@ -143,7 +143,6 @@ void UDPLink::removeHost(const QString& hostname)
     }
 }
 
-
 void UDPLink::writeBytes(const char* data, qint64 size)
 {
     // Broadcast to all connected systems
@@ -151,18 +150,26 @@ void UDPLink::writeBytes(const char* data, qint64 size)
     {
         QHostAddress currentHost = hosts.at(h);
         quint16 currentPort = ports.at(h);
+//#define UDPLINK_DEBUG
+#ifdef UDPLINK_DEBUG
         QString bytes;
         QString ascii;
-        //qDebug() << "WRITING DATA TO" << currentHost.toString() << currentPort;
         for (int i=0; i<size; i++) {
             unsigned char v = data[i];
             bytes.append(QString().sprintf("%02x ", v));
-            ascii.append(data[i]);
+            if (data[i] > 31 && data[i] < 127)
+            {
+                ascii.append(data[i]);
+            }
+            else
+            {
+                ascii.append(219);
+            }
         }
         qDebug() << "Sent" << size << "bytes to" << currentHost.toString() << ":" << currentPort << "data:";
         qDebug() << bytes;
         qDebug() << "ASCII:" << ascii;
-
+#endif
         socket->writeDatagram(data, size, currentHost, currentPort);
     }
 }
