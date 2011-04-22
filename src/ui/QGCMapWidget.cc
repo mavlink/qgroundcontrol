@@ -1,9 +1,19 @@
 #include "QGCMapWidget.h"
 #include "UASInterface.h"
+#include "UASManager.h"
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
     mapcontrol::OPMapWidget(parent)
 {
+    //UAV = new mapcontrol::UAVItem();
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+    foreach (UASInterface* uas, UASManager::instance()->getUASList())
+    {
+        addUAS(uas);
+    }
+    UAV->setVisible(true);
+    UAV->setPos(40, 8);
+    UAV->show();
 }
 
 /**
@@ -31,7 +41,9 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
     Q_UNUSED(usec);
     Q_UNUSED(alt); // FIXME Use altitude
 
-
+    UAV->setPos(lat, lon);
+    UAV->show();
+    qDebug() << "Updating 2D map position";
 
 //        QPointF coordinate;
 //        coordinate.setX(lon);
