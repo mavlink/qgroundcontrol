@@ -127,7 +127,7 @@ INCLUDEPATH += . \
     thirdParty/qserialport/src
 
 # Include serial port library
-include(src/lib/qextserialport/qextserialport.pri)
+#include(src/lib/qextserialport/qextserialport.pri)
 # include qserial library
 include(thirdParty/qserialport/qgroundcontrol-qserialport.pri)
 
@@ -207,7 +207,6 @@ HEADERS += src/MG.h \
     src/comm/LinkManager.h \
     src/comm/LinkInterface.h \
     src/comm/SerialLinkInterface.h \
-    src/comm/SerialInterface.h \
     src/comm/SerialLink.h \
     src/comm/SerialSimulationLink.h \
     src/comm/ProtocolInterface.h \

@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QThread>
 #include <QMutex>
 #include <QString>
-#include "SerialInterface.h"
+#include "qserialport.h"
 #include <configuration.h>
 #include "SerialLinkInterface.h"
 #ifdef _WIN32
@@ -59,11 +59,11 @@ class SerialLink : public SerialLinkInterface
 
 public:
     SerialLink(QString portname = "",
-               SerialInterface::baudRateType baudrate=SerialInterface::BAUD57600,
-               SerialInterface::flowType flow=SerialInterface::FLOW_OFF,
-               SerialInterface::parityType parity=SerialInterface::PAR_NONE,
-               SerialInterface::dataBitsType dataBits=SerialInterface::DATA_8,
-               SerialInterface::stopBitsType stopBits=SerialInterface::STOP_1);
+               int baudrate=57600,
+               bool flow=false,
+               bool parity=false,
+               int dataBits=8,
+               int stopBits=1);
     ~SerialLink();
 
     static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in configuration.h
@@ -116,6 +116,9 @@ public slots:
     bool setDataBits(int dataBits);
     bool setStopBits(int stopBits);
 
+    // Set string rate
+    bool setBaudRateString(const QString& rate);
+
     // Set ENUM values
     bool setBaudRateType(int rateIndex);
     bool setFlowType(int flow);
@@ -138,18 +141,14 @@ protected slots:
     void checkForBytes();
 
 protected:
-    SerialInterface * port;
+    TNX::QSerialPort * port;
+    TNX::QPortSettings portSettings;
 #ifdef _WIN32
     HANDLE winPort;
     DCB winPortSettings;
 #endif
     QString porthandle;
     QString name;
-    SerialInterface::baudRateType baudrate;
-    SerialInterface::flowType flow;
-    SerialInterface::parityType parity;
-    SerialInterface::dataBitsType dataBits;
-    SerialInterface::stopBitsType stopBits;
     int timeout;
     int id;
 
