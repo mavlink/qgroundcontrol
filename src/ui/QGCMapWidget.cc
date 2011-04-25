@@ -14,6 +14,62 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     UAV->setVisible(true);
     UAV->setPos(40, 8);
     UAV->show();
+
+
+
+
+    internals::PointLatLng pos_lat_lon = internals::PointLatLng(0, 0);
+
+//        // **************
+//        // default home position
+
+//        home_position.coord = pos_lat_lon;
+//        home_position.altitude = altitude;
+//        home_position.locked = false;
+
+//        // **************
+//        // default magic waypoint params
+
+//        magic_waypoint.map_wp_item = NULL;
+//        magic_waypoint.coord = home_position.coord;
+//        magic_waypoint.altitude = altitude;
+//        magic_waypoint.description = "Magic waypoint";
+//        magic_waypoint.locked = false;
+//        magic_waypoint.time_seconds = 0;
+//        magic_waypoint.hold_time_seconds = 0;
+
+        const int safe_area_radius_list[] = {5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000};   // meters
+
+        const int uav_trail_time_list[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};                      // seconds
+
+        const int uav_trail_distance_list[] = {1, 2, 5, 10, 20, 50, 100, 200, 500};             // meters
+
+        SetMouseWheelZoomType(internals::MouseWheelZoomType::MousePositionWithoutCenter);	    // set how the mouse wheel zoom functions
+        SetFollowMouse(true);				    // we want a contiuous mouse position reading
+
+        SetShowHome(true);					    // display the HOME position on the map
+        SetShowUAV(true);					    // display the UAV position on the map
+
+            Home->SetSafeArea(safe_area_radius_list[0]);                         // set radius (meters)
+        Home->SetShowSafeArea(true);                                         // show the safe area
+
+        UAV->SetTrailTime(uav_trail_time_list[0]);                           // seconds
+        UAV->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
+
+        //UAV->SetTrailType(UAVTrailType::ByTimeElapsed);
+    //  UAV->SetTrailType(UAVTrailType::ByDistance);
+
+        GPS->SetTrailTime(uav_trail_time_list[0]);                           // seconds
+        GPS->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
+
+        //GPS->SetTrailType(UAVTrailType::ByTimeElapsed);
+
+        SetCurrentPosition(pos_lat_lon);         // set the map position
+        Home->SetCoord(pos_lat_lon);             // set the HOME position
+        UAV->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
+        GPS->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
+
+        setFocus();
 }
 
 /**
