@@ -99,13 +99,14 @@ public:
     BAUDR_460800,
     BAUDR_500000,
     BAUDR_576000,
-    BAUDR_921600,
 #endif
 #ifdef TNX_WINDOWS_SERIAL_PORT
     BAUDR_14400,
     BAUDR_56000,
     BAUDR_128000,
+    BAUDR_230400,
     BAUDR_256000,
+    BAUDR_460800,
 #endif
     // baud rates supported by all OSs
     BAUDR_110,
@@ -118,7 +119,8 @@ public:
     BAUDR_19200,
     BAUDR_38400,
     BAUDR_57600,
-    BAUDR_115200
+    BAUDR_115200,
+    BAUDR_921600
   };
 
   enum DataBits {
@@ -184,13 +186,14 @@ public:
       case BAUDR_56000: baudRateInt_=56000; break;
       case BAUDR_128000: baudRateInt_=128000; break;
       case BAUDR_256000: baudRateInt_=256000; break;
+      case BAUDR_230400: baudRateInt_=230400; break;
+      case BAUDR_460800: baudRateInt_=460800; break;
     #endif
     #if defined(Q_OS_LINUX)
       case BAUDR_230400: baudRateInt_=230400; break;
       case BAUDR_460800: baudRateInt_=460800; break;
       case BAUDR_500000: baudRateInt_=500000; break;
       case BAUDR_576000: baudRateInt_=576000; break;
-      case BAUDR_921600: baudRateInt_=921600; break;
     #endif
       // baud rates supported by all platforms
       case BAUDR_110: baudRateInt_=110; break;
@@ -204,6 +207,7 @@ public:
       case BAUDR_38400: baudRateInt_=38400; break;
       case BAUDR_57600: baudRateInt_=57600; break;
       case BAUDR_115200: baudRateInt_=115200; break;
+      case BAUDR_921600: baudRateInt_=921600; break;
       default:
         baudRateInt_ = 0; // unknown baudrate
       }
