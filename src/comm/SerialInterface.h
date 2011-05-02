@@ -33,7 +33,6 @@ This file is part of the QGROUNDCONTROL project
 #define SERIALINTERFACE_H
 
 #include <QIODevice>
-#include "qextserialport.h"
 #include <QtSerialPort/QSerialPort>
 #include <iostream>
 
@@ -136,67 +135,6 @@ public:
     virtual void setDataBits(dataBitsType dataBits) = 0;
     virtual void setTimeout(qint64 timeout) = 0;
     virtual void setFlow(flowType flow) = 0;
-};
-
-class SerialQextserial : public SerialInterface
-{
-    Q_OBJECT
-private:
-    QextSerialPort * _port;
-signals:
-    void aboutToClose();
-public:
-    SerialQextserial(QString porthandle, QextSerialPort::QueryMode mode) : _port(NULL) {
-        _port = new QextSerialPort(porthandle, QextSerialPort::Polling);
-        QObject::connect(_port,SIGNAL(aboutToClose()),this,SIGNAL(aboutToClose()));
-    }
-    ~SerialQextserial() {
-        delete _port;
-        _port = NULL;
-    }
-    virtual bool isOpen() {
-        return _port->isOpen();
-    }
-    virtual bool isWritable() {
-        return _port->isWritable();
-    }
-    virtual qint64 bytesAvailable() {
-        return _port->bytesAvailable();
-    }
-    virtual int write(const char * data, qint64 size) {
-        return _port->write(data,size);
-    }
-    virtual void read(char * data, qint64 numBytes) {
-        _port->read(data,numBytes);
-    }
-    virtual void flush() {
-        _port->flush();
-    }
-    virtual void close() {
-        _port->close();
-    }
-    virtual void open(QIODevice::OpenModeFlag flag) {
-        _port->open(flag);
-    }
-    virtual void setBaudRate(SerialInterface::baudRateType baudrate) {
-        _port->setBaudRate((BaudRateType)baudrate);
-    }
-    virtual void setParity(SerialInterface::parityType parity) {
-        _port->setParity((ParityType)parity);
-    }
-    virtual void setStopBits(SerialInterface::stopBitsType stopBits) {
-        _port->setStopBits((StopBitsType)stopBits);
-    }
-    virtual void setDataBits(SerialInterface::dataBitsType dataBits) {
-        _port->setDataBits((DataBitsType)dataBits);
-    }
-    virtual void setTimeout(qint64 timeout) {
-        _port->setTimeout(timeout);
-    }
-    virtual void setFlow(SerialInterface::flowType flow) {
-        // TODO implement
-        _port->setFlowControl((FlowType)flow);
-    }
 };
 
 using namespace TNX;
