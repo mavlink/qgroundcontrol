@@ -10,6 +10,7 @@ class QGCMapWidget : public mapcontrol::OPMapWidget
     Q_OBJECT
 public:
     explicit QGCMapWidget(QWidget *parent = 0);
+    ~QGCMapWidget();
 
 signals:
 
