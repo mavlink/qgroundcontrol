@@ -85,29 +85,32 @@ void UDPLink::setPort(int port)
  */
 void UDPLink::addHost(const QString& host)
 {
-    qDebug() << "UDP:" << "ADDING HOST:" << host;
-    if (host.contains(":")) {
-        qDebug() << "HOST: " << host.split(":").first();
-        QHostInfo info = QHostInfo::fromName(host.split(":").first());
-        // Add host
-        QList<QHostAddress> hostAddresses = info.addresses();
-        QHostAddress address;
-        for (int i = 0; i < hostAddresses.size(); i++) {
-            // Exclude loopback IPv4 and all IPv6 addresses
-            if (!hostAddresses.at(i).toString().contains(":")) {
-                address = hostAddresses.at(i);
+    if (host != "")
+    {
+        qDebug() << "UDP:" << "ADDING HOST:" << host;
+        if (host.contains(":")) {
+            qDebug() << "HOST: " << host.split(":").first();
+            QHostInfo info = QHostInfo::fromName(host.split(":").first());
+            // Add host
+            QList<QHostAddress> hostAddresses = info.addresses();
+            QHostAddress address;
+            for (int i = 0; i < hostAddresses.size(); i++) {
+                // Exclude loopback IPv4 and all IPv6 addresses
+                if (!hostAddresses.at(i).toString().contains(":")) {
+                    address = hostAddresses.at(i);
+                }
             }
+            hosts.append(address);
+            qDebug() << "Address:" << address.toString();
+            // Set port according to user input
+            ports.append(host.split(":").last().toInt());
+        } else {
+            QHostInfo info = QHostInfo::fromName(host);
+            // Add host
+            hosts.append(info.addresses().first());
+            // Set port according to default (this port)
+            ports.append(port);
         }
-        hosts.append(address);
-        qDebug() << "Address:" << address.toString();
-        // Set port according to user input
-        ports.append(host.split(":").last().toInt());
-    } else {
-        QHostInfo info = QHostInfo::fromName(host);
-        // Add host
-        hosts.append(info.addresses().first());
-        // Set port according to default (this port)
-        ports.append(port);
     }
 }
 
@@ -137,20 +140,21 @@ void UDPLink::removeHost(const QString& hostname)
 void UDPLink::writeBytes(const char* data, qint64 size)
 {
     // Broadcast to all connected systems
-    //QList<QHostAddress>::iterator h;
-    // for (h = hosts->begin(); h != hosts->end(); ++h)
-
-
-    for (int h = 0; h < hosts.size(); h++) {
+    for (int h = 0; h < hosts.size(); h++)
+    {
         QHostAddress currentHost = hosts.at(h);
         quint16 currentPort = ports.at(h);
-
-        qDebug() << "WRITING TO" << currentHost.toIPv4Address() << currentPort;
+        QString bytes;
+        QString ascii;
+        //qDebug() << "WRITING DATA TO" << currentHost.toString() << currentPort;
         for (int i=0; i<size; i++) {
-            unsigned char v =data[i];
-            qDebug("%02x ", v);
+            unsigned char v = data[i];
+            bytes.append(QString().sprintf("%02x ", v));
+            ascii.append(data[i]);
         }
-        qDebug() <<"Sent to " << currentHost.toString() << ":" << currentPort;
+        qDebug() << "Sent" << size << "bytes to" << currentHost.toString() << ":" << currentPort << "data:";
+        qDebug() << bytes;
+        qDebug() << "ASCII:" << ascii;
 
         socket->writeDatagram(data, size, currentHost, currentPort);
     }
