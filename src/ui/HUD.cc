@@ -165,7 +165,7 @@ HUD::HUD(int width, int height, QWidget* parent)
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
-    imageTimer->setInterval(1);
+    imageTimer->setInterval(250);
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
     connect(imageTimer, SIGNAL(timeout()), this, SLOT(requestNewImage()));
