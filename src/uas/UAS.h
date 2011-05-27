@@ -226,7 +226,7 @@ public:
     }
     int getSystemType();
     QImage getImage();
-    void requestImage(); // ?
+    void requestImage();
     int getAutopilotType() {
         return autopilot;
     }

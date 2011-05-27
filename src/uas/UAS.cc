@@ -897,11 +897,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             ++imagePacketsArrived;
 
             // emit signal if all packets arrived
-            if ((imagePacketsArrived == imagePackets)) {
-                image.loadFromData(imageRecBuffer);
-                emit imageReady(this);
+            if ((imagePacketsArrived == imagePackets))
+            {
                 // Restart statemachine
                 imagePacketsArrived = 0;
+                emit imageReady(this);
 
                 //this->requestImage();
                 //qDebug() << "SENDING REQUEST TO GET NEW IMAGE FROM SYSTEM" << uasId;
@@ -1325,7 +1325,11 @@ void UAS::getStatusForCode(int statusCode, QString& uasState, QString& stateDesc
 
 QImage UAS::getImage()
 {
+    #ifdef MAVLINK_ENABLED_PIXHAWK
+    image.loadFromData(imageRecBuffer);
     return image;
+    #endif
+
 }
 
 void UAS::requestImage()
@@ -1333,20 +1337,14 @@ void UAS::requestImage()
 #ifdef MAVLINK_ENABLED_PIXHAWK
     qDebug() << "trying to get an image from the uas...";
 
-    if (imagePacketsArrived == 0) {
+    // check if there is already an image transmission going on
+    if (imagePacketsArrived == 0)
+    {
         mavlink_message_t msg;
         mavlink_msg_data_transmission_handshake_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, DATA_TYPE_JPEG_IMAGE, 0, 0, 0, 50);
         sendMessage(msg);
-    } else if (QGC::groundTimeMilliseconds() - imageStart >= 1000) {
-        // handshake happened more than 1 second ago, packets should have arrived by now
-        // maybe we missed some packets (dropped along the way)
-        image.loadFromData(imageRecBuffer);
-        emit imageReady(this);
-        // Restart statemachine
-        imagePacketsArrived = 0;
     }
 #endif
-    // default else, wait?
 }
 
 
