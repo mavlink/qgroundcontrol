@@ -203,17 +203,17 @@ void WaypointView::updateActionView(int action)
         m_ui->orbitSpinBox->show();
         m_ui->holdTimeSpinBox->show();
         break;
-    case MAV_CMD_NAV_ORIENTATION_TARGET:
-        m_ui->orbitSpinBox->hide();
-        m_ui->takeOffAngleSpinBox->hide();
-        m_ui->turnsSpinBox->hide();
-        m_ui->holdTimeSpinBox->show();
-        m_ui->customActionWidget->hide();
+//    case MAV_CMD_NAV_ORIENTATION_TARGET:
+//        m_ui->orbitSpinBox->hide();
+//        m_ui->takeOffAngleSpinBox->hide();
+//        m_ui->turnsSpinBox->hide();
+//        m_ui->holdTimeSpinBox->show();
+//        m_ui->customActionWidget->hide();
 
-        m_ui->autoContinue->show();
-        m_ui->acceptanceSpinBox->hide();
-        m_ui->yawSpinBox->hide();
-        break;
+//        m_ui->autoContinue->show();
+//        m_ui->acceptanceSpinBox->hide();
+//        m_ui->yawSpinBox->hide();
+//        break;
     default:
         break;
     }
