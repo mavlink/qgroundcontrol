@@ -75,6 +75,7 @@ inline bool isinf(T value)
  */
 HUD::HUD(int width, int height, QWidget* parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+      u(NULL),
       uas(NULL),
       yawInt(0.0f),
       mode(tr("UNKNOWN MODE")),
@@ -105,6 +106,7 @@ HUD::HUD(int width, int height, QWidget* parent)
       fuelColor(criticalColor),
       warningBlinkRate(5),
       refreshTimer(new QTimer(this)),
+      imageTimer(new QTimer(this)),
       noCamera(true),
       hardwareAcceleration(true),
       strongStrokeWidth(1.5f),
@@ -137,6 +139,7 @@ HUD::HUD(int width, int height, QWidget* parent)
       videoEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0)
+      imageRequested(false),
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -162,8 +165,10 @@ HUD::HUD(int width, int height, QWidget* parent)
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
+    imageTimer->setInterval(1);
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
+    connect(imageTimer, SIGNAL(timeout()), this, SLOT(requestNewImage()));
 
     // Resize to correct size and fill with image
     //glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
@@ -202,6 +207,7 @@ HUD::HUD(int width, int height, QWidget* parent)
 HUD::~HUD()
 {
     refreshTimer->stop();
+    imageTimer->stop();
 }
 
 QSize HUD::sizeHint() const
@@ -282,6 +288,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         UAS* u = dynamic_cast<UAS*>(this->uas);
         if (u) {
             disconnect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
+            disconnect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(requestNewImage()));
         }
     }
 
@@ -303,10 +310,12 @@ void HUD::setActiveUAS(UASInterface* uas)
         UAS* u = dynamic_cast<UAS*>(uas);
         if (u) {
             connect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
+            connect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(requestNewImage()));
         }
 
         // Set new UAS
         this->uas = uas;
+        this->u = dynamic_cast<UAS*>(this->uas);
     }
 }
 
@@ -1621,5 +1630,19 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
         //                qDebug() << "Setting pixel" << x << "," << y << "to" << (unsigned int)*(rawImage+startIndex+i);
         //            }
         //        }
+    }
+}
+
+void HUD::requestNewImage()
+{
+    if (!imageRequested)
+    {
+        this->u->requestImage();
+        imageRequested = true;
+    }
+    else
+    {
+        this->glImage = this->u->getImage();
+        imageRequested = false;
     }
 }
