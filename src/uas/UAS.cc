@@ -1327,6 +1327,8 @@ QImage UAS::getImage()
 {
     #ifdef MAVLINK_ENABLED_PIXHAWK
     image.loadFromData(imageRecBuffer);
+    // Restart statemachine
+    imagePacketsArrived = 0;
     return image;
     #endif
 
