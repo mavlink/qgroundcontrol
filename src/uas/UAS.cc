@@ -1119,7 +1119,8 @@ void UAS::startPressureCalibration()
 quint64 UAS::getUnixTime(quint64 time)
 {
     if (time == 0) {
-        return MG::TIME::getGroundTimeNow();
+//        qDebug() << "XNEW time:" <<QGC::groundTimeMilliseconds();
+        return QGC::groundTimeMilliseconds();
     }
     // Check if time is smaller than 40 years,
     // assuming no system without Unix timestamp
@@ -1143,8 +1144,9 @@ quint64 UAS::getUnixTime(quint64 time)
     else if (time < 1261440000000000)
 #endif
     {
+//        qDebug() << "GEN time:" << time/1000 + onboardTimeOffset;
         if (onboardTimeOffset == 0) {
-            onboardTimeOffset = MG::TIME::getGroundTimeNow() - time/1000;
+            onboardTimeOffset = QGC::groundTimeMilliseconds() - time/1000;
         }
         return time/1000 + onboardTimeOffset;
     } else {
