@@ -138,8 +138,8 @@ HUD::HUD(int width, int height, QWidget* parent)
       hudInstrumentsEnabled(true),
       videoEnabled(false),
       xImageFactor(1.0),
-      yImageFactor(1.0)
-      imageRequested(false),
+      yImageFactor(1.0),
+      imageRequested(false)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -168,7 +168,7 @@ HUD::HUD(int width, int height, QWidget* parent)
     imageTimer->setInterval(250);
     //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
-    connect(imageTimer, SIGNAL(timeout()), this, SLOT(requestNewImage()));
+   // connect(imageTimer, SIGNAL(timeout()), this, SLOT(requestNewImage())); TODO
 
     // Resize to correct size and fill with image
     //glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
@@ -1635,14 +1635,15 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
 
 void HUD::requestNewImage()
 {
-    if (!imageRequested)
-    {
-        this->u->requestImage();
-        imageRequested = true;
-    }
-    else
-    {
+    qDebug() << "HUD::requestNewImage()";
+//    if (!imageRequested)
+//    {
+//        this->u->requestImage();
+//        imageRequested = true;
+//    }
+//    else
+//    {
         this->glImage = this->u->getImage();
-        imageRequested = false;
-    }
+//        imageRequested = false;
+//    }
 }
