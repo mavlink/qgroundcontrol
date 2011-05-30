@@ -902,6 +902,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // Restart statemachine
                 imagePacketsArrived = 0;
                 emit imageReady(this);
+                qDebug() << "imageReady emitted. all packets arrived";
 
                 //this->requestImage();
                 //qDebug() << "SENDING REQUEST TO GET NEW IMAGE FROM SYSTEM" << uasId;
