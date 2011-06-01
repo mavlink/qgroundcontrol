@@ -88,8 +88,8 @@ public slots:
     void enableHUDInstruments(bool enabled);
     /** @brief Enable Video */
     void enableVideo(bool enabled);
-    /** @brief Handler for image transmission */
-    void requestNewImage();
+    /** @brief Copy an image from the current active UAS */
+    void copyImage();
 
 
 protected slots:
@@ -176,7 +176,6 @@ protected:
     int warningBlinkRate;      ///< Blink rate of warning messages, will be rounded to the refresh rate
 
     QTimer* refreshTimer;      ///< The main timer, controls the update rate
-    QTimer* imageTimer;        ///< The timer for the image update rate
     QPainter* hudPainter;
     QFont font;                ///< The HUD font, per default the free Bitstream Vera SANS, which is very close to actual HUD fonts
     QFontDatabase fontDatabase;///< Font database, only used to load the TrueType font file (the HUD font is directly loaded from file rather than from the system)
