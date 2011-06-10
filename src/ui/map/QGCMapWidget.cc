@@ -1,5 +1,5 @@
 #include "QGCMapWidget.h"
-#include "QGCMapToolbar.h"
+#include "QGCMapToolBar.h"
 #include "UASInterface.h"
 #include "UASManager.h"
 #include "MAV2DIcon.h"
