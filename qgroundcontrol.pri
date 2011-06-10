@@ -221,7 +221,7 @@ message("Compiling for linux 32")
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
 
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$DESTDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
@@ -295,7 +295,7 @@ linux-g++-64 {
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
 
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$DESTDIR
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$DESTDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
