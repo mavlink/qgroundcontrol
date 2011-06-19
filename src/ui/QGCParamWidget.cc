@@ -416,6 +416,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
  */
 void QGCParamWidget::requestParameterList()
 {
+    if (!mav) return;
     // FIXME This call does not belong here
     // Once the comm handling is moved to a new
     // Param manager class the settings can be directly
@@ -487,6 +488,7 @@ void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)
 
 void QGCParamWidget::saveParameters()
 {
+    if (!mav) return;
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./parameters.txt", tr("Parameter File (*.txt)"));
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -520,6 +522,7 @@ void QGCParamWidget::saveParameters()
 
 void QGCParamWidget::loadParameters()
 {
+    if (!mav) return;
     QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Parameter file (*.txt)"));
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -749,11 +752,13 @@ void QGCParamWidget::setParameters()
  */
 void QGCParamWidget::writeParameters()
 {
+    if (!mav) return;
     mav->writeParametersToStorage();
 }
 
 void QGCParamWidget::readParameters()
 {
+    if (!mav) return;
     mav->readParametersFromStorage();
 }
 
