@@ -535,7 +535,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         {
             mavlink_global_position_int_t pos;
             mavlink_msg_global_position_int_decode(&message, &pos);
-            quint64 time = QGC::groundTimeUsecs()/1000;
+            quint64 time = getUnixTime();
             latitude = pos.lat/(double)1E7;
             longitude = pos.lon/(double)1E7;
             altitude = pos.alt/1000.0;
@@ -562,7 +562,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_GLOBAL_POSITION: {
             mavlink_global_position_t pos;
             mavlink_msg_global_position_decode(&message, &pos);
-            quint64 time = QGC::groundTimeUsecs()/1000;
+            quint64 time = getUnixTime();
             latitude = pos.lat;
             longitude = pos.lon;
             altitude = pos.alt;
@@ -845,7 +845,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW: {
             mavlink_servo_output_raw_t servos;
             mavlink_msg_servo_output_raw_decode(&message, &servos);
-            quint64 time = getUnixTime(0);
+            quint64 time = getUnixTime();
             emit valueChanged(uasId, "servo #1", "us", servos.servo1_raw, time);
             emit valueChanged(uasId, "servo #2", "us", servos.servo2_raw, time);
             emit valueChanged(uasId, "servo #3", "us", servos.servo3_raw, time);
@@ -939,7 +939,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_NAV_FILTER_BIAS: {
             mavlink_nav_filter_bias_t bias;
             mavlink_msg_nav_filter_bias_decode(&message, &bias);
-            quint64 time = MG::TIME::getGroundTimeNow();
+            quint64 time = getUnixTime();
             emit valueChanged(uasId, "b_f[0]", "raw", bias.accel_0, time);
             emit valueChanged(uasId, "b_f[1]", "raw", bias.accel_1, time);
             emit valueChanged(uasId, "b_f[2]", "raw", bias.accel_2, time);
@@ -985,7 +985,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             if (!unknownPackets.contains(message.msgid)) {
                 unknownPackets.append(message.msgid);
                 QString errString = tr("UNABLE TO DECODE MESSAGE NUMBER %1").arg(message.msgid);
-                GAudioOutput::instance()->say(errString+tr(", please check the communication console for details."));
+                GAudioOutput::instance()->say(errString+tr(", please check console for details."));
                 emit textMessageReceived(uasId, message.compid, 255, errString);
                 std::cout << "Unable to decode message from system " << std::dec << static_cast<int>(message.sysid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
                 //qDebug() << std::cerr << "Unable to decode message from system " << std::dec << static_cast<int>(message.acid) << " with message id:" << static_cast<int>(message.msgid) << std::endl;
@@ -1119,7 +1119,8 @@ void UAS::startPressureCalibration()
 quint64 UAS::getUnixTime(quint64 time)
 {
     if (time == 0) {
-        return MG::TIME::getGroundTimeNow();
+//        qDebug() << "XNEW time:" <<QGC::groundTimeMilliseconds();
+        return QGC::groundTimeMilliseconds();
     }
     // Check if time is smaller than 40 years,
     // assuming no system without Unix timestamp
@@ -1143,8 +1144,9 @@ quint64 UAS::getUnixTime(quint64 time)
     else if (time < 1261440000000000)
 #endif
     {
+//        qDebug() << "GEN time:" << time/1000 + onboardTimeOffset;
         if (onboardTimeOffset == 0) {
-            onboardTimeOffset = MG::TIME::getGroundTimeNow() - time/1000;
+            onboardTimeOffset = QGC::groundTimeMilliseconds() - time/1000;
         }
         return time/1000 + onboardTimeOffset;
     } else {

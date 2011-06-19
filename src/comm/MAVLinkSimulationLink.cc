@@ -934,7 +934,7 @@ bool MAVLinkSimulationLink::connect()
     emit connected(true);
 
     start(LowPriority);
-    MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1, 47.376, 8.548);
+    MAVLinkSimulationMAV* mav1 = new MAVLinkSimulationMAV(this, 1, 37.480391, -122.282883);
     Q_UNUSED(mav1);
 //    MAVLinkSimulationMAV* mav2 = new MAVLinkSimulationMAV(this, 2, 47.375, 8.548, 1);
 //    Q_UNUSED(mav2);
