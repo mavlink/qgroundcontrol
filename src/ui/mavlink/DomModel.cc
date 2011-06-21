@@ -36,7 +36,26 @@ QVariant DomModel::data(const QModelIndex &index, int role) const
 
     switch (index.column()) {
     case 0:
-        return node.nodeName();
+        {
+            if (node.nodeName() == "message")
+            {
+                for (int i = 0; i < attributeMap.count(); ++i) {
+                    QDomNode attribute = attributeMap.item(i);
+                    if (attribute.nodeName() == "name") return attribute.nodeValue();
+                }
+            }
+            if (node.nodeName() == "field")
+            {
+                for (int i = 0; i < attributeMap.count(); ++i) {
+                    QDomNode attribute = attributeMap.item(i);
+                    if (attribute.nodeName() == "name") return attribute.nodeValue();
+                }
+            }
+            else
+            {
+                return node.nodeName();
+            }
+        }
     case 1:
         for (int i = 0; i < attributeMap.count(); ++i) {
             QDomNode attribute = attributeMap.item(i);
