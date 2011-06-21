@@ -79,7 +79,9 @@ void XMLCommProtocolWidget::setXML(const QString& xml)
     }
     model = new DomModel(doc, this);
     m_ui->xmlTreeView->setModel(model);
-    m_ui->xmlTreeView->expandAll();
+    // Expand the tree so that message names are visible
+    m_ui->xmlTreeView->expandToDepth(1);
+    m_ui->xmlTreeView->hideColumn(2);
     m_ui->xmlTreeView->repaint();
 }
 
