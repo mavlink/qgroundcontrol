@@ -11,9 +11,6 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     {
         addUAS(uas);
     }
-    UAV->setVisible(true);
-    UAV->setPos(0, 0);
-    UAV->show();
 
 
 
@@ -68,6 +65,9 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     Home->SetCoord(pos_lat_lon);             // set the HOME position
     UAV->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
     GPS->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
+    //UAV->setVisible(false);
+    //UAV->setPos(0, 0);
+    //UAV->show();
 
     //SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
 
@@ -89,6 +89,7 @@ QGCMapWidget::~QGCMapWidget()
  */
 void QGCMapWidget::addUAS(UASInterface* uas)
 {
+    qDebug() << "ADDING UAS";
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     //connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
     //connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
@@ -108,9 +109,13 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
     Q_UNUSED(usec);
     Q_UNUSED(alt); // FIXME Use altitude
 
-    UAV->setPos(lat, lon);
-    UAV->show();
-    qDebug() << "Updating 2D map position";
+    static int uasid = 220;
+    if (uas->getUASID() == uasid)
+    {
+        UAV->setPos(lon, lat);
+        if (!UAV->isVisible()) UAV->show();
+        qDebug() << "Updating 2D map position" << uas->getUASID() << "LAT:" << lat << "LON:" << lon;
+    }
 
 //        QPointF coordinate;
 //        coordinate.setX(lon);

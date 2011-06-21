@@ -60,8 +60,8 @@ This file is part of the PIXHAWK project
 MAVLinkGen::MAVLinkGen(int &argc, char* argv[]) : QApplication(argc, argv)
 {
     this->setApplicationName("MAVLink Generator");
-    this->setApplicationVersion("v. 0.1.0 (Beta)");
-    this->setOrganizationName(QLatin1String("OpenMAV Association"));
+    this->setApplicationVersion("v. 1.0.0 (Beta)");
+    this->setOrganizationName(QLatin1String("QGroundControl"));
     this->setOrganizationDomain("http://qgroundcontrol.org");
 
     QSettings::setDefaultFormat(QSettings::IniFormat);

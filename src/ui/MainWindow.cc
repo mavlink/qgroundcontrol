@@ -29,6 +29,7 @@
 #include "QGCToolWidget.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGCSettingsWidget.h"
+#include "QGCMapWidget.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -352,7 +353,7 @@ void MainWindow::buildCommonWidgets()
     // Center widgets
     if (!mapWidget)
     {
-        mapWidget = new mapcontrol::OPMapWidget(this);//new MapWidget(this);
+        mapWidget = new QGCMapWidget(this);
         addToCentralWidgetsMenu (mapWidget, "Maps", SLOT(showCentralWidget()),CENTRAL_MAP);
     }
 
