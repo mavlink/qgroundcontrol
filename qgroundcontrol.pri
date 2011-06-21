@@ -29,7 +29,7 @@
 #               $$BASEDIR/lib/openjaus/libopenJaus/include
 
 message(Qt version $$[QT_VERSION])
-message(Using Qt from $QTDIR)
+message(Using Qt from $$[QTDIR])
 
 release {
 #    DEFINES += QT_NO_DEBUG_OUTPUT

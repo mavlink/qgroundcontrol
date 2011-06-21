@@ -19,14 +19,12 @@ XMLCommProtocolWidget::XMLCommProtocolWidget(QWidget *parent) :
     m_ui->setupUi(this);
 
     // Now set syntax highlighter
-    highlighter = new MAVLinkSyntaxHighlighter(m_ui->xmlTextView->document());
+    //highlighter = new MAVLinkSyntaxHighlighter(m_ui->xmlTextView->document());
 
     connect(m_ui->selectFileButton, SIGNAL(clicked()), this, SLOT(selectXMLFile()));
     connect(m_ui->selectOutputButton, SIGNAL(clicked()), this, SLOT(selectOutputDirectory()));
     connect(m_ui->generateButton, SIGNAL(clicked()), this, SLOT(generate()));
     connect(m_ui->saveButton, SIGNAL(clicked()), this, SLOT(save()));
-
-    this->setVisible(false);
 }
 
 void XMLCommProtocolWidget::selectXMLFile()
@@ -81,6 +79,7 @@ void XMLCommProtocolWidget::setXML(const QString& xml)
     }
     model = new DomModel(doc, this);
     m_ui->xmlTreeView->setModel(model);
+    m_ui->xmlTreeView->expandAll();
     m_ui->xmlTreeView->repaint();
 }
 
@@ -125,6 +124,9 @@ void XMLCommProtocolWidget::generate()
     save();
     // Clean log
     m_ui->compileLog->clear();
+
+    // Check XML validity
+    if (!m_ui->xmlTextView->syntaxcheck()) return;
 
     MAVLinkXMLParser* parser = new MAVLinkXMLParser(m_ui->fileNameLabel->text().trimmed(), m_ui->outputDirNameLabel->text().trimmed());
     connect(parser, SIGNAL(parseState(QString)), m_ui->compileLog, SLOT(appendHtml(QString)));

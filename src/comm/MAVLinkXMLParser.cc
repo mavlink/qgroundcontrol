@@ -149,7 +149,8 @@ bool MAVLinkXMLParser::generate()
                                 connect(&includeParser, SIGNAL(parseState(QString)), this, SIGNAL(parseState(QString)));
                                 // Generate and write
                                 recursion_level++;
-                                includeParser.generate();
+                                // Abort if inclusion fails
+                                if (!includeParser.generate()) return false;
                                 recursion_level--;
                                 mainHeader += "\n#include \"../" + pureIncludeFileName + "/" + pureIncludeFileName + ".h\"\n";
 

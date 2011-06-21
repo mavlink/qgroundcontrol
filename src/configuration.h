@@ -1,15 +1,10 @@
 #ifndef QGC_CONFIGURATION_H
 #define QGC_CONFIGURATION_H
 
-#include "mavlink.h"
 #include <QString>
 
 /** @brief Polling interval in ms */
-#ifdef MAVLINK_ENABLED_SLUGS
 #define SERIAL_POLL_INTERVAL 7
-#else
-#define SERIAL_POLL_INTERVAL 7
-#endif
 
 /** @brief Heartbeat emission rate, in Hertz (times per second) */
 #define MAVLINK_HEARTBEAT_DEFAULT_RATE 1
