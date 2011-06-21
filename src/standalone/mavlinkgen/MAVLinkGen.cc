@@ -80,6 +80,7 @@ MAVLinkGen::MAVLinkGen(int &argc, char* argv[]) : QApplication(argc, argv)
     QMainWindow* window = new QMainWindow();
     window->setCentralWidget(new XMLCommProtocolWidget(window));
     window->setWindowTitle(applicationName() + " " + applicationVersion());
+//    window->setBaseSize(qMin(1024, static_cast<int>(QApplication::desktop()->width()*0.8f)), qMin(900, static_cast<int>(QApplication::desktop()->height()*0.8f)));
     window->show();
 }
 
