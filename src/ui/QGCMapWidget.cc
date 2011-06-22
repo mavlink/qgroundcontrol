@@ -107,15 +107,28 @@ void QGCMapWidget::addUAS(UASInterface* uas)
 void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
-    Q_UNUSED(alt); // FIXME Use altitude
 
-    static int uasid = 220;
-    if (uas->getUASID() == uasid)
+    // Get reference to graphic UAV item
+    mapcontrol::UAVItem* uav = GetUAV(uas->getUASID());
+    // Check if reference is valid, else create a new one
+    if (uav == NULL)
     {
-        UAV->setPos(lon, lat);
-        if (!UAV->isVisible()) UAV->show();
-        qDebug() << "Updating 2D map position" << uas->getUASID() << "LAT:" << lat << "LON:" << lon;
+        AddUAV(uas->getUASID());
+        uav = GetUAV(uas->getUASID());
     }
+
+    // Set new lat/lon position of UAV icon
+    internals::PointLatLng pos_lat_lon = internals::PointLatLng(lat, lon);
+    uav->SetUAVPos(pos_lat_lon, alt);
+
+//    static int uasid = 220;
+//    if (uas->getUASID() == uasid)
+//    {
+//        internals::PointLatLng pos_lat_lon = internals::PointLatLng(lat, lon);
+//        UAV->SetUAVPos(pos_lat_lon, alt);
+//        if (!UAV->isVisible()) UAV->show();
+//        qDebug() << "Updating 2D map position" << uas->getUASID() << "LAT:" << lat << "LON:" << lon;
+//    }
 
 //        QPointF coordinate;
 //        coordinate.setX(lon);

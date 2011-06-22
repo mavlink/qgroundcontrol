@@ -31,6 +31,7 @@ include(lib/nmea/nmea.pri)
 # provided by the OpenPilot team - thanks, great piece
 # of open-source software!
 # (We're not reusing any part of the OP GCS, just the map library)
+include(../openpilot/ground/openpilotgcs/src/libs/utils/utils_external.pri)
 include(../openpilot/ground/openpilotgcs/src/libs/opmapcontrol/opmapcontrol_external.pri)
 
 # include(lib/opmapcontrol/opmapcontrol.pri)
@@ -117,13 +118,22 @@ include(qgroundcontrol.pri)
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
-    \ # lib/QMapControl \
+    ../openpilot/ground/openpilotgcs/src/libs/utils \
+    ../openpilot/ground/openpilotgcs/src/libs/utils/src \
+    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol \
+    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol/src \
+    plugins \
+    thirdParty/qserialport/include \
+    thirdParty/qserialport/include/QtSerialPort \
+    thirdParty/qserialport
 
-# lib/QMapControl/src \
-lib/opmapcontrollib/opmapcontrol/srcpluginsthirdParty/qserialport/includethirdParty/qserialport/include/QtSerialPortthirdParty/qserialport
 INCLUDEPATH += . \
-    \ # lib/QMapControl \
-lib/opmapcontrolthirdParty/qserialport/includethirdParty/qserialport/include/QtSerialPortthirdParty/qserialport/src
+    ../openpilot/ground/openpilotgcs/src/libs/utils \
+    ../openpilot/ground/openpilotgcs/src/libs \
+    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol \
+    thirdParty/qserialport/include \
+    thirdParty/qserialport/include/QtSerialPort \
+    thirdParty/qserialport/src
 
 # Include serial port library
 # include(src/lib/qextserialport/qextserialport.pri)
@@ -148,7 +158,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/ObjectDetectionView.ui \
     src/ui/JoystickWidget.ui \
     src/ui/DebugConsole.ui \
-    \ \ # src/ui/MapWidget.ui \
     src/ui/XMLCommProtocolWidget.ui \
     src/ui/HDDisplay.ui \
     src/ui/MAVLinkSettingsWidget.ui \
@@ -358,7 +367,6 @@ SOURCES += src/main.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
     src/ui/DebugConsole.cc \
-    \ \ # src/ui/MapWidget.cc \
     src/ui/XMLCommProtocolWidget.cc \
     src/ui/mavlink/DomItem.cc \
     src/ui/mavlink/DomModel.cc \
@@ -385,8 +393,6 @@ SOURCES += src/main.cc \
     src/ui/QGCPxImuFirmwareUpdate.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc \
-    \ \ # src/ui/map/Waypoint2DIcon.cc \
-# src/ui/map/MAV2DIcon.cc \
     src/ui/QGCRemoteControlView.cc \
     src/ui/RadioCalibration/RadioCalibrationWindow.cc \
     src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
@@ -420,6 +426,8 @@ SOURCES += src/main.cc \
     src/uas/QGCUASParamManager.cc \
     src/ui/QGCMapWidget.cc \
     src/ui/mavlink/QGCMAVLinkTextEdit.cc
+# src/ui/map/Waypoint2DIcon.cc \
+# src/ui/map/MAV2DIcon.cc \
 macx|win32-msvc2008::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
