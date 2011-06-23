@@ -1,12 +1,13 @@
 #include "QGCMapWidget.h"
 #include "UASInterface.h"
 #include "UASManager.h"
+#include "MAV2DIcon.h"
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
         mapcontrol::OPMapWidget(parent)
 {
-    //UAV = new mapcontrol::UAVItem();
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(updateSelectedSystem(int)));
     foreach (UASInterface* uas, UASManager::instance()->getUASList())
     {
         addUAS(uas);
@@ -53,23 +54,18 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     UAV->SetTrailTime(uav_trail_time_list[0]);                           // seconds
     UAV->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
 
-    //UAV->SetTrailType(UAVTrailType::ByTimeElapsed);
+    // UAV->SetTrailType(UAVTrailType::ByTimeElapsed);
     //  UAV->SetTrailType(UAVTrailType::ByDistance);
 
     GPS->SetTrailTime(uav_trail_time_list[0]);                           // seconds
     GPS->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
 
-    //GPS->SetTrailType(UAVTrailType::ByTimeElapsed);
+    // GPS->SetTrailType(UAVTrailType::ByTimeElapsed);
 
     SetCurrentPosition(pos_lat_lon);         // set the map position
     Home->SetCoord(pos_lat_lon);             // set the HOME position
     UAV->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
     GPS->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
-    //UAV->setVisible(false);
-    //UAV->setPos(0, 0);
-    //UAV->show();
-
-    //SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
 
     setFrameStyle(QFrame::NoFrame);      // no border frame
     setBackgroundBrush(QBrush(Qt::black)); // tile background
@@ -92,7 +88,7 @@ void QGCMapWidget::addUAS(UASInterface* uas)
     qDebug() << "ADDING UAS";
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     //connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
-    //connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
+    connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
 }
 
 /**
@@ -113,13 +109,16 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
     // Check if reference is valid, else create a new one
     if (uav == NULL)
     {
-        AddUAV(uas->getUASID());
+        MAV2DIcon* newUAV = new MAV2DIcon(map, this, uas);
+        newUAV->setParentItem(map);
+        UAVS.insert(uas->getUASID(), newUAV);
         uav = GetUAV(uas->getUASID());
     }
 
     // Set new lat/lon position of UAV icon
     internals::PointLatLng pos_lat_lon = internals::PointLatLng(lat, lon);
     uav->SetUAVPos(pos_lat_lon, alt);
+    uav->SetUAVHeading((uas->getYaw()/M_PI)*180.0f);
 
 //    static int uasid = 220;
 //    if (uas->getUASID() == uasid)
@@ -188,7 +187,65 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
 //                } else {
 //                    // Refresh the screen
 //                    //if (isVisible()) mc->updateRequestNew();
-//                }
+    //                }
+    //            }
+    //        }
+}
+
+
+void QGCMapWidget::updateSystemSpecs(int uas)
+{
+    foreach (mapcontrol::UAVItem* p, UAVS.values())
+    {
+        MAV2DIcon* icon = dynamic_cast<MAV2DIcon*>(p);
+        if (icon && icon->getUASId() == uas)
+        {
+            // Set new airframe
+            icon->setAirframe(UASManager::instance()->getUASForId(uas)->getAirframe());
+            icon->drawIcon();
+        }
+    }
+}
+
+/**
+ * Does not update the system type or configuration, only the current state.
+ */
+void QGCMapWidget::updateSelectedSystem(int uas)
+{
+    foreach (mapcontrol::UAVItem* p, UAVS.values())
+    {
+        MAV2DIcon* icon = dynamic_cast<MAV2DIcon*>(p);
+        if (icon)
+        {
+            // Set as selected if ids match
+            icon->setSelectedUAS((icon->getUASId() == uas));
+        }
+    }
+}
+
+///**
+// * Updates all UAVs at once
+// */
+//void QGCMapWidget::updateUAVs()
+//{
+
+//}
+
+/**
+ * Updates the attitude
+ */
+void QGCMapWidget::updateAttitude(UASInterface* uas, double roll, double pitch, double yaw, quint64 usec)
+{
+//    Q_UNUSED(roll);
+//    Q_UNUSED(pitch);
+//    Q_UNUSED(usec);
+//    if (mc) {
+
+//        if (uas) {
+//            MAV2DIcon* icon = dynamic_cast<MAV2DIcon*>(uasIcons.value(uas->getUASID(), NULL));
+//            if (icon) {
+//                icon->setYaw(yaw);
 //            }
 //        }
+//    }
 }
