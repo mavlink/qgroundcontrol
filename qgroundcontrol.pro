@@ -299,8 +299,11 @@ HEADERS += src/MG.h \
     src/ui/mission/QGCMissionDoWidget.h \
     src/ui/mission/QGCMissionConditionWidget.h \
     src/uas/QGCUASParamManager.h \
-    src/ui/QGCMapWidget.h \
+    src/ui/map/QGCMapWidget.h \
+    src/ui/map/MAV2DIcon.h \
     src/ui/mavlink/QGCMAVLinkTextEdit.h
+
+#    src/ui/map/Waypoint2DIcon.h \
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -424,10 +427,10 @@ SOURCES += src/main.cc \
     src/ui/mission/QGCMissionDoWidget.cc \
     src/ui/mission/QGCMissionConditionWidget.cc \
     src/uas/QGCUASParamManager.cc \
-    src/ui/QGCMapWidget.cc \
+    src/ui/map/QGCMapWidget.cc \
+    src/ui/map/MAV2DIcon.cc \
     src/ui/mavlink/QGCMAVLinkTextEdit.cc
-# src/ui/map/Waypoint2DIcon.cc \
-# src/ui/map/MAV2DIcon.cc \
+# src/ui/map/Waypoint2DIcon.cc
 macx|win32-msvc2008::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")

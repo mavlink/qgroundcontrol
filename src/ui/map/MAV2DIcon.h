@@ -4,8 +4,9 @@
 #include <QGraphicsItem>
 
 #include "UASInterface.h"
+#include "opmapcontrol.h"
 
-class MAV2DIcon : public QGraphicsItem
+class MAV2DIcon : public mapcontrol::UAVItem
 {
 public:
     enum {
@@ -26,7 +27,7 @@ public:
      * @param alignment alignment (Middle or TopLeft)
      * @param pen QPen for drawing
      */
-    MAV2DIcon(UASInterface* uas, int radius = 10, int type=0, const QColor& color=QColor(Qt::red), QString name = QString(), Alignment alignment = Middle, QPen* pen=0);
+    MAV2DIcon(mapcontrol::MapGraphicItem* map,mapcontrol::OPMapWidget* parent, UASInterface* uas, int radius = 10, int type=0);
 
     /*!
      *
@@ -36,7 +37,7 @@ public:
      * @param alignment alignment (Middle or TopLeft)
      * @param pen QPen for drawing
      */
-    MAV2DIcon(qreal x, qreal y, QString name = QString(), Alignment alignment = Middle, QPen* pen=0);
+    MAV2DIcon(mapcontrol::MapGraphicItem* map,mapcontrol::OPMapWidget* parent, qreal lat=0, qreal lon=0, qreal alt=0, QPen* pen=0);
 
     virtual ~MAV2DIcon();
 
@@ -75,6 +76,9 @@ protected:
     QColor iconColor; ///< Color to be used for the icon
     bool selected;  ///< Wether this is the system currently in focus
     int uasid;      ///< ID of tracked system
+    QPen* mypen;
+    QPixmap* mypixmap;
+    QSize size;
 
 };
 

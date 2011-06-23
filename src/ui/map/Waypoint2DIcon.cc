@@ -1,7 +1,7 @@
 #include "Waypoint2DIcon.h"
 #include <QPainter>
 
-Waypoint2DIcon::Waypoint2DIcon(qreal x, qreal y, int radius, QString name, Alignment alignment, QPen* pen)
+Waypoint2DIcon::Waypoint2DIcon(qreal x, qreal y, int radius, QPen* pen)
     : Point(x, y, name, alignment),
       yaw(0.0f),
       radius(radius)
