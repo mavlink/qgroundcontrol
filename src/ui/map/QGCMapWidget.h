@@ -7,6 +7,7 @@
 class UASInterface;
 class UASWaypointManager;
 class Waypoint;
+typedef mapcontrol::WayPointItem WayPointItem;
 
 /**
  * @brief Class representing a 2D map using aerial imagery
@@ -20,6 +21,9 @@ public:
 
 signals:
     void homePositionChanged(double latitude, double longitude, double altitude);
+    /** @brief Signal for newly created map waypoints */
+    void waypointCreated(Waypoint* wp);
+    void waypointChanged(Waypoint* wp);
 
 public slots:
     /** @brief Add system to map view */
@@ -39,6 +43,10 @@ public slots:
     /** @brief Update the home position on the map */
     void updateHomePosition(double latitude, double longitude, double altitude);
 
+protected slots:
+    /** @brief Convert a map edit into a QGC waypoint event */
+    void handleMapWaypointEdit(WayPointItem* waypoint);
+
 protected:
     /** @brief Update the highlighting of the currently controlled system */
     void updateSelectedSystem(int uas);
@@ -47,6 +55,7 @@ protected:
     UASWaypointManager* currWPManager; ///< The current waypoint manager
     QMap<Waypoint* , mapcontrol::WayPointItem*> waypointsToIcons;
     QMap<mapcontrol::WayPointItem*, Waypoint*> iconsToWaypoints;
+    Waypoint* firingWaypointChange;
 //    enum editMode {
 //        NONE,
 //        WAYPOINTS,
