@@ -35,7 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include "Waypoint.h"
 
 Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _param1, double _param2, double _param3, double _param4,
-                   bool _autocontinue, bool _current, MAV_FRAME _frame, MAV_CMD _action)
+                   bool _autocontinue, bool _current, MAV_FRAME _frame, MAV_CMD _action, const QString& _description)
     : id(_id),
       x(_x),
       y(_y),
@@ -48,7 +48,8 @@ Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _param1,
       orbit(_param3),
       param1(_param1),
       param2(_param2),
-      name(QString("WP%1").arg(id, 2, 10, QChar('0')))
+      name(QString("WP%1").arg(id, 2, 10, QChar('0'))),
+      description(_description)
 {
 }
 
@@ -70,15 +71,15 @@ void Waypoint::save(QTextStream &saveStream)
     position = position.arg(z, 0, 'g', 18);
     QString parameters("%1\t%2\t%3\t%4");
     parameters = parameters.arg(param1, 0, 'g', 18).arg(param2, 0, 'g', 18).arg(orbit, 0, 'g', 18).arg(yaw, 0, 'g', 18);
-    // FORMAT: <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE>
+    // FORMAT: <INDEX> <CURRENT WP> <COORD FRAME> <COMMAND> <PARAM1> <PARAM2> <PARAM3> <PARAM4> <PARAM5/X/LONGITUDE> <PARAM6/Y/LATITUDE> <PARAM7/Z/ALTITUDE> <AUTOCONTINUE> <DESCRIPTION>
     // as documented here: http://qgroundcontrol.org/waypoint_protocol
-    saveStream << this->getId() << "\t" << this->getCurrent() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n";
+    saveStream << this->getId() << "\t" << this->getCurrent() << "\t" << this->getFrame() << "\t" << this->getAction() << "\t"  << parameters << "\t" << position  << "\t" << this->getAutoContinue() << "\r\n"; //"\t" << this->getDescription() << "\r\n";
 }
 
 bool Waypoint::load(QTextStream &loadStream)
 {
     const QStringList &wpParams = loadStream.readLine().split("\t");
-    if (wpParams.size() == 12) {
+    if (wpParams.size() == 13) {
         this->id = wpParams[0].toInt();
         this->current = (wpParams[1].toInt() == 1 ? true : false);
         this->frame = (MAV_FRAME) wpParams[2].toInt();
@@ -91,6 +92,7 @@ bool Waypoint::load(QTextStream &loadStream)
         this->y = wpParams[9].toDouble();
         this->z = wpParams[10].toDouble();
         this->autocontinue = (wpParams[11].toInt() == 1 ? true : false);
+        //this->description = wpParams[12];
         return true;
     }
     return false;
