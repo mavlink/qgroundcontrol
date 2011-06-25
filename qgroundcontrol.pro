@@ -188,7 +188,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCSettingsWidget.ui \
     src/ui/UASControlParameters.ui \
     src/ui/mission/QGCMissionDoWidget.ui \
-    src/ui/mission/QGCMissionConditionWidget.ui
+    src/ui/mission/QGCMissionConditionWidget.ui \
+    src/ui/map/QGCMapToolbar.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -301,7 +302,8 @@ HEADERS += src/MG.h \
     src/uas/QGCUASParamManager.h \
     src/ui/map/QGCMapWidget.h \
     src/ui/map/MAV2DIcon.h \
-    src/ui/mavlink/QGCMAVLinkTextEdit.h
+    src/ui/mavlink/QGCMAVLinkTextEdit.h \
+    src/ui/map/QGCMapToolbar.h
 
 #    src/ui/map/Waypoint2DIcon.h \
 
@@ -429,7 +431,8 @@ SOURCES += src/main.cc \
     src/uas/QGCUASParamManager.cc \
     src/ui/map/QGCMapWidget.cc \
     src/ui/map/MAV2DIcon.cc \
-    src/ui/mavlink/QGCMAVLinkTextEdit.cc
+    src/ui/mavlink/QGCMAVLinkTextEdit.cc \
+    src/ui/map/QGCMapToolbar.cc
 # src/ui/map/Waypoint2DIcon.cc
 macx|win32-msvc2008::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 contains(DEPENDENCIES_PRESENT, osg) { 

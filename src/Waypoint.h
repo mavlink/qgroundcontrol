@@ -44,7 +44,7 @@ class Waypoint : public QObject
 
 public:
     Waypoint(quint16 id = 0, double x = 0.0, double y = 0.0, double z = 0.0, double param1 = 0.0, double param2 = 0.0, double param3 = 0.0, double param4 = 0.0,
-             bool autocontinue = true, bool current = false, MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_CMD action=MAV_CMD_NAV_WAYPOINT);
+             bool autocontinue = true, bool current = false, MAV_FRAME frame=MAV_FRAME_GLOBAL, MAV_CMD action=MAV_CMD_NAV_WAYPOINT, const QString& description=QString(""));
     ~Waypoint();
 
     quint16 getId() const {
@@ -119,6 +119,9 @@ public:
     const QString& getName() const {
         return name;
     }
+    const QString& getDescription() const {
+        return description;
+    }
     /** @brief Returns true if x, y, z contain reasonable navigation data */
     bool isNavigationType();
 
@@ -141,6 +144,7 @@ protected:
     double param2;
     int turns;
     QString name;
+    QString description;
 
 public slots:
     void setId(quint16 id);

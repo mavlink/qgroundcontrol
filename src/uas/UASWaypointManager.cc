@@ -294,6 +294,7 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
         Waypoint *t = waypoints[seq];
         waypoints.remove(seq);
         delete t;
+        t = NULL;
 
         for(int i = seq; i < waypoints.size(); i++) {
             waypoints[i]->setId(i);
