@@ -7,7 +7,8 @@
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
         mapcontrol::OPMapWidget(parent),
-        currWPManager(NULL)
+        currWPManager(NULL),
+        firingWaypointChange(NULL)
 {
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)));
@@ -81,6 +82,11 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     // FIXME XXX this is a hack to trick OPs current 1-system design
     SetShowUAV(false);
 
+
+    // Connect map updates to the adapter slots
+    connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)));
+
+
     setFocus();
 }
 
@@ -113,6 +119,7 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         disconnect(currWPManager, SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
         disconnect(currWPManager, SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         disconnect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypoint(Waypoint*)));
+        disconnect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChange(Waypoint*)));
     }
 
     if (uas) {
@@ -132,7 +139,7 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         connect(currWPManager, SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
         connect(currWPManager, SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
         connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypoint(Waypoint*)));
-
+        connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChange(Waypoint*)));
         updateSelectedSystem(uas->getUASID());
     }
 }
@@ -233,6 +240,32 @@ void QGCMapWidget::updateHomePosition(double latitude, double longitude, double 
 }
 
 
+// WAYPOINT MAP INTERACTION FUNCTIONS
+
+//void QGCMapWidget::createWaypointAtMousePos(QMouseEvent)
+//{
+
+//}
+
+void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
+{
+    qDebug() << "UPDATING WP FROM MAP";
+    // Block circle updates
+    Waypoint* wp = iconsToWaypoints.value(waypoint, NULL);
+    // Protect from vicious double update cycle
+    if (firingWaypointChange == wp || !wp) return;
+    // Not in cycle, block now from entering it
+    firingWaypointChange = wp;
+
+    // Update WP values
+    internals::PointLatLng pos = waypoint->Coord();
+    wp->setLatitude(pos.Lat());
+    wp->setLongitude(pos.Lng());
+    wp->setAltitude(waypoint->Altitude());
+
+    emit waypointChanged(wp);
+    firingWaypointChange = NULL;
+}
 
 // WAYPOINT UPDATE FUNCTIONS
 
@@ -242,6 +275,8 @@ void QGCMapWidget::updateHomePosition(double latitude, double longitude, double 
  */
 void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
 {
+    // Source of the event was in this widget, do nothing
+    if (firingWaypointChange == wp) return;
         // Currently only accept waypoint updates from the UAS in focus
         // this has to be changed to accept read-only updates from other systems as well.
         if (UASManager::instance()->getUASForId(uas)->getWaypointManager() == currWPManager) {
@@ -255,6 +290,8 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                 int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
                 // If not found, return (this should never happen, but helps safety)
                 if (wpindex == -1) return;
+                // Mark this wp as currently edited
+                firingWaypointChange = wp;
 
                 // Check if wp exists yet in map
                 if (!waypointsToIcons.contains(wp)) {
@@ -281,6 +318,8 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                     // Re-enable signals again
                     this->blockSignals(false);
                 }
+                firingWaypointChange = NULL;
+
             } else {
                 // Check if the index of this waypoint is larger than the global
                 // waypoint list. This implies that the coordinate frame of this
