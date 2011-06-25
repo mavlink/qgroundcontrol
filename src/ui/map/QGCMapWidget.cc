@@ -298,6 +298,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                     // Create icon for new WP
                     mapcontrol::WayPointItem* icon = WPCreate(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()), wp->getAltitude(), wp->getDescription());
                     icon->SetHeading(wp->getYaw());
+                    icon->SetNumber(wpindex);
                     // Update maps to allow inverse data association
                     waypointsToIcons.insert(wp, icon);
                     iconsToWaypoints.insert(icon, wp);
@@ -314,7 +315,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                     icon->SetCoord(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()));
                     icon->SetAltitude(wp->getAltitude());
                     icon->SetHeading(wp->getYaw());
-                    icon->SetNumber(wp->getId());
+                    icon->SetNumber(wpindex);
                     // Re-enable signals again
                     this->blockSignals(false);
                 }
