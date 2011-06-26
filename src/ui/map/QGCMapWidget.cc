@@ -3,12 +3,14 @@
 #include "UASInterface.h"
 #include "UASManager.h"
 #include "MAV2DIcon.h"
+#include "Waypoint2DIcon.h"
 #include "UASWaypointManager.h"
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
         mapcontrol::OPMapWidget(parent),
         currWPManager(NULL),
-        firingWaypointChange(NULL)
+        firingWaypointChange(NULL),
+        maxUpdateInterval(2) // 2 seconds
 {
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)));
@@ -88,6 +90,10 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
 
 
     setFocus();
+
+    // Start timer
+    connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateGlobalPosition()));
+    updateTimer.start(maxUpdateInterval*1000);
 }
 
 QGCMapWidget::~QGCMapWidget()
@@ -157,22 +163,53 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
 {
     Q_UNUSED(usec);
 
-    // Get reference to graphic UAV item
-    mapcontrol::UAVItem* uav = GetUAV(uas->getUASID());
-    // Check if reference is valid, else create a new one
-    if (uav == NULL)
+    // Immediate update
+    if (maxUpdateInterval == 0)
     {
-        MAV2DIcon* newUAV = new MAV2DIcon(map, this, uas);
-        newUAV->setParentItem(map);
-        UAVS.insert(uas->getUASID(), newUAV);
-        uav = GetUAV(uas->getUASID());
-    }
+        // Get reference to graphic UAV item
+        mapcontrol::UAVItem* uav = GetUAV(uas->getUASID());
+        // Check if reference is valid, else create a new one
+        if (uav == NULL)
+        {
+            MAV2DIcon* newUAV = new MAV2DIcon(map, this, uas);
+            newUAV->setParentItem(map);
+            UAVS.insert(uas->getUASID(), newUAV);
+            uav = GetUAV(uas->getUASID());
+        }
 
-    // Set new lat/lon position of UAV icon
-    internals::PointLatLng pos_lat_lon = internals::PointLatLng(lat, lon);
-    uav->SetUAVPos(pos_lat_lon, alt);
-    // Convert from radians to degrees and apply
-    uav->SetUAVHeading((uas->getYaw()/M_PI)*180.0f);
+        // Set new lat/lon position of UAV icon
+        internals::PointLatLng pos_lat_lon = internals::PointLatLng(lat, lon);
+        uav->SetUAVPos(pos_lat_lon, alt);
+        // Convert from radians to degrees and apply
+        uav->SetUAVHeading((uas->getYaw()/M_PI)*180.0f);
+    }
+}
+
+/**
+ * Pulls in the positions of all UAVs from the UAS manager
+ */
+void QGCMapWidget::updateGlobalPosition()
+{
+    QList<UASInterface*> systems = UASManager::instance()->getUASList();
+    foreach (UASInterface* system, systems)
+    {
+        // Get reference to graphic UAV item
+        mapcontrol::UAVItem* uav = GetUAV(system->getUASID());
+        // Check if reference is valid, else create a new one
+        if (uav == NULL)
+        {
+            MAV2DIcon* newUAV = new MAV2DIcon(map, this, system);
+            newUAV->setParentItem(map);
+            UAVS.insert(system->getUASID(), newUAV);
+            uav = GetUAV(system->getUASID());
+        }
+
+        // Set new lat/lon position of UAV icon
+        internals::PointLatLng pos_lat_lon = internals::PointLatLng(system->getLatitude(), system->getLongitude());
+        uav->SetUAVPos(pos_lat_lon, system->getAltitude());
+        // Convert from radians to degrees and apply
+        uav->SetUAVHeading((system->getYaw()/M_PI)*180.0f);
+    }
 }
 
 
@@ -239,6 +276,16 @@ void QGCMapWidget::updateHomePosition(double latitude, double longitude, double 
     SetShowHome(true);                      // display the HOME position on the map
 }
 
+/**
+ * Limits the update rate on the specified interval. Set to zero (0) to run at maximum
+ * telemetry speed. Recommended rate is 2 s.
+ */
+void QGCMapWidget::setUpdateRateLimit(float seconds)
+{
+    maxUpdateInterval = seconds;
+    updateTimer.start(maxUpdateInterval*1000);
+}
+
 
 // WAYPOINT MAP INTERACTION FUNCTIONS
 
@@ -288,6 +335,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                 // note the call to getGlobalFrameAndNavTypeIndexOf()
                 // as we're only handling global waypoints
                 int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
+                UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
                 // If not found, return (this should never happen, but helps safety)
                 if (wpindex == -1) return;
                 // Mark this wp as currently edited
@@ -296,9 +344,9 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                 // Check if wp exists yet in map
                 if (!waypointsToIcons.contains(wp)) {
                     // Create icon for new WP
-                    mapcontrol::WayPointItem* icon = WPCreate(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()), wp->getAltitude(), wp->getDescription());
-                    icon->SetHeading(wp->getYaw());
-                    icon->SetNumber(wpindex);
+                    Waypoint2DIcon* icon = new Waypoint2DIcon(map, this, wp, uasInstance->getColor(), wpindex);
+                    ConnectWP(icon);
+                    icon->setParentItem(map);
                     // Update maps to allow inverse data association
                     waypointsToIcons.insert(wp, icon);
                     iconsToWaypoints.insert(icon, wp);
@@ -312,13 +360,25 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                     // should not happen, just a precaution
                     this->blockSignals(true);
                     // Update the WP
-                    icon->SetCoord(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()));
-                    icon->SetAltitude(wp->getAltitude());
-                    icon->SetHeading(wp->getYaw());
-                    icon->SetNumber(wpindex);
+                    Waypoint2DIcon* wpicon = dynamic_cast<Waypoint2DIcon*>(icon);
+                    if (wpicon)
+                    {
+                        // Let icon read out values directly from waypoint
+                        icon->SetNumber(wpindex);
+                        wpicon->updateWaypoint();
+                    }
+                    else
+                    {
+                        // Use safe standard interfaces for non Waypoint-class based wps
+                        icon->SetCoord(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()));
+                        icon->SetAltitude(wp->getAltitude());
+                        icon->SetHeading(wp->getYaw());
+                        icon->SetNumber(wpindex);
+                    }
                     // Re-enable signals again
                     this->blockSignals(false);
                 }
+
                 firingWaypointChange = NULL;
 
             } else {
@@ -428,3 +488,46 @@ void QGCMapWidget::updateWaypointList(int uas)
 //        }
                         }
 }
+
+
+//// ADAPTER / HELPER FUNCTIONS
+//float QGCMapWidget::metersToPixels(double meters)
+//{
+//    return meters/map->Projection()->GetGroundResolution(map->ZoomTotal(),coord.Lat());
+//}
+
+//double QGCMapWidget::headingP1P2(internals::PointLatLng p1, internals::PointLatLng p2)
+//{
+//    double lat1 = p1.Lat() * deg_to_rad;
+//    double lon1 = p2.Lng() * deg_to_rad;
+
+//    double lat2 = p2.Lat() * deg_to_rad;
+//    double lon2 = p2.Lng() * deg_to_rad;
+
+//    double delta_lon = lon2 - lon1;
+
+//    double y = sin(delta_lon) * cos(lat2);
+//    double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(delta_lon);
+//    double heading = atan2(y, x) * rad_to_deg;
+
+//    heading += 360;
+//    while (heading < 0) bear += 360;
+//    while (heading >= 360) bear -= 360;
+
+//    return heading;
+//}
+
+//internals::PointLatLng QGCMapWidget::targetLatLon(internals::PointLatLng source, double heading, double dist)
+//{
+//    double lat1 = source.Lat() * deg_to_rad;
+//    double lon1 = source.Lng() * deg_to_rad;
+
+//    heading *= deg_to_rad;
+
+//    double ad = dist / earth_mean_radius;
+
+//    double lat2 = asin(sin(lat1) * cos(ad) + cos(lat1) * sin(ad) * cos(heading));
+//    double lon2 = lon1 + atan2(sin(bear) * sin(ad) * cos(lat1), cos(ad) - sin(lat1) * sin(lat2));
+
+//    return internals::PointLatLng(lat2 * rad_to_deg, lon2 * rad_to_deg);
+//}
