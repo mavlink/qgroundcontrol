@@ -427,18 +427,19 @@ void WaypointView::updateValues()
             }
         }
     }
-    switch(action) {
-    case MAV_CMD_NAV_TAKEOFF:
-        break;
-    case MAV_CMD_NAV_LAND:
-        break;
-    case MAV_CMD_NAV_WAYPOINT:
-        break;
-    case MAV_CMD_NAV_LOITER_UNLIM:
-        break;
-    default:
-        std::cerr << "unknown action" << std::endl;
-    }
+    // Do something on actions - currently unused
+//    switch(action) {
+//    case MAV_CMD_NAV_TAKEOFF:
+//        break;
+//    case MAV_CMD_NAV_LAND:
+//        break;
+//    case MAV_CMD_NAV_WAYPOINT:
+//        break;
+//    case MAV_CMD_NAV_LOITER_UNLIM:
+//        break;
+//    default:
+//        std::cerr << "unknown action" << std::endl;
+//    }
 
     if (m_ui->yawSpinBox->value() != wp->getYaw()) {
         if (!m_ui->yawSpinBox->isVisible()) m_ui->yawSpinBox->blockSignals(true);

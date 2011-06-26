@@ -2,6 +2,7 @@
 #define QGCMAPWIDGET_H
 
 #include <QMap>
+#include <QTimer>
 #include "opmapcontrol.h"
 
 class UASInterface;
@@ -18,6 +19,10 @@ class QGCMapWidget : public mapcontrol::OPMapWidget
 public:
     explicit QGCMapWidget(QWidget *parent = 0);
     ~QGCMapWidget();
+//    /** @brief Convert meters to pixels */
+//    float metersToPixels(double meters);
+//    double headingP1P2(internals::PointLatLng p1, internals::PointLatLng p2);
+//    internals::PointLatLng targetLatLon(internals::PointLatLng source, double heading, double dist);
 
 signals:
     void homePositionChanged(double latitude, double longitude, double altitude);
@@ -30,6 +35,8 @@ public slots:
     void addUAS(UASInterface* uas);
     /** @brief Update the global position of a system */
     void updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec);
+    /** @brief Update the global position of all systems */
+    void updateGlobalPosition();
     /** @brief Update the type, size, etc. of this system */
     void updateSystemSpecs(int uas);
     /** @brief Change current system in focus / editing */
@@ -42,6 +49,8 @@ public slots:
     void updateWaypointList(int uas);
     /** @brief Update the home position on the map */
     void updateHomePosition(double latitude, double longitude, double altitude);
+    /** @brief Set update rate limit */
+    void setUpdateRateLimit(float seconds);
 
 protected slots:
     /** @brief Convert a map edit into a QGC waypoint event */
@@ -56,6 +65,8 @@ protected:
     QMap<Waypoint* , mapcontrol::WayPointItem*> waypointsToIcons;
     QMap<mapcontrol::WayPointItem*, Waypoint*> iconsToWaypoints;
     Waypoint* firingWaypointChange;
+    QTimer updateTimer;
+    float maxUpdateInterval;
 //    enum editMode {
 //        NONE,
 //        WAYPOINTS,

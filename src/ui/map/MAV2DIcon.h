@@ -77,7 +77,6 @@ protected:
     bool selected;  ///< Wether this is the system currently in focus
     int uasid;      ///< ID of tracked system
     QPen* mypen;
-    QPixmap* mypixmap;
     QSize size;
 
 };
