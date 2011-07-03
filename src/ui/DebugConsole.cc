@@ -69,7 +69,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Hide auto-send checkbox
     //m_ui->specialCheckBox->setVisible(false);
     // Make text area not editable
-    m_ui->receiveText->setReadOnly(true);
+    m_ui->receiveText->setReadOnly(false);
     // Limit to 500 lines
     m_ui->receiveText->setMaximumBlockCount(500);
     // Allow to wrap everywhere
@@ -340,69 +340,110 @@ void DebugConsole::paintEvent(QPaintEvent *event)
 void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
 {
     snapShotBytes += bytes.size();
+    int len = bytes.size();
+    int lastSpace = 0;
+    if ((this->bytesToIgnore > 260) || (this->bytesToIgnore < -2)) this->bytesToIgnore = 0;
     // Only add data from current link
-    if (link == currLink && !holdOn) {
+    if (link == currLink && !holdOn)
+    {
         // Parse all bytes
-        for (int j = 0; j < bytes.size(); j++) {
+        for (int j = 0; j < len; j++)
+        {
             unsigned char byte = bytes.at(j);
             // Filter MAVLink (http://pixhawk.ethz.ch/wiki/mavlink/) messages out of the stream.
-            if (filterMAVLINK && bytes.size() > 1) {
+            if (filterMAVLINK)
+            {
+                if (this->bytesToIgnore > 0)
+                {
+                    if ( (j + this->bytesToIgnore) < len )
+                        j += this->bytesToIgnore - 1, this->bytesToIgnore = 1;
+                    else
+                        this->bytesToIgnore -= (len - j - 1), j = len - 1;
+                } else
+                if (this->bytesToIgnore == -2)
+                {   // Payload plus header - but we got STX already
+                    this->bytesToIgnore = static_cast<unsigned int>(byte) + MAVLINK_NUM_NON_PAYLOAD_BYTES - 1;
+                    if ( (j + this->bytesToIgnore) < len )
+                        j += this->bytesToIgnore - 1, this->bytesToIgnore = 1;
+                    else
+                        this->bytesToIgnore -= (len - j - 1), j = len - 1;
+                } else
                 // Filtering is done by setting an ignore counter based on the MAVLINK packet length
-                if (static_cast<unsigned char>(bytes[0]) == MAVLINK_STX) bytesToIgnore = static_cast<unsigned int>(bytes[1]) + MAVLINK_NUM_NON_PAYLOAD_BYTES; // Payload plus header
-            }
+                if (static_cast<unsigned char>(byte) == MAVLINK_STX)
+                {
+                    this->bytesToIgnore = -1;
+                } else
+                    this->bytesToIgnore = 0;
+            } else this->bytesToIgnore = 0;
 
-            if (bytesToIgnore <= 0) {
+            if ( (this->bytesToIgnore <= 0) && (this->bytesToIgnore != -1) )
+            {
                 QString str;
                 // Convert to ASCII for readability
-                if (convertToAscii) {
-                    if ((byte < 32) || (byte > 126)) {
-                        switch (byte) {
-                            // Accept line feed and tab
-                        case (unsigned char)'\n': {
-                            if (lastByte != '\r') {
-                                // Do not break line again for CR+LF
-                                // only break line for single LF bytes
+                if (convertToAscii)
+                {
+                    if ((byte <= 32) || (byte > 126))
+                    {
+                        switch (byte)
+                        {
+                            case (unsigned char)'\n':   // Accept line feed
+                                if (lastByte != '\r')   // Do not break line again for CR+LF
+                                    str.append(byte);   // only break line for single LF or CR bytes
+                                else ;
+                            break;
+                            case (unsigned char)' ':    // space of any type means don't add another on hex output
+                            case (unsigned char)'\t':   // Accept tab
+                            case (unsigned char)'\r':   // Catch and carriage return
                                 str.append(byte);
-                            }
+                                lastSpace = 1;
+                            break;
+                            default:                    // Append replacement character (box) if char is not ASCII
+//                                str.append(QChar(QChar::ReplacementCharacter));
+                                QString str2;
+                                if ( lastSpace == 1)
+                                    str2.sprintf("0x%02x ", byte);
+                                else str2.sprintf(" 0x%02x ", byte);
+                                str.append(str2);
+                                lastSpace = 1;
+                            break;
                         }
-                        break;
-                        case (unsigned char)'\t':
-                            str.append(byte);
-                            break;
-                            // Catch and ignore carriage return
-                        case (unsigned char)'\r':
-                            str.append(byte);
-                            break;
-                        default:
-                            str.append(QChar(QChar::ReplacementCharacter));
-                            break;
-                        }// Append replacement character (box) if char is not ASCII
-                    } else {
-                        // Append original character
-                        str.append(byte);
                     }
-                } else {
+                    else
+                    {
+                        str.append(byte);           // Append original character
+                        lastSpace = 0;
+                    }
+                }
+                else
+                {
                     QString str2;
                     str2.sprintf("%02x ", byte);
                     str.append(str2);
                 }
                 lineBuffer.append(str);
                 lastByte = byte;
-            } else {
-                if (filterMAVLINK) bytesToIgnore--;
+            }
+            else
+            {
+                if (filterMAVLINK) this->bytesToIgnore--;
                 // Constrain bytes to positive range
-                bytesToIgnore = qMax(0, bytesToIgnore);
+//                bytesToIgnore = qMax(0, bytesToIgnore);
             }
 
         }
-        if (lineBuffer.length() > 0) {
+        if (lineBuffer.length() > 0)
+        {
             m_ui->receiveText->insertPlainText(lineBuffer);
             // Ensure text area scrolls correctly
             m_ui->receiveText->ensureCursorVisible();
             lineBuffer.clear();
         }
-    } else if (link == currLink && holdOn) {
+    }
+    else if (link == currLink && holdOn)
+    {
         holdBuffer.append(bytes);
+        if (holdBuffer.size() > 8192)
+            holdBuffer.remove(0, 4096); // drop old stuff
     }
 }
 
@@ -629,7 +670,7 @@ void DebugConsole::MAVLINKfilterEnabled(bool filter)
 {
     if (filterMAVLINK != filter) {
         filterMAVLINK = filter;
-        bytesToIgnore = 0;
+        this->bytesToIgnore = 0;
         if (m_ui->mavlinkCheckBox->isChecked() != filter) {
             m_ui->mavlinkCheckBox->setChecked(filter);
         }
