@@ -29,6 +29,9 @@ public:
     /** @brief All instances of this class */
     static QMap<QString, QGCToolWidget*>* instances();
 
+    int isVisible(int view) { return viewVisible.value(view, false); }
+    Qt::DockWidgetArea getDockWidgetArea(int view) { return dockWidgetArea.value(view, Qt::BottomDockWidgetArea); }
+
 public slots:
     void addUAS(UASInterface* uas);
     /** @brief Delete this widget */
@@ -39,6 +42,8 @@ public slots:
     void importWidget(const QString& fileName);
     /** @brief Store all widgets of this type to QSettings */
     static void storeWidgetsToSettings();
+    /** @brief Store the view id and dock widget area */
+    void setViewVisibilityAndDockWidgetArea(int view, bool visible, Qt::DockWidgetArea area);
 
 signals:
     void titleChanged(QString);
@@ -53,7 +58,9 @@ protected:
     QAction* importAction;
     QVBoxLayout* toolLayout;
     UAS* mav;
-    QAction* mainMenuAction;
+    QAction* mainMenuAction;             ///< Main menu action
+    QMap<int, Qt::DockWidgetArea> dockWidgetArea;   ///< Dock widget area desired by this widget
+    QMap<int, bool> viewVisible;  ///< Visibility in one view
 
     void contextMenuEvent(QContextMenuEvent* event);
     void createActions();
@@ -61,6 +68,8 @@ protected:
     const QString getTitle();
     /** @brief Add an existing tool widget */
     void addToolWidget(QGCToolWidgetItem* widget);
+
+    void hideEvent(QHideEvent* event);
 
 protected slots:
     void addParam();

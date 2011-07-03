@@ -46,7 +46,7 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item row="3" column="0">
         <widget class="QRadioButton" name="nativeStyle">
          <property name="text">
           <string>Use native platform look and feel (Windows/Linux/Mac OS)</string>
@@ -56,17 +56,27 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item row="4" column="0">
         <widget class="QRadioButton" name="indoorStyle">
          <property name="text">
           <string>Use indoor mission style (black background)</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="5" column="0">
         <widget class="QRadioButton" name="outdoorStyle">
          <property name="text">
           <string>Use outdoor mission style (light background)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QCheckBox" name="lowPowerCheckBox">
+         <property name="toolTip">
+          <string>Lowers all update rates to save battery power</string>
+         </property>
+         <property name="text">
+          <string>Enable low power mode</string>
          </property>
         </widget>
        </item>
