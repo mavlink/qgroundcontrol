@@ -122,7 +122,8 @@ protected:
     QAction* selectAction;
     QAction* selectAirframeAction;
     QAction* setBatterySpecsAction;
-    static const int updateInterval = 300;
+    static const int updateInterval = 700;
+    bool lowPowerModeEnabled; ///< Low power mode reduces update rates
 
 
     void mouseDoubleClickEvent (QMouseEvent * event);

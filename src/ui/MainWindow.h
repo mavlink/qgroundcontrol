@@ -103,6 +103,11 @@ public:
         return autoReconnect;
     }
 
+    /** @brief Get low power mode setting */
+    bool lowPowerModeEnabled() {
+        return lowPowerMode;
+    }
+
 public slots:
 //    /** @brief Store the mainwindow settings */
 //    void storeSettings();
@@ -160,6 +165,8 @@ public slots:
     void selectStylesheet();
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
+    /** @brief Save power by reducing update rates */
+    void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
     /** @brief Switch to native application style */
     void loadNativeStyle();
     /** @brief Switch to indoor mission style */
@@ -430,6 +437,7 @@ protected:
     bool autoReconnect;
     QGC_MAINWINDOW_STYLE currentStyle;
     Qt::WindowStates windowStateVal;
+    bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
 
 private:
     Ui::MainWindow ui;
