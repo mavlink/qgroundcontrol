@@ -362,19 +362,21 @@ void QGCMapWidget::setUpdateRateLimit(float seconds)
 
 void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
 {
-    qDebug() << "UPDATING WP FROM MAP";
     // Block circle updates
     Waypoint* wp = iconsToWaypoints.value(waypoint, NULL);
     // Protect from vicious double update cycle
-    if (firingWaypointChange == wp || !wp) return;
+    if (firingWaypointChange == wp) return;
     // Not in cycle, block now from entering it
     firingWaypointChange = wp;
+    qDebug() << "UPDATING WP FROM MAP";
 
     // Update WP values
     internals::PointLatLng pos = waypoint->Coord();
     wp->setLatitude(pos.Lat());
     wp->setLongitude(pos.Lng());
     wp->setAltitude(waypoint->Altitude());
+
+    qDebug() << "WP: LAT:" << pos.Lat() << "LON:" << pos.Lng();
 
     emit waypointChanged(wp);
     firingWaypointChange = NULL;

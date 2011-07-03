@@ -35,7 +35,7 @@ Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMa
 //    drawIcon(mypen);
     this->setFlag(QGraphicsItem::ItemIgnoresTransformations,true);
     picture = QPixmap(radius+1, radius+1);
-    drawIcon();
+    updateWaypoint();
 }
 
 Waypoint2DIcon::~Waypoint2DIcon()
@@ -63,6 +63,9 @@ void Waypoint2DIcon::updateWaypoint()
 
         SetHeading(waypoint->getYaw());
         SetCoord(internals::PointLatLng(waypoint->getLatitude(), waypoint->getLongitude()));
+
+        qDebug() << "UPDATING WP:" << waypoint->getId() << "LAT:" << waypoint->getLatitude() << "LON:" << waypoint->getLongitude();
+
         SetDescription(waypoint->getDescription());
         SetAltitude(waypoint->getAltitude());
         // FIXME Add SetNumber (currently needs a separate call)
