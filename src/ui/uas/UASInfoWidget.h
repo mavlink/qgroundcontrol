@@ -95,7 +95,7 @@ protected:
     QString name;
     quint64 startTime;
     QMap<QString, int> errors;
-    static const int updateInterval = 200; ///< Refresh interval in milliseconds
+    static const int updateInterval = 800; ///< Refresh interval in milliseconds
 
     void showEvent(QShowEvent* event);
     void hideEvent(QHideEvent* event);

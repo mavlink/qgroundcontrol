@@ -71,8 +71,8 @@ macx {
         #CONFIG -= x86 # phonon
         #message(Building for Mac OS X 64bit/Snow Leopard 10.6 and later)
       #          debug {
-                        QMAKE_CXXFLAGS += -finstrument-functions
-                        LIBS += -lSaturn
+                        #QMAKE_CXXFLAGS += -finstrument-functions
+                        #LIBS += -lSaturn
                         CONFIG += console
       #          }
     #}
