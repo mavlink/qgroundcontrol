@@ -31,8 +31,39 @@ include(lib/nmea/nmea.pri)
 # provided by the OpenPilot team - thanks, great piece
 # of open-source software!
 # (We're not reusing any part of the OP GCS, just the map library)
+
+# Try to get it from OP mainline, if this fails fall back to internal copies
+exists(../openpilot/ground/openpilotgcs/src/libs) {
 include(../openpilot/ground/openpilotgcs/src/libs/utils/utils_external.pri)
 include(../openpilot/ground/openpilotgcs/src/libs/opmapcontrol/opmapcontrol_external.pri)
+DEPENDPATH += \
+    ../openpilot/ground/openpilotgcs/src/libs/utils \
+    ../openpilot/ground/openpilotgcs/src/libs/utils/src \
+    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol \
+    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol/src
+
+INCLUDEPATH += \
+    ../openpilot/ground/openpilotgcs/src/libs/utils \
+    ../openpilot/ground/openpilotgcs/src/libs \
+    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol
+
+    message("----- USING MAINLINE OPENPILOT FROM ../openpilot -----")
+    message("Using OpenPilot's mapcontrol library from external folder")
+    message("------------------------------------------------------------------------")
+} else {
+include(src/libs/utils/utils_external.pri)
+include(src/libs/opmapcontrol/opmapcontrol_external.pri)
+DEPENDPATH += \
+    src/libs/utils \
+    src/libs/utils/src \
+    src/libs/opmapcontrol \
+    src/libs/opmapcontrol/src
+
+INCLUDEPATH += \
+    src/libs/utils \
+    src/libs \
+    src/libs/opmapcontrol
+}
 
 # include(lib/opmapcontrol/opmapcontrol.pri)
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
@@ -118,19 +149,12 @@ include(qgroundcontrol.pri)
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
-    ../openpilot/ground/openpilotgcs/src/libs/utils \
-    ../openpilot/ground/openpilotgcs/src/libs/utils/src \
-    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol \
-    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol/src \
     plugins \
     thirdParty/qserialport/include \
     thirdParty/qserialport/include/QtSerialPort \
     thirdParty/qserialport
 
 INCLUDEPATH += . \
-    ../openpilot/ground/openpilotgcs/src/libs/utils \
-    ../openpilot/ground/openpilotgcs/src/libs \
-    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol \
     thirdParty/qserialport/include \
     thirdParty/qserialport/include/QtSerialPort \
     thirdParty/qserialport/src
