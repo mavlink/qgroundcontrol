@@ -1,0 +1,1 @@
+LIBS *= -l$$qtLibraryTarget(opmapwidget)
