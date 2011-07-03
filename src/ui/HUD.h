@@ -88,6 +88,8 @@ public slots:
     void enableHUDInstruments(bool enabled);
     /** @brief Enable Video */
     void enableVideo(bool enabled);
+    /** @brief Copy an image from the current active UAS */
+    void copyImage();
 
 
 protected slots:
@@ -216,6 +218,8 @@ protected:
     QAction* selectOfflineDirectoryAction;
     QAction* selectVideoChannelAction;
     void paintEvent(QPaintEvent *event);
+    bool imageRequested;
+    UAS* u;
 
 };
 
