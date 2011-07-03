@@ -58,7 +58,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     snapShotBytes(0),
     dataRate(0.0f),
     lowpassDataRate(0.0f),
-    dataRateThreshold(500),
+    dataRateThreshold(400),
     commandIndex(0),
     m_ui(new Ui::DebugConsole)
 {
@@ -121,10 +121,10 @@ DebugConsole::DebugConsole(QWidget *parent) :
 
     loadSettings();
 
-    // Warn user about not activated hold
-    if (!m_ui->holdCheckBox->isChecked()) {
-        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console is huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
-    }
+//    // Warn user about not activated hold
+//    if (!m_ui->holdCheckBox->isChecked()) {
+//        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console if huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
+//    }
 }
 
 void DebugConsole::hideEvent(QHideEvent* event)
@@ -245,6 +245,17 @@ void DebugConsole::setAutoHold(bool hold)
     if (m_ui->holdCheckBox->isChecked() != hold) {
         m_ui->holdCheckBox->setChecked(hold);
     }
+
+    if (!hold)
+    {
+        // Warn user about not activated hold
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console if huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
+    }
+    else
+    {
+        m_ui->receiveText->clear();
+    }
+
     // Set new state
     autoHold = hold;
 }
@@ -280,6 +291,8 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
         }
 
         m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(%2:%3) %4</font>\n").arg(UASManager::instance()->getUASForId(id)->getColor().name(), name, comp, text));
+        // Ensure text area scrolls correctly
+        m_ui->receiveText->ensureCursorVisible();
     }
 }
 

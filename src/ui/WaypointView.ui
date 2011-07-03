@@ -524,10 +524,10 @@ QProgressBar::chunk#thrustBar {
          <double>0.050000000000000</double>
         </property>
         <property name="maximum">
-         <double>100.000000000000000</double>
+         <double>5000.000000000000000</double>
         </property>
         <property name="singleStep">
-         <double>0.050000000000000</double>
+         <double>1.000000000000000</double>
         </property>
         <property name="value">
          <double>20.000000000000000</double>
@@ -578,6 +578,9 @@ Time to stay at this position before advancing</string>
         </property>
         <property name="suffix">
          <string> turns</string>
+        </property>
+        <property name="maximum">
+         <number>99</number>
         </property>
        </widget>
       </item>

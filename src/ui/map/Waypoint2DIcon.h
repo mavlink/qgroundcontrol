@@ -42,6 +42,8 @@ public:
     void drawIcon();
     /** @brief Draw the icon on a QPainter device (map) */
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    /** @brief UNUSED FUNCTION: Waypoints in QGC are purely passive */
+    void SetReached(const bool &value);
 
 public:
     void updateWaypoint();

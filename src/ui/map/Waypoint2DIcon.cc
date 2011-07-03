@@ -58,13 +58,36 @@ void Waypoint2DIcon::SetHeading(float heading)
 void Waypoint2DIcon::updateWaypoint()
 {
     if (waypoint) {
+        // Store old size
+        static QRectF oldSize;
+
         SetHeading(waypoint->getYaw());
         SetCoord(internals::PointLatLng(waypoint->getLatitude(), waypoint->getLongitude()));
         SetDescription(waypoint->getDescription());
         SetAltitude(waypoint->getAltitude());
         // FIXME Add SetNumber (currently needs a separate call)
         drawIcon();
-        this->update();
+        QRectF newSize = boundingRect();
+
+        qDebug() << "WIDTH" << newSize.width() << "<" << oldSize.width();
+
+        // If new size is smaller than old size, update surrounding
+        if ((newSize.width() <= oldSize.width()) || (newSize.height() <= oldSize.height()))
+        {
+            // If the symbol size was reduced, enforce an update of the environment
+//            update(oldSize);
+            int oldWidth = oldSize.width() + 20;
+            int oldHeight = oldSize.height() + 20;
+            map->update(this->x()-10, this->y()-10, oldWidth, oldHeight);
+            qDebug() << "UPDATING DUE TO SMALLER SIZE";
+            qDebug() << "X:" << this->x()-1 << "Y:" << this->y()-1 << "WIDTH:" << oldWidth << "HEIGHT:" << oldHeight;
+        }
+        else
+        {
+            // Symbol size stayed constant or increased, use new size for update
+            this->update();
+        }
+        oldSize = boundingRect();
         qDebug() << "UPDATING WP";
     }
 }
@@ -87,6 +110,20 @@ QRectF Waypoint2DIcon::boundingRect() const
     int height = qMax(picture.height()/2, qMax(loiter, acceptance));
 
     return QRectF(-width,-height,2*width,2*height);
+}
+
+void Waypoint2DIcon::SetReached(const bool &value)
+{
+    // DO NOTHING
+    Q_UNUSED(value);
+//    reached=value;
+//    emit WPValuesChanged(this);
+//    if(value)
+//        picture.load(QString::fromUtf8(":/markers/images/bigMarkerGreen.png"));
+//    else
+//        picture.load(QString::fromUtf8(":/markers/images/marker.png"));
+//    this->update();
+
 }
 
 void Waypoint2DIcon::drawIcon()
@@ -139,8 +176,8 @@ void Waypoint2DIcon::drawIcon()
             (waypoint->getAction() != (int)MAV_CMD_NAV_TAKEOFF) &&
             (waypoint->getAction() != (int)MAV_CMD_NAV_LAND) &&
             (waypoint->getAction() != (int)MAV_CMD_NAV_LOITER_UNLIM) &&
-            (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TIME) &&
-            (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TURNS)
+            (waypoint->getAction() != (int)MAV_CMD_NAV_LOITER_TIME) &&
+            (waypoint->getAction() != (int)MAV_CMD_NAV_LOITER_TURNS)
             )))
     {
         painter.drawLine(p.x(), p.y(), p.x()+sin(Heading()) * rad, p.y()-cos(Heading()) * rad);
@@ -151,8 +188,8 @@ void Waypoint2DIcon::drawIcon()
         // Takeoff waypoint
         int width = (picture.width()-1);
         int height = (picture.height()-1);
-        painter.drawRect(0, 0, 2*width, 2*height);
-        painter.drawRect(width*0.2, height*0.2f, 2*width*0.6f, 2*height*0.6f);
+        painter.drawRect(0, 0, width, height);
+        painter.drawRect(width*0.2, height*0.2f, width*0.6f, height*0.6f);
     }
     else if ((waypoint != NULL) && (waypoint->getAction() == (int)MAV_CMD_NAV_LAND))
     {

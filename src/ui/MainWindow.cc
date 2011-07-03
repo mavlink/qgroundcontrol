@@ -106,19 +106,6 @@ MainWindow::MainWindow(QWidget *parent):
 
     loadStyle(currentStyle);
 
-//    // Set the application style (not the same as a style sheet)
-//    // Set the style to Plastique
-//    qApp->setStyle("plastique");
-
-//    // Set style sheet as last step
-//    QFile* styleSheet = new QFile(":/images/style-mission.css");
-//    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
-//    {
-//        QString style = QString(styleSheet->readAll());
-//        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "/images/");
-//        qApp->setStyleSheet(style);
-//    }
-
     // Create actions
     connectCommonActions();
 
@@ -287,19 +274,27 @@ void MainWindow::buildCustomWidget()
 
         for(int i = 0; i < widgets.size(); ++i) {
             // Check if this widget already has a parent, do not create it in this case
-            QDockWidget* dock = dynamic_cast<QDockWidget*>(widgets.at(i)->parentWidget());
+            QGCToolWidget* tool = widgets.at(i);
+            QDockWidget* dock = dynamic_cast<QDockWidget*>(tool->parentWidget());
             if (!dock) {
-                QDockWidget* dock = new QDockWidget(widgets.at(i)->windowTitle(), this);
-                dock->setObjectName(widgets.at(i)->objectName()+"_DOCK");
-                dock->setWidget(widgets.at(i));
-                connect(widgets.at(i), SIGNAL(destroyed()), dock, SLOT(deleteLater()));
+                QDockWidget* dock = new QDockWidget(tool->windowTitle(), this);
+                dock->setObjectName(tool->objectName()+"_DOCK");
+                dock->setWidget(tool);
+                connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
                 QAction* showAction = new QAction(widgets.at(i)->windowTitle(), this);
                 showAction->setCheckable(true);
                 connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
                 connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
                 widgets.at(i)->setMainMenuAction(showAction);
                 ui.menuTools->addAction(showAction);
-                addDockWidget(Qt::BottomDockWidgetArea, dock);
+
+                // Load visibility for view (default is off)
+                dock->setVisible(tool->isVisible(currentView));
+
+                // Load dock widget location (default is bottom)
+                Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
+
+                addDockWidget(location, dock);
             }
         }
     }
