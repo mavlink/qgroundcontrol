@@ -70,7 +70,8 @@ MainWindow::MainWindow(QWidget *parent):
     changingViewsFlag(false),
     styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
     autoReconnect(false),
-    currentStyle(QGC_MAINWINDOW_STYLE_INDOOR)
+    currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
+    lowPowerMode(false)
 {
     loadSettings();
     if (!settings.contains("CURRENT_VIEW")) {
@@ -162,6 +163,9 @@ MainWindow::MainWindow(QWidget *parent):
         LinkManager::instance()->addProtocol(link, mavlink);
         link->connect();
     }
+
+    // Set low power mode
+    enableLowPowerMode(lowPowerMode);
 
     // Initialize window state
     windowStateVal = windowState();
@@ -1048,6 +1052,7 @@ void MainWindow::loadSettings()
     settings.beginGroup("QGC_MAINWINDOW");
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
     currentStyle = (QGC_MAINWINDOW_STYLE)settings.value("CURRENT_STYLE", currentStyle).toInt();
+    lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
     settings.endGroup();
 }
 
@@ -1065,6 +1070,8 @@ void MainWindow::storeSettings()
     if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
     // Save the current view only if a UAS is connected
     if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
+    // Save the current power mode
+    settings.setValue("LOW_POWER_MODE", lowPowerMode);
     settings.sync();
 }
 
@@ -1886,7 +1893,7 @@ void MainWindow::presentView()
         }
     }
 
-    // ACTIVATE MAP WIDGET
+    // ACTIVATE HUD WIDGET
     if (headUpDockWidget) {
         HUD* tmpHud = dynamic_cast<HUD*>( headUpDockWidget->widget() );
         if (tmpHud) {

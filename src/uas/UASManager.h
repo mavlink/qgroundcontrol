@@ -175,7 +175,7 @@ public slots:
     bool shutdownActiveUAS();
 
     /** @brief Set the current home position */
-    void setHomePosition(double lat, double lon, double alt);
+    bool setHomePosition(double lat, double lon, double alt);
 
     /** @brief Load settings */
     void loadSettings();
