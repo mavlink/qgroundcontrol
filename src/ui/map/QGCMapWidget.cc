@@ -12,6 +12,20 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
         firingWaypointChange(NULL),
         maxUpdateInterval(2) // 2 seconds
 {
+    // Widget is inactive until shown
+}
+
+QGCMapWidget::~QGCMapWidget()
+{
+    SetShowHome(false);	// doing this appears to stop the map lib crashing on exit
+    SetShowUAV(false);	//   "          "
+}
+
+void QGCMapWidget::showEvent(QShowEvent* event)
+{
+    // Pass on to parent widget
+    OPMapWidget::showEvent(event);
+
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)));
     foreach (UASInterface* uas, UASManager::instance()->getUASList())
@@ -94,13 +108,65 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     // Start timer
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateGlobalPosition()));
     updateTimer.start(maxUpdateInterval*1000);
+    updateGlobalPosition();
+    QTimer::singleShot(300, this, SLOT(loadSettings()));
 }
 
-QGCMapWidget::~QGCMapWidget()
+void QGCMapWidget::hideEvent(QHideEvent* event)
 {
-    SetShowHome(false);	// doing this appears to stop the map lib crashing on exit
-    SetShowUAV(false);	//   "          "
+    storeSettings();
+    OPMapWidget::hideEvent(event);
 }
+
+void QGCMapWidget::loadSettings()
+{
+    // Atlantic Ocean near Africa, coordinate origin
+    double lastZoom = 1;
+    double lastLat = 0;
+    double lastLon = 0;
+
+    QSettings settings;
+    settings.beginGroup("QGC_MAPWIDGET");
+    lastLat = settings.value("LAST_LATITUDE", lastLat).toDouble();
+    lastLon = settings.value("LAST_LONGITUDE", lastLon).toDouble();
+    lastZoom = settings.value("LAST_ZOOM", lastZoom).toDouble();
+    settings.endGroup();
+
+    // SET INITIAL POSITION AND ZOOM
+    SetZoom(lastZoom); // set map zoom level
+    internals::PointLatLng pos_lat_lon = internals::PointLatLng(lastLat, lastLon);
+    SetCurrentPosition(pos_lat_lon);        // set the map position
+}
+
+void QGCMapWidget::storeSettings()
+{
+    QSettings settings;
+    settings.beginGroup("QGC_MAPWIDGET");
+    internals::PointLatLng pos = CurrentPosition();
+    settings.setValue("LAST_LATITUDE", pos.Lat());
+    settings.setValue("LAST_LONGITUDE", pos.Lng());
+    settings.setValue("LAST_ZOOM", ZoomReal());
+    settings.endGroup();
+    settings.sync();
+}
+
+void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
+{
+    OPMapWidget::mouseDoubleClickEvent(event);
+    if (currEditMode == EDIT_MODE_WAYPOINTS)
+    {
+        // If a waypoint manager is available
+        if (currWPManager)
+        {
+            // Create new waypoint
+            internals::PointLatLng pos = this->currentMousePosition();
+            Waypoint* wp = currWPManager->createWaypoint();
+            wp->setLatitude(pos.Lat());
+            wp->setLongitude(pos.Lng());
+        }
+    }
+}
+
 
 /**
  *
@@ -424,8 +490,7 @@ void QGCMapWidget::updateWaypointList(int uas)
         {
             waypointsToIcons.remove(wp);
             iconsToWaypoints.remove(icon);
-            delete icon;
-            icon = NULL;
+            WPDelete(icon);
         }
     }
 

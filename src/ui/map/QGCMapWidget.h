@@ -52,6 +52,9 @@ public slots:
     /** @brief Set update rate limit */
     void setUpdateRateLimit(float seconds);
 
+    void loadSettings();
+    void storeSettings();
+
 protected slots:
     /** @brief Convert a map edit into a QGC waypoint event */
     void handleMapWaypointEdit(WayPointItem* waypoint);
@@ -59,7 +62,10 @@ protected slots:
 protected:
     /** @brief Update the highlighting of the currently controlled system */
     void updateSelectedSystem(int uas);
-    /** @brief Set the current mouse position on the map as new home position */
+    /** @brief Initialize */
+    void showEvent(QShowEvent* event);
+    void hideEvent(QHideEvent* event);
+    void mouseDoubleClickEvent(QMouseEvent* event);
 
     UASWaypointManager* currWPManager; ///< The current waypoint manager
     QMap<Waypoint* , mapcontrol::WayPointItem*> waypointsToIcons;
@@ -67,15 +73,17 @@ protected:
     Waypoint* firingWaypointChange;
     QTimer updateTimer;
     float maxUpdateInterval;
-//    enum editMode {
-//        NONE,
-//        WAYPOINTS,
-//        SWEEP,
-//        UAVS,
-//        HOME,
-//        SAFE_AREA
-//    };
-    //editMode currEditMode;            ///< The current edit mode on the map
+    enum editMode {
+        EDIT_MODE_NONE,
+        EDIT_MODE_WAYPOINTS,
+        EDIT_MODE_SWEEP,
+        EDIT_MODE_UAVS,
+        EDIT_MODE_HOME,
+        EDIT_MODE_SAFE_AREA,
+        EDIT_MODE_CACHING
+    };
+    editMode currEditMode;            ///< The current edit mode on the map
+
 
 };
 
