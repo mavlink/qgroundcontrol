@@ -75,7 +75,7 @@ protected:
 //        HOME,
 //        SAFE_AREA
 //    };
-//    enum editMode currEditMode;            ///< The current edit mode on the map
+    //editMode currEditMode;            ///< The current edit mode on the map
 
 };
 
