@@ -342,6 +342,11 @@ void QGCMapWidget::updateHomePosition(double latitude, double longitude, double 
     SetShowHome(true);                      // display the HOME position on the map
 }
 
+void QGCMapWidget::goHome()
+{
+    SetCurrentPosition(Home->Coord());
+}
+
 /**
  * Limits the update rate on the specified interval. Set to zero (0) to run at maximum
  * telemetry speed. Recommended rate is 2 s.
@@ -406,7 +411,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
         // this has to be changed to accept read-only updates from other systems as well.
         if (UASManager::instance()->getUASForId(uas)->getWaypointManager() == currWPManager) {
             // Only accept waypoints in global coordinate frame
-            if (wp->getFrame() == MAV_FRAME_GLOBAL && wp->isNavigationType()) {
+            if (((wp->getFrame() == MAV_FRAME_GLOBAL) || (wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)) && wp->isNavigationType()) {
                 // We're good, this is a global waypoint
 
                 // Get the index of this waypoint
@@ -481,89 +486,45 @@ void QGCMapWidget::updateWaypointList(int uas)
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
     if (UASManager::instance()->getUASForId(uas)->getWaypointManager() == currWPManager) {
-    qDebug() << "UPDATING WP LIST";
-    // Get current WP list
-    // compare to local WP maps and
-    // update / remove all WPs
+        qDebug() << "UPDATING WP LIST";
+        // Get current WP list
+        // compare to local WP maps and
+        // update / remove all WPs
 
-//    int localCount = waypointsToIcons.count();
+        //    int localCount = waypointsToIcons.count();
 
-    // ORDER MATTERS HERE!
-    // TWO LOOPS ARE NEEDED - INFINITY LOOP ELSE
+        // ORDER MATTERS HERE!
+        // TWO LOOPS ARE NEEDED - INFINITY LOOP ELSE
 
-    // Delete first all old waypoints
-    // this is suboptimal (quadratic, but wps should stay in the sub-100 range anyway)
-    QVector<Waypoint* > wps = currWPManager->getGlobalFrameAndNavTypeWaypointList();
-    foreach (Waypoint* wp, waypointsToIcons.keys())
-    {
-        // Get icon to work on
-        mapcontrol::WayPointItem* icon = waypointsToIcons.value(wp);
-        if (!wps.contains(wp))
+        // Delete first all old waypoints
+        // this is suboptimal (quadratic, but wps should stay in the sub-100 range anyway)
+        QVector<Waypoint* > wps = currWPManager->getGlobalFrameAndNavTypeWaypointList();
+        foreach (Waypoint* wp, waypointsToIcons.keys())
         {
-            waypointsToIcons.remove(wp);
-            iconsToWaypoints.remove(icon);
-            WPDelete(icon);
+            // Get icon to work on
+            mapcontrol::WayPointItem* icon = waypointsToIcons.value(wp);
+            if (!wps.contains(wp))
+            {
+                waypointsToIcons.remove(wp);
+                iconsToWaypoints.remove(icon);
+                WPDelete(icon);
+            }
+        }
+
+        // Update all existing waypoints
+        foreach (Waypoint* wp, waypointsToIcons.keys())
+        {
+            // Update remaining waypoints
+            updateWaypoint(uas, wp);
+        }
+
+        // Update all potentially new waypoints
+        foreach (Waypoint* wp, wps)
+        {
+            // Update / add only if new
+            if (!waypointsToIcons.contains(wp)) updateWaypoint(uas, wp);
         }
     }
-
-    // Update all existing waypoints
-    foreach (Waypoint* wp, waypointsToIcons.keys())
-    {
-        // Update remaining waypoints
-        updateWaypoint(uas, wp);
-    }
-
-    // Update all potentially new waypoints
-    foreach (Waypoint* wp, wps)
-    {
-        // Update / add only if new
-        if (!waypointsToIcons.contains(wp)) updateWaypoint(uas, wp);
-    }
-
-//    int globalCount = uasInstance->getWaypointManager()->getGlobalFrameAndNavTypeCount();
-
-//        // Get already existing waypoints
-//        UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
-//        if (uasInstance) {
-//            // Get update rect of old content, this is what will be redrawn
-//            // in the last step
-//            QRect updateRect = waypointPath->boundingBox().toRect();
-
-//            // Get all waypoints, including non-global waypoints
-//            QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getWaypointList();
-
-//            // Clear if necessary
-//            if (wpList.count() == 0) {
-//                clearWaypoints(uas);
-//                return;
-//            }
-
-//            // Trim internal list to number of global waypoints in the waypoint manager list
-//            int overSize = waypointPath->points().count() - uasInstance->getWaypointManager()->getGlobalFrameAndNavTypeCount();
-//            if (overSize > 0) {
-//                // Remove n waypoints at the end of the list
-//                // the remaining waypoints will be updated
-//                // in the next step
-//                for (int i = 0; i < overSize; ++i) {
-//                    wps.removeLast();
-//                    mc->layer("Waypoints")->removeGeometry(wpIcons.last());
-//                    wpIcons.removeLast();
-//                    waypointPath->points().removeLast();
-//                }
-//            }
-
-//            // Load all existing waypoints into map view
-//            foreach (Waypoint* wp, wpList) {
-//                // Block map draw updates, since we update everything in the next step
-//                // but update internal data structures.
-//                // Please note that updateWaypoint() ignores non-global waypoints
-//                updateWaypoint(mav->getUASID(), wp, false);
-//            }
-
-//            // Update view
-//            if (isVisible()) mc->updateRequest(updateRect);
-//        }
-                        }
 }
 
 

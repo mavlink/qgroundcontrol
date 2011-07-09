@@ -43,6 +43,8 @@ public slots:
     void activeUASSet(UASInterface* uas);
     /** @brief Show a dialog to jump to given GPS coordinates */
     void showGoToDialog();
+    /** @brief Jump to the home position on the map */
+    void goHome();
     /** @brief Update this waypoint for this UAS */
     void updateWaypoint(int uas, Waypoint* wp);
     /** @brief Update the whole waypoint */

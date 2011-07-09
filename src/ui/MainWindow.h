@@ -76,6 +76,8 @@ This file is part of the QGROUNDCONTROL project
 #include "SlugsPadCameraControl.h"
 #include "UASControlParameters.h"
 
+class QGCMapTool;
+
 /**
  * @brief Main Application Window
  *
@@ -376,7 +378,7 @@ protected:
 
     QPointer<HUD> hudWidget;
 
-    QPointer<mapcontrol::OPMapWidget> mapWidget;
+    QPointer<QGCMapTool> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
 #ifdef QGC_OSG_ENABLED
