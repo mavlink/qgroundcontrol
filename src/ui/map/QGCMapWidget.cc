@@ -133,9 +133,9 @@ void QGCMapWidget::loadSettings()
     settings.endGroup();
 
     // SET INITIAL POSITION AND ZOOM
-    SetZoom(lastZoom); // set map zoom level
     internals::PointLatLng pos_lat_lon = internals::PointLatLng(lastLat, lastLon);
     SetCurrentPosition(pos_lat_lon);        // set the map position
+    SetZoom(lastZoom); // set map zoom level
 }
 
 void QGCMapWidget::storeSettings()
@@ -152,7 +152,7 @@ void QGCMapWidget::storeSettings()
 
 void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
 {
-    OPMapWidget::mouseDoubleClickEvent(event);
+    //OPMapWidget::mouseDoubleClickEvent(event);
     if (currEditMode == EDIT_MODE_WAYPOINTS)
     {
         // If a waypoint manager is available
@@ -372,14 +372,24 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
 
     // Update WP values
     internals::PointLatLng pos = waypoint->Coord();
+
+    // Block waypoint signals
+    wp->blockSignals(true);
     wp->setLatitude(pos.Lat());
     wp->setLongitude(pos.Lng());
     wp->setAltitude(waypoint->Altitude());
+    wp->blockSignals(false);
 
-    qDebug() << "WP: LAT:" << pos.Lat() << "LON:" << pos.Lng();
+
+    internals::PointLatLng coord = waypoint->Coord();
+    QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
+    qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
+    QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
+    qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
+
+    firingWaypointChange = NULL;
 
     emit waypointChanged(wp);
-    firingWaypointChange = NULL;
 }
 
 // WAYPOINT UPDATE FUNCTIONS

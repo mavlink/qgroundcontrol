@@ -108,7 +108,7 @@ void Waypoint::setId(quint16 id)
 
 void Waypoint::setX(double x)
 {
-    if (this->x != x) {
+    if (this->x != x && (this->frame == MAV_FRAME_LOCAL)) {
         this->x = x;
         emit changed(this);
     }
@@ -116,7 +116,7 @@ void Waypoint::setX(double x)
 
 void Waypoint::setY(double y)
 {
-    if (this->y != y) {
+    if (this->y != y && (this->frame == MAV_FRAME_LOCAL)) {
         this->y = y;
         emit changed(this);
     }
@@ -124,7 +124,7 @@ void Waypoint::setY(double y)
 
 void Waypoint::setZ(double z)
 {
-    if (this->z != z) {
+    if (this->z != z && (this->frame == MAV_FRAME_LOCAL)) {
         this->z = z;
         emit changed(this);
     }
@@ -132,27 +132,24 @@ void Waypoint::setZ(double z)
 
 void Waypoint::setLatitude(double lat)
 {
-    if (this->x != lat) {
+    if (this->x != lat && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT))) {
         this->x = lat;
-        this->frame = MAV_FRAME_GLOBAL;
         emit changed(this);
     }
 }
 
 void Waypoint::setLongitude(double lon)
 {
-    if (this->y != lon) {
+    if (this->y != lon && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT))) {
         this->y = lon;
-        this->frame = MAV_FRAME_GLOBAL;
         emit changed(this);
     }
 }
 
 void Waypoint::setAltitude(double altitude)
 {
-    if (this->z != altitude) {
+    if (this->z != altitude && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT))) {
         this->z = altitude;
-        this->frame = MAV_FRAME_GLOBAL;
         emit changed(this);
     }
 }
