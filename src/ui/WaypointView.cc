@@ -71,9 +71,9 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(m_ui->posESpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
     connect(m_ui->posDSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
 
-    connect(m_ui->latSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
-    connect(m_ui->lonSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
-    connect(m_ui->altSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
+    connect(m_ui->latSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setLatitude(double)));
+    connect(m_ui->lonSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setLongitude(double)));
+    connect(m_ui->altSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setAltitude(double)));
     connect(m_ui->yawSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setYaw(int)));
 
     connect(m_ui->upButton, SIGNAL(clicked()), this, SLOT(moveUp()));
@@ -391,14 +391,26 @@ void WaypointView::updateValues()
     break;
     case MAV_FRAME_GLOBAL:
     case MAV_FRAME_GLOBAL_RELATIVE_ALT: {
-        if (m_ui->latSpinBox->value() != wp->getX()) {
-            m_ui->latSpinBox->setValue(wp->getX());
+        if (m_ui->latSpinBox->value() != wp->getLatitude()) {
+            // Rounding might occur, prevent spin box from
+            // firing back changes
+            m_ui->latSpinBox->blockSignals(true);
+            m_ui->latSpinBox->setValue(wp->getLatitude());
+            m_ui->latSpinBox->blockSignals(false);
         }
-        if (m_ui->lonSpinBox->value() != wp->getY()) {
-            m_ui->lonSpinBox->setValue(wp->getY());
+        if (m_ui->lonSpinBox->value() != wp->getLongitude()) {
+            // Rounding might occur, prevent spin box from
+            // firing back changes
+            m_ui->lonSpinBox->blockSignals(true);
+            m_ui->lonSpinBox->setValue(wp->getLongitude());
+            m_ui->lonSpinBox->blockSignals(false);
         }
-        if (m_ui->altSpinBox->value() != wp->getZ()) {
-            m_ui->altSpinBox->setValue(wp->getZ());
+        if (m_ui->altSpinBox->value() != wp->getAltitude()) {
+            // Rounding might occur, prevent spin box from
+            // firing back changes
+            m_ui->altSpinBox->blockSignals(true);
+            m_ui->altSpinBox->setValue(wp->getAltitude());
+            m_ui->altSpinBox->blockSignals(false);
         }
     }
     break;

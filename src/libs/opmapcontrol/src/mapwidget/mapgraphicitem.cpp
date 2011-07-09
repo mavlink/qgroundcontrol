@@ -455,17 +455,15 @@ namespace mapcontrol
     }
     internals::PointLatLng MapGraphicItem::FromLocalToLatLng(int x, int y)
     {
-        // It is IMPORTANT here to use full precision during the calculations!
-        double lat, lon;
         if(MapRenderTransform!=1)
         {
-            lat=x+((static_cast<double>(boundingRect().width())*MapRenderTransform)-(boundingRect().width()))/2.0f;
-            lon=y+((static_cast<double>(boundingRect().height())*MapRenderTransform)-(boundingRect().height()))/2.0f;
+            x=x+((boundingRect().width()*MapRenderTransform)-(boundingRect().width()))/2;
+            y=y+((boundingRect().height()*MapRenderTransform)-(boundingRect().height()))/2;
 
-            lat = (x / MapRenderTransform);
-            lon = (y / MapRenderTransform);
+            x = (int) (x / MapRenderTransform);
+            y = (int) (y / MapRenderTransform);
         }
-        return core->FromLocalToLatLng(lat, lon);
+        return core->FromLocalToLatLng(x, y);
     }
     float MapGraphicItem::metersToPixels(double meters, internals::PointLatLng coord)
     {
