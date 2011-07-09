@@ -24,6 +24,9 @@ public:
 //    double headingP1P2(internals::PointLatLng p1, internals::PointLatLng p2);
 //    internals::PointLatLng targetLatLon(internals::PointLatLng source, double heading, double dist);
 
+    /** @brief Map centered on current active system */
+    bool getFollowUAVEnabled() { return followUAVEnabled; }
+
 signals:
     void homePositionChanged(double latitude, double longitude, double altitude);
     /** @brief Signal for newly created map waypoints */
@@ -53,6 +56,10 @@ public slots:
     void updateHomePosition(double latitude, double longitude, double altitude);
     /** @brief Set update rate limit */
     void setUpdateRateLimit(float seconds);
+    /** @brief Cache visible region to harddisk */
+    void cacheVisibleRegion();
+    /** @brief Set follow mode */
+    void setFollowUAVEnabled(bool enabled) { followUAVEnabled = enabled; }
 
     void loadSettings();
     void storeSettings();
@@ -85,6 +92,8 @@ protected:
         EDIT_MODE_CACHING
     };
     editMode currEditMode;            ///< The current edit mode on the map
+    bool followUAVEnabled;              ///< Does the map follow the UAV?
+    int followUAVID;                    ///< Which UAV should be tracked?
 
 
 };

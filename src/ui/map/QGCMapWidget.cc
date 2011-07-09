@@ -10,9 +10,12 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
         mapcontrol::OPMapWidget(parent),
         currWPManager(NULL),
         firingWaypointChange(NULL),
-        maxUpdateInterval(2) // 2 seconds
+        maxUpdateInterval(2), // 2 seconds
+        followUAVEnabled(false)
 {
     // Widget is inactive until shown
+
+    // Set cache mode
 }
 
 QGCMapWidget::~QGCMapWidget()
@@ -152,7 +155,7 @@ void QGCMapWidget::storeSettings()
 
 void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
 {
-    //OPMapWidget::mouseDoubleClickEvent(event);
+    OPMapWidget::mouseDoubleClickEvent(event);
     if (currEditMode == EDIT_MODE_WAYPOINTS)
     {
         // If a waypoint manager is available
@@ -213,6 +216,7 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypoint(Waypoint*)));
         connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChange(Waypoint*)));
         updateSelectedSystem(uas->getUASID());
+        followUAVID = uas->getUASID();
     }
 }
 
@@ -246,6 +250,8 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
         // Set new lat/lon position of UAV icon
         internals::PointLatLng pos_lat_lon = internals::PointLatLng(lat, lon);
         uav->SetUAVPos(pos_lat_lon, alt);
+        // Follow status
+        if (followUAVEnabled && uas->getUASID() == followUAVID) SetCurrentPosition(pos_lat_lon);
         // Convert from radians to degrees and apply
         uav->SetUAVHeading((uas->getYaw()/M_PI)*180.0f);
     }
@@ -265,14 +271,15 @@ void QGCMapWidget::updateGlobalPosition()
         if (uav == NULL)
         {
             MAV2DIcon* newUAV = new MAV2DIcon(map, this, system);
-            newUAV->setParentItem(map);
-            UAVS.insert(system->getUASID(), newUAV);
-            uav = GetUAV(system->getUASID());
+            AddUAV(system->getUASID(), newUAV);
+            uav = newUAV;
         }
 
         // Set new lat/lon position of UAV icon
         internals::PointLatLng pos_lat_lon = internals::PointLatLng(system->getLatitude(), system->getLongitude());
         uav->SetUAVPos(pos_lat_lon, system->getAltitude());
+        // Follow status
+        if (followUAVEnabled && system->getUASID() == followUAVID) SetCurrentPosition(pos_lat_lon);
         // Convert from radians to degrees and apply
         uav->SetUAVHeading((system->getYaw()/M_PI)*180.0f);
     }
@@ -316,7 +323,7 @@ void QGCMapWidget::showGoToDialog()
     bool ok;
     QString text = QInputDialog::getText(this, tr("Please enter coordinates"),
                                          tr("Coordinates (Lat,Lon):"), QLineEdit::Normal,
-                                         QString("%1,%2").arg(CurrentPosition().Lat()).arg( CurrentPosition().Lng()), &ok);
+                                         QString("%1,%2").arg(CurrentPosition().Lat(), 0, 'g', 6).arg(CurrentPosition().Lng(), 0, 'g', 6), &ok);
     if (ok && !text.isEmpty()) {
         QStringList split = text.split(",");
         if (split.length() == 2) {
@@ -355,6 +362,26 @@ void QGCMapWidget::setUpdateRateLimit(float seconds)
 {
     maxUpdateInterval = seconds;
     updateTimer.start(maxUpdateInterval*1000);
+}
+
+void QGCMapWidget::cacheVisibleRegion()
+{
+    internals::RectLatLng rect = map->SelectedArea();
+
+    if (rect.IsEmpty())
+    {
+        QMessageBox msgBox(this);
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setText("Cannot cache tiles for offline use");
+        msgBox.setInformativeText("Please select an area first by holding down SHIFT or ALT and selecting the area with the left mouse button.");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.exec();
+    }
+
+    RipMap();
+
+    // FIXME UNSELECT AREA NOW
 }
 
 
@@ -407,73 +434,84 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
 {
     // Source of the event was in this widget, do nothing
     if (firingWaypointChange == wp) return;
-        // Currently only accept waypoint updates from the UAS in focus
-        // this has to be changed to accept read-only updates from other systems as well.
-        if (UASManager::instance()->getUASForId(uas)->getWaypointManager() == currWPManager) {
-            // Only accept waypoints in global coordinate frame
-            if (((wp->getFrame() == MAV_FRAME_GLOBAL) || (wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)) && wp->isNavigationType()) {
-                // We're good, this is a global waypoint
+    // Currently only accept waypoint updates from the UAS in focus
+    // this has to be changed to accept read-only updates from other systems as well.
+    if (UASManager::instance()->getUASForId(uas)->getWaypointManager() == currWPManager) {
+        // Only accept waypoints in global coordinate frame
+        if (((wp->getFrame() == MAV_FRAME_GLOBAL) || (wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)) && wp->isNavigationType()) {
+            // We're good, this is a global waypoint
 
-                // Get the index of this waypoint
-                // note the call to getGlobalFrameAndNavTypeIndexOf()
-                // as we're only handling global waypoints
-                int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
-                UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
-                // If not found, return (this should never happen, but helps safety)
-                if (wpindex == -1) return;
-                // Mark this wp as currently edited
-                firingWaypointChange = wp;
+            // Get the index of this waypoint
+            // note the call to getGlobalFrameAndNavTypeIndexOf()
+            // as we're only handling global waypoints
+            int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
+            UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+            // If not found, return (this should never happen, but helps safety)
+            if (wpindex == -1) return;
+            // Mark this wp as currently edited
+            firingWaypointChange = wp;
 
-                // Check if wp exists yet in map
-                if (!waypointsToIcons.contains(wp)) {
-                    // Create icon for new WP
-                    Waypoint2DIcon* icon = new Waypoint2DIcon(map, this, wp, uasInstance->getColor(), wpindex);
-                    ConnectWP(icon);
-                    icon->setParentItem(map);
-                    // Update maps to allow inverse data association
-                    waypointsToIcons.insert(wp, icon);
-                    iconsToWaypoints.insert(icon, wp);
-                } else {
-                    // Waypoint exists, block it's signals and update it
-                    mapcontrol::WayPointItem* icon = waypointsToIcons.value(wp);
-                    // Make sure we don't die on a null pointer
-                    // this should never happen, just a precaution
-                    if (!icon) return;
-                    // Block outgoing signals to prevent an infinite signal loop
-                    // should not happen, just a precaution
-                    this->blockSignals(true);
-                    // Update the WP
-                    Waypoint2DIcon* wpicon = dynamic_cast<Waypoint2DIcon*>(icon);
-                    if (wpicon)
-                    {
-                        // Let icon read out values directly from waypoint
-                        icon->SetNumber(wpindex);
-                        wpicon->updateWaypoint();
-                    }
-                    else
-                    {
-                        // Use safe standard interfaces for non Waypoint-class based wps
-                        icon->SetCoord(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()));
-                        icon->SetAltitude(wp->getAltitude());
-                        icon->SetHeading(wp->getYaw());
-                        icon->SetNumber(wpindex);
-                    }
-                    // Re-enable signals again
-                    this->blockSignals(false);
-                }
+            // Check if wp exists yet in map
+            if (!waypointsToIcons.contains(wp)) {
+                // Create icon for new WP
+                Waypoint2DIcon* icon = new Waypoint2DIcon(map, this, wp, uasInstance->getColor(), wpindex);
+                ConnectWP(icon);
+                icon->setParentItem(map);
+                // Update maps to allow inverse data association
+                waypointsToIcons.insert(wp, icon);
+                iconsToWaypoints.insert(icon, wp);
 
-                firingWaypointChange = NULL;
-
+                // Add line element
+                qDebug() << "ADDING LINE";
+                mapcontrol::TrailLineItem* line = new mapcontrol::TrailLineItem(internals::PointLatLng(0.2, 0.2), icon->Coord(), QBrush(Qt::red), map);
+               QGraphicsItemGroup* group = waypointLines.value(uas, NULL);
+               if (group)
+               {
+                   group->addToGroup(line);
+                   qDebug() << "ADDED LINE!";
+               }
+                line->setVisible(true);
             } else {
-                // Check if the index of this waypoint is larger than the global
-                // waypoint list. This implies that the coordinate frame of this
-                // waypoint was changed and the list containing only global
-                // waypoints was shortened. Thus update the whole list
-                if (waypointsToIcons.size() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeCount()) {
-                    updateWaypointList(uas);
+                // Waypoint exists, block it's signals and update it
+                mapcontrol::WayPointItem* icon = waypointsToIcons.value(wp);
+                // Make sure we don't die on a null pointer
+                // this should never happen, just a precaution
+                if (!icon) return;
+                // Block outgoing signals to prevent an infinite signal loop
+                // should not happen, just a precaution
+                this->blockSignals(true);
+                // Update the WP
+                Waypoint2DIcon* wpicon = dynamic_cast<Waypoint2DIcon*>(icon);
+                if (wpicon)
+                {
+                    // Let icon read out values directly from waypoint
+                    icon->SetNumber(wpindex);
+                    wpicon->updateWaypoint();
                 }
+                else
+                {
+                    // Use safe standard interfaces for non Waypoint-class based wps
+                    icon->SetCoord(internals::PointLatLng(wp->getLatitude(), wp->getLongitude()));
+                    icon->SetAltitude(wp->getAltitude());
+                    icon->SetHeading(wp->getYaw());
+                    icon->SetNumber(wpindex);
+                }
+                // Re-enable signals again
+                this->blockSignals(false);
+            }
+
+            firingWaypointChange = NULL;
+
+        } else {
+            // Check if the index of this waypoint is larger than the global
+            // waypoint list. This implies that the coordinate frame of this
+            // waypoint was changed and the list containing only global
+            // waypoints was shortened. Thus update the whole list
+            if (waypointsToIcons.size() > UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeCount()) {
+                updateWaypointList(uas);
             }
         }
+    }
 }
 
 /**
