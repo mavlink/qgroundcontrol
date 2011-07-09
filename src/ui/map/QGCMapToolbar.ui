@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QGCMapToolbar</class>
- <widget class="QWidget" name="QGCMapToolbar">
+ <class>QGCMapToolBar</class>
+ <widget class="QWidget" name="QGCMapToolBar">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>617</width>
-    <height>28</height>
+    <width>669</width>
+    <height>35</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,19 +18,19 @@
     <number>12</number>
    </property>
    <property name="margin">
-    <number>2</number>
+    <number>4</number>
    </property>
    <item>
-    <widget class="QPushButton" name="goToLatLonButton">
+    <widget class="QLabel" name="posLabel">
      <property name="text">
-      <string>Lat/Lon</string>
+      <string>00.00 00.00</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="goToHomeButton">
+    <widget class="QPushButton" name="goToButton">
      <property name="text">
-      <string>Home</string>
+      <string>Lat/Lon</string>
      </property>
     </widget>
    </item>
@@ -39,24 +39,34 @@
      <property name="text">
       <string>Edit</string>
      </property>
-     <property name="checkable">
-      <bool>true</bool>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="goHomeButton">
+     <property name="text">
+      <string>Go Home</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="setHomeButton">
+    <widget class="QCheckBox" name="followCheckBox">
      <property name="text">
-      <string>Set Home</string>
+      <string>Follow</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="latLonLabel">
-     <property name="text">
-      <string>Mouse Coordinate</string>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
-    </widget>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>242</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>
