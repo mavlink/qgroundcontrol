@@ -19,6 +19,11 @@ public:
 
     void setMap(QGCMapWidget* map);
 
+public slots:
+    void tileLoadStart();
+    void tileLoadEnd();
+    void tileLoadProgress(int progress);
+
 protected:
     QGCMapWidget* map;
 

@@ -109,6 +109,13 @@ namespace mapcontrol
         double ZoomDigi();
         double ZoomTotal();
 
+        /**
+        * @brief The area currently selected by the user
+        *
+        * @return The rectangle in lat/lon coordinates currently selected
+        */
+        internals::RectLatLng SelectedArea()const{return selectedArea;}
+
     protected:
         void mouseMoveEvent ( QGraphicsSceneMouseEvent * event );
         void mousePressEvent ( QGraphicsSceneMouseEvent * event );
@@ -190,7 +197,6 @@ namespace mapcontrol
         int MinZoom()const{return minZoom;}
         internals::MouseWheelZoomType::Types GetMouseWheelZoomType(){return core->GetMouseWheelZoomType();}
         void SetSelectedArea(internals::RectLatLng const& value){selectedArea = value;this->update();}
-        internals::RectLatLng SelectedArea()const{return selectedArea;}
         internals::RectLatLng BoundsOfMap;
         void Offset(int const& x, int const& y);
         bool CanDragMap()const{return core->CanDragMap;}
