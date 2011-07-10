@@ -10,6 +10,8 @@ INCLUDEPATH += . \
 # HACK! BIG TIME!
 DEFINES += EXTERNAL_USE
 
+DEFINES += QTCREATOR_UTILS_LIB
+
 # Input
 HEADERS += abstractprocess.h \
            basevalidatinglineedit.h \
@@ -70,12 +72,19 @@ SOURCES += abstractprocess_win.cpp \
            winutils.cpp
 }
 
+macx {
+SOURCES += consoleprocess_unix.cpp
+}
+
+linux-g++ {
+SOURCES += consoleprocess_unix.cpp
+}
+
 SOURCES += basevalidatinglineedit.cpp \
            checkablemessagebox.cpp \
            classnamevalidatinglineedit.cpp \
            codegeneration.cpp \
            consoleprocess.cpp \
-           consoleprocess_unix.cpp \
            coordinateconversions.cpp \
            detailsbutton.cpp \
            detailswidget.cpp \
