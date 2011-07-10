@@ -21,6 +21,11 @@ public slots:
     * @param waypoint The waypoint object that just changed
     */
     void updateWPValues(WayPointItem* waypoint);
+    /**
+    * @brief Update waypoint values
+    *
+    */
+    void RefreshPos();
 
 protected:
     internals::PointLatLng point1;

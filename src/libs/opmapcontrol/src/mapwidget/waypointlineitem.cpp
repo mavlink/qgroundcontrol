@@ -35,6 +35,23 @@ WaypointLineItem::WaypointLineItem(WayPointItem* wp1, WayPointItem* wp2, QColor 
     // Map Zoom and move
 }
 
+void WaypointLineItem::RefreshPos()
+{
+    // Delete if either waypoint got deleted
+    if (!wp1 || !wp2)
+    {
+        this->deleteLater();
+    }
+    else
+    {
+        // Set new pixel coordinates based on new global coordinates
+        core::Point localPoint1 = map->FromLatLngToLocal(wp1->Coord());
+        core::Point localPoint2 = map->FromLatLngToLocal(wp2->Coord());
+
+        setLine(localPoint1.X(), localPoint1.Y(), localPoint2.X(), localPoint2.Y());
+    }
+}
+
 void WaypointLineItem::updateWPValues(WayPointItem* waypoint)
 {
     Q_UNUSED(waypoint);
