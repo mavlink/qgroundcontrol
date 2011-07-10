@@ -28,6 +28,7 @@
 #include "gpsitem.h"
 #include "homeitem.h"
 #include "mapgraphicitem.h"
+#include "waypointlineitem.h"
 
 namespace mapcontrol
 {
@@ -91,6 +92,13 @@ namespace mapcontrol
             GPSItem* wwww=qgraphicsitem_cast<GPSItem*>(i);
             if(wwww)
                 wwww->RefreshPos();
+            QGraphicsItemGroup* wwwww=qgraphicsitem_cast<QGraphicsItemGroup*>(i);
+            if(wwwww)
+                foreach(QGraphicsItem* i, wwwww->childItems())
+                {
+                    WaypointLineItem* line = qgraphicsitem_cast<WaypointLineItem*>(i);
+                    if (line) line->RefreshPos();
+                }
         }
     }
     void MapGraphicItem::ChildPosRefresh()
@@ -109,6 +117,13 @@ namespace mapcontrol
             GPSItem* wwww=qgraphicsitem_cast<GPSItem*>(i);
             if(wwww)
                 wwww->RefreshPos();
+            QGraphicsItemGroup* wwwww=qgraphicsitem_cast<QGraphicsItemGroup*>(i);
+            if(wwwww)
+                foreach(QGraphicsItem* i, wwwww->childItems())
+                {
+                    WaypointLineItem* line = qgraphicsitem_cast<WaypointLineItem*>(i);
+                    if (line) line->RefreshPos();
+                }
         }
     }
     void MapGraphicItem::ConstructLastImage(int const& zoomdiff)
