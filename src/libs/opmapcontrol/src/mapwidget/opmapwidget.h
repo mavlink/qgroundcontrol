@@ -391,8 +391,9 @@ namespace mapcontrol
         bool showuav;
         bool showhome;
         QTimer * diagTimer;
-        QGraphicsTextItem * diagGraphItem;
         bool showDiag;
+        QGraphicsTextItem * diagGraphItem;
+
     private slots:
         void diagRefresh();
         //   WayPointItem* item;//apagar

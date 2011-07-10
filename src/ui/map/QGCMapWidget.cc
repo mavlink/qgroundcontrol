@@ -155,19 +155,18 @@ void QGCMapWidget::storeSettings()
 
 void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
 {
-    OPMapWidget::mouseDoubleClickEvent(event);
+
     // FIXME HACK!
-    currEditMode = EDIT_MODE_WAYPOINTS;
-    if (currEditMode == EDIT_MODE_WAYPOINTS)
+    //if (currEditMode == EDIT_MODE_WAYPOINTS)
     {
         // If a waypoint manager is available
         if (currWPManager)
         {
             // Create new waypoint
-            internals::PointLatLng pos = this->currentMousePosition();
+            internals::PointLatLng pos = map->FromLocalToLatLng(event->pos().x(), event->pos().y());
             Waypoint* wp = currWPManager->createWaypoint();
 //            wp->blockSignals(true);
-            wp->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
+//            wp->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
             wp->setLatitude(pos.Lat());
             wp->setLongitude(pos.Lng());
             wp->setAltitude(0);
@@ -175,6 +174,7 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
 //            currWPManager->notifyOfChange(wp);
         }
     }
+    OPMapWidget::mouseDoubleClickEvent(event);
 }
 
 
@@ -471,12 +471,13 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                     if (prevIcon)
                     {
                         mapcontrol::WaypointLineItem* line = new mapcontrol::WaypointLineItem(prevIcon, icon, wpColor, map);
+                        line->setParentItem(map);
                         QGraphicsItemGroup* group = waypointLines.value(uas, NULL);
                         if (group)
                         {
                             group->addToGroup(line);
+                            group->setParentItem(map);
                         }
-                        line->setVisible(true);
                     }
                 }
             } else {
@@ -588,13 +589,13 @@ void QGCMapWidget::updateWaypointList(int uas)
                 QColor wpColor(Qt::red);
                 if (uasInstance) wpColor = uasInstance->getColor();
                 mapcontrol::WaypointLineItem* line = new mapcontrol::WaypointLineItem(prevIcon, currIcon, wpColor, map);
+                line->setParentItem(map);
                 QGraphicsItemGroup* group = waypointLines.value(uas, NULL);
                 if (group)
                 {
                     group->addToGroup(line);
-                    qDebug() << "ADDED LINE!";
+                    group->setParentItem(map);
                 }
-                line->setVisible(true);
             }
             prevIcon = currIcon;
         }

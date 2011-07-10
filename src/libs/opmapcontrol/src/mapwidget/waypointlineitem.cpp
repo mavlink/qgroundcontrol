@@ -3,12 +3,13 @@
 namespace mapcontrol
 {
 WaypointLineItem::WaypointLineItem(WayPointItem* wp1, WayPointItem* wp2, QColor color, mapcontrol::MapGraphicItem* map) :
+        QGraphicsLineItem(map),
     wp1(wp1),
     wp2(wp2),
     map(map)
 {
     // Make sure this stick to the map
-    this->setFlag(QGraphicsItem::ItemIgnoresTransformations,true);
+    //this->setFlag(QGraphicsItem::Item,true);
     setParentItem(map);
 
     // Set up the pen for this icon with the UAV color
@@ -30,6 +31,8 @@ WaypointLineItem::WaypointLineItem(WayPointItem* wp1, WayPointItem* wp2, QColor 
     // Delete line if one of the waypoints get deleted
     connect(wp1, SIGNAL(destroyed()), this, SLOT(deleteLater()));
     connect(wp2, SIGNAL(destroyed()), this, SLOT(deleteLater()));
+
+    // Map Zoom and move
 }
 
 void WaypointLineItem::updateWPValues(WayPointItem* waypoint)
@@ -48,6 +51,11 @@ void WaypointLineItem::updateWPValues(WayPointItem* waypoint)
 
         setLine(localPoint1.X(), localPoint1.Y(), localPoint2.X(), localPoint2.Y());
     }
+}
+
+int WaypointLineItem::type()const
+{
+    return Type;
 }
 
 }

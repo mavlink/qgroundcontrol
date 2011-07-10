@@ -55,8 +55,7 @@ HEADERS += abstractprocess.h \
            xmlconfig.h
 
 win32 {
-HEADERS += winutils.h \
-           qwineventnotifier_p.h
+HEADERS += winutils.h
 }
 
 FORMS += checkablemessagebox.ui \

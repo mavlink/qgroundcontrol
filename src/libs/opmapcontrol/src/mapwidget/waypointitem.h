@@ -121,7 +121,7 @@ public:
     *
     * @param value
     */
-    void SetShowNumber(bool const& value);
+    virtual void SetShowNumber(bool const& value);
     /**
     * @brief Returns the WayPoint altitude in meters
     *
@@ -162,8 +162,12 @@ protected:
     void mouseReleaseEvent ( QGraphicsSceneMouseEvent * event );
 
     MapGraphicItem* map;
-
-private:
+    bool autoreachedEnabled;    ///< If the waypoint should change appearance once it has been reached
+    QGraphicsSimpleTextItem* text;
+    QGraphicsRectItem* textBG;
+    QGraphicsSimpleTextItem* numberI;
+    QGraphicsRectItem* numberIBG;
+    QTransform transf;
     internals::PointLatLng coord;//coordinates of this WayPoint
     bool reached;
     QString description;
@@ -172,13 +176,6 @@ private:
     double altitude;
     float heading;
     int number;
-
-
-    QGraphicsSimpleTextItem* text;
-    QGraphicsRectItem* textBG;
-    QGraphicsSimpleTextItem* numberI;
-    QGraphicsRectItem* numberIBG;
-    QTransform transf;
 
 public slots:
     /**

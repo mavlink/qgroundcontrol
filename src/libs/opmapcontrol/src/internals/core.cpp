@@ -33,8 +33,21 @@ qlonglong internals::Core::debugcounter=0;
 using namespace projections;
 
 namespace internals {
-    Core::Core():MouseWheelZooming(false),currentPosition(0,0),currentPositionPixel(0,0),LastLocationInBounds(-1,-1),sizeOfMapArea(0,0)
-            ,minOfTiles(0,0),maxOfTiles(0,0),zoom(0),isDragging(false),TooltipTextPadding(10,10),loaderLimit(5),maxzoom(21),started(false),runningThreads(0)
+    Core::Core() :
+    MouseWheelZooming(false),
+    currentPosition(0,0),
+    currentPositionPixel(0,0),
+    LastLocationInBounds(-1,-1),
+    sizeOfMapArea(0,0),
+    minOfTiles(0,0),
+    maxOfTiles(0,0),
+    zoom(0),
+    isDragging(false),
+    TooltipTextPadding(10,10),
+    loaderLimit(5),
+    maxzoom(21),
+    runningThreads(0),
+    started(false)
     {
         mousewheelzoomtype=MouseWheelZoomType::MousePositionAndCenter;
         SetProjection(new MercatorProjection());

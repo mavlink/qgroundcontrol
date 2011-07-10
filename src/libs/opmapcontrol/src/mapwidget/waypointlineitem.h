@@ -10,7 +10,9 @@ class WaypointLineItem : public QObject,public QGraphicsLineItem
     Q_OBJECT
     Q_INTERFACES(QGraphicsItem)
 public:
+    enum { Type = UserType + 7 };
     WaypointLineItem(WayPointItem* wp1, WayPointItem* wp2, QColor color=QColor(Qt::red), MapGraphicItem* parent=0);
+    int type() const;
 
 public slots:
     /**

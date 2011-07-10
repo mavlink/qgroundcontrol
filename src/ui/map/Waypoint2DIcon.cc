@@ -1,6 +1,7 @@
 #include "Waypoint2DIcon.h"
 #include <QPainter>
 #include "opmapcontrol.h"
+#include "QGC.h"
 
 Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, qreal latitude, qreal longitude, qreal altitude, int listindex, QString name, QString description, int radius)
     : mapcontrol::WayPointItem(internals::PointLatLng(latitude, longitude), altitude, description, map),
@@ -13,10 +14,11 @@ Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMa
 {
     SetHeading(0);
     SetNumber(listindex);
-    if (mypen == NULL) mypen = new QPen(Qt::red);
-//    drawIcon(mypen);
     this->setFlag(QGraphicsItem::ItemIgnoresTransformations,true);
     picture = QPixmap(radius+1, radius+1);
+    autoreachedEnabled = false; // In contrast to the use in OpenPilot, we don't
+                                // want to let the map interfere with the actual mission logic
+                                // wether a WP is reached depends solely on the UAV's state machine
     drawIcon();
 }
 
@@ -31,22 +33,16 @@ Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMa
 {
     SetHeading(wp->getYaw());
     SetNumber(listindex);
-    if (mypen == NULL) mypen = new QPen(Qt::red);
-//    drawIcon(mypen);
     this->setFlag(QGraphicsItem::ItemIgnoresTransformations,true);
     picture = QPixmap(radius+1, radius+1);
+    autoreachedEnabled = false; // In contrast to the use in OpenPilot, we don't
+                                // want to let the map interfere with the actual mission logic
+                                // wether a WP is reached depends solely on the UAV's state machine
     updateWaypoint();
 }
 
 Waypoint2DIcon::~Waypoint2DIcon()
 {
-    delete &picture;
-}
-
-void Waypoint2DIcon::setPen(QPen* pen)
-{
-    mypen = pen;
-//    drawIcon(pen);
 }
 
 void Waypoint2DIcon::SetHeading(float heading)
@@ -114,27 +110,23 @@ QRectF Waypoint2DIcon::boundingRect() const
     return QRectF(-width,-height,2*width,2*height);
 }
 
-void Waypoint2DIcon::SetReached(const bool &value)
-{
-    // DO NOTHING
-    Q_UNUSED(value);
-//    reached=value;
-//    emit WPValuesChanged(this);
-//    if(value)
-//        picture.load(QString::fromUtf8(":/markers/images/bigMarkerGreen.png"));
-//    else
-//        picture.load(QString::fromUtf8(":/markers/images/marker.png"));
-//    this->update();
-
-}
-
 void Waypoint2DIcon::drawIcon()
 {
     picture.fill(Qt::transparent);
     QPainter painter(&picture);
-    painter.setRenderHint(QPainter::TextAntialiasing, true);
     painter.setRenderHint(QPainter::Antialiasing, true);
     painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+
+    QFont font("Bitstream Vera Sans");
+    int fontSize = picture.height()*0.8f;
+    font.setPixelSize(fontSize);
+
+    QFontMetrics metrics = QFontMetrics(font);
+    int border = qMax(4, metrics.leading());
+    painter.setFont(font);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+
+
 
     QPen pen1(Qt::black);
     pen1.setWidth(4);
@@ -142,17 +134,19 @@ void Waypoint2DIcon::drawIcon()
     pen2.setWidth(2);
     painter.setBrush(Qt::NoBrush);
 
+    int penWidth = pen1.width();
+
     // DRAW WAYPOINT
     QPointF p(picture.width()/2, picture.height()/2);
 
     QPolygonF poly(4);
     // Top point
-    poly.replace(0, QPointF(p.x(), p.y()-picture.height()/2.0f+8*painter.pen().width()));
+    poly.replace(0, QPointF(p.x(), p.y()-picture.height()/2.0f+penWidth/2));
     // Right point
-    poly.replace(1, QPointF(p.x()+picture.width()/2.0f-8*painter.pen().width(), p.y()));
+    poly.replace(1, QPointF(p.x()+picture.width()/2.0f-penWidth/2, p.y()));
     // Bottom point
-    poly.replace(2, QPointF(p.x(), p.y() + picture.height()/2.0f-8*painter.pen().width()));
-    poly.replace(3, QPointF(p.x() - picture.width()/2.0f+8*painter.pen().width(), p.y()));
+    poly.replace(2, QPointF(p.x(), p.y() + picture.height()/2.0f-penWidth/2));
+    poly.replace(3, QPointF(p.x() - picture.width()/2.0f+penWidth/2, p.y()));
 
     int waypointSize = qMin(picture.width(), picture.height());
     float rad = (waypointSize/2.0f) * 0.7f * (1/sqrt(2.0f));
@@ -178,28 +172,36 @@ void Waypoint2DIcon::drawIcon()
     if ((waypoint != NULL) && (waypoint->getAction() == (int)MAV_CMD_NAV_TAKEOFF))
     {
         // Takeoff waypoint
-        int width = picture.width()-2*painter.pen().width();
-        int height = picture.height()-2*-painter.pen().width();
-        painter.drawRect(painter.pen().width()/2, painter.pen().width()/2, width, height);
-        painter.drawRect(width*0.2+painter.pen().width()/2, height*0.2f+painter.pen().width()/2, width*0.6f, height*0.6f);
+        int width = picture.width()-penWidth;
+        int height = picture.height()-penWidth;
+
+        painter.setPen(pen1);
+        painter.drawRect(penWidth/2, penWidth/2, width, height);
+        painter.setPen(pen2);
+        painter.drawRect(penWidth/2, penWidth/2, width, height);
+
+        painter.setPen(pen1);
+        painter.drawRect(width*0.3, height*0.3f, width*0.6f, height*0.6f);
+        painter.setPen(pen2);
+        painter.drawRect(width*0.3, height*0.3f, width*0.6f, height*0.6f);
     }
     else if ((waypoint != NULL) && (waypoint->getAction() == (int)MAV_CMD_NAV_LAND))
     {
         // Landing waypoint
-        int width = (picture.width())/2-painter.pen().width();
-        int height = (picture.height())/2-painter.pen().width();
+        int width = (picture.width())/2-penWidth;
+        int height = (picture.height())/2-penWidth;
         painter.setPen(pen1);
         painter.drawEllipse(p, width, height);
-        painter.drawLine(p.x()-width/2, p.y()-height/2, width, height);
+        painter.drawLine(p.x()-width/2, p.y()-height/2, 2*width, 2*height);
         painter.setPen(pen2);
         painter.drawEllipse(p, width, height);
-        painter.drawLine(p.x()-width/2, p.y()-height/2, width, height);
+        painter.drawLine(p.x()-width/2, p.y()-height/2, 2*width, 2*height);
     }
     else if ((waypoint != NULL) && ((waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_UNLIM) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TIME) || (waypoint->getAction() == (int)MAV_CMD_NAV_LOITER_TURNS)))
     {
         // Loiter waypoint
-        int width = (picture.width())/2-9*painter.pen().width();
-        int height = (picture.height())/2-9*painter.pen().width();
+        int width = (picture.width()-penWidth)/2;
+        int height = (picture.height()-penWidth)/2;
         painter.setPen(pen1);
         painter.drawEllipse(p, width, height);
         painter.drawPoint(p);
@@ -210,10 +212,24 @@ void Waypoint2DIcon::drawIcon()
     else if ((waypoint != NULL) && (waypoint->getAction() == (int)MAV_CMD_NAV_RETURN_TO_LAUNCH))
     {
         // Return to launch waypoint
-        int width = picture.width()-2*painter.pen().width();
-        int height = picture.height()-2*-painter.pen().width();
-        painter.drawRect(painter.pen().width()/2, painter.pen().width()/2, width, height);
-        painter.drawText(width/10, width/10, width/10*8, width/10*8, 0, QString("R"));
+        int width = picture.width()-penWidth;
+        int height = picture.height()-penWidth;
+        painter.setPen(pen1);
+        painter.drawRect(penWidth/2, penWidth/2, width, height);
+        painter.setPen(pen2);
+        painter.drawRect(penWidth/2, penWidth/2, width, height);
+
+        QString text("R");
+
+        painter.setPen(pen1);
+        QRect rect = metrics.boundingRect(0, 0, width - 2*border, height, Qt::AlignLeft | Qt::TextWordWrap, text);
+        painter.drawText(width/4, height/6, rect.width(), rect.height(),
+                          Qt::AlignCenter | Qt::TextWordWrap, text);
+        painter.setPen(pen2);
+
+        font.setPixelSize(fontSize*0.85f);
+        painter.setFont(font);
+        painter.drawText(width/4, height/6, rect.width(), rect.height(), Qt::AlignCenter | Qt::TextWordWrap, text);
     }
     else
     {
@@ -223,6 +239,30 @@ void Waypoint2DIcon::drawIcon()
         painter.setPen(pen2);
         painter.drawPolygon(poly);
     }
+}
+
+void Waypoint2DIcon::SetShowNumber(const bool &value)
+{
+    shownumber=value;
+    if((numberI==0) && value)
+    {
+        numberI=new QGraphicsSimpleTextItem(this);
+        numberIBG=new QGraphicsRectItem(this);
+        numberIBG->setBrush(Qt::black);
+        numberIBG->setOpacity(0.5);
+        numberI->setZValue(3);
+        numberI->setPen(QPen(QGC::colorCyan));
+        numberI->setPos(5,-picture.height());
+        numberIBG->setPos(5,-picture.height());
+        numberI->setText(QString::number(number));
+        numberIBG->setRect(numberI->boundingRect().adjusted(-2,0,1,0));
+    }
+    else if (!value && numberI)
+    {
+        delete numberI;
+        delete numberIBG;
+    }
+    this->update();
 }
 
 void Waypoint2DIcon::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -246,6 +286,7 @@ void Waypoint2DIcon::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     {
         QPen redPen = QPen(pen);
         redPen.setColor(Qt::yellow);
+        redPen.setWidth(1);
         painter->setPen(redPen);
         const int acceptance = map->metersToPixels(waypoint->getAcceptanceRadius(), Coord());
         painter->setPen(penBlack);
