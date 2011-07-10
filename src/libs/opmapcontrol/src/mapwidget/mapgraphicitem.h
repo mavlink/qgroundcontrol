@@ -169,6 +169,7 @@ namespace mapcontrol
         internals::PointLatLng selectionStart;
         internals::PointLatLng selectionEnd;
         double zoomReal;
+        qreal rotation;
         double zoomDigi;
         QRectF maprect;
         bool isSelected;
@@ -176,7 +177,7 @@ namespace mapcontrol
         QPixmap dragons;
         void SetIsMouseOverMarker(bool const& value){isMouseOverMarker = value;}
 
-        qreal rotation;
+
         /**
         * @brief Creates a rectangle that represents the "view" of the cuurent map, to compensate
         *       rotation

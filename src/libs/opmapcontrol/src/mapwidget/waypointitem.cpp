@@ -27,7 +27,7 @@
 #include "waypointitem.h"
 namespace mapcontrol
 {
-    WayPointItem::WayPointItem(const internals::PointLatLng &coord,double const& altitude, MapGraphicItem *map):coord(coord),reached(false),description(""),shownumber(true),isDragging(false),altitude(altitude),heading(0),map(map)
+    WayPointItem::WayPointItem(const internals::PointLatLng &coord,double const& altitude, MapGraphicItem *map):coord(coord),reached(false),description(""),shownumber(true),isDragging(false),altitude(altitude),heading(0),map(map),autoreachedEnabled(true)
     {
         text=0;
         numberI=0;
@@ -169,28 +169,53 @@ namespace mapcontrol
     }
     void WayPointItem::SetReached(const bool &value)
     {
-        reached=value;
-        emit WPValuesChanged(this);
-        if(value)
-            picture.load(QString::fromUtf8(":/markers/images/bigMarkerGreen.png"));
-        else
-            picture.load(QString::fromUtf8(":/markers/images/marker.png"));
-        this->update();
-
+        if (autoreachedEnabled)
+        {
+            reached=value;
+            emit WPValuesChanged(this);
+            if(value)
+                picture.load(QString::fromUtf8(":/markers/images/bigMarkerGreen.png"));
+            else
+                picture.load(QString::fromUtf8(":/markers/images/marker.png"));
+            this->update();
+        }
     }
     void WayPointItem::SetShowNumber(const bool &value)
     {
+//        shownumber=value;
+//        if((numberI==0) && value)
+//        {
+//            numberI=new QGraphicsSimpleTextItem(this);
+//            numberIBG=new QGraphicsRectItem(this);
+//            numberIBG->setBrush(Qt::white);
+//            numberIBG->setOpacity(0.5);
+//            numberI->setZValue(3);
+//            numberI->setPen(QPen(Qt::blue));
+//            numberI->setPos(0,-13-picture.height());
+//            numberIBG->setPos(0,-13-picture.height());
+//            numberI->setText(QString::number(number));
+//            numberIBG->setRect(numberI->boundingRect().adjusted(-2,0,1,0));
+//        }
+//        else if (!value && numberI)
+//        {
+//            delete numberI;
+//            delete numberIBG;
+//        }
+//        this->update();
+
+
+
         shownumber=value;
         if((numberI==0) && value)
         {
             numberI=new QGraphicsSimpleTextItem(this);
             numberIBG=new QGraphicsRectItem(this);
-            numberIBG->setBrush(Qt::white);
+            numberIBG->setBrush(Qt::black);
             numberIBG->setOpacity(0.5);
             numberI->setZValue(3);
-            numberI->setPen(QPen(Qt::blue));
-            numberI->setPos(0,-13-picture.height());
-            numberIBG->setPos(0,-13-picture.height());
+            numberI->setPen(QPen(Qt::white));
+            numberI->setPos(18,-picture.height()/2-2);
+            numberIBG->setPos(18,-picture.height()/2-2);
             numberI->setText(QString::number(number));
             numberIBG->setRect(numberI->boundingRect().adjusted(-2,0,1,0));
         }
@@ -200,6 +225,9 @@ namespace mapcontrol
             delete numberIBG;
         }
         this->update();
+
+
+
     }
     void WayPointItem::WPDeleted(const int &onumber)
     {

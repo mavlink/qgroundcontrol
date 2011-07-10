@@ -37,6 +37,7 @@ This file is part of the PIXHAWK project
 #include <QString>
 #include <QTextStream>
 #include "QGCMAVLink.h"
+#include "QGC.h"
 
 class Waypoint : public QObject
 {
@@ -145,6 +146,7 @@ protected:
     int turns;
     QString name;
     QString description;
+    quint64 reachedTime;
 
 public slots:
     void setId(quint16 id);
@@ -177,6 +179,12 @@ public slots:
     void setHoldTime(double holdTime);
     /** @brief Number of turns for loiter waypoints */
     void setTurns(int turns);
+    /** @brief Set waypoint as reached */
+    void setReached() { reachedTime = QGC::groundTimeMilliseconds(); }
+    /** @brief Wether this waypoint has been reached yet */
+    bool isReached() { return (reachedTime > 0); }
+    /** @brief Get the time this waypoint was reached */
+    quint64 getReachedTime() { return reachedTime; }
 
 signals:
     /** @brief Announces a change to the waypoint data */

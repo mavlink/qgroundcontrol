@@ -26,14 +26,6 @@ public:
 
     virtual ~Waypoint2DIcon();
 
-    //! sets the QPen which is used for drawing the circle
-    /*!
-     * A QPen can be used to modify the look of the drawn circle
-     * @param pen the QPen which should be used for drawing
-     * @see http://doc.trolltech.com/4.3/qpen.html
-     */
-    virtual void setPen(QPen* pen);
-
     void SetHeading(float heading);
 
     /** @brief Rectangle to be updated on changes */
@@ -42,8 +34,8 @@ public:
     void drawIcon();
     /** @brief Draw the icon on a QPainter device (map) */
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-    /** @brief UNUSED FUNCTION: Waypoints in QGC are purely passive */
-    void SetReached(const bool &value);
+    /** @brief Enable and format the waypoint number display */
+    void SetShowNumber(const bool &value);
 
 public:
     void updateWaypoint();
@@ -52,7 +44,6 @@ protected:
     mapcontrol::OPMapWidget* parent; ///< Parent widget
     int radius;           ///< Radius / diameter of the icon in pixels
     Waypoint* waypoint;   ///< Waypoint data container this icon represents
-    QPen* mypen;
     QColor color;
     bool showAcceptanceRadius;
     bool showOrbit;

@@ -49,7 +49,8 @@ Waypoint::Waypoint(quint16 _id, double _x, double _y, double _z, double _param1,
       param1(_param1),
       param2(_param2),
       name(QString("WP%1").arg(id, 2, 10, QChar('0'))),
-      description(_description)
+      description(_description),
+      reachedTime(0)
 {
 }
 
@@ -79,7 +80,7 @@ void Waypoint::save(QTextStream &saveStream)
 bool Waypoint::load(QTextStream &loadStream)
 {
     const QStringList &wpParams = loadStream.readLine().split("\t");
-    if (wpParams.size() == 13) {
+    if (wpParams.size() == 12) {
         this->id = wpParams[0].toInt();
         this->current = (wpParams[1].toInt() == 1 ? true : false);
         this->frame = (MAV_FRAME) wpParams[2].toInt();
