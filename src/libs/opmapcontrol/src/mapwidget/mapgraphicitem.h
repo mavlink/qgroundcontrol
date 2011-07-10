@@ -116,6 +116,9 @@ namespace mapcontrol
         */
         internals::RectLatLng SelectedArea()const{return selectedArea;}
 
+    public slots:
+        void SetSelectedArea(internals::RectLatLng const& value){selectedArea = value;this->update();}
+
     protected:
         void mouseMoveEvent ( QGraphicsSceneMouseEvent * event );
         void mousePressEvent ( QGraphicsSceneMouseEvent * event );
@@ -196,7 +199,6 @@ namespace mapcontrol
         */
         int MinZoom()const{return minZoom;}
         internals::MouseWheelZoomType::Types GetMouseWheelZoomType(){return core->GetMouseWheelZoomType();}
-        void SetSelectedArea(internals::RectLatLng const& value){selectedArea = value;this->update();}
         internals::RectLatLng BoundsOfMap;
         void Offset(int const& x, int const& y);
         bool CanDragMap()const{return core->CanDragMap;}
