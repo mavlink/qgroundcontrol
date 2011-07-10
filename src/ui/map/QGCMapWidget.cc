@@ -156,6 +156,8 @@ void QGCMapWidget::storeSettings()
 void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
 {
     OPMapWidget::mouseDoubleClickEvent(event);
+    // FIXME HACK!
+    currEditMode = EDIT_MODE_WAYPOINTS;
     if (currEditMode == EDIT_MODE_WAYPOINTS)
     {
         // If a waypoint manager is available
@@ -164,8 +166,13 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
             // Create new waypoint
             internals::PointLatLng pos = this->currentMousePosition();
             Waypoint* wp = currWPManager->createWaypoint();
+//            wp->blockSignals(true);
+            wp->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
             wp->setLatitude(pos.Lat());
             wp->setLongitude(pos.Lng());
+            wp->setAltitude(0);
+//            wp->blockSignals(false);
+//            currWPManager->notifyOfChange(wp);
         }
     }
 }
@@ -199,13 +206,6 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
 
     if (uas) {
         currWPManager = uas->getWaypointManager();
-//        QColor color = mav->getColor();
-//        color.setAlphaF(0.9);
-//        QPen* pen = new QPen(color);
-//        pen->setWidth(3.0);
-//        mavPens.insert(mav->getUASID(), pen);
-//        // FIXME Remove after refactoring
-//        waypointPath->setPen(pen);
 
         // Delete all waypoints and add waypoint from new system
         updateWaypointList(uas->getUASID());
@@ -461,16 +461,25 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                 waypointsToIcons.insert(wp, icon);
                 iconsToWaypoints.insert(icon, wp);
 
-                // Add line element
-                qDebug() << "ADDING LINE";
-                mapcontrol::TrailLineItem* line = new mapcontrol::TrailLineItem(internals::PointLatLng(0.2, 0.2), icon->Coord(), QBrush(Qt::red), map);
-               QGraphicsItemGroup* group = waypointLines.value(uas, NULL);
-               if (group)
-               {
-                   group->addToGroup(line);
-                   qDebug() << "ADDED LINE!";
-               }
-                line->setVisible(true);
+                // Add line element if this is NOT the first waypoint
+                if (wpindex > 0)
+                {
+                    // Get predecessor of this WP
+                    QVector<Waypoint* > wps = currWPManager->getGlobalFrameAndNavTypeWaypointList();
+                    Waypoint* wp1 = wps.at(wpindex-1);
+                    mapcontrol::WayPointItem* prevIcon = waypointsToIcons.value(wp1, NULL);
+                    // If we got a valid graphics item, continue
+                    if (prevIcon)
+                    {
+                        mapcontrol::WaypointLineItem* line = new mapcontrol::WaypointLineItem(prevIcon, icon, Qt::red, map);
+                        QGraphicsItemGroup* group = waypointLines.value(uas, NULL);
+                        if (group)
+                        {
+                            group->addToGroup(line);
+                        }
+                        line->setVisible(true);
+                    }
+                }
             } else {
                 // Waypoint exists, block it's signals and update it
                 mapcontrol::WayPointItem* icon = waypointsToIcons.value(wp);
@@ -523,7 +532,8 @@ void QGCMapWidget::updateWaypointList(int uas)
 {
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
-    if (UASManager::instance()->getUASForId(uas)->getWaypointManager() == currWPManager) {
+    UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
+    if (uasInstance->getWaypointManager() == currWPManager) {
         qDebug() << "UPDATING WP LIST";
         // Get current WP list
         // compare to local WP maps and
@@ -561,6 +571,38 @@ void QGCMapWidget::updateWaypointList(int uas)
         {
             // Update / add only if new
             if (!waypointsToIcons.contains(wp)) updateWaypoint(uas, wp);
+        }
+
+        // Delete connecting waypoint lines
+        QGraphicsItemGroup* group = waypointLines.value(uas, NULL);
+        if (group)
+        {
+            foreach (QGraphicsItem* item, group->childItems())
+            {
+                delete item;
+            }
+        }
+
+        // Add line element if this is NOT the first waypoint
+        mapcontrol::WayPointItem* prevIcon = NULL;
+        foreach (Waypoint* wp, wps)
+        {
+            mapcontrol::WayPointItem* currIcon = waypointsToIcons.value(wp, NULL);
+            // Do not work on first waypoint, but only increment counter
+            // do not continue if icon is invalid
+            if (prevIcon && currIcon)
+            {
+                // If we got a valid graphics item, continue
+                mapcontrol::WaypointLineItem* line = new mapcontrol::WaypointLineItem(prevIcon, currIcon, uasInstance->getColor(), map);
+                QGraphicsItemGroup* group = waypointLines.value(uas, NULL);
+                if (group)
+                {
+                    group->addToGroup(line);
+                    qDebug() << "ADDED LINE!";
+                }
+                line->setVisible(true);
+            }
+            prevIcon = currIcon;
         }
     }
 }
