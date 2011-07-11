@@ -92,13 +92,8 @@ namespace mapcontrol
             GPSItem* wwww=qgraphicsitem_cast<GPSItem*>(i);
             if(wwww)
                 wwww->RefreshPos();
-            QGraphicsItemGroup* wwwww=qgraphicsitem_cast<QGraphicsItemGroup*>(i);
-            if(wwwww)
-                foreach(QGraphicsItem* i, wwwww->childItems())
-                {
-                    WaypointLineItem* line = qgraphicsitem_cast<WaypointLineItem*>(i);
-                    if (line) line->RefreshPos();
-                }
+
+            emit mapChanged();
         }
     }
     void MapGraphicItem::ChildPosRefresh()
@@ -117,13 +112,8 @@ namespace mapcontrol
             GPSItem* wwww=qgraphicsitem_cast<GPSItem*>(i);
             if(wwww)
                 wwww->RefreshPos();
-            QGraphicsItemGroup* wwwww=qgraphicsitem_cast<QGraphicsItemGroup*>(i);
-            if(wwwww)
-                foreach(QGraphicsItem* i, wwwww->childItems())
-                {
-                    WaypointLineItem* line = qgraphicsitem_cast<WaypointLineItem*>(i);
-                    if (line) line->RefreshPos();
-                }
+
+            emit mapChanged();
         }
     }
     void MapGraphicItem::ConstructLastImage(int const& zoomdiff)

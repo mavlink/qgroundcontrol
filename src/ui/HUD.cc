@@ -147,6 +147,7 @@ HUD::HUD(int width, int height, QWidget* parent)
     setMinimumSize(80, 60);
     // Set preferred size
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    scalingFactor = this->width()/vwidth;
 
     // Fill with black background
     QImage fill = QImage(width, height, QImage::Format_Indexed8);
@@ -196,8 +197,6 @@ HUD::HUD(int width, int height, QWidget* parent)
     createActions();
 
     if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
-
-    setVisible(false);
 }
 
 HUD::~HUD()

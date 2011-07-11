@@ -112,6 +112,8 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     this->setMinimumHeight(125);
     this->setMinimumWidth(100);
 
+    scalingFactor = this->width()/vwidth;
+
     // Refresh timer
     refreshTimer->setInterval(180); //
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(triggerUpdate()));

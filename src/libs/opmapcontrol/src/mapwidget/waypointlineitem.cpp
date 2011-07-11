@@ -17,6 +17,9 @@ WaypointLineItem::WaypointLineItem(WayPointItem* wp1, WayPointItem* wp2, QColor 
     pen.setWidth(2);
     setPen(pen);
 
+    point1 = wp1->Coord();
+    point2 = wp2->Coord();
+
     // Pixel coordinates of the local points
     core::Point localPoint1 = map->FromLatLngToLocal(wp1->Coord());
     core::Point localPoint2 = map->FromLatLngToLocal(wp2->Coord());
@@ -33,6 +36,7 @@ WaypointLineItem::WaypointLineItem(WayPointItem* wp1, WayPointItem* wp2, QColor 
     connect(wp2, SIGNAL(destroyed()), this, SLOT(deleteLater()));
 
     // Map Zoom and move
+    connect(map, SIGNAL(mapChanged()), this, SLOT(updateWPValues()));
 }
 
 void WaypointLineItem::RefreshPos()
@@ -45,10 +49,13 @@ void WaypointLineItem::RefreshPos()
     else
     {
         // Set new pixel coordinates based on new global coordinates
-        core::Point localPoint1 = map->FromLatLngToLocal(wp1->Coord());
-        core::Point localPoint2 = map->FromLatLngToLocal(wp2->Coord());
-
-        setLine(localPoint1.X(), localPoint1.Y(), localPoint2.X(), localPoint2.Y());
+        //QTimer::singleShot(0, this, SLOT(updateWPValues()));
+        core::Point localPoint1 = map->FromLatLngToLocal(point1);
+        core::Point localPoint2 = map->FromLatLngToLocal(point2);
+        if (!localPoint1.IsEmpty() && !localPoint2.IsEmpty())
+        {
+            setLine(localPoint1.X(), localPoint1.Y(), localPoint2.X(), localPoint2.Y());
+        }
     }
 }
 
@@ -63,11 +70,18 @@ void WaypointLineItem::updateWPValues(WayPointItem* waypoint)
     else
     {
         // Set new pixel coordinates based on new global coordinates
+        point1 = wp1->Coord();
+        point2 = wp2->Coord();
         core::Point localPoint1 = map->FromLatLngToLocal(wp1->Coord());
         core::Point localPoint2 = map->FromLatLngToLocal(wp2->Coord());
 
         setLine(localPoint1.X(), localPoint1.Y(), localPoint2.X(), localPoint2.Y());
     }
+}
+
+void WaypointLineItem::updateWPValues()
+{
+    updateWPValues(NULL);
 }
 
 int WaypointLineItem::type()const
