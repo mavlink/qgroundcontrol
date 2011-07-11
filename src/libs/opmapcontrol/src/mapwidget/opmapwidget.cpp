@@ -94,8 +94,7 @@ namespace mapcontrol
         UAVItem* newUAV = new UAVItem(map,this);
         newUAV->setParentItem(map);
         UAVS.insert(id, newUAV);
-        QGraphicsItemGroup* waypointLine = new QGraphicsItemGroup();
-        waypointLine->setParentItem(map);
+        QGraphicsItemGroup* waypointLine = new QGraphicsItemGroup(map);
         waypointLines.insert(id, waypointLine);
         return newUAV;
     }
@@ -103,8 +102,7 @@ namespace mapcontrol
     void OPMapWidget::AddUAV(int id, UAVItem* uav)
     {
         uav->setParentItem(map);
-        QGraphicsItemGroup* waypointLine = new QGraphicsItemGroup();
-        waypointLine->setParentItem(map);
+        QGraphicsItemGroup* waypointLine = new QGraphicsItemGroup(map);
         waypointLines.insert(id, waypointLine);
         UAVS.insert(id, uav);
     }

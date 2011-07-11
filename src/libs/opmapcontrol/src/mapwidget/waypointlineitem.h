@@ -23,6 +23,10 @@ public slots:
     void updateWPValues(WayPointItem* waypoint);
     /**
     * @brief Update waypoint values
+    */
+    void updateWPValues();
+    /**
+    * @brief Update waypoint values
     *
     */
     void RefreshPos();

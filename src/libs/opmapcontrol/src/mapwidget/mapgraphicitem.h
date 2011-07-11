@@ -229,6 +229,11 @@ namespace mapcontrol
         * @param zoom
         */
         void zoomChanged(double zoomtotal,double zoomreal,double zoomdigi);
+
+        /**
+        * @brief Fired when map changes in any visible way
+        */
+        void mapChanged();
     };
 }
 #endif // MAPGRAPHICITEM_H
