@@ -65,6 +65,10 @@ var trailPlacemarks = [];
 var trailsVisible = [];
 var trailColors = [];
 var waypoints = [];
+
+var waypointLines = [];
+var waypointLinePlacemarks = [];
+var waypointLineColors = [];
 //var waypointLines = [];
 //var trailPlacemarks[id];
 var lineStyle;
@@ -362,6 +366,8 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    location.setAltitude(alt); 
 	    waypoints[index].setGeometry(location);
 	    waypoints[index].setDescription(index+"");
+	    
+	    
 	}
 	else
 	{
@@ -388,7 +394,26 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    // Add the placemark to Earth. 
 	    ge.getFeatures().appendChild(placemark); 
 		waypoints[index] = placemark;
-	}
+		}
+		
+		// Add waypoint line
+	    waypointLines[id].setExtrude(false);
+        waypointLines[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+
+        // Add LineString points
+	    waypointLines[id].getCoordinates().pushLatLngAlt(lat, lon, alt);
+
+        // Create a style and set width and color of line
+        waypointLinePlacemarks[id].setStyleSelector(ge.createStyle(''));
+        lineStyle = waypointLinePlacemarks[id].getStyleSelector().getLineStyle();
+        lineStyle.setWidth(5);
+        lineStyle.getColor().set(waypointLineColors[id]);  // aabbggrr format
+        //lineStyle.getColor().set(color);  // aabbggrr format
+
+        // Add the feature to Earth
+        //if (waypointLinesVisible[id] == true) 
+        ge.getFeatures().replaceChild(waypointLinePlacemarks[id], waypointLinePlacemarks[id]);
+	
 	// Add connecting line
 	
 }
@@ -423,6 +448,7 @@ function createAircraft(id, type, color)
           //planeColor = color;
           
           createTrail(id, color);
+          createWaypointLine(id, color);
           //console.log(color);
 }
 
@@ -448,6 +474,32 @@ trailColors[id] = color;
 lineStyle.getColor().set('00000000');  // aabbggrr format
 
 trailsVisible[id] = false;
+
+// Add the feature to Earth
+//ge.getFeatures().appendChild(trailPlacemarks[id]);
+
+}
+
+function createWaypointLine(id, color)
+{
+          waypointLinePlacemarks[id] = ge.createPlacemark('');
+          // Create the placemark
+// Create the LineString; set it to extend down to the ground
+// and set the altitude mode
+waypointLines[id] = ge.createLineString('');
+waypointLinePlacemarks[id].setGeometry(waypointLines[id]);
+waypointLines[id].setExtrude(false);
+waypointLines[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+
+// Add LineString points
+//lineString.getCoordinates().pushLatLngAlt(48.754, -121.835, 700);
+
+// Create a style and set width and color of line
+waypointLinePlacemarks[id].setStyleSelector(ge.createStyle(''));
+lineStyle = waypointLinePlacemarks[id].getStyleSelector().getLineStyle();
+lineStyle.setWidth(10);
+waypointLineColors[id] = color;
+lineStyle.getColor().set('00000000');  // aabbggrr format
 
 // Add the feature to Earth
 //ge.getFeatures().appendChild(trailPlacemarks[id]);
