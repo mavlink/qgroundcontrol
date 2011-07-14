@@ -10,11 +10,13 @@
 
 #include <QtCore/qglobal.h>
 
-#ifdef QEXTSERIALPORT_LIB
-# define QEXTSERIALPORT_EXPORT Q_DECL_EXPORT
-#else
-# define QEXTSERIALPORT_EXPORT Q_DECL_IMPORT
-#endif
+//#ifdef QEXTSERIALPORT_LIB
+//# define QEXTSERIALPORT_EXPORT Q_DECL_EXPORT
+//#else
+//# define QEXTSERIALPORT_EXPORT Q_DECL_IMPORT
+//#endif
+
+#define QEXTSERIALPORT_EXPORT
 
 #include <QString>
 #include <QList>
