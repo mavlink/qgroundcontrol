@@ -38,6 +38,10 @@ QGCSettingsWidget::QGCSettingsWidget(QWidget *parent, Qt::WindowFlags flags) :
     ui->reconnectCheckBox->setChecked(MainWindow::instance()->autoReconnectEnabled());
     connect(ui->reconnectCheckBox, SIGNAL(clicked(bool)), MainWindow::instance(), SLOT(enableAutoReconnect(bool)));
 
+    // Low power mode
+    ui->lowPowerCheckBox->setChecked(MainWindow::instance()->lowPowerModeEnabled());
+    connect(ui->lowPowerCheckBox, SIGNAL(clicked(bool)), MainWindow::instance(), SLOT(enableLowPowerMode(bool)));
+
     // Style
     MainWindow::QGC_MAINWINDOW_STYLE style = (MainWindow::QGC_MAINWINDOW_STYLE)MainWindow::instance()->getStyle();
     switch (style) {

@@ -73,10 +73,13 @@ void UASManager::loadSettings()
     settings.endGroup();
 }
 
-void UASManager::setHomePosition(double lat, double lon, double alt)
+bool UASManager::setHomePosition(double lat, double lon, double alt)
 {
     // Checking for NaN and infitiny
-    if (lat == lat && lon == lon && alt == alt && !std::isinf(lat) && !std::isinf(lon) && !std::isinf(alt)) {
+	// FIXME does not work with MSVC: && !std::isinf(lat) && !std::isinf(lon) && !std::isinf(alt)
+    if (lat == lat && lon == lon && alt == alt 
+        && lat <= 90.0 && lat >= -90.0 && lon <= 180.0 && lon >= -180.0) {
+
         bool changed = false;
         if (homeLat != lat) changed = true;
         if (homeLon != lon) changed = true;
@@ -87,6 +90,9 @@ void UASManager::setHomePosition(double lat, double lon, double alt)
         homeAlt = alt;
 
         if (changed) emit homePositionChanged(homeLat, homeLon, homeAlt);
+        return true;
+    } else {
+        return false;
     }
 }
 

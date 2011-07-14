@@ -29,7 +29,7 @@
 #               $$BASEDIR/lib/openjaus/libopenJaus/include
 
 message(Qt version $$[QT_VERSION])
-message(Using Qt from $QTDIR)
+message(Using Qt from $$[QTDIR])
 
 release {
 #    DEFINES += QT_NO_DEBUG_OUTPUT
@@ -340,7 +340,8 @@ win32-msvc2008 {
                    #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
 
     LIBS += -L$$BASEDIR/lib/sdl/msvc/lib \
-             -lSDLmain -lSDL
+             -lSDLmain -lSDL \
+			 -lsetupapi
 
 exists($$BASEDIR/lib/osg123) {
 message("Building support for OSG")
@@ -403,7 +404,8 @@ win32-g++ {
                    #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
 
     LIBS += -L$$BASEDIR/lib/sdl/win32 \
-             -lmingw32 -lSDLmain -lSDL -mwindows
+             -lmingw32 -lSDLmain -lSDL -mwindows \
+			 -lsetupapi
 
     CONFIG += windows
 

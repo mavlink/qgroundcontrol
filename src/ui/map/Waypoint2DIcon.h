@@ -2,67 +2,52 @@
 #define WAYPOINT2DICON_H
 
 #include <QGraphicsItem>
-#include "qmapcontrol.h"
 
 #include "Waypoint.h"
+#include "opmapcontrol.h"
 
-class Waypoint2DIcon : public qmapcontrol::Point
+class Waypoint2DIcon : public mapcontrol::WayPointItem
 {
 public:
-    /*!
+    /**
      *
-     * @param x longitude
-     * @param y latitude
+     * @param latitude
+     * @param longitude
      * @param name name of the circle point
-     * @param alignment alignment (Middle or TopLeft)
-     * @param pen QPen for drawing
      */
-    Waypoint2DIcon(qreal x, qreal y, QString name = QString(), Alignment alignment = Middle, QPen* pen=0);
-
-    //!
-    /*!
-     *
-     * @param x longitude
-     * @param y latitude
-     * @param radius the radius of the circle
-     * @param name name of the circle point
-     * @param alignment alignment (Middle or TopLeft)
-     * @param pen QPen for drawing
-     */
-    Waypoint2DIcon(qreal x, qreal y, int radius = 20, QString name = QString(), Alignment alignment = Middle, QPen* pen=0);
+    Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, qreal latitude, qreal longitude, qreal altitude, int listindex, QString name = QString(), QString description = QString(), int radius=30);
 
     /**
      *
      * @param wp Waypoint
-     * @param listIndex Index in the waypoint list
      * @param radius the radius of the circle
-     * @param name name of the circle point
-     * @param alignment alignment (Middle or TopLeft)
-     * @param pen QPen for drawing
      */
-    Waypoint2DIcon(Waypoint* wp, int listIndex, int radius = 20, Alignment alignment = Middle, QPen* pen=0);
+    Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, Waypoint* wp, const QColor& color, int listindex, int radius = 31);
 
     virtual ~Waypoint2DIcon();
 
-    //! sets the QPen which is used for drawing the circle
-    /*!
-     * A QPen can be used to modify the look of the drawn circle
-     * @param pen the QPen which should be used for drawing
-     * @see http://doc.trolltech.com/4.3/qpen.html
-     */
-    virtual void setPen(QPen* pen);
+    void SetHeading(float heading);
 
-    void setYaw(float yaw);
+    /** @brief Rectangle to be updated on changes */
+    QRectF boundingRect() const;
+    /** @brief Draw the icon in a double buffer */
+    void drawIcon();
+    /** @brief Draw the icon on a QPainter device (map) */
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    /** @brief Enable and format the waypoint number display */
+    void SetShowNumber(const bool &value);
 
-    void drawIcon(QPen* pen);
-
-public slots:
+public:
     void updateWaypoint();
 
 protected:
-    float yaw;      ///< Yaw angle of the MAV
-    int radius;     ///< Radius / diameter of the icon in pixels
+    mapcontrol::OPMapWidget* parent; ///< Parent widget
+    int radius;           ///< Radius / diameter of the icon in pixels
     Waypoint* waypoint;   ///< Waypoint data container this icon represents
+    QColor color;
+    bool showAcceptanceRadius;
+    bool showOrbit;
+//    QSize size;
 
 };
 

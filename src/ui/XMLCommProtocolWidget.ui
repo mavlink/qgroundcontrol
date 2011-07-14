@@ -57,7 +57,7 @@
     </widget>
    </item>
    <item row="0" column="3" rowspan="6">
-    <widget class="QTextEdit" name="xmlTextView">
+    <widget class="QGCMAVLinkTextEdit" name="xmlTextView">
      <property name="readOnly">
       <bool>false</bool>
      </property>
@@ -130,6 +130,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QGCMAVLinkTextEdit</class>
+   <extends>QTextEdit</extends>
+   <header location="global">QGCMAVLinkTextEdit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../mavground.qrc"/>
  </resources>

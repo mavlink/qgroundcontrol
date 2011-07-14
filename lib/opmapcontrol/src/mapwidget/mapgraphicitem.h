@@ -39,9 +39,12 @@
 #include <QFont>
 #include <QObject>
 #include "waypointitem.h"
+#include "configuration.h"
 //#include "uavitem.h"
 namespace mapcontrol
 {
+    using namespace mapcontrol;
+
     class OPMapWidget;
     /**
     * @brief The main graphicsItem used on the widget, contains the map and map logic

@@ -90,6 +90,16 @@ bool MAVLinkXMLParser::generate()
 
     int mavlinkVersion = 0;
 
+    // we need to gather the message lengths across multiple includes,
+    // which we can do via detecting recursion
+    static unsigned message_lengths[256];
+    static int highest_message_id;
+    static int recursion_level;
+
+    if (recursion_level == 0) {
+        highest_message_id = 0;
+        memset(message_lengths, 0, sizeof(message_lengths));
+    }
 
 
     // Start main header
@@ -138,7 +148,10 @@ bool MAVLinkXMLParser::generate()
                                 MAVLinkXMLParser includeParser(incFilePath, topLevelOutputDirName, this);
                                 connect(&includeParser, SIGNAL(parseState(QString)), this, SIGNAL(parseState(QString)));
                                 // Generate and write
-                                includeParser.generate();
+                                recursion_level++;
+                                // Abort if inclusion fails
+                                if (!includeParser.generate()) return false;
+                                recursion_level--;
                                 mainHeader += "\n#include \"../" + pureIncludeFileName + "/" + pureIncludeFileName + ".h\"\n";
 
 
@@ -250,13 +263,30 @@ bool MAVLinkXMLParser::generate()
 
                                                 // Add comment of field if there is one
                                                 QString fieldComment;
-                                                if (e2.text().length() > 0) {
-                                                    fieldComment = " /* " + e2.text() + "*/";
+                                                if (e2.text().length() > 0)
+                                                {
+                                                    QString sep(" | ");
+                                                    QDomNode pp = e2.firstChild();
+                                                    while (!pp.isNull()) {
+                                                        QDomElement pp2 = pp.toElement();
+                                                        if (pp2.isText() || pp2.isCDATASection())
+                                                        {
+                                                            fieldComment +=  pp2.nodeValue() + sep;
+                                                        }
+                                                        else if (pp2.isElement())
+                                                        {
+                                                            fieldComment += pp2.text() + sep;
+                                                            pp = pp.nextSibling();
+                                                        }
+                                                    }
                                                     fieldComment = fieldComment.replace("\n", " ");
+                                                    fieldComment = " /* " + fieldComment.simplified() + " */";
                                                 }
                                                 currEnum += "\t" + fieldName.toUpper() + "=" + fieldValue + "," + fieldComment + "\n";
-                                            } else if(!e2.isNull() && e2.tagName() == "description") {
-                                                comment = e2.text().replace("\n", " ") + comment;
+                                            }
+                                            else if(!e2.isNull() && e2.tagName() == "description")
+                                            {
+                                                comment = " " + e2.text().replace("\n", " ") + comment;
                                             }
                                             f = f.nextSibling();
                                         }
@@ -340,7 +370,7 @@ bool MAVLinkXMLParser::generate()
                                         QString decodeLines;
                                         QString sendArguments;
                                         QString commentLines;
-
+                                        unsigned message_length = 0;
 
 
                                         // Get the message fields
@@ -437,6 +467,40 @@ bool MAVLinkXMLParser::generate()
                                                 }
 
 
+                                                // message length calculation
+                                                unsigned element_multiplier = 1;
+                                                unsigned element_length = 0;
+                                                const struct {
+                                                    const char *prefix;
+                                                    unsigned length;
+                                                } length_map[] = {
+                                                        { "array",  1 },
+                                                        { "char",   1 },
+                                                        { "uint8",  1 },
+                                                        { "int8",   1 },
+                                                        { "uint16", 2 },
+                                                        { "int16",  2 },
+                                                        { "uint32", 4 },
+                                                        { "int32",  4 },
+                                                        { "uint64", 8 },
+                                                        { "int64",  8 },
+                                                        { "float",  4 },
+                                                        { "double", 8 },
+                                                };
+                                                if (fieldType.contains("[")) {
+                                                    element_multiplier = fieldType.split("[").at(1).split("]").first().toInt();
+                                                }
+                                                for (unsigned i=0; i<sizeof(length_map)/sizeof(length_map[0]); i++) {
+                                                    if (fieldType.startsWith(length_map[i].prefix)) {
+                                                        element_length = length_map[i].length * element_multiplier;
+                                                        break;
+                                                    }
+                                                }
+                                                if (element_length == 0) {
+                                                    emit parseState(tr("<font color=\"red\">ERROR: Unable to calculate length for %2 near line %1\nAbort.</font>").arg(QString::number(e.lineNumber()), fieldType));
+                                                }
+                                                message_length += element_length;
+
                                                 //
                                                 //                                                QString unpackingCode;
 
@@ -489,6 +553,11 @@ bool MAVLinkXMLParser::generate()
                                             f = f.nextSibling();
                                         }
 
+                                        if (messageId > highest_message_id) {
+                                            highest_message_id = messageId;
+                                        }
+                                        message_lengths[messageId] = message_length;
+
                                         cStruct = cStruct.arg(cStructName, cStructLines);
                                         lcmStructDefs.append("\n").append(cStruct).append("\n");
                                         pack = pack.arg(messageName, packParameters, messageName.toUpper(), packLines);
@@ -539,6 +608,15 @@ bool MAVLinkXMLParser::generate()
         rawFile.close();
         mainHeader += includeLine.arg(messagesDirName + "/" + cFiles.at(i).first);
     }
+
+    mainHeader += "\n\n// MESSAGE LENGTHS\n\n";
+    mainHeader += "#undef MAVLINK_MESSAGE_LENGTHS\n";
+    mainHeader += "#define MAVLINK_MESSAGE_LENGTHS { ";
+    for (int i=0; i<highest_message_id; i++) {
+        mainHeader += QString::number(message_lengths[i]);
+        if (i < highest_message_id-1) mainHeader += ", ";
+    }
+    mainHeader += " }\n\n";
 
     mainHeader += "#ifdef __cplusplus\n}\n#endif\n";
     mainHeader += "#endif";

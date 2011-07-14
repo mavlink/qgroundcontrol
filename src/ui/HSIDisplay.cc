@@ -40,10 +40,12 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "Waypoint.h"
 #include "UASWaypointManager.h"
-#include "Waypoint2DIcon.h"
-#include "MAV2DIcon.h"
+#include <qmath.h>
+//#include "Waypoint2DIcon.h"
+//#include "MAV2DIcon.h"
 
 #include <QDebug>
+
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
     HDDisplay(NULL, "HSI", parent),
@@ -244,7 +246,7 @@ void HSIDisplay::renderOverlay()
         // Translate to center
         painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
         QColor uasColor = uas->getColor();
-        MAV2DIcon::drawAirframePolygon(uas->getAirframe(), painter, static_cast<int>((vwidth/4.0f)*scalingFactor*1.1f), uasColor, 0.0f);
+        //MAV2DIcon::drawAirframePolygon(uas->getAirframe(), painter, static_cast<int>((vwidth/4.0f)*scalingFactor*1.1f), uasColor, 0.0f);
         // Translate back
         painter.translate(-(xCenterPos)*scalingFactor, -(yCenterPos)*scalingFactor);
     }

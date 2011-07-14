@@ -29,6 +29,7 @@
 #include "QGCToolWidget.h"
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGCSettingsWidget.h"
+#include "QGCMapTool.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -69,7 +70,8 @@ MainWindow::MainWindow(QWidget *parent):
     changingViewsFlag(false),
     styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
     autoReconnect(false),
-    currentStyle(QGC_MAINWINDOW_STYLE_INDOOR)
+    currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
+    lowPowerMode(false)
 {
     loadSettings();
     if (!settings.contains("CURRENT_VIEW")) {
@@ -103,19 +105,6 @@ MainWindow::MainWindow(QWidget *parent):
     configureWindowName();
 
     loadStyle(currentStyle);
-
-//    // Set the application style (not the same as a style sheet)
-//    // Set the style to Plastique
-//    qApp->setStyle("plastique");
-
-//    // Set style sheet as last step
-//    QFile* styleSheet = new QFile(":/images/style-mission.css");
-//    if (styleSheet->open(QIODevice::ReadOnly | QIODevice::Text))
-//    {
-//        QString style = QString(styleSheet->readAll());
-//        style.replace("ICONDIR", QCoreApplication::applicationDirPath()+ "/images/");
-//        qApp->setStyleSheet(style);
-//    }
 
     // Create actions
     connectCommonActions();
@@ -161,6 +150,9 @@ MainWindow::MainWindow(QWidget *parent):
         LinkManager::instance()->addProtocol(link, mavlink);
         link->connect();
     }
+
+    // Set low power mode
+    enableLowPowerMode(lowPowerMode);
 
     // Initialize window state
     windowStateVal = windowState();
@@ -282,19 +274,27 @@ void MainWindow::buildCustomWidget()
 
         for(int i = 0; i < widgets.size(); ++i) {
             // Check if this widget already has a parent, do not create it in this case
-            QDockWidget* dock = dynamic_cast<QDockWidget*>(widgets.at(i)->parentWidget());
+            QGCToolWidget* tool = widgets.at(i);
+            QDockWidget* dock = dynamic_cast<QDockWidget*>(tool->parentWidget());
             if (!dock) {
-                QDockWidget* dock = new QDockWidget(widgets.at(i)->windowTitle(), this);
-                dock->setObjectName(widgets.at(i)->objectName()+"_DOCK");
-                dock->setWidget(widgets.at(i));
-                connect(widgets.at(i), SIGNAL(destroyed()), dock, SLOT(deleteLater()));
+                QDockWidget* dock = new QDockWidget(tool->windowTitle(), this);
+                dock->setObjectName(tool->objectName()+"_DOCK");
+                dock->setWidget(tool);
+                connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
                 QAction* showAction = new QAction(widgets.at(i)->windowTitle(), this);
                 showAction->setCheckable(true);
                 connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
                 connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
                 widgets.at(i)->setMainMenuAction(showAction);
                 ui.menuTools->addAction(showAction);
-                addDockWidget(Qt::BottomDockWidgetArea, dock);
+
+                // Load visibility for view (default is off)
+                dock->setVisible(tool->isVisible(currentView));
+
+                // Load dock widget location (default is bottom)
+                Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
+
+                addDockWidget(location, dock);
             }
         }
     }
@@ -350,8 +350,9 @@ void MainWindow::buildCommonWidgets()
     }
 
     // Center widgets
-    if (!mapWidget) {
-        mapWidget = new MapWidget(this);
+    if (!mapWidget)
+    {
+        mapWidget = new QGCMapTool(this);
         addToCentralWidgetsMenu (mapWidget, "Maps", SLOT(showCentralWidget()),CENTRAL_MAP);
     }
 
@@ -928,20 +929,11 @@ void MainWindow::connectCommonWidgets()
         connect(mavlink, SIGNAL(receiveLossChanged(int, float)),
                 infoDockWidget->widget(), SLOT(updateSendLoss(int, float)));
     }
-
-    if (mapWidget && waypointsDockWidget->widget()) {
-
-        //
-        connect(waypointsDockWidget->widget(), SIGNAL(changePointList()), mapWidget, SLOT(clearWaypoints()));
-    }
-
-    //TODO temporaly debug
-    if (slugsHilSimWidget && slugsHilSimWidget->widget()) {
-        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-                slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
-    }
-
-
+//    //TODO temporaly debug
+//    if (slugsHilSimWidget && slugsHilSimWidget->widget()) {
+//        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
+//                slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
+//    }
 }
 
 void MainWindow::createCustomWidget()
@@ -1055,6 +1047,7 @@ void MainWindow::loadSettings()
     settings.beginGroup("QGC_MAINWINDOW");
     autoReconnect = settings.value("AUTO_RECONNECT", autoReconnect).toBool();
     currentStyle = (QGC_MAINWINDOW_STYLE)settings.value("CURRENT_STYLE", currentStyle).toInt();
+    lowPowerMode = settings.value("LOW_POWER_MODE", lowPowerMode).toBool();
     settings.endGroup();
 }
 
@@ -1072,6 +1065,8 @@ void MainWindow::storeSettings()
     if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
     // Save the current view only if a UAS is connected
     if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
+    // Save the current power mode
+    settings.setValue("LOW_POWER_MODE", lowPowerMode);
     settings.sync();
 }
 
@@ -1893,7 +1888,7 @@ void MainWindow::presentView()
         }
     }
 
-    // ACTIVATE MAP WIDGET
+    // ACTIVATE HUD WIDGET
     if (headUpDockWidget) {
         HUD* tmpHud = dynamic_cast<HUD*>( headUpDockWidget->widget() );
         if (tmpHud) {

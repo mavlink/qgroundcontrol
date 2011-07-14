@@ -174,6 +174,24 @@ void QGCToolWidget::contextMenuEvent (QContextMenuEvent* event)
     menu.exec(event->globalPos());
 }
 
+void QGCToolWidget::hideEvent(QHideEvent* event)
+{
+    // Store settings
+    storeWidgetsToSettings();
+    QWidget::hideEvent(event);
+}
+
+/**
+ * The widgets current view and the applied dock widget area.
+ * Both values are only stored internally and allow an external
+ * widget to configure it accordingly
+ */
+void QGCToolWidget::setViewVisibilityAndDockWidgetArea(int view, bool visible, Qt::DockWidgetArea area)
+{
+    viewVisible.insert(view, visible);
+    dockWidgetArea.insert(view, area);
+}
+
 void QGCToolWidget::createActions()
 {
     addParamAction = new QAction(tr("New &Parameter Slider"), this);

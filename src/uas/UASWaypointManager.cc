@@ -273,7 +273,9 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
 }
 
 /**
+ * @warning Make sure the waypoint stays valid for the whole application lifecycle!
  * @param enforceFirstActive Enforces that the first waypoint is set as active
+ * @see createWaypoint() is more suitable for most use cases
  */
 void UASWaypointManager::addWaypoint(Waypoint *wp, bool enforceFirstActive)
 {
@@ -288,12 +290,29 @@ void UASWaypointManager::addWaypoint(Waypoint *wp, bool enforceFirstActive)
     }
 }
 
+/**
+ * @param enforceFirstActive Enforces that the first waypoint is set as active
+ */
+Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
+{
+    Waypoint* wp = new Waypoint();
+    wp->setId(waypoints.size());
+    if (enforceFirstActive && waypoints.size() == 0) wp->setCurrent(true);
+    waypoints.insert(waypoints.size(), wp);
+    connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChange(Waypoint*)));
+
+    emit waypointListChanged();
+    emit waypointListChanged(uas.getUASID());
+    return wp;
+}
+
 int UASWaypointManager::removeWaypoint(quint16 seq)
 {
     if (seq < waypoints.size()) {
         Waypoint *t = waypoints[seq];
         waypoints.remove(seq);
         delete t;
+        t = NULL;
 
         for(int i = seq; i < waypoints.size(); i++) {
             waypoints[i]->setId(i);

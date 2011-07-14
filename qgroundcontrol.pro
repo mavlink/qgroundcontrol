@@ -1,10 +1,10 @@
 # -------------------------------------------------
 # QGroundControl - Micro Air Vehicle Groundstation
 # Please see our website at <http://qgroundcontrol.org>
-# Author:
-# Lorenz Meier <mavteam@student.ethz.ch>
-# (c) 2009-2010 PIXHAWK Team
-# This file is part of the mav groundstation project
+# Maintainer:
+# Lorenz Meier <lm@inf.ethz.ch>
+# (c) 2009-2011 QGroundControl Developers
+# This file is part of the open groundstation project
 # QGroundControl is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -23,18 +23,57 @@
 # Version from GIT repository is preferred
 # include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
 # Include bundled version if necessary
-
-include(lib/QMapControl/QMapControl.pri)
+# include(lib/QMapControl/QMapControl.pri)
 include(lib/nmea/nmea.pri)
-#include(lib/opmapcontrol/opmapcontrol.pri)
 
+# This is a HACK - linking to openpilot repo for now
+# OPMapControl is a OpenPilot-independent map library
+# provided by the OpenPilot team - thanks, great piece
+# of open-source software!
+# (We're not reusing any part of the OP GCS, just the map library)
+
+# Try to get it from OP mainline, if this fails fall back to internal copies
+exists(../openpilot/ground/openpilotgcs/src/libs) {
+include(../openpilot/ground/openpilotgcs/src/libs/utils/utils_external.pri)
+include(../openpilot/ground/openpilotgcs/src/libs/opmapcontrol/opmapcontrol_external.pri)
+DEPENDPATH += \
+    ../openpilot/ground/openpilotgcs/src/libs/utils \
+    ../openpilot/ground/openpilotgcs/src/libs/utils/src \
+    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol \
+    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol/src
+
+INCLUDEPATH += \
+    ../openpilot/ground/openpilotgcs/src/libs/utils \
+    ../openpilot/ground/openpilotgcs/src/libs \
+    ../openpilot/ground/openpilotgcs/src/libs/opmapcontrol
+
+    message("----- USING MAINLINE OPENPILOT FROM ../openpilot -----")
+    message("Using OpenPilot's mapcontrol library from external folder")
+    message("------------------------------------------------------------------------")
+} else {
+include(src/libs/utils/utils_external.pri)
+include(src/libs/opmapcontrol/opmapcontrol_external.pri)
+DEPENDPATH += \
+    src/libs/utils \
+    src/libs/utils/src \
+    src/libs/opmapcontrol \
+    src/libs/opmapcontrol/src
+
+INCLUDEPATH += \
+    src/libs/utils \
+    src/libs \
+    src/libs/opmapcontrol
+}
+
+# include(lib/opmapcontrol/opmapcontrol.pri)
 # message("Including bundled QMapControl version as FALLBACK. This is fine on Linux and MacOS, but not the best choice in Windows")
 QT += network \
     opengl \
     svg \
     xml \
     phonon \
-    webkit
+    webkit \
+    sql
 TEMPLATE = app
 TARGET = qgroundcontrol
 BASEDIR = $$IN_PWD
@@ -56,7 +95,6 @@ exists(user_config.pri) {
     message("Adding support for additional MAVLink messages for: " $$MAVLINK_CONF)
     message("------------------------------------------------------------------------")
 }
-
 INCLUDEPATH += $$BASEDIR/../mavlink/include/common
 INCLUDEPATH += $$BASEDIR/../mavlink/include
 INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/common
@@ -111,26 +149,27 @@ include(qgroundcontrol.pri)
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
 DEPENDPATH += . \
-    lib/QMapControl \
-    lib/QMapControl/src \
-    lib/opmapcontrol \
-    lib/opmapcontrol/src \
     plugins \
     thirdParty/qserialport/include \
     thirdParty/qserialport/include/QtSerialPort \
-    thirdParty/qserialport
+    thirdParty/qserialport \
+    src/libs/qextserialport
+
 INCLUDEPATH += . \
-    lib/QMapControl \
-    lib/opmapcontrol \
     thirdParty/qserialport/include \
     thirdParty/qserialport/include/QtSerialPort \
-    thirdParty/qserialport/src
+    thirdParty/qserialport/src \
+    src/libs/qextserialport
 
 # Include serial port library
-include(src/lib/qextserialport/qextserialport.pri)
+# include(src/lib/qextserialport/qextserialport.pri)
 # include qserial library
 include(thirdParty/qserialport/qgroundcontrol-qserialport.pri)
 
+# Serial port detection
+macx::SOURCES += src/libs/qextserialport/qextserialenumerator_osx.cpp
+linux-g++::SOURCES += src/libs/qextserialport/qextserialenumerator_unix.cpp
+win32::SOURCES += src/libs/qextserialport/qextserialenumerator_win.cpp
 
 # ../mavlink/include \
 # MAVLink/include \
@@ -150,7 +189,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/ObjectDetectionView.ui \
     src/ui/JoystickWidget.ui \
     src/ui/DebugConsole.ui \
-    src/ui/MapWidget.ui \
     src/ui/XMLCommProtocolWidget.ui \
     src/ui/HDDisplay.ui \
     src/ui/MAVLinkSettingsWidget.ui \
@@ -181,8 +219,9 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/QGCSettingsWidget.ui \
     src/ui/UASControlParameters.ui \
     src/ui/mission/QGCMissionDoWidget.ui \
-    src/ui/mission/QGCMissionConditionWidget.ui
-
+    src/ui/mission/QGCMissionConditionWidget.ui \
+    src/ui/map/QGCMapTool.ui \
+    src/ui/map/QGCMapToolBar.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -198,16 +237,14 @@ INCLUDEPATH += src \
     src/ui/watchdog \
     src/ui/map3D \
     src/ui/designer
-
 HEADERS += src/MG.h \
-    src/Core.h \
+    src/QGCCore.h \
     src/uas/UASInterface.h \
     src/uas/UAS.h \
     src/uas/UASManager.h \
     src/comm/LinkManager.h \
     src/comm/LinkInterface.h \
     src/comm/SerialLinkInterface.h \
-    src/comm/SerialInterface.h \
     src/comm/SerialLink.h \
     src/comm/SerialSimulationLink.h \
     src/comm/ProtocolInterface.h \
@@ -237,7 +274,6 @@ HEADERS += src/MG.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
     src/ui/DebugConsole.h \
-    src/ui/MapWidget.h \
     src/ui/XMLCommProtocolWidget.h \
     src/ui/mavlink/DomItem.h \
     src/ui/mavlink/DomModel.h \
@@ -264,8 +300,6 @@ HEADERS += src/MG.h \
     src/ui/QGCPxImuFirmwareUpdate.h \
     src/ui/QGCDataPlot2D.h \
     src/ui/linechart/IncrementalPlot.h \
-    src/ui/map/Waypoint2DIcon.h \
-    src/ui/map/MAV2DIcon.h \
     src/ui/QGCRemoteControlView.h \
     src/ui/RadioCalibration/RadioCalibrationData.h \
     src/ui/RadioCalibration/RadioCalibrationWindow.h \
@@ -297,13 +331,17 @@ HEADERS += src/MG.h \
     src/ui/uas/UASControlParameters.h \
     src/ui/mission/QGCMissionDoWidget.h \
     src/ui/mission/QGCMissionConditionWidget.h \
-    src/uas/QGCUASParamManager.h
+    src/uas/QGCUASParamManager.h \
+    src/ui/map/QGCMapWidget.h \
+    src/ui/map/MAV2DIcon.h \
+    src/ui/map/Waypoint2DIcon.h \
+    src/ui/mavlink/QGCMAVLinkTextEdit.h \
+    src/ui/map/QGCMapTool.h \
+    src/ui/map/QGCMapToolBar.h \
+    src/libs/qextserialport/qextserialenumerator.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
-macx|win32-msvc2008: {
-    HEADERS +=    src/ui/map3D/QGCGoogleEarthView.h
-}
-
+macx|win32-msvc2008::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
     
@@ -335,9 +373,8 @@ contains(DEPENDENCIES_PRESENT, libfreenect) {
     # Enable only if libfreenect is available
     HEADERS += src/input/Freenect.h
 }
-
 SOURCES += src/main.cc \
-    src/Core.cc \
+    src/QGCCore.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
     src/comm/LinkManager.cc \
@@ -368,7 +405,6 @@ SOURCES += src/main.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
     src/ui/DebugConsole.cc \
-    src/ui/MapWidget.cc \
     src/ui/XMLCommProtocolWidget.cc \
     src/ui/mavlink/DomItem.cc \
     src/ui/mavlink/DomModel.cc \
@@ -395,8 +431,6 @@ SOURCES += src/main.cc \
     src/ui/QGCPxImuFirmwareUpdate.cc \
     src/ui/QGCDataPlot2D.cc \
     src/ui/linechart/IncrementalPlot.cc \
-    src/ui/map/Waypoint2DIcon.cc \
-    src/ui/map/MAV2DIcon.cc \
     src/ui/QGCRemoteControlView.cc \
     src/ui/RadioCalibration/RadioCalibrationWindow.cc \
     src/ui/RadioCalibration/AirfoilServoCalibrator.cc \
@@ -427,12 +461,14 @@ SOURCES += src/main.cc \
     src/ui/uas/UASControlParameters.cpp \
     src/ui/mission/QGCMissionDoWidget.cc \
     src/ui/mission/QGCMissionConditionWidget.cc \
-    src/uas/QGCUASParamManager.cc
-
-macx|win32-msvc2008: {
-    SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
-}
-
+    src/uas/QGCUASParamManager.cc \
+    src/ui/map/QGCMapWidget.cc \
+    src/ui/map/MAV2DIcon.cc \
+    src/ui/map/Waypoint2DIcon.cc \
+    src/ui/mavlink/QGCMAVLinkTextEdit.cc \
+    src/ui/map/QGCMapTool.cc \
+    src/ui/map/QGCMapToolBar.cc
+macx|win32-msvc2008::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     
@@ -450,9 +486,7 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/Texture.cc \
         src/ui/map3D/Imagery.cc \
         src/ui/map3D/HUDScaleGeode.cc \
-        src/ui/map3D/WaypointGroupNode.cc \
-
-
+        src/ui/map3D/WaypointGroupNode.cc
     contains(DEPENDENCIES_PRESENT, osgearth) { 
         message("Including sources for osgEarth")
         
@@ -469,7 +503,7 @@ contains(DEPENDENCIES_PRESENT, libfreenect) {
 RESOURCES += mavground.qrc
 
 # Include RT-LAB Library
-win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) {
+win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin) { 
     message("Building support for Opal-RT")
     LIBS += -LC:/OPAL-RT/RT-LAB7.2.4/Common/bin \
         -lOpalApi
@@ -489,6 +523,5 @@ win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin)
     FORMS += src/ui/OpalLinkSettings.ui
     DEFINES += OPAL_RT
 }
-
-TRANSLATIONS  += es-MX.ts \
+TRANSLATIONS += es-MX.ts \
     en-US.ts

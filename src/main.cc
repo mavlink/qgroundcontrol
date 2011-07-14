@@ -29,7 +29,7 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include <QtGui/QApplication>
-#include "Core.h"
+#include "QGCCore.h"
 #include "MainWindow.h"
 #include "configuration.h"
 
@@ -70,6 +70,6 @@ int main(int argc, char *argv[])
     qInstallMsgHandler( msgHandler );
 #endif
 
-    Core core(argc, argv);
+    QGCCore core(argc, argv);
     return core.exec();
 }

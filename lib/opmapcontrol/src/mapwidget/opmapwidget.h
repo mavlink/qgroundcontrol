@@ -37,6 +37,7 @@
 #include <QtOpenGL/QGLWidget>
 #include "waypointitem.h"
 #include "QtSvg/QGraphicsSvgItem"
+#include "configuration.h"
 #include "uavitem.h"
 #include "gpsitem.h"
 #include "homeitem.h"
@@ -168,7 +169,7 @@ namespace mapcontrol
         * @param config pointer to configuration classed to be used
         * @return
         */
-        OPMapWidget(QWidget *parent=0,Configuration *config=new Configuration);
+        OPMapWidget(QWidget *parent=0, mapcontrol::Configuration *config=new mapcontrol::Configuration());
         ~OPMapWidget();
 
         /**
