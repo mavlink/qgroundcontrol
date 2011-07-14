@@ -94,7 +94,7 @@ void AirfoilServoCalibrator::setLow()
     emit setpointChanged(0, logExtrema());
 }
 
-void AirfoilServoCalibrator::set(const QVector<float> &data)
+void AirfoilServoCalibrator::set(const QVector<uint16_t> &data)
 {
     if (data.size() == 3) {
         lowPulseWidth->setText(QString::number(data[0]));

@@ -75,9 +75,9 @@ CurveCalibrator::~CurveCalibrator()
 void CurveCalibrator::setSetpoint(int setpoint)
 {
     if (setpoint == 0 || setpoint == 4) {
-        setpoints->replace(setpoint, static_cast<double>(logExtrema()));
+        setpoints->replace(setpoint,logExtrema());
     } else {
-        setpoints->replace(setpoint, static_cast<double>(logAverage()));
+        setpoints->replace(setpoint, logAverage());
     }
     curve->setData(*positions, *setpoints);
     plot->replot();
@@ -85,7 +85,7 @@ void CurveCalibrator::setSetpoint(int setpoint)
     emit setpointChanged(setpoint, static_cast<float>(setpoints->value(setpoint)));
 }
 
-void CurveCalibrator::set(const QVector<float> &data)
+void CurveCalibrator::set(const QVector<uint16_t> &data)
 {
     if (data.size() == 5) {
         for (int i=0; i<data.size(); ++i)
