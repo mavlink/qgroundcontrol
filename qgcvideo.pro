@@ -1,0 +1,41 @@
+# Video streaming application for simple UDP direct byte streaming
+
+
+QT       += svg network
+
+TEMPLATE = app
+TARGET = qgcvideo
+
+BASEDIR = .
+BUILDDIR = build/qgcvideo
+LANGUAGE = C++
+
+CONFIG += release
+CONFIG -= debug
+
+OBJECTS_DIR = $$BUILDDIR/obj
+MOC_DIR = $$BUILDDIR/moc
+UI_HEADERS_DIR = src/ui/generated
+
+macx:DESTDIR = $$BASEDIR/bin/mac
+
+INCLUDEPATH += . \
+    src \
+    src/ui \
+    src/comm \
+    include/ui \
+    src/ui/mavlink \
+    src/apps/qgcstreamer
+
+# Input
+
+HEADERS += src/apps/qgcvideo/QGCVideoApp.h
+
+SOURCES += \
+    src/apps/qgcvideo/QGCVideoApp.cc \
+    src/apps/qgcvideo/main.cc
+
+FORMS += \
+    src/apps/qgcvideo/QGCVideoApp.ui
+
+RESOURCES = mavground.qrc
