@@ -282,4 +282,4 @@ void QtColorButton::dropEvent(QDropEvent *event)
 
 } // namespace Utils
 
-#include "moc_qtcolorbutton.cpp"
+//#include "moc_qtcolorbutton.cpp"

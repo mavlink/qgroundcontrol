@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QSettings>
 #include <QFileInfoList>
 #ifdef _WIN32
-#include <QextSerialEnumerator.h>
+#include <qextserialenumerator.h>
 #endif
 #if defined (__APPLE__) && defined (__MACH__)
 #include <stdio.h>

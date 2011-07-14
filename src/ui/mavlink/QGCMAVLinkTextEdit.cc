@@ -75,10 +75,12 @@ bool QGCMAVLinkTextEdit::syntaxcheck()
         QMessageBox::information(0, tr("XML not found!"),tr("Null size xml document!"));
         error = true;
     }
+	return error;
 }
 
 void QGCMAVLinkTextEdit::contextMenuEvent ( QContextMenuEvent * e )
 {
+	Q_UNUSED(e);
     QMenu *RContext = createOwnStandardContextMenu();
     RContext->exec(QCursor::pos());
     delete RContext;

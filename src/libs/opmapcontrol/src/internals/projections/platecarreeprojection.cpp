@@ -85,7 +85,7 @@ double PlateCarreeProjection::Flattening() const
 }
 Size PlateCarreeProjection::GetTileMatrixMaxXY(const int &zoom)
 {
-    int y = (int) pow(2, zoom);
+    int y = (int) pow(2.0f, zoom);
     return Size((2*y) - 1, y - 1);
 }
 

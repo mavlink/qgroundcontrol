@@ -88,7 +88,7 @@ protected:
     static const double TWO_PI;
     static const double EPSLoN;
     static const double MAX_VAL;
-    static const double MAXLONG;
+    static const double maxLong;
     static const double DBLLONG;
     static const double R2D;
     static const double D2R;

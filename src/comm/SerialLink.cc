@@ -344,6 +344,7 @@ qint64 SerialLink::getNominalDataRate()
 {
     qint64 dataRate = 0;
     switch (portSettings.baudRate()) {
+#ifndef Q_OS_WIN
     case QPortSettings::BAUDR_50:
         dataRate = 50;
         break;
@@ -362,6 +363,7 @@ qint64 SerialLink::getNominalDataRate()
     case QPortSettings::BAUDR_200:
         dataRate = 200;
         break;
+#endif
     case QPortSettings::BAUDR_300:
         dataRate = 300;
         break;
@@ -371,9 +373,11 @@ qint64 SerialLink::getNominalDataRate()
     case QPortSettings::BAUDR_1200:
         dataRate = 1200;
         break;
+#ifndef Q_OS_WIN
     case QPortSettings::BAUDR_1800:
         dataRate = 1800;
         break;
+#endif
     case QPortSettings::BAUDR_2400:
         dataRate = 2400;
         break;
@@ -402,7 +406,7 @@ qint64 SerialLink::getNominalDataRate()
     case QPortSettings::BAUDR_57600:
         dataRate = 57600;
         break;
-#ifdef Q_OS_WIN
+#ifdef Q_OS_WIN_XXXX // FIXME
     case QPortSettings::BAUDR_76800:
         dataRate = 76800;
         break;
@@ -598,7 +602,13 @@ bool SerialLink::setBaudRateType(int rateIndex)
     if(isConnected()) reconnect = true;
     disconnect();
 
-    if (rateIndex >= (int)QPortSettings::BAUDR_50 && rateIndex <= (int)QPortSettings::BAUDR_921600)
+#ifdef Q_OS_WIN
+	const int minBaud = (int)QPortSettings::BAUDR_14400;
+#else
+	const int minBaud = (int)QPortSettings::BAUDR_50;
+#endif
+
+    if (rateIndex >= minBaud && rateIndex <= (int)QPortSettings::BAUDR_921600)
     {
         portSettings.setBaudRate((QPortSettings::BaudRate)rateIndex);
     }
@@ -627,6 +637,8 @@ bool SerialLink::setBaudRate(int rate)
     disconnect();
 
     switch (rate) {
+
+#ifndef Q_OS_WIN
     case 50:
         portSettings.setBaudRate(QPortSettings::BAUDR_50);
         break;
@@ -645,6 +657,7 @@ bool SerialLink::setBaudRate(int rate)
     case 200:
         portSettings.setBaudRate(QPortSettings::BAUDR_200);
         break;
+#endif
     case 300:
         portSettings.setBaudRate(QPortSettings::BAUDR_300);
         break;
@@ -654,9 +667,11 @@ bool SerialLink::setBaudRate(int rate)
     case 1200:
         portSettings.setBaudRate(QPortSettings::BAUDR_1200);
         break;
+#ifndef Q_OS_WIN
     case 1800:
         portSettings.setBaudRate(QPortSettings::BAUDR_1800);
         break;
+#endif
     case 2400:
         portSettings.setBaudRate(QPortSettings::BAUDR_2400);
         break;
@@ -685,7 +700,7 @@ bool SerialLink::setBaudRate(int rate)
     case 57600:
         portSettings.setBaudRate(QPortSettings::BAUDR_57600);
         break;
-#ifdef Q_OS_WIN
+#ifdef Q_OS_WIN_XXXX // FIXME CHECK THIS
     case 76800:
         portSettings.setBaudRate(QPortSettings::BAUDR_76800);
         break;

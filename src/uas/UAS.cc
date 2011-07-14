@@ -1383,6 +1383,8 @@ QImage UAS::getImage()
     imagePacketsArrived = 0;
     //imageRecBuffer.clear();
     return image;
+#else
+	return QImage();
 #endif
 
 }

@@ -40,10 +40,12 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include "Waypoint.h"
 #include "UASWaypointManager.h"
+#include <qmath.h>
 //#include "Waypoint2DIcon.h"
 //#include "MAV2DIcon.h"
 
 #include <QDebug>
+
 
 HSIDisplay::HSIDisplay(QWidget *parent) :
     HDDisplay(NULL, "HSI", parent),
