@@ -26,13 +26,12 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string>QWidget#colorIcon {}
+   <string notr="true">QWidget#colorIcon {}
 
 QWidget {
 background-color: #252528;
 color: #DDDDDF;
-border-color: #EEEEEE;
-background-clip: border;
+border-color: #CCCCCF;
 }
 
 QCheckBox {
@@ -56,10 +55,6 @@ margin-top: 1ex; /* leave space at the top for the title */
      font: bold 8px;
  }
 
-QGroupBox#heartbeatIcon {
-	background-color: red;
-}
-
  QDockWidget {
 	font: bold;
     border: 1px solid #32345E;
@@ -81,67 +76,7 @@ QPushButton {
 QPushButton:pressed {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #444444, stop: 1 #555555);
 }
-
-QPushButton#landButton {
-	color: #000000;
-	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffee01, stop:1 #ae8f00) url(&quot;ICONDIR/control/emergency-button.png&quot;);
-}
-
-QPushButton:pressed#landButton {
-	color: #000000;
-	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bbaa00, stop:1 #a05b00) url(&quot;ICONDIR/control/emergency-button.png&quot;);
-}
-
-QPushButton#killButton {
-	color: #000000;
-	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffb917, stop:1 #b37300) url(&quot;ICONDIR/control/emergency-button.png&quot;);
-}
-
-QPushButton:pressed#killButton {
-	color: #000000;
-	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bb8500, stop:1 #903000) url(&quot;ICONDIR/control/emergency-button.png&quot;);
-}
-
-QProgressBar {
-	border: 1px solid white;
-	border-radius: 4px;
-	text-align: center;
-	padding: 2px;
-	color: white;
-	background-color: #111111;
-}
-
-QProgressBar:horizontal {
-	height: 12px;
-}
-
-QProgressBar QLabel {
-	font-size: 8px;
-}
-
-QProgressBar:vertical {
-	width: 12px;
-}
-
-QProgressBar::chunk {
-	background-color: #656565;
-}
-
-QProgressBar::chunk#batteryBar {
-	background-color: green;
-}
-
-QProgressBar::chunk#speedBar {
-	background-color: yellow;
-}
-
-QProgressBar::chunk#thrustBar {
-	background-color: orange;
-}</string>
+</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <property name="margin">
@@ -161,12 +96,12 @@ QProgressBar::chunk#thrustBar {
      <property name="title">
       <string/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,20,20,20,20,20,20,1,8,8,1,4,8,1,1,1,1,1">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,5,5,5,50,50,50,50,50,50,5,20,20,5,10,10,10,20,5,5,5,5">
       <property name="spacing">
        <number>2</number>
       </property>
       <property name="margin">
-       <number>2</number>
+       <number>4</number>
       </property>
       <item>
        <widget class="QCheckBox" name="selectedBox">
@@ -621,6 +556,19 @@ Time to stay at this position before advancing</string>
          </sizepolicy>
         </property>
        </widget>
+      </item>
+      <item>
+       <spacer name="removeSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>5</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
       <item>
        <widget class="QCheckBox" name="autoContinue">

@@ -129,6 +129,8 @@ void WaypointView::changedAutoContinue(int state)
 
 void WaypointView::updateActionView(int action)
 {
+    // Remove stretch item at index 17 (m_ui->removeSpacer)
+    m_ui->horizontalLayout->takeAt(17);
     // expose ui based on action
 
     switch(action) {
@@ -140,6 +142,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 82);
         m_ui->takeOffAngleSpinBox->show();
         break;
     case MAV_CMD_NAV_LAND:
@@ -151,6 +154,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 26);
         break;
     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
         m_ui->orbitSpinBox->hide();
@@ -161,6 +165,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 26);
         break;
     case MAV_CMD_NAV_WAYPOINT:
         m_ui->orbitSpinBox->hide();
@@ -168,6 +173,7 @@ void WaypointView::updateActionView(int action)
         m_ui->turnsSpinBox->hide();
         m_ui->holdTimeSpinBox->show();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 1);
 
         m_ui->autoContinue->show();
         m_ui->acceptanceSpinBox->show();
@@ -181,6 +187,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 25);
         m_ui->orbitSpinBox->show();
         break;
     case MAV_CMD_NAV_LOITER_TURNS:
@@ -190,6 +197,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 20);
         m_ui->orbitSpinBox->show();
         m_ui->turnsSpinBox->show();
         break;
@@ -200,6 +208,7 @@ void WaypointView::updateActionView(int action)
         m_ui->autoContinue->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 20);
         m_ui->orbitSpinBox->show();
         m_ui->holdTimeSpinBox->show();
         break;
@@ -527,6 +536,38 @@ void WaypointView::updateValues()
     }
 
     wp->blockSignals(false);
+
+    QColor backGroundColor = QGC::colorBackground;
+
+    static int lastId = -1;
+    int currId = wp->getId() % 2;
+
+    if (currId != lastId)
+    {
+
+        qDebug() << "COLOR ID: " << currId;
+        if (currId == 1)
+        {
+            //backGroundColor = backGroundColor.lighter(150);
+            backGroundColor = QColor("#252528").lighter(150);
+        }
+        else
+        {
+            backGroundColor = QColor("#252528").lighter(250);
+        }
+        qDebug() << "COLOR:" << backGroundColor.name();
+
+        // Update color based on id
+        QString groupBoxStyle = QString("QGroupBox {padding: 0px; margin: 0px; border: 0px; background-color: %1; }").arg(backGroundColor.name());
+        QString labelStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border-color: #EEEEEE; }").arg(backGroundColor.name());
+        QString checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; }").arg(backGroundColor.name());
+
+        m_ui->autoContinue->setStyleSheet(checkBoxStyle);
+        m_ui->selectedBox->setStyleSheet(checkBoxStyle);
+        m_ui->idLabel->setStyleSheet(labelStyle);
+        m_ui->groupBox->setStyleSheet(groupBoxStyle);
+        lastId = currId;
+    }
 }
 
 void WaypointView::setCurrent(bool state)

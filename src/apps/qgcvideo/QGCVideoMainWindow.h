@@ -23,36 +23,31 @@
 
 /**
  * @file
- *   @brief Definition of main application class
+ *   @brief Definition of main window
  *
- *   @author Lorenz Meier <lm@inf.ethz.ch>
+ *   @author Dominik Honegger
  *
  */
 
+#ifndef QGCVIDEOMAINWINDOW_H
+#define QGCVIDEOMAINWINDOW_H
 
-#ifndef QGCVIDEOAPP_H
-#define QGCVIDEOAPP_H
+#include <QMainWindow>
 
-#include <QApplication>
+namespace Ui {
+    class QGCVideoMainWindow;
+}
 
-/**
- * @brief The main application and management class.
- *
- * This class is started by the main method and provides
- * the central management unit of the groundstation application.
- *
- **/
-class QGCVideoApp : public QApplication
+class QGCVideoMainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    QGCVideoApp(int &argc, char* argv[]);
-    ~QGCVideoApp();
-
-protected:
+    explicit QGCVideoMainWindow(QWidget *parent = 0);
+    ~QGCVideoMainWindow();
 
 private:
+    Ui::QGCVideoMainWindow *ui;
 };
 
-#endif /* QGCVIDEOAPP_H */
+#endif // QGCVIDEOMAINWINDOW_H

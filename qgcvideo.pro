@@ -1,7 +1,7 @@
 # Video streaming application for simple UDP direct byte streaming
 
 
-QT       += svg network
+QT       += svg network opengl
 
 TEMPLATE = app
 TARGET = qgcvideo
@@ -24,18 +24,22 @@ INCLUDEPATH += . \
     src/ui \
     src/comm \
     include/ui \
-    src/ui/mavlink \
-    src/apps/qgcstreamer
+    src/apps/qgcvideo \
 
 # Input
 
-HEADERS += src/apps/qgcvideo/QGCVideoApp.h
+HEADERS += \
+    src/apps/qgcvideo/QGCVideoMainWindow.h \
+    src/apps/qgcvideo/QGCVideoApp.h \
+    src/apps/qgcvideo/QGCVideoWidget.h
 
 SOURCES += \
+    src/apps/qgcvideo/main.cc \
+    src/apps/qgcvideo/QGCVideoMainWindow.cc \
     src/apps/qgcvideo/QGCVideoApp.cc \
-    src/apps/qgcvideo/main.cc
+    src/apps/qgcvideo/QGCVideoWidget.cc
 
 FORMS += \
-    src/apps/qgcvideo/QGCVideoApp.ui
+    src/apps/qgcvideo/QGCVideoMainWindow.ui
 
 RESOURCES = mavground.qrc

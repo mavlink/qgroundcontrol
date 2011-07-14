@@ -80,15 +80,14 @@ DebugConsole::DebugConsole(QWidget *parent) :
     //lineBufferTimer.setInterval(100); // 100 Hz
     //lineBufferTimer.start();
 
+    loadSettings();
+
     // Enable traffic measurements
     connect(&snapShotTimer, SIGNAL(timeout()), this, SLOT(updateTrafficMeasurements()));
     snapShotTimer.setInterval(snapShotInterval);
     snapShotTimer.start();
-
-//    // Set hex checkbox checked
-//    m_ui->hexCheckBox->setChecked(!convertToAscii);
-//    m_ui->mavlinkCheckBox->setChecked(filterMAVLINK);
-//    m_ui->holdCheckBox->setChecked(autoHold);
+    // Update measurements the first time
+    updateTrafficMeasurements();
 
     // Get a list of all existing links
     links = QList<LinkInterface*>();
@@ -114,17 +113,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     connect(m_ui->addSymbolButton, SIGNAL(clicked()), this, SLOT(appendSpecialSymbol()));
     // Connect Checkbox
     connect(m_ui->specialComboBox, SIGNAL(highlighted(QString)), this, SLOT(specialSymbolSelected(QString)));
-    // Set add button invisible if auto add checkbox is checked
-    //connect(m_ui->specialCheckBox, SIGNAL(clicked(bool)), m_ui->addSymbolButton, SLOT(setHidden(bool)));
     // Allow to send via return
     connect(m_ui->sendText, SIGNAL(returnPressed()), this, SLOT(sendBytes()));
-
-    loadSettings();
-
-//    // Warn user about not activated hold
-//    if (!m_ui->holdCheckBox->isChecked()) {
-//        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console if huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
-//    }
 }
 
 void DebugConsole::hideEvent(QHideEvent* event)
