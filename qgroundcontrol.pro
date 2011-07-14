@@ -152,17 +152,24 @@ DEPENDPATH += . \
     plugins \
     thirdParty/qserialport/include \
     thirdParty/qserialport/include/QtSerialPort \
-    thirdParty/qserialport
+    thirdParty/qserialport \
+    src/libs/qextserialport
 
 INCLUDEPATH += . \
     thirdParty/qserialport/include \
     thirdParty/qserialport/include/QtSerialPort \
-    thirdParty/qserialport/src
+    thirdParty/qserialport/src \
+    src/libs/qextserialport
 
 # Include serial port library
 # include(src/lib/qextserialport/qextserialport.pri)
 # include qserial library
 include(thirdParty/qserialport/qgroundcontrol-qserialport.pri)
+
+# Serial port detection
+macx::SOURCES += src/libs/qextserialport/qextserialenumerator_osx.cpp
+linux-g++::SOURCES += src/libs/qextserialport/qextserialenumerator_unix.cpp
+win32::SOURCES += src/libs/qextserialport/qextserialenumerator_win.cpp
 
 # ../mavlink/include \
 # MAVLink/include \
@@ -330,7 +337,8 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/mavlink/QGCMAVLinkTextEdit.h \
     src/ui/map/QGCMapTool.h \
-    src/ui/map/QGCMapToolBar.h
+    src/ui/map/QGCMapToolBar.h \
+    src/libs/qextserialport/qextserialenumerator.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008::HEADERS += src/ui/map3D/QGCGoogleEarthView.h

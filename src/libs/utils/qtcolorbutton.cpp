@@ -282,4 +282,6 @@ void QtColorButton::dropEvent(QDropEvent *event)
 
 } // namespace Utils
 
-//#include "moc_qtcolorbutton.cpp"
+// It is unclear why this include directly access the MOC output?
+
+#include "moc_qtcolorbutton.cpp"
