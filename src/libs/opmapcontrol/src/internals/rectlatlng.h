@@ -203,11 +203,11 @@ public:
     }
     static RectLatLng Intersect(RectLatLng const& a, RectLatLng const& b)
     {
-        double lng = std::max(a.Lng(), b.Lng());
-        double num2 = std::min((double) (a.Lng() + a.WidthLng()), (double) (b.Lng() + b.WidthLng()));
+        double lng = qMax(a.Lng(), b.Lng());
+        double num2 = qMin((double) (a.Lng() + a.WidthLng()), (double) (b.Lng() + b.WidthLng()));
 
-        double lat = std::max(a.Lat(), b.Lat());
-        double num4 = std::min((double) (a.Lat() + a.HeightLat()), (double) (b.Lat() + b.HeightLat()));
+        double lat = qMax(a.Lat(), b.Lat());
+        double num4 = qMin((double) (a.Lat() + a.HeightLat()), (double) (b.Lat() + b.HeightLat()));
 
         if((num2 >= lng) && (num4 >= lat))
         {
@@ -222,10 +222,10 @@ public:
 
    static RectLatLng Union(RectLatLng const& a, RectLatLng const& b)
    {
-       double lng = std::min(a.Lng(), b.Lng());
-       double num2 = std::max((double) (a.Lng() + a.WidthLng()), (double) (b.Lng() + b.WidthLng()));
-       double lat = std::min(a.Lat(), b.Lat());
-       double num4 = std::max((double) (a.Lat() + a.HeightLat()), (double) (b.Lat() + b.HeightLat()));
+       double lng = qMin(a.Lng(), b.Lng());
+       double num2 = qMax((double) (a.Lng() + a.WidthLng()), (double) (b.Lng() + b.WidthLng()));
+       double lat = qMin(a.Lat(), b.Lat());
+       double num4 = qMax((double) (a.Lat() + a.HeightLat()), (double) (b.Lat() + b.HeightLat()));
        return RectLatLng(lng, lat, num2 - lng, num4 - lat);
    }
    void Offset(PointLatLng const& pos)

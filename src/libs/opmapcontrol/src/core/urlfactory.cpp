@@ -26,6 +26,7 @@
 */
 #include "urlfactory.h"
 #include <QRegExp>
+#include <qmath.h>
 
 namespace core {
 

@@ -27,7 +27,6 @@
 #ifndef OPOINT_H
 #define OPOINT_H
 
-
 #include <QString>
 
 namespace core {
@@ -60,8 +59,15 @@ namespace core {
         {
             Offset(p.x, p.y);
         }
-        static int HIWORD(int n);
-        static int LOWORD(int n);
+    static int hiWord(int n)
+    {
+        return (n >> 16) & 0xffff;
+    }
+
+    static int loWord(int n)
+    {
+        return n & 0xffff;
+    }
 
     private:
         int x;

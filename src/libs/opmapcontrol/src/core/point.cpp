@@ -30,8 +30,8 @@
 namespace core {
     Point::Point(int dw)
     {
-        this->x=(short)Point::LOWORD(dw);
-        this->y=(short)Point::HIWORD(dw);
+        this->x=(short)Point::loWord(dw);
+        this->y=(short)Point::hiWord(dw);
         empty=false;
     }
     Point::Point(Size sz)
@@ -59,15 +59,6 @@ namespace core {
     bool operator!=(Point const &lhs,Point const &rhs)
     {
         return !(lhs==rhs);
-    }
-    int Point::HIWORD(int n)
-    {
-        return (n >> 16) & 0xffff;
-    }
-
-    int Point::LOWORD(int n)
-    {
-        return n & 0xffff;
     }
     Point Point::Empty=Point();
 

@@ -25,6 +25,7 @@
 * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 #include "pureprojection.h"
+#include <qmath.h>
 
 
 
@@ -38,7 +39,7 @@ const double PureProjection::HALF_PI = (M_PI * 0.5);
 const double PureProjection::TWO_PI= (M_PI * 2.0);
 const double PureProjection::EPSLoN= 1.0e-10;
 const double PureProjection::MAX_VAL= 4;
-const double PureProjection::MAXLONG= 2147483647;
+const double PureProjection::maxLong= 2147483647;
 const double PureProjection::DBLLONG= 4.61168601e18;
 const double PureProjection::R2D=180/M_PI;
 const double PureProjection::D2R=M_PI/180;
@@ -128,17 +129,17 @@ Point PureProjection::FromLatLngToPixel(const PointLatLng &p,const int &zoom)
                   x = x - (Sign(x) * TWO_PI);
 
                else
-                  if(((qlonglong) qAbs(x / TWO_PI)) < MAXLONG)
+                  if(((qlonglong) qAbs(x / TWO_PI)) < maxLong)
                   {
                      x = x - (((qlonglong) (x / TWO_PI)) * TWO_PI);
                   }
                   else
-                     if(((qlonglong) qAbs(x / (MAXLONG * TWO_PI))) < MAXLONG)
+                     if(((qlonglong) qAbs(x / (maxLong * TWO_PI))) < maxLong)
                      {
-                        x = x - (((qlonglong) (x / (MAXLONG * TWO_PI))) * (TWO_PI * MAXLONG));
+                        x = x - (((qlonglong) (x / (maxLong * TWO_PI))) * (TWO_PI * maxLong));
                      }
                      else
-                        if(((qlonglong) qAbs(x / (DBLLONG * TWO_PI))) < MAXLONG)
+                        if(((qlonglong) qAbs(x / (DBLLONG * TWO_PI))) < maxLong)
                         {
                            x = x - (((qlonglong) (x / (DBLLONG * TWO_PI))) * (TWO_PI * DBLLONG));
                         }
