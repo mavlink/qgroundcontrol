@@ -53,30 +53,30 @@ public:
       changing the display from an external source (file/uav).
       @param data QVector of setpoints
       */
-    virtual void set(const QVector<float>& data)=0;
+    virtual void set(const QVector<uint16_t>& data)=0;
 signals:
     /** Announce a setpoint change.
       @param index setpoint number - 0 based in the current implementation
       @param value new value
       */
-    void setpointChanged(int index, float value);
+    void setpointChanged(int index, uint16_t value);
 
 public slots:
     /** Slot to call when the relevant channel is updated
      @param raw current channel value
      */
-    void channelChanged(float raw);
+    void channelChanged(uint16_t raw);
 
 protected:
     /** Display the current pulse width */
     QLabel *pulseWidth;
 
     /** Log of the past few samples for use in averaging and finding extrema */
-    QVector<float> *log;
+    QVector<uint16_t> *log;
     /** Find the maximum or minimum of the data log */
-    float logExtrema();
+    uint16_t logExtrema();
     /** Find the average of the log */
-    float logAverage();
+    uint16_t logAverage();
 };
 
 #endif // ABSTRACTCALIBRATOR_H
