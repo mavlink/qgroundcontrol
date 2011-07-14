@@ -39,38 +39,44 @@ This file is part of the PIXHAWK project
 #include "UASManager.h"
 #include "UASView.h"
 #include "UASWaypointManager.h"
+#include "MainWindow.h"
 #include "ui_UASView.h"
 
 UASView::UASView(UASInterface* uas, QWidget *parent) :
-    QWidget(parent),
-    startTime(0),
-    timeout(false),
-    iconIsRed(true),
-    timeRemaining(0),
-    chargeLevel(0),
-    uas(uas),
-    load(0),
-    state("UNKNOWN"),
-    stateDesc(tr("Unknown state")),
-    mode("MAV_MODE_UNKNOWN"),
-    thrust(0),
-    isActive(false),
-    x(0),
-    y(0),
-    z(0),
-    totalSpeed(0),
-    lat(0),
-    lon(0),
-    alt(0),
-    groundDistance(0),
-    localFrame(false),
-    removeAction(new QAction("Delete this system", this)),
-    renameAction(new QAction("Rename..", this)),
-    selectAction(new QAction("Control this system", this )),
-    selectAirframeAction(new QAction("Choose Airframe", this)),
-    setBatterySpecsAction(new QAction("Set Battery Options", this)),
-    m_ui(new Ui::UASView)
+        QWidget(parent),
+        startTime(0),
+        timeout(false),
+        iconIsRed(true),
+        timeRemaining(0),
+        chargeLevel(0),
+        uas(uas),
+        load(0),
+        state("UNKNOWN"),
+        stateDesc(tr("Unknown state")),
+        mode("MAV_MODE_UNKNOWN"),
+        thrust(0),
+        isActive(false),
+        x(0),
+        y(0),
+        z(0),
+        totalSpeed(0),
+        lat(0),
+        lon(0),
+        alt(0),
+        groundDistance(0),
+        localFrame(false),
+        removeAction(new QAction("Delete this system", this)),
+        renameAction(new QAction("Rename..", this)),
+        selectAction(new QAction("Control this system", this )),
+        selectAirframeAction(new QAction("Choose Airframe", this)),
+        setBatterySpecsAction(new QAction("Set Battery Options", this)),
+        lowPowerModeEnabled(false),
+        m_ui(new Ui::UASView)
 {
+    // FIXME XXX
+    lowPowerModeEnabled = MainWindow::instance()->lowPowerModeEnabled();
+
+
     m_ui->setupUi(this);
 
     // Setup communication
@@ -129,7 +135,12 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     // Heartbeat fade
     refreshTimer = new QTimer(this);
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
-    refreshTimer->start(updateInterval);
+    if (lowPowerModeEnabled)
+    {
+        refreshTimer->start(updateInterval*10);
+    } else {
+        refreshTimer->start(updateInterval);
+    }
 
     // Hide kill and shutdown buttons per default
     m_ui->killButton->hide();
@@ -248,7 +259,7 @@ void UASView::showEvent(QShowEvent* event)
     // React only to internal (pre-display)
     // events
     Q_UNUSED(event);
-    refreshTimer->start(updateInterval);
+    refreshTimer->start(updateInterval*10);
 }
 
 void UASView::hideEvent(QHideEvent* event)
@@ -305,24 +316,24 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
             m_ui->typeButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
             break;
         case 6: {
-            // A groundstation is a special system type, update widget
-            QString result;
-            m_ui->nameLabel->setText(tr("OCU ") + result.sprintf("%03d", uas->getUASID()));
-            m_ui->waypointLabel->setText("");
-            m_ui->timeRemainingLabel->setText("Online:");
-            m_ui->batteryBar->hide();
-            m_ui->thrustBar->hide();
-            m_ui->stateLabel->hide();
-            m_ui->statusTextLabel->hide();
-            m_ui->waypointLabel->hide();
-            m_ui->liftoffButton->hide();
-            m_ui->haltButton->hide();
-            m_ui->landButton->hide();
-            m_ui->shutdownButton->hide();
-            m_ui->abortButton->hide();
-            m_ui->typeButton->setIcon(QIcon(":/images/mavs/groundstation.svg"));
-        }
-        break;
+                // A groundstation is a special system type, update widget
+                QString result;
+                m_ui->nameLabel->setText(tr("OCU ") + result.sprintf("%03d", uas->getUASID()));
+                m_ui->waypointLabel->setText("");
+                m_ui->timeRemainingLabel->setText("Online:");
+                m_ui->batteryBar->hide();
+                m_ui->thrustBar->hide();
+                m_ui->stateLabel->hide();
+                m_ui->statusTextLabel->hide();
+                m_ui->waypointLabel->hide();
+                m_ui->liftoffButton->hide();
+                m_ui->haltButton->hide();
+                m_ui->landButton->hide();
+                m_ui->shutdownButton->hide();
+                m_ui->abortButton->hide();
+                m_ui->typeButton->setIcon(QIcon(":/images/mavs/groundstation.svg"));
+            }
+            break;
         default:
             m_ui->typeButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
             break;
@@ -458,15 +469,15 @@ void UASView::selectAirframe()
         // Get list of airframes from UAS
         QStringList airframes;
         airframes << "Generic"
-                  << "Multiplex Easystar"
-                  << "Multiplex Twinstar"
-                  << "Multiplex Merlin"
-                  << "Pixhawk Cheetah"
-                  << "Mikrokopter"
-                  << "Reaper"
-                  << "Predator"
-                  << "Coaxial"
-                  << "Pteryx";
+                << "Multiplex Easystar"
+                << "Multiplex Twinstar"
+                << "Multiplex Merlin"
+                << "Pixhawk Cheetah"
+                << "Mikrokopter"
+                << "Reaper"
+                << "Predator"
+                << "Coaxial"
+                << "Pteryx";
 
         bool ok;
         QString item = QInputDialog::getItem(this, tr("Select Airframe for %1").arg(uas->getUASName()),
@@ -591,12 +602,15 @@ void UASView::refresh()
         }
         iconIsRed = !iconIsRed;
     } else {
-        // Fade heartbeat icon
-        // Make color darker
-        heartbeatColor = heartbeatColor.darker(150);
+        if (!lowPowerModeEnabled)
+        {
+            // Fade heartbeat icon
+            // Make color darker
+            heartbeatColor = heartbeatColor.darker(150);
 
-        //m_ui->heartbeatIcon->setAutoFillBackground(true);
-        m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
+            //m_ui->heartbeatIcon->setAutoFillBackground(true);
+            m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
+        }
     }
     //setUpdatesEnabled(true);
 

@@ -75,6 +75,7 @@ inline bool isinf(T value)
  */
 HUD::HUD(int width, int height, QWidget* parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
+      u(NULL),
       uas(NULL),
       yawInt(0.0f),
       mode(tr("UNKNOWN MODE")),
@@ -136,7 +137,8 @@ HUD::HUD(int width, int height, QWidget* parent)
       hudInstrumentsEnabled(true),
       videoEnabled(false),
       xImageFactor(1.0),
-      yImageFactor(1.0)
+      yImageFactor(1.0),
+      imageRequested(false)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -145,6 +147,7 @@ HUD::HUD(int width, int height, QWidget* parent)
     setMinimumSize(80, 60);
     // Set preferred size
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    scalingFactor = this->width()/vwidth;
 
     // Fill with black background
     QImage fill = QImage(width, height, QImage::Format_Indexed8);
@@ -158,11 +161,10 @@ HUD::HUD(int width, int height, QWidget* parent)
     //qDebug() << __FILE__ << __LINE__ << "template image:" << imagePath;
     //fill = QImage(imagePath);
 
-    //glImage = QGLWidget::convertToGLFormat(fill);
+    glImage = QGLWidget::convertToGLFormat(fill);
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
-    //connect(refreshTimer, SIGNAL(timeout()), this, SLOT(update()));
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
 
     // Resize to correct size and fill with image
@@ -195,8 +197,6 @@ HUD::HUD(int width, int height, QWidget* parent)
     createActions();
 
     if (UASManager::instance()->getActiveUAS() != NULL) setActiveUAS(UASManager::instance()->getActiveUAS());
-
-    setVisible(false);
 }
 
 HUD::~HUD()
@@ -282,6 +282,7 @@ void HUD::setActiveUAS(UASInterface* uas)
         UAS* u = dynamic_cast<UAS*>(this->uas);
         if (u) {
             disconnect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
+            disconnect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage()));
         }
     }
 
@@ -303,10 +304,12 @@ void HUD::setActiveUAS(UASInterface* uas)
         UAS* u = dynamic_cast<UAS*>(uas);
         if (u) {
             connect(u, SIGNAL(imageStarted(quint64)), this, SLOT(startImage(quint64)));
+            connect(u, SIGNAL(imageReady(UASInterface*)), this, SLOT(copyImage()));
         }
 
         // Set new UAS
         this->uas = uas;
+        this->u = dynamic_cast<UAS*>(this->uas);
     }
 }
 
@@ -666,9 +669,6 @@ void HUD::paintHUD()
                 qDebug() << __FILE__ << __LINE__ << "template image:" << nextOfflineImage;
                 QImage fill = QImage(nextOfflineImage);
 
-                xImageFactor = width() / (float)fill.width();
-                yImageFactor = height() / (float)fill.height();
-
                 glImage = QGLWidget::convertToGLFormat(fill);
 
                 // Reset to save load efforts
@@ -677,9 +677,13 @@ void HUD::paintHUD()
 
             glRasterPos2i(0, 0);
 
-            glPixelZoom(xImageFactor, yImageFactor);
+            xImageFactor = width() / (float)glImage.width();
+            yImageFactor = height() / (float)glImage.height();
+            float imageFactor = qMin(xImageFactor, yImageFactor);
+            glPixelZoom(imageFactor, imageFactor);
             // Resize to correct size and fill with image
             glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
+            //qDebug() << "DRAWING GL IMAGE";
         } else {
             // Blue / brown background
             paintCenterBackground(roll, pitch, yawTrans);
@@ -1622,4 +1626,10 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
         //            }
         //        }
     }
+}
+
+void HUD::copyImage()
+{
+    qDebug() << "HUD::copyImage()";
+    this->glImage = QGLWidget::convertToGLFormat(this->u->getImage());
 }

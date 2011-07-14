@@ -71,9 +71,9 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(m_ui->posESpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
     connect(m_ui->posDSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
 
-    connect(m_ui->latSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setX(double)));
-    connect(m_ui->lonSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setY(double)));
-    connect(m_ui->altSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setZ(double)));
+    connect(m_ui->latSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setLatitude(double)));
+    connect(m_ui->lonSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setLongitude(double)));
+    connect(m_ui->altSpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setAltitude(double)));
     connect(m_ui->yawSpinBox, SIGNAL(valueChanged(int)), wp, SLOT(setYaw(int)));
 
     connect(m_ui->upButton, SIGNAL(clicked()), this, SLOT(moveUp()));
@@ -129,6 +129,8 @@ void WaypointView::changedAutoContinue(int state)
 
 void WaypointView::updateActionView(int action)
 {
+    // Remove stretch item at index 17 (m_ui->removeSpacer)
+    m_ui->horizontalLayout->takeAt(17);
     // expose ui based on action
 
     switch(action) {
@@ -140,6 +142,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 82);
         m_ui->takeOffAngleSpinBox->show();
         break;
     case MAV_CMD_NAV_LAND:
@@ -151,6 +154,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 26);
         break;
     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
         m_ui->orbitSpinBox->hide();
@@ -161,6 +165,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 26);
         break;
     case MAV_CMD_NAV_WAYPOINT:
         m_ui->orbitSpinBox->hide();
@@ -168,6 +173,7 @@ void WaypointView::updateActionView(int action)
         m_ui->turnsSpinBox->hide();
         m_ui->holdTimeSpinBox->show();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 1);
 
         m_ui->autoContinue->show();
         m_ui->acceptanceSpinBox->show();
@@ -181,6 +187,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 25);
         m_ui->orbitSpinBox->show();
         break;
     case MAV_CMD_NAV_LOITER_TURNS:
@@ -190,6 +197,7 @@ void WaypointView::updateActionView(int action)
         m_ui->holdTimeSpinBox->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 20);
         m_ui->orbitSpinBox->show();
         m_ui->turnsSpinBox->show();
         break;
@@ -200,20 +208,21 @@ void WaypointView::updateActionView(int action)
         m_ui->autoContinue->hide();
         m_ui->acceptanceSpinBox->hide();
         m_ui->customActionWidget->hide();
+        m_ui->horizontalLayout->insertStretch(17, 20);
         m_ui->orbitSpinBox->show();
         m_ui->holdTimeSpinBox->show();
         break;
-    case MAV_CMD_NAV_ORIENTATION_TARGET:
-        m_ui->orbitSpinBox->hide();
-        m_ui->takeOffAngleSpinBox->hide();
-        m_ui->turnsSpinBox->hide();
-        m_ui->holdTimeSpinBox->show();
-        m_ui->customActionWidget->hide();
+//    case MAV_CMD_NAV_ORIENTATION_TARGET:
+//        m_ui->orbitSpinBox->hide();
+//        m_ui->takeOffAngleSpinBox->hide();
+//        m_ui->turnsSpinBox->hide();
+//        m_ui->holdTimeSpinBox->show();
+//        m_ui->customActionWidget->hide();
 
-        m_ui->autoContinue->show();
-        m_ui->acceptanceSpinBox->hide();
-        m_ui->yawSpinBox->hide();
-        break;
+//        m_ui->autoContinue->show();
+//        m_ui->acceptanceSpinBox->hide();
+//        m_ui->yawSpinBox->hide();
+//        break;
     default:
         break;
     }
@@ -391,14 +400,26 @@ void WaypointView::updateValues()
     break;
     case MAV_FRAME_GLOBAL:
     case MAV_FRAME_GLOBAL_RELATIVE_ALT: {
-        if (m_ui->latSpinBox->value() != wp->getX()) {
-            m_ui->latSpinBox->setValue(wp->getX());
+        if (m_ui->latSpinBox->value() != wp->getLatitude()) {
+            // Rounding might occur, prevent spin box from
+            // firing back changes
+            m_ui->latSpinBox->blockSignals(true);
+            m_ui->latSpinBox->setValue(wp->getLatitude());
+            m_ui->latSpinBox->blockSignals(false);
         }
-        if (m_ui->lonSpinBox->value() != wp->getY()) {
-            m_ui->lonSpinBox->setValue(wp->getY());
+        if (m_ui->lonSpinBox->value() != wp->getLongitude()) {
+            // Rounding might occur, prevent spin box from
+            // firing back changes
+            m_ui->lonSpinBox->blockSignals(true);
+            m_ui->lonSpinBox->setValue(wp->getLongitude());
+            m_ui->lonSpinBox->blockSignals(false);
         }
-        if (m_ui->altSpinBox->value() != wp->getZ()) {
-            m_ui->altSpinBox->setValue(wp->getZ());
+        if (m_ui->altSpinBox->value() != wp->getAltitude()) {
+            // Rounding might occur, prevent spin box from
+            // firing back changes
+            m_ui->altSpinBox->blockSignals(true);
+            m_ui->altSpinBox->setValue(wp->getAltitude());
+            m_ui->altSpinBox->blockSignals(false);
         }
     }
     break;
@@ -427,18 +448,19 @@ void WaypointView::updateValues()
             }
         }
     }
-    switch(action) {
-    case MAV_CMD_NAV_TAKEOFF:
-        break;
-    case MAV_CMD_NAV_LAND:
-        break;
-    case MAV_CMD_NAV_WAYPOINT:
-        break;
-    case MAV_CMD_NAV_LOITER_UNLIM:
-        break;
-    default:
-        std::cerr << "unknown action" << std::endl;
-    }
+    // Do something on actions - currently unused
+//    switch(action) {
+//    case MAV_CMD_NAV_TAKEOFF:
+//        break;
+//    case MAV_CMD_NAV_LAND:
+//        break;
+//    case MAV_CMD_NAV_WAYPOINT:
+//        break;
+//    case MAV_CMD_NAV_LOITER_UNLIM:
+//        break;
+//    default:
+//        std::cerr << "unknown action" << std::endl;
+//    }
 
     if (m_ui->yawSpinBox->value() != wp->getYaw()) {
         if (!m_ui->yawSpinBox->isVisible()) m_ui->yawSpinBox->blockSignals(true);
@@ -514,6 +536,38 @@ void WaypointView::updateValues()
     }
 
     wp->blockSignals(false);
+
+    QColor backGroundColor = QGC::colorBackground;
+
+    static int lastId = -1;
+    int currId = wp->getId() % 2;
+
+    if (currId != lastId)
+    {
+
+        qDebug() << "COLOR ID: " << currId;
+        if (currId == 1)
+        {
+            //backGroundColor = backGroundColor.lighter(150);
+            backGroundColor = QColor("#252528").lighter(150);
+        }
+        else
+        {
+            backGroundColor = QColor("#252528").lighter(250);
+        }
+        qDebug() << "COLOR:" << backGroundColor.name();
+
+        // Update color based on id
+        QString groupBoxStyle = QString("QGroupBox {padding: 0px; margin: 0px; border: 0px; background-color: %1; }").arg(backGroundColor.name());
+        QString labelStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border-color: #EEEEEE; }").arg(backGroundColor.name());
+        QString checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; }").arg(backGroundColor.name());
+
+        m_ui->autoContinue->setStyleSheet(checkBoxStyle);
+        m_ui->selectedBox->setStyleSheet(checkBoxStyle);
+        m_ui->idLabel->setStyleSheet(labelStyle);
+        m_ui->groupBox->setStyleSheet(groupBoxStyle);
+        lastId = currId;
+    }
 }
 
 void WaypointView::setCurrent(bool state)

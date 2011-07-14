@@ -58,7 +58,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     snapShotBytes(0),
     dataRate(0.0f),
     lowpassDataRate(0.0f),
-    dataRateThreshold(500),
+    dataRateThreshold(400),
     commandIndex(0),
     m_ui(new Ui::DebugConsole)
 {
@@ -69,7 +69,7 @@ DebugConsole::DebugConsole(QWidget *parent) :
     // Hide auto-send checkbox
     //m_ui->specialCheckBox->setVisible(false);
     // Make text area not editable
-    m_ui->receiveText->setReadOnly(true);
+    m_ui->receiveText->setReadOnly(false);
     // Limit to 500 lines
     m_ui->receiveText->setMaximumBlockCount(500);
     // Allow to wrap everywhere
@@ -80,15 +80,14 @@ DebugConsole::DebugConsole(QWidget *parent) :
     //lineBufferTimer.setInterval(100); // 100 Hz
     //lineBufferTimer.start();
 
+    loadSettings();
+
     // Enable traffic measurements
     connect(&snapShotTimer, SIGNAL(timeout()), this, SLOT(updateTrafficMeasurements()));
     snapShotTimer.setInterval(snapShotInterval);
     snapShotTimer.start();
-
-//    // Set hex checkbox checked
-//    m_ui->hexCheckBox->setChecked(!convertToAscii);
-//    m_ui->mavlinkCheckBox->setChecked(filterMAVLINK);
-//    m_ui->holdCheckBox->setChecked(autoHold);
+    // Update measurements the first time
+    updateTrafficMeasurements();
 
     // Get a list of all existing links
     links = QList<LinkInterface*>();
@@ -114,17 +113,8 @@ DebugConsole::DebugConsole(QWidget *parent) :
     connect(m_ui->addSymbolButton, SIGNAL(clicked()), this, SLOT(appendSpecialSymbol()));
     // Connect Checkbox
     connect(m_ui->specialComboBox, SIGNAL(highlighted(QString)), this, SLOT(specialSymbolSelected(QString)));
-    // Set add button invisible if auto add checkbox is checked
-    //connect(m_ui->specialCheckBox, SIGNAL(clicked(bool)), m_ui->addSymbolButton, SLOT(setHidden(bool)));
     // Allow to send via return
     connect(m_ui->sendText, SIGNAL(returnPressed()), this, SLOT(sendBytes()));
-
-    loadSettings();
-
-    // Warn user about not activated hold
-    if (!m_ui->holdCheckBox->isChecked()) {
-        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console is huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
-    }
 }
 
 void DebugConsole::hideEvent(QHideEvent* event)
@@ -245,6 +235,17 @@ void DebugConsole::setAutoHold(bool hold)
     if (m_ui->holdCheckBox->isChecked() != hold) {
         m_ui->holdCheckBox->setChecked(hold);
     }
+
+    if (!hold)
+    {
+        // Warn user about not activated hold
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">%2</font>\n").arg(QColor(Qt::red).name(), tr("WARNING: You have NOT enabled auto-hold (stops updating the console if huge amounts of serial data arrive). Updating the console consumes significant CPU load, so if you receive more than about 5 KB/s of serial data, make sure to enable auto-hold if not using the console.")));
+    }
+    else
+    {
+        m_ui->receiveText->clear();
+    }
+
     // Set new state
     autoHold = hold;
 }
@@ -255,30 +256,34 @@ void DebugConsole::setAutoHold(bool hold)
 void DebugConsole::receiveTextMessage(int id, int component, int severity, QString text)
 {
     Q_UNUSED(severity);
-    QString name = UASManager::instance()->getUASForId(id)->getUASName();
-    QString comp;
-    // Get a human readable name if possible
-    switch (component) {
-        // TODO: To be completed
-    case MAV_COMP_ID_IMU:
-        comp = tr("IMU");
-        break;
-    case MAV_COMP_ID_MAPPER:
-        comp = tr("MAPPER");
-        break;
-    case MAV_COMP_ID_WAYPOINTPLANNER:
-        comp = tr("WP-PLANNER");
-        break;
-    case MAV_COMP_ID_AIRSLAM:
-        comp = tr("AIRSLAM");
-        break;
-    default:
-        comp = QString::number(component);
-        break;
-    }
+    if (isVisible())
+    {
+        QString name = UASManager::instance()->getUASForId(id)->getUASName();
+        QString comp;
+        // Get a human readable name if possible
+        switch (component) {
+            // TODO: To be completed
+        case MAV_COMP_ID_IMU:
+            comp = tr("IMU");
+            break;
+        case MAV_COMP_ID_MAPPER:
+            comp = tr("MAPPER");
+            break;
+        case MAV_COMP_ID_WAYPOINTPLANNER:
+            comp = tr("WP-PLANNER");
+            break;
+        case MAV_COMP_ID_SYSTEM_CONTROL:
+            comp = tr("SYS-CONTROL");
+            break;
+        default:
+            comp = QString::number(component);
+            break;
+        }
 
-    m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(%2:%3) %4</font>\n").arg(UASManager::instance()->getUASForId(id)->getColor().name(), name, comp, text));
-    //m_ui->receiveText->appendPlainText("");
+        m_ui->receiveText->appendHtml(QString("<font color=\"%1\">(%2:%3) %4</font>\n").arg(UASManager::instance()->getUASForId(id)->getColor().name(), name, comp, text));
+        // Ensure text area scrolls correctly
+        m_ui->receiveText->ensureCursorVisible();
+    }
 }
 
 void DebugConsole::updateTrafficMeasurements()
@@ -340,69 +345,112 @@ void DebugConsole::paintEvent(QPaintEvent *event)
 void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
 {
     snapShotBytes += bytes.size();
+    int len = bytes.size();
+    int lastSpace = 0;
+    if ((this->bytesToIgnore > 260) || (this->bytesToIgnore < -2)) this->bytesToIgnore = 0;
     // Only add data from current link
-    if (link == currLink && !holdOn) {
+    if (link == currLink && !holdOn)
+    {
         // Parse all bytes
-        for (int j = 0; j < bytes.size(); j++) {
+        for (int j = 0; j < len; j++)
+        {
             unsigned char byte = bytes.at(j);
             // Filter MAVLink (http://pixhawk.ethz.ch/wiki/mavlink/) messages out of the stream.
-            if (filterMAVLINK && bytes.size() > 1) {
+            if (filterMAVLINK)
+            {
+                if (this->bytesToIgnore > 0)
+                {
+                    if ( (j + this->bytesToIgnore) < len )
+                        j += this->bytesToIgnore - 1, this->bytesToIgnore = 1;
+                    else
+                        this->bytesToIgnore -= (len - j - 1), j = len - 1;
+                } else
+                if (this->bytesToIgnore == -2)
+                {   // Payload plus header - but we got STX already
+                    this->bytesToIgnore = static_cast<unsigned int>(byte) + MAVLINK_NUM_NON_PAYLOAD_BYTES - 1;
+                    if ( (j + this->bytesToIgnore) < len )
+                        j += this->bytesToIgnore - 1, this->bytesToIgnore = 1;
+                    else
+                        this->bytesToIgnore -= (len - j - 1), j = len - 1;
+                } else
                 // Filtering is done by setting an ignore counter based on the MAVLINK packet length
-                if (static_cast<unsigned char>(bytes[0]) == MAVLINK_STX) bytesToIgnore = static_cast<unsigned int>(bytes[1]) + MAVLINK_NUM_NON_PAYLOAD_BYTES; // Payload plus header
-            }
+                if (static_cast<unsigned char>(byte) == MAVLINK_STX)
+                {
+                    this->bytesToIgnore = -1;
+                } else
+                    this->bytesToIgnore = 0;
+            } else this->bytesToIgnore = 0;
 
-            if (bytesToIgnore <= 0) {
+            if ( (this->bytesToIgnore <= 0) && (this->bytesToIgnore != -1) )
+            {
                 QString str;
                 // Convert to ASCII for readability
-                if (convertToAscii) {
-                    if ((byte < 32) || (byte > 126)) {
-                        switch (byte) {
-                            // Accept line feed and tab
-                        case (unsigned char)'\n': {
-                            if (lastByte != '\r') {
-                                // Do not break line again for CR+LF
-                                // only break line for single LF bytes
+                if (convertToAscii)
+                {
+                    if ((byte <= 32) || (byte > 126))
+                    {
+                        switch (byte)
+                        {
+                            case (unsigned char)'\n':   // Accept line feed
+                                if (lastByte != '\r')   // Do not break line again for CR+LF
+                                    str.append(byte);   // only break line for single LF or CR bytes
+                                else ;
+                            break;
+                            case (unsigned char)' ':    // space of any type means don't add another on hex output
+                            case (unsigned char)'\t':   // Accept tab
+                            case (unsigned char)'\r':   // Catch and carriage return
                                 str.append(byte);
-                            }
+                                lastSpace = 1;
+                            break;
+                            default:                    // Append replacement character (box) if char is not ASCII
+//                                str.append(QChar(QChar::ReplacementCharacter));
+                                QString str2;
+                                if ( lastSpace == 1)
+                                    str2.sprintf("0x%02x ", byte);
+                                else str2.sprintf(" 0x%02x ", byte);
+                                str.append(str2);
+                                lastSpace = 1;
+                            break;
                         }
-                        break;
-                        case (unsigned char)'\t':
-                            str.append(byte);
-                            break;
-                            // Catch and ignore carriage return
-                        case (unsigned char)'\r':
-                            str.append(byte);
-                            break;
-                        default:
-                            str.append(QChar(QChar::ReplacementCharacter));
-                            break;
-                        }// Append replacement character (box) if char is not ASCII
-                    } else {
-                        // Append original character
-                        str.append(byte);
                     }
-                } else {
+                    else
+                    {
+                        str.append(byte);           // Append original character
+                        lastSpace = 0;
+                    }
+                }
+                else
+                {
                     QString str2;
                     str2.sprintf("%02x ", byte);
                     str.append(str2);
                 }
                 lineBuffer.append(str);
                 lastByte = byte;
-            } else {
-                if (filterMAVLINK) bytesToIgnore--;
+            }
+            else
+            {
+                if (filterMAVLINK) this->bytesToIgnore--;
                 // Constrain bytes to positive range
-                bytesToIgnore = qMax(0, bytesToIgnore);
+//                bytesToIgnore = qMax(0, bytesToIgnore);
             }
 
         }
         if (lineBuffer.length() > 0) {
-            m_ui->receiveText->insertPlainText(lineBuffer);
-            // Ensure text area scrolls correctly
-            m_ui->receiveText->ensureCursorVisible();
+            if (isVisible())
+            {
+                m_ui->receiveText->insertPlainText(lineBuffer);
+                // Ensure text area scrolls correctly
+                m_ui->receiveText->ensureCursorVisible();
+            }
             lineBuffer.clear();
         }
-    } else if (link == currLink && holdOn) {
+    }
+    else if (link == currLink && holdOn)
+    {
         holdBuffer.append(bytes);
+        if (holdBuffer.size() > 8192)
+            holdBuffer.remove(0, 4096); // drop old stuff
     }
 }
 
@@ -629,7 +677,7 @@ void DebugConsole::MAVLINKfilterEnabled(bool filter)
 {
     if (filterMAVLINK != filter) {
         filterMAVLINK = filter;
-        bytesToIgnore = 0;
+        this->bytesToIgnore = 0;
         if (m_ui->mavlinkCheckBox->isChecked() != filter) {
             m_ui->mavlinkCheckBox->setChecked(filter);
         }

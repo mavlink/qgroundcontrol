@@ -36,18 +36,87 @@ QVariant DomModel::data(const QModelIndex &index, int role) const
 
     switch (index.column()) {
     case 0:
-        return node.nodeName();
+        {
+            if (node.nodeName() == "message")
+            {
+                for (int i = 0; i < attributeMap.count(); ++i) {
+                    QDomNode attribute = attributeMap.item(i);
+                    if (attribute.nodeName() == "name") return attribute.nodeValue();
+                }
+            }
+            else if (node.nodeName() == "field")
+            {
+                for (int i = 0; i < attributeMap.count(); ++i) {
+                    QDomNode attribute = attributeMap.item(i);
+                    if (attribute.nodeName() == "name") return attribute.nodeValue();
+                }
+            }
+            else if (node.nodeName() == "enum")
+            {
+                for (int i = 0; i < attributeMap.count(); ++i) {
+                    QDomNode attribute = attributeMap.item(i);
+                    if (attribute.nodeName() == "name") return attribute.nodeValue();
+                }
+            }
+            else if (node.nodeName() == "entry")
+            {
+                for (int i = 0; i < attributeMap.count(); ++i) {
+                    QDomNode attribute = attributeMap.item(i);
+                    if (attribute.nodeName() == "name") return attribute.nodeValue();
+                }
+            }
+            else if (node.nodeName() == "#text")
+            {
+                return node.nodeValue().split("\n").join(" ");
+            }
+            else
+            {
+                return node.nodeName();
+            }
+        }
+        break;
     case 1:
+        if (node.nodeName() == "description")
+            {
+                return node.nodeValue().split("\n").join(" ");
+            }
+        else
+        {
         for (int i = 0; i < attributeMap.count(); ++i) {
             QDomNode attribute = attributeMap.item(i);
-            attributes << attribute.nodeName() + "=\""
-                       +attribute.nodeValue() + "\"";
+
+            if (attribute.nodeName() == "id" || attribute.nodeName() == "index" || attribute.nodeName() == "value")
+            {
+                return QString("(# %1)").arg(attribute.nodeValue());
+            }
+            else  if (attribute.nodeName() == "type")
+            {
+                return attribute.nodeValue();
+            }
         }
-        return attributes.join(" ");
-    case 2:
-        return node.nodeValue().split("\n").join(" ");
+    }
+        break;
+//    case 2:
+//        {
+////            if (node.nodeName() != "description")
+////            {
+////            for (int i = 0; i < attributeMap.count(); ++i) {
+////                QDomNode attribute = attributeMap.item(i);
+////                attributes << attribute.nodeName() + "=\""
+////                        +attribute.nodeValue() + "\"";
+////            }
+////            return attributes.join(" ");
+////            }
+////            else
+////            {
+////            return node.nodeValue().split("\n").join(" ");
+////        }
+//        }
+//        break;
     default:
+        {
         return QVariant();
+        }
     }
 }
 
@@ -65,11 +134,11 @@ QVariant DomModel::headerData(int section, Qt::Orientation orientation,
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         switch (section) {
         case 0:
-            return tr("Name");
+            return tr("Name                 ");
         case 1:
-            return tr("Attributes");
-        case 2:
             return tr("Value");
+//        case 2:
+//            return tr("Description");
         default:
             return QVariant();
         }
@@ -79,7 +148,7 @@ QVariant DomModel::headerData(int section, Qt::Orientation orientation,
 }
 
 QModelIndex DomModel::index(int row, int column, const QModelIndex &parent)
-const
+        const
 {
     if (!hasIndex(row, column, parent))
         return QModelIndex();

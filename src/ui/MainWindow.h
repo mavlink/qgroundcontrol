@@ -55,7 +55,7 @@ This file is part of the QGROUNDCONTROL project
 #include "JoystickWidget.h"
 #include "input/JoystickInput.h"
 #include "DebugConsole.h"
-#include "MapWidget.h"
+//#include "MapWidget.h"
 #include "ParameterInterface.h"
 #include "XMLCommProtocolWidget.h"
 #include "HDDisplay.h"
@@ -63,6 +63,7 @@ This file is part of the QGROUNDCONTROL project
 #include "HSIDisplay.h"
 #include "QGCDataPlot2D.h"
 #include "QGCRemoteControlView.h"
+#include "opmapcontrol.h"
 #if (defined Q_OS_MAC) | (defined _MSC_VER)
 #include "QGCGoogleEarthView.h"
 #endif
@@ -74,6 +75,8 @@ This file is part of the QGROUNDCONTROL project
 
 #include "SlugsPadCameraControl.h"
 #include "UASControlParameters.h"
+
+class QGCMapTool;
 
 /**
  * @brief Main Application Window
@@ -100,6 +103,11 @@ public:
     /** @brief Get auto link reconnect setting */
     bool autoReconnectEnabled() {
         return autoReconnect;
+    }
+
+    /** @brief Get low power mode setting */
+    bool lowPowerModeEnabled() {
+        return lowPowerMode;
     }
 
 public slots:
@@ -159,6 +167,8 @@ public slots:
     void selectStylesheet();
     /** @brief Automatically reconnect last link */
     void enableAutoReconnect(bool enabled);
+    /** @brief Save power by reducing update rates */
+    void enableLowPowerMode(bool enabled) { lowPowerMode = enabled; }
     /** @brief Switch to native application style */
     void loadNativeStyle();
     /** @brief Switch to indoor mission style */
@@ -368,7 +378,7 @@ protected:
 
     QPointer<HUD> hudWidget;
 
-    QPointer<MapWidget> mapWidget;
+    QPointer<QGCMapTool> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
 #ifdef QGC_OSG_ENABLED
@@ -429,6 +439,7 @@ protected:
     bool autoReconnect;
     QGC_MAINWINDOW_STYLE currentStyle;
     Qt::WindowStates windowStateVal;
+    bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
 
 private:
     Ui::MainWindow ui;

@@ -85,18 +85,20 @@ void UDPLink::setPort(int port)
  */
 void UDPLink::addHost(const QString& host)
 {
-    if (host != "")
-    {
-        qDebug() << "UDP:" << "ADDING HOST:" << host;
-        if (host.contains(":")) {
-            qDebug() << "HOST: " << host.split(":").first();
-            QHostInfo info = QHostInfo::fromName(host.split(":").first());
+    qDebug() << "UDP:" << "ADDING HOST:" << host;
+    if (host.contains(":")) {
+        qDebug() << "HOST: " << host.split(":").first();
+        QHostInfo info = QHostInfo::fromName(host.split(":").first());
+        if (info.error() == QHostInfo::NoError)
+        {
             // Add host
             QList<QHostAddress> hostAddresses = info.addresses();
             QHostAddress address;
-            for (int i = 0; i < hostAddresses.size(); i++) {
+            for (int i = 0; i < hostAddresses.size(); i++)
+            {
                 // Exclude loopback IPv4 and all IPv6 addresses
-                if (!hostAddresses.at(i).toString().contains(":")) {
+                if (!hostAddresses.at(i).toString().contains(":"))
+                {
                     address = hostAddresses.at(i);
                 }
             }
@@ -104,8 +106,13 @@ void UDPLink::addHost(const QString& host)
             qDebug() << "Address:" << address.toString();
             // Set port according to user input
             ports.append(host.split(":").last().toInt());
-        } else {
-            QHostInfo info = QHostInfo::fromName(host);
+        }
+    }
+    else
+    {
+        QHostInfo info = QHostInfo::fromName(host);
+        if (info.error() == QHostInfo::NoError)
+        {
             // Add host
             hosts.append(info.addresses().first());
             // Set port according to default (this port)
@@ -136,7 +143,6 @@ void UDPLink::removeHost(const QString& hostname)
     }
 }
 
-
 void UDPLink::writeBytes(const char* data, qint64 size)
 {
     // Broadcast to all connected systems
@@ -144,18 +150,26 @@ void UDPLink::writeBytes(const char* data, qint64 size)
     {
         QHostAddress currentHost = hosts.at(h);
         quint16 currentPort = ports.at(h);
+//#define UDPLINK_DEBUG
+#ifdef UDPLINK_DEBUG
         QString bytes;
         QString ascii;
-        //qDebug() << "WRITING DATA TO" << currentHost.toString() << currentPort;
         for (int i=0; i<size; i++) {
             unsigned char v = data[i];
             bytes.append(QString().sprintf("%02x ", v));
-            ascii.append(data[i]);
+            if (data[i] > 31 && data[i] < 127)
+            {
+                ascii.append(data[i]);
+            }
+            else
+            {
+                ascii.append(219);
+            }
         }
         qDebug() << "Sent" << size << "bytes to" << currentHost.toString() << ":" << currentPort << "data:";
         qDebug() << bytes;
         qDebug() << "ASCII:" << ascii;
-
+#endif
         socket->writeDatagram(data, size, currentHost, currentPort);
     }
 }

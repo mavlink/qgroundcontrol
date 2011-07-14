@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Utils::NewClassWidget</class>
+ <widget class="QWidget" name="Utils::NewClassWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>418</width>
+    <height>291</height>
+   </rect>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <property name="fieldGrowthPolicy">
+    <enum>QFormLayout::ExpandingFieldsGrow</enum>
+   </property>
+   <property name="margin">
+    <number>0</number>
+   </property>
+   <item row="0" column="0">
+    <widget class="QLabel" name="classNameLabel">
+     <property name="text">
+      <string>Class name:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="Utils::ClassNameValidatingLineEdit" name="classLineEdit"/>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="baseClassLabel">
+     <property name="text">
+      <string>Base class:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QComboBox" name="baseClassComboBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="classTypeLabel">
+     <property name="text">
+      <string>Type information:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="classTypeComboBox">
+     <item>
+      <property name="text">
+       <string>None</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Inherits QObject</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Inherits QWidget</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="3" column="1">
+    <spacer name="verticalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Fixed</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="headerLabel">
+     <property name="text">
+      <string>Header file:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="Utils::FileNameValidatingLineEdit" name="headerFileLineEdit"/>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="sourceLabel">
+     <property name="text">
+      <string>Source file:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <widget class="Utils::FileNameValidatingLineEdit" name="sourceFileLineEdit"/>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="generateFormLabel">
+     <property name="text">
+      <string>Generate form:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QCheckBox" name="generateFormCheckBox">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QLabel" name="formLabel">
+     <property name="text">
+      <string>Form file:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="Utils::FileNameValidatingLineEdit" name="formFileLineEdit"/>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="pathLabel">
+     <property name="text">
+      <string>Path:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="1">
+    <widget class="Utils::PathChooser" name="pathChooser"/>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Utils::ClassNameValidatingLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header location="global">utils/classnamevalidatinglineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Utils::FileNameValidatingLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header location="global">utils/filenamevalidatinglineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Utils::PathChooser</class>
+   <extends>QWidget</extends>
+   <header location="global">utils/pathchooser.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

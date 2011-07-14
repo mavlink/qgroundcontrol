@@ -37,12 +37,12 @@ HEADERS += src/standalone/mavlinkgen/MAVLinkGen.h \
     src/comm/MAVLinkXMLParser.h \
     src/ui/mavlink/DomItem.h \
     src/ui/mavlink/DomModel.h \
-    src/comm/MAVLinkSyntaxHighlighter.h
+    src/ui/mavlink/QGCMAVLinkTextEdit.h
 SOURCES += src/standalone/mavlinkgen/main.cc \
     src/standalone/mavlinkgen/MAVLinkGen.cc \
     src/ui/XMLCommProtocolWidget.cc \
     src/ui/mavlink/DomItem.cc \
     src/ui/mavlink/DomModel.cc \
     src/comm/MAVLinkXMLParser.cc \
-    src/comm/MAVLinkSyntaxHighlighter.cc
+    src/ui/mavlink/QGCMAVLinkTextEdit.cc
 RESOURCES = mavground.qrc

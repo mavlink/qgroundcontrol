@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="48.248676"
+   height="57.976875"
+   id="svg3258"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   version="1.0"
+   inkscape:export-filename="/home/nathan/Desktop/Airplane.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90"
+   sodipodi:docname="Airplane.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs3260">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective3266" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="8.5206388"
+     inkscape:cx="27.741397"
+     inkscape:cy="28.98844"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="953"
+     inkscape:window-height="719"
+     inkscape:window-x="50"
+     inkscape:window-y="40">
+    <sodipodi:guide
+       orientation="1,0"
+       position="26.27766,35.891438"
+       id="guide3269" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="27.174946,37.173275"
+       id="guide3271" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="39.352398,24.739455"
+       id="guide3279" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="38.583296,30.635906"
+       id="guide3281" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="33.455948,30.76409"
+       id="guide3283" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="47.940706,21.663047"
+       id="guide3285" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="16.663882,7.0501039"
+       id="guide3289" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="29.73862,51.017115"
+       id="guide3291" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="37.301459,47.940706"
+       id="guide3293" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata3263">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-514.65866,-602.51346)">
+    <path
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 548.16497,602.51404 C 544.39599,602.46904 542.44425,605.04177 541.83361,608.31962 C 540.93632,614.84219 541.66412,623.09869 541.00272,629.48244 C 533.06041,629.79211 528.86793,629.98585 522.28689,630.32396 C 522.24907,622.18823 521.69223,620.46085 519.24954,620.32938 C 516.84341,620.19987 516.43479,622.22062 516.36689,624.22196 C 516.29899,626.22329 516.32318,628.43173 516.27856,630.60655 C 516.27857,630.60654 515.08466,630.61705 514.84893,630.99902 C 514.6298,631.35409 514.59266,632.11082 514.7756,632.50911 C 514.94453,632.87689 516.31523,633.00615 516.31522,633.00616 C 516.31522,633.00616 516.33136,637.10623 516.27314,639.12944 C 516.2056,641.33883 516.35322,643.4298 519.26147,643.48735 C 522.16877,643.54488 522.25969,638.97649 522.28689,633.37701 C 531.05333,633.92589 531.54061,634.01425 541.00272,634.47368 C 541.61913,640.83085 540.93632,647.92474 541.83361,653.44029 C 542.55133,657.8521 544.39728,660.61165 548.15213,660.48623 C 551.90698,660.36081 553.24196,658.22708 553.24832,653.407 C 553.25928,644.8866 554.0194,635.28156 554.0194,635.28156 C 557.73343,635.19899 562.89282,636.13057 562.9073,632.4527 C 562.92178,628.77481 557.76024,629.44301 554.01106,629.32367 C 554.01015,624.76112 553.18728,614.79196 553.22404,608.22378 C 553.24196,605.15082 551.97086,602.55948 548.16497,602.51404 z"
+       id="path3241"
+       sodipodi:nodetypes="cccczzczzcczccszsczcsz" />
+  </g>
+</svg>
