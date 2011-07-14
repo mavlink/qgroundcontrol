@@ -7,7 +7,7 @@
 
 #include <objbase.h>
 #include <initguid.h>
-#include "qextserialport.h"
+//#include "qextserialport.h"
 #include <QRegExp>
 
 QextSerialEnumerator::QextSerialEnumerator( )
@@ -192,7 +192,16 @@ bool QextSerialEnumerator::getDeviceDetailsWin( QextPortInfo* portInfo, HDEVINFO
     portInfo->enumName = getDeviceProperty(devInfo, devData, SPDRP_ENUMERATOR_NAME);
     QString hardwareIDs = getDeviceProperty(devInfo, devData, SPDRP_HARDWAREID);
     HKEY devKey = SetupDiOpenDevRegKey(devInfo, devData, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
-    portInfo->portName = QextSerialPort::fullPortNameWin( getRegKeyValue(devKey, TEXT("PortName")) );
+    
+	QRegExp rx("^COM(\\d+)");
+    QString fullName(getRegKeyValue(devKey, TEXT("PortName")));
+    if(fullName.contains(rx)) {
+        int portnum = rx.cap(1).toInt();
+        if(portnum > 9) // COM ports greater than 9 need \\.\ prepended
+            fullName.prepend("\\\\.\\");
+    }
+	
+	portInfo->portName = fullName;
     QRegExp idRx("VID_(\\w+)&PID_(\\w+)");
     if( hardwareIDs.toUpper().contains(idRx) )
     {
