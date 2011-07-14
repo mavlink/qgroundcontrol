@@ -13,6 +13,7 @@ DEFINES += EXTERNAL_USE
 DEFINES += QTCREATOR_UTILS_LIB
 
 #    submiteditorwidget.h \
+#    qtcolorbutton.h \
 
 # Input
 HEADERS += utils_global.h \
@@ -33,7 +34,6 @@ HEADERS += utils_global.h \
     classnamevalidatinglineedit.h \
     linecolumnlabel.h \
     fancylineedit.h \
-    qtcolorbutton.h \
     savedaction.h \
     abstractprocess.h \
     consoleprocess.h \
@@ -82,6 +82,7 @@ SOURCES += consoleprocess_unix.cpp
 }
 
 #    submiteditorwidget.cpp \
+#    qtcolorbutton.cpp \
 
 SOURCES += reloadpromptutils.cpp \
     settingsutils.cpp \
@@ -99,7 +100,6 @@ SOURCES += reloadpromptutils.cpp \
     classnamevalidatinglineedit.cpp \
     linecolumnlabel.cpp \
     fancylineedit.cpp \
-    qtcolorbutton.cpp \
     savedaction.cpp \
     synchronousprocess.cpp \
     submitfieldwidget.cpp \
