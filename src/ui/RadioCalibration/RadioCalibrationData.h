@@ -36,6 +36,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QString>
 #include <stdexcept>
 
+#include <stdint.h>
+
 
 /**
   @brief Class to hold the calibration data.
@@ -48,12 +50,12 @@ class RadioCalibrationData : public QObject
 public:
     explicit RadioCalibrationData();
     RadioCalibrationData(const RadioCalibrationData&);
-    RadioCalibrationData(const QVector<float>& aileron,
-                         const QVector<float>& elevator,
-                         const QVector<float>& rudder,
-                         const QVector<float>& gyro,
-                         const QVector<float>& pitch,
-                         const QVector<float>& throttle);
+    RadioCalibrationData(const QVector<uint16_t>& aileron,
+                         const QVector<uint16_t>& elevator,
+                         const QVector<uint16_t>& rudder,
+                         const QVector<uint16_t>& gyro,
+                         const QVector<uint16_t>& pitch,
+                         const QVector<uint16_t>& throttle);
     ~RadioCalibrationData();
 
     enum RadioElement {
@@ -65,33 +67,33 @@ public:
         THROTTLE
     };
 
-    const float* operator[](int i) const;
+    const uint16_t* operator[](int i) const;
 #ifdef _MSC_VER
-    const QVector<float>& operator()(int i) const;
+    const QVector<uint16_t>& operator()(int i) const;
 #else
-    const QVector<float>& operator()(int i) const throw(std::out_of_range);
+    const QVector<uint16_t>& operator()(int i) const throw(std::out_of_range);
 #endif
     void set(int element, int index, float value) {
         (*data)[element][index] = value;
     }
 
 public slots:
-    void setAileron(int index, float value) {
+    void setAileron(int index, uint16_t value) {
         set(AILERON, index, value);
     }
-    void setElevator(int index, float value) {
+    void setElevator(int index, uint16_t value) {
         set(ELEVATOR, index, value);
     }
-    void setRudder(int index, float value) {
+    void setRudder(int index, uint16_t value) {
         set(RUDDER, index, value);
     }
-    void setGyro(int index, float value) {
+    void setGyro(int index, uint16_t value) {
         set(GYRO, index, value);
     }
-    void setPitch(int index, float value) {
+    void setPitch(int index, uint16_t value) {
         set(PITCH, index, value);
     }
-    void setThrottle(int index, float value) {
+    void setThrottle(int index, uint16_t value) {
         set(THROTTLE, index, value);
     }
 
@@ -100,7 +102,7 @@ public:
     QString toString(const RadioElement element) const;
 
 protected:
-    QVector<QVector<float> > *data;
+    QVector<QVector<uint16_t> > *data;
 
     void init(const QVector<float>& aileron,
               const QVector<float>& elevator,

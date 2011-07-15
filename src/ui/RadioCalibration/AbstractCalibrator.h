@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QVector>
 
 #include <math.h>
+#include <stdint.h>
 
 /**
   @brief Holds the code which is common to all the radio calibration widgets.

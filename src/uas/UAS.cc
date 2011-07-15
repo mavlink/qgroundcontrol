@@ -958,12 +958,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_RADIO_CALIBRATION: {
                 mavlink_radio_calibration_t radioMsg;
                 mavlink_msg_radio_calibration_decode(&message, &radioMsg);
-                QVector<float> aileron;
-                QVector<float> elevator;
-                QVector<float> rudder;
-                QVector<float> gyro;
-                QVector<float> pitch;
-                QVector<float> throttle;
+                QVector<uint16_t> aileron;
+                QVector<uint16_t> elevator;
+                QVector<uint16_t> rudder;
+                QVector<uint16_t> gyro;
+                QVector<uint16_t> pitch;
+                QVector<uint16_t> throttle;
 
                 for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_AILERON_LEN; ++i)
                     aileron << radioMsg.aileron[i];

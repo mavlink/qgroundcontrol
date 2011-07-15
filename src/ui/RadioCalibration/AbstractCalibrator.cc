@@ -3,7 +3,7 @@
 AbstractCalibrator::AbstractCalibrator(QWidget *parent) :
     QWidget(parent),
     pulseWidth(new QLabel()),
-    log(new QVector<float>())
+    log(new QVector<uint16_t>())
 {
 }
 
