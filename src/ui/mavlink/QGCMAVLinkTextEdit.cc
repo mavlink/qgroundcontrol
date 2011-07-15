@@ -50,32 +50,32 @@ void QGCMAVLinkTextEdit::setPlainText( const QString txt )
 
 bool QGCMAVLinkTextEdit::syntaxcheck()
 {
-    bool error = false;
+    bool noError = true;
     if (text().size() > 0 ) {
         QString errorStr;
         int errorLine, errorColumn;
         QDomDocument doc;
         if (!doc.setContent(text(),false, &errorStr, &errorLine, &errorColumn)) {
             //////return doc.toString(5);
-            QMessageBox::information(0, tr("Found xml error"),tr("Check line %1 column %2 on string \"%3\"!")
+            QMessageBox::critical(0, tr("Found xml error"),tr("Check line %1 column %2 on string \"%3\"!")
                                      .arg(errorLine - 1)
                                      .arg(errorColumn - 1)
                                      .arg(errorStr));
-            error = true;
+            noError = false;
 
             // FIXME Mark line
             if (errorLine >= 0 ) {
 
             }
         } else {
-            QMessageBox::information(0, tr("XML valid."),tr("All tag are valid size %1.").arg(text().size()));
+            QMessageBox::information(0, tr("XML valid."),tr("All tags are valid. Document size is %1 characters.").arg(text().size()));
             setPlainText(doc.toString(5));
         }
     } else {
         QMessageBox::information(0, tr("XML not found!"),tr("Null size xml document!"));
-        error = true;
+        noError = false;
     }
-	return error;
+        return noError;
 }
 
 void QGCMAVLinkTextEdit::contextMenuEvent ( QContextMenuEvent * e )

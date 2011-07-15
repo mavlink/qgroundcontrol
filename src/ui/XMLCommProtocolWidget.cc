@@ -18,13 +18,13 @@ XMLCommProtocolWidget::XMLCommProtocolWidget(QWidget *parent) :
 {
     m_ui->setupUi(this);
 
-    // Now set syntax highlighter
-    //highlighter = new MAVLinkSyntaxHighlighter(m_ui->xmlTextView->document());
-
     connect(m_ui->selectFileButton, SIGNAL(clicked()), this, SLOT(selectXMLFile()));
     connect(m_ui->selectOutputButton, SIGNAL(clicked()), this, SLOT(selectOutputDirectory()));
     connect(m_ui->generateButton, SIGNAL(clicked()), this, SLOT(generate()));
     connect(m_ui->saveButton, SIGNAL(clicked()), this, SLOT(save()));
+
+    // Make sure text background is white
+    m_ui->xmlTextView->setStyleSheet("QGCMAVLinkTextEdit { background-color: #FFFFFF; }");
 }
 
 void XMLCommProtocolWidget::selectXMLFile()
@@ -128,7 +128,11 @@ void XMLCommProtocolWidget::generate()
     m_ui->compileLog->clear();
 
     // Check XML validity
-    if (!m_ui->xmlTextView->syntaxcheck()) return;
+    if (!m_ui->xmlTextView->syntaxcheck())
+    {
+        // Syntax check already gives output
+        return;
+    }
 
     MAVLinkXMLParser* parser = new MAVLinkXMLParser(m_ui->fileNameLabel->text().trimmed(), m_ui->outputDirNameLabel->text().trimmed());
     connect(parser, SIGNAL(parseState(QString)), m_ui->compileLog, SLOT(appendHtml(QString)));
