@@ -58,7 +58,8 @@ DEPENDPATH += \
     src/libs/utils \
     src/libs/utils/src \
     src/libs/opmapcontrol \
-    src/libs/opmapcontrol/src
+    src/libs/opmapcontrol/src \
+    src/libs/opmapcontrol/src/mapwidget
 
 INCLUDEPATH += \
     src/libs/utils \
@@ -83,7 +84,7 @@ BUILDDIR = $$TARGETDIR/build
 LANGUAGE = C++
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
-UI_HEADERS_DIR = src/ui/generated
+UI_HEADERS_DIR = $$BUILDDIR/ui
 MAVLINK_CONF = ""
 
 # If the user config file exists, it will be included.

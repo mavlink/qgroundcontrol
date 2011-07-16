@@ -39,4 +39,4 @@ SOURCES += \
     generator/MAVLinkXMLParser.cc \
     ui/QGCMAVLinkTextEdit.cc
 
-RESOURCES = mavlinkgen.qrc
+RESOURCES += mavlinkgen.qrc
