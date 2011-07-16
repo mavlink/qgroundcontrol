@@ -74,12 +74,20 @@ Done.
 Windows
 =======
 
-Windows XP:
+Windows XP/7:
 
-1) Download and install the QT SDK for Windows from http://qt.nokia.com/downloads/.
+1) Download and install the QT SDK for Windows from http://qt.nokia.com/downloads/ (Visual Studio 2008 version)
 
-2) Open qgroundcontrol.pro with QT to open the project.
+2) Download and install Visual Studio 2008 Express Edition (free)
 
-3) Once the indexing is complete, you may build the project, which will compile and run the debug build.
+3) Go to the source folder of QGroundControl with the Qt 4.7.x Command Prompt tool (from the applications menu)
+
+4) Create the Visual Studio project by typing:
+
+qmake -tp vc qgroundcontrol.pro
+
+5) Now start Visual Studio and load the qgroundcontrol.vcproj file
+
+6) Compile and edit in Visual Studio. If you need to add new files, add them to qgroundcontrol.pro and re-run "quake -tp vc qgroundcontrol.pro"
 
 
