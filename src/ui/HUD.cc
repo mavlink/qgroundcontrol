@@ -75,7 +75,6 @@ inline bool isinf(T value)
  */
 HUD::HUD(int width, int height, QWidget* parent)
     : QGLWidget(QGLFormat(QGL::SampleBuffers), parent),
-      u(NULL),
       uas(NULL),
       yawInt(0.0f),
       mode(tr("UNKNOWN MODE")),
@@ -309,7 +308,6 @@ void HUD::setActiveUAS(UASInterface* uas)
 
         // Set new UAS
         this->uas = uas;
-        this->u = dynamic_cast<UAS*>(this->uas);
     }
 }
 
@@ -1631,5 +1629,9 @@ void HUD::setPixels(int imgid, const unsigned char* imageData, int length, int s
 void HUD::copyImage()
 {
     qDebug() << "HUD::copyImage()";
-    this->glImage = QGLWidget::convertToGLFormat(this->u->getImage());
+    UAS* u = dynamic_cast<UAS*>(this->uas);
+    if (u)
+    {
+        this->glImage = QGLWidget::convertToGLFormat(u->getImage());
+    }
 }
