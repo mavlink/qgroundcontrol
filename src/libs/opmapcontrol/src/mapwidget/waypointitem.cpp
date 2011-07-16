@@ -27,7 +27,16 @@
 #include "waypointitem.h"
 namespace mapcontrol
 {
-    WayPointItem::WayPointItem(const internals::PointLatLng &coord,double const& altitude, MapGraphicItem *map):coord(coord),reached(false),description(""),shownumber(true),isDragging(false),altitude(altitude),heading(0),map(map),autoreachedEnabled(true)
+    WayPointItem::WayPointItem(const internals::PointLatLng &coord,double const& altitude, MapGraphicItem *map) :
+        map(map),
+        coord(coord),
+        reached(false),
+        description(""),
+        shownumber(true),
+        isDragging(false),
+        altitude(altitude),
+        heading(0),
+        autoreachedEnabled(true)
     {
         text=0;
         numberI=0;
