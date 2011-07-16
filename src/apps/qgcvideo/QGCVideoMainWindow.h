@@ -33,6 +33,7 @@
 #define QGCVIDEOMAINWINDOW_H
 
 #include <QMainWindow>
+#include "UDPLink.h"
 
 namespace Ui {
     class QGCVideoMainWindow;
@@ -45,6 +46,12 @@ class QGCVideoMainWindow : public QMainWindow
 public:
     explicit QGCVideoMainWindow(QWidget *parent = 0);
     ~QGCVideoMainWindow();
+
+public slots:
+    void receiveBytes(LinkInterface* link, QByteArray data);
+
+protected:
+    UDPLink link;
 
 private:
     Ui::QGCVideoMainWindow *ui;
