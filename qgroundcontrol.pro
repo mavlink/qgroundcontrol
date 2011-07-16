@@ -32,8 +32,13 @@ include(lib/nmea/nmea.pri)
 # of open-source software!
 # (We're not reusing any part of the OP GCS, just the map library)
 
+
+# Include MAVLink generator
+include(src/apps/mavlinkgen.pri)
+
+
 # Try to get it from OP mainline, if this fails fall back to internal copies
-exists(../openpilot/ground/openpilotgcs/src/libs) {
+exists(../openpilot-xxxxxxx/ground/openpilotgcs/src/libs) {
 include(../openpilot/ground/openpilotgcs/src/libs/utils/utils_external.pri)
 include(../openpilot/ground/openpilotgcs/src/libs/opmapcontrol/opmapcontrol_external.pri)
 DEPENDPATH += \
