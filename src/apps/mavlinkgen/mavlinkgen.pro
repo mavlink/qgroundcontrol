@@ -8,4 +8,10 @@ TARGET = mavlinkgen
 
 LANGUAGE = C++
 
+# Widget files (can be included in third-party Qt applications)
 include(mavlinkgen.pri)
+
+# Standalone files
+HEADERS += MAVLinkGen.h
+SOURCES += main.cc \
+    MAVLinkGen.cc
