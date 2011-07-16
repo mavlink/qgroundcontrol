@@ -67,9 +67,6 @@ public:
 
 public slots:
     void setChannel(int ch, float raw);
-    // @todo remove these functions if they are not needed - were added by lm on dec 14, 2010
-//    void setChannelRaw(int ch, float raw);
-//    void setChannelScaled(int ch, float normalized);
     void loadFile();
     void saveFile();
     void send();
