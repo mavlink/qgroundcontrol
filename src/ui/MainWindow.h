@@ -181,6 +181,9 @@ public slots:
     /** @brief Add a custom tool widget */
     void createCustomWidget();
 
+    /** @brief Load a custom tool widget from a file */
+    void loadCustomWidget();
+
     void closeEvent(QCloseEvent* event);
 
     /** @brief Load data view, allowing to plot flight data */

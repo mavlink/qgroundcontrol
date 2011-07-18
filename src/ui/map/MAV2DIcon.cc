@@ -40,6 +40,7 @@ MAV2DIcon::MAV2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* p
         drawIcon(pen);
     }
     size = QSize(radius, radius);
+    SetUAVPos(internals::PointLatLng(lat, lon), alt);
 }
 
 MAV2DIcon::~MAV2DIcon()
