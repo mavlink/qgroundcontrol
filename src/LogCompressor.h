@@ -22,6 +22,7 @@ protected:
     int currentDataLine;
     int dataLines;
     int uasid;
+    bool holeFillingEnabled;       ///< Enables the filling of holes in the dataset with the previous value (or NaN if none exists)
 
 signals:
     /** @brief This signal is emitted once a logfile has been finished writing
