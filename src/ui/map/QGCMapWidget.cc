@@ -112,7 +112,7 @@ void QGCMapWidget::showEvent(QShowEvent* event)
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateGlobalPosition()));
     updateTimer.start(maxUpdateInterval*1000);
     updateGlobalPosition();
-    QTimer::singleShot(1, this, SLOT(loadSettings()));
+    //QTimer::singleShot(800, this, SLOT(loadSettings()));
 }
 
 void QGCMapWidget::hideEvent(QHideEvent* event)
