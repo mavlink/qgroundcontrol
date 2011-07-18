@@ -87,7 +87,7 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
 
 void QGCParamSlider::requestParameter()
 {
-    if (parameterIndex != -1) {
+    if (parameterIndex != -1 && uas) {
         uas->requestParameter(this->component, this->parameterIndex);
     }
 }

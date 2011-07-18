@@ -15,32 +15,24 @@ MAV2DIcon::MAV2DIcon(mapcontrol::MapGraphicItem* map,mapcontrol::OPMapWidget* pa
     selected(uas->getSelected()),
     uasid(uas->getUASID())
 {
-    //connect
     size = QSize(radius, radius);
-    mypen = new QPen(uas->getColor());
-    drawIcon(mypen);
+    pic = QPixmap(size);
+    drawIcon();
 }
 
-MAV2DIcon::MAV2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, qreal lat, qreal lon, qreal alt, QPen* pen)
+MAV2DIcon::MAV2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* parent, qreal lat, qreal lon, qreal alt, QColor color)
     : UAVItem(map,parent),
     radius(20),
     type(0),
     airframe(0),
-    iconColor(Qt::yellow),
+    iconColor(color),
     selected(false),
     uasid(0)
 {
-    if (pen == NULL)
-    {
-        mypen = new QPen(Qt::red);
-        drawIcon(mypen);
-    }
-    else
-    {
-        drawIcon(pen);
-    }
     size = QSize(radius, radius);
-    SetUAVPos(internals::PointLatLng(lat, lon), alt);
+    pic = QPixmap(size);
+    drawIcon();
+    SetUAVPos(internals::PointLatLng(lat, lon), alt, color);
 }
 
 MAV2DIcon::~MAV2DIcon()
@@ -48,19 +40,10 @@ MAV2DIcon::~MAV2DIcon()
     //delete pic;
 }
 
-void MAV2DIcon::setPen(QPen* pen)
-{
-    if (pen != NULL)
-    {
-        mypen = pen;
-        drawIcon(pen);
-    }
-}
-
 void MAV2DIcon::setSelectedUAS(bool selected)
 {
     this->selected = selected;
-    drawIcon(mypen);
+    drawIcon();
 }
 
 /**
@@ -78,14 +61,13 @@ void MAV2DIcon::setYaw(float yaw)
 
     if (diff > 0.1f) {
         this->yaw = yaw;
-        drawIcon(mypen);
+        drawIcon();
         // FIXME
     }
 }
 
-void MAV2DIcon::drawIcon(QPen* pen)
+void MAV2DIcon::drawIcon()
 {
-    Q_UNUSED(pen);
     pic.fill(Qt::transparent);
     QPainter painter(&pic);
     painter.setRenderHint(QPainter::TextAntialiasing);
@@ -98,21 +80,19 @@ void MAV2DIcon::drawIcon(QPen* pen)
     painter.translate(radius/2, radius/2);
 
     // Draw selected indicator
+    painter.setBrush(Qt::NoBrush);
     if (selected) {
-        //        qDebug() << "SYSTEM IS NOW SELECTED";
-        //        QColor color(Qt::yellow);
-        //        color.setAlpha(0.3f);
-        painter.setBrush(Qt::NoBrush);
-        //        QPen selPen(color);
-        //        int width = 5;
-        //        selPen.setWidth(width);
         QPen pen(Qt::yellow);
         pen.setWidth(2);
         painter.setPen(pen);
-        painter.drawEllipse(QPoint(0, 0), radius/2-1, radius/2-1);
-        //qDebug() << "Painting ellipse" << radius/2-width << width;
-        //selPen->deleteLater();
     }
+    else
+    {
+        QPen pen(Qt::white);
+        pen.setWidth(1);
+        painter.setPen(pen);
+    }
+    painter.drawEllipse(QPoint(0, 0), radius/2-1, radius/2-1);
     drawAirframePolygon(airframe, painter, radius, iconColor, yaw);
 }
 

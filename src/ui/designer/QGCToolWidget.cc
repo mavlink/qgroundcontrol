@@ -16,10 +16,10 @@
 #include "UASManager.h"
 
 QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
-    QWidget(parent),
-    mav(NULL),
-    mainMenuAction(NULL),
-    ui(new Ui::QGCToolWidget)
+        QWidget(parent),
+        mav(NULL),
+        mainMenuAction(NULL),
+        ui(new Ui::QGCToolWidget)
 {
     ui->setupUi(this);
     setObjectName(title);
@@ -110,8 +110,12 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
 
 void QGCToolWidget::loadSettings(const QString& settings)
 {
-    QSettings(settings, QSettings::IniFormat);
-    loadSettings(settings);
+    QSettings set(settings, QSettings::IniFormat);
+    QStringList groups = set.childGroups();
+    QString widgetName = groups.first();
+    setTitle(widgetName);
+    qDebug() << "WIDGET TITLE LOADED: " << widgetName;
+    loadSettings(set);
 }
 
 void QGCToolWidget::loadSettings(QSettings& settings)
@@ -373,12 +377,30 @@ void QGCToolWidget::setTitle()
             settings.remove("");
             settings.endGroup();
             parent->setWindowTitle(text);
+            setWindowTitle(text);
 
             storeWidgetsToSettings();
             emit titleChanged(text);
             if (mainMenuAction) mainMenuAction->setText(text);
         }
     }
+}
+
+void QGCToolWidget::setTitle(QString title)
+{
+    QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
+    if (parent) {
+        QSettings settings;
+        settings.beginGroup(parent->windowTitle());
+        settings.remove("");
+        settings.endGroup();
+        parent->setWindowTitle(title);
+    }
+    setWindowTitle(title);
+
+    storeWidgetsToSettings();
+    emit titleChanged(title);
+    if (mainMenuAction) mainMenuAction->setText(title);
 }
 
 void QGCToolWidget::setMainMenuAction(QAction* action)

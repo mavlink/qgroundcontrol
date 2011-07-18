@@ -86,6 +86,7 @@ protected slots:
     void addAction();
     void addCommand();
     void setTitle();
+    void setTitle(QString title);
 
 
 private:

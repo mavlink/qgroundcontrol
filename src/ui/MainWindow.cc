@@ -135,9 +135,8 @@ MainWindow::MainWindow(QWidget *parent):
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
 
     // Connect user interface devices
-    if (!joystick) {
-        joystick = new JoystickInput();
-    }
+    joystickWidget = 0;
+    joystick = new JoystickInput();
 
     // Enable and update view
     presentView();

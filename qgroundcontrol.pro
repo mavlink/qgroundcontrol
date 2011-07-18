@@ -32,8 +32,9 @@ include(lib/nmea/nmea.pri)
 # of open-source software!
 # (We're not reusing any part of the OP GCS, just the map library)
 
+
 # Try to get it from OP mainline, if this fails fall back to internal copies
-exists(../openpilot/ground/openpilotgcs/src/libs) {
+exists(../openpilot-xxxxxxx/ground/openpilotgcs/src/libs) {
 include(../openpilot/ground/openpilotgcs/src/libs/utils/utils_external.pri)
 include(../openpilot/ground/openpilotgcs/src/libs/opmapcontrol/opmapcontrol_external.pri)
 DEPENDPATH += \
@@ -57,7 +58,8 @@ DEPENDPATH += \
     src/libs/utils \
     src/libs/utils/src \
     src/libs/opmapcontrol \
-    src/libs/opmapcontrol/src
+    src/libs/opmapcontrol/src \
+    src/libs/opmapcontrol/src/mapwidget
 
 INCLUDEPATH += \
     src/libs/utils \
@@ -82,7 +84,7 @@ BUILDDIR = $$TARGETDIR/build
 LANGUAGE = C++
 OBJECTS_DIR = $$BUILDDIR/obj
 MOC_DIR = $$BUILDDIR/moc
-UI_HEADERS_DIR = src/ui/generated
+UI_HEADERS_DIR = $$BUILDDIR/ui
 MAVLINK_CONF = ""
 
 # If the user config file exists, it will be included.
@@ -141,10 +143,25 @@ contains(MAVLINK_CONF, ardupilotmega) {
 }
 
 # }
-# Include general settings for MAVGround
+# Include general settings for QGroundControl
 # necessary as last include to override any non-acceptable settings
 # done by the plugins above
 include(qgroundcontrol.pri)
+
+
+
+# Include MAVLink generator
+DEPENDPATH += \
+    src/apps/mavlinkgen
+
+INCLUDEPATH += \
+    src/apps/mavlinkgen \
+    src/apps/mavlinkgen/ui \
+    src/apps/mavlinkgen/generator
+
+include(src/apps/mavlinkgen/mavlinkgen.pri)
+
+
 
 # Include QWT plotting library
 include(src/lib/qwt/qwt.pri)
@@ -189,7 +206,6 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/ObjectDetectionView.ui \
     src/ui/JoystickWidget.ui \
     src/ui/DebugConsole.ui \
-    src/ui/XMLCommProtocolWidget.ui \
     src/ui/HDDisplay.ui \
     src/ui/MAVLinkSettingsWidget.ui \
     src/ui/AudioOutputWidget.ui \
@@ -274,10 +290,6 @@ HEADERS += src/MG.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
     src/ui/DebugConsole.h \
-    src/ui/XMLCommProtocolWidget.h \
-    src/ui/mavlink/DomItem.h \
-    src/ui/mavlink/DomModel.h \
-    src/comm/MAVLinkXMLParser.h \
     src/ui/HDDisplay.h \
     src/ui/MAVLinkSettingsWidget.h \
     src/ui/AudioOutputWidget.h \
@@ -289,7 +301,6 @@ HEADERS += src/MG.h \
     src/uas/SlugsMAV.h \
     src/uas/PxQuadMAV.h \
     src/uas/ArduPilotMegaMAV.h \
-    src/comm/MAVLinkSyntaxHighlighter.h \
     src/ui/watchdog/WatchdogControl.h \
     src/ui/watchdog/WatchdogProcessView.h \
     src/ui/watchdog/WatchdogView.h \
@@ -335,7 +346,6 @@ HEADERS += src/MG.h \
     src/ui/map/QGCMapWidget.h \
     src/ui/map/MAV2DIcon.h \
     src/ui/map/Waypoint2DIcon.h \
-    src/ui/mavlink/QGCMAVLinkTextEdit.h \
     src/ui/map/QGCMapTool.h \
     src/ui/map/QGCMapToolBar.h \
     src/libs/qextserialport/qextserialenumerator.h
@@ -405,10 +415,6 @@ SOURCES += src/main.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
     src/ui/DebugConsole.cc \
-    src/ui/XMLCommProtocolWidget.cc \
-    src/ui/mavlink/DomItem.cc \
-    src/ui/mavlink/DomModel.cc \
-    src/comm/MAVLinkXMLParser.cc \
     src/ui/HDDisplay.cc \
     src/ui/MAVLinkSettingsWidget.cc \
     src/ui/AudioOutputWidget.cc \
@@ -420,7 +426,6 @@ SOURCES += src/main.cc \
     src/uas/SlugsMAV.cc \
     src/uas/PxQuadMAV.cc \
     src/uas/ArduPilotMegaMAV.cc \
-    src/comm/MAVLinkSyntaxHighlighter.cc \
     src/ui/watchdog/WatchdogControl.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
     src/ui/watchdog/WatchdogView.cc \
@@ -465,7 +470,6 @@ SOURCES += src/main.cc \
     src/ui/map/QGCMapWidget.cc \
     src/ui/map/MAV2DIcon.cc \
     src/ui/map/Waypoint2DIcon.cc \
-    src/ui/mavlink/QGCMAVLinkTextEdit.cc \
     src/ui/map/QGCMapTool.cc \
     src/ui/map/QGCMapToolBar.cc
 macx|win32-msvc2008::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
