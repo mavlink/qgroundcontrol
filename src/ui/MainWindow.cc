@@ -938,16 +938,44 @@ void MainWindow::connectCommonWidgets()
 
 void MainWindow::createCustomWidget()
 {
-    QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool", this);
+    QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
+    QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool", dock);
 
     if (QGCToolWidget::instances()->size() < 2) {
         // This is the first widget
         ui.menuTools->addSeparator();
     }
 
-    QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
     connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
     dock->setWidget(tool);
+
+    QAction* showAction = new QAction(tool->getTitle(), this);
+    showAction->setCheckable(true);
+    connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
+    connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
+    tool->setMainMenuAction(showAction);
+    ui.menuTools->addAction(showAction);
+    this->addDockWidget(Qt::BottomDockWidgetArea, dock);
+    dock->setVisible(true);
+}
+
+void MainWindow::loadCustomWidget()
+{
+    QString widgetFileExtension(".qgw");
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
+    QGCToolWidget* tool = new QGCToolWidget("", this);
+    tool->loadSettings(fileName);
+
+    if (QGCToolWidget::instances()->size() < 2) {
+        // This is the first widget
+        ui.menuTools->addSeparator();
+    }
+
+    // Add widget to UI
+    QDockWidget* dock = new QDockWidget(tool->getTitle(), this);
+    connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
+    dock->setWidget(tool);
+    tool->setParent(dock);
 
     QAction* showAction = new QAction("Show Unnamed Tool", this);
     showAction->setCheckable(true);
@@ -1333,6 +1361,7 @@ void MainWindow::connectCommonActions()
 
     // Custom widget actions
     connect(ui.actionNewCustomWidget, SIGNAL(triggered()), this, SLOT(createCustomWidget()));
+    connect(ui.actionLoadCustomWidgetFile, SIGNAL(triggered()), this, SLOT(loadCustomWidget()));
 
     // Audio output
     ui.actionMuteAudioOutput->setChecked(GAudioOutput::instance()->isMuted());
