@@ -42,6 +42,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QPushButton" name="lastPosButton">
+     <property name="text">
+      <string>Last Pos</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QPushButton" name="ripMapButton">
      <property name="text">
       <string>Cache</string>
