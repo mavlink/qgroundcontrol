@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,100,0,0,0" columnstretch="1,1,1,100">
+  <layout class="QGridLayout" name="gridLayout" rowstretch="1,1,100,1,1,1" columnstretch="1,1,1,100">
    <property name="topMargin">
     <number>6</number>
    </property>
@@ -51,13 +51,25 @@
       <string>Select input file</string>
      </property>
      <property name="icon">
-      <iconset resource="../../mavground.qrc">
+      <iconset resource="../mavlinkgen.qrc">
        <normaloff>:/images/status/folder-open.svg</normaloff>:/images/status/folder-open.svg</iconset>
      </property>
     </widget>
    </item>
    <item row="0" column="3" rowspan="6">
     <widget class="QGCMAVLinkTextEdit" name="xmlTextView">
+     <property name="minimumSize">
+      <size>
+       <width>400</width>
+       <height>300</height>
+      </size>
+     </property>
+     <property name="baseSize">
+      <size>
+       <width>800</width>
+       <height>600</height>
+      </size>
+     </property>
      <property name="readOnly">
       <bool>false</bool>
      </property>
@@ -85,7 +97,7 @@
       <string>Select directory</string>
      </property>
      <property name="icon">
-      <iconset resource="../../mavground.qrc">
+      <iconset resource="../mavlinkgen.qrc">
        <normaloff>:/images/status/folder-open.svg</normaloff>:/images/status/folder-open.svg</iconset>
      </property>
     </widget>
@@ -123,7 +135,7 @@
       <string>Save and generate</string>
      </property>
      <property name="icon">
-      <iconset resource="../../mavground.qrc">
+      <iconset resource="../mavlinkgen.qrc">
        <normaloff>:/images/categories/applications-system.svg</normaloff>:/images/categories/applications-system.svg</iconset>
      </property>
     </widget>
@@ -138,7 +150,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../mavground.qrc"/>
+  <include location="../mavlinkgen.qrc"/>
  </resources>
  <connections/>
 </ui>

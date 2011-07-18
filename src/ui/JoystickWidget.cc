@@ -69,7 +69,6 @@ void JoystickWidget::setZ(float z)
 
 void JoystickWidget::setHat(float x, float y)
 {
-    qDebug() << __FILE__ << __LINE__ << "HAT X:" << x << "HAT Y:" << y;
     updateStatus(tr("Hat position: x: %1, y: %2").arg(x, y));
 }
 
@@ -129,7 +128,6 @@ void JoystickWidget::pressKey(int key)
         break;
     }
     QTimer::singleShot(20, this, SLOT(clearKeys()));
-    qDebug() << __FILE__ << __LINE__ << "KEY" << key << " pressed on joystick";
     updateStatus(tr("Key %1 pressed").arg(key));
 }
 

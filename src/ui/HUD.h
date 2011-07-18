@@ -219,7 +219,6 @@ protected:
     QAction* selectVideoChannelAction;
     void paintEvent(QPaintEvent *event);
     bool imageRequested;
-    UAS* u;
 
 };
 
