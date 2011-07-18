@@ -30,6 +30,7 @@ public slots:
     /** @brief Copy an image from an external buffer */
     void copyImage(const QImage& img);
     void enableHUDInstruments(bool enabled) { hudInstrumentsEnabled = enabled; }
+    void enableVideo(bool enabled) { videoEnabled = enabled; }
 
 
 protected slots:

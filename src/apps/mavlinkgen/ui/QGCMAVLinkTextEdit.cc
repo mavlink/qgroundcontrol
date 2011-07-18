@@ -7,7 +7,7 @@
 #include <QTextLayout>
 
 QGCMAVLinkTextEdit::QGCMAVLinkTextEdit(QWidget *parent)
-    : QTextEdit(parent)
+: QTextEdit(parent)
 {
     setViewportMargins(50, 0, 0, 0);
     highlight = new XmlHighlighter(document());
@@ -58,14 +58,14 @@ bool QGCMAVLinkTextEdit::syntaxcheck()
         if (!doc.setContent(text(),false, &errorStr, &errorLine, &errorColumn)) {
             //////return doc.toString(5);
             QMessageBox::critical(0, tr("Found xml error"),tr("Check line %1 column %2 on string \"%3\"!")
-                                     .arg(errorLine - 1)
-                                     .arg(errorColumn - 1)
-                                     .arg(errorStr));
+								  .arg(errorLine - 1)
+								  .arg(errorColumn - 1)
+								  .arg(errorStr));
             noError = false;
-
+			
             // FIXME Mark line
             if (errorLine >= 0 ) {
-
+				
             }
         } else {
             QMessageBox::information(0, tr("XML valid."),tr("All tags are valid. Document size is %1 characters.").arg(text().size()));
@@ -75,7 +75,7 @@ bool QGCMAVLinkTextEdit::syntaxcheck()
         QMessageBox::information(0, tr("XML not found!"),tr("Null size xml document!"));
         noError = false;
     }
-        return noError;
+	return noError;
 }
 
 void QGCMAVLinkTextEdit::contextMenuEvent ( QContextMenuEvent * e )
@@ -109,7 +109,7 @@ bool QGCMAVLinkTextEdit::event( QEvent *event )
         int m_lineNumber(1);
         const QFontMetrics fm=fontMetrics();
         const int ascent = fontMetrics().ascent() +1;
-
+		
         for (QTextBlock block=document()->begin(); block.isValid(); block=block.next(), m_lineNumber++) {
             QTextLayout *layout = block.layout();
             const QRectF boundingRect = layout->boundingRect();
@@ -122,7 +122,7 @@ bool QGCMAVLinkTextEdit::event( QEvent *event )
             }
             const QString txt = QString::number(m_lineNumber);
             p.drawText(50-fm.width(txt)-2, qRound(position.y())-contentsY+ascent, txt);
-
+			
         }
         p.setPen(QPen(Qt::NoPen));
     } else if ( event->type() == QEvent::KeyPress ) {
@@ -170,19 +170,19 @@ static const QString EXPR_ATTRIBUTE_VALUE	= "\"[^<\"]*\"|'[^<']*'";
 static const QString EXPR_NAME				= "([A-Za-z_:]|[^\\x00-\\x7F])([A-Za-z0-9_:.-]|[^\\x00-\\x7F])*";
 
 XmlHighlighter::XmlHighlighter(QObject* parent)
-    : QSyntaxHighlighter(parent)
+: QSyntaxHighlighter(parent)
 {
     init();
 }
 
 XmlHighlighter::XmlHighlighter(QTextDocument* parent)
-    : QSyntaxHighlighter(parent)
+: QSyntaxHighlighter(parent)
 {
     init();
 }
 
 XmlHighlighter::XmlHighlighter(QTextEdit* parent)
-    : QSyntaxHighlighter(parent)
+: QSyntaxHighlighter(parent)
 {
     init();
 }
@@ -216,27 +216,27 @@ void XmlHighlighter::setHighlightFormat(HighlightType type, QTextCharFormat form
 {
     switch (type)
     {
-                case SyntaxChar:
-        fmtSyntaxChar = format;
-        break;
-                case ElementName:
-        fmtElementName = format;
-        break;
-                case Comment:
-        fmtComment = format;
-        break;
-                case AttributeName:
-        fmtAttributeName = format;
-        break;
-                case AttributeValue:
-        fmtAttributeValue = format;
-        break;
-                case Error:
-        fmtError = format;
-        break;
-                case Other:
-        fmtOther = format;
-        break;
+		case SyntaxChar:
+			fmtSyntaxChar = format;
+			break;
+		case ElementName:
+			fmtElementName = format;
+			break;
+		case Comment:
+			fmtComment = format;
+			break;
+		case AttributeName:
+			fmtAttributeName = format;
+			break;
+		case AttributeValue:
+			fmtAttributeValue = format;
+			break;
+		case Error:
+			fmtError = format;
+			break;
+		case Other:
+			fmtOther = format;
+			break;
     }
     rehighlight();
 }
@@ -246,15 +246,15 @@ void XmlHighlighter::highlightBlock(const QString& text)
     int i = 0;
     int pos = 0;
     int brackets = 0;
-
+	
     state = (previousBlockState() == InElement ? ExpectAttributeOrEndOfElement : NoState);
-
+	
     if (previousBlockState() == InComment)
     {
         // search for the end of the comment
         QRegExp expression(EXPR_COMMENT_END);
         pos = expression.indexIn(text, i);
-
+		
         if (pos >= 0)
         {
             // end comment found
@@ -271,153 +271,153 @@ void XmlHighlighter::highlightBlock(const QString& text)
             return;
         }
     }
-
+	
     for (; i < text.length(); i++)
     {
         switch (text.at(i).toAscii())
         {
-                case '<':
-            brackets++;
-            if (brackets == 1)
-            {
-                setFormat(i, 1, fmtSyntaxChar);
-                state = ExpectElementNameOrSlash;
-            }
-            else
-            {
-                // wrong bracket nesting
-                setFormat(i, 1, fmtError);
-            }
-            break;
-
-                case '>':
-            brackets--;
-            if (brackets == 0)
-            {
-                setFormat(i, 1, fmtSyntaxChar);
-            }
-            else
-            {
-                // wrong bracket nesting
-                setFormat( i, 1, fmtError);
-            }
-            state = NoState;
-            break;
-
-                case '/':
-            if (state == ExpectElementNameOrSlash)
-            {
-                state = ExpectElementName;
-                setFormat(i, 1, fmtSyntaxChar);
-            }
-            else
-            {
-                if (state == ExpectAttributeOrEndOfElement)
-                {
-                    setFormat(i, 1, fmtSyntaxChar);
-                }
-                else
-                {
-                    processDefaultText(i, text);
-                }
-            }
-            break;
-
-                case '=':
-            if (state == ExpectEqual)
-            {
-                state = ExpectAttributeValue;
-                setFormat(i, 1, fmtOther);
-            }
-            else
-            {
-                processDefaultText(i, text);
-            }
-            break;
-
-                case '\'':
-                case '\"':
-            if (state == ExpectAttributeValue)
-            {
-                // search attribute value
-                QRegExp expression(EXPR_ATTRIBUTE_VALUE);
-                pos = expression.indexIn(text, i);
-
-                if (pos == i) // attribute value found ?
-                {
-                    const int iLength = expression.matchedLength();
-
-                    setFormat(i, 1, fmtOther);
-                    setFormat(i + 1, iLength - 2, fmtAttributeValue);
-                    setFormat(i + iLength - 1, 1, fmtOther);
-
-                    i += iLength - 1; // skip attribute value
-                    state = ExpectAttributeOrEndOfElement;
-                }
-                else
-                {
-                    processDefaultText(i, text);
-                }
-            }
-            else
-            {
-                processDefaultText(i, text);
-            }
-            break;
-
-                case '!':
-            if (state == ExpectElementNameOrSlash)
-            {
-                // search comment
-                QRegExp expression(EXPR_COMMENT);
-                pos = expression.indexIn(text, i - 1);
-
-                if (pos == i - 1) // comment found ?
-                {
-                    const int iLength = expression.matchedLength();
-
-                    setFormat(pos, 4, fmtSyntaxChar);
-                    setFormat(pos + 4, iLength - 7, fmtComment);
-                    setFormat(iLength - 3, 3, fmtSyntaxChar);
-                    i += iLength - 2; // skip comment
-                    state = NoState;
-                    brackets--;
-                }
-                else
-                {
-                    // Try find multiline comment
-                    QRegExp expression(EXPR_COMMENT_BEGIN); // search comment start
-                    pos = expression.indexIn(text, i - 1);
-
-                    //if (pos == i - 1) // comment found ?
-                    if (pos >= i - 1)
-                    {
-                        setFormat(i, 3, fmtSyntaxChar);
-                        setFormat(i + 3, text.length() - i - 3, fmtComment);
-                        setCurrentBlockState(InComment);
-                        return;
-                    }
-                    else
-                    {
-                        processDefaultText(i, text);
-                    }
-                }
-            }
-            else
-            {
-                processDefaultText(i, text);
-            }
-
-            break;
-
-                default:
-            const int iLength = processDefaultText(i, text);
-            if (iLength > 0)
-                i += iLength - 1;
-            break;
+			case '<':
+				brackets++;
+				if (brackets == 1)
+				{
+					setFormat(i, 1, fmtSyntaxChar);
+					state = ExpectElementNameOrSlash;
+				}
+				else
+				{
+					// wrong bracket nesting
+					setFormat(i, 1, fmtError);
+				}
+				break;
+				
+			case '>':
+				brackets--;
+				if (brackets == 0)
+				{
+					setFormat(i, 1, fmtSyntaxChar);
+				}
+				else
+				{
+					// wrong bracket nesting
+					setFormat( i, 1, fmtError);
+				}
+				state = NoState;
+				break;
+				
+			case '/':
+				if (state == ExpectElementNameOrSlash)
+				{
+					state = ExpectElementName;
+					setFormat(i, 1, fmtSyntaxChar);
+				}
+				else
+				{
+					if (state == ExpectAttributeOrEndOfElement)
+					{
+						setFormat(i, 1, fmtSyntaxChar);
+					}
+					else
+					{
+						processDefaultText(i, text);
+					}
+				}
+				break;
+				
+			case '=':
+				if (state == ExpectEqual)
+				{
+					state = ExpectAttributeValue;
+					setFormat(i, 1, fmtOther);
+				}
+				else
+				{
+					processDefaultText(i, text);
+				}
+				break;
+				
+			case '\'':
+			case '\"':
+				if (state == ExpectAttributeValue)
+				{
+					// search attribute value
+					QRegExp expression(EXPR_ATTRIBUTE_VALUE);
+					pos = expression.indexIn(text, i);
+					
+					if (pos == i) // attribute value found ?
+					{
+						const int iLength = expression.matchedLength();
+						
+						setFormat(i, 1, fmtOther);
+						setFormat(i + 1, iLength - 2, fmtAttributeValue);
+						setFormat(i + iLength - 1, 1, fmtOther);
+						
+						i += iLength - 1; // skip attribute value
+						state = ExpectAttributeOrEndOfElement;
+					}
+					else
+					{
+						processDefaultText(i, text);
+					}
+				}
+				else
+				{
+					processDefaultText(i, text);
+				}
+				break;
+				
+			case '!':
+				if (state == ExpectElementNameOrSlash)
+				{
+					// search comment
+					QRegExp expression(EXPR_COMMENT);
+					pos = expression.indexIn(text, i - 1);
+					
+					if (pos == i - 1) // comment found ?
+					{
+						const int iLength = expression.matchedLength();
+						
+						setFormat(pos, 4, fmtSyntaxChar);
+						setFormat(pos + 4, iLength - 7, fmtComment);
+						setFormat(iLength - 3, 3, fmtSyntaxChar);
+						i += iLength - 2; // skip comment
+						state = NoState;
+						brackets--;
+					}
+					else
+					{
+						// Try find multiline comment
+						QRegExp expression(EXPR_COMMENT_BEGIN); // search comment start
+						pos = expression.indexIn(text, i - 1);
+						
+						//if (pos == i - 1) // comment found ?
+						if (pos >= i - 1)
+						{
+							setFormat(i, 3, fmtSyntaxChar);
+							setFormat(i + 3, text.length() - i - 3, fmtComment);
+							setCurrentBlockState(InComment);
+							return;
+						}
+						else
+						{
+							processDefaultText(i, text);
+						}
+					}
+				}
+				else
+				{
+					processDefaultText(i, text);
+				}
+				
+				break;
+				
+			default:
+				const int iLength = processDefaultText(i, text);
+				if (iLength > 0)
+					i += iLength - 1;
+				break;
         }
     }
-
+	
     if (state == ExpectAttributeOrEndOfElement)
     {
         setCurrentBlockState(InElement);
@@ -428,20 +428,20 @@ int XmlHighlighter::processDefaultText(int i, const QString& text)
 {
     // length of matched text
     int iLength = 0;
-
+	
     switch(state)
     {
-    case ExpectElementNameOrSlash:
-    case ExpectElementName:
+		case ExpectElementNameOrSlash:
+		case ExpectElementName:
         {
             // search element name
             QRegExp expression(EXPR_NAME);
             const int pos = expression.indexIn(text, i);
-
+			
             if (pos == i) // found ?
             {
                 iLength = expression.matchedLength();
-
+				
                 setFormat(pos, iLength, fmtElementName);
                 state = ExpectAttributeOrEndOfElement;
             }
@@ -450,18 +450,18 @@ int XmlHighlighter::processDefaultText(int i, const QString& text)
                 setFormat(i, 1, fmtOther);
             }
         }
-        break;
-
-    case ExpectAttributeOrEndOfElement:
+			break;
+			
+		case ExpectAttributeOrEndOfElement:
         {
             // search attribute name
             QRegExp expression(EXPR_NAME);
             const int pos = expression.indexIn(text, i);
-
+			
             if (pos == i) // found ?
             {
                 iLength = expression.matchedLength();
-
+				
                 setFormat(pos, iLength, fmtAttributeName);
                 state = ExpectEqual;
             }
@@ -470,11 +470,11 @@ int XmlHighlighter::processDefaultText(int i, const QString& text)
                 setFormat(i, 1, fmtOther);
             }
         }
-        break;
-
-    default:
-        setFormat(i, 1, fmtOther);
-        break;
+			break;
+			
+		default:
+			setFormat(i, 1, fmtOther);
+			break;
     }
     return iLength;
 }

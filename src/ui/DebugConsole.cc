@@ -394,7 +394,6 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
                             case (unsigned char)'\n':   // Accept line feed
                                 if (lastByte != '\r')   // Do not break line again for CR+LF
                                     str.append(byte);   // only break line for single LF or CR bytes
-                                else ;
                             break;
                             case (unsigned char)' ':    // space of any type means don't add another on hex output
                             case (unsigned char)'\t':   // Accept tab

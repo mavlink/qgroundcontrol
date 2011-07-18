@@ -103,7 +103,7 @@ bool MAVLinkXMLParser::generate()
 
 
     // Start main header
-    QString mainHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef " + pureFileName.toUpper() + "_H\n#define " + pureFileName.toUpper() + "_H\n\n").arg(date); // The main header includes all messages
+    QString mainHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://qgroundcontrol.org/mavlink/\n *\t Generated on %1\n */\n#ifndef " + pureFileName.toUpper() + "_H\n#define " + pureFileName.toUpper() + "_H\n\n").arg(date); // The main header includes all messages
     // Mark all code as C code
     mainHeader += "#ifdef __cplusplus\nextern \"C\" {\n#endif\n\n";
     mainHeader += "\n#include \"../protocol.h\"\n";
