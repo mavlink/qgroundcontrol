@@ -23,11 +23,13 @@ public:
     ~QGCToolWidget();
 
     /** @brief Factory method to instantiate all tool widgets */
-    static QList<QGCToolWidget*> createWidgetsFromSettings(QWidget* parent);
+    static QList<QGCToolWidget*> createWidgetsFromSettings(QWidget* parent, QString settingsFile=QString());
     /** @Give the tool widget a reference to its action in the main menu */
     void setMainMenuAction(QAction* action);
     /** @brief All instances of this class */
     static QMap<QString, QGCToolWidget*>* instances();
+    /** @brief Get title of widget */
+    const QString getTitle();
 
     int isVisible(int view) { return viewVisible.value(view, false); }
     Qt::DockWidgetArea getDockWidgetArea(int view) { return dockWidgetArea.value(view, Qt::BottomDockWidgetArea); }
@@ -39,9 +41,17 @@ public slots:
     /** @brief Export this widget to a file */
     void exportWidget();
     /** @brief Import settings for this widget from a file */
-    void importWidget(const QString& fileName);
+    void importWidget();
     /** @brief Store all widgets of this type to QSettings */
-    static void storeWidgetsToSettings();
+    static void storeWidgetsToSettings(QString settingsFile=QString());
+    /** @brief Load this widget from a QSettings object */
+    void loadSettings(QSettings& settings);
+    /** @brief Load this widget from a settings file */
+    void loadSettings(const QString& settings);
+    /** @brief Store this widget to a QSettings object */
+    void storeSettings(QSettings& settings);
+    /** @brief Store this widget to a settings file */
+    void storeSettings(const QString& settingsFile);
     /** @brief Store the view id and dock widget area */
     void setViewVisibilityAndDockWidgetArea(int view, bool visible, Qt::DockWidgetArea area);
 
@@ -65,7 +75,6 @@ protected:
     void contextMenuEvent(QContextMenuEvent* event);
     void createActions();
     QList<QGCToolWidgetItem* >* itemList();
-    const QString getTitle();
     /** @brief Add an existing tool widget */
     void addToolWidget(QGCToolWidgetItem* widget);
 
@@ -77,6 +86,7 @@ protected slots:
     void addAction();
     void addCommand();
     void setTitle();
+    void setTitle(QString title);
 
 
 private:
