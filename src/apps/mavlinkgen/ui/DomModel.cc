@@ -113,11 +113,9 @@ QVariant DomModel::data(const QModelIndex &index, int role) const
 ////        }
 //        }
 //        break;
-    default:
-        {
-        return QVariant();
-        }
     }
+    // Return empty variant if no case applied
+    return QVariant();
 }
 
 Qt::ItemFlags DomModel::flags(const QModelIndex &index) const
