@@ -134,10 +134,10 @@ void QGCRemoteControlView::setChannelScaled(int channelId, float normalized)
         // This is an existing channel, update it
         this->normalized[channelId] = normalized;
     }
-    updated = true;
+//    updated = true;
 
-    // FIXME Will be timer based in the future
-    redraw();
+//    // FIXME Will be timer based in the future
+//    redraw();
 }
 
 void QGCRemoteControlView::setRemoteRSSI(float rssiNormalized)
