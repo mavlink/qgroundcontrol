@@ -35,7 +35,8 @@
 #include "UDPLink.h"
 #include <QDebug>
 
-  QByteArray imageRecBuffer = QByteArray(376*240,255);
+  QByteArray imageRecBuffer1 = QByteArray(376*240,255);
+  QByteArray imageRecBuffer2 = QByteArray(376*240,255);
   static int part = 0;
 
 QGCVideoMainWindow::QGCVideoMainWindow(QWidget *parent) :
@@ -91,71 +92,140 @@ void QGCVideoMainWindow::receiveBytes(LinkInterface* link, QByteArray data)
     QString header("P5\n%1 %2\n%3\n");
     header = header.arg(imgWidth).arg(imgHeight).arg(imgColors);
 
-    switch (data[0])
-    {
-    case (1):
-        {
-            for (int i=4; i<data.size()/4; i++)
-            {
-                imageRecBuffer[i] = data[i*4];
-                part = part | 1;
-            }
-        }
-    case (2):
-        {
-            for (int i=4; i<data.size()/4; i++)
-            {
-                imageRecBuffer[i+45124/4*2] = data[i*4];
-                part = part | 2;
-            }
-        }
-//    case (3):
-//        {
-//            for (int i=4; i<data.size()/4; i++)
-//            {
-//                imageRecBuffer[i+45124/4*2] = data[i*4];
-//                part = part | 4;
-//            }
-//        }
-    }
-    if(part==3)
-    {
-        for (int i=45124/4*3; i<376*240; i++)
-        {
-            imageRecBuffer[i] = 255;
-        }
-        QByteArray tmpImage(header.toStdString().c_str(), header.toStdString().size());
-        tmpImage.append(imageRecBuffer);
+    unsigned char i0 = data[0];
 
+    switch (i0)
+    {
+    case 0x01:
+        {
+            for (int i=4; i<data.size()/4; i++)
+            {
+                imageRecBuffer1[i] = data[i*4];
+                imageRecBuffer2[i] = data[i*4+1];
+            }
+            part = part | 1;
+            break;
+        }
+    case 0x02:
+        {
+            for (int i=4; i<data.size()/4; i++)
+            {
+                imageRecBuffer1[i+45124/4] = data[i*4];
+                imageRecBuffer2[i+45124/4] = data[i*4+1];
+            }
+            part = part | 2;
+            break;
+        }
+    case 0x03:
+        {
+            for (int i=4; i<data.size()/4; i++)
+            {
+                imageRecBuffer1[i+45124/4*2] = data[i*4];
+                imageRecBuffer2[i+45124/4*2] = data[i*4+1];
+            }
+            part = part | 4;
+            break;
+        }
+    case 0x04:
+        {
+            for (int i=4; i<data.size()/4; i++)
+            {
+                imageRecBuffer1[i+45124/4*3] = data[i*4];
+                imageRecBuffer2[i+45124/4*3] = data[i*4+1];
+            }
+            part = part | 8;
+            break;
+        }
+    case 0x05:
+        {
+            for (int i=4; i<data.size()/4; i++)
+            {
+                imageRecBuffer1[i+45124/4*4] = data[i*4];
+                imageRecBuffer2[i+45124/4*4] = data[i*4+1];
+            }
+            part = part | 16;
+            break;
+        }
+    case 0x06:
+        {
+            for (int i=4; i<data.size()/4; i++)
+            {
+                imageRecBuffer1[i+45124/4*5] = data[i*4];
+                imageRecBuffer2[i+45124/4*5] = data[i*4+1];
+            }
+            part = part | 32;
+            break;
+        }
+    case 0x07:
+        {
+            for (int i=4; i<data.size()/4; i++)
+            {
+                imageRecBuffer1[i+45124/4*6] = data[i*4];
+                imageRecBuffer2[i+45124/4*6] = data[i*4+1];
+            }
+            part = part | 64;
+            break;
+        }
+    case 0x08:
+        {
+            for (int i=4; i<data.size()/4; i++)
+            {
+                imageRecBuffer1[i+45124/4*7] = data[i*4];
+                imageRecBuffer2[i+45124/4*7] = data[i*4+1];
+            }
+            part = part | 128;
+            break;
+        }
+    }
+    if(part==255)
+    {
+
+        QByteArray tmpImage1(header.toStdString().c_str(), header.toStdString().size());
+        tmpImage1.append(imageRecBuffer1);
+        QByteArray tmpImage2(header.toStdString().c_str(), header.toStdString().size());
+        tmpImage2.append(imageRecBuffer2);
 
         // Load image into window
-        QImage test(":images/patterns/lenna.jpg");
-        QImage image;
+        //QImage test(":images/patterns/lenna.jpg");
+        QImage image1;
+        QImage image2;
 
 
-        if (imageRecBuffer.isNull())
+        if (imageRecBuffer1.isNull())
             {
                 qDebug()<< "could not convertToPGM()";
 
             }
 
-            if (!image.loadFromData(tmpImage, "PGM"))
+            if (!image1.loadFromData(tmpImage1, "PGM"))
             {
-                qDebug()<< "could not create extracted image";
+                qDebug()<< "could not create extracted image1";
+
+            }
+         if (imageRecBuffer2.isNull())
+            {
+                qDebug()<< "could not convertToPGM()";
 
             }
 
-        tmpImage.clear();
-        ui->video1Widget->copyImage(test);
-        ui->video2Widget->copyImage(image);
-        //ui->video3Widget->copyImage(test);
+            if (!image2.loadFromData(tmpImage2, "PGM"))
+            {
+                 qDebug()<< "could not create extracted image2";
+
+            }
+        tmpImage1.clear();
+        tmpImage2.clear();
+        //ui->video1Widget->copyImage(test);
+        ui->video2Widget->copyImage(image1);
+        ui->video3Widget->copyImage(image2);
         //ui->video4Widget->copyImage(test);
         part = 0;
-        imageRecBuffer.clear();
+        imageRecBuffer1.clear();
+        imageRecBuffer2.clear();
     }
 
 
-    unsigned char i0 = data[0];
+
     index.append(QString().sprintf("%02x ", i0));
 
     for (int j=0; j<data.size(); j++) {
