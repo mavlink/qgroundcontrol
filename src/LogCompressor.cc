@@ -231,19 +231,35 @@ void LogCompressor::run()
         for (int index = 0; index < outLines->count(); ++index)
         {
             QString line = outLines->at(index);
+            //qDebug() << "LINE" << line;
             QStringList fields = line.split(separator, QString::SkipEmptyParts);
             // The fields line contains the timestamp
             // index of the data fields therefore runs from 1 to n-1
             int fieldCount = fields.count();
             for (int i = 1; i < fillCount+1; ++i)
             {
-                if (fieldCount < fillCount) fields.append("");
+                if (fieldCount <= i) fields.append("");
+
+                // Allow input data to be screwed up
+                if (fields.at(i) == "\t" || fields.at(i) == " " || fields.at(i) == "\n")
+                {
+                    // Remove invalid data
+                    if (fieldCount > fillCount+1)
+                    {
+                        // This field has a seperator value and is too much
+                        //qDebug() << "REMOVED INVALID INPUT DATA";
+                        fields.removeAt(i);
+                    }
+                    // Continue on invalid data
+                    continue;
+                }
 
                 // Check if this is NaN
-                if (fields[i] == 0 || fields[i] == "" || fields[i] == "\t" || fields[i] == " " || fields[i] == "\n")
+                if (fields.at(i) == 0 || fields.at(i) == "")
                 {
                     // Value was empty, replace it
                     fields.replace(i, fillValues[i-1]);
+                    //qDebug() << "FILL" << fillValues.at(i-1);
                 }
                 else
                 {
@@ -285,8 +301,14 @@ void LogCompressor::run()
     running = false;
 }
 
-void LogCompressor::startCompression()
+/**
+ * @param holeFilling If hole filling is enabled, the compressor tries to fill empty data fields with previous
+ *                    values from the same variable (or NaN, if no previous value existed)
+ */
+void LogCompressor::startCompression(bool holeFilling)
 {
+    // Set hole filling
+    holeFillingEnabled = holeFilling;
     start();
 }
 
