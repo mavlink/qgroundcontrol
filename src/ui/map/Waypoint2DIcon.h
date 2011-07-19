@@ -42,11 +42,11 @@ public:
 
 protected:
     mapcontrol::OPMapWidget* parent; ///< Parent widget
-    int radius;           ///< Radius / diameter of the icon in pixels
     Waypoint* waypoint;   ///< Waypoint data container this icon represents
-    QColor color;
+    int radius;           ///< Radius / diameter of the icon in pixels
     bool showAcceptanceRadius;
     bool showOrbit;
+    QColor color;
 //    QSize size;
 
 };

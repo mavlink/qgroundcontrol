@@ -61,34 +61,28 @@ MAVLinkGen::MAVLinkGen(int &argc, char* argv[]) : QApplication(argc, argv)
 {
     this->setApplicationName("MAVLink Generator");
     this->setApplicationVersion("v. 1.0.0 (Beta)");
-    this->setOrganizationName(QLatin1String("QGroundControl"));
-    this->setOrganizationDomain("http://qgroundcontrol.org");
+    this->setOrganizationName(QLatin1String("MAVLink Consortium"));
+    this->setOrganizationDomain("http://qgroundcontrol.org/mavlink");
 
     QSettings::setDefaultFormat(QSettings::IniFormat);
     // Exit main application when last window is closed
     connect(this, SIGNAL(lastWindowClosed()), this, SLOT(quit()));
 
-    // Set application font
-    QFontDatabase fontDatabase = QFontDatabase();
-    const QString fontFileName = ":/general/vera.ttf"; ///< Font file is part of the QRC file and compiled into the app
-    const QString fontFamilyName = "Bitstream Vera Sans";
-    if(!QFile::exists(fontFileName)) printf("ERROR! font file: %s DOES NOT EXIST!\n", fontFileName.toStdString().c_str());
-    fontDatabase.addApplicationFont(fontFileName);
-    setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
-
     // Create main window
-    QMainWindow* window = new QMainWindow();
+    window = new QMainWindow();
     window->setCentralWidget(new XMLCommProtocolWidget(window));
     window->setWindowTitle(applicationName() + " " + applicationVersion());
-//    window->setBaseSize(qMin(1024, static_cast<int>(QApplication::desktop()->width()*0.8f)), qMin(900, static_cast<int>(QApplication::desktop()->height()*0.8f)));
+    window->resize(qMax(950, static_cast<int>(QApplication::desktop()->width()*0.7f)), qMax(600, static_cast<int>(QApplication::desktop()->height()*0.8f)));
     window->show();
 }
 
 /**
- * @brief Destructor for the groundstation. It destroys all loaded instances.
+ * @brief Destructor
  *
  **/
 MAVLinkGen::~MAVLinkGen()
 {
+    window->hide();
+    delete window;
 }
 

@@ -381,7 +381,6 @@ set (qgroundcontrolHdrs
 	src/ui/map/Waypoint2DIcon.h
 	src/ui/map/MAV2DIcon.h
 	src/ui/OgreWidget.h
-	src/ui/mavlink/DomItem.h
 	src/ui/generated/ObjectDetectionView.h
 	src/ui/generated/MAVLinkSettingsWidget.h
 	src/ui/generated/SerialSettings.h
@@ -427,7 +426,6 @@ set(qgroundcontrolMocSrc
 	src/comm/AS4Protocol.h
 	src/comm/MAVLinkSwarmSimulationLink.h
 	src/comm/ProtocolInterface.h
-	src/comm/MAVLinkSyntaxHighlighter.h
 	#src/comm/OpalLink.h
 	src/comm/MAVLinkProtocol.h
 	src/comm/SerialLinkInterface.h
@@ -435,7 +433,6 @@ set(qgroundcontrolMocSrc
 	src/comm/UDPLink.h
 	src/comm/LinkManager.h
 	src/comm/LinkInterface.h
-	src/comm/MAVLinkXMLParser.h
 	src/comm/MAVLinkSimulationLink.h
 	src/comm/SerialSimulationLink.h
 	src/comm/MAVLinkSimulationWaypointPlanner.h
@@ -495,7 +492,6 @@ set(qgroundcontrolMocSrc
 	src/ui/QGCMAVLinkLogPlayer.h
 	src/ui/QGCUDPLinkConfiguration.h
 	#src/ui/OpalLinkConfigurationWindow.h
-	src/ui/mavlink/DomModel.h
 	src/ui/SlugsHilSim.h
 	src/ui/WaypointList.h
 	src/ui/JoystickWidget.h
@@ -529,8 +525,6 @@ set (qgroundcontrolSrc
     src/comm/MAVLinkSimulationMAV.cc
     src/comm/MAVLinkSimulationWaypointPlanner.cc
     src/comm/MAVLinkSwarmSimulationLink.cc
-    src/comm/MAVLinkSyntaxHighlighter.cc
-    src/comm/MAVLinkXMLParser.cc
     src/comm/SerialLink.cc
     src/comm/SerialSimulationLink.cc
     src/comm/UDPLink.cc
@@ -584,7 +578,6 @@ set (qgroundcontrolSrc
     #src/ui/SlugsVideoCamControl.cpp
     src/ui/WaypointList.cc
     src/ui/WaypointView.cc
-    src/ui/XMLCommProtocolWidget.cc
     src/ui/designer/QGCActionButton.cc
     src/ui/designer/QGCParamSlider.cc
     src/ui/designer/QGCToolWidget.cc
@@ -598,8 +591,6 @@ set (qgroundcontrolSrc
     src/ui/map/MAV2DIcon.cc
     src/ui/map/Waypoint2DIcon.cc
     src/ui/map3D/QGCWebPage.cc
-    src/ui/mavlink/DomItem.cc
-    src/ui/mavlink/DomModel.cc
     src/ui/uas/QGCUnconnectedInfoWidget.cc
     src/ui/uas/UASControlWidget.cc
     src/ui/uas/UASInfoWidget.cc

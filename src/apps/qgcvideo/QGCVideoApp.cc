@@ -44,6 +44,8 @@
 #include <QMainWindow>
 
 #include "QGCVideoApp.h"
+#include "QGCVideoMainWindow.h"
+#include "UDPLink.h"
 
 
 /**
@@ -76,7 +78,7 @@ QGCVideoApp::QGCVideoApp(int &argc, char* argv[]) : QApplication(argc, argv)
     setFont(fontDatabase.font(fontFamilyName, "Roman", 12));
 
     // Create main window
-    QMainWindow* window = new QMainWindow();
+    QMainWindow* window = new QGCVideoMainWindow();
     //window->setCentralWidget(new XMLCommProtocolWidget(window));
     window->setWindowTitle(applicationName() + " " + applicationVersion());
     window->show();

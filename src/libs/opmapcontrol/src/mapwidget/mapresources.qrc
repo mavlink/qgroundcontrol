@@ -2,7 +2,6 @@
     <qresource prefix="/markers">
         <file>images/bigMarkerGreen.png</file>
         <file>images/marker.png</file>
-        <file>images/compas.svg</file>
         <file>images/airplane.svg</file>
         <file>images/home.png</file>
         <file>images/home.svg</file>
@@ -12,6 +11,7 @@
         <file>images/mapquad.png</file>
         <file>images/dragons1.jpg</file>
         <file>images/dragons2.jpeg</file>
+        <file>images/compas.svg</file>
     </qresource>
     <qresource prefix="/uavs">
         <file>images/airplanepip.png</file>

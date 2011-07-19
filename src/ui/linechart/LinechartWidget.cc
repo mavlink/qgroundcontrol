@@ -310,7 +310,7 @@ void LinechartWidget::appendData(int uasId, QString curve, double value, quint64
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
 
-            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value,'g',10) + "\n").toLatin1());
+            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value,'g',18) + "\n").toLatin1());
             logFile->flush();
         }
     }
@@ -338,7 +338,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
 
-            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value,'g',10) + "\n").toLatin1());
+            logFile->write(QString(QString::number(time) + "\t" + QString::number(uasId) + "\t" + curve + "\t" + QString::number(value,'g',18) + "\n").toLatin1());
             logFile->flush();
         }
     }
@@ -449,7 +449,7 @@ void LinechartWidget::startLogging()
     }
 
     // Let user select the log file name
-    QDate date(QDate::currentDate());
+    //QDate date(QDate::currentDate());
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
     QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.csv *.txt);;"));
 
@@ -499,8 +499,25 @@ void LinechartWidget::stopLogging()
         compressor = new LogCompressor(logFile->fileName(), logFile->fileName());
         connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
         connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
-        MainWindow::instance()->showInfoMessage("Logging ended", "QGroundControl is now compressing the logfile in a consistent CVS file. This may take a while, you can continue to use QGroundControl. Status updates appear at the bottom of the window.");
-        compressor->startCompression();
+
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Question);
+        msgBox.setText(tr("Starting Log Compression"));
+        msgBox.setInformativeText(tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"));
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+        int ret = msgBox.exec();
+        bool fill;
+        if (ret == QMessageBox::Yes)
+        {
+            fill = true;
+        }
+        else
+        {
+            fill = false;
+        }
+
+        compressor->startCompression(fill);
     }
     logButton->setText(tr("Start logging"));
     disconnect(logButton, SIGNAL(clicked()), this, SLOT(stopLogging()));

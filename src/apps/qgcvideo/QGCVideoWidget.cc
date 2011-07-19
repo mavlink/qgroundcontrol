@@ -160,7 +160,7 @@ QGCVideoWidget::QGCVideoWidget(QWidget* parent)
 
     // Refresh timer
     refreshTimer->setInterval(updateInterval);
-    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintQGCVideoWidget()));
+    connect(refreshTimer, SIGNAL(timeout()), this, SLOT(paintHUD()));
 
     // Resize to correct size and fill with image
     //glDrawPixels(glImage.width(), glImage.height(), GL_RGBA, GL_UNSIGNED_BYTE, glImage.bits());
@@ -201,16 +201,12 @@ QSize QGCVideoWidget::sizeHint() const
 
 void QGCVideoWidget::showEvent(QShowEvent* event)
 {
-    // React only to internal (pre-display)
-    // events
     Q_UNUSED(event)
     refreshTimer->start(updateInterval);
 }
 
 void QGCVideoWidget::hideEvent(QHideEvent* event)
 {
-    // React only to internal (pre-display)
-    // events
     Q_UNUSED(event);
     refreshTimer->stop();
 }
@@ -220,20 +216,20 @@ void QGCVideoWidget::contextMenuEvent (QContextMenuEvent* event)
     QMenu menu(this);
     // Update actions
     enableHUDAction->setChecked(hudInstrumentsEnabled);
-    enableVideoAction->setChecked(videoEnabled);
+//    enableVideoAction->setChecked(videoEnabled);
 
     menu.addAction(enableHUDAction);
     //menu.addAction(selectQGCVideoWidgetColorAction);
-    menu.addAction(enableVideoAction);
-    menu.addAction(selectOfflineDirectoryAction);
+//    menu.addAction(enableVideoAction);
+//    menu.addAction(selectOfflineDirectoryAction);
     //menu.addAction(selectVideoChannelAction);
     menu.exec(event->globalPos());
 }
 
 void QGCVideoWidget::createActions()
 {
-    enableHUDAction = new QAction(tr("Enable QGCVideoWidget"), this);
-    enableHUDAction->setStatusTip(tr("Show the QGCVideoWidget instruments in this window"));
+    enableHUDAction = new QAction(tr("Enable HUD"), this);
+    enableHUDAction->setStatusTip(tr("Show the HUD instruments in this window"));
     enableHUDAction->setCheckable(true);
     enableHUDAction->setChecked(hudInstrumentsEnabled);
     connect(enableHUDAction, SIGNAL(triggered(bool)), this, SLOT(enableHUDInstruments(bool)));
@@ -242,11 +238,11 @@ void QGCVideoWidget::createActions()
     enableVideoAction->setStatusTip(tr("Show the video live feed"));
     enableVideoAction->setCheckable(true);
     enableVideoAction->setChecked(videoEnabled);
-    connect(enableVideoAction, SIGNAL(triggered(bool)), this, SLOT(enableVideo(bool)));
+//    connect(enableVideoAction, SIGNAL(triggered(bool)), this, SLOT(enableVideo(bool)));
 
     selectOfflineDirectoryAction = new QAction(tr("Select image log"), this);
     selectOfflineDirectoryAction->setStatusTip(tr("Load previously logged images into simulation / replay"));
-    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
+//    connect(selectOfflineDirectoryAction, SIGNAL(triggered()), this, SLOT(selectOfflineDirectory()));
 }
 
 /**

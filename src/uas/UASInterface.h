@@ -271,6 +271,10 @@ public slots:
     virtual void enableRCChannelDataTransmission(int rate) = 0;
     virtual void enableRawControllerDataTransmission(int rate) = 0;
     //virtual void enableRawSensorFusionTransmission(int rate) = 0;
+    virtual void enablePositionTransmission(int rate) = 0;
+    virtual void enableExtra1Transmission(int rate) = 0;
+    virtual void enableExtra2Transmission(int rate) = 0;
+    virtual void enableExtra3Transmission(int rate) = 0;
 
     virtual void setLocalPositionSetpoint(float x, float y, float z, float yaw) = 0;
     virtual void setLocalPositionOffset(float x, float y, float z, float yaw) = 0;

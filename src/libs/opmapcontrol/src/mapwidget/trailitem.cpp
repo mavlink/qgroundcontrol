@@ -38,6 +38,8 @@ namespace mapcontrol
 
     void TrailItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
     {
+        Q_UNUSED(option);
+        Q_UNUSED(widget);
       //  painter->drawRect(QRectF(-3,-3,6,6));
         painter->setBrush(m_brush);
         painter->drawEllipse(-2,-2,4,4);
