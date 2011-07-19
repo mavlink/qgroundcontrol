@@ -503,7 +503,7 @@ void LinechartWidget::stopLogging()
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Question);
         msgBox.setText(tr("Starting Log Compression"));
-        msgBox.setInformativeText(tr("Should empty fields be filled with the previous variable of the same variable? The compression might take some time.."));
+        msgBox.setInformativeText(tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"));
         msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
         msgBox.setDefaultButton(QMessageBox::No);
         int ret = msgBox.exec();
