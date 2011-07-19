@@ -34,6 +34,7 @@ This file is part of the PIXHAWK project
 #define MAVLINKGEN_H
 
 #include <QApplication>
+#include <QMainWindow>
 
 /**
  * @brief The main application and management class.
@@ -51,6 +52,7 @@ public:
     ~MAVLinkGen();
 
 protected:
+    QMainWindow* window;
 
 private:
 };

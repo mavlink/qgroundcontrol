@@ -45,7 +45,8 @@ LogCompressor::LogCompressor(QString logFileName, QString outFileName, int uasid
     running(true),
     currentDataLine(0),
     dataLines(1),
-    uasid(uasid)
+    uasid(uasid),
+    holeFillingEnabled(true)
 {
 }
 
@@ -59,7 +60,7 @@ void LogCompressor::run()
     QList<quint64> times;// = new QList<quint64>();
     QList<quint64> finalTimes;
 
-    qDebug() << "LOG COMPRESSOR: Starting" << fileName;
+    //qDebug() << "LOG COMPRESSOR: Starting" << fileName;
 
     if (!file.exists() || !file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         //qDebug() << "LOG COMPRESSOR: INPUT FILE DOES NOT EXIST";
@@ -89,7 +90,10 @@ void LogCompressor::run()
         // Accumulate map of keys
         // Data field name is at position 2
         QString key = line.split(separator).at(2);
-        if (!keys->contains(key)) keys->append(key);
+        if (!keys->contains(key))
+        {
+            keys->append(key);
+        }
         keyCounter++;
     }
     keys->sort();
@@ -98,14 +102,10 @@ void LogCompressor::run()
     QString spacer = "";
     for (int i = 0; i < keys->length(); i++) {
         header += keys->at(i) + separator;
-        spacer += " " + separator;
+        spacer += separator;
     }
 
     emit logProcessingStatusChanged(tr("Log compressor: Dataset contains dimension: ") + header);
-
-    //qDebug() << header;
-
-    //qDebug() << "NOW READING TIMES";
 
     // Find all times
     //in.reset();
@@ -158,16 +158,18 @@ void LogCompressor::run()
         // Get time
         quint64 time = static_cast<QString>(parts.first()).toLongLong(&ok);
         QString field = parts.at(2);
+        int fieldIndex = keys->indexOf(field);
         QString value = parts.at(3);
-        // Enforce NaN if no value is present
-        if (value.length() == 0 || value == "" || value == " " || value == "\t" || value == "\n") {
-            value = "NaN";
-        }
+//        // Enforce NaN if no value is present
+//        if (value.length() == 0 || value == "" || value == " " || value == "\t" || value == "\n") {
+//            // Hole filling disabled, fill with NaN
+//            value = "NaN";
+//        }
         // Get matching output line
 
         // Constraining the search area might result in not finding a key,
         // but it significantly reduces the time needed for the search
-        // setting a window of 1000 entries means that a 1 Hz data point
+        // setting a window of 100 entries means that a 1 Hz data point
         // can still be located
         quint64 offsetLimit = 100;
         quint64 offset;
@@ -205,12 +207,70 @@ void LogCompressor::run()
             QString outLine = outLines->at(index);
             QStringList outParts = outLine.split(separator);
             // Replace measurement placeholder with current value
-            outParts.replace(keys->indexOf(field)+1, value);
+            outParts.replace(fieldIndex+1, value);
             outLine = outParts.join(separator);
             outLines->replace(index, outLine);
         }
     }
 
+    ///////////////////////////
+    // HOLE FILLING
+
+    // If hole filling is enabled, run again through the whole file and replace holes
+    if (holeFillingEnabled)
+    {
+        // Build up the fill values - initialize to NaN
+        QStringList fillValues;
+        int fillCount = keys->count();
+        for (int i = 0; i< fillCount; ++i)
+        {
+            fillValues.append("NaN");
+        }
+
+        // Run through all lines and replace with fill values
+        for (int index = 0; index < outLines->count(); ++index)
+        {
+            QString line = outLines->at(index);
+            //qDebug() << "LINE" << line;
+            QStringList fields = line.split(separator, QString::SkipEmptyParts);
+            // The fields line contains the timestamp
+            // index of the data fields therefore runs from 1 to n-1
+            int fieldCount = fields.count();
+            for (int i = 1; i < fillCount+1; ++i)
+            {
+                if (fieldCount <= i) fields.append("");
+
+                // Allow input data to be screwed up
+                if (fields.at(i) == "\t" || fields.at(i) == " " || fields.at(i) == "\n")
+                {
+                    // Remove invalid data
+                    if (fieldCount > fillCount+1)
+                    {
+                        // This field has a seperator value and is too much
+                        //qDebug() << "REMOVED INVALID INPUT DATA";
+                        fields.removeAt(i);
+                    }
+                    // Continue on invalid data
+                    continue;
+                }
+
+                // Check if this is NaN
+                if (fields.at(i) == 0 || fields.at(i) == "")
+                {
+                    // Value was empty, replace it
+                    fields.replace(i, fillValues[i-1]);
+                    //qDebug() << "FILL" << fillValues.at(i-1);
+                }
+                else
+                {
+                    // Value was not NaN, use it as
+                    // new fill value
+                    fillValues.replace(i-1, fields[i]);
+                }
+            }
+            outLines->replace(index, fields.join(separator));
+        }
+    }
 
     // Add header, write out file
     file.close();
@@ -222,9 +282,8 @@ void LogCompressor::run()
     }
     if (!outfile.open(QIODevice::WriteOnly | QIODevice::Text))
         return;
-    outfile.write(QString(QString("unix_timestamp") + separator + header.replace(" ", "_") + QString("\n")).toLatin1());
+    outfile.write(QString(QString("timestamp_ms") + separator + header.replace(" ", "_") + QString("\n")).toLatin1());
     emit logProcessingStatusChanged(tr("Log Compressor: Writing output to file %1").arg(QFileInfo(outFileName).absoluteFilePath()));
-    //QString fileHeader = QString("unix_timestamp") + header.replace(" ", "_") + QString("\n");
 
     // File output
     for (int i = 0; i < outLines->length(); i++) {
@@ -242,8 +301,14 @@ void LogCompressor::run()
     running = false;
 }
 
-void LogCompressor::startCompression()
+/**
+ * @param holeFilling If hole filling is enabled, the compressor tries to fill empty data fields with previous
+ *                    values from the same variable (or NaN, if no previous value existed)
+ */
+void LogCompressor::startCompression(bool holeFilling)
 {
+    // Set hole filling
+    holeFillingEnabled = holeFilling;
     start();
 }
 
