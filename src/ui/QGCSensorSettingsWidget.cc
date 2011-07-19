@@ -38,14 +38,14 @@ QGCSensorSettingsWidget::QGCSensorSettingsWidget(UASInterface* uas, QWidget *par
 {
     ui->setupUi(this);
     // Set up delay timers
-     delayedSendRawSensorTimer.setInterval(400);
-     delayedSendControllerTimer.setInterval(400);
-     delayedSendExtendedTimer.setInterval(400);
-     delayedSendRCTimer.setInterval(400);
-     delayedSendPositionTimer.setInterval(400);
-     delayedSendExtra1Timer.setInterval(400);
-     delayedSendExtra2Timer.setInterval(400);
-     delayedSendExtra3Timer.setInterval(400);
+     delayedSendRawSensorTimer.setInterval(800);
+     delayedSendControllerTimer.setInterval(800);
+     delayedSendExtendedTimer.setInterval(800);
+     delayedSendRCTimer.setInterval(800);
+     delayedSendPositionTimer.setInterval(800);
+     delayedSendExtra1Timer.setInterval(800);
+     delayedSendExtra2Timer.setInterval(800);
+     delayedSendExtra3Timer.setInterval(800);
 
      connect(&delayedSendRawSensorTimer, SIGNAL(timeout()), this, SLOT(sendRawSensor()));
      connect(&delayedSendControllerTimer, SIGNAL(timeout()), this, SLOT(sendController()));
