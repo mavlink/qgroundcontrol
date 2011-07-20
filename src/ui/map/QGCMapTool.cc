@@ -14,7 +14,15 @@ QGCMapTool::QGCMapTool(QWidget *parent) :
     ui->zoomSlider->setMaximum(ui->map->MaxZoom());
     ui->zoomSlider->setValue(ui->map->ZoomReal());
     connect(ui->zoomSlider, SIGNAL(valueChanged(int)), ui->map, SLOT(SetZoom(int)));
-    connect(ui->map, SIGNAL(zoomChanged(int)), ui->zoomSlider, SLOT(setValue(int)));
+    connect(ui->map, SIGNAL(zoomChanged(int)), this, SLOT(setZoom(int)));
+}
+
+void QGCMapTool::setZoom(int zoom)
+{
+    if (ui->zoomSlider->value() != zoom)
+    {
+        ui->zoomSlider->setValue(zoom);
+    }
 }
 
 QGCMapTool::~QGCMapTool()

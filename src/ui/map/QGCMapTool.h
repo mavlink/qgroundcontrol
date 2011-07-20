@@ -15,6 +15,10 @@ public:
     explicit QGCMapTool(QWidget *parent = 0);
     ~QGCMapTool();
 
+public slots:
+    /** @brief Update slider zoom from map change */
+    void setZoom(int zoom);
+
 private:
     Ui::QGCMapTool *ui;
 };
