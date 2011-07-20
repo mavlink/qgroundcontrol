@@ -35,6 +35,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QMutex>
 #include <UASInterface.h>
+#include "Eigen/Eigen"
+#include "QGCGeo.h"
 
 /**
  * @brief Central manager for all connected aerial vehicles
@@ -82,6 +84,15 @@ public:
     double getHomeAltitude() const {
         return homeAlt;
     }
+
+    /** @brief Convert WGS84 coordinates to earth centric frame */
+    Eigen::Vector3d wgs84ToEcef(const double & latitude, const double & longitude, const double & altitude);
+    /** @brief Convert earth centric frame to EAST-NORTH-UP frame (x-y-z directions */
+    Eigen::Vector3d ecefToEnu(const Eigen::Vector3d & ecef);
+    /** @brief Convert WGS84 lat/lon coordinates to carthesian coordinates with home position as origin */
+    void wgs84ToEnu(const double& lat, const double& lon, const double& alt, double* east, double* north, double* up);
+
+//    void wgs84ToNed(const double& lat, const double& lon, const double& alt, double* north, double* east, double* down);
 
 
 public slots:
@@ -194,6 +205,10 @@ protected:
     double homeLat;
     double homeLon;
     double homeAlt;
+    Eigen::Quaterniond ecef_ref_orientation_;
+    Eigen::Vector3d ecef_ref_point_;
+
+    void initReference(const double & latitude, const double & longitude, const double & altitude);
 
 signals:
     void UASCreated(UASInterface* UAS);
