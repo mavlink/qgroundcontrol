@@ -30,6 +30,22 @@
 
 #include "configuration.h"
 
+
+/* Windows fixes */
+#ifdef _MSC_VER
+#include <math.h>
+#define isnan(x) _isnan(x)
+#define isinf(x) (!_finite(x))
+#else
+#include <cmath>
+#ifndef isnan
+#define isnan(x) std::isnan(x)
+#endif
+#ifndef isinf
+#define isinf(x) std::isinf(x)
+#endif
+#endif
+
 namespace QGC
 {
 const static int defaultSystemId = 255;

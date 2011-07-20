@@ -174,8 +174,11 @@ public slots:
     /** @brief Shut down the onboard operating system down */
     bool shutdownActiveUAS();
 
-    /** @brief Set the current home position */
+    /** @brief Set the current home position on all UAVs*/
     bool setHomePosition(double lat, double lon, double alt);
+
+    /** @brief Update home position based on the position from one of the UAVs */
+    void uavChangedHomePosition(int uav, double lat, double lon, double alt);
 
     /** @brief Load settings */
     void loadSettings();
