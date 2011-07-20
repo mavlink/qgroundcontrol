@@ -67,32 +67,72 @@ void UASManager::loadSettings()
     QSettings settings;
     settings.sync();
     settings.beginGroup("QGC_UASMANAGER");
-    setHomePosition(settings.value("HOMELAT", homeLat).toDouble(),
+    bool changed =  setHomePosition(settings.value("HOMELAT", homeLat).toDouble(),
                     settings.value("HOMELON", homeLon).toDouble(),
                     settings.value("HOMEALT", homeAlt).toDouble());
+
+    // Make sure to fire the change - this will
+    // make sure widgets get the signal once
+    if (!changed)
+    {
+        emit homePositionChanged(homeLat, homeLon, homeAlt);
+    }
+
     settings.endGroup();
 }
 
 bool UASManager::setHomePosition(double lat, double lon, double alt)
 {
     // Checking for NaN and infitiny
-	// FIXME does not work with MSVC: && !std::isinf(lat) && !std::isinf(lon) && !std::isinf(alt)
-    if (lat == lat && lon == lon && alt == alt 
-        && lat <= 90.0 && lat >= -90.0 && lon <= 180.0 && lon >= -180.0) {
+    // and checking for borders
+    bool changed = false;
+    if (!isnan(lat) && !isnan(lon) && !isnan(alt)
+        && !isinf(lat) && !isinf(lon) && !isinf(alt)
+        && lat <= 90.0 && lat >= -90.0 && lon <= 180.0 && lon >= -180.0)
+        {
 
-        bool changed = false;
         if (homeLat != lat) changed = true;
         if (homeLon != lon) changed = true;
         if (homeAlt != alt) changed = true;
 
-        homeLat = lat;
-        homeLon = lon;
-        homeAlt = alt;
+        if (changed)
+        {
+            homeLat = lat;
+            homeLon = lon;
+            homeAlt = alt;
+            emit homePositionChanged(homeLat, homeLon, homeAlt);
 
-        if (changed) emit homePositionChanged(homeLat, homeLon, homeAlt);
-        return true;
-    } else {
-        return false;
+            // Update all UAVs
+            foreach (UASInterface* mav, systems)
+            {
+                mav->setHomePosition(homeLat, homeLon, homeAlt);
+            }
+        }
+    }
+    return changed;
+}
+
+/**
+ * This function will change QGC's home position on a number of conditions only
+ */
+void UASManager::uavChangedHomePosition(int uav, double lat, double lon, double alt)
+{
+    // FIXME: Accept any home position change for now from the active UAS
+    // this means that the currently select UAS can change the home location
+    // of the whole swarm. This makes sense, but more control might be needed
+    if (uav == activeUAS->getUASID())
+    {
+        if (setHomePosition(lat, lon, alt))
+        {
+            foreach (UASInterface* mav, systems)
+            {
+                // Only update the other systems, not the original source
+                if (mav->getUASID() != uav)
+                {
+                    mav->setHomePosition(homeLat, homeLon, homeAlt);
+                }
+            }
+        }
     }
 }
 
@@ -147,7 +187,10 @@ void UASManager::addUAS(UASInterface* uas)
     if (!systems.contains(uas)) {
         systems.append(uas);
         connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
-        connect(this, SIGNAL(homePositionChanged(double,double,double)), uas, SLOT(setHomePosition(double,double,double)));
+        // Set home position on UAV if set in UI
+        // - this is done on a per-UAV basis
+        // Set home position in UI if UAV chooses a new one (caution! if multiple UAVs are connected, take care!)
+        connect(uas, SIGNAL(homePositionChanged(int,double,double,double)), this, SLOT(uavChangedHomePosition(int,double,double,double)));
         emit UASCreated(uas);
     }
 
