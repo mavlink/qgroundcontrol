@@ -44,6 +44,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QtXml>
 #include <QTextStream>
 
+#include <stdint.h>
+
 #include "AirfoilServoCalibrator.h"
 #include "SwitchCalibrator.h"
 #include "CurveCalibrator.h"
