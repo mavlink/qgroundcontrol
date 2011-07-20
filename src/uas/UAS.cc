@@ -602,7 +602,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "longitude", "deg", pos.lon, time);
 
                 if (pos.fix_type > 0) {
-                    emit globalPositionChanged(this, pos.lat, pos.lon, pos.alt, time);
                     emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
                     latitude = pos.lat;
                     longitude = pos.lon;
@@ -676,7 +675,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_GPS_LOCAL_ORIGIN_SET: {
                 mavlink_gps_local_origin_set_t pos;
                 mavlink_msg_gps_local_origin_set_decode(&message, &pos);
-                // FIXME Emit to other components
+                emit homePositionChanged(uasId, pos.latitude, pos.longitude, pos.altitude);
             }
             break;
         case MAVLINK_MSG_ID_RAW_PRESSURE: {

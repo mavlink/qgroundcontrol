@@ -28,7 +28,7 @@
 #include "uavitem.h"
 namespace mapcontrol
 {
-    UAVItem::UAVItem(MapGraphicItem* map,OPMapWidget* parent,QString uavPic):map(map),mapwidget(parent),showtrail(true),showtrailline(true),trailtime(5),traildistance(50),autosetreached(true)
+    UAVItem::UAVItem(MapGraphicItem* map,OPMapWidget* parent,QString uavPic):map(map),mapwidget(parent),showtrail(true),showtrailline(true),trailtime(5),traildistance(20),autosetreached(true)
     ,autosetdistance(100)
     {
         //QDir dir(":/uavs/images/");
@@ -86,7 +86,7 @@ namespace mapcontrol
             }
             else if(trailtype==UAVTrailType::ByDistance)
             {
-                if(qAbs(internals::PureProjection::DistanceBetweenLatLng(lastcoord,position)*1000)>traildistance)
+                if(qAbs(internals::PureProjection::DistanceBetweenLatLng(lastcoord,position))>traildistance)
                 {
                     trail->addToGroup(new TrailItem(position,altitude,color,this));
                     if(!lasttrailline.IsEmpty())
