@@ -468,6 +468,10 @@ signals:
     /** @brief Core specifications have changed */
     void systemSpecsChanged(int uasId);
 
+
+    // HOME POSITION / ORIGIN CHANGES
+    void homePositionChanged(int uas, double lat, double lon, double alt);
+
 protected:
 
     // TIMEOUT CONSTANTS

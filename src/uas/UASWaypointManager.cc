@@ -469,6 +469,20 @@ const QVector<Waypoint *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointLi
     return wps;
 }
 
+const QVector<Waypoint *> UASWaypointManager::getNavTypeWaypointList()
+{
+    // TODO Keep this global frame list up to date
+    // with complete waypoint list
+    // instead of filtering on each request
+    QVector<Waypoint*> wps;
+    foreach (Waypoint* wp, waypoints) {
+        if (wp->isNavigationType()) {
+            wps.append(wp);
+        }
+    }
+    return wps;
+}
+
 int UASWaypointManager::getIndexOf(Waypoint* wp)
 {
     return waypoints.indexOf(wp);
@@ -508,6 +522,23 @@ int UASWaypointManager::getGlobalFrameAndNavTypeIndexOf(Waypoint* wp)
     return -1;
 }
 
+int UASWaypointManager::getNavTypeIndexOf(Waypoint* wp)
+{
+    // Search through all waypoints,
+    // counting only those in global frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints) {
+        if (p->isNavigationType()) {
+            if (p == wp) {
+                return i;
+            }
+            i++;
+        }
+    }
+
+    return -1;
+}
+
 int UASWaypointManager::getGlobalFrameCount()
 {
     // Search through all waypoints,
@@ -529,6 +560,20 @@ int UASWaypointManager::getGlobalFrameAndNavTypeCount()
     int i = 0;
     foreach (Waypoint* p, waypoints) {
         if (p->getFrame() == MAV_FRAME_GLOBAL && p->isNavigationType()) {
+            i++;
+        }
+    }
+
+    return i;
+}
+
+int UASWaypointManager::getNavTypeCount()
+{
+    // Search through all waypoints,
+    // counting only those in global frame
+    int i = 0;
+    foreach (Waypoint* p, waypoints) {
+        if (p->isNavigationType()) {
             i++;
         }
     }

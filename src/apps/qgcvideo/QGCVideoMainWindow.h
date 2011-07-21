@@ -35,6 +35,8 @@
 #include <QMainWindow>
 #include "UDPLink.h"
 
+
+
 namespace Ui {
     class QGCVideoMainWindow;
 }
@@ -47,7 +49,9 @@ public:
     explicit QGCVideoMainWindow(QWidget *parent = 0);
     ~QGCVideoMainWindow();
 
+
 public slots:
+
     void receiveBytes(LinkInterface* link, QByteArray data);
 
 protected:
