@@ -417,12 +417,10 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
     QMap<QString, QString> renaming;
 
     QStringList yCurves = yAxisFilter.split("|", QString::SkipEmptyParts);
-    qDebug() << "YFILTER" << yAxisFilter;
 
     // Figure out the correct renaming
     for (int i = 0; i < yCurves.count(); ++i)
     {
-        qDebug() << "CURVE:" << yCurves.at(i);
         if (yCurves.at(i).contains(":"))
         {
             QStringList parts = yCurves.at(i).split(":", QString::SkipEmptyParts);
