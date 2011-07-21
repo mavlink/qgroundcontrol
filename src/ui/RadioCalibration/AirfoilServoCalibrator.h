@@ -58,7 +58,7 @@ public:
     explicit AirfoilServoCalibrator(AirfoilType type = AILERON, QWidget *parent = 0);
 
     /** @param data must have exaclty 3 elemets.  they are assumed to be low center high */
-    void set(const QVector<float>& data);
+    void set(const QVector<uint16_t>& data);
 
 protected slots:
     void setHigh();

@@ -1,5 +1,5 @@
-DEPENDPATH += lib/nmea lib/nmea/include
-INCLUDEPATH += lib/nmea/include
+DEPENDPATH += src/libs/nmea src/libs/nmea/include
+INCLUDEPATH += src/libs/nmea/include
 
 # Input
 HEADERS += include/nmea/config.h \
