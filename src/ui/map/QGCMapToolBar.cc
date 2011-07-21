@@ -30,28 +30,28 @@ void QGCMapToolBar::setMap(QGCMapWidget* map)
         // Edit mode handling
         ui->editButton->hide();
 
-        const int uavTrailTimeList[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};                      // seconds
-        const int uavTrailTimeCount = 10;
+//        const int uavTrailTimeList[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};                      // seconds
+//        const int uavTrailTimeCount = 10;
 
-        const int uavTrailDistanceList[] = {1, 2, 5, 10, 20, 50, 100, 200, 500};             // meters
-        const int uavTrailDistanceCount = 9;
+//        const int uavTrailDistanceList[] = {1, 2, 5, 10, 20, 50, 100, 200, 500};             // meters
+//        const int uavTrailDistanceCount = 9;
 
-        optionsMenu.setParent(this);
+//        optionsMenu.setParent(this);
 
 
-        // Build up menu
-        //trailPlotMenu(tr("Add trail dot every.."), this);
-        for (int i = 0; i < uavTrailTimeCount; ++i)
-        {
-            trailPlotMenu.addAction(QString("%1 second%2").arg(uavTrailTimeList[i]).arg((uavTrailTimeList[i] > 1) ? "s" : ""), this, SLOT(setUAVTrailTime()));
-        }
-        for (int i = 0; i < uavTrailDistanceCount; ++i)
-        {
-            trailPlotMenu.addAction(QString("%1 meter%2").arg(uavTrailDistanceList[i]).arg((uavTrailDistanceList[i] > 1) ? "s" : ""), this, SLOT(setUAVTrailDistance()));
-        }
-        optionsMenu.addMenu(&trailPlotMenu);
+//        // Build up menu
+//        //trailPlotMenu(tr("Add trail dot every.."), this);
+//        for (int i = 0; i < uavTrailTimeCount; ++i)
+//        {
+//            trailPlotMenu.addAction(QString("%1 second%2").arg(uavTrailTimeList[i]).arg((uavTrailTimeList[i] > 1) ? "s" : ""), this, SLOT(setUAVTrailTime()));
+//        }
+//        for (int i = 0; i < uavTrailDistanceCount; ++i)
+//        {
+//            trailPlotMenu.addAction(QString("%1 meter%2").arg(uavTrailDistanceList[i]).arg((uavTrailDistanceList[i] > 1) ? "s" : ""), this, SLOT(setUAVTrailDistance()));
+//        }
+//        optionsMenu.addMenu(&trailPlotMenu);
 
-        ui->optionsButton->setMenu(&optionsMenu);
+//        ui->optionsButton->setMenu(&optionsMenu);
     }
 }
 
