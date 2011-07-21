@@ -86,7 +86,7 @@ namespace mapcontrol
             }
             else if(trailtype==UAVTrailType::ByDistance)
             {
-                if(qAbs(internals::PureProjection::DistanceBetweenLatLng(lastcoord,position))>traildistance)
+                if(qAbs(internals::PureProjection::DistanceBetweenLatLng(lastcoord,position)*1000)>traildistance)
                 {
                     trail->addToGroup(new TrailItem(position,altitude,color,this));
                     if(!lasttrailline.IsEmpty())
