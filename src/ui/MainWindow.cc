@@ -243,6 +243,7 @@ void MainWindow::resizeEvent(QResizeEvent * event)
         ui.statusBar->setVisible(false);
     } else {
         ui.statusBar->setVisible(true);
+        ui.statusBar->setSizeGripEnabled(true);
     }
 }
 

@@ -499,8 +499,25 @@ void LinechartWidget::stopLogging()
         compressor = new LogCompressor(logFile->fileName(), logFile->fileName());
         connect(compressor, SIGNAL(finishedFile(QString)), this, SIGNAL(logfileWritten(QString)));
         connect(compressor, SIGNAL(logProcessingStatusChanged(QString)), MainWindow::instance(), SLOT(showStatusMessage(QString)));
-        MainWindow::instance()->showInfoMessage("Logging ended", "QGroundControl is now compressing the logfile in a consistent CVS file. This may take a while, you can continue to use QGroundControl. Status updates appear at the bottom of the window.");
-        compressor->startCompression();
+
+        QMessageBox msgBox;
+        msgBox.setIcon(QMessageBox::Question);
+        msgBox.setText(tr("Starting Log Compression"));
+        msgBox.setInformativeText(tr("Should empty fields (e.g. due to packet drops) be filled with the previous value of the same variable (zero order hold)?"));
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+        int ret = msgBox.exec();
+        bool fill;
+        if (ret == QMessageBox::Yes)
+        {
+            fill = true;
+        }
+        else
+        {
+            fill = false;
+        }
+
+        compressor->startCompression(fill);
     }
     logButton->setText(tr("Start logging"));
     disconnect(logButton, SIGNAL(clicked()), this, SLOT(stopLogging()));

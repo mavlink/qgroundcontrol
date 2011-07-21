@@ -9,7 +9,8 @@ class LogCompressor : public QThread
 public:
     /** @brief Create the log compressor. It will only get active upon calling startCompression() */
     LogCompressor(QString logFileName, QString outFileName="", int uasid = 0);
-    void startCompression();
+    /** @brief Start the compression of a raw, line-based logfile into a CSV file */
+    void startCompression(bool holeFilling=false);
     bool isFinished();
     int getDataLines();
     int getCurrentLine();
