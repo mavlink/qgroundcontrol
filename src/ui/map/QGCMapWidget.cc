@@ -73,8 +73,8 @@ void QGCMapWidget::showEvent(QShowEvent* event)
     Home->SetSafeArea(safe_area_radius_list[0]);                         // set radius (meters)
     Home->SetShowSafeArea(true);                                         // show the safe area
 
-    UAV->SetTrailTime(uav_trail_time_list[0]);                           // seconds
-    UAV->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
+//    UAV->SetTrailTime(uav_trail_time_list[0]);                           // seconds
+//    UAV->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
 
     // UAV->SetTrailType(UAVTrailType::ByTimeElapsed);
     //  UAV->SetTrailType(UAVTrailType::ByDistance);
@@ -86,8 +86,8 @@ void QGCMapWidget::showEvent(QShowEvent* event)
 
     SetCurrentPosition(pos_lat_lon);         // set the map position
     Home->SetCoord(pos_lat_lon);             // set the HOME position
-    UAV->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
-    GPS->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
+//    UAV->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
+//    GPS->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
 
     setFrameStyle(QFrame::NoFrame);      // no border frame
     setBackgroundBrush(QBrush(Qt::black)); // tile background
@@ -245,6 +245,9 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
             newUAV->setParentItem(map);
             UAVS.insert(uas->getUASID(), newUAV);
             uav = GetUAV(uas->getUASID());
+//            uav->SetTrailTime(1);
+//            uav->SetTrailDistance(5);
+//            uav->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
         }
 
         // Set new lat/lon position of UAV icon

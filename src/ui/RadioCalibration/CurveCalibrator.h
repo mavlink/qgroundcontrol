@@ -58,14 +58,14 @@ public:
     explicit CurveCalibrator(QString title = QString(), QWidget *parent = 0);
     ~CurveCalibrator();
 
-    void set(const QVector<float> &data);
+    void set(const QVector<uint16_t> &data);
 
 protected slots:
     void setSetpoint(int setpoint);
 
 protected:
-    QVector<double> *setpoints;
-    QVector<double> *positions;
+    QVector<uint16_t> *setpoints;
+    QVector<uint16_t> *positions;
     /** Plot to display calibration curve */
     QwtPlot *plot;
     /** Curve object of calibration curve */
