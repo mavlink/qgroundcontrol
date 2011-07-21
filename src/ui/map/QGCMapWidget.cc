@@ -26,6 +26,9 @@ QGCMapWidget::~QGCMapWidget()
 
 void QGCMapWidget::showEvent(QShowEvent* event)
 {
+    // FIXME XXX this is a hack to trick OPs current 1-system design
+    SetShowUAV(false);
+
     // Pass on to parent widget
     OPMapWidget::showEvent(event);
 
@@ -57,30 +60,25 @@ void QGCMapWidget::showEvent(QShowEvent* event)
     //        magic_waypoint.time_seconds = 0;
     //        magic_waypoint.hold_time_seconds = 0;
 
-    const int safe_area_radius_list[] = {5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000};   // meters
-
-    const int uav_trail_time_list[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};                      // seconds
-
-    const int uav_trail_distance_list[] = {1, 2, 5, 10, 20, 50, 100, 200, 500};             // meters
-
     SetMouseWheelZoomType(internals::MouseWheelZoomType::MousePositionWithoutCenter);	    // set how the mouse wheel zoom functions
     SetFollowMouse(true);				    // we want a contiuous mouse position reading
 
     SetShowHome(true);					    // display the HOME position on the map
-    SetShowUAV(true);					    // display the UAV position on the map
+//    SetShowUAV(true);					    // display the UAV position on the map
     //SetShowDiagnostics(true); // Not needed in flight / production mode
 
-    Home->SetSafeArea(safe_area_radius_list[0]);                         // set radius (meters)
+
+    Home->SetSafeArea(30);                         // set radius (meters)
     Home->SetShowSafeArea(true);                                         // show the safe area
 
-//    UAV->SetTrailTime(uav_trail_time_list[0]);                           // seconds
-//    UAV->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
+////    UAV->SetTrailTime(uav_trail_time_list[0]);                           // seconds
+////    UAV->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
 
-    // UAV->SetTrailType(UAVTrailType::ByTimeElapsed);
-    //  UAV->SetTrailType(UAVTrailType::ByDistance);
+////     UAV->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
+////      UAV->SetTrailType(mapcontrol::UAVTrailType::ByDistance);
 
-    GPS->SetTrailTime(uav_trail_time_list[0]);                           // seconds
-    GPS->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
+//    GPS->SetTrailTime(uav_trail_time_list[0]);                           // seconds
+//    GPS->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
 
     // GPS->SetTrailType(UAVTrailType::ByTimeElapsed);
 
@@ -245,9 +243,9 @@ void QGCMapWidget::updateGlobalPosition(UASInterface* uas, double lat, double lo
             newUAV->setParentItem(map);
             UAVS.insert(uas->getUASID(), newUAV);
             uav = GetUAV(uas->getUASID());
-//            uav->SetTrailTime(1);
-//            uav->SetTrailDistance(5);
-//            uav->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
+            uav->SetTrailTime(1);
+            uav->SetTrailDistance(5);
+            uav->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
         }
 
         // Set new lat/lon position of UAV icon
@@ -276,6 +274,9 @@ void QGCMapWidget::updateGlobalPosition()
             MAV2DIcon* newUAV = new MAV2DIcon(map, this, system);
             AddUAV(system->getUASID(), newUAV);
             uav = newUAV;
+            uav->SetTrailTime(1);
+            uav->SetTrailDistance(5);
+            uav->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
         }
 
         // Set new lat/lon position of UAV icon

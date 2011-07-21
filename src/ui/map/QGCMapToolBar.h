@@ -2,6 +2,7 @@
 #define QGCMAPTOOLBAR_H
 
 #include <QWidget>
+#include <QMenu>
 
 class QGCMapWidget;
 
@@ -23,9 +24,13 @@ public slots:
     void tileLoadStart();
     void tileLoadEnd();
     void tileLoadProgress(int progress);
+    void setUAVTrailTime();
+    void setUAVTrailDistance();
 
 protected:
     QGCMapWidget* map;
+    QMenu optionsMenu;
+    QMenu trailPlotMenu;
 
 private:
     Ui::QGCMapToolBar *ui;
