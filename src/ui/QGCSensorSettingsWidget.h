@@ -46,9 +46,37 @@ public:
     QGCSensorSettingsWidget(UASInterface* uas, QWidget *parent = 0);
     ~QGCSensorSettingsWidget();
 
+public slots:
+    void delayedSendRawSensor(int rate);
+    void delayedSendController(int rate);
+    void delayedSendExtended(int rate);
+    void delayedSendRC(int rate);
+    void delayedSendPosition(int rate);
+    void delayedSendExtra1(int rate);
+    void delayedSendExtra2(int rate);
+    void delayedSendExtra3(int rate);
+
 protected:
     UASInterface* mav;
+    QTimer delayedSendRawSensorTimer;
+    QTimer delayedSendControllerTimer;
+    QTimer delayedSendExtendedTimer;
+    QTimer delayedSendRCTimer;
+    QTimer delayedSendPositionTimer;
+    QTimer delayedSendExtra1Timer;
+    QTimer delayedSendExtra2Timer;
+    QTimer delayedSendExtra3Timer;
     void changeEvent(QEvent *e);
+
+protected slots:
+    void sendRawSensor();
+    void sendController();
+    void sendExtended();
+    void sendRC();
+    void sendPosition();
+    void sendExtra1();
+    void sendExtra2();
+    void sendExtra3();
 
 private:
     Ui::QGCSensorSettingsWidget *ui;
