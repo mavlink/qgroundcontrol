@@ -1,5 +1,7 @@
 #include "QGCMapTool.h"
 #include "ui_QGCMapTool.h"
+#include <QAction>
+#include <QMenu>
 
 QGCMapTool::QGCMapTool(QWidget *parent) :
     QWidget(parent),

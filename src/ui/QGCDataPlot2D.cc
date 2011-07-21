@@ -405,14 +405,40 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     int curveNameIndex = 0;
 
-    //int xValueIndex = curveNames.indexOf(xAxisName);
-
     QString xAxisFilter;
     if (xAxisName == "") {
         xAxisFilter = curveNames.first();
     } else {
         xAxisFilter = xAxisName;
     }
+
+    // Fill y-axis renaming lookup table
+    // Allow the user to rename data dimensions in the plot
+    QMap<QString, QString> renaming;
+
+    QStringList yCurves = yAxisFilter.split("|", QString::SkipEmptyParts);
+
+    // Figure out the correct renaming
+    for (int i = 0; i < yCurves.count(); ++i)
+    {
+        if (yCurves.at(i).contains(":"))
+        {
+            QStringList parts = yCurves.at(i).split(":", QString::SkipEmptyParts);
+            if (parts.count() > 1)
+            {
+                // Insert renaming map
+                renaming.insert(parts.first(), parts.last());
+                // Replace curve value with first part only
+                yCurves.replace(i, parts.first());
+            }
+        }
+//        else
+//        {
+//            // Insert same value, not renaming anything
+//            renaming.insert(yCurves.at(i), yCurves.at(i));
+//        }
+    }
+
 
     foreach(curveName, curveNames) {
         // Add to plot x axis selection
@@ -421,14 +447,19 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
         ui->xRegressionComboBox->addItem(curveName);
         ui->yRegressionComboBox->addItem(curveName);
         if (curveName != xAxisFilter) {
-            if ((yAxisFilter == "") || yAxisFilter.contains(curveName)) {
+            if ((yAxisFilter == "") || yCurves.contains(curveName)) {
                 yValues.insert(curveName, new QVector<double>());
                 xValues.insert(curveName, new QVector<double>());
                 // Add separator starting with second item
                 if (curveNameIndex > 0 && curveNameIndex < curveNames.count()) {
                     ui->yAxis->setText(ui->yAxis->text()+"|");
                 }
-                ui->yAxis->setText(ui->yAxis->text()+curveName);
+                // If this curve was renamed, re-add the renaming to the text field
+                QString renamingText = "";
+                if (renaming.contains(curveName)) renamingText = QString(":%1").arg(renaming.value(curveName));
+                ui->yAxis->setText(ui->yAxis->text()+curveName+renamingText);
+                // Insert same value, not renaming anything
+                if (!renaming.contains(curveName)) renaming.insert(curveName, curveName);
                 curveNameIndex++;
             }
         }
@@ -478,7 +509,8 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
             foreach(curveName, curveNames)
             {
                 // Y  AXIS HANDLING
-                if(curveName != xAxisFilter && (yAxisFilter == "" || yAxisFilter.contains(curveName)))
+                // Only plot non-x curver and those selected in the yAxisFilter (or all if the filter is not set)
+                if(curveName != xAxisFilter && (yAxisFilter == "" || yCurves.contains(curveName)))
                 {
                     bool oky;
                     int curveNameIndex = curveNames.indexOf(curveName);
@@ -504,7 +536,14 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
     // Add data array of each curve to the plot at once (fast)
     // Iterates through all x-y curve combinations
     for (int i = 0; i < yValues.count(); i++) {
-        plot->appendData(yValues.keys().at(i), xValues.values().at(i)->data(), yValues.values().at(i)->data(), xValues.values().at(i)->count());
+        if (renaming.contains(yValues.keys().at(i)))
+        {
+            plot->appendData(renaming.value(yValues.keys().at(i)), xValues.values().at(i)->data(), yValues.values().at(i)->data(), xValues.values().at(i)->count());
+        }
+        else
+        {
+            plot->appendData(yValues.keys().at(i), xValues.values().at(i)->data(), yValues.values().at(i)->data(), xValues.values().at(i)->count());
+        }
     }
     plot->updateScale();
     plot->setStyleText(ui->style->currentText());

@@ -2,6 +2,7 @@
 #define QGCMAPTOOL_H
 
 #include <QWidget>
+#include <QMenu>
 
 namespace Ui {
     class QGCMapTool;

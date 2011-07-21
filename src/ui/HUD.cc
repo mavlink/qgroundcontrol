@@ -51,20 +51,6 @@ This file is part of the QGROUNDCONTROL project
 #define GL_MULTISAMPLE  0x809D
 #endif
 
-template<typename T>
-inline bool isnan(T value)
-{
-    return value != value;
-
-}
-
-// requires #include <limits>
-template<typename T>
-inline bool isinf(T value)
-{
-    return std::numeric_limits<T>::has_infinity && (value == std::numeric_limits<T>::infinity() || (-1*value) == std::numeric_limits<T>::infinity());
-}
-
 /**
  * @warning The HUD widget will not start painting its content automatically
  *          to update the view, start the auto-update by calling HUD::start().

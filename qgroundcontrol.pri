@@ -320,7 +320,13 @@ win32-msvc2008 {
 
     message(Building for Windows Visual Studio 2008 (32bit))
 
+    # QAxContainer support is needed for the Internet Control
+    # element showing the Google Earth window
     CONFIG += qaxcontainer
+
+    # The EIGEN library needs this define
+    # to make the internal min/max functions work
+    DEFINES += NOMINMAX
 
     # QWebkit is not needed on MS-Windows compilation environment
     CONFIG -= webkit
