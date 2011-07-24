@@ -10,7 +10,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
         mapcontrol::OPMapWidget(parent),
         currWPManager(NULL),
         firingWaypointChange(NULL),
-        maxUpdateInterval(2), // 2 seconds
+        maxUpdateInterval(2.1), // 2 seconds
         followUAVEnabled(false)
 {
     // Widget is inactive until shown
