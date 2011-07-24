@@ -26,6 +26,8 @@ public:
 
     /** @brief Map centered on current active system */
     bool getFollowUAVEnabled() { return followUAVEnabled; }
+    /** @brief The maximum map update rate */
+    float getUpdateRateLimit() { return maxUpdateInterval; };
 
 signals:
     void homePositionChanged(double latitude, double longitude, double altitude);
@@ -60,6 +62,24 @@ public slots:
     void cacheVisibleRegion();
     /** @brief Set follow mode */
     void setFollowUAVEnabled(bool enabled) { followUAVEnabled = enabled; }
+    /** @brief Set trail to time mode and set time */
+    void setTrailModeTimed(int seconds)
+    {
+        foreach(mapcontrol::UAVItem* uav, GetUAVS())
+        {
+            uav->SetTrailTime(seconds);
+            uav->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
+        }
+    }
+    /** @brief Set trail to distance mode and set time */
+    void setTrailModeDistance(int meters)
+    {
+        foreach(mapcontrol::UAVItem* uav, GetUAVS())
+        {
+            uav->SetTrailDistance(meters);
+            uav->SetTrailType(mapcontrol::UAVTrailType::ByDistance);
+        }
+    }
 
     void loadSettings();
     void storeSettings();
