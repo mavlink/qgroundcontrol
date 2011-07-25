@@ -405,6 +405,10 @@ win32-g++ {
     CONFIG += CONSOLE
     OUTPUT += CONSOLE
 
+    # The EIGEN library needs this define
+    # to make the internal min/max functions work
+    DEFINES += NOMINMAX
+
     INCLUDEPATH += $$BASEDIR/lib/sdl/include \
                    $$BASEDIR/lib/opal/include #\ #\
                    #"C:\Program Files\Microsoft SDKs\Windows\v7.0\Include"
