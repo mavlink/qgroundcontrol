@@ -51,6 +51,10 @@ void QGCMapToolBar::setMap(QGCMapWidget* map)
         updateTimesMenu.setTitle(tr("&Limit map view update rate to.."));
 
         // FIXME MARK CURRENT VALUES IN MENU
+        QAction* action = trailPlotMenu.addAction(tr("No trail"), this, SLOT(setUAVTrailTime()));
+        action->setData(-1);
+        action->setCheckable(true);
+        trailSettingsGroup->addAction(action);
 
         for (int i = 0; i < uavTrailTimeCount; ++i)
         {
@@ -58,6 +62,11 @@ void QGCMapToolBar::setMap(QGCMapWidget* map)
             action->setData(uavTrailTimeList[i]);
             action->setCheckable(true);
             trailSettingsGroup->addAction(action);
+            if (static_cast<mapcontrol::UAVTrailType::Types>(map->getTrailType()) == mapcontrol::UAVTrailType::ByTimeElapsed && map->getTrailInterval() == uavTrailTimeList[i])
+            {
+                // This is the current active time, set the action checked
+                action->setChecked(true);
+            }
         }
         for (int i = 0; i < uavTrailDistanceCount; ++i)
         {
@@ -65,7 +74,19 @@ void QGCMapToolBar::setMap(QGCMapWidget* map)
             action->setData(uavTrailDistanceList[i]);
             action->setCheckable(true);
             trailSettingsGroup->addAction(action);
+            if (static_cast<mapcontrol::UAVTrailType::Types>(map->getTrailType()) == mapcontrol::UAVTrailType::ByDistance && map->getTrailInterval() == uavTrailDistanceList[i])
+            {
+                // This is the current active time, set the action checked
+                action->setChecked(true);
+            }
         }
+
+        // Set no trail checked if no action is checked yet
+        if (!trailSettingsGroup->checkedAction())
+        {
+            action->setChecked(true);
+        }
+
         optionsMenu.addMenu(&trailPlotMenu);
 
         // Add update times menu
