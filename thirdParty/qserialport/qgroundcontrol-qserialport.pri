@@ -24,7 +24,7 @@ macx|linux-g++|linux-g++-64 {
 HEADERS += src/posix/termioshelper.h
 }
 
-win32-msvc2008|win32-g++ {
+win32-msvc2008|win32-msvc2010|win32-g++ {
 HEADERS += src/win32/commdcbhelper.h \
            src/win32/qwincommevtnotifier.h \
            src/win32/wincommevtbreaker.h \
@@ -41,7 +41,7 @@ SOURCES += src/posix/qserialportnative_posix.cpp \
            src/posix/termioshelper.cpp
 }
 
-win32-msvc2008|win32-g++ {
+win32-msvc2008|win32-msvc2010|win32-g++ {
 SOURCES += src/win32/commdcbhelper.cpp \
            src/win32/qserialportnative_win32.cpp \
            src/win32/qwincommevtnotifier.cpp \
