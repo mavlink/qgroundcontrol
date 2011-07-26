@@ -3,7 +3,7 @@
 AbstractCalibrator::AbstractCalibrator(QWidget *parent) :
     QWidget(parent),
     pulseWidth(new QLabel()),
-    log(new QVector<float>())
+    log(new QVector<uint16_t>())
 {
 }
 
@@ -12,17 +12,17 @@ AbstractCalibrator::~AbstractCalibrator()
     delete log;
 }
 
-float AbstractCalibrator::logAverage()
+uint16_t AbstractCalibrator::logAverage()
 {
-    float total = 0;
+    uint16_t total = 0;
     for (int i=0; i<log->size(); ++i)
         total += log->value(i);
-    return floor(total/log->size());
+    return total/log->size();
 }
 
-float AbstractCalibrator::logExtrema()
+uint16_t AbstractCalibrator::logExtrema()
 {
-    float extrema = logAverage();
+    uint16_t extrema = logAverage();
     if (logAverage() < 1500) {
         for (int i=0; i<log->size(); ++i) {
             if (log->value(i) < extrema)
@@ -40,9 +40,9 @@ float AbstractCalibrator::logExtrema()
     return extrema;
 }
 
-void AbstractCalibrator::channelChanged(float raw)
+void AbstractCalibrator::channelChanged(uint16_t raw)
 {
-    pulseWidth->setText(QString::number(static_cast<double>(raw)));
+    pulseWidth->setText(QString::number(raw));
     if (log->size() == 5)
         log->pop_front();
     log->push_back(raw);

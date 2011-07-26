@@ -2,8 +2,8 @@
 
 CurveCalibrator::CurveCalibrator(QString titleString, QWidget *parent) :
     AbstractCalibrator(parent),
-    setpoints(new QVector<double>(5)),
-    positions(new QVector<double>())
+    setpoints(new QVector<uint16_t>(5)),
+    positions(new QVector<uint16_t>())
 {
     QGridLayout *grid = new QGridLayout(this);
     QLabel *title = new QLabel(titleString);
@@ -32,7 +32,17 @@ CurveCalibrator::CurveCalibrator(QString titleString, QWidget *parent) :
 
     curve = new QwtPlotCurve();
     curve->setPen(QPen(QColor(QString("lime"))));
-    curve->setData(*positions, *setpoints);
+
+    QVector<double> pos(positions->size());
+    QVector<double> set(setpoints->size());
+
+    for (int i=0; i<positions->size()&&i<setpoints->size(); i++)
+    {
+        pos[i] = static_cast<double>((*positions)[i]);
+        set[i] = static_cast<double>((*setpoints)[i]);
+    }
+
+    curve->setData(pos, set);
     curve->attach(plot);
 
     plot->replot();
@@ -75,22 +85,40 @@ CurveCalibrator::~CurveCalibrator()
 void CurveCalibrator::setSetpoint(int setpoint)
 {
     if (setpoint == 0 || setpoint == 4) {
-        setpoints->replace(setpoint, static_cast<double>(logExtrema()));
+        setpoints->replace(setpoint,logExtrema());
     } else {
-        setpoints->replace(setpoint, static_cast<double>(logAverage()));
+        setpoints->replace(setpoint, logAverage());
     }
-    curve->setData(*positions, *setpoints);
+
+    QVector<double> pos(positions->size());
+    QVector<double> set(setpoints->size());
+
+    for (int i=0; i<positions->size()&&i<setpoints->size(); i++)
+    {
+        pos[i] = static_cast<double>((*positions)[i]);
+        set[i] = static_cast<double>((*setpoints)[i]);
+    }
+
+    curve->setData(pos, set);
     plot->replot();
 
-    emit setpointChanged(setpoint, static_cast<float>(setpoints->value(setpoint)));
+    emit setpointChanged(setpoint, setpoints->value(setpoint));
 }
 
-void CurveCalibrator::set(const QVector<float> &data)
+void CurveCalibrator::set(const QVector<uint16_t> &data)
 {
     if (data.size() == 5) {
         for (int i=0; i<data.size(); ++i)
-            setpoints->replace(i, static_cast<double>(data[i]));
-        curve->setData(*positions, *setpoints);
+            setpoints->replace(i, data[i]);
+        QVector<double> pos(positions->size());
+        QVector<double> set(setpoints->size());
+
+        for (int i=0; i<positions->size()&&i<setpoints->size(); i++)
+        {
+            pos[i] = static_cast<double>((*positions)[i]);
+            set[i] = static_cast<double>((*setpoints)[i]);
+        }
+        curve->setData(pos, set);
         plot->replot();
     } else {
         qDebug() << __FILE__ << __LINE__ << ": wrong data vector size";

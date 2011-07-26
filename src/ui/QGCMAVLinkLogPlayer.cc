@@ -128,7 +128,7 @@ bool QGCMAVLinkLogPlayer::reset(int packetIndex)
 
 void QGCMAVLinkLogPlayer::selectLogFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify MAVLink log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink or Binary Logfile (*.mavlink; *.bin);;"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify MAVLink log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink or Binary Logfile (*.mavlink *.bin)"));
 
     loadLogFile(fileName);
 }
