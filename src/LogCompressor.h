@@ -9,7 +9,8 @@ class LogCompressor : public QThread
 public:
     /** @brief Create the log compressor. It will only get active upon calling startCompression() */
     LogCompressor(QString logFileName, QString outFileName="", int uasid = 0);
-    void startCompression();
+    /** @brief Start the compression of a raw, line-based logfile into a CSV file */
+    void startCompression(bool holeFilling=false);
     bool isFinished();
     int getDataLines();
     int getCurrentLine();
@@ -22,6 +23,7 @@ protected:
     int currentDataLine;
     int dataLines;
     int uasid;
+    bool holeFillingEnabled;       ///< Enables the filling of holes in the dataset with the previous value (or NaN if none exists)
 
 signals:
     /** @brief This signal is emitted once a logfile has been finished writing

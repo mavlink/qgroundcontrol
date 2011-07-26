@@ -20,7 +20,7 @@ QGCUASParamManager::QGCUASParamManager(UASInterface* uas, QWidget *parent) :
  */
 void QGCUASParamManager::requestParameterListUpdate(int component)
 {
-
+	Q_UNUSED(component);
 }
 
 

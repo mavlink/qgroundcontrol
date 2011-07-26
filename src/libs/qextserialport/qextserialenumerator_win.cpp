@@ -9,6 +9,13 @@
 #include <initguid.h>
 //#include "qextserialport.h"
 #include <QRegExp>
+#ifdef Q_OS_WIN
+#ifndef _MSC_VER
+#include <windows.h>
+#include <dbt.h>
+#include <QtCore/qglobal.h>
+#endif
+#endif
 
 QextSerialEnumerator::QextSerialEnumerator( )
 {
