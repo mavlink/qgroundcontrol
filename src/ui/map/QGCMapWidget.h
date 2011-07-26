@@ -100,7 +100,7 @@ public slots:
     }
 
     /** @brief Load the settings for this widget from disk */
-    void loadSettings(bool changePosition=false);
+    void loadSettings(bool changePosition=true);
     /** @brief Store the settings for this widget to disk */
     void storeSettings();
 

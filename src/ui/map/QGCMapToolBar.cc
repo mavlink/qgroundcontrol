@@ -152,7 +152,7 @@ void QGCMapToolBar::setUAVTrailDistance()
         if (ok)
         {
             map->setTrailModeDistance(trailDistance);
-            ui->posLabel->setText(tr("Trail mode: Every %1 meter%2").arg(trailDistance).arg((trailDistance > 1) ? "s" : ""));
+            ui->posLabel->setText(tr("Trail mode: Every %1 meter%2").arg(trailDistance).arg((trailDistance == 1) ? "s" : ""));
         }
     }
 }
@@ -166,7 +166,11 @@ void QGCMapToolBar::setUpdateInterval()
     {
         bool ok;
         float time = action->data().toFloat(&ok);
-        if (ok) map->setUpdateRateLimit(time);
+        if (ok)
+        {
+            map->setUpdateRateLimit(time);
+            ui->posLabel->setText(tr("Map update rate limit: %1 second%2").arg(time).arg((time != 1.0f) ? "s" : ""));
+        }
     }
 }
 
