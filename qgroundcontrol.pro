@@ -24,7 +24,10 @@
 # include ( "../qmapcontrol/QMapControl/QMapControl.pri" ) #{
 # Include bundled version if necessary
 # include(lib/QMapControl/QMapControl.pri)
-include(lib/nmea/nmea.pri)
+include(src/libs/nmea/nmea.pri)
+
+# EIGEN matrix library (header-only)
+INCLUDEPATH += src/libs/eigen
 
 # This is a HACK - linking to openpilot repo for now
 # OPMapControl is a OpenPilot-independent map library
@@ -348,7 +351,8 @@ HEADERS += src/MG.h \
     src/ui/map/Waypoint2DIcon.h \
     src/ui/map/QGCMapTool.h \
     src/ui/map/QGCMapToolBar.h \
-    src/libs/qextserialport/qextserialenumerator.h
+    src/libs/qextserialport/qextserialenumerator.h \
+    src/QGCGeo.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h

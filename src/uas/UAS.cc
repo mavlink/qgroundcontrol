@@ -602,7 +602,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "longitude", "deg", pos.lon, time);
 
                 if (pos.fix_type > 0) {
-                    emit globalPositionChanged(this, pos.lat, pos.lon, pos.alt, time);
                     emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
                     latitude = pos.lat;
                     longitude = pos.lon;
@@ -676,7 +675,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_GPS_LOCAL_ORIGIN_SET: {
                 mavlink_gps_local_origin_set_t pos;
                 mavlink_msg_gps_local_origin_set_decode(&message, &pos);
-                // FIXME Emit to other components
+                emit homePositionChanged(uasId, pos.latitude, pos.longitude, pos.altitude);
             }
             break;
         case MAVLINK_MSG_ID_RAW_PRESSURE: {
@@ -958,12 +957,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_RADIO_CALIBRATION: {
                 mavlink_radio_calibration_t radioMsg;
                 mavlink_msg_radio_calibration_decode(&message, &radioMsg);
-                QVector<float> aileron;
-                QVector<float> elevator;
-                QVector<float> rudder;
-                QVector<float> gyro;
-                QVector<float> pitch;
-                QVector<float> throttle;
+                QVector<uint16_t> aileron;
+                QVector<uint16_t> elevator;
+                QVector<uint16_t> rudder;
+                QVector<uint16_t> gyro;
+                QVector<uint16_t> pitch;
+                QVector<uint16_t> throttle;
 
                 for (int i=0; i<MAVLINK_MSG_RADIO_CALIBRATION_FIELD_AILERON_LEN; ++i)
                     aileron << radioMsg.aileron[i];

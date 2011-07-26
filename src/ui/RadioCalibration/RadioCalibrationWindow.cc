@@ -43,12 +43,12 @@ RadioCalibrationWindow::RadioCalibrationWindow(QWidget *parent) :
     connect(transmit, SIGNAL(clicked()), this, SLOT(send()));
     connect(get, SIGNAL(clicked()), this, SLOT(request()));
 
-    connect(aileron, SIGNAL(setpointChanged(int,float)), radio, SLOT(setAileron(int,float)));
-    connect(elevator, SIGNAL(setpointChanged(int,float)), radio, SLOT(setElevator(int,float)));
-    connect(rudder, SIGNAL(setpointChanged(int,float)), radio, SLOT(setRudder(int,float)));
-    connect(gyro, SIGNAL(setpointChanged(int,float)), radio, SLOT(setGyro(int,float)));
-    connect(pitch, SIGNAL(setpointChanged(int,float)), radio, SLOT(setPitch(int,float)));
-    connect(throttle, SIGNAL(setpointChanged(int,float)), radio, SLOT(setThrottle(int,float)));
+    connect(aileron, SIGNAL(setpointChanged(int,uint16_t)), radio, SLOT(setAileron(int,uint16_t)));
+    connect(elevator, SIGNAL(setpointChanged(int,uint16_t)), radio, SLOT(setElevator(int,uint16_t)));
+    connect(rudder, SIGNAL(setpointChanged(int,uint16_t)), radio, SLOT(setRudder(int,uint16_t)));
+    connect(gyro, SIGNAL(setpointChanged(int,uint16_t)), radio, SLOT(setGyro(int,uint16_t)));
+    connect(pitch, SIGNAL(setpointChanged(int,uint16_t)), radio, SLOT(setPitch(int,uint16_t)));
+    connect(throttle, SIGNAL(setpointChanged(int,uint16_t)), radio, SLOT(setThrottle(int,uint16_t)));
     setUASId(0);
 }
 
