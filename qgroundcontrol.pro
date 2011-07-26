@@ -351,7 +351,7 @@ HEADERS += src/MG.h \
     src/libs/qextserialport/qextserialenumerator.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
-macx|win32-msvc2008::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
+macx|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including headers for OpenSceneGraph")
     
@@ -472,7 +472,7 @@ SOURCES += src/main.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/QGCMapTool.cc \
     src/ui/map/QGCMapToolBar.cc
-macx|win32-msvc2008::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
+macx|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
 contains(DEPENDENCIES_PRESENT, osg) { 
     message("Including sources for OpenSceneGraph")
     
