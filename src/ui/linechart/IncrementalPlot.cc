@@ -259,10 +259,10 @@ void IncrementalPlot::resetScaling()
 void IncrementalPlot::updateScale()
 {
     const double margin = 0.05;
-    double xMinRange = xmin-(xmin*margin);
-    double xMaxRange = xmax+(xmax*margin);
-    double yMinRange = ymin-(ymin*margin);
-    double yMaxRange = ymax+(ymax*margin);
+    double xMinRange = xmin-(qAbs(xmin*margin));
+    double xMaxRange = xmax+(qAbs(xmax*margin));
+    double yMinRange = ymin-(qAbs(ymin*margin));
+    double yMaxRange = ymax+(qAbs(ymax*margin));
     if (symmetric) {
         double xRange = xMaxRange - xMinRange;
         double yRange = yMaxRange - yMinRange;
