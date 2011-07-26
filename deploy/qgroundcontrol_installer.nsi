@@ -16,7 +16,7 @@ LicenseData ..\license.txt
 Section ""
 
   SetOutPath $INSTDIR
-  File ..\release\*.*
+  File /r ..\release\*.*
   WriteUninstaller $INSTDIR\QGroundControl_uninstall.exe
 SectionEnd 
 

@@ -325,7 +325,13 @@ win32-msvc2008|win32-msvc2010 {
     message(Building for Windows Visual Studio 2010 (32bit))
     }
 
+    # QAxContainer support is needed for the Internet Control
+    # element showing the Google Earth window
     CONFIG += qaxcontainer
+
+    # The EIGEN library needs this define
+    # to make the internal min/max functions work
+    DEFINES += NOMINMAX
 
     # QWebkit is not needed on MS-Windows compilation environment
     CONFIG -= webkit
@@ -411,6 +417,10 @@ win32-g++ {
     # Special settings for debug
     CONFIG += CONSOLE
     OUTPUT += CONSOLE
+
+    # The EIGEN library needs this define
+    # to make the internal min/max functions work
+    DEFINES += NOMINMAX
 
     INCLUDEPATH += $$BASEDIR/lib/sdl/include \
                    $$BASEDIR/lib/opal/include #\ #\
