@@ -224,7 +224,12 @@ signals:
     void activeUASStatusChanged(int systemId, bool active);
     /** @brief Current home position changed */
     void homePositionChanged(double lat, double lon, double alt);
-
+public:
+    /* Need to align struct pointer to prevent a memory assertion:
+     * See http://eigen.tuxfamily.org/dox-devel/TopicUnalignedArrayAssert.html
+     * for details
+     */
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 
 #endif // _UASMANAGER_H_
