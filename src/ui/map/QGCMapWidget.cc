@@ -17,7 +17,7 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     followUAVID(0)
 {
     // Widget is inactive until shown
-
+    loadSettings(false);
     // Set cache mode
 }
 
