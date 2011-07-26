@@ -1,24 +1,4 @@
-/*=====================================================================
-
-QGroundControl Open Source Ground Control Station
-
-(c) 2009, 2010 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
-
-This file is part of the QGROUNDCONTROL project
-
-    QGROUNDCONTROL is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    QGROUNDCONTROL is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with QGROUNDCONTROL. If not, see <http://www.gnu.org/licenses/>.
-
+/*==================================================================
 ======================================================================*/
 
 /**
@@ -67,32 +47,141 @@ void UASManager::loadSettings()
     QSettings settings;
     settings.sync();
     settings.beginGroup("QGC_UASMANAGER");
-    setHomePosition(settings.value("HOMELAT", homeLat).toDouble(),
-                    settings.value("HOMELON", homeLon).toDouble(),
-                    settings.value("HOMEALT", homeAlt).toDouble());
+    bool changed =  setHomePosition(settings.value("HOMELAT", homeLat).toDouble(),
+                                    settings.value("HOMELON", homeLon).toDouble(),
+                                    settings.value("HOMEALT", homeAlt).toDouble());
+
+    // Make sure to fire the change - this will
+    // make sure widgets get the signal once
+    if (!changed)
+    {
+        emit homePositionChanged(homeLat, homeLon, homeAlt);
+    }
+
     settings.endGroup();
 }
 
 bool UASManager::setHomePosition(double lat, double lon, double alt)
 {
     // Checking for NaN and infitiny
-	// FIXME does not work with MSVC: && !std::isinf(lat) && !std::isinf(lon) && !std::isinf(alt)
-    if (lat == lat && lon == lon && alt == alt 
-        && lat <= 90.0 && lat >= -90.0 && lon <= 180.0 && lon >= -180.0) {
+    // and checking for borders
+    bool changed = false;
+    if (!isnan(lat) && !isnan(lon) && !isnan(alt)
+        && !isinf(lat) && !isinf(lon) && !isinf(alt)
+        && lat <= 90.0 && lat >= -90.0 && lon <= 180.0 && lon >= -180.0)
+        {
 
-        bool changed = false;
         if (homeLat != lat) changed = true;
         if (homeLon != lon) changed = true;
         if (homeAlt != alt) changed = true;
 
-        homeLat = lat;
-        homeLon = lon;
-        homeAlt = alt;
+        // Initialize conversion reference in any case
+        initReference(lat, lon, alt);
 
-        if (changed) emit homePositionChanged(homeLat, homeLon, homeAlt);
-        return true;
-    } else {
-        return false;
+        if (changed)
+        {
+            homeLat = lat;
+            homeLon = lon;
+            homeAlt = alt;
+
+            emit homePositionChanged(homeLat, homeLon, homeAlt);
+
+            // Update all UAVs
+            foreach (UASInterface* mav, systems)
+            {
+                mav->setHomePosition(homeLat, homeLon, homeAlt);
+            }
+        }
+    }
+    return changed;
+}
+
+
+void UASManager::initReference(const double & latitude, const double & longitude, const double & altitude)
+{
+    Eigen::Matrix3d R;
+    double s_long, s_lat, c_long, c_lat;
+    sincos(latitude * DEG2RAD, &s_lat, &c_lat);
+    sincos(longitude * DEG2RAD, &s_long, &c_long);
+
+    R(0, 0) = -s_long;
+    R(0, 1) = c_long;
+    R(0, 2) = 0;
+
+    R(1, 0) = -s_lat * c_long;
+    R(1, 1) = -s_lat * s_long;
+    R(1, 2) = c_lat;
+
+    R(2, 0) = c_lat * c_long;
+    R(2, 1) = c_lat * s_long;
+    R(2, 2) = s_lat;
+
+    ecef_ref_orientation_ = Eigen::Quaterniond(R);
+
+    ecef_ref_point_ = wgs84ToEcef(latitude, longitude, altitude);
+}
+
+Eigen::Vector3d UASManager::wgs84ToEcef(const double & latitude, const double & longitude, const double & altitude)
+{
+    const double a = 6378137.0; // semi-major axis
+    const double e_sq = 6.69437999014e-3; // first eccentricity squared
+
+    double s_long, s_lat, c_long, c_lat;
+    sincos(latitude * DEG2RAD, &s_lat, &c_lat);
+    sincos(longitude * DEG2RAD, &s_long, &c_long);
+
+    const double N = a / sqrt(1 - e_sq * s_lat * s_lat);
+
+    Eigen::Vector3d ecef;
+
+    ecef[0] = (N + altitude) * c_lat * c_long;
+    ecef[1] = (N + altitude) * c_lat * s_long;
+    ecef[2] = (N * (1 - e_sq) + altitude) * s_lat;
+
+    return ecef;
+}
+
+Eigen::Vector3d UASManager::ecefToEnu(const Eigen::Vector3d & ecef)
+{
+    return ecef_ref_orientation_ * (ecef - ecef_ref_point_);
+}
+
+void UASManager::wgs84ToEnu(const double& lat, const double& lon, const double& alt, double* east, double* north, double* up)
+{
+    Eigen::Vector3d ecef = wgs84ToEcef(lat, lon, alt);
+    Eigen::Vector3d enu = ecefToEnu(ecef);
+    *east = enu.x();
+    *north = enu.y();
+    *up = enu.z();
+}
+
+//void UASManager::wgs84ToNed(const double& lat, const double& lon, const double& alt, double* north, double* east, double* down)
+//{
+
+//}
+
+
+/**
+ * This function will change QGC's home position on a number of conditions only
+ */
+void UASManager::uavChangedHomePosition(int uav, double lat, double lon, double alt)
+{
+    // FIXME: Accept any home position change for now from the active UAS
+    // this means that the currently select UAS can change the home location
+    // of the whole swarm. This makes sense, but more control might be needed
+    if (uav == activeUAS->getUASID())
+    {
+        if (setHomePosition(lat, lon, alt))
+        {
+            foreach (UASInterface* mav, systems)
+            {
+                // Only update the other systems, not the original source
+                if (mav->getUASID() != uav)
+                {
+                    mav->setHomePosition(homeLat, homeLon, homeAlt);
+                }
+            }
+        }
     }
 }
 
@@ -102,10 +191,10 @@ bool UASManager::setHomePosition(double lat, double lon, double alt)
  * This class implements the singleton design pattern and has therefore only a private constructor.
  **/
 UASManager::UASManager() :
-    activeUAS(NULL),
-    homeLat(47.3769),
-    homeLon(8.549444),
-    homeAlt(470.0)
+        activeUAS(NULL),
+        homeLat(47.3769),
+        homeLon(8.549444),
+        homeAlt(470.0)
 {
     start(QThread::LowPriority);
     loadSettings();
@@ -123,10 +212,10 @@ UASManager::~UASManager()
 
 void UASManager::run()
 {
-//    forever
-//    {
-//        QGC::SLEEP::msleep(5000);
-//    }
+    //    forever
+    //    {
+    //        QGC::SLEEP::msleep(5000);
+    //    }
     exec();
 }
 
@@ -147,7 +236,10 @@ void UASManager::addUAS(UASInterface* uas)
     if (!systems.contains(uas)) {
         systems.append(uas);
         connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
-        connect(this, SIGNAL(homePositionChanged(double,double,double)), uas, SLOT(setHomePosition(double,double,double)));
+        // Set home position on UAV if set in UI
+        // - this is done on a per-UAV basis
+        // Set home position in UI if UAV chooses a new one (caution! if multiple UAVs are connected, take care!)
+        connect(uas, SIGNAL(homePositionChanged(int,double,double,double)), this, SLOT(uavChangedHomePosition(int,double,double,double)));
         emit UASCreated(uas);
     }
 

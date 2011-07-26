@@ -37,22 +37,139 @@ QGCSensorSettingsWidget::QGCSensorSettingsWidget(UASInterface* uas, QWidget *par
     ui(new Ui::QGCSensorSettingsWidget)
 {
     ui->setupUi(this);
-    // FIXME James Goppert
-    // XXX: This might be a bad idea sending a message every time the value changes
-    connect(ui->spinBox_rawSensor, SIGNAL(valueChanged(int)), mav, SLOT(enableRawSensorDataTransmission(int)));
-    connect(ui->spinBox_controller, SIGNAL(valueChanged(int)), mav, SLOT(enableRawControllerDataTransmission(int)));
-    connect(ui->spinBox_extended, SIGNAL(valueChanged(int)), mav, SLOT(enableExtendedSystemStatusTransmission(int)));
-    connect(ui->spinBox_rc, SIGNAL(valueChanged(int)), mav, SLOT(enableRCChannelDataTransmission(int)));
-    connect(ui->spinBox_position, SIGNAL(valueChanged(int)), mav, SLOT(enablePositionTransmission(int)));
-    connect(ui->spinBox_extra1, SIGNAL(valueChanged(int)), mav, SLOT(enableExtra1Transmission(int)));
-    connect(ui->spinBox_extra2, SIGNAL(valueChanged(int)), mav, SLOT(enableExtra2Transmission(int)));
-    connect(ui->spinBox_extra3, SIGNAL(valueChanged(int)), mav, SLOT(enableExtra3Transmission(int)));
+    // Set up delay timers
+     delayedSendRawSensorTimer.setInterval(800);
+     delayedSendControllerTimer.setInterval(800);
+     delayedSendExtendedTimer.setInterval(800);
+     delayedSendRCTimer.setInterval(800);
+     delayedSendPositionTimer.setInterval(800);
+     delayedSendExtra1Timer.setInterval(800);
+     delayedSendExtra2Timer.setInterval(800);
+     delayedSendExtra3Timer.setInterval(800);
+
+     connect(&delayedSendRawSensorTimer, SIGNAL(timeout()), this, SLOT(sendRawSensor()));
+     connect(&delayedSendControllerTimer, SIGNAL(timeout()), this, SLOT(sendController()));
+     connect(&delayedSendExtendedTimer, SIGNAL(timeout()), this, SLOT(sendExtended()));
+     connect(&delayedSendRCTimer, SIGNAL(timeout()), this, SLOT(sendRC()));
+     connect(&delayedSendPositionTimer, SIGNAL(timeout()), this, SLOT(sendPosition()));
+     connect(&delayedSendExtra1Timer, SIGNAL(timeout()), this, SLOT(sendExtra1()));
+     connect(&delayedSendExtra2Timer, SIGNAL(timeout()), this, SLOT(sendExtra2()));
+    connect(&delayedSendExtra3Timer, SIGNAL(timeout()), this, SLOT(sendExtra3()));
+
+    // Connect UI
+    connect(ui->spinBox_rawSensor, SIGNAL(valueChanged(int)), this, SLOT(delayedSendRawSensor(int)));//mav, SLOT(enableRawSensorDataTransmission(int)));
+    connect(ui->spinBox_controller, SIGNAL(valueChanged(int)), this, SLOT(delayedSendController(int)));
+    connect(ui->spinBox_extended, SIGNAL(valueChanged(int)), this, SLOT(delayedSendExtended(int)));
+    connect(ui->spinBox_rc, SIGNAL(valueChanged(int)), this, SLOT(delayedSendRC(int)));
+    connect(ui->spinBox_position, SIGNAL(valueChanged(int)), this, SLOT(delayedSendPosition(int)));
+    connect(ui->spinBox_extra1, SIGNAL(valueChanged(int)), this, SLOT(delayedSendExtra1(int)));
+    connect(ui->spinBox_extra2, SIGNAL(valueChanged(int)), this, SLOT(delayedSendExtra2(int)));
+    connect(ui->spinBox_extra3, SIGNAL(valueChanged(int)), this, SLOT(delayedSendExtra3(int)));
 
     // Calibration
     connect(ui->rcCalButton, SIGNAL(clicked()), mav, SLOT(startRadioControlCalibration()));
     connect(ui->magCalButton, SIGNAL(clicked()), mav, SLOT(startMagnetometerCalibration()));
     connect(ui->pressureCalButton, SIGNAL(clicked()), mav, SLOT(startPressureCalibration()));
     connect(ui->gyroCalButton, SIGNAL(clicked()), mav, SLOT(startGyroscopeCalibration()));
+
+    // Hide the calibration stuff - done in custom widgets anyway
+    ui->groupBox_3->hide();
+}
+
+void QGCSensorSettingsWidget::delayedSendRawSensor(int rate)
+{
+    Q_UNUSED(rate);
+    delayedSendRawSensorTimer.start();
+}
+
+void QGCSensorSettingsWidget::delayedSendController(int rate)
+{
+    Q_UNUSED(rate);
+    delayedSendControllerTimer.start();
+}
+
+void QGCSensorSettingsWidget::delayedSendExtended(int rate)
+{
+    Q_UNUSED(rate);
+    delayedSendExtendedTimer.start();
+}
+
+void QGCSensorSettingsWidget::delayedSendRC(int rate)
+{
+    Q_UNUSED(rate);
+    delayedSendRCTimer.start();
+}
+
+void QGCSensorSettingsWidget::delayedSendPosition(int rate)
+{
+    Q_UNUSED(rate);
+    delayedSendPositionTimer.start();
+}
+
+void QGCSensorSettingsWidget::delayedSendExtra1(int rate)
+{
+    Q_UNUSED(rate);
+    delayedSendExtra1Timer.start();
+}
+
+void QGCSensorSettingsWidget::delayedSendExtra2(int rate)
+{
+    Q_UNUSED(rate);
+    delayedSendExtra2Timer.start();
+}
+
+void QGCSensorSettingsWidget::delayedSendExtra3(int rate)
+{
+    Q_UNUSED(rate);
+    delayedSendExtra3Timer.start();
+}
+
+void QGCSensorSettingsWidget::sendRawSensor()
+{
+    delayedSendRawSensorTimer.stop();
+    mav->enableRawSensorDataTransmission(ui->spinBox_rawSensor->value());
+}
+
+void QGCSensorSettingsWidget::sendController()
+{
+    delayedSendControllerTimer.stop();
+    mav->enableRawControllerDataTransmission(ui->spinBox_controller->value());
+}
+
+void QGCSensorSettingsWidget::sendExtended()
+{
+    delayedSendExtendedTimer.stop();
+    mav->enableExtendedSystemStatusTransmission(ui->spinBox_extended->value());
+}
+
+void QGCSensorSettingsWidget::sendRC()
+{
+    delayedSendRCTimer.stop();
+    mav->enableRCChannelDataTransmission(ui->spinBox_rc->value());
+}
+
+void QGCSensorSettingsWidget::sendPosition()
+{
+    delayedSendPositionTimer.stop();
+    mav->enablePositionTransmission(ui->spinBox_position->value());
+}
+
+void QGCSensorSettingsWidget::sendExtra1()
+{
+    delayedSendExtra1Timer.stop();
+    mav->enableExtra1Transmission(ui->spinBox_extra1->value());
+}
+
+void QGCSensorSettingsWidget::sendExtra2()
+{
+    delayedSendExtra2Timer.stop();
+    mav->enableExtra2Transmission(ui->spinBox_extra2->value());
+}
+
+void QGCSensorSettingsWidget::sendExtra3()
+{
+    delayedSendExtra3Timer.stop();
+    mav->enableExtra3Transmission(ui->spinBox_extra3->value());
 }
 
 QGCSensorSettingsWidget::~QGCSensorSettingsWidget()

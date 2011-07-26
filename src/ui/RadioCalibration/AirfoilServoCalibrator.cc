@@ -78,23 +78,23 @@ AirfoilServoCalibrator::AirfoilServoCalibrator(AirfoilType type, QWidget *parent
 
 void AirfoilServoCalibrator::setHigh()
 {
-    highPulseWidth->setText(QString::number(static_cast<double>(logExtrema())));
+    highPulseWidth->setText(QString::number(logExtrema()));
     emit setpointChanged(2, logExtrema());
 }
 
 void AirfoilServoCalibrator::setCenter()
 {
-    centerPulseWidth->setText(QString::number(static_cast<double>(logAverage())));
+    centerPulseWidth->setText(QString::number(logAverage()));
     emit setpointChanged(1, logAverage());
 }
 
 void AirfoilServoCalibrator::setLow()
 {
-    lowPulseWidth->setText(QString::number(static_cast<double>(logExtrema())));
+    lowPulseWidth->setText(QString::number(logExtrema()));
     emit setpointChanged(0, logExtrema());
 }
 
-void AirfoilServoCalibrator::set(const QVector<float> &data)
+void AirfoilServoCalibrator::set(const QVector<uint16_t> &data)
 {
     if (data.size() == 3) {
         lowPulseWidth->setText(QString::number(data[0]));

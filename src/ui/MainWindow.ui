@@ -111,6 +111,7 @@
      <string>Widgets</string>
     </property>
     <addaction name="actionNewCustomWidget"/>
+    <addaction name="actionLoadCustomWidgetFile"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -454,6 +455,15 @@
    </property>
    <property name="shortcut">
     <string>Esc</string>
+   </property>
+  </action>
+  <action name="actionLoadCustomWidgetFile">
+   <property name="icon">
+    <iconset resource="../../mavground.qrc">
+     <normaloff>:/images/status/folder-drag-accept.svg</normaloff>:/images/status/folder-drag-accept.svg</iconset>
+   </property>
+   <property name="text">
+    <string>Load Custom Widget File</string>
    </property>
   </action>
  </widget>
