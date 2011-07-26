@@ -2,23 +2,23 @@
 
 RadioCalibrationData::RadioCalibrationData()
 {
-    data = new QVector<QVector<float> >(6);
-    (*data).insert(AILERON, QVector<float>(3));
-    (*data).insert(ELEVATOR, QVector<float>(3));
-    (*data).insert(RUDDER, QVector<float>(3));
-    (*data).insert(GYRO, QVector<float>(2));
-    (*data).insert(PITCH, QVector<float>(5));
-    (*data).insert(THROTTLE, QVector<float>(5));
+    data = new QVector<QVector<uint16_t> >(6);
+    (*data).insert(AILERON, QVector<uint16_t>(3));
+    (*data).insert(ELEVATOR, QVector<uint16_t>(3));
+    (*data).insert(RUDDER, QVector<uint16_t>(3));
+    (*data).insert(GYRO, QVector<uint16_t>(2));
+    (*data).insert(PITCH, QVector<uint16_t>(5));
+    (*data).insert(THROTTLE, QVector<uint16_t>(5));
 }
 
-RadioCalibrationData::RadioCalibrationData(const QVector<float> &aileron,
-        const QVector<float> &elevator,
-        const QVector<float> &rudder,
-        const QVector<float> &gyro,
-        const QVector<float> &pitch,
-        const QVector<float> &throttle)
+RadioCalibrationData::RadioCalibrationData(const QVector<uint16_t> &aileron,
+        const QVector<uint16_t> &elevator,
+        const QVector<uint16_t> &rudder,
+        const QVector<uint16_t> &gyro,
+        const QVector<uint16_t> &pitch,
+        const QVector<uint16_t> &throttle)
 {
-    data = new QVector<QVector<float> >();
+    data = new QVector<QVector<uint16_t> >();
     (*data) << aileron
             << elevator
             << rudder
@@ -30,7 +30,7 @@ RadioCalibrationData::RadioCalibrationData(const QVector<float> &aileron,
 RadioCalibrationData::RadioCalibrationData(const RadioCalibrationData &other)
     :QObject()
 {
-    data = new QVector<QVector<float> >(*other.data);
+    data = new QVector<QVector<uint16_t> >(*other.data);
 }
 
 RadioCalibrationData::~RadioCalibrationData()
@@ -38,7 +38,7 @@ RadioCalibrationData::~RadioCalibrationData()
     delete data;
 }
 
-const float* RadioCalibrationData::operator [](int i) const
+const uint16_t* RadioCalibrationData::operator [](int i) const
 {
     if (i < data->size()) {
         return (*data)[i].constData();
@@ -47,7 +47,7 @@ const float* RadioCalibrationData::operator [](int i) const
     return NULL;
 }
 
-const QVector<float>& RadioCalibrationData::operator ()(const int i) const throw(std::out_of_range)
+const QVector<uint16_t>& RadioCalibrationData::operator ()(const int i) const throw(std::out_of_range)
 {
     if ((i < data->size()) && (i >=0)) {
         return (*data)[i];

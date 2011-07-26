@@ -36,6 +36,10 @@ namespace mapcontrol
         this->setPos(localposition.X(),localposition.Y());
         this->setZValue(4);
         coord=internals::PointLatLng(50,50);
+
+//        this->setFlag(QGraphicsItem::ItemIsMovable,true);
+//        this->setFlag(QGraphicsItem::ItemIgnoresTransformations,true);
+//        this->setFlag(QGraphicsItem::ItemIsSelectable,true);
     }
 
     void HomeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -76,5 +80,20 @@ namespace mapcontrol
             localsafearea=safearea/map->Projection()->GetGroundResolution(map->ZoomTotal(),coord.Lat());
 
     }
+
+//    void HomeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+//    {
+//        if(event->button()==Qt::LeftButton)
+//        {
+//            coord=map->FromLocalToLatLng(this->pos().x(),this->pos().y());
+//            QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
+//            qDebug() << "WP MOVE:" << coord_str << __FILE__ << __LINE__;
+//            isDragging=false;
+//            RefreshToolTip();
+
+//            emit WPValuesChanged(this);
+//        }
+//        QGraphicsItem::mouseReleaseEvent(event);
+//    }
 
 }

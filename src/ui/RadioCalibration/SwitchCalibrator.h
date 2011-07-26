@@ -49,7 +49,7 @@ class SwitchCalibrator : public AbstractCalibrator
 public:
     explicit SwitchCalibrator(QString title=QString(), QWidget *parent = 0);
 
-    void set(const QVector<float> &data);
+    void set(const QVector<uint16_t> &data);
 
 protected slots:
     void setDefault();

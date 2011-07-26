@@ -375,10 +375,25 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
     // Clear plot
     plot->removeData();
 
-    QVector<double> xValues;
+    QMap<QString, QVector<double>* > xValues;
     QMap<QString, QVector<double>* > yValues;
 
     curveNames.append(header.split(separator, QString::SkipEmptyParts));
+
+    // Eliminate any non-string curve names
+    for (int i = 0; i < curveNames.count(); ++i)
+    {
+        if (curveNames.at(i).length() == 0 ||
+            curveNames.at(i) == " " ||
+            curveNames.at(i) == "\n" ||
+            curveNames.at(i) == "\t" ||
+            curveNames.at(i) == "\r")
+        {
+            // Remove bogus curve name
+            curveNames.removeAt(i);
+        }
+    }
+
     QString curveName;
 
     // Clear UI elements
@@ -390,14 +405,40 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     int curveNameIndex = 0;
 
-    //int xValueIndex = curveNames.indexOf(xAxisName);
-
     QString xAxisFilter;
     if (xAxisName == "") {
         xAxisFilter = curveNames.first();
     } else {
         xAxisFilter = xAxisName;
     }
+
+    // Fill y-axis renaming lookup table
+    // Allow the user to rename data dimensions in the plot
+    QMap<QString, QString> renaming;
+
+    QStringList yCurves = yAxisFilter.split("|", QString::SkipEmptyParts);
+
+    // Figure out the correct renaming
+    for (int i = 0; i < yCurves.count(); ++i)
+    {
+        if (yCurves.at(i).contains(":"))
+        {
+            QStringList parts = yCurves.at(i).split(":", QString::SkipEmptyParts);
+            if (parts.count() > 1)
+            {
+                // Insert renaming map
+                renaming.insert(parts.first(), parts.last());
+                // Replace curve value with first part only
+                yCurves.replace(i, parts.first());
+            }
+        }
+//        else
+//        {
+//            // Insert same value, not renaming anything
+//            renaming.insert(yCurves.at(i), yCurves.at(i));
+//        }
+    }
+
 
     foreach(curveName, curveNames) {
         // Add to plot x axis selection
@@ -406,13 +447,19 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
         ui->xRegressionComboBox->addItem(curveName);
         ui->yRegressionComboBox->addItem(curveName);
         if (curveName != xAxisFilter) {
-            if ((yAxisFilter == "") || yAxisFilter.contains(curveName)) {
+            if ((yAxisFilter == "") || yCurves.contains(curveName)) {
                 yValues.insert(curveName, new QVector<double>());
+                xValues.insert(curveName, new QVector<double>());
                 // Add separator starting with second item
                 if (curveNameIndex > 0 && curveNameIndex < curveNames.count()) {
                     ui->yAxis->setText(ui->yAxis->text()+"|");
                 }
-                ui->yAxis->setText(ui->yAxis->text()+curveName);
+                // If this curve was renamed, re-add the renaming to the text field
+                QString renamingText = "";
+                if (renaming.contains(curveName)) renamingText = QString(":%1").arg(renaming.value(curveName));
+                ui->yAxis->setText(ui->yAxis->text()+curveName+renamingText);
+                // Insert same value, not renaming anything
+                if (!renaming.contains(curveName)) renaming.insert(curveName, curveName);
                 curveNameIndex++;
             }
         }
@@ -425,29 +472,59 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
 
     double x,y;
 
-    while (!in.atEnd()) {
+    while (!in.atEnd())
+    {
         QString line = in.readLine();
 
-        QStringList values = line.split(separator, QString::SkipEmptyParts);
+        // Keep empty parts here - we still have to act on them
+        QStringList values = line.split(separator, QString::KeepEmptyParts);
 
-        foreach(curveName, curveNames) {
-            bool okx;
-            if (curveName == xAxisFilter) {
+        bool headerfound = false;
+
+        // First get header - ORDER MATTERS HERE!
+        foreach(curveName, curveNames)
+        {
+            if (curveName == xAxisFilter)
+            {
                 // X  AXIS HANDLING
 
                 // Take this value as x if it is selected
-                x = values.at(curveNames.indexOf(curveName)).toDouble(&okx);
-                xValues.append(x);// - 1270125570000ULL);
-            } else {
-                // Y  AXIS HANDLING
+                QString text = values.at(curveNames.indexOf(curveName));
+                text = text.trimmed();
+                if (text.length() > 0 && text != " " && text != "\n" && text != "\r" && text != "\t")
+                {
+                    bool okx = true;
+                    x = text.toDouble(&okx);
+                    if (okx && !isnan(x) && !isinf(x))
+                    {
+                        headerfound = true;
+                    }
+                }
+            }
+        }
 
-                if(yAxisFilter == "" || yAxisFilter.contains(curveName)) {
-                    // Only append y values where a valid x value is present
-                    if (yValues.value(curveName)->count() == xValues.count() - 1) {
-                        bool oky;
-                        int curveNameIndex = curveNames.indexOf(curveName);
-                        if (values.count() > curveNameIndex) {
-                            y = values.at(curveNameIndex).toDouble(&oky);
+        if (headerfound)
+        {
+            // Search again from start for values - ORDER MATTERS HERE!
+            foreach(curveName, curveNames)
+            {
+                // Y  AXIS HANDLING
+                // Only plot non-x curver and those selected in the yAxisFilter (or all if the filter is not set)
+                if(curveName != xAxisFilter && (yAxisFilter == "" || yCurves.contains(curveName)))
+                {
+                    bool oky;
+                    int curveNameIndex = curveNames.indexOf(curveName);
+                    if (values.count() > curveNameIndex)
+                    {
+                        QString text(values.at(curveNameIndex));
+                        text = text.trimmed();
+                        y = text.toDouble(&oky);
+                        // Only INF is really an issue for the plot
+                        // NaN is fine
+                        if (oky && !isnan(y) && !isinf(y) && text.length() > 0 && text != " " && text != "\n" && text != "\r" && text != "\t")
+                        {
+                            // Only append definitely valid values
+                            xValues.value(curveName)->append(x);
                             yValues.value(curveName)->append(y);
                         }
                     }
@@ -459,8 +536,16 @@ void QGCDataPlot2D::loadCsvLog(QString file, QString xAxisName, QString yAxisFil
     // Add data array of each curve to the plot at once (fast)
     // Iterates through all x-y curve combinations
     for (int i = 0; i < yValues.count(); i++) {
-        plot->appendData(yValues.keys().at(i), xValues.data(), yValues.values().at(i)->data(), xValues.count());
+        if (renaming.contains(yValues.keys().at(i)))
+        {
+            plot->appendData(renaming.value(yValues.keys().at(i)), xValues.values().at(i)->data(), yValues.values().at(i)->data(), xValues.values().at(i)->count());
+        }
+        else
+        {
+            plot->appendData(yValues.keys().at(i), xValues.values().at(i)->data(), yValues.values().at(i)->data(), xValues.values().at(i)->count());
+        }
     }
+    plot->updateScale();
     plot->setStyleText(ui->style->currentText());
 }
 
