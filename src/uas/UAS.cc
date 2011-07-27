@@ -242,6 +242,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     emit statusChanged(this, uasState, stateDescription);
                     emit statusChanged(this->status);
 
+                    shortStateText = uasState;
+
                     stateAudio = " changed status to " + uasState;
                 }
 
@@ -310,6 +312,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                         mode = "UNINIT MODE";
                         break;
                     }
+
+                    shortModeText = mode;
 
                     emit modeChanged(this->getUASID(), mode, "");
 
@@ -2104,6 +2108,16 @@ QString UAS::getUASName(void) const
         result = name;
     }
     return result;
+}
+
+const QString& UAS::getShortState() const
+{
+    return shortStateText;
+}
+
+const QString& UAS::getShortMode() const
+{
+    return shortModeText;
 }
 
 void UAS::addLink(LinkInterface* link)

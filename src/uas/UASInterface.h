@@ -60,6 +60,10 @@ public:
 
     /** @brief The name of the robot **/
     virtual QString getUASName() const = 0;
+    /** @brief Get short state */
+    virtual const QString& getShortState() const = 0;
+    /** @brief Get short mode */
+    virtual const QString& getShortMode() const = 0;
     //virtual QColor getColor() = 0;
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
