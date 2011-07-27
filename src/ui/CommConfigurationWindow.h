@@ -44,6 +44,9 @@ enum qgc_link_t {
     QGC_LINK_UDP,
     QGC_LINK_SIMULATION,
     QGC_LINK_FORWARDING,
+#ifdef XBEELINK
+	QGC_LINK_XBEE,
+#endif
     QGC_LINK_OPAL
 };
 
