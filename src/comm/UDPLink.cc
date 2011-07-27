@@ -85,9 +85,9 @@ void UDPLink::setPort(int port)
  */
 void UDPLink::addHost(const QString& host)
 {
-    qDebug() << "UDP:" << "ADDING HOST:" << host;
+    //qDebug() << "UDP:" << "ADDING HOST:" << host;
     if (host.contains(":")) {
-        qDebug() << "HOST: " << host.split(":").first();
+        //qDebug() << "HOST: " << host.split(":").first();
         QHostInfo info = QHostInfo::fromName(host.split(":").first());
         if (info.error() == QHostInfo::NoError)
         {
@@ -103,7 +103,7 @@ void UDPLink::addHost(const QString& host)
                 }
             }
             hosts.append(address);
-            qDebug() << "Address:" << address.toString();
+            //qDebug() << "Address:" << address.toString();
             // Set port according to user input
             ports.append(host.split(":").last().toInt());
         }

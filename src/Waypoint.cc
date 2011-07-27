@@ -221,8 +221,8 @@ void Waypoint::setAcceptanceRadius(double radius)
 
 void Waypoint::setParam1(double param1)
 {
-    qDebug() << "SENDER:" << QObject::sender();
-    qDebug() << "PARAM1 SET REQ:" << param1;
+    //qDebug() << "SENDER:" << QObject::sender();
+    //qDebug() << "PARAM1 SET REQ:" << param1;
     if (this->param1 != param1) {
         this->param1 = param1;
         emit changed(this);
