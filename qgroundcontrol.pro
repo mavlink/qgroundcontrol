@@ -533,3 +533,20 @@ win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin)
 }
 TRANSLATIONS += es-MX.ts \
     en-US.ts
+
+# xbee support
+# libxbee only supported by linux and windows systems
+win32-msvc2008|win32-msvc2010|linux{
+    HEADERS += src/comm/XbeeLinkInterface.h \
+	src/comm/XbeeLink.h \
+	src/ui/XbeeConfigurationWindow.h \
+	src/comm/CallConv.h
+    SOURCES += src/comm/XbeeLink.cpp \
+	src/ui/XbeeConfigurationWindow.cpp
+    DEFINES += XBEELINK
+    INCLUDEPATH += thirdParty/libxbee
+# TO DO: build library when it does not exists already
+    LIBS += -LthirdParty/libxbee/lib \
+	-llibxbee
+
+}
