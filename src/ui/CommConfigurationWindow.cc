@@ -53,6 +53,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkSettingsWidget.h"
 #include "QGCUDPLinkConfiguration.h"
 #include "LinkManager.h"
+#include "MainWindow.h"
 
 CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolInterface* protocol, QWidget *parent, Qt::WindowFlags flags) : QWidget(parent, flags)
 {
@@ -96,9 +97,6 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 
     connect(this->link, SIGNAL(connected(bool)), this, SLOT(connectionState(bool)));
 
-#ifdef XBEELINK
-	connect(ui.linkType,SIGNAL(currentIndexChanged(int)),this,SLOT(setLinkType(int)));
-#endif // XBEELINK
 
     // Fill in the current data
     if(this->link->isConnected()) ui.connectButton->setChecked(true);
@@ -160,7 +158,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 		QWidget* conf = new XbeeConfigurationWindow(xbee,this); 
 		ui.linkScrollArea->setWidget(conf);
 		ui.linkGroupBox->setTitle(tr("Xbee Link"));
-		//ui.linkType->setCurrentIndex(4);
+		ui.linkType->setCurrentIndex(4);
 	}
 #endif // XBEELINK
     if (serial == 0 && udp == 0 && sim == 0
@@ -174,6 +172,9 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         qDebug() << "Link is NOT a known link, can't open configuration window";
     }
 
+#ifdef XBEELINK
+	connect(ui.linkType,SIGNAL(currentIndexChanged(int)),this,SLOT(setLinkType(int)));
+#endif // XBEELINK
 
     // Open details pane for MAVLink if necessary
     MAVLinkProtocol* mavlink = dynamic_cast<MAVLinkProtocol*>(protocol);
@@ -209,35 +210,28 @@ QAction* CommConfigurationWindow::getAction()
 void CommConfigurationWindow::setLinkType(int linktype)
 {
 #ifdef XBEELINK
-    // Adjust the form layout per link type
-	if(ui.linkScrollArea->widget())  
-	{
-		delete ui.linkScrollArea->widget();
-	}
+	// close old configuration window
+	this->window()->close();
+
 	switch(linktype)
 	{
 		case 4:
 			{
 				XbeeLink *xbee = new XbeeLink();
-				link = xbee;
-				LinkManager::instance()->add(link);
-				QWidget* conf = new XbeeConfigurationWindow(link);
-				ui.linkScrollArea->setWidget(conf);
-				ui.linkGroupBox->setTitle(tr("Serial Link"));
+				MainWindow::instance()->addLink(xbee);
 				break;
 			}
 		case 0:
 			{
 				SerialLink *serial = new SerialLink();
-				link = serial;
-				LinkManager::instance()->add(link);
-				QWidget* conf = new SerialConfigurationWindow(link, this);
-				ui.linkScrollArea->setWidget(conf);
-				ui.linkGroupBox->setTitle(tr("Serial Link"));
+				MainWindow::instance()->addLink(serial);
 				break;
 			}
 		default:
-			break;
+			{
+				MainWindow::instance()->addLink();
+				break;
+			}
 	}
 #endif // XBEELINK
 }
