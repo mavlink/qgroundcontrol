@@ -276,8 +276,8 @@ bool MAVLinkXMLParser::generate()
                                                         else if (pp2.isElement())
                                                         {
                                                             fieldComment += pp2.text() + sep;
-                                                            pp = pp.nextSibling();
                                                         }
+                                                        pp = pp.nextSibling();
                                                     }
                                                     fieldComment = fieldComment.replace("\n", " ");
                                                     fieldComment = " /* " + fieldComment.simplified() + " */";
