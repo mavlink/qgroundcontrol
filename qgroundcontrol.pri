@@ -34,9 +34,6 @@ win32-msvc2008|win32-msvc2010 {
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
 
-#QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
-#QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
-
 # MAC OS X
 macx {
 
