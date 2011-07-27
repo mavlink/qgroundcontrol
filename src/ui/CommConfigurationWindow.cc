@@ -41,6 +41,10 @@ This file is part of the QGROUNDCONTROL project
 #include "SerialLink.h"
 #include "UDPLink.h"
 #include "MAVLinkSimulationLink.h"
+#ifdef XBEELINK
+#include "XbeeLink.h"
+#include "XbeeConfigurationWindow.h"
+#endif // XBEELINK
 #ifdef OPAL_RT
 #include "OpalLink.h"
 #include "OpalLinkConfigurationWindow.h"
@@ -62,6 +66,9 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     ui.linkType->addItem(tr("UDP"), QGC_LINK_UDP);
     ui.linkType->addItem(tr("Simulation"), QGC_LINK_SIMULATION);
     ui.linkType->addItem(tr("Opal-RT Link"), QGC_LINK_OPAL);
+#ifdef XBEELINK
+	ui.linkType->addItem(tr("Xbee API"),QGC_LINK_XBEE);
+#endif // XBEELINK
     ui.linkType->setEditable(false);
     //ui.linkType->setEnabled(false);
 
@@ -88,6 +95,10 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     connect(ui.deleteButton, SIGNAL(clicked()), this, SLOT(remove()));
 
     connect(this->link, SIGNAL(connected(bool)), this, SLOT(connectionState(bool)));
+
+#ifdef XBEELINK
+	connect(ui.linkType,SIGNAL(currentIndexChanged(int)),this,SLOT(setLinkType(int)));
+#endif // XBEELINK
 
     // Fill in the current data
     if(this->link->isConnected()) ui.connectButton->setChecked(true);
@@ -142,10 +153,23 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
         ui.linkGroupBox->setTitle(tr("Opal-RT Link"));
     }
 #endif
+#ifdef XBEELINK
+	XbeeLink* xbee = dynamic_cast<XbeeLink*>(link); // new Konrad
+	if(xbee != 0)
+	{
+		QWidget* conf = new XbeeConfigurationWindow(xbee,this); 
+		ui.linkScrollArea->setWidget(conf);
+		ui.linkGroupBox->setTitle(tr("Xbee Link"));
+		//ui.linkType->setCurrentIndex(4);
+	}
+#endif // XBEELINK
     if (serial == 0 && udp == 0 && sim == 0
 #ifdef OPAL_RT
             && opal == 0
 #endif
+#ifdef XBEELINK
+			&& xbee == 0
+#endif // XBEELINK
        ) {
         qDebug() << "Link is NOT a known link, can't open configuration window";
     }
@@ -184,8 +208,38 @@ QAction* CommConfigurationWindow::getAction()
 
 void CommConfigurationWindow::setLinkType(int linktype)
 {
+#ifdef XBEELINK
     // Adjust the form layout per link type
-    Q_UNUSED(linktype);
+	if(ui.linkScrollArea->widget())  
+	{
+		delete ui.linkScrollArea->widget();
+	}
+	switch(linktype)
+	{
+		case 4:
+			{
+				XbeeLink *xbee = new XbeeLink();
+				link = xbee;
+				LinkManager::instance()->add(link);
+				QWidget* conf = new XbeeConfigurationWindow(link);
+				ui.linkScrollArea->setWidget(conf);
+				ui.linkGroupBox->setTitle(tr("Serial Link"));
+				break;
+			}
+		case 0:
+			{
+				SerialLink *serial = new SerialLink();
+				link = serial;
+				LinkManager::instance()->add(link);
+				QWidget* conf = new SerialConfigurationWindow(link, this);
+				ui.linkScrollArea->setWidget(conf);
+				ui.linkGroupBox->setTitle(tr("Serial Link"));
+				break;
+			}
+		default:
+			break;
+	}
+#endif // XBEELINK
 }
 
 void CommConfigurationWindow::setProtocol(int protocol)
