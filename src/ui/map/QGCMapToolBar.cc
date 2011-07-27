@@ -24,6 +24,7 @@ void QGCMapToolBar::setMap(QGCMapWidget* map)
         connect(ui->goToButton, SIGNAL(clicked()), map, SLOT(showGoToDialog()));
         connect(ui->goHomeButton, SIGNAL(clicked()), map, SLOT(goHome()));
         connect(ui->lastPosButton, SIGNAL(clicked()), map, SLOT(loadSettings()));
+        connect(ui->clearTrailsButton, SIGNAL(clicked()), map, SLOT(deleteTrails()));
         connect(map, SIGNAL(OnTileLoadStart()), this, SLOT(tileLoadStart()));
         connect(map, SIGNAL(OnTileLoadComplete()), this, SLOT(tileLoadEnd()));
         connect(map, SIGNAL(OnTilesStillToLoad(int)), this, SLOT(tileLoadProgress(int)));

@@ -1,15 +1,10 @@
-#-------------------------------------------------
-#
+# -------------------------------------------------
 # QGroundControl - Micro Air Vehicle Groundstation
-#
 # Please see our website at <http://qgroundcontrol.org>
-#
-# Author:
-# Lorenz Meier <mavteam@student.ethz.ch>
-#
-# (c) 2009-2010 PIXHAWK Team
-#
-# This file is part of the mav groundstation project
+# Maintainer:
+# Lorenz Meier <lm@inf.ethz.ch>
+# (c) 2009-2011 QGroundControl Developers
+# This file is part of the open groundstation project
 # QGroundControl is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -20,13 +15,7 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
-#
-#-------------------------------------------------
-
-
-#$$BASEDIR/lib/qextserialport/include
-#               $$BASEDIR/lib/openjaus/libjaus/include \
-#               $$BASEDIR/lib/openjaus/libopenJaus/include
+# -------------------------------------------------
 
 message(Qt version $$[QT_VERSION])
 message(Using Qt from $$[QTDIR])
@@ -36,7 +25,11 @@ release {
 #    DEFINES += QT_NO_WARNING_OUTPUT
 }
 
-QMAKE_POST_LINK += $$quote(echo "Copying files"$$escape_expand(\\n))
+win32-msvc2008|win32-msvc2010 {
+    QMAKE_POST_LINK += $$quote(echo "Copying files"$$escape_expand(\\n))
+} else {
+    QMAKE_POST_LINK += $$quote(echo "Copying files")
+}
 
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
@@ -181,8 +174,6 @@ message("Compiling for linux 32")
     INCLUDEPATH += /usr/include \
                    /usr/local/include \
                    /usr/include/qt4/phonon
-              # $$BASEDIR/lib/flite/include \
-              # $$BASEDIR/lib/flite/lang
 
 
     message(Building for GNU/Linux 32bit/i386)
@@ -256,8 +247,6 @@ linux-g++-64 {
 
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
-              # $$BASEDIR/lib/flite/include \
-              # $$BASEDIR/lib/flite/lang
 
 
     # 64-bit Linux
@@ -358,7 +347,7 @@ exists($$BASEDIR/lib/osg123) {
 message("Building support for OSG")
 DEPENDENCIES_PRESENT += osg
 
-# Include OpenSceneGraph and osgEarth libraries
+# Include OpenSceneGraph
 INCLUDEPATH += $$BASEDIR/lib/osgEarth/win32/include \
     $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/include
 LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
@@ -369,14 +358,6 @@ LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
     -losgText \
     -lOpenThreads
 DEFINES += QGC_OSG_ENABLED
-exists($$BASEDIR/lib/osgEarth123) {
-    DEPENDENCIES_PRESENT += osgearth
-    message("Building support for osgEarth")
-    DEFINES += QGC_OSGEARTH_ENABLED
-    LIBS += -L$$BASEDIR/lib/osgEarth/win32/lib \
-        -losgEarth \
-        -losgEarthUtil
-}
 }
 
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
