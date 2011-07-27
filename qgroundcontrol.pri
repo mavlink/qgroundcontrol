@@ -36,7 +36,7 @@ release {
 #    DEFINES += QT_NO_WARNING_OUTPUT
 }
 
-QMAKE_POST_LINK += echo "Copying files"
+QMAKE_POST_LINK += $$quote(echo "Copying files"$$escape_expand(\\n))
 
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
@@ -316,9 +316,14 @@ linux-g++-64 {
 }
 
 # Windows (32bit)
-win32-msvc2008 {
+win32-msvc2008|win32-msvc2010 {
 
+    win32-msvc2008 {
     message(Building for Windows Visual Studio 2008 (32bit))
+    }
+    win32-msvc2010 {
+    message(Building for Windows Visual Studio 2010 (32bit))
+    }
 
     # QAxContainer support is needed for the Internet Control
     # element showing the Google Earth window
@@ -381,17 +386,25 @@ exists($$BASEDIR/lib/osgEarth123) {
     TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
 
     exists($$TARGETDIR/debug) {
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
+	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\debug\\SDL.dll"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"$$escape_expand(\\n))
+#        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
+#        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
+#        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
+#        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
     }
 
     exists($$TARGETDIR/release) {
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
+	QMAKE_POST_LINK += $$quote(copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\" $$escape_expand(\\n))
+#        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
+#        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
+#        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
+#        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
     }
 
 }
