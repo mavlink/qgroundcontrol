@@ -171,7 +171,7 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
  */
 void QGCMapWidget::addUAS(UASInterface* uas)
 {
-    qDebug() << "ADDING UAS";
+    // // qDebug() << "ADDING UAS";
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     //connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
@@ -390,7 +390,7 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
     if (firingWaypointChange == wp) return;
     // Not in cycle, block now from entering it
     firingWaypointChange = wp;
-    qDebug() << "UPDATING WP FROM MAP";
+    // // qDebug() << "UPDATING WP FROM MAP";
 
     // Update WP values
     internals::PointLatLng pos = waypoint->Coord();
@@ -405,9 +405,9 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
 
     internals::PointLatLng coord = waypoint->Coord();
     QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
-    qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
+    // // qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
     QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
-    qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
+    // // qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
 
     firingWaypointChange = NULL;
 
