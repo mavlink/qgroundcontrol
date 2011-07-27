@@ -146,6 +146,9 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     m_ui->killButton->hide();
     m_ui->shutdownButton->hide();
 
+    // Set state and mode
+    updateMode(uas->getUASID(), uas->getShortMode(), "");
+    updateState(uas, uas->getShortState(), "");
     setSystemType(uas, uas->getSystemType());
 }
 

@@ -67,7 +67,7 @@ This file is part of the QGROUNDCONTROL project
 #if (defined Q_OS_MAC) | (defined _MSC_VER)
 #include "QGCGoogleEarthView.h"
 #endif
-//#include "QMap3DWidget.h"
+#include "QGCToolBar.h"
 #include "SlugsDataSensorView.h"
 #include "LogCompressor.h"
 
@@ -418,6 +418,8 @@ protected:
     QPointer<QDockWidget> slugsDataWidget;
     QPointer<QDockWidget> slugsHilSimWidget;
     QPointer<QDockWidget> slugsCamControlWidget;
+
+    QPointer<QGCToolBar> toolBar;
 
 
     // Popup widgets
