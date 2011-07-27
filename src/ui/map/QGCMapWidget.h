@@ -98,6 +98,14 @@ public slots:
             }
         }
     }
+    /** @brief Delete all trails */
+    void deleteTrails()
+    {
+        foreach(mapcontrol::UAVItem* uav, GetUAVS())
+        {
+            uav->DeleteTrail();
+        }
+    }
 
     /** @brief Load the settings for this widget from disk */
     void loadSettings(bool changePosition=true);
