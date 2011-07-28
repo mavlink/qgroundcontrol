@@ -198,7 +198,7 @@ void HUD::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    Q_UNUSED(event)
+    QGLWidget::showEvent(event);
     refreshTimer->start(updateInterval);
 }
 
@@ -206,7 +206,7 @@ void HUD::hideEvent(QHideEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    Q_UNUSED(event);
+    QGLWidget::hideEvent(event);
     refreshTimer->stop();
 }
 

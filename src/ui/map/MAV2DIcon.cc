@@ -53,7 +53,7 @@ void MAV2DIcon::setSelectedUAS(bool selected)
  */
 void MAV2DIcon::setYaw(float yaw)
 {
-    //qDebug() << "MAV2Icon" << yaw;
+    //// qDebug() << "MAV2Icon" << yaw;
     float diff = fabs(yaw - this->yaw);
     while (diff > (float)M_PI) {
         diff -= (float)M_PI;
@@ -111,7 +111,7 @@ void MAV2DIcon::drawAirframePolygon(int airframe, QPainter& painter, int radius,
 
             painter.rotate(yawRotate);
 
-            //qDebug() << "ICON SIZE:" << radius;
+            //// qDebug() << "ICON SIZE:" << radius;
 
             float iconSize = radius*0.9f;
             QPolygonF poly(24);
@@ -158,7 +158,7 @@ void MAV2DIcon::drawAirframePolygon(int airframe, QPainter& painter, int radius,
 
             painter.rotate(yawRotate);
 
-            //qDebug() << "ICON SIZE:" << radius;
+            //// qDebug() << "ICON SIZE:" << radius;
 
             QPointF front(0, 0.2);
             front = front *iconSize;
@@ -199,7 +199,7 @@ void MAV2DIcon::drawAirframePolygon(int airframe, QPainter& painter, int radius,
             int yawRotate = static_cast<int>(yawDeg) % 360;
             painter.rotate(yawRotate);
 
-            //qDebug() << "ICON SIZE:" << radius;
+            //// qDebug() << "ICON SIZE:" << radius;
 
             float iconSize = radius*0.7f;
 
@@ -254,7 +254,7 @@ void MAV2DIcon::drawAirframePolygon(int airframe, QPainter& painter, int radius,
 
             painter.rotate(yawRotate);
 
-            //qDebug() << "ICON SIZE:" << radius;
+            //// qDebug() << "ICON SIZE:" << radius;
 
             float iconSize = radius*0.9f;
             QPolygonF poly(3);
