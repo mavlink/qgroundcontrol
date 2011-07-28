@@ -210,21 +210,32 @@ QAction* CommConfigurationWindow::getAction()
 void CommConfigurationWindow::setLinkType(int linktype)
 {
 #ifdef XBEELINK
-	// close old configuration window
-	this->window()->close();
+	if(link->isConnected())
+	{
+		// close old configuration window
+		this->window()->close();
+	}
+	else
+	{
+		// delete old configuration window
+		this->remove();
+	}
 
+	LinkInterface *tmpLink(NULL);
 	switch(linktype)
 	{
 		case 4:
 			{
 				XbeeLink *xbee = new XbeeLink();
-				MainWindow::instance()->addLink(xbee);
+				tmpLink = xbee;
+				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
 		case 0:
 			{
 				SerialLink *serial = new SerialLink();
-				MainWindow::instance()->addLink(serial);
+				tmpLink = serial;
+				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
 		default:
@@ -233,6 +244,16 @@ void CommConfigurationWindow::setLinkType(int linktype)
 				break;
 			}
 	}
+	// trigger new window
+	QList<QAction*> actions = MainWindow::instance()->listLinkMenuActions();
+	foreach (QAction* act, actions) 
+	{
+        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(tmpLink)) 
+		{
+            act->trigger();
+            break;
+        }
+    }
 #endif // XBEELINK
 }
 

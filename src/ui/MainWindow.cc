@@ -2002,3 +2002,7 @@ void MainWindow::loadDataView(QString fileName)
 }
 
 
+QList<QAction*> MainWindow::listLinkMenuActions(void)
+{
+	return ui.menuNetwork->actions();
+}
