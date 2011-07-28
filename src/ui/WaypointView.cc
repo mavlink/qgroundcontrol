@@ -504,7 +504,7 @@ void WaypointView::updateValues()
 
     if (customCommand->commandSpinBox->value() != wp->getAction()) {
         customCommand->commandSpinBox->setValue(wp->getAction());
-        qDebug() << "Changed action";
+        // qDebug() << "Changed action";
     }
     // Param 1
     if (customCommand->param1SpinBox->value() != wp->getParam1()) {
@@ -545,7 +545,7 @@ void WaypointView::updateValues()
     if (currId != lastId)
     {
 
-        qDebug() << "COLOR ID: " << currId;
+        // qDebug() << "COLOR ID: " << currId;
         if (currId == 1)
         {
             //backGroundColor = backGroundColor.lighter(150);
@@ -555,7 +555,7 @@ void WaypointView::updateValues()
         {
             backGroundColor = QColor("#252528").lighter(250);
         }
-        qDebug() << "COLOR:" << backGroundColor.name();
+        // qDebug() << "COLOR:" << backGroundColor.name();
 
         // Update color based on id
         QString groupBoxStyle = QString("QGroupBox {padding: 0px; margin: 0px; border: 0px; background-color: %1; }").arg(backGroundColor.name());

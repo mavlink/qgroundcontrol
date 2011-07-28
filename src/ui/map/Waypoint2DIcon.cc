@@ -60,7 +60,7 @@ void Waypoint2DIcon::updateWaypoint()
         SetHeading(waypoint->getYaw());
         SetCoord(internals::PointLatLng(waypoint->getLatitude(), waypoint->getLongitude()));
 
-        qDebug() << "UPDATING WP:" << waypoint->getId() << "LAT:" << waypoint->getLatitude() << "LON:" << waypoint->getLongitude();
+        // qDebug() << "UPDATING WP:" << waypoint->getId() << "LAT:" << waypoint->getLatitude() << "LON:" << waypoint->getLongitude();
 
         SetDescription(waypoint->getDescription());
         SetAltitude(waypoint->getAltitude());
@@ -68,7 +68,7 @@ void Waypoint2DIcon::updateWaypoint()
         drawIcon();
         QRectF newSize = boundingRect();
 
-        qDebug() << "WIDTH" << newSize.width() << "<" << oldSize.width();
+        // qDebug() << "WIDTH" << newSize.width() << "<" << oldSize.width();
 
         // If new size is smaller than old size, update surrounding
         if ((newSize.width() <= oldSize.width()) || (newSize.height() <= oldSize.height()))
@@ -78,8 +78,8 @@ void Waypoint2DIcon::updateWaypoint()
             int oldWidth = oldSize.width() + 20;
             int oldHeight = oldSize.height() + 20;
             map->update(this->x()-10, this->y()-10, oldWidth, oldHeight);
-            //qDebug() << "UPDATING DUE TO SMALLER SIZE";
-            //qDebug() << "X:" << this->x()-1 << "Y:" << this->y()-1 << "WIDTH:" << oldWidth << "HEIGHT:" << oldHeight;
+            //// qDebug() << "UPDATING DUE TO SMALLER SIZE";
+            //// qDebug() << "X:" << this->x()-1 << "Y:" << this->y()-1 << "WIDTH:" << oldWidth << "HEIGHT:" << oldHeight;
         }
         else
         {

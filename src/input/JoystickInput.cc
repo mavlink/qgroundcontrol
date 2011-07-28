@@ -143,7 +143,7 @@ void JoystickInput::run()
             switch(event.type) {
             case SDL_KEYDOWN:
                 /* handle keyboard stuff here */
-                qDebug() << "KEY PRESSED!";
+                //qDebug() << "KEY PRESSED!";
                 break;
 
             case SDL_QUIT:
@@ -153,7 +153,7 @@ void JoystickInput::run()
 
             case SDL_JOYBUTTONDOWN:  /* Handle Joystick Button Presses */
                 if ( event.jbutton.button == 0 ) {
-                    qDebug() << "BUTTON PRESSED!";
+                    //qDebug() << "BUTTON PRESSED!";
                 }
                 break;
 
@@ -170,7 +170,7 @@ void JoystickInput::run()
                 break;
 
             default:
-                qDebug() << "SDL event occured";
+                //qDebug() << "SDL event occured";
                 break;
             }
         }
