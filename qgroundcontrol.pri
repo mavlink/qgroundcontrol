@@ -18,7 +18,7 @@
 # -------------------------------------------------
 
 message(Qt version $$[QT_VERSION])
-message(Using Qt from $(QTDIR))
+message(Using Qt from $$(QTDIR))
 
 
 

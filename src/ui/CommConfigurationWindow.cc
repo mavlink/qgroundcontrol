@@ -209,7 +209,6 @@ QAction* CommConfigurationWindow::getAction()
 
 void CommConfigurationWindow::setLinkType(int linktype)
 {
-#ifdef XBEELINK
 	if(link->isConnected())
 	{
 		// close old configuration window
@@ -224,6 +223,7 @@ void CommConfigurationWindow::setLinkType(int linktype)
 	LinkInterface *tmpLink(NULL);
 	switch(linktype)
 	{
+#ifdef XBEELINK
 		case 4:
 			{
 				XbeeLink *xbee = new XbeeLink();
@@ -231,6 +231,7 @@ void CommConfigurationWindow::setLinkType(int linktype)
 				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
+#endif // XBEELINK
 		case 0:
 			{
 				SerialLink *serial = new SerialLink();
@@ -238,6 +239,23 @@ void CommConfigurationWindow::setLinkType(int linktype)
 				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
+/*		case 1:
+			{
+				UDPLink *udp = new UDPLink();
+				tmpLink = udp;
+				MainWindow::instance()->addLink(tmpLink);
+				break;
+			}
+			*/
+#ifdef OPAL_RT
+		case 3:
+			{
+				OpalLink* opal = new OpalLink();
+				tmpLink = opal;
+				MainWindow::instance()->addLink(tmpLink);
+				break;
+			}
+#endif // OPAL_RT
 		default:
 			{
 				MainWindow::instance()->addLink();
@@ -254,7 +272,6 @@ void CommConfigurationWindow::setLinkType(int linktype)
             break;
         }
     }
-#endif // XBEELINK
 }
 
 void CommConfigurationWindow::setProtocol(int protocol)
