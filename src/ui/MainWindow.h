@@ -35,6 +35,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QStatusBar>
 #include <QStackedWidget>
 #include <QSettings>
+#include <qlist.h>
 
 #include "ui_MainWindow.h"
 #include "LinkManager.h"
@@ -214,6 +215,9 @@ public slots:
 
     /** @brief Updates a QDockWidget's location */
     void updateLocationSettings (Qt::DockWidgetArea location);
+
+public:
+	QList<QAction*> listLinkMenuActions(void);
 
 protected:
 
