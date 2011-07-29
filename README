@@ -60,6 +60,10 @@ cd directory
 git clone git@github.com:pixhawk/mavlink.git
 git clone git@github.com:pixhawk/qgroundcontrol.git
 
+go to thirdParty -> libxbee 
+
+Create Library -> Readme file in folder
+
 Ubuntu Application Menu -> Development -> Qt Creator
 
 QtCreator Menu File -> Open File or Project..
@@ -80,14 +84,18 @@ Windows XP/7:
 
 2) Download and install Visual Studio 2008 Express Edition (free)
 
-3) Go to the source folder of QGroundControl with the Qt 4.7.x Command Prompt tool (from the applications menu)
+3) Go to the QGroundControl folder and then to thirdParty -> libxbee
 
-4) Create the Visual Studio project by typing:
+4) Build the library. See win32.README 
+
+5) Go to the source folder of QGroundControl with the Qt 4.7.x Command Prompt tool (from the applications menu)
+
+6) Create the Visual Studio project by typing:
 
 qmake -tp vc qgroundcontrol.pro
 
-5) Now start Visual Studio and load the qgroundcontrol.vcproj file
+7) Now start Visual Studio and load the qgroundcontrol.vcproj file
 
-6) Compile and edit in Visual Studio. If you need to add new files, add them to qgroundcontrol.pro and re-run "quake -tp vc qgroundcontrol.pro"
+8) Compile and edit in Visual Studio. If you need to add new files, add them to qgroundcontrol.pro and re-run "quake -tp vc qgroundcontrol.pro"
 
 
