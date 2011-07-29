@@ -3,18 +3,14 @@
 <include>common.xml</include>
 
 <enums>
-   <enum name="SLUGS_PID_INDX_IDS" >
-      <description>Slugs parameter interface subsets</description>
-      <entry name = "PID_YAW_DAMPER" value="2" />
-      <entry name = "PID_PITCH">With comment: PID Pitch parameter</entry>
-      <entry name = "PID_ALT_HOLD"  value="50" />
-   </enum>
-
    <enum name="DATA_TYPES">
       <description>Content Types for data transmission handshake</description>
-      <entry name = "DATA_TYPE_JPEG_IMAGE" value="1" />
-      <entry name = "DATA_TYPE_RAW_IMAGE" value="2" />
-      <entry name = "DATA_TYPE_KINECT" />
+      <entry name = "DATA_TYPE_JPEG_IMAGE" value="1">
+      </entry>
+      <entry name = "DATA_TYPE_RAW_IMAGE" value="2">
+      </entry>
+      <entry name = "DATA_TYPE_KINECT" value="3">
+      </entry>
    </enum>
 </enums>
 
@@ -50,6 +46,9 @@
      <field name="lat" type="float">GPS X coordinate</field>
      <field name="lon" type="float">GPS Y coordinate</field>
      <field name="alt" type="float">Global frame altitude</field>
+     <field name="ground_x" type="float">Ground truth X</field>
+     <field name="ground_y" type="float">Ground truth Y</field>
+     <field name="ground_z" type="float">Ground truth Z</field>
    </message>
 
    <message name="IMAGE_TRIGGER_CONTROL" id="102">
@@ -77,6 +76,9 @@
      <field name="lat" type="float">GPS X coordinate</field>
      <field name="lon" type="float">GPS Y coordinate</field>
      <field name="alt" type="float">Global frame altitude</field>
+     <field name="ground_x" type="float">Ground truth X</field>
+     <field name="ground_y" type="float">Ground truth Y</field>
+     <field name="ground_z" type="float">Ground truth Z</field>
    </message>
 
    <message name="VISION_POSITION_ESTIMATE" id="111">
@@ -97,6 +99,13 @@
      <field name="roll" type="float">Roll angle in rad</field>
      <field name="pitch" type="float">Pitch angle in rad</field>
      <field name="yaw" type="float">Yaw angle in rad</field>
+   </message>
+
+   <message name="VISION_SPEED_ESTIMATE" id="113">
+     <field name="usec" type="uint64_t">Timestamp (milliseconds)</field>
+     <field name="x"   type="float">Global X speed</field>
+     <field name="y"   type="float">Global Y speed</field>
+     <field name="z"   type="float">Global Z speed</field>
    </message>
 
    <message name="POSITION_CONTROL_SETPOINT_SET" id="120">
