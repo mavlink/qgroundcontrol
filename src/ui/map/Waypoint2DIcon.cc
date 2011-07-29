@@ -12,6 +12,8 @@ Waypoint2DIcon::Waypoint2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMa
     showOrbit(false),
     color(Qt::red)
 {
+    Q_UNUSED(name);
+
     SetHeading(0);
     SetNumber(listindex);
     this->setFlag(QGraphicsItem::ItemIgnoresTransformations,true);
