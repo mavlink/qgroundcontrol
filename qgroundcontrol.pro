@@ -360,6 +360,7 @@ SOURCES += src/main.cc \
     src/uas/UASManager.cc \
     src/uas/UAS.cc \
     src/comm/LinkManager.cc \
+    src/comm/LinkInterface.cpp \
     src/comm/SerialLink.cc \
     src/comm/SerialSimulationLink.cc \
     src/comm/MAVLinkProtocol.cc \
