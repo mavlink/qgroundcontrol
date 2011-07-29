@@ -6,6 +6,6 @@
 #ifndef MAVLINK_H
 #define MAVLINK_H
 
-#include "pixhawk.h"
+#include "minimal.h"
 
 #endif
