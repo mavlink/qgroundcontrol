@@ -1,7 +1,7 @@
 /** @file
  *	@brief MAVLink comm protocol.
  *	@see http://qgroundcontrol.org/mavlink/
- *	 Generated on Wednesday, July 27 2011, 14:17 UTC
+ *	 Generated on Sunday, July 31 2011, 15:11 UTC
  */
 #ifndef PIXHAWK_H
 #define PIXHAWK_H
@@ -30,7 +30,7 @@ extern "C" {
 
 // ENUM DEFINITIONS
 
-/** @brief  Content Types for data transmission handshake */
+/** @brief Content Types for data transmission handshake */
 enum DATA_TYPES
 {
 	DATA_TYPE_JPEG_IMAGE=1,
@@ -66,13 +66,6 @@ enum DATA_TYPES
 #include "./mavlink_msg_data_transmission_handshake.h"
 #include "./mavlink_msg_encapsulated_data.h"
 #include "./mavlink_msg_brief_feature.h"
-
-
-// MESSAGE LENGTHS
-
-#undef MAVLINK_MESSAGE_LENGTHS
-#define MAVLINK_MESSAGE_LENGTHS { 3, 4, 8, 14, 8, 28, 3, 32, 0, 2, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 19, 2, 23, 21, 0, 37, 26, 101, 26, 16, 32, 32, 37, 32, 11, 17, 17, 16, 18, 36, 4, 4, 2, 2, 4, 2, 2, 3, 14, 12, 18, 16, 8, 27, 25, 0, 0, 0, 0, 0, 5, 5, 26, 16, 36, 5, 6, 0, 0, 21, 0, 0, 0, 18, 20, 20, 8, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 52, 1, 92, 0, 0, 0, 0, 0, 0, 0, 32, 32, 20, 0, 0, 0, 0, 0, 0, 20, 18, 0, 0, 0, 0, 0, 0, 0, 0, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 12, 0, 0, 0, 0, 0, 0, 0, 4, 255, 12, 6, 18, 0, 0, 0, 0, 0, 106, 42, 54, 0, 0, 0, 0, 0, 0, 0, 8, 255, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 14, 14, 51 }
-
 #ifdef __cplusplus
 }
 #endif

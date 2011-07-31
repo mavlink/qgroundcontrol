@@ -1,6 +1,8 @@
 // MESSAGE VISION_POSITION_ESTIMATE PACKING
 
 #define MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE 111
+#define MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE_LEN 32
+#define MAVLINK_MSG_111_LEN 32
 
 typedef struct __mavlink_vision_position_estimate_t 
 {
@@ -13,8 +15,6 @@ typedef struct __mavlink_vision_position_estimate_t
 	float yaw; ///< Yaw angle in rad
 
 } mavlink_vision_position_estimate_t;
-
-
 
 /**
  * @brief Pack a vision_position_estimate message
@@ -33,18 +33,18 @@ typedef struct __mavlink_vision_position_estimate_t
  */
 static inline uint16_t mavlink_msg_vision_position_estimate_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint64_t usec, float x, float y, float z, float roll, float pitch, float yaw)
 {
-	uint16_t i = 0;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE;
 
-	i += put_uint64_t_by_index(usec, i, msg->payload); // Timestamp (milliseconds)
-	i += put_float_by_index(x, i, msg->payload); // Global X position
-	i += put_float_by_index(y, i, msg->payload); // Global Y position
-	i += put_float_by_index(z, i, msg->payload); // Global Z position
-	i += put_float_by_index(roll, i, msg->payload); // Roll angle in rad
-	i += put_float_by_index(pitch, i, msg->payload); // Pitch angle in rad
-	i += put_float_by_index(yaw, i, msg->payload); // Yaw angle in rad
+	p->usec = usec; // uint64_t:Timestamp (milliseconds)
+	p->x = x; // float:Global X position
+	p->y = y; // float:Global Y position
+	p->z = z; // float:Global Z position
+	p->roll = roll; // float:Roll angle in rad
+	p->pitch = pitch; // float:Pitch angle in rad
+	p->yaw = yaw; // float:Yaw angle in rad
 
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE_LEN);
 }
 
 /**
@@ -64,18 +64,18 @@ static inline uint16_t mavlink_msg_vision_position_estimate_pack(uint8_t system_
  */
 static inline uint16_t mavlink_msg_vision_position_estimate_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint64_t usec, float x, float y, float z, float roll, float pitch, float yaw)
 {
-	uint16_t i = 0;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE;
 
-	i += put_uint64_t_by_index(usec, i, msg->payload); // Timestamp (milliseconds)
-	i += put_float_by_index(x, i, msg->payload); // Global X position
-	i += put_float_by_index(y, i, msg->payload); // Global Y position
-	i += put_float_by_index(z, i, msg->payload); // Global Z position
-	i += put_float_by_index(roll, i, msg->payload); // Roll angle in rad
-	i += put_float_by_index(pitch, i, msg->payload); // Pitch angle in rad
-	i += put_float_by_index(yaw, i, msg->payload); // Yaw angle in rad
+	p->usec = usec; // uint64_t:Timestamp (milliseconds)
+	p->x = x; // float:Global X position
+	p->y = y; // float:Global Y position
+	p->z = z; // float:Global Z position
+	p->roll = roll; // float:Roll angle in rad
+	p->pitch = pitch; // float:Pitch angle in rad
+	p->yaw = yaw; // float:Yaw angle in rad
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE_LEN);
 }
 
 /**
@@ -104,12 +104,69 @@ static inline uint16_t mavlink_msg_vision_position_estimate_encode(uint8_t syste
  * @param yaw Yaw angle in rad
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
 static inline void mavlink_msg_vision_position_estimate_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z, float roll, float pitch, float yaw)
 {
 	mavlink_message_t msg;
-	mavlink_msg_vision_position_estimate_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, usec, x, y, z, roll, pitch, yaw);
-	mavlink_send_uart(chan, &msg);
+	uint16_t checksum;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg.payload[0];
+
+	p->usec = usec; // uint64_t:Timestamp (milliseconds)
+	p->x = x; // float:Global X position
+	p->y = y; // float:Global Y position
+	p->z = z; // float:Global Z position
+	p->roll = roll; // float:Roll angle in rad
+	p->pitch = pitch; // float:Pitch angle in rad
+	p->yaw = yaw; // float:Yaw angle in rad
+
+	msg.STX = MAVLINK_STX;
+	msg.len = MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE_LEN;
+	msg.msgid = MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE;
+	msg.sysid = mavlink_system.sysid;
+	msg.compid = mavlink_system.compid;
+	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
+	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
+	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_msg(chan, &msg);
+}
+
+#endif
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
+static inline void mavlink_msg_vision_position_estimate_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z, float roll, float pitch, float yaw)
+{
+	mavlink_header_t hdr;
+	mavlink_vision_position_estimate_t payload;
+	uint16_t checksum;
+	mavlink_vision_position_estimate_t *p = &payload;
+
+	p->usec = usec; // uint64_t:Timestamp (milliseconds)
+	p->x = x; // float:Global X position
+	p->y = y; // float:Global Y position
+	p->z = z; // float:Global Z position
+	p->roll = roll; // float:Roll angle in rad
+	p->pitch = pitch; // float:Pitch angle in rad
+	p->yaw = yaw; // float:Yaw angle in rad
+
+	hdr.STX = MAVLINK_STX;
+	hdr.len = MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE_LEN;
+	hdr.msgid = MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE;
+	hdr.sysid = mavlink_system.sysid;
+	hdr.compid = mavlink_system.compid;
+	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
+	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+
+	crc_init(&checksum);
+	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
+	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
+	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
 }
 
 #endif
@@ -122,16 +179,8 @@ static inline void mavlink_msg_vision_position_estimate_send(mavlink_channel_t c
  */
 static inline uint64_t mavlink_msg_vision_position_estimate_get_usec(const mavlink_message_t* msg)
 {
-	generic_64bit r;
-	r.b[7] = (msg->payload)[0];
-	r.b[6] = (msg->payload)[1];
-	r.b[5] = (msg->payload)[2];
-	r.b[4] = (msg->payload)[3];
-	r.b[3] = (msg->payload)[4];
-	r.b[2] = (msg->payload)[5];
-	r.b[1] = (msg->payload)[6];
-	r.b[0] = (msg->payload)[7];
-	return (uint64_t)r.ll;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg->payload[0];
+	return (uint64_t)(p->usec);
 }
 
 /**
@@ -141,12 +190,8 @@ static inline uint64_t mavlink_msg_vision_position_estimate_get_usec(const mavli
  */
 static inline float mavlink_msg_vision_position_estimate_get_x(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint64_t))[0];
-	r.b[2] = (msg->payload+sizeof(uint64_t))[1];
-	r.b[1] = (msg->payload+sizeof(uint64_t))[2];
-	r.b[0] = (msg->payload+sizeof(uint64_t))[3];
-	return (float)r.f;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg->payload[0];
+	return (float)(p->x);
 }
 
 /**
@@ -156,12 +201,8 @@ static inline float mavlink_msg_vision_position_estimate_get_x(const mavlink_mes
  */
 static inline float mavlink_msg_vision_position_estimate_get_y(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint64_t)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(uint64_t)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(uint64_t)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(uint64_t)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg->payload[0];
+	return (float)(p->y);
 }
 
 /**
@@ -171,12 +212,8 @@ static inline float mavlink_msg_vision_position_estimate_get_y(const mavlink_mes
  */
 static inline float mavlink_msg_vision_position_estimate_get_z(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg->payload[0];
+	return (float)(p->z);
 }
 
 /**
@@ -186,12 +223,8 @@ static inline float mavlink_msg_vision_position_estimate_get_z(const mavlink_mes
  */
 static inline float mavlink_msg_vision_position_estimate_get_roll(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg->payload[0];
+	return (float)(p->roll);
 }
 
 /**
@@ -201,12 +234,8 @@ static inline float mavlink_msg_vision_position_estimate_get_roll(const mavlink_
  */
 static inline float mavlink_msg_vision_position_estimate_get_pitch(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg->payload[0];
+	return (float)(p->pitch);
 }
 
 /**
@@ -216,12 +245,8 @@ static inline float mavlink_msg_vision_position_estimate_get_pitch(const mavlink
  */
 static inline float mavlink_msg_vision_position_estimate_get_yaw(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(uint64_t)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg->payload[0];
+	return (float)(p->yaw);
 }
 
 /**
@@ -232,11 +257,5 @@ static inline float mavlink_msg_vision_position_estimate_get_yaw(const mavlink_m
  */
 static inline void mavlink_msg_vision_position_estimate_decode(const mavlink_message_t* msg, mavlink_vision_position_estimate_t* vision_position_estimate)
 {
-	vision_position_estimate->usec = mavlink_msg_vision_position_estimate_get_usec(msg);
-	vision_position_estimate->x = mavlink_msg_vision_position_estimate_get_x(msg);
-	vision_position_estimate->y = mavlink_msg_vision_position_estimate_get_y(msg);
-	vision_position_estimate->z = mavlink_msg_vision_position_estimate_get_z(msg);
-	vision_position_estimate->roll = mavlink_msg_vision_position_estimate_get_roll(msg);
-	vision_position_estimate->pitch = mavlink_msg_vision_position_estimate_get_pitch(msg);
-	vision_position_estimate->yaw = mavlink_msg_vision_position_estimate_get_yaw(msg);
+	memcpy( vision_position_estimate, msg->payload, sizeof(mavlink_vision_position_estimate_t));
 }
