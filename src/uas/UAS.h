@@ -253,8 +253,6 @@ public slots:
     }
     /** @brief Set a new name **/
     void setUASName(const QString& name);
-    /** @brief Executes an action **/
-    void setAction(MAV_ACTION action);
     /** @brief Executes a command **/
     void executeCommand(MAV_CMD command);
     /** @brief Executes a command **/

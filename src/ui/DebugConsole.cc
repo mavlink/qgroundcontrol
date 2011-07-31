@@ -355,7 +355,7 @@ void DebugConsole::receiveBytes(LinkInterface* link, QByteArray bytes)
         for (int j = 0; j < len; j++)
         {
             unsigned char byte = bytes.at(j);
-            // Filter MAVLink (http://pixhawk.ethz.ch/wiki/mavlink/) messages out of the stream.
+            // Filter MAVLink (http://qgroundcontrol.org/mavlink/) messages out of the stream.
             if (filterMAVLINK)
             {
                 if (this->bytesToIgnore > 0)

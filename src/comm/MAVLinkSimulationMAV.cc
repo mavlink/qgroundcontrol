@@ -68,7 +68,7 @@ void MAVLinkSimulationMAV::mainloop()
     // 1 Hz execution
     if (timer1Hz <= 0) {
         mavlink_message_t msg;
-        mavlink_msg_heartbeat_pack_version_free(systemid, MAV_COMP_ID_IMU, &msg, MAV_FIXED_WING, MAV_AUTOPILOT_PIXHAWK, mavlink_version);
+        mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_TYPE_FIXED_WING, MAV_CLASS_PIXHAWK);
         link->sendMAVLinkMessage(&msg);
         planner.handleMessage(msg);
 
@@ -306,30 +306,31 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
         if (systemid == mode.target) sys_mode = mode.mode;
     }
     break;
-    case MAVLINK_MSG_ID_ACTION: {
-        mavlink_action_t action;
-        mavlink_msg_action_decode(&msg, &action);
-        if (systemid == action.target && (action.target_component == 0 || action.target_component == MAV_COMP_ID_IMU)) {
-            mavlink_action_ack_t ack;
-            ack.action = action.action;
-            switch (action.action) {
-            case MAV_ACTION_TAKEOFF:
-                flying = true;
-                nav_mode = MAV_NAV_LIFTOFF;
-                ack.result = 1;
-                break;
-            default: {
-                ack.result = 0;
-            }
-            break;
-            }
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    case MAVLINK_MSG_ID_ACTION: {
+//        mavlink_action_t action;
+//        mavlink_msg_action_decode(&msg, &action);
+//        if (systemid == action.target && (action.target_component == 0 || action.target_component == MAV_COMP_ID_IMU)) {
+//            mavlink_action_ack_t ack;
+//            ack.action = action.action;
+////            switch (action.action) {
+////            case MAV_ACTION_TAKEOFF:
+////                flying = true;
+////                nav_mode = MAV_NAV_LIFTOFF;
+////                ack.result = 1;
+////                break;
+////            default: {
+////                ack.result = 0;
+////            }
+////            break;
+////            }
 
-            // Give feedback about action
-            mavlink_message_t r_msg;
-            mavlink_msg_action_ack_encode(systemid, MAV_COMP_ID_IMU, &r_msg, &ack);
-            link->sendMAVLinkMessage(&r_msg);
-        }
-    }
+//            // Give feedback about action
+//            mavlink_message_t r_msg;
+//            mavlink_msg_action_ack_encode(systemid, MAV_COMP_ID_IMU, &r_msg, &ack);
+//            link->sendMAVLinkMessage(&r_msg);
+//        }
+//    }
     break;
     case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET: {
         mavlink_local_position_setpoint_set_t sp;

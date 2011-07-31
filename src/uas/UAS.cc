@@ -205,10 +205,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 {
                     switch (type)
                     {
-                    case MAV_FIXED_WING:
+                    case MAV_TYPE_FIXED_WING:
                         setAirframe(UASInterface::QGC_AIRFRAME_EASYSTAR);
                         break;
-                    case MAV_QUADROTOR:
+                    case MAV_TYPE_QUADROTOR:
                         setAirframe(UASInterface::QGC_AIRFRAME_CHEETAH);
                         break;
                     default:
@@ -930,7 +930,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 QByteArray b;
                 b.resize(MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN);
-                mavlink_msg_statustext_get_text(&message, (int8_t*)b.data());
+                mavlink_msg_statustext_get_text(&message, b.data());
                 //b.append('\0');
                 QString text = QString(b);
                 int severity = mavlink_msg_statustext_get_severity(&message);
@@ -1163,14 +1163,15 @@ void UAS::setLocalOriginAtCurrentGPSPosition()
 
     if (ret == QMessageBox::Yes)
     {
-        mavlink_message_t msg;
-        mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_ACTION_SET_ORIGIN);
-        // Send message twice to increase chance that it reaches its goal
-        sendMessage(msg);
-        // Wait 5 ms
-        MG::SLEEP::usleep(5000);
-        // Send again
-        sendMessage(msg);
+        // FIXME MAVLINKV10PORTINGNEEDED
+//        mavlink_message_t msg;
+//        mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_ACTION_SET_ORIGIN);
+//        // Send message twice to increase chance that it reaches its goal
+//        sendMessage(msg);
+//        // Wait 5 ms
+//        MG::SLEEP::usleep(5000);
+//        // Send again
+//        sendMessage(msg);
         result = true;
     }
 }
@@ -1204,52 +1205,58 @@ void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
 }
 
 void UAS::startRadioControlCalibration()
-{
-    mavlink_message_t msg;
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_RC);
-    sendMessage(msg);
+{// FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_DO_RC_CALIB;
+//    sendMessage(msg);
 }
 
 void UAS::startDataRecording()
 {
-    mavlink_message_t msg;
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_START);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_START);
+//    sendMessage(msg);
 }
 
 void UAS::pauseDataRecording()
 {
-    mavlink_message_t msg;
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_PAUSE);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_PAUSE);
+//    sendMessage(msg);
 }
 
 void UAS::stopDataRecording()
 {
-    mavlink_message_t msg;
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_STOP);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_STOP);
+//    sendMessage(msg);
 }
 
 void UAS::startMagnetometerCalibration()
 {
-    mavlink_message_t msg;
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_MAG);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_MAG);
+//    sendMessage(msg);
 }
 
 void UAS::startGyroscopeCalibration()
 {
-    mavlink_message_t msg;
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_GYRO);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_GYRO);
+//    sendMessage(msg);
 }
 
 void UAS::startPressureCalibration()
 {
-    mavlink_message_t msg;
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_PRESSURE);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_PRESSURE);
+//    sendMessage(msg);
 }
 
 quint64 UAS::getUnixTime(quint64 time)
@@ -1589,19 +1596,21 @@ void UAS::requestParameters()
 
 void UAS::writeParametersToStorage()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_STORAGE_WRITE);
-    //mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(uint8_t)MAV_ACTION_STORAGE_WRITE);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_STORAGE_WRITE);
+//    //mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(uint8_t)MAV_ACTION_STORAGE_WRITE);
+//    sendMessage(msg);
 }
 
 void UAS::readParametersFromStorage()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(uint8_t)MAV_ACTION_STORAGE_READ);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(uint8_t)MAV_ACTION_STORAGE_READ);
+//    sendMessage(msg);
 }
 
 void UAS::enableAllDataTransmission(int rate)
@@ -1894,10 +1903,10 @@ void UAS::setSystemType(int systemType)
     {
         switch (systemType)
         {
-        case MAV_FIXED_WING:
+        case MAV_TYPE_FIXED_WING:
             airframe = QGC_AIRFRAME_EASYSTAR;
             break;
-        case MAV_QUADROTOR:
+        case MAV_TYPE_QUADROTOR:
             airframe = QGC_AIRFRAME_MIKROKOPTER;
             break;
         }
@@ -1946,30 +1955,18 @@ void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float 
 }
 
 /**
- * Sets an action
- *
- **/
-void UAS::setAction(MAV_ACTION action)
-{
-    mavlink_message_t msg;
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, action);
-    // Send message twice to increase chance that it reaches its goal
-    sendMessage(msg);
-    sendMessage(msg);
-}
-
-/**
  * Launches the system
  *
  **/
 void UAS::launch()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_TAKEOFF);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_TAKEOFF);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
 }
 
 /**
@@ -1978,12 +1975,12 @@ void UAS::launch()
  **/
 void UAS::enable_motors()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_MOTORS_START);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+//    // FIXME MAVLINKV10PORTINGNEEDED
+//    //mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_MOTORS_START);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
 }
 
 /**
@@ -1992,12 +1989,12 @@ void UAS::enable_motors()
  **/
 void UAS::disable_motors()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_MOTORS_STOP);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+//    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_MOTORS_STOP);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
 }
 
 void UAS::setManualControlCommands(double roll, double pitch, double yaw, double thrust)
@@ -2113,33 +2110,36 @@ void UAS::clearWaypointList()
 
 void UAS::halt()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_HALT);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_HALT);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
 }
 
 void UAS::go()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,  (int)MAV_ACTION_CONTINUE);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,  (int)MAV_ACTION_CONTINUE);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
 }
 
 /** Order the robot to return home / to land on the runway **/
 void UAS::home()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,  (int)MAV_ACTION_RETURN);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,  (int)MAV_ACTION_RETURN);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
 }
 
 /**
@@ -2148,96 +2148,102 @@ void UAS::home()
  */
 void UAS::emergencySTOP()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_EMCY_LAND);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
+//    mavlink_message_t msg;
+//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//    // FIXME MAVLINKV10PORTINGNEEDED
+//    //mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_EMCY_LAND);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
 }
 
 /**
- * All systems are immediately shut down (e.g. the main power line is cut).
+ * Shut down this mav - All onboard systems are immediately shut down (e.g. the main power line is cut).
  * @warning This might lead to a crash
  *
  * The command will not be executed until emergencyKILLConfirm is issues immediately afterwards
  */
 bool UAS::emergencyKILL()
 {
-    bool result = false;
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Critical);
-    msgBox.setText("EMERGENCY: KILL ALL MOTORS ON UAS");
-    msgBox.setInformativeText("Do you want to cut power on all systems?");
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Cancel);
-    int ret = msgBox.exec();
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    bool result = false;
+//    QMessageBox msgBox;
+//    msgBox.setIcon(QMessageBox::Critical);
+//    msgBox.setText("EMERGENCY: KILL ALL MOTORS ON UAS");
+//    msgBox.setInformativeText("Do you want to cut power on all systems?");
+//    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+//    msgBox.setDefaultButton(QMessageBox::Cancel);
+//    int ret = msgBox.exec();
 
-    // Close the message box shortly after the click to prevent accidental clicks
-    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
+//    // Close the message box shortly after the click to prevent accidental clicks
+//    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
 
 
-    if (ret == QMessageBox::Yes)
-    {
-        mavlink_message_t msg;
-        // TODO Replace MG System ID with static function call and allow to change ID in GUI
-        mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_EMCY_KILL);
-        // Send message twice to increase chance of reception
-        sendMessage(msg);
-        sendMessage(msg);
-        result = true;
-    }
-    return result;
+//    if (ret == QMessageBox::Yes)
+//    {
+//        mavlink_message_t msg;
+//        // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//        mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_EMCY_KILL);
+//        // Send message twice to increase chance of reception
+//        sendMessage(msg);
+//        sendMessage(msg);
+//        result = true;
+//    }
+//    return result;
+    return false;
 }
 
 void UAS::startHil()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_START_HILSIM);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_START_HILSIM);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
 }
 
 void UAS::stopHil()
 {
-    mavlink_message_t msg;
-    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_STOP_HILSIM);
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
-    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    mavlink_message_t msg;
+//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_STOP_HILSIM);
+//    // Send message twice to increase chance of reception
+//    sendMessage(msg);
+//    sendMessage(msg);
 }
 
 
 void UAS::shutdown()
 {
-    bool result = false;
-    QMessageBox msgBox;
-    msgBox.setIcon(QMessageBox::Critical);
-    msgBox.setText("Shutting down the UAS");
-    msgBox.setInformativeText("Do you want to shut down the onboard computer?");
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    bool result = false;
+//    QMessageBox msgBox;
+//    msgBox.setIcon(QMessageBox::Critical);
+//    msgBox.setText("Shutting down the UAS");
+//    msgBox.setInformativeText("Do you want to shut down the onboard computer?");
 
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Cancel);
-    int ret = msgBox.exec();
+//    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+//    msgBox.setDefaultButton(QMessageBox::Cancel);
+//    int ret = msgBox.exec();
 
-    // Close the message box shortly after the click to prevent accidental clicks
-    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
+//    // Close the message box shortly after the click to prevent accidental clicks
+//    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
 
-    if (ret == QMessageBox::Yes)
-    {
-        // If the active UAS is set, execute command
-        mavlink_message_t msg;
-        // TODO Replace MG System ID with static function call and allow to change ID in GUI
-        mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_SHUTDOWN);
-        // Send message twice to increase chance of reception
-        sendMessage(msg);
-        sendMessage(msg);
+//    if (ret == QMessageBox::Yes)
+//    {
+//        // If the active UAS is set, execute command
+//        mavlink_message_t msg;
+//        // TODO Replace MG System ID with static function call and allow to change ID in GUI
+//        mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_SHUTDOWN);
+//        // Send message twice to increase chance of reception
+//        sendMessage(msg);
+//        sendMessage(msg);
 
-        result = true;
-    }
+//        result = true;
+//    }
 }
 
 void UAS::setTargetPosition(float x, float y, float z, float yaw)
