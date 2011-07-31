@@ -109,7 +109,8 @@ void Waypoint::setId(quint16 id)
 
 void Waypoint::setX(double x)
 {
-    if (this->x != x && (this->frame == MAV_FRAME_LOCAL)) {
+    if (!isinf(x) && !isnan(x) && ((this->frame == MAV_FRAME_LOCAL_NED) || (this->frame == MAV_FRAME_LOCAL_ENU)))
+    {
         this->x = x;
         emit changed(this);
     }
@@ -117,7 +118,8 @@ void Waypoint::setX(double x)
 
 void Waypoint::setY(double y)
 {
-    if (this->y != y && (this->frame == MAV_FRAME_LOCAL)) {
+    if (!isinf(y) && !isnan(y) && ((this->frame == MAV_FRAME_LOCAL_NED) || (this->frame == MAV_FRAME_LOCAL_ENU)))
+    {
         this->y = y;
         emit changed(this);
     }
@@ -125,7 +127,8 @@ void Waypoint::setY(double y)
 
 void Waypoint::setZ(double z)
 {
-    if (this->z != z && (this->frame == MAV_FRAME_LOCAL)) {
+    if (!isinf(z) && !isnan(z) && ((this->frame == MAV_FRAME_LOCAL_NED) || (this->frame == MAV_FRAME_LOCAL_ENU)))
+    {
         this->z = z;
         emit changed(this);
     }
@@ -133,7 +136,8 @@ void Waypoint::setZ(double z)
 
 void Waypoint::setLatitude(double lat)
 {
-    if (this->x != lat && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT))) {
+    if (this->x != lat && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    {
         this->x = lat;
         emit changed(this);
     }
@@ -141,7 +145,8 @@ void Waypoint::setLatitude(double lat)
 
 void Waypoint::setLongitude(double lon)
 {
-    if (this->y != lon && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT))) {
+    if (this->y != lon && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    {
         this->y = lon;
         emit changed(this);
     }
@@ -149,7 +154,8 @@ void Waypoint::setLongitude(double lon)
 
 void Waypoint::setAltitude(double altitude)
 {
-    if (this->z != altitude && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT))) {
+    if (this->z != altitude && ((this->frame == MAV_FRAME_GLOBAL) || (this->frame == MAV_FRAME_GLOBAL_RELATIVE_ALT)))
+    {
         this->z = altitude;
         emit changed(this);
     }
@@ -157,7 +163,8 @@ void Waypoint::setAltitude(double altitude)
 
 void Waypoint::setYaw(int yaw)
 {
-    if (this->yaw != yaw) {
+    if (this->yaw != yaw)
+    {
         this->yaw = yaw;
         emit changed(this);
     }
@@ -165,7 +172,8 @@ void Waypoint::setYaw(int yaw)
 
 void Waypoint::setYaw(double yaw)
 {
-    if (this->yaw != yaw) {
+    if (this->yaw != yaw)
+    {
         this->yaw = yaw;
         emit changed(this);
     }
@@ -173,7 +181,8 @@ void Waypoint::setYaw(double yaw)
 
 void Waypoint::setAction(int action)
 {
-    if (this->action != (MAV_CMD)action) {
+    if (this->action != (MAV_CMD)action)
+    {
         this->action = (MAV_CMD)action;
         emit changed(this);
     }
@@ -205,7 +214,8 @@ void Waypoint::setAutocontinue(bool autoContinue)
 
 void Waypoint::setCurrent(bool current)
 {
-    if (this->current != current) {
+    if (this->current != current)
+    {
         this->current = current;
         emit changed(this);
     }
@@ -213,7 +223,8 @@ void Waypoint::setCurrent(bool current)
 
 void Waypoint::setAcceptanceRadius(double radius)
 {
-    if (this->param2 != radius) {
+    if (this->param2 != radius)
+    {
         this->param2 = radius;
         emit changed(this);
     }
@@ -223,7 +234,8 @@ void Waypoint::setParam1(double param1)
 {
     //qDebug() << "SENDER:" << QObject::sender();
     //qDebug() << "PARAM1 SET REQ:" << param1;
-    if (this->param1 != param1) {
+    if (this->param1 != param1)
+    {
         this->param1 = param1;
         emit changed(this);
     }
@@ -231,7 +243,8 @@ void Waypoint::setParam1(double param1)
 
 void Waypoint::setParam2(double param2)
 {
-    if (this->param2 != param2) {
+    if (this->param2 != param2)
+    {
         this->param2 = param2;
         emit changed(this);
     }

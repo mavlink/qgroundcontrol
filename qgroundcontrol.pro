@@ -299,7 +299,6 @@ HEADERS += src/MG.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/designer/QGCToolWidget.h \
     src/ui/designer/QGCParamSlider.h \
-    src/ui/designer/QGCActionButton.h \
     src/ui/designer/QGCCommandButton.h \
     src/ui/designer/QGCToolWidgetItem.h \
     src/ui/QGCMAVLinkLogPlayer.h \
@@ -425,7 +424,6 @@ SOURCES += src/main.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/designer/QGCToolWidget.cc \
     src/ui/designer/QGCParamSlider.cc \
-    src/ui/designer/QGCActionButton.cc \
     src/ui/designer/QGCCommandButton.cc \
     src/ui/designer/QGCToolWidgetItem.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \

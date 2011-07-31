@@ -11,7 +11,6 @@
 #include <QDesktopServices>
 
 #include "QGCParamSlider.h"
-#include "QGCActionButton.h"
 #include "QGCCommandButton.h"
 #include "UASManager.h"
 
@@ -129,10 +128,7 @@ void QGCToolWidget::loadSettings(QSettings& settings)
         QString type = settings.value("TYPE", "UNKNOWN").toString();
         if (type != "UNKNOWN") {
             QGCToolWidgetItem* item = NULL;
-            if (type == "BUTTON") {
-                item = new QGCActionButton(this);
-                qDebug() << "CREATED BUTTON";
-            } else if (type == "COMMANDBUTTON") {
+            if (type == "COMMANDBUTTON") {
                 item = new QGCCommandButton(this);
                 qDebug() << "CREATED COMMANDBUTTON";
             } else if (type == "SLIDER") {
@@ -301,17 +297,6 @@ void QGCToolWidget::addParam()
     }
     toolLayout->addWidget(slider);
     slider->startEditMode();
-}
-
-void QGCToolWidget::addAction()
-{
-    QGCActionButton* button = new QGCActionButton(this);
-    if (ui->hintLabel) {
-        ui->hintLabel->deleteLater();
-        ui->hintLabel = NULL;
-    }
-    toolLayout->addWidget(button);
-    button->startEditMode();
 }
 
 void QGCToolWidget::addCommand()
