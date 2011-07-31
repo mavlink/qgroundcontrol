@@ -446,9 +446,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "gyro roll", "rad/s", scaled.xgyro/1000.0f, time);
                 emit valueChanged(uasId, "gyro pitch", "rad/s", scaled.ygyro/1000.0f, time);
                 emit valueChanged(uasId, "gyro yaw", "rad/s", scaled.zgyro/1000.0f, time);
-                emit valueChanged(uasId, "mag x", "tesla", scaled.xmag/1000.0f, time);
-                emit valueChanged(uasId, "mag y", "tesla", scaled.ymag/1000.0f, time);
-                emit valueChanged(uasId, "mag z", "tesla", scaled.zmag/1000.0f, time);
+                emit valueChanged(uasId, "mag x", "uTesla", scaled.xmag/100.0f, time);
+                emit valueChanged(uasId, "mag y", "uTesla", scaled.ymag/100.0f, time);
+                emit valueChanged(uasId, "mag z", "uTesla", scaled.zmag/100.0f, time);
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
@@ -753,6 +753,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit remoteControlChannelRawChanged(5, channels.chan6_raw);
                 emit remoteControlChannelRawChanged(6, channels.chan7_raw);
                 emit remoteControlChannelRawChanged(7, channels.chan8_raw);
+                quint64 time = getUnixTime();
+                emit valueChanged(uasId, "rc in #1", "us", channels.chan1_raw, time);
+                emit valueChanged(uasId, "rc in #2", "us", channels.chan2_raw, time);
+                emit valueChanged(uasId, "rc in #3", "us", channels.chan3_raw, time);
+                emit valueChanged(uasId, "rc in #4", "us", channels.chan4_raw, time);
+                emit valueChanged(uasId, "rc in #5", "us", channels.chan5_raw, time);
+                emit valueChanged(uasId, "rc in #6", "us", channels.chan6_raw, time);
+                emit valueChanged(uasId, "rc in #7", "us", channels.chan7_raw, time);
+                emit valueChanged(uasId, "rc in #8", "us", channels.chan8_raw, time);
             }
             break;
         case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
@@ -982,32 +991,81 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
 #endif
         case MAVLINK_MSG_ID_DEBUG_VECT:
-            {
-                mavlink_debug_vect_t vect;
-                mavlink_msg_debug_vect_decode(&message, &vect);
-                QString str((const char*)vect.name);
-                quint64 time = getUnixTime(vect.usec);
-                emit valueChanged(uasId, str+".x", "raw", vect.x, time);
-                emit valueChanged(uasId, str+".y", "raw", vect.y, time);
-                emit valueChanged(uasId, str+".z", "raw", vect.z, time);
-            }
-            break;
-            //#ifdef MAVLINK_ENABLED_PIXHAWK
-            //            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
-            //            {
-            //                mavlink_point_of_interest_t poi;
-            //                mavlink_msg_point_of_interest_decode(&message, &poi);
-            //                emit poiFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_FIELD_NAME_LEN), poi.x, poi.y, poi.z);
-            //            }
-            //            break;
-            //            case MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION:
-            //            {
-            //                mavlink_point_of_interest_connection_t poi;
-            //                mavlink_msg_point_of_interest_connection_decode(&message, &poi);
-            //                emit poiConnectionFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN), poi.x1, poi.y1, poi.z1, poi.x2, poi.y2, poi.z2);
-            //            }
-            //            break;
-            //#endif
+        {
+            mavlink_debug_vect_t vect;
+            mavlink_msg_debug_vect_decode(&message, &vect);
+            QString str((const char*)vect.name);
+            quint64 time = getUnixTime(vect.usec);
+            emit valueChanged(uasId, str+".x", "raw", vect.x, time);
+            emit valueChanged(uasId, str+".y", "raw", vect.y, time);
+            emit valueChanged(uasId, str+".z", "raw", vect.z, time);
+        }
+        break;
+        // WILL BE ENABLED ONCE MESSAGE IS IN COMMON MESSAGE SET
+//        case MAVLINK_MSG_ID_MEMORY_VECT:
+//        {
+//            mavlink_memory_vect_t vect;
+//            mavlink_msg_memory_vect_decode(&message, &vect);
+//            QString str("mem_%1");
+//            quint64 time = getUnixTime(0);
+//            int16_t *mem0 = (int16_t *)&vect.value[0];
+//            uint16_t *mem1 = (uint16_t *)&vect.value[0];
+//            int32_t *mem2 = (int32_t *)&vect.value[0];
+//            // uint32_t *mem3 = (uint32_t *)&vect.value[0]; causes overload problem
+//            float *mem4 = (float *)&vect.value[0];
+//            if ( vect.ver == 0) vect.type = 0, vect.ver = 1; else ;
+//            if ( vect.ver == 1)
+//            {
+//                switch (vect.type) {
+//                default:
+//                case 0:
+//                    for (int i = 0; i < 16; i++)
+//                        emit valueChanged(uasId, str.arg(vect.address+(i*2)), "i16", mem0[i], time);
+//                    break;
+//                case 1:
+//                    for (int i = 0; i < 16; i++)
+//                        emit valueChanged(uasId, str.arg(vect.address+(i*2)), "ui16", mem1[i], time);
+//                    break;
+//                case 2:
+//                    for (int i = 0; i < 16; i++)
+//                        emit valueChanged(uasId, str.arg(vect.address+(i*2)), "Q15", (float)mem0[i]/32767.0, time);
+//                    break;
+//                case 3:
+//                    for (int i = 0; i < 16; i++)
+//                        emit valueChanged(uasId, str.arg(vect.address+(i*2)), "1Q14", (float)mem0[i]/16383.0, time);
+//                    break;
+//                case 4:
+//                    for (int i = 0; i < 8; i++)
+//                        emit valueChanged(uasId, str.arg(vect.address+(i*4)), "i32", mem2[i], time);
+//                    break;
+//                case 5:
+//                    for (int i = 0; i < 8; i++)
+//                        emit valueChanged(uasId, str.arg(vect.address+(i*4)), "i32", mem2[i], time);
+//                    break;
+//                case 6:
+//                    for (int i = 0; i < 8; i++)
+//                        emit valueChanged(uasId, str.arg(vect.address+(i*4)), "float", mem4[i], time);
+//                    break;
+//                }
+//            }
+//        }
+//        break;
+				//#ifdef MAVLINK_ENABLED_PIXHAWK
+				//            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
+				//            {
+				//                mavlink_point_of_interest_t poi;
+				//                mavlink_msg_point_of_interest_decode(&message, &poi);
+				//                emit poiFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_FIELD_NAME_LEN), poi.x, poi.y, poi.z);
+				//            }
+				//            break;
+				//            case MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION:
+				//            {
+				//                mavlink_point_of_interest_connection_t poi;
+				//                mavlink_msg_point_of_interest_connection_decode(&message, &poi);
+				//                emit poiConnectionFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN), poi.x1, poi.y1, poi.z1, poi.x2, poi.y2, poi.z2);
+				//            }
+				//            break;
+				//#endif
 #ifdef MAVLINK_ENABLED_UALBERTA
         case MAVLINK_MSG_ID_NAV_FILTER_BIAS:
             {
