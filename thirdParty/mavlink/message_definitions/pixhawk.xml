@@ -175,8 +175,8 @@
   <message name="WATCHDOG_PROCESS_INFO" id="151">
     <field name="watchdog_id" type="uint16_t">Watchdog ID</field>
     <field name="process_id" type="uint16_t">Process ID</field>
-    <field name="name" type="array[100]">Process name</field>
-    <field name="arguments" type="array[147]">Process arguments</field>
+    <field name="name" type="char[100]">Process name</field>
+    <field name="arguments" type="char[147]">Process arguments</field>
     <field name="timeout" type="int32_t">Timeout (seconds)</field>
   </message>
 
@@ -199,7 +199,7 @@
   <message name="PATTERN_DETECTED" id="160">
     <field name="type" type="uint8_t">0: Pattern, 1: Letter</field>
     <field name="confidence" type="float">Confidence of detection</field>
-    <field name="file" type="array[100]">Pattern file name</field>
+    <field name="file" type="char[100]">Pattern file name</field>
     <field name="detected" type="uint8_t">Accepted as true detection, 0 no, 1 yes</field>
    </message>
 
@@ -214,7 +214,7 @@
     <field name="x" type="float">X Position</field>
     <field name="y" type="float">Y Position</field>
     <field name="z" type="float">Z Position</field>
-    <field name="name" type="array[25]">POI name</field>
+    <field name="name" type="char[25]">POI name</field>
    </message>
 
    <message name="POINT_OF_INTEREST_CONNECTION" id="162">
@@ -231,7 +231,7 @@
     <field name="xp2" type="float">X2 Position</field>
     <field name="yp2" type="float">Y2 Position</field>
     <field name="zp2" type="float">Z2 Position</field>
-    <field name="name" type="array[25]">POI connection name</field>
+    <field name="name" type="char[25]">POI connection name</field>
    </message>
 
   <message name="DATA_TRANSMISSION_HANDSHAKE" id="170">
@@ -254,7 +254,7 @@
     <field name="orientation_assignment" type="uint8_t">Orientation assignment 0: false, 1:true</field>
     <field name="size" type="uint16_t">Size in pixels</field>
     <field name="orientation" type="uint16_t">Orientation</field>
-    <field name="descriptor" type="uint8_t[32]">Descriptor</field>
+    <field name="descriptor" type="char[32]">Descriptor</field>
     <field name="response" type="float">Harris operator response at this location</field>
   </message>
 

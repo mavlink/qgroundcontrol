@@ -1,6 +1,8 @@
 // MESSAGE POSITION_CONTROLLER_OUTPUT PACKING
 
 #define MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT 61
+#define MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT_LEN 5
+#define MAVLINK_MSG_61_LEN 5
 
 typedef struct __mavlink_position_controller_output_t 
 {
@@ -11,8 +13,6 @@ typedef struct __mavlink_position_controller_output_t
 	int8_t yaw; ///< Position yaw: -128: -100%, 127: +100%
 
 } mavlink_position_controller_output_t;
-
-
 
 /**
  * @brief Pack a position_controller_output message
@@ -29,16 +29,16 @@ typedef struct __mavlink_position_controller_output_t
  */
 static inline uint16_t mavlink_msg_position_controller_output_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t enabled, int8_t x, int8_t y, int8_t z, int8_t yaw)
 {
-	uint16_t i = 0;
+	mavlink_position_controller_output_t *p = (mavlink_position_controller_output_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT;
 
-	i += put_uint8_t_by_index(enabled, i, msg->payload); // 1: enabled, 0: disabled
-	i += put_int8_t_by_index(x, i, msg->payload); // Position x: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(y, i, msg->payload); // Position y: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(z, i, msg->payload); // Position z: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(yaw, i, msg->payload); // Position yaw: -128: -100%, 127: +100%
+	p->enabled = enabled; // uint8_t:1: enabled, 0: disabled
+	p->x = x; // int8_t:Position x: -128: -100%, 127: +100%
+	p->y = y; // int8_t:Position y: -128: -100%, 127: +100%
+	p->z = z; // int8_t:Position z: -128: -100%, 127: +100%
+	p->yaw = yaw; // int8_t:Position yaw: -128: -100%, 127: +100%
 
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT_LEN);
 }
 
 /**
@@ -56,16 +56,16 @@ static inline uint16_t mavlink_msg_position_controller_output_pack(uint8_t syste
  */
 static inline uint16_t mavlink_msg_position_controller_output_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t enabled, int8_t x, int8_t y, int8_t z, int8_t yaw)
 {
-	uint16_t i = 0;
+	mavlink_position_controller_output_t *p = (mavlink_position_controller_output_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT;
 
-	i += put_uint8_t_by_index(enabled, i, msg->payload); // 1: enabled, 0: disabled
-	i += put_int8_t_by_index(x, i, msg->payload); // Position x: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(y, i, msg->payload); // Position y: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(z, i, msg->payload); // Position z: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(yaw, i, msg->payload); // Position yaw: -128: -100%, 127: +100%
+	p->enabled = enabled; // uint8_t:1: enabled, 0: disabled
+	p->x = x; // int8_t:Position x: -128: -100%, 127: +100%
+	p->y = y; // int8_t:Position y: -128: -100%, 127: +100%
+	p->z = z; // int8_t:Position z: -128: -100%, 127: +100%
+	p->yaw = yaw; // int8_t:Position yaw: -128: -100%, 127: +100%
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT_LEN);
 }
 
 /**
@@ -92,12 +92,65 @@ static inline uint16_t mavlink_msg_position_controller_output_encode(uint8_t sys
  * @param yaw Position yaw: -128: -100%, 127: +100%
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
 static inline void mavlink_msg_position_controller_output_send(mavlink_channel_t chan, uint8_t enabled, int8_t x, int8_t y, int8_t z, int8_t yaw)
 {
 	mavlink_message_t msg;
-	mavlink_msg_position_controller_output_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, enabled, x, y, z, yaw);
-	mavlink_send_uart(chan, &msg);
+	uint16_t checksum;
+	mavlink_position_controller_output_t *p = (mavlink_position_controller_output_t *)&msg.payload[0];
+
+	p->enabled = enabled; // uint8_t:1: enabled, 0: disabled
+	p->x = x; // int8_t:Position x: -128: -100%, 127: +100%
+	p->y = y; // int8_t:Position y: -128: -100%, 127: +100%
+	p->z = z; // int8_t:Position z: -128: -100%, 127: +100%
+	p->yaw = yaw; // int8_t:Position yaw: -128: -100%, 127: +100%
+
+	msg.STX = MAVLINK_STX;
+	msg.len = MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT_LEN;
+	msg.msgid = MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT;
+	msg.sysid = mavlink_system.sysid;
+	msg.compid = mavlink_system.compid;
+	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
+	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
+	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_msg(chan, &msg);
+}
+
+#endif
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
+static inline void mavlink_msg_position_controller_output_send(mavlink_channel_t chan, uint8_t enabled, int8_t x, int8_t y, int8_t z, int8_t yaw)
+{
+	mavlink_header_t hdr;
+	mavlink_position_controller_output_t payload;
+	uint16_t checksum;
+	mavlink_position_controller_output_t *p = &payload;
+
+	p->enabled = enabled; // uint8_t:1: enabled, 0: disabled
+	p->x = x; // int8_t:Position x: -128: -100%, 127: +100%
+	p->y = y; // int8_t:Position y: -128: -100%, 127: +100%
+	p->z = z; // int8_t:Position z: -128: -100%, 127: +100%
+	p->yaw = yaw; // int8_t:Position yaw: -128: -100%, 127: +100%
+
+	hdr.STX = MAVLINK_STX;
+	hdr.len = MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT_LEN;
+	hdr.msgid = MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT;
+	hdr.sysid = mavlink_system.sysid;
+	hdr.compid = mavlink_system.compid;
+	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
+	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+
+	crc_init(&checksum);
+	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
+	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
+	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
 }
 
 #endif
@@ -110,7 +163,8 @@ static inline void mavlink_msg_position_controller_output_send(mavlink_channel_t
  */
 static inline uint8_t mavlink_msg_position_controller_output_get_enabled(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload)[0];
+	mavlink_position_controller_output_t *p = (mavlink_position_controller_output_t *)&msg->payload[0];
+	return (uint8_t)(p->enabled);
 }
 
 /**
@@ -120,7 +174,8 @@ static inline uint8_t mavlink_msg_position_controller_output_get_enabled(const m
  */
 static inline int8_t mavlink_msg_position_controller_output_get_x(const mavlink_message_t* msg)
 {
-	return (int8_t)(msg->payload+sizeof(uint8_t))[0];
+	mavlink_position_controller_output_t *p = (mavlink_position_controller_output_t *)&msg->payload[0];
+	return (int8_t)(p->x);
 }
 
 /**
@@ -130,7 +185,8 @@ static inline int8_t mavlink_msg_position_controller_output_get_x(const mavlink_
  */
 static inline int8_t mavlink_msg_position_controller_output_get_y(const mavlink_message_t* msg)
 {
-	return (int8_t)(msg->payload+sizeof(uint8_t)+sizeof(int8_t))[0];
+	mavlink_position_controller_output_t *p = (mavlink_position_controller_output_t *)&msg->payload[0];
+	return (int8_t)(p->y);
 }
 
 /**
@@ -140,7 +196,8 @@ static inline int8_t mavlink_msg_position_controller_output_get_y(const mavlink_
  */
 static inline int8_t mavlink_msg_position_controller_output_get_z(const mavlink_message_t* msg)
 {
-	return (int8_t)(msg->payload+sizeof(uint8_t)+sizeof(int8_t)+sizeof(int8_t))[0];
+	mavlink_position_controller_output_t *p = (mavlink_position_controller_output_t *)&msg->payload[0];
+	return (int8_t)(p->z);
 }
 
 /**
@@ -150,7 +207,8 @@ static inline int8_t mavlink_msg_position_controller_output_get_z(const mavlink_
  */
 static inline int8_t mavlink_msg_position_controller_output_get_yaw(const mavlink_message_t* msg)
 {
-	return (int8_t)(msg->payload+sizeof(uint8_t)+sizeof(int8_t)+sizeof(int8_t)+sizeof(int8_t))[0];
+	mavlink_position_controller_output_t *p = (mavlink_position_controller_output_t *)&msg->payload[0];
+	return (int8_t)(p->yaw);
 }
 
 /**
@@ -161,9 +219,5 @@ static inline int8_t mavlink_msg_position_controller_output_get_yaw(const mavlin
  */
 static inline void mavlink_msg_position_controller_output_decode(const mavlink_message_t* msg, mavlink_position_controller_output_t* position_controller_output)
 {
-	position_controller_output->enabled = mavlink_msg_position_controller_output_get_enabled(msg);
-	position_controller_output->x = mavlink_msg_position_controller_output_get_x(msg);
-	position_controller_output->y = mavlink_msg_position_controller_output_get_y(msg);
-	position_controller_output->z = mavlink_msg_position_controller_output_get_z(msg);
-	position_controller_output->yaw = mavlink_msg_position_controller_output_get_yaw(msg);
+	memcpy( position_controller_output, msg->payload, sizeof(mavlink_position_controller_output_t));
 }

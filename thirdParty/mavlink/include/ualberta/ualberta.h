@@ -1,7 +1,7 @@
 /** @file
  *	@brief MAVLink comm protocol.
  *	@see http://qgroundcontrol.org/mavlink/
- *	 Generated on Wednesday, July 27 2011, 14:17 UTC
+ *	 Generated on Sunday, July 31 2011, 15:12 UTC
  */
 #ifndef UALBERTA_H
 #define UALBERTA_H
@@ -30,7 +30,7 @@ extern "C" {
 
 // ENUM DEFINITIONS
 
-/** @brief  Available autopilot modes for ualberta uav */
+/** @brief Available autopilot modes for ualberta uav */
 enum UALBERTA_AUTOPILOT_MODE
 {
 	MODE_MANUAL_DIRECT=0, /*  */
@@ -41,7 +41,7 @@ enum UALBERTA_AUTOPILOT_MODE
 	UALBERTA_AUTOPILOT_MODE_ENUM_END
 };
 
-/** @brief  Navigation filter mode */
+/** @brief Navigation filter mode */
 enum UALBERTA_NAV_MODE
 {
 	NAV_AHRS_INIT=0,
@@ -51,7 +51,7 @@ enum UALBERTA_NAV_MODE
 	UALBERTA_NAV_MODE_ENUM_END
 };
 
-/** @brief  Mode currently commanded by pilot */
+/** @brief Mode currently commanded by pilot */
 enum UALBERTA_PILOT_MODE
 {
 	PILOT_MANUAL=0, /*  */
@@ -66,13 +66,6 @@ enum UALBERTA_PILOT_MODE
 #include "./mavlink_msg_nav_filter_bias.h"
 #include "./mavlink_msg_radio_calibration.h"
 #include "./mavlink_msg_ualberta_sys_status.h"
-
-
-// MESSAGE LENGTHS
-
-#undef MAVLINK_MESSAGE_LENGTHS
-#define MAVLINK_MESSAGE_LENGTHS { 3, 4, 8, 14, 8, 28, 3, 32, 0, 2, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 19, 2, 23, 21, 0, 37, 26, 101, 26, 16, 32, 32, 37, 32, 11, 17, 17, 16, 18, 36, 4, 4, 2, 2, 4, 2, 2, 3, 14, 12, 18, 16, 8, 27, 25, 0, 0, 0, 0, 0, 5, 5, 26, 16, 36, 5, 6, 0, 0, 21, 0, 0, 0, 18, 20, 20, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 42, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 14, 14, 51 }
-
 #ifdef __cplusplus
 }
 #endif

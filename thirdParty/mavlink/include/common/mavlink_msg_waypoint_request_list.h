@@ -1,6 +1,8 @@
 // MESSAGE WAYPOINT_REQUEST_LIST PACKING
 
 #define MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST 43
+#define MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST_LEN 2
+#define MAVLINK_MSG_43_LEN 2
 
 typedef struct __mavlink_waypoint_request_list_t 
 {
@@ -8,8 +10,6 @@ typedef struct __mavlink_waypoint_request_list_t
 	uint8_t target_component; ///< Component ID
 
 } mavlink_waypoint_request_list_t;
-
-
 
 /**
  * @brief Pack a waypoint_request_list message
@@ -23,13 +23,13 @@ typedef struct __mavlink_waypoint_request_list_t
  */
 static inline uint16_t mavlink_msg_waypoint_request_list_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component)
 {
-	uint16_t i = 0;
+	mavlink_waypoint_request_list_t *p = (mavlink_waypoint_request_list_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST;
 
-	i += put_uint8_t_by_index(target_system, i, msg->payload); // System ID
-	i += put_uint8_t_by_index(target_component, i, msg->payload); // Component ID
+	p->target_system = target_system; // uint8_t:System ID
+	p->target_component = target_component; // uint8_t:Component ID
 
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST_LEN);
 }
 
 /**
@@ -44,13 +44,13 @@ static inline uint16_t mavlink_msg_waypoint_request_list_pack(uint8_t system_id,
  */
 static inline uint16_t mavlink_msg_waypoint_request_list_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component)
 {
-	uint16_t i = 0;
+	mavlink_waypoint_request_list_t *p = (mavlink_waypoint_request_list_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST;
 
-	i += put_uint8_t_by_index(target_system, i, msg->payload); // System ID
-	i += put_uint8_t_by_index(target_component, i, msg->payload); // Component ID
+	p->target_system = target_system; // uint8_t:System ID
+	p->target_component = target_component; // uint8_t:Component ID
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST_LEN);
 }
 
 /**
@@ -74,12 +74,59 @@ static inline uint16_t mavlink_msg_waypoint_request_list_encode(uint8_t system_i
  * @param target_component Component ID
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
 static inline void mavlink_msg_waypoint_request_list_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component)
 {
 	mavlink_message_t msg;
-	mavlink_msg_waypoint_request_list_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, target_system, target_component);
-	mavlink_send_uart(chan, &msg);
+	uint16_t checksum;
+	mavlink_waypoint_request_list_t *p = (mavlink_waypoint_request_list_t *)&msg.payload[0];
+
+	p->target_system = target_system; // uint8_t:System ID
+	p->target_component = target_component; // uint8_t:Component ID
+
+	msg.STX = MAVLINK_STX;
+	msg.len = MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST_LEN;
+	msg.msgid = MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST;
+	msg.sysid = mavlink_system.sysid;
+	msg.compid = mavlink_system.compid;
+	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
+	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
+	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_msg(chan, &msg);
+}
+
+#endif
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
+static inline void mavlink_msg_waypoint_request_list_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component)
+{
+	mavlink_header_t hdr;
+	mavlink_waypoint_request_list_t payload;
+	uint16_t checksum;
+	mavlink_waypoint_request_list_t *p = &payload;
+
+	p->target_system = target_system; // uint8_t:System ID
+	p->target_component = target_component; // uint8_t:Component ID
+
+	hdr.STX = MAVLINK_STX;
+	hdr.len = MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST_LEN;
+	hdr.msgid = MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST;
+	hdr.sysid = mavlink_system.sysid;
+	hdr.compid = mavlink_system.compid;
+	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
+	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+
+	crc_init(&checksum);
+	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
+	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
+	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
 }
 
 #endif
@@ -92,7 +139,8 @@ static inline void mavlink_msg_waypoint_request_list_send(mavlink_channel_t chan
  */
 static inline uint8_t mavlink_msg_waypoint_request_list_get_target_system(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload)[0];
+	mavlink_waypoint_request_list_t *p = (mavlink_waypoint_request_list_t *)&msg->payload[0];
+	return (uint8_t)(p->target_system);
 }
 
 /**
@@ -102,7 +150,8 @@ static inline uint8_t mavlink_msg_waypoint_request_list_get_target_system(const 
  */
 static inline uint8_t mavlink_msg_waypoint_request_list_get_target_component(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload+sizeof(uint8_t))[0];
+	mavlink_waypoint_request_list_t *p = (mavlink_waypoint_request_list_t *)&msg->payload[0];
+	return (uint8_t)(p->target_component);
 }
 
 /**
@@ -113,6 +162,5 @@ static inline uint8_t mavlink_msg_waypoint_request_list_get_target_component(con
  */
 static inline void mavlink_msg_waypoint_request_list_decode(const mavlink_message_t* msg, mavlink_waypoint_request_list_t* waypoint_request_list)
 {
-	waypoint_request_list->target_system = mavlink_msg_waypoint_request_list_get_target_system(msg);
-	waypoint_request_list->target_component = mavlink_msg_waypoint_request_list_get_target_component(msg);
+	memcpy( waypoint_request_list, msg->payload, sizeof(mavlink_waypoint_request_list_t));
 }
