@@ -63,6 +63,41 @@ MAVLinkXMLParserV10::~MAVLinkXMLParserV10()
 }
 
 /**
+ *
+ *  CALCULATE THE CHECKSUM
+ *
+ */
+
+#define X25_INIT_CRC 0xffff
+#define X25_VALIDATE_CRC 0xf0b8
+
+/**
+ * The checksum function adds the hash of one char at a time to the
+ * 16 bit checksum (uint16_t).
+ *
+ * @param data new char to hash
+ * @param crcAccum the already accumulated checksum
+ **/
+void MAVLinkXMLParserV10::crcAccumulate(uint8_t data, uint16_t *crcAccum)
+{
+        /*Accumulate one byte of data into the CRC*/
+        uint8_t tmp;
+
+        tmp=data ^ (uint8_t)(*crcAccum &0xff);
+        tmp^= (tmp<<4);
+        *crcAccum = (*crcAccum>>8) ^ (tmp<<8) ^ (tmp <<3) ^ (tmp>>4);
+}
+
+/**
+ * @param crcAccum the 16 bit X.25 CRC
+ */
+void MAVLinkXMLParserV10::crcInit(uint16_t* crcAccum)
+{
+        *crcAccum = X25_INIT_CRC;
+}
+
+
+/**
  * Generate C-code (C-89 compliant) out of the XML protocol specs.
  */
 bool MAVLinkXMLParserV10::generate()
@@ -170,26 +205,6 @@ bool MAVLinkXMLParserV10::generate()
                                 // Generate and write
                                 includeParser.generate();
                                 mainHeader += "\n#include \"../" + pureIncludeFileName + "/" + pureIncludeFileName + ".h\"\n";
-
-
-                                // OLD MODE: MERGE BOTH FILES
-                                //                                        const QString instanceText(QString::fromUtf8(file.readAll()));
-                                //                                        includeDoc.setContent(instanceText);
-                                //                                // Get all messages
-                                //                                QDomNode in = includeDoc.documentElement().firstChild();
-                                //                                QDomElement ie = in.toElement();
-                                //                                if (!ie.isNull())
-                                //                                {
-                                //                                    if (ie.tagName() == "messages" || ie.tagName() == "include")
-                                //                                    {
-                                //                                        QDomNode ref = n.parentNode().insertAfter(in, n);
-                                //                                        if (ref.isNull())
-                                //                                        {
-                                //                                            emit parseState(QString("<font color=\"red\">ERROR: Inclusion failed: XML syntax error in file %1. Wrong/misspelled XML?\nAbort.</font>").arg(fileName));
-                                //                                            return false;
-                                //                                        }
-                                //                                    }
-                                //                                }
 
                                 emit parseState(QString("<font color=\"green\">End of inclusion from file: %1</font>").arg(incFileName));
                             }
@@ -311,11 +326,27 @@ bool MAVLinkXMLParserV10::generate()
                                                         QDomElement pp2 = pp.toElement();
                                                         if (pp2.isText() || pp2.isCDATASection())
                                                         {
-                                                            fieldComment +=  pp2.nodeValue() + sep;
+                                                            // If this is the only field, don't add the separator
+                                                            if (pp.nextSibling().isNull())
+                                                            {
+                                                                fieldComment +=  pp2.nodeValue();
+                                                            }
+                                                            else
+                                                            {
+                                                                fieldComment +=  pp2.nodeValue() + sep;
+                                                            }
                                                         }
                                                         else if (pp2.isElement())
                                                         {
-                                                            fieldComment += pp2.text() + sep;
+                                                            // If this is the only field, don't add the separator
+                                                            if (pp.nextSibling().isNull())
+                                                            {
+                                                                fieldComment += pp2.text();
+                                                            }
+                                                            else
+                                                            {
+                                                                fieldComment += pp2.text() + sep;
+                                                            }
                                                         }
                                                         pp = pp.nextSibling();
                                                     }
@@ -430,6 +461,13 @@ bool MAVLinkXMLParserV10::generate()
 
                                         // Get the message fields
                                         QDomNode f = e.firstChild();
+
+                                        // The field types and order are hashed with a checksum
+
+                                        // Initialize CRC
+                                        uint16_t fieldHash;
+                                        crcInit(&fieldHash);
+
                                         while (!f.isNull())
                                         {
                                             QDomElement e2 = f.toElement();
@@ -483,68 +521,17 @@ bool MAVLinkXMLParserV10::generate()
                                                     }
                                                 }
 
-                                                // Array handling is different from simple types
+                                                // ARRAYS are not longer supported - leave error message in here to inform users!
                                                 else if (fieldType.startsWith("array"))
                                                 {
-                                                    int arrayLength = QString(fieldType.split("[").at(1).split("]").first()).toInt();
-                                                    QString arrayType = fieldType.split("[").first();
-                                                    if (arrayType.contains("array")) calculatedLength += arrayLength; else
-                                                                                                                if (arrayType.contains("char")) calculatedLength += arrayLength; else
-                                                                                                                        if (arrayType.contains("int8")) calculatedLength += arrayLength; else
-                                                                                                                                if (arrayType.contains("int16")) calculatedLength += arrayLength*2; else
-                                                                                                                                        if (arrayType.contains("int32")) calculatedLength += arrayLength*4; else
-                                                                                                                                                if (arrayType.contains("int64")) calculatedLength += arrayLength*8; else
-                                                                                                                                                        if (arrayType == "float") calculatedLength += arrayLength*4; else {
-                                                                                                                                                                emit parseState(tr("<font color=\"red\">ERROR: In message %1 inavlid array type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, arrayType));
-                                                                                                                                                                return false;
-                                                                                                                                                        }
-                                                    packParameters += QString(", const ") + QString("int8_t*") + " " + fieldName;
-                                                    packArguments += ", " + messageName + "->" + fieldName;
-
-                                                    // Add field to C structure
-                                                    cStructLines += QString("\t%1 %2[%3]; ///< %4\n").arg("int8_t", fieldName, QString::number(arrayLength), fieldText);
-                                                    // Add pack line to message_xx_pack function
-                                                                                                        //                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); // %4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
-                                                    packLines += QString("\tmemcpy( p->%2, %2, sizeof(p->%2)); // %1[%3]:%4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
-                                                    // Add decode function for this type
-                                                    decodeLines += QString("\n\tmavlink_msg_%1_get_%2(msg, %1->%2);").arg(messageName, fieldName);
-
-                                                    if (fieldOffset != "") { // does not use the number - always moves up one slot
-                                                        QStringList itemList;
-                                                        // Swap field in C structure
-                                                        itemList = cStructLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
-                                                        cStructLines = itemList.join("\n") + "\n";
-
-                                                        // Swap line in message_xx_pack function
-                                                        itemList = packLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
-                                                        packLines = itemList.join("\n") + "\n";
-
-                                                        // Swap line in decode function for this type
-                                                        itemList = decodeLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
-                                                        decodeLines = itemList.join("\n") + "\n";
-                                                    }
-
-                                                    arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
+                                                    emit parseState(tr("<font color=\"red\">ERROR: In message %1 deprecated type <array> used near line %2 of file %3. Please change from array[size] to uint8_t[size] to get the same behaviour.\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName));
+                                                    return false;
                                                 }
                                                 else if (fieldType.startsWith("string"))
                                                 {
                                                     int arrayLength = QString(fieldType.split("[").at(1).split("]").first()).toInt();
+                                                    // String array is always unsigned char, so bytes
                                                     calculatedLength += arrayLength;
-                                                    QString arrayType = fieldType.split("[").first();
-                                                    if (arrayType.contains("string")) calculatedLength += arrayLength; else
-                                                                                                                if (arrayType.contains("array")) calculatedLength += arrayLength; else
-                                                                                                                        if (arrayType.contains("char")) calculatedLength += arrayLength; else
-                                                                                                                                if (arrayType.contains("int8")) calculatedLength += arrayLength; else
-                                                                                                                                        if (arrayType.contains("int16")) calculatedLength += arrayLength*2; else
-                                                                                                                                                if (arrayType.contains("int32")) calculatedLength += arrayLength*4; else
-                                                                                                                                                        if (arrayType.contains("int64")) calculatedLength += arrayLength*8; else
-                                                                                                                                                                if (arrayType == "float") calculatedLength += arrayLength*4; else {
-                                                                                                                                                                        emit parseState(tr("<font color=\"red\">ERROR: In message %1 inavlid array type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, arrayType));
-                                                                                                                                                                        return false;
-                                                                                                                                                                }
                                                     packParameters += QString(", const ") + QString("char*") + " " + fieldName;
                                                     packArguments += ", " + messageName + "->" + fieldName;
 
@@ -557,21 +544,22 @@ bool MAVLinkXMLParserV10::generate()
                                                     decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
                                                     arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
 
-                                                    if (fieldOffset != "") { // does not use the number - always moves up one slot
+                                                    if (fieldOffset != "")
+                                                    { // does not use the number - always moves up one slot
                                                         QStringList itemList;
                                                         // Swap field in C structure
                                                         itemList = cStructLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         cStructLines = itemList.join("\n") + "\n";
 
                                                         // Swap line in message_xx_pack function
                                                         itemList = packLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         packLines = itemList.join("\n") + "\n";
 
                                                         // Swap line in decode function for this type
                                                         itemList = decodeLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         decodeLines = itemList.join("\n") + "\n";
                                                     }
                                                 }
@@ -580,16 +568,39 @@ bool MAVLinkXMLParserV10::generate()
                                                 {
                                                     int arrayLength = QString(fieldType.split("[").at(1).split("]").first()).toInt();
                                                     QString arrayType = fieldType.split("[").first();
-                                                    if (arrayType.contains("array")) calculatedLength += arrayLength; else
-                                                                                                                if (arrayType.contains("char")) calculatedLength += arrayLength; else
-                                                                                                                        if (arrayType.contains("int8")) calculatedLength += arrayLength; else
-                                                                                                                                if (arrayType.contains("int16")) calculatedLength += arrayLength*2; else
-                                                                                                                                        if (arrayType.contains("int32")) calculatedLength += arrayLength*4; else
-                                                                                                                                                if (arrayType.contains("int64")) calculatedLength += arrayLength*8; else
-                                                                                                                                                        if (arrayType == "float") calculatedLength += arrayLength*4; else {
-                                                                                                                                                                emit parseState(tr("<font color=\"red\">ERROR: In message %1 inavlid array type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, arrayType));
-                                                                                                                                                                return false;
-                                                                                                                                                        }
+                                                    if (arrayType.contains("array"))
+                                                    {
+                                                        calculatedLength += arrayLength;
+                                                    }
+                                                    else if (arrayType.contains("char"))
+                                                    {
+                                                        calculatedLength += arrayLength;
+                                                    }
+                                                    else if (arrayType.contains("int8"))
+                                                    {
+                                                        calculatedLength += arrayLength;
+                                                    }
+                                                    else if (arrayType.contains("int16"))
+                                                    {
+                                                        calculatedLength += arrayLength*2;
+                                                    }
+                                                    else if (arrayType.contains("int32"))
+                                                    {
+                                                        calculatedLength += arrayLength*4;
+                                                    }
+                                                    else if (arrayType.contains("int64"))
+                                                    {
+                                                        calculatedLength += arrayLength*8;
+                                                    }
+                                                    else if (arrayType == "float")
+                                                    {
+                                                        calculatedLength += arrayLength*4;
+                                                    }
+                                                    else
+                                                    {
+                                                        emit parseState(tr("<font color=\"red\">ERROR: In message %1 invalid array type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, arrayType));
+                                                        return false;
+                                                    }
                                                     packParameters += QString(", const ") + arrayType + "* " + fieldName;
                                                     packArguments += ", " + messageName + "->" + fieldName;
 
@@ -601,21 +612,22 @@ bool MAVLinkXMLParserV10::generate()
                                                     // Add decode function for this type
                                                     decodeLines += QString("\n\tmavlink_msg_%1_get_%2(msg, %1->%2);").arg(messageName, fieldName);
 
-                                                    if (fieldOffset != "") { // does not use the number - always moves up one slot
+                                                    if (fieldOffset != "")
+                                                    { // does not use the number - always moves up one slot
                                                         QStringList itemList;
                                                         // Swap field in C structure
                                                         itemList = cStructLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         cStructLines = itemList.join("\n") + "\n";
 
                                                         // Swap line in message_xx_pack function
                                                         itemList = packLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         packLines = itemList.join("\n") + "\n";
 
                                                         // Swap line in decode function for this type
                                                         itemList = decodeLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         decodeLines = itemList.join("\n") + "\n";
                                                     }
 
@@ -662,17 +674,35 @@ bool MAVLinkXMLParserV10::generate()
                                                         if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
                                                         decodeLines = itemList.join("\n") + "\n";
                                                     }
-
-                                                    if (fieldType.contains("array")) calculatedLength += 1; else
-                                                                                                                if (fieldType.contains("char")) calculatedLength += 1; else
-                                                                                                                        if (fieldType.contains("int8")) calculatedLength += 1; else
-                                                                                                                                if (fieldType.contains("int16")) calculatedLength += 2; else
-                                                                                                                                        if (fieldType.contains("int32")) calculatedLength += 4; else
-                                                                                                                                                if (fieldType.contains("int64")) calculatedLength += 8; else
-                                                                                                                                                        if (fieldType == "float") calculatedLength += 4; else {
-                                                                                                                                                                emit parseState(tr("<font color=\"red\">ERROR: In message %1 inavlid type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, fieldType));
-                                                                                                                                                                return false;
-                                                                                                                                                        }
+                                                    if (fieldType.contains("char"))
+                                                    {
+                                                        calculatedLength += 1;
+                                                    }
+                                                    else if (fieldType.contains("int8"))
+                                                    {
+                                                        calculatedLength += 1;
+                                                    }
+                                                    else if (fieldType.contains("int16"))
+                                                    {
+                                                        calculatedLength += 2;
+                                                    }
+                                                    else if (fieldType.contains("int32"))
+                                                    {
+                                                        calculatedLength += 4;
+                                                    }
+                                                    else if (fieldType.contains("int64"))
+                                                    {
+                                                        calculatedLength += 8;
+                                                    }
+                                                    else if (fieldType == "float")
+                                                    {
+                                                        calculatedLength += 4;
+                                                    }
+                                                    else
+                                                    {
+                                                        emit parseState(tr("<font color=\"red\">ERROR: In message %1 inavlid type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, fieldType));
+                                                        return false;
+                                                    }
                                                 }
 
 

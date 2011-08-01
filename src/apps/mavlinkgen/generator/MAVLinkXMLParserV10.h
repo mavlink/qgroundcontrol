@@ -58,6 +58,12 @@ signals:
     void parseState(QString message);
 
 protected:
+    /** @brief Accumulate the X.25 CRC by adding one char at a time. */
+    void crcAccumulate(uint8_t data, uint16_t *crcAccum);
+
+    /** @brief Initialize the buffer for the X.25 CRC */
+    void crcInit(uint16_t* crcAccum);
+
     QDomDocument* doc;
     QString outputDirName;
     QString fileName;
