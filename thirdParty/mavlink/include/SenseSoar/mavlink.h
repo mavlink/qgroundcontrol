@@ -6,6 +6,6 @@
 #ifndef MAVLINK_H
 #define MAVLINK_H
 
-#include "common.h"
+#include "SenseSoar.h"
 
 #endif
