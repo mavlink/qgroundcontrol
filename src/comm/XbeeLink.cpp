@@ -194,7 +194,7 @@ bool XbeeLink::disconnect()
 
 	if(this->m_xbeeCon)
 	{
-		xbee_endcon(this->m_xbeeCon);
+		xbee_end();
 		this->m_xbeeCon = NULL;
 	}
 	this->m_connected = false;
