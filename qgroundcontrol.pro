@@ -118,6 +118,16 @@ contains(MAVLINK_CONF, ardupilotmega) {
     INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/ardupilotmega
     DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
 }
+contains(MAVLINK_CONF, senseSoar) { 
+    # Remove the default set - it is included anyway
+    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
+    
+    # SENSESOAR SPECIAL MESSAGES
+    INCLUDEPATH += $$BASEDIR/../mavlink/include/SenseSoar
+    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/SenseSoar
+    DEFINES += QGC_USE_SENSESOAR_MESSAGES
+}
 
 
 # Include general settings for QGroundControl

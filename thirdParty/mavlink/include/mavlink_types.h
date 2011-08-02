@@ -14,6 +14,7 @@ enum MAV_CLASS
 	MAV_CLASS_GENERIC_MISSION_NAVIGATION_ONLY = 6, ///< Generic autopilot supporting waypoints and other simple navigation commands
 	MAV_CLASS_GENERIC_MISSION_FULL = 7,            ///< Generic autopilot supporting the full mission command set
 	MAV_CLASS_NONE = 8,           ///< No valid autopilot
+	MAV_CLASS_SENSESOAR = 9,           ///< senseSoar autopilot
 	MAV_CLASS_NB                  ///< Number of autopilot classes
 };
 
@@ -128,7 +129,8 @@ enum MAV_AUTOPILOT_TYPE
     MAV_AUTOPILOT_PIXHAWK = 1,
     MAV_AUTOPILOT_SLUGS = 2,
     MAV_AUTOPILOT_ARDUPILOTMEGA = 3,
-	MAV_AUTOPILOT_NONE = 4
+	MAV_AUTOPILOT_NONE = 4,
+	MAV_AUTOPILOT_SENSESOAR = 5
 };
 
 enum MAV_COMPONENT
