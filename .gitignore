@@ -33,7 +33,7 @@ user_config.pri
 
 *.ncb
 *.vcproj
-*.vcxpproj*
+*.vcxproj*
 *.sdf
 *.ipch
 *.pdb
