@@ -75,6 +75,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "SlugsPadCameraControl.h"
 #include "UASControlParameters.h"
+#include "QGCFlightGearLink.h"
 
 class QGCMapTool;
 
@@ -445,6 +446,7 @@ protected:
     QGC_MAINWINDOW_STYLE currentStyle;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
+    QGCFlightGearLink* fgLink;
 
 private:
     Ui::MainWindow ui;

@@ -34,19 +34,20 @@ This file is part of the QGROUNDCONTROL project
 #include <QMutexLocker>
 #include <iostream>
 #include "QGCFlightGearLink.h"
-#include "LinkManager.h"
 #include "QGC.h"
 #include <QHostInfo>
-//#include <netinet/in.h>
 
 QGCFlightGearLink::QGCFlightGearLink(QHostAddress host, quint16 port)
 {
     this->host = host;
     this->port = port;
     this->connectState = false;
+
     // Set unique ID and add link to the list of links
-    this->name = tr("FlightGear Link (port:%1)").arg(5401);
-    LinkManager::instance()->add(this);
+    this->name = tr("FlightGear Link (port:%1)").arg(port);
+    setRemoteHost(QString("127.0.0.1:%1").arg(port));
+    connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
+    refreshTimer.start(20); // 50 Hz UAV -> Simulation update rate
 }
 
 QGCFlightGearLink::~QGCFlightGearLink()
@@ -70,8 +71,8 @@ void QGCFlightGearLink::run()
 void QGCFlightGearLink::setPort(int port)
 {
     this->port = port;
-    disconnect();
-    connect();
+    disconnectSimulation();
+    connectSimulation();
 }
 
 /**
@@ -100,7 +101,7 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
             currentHost = address;
             //qDebug() << "Address:" << address.toString();
             // Set port according to user input
-            currentPort = host.split(":");
+            currentPort = host.split(":").last().toInt();
         }
     }
     else
@@ -114,12 +115,19 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
     }
 }
 
+void QGCFlightGearLink::updateGlobalPosition(quint64 time, double lat, double lon, double alt)
+{
+
+}
+
+void QGCFlightGearLink::sendUAVUpdate()
+{
+    QString state("");
+    writeBytes(state.toAscii().constData(), state.length());
+}
+
 void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
 {
-    // Broadcast to all connected systems
-    for (int h = 0; h < hosts.size(); h++)
-    {
-        quint16 currentPort = ports.at(h);
 //#define QGCFlightGearLink_DEBUG
 #ifdef QGCFlightGearLink_DEBUG
         QString bytes;
@@ -142,7 +150,6 @@ void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
         qDebug() << "ASCII:" << ascii;
 #endif
         socket->writeDatagram(data, size, currentHost, currentPort);
-    }
 }
 
 /**
@@ -164,7 +171,10 @@ void QGCFlightGearLink::readBytes()
 
     // FIXME TODO Check if this method is better than retrieving the data by individual processes
     QByteArray b(data, s);
-    emit bytesReceived(this, b);
+    //emit bytesReceived(this, b);
+	
+	// Print string
+	qDebug() << "FG LINK GOT:" << QString(b);
 
 //    // Echo data for debugging purposes
 //    std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
@@ -175,21 +185,6 @@ void QGCFlightGearLink::readBytes()
 //        fprintf(stderr,"%02x ", v);
 //    }
 //    std::cerr << std::endl;
-
-
-    // Add host to broadcast list if not yet present
-    if (!hosts.contains(sender))
-    {
-        hosts.append(sender);
-        ports.append(senderPort);
-        //        ports->insert(sender, senderPort);
-    }
-    else
-    {
-        int index = hosts.indexOf(sender);
-        ports.replace(index, senderPort);
-    }
-
 }
 
 
@@ -208,15 +203,15 @@ qint64 QGCFlightGearLink::bytesAvailable()
  *
  * @return True if connection has been disconnected, false if connection couldn't be disconnected.
  **/
-bool QGCFlightGearLink::disconnect()
+bool QGCFlightGearLink::disconnectSimulation()
 {
     delete socket;
     socket = NULL;
 
     connectState = false;
 
-    emit disconnected();
-    emit connected(false);
+    emit flightGearDisconnected();
+    emit flightGearConnected(false);
     return !connectState;
 }
 
@@ -225,7 +220,7 @@ bool QGCFlightGearLink::disconnect()
  *
  * @return True if connection has been established, false if connection couldn't be established.
  **/
-bool QGCFlightGearLink::connect()
+bool QGCFlightGearLink::connectSimulation()
 {
     socket = new QUdpSocket(this);
 
@@ -269,9 +264,9 @@ bool QGCFlightGearLink::connect()
     //QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
-    emit connected(connectState);
+    emit flightGearConnected(connectState);
     if (connectState) {
-        emit connected();
+        emit flightGearConnected();
         connectionStartTime = QGC::groundTimeUsecs()/1000;
     }
 
@@ -297,5 +292,5 @@ QString QGCFlightGearLink::getName()
 void QGCFlightGearLink::setName(QString name)
 {
     this->name = name;
-    emit nameChanged(this->name);
+//    emit nameChanged(this->name);
 }
