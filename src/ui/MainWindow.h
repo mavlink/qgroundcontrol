@@ -49,7 +49,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASListWidget.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
-#include "AS4Protocol.h"
 #include "ObjectDetectionView.h"
 #include "HUD.h"
 #include "JoystickWidget.h"
@@ -368,7 +367,6 @@ protected:
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
-    AS4Protocol* as4link;
 
     MAVLinkSimulationLink* simulationLink;
     LinkInterface* udpLink;
