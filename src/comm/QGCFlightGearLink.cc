@@ -37,15 +37,16 @@ This file is part of the QGROUNDCONTROL project
 #include "QGC.h"
 #include <QHostInfo>
 
-QGCFlightGearLink::QGCFlightGearLink(QHostAddress host, quint16 port)
+QGCFlightGearLink::QGCFlightGearLink(QString remoteHost, QHostAddress host, quint16 port)
 {
     this->host = host;
     this->port = port;
     this->connectState = false;
+    this->currentPort = 49000;
 
     // Set unique ID and add link to the list of links
     this->name = tr("FlightGear Link (port:%1)").arg(port);
-    setRemoteHost(QString("127.0.0.1:%1").arg(port));
+    setRemoteHost(remoteHost);
     connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
     refreshTimer.start(20); // 50 Hz UAV -> Simulation update rate
 }
@@ -122,7 +123,17 @@ void QGCFlightGearLink::updateGlobalPosition(quint64 time, double lat, double lo
 
 void QGCFlightGearLink::sendUAVUpdate()
 {
-    QString state("");
+    // 37.613548,-122.357246,-9999.000000,0.000000,0.424000,297.899994,0.000000\n
+    // magnetos,aileron,elevator,rudder,throttle\n
+
+    float magnetos = 3.0f;
+    float aileron = 0.0f;
+    float elevator = 0.0f;
+    float rudder = 0.0f;
+    float throttle = 90.0f;
+
+    QString state("%1,%2,%3,%4,%5\n");
+    state = state.arg(magnetos).arg(aileron).arg(elevator).arg(rudder).arg(throttle);
     writeBytes(state.toAscii().constData(), state.length());
 }
 
