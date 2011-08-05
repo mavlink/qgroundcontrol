@@ -46,7 +46,7 @@ class QGCFlightGearLink : public QThread
     //Q_INTERFACES(QGCFlightGearLinkInterface:LinkInterface)
 
 public:
-    QGCFlightGearLink(QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCFlightGearLink(QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
     ~QGCFlightGearLink();
 
     bool isConnected();

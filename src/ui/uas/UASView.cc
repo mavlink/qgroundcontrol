@@ -602,6 +602,8 @@ void UASView::refresh()
             m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(warnColor.name()));
             QString style = QString("QGroupBox { border-radius: 12px; padding: 0px; margin: 0px; border: 2px solid %1; background-color: %2; }").arg(borderColor, warnColor.name());
             m_ui->uasViewFrame->setStyleSheet(style);
+
+            refreshTimer->setInterval(errorUpdateInterval);
         }
         iconIsRed = !iconIsRed;
     } else {
@@ -609,10 +611,11 @@ void UASView::refresh()
         {
             // Fade heartbeat icon
             // Make color darker
-            heartbeatColor = heartbeatColor.darker(150);
+            heartbeatColor = heartbeatColor.darker(210);
 
             //m_ui->heartbeatIcon->setAutoFillBackground(true);
             m_ui->heartbeatIcon->setStyleSheet(colorstyle.arg(heartbeatColor.name()));
+            refreshTimer->setInterval(updateInterval);
         }
     }
     //setUpdatesEnabled(true);

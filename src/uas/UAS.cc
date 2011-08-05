@@ -74,7 +74,9 @@ statusTimeout(new QTimer(this)),
 paramsOnceRequested(false),
 airframe(0),
 attitudeKnown(false),
-paramManager(NULL)
+paramManager(NULL),
+attitudeStamped(true),
+lastAttitude(0)
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
@@ -187,7 +189,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
     //    qDebug() << "UAS RECEIVED from" << message.sysid << "component" << message.compid << "msg id" << message.msgid << "seq no" << message.seq;
 
-    if (message.sysid == uasId)
+    // Only accept messages from this system (condition 1)
+    // and only then if a) attitudeStamped is disabled OR b) attitudeStamped is enabled
+    // and we already got one attitude packet
+    if (message.sysid == uasId && (!attitudeStamped || (attitudeStamped && (lastAttitude != 0)) || message.msgid == MAVLINK_MSG_ID_ATTITUDE))
     {
         QString uasState;
         QString stateDescription;
@@ -457,7 +462,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
-                quint64 time = getUnixTime(attitude.usec);
+                quint64 time = getUnixReferenceTime(attitude.usec);
+                lastAttitude = time;
                 roll = QGC::limitAngleToPMPIf(attitude.roll);
                 pitch = QGC::limitAngleToPMPIf(attitude.pitch);
                 yaw = QGC::limitAngleToPMPIf(attitude.yaw);
@@ -1252,8 +1258,65 @@ void UAS::startPressureCalibration()
     sendMessage(msg);
 }
 
+quint64 UAS::getUnixReferenceTime(quint64 time)
+{
+    // Same as getUnixTime, but does not react to attitudeStamped mode
+    if (time == 0)
+    {
+        //        qDebug() << "XNEW time:" <<QGC::groundTimeMilliseconds();
+        return QGC::groundTimeMilliseconds();
+    }
+    // Check if time is smaller than 40 years,
+    // assuming no system without Unix timestamp
+    // runs longer than 40 years continuously without
+    // reboot. In worst case this will add/subtract the
+    // communication delay between GCS and MAV,
+    // it will never alter the timestamp in a safety
+    // critical way.
+    //
+    // Calculation:
+    // 40 years
+    // 365 days
+    // 24 hours
+    // 60 minutes
+    // 60 seconds
+    // 1000 milliseconds
+    // 1000 microseconds
+#ifndef _MSC_VER
+    else if (time < 1261440000000000LLU)
+#else
+        else if (time < 1261440000000000)
+#endif
+        {
+        //        qDebug() << "GEN time:" << time/1000 + onboardTimeOffset;
+        if (onboardTimeOffset == 0)
+        {
+            onboardTimeOffset = QGC::groundTimeMilliseconds() - time/1000;
+        }
+        return time/1000 + onboardTimeOffset;
+    }
+    else
+    {
+        // Time is not zero and larger than 40 years -> has to be
+        // a Unix epoch timestamp. Do nothing.
+        return time/1000;
+    }
+}
+
+/**
+ * @warning If attitudeStamped is enabled, this function will not actually return the precise time stamp
+ *          of this measurement augmented to UNIX time, but will MOVE the timestamp IN TIME to match
+ *          the last measured attitude. There is no reason why one would want this, except for
+ *          system setups where the onboard clock is not present or broken and datasets should
+ *          be collected that are still roughly synchronized. PLEASE NOTE THAT ENABLING ATTITUDE STAMPED
+ *          RUINS THE SCIENTIFIC NATURE OF THE CORRECT LOGGING FUNCTIONS OF QGROUNDCONTROL!
+ */
 quint64 UAS::getUnixTime(quint64 time)
 {
+    if (attitudeStamped)
+    {
+        return lastAttitude;
+    }
     if (time == 0)
     {
         //        qDebug() << "XNEW time:" <<QGC::groundTimeMilliseconds();
