@@ -9,8 +9,8 @@ typedef struct __mavlink_watchdog_process_info_t
 	int32_t timeout; ///< Timeout (seconds)
 	uint16_t watchdog_id; ///< Watchdog ID
 	uint16_t process_id; ///< Process ID
-	uint8_t name[100]; ///< Process name
-	uint8_t arguments[147]; ///< Process arguments
+	char name[100]; ///< Process name
+	char arguments[147]; ///< Process arguments
 
 } mavlink_watchdog_process_info_t;
 #define MAVLINK_MSG_WATCHDOG_PROCESS_INFO_FIELD_NAME_LEN 100
@@ -29,15 +29,15 @@ typedef struct __mavlink_watchdog_process_info_t
  * @param timeout Timeout (seconds)
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_watchdog_process_info_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint16_t watchdog_id, uint16_t process_id, const uint8_t* name, const uint8_t* arguments, int32_t timeout)
+static inline uint16_t mavlink_msg_watchdog_process_info_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint16_t watchdog_id, uint16_t process_id, const char* name, const char* arguments, int32_t timeout)
 {
 	mavlink_watchdog_process_info_t *p = (mavlink_watchdog_process_info_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO;
 
 	p->watchdog_id = watchdog_id; // uint16_t:Watchdog ID
 	p->process_id = process_id; // uint16_t:Process ID
-	memcpy(p->name, name, sizeof(p->name)); // uint8_t[100]:Process name
-	memcpy(p->arguments, arguments, sizeof(p->arguments)); // uint8_t[147]:Process arguments
+	memcpy(p->name, name, sizeof(p->name)); // char[100]:Process name
+	memcpy(p->arguments, arguments, sizeof(p->arguments)); // char[147]:Process arguments
 	p->timeout = timeout; // int32_t:Timeout (seconds)
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO_LEN);
@@ -56,15 +56,15 @@ static inline uint16_t mavlink_msg_watchdog_process_info_pack(uint8_t system_id,
  * @param timeout Timeout (seconds)
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_watchdog_process_info_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint16_t watchdog_id, uint16_t process_id, const uint8_t* name, const uint8_t* arguments, int32_t timeout)
+static inline uint16_t mavlink_msg_watchdog_process_info_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint16_t watchdog_id, uint16_t process_id, const char* name, const char* arguments, int32_t timeout)
 {
 	mavlink_watchdog_process_info_t *p = (mavlink_watchdog_process_info_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO;
 
 	p->watchdog_id = watchdog_id; // uint16_t:Watchdog ID
 	p->process_id = process_id; // uint16_t:Process ID
-	memcpy(p->name, name, sizeof(p->name)); // uint8_t[100]:Process name
-	memcpy(p->arguments, arguments, sizeof(p->arguments)); // uint8_t[147]:Process arguments
+	memcpy(p->name, name, sizeof(p->name)); // char[100]:Process name
+	memcpy(p->arguments, arguments, sizeof(p->arguments)); // char[147]:Process arguments
 	p->timeout = timeout; // int32_t:Timeout (seconds)
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_INFO_LEN);
@@ -96,7 +96,7 @@ static inline uint16_t mavlink_msg_watchdog_process_info_encode(uint8_t system_i
 
 
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_watchdog_process_info_send(mavlink_channel_t chan, uint16_t watchdog_id, uint16_t process_id, const uint8_t* name, const uint8_t* arguments, int32_t timeout)
+static inline void mavlink_msg_watchdog_process_info_send(mavlink_channel_t chan, uint16_t watchdog_id, uint16_t process_id, const char* name, const char* arguments, int32_t timeout)
 {
 	mavlink_header_t hdr;
 	mavlink_watchdog_process_info_t payload;
@@ -105,8 +105,8 @@ static inline void mavlink_msg_watchdog_process_info_send(mavlink_channel_t chan
 
 	p->watchdog_id = watchdog_id; // uint16_t:Watchdog ID
 	p->process_id = process_id; // uint16_t:Process ID
-	memcpy(p->name, name, sizeof(p->name)); // uint8_t[100]:Process name
-	memcpy(p->arguments, arguments, sizeof(p->arguments)); // uint8_t[147]:Process arguments
+	memcpy(p->name, name, sizeof(p->name)); // char[100]:Process name
+	memcpy(p->arguments, arguments, sizeof(p->arguments)); // char[147]:Process arguments
 	p->timeout = timeout; // int32_t:Timeout (seconds)
 
 	hdr.STX = MAVLINK_STX;
@@ -158,7 +158,7 @@ static inline uint16_t mavlink_msg_watchdog_process_info_get_process_id(const ma
  *
  * @return Process name
  */
-static inline uint16_t mavlink_msg_watchdog_process_info_get_name(const mavlink_message_t* msg, uint8_t* name)
+static inline uint16_t mavlink_msg_watchdog_process_info_get_name(const mavlink_message_t* msg, char* name)
 {
 	mavlink_watchdog_process_info_t *p = (mavlink_watchdog_process_info_t *)&msg->payload[0];
 
@@ -171,7 +171,7 @@ static inline uint16_t mavlink_msg_watchdog_process_info_get_name(const mavlink_
  *
  * @return Process arguments
  */
-static inline uint16_t mavlink_msg_watchdog_process_info_get_arguments(const mavlink_message_t* msg, uint8_t* arguments)
+static inline uint16_t mavlink_msg_watchdog_process_info_get_arguments(const mavlink_message_t* msg, char* arguments)
 {
 	mavlink_watchdog_process_info_t *p = (mavlink_watchdog_process_info_t *)&msg->payload[0];
 

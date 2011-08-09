@@ -16,7 +16,7 @@ typedef struct __mavlink_point_of_interest_connection_t
 	uint8_t type; ///< 0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
 	uint8_t color; ///< 0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
 	uint8_t coordinate_system; ///< 0: global, 1:local
-	uint8_t name[26]; ///< POI connection name
+	char name[26]; ///< POI connection name
 
 } mavlink_point_of_interest_connection_t;
 #define MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN 26
@@ -40,7 +40,7 @@ typedef struct __mavlink_point_of_interest_connection_t
  * @param name POI connection name
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const uint8_t* name)
+static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char* name)
 {
 	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
@@ -55,7 +55,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t sys
 	p->xp2 = xp2; // float:X2 Position
 	p->yp2 = yp2; // float:Y2 Position
 	p->zp2 = zp2; // float:Z2 Position
-	memcpy(p->name, name, sizeof(p->name)); // uint8_t[26]:POI connection name
+	memcpy(p->name, name, sizeof(p->name)); // char[26]:POI connection name
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
 }
@@ -79,7 +79,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t sys
  * @param name POI connection name
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const uint8_t* name)
+static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char* name)
 {
 	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
@@ -94,7 +94,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_
 	p->xp2 = xp2; // float:X2 Position
 	p->yp2 = yp2; // float:Y2 Position
 	p->zp2 = zp2; // float:Z2 Position
-	memcpy(p->name, name, sizeof(p->name)); // uint8_t[26]:POI connection name
+	memcpy(p->name, name, sizeof(p->name)); // char[26]:POI connection name
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
 }
@@ -131,7 +131,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_encode(uint8_t s
 
 
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel_t chan, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const uint8_t* name)
+static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel_t chan, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char* name)
 {
 	mavlink_header_t hdr;
 	mavlink_point_of_interest_connection_t payload;
@@ -148,7 +148,7 @@ static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel
 	p->xp2 = xp2; // float:X2 Position
 	p->yp2 = yp2; // float:Y2 Position
 	p->zp2 = zp2; // float:Z2 Position
-	memcpy(p->name, name, sizeof(p->name)); // uint8_t[26]:POI connection name
+	memcpy(p->name, name, sizeof(p->name)); // char[26]:POI connection name
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN;
@@ -287,7 +287,7 @@ static inline float mavlink_msg_point_of_interest_connection_get_zp2(const mavli
  *
  * @return POI connection name
  */
-static inline uint16_t mavlink_msg_point_of_interest_connection_get_name(const mavlink_message_t* msg, uint8_t* name)
+static inline uint16_t mavlink_msg_point_of_interest_connection_get_name(const mavlink_message_t* msg, char* name)
 {
 	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
 
