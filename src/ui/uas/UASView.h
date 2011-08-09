@@ -122,7 +122,8 @@ protected:
     QAction* selectAction;
     QAction* selectAirframeAction;
     QAction* setBatterySpecsAction;
-    static const int updateInterval = 700;
+    static const int updateInterval = 800;
+    static const int errorUpdateInterval = 200;
     bool lowPowerModeEnabled; ///< Low power mode reduces update rates
 
 

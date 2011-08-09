@@ -204,6 +204,8 @@ protected: //COMMENTS FOR TEST UNIT
     QGCUASParamManager* paramManager; ///< Parameter manager class
     QString shortStateText;     ///< Short textual state description
     QString shortModeText;      ///< Short textual mode description
+    bool attitudeStamped;       ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
+    quint64 lastAttitude;       ///< Timestamp of last attitude measurement
 
 public:
     /** @brief Set the current battery type */
@@ -401,6 +403,8 @@ signals:
 protected:
     /** @brief Get the UNIX timestamp in milliseconds */
     quint64 getUnixTime(quint64 time=0);
+    /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
+    quint64 getUnixReferenceTime(quint64 time);
 
 protected slots:
     /** @brief Write settings to disk */
