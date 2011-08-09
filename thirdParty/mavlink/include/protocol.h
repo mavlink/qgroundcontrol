@@ -322,18 +322,19 @@ static inline uint8_t mavlink_parse_char(uint8_t chan, uint8_t c, mavlink_messag
 			status->parse_state = MAVLINK_PARSE_STATE_IDLE;
 			if (c == MAVLINK_STX)
 			{
-				status->parse_state = MAVLINK_PARSE_STATE_GOT_STX;
-				mavlink_start_checksum(rxmsg);
+                            status->parse_state = MAVLINK_PARSE_STATE_GOT_STX;
+                            mavlink_start_checksum(rxmsg);
 			}
-		}
+                    }
 		else
 		{
-			// Successfully got message
-			status->msg_received = 1;
-			status->parse_state = MAVLINK_PARSE_STATE_IDLE;
-			if ( r_message != NULL )
-				memcpy(r_message, rxmsg, sizeof(mavlink_message_t));
-			else ;
+                    // Successfully got message
+                    status->msg_received = 1;
+                    status->parse_state = MAVLINK_PARSE_STATE_IDLE;
+                    if ( r_message != NULL )
+                    {
+                        memcpy(r_message, rxmsg, sizeof(mavlink_message_t));
+                    }
 		}
 		break;
 	}

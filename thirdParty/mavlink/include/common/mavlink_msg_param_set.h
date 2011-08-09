@@ -9,7 +9,7 @@ typedef struct __mavlink_param_set_t
 	float param_value; ///< Onboard parameter value
 	uint8_t target_system; ///< System ID
 	uint8_t target_component; ///< Component ID
-	uint8_t param_id[16]; ///< Onboard parameter id
+	char param_id[16]; ///< Onboard parameter id
 
 } mavlink_param_set_t;
 #define MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN 16
@@ -26,14 +26,14 @@ typedef struct __mavlink_param_set_t
  * @param param_value Onboard parameter value
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_param_set_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, const uint8_t* param_id, float param_value)
+static inline uint16_t mavlink_msg_param_set_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, const char* param_id, float param_value)
 {
 	mavlink_param_set_t *p = (mavlink_param_set_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_PARAM_SET;
 
 	p->target_system = target_system; // uint8_t:System ID
 	p->target_component = target_component; // uint8_t:Component ID
-	memcpy(p->param_id, param_id, sizeof(p->param_id)); // uint8_t[16]:Onboard parameter id
+	memcpy(p->param_id, param_id, sizeof(p->param_id)); // char[16]:Onboard parameter id
 	p->param_value = param_value; // float:Onboard parameter value
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_PARAM_SET_LEN);
@@ -51,14 +51,14 @@ static inline uint16_t mavlink_msg_param_set_pack(uint8_t system_id, uint8_t com
  * @param param_value Onboard parameter value
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_param_set_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, const uint8_t* param_id, float param_value)
+static inline uint16_t mavlink_msg_param_set_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, const char* param_id, float param_value)
 {
 	mavlink_param_set_t *p = (mavlink_param_set_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_PARAM_SET;
 
 	p->target_system = target_system; // uint8_t:System ID
 	p->target_component = target_component; // uint8_t:Component ID
-	memcpy(p->param_id, param_id, sizeof(p->param_id)); // uint8_t[16]:Onboard parameter id
+	memcpy(p->param_id, param_id, sizeof(p->param_id)); // char[16]:Onboard parameter id
 	p->param_value = param_value; // float:Onboard parameter value
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_PARAM_SET_LEN);
@@ -89,7 +89,7 @@ static inline uint16_t mavlink_msg_param_set_encode(uint8_t system_id, uint8_t c
 
 
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_param_set_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, const uint8_t* param_id, float param_value)
+static inline void mavlink_msg_param_set_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, const char* param_id, float param_value)
 {
 	mavlink_header_t hdr;
 	mavlink_param_set_t payload;
@@ -98,7 +98,7 @@ static inline void mavlink_msg_param_set_send(mavlink_channel_t chan, uint8_t ta
 
 	p->target_system = target_system; // uint8_t:System ID
 	p->target_component = target_component; // uint8_t:Component ID
-	memcpy(p->param_id, param_id, sizeof(p->param_id)); // uint8_t[16]:Onboard parameter id
+	memcpy(p->param_id, param_id, sizeof(p->param_id)); // char[16]:Onboard parameter id
 	p->param_value = param_value; // float:Onboard parameter value
 
 	hdr.STX = MAVLINK_STX;
@@ -150,7 +150,7 @@ static inline uint8_t mavlink_msg_param_set_get_target_component(const mavlink_m
  *
  * @return Onboard parameter id
  */
-static inline uint16_t mavlink_msg_param_set_get_param_id(const mavlink_message_t* msg, uint8_t* param_id)
+static inline uint16_t mavlink_msg_param_set_get_param_id(const mavlink_message_t* msg, char* param_id)
 {
 	mavlink_param_set_t *p = (mavlink_param_set_t *)&msg->payload[0];
 

@@ -19,7 +19,7 @@ extern "C" {
  *  table. Comment out the define to leave out the table and code to check it.
  *
  */
-#define MAVLINK_CHECK_LENGTH
+//#define MAVLINK_CHECK_LENGTH
 
 /**
  *
@@ -30,7 +30,7 @@ extern "C" {
  *  enable if you make the changes required. Default DISABLED.
  *
  */
-//#define MAVLINK_STAIC_BUFFER
+//#define MAVLINK_STATIC_BUFFER
 
 /**
  *

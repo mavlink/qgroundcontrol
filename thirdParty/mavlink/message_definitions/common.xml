@@ -676,16 +676,10 @@
                <description>Emit an encrypted signature / key identifying this system. PLEASE NOTE: This protocol has been kept simple, so transmitting the key requires an encrypted channel for true safety.</description>
                <field type="char[32]" name="key">key</field>
           </message>
-          <message id="9" name="ACTION_ACK">
+          <message id="9" name="CMD_ACK">
                <description>This message acknowledges an action. IMPORTANT: The acknowledgement can be also negative, e.g. the MAV rejects a reset message because it is in-flight. The action ids are defined in ENUM MAV_ACTION in mavlink/include/mavlink_types.h</description>
-               <field type="uint8_t" name="action">The action id</field>
+               <field type="uint8_t" name="cmd">The MAV_CMD ID</field>
                <field type="uint8_t" name="result">0: Action DENIED, 1: Action executed</field>
-          </message>
-          <message id="10" name="ACTION">
-               <description>An action message allows to execute a certain onboard action. These include liftoff, land, storing parameters too EEPROM, shutddown, etc. The action ids are defined in ENUM MAV_ACTION in mavlink/include/mavlink_types.h</description>
-               <field type="uint8_t" name="target">The system executing the action</field>
-               <field type="uint8_t" name="target_component">The component executing the action</field>
-               <field type="uint8_t" name="action">The action id</field>
           </message>
           <message id="11" name="SET_MODE">
                <description>Set the system mode, as defined by enum MAV_MODE in mavlink/include/mavlink_types.h. There is no target component id as the mode is by definition for the overall aircraft, not only for one component.</description>
@@ -701,7 +695,7 @@
                <description>Request to read the onboard parameter with the param_id string id. Onboard parameters are stored as key[const char*] -> value[float]. This allows to send a parameter to any other component (such as the GCS) without the need of previous knowledge of possible parameter names. Thus the same GCS can store different parameters for different autopilots. See also http://qgroundcontrol.org/parameter_interface for a full documentation of QGroundControl and IMU code.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="uint8_t[16]" name="param_id">Onboard parameter id</field>
+               <field type="char[16]" name="param_id">Onboard parameter id</field>
                <field type="int16_t" name="param_index">Parameter index. Send -1 to use the param ID field as identifier</field>
           </message>
           <message id="21" name="PARAM_REQUEST_LIST">
@@ -711,7 +705,7 @@
           </message>
           <message id="22" name="PARAM_VALUE">
                <description>Emit the value of a onboard parameter. The inclusion of param_count and param_index in the message allows the recipient to keep track of received parameters and allows him to re-request missing parameters after a loss or timeout.</description>
-               <field type="uint8_t[16]" name="param_id">Onboard parameter id</field>
+               <field type="char[16]" name="param_id">Onboard parameter id</field>
                <field type="float" name="param_value">Onboard parameter value</field>
                <field type="uint16_t" name="param_count">Total number of onboard parameters</field>
                <field type="uint16_t" name="param_index">Index of this onboard parameter</field>
@@ -720,7 +714,7 @@
                <description>Set a parameter value TEMPORARILY to RAM. It will be reset to default on system reboot. Send the ACTION MAV_ACTION_STORAGE_WRITE to PERMANENTLY write the RAM contents to EEPROM. IMPORTANT: The receiving component should acknowledge the new parameter value by sending a param_value message to all communication partners. This will also ensure that multiple GCS all have an up-to-date list of all parameters. If the sending GCS did not receive a PARAM_VALUE message within its timeout time, it should re-send the PARAM_SET message.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="uint8_t[16]" name="param_id">Onboard parameter id</field>
+               <field type="char[16]" name="param_id">Onboard parameter id</field>
                <field type="float" name="param_value">Onboard parameter value</field>
           </message>
           <message id="25" name="GPS_RAW_INT">
@@ -1174,7 +1168,7 @@
           <message id="254" name="STATUSTEXT">
                <description>Status text message. These messages are printed in yellow in the COMM console of QGroundControl. WARNING: They consume quite some bandwidth, so use only for important status and error messages. If implemented wisely, these messages are buffered on the MCU and sent only at a limited rate (e.g. 10 Hz).</description>
                <field type="uint8_t" name="severity">Severity of status, 0 = info message, 255 = critical fault</field>
-               <field type="int8_t[50]" name="text">Status text message, without null termination character</field>
+               <field type="char[50]" name="text">Status text message, without null termination character</field>
           </message>
           <message id="255" name="DEBUG">
                <description>Send a debug value. The index is used to discriminate between values. These values show up in the plot of QGroundControl as DEBUG N.</description>

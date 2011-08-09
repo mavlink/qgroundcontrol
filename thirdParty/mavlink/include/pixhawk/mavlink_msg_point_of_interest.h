@@ -13,7 +13,7 @@ typedef struct __mavlink_point_of_interest_t
 	uint8_t type; ///< 0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
 	uint8_t color; ///< 0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
 	uint8_t coordinate_system; ///< 0: global, 1:local
-	uint8_t name[26]; ///< POI name
+	char name[26]; ///< POI name
 
 } mavlink_point_of_interest_t;
 #define MAVLINK_MSG_POINT_OF_INTEREST_FIELD_NAME_LEN 26
@@ -34,7 +34,7 @@ typedef struct __mavlink_point_of_interest_t
  * @param name POI name
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_point_of_interest_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float x, float y, float z, const uint8_t* name)
+static inline uint16_t mavlink_msg_point_of_interest_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float x, float y, float z, const char* name)
 {
 	mavlink_point_of_interest_t *p = (mavlink_point_of_interest_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST;
@@ -46,7 +46,7 @@ static inline uint16_t mavlink_msg_point_of_interest_pack(uint8_t system_id, uin
 	p->x = x; // float:X Position
 	p->y = y; // float:Y Position
 	p->z = z; // float:Z Position
-	memcpy(p->name, name, sizeof(p->name)); // uint8_t[26]:POI name
+	memcpy(p->name, name, sizeof(p->name)); // char[26]:POI name
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_POINT_OF_INTEREST_LEN);
 }
@@ -67,7 +67,7 @@ static inline uint16_t mavlink_msg_point_of_interest_pack(uint8_t system_id, uin
  * @param name POI name
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_point_of_interest_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float x, float y, float z, const uint8_t* name)
+static inline uint16_t mavlink_msg_point_of_interest_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float x, float y, float z, const char* name)
 {
 	mavlink_point_of_interest_t *p = (mavlink_point_of_interest_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST;
@@ -79,7 +79,7 @@ static inline uint16_t mavlink_msg_point_of_interest_pack_chan(uint8_t system_id
 	p->x = x; // float:X Position
 	p->y = y; // float:Y Position
 	p->z = z; // float:Z Position
-	memcpy(p->name, name, sizeof(p->name)); // uint8_t[26]:POI name
+	memcpy(p->name, name, sizeof(p->name)); // char[26]:POI name
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_LEN);
 }
@@ -113,7 +113,7 @@ static inline uint16_t mavlink_msg_point_of_interest_encode(uint8_t system_id, u
 
 
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_point_of_interest_send(mavlink_channel_t chan, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float x, float y, float z, const uint8_t* name)
+static inline void mavlink_msg_point_of_interest_send(mavlink_channel_t chan, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float x, float y, float z, const char* name)
 {
 	mavlink_header_t hdr;
 	mavlink_point_of_interest_t payload;
@@ -127,7 +127,7 @@ static inline void mavlink_msg_point_of_interest_send(mavlink_channel_t chan, ui
 	p->x = x; // float:X Position
 	p->y = y; // float:Y Position
 	p->z = z; // float:Z Position
-	memcpy(p->name, name, sizeof(p->name)); // uint8_t[26]:POI name
+	memcpy(p->name, name, sizeof(p->name)); // char[26]:POI name
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_POINT_OF_INTEREST_LEN;
@@ -233,7 +233,7 @@ static inline float mavlink_msg_point_of_interest_get_z(const mavlink_message_t*
  *
  * @return POI name
  */
-static inline uint16_t mavlink_msg_point_of_interest_get_name(const mavlink_message_t* msg, uint8_t* name)
+static inline uint16_t mavlink_msg_point_of_interest_get_name(const mavlink_message_t* msg, char* name)
 {
 	mavlink_point_of_interest_t *p = (mavlink_point_of_interest_t *)&msg->payload[0];
 
