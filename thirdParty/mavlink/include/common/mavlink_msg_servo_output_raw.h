@@ -109,39 +109,9 @@ static inline uint16_t mavlink_msg_servo_output_raw_encode(uint8_t system_id, ui
  * @param servo7_raw Servo output 7 value, in microseconds
  * @param servo8_raw Servo output 8 value, in microseconds
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_servo_output_raw_send(mavlink_channel_t chan, uint16_t servo1_raw, uint16_t servo2_raw, uint16_t servo3_raw, uint16_t servo4_raw, uint16_t servo5_raw, uint16_t servo6_raw, uint16_t servo7_raw, uint16_t servo8_raw)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_servo_output_raw_t *p = (mavlink_servo_output_raw_t *)&msg.payload[0];
-
-	p->servo1_raw = servo1_raw; // uint16_t:Servo output 1 value, in microseconds
-	p->servo2_raw = servo2_raw; // uint16_t:Servo output 2 value, in microseconds
-	p->servo3_raw = servo3_raw; // uint16_t:Servo output 3 value, in microseconds
-	p->servo4_raw = servo4_raw; // uint16_t:Servo output 4 value, in microseconds
-	p->servo5_raw = servo5_raw; // uint16_t:Servo output 5 value, in microseconds
-	p->servo6_raw = servo6_raw; // uint16_t:Servo output 6 value, in microseconds
-	p->servo7_raw = servo7_raw; // uint16_t:Servo output 7 value, in microseconds
-	p->servo8_raw = servo8_raw; // uint16_t:Servo output 8 value, in microseconds
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW_LEN;
-	msg.msgid = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_servo_output_raw_send(mavlink_channel_t chan, uint16_t servo1_raw, uint16_t servo2_raw, uint16_t servo3_raw, uint16_t servo4_raw, uint16_t servo5_raw, uint16_t servo6_raw, uint16_t servo7_raw, uint16_t servo8_raw)
 {
 	mavlink_header_t hdr;

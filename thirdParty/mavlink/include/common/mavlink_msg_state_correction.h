@@ -115,40 +115,9 @@ static inline uint16_t mavlink_msg_state_correction_encode(uint8_t system_id, ui
  * @param vyErr y velocity
  * @param vzErr z velocity
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_state_correction_send(mavlink_channel_t chan, float xErr, float yErr, float zErr, float rollErr, float pitchErr, float yawErr, float vxErr, float vyErr, float vzErr)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_state_correction_t *p = (mavlink_state_correction_t *)&msg.payload[0];
-
-	p->xErr = xErr; // float:x position error
-	p->yErr = yErr; // float:y position error
-	p->zErr = zErr; // float:z position error
-	p->rollErr = rollErr; // float:roll error (radians)
-	p->pitchErr = pitchErr; // float:pitch error (radians)
-	p->yawErr = yawErr; // float:yaw error (radians)
-	p->vxErr = vxErr; // float:x velocity
-	p->vyErr = vyErr; // float:y velocity
-	p->vzErr = vzErr; // float:z velocity
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_STATE_CORRECTION_LEN;
-	msg.msgid = MAVLINK_MSG_ID_STATE_CORRECTION;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_state_correction_send(mavlink_channel_t chan, float xErr, float yErr, float zErr, float rollErr, float pitchErr, float yawErr, float vxErr, float vyErr, float vzErr)
 {
 	mavlink_header_t hdr;

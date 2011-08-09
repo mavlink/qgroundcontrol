@@ -6,9 +6,9 @@
 
 typedef struct __mavlink_slugs_action_t 
 {
+	uint16_t actionVal; ///< Value associated with the action
 	uint8_t target; ///< The system reporting the action
 	uint8_t actionId; ///< Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
-	uint16_t actionVal; ///< Value associated with the action
 
 } mavlink_slugs_action_t;
 
@@ -79,34 +79,9 @@ static inline uint16_t mavlink_msg_slugs_action_encode(uint8_t system_id, uint8_
  * @param actionId Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
  * @param actionVal Value associated with the action
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_slugs_action_send(mavlink_channel_t chan, uint8_t target, uint8_t actionId, uint16_t actionVal)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_slugs_action_t *p = (mavlink_slugs_action_t *)&msg.payload[0];
-
-	p->target = target; // uint8_t:The system reporting the action
-	p->actionId = actionId; // uint8_t:Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
-	p->actionVal = actionVal; // uint16_t:Value associated with the action
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_SLUGS_ACTION_LEN;
-	msg.msgid = MAVLINK_MSG_ID_SLUGS_ACTION;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_slugs_action_send(mavlink_channel_t chan, uint8_t target, uint8_t actionId, uint16_t actionVal)
 {
 	mavlink_header_t hdr;

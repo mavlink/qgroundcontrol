@@ -6,13 +6,13 @@
 
 typedef struct __mavlink_raw_aux_t 
 {
+	int32_t baro; ///< Barometric pressure (hecto Pascal)
 	uint16_t adc1; ///< ADC1 (J405 ADC3, LPC2148 AD0.6)
 	uint16_t adc2; ///< ADC2 (J405 ADC5, LPC2148 AD0.2)
 	uint16_t adc3; ///< ADC3 (J405 ADC6, LPC2148 AD0.1)
 	uint16_t adc4; ///< ADC4 (J405 ADC7, LPC2148 AD1.3)
 	uint16_t vbat; ///< Battery voltage
 	int16_t temp; ///< Temperature (degrees celcius)
-	int32_t baro; ///< Barometric pressure (hecto Pascal)
 
 } mavlink_raw_aux_t;
 
@@ -103,38 +103,9 @@ static inline uint16_t mavlink_msg_raw_aux_encode(uint8_t system_id, uint8_t com
  * @param temp Temperature (degrees celcius)
  * @param baro Barometric pressure (hecto Pascal)
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_raw_aux_send(mavlink_channel_t chan, uint16_t adc1, uint16_t adc2, uint16_t adc3, uint16_t adc4, uint16_t vbat, int16_t temp, int32_t baro)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg.payload[0];
-
-	p->adc1 = adc1; // uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
-	p->adc2 = adc2; // uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
-	p->adc3 = adc3; // uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
-	p->adc4 = adc4; // uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
-	p->vbat = vbat; // uint16_t:Battery voltage
-	p->temp = temp; // int16_t:Temperature (degrees celcius)
-	p->baro = baro; // int32_t:Barometric pressure (hecto Pascal)
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_RAW_AUX_LEN;
-	msg.msgid = MAVLINK_MSG_ID_RAW_AUX;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_raw_aux_send(mavlink_channel_t chan, uint16_t adc1, uint16_t adc2, uint16_t adc3, uint16_t adc4, uint16_t vbat, int16_t temp, int32_t baro)
 {
 	mavlink_header_t hdr;

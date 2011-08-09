@@ -97,37 +97,9 @@ static inline uint16_t mavlink_msg_data_log_encode(uint8_t system_id, uint8_t co
  * @param fl_5 Log value 5 
  * @param fl_6 Log value 6 
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_data_log_send(mavlink_channel_t chan, float fl_1, float fl_2, float fl_3, float fl_4, float fl_5, float fl_6)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_data_log_t *p = (mavlink_data_log_t *)&msg.payload[0];
-
-	p->fl_1 = fl_1; // float:Log value 1 
-	p->fl_2 = fl_2; // float:Log value 2 
-	p->fl_3 = fl_3; // float:Log value 3 
-	p->fl_4 = fl_4; // float:Log value 4 
-	p->fl_5 = fl_5; // float:Log value 5 
-	p->fl_6 = fl_6; // float:Log value 6 
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_DATA_LOG_LEN;
-	msg.msgid = MAVLINK_MSG_ID_DATA_LOG;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_data_log_send(mavlink_channel_t chan, float fl_1, float fl_2, float fl_3, float fl_4, float fl_5, float fl_6)
 {
 	mavlink_header_t hdr;

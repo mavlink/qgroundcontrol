@@ -8,12 +8,12 @@ typedef struct __mavlink_nav_controller_output_t
 {
 	float nav_roll; ///< Current desired roll in degrees
 	float nav_pitch; ///< Current desired pitch in degrees
-	int16_t nav_bearing; ///< Current desired heading in degrees
-	int16_t target_bearing; ///< Bearing to current waypoint/target in degrees
-	uint16_t wp_dist; ///< Distance to active waypoint in meters
 	float alt_error; ///< Current altitude error in meters
 	float aspd_error; ///< Current airspeed error in meters/second
 	float xtrack_error; ///< Current crosstrack error on x-y plane in meters
+	int16_t nav_bearing; ///< Current desired heading in degrees
+	int16_t target_bearing; ///< Bearing to current waypoint/target in degrees
+	uint16_t wp_dist; ///< Distance to active waypoint in meters
 
 } mavlink_nav_controller_output_t;
 
@@ -109,39 +109,9 @@ static inline uint16_t mavlink_msg_nav_controller_output_encode(uint8_t system_i
  * @param aspd_error Current airspeed error in meters/second
  * @param xtrack_error Current crosstrack error on x-y plane in meters
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_nav_controller_output_send(mavlink_channel_t chan, float nav_roll, float nav_pitch, int16_t nav_bearing, int16_t target_bearing, uint16_t wp_dist, float alt_error, float aspd_error, float xtrack_error)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_nav_controller_output_t *p = (mavlink_nav_controller_output_t *)&msg.payload[0];
-
-	p->nav_roll = nav_roll; // float:Current desired roll in degrees
-	p->nav_pitch = nav_pitch; // float:Current desired pitch in degrees
-	p->nav_bearing = nav_bearing; // int16_t:Current desired heading in degrees
-	p->target_bearing = target_bearing; // int16_t:Bearing to current waypoint/target in degrees
-	p->wp_dist = wp_dist; // uint16_t:Distance to active waypoint in meters
-	p->alt_error = alt_error; // float:Current altitude error in meters
-	p->aspd_error = aspd_error; // float:Current airspeed error in meters/second
-	p->xtrack_error = xtrack_error; // float:Current crosstrack error on x-y plane in meters
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_nav_controller_output_send(mavlink_channel_t chan, float nav_roll, float nav_pitch, int16_t nav_bearing, int16_t target_bearing, uint16_t wp_dist, float alt_error, float aspd_error, float xtrack_error)
 {
 	mavlink_header_t hdr;

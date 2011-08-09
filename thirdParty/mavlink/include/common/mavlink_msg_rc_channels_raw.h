@@ -115,40 +115,9 @@ static inline uint16_t mavlink_msg_rc_channels_raw_encode(uint8_t system_id, uin
  * @param chan8_raw RC channel 8 value, in microseconds
  * @param rssi Receive signal strength indicator, 0: 0%, 255: 100%
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_rc_channels_raw_send(mavlink_channel_t chan, uint16_t chan1_raw, uint16_t chan2_raw, uint16_t chan3_raw, uint16_t chan4_raw, uint16_t chan5_raw, uint16_t chan6_raw, uint16_t chan7_raw, uint16_t chan8_raw, uint8_t rssi)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_rc_channels_raw_t *p = (mavlink_rc_channels_raw_t *)&msg.payload[0];
-
-	p->chan1_raw = chan1_raw; // uint16_t:RC channel 1 value, in microseconds
-	p->chan2_raw = chan2_raw; // uint16_t:RC channel 2 value, in microseconds
-	p->chan3_raw = chan3_raw; // uint16_t:RC channel 3 value, in microseconds
-	p->chan4_raw = chan4_raw; // uint16_t:RC channel 4 value, in microseconds
-	p->chan5_raw = chan5_raw; // uint16_t:RC channel 5 value, in microseconds
-	p->chan6_raw = chan6_raw; // uint16_t:RC channel 6 value, in microseconds
-	p->chan7_raw = chan7_raw; // uint16_t:RC channel 7 value, in microseconds
-	p->chan8_raw = chan8_raw; // uint16_t:RC channel 8 value, in microseconds
-	p->rssi = rssi; // uint8_t:Receive signal strength indicator, 0: 0%, 255: 100%
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_RC_CHANNELS_RAW_LEN;
-	msg.msgid = MAVLINK_MSG_ID_RC_CHANNELS_RAW;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_rc_channels_raw_send(mavlink_channel_t chan, uint16_t chan1_raw, uint16_t chan2_raw, uint16_t chan3_raw, uint16_t chan4_raw, uint16_t chan5_raw, uint16_t chan6_raw, uint16_t chan7_raw, uint16_t chan8_raw, uint8_t rssi)
 {
 	mavlink_header_t hdr;

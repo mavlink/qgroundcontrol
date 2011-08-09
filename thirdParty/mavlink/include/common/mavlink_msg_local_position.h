@@ -103,38 +103,9 @@ static inline uint16_t mavlink_msg_local_position_encode(uint8_t system_id, uint
  * @param vy Y Speed
  * @param vz Z Speed
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_local_position_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z, float vx, float vy, float vz)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_local_position_t *p = (mavlink_local_position_t *)&msg.payload[0];
-
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->x = x; // float:X Position
-	p->y = y; // float:Y Position
-	p->z = z; // float:Z Position
-	p->vx = vx; // float:X Speed
-	p->vy = vy; // float:Y Speed
-	p->vz = vz; // float:Z Speed
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_LOCAL_POSITION_LEN;
-	msg.msgid = MAVLINK_MSG_ID_LOCAL_POSITION;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_local_position_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z, float vx, float vy, float vz)
 {
 	mavlink_header_t hdr;

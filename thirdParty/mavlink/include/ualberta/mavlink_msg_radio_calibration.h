@@ -103,37 +103,9 @@ static inline uint16_t mavlink_msg_radio_calibration_encode(uint8_t system_id, u
  * @param pitch Pitch curve setpoints (every 25%)
  * @param throttle Throttle curve setpoints (every 25%)
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_radio_calibration_send(mavlink_channel_t chan, const uint16_t* aileron, const uint16_t* elevator, const uint16_t* rudder, const uint16_t* gyro, const uint16_t* pitch, const uint16_t* throttle)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_radio_calibration_t *p = (mavlink_radio_calibration_t *)&msg.payload[0];
-
-	memcpy(p->aileron, aileron, sizeof(p->aileron)); // uint16_t[3]:Aileron setpoints: left, center, right
-	memcpy(p->elevator, elevator, sizeof(p->elevator)); // uint16_t[3]:Elevator setpoints: nose down, center, nose up
-	memcpy(p->rudder, rudder, sizeof(p->rudder)); // uint16_t[3]:Rudder setpoints: nose left, center, nose right
-	memcpy(p->gyro, gyro, sizeof(p->gyro)); // uint16_t[2]:Tail gyro mode/gain setpoints: heading hold, rate mode
-	memcpy(p->pitch, pitch, sizeof(p->pitch)); // uint16_t[5]:Pitch curve setpoints (every 25%)
-	memcpy(p->throttle, throttle, sizeof(p->throttle)); // uint16_t[5]:Throttle curve setpoints (every 25%)
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_RADIO_CALIBRATION_LEN;
-	msg.msgid = MAVLINK_MSG_ID_RADIO_CALIBRATION;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_radio_calibration_send(mavlink_channel_t chan, const uint16_t* aileron, const uint16_t* elevator, const uint16_t* rudder, const uint16_t* gyro, const uint16_t* pitch, const uint16_t* throttle)
 {
 	mavlink_header_t hdr;

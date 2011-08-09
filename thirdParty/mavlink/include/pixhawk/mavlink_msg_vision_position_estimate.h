@@ -103,38 +103,9 @@ static inline uint16_t mavlink_msg_vision_position_estimate_encode(uint8_t syste
  * @param pitch Pitch angle in rad
  * @param yaw Yaw angle in rad
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_vision_position_estimate_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z, float roll, float pitch, float yaw)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_vision_position_estimate_t *p = (mavlink_vision_position_estimate_t *)&msg.payload[0];
-
-	p->usec = usec; // uint64_t:Timestamp (milliseconds)
-	p->x = x; // float:Global X position
-	p->y = y; // float:Global Y position
-	p->z = z; // float:Global Z position
-	p->roll = roll; // float:Roll angle in rad
-	p->pitch = pitch; // float:Pitch angle in rad
-	p->yaw = yaw; // float:Yaw angle in rad
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE_LEN;
-	msg.msgid = MAVLINK_MSG_ID_VISION_POSITION_ESTIMATE;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_vision_position_estimate_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z, float roll, float pitch, float yaw)
 {
 	mavlink_header_t hdr;

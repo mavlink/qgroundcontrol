@@ -6,9 +6,9 @@
 
 typedef struct __mavlink_waypoint_set_current_t 
 {
+	uint16_t seq; ///< Sequence
 	uint8_t target_system; ///< System ID
 	uint8_t target_component; ///< Component ID
-	uint16_t seq; ///< Sequence
 
 } mavlink_waypoint_set_current_t;
 
@@ -79,34 +79,9 @@ static inline uint16_t mavlink_msg_waypoint_set_current_encode(uint8_t system_id
  * @param target_component Component ID
  * @param seq Sequence
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_waypoint_set_current_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint16_t seq)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_waypoint_set_current_t *p = (mavlink_waypoint_set_current_t *)&msg.payload[0];
-
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->seq = seq; // uint16_t:Sequence
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_waypoint_set_current_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint16_t seq)
 {
 	mavlink_header_t hdr;

@@ -6,13 +6,13 @@
 
 typedef struct __mavlink_marker_t 
 {
-	uint16_t id; ///< ID
 	float x; ///< x position
 	float y; ///< y position
 	float z; ///< z position
 	float roll; ///< roll orientation
 	float pitch; ///< pitch orientation
 	float yaw; ///< yaw orientation
+	uint16_t id; ///< ID
 
 } mavlink_marker_t;
 
@@ -103,38 +103,9 @@ static inline uint16_t mavlink_msg_marker_encode(uint8_t system_id, uint8_t comp
  * @param pitch pitch orientation
  * @param yaw yaw orientation
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_marker_send(mavlink_channel_t chan, uint16_t id, float x, float y, float z, float roll, float pitch, float yaw)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_marker_t *p = (mavlink_marker_t *)&msg.payload[0];
-
-	p->id = id; // uint16_t:ID
-	p->x = x; // float:x position
-	p->y = y; // float:y position
-	p->z = z; // float:z position
-	p->roll = roll; // float:roll orientation
-	p->pitch = pitch; // float:pitch orientation
-	p->yaw = yaw; // float:yaw orientation
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_MARKER_LEN;
-	msg.msgid = MAVLINK_MSG_ID_MARKER;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_marker_send(mavlink_channel_t chan, uint16_t id, float x, float y, float z, float roll, float pitch, float yaw)
 {
 	mavlink_header_t hdr;

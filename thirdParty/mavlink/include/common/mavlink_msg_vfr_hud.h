@@ -8,10 +8,10 @@ typedef struct __mavlink_vfr_hud_t
 {
 	float airspeed; ///< Current airspeed in m/s
 	float groundspeed; ///< Current ground speed in m/s
-	int16_t heading; ///< Current heading in degrees, in compass units (0..360, 0=north)
-	uint16_t throttle; ///< Current throttle setting in integer percent, 0 to 100
 	float alt; ///< Current altitude (MSL), in meters
 	float climb; ///< Current climb rate in meters/second
+	int16_t heading; ///< Current heading in degrees, in compass units (0..360, 0=north)
+	uint16_t throttle; ///< Current throttle setting in integer percent, 0 to 100
 
 } mavlink_vfr_hud_t;
 
@@ -97,37 +97,9 @@ static inline uint16_t mavlink_msg_vfr_hud_encode(uint8_t system_id, uint8_t com
  * @param alt Current altitude (MSL), in meters
  * @param climb Current climb rate in meters/second
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_vfr_hud_send(mavlink_channel_t chan, float airspeed, float groundspeed, int16_t heading, uint16_t throttle, float alt, float climb)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_vfr_hud_t *p = (mavlink_vfr_hud_t *)&msg.payload[0];
-
-	p->airspeed = airspeed; // float:Current airspeed in m/s
-	p->groundspeed = groundspeed; // float:Current ground speed in m/s
-	p->heading = heading; // int16_t:Current heading in degrees, in compass units (0..360, 0=north)
-	p->throttle = throttle; // uint16_t:Current throttle setting in integer percent, 0 to 100
-	p->alt = alt; // float:Current altitude (MSL), in meters
-	p->climb = climb; // float:Current climb rate in meters/second
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_VFR_HUD_LEN;
-	msg.msgid = MAVLINK_MSG_ID_VFR_HUD;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_vfr_hud_send(mavlink_channel_t chan, float airspeed, float groundspeed, int16_t heading, uint16_t throttle, float alt, float climb)
 {
 	mavlink_header_t hdr;

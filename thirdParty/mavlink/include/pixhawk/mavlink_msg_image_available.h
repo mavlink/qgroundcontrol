@@ -7,15 +7,10 @@
 typedef struct __mavlink_image_available_t 
 {
 	uint64_t cam_id; ///< Camera id
-	uint8_t cam_no; ///< Camera # (starts with 0)
 	uint64_t timestamp; ///< Timestamp
 	uint64_t valid_until; ///< Until which timestamp this buffer will stay valid
 	uint32_t img_seq; ///< The image sequence number
 	uint32_t img_buf_index; ///< Position of the image in the buffer, starts with 0
-	uint16_t width; ///< Image width
-	uint16_t height; ///< Image height
-	uint16_t depth; ///< Image depth
-	uint8_t channels; ///< Image channels
 	uint32_t key; ///< Shared memory area key
 	uint32_t exposure; ///< Exposure time, in microseconds
 	float gain; ///< Camera gain
@@ -29,6 +24,11 @@ typedef struct __mavlink_image_available_t
 	float ground_x; ///< Ground truth X
 	float ground_y; ///< Ground truth Y
 	float ground_z; ///< Ground truth Z
+	uint16_t width; ///< Image width
+	uint16_t height; ///< Image height
+	uint16_t depth; ///< Image depth
+	uint8_t cam_no; ///< Camera # (starts with 0)
+	uint8_t channels; ///< Image channels
 
 } mavlink_image_available_t;
 
@@ -199,54 +199,9 @@ static inline uint16_t mavlink_msg_image_available_encode(uint8_t system_id, uin
  * @param ground_y Ground truth Y
  * @param ground_z Ground truth Z
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_image_available_send(mavlink_channel_t chan, uint64_t cam_id, uint8_t cam_no, uint64_t timestamp, uint64_t valid_until, uint32_t img_seq, uint32_t img_buf_index, uint16_t width, uint16_t height, uint16_t depth, uint8_t channels, uint32_t key, uint32_t exposure, float gain, float roll, float pitch, float yaw, float local_z, float lat, float lon, float alt, float ground_x, float ground_y, float ground_z)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_image_available_t *p = (mavlink_image_available_t *)&msg.payload[0];
-
-	p->cam_id = cam_id; // uint64_t:Camera id
-	p->cam_no = cam_no; // uint8_t:Camera # (starts with 0)
-	p->timestamp = timestamp; // uint64_t:Timestamp
-	p->valid_until = valid_until; // uint64_t:Until which timestamp this buffer will stay valid
-	p->img_seq = img_seq; // uint32_t:The image sequence number
-	p->img_buf_index = img_buf_index; // uint32_t:Position of the image in the buffer, starts with 0
-	p->width = width; // uint16_t:Image width
-	p->height = height; // uint16_t:Image height
-	p->depth = depth; // uint16_t:Image depth
-	p->channels = channels; // uint8_t:Image channels
-	p->key = key; // uint32_t:Shared memory area key
-	p->exposure = exposure; // uint32_t:Exposure time, in microseconds
-	p->gain = gain; // float:Camera gain
-	p->roll = roll; // float:Roll angle in rad
-	p->pitch = pitch; // float:Pitch angle in rad
-	p->yaw = yaw; // float:Yaw angle in rad
-	p->local_z = local_z; // float:Local frame Z coordinate (height over ground)
-	p->lat = lat; // float:GPS X coordinate
-	p->lon = lon; // float:GPS Y coordinate
-	p->alt = alt; // float:Global frame altitude
-	p->ground_x = ground_x; // float:Ground truth X
-	p->ground_y = ground_y; // float:Ground truth Y
-	p->ground_z = ground_z; // float:Ground truth Z
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_IMAGE_AVAILABLE_LEN;
-	msg.msgid = MAVLINK_MSG_ID_IMAGE_AVAILABLE;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_image_available_send(mavlink_channel_t chan, uint64_t cam_id, uint8_t cam_no, uint64_t timestamp, uint64_t valid_until, uint32_t img_seq, uint32_t img_buf_index, uint16_t width, uint16_t height, uint16_t depth, uint8_t channels, uint32_t key, uint32_t exposure, float gain, float roll, float pitch, float yaw, float local_z, float lat, float lon, float alt, float ground_x, float ground_y, float ground_z)
 {
 	mavlink_header_t hdr;

@@ -85,35 +85,9 @@ static inline uint16_t mavlink_msg_local_position_setpoint_encode(uint8_t system
  * @param z z position
  * @param yaw Desired yaw angle
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_local_position_setpoint_send(mavlink_channel_t chan, float x, float y, float z, float yaw)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_local_position_setpoint_t *p = (mavlink_local_position_setpoint_t *)&msg.payload[0];
-
-	p->x = x; // float:x position
-	p->y = y; // float:y position
-	p->z = z; // float:z position
-	p->yaw = yaw; // float:Desired yaw angle
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_local_position_setpoint_send(mavlink_channel_t chan, float x, float y, float z, float yaw)
 {
 	mavlink_header_t hdr;

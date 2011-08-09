@@ -97,11 +97,60 @@ void MAVLinkXMLParserV10::crcInit(uint16_t* crcAccum)
 }
 
 
+const struct {
+    const char *prefix;
+    unsigned length;
+} length_map[] = {
+        { "array",  1 },
+        { "char",   1 },
+        { "uint8",  1 },
+        { "int8",   1 },
+        { "uint16", 2 },
+        { "int16",  2 },
+        { "uint32", 4 },
+        { "int32",  4 },
+        { "uint64", 8 },
+        { "int64",  8 },
+        { "float",  4 },
+        { "double", 8 },
+};
+
+unsigned itemLength( const QString &s1 )
+{
+    unsigned el1, i1, i2;
+    QString Ss1 = s1;
+
+    Ss1 = Ss1.replace("_"," ");
+    Ss1 = Ss1.simplified();
+    Ss1 = Ss1.section(" ",0,0);
+
+    el1 = i1 = 0;
+    i2 = sizeof(length_map)/sizeof(length_map[0]);
+
+    do {
+        if (Ss1.startsWith(length_map[i1].prefix))
+            el1 = length_map[i1].length;
+        else ;
+        i1++;
+    } while ( (el1 == 0) && (i1 < i2));
+    return el1;
+}
+
+bool structSort(const QString &s1, const QString &s2)
+{
+    unsigned el1, el2;
+
+    el1 = itemLength( s1 );
+    el2 = itemLength( s2 );
+    return el2 < el1;
+}
+
 /**
  * Generate C-code (C-89 compliant) out of the XML protocol specs.
  */
 bool MAVLinkXMLParserV10::generate()
 {
+    uint16_t crc_key = X25_INIT_CRC;
     // Process result
     bool success = true;
 
@@ -146,7 +195,15 @@ bool MAVLinkXMLParserV10::generate()
     QDir dir(outputDirName + "/" + messagesDirName);
 
     int mavlinkVersion = 0;
+    static unsigned message_lengths[256];
+    static unsigned message_key[256];
+    static int highest_message_id;
+    static int recursion_level;
 
+    if (recursion_level == 0) {
+        highest_message_id = 0;
+        memset(message_lengths, 0, sizeof(message_lengths));
+    }
 
 
     // Start main header
@@ -457,6 +514,7 @@ bool MAVLinkXMLParserV10::generate()
                                         QString sendArguments;
                                         QString commentLines;
                                         int calculatedLength = 0;
+                                        unsigned message_length = 0;
 
 
                                         // Get the message fields
@@ -506,17 +564,17 @@ bool MAVLinkXMLParserV10::generate()
                                                         QStringList itemList;
                                                         // Swap field in C structure
                                                         itemList = cStructLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         cStructLines = itemList.join("\n") + "\n";
 
                                                         // Swap line in message_xx_pack function
                                                         itemList = packLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         packLines = itemList.join("\n") + "\n";
 
                                                         // Swap line in decode function for this type
                                                         itemList = decodeLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         decodeLines = itemList.join("\n") + "\n";
                                                     }
                                                 }
@@ -541,7 +599,7 @@ bool MAVLinkXMLParserV10::generate()
                                                                                                         //                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); // %4\n").arg(arrayType, fieldName, QString::number(arrayLength), e2.text());
                                                     packLines += QString("\tstrncpy( p->%2, %2, sizeof(p->%2)); // %1[%3]:%4\n").arg("char", fieldName, QString::number(arrayLength), fieldText);
                                                     // Add decode function for this type
-                                                    decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
+                                                    decodeLines += QString("\n\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
                                                     arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
 
                                                     if (fieldOffset != "")
@@ -661,17 +719,17 @@ bool MAVLinkXMLParserV10::generate()
                                                         QStringList itemList;
                                                         // Swap field in C structure
                                                         itemList = cStructLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         cStructLines = itemList.join("\n") + "\n";
 
                                                         // Swap line in message_xx_pack function
                                                         itemList = packLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         packLines = itemList.join("\n") + "\n";
 
                                                         // Swap line in decode function for this type
                                                         itemList = decodeLines.split("\n", QString::SkipEmptyParts);
-                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2);
                                                         decodeLines = itemList.join("\n") + "\n";
                                                     }
                                                     if (fieldType.contains("char"))
@@ -704,6 +762,26 @@ bool MAVLinkXMLParserV10::generate()
                                                         return false;
                                                     }
                                                 }
+
+                                                // message length calculation
+                                                unsigned element_multiplier = 1;
+                                                unsigned element_length = 0;
+
+                                                if (fieldType.contains("[")) {
+                                                    element_multiplier = fieldType.split("[").at(1).split("]").first().toInt();
+                                                }
+                                                for (unsigned i=0; i<sizeof(length_map)/sizeof(length_map[0]); i++)
+                                                {
+                                                    if (fieldType.startsWith(length_map[i].prefix)) {
+                                                        element_length = length_map[i].length * element_multiplier;
+                                                        break;
+                                                    }
+                                                }
+                                                if (element_length == 0) {
+                                                    emit parseState(tr("<font color=\"red\">ERROR: Unable to calculate length for %2 near line %1\nAbort.</font>").arg(QString::number(e.lineNumber()), fieldType));
+                                                    return false;
+                                                }
+                                                message_length += element_length;
 
 
                                                 //
@@ -791,26 +869,71 @@ bool MAVLinkXMLParserV10::generate()
                                             f = f.nextSibling();
                                         }
 
+                                        if (messageId > highest_message_id) {
+                                            highest_message_id = messageId;
+                                        }
+                                        message_lengths[messageId] = message_length;
+
+
+                                        // Sort fields to ensure 16bit-boundary aligned data
+                                        QStringList fieldList;
+                                        // Stable sort fields in C structure
+                                        fieldList = cStructLines.split("\n", QString::SkipEmptyParts);
+                                        if (fieldList.size() > 1)
+                                        {
+                                            qStableSort(fieldList.begin(), fieldList.end(), structSort);
+                                        } else ;
+
+                                        // struct now sorted, do crc calc for each field
+                                        QString fieldCRCstring;
+                                        QByteArray fieldText;
+                                        crc_key = X25_INIT_CRC;
+
+                                        for (int i =0; i < fieldList.size(); i++)
+                                        {
+                                            fieldCRCstring = fieldList.at(i).simplified();
+                                            fieldCRCstring = fieldCRCstring.section(" ",0,1); // note: this has one space bewteen type and name
+                                            fieldText = fieldCRCstring.toAscii();
+                                            for (int i = 0; i < fieldText.size(); ++i)
+                                            {
+                                                crcAccumulate((uint8_t) fieldText.at(i), &crc_key);
+                                            }
+                                        }
+
+                                        // generate the key byte value
+                                        QString stringCRC;
+                                        message_key[messageId] = (crc_key&0xff)^((crc_key>>8)&0xff);
+                                        stringCRC = stringCRC.number( message_key[messageId], 16);
+
+                                        // create structure
+                                        cStructLines = fieldList.join("\n") + "\n";
+
+
+
                                                                                 //                                        cStruct = cStruct.arg(cStructName, cStructLines, QString::number(calculatedLength) );
                                         cStruct = cStruct.arg(cStructName, cStructLines );
                                         lcmStructDefs.append("\n").append(cStruct).append("\n");
                                         pack = pack.arg(messageName, packParameters, messageName.toUpper(), packLines);
                                         packChan = packChan.arg(messageName, packParameters, messageName.toUpper(), packLines);
                                         encode = encode.arg(messageName).arg(cStructName).arg(packArguments);
-                                                                                //                                        decode = decode.arg(messageName).arg(cStructName).arg(decodeLines);
+//                                        decode = decode.arg(messageName).arg(cStructName).arg(decodeLines);
                                         decode = decode.arg(messageName).arg(cStructName);
-                                                                                //                                        QString compactSend("#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif");
-                                        QString compactSend("#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tuint16_t checksum;\n\tmavlink_%3_t *p = (mavlink_%3_t *)&msg.payload[0];\n\n%6\n\tmsg.STX = MAVLINK_STX;\n\tmsg.len = MAVLINK_MSG_ID_%4_LEN;\n\tmsg.msgid = MAVLINK_MSG_ID_%4;\n");
-                                        QString compactSend2("\tmsg.sysid = mavlink_system.sysid;\n\tmsg.compid = mavlink_system.compid;\n\tmsg.seq = mavlink_get_channel_status(chan)->current_tx_seq;\n\tmavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;\n");
-                                        QString compactSend3("\tchecksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);\n\tmsg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte\n\tmsg.ck_b = (uint8_t)(checksum >> 8); ///< High byte\n\n\tmavlink_send_msg(chan, &msg);\n}\n\n#endif");
-                                                                                //                                        compactSend = compactSend.arg(channelType, messageType, messageName, sendArguments, packParameters );
-                                        compactSend = compactSend.arg(channelType, messageType, messageName, messageName.toUpper(), packParameters, packLines ) + compactSend2 + compactSend3;
-                                        QString compact2Send("\n\n#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 hdr;\n\tmavlink_%3_t payload;\n\tuint16_t checksum;\n\tmavlink_%3_t *p = &payload;\n\n%6\n\thdr.STX = MAVLINK_STX;\n\thdr.len = MAVLINK_MSG_ID_%4_LEN;\n\thdr.msgid = MAVLINK_MSG_ID_%4;\n");
+//                                        QString compactSend("#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif");
+//                                        QString compactSend("#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tuint16_t checksum;\n\tmavlink_%3_t *p = (mavlink_%3_t *)&msg.payload[0];\n\n%6\n\tmsg.STX = MAVLINK_STX;\n\tmsg.len = MAVLINK_MSG_ID_%4_LEN;\n\tmsg.msgid = MAVLINK_MSG_ID_%4;\n");
+//                                        QString compactSend2("\tmsg.sysid = mavlink_system.sysid;\n\tmsg.compid = mavlink_system.compid;\n\tmsg.seq = mavlink_get_channel_status(chan)->current_tx_seq;\n\tmavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;\n");
+//                                        QString compactSend3("\tchecksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);\n\tmsg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte\n\tmsg.ck_b = (uint8_t)(checksum >> 8); ///< High byte\n\n\tmavlink_send_msg(chan, &msg);\n}\n\n#endif");
+//                                        compactSend = compactSend.arg(channelType, messageType, messageName, sendArguments, packParameters );
+//                                        compactSend = compactSend.arg(channelType, messageType, messageName, messageName.toUpper(), packParameters, packLines ) + compactSend2 + compactSend3;
+//                                        QString compact2Send("\n\n#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 hdr;\n\tmavlink_%3_t payload;\n\tuint16_t checksum;\n\tmavlink_%3_t *p = &payload;\n\n%6\n\thdr.STX = MAVLINK_STX;\n\thdr.len = MAVLINK_MSG_ID_%4_LEN;\n\thdr.msgid = MAVLINK_MSG_ID_%4;\n");
+                                        QString compact2Send("\n\n#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 hdr;\n\tmavlink_%3_t payload;\n\tuint16_t checksum;\n\tmavlink_%3_t *p = &payload;\n\n%6\n\thdr.STX = MAVLINK_STX;\n\thdr.len = MAVLINK_MSG_ID_%4_LEN;\n\thdr.msgid = MAVLINK_MSG_ID_%4;\n");
                                         QString compact2Send2("\thdr.sysid = mavlink_system.sysid;\n\thdr.compid = mavlink_system.compid;\n\thdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;\n\tmavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;\n\tmavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );\n");
                                         QString compact2Send3("\n\tcrc_init(&checksum);\n\tchecksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);\n\tchecksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );\n\thdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte\n\thdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte\n\n\tmavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);\n\tmavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);\n}\n\n#endif");
-                                        compact2Send = compact2Send.arg(channelType, headerType, messageName, messageName.toUpper(), packParameters, packLines ) + compact2Send2 + compact2Send3;
-                                        QString cFile = "// MESSAGE " + messageName.toUpper() + " PACKING\n\n" + idDefine.arg(messageName.toUpper(), QString::number(messageId), QString::number(calculatedLength)) + "\n\n" + cStruct + "\n" + arrayDefines + "\n" + commentContainer.arg(messageName.toLower(), commentLines) + pack + commentPackChanContainer.arg(messageName.toLower(), commentLines) + packChan + commentEncodeContainer.arg(messageName.toLower()) + encode + "\n" + commentSendContainer.arg(messageName.toLower(), commentLines) + compactSend + compact2Send + "\n" + "// MESSAGE " + messageName.toUpper() + " UNPACKING\n\n" + unpacking + commentDecodeContainer.arg(messageName.toLower()) + decode;
+                                        compact2Send = compact2Send.arg(channelType, headerType, messageName, messageName.toUpper(), packParameters, packLines ) + compact2Send2 + compact2Send3.arg(stringCRC.toUpper());
+//                                        QString cFile = "// MESSAGE " + messageName.toUpper() + " PACKING\n\n" + idDefine.arg(messageName.toUpper(), QString::number(messageId), QString::number(calculatedLength), stringCRC.toUpper() ) + "\n\n" + cStruct + "\n" + arrayDefines + "\n" + commentContainer.arg(messageName.toLower(), commentLines) + pack + commentPackChanContainer.arg(messageName.toLower(), commentLines) + packChan + commentEncodeContainer.arg(messageName.toLower()) + encode + "\n" + commentSendContainer.arg(messageName.toLower(), commentLines) + compactSend + compact2Send + "\n" + "// MESSAGE " + messageName.toUpper() + " UNPACKING\n\n" + unpacking + commentDecodeContainer.arg(messageName.toLower()) + decode;
+                                        QString cFile = "// MESSAGE " + messageName.toUpper() + " PACKING\n\n" + idDefine.arg(messageName.toUpper(), QString::number(messageId), QString::number(calculatedLength), stringCRC.toUpper() ) + "\n\n" + cStruct + "\n" + arrayDefines + "\n" + commentContainer.arg(messageName.toLower(), commentLines) + pack + commentPackChanContainer.arg(messageName.toLower(), commentLines) + packChan + commentEncodeContainer.arg(messageName.toLower()) + encode + "\n" + commentSendContainer.arg(messageName.toLower(), commentLines) + compact2Send + "\n" + "// MESSAGE " + messageName.toUpper() + " UNPACKING\n\n" + unpacking + commentDecodeContainer.arg(messageName.toLower()) + decode;
                                         cFiles.append(qMakePair(QString("mavlink_msg_%1.h").arg(messageName), cFile));
+
+                                        emit parseState(tr("Compiled message <strong>%1 \t(#%3)</strong> \tend near line %2, length %4, crc key 0x%5(%6)").arg(messageName, QString::number(n.lineNumber()), QString::number(messageId), QString::number(message_lengths[messageId]), stringCRC.toUpper(), QString::number(message_key[messageId])));
                                     } // Check if tag = message
                                 } // Check if e = NULL
                                 n = n.nextSibling();
@@ -854,6 +977,16 @@ bool MAVLinkXMLParserV10::generate()
         mainHeader += includeLine.arg(messagesDirName + "/" + cFiles.at(i).first);
     }
 
+    // CRC seeds
+    mainHeader += "\n\n// MESSAGE CRC KEYS\n\n";
+    mainHeader += "#undef MAVLINK_MESSAGE_KEYS\n";
+    mainHeader += "#define MAVLINK_MESSAGE_KEYS { ";
+    for (int i=0; i<highest_message_id; i++) {
+        mainHeader += QString::number(message_key[i]);
+        if (i < highest_message_id-1) mainHeader += ", ";
+    }
+    mainHeader += " }\n\n";
+
     mainHeader += "#ifdef __cplusplus\n}\n#endif\n";
     mainHeader += "#endif";
     // Newline to make compiler happy
@@ -872,8 +1005,9 @@ bool MAVLinkXMLParserV10::generate()
     success = success && ok;
     QString mHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef MAVLINK_H\n#define MAVLINK_H\n\n").arg(date); // The main header includes all messages
     // Mark all code as C code
-//    mHeader += "\n#include \"" + mainHeaderName + "\"\n\n";
-    mHeader += "#pragma pack(push,1)\n#include \"" + mainHeaderName + "\"\n#ifdef MAVLINK_CHECK_LENGTH\n#include \"lengths.h\"\n#endif\n#pragma pack(pop)\n";
+    //    mHeader += "\n#include \"" + mainHeaderName + "\"\n\n";
+    //    mHeader += "#pragma pack(push,1)\n#include mavlink_options.h\n#include \"" + mainHeaderName + "\"\n#ifdef MAVLINK_CHECK_LENGTH\n#include \"lengths.h\"\n#endif\n#pragma pack(pop)\n";
+    mHeader += "#pragma pack(push,1)\n#include \"mavlink_options.h\"\n#include \"" + mainHeaderName + "\"\n#ifdef MAVLINK_DATA\n#include \"mavlink_data.h\"\n#endif\n#pragma pack(pop)\n";
     mHeader += "#endif\n";
     mavlinkHeader.write(mHeader.toLatin1());
     mavlinkHeader.close();

@@ -9,11 +9,11 @@ typedef struct __mavlink_brief_feature_t
 	float x; ///< x position in m
 	float y; ///< y position in m
 	float z; ///< z position in m
-	uint8_t orientation_assignment; ///< Orientation assignment 0: false, 1:true
+	float response; ///< Harris operator response at this location
 	uint16_t size; ///< Size in pixels
 	uint16_t orientation; ///< Orientation
-	char descriptor[32]; ///< Descriptor
-	float response; ///< Harris operator response at this location
+	uint8_t orientation_assignment; ///< Orientation assignment 0: false, 1:true
+	uint8_t descriptor[32]; ///< Descriptor
 
 } mavlink_brief_feature_t;
 #define MAVLINK_MSG_BRIEF_FEATURE_FIELD_DESCRIPTOR_LEN 32
@@ -34,7 +34,7 @@ typedef struct __mavlink_brief_feature_t
  * @param response Harris operator response at this location
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_brief_feature_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const char* descriptor, float response)
+static inline uint16_t mavlink_msg_brief_feature_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const uint8_t* descriptor, float response)
 {
 	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
@@ -45,7 +45,7 @@ static inline uint16_t mavlink_msg_brief_feature_pack(uint8_t system_id, uint8_t
 	p->orientation_assignment = orientation_assignment; // uint8_t:Orientation assignment 0: false, 1:true
 	p->size = size; // uint16_t:Size in pixels
 	p->orientation = orientation; // uint16_t:Orientation
-	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // char[32]:Descriptor
+	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // uint8_t[32]:Descriptor
 	p->response = response; // float:Harris operator response at this location
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_BRIEF_FEATURE_LEN);
@@ -67,7 +67,7 @@ static inline uint16_t mavlink_msg_brief_feature_pack(uint8_t system_id, uint8_t
  * @param response Harris operator response at this location
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_brief_feature_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const char* descriptor, float response)
+static inline uint16_t mavlink_msg_brief_feature_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const uint8_t* descriptor, float response)
 {
 	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
@@ -78,7 +78,7 @@ static inline uint16_t mavlink_msg_brief_feature_pack_chan(uint8_t system_id, ui
 	p->orientation_assignment = orientation_assignment; // uint8_t:Orientation assignment 0: false, 1:true
 	p->size = size; // uint16_t:Size in pixels
 	p->orientation = orientation; // uint16_t:Orientation
-	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // char[32]:Descriptor
+	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // uint8_t[32]:Descriptor
 	p->response = response; // float:Harris operator response at this location
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_BRIEF_FEATURE_LEN);
@@ -110,40 +110,10 @@ static inline uint16_t mavlink_msg_brief_feature_encode(uint8_t system_id, uint8
  * @param descriptor Descriptor
  * @param response Harris operator response at this location
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const char* descriptor, float response)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg.payload[0];
-
-	p->x = x; // float:x position in m
-	p->y = y; // float:y position in m
-	p->z = z; // float:z position in m
-	p->orientation_assignment = orientation_assignment; // uint8_t:Orientation assignment 0: false, 1:true
-	p->size = size; // uint16_t:Size in pixels
-	p->orientation = orientation; // uint16_t:Orientation
-	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // char[32]:Descriptor
-	p->response = response; // float:Harris operator response at this location
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_BRIEF_FEATURE_LEN;
-	msg.msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
-static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const char* descriptor, float response)
+static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const uint8_t* descriptor, float response)
 {
 	mavlink_header_t hdr;
 	mavlink_brief_feature_t payload;
@@ -156,7 +126,7 @@ static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float 
 	p->orientation_assignment = orientation_assignment; // uint8_t:Orientation assignment 0: false, 1:true
 	p->size = size; // uint16_t:Size in pixels
 	p->orientation = orientation; // uint16_t:Orientation
-	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // char[32]:Descriptor
+	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // uint8_t[32]:Descriptor
 	p->response = response; // float:Harris operator response at this location
 
 	hdr.STX = MAVLINK_STX;
@@ -252,7 +222,7 @@ static inline uint16_t mavlink_msg_brief_feature_get_orientation(const mavlink_m
  *
  * @return Descriptor
  */
-static inline uint16_t mavlink_msg_brief_feature_get_descriptor(const mavlink_message_t* msg, char* descriptor)
+static inline uint16_t mavlink_msg_brief_feature_get_descriptor(const mavlink_message_t* msg, uint8_t* descriptor)
 {
 	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
 

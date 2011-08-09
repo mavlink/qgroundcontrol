@@ -73,33 +73,9 @@ static inline uint16_t mavlink_msg_waypoint_request_list_encode(uint8_t system_i
  * @param target_system System ID
  * @param target_component Component ID
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_waypoint_request_list_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_waypoint_request_list_t *p = (mavlink_waypoint_request_list_t *)&msg.payload[0];
-
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST_LEN;
-	msg.msgid = MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_waypoint_request_list_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component)
 {
 	mavlink_header_t hdr;

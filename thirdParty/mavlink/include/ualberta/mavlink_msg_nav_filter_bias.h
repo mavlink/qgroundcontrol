@@ -103,38 +103,9 @@ static inline uint16_t mavlink_msg_nav_filter_bias_encode(uint8_t system_id, uin
  * @param gyro_1 b_f[1]
  * @param gyro_2 b_f[2]
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_nav_filter_bias_send(mavlink_channel_t chan, uint64_t usec, float accel_0, float accel_1, float accel_2, float gyro_0, float gyro_1, float gyro_2)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_nav_filter_bias_t *p = (mavlink_nav_filter_bias_t *)&msg.payload[0];
-
-	p->usec = usec; // uint64_t:Timestamp (microseconds)
-	p->accel_0 = accel_0; // float:b_f[0]
-	p->accel_1 = accel_1; // float:b_f[1]
-	p->accel_2 = accel_2; // float:b_f[2]
-	p->gyro_0 = gyro_0; // float:b_f[0]
-	p->gyro_1 = gyro_1; // float:b_f[1]
-	p->gyro_2 = gyro_2; // float:b_f[2]
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_NAV_FILTER_BIAS_LEN;
-	msg.msgid = MAVLINK_MSG_ID_NAV_FILTER_BIAS;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_nav_filter_bias_send(mavlink_channel_t chan, uint64_t usec, float accel_0, float accel_1, float accel_2, float gyro_0, float gyro_1, float gyro_2)
 {
 	mavlink_header_t hdr;

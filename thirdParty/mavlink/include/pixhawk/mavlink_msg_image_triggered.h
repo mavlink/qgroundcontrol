@@ -133,43 +133,9 @@ static inline uint16_t mavlink_msg_image_triggered_encode(uint8_t system_id, uin
  * @param ground_y Ground truth Y
  * @param ground_z Ground truth Z
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_image_triggered_send(mavlink_channel_t chan, uint64_t timestamp, uint32_t seq, float roll, float pitch, float yaw, float local_z, float lat, float lon, float alt, float ground_x, float ground_y, float ground_z)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_image_triggered_t *p = (mavlink_image_triggered_t *)&msg.payload[0];
-
-	p->timestamp = timestamp; // uint64_t:Timestamp
-	p->seq = seq; // uint32_t:IMU seq
-	p->roll = roll; // float:Roll angle in rad
-	p->pitch = pitch; // float:Pitch angle in rad
-	p->yaw = yaw; // float:Yaw angle in rad
-	p->local_z = local_z; // float:Local frame Z coordinate (height over ground)
-	p->lat = lat; // float:GPS X coordinate
-	p->lon = lon; // float:GPS Y coordinate
-	p->alt = alt; // float:Global frame altitude
-	p->ground_x = ground_x; // float:Ground truth X
-	p->ground_y = ground_y; // float:Ground truth Y
-	p->ground_z = ground_z; // float:Ground truth Z
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_IMAGE_TRIGGERED_LEN;
-	msg.msgid = MAVLINK_MSG_ID_IMAGE_TRIGGERED;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_image_triggered_send(mavlink_channel_t chan, uint64_t timestamp, uint32_t seq, float roll, float pitch, float yaw, float local_z, float lat, float lon, float alt, float ground_x, float ground_y, float ground_z)
 {
 	mavlink_header_t hdr;

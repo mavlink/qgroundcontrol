@@ -109,39 +109,9 @@ static inline uint16_t mavlink_msg_control_status_encode(uint8_t system_id, uint
  * @param control_pos_z 0: Z position control disabled, 1: enabled
  * @param control_pos_yaw 0: Yaw angle control disabled, 1: enabled
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_control_status_send(mavlink_channel_t chan, uint8_t position_fix, uint8_t vision_fix, uint8_t gps_fix, uint8_t ahrs_health, uint8_t control_att, uint8_t control_pos_xy, uint8_t control_pos_z, uint8_t control_pos_yaw)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_control_status_t *p = (mavlink_control_status_t *)&msg.payload[0];
-
-	p->position_fix = position_fix; // uint8_t:Position fix: 0: lost, 2: 2D position fix, 3: 3D position fix 
-	p->vision_fix = vision_fix; // uint8_t:Vision position fix: 0: lost, 1: 2D local position hold, 2: 2D global position fix, 3: 3D global position fix 
-	p->gps_fix = gps_fix; // uint8_t:GPS position fix: 0: no reception, 1: Minimum 1 satellite, but no position fix, 2: 2D position fix, 3: 3D position fix 
-	p->ahrs_health = ahrs_health; // uint8_t:Attitude estimation health: 0: poor, 255: excellent
-	p->control_att = control_att; // uint8_t:0: Attitude control disabled, 1: enabled
-	p->control_pos_xy = control_pos_xy; // uint8_t:0: X, Y position control disabled, 1: enabled
-	p->control_pos_z = control_pos_z; // uint8_t:0: Z position control disabled, 1: enabled
-	p->control_pos_yaw = control_pos_yaw; // uint8_t:0: Yaw angle control disabled, 1: enabled
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_CONTROL_STATUS_LEN;
-	msg.msgid = MAVLINK_MSG_ID_CONTROL_STATUS;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_control_status_send(mavlink_channel_t chan, uint8_t position_fix, uint8_t vision_fix, uint8_t gps_fix, uint8_t ahrs_health, uint8_t control_att, uint8_t control_pos_xy, uint8_t control_pos_z, uint8_t control_pos_yaw)
 {
 	mavlink_header_t hdr;

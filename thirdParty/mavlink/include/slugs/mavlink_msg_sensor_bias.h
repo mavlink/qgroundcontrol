@@ -97,37 +97,9 @@ static inline uint16_t mavlink_msg_sensor_bias_encode(uint8_t system_id, uint8_t
  * @param gyBias Gyro Y bias (rad/s)
  * @param gzBias Gyro Z bias (rad/s)
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_sensor_bias_send(mavlink_channel_t chan, float axBias, float ayBias, float azBias, float gxBias, float gyBias, float gzBias)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_sensor_bias_t *p = (mavlink_sensor_bias_t *)&msg.payload[0];
-
-	p->axBias = axBias; // float:Accelerometer X bias (m/s)
-	p->ayBias = ayBias; // float:Accelerometer Y bias (m/s)
-	p->azBias = azBias; // float:Accelerometer Z bias (m/s)
-	p->gxBias = gxBias; // float:Gyro X bias (rad/s)
-	p->gyBias = gyBias; // float:Gyro Y bias (rad/s)
-	p->gzBias = gzBias; // float:Gyro Z bias (rad/s)
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_SENSOR_BIAS_LEN;
-	msg.msgid = MAVLINK_MSG_ID_SENSOR_BIAS;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_sensor_bias_send(mavlink_channel_t chan, float axBias, float ayBias, float azBias, float gxBias, float gyBias, float gzBias)
 {
 	mavlink_header_t hdr;

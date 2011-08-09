@@ -97,37 +97,9 @@ static inline uint16_t mavlink_msg_aux_status_encode(uint8_t system_id, uint8_t 
  * @param spi1_err_count Number of I2C errors since startup
  * @param uart_total_err_count Number of I2C errors since startup
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_aux_status_send(mavlink_channel_t chan, uint16_t load, uint16_t i2c0_err_count, uint16_t i2c1_err_count, uint16_t spi0_err_count, uint16_t spi1_err_count, uint16_t uart_total_err_count)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_aux_status_t *p = (mavlink_aux_status_t *)&msg.payload[0];
-
-	p->load = load; // uint16_t:Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
-	p->i2c0_err_count = i2c0_err_count; // uint16_t:Number of I2C errors since startup
-	p->i2c1_err_count = i2c1_err_count; // uint16_t:Number of I2C errors since startup
-	p->spi0_err_count = spi0_err_count; // uint16_t:Number of I2C errors since startup
-	p->spi1_err_count = spi1_err_count; // uint16_t:Number of I2C errors since startup
-	p->uart_total_err_count = uart_total_err_count; // uint16_t:Number of I2C errors since startup
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_AUX_STATUS_LEN;
-	msg.msgid = MAVLINK_MSG_ID_AUX_STATUS;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_aux_status_send(mavlink_channel_t chan, uint16_t load, uint16_t i2c0_err_count, uint16_t i2c1_err_count, uint16_t spi0_err_count, uint16_t spi1_err_count, uint16_t uart_total_err_count)
 {
 	mavlink_header_t hdr;

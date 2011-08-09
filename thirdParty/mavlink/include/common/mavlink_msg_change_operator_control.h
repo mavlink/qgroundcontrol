@@ -86,35 +86,9 @@ static inline uint16_t mavlink_msg_change_operator_control_encode(uint8_t system
  * @param version 0: key as plaintext, 1-255: future, different hashing/encryption variants. The GCS should in general use the safest mode possible initially and then gradually move down the encryption level if it gets a NACK message indicating an encryption mismatch.
  * @param passkey Password / Key, depending on version plaintext or encrypted. 25 or less characters, NULL terminated. The characters may involve A-Z, a-z, 0-9, and "!?,.-"
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_change_operator_control_send(mavlink_channel_t chan, uint8_t target_system, uint8_t control_request, uint8_t version, const char* passkey)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_change_operator_control_t *p = (mavlink_change_operator_control_t *)&msg.payload[0];
-
-	p->target_system = target_system; // uint8_t:System the GCS requests control for
-	p->control_request = control_request; // uint8_t:0: request control of this MAV, 1: Release control of this MAV
-	p->version = version; // uint8_t:0: key as plaintext, 1-255: future, different hashing/encryption variants. The GCS should in general use the safest mode possible initially and then gradually move down the encryption level if it gets a NACK message indicating an encryption mismatch.
-	memcpy(p->passkey, passkey, sizeof(p->passkey)); // char[25]:Password / Key, depending on version plaintext or encrypted. 25 or less characters, NULL terminated. The characters may involve A-Z, a-z, 0-9, and "!?,.-"
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_LEN;
-	msg.msgid = MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_change_operator_control_send(mavlink_channel_t chan, uint8_t target_system, uint8_t control_request, uint8_t version, const char* passkey)
 {
 	mavlink_header_t hdr;

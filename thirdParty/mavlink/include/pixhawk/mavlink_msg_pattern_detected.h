@@ -6,9 +6,9 @@
 
 typedef struct __mavlink_pattern_detected_t 
 {
-	uint8_t type; ///< 0: Pattern, 1: Letter
 	float confidence; ///< Confidence of detection
-	char file[100]; ///< Pattern file name
+	uint8_t type; ///< 0: Pattern, 1: Letter
+	uint8_t file[100]; ///< Pattern file name
 	uint8_t detected; ///< Accepted as true detection, 0 no, 1 yes
 
 } mavlink_pattern_detected_t;
@@ -26,14 +26,14 @@ typedef struct __mavlink_pattern_detected_t
  * @param detected Accepted as true detection, 0 no, 1 yes
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_pattern_detected_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t type, float confidence, const char* file, uint8_t detected)
+static inline uint16_t mavlink_msg_pattern_detected_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t type, float confidence, const uint8_t* file, uint8_t detected)
 {
 	mavlink_pattern_detected_t *p = (mavlink_pattern_detected_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
 
 	p->type = type; // uint8_t:0: Pattern, 1: Letter
 	p->confidence = confidence; // float:Confidence of detection
-	memcpy(p->file, file, sizeof(p->file)); // char[100]:Pattern file name
+	memcpy(p->file, file, sizeof(p->file)); // uint8_t[100]:Pattern file name
 	p->detected = detected; // uint8_t:Accepted as true detection, 0 no, 1 yes
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_PATTERN_DETECTED_LEN);
@@ -51,14 +51,14 @@ static inline uint16_t mavlink_msg_pattern_detected_pack(uint8_t system_id, uint
  * @param detected Accepted as true detection, 0 no, 1 yes
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_pattern_detected_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t type, float confidence, const char* file, uint8_t detected)
+static inline uint16_t mavlink_msg_pattern_detected_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t type, float confidence, const uint8_t* file, uint8_t detected)
 {
 	mavlink_pattern_detected_t *p = (mavlink_pattern_detected_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
 
 	p->type = type; // uint8_t:0: Pattern, 1: Letter
 	p->confidence = confidence; // float:Confidence of detection
-	memcpy(p->file, file, sizeof(p->file)); // char[100]:Pattern file name
+	memcpy(p->file, file, sizeof(p->file)); // uint8_t[100]:Pattern file name
 	p->detected = detected; // uint8_t:Accepted as true detection, 0 no, 1 yes
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_PATTERN_DETECTED_LEN);
@@ -86,36 +86,10 @@ static inline uint16_t mavlink_msg_pattern_detected_encode(uint8_t system_id, ui
  * @param file Pattern file name
  * @param detected Accepted as true detection, 0 no, 1 yes
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_pattern_detected_send(mavlink_channel_t chan, uint8_t type, float confidence, const char* file, uint8_t detected)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_pattern_detected_t *p = (mavlink_pattern_detected_t *)&msg.payload[0];
-
-	p->type = type; // uint8_t:0: Pattern, 1: Letter
-	p->confidence = confidence; // float:Confidence of detection
-	memcpy(p->file, file, sizeof(p->file)); // char[100]:Pattern file name
-	p->detected = detected; // uint8_t:Accepted as true detection, 0 no, 1 yes
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_PATTERN_DETECTED_LEN;
-	msg.msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
-static inline void mavlink_msg_pattern_detected_send(mavlink_channel_t chan, uint8_t type, float confidence, const char* file, uint8_t detected)
+static inline void mavlink_msg_pattern_detected_send(mavlink_channel_t chan, uint8_t type, float confidence, const uint8_t* file, uint8_t detected)
 {
 	mavlink_header_t hdr;
 	mavlink_pattern_detected_t payload;
@@ -124,7 +98,7 @@ static inline void mavlink_msg_pattern_detected_send(mavlink_channel_t chan, uin
 
 	p->type = type; // uint8_t:0: Pattern, 1: Letter
 	p->confidence = confidence; // float:Confidence of detection
-	memcpy(p->file, file, sizeof(p->file)); // char[100]:Pattern file name
+	memcpy(p->file, file, sizeof(p->file)); // uint8_t[100]:Pattern file name
 	p->detected = detected; // uint8_t:Accepted as true detection, 0 no, 1 yes
 
 	hdr.STX = MAVLINK_STX;
@@ -176,7 +150,7 @@ static inline float mavlink_msg_pattern_detected_get_confidence(const mavlink_me
  *
  * @return Pattern file name
  */
-static inline uint16_t mavlink_msg_pattern_detected_get_file(const mavlink_message_t* msg, char* file)
+static inline uint16_t mavlink_msg_pattern_detected_get_file(const mavlink_message_t* msg, uint8_t* file)
 {
 	mavlink_pattern_detected_t *p = (mavlink_pattern_detected_t *)&msg->payload[0];
 

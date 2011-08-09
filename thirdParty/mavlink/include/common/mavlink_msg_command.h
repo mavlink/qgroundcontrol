@@ -6,14 +6,14 @@
 
 typedef struct __mavlink_command_t 
 {
-	uint8_t target_system; ///< System which should execute the command
-	uint8_t target_component; ///< Component which should execute the command, 0 for all components
-	uint8_t command; ///< Command ID, as defined by MAV_CMD enum.
-	uint8_t confirmation; ///< 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
 	float param1; ///< Parameter 1, as defined by MAV_CMD enum.
 	float param2; ///< Parameter 2, as defined by MAV_CMD enum.
 	float param3; ///< Parameter 3, as defined by MAV_CMD enum.
 	float param4; ///< Parameter 4, as defined by MAV_CMD enum.
+	uint8_t target_system; ///< System which should execute the command
+	uint8_t target_component; ///< Component which should execute the command, 0 for all components
+	uint8_t command; ///< Command ID, as defined by MAV_CMD enum.
+	uint8_t confirmation; ///< 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
 
 } mavlink_command_t;
 
@@ -109,39 +109,9 @@ static inline uint16_t mavlink_msg_command_encode(uint8_t system_id, uint8_t com
  * @param param3 Parameter 3, as defined by MAV_CMD enum.
  * @param param4 Parameter 4, as defined by MAV_CMD enum.
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_command_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t command, uint8_t confirmation, float param1, float param2, float param3, float param4)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_command_t *p = (mavlink_command_t *)&msg.payload[0];
-
-	p->target_system = target_system; // uint8_t:System which should execute the command
-	p->target_component = target_component; // uint8_t:Component which should execute the command, 0 for all components
-	p->command = command; // uint8_t:Command ID, as defined by MAV_CMD enum.
-	p->confirmation = confirmation; // uint8_t:0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
-	p->param1 = param1; // float:Parameter 1, as defined by MAV_CMD enum.
-	p->param2 = param2; // float:Parameter 2, as defined by MAV_CMD enum.
-	p->param3 = param3; // float:Parameter 3, as defined by MAV_CMD enum.
-	p->param4 = param4; // float:Parameter 4, as defined by MAV_CMD enum.
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_COMMAND_LEN;
-	msg.msgid = MAVLINK_MSG_ID_COMMAND;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_command_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t command, uint8_t confirmation, float param1, float param2, float param3, float param4)
 {
 	mavlink_header_t hdr;

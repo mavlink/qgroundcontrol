@@ -6,8 +6,8 @@
 
 typedef struct __mavlink_data_transmission_handshake_t 
 {
-	uint8_t type; ///< type of requested/acknowledged data (as defined in ENUM DATA_TYPES in mavlink/include/mavlink_types.h)
 	uint32_t size; ///< total data size in bytes (set on ACK only)
+	uint8_t type; ///< type of requested/acknowledged data (as defined in ENUM DATA_TYPES in mavlink/include/mavlink_types.h)
 	uint8_t packets; ///< number of packets beeing sent (set on ACK only)
 	uint8_t payload; ///< payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only)
 	uint8_t jpg_quality; ///< JPEG quality out of [1,100]
@@ -91,36 +91,9 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_encode(uint8_t sy
  * @param payload payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only)
  * @param jpg_quality JPEG quality out of [1,100]
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_data_transmission_handshake_send(mavlink_channel_t chan, uint8_t type, uint32_t size, uint8_t packets, uint8_t payload, uint8_t jpg_quality)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_data_transmission_handshake_t *p = (mavlink_data_transmission_handshake_t *)&msg.payload[0];
-
-	p->type = type; // uint8_t:type of requested/acknowledged data (as defined in ENUM DATA_TYPES in mavlink/include/mavlink_types.h)
-	p->size = size; // uint32_t:total data size in bytes (set on ACK only)
-	p->packets = packets; // uint8_t:number of packets beeing sent (set on ACK only)
-	p->payload = payload; // uint8_t:payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only)
-	p->jpg_quality = jpg_quality; // uint8_t:JPEG quality out of [1,100]
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE_LEN;
-	msg.msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_data_transmission_handshake_send(mavlink_channel_t chan, uint8_t type, uint32_t size, uint8_t packets, uint8_t payload, uint8_t jpg_quality)
 {
 	mavlink_header_t hdr;

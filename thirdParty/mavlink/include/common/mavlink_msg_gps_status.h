@@ -102,37 +102,9 @@ static inline uint16_t mavlink_msg_gps_status_encode(uint8_t system_id, uint8_t 
  * @param satellite_azimuth Direction of satellite, 0: 0 deg, 255: 360 deg.
  * @param satellite_snr Signal to noise ratio of satellite
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_gps_status_send(mavlink_channel_t chan, uint8_t satellites_visible, const uint8_t* satellite_prn, const uint8_t* satellite_used, const uint8_t* satellite_elevation, const uint8_t* satellite_azimuth, const uint8_t* satellite_snr)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_gps_status_t *p = (mavlink_gps_status_t *)&msg.payload[0];
-
-	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible
-	memcpy(p->satellite_prn, satellite_prn, sizeof(p->satellite_prn)); // uint8_t[20]:Global satellite ID
-	memcpy(p->satellite_used, satellite_used, sizeof(p->satellite_used)); // uint8_t[20]:0: Satellite not used, 1: used for localization
-	memcpy(p->satellite_elevation, satellite_elevation, sizeof(p->satellite_elevation)); // uint8_t[20]:Elevation (0: right on top of receiver, 90: on the horizon) of satellite
-	memcpy(p->satellite_azimuth, satellite_azimuth, sizeof(p->satellite_azimuth)); // uint8_t[20]:Direction of satellite, 0: 0 deg, 255: 360 deg.
-	memcpy(p->satellite_snr, satellite_snr, sizeof(p->satellite_snr)); // uint8_t[20]:Signal to noise ratio of satellite
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_GPS_STATUS_LEN;
-	msg.msgid = MAVLINK_MSG_ID_GPS_STATUS;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_gps_status_send(mavlink_channel_t chan, uint8_t satellites_visible, const uint8_t* satellite_prn, const uint8_t* satellite_used, const uint8_t* satellite_elevation, const uint8_t* satellite_azimuth, const uint8_t* satellite_snr)
 {
 	mavlink_header_t hdr;

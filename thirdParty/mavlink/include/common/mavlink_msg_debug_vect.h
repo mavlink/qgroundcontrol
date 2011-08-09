@@ -6,11 +6,11 @@
 
 typedef struct __mavlink_debug_vect_t 
 {
-	char name[10]; ///< Name
 	uint64_t usec; ///< Timestamp
 	float x; ///< x
 	float y; ///< y
 	float z; ///< z
+	char name[10]; ///< Name
 
 } mavlink_debug_vect_t;
 #define MAVLINK_MSG_DEBUG_VECT_FIELD_NAME_LEN 10
@@ -92,36 +92,9 @@ static inline uint16_t mavlink_msg_debug_vect_encode(uint8_t system_id, uint8_t 
  * @param y y
  * @param z z
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_debug_vect_send(mavlink_channel_t chan, const char* name, uint64_t usec, float x, float y, float z)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_debug_vect_t *p = (mavlink_debug_vect_t *)&msg.payload[0];
-
-	memcpy(p->name, name, sizeof(p->name)); // char[10]:Name
-	p->usec = usec; // uint64_t:Timestamp
-	p->x = x; // float:x
-	p->y = y; // float:y
-	p->z = z; // float:z
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_DEBUG_VECT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_DEBUG_VECT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_debug_vect_send(mavlink_channel_t chan, const char* name, uint64_t usec, float x, float y, float z)
 {
 	mavlink_header_t hdr;

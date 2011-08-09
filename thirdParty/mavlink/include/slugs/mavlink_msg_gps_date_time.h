@@ -103,38 +103,9 @@ static inline uint16_t mavlink_msg_gps_date_time_encode(uint8_t system_id, uint8
  * @param sec Sec reported by Gps  
  * @param visSat Visible sattelites reported by Gps  
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_gps_date_time_send(mavlink_channel_t chan, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec, uint8_t visSat)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_gps_date_time_t *p = (mavlink_gps_date_time_t *)&msg.payload[0];
-
-	p->year = year; // uint8_t:Year reported by Gps 
-	p->month = month; // uint8_t:Month reported by Gps 
-	p->day = day; // uint8_t:Day reported by Gps 
-	p->hour = hour; // uint8_t:Hour reported by Gps 
-	p->min = min; // uint8_t:Min reported by Gps 
-	p->sec = sec; // uint8_t:Sec reported by Gps  
-	p->visSat = visSat; // uint8_t:Visible sattelites reported by Gps  
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_GPS_DATE_TIME_LEN;
-	msg.msgid = MAVLINK_MSG_ID_GPS_DATE_TIME;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_gps_date_time_send(mavlink_channel_t chan, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec, uint8_t visSat)
 {
 	mavlink_header_t hdr;

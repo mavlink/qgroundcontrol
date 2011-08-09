@@ -7,7 +7,6 @@
 typedef struct __mavlink_gps_raw_int_t 
 {
 	uint64_t usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	uint8_t fix_type; ///< 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
 	int32_t lat; ///< Latitude in 1E7 degrees
 	int32_t lon; ///< Longitude in 1E7 degrees
 	int32_t alt; ///< Altitude in 1E3 meters (millimeters)
@@ -15,6 +14,7 @@ typedef struct __mavlink_gps_raw_int_t
 	float epv; ///< GPS VDOP
 	float v; ///< GPS ground speed (m/s)
 	float hdg; ///< Compass heading in degrees, 0..360 degrees
+	uint8_t fix_type; ///< 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
 
 } mavlink_gps_raw_int_t;
 
@@ -115,40 +115,9 @@ static inline uint16_t mavlink_msg_gps_raw_int_encode(uint8_t system_id, uint8_t
  * @param v GPS ground speed (m/s)
  * @param hdg Compass heading in degrees, 0..360 degrees
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_gps_raw_int_send(mavlink_channel_t chan, uint64_t usec, uint8_t fix_type, int32_t lat, int32_t lon, int32_t alt, float eph, float epv, float v, float hdg)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_gps_raw_int_t *p = (mavlink_gps_raw_int_t *)&msg.payload[0];
-
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->fix_type = fix_type; // uint8_t:0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
-	p->lat = lat; // int32_t:Latitude in 1E7 degrees
-	p->lon = lon; // int32_t:Longitude in 1E7 degrees
-	p->alt = alt; // int32_t:Altitude in 1E3 meters (millimeters)
-	p->eph = eph; // float:GPS HDOP
-	p->epv = epv; // float:GPS VDOP
-	p->v = v; // float:GPS ground speed (m/s)
-	p->hdg = hdg; // float:Compass heading in degrees, 0..360 degrees
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_GPS_RAW_INT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_GPS_RAW_INT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_gps_raw_int_send(mavlink_channel_t chan, uint64_t usec, uint8_t fix_type, int32_t lat, int32_t lon, int32_t alt, float eph, float epv, float v, float hdg)
 {
 	mavlink_header_t hdr;
