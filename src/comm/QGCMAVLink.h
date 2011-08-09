@@ -30,6 +30,7 @@ This file is part of the QGROUNDCONTROL project
 #ifndef QGCMAVLINK_H
 #define QGCMAVLINK_H
 
+#define MAVLINK_NO_DATA
 #include <mavlink_types.h>
 #include <mavlink.h>
 

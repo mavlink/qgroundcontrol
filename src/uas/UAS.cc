@@ -809,16 +809,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val);
             }
             break;
-        case MAVLINK_MSG_ID_ACTION_ACK:
-            mavlink_action_ack_t ack;
-            mavlink_msg_action_ack_decode(&message, &ack);
+        case MAVLINK_MSG_ID_CMD_ACK:
+            mavlink_cmd_ack_t ack;
+            mavlink_msg_cmd_ack_decode(&message, &ack);
             if (ack.result == 1)
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("SUCCESS: Executed action: %1").arg(ack.action));
+                emit textMessageReceived(uasId, message.compid, 0, tr("SUCCESS: Executed CMD: %1").arg(ack.cmd));
             }
             else
             {
-                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Rejected action: %1").arg(ack.action));
+                emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Rejected CMD: %1").arg(ack.cmd));
             }
             break;
         case MAVLINK_MSG_ID_DEBUG:

@@ -65,7 +65,7 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_msg_pattern_detected_decode(&message, &detected);
             QByteArray b;
             b.resize(256);
-            mavlink_msg_pattern_detected_get_file(&message, (int8_t*)b.data());
+            mavlink_msg_pattern_detected_get_file(&message, b.data());
             b.append('\0');
             QString name = QString(b);
             if (detected.type == 0)
