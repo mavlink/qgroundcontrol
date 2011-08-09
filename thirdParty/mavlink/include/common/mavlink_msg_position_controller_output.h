@@ -91,36 +91,9 @@ static inline uint16_t mavlink_msg_position_controller_output_encode(uint8_t sys
  * @param z Position z: -128: -100%, 127: +100%
  * @param yaw Position yaw: -128: -100%, 127: +100%
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_position_controller_output_send(mavlink_channel_t chan, uint8_t enabled, int8_t x, int8_t y, int8_t z, int8_t yaw)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_position_controller_output_t *p = (mavlink_position_controller_output_t *)&msg.payload[0];
-
-	p->enabled = enabled; // uint8_t:1: enabled, 0: disabled
-	p->x = x; // int8_t:Position x: -128: -100%, 127: +100%
-	p->y = y; // int8_t:Position y: -128: -100%, 127: +100%
-	p->z = z; // int8_t:Position z: -128: -100%, 127: +100%
-	p->yaw = yaw; // int8_t:Position yaw: -128: -100%, 127: +100%
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_position_controller_output_send(mavlink_channel_t chan, uint8_t enabled, int8_t x, int8_t y, int8_t z, int8_t yaw)
 {
 	mavlink_header_t hdr;

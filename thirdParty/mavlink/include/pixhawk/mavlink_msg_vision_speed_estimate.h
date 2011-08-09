@@ -85,35 +85,9 @@ static inline uint16_t mavlink_msg_vision_speed_estimate_encode(uint8_t system_i
  * @param y Global Y speed
  * @param z Global Z speed
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_vision_speed_estimate_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_vision_speed_estimate_t *p = (mavlink_vision_speed_estimate_t *)&msg.payload[0];
-
-	p->usec = usec; // uint64_t:Timestamp (milliseconds)
-	p->x = x; // float:Global X speed
-	p->y = y; // float:Global Y speed
-	p->z = z; // float:Global Z speed
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE_LEN;
-	msg.msgid = MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_vision_speed_estimate_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z)
 {
 	mavlink_header_t hdr;

@@ -6,8 +6,8 @@
 
 typedef struct __mavlink_named_value_int_t 
 {
-	char name[10]; ///< Name of the debug variable
 	int32_t value; ///< Signed integer value
+	char name[10]; ///< Name of the debug variable
 
 } mavlink_named_value_int_t;
 #define MAVLINK_MSG_NAMED_VALUE_INT_FIELD_NAME_LEN 10
@@ -74,33 +74,9 @@ static inline uint16_t mavlink_msg_named_value_int_encode(uint8_t system_id, uin
  * @param name Name of the debug variable
  * @param value Signed integer value
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_named_value_int_send(mavlink_channel_t chan, const char* name, int32_t value)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_named_value_int_t *p = (mavlink_named_value_int_t *)&msg.payload[0];
-
-	memcpy(p->name, name, sizeof(p->name)); // char[10]:Name of the debug variable
-	p->value = value; // int32_t:Signed integer value
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_NAMED_VALUE_INT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_NAMED_VALUE_INT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_named_value_int_send(mavlink_channel_t chan, const char* name, int32_t value)
 {
 	mavlink_header_t hdr;

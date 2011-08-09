@@ -74,33 +74,9 @@ static inline uint16_t mavlink_msg_encapsulated_data_encode(uint8_t system_id, u
  * @param seqnr sequence number (starting with 0 on every transmission)
  * @param data image data bytes
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_encapsulated_data_send(mavlink_channel_t chan, uint16_t seqnr, const uint8_t* data)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_encapsulated_data_t *p = (mavlink_encapsulated_data_t *)&msg.payload[0];
-
-	p->seqnr = seqnr; // uint16_t:sequence number (starting with 0 on every transmission)
-	memcpy(p->data, data, sizeof(p->data)); // uint8_t[253]:image data bytes
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_ENCAPSULATED_DATA_LEN;
-	msg.msgid = MAVLINK_MSG_ID_ENCAPSULATED_DATA;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_encapsulated_data_send(mavlink_channel_t chan, uint16_t seqnr, const uint8_t* data)
 {
 	mavlink_header_t hdr;

@@ -103,38 +103,9 @@ static inline uint16_t mavlink_msg_attitude_encode(uint8_t system_id, uint8_t co
  * @param pitchspeed Pitch angular speed (rad/s)
  * @param yawspeed Yaw angular speed (rad/s)
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_attitude_send(mavlink_channel_t chan, uint64_t usec, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_attitude_t *p = (mavlink_attitude_t *)&msg.payload[0];
-
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->roll = roll; // float:Roll angle (rad)
-	p->pitch = pitch; // float:Pitch angle (rad)
-	p->yaw = yaw; // float:Yaw angle (rad)
-	p->rollspeed = rollspeed; // float:Roll angular speed (rad/s)
-	p->pitchspeed = pitchspeed; // float:Pitch angular speed (rad/s)
-	p->yawspeed = yawspeed; // float:Yaw angular speed (rad/s)
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_ATTITUDE_LEN;
-	msg.msgid = MAVLINK_MSG_ID_ATTITUDE;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_attitude_send(mavlink_channel_t chan, uint64_t usec, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed)
 {
 	mavlink_header_t hdr;

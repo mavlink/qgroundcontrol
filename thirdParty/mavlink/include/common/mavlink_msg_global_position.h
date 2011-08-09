@@ -103,38 +103,9 @@ static inline uint16_t mavlink_msg_global_position_encode(uint8_t system_id, uin
  * @param vy Y Speed (in Longitude direction, positive: going east)
  * @param vz Z Speed (in Altitude direction, positive: going up)
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_global_position_send(mavlink_channel_t chan, uint64_t usec, float lat, float lon, float alt, float vx, float vy, float vz)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_global_position_t *p = (mavlink_global_position_t *)&msg.payload[0];
-
-	p->usec = usec; // uint64_t:Timestamp (microseconds since unix epoch)
-	p->lat = lat; // float:Latitude, in degrees
-	p->lon = lon; // float:Longitude, in degrees
-	p->alt = alt; // float:Absolute altitude, in meters
-	p->vx = vx; // float:X Speed (in Latitude direction, positive: going north)
-	p->vy = vy; // float:Y Speed (in Longitude direction, positive: going east)
-	p->vz = vz; // float:Z Speed (in Altitude direction, positive: going up)
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_GLOBAL_POSITION_LEN;
-	msg.msgid = MAVLINK_MSG_ID_GLOBAL_POSITION;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_global_position_send(mavlink_channel_t chan, uint64_t usec, float lat, float lon, float alt, float vx, float vy, float vz)
 {
 	mavlink_header_t hdr;

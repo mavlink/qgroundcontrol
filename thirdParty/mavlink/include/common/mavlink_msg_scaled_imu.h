@@ -121,41 +121,9 @@ static inline uint16_t mavlink_msg_scaled_imu_encode(uint8_t system_id, uint8_t 
  * @param ymag Y Magnetic field (milli tesla)
  * @param zmag Z Magnetic field (milli tesla)
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_scaled_imu_send(mavlink_channel_t chan, uint64_t usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_scaled_imu_t *p = (mavlink_scaled_imu_t *)&msg.payload[0];
-
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->xacc = xacc; // int16_t:X acceleration (mg)
-	p->yacc = yacc; // int16_t:Y acceleration (mg)
-	p->zacc = zacc; // int16_t:Z acceleration (mg)
-	p->xgyro = xgyro; // int16_t:Angular speed around X axis (millirad /sec)
-	p->ygyro = ygyro; // int16_t:Angular speed around Y axis (millirad /sec)
-	p->zgyro = zgyro; // int16_t:Angular speed around Z axis (millirad /sec)
-	p->xmag = xmag; // int16_t:X Magnetic field (milli tesla)
-	p->ymag = ymag; // int16_t:Y Magnetic field (milli tesla)
-	p->zmag = zmag; // int16_t:Z Magnetic field (milli tesla)
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_SCALED_IMU_LEN;
-	msg.msgid = MAVLINK_MSG_ID_SCALED_IMU;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_scaled_imu_send(mavlink_channel_t chan, uint64_t usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
 	mavlink_header_t hdr;

@@ -73,33 +73,9 @@ static inline uint16_t mavlink_msg_action_ack_encode(uint8_t system_id, uint8_t 
  * @param action The action id
  * @param result 0: Action DENIED, 1: Action executed
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_action_ack_send(mavlink_channel_t chan, uint8_t action, uint8_t result)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_action_ack_t *p = (mavlink_action_ack_t *)&msg.payload[0];
-
-	p->action = action; // uint8_t:The action id
-	p->result = result; // uint8_t:0: Action DENIED, 1: Action executed
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_ACTION_ACK_LEN;
-	msg.msgid = MAVLINK_MSG_ID_ACTION_ACK;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_action_ack_send(mavlink_channel_t chan, uint8_t action, uint8_t result)
 {
 	mavlink_header_t hdr;

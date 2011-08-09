@@ -91,36 +91,9 @@ static inline uint16_t mavlink_msg_attitude_controller_output_encode(uint8_t sys
  * @param yaw Attitude yaw: -128: -100%, 127: +100%
  * @param thrust Attitude thrust: -128: -100%, 127: +100%
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_attitude_controller_output_send(mavlink_channel_t chan, uint8_t enabled, int8_t roll, int8_t pitch, int8_t yaw, int8_t thrust)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_attitude_controller_output_t *p = (mavlink_attitude_controller_output_t *)&msg.payload[0];
-
-	p->enabled = enabled; // uint8_t:1: enabled, 0: disabled
-	p->roll = roll; // int8_t:Attitude roll: -128: -100%, 127: +100%
-	p->pitch = pitch; // int8_t:Attitude pitch: -128: -100%, 127: +100%
-	p->yaw = yaw; // int8_t:Attitude yaw: -128: -100%, 127: +100%
-	p->thrust = thrust; // int8_t:Attitude thrust: -128: -100%, 127: +100%
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_attitude_controller_output_send(mavlink_channel_t chan, uint8_t enabled, int8_t roll, int8_t pitch, int8_t yaw, int8_t thrust)
 {
 	mavlink_header_t hdr;

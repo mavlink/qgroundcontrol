@@ -73,33 +73,9 @@ static inline uint16_t mavlink_msg_command_ack_encode(uint8_t system_id, uint8_t
  * @param command Current airspeed in m/s
  * @param result 1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_command_ack_send(mavlink_channel_t chan, float command, float result)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_command_ack_t *p = (mavlink_command_ack_t *)&msg.payload[0];
-
-	p->command = command; // float:Current airspeed in m/s
-	p->result = result; // float:1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_COMMAND_ACK_LEN;
-	msg.msgid = MAVLINK_MSG_ID_COMMAND_ACK;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_command_ack_send(mavlink_channel_t chan, float command, float result)
 {
 	mavlink_header_t hdr;

@@ -97,37 +97,9 @@ static inline uint16_t mavlink_msg_diagnostic_encode(uint8_t system_id, uint8_t 
  * @param diagSh2 Diagnostic short 2
  * @param diagSh3 Diagnostic short 3
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_diagnostic_send(mavlink_channel_t chan, float diagFl1, float diagFl2, float diagFl3, int16_t diagSh1, int16_t diagSh2, int16_t diagSh3)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg.payload[0];
-
-	p->diagFl1 = diagFl1; // float:Diagnostic float 1
-	p->diagFl2 = diagFl2; // float:Diagnostic float 2
-	p->diagFl3 = diagFl3; // float:Diagnostic float 3
-	p->diagSh1 = diagSh1; // int16_t:Diagnostic short 1
-	p->diagSh2 = diagSh2; // int16_t:Diagnostic short 2
-	p->diagSh3 = diagSh3; // int16_t:Diagnostic short 3
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_DIAGNOSTIC_LEN;
-	msg.msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_diagnostic_send(mavlink_channel_t chan, float diagFl1, float diagFl2, float diagFl3, int16_t diagSh1, int16_t diagSh2, int16_t diagSh3)
 {
 	mavlink_header_t hdr;

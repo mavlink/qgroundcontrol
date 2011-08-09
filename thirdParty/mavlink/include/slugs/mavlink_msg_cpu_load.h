@@ -6,9 +6,9 @@
 
 typedef struct __mavlink_cpu_load_t 
 {
+	uint16_t batVolt; ///< Battery Voltage in millivolts
 	uint8_t sensLoad; ///< Sensor DSC Load
 	uint8_t ctrlLoad; ///< Control DSC Load
-	uint16_t batVolt; ///< Battery Voltage in millivolts
 
 } mavlink_cpu_load_t;
 
@@ -79,34 +79,9 @@ static inline uint16_t mavlink_msg_cpu_load_encode(uint8_t system_id, uint8_t co
  * @param ctrlLoad Control DSC Load
  * @param batVolt Battery Voltage in millivolts
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_cpu_load_send(mavlink_channel_t chan, uint8_t sensLoad, uint8_t ctrlLoad, uint16_t batVolt)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_cpu_load_t *p = (mavlink_cpu_load_t *)&msg.payload[0];
-
-	p->sensLoad = sensLoad; // uint8_t:Sensor DSC Load
-	p->ctrlLoad = ctrlLoad; // uint8_t:Control DSC Load
-	p->batVolt = batVolt; // uint16_t:Battery Voltage in millivolts
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_CPU_LOAD_LEN;
-	msg.msgid = MAVLINK_MSG_ID_CPU_LOAD;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_cpu_load_send(mavlink_channel_t chan, uint8_t sensLoad, uint8_t ctrlLoad, uint16_t batVolt)
 {
 	mavlink_header_t hdr;

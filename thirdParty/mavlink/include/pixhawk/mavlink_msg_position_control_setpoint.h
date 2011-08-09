@@ -6,11 +6,11 @@
 
 typedef struct __mavlink_position_control_setpoint_t 
 {
-	uint16_t id; ///< ID of waypoint, 0 for plain position
 	float x; ///< x position
 	float y; ///< y position
 	float z; ///< z position
 	float yaw; ///< yaw orientation in radians, 0 = NORTH
+	uint16_t id; ///< ID of waypoint, 0 for plain position
 
 } mavlink_position_control_setpoint_t;
 
@@ -91,36 +91,9 @@ static inline uint16_t mavlink_msg_position_control_setpoint_encode(uint8_t syst
  * @param z z position
  * @param yaw yaw orientation in radians, 0 = NORTH
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_position_control_setpoint_send(mavlink_channel_t chan, uint16_t id, float x, float y, float z, float yaw)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_position_control_setpoint_t *p = (mavlink_position_control_setpoint_t *)&msg.payload[0];
-
-	p->id = id; // uint16_t:ID of waypoint, 0 for plain position
-	p->x = x; // float:x position
-	p->y = y; // float:y position
-	p->z = z; // float:z position
-	p->yaw = yaw; // float:yaw orientation in radians, 0 = NORTH
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_position_control_setpoint_send(mavlink_channel_t chan, uint16_t id, float x, float y, float z, float yaw)
 {
 	mavlink_header_t hdr;

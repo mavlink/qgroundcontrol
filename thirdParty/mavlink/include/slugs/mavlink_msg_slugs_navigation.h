@@ -115,40 +115,9 @@ static inline uint16_t mavlink_msg_slugs_navigation_encode(uint8_t system_id, ui
  * @param fromWP Origin WP
  * @param toWP Destination WP
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_slugs_navigation_send(mavlink_channel_t chan, float u_m, float phi_c, float theta_c, float psiDot_c, float ay_body, float totalDist, float dist2Go, uint8_t fromWP, uint8_t toWP)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg.payload[0];
-
-	p->u_m = u_m; // float:Measured Airspeed prior to the Nav Filter
-	p->phi_c = phi_c; // float:Commanded Roll
-	p->theta_c = theta_c; // float:Commanded Pitch
-	p->psiDot_c = psiDot_c; // float:Commanded Turn rate
-	p->ay_body = ay_body; // float:Y component of the body acceleration
-	p->totalDist = totalDist; // float:Total Distance to Run on this leg of Navigation
-	p->dist2Go = dist2Go; // float:Remaining distance to Run on this leg of Navigation
-	p->fromWP = fromWP; // uint8_t:Origin WP
-	p->toWP = toWP; // uint8_t:Destination WP
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_SLUGS_NAVIGATION_LEN;
-	msg.msgid = MAVLINK_MSG_ID_SLUGS_NAVIGATION;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_slugs_navigation_send(mavlink_channel_t chan, float u_m, float phi_c, float theta_c, float psiDot_c, float ay_body, float totalDist, float dist2Go, uint8_t fromWP, uint8_t toWP)
 {
 	mavlink_header_t hdr;

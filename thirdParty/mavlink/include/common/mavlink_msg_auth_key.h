@@ -68,32 +68,9 @@ static inline uint16_t mavlink_msg_auth_key_encode(uint8_t system_id, uint8_t co
  *
  * @param key key
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_auth_key_send(mavlink_channel_t chan, const char* key)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_auth_key_t *p = (mavlink_auth_key_t *)&msg.payload[0];
-
-	memcpy(p->key, key, sizeof(p->key)); // char[32]:key
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_AUTH_KEY_LEN;
-	msg.msgid = MAVLINK_MSG_ID_AUTH_KEY;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_auth_key_send(mavlink_channel_t chan, const char* key)
 {
 	mavlink_header_t hdr;

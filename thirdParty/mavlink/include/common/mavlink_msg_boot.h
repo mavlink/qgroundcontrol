@@ -67,32 +67,9 @@ static inline uint16_t mavlink_msg_boot_encode(uint8_t system_id, uint8_t compon
  *
  * @param version The onboard software version
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_boot_send(mavlink_channel_t chan, uint32_t version)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_boot_t *p = (mavlink_boot_t *)&msg.payload[0];
-
-	p->version = version; // uint32_t:The onboard software version
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_BOOT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_BOOT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_boot_send(mavlink_channel_t chan, uint32_t version)
 {
 	mavlink_header_t hdr;

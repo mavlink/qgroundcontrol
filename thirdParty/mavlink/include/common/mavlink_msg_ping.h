@@ -6,10 +6,10 @@
 
 typedef struct __mavlink_ping_t 
 {
+	uint64_t time; ///< Unix timestamp in microseconds
 	uint32_t seq; ///< PING sequence
 	uint8_t target_system; ///< 0: request ping from all receiving systems, if greater than 0: message is a ping response and number is the system id of the requesting system
 	uint8_t target_component; ///< 0: request ping from all receiving components, if greater than 0: message is a ping response and number is the system id of the requesting system
-	uint64_t time; ///< Unix timestamp in microseconds
 
 } mavlink_ping_t;
 
@@ -85,35 +85,9 @@ static inline uint16_t mavlink_msg_ping_encode(uint8_t system_id, uint8_t compon
  * @param target_component 0: request ping from all receiving components, if greater than 0: message is a ping response and number is the system id of the requesting system
  * @param time Unix timestamp in microseconds
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_ping_send(mavlink_channel_t chan, uint32_t seq, uint8_t target_system, uint8_t target_component, uint64_t time)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_ping_t *p = (mavlink_ping_t *)&msg.payload[0];
-
-	p->seq = seq; // uint32_t:PING sequence
-	p->target_system = target_system; // uint8_t:0: request ping from all receiving systems, if greater than 0: message is a ping response and number is the system id of the requesting system
-	p->target_component = target_component; // uint8_t:0: request ping from all receiving components, if greater than 0: message is a ping response and number is the system id of the requesting system
-	p->time = time; // uint64_t:Unix timestamp in microseconds
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_PING_LEN;
-	msg.msgid = MAVLINK_MSG_ID_PING;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_ping_send(mavlink_channel_t chan, uint32_t seq, uint8_t target_system, uint8_t target_component, uint64_t time)
 {
 	mavlink_header_t hdr;

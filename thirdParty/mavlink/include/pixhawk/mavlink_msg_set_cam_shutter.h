@@ -6,12 +6,12 @@
 
 typedef struct __mavlink_set_cam_shutter_t 
 {
+	float gain; ///< Camera gain
+	uint16_t interval; ///< Shutter interval, in microseconds
+	uint16_t exposure; ///< Exposure time, in microseconds
 	uint8_t cam_no; ///< Camera id
 	uint8_t cam_mode; ///< Camera mode: 0 = auto, 1 = manual
 	uint8_t trigger_pin; ///< Trigger pin, 0-3 for PtGrey FireFly
-	uint16_t interval; ///< Shutter interval, in microseconds
-	uint16_t exposure; ///< Exposure time, in microseconds
-	float gain; ///< Camera gain
 
 } mavlink_set_cam_shutter_t;
 
@@ -97,37 +97,9 @@ static inline uint16_t mavlink_msg_set_cam_shutter_encode(uint8_t system_id, uin
  * @param exposure Exposure time, in microseconds
  * @param gain Camera gain
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_set_cam_shutter_send(mavlink_channel_t chan, uint8_t cam_no, uint8_t cam_mode, uint8_t trigger_pin, uint16_t interval, uint16_t exposure, float gain)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_set_cam_shutter_t *p = (mavlink_set_cam_shutter_t *)&msg.payload[0];
-
-	p->cam_no = cam_no; // uint8_t:Camera id
-	p->cam_mode = cam_mode; // uint8_t:Camera mode: 0 = auto, 1 = manual
-	p->trigger_pin = trigger_pin; // uint8_t:Trigger pin, 0-3 for PtGrey FireFly
-	p->interval = interval; // uint16_t:Shutter interval, in microseconds
-	p->exposure = exposure; // uint16_t:Exposure time, in microseconds
-	p->gain = gain; // float:Camera gain
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_SET_CAM_SHUTTER_LEN;
-	msg.msgid = MAVLINK_MSG_ID_SET_CAM_SHUTTER;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_set_cam_shutter_send(mavlink_channel_t chan, uint8_t cam_no, uint8_t cam_mode, uint8_t trigger_pin, uint16_t interval, uint16_t exposure, float gain)
 {
 	mavlink_header_t hdr;

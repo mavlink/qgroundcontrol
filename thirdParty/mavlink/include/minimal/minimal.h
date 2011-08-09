@@ -1,7 +1,7 @@
 /** @file
  *	@brief MAVLink comm protocol.
  *	@see http://qgroundcontrol.org/mavlink/
- *	 Generated on Sunday, July 31 2011, 15:11 UTC
+ *	 Generated on Tuesday, August 9 2011, 16:16 UTC
  */
 #ifndef MINIMAL_H
 #define MINIMAL_H
@@ -32,6 +32,13 @@ extern "C" {
 // MESSAGE DEFINITIONS
 
 #include "./mavlink_msg_heartbeat.h"
+
+
+// MESSAGE CRC KEYS
+
+#undef MAVLINK_MESSAGE_KEYS
+#define MAVLINK_MESSAGE_KEYS {  }
+
 #ifdef __cplusplus
 }
 #endif

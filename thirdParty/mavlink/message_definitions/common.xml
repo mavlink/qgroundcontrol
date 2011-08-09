@@ -701,7 +701,7 @@
                <description>Request to read the onboard parameter with the param_id string id. Onboard parameters are stored as key[const char*] -> value[float]. This allows to send a parameter to any other component (such as the GCS) without the need of previous knowledge of possible parameter names. Thus the same GCS can store different parameters for different autopilots. See also http://qgroundcontrol.org/parameter_interface for a full documentation of QGroundControl and IMU code.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="char[15]" name="param_id">Onboard parameter id</field>
+               <field type="uint8_t[16]" name="param_id">Onboard parameter id</field>
                <field type="int16_t" name="param_index">Parameter index. Send -1 to use the param ID field as identifier</field>
           </message>
           <message id="21" name="PARAM_REQUEST_LIST">
@@ -711,7 +711,7 @@
           </message>
           <message id="22" name="PARAM_VALUE">
                <description>Emit the value of a onboard parameter. The inclusion of param_count and param_index in the message allows the recipient to keep track of received parameters and allows him to re-request missing parameters after a loss or timeout.</description>
-               <field type="char[15]" name="param_id">Onboard parameter id</field>
+               <field type="uint8_t[16]" name="param_id">Onboard parameter id</field>
                <field type="float" name="param_value">Onboard parameter value</field>
                <field type="uint16_t" name="param_count">Total number of onboard parameters</field>
                <field type="uint16_t" name="param_index">Index of this onboard parameter</field>
@@ -720,12 +720,13 @@
                <description>Set a parameter value TEMPORARILY to RAM. It will be reset to default on system reboot. Send the ACTION MAV_ACTION_STORAGE_WRITE to PERMANENTLY write the RAM contents to EEPROM. IMPORTANT: The receiving component should acknowledge the new parameter value by sending a param_value message to all communication partners. This will also ensure that multiple GCS all have an up-to-date list of all parameters. If the sending GCS did not receive a PARAM_VALUE message within its timeout time, it should re-send the PARAM_SET message.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="char[15]" name="param_id">Onboard parameter id</field>
+               <field type="uint8_t[16]" name="param_id">Onboard parameter id</field>
                <field type="float" name="param_value">Onboard parameter value</field>
           </message>
           <message id="25" name="GPS_RAW_INT">
                <description>The global position, as returned by the Global Positioning System (GPS). This is
-NOT the global position estimate of the sytem, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate. Coordinate frame is right-handed, Z-axis up (GPS frame)</description>
+                NOT the global position estimate of the sytem, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate. Coordinate frame is right-handed, Z-axis up (GPS frame)
+            </description>
                <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="uint8_t" name="fix_type">0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.</field>
                <field type="int32_t" name="lat">Latitude in 1E7 degrees</field>
@@ -818,7 +819,8 @@ NOT the global position estimate of the sytem, but rather a RAW sensor value. Se
           </message>
           <message id="32" name="GPS_RAW">
                <description>The global position, as returned by the Global Positioning System (GPS). This is
-NOT the global position estimate of the sytem, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate. Coordinate frame is right-handed, Z-axis up (GPS frame)</description>
+                NOT the global position estimate of the sytem, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate. Coordinate frame is right-handed, Z-axis up (GPS frame)
+            </description>
                <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="uint8_t" name="fix_type">0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.</field>
                <field type="float" name="lat">Latitude in degrees</field>
@@ -876,7 +878,8 @@ NOT the global position estimate of the sytem, but rather a RAW sensor value. Se
           </message>
           <message id="39" name="WAYPOINT">
                <description>Message encoding a waypoint. This message is emitted to announce
-     the presence of a waypoint and to set a waypoint on the system. The waypoint can be either in x, y, z meters (type: LOCAL) or x:lat, y:lon, z:altitude. Local frame is Z-down, right handed, global frame is Z-up, right handed</description>
+                the presence of a waypoint and to set a waypoint on the system. The waypoint can be either in x, y, z meters (type: LOCAL) or x:lat, y:lon, z:altitude. Local frame is Z-down, right handed, global frame is Z-up, right handed
+            </description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="uint16_t" name="seq">Sequence</field>
@@ -996,6 +999,22 @@ NOT the global position estimate of the sytem, but rather a RAW sensor value. Se
                <field type="float" name="p2y">y position 2 / Longitude 2</field>
                <field type="float" name="p2z">z position 2 / Altitude 2</field>
           </message>
+          <message id="55" name="SET_ROLL_PITCH_YAW">
+               <description>Set roll, pitch and yaw.</description>
+               <field type="uint8_t" name="target_system">System ID</field>
+               <field type="uint8_t" name="target_component">Component ID</field>
+               <field type="float" name="roll">Desired roll angle in radians</field>
+               <field type="float" name="pitch">Desired pitch angle in radians</field>
+               <field type="float" name="yaw">Desired yaw angle in radians</field>
+          </message>
+          <message id="56" name="SET_ROLL_PITCH_YAW_SPEED">
+               <description>Set roll, pitch and yaw.</description>
+               <field type="uint8_t" name="target_system">System ID</field>
+               <field type="uint8_t" name="target_component">Component ID</field>
+               <field type="float" name="roll_speed">Desired roll angular speed in rad/s</field>
+               <field type="float" name="pitch_speed">Desired pitch angular speed in rad/s</field>
+               <field type="float" name="yaw_speed">Desired yaw angular speed in rad/s</field>
+          </message>
           <message id="60" name="ATTITUDE_CONTROLLER_OUTPUT">
                <description>The output of the attitude controller. This output is the control response the controller currently generates and the attitude the MAV would take if it is under control of the attitude controller. The primary use of this message is to check the response and signs of the controller before the actual flight.</description>
                <field type="uint8_t" name="enabled">1: enabled, 0: disabled</field>
@@ -1014,7 +1033,8 @@ NOT the global position estimate of the sytem, but rather a RAW sensor value. Se
           </message>
           <message id="62" name="NAV_CONTROLLER_OUTPUT">
                <description>Outputs of the APM navigation controller. The primary use of this message is to check the response and signs
-of the controller before actual flight and to assist with tuning controller parameters </description>
+                of the controller before actual flight and to assist with tuning controller parameters 
+            </description>
                <field type="float" name="nav_roll">Current desired roll in degrees</field>
                <field type="float" name="nav_pitch">Current desired pitch in degrees</field>
                <field type="int16_t" name="nav_bearing">Current desired heading in degrees</field>
@@ -1054,6 +1074,27 @@ of the controller before actual flight and to assist with tuning controller para
                <field type="uint16_t" name="req_message_rate">The requested interval between two messages of this type</field>
                <field type="uint8_t" name="start_stop">1 to start sending, 0 to stop sending.</field>
           </message>
+          <message id="67" name="FULL_STATE">
+               <description>This packet is useful for high throughput
+                applications such as hardware in the loop.
+            </description>
+               <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+               <field type="float" name="roll">Roll angle (rad)</field>
+               <field type="float" name="pitch">Pitch angle (rad)</field>
+               <field type="float" name="yaw">Yaw angle (rad)</field>
+               <field type="float" name="rollspeed">Roll angular speed (rad/s)</field>
+               <field type="float" name="pitchspeed">Pitch angular speed (rad/s)</field>
+               <field type="float" name="yawspeed">Yaw angular speed (rad/s)</field>
+               <field type="int32_t" name="lat">Latitude, expressed as * 1E7</field>
+               <field type="int32_t" name="lon">Longitude, expressed as * 1E7</field>
+               <field type="int32_t" name="alt">Altitude in meters, expressed as * 1000 (millimeters)</field>
+               <field type="int16_t" name="vx">Ground X Speed (Latitude), expressed as m/s * 100</field>
+               <field type="int16_t" name="vy">Ground Y Speed (Longitude), expressed as m/s * 100</field>
+               <field type="int16_t" name="vz">Ground Z Speed (Altitude), expressed as m/s * 100</field>
+               <field type="int16_t" name="xacc">X acceleration (mg)</field>
+               <field type="int16_t" name="yacc">Y acceleration (mg)</field>
+               <field type="int16_t" name="zacc">Z acceleration (mg)</field>
+          </message>
           <message id="69" name="MANUAL_CONTROL">
                <field type="uint8_t" name="target">The system to be controlled</field>
                <field type="float" name="roll">roll</field>
@@ -1064,6 +1105,19 @@ of the controller before actual flight and to assist with tuning controller para
                <field type="uint8_t" name="pitch_manual">pitch auto:0, manual:1</field>
                <field type="uint8_t" name="yaw_manual">yaw auto:0, manual:1</field>
                <field type="uint8_t" name="thrust_manual">thrust auto:0, manual:1</field>
+          </message>
+          <message id="70" name="RC_CHANNELS_OVERRIDE">
+               <description>The RAW values of the RC channels sent to the MAV to override info received from the RC radio. A value of -1 means no change to that channel. A value of 0 means control of that channel should be released back to the RC radio. The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%. Individual receivers/transmitters might violate this specification.</description>
+               <field type="uint8_t" name="target_system">System ID</field>
+               <field type="uint8_t" name="target_component">Component ID</field>
+               <field type="uint16_t" name="chan1_raw">RC channel 1 value, in microseconds</field>
+               <field type="uint16_t" name="chan2_raw">RC channel 2 value, in microseconds</field>
+               <field type="uint16_t" name="chan3_raw">RC channel 3 value, in microseconds</field>
+               <field type="uint16_t" name="chan4_raw">RC channel 4 value, in microseconds</field>
+               <field type="uint16_t" name="chan5_raw">RC channel 5 value, in microseconds</field>
+               <field type="uint16_t" name="chan6_raw">RC channel 6 value, in microseconds</field>
+               <field type="uint16_t" name="chan7_raw">RC channel 7 value, in microseconds</field>
+               <field type="uint16_t" name="chan8_raw">RC channel 8 value, in microseconds</field>
           </message>
           <message id="73" name="GLOBAL_POSITION_INT">
                <description>The filtered global position (e.g. fused GPS and accelerometers). The position is in GPS-frame (right-handed, Z-up)</description>
@@ -1120,7 +1174,7 @@ of the controller before actual flight and to assist with tuning controller para
           <message id="254" name="STATUSTEXT">
                <description>Status text message. These messages are printed in yellow in the COMM console of QGroundControl. WARNING: They consume quite some bandwidth, so use only for important status and error messages. If implemented wisely, these messages are buffered on the MCU and sent only at a limited rate (e.g. 10 Hz).</description>
                <field type="uint8_t" name="severity">Severity of status, 0 = info message, 255 = critical fault</field>
-               <field type="char[50]" name="text">Status text message, without null termination character</field>
+               <field type="int8_t[50]" name="text">Status text message, without null termination character</field>
           </message>
           <message id="255" name="DEBUG">
                <description>Send a debug value. The index is used to discriminate between values. These values show up in the plot of QGroundControl as DEBUG N.</description>
@@ -1128,4 +1182,5 @@ of the controller before actual flight and to assist with tuning controller para
                <field type="float" name="value">DEBUG value</field>
           </message>
      </messages>
+>>>>>>> 26a845613229fbb0cb8bee589c12f477fd30a42f
 </mavlink>

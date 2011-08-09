@@ -73,33 +73,9 @@ static inline uint16_t mavlink_msg_watchdog_heartbeat_encode(uint8_t system_id, 
  * @param watchdog_id Watchdog ID
  * @param process_count Number of processes
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_watchdog_heartbeat_send(mavlink_channel_t chan, uint16_t watchdog_id, uint16_t process_count)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_watchdog_heartbeat_t *p = (mavlink_watchdog_heartbeat_t *)&msg.payload[0];
-
-	p->watchdog_id = watchdog_id; // uint16_t:Watchdog ID
-	p->process_count = process_count; // uint16_t:Number of processes
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_WATCHDOG_HEARTBEAT_LEN;
-	msg.msgid = MAVLINK_MSG_ID_WATCHDOG_HEARTBEAT;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_watchdog_heartbeat_send(mavlink_channel_t chan, uint16_t watchdog_id, uint16_t process_count)
 {
 	mavlink_header_t hdr;

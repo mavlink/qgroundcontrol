@@ -6,10 +6,10 @@
 
 typedef struct __mavlink_request_data_stream_t 
 {
+	uint16_t req_message_rate; ///< The requested interval between two messages of this type
 	uint8_t target_system; ///< The target requested to send the message stream.
 	uint8_t target_component; ///< The target requested to send the message stream.
 	uint8_t req_stream_id; ///< The ID of the requested message type
-	uint16_t req_message_rate; ///< The requested interval between two messages of this type
 	uint8_t start_stop; ///< 1 to start sending, 0 to stop sending.
 
 } mavlink_request_data_stream_t;
@@ -91,36 +91,9 @@ static inline uint16_t mavlink_msg_request_data_stream_encode(uint8_t system_id,
  * @param req_message_rate The requested interval between two messages of this type
  * @param start_stop 1 to start sending, 0 to stop sending.
  */
+
+
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_request_data_stream_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t req_stream_id, uint16_t req_message_rate, uint8_t start_stop)
-{
-	mavlink_message_t msg;
-	uint16_t checksum;
-	mavlink_request_data_stream_t *p = (mavlink_request_data_stream_t *)&msg.payload[0];
-
-	p->target_system = target_system; // uint8_t:The target requested to send the message stream.
-	p->target_component = target_component; // uint8_t:The target requested to send the message stream.
-	p->req_stream_id = req_stream_id; // uint8_t:The ID of the requested message type
-	p->req_message_rate = req_message_rate; // uint16_t:The requested interval between two messages of this type
-	p->start_stop = start_stop; // uint8_t:1 to start sending, 0 to stop sending.
-
-	msg.STX = MAVLINK_STX;
-	msg.len = MAVLINK_MSG_ID_REQUEST_DATA_STREAM_LEN;
-	msg.msgid = MAVLINK_MSG_ID_REQUEST_DATA_STREAM;
-	msg.sysid = mavlink_system.sysid;
-	msg.compid = mavlink_system.compid;
-	msg.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;
-	checksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);
-	msg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	msg.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_msg(chan, &msg);
-}
-
-#endif
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL
 static inline void mavlink_msg_request_data_stream_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t req_stream_id, uint16_t req_message_rate, uint8_t start_stop)
 {
 	mavlink_header_t hdr;
