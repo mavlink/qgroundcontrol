@@ -31,6 +31,9 @@
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
 
+// Instantiate MAVLink data
+#include "mavlink_data.h"
+
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.

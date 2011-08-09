@@ -38,6 +38,7 @@ MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = $$BUILDDIR/ui
 RCC_DIR = $$BUILDDIR/rcc
 MAVLINK_CONF = ""
+DEFINES += MAVLINK_NO_DATA
 
 
 #################################################################
