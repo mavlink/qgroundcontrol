@@ -44,7 +44,6 @@ This file is part of the QGROUNDCONTROL project
 #include "configuration.h"
 #include "QGC.h"
 #include "QGCCore.h"
-#include "MG.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
 

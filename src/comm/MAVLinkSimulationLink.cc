@@ -716,11 +716,11 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
             }
             break;
             // EXECUTE OPERATOR ACTIONS
-            case MAVLINK_MSG_ID_ACTION: {
-                mavlink_action_t action;
-                mavlink_msg_action_decode(&msg, &action);
+            case MAVLINK_MSG_ID_COMMAND: {
+                mavlink_command_t action;
+                mavlink_msg_command_decode(&msg, &action);
 
-                qDebug() << "SIM" << "received action" << action.action << "for system" << action.target;
+                qDebug() << "SIM" << "received action" << action.command << "for system" << action.target_system;
 
                 // FIXME MAVLINKV10PORTINGNEEDED
 //                switch (action.action) {

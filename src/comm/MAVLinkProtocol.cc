@@ -17,7 +17,6 @@
 #include <QSettings>
 #include <QDesktopServices>
 
-//#include "MG.h"
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
 #include "UASManager.h"
@@ -28,7 +27,6 @@
 #include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
-//#include "MainWindow.h"
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
