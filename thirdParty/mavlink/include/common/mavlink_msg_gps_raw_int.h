@@ -1,20 +1,21 @@
 // MESSAGE GPS_RAW_INT PACKING
 
 #define MAVLINK_MSG_ID_GPS_RAW_INT 25
-#define MAVLINK_MSG_ID_GPS_RAW_INT_LEN 37
-#define MAVLINK_MSG_25_LEN 37
+#define MAVLINK_MSG_ID_GPS_RAW_INT_LEN 30
+#define MAVLINK_MSG_25_LEN 30
 
 typedef struct __mavlink_gps_raw_int_t 
 {
 	uint64_t usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
 	int32_t lat; ///< Latitude in 1E7 degrees
 	int32_t lon; ///< Longitude in 1E7 degrees
-	int32_t alt; ///< Altitude in 1E3 meters (millimeters)
-	float eph; ///< GPS HDOP
-	float epv; ///< GPS VDOP
-	float v; ///< GPS ground speed (m/s)
-	float hdg; ///< Compass heading in degrees, 0..360 degrees
+	int32_t alt; ///< Altitude in 1E3 meters (millimeters) above MSL
+	uint16_t eph; ///< GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+	uint16_t epv; ///< GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+	uint16_t vel; ///< GPS ground speed (m/s * 100). If unknown, set to: 65535
+	uint16_t hdg; ///< Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535
 	uint8_t fix_type; ///< 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
+	uint8_t satellites_visible; ///< Number of satellites visible. If unknown, set to 255
 
 } mavlink_gps_raw_int_t;
 
@@ -28,14 +29,15 @@ typedef struct __mavlink_gps_raw_int_t
  * @param fix_type 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
  * @param lat Latitude in 1E7 degrees
  * @param lon Longitude in 1E7 degrees
- * @param alt Altitude in 1E3 meters (millimeters)
- * @param eph GPS HDOP
- * @param epv GPS VDOP
- * @param v GPS ground speed (m/s)
- * @param hdg Compass heading in degrees, 0..360 degrees
+ * @param alt Altitude in 1E3 meters (millimeters) above MSL
+ * @param eph GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+ * @param epv GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+ * @param vel GPS ground speed (m/s * 100). If unknown, set to: 65535
+ * @param hdg Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535
+ * @param satellites_visible Number of satellites visible. If unknown, set to 255
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_gps_raw_int_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint64_t usec, uint8_t fix_type, int32_t lat, int32_t lon, int32_t alt, float eph, float epv, float v, float hdg)
+static inline uint16_t mavlink_msg_gps_raw_int_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint64_t usec, uint8_t fix_type, int32_t lat, int32_t lon, int32_t alt, uint16_t eph, uint16_t epv, uint16_t vel, uint16_t hdg, uint8_t satellites_visible)
 {
 	mavlink_gps_raw_int_t *p = (mavlink_gps_raw_int_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_GPS_RAW_INT;
@@ -44,11 +46,12 @@ static inline uint16_t mavlink_msg_gps_raw_int_pack(uint8_t system_id, uint8_t c
 	p->fix_type = fix_type; // uint8_t:0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
 	p->lat = lat; // int32_t:Latitude in 1E7 degrees
 	p->lon = lon; // int32_t:Longitude in 1E7 degrees
-	p->alt = alt; // int32_t:Altitude in 1E3 meters (millimeters)
-	p->eph = eph; // float:GPS HDOP
-	p->epv = epv; // float:GPS VDOP
-	p->v = v; // float:GPS ground speed (m/s)
-	p->hdg = hdg; // float:Compass heading in degrees, 0..360 degrees
+	p->alt = alt; // int32_t:Altitude in 1E3 meters (millimeters) above MSL
+	p->eph = eph; // uint16_t:GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+	p->epv = epv; // uint16_t:GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+	p->vel = vel; // uint16_t:GPS ground speed (m/s * 100). If unknown, set to: 65535
+	p->hdg = hdg; // uint16_t:Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535
+	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible. If unknown, set to 255
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_GPS_RAW_INT_LEN);
 }
@@ -63,14 +66,15 @@ static inline uint16_t mavlink_msg_gps_raw_int_pack(uint8_t system_id, uint8_t c
  * @param fix_type 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
  * @param lat Latitude in 1E7 degrees
  * @param lon Longitude in 1E7 degrees
- * @param alt Altitude in 1E3 meters (millimeters)
- * @param eph GPS HDOP
- * @param epv GPS VDOP
- * @param v GPS ground speed (m/s)
- * @param hdg Compass heading in degrees, 0..360 degrees
+ * @param alt Altitude in 1E3 meters (millimeters) above MSL
+ * @param eph GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+ * @param epv GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+ * @param vel GPS ground speed (m/s * 100). If unknown, set to: 65535
+ * @param hdg Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535
+ * @param satellites_visible Number of satellites visible. If unknown, set to 255
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_gps_raw_int_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint64_t usec, uint8_t fix_type, int32_t lat, int32_t lon, int32_t alt, float eph, float epv, float v, float hdg)
+static inline uint16_t mavlink_msg_gps_raw_int_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint64_t usec, uint8_t fix_type, int32_t lat, int32_t lon, int32_t alt, uint16_t eph, uint16_t epv, uint16_t vel, uint16_t hdg, uint8_t satellites_visible)
 {
 	mavlink_gps_raw_int_t *p = (mavlink_gps_raw_int_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_GPS_RAW_INT;
@@ -79,11 +83,12 @@ static inline uint16_t mavlink_msg_gps_raw_int_pack_chan(uint8_t system_id, uint
 	p->fix_type = fix_type; // uint8_t:0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
 	p->lat = lat; // int32_t:Latitude in 1E7 degrees
 	p->lon = lon; // int32_t:Longitude in 1E7 degrees
-	p->alt = alt; // int32_t:Altitude in 1E3 meters (millimeters)
-	p->eph = eph; // float:GPS HDOP
-	p->epv = epv; // float:GPS VDOP
-	p->v = v; // float:GPS ground speed (m/s)
-	p->hdg = hdg; // float:Compass heading in degrees, 0..360 degrees
+	p->alt = alt; // int32_t:Altitude in 1E3 meters (millimeters) above MSL
+	p->eph = eph; // uint16_t:GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+	p->epv = epv; // uint16_t:GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+	p->vel = vel; // uint16_t:GPS ground speed (m/s * 100). If unknown, set to: 65535
+	p->hdg = hdg; // uint16_t:Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535
+	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible. If unknown, set to 255
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_GPS_RAW_INT_LEN);
 }
@@ -98,7 +103,7 @@ static inline uint16_t mavlink_msg_gps_raw_int_pack_chan(uint8_t system_id, uint
  */
 static inline uint16_t mavlink_msg_gps_raw_int_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_gps_raw_int_t* gps_raw_int)
 {
-	return mavlink_msg_gps_raw_int_pack(system_id, component_id, msg, gps_raw_int->usec, gps_raw_int->fix_type, gps_raw_int->lat, gps_raw_int->lon, gps_raw_int->alt, gps_raw_int->eph, gps_raw_int->epv, gps_raw_int->v, gps_raw_int->hdg);
+	return mavlink_msg_gps_raw_int_pack(system_id, component_id, msg, gps_raw_int->usec, gps_raw_int->fix_type, gps_raw_int->lat, gps_raw_int->lon, gps_raw_int->alt, gps_raw_int->eph, gps_raw_int->epv, gps_raw_int->vel, gps_raw_int->hdg, gps_raw_int->satellites_visible);
 }
 
 /**
@@ -109,16 +114,17 @@ static inline uint16_t mavlink_msg_gps_raw_int_encode(uint8_t system_id, uint8_t
  * @param fix_type 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
  * @param lat Latitude in 1E7 degrees
  * @param lon Longitude in 1E7 degrees
- * @param alt Altitude in 1E3 meters (millimeters)
- * @param eph GPS HDOP
- * @param epv GPS VDOP
- * @param v GPS ground speed (m/s)
- * @param hdg Compass heading in degrees, 0..360 degrees
+ * @param alt Altitude in 1E3 meters (millimeters) above MSL
+ * @param eph GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+ * @param epv GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+ * @param vel GPS ground speed (m/s * 100). If unknown, set to: 65535
+ * @param hdg Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535
+ * @param satellites_visible Number of satellites visible. If unknown, set to 255
  */
 
 
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_gps_raw_int_send(mavlink_channel_t chan, uint64_t usec, uint8_t fix_type, int32_t lat, int32_t lon, int32_t alt, float eph, float epv, float v, float hdg)
+static inline void mavlink_msg_gps_raw_int_send(mavlink_channel_t chan, uint64_t usec, uint8_t fix_type, int32_t lat, int32_t lon, int32_t alt, uint16_t eph, uint16_t epv, uint16_t vel, uint16_t hdg, uint8_t satellites_visible)
 {
 	mavlink_header_t hdr;
 	mavlink_gps_raw_int_t payload;
@@ -129,11 +135,12 @@ static inline void mavlink_msg_gps_raw_int_send(mavlink_channel_t chan, uint64_t
 	p->fix_type = fix_type; // uint8_t:0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
 	p->lat = lat; // int32_t:Latitude in 1E7 degrees
 	p->lon = lon; // int32_t:Longitude in 1E7 degrees
-	p->alt = alt; // int32_t:Altitude in 1E3 meters (millimeters)
-	p->eph = eph; // float:GPS HDOP
-	p->epv = epv; // float:GPS VDOP
-	p->v = v; // float:GPS ground speed (m/s)
-	p->hdg = hdg; // float:Compass heading in degrees, 0..360 degrees
+	p->alt = alt; // int32_t:Altitude in 1E3 meters (millimeters) above MSL
+	p->eph = eph; // uint16_t:GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+	p->epv = epv; // uint16_t:GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
+	p->vel = vel; // uint16_t:GPS ground speed (m/s * 100). If unknown, set to: 65535
+	p->hdg = hdg; // uint16_t:Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535
+	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible. If unknown, set to 255
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_GPS_RAW_INT_LEN;
@@ -204,7 +211,7 @@ static inline int32_t mavlink_msg_gps_raw_int_get_lon(const mavlink_message_t* m
 /**
  * @brief Get field alt from gps_raw_int message
  *
- * @return Altitude in 1E3 meters (millimeters)
+ * @return Altitude in 1E3 meters (millimeters) above MSL
  */
 static inline int32_t mavlink_msg_gps_raw_int_get_alt(const mavlink_message_t* msg)
 {
@@ -215,45 +222,56 @@ static inline int32_t mavlink_msg_gps_raw_int_get_alt(const mavlink_message_t* m
 /**
  * @brief Get field eph from gps_raw_int message
  *
- * @return GPS HDOP
+ * @return GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
  */
-static inline float mavlink_msg_gps_raw_int_get_eph(const mavlink_message_t* msg)
+static inline uint16_t mavlink_msg_gps_raw_int_get_eph(const mavlink_message_t* msg)
 {
 	mavlink_gps_raw_int_t *p = (mavlink_gps_raw_int_t *)&msg->payload[0];
-	return (float)(p->eph);
+	return (uint16_t)(p->eph);
 }
 
 /**
  * @brief Get field epv from gps_raw_int message
  *
- * @return GPS VDOP
+ * @return GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535
  */
-static inline float mavlink_msg_gps_raw_int_get_epv(const mavlink_message_t* msg)
+static inline uint16_t mavlink_msg_gps_raw_int_get_epv(const mavlink_message_t* msg)
 {
 	mavlink_gps_raw_int_t *p = (mavlink_gps_raw_int_t *)&msg->payload[0];
-	return (float)(p->epv);
+	return (uint16_t)(p->epv);
 }
 
 /**
- * @brief Get field v from gps_raw_int message
+ * @brief Get field vel from gps_raw_int message
  *
- * @return GPS ground speed (m/s)
+ * @return GPS ground speed (m/s * 100). If unknown, set to: 65535
  */
-static inline float mavlink_msg_gps_raw_int_get_v(const mavlink_message_t* msg)
+static inline uint16_t mavlink_msg_gps_raw_int_get_vel(const mavlink_message_t* msg)
 {
 	mavlink_gps_raw_int_t *p = (mavlink_gps_raw_int_t *)&msg->payload[0];
-	return (float)(p->v);
+	return (uint16_t)(p->vel);
 }
 
 /**
  * @brief Get field hdg from gps_raw_int message
  *
- * @return Compass heading in degrees, 0..360 degrees
+ * @return Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535
  */
-static inline float mavlink_msg_gps_raw_int_get_hdg(const mavlink_message_t* msg)
+static inline uint16_t mavlink_msg_gps_raw_int_get_hdg(const mavlink_message_t* msg)
 {
 	mavlink_gps_raw_int_t *p = (mavlink_gps_raw_int_t *)&msg->payload[0];
-	return (float)(p->hdg);
+	return (uint16_t)(p->hdg);
+}
+
+/**
+ * @brief Get field satellites_visible from gps_raw_int message
+ *
+ * @return Number of satellites visible. If unknown, set to 255
+ */
+static inline uint8_t mavlink_msg_gps_raw_int_get_satellites_visible(const mavlink_message_t* msg)
+{
+	mavlink_gps_raw_int_t *p = (mavlink_gps_raw_int_t *)&msg->payload[0];
+	return (uint8_t)(p->satellites_visible);
 }
 
 /**
