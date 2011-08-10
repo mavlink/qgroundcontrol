@@ -22,20 +22,27 @@
 #define MAVLINK_MAX_PACKET_LEN (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) ///< Maximum packet length
 //#define MAVLINK_MAX_DATA_LEN MAVLINK_MAX_PACKET_LEN - MAVLINK_STX_LEN
 
-typedef struct __mavlink_system {
+typedef struct __mavlink_system
+{
     uint8_t sysid;   ///< Used by the MAVLink message_xx_send() convenience function
     uint8_t compid;  ///< Used by the MAVLink message_xx_send() convenience function
     uint8_t type;    ///< Unused, can be used by user to store the system's type
     uint8_t state;   ///< Unused, can be used by user to store the system's state
     uint8_t mode;    ///< Unused, can be used by user to store the system's mode
+    uint8_t nav_mode; ///< Unused, can be used by user to store the system's navigation mode
 } mavlink_system_t;
 
-typedef struct __mavlink_message {
-  union {
-    uint16_t ck;     ///< Checksum high byte
-    uint8_t ck_a;    ///< Checksum low byte
-    uint8_t ck_b;    ///< Checksum high byte
-        };
+typedef struct __mavlink_message
+{
+	union
+	{
+		uint16_t ck;     ///< Checksum high byte
+		struct
+		{
+			uint8_t ck_a;    ///< Checksum low byte
+			uint8_t ck_b;    ///< Checksum high byte
+                };
+	};
     uint8_t STX;     ///< start of packet marker
     uint8_t len;     ///< Length of payload
     uint8_t seq;     ///< Sequence of packet
@@ -45,7 +52,8 @@ typedef struct __mavlink_message {
     uint8_t payload[MAVLINK_MAX_PAYLOAD_LEN]; ///< Payload data, ALIGNMENT IMPORTANT ON MCU
 } mavlink_message_t;
 
-typedef struct __mavlink_header {
+typedef struct __mavlink_header
+{
   union {
     uint16_t ck;     ///< Checksum high byte
     uint8_t ck_a;    ///< Checksum low byte
@@ -59,16 +67,18 @@ typedef struct __mavlink_header {
     uint8_t msgid;   ///< ID of message in payload
 } mavlink_header_t;
 
-typedef enum {
+typedef enum
+{
     MAVLINK_COMM_0,
     MAVLINK_COMM_1,
     MAVLINK_COMM_2,
     MAVLINK_COMM_3,
     MAVLINK_COMM_NB,
     MAVLINK_COMM_NB_HIGH = 16
-                       } mavlink_channel_t;
+} mavlink_channel_t;
 
-typedef enum {
+typedef enum
+{
     MAVLINK_PARSE_STATE_UNINIT=0,
     MAVLINK_PARSE_STATE_IDLE,
     MAVLINK_PARSE_STATE_GOT_STX,
@@ -81,7 +91,8 @@ typedef enum {
     MAVLINK_PARSE_STATE_GOT_CRC1
 } mavlink_parse_state_t; ///< The state machine for the comm parser
 
-typedef struct __mavlink_status {
+typedef struct __mavlink_status
+{
     uint8_t ck_a;                       ///< Checksum byte 1
     uint8_t ck_b;                       ///< Checksum byte 2
     uint8_t msg_received;               ///< Number of received messages
