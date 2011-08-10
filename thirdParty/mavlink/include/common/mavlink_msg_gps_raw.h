@@ -1,8 +1,8 @@
 // MESSAGE GPS_RAW PACKING
 
 #define MAVLINK_MSG_ID_GPS_RAW 32
-#define MAVLINK_MSG_ID_GPS_RAW_LEN 37
-#define MAVLINK_MSG_32_LEN 37
+#define MAVLINK_MSG_ID_GPS_RAW_LEN 38
+#define MAVLINK_MSG_32_LEN 38
 
 typedef struct __mavlink_gps_raw_t 
 {
@@ -15,6 +15,7 @@ typedef struct __mavlink_gps_raw_t
 	float v; ///< GPS ground speed
 	float hdg; ///< Compass heading in degrees, 0..360 degrees
 	uint8_t fix_type; ///< 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
+	uint8_t satellites_visible; ///< Number of satellites visible
 
 } mavlink_gps_raw_t;
 
@@ -33,9 +34,10 @@ typedef struct __mavlink_gps_raw_t
  * @param epv GPS VDOP
  * @param v GPS ground speed
  * @param hdg Compass heading in degrees, 0..360 degrees
+ * @param satellites_visible Number of satellites visible
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_gps_raw_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint64_t usec, uint8_t fix_type, float lat, float lon, float alt, float eph, float epv, float v, float hdg)
+static inline uint16_t mavlink_msg_gps_raw_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint64_t usec, uint8_t fix_type, float lat, float lon, float alt, float eph, float epv, float v, float hdg, uint8_t satellites_visible)
 {
 	mavlink_gps_raw_t *p = (mavlink_gps_raw_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_GPS_RAW;
@@ -49,6 +51,7 @@ static inline uint16_t mavlink_msg_gps_raw_pack(uint8_t system_id, uint8_t compo
 	p->epv = epv; // float:GPS VDOP
 	p->v = v; // float:GPS ground speed
 	p->hdg = hdg; // float:Compass heading in degrees, 0..360 degrees
+	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_GPS_RAW_LEN);
 }
@@ -68,9 +71,10 @@ static inline uint16_t mavlink_msg_gps_raw_pack(uint8_t system_id, uint8_t compo
  * @param epv GPS VDOP
  * @param v GPS ground speed
  * @param hdg Compass heading in degrees, 0..360 degrees
+ * @param satellites_visible Number of satellites visible
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_gps_raw_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint64_t usec, uint8_t fix_type, float lat, float lon, float alt, float eph, float epv, float v, float hdg)
+static inline uint16_t mavlink_msg_gps_raw_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint64_t usec, uint8_t fix_type, float lat, float lon, float alt, float eph, float epv, float v, float hdg, uint8_t satellites_visible)
 {
 	mavlink_gps_raw_t *p = (mavlink_gps_raw_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_GPS_RAW;
@@ -84,6 +88,7 @@ static inline uint16_t mavlink_msg_gps_raw_pack_chan(uint8_t system_id, uint8_t 
 	p->epv = epv; // float:GPS VDOP
 	p->v = v; // float:GPS ground speed
 	p->hdg = hdg; // float:Compass heading in degrees, 0..360 degrees
+	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_GPS_RAW_LEN);
 }
@@ -98,7 +103,7 @@ static inline uint16_t mavlink_msg_gps_raw_pack_chan(uint8_t system_id, uint8_t 
  */
 static inline uint16_t mavlink_msg_gps_raw_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_gps_raw_t* gps_raw)
 {
-	return mavlink_msg_gps_raw_pack(system_id, component_id, msg, gps_raw->usec, gps_raw->fix_type, gps_raw->lat, gps_raw->lon, gps_raw->alt, gps_raw->eph, gps_raw->epv, gps_raw->v, gps_raw->hdg);
+	return mavlink_msg_gps_raw_pack(system_id, component_id, msg, gps_raw->usec, gps_raw->fix_type, gps_raw->lat, gps_raw->lon, gps_raw->alt, gps_raw->eph, gps_raw->epv, gps_raw->v, gps_raw->hdg, gps_raw->satellites_visible);
 }
 
 /**
@@ -114,11 +119,12 @@ static inline uint16_t mavlink_msg_gps_raw_encode(uint8_t system_id, uint8_t com
  * @param epv GPS VDOP
  * @param v GPS ground speed
  * @param hdg Compass heading in degrees, 0..360 degrees
+ * @param satellites_visible Number of satellites visible
  */
 
 
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-static inline void mavlink_msg_gps_raw_send(mavlink_channel_t chan, uint64_t usec, uint8_t fix_type, float lat, float lon, float alt, float eph, float epv, float v, float hdg)
+static inline void mavlink_msg_gps_raw_send(mavlink_channel_t chan, uint64_t usec, uint8_t fix_type, float lat, float lon, float alt, float eph, float epv, float v, float hdg, uint8_t satellites_visible)
 {
 	mavlink_header_t hdr;
 	mavlink_gps_raw_t payload;
@@ -134,6 +140,7 @@ static inline void mavlink_msg_gps_raw_send(mavlink_channel_t chan, uint64_t use
 	p->epv = epv; // float:GPS VDOP
 	p->v = v; // float:GPS ground speed
 	p->hdg = hdg; // float:Compass heading in degrees, 0..360 degrees
+	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_GPS_RAW_LEN;
@@ -254,6 +261,17 @@ static inline float mavlink_msg_gps_raw_get_hdg(const mavlink_message_t* msg)
 {
 	mavlink_gps_raw_t *p = (mavlink_gps_raw_t *)&msg->payload[0];
 	return (float)(p->hdg);
+}
+
+/**
+ * @brief Get field satellites_visible from gps_raw message
+ *
+ * @return Number of satellites visible
+ */
+static inline uint8_t mavlink_msg_gps_raw_get_satellites_visible(const mavlink_message_t* msg)
+{
+	mavlink_gps_raw_t *p = (mavlink_gps_raw_t *)&msg->payload[0];
+	return (uint8_t)(p->satellites_visible);
 }
 
 /**

@@ -725,11 +725,12 @@
                <field type="uint8_t" name="fix_type">0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.</field>
                <field type="int32_t" name="lat">Latitude in 1E7 degrees</field>
                <field type="int32_t" name="lon">Longitude in 1E7 degrees</field>
-               <field type="int32_t" name="alt">Altitude in 1E3 meters (millimeters)</field>
-               <field type="float" name="eph">GPS HDOP</field>
-               <field type="float" name="epv">GPS VDOP</field>
-               <field type="float" name="v">GPS ground speed (m/s)</field>
-               <field type="float" name="hdg">Compass heading in degrees, 0..360 degrees</field>
+               <field type="int32_t" name="alt">Altitude in 1E3 meters (millimeters) above MSL</field>
+               <field type="uint16_t" name="eph">GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535</field>
+               <field type="uint16_t" name="epv">GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535</field>
+               <field type="uint16_t" name="vel">GPS ground speed (m/s * 100). If unknown, set to: 65535</field>
+               <field type="uint16_t" name="hdg">Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535</field>
+               <field type="uint8_t" name="satellites_visible">Number of satellites visible. If unknown, set to 255</field>
           </message>
           <message id="26" name="SCALED_IMU">
                <description>The RAW IMU readings for the usual 9DOF sensor setup. This message should contain the scaled values to the described units</description>
@@ -812,7 +813,7 @@
                <field type="float" name="vz">Z Speed (in Altitude direction, positive: going up)</field>
           </message>
           <message id="32" name="GPS_RAW">
-               <description>The global position, as returned by the Global Positioning System (GPS). This is
+               <description>IMPORTANT: Please use GPS_RAW_INT for maximum precision. The max FLOAT resolution limits the resolution to about 1.8 m on some places on the earth. The global position, as returned by the Global Positioning System (GPS). This is
                 NOT the global position estimate of the sytem, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate. Coordinate frame is right-handed, Z-axis up (GPS frame)
             </description>
                <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
@@ -824,6 +825,7 @@
                <field type="float" name="epv">GPS VDOP</field>
                <field type="float" name="v">GPS ground speed</field>
                <field type="float" name="hdg">Compass heading in degrees, 0..360 degrees</field>
+               <field type="uint8_t" name="satellites_visible">Number of satellites visible</field>
           </message>
           <message id="34" name="SYS_STATUS">
                <description>The general system state. If the system is following the MAVLink standard, the system state is mainly defined by three orthogonal states/modes: The system mode, which is either LOCKED (motors shut down and locked), MANUAL (system under RC control), GUIDED (system with autonomous position control, position setpoint controlled manually) or AUTO (system guided by path/waypoint planner). The NAV_MODE defined the current flight state: LIFTOFF (often an open-loop maneuver), LANDING, WAYPOINTS or VECTOR. This represents the internal navigation state machine. The system status shows wether the system is currently active or not and if an emergency occured. During the CRITICAL and EMERGENCY states the MAV is still considered to be active, but should start emergency procedures autonomously. After a failure occured it should first move from active to critical to allow manual intervention and then move to emergency after a certain timeout.</description>
@@ -1117,10 +1119,11 @@
                <description>The filtered global position (e.g. fused GPS and accelerometers). The position is in GPS-frame (right-handed, Z-up)</description>
                <field type="int32_t" name="lat">Latitude, expressed as * 1E7</field>
                <field type="int32_t" name="lon">Longitude, expressed as * 1E7</field>
-               <field type="int32_t" name="alt">Altitude in meters, expressed as * 1000 (millimeters)</field>
+               <field type="int32_t" name="alt">Altitude in meters, expressed as * 1000 (millimeters), above MSL</field>
                <field type="int16_t" name="vx">Ground X Speed (Latitude), expressed as m/s * 100</field>
                <field type="int16_t" name="vy">Ground Y Speed (Longitude), expressed as m/s * 100</field>
                <field type="int16_t" name="vz">Ground Z Speed (Altitude), expressed as m/s * 100</field>
+               <field type="uint16_t" name="hdg">Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535</field>
           </message>
           <message id="74" name="VFR_HUD">
                <description>Metrics typically displayed on a HUD for fixed wing aircraft</description>
@@ -1147,7 +1150,14 @@
                <field type="float" name="command">Current airspeed in m/s</field>
                <field type="float" name="result">1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION</field>
           </message>
-          <!-- MESSAGE IDs 80 - 250: Space for custom messages in individual projectname_messages.xml files -->
+          <!-- MESSAGE IDs 80 - 249: Space for custom messages in individual projectname_messages.xml files -->
+          <message id="250" name="MEMORY_VECT">
+               <description>Send raw controller memory. The use of this message is discouraged for normal packets, but a quite efficient way for testing new messages and getting experimental debug output.</description>
+               <field type="uint16_t" name="address">Starting address of the debug variables</field>
+               <field type="uint8_t" name="ver">Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below</field>
+               <field type="uint8_t" name="type">Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14</field>
+               <field type="int8_t[32]" name="value">Memory contents at specified address</field>
+          </message>
           <message id="251" name="DEBUG_VECT">
                <field type="char[10]" name="name">Name</field>
                <field type="uint64_t" name="usec">Timestamp</field>
