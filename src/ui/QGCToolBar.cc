@@ -55,6 +55,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
         disconnect(mav, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
         disconnect(mav, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
+        disconnect(mav, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
     }
 
     // Connect new system
@@ -63,6 +64,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     connect(active, SIGNAL(modeChanged(int,QString,QString)), this, SLOT(updateMode(int,QString,QString)));
     connect(active, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
     connect(active, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
+    connect(active, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
 
     // Update all values once
     nameLabel->setText(mav->getUASName());
@@ -81,6 +83,7 @@ void QGCToolBar::createCustomWidgets()
     stateLabel = new QLabel("------", this);
     wpLabel = new QLabel("---", this);
     distlabel = new QLabel("--- ---- m", this);
+    messageLabel = new QLabel("No system messages.", this);
     //symbolButton->setIcon(":");
     symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px; background-color: none; }");
     addWidget(symbolButton);
@@ -89,6 +92,7 @@ void QGCToolBar::createCustomWidgets()
     addWidget(stateLabel);
     addWidget(wpLabel);
     addWidget(distlabel);
+    addWidget(messageLabel);
 
     toggleLoggingAction = new QAction(QIcon(":"), "Start Logging", this);
     logReplayAction = new QAction(QIcon(":"), "Start Replay", this);
@@ -152,6 +156,14 @@ void QGCToolBar::setSystemType(UASInterface* uas, unsigned int systemType)
             symbolButton->setIcon(QIcon(":/images/mavs/unknown.svg"));
             break;
         }
+}
+
+void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QString text)
+{
+    Q_UNUSED(uasid);
+    Q_UNUSED(componentid);
+    Q_UNUSED(severity);
+    messageLabel->setText(text);
 }
 
 QGCToolBar::~QGCToolBar()
