@@ -17,7 +17,6 @@
 #include <QSettings>
 #include <QDesktopServices>
 
-//#include "MG.h"
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
 #include "UASManager.h"
@@ -28,7 +27,6 @@
 #include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
-//#include "MainWindow.h"
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
@@ -182,14 +180,14 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
         unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)(b.at(position)), &message, &status);
 
         if (decodeState == 1) {
-#ifdef MAVLINK_MESSAGE_LENGTHS
-	    const uint8_t message_lengths[] = MAVLINK_MESSAGE_LENGTHS;
-	    if (message.msgid >= sizeof(message_lengths) ||
-		message.len != message_lengths[message.msgid]) {
-                    qDebug() << "MAVLink message " << message.msgid << " length incorrect (was " << message.len << " expected " << message_lengths[message.msgid] << ")";
-		    continue;
-	    }
-#endif
+//#ifdef MAVLINK_MESSAGE_LENGTHS
+//	    const uint8_t message_lengths[] = MAVLINK_MESSAGE_LENGTHS;
+//	    if (message.msgid >= sizeof(message_lengths) ||
+//		message.len != message_lengths[message.msgid]) {
+//                    qDebug() << "MAVLink message " << message.msgid << " length incorrect (was " << message.len << " expected " << message_lengths[message.msgid] << ")";
+//		    continue;
+//	    }
+//#endif
             // Log data
             if (m_loggingEnabled && m_logfile) {
                 const int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);

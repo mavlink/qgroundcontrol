@@ -50,6 +50,8 @@ public slots:
     void updateName(const QString& name);
     /** @brief Set the MAV system type */
     void setSystemType(UASInterface* uas, unsigned int systemType);
+    /** @brief Received system text message */
+    void receiveTextMessage(int uasid, int componentid, int severity, QString text);
 
 protected:
     void createCustomWidgets();
@@ -63,7 +65,7 @@ protected:
     QLabel* stateLabel;
     QLabel* wpLabel;
     QLabel* distlabel;
-
+    QLabel* messageLabel;
 };
 
 #endif // QGCTOOLBAR_H
