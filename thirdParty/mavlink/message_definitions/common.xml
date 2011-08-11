@@ -1011,6 +1011,20 @@
                <field type="float" name="pitch_speed">Desired pitch angular speed in rad/s</field>
                <field type="float" name="yaw_speed">Desired yaw angular speed in rad/s</field>
           </message>
+          <message id="57" name="ROLL_PITCH_YAW_SETPOINT">
+               <description>Setpoint in roll, pitch, yaw currently active on the system.</description>
+               <field type="uint32_t" name="time_ms">Timestamp in milliseconds since system boot</field>
+               <field type="float" name="roll">Desired roll angle in radians</field>
+               <field type="float" name="pitch">Desired pitch angle in radians</field>
+               <field type="float" name="yaw">Desired yaw angle in radians</field>
+          </message>
+          <message id="58" name="ROLL_PITCH_YAW_SPEED_SETPOINT">
+               <description>Setpoint in rollspeed, pitchspeed, yawspeed currently active on the system.</description>
+               <field type="uint32_t" name="time_ms">Timestamp in milliseconds since system boot</field>
+               <field type="float" name="roll_speed">Desired roll angular speed in rad/s</field>
+               <field type="float" name="pitch_speed">Desired pitch angular speed in rad/s</field>
+               <field type="float" name="yaw_speed">Desired yaw angular speed in rad/s</field>
+          </message>
           <message id="60" name="ATTITUDE_CONTROLLER_OUTPUT">
                <description>The output of the attitude controller. This output is the control response the controller currently generates and the attitude the MAV would take if it is under control of the attitude controller. The primary use of this message is to check the response and signs of the controller before the actual flight.</description>
                <field type="uint8_t" name="enabled">1: enabled, 0: disabled</field>
