@@ -3,15 +3,17 @@
 #define MAVLINK_MSG_ID_GPS_STATUS 27
 #define MAVLINK_MSG_ID_GPS_STATUS_LEN 101
 #define MAVLINK_MSG_27_LEN 101
+#define MAVLINK_MSG_ID_GPS_STATUS_KEY 0x63
+#define MAVLINK_MSG_27_KEY 0x63
 
 typedef struct __mavlink_gps_status_t 
 {
-	uint8_t satellites_visible; ///< Number of satellites visible
-	uint8_t satellite_prn[20]; ///< Global satellite ID
-	uint8_t satellite_used[20]; ///< 0: Satellite not used, 1: used for localization
-	uint8_t satellite_elevation[20]; ///< Elevation (0: right on top of receiver, 90: on the horizon) of satellite
-	uint8_t satellite_azimuth[20]; ///< Direction of satellite, 0: 0 deg, 255: 360 deg.
-	uint8_t satellite_snr[20]; ///< Signal to noise ratio of satellite
+	uint8_t satellites_visible;	///< Number of satellites visible
+	uint8_t satellite_prn[20];	///< Global satellite ID
+	uint8_t satellite_used[20];	///< 0: Satellite not used, 1: used for localization
+	uint8_t satellite_elevation[20];	///< Elevation (0: right on top of receiver, 90: on the horizon) of satellite
+	uint8_t satellite_azimuth[20];	///< Direction of satellite, 0: 0 deg, 255: 360 deg.
+	uint8_t satellite_snr[20];	///< Signal to noise ratio of satellite
 
 } mavlink_gps_status_t;
 #define MAVLINK_MSG_GPS_STATUS_FIELD_SATELLITE_PRN_LEN 20
@@ -39,12 +41,12 @@ static inline uint16_t mavlink_msg_gps_status_pack(uint8_t system_id, uint8_t co
 	mavlink_gps_status_t *p = (mavlink_gps_status_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_GPS_STATUS;
 
-	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible
-	memcpy(p->satellite_prn, satellite_prn, sizeof(p->satellite_prn)); // uint8_t[20]:Global satellite ID
-	memcpy(p->satellite_used, satellite_used, sizeof(p->satellite_used)); // uint8_t[20]:0: Satellite not used, 1: used for localization
-	memcpy(p->satellite_elevation, satellite_elevation, sizeof(p->satellite_elevation)); // uint8_t[20]:Elevation (0: right on top of receiver, 90: on the horizon) of satellite
-	memcpy(p->satellite_azimuth, satellite_azimuth, sizeof(p->satellite_azimuth)); // uint8_t[20]:Direction of satellite, 0: 0 deg, 255: 360 deg.
-	memcpy(p->satellite_snr, satellite_snr, sizeof(p->satellite_snr)); // uint8_t[20]:Signal to noise ratio of satellite
+	p->satellites_visible = satellites_visible;	// uint8_t:Number of satellites visible
+	memcpy(p->satellite_prn, satellite_prn, sizeof(p->satellite_prn));	// uint8_t[20]:Global satellite ID
+	memcpy(p->satellite_used, satellite_used, sizeof(p->satellite_used));	// uint8_t[20]:0: Satellite not used, 1: used for localization
+	memcpy(p->satellite_elevation, satellite_elevation, sizeof(p->satellite_elevation));	// uint8_t[20]:Elevation (0: right on top of receiver, 90: on the horizon) of satellite
+	memcpy(p->satellite_azimuth, satellite_azimuth, sizeof(p->satellite_azimuth));	// uint8_t[20]:Direction of satellite, 0: 0 deg, 255: 360 deg.
+	memcpy(p->satellite_snr, satellite_snr, sizeof(p->satellite_snr));	// uint8_t[20]:Signal to noise ratio of satellite
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_GPS_STATUS_LEN);
 }
@@ -68,12 +70,12 @@ static inline uint16_t mavlink_msg_gps_status_pack_chan(uint8_t system_id, uint8
 	mavlink_gps_status_t *p = (mavlink_gps_status_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_GPS_STATUS;
 
-	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible
-	memcpy(p->satellite_prn, satellite_prn, sizeof(p->satellite_prn)); // uint8_t[20]:Global satellite ID
-	memcpy(p->satellite_used, satellite_used, sizeof(p->satellite_used)); // uint8_t[20]:0: Satellite not used, 1: used for localization
-	memcpy(p->satellite_elevation, satellite_elevation, sizeof(p->satellite_elevation)); // uint8_t[20]:Elevation (0: right on top of receiver, 90: on the horizon) of satellite
-	memcpy(p->satellite_azimuth, satellite_azimuth, sizeof(p->satellite_azimuth)); // uint8_t[20]:Direction of satellite, 0: 0 deg, 255: 360 deg.
-	memcpy(p->satellite_snr, satellite_snr, sizeof(p->satellite_snr)); // uint8_t[20]:Signal to noise ratio of satellite
+	p->satellites_visible = satellites_visible;	// uint8_t:Number of satellites visible
+	memcpy(p->satellite_prn, satellite_prn, sizeof(p->satellite_prn));	// uint8_t[20]:Global satellite ID
+	memcpy(p->satellite_used, satellite_used, sizeof(p->satellite_used));	// uint8_t[20]:0: Satellite not used, 1: used for localization
+	memcpy(p->satellite_elevation, satellite_elevation, sizeof(p->satellite_elevation));	// uint8_t[20]:Elevation (0: right on top of receiver, 90: on the horizon) of satellite
+	memcpy(p->satellite_azimuth, satellite_azimuth, sizeof(p->satellite_azimuth));	// uint8_t[20]:Direction of satellite, 0: 0 deg, 255: 360 deg.
+	memcpy(p->satellite_snr, satellite_snr, sizeof(p->satellite_snr));	// uint8_t[20]:Signal to noise ratio of satellite
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_GPS_STATUS_LEN);
 }
@@ -91,6 +93,8 @@ static inline uint16_t mavlink_msg_gps_status_encode(uint8_t system_id, uint8_t 
 	return mavlink_msg_gps_status_pack(system_id, component_id, msg, gps_status->satellites_visible, gps_status->satellite_prn, gps_status->satellite_used, gps_status->satellite_elevation, gps_status->satellite_azimuth, gps_status->satellite_snr);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a gps_status message
  * @param chan MAVLink channel to send the message
@@ -102,22 +106,18 @@ static inline uint16_t mavlink_msg_gps_status_encode(uint8_t system_id, uint8_t 
  * @param satellite_azimuth Direction of satellite, 0: 0 deg, 255: 360 deg.
  * @param satellite_snr Signal to noise ratio of satellite
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_gps_status_send(mavlink_channel_t chan, uint8_t satellites_visible, const uint8_t* satellite_prn, const uint8_t* satellite_used, const uint8_t* satellite_elevation, const uint8_t* satellite_azimuth, const uint8_t* satellite_snr)
 {
 	mavlink_header_t hdr;
 	mavlink_gps_status_t payload;
-	uint16_t checksum;
-	mavlink_gps_status_t *p = &payload;
 
-	p->satellites_visible = satellites_visible; // uint8_t:Number of satellites visible
-	memcpy(p->satellite_prn, satellite_prn, sizeof(p->satellite_prn)); // uint8_t[20]:Global satellite ID
-	memcpy(p->satellite_used, satellite_used, sizeof(p->satellite_used)); // uint8_t[20]:0: Satellite not used, 1: used for localization
-	memcpy(p->satellite_elevation, satellite_elevation, sizeof(p->satellite_elevation)); // uint8_t[20]:Elevation (0: right on top of receiver, 90: on the horizon) of satellite
-	memcpy(p->satellite_azimuth, satellite_azimuth, sizeof(p->satellite_azimuth)); // uint8_t[20]:Direction of satellite, 0: 0 deg, 255: 360 deg.
-	memcpy(p->satellite_snr, satellite_snr, sizeof(p->satellite_snr)); // uint8_t[20]:Signal to noise ratio of satellite
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_GPS_STATUS_LEN )
+	payload.satellites_visible = satellites_visible;	// uint8_t:Number of satellites visible
+	memcpy(payload.satellite_prn, satellite_prn, sizeof(payload.satellite_prn));	// uint8_t[20]:Global satellite ID
+	memcpy(payload.satellite_used, satellite_used, sizeof(payload.satellite_used));	// uint8_t[20]:0: Satellite not used, 1: used for localization
+	memcpy(payload.satellite_elevation, satellite_elevation, sizeof(payload.satellite_elevation));	// uint8_t[20]:Elevation (0: right on top of receiver, 90: on the horizon) of satellite
+	memcpy(payload.satellite_azimuth, satellite_azimuth, sizeof(payload.satellite_azimuth));	// uint8_t[20]:Direction of satellite, 0: 0 deg, 255: 360 deg.
+	memcpy(payload.satellite_snr, satellite_snr, sizeof(payload.satellite_snr));	// uint8_t[20]:Signal to noise ratio of satellite
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_GPS_STATUS_LEN;
@@ -128,14 +128,12 @@ static inline void mavlink_msg_gps_status_send(mavlink_channel_t chan, uint8_t s
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x63, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

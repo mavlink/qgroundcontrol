@@ -3,15 +3,17 @@
 #define MAVLINK_MSG_ID_VFR_HUD 74
 #define MAVLINK_MSG_ID_VFR_HUD_LEN 20
 #define MAVLINK_MSG_74_LEN 20
+#define MAVLINK_MSG_ID_VFR_HUD_KEY 0xFB
+#define MAVLINK_MSG_74_KEY 0xFB
 
 typedef struct __mavlink_vfr_hud_t 
 {
-	float airspeed; ///< Current airspeed in m/s
-	float groundspeed; ///< Current ground speed in m/s
-	float alt; ///< Current altitude (MSL), in meters
-	float climb; ///< Current climb rate in meters/second
-	int16_t heading; ///< Current heading in degrees, in compass units (0..360, 0=north)
-	uint16_t throttle; ///< Current throttle setting in integer percent, 0 to 100
+	float airspeed;	///< Current airspeed in m/s
+	float groundspeed;	///< Current ground speed in m/s
+	float alt;	///< Current altitude (MSL), in meters
+	float climb;	///< Current climb rate in meters/second
+	int16_t heading;	///< Current heading in degrees, in compass units (0..360, 0=north)
+	uint16_t throttle;	///< Current throttle setting in integer percent, 0 to 100
 
 } mavlink_vfr_hud_t;
 
@@ -34,12 +36,12 @@ static inline uint16_t mavlink_msg_vfr_hud_pack(uint8_t system_id, uint8_t compo
 	mavlink_vfr_hud_t *p = (mavlink_vfr_hud_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_VFR_HUD;
 
-	p->airspeed = airspeed; // float:Current airspeed in m/s
-	p->groundspeed = groundspeed; // float:Current ground speed in m/s
-	p->heading = heading; // int16_t:Current heading in degrees, in compass units (0..360, 0=north)
-	p->throttle = throttle; // uint16_t:Current throttle setting in integer percent, 0 to 100
-	p->alt = alt; // float:Current altitude (MSL), in meters
-	p->climb = climb; // float:Current climb rate in meters/second
+	p->airspeed = airspeed;	// float:Current airspeed in m/s
+	p->groundspeed = groundspeed;	// float:Current ground speed in m/s
+	p->heading = heading;	// int16_t:Current heading in degrees, in compass units (0..360, 0=north)
+	p->throttle = throttle;	// uint16_t:Current throttle setting in integer percent, 0 to 100
+	p->alt = alt;	// float:Current altitude (MSL), in meters
+	p->climb = climb;	// float:Current climb rate in meters/second
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_VFR_HUD_LEN);
 }
@@ -63,12 +65,12 @@ static inline uint16_t mavlink_msg_vfr_hud_pack_chan(uint8_t system_id, uint8_t 
 	mavlink_vfr_hud_t *p = (mavlink_vfr_hud_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_VFR_HUD;
 
-	p->airspeed = airspeed; // float:Current airspeed in m/s
-	p->groundspeed = groundspeed; // float:Current ground speed in m/s
-	p->heading = heading; // int16_t:Current heading in degrees, in compass units (0..360, 0=north)
-	p->throttle = throttle; // uint16_t:Current throttle setting in integer percent, 0 to 100
-	p->alt = alt; // float:Current altitude (MSL), in meters
-	p->climb = climb; // float:Current climb rate in meters/second
+	p->airspeed = airspeed;	// float:Current airspeed in m/s
+	p->groundspeed = groundspeed;	// float:Current ground speed in m/s
+	p->heading = heading;	// int16_t:Current heading in degrees, in compass units (0..360, 0=north)
+	p->throttle = throttle;	// uint16_t:Current throttle setting in integer percent, 0 to 100
+	p->alt = alt;	// float:Current altitude (MSL), in meters
+	p->climb = climb;	// float:Current climb rate in meters/second
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_VFR_HUD_LEN);
 }
@@ -86,6 +88,8 @@ static inline uint16_t mavlink_msg_vfr_hud_encode(uint8_t system_id, uint8_t com
 	return mavlink_msg_vfr_hud_pack(system_id, component_id, msg, vfr_hud->airspeed, vfr_hud->groundspeed, vfr_hud->heading, vfr_hud->throttle, vfr_hud->alt, vfr_hud->climb);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a vfr_hud message
  * @param chan MAVLink channel to send the message
@@ -97,22 +101,18 @@ static inline uint16_t mavlink_msg_vfr_hud_encode(uint8_t system_id, uint8_t com
  * @param alt Current altitude (MSL), in meters
  * @param climb Current climb rate in meters/second
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_vfr_hud_send(mavlink_channel_t chan, float airspeed, float groundspeed, int16_t heading, uint16_t throttle, float alt, float climb)
 {
 	mavlink_header_t hdr;
 	mavlink_vfr_hud_t payload;
-	uint16_t checksum;
-	mavlink_vfr_hud_t *p = &payload;
 
-	p->airspeed = airspeed; // float:Current airspeed in m/s
-	p->groundspeed = groundspeed; // float:Current ground speed in m/s
-	p->heading = heading; // int16_t:Current heading in degrees, in compass units (0..360, 0=north)
-	p->throttle = throttle; // uint16_t:Current throttle setting in integer percent, 0 to 100
-	p->alt = alt; // float:Current altitude (MSL), in meters
-	p->climb = climb; // float:Current climb rate in meters/second
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_VFR_HUD_LEN )
+	payload.airspeed = airspeed;	// float:Current airspeed in m/s
+	payload.groundspeed = groundspeed;	// float:Current ground speed in m/s
+	payload.heading = heading;	// int16_t:Current heading in degrees, in compass units (0..360, 0=north)
+	payload.throttle = throttle;	// uint16_t:Current throttle setting in integer percent, 0 to 100
+	payload.alt = alt;	// float:Current altitude (MSL), in meters
+	payload.climb = climb;	// float:Current climb rate in meters/second
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_VFR_HUD_LEN;
@@ -123,14 +123,12 @@ static inline void mavlink_msg_vfr_hud_send(mavlink_channel_t chan, float airspe
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xFB, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

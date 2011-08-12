@@ -3,11 +3,13 @@
 #define MAVLINK_MSG_ID_SET_NAV_MODE 12
 #define MAVLINK_MSG_ID_SET_NAV_MODE_LEN 2
 #define MAVLINK_MSG_12_LEN 2
+#define MAVLINK_MSG_ID_SET_NAV_MODE_KEY 0x85
+#define MAVLINK_MSG_12_KEY 0x85
 
 typedef struct __mavlink_set_nav_mode_t 
 {
-	uint8_t target; ///< The system setting the mode
-	uint8_t nav_mode; ///< The new navigation mode
+	uint8_t target;	///< The system setting the mode
+	uint8_t nav_mode;	///< The new navigation mode
 
 } mavlink_set_nav_mode_t;
 
@@ -26,8 +28,8 @@ static inline uint16_t mavlink_msg_set_nav_mode_pack(uint8_t system_id, uint8_t 
 	mavlink_set_nav_mode_t *p = (mavlink_set_nav_mode_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SET_NAV_MODE;
 
-	p->target = target; // uint8_t:The system setting the mode
-	p->nav_mode = nav_mode; // uint8_t:The new navigation mode
+	p->target = target;	// uint8_t:The system setting the mode
+	p->nav_mode = nav_mode;	// uint8_t:The new navigation mode
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SET_NAV_MODE_LEN);
 }
@@ -47,8 +49,8 @@ static inline uint16_t mavlink_msg_set_nav_mode_pack_chan(uint8_t system_id, uin
 	mavlink_set_nav_mode_t *p = (mavlink_set_nav_mode_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SET_NAV_MODE;
 
-	p->target = target; // uint8_t:The system setting the mode
-	p->nav_mode = nav_mode; // uint8_t:The new navigation mode
+	p->target = target;	// uint8_t:The system setting the mode
+	p->nav_mode = nav_mode;	// uint8_t:The new navigation mode
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SET_NAV_MODE_LEN);
 }
@@ -66,6 +68,8 @@ static inline uint16_t mavlink_msg_set_nav_mode_encode(uint8_t system_id, uint8_
 	return mavlink_msg_set_nav_mode_pack(system_id, component_id, msg, set_nav_mode->target, set_nav_mode->nav_mode);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a set_nav_mode message
  * @param chan MAVLink channel to send the message
@@ -73,18 +77,14 @@ static inline uint16_t mavlink_msg_set_nav_mode_encode(uint8_t system_id, uint8_
  * @param target The system setting the mode
  * @param nav_mode The new navigation mode
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_set_nav_mode_send(mavlink_channel_t chan, uint8_t target, uint8_t nav_mode)
 {
 	mavlink_header_t hdr;
 	mavlink_set_nav_mode_t payload;
-	uint16_t checksum;
-	mavlink_set_nav_mode_t *p = &payload;
 
-	p->target = target; // uint8_t:The system setting the mode
-	p->nav_mode = nav_mode; // uint8_t:The new navigation mode
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SET_NAV_MODE_LEN )
+	payload.target = target;	// uint8_t:The system setting the mode
+	payload.nav_mode = nav_mode;	// uint8_t:The new navigation mode
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_SET_NAV_MODE_LEN;
@@ -95,14 +95,12 @@ static inline void mavlink_msg_set_nav_mode_send(mavlink_channel_t chan, uint8_t
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x85, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

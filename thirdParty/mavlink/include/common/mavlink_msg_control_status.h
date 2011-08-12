@@ -3,17 +3,19 @@
 #define MAVLINK_MSG_ID_CONTROL_STATUS 52
 #define MAVLINK_MSG_ID_CONTROL_STATUS_LEN 8
 #define MAVLINK_MSG_52_LEN 8
+#define MAVLINK_MSG_ID_CONTROL_STATUS_KEY 0xF9
+#define MAVLINK_MSG_52_KEY 0xF9
 
 typedef struct __mavlink_control_status_t 
 {
-	uint8_t position_fix; ///< Position fix: 0: lost, 2: 2D position fix, 3: 3D position fix 
-	uint8_t vision_fix; ///< Vision position fix: 0: lost, 1: 2D local position hold, 2: 2D global position fix, 3: 3D global position fix 
-	uint8_t gps_fix; ///< GPS position fix: 0: no reception, 1: Minimum 1 satellite, but no position fix, 2: 2D position fix, 3: 3D position fix 
-	uint8_t ahrs_health; ///< Attitude estimation health: 0: poor, 255: excellent
-	uint8_t control_att; ///< 0: Attitude control disabled, 1: enabled
-	uint8_t control_pos_xy; ///< 0: X, Y position control disabled, 1: enabled
-	uint8_t control_pos_z; ///< 0: Z position control disabled, 1: enabled
-	uint8_t control_pos_yaw; ///< 0: Yaw angle control disabled, 1: enabled
+	uint8_t position_fix;	///< Position fix: 0: lost, 2: 2D position fix, 3: 3D position fix 
+	uint8_t vision_fix;	///< Vision position fix: 0: lost, 1: 2D local position hold, 2: 2D global position fix, 3: 3D global position fix 
+	uint8_t gps_fix;	///< GPS position fix: 0: no reception, 1: Minimum 1 satellite, but no position fix, 2: 2D position fix, 3: 3D position fix 
+	uint8_t ahrs_health;	///< Attitude estimation health: 0: poor, 255: excellent
+	uint8_t control_att;	///< 0: Attitude control disabled, 1: enabled
+	uint8_t control_pos_xy;	///< 0: X, Y position control disabled, 1: enabled
+	uint8_t control_pos_z;	///< 0: Z position control disabled, 1: enabled
+	uint8_t control_pos_yaw;	///< 0: Yaw angle control disabled, 1: enabled
 
 } mavlink_control_status_t;
 
@@ -38,14 +40,14 @@ static inline uint16_t mavlink_msg_control_status_pack(uint8_t system_id, uint8_
 	mavlink_control_status_t *p = (mavlink_control_status_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_CONTROL_STATUS;
 
-	p->position_fix = position_fix; // uint8_t:Position fix: 0: lost, 2: 2D position fix, 3: 3D position fix 
-	p->vision_fix = vision_fix; // uint8_t:Vision position fix: 0: lost, 1: 2D local position hold, 2: 2D global position fix, 3: 3D global position fix 
-	p->gps_fix = gps_fix; // uint8_t:GPS position fix: 0: no reception, 1: Minimum 1 satellite, but no position fix, 2: 2D position fix, 3: 3D position fix 
-	p->ahrs_health = ahrs_health; // uint8_t:Attitude estimation health: 0: poor, 255: excellent
-	p->control_att = control_att; // uint8_t:0: Attitude control disabled, 1: enabled
-	p->control_pos_xy = control_pos_xy; // uint8_t:0: X, Y position control disabled, 1: enabled
-	p->control_pos_z = control_pos_z; // uint8_t:0: Z position control disabled, 1: enabled
-	p->control_pos_yaw = control_pos_yaw; // uint8_t:0: Yaw angle control disabled, 1: enabled
+	p->position_fix = position_fix;	// uint8_t:Position fix: 0: lost, 2: 2D position fix, 3: 3D position fix 
+	p->vision_fix = vision_fix;	// uint8_t:Vision position fix: 0: lost, 1: 2D local position hold, 2: 2D global position fix, 3: 3D global position fix 
+	p->gps_fix = gps_fix;	// uint8_t:GPS position fix: 0: no reception, 1: Minimum 1 satellite, but no position fix, 2: 2D position fix, 3: 3D position fix 
+	p->ahrs_health = ahrs_health;	// uint8_t:Attitude estimation health: 0: poor, 255: excellent
+	p->control_att = control_att;	// uint8_t:0: Attitude control disabled, 1: enabled
+	p->control_pos_xy = control_pos_xy;	// uint8_t:0: X, Y position control disabled, 1: enabled
+	p->control_pos_z = control_pos_z;	// uint8_t:0: Z position control disabled, 1: enabled
+	p->control_pos_yaw = control_pos_yaw;	// uint8_t:0: Yaw angle control disabled, 1: enabled
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_CONTROL_STATUS_LEN);
 }
@@ -71,14 +73,14 @@ static inline uint16_t mavlink_msg_control_status_pack_chan(uint8_t system_id, u
 	mavlink_control_status_t *p = (mavlink_control_status_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_CONTROL_STATUS;
 
-	p->position_fix = position_fix; // uint8_t:Position fix: 0: lost, 2: 2D position fix, 3: 3D position fix 
-	p->vision_fix = vision_fix; // uint8_t:Vision position fix: 0: lost, 1: 2D local position hold, 2: 2D global position fix, 3: 3D global position fix 
-	p->gps_fix = gps_fix; // uint8_t:GPS position fix: 0: no reception, 1: Minimum 1 satellite, but no position fix, 2: 2D position fix, 3: 3D position fix 
-	p->ahrs_health = ahrs_health; // uint8_t:Attitude estimation health: 0: poor, 255: excellent
-	p->control_att = control_att; // uint8_t:0: Attitude control disabled, 1: enabled
-	p->control_pos_xy = control_pos_xy; // uint8_t:0: X, Y position control disabled, 1: enabled
-	p->control_pos_z = control_pos_z; // uint8_t:0: Z position control disabled, 1: enabled
-	p->control_pos_yaw = control_pos_yaw; // uint8_t:0: Yaw angle control disabled, 1: enabled
+	p->position_fix = position_fix;	// uint8_t:Position fix: 0: lost, 2: 2D position fix, 3: 3D position fix 
+	p->vision_fix = vision_fix;	// uint8_t:Vision position fix: 0: lost, 1: 2D local position hold, 2: 2D global position fix, 3: 3D global position fix 
+	p->gps_fix = gps_fix;	// uint8_t:GPS position fix: 0: no reception, 1: Minimum 1 satellite, but no position fix, 2: 2D position fix, 3: 3D position fix 
+	p->ahrs_health = ahrs_health;	// uint8_t:Attitude estimation health: 0: poor, 255: excellent
+	p->control_att = control_att;	// uint8_t:0: Attitude control disabled, 1: enabled
+	p->control_pos_xy = control_pos_xy;	// uint8_t:0: X, Y position control disabled, 1: enabled
+	p->control_pos_z = control_pos_z;	// uint8_t:0: Z position control disabled, 1: enabled
+	p->control_pos_yaw = control_pos_yaw;	// uint8_t:0: Yaw angle control disabled, 1: enabled
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_CONTROL_STATUS_LEN);
 }
@@ -96,6 +98,8 @@ static inline uint16_t mavlink_msg_control_status_encode(uint8_t system_id, uint
 	return mavlink_msg_control_status_pack(system_id, component_id, msg, control_status->position_fix, control_status->vision_fix, control_status->gps_fix, control_status->ahrs_health, control_status->control_att, control_status->control_pos_xy, control_status->control_pos_z, control_status->control_pos_yaw);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a control_status message
  * @param chan MAVLink channel to send the message
@@ -109,24 +113,20 @@ static inline uint16_t mavlink_msg_control_status_encode(uint8_t system_id, uint
  * @param control_pos_z 0: Z position control disabled, 1: enabled
  * @param control_pos_yaw 0: Yaw angle control disabled, 1: enabled
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_control_status_send(mavlink_channel_t chan, uint8_t position_fix, uint8_t vision_fix, uint8_t gps_fix, uint8_t ahrs_health, uint8_t control_att, uint8_t control_pos_xy, uint8_t control_pos_z, uint8_t control_pos_yaw)
 {
 	mavlink_header_t hdr;
 	mavlink_control_status_t payload;
-	uint16_t checksum;
-	mavlink_control_status_t *p = &payload;
 
-	p->position_fix = position_fix; // uint8_t:Position fix: 0: lost, 2: 2D position fix, 3: 3D position fix 
-	p->vision_fix = vision_fix; // uint8_t:Vision position fix: 0: lost, 1: 2D local position hold, 2: 2D global position fix, 3: 3D global position fix 
-	p->gps_fix = gps_fix; // uint8_t:GPS position fix: 0: no reception, 1: Minimum 1 satellite, but no position fix, 2: 2D position fix, 3: 3D position fix 
-	p->ahrs_health = ahrs_health; // uint8_t:Attitude estimation health: 0: poor, 255: excellent
-	p->control_att = control_att; // uint8_t:0: Attitude control disabled, 1: enabled
-	p->control_pos_xy = control_pos_xy; // uint8_t:0: X, Y position control disabled, 1: enabled
-	p->control_pos_z = control_pos_z; // uint8_t:0: Z position control disabled, 1: enabled
-	p->control_pos_yaw = control_pos_yaw; // uint8_t:0: Yaw angle control disabled, 1: enabled
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_CONTROL_STATUS_LEN )
+	payload.position_fix = position_fix;	// uint8_t:Position fix: 0: lost, 2: 2D position fix, 3: 3D position fix 
+	payload.vision_fix = vision_fix;	// uint8_t:Vision position fix: 0: lost, 1: 2D local position hold, 2: 2D global position fix, 3: 3D global position fix 
+	payload.gps_fix = gps_fix;	// uint8_t:GPS position fix: 0: no reception, 1: Minimum 1 satellite, but no position fix, 2: 2D position fix, 3: 3D position fix 
+	payload.ahrs_health = ahrs_health;	// uint8_t:Attitude estimation health: 0: poor, 255: excellent
+	payload.control_att = control_att;	// uint8_t:0: Attitude control disabled, 1: enabled
+	payload.control_pos_xy = control_pos_xy;	// uint8_t:0: X, Y position control disabled, 1: enabled
+	payload.control_pos_z = control_pos_z;	// uint8_t:0: Z position control disabled, 1: enabled
+	payload.control_pos_yaw = control_pos_yaw;	// uint8_t:0: Yaw angle control disabled, 1: enabled
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_CONTROL_STATUS_LEN;
@@ -137,14 +137,12 @@ static inline void mavlink_msg_control_status_send(mavlink_channel_t chan, uint8
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xF9, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

@@ -3,18 +3,20 @@
 #define MAVLINK_MSG_ID_STATE_CORRECTION 64
 #define MAVLINK_MSG_ID_STATE_CORRECTION_LEN 36
 #define MAVLINK_MSG_64_LEN 36
+#define MAVLINK_MSG_ID_STATE_CORRECTION_KEY 0xB9
+#define MAVLINK_MSG_64_KEY 0xB9
 
 typedef struct __mavlink_state_correction_t 
 {
-	float xErr; ///< x position error
-	float yErr; ///< y position error
-	float zErr; ///< z position error
-	float rollErr; ///< roll error (radians)
-	float pitchErr; ///< pitch error (radians)
-	float yawErr; ///< yaw error (radians)
-	float vxErr; ///< x velocity
-	float vyErr; ///< y velocity
-	float vzErr; ///< z velocity
+	float xErr;	///< x position error
+	float yErr;	///< y position error
+	float zErr;	///< z position error
+	float rollErr;	///< roll error (radians)
+	float pitchErr;	///< pitch error (radians)
+	float yawErr;	///< yaw error (radians)
+	float vxErr;	///< x velocity
+	float vyErr;	///< y velocity
+	float vzErr;	///< z velocity
 
 } mavlink_state_correction_t;
 
@@ -40,15 +42,15 @@ static inline uint16_t mavlink_msg_state_correction_pack(uint8_t system_id, uint
 	mavlink_state_correction_t *p = (mavlink_state_correction_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_STATE_CORRECTION;
 
-	p->xErr = xErr; // float:x position error
-	p->yErr = yErr; // float:y position error
-	p->zErr = zErr; // float:z position error
-	p->rollErr = rollErr; // float:roll error (radians)
-	p->pitchErr = pitchErr; // float:pitch error (radians)
-	p->yawErr = yawErr; // float:yaw error (radians)
-	p->vxErr = vxErr; // float:x velocity
-	p->vyErr = vyErr; // float:y velocity
-	p->vzErr = vzErr; // float:z velocity
+	p->xErr = xErr;	// float:x position error
+	p->yErr = yErr;	// float:y position error
+	p->zErr = zErr;	// float:z position error
+	p->rollErr = rollErr;	// float:roll error (radians)
+	p->pitchErr = pitchErr;	// float:pitch error (radians)
+	p->yawErr = yawErr;	// float:yaw error (radians)
+	p->vxErr = vxErr;	// float:x velocity
+	p->vyErr = vyErr;	// float:y velocity
+	p->vzErr = vzErr;	// float:z velocity
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_STATE_CORRECTION_LEN);
 }
@@ -75,15 +77,15 @@ static inline uint16_t mavlink_msg_state_correction_pack_chan(uint8_t system_id,
 	mavlink_state_correction_t *p = (mavlink_state_correction_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_STATE_CORRECTION;
 
-	p->xErr = xErr; // float:x position error
-	p->yErr = yErr; // float:y position error
-	p->zErr = zErr; // float:z position error
-	p->rollErr = rollErr; // float:roll error (radians)
-	p->pitchErr = pitchErr; // float:pitch error (radians)
-	p->yawErr = yawErr; // float:yaw error (radians)
-	p->vxErr = vxErr; // float:x velocity
-	p->vyErr = vyErr; // float:y velocity
-	p->vzErr = vzErr; // float:z velocity
+	p->xErr = xErr;	// float:x position error
+	p->yErr = yErr;	// float:y position error
+	p->zErr = zErr;	// float:z position error
+	p->rollErr = rollErr;	// float:roll error (radians)
+	p->pitchErr = pitchErr;	// float:pitch error (radians)
+	p->yawErr = yawErr;	// float:yaw error (radians)
+	p->vxErr = vxErr;	// float:x velocity
+	p->vyErr = vyErr;	// float:y velocity
+	p->vzErr = vzErr;	// float:z velocity
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_STATE_CORRECTION_LEN);
 }
@@ -101,6 +103,8 @@ static inline uint16_t mavlink_msg_state_correction_encode(uint8_t system_id, ui
 	return mavlink_msg_state_correction_pack(system_id, component_id, msg, state_correction->xErr, state_correction->yErr, state_correction->zErr, state_correction->rollErr, state_correction->pitchErr, state_correction->yawErr, state_correction->vxErr, state_correction->vyErr, state_correction->vzErr);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a state_correction message
  * @param chan MAVLink channel to send the message
@@ -115,25 +119,21 @@ static inline uint16_t mavlink_msg_state_correction_encode(uint8_t system_id, ui
  * @param vyErr y velocity
  * @param vzErr z velocity
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_state_correction_send(mavlink_channel_t chan, float xErr, float yErr, float zErr, float rollErr, float pitchErr, float yawErr, float vxErr, float vyErr, float vzErr)
 {
 	mavlink_header_t hdr;
 	mavlink_state_correction_t payload;
-	uint16_t checksum;
-	mavlink_state_correction_t *p = &payload;
 
-	p->xErr = xErr; // float:x position error
-	p->yErr = yErr; // float:y position error
-	p->zErr = zErr; // float:z position error
-	p->rollErr = rollErr; // float:roll error (radians)
-	p->pitchErr = pitchErr; // float:pitch error (radians)
-	p->yawErr = yawErr; // float:yaw error (radians)
-	p->vxErr = vxErr; // float:x velocity
-	p->vyErr = vyErr; // float:y velocity
-	p->vzErr = vzErr; // float:z velocity
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_STATE_CORRECTION_LEN )
+	payload.xErr = xErr;	// float:x position error
+	payload.yErr = yErr;	// float:y position error
+	payload.zErr = zErr;	// float:z position error
+	payload.rollErr = rollErr;	// float:roll error (radians)
+	payload.pitchErr = pitchErr;	// float:pitch error (radians)
+	payload.yawErr = yawErr;	// float:yaw error (radians)
+	payload.vxErr = vxErr;	// float:x velocity
+	payload.vyErr = vyErr;	// float:y velocity
+	payload.vzErr = vzErr;	// float:z velocity
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_STATE_CORRECTION_LEN;
@@ -144,14 +144,12 @@ static inline void mavlink_msg_state_correction_send(mavlink_channel_t chan, flo
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xB9, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

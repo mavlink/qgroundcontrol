@@ -3,11 +3,13 @@
 #define MAVLINK_MSG_ID_SYSTEM_TIME_UTC 4
 #define MAVLINK_MSG_ID_SYSTEM_TIME_UTC_LEN 8
 #define MAVLINK_MSG_4_LEN 8
+#define MAVLINK_MSG_ID_SYSTEM_TIME_UTC_KEY 0x4C
+#define MAVLINK_MSG_4_KEY 0x4C
 
 typedef struct __mavlink_system_time_utc_t 
 {
-	uint32_t utc_date; ///< GPS UTC date ddmmyy
-	uint32_t utc_time; ///< GPS UTC time hhmmss
+	uint32_t utc_date;	///< GPS UTC date ddmmyy
+	uint32_t utc_time;	///< GPS UTC time hhmmss
 
 } mavlink_system_time_utc_t;
 
@@ -26,8 +28,8 @@ static inline uint16_t mavlink_msg_system_time_utc_pack(uint8_t system_id, uint8
 	mavlink_system_time_utc_t *p = (mavlink_system_time_utc_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SYSTEM_TIME_UTC;
 
-	p->utc_date = utc_date; // uint32_t:GPS UTC date ddmmyy
-	p->utc_time = utc_time; // uint32_t:GPS UTC time hhmmss
+	p->utc_date = utc_date;	// uint32_t:GPS UTC date ddmmyy
+	p->utc_time = utc_time;	// uint32_t:GPS UTC time hhmmss
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SYSTEM_TIME_UTC_LEN);
 }
@@ -47,8 +49,8 @@ static inline uint16_t mavlink_msg_system_time_utc_pack_chan(uint8_t system_id, 
 	mavlink_system_time_utc_t *p = (mavlink_system_time_utc_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SYSTEM_TIME_UTC;
 
-	p->utc_date = utc_date; // uint32_t:GPS UTC date ddmmyy
-	p->utc_time = utc_time; // uint32_t:GPS UTC time hhmmss
+	p->utc_date = utc_date;	// uint32_t:GPS UTC date ddmmyy
+	p->utc_time = utc_time;	// uint32_t:GPS UTC time hhmmss
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SYSTEM_TIME_UTC_LEN);
 }
@@ -66,6 +68,8 @@ static inline uint16_t mavlink_msg_system_time_utc_encode(uint8_t system_id, uin
 	return mavlink_msg_system_time_utc_pack(system_id, component_id, msg, system_time_utc->utc_date, system_time_utc->utc_time);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a system_time_utc message
  * @param chan MAVLink channel to send the message
@@ -73,18 +77,14 @@ static inline uint16_t mavlink_msg_system_time_utc_encode(uint8_t system_id, uin
  * @param utc_date GPS UTC date ddmmyy
  * @param utc_time GPS UTC time hhmmss
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_system_time_utc_send(mavlink_channel_t chan, uint32_t utc_date, uint32_t utc_time)
 {
 	mavlink_header_t hdr;
 	mavlink_system_time_utc_t payload;
-	uint16_t checksum;
-	mavlink_system_time_utc_t *p = &payload;
 
-	p->utc_date = utc_date; // uint32_t:GPS UTC date ddmmyy
-	p->utc_time = utc_time; // uint32_t:GPS UTC time hhmmss
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SYSTEM_TIME_UTC_LEN )
+	payload.utc_date = utc_date;	// uint32_t:GPS UTC date ddmmyy
+	payload.utc_time = utc_time;	// uint32_t:GPS UTC time hhmmss
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_SYSTEM_TIME_UTC_LEN;
@@ -95,14 +95,12 @@ static inline void mavlink_msg_system_time_utc_send(mavlink_channel_t chan, uint
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x4C, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

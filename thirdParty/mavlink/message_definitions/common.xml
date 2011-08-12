@@ -995,51 +995,39 @@
                <field type="float" name="p2y">y position 2 / Longitude 2</field>
                <field type="float" name="p2z">z position 2 / Altitude 2</field>
           </message>
-          <message id="55" name="SET_ROLL_PITCH_YAW">
+          <message id="55" name="SET_ROLL_PITCH_YAW_THRUST">
                <description>Set roll, pitch and yaw.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="float" name="roll">Desired roll angle in radians</field>
                <field type="float" name="pitch">Desired pitch angle in radians</field>
                <field type="float" name="yaw">Desired yaw angle in radians</field>
+               <field type="float" name="thrust">Collective thrust, normalized to 0 .. 1</field>
           </message>
-          <message id="56" name="SET_ROLL_PITCH_YAW_SPEED">
+          <message id="56" name="SET_ROLL_PITCH_YAW_SPEED_THRUST">
                <description>Set roll, pitch and yaw.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="float" name="roll_speed">Desired roll angular speed in rad/s</field>
                <field type="float" name="pitch_speed">Desired pitch angular speed in rad/s</field>
                <field type="float" name="yaw_speed">Desired yaw angular speed in rad/s</field>
+               <field type="float" name="thrust">Collective thrust, normalized to 0 .. 1</field>
           </message>
-          <message id="57" name="ROLL_PITCH_YAW_SETPOINT">
+          <message id="57" name="ROLL_PITCH_YAW_THRUST_SETPOINT">
                <description>Setpoint in roll, pitch, yaw currently active on the system.</description>
                <field type="uint32_t" name="time_ms">Timestamp in milliseconds since system boot</field>
                <field type="float" name="roll">Desired roll angle in radians</field>
                <field type="float" name="pitch">Desired pitch angle in radians</field>
                <field type="float" name="yaw">Desired yaw angle in radians</field>
+               <field type="float" name="thrust">Collective thrust, normalized to 0 .. 1</field>
           </message>
-          <message id="58" name="ROLL_PITCH_YAW_SPEED_SETPOINT">
+          <message id="58" name="ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT">
                <description>Setpoint in rollspeed, pitchspeed, yawspeed currently active on the system.</description>
                <field type="uint32_t" name="time_ms">Timestamp in milliseconds since system boot</field>
                <field type="float" name="roll_speed">Desired roll angular speed in rad/s</field>
                <field type="float" name="pitch_speed">Desired pitch angular speed in rad/s</field>
                <field type="float" name="yaw_speed">Desired yaw angular speed in rad/s</field>
-          </message>
-          <message id="60" name="ATTITUDE_CONTROLLER_OUTPUT">
-               <description>The output of the attitude controller. This output is the control response the controller currently generates and the attitude the MAV would take if it is under control of the attitude controller. The primary use of this message is to check the response and signs of the controller before the actual flight.</description>
-               <field type="uint8_t" name="enabled">1: enabled, 0: disabled</field>
-               <field type="int8_t" name="roll">Attitude roll: -128: -100%, 127: +100%</field>
-               <field type="int8_t" name="pitch">Attitude pitch: -128: -100%, 127: +100%</field>
-               <field type="int8_t" name="yaw">Attitude yaw: -128: -100%, 127: +100%</field>
-               <field type="int8_t" name="thrust">Attitude thrust: -128: -100%, 127: +100%</field>
-          </message>
-          <message id="61" name="POSITION_CONTROLLER_OUTPUT">
-               <description>The output of the position controller. The primary use of this message is to check the response and signs of the controller before the actual flight.</description>
-               <field type="uint8_t" name="enabled">1: enabled, 0: disabled</field>
-               <field type="int8_t" name="x">Position x: -128: -100%, 127: +100%</field>
-               <field type="int8_t" name="y">Position y: -128: -100%, 127: +100%</field>
-               <field type="int8_t" name="z">Position z: -128: -100%, 127: +100%</field>
-               <field type="int8_t" name="yaw">Position yaw: -128: -100%, 127: +100%</field>
+               <field type="float" name="thrust">Collective thrust, normalized to 0 .. 1</field>
           </message>
           <message id="62" name="NAV_CONTROLLER_OUTPUT">
                <description>Outputs of the APM navigation controller. The primary use of this message is to check the response and signs

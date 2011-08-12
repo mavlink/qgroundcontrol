@@ -36,7 +36,7 @@ typedef struct __mavlink_message
 {
 	union
 	{
-		uint16_t ck;     ///< Checksum high byte
+		uint16_t ck;     ///< Checksum word
 		struct
 		{
 			uint8_t ck_a;    ///< Checksum low byte
@@ -54,11 +54,15 @@ typedef struct __mavlink_message
 
 typedef struct __mavlink_header
 {
-  union {
-    uint16_t ck;     ///< Checksum high byte
-    uint8_t ck_a;    ///< Checksum low byte
-    uint8_t ck_b;    ///< Checksum high byte
-        };
+	union
+	{
+		uint16_t ck;     ///< Checksum word
+		struct
+		{
+			uint8_t ck_a;    ///< Checksum low byte
+			uint8_t ck_b;    ///< Checksum high byte
+                };
+	};
     uint8_t STX;     ///< start of packet marker
     uint8_t len;     ///< Length of payload
     uint8_t seq;     ///< Sequence of packet
@@ -93,8 +97,15 @@ typedef enum
 
 typedef struct __mavlink_status
 {
-    uint8_t ck_a;                       ///< Checksum byte 1
-    uint8_t ck_b;                       ///< Checksum byte 2
+	union
+	{
+		uint16_t ck;     ///< Checksum word
+		struct
+		{
+			uint8_t ck_a;    ///< Checksum low byte
+			uint8_t ck_b;    ///< Checksum high byte
+                };
+	};
     uint8_t msg_received;               ///< Number of received messages
     uint8_t buffer_overrun;             ///< Number of buffer overruns
     uint8_t parse_error;                ///< Number of parse errors

@@ -3,13 +3,15 @@
 #define MAVLINK_MSG_ID_SCALED_PRESSURE 38
 #define MAVLINK_MSG_ID_SCALED_PRESSURE_LEN 18
 #define MAVLINK_MSG_38_LEN 18
+#define MAVLINK_MSG_ID_SCALED_PRESSURE_KEY 0x16
+#define MAVLINK_MSG_38_KEY 0x16
 
 typedef struct __mavlink_scaled_pressure_t 
 {
-	uint64_t usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	float press_abs; ///< Absolute pressure (hectopascal)
-	float press_diff; ///< Differential pressure 1 (hectopascal)
-	int16_t temperature; ///< Temperature measurement (0.01 degrees celsius)
+	uint64_t usec;	///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	float press_abs;	///< Absolute pressure (hectopascal)
+	float press_diff;	///< Differential pressure 1 (hectopascal)
+	int16_t temperature;	///< Temperature measurement (0.01 degrees celsius)
 
 } mavlink_scaled_pressure_t;
 
@@ -30,10 +32,10 @@ static inline uint16_t mavlink_msg_scaled_pressure_pack(uint8_t system_id, uint8
 	mavlink_scaled_pressure_t *p = (mavlink_scaled_pressure_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SCALED_PRESSURE;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->press_abs = press_abs; // float:Absolute pressure (hectopascal)
-	p->press_diff = press_diff; // float:Differential pressure 1 (hectopascal)
-	p->temperature = temperature; // int16_t:Temperature measurement (0.01 degrees celsius)
+	p->usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	p->press_abs = press_abs;	// float:Absolute pressure (hectopascal)
+	p->press_diff = press_diff;	// float:Differential pressure 1 (hectopascal)
+	p->temperature = temperature;	// int16_t:Temperature measurement (0.01 degrees celsius)
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SCALED_PRESSURE_LEN);
 }
@@ -55,10 +57,10 @@ static inline uint16_t mavlink_msg_scaled_pressure_pack_chan(uint8_t system_id, 
 	mavlink_scaled_pressure_t *p = (mavlink_scaled_pressure_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SCALED_PRESSURE;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->press_abs = press_abs; // float:Absolute pressure (hectopascal)
-	p->press_diff = press_diff; // float:Differential pressure 1 (hectopascal)
-	p->temperature = temperature; // int16_t:Temperature measurement (0.01 degrees celsius)
+	p->usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	p->press_abs = press_abs;	// float:Absolute pressure (hectopascal)
+	p->press_diff = press_diff;	// float:Differential pressure 1 (hectopascal)
+	p->temperature = temperature;	// int16_t:Temperature measurement (0.01 degrees celsius)
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SCALED_PRESSURE_LEN);
 }
@@ -76,6 +78,8 @@ static inline uint16_t mavlink_msg_scaled_pressure_encode(uint8_t system_id, uin
 	return mavlink_msg_scaled_pressure_pack(system_id, component_id, msg, scaled_pressure->usec, scaled_pressure->press_abs, scaled_pressure->press_diff, scaled_pressure->temperature);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a scaled_pressure message
  * @param chan MAVLink channel to send the message
@@ -85,20 +89,16 @@ static inline uint16_t mavlink_msg_scaled_pressure_encode(uint8_t system_id, uin
  * @param press_diff Differential pressure 1 (hectopascal)
  * @param temperature Temperature measurement (0.01 degrees celsius)
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_scaled_pressure_send(mavlink_channel_t chan, uint64_t usec, float press_abs, float press_diff, int16_t temperature)
 {
 	mavlink_header_t hdr;
 	mavlink_scaled_pressure_t payload;
-	uint16_t checksum;
-	mavlink_scaled_pressure_t *p = &payload;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->press_abs = press_abs; // float:Absolute pressure (hectopascal)
-	p->press_diff = press_diff; // float:Differential pressure 1 (hectopascal)
-	p->temperature = temperature; // int16_t:Temperature measurement (0.01 degrees celsius)
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SCALED_PRESSURE_LEN )
+	payload.usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	payload.press_abs = press_abs;	// float:Absolute pressure (hectopascal)
+	payload.press_diff = press_diff;	// float:Differential pressure 1 (hectopascal)
+	payload.temperature = temperature;	// int16_t:Temperature measurement (0.01 degrees celsius)
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_SCALED_PRESSURE_LEN;
@@ -109,14 +109,12 @@ static inline void mavlink_msg_scaled_pressure_send(mavlink_channel_t chan, uint
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x16, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

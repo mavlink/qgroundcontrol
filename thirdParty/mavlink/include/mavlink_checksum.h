@@ -103,6 +103,33 @@ static inline uint16_t crc_calculate(uint8_t* pBuffer, int length)
         return(crcTmp);
 }
 
+/**
+ * @brief Calculates the X.25 checksum on a byte buffer
+ *
+ * @param  pBuffer buffer containing the byte array to hash
+ * @param  length  length of the byte array
+ * @return the checksum over the buffer bytes
+ **/
+static inline uint16_t crc_calculate_mem(uint8_t *pBuffer, uint16_t *crcTmp, int length)
+{
+
+        // For a "message" of length bytes contained in the unsigned char array
+        // pointed to by pBuffer, calculate the CRC
+        // crcCalculate(unsigned char* pBuffer, int length, unsigned short* checkConst) < not needed
+
+        //uint16_t tmp;
+        //uint8_t* pTmp;
+		int i;
+
+//        pTmp=pBuffer;
+        
+        for (i = 0; i < length; i++){
+                crc_accumulate(*pBuffer++, crcTmp);
+        }
+
+        return(*crcTmp);
+}
+
 
 /**
  * @brief Calculates the X.25 checksum on a msg buffer

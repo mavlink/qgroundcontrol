@@ -3,15 +3,17 @@
 #define MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET 50
 #define MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET_LEN 18
 #define MAVLINK_MSG_50_LEN 18
+#define MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET_KEY 0xA
+#define MAVLINK_MSG_50_KEY 0xA
 
 typedef struct __mavlink_local_position_setpoint_set_t 
 {
-	float x; ///< x position
-	float y; ///< y position
-	float z; ///< z position
-	float yaw; ///< Desired yaw angle
-	uint8_t target_system; ///< System ID
-	uint8_t target_component; ///< Component ID
+	float x;	///< x position
+	float y;	///< y position
+	float z;	///< z position
+	float yaw;	///< Desired yaw angle
+	uint8_t target_system;	///< System ID
+	uint8_t target_component;	///< Component ID
 
 } mavlink_local_position_setpoint_set_t;
 
@@ -34,12 +36,12 @@ static inline uint16_t mavlink_msg_local_position_setpoint_set_pack(uint8_t syst
 	mavlink_local_position_setpoint_set_t *p = (mavlink_local_position_setpoint_set_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET;
 
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->x = x; // float:x position
-	p->y = y; // float:y position
-	p->z = z; // float:z position
-	p->yaw = yaw; // float:Desired yaw angle
+	p->target_system = target_system;	// uint8_t:System ID
+	p->target_component = target_component;	// uint8_t:Component ID
+	p->x = x;	// float:x position
+	p->y = y;	// float:y position
+	p->z = z;	// float:z position
+	p->yaw = yaw;	// float:Desired yaw angle
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET_LEN);
 }
@@ -63,12 +65,12 @@ static inline uint16_t mavlink_msg_local_position_setpoint_set_pack_chan(uint8_t
 	mavlink_local_position_setpoint_set_t *p = (mavlink_local_position_setpoint_set_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET;
 
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->x = x; // float:x position
-	p->y = y; // float:y position
-	p->z = z; // float:z position
-	p->yaw = yaw; // float:Desired yaw angle
+	p->target_system = target_system;	// uint8_t:System ID
+	p->target_component = target_component;	// uint8_t:Component ID
+	p->x = x;	// float:x position
+	p->y = y;	// float:y position
+	p->z = z;	// float:z position
+	p->yaw = yaw;	// float:Desired yaw angle
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET_LEN);
 }
@@ -86,6 +88,8 @@ static inline uint16_t mavlink_msg_local_position_setpoint_set_encode(uint8_t sy
 	return mavlink_msg_local_position_setpoint_set_pack(system_id, component_id, msg, local_position_setpoint_set->target_system, local_position_setpoint_set->target_component, local_position_setpoint_set->x, local_position_setpoint_set->y, local_position_setpoint_set->z, local_position_setpoint_set->yaw);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a local_position_setpoint_set message
  * @param chan MAVLink channel to send the message
@@ -97,22 +101,18 @@ static inline uint16_t mavlink_msg_local_position_setpoint_set_encode(uint8_t sy
  * @param z z position
  * @param yaw Desired yaw angle
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_local_position_setpoint_set_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, float x, float y, float z, float yaw)
 {
 	mavlink_header_t hdr;
 	mavlink_local_position_setpoint_set_t payload;
-	uint16_t checksum;
-	mavlink_local_position_setpoint_set_t *p = &payload;
 
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->x = x; // float:x position
-	p->y = y; // float:y position
-	p->z = z; // float:z position
-	p->yaw = yaw; // float:Desired yaw angle
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET_LEN )
+	payload.target_system = target_system;	// uint8_t:System ID
+	payload.target_component = target_component;	// uint8_t:Component ID
+	payload.x = x;	// float:x position
+	payload.y = y;	// float:y position
+	payload.z = z;	// float:z position
+	payload.yaw = yaw;	// float:Desired yaw angle
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET_LEN;
@@ -123,14 +123,12 @@ static inline void mavlink_msg_local_position_setpoint_set_send(mavlink_channel_
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xA, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif
