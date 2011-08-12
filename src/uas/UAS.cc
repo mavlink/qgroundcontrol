@@ -827,26 +827,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_DEBUG:
             emit valueChanged(uasId, QString("debug ") + QString::number(mavlink_msg_debug_get_ind(&message)), "raw", mavlink_msg_debug_get_value(&message), MG::TIME::getGroundTimeNow());
             break;
-        case MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT:
+        case MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT:
             {
-                mavlink_attitude_controller_output_t out;
-                mavlink_msg_attitude_controller_output_decode(&message, &out);
-                quint64 time = MG::TIME::getGroundTimeNowUsecs();
-                emit attitudeThrustSetPointChanged(this, out.roll/127.0f, out.pitch/127.0f, out.yaw/127.0f, (uint8_t)out.thrust, time);
-                emit valueChanged(uasId, "att control roll", "raw", out.roll, time/1000.0f);
-                emit valueChanged(uasId, "att control pitch", "raw", out.pitch, time/1000.0f);
-                emit valueChanged(uasId, "att control yaw", "raw", out.yaw, time/1000.0f);
-            }
-            break;
-        case MAVLINK_MSG_ID_POSITION_CONTROLLER_OUTPUT:
-            {
-                mavlink_position_controller_output_t out;
-                mavlink_msg_position_controller_output_decode(&message, &out);
-                quint64 time = MG::TIME::getGroundTimeNow();
-                //emit positionSetPointsChanged(uasId, out.x/127.0f, out.y/127.0f, out.z/127.0f, out.yaw, time);
-                emit valueChanged(uasId, "pos control x", "raw", out.x, time);
-                emit valueChanged(uasId, "pos control y", "raw", out.y, time);
-                emit valueChanged(uasId, "pos control z", "raw", out.z, time);
+                mavlink_roll_pitch_yaw_thrust_setpoint_t out;
+                mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(&message, &out);
+                quint64 time = getUnixTime(out.time_ms*1000);
+                emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
+                emit valueChanged(uasId, "att control roll", "rad", out.roll, time);
+                emit valueChanged(uasId, "att control pitch", "rad", out.pitch, time);
+                emit valueChanged(uasId, "att control yaw", "rad", out.yaw, time);
+                emit valueChanged(uasId, "att control thrust", "0-1", out.thrust, time);
             }
             break;
         case MAVLINK_MSG_ID_WAYPOINT_COUNT:
