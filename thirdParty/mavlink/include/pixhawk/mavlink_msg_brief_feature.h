@@ -1,22 +1,22 @@
 // MESSAGE BRIEF_FEATURE PACKING
 
 #define MAVLINK_MSG_ID_BRIEF_FEATURE 172
+#define MAVLINK_MSG_ID_BRIEF_FEATURE_LEN 53
+#define MAVLINK_MSG_172_LEN 53
 
 typedef struct __mavlink_brief_feature_t 
 {
 	float x; ///< x position in m
 	float y; ///< y position in m
 	float z; ///< z position in m
-	uint8_t orientation_assignment; ///< Orientation assignment 0: false, 1:true
+	float response; ///< Harris operator response at this location
 	uint16_t size; ///< Size in pixels
 	uint16_t orientation; ///< Orientation
+	uint8_t orientation_assignment; ///< Orientation assignment 0: false, 1:true
 	uint8_t descriptor[32]; ///< Descriptor
-	float response; ///< Harris operator response at this location
 
 } mavlink_brief_feature_t;
-
 #define MAVLINK_MSG_BRIEF_FEATURE_FIELD_DESCRIPTOR_LEN 32
-
 
 /**
  * @brief Pack a brief_feature message
@@ -36,19 +36,19 @@ typedef struct __mavlink_brief_feature_t
  */
 static inline uint16_t mavlink_msg_brief_feature_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const uint8_t* descriptor, float response)
 {
-	uint16_t i = 0;
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
 
-	i += put_float_by_index(x, i, msg->payload); // x position in m
-	i += put_float_by_index(y, i, msg->payload); // y position in m
-	i += put_float_by_index(z, i, msg->payload); // z position in m
-	i += put_uint8_t_by_index(orientation_assignment, i, msg->payload); // Orientation assignment 0: false, 1:true
-	i += put_uint16_t_by_index(size, i, msg->payload); // Size in pixels
-	i += put_uint16_t_by_index(orientation, i, msg->payload); // Orientation
-	i += put_array_by_index((const int8_t*)descriptor, sizeof(uint8_t)*32, i, msg->payload); // Descriptor
-	i += put_float_by_index(response, i, msg->payload); // Harris operator response at this location
+	p->x = x; // float:x position in m
+	p->y = y; // float:y position in m
+	p->z = z; // float:z position in m
+	p->orientation_assignment = orientation_assignment; // uint8_t:Orientation assignment 0: false, 1:true
+	p->size = size; // uint16_t:Size in pixels
+	p->orientation = orientation; // uint16_t:Orientation
+	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // uint8_t[32]:Descriptor
+	p->response = response; // float:Harris operator response at this location
 
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_BRIEF_FEATURE_LEN);
 }
 
 /**
@@ -69,19 +69,19 @@ static inline uint16_t mavlink_msg_brief_feature_pack(uint8_t system_id, uint8_t
  */
 static inline uint16_t mavlink_msg_brief_feature_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const uint8_t* descriptor, float response)
 {
-	uint16_t i = 0;
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
 
-	i += put_float_by_index(x, i, msg->payload); // x position in m
-	i += put_float_by_index(y, i, msg->payload); // y position in m
-	i += put_float_by_index(z, i, msg->payload); // z position in m
-	i += put_uint8_t_by_index(orientation_assignment, i, msg->payload); // Orientation assignment 0: false, 1:true
-	i += put_uint16_t_by_index(size, i, msg->payload); // Size in pixels
-	i += put_uint16_t_by_index(orientation, i, msg->payload); // Orientation
-	i += put_array_by_index((const int8_t*)descriptor, sizeof(uint8_t)*32, i, msg->payload); // Descriptor
-	i += put_float_by_index(response, i, msg->payload); // Harris operator response at this location
+	p->x = x; // float:x position in m
+	p->y = y; // float:y position in m
+	p->z = z; // float:z position in m
+	p->orientation_assignment = orientation_assignment; // uint8_t:Orientation assignment 0: false, 1:true
+	p->size = size; // uint16_t:Size in pixels
+	p->orientation = orientation; // uint16_t:Orientation
+	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // uint8_t[32]:Descriptor
+	p->response = response; // float:Harris operator response at this location
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_BRIEF_FEATURE_LEN);
 }
 
 /**
@@ -110,13 +110,42 @@ static inline uint16_t mavlink_msg_brief_feature_encode(uint8_t system_id, uint8
  * @param descriptor Descriptor
  * @param response Harris operator response at this location
  */
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const uint8_t* descriptor, float response)
 {
-	mavlink_message_t msg;
-	mavlink_msg_brief_feature_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, x, y, z, orientation_assignment, size, orientation, descriptor, response);
-	mavlink_send_uart(chan, &msg);
+	mavlink_header_t hdr;
+	mavlink_brief_feature_t payload;
+	uint16_t checksum;
+	mavlink_brief_feature_t *p = &payload;
+
+	p->x = x; // float:x position in m
+	p->y = y; // float:y position in m
+	p->z = z; // float:z position in m
+	p->orientation_assignment = orientation_assignment; // uint8_t:Orientation assignment 0: false, 1:true
+	p->size = size; // uint16_t:Size in pixels
+	p->orientation = orientation; // uint16_t:Orientation
+	memcpy(p->descriptor, descriptor, sizeof(p->descriptor)); // uint8_t[32]:Descriptor
+	p->response = response; // float:Harris operator response at this location
+
+	hdr.STX = MAVLINK_STX;
+	hdr.len = MAVLINK_MSG_ID_BRIEF_FEATURE_LEN;
+	hdr.msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
+	hdr.sysid = mavlink_system.sysid;
+	hdr.compid = mavlink_system.compid;
+	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
+	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+
+	crc_init(&checksum);
+	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
+	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
+	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
 }
 
 #endif
@@ -129,12 +158,8 @@ static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float 
  */
 static inline float mavlink_msg_brief_feature_get_x(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload)[0];
-	r.b[2] = (msg->payload)[1];
-	r.b[1] = (msg->payload)[2];
-	r.b[0] = (msg->payload)[3];
-	return (float)r.f;
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
+	return (float)(p->x);
 }
 
 /**
@@ -144,12 +169,8 @@ static inline float mavlink_msg_brief_feature_get_x(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_brief_feature_get_y(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
+	return (float)(p->y);
 }
 
 /**
@@ -159,12 +180,8 @@ static inline float mavlink_msg_brief_feature_get_y(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_brief_feature_get_z(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
+	return (float)(p->z);
 }
 
 /**
@@ -174,7 +191,8 @@ static inline float mavlink_msg_brief_feature_get_z(const mavlink_message_t* msg
  */
 static inline uint8_t mavlink_msg_brief_feature_get_orientation_assignment(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload+sizeof(float)+sizeof(float)+sizeof(float))[0];
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
+	return (uint8_t)(p->orientation_assignment);
 }
 
 /**
@@ -184,10 +202,8 @@ static inline uint8_t mavlink_msg_brief_feature_get_orientation_assignment(const
  */
 static inline uint16_t mavlink_msg_brief_feature_get_size(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t))[0];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t))[1];
-	return (uint16_t)r.s;
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
+	return (uint16_t)(p->size);
 }
 
 /**
@@ -197,10 +213,8 @@ static inline uint16_t mavlink_msg_brief_feature_get_size(const mavlink_message_
  */
 static inline uint16_t mavlink_msg_brief_feature_get_orientation(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t)+sizeof(uint16_t))[0];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t)+sizeof(uint16_t))[1];
-	return (uint16_t)r.s;
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
+	return (uint16_t)(p->orientation);
 }
 
 /**
@@ -208,11 +222,12 @@ static inline uint16_t mavlink_msg_brief_feature_get_orientation(const mavlink_m
  *
  * @return Descriptor
  */
-static inline uint16_t mavlink_msg_brief_feature_get_descriptor(const mavlink_message_t* msg, uint8_t* r_data)
+static inline uint16_t mavlink_msg_brief_feature_get_descriptor(const mavlink_message_t* msg, uint8_t* descriptor)
 {
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
 
-	memcpy(r_data, msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint16_t), sizeof(uint8_t)*32);
-	return sizeof(uint8_t)*32;
+	memcpy(descriptor, p->descriptor, sizeof(p->descriptor));
+	return sizeof(p->descriptor);
 }
 
 /**
@@ -222,12 +237,8 @@ static inline uint16_t mavlink_msg_brief_feature_get_descriptor(const mavlink_me
  */
 static inline float mavlink_msg_brief_feature_get_response(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint8_t)*32)[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint8_t)*32)[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint8_t)*32)[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint8_t)*32)[3];
-	return (float)r.f;
+	mavlink_brief_feature_t *p = (mavlink_brief_feature_t *)&msg->payload[0];
+	return (float)(p->response);
 }
 
 /**
@@ -238,12 +249,5 @@ static inline float mavlink_msg_brief_feature_get_response(const mavlink_message
  */
 static inline void mavlink_msg_brief_feature_decode(const mavlink_message_t* msg, mavlink_brief_feature_t* brief_feature)
 {
-	brief_feature->x = mavlink_msg_brief_feature_get_x(msg);
-	brief_feature->y = mavlink_msg_brief_feature_get_y(msg);
-	brief_feature->z = mavlink_msg_brief_feature_get_z(msg);
-	brief_feature->orientation_assignment = mavlink_msg_brief_feature_get_orientation_assignment(msg);
-	brief_feature->size = mavlink_msg_brief_feature_get_size(msg);
-	brief_feature->orientation = mavlink_msg_brief_feature_get_orientation(msg);
-	mavlink_msg_brief_feature_get_descriptor(msg, brief_feature->descriptor);
-	brief_feature->response = mavlink_msg_brief_feature_get_response(msg);
+	memcpy( brief_feature, msg->payload, sizeof(mavlink_brief_feature_t));
 }

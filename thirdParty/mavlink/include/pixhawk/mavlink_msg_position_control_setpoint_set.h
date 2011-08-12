@@ -1,20 +1,20 @@
 // MESSAGE POSITION_CONTROL_SETPOINT_SET PACKING
 
 #define MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET 120
+#define MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_LEN 20
+#define MAVLINK_MSG_120_LEN 20
 
 typedef struct __mavlink_position_control_setpoint_set_t 
 {
-	uint8_t target_system; ///< System ID
-	uint8_t target_component; ///< Component ID
-	uint16_t id; ///< ID of waypoint, 0 for plain position
 	float x; ///< x position
 	float y; ///< y position
 	float z; ///< z position
 	float yaw; ///< yaw orientation in radians, 0 = NORTH
+	uint16_t id; ///< ID of waypoint, 0 for plain position
+	uint8_t target_system; ///< System ID
+	uint8_t target_component; ///< Component ID
 
 } mavlink_position_control_setpoint_set_t;
-
-
 
 /**
  * @brief Pack a position_control_setpoint_set message
@@ -33,18 +33,18 @@ typedef struct __mavlink_position_control_setpoint_set_t
  */
 static inline uint16_t mavlink_msg_position_control_setpoint_set_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, uint16_t id, float x, float y, float z, float yaw)
 {
-	uint16_t i = 0;
+	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET;
 
-	i += put_uint8_t_by_index(target_system, i, msg->payload); // System ID
-	i += put_uint8_t_by_index(target_component, i, msg->payload); // Component ID
-	i += put_uint16_t_by_index(id, i, msg->payload); // ID of waypoint, 0 for plain position
-	i += put_float_by_index(x, i, msg->payload); // x position
-	i += put_float_by_index(y, i, msg->payload); // y position
-	i += put_float_by_index(z, i, msg->payload); // z position
-	i += put_float_by_index(yaw, i, msg->payload); // yaw orientation in radians, 0 = NORTH
+	p->target_system = target_system; // uint8_t:System ID
+	p->target_component = target_component; // uint8_t:Component ID
+	p->id = id; // uint16_t:ID of waypoint, 0 for plain position
+	p->x = x; // float:x position
+	p->y = y; // float:y position
+	p->z = z; // float:z position
+	p->yaw = yaw; // float:yaw orientation in radians, 0 = NORTH
 
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_LEN);
 }
 
 /**
@@ -64,18 +64,18 @@ static inline uint16_t mavlink_msg_position_control_setpoint_set_pack(uint8_t sy
  */
 static inline uint16_t mavlink_msg_position_control_setpoint_set_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, uint16_t id, float x, float y, float z, float yaw)
 {
-	uint16_t i = 0;
+	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET;
 
-	i += put_uint8_t_by_index(target_system, i, msg->payload); // System ID
-	i += put_uint8_t_by_index(target_component, i, msg->payload); // Component ID
-	i += put_uint16_t_by_index(id, i, msg->payload); // ID of waypoint, 0 for plain position
-	i += put_float_by_index(x, i, msg->payload); // x position
-	i += put_float_by_index(y, i, msg->payload); // y position
-	i += put_float_by_index(z, i, msg->payload); // z position
-	i += put_float_by_index(yaw, i, msg->payload); // yaw orientation in radians, 0 = NORTH
+	p->target_system = target_system; // uint8_t:System ID
+	p->target_component = target_component; // uint8_t:Component ID
+	p->id = id; // uint16_t:ID of waypoint, 0 for plain position
+	p->x = x; // float:x position
+	p->y = y; // float:y position
+	p->z = z; // float:z position
+	p->yaw = yaw; // float:yaw orientation in radians, 0 = NORTH
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_LEN);
 }
 
 /**
@@ -103,13 +103,41 @@ static inline uint16_t mavlink_msg_position_control_setpoint_set_encode(uint8_t 
  * @param z z position
  * @param yaw yaw orientation in radians, 0 = NORTH
  */
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_position_control_setpoint_set_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint16_t id, float x, float y, float z, float yaw)
 {
-	mavlink_message_t msg;
-	mavlink_msg_position_control_setpoint_set_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, target_system, target_component, id, x, y, z, yaw);
-	mavlink_send_uart(chan, &msg);
+	mavlink_header_t hdr;
+	mavlink_position_control_setpoint_set_t payload;
+	uint16_t checksum;
+	mavlink_position_control_setpoint_set_t *p = &payload;
+
+	p->target_system = target_system; // uint8_t:System ID
+	p->target_component = target_component; // uint8_t:Component ID
+	p->id = id; // uint16_t:ID of waypoint, 0 for plain position
+	p->x = x; // float:x position
+	p->y = y; // float:y position
+	p->z = z; // float:z position
+	p->yaw = yaw; // float:yaw orientation in radians, 0 = NORTH
+
+	hdr.STX = MAVLINK_STX;
+	hdr.len = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_LEN;
+	hdr.msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET;
+	hdr.sysid = mavlink_system.sysid;
+	hdr.compid = mavlink_system.compid;
+	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
+	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+
+	crc_init(&checksum);
+	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
+	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
+	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
 }
 
 #endif
@@ -122,7 +150,8 @@ static inline void mavlink_msg_position_control_setpoint_set_send(mavlink_channe
  */
 static inline uint8_t mavlink_msg_position_control_setpoint_set_get_target_system(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload)[0];
+	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
+	return (uint8_t)(p->target_system);
 }
 
 /**
@@ -132,7 +161,8 @@ static inline uint8_t mavlink_msg_position_control_setpoint_set_get_target_syste
  */
 static inline uint8_t mavlink_msg_position_control_setpoint_set_get_target_component(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload+sizeof(uint8_t))[0];
+	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
+	return (uint8_t)(p->target_component);
 }
 
 /**
@@ -142,10 +172,8 @@ static inline uint8_t mavlink_msg_position_control_setpoint_set_get_target_compo
  */
 static inline uint16_t mavlink_msg_position_control_setpoint_set_get_id(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t))[0];
-	r.b[0] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t))[1];
-	return (uint16_t)r.s;
+	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
+	return (uint16_t)(p->id);
 }
 
 /**
@@ -155,12 +183,8 @@ static inline uint16_t mavlink_msg_position_control_setpoint_set_get_id(const ma
  */
 static inline float mavlink_msg_position_control_setpoint_set_get_x(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t))[0];
-	r.b[2] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t))[1];
-	r.b[1] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t))[2];
-	r.b[0] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t))[3];
-	return (float)r.f;
+	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
+	return (float)(p->x);
 }
 
 /**
@@ -170,12 +194,8 @@ static inline float mavlink_msg_position_control_setpoint_set_get_x(const mavlin
  */
 static inline float mavlink_msg_position_control_setpoint_set_get_y(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
+	return (float)(p->y);
 }
 
 /**
@@ -185,12 +205,8 @@ static inline float mavlink_msg_position_control_setpoint_set_get_y(const mavlin
  */
 static inline float mavlink_msg_position_control_setpoint_set_get_z(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
+	return (float)(p->z);
 }
 
 /**
@@ -200,12 +216,8 @@ static inline float mavlink_msg_position_control_setpoint_set_get_z(const mavlin
  */
 static inline float mavlink_msg_position_control_setpoint_set_get_yaw(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
+	return (float)(p->yaw);
 }
 
 /**
@@ -216,11 +228,5 @@ static inline float mavlink_msg_position_control_setpoint_set_get_yaw(const mavl
  */
 static inline void mavlink_msg_position_control_setpoint_set_decode(const mavlink_message_t* msg, mavlink_position_control_setpoint_set_t* position_control_setpoint_set)
 {
-	position_control_setpoint_set->target_system = mavlink_msg_position_control_setpoint_set_get_target_system(msg);
-	position_control_setpoint_set->target_component = mavlink_msg_position_control_setpoint_set_get_target_component(msg);
-	position_control_setpoint_set->id = mavlink_msg_position_control_setpoint_set_get_id(msg);
-	position_control_setpoint_set->x = mavlink_msg_position_control_setpoint_set_get_x(msg);
-	position_control_setpoint_set->y = mavlink_msg_position_control_setpoint_set_get_y(msg);
-	position_control_setpoint_set->z = mavlink_msg_position_control_setpoint_set_get_z(msg);
-	position_control_setpoint_set->yaw = mavlink_msg_position_control_setpoint_set_get_yaw(msg);
+	memcpy( position_control_setpoint_set, msg->payload, sizeof(mavlink_position_control_setpoint_set_t));
 }

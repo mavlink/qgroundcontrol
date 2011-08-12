@@ -792,7 +792,8 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
 
         for (int i = 0; i < list.size(); i++) {
             QPointF in;
-            if (list.at(i)->getFrame() == MAV_FRAME_LOCAL) {
+            if (list.at(i)->getFrame() == MAV_FRAME_LOCAL_NED)
+            {
                 // Do not transform
                 in = QPointF(list.at(i)->getX(), list.at(i)->getY());
             } else {

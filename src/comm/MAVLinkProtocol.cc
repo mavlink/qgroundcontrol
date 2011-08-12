@@ -17,7 +17,6 @@
 #include <QSettings>
 #include <QDesktopServices>
 
-//#include "MG.h"
 #include "MAVLinkProtocol.h"
 #include "UASInterface.h"
 #include "UASManager.h"
@@ -28,10 +27,12 @@
 #include "ArduPilotMegaMAV.h"
 #include "configuration.h"
 #include "LinkManager.h"
-//#include "MainWindow.h"
 #include "QGCMAVLink.h"
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
+
+// Instantiate MAVLink data
+#include "mavlink_data.h"
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
@@ -395,7 +396,7 @@ void MAVLinkProtocol::sendHeartbeat()
 {
     if (m_heartbeatsEnabled) {
         mavlink_message_t beat;
-        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, OCU, MAV_AUTOPILOT_GENERIC);
+        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, MAV_TYPE_OCU, MAV_CLASS_INVALID);
         sendMessage(beat);
     }
     if (m_authEnabled) {

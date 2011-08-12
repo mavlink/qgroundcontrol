@@ -34,6 +34,7 @@ static inline void crc_accumulate(uint8_t data, uint16_t *crcAccum)
         tmp=data ^ (uint8_t)(*crcAccum &0xff);
         tmp^= (tmp<<4);
         *crcAccum = (*crcAccum>>8) ^ (tmp<<8) ^ (tmp <<3) ^ (tmp>>4);
+//        *crcAccum += data; // super simple to test
 }
 
 /**
@@ -73,6 +74,49 @@ static inline uint16_t crc_calculate(uint8_t* pBuffer, int length)
         crc_init(&crcTmp);
 
         for (i = 0; i < length; i++){
+                crc_accumulate(*pTmp++, &crcTmp);
+        }
+
+        /* This is currently not needed, as only the checksum over payload should be computed
+        tmp = crcTmp;
+        crcAccumulate((unsigned char)(~crcTmp & 0xff),&tmp);
+        crcAccumulate((unsigned char)((~crcTmp>>8)&0xff),&tmp);
+        *checkConst = tmp;
+        */
+        return(crcTmp);
+}
+
+
+/**
+ * @brief Calculates the X.25 checksum on a msg buffer
+ *
+ * @param  pMSG buffer containing the msg to hash
+ * @param  length  number of bytes to hash
+ * @return the checksum over the buffer bytes
+ **/
+static inline uint16_t crc_calculate_msg(mavlink_message_t* pMSG, int length)
+{
+
+        // For a "message" of length bytes contained in the unsigned char array
+        // pointed to by pBuffer, calculate the CRC
+        // crcCalculate(unsigned char* pBuffer, int length, unsigned short* checkConst) < not needed
+
+        uint16_t crcTmp;
+        //uint16_t tmp;
+        uint8_t* pTmp;
+		int i;
+
+        pTmp=&pMSG->len;
+       
+        /* init crcTmp */
+        crc_init(&crcTmp);
+
+        for (i = 0; i < 5; i++){
+                crc_accumulate(*pTmp++, &crcTmp);
+        }
+
+        pTmp=&pMSG->payload[0];
+        for (; i < length; i++){
                 crc_accumulate(*pTmp++, &crcTmp);
         }
 

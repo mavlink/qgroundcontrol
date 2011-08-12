@@ -52,7 +52,7 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     // add frames
     m_ui->comboBox_frame->addItem("Abs. Alt/Global",MAV_FRAME_GLOBAL);
     m_ui->comboBox_frame->addItem("Rel. Alt/Global", MAV_FRAME_GLOBAL_RELATIVE_ALT);
-    m_ui->comboBox_frame->addItem("Local/Abs. Alt.",MAV_FRAME_LOCAL);
+    m_ui->comboBox_frame->addItem("Local/Abs. Alt.",MAV_FRAME_LOCAL_NED);
     m_ui->comboBox_frame->addItem("Mission",MAV_FRAME_MISSION);
 
     // Initialize view correctly
@@ -322,7 +322,7 @@ void WaypointView::updateFrameView(int frame)
         m_ui->comboBox_frame->show();
         m_ui->customActionWidget->hide();
         break;
-    case MAV_FRAME_LOCAL:
+    case MAV_FRAME_LOCAL_NED:
         m_ui->lonSpinBox->hide();
         m_ui->latSpinBox->hide();
         m_ui->altSpinBox->hide();
@@ -386,7 +386,7 @@ void WaypointView::updateValues()
         updateFrameView(frame);
     }
     switch(frame) {
-    case MAV_FRAME_LOCAL: {
+    case MAV_FRAME_LOCAL_NED: {
         if (m_ui->posNSpinBox->value() != wp->getX()) {
             m_ui->posNSpinBox->setValue(wp->getX());
         }

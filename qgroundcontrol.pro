@@ -38,6 +38,7 @@ MOC_DIR = $$BUILDDIR/moc
 UI_HEADERS_DIR = $$BUILDDIR/ui
 RCC_DIR = $$BUILDDIR/rcc
 MAVLINK_CONF = ""
+DEFINES += MAVLINK_NO_DATA
 
 
 #################################################################
@@ -235,7 +236,7 @@ HEADERS += src/MG.h \
     src/comm/SerialSimulationLink.h \
     src/comm/ProtocolInterface.h \
     src/comm/MAVLinkProtocol.h \
-    src/comm/AS4Protocol.h \
+    src/comm/QGCFlightGearLink.h \
     src/ui/CommConfigurationWindow.h \
     src/ui/SerialConfigurationWindow.h \
     src/ui/MainWindow.h \
@@ -299,7 +300,6 @@ HEADERS += src/MG.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/designer/QGCToolWidget.h \
     src/ui/designer/QGCParamSlider.h \
-    src/ui/designer/QGCActionButton.h \
     src/ui/designer/QGCCommandButton.h \
     src/ui/designer/QGCToolWidgetItem.h \
     src/ui/QGCMAVLinkLogPlayer.h \
@@ -364,7 +364,7 @@ SOURCES += src/main.cc \
     src/comm/SerialLink.cc \
     src/comm/SerialSimulationLink.cc \
     src/comm/MAVLinkProtocol.cc \
-    src/comm/AS4Protocol.cc \
+    src/comm/QGCFlightGearLink.cc \
     src/ui/CommConfigurationWindow.cc \
     src/ui/SerialConfigurationWindow.cc \
     src/ui/MainWindow.cc \
@@ -426,7 +426,6 @@ SOURCES += src/main.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/designer/QGCToolWidget.cc \
     src/ui/designer/QGCParamSlider.cc \
-    src/ui/designer/QGCActionButton.cc \
     src/ui/designer/QGCCommandButton.cc \
     src/ui/designer/QGCToolWidgetItem.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
