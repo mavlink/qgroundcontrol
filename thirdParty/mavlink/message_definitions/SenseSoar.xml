@@ -10,24 +10,6 @@
           </enum>
      </enums>
      <messages>
-          <message id="166" name="SENSESOAR_MODE_CHNG">
-     change flight mode of the sensesoar
-     <field type="uint8_t" name="target">Target ID</field>
-               <field type="uint8_t" name="mode">Mode as desribed in the sensesoar_mode</field>
-          </message>
-          <message id="167" name="SENSESOAR_MODE_ACK">
-     accept change of mode
-     <field type="uint8_t" name="mode">Mode as desribed in the sensesoar_mode</field>
-               <field type="uint8_t" name="ack">0:ack, 1:nack</field>
-          </message>
-          <message id="168" name="SENSESOAR_MODE_RQST">
-     request for sending current flight mode
-     <field type="uint8_t" name="target">Target ID</field>
-          </message>
-          <message id="169" name="SENSESOAR_MODE_RQST_SEND">
-     sending current flight mode
-     <field type="uint8_t" name="mode">Mode as desribed in the sensesoar_mode</field>
-          </message>
           <message id="170" name="OBS_POSITION">
      Position estimate of the observer in NED inertial frame
      <field type="double[3]" name="pos">Position</field>
@@ -38,7 +20,7 @@
           </message>
           <message id="174" name="OBS_ATTITUDE">
      attitude estimate of the observer
-     <field type="float[4]" name="quat">Quaternion re;im</field>
+     <field type="double[4]" name="quat">Quaternion re;im</field>
           </message>
           <message id="176" name="OBS_WIND">
      Wind estimate in NED inertial frame

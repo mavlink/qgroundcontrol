@@ -64,6 +64,14 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         uas = mav;
     }
     break;
+	case MAV_AUTOPILOT_SENSESOAR:
+		{
+			senseSoarMAV* mav = new senseSoarMAV(mavlink,sysid);
+			mav->setSystemType((int)heartbeat->type);
+			connect(mavlink, SIGNAL(messageReceived(LinkInterface*, mavlink_message_t)), mav, SLOT(receiveMessage(LinkInterface*, mavlink_message_t)));
+			uas = mav;
+			break;
+		}
     default: {
         UAS* mav = new UAS(mavlink, sysid);
         mav->setSystemType((int)heartbeat->type);

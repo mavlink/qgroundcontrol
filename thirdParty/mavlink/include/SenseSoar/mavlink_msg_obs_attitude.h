@@ -4,7 +4,7 @@
 
 typedef struct __mavlink_obs_attitude_t 
 {
-	float quat[4]; ///< Quaternion re;im
+	double quat[4]; ///< Quaternion re;im
 
 } mavlink_obs_attitude_t;
 
@@ -20,12 +20,12 @@ typedef struct __mavlink_obs_attitude_t
  * @param quat Quaternion re;im
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_attitude_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const float* quat)
+static inline uint16_t mavlink_msg_obs_attitude_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const double* quat)
 {
 	uint16_t i = 0;
 	msg->msgid = MAVLINK_MSG_ID_OBS_ATTITUDE;
 
-	i += put_array_by_index((const int8_t*)quat, sizeof(float)*4, i, msg->payload); // Quaternion re;im
+	i += put_array_by_index((const int8_t*)quat, sizeof(double)*4, i, msg->payload); // Quaternion re;im
 
 	return mavlink_finalize_message(msg, system_id, component_id, i);
 }
@@ -39,12 +39,12 @@ static inline uint16_t mavlink_msg_obs_attitude_pack(uint8_t system_id, uint8_t 
  * @param quat Quaternion re;im
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_obs_attitude_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const float* quat)
+static inline uint16_t mavlink_msg_obs_attitude_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, const double* quat)
 {
 	uint16_t i = 0;
 	msg->msgid = MAVLINK_MSG_ID_OBS_ATTITUDE;
 
-	i += put_array_by_index((const int8_t*)quat, sizeof(float)*4, i, msg->payload); // Quaternion re;im
+	i += put_array_by_index((const int8_t*)quat, sizeof(double)*4, i, msg->payload); // Quaternion re;im
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
 }
@@ -70,7 +70,7 @@ static inline uint16_t mavlink_msg_obs_attitude_encode(uint8_t system_id, uint8_
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_obs_attitude_send(mavlink_channel_t chan, const float* quat)
+static inline void mavlink_msg_obs_attitude_send(mavlink_channel_t chan, const double* quat)
 {
 	mavlink_message_t msg;
 	mavlink_msg_obs_attitude_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, quat);
@@ -85,11 +85,11 @@ static inline void mavlink_msg_obs_attitude_send(mavlink_channel_t chan, const f
  *
  * @return Quaternion re;im
  */
-static inline uint16_t mavlink_msg_obs_attitude_get_quat(const mavlink_message_t* msg, float* r_data)
+static inline uint16_t mavlink_msg_obs_attitude_get_quat(const mavlink_message_t* msg, double* r_data)
 {
 
-	memcpy(r_data, msg->payload, sizeof(float)*4);
-	return sizeof(float)*4;
+	memcpy(r_data, msg->payload, sizeof(double)*4);
+	return sizeof(double)*4;
 }
 
 /**
