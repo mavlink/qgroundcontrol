@@ -157,6 +157,11 @@ MainWindow::MainWindow(QWidget *parent):
     joystickWidget = 0;
     joystick = new JoystickInput();
 
+    // Connect flighgear test link
+    // FIXME MOVE INTO UAV OBJECT
+    fgLink = new QGCFlightGearLink();
+    fgLink->connectSimulation();
+
     // Load Toolbar
     toolBar = new QGCToolBar(this);
     this->addToolBar(toolBar);
@@ -1629,7 +1634,7 @@ void MainWindow::UASCreated(UASInterface* uas)
         }
 
         switch (uas->getAutopilotType()) {
-        case (MAV_AUTOPILOT_SLUGS): {
+        case (MAV_CLASS_SLUGS): {
             // Build Slugs Widgets
             buildSlugsWidgets();
 
@@ -1667,9 +1672,9 @@ void MainWindow::UASCreated(UASInterface* uas)
         }
         break;
         default:
-        case (MAV_AUTOPILOT_GENERIC):
-        case (MAV_AUTOPILOT_ARDUPILOTMEGA):
-        case (MAV_AUTOPILOT_PIXHAWK): {
+        case (MAV_CLASS_GENERIC):
+        case (MAV_CLASS_ARDUPILOTMEGA):
+        case (MAV_CLASS_PIXHAWK): {
             // Build Pixhawk Widgets
             buildPxWidgets();
 

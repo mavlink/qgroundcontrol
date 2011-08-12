@@ -1,6 +1,8 @@
 // MESSAGE ATTITUDE_CONTROLLER_OUTPUT PACKING
 
 #define MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT 60
+#define MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT_LEN 5
+#define MAVLINK_MSG_60_LEN 5
 
 typedef struct __mavlink_attitude_controller_output_t 
 {
@@ -11,8 +13,6 @@ typedef struct __mavlink_attitude_controller_output_t
 	int8_t thrust; ///< Attitude thrust: -128: -100%, 127: +100%
 
 } mavlink_attitude_controller_output_t;
-
-
 
 /**
  * @brief Pack a attitude_controller_output message
@@ -29,16 +29,16 @@ typedef struct __mavlink_attitude_controller_output_t
  */
 static inline uint16_t mavlink_msg_attitude_controller_output_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t enabled, int8_t roll, int8_t pitch, int8_t yaw, int8_t thrust)
 {
-	uint16_t i = 0;
+	mavlink_attitude_controller_output_t *p = (mavlink_attitude_controller_output_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT;
 
-	i += put_uint8_t_by_index(enabled, i, msg->payload); // 1: enabled, 0: disabled
-	i += put_int8_t_by_index(roll, i, msg->payload); // Attitude roll: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(pitch, i, msg->payload); // Attitude pitch: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(yaw, i, msg->payload); // Attitude yaw: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(thrust, i, msg->payload); // Attitude thrust: -128: -100%, 127: +100%
+	p->enabled = enabled; // uint8_t:1: enabled, 0: disabled
+	p->roll = roll; // int8_t:Attitude roll: -128: -100%, 127: +100%
+	p->pitch = pitch; // int8_t:Attitude pitch: -128: -100%, 127: +100%
+	p->yaw = yaw; // int8_t:Attitude yaw: -128: -100%, 127: +100%
+	p->thrust = thrust; // int8_t:Attitude thrust: -128: -100%, 127: +100%
 
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT_LEN);
 }
 
 /**
@@ -56,16 +56,16 @@ static inline uint16_t mavlink_msg_attitude_controller_output_pack(uint8_t syste
  */
 static inline uint16_t mavlink_msg_attitude_controller_output_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t enabled, int8_t roll, int8_t pitch, int8_t yaw, int8_t thrust)
 {
-	uint16_t i = 0;
+	mavlink_attitude_controller_output_t *p = (mavlink_attitude_controller_output_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT;
 
-	i += put_uint8_t_by_index(enabled, i, msg->payload); // 1: enabled, 0: disabled
-	i += put_int8_t_by_index(roll, i, msg->payload); // Attitude roll: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(pitch, i, msg->payload); // Attitude pitch: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(yaw, i, msg->payload); // Attitude yaw: -128: -100%, 127: +100%
-	i += put_int8_t_by_index(thrust, i, msg->payload); // Attitude thrust: -128: -100%, 127: +100%
+	p->enabled = enabled; // uint8_t:1: enabled, 0: disabled
+	p->roll = roll; // int8_t:Attitude roll: -128: -100%, 127: +100%
+	p->pitch = pitch; // int8_t:Attitude pitch: -128: -100%, 127: +100%
+	p->yaw = yaw; // int8_t:Attitude yaw: -128: -100%, 127: +100%
+	p->thrust = thrust; // int8_t:Attitude thrust: -128: -100%, 127: +100%
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT_LEN);
 }
 
 /**
@@ -91,13 +91,39 @@ static inline uint16_t mavlink_msg_attitude_controller_output_encode(uint8_t sys
  * @param yaw Attitude yaw: -128: -100%, 127: +100%
  * @param thrust Attitude thrust: -128: -100%, 127: +100%
  */
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_attitude_controller_output_send(mavlink_channel_t chan, uint8_t enabled, int8_t roll, int8_t pitch, int8_t yaw, int8_t thrust)
 {
-	mavlink_message_t msg;
-	mavlink_msg_attitude_controller_output_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, enabled, roll, pitch, yaw, thrust);
-	mavlink_send_uart(chan, &msg);
+	mavlink_header_t hdr;
+	mavlink_attitude_controller_output_t payload;
+	uint16_t checksum;
+	mavlink_attitude_controller_output_t *p = &payload;
+
+	p->enabled = enabled; // uint8_t:1: enabled, 0: disabled
+	p->roll = roll; // int8_t:Attitude roll: -128: -100%, 127: +100%
+	p->pitch = pitch; // int8_t:Attitude pitch: -128: -100%, 127: +100%
+	p->yaw = yaw; // int8_t:Attitude yaw: -128: -100%, 127: +100%
+	p->thrust = thrust; // int8_t:Attitude thrust: -128: -100%, 127: +100%
+
+	hdr.STX = MAVLINK_STX;
+	hdr.len = MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT_LEN;
+	hdr.msgid = MAVLINK_MSG_ID_ATTITUDE_CONTROLLER_OUTPUT;
+	hdr.sysid = mavlink_system.sysid;
+	hdr.compid = mavlink_system.compid;
+	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
+	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+
+	crc_init(&checksum);
+	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
+	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
+	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
 }
 
 #endif
@@ -110,7 +136,8 @@ static inline void mavlink_msg_attitude_controller_output_send(mavlink_channel_t
  */
 static inline uint8_t mavlink_msg_attitude_controller_output_get_enabled(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload)[0];
+	mavlink_attitude_controller_output_t *p = (mavlink_attitude_controller_output_t *)&msg->payload[0];
+	return (uint8_t)(p->enabled);
 }
 
 /**
@@ -120,7 +147,8 @@ static inline uint8_t mavlink_msg_attitude_controller_output_get_enabled(const m
  */
 static inline int8_t mavlink_msg_attitude_controller_output_get_roll(const mavlink_message_t* msg)
 {
-	return (int8_t)(msg->payload+sizeof(uint8_t))[0];
+	mavlink_attitude_controller_output_t *p = (mavlink_attitude_controller_output_t *)&msg->payload[0];
+	return (int8_t)(p->roll);
 }
 
 /**
@@ -130,7 +158,8 @@ static inline int8_t mavlink_msg_attitude_controller_output_get_roll(const mavli
  */
 static inline int8_t mavlink_msg_attitude_controller_output_get_pitch(const mavlink_message_t* msg)
 {
-	return (int8_t)(msg->payload+sizeof(uint8_t)+sizeof(int8_t))[0];
+	mavlink_attitude_controller_output_t *p = (mavlink_attitude_controller_output_t *)&msg->payload[0];
+	return (int8_t)(p->pitch);
 }
 
 /**
@@ -140,7 +169,8 @@ static inline int8_t mavlink_msg_attitude_controller_output_get_pitch(const mavl
  */
 static inline int8_t mavlink_msg_attitude_controller_output_get_yaw(const mavlink_message_t* msg)
 {
-	return (int8_t)(msg->payload+sizeof(uint8_t)+sizeof(int8_t)+sizeof(int8_t))[0];
+	mavlink_attitude_controller_output_t *p = (mavlink_attitude_controller_output_t *)&msg->payload[0];
+	return (int8_t)(p->yaw);
 }
 
 /**
@@ -150,7 +180,8 @@ static inline int8_t mavlink_msg_attitude_controller_output_get_yaw(const mavlin
  */
 static inline int8_t mavlink_msg_attitude_controller_output_get_thrust(const mavlink_message_t* msg)
 {
-	return (int8_t)(msg->payload+sizeof(uint8_t)+sizeof(int8_t)+sizeof(int8_t)+sizeof(int8_t))[0];
+	mavlink_attitude_controller_output_t *p = (mavlink_attitude_controller_output_t *)&msg->payload[0];
+	return (int8_t)(p->thrust);
 }
 
 /**
@@ -161,9 +192,5 @@ static inline int8_t mavlink_msg_attitude_controller_output_get_thrust(const mav
  */
 static inline void mavlink_msg_attitude_controller_output_decode(const mavlink_message_t* msg, mavlink_attitude_controller_output_t* attitude_controller_output)
 {
-	attitude_controller_output->enabled = mavlink_msg_attitude_controller_output_get_enabled(msg);
-	attitude_controller_output->roll = mavlink_msg_attitude_controller_output_get_roll(msg);
-	attitude_controller_output->pitch = mavlink_msg_attitude_controller_output_get_pitch(msg);
-	attitude_controller_output->yaw = mavlink_msg_attitude_controller_output_get_yaw(msg);
-	attitude_controller_output->thrust = mavlink_msg_attitude_controller_output_get_thrust(msg);
+	memcpy( attitude_controller_output, msg->payload, sizeof(mavlink_attitude_controller_output_t));
 }

@@ -82,8 +82,6 @@ protected:
 
 protected slots:
     void addParam();
-    /** @deprecated */
-    void addAction();
     void addCommand();
     void setTitle();
     void setTitle(QString title);

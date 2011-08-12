@@ -188,8 +188,6 @@ public slots:
 
     /** @brief Set a new name for the system */
     virtual void setUASName(const QString& name) = 0;
-    /** @brief Sets an action **/
-    virtual void setAction(MAV_ACTION action) = 0;
     /** @brief Execute command immediately **/
     virtual void executeCommand(MAV_CMD command) = 0;
     /** @brief Executes a command **/

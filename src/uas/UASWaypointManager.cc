@@ -32,7 +32,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASWaypointManager.h"
 #include "UAS.h"
 #include "mavlink_types.h"
-//#include "MainWindow.h"
 
 #define PROTOCOL_TIMEOUT_MS 2000    ///< maximum time to wait for pending messages until timeout
 #define PROTOCOL_DELAY_MS 40        ///< minimum delay between sent messages
@@ -586,8 +585,10 @@ int UASWaypointManager::getLocalFrameCount()
     // Search through all waypoints,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints) {
-        if (p->getFrame() == MAV_FRAME_GLOBAL) {
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_GLOBAL)
+        {
             i++;
         }
     }
@@ -600,8 +601,10 @@ int UASWaypointManager::getLocalFrameIndexOf(Waypoint* wp)
     // Search through all waypoints,
     // counting only those in local frame
     int i = 0;
-    foreach (Waypoint* p, waypoints) {
-        if (p->getFrame() == MAV_FRAME_LOCAL) {
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->getFrame() == MAV_FRAME_LOCAL_NED || p->getFrame() == MAV_FRAME_LOCAL_ENU)
+        {
             if (p == wp) {
                 return i;
             }
@@ -617,7 +620,8 @@ int UASWaypointManager::getMissionFrameIndexOf(Waypoint* wp)
     // Search through all waypoints,
     // counting only those in mission frame
     int i = 0;
-    foreach (Waypoint* p, waypoints) {
+    foreach (Waypoint* p, waypoints)
+    {
         if (p->getFrame() == MAV_FRAME_MISSION) {
             if (p == wp) {
                 return i;

@@ -50,7 +50,6 @@ This file is part of the QGROUNDCONTROL project
 #include "UASListWidget.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
-#include "AS4Protocol.h"
 #include "ObjectDetectionView.h"
 #include "HUD.h"
 #include "JoystickWidget.h"
@@ -76,6 +75,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "SlugsPadCameraControl.h"
 #include "UASControlParameters.h"
+#include "QGCFlightGearLink.h"
 
 class QGCMapTool;
 
@@ -372,7 +372,6 @@ protected:
 
     // TODO Should be moved elsewhere, as the protocol does not belong to the UI
     MAVLinkProtocol* mavlink;
-    AS4Protocol* as4link;
 
     MAVLinkSimulationLink* simulationLink;
     LinkInterface* udpLink;
@@ -449,6 +448,7 @@ protected:
     QGC_MAINWINDOW_STYLE currentStyle;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
+    QGCFlightGearLink* fgLink;
 
 private:
     Ui::MainWindow ui;

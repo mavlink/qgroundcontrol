@@ -270,13 +270,14 @@ void RadioCalibrationWindow::send()
 
 void RadioCalibrationWindow::request()
 {
-    qDebug() << __FILE__ << __LINE__ << "READ FROM UAV";
-    UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(uasId));
-    if (uas) {
-        mavlink_message_t msg;
-        mavlink_msg_action_pack(uasId, 0, &msg, 0, 0, ::MAV_ACTION_CALIBRATE_RC);
-        uas->sendMessage(msg);
-    }
+    // FIXME MAVLINKV10PORTINGNEEDED
+//    qDebug() << __FILE__ << __LINE__ << "READ FROM UAV";
+//    UAS *uas = dynamic_cast<UAS*>(UASManager::instance()->getUASForId(uasId));
+//    if (uas) {
+//        mavlink_message_t msg;
+//        mavlink_msg_action_pack(uasId, 0, &msg, 0, 0, ::MAV_ACTION_CALIBRATE_RC);
+//        uas->sendMessage(msg);
+//    }
 }
 
 void RadioCalibrationWindow::receive(const QPointer<RadioCalibrationData>& radio)

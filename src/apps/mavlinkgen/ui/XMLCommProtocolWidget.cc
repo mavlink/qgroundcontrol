@@ -6,6 +6,7 @@
 #include "XMLCommProtocolWidget.h"
 #include "ui_XMLCommProtocolWidget.h"
 #include "MAVLinkXMLParser.h"
+#include "MAVLinkXMLParserV10.h"
 
 #include <QDebug>
 #include <iostream>
@@ -131,18 +132,37 @@ void XMLCommProtocolWidget::generate()
         // Syntax check already gives output
         return;
     }
-	
-    MAVLinkXMLParser* parser = new MAVLinkXMLParser(m_ui->fileNameLabel->text().trimmed(), m_ui->outputDirNameLabel->text().trimmed());
-    connect(parser, SIGNAL(parseState(QString)), m_ui->compileLog, SLOT(appendHtml(QString)));
-    bool result = parser->generate();
-    if (result) {
+
+    MAVLinkXMLParser* parser = NULL;
+    MAVLinkXMLParserV10* parserV10 = NULL;
+
+    bool result = false;
+
+    if (m_ui->versionComboBox->currentIndex() == 0)
+    {
+        MAVLinkXMLParser* parser = new MAVLinkXMLParser(m_ui->fileNameLabel->text().trimmed(), m_ui->outputDirNameLabel->text().trimmed());
+        connect(parser, SIGNAL(parseState(QString)), m_ui->compileLog, SLOT(appendHtml(QString)));
+        result = parser->generate();
+    }
+    else if (m_ui->versionComboBox->currentIndex() == 1)
+    {
+        MAVLinkXMLParserV10* parserV10 = new MAVLinkXMLParserV10(m_ui->fileNameLabel->text().trimmed(), m_ui->outputDirNameLabel->text().trimmed());
+        connect(parserV10, SIGNAL(parseState(QString)), m_ui->compileLog, SLOT(appendHtml(QString)));
+        result = parserV10->generate();
+    }
+
+    if (result)
+    {
         QMessageBox msgBox;
         msgBox.setText(QString("The C code / headers have been generated in folder\n%1").arg(m_ui->outputDirNameLabel->text().trimmed()));
         msgBox.exec();
-    } else {
+    }
+    else
+    {
         QMessageBox::critical(this, tr("C code generation failed, please see the compile log for further information"), QString("The C code / headers could not be written to folder\n%1").arg(m_ui->outputDirNameLabel->text().trimmed()), QMessageBox::Ok);
     }
-    delete parser;
+    if (parser) delete parser;
+    if (parserV10) delete parserV10;
 }
 
 void XMLCommProtocolWidget::save()

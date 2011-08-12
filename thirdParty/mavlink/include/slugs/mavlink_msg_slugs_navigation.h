@@ -1,6 +1,8 @@
 // MESSAGE SLUGS_NAVIGATION PACKING
 
 #define MAVLINK_MSG_ID_SLUGS_NAVIGATION 176
+#define MAVLINK_MSG_ID_SLUGS_NAVIGATION_LEN 30
+#define MAVLINK_MSG_176_LEN 30
 
 typedef struct __mavlink_slugs_navigation_t 
 {
@@ -15,8 +17,6 @@ typedef struct __mavlink_slugs_navigation_t
 	uint8_t toWP; ///< Destination WP
 
 } mavlink_slugs_navigation_t;
-
-
 
 /**
  * @brief Pack a slugs_navigation message
@@ -37,20 +37,20 @@ typedef struct __mavlink_slugs_navigation_t
  */
 static inline uint16_t mavlink_msg_slugs_navigation_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, float u_m, float phi_c, float theta_c, float psiDot_c, float ay_body, float totalDist, float dist2Go, uint8_t fromWP, uint8_t toWP)
 {
-	uint16_t i = 0;
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SLUGS_NAVIGATION;
 
-	i += put_float_by_index(u_m, i, msg->payload); // Measured Airspeed prior to the Nav Filter
-	i += put_float_by_index(phi_c, i, msg->payload); // Commanded Roll
-	i += put_float_by_index(theta_c, i, msg->payload); // Commanded Pitch
-	i += put_float_by_index(psiDot_c, i, msg->payload); // Commanded Turn rate
-	i += put_float_by_index(ay_body, i, msg->payload); // Y component of the body acceleration
-	i += put_float_by_index(totalDist, i, msg->payload); // Total Distance to Run on this leg of Navigation
-	i += put_float_by_index(dist2Go, i, msg->payload); // Remaining distance to Run on this leg of Navigation
-	i += put_uint8_t_by_index(fromWP, i, msg->payload); // Origin WP
-	i += put_uint8_t_by_index(toWP, i, msg->payload); // Destination WP
+	p->u_m = u_m; // float:Measured Airspeed prior to the Nav Filter
+	p->phi_c = phi_c; // float:Commanded Roll
+	p->theta_c = theta_c; // float:Commanded Pitch
+	p->psiDot_c = psiDot_c; // float:Commanded Turn rate
+	p->ay_body = ay_body; // float:Y component of the body acceleration
+	p->totalDist = totalDist; // float:Total Distance to Run on this leg of Navigation
+	p->dist2Go = dist2Go; // float:Remaining distance to Run on this leg of Navigation
+	p->fromWP = fromWP; // uint8_t:Origin WP
+	p->toWP = toWP; // uint8_t:Destination WP
 
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SLUGS_NAVIGATION_LEN);
 }
 
 /**
@@ -72,20 +72,20 @@ static inline uint16_t mavlink_msg_slugs_navigation_pack(uint8_t system_id, uint
  */
 static inline uint16_t mavlink_msg_slugs_navigation_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, float u_m, float phi_c, float theta_c, float psiDot_c, float ay_body, float totalDist, float dist2Go, uint8_t fromWP, uint8_t toWP)
 {
-	uint16_t i = 0;
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SLUGS_NAVIGATION;
 
-	i += put_float_by_index(u_m, i, msg->payload); // Measured Airspeed prior to the Nav Filter
-	i += put_float_by_index(phi_c, i, msg->payload); // Commanded Roll
-	i += put_float_by_index(theta_c, i, msg->payload); // Commanded Pitch
-	i += put_float_by_index(psiDot_c, i, msg->payload); // Commanded Turn rate
-	i += put_float_by_index(ay_body, i, msg->payload); // Y component of the body acceleration
-	i += put_float_by_index(totalDist, i, msg->payload); // Total Distance to Run on this leg of Navigation
-	i += put_float_by_index(dist2Go, i, msg->payload); // Remaining distance to Run on this leg of Navigation
-	i += put_uint8_t_by_index(fromWP, i, msg->payload); // Origin WP
-	i += put_uint8_t_by_index(toWP, i, msg->payload); // Destination WP
+	p->u_m = u_m; // float:Measured Airspeed prior to the Nav Filter
+	p->phi_c = phi_c; // float:Commanded Roll
+	p->theta_c = theta_c; // float:Commanded Pitch
+	p->psiDot_c = psiDot_c; // float:Commanded Turn rate
+	p->ay_body = ay_body; // float:Y component of the body acceleration
+	p->totalDist = totalDist; // float:Total Distance to Run on this leg of Navigation
+	p->dist2Go = dist2Go; // float:Remaining distance to Run on this leg of Navigation
+	p->fromWP = fromWP; // uint8_t:Origin WP
+	p->toWP = toWP; // uint8_t:Destination WP
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SLUGS_NAVIGATION_LEN);
 }
 
 /**
@@ -115,13 +115,43 @@ static inline uint16_t mavlink_msg_slugs_navigation_encode(uint8_t system_id, ui
  * @param fromWP Origin WP
  * @param toWP Destination WP
  */
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_slugs_navigation_send(mavlink_channel_t chan, float u_m, float phi_c, float theta_c, float psiDot_c, float ay_body, float totalDist, float dist2Go, uint8_t fromWP, uint8_t toWP)
 {
-	mavlink_message_t msg;
-	mavlink_msg_slugs_navigation_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, u_m, phi_c, theta_c, psiDot_c, ay_body, totalDist, dist2Go, fromWP, toWP);
-	mavlink_send_uart(chan, &msg);
+	mavlink_header_t hdr;
+	mavlink_slugs_navigation_t payload;
+	uint16_t checksum;
+	mavlink_slugs_navigation_t *p = &payload;
+
+	p->u_m = u_m; // float:Measured Airspeed prior to the Nav Filter
+	p->phi_c = phi_c; // float:Commanded Roll
+	p->theta_c = theta_c; // float:Commanded Pitch
+	p->psiDot_c = psiDot_c; // float:Commanded Turn rate
+	p->ay_body = ay_body; // float:Y component of the body acceleration
+	p->totalDist = totalDist; // float:Total Distance to Run on this leg of Navigation
+	p->dist2Go = dist2Go; // float:Remaining distance to Run on this leg of Navigation
+	p->fromWP = fromWP; // uint8_t:Origin WP
+	p->toWP = toWP; // uint8_t:Destination WP
+
+	hdr.STX = MAVLINK_STX;
+	hdr.len = MAVLINK_MSG_ID_SLUGS_NAVIGATION_LEN;
+	hdr.msgid = MAVLINK_MSG_ID_SLUGS_NAVIGATION;
+	hdr.sysid = mavlink_system.sysid;
+	hdr.compid = mavlink_system.compid;
+	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
+	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+
+	crc_init(&checksum);
+	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
+	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
+	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
 }
 
 #endif
@@ -134,12 +164,8 @@ static inline void mavlink_msg_slugs_navigation_send(mavlink_channel_t chan, flo
  */
 static inline float mavlink_msg_slugs_navigation_get_u_m(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload)[0];
-	r.b[2] = (msg->payload)[1];
-	r.b[1] = (msg->payload)[2];
-	r.b[0] = (msg->payload)[3];
-	return (float)r.f;
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
+	return (float)(p->u_m);
 }
 
 /**
@@ -149,12 +175,8 @@ static inline float mavlink_msg_slugs_navigation_get_u_m(const mavlink_message_t
  */
 static inline float mavlink_msg_slugs_navigation_get_phi_c(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
+	return (float)(p->phi_c);
 }
 
 /**
@@ -164,12 +186,8 @@ static inline float mavlink_msg_slugs_navigation_get_phi_c(const mavlink_message
  */
 static inline float mavlink_msg_slugs_navigation_get_theta_c(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
+	return (float)(p->theta_c);
 }
 
 /**
@@ -179,12 +197,8 @@ static inline float mavlink_msg_slugs_navigation_get_theta_c(const mavlink_messa
  */
 static inline float mavlink_msg_slugs_navigation_get_psiDot_c(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
+	return (float)(p->psiDot_c);
 }
 
 /**
@@ -194,12 +208,8 @@ static inline float mavlink_msg_slugs_navigation_get_psiDot_c(const mavlink_mess
  */
 static inline float mavlink_msg_slugs_navigation_get_ay_body(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
+	return (float)(p->ay_body);
 }
 
 /**
@@ -209,12 +219,8 @@ static inline float mavlink_msg_slugs_navigation_get_ay_body(const mavlink_messa
  */
 static inline float mavlink_msg_slugs_navigation_get_totalDist(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
+	return (float)(p->totalDist);
 }
 
 /**
@@ -224,12 +230,8 @@ static inline float mavlink_msg_slugs_navigation_get_totalDist(const mavlink_mes
  */
 static inline float mavlink_msg_slugs_navigation_get_dist2Go(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
+	return (float)(p->dist2Go);
 }
 
 /**
@@ -239,7 +241,8 @@ static inline float mavlink_msg_slugs_navigation_get_dist2Go(const mavlink_messa
  */
 static inline uint8_t mavlink_msg_slugs_navigation_get_fromWP(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[0];
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
+	return (uint8_t)(p->fromWP);
 }
 
 /**
@@ -249,7 +252,8 @@ static inline uint8_t mavlink_msg_slugs_navigation_get_fromWP(const mavlink_mess
  */
 static inline uint8_t mavlink_msg_slugs_navigation_get_toWP(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(uint8_t))[0];
+	mavlink_slugs_navigation_t *p = (mavlink_slugs_navigation_t *)&msg->payload[0];
+	return (uint8_t)(p->toWP);
 }
 
 /**
@@ -260,13 +264,5 @@ static inline uint8_t mavlink_msg_slugs_navigation_get_toWP(const mavlink_messag
  */
 static inline void mavlink_msg_slugs_navigation_decode(const mavlink_message_t* msg, mavlink_slugs_navigation_t* slugs_navigation)
 {
-	slugs_navigation->u_m = mavlink_msg_slugs_navigation_get_u_m(msg);
-	slugs_navigation->phi_c = mavlink_msg_slugs_navigation_get_phi_c(msg);
-	slugs_navigation->theta_c = mavlink_msg_slugs_navigation_get_theta_c(msg);
-	slugs_navigation->psiDot_c = mavlink_msg_slugs_navigation_get_psiDot_c(msg);
-	slugs_navigation->ay_body = mavlink_msg_slugs_navigation_get_ay_body(msg);
-	slugs_navigation->totalDist = mavlink_msg_slugs_navigation_get_totalDist(msg);
-	slugs_navigation->dist2Go = mavlink_msg_slugs_navigation_get_dist2Go(msg);
-	slugs_navigation->fromWP = mavlink_msg_slugs_navigation_get_fromWP(msg);
-	slugs_navigation->toWP = mavlink_msg_slugs_navigation_get_toWP(msg);
+	memcpy( slugs_navigation, msg->payload, sizeof(mavlink_slugs_navigation_t));
 }

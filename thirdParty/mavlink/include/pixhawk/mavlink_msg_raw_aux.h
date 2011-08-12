@@ -1,20 +1,20 @@
 // MESSAGE RAW_AUX PACKING
 
 #define MAVLINK_MSG_ID_RAW_AUX 141
+#define MAVLINK_MSG_ID_RAW_AUX_LEN 16
+#define MAVLINK_MSG_141_LEN 16
 
 typedef struct __mavlink_raw_aux_t 
 {
+	int32_t baro; ///< Barometric pressure (hecto Pascal)
 	uint16_t adc1; ///< ADC1 (J405 ADC3, LPC2148 AD0.6)
 	uint16_t adc2; ///< ADC2 (J405 ADC5, LPC2148 AD0.2)
 	uint16_t adc3; ///< ADC3 (J405 ADC6, LPC2148 AD0.1)
 	uint16_t adc4; ///< ADC4 (J405 ADC7, LPC2148 AD1.3)
 	uint16_t vbat; ///< Battery voltage
 	int16_t temp; ///< Temperature (degrees celcius)
-	int32_t baro; ///< Barometric pressure (hecto Pascal)
 
 } mavlink_raw_aux_t;
-
-
 
 /**
  * @brief Pack a raw_aux message
@@ -33,18 +33,18 @@ typedef struct __mavlink_raw_aux_t
  */
 static inline uint16_t mavlink_msg_raw_aux_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint16_t adc1, uint16_t adc2, uint16_t adc3, uint16_t adc4, uint16_t vbat, int16_t temp, int32_t baro)
 {
-	uint16_t i = 0;
+	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_RAW_AUX;
 
-	i += put_uint16_t_by_index(adc1, i, msg->payload); // ADC1 (J405 ADC3, LPC2148 AD0.6)
-	i += put_uint16_t_by_index(adc2, i, msg->payload); // ADC2 (J405 ADC5, LPC2148 AD0.2)
-	i += put_uint16_t_by_index(adc3, i, msg->payload); // ADC3 (J405 ADC6, LPC2148 AD0.1)
-	i += put_uint16_t_by_index(adc4, i, msg->payload); // ADC4 (J405 ADC7, LPC2148 AD1.3)
-	i += put_uint16_t_by_index(vbat, i, msg->payload); // Battery voltage
-	i += put_int16_t_by_index(temp, i, msg->payload); // Temperature (degrees celcius)
-	i += put_int32_t_by_index(baro, i, msg->payload); // Barometric pressure (hecto Pascal)
+	p->adc1 = adc1; // uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
+	p->adc2 = adc2; // uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
+	p->adc3 = adc3; // uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
+	p->adc4 = adc4; // uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
+	p->vbat = vbat; // uint16_t:Battery voltage
+	p->temp = temp; // int16_t:Temperature (degrees celcius)
+	p->baro = baro; // int32_t:Barometric pressure (hecto Pascal)
 
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_RAW_AUX_LEN);
 }
 
 /**
@@ -64,18 +64,18 @@ static inline uint16_t mavlink_msg_raw_aux_pack(uint8_t system_id, uint8_t compo
  */
 static inline uint16_t mavlink_msg_raw_aux_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint16_t adc1, uint16_t adc2, uint16_t adc3, uint16_t adc4, uint16_t vbat, int16_t temp, int32_t baro)
 {
-	uint16_t i = 0;
+	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_RAW_AUX;
 
-	i += put_uint16_t_by_index(adc1, i, msg->payload); // ADC1 (J405 ADC3, LPC2148 AD0.6)
-	i += put_uint16_t_by_index(adc2, i, msg->payload); // ADC2 (J405 ADC5, LPC2148 AD0.2)
-	i += put_uint16_t_by_index(adc3, i, msg->payload); // ADC3 (J405 ADC6, LPC2148 AD0.1)
-	i += put_uint16_t_by_index(adc4, i, msg->payload); // ADC4 (J405 ADC7, LPC2148 AD1.3)
-	i += put_uint16_t_by_index(vbat, i, msg->payload); // Battery voltage
-	i += put_int16_t_by_index(temp, i, msg->payload); // Temperature (degrees celcius)
-	i += put_int32_t_by_index(baro, i, msg->payload); // Barometric pressure (hecto Pascal)
+	p->adc1 = adc1; // uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
+	p->adc2 = adc2; // uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
+	p->adc3 = adc3; // uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
+	p->adc4 = adc4; // uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
+	p->vbat = vbat; // uint16_t:Battery voltage
+	p->temp = temp; // int16_t:Temperature (degrees celcius)
+	p->baro = baro; // int32_t:Barometric pressure (hecto Pascal)
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_RAW_AUX_LEN);
 }
 
 /**
@@ -103,13 +103,41 @@ static inline uint16_t mavlink_msg_raw_aux_encode(uint8_t system_id, uint8_t com
  * @param temp Temperature (degrees celcius)
  * @param baro Barometric pressure (hecto Pascal)
  */
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_raw_aux_send(mavlink_channel_t chan, uint16_t adc1, uint16_t adc2, uint16_t adc3, uint16_t adc4, uint16_t vbat, int16_t temp, int32_t baro)
 {
-	mavlink_message_t msg;
-	mavlink_msg_raw_aux_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, adc1, adc2, adc3, adc4, vbat, temp, baro);
-	mavlink_send_uart(chan, &msg);
+	mavlink_header_t hdr;
+	mavlink_raw_aux_t payload;
+	uint16_t checksum;
+	mavlink_raw_aux_t *p = &payload;
+
+	p->adc1 = adc1; // uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
+	p->adc2 = adc2; // uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
+	p->adc3 = adc3; // uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
+	p->adc4 = adc4; // uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
+	p->vbat = vbat; // uint16_t:Battery voltage
+	p->temp = temp; // int16_t:Temperature (degrees celcius)
+	p->baro = baro; // int32_t:Barometric pressure (hecto Pascal)
+
+	hdr.STX = MAVLINK_STX;
+	hdr.len = MAVLINK_MSG_ID_RAW_AUX_LEN;
+	hdr.msgid = MAVLINK_MSG_ID_RAW_AUX;
+	hdr.sysid = mavlink_system.sysid;
+	hdr.compid = mavlink_system.compid;
+	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
+	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
+	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+
+	crc_init(&checksum);
+	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
+	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
+	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
+	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
+
+	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
 }
 
 #endif
@@ -122,10 +150,8 @@ static inline void mavlink_msg_raw_aux_send(mavlink_channel_t chan, uint16_t adc
  */
 static inline uint16_t mavlink_msg_raw_aux_get_adc1(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload)[0];
-	r.b[0] = (msg->payload)[1];
-	return (uint16_t)r.s;
+	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
+	return (uint16_t)(p->adc1);
 }
 
 /**
@@ -135,10 +161,8 @@ static inline uint16_t mavlink_msg_raw_aux_get_adc1(const mavlink_message_t* msg
  */
 static inline uint16_t mavlink_msg_raw_aux_get_adc2(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload+sizeof(uint16_t))[0];
-	r.b[0] = (msg->payload+sizeof(uint16_t))[1];
-	return (uint16_t)r.s;
+	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
+	return (uint16_t)(p->adc2);
 }
 
 /**
@@ -148,10 +172,8 @@ static inline uint16_t mavlink_msg_raw_aux_get_adc2(const mavlink_message_t* msg
  */
 static inline uint16_t mavlink_msg_raw_aux_get_adc3(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t))[0];
-	r.b[0] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t))[1];
-	return (uint16_t)r.s;
+	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
+	return (uint16_t)(p->adc3);
 }
 
 /**
@@ -161,10 +183,8 @@ static inline uint16_t mavlink_msg_raw_aux_get_adc3(const mavlink_message_t* msg
  */
 static inline uint16_t mavlink_msg_raw_aux_get_adc4(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t))[0];
-	r.b[0] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t))[1];
-	return (uint16_t)r.s;
+	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
+	return (uint16_t)(p->adc4);
 }
 
 /**
@@ -174,10 +194,8 @@ static inline uint16_t mavlink_msg_raw_aux_get_adc4(const mavlink_message_t* msg
  */
 static inline uint16_t mavlink_msg_raw_aux_get_vbat(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t))[0];
-	r.b[0] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t))[1];
-	return (uint16_t)r.s;
+	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
+	return (uint16_t)(p->vbat);
 }
 
 /**
@@ -187,10 +205,8 @@ static inline uint16_t mavlink_msg_raw_aux_get_vbat(const mavlink_message_t* msg
  */
 static inline int16_t mavlink_msg_raw_aux_get_temp(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t))[0];
-	r.b[0] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t))[1];
-	return (int16_t)r.s;
+	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
+	return (int16_t)(p->temp);
 }
 
 /**
@@ -200,12 +216,8 @@ static inline int16_t mavlink_msg_raw_aux_get_temp(const mavlink_message_t* msg)
  */
 static inline int32_t mavlink_msg_raw_aux_get_baro(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(int16_t))[0];
-	r.b[2] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(int16_t))[1];
-	r.b[1] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(int16_t))[2];
-	r.b[0] = (msg->payload+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(uint16_t)+sizeof(int16_t))[3];
-	return (int32_t)r.i;
+	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
+	return (int32_t)(p->baro);
 }
 
 /**
@@ -216,11 +228,5 @@ static inline int32_t mavlink_msg_raw_aux_get_baro(const mavlink_message_t* msg)
  */
 static inline void mavlink_msg_raw_aux_decode(const mavlink_message_t* msg, mavlink_raw_aux_t* raw_aux)
 {
-	raw_aux->adc1 = mavlink_msg_raw_aux_get_adc1(msg);
-	raw_aux->adc2 = mavlink_msg_raw_aux_get_adc2(msg);
-	raw_aux->adc3 = mavlink_msg_raw_aux_get_adc3(msg);
-	raw_aux->adc4 = mavlink_msg_raw_aux_get_adc4(msg);
-	raw_aux->vbat = mavlink_msg_raw_aux_get_vbat(msg);
-	raw_aux->temp = mavlink_msg_raw_aux_get_temp(msg);
-	raw_aux->baro = mavlink_msg_raw_aux_get_baro(msg);
+	memcpy( raw_aux, msg->payload, sizeof(mavlink_raw_aux_t));
 }

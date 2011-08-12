@@ -1,11 +1,16 @@
 /** @file
  *	@brief MAVLink comm protocol.
  *	@see http://pixhawk.ethz.ch/software/mavlink
- *	 Generated on Wednesday, July 27 2011, 14:17 UTC
+ *	 Generated on Tuesday, August 9 2011, 16:16 UTC
  */
 #ifndef MAVLINK_H
 #define MAVLINK_H
 
+#pragma pack(push,1)
+#include "mavlink_options.h"
 #include "slugs.h"
-
+#ifdef MAVLINK_DATA
+#include "mavlink_data.h"
+#endif
+#pragma pack(pop)
 #endif
