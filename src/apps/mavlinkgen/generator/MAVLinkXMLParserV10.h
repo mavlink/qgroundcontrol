@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QObject>
 #include <QDomDocument>
 #include <QString>
+#include <inttypes.h>
 
 /**
  * @brief MAVLink micro air vehicle protocol generator
