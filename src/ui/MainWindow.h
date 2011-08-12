@@ -352,18 +352,22 @@ protected:
     void buildCommonWidgets();
     void buildPxWidgets();
     void buildSlugsWidgets();
+	void buildSenseSoarWidgets();
 
     void connectCommonWidgets();
     void connectPxWidgets();
     void connectSlugsWidgets();
+	void connectSenseSoarWidgets();
 
     void arrangeCommonCenterStack();
     void arrangePxCenterStack();
     void arrangeSlugsCenterStack();
+	void arrangeSenseSoarCenterStack();
 
     void connectCommonActions();
     void connectPxActions();
     void connectSlugsActions();
+	void connectSenseSoarActions();
 
 
     void configureWindowName();
