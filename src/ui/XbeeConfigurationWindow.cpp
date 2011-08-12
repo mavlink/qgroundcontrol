@@ -207,19 +207,10 @@ XbeeConfigurationWindow::XbeeConfigurationWindow(LinkInterface* link, QWidget *p
 		baudLabel = new QLabel;
 		baudLabel->setText(tr("Baut Rate"));
 		baudBox = new QComboBox;
-		baudBox->addItem("1200",1200);
-		baudBox->addItem("2400",2400);
-		baudBox->addItem("4800",4800);
-		baudBox->addItem("9600",9600);
-		baudBox->addItem("19200",19200);
-		baudBox->addItem("38400",38400);
-		baudBox->addItem("57600",57600);
-		baudBox->setCurrentIndex(1);
 		baudLabel->setBuddy(baudBox);
 		portLabel = new QLabel;
 		portLabel->setText(tr("SerialPort"));
 		portBox = new QComboBox;
-		this->setupPortList();
 		portBox->setEditable(true);
 		portLabel->setBuddy(portBox);
 		actionLayout = new QGridLayout;
@@ -240,6 +231,16 @@ XbeeConfigurationWindow::XbeeConfigurationWindow(LinkInterface* link, QWidget *p
 		connect(portBox,SIGNAL(currentIndexChanged(QString)),this,SLOT(setPortName(QString)));
 		connect(portBox,SIGNAL(editTextChanged(QString)),this,SLOT(setPortName(QString)));
 		connect(baudBox,SIGNAL(currentIndexChanged(QString)),this,SLOT(setBaudRateString(QString)));
+
+		baudBox->addItem("1200",1200);
+		baudBox->addItem("2400",2400);
+		baudBox->addItem("4800",4800);
+		baudBox->addItem("9600",9600);
+		baudBox->addItem("19200",19200);
+		baudBox->addItem("38400",38400);
+		baudBox->addItem("57600",57600);
+		baudBox->setCurrentIndex(6);
+		this->setupPortList();
 
 		portCheckTimer = new QTimer(this);
         portCheckTimer->setInterval(1000);

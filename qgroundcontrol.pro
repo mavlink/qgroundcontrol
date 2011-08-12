@@ -281,6 +281,7 @@ HEADERS += src/MG.h \
     src/uas/SlugsMAV.h \
     src/uas/PxQuadMAV.h \
     src/uas/ArduPilotMegaMAV.h \
+    src/uas/senseSoarMAV.h \
     src/ui/watchdog/WatchdogControl.h \
     src/ui/watchdog/WatchdogProcessView.h \
     src/ui/watchdog/WatchdogView.h \
@@ -409,6 +410,7 @@ SOURCES += src/main.cc \
     src/uas/SlugsMAV.cc \
     src/uas/PxQuadMAV.cc \
     src/uas/ArduPilotMegaMAV.cc \
+    src/uas/senseSoarMAV.cpp \
     src/ui/watchdog/WatchdogControl.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
     src/ui/watchdog/WatchdogView.cc \
