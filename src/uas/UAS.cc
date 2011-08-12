@@ -75,7 +75,7 @@ paramsOnceRequested(false),
 airframe(0),
 attitudeKnown(false),
 paramManager(NULL),
-attitudeStamped(true),
+attitudeStamped(false),
 lastAttitude(0)
 {
     color = UASInterface::getNextColor();
@@ -682,7 +682,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 if (pos.fix_type > 0) {
                     emit globalPositionChanged(this, pos.lat/(double)1E7, pos.lon/(double)1E7, pos.alt/1000.0, time);
-                    emit valueChanged(uasId, "gps speed", "m/s", pos.v, time);
+                    emit valueChanged(uasId, "gps speed", "m/s", pos.vel, time);
                     latitude = pos.lat/(double)1E7;
                     longitude = pos.lon/(double)1E7;
                     altitude = pos.alt/1000.0;
@@ -696,12 +696,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     }
                     emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E3, time);
                     // Smaller than threshold and not NaN
-                    if (pos.v < 1000000 && pos.v == pos.v) {
-                        emit valueChanged(uasId, "speed", "m/s", pos.v, time);
+
+                    float vel = pos.vel/100.0f;
+
+                    if (vel < 1000000 && !isnan(vel) && !isinf(vel)) {
+                        emit valueChanged(uasId, "speed", "m/s", vel, time);
                         //qDebug() << "GOT GPS RAW";
                         // emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
                     } else {
-                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(pos.v));
+                        emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
                     }
                 }
             }
@@ -854,6 +857,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 {
                     waypointManager.handleWaypointCount(message.sysid, message.compid, wpc.count);
                 }
+                else
+                {
+                    qDebug() << "Got waypoint message, but was not for me";
+                }
             }
             break;
 
@@ -865,6 +872,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if(wp.target_system == mavlink->getSystemId() && wp.target_component == mavlink->getComponentId())
                 {
                     waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
+                }
+                else
+                {
+                    qDebug() << "Got waypoint message, but was not for me";
                 }
             }
             break;
@@ -887,6 +898,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 if(wpr.target_system == mavlink->getSystemId() && wpr.target_component == mavlink->getComponentId())
                 {
                     waypointManager.handleWaypointRequest(message.sysid, message.compid, &wpr);
+                }
+                else
+                {
+                    qDebug() << "Got waypoint message, but was not for me";
                 }
             }
             break;
