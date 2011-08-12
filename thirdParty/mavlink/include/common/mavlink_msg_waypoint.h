@@ -3,23 +3,25 @@
 #define MAVLINK_MSG_ID_WAYPOINT 39
 #define MAVLINK_MSG_ID_WAYPOINT_LEN 36
 #define MAVLINK_MSG_39_LEN 36
+#define MAVLINK_MSG_ID_WAYPOINT_KEY 0xC5
+#define MAVLINK_MSG_39_KEY 0xC5
 
 typedef struct __mavlink_waypoint_t 
 {
-	float param1; ///< PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters
-	float param2; ///< PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds
-	float param3; ///< PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.
-	float param4; ///< PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH
-	float x; ///< PARAM5 / local: x position, global: latitude
-	float y; ///< PARAM6 / y position: global: longitude
-	float z; ///< PARAM7 / z position: global: altitude
-	uint16_t seq; ///< Sequence
-	uint8_t target_system; ///< System ID
-	uint8_t target_component; ///< Component ID
-	uint8_t frame; ///< The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
-	uint8_t command; ///< The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs
-	uint8_t current; ///< false:0, true:1
-	uint8_t autocontinue; ///< autocontinue to next wp
+	float param1;	///< PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters
+	float param2;	///< PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds
+	float param3;	///< PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.
+	float param4;	///< PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH
+	float x;	///< PARAM5 / local: x position, global: latitude
+	float y;	///< PARAM6 / y position: global: longitude
+	float z;	///< PARAM7 / z position: global: altitude
+	uint16_t seq;	///< Sequence
+	uint8_t target_system;	///< System ID
+	uint8_t target_component;	///< Component ID
+	uint8_t frame;	///< The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
+	uint8_t command;	///< The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs
+	uint8_t current;	///< false:0, true:1
+	uint8_t autocontinue;	///< autocontinue to next wp
 
 } mavlink_waypoint_t;
 
@@ -50,20 +52,20 @@ static inline uint16_t mavlink_msg_waypoint_pack(uint8_t system_id, uint8_t comp
 	mavlink_waypoint_t *p = (mavlink_waypoint_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT;
 
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->seq = seq; // uint16_t:Sequence
-	p->frame = frame; // uint8_t:The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
-	p->command = command; // uint8_t:The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs
-	p->current = current; // uint8_t:false:0, true:1
-	p->autocontinue = autocontinue; // uint8_t:autocontinue to next wp
-	p->param1 = param1; // float:PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters
-	p->param2 = param2; // float:PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds
-	p->param3 = param3; // float:PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.
-	p->param4 = param4; // float:PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH
-	p->x = x; // float:PARAM5 / local: x position, global: latitude
-	p->y = y; // float:PARAM6 / y position: global: longitude
-	p->z = z; // float:PARAM7 / z position: global: altitude
+	p->target_system = target_system;	// uint8_t:System ID
+	p->target_component = target_component;	// uint8_t:Component ID
+	p->seq = seq;	// uint16_t:Sequence
+	p->frame = frame;	// uint8_t:The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
+	p->command = command;	// uint8_t:The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs
+	p->current = current;	// uint8_t:false:0, true:1
+	p->autocontinue = autocontinue;	// uint8_t:autocontinue to next wp
+	p->param1 = param1;	// float:PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters
+	p->param2 = param2;	// float:PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds
+	p->param3 = param3;	// float:PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.
+	p->param4 = param4;	// float:PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH
+	p->x = x;	// float:PARAM5 / local: x position, global: latitude
+	p->y = y;	// float:PARAM6 / y position: global: longitude
+	p->z = z;	// float:PARAM7 / z position: global: altitude
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WAYPOINT_LEN);
 }
@@ -95,20 +97,20 @@ static inline uint16_t mavlink_msg_waypoint_pack_chan(uint8_t system_id, uint8_t
 	mavlink_waypoint_t *p = (mavlink_waypoint_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT;
 
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->seq = seq; // uint16_t:Sequence
-	p->frame = frame; // uint8_t:The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
-	p->command = command; // uint8_t:The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs
-	p->current = current; // uint8_t:false:0, true:1
-	p->autocontinue = autocontinue; // uint8_t:autocontinue to next wp
-	p->param1 = param1; // float:PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters
-	p->param2 = param2; // float:PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds
-	p->param3 = param3; // float:PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.
-	p->param4 = param4; // float:PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH
-	p->x = x; // float:PARAM5 / local: x position, global: latitude
-	p->y = y; // float:PARAM6 / y position: global: longitude
-	p->z = z; // float:PARAM7 / z position: global: altitude
+	p->target_system = target_system;	// uint8_t:System ID
+	p->target_component = target_component;	// uint8_t:Component ID
+	p->seq = seq;	// uint16_t:Sequence
+	p->frame = frame;	// uint8_t:The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
+	p->command = command;	// uint8_t:The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs
+	p->current = current;	// uint8_t:false:0, true:1
+	p->autocontinue = autocontinue;	// uint8_t:autocontinue to next wp
+	p->param1 = param1;	// float:PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters
+	p->param2 = param2;	// float:PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds
+	p->param3 = param3;	// float:PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.
+	p->param4 = param4;	// float:PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH
+	p->x = x;	// float:PARAM5 / local: x position, global: latitude
+	p->y = y;	// float:PARAM6 / y position: global: longitude
+	p->z = z;	// float:PARAM7 / z position: global: altitude
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WAYPOINT_LEN);
 }
@@ -126,6 +128,8 @@ static inline uint16_t mavlink_msg_waypoint_encode(uint8_t system_id, uint8_t co
 	return mavlink_msg_waypoint_pack(system_id, component_id, msg, waypoint->target_system, waypoint->target_component, waypoint->seq, waypoint->frame, waypoint->command, waypoint->current, waypoint->autocontinue, waypoint->param1, waypoint->param2, waypoint->param3, waypoint->param4, waypoint->x, waypoint->y, waypoint->z);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a waypoint message
  * @param chan MAVLink channel to send the message
@@ -145,30 +149,26 @@ static inline uint16_t mavlink_msg_waypoint_encode(uint8_t system_id, uint8_t co
  * @param y PARAM6 / y position: global: longitude
  * @param z PARAM7 / z position: global: altitude
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_waypoint_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint16_t seq, uint8_t frame, uint8_t command, uint8_t current, uint8_t autocontinue, float param1, float param2, float param3, float param4, float x, float y, float z)
 {
 	mavlink_header_t hdr;
 	mavlink_waypoint_t payload;
-	uint16_t checksum;
-	mavlink_waypoint_t *p = &payload;
 
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->seq = seq; // uint16_t:Sequence
-	p->frame = frame; // uint8_t:The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
-	p->command = command; // uint8_t:The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs
-	p->current = current; // uint8_t:false:0, true:1
-	p->autocontinue = autocontinue; // uint8_t:autocontinue to next wp
-	p->param1 = param1; // float:PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters
-	p->param2 = param2; // float:PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds
-	p->param3 = param3; // float:PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.
-	p->param4 = param4; // float:PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH
-	p->x = x; // float:PARAM5 / local: x position, global: latitude
-	p->y = y; // float:PARAM6 / y position: global: longitude
-	p->z = z; // float:PARAM7 / z position: global: altitude
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_WAYPOINT_LEN )
+	payload.target_system = target_system;	// uint8_t:System ID
+	payload.target_component = target_component;	// uint8_t:Component ID
+	payload.seq = seq;	// uint16_t:Sequence
+	payload.frame = frame;	// uint8_t:The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h
+	payload.command = command;	// uint8_t:The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs
+	payload.current = current;	// uint8_t:false:0, true:1
+	payload.autocontinue = autocontinue;	// uint8_t:autocontinue to next wp
+	payload.param1 = param1;	// float:PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters
+	payload.param2 = param2;	// float:PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds
+	payload.param3 = param3;	// float:PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.
+	payload.param4 = param4;	// float:PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH
+	payload.x = x;	// float:PARAM5 / local: x position, global: latitude
+	payload.y = y;	// float:PARAM6 / y position: global: longitude
+	payload.z = z;	// float:PARAM7 / z position: global: altitude
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_WAYPOINT_LEN;
@@ -179,14 +179,12 @@ static inline void mavlink_msg_waypoint_send(mavlink_channel_t chan, uint8_t tar
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xC5, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

@@ -3,18 +3,20 @@
 #define MAVLINK_MSG_ID_RC_CHANNELS_SCALED 36
 #define MAVLINK_MSG_ID_RC_CHANNELS_SCALED_LEN 17
 #define MAVLINK_MSG_36_LEN 17
+#define MAVLINK_MSG_ID_RC_CHANNELS_SCALED_KEY 0xC0
+#define MAVLINK_MSG_36_KEY 0xC0
 
 typedef struct __mavlink_rc_channels_scaled_t 
 {
-	int16_t chan1_scaled; ///< RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	int16_t chan2_scaled; ///< RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	int16_t chan3_scaled; ///< RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	int16_t chan4_scaled; ///< RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	int16_t chan5_scaled; ///< RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	int16_t chan6_scaled; ///< RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	int16_t chan7_scaled; ///< RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	int16_t chan8_scaled; ///< RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	uint8_t rssi; ///< Receive signal strength indicator, 0: 0%, 255: 100%
+	int16_t chan1_scaled;	///< RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	int16_t chan2_scaled;	///< RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	int16_t chan3_scaled;	///< RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	int16_t chan4_scaled;	///< RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	int16_t chan5_scaled;	///< RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	int16_t chan6_scaled;	///< RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	int16_t chan7_scaled;	///< RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	int16_t chan8_scaled;	///< RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	uint8_t rssi;	///< Receive signal strength indicator, 0: 0%, 255: 100%
 
 } mavlink_rc_channels_scaled_t;
 
@@ -40,15 +42,15 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_pack(uint8_t system_id, ui
 	mavlink_rc_channels_scaled_t *p = (mavlink_rc_channels_scaled_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_SCALED;
 
-	p->chan1_scaled = chan1_scaled; // int16_t:RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan2_scaled = chan2_scaled; // int16_t:RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan3_scaled = chan3_scaled; // int16_t:RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan4_scaled = chan4_scaled; // int16_t:RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan5_scaled = chan5_scaled; // int16_t:RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan6_scaled = chan6_scaled; // int16_t:RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan7_scaled = chan7_scaled; // int16_t:RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan8_scaled = chan8_scaled; // int16_t:RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->rssi = rssi; // uint8_t:Receive signal strength indicator, 0: 0%, 255: 100%
+	p->chan1_scaled = chan1_scaled;	// int16_t:RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan2_scaled = chan2_scaled;	// int16_t:RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan3_scaled = chan3_scaled;	// int16_t:RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan4_scaled = chan4_scaled;	// int16_t:RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan5_scaled = chan5_scaled;	// int16_t:RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan6_scaled = chan6_scaled;	// int16_t:RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan7_scaled = chan7_scaled;	// int16_t:RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan8_scaled = chan8_scaled;	// int16_t:RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->rssi = rssi;	// uint8_t:Receive signal strength indicator, 0: 0%, 255: 100%
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_RC_CHANNELS_SCALED_LEN);
 }
@@ -75,15 +77,15 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_pack_chan(uint8_t system_i
 	mavlink_rc_channels_scaled_t *p = (mavlink_rc_channels_scaled_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_SCALED;
 
-	p->chan1_scaled = chan1_scaled; // int16_t:RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan2_scaled = chan2_scaled; // int16_t:RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan3_scaled = chan3_scaled; // int16_t:RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan4_scaled = chan4_scaled; // int16_t:RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan5_scaled = chan5_scaled; // int16_t:RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan6_scaled = chan6_scaled; // int16_t:RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan7_scaled = chan7_scaled; // int16_t:RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan8_scaled = chan8_scaled; // int16_t:RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->rssi = rssi; // uint8_t:Receive signal strength indicator, 0: 0%, 255: 100%
+	p->chan1_scaled = chan1_scaled;	// int16_t:RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan2_scaled = chan2_scaled;	// int16_t:RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan3_scaled = chan3_scaled;	// int16_t:RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan4_scaled = chan4_scaled;	// int16_t:RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan5_scaled = chan5_scaled;	// int16_t:RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan6_scaled = chan6_scaled;	// int16_t:RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan7_scaled = chan7_scaled;	// int16_t:RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->chan8_scaled = chan8_scaled;	// int16_t:RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	p->rssi = rssi;	// uint8_t:Receive signal strength indicator, 0: 0%, 255: 100%
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_RC_CHANNELS_SCALED_LEN);
 }
@@ -101,6 +103,8 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_encode(uint8_t system_id, 
 	return mavlink_msg_rc_channels_scaled_pack(system_id, component_id, msg, rc_channels_scaled->chan1_scaled, rc_channels_scaled->chan2_scaled, rc_channels_scaled->chan3_scaled, rc_channels_scaled->chan4_scaled, rc_channels_scaled->chan5_scaled, rc_channels_scaled->chan6_scaled, rc_channels_scaled->chan7_scaled, rc_channels_scaled->chan8_scaled, rc_channels_scaled->rssi);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a rc_channels_scaled message
  * @param chan MAVLink channel to send the message
@@ -115,25 +119,21 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_encode(uint8_t system_id, 
  * @param chan8_scaled RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
  * @param rssi Receive signal strength indicator, 0: 0%, 255: 100%
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_rc_channels_scaled_send(mavlink_channel_t chan, int16_t chan1_scaled, int16_t chan2_scaled, int16_t chan3_scaled, int16_t chan4_scaled, int16_t chan5_scaled, int16_t chan6_scaled, int16_t chan7_scaled, int16_t chan8_scaled, uint8_t rssi)
 {
 	mavlink_header_t hdr;
 	mavlink_rc_channels_scaled_t payload;
-	uint16_t checksum;
-	mavlink_rc_channels_scaled_t *p = &payload;
 
-	p->chan1_scaled = chan1_scaled; // int16_t:RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan2_scaled = chan2_scaled; // int16_t:RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan3_scaled = chan3_scaled; // int16_t:RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan4_scaled = chan4_scaled; // int16_t:RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan5_scaled = chan5_scaled; // int16_t:RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan6_scaled = chan6_scaled; // int16_t:RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan7_scaled = chan7_scaled; // int16_t:RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->chan8_scaled = chan8_scaled; // int16_t:RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	p->rssi = rssi; // uint8_t:Receive signal strength indicator, 0: 0%, 255: 100%
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_RC_CHANNELS_SCALED_LEN )
+	payload.chan1_scaled = chan1_scaled;	// int16_t:RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	payload.chan2_scaled = chan2_scaled;	// int16_t:RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	payload.chan3_scaled = chan3_scaled;	// int16_t:RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	payload.chan4_scaled = chan4_scaled;	// int16_t:RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	payload.chan5_scaled = chan5_scaled;	// int16_t:RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	payload.chan6_scaled = chan6_scaled;	// int16_t:RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	payload.chan7_scaled = chan7_scaled;	// int16_t:RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	payload.chan8_scaled = chan8_scaled;	// int16_t:RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	payload.rssi = rssi;	// uint8_t:Receive signal strength indicator, 0: 0%, 255: 100%
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_RC_CHANNELS_SCALED_LEN;
@@ -144,14 +144,12 @@ static inline void mavlink_msg_rc_channels_scaled_send(mavlink_channel_t chan, i
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xC0, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

@@ -3,13 +3,15 @@
 #define MAVLINK_MSG_ID_MEMORY_VECT 250
 #define MAVLINK_MSG_ID_MEMORY_VECT_LEN 36
 #define MAVLINK_MSG_250_LEN 36
+#define MAVLINK_MSG_ID_MEMORY_VECT_KEY 0x8A
+#define MAVLINK_MSG_250_KEY 0x8A
 
 typedef struct __mavlink_memory_vect_t 
 {
-	uint16_t address; ///< Starting address of the debug variables
-	uint8_t ver; ///< Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below
-	uint8_t type; ///< Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14
-	int8_t value[32]; ///< Memory contents at specified address
+	uint16_t address;	///< Starting address of the debug variables
+	uint8_t ver;	///< Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below
+	uint8_t type;	///< Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14
+	int8_t value[32];	///< Memory contents at specified address
 
 } mavlink_memory_vect_t;
 #define MAVLINK_MSG_MEMORY_VECT_FIELD_VALUE_LEN 32
@@ -31,10 +33,10 @@ static inline uint16_t mavlink_msg_memory_vect_pack(uint8_t system_id, uint8_t c
 	mavlink_memory_vect_t *p = (mavlink_memory_vect_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_MEMORY_VECT;
 
-	p->address = address; // uint16_t:Starting address of the debug variables
-	p->ver = ver; // uint8_t:Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below
-	p->type = type; // uint8_t:Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14
-	memcpy(p->value, value, sizeof(p->value)); // int8_t[32]:Memory contents at specified address
+	p->address = address;	// uint16_t:Starting address of the debug variables
+	p->ver = ver;	// uint8_t:Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below
+	p->type = type;	// uint8_t:Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14
+	memcpy(p->value, value, sizeof(p->value));	// int8_t[32]:Memory contents at specified address
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_MEMORY_VECT_LEN);
 }
@@ -56,10 +58,10 @@ static inline uint16_t mavlink_msg_memory_vect_pack_chan(uint8_t system_id, uint
 	mavlink_memory_vect_t *p = (mavlink_memory_vect_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_MEMORY_VECT;
 
-	p->address = address; // uint16_t:Starting address of the debug variables
-	p->ver = ver; // uint8_t:Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below
-	p->type = type; // uint8_t:Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14
-	memcpy(p->value, value, sizeof(p->value)); // int8_t[32]:Memory contents at specified address
+	p->address = address;	// uint16_t:Starting address of the debug variables
+	p->ver = ver;	// uint8_t:Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below
+	p->type = type;	// uint8_t:Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14
+	memcpy(p->value, value, sizeof(p->value));	// int8_t[32]:Memory contents at specified address
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_MEMORY_VECT_LEN);
 }
@@ -77,6 +79,8 @@ static inline uint16_t mavlink_msg_memory_vect_encode(uint8_t system_id, uint8_t
 	return mavlink_msg_memory_vect_pack(system_id, component_id, msg, memory_vect->address, memory_vect->ver, memory_vect->type, memory_vect->value);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a memory_vect message
  * @param chan MAVLink channel to send the message
@@ -86,20 +90,16 @@ static inline uint16_t mavlink_msg_memory_vect_encode(uint8_t system_id, uint8_t
  * @param type Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14
  * @param value Memory contents at specified address
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_memory_vect_send(mavlink_channel_t chan, uint16_t address, uint8_t ver, uint8_t type, const int8_t* value)
 {
 	mavlink_header_t hdr;
 	mavlink_memory_vect_t payload;
-	uint16_t checksum;
-	mavlink_memory_vect_t *p = &payload;
 
-	p->address = address; // uint16_t:Starting address of the debug variables
-	p->ver = ver; // uint8_t:Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below
-	p->type = type; // uint8_t:Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14
-	memcpy(p->value, value, sizeof(p->value)); // int8_t[32]:Memory contents at specified address
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_MEMORY_VECT_LEN )
+	payload.address = address;	// uint16_t:Starting address of the debug variables
+	payload.ver = ver;	// uint8_t:Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below
+	payload.type = type;	// uint8_t:Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14
+	memcpy(payload.value, value, sizeof(payload.value));	// int8_t[32]:Memory contents at specified address
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_MEMORY_VECT_LEN;
@@ -110,14 +110,12 @@ static inline void mavlink_msg_memory_vect_send(mavlink_channel_t chan, uint16_t
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x8A, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

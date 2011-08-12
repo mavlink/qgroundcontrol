@@ -3,25 +3,27 @@
 #define MAVLINK_MSG_ID_FULL_STATE 67
 #define MAVLINK_MSG_ID_FULL_STATE_LEN 56
 #define MAVLINK_MSG_67_LEN 56
+#define MAVLINK_MSG_ID_FULL_STATE_KEY 0x26
+#define MAVLINK_MSG_67_KEY 0x26
 
 typedef struct __mavlink_full_state_t 
 {
-	uint64_t usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	float roll; ///< Roll angle (rad)
-	float pitch; ///< Pitch angle (rad)
-	float yaw; ///< Yaw angle (rad)
-	float rollspeed; ///< Roll angular speed (rad/s)
-	float pitchspeed; ///< Pitch angular speed (rad/s)
-	float yawspeed; ///< Yaw angular speed (rad/s)
-	int32_t lat; ///< Latitude, expressed as * 1E7
-	int32_t lon; ///< Longitude, expressed as * 1E7
-	int32_t alt; ///< Altitude in meters, expressed as * 1000 (millimeters)
-	int16_t vx; ///< Ground X Speed (Latitude), expressed as m/s * 100
-	int16_t vy; ///< Ground Y Speed (Longitude), expressed as m/s * 100
-	int16_t vz; ///< Ground Z Speed (Altitude), expressed as m/s * 100
-	int16_t xacc; ///< X acceleration (mg)
-	int16_t yacc; ///< Y acceleration (mg)
-	int16_t zacc; ///< Z acceleration (mg)
+	uint64_t usec;	///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	float roll;	///< Roll angle (rad)
+	float pitch;	///< Pitch angle (rad)
+	float yaw;	///< Yaw angle (rad)
+	float rollspeed;	///< Roll angular speed (rad/s)
+	float pitchspeed;	///< Pitch angular speed (rad/s)
+	float yawspeed;	///< Yaw angular speed (rad/s)
+	int32_t lat;	///< Latitude, expressed as * 1E7
+	int32_t lon;	///< Longitude, expressed as * 1E7
+	int32_t alt;	///< Altitude in meters, expressed as * 1000 (millimeters)
+	int16_t vx;	///< Ground X Speed (Latitude), expressed as m/s * 100
+	int16_t vy;	///< Ground Y Speed (Longitude), expressed as m/s * 100
+	int16_t vz;	///< Ground Z Speed (Altitude), expressed as m/s * 100
+	int16_t xacc;	///< X acceleration (mg)
+	int16_t yacc;	///< Y acceleration (mg)
+	int16_t zacc;	///< Z acceleration (mg)
 
 } mavlink_full_state_t;
 
@@ -54,22 +56,22 @@ static inline uint16_t mavlink_msg_full_state_pack(uint8_t system_id, uint8_t co
 	mavlink_full_state_t *p = (mavlink_full_state_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_FULL_STATE;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->roll = roll; // float:Roll angle (rad)
-	p->pitch = pitch; // float:Pitch angle (rad)
-	p->yaw = yaw; // float:Yaw angle (rad)
-	p->rollspeed = rollspeed; // float:Roll angular speed (rad/s)
-	p->pitchspeed = pitchspeed; // float:Pitch angular speed (rad/s)
-	p->yawspeed = yawspeed; // float:Yaw angular speed (rad/s)
-	p->lat = lat; // int32_t:Latitude, expressed as * 1E7
-	p->lon = lon; // int32_t:Longitude, expressed as * 1E7
-	p->alt = alt; // int32_t:Altitude in meters, expressed as * 1000 (millimeters)
-	p->vx = vx; // int16_t:Ground X Speed (Latitude), expressed as m/s * 100
-	p->vy = vy; // int16_t:Ground Y Speed (Longitude), expressed as m/s * 100
-	p->vz = vz; // int16_t:Ground Z Speed (Altitude), expressed as m/s * 100
-	p->xacc = xacc; // int16_t:X acceleration (mg)
-	p->yacc = yacc; // int16_t:Y acceleration (mg)
-	p->zacc = zacc; // int16_t:Z acceleration (mg)
+	p->usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	p->roll = roll;	// float:Roll angle (rad)
+	p->pitch = pitch;	// float:Pitch angle (rad)
+	p->yaw = yaw;	// float:Yaw angle (rad)
+	p->rollspeed = rollspeed;	// float:Roll angular speed (rad/s)
+	p->pitchspeed = pitchspeed;	// float:Pitch angular speed (rad/s)
+	p->yawspeed = yawspeed;	// float:Yaw angular speed (rad/s)
+	p->lat = lat;	// int32_t:Latitude, expressed as * 1E7
+	p->lon = lon;	// int32_t:Longitude, expressed as * 1E7
+	p->alt = alt;	// int32_t:Altitude in meters, expressed as * 1000 (millimeters)
+	p->vx = vx;	// int16_t:Ground X Speed (Latitude), expressed as m/s * 100
+	p->vy = vy;	// int16_t:Ground Y Speed (Longitude), expressed as m/s * 100
+	p->vz = vz;	// int16_t:Ground Z Speed (Altitude), expressed as m/s * 100
+	p->xacc = xacc;	// int16_t:X acceleration (mg)
+	p->yacc = yacc;	// int16_t:Y acceleration (mg)
+	p->zacc = zacc;	// int16_t:Z acceleration (mg)
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_FULL_STATE_LEN);
 }
@@ -103,22 +105,22 @@ static inline uint16_t mavlink_msg_full_state_pack_chan(uint8_t system_id, uint8
 	mavlink_full_state_t *p = (mavlink_full_state_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_FULL_STATE;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->roll = roll; // float:Roll angle (rad)
-	p->pitch = pitch; // float:Pitch angle (rad)
-	p->yaw = yaw; // float:Yaw angle (rad)
-	p->rollspeed = rollspeed; // float:Roll angular speed (rad/s)
-	p->pitchspeed = pitchspeed; // float:Pitch angular speed (rad/s)
-	p->yawspeed = yawspeed; // float:Yaw angular speed (rad/s)
-	p->lat = lat; // int32_t:Latitude, expressed as * 1E7
-	p->lon = lon; // int32_t:Longitude, expressed as * 1E7
-	p->alt = alt; // int32_t:Altitude in meters, expressed as * 1000 (millimeters)
-	p->vx = vx; // int16_t:Ground X Speed (Latitude), expressed as m/s * 100
-	p->vy = vy; // int16_t:Ground Y Speed (Longitude), expressed as m/s * 100
-	p->vz = vz; // int16_t:Ground Z Speed (Altitude), expressed as m/s * 100
-	p->xacc = xacc; // int16_t:X acceleration (mg)
-	p->yacc = yacc; // int16_t:Y acceleration (mg)
-	p->zacc = zacc; // int16_t:Z acceleration (mg)
+	p->usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	p->roll = roll;	// float:Roll angle (rad)
+	p->pitch = pitch;	// float:Pitch angle (rad)
+	p->yaw = yaw;	// float:Yaw angle (rad)
+	p->rollspeed = rollspeed;	// float:Roll angular speed (rad/s)
+	p->pitchspeed = pitchspeed;	// float:Pitch angular speed (rad/s)
+	p->yawspeed = yawspeed;	// float:Yaw angular speed (rad/s)
+	p->lat = lat;	// int32_t:Latitude, expressed as * 1E7
+	p->lon = lon;	// int32_t:Longitude, expressed as * 1E7
+	p->alt = alt;	// int32_t:Altitude in meters, expressed as * 1000 (millimeters)
+	p->vx = vx;	// int16_t:Ground X Speed (Latitude), expressed as m/s * 100
+	p->vy = vy;	// int16_t:Ground Y Speed (Longitude), expressed as m/s * 100
+	p->vz = vz;	// int16_t:Ground Z Speed (Altitude), expressed as m/s * 100
+	p->xacc = xacc;	// int16_t:X acceleration (mg)
+	p->yacc = yacc;	// int16_t:Y acceleration (mg)
+	p->zacc = zacc;	// int16_t:Z acceleration (mg)
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_FULL_STATE_LEN);
 }
@@ -136,6 +138,8 @@ static inline uint16_t mavlink_msg_full_state_encode(uint8_t system_id, uint8_t 
 	return mavlink_msg_full_state_pack(system_id, component_id, msg, full_state->usec, full_state->roll, full_state->pitch, full_state->yaw, full_state->rollspeed, full_state->pitchspeed, full_state->yawspeed, full_state->lat, full_state->lon, full_state->alt, full_state->vx, full_state->vy, full_state->vz, full_state->xacc, full_state->yacc, full_state->zacc);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a full_state message
  * @param chan MAVLink channel to send the message
@@ -157,32 +161,28 @@ static inline uint16_t mavlink_msg_full_state_encode(uint8_t system_id, uint8_t 
  * @param yacc Y acceleration (mg)
  * @param zacc Z acceleration (mg)
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_full_state_send(mavlink_channel_t chan, uint64_t usec, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt, int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
 {
 	mavlink_header_t hdr;
 	mavlink_full_state_t payload;
-	uint16_t checksum;
-	mavlink_full_state_t *p = &payload;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->roll = roll; // float:Roll angle (rad)
-	p->pitch = pitch; // float:Pitch angle (rad)
-	p->yaw = yaw; // float:Yaw angle (rad)
-	p->rollspeed = rollspeed; // float:Roll angular speed (rad/s)
-	p->pitchspeed = pitchspeed; // float:Pitch angular speed (rad/s)
-	p->yawspeed = yawspeed; // float:Yaw angular speed (rad/s)
-	p->lat = lat; // int32_t:Latitude, expressed as * 1E7
-	p->lon = lon; // int32_t:Longitude, expressed as * 1E7
-	p->alt = alt; // int32_t:Altitude in meters, expressed as * 1000 (millimeters)
-	p->vx = vx; // int16_t:Ground X Speed (Latitude), expressed as m/s * 100
-	p->vy = vy; // int16_t:Ground Y Speed (Longitude), expressed as m/s * 100
-	p->vz = vz; // int16_t:Ground Z Speed (Altitude), expressed as m/s * 100
-	p->xacc = xacc; // int16_t:X acceleration (mg)
-	p->yacc = yacc; // int16_t:Y acceleration (mg)
-	p->zacc = zacc; // int16_t:Z acceleration (mg)
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_FULL_STATE_LEN )
+	payload.usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	payload.roll = roll;	// float:Roll angle (rad)
+	payload.pitch = pitch;	// float:Pitch angle (rad)
+	payload.yaw = yaw;	// float:Yaw angle (rad)
+	payload.rollspeed = rollspeed;	// float:Roll angular speed (rad/s)
+	payload.pitchspeed = pitchspeed;	// float:Pitch angular speed (rad/s)
+	payload.yawspeed = yawspeed;	// float:Yaw angular speed (rad/s)
+	payload.lat = lat;	// int32_t:Latitude, expressed as * 1E7
+	payload.lon = lon;	// int32_t:Longitude, expressed as * 1E7
+	payload.alt = alt;	// int32_t:Altitude in meters, expressed as * 1000 (millimeters)
+	payload.vx = vx;	// int16_t:Ground X Speed (Latitude), expressed as m/s * 100
+	payload.vy = vy;	// int16_t:Ground Y Speed (Longitude), expressed as m/s * 100
+	payload.vz = vz;	// int16_t:Ground Z Speed (Altitude), expressed as m/s * 100
+	payload.xacc = xacc;	// int16_t:X acceleration (mg)
+	payload.yacc = yacc;	// int16_t:Y acceleration (mg)
+	payload.zacc = zacc;	// int16_t:Z acceleration (mg)
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_FULL_STATE_LEN;
@@ -193,14 +193,12 @@ static inline void mavlink_msg_full_state_send(mavlink_channel_t chan, uint64_t 
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x26, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

@@ -17,5 +17,5 @@ const uint8_t MAVLINK_CONST mavlink_msg_keys[256] = MAVLINK_MESSAGE_KEYS;
 
 mavlink_status_t m_mavlink_status[MAVLINK_COMM_NB];
 mavlink_message_t m_mavlink_message[MAVLINK_COMM_NB];
-
+mavlink_system_t mavlink_system;
 #endif

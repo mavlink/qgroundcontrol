@@ -3,19 +3,21 @@
 #define MAVLINK_MSG_ID_SCALED_IMU 26
 #define MAVLINK_MSG_ID_SCALED_IMU_LEN 26
 #define MAVLINK_MSG_26_LEN 26
+#define MAVLINK_MSG_ID_SCALED_IMU_KEY 0x1C
+#define MAVLINK_MSG_26_KEY 0x1C
 
 typedef struct __mavlink_scaled_imu_t 
 {
-	uint64_t usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	int16_t xacc; ///< X acceleration (mg)
-	int16_t yacc; ///< Y acceleration (mg)
-	int16_t zacc; ///< Z acceleration (mg)
-	int16_t xgyro; ///< Angular speed around X axis (millirad /sec)
-	int16_t ygyro; ///< Angular speed around Y axis (millirad /sec)
-	int16_t zgyro; ///< Angular speed around Z axis (millirad /sec)
-	int16_t xmag; ///< X Magnetic field (milli tesla)
-	int16_t ymag; ///< Y Magnetic field (milli tesla)
-	int16_t zmag; ///< Z Magnetic field (milli tesla)
+	uint64_t usec;	///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	int16_t xacc;	///< X acceleration (mg)
+	int16_t yacc;	///< Y acceleration (mg)
+	int16_t zacc;	///< Z acceleration (mg)
+	int16_t xgyro;	///< Angular speed around X axis (millirad /sec)
+	int16_t ygyro;	///< Angular speed around Y axis (millirad /sec)
+	int16_t zgyro;	///< Angular speed around Z axis (millirad /sec)
+	int16_t xmag;	///< X Magnetic field (milli tesla)
+	int16_t ymag;	///< Y Magnetic field (milli tesla)
+	int16_t zmag;	///< Z Magnetic field (milli tesla)
 
 } mavlink_scaled_imu_t;
 
@@ -42,16 +44,16 @@ static inline uint16_t mavlink_msg_scaled_imu_pack(uint8_t system_id, uint8_t co
 	mavlink_scaled_imu_t *p = (mavlink_scaled_imu_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SCALED_IMU;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->xacc = xacc; // int16_t:X acceleration (mg)
-	p->yacc = yacc; // int16_t:Y acceleration (mg)
-	p->zacc = zacc; // int16_t:Z acceleration (mg)
-	p->xgyro = xgyro; // int16_t:Angular speed around X axis (millirad /sec)
-	p->ygyro = ygyro; // int16_t:Angular speed around Y axis (millirad /sec)
-	p->zgyro = zgyro; // int16_t:Angular speed around Z axis (millirad /sec)
-	p->xmag = xmag; // int16_t:X Magnetic field (milli tesla)
-	p->ymag = ymag; // int16_t:Y Magnetic field (milli tesla)
-	p->zmag = zmag; // int16_t:Z Magnetic field (milli tesla)
+	p->usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	p->xacc = xacc;	// int16_t:X acceleration (mg)
+	p->yacc = yacc;	// int16_t:Y acceleration (mg)
+	p->zacc = zacc;	// int16_t:Z acceleration (mg)
+	p->xgyro = xgyro;	// int16_t:Angular speed around X axis (millirad /sec)
+	p->ygyro = ygyro;	// int16_t:Angular speed around Y axis (millirad /sec)
+	p->zgyro = zgyro;	// int16_t:Angular speed around Z axis (millirad /sec)
+	p->xmag = xmag;	// int16_t:X Magnetic field (milli tesla)
+	p->ymag = ymag;	// int16_t:Y Magnetic field (milli tesla)
+	p->zmag = zmag;	// int16_t:Z Magnetic field (milli tesla)
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SCALED_IMU_LEN);
 }
@@ -79,16 +81,16 @@ static inline uint16_t mavlink_msg_scaled_imu_pack_chan(uint8_t system_id, uint8
 	mavlink_scaled_imu_t *p = (mavlink_scaled_imu_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SCALED_IMU;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->xacc = xacc; // int16_t:X acceleration (mg)
-	p->yacc = yacc; // int16_t:Y acceleration (mg)
-	p->zacc = zacc; // int16_t:Z acceleration (mg)
-	p->xgyro = xgyro; // int16_t:Angular speed around X axis (millirad /sec)
-	p->ygyro = ygyro; // int16_t:Angular speed around Y axis (millirad /sec)
-	p->zgyro = zgyro; // int16_t:Angular speed around Z axis (millirad /sec)
-	p->xmag = xmag; // int16_t:X Magnetic field (milli tesla)
-	p->ymag = ymag; // int16_t:Y Magnetic field (milli tesla)
-	p->zmag = zmag; // int16_t:Z Magnetic field (milli tesla)
+	p->usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	p->xacc = xacc;	// int16_t:X acceleration (mg)
+	p->yacc = yacc;	// int16_t:Y acceleration (mg)
+	p->zacc = zacc;	// int16_t:Z acceleration (mg)
+	p->xgyro = xgyro;	// int16_t:Angular speed around X axis (millirad /sec)
+	p->ygyro = ygyro;	// int16_t:Angular speed around Y axis (millirad /sec)
+	p->zgyro = zgyro;	// int16_t:Angular speed around Z axis (millirad /sec)
+	p->xmag = xmag;	// int16_t:X Magnetic field (milli tesla)
+	p->ymag = ymag;	// int16_t:Y Magnetic field (milli tesla)
+	p->zmag = zmag;	// int16_t:Z Magnetic field (milli tesla)
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SCALED_IMU_LEN);
 }
@@ -106,6 +108,8 @@ static inline uint16_t mavlink_msg_scaled_imu_encode(uint8_t system_id, uint8_t 
 	return mavlink_msg_scaled_imu_pack(system_id, component_id, msg, scaled_imu->usec, scaled_imu->xacc, scaled_imu->yacc, scaled_imu->zacc, scaled_imu->xgyro, scaled_imu->ygyro, scaled_imu->zgyro, scaled_imu->xmag, scaled_imu->ymag, scaled_imu->zmag);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a scaled_imu message
  * @param chan MAVLink channel to send the message
@@ -121,26 +125,22 @@ static inline uint16_t mavlink_msg_scaled_imu_encode(uint8_t system_id, uint8_t 
  * @param ymag Y Magnetic field (milli tesla)
  * @param zmag Z Magnetic field (milli tesla)
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_scaled_imu_send(mavlink_channel_t chan, uint64_t usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
 	mavlink_header_t hdr;
 	mavlink_scaled_imu_t payload;
-	uint16_t checksum;
-	mavlink_scaled_imu_t *p = &payload;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->xacc = xacc; // int16_t:X acceleration (mg)
-	p->yacc = yacc; // int16_t:Y acceleration (mg)
-	p->zacc = zacc; // int16_t:Z acceleration (mg)
-	p->xgyro = xgyro; // int16_t:Angular speed around X axis (millirad /sec)
-	p->ygyro = ygyro; // int16_t:Angular speed around Y axis (millirad /sec)
-	p->zgyro = zgyro; // int16_t:Angular speed around Z axis (millirad /sec)
-	p->xmag = xmag; // int16_t:X Magnetic field (milli tesla)
-	p->ymag = ymag; // int16_t:Y Magnetic field (milli tesla)
-	p->zmag = zmag; // int16_t:Z Magnetic field (milli tesla)
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SCALED_IMU_LEN )
+	payload.usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	payload.xacc = xacc;	// int16_t:X acceleration (mg)
+	payload.yacc = yacc;	// int16_t:Y acceleration (mg)
+	payload.zacc = zacc;	// int16_t:Z acceleration (mg)
+	payload.xgyro = xgyro;	// int16_t:Angular speed around X axis (millirad /sec)
+	payload.ygyro = ygyro;	// int16_t:Angular speed around Y axis (millirad /sec)
+	payload.zgyro = zgyro;	// int16_t:Angular speed around Z axis (millirad /sec)
+	payload.xmag = xmag;	// int16_t:X Magnetic field (milli tesla)
+	payload.ymag = ymag;	// int16_t:Y Magnetic field (milli tesla)
+	payload.zmag = zmag;	// int16_t:Z Magnetic field (milli tesla)
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_SCALED_IMU_LEN;
@@ -151,14 +151,12 @@ static inline void mavlink_msg_scaled_imu_send(mavlink_channel_t chan, uint64_t 
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x1C, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

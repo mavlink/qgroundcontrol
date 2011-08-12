@@ -3,16 +3,18 @@
 #define MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA 54
 #define MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA_LEN 25
 #define MAVLINK_MSG_54_LEN 25
+#define MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA_KEY 0xEA
+#define MAVLINK_MSG_54_KEY 0xEA
 
 typedef struct __mavlink_safety_allowed_area_t 
 {
-	float p1x; ///< x position 1 / Latitude 1
-	float p1y; ///< y position 1 / Longitude 1
-	float p1z; ///< z position 1 / Altitude 1
-	float p2x; ///< x position 2 / Latitude 2
-	float p2y; ///< y position 2 / Longitude 2
-	float p2z; ///< z position 2 / Altitude 2
-	uint8_t frame; ///< Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
+	float p1x;	///< x position 1 / Latitude 1
+	float p1y;	///< y position 1 / Longitude 1
+	float p1z;	///< z position 1 / Altitude 1
+	float p2x;	///< x position 2 / Latitude 2
+	float p2y;	///< y position 2 / Longitude 2
+	float p2z;	///< z position 2 / Altitude 2
+	uint8_t frame;	///< Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
 
 } mavlink_safety_allowed_area_t;
 
@@ -36,13 +38,13 @@ static inline uint16_t mavlink_msg_safety_allowed_area_pack(uint8_t system_id, u
 	mavlink_safety_allowed_area_t *p = (mavlink_safety_allowed_area_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA;
 
-	p->frame = frame; // uint8_t:Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
-	p->p1x = p1x; // float:x position 1 / Latitude 1
-	p->p1y = p1y; // float:y position 1 / Longitude 1
-	p->p1z = p1z; // float:z position 1 / Altitude 1
-	p->p2x = p2x; // float:x position 2 / Latitude 2
-	p->p2y = p2y; // float:y position 2 / Longitude 2
-	p->p2z = p2z; // float:z position 2 / Altitude 2
+	p->frame = frame;	// uint8_t:Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
+	p->p1x = p1x;	// float:x position 1 / Latitude 1
+	p->p1y = p1y;	// float:y position 1 / Longitude 1
+	p->p1z = p1z;	// float:z position 1 / Altitude 1
+	p->p2x = p2x;	// float:x position 2 / Latitude 2
+	p->p2y = p2y;	// float:y position 2 / Longitude 2
+	p->p2z = p2z;	// float:z position 2 / Altitude 2
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA_LEN);
 }
@@ -67,13 +69,13 @@ static inline uint16_t mavlink_msg_safety_allowed_area_pack_chan(uint8_t system_
 	mavlink_safety_allowed_area_t *p = (mavlink_safety_allowed_area_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA;
 
-	p->frame = frame; // uint8_t:Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
-	p->p1x = p1x; // float:x position 1 / Latitude 1
-	p->p1y = p1y; // float:y position 1 / Longitude 1
-	p->p1z = p1z; // float:z position 1 / Altitude 1
-	p->p2x = p2x; // float:x position 2 / Latitude 2
-	p->p2y = p2y; // float:y position 2 / Longitude 2
-	p->p2z = p2z; // float:z position 2 / Altitude 2
+	p->frame = frame;	// uint8_t:Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
+	p->p1x = p1x;	// float:x position 1 / Latitude 1
+	p->p1y = p1y;	// float:y position 1 / Longitude 1
+	p->p1z = p1z;	// float:z position 1 / Altitude 1
+	p->p2x = p2x;	// float:x position 2 / Latitude 2
+	p->p2y = p2y;	// float:y position 2 / Longitude 2
+	p->p2z = p2z;	// float:z position 2 / Altitude 2
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA_LEN);
 }
@@ -91,6 +93,8 @@ static inline uint16_t mavlink_msg_safety_allowed_area_encode(uint8_t system_id,
 	return mavlink_msg_safety_allowed_area_pack(system_id, component_id, msg, safety_allowed_area->frame, safety_allowed_area->p1x, safety_allowed_area->p1y, safety_allowed_area->p1z, safety_allowed_area->p2x, safety_allowed_area->p2y, safety_allowed_area->p2z);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a safety_allowed_area message
  * @param chan MAVLink channel to send the message
@@ -103,23 +107,19 @@ static inline uint16_t mavlink_msg_safety_allowed_area_encode(uint8_t system_id,
  * @param p2y y position 2 / Longitude 2
  * @param p2z z position 2 / Altitude 2
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_safety_allowed_area_send(mavlink_channel_t chan, uint8_t frame, float p1x, float p1y, float p1z, float p2x, float p2y, float p2z)
 {
 	mavlink_header_t hdr;
 	mavlink_safety_allowed_area_t payload;
-	uint16_t checksum;
-	mavlink_safety_allowed_area_t *p = &payload;
 
-	p->frame = frame; // uint8_t:Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
-	p->p1x = p1x; // float:x position 1 / Latitude 1
-	p->p1y = p1y; // float:y position 1 / Longitude 1
-	p->p1z = p1z; // float:z position 1 / Altitude 1
-	p->p2x = p2x; // float:x position 2 / Latitude 2
-	p->p2y = p2y; // float:y position 2 / Longitude 2
-	p->p2z = p2z; // float:z position 2 / Altitude 2
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA_LEN )
+	payload.frame = frame;	// uint8_t:Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
+	payload.p1x = p1x;	// float:x position 1 / Latitude 1
+	payload.p1y = p1y;	// float:y position 1 / Longitude 1
+	payload.p1z = p1z;	// float:z position 1 / Altitude 1
+	payload.p2x = p2x;	// float:x position 2 / Latitude 2
+	payload.p2y = p2y;	// float:y position 2 / Longitude 2
+	payload.p2z = p2z;	// float:z position 2 / Altitude 2
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_SAFETY_ALLOWED_AREA_LEN;
@@ -130,14 +130,12 @@ static inline void mavlink_msg_safety_allowed_area_send(mavlink_channel_t chan, 
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xEA, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

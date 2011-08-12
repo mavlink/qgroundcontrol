@@ -3,16 +3,18 @@
 #define MAVLINK_MSG_ID_SYS_STATUS 34
 #define MAVLINK_MSG_ID_SYS_STATUS_LEN 11
 #define MAVLINK_MSG_34_LEN 11
+#define MAVLINK_MSG_ID_SYS_STATUS_KEY 0x6F
+#define MAVLINK_MSG_34_KEY 0x6F
 
 typedef struct __mavlink_sys_status_t 
 {
-	uint16_t load; ///< Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
-	uint16_t vbat; ///< Battery voltage, in millivolts (1 = 1 millivolt)
-	uint16_t battery_remaining; ///< Remaining battery energy: (0%: 0, 100%: 1000)
-	uint16_t packet_drop; ///< Dropped packets (packets that were corrupted on reception on the MAV)
-	uint8_t mode; ///< System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h
-	uint8_t nav_mode; ///< Navigation mode, see MAV_NAV_MODE ENUM
-	uint8_t status; ///< System status flag, see MAV_STATUS ENUM
+	uint16_t load;	///< Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
+	uint16_t vbat;	///< Battery voltage, in millivolts (1 = 1 millivolt)
+	uint16_t battery_remaining;	///< Remaining battery energy: (0%: 0, 100%: 1000)
+	uint16_t packet_drop;	///< Dropped packets (packets that were corrupted on reception on the MAV)
+	uint8_t mode;	///< System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h
+	uint8_t nav_mode;	///< Navigation mode, see MAV_NAV_MODE ENUM
+	uint8_t status;	///< System status flag, see MAV_STATUS ENUM
 
 } mavlink_sys_status_t;
 
@@ -36,13 +38,13 @@ static inline uint16_t mavlink_msg_sys_status_pack(uint8_t system_id, uint8_t co
 	mavlink_sys_status_t *p = (mavlink_sys_status_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SYS_STATUS;
 
-	p->mode = mode; // uint8_t:System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h
-	p->nav_mode = nav_mode; // uint8_t:Navigation mode, see MAV_NAV_MODE ENUM
-	p->status = status; // uint8_t:System status flag, see MAV_STATUS ENUM
-	p->load = load; // uint16_t:Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
-	p->vbat = vbat; // uint16_t:Battery voltage, in millivolts (1 = 1 millivolt)
-	p->battery_remaining = battery_remaining; // uint16_t:Remaining battery energy: (0%: 0, 100%: 1000)
-	p->packet_drop = packet_drop; // uint16_t:Dropped packets (packets that were corrupted on reception on the MAV)
+	p->mode = mode;	// uint8_t:System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h
+	p->nav_mode = nav_mode;	// uint8_t:Navigation mode, see MAV_NAV_MODE ENUM
+	p->status = status;	// uint8_t:System status flag, see MAV_STATUS ENUM
+	p->load = load;	// uint16_t:Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
+	p->vbat = vbat;	// uint16_t:Battery voltage, in millivolts (1 = 1 millivolt)
+	p->battery_remaining = battery_remaining;	// uint16_t:Remaining battery energy: (0%: 0, 100%: 1000)
+	p->packet_drop = packet_drop;	// uint16_t:Dropped packets (packets that were corrupted on reception on the MAV)
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SYS_STATUS_LEN);
 }
@@ -67,13 +69,13 @@ static inline uint16_t mavlink_msg_sys_status_pack_chan(uint8_t system_id, uint8
 	mavlink_sys_status_t *p = (mavlink_sys_status_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SYS_STATUS;
 
-	p->mode = mode; // uint8_t:System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h
-	p->nav_mode = nav_mode; // uint8_t:Navigation mode, see MAV_NAV_MODE ENUM
-	p->status = status; // uint8_t:System status flag, see MAV_STATUS ENUM
-	p->load = load; // uint16_t:Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
-	p->vbat = vbat; // uint16_t:Battery voltage, in millivolts (1 = 1 millivolt)
-	p->battery_remaining = battery_remaining; // uint16_t:Remaining battery energy: (0%: 0, 100%: 1000)
-	p->packet_drop = packet_drop; // uint16_t:Dropped packets (packets that were corrupted on reception on the MAV)
+	p->mode = mode;	// uint8_t:System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h
+	p->nav_mode = nav_mode;	// uint8_t:Navigation mode, see MAV_NAV_MODE ENUM
+	p->status = status;	// uint8_t:System status flag, see MAV_STATUS ENUM
+	p->load = load;	// uint16_t:Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
+	p->vbat = vbat;	// uint16_t:Battery voltage, in millivolts (1 = 1 millivolt)
+	p->battery_remaining = battery_remaining;	// uint16_t:Remaining battery energy: (0%: 0, 100%: 1000)
+	p->packet_drop = packet_drop;	// uint16_t:Dropped packets (packets that were corrupted on reception on the MAV)
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SYS_STATUS_LEN);
 }
@@ -91,6 +93,8 @@ static inline uint16_t mavlink_msg_sys_status_encode(uint8_t system_id, uint8_t 
 	return mavlink_msg_sys_status_pack(system_id, component_id, msg, sys_status->mode, sys_status->nav_mode, sys_status->status, sys_status->load, sys_status->vbat, sys_status->battery_remaining, sys_status->packet_drop);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a sys_status message
  * @param chan MAVLink channel to send the message
@@ -103,23 +107,19 @@ static inline uint16_t mavlink_msg_sys_status_encode(uint8_t system_id, uint8_t 
  * @param battery_remaining Remaining battery energy: (0%: 0, 100%: 1000)
  * @param packet_drop Dropped packets (packets that were corrupted on reception on the MAV)
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_sys_status_send(mavlink_channel_t chan, uint8_t mode, uint8_t nav_mode, uint8_t status, uint16_t load, uint16_t vbat, uint16_t battery_remaining, uint16_t packet_drop)
 {
 	mavlink_header_t hdr;
 	mavlink_sys_status_t payload;
-	uint16_t checksum;
-	mavlink_sys_status_t *p = &payload;
 
-	p->mode = mode; // uint8_t:System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h
-	p->nav_mode = nav_mode; // uint8_t:Navigation mode, see MAV_NAV_MODE ENUM
-	p->status = status; // uint8_t:System status flag, see MAV_STATUS ENUM
-	p->load = load; // uint16_t:Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
-	p->vbat = vbat; // uint16_t:Battery voltage, in millivolts (1 = 1 millivolt)
-	p->battery_remaining = battery_remaining; // uint16_t:Remaining battery energy: (0%: 0, 100%: 1000)
-	p->packet_drop = packet_drop; // uint16_t:Dropped packets (packets that were corrupted on reception on the MAV)
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SYS_STATUS_LEN )
+	payload.mode = mode;	// uint8_t:System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h
+	payload.nav_mode = nav_mode;	// uint8_t:Navigation mode, see MAV_NAV_MODE ENUM
+	payload.status = status;	// uint8_t:System status flag, see MAV_STATUS ENUM
+	payload.load = load;	// uint16_t:Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
+	payload.vbat = vbat;	// uint16_t:Battery voltage, in millivolts (1 = 1 millivolt)
+	payload.battery_remaining = battery_remaining;	// uint16_t:Remaining battery energy: (0%: 0, 100%: 1000)
+	payload.packet_drop = packet_drop;	// uint16_t:Dropped packets (packets that were corrupted on reception on the MAV)
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_SYS_STATUS_LEN;
@@ -130,14 +130,12 @@ static inline void mavlink_msg_sys_status_send(mavlink_channel_t chan, uint8_t m
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x6F, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

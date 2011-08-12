@@ -95,6 +95,39 @@ extern "C" {
 #endif
 
 
+/**
+ *
+ *  Convience functions. These are all in one send functions that are very
+ *  easy to use. Just define the symbol MAVLINK_USE_CONVENIENCE_FUNCTIONS.
+ *  These functions also support a buffer check, to ensure there is enough
+ *  space in your comm buffer that the function would not block - it could
+ *  also be used as the basis of a MUTEX. This is implemented in the send
+ *  function as a macro with two arguments, first the comm chan number and
+ *  the message length in the form 
+ *  MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_LEN )
+ *  followed by the function code and then
+ *  MAVLINK_BUFFER_CHECK_START
+ *  Note that there are no terminators on these statements to allow for
+ *  code nesting or other constructs. Default value for both is empty.
+ *  A sugested implementation is shown below and the symbols will be defined
+ *  only if they are not allready.
+ *
+ *  if ( serial_space( chan ) > len ) { // serial_space returns available space
+ *  ..... code that creates message
+ *  } 
+ *
+ *  #define MAVLINK_BUFFER_CHECK_START( c, l ) if ( serial_space( c ) > l ) {
+ *  #define MAVLINK_BUFFER_CHECK_END }
+ *
+ */
+//#define MAVLINK_USE_CONVENIENCE_FUNCTIONS
+#ifndef MAVLINK_BUFFER_CHECK_START
+#define MAVLINK_BUFFER_CHECK_START( c, l ) ;
+#endif
+#ifndef MAVLINK_BUFFER_CHECK_END
+#define MAVLINK_BUFFER_CHECK_END ;
+#endif
+
 #endif /* _ML_OPTIONS_H_ */
 
 #ifdef __cplusplus

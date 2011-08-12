@@ -3,16 +3,18 @@
 #define MAVLINK_MSG_ID_ATTITUDE 30
 #define MAVLINK_MSG_ID_ATTITUDE_LEN 32
 #define MAVLINK_MSG_30_LEN 32
+#define MAVLINK_MSG_ID_ATTITUDE_KEY 0xF3
+#define MAVLINK_MSG_30_KEY 0xF3
 
 typedef struct __mavlink_attitude_t 
 {
-	uint64_t usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	float roll; ///< Roll angle (rad)
-	float pitch; ///< Pitch angle (rad)
-	float yaw; ///< Yaw angle (rad)
-	float rollspeed; ///< Roll angular speed (rad/s)
-	float pitchspeed; ///< Pitch angular speed (rad/s)
-	float yawspeed; ///< Yaw angular speed (rad/s)
+	uint64_t usec;	///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	float roll;	///< Roll angle (rad)
+	float pitch;	///< Pitch angle (rad)
+	float yaw;	///< Yaw angle (rad)
+	float rollspeed;	///< Roll angular speed (rad/s)
+	float pitchspeed;	///< Pitch angular speed (rad/s)
+	float yawspeed;	///< Yaw angular speed (rad/s)
 
 } mavlink_attitude_t;
 
@@ -36,13 +38,13 @@ static inline uint16_t mavlink_msg_attitude_pack(uint8_t system_id, uint8_t comp
 	mavlink_attitude_t *p = (mavlink_attitude_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_ATTITUDE;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->roll = roll; // float:Roll angle (rad)
-	p->pitch = pitch; // float:Pitch angle (rad)
-	p->yaw = yaw; // float:Yaw angle (rad)
-	p->rollspeed = rollspeed; // float:Roll angular speed (rad/s)
-	p->pitchspeed = pitchspeed; // float:Pitch angular speed (rad/s)
-	p->yawspeed = yawspeed; // float:Yaw angular speed (rad/s)
+	p->usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	p->roll = roll;	// float:Roll angle (rad)
+	p->pitch = pitch;	// float:Pitch angle (rad)
+	p->yaw = yaw;	// float:Yaw angle (rad)
+	p->rollspeed = rollspeed;	// float:Roll angular speed (rad/s)
+	p->pitchspeed = pitchspeed;	// float:Pitch angular speed (rad/s)
+	p->yawspeed = yawspeed;	// float:Yaw angular speed (rad/s)
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_ATTITUDE_LEN);
 }
@@ -67,13 +69,13 @@ static inline uint16_t mavlink_msg_attitude_pack_chan(uint8_t system_id, uint8_t
 	mavlink_attitude_t *p = (mavlink_attitude_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_ATTITUDE;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->roll = roll; // float:Roll angle (rad)
-	p->pitch = pitch; // float:Pitch angle (rad)
-	p->yaw = yaw; // float:Yaw angle (rad)
-	p->rollspeed = rollspeed; // float:Roll angular speed (rad/s)
-	p->pitchspeed = pitchspeed; // float:Pitch angular speed (rad/s)
-	p->yawspeed = yawspeed; // float:Yaw angular speed (rad/s)
+	p->usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	p->roll = roll;	// float:Roll angle (rad)
+	p->pitch = pitch;	// float:Pitch angle (rad)
+	p->yaw = yaw;	// float:Yaw angle (rad)
+	p->rollspeed = rollspeed;	// float:Roll angular speed (rad/s)
+	p->pitchspeed = pitchspeed;	// float:Pitch angular speed (rad/s)
+	p->yawspeed = yawspeed;	// float:Yaw angular speed (rad/s)
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_ATTITUDE_LEN);
 }
@@ -91,6 +93,8 @@ static inline uint16_t mavlink_msg_attitude_encode(uint8_t system_id, uint8_t co
 	return mavlink_msg_attitude_pack(system_id, component_id, msg, attitude->usec, attitude->roll, attitude->pitch, attitude->yaw, attitude->rollspeed, attitude->pitchspeed, attitude->yawspeed);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a attitude message
  * @param chan MAVLink channel to send the message
@@ -103,23 +107,19 @@ static inline uint16_t mavlink_msg_attitude_encode(uint8_t system_id, uint8_t co
  * @param pitchspeed Pitch angular speed (rad/s)
  * @param yawspeed Yaw angular speed (rad/s)
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_attitude_send(mavlink_channel_t chan, uint64_t usec, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed)
 {
 	mavlink_header_t hdr;
 	mavlink_attitude_t payload;
-	uint16_t checksum;
-	mavlink_attitude_t *p = &payload;
 
-	p->usec = usec; // uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	p->roll = roll; // float:Roll angle (rad)
-	p->pitch = pitch; // float:Pitch angle (rad)
-	p->yaw = yaw; // float:Yaw angle (rad)
-	p->rollspeed = rollspeed; // float:Roll angular speed (rad/s)
-	p->pitchspeed = pitchspeed; // float:Pitch angular speed (rad/s)
-	p->yawspeed = yawspeed; // float:Yaw angular speed (rad/s)
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_ATTITUDE_LEN )
+	payload.usec = usec;	// uint64_t:Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	payload.roll = roll;	// float:Roll angle (rad)
+	payload.pitch = pitch;	// float:Pitch angle (rad)
+	payload.yaw = yaw;	// float:Yaw angle (rad)
+	payload.rollspeed = rollspeed;	// float:Roll angular speed (rad/s)
+	payload.pitchspeed = pitchspeed;	// float:Pitch angular speed (rad/s)
+	payload.yawspeed = yawspeed;	// float:Yaw angular speed (rad/s)
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_ATTITUDE_LEN;
@@ -130,14 +130,12 @@ static inline void mavlink_msg_attitude_send(mavlink_channel_t chan, uint64_t us
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xF3, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

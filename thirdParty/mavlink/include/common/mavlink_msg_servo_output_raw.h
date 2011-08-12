@@ -3,17 +3,19 @@
 #define MAVLINK_MSG_ID_SERVO_OUTPUT_RAW 37
 #define MAVLINK_MSG_ID_SERVO_OUTPUT_RAW_LEN 16
 #define MAVLINK_MSG_37_LEN 16
+#define MAVLINK_MSG_ID_SERVO_OUTPUT_RAW_KEY 0xEA
+#define MAVLINK_MSG_37_KEY 0xEA
 
 typedef struct __mavlink_servo_output_raw_t 
 {
-	uint16_t servo1_raw; ///< Servo output 1 value, in microseconds
-	uint16_t servo2_raw; ///< Servo output 2 value, in microseconds
-	uint16_t servo3_raw; ///< Servo output 3 value, in microseconds
-	uint16_t servo4_raw; ///< Servo output 4 value, in microseconds
-	uint16_t servo5_raw; ///< Servo output 5 value, in microseconds
-	uint16_t servo6_raw; ///< Servo output 6 value, in microseconds
-	uint16_t servo7_raw; ///< Servo output 7 value, in microseconds
-	uint16_t servo8_raw; ///< Servo output 8 value, in microseconds
+	uint16_t servo1_raw;	///< Servo output 1 value, in microseconds
+	uint16_t servo2_raw;	///< Servo output 2 value, in microseconds
+	uint16_t servo3_raw;	///< Servo output 3 value, in microseconds
+	uint16_t servo4_raw;	///< Servo output 4 value, in microseconds
+	uint16_t servo5_raw;	///< Servo output 5 value, in microseconds
+	uint16_t servo6_raw;	///< Servo output 6 value, in microseconds
+	uint16_t servo7_raw;	///< Servo output 7 value, in microseconds
+	uint16_t servo8_raw;	///< Servo output 8 value, in microseconds
 
 } mavlink_servo_output_raw_t;
 
@@ -38,14 +40,14 @@ static inline uint16_t mavlink_msg_servo_output_raw_pack(uint8_t system_id, uint
 	mavlink_servo_output_raw_t *p = (mavlink_servo_output_raw_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW;
 
-	p->servo1_raw = servo1_raw; // uint16_t:Servo output 1 value, in microseconds
-	p->servo2_raw = servo2_raw; // uint16_t:Servo output 2 value, in microseconds
-	p->servo3_raw = servo3_raw; // uint16_t:Servo output 3 value, in microseconds
-	p->servo4_raw = servo4_raw; // uint16_t:Servo output 4 value, in microseconds
-	p->servo5_raw = servo5_raw; // uint16_t:Servo output 5 value, in microseconds
-	p->servo6_raw = servo6_raw; // uint16_t:Servo output 6 value, in microseconds
-	p->servo7_raw = servo7_raw; // uint16_t:Servo output 7 value, in microseconds
-	p->servo8_raw = servo8_raw; // uint16_t:Servo output 8 value, in microseconds
+	p->servo1_raw = servo1_raw;	// uint16_t:Servo output 1 value, in microseconds
+	p->servo2_raw = servo2_raw;	// uint16_t:Servo output 2 value, in microseconds
+	p->servo3_raw = servo3_raw;	// uint16_t:Servo output 3 value, in microseconds
+	p->servo4_raw = servo4_raw;	// uint16_t:Servo output 4 value, in microseconds
+	p->servo5_raw = servo5_raw;	// uint16_t:Servo output 5 value, in microseconds
+	p->servo6_raw = servo6_raw;	// uint16_t:Servo output 6 value, in microseconds
+	p->servo7_raw = servo7_raw;	// uint16_t:Servo output 7 value, in microseconds
+	p->servo8_raw = servo8_raw;	// uint16_t:Servo output 8 value, in microseconds
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SERVO_OUTPUT_RAW_LEN);
 }
@@ -71,14 +73,14 @@ static inline uint16_t mavlink_msg_servo_output_raw_pack_chan(uint8_t system_id,
 	mavlink_servo_output_raw_t *p = (mavlink_servo_output_raw_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW;
 
-	p->servo1_raw = servo1_raw; // uint16_t:Servo output 1 value, in microseconds
-	p->servo2_raw = servo2_raw; // uint16_t:Servo output 2 value, in microseconds
-	p->servo3_raw = servo3_raw; // uint16_t:Servo output 3 value, in microseconds
-	p->servo4_raw = servo4_raw; // uint16_t:Servo output 4 value, in microseconds
-	p->servo5_raw = servo5_raw; // uint16_t:Servo output 5 value, in microseconds
-	p->servo6_raw = servo6_raw; // uint16_t:Servo output 6 value, in microseconds
-	p->servo7_raw = servo7_raw; // uint16_t:Servo output 7 value, in microseconds
-	p->servo8_raw = servo8_raw; // uint16_t:Servo output 8 value, in microseconds
+	p->servo1_raw = servo1_raw;	// uint16_t:Servo output 1 value, in microseconds
+	p->servo2_raw = servo2_raw;	// uint16_t:Servo output 2 value, in microseconds
+	p->servo3_raw = servo3_raw;	// uint16_t:Servo output 3 value, in microseconds
+	p->servo4_raw = servo4_raw;	// uint16_t:Servo output 4 value, in microseconds
+	p->servo5_raw = servo5_raw;	// uint16_t:Servo output 5 value, in microseconds
+	p->servo6_raw = servo6_raw;	// uint16_t:Servo output 6 value, in microseconds
+	p->servo7_raw = servo7_raw;	// uint16_t:Servo output 7 value, in microseconds
+	p->servo8_raw = servo8_raw;	// uint16_t:Servo output 8 value, in microseconds
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SERVO_OUTPUT_RAW_LEN);
 }
@@ -96,6 +98,8 @@ static inline uint16_t mavlink_msg_servo_output_raw_encode(uint8_t system_id, ui
 	return mavlink_msg_servo_output_raw_pack(system_id, component_id, msg, servo_output_raw->servo1_raw, servo_output_raw->servo2_raw, servo_output_raw->servo3_raw, servo_output_raw->servo4_raw, servo_output_raw->servo5_raw, servo_output_raw->servo6_raw, servo_output_raw->servo7_raw, servo_output_raw->servo8_raw);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a servo_output_raw message
  * @param chan MAVLink channel to send the message
@@ -109,24 +113,20 @@ static inline uint16_t mavlink_msg_servo_output_raw_encode(uint8_t system_id, ui
  * @param servo7_raw Servo output 7 value, in microseconds
  * @param servo8_raw Servo output 8 value, in microseconds
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_servo_output_raw_send(mavlink_channel_t chan, uint16_t servo1_raw, uint16_t servo2_raw, uint16_t servo3_raw, uint16_t servo4_raw, uint16_t servo5_raw, uint16_t servo6_raw, uint16_t servo7_raw, uint16_t servo8_raw)
 {
 	mavlink_header_t hdr;
 	mavlink_servo_output_raw_t payload;
-	uint16_t checksum;
-	mavlink_servo_output_raw_t *p = &payload;
 
-	p->servo1_raw = servo1_raw; // uint16_t:Servo output 1 value, in microseconds
-	p->servo2_raw = servo2_raw; // uint16_t:Servo output 2 value, in microseconds
-	p->servo3_raw = servo3_raw; // uint16_t:Servo output 3 value, in microseconds
-	p->servo4_raw = servo4_raw; // uint16_t:Servo output 4 value, in microseconds
-	p->servo5_raw = servo5_raw; // uint16_t:Servo output 5 value, in microseconds
-	p->servo6_raw = servo6_raw; // uint16_t:Servo output 6 value, in microseconds
-	p->servo7_raw = servo7_raw; // uint16_t:Servo output 7 value, in microseconds
-	p->servo8_raw = servo8_raw; // uint16_t:Servo output 8 value, in microseconds
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SERVO_OUTPUT_RAW_LEN )
+	payload.servo1_raw = servo1_raw;	// uint16_t:Servo output 1 value, in microseconds
+	payload.servo2_raw = servo2_raw;	// uint16_t:Servo output 2 value, in microseconds
+	payload.servo3_raw = servo3_raw;	// uint16_t:Servo output 3 value, in microseconds
+	payload.servo4_raw = servo4_raw;	// uint16_t:Servo output 4 value, in microseconds
+	payload.servo5_raw = servo5_raw;	// uint16_t:Servo output 5 value, in microseconds
+	payload.servo6_raw = servo6_raw;	// uint16_t:Servo output 6 value, in microseconds
+	payload.servo7_raw = servo7_raw;	// uint16_t:Servo output 7 value, in microseconds
+	payload.servo8_raw = servo8_raw;	// uint16_t:Servo output 8 value, in microseconds
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_SERVO_OUTPUT_RAW_LEN;
@@ -137,14 +137,12 @@ static inline void mavlink_msg_servo_output_raw_send(mavlink_channel_t chan, uin
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xEA, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif
