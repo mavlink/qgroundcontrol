@@ -3,16 +3,18 @@
 #define MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET 120
 #define MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_LEN 20
 #define MAVLINK_MSG_120_LEN 20
+#define MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_KEY 0xE1
+#define MAVLINK_MSG_120_KEY 0xE1
 
 typedef struct __mavlink_position_control_setpoint_set_t 
 {
-	float x; ///< x position
-	float y; ///< y position
-	float z; ///< z position
-	float yaw; ///< yaw orientation in radians, 0 = NORTH
-	uint16_t id; ///< ID of waypoint, 0 for plain position
-	uint8_t target_system; ///< System ID
-	uint8_t target_component; ///< Component ID
+	float x;	///< x position
+	float y;	///< y position
+	float z;	///< z position
+	float yaw;	///< yaw orientation in radians, 0 = NORTH
+	uint16_t id;	///< ID of waypoint, 0 for plain position
+	uint8_t target_system;	///< System ID
+	uint8_t target_component;	///< Component ID
 
 } mavlink_position_control_setpoint_set_t;
 
@@ -36,13 +38,13 @@ static inline uint16_t mavlink_msg_position_control_setpoint_set_pack(uint8_t sy
 	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET;
 
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->id = id; // uint16_t:ID of waypoint, 0 for plain position
-	p->x = x; // float:x position
-	p->y = y; // float:y position
-	p->z = z; // float:z position
-	p->yaw = yaw; // float:yaw orientation in radians, 0 = NORTH
+	p->target_system = target_system;	// uint8_t:System ID
+	p->target_component = target_component;	// uint8_t:Component ID
+	p->id = id;	// uint16_t:ID of waypoint, 0 for plain position
+	p->x = x;	// float:x position
+	p->y = y;	// float:y position
+	p->z = z;	// float:z position
+	p->yaw = yaw;	// float:yaw orientation in radians, 0 = NORTH
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_LEN);
 }
@@ -67,13 +69,13 @@ static inline uint16_t mavlink_msg_position_control_setpoint_set_pack_chan(uint8
 	mavlink_position_control_setpoint_set_t *p = (mavlink_position_control_setpoint_set_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET;
 
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->id = id; // uint16_t:ID of waypoint, 0 for plain position
-	p->x = x; // float:x position
-	p->y = y; // float:y position
-	p->z = z; // float:z position
-	p->yaw = yaw; // float:yaw orientation in radians, 0 = NORTH
+	p->target_system = target_system;	// uint8_t:System ID
+	p->target_component = target_component;	// uint8_t:Component ID
+	p->id = id;	// uint16_t:ID of waypoint, 0 for plain position
+	p->x = x;	// float:x position
+	p->y = y;	// float:y position
+	p->z = z;	// float:z position
+	p->yaw = yaw;	// float:yaw orientation in radians, 0 = NORTH
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_LEN);
 }
@@ -91,6 +93,8 @@ static inline uint16_t mavlink_msg_position_control_setpoint_set_encode(uint8_t 
 	return mavlink_msg_position_control_setpoint_set_pack(system_id, component_id, msg, position_control_setpoint_set->target_system, position_control_setpoint_set->target_component, position_control_setpoint_set->id, position_control_setpoint_set->x, position_control_setpoint_set->y, position_control_setpoint_set->z, position_control_setpoint_set->yaw);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a position_control_setpoint_set message
  * @param chan MAVLink channel to send the message
@@ -103,23 +107,19 @@ static inline uint16_t mavlink_msg_position_control_setpoint_set_encode(uint8_t 
  * @param z z position
  * @param yaw yaw orientation in radians, 0 = NORTH
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_position_control_setpoint_set_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint16_t id, float x, float y, float z, float yaw)
 {
 	mavlink_header_t hdr;
 	mavlink_position_control_setpoint_set_t payload;
-	uint16_t checksum;
-	mavlink_position_control_setpoint_set_t *p = &payload;
 
-	p->target_system = target_system; // uint8_t:System ID
-	p->target_component = target_component; // uint8_t:Component ID
-	p->id = id; // uint16_t:ID of waypoint, 0 for plain position
-	p->x = x; // float:x position
-	p->y = y; // float:y position
-	p->z = z; // float:z position
-	p->yaw = yaw; // float:yaw orientation in radians, 0 = NORTH
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_LEN )
+	payload.target_system = target_system;	// uint8_t:System ID
+	payload.target_component = target_component;	// uint8_t:Component ID
+	payload.id = id;	// uint16_t:ID of waypoint, 0 for plain position
+	payload.x = x;	// float:x position
+	payload.y = y;	// float:y position
+	payload.z = z;	// float:z position
+	payload.yaw = yaw;	// float:yaw orientation in radians, 0 = NORTH
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT_SET_LEN;
@@ -130,14 +130,12 @@ static inline void mavlink_msg_position_control_setpoint_set_send(mavlink_channe
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xE1, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

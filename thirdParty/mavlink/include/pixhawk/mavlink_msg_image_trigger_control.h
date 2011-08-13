@@ -3,10 +3,12 @@
 #define MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL 102
 #define MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL_LEN 1
 #define MAVLINK_MSG_102_LEN 1
+#define MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL_KEY 0xEE
+#define MAVLINK_MSG_102_KEY 0xEE
 
 typedef struct __mavlink_image_trigger_control_t 
 {
-	uint8_t enable; ///< 0 to disable, 1 to enable
+	uint8_t enable;	///< 0 to disable, 1 to enable
 
 } mavlink_image_trigger_control_t;
 
@@ -24,7 +26,7 @@ static inline uint16_t mavlink_msg_image_trigger_control_pack(uint8_t system_id,
 	mavlink_image_trigger_control_t *p = (mavlink_image_trigger_control_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL;
 
-	p->enable = enable; // uint8_t:0 to disable, 1 to enable
+	p->enable = enable;	// uint8_t:0 to disable, 1 to enable
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL_LEN);
 }
@@ -43,7 +45,7 @@ static inline uint16_t mavlink_msg_image_trigger_control_pack_chan(uint8_t syste
 	mavlink_image_trigger_control_t *p = (mavlink_image_trigger_control_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL;
 
-	p->enable = enable; // uint8_t:0 to disable, 1 to enable
+	p->enable = enable;	// uint8_t:0 to disable, 1 to enable
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL_LEN);
 }
@@ -61,23 +63,21 @@ static inline uint16_t mavlink_msg_image_trigger_control_encode(uint8_t system_i
 	return mavlink_msg_image_trigger_control_pack(system_id, component_id, msg, image_trigger_control->enable);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a image_trigger_control message
  * @param chan MAVLink channel to send the message
  *
  * @param enable 0 to disable, 1 to enable
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_image_trigger_control_send(mavlink_channel_t chan, uint8_t enable)
 {
 	mavlink_header_t hdr;
 	mavlink_image_trigger_control_t payload;
-	uint16_t checksum;
-	mavlink_image_trigger_control_t *p = &payload;
 
-	p->enable = enable; // uint8_t:0 to disable, 1 to enable
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL_LEN )
+	payload.enable = enable;	// uint8_t:0 to disable, 1 to enable
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_IMAGE_TRIGGER_CONTROL_LEN;
@@ -88,14 +88,12 @@ static inline void mavlink_msg_image_trigger_control_send(mavlink_channel_t chan
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xEE, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

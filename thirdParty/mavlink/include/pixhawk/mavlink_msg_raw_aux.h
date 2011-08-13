@@ -3,16 +3,18 @@
 #define MAVLINK_MSG_ID_RAW_AUX 141
 #define MAVLINK_MSG_ID_RAW_AUX_LEN 16
 #define MAVLINK_MSG_141_LEN 16
+#define MAVLINK_MSG_ID_RAW_AUX_KEY 0xAB
+#define MAVLINK_MSG_141_KEY 0xAB
 
 typedef struct __mavlink_raw_aux_t 
 {
-	int32_t baro; ///< Barometric pressure (hecto Pascal)
-	uint16_t adc1; ///< ADC1 (J405 ADC3, LPC2148 AD0.6)
-	uint16_t adc2; ///< ADC2 (J405 ADC5, LPC2148 AD0.2)
-	uint16_t adc3; ///< ADC3 (J405 ADC6, LPC2148 AD0.1)
-	uint16_t adc4; ///< ADC4 (J405 ADC7, LPC2148 AD1.3)
-	uint16_t vbat; ///< Battery voltage
-	int16_t temp; ///< Temperature (degrees celcius)
+	int32_t baro;	///< Barometric pressure (hecto Pascal)
+	uint16_t adc1;	///< ADC1 (J405 ADC3, LPC2148 AD0.6)
+	uint16_t adc2;	///< ADC2 (J405 ADC5, LPC2148 AD0.2)
+	uint16_t adc3;	///< ADC3 (J405 ADC6, LPC2148 AD0.1)
+	uint16_t adc4;	///< ADC4 (J405 ADC7, LPC2148 AD1.3)
+	uint16_t vbat;	///< Battery voltage
+	int16_t temp;	///< Temperature (degrees celcius)
 
 } mavlink_raw_aux_t;
 
@@ -36,13 +38,13 @@ static inline uint16_t mavlink_msg_raw_aux_pack(uint8_t system_id, uint8_t compo
 	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_RAW_AUX;
 
-	p->adc1 = adc1; // uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
-	p->adc2 = adc2; // uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
-	p->adc3 = adc3; // uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
-	p->adc4 = adc4; // uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
-	p->vbat = vbat; // uint16_t:Battery voltage
-	p->temp = temp; // int16_t:Temperature (degrees celcius)
-	p->baro = baro; // int32_t:Barometric pressure (hecto Pascal)
+	p->adc1 = adc1;	// uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
+	p->adc2 = adc2;	// uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
+	p->adc3 = adc3;	// uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
+	p->adc4 = adc4;	// uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
+	p->vbat = vbat;	// uint16_t:Battery voltage
+	p->temp = temp;	// int16_t:Temperature (degrees celcius)
+	p->baro = baro;	// int32_t:Barometric pressure (hecto Pascal)
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_RAW_AUX_LEN);
 }
@@ -67,13 +69,13 @@ static inline uint16_t mavlink_msg_raw_aux_pack_chan(uint8_t system_id, uint8_t 
 	mavlink_raw_aux_t *p = (mavlink_raw_aux_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_RAW_AUX;
 
-	p->adc1 = adc1; // uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
-	p->adc2 = adc2; // uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
-	p->adc3 = adc3; // uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
-	p->adc4 = adc4; // uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
-	p->vbat = vbat; // uint16_t:Battery voltage
-	p->temp = temp; // int16_t:Temperature (degrees celcius)
-	p->baro = baro; // int32_t:Barometric pressure (hecto Pascal)
+	p->adc1 = adc1;	// uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
+	p->adc2 = adc2;	// uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
+	p->adc3 = adc3;	// uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
+	p->adc4 = adc4;	// uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
+	p->vbat = vbat;	// uint16_t:Battery voltage
+	p->temp = temp;	// int16_t:Temperature (degrees celcius)
+	p->baro = baro;	// int32_t:Barometric pressure (hecto Pascal)
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_RAW_AUX_LEN);
 }
@@ -91,6 +93,8 @@ static inline uint16_t mavlink_msg_raw_aux_encode(uint8_t system_id, uint8_t com
 	return mavlink_msg_raw_aux_pack(system_id, component_id, msg, raw_aux->adc1, raw_aux->adc2, raw_aux->adc3, raw_aux->adc4, raw_aux->vbat, raw_aux->temp, raw_aux->baro);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a raw_aux message
  * @param chan MAVLink channel to send the message
@@ -103,23 +107,19 @@ static inline uint16_t mavlink_msg_raw_aux_encode(uint8_t system_id, uint8_t com
  * @param temp Temperature (degrees celcius)
  * @param baro Barometric pressure (hecto Pascal)
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_raw_aux_send(mavlink_channel_t chan, uint16_t adc1, uint16_t adc2, uint16_t adc3, uint16_t adc4, uint16_t vbat, int16_t temp, int32_t baro)
 {
 	mavlink_header_t hdr;
 	mavlink_raw_aux_t payload;
-	uint16_t checksum;
-	mavlink_raw_aux_t *p = &payload;
 
-	p->adc1 = adc1; // uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
-	p->adc2 = adc2; // uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
-	p->adc3 = adc3; // uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
-	p->adc4 = adc4; // uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
-	p->vbat = vbat; // uint16_t:Battery voltage
-	p->temp = temp; // int16_t:Temperature (degrees celcius)
-	p->baro = baro; // int32_t:Barometric pressure (hecto Pascal)
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_RAW_AUX_LEN )
+	payload.adc1 = adc1;	// uint16_t:ADC1 (J405 ADC3, LPC2148 AD0.6)
+	payload.adc2 = adc2;	// uint16_t:ADC2 (J405 ADC5, LPC2148 AD0.2)
+	payload.adc3 = adc3;	// uint16_t:ADC3 (J405 ADC6, LPC2148 AD0.1)
+	payload.adc4 = adc4;	// uint16_t:ADC4 (J405 ADC7, LPC2148 AD1.3)
+	payload.vbat = vbat;	// uint16_t:Battery voltage
+	payload.temp = temp;	// int16_t:Temperature (degrees celcius)
+	payload.baro = baro;	// int32_t:Barometric pressure (hecto Pascal)
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_RAW_AUX_LEN;
@@ -130,14 +130,12 @@ static inline void mavlink_msg_raw_aux_send(mavlink_channel_t chan, uint16_t adc
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xAB, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

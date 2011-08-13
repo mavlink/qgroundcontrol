@@ -19,6 +19,12 @@
 
 /* This assumes you have the mavlink headers on your include path
  or in the same folder as this source file */
+
+// Disable auto-data structures
+#ifndef MAVLINK_NO_DATA
+#define MAVLINK_NO_DATA
+#endif
+
 #include <mavlink.h>
 #include <stdbool.h>
 
@@ -47,11 +53,9 @@ enum MAVLINK_WPM_CODES
 
 /* WAYPOINT MANAGER - MISSION LIB */
 
-#define MAVLINK_WPM_MAX_WP_COUNT 30
+#define MAVLINK_WPM_MAX_WP_COUNT 15
 #define MAVLINK_WPM_CONFIG_IN_FLIGHT_UPDATE				  ///< Enable double buffer and in-flight updates
 #define MAVLINK_WPM_TEXT_FEEDBACK 1						  ///< Report back status information as text
-#define MAVLINK_WPM_SYSTEM_ID 1
-#define MAVLINK_WPM_COMPONENT_ID 1
 #define MAVLINK_WPM_PROTOCOL_TIMEOUT_DEFAULT 2000000
 #define MAVLINK_WPM_SETPOINT_DELAY_DEFAULT 1000000
 #define MAVLINK_WPM_PROTOCOL_DELAY_DEFAULT 40
