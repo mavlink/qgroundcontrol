@@ -1216,58 +1216,49 @@ void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
 }
 
 void UAS::startRadioControlCalibration()
-{// FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_DO_RC_CALIB;
-//    sendMessage(msg);
+{
+    mavlink_message_t msg;
+    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
+    mavlink_msg_command_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, 1);
+    sendMessage(msg);
 }
 
 void UAS::startDataRecording()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_START);
-//    sendMessage(msg);
-}
-
-void UAS::pauseDataRecording()
-{
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_PAUSE);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    mavlink_msg_command_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_DO_CONTROL_VIDEO, 1, -1, -1, -1, 2);
+    sendMessage(msg);
 }
 
 void UAS::stopDataRecording()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_REC_STOP);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    mavlink_msg_command_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_DO_CONTROL_VIDEO, 1, -1, -1, -1, 0);
+    sendMessage(msg);
 }
 
 void UAS::startMagnetometerCalibration()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_MAG);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
+    mavlink_msg_command_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 1, 0, 0);
+    sendMessage(msg);
 }
 
 void UAS::startGyroscopeCalibration()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_GYRO);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
+    mavlink_msg_command_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 1, 0, 0, 0);
+    sendMessage(msg);
 }
 
 void UAS::startPressureCalibration()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_ACTION_CALIBRATE_PRESSURE);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
+    mavlink_msg_command_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 1, 0);
+    sendMessage(msg);
 }
 
 quint64 UAS::getUnixReferenceTime(quint64 time)
@@ -1658,27 +1649,21 @@ void UAS::requestParameters()
 {
     mavlink_message_t msg;
     mavlink_msg_param_request_list_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 25);
-    // Send message twice to increase chance of reception
     sendMessage(msg);
 }
 
 void UAS::writeParametersToStorage()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_STORAGE_WRITE);
-//    //mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(),(uint8_t)MAV_ACTION_STORAGE_WRITE);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    mavlink_msg_command_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1);
+    sendMessage(msg);
 }
 
 void UAS::readParametersFromStorage()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(uint8_t)MAV_ACTION_STORAGE_READ);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    mavlink_msg_command_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 0, -1, -1, -1);
+    sendMessage(msg);
 }
 
 void UAS::enableAllDataTransmission(int rate)
