@@ -3,11 +3,13 @@
 #define MAVLINK_MSG_ID_CTRL_SRFC_PT 181
 #define MAVLINK_MSG_ID_CTRL_SRFC_PT_LEN 3
 #define MAVLINK_MSG_181_LEN 3
+#define MAVLINK_MSG_ID_CTRL_SRFC_PT_KEY 0x35
+#define MAVLINK_MSG_181_KEY 0x35
 
 typedef struct __mavlink_ctrl_srfc_pt_t 
 {
-	uint16_t bitfieldPt; ///< Bitfield containing the PT configuration
-	uint8_t target; ///< The system setting the commands
+	uint16_t bitfieldPt;	///< Bitfield containing the PT configuration
+	uint8_t target;	///< The system setting the commands
 
 } mavlink_ctrl_srfc_pt_t;
 
@@ -26,8 +28,8 @@ static inline uint16_t mavlink_msg_ctrl_srfc_pt_pack(uint8_t system_id, uint8_t 
 	mavlink_ctrl_srfc_pt_t *p = (mavlink_ctrl_srfc_pt_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_CTRL_SRFC_PT;
 
-	p->target = target; // uint8_t:The system setting the commands
-	p->bitfieldPt = bitfieldPt; // uint16_t:Bitfield containing the PT configuration
+	p->target = target;	// uint8_t:The system setting the commands
+	p->bitfieldPt = bitfieldPt;	// uint16_t:Bitfield containing the PT configuration
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_CTRL_SRFC_PT_LEN);
 }
@@ -47,8 +49,8 @@ static inline uint16_t mavlink_msg_ctrl_srfc_pt_pack_chan(uint8_t system_id, uin
 	mavlink_ctrl_srfc_pt_t *p = (mavlink_ctrl_srfc_pt_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_CTRL_SRFC_PT;
 
-	p->target = target; // uint8_t:The system setting the commands
-	p->bitfieldPt = bitfieldPt; // uint16_t:Bitfield containing the PT configuration
+	p->target = target;	// uint8_t:The system setting the commands
+	p->bitfieldPt = bitfieldPt;	// uint16_t:Bitfield containing the PT configuration
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_CTRL_SRFC_PT_LEN);
 }
@@ -66,6 +68,8 @@ static inline uint16_t mavlink_msg_ctrl_srfc_pt_encode(uint8_t system_id, uint8_
 	return mavlink_msg_ctrl_srfc_pt_pack(system_id, component_id, msg, ctrl_srfc_pt->target, ctrl_srfc_pt->bitfieldPt);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a ctrl_srfc_pt message
  * @param chan MAVLink channel to send the message
@@ -73,18 +77,14 @@ static inline uint16_t mavlink_msg_ctrl_srfc_pt_encode(uint8_t system_id, uint8_
  * @param target The system setting the commands
  * @param bitfieldPt Bitfield containing the PT configuration
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_ctrl_srfc_pt_send(mavlink_channel_t chan, uint8_t target, uint16_t bitfieldPt)
 {
 	mavlink_header_t hdr;
 	mavlink_ctrl_srfc_pt_t payload;
-	uint16_t checksum;
-	mavlink_ctrl_srfc_pt_t *p = &payload;
 
-	p->target = target; // uint8_t:The system setting the commands
-	p->bitfieldPt = bitfieldPt; // uint16_t:Bitfield containing the PT configuration
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_CTRL_SRFC_PT_LEN )
+	payload.target = target;	// uint8_t:The system setting the commands
+	payload.bitfieldPt = bitfieldPt;	// uint16_t:Bitfield containing the PT configuration
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_CTRL_SRFC_PT_LEN;
@@ -95,14 +95,12 @@ static inline void mavlink_msg_ctrl_srfc_pt_send(mavlink_channel_t chan, uint8_t
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x35, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

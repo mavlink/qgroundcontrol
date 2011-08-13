@@ -3,15 +3,17 @@
 #define MAVLINK_MSG_ID_RADIO_CALIBRATION 221
 #define MAVLINK_MSG_ID_RADIO_CALIBRATION_LEN 42
 #define MAVLINK_MSG_221_LEN 42
+#define MAVLINK_MSG_ID_RADIO_CALIBRATION_KEY 0x49
+#define MAVLINK_MSG_221_KEY 0x49
 
 typedef struct __mavlink_radio_calibration_t 
 {
-	uint16_t aileron[3]; ///< Aileron setpoints: left, center, right
-	uint16_t elevator[3]; ///< Elevator setpoints: nose down, center, nose up
-	uint16_t rudder[3]; ///< Rudder setpoints: nose left, center, nose right
-	uint16_t gyro[2]; ///< Tail gyro mode/gain setpoints: heading hold, rate mode
-	uint16_t pitch[5]; ///< Pitch curve setpoints (every 25%)
-	uint16_t throttle[5]; ///< Throttle curve setpoints (every 25%)
+	uint16_t aileron[3];	///< Aileron setpoints: left, center, right
+	uint16_t elevator[3];	///< Elevator setpoints: nose down, center, nose up
+	uint16_t rudder[3];	///< Rudder setpoints: nose left, center, nose right
+	uint16_t gyro[2];	///< Tail gyro mode/gain setpoints: heading hold, rate mode
+	uint16_t pitch[5];	///< Pitch curve setpoints (every 25%)
+	uint16_t throttle[5];	///< Throttle curve setpoints (every 25%)
 
 } mavlink_radio_calibration_t;
 #define MAVLINK_MSG_RADIO_CALIBRATION_FIELD_AILERON_LEN 3
@@ -40,12 +42,12 @@ static inline uint16_t mavlink_msg_radio_calibration_pack(uint8_t system_id, uin
 	mavlink_radio_calibration_t *p = (mavlink_radio_calibration_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_RADIO_CALIBRATION;
 
-	memcpy(p->aileron, aileron, sizeof(p->aileron)); // uint16_t[3]:Aileron setpoints: left, center, right
-	memcpy(p->elevator, elevator, sizeof(p->elevator)); // uint16_t[3]:Elevator setpoints: nose down, center, nose up
-	memcpy(p->rudder, rudder, sizeof(p->rudder)); // uint16_t[3]:Rudder setpoints: nose left, center, nose right
-	memcpy(p->gyro, gyro, sizeof(p->gyro)); // uint16_t[2]:Tail gyro mode/gain setpoints: heading hold, rate mode
-	memcpy(p->pitch, pitch, sizeof(p->pitch)); // uint16_t[5]:Pitch curve setpoints (every 25%)
-	memcpy(p->throttle, throttle, sizeof(p->throttle)); // uint16_t[5]:Throttle curve setpoints (every 25%)
+	memcpy(p->aileron, aileron, sizeof(p->aileron));	// uint16_t[3]:Aileron setpoints: left, center, right
+	memcpy(p->elevator, elevator, sizeof(p->elevator));	// uint16_t[3]:Elevator setpoints: nose down, center, nose up
+	memcpy(p->rudder, rudder, sizeof(p->rudder));	// uint16_t[3]:Rudder setpoints: nose left, center, nose right
+	memcpy(p->gyro, gyro, sizeof(p->gyro));	// uint16_t[2]:Tail gyro mode/gain setpoints: heading hold, rate mode
+	memcpy(p->pitch, pitch, sizeof(p->pitch));	// uint16_t[5]:Pitch curve setpoints (every 25%)
+	memcpy(p->throttle, throttle, sizeof(p->throttle));	// uint16_t[5]:Throttle curve setpoints (every 25%)
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_RADIO_CALIBRATION_LEN);
 }
@@ -69,12 +71,12 @@ static inline uint16_t mavlink_msg_radio_calibration_pack_chan(uint8_t system_id
 	mavlink_radio_calibration_t *p = (mavlink_radio_calibration_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_RADIO_CALIBRATION;
 
-	memcpy(p->aileron, aileron, sizeof(p->aileron)); // uint16_t[3]:Aileron setpoints: left, center, right
-	memcpy(p->elevator, elevator, sizeof(p->elevator)); // uint16_t[3]:Elevator setpoints: nose down, center, nose up
-	memcpy(p->rudder, rudder, sizeof(p->rudder)); // uint16_t[3]:Rudder setpoints: nose left, center, nose right
-	memcpy(p->gyro, gyro, sizeof(p->gyro)); // uint16_t[2]:Tail gyro mode/gain setpoints: heading hold, rate mode
-	memcpy(p->pitch, pitch, sizeof(p->pitch)); // uint16_t[5]:Pitch curve setpoints (every 25%)
-	memcpy(p->throttle, throttle, sizeof(p->throttle)); // uint16_t[5]:Throttle curve setpoints (every 25%)
+	memcpy(p->aileron, aileron, sizeof(p->aileron));	// uint16_t[3]:Aileron setpoints: left, center, right
+	memcpy(p->elevator, elevator, sizeof(p->elevator));	// uint16_t[3]:Elevator setpoints: nose down, center, nose up
+	memcpy(p->rudder, rudder, sizeof(p->rudder));	// uint16_t[3]:Rudder setpoints: nose left, center, nose right
+	memcpy(p->gyro, gyro, sizeof(p->gyro));	// uint16_t[2]:Tail gyro mode/gain setpoints: heading hold, rate mode
+	memcpy(p->pitch, pitch, sizeof(p->pitch));	// uint16_t[5]:Pitch curve setpoints (every 25%)
+	memcpy(p->throttle, throttle, sizeof(p->throttle));	// uint16_t[5]:Throttle curve setpoints (every 25%)
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_RADIO_CALIBRATION_LEN);
 }
@@ -92,6 +94,8 @@ static inline uint16_t mavlink_msg_radio_calibration_encode(uint8_t system_id, u
 	return mavlink_msg_radio_calibration_pack(system_id, component_id, msg, radio_calibration->aileron, radio_calibration->elevator, radio_calibration->rudder, radio_calibration->gyro, radio_calibration->pitch, radio_calibration->throttle);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a radio_calibration message
  * @param chan MAVLink channel to send the message
@@ -103,22 +107,18 @@ static inline uint16_t mavlink_msg_radio_calibration_encode(uint8_t system_id, u
  * @param pitch Pitch curve setpoints (every 25%)
  * @param throttle Throttle curve setpoints (every 25%)
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_radio_calibration_send(mavlink_channel_t chan, const uint16_t* aileron, const uint16_t* elevator, const uint16_t* rudder, const uint16_t* gyro, const uint16_t* pitch, const uint16_t* throttle)
 {
 	mavlink_header_t hdr;
 	mavlink_radio_calibration_t payload;
-	uint16_t checksum;
-	mavlink_radio_calibration_t *p = &payload;
 
-	memcpy(p->aileron, aileron, sizeof(p->aileron)); // uint16_t[3]:Aileron setpoints: left, center, right
-	memcpy(p->elevator, elevator, sizeof(p->elevator)); // uint16_t[3]:Elevator setpoints: nose down, center, nose up
-	memcpy(p->rudder, rudder, sizeof(p->rudder)); // uint16_t[3]:Rudder setpoints: nose left, center, nose right
-	memcpy(p->gyro, gyro, sizeof(p->gyro)); // uint16_t[2]:Tail gyro mode/gain setpoints: heading hold, rate mode
-	memcpy(p->pitch, pitch, sizeof(p->pitch)); // uint16_t[5]:Pitch curve setpoints (every 25%)
-	memcpy(p->throttle, throttle, sizeof(p->throttle)); // uint16_t[5]:Throttle curve setpoints (every 25%)
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_RADIO_CALIBRATION_LEN )
+	memcpy(payload.aileron, aileron, sizeof(payload.aileron));	// uint16_t[3]:Aileron setpoints: left, center, right
+	memcpy(payload.elevator, elevator, sizeof(payload.elevator));	// uint16_t[3]:Elevator setpoints: nose down, center, nose up
+	memcpy(payload.rudder, rudder, sizeof(payload.rudder));	// uint16_t[3]:Rudder setpoints: nose left, center, nose right
+	memcpy(payload.gyro, gyro, sizeof(payload.gyro));	// uint16_t[2]:Tail gyro mode/gain setpoints: heading hold, rate mode
+	memcpy(payload.pitch, pitch, sizeof(payload.pitch));	// uint16_t[5]:Pitch curve setpoints (every 25%)
+	memcpy(payload.throttle, throttle, sizeof(payload.throttle));	// uint16_t[5]:Throttle curve setpoints (every 25%)
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_RADIO_CALIBRATION_LEN;
@@ -129,14 +129,12 @@ static inline void mavlink_msg_radio_calibration_send(mavlink_channel_t chan, co
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x49, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

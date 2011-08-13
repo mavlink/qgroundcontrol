@@ -3,12 +3,14 @@
 #define MAVLINK_MSG_ID_HEARTBEAT 0
 #define MAVLINK_MSG_ID_HEARTBEAT_LEN 3
 #define MAVLINK_MSG_0_LEN 3
+#define MAVLINK_MSG_ID_HEARTBEAT_KEY 0x47
+#define MAVLINK_MSG_0_KEY 0x47
 
 typedef struct __mavlink_heartbeat_t 
 {
-	uint8_t type; ///< Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
-	uint8_t autopilot; ///< Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
-	uint8_t mavlink_version; ///< MAVLink version
+	uint8_t type;	///< Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
+	uint8_t autopilot;	///< Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
+	uint8_t mavlink_version;	///< MAVLink version
 
 } mavlink_heartbeat_t;
 
@@ -27,10 +29,10 @@ static inline uint16_t mavlink_msg_heartbeat_pack(uint8_t system_id, uint8_t com
 	mavlink_heartbeat_t *p = (mavlink_heartbeat_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_HEARTBEAT;
 
-	p->type = type; // uint8_t:Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
-	p->autopilot = autopilot; // uint8_t:Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
+	p->type = type;	// uint8_t:Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
+	p->autopilot = autopilot;	// uint8_t:Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
 
-	p->mavlink_version = MAVLINK_VERSION; // uint8_t_mavlink_version:MAVLink version
+	p->mavlink_version = MAVLINK_VERSION;	// uint8_t_mavlink_version:MAVLink version
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_HEARTBEAT_LEN);
 }
 
@@ -49,10 +51,10 @@ static inline uint16_t mavlink_msg_heartbeat_pack_chan(uint8_t system_id, uint8_
 	mavlink_heartbeat_t *p = (mavlink_heartbeat_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_HEARTBEAT;
 
-	p->type = type; // uint8_t:Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
-	p->autopilot = autopilot; // uint8_t:Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
+	p->type = type;	// uint8_t:Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
+	p->autopilot = autopilot;	// uint8_t:Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
 
-	p->mavlink_version = MAVLINK_VERSION; // uint8_t_mavlink_version:MAVLink version
+	p->mavlink_version = MAVLINK_VERSION;	// uint8_t_mavlink_version:MAVLink version
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_HEARTBEAT_LEN);
 }
 
@@ -69,6 +71,8 @@ static inline uint16_t mavlink_msg_heartbeat_encode(uint8_t system_id, uint8_t c
 	return mavlink_msg_heartbeat_pack(system_id, component_id, msg, heartbeat->type, heartbeat->autopilot);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a heartbeat message
  * @param chan MAVLink channel to send the message
@@ -76,20 +80,16 @@ static inline uint16_t mavlink_msg_heartbeat_encode(uint8_t system_id, uint8_t c
  * @param type Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
  * @param autopilot Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_heartbeat_send(mavlink_channel_t chan, uint8_t type, uint8_t autopilot)
 {
 	mavlink_header_t hdr;
 	mavlink_heartbeat_t payload;
-	uint16_t checksum;
-	mavlink_heartbeat_t *p = &payload;
 
-	p->type = type; // uint8_t:Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
-	p->autopilot = autopilot; // uint8_t:Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_HEARTBEAT_LEN )
+	payload.type = type;	// uint8_t:Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
+	payload.autopilot = autopilot;	// uint8_t:Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM
 
-	p->mavlink_version = MAVLINK_VERSION; // uint8_t_mavlink_version:MAVLink version
+	payload.mavlink_version = MAVLINK_VERSION;	// uint8_t_mavlink_version:MAVLink version
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_HEARTBEAT_LEN;
 	hdr.msgid = MAVLINK_MSG_ID_HEARTBEAT;
@@ -99,14 +99,12 @@ static inline void mavlink_msg_heartbeat_send(mavlink_channel_t chan, uint8_t ty
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0x47, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

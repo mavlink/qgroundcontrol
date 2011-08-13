@@ -3,12 +3,14 @@
 #define MAVLINK_MSG_ID_SLUGS_ACTION 183
 #define MAVLINK_MSG_ID_SLUGS_ACTION_LEN 4
 #define MAVLINK_MSG_183_LEN 4
+#define MAVLINK_MSG_ID_SLUGS_ACTION_KEY 0xD4
+#define MAVLINK_MSG_183_KEY 0xD4
 
 typedef struct __mavlink_slugs_action_t 
 {
-	uint16_t actionVal; ///< Value associated with the action
-	uint8_t target; ///< The system reporting the action
-	uint8_t actionId; ///< Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
+	uint16_t actionVal;	///< Value associated with the action
+	uint8_t target;	///< The system reporting the action
+	uint8_t actionId;	///< Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
 
 } mavlink_slugs_action_t;
 
@@ -28,9 +30,9 @@ static inline uint16_t mavlink_msg_slugs_action_pack(uint8_t system_id, uint8_t 
 	mavlink_slugs_action_t *p = (mavlink_slugs_action_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SLUGS_ACTION;
 
-	p->target = target; // uint8_t:The system reporting the action
-	p->actionId = actionId; // uint8_t:Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
-	p->actionVal = actionVal; // uint16_t:Value associated with the action
+	p->target = target;	// uint8_t:The system reporting the action
+	p->actionId = actionId;	// uint8_t:Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
+	p->actionVal = actionVal;	// uint16_t:Value associated with the action
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SLUGS_ACTION_LEN);
 }
@@ -51,9 +53,9 @@ static inline uint16_t mavlink_msg_slugs_action_pack_chan(uint8_t system_id, uin
 	mavlink_slugs_action_t *p = (mavlink_slugs_action_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SLUGS_ACTION;
 
-	p->target = target; // uint8_t:The system reporting the action
-	p->actionId = actionId; // uint8_t:Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
-	p->actionVal = actionVal; // uint16_t:Value associated with the action
+	p->target = target;	// uint8_t:The system reporting the action
+	p->actionId = actionId;	// uint8_t:Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
+	p->actionVal = actionVal;	// uint16_t:Value associated with the action
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SLUGS_ACTION_LEN);
 }
@@ -71,6 +73,8 @@ static inline uint16_t mavlink_msg_slugs_action_encode(uint8_t system_id, uint8_
 	return mavlink_msg_slugs_action_pack(system_id, component_id, msg, slugs_action->target, slugs_action->actionId, slugs_action->actionVal);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a slugs_action message
  * @param chan MAVLink channel to send the message
@@ -79,19 +83,15 @@ static inline uint16_t mavlink_msg_slugs_action_encode(uint8_t system_id, uint8_
  * @param actionId Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
  * @param actionVal Value associated with the action
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_slugs_action_send(mavlink_channel_t chan, uint8_t target, uint8_t actionId, uint16_t actionVal)
 {
 	mavlink_header_t hdr;
 	mavlink_slugs_action_t payload;
-	uint16_t checksum;
-	mavlink_slugs_action_t *p = &payload;
 
-	p->target = target; // uint8_t:The system reporting the action
-	p->actionId = actionId; // uint8_t:Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
-	p->actionVal = actionVal; // uint16_t:Value associated with the action
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SLUGS_ACTION_LEN )
+	payload.target = target;	// uint8_t:The system reporting the action
+	payload.actionId = actionId;	// uint8_t:Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
+	payload.actionVal = actionVal;	// uint16_t:Value associated with the action
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_SLUGS_ACTION_LEN;
@@ -102,14 +102,12 @@ static inline void mavlink_msg_slugs_action_send(mavlink_channel_t chan, uint8_t
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xD4, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

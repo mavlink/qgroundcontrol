@@ -3,15 +3,17 @@
 #define MAVLINK_MSG_ID_DIAGNOSTIC 173
 #define MAVLINK_MSG_ID_DIAGNOSTIC_LEN 18
 #define MAVLINK_MSG_173_LEN 18
+#define MAVLINK_MSG_ID_DIAGNOSTIC_KEY 0xFE
+#define MAVLINK_MSG_173_KEY 0xFE
 
 typedef struct __mavlink_diagnostic_t 
 {
-	float diagFl1; ///< Diagnostic float 1
-	float diagFl2; ///< Diagnostic float 2
-	float diagFl3; ///< Diagnostic float 3
-	int16_t diagSh1; ///< Diagnostic short 1
-	int16_t diagSh2; ///< Diagnostic short 2
-	int16_t diagSh3; ///< Diagnostic short 3
+	float diagFl1;	///< Diagnostic float 1
+	float diagFl2;	///< Diagnostic float 2
+	float diagFl3;	///< Diagnostic float 3
+	int16_t diagSh1;	///< Diagnostic short 1
+	int16_t diagSh2;	///< Diagnostic short 2
+	int16_t diagSh3;	///< Diagnostic short 3
 
 } mavlink_diagnostic_t;
 
@@ -34,12 +36,12 @@ static inline uint16_t mavlink_msg_diagnostic_pack(uint8_t system_id, uint8_t co
 	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
 
-	p->diagFl1 = diagFl1; // float:Diagnostic float 1
-	p->diagFl2 = diagFl2; // float:Diagnostic float 2
-	p->diagFl3 = diagFl3; // float:Diagnostic float 3
-	p->diagSh1 = diagSh1; // int16_t:Diagnostic short 1
-	p->diagSh2 = diagSh2; // int16_t:Diagnostic short 2
-	p->diagSh3 = diagSh3; // int16_t:Diagnostic short 3
+	p->diagFl1 = diagFl1;	// float:Diagnostic float 1
+	p->diagFl2 = diagFl2;	// float:Diagnostic float 2
+	p->diagFl3 = diagFl3;	// float:Diagnostic float 3
+	p->diagSh1 = diagSh1;	// int16_t:Diagnostic short 1
+	p->diagSh2 = diagSh2;	// int16_t:Diagnostic short 2
+	p->diagSh3 = diagSh3;	// int16_t:Diagnostic short 3
 
 	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_DIAGNOSTIC_LEN);
 }
@@ -63,12 +65,12 @@ static inline uint16_t mavlink_msg_diagnostic_pack_chan(uint8_t system_id, uint8
 	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
 
-	p->diagFl1 = diagFl1; // float:Diagnostic float 1
-	p->diagFl2 = diagFl2; // float:Diagnostic float 2
-	p->diagFl3 = diagFl3; // float:Diagnostic float 3
-	p->diagSh1 = diagSh1; // int16_t:Diagnostic short 1
-	p->diagSh2 = diagSh2; // int16_t:Diagnostic short 2
-	p->diagSh3 = diagSh3; // int16_t:Diagnostic short 3
+	p->diagFl1 = diagFl1;	// float:Diagnostic float 1
+	p->diagFl2 = diagFl2;	// float:Diagnostic float 2
+	p->diagFl3 = diagFl3;	// float:Diagnostic float 3
+	p->diagSh1 = diagSh1;	// int16_t:Diagnostic short 1
+	p->diagSh2 = diagSh2;	// int16_t:Diagnostic short 2
+	p->diagSh3 = diagSh3;	// int16_t:Diagnostic short 3
 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_DIAGNOSTIC_LEN);
 }
@@ -86,6 +88,8 @@ static inline uint16_t mavlink_msg_diagnostic_encode(uint8_t system_id, uint8_t 
 	return mavlink_msg_diagnostic_pack(system_id, component_id, msg, diagnostic->diagFl1, diagnostic->diagFl2, diagnostic->diagFl3, diagnostic->diagSh1, diagnostic->diagSh2, diagnostic->diagSh3);
 }
 
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a diagnostic message
  * @param chan MAVLink channel to send the message
@@ -97,22 +101,18 @@ static inline uint16_t mavlink_msg_diagnostic_encode(uint8_t system_id, uint8_t 
  * @param diagSh2 Diagnostic short 2
  * @param diagSh3 Diagnostic short 3
  */
-
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 static inline void mavlink_msg_diagnostic_send(mavlink_channel_t chan, float diagFl1, float diagFl2, float diagFl3, int16_t diagSh1, int16_t diagSh2, int16_t diagSh3)
 {
 	mavlink_header_t hdr;
 	mavlink_diagnostic_t payload;
-	uint16_t checksum;
-	mavlink_diagnostic_t *p = &payload;
 
-	p->diagFl1 = diagFl1; // float:Diagnostic float 1
-	p->diagFl2 = diagFl2; // float:Diagnostic float 2
-	p->diagFl3 = diagFl3; // float:Diagnostic float 3
-	p->diagSh1 = diagSh1; // int16_t:Diagnostic short 1
-	p->diagSh2 = diagSh2; // int16_t:Diagnostic short 2
-	p->diagSh3 = diagSh3; // int16_t:Diagnostic short 3
+	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_DIAGNOSTIC_LEN )
+	payload.diagFl1 = diagFl1;	// float:Diagnostic float 1
+	payload.diagFl2 = diagFl2;	// float:Diagnostic float 2
+	payload.diagFl3 = diagFl3;	// float:Diagnostic float 3
+	payload.diagSh1 = diagSh1;	// int16_t:Diagnostic short 1
+	payload.diagSh2 = diagSh2;	// int16_t:Diagnostic short 2
+	payload.diagSh3 = diagSh3;	// int16_t:Diagnostic short 3
 
 	hdr.STX = MAVLINK_STX;
 	hdr.len = MAVLINK_MSG_ID_DIAGNOSTIC_LEN;
@@ -123,14 +123,12 @@ static inline void mavlink_msg_diagnostic_send(mavlink_channel_t chan, float dia
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
 
-	crc_init(&checksum);
-	checksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);
-	checksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );
-	hdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte
-	hdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte
-
-	mavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);
+	crc_init(&hdr.ck);
+	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
+	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
+	crc_accumulate( 0xFE, &hdr.ck); /// include key in X25 checksum
+	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
+	MAVLINK_BUFFER_CHECK_END
 }
 
 #endif

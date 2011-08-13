@@ -1,7 +1,7 @@
 /** @file
  *	@brief MAVLink comm protocol.
  *	@see http://qgroundcontrol.org/mavlink/
- *	 Generated on Tuesday, August 9 2011, 16:16 UTC
+ *	 Generated on Saturday, August 13 2011, 07:20 UTC
  */
 #ifndef MINIMAL_H
 #define MINIMAL_H
@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 
-#include "../protocol.h"
+#include "../mavlink_protocol.h"
 
 #define MAVLINK_ENABLED_MINIMAL
 
@@ -38,6 +38,11 @@ extern "C" {
 
 #undef MAVLINK_MESSAGE_KEYS
 #define MAVLINK_MESSAGE_KEYS {  }
+
+// MESSAGE LENGTHS
+
+#undef MAVLINK_MESSAGE_LENGTHS
+#define MAVLINK_MESSAGE_LENGTHS {  }
 
 #ifdef __cplusplus
 }
