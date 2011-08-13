@@ -380,7 +380,6 @@ public slots:
     void startPressureCalibration();
 
     void startDataRecording();
-    void pauseDataRecording();
     void stopDataRecording();
 
 signals:
