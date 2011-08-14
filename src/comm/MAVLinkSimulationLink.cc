@@ -556,7 +556,7 @@ void MAVLinkSimulationLink::mainloop()
         messageSize = mavlink_msg_heartbeat_pack(systemId, componentId, &msg, mavType, MAV_CLASS_PIXHAWK);
         // Allocate buffer with packet data
         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
-        qDebug() << "CRC:" << msg.ck_a << msg.ck_b;
+        //qDebug() << "CRC:" << msg.ck_a << msg.ck_b;
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;

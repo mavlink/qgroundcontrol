@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MG.h"
 #include <MAVLinkProtocol.h>
 #include "QGCMAVLink.h"
+#include "QGCFlightGearLink.h"
 
 /**
  * @brief A generic MAVLINK-connected MAV/UAV
@@ -206,6 +207,7 @@ protected: //COMMENTS FOR TEST UNIT
     QString shortModeText;      ///< Short textual mode description
     bool attitudeStamped;       ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
     quint64 lastAttitude;       ///< Timestamp of last attitude measurement
+    QGCFlightGearLink* simulation; ///< Hardware in the loop simulation link
 
 public:
     /** @brief Set the current battery type */
@@ -274,6 +276,16 @@ public slots:
     void home();
     void halt();
     void go();
+
+    /** @brief Enable / disable HIL */
+    void enableHil(bool enable);
+
+    /** @brief Send the full HIL state to the MAV */
+
+    void sendHilState(	uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
+                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
+                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
+
     /** @brief Places the UAV in Hardware-in-the-Loop simulation status **/
     void startHil();
 
@@ -398,6 +410,8 @@ signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
+    /** @brief HIL controls have changed */
+    void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
 
 protected:
     /** @brief Get the UNIX timestamp in milliseconds */

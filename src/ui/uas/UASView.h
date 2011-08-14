@@ -120,6 +120,7 @@ protected:
     QAction* removeAction;
     QAction* renameAction;
     QAction* selectAction;
+    QAction* hilAction;
     QAction* selectAirframeAction;
     QAction* setBatterySpecsAction;
     static const int updateInterval = 800;

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+
+<PropertyList>
+	
+	<!--back-->
+	<!--right -->
+	<!--up -->
+		
+
+    <path>gpatrans.ac</path>
+ <animation>
+  <type>rotate</type>
+  <object-name>noshadow.screenglass</object-name>
+  <property>controls/gear//screen</property>
+  <factor>-108</factor>
+  <center>
+   <x-m>1.167</x-m>
+   <y-m>0.0</y-m>
+   <z-m>0.992</z-m>
+  </center>
+  <axis>
+   <x>0.0</x>
+   <y>1.0</y>
+   <z>0.0</z>
+  </axis>
+ </animation>
+
+
+</PropertyList>

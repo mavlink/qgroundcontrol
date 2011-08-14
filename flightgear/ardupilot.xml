@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+
+<PropertyList>
+ <generic>
+
+  <output>
+   <line_separator>newline</line_separator>
+   <var_separator>,</var_separator>
+
+   <!-- Position -->
+   <chunk>
+    <name>latitude-deg</name>
+    <type>float</type>
+    <format>%f</format>
+    <node>/position/latitude-deg</node>
+   </chunk>
+
+   <chunk>
+    <name>longitude-deg</name>
+    <type>float</type>
+    <format>%f</format>
+    <node>/position/longitude-deg</node>
+   </chunk>
+
+   <chunk>
+    <name>altitude-ft</name>
+    <type>float</type>
+    <format>%f</format>
+    <node>/position/altitude-ft</node>
+   </chunk>
+
+   <!-- Orientation -->
+   <chunk>
+    <name>roll-deg</name>
+    <type>float</type>
+    <format>%f</format>
+    <node>/orientation/roll-deg</node>
+   </chunk>
+
+   <chunk>
+    <name>pitch-deg</name>
+    <type>float</type>
+    <format>%f</format>
+    <node>/orientation/pitch-deg</node>
+   </chunk>
+
+   <chunk>
+    <name>heading-deg</name>
+    <type>float</type>
+    <format>%f</format>
+    <node>/orientation/heading-deg</node>
+   </chunk>
+
+   <!-- Velocities -->
+   <chunk>
+     <name>airspeed-kt</name>
+     <type>float</type>
+     <format>%f</format>
+     <node>/velocities/airspeed-kt</node>
+   </chunk>
+   
+  </output>
+
+  <input>
+   <line_separator>newline</line_separator>
+   <var_separator>,</var_separator>
+
+   <!-- Controls -->
+   <chunk>
+    <name>magnetos</name>
+    <type>float</type>
+    <format>%f</format>
+    <node>/controls/engines/engine[0]/magnetos</node>
+   </chunk>
+   
+   <chunk>
+    <name>aileron</name>
+    <type>float</type>
+    <node>/controls/flight/aileron</node>
+   </chunk>
+
+   <chunk>
+    <name>elevator</name>
+    <type>float</type>
+    <node>/controls/flight/elevator</node>
+   </chunk>
+   
+   <chunk>
+     <name>rudder</name>
+     <type>float</type>
+     <node>/controls/flight/rudder</node>
+   </chunk>
+
+   <chunk>
+    <name>throttle</name>
+    <type>float</type>
+    <node>/controls/engines/engine/throttle</node>
+   </chunk>
+
+ </input>
+
+ </generic>
+
+</PropertyList>

@@ -157,11 +157,6 @@ MainWindow::MainWindow(QWidget *parent):
     joystickWidget = 0;
     joystick = new JoystickInput();
 
-    // Connect flighgear test link
-    // FIXME MOVE INTO UAV OBJECT
-    fgLink = new QGCFlightGearLink();
-    fgLink->connectSimulation();
-
     // Load Toolbar
     toolBar = new QGCToolBar(this);
     this->addToolBar(toolBar);

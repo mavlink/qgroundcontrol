@@ -76,7 +76,8 @@ airframe(0),
 attitudeKnown(false),
 paramManager(NULL),
 attitudeStamped(false),
-lastAttitude(0)
+lastAttitude(0),
+    simulation(new QGCFlightGearLink(this))
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
@@ -494,6 +495,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 emit attitudeChanged(this, roll, pitch, yaw, time);
                 emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
+            }
+            break;
+        case MAVLINK_MSG_ID_HIL_CONTROLS:
+            {
+                mavlink_hil_controls_t hil;
+                mavlink_msg_hil_controls_decode(&message, &hil);
+                emit hilControlsChanged(hil.time_us, hil.roll_ailerons, hil.pitch_elevator, hil.yaw_rudder, hil.throttle, hil.mode, hil.nav_mode);
             }
             break;
         case MAVLINK_MSG_ID_VFR_HUD:
@@ -2246,8 +2254,51 @@ bool UAS::emergencyKILL()
     return false;
 }
 
+void UAS::enableHil(bool enable)
+{
+    // Connect Flight Gear Link
+    if (enable)
+    {
+        simulation->connectSimulation();
+    }
+    else
+    {
+        simulation->disconnectSimulation();
+    }
+}
+
+/**
+* @param time_us Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+* @param roll Roll angle (rad)
+* @param pitch Pitch angle (rad)
+* @param yaw Yaw angle (rad)
+* @param rollspeed Roll angular speed (rad/s)
+* @param pitchspeed Pitch angular speed (rad/s)
+* @param yawspeed Yaw angular speed (rad/s)
+* @param lat Latitude, expressed as * 1E7
+* @param lon Longitude, expressed as * 1E7
+* @param alt Altitude in meters, expressed as * 1000 (millimeters)
+* @param vx Ground X Speed (Latitude), expressed as m/s * 100
+* @param vy Ground Y Speed (Longitude), expressed as m/s * 100
+* @param vz Ground Z Speed (Altitude), expressed as m/s * 100
+* @param xacc X acceleration (mg)
+* @param yacc Y acceleration (mg)
+* @param zacc Z acceleration (mg)
+*/
+void UAS::sendHilState(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
+                    float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
+                    int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
+{
+    mavlink_message_t msg;
+    mavlink_msg_hil_state_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed, lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
+    sendMessage(msg);
+}
+
+
 void UAS::startHil()
 {
+    // Connect Flight Gear Link
+    simulation->connectSimulation();
     // FIXME MAVLINKV10PORTINGNEEDED
 //    mavlink_message_t msg;
 //    // TODO Replace MG System ID with static function call and allow to change ID in GUI
@@ -2259,6 +2310,7 @@ void UAS::startHil()
 
 void UAS::stopHil()
 {
+    simulation->disconnectSimulation();
     // FIXME MAVLINKV10PORTINGNEEDED
 //    mavlink_message_t msg;
 //    // TODO Replace MG System ID with static function call and allow to change ID in GUI
