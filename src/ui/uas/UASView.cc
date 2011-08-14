@@ -68,6 +68,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         removeAction(new QAction("Delete this system", this)),
         renameAction(new QAction("Rename..", this)),
         selectAction(new QAction("Control this system", this )),
+        hilAction(new QAction("Enable Hardware-in-the-Loop Simulation", this )),
         selectAirframeAction(new QAction("Choose Airframe", this)),
         setBatterySpecsAction(new QAction("Set Battery Options", this)),
         lowPowerModeEnabled(false),
@@ -76,6 +77,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     // FIXME XXX
     lowPowerModeEnabled = MainWindow::instance()->lowPowerModeEnabled();
 
+    hilAction->setCheckable(true);
 
     m_ui->setupUi(this);
 
@@ -114,6 +116,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(removeAction, SIGNAL(triggered()), this, SLOT(deleteLater()));
     connect(renameAction, SIGNAL(triggered()), this, SLOT(rename()));
     connect(selectAction, SIGNAL(triggered()), uas, SLOT(setSelected()));
+    connect(hilAction, SIGNAL(triggered(bool)), uas, SLOT(enableHil(bool)));
     connect(selectAirframeAction, SIGNAL(triggered()), this, SLOT(selectAirframe()));
     connect(setBatterySpecsAction, SIGNAL(triggered()), this, SLOT(setBatterySpecs()));
     connect(uas, SIGNAL(systemRemoved()), this, SLOT(deleteLater()));
@@ -437,6 +440,7 @@ void UASView::contextMenuEvent (QContextMenuEvent* event)
     if (timeout) {
         menu.addAction(removeAction);
     }
+    menu.addAction(hilAction);
     menu.addAction(selectAirframeAction);
     menu.addAction(setBatterySpecsAction);
     menu.exec(event->globalPos());

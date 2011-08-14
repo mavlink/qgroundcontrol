@@ -36,19 +36,18 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCFlightGearLink.h"
 #include "QGC.h"
 #include <QHostInfo>
+#include "MainWindow.h"
 
-QGCFlightGearLink::QGCFlightGearLink(QString remoteHost, QHostAddress host, quint16 port)
+QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString remoteHost, QHostAddress host, quint16 port)
 {
     this->host = host;
     this->port = port;
     this->connectState = false;
     this->currentPort = 49000;
-
+    this->mav = mav;
     // Set unique ID and add link to the list of links
     this->name = tr("FlightGear Link (port:%1)").arg(port);
     setRemoteHost(remoteHost);
-    connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
-    refreshTimer.start(20); // 50 Hz UAV -> Simulation update rate
 }
 
 QGCFlightGearLink::~QGCFlightGearLink()
@@ -62,10 +61,6 @@ QGCFlightGearLink::~QGCFlightGearLink()
  **/
 void QGCFlightGearLink::run()
 {
-//    forever
-//    {
-//        QGC::SLEEP::msleep(5000);
-//    }
     exec();
 }
 
@@ -74,6 +69,34 @@ void QGCFlightGearLink::setPort(int port)
     this->port = port;
     disconnectSimulation();
     connectSimulation();
+}
+
+void QGCFlightGearLink::processError(QProcess::ProcessError err)
+{
+    switch(err)
+    {
+    case QProcess::FailedToStart:
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        break;
+    case QProcess::Crashed:
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
+        break;
+    case QProcess::Timedout:
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        break;
+    case QProcess::WriteError:
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        break;
+    case QProcess::ReadError:
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        break;
+    case QProcess::UnknownError:
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        break;
+    default:
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Error"), tr("Please check if the path and command is correct."));
+        break;
+    }
 }
 
 /**
@@ -116,51 +139,46 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
     }
 }
 
-void QGCFlightGearLink::updateGlobalPosition(quint64 time, double lat, double lon, double alt)
-{
-
-}
-
-void QGCFlightGearLink::sendUAVUpdate()
+void QGCFlightGearLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
 {
     // 37.613548,-122.357246,-9999.000000,0.000000,0.424000,297.899994,0.000000\n
     // magnetos,aileron,elevator,rudder,throttle\n
 
     float magnetos = 3.0f;
-    float aileron = 0.0f;
-    float elevator = 0.0f;
-    float rudder = 0.0f;
-    float throttle = 90.0f;
+    Q_UNUSED(time);
+    Q_UNUSED(systemMode);
+    Q_UNUSED(navMode);
 
     QString state("%1,%2,%3,%4,%5\n");
-    state = state.arg(magnetos).arg(aileron).arg(elevator).arg(rudder).arg(throttle);
+    state = state.arg(magnetos).arg(rollAilerons).arg(pitchElevator).arg(yawRudder).arg(throttle);
     writeBytes(state.toAscii().constData(), state.length());
+    //qDebug() << "Updated controls" << state;
 }
 
 void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
 {
-//#define QGCFlightGearLink_DEBUG
+    //#define QGCFlightGearLink_DEBUG
 #ifdef QGCFlightGearLink_DEBUG
-        QString bytes;
-        QString ascii;
-        for (int i=0; i<size; i++)
+    QString bytes;
+    QString ascii;
+    for (int i=0; i<size; i++)
+    {
+        unsigned char v = data[i];
+        bytes.append(QString().sprintf("%02x ", v));
+        if (data[i] > 31 && data[i] < 127)
         {
-            unsigned char v = data[i];
-            bytes.append(QString().sprintf("%02x ", v));
-            if (data[i] > 31 && data[i] < 127)
-            {
-                ascii.append(data[i]);
-            }
-            else
-            {
-                ascii.append(219);
-            }
+            ascii.append(data[i]);
         }
-        qDebug() << "Sent" << size << "bytes to" << currentHost.toString() << ":" << currentPort << "data:";
-        qDebug() << bytes;
-        qDebug() << "ASCII:" << ascii;
+        else
+        {
+            ascii.append(219);
+        }
+    }
+    qDebug() << "Sent" << size << "bytes to" << currentHost.toString() << ":" << currentPort << "data:";
+    qDebug() << bytes;
+    qDebug() << "ASCII:" << ascii;
 #endif
-        socket->writeDatagram(data, size, currentHost, currentPort);
+    socket->writeDatagram(data, size, currentHost, currentPort);
 }
 
 /**
@@ -180,22 +198,42 @@ void QGCFlightGearLink::readBytes()
     if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size" << std::endl;
     socket->readDatagram(data, maxLength, &sender, &senderPort);
 
-    // FIXME TODO Check if this method is better than retrieving the data by individual processes
     QByteArray b(data, s);
-    //emit bytesReceived(this, b);
-	
-	// Print string
-	qDebug() << "FG LINK GOT:" << QString(b);
 
-//    // Echo data for debugging purposes
-//    std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
-//    int i;
-//    for (i=0; i<s; i++)
-//    {
-//        unsigned int v=data[i];
-//        fprintf(stderr,"%02x ", v);
-//    }
-//    std::cerr << std::endl;
+    // Print string
+    QString state(b);
+    qDebug() << "FG LINK GOT:" << state;
+
+    QStringList values = state.split(",");
+
+    // Parse string
+    float roll, pitch, yaw, rollspeed, pitchspeed, yawspeed;
+    int32_t lat, lon, alt;
+    int16_t vx, vy, vz, xacc, yacc, zacc;
+
+    lat = values.at(0).toDouble();
+    lon = values.at(1).toDouble();
+    alt = values.at(2).toDouble();
+    roll = values.at(3).toDouble();
+    pitch = values.at(4).toDouble();
+    yaw = values.at(5).toDouble();
+
+
+
+    // Send updated state
+    emit hilStateChanged(QGC::groundTimeUsecs(), roll, pitch, yaw, rollspeed,
+                         pitchspeed, yawspeed, lat, lon, alt,
+                         vx, vy, vz, xacc, yacc, zacc);
+
+    //    // Echo data for debugging purposes
+    //    std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
+    //    int i;
+    //    for (i=0; i<s; i++)
+    //    {
+    //        unsigned int v=data[i];
+    //        fprintf(stderr,"%02x ", v);
+    //    }
+    //    std::cerr << std::endl;
 }
 
 
@@ -236,16 +274,16 @@ bool QGCFlightGearLink::connectSimulation()
     socket = new QUdpSocket(this);
 
     //Check if we are using a multicast-address
-//    bool multicast = false;
-//    if (host.isInSubnet(QHostAddress("224.0.0.0"),4))
-//    {
-//        multicast = true;
-//        connectState = socket->bind(port, QUdpSocket::ShareAddress);
-//    }
-//    else
-//    {
+    //    bool multicast = false;
+    //    if (host.isInSubnet(QHostAddress("224.0.0.0"),4))
+    //    {
+    //        multicast = true;
+    //        connectState = socket->bind(port, QUdpSocket::ShareAddress);
+    //    }
+    //    else
+    //    {
     connectState = socket->bind(host, port);
-//    }
+    //    }
 
     //Provides Multicast functionality to UdpSocket
     /* not working yet
@@ -275,13 +313,58 @@ bool QGCFlightGearLink::connectSimulation()
     //QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
+    process = new QProcess(this);
+
+//    forever
+//    {
+//        QGC::SLEEP::msleep(5000);
+//    }
+//refreshTimer.start(5); // 200 Hz UAV -> Simulation update rate
+connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+
+//connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
+// Catch process error
+QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
+                      this, SLOT(processError(QProcess::ProcessError)));
+// Start Flightgear
+QStringList processCall;
+processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,ardupilot" << "--generic=socket,in,50,127.0.0.1,49000,udp,ardupilot" << "--in-air" << "--altitude=10" << "--vc=90" << "--heading=300" << "--timeofday=noon";
+QString processFgfs;
+QString fgRoot;
+QString aircraft("Rascal110");
+
+#ifdef Q_OS_MACX
+processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
+fgRoot = "--fg-root=/Applications/FlightGear.app/Contents/Resources/data";
+#endif
+
+#ifdef Q_OS_WIN32
+processFgfs = "C:\Program Files (x86)\FlightGear\bin\Win32\fgfs";
+fgRoot = "--fg-root=C:\Program Files (x86)\FlightGear\data";
+#endif
+
+
+processCall << QString("--aircraft=%2").arg(aircraft);
+processCall << fgRoot;
+
+process->start(processFgfs, processCall);
+
+qDebug() << "STARTING: " << processFgfs << processCall;
+
+if (!process->waitForStarted())
+{
+    qDebug() << "PROCESS START FAILED!";
+}
+
     emit flightGearConnected(connectState);
     if (connectState) {
         emit flightGearConnected();
         connectionStartTime = QGC::groundTimeUsecs()/1000;
     }
+    qDebug() << "STARTING SIM";
 
-    start(HighPriority);
+    start(LowPriority);
     return connectState;
 }
 
@@ -303,5 +386,5 @@ QString QGCFlightGearLink::getName()
 void QGCFlightGearLink::setName(QString name)
 {
     this->name = name;
-//    emit nameChanged(this->name);
+    //    emit nameChanged(this->name);
 }
