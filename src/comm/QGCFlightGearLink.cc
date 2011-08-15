@@ -178,7 +178,7 @@ void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
     qDebug() << bytes;
     qDebug() << "ASCII:" << ascii;
 #endif
-    socket->writeDatagram(data, size, currentHost, currentPort);
+    if (connectState && socket) socket->writeDatagram(data, size, currentHost, currentPort);
 }
 
 /**
@@ -202,7 +202,7 @@ void QGCFlightGearLink::readBytes()
 
     // Print string
     QString state(b);
-    qDebug() << "FG LINK GOT:" << state;
+    //qDebug() << "FG LINK GOT:" << state;
 
     QStringList values = state.split(",");
 
@@ -254,6 +254,14 @@ qint64 QGCFlightGearLink::bytesAvailable()
  **/
 bool QGCFlightGearLink::disconnectSimulation()
 {
+    disconnect(process, SIGNAL(error(QProcess::ProcessError)),
+                          this, SLOT(processError(QProcess::ProcessError)));
+    disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+
+    process->close();
+    delete process;
+    process = NULL;
     delete socket;
     socket = NULL;
 
@@ -331,7 +339,7 @@ QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
 QStringList processCall;
 QString processFgfs;
 QString fgRoot;
-QString aircraft("Rascal110");
+QString aircraft("Rascal110-JSBSim");
 
 #ifdef Q_OS_MACX
 processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
@@ -343,18 +351,40 @@ processFgfs = "C:\Program Files (x86)\FlightGear\bin\Win32\fgfs";
 fgRoot = "--fg-root=C:\Program Files (x86)\FlightGear\data";
 #endif
 
+#ifdef Q_OS_LINUX
+processFgfs = "fgfs";
+fgRoot = "--fg-root=/usr/share/flightgear/data";
+#endif
+
 processCall << fgRoot;
-//processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,ardupilot" << "--generic=socket,in,50,127.0.0.1,49000,udp,ardupilot" << "--in-air" << "--altitude=10" << "--vc=90" << "--heading=300" << "--timeofday=noon";
-//processCall << QString("--aircraft=%2").arg(aircraft);
+processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,ardupilot";
+processCall << "--generic=socket,in,50,127.0.0.1,49000,udp,ardupilot";
+processCall << "--in-air";
+processCall << "--altitude=10";
+processCall << "--vc=90";
+processCall << "--heading=300";
+processCall << "--timeofday=noon";
+processCall << "--disable-hud-3d";
+processCall << "--control=mouse";
+processCall << "--disable-intro-music";
+processCall << "--disable-sound";
+processCall << "--disable-anti-alias-hud";
+processCall << "--disable-fullscreen";
+processCall << "--disable-random-objects";
+processCall << "--disable-ai-models";
+processCall << "--wind=0@0";
+processCall << "--fdm=jsb";
+// Add new argument with this: processCall << "";
+processCall << QString("--aircraft=%2").arg(aircraft);
 
 process->start(processFgfs, processCall);
 
 qDebug() << "STARTING: " << processFgfs << processCall;
 
-if (!process->waitForStarted())
-{
-    qDebug() << "PROCESS START FAILED!";
-}
+//if (!process->waitForStarted())
+//{
+//    qDebug() << "PROCESS START FAILED!";
+//}
 
     emit flightGearConnected(connectState);
     if (connectState) {
