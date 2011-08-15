@@ -26,6 +26,12 @@ public:
 
     /** @brief Map centered on current active system */
     bool getFollowUAVEnabled() { return followUAVEnabled; }
+    /** @brief The maximum map update rate */
+    float getUpdateRateLimit() { return maxUpdateInterval; }
+    /** @brief Get the trail type */
+    int getTrailType() { return static_cast<int>(trailType); }
+    /** @brief Get the trail interval */
+    float getTrailInterval() { return trailInterval; }
 
 signals:
     void homePositionChanged(double latitude, double longitude, double altitude);
@@ -60,8 +66,50 @@ public slots:
     void cacheVisibleRegion();
     /** @brief Set follow mode */
     void setFollowUAVEnabled(bool enabled) { followUAVEnabled = enabled; }
+    /** @brief Set trail to time mode and set time @param seconds The minimum time between trail dots in seconds. If set to a value < 0, trails will be disabled*/
+    void setTrailModeTimed(int seconds)
+    {
+        foreach(mapcontrol::UAVItem* uav, GetUAVS())
+        {
+            if (seconds >= 0)
+            {
+                uav->SetTrailTime(seconds);
+                uav->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
+            }
+            else
+            {
+                uav->SetTrailType(mapcontrol::UAVTrailType::NoTrail);
+            }
+        }
+    }
+    /** @brief Set trail to distance mode and set time @param meters The minimum distance between trail dots in meters. The actual distance depends on the MAV's update rate as well. If set to a value < 0, trails will be disabled*/
+    void setTrailModeDistance(int meters)
+    {
+        foreach(mapcontrol::UAVItem* uav, GetUAVS())
+        {
+            if (meters >= 0)
+            {
+                uav->SetTrailDistance(meters);
+                uav->SetTrailType(mapcontrol::UAVTrailType::ByDistance);
+            }
+            else
+            {
+                uav->SetTrailType(mapcontrol::UAVTrailType::NoTrail);
+            }
+        }
+    }
+    /** @brief Delete all trails */
+    void deleteTrails()
+    {
+        foreach(mapcontrol::UAVItem* uav, GetUAVS())
+        {
+            uav->DeleteTrail();
+        }
+    }
 
-    void loadSettings();
+    /** @brief Load the settings for this widget from disk */
+    void loadSettings(bool changePosition=true);
+    /** @brief Store the settings for this widget to disk */
     void storeSettings();
 
 protected slots:
@@ -93,6 +141,8 @@ protected:
     };
     editMode currEditMode;            ///< The current edit mode on the map
     bool followUAVEnabled;              ///< Does the map follow the UAV?
+    mapcontrol::UAVTrailType::Types trailType; ///< Time or distance based trail dots
+    float trailInterval;                ///< Time or distance between trail items
     int followUAVID;                    ///< Which UAV should be tracked?
 
 

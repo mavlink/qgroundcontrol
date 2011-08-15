@@ -71,6 +71,9 @@ QGCSensorSettingsWidget::QGCSensorSettingsWidget(UASInterface* uas, QWidget *par
     connect(ui->magCalButton, SIGNAL(clicked()), mav, SLOT(startMagnetometerCalibration()));
     connect(ui->pressureCalButton, SIGNAL(clicked()), mav, SLOT(startPressureCalibration()));
     connect(ui->gyroCalButton, SIGNAL(clicked()), mav, SLOT(startGyroscopeCalibration()));
+
+    // Hide the calibration stuff - done in custom widgets anyway
+    ui->groupBox_3->hide();
 }
 
 void QGCSensorSettingsWidget::delayedSendRawSensor(int rate)

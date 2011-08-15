@@ -146,6 +146,9 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     m_ui->killButton->hide();
     m_ui->shutdownButton->hide();
 
+    // Set state and mode
+    updateMode(uas->getUASID(), uas->getShortMode(), "");
+    updateState(uas, uas->getShortState(), "");
     setSystemType(uas, uas->getSystemType());
 }
 
@@ -228,7 +231,7 @@ void UASView::mouseDoubleClickEvent (QMouseEvent * event)
 {
     Q_UNUSED(event);
     UASManager::instance()->setActiveUAS(uas);
-    qDebug() << __FILE__ << __LINE__ << "DOUBLECLICKED";
+    // qDebug() << __FILE__ << __LINE__ << "DOUBLECLICKED";
 }
 
 void UASView::enterEvent(QEvent* event)
@@ -239,10 +242,10 @@ void UASView::enterEvent(QEvent* event)
             grabMouse(QCursor(Qt::PointingHandCursor));
         }
     }
-    qDebug() << __FILE__ << __LINE__ << "IN FOCUS";
+    // qDebug() << __FILE__ << __LINE__ << "IN FOCUS";
 
     if (event->type() == QEvent::MouseButtonDblClick) {
-        qDebug() << __FILE__ << __LINE__ << "UAS CLICKED!";
+        // qDebug() << __FILE__ << __LINE__ << "UAS CLICKED!";
     }
 }
 
@@ -496,7 +499,7 @@ void UASView::refresh()
     //repaint();
 
     static quint64 lastupdate = 0;
-    //qDebug() << "UASVIEW update diff: " << MG::TIME::getGroundTimeNow() - lastupdate;
+    //// qDebug() << "UASVIEW update diff: " << MG::TIME::getGroundTimeNow() - lastupdate;
     lastupdate = MG::TIME::getGroundTimeNow();
 
     // FIXME
@@ -504,10 +507,10 @@ void UASView::refresh()
 
     if (generalUpdateCount == 4) {
 #if (QGC_EVENTLOOP_DEBUG)
-        qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
+        // qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
 #endif
         generalUpdateCount = 0;
-        //qDebug() << "UPDATING EVERYTHING";
+        //// qDebug() << "UPDATING EVERYTHING";
         // State
         m_ui->stateLabel->setText(state);
         m_ui->statusTextLabel->setText(stateDesc);

@@ -7,14 +7,17 @@
 #include "UASWaypointManager.h"
 
 QGCMapWidget::QGCMapWidget(QWidget *parent) :
-        mapcontrol::OPMapWidget(parent),
-        currWPManager(NULL),
-        firingWaypointChange(NULL),
-        maxUpdateInterval(2), // 2 seconds
-        followUAVEnabled(false)
+    mapcontrol::OPMapWidget(parent),
+    currWPManager(NULL),
+    firingWaypointChange(NULL),
+    maxUpdateInterval(2.1), // 2 seconds
+    followUAVEnabled(false),
+    trailType(mapcontrol::UAVTrailType::ByTimeElapsed),
+    trailInterval(2.0f),
+    followUAVID(0)
 {
     // Widget is inactive until shown
-
+    loadSettings(false);
     // Set cache mode
 }
 
@@ -26,7 +29,7 @@ QGCMapWidget::~QGCMapWidget()
 
 void QGCMapWidget::showEvent(QShowEvent* event)
 {
-    // FIXME XXX this is a hack to trick OPs current 1-system design
+    // Disable OP's standard UAV, we have more than one
     SetShowUAV(false);
 
     // Pass on to parent widget
@@ -42,50 +45,13 @@ void QGCMapWidget::showEvent(QShowEvent* event)
 
     internals::PointLatLng pos_lat_lon = internals::PointLatLng(0, 0);
 
-    //        // **************
-    //        // default home position
-
-    //        home_position.coord = pos_lat_lon;
-    //        home_position.altitude = altitude;
-    //        home_position.locked = false;
-
-    //        // **************
-    //        // default magic waypoint params
-
-    //        magic_waypoint.map_wp_item = NULL;
-    //        magic_waypoint.coord = home_position.coord;
-    //        magic_waypoint.altitude = altitude;
-    //        magic_waypoint.description = "Magic waypoint";
-    //        magic_waypoint.locked = false;
-    //        magic_waypoint.time_seconds = 0;
-    //        magic_waypoint.hold_time_seconds = 0;
-
     SetMouseWheelZoomType(internals::MouseWheelZoomType::MousePositionWithoutCenter);	    // set how the mouse wheel zoom functions
     SetFollowMouse(true);				    // we want a contiuous mouse position reading
 
     SetShowHome(true);					    // display the HOME position on the map
-//    SetShowUAV(true);					    // display the UAV position on the map
-    //SetShowDiagnostics(true); // Not needed in flight / production mode
-
-
     Home->SetSafeArea(30);                         // set radius (meters)
     Home->SetShowSafeArea(true);                                         // show the safe area
-
-////    UAV->SetTrailTime(uav_trail_time_list[0]);                           // seconds
-////    UAV->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
-
-////     UAV->SetTrailType(mapcontrol::UAVTrailType::ByTimeElapsed);
-////      UAV->SetTrailType(mapcontrol::UAVTrailType::ByDistance);
-
-//    GPS->SetTrailTime(uav_trail_time_list[0]);                           // seconds
-//    GPS->SetTrailDistance(uav_trail_distance_list[1]);                   // meters
-
-    // GPS->SetTrailType(UAVTrailType::ByTimeElapsed);
-
-    SetCurrentPosition(pos_lat_lon);         // set the map position
     Home->SetCoord(pos_lat_lon);             // set the HOME position
-//    UAV->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
-//    GPS->SetUAVPos(pos_lat_lon, 0.0);        // set the UAV position
 
     setFrameStyle(QFrame::NoFrame);      // no border frame
     setBackgroundBrush(QBrush(Qt::black)); // tile background
@@ -96,19 +62,16 @@ void QGCMapWidget::showEvent(QShowEvent* event)
     // Set currently selected system
     activeUASSet(UASManager::instance()->getActiveUAS());
 
-    // FIXME XXX this is a hack to trick OPs current 1-system design
-    SetShowUAV(false);
-
-
     // Connect map updates to the adapter slots
     connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)));
 
-
+    SetCurrentPosition(pos_lat_lon);         // set the map position
     setFocus();
 
     // Start timer
     connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateGlobalPosition()));
     updateTimer.start(maxUpdateInterval*1000);
+    // Update all UAV positions
     updateGlobalPosition();
     //QTimer::singleShot(800, this, SLOT(loadSettings()));
 }
@@ -119,7 +82,10 @@ void QGCMapWidget::hideEvent(QHideEvent* event)
     OPMapWidget::hideEvent(event);
 }
 
-void QGCMapWidget::loadSettings()
+/**
+ * @param changePosition Load also the last position from settings and update the map position.
+ */
+void QGCMapWidget::loadSettings(bool changePosition)
 {
     // Atlantic Ocean near Africa, coordinate origin
     double lastZoom = 1;
@@ -128,10 +94,31 @@ void QGCMapWidget::loadSettings()
 
     QSettings settings;
     settings.beginGroup("QGC_MAPWIDGET");
-    lastLat = settings.value("LAST_LATITUDE", lastLat).toDouble();
-    lastLon = settings.value("LAST_LONGITUDE", lastLon).toDouble();
-    lastZoom = settings.value("LAST_ZOOM", lastZoom).toDouble();
+    if (changePosition)
+    {
+        lastLat = settings.value("LAST_LATITUDE", lastLat).toDouble();
+        lastLon = settings.value("LAST_LONGITUDE", lastLon).toDouble();
+        lastZoom = settings.value("LAST_ZOOM", lastZoom).toDouble();
+    }
+    trailType = static_cast<mapcontrol::UAVTrailType::Types>(settings.value("TRAIL_TYPE", trailType).toInt());
+    trailInterval = settings.value("TRAIL_INTERVAL", trailInterval).toFloat();
     settings.endGroup();
+
+    // SET TRAIL TYPE
+    foreach (mapcontrol::UAVItem* uav, GetUAVS())
+    {
+        // Set the correct trail type
+        uav->SetTrailType(trailType);
+        // Set the correct trail interval
+        if (trailType == mapcontrol::UAVTrailType::ByDistance)
+        {
+            uav->SetTrailDistance(trailInterval);
+        }
+        else if (trailType == mapcontrol::UAVTrailType::ByTimeElapsed)
+        {
+            uav->SetTrailTime(trailInterval);
+        }
+    }
 
     // SET INITIAL POSITION AND ZOOM
     internals::PointLatLng pos_lat_lon = internals::PointLatLng(lastLat, lastLon);
@@ -147,6 +134,8 @@ void QGCMapWidget::storeSettings()
     settings.setValue("LAST_LATITUDE", pos.Lat());
     settings.setValue("LAST_LONGITUDE", pos.Lng());
     settings.setValue("LAST_ZOOM", ZoomReal());
+    settings.setValue("TRAIL_TYPE", static_cast<int>(trailType));
+    settings.setValue("TRAIL_INTERVAL", trailInterval);
     settings.endGroup();
     settings.sync();
 }
@@ -163,13 +152,13 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
             // Create new waypoint
             internals::PointLatLng pos = map->FromLocalToLatLng(event->pos().x(), event->pos().y());
             Waypoint* wp = currWPManager->createWaypoint();
-//            wp->blockSignals(true);
-//            wp->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
+            //            wp->blockSignals(true);
+            //            wp->setFrame(MAV_FRAME_GLOBAL_RELATIVE_ALT);
             wp->setLatitude(pos.Lat());
             wp->setLongitude(pos.Lng());
             wp->setAltitude(0);
-//            wp->blockSignals(false);
-//            currWPManager->notifyOfChange(wp);
+            //            wp->blockSignals(false);
+            //            currWPManager->notifyOfChange(wp);
         }
     }
     OPMapWidget::mouseDoubleClickEvent(event);
@@ -182,7 +171,7 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
  */
 void QGCMapWidget::addUAS(UASInterface* uas)
 {
-    qDebug() << "ADDING UAS";
+    // // qDebug() << "ADDING UAS";
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     //connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
@@ -401,7 +390,7 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
     if (firingWaypointChange == wp) return;
     // Not in cycle, block now from entering it
     firingWaypointChange = wp;
-    qDebug() << "UPDATING WP FROM MAP";
+    // // qDebug() << "UPDATING WP FROM MAP";
 
     // Update WP values
     internals::PointLatLng pos = waypoint->Coord();
@@ -416,9 +405,9 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
 
     internals::PointLatLng coord = waypoint->Coord();
     QString coord_str = " " + QString::number(coord.Lat(), 'f', 6) + "   " + QString::number(coord.Lng(), 'f', 6);
-    qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
+    // // qDebug() << "MAP WP COORD (MAP):" << coord_str << __FILE__ << __LINE__;
     QString wp_str = QString::number(wp->getLatitude(), 'f', 6) + "   " + QString::number(wp->getLongitude(), 'f', 6);
-    qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
+    // // qDebug() << "MAP WP COORD (WP):" << wp_str << __FILE__ << __LINE__;
 
     firingWaypointChange = NULL;
 

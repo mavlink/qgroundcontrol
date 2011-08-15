@@ -68,6 +68,10 @@ public:
 
     /** @brief The name of the robot */
     QString getUASName(void) const;
+    /** @brief Get short state */
+    const QString& getShortState() const;
+    /** @brief Get short mode */
+    const QString& getShortMode() const;
     /** @brief Get the unique system id */
     int getUASID() const;
     /** @brief Get the airframe */
@@ -198,6 +202,8 @@ protected: //COMMENTS FOR TEST UNIT
     int airframe;               ///< The airframe type
     bool attitudeKnown;         ///< True if attitude was received, false else
     QGCUASParamManager* paramManager; ///< Parameter manager class
+    QString shortStateText;     ///< Short textual state description
+    QString shortModeText;      ///< Short textual mode description
 
 public:
     /** @brief Set the current battery type */
