@@ -60,6 +60,18 @@ QGCVideoMainWindow::QGCVideoMainWindow(QWidget *parent) :
 
     // Open port
     link.connect();
+
+    // Show flow // FIXME
+    int xCount = 16;
+    int yCount = 5;
+
+    unsigned char flowX[xCount][yCount];
+    unsigned char flowY[xCount][yCount];
+
+    flowX[3][3] = 10;
+    flowY[3][3] = 5;
+
+    ui->video4Widget->copyFlow((const unsigned char*)flowX, (const unsigned char*)flowY, xCount, yCount);
 }
 
 QGCVideoMainWindow::~QGCVideoMainWindow()
@@ -316,6 +328,16 @@ void QGCVideoMainWindow::receiveBytes(LinkInterface* link, QByteArray data)
         imageRecBuffer2.clear();
         imageRecBuffer3.clear();
         imageRecBuffer4.clear();
+
+        ui->video4Widget->enableFlow(true);
+
+        int xCount = 16;
+        int yCount = 5;
+
+        unsigned char flowX[xCount][yCount];
+        unsigned char flowY[xCount][yCount];
+
+        ui->video4Widget->copyFlow((const unsigned char*)flowX, (const unsigned char*)flowY, xCount, yCount);
     }
 
 
