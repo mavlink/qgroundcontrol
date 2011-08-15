@@ -676,7 +676,7 @@ void QGCParamWidget::retransmissionGuardTick()
  */
 void QGCParamWidget::requestParameterUpdate(int component, const QString& parameter)
 {
-
+    // FIXME - IMPLEMENT THIS!
 }
 
 

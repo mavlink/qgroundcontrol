@@ -1,15 +1,10 @@
-#-------------------------------------------------
-#
+# -------------------------------------------------
 # QGroundControl - Micro Air Vehicle Groundstation
-#
 # Please see our website at <http://qgroundcontrol.org>
-#
-# Author:
-# Lorenz Meier <mavteam@student.ethz.ch>
-#
-# (c) 2009-2010 PIXHAWK Team
-#
-# This file is part of the mav groundstation project
+# Maintainer:
+# Lorenz Meier <lm@inf.ethz.ch>
+# (c) 2009-2011 QGroundControl Developers
+# This file is part of the open groundstation project
 # QGroundControl is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -20,29 +15,26 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with QGroundControl. If not, see <http://www.gnu.org/licenses/>.
-#
-#-------------------------------------------------
-
-
-#$$BASEDIR/lib/qextserialport/include
-#               $$BASEDIR/lib/openjaus/libjaus/include \
-#               $$BASEDIR/lib/openjaus/libopenJaus/include
+# -------------------------------------------------
 
 message(Qt version $$[QT_VERSION])
-message(Using Qt from $$[QTDIR])
+message(Using Qt from $(QTDIR))
+
+QT_DIR = $$(QTDIR)
 
 release {
 #    DEFINES += QT_NO_DEBUG_OUTPUT
 #    DEFINES += QT_NO_WARNING_OUTPUT
 }
 
-QMAKE_POST_LINK += echo "Copying files"
+win32-msvc2008|win32-msvc2010 {
+    QMAKE_POST_LINK += $$quote(echo "Copying files"$$escape_expand(\\n))
+} else {
+    QMAKE_POST_LINK += $$quote(echo "Copying files")
+}
 
 # Turn off serial port warnings
 DEFINES += _TTY_NOWARN_
-
-#QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/debug/.
-#QMAKE_POST_LINK += && cp -rf $$BASEDIR/models $$TARGETDIR/release/.
 
 # MAC OS X
 macx {
@@ -181,8 +173,6 @@ message("Compiling for linux 32")
     INCLUDEPATH += /usr/include \
                    /usr/local/include \
                    /usr/include/qt4/phonon
-              # $$BASEDIR/lib/flite/include \
-              # $$BASEDIR/lib/flite/lang
 
 
     message(Building for GNU/Linux 32bit/i386)
@@ -256,8 +246,6 @@ linux-g++-64 {
 
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
-              # $$BASEDIR/lib/flite/include \
-              # $$BASEDIR/lib/flite/lang
 
 
     # 64-bit Linux
@@ -316,9 +304,14 @@ linux-g++-64 {
 }
 
 # Windows (32bit)
-win32-msvc2008 {
+win32-msvc2008|win32-msvc2010 {
 
+    win32-msvc2008 {
     message(Building for Windows Visual Studio 2008 (32bit))
+    }
+    win32-msvc2010 {
+    message(Building for Windows Visual Studio 2010 (32bit))
+    }
 
     # QAxContainer support is needed for the Internet Control
     # element showing the Google Earth window
@@ -353,7 +346,7 @@ exists($$BASEDIR/lib/osg123) {
 message("Building support for OSG")
 DEPENDENCIES_PRESENT += osg
 
-# Include OpenSceneGraph and osgEarth libraries
+# Include OpenSceneGraph
 INCLUDEPATH += $$BASEDIR/lib/osgEarth/win32/include \
     $$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/include
 LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
@@ -364,14 +357,6 @@ LIBS += -L$$BASEDIR/lib/osgEarth_3rdparty/win32/OpenSceneGraph-2.8.2/lib \
     -losgText \
     -lOpenThreads
 DEFINES += QGC_OSG_ENABLED
-exists($$BASEDIR/lib/osgEarth123) {
-    DEPENDENCIES_PRESENT += osgearth
-    message("Building support for osgEarth")
-    DEFINES += QGC_OSGEARTH_ENABLED
-    LIBS += -L$$BASEDIR/lib/osgEarth/win32/lib \
-        -losgEarth \
-        -losgEarthUtil
-}
 }
 
     RC_FILE = $$BASEDIR/qgroundcontrol.rc
@@ -379,21 +364,47 @@ exists($$BASEDIR/lib/osgEarth123) {
     # Copy dependencies
     BASEDIR_WIN = $$replace(BASEDIR,"/","\\")
     TARGETDIR_WIN = $$replace(TARGETDIR,"/","\\")
+	QTDIR_WIN = $(QTDIR)
 
     exists($$TARGETDIR/debug) {
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\debug\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\debug\\audio\\\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\debug\\models\\\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\debug\\earth.html\"
+	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\audio" "$$TARGETDIR_WIN\\debug\\audio" /E /I $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\debug\\models" /E /I $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\images\\earth.html" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy /Y "$$(QTDIR)\\plugins" "$$TARGETDIR_WIN\\debug" /E /I /EXCLUDE:copydebug.txt $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\phonond4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtCored4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtGuid4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtMultimediad4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtNetworkd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtOpenGLd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtSqld4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtSvgd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtWebKitd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtXmld4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtXmlPatternsd4.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
     }
 
     exists($$TARGETDIR/release) {
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll\" \"$$TARGETDIR_WIN\\release\\SDL.dll\"
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\audio\" \"$$TARGETDIR_WIN\\release\\audio\\\" /S /E /Y
-        QMAKE_POST_LINK += && xcopy \"$$BASEDIR_WIN\\models\" \"$$TARGETDIR_WIN\\release\\models\\\" /S /E /Y
-        QMAKE_POST_LINK += && copy /Y \"$$BASEDIR_WIN\\images\\earth.html\" \"$$TARGETDIR_WIN\\release\\earth.html\"
+	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\audio" "$$TARGETDIR_WIN\\release\\audio" /E /I $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\release\\models" /E /I $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\images\\earth.html" "$$TARGETDIR_WIN\\release\\earth.html" $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(xcopy /Y "$$(QTDIR)\\plugins" "$$TARGETDIR_WIN\\release" /E /I /EXCLUDE:copyrelease.txt $$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\phonon4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtCore4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtGui4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtMultimedia4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtNetwork4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtOpenGL4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtSql4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtSvg4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtWebKit4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtXml4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+	QMAKE_POST_LINK += $$quote(copy /Y "$$(QTDIR)\\bin\\QtXmlPatterns4.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
+        QMAKE_POST_LINK += $$quote(del /F "$$TARGETDIR_WIN\\release\\qgroundcontrol.exp"$$escape_expand(\\n))
+        QMAKE_POST_LINK += $$quote(del /F "$$TARGETDIR_WIN\\release\\qgroundcontrol.lib"$$escape_expand(\\n))
     }
-
 }
 
 # Windows (32bit)
@@ -404,6 +415,10 @@ win32-g++ {
     # Special settings for debug
     CONFIG += CONSOLE
     OUTPUT += CONSOLE
+
+    # The EIGEN library needs this define
+    # to make the internal min/max functions work
+    DEFINES += NOMINMAX
 
     INCLUDEPATH += $$BASEDIR/lib/sdl/include \
                    $$BASEDIR/lib/opal/include #\ #\

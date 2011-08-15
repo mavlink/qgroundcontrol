@@ -300,7 +300,7 @@ bool SerialLink::hardwareConnect()
         emit connected(true);
     }
 
-    qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "with settings" << port->portName() << getBaudRate() << getDataBits() << getParityType() << getStopBits();
+    //qDebug() << "CONNECTING LINK: " << __FILE__ << __LINE__ << "with settings" << port->portName() << getBaudRate() << getDataBits() << getParityType() << getStopBits();
 
 
     writeSettings();
@@ -627,7 +627,7 @@ bool SerialLink::setBaudRateString(const QString& rate)
 
 bool SerialLink::setBaudRate(int rate)
 {
-    qDebug() << "BAUD RATE:" << rate;
+    //qDebug() << "BAUD RATE:" << rate;
 
     bool reconnect = false;
     bool accepted = true; // This is changed if none of the data rates matches
@@ -796,7 +796,7 @@ bool SerialLink::setParityType(int parity)
 
 bool SerialLink::setDataBits(int dataBits)
 {
-    qDebug() << "Setting" << dataBits << "data bits";
+    //qDebug() << "Setting" << dataBits << "data bits";
     bool reconnect = false;
     if (isConnected()) reconnect = true;
     bool accepted = true;

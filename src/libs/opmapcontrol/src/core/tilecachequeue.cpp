@@ -98,7 +98,9 @@ void TileCacheQueue::run()
 
         else
         {
+            #ifdef DEBUG_TILECACHEQUEUE
             qDebug()<<"Cache engine BEGIN WAIT";
+            #endif //DEBUG_TILECACHEQUEUE
             waitmutex.lock();
             int tout=4000;
             if(!waitc.wait(&waitmutex,tout))
@@ -115,7 +117,9 @@ void TileCacheQueue::run()
                 }
                 mutex.unlock();
             }
+            #ifdef DEBUG_TILECACHEQUEUE
             qDebug()<<"Cache Engine DID NOT TimeOut";
+            #endif //DEBUG_TILECACHEQUEUE
             waitmutex.unlock();
         }
     }
