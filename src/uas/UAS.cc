@@ -421,6 +421,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit gpsLocalizationChanged(this, status.gps_fix);
             }
             break;
+        case MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE:
+            {
+                mavlink_vision_speed_estimate_t speed;
+                mavlink_msg_vision_speed_estimate_decode(&message, &speed);
+                quint64 time = getUnixTime(speed.usec);
+                emit valueChanged(uasId, "vis.speed x", "m/s", static_cast<double>(speed.x), time);
+                emit valueChanged(uasId, "vis.speed y", "m/s", static_cast<double>(speed.y), time);
+                emit valueChanged(uasId, "vis.speed z", "m/s", static_cast<double>(speed.z), time);
+            }
+            break;
 #endif // PIXHAWK
         case MAVLINK_MSG_ID_RAW_IMU:
             {
