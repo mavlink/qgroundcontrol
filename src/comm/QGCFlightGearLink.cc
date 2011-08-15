@@ -329,7 +329,6 @@ QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
                       this, SLOT(processError(QProcess::ProcessError)));
 // Start Flightgear
 QStringList processCall;
-processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,ardupilot" << "--generic=socket,in,50,127.0.0.1,49000,udp,ardupilot" << "--in-air" << "--altitude=10" << "--vc=90" << "--heading=300" << "--timeofday=noon";
 QString processFgfs;
 QString fgRoot;
 QString aircraft("Rascal110");
@@ -344,9 +343,9 @@ processFgfs = "C:\Program Files (x86)\FlightGear\bin\Win32\fgfs";
 fgRoot = "--fg-root=C:\Program Files (x86)\FlightGear\data";
 #endif
 
-
-processCall << QString("--aircraft=%2").arg(aircraft);
 processCall << fgRoot;
+//processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,ardupilot" << "--generic=socket,in,50,127.0.0.1,49000,udp,ardupilot" << "--in-air" << "--altitude=10" << "--vc=90" << "--heading=300" << "--timeofday=noon";
+//processCall << QString("--aircraft=%2").arg(aircraft);
 
 process->start(processFgfs, processCall);
 
