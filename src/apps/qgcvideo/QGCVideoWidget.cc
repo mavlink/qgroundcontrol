@@ -129,7 +129,7 @@ QGCVideoWidget::QGCVideoWidget(QWidget* parent)
       load(0.0f),
       offlineDirectory(""),
       nextOfflineImage(""),
-      hudInstrumentsEnabled(true),
+      hudInstrumentsEnabled(false),
       videoEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0),
