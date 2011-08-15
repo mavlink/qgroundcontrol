@@ -33,24 +33,25 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QMutexLocker>
 #include <iostream>
-#include "UDPLink.h"
-#include "LinkManager.h"
+#include "QGCFlightGearLink.h"
 #include "QGC.h"
 #include <QHostInfo>
-//#include <netinet/in.h>
 
-UDPLink::UDPLink(QHostAddress host, quint16 port)
+QGCFlightGearLink::QGCFlightGearLink(QString remoteHost, QHostAddress host, quint16 port)
 {
     this->host = host;
     this->port = port;
     this->connectState = false;
+    this->currentPort = 49000;
+
     // Set unique ID and add link to the list of links
-    this->id = getNextLinkId();
-    this->name = tr("UDP Link (port:%1)").arg(14550);
-    LinkManager::instance()->add(this);
+    this->name = tr("FlightGear Link (port:%1)").arg(port);
+    setRemoteHost(remoteHost);
+    connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
+    refreshTimer.start(20); // 50 Hz UAV -> Simulation update rate
 }
 
-UDPLink::~UDPLink()
+QGCFlightGearLink::~QGCFlightGearLink()
 {
     disconnect();
 }
@@ -59,7 +60,7 @@ UDPLink::~UDPLink()
  * @brief Runs the thread
  *
  **/
-void UDPLink::run()
+void QGCFlightGearLink::run()
 {
 //    forever
 //    {
@@ -68,22 +69,17 @@ void UDPLink::run()
     exec();
 }
 
-void UDPLink::setAddress(QString address)
-{
-    Q_UNUSED(address);
-}
-
-void UDPLink::setPort(int port)
+void QGCFlightGearLink::setPort(int port)
 {
     this->port = port;
-    disconnect();
-    connect();
+    disconnectSimulation();
+    connectSimulation();
 }
 
 /**
  * @param host Hostname in standard formatting, e.g. localhost:14551 or 192.168.1.1:14551
  */
-void UDPLink::addHost(const QString& host)
+void QGCFlightGearLink::setRemoteHost(const QString& host)
 {
     //qDebug() << "UDP:" << "ADDING HOST:" << host;
     if (host.contains(":"))
@@ -103,10 +99,10 @@ void UDPLink::addHost(const QString& host)
                     address = hostAddresses.at(i);
                 }
             }
-            hosts.append(address);
+            currentHost = address;
             //qDebug() << "Address:" << address.toString();
             // Set port according to user input
-            ports.append(host.split(":").last().toInt());
+            currentPort = host.split(":").last().toInt();
         }
     }
     else
@@ -115,48 +111,36 @@ void UDPLink::addHost(const QString& host)
         if (info.error() == QHostInfo::NoError)
         {
             // Add host
-            hosts.append(info.addresses().first());
-            // Set port according to default (this port)
-            ports.append(port);
+            currentHost = info.addresses().first();
         }
     }
 }
 
-void UDPLink::removeHost(const QString& hostname)
+void QGCFlightGearLink::updateGlobalPosition(quint64 time, double lat, double lon, double alt)
 {
-    QString host = hostname;
-    if (host.contains(":")) host = host.split(":").first();
-    host = host.trimmed();
-    QHostInfo info = QHostInfo::fromName(host);
-    QHostAddress address;
-    QList<QHostAddress> hostAddresses = info.addresses();
-    for (int i = 0; i < hostAddresses.size(); i++)
-    {
-        // Exclude loopback IPv4 and all IPv6 addresses
-        if (!hostAddresses.at(i).toString().contains(":"))
-        {
-            address = hostAddresses.at(i);
-        }
-    }
-    for (int i = 0; i < hosts.count(); ++i)
-    {
-        if (hosts.at(i) == address)
-        {
-            hosts.removeAt(i);
-            ports.removeAt(i);
-        }
-    }
+
 }
 
-void UDPLink::writeBytes(const char* data, qint64 size)
+void QGCFlightGearLink::sendUAVUpdate()
 {
-    // Broadcast to all connected systems
-    for (int h = 0; h < hosts.size(); h++)
-    {
-        QHostAddress currentHost = hosts.at(h);
-        quint16 currentPort = ports.at(h);
-//#define UDPLINK_DEBUG
-#ifdef UDPLINK_DEBUG
+    // 37.613548,-122.357246,-9999.000000,0.000000,0.424000,297.899994,0.000000\n
+    // magnetos,aileron,elevator,rudder,throttle\n
+
+    float magnetos = 3.0f;
+    float aileron = 0.0f;
+    float elevator = 0.0f;
+    float rudder = 0.0f;
+    float throttle = 90.0f;
+
+    QString state("%1,%2,%3,%4,%5\n");
+    state = state.arg(magnetos).arg(aileron).arg(elevator).arg(rudder).arg(throttle);
+    writeBytes(state.toAscii().constData(), state.length());
+}
+
+void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
+{
+//#define QGCFlightGearLink_DEBUG
+#ifdef QGCFlightGearLink_DEBUG
         QString bytes;
         QString ascii;
         for (int i=0; i<size; i++)
@@ -177,7 +161,6 @@ void UDPLink::writeBytes(const char* data, qint64 size)
         qDebug() << "ASCII:" << ascii;
 #endif
         socket->writeDatagram(data, size, currentHost, currentPort);
-    }
 }
 
 /**
@@ -186,7 +169,7 @@ void UDPLink::writeBytes(const char* data, qint64 size)
  * @param data Pointer to the data byte array to write the bytes to
  * @param maxLength The maximum number of bytes to write
  **/
-void UDPLink::readBytes()
+void QGCFlightGearLink::readBytes()
 {
     const qint64 maxLength = 65536;
     static char data[maxLength];
@@ -199,7 +182,10 @@ void UDPLink::readBytes()
 
     // FIXME TODO Check if this method is better than retrieving the data by individual processes
     QByteArray b(data, s);
-    emit bytesReceived(this, b);
+    //emit bytesReceived(this, b);
+	
+	// Print string
+	qDebug() << "FG LINK GOT:" << QString(b);
 
 //    // Echo data for debugging purposes
 //    std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
@@ -210,21 +196,6 @@ void UDPLink::readBytes()
 //        fprintf(stderr,"%02x ", v);
 //    }
 //    std::cerr << std::endl;
-
-
-    // Add host to broadcast list if not yet present
-    if (!hosts.contains(sender))
-    {
-        hosts.append(sender);
-        ports.append(senderPort);
-        //        ports->insert(sender, senderPort);
-    }
-    else
-    {
-        int index = hosts.indexOf(sender);
-        ports.replace(index, senderPort);
-    }
-
 }
 
 
@@ -233,7 +204,7 @@ void UDPLink::readBytes()
  *
  * @return The number of bytes to read
  **/
-qint64 UDPLink::bytesAvailable()
+qint64 QGCFlightGearLink::bytesAvailable()
 {
     return socket->pendingDatagramSize();
 }
@@ -243,15 +214,15 @@ qint64 UDPLink::bytesAvailable()
  *
  * @return True if connection has been disconnected, false if connection couldn't be disconnected.
  **/
-bool UDPLink::disconnect()
+bool QGCFlightGearLink::disconnectSimulation()
 {
     delete socket;
     socket = NULL;
 
     connectState = false;
 
-    emit disconnected();
-    emit connected(false);
+    emit flightGearDisconnected();
+    emit flightGearConnected(false);
     return !connectState;
 }
 
@@ -260,7 +231,7 @@ bool UDPLink::disconnect()
  *
  * @return True if connection has been established, false if connection couldn't be established.
  **/
-bool UDPLink::connect()
+bool QGCFlightGearLink::connectSimulation()
 {
     socket = new QUdpSocket(this);
 
@@ -304,9 +275,9 @@ bool UDPLink::connect()
     //QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
-    emit connected(connectState);
+    emit flightGearConnected(connectState);
     if (connectState) {
-        emit connected();
+        emit flightGearConnected();
         connectionStartTime = QGC::groundTimeUsecs()/1000;
     }
 
@@ -319,86 +290,18 @@ bool UDPLink::connect()
  *
  * @return True if link is connected, false otherwise.
  **/
-bool UDPLink::isConnected()
+bool QGCFlightGearLink::isConnected()
 {
     return connectState;
 }
 
-int UDPLink::getId()
-{
-    return id;
-}
-
-QString UDPLink::getName()
+QString QGCFlightGearLink::getName()
 {
     return name;
 }
 
-void UDPLink::setName(QString name)
+void QGCFlightGearLink::setName(QString name)
 {
     this->name = name;
-    emit nameChanged(this->name);
-}
-
-
-qint64 UDPLink::getNominalDataRate()
-{
-    return 54000000; // 54 Mbit
-}
-
-qint64 UDPLink::getTotalUpstream()
-{
-    statisticsMutex.lock();
-    qint64 totalUpstream = bitsSentTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalUpstream;
-}
-
-qint64 UDPLink::getCurrentUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 UDPLink::getMaxUpstream()
-{
-    return 0; // TODO
-}
-
-qint64 UDPLink::getBitsSent()
-{
-    return bitsSentTotal;
-}
-
-qint64 UDPLink::getBitsReceived()
-{
-    return bitsReceivedTotal;
-}
-
-qint64 UDPLink::getTotalDownstream()
-{
-    statisticsMutex.lock();
-    qint64 totalDownstream = bitsReceivedTotal / ((QGC::groundTimeUsecs()/1000 - connectionStartTime) / 1000);
-    statisticsMutex.unlock();
-    return totalDownstream;
-}
-
-qint64 UDPLink::getCurrentDownstream()
-{
-    return 0; // TODO
-}
-
-qint64 UDPLink::getMaxDownstream()
-{
-    return 0; // TODO
-}
-
-bool UDPLink::isFullDuplex()
-{
-    return true;
-}
-
-int UDPLink::getLinkQuality()
-{
-    /* This feature is not supported with this interface */
-    return -1;
+//    emit nameChanged(this->name);
 }

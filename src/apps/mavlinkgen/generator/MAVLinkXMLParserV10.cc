@@ -23,7 +23,7 @@ This file is part of the QGROUNDCONTROL project
 
 /**
  * @file
- *   @brief Implementation of class MAVLinkXMLParser
+ *   @brief Implementation of class MAVLinkXMLParserV10
  *   @author Lorenz Meier <mail@qgroundcontrol.org>
  */
 
@@ -34,18 +34,18 @@ This file is part of the QGROUNDCONTROL project
 #include <QMap>
 #include <QDateTime>
 #include <QLocale>
-#include "MAVLinkXMLParser.h"
+#include "MAVLinkXMLParserV10.h"
 
 #include <QDebug>
 
-MAVLinkXMLParser::MAVLinkXMLParser(QDomDocument* document, QString outputDirectory, QObject* parent) : QObject(parent),
-    doc(document),
-    outputDirName(outputDirectory),
-    fileName("")
+MAVLinkXMLParserV10::MAVLinkXMLParserV10(QDomDocument* document, QString outputDirectory, QObject* parent) : QObject(parent),
+doc(document),
+outputDirName(outputDirectory),
+fileName("")
 {
 }
 
-MAVLinkXMLParser::MAVLinkXMLParser(QString document, QString outputDirectory, QObject* parent) : QObject(parent)
+MAVLinkXMLParserV10::MAVLinkXMLParserV10(QString document, QString outputDirectory, QObject* parent) : QObject(parent)
 {
     doc = new QDomDocument();
     QFile file(document);
@@ -58,14 +58,14 @@ MAVLinkXMLParser::MAVLinkXMLParser(QString document, QString outputDirectory, QO
     outputDirName = outputDirectory;
 }
 
-MAVLinkXMLParser::~MAVLinkXMLParser()
+MAVLinkXMLParserV10::~MAVLinkXMLParserV10()
 {
 }
 
 /**
  * Generate C-code (C-89 compliant) out of the XML protocol specs.
  */
-bool MAVLinkXMLParser::generate()
+bool MAVLinkXMLParserV10::generate()
 {
     // Process result
     bool success = true;
@@ -112,16 +112,6 @@ bool MAVLinkXMLParser::generate()
 
     int mavlinkVersion = 0;
 
-    // we need to gather the message lengths across multiple includes,
-    // which we can do via detecting recursion
-    static unsigned message_lengths[256];
-    static int highest_message_id;
-    static int recursion_level;
-
-    if (recursion_level == 0){
-        highest_message_id = 0;
-        memset(message_lengths, 0, sizeof(message_lengths));
-    }
 
 
     // Start main header
@@ -175,13 +165,10 @@ bool MAVLinkXMLParser::generate()
                                 emit parseState(QString("<font color=\"green\">Included messages from file: %1</font>").arg(incFileName));
                                 // NEW MODE: CREATE INDIVIDUAL FOLDERS
                                 // Create new output directory, parse included XML and generate C-code
-                                MAVLinkXMLParser includeParser(incFilePath, topLevelOutputDirName, this);
+                                MAVLinkXMLParserV10 includeParser(incFilePath, topLevelOutputDirName, this);
                                 connect(&includeParser, SIGNAL(parseState(QString)), this, SIGNAL(parseState(QString)));
                                 // Generate and write
-                                recursion_level++;
-                                // Abort if inclusion fails
-                                if (!includeParser.generate()) return false;
-                                recursion_level--;
+                                includeParser.generate();
                                 mainHeader += "\n#include \"../" + pureIncludeFileName + "/" + pureIncludeFileName + ".h\"\n";
 
 
@@ -350,7 +337,7 @@ bool MAVLinkXMLParser::generate()
                                     //int commaPosition = currEnum.lastIndexOf(",");
                                     //currEnum.remove(commaPosition, 1);
 
-                                    enums += "/** @brief " + comment  + " */\n" + currEnum + currEnumEnd;
+                                    enums += "/** @brief " + comment.simplified() + " */\n" + currEnum + currEnumEnd;
                                 } // Element is non-zero and element name is <enum>
                                 n = n.nextSibling();
                             } // While through <enums>
@@ -407,6 +394,7 @@ bool MAVLinkXMLParser::generate()
 
                                         QString channelType("mavlink_channel_t");
                                         QString messageType("mavlink_message_t");
+                                        QString headerType("mavlink_header_t");
 
                                         // Build up function call
                                         QString commentContainer("/**\n * @brief Pack a %1 message\n * @param system_id ID of this system\n * @param component_id ID of this component (e.g. 200 for IMU)\n * @param msg The MAVLink message to compress the data into\n *\n%2 * @return length of the message in bytes (excluding serial stream start sign)\n */\n");
@@ -415,17 +403,19 @@ bool MAVLinkXMLParser::generate()
                                         QString commentEncodeContainer("/**\n * @brief Encode a %1 struct into a message\n *\n * @param system_id ID of this system\n * @param component_id ID of this component (e.g. 200 for IMU)\n * @param msg The MAVLink message to compress the data into\n * @param %1 C-struct to read the message contents from\n */\n");
                                         QString commentDecodeContainer("/**\n * @brief Decode a %1 message into a struct\n *\n * @param msg The message to decode\n * @param %1 C-struct to decode the message contents into\n */\n");
                                         QString commentEntry(" * @param %1 %2\n");
-                                        QString idDefine = QString("#define MAVLINK_MSG_ID_%1 %2").arg(messageName.toUpper(), QString::number(messageId));
+                                        QString idDefine = QString("#define MAVLINK_MSG_ID_%1 %2\n#define MAVLINK_MSG_ID_%1_LEN %3\n#define MAVLINK_MSG_%2_LEN %3");
                                         QString arrayDefines;
                                         QString cStructName = QString("mavlink_%1_t").arg(messageName);
                                         QString cStruct("typedef struct __%1 \n{\n%2\n} %1;");
                                         QString cStructLines;
                                         QString encode("static inline uint16_t mavlink_msg_%1_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const %2* %1)\n{\n\treturn mavlink_msg_%1_pack(%3);\n}\n");
 
-                                        QString decode("static inline void mavlink_msg_%1_decode(const mavlink_message_t* msg, %2* %1)\n{\n%3}\n");
-                                        QString pack("static inline uint16_t mavlink_msg_%1_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg%2)\n{\n\tuint16_t i = 0;\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\n%4\n\treturn mavlink_finalize_message(msg, system_id, component_id, i);\n}\n\n");
-                                        QString packChan("static inline uint16_t mavlink_msg_%1_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg%2)\n{\n\tuint16_t i = 0;\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\n%4\n\treturn mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);\n}\n\n");
-                                        QString compactSend("#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif");
+                                                                                //                                        QString decode("static inline void mavlink_msg_%1_decode(const mavlink_message_t* msg, %2* %1)\n{\n%3}\n");
+                                        QString decode("static inline void mavlink_msg_%1_decode(const mavlink_message_t* msg, %2* %1)\n{\n\tmemcpy( %1, msg->payload, sizeof(%2));\n}\n");
+                                                                                //                                        QString pack("static inline uint16_t mavlink_msg_%1_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg%2)\n{\n\tuint16_t i = 0;\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\n%4\n\treturn mavlink_finalize_message(msg, system_id, component_id, i);\n}\n\n");
+                                        QString pack("static inline uint16_t mavlink_msg_%1_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg%2)\n{\n\tmavlink_%1_t *p = (mavlink_%1_t *)&msg->payload[0];\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\n%4\n\treturn mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_%3_LEN);\n}\n\n");
+                                                                                //                                        QString packChan("static inline uint16_t mavlink_msg_%1_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg%2)\n{\n\tuint16_t i = 0;\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\n%4\n\treturn mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);\n}\n\n");
+                                        QString packChan("static inline uint16_t mavlink_msg_%1_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg%2)\n{\n\tmavlink_%1_t *p = (mavlink_%1_t *)&msg->payload[0];\n\tmsg->msgid = MAVLINK_MSG_ID_%3;\n\n%4\n\treturn mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_%3_LEN);\n}\n\n");
                                         //QString compactStructSend = "#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_struct_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_encode(mavlink_system.sysid, mavlink_system.compid, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif";
                                         QString unpacking;
                                         QString prepends;
@@ -435,7 +425,7 @@ bool MAVLinkXMLParser::generate()
                                         QString decodeLines;
                                         QString sendArguments;
                                         QString commentLines;
-                                        unsigned message_length = 0;
+                                        int calculatedLength = 0;
 
 
                                         // Get the message fields
@@ -447,6 +437,7 @@ bool MAVLinkXMLParser::generate()
                                             {
                                                 QString fieldType = e2.attribute("type", "");
                                                 QString fieldName = e2.attribute("name", "");
+                                                QString fieldOffset = e2.attribute("offset", "");
                                                 QString fieldText = e2.text();
 
                                                 QString unpackingCode;
@@ -466,10 +457,30 @@ bool MAVLinkXMLParser::generate()
                                                 {
                                                     // Add field to C structure
                                                     cStructLines += QString("\t%1 %2; ///< %3\n").arg("uint8_t", fieldName, fieldText);
+                                                    calculatedLength += 1;
                                                     // Add pack line to message_xx_pack function
-                                                    packLines += QString("\ti += put_uint8_t_by_index(%1, i, msg->payload); // %2\n").arg(mavlinkVersion).arg(fieldText);
+                                                                                                        //                                                    packLines += QString("\ti += put_uint8_t_by_index(%1, i, msg->payload); // %2\n").arg(mavlinkVersion).arg(fieldText);
+                                                    packLines += QString("\n\tp->%2 = MAVLINK_VERSION; // %1:%3").arg(fieldType, fieldName, e2.text());
                                                     // Add decode function for this type
-                                                    decodeLines += QString("\t%1->%2 = mavlink_msg_%1_get_%2(msg);\n").arg(messageName, fieldName);
+                                                    decodeLines += QString("\n\t%1->%2 = mavlink_msg_%1_get_%2(msg);").arg(messageName, fieldName);
+
+                                                    if (fieldOffset != "") { // does not use the number - always moves up one slot
+                                                        QStringList itemList;
+                                                        // Swap field in C structure
+                                                        itemList = cStructLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        cStructLines = itemList.join("\n") + "\n";
+
+                                                        // Swap line in message_xx_pack function
+                                                        itemList = packLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        packLines = itemList.join("\n") + "\n";
+
+                                                        // Swap line in decode function for this type
+                                                        itemList = decodeLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        decodeLines = itemList.join("\n") + "\n";
+                                                    }
                                                 }
 
                                                 // Array handling is different from simple types
@@ -477,51 +488,144 @@ bool MAVLinkXMLParser::generate()
                                                 {
                                                     int arrayLength = QString(fieldType.split("[").at(1).split("]").first()).toInt();
                                                     QString arrayType = fieldType.split("[").first();
+                                                    if (arrayType.contains("array")) calculatedLength += arrayLength; else
+                                                                                                                if (arrayType.contains("char")) calculatedLength += arrayLength; else
+                                                                                                                        if (arrayType.contains("int8")) calculatedLength += arrayLength; else
+                                                                                                                                if (arrayType.contains("int16")) calculatedLength += arrayLength*2; else
+                                                                                                                                        if (arrayType.contains("int32")) calculatedLength += arrayLength*4; else
+                                                                                                                                                if (arrayType.contains("int64")) calculatedLength += arrayLength*8; else
+                                                                                                                                                        if (arrayType == "float") calculatedLength += arrayLength*4; else {
+                                                                                                                                                                emit parseState(tr("<font color=\"red\">ERROR: In message %1 inavlid array type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, arrayType));
+                                                                                                                                                                return false;
+                                                                                                                                                        }
                                                     packParameters += QString(", const ") + QString("int8_t*") + " " + fieldName;
                                                     packArguments += ", " + messageName + "->" + fieldName;
 
                                                     // Add field to C structure
                                                     cStructLines += QString("\t%1 %2[%3]; ///< %4\n").arg("int8_t", fieldName, QString::number(arrayLength), fieldText);
                                                     // Add pack line to message_xx_pack function
-                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); // %4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
+                                                                                                        //                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); // %4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
+                                                    packLines += QString("\tmemcpy( p->%2, %2, sizeof(p->%2)); // %1[%3]:%4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
                                                     // Add decode function for this type
-                                                    decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
+                                                    decodeLines += QString("\n\tmavlink_msg_%1_get_%2(msg, %1->%2);").arg(messageName, fieldName);
+
+                                                    if (fieldOffset != "") { // does not use the number - always moves up one slot
+                                                        QStringList itemList;
+                                                        // Swap field in C structure
+                                                        itemList = cStructLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        cStructLines = itemList.join("\n") + "\n";
+
+                                                        // Swap line in message_xx_pack function
+                                                        itemList = packLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        packLines = itemList.join("\n") + "\n";
+
+                                                        // Swap line in decode function for this type
+                                                        itemList = decodeLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        decodeLines = itemList.join("\n") + "\n";
+                                                    }
+
                                                     arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
                                                 }
                                                 else if (fieldType.startsWith("string"))
                                                 {
                                                     int arrayLength = QString(fieldType.split("[").at(1).split("]").first()).toInt();
+                                                    calculatedLength += arrayLength;
                                                     QString arrayType = fieldType.split("[").first();
+                                                    if (arrayType.contains("string")) calculatedLength += arrayLength; else
+                                                                                                                if (arrayType.contains("array")) calculatedLength += arrayLength; else
+                                                                                                                        if (arrayType.contains("char")) calculatedLength += arrayLength; else
+                                                                                                                                if (arrayType.contains("int8")) calculatedLength += arrayLength; else
+                                                                                                                                        if (arrayType.contains("int16")) calculatedLength += arrayLength*2; else
+                                                                                                                                                if (arrayType.contains("int32")) calculatedLength += arrayLength*4; else
+                                                                                                                                                        if (arrayType.contains("int64")) calculatedLength += arrayLength*8; else
+                                                                                                                                                                if (arrayType == "float") calculatedLength += arrayLength*4; else {
+                                                                                                                                                                        emit parseState(tr("<font color=\"red\">ERROR: In message %1 inavlid array type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, arrayType));
+                                                                                                                                                                        return false;
+                                                                                                                                                                }
                                                     packParameters += QString(", const ") + QString("char*") + " " + fieldName;
                                                     packArguments += ", " + messageName + "->" + fieldName;
 
                                                     // Add field to C structure
                                                     cStructLines += QString("\t%1 %2[%3]; ///< %4\n").arg("char", fieldName, QString::number(arrayLength), fieldText);
                                                     // Add pack line to message_xx_pack function
-                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); // %4\n").arg(arrayType, fieldName, QString::number(arrayLength), e2.text());
+                                                                                                        //                                                    packLines += QString("\ti += put_%1_by_index(%2, %3, i, msg->payload); // %4\n").arg(arrayType, fieldName, QString::number(arrayLength), e2.text());
+                                                    packLines += QString("\tstrncpy( p->%2, %2, sizeof(p->%2)); // %1[%3]:%4\n").arg("char", fieldName, QString::number(arrayLength), fieldText);
                                                     // Add decode function for this type
                                                     decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
                                                     arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
+
+                                                    if (fieldOffset != "") { // does not use the number - always moves up one slot
+                                                        QStringList itemList;
+                                                        // Swap field in C structure
+                                                        itemList = cStructLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        cStructLines = itemList.join("\n") + "\n";
+
+                                                        // Swap line in message_xx_pack function
+                                                        itemList = packLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        packLines = itemList.join("\n") + "\n";
+
+                                                        // Swap line in decode function for this type
+                                                        itemList = decodeLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        decodeLines = itemList.join("\n") + "\n";
+                                                    }
                                                 }
                                                 // Expand array handling to all valid mavlink data types
                                                 else if(fieldType.contains('[') && fieldType.contains(']'))
                                                 {
                                                     int arrayLength = QString(fieldType.split("[").at(1).split("]").first()).toInt();
                                                     QString arrayType = fieldType.split("[").first();
+                                                    if (arrayType.contains("array")) calculatedLength += arrayLength; else
+                                                                                                                if (arrayType.contains("char")) calculatedLength += arrayLength; else
+                                                                                                                        if (arrayType.contains("int8")) calculatedLength += arrayLength; else
+                                                                                                                                if (arrayType.contains("int16")) calculatedLength += arrayLength*2; else
+                                                                                                                                        if (arrayType.contains("int32")) calculatedLength += arrayLength*4; else
+                                                                                                                                                if (arrayType.contains("int64")) calculatedLength += arrayLength*8; else
+                                                                                                                                                        if (arrayType == "float") calculatedLength += arrayLength*4; else {
+                                                                                                                                                                emit parseState(tr("<font color=\"red\">ERROR: In message %1 inavlid array type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, arrayType));
+                                                                                                                                                                return false;
+                                                                                                                                                        }
                                                     packParameters += QString(", const ") + arrayType + "* " + fieldName;
                                                     packArguments += ", " + messageName + "->" + fieldName;
 
                                                     // Add field to C structure
                                                     cStructLines += QString("\t%1 %2[%3]; ///< %4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
                                                     // Add pack line to message_xx_pack function
-                                                    packLines += QString("\ti += put_array_by_index((const int8_t*)%1, sizeof(%2)*%3, i, msg->payload); // %4\n").arg(fieldName, arrayType, QString::number(arrayLength), fieldText);
+                                                                                                        //                                                    packLines += QString("\ti += put_array_by_index((const int8_t*)%1, sizeof(%2)*%3, i, msg->payload); // %4\n").arg(fieldName, arrayType, QString::number(arrayLength), fieldText);
+                                                    packLines += QString("\tmemcpy(p->%2, %2, sizeof(p->%2)); // %1[%3]:%4\n").arg(arrayType, fieldName, QString::number(arrayLength), fieldText);
                                                     // Add decode function for this type
-                                                    decodeLines += QString("\tmavlink_msg_%1_get_%2(msg, %1->%2);\n").arg(messageName, fieldName);
+                                                    decodeLines += QString("\n\tmavlink_msg_%1_get_%2(msg, %1->%2);").arg(messageName, fieldName);
+
+                                                    if (fieldOffset != "") { // does not use the number - always moves up one slot
+                                                        QStringList itemList;
+                                                        // Swap field in C structure
+                                                        itemList = cStructLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        cStructLines = itemList.join("\n") + "\n";
+
+                                                        // Swap line in message_xx_pack function
+                                                        itemList = packLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        packLines = itemList.join("\n") + "\n";
+
+                                                        // Swap line in decode function for this type
+                                                        itemList = decodeLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        decodeLines = itemList.join("\n") + "\n";
+                                                    }
+
                                                     arrayDefines += QString("#define MAVLINK_MSG_%1_FIELD_%2_LEN %3\n").arg(messageName.toUpper(), fieldName.toUpper(), QString::number(arrayLength));
 
-                                                    unpackingCode = QString("\n\tmemcpy(r_data, msg->payload%1, sizeof(%2)*%3);\n\treturn sizeof(%2)*%3;").arg(prepends, arrayType, QString::number(arrayLength));
+                                                                                                        //                                                    unpackingCode = QString("\n\tmemcpy(r_data, msg->payload%1, sizeof(%2)*%3);\n\treturn sizeof(%2)*%3;").arg(prepends, arrayType, QString::number(arrayLength));
+                                                    unpackingCode = QString("\n\tmemcpy(%1, p->%1, sizeof(p->%1));\n\treturn sizeof(p->%1);").arg(fieldName);
 
-                                                    unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, %3* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, arrayType, unpackingCode);
+                                                                                                        //                                                    unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, %3* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, arrayType, unpackingCode);
+                                                    unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, %3* %2)\n{\n\tmavlink_%1_t *p = (mavlink_%1_t *)&msg->payload[0];\n%4\n}\n\n").arg(messageName, fieldName, arrayType, unpackingCode);
                                                     //                                                    decodeLines += "";
                                                     prepends += QString("+sizeof(%1)*%2").arg(arrayType, QString::number(arrayLength));
 
@@ -535,106 +639,109 @@ bool MAVLinkXMLParser::generate()
                                                     // Add field to C structure
                                                     cStructLines += QString("\t%1 %2; ///< %3\n").arg(fieldType, fieldName, fieldText);
                                                     // Add pack line to message_xx_pack function
-                                                    packLines += QString("\ti += put_%1_by_index(%2, i, msg->payload); // %3\n").arg(fieldType, fieldName, e2.text());
+                                                                                                        //                                                     packLines += QString("\ti += put_%1_by_index(%2, i, msg->payload); // %3\n").arg(fieldType, fieldName, e2.text());
+                                                    packLines += QString("\tp->%2 = %2; // %1:%3\n").arg(fieldType, fieldName, e2.text());
                                                     // Add decode function for this type
-                                                    decodeLines += QString("\t%1->%2 = mavlink_msg_%1_get_%2(msg);\n").arg(messageName, fieldName);
-                                                }
+                                                                                                        //                                                     decodeLines += QString("\t%1->%2 = mavlink_msg_%1_get_%2(msg);\n").arg(messageName, fieldName);
+                                                    decodeLines += QString("\n\t%1 = p->%1;").arg(fieldName);
 
+                                                    if (fieldOffset != "") { // does not use the number - always moves up one slot
+                                                        QStringList itemList;
+                                                        // Swap field in C structure
+                                                        itemList = cStructLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        cStructLines = itemList.join("\n") + "\n";
 
-                                                // message length calculation
-                                                unsigned element_multiplier = 1;
-                                                unsigned element_length = 0;
-                                                const struct
-                                                {
-                                                    const char *prefix;
-                                                    unsigned length;
-                                                } length_map[] = {
-                                                        { "array",  1 },
-                                                        { "char",   1 },
-                                                        { "uint8",  1 },
-                                                        { "int8",   1 },
-                                                        { "uint16", 2 },
-                                                        { "int16",  2 },
-                                                        { "uint32", 4 },
-                                                        { "int32",  4 },
-                                                        { "uint64", 8 },
-                                                        { "int64",  8 },
-                                                        { "float",  4 },
-                                                        { "double", 8 },
-                                                };
-                                                if (fieldType.contains("["))
-                                                {
-                                                    element_multiplier = fieldType.split("[").at(1).split("]").first().toInt();
-                                                }
-                                                for (unsigned i=0; i<sizeof(length_map)/sizeof(length_map[0]); i++)
-                                                {
-                                                    if (fieldType.startsWith(length_map[i].prefix)) {
-                                                        element_length = length_map[i].length * element_multiplier;
-                                                        break;
+                                                        // Swap line in message_xx_pack function
+                                                        itemList = packLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        packLines = itemList.join("\n") + "\n";
+
+                                                        // Swap line in decode function for this type
+                                                        itemList = decodeLines.split("\n", QString::SkipEmptyParts);
+                                                        if (itemList.size() > 1) itemList.swap(itemList.size() - 1, itemList.size() - 2); else ;
+                                                        decodeLines = itemList.join("\n") + "\n";
                                                     }
+
+                                                    if (fieldType.contains("array")) calculatedLength += 1; else
+                                                                                                                if (fieldType.contains("char")) calculatedLength += 1; else
+                                                                                                                        if (fieldType.contains("int8")) calculatedLength += 1; else
+                                                                                                                                if (fieldType.contains("int16")) calculatedLength += 2; else
+                                                                                                                                        if (fieldType.contains("int32")) calculatedLength += 4; else
+                                                                                                                                                if (fieldType.contains("int64")) calculatedLength += 8; else
+                                                                                                                                                        if (fieldType == "float") calculatedLength += 4; else {
+                                                                                                                                                                emit parseState(tr("<font color=\"red\">ERROR: In message %1 inavlid type %4 used near line %2 of file %3\nAbort.</font>").arg(messageName, QString::number(e.lineNumber()), fileName, fieldType));
+                                                                                                                                                                return false;
+                                                                                                                                                        }
                                                 }
-                                                if (element_length == 0) {
-                                                    emit parseState(tr("<font color=\"red\">ERROR: Unable to calculate length for %2 near line %1\nAbort.</font>").arg(QString::number(e.lineNumber()), fieldType));
-                                                }
-                                                message_length += element_length;
+
 
                                                 //
                                                 //                                                QString unpackingCode;
 
                                                 if (fieldType == "uint8_t_mavlink_version")
                                                 {
-                                                    unpackingCode = QString("\treturn (%1)(msg->payload%2)[0];").arg("uint8_t", prepends);
+                                                                                                        //                                                    unpackingCode = QString("\treturn (%1)(msg->payload%2)[0];").arg("uint8_t", prepends);
+                                                    unpackingCode = QString("\treturn (%1)(p->%2);").arg("uint8_t", fieldName);
                                                 }
                                                 else if (fieldType == "uint8_t" || fieldType == "int8_t")
                                                 {
-                                                    unpackingCode = QString("\treturn (%1)(msg->payload%2)[0];").arg(fieldType, prepends);
+                                                                                                        //                                                    unpackingCode = QString("\treturn (%1)(msg->payload%2)[0];").arg(fieldType, prepends);
+                                                    unpackingCode = QString("\treturn (%1)(p->%2);").arg(fieldType, fieldName);
                                                 }
                                                 else if (fieldType == "uint16_t" || fieldType == "int16_t")
                                                 {
-                                                    unpackingCode = QString("\tgeneric_16bit r;\n\tr.b[1] = (msg->payload%1)[0];\n\tr.b[0] = (msg->payload%1)[1];\n\treturn (%2)r.s;").arg(prepends).arg(fieldType);
+                                                                                                        //                                                    unpackingCode = QString("\tgeneric_16bit r;\n\tr.b[1] = (msg->payload%1)[0];\n\tr.b[0] = (msg->payload%1)[1];\n\treturn (%2)r.s;").arg(prepends).arg(fieldType);
+                                                    unpackingCode = QString("\treturn (%1)(p->%2);").arg(fieldType, fieldName);
                                                 }
                                                 else if (fieldType == "uint32_t" || fieldType == "int32_t")
                                                 {
-                                                    unpackingCode = QString("\tgeneric_32bit r;\n\tr.b[3] = (msg->payload%1)[0];\n\tr.b[2] = (msg->payload%1)[1];\n\tr.b[1] = (msg->payload%1)[2];\n\tr.b[0] = (msg->payload%1)[3];\n\treturn (%2)r.i;").arg(prepends).arg(fieldType);
+                                                                                                        //                                                    unpackingCode = QString("\tgeneric_32bit r;\n\tr.b[3] = (msg->payload%1)[0];\n\tr.b[2] = (msg->payload%1)[1];\n\tr.b[1] = (msg->payload%1)[2];\n\tr.b[0] = (msg->payload%1)[3];\n\treturn (%2)r.i;").arg(prepends).arg(fieldType);
+                                                    unpackingCode = QString("\treturn (%1)(p->%2);").arg(fieldType, fieldName);
                                                 }
                                                 else if (fieldType == "float")
                                                 {
-                                                    unpackingCode = QString("\tgeneric_32bit r;\n\tr.b[3] = (msg->payload%1)[0];\n\tr.b[2] = (msg->payload%1)[1];\n\tr.b[1] = (msg->payload%1)[2];\n\tr.b[0] = (msg->payload%1)[3];\n\treturn (%2)r.f;").arg(prepends).arg(fieldType);
+                                                                                                        //                                                    unpackingCode = QString("\tgeneric_32bit r;\n\tr.b[3] = (msg->payload%1)[0];\n\tr.b[2] = (msg->payload%1)[1];\n\tr.b[1] = (msg->payload%1)[2];\n\tr.b[0] = (msg->payload%1)[3];\n\treturn (%2)r.f;").arg(prepends).arg(fieldType);
+                                                    unpackingCode = QString("\treturn (%1)(p->%2);").arg(fieldType, fieldName);
                                                 }
                                                 else if (fieldType == "uint64_t" || fieldType == "int64_t")
                                                 {
-                                                    unpackingCode = QString("\tgeneric_64bit r;\n\tr.b[7] = (msg->payload%1)[0];\n\tr.b[6] = (msg->payload%1)[1];\n\tr.b[5] = (msg->payload%1)[2];\n\tr.b[4] = (msg->payload%1)[3];\n\tr.b[3] = (msg->payload%1)[4];\n\tr.b[2] = (msg->payload%1)[5];\n\tr.b[1] = (msg->payload%1)[6];\n\tr.b[0] = (msg->payload%1)[7];\n\treturn (%2)r.ll;").arg(prepends).arg(fieldType);
+                                                                                                        //                                                    unpackingCode = QString("\tgeneric_64bit r;\n\tr.b[7] = (msg->payload%1)[0];\n\tr.b[6] = (msg->payload%1)[1];\n\tr.b[5] = (msg->payload%1)[2];\n\tr.b[4] = (msg->payload%1)[3];\n\tr.b[3] = (msg->payload%1)[4];\n\tr.b[2] = (msg->payload%1)[5];\n\tr.b[1] = (msg->payload%1)[6];\n\tr.b[0] = (msg->payload%1)[7];\n\treturn (%2)r.ll;").arg(prepends).arg(fieldType);
+                                                    unpackingCode = QString("\treturn (%1)(p->%2);").arg(fieldType, fieldName);
                                                 }
                                                 else if (fieldType.startsWith("array"))
-                                                {
-                                                    // fieldtype formatis string[n] where n is the number of bytes, extract n from field type string
-                                                    unpackingCode = QString("\n\tmemcpy(r_data, msg->payload%1, %2);\n\treturn %2;").arg(prepends, fieldType.split("[").at(1).split("]").first());
+                                                {  // fieldtype formatis string[n] where n is the number of bytes, extract n from field type string
+                                                                                                        //                                                    unpackingCode = QString("\n\tmemcpy(r_data, msg->payload%1, %2);\n\treturn %2;").arg(filedName, prepends, fieldType.split("[").at(1).split("]").first());
+                                                    unpackingCode = QString("\n\tmemcpy(%1, p->%1, sizeof(p->%1));\n\treturn sizeof(p->%1);").arg(fieldName);
                                                 }
                                                 else if (fieldType.startsWith("string"))
-                                                {
-                                                    // fieldtype formatis string[n] where n is the number of bytes, extract n from field type string
-                                                    unpackingCode = QString("\n\tstrcpy(r_data, msg->payload%1, %2);\n\treturn %2;").arg(prepends, fieldType.split("[").at(1).split("]").first());
+                                                {  // fieldtype formatis string[n] where n is the number of bytes, extract n from field type string
+                                                                                                        //                                                    unpackingCode = QString("\n\tstrcpy(r_data, msg->payload%1, %2);\n\treturn %2;").arg(prepends, fieldType.split("[").at(1).split("]").first());
+                                                    unpackingCode = QString("\n\tstrncpy(%1, p->%1, sizeof(p->%1));\n\treturn sizeof(p->%1);").arg(fieldName);
                                                 }
 
 
                                                 // Generate the message decoding function
                                                 if (fieldType.contains("uint8_t_mavlink_version"))
                                                 {
-                                                    unpacking += unpackingComment + QString("static inline %1 mavlink_msg_%2_get_%3(const mavlink_message_t* msg)\n{\n%4\n}\n\n").arg("uint8_t", messageName, fieldName, unpackingCode);
+                                                                                                        //                                                    unpacking += unpackingComment + QString("static inline %1 mavlink_msg_%2_get_%3(const mavlink_message_t* msg)\n{\n%4\n}\n\n").arg("uint8_t", messageName, fieldName, unpackingCode);
+                                                    unpacking += unpackingComment + QString("static inline %1 mavlink_msg_%2_get_%3(const mavlink_message_t* msg)\n{\n\tmavlink_%2_t *p = (mavlink_%2_t *)&msg->payload[0];\n%4\n}\n\n").arg("uint8_t", messageName, fieldName, unpackingCode);
                                                     decodeLines += "";
                                                     prepends += "+sizeof(uint8_t)";
                                                 }
                                                 // Array handling is different from simple types
                                                 else if (fieldType.startsWith("array"))
                                                 {
-                                                    unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, int8_t* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, unpackingCode);
+                                                                                                        //                                                    unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, int8_t* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, unpackingCode);
+                                                    unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, int8_t* %2)\n{\n\tmavlink_%1_t *p = (mavlink_%1_t *)&msg->payload[0];\n%3\n}\n\n").arg(messageName, fieldName, unpackingCode);
                                                     decodeLines += "";
                                                     QString arrayLength = QString(fieldType.split("[").at(1).split("]").first());
                                                     prepends += "+" + arrayLength;
                                                 }
                                                 else if (fieldType.startsWith("string"))
                                                 {
-                                                    unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, char* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, unpackingCode);
+                                                                                                        //                                                    unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, char* r_data)\n{\n%4\n}\n\n").arg(messageName, fieldName, unpackingCode);
+                                                    unpacking += unpackingComment + QString("static inline uint16_t mavlink_msg_%1_get_%2(const mavlink_message_t* msg, char* %2)\n{\n\tmavlink_%1 *p = (mavlink_%1 *)&msg->payload[0];\n%3\n}\n\n").arg(messageName, fieldName, unpackingCode);
                                                     decodeLines += "";
                                                     QString arrayLength = QString(fieldType.split("[").at(1).split("]").first());
                                                     prepends += "+" + arrayLength;
@@ -645,7 +752,8 @@ bool MAVLinkXMLParser::generate()
                                                 }
                                                 else
                                                 {
-                                                    unpacking += unpackingComment + QString("static inline %1 mavlink_msg_%2_get_%3(const mavlink_message_t* msg)\n{\n%4\n}\n\n").arg(fieldType, messageName, fieldName, unpackingCode);
+                                                                                                        //                                                    unpacking += unpackingComment + QString("static inline %1 mavlink_msg_%2_get_%3(const mavlink_message_t* msg)\n{\n%4\n}\n\n").arg(fieldType, messageName, fieldName, unpackingCode);
+                                                    unpacking += unpackingComment + QString("static inline %1 mavlink_msg_%2_get_%3(const mavlink_message_t* msg)\n{\n\tmavlink_%2_t *p = (mavlink_%2_t *)&msg->payload[0];\n%4\n}\n\n").arg(fieldType, messageName, fieldName, unpackingCode);
                                                     decodeLines += "";
                                                     prepends += "+sizeof(" + e2.attribute("type", "void") + ")";
                                                 }
@@ -653,20 +761,25 @@ bool MAVLinkXMLParser::generate()
                                             f = f.nextSibling();
                                         }
 
-                                        if (messageId > highest_message_id)
-                                        {
-                                            highest_message_id = messageId;
-                                        }
-                                        message_lengths[messageId] = message_length;
-
-                                        cStruct = cStruct.arg(cStructName, cStructLines);
+                                                                                //                                        cStruct = cStruct.arg(cStructName, cStructLines, QString::number(calculatedLength) );
+                                        cStruct = cStruct.arg(cStructName, cStructLines );
                                         lcmStructDefs.append("\n").append(cStruct).append("\n");
                                         pack = pack.arg(messageName, packParameters, messageName.toUpper(), packLines);
                                         packChan = packChan.arg(messageName, packParameters, messageName.toUpper(), packLines);
                                         encode = encode.arg(messageName).arg(cStructName).arg(packArguments);
-                                        decode = decode.arg(messageName).arg(cStructName).arg(decodeLines);
-                                        compactSend = compactSend.arg(channelType, messageType, messageName, sendArguments, packParameters);
-                                        QString cFile = "// MESSAGE " + messageName.toUpper() + " PACKING\n\n" + idDefine + "\n\n" + cStruct + "\n\n" + arrayDefines + "\n\n" + commentContainer.arg(messageName.toLower(), commentLines) + pack + commentPackChanContainer.arg(messageName.toLower(), commentLines) + packChan + commentEncodeContainer.arg(messageName.toLower()) + encode + "\n" + commentSendContainer.arg(messageName.toLower(), commentLines) + compactSend + "\n" + "// MESSAGE " + messageName.toUpper() + " UNPACKING\n\n" + unpacking + commentDecodeContainer.arg(messageName.toLower()) + decode;
+                                                                                //                                        decode = decode.arg(messageName).arg(cStructName).arg(decodeLines);
+                                        decode = decode.arg(messageName).arg(cStructName);
+                                                                                //                                        QString compactSend("#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\n\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tmavlink_msg_%3_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg%4);\n\tmavlink_send_uart(chan, &msg);\n}\n\n#endif");
+                                        QString compactSend("#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 msg;\n\tuint16_t checksum;\n\tmavlink_%3_t *p = (mavlink_%3_t *)&msg.payload[0];\n\n%6\n\tmsg.STX = MAVLINK_STX;\n\tmsg.len = MAVLINK_MSG_ID_%4_LEN;\n\tmsg.msgid = MAVLINK_MSG_ID_%4;\n");
+                                        QString compactSend2("\tmsg.sysid = mavlink_system.sysid;\n\tmsg.compid = mavlink_system.compid;\n\tmsg.seq = mavlink_get_channel_status(chan)->current_tx_seq;\n\tmavlink_get_channel_status(chan)->current_tx_seq = msg.seq + 1;\n");
+                                        QString compactSend3("\tchecksum = crc_calculate_msg(&msg, msg.len + MAVLINK_CORE_HEADER_LEN);\n\tmsg.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte\n\tmsg.ck_b = (uint8_t)(checksum >> 8); ///< High byte\n\n\tmavlink_send_msg(chan, &msg);\n}\n\n#endif");
+                                                                                //                                        compactSend = compactSend.arg(channelType, messageType, messageName, sendArguments, packParameters );
+                                        compactSend = compactSend.arg(channelType, messageType, messageName, messageName.toUpper(), packParameters, packLines ) + compactSend2 + compactSend3;
+                                        QString compact2Send("\n\n#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS_SMALL\nstatic inline void mavlink_msg_%3_send(%1 chan%5)\n{\n\t%2 hdr;\n\tmavlink_%3_t payload;\n\tuint16_t checksum;\n\tmavlink_%3_t *p = &payload;\n\n%6\n\thdr.STX = MAVLINK_STX;\n\thdr.len = MAVLINK_MSG_ID_%4_LEN;\n\thdr.msgid = MAVLINK_MSG_ID_%4;\n");
+                                        QString compact2Send2("\thdr.sysid = mavlink_system.sysid;\n\thdr.compid = mavlink_system.compid;\n\thdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;\n\tmavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;\n\tmavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );\n");
+                                        QString compact2Send3("\n\tcrc_init(&checksum);\n\tchecksum = crc_calculate_mem((uint8_t *)&hdr.len, &checksum, MAVLINK_CORE_HEADER_LEN);\n\tchecksum = crc_calculate_mem((uint8_t *)&payload, &checksum, hdr.len );\n\thdr.ck_a = (uint8_t)(checksum & 0xFF); ///< Low byte\n\thdr.ck_b = (uint8_t)(checksum >> 8); ///< High byte\n\n\tmavlink_send_mem(chan, (uint8_t *)&payload, hdr.len);\n\tmavlink_send_mem(chan, (uint8_t *)&hdr.ck_a, MAVLINK_NUM_CHECKSUM_BYTES);\n}\n\n#endif");
+                                        compact2Send = compact2Send.arg(channelType, headerType, messageName, messageName.toUpper(), packParameters, packLines ) + compact2Send2 + compact2Send3;
+                                        QString cFile = "// MESSAGE " + messageName.toUpper() + " PACKING\n\n" + idDefine.arg(messageName.toUpper(), QString::number(messageId), QString::number(calculatedLength)) + "\n\n" + cStruct + "\n" + arrayDefines + "\n" + commentContainer.arg(messageName.toLower(), commentLines) + pack + commentPackChanContainer.arg(messageName.toLower(), commentLines) + packChan + commentEncodeContainer.arg(messageName.toLower()) + encode + "\n" + commentSendContainer.arg(messageName.toLower(), commentLines) + compactSend + compact2Send + "\n" + "// MESSAGE " + messageName.toUpper() + " UNPACKING\n\n" + unpacking + commentDecodeContainer.arg(messageName.toLower()) + decode;
                                         cFiles.append(qMakePair(QString("mavlink_msg_%1.h").arg(messageName), cFile));
                                     } // Check if tag = message
                                 } // Check if e = NULL
@@ -711,16 +824,6 @@ bool MAVLinkXMLParser::generate()
         mainHeader += includeLine.arg(messagesDirName + "/" + cFiles.at(i).first);
     }
 
-    mainHeader += "\n\n// MESSAGE LENGTHS\n\n";
-    mainHeader += "#undef MAVLINK_MESSAGE_LENGTHS\n";
-    mainHeader += "#define MAVLINK_MESSAGE_LENGTHS { ";
-    for (int i=0; i<highest_message_id; i++)
-    {
-        mainHeader += QString::number(message_lengths[i]);
-        if (i < highest_message_id-1) mainHeader += ", ";
-    }
-    mainHeader += " }\n\n";
-
     mainHeader += "#ifdef __cplusplus\n}\n#endif\n";
     mainHeader += "#endif";
     // Newline to make compiler happy
@@ -739,7 +842,8 @@ bool MAVLinkXMLParser::generate()
     success = success && ok;
     QString mHeader = QString("/** @file\n *\t@brief MAVLink comm protocol.\n *\t@see http://pixhawk.ethz.ch/software/mavlink\n *\t Generated on %1\n */\n#ifndef MAVLINK_H\n#define MAVLINK_H\n\n").arg(date); // The main header includes all messages
     // Mark all code as C code
-    mHeader += "#include \"" + mainHeaderName + "\"\n\n";
+//    mHeader += "\n#include \"" + mainHeaderName + "\"\n\n";
+    mHeader += "#pragma pack(push,1)\n#include \"" + mainHeaderName + "\"\n#ifdef MAVLINK_CHECK_LENGTH\n#include \"lengths.h\"\n#endif\n#pragma pack(pop)\n";
     mHeader += "#endif\n";
     mavlinkHeader.write(mHeader.toLatin1());
     mavlinkHeader.close();
