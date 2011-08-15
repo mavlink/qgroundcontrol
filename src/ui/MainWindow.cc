@@ -968,7 +968,8 @@ void MainWindow::createCustomWidget()
     QDockWidget* dock = new QDockWidget("Unnamed Tool", this);
     QGCToolWidget* tool = new QGCToolWidget("Unnamed Tool", dock);
 
-    if (QGCToolWidget::instances()->size() < 2) {
+    if (QGCToolWidget::instances()->size() < 2)
+    {
         // This is the first widget
         ui.menuTools->addSeparator();
     }
@@ -990,28 +991,34 @@ void MainWindow::loadCustomWidget()
 {
     QString widgetFileExtension(".qgw");
     QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
-    QGCToolWidget* tool = new QGCToolWidget("", this);
-    tool->loadSettings(fileName);
 
-    if (QGCToolWidget::instances()->size() < 2) {
-        // This is the first widget
-        ui.menuTools->addSeparator();
+    if (fileName.length() > 0)
+    {
+
+        QGCToolWidget* tool = new QGCToolWidget("", this);
+        tool->loadSettings(fileName);
+
+        if (QGCToolWidget::instances()->size() < 2)
+        {
+            // This is the first widget
+            ui.menuTools->addSeparator();
+        }
+
+        // Add widget to UI
+        QDockWidget* dock = new QDockWidget(tool->getTitle(), this);
+        connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
+        dock->setWidget(tool);
+        tool->setParent(dock);
+
+        QAction* showAction = new QAction(tool->getTitle(), this);
+        showAction->setCheckable(true);
+        connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
+        connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
+        tool->setMainMenuAction(showAction);
+        ui.menuTools->addAction(showAction);
+        this->addDockWidget(Qt::BottomDockWidgetArea, dock);
+        dock->setVisible(true);
     }
-
-    // Add widget to UI
-    QDockWidget* dock = new QDockWidget(tool->getTitle(), this);
-    connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
-    dock->setWidget(tool);
-    tool->setParent(dock);
-
-    QAction* showAction = new QAction("Show Unnamed Tool", this);
-    showAction->setCheckable(true);
-    connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
-    connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
-    tool->setMainMenuAction(showAction);
-    ui.menuTools->addAction(showAction);
-    this->addDockWidget(Qt::BottomDockWidgetArea, dock);
-    dock->setVisible(true);
 }
 
 void MainWindow::connectPxWidgets()
