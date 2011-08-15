@@ -683,12 +683,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // SANITY CHECK
                 // only accept values in a realistic range
                 // quint64 time = getUnixTime(pos.usec);
-                quint64 time = getUnixTime();
+                quint64 time = getUnixTime(pos.usec);
 
                 emit valueChanged(uasId, "latitude", "deg", pos.lat/(double)1E7, time);
                 emit valueChanged(uasId, "longitude", "deg", pos.lon/(double)1E7, time);
+                emit valueChanged(uasId, "eph", "m", pos.eph/(double)1E2, time);
+                emit valueChanged(uasId, "epv", "m", pos.eph/(double)1E2, time);
 
-                if (pos.fix_type > 0) {
+                if (pos.fix_type > 2) {
                     emit globalPositionChanged(this, pos.lat/(double)1E7, pos.lon/(double)1E7, pos.alt/1000.0, time);
                     emit valueChanged(uasId, "gps speed", "m/s", pos.vel, time);
                     latitude = pos.lat/(double)1E7;

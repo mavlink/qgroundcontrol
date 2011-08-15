@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QFontDatabase>
 #include <QTimer>
+#include <QVector>
 
 
 /**
@@ -31,6 +32,9 @@ public slots:
     void copyImage(const QImage& img);
     void enableHUDInstruments(bool enabled) { hudInstrumentsEnabled = enabled; }
     void enableVideo(bool enabled) { videoEnabled = enabled; }
+    void enableFlow(bool enabled) { flowEnabled = enabled; }
+    /** @brief Copy flow */
+    void copyFlow(const unsigned char* flowX, const unsigned char* flowY, int width, int height);
 
 
 protected slots:
@@ -42,6 +46,8 @@ protected slots:
     /** @brief Setup the OpenGL view for drawing a sub-component of the HUD */
     void setupGLView(float referencePositionX, float referencePositionY, float referenceWidth, float referenceHeight);
     void paintHUD();
+    /** @brief Paint an optical flow field */
+    void paintFlowField(QPainter* painter);
     void paintPitchLinePos(QString text, float refPosX, float refPosY, QPainter* painter);
     void paintPitchLineNeg(QString text, float refPosX, float refPosY, QPainter* painter);
 
@@ -151,14 +157,22 @@ protected:
     QString nextOfflineImage;
     bool hudInstrumentsEnabled;
     bool videoEnabled;
+    bool flowEnabled;
     float xImageFactor;
     float yImageFactor;
     QAction* enableHUDAction;
     QAction* enableVideoAction;
+    QAction* enableFlowFieldAction;
     QAction* selectOfflineDirectoryAction;
     QAction* selectVideoChannelAction;
     void paintEvent(QPaintEvent *event);
     bool imageRequested;
+    int flowFieldWidth;
+    int flowFieldHeight;
+    unsigned char** flowFieldX;
+    unsigned char** flowFieldY;
+    unsigned int flowWidth;
+    unsigned int flowHeight;
 
 };
 
