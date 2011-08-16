@@ -108,13 +108,13 @@ void senseSoarMAV::receiveMessage(LinkInterface *link, mavlink_message_t message
 				mavlink_obs_position_t posMsg;
 				mavlink_msg_obs_position_decode(&message, &posMsg);
 				quint64 time = getUnixTime();
-				this->localX = posMsg.pos[0];
-				this->localY = posMsg.pos[1];
-				this->localZ = posMsg.pos[2];
-				emit valueChanged(uasId, "x", "m", this->localX, time);
-                emit valueChanged(uasId, "y", "m", this->localY, time);
-                emit valueChanged(uasId, "z", "m", this->localZ, time);
-				emit localPositionChanged(this, this->localX, this->localY, this->localZ, time);
+				this->longitude = posMsg.lon/(double)1E7;
+				this->latitude = posMsg.lat/(double)1E7;
+				this->altitude = posMsg.alt/1000.0;
+				emit valueChanged(uasId, "latitude", "deg", this->latitude, time);
+                emit valueChanged(uasId, "longitude", "deg", this->longitude, time);
+                emit valueChanged(uasId, "altitude", "m", this->altitude, time);
+				emit globalPositionChanged(this, this->latitude, this->longitude, this->altitude, time);
 				break;
 			}
 		case MAVLINK_MSG_ID_OBS_QFF:
