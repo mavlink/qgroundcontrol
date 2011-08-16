@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html>
   <head>
@@ -366,8 +366,6 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    location.setAltitude(alt); 
 	    waypoints[index].setGeometry(location);
 	    waypoints[index].setDescription(index+"");
-	    
-	    
 	}
 	else
 	{
@@ -394,7 +392,7 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    // Add the placemark to Earth. 
 	    ge.getFeatures().appendChild(placemark); 
 		waypoints[index] = placemark;
-		}
+	}
 		
 		// Add waypoint line
 	    waypointLines[id].setExtrude(false);
@@ -412,7 +410,7 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 
         // Add the feature to Earth
         //if (waypointLinesVisible[id] == true) 
-        ge.getFeatures().replaceChild(waypointLinePlacemarks[id], waypointLinePlacemarks[id]);
+        //ge.getFeatures().replaceChild(waypointLinePlacemarks[id], waypointLinePlacemarks[id]);  // does not work
 	
 	// Add connecting line
 	
