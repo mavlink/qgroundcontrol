@@ -11,8 +11,10 @@
      </enums>
      <messages>
           <message id="170" name="OBS_POSITION">
-     Position estimate of the observer in NED inertial frame
-     <field type="double[3]" name="pos">Position</field>
+     Position estimate of the observer in global frame
+     <field type="int32_t" name="lon">Longitude expressed in 1E7</field>
+ <field type="int32_t" name="lat">Latitude expressed in 1E7</field>
+ <field type="int32_t" name="alt">Altitude expressed in milimeters</field>
           </message>
           <message id="172" name="OBS_VELOCITY">
      velocity estimate of the observer in NED inertial frame
