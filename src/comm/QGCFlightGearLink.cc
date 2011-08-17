@@ -279,6 +279,7 @@ bool QGCFlightGearLink::disconnectSimulation()
  **/
 bool QGCFlightGearLink::connectSimulation()
 {
+    if (!mav) return false;
     socket = new QUdpSocket(this);
 
     //Check if we are using a multicast-address
@@ -377,6 +378,8 @@ processCall << "--disable-random-objects";
 processCall << "--disable-ai-models";
 processCall << "--wind=0@0";
 processCall << "--fdm=jsb";
+processCall << QString("--lat=%1").arg(mav->getLatitude());
+processCall << QString("--lon=%1").arg(mav->getLongitude());
 // Add new argument with this: processCall << "";
 processCall << QString("--aircraft=%2").arg(aircraft);
 
