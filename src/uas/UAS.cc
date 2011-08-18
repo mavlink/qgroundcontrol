@@ -838,7 +838,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_roll_pitch_yaw_thrust_setpoint_t out;
                 mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(&message, &out);
-                quint64 time = getUnixTime(out.time_ms*1000);
+                quint64 time = getUnixTime(out.time_us*1000);
                 emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
                 emit valueChanged(uasId, "att control roll", "rad", out.roll, time);
                 emit valueChanged(uasId, "att control pitch", "rad", out.pitch, time);
