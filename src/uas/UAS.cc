@@ -932,6 +932,18 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "servo #8", "us", servos.servo8_raw, time);
             }
             break;
+
+        case MAVLINK_MSG_ID_OPTICAL_FLOW:
+            {
+                mavlink_optical_flow_t flow;
+                mavlink_msg_optical_flow_decode(&message, &flow);
+                quint64 time = getUnixTime(flow.time);
+
+                emit valueChanged(uasId, QString("opt_flow_%1.x").arg(flow.sensor_id), "Pixel", flow.flow_x, time);
+                emit valueChanged(uasId, QString("opt_flow_%1.y").arg(flow.sensor_id), "Pixel", flow.flow_y, time);
+                emit valueChanged(uasId, QString("opt_flow_%1.qual").arg(flow.sensor_id), "0-255", flow.quality, time);
+            }
+            break;
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
