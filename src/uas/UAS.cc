@@ -942,6 +942,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, QString("opt_flow_%1.x").arg(flow.sensor_id), "Pixel", flow.flow_x, time);
                 emit valueChanged(uasId, QString("opt_flow_%1.y").arg(flow.sensor_id), "Pixel", flow.flow_y, time);
                 emit valueChanged(uasId, QString("opt_flow_%1.qual").arg(flow.sensor_id), "0-255", flow.quality, time);
+                emit valueChanged(uasId, QString("opt_flow_%1.dist").arg(flow.sensor_id), "m", flow.ground_distance, time);
             }
             break;
         case MAVLINK_MSG_ID_STATUSTEXT:
