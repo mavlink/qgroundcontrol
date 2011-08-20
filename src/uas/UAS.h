@@ -73,11 +73,17 @@ public:
     const QString& getShortState() const;
     /** @brief Get short mode */
     const QString& getShortMode() const;
+    /** @brief Translate from mode id to text */
+    static QString getShortModeTextFor(int id);
     /** @brief Get the unique system id */
     int getUASID() const;
     /** @brief Get the airframe */
     int getAirframe() const {
         return airframe;
+    }
+
+    int getType() const {
+        return type;
     }
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
@@ -261,6 +267,8 @@ public slots:
     void executeCommand(MAV_CMD command);
     /** @brief Executes a command **/
     void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component);
+    /** @brief Executes a command with 7 params */
+    void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component);
     /** @brief Set the current battery type and voltages */
     void setBatterySpecs(const QString& specs);
     /** @brief Get the current battery type and specs */
@@ -308,13 +316,10 @@ public slots:
     void startLowBattAlarm();
     void stopLowBattAlarm();
 
-    //void requestWaypoints();  FIXME tbd
-    //void clearWaypointList();   FIXME tbd
-
-    /** @brief Enable the motors */
-    void enable_motors();
+    /** @brief Arm system */
+    void armSystem();
     /** @brief Disable the motors */
-    void disable_motors();
+    void disarmSystem();
 
     /** @brief Set the values for the manual control of the vehicle */
     void setManualControlCommands(double roll, double pitch, double yaw, double thrust);

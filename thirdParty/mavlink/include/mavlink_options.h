@@ -41,12 +41,12 @@ extern "C" {
  *  otherwise.
  *
  */
-#if !((defined MAVLINK_COMM_NB) | (MAVLINK_COMM_NB < 1))
-#undef MAVLINK_COMM_NB
-  #if (defined linux) | (defined __linux) | (defined  __MACH__) | (defined _WIN32) | (defined __APPLE__)
-  #define MAVLINK_COMM_NB 16
+#if !(defined MAVLINK_COMM_NUM_BUFFERS) || (MAVLINK_COMM_NUM_BUFFERS < 1)
+#undef MAVLINK_COMM_NUM_BUFFERS
+  #if (defined linux) || (defined __linux) || (defined  __MACH__) || (defined _WIN32) || (defined __APPLE__)
+  #define MAVLINK_COMM_NUM_BUFFERS 16
   #else
-  #define MAVLINK_COMM_NB 1
+  #define MAVLINK_COMM_NUM_BUFFERS 1
   #endif
 #endif
 

@@ -64,12 +64,15 @@ public:
     virtual const QString& getShortState() const = 0;
     /** @brief Get short mode */
     virtual const QString& getShortMode() const = 0;
+    /** @brief Translate mode id into text */
+    static QString getShortModeTextFor(int id);
     //virtual QColor getColor() = 0;
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
     virtual quint64 getUptime() const = 0;
     /** @brief Get the status flag for the communication **/
     virtual int getCommunicationStatus() const = 0;
+    virtual int getType() const = 0;
 
     virtual double getLocalX() const = 0;
     virtual double getLocalY() const = 0;

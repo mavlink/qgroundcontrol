@@ -1636,7 +1636,7 @@ void MainWindow::UASCreated(UASInterface* uas)
         }
 
         switch (uas->getAutopilotType()) {
-        case (MAV_CLASS_SLUGS): {
+        case (MAV_AUTOPILOT_SLUGS): {
             // Build Slugs Widgets
             buildSlugsWidgets();
 
@@ -1674,9 +1674,9 @@ void MainWindow::UASCreated(UASInterface* uas)
         }
         break;
         default:
-        case (MAV_CLASS_GENERIC):
-        case (MAV_CLASS_ARDUPILOTMEGA):
-        case (MAV_CLASS_PIXHAWK): {
+        case (MAV_AUTOPILOT_GENERIC):
+        case (MAV_AUTOPILOT_ARDUPILOTMEGA):
+        case (MAV_AUTOPILOT_PIXHAWK): {
             // Build Pixhawk Widgets
             buildPxWidgets();
 
