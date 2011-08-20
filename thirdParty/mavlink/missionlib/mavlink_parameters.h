@@ -30,10 +30,6 @@
 
 /* PARAMETER MANAGER - MISSION LIB */
 
-//#ifndef MAVLINK_PM_MAX_PARAM_COUNT
-//#error You have not defined the ENUM with your parameters with MAVLINK_PM_MAX_PARAM_COUNT at the end.
-//#endif
-
 #ifndef MAVLINK_PM_TEXT_FEEDBACK
 #define MAVLINK_PM_TEXT_FEEDBACK 1						  ///< Report back status information as text
 #endif

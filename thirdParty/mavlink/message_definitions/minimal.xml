@@ -3,11 +3,16 @@
     <version>2</version>
     <enums/>
     <messages>
-        <message id="0" name="HEARTBEAT">
-            <description>The heartbeat message shows that a system is present and responding. The type of the MAV and Autopilot hardware allow the receiving system to treat further messages from this system appropriate (e.g. by laying out the user interface based on the autopilot).</description>
-            <field type="uint8_t" name="type">Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)</field>
-            <field type="uint8_t" name="autopilot">Type of the Autopilot: 0: Generic, 1: PIXHAWK, 2: SLUGS, 3: Ardupilot (up to 15 types), defined in MAV_AUTOPILOT_TYPE ENUM</field>
-            <field type="uint8_t_mavlink_version" name="mavlink_version">MAVLink version</field>
-        </message>
+          <message id="0" name="HEARTBEAT">
+               <description>The heartbeat message shows that a system is present and responding. The type of the MAV and Autopilot hardware allow the receiving system to treat further messages from this system appropriate (e.g. by laying out the user interface based on the autopilot).</description>
+               <field type="uint8_t" name="type">Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)</field>
+               <field type="uint8_t" name="autopilot">Autopilot type / class. defined in MAV_CLASS ENUM</field>
+               <field type="uint8_t" name="mode">System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h</field>
+               <field type="uint8_t" name="nav_mode">Navigation mode, see MAV_NAV_MODE ENUM</field>
+               <field type="uint8_t" name="status">System status flag, see MAV_STATUS ENUM</field>
+               <field type="uint8_t" name="safety_status">System safety lock state, see MAV_SAFETY enum. Also indicates HIL operation</field>
+               <field type="uint8_t" name="link_status">Bitmask showing which links are ok / enabled. 0 for disabled/non functional, 1: enabled Indices: 0: RC, 1: UART1, 2: UART2, 3: UART3, 4: UART4, 5: UART5, 6: I2C, 7: CAN</field>
+               <field type="uint8_t_mavlink_version" name="mavlink_version">MAVLink version</field>
+          </message>
     </messages>
 </mavlink>
