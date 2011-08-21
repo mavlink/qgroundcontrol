@@ -324,7 +324,7 @@ void UASView::setSystemType(UASInterface* uas, unsigned int systemType)
         case 6: {
                 // A groundstation is a special system type, update widget
                 QString result;
-                m_ui->nameLabel->setText(tr("OCU ") + result.sprintf("%03d", uas->getUASID()));
+                m_ui->nameLabel->setText(tr("GCS ") + result.sprintf("%03d", uas->getUASID()));
                 m_ui->waypointLabel->setText("");
                 m_ui->timeRemainingLabel->setText("Online:");
                 m_ui->batteryBar->hide();

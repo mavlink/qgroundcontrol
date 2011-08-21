@@ -49,6 +49,9 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     // Load settings
     loadSettings();
 
+    // Load default values and tooltips
+    loadParameterInfoCSV(uas->getAutopilotTypeName(), uas->getSystemTypeName());
+
     // Create tree widget
     tree = new QTreeWidget(this);
     statusLabel = new QLabel();
@@ -143,6 +146,106 @@ void QGCParamWidget::loadSettings()
     settings.endGroup();
 }
 
+void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QString& airframe)
+{
+    QDir appDir = QDir::current();
+    appDir.cd("files/parameter_tooltips");
+    QString fileName = QString("MAV_AUTOPILOT_%1-MAV_TYPE_%2.csv").arg(autopilot).arg(airframe);
+    QString filePath = appDir.filePath(fileName);
+    QFile paramMetaFile(filePath);
+
+    // Load CSV data
+    if (!paramMetaFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "COULD NOT OPEN PARAM META INFO FILE:" << filePath;
+        return;
+    }
+
+    // Extract header
+
+    // Read in values
+    // Find all keys
+    QTextStream in(&paramMetaFile);
+
+    // First line is header
+    QString header = in.readLine();
+
+    bool charRead = false;
+    QString separator = "";
+    QList<QChar> sepCandidates;
+    sepCandidates << '\t';
+    sepCandidates << ',';
+    sepCandidates << ';';
+    sepCandidates << ' ';
+    sepCandidates << '~';
+    sepCandidates << '|';
+
+    // Iterate until separator is found
+    // or full header is parsed
+    for (int i = 0; i < header.length(); i++)
+    {
+        if (sepCandidates.contains(header.at(i)))
+        {
+            // Separator found
+            if (charRead)
+            {
+                separator += header[i];
+            }
+        }
+        else
+        {
+            // Char found
+            charRead = true;
+            // If the separator is not empty, this char
+            // has been read after a separator, so detection
+            // is now complete
+            if (separator != "") break;
+        }
+    }
+
+    QString out = separator;
+    out.replace("\t", "<tab>");
+    qDebug() << " Separator: \"" << out << "\"";
+    //qDebug() << "READING CSV:" << header;
+
+
+    // Read data
+    while (!in.atEnd())
+    {
+        QString line = in.readLine();
+
+        // Keep empty parts here - we still have to act on them
+        QStringList parts = line.split(separator, QString::KeepEmptyParts);
+
+        // Each line is:
+        // variable name, Min, Max, Default, Multiplier, Enabled (0 = no, 1 = yes), Comment
+
+
+        // Fill in min, max and default values
+        if (parts.count() > 1)
+        {
+            // min
+            paramMin.insert(parts.at(0), parts.at(1).toDouble());
+        }
+        if (parts.count() > 2)
+        {
+            // max
+            paramMax.insert(parts.at(0), parts.at(2).toDouble());
+        }
+        if (parts.count() > 3)
+        {
+            // default
+            paramDefault.insert(parts.at(0), parts.at(3).toDouble());
+        }
+        // IGNORING 4 and 5 for now
+        if (parts.count() > 6)
+        {
+            // tooltip
+            paramToolTips.insert(parts.at(0), parts.at(6).trimmed());
+        }
+    }
+}
+
 /**
  * @return The MAV of this widget. Unless the MAV object has been destroyed, this
  *         pointer is never zero.
@@ -205,13 +308,16 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
     if (transmissionListMode) {
         // Only accept the list size once on the first packet from
         // each component
-        if (!transmissionListSizeKnown.contains(component)) {
+        if (!transmissionListSizeKnown.contains(component))
+        {
             // Mark list size as known
             transmissionListSizeKnown.insert(component, true);
 
             // Mark all parameters as missing
-            for (int i = 0; i < paramCount; ++i) {
-                if (!transmissionMissingPackets.value(component)->contains(i)) {
+            for (int i = 0; i < paramCount; ++i)
+            {
+                if (!transmissionMissingPackets.value(component)->contains(i))
+                {
                     transmissionMissingPackets.value(component)->append(i);
                 }
             }
@@ -220,7 +326,8 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
             // since components do not manage their transmission,
             // the longest timeout is safe for all components.
             quint64 thisTransmissionTimeout = QGC::groundTimeMilliseconds() + ((paramCount/retransmissionBurstRequestSize+5)*retransmissionTimeout);
-            if (thisTransmissionTimeout > transmissionTimeout) {
+            if (thisTransmissionTimeout > transmissionTimeout)
+            {
                 transmissionTimeout = thisTransmissionTimeout;
             }
         }
@@ -240,47 +347,59 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
     //bool lastWritten = false;
     // Mark this parameter as received in write ACK list
     QMap<QString, float>* map = transmissionMissingWriteAckPackets.value(component);
-    if (map && map->contains(parameterName)) {
+    if (map && map->contains(parameterName))
+    {
         justWritten = true;
-        if (map->value(parameterName) != value) {
+        if (map->value(parameterName) != value)
+        {
             writeMismatch = true;
         }
         map->remove(parameterName);
     }
 
     int missCount = 0;
-    foreach (int key, transmissionMissingPackets.keys()) {
+    foreach (int key, transmissionMissingPackets.keys())
+    {
         missCount +=  transmissionMissingPackets.value(key)->count();
     }
 
     int missWriteCount = 0;
-    foreach (int key, transmissionMissingWriteAckPackets.keys()) {
+    foreach (int key, transmissionMissingWriteAckPackets.keys())
+    {
         missWriteCount += transmissionMissingWriteAckPackets.value(key)->count();
     }
 
-    if (justWritten && !writeMismatch && missWriteCount == 0) {
+    if (justWritten && !writeMismatch && missWriteCount == 0)
+    {
         // Just wrote one and count went to 0 - this was the last missing write parameter
         statusLabel->setText(tr("SUCCESS: WROTE ALL PARAMETERS"));
         QPalette pal = statusLabel->palette();
         pal.setColor(backgroundRole(), QGC::colorGreen);
         statusLabel->setPalette(pal);
-    } else if (justWritten && !writeMismatch) {
+    } else if (justWritten && !writeMismatch)
+    {
         statusLabel->setText(tr("SUCCESS: Wrote %2 (#%1/%4): %3").arg(paramId+1).arg(parameterName).arg(value).arg(paramCount));
         QPalette pal = statusLabel->palette();
         pal.setColor(backgroundRole(), QGC::colorGreen);
         statusLabel->setPalette(pal);
-    } else if (justWritten && writeMismatch) {
+    } else if (justWritten && writeMismatch)
+    {
         // Mismatch, tell user
         QPalette pal = statusLabel->palette();
         pal.setColor(backgroundRole(), QGC::colorRed);
         statusLabel->setPalette(pal);
         statusLabel->setText(tr("FAILURE: Wrote %1: sent %2 != onboard %3").arg(parameterName).arg(map->value(parameterName)).arg(value));
-    } else {
-        if (missCount > 0) {
+    }
+    else
+    {
+        if (missCount > 0)
+        {
             QPalette pal = statusLabel->palette();
             pal.setColor(backgroundRole(), QGC::colorOrange);
             statusLabel->setPalette(pal);
-        } else {
+        }
+        else
+        {
             QPalette pal = statusLabel->palette();
             pal.setColor(backgroundRole(), QGC::colorGreen);
             statusLabel->setPalette(pal);
@@ -289,11 +408,13 @@ void QGCParamWidget::addParameter(int uas, int component, int paramCount, int pa
     }
 
     // Check if last parameter was received
-    if (missCount == 0 && missWriteCount == 0) {
+    if (missCount == 0 && missWriteCount == 0)
+    {
         this->transmissionActive = false;
         this->transmissionListMode = false;
         transmissionListSizeKnown.clear();
-        foreach (int key, transmissionMissingPackets.keys()) {
+        foreach (int key, transmissionMissingPackets.keys())
+        {
             transmissionMissingPackets.value(key)->clear();
         }
     }
@@ -311,9 +432,11 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     QTreeWidgetItem* parameterItem = NULL;
 
     // Get component
-    if (!components->contains(component)) {
+    if (!components->contains(component))
+    {
         QString componentName;
-        switch (component) {
+        switch (component)
+        {
         case MAV_COMP_ID_CAMERA:
             componentName = tr("Camera (#%1)").arg(component);
             break;
@@ -337,7 +460,8 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
 
     QString splitToken = "_";
     // Check if auto-grouping can work
-    if (parameterName.contains(splitToken)) {
+    if (parameterName.contains(splitToken))
+    {
         QString parent = parameterName.section(splitToken, 0, 0, QString::SectionSkipEmpty);
         QMap<QString, QTreeWidgetItem*>* compParamGroups = paramGroups.value(component);
         if (!compParamGroups->contains(parent)) {
@@ -363,7 +487,8 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             }
         }
 
-        if (!found) {
+        if (!found)
+        {
             // Insert parameter into map
             QStringList plist;
             plist.append(parameterName);
@@ -375,13 +500,17 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             compParamGroups->value(parent)->addChild(parameterItem);
             parameterItem->setFlags(parameterItem->flags() | Qt::ItemIsEditable);
         }
-    } else {
+    }
+    else
+    {
         bool found = false;
         QTreeWidgetItem* parent = components->value(component);
-        for (int i = 0; i < parent->childCount(); i++) {
+        for (int i = 0; i < parent->childCount(); i++)
+        {
             QTreeWidgetItem* child = parent->child(i);
             QString key = child->data(0, Qt::DisplayRole).toString();
-            if (key == parameterName) {
+            if (key == parameterName)
+            {
                 //qDebug() << "UPDATED CHILD";
                 parameterItem = child;
                 parameterItem->setData(1, Qt::DisplayRole, value);
@@ -389,7 +518,8 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
             }
         }
 
-        if (!found) {
+        if (!found)
+        {
             // Insert parameter into map
             QStringList plist;
             plist.append(parameterName);
@@ -406,6 +536,10 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     // Reset background color
     parameterItem->setBackground(0, QBrush(QColor(0, 0, 0)));
     parameterItem->setBackground(1, Qt::NoBrush);
+    // Add tooltip
+    parameterItem->setToolTip(0, paramToolTips.value(parameterName, ""));
+    parameterItem->setToolTip(1, paramToolTips.value(parameterName, ""));
+
     //tree->update();
     if (changedValues.contains(component)) changedValues.value(component)->remove(parameterName);
 }

@@ -2308,7 +2308,7 @@ QString UAS::getShortModeTextFor(int id)
         mode = "STABILIZED";
         break;
     case (uint8_t)MAV_MODE_TEST:
-        mode = "STABILIZED";
+        mode = "TEST";
         break;
     default:
         mode = "UNKNOWN";

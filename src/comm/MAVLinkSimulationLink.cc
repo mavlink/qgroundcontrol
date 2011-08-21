@@ -536,10 +536,13 @@ void MAVLinkSimulationLink::mainloop()
 
         static int typeCounter = 0;
         uint8_t mavType;
-        if (typeCounter < 10) {
+        if (typeCounter < 10)
+        {
             mavType = MAV_TYPE_QUADROTOR;
-        } else {
-            mavType = typeCounter % (MAV_TYPE_OCU);
+        }
+        else
+        {
+            mavType = typeCounter % (MAV_TYPE_GCS);
         }
         typeCounter++;
 

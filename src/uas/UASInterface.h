@@ -72,7 +72,6 @@ public:
     virtual quint64 getUptime() const = 0;
     /** @brief Get the status flag for the communication **/
     virtual int getCommunicationStatus() const = 0;
-    virtual int getType() const = 0;
 
     virtual double getLocalX() const = 0;
     virtual double getLocalY() const = 0;
@@ -124,7 +123,9 @@ public:
         QGC_AIRFRAME_REAPER,
         QGC_AIRFRAME_PREDATOR,
         QGC_AIRFRAME_COAXIAL,
-        QGC_AIRFRAME_PTERYX
+        QGC_AIRFRAME_PTERYX,
+        QGC_AIRFRAME_TRICOPTER,
+        QGC_AIRFRAME_HEXCOPTER
     };
 
     /**
@@ -179,12 +180,14 @@ public:
 
     /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
     virtual int getSystemType() = 0;
+    virtual QString getSystemTypeName() = 0;
 
     QColor getColor() {
         return color;
     }
 
     virtual int getAutopilotType() = 0;
+    virtual QString getAutopilotTypeName() = 0;
     virtual void setAutopilotType(int apType)= 0;
 
 public slots:

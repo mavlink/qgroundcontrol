@@ -379,7 +379,7 @@ processCall << "--disable-ai-models";
 processCall << "--wind=0@0";
 processCall << "--fdm=jsb";
 processCall << "--prop:/engines/engine[0]/running=true";
-if (mav->getType() == MAV_TYPE_QUADROTOR)
+if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
 {
     // Start the remaining three motors of the quad
     processCall << "--prop:/engines/engine[1]/running=true";

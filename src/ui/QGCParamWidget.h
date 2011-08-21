@@ -93,10 +93,19 @@ protected:
     QMap<int, QTreeWidgetItem*>* components; ///< The list of components
     QMap<int, QMap<QString, QTreeWidgetItem*>* > paramGroups; ///< Parameter groups
 
+    // Tooltip data structures
+    QMap<QString, QString> paramToolTips; ///< Tooltip values
+    // Min / Default / Max data structures
+    QMap<QString, float> paramMin; ///< Minimum param values
+    QMap<QString, float> paramDefault; ///< Default param values
+    QMap<QString, float> paramMax; ///< Minimum param values
+
     /** @brief Activate / deactivate parameter retransmission */
     void setRetransmissionGuardEnabled(bool enabled);
     /** @brief Load  settings */
     void loadSettings();
+    /** @brief Load meta information from CSV */
+    void loadParameterInfoCSV(const QString& autopilot, const QString& airframe);
 };
 
 #endif // QGCPARAMWIDGET_H
