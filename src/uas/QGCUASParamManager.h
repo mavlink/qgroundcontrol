@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QMap>
 #include <QTimer>
+#include <QVariant>
 
 class UASInterface;
 
@@ -16,10 +17,10 @@ public:
     QList<QString> getParameterNames(int component) const {
         return parameters.value(component)->keys();
     }
-    QList<float> getParameterValues(int component) const {
+    QList<QVariant> getParameterValues(int component) const {
         return parameters.value(component)->values();
     }
-    float getParameterValue(int component, const QString& parameter) const {
+    QVariant getParameterValue(int component, const QString& parameter) const {
         return parameters.value(component)->value(parameter);
     }
 
@@ -29,23 +30,23 @@ public:
     virtual void requestParameterUpdate(int component, const QString& parameter) = 0;
 
 signals:
-    void parameterChanged(int component, QString parameter, float value);
-    void parameterChanged(int component, int parameterIndex, float value);
+    void parameterChanged(int component, QString parameter, QVariant value);
+    void parameterChanged(int component, int parameterIndex, QVariant value);
     void parameterListUpToDate(int component);
 
 public slots:
     /** @brief Write one parameter to the MAV */
-    virtual void setParameter(int component, QString parameterName, float value) = 0;
+    virtual void setParameter(int component, QString parameterName, QVariant value) = 0;
     /** @brief Request list of parameters from MAV */
     virtual void requestParameterList() = 0;
 
 protected:
     UASInterface* mav;   ///< The MAV this widget is controlling
-    QMap<int, QMap<QString, float>* > changedValues; ///< Changed values
-    QMap<int, QMap<QString, float>* > parameters; ///< All parameters
+    QMap<int, QMap<QString, QVariant>* > changedValues; ///< Changed values
+    QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     QVector<bool> received; ///< Successfully received parameters
     QMap<int, QList<int>* > transmissionMissingPackets; ///< Missing packets
-    QMap<int, QMap<QString, float>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
+    QMap<int, QMap<QString, QVariant>* > transmissionMissingWriteAckPackets; ///< Missing write ACK packets
     bool transmissionListMode;       ///< Currently requesting list
     QMap<int, bool> transmissionListSizeKnown;  ///< List size initialized?
     bool transmissionActive;         ///< Missing packets, working on list?

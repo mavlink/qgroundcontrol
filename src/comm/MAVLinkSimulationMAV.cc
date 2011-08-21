@@ -68,7 +68,7 @@ void MAVLinkSimulationMAV::mainloop()
     // 1 Hz execution
     if (timer1Hz <= 0) {
         mavlink_message_t msg;
-        mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_TYPE_FIXED_WING, MAV_AUTOPILOT_PIXHAWK, MAV_MODE_GUIDED, MAV_FLIGHT_MODE_AUTO_MISSION, MAV_STATE_ACTIVE, MAV_SAFETY_ARMED, 0xFF);
+        mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_TYPE_FIXED_WING, MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_MODE_GUIDED, MAV_FLIGHT_MODE_AUTO_MISSION, MAV_STATE_ACTIVE, MAV_SAFETY_ARMED, 0xFF);
         link->sendMAVLinkMessage(&msg);
         planner.handleMessage(msg);
 

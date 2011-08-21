@@ -69,7 +69,7 @@ void UASControlWidget::setUAS(UASInterface* uas)
 {
     if (this->uas != 0) {
         UASInterface* oldUAS = UASManager::instance()->getUASForId(this->uas);
-        disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(enable_motors()));
+        disconnect(ui.controlButton, SIGNAL(clicked()), oldUAS, SLOT(armSystem()));
         disconnect(ui.liftoffButton, SIGNAL(clicked()), oldUAS, SLOT(launch()));
         disconnect(ui.landButton, SIGNAL(clicked()), oldUAS, SLOT(home()));
         disconnect(ui.shutdownButton, SIGNAL(clicked()), oldUAS, SLOT(shutdown()));

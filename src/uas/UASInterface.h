@@ -255,7 +255,7 @@ public slots:
      * @warning The length of the ID string is limited by the MAVLink format! Take care to not exceed it
      * @param value Value of the parameter, IEEE 754 single precision floating point
      */
-    virtual void setParameter(const int component, const QString& id, const float value) = 0;
+    virtual void setParameter(const int component, const QString& id, const QVariant& value) = 0;
 
     /**
      * @brief Add a link to the list of current links
@@ -395,8 +395,8 @@ signals:
     void waypointSelected(int uasId, int id);
     void waypointReached(UASInterface* uas, int id);
     void autoModeChanged(bool autoMode);
-    void parameterChanged(int uas, int component, QString parameterName, float value);
-    void parameterChanged(int uas, int component, int parameterCount, int parameterId, QString parameterName, float value);
+    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
+    void parameterChanged(int uas, int component, int parameterCount, int parameterId, QString parameterName, QVariant value);
     void patternDetected(int uasId, QString patternPath, float confidence, bool detected);
     void letterDetected(int uasId, QString letter, float confidence, bool detected);
     /**
