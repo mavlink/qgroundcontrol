@@ -743,21 +743,74 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 QByteArray bytes((char*)value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
                 QString parameterName = QString(bytes);
                 int component = message.compid;
-                float val = value.param_value;
+                mavlink_param_union_t val;
+                val.param_float = value.param_value;
+
+                // Convert to machine order if necessary
+//#if MAVLINK_NEED_BYTE_SWAP
+//   buffer[bindex]   = (b>>24)&0xff;
+//   buffer[bindex+1] = (b>>16)&0xff;
+//   buffer[bindex+2] = (b>>8)&0xff;
+//   buffer[bindex+3] = (b & 0xff);
+//#else
 
                 // Insert component if necessary
                 if (!parameters.contains(component))
                 {
-                    parameters.insert(component, new QMap<QString, float>());
+                    parameters.insert(component, new QMap<QString, QVariant>());
                 }
 
                 // Insert parameter into registry
                 if (parameters.value(component)->contains(parameterName)) parameters.value(component)->remove(parameterName);
-                parameters.value(component)->insert(parameterName, val);
 
-                // Emit change
-                emit parameterChanged(uasId, message.compid, parameterName, val);
-                emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val);
+                // Insert with correct type
+                switch (value.param_type)
+                {
+                case MAV_DATA_TYPE_FLOAT:
+                    parameters.value(component)->insert(parameterName, val.param_float);
+                    // Emit change
+                    emit parameterChanged(uasId, message.compid, parameterName, val.param_float);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_float);
+                    break;/*
+                case MAV_DATA_TYPE_UINT8:
+                    parameters.value(component)->insert(parameterName, val.param_uint8);
+                    // Emit change
+                    emit parameterChanged(uasId, message.compid, parameterName, val.param_uint8);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_uint8);
+                    break;
+                case MAV_DATA_TYPE_INT8:
+                    parameters.value(component)->insert(parameterName, val.param_int8);
+                    // Emit change
+                    emit parameterChanged(uasId, message.compid, parameterName, val.param_int8);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_int8);
+                    break;
+                case MAV_DATA_TYPE_UINT16:
+                    parameters.value(component)->insert(parameterName, val.param_uint16);
+                    // Emit change
+                    emit parameterChanged(uasId, message.compid, parameterName, val.param_uint16);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_uint16);
+                    break;
+                case MAV_DATA_TYPE_INT16:
+                    parameters.value(component)->insert(parameterName, val.param_int16);
+                    // Emit change
+                    emit parameterChanged(uasId, message.compid, parameterName, val.param_int16);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_int16);
+                    break;*/
+                case MAV_DATA_TYPE_UINT32:
+                    parameters.value(component)->insert(parameterName, val.param_uint32);
+                    // Emit change
+                    emit parameterChanged(uasId, message.compid, parameterName, val.param_uint32);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_uint32);
+                    break;
+                case MAV_DATA_TYPE_INT32:
+                    parameters.value(component)->insert(parameterName, val.param_int32);
+                    // Emit change
+                    emit parameterChanged(uasId, message.compid, parameterName, val.param_int32);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_int32);
+                    break;
+                default:
+                    qCritical() << "INVALID DATA TYPE USED AS PARAMETER VALUE: " << value.param_type;
+                }
             }
             break;
         case MAVLINK_MSG_ID_COMMAND_ACK:
@@ -1868,13 +1921,35 @@ void UAS::enableExtra3Transmission(int rate)
  * @param id Name of the parameter
  * @param value Parameter value
  */
-void UAS::setParameter(const int component, const QString& id, const float value)
+void UAS::setParameter(const int component, const QString& id, const QVariant& value)
 {
     if (!id.isNull())
     {
         mavlink_message_t msg;
         mavlink_param_set_t p;
-        p.param_value = value;
+        mavlink_param_union_t union_value;
+
+        // Assign correct value based on QVariant
+        switch (value.type())
+        {
+        case QVariant::Int:
+            union_value.param_int32 = value.toInt();
+            p.param_type = MAV_DATA_TYPE_INT32;
+            break;
+        case QVariant::UInt:
+            union_value.param_uint32 = value.toUInt();
+            p.param_type = MAV_DATA_TYPE_UINT32;
+            break;
+        case QMetaType::Float:
+            union_value.param_float = value.toFloat();
+            p.param_type = MAV_DATA_TYPE_FLOAT;
+            break;
+        default:
+            qCritical() << "ABORTED PARAM SEND, NO VALID QVARIANT TYPE";
+            return;
+        }
+
+        p.param_value = union_value.param_float;
         p.target_system = (uint8_t)uasId;
         p.target_component = (uint8_t)component;
 

@@ -200,7 +200,7 @@ protected: //COMMENTS FOR TEST UNIT
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
 
-    QMap<int, QMap<QString, float>* > parameters; ///< All parameters
+    QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     bool paramsOnceRequested;   ///< If the parameter list has been read at least once
     int airframe;               ///< The airframe type
     bool attitudeKnown;         ///< True if attitude was received, false else
@@ -459,7 +459,7 @@ public slots:
     void requestParameter(int component, int parameter);
 
     /** @brief Set a system parameter */
-    void setParameter(const int component, const QString& id, const float value);
+    void setParameter(const int component, const QString& id, const QVariant& value);
 
     /** @brief Write parameters to permanent storage */
     void writeParametersToStorage();

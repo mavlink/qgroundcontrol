@@ -66,10 +66,12 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     onboardParams.insert("PID_ROLL_K_P", 0.5f);
     onboardParams.insert("PID_PITCH_K_P", 0.5f);
     onboardParams.insert("PID_YAW_K_P", 0.5f);
-    onboardParams.insert("PID_XY_K_P", 0.5f);
+    onboardParams.insert("PID_XY_K_P", 100.0f);
     onboardParams.insert("PID_ALT_K_P", 0.5f);
     onboardParams.insert("SYS_TYPE", 1);
     onboardParams.insert("SYS_ID", systemId);
+    onboardParams.insert("RC4_REV", 0);
+    onboardParams.insert("RC5_REV", 1);
 
     // Comments on the variables can be found in the header file
 
