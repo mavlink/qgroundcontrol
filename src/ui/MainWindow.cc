@@ -1628,14 +1628,17 @@ void MainWindow::UASCreated(UASInterface* uas)
         }
 
         // UAS List
-        if (listDockWidget) {
+        if (listDockWidget)
+        {
             UASListWidget *listWidget = dynamic_cast<UASListWidget*>(listDockWidget->widget());
-            if (listWidget) {
+            if (listWidget)
+            {
                 listWidget->addUAS(uas);
             }
         }
 
-        switch (uas->getAutopilotType()) {
+        switch (uas->getAutopilotType())
+        {
         case (MAV_AUTOPILOT_SLUGS): {
             // Build Slugs Widgets
             buildSlugsWidgets();

@@ -81,10 +81,6 @@ public:
     int getAirframe() const {
         return airframe;
     }
-
-    int getType() const {
-        return type;
-    }
     /** @brief The time interval the robot is switched on */
     quint64 getUptime() const;
     /** @brief Get the status flag for the communication */
@@ -242,22 +238,130 @@ public:
         paramManager = manager;
     }
     int getSystemType();
+    QString getSystemTypeName()
+    {
+        switch(type)
+        {
+        case MAV_TYPE_GENERIC:
+            return "GENERIC";
+            break;
+        case MAV_TYPE_FIXED_WING:
+            return "FIXED_WING";
+            break;
+        case MAV_TYPE_QUADROTOR:
+            return "QUADROTOR";
+            break;
+        case MAV_TYPE_COAXIAL:
+            return "COAXIAL";
+            break;
+        case MAV_TYPE_HELICOPTER:
+            return "HELICOPTER";
+            break;
+        case MAV_TYPE_ANTENNA_TRACKER:
+            return "ANTENNA_TRACKER";
+            break;
+        case MAV_TYPE_GCS:
+            return "GCS";
+            break;
+        case MAV_TYPE_AIRSHIP:
+            return "AIRSHIP";
+            break;
+        case MAV_TYPE_FREE_BALLOON:
+            return "FREE_BALLOON";
+            break;
+        case MAV_TYPE_ROCKET:
+            return "ROCKET";
+            break;
+        case MAV_TYPE_GROUND_ROVER:
+            return "GROUND_ROVER";
+            break;
+        case MAV_TYPE_SURFACE_BOAT:
+            return "BOAT";
+            break;
+        case MAV_TYPE_SUBMARINE:
+            return "SUBMARINE";
+            break;
+        case MAV_TYPE_HEXAROTOR:
+            return "HEXAROTOR";
+            break;
+        case MAV_TYPE_OCTOROTOR:
+            return "OCTOROTOR";
+            break;
+        case MAV_TYPE_TRICOPTER:
+            return "TRICOPTER";
+            break;
+        case MAV_TYPE_FLAPPING_WING:
+            return "FLAPPING_WING";
+            break;
+        default:
+            return "";
+            break;
+        }
+    }
+
     QImage getImage();
     void requestImage();
     int getAutopilotType() {
         return autopilot;
     }
+    QString getAutopilotTypeName()
+    {
+        switch (autopilot)
+        {
+        case MAV_AUTOPILOT_GENERIC:
+            return "GENERIC";
+            break;
+        case MAV_AUTOPILOT_PIXHAWK:
+            return "PIXHAWK";
+            break;
+        case MAV_AUTOPILOT_SLUGS:
+            return "SLUGS";
+            break;
+        case MAV_AUTOPILOT_ARDUPILOTMEGA:
+            return "ARDUPILOTMEGA";
+            break;
+        case MAV_AUTOPILOT_OPENPILOT:
+            return "OPENPILOT";
+            break;
+        case MAV_AUTOPILOT_GENERIC_MISSION_WAYPOINTS_ONLY:
+            return "GENERIC_MISSION_WAYPOINTS_ONLY";
+            break;
+        case MAV_AUTOPILOT_GENERIC_MISSION_NAVIGATION_ONLY:
+            return "GENERIC_MISSION_NAVIGATION_ONLY";
+            break;
+        case MAV_AUTOPILOT_GENERIC_MISSION_FULL:
+            return "GENERIC_MISSION_FULL";
+            break;
+        case MAV_AUTOPILOT_INVALID:
+            return "NO AP";
+            break;
+        case MAV_AUTOPILOT_PPZ:
+            return "PPZ";
+            break;
+        case MAV_AUTOPILOT_UDB:
+            return "UDB";
+            break;
+        case MAV_AUTOPILOT_FP:
+            return "FP";
+            break;
+        default:
+            return "";
+            break;
+        }
+    }
 
 public slots:
     /** @brief Set the autopilot type */
-    void setAutopilotType(int apType) {
+    void setAutopilotType(int apType)
+    {
         autopilot = apType;
         emit systemSpecsChanged(uasId);
     }
     /** @brief Set the type of airframe */
     void setSystemType(int systemType);
     /** @brief Set the specific airframe type */
-    void setAirframe(int airframe) {
+    void setAirframe(int airframe)
+    {
         this->airframe = airframe;
         emit systemSpecsChanged(uasId);
     }
