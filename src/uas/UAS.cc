@@ -270,7 +270,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
 
                 emit loadChanged(this,state.load/10.0f);
-                emit valueChanged(uasId, "Load", "%", ((float)state.load)/10.0f, getUnixTime());
+                //emit valueChanged(uasId, "Load", "%", ((float)state.load)/10.0f, getUnixTime());
 
                 if (this->mode != static_cast<int>(state.mode))
                 {
