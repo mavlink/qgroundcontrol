@@ -82,16 +82,16 @@ void QGCFlightGearLink::processError(QProcess::ProcessError err)
         MainWindow::instance()->showCriticalMessage(tr("FlightGear Crashed"), tr("This is a FlightGear-related problem. Please upgrade FlightGear"));
         break;
     case QProcess::Timedout:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Start Timed Out"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::WriteError:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::ReadError:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::UnknownError:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Failed to Start"), tr("Please check if the path and command is correct"));
+        MainWindow::instance()->showCriticalMessage(tr("FlightGear Error"), tr("Please check if the path and command is correct"));
         break;
     default:
         MainWindow::instance()->showCriticalMessage(tr("FlightGear Error"), tr("Please check if the path and command is correct."));
@@ -279,6 +279,7 @@ bool QGCFlightGearLink::disconnectSimulation()
  **/
 bool QGCFlightGearLink::connectSimulation()
 {
+    if (!mav) return false;
     socket = new QUdpSocket(this);
 
     //Check if we are using a multicast-address
@@ -358,7 +359,7 @@ processFgfs = "fgfs";
 fgRoot = "--fg-root=/usr/share/flightgear/data";
 #endif
 
-processCall << fgRoot;
+//processCall << fgRoot;
 //processCall << fgScenery;
 processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,ardupilot";
 processCall << "--generic=socket,in,50,127.0.0.1,49000,udp,ardupilot";
@@ -377,6 +378,16 @@ processCall << "--disable-random-objects";
 processCall << "--disable-ai-models";
 processCall << "--wind=0@0";
 processCall << "--fdm=jsb";
+processCall << "--prop:/engines/engine[0]/running=true";
+if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+{
+    // Start the remaining three motors of the quad
+    processCall << "--prop:/engines/engine[1]/running=true";
+    processCall << "--prop:/engines/engine[2]/running=true";
+    processCall << "--prop:/engines/engine[3]/running=true";
+}
+processCall << QString("--lat=%1").arg(mav->getLatitude());
+processCall << QString("--lon=%1").arg(mav->getLongitude());
 // Add new argument with this: processCall << "";
 processCall << QString("--aircraft=%2").arg(aircraft);
 

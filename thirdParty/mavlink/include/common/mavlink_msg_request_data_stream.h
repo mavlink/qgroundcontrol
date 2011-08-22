@@ -11,7 +11,7 @@ typedef struct __mavlink_request_data_stream_t
 	uint16_t req_message_rate;	///< The requested interval between two messages of this type
 	uint8_t target_system;	///< The target requested to send the message stream.
 	uint8_t target_component;	///< The target requested to send the message stream.
-	uint8_t req_stream_id;	///< The ID of the requested message type
+	uint8_t req_stream_id;	///< The ID of the requested data stream
 	uint8_t start_stop;	///< 1 to start sending, 0 to stop sending.
 
 } mavlink_request_data_stream_t;
@@ -24,7 +24,7 @@ typedef struct __mavlink_request_data_stream_t
  *
  * @param target_system The target requested to send the message stream.
  * @param target_component The target requested to send the message stream.
- * @param req_stream_id The ID of the requested message type
+ * @param req_stream_id The ID of the requested data stream
  * @param req_message_rate The requested interval between two messages of this type
  * @param start_stop 1 to start sending, 0 to stop sending.
  * @return length of the message in bytes (excluding serial stream start sign)
@@ -36,7 +36,7 @@ static inline uint16_t mavlink_msg_request_data_stream_pack(uint8_t system_id, u
 
 	p->target_system = target_system;	// uint8_t:The target requested to send the message stream.
 	p->target_component = target_component;	// uint8_t:The target requested to send the message stream.
-	p->req_stream_id = req_stream_id;	// uint8_t:The ID of the requested message type
+	p->req_stream_id = req_stream_id;	// uint8_t:The ID of the requested data stream
 	p->req_message_rate = req_message_rate;	// uint16_t:The requested interval between two messages of this type
 	p->start_stop = start_stop;	// uint8_t:1 to start sending, 0 to stop sending.
 
@@ -51,7 +51,7 @@ static inline uint16_t mavlink_msg_request_data_stream_pack(uint8_t system_id, u
  * @param msg The MAVLink message to compress the data into
  * @param target_system The target requested to send the message stream.
  * @param target_component The target requested to send the message stream.
- * @param req_stream_id The ID of the requested message type
+ * @param req_stream_id The ID of the requested data stream
  * @param req_message_rate The requested interval between two messages of this type
  * @param start_stop 1 to start sending, 0 to stop sending.
  * @return length of the message in bytes (excluding serial stream start sign)
@@ -63,7 +63,7 @@ static inline uint16_t mavlink_msg_request_data_stream_pack_chan(uint8_t system_
 
 	p->target_system = target_system;	// uint8_t:The target requested to send the message stream.
 	p->target_component = target_component;	// uint8_t:The target requested to send the message stream.
-	p->req_stream_id = req_stream_id;	// uint8_t:The ID of the requested message type
+	p->req_stream_id = req_stream_id;	// uint8_t:The ID of the requested data stream
 	p->req_message_rate = req_message_rate;	// uint16_t:The requested interval between two messages of this type
 	p->start_stop = start_stop;	// uint8_t:1 to start sending, 0 to stop sending.
 
@@ -91,7 +91,7 @@ static inline uint16_t mavlink_msg_request_data_stream_encode(uint8_t system_id,
  *
  * @param target_system The target requested to send the message stream.
  * @param target_component The target requested to send the message stream.
- * @param req_stream_id The ID of the requested message type
+ * @param req_stream_id The ID of the requested data stream
  * @param req_message_rate The requested interval between two messages of this type
  * @param start_stop 1 to start sending, 0 to stop sending.
  */
@@ -103,7 +103,7 @@ static inline void mavlink_msg_request_data_stream_send(mavlink_channel_t chan, 
 	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_REQUEST_DATA_STREAM_LEN )
 	payload.target_system = target_system;	// uint8_t:The target requested to send the message stream.
 	payload.target_component = target_component;	// uint8_t:The target requested to send the message stream.
-	payload.req_stream_id = req_stream_id;	// uint8_t:The ID of the requested message type
+	payload.req_stream_id = req_stream_id;	// uint8_t:The ID of the requested data stream
 	payload.req_message_rate = req_message_rate;	// uint16_t:The requested interval between two messages of this type
 	payload.start_stop = start_stop;	// uint8_t:1 to start sending, 0 to stop sending.
 
@@ -115,6 +115,7 @@ static inline void mavlink_msg_request_data_stream_send(mavlink_channel_t chan, 
 	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
 
 	crc_init(&hdr.ck);
 	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
@@ -152,7 +153,7 @@ static inline uint8_t mavlink_msg_request_data_stream_get_target_component(const
 /**
  * @brief Get field req_stream_id from request_data_stream message
  *
- * @return The ID of the requested message type
+ * @return The ID of the requested data stream
  */
 static inline uint8_t mavlink_msg_request_data_stream_get_req_stream_id(const mavlink_message_t* msg)
 {

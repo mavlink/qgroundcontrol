@@ -7,6 +7,7 @@
 #ifndef  _MAVLINK_PROTOCOL_H_
 #define  _MAVLINK_PROTOCOL_H_
 
+#include "string.h" /* memcpy */
 #include "mavlink_types.h"
 
 #include "mavlink_checksum.h"
@@ -17,8 +18,8 @@ extern const uint8_t MAVLINK_CONST mavlink_msg_lengths[256];
 
 extern const uint8_t MAVLINK_CONST mavlink_msg_keys[256];
 
-extern mavlink_status_t m_mavlink_status[MAVLINK_COMM_NB];
-extern mavlink_message_t m_mavlink_message[MAVLINK_COMM_NB];
+extern mavlink_status_t m_mavlink_status[MAVLINK_COMM_NUM_BUFFERS];
+extern mavlink_message_t m_mavlink_message[MAVLINK_COMM_NUM_BUFFERS];
 extern mavlink_system_t mavlink_system;
 
 
@@ -323,9 +324,10 @@ static inline int16_t mavlink_parse_char(uint8_t chan, uint8_t c, mavlink_messag
 			// Successfully got message
 			status->msg_received = 1;
 			status->parse_state = MAVLINK_PARSE_STATE_IDLE;
-			if ( r_message != NULL )
+			if ( r_message != 0 )
+                        {
 				memcpy(r_message, rxmsg, sizeof(mavlink_message_t));
-			else ;
+                        }
 		}
 		break;
 	}

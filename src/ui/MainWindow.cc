@@ -1628,15 +1628,18 @@ void MainWindow::UASCreated(UASInterface* uas)
         }
 
         // UAS List
-        if (listDockWidget) {
+        if (listDockWidget)
+        {
             UASListWidget *listWidget = dynamic_cast<UASListWidget*>(listDockWidget->widget());
-            if (listWidget) {
+            if (listWidget)
+            {
                 listWidget->addUAS(uas);
             }
         }
 
-        switch (uas->getAutopilotType()) {
-        case (MAV_CLASS_SLUGS): {
+        switch (uas->getAutopilotType())
+        {
+        case (MAV_AUTOPILOT_SLUGS): {
             // Build Slugs Widgets
             buildSlugsWidgets();
 
@@ -1674,9 +1677,9 @@ void MainWindow::UASCreated(UASInterface* uas)
         }
         break;
         default:
-        case (MAV_CLASS_GENERIC):
-        case (MAV_CLASS_ARDUPILOTMEGA):
-        case (MAV_CLASS_PIXHAWK): {
+        case (MAV_AUTOPILOT_GENERIC):
+        case (MAV_AUTOPILOT_ARDUPILOTMEGA):
+        case (MAV_AUTOPILOT_PIXHAWK): {
             // Build Pixhawk Widgets
             buildPxWidgets();
 

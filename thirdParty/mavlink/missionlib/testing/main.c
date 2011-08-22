@@ -55,7 +55,7 @@
 /* FIRST: MAVLink setup */
 //#define MAVLINK_CONFIGURED
 //#define MAVLINK_NO_DATA
-#define MAVLINK_WPM_VERBOSE
+//#define MAVLINK_WPM_VERBOSE
 
 /* 0: Include MAVLink types */
 #include "mavlink_types.h"
@@ -145,7 +145,21 @@ void mavlink_missionlib_send_message(mavlink_message_t* msg)
 
 void mavlink_missionlib_send_gcs_string(const char* string)
 {
-	printf("%s\n",string);
+	const int len = 50;
+	mavlink_statustext_t status;
+	int i = 0;
+	while (i < len - 1)
+	{
+		status.text[i] = string[i];
+		if (string[i] == '\0')
+			break;
+		i++;
+	}
+	status.text[i] = '\0'; // Enforce null termination
+	mavlink_message_t msg;
+	
+	mavlink_msg_statustext_encode(mavlink_system.sysid, mavlink_system.compid, &msg, &status);
+	mavlink_missionlib_send_message(&msg);
 }
 
 uint64_t mavlink_missionlib_get_system_timestamp()
@@ -155,29 +169,11 @@ uint64_t mavlink_missionlib_get_system_timestamp()
 	return ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
 }
 
-
-void mavlink_wpm_send_message(mavlink_message_t* msg)
-{
-	mavlink_missionlib_send_message(msg);
-}
-
-void mavlink_wpm_send_gcs_string(const char* string)
-{
-	mavlink_missionlib_send_gcs_string(string);
-}
-
-uint64_t mavlink_wpm_get_system_timestamp()
-{
-	return mavlink_missionlib_get_system_timestamp();
-}
-
-
-
 int main(int argc, char* argv[])
 {	
 	// Initialize MAVLink
 	mavlink_wpm_init(&wpm);
-	mavlink_system.sysid = 1;
+	mavlink_system.sysid = 5;
 	mavlink_system.compid = 20;
 	mavlink_pm_reset_params(&pm);
 	
@@ -240,29 +236,38 @@ int main(int argc, char* argv[])
 	
 	for (;;) 
     {
+		bytes_sent = 0;
 		
 		/*Send Heartbeat */
 		mavlink_msg_heartbeat_pack(mavlink_system.sysid, 200, &msg, MAV_TYPE_HELICOPTER, MAV_CLASS_GENERIC);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
-		bytes_sent = sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
+		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		
 		/* Send Status */
 		mavlink_msg_sys_status_pack(1, 200, &msg, MAV_MODE_GUIDED, MAV_NAV_HOLD, MAV_STATE_ACTIVE, 500, 7500, 0, 0);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
-		bytes_sent = sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof (struct sockaddr_in));
+		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof (struct sockaddr_in));
 		
 		/* Send Local Position */
 		mavlink_msg_local_position_pack(mavlink_system.sysid, 200, &msg, microsSinceEpoch(), 
 										position[0], position[1], position[2],
 										position[3], position[4], position[5]);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
-		bytes_sent = sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
+		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		
 		/* Send attitude */
 		mavlink_msg_attitude_pack(mavlink_system.sysid, 200, &msg, microsSinceEpoch(), 1.2, 1.7, 3.14, 0.01, 0.02, 0.03);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
-		bytes_sent = sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
+		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		
+		/* Send HIL outputs */
+		float roll_ailerons = 0;   // -1 .. 1
+		float pitch_elevator = -0.2;  // -1 .. 1
+		float yaw_rudder = 0.1;      // -1 .. 1
+		float throttle = 0.9;      //  0 .. 1
+		mavlink_msg_hil_controls_pack_chan(mavlink_system.sysid, mavlink_system.compid, MAVLINK_COMM_0, &msg, microsSinceEpoch(), roll_ailerons, pitch_elevator, yaw_rudder, throttle, mavlink_system.mode, mavlink_system.nav_mode);
+		len = mavlink_msg_to_send_buffer(buf, &msg);
+		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		
 		memset(buf, 0, BUFFER_LENGTH);
 		recsize = recvfrom(sock, (void *)buf, BUFFER_LENGTH, 0, (struct sockaddr *)&gcAddr, &fromlen);
@@ -287,12 +292,21 @@ int main(int argc, char* argv[])
 					
 					// Handle packet with parameter component
 					mavlink_pm_message_handler(MAVLINK_COMM_0, &msg);
+					
+					// Print HIL values sent to system
+					if (msg.msgid == MAVLINK_MSG_ID_HIL_STATE)
+					{
+						mavlink_hil_state_t hil;
+						mavlink_msg_hil_state_decode(&msg, &hil);
+						printf("Received HIL state:\n");
+						printf("R: %f P: %f Y: %f\n", hil.roll, hil.pitch, hil.yaw);
+					}
 				}
 			}
 			printf("\n");
 		}
 		memset(buf, 0, BUFFER_LENGTH);
-		usleep(50000); // Sleep one second
+		usleep(10000); // Sleep 10 ms
 		
 		
 		// Send one parameter
