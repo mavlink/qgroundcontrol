@@ -1,6 +1,6 @@
-#include "LinkInterface.h"
+//#include "LinkInterface.h"
 
-LinkInterface::~LinkInterface()
-{
-	emit this->deleteLink(this);
-}
+//LinkInterface::~LinkInterface()
+//{
+
+//}

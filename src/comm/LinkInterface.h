@@ -44,7 +44,7 @@ class LinkInterface : public QThread
     Q_OBJECT
 public:
     LinkInterface(QObject* parent = 0) : QThread(parent) {}
-    virtual ~LinkInterface() {}
+    virtual ~LinkInterface() { emit this->deleteLink(this); }
 
     /* Connection management */
 

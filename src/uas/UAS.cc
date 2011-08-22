@@ -294,7 +294,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             else if (modechanged || statechanged)
             {
                 GAudioOutput::instance()->stopEmergency();
-                GAudioOutput::instance()->say(audiostring);
+                GAudioOutput::instance()->say(audiostring.toLower());
             }
 
             if (state.system_status == MAV_STATE_POWEROFF)
@@ -345,24 +345,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
-#ifdef MAVLINK_ENABLED_PIXHAWK
-        case MAVLINK_MSG_ID_CONTROL_STATUS:
-            {
-                mavlink_control_status_t status;
-                mavlink_msg_control_status_decode(&message, &status);
-                // Emit control status vector
-                emit attitudeControlEnabled(static_cast<bool>(status.control_att));
-                emit positionXYControlEnabled(static_cast<bool>(status.control_pos_xy));
-                emit positionZControlEnabled(static_cast<bool>(status.control_pos_z));
-                emit positionYawControlEnabled(static_cast<bool>(status.control_pos_yaw));
-
-                // Emit localization status vector
-                emit localizationChanged(this, status.position_fix);
-                emit visionLocalizationChanged(this, status.vision_fix);
-                emit gpsLocalizationChanged(this, status.gps_fix);
-            }
-            break;
-#endif // PIXHAWK
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 mavlink_raw_imu_t raw;
@@ -625,14 +607,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // quint64 time = getUnixTime(pos.usec);
                 quint64 time = getUnixTime(pos.usec);
 
-                emit valueChanged(uasId, "latitude", "deg", pos.lat/(double)1E7, time);
-                emit valueChanged(uasId, "longitude", "deg", pos.lon/(double)1E7, time);
-                emit valueChanged(uasId, "eph", "m", pos.eph/(double)1E2, time);
-                emit valueChanged(uasId, "epv", "m", pos.eph/(double)1E2, time);
+                emit valueChanged(uasId, "gps latitude", "deg", pos.lat/(double)1E7, time);
+                emit valueChanged(uasId, "gps longitude", "deg", pos.lon/(double)1E7, time);
+                emit valueChanged(uasId, "gps speed", "m/s", pos.vel, time);
+                emit valueChanged(uasId, "gps eph", "m", pos.eph/(double)1E2, time);
+                emit valueChanged(uasId, "gps epv", "m", pos.eph/(double)1E2, time);
+                emit valueChanged(uasId, "gps fix", "raw", pos.fix_type, time);
+                emit valueChanged(uasId, "gps heading", "raw", pos.hdg, time);
 
                 if (pos.fix_type > 2) {
                     emit globalPositionChanged(this, pos.lat/(double)1E7, pos.lon/(double)1E7, pos.alt/1000.0, time);
-                    emit valueChanged(uasId, "gps speed", "m/s", pos.vel, time);
                     latitude = pos.lat/(double)1E7;
                     longitude = pos.lon/(double)1E7;
                     altitude = pos.alt/1000.0;
@@ -2550,7 +2534,7 @@ void UAS::startLowBattAlarm()
 {
     if (!lowBattAlarm)
     {
-        GAudioOutput::instance()->alert(tr("SYSTEM %1 HAS LOW BATTERY").arg(getUASName()));
+        GAudioOutput::instance()->alert(tr("system %1 has low battery").arg(getUASName()));
         QTimer::singleShot(2500, GAudioOutput::instance(), SLOT(startEmergency()));
         lowBattAlarm = true;
     }

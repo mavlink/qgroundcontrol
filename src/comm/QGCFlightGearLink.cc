@@ -346,7 +346,7 @@ QString aircraft("Rascal110-JSBSim");
 #ifdef Q_OS_MACX
 processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
 fgRoot = "--fg-root=/Applications/FlightGear.app/Contents/Resources/data";
-fgScenery = "--fg-scenery=\"/Applications/FlightGear.app/Contents/Resources/data/Scenery\"";
+fgScenery = "--fg-scenery=/Applications/FlightGear.app/Contents/Resources/data/Scenery";
 #endif
 
 #ifdef Q_OS_WIN32
@@ -359,8 +359,8 @@ processFgfs = "fgfs";
 fgRoot = "--fg-root=/usr/share/flightgear/data";
 #endif
 
-//processCall << fgRoot;
-//processCall << fgScenery;
+processCall << fgRoot;
+processCall << fgScenery;
 processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,ardupilot";
 processCall << "--generic=socket,in,50,127.0.0.1,49000,udp,ardupilot";
 processCall << "--in-air";

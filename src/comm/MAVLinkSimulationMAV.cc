@@ -206,21 +206,6 @@ void MAVLinkSimulationMAV::mainloop()
         // The message container to be used for sending
         mavlink_message_t ret;
 
-#ifdef MAVLINK_ENABLED_PIXHAWK
-        // Send which controllers are active
-        mavlink_control_status_t control_status;
-        control_status.control_att = 1;
-        control_status.control_pos_xy = 1;
-        control_status.control_pos_yaw = 1;
-        control_status.control_pos_z = 1;
-        control_status.gps_fix = 2;        // 2D GPS fix
-        control_status.position_fix = 3;   // 3D fix from GPS + barometric pressure
-        control_status.vision_fix = 0;     // no fix from vision system
-        control_status.ahrs_health = 230;
-        mavlink_msg_control_status_encode(systemid, MAV_COMP_ID_IMU, &ret, &control_status);
-        link->sendMAVLinkMessage(&ret);
-#endif //MAVLINK_ENABLED_PIXHAWK
-
         // Send actual controller outputs
         // This message just shows the direction
         // and magnitude of the control output
