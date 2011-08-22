@@ -64,6 +64,8 @@ public:
     virtual const QString& getShortState() const = 0;
     /** @brief Get short mode */
     virtual const QString& getShortMode() const = 0;
+    /** @brief Translate mode id into text */
+    static QString getShortModeTextFor(int id);
     //virtual QColor getColor() = 0;
     virtual int getUASID() const = 0; ///< Get the ID of the connected UAS
     /** @brief The time interval the robot is switched on **/
@@ -121,7 +123,9 @@ public:
         QGC_AIRFRAME_REAPER,
         QGC_AIRFRAME_PREDATOR,
         QGC_AIRFRAME_COAXIAL,
-        QGC_AIRFRAME_PTERYX
+        QGC_AIRFRAME_PTERYX,
+        QGC_AIRFRAME_TRICOPTER,
+        QGC_AIRFRAME_HEXCOPTER
     };
 
     /**
@@ -176,12 +180,14 @@ public:
 
     /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
     virtual int getSystemType() = 0;
+    virtual QString getSystemTypeName() = 0;
 
     QColor getColor() {
         return color;
     }
 
     virtual int getAutopilotType() = 0;
+    virtual QString getAutopilotTypeName() = 0;
     virtual void setAutopilotType(int apType)= 0;
 
 public slots:
@@ -249,7 +255,7 @@ public slots:
      * @warning The length of the ID string is limited by the MAVLink format! Take care to not exceed it
      * @param value Value of the parameter, IEEE 754 single precision floating point
      */
-    virtual void setParameter(const int component, const QString& id, const float value) = 0;
+    virtual void setParameter(const int component, const QString& id, const QVariant& value) = 0;
 
     /**
      * @brief Add a link to the list of current links
@@ -389,8 +395,8 @@ signals:
     void waypointSelected(int uasId, int id);
     void waypointReached(UASInterface* uas, int id);
     void autoModeChanged(bool autoMode);
-    void parameterChanged(int uas, int component, QString parameterName, float value);
-    void parameterChanged(int uas, int component, int parameterCount, int parameterId, QString parameterName, float value);
+    void parameterChanged(int uas, int component, QString parameterName, QVariant value);
+    void parameterChanged(int uas, int component, int parameterCount, int parameterId, QString parameterName, QVariant value);
     void patternDetected(int uasId, QString patternPath, float confidence, bool detected);
     void letterDetected(int uasId, QString letter, float confidence, bool detected);
     /**

@@ -815,9 +815,10 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
         break;
     }
 
-    case MAVLINK_MSG_ID_COMMAND: { // special action from ground station
-        mavlink_command_t action;
-        mavlink_msg_command_decode(msg, &action);
+    case MAVLINK_MSG_ID_COMMAND_SHORT:
+    { // special action from ground station
+        mavlink_command_short_t action;
+        mavlink_msg_command_short_decode(msg, &action);
         if(action.target_system == systemid) {
             if (verbose) qDebug("Waypoint: received message with action %d\n", action.command);
 //            switch (action.action) {

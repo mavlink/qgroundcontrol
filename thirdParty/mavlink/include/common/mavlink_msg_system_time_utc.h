@@ -1,10 +1,10 @@
 // MESSAGE SYSTEM_TIME_UTC PACKING
 
-#define MAVLINK_MSG_ID_SYSTEM_TIME_UTC 4
+#define MAVLINK_MSG_ID_SYSTEM_TIME_UTC 3
 #define MAVLINK_MSG_ID_SYSTEM_TIME_UTC_LEN 8
-#define MAVLINK_MSG_4_LEN 8
+#define MAVLINK_MSG_3_LEN 8
 #define MAVLINK_MSG_ID_SYSTEM_TIME_UTC_KEY 0x4C
-#define MAVLINK_MSG_4_KEY 0x4C
+#define MAVLINK_MSG_3_KEY 0x4C
 
 typedef struct __mavlink_system_time_utc_t 
 {
@@ -94,6 +94,7 @@ static inline void mavlink_msg_system_time_utc_send(mavlink_channel_t chan, uint
 	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
 	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
 	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
+	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
 
 	crc_init(&hdr.ck);
 	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);

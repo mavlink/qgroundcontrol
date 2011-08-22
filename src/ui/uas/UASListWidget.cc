@@ -75,7 +75,8 @@ UASListWidget::~UASListWidget()
 void UASListWidget::changeEvent(QEvent *e)
 {
     QWidget::changeEvent(e);
-    switch (e->type()) {
+    switch (e->type())
+    {
     case QEvent::LanguageChange:
         m_ui->retranslateUi(this);
         break;
@@ -88,13 +89,15 @@ void UASListWidget::changeEvent(QEvent *e)
 
 void UASListWidget::addUAS(UASInterface* uas)
 {
-    if (uasViews.isEmpty()) {
+    if (uasViews.isEmpty())
+    {
         listLayout->removeWidget(uWidget);
         delete uWidget;
         uWidget = NULL;
     }
 
-    if (!uasViews.contains(uas)) {
+    if (!uasViews.contains(uas))
+    {
         uasViews.insert(uas, new UASView(uas, this));
         listLayout->addWidget(uasViews.value(uas));
         //connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(removeUAS(QObject*)));
