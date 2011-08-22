@@ -119,8 +119,8 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
 
     // Add interaction elements
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setMargin(2);
-    layout->setSpacing(0);
+    layout->setMargin(0);
+    layout->setSpacing(12);
     QDoubleSpinBox* spinBox = new QDoubleSpinBox(this);
     spinBox->setMinimum(0.1);
     spinBox->setMaximum(9999);
