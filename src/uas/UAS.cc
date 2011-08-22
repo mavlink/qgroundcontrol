@@ -528,8 +528,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 emit altitudeChanged(uasId, hud.alt);
                 //yaw = (hud.heading-180.0f/360.0f)*M_PI;
-                //emit attitudeChanged(this, roll, pitch, yaw, getUnixTime());
-                emit speedChanged(this, hud.airspeed, 0.0f, hud.climb, getUnixTime());
+                emit speedChanged(this, hud.airspeed, 0.0f, hud.climb, time);
             }
             break;
         case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
