@@ -65,6 +65,7 @@ public slots:
     void updateAttitudeControllerEnabled(bool enabled);
     void updatePositionXYControllerEnabled(bool enabled);
     void updatePositionZControllerEnabled(bool enabled);
+    void updateObjectPosition(unsigned int time, int id, int type, const QString& name, int quality, float bearing, float distance);
     /** @brief Heading control enabled/disabled */
     void updatePositionYawControllerEnabled(bool enabled);
 
@@ -132,6 +133,11 @@ protected:
     QPointF metricBodyToRef(QPointF &metric);
     /** @brief Metric body coordinates to screen coordinates */
     QPointF metricBodyToScreen(QPointF metric);
+    QMap<int, QString> objectNames;
+    QMap<int, int> objectTypes;
+    QMap<int, float> objectQualities;
+    QMap<int, float> objectBearings;
+    QMap<int, float> objectDistances;
 
     /**
      * @brief Private data container class to be used within the HSI widget
