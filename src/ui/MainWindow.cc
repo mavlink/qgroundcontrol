@@ -376,6 +376,14 @@ void MainWindow::buildCommonWidgets()
         addToToolsMenu(logPlayerDockWidget, tr("MAVLink Log Replay"), SLOT(showToolWidget(bool)), MENU_MAVLINK_LOG_PLAYER, Qt::RightDockWidgetArea);
     }
 
+    if (!mavlinkInspectorWidget)
+    {
+        mavlinkInspectorWidget = new QDockWidget(tr("MAVLink Message Inspector"), this);
+        mavlinkInspectorWidget->setWidget( new QGCMAVLinkInspector(mavlink, this) );
+        mavlinkInspectorWidget->setObjectName("MAVLINK_INSPECTOR_DOCKWIDGET");
+        addToToolsMenu(mavlinkInspectorWidget, tr("MAVLink Inspector"), SLOT(showToolWidget(bool)), MENU_MAVLINK_INSPECTOR, Qt::RightDockWidgetArea);
+    }
+
     // Center widgets
     if (!mapWidget)
     {

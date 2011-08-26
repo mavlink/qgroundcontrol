@@ -75,7 +75,7 @@ This file is part of the QGROUNDCONTROL project
 
 #include "SlugsPadCameraControl.h"
 #include "UASControlParameters.h"
-#include "QGCFlightGearLink.h"
+#include "QGCMAVLinkInspector.h"
 
 class QGCMapTool;
 
@@ -254,6 +254,7 @@ protected:
         MENU_MAVLINK_LOG_PLAYER,
         MENU_VIDEO_STREAM_1,
         MENU_VIDEO_STREAM_2,
+        MENU_MAVLINK_INSPECTOR,
         CENTRAL_SEPARATOR= 255, // do not change
         CENTRAL_LINECHART,
         CENTRAL_PROTOCOL,
@@ -423,6 +424,8 @@ protected:
     QPointer<QDockWidget> slugsCamControlWidget;
 
     QPointer<QGCToolBar> toolBar;
+
+    QPointer<QDockWidget> mavlinkInspectorWidget;
 
 
     // Popup widgets
