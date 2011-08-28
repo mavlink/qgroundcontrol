@@ -90,6 +90,7 @@ Size PlateCarreeProjectionPergo::GetTileMatrixMaxXY(const int &zoom)
 
 Size PlateCarreeProjectionPergo::GetTileMatrixMinXY(const int &zoom)
 {
+    Q_UNUSED(zoom);
     return Size(0, 0);
 }
 }

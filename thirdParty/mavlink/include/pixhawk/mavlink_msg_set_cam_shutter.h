@@ -1,21 +1,34 @@
 // MESSAGE SET_CAM_SHUTTER PACKING
 
-#define MAVLINK_MSG_ID_SET_CAM_SHUTTER 100
-#define MAVLINK_MSG_ID_SET_CAM_SHUTTER_LEN 11
-#define MAVLINK_MSG_100_LEN 11
-#define MAVLINK_MSG_ID_SET_CAM_SHUTTER_KEY 0x24
-#define MAVLINK_MSG_100_KEY 0x24
+#define MAVLINK_MSG_ID_SET_CAM_SHUTTER 151
 
-typedef struct __mavlink_set_cam_shutter_t 
+typedef struct __mavlink_set_cam_shutter_t
 {
-	float gain;	///< Camera gain
-	uint16_t interval;	///< Shutter interval, in microseconds
-	uint16_t exposure;	///< Exposure time, in microseconds
-	uint8_t cam_no;	///< Camera id
-	uint8_t cam_mode;	///< Camera mode: 0 = auto, 1 = manual
-	uint8_t trigger_pin;	///< Trigger pin, 0-3 for PtGrey FireFly
-
+ float gain; ///< Camera gain
+ uint16_t interval; ///< Shutter interval, in microseconds
+ uint16_t exposure; ///< Exposure time, in microseconds
+ uint8_t cam_no; ///< Camera id
+ uint8_t cam_mode; ///< Camera mode: 0 = auto, 1 = manual
+ uint8_t trigger_pin; ///< Trigger pin, 0-3 for PtGrey FireFly
 } mavlink_set_cam_shutter_t;
+
+#define MAVLINK_MSG_ID_SET_CAM_SHUTTER_LEN 11
+#define MAVLINK_MSG_ID_151_LEN 11
+
+
+
+#define MAVLINK_MESSAGE_INFO_SET_CAM_SHUTTER { \
+	"SET_CAM_SHUTTER", \
+	6, \
+	{  { "gain", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_set_cam_shutter_t, gain) }, \
+         { "interval", MAVLINK_TYPE_UINT16_T, 0, 4, offsetof(mavlink_set_cam_shutter_t, interval) }, \
+         { "exposure", MAVLINK_TYPE_UINT16_T, 0, 6, offsetof(mavlink_set_cam_shutter_t, exposure) }, \
+         { "cam_no", MAVLINK_TYPE_UINT8_T, 0, 8, offsetof(mavlink_set_cam_shutter_t, cam_no) }, \
+         { "cam_mode", MAVLINK_TYPE_UINT8_T, 0, 9, offsetof(mavlink_set_cam_shutter_t, cam_mode) }, \
+         { "trigger_pin", MAVLINK_TYPE_UINT8_T, 0, 10, offsetof(mavlink_set_cam_shutter_t, trigger_pin) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a set_cam_shutter message
@@ -31,23 +44,23 @@ typedef struct __mavlink_set_cam_shutter_t
  * @param gain Camera gain
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_set_cam_shutter_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t cam_no, uint8_t cam_mode, uint8_t trigger_pin, uint16_t interval, uint16_t exposure, float gain)
+static inline uint16_t mavlink_msg_set_cam_shutter_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       uint8_t cam_no, uint8_t cam_mode, uint8_t trigger_pin, uint16_t interval, uint16_t exposure, float gain)
 {
-	mavlink_set_cam_shutter_t *p = (mavlink_set_cam_shutter_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SET_CAM_SHUTTER;
 
-	p->cam_no = cam_no;	// uint8_t:Camera id
-	p->cam_mode = cam_mode;	// uint8_t:Camera mode: 0 = auto, 1 = manual
-	p->trigger_pin = trigger_pin;	// uint8_t:Trigger pin, 0-3 for PtGrey FireFly
-	p->interval = interval;	// uint16_t:Shutter interval, in microseconds
-	p->exposure = exposure;	// uint16_t:Exposure time, in microseconds
-	p->gain = gain;	// float:Camera gain
+	put_float_by_index(msg, 0, gain); // Camera gain
+	put_uint16_t_by_index(msg, 4, interval); // Shutter interval, in microseconds
+	put_uint16_t_by_index(msg, 6, exposure); // Exposure time, in microseconds
+	put_uint8_t_by_index(msg, 8, cam_no); // Camera id
+	put_uint8_t_by_index(msg, 9, cam_mode); // Camera mode: 0 = auto, 1 = manual
+	put_uint8_t_by_index(msg, 10, trigger_pin); // Trigger pin, 0-3 for PtGrey FireFly
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SET_CAM_SHUTTER_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 11, 108);
 }
 
 /**
- * @brief Pack a set_cam_shutter message
+ * @brief Pack a set_cam_shutter message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -60,20 +73,52 @@ static inline uint16_t mavlink_msg_set_cam_shutter_pack(uint8_t system_id, uint8
  * @param gain Camera gain
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_set_cam_shutter_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t cam_no, uint8_t cam_mode, uint8_t trigger_pin, uint16_t interval, uint16_t exposure, float gain)
+static inline uint16_t mavlink_msg_set_cam_shutter_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t cam_no,uint8_t cam_mode,uint8_t trigger_pin,uint16_t interval,uint16_t exposure,float gain)
 {
-	mavlink_set_cam_shutter_t *p = (mavlink_set_cam_shutter_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SET_CAM_SHUTTER;
 
-	p->cam_no = cam_no;	// uint8_t:Camera id
-	p->cam_mode = cam_mode;	// uint8_t:Camera mode: 0 = auto, 1 = manual
-	p->trigger_pin = trigger_pin;	// uint8_t:Trigger pin, 0-3 for PtGrey FireFly
-	p->interval = interval;	// uint16_t:Shutter interval, in microseconds
-	p->exposure = exposure;	// uint16_t:Exposure time, in microseconds
-	p->gain = gain;	// float:Camera gain
+	put_float_by_index(msg, 0, gain); // Camera gain
+	put_uint16_t_by_index(msg, 4, interval); // Shutter interval, in microseconds
+	put_uint16_t_by_index(msg, 6, exposure); // Exposure time, in microseconds
+	put_uint8_t_by_index(msg, 8, cam_no); // Camera id
+	put_uint8_t_by_index(msg, 9, cam_mode); // Camera mode: 0 = auto, 1 = manual
+	put_uint8_t_by_index(msg, 10, trigger_pin); // Trigger pin, 0-3 for PtGrey FireFly
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SET_CAM_SHUTTER_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 11, 108);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a set_cam_shutter message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param cam_no Camera id
+ * @param cam_mode Camera mode: 0 = auto, 1 = manual
+ * @param trigger_pin Trigger pin, 0-3 for PtGrey FireFly
+ * @param interval Shutter interval, in microseconds
+ * @param exposure Exposure time, in microseconds
+ * @param gain Camera gain
+ */
+static inline void mavlink_msg_set_cam_shutter_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t cam_no,uint8_t cam_mode,uint8_t trigger_pin,uint16_t interval,uint16_t exposure,float gain)
+{
+	msg->msgid = MAVLINK_MSG_ID_SET_CAM_SHUTTER;
+
+	put_float_by_index(msg, 0, gain); // Camera gain
+	put_uint16_t_by_index(msg, 4, interval); // Shutter interval, in microseconds
+	put_uint16_t_by_index(msg, 6, exposure); // Exposure time, in microseconds
+	put_uint8_t_by_index(msg, 8, cam_no); // Camera id
+	put_uint8_t_by_index(msg, 9, cam_mode); // Camera mode: 0 = auto, 1 = manual
+	put_uint8_t_by_index(msg, 10, trigger_pin); // Trigger pin, 0-3 for PtGrey FireFly
+
+	mavlink_finalize_message_chan_send(msg, chan, 11, 108);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a set_cam_shutter struct into a message
@@ -88,8 +133,6 @@ static inline uint16_t mavlink_msg_set_cam_shutter_encode(uint8_t system_id, uin
 	return mavlink_msg_set_cam_shutter_pack(system_id, component_id, msg, set_cam_shutter->cam_no, set_cam_shutter->cam_mode, set_cam_shutter->trigger_pin, set_cam_shutter->interval, set_cam_shutter->exposure, set_cam_shutter->gain);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a set_cam_shutter message
  * @param chan MAVLink channel to send the message
@@ -101,39 +144,18 @@ static inline uint16_t mavlink_msg_set_cam_shutter_encode(uint8_t system_id, uin
  * @param exposure Exposure time, in microseconds
  * @param gain Camera gain
  */
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 static inline void mavlink_msg_set_cam_shutter_send(mavlink_channel_t chan, uint8_t cam_no, uint8_t cam_mode, uint8_t trigger_pin, uint16_t interval, uint16_t exposure, float gain)
 {
-	mavlink_header_t hdr;
-	mavlink_set_cam_shutter_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SET_CAM_SHUTTER_LEN )
-	payload.cam_no = cam_no;	// uint8_t:Camera id
-	payload.cam_mode = cam_mode;	// uint8_t:Camera mode: 0 = auto, 1 = manual
-	payload.trigger_pin = trigger_pin;	// uint8_t:Trigger pin, 0-3 for PtGrey FireFly
-	payload.interval = interval;	// uint16_t:Shutter interval, in microseconds
-	payload.exposure = exposure;	// uint16_t:Exposure time, in microseconds
-	payload.gain = gain;	// float:Camera gain
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_SET_CAM_SHUTTER_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_SET_CAM_SHUTTER;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0x24, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 11);
+	mavlink_msg_set_cam_shutter_pack_chan_send(chan, msg, cam_no, cam_mode, trigger_pin, interval, exposure, gain);
 }
 
 #endif
+
 // MESSAGE SET_CAM_SHUTTER UNPACKING
+
 
 /**
  * @brief Get field cam_no from set_cam_shutter message
@@ -142,8 +164,7 @@ static inline void mavlink_msg_set_cam_shutter_send(mavlink_channel_t chan, uint
  */
 static inline uint8_t mavlink_msg_set_cam_shutter_get_cam_no(const mavlink_message_t* msg)
 {
-	mavlink_set_cam_shutter_t *p = (mavlink_set_cam_shutter_t *)&msg->payload[0];
-	return (uint8_t)(p->cam_no);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  8);
 }
 
 /**
@@ -153,8 +174,7 @@ static inline uint8_t mavlink_msg_set_cam_shutter_get_cam_no(const mavlink_messa
  */
 static inline uint8_t mavlink_msg_set_cam_shutter_get_cam_mode(const mavlink_message_t* msg)
 {
-	mavlink_set_cam_shutter_t *p = (mavlink_set_cam_shutter_t *)&msg->payload[0];
-	return (uint8_t)(p->cam_mode);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  9);
 }
 
 /**
@@ -164,8 +184,7 @@ static inline uint8_t mavlink_msg_set_cam_shutter_get_cam_mode(const mavlink_mes
  */
 static inline uint8_t mavlink_msg_set_cam_shutter_get_trigger_pin(const mavlink_message_t* msg)
 {
-	mavlink_set_cam_shutter_t *p = (mavlink_set_cam_shutter_t *)&msg->payload[0];
-	return (uint8_t)(p->trigger_pin);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  10);
 }
 
 /**
@@ -175,8 +194,7 @@ static inline uint8_t mavlink_msg_set_cam_shutter_get_trigger_pin(const mavlink_
  */
 static inline uint16_t mavlink_msg_set_cam_shutter_get_interval(const mavlink_message_t* msg)
 {
-	mavlink_set_cam_shutter_t *p = (mavlink_set_cam_shutter_t *)&msg->payload[0];
-	return (uint16_t)(p->interval);
+	return MAVLINK_MSG_RETURN_uint16_t(msg,  4);
 }
 
 /**
@@ -186,8 +204,7 @@ static inline uint16_t mavlink_msg_set_cam_shutter_get_interval(const mavlink_me
  */
 static inline uint16_t mavlink_msg_set_cam_shutter_get_exposure(const mavlink_message_t* msg)
 {
-	mavlink_set_cam_shutter_t *p = (mavlink_set_cam_shutter_t *)&msg->payload[0];
-	return (uint16_t)(p->exposure);
+	return MAVLINK_MSG_RETURN_uint16_t(msg,  6);
 }
 
 /**
@@ -197,8 +214,7 @@ static inline uint16_t mavlink_msg_set_cam_shutter_get_exposure(const mavlink_me
  */
 static inline float mavlink_msg_set_cam_shutter_get_gain(const mavlink_message_t* msg)
 {
-	mavlink_set_cam_shutter_t *p = (mavlink_set_cam_shutter_t *)&msg->payload[0];
-	return (float)(p->gain);
+	return MAVLINK_MSG_RETURN_float(msg,  0);
 }
 
 /**
@@ -209,5 +225,14 @@ static inline float mavlink_msg_set_cam_shutter_get_gain(const mavlink_message_t
  */
 static inline void mavlink_msg_set_cam_shutter_decode(const mavlink_message_t* msg, mavlink_set_cam_shutter_t* set_cam_shutter)
 {
-	memcpy( set_cam_shutter, msg->payload, sizeof(mavlink_set_cam_shutter_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	set_cam_shutter->gain = mavlink_msg_set_cam_shutter_get_gain(msg);
+	set_cam_shutter->interval = mavlink_msg_set_cam_shutter_get_interval(msg);
+	set_cam_shutter->exposure = mavlink_msg_set_cam_shutter_get_exposure(msg);
+	set_cam_shutter->cam_no = mavlink_msg_set_cam_shutter_get_cam_no(msg);
+	set_cam_shutter->cam_mode = mavlink_msg_set_cam_shutter_get_cam_mode(msg);
+	set_cam_shutter->trigger_pin = mavlink_msg_set_cam_shutter_get_trigger_pin(msg);
+#else
+	memcpy(set_cam_shutter, MAVLINK_PAYLOAD(msg), 11);
+#endif
 }

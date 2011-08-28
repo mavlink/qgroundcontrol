@@ -1,19 +1,30 @@
 // MESSAGE WATCHDOG_COMMAND PACKING
 
-#define MAVLINK_MSG_ID_WATCHDOG_COMMAND 153
-#define MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN 6
-#define MAVLINK_MSG_153_LEN 6
-#define MAVLINK_MSG_ID_WATCHDOG_COMMAND_KEY 0xA9
-#define MAVLINK_MSG_153_KEY 0xA9
+#define MAVLINK_MSG_ID_WATCHDOG_COMMAND 183
 
-typedef struct __mavlink_watchdog_command_t 
+typedef struct __mavlink_watchdog_command_t
 {
-	uint16_t watchdog_id;	///< Watchdog ID
-	uint16_t process_id;	///< Process ID
-	uint8_t target_system_id;	///< Target system ID
-	uint8_t command_id;	///< Command ID
-
+ uint16_t watchdog_id; ///< Watchdog ID
+ uint16_t process_id; ///< Process ID
+ uint8_t target_system_id; ///< Target system ID
+ uint8_t command_id; ///< Command ID
 } mavlink_watchdog_command_t;
+
+#define MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN 6
+#define MAVLINK_MSG_ID_183_LEN 6
+
+
+
+#define MAVLINK_MESSAGE_INFO_WATCHDOG_COMMAND { \
+	"WATCHDOG_COMMAND", \
+	4, \
+	{  { "watchdog_id", MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_watchdog_command_t, watchdog_id) }, \
+         { "process_id", MAVLINK_TYPE_UINT16_T, 0, 2, offsetof(mavlink_watchdog_command_t, process_id) }, \
+         { "target_system_id", MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_watchdog_command_t, target_system_id) }, \
+         { "command_id", MAVLINK_TYPE_UINT8_T, 0, 5, offsetof(mavlink_watchdog_command_t, command_id) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a watchdog_command message
@@ -27,21 +38,21 @@ typedef struct __mavlink_watchdog_command_t
  * @param command_id Command ID
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_watchdog_command_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t target_system_id, uint16_t watchdog_id, uint16_t process_id, uint8_t command_id)
+static inline uint16_t mavlink_msg_watchdog_command_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       uint8_t target_system_id, uint16_t watchdog_id, uint16_t process_id, uint8_t command_id)
 {
-	mavlink_watchdog_command_t *p = (mavlink_watchdog_command_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;
 
-	p->target_system_id = target_system_id;	// uint8_t:Target system ID
-	p->watchdog_id = watchdog_id;	// uint16_t:Watchdog ID
-	p->process_id = process_id;	// uint16_t:Process ID
-	p->command_id = command_id;	// uint8_t:Command ID
+	put_uint16_t_by_index(msg, 0, watchdog_id); // Watchdog ID
+	put_uint16_t_by_index(msg, 2, process_id); // Process ID
+	put_uint8_t_by_index(msg, 4, target_system_id); // Target system ID
+	put_uint8_t_by_index(msg, 5, command_id); // Command ID
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 6, 162);
 }
 
 /**
- * @brief Pack a watchdog_command message
+ * @brief Pack a watchdog_command message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -52,18 +63,46 @@ static inline uint16_t mavlink_msg_watchdog_command_pack(uint8_t system_id, uint
  * @param command_id Command ID
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_watchdog_command_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t target_system_id, uint16_t watchdog_id, uint16_t process_id, uint8_t command_id)
+static inline uint16_t mavlink_msg_watchdog_command_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t target_system_id,uint16_t watchdog_id,uint16_t process_id,uint8_t command_id)
 {
-	mavlink_watchdog_command_t *p = (mavlink_watchdog_command_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;
 
-	p->target_system_id = target_system_id;	// uint8_t:Target system ID
-	p->watchdog_id = watchdog_id;	// uint16_t:Watchdog ID
-	p->process_id = process_id;	// uint16_t:Process ID
-	p->command_id = command_id;	// uint8_t:Command ID
+	put_uint16_t_by_index(msg, 0, watchdog_id); // Watchdog ID
+	put_uint16_t_by_index(msg, 2, process_id); // Process ID
+	put_uint8_t_by_index(msg, 4, target_system_id); // Target system ID
+	put_uint8_t_by_index(msg, 5, command_id); // Command ID
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 6, 162);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a watchdog_command message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param target_system_id Target system ID
+ * @param watchdog_id Watchdog ID
+ * @param process_id Process ID
+ * @param command_id Command ID
+ */
+static inline void mavlink_msg_watchdog_command_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t target_system_id,uint16_t watchdog_id,uint16_t process_id,uint8_t command_id)
+{
+	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;
+
+	put_uint16_t_by_index(msg, 0, watchdog_id); // Watchdog ID
+	put_uint16_t_by_index(msg, 2, process_id); // Process ID
+	put_uint8_t_by_index(msg, 4, target_system_id); // Target system ID
+	put_uint8_t_by_index(msg, 5, command_id); // Command ID
+
+	mavlink_finalize_message_chan_send(msg, chan, 6, 162);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a watchdog_command struct into a message
@@ -78,8 +117,6 @@ static inline uint16_t mavlink_msg_watchdog_command_encode(uint8_t system_id, ui
 	return mavlink_msg_watchdog_command_pack(system_id, component_id, msg, watchdog_command->target_system_id, watchdog_command->watchdog_id, watchdog_command->process_id, watchdog_command->command_id);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a watchdog_command message
  * @param chan MAVLink channel to send the message
@@ -89,37 +126,18 @@ static inline uint16_t mavlink_msg_watchdog_command_encode(uint8_t system_id, ui
  * @param process_id Process ID
  * @param command_id Command ID
  */
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 static inline void mavlink_msg_watchdog_command_send(mavlink_channel_t chan, uint8_t target_system_id, uint16_t watchdog_id, uint16_t process_id, uint8_t command_id)
 {
-	mavlink_header_t hdr;
-	mavlink_watchdog_command_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN )
-	payload.target_system_id = target_system_id;	// uint8_t:Target system ID
-	payload.watchdog_id = watchdog_id;	// uint16_t:Watchdog ID
-	payload.process_id = process_id;	// uint16_t:Process ID
-	payload.command_id = command_id;	// uint8_t:Command ID
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_WATCHDOG_COMMAND_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0xA9, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 6);
+	mavlink_msg_watchdog_command_pack_chan_send(chan, msg, target_system_id, watchdog_id, process_id, command_id);
 }
 
 #endif
+
 // MESSAGE WATCHDOG_COMMAND UNPACKING
+
 
 /**
  * @brief Get field target_system_id from watchdog_command message
@@ -128,8 +146,7 @@ static inline void mavlink_msg_watchdog_command_send(mavlink_channel_t chan, uin
  */
 static inline uint8_t mavlink_msg_watchdog_command_get_target_system_id(const mavlink_message_t* msg)
 {
-	mavlink_watchdog_command_t *p = (mavlink_watchdog_command_t *)&msg->payload[0];
-	return (uint8_t)(p->target_system_id);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  4);
 }
 
 /**
@@ -139,8 +156,7 @@ static inline uint8_t mavlink_msg_watchdog_command_get_target_system_id(const ma
  */
 static inline uint16_t mavlink_msg_watchdog_command_get_watchdog_id(const mavlink_message_t* msg)
 {
-	mavlink_watchdog_command_t *p = (mavlink_watchdog_command_t *)&msg->payload[0];
-	return (uint16_t)(p->watchdog_id);
+	return MAVLINK_MSG_RETURN_uint16_t(msg,  0);
 }
 
 /**
@@ -150,8 +166,7 @@ static inline uint16_t mavlink_msg_watchdog_command_get_watchdog_id(const mavlin
  */
 static inline uint16_t mavlink_msg_watchdog_command_get_process_id(const mavlink_message_t* msg)
 {
-	mavlink_watchdog_command_t *p = (mavlink_watchdog_command_t *)&msg->payload[0];
-	return (uint16_t)(p->process_id);
+	return MAVLINK_MSG_RETURN_uint16_t(msg,  2);
 }
 
 /**
@@ -161,8 +176,7 @@ static inline uint16_t mavlink_msg_watchdog_command_get_process_id(const mavlink
  */
 static inline uint8_t mavlink_msg_watchdog_command_get_command_id(const mavlink_message_t* msg)
 {
-	mavlink_watchdog_command_t *p = (mavlink_watchdog_command_t *)&msg->payload[0];
-	return (uint8_t)(p->command_id);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  5);
 }
 
 /**
@@ -173,5 +187,12 @@ static inline uint8_t mavlink_msg_watchdog_command_get_command_id(const mavlink_
  */
 static inline void mavlink_msg_watchdog_command_decode(const mavlink_message_t* msg, mavlink_watchdog_command_t* watchdog_command)
 {
-	memcpy( watchdog_command, msg->payload, sizeof(mavlink_watchdog_command_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	watchdog_command->watchdog_id = mavlink_msg_watchdog_command_get_watchdog_id(msg);
+	watchdog_command->process_id = mavlink_msg_watchdog_command_get_process_id(msg);
+	watchdog_command->target_system_id = mavlink_msg_watchdog_command_get_target_system_id(msg);
+	watchdog_command->command_id = mavlink_msg_watchdog_command_get_command_id(msg);
+#else
+	memcpy(watchdog_command, MAVLINK_PAYLOAD(msg), 6);
+#endif
 }

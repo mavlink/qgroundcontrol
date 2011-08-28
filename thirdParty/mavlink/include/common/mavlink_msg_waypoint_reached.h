@@ -1,16 +1,24 @@
 // MESSAGE WAYPOINT_REACHED PACKING
 
 #define MAVLINK_MSG_ID_WAYPOINT_REACHED 46
-#define MAVLINK_MSG_ID_WAYPOINT_REACHED_LEN 2
-#define MAVLINK_MSG_46_LEN 2
-#define MAVLINK_MSG_ID_WAYPOINT_REACHED_KEY 0xA6
-#define MAVLINK_MSG_46_KEY 0xA6
 
-typedef struct __mavlink_waypoint_reached_t 
+typedef struct __mavlink_waypoint_reached_t
 {
-	uint16_t seq;	///< Sequence
-
+ uint16_t seq; ///< Sequence
 } mavlink_waypoint_reached_t;
+
+#define MAVLINK_MSG_ID_WAYPOINT_REACHED_LEN 2
+#define MAVLINK_MSG_ID_46_LEN 2
+
+
+
+#define MAVLINK_MESSAGE_INFO_WAYPOINT_REACHED { \
+	"WAYPOINT_REACHED", \
+	1, \
+	{  { "seq", MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_waypoint_reached_t, seq) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a waypoint_reached message
@@ -21,18 +29,18 @@ typedef struct __mavlink_waypoint_reached_t
  * @param seq Sequence
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_waypoint_reached_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint16_t seq)
+static inline uint16_t mavlink_msg_waypoint_reached_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       uint16_t seq)
 {
-	mavlink_waypoint_reached_t *p = (mavlink_waypoint_reached_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_REACHED;
 
-	p->seq = seq;	// uint16_t:Sequence
+	put_uint16_t_by_index(msg, 0, seq); // Sequence
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WAYPOINT_REACHED_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 2, 21);
 }
 
 /**
- * @brief Pack a waypoint_reached message
+ * @brief Pack a waypoint_reached message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -40,15 +48,37 @@ static inline uint16_t mavlink_msg_waypoint_reached_pack(uint8_t system_id, uint
  * @param seq Sequence
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_waypoint_reached_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint16_t seq)
+static inline uint16_t mavlink_msg_waypoint_reached_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           uint16_t seq)
 {
-	mavlink_waypoint_reached_t *p = (mavlink_waypoint_reached_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_REACHED;
 
-	p->seq = seq;	// uint16_t:Sequence
+	put_uint16_t_by_index(msg, 0, seq); // Sequence
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WAYPOINT_REACHED_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 2, 21);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a waypoint_reached message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param seq Sequence
+ */
+static inline void mavlink_msg_waypoint_reached_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           uint16_t seq)
+{
+	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_REACHED;
+
+	put_uint16_t_by_index(msg, 0, seq); // Sequence
+
+	mavlink_finalize_message_chan_send(msg, chan, 2, 21);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a waypoint_reached struct into a message
@@ -63,42 +93,24 @@ static inline uint16_t mavlink_msg_waypoint_reached_encode(uint8_t system_id, ui
 	return mavlink_msg_waypoint_reached_pack(system_id, component_id, msg, waypoint_reached->seq);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a waypoint_reached message
  * @param chan MAVLink channel to send the message
  *
  * @param seq Sequence
  */
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 static inline void mavlink_msg_waypoint_reached_send(mavlink_channel_t chan, uint16_t seq)
 {
-	mavlink_header_t hdr;
-	mavlink_waypoint_reached_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_WAYPOINT_REACHED_LEN )
-	payload.seq = seq;	// uint16_t:Sequence
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_WAYPOINT_REACHED_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_WAYPOINT_REACHED;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0xA6, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 2);
+	mavlink_msg_waypoint_reached_pack_chan_send(chan, msg, seq);
 }
 
 #endif
+
 // MESSAGE WAYPOINT_REACHED UNPACKING
+
 
 /**
  * @brief Get field seq from waypoint_reached message
@@ -107,8 +119,7 @@ static inline void mavlink_msg_waypoint_reached_send(mavlink_channel_t chan, uin
  */
 static inline uint16_t mavlink_msg_waypoint_reached_get_seq(const mavlink_message_t* msg)
 {
-	mavlink_waypoint_reached_t *p = (mavlink_waypoint_reached_t *)&msg->payload[0];
-	return (uint16_t)(p->seq);
+	return MAVLINK_MSG_RETURN_uint16_t(msg,  0);
 }
 
 /**
@@ -119,5 +130,9 @@ static inline uint16_t mavlink_msg_waypoint_reached_get_seq(const mavlink_messag
  */
 static inline void mavlink_msg_waypoint_reached_decode(const mavlink_message_t* msg, mavlink_waypoint_reached_t* waypoint_reached)
 {
-	memcpy( waypoint_reached, msg->payload, sizeof(mavlink_waypoint_reached_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	waypoint_reached->seq = mavlink_msg_waypoint_reached_get_seq(msg);
+#else
+	memcpy(waypoint_reached, MAVLINK_PAYLOAD(msg), 2);
+#endif
 }

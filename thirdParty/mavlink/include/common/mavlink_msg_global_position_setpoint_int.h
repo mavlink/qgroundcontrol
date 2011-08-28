@@ -1,19 +1,30 @@
 // MESSAGE GLOBAL_POSITION_SETPOINT_INT PACKING
 
 #define MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT 52
-#define MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT_LEN 14
-#define MAVLINK_MSG_52_LEN 14
-#define MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT_KEY 0x14
-#define MAVLINK_MSG_52_KEY 0x14
 
-typedef struct __mavlink_global_position_setpoint_int_t 
+typedef struct __mavlink_global_position_setpoint_int_t
 {
-	int32_t latitude;	///< WGS84 Latitude position in degrees * 1E7
-	int32_t longitude;	///< WGS84 Longitude position in degrees * 1E7
-	int32_t altitude;	///< WGS84 Altitude in meters * 1000 (positive for up)
-	int16_t yaw;	///< Desired yaw angle in degrees * 100
-
+ int32_t latitude; ///< WGS84 Latitude position in degrees * 1E7
+ int32_t longitude; ///< WGS84 Longitude position in degrees * 1E7
+ int32_t altitude; ///< WGS84 Altitude in meters * 1000 (positive for up)
+ int16_t yaw; ///< Desired yaw angle in degrees * 100
 } mavlink_global_position_setpoint_int_t;
+
+#define MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT_LEN 14
+#define MAVLINK_MSG_ID_52_LEN 14
+
+
+
+#define MAVLINK_MESSAGE_INFO_GLOBAL_POSITION_SETPOINT_INT { \
+	"GLOBAL_POSITION_SETPOINT_INT", \
+	4, \
+	{  { "latitude", MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_global_position_setpoint_int_t, latitude) }, \
+         { "longitude", MAVLINK_TYPE_INT32_T, 0, 4, offsetof(mavlink_global_position_setpoint_int_t, longitude) }, \
+         { "altitude", MAVLINK_TYPE_INT32_T, 0, 8, offsetof(mavlink_global_position_setpoint_int_t, altitude) }, \
+         { "yaw", MAVLINK_TYPE_INT16_T, 0, 12, offsetof(mavlink_global_position_setpoint_int_t, yaw) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a global_position_setpoint_int message
@@ -27,21 +38,21 @@ typedef struct __mavlink_global_position_setpoint_int_t
  * @param yaw Desired yaw angle in degrees * 100
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_global_position_setpoint_int_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, int32_t latitude, int32_t longitude, int32_t altitude, int16_t yaw)
+static inline uint16_t mavlink_msg_global_position_setpoint_int_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       int32_t latitude, int32_t longitude, int32_t altitude, int16_t yaw)
 {
-	mavlink_global_position_setpoint_int_t *p = (mavlink_global_position_setpoint_int_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT;
 
-	p->latitude = latitude;	// int32_t:WGS84 Latitude position in degrees * 1E7
-	p->longitude = longitude;	// int32_t:WGS84 Longitude position in degrees * 1E7
-	p->altitude = altitude;	// int32_t:WGS84 Altitude in meters * 1000 (positive for up)
-	p->yaw = yaw;	// int16_t:Desired yaw angle in degrees * 100
+	put_int32_t_by_index(msg, 0, latitude); // WGS84 Latitude position in degrees * 1E7
+	put_int32_t_by_index(msg, 4, longitude); // WGS84 Longitude position in degrees * 1E7
+	put_int32_t_by_index(msg, 8, altitude); // WGS84 Altitude in meters * 1000 (positive for up)
+	put_int16_t_by_index(msg, 12, yaw); // Desired yaw angle in degrees * 100
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 14, 142);
 }
 
 /**
- * @brief Pack a global_position_setpoint_int message
+ * @brief Pack a global_position_setpoint_int message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -52,18 +63,46 @@ static inline uint16_t mavlink_msg_global_position_setpoint_int_pack(uint8_t sys
  * @param yaw Desired yaw angle in degrees * 100
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_global_position_setpoint_int_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, int32_t latitude, int32_t longitude, int32_t altitude, int16_t yaw)
+static inline uint16_t mavlink_msg_global_position_setpoint_int_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           int32_t latitude,int32_t longitude,int32_t altitude,int16_t yaw)
 {
-	mavlink_global_position_setpoint_int_t *p = (mavlink_global_position_setpoint_int_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT;
 
-	p->latitude = latitude;	// int32_t:WGS84 Latitude position in degrees * 1E7
-	p->longitude = longitude;	// int32_t:WGS84 Longitude position in degrees * 1E7
-	p->altitude = altitude;	// int32_t:WGS84 Altitude in meters * 1000 (positive for up)
-	p->yaw = yaw;	// int16_t:Desired yaw angle in degrees * 100
+	put_int32_t_by_index(msg, 0, latitude); // WGS84 Latitude position in degrees * 1E7
+	put_int32_t_by_index(msg, 4, longitude); // WGS84 Longitude position in degrees * 1E7
+	put_int32_t_by_index(msg, 8, altitude); // WGS84 Altitude in meters * 1000 (positive for up)
+	put_int16_t_by_index(msg, 12, yaw); // Desired yaw angle in degrees * 100
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 14, 142);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a global_position_setpoint_int message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param latitude WGS84 Latitude position in degrees * 1E7
+ * @param longitude WGS84 Longitude position in degrees * 1E7
+ * @param altitude WGS84 Altitude in meters * 1000 (positive for up)
+ * @param yaw Desired yaw angle in degrees * 100
+ */
+static inline void mavlink_msg_global_position_setpoint_int_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           int32_t latitude,int32_t longitude,int32_t altitude,int16_t yaw)
+{
+	msg->msgid = MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT;
+
+	put_int32_t_by_index(msg, 0, latitude); // WGS84 Latitude position in degrees * 1E7
+	put_int32_t_by_index(msg, 4, longitude); // WGS84 Longitude position in degrees * 1E7
+	put_int32_t_by_index(msg, 8, altitude); // WGS84 Altitude in meters * 1000 (positive for up)
+	put_int16_t_by_index(msg, 12, yaw); // Desired yaw angle in degrees * 100
+
+	mavlink_finalize_message_chan_send(msg, chan, 14, 142);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a global_position_setpoint_int struct into a message
@@ -78,8 +117,6 @@ static inline uint16_t mavlink_msg_global_position_setpoint_int_encode(uint8_t s
 	return mavlink_msg_global_position_setpoint_int_pack(system_id, component_id, msg, global_position_setpoint_int->latitude, global_position_setpoint_int->longitude, global_position_setpoint_int->altitude, global_position_setpoint_int->yaw);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a global_position_setpoint_int message
  * @param chan MAVLink channel to send the message
@@ -89,37 +126,18 @@ static inline uint16_t mavlink_msg_global_position_setpoint_int_encode(uint8_t s
  * @param altitude WGS84 Altitude in meters * 1000 (positive for up)
  * @param yaw Desired yaw angle in degrees * 100
  */
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 static inline void mavlink_msg_global_position_setpoint_int_send(mavlink_channel_t chan, int32_t latitude, int32_t longitude, int32_t altitude, int16_t yaw)
 {
-	mavlink_header_t hdr;
-	mavlink_global_position_setpoint_int_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT_LEN )
-	payload.latitude = latitude;	// int32_t:WGS84 Latitude position in degrees * 1E7
-	payload.longitude = longitude;	// int32_t:WGS84 Longitude position in degrees * 1E7
-	payload.altitude = altitude;	// int32_t:WGS84 Altitude in meters * 1000 (positive for up)
-	payload.yaw = yaw;	// int16_t:Desired yaw angle in degrees * 100
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0x14, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 14);
+	mavlink_msg_global_position_setpoint_int_pack_chan_send(chan, msg, latitude, longitude, altitude, yaw);
 }
 
 #endif
+
 // MESSAGE GLOBAL_POSITION_SETPOINT_INT UNPACKING
+
 
 /**
  * @brief Get field latitude from global_position_setpoint_int message
@@ -128,8 +146,7 @@ static inline void mavlink_msg_global_position_setpoint_int_send(mavlink_channel
  */
 static inline int32_t mavlink_msg_global_position_setpoint_int_get_latitude(const mavlink_message_t* msg)
 {
-	mavlink_global_position_setpoint_int_t *p = (mavlink_global_position_setpoint_int_t *)&msg->payload[0];
-	return (int32_t)(p->latitude);
+	return MAVLINK_MSG_RETURN_int32_t(msg,  0);
 }
 
 /**
@@ -139,8 +156,7 @@ static inline int32_t mavlink_msg_global_position_setpoint_int_get_latitude(cons
  */
 static inline int32_t mavlink_msg_global_position_setpoint_int_get_longitude(const mavlink_message_t* msg)
 {
-	mavlink_global_position_setpoint_int_t *p = (mavlink_global_position_setpoint_int_t *)&msg->payload[0];
-	return (int32_t)(p->longitude);
+	return MAVLINK_MSG_RETURN_int32_t(msg,  4);
 }
 
 /**
@@ -150,8 +166,7 @@ static inline int32_t mavlink_msg_global_position_setpoint_int_get_longitude(con
  */
 static inline int32_t mavlink_msg_global_position_setpoint_int_get_altitude(const mavlink_message_t* msg)
 {
-	mavlink_global_position_setpoint_int_t *p = (mavlink_global_position_setpoint_int_t *)&msg->payload[0];
-	return (int32_t)(p->altitude);
+	return MAVLINK_MSG_RETURN_int32_t(msg,  8);
 }
 
 /**
@@ -161,8 +176,7 @@ static inline int32_t mavlink_msg_global_position_setpoint_int_get_altitude(cons
  */
 static inline int16_t mavlink_msg_global_position_setpoint_int_get_yaw(const mavlink_message_t* msg)
 {
-	mavlink_global_position_setpoint_int_t *p = (mavlink_global_position_setpoint_int_t *)&msg->payload[0];
-	return (int16_t)(p->yaw);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  12);
 }
 
 /**
@@ -173,5 +187,12 @@ static inline int16_t mavlink_msg_global_position_setpoint_int_get_yaw(const mav
  */
 static inline void mavlink_msg_global_position_setpoint_int_decode(const mavlink_message_t* msg, mavlink_global_position_setpoint_int_t* global_position_setpoint_int)
 {
-	memcpy( global_position_setpoint_int, msg->payload, sizeof(mavlink_global_position_setpoint_int_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	global_position_setpoint_int->latitude = mavlink_msg_global_position_setpoint_int_get_latitude(msg);
+	global_position_setpoint_int->longitude = mavlink_msg_global_position_setpoint_int_get_longitude(msg);
+	global_position_setpoint_int->altitude = mavlink_msg_global_position_setpoint_int_get_altitude(msg);
+	global_position_setpoint_int->yaw = mavlink_msg_global_position_setpoint_int_get_yaw(msg);
+#else
+	memcpy(global_position_setpoint_int, MAVLINK_PAYLOAD(msg), 14);
+#endif
 }

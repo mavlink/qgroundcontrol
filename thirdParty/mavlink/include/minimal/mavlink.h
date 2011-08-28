@@ -1,16 +1,23 @@
 /** @file
- *	@brief MAVLink comm protocol.
+ *	@brief MAVLink comm protocol built from minimal.xml
  *	@see http://pixhawk.ethz.ch/software/mavlink
- *	 Generated on Saturday, August 20 2011, 11:07 UTC
  */
 #ifndef MAVLINK_H
 #define MAVLINK_H
 
-#pragma pack(push,1)
-#include "mavlink_options.h"
+#ifndef MAVLINK_STX
+#define MAVLINK_STX 254
+#endif
+
+#ifndef MAVLINK_ENDIAN
+#define MAVLINK_ENDIAN MAVLINK_LITTLE_ENDIAN
+#endif
+
+#ifndef MAVLINK_CRC_EXTRA
+#define MAVLINK_CRC_EXTRA 1
+#endif
+
+#include "version.h"
 #include "minimal.h"
-#ifdef MAVLINK_DATA
-#include "mavlink_data.h"
-#endif
-#pragma pack(pop)
-#endif
+
+#endif // MAVLINK_H

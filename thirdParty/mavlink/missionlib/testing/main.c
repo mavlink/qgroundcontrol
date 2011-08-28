@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <time.h>
+#include <math.h>
 #if (defined __QNX__) | (defined __QNXNTO__)
 /* QNX specific headers */
 #include <unix.h>
@@ -169,6 +170,12 @@ uint64_t mavlink_missionlib_get_system_timestamp()
 	return ((uint64_t)tv.tv_sec) * 1000000 + tv.tv_usec;
 }
 
+float roll, pitch, yaw;
+uint32_t latitude, longitude, altitude;
+uint16_t speedx, speedy, speedz;
+float rollspeed, pitchspeed, yawspeed;
+bool hilEnabled = false;
+
 int main(int argc, char* argv[])
 {	
 	// Initialize MAVLink
@@ -238,13 +245,13 @@ int main(int argc, char* argv[])
     {
 		bytes_sent = 0;
 		
-		/*Send Heartbeat */
-		mavlink_msg_heartbeat_pack(mavlink_system.sysid, 200, &msg, MAV_TYPE_HELICOPTER, MAV_CLASS_GENERIC);
+		/* Send Heartbeat */
+		mavlink_msg_heartbeat_pack(mavlink_system.sysid, 200, &msg, MAV_TYPE_HELICOPTER, MAV_AUTOPILOT_GENERIC, 0, 0, 0, 0, 0);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
 		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		
 		/* Send Status */
-		mavlink_msg_sys_status_pack(1, 200, &msg, MAV_MODE_GUIDED, MAV_NAV_HOLD, MAV_STATE_ACTIVE, 500, 7500, 0, 0);
+		mavlink_msg_sys_status_pack(1, 200, &msg, MAV_MODE_GUIDED, 0, MAV_STATE_ACTIVE, 500, 7500, 0, 0, 0, 0, 0, 0, 0);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
 		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof (struct sockaddr_in));
 		
@@ -255,17 +262,25 @@ int main(int argc, char* argv[])
 		len = mavlink_msg_to_send_buffer(buf, &msg);
 		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		
+		/* Send global position */
+		if (hilEnabled)
+		{
+			mavlink_msg_global_position_int_pack(mavlink_system.sysid, 200, &msg, latitude, longitude, altitude, speedx, speedy, speedz, (yaw/M_PI)*180*100);
+			len = mavlink_msg_to_send_buffer(buf, &msg);
+			bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
+		}
+		
 		/* Send attitude */
-		mavlink_msg_attitude_pack(mavlink_system.sysid, 200, &msg, microsSinceEpoch(), 1.2, 1.7, 3.14, 0.01, 0.02, 0.03);
+		mavlink_msg_attitude_pack(mavlink_system.sysid, 200, &msg, microsSinceEpoch(), roll, pitch, yaw, rollspeed, pitchspeed, yawspeed);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
 		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		
 		/* Send HIL outputs */
 		float roll_ailerons = 0;   // -1 .. 1
-		float pitch_elevator = -0.2;  // -1 .. 1
+		float pitch_elevator = 0.2;  // -1 .. 1
 		float yaw_rudder = 0.1;      // -1 .. 1
 		float throttle = 0.9;      //  0 .. 1
-		mavlink_msg_hil_controls_pack_chan(mavlink_system.sysid, mavlink_system.compid, MAVLINK_COMM_0, &msg, microsSinceEpoch(), roll_ailerons, pitch_elevator, yaw_rudder, throttle, mavlink_system.mode, mavlink_system.nav_mode);
+		mavlink_msg_hil_controls_pack_chan(mavlink_system.sysid, mavlink_system.compid, MAVLINK_COMM_0, &msg, microsSinceEpoch(), roll_ailerons, pitch_elevator, yaw_rudder, throttle, mavlink_system.mode, mavlink_system.nav_mode, 0, 0, 0, 0);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
 		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		
@@ -300,6 +315,19 @@ int main(int argc, char* argv[])
 						mavlink_msg_hil_state_decode(&msg, &hil);
 						printf("Received HIL state:\n");
 						printf("R: %f P: %f Y: %f\n", hil.roll, hil.pitch, hil.yaw);
+						roll = hil.roll;
+						pitch = hil.pitch;
+						yaw = hil.yaw;
+						rollspeed = hil.rollspeed;
+						pitchspeed = hil.pitchspeed;
+						yawspeed = hil.yawspeed;
+						speedx = hil.vx;
+						speedy = hil.vy;
+						speedz = hil.vz;
+						latitude = hil.lat;
+						longitude = hil.lon;
+						altitude = hil.alt;
+						hilEnabled = true;
 					}
 				}
 			}

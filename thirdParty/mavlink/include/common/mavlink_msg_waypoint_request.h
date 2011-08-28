@@ -1,18 +1,28 @@
 // MESSAGE WAYPOINT_REQUEST PACKING
 
 #define MAVLINK_MSG_ID_WAYPOINT_REQUEST 40
-#define MAVLINK_MSG_ID_WAYPOINT_REQUEST_LEN 4
-#define MAVLINK_MSG_40_LEN 4
-#define MAVLINK_MSG_ID_WAYPOINT_REQUEST_KEY 0xC0
-#define MAVLINK_MSG_40_KEY 0xC0
 
-typedef struct __mavlink_waypoint_request_t 
+typedef struct __mavlink_waypoint_request_t
 {
-	uint16_t seq;	///< Sequence
-	uint8_t target_system;	///< System ID
-	uint8_t target_component;	///< Component ID
-
+ uint16_t seq; ///< Sequence
+ uint8_t target_system; ///< System ID
+ uint8_t target_component; ///< Component ID
 } mavlink_waypoint_request_t;
+
+#define MAVLINK_MSG_ID_WAYPOINT_REQUEST_LEN 4
+#define MAVLINK_MSG_ID_40_LEN 4
+
+
+
+#define MAVLINK_MESSAGE_INFO_WAYPOINT_REQUEST { \
+	"WAYPOINT_REQUEST", \
+	3, \
+	{  { "seq", MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_waypoint_request_t, seq) }, \
+         { "target_system", MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_waypoint_request_t, target_system) }, \
+         { "target_component", MAVLINK_TYPE_UINT8_T, 0, 3, offsetof(mavlink_waypoint_request_t, target_component) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a waypoint_request message
@@ -25,20 +35,20 @@ typedef struct __mavlink_waypoint_request_t
  * @param seq Sequence
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_waypoint_request_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, uint16_t seq)
+static inline uint16_t mavlink_msg_waypoint_request_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       uint8_t target_system, uint8_t target_component, uint16_t seq)
 {
-	mavlink_waypoint_request_t *p = (mavlink_waypoint_request_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_REQUEST;
 
-	p->target_system = target_system;	// uint8_t:System ID
-	p->target_component = target_component;	// uint8_t:Component ID
-	p->seq = seq;	// uint16_t:Sequence
+	put_uint16_t_by_index(msg, 0, seq); // Sequence
+	put_uint8_t_by_index(msg, 2, target_system); // System ID
+	put_uint8_t_by_index(msg, 3, target_component); // Component ID
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_WAYPOINT_REQUEST_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 4, 51);
 }
 
 /**
- * @brief Pack a waypoint_request message
+ * @brief Pack a waypoint_request message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -48,17 +58,43 @@ static inline uint16_t mavlink_msg_waypoint_request_pack(uint8_t system_id, uint
  * @param seq Sequence
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_waypoint_request_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, uint16_t seq)
+static inline uint16_t mavlink_msg_waypoint_request_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t target_system,uint8_t target_component,uint16_t seq)
 {
-	mavlink_waypoint_request_t *p = (mavlink_waypoint_request_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_REQUEST;
 
-	p->target_system = target_system;	// uint8_t:System ID
-	p->target_component = target_component;	// uint8_t:Component ID
-	p->seq = seq;	// uint16_t:Sequence
+	put_uint16_t_by_index(msg, 0, seq); // Sequence
+	put_uint8_t_by_index(msg, 2, target_system); // System ID
+	put_uint8_t_by_index(msg, 3, target_component); // Component ID
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_WAYPOINT_REQUEST_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 4, 51);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a waypoint_request message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param target_system System ID
+ * @param target_component Component ID
+ * @param seq Sequence
+ */
+static inline void mavlink_msg_waypoint_request_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t target_system,uint8_t target_component,uint16_t seq)
+{
+	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_REQUEST;
+
+	put_uint16_t_by_index(msg, 0, seq); // Sequence
+	put_uint8_t_by_index(msg, 2, target_system); // System ID
+	put_uint8_t_by_index(msg, 3, target_component); // Component ID
+
+	mavlink_finalize_message_chan_send(msg, chan, 4, 51);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a waypoint_request struct into a message
@@ -73,8 +109,6 @@ static inline uint16_t mavlink_msg_waypoint_request_encode(uint8_t system_id, ui
 	return mavlink_msg_waypoint_request_pack(system_id, component_id, msg, waypoint_request->target_system, waypoint_request->target_component, waypoint_request->seq);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a waypoint_request message
  * @param chan MAVLink channel to send the message
@@ -83,36 +117,18 @@ static inline uint16_t mavlink_msg_waypoint_request_encode(uint8_t system_id, ui
  * @param target_component Component ID
  * @param seq Sequence
  */
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 static inline void mavlink_msg_waypoint_request_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint16_t seq)
 {
-	mavlink_header_t hdr;
-	mavlink_waypoint_request_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_WAYPOINT_REQUEST_LEN )
-	payload.target_system = target_system;	// uint8_t:System ID
-	payload.target_component = target_component;	// uint8_t:Component ID
-	payload.seq = seq;	// uint16_t:Sequence
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_WAYPOINT_REQUEST_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_WAYPOINT_REQUEST;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0xC0, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 4);
+	mavlink_msg_waypoint_request_pack_chan_send(chan, msg, target_system, target_component, seq);
 }
 
 #endif
+
 // MESSAGE WAYPOINT_REQUEST UNPACKING
+
 
 /**
  * @brief Get field target_system from waypoint_request message
@@ -121,8 +137,7 @@ static inline void mavlink_msg_waypoint_request_send(mavlink_channel_t chan, uin
  */
 static inline uint8_t mavlink_msg_waypoint_request_get_target_system(const mavlink_message_t* msg)
 {
-	mavlink_waypoint_request_t *p = (mavlink_waypoint_request_t *)&msg->payload[0];
-	return (uint8_t)(p->target_system);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  2);
 }
 
 /**
@@ -132,8 +147,7 @@ static inline uint8_t mavlink_msg_waypoint_request_get_target_system(const mavli
  */
 static inline uint8_t mavlink_msg_waypoint_request_get_target_component(const mavlink_message_t* msg)
 {
-	mavlink_waypoint_request_t *p = (mavlink_waypoint_request_t *)&msg->payload[0];
-	return (uint8_t)(p->target_component);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  3);
 }
 
 /**
@@ -143,8 +157,7 @@ static inline uint8_t mavlink_msg_waypoint_request_get_target_component(const ma
  */
 static inline uint16_t mavlink_msg_waypoint_request_get_seq(const mavlink_message_t* msg)
 {
-	mavlink_waypoint_request_t *p = (mavlink_waypoint_request_t *)&msg->payload[0];
-	return (uint16_t)(p->seq);
+	return MAVLINK_MSG_RETURN_uint16_t(msg,  0);
 }
 
 /**
@@ -155,5 +168,11 @@ static inline uint16_t mavlink_msg_waypoint_request_get_seq(const mavlink_messag
  */
 static inline void mavlink_msg_waypoint_request_decode(const mavlink_message_t* msg, mavlink_waypoint_request_t* waypoint_request)
 {
-	memcpy( waypoint_request, msg->payload, sizeof(mavlink_waypoint_request_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	waypoint_request->seq = mavlink_msg_waypoint_request_get_seq(msg);
+	waypoint_request->target_system = mavlink_msg_waypoint_request_get_target_system(msg);
+	waypoint_request->target_component = mavlink_msg_waypoint_request_get_target_component(msg);
+#else
+	memcpy(waypoint_request, MAVLINK_PAYLOAD(msg), 4);
+#endif
 }

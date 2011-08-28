@@ -1,26 +1,44 @@
 // MESSAGE COMMAND_LONG PACKING
 
 #define MAVLINK_MSG_ID_COMMAND_LONG 76
-#define MAVLINK_MSG_ID_COMMAND_LONG_LEN 32
-#define MAVLINK_MSG_76_LEN 32
-#define MAVLINK_MSG_ID_COMMAND_LONG_KEY 0x3F
-#define MAVLINK_MSG_76_KEY 0x3F
 
-typedef struct __mavlink_command_long_t 
+typedef struct __mavlink_command_long_t
 {
-	float param1;	///< Parameter 1, as defined by MAV_CMD enum.
-	float param2;	///< Parameter 2, as defined by MAV_CMD enum.
-	float param3;	///< Parameter 3, as defined by MAV_CMD enum.
-	float param4;	///< Parameter 4, as defined by MAV_CMD enum.
-	float param5;	///< Parameter 5, as defined by MAV_CMD enum.
-	float param6;	///< Parameter 6, as defined by MAV_CMD enum.
-	float param7;	///< Parameter 7, as defined by MAV_CMD enum.
-	uint8_t target_system;	///< System which should execute the command
-	uint8_t target_component;	///< Component which should execute the command, 0 for all components
-	uint8_t command;	///< Command ID, as defined by MAV_CMD enum.
-	uint8_t confirmation;	///< 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
-
+ float param1; ///< Parameter 1, as defined by MAV_CMD enum.
+ float param2; ///< Parameter 2, as defined by MAV_CMD enum.
+ float param3; ///< Parameter 3, as defined by MAV_CMD enum.
+ float param4; ///< Parameter 4, as defined by MAV_CMD enum.
+ float param5; ///< Parameter 5, as defined by MAV_CMD enum.
+ float param6; ///< Parameter 6, as defined by MAV_CMD enum.
+ float param7; ///< Parameter 7, as defined by MAV_CMD enum.
+ uint8_t target_system; ///< System which should execute the command
+ uint8_t target_component; ///< Component which should execute the command, 0 for all components
+ uint8_t command; ///< Command ID, as defined by MAV_CMD enum.
+ uint8_t confirmation; ///< 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
 } mavlink_command_long_t;
+
+#define MAVLINK_MSG_ID_COMMAND_LONG_LEN 32
+#define MAVLINK_MSG_ID_76_LEN 32
+
+
+
+#define MAVLINK_MESSAGE_INFO_COMMAND_LONG { \
+	"COMMAND_LONG", \
+	11, \
+	{  { "param1", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_command_long_t, param1) }, \
+         { "param2", MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_command_long_t, param2) }, \
+         { "param3", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_command_long_t, param3) }, \
+         { "param4", MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_command_long_t, param4) }, \
+         { "param5", MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_command_long_t, param5) }, \
+         { "param6", MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_command_long_t, param6) }, \
+         { "param7", MAVLINK_TYPE_FLOAT, 0, 24, offsetof(mavlink_command_long_t, param7) }, \
+         { "target_system", MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_command_long_t, target_system) }, \
+         { "target_component", MAVLINK_TYPE_UINT8_T, 0, 29, offsetof(mavlink_command_long_t, target_component) }, \
+         { "command", MAVLINK_TYPE_UINT8_T, 0, 30, offsetof(mavlink_command_long_t, command) }, \
+         { "confirmation", MAVLINK_TYPE_UINT8_T, 0, 31, offsetof(mavlink_command_long_t, confirmation) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a command_long message
@@ -41,28 +59,28 @@ typedef struct __mavlink_command_long_t
  * @param param7 Parameter 7, as defined by MAV_CMD enum.
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_command_long_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, uint8_t command, uint8_t confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+static inline uint16_t mavlink_msg_command_long_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       uint8_t target_system, uint8_t target_component, uint8_t command, uint8_t confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_COMMAND_LONG;
 
-	p->target_system = target_system;	// uint8_t:System which should execute the command
-	p->target_component = target_component;	// uint8_t:Component which should execute the command, 0 for all components
-	p->command = command;	// uint8_t:Command ID, as defined by MAV_CMD enum.
-	p->confirmation = confirmation;	// uint8_t:0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
-	p->param1 = param1;	// float:Parameter 1, as defined by MAV_CMD enum.
-	p->param2 = param2;	// float:Parameter 2, as defined by MAV_CMD enum.
-	p->param3 = param3;	// float:Parameter 3, as defined by MAV_CMD enum.
-	p->param4 = param4;	// float:Parameter 4, as defined by MAV_CMD enum.
-	p->param5 = param5;	// float:Parameter 5, as defined by MAV_CMD enum.
-	p->param6 = param6;	// float:Parameter 6, as defined by MAV_CMD enum.
-	p->param7 = param7;	// float:Parameter 7, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 0, param1); // Parameter 1, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 4, param2); // Parameter 2, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 8, param3); // Parameter 3, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 12, param4); // Parameter 4, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 16, param5); // Parameter 5, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 20, param6); // Parameter 6, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 24, param7); // Parameter 7, as defined by MAV_CMD enum.
+	put_uint8_t_by_index(msg, 28, target_system); // System which should execute the command
+	put_uint8_t_by_index(msg, 29, target_component); // Component which should execute the command, 0 for all components
+	put_uint8_t_by_index(msg, 30, command); // Command ID, as defined by MAV_CMD enum.
+	put_uint8_t_by_index(msg, 31, confirmation); // 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_COMMAND_LONG_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 32, 168);
 }
 
 /**
- * @brief Pack a command_long message
+ * @brief Pack a command_long message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -80,25 +98,67 @@ static inline uint16_t mavlink_msg_command_long_pack(uint8_t system_id, uint8_t 
  * @param param7 Parameter 7, as defined by MAV_CMD enum.
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_command_long_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t target_system, uint8_t target_component, uint8_t command, uint8_t confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+static inline uint16_t mavlink_msg_command_long_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t target_system,uint8_t target_component,uint8_t command,uint8_t confirmation,float param1,float param2,float param3,float param4,float param5,float param6,float param7)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_COMMAND_LONG;
 
-	p->target_system = target_system;	// uint8_t:System which should execute the command
-	p->target_component = target_component;	// uint8_t:Component which should execute the command, 0 for all components
-	p->command = command;	// uint8_t:Command ID, as defined by MAV_CMD enum.
-	p->confirmation = confirmation;	// uint8_t:0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
-	p->param1 = param1;	// float:Parameter 1, as defined by MAV_CMD enum.
-	p->param2 = param2;	// float:Parameter 2, as defined by MAV_CMD enum.
-	p->param3 = param3;	// float:Parameter 3, as defined by MAV_CMD enum.
-	p->param4 = param4;	// float:Parameter 4, as defined by MAV_CMD enum.
-	p->param5 = param5;	// float:Parameter 5, as defined by MAV_CMD enum.
-	p->param6 = param6;	// float:Parameter 6, as defined by MAV_CMD enum.
-	p->param7 = param7;	// float:Parameter 7, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 0, param1); // Parameter 1, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 4, param2); // Parameter 2, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 8, param3); // Parameter 3, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 12, param4); // Parameter 4, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 16, param5); // Parameter 5, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 20, param6); // Parameter 6, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 24, param7); // Parameter 7, as defined by MAV_CMD enum.
+	put_uint8_t_by_index(msg, 28, target_system); // System which should execute the command
+	put_uint8_t_by_index(msg, 29, target_component); // Component which should execute the command, 0 for all components
+	put_uint8_t_by_index(msg, 30, command); // Command ID, as defined by MAV_CMD enum.
+	put_uint8_t_by_index(msg, 31, confirmation); // 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_COMMAND_LONG_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 32, 168);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a command_long message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param target_system System which should execute the command
+ * @param target_component Component which should execute the command, 0 for all components
+ * @param command Command ID, as defined by MAV_CMD enum.
+ * @param confirmation 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
+ * @param param1 Parameter 1, as defined by MAV_CMD enum.
+ * @param param2 Parameter 2, as defined by MAV_CMD enum.
+ * @param param3 Parameter 3, as defined by MAV_CMD enum.
+ * @param param4 Parameter 4, as defined by MAV_CMD enum.
+ * @param param5 Parameter 5, as defined by MAV_CMD enum.
+ * @param param6 Parameter 6, as defined by MAV_CMD enum.
+ * @param param7 Parameter 7, as defined by MAV_CMD enum.
+ */
+static inline void mavlink_msg_command_long_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t target_system,uint8_t target_component,uint8_t command,uint8_t confirmation,float param1,float param2,float param3,float param4,float param5,float param6,float param7)
+{
+	msg->msgid = MAVLINK_MSG_ID_COMMAND_LONG;
+
+	put_float_by_index(msg, 0, param1); // Parameter 1, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 4, param2); // Parameter 2, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 8, param3); // Parameter 3, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 12, param4); // Parameter 4, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 16, param5); // Parameter 5, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 20, param6); // Parameter 6, as defined by MAV_CMD enum.
+	put_float_by_index(msg, 24, param7); // Parameter 7, as defined by MAV_CMD enum.
+	put_uint8_t_by_index(msg, 28, target_system); // System which should execute the command
+	put_uint8_t_by_index(msg, 29, target_component); // Component which should execute the command, 0 for all components
+	put_uint8_t_by_index(msg, 30, command); // Command ID, as defined by MAV_CMD enum.
+	put_uint8_t_by_index(msg, 31, confirmation); // 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
+
+	mavlink_finalize_message_chan_send(msg, chan, 32, 168);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a command_long struct into a message
@@ -113,8 +173,6 @@ static inline uint16_t mavlink_msg_command_long_encode(uint8_t system_id, uint8_
 	return mavlink_msg_command_long_pack(system_id, component_id, msg, command_long->target_system, command_long->target_component, command_long->command, command_long->confirmation, command_long->param1, command_long->param2, command_long->param3, command_long->param4, command_long->param5, command_long->param6, command_long->param7);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a command_long message
  * @param chan MAVLink channel to send the message
@@ -131,44 +189,18 @@ static inline uint16_t mavlink_msg_command_long_encode(uint8_t system_id, uint8_
  * @param param6 Parameter 6, as defined by MAV_CMD enum.
  * @param param7 Parameter 7, as defined by MAV_CMD enum.
  */
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 static inline void mavlink_msg_command_long_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t command, uint8_t confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
-	mavlink_header_t hdr;
-	mavlink_command_long_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_COMMAND_LONG_LEN )
-	payload.target_system = target_system;	// uint8_t:System which should execute the command
-	payload.target_component = target_component;	// uint8_t:Component which should execute the command, 0 for all components
-	payload.command = command;	// uint8_t:Command ID, as defined by MAV_CMD enum.
-	payload.confirmation = confirmation;	// uint8_t:0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command)
-	payload.param1 = param1;	// float:Parameter 1, as defined by MAV_CMD enum.
-	payload.param2 = param2;	// float:Parameter 2, as defined by MAV_CMD enum.
-	payload.param3 = param3;	// float:Parameter 3, as defined by MAV_CMD enum.
-	payload.param4 = param4;	// float:Parameter 4, as defined by MAV_CMD enum.
-	payload.param5 = param5;	// float:Parameter 5, as defined by MAV_CMD enum.
-	payload.param6 = param6;	// float:Parameter 6, as defined by MAV_CMD enum.
-	payload.param7 = param7;	// float:Parameter 7, as defined by MAV_CMD enum.
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_COMMAND_LONG_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_COMMAND_LONG;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0x3F, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 32);
+	mavlink_msg_command_long_pack_chan_send(chan, msg, target_system, target_component, command, confirmation, param1, param2, param3, param4, param5, param6, param7);
 }
 
 #endif
+
 // MESSAGE COMMAND_LONG UNPACKING
+
 
 /**
  * @brief Get field target_system from command_long message
@@ -177,8 +209,7 @@ static inline void mavlink_msg_command_long_send(mavlink_channel_t chan, uint8_t
  */
 static inline uint8_t mavlink_msg_command_long_get_target_system(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (uint8_t)(p->target_system);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  28);
 }
 
 /**
@@ -188,8 +219,7 @@ static inline uint8_t mavlink_msg_command_long_get_target_system(const mavlink_m
  */
 static inline uint8_t mavlink_msg_command_long_get_target_component(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (uint8_t)(p->target_component);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  29);
 }
 
 /**
@@ -199,8 +229,7 @@ static inline uint8_t mavlink_msg_command_long_get_target_component(const mavlin
  */
 static inline uint8_t mavlink_msg_command_long_get_command(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (uint8_t)(p->command);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  30);
 }
 
 /**
@@ -210,8 +239,7 @@ static inline uint8_t mavlink_msg_command_long_get_command(const mavlink_message
  */
 static inline uint8_t mavlink_msg_command_long_get_confirmation(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (uint8_t)(p->confirmation);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  31);
 }
 
 /**
@@ -221,8 +249,7 @@ static inline uint8_t mavlink_msg_command_long_get_confirmation(const mavlink_me
  */
 static inline float mavlink_msg_command_long_get_param1(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (float)(p->param1);
+	return MAVLINK_MSG_RETURN_float(msg,  0);
 }
 
 /**
@@ -232,8 +259,7 @@ static inline float mavlink_msg_command_long_get_param1(const mavlink_message_t*
  */
 static inline float mavlink_msg_command_long_get_param2(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (float)(p->param2);
+	return MAVLINK_MSG_RETURN_float(msg,  4);
 }
 
 /**
@@ -243,8 +269,7 @@ static inline float mavlink_msg_command_long_get_param2(const mavlink_message_t*
  */
 static inline float mavlink_msg_command_long_get_param3(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (float)(p->param3);
+	return MAVLINK_MSG_RETURN_float(msg,  8);
 }
 
 /**
@@ -254,8 +279,7 @@ static inline float mavlink_msg_command_long_get_param3(const mavlink_message_t*
  */
 static inline float mavlink_msg_command_long_get_param4(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (float)(p->param4);
+	return MAVLINK_MSG_RETURN_float(msg,  12);
 }
 
 /**
@@ -265,8 +289,7 @@ static inline float mavlink_msg_command_long_get_param4(const mavlink_message_t*
  */
 static inline float mavlink_msg_command_long_get_param5(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (float)(p->param5);
+	return MAVLINK_MSG_RETURN_float(msg,  16);
 }
 
 /**
@@ -276,8 +299,7 @@ static inline float mavlink_msg_command_long_get_param5(const mavlink_message_t*
  */
 static inline float mavlink_msg_command_long_get_param6(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (float)(p->param6);
+	return MAVLINK_MSG_RETURN_float(msg,  20);
 }
 
 /**
@@ -287,8 +309,7 @@ static inline float mavlink_msg_command_long_get_param6(const mavlink_message_t*
  */
 static inline float mavlink_msg_command_long_get_param7(const mavlink_message_t* msg)
 {
-	mavlink_command_long_t *p = (mavlink_command_long_t *)&msg->payload[0];
-	return (float)(p->param7);
+	return MAVLINK_MSG_RETURN_float(msg,  24);
 }
 
 /**
@@ -299,5 +320,19 @@ static inline float mavlink_msg_command_long_get_param7(const mavlink_message_t*
  */
 static inline void mavlink_msg_command_long_decode(const mavlink_message_t* msg, mavlink_command_long_t* command_long)
 {
-	memcpy( command_long, msg->payload, sizeof(mavlink_command_long_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	command_long->param1 = mavlink_msg_command_long_get_param1(msg);
+	command_long->param2 = mavlink_msg_command_long_get_param2(msg);
+	command_long->param3 = mavlink_msg_command_long_get_param3(msg);
+	command_long->param4 = mavlink_msg_command_long_get_param4(msg);
+	command_long->param5 = mavlink_msg_command_long_get_param5(msg);
+	command_long->param6 = mavlink_msg_command_long_get_param6(msg);
+	command_long->param7 = mavlink_msg_command_long_get_param7(msg);
+	command_long->target_system = mavlink_msg_command_long_get_target_system(msg);
+	command_long->target_component = mavlink_msg_command_long_get_target_component(msg);
+	command_long->command = mavlink_msg_command_long_get_command(msg);
+	command_long->confirmation = mavlink_msg_command_long_get_confirmation(msg);
+#else
+	memcpy(command_long, MAVLINK_PAYLOAD(msg), 32);
+#endif
 }

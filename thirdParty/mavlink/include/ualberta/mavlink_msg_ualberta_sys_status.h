@@ -1,18 +1,28 @@
 // MESSAGE UALBERTA_SYS_STATUS PACKING
 
 #define MAVLINK_MSG_ID_UALBERTA_SYS_STATUS 222
-#define MAVLINK_MSG_ID_UALBERTA_SYS_STATUS_LEN 3
-#define MAVLINK_MSG_222_LEN 3
-#define MAVLINK_MSG_ID_UALBERTA_SYS_STATUS_KEY 0xEF
-#define MAVLINK_MSG_222_KEY 0xEF
 
-typedef struct __mavlink_ualberta_sys_status_t 
+typedef struct __mavlink_ualberta_sys_status_t
 {
-	uint8_t mode;	///< System mode, see UALBERTA_AUTOPILOT_MODE ENUM
-	uint8_t nav_mode;	///< Navigation mode, see UALBERTA_NAV_MODE ENUM
-	uint8_t pilot;	///< Pilot mode, see UALBERTA_PILOT_MODE
-
+ uint8_t mode; ///< System mode, see UALBERTA_AUTOPILOT_MODE ENUM
+ uint8_t nav_mode; ///< Navigation mode, see UALBERTA_NAV_MODE ENUM
+ uint8_t pilot; ///< Pilot mode, see UALBERTA_PILOT_MODE
 } mavlink_ualberta_sys_status_t;
+
+#define MAVLINK_MSG_ID_UALBERTA_SYS_STATUS_LEN 3
+#define MAVLINK_MSG_ID_222_LEN 3
+
+
+
+#define MAVLINK_MESSAGE_INFO_UALBERTA_SYS_STATUS { \
+	"UALBERTA_SYS_STATUS", \
+	3, \
+	{  { "mode", MAVLINK_TYPE_UINT8_T, 0, 0, offsetof(mavlink_ualberta_sys_status_t, mode) }, \
+         { "nav_mode", MAVLINK_TYPE_UINT8_T, 0, 1, offsetof(mavlink_ualberta_sys_status_t, nav_mode) }, \
+         { "pilot", MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_ualberta_sys_status_t, pilot) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a ualberta_sys_status message
@@ -25,20 +35,20 @@ typedef struct __mavlink_ualberta_sys_status_t
  * @param pilot Pilot mode, see UALBERTA_PILOT_MODE
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_ualberta_sys_status_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t mode, uint8_t nav_mode, uint8_t pilot)
+static inline uint16_t mavlink_msg_ualberta_sys_status_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       uint8_t mode, uint8_t nav_mode, uint8_t pilot)
 {
-	mavlink_ualberta_sys_status_t *p = (mavlink_ualberta_sys_status_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_UALBERTA_SYS_STATUS;
 
-	p->mode = mode;	// uint8_t:System mode, see UALBERTA_AUTOPILOT_MODE ENUM
-	p->nav_mode = nav_mode;	// uint8_t:Navigation mode, see UALBERTA_NAV_MODE ENUM
-	p->pilot = pilot;	// uint8_t:Pilot mode, see UALBERTA_PILOT_MODE
+	put_uint8_t_by_index(msg, 0, mode); // System mode, see UALBERTA_AUTOPILOT_MODE ENUM
+	put_uint8_t_by_index(msg, 1, nav_mode); // Navigation mode, see UALBERTA_NAV_MODE ENUM
+	put_uint8_t_by_index(msg, 2, pilot); // Pilot mode, see UALBERTA_PILOT_MODE
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_UALBERTA_SYS_STATUS_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 3, 15);
 }
 
 /**
- * @brief Pack a ualberta_sys_status message
+ * @brief Pack a ualberta_sys_status message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -48,17 +58,43 @@ static inline uint16_t mavlink_msg_ualberta_sys_status_pack(uint8_t system_id, u
  * @param pilot Pilot mode, see UALBERTA_PILOT_MODE
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_ualberta_sys_status_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t mode, uint8_t nav_mode, uint8_t pilot)
+static inline uint16_t mavlink_msg_ualberta_sys_status_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t mode,uint8_t nav_mode,uint8_t pilot)
 {
-	mavlink_ualberta_sys_status_t *p = (mavlink_ualberta_sys_status_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_UALBERTA_SYS_STATUS;
 
-	p->mode = mode;	// uint8_t:System mode, see UALBERTA_AUTOPILOT_MODE ENUM
-	p->nav_mode = nav_mode;	// uint8_t:Navigation mode, see UALBERTA_NAV_MODE ENUM
-	p->pilot = pilot;	// uint8_t:Pilot mode, see UALBERTA_PILOT_MODE
+	put_uint8_t_by_index(msg, 0, mode); // System mode, see UALBERTA_AUTOPILOT_MODE ENUM
+	put_uint8_t_by_index(msg, 1, nav_mode); // Navigation mode, see UALBERTA_NAV_MODE ENUM
+	put_uint8_t_by_index(msg, 2, pilot); // Pilot mode, see UALBERTA_PILOT_MODE
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_UALBERTA_SYS_STATUS_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 3, 15);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a ualberta_sys_status message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param mode System mode, see UALBERTA_AUTOPILOT_MODE ENUM
+ * @param nav_mode Navigation mode, see UALBERTA_NAV_MODE ENUM
+ * @param pilot Pilot mode, see UALBERTA_PILOT_MODE
+ */
+static inline void mavlink_msg_ualberta_sys_status_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t mode,uint8_t nav_mode,uint8_t pilot)
+{
+	msg->msgid = MAVLINK_MSG_ID_UALBERTA_SYS_STATUS;
+
+	put_uint8_t_by_index(msg, 0, mode); // System mode, see UALBERTA_AUTOPILOT_MODE ENUM
+	put_uint8_t_by_index(msg, 1, nav_mode); // Navigation mode, see UALBERTA_NAV_MODE ENUM
+	put_uint8_t_by_index(msg, 2, pilot); // Pilot mode, see UALBERTA_PILOT_MODE
+
+	mavlink_finalize_message_chan_send(msg, chan, 3, 15);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a ualberta_sys_status struct into a message
@@ -73,8 +109,6 @@ static inline uint16_t mavlink_msg_ualberta_sys_status_encode(uint8_t system_id,
 	return mavlink_msg_ualberta_sys_status_pack(system_id, component_id, msg, ualberta_sys_status->mode, ualberta_sys_status->nav_mode, ualberta_sys_status->pilot);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a ualberta_sys_status message
  * @param chan MAVLink channel to send the message
@@ -83,36 +117,18 @@ static inline uint16_t mavlink_msg_ualberta_sys_status_encode(uint8_t system_id,
  * @param nav_mode Navigation mode, see UALBERTA_NAV_MODE ENUM
  * @param pilot Pilot mode, see UALBERTA_PILOT_MODE
  */
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 static inline void mavlink_msg_ualberta_sys_status_send(mavlink_channel_t chan, uint8_t mode, uint8_t nav_mode, uint8_t pilot)
 {
-	mavlink_header_t hdr;
-	mavlink_ualberta_sys_status_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_UALBERTA_SYS_STATUS_LEN )
-	payload.mode = mode;	// uint8_t:System mode, see UALBERTA_AUTOPILOT_MODE ENUM
-	payload.nav_mode = nav_mode;	// uint8_t:Navigation mode, see UALBERTA_NAV_MODE ENUM
-	payload.pilot = pilot;	// uint8_t:Pilot mode, see UALBERTA_PILOT_MODE
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_UALBERTA_SYS_STATUS_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_UALBERTA_SYS_STATUS;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0xEF, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 3);
+	mavlink_msg_ualberta_sys_status_pack_chan_send(chan, msg, mode, nav_mode, pilot);
 }
 
 #endif
+
 // MESSAGE UALBERTA_SYS_STATUS UNPACKING
+
 
 /**
  * @brief Get field mode from ualberta_sys_status message
@@ -121,8 +137,7 @@ static inline void mavlink_msg_ualberta_sys_status_send(mavlink_channel_t chan, 
  */
 static inline uint8_t mavlink_msg_ualberta_sys_status_get_mode(const mavlink_message_t* msg)
 {
-	mavlink_ualberta_sys_status_t *p = (mavlink_ualberta_sys_status_t *)&msg->payload[0];
-	return (uint8_t)(p->mode);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  0);
 }
 
 /**
@@ -132,8 +147,7 @@ static inline uint8_t mavlink_msg_ualberta_sys_status_get_mode(const mavlink_mes
  */
 static inline uint8_t mavlink_msg_ualberta_sys_status_get_nav_mode(const mavlink_message_t* msg)
 {
-	mavlink_ualberta_sys_status_t *p = (mavlink_ualberta_sys_status_t *)&msg->payload[0];
-	return (uint8_t)(p->nav_mode);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  1);
 }
 
 /**
@@ -143,8 +157,7 @@ static inline uint8_t mavlink_msg_ualberta_sys_status_get_nav_mode(const mavlink
  */
 static inline uint8_t mavlink_msg_ualberta_sys_status_get_pilot(const mavlink_message_t* msg)
 {
-	mavlink_ualberta_sys_status_t *p = (mavlink_ualberta_sys_status_t *)&msg->payload[0];
-	return (uint8_t)(p->pilot);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  2);
 }
 
 /**
@@ -155,5 +168,11 @@ static inline uint8_t mavlink_msg_ualberta_sys_status_get_pilot(const mavlink_me
  */
 static inline void mavlink_msg_ualberta_sys_status_decode(const mavlink_message_t* msg, mavlink_ualberta_sys_status_t* ualberta_sys_status)
 {
-	memcpy( ualberta_sys_status, msg->payload, sizeof(mavlink_ualberta_sys_status_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	ualberta_sys_status->mode = mavlink_msg_ualberta_sys_status_get_mode(msg);
+	ualberta_sys_status->nav_mode = mavlink_msg_ualberta_sys_status_get_nav_mode(msg);
+	ualberta_sys_status->pilot = mavlink_msg_ualberta_sys_status_get_pilot(msg);
+#else
+	memcpy(ualberta_sys_status, MAVLINK_PAYLOAD(msg), 3);
+#endif
 }

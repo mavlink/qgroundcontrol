@@ -1,17 +1,26 @@
 // MESSAGE SET_MODE PACKING
 
 #define MAVLINK_MSG_ID_SET_MODE 11
-#define MAVLINK_MSG_ID_SET_MODE_LEN 2
-#define MAVLINK_MSG_11_LEN 2
-#define MAVLINK_MSG_ID_SET_MODE_KEY 0xF9
-#define MAVLINK_MSG_11_KEY 0xF9
 
-typedef struct __mavlink_set_mode_t 
+typedef struct __mavlink_set_mode_t
 {
-	uint8_t target;	///< The system setting the mode
-	uint8_t mode;	///< The new mode
-
+ uint8_t target; ///< The system setting the mode
+ uint8_t mode; ///< The new mode
 } mavlink_set_mode_t;
+
+#define MAVLINK_MSG_ID_SET_MODE_LEN 2
+#define MAVLINK_MSG_ID_11_LEN 2
+
+
+
+#define MAVLINK_MESSAGE_INFO_SET_MODE { \
+	"SET_MODE", \
+	2, \
+	{  { "target", MAVLINK_TYPE_UINT8_T, 0, 0, offsetof(mavlink_set_mode_t, target) }, \
+         { "mode", MAVLINK_TYPE_UINT8_T, 0, 1, offsetof(mavlink_set_mode_t, mode) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a set_mode message
@@ -23,19 +32,19 @@ typedef struct __mavlink_set_mode_t
  * @param mode The new mode
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_set_mode_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t target, uint8_t mode)
+static inline uint16_t mavlink_msg_set_mode_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       uint8_t target, uint8_t mode)
 {
-	mavlink_set_mode_t *p = (mavlink_set_mode_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SET_MODE;
 
-	p->target = target;	// uint8_t:The system setting the mode
-	p->mode = mode;	// uint8_t:The new mode
+	put_uint8_t_by_index(msg, 0, target); // The system setting the mode
+	put_uint8_t_by_index(msg, 1, mode); // The new mode
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_SET_MODE_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 2, 186);
 }
 
 /**
- * @brief Pack a set_mode message
+ * @brief Pack a set_mode message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -44,16 +53,40 @@ static inline uint16_t mavlink_msg_set_mode_pack(uint8_t system_id, uint8_t comp
  * @param mode The new mode
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_set_mode_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t target, uint8_t mode)
+static inline uint16_t mavlink_msg_set_mode_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t target,uint8_t mode)
 {
-	mavlink_set_mode_t *p = (mavlink_set_mode_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_SET_MODE;
 
-	p->target = target;	// uint8_t:The system setting the mode
-	p->mode = mode;	// uint8_t:The new mode
+	put_uint8_t_by_index(msg, 0, target); // The system setting the mode
+	put_uint8_t_by_index(msg, 1, mode); // The new mode
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_SET_MODE_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 2, 186);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a set_mode message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param target The system setting the mode
+ * @param mode The new mode
+ */
+static inline void mavlink_msg_set_mode_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t target,uint8_t mode)
+{
+	msg->msgid = MAVLINK_MSG_ID_SET_MODE;
+
+	put_uint8_t_by_index(msg, 0, target); // The system setting the mode
+	put_uint8_t_by_index(msg, 1, mode); // The new mode
+
+	mavlink_finalize_message_chan_send(msg, chan, 2, 186);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a set_mode struct into a message
@@ -68,8 +101,6 @@ static inline uint16_t mavlink_msg_set_mode_encode(uint8_t system_id, uint8_t co
 	return mavlink_msg_set_mode_pack(system_id, component_id, msg, set_mode->target, set_mode->mode);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a set_mode message
  * @param chan MAVLink channel to send the message
@@ -77,35 +108,18 @@ static inline uint16_t mavlink_msg_set_mode_encode(uint8_t system_id, uint8_t co
  * @param target The system setting the mode
  * @param mode The new mode
  */
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 static inline void mavlink_msg_set_mode_send(mavlink_channel_t chan, uint8_t target, uint8_t mode)
 {
-	mavlink_header_t hdr;
-	mavlink_set_mode_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_SET_MODE_LEN )
-	payload.target = target;	// uint8_t:The system setting the mode
-	payload.mode = mode;	// uint8_t:The new mode
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_SET_MODE_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_SET_MODE;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0xF9, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 2);
+	mavlink_msg_set_mode_pack_chan_send(chan, msg, target, mode);
 }
 
 #endif
+
 // MESSAGE SET_MODE UNPACKING
+
 
 /**
  * @brief Get field target from set_mode message
@@ -114,8 +128,7 @@ static inline void mavlink_msg_set_mode_send(mavlink_channel_t chan, uint8_t tar
  */
 static inline uint8_t mavlink_msg_set_mode_get_target(const mavlink_message_t* msg)
 {
-	mavlink_set_mode_t *p = (mavlink_set_mode_t *)&msg->payload[0];
-	return (uint8_t)(p->target);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  0);
 }
 
 /**
@@ -125,8 +138,7 @@ static inline uint8_t mavlink_msg_set_mode_get_target(const mavlink_message_t* m
  */
 static inline uint8_t mavlink_msg_set_mode_get_mode(const mavlink_message_t* msg)
 {
-	mavlink_set_mode_t *p = (mavlink_set_mode_t *)&msg->payload[0];
-	return (uint8_t)(p->mode);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  1);
 }
 
 /**
@@ -137,5 +149,10 @@ static inline uint8_t mavlink_msg_set_mode_get_mode(const mavlink_message_t* msg
  */
 static inline void mavlink_msg_set_mode_decode(const mavlink_message_t* msg, mavlink_set_mode_t* set_mode)
 {
-	memcpy( set_mode, msg->payload, sizeof(mavlink_set_mode_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	set_mode->target = mavlink_msg_set_mode_get_target(msg);
+	set_mode->mode = mavlink_msg_set_mode_get_mode(msg);
+#else
+	memcpy(set_mode, MAVLINK_PAYLOAD(msg), 2);
+#endif
 }
