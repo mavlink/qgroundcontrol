@@ -1,27 +1,44 @@
 // MESSAGE POINT_OF_INTEREST_CONNECTION PACKING
 
-#define MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION 162
-#define MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN 55
-#define MAVLINK_MSG_162_LEN 55
-#define MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_KEY 0x10
-#define MAVLINK_MSG_162_KEY 0x10
+#define MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION 192
 
-typedef struct __mavlink_point_of_interest_connection_t 
+typedef struct __mavlink_point_of_interest_connection_t
 {
-	float xp1;	///< X1 Position
-	float yp1;	///< Y1 Position
-	float zp1;	///< Z1 Position
-	float xp2;	///< X2 Position
-	float yp2;	///< Y2 Position
-	float zp2;	///< Z2 Position
-	uint16_t timeout;	///< 0: no timeout, >1: timeout in seconds
-	uint8_t type;	///< 0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
-	uint8_t color;	///< 0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
-	uint8_t coordinate_system;	///< 0: global, 1:local
-	char name[26];	///< POI connection name
-
+ float xp1; ///< X1 Position
+ float yp1; ///< Y1 Position
+ float zp1; ///< Z1 Position
+ float xp2; ///< X2 Position
+ float yp2; ///< Y2 Position
+ float zp2; ///< Z2 Position
+ uint16_t timeout; ///< 0: no timeout, >1: timeout in seconds
+ uint8_t type; ///< 0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
+ uint8_t color; ///< 0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
+ uint8_t coordinate_system; ///< 0: global, 1:local
+ char name[26]; ///< POI connection name
 } mavlink_point_of_interest_connection_t;
+
+#define MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN 55
+#define MAVLINK_MSG_ID_192_LEN 55
+
 #define MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN 26
+
+#define MAVLINK_MESSAGE_INFO_POINT_OF_INTEREST_CONNECTION { \
+	"POINT_OF_INTEREST_CONNECTION", \
+	11, \
+	{  { "xp1", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_point_of_interest_connection_t, xp1) }, \
+         { "yp1", MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_point_of_interest_connection_t, yp1) }, \
+         { "zp1", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_point_of_interest_connection_t, zp1) }, \
+         { "xp2", MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_point_of_interest_connection_t, xp2) }, \
+         { "yp2", MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_point_of_interest_connection_t, yp2) }, \
+         { "zp2", MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_point_of_interest_connection_t, zp2) }, \
+         { "timeout", MAVLINK_TYPE_UINT16_T, 0, 24, offsetof(mavlink_point_of_interest_connection_t, timeout) }, \
+         { "type", MAVLINK_TYPE_UINT8_T, 0, 26, offsetof(mavlink_point_of_interest_connection_t, type) }, \
+         { "color", MAVLINK_TYPE_UINT8_T, 0, 27, offsetof(mavlink_point_of_interest_connection_t, color) }, \
+         { "coordinate_system", MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_point_of_interest_connection_t, coordinate_system) }, \
+         { "name", MAVLINK_TYPE_CHAR, 26, 29, offsetof(mavlink_point_of_interest_connection_t, name) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a point_of_interest_connection message
@@ -42,28 +59,28 @@ typedef struct __mavlink_point_of_interest_connection_t
  * @param name POI connection name
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char* name)
+static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char *name)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
 
-	p->type = type;	// uint8_t:0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
-	p->color = color;	// uint8_t:0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
-	p->coordinate_system = coordinate_system;	// uint8_t:0: global, 1:local
-	p->timeout = timeout;	// uint16_t:0: no timeout, >1: timeout in seconds
-	p->xp1 = xp1;	// float:X1 Position
-	p->yp1 = yp1;	// float:Y1 Position
-	p->zp1 = zp1;	// float:Z1 Position
-	p->xp2 = xp2;	// float:X2 Position
-	p->yp2 = yp2;	// float:Y2 Position
-	p->zp2 = zp2;	// float:Z2 Position
-	memcpy(p->name, name, sizeof(p->name));	// char[26]:POI connection name
+	put_float_by_index(msg, 0, xp1); // X1 Position
+	put_float_by_index(msg, 4, yp1); // Y1 Position
+	put_float_by_index(msg, 8, zp1); // Z1 Position
+	put_float_by_index(msg, 12, xp2); // X2 Position
+	put_float_by_index(msg, 16, yp2); // Y2 Position
+	put_float_by_index(msg, 20, zp2); // Z2 Position
+	put_uint16_t_by_index(msg, 24, timeout); // 0: no timeout, >1: timeout in seconds
+	put_uint8_t_by_index(msg, 26, type); // 0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
+	put_uint8_t_by_index(msg, 27, color); // 0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
+	put_uint8_t_by_index(msg, 28, coordinate_system); // 0: global, 1:local
+	put_char_array_by_index(msg, 29, name, 26); // POI connection name
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 55, 36);
 }
 
 /**
- * @brief Pack a point_of_interest_connection message
+ * @brief Pack a point_of_interest_connection message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -81,25 +98,67 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_pack(uint8_t sys
  * @param name POI connection name
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char* name)
+static inline uint16_t mavlink_msg_point_of_interest_connection_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t type,uint8_t color,uint8_t coordinate_system,uint16_t timeout,float xp1,float yp1,float zp1,float xp2,float yp2,float zp2,const char *name)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
 
-	p->type = type;	// uint8_t:0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
-	p->color = color;	// uint8_t:0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
-	p->coordinate_system = coordinate_system;	// uint8_t:0: global, 1:local
-	p->timeout = timeout;	// uint16_t:0: no timeout, >1: timeout in seconds
-	p->xp1 = xp1;	// float:X1 Position
-	p->yp1 = yp1;	// float:Y1 Position
-	p->zp1 = zp1;	// float:Z1 Position
-	p->xp2 = xp2;	// float:X2 Position
-	p->yp2 = yp2;	// float:Y2 Position
-	p->zp2 = zp2;	// float:Z2 Position
-	memcpy(p->name, name, sizeof(p->name));	// char[26]:POI connection name
+	put_float_by_index(msg, 0, xp1); // X1 Position
+	put_float_by_index(msg, 4, yp1); // Y1 Position
+	put_float_by_index(msg, 8, zp1); // Z1 Position
+	put_float_by_index(msg, 12, xp2); // X2 Position
+	put_float_by_index(msg, 16, yp2); // Y2 Position
+	put_float_by_index(msg, 20, zp2); // Z2 Position
+	put_uint16_t_by_index(msg, 24, timeout); // 0: no timeout, >1: timeout in seconds
+	put_uint8_t_by_index(msg, 26, type); // 0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
+	put_uint8_t_by_index(msg, 27, color); // 0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
+	put_uint8_t_by_index(msg, 28, coordinate_system); // 0: global, 1:local
+	put_char_array_by_index(msg, 29, name, 26); // POI connection name
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 55, 36);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a point_of_interest_connection message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param type 0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
+ * @param color 0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
+ * @param coordinate_system 0: global, 1:local
+ * @param timeout 0: no timeout, >1: timeout in seconds
+ * @param xp1 X1 Position
+ * @param yp1 Y1 Position
+ * @param zp1 Z1 Position
+ * @param xp2 X2 Position
+ * @param yp2 Y2 Position
+ * @param zp2 Z2 Position
+ * @param name POI connection name
+ */
+static inline void mavlink_msg_point_of_interest_connection_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t type,uint8_t color,uint8_t coordinate_system,uint16_t timeout,float xp1,float yp1,float zp1,float xp2,float yp2,float zp2,const char *name)
+{
+	msg->msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
+
+	put_float_by_index(msg, 0, xp1); // X1 Position
+	put_float_by_index(msg, 4, yp1); // Y1 Position
+	put_float_by_index(msg, 8, zp1); // Z1 Position
+	put_float_by_index(msg, 12, xp2); // X2 Position
+	put_float_by_index(msg, 16, yp2); // Y2 Position
+	put_float_by_index(msg, 20, zp2); // Z2 Position
+	put_uint16_t_by_index(msg, 24, timeout); // 0: no timeout, >1: timeout in seconds
+	put_uint8_t_by_index(msg, 26, type); // 0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
+	put_uint8_t_by_index(msg, 27, color); // 0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
+	put_uint8_t_by_index(msg, 28, coordinate_system); // 0: global, 1:local
+	put_char_array_by_index(msg, 29, name, 26); // POI connection name
+
+	mavlink_finalize_message_chan_send(msg, chan, 55, 36);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a point_of_interest_connection struct into a message
@@ -114,8 +173,6 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_encode(uint8_t s
 	return mavlink_msg_point_of_interest_connection_pack(system_id, component_id, msg, point_of_interest_connection->type, point_of_interest_connection->color, point_of_interest_connection->coordinate_system, point_of_interest_connection->timeout, point_of_interest_connection->xp1, point_of_interest_connection->yp1, point_of_interest_connection->zp1, point_of_interest_connection->xp2, point_of_interest_connection->yp2, point_of_interest_connection->zp2, point_of_interest_connection->name);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a point_of_interest_connection message
  * @param chan MAVLink channel to send the message
@@ -132,44 +189,18 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_encode(uint8_t s
  * @param zp2 Z2 Position
  * @param name POI connection name
  */
-static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel_t chan, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char* name)
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel_t chan, uint8_t type, uint8_t color, uint8_t coordinate_system, uint16_t timeout, float xp1, float yp1, float zp1, float xp2, float yp2, float zp2, const char *name)
 {
-	mavlink_header_t hdr;
-	mavlink_point_of_interest_connection_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN )
-	payload.type = type;	// uint8_t:0: Notice, 1: Warning, 2: Critical, 3: Emergency, 4: Debug
-	payload.color = color;	// uint8_t:0: blue, 1: yellow, 2: red, 3: orange, 4: green, 5: magenta
-	payload.coordinate_system = coordinate_system;	// uint8_t:0: global, 1:local
-	payload.timeout = timeout;	// uint16_t:0: no timeout, >1: timeout in seconds
-	payload.xp1 = xp1;	// float:X1 Position
-	payload.yp1 = yp1;	// float:Y1 Position
-	payload.zp1 = zp1;	// float:Z1 Position
-	payload.xp2 = xp2;	// float:X2 Position
-	payload.yp2 = yp2;	// float:Y2 Position
-	payload.zp2 = zp2;	// float:Z2 Position
-	memcpy(payload.name, name, sizeof(payload.name));	// char[26]:POI connection name
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0x10, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 55);
+	mavlink_msg_point_of_interest_connection_pack_chan_send(chan, msg, type, color, coordinate_system, timeout, xp1, yp1, zp1, xp2, yp2, zp2, name);
 }
 
 #endif
+
 // MESSAGE POINT_OF_INTEREST_CONNECTION UNPACKING
+
 
 /**
  * @brief Get field type from point_of_interest_connection message
@@ -178,8 +209,7 @@ static inline void mavlink_msg_point_of_interest_connection_send(mavlink_channel
  */
 static inline uint8_t mavlink_msg_point_of_interest_connection_get_type(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (uint8_t)(p->type);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  26);
 }
 
 /**
@@ -189,8 +219,7 @@ static inline uint8_t mavlink_msg_point_of_interest_connection_get_type(const ma
  */
 static inline uint8_t mavlink_msg_point_of_interest_connection_get_color(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (uint8_t)(p->color);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  27);
 }
 
 /**
@@ -200,8 +229,7 @@ static inline uint8_t mavlink_msg_point_of_interest_connection_get_color(const m
  */
 static inline uint8_t mavlink_msg_point_of_interest_connection_get_coordinate_system(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (uint8_t)(p->coordinate_system);
+	return MAVLINK_MSG_RETURN_uint8_t(msg,  28);
 }
 
 /**
@@ -211,8 +239,7 @@ static inline uint8_t mavlink_msg_point_of_interest_connection_get_coordinate_sy
  */
 static inline uint16_t mavlink_msg_point_of_interest_connection_get_timeout(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (uint16_t)(p->timeout);
+	return MAVLINK_MSG_RETURN_uint16_t(msg,  24);
 }
 
 /**
@@ -222,8 +249,7 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_get_timeout(cons
  */
 static inline float mavlink_msg_point_of_interest_connection_get_xp1(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (float)(p->xp1);
+	return MAVLINK_MSG_RETURN_float(msg,  0);
 }
 
 /**
@@ -233,8 +259,7 @@ static inline float mavlink_msg_point_of_interest_connection_get_xp1(const mavli
  */
 static inline float mavlink_msg_point_of_interest_connection_get_yp1(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (float)(p->yp1);
+	return MAVLINK_MSG_RETURN_float(msg,  4);
 }
 
 /**
@@ -244,8 +269,7 @@ static inline float mavlink_msg_point_of_interest_connection_get_yp1(const mavli
  */
 static inline float mavlink_msg_point_of_interest_connection_get_zp1(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (float)(p->zp1);
+	return MAVLINK_MSG_RETURN_float(msg,  8);
 }
 
 /**
@@ -255,8 +279,7 @@ static inline float mavlink_msg_point_of_interest_connection_get_zp1(const mavli
  */
 static inline float mavlink_msg_point_of_interest_connection_get_xp2(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (float)(p->xp2);
+	return MAVLINK_MSG_RETURN_float(msg,  12);
 }
 
 /**
@@ -266,8 +289,7 @@ static inline float mavlink_msg_point_of_interest_connection_get_xp2(const mavli
  */
 static inline float mavlink_msg_point_of_interest_connection_get_yp2(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (float)(p->yp2);
+	return MAVLINK_MSG_RETURN_float(msg,  16);
 }
 
 /**
@@ -277,8 +299,7 @@ static inline float mavlink_msg_point_of_interest_connection_get_yp2(const mavli
  */
 static inline float mavlink_msg_point_of_interest_connection_get_zp2(const mavlink_message_t* msg)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-	return (float)(p->zp2);
+	return MAVLINK_MSG_RETURN_float(msg,  20);
 }
 
 /**
@@ -286,12 +307,9 @@ static inline float mavlink_msg_point_of_interest_connection_get_zp2(const mavli
  *
  * @return POI connection name
  */
-static inline uint16_t mavlink_msg_point_of_interest_connection_get_name(const mavlink_message_t* msg, char* name)
+static inline uint16_t mavlink_msg_point_of_interest_connection_get_name(const mavlink_message_t* msg, char *name)
 {
-	mavlink_point_of_interest_connection_t *p = (mavlink_point_of_interest_connection_t *)&msg->payload[0];
-
-	memcpy(name, p->name, sizeof(p->name));
-	return sizeof(p->name);
+	return MAVLINK_MSG_RETURN_char_array(msg, name, 26,  29);
 }
 
 /**
@@ -302,5 +320,19 @@ static inline uint16_t mavlink_msg_point_of_interest_connection_get_name(const m
  */
 static inline void mavlink_msg_point_of_interest_connection_decode(const mavlink_message_t* msg, mavlink_point_of_interest_connection_t* point_of_interest_connection)
 {
-	memcpy( point_of_interest_connection, msg->payload, sizeof(mavlink_point_of_interest_connection_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	point_of_interest_connection->xp1 = mavlink_msg_point_of_interest_connection_get_xp1(msg);
+	point_of_interest_connection->yp1 = mavlink_msg_point_of_interest_connection_get_yp1(msg);
+	point_of_interest_connection->zp1 = mavlink_msg_point_of_interest_connection_get_zp1(msg);
+	point_of_interest_connection->xp2 = mavlink_msg_point_of_interest_connection_get_xp2(msg);
+	point_of_interest_connection->yp2 = mavlink_msg_point_of_interest_connection_get_yp2(msg);
+	point_of_interest_connection->zp2 = mavlink_msg_point_of_interest_connection_get_zp2(msg);
+	point_of_interest_connection->timeout = mavlink_msg_point_of_interest_connection_get_timeout(msg);
+	point_of_interest_connection->type = mavlink_msg_point_of_interest_connection_get_type(msg);
+	point_of_interest_connection->color = mavlink_msg_point_of_interest_connection_get_color(msg);
+	point_of_interest_connection->coordinate_system = mavlink_msg_point_of_interest_connection_get_coordinate_system(msg);
+	mavlink_msg_point_of_interest_connection_get_name(msg, point_of_interest_connection->name);
+#else
+	memcpy(point_of_interest_connection, MAVLINK_PAYLOAD(msg), 55);
+#endif
 }

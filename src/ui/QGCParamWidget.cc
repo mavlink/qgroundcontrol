@@ -295,10 +295,9 @@ void QGCParamWidget::addComponent(int uas, int component, QString componentName)
         components->value(component)->setData(1, Qt::DisplayRole, QString::number(component));
     } else {
         // Add new
-        QStringList list;
-        list.append(componentName);
-        list.append(QString::number(component));
+        QStringList list(QString("%1 (#%2)").arg(componentName).arg(component));
         QTreeWidgetItem* comp = new QTreeWidgetItem(list);
+        comp->setFirstColumnSpanned(true);
         components->insert(component, comp);
         // Create grouping and update maps
         paramGroups.insert(component, new QMap<QString, QTreeWidgetItem*>());

@@ -1,21 +1,34 @@
 // MESSAGE DIAGNOSTIC PACKING
 
 #define MAVLINK_MSG_ID_DIAGNOSTIC 173
-#define MAVLINK_MSG_ID_DIAGNOSTIC_LEN 18
-#define MAVLINK_MSG_173_LEN 18
-#define MAVLINK_MSG_ID_DIAGNOSTIC_KEY 0xFE
-#define MAVLINK_MSG_173_KEY 0xFE
 
-typedef struct __mavlink_diagnostic_t 
+typedef struct __mavlink_diagnostic_t
 {
-	float diagFl1;	///< Diagnostic float 1
-	float diagFl2;	///< Diagnostic float 2
-	float diagFl3;	///< Diagnostic float 3
-	int16_t diagSh1;	///< Diagnostic short 1
-	int16_t diagSh2;	///< Diagnostic short 2
-	int16_t diagSh3;	///< Diagnostic short 3
-
+ float diagFl1; ///< Diagnostic float 1
+ float diagFl2; ///< Diagnostic float 2
+ float diagFl3; ///< Diagnostic float 3
+ int16_t diagSh1; ///< Diagnostic short 1
+ int16_t diagSh2; ///< Diagnostic short 2
+ int16_t diagSh3; ///< Diagnostic short 3
 } mavlink_diagnostic_t;
+
+#define MAVLINK_MSG_ID_DIAGNOSTIC_LEN 18
+#define MAVLINK_MSG_ID_173_LEN 18
+
+
+
+#define MAVLINK_MESSAGE_INFO_DIAGNOSTIC { \
+	"DIAGNOSTIC", \
+	6, \
+	{  { "diagFl1", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_diagnostic_t, diagFl1) }, \
+         { "diagFl2", MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_diagnostic_t, diagFl2) }, \
+         { "diagFl3", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_diagnostic_t, diagFl3) }, \
+         { "diagSh1", MAVLINK_TYPE_INT16_T, 0, 12, offsetof(mavlink_diagnostic_t, diagSh1) }, \
+         { "diagSh2", MAVLINK_TYPE_INT16_T, 0, 14, offsetof(mavlink_diagnostic_t, diagSh2) }, \
+         { "diagSh3", MAVLINK_TYPE_INT16_T, 0, 16, offsetof(mavlink_diagnostic_t, diagSh3) }, \
+         } \
+}
+
 
 /**
  * @brief Pack a diagnostic message
@@ -31,23 +44,23 @@ typedef struct __mavlink_diagnostic_t
  * @param diagSh3 Diagnostic short 3
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_diagnostic_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, float diagFl1, float diagFl2, float diagFl3, int16_t diagSh1, int16_t diagSh2, int16_t diagSh3)
+static inline uint16_t mavlink_msg_diagnostic_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       float diagFl1, float diagFl2, float diagFl3, int16_t diagSh1, int16_t diagSh2, int16_t diagSh3)
 {
-	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
 
-	p->diagFl1 = diagFl1;	// float:Diagnostic float 1
-	p->diagFl2 = diagFl2;	// float:Diagnostic float 2
-	p->diagFl3 = diagFl3;	// float:Diagnostic float 3
-	p->diagSh1 = diagSh1;	// int16_t:Diagnostic short 1
-	p->diagSh2 = diagSh2;	// int16_t:Diagnostic short 2
-	p->diagSh3 = diagSh3;	// int16_t:Diagnostic short 3
+	put_float_by_index(msg, 0, diagFl1); // Diagnostic float 1
+	put_float_by_index(msg, 4, diagFl2); // Diagnostic float 2
+	put_float_by_index(msg, 8, diagFl3); // Diagnostic float 3
+	put_int16_t_by_index(msg, 12, diagSh1); // Diagnostic short 1
+	put_int16_t_by_index(msg, 14, diagSh2); // Diagnostic short 2
+	put_int16_t_by_index(msg, 16, diagSh3); // Diagnostic short 3
 
-	return mavlink_finalize_message(msg, system_id, component_id, MAVLINK_MSG_ID_DIAGNOSTIC_LEN);
+	return mavlink_finalize_message(msg, system_id, component_id, 18, 2);
 }
 
 /**
- * @brief Pack a diagnostic message
+ * @brief Pack a diagnostic message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -60,20 +73,52 @@ static inline uint16_t mavlink_msg_diagnostic_pack(uint8_t system_id, uint8_t co
  * @param diagSh3 Diagnostic short 3
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_diagnostic_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, float diagFl1, float diagFl2, float diagFl3, int16_t diagSh1, int16_t diagSh2, int16_t diagSh3)
+static inline uint16_t mavlink_msg_diagnostic_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           float diagFl1,float diagFl2,float diagFl3,int16_t diagSh1,int16_t diagSh2,int16_t diagSh3)
 {
-	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
 	msg->msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
 
-	p->diagFl1 = diagFl1;	// float:Diagnostic float 1
-	p->diagFl2 = diagFl2;	// float:Diagnostic float 2
-	p->diagFl3 = diagFl3;	// float:Diagnostic float 3
-	p->diagSh1 = diagSh1;	// int16_t:Diagnostic short 1
-	p->diagSh2 = diagSh2;	// int16_t:Diagnostic short 2
-	p->diagSh3 = diagSh3;	// int16_t:Diagnostic short 3
+	put_float_by_index(msg, 0, diagFl1); // Diagnostic float 1
+	put_float_by_index(msg, 4, diagFl2); // Diagnostic float 2
+	put_float_by_index(msg, 8, diagFl3); // Diagnostic float 3
+	put_int16_t_by_index(msg, 12, diagSh1); // Diagnostic short 1
+	put_int16_t_by_index(msg, 14, diagSh2); // Diagnostic short 2
+	put_int16_t_by_index(msg, 16, diagSh3); // Diagnostic short 3
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, MAVLINK_MSG_ID_DIAGNOSTIC_LEN);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 18, 2);
 }
+
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
+/**
+ * @brief Pack a diagnostic message on a channel and send
+ * @param chan The MAVLink channel this message was sent over
+ * @param msg The MAVLink message to compress the data into
+ * @param diagFl1 Diagnostic float 1
+ * @param diagFl2 Diagnostic float 2
+ * @param diagFl3 Diagnostic float 3
+ * @param diagSh1 Diagnostic short 1
+ * @param diagSh2 Diagnostic short 2
+ * @param diagSh3 Diagnostic short 3
+ */
+static inline void mavlink_msg_diagnostic_pack_chan_send(mavlink_channel_t chan,
+							   mavlink_message_t* msg,
+						           float diagFl1,float diagFl2,float diagFl3,int16_t diagSh1,int16_t diagSh2,int16_t diagSh3)
+{
+	msg->msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
+
+	put_float_by_index(msg, 0, diagFl1); // Diagnostic float 1
+	put_float_by_index(msg, 4, diagFl2); // Diagnostic float 2
+	put_float_by_index(msg, 8, diagFl3); // Diagnostic float 3
+	put_int16_t_by_index(msg, 12, diagSh1); // Diagnostic short 1
+	put_int16_t_by_index(msg, 14, diagSh2); // Diagnostic short 2
+	put_int16_t_by_index(msg, 16, diagSh3); // Diagnostic short 3
+
+	mavlink_finalize_message_chan_send(msg, chan, 18, 2);
+}
+#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 
 /**
  * @brief Encode a diagnostic struct into a message
@@ -88,8 +133,6 @@ static inline uint16_t mavlink_msg_diagnostic_encode(uint8_t system_id, uint8_t 
 	return mavlink_msg_diagnostic_pack(system_id, component_id, msg, diagnostic->diagFl1, diagnostic->diagFl2, diagnostic->diagFl3, diagnostic->diagSh1, diagnostic->diagSh2, diagnostic->diagSh3);
 }
 
-
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 /**
  * @brief Send a diagnostic message
  * @param chan MAVLink channel to send the message
@@ -101,39 +144,18 @@ static inline uint16_t mavlink_msg_diagnostic_encode(uint8_t system_id, uint8_t 
  * @param diagSh2 Diagnostic short 2
  * @param diagSh3 Diagnostic short 3
  */
+#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
+
 static inline void mavlink_msg_diagnostic_send(mavlink_channel_t chan, float diagFl1, float diagFl2, float diagFl3, int16_t diagSh1, int16_t diagSh2, int16_t diagSh3)
 {
-	mavlink_header_t hdr;
-	mavlink_diagnostic_t payload;
-
-	MAVLINK_BUFFER_CHECK_START( chan, MAVLINK_MSG_ID_DIAGNOSTIC_LEN )
-	payload.diagFl1 = diagFl1;	// float:Diagnostic float 1
-	payload.diagFl2 = diagFl2;	// float:Diagnostic float 2
-	payload.diagFl3 = diagFl3;	// float:Diagnostic float 3
-	payload.diagSh1 = diagSh1;	// int16_t:Diagnostic short 1
-	payload.diagSh2 = diagSh2;	// int16_t:Diagnostic short 2
-	payload.diagSh3 = diagSh3;	// int16_t:Diagnostic short 3
-
-	hdr.STX = MAVLINK_STX;
-	hdr.len = MAVLINK_MSG_ID_DIAGNOSTIC_LEN;
-	hdr.msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
-	hdr.sysid = mavlink_system.sysid;
-	hdr.compid = mavlink_system.compid;
-	hdr.seq = mavlink_get_channel_status(chan)->current_tx_seq;
-	mavlink_get_channel_status(chan)->current_tx_seq = hdr.seq + 1;
-	mavlink_send_mem(chan, (uint8_t *)&hdr.STX, MAVLINK_NUM_HEADER_BYTES );
-	mavlink_send_mem(chan, (uint8_t *)&payload, sizeof(payload) );
-
-	crc_init(&hdr.ck);
-	crc_calculate_mem((uint8_t *)&hdr.len, &hdr.ck, MAVLINK_CORE_HEADER_LEN);
-	crc_calculate_mem((uint8_t *)&payload, &hdr.ck, hdr.len );
-	crc_accumulate( 0xFE, &hdr.ck); /// include key in X25 checksum
-	mavlink_send_mem(chan, (uint8_t *)&hdr.ck, MAVLINK_NUM_CHECKSUM_BYTES);
-	MAVLINK_BUFFER_CHECK_END
+	MAVLINK_ALIGNED_MESSAGE(msg, 18);
+	mavlink_msg_diagnostic_pack_chan_send(chan, msg, diagFl1, diagFl2, diagFl3, diagSh1, diagSh2, diagSh3);
 }
 
 #endif
+
 // MESSAGE DIAGNOSTIC UNPACKING
+
 
 /**
  * @brief Get field diagFl1 from diagnostic message
@@ -142,8 +164,7 @@ static inline void mavlink_msg_diagnostic_send(mavlink_channel_t chan, float dia
  */
 static inline float mavlink_msg_diagnostic_get_diagFl1(const mavlink_message_t* msg)
 {
-	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
-	return (float)(p->diagFl1);
+	return MAVLINK_MSG_RETURN_float(msg,  0);
 }
 
 /**
@@ -153,8 +174,7 @@ static inline float mavlink_msg_diagnostic_get_diagFl1(const mavlink_message_t* 
  */
 static inline float mavlink_msg_diagnostic_get_diagFl2(const mavlink_message_t* msg)
 {
-	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
-	return (float)(p->diagFl2);
+	return MAVLINK_MSG_RETURN_float(msg,  4);
 }
 
 /**
@@ -164,8 +184,7 @@ static inline float mavlink_msg_diagnostic_get_diagFl2(const mavlink_message_t* 
  */
 static inline float mavlink_msg_diagnostic_get_diagFl3(const mavlink_message_t* msg)
 {
-	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
-	return (float)(p->diagFl3);
+	return MAVLINK_MSG_RETURN_float(msg,  8);
 }
 
 /**
@@ -175,8 +194,7 @@ static inline float mavlink_msg_diagnostic_get_diagFl3(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_diagnostic_get_diagSh1(const mavlink_message_t* msg)
 {
-	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
-	return (int16_t)(p->diagSh1);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  12);
 }
 
 /**
@@ -186,8 +204,7 @@ static inline int16_t mavlink_msg_diagnostic_get_diagSh1(const mavlink_message_t
  */
 static inline int16_t mavlink_msg_diagnostic_get_diagSh2(const mavlink_message_t* msg)
 {
-	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
-	return (int16_t)(p->diagSh2);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  14);
 }
 
 /**
@@ -197,8 +214,7 @@ static inline int16_t mavlink_msg_diagnostic_get_diagSh2(const mavlink_message_t
  */
 static inline int16_t mavlink_msg_diagnostic_get_diagSh3(const mavlink_message_t* msg)
 {
-	mavlink_diagnostic_t *p = (mavlink_diagnostic_t *)&msg->payload[0];
-	return (int16_t)(p->diagSh3);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  16);
 }
 
 /**
@@ -209,5 +225,14 @@ static inline int16_t mavlink_msg_diagnostic_get_diagSh3(const mavlink_message_t
  */
 static inline void mavlink_msg_diagnostic_decode(const mavlink_message_t* msg, mavlink_diagnostic_t* diagnostic)
 {
-	memcpy( diagnostic, msg->payload, sizeof(mavlink_diagnostic_t));
+#if MAVLINK_NEED_BYTE_SWAP
+	diagnostic->diagFl1 = mavlink_msg_diagnostic_get_diagFl1(msg);
+	diagnostic->diagFl2 = mavlink_msg_diagnostic_get_diagFl2(msg);
+	diagnostic->diagFl3 = mavlink_msg_diagnostic_get_diagFl3(msg);
+	diagnostic->diagSh1 = mavlink_msg_diagnostic_get_diagSh1(msg);
+	diagnostic->diagSh2 = mavlink_msg_diagnostic_get_diagSh2(msg);
+	diagnostic->diagSh3 = mavlink_msg_diagnostic_get_diagSh3(msg);
+#else
+	memcpy(diagnostic, MAVLINK_PAYLOAD(msg), 18);
+#endif
 }

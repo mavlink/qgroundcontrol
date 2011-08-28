@@ -1,9 +1,3 @@
-/** @file
- *	@brief MAVLink comm protocol enumerations / structures / constants.
- *	@see http://qgroundcontrol.org/mavlink/
- *	Edited on Monday, August 8 2011
- */
-
 #ifndef MAVLINK_TYPES_H_
 #define MAVLINK_TYPES_H_
 
@@ -52,98 +46,120 @@ enum MAV_ACTION
     MAV_ACTION_CHANGE_MODE = 38,
     MAV_ACTION_LOITER_MAX_TURNS = 39,
     MAV_ACTION_LOITER_MAX_TIME = 40,
-		MAV_ACTION_START_HILSIM = 41,
-		MAV_ACTION_STOP_HILSIM = 42,    
+    MAV_ACTION_START_HILSIM = 41,
+    MAV_ACTION_STOP_HILSIM = 42,    
     MAV_ACTION_NB        ///< Number of MAV actions
 };
 
-
-
-#define MAVLINK_STX 0xD5 ///< Packet start sign
-#define MAVLINK_STX_LEN 1 ///< Length of start sign
 #define MAVLINK_MAX_PAYLOAD_LEN 255 ///< Maximum payload length
 
 #define MAVLINK_CORE_HEADER_LEN 5 ///< Length of core header (of the comm. layer): message length (1 byte) + message sequence (1 byte) + message system id (1 byte) + message component id (1 byte) + message type id (1 byte)
-#define MAVLINK_NUM_HEADER_BYTES (MAVLINK_CORE_HEADER_LEN + MAVLINK_STX_LEN) ///< Length of all header bytes, including core and checksum
+#define MAVLINK_NUM_HEADER_BYTES (MAVLINK_CORE_HEADER_LEN + 1) ///< Length of all header bytes, including core and checksum
 #define MAVLINK_NUM_CHECKSUM_BYTES 2
 #define MAVLINK_NUM_NON_PAYLOAD_BYTES (MAVLINK_NUM_HEADER_BYTES + MAVLINK_NUM_CHECKSUM_BYTES)
-#define MAVLINK_NUM_NON_STX_PAYLOAD_BYTES (MAVLINK_NUM_NON_PAYLOAD_BYTES - MAVLINK_STX_LEN)
 
 #define MAVLINK_MAX_PACKET_LEN (MAVLINK_MAX_PAYLOAD_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES) ///< Maximum packet length
-//#define MAVLINK_MAX_DATA_LEN MAVLINK_MAX_PACKET_LEN - MAVLINK_STX_LEN
 
-typedef struct __mavlink_system
-{
+typedef struct param_union {
+	union {
+		float param_float;
+		int32_t param_int32;
+		uint32_t param_uint32;
+	};
+	uint8_t type;
+} mavlink_param_union_t;
+
+typedef struct __mavlink_system {
     uint8_t sysid;   ///< Used by the MAVLink message_xx_send() convenience function
     uint8_t compid;  ///< Used by the MAVLink message_xx_send() convenience function
     uint8_t type;    ///< Unused, can be used by user to store the system's type
     uint8_t state;   ///< Unused, can be used by user to store the system's state
     uint8_t mode;    ///< Unused, can be used by user to store the system's mode
-    uint8_t nav_mode; ///< Unused, can be used by user to store the system's navigation mode
+    uint8_t nav_mode;    ///< Unused, can be used by user to store the system's navigation mode
 } mavlink_system_t;
 
-typedef struct __mavlink_message
-{
-	union
-	{
-		uint16_t ck;     ///< Checksum word
-		struct
-		{
-			uint8_t ck_a;    ///< Checksum low byte
-			uint8_t ck_b;    ///< Checksum high byte
-                };
-	};
-    uint8_t STX;     ///< start of packet marker
+typedef struct __mavlink_message {
+    uint16_t checksum; /// sent at end of packet
+    uint8_t magic;   ///< protocol magic marker
     uint8_t len;     ///< Length of payload
     uint8_t seq;     ///< Sequence of packet
     uint8_t sysid;   ///< ID of message sender system/aircraft
     uint8_t compid;  ///< ID of the message sender component
     uint8_t msgid;   ///< ID of message in payload
-    uint8_t payload[MAVLINK_MAX_PAYLOAD_LEN]; ///< Payload data, ALIGNMENT IMPORTANT ON MCU
+    union {  ///< Payload data, ALIGNMENT IMPORTANT ON MCU
+	char       c[MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES];
+	int8_t    i8[MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES];
+	uint8_t   u8[MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES];
+	int16_t  i16[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+1)/2];
+	uint16_t u16[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+1)/2];
+	int32_t  i32[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+3)/4];
+	uint32_t u32[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+3)/4];
+	int64_t  i64[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+7)/8];
+	uint64_t u64[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+7)/8];
+	float      f[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+3)/4];
+	double     d[(MAVLINK_MAX_PAYLOAD_LEN+MAVLINK_NUM_CHECKSUM_BYTES+7)/8];
+    } payload;
 } mavlink_message_t;
 
-typedef struct __mavlink_header
-{
-	union
-	{
-		uint16_t ck;     ///< Checksum word
-		struct
-		{
-			uint8_t ck_a;    ///< Checksum low byte
-			uint8_t ck_b;    ///< Checksum high byte
-                };
-	};
-    uint8_t STX;     ///< start of packet marker
-    uint8_t len;     ///< Length of payload
-    uint8_t seq;     ///< Sequence of packet
-    uint8_t sysid;   ///< ID of message sender system/aircraft
-    uint8_t compid;  ///< ID of the message sender component
-    uint8_t msgid;   ///< ID of message in payload
-} mavlink_header_t;
+typedef enum {
+	MAVLINK_TYPE_CHAR     = 0,
+	MAVLINK_TYPE_UINT8_T  = 1,
+	MAVLINK_TYPE_INT8_T   = 2,
+	MAVLINK_TYPE_UINT16_T = 3,
+	MAVLINK_TYPE_INT16_T  = 4,
+	MAVLINK_TYPE_UINT32_T = 5,
+	MAVLINK_TYPE_INT32_T  = 6,
+	MAVLINK_TYPE_UINT64_T = 7,
+	MAVLINK_TYPE_INT64_T  = 8,
+	MAVLINK_TYPE_FLOAT    = 9,
+	MAVLINK_TYPE_DOUBLE   = 10
+} mavlink_message_type_t;
 
-typedef enum
-{
+#define MAVLINK_MAX_FIELDS 64
+
+typedef struct __mavlink_field_info {
+	const char *name;             // name of this field
+	mavlink_message_type_t type;  // type of this field
+	unsigned array_length;        // if non-zero, field is an array
+	unsigned wire_offset;         // offset of each field in the payload
+	unsigned structure_offset;    // offset in a C structure
+} mavlink_field_info_t;
+
+// note that in this structure the order of fields is the order
+// in the XML file, not necessary the wire order
+typedef struct __mavlink_message_info {
+	const char *name;                                      // name of the message
+	unsigned num_fields;                                   // how many fields in this message
+	const mavlink_field_info_t fields[MAVLINK_MAX_FIELDS]; // field information
+} mavlink_message_info_t;
+
+#define MAVLINK_PAYLOAD(msg) msg->payload.u8
+
+// checksum is immediately after the payload bytes
+#define mavlink_ck_a(msg) msg->payload.u8[(msg)->len]
+#define mavlink_ck_b(msg) msg->payload.u8[1+(uint16_t)(msg)->len]
+
+typedef enum {
     MAVLINK_COMM_0,
     MAVLINK_COMM_1,
     MAVLINK_COMM_2,
-    MAVLINK_COMM_3,
-    MAVLINK_COMM_4,
-    MAVLINK_COMM_5,
-    MAVLINK_COMM_6,
-    MAVLINK_COMM_7,
-    MAVLINK_COMM_8,
-    MAVLINK_COMM_9,
-    MAVLINK_COMM_10,
-    MAVLINK_COMM_11,
-    MAVLINK_COMM_12,
-    MAVLINK_COMM_13,
-    MAVLINK_COMM_14,
-    MAVLINK_COMM_15,
-    MAVLINK_COMM_NB_HIGH = 16
+    MAVLINK_COMM_3
 } mavlink_channel_t;
 
-typedef enum
-{
+/*
+ * applications can set MAVLINK_COMM_NUM_BUFFERS to the maximum number
+ * of buffers they will use. If more are used, then the result will be
+ * a stack overrun
+ */
+#ifndef MAVLINK_COMM_NUM_BUFFERS
+#if (defined linux) | (defined __linux) | (defined  __MACH__) | (defined _WIN32)
+# define MAVLINK_COMM_NUM_BUFFERS 16
+#else
+# define MAVLINK_COMM_NUM_BUFFERS 4
+#endif
+#endif
+
+typedef enum {
     MAVLINK_PARSE_STATE_UNINIT=0,
     MAVLINK_PARSE_STATE_IDLE,
     MAVLINK_PARSE_STATE_GOT_STX,
@@ -156,17 +172,7 @@ typedef enum
     MAVLINK_PARSE_STATE_GOT_CRC1
 } mavlink_parse_state_t; ///< The state machine for the comm parser
 
-typedef struct __mavlink_status
-{
-	union
-	{
-		uint16_t ck;     ///< Checksum word
-		struct
-		{
-			uint8_t ck_a;    ///< Checksum low byte
-			uint8_t ck_b;    ///< Checksum high byte
-                };
-	};
+typedef struct __mavlink_status {
     uint8_t msg_received;               ///< Number of received messages
     uint8_t buffer_overrun;             ///< Number of buffer overruns
     uint8_t parse_error;                ///< Number of parse errors
@@ -177,5 +183,8 @@ typedef struct __mavlink_status
     uint16_t packet_rx_success_count;   ///< Received packets
     uint16_t packet_rx_drop_count;      ///< Number of packet drops
 } mavlink_status_t;
+
+#define MAVLINK_BIG_ENDIAN 0
+#define MAVLINK_LITTLE_ENDIAN 1
 
 #endif /* MAVLINK_TYPES_H_ */
