@@ -1,10 +1,10 @@
 // MESSAGE SCALED_IMU PACKING
 
-#define MAVLINK_MSG_ID_SCALED_IMU 26
+#define MAVLINK_MSG_ID_SCALED_IMU 27
 
 typedef struct __mavlink_scaled_imu_t
 {
- uint64_t usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ uint32_t time_boot_ms; ///< Timestamp (milliseconds since system boot)
  int16_t xacc; ///< X acceleration (mg)
  int16_t yacc; ///< Y acceleration (mg)
  int16_t zacc; ///< Z acceleration (mg)
@@ -16,24 +16,24 @@ typedef struct __mavlink_scaled_imu_t
  int16_t zmag; ///< Z Magnetic field (milli tesla)
 } mavlink_scaled_imu_t;
 
-#define MAVLINK_MSG_ID_SCALED_IMU_LEN 26
-#define MAVLINK_MSG_ID_26_LEN 26
+#define MAVLINK_MSG_ID_SCALED_IMU_LEN 22
+#define MAVLINK_MSG_ID_27_LEN 22
 
 
 
 #define MAVLINK_MESSAGE_INFO_SCALED_IMU { \
 	"SCALED_IMU", \
 	10, \
-	{  { "usec", MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_scaled_imu_t, usec) }, \
-         { "xacc", MAVLINK_TYPE_INT16_T, 0, 8, offsetof(mavlink_scaled_imu_t, xacc) }, \
-         { "yacc", MAVLINK_TYPE_INT16_T, 0, 10, offsetof(mavlink_scaled_imu_t, yacc) }, \
-         { "zacc", MAVLINK_TYPE_INT16_T, 0, 12, offsetof(mavlink_scaled_imu_t, zacc) }, \
-         { "xgyro", MAVLINK_TYPE_INT16_T, 0, 14, offsetof(mavlink_scaled_imu_t, xgyro) }, \
-         { "ygyro", MAVLINK_TYPE_INT16_T, 0, 16, offsetof(mavlink_scaled_imu_t, ygyro) }, \
-         { "zgyro", MAVLINK_TYPE_INT16_T, 0, 18, offsetof(mavlink_scaled_imu_t, zgyro) }, \
-         { "xmag", MAVLINK_TYPE_INT16_T, 0, 20, offsetof(mavlink_scaled_imu_t, xmag) }, \
-         { "ymag", MAVLINK_TYPE_INT16_T, 0, 22, offsetof(mavlink_scaled_imu_t, ymag) }, \
-         { "zmag", MAVLINK_TYPE_INT16_T, 0, 24, offsetof(mavlink_scaled_imu_t, zmag) }, \
+	{  { "time_boot_ms", MAVLINK_TYPE_UINT32_T, 0, 0, offsetof(mavlink_scaled_imu_t, time_boot_ms) }, \
+         { "xacc", MAVLINK_TYPE_INT16_T, 0, 4, offsetof(mavlink_scaled_imu_t, xacc) }, \
+         { "yacc", MAVLINK_TYPE_INT16_T, 0, 6, offsetof(mavlink_scaled_imu_t, yacc) }, \
+         { "zacc", MAVLINK_TYPE_INT16_T, 0, 8, offsetof(mavlink_scaled_imu_t, zacc) }, \
+         { "xgyro", MAVLINK_TYPE_INT16_T, 0, 10, offsetof(mavlink_scaled_imu_t, xgyro) }, \
+         { "ygyro", MAVLINK_TYPE_INT16_T, 0, 12, offsetof(mavlink_scaled_imu_t, ygyro) }, \
+         { "zgyro", MAVLINK_TYPE_INT16_T, 0, 14, offsetof(mavlink_scaled_imu_t, zgyro) }, \
+         { "xmag", MAVLINK_TYPE_INT16_T, 0, 16, offsetof(mavlink_scaled_imu_t, xmag) }, \
+         { "ymag", MAVLINK_TYPE_INT16_T, 0, 18, offsetof(mavlink_scaled_imu_t, ymag) }, \
+         { "zmag", MAVLINK_TYPE_INT16_T, 0, 20, offsetof(mavlink_scaled_imu_t, zmag) }, \
          } \
 }
 
@@ -44,7 +44,7 @@ typedef struct __mavlink_scaled_imu_t
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param msg The MAVLink message to compress the data into
  *
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @param time_boot_ms Timestamp (milliseconds since system boot)
  * @param xacc X acceleration (mg)
  * @param yacc Y acceleration (mg)
  * @param zacc Z acceleration (mg)
@@ -57,22 +57,22 @@ typedef struct __mavlink_scaled_imu_t
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_scaled_imu_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-						       uint64_t usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
+						       uint32_t time_boot_ms, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
 	msg->msgid = MAVLINK_MSG_ID_SCALED_IMU;
 
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	put_int16_t_by_index(msg, 8, xacc); // X acceleration (mg)
-	put_int16_t_by_index(msg, 10, yacc); // Y acceleration (mg)
-	put_int16_t_by_index(msg, 12, zacc); // Z acceleration (mg)
-	put_int16_t_by_index(msg, 14, xgyro); // Angular speed around X axis (millirad /sec)
-	put_int16_t_by_index(msg, 16, ygyro); // Angular speed around Y axis (millirad /sec)
-	put_int16_t_by_index(msg, 18, zgyro); // Angular speed around Z axis (millirad /sec)
-	put_int16_t_by_index(msg, 20, xmag); // X Magnetic field (milli tesla)
-	put_int16_t_by_index(msg, 22, ymag); // Y Magnetic field (milli tesla)
-	put_int16_t_by_index(msg, 24, zmag); // Z Magnetic field (milli tesla)
+	put_uint32_t_by_index(msg, 0, time_boot_ms); // Timestamp (milliseconds since system boot)
+	put_int16_t_by_index(msg, 4, xacc); // X acceleration (mg)
+	put_int16_t_by_index(msg, 6, yacc); // Y acceleration (mg)
+	put_int16_t_by_index(msg, 8, zacc); // Z acceleration (mg)
+	put_int16_t_by_index(msg, 10, xgyro); // Angular speed around X axis (millirad /sec)
+	put_int16_t_by_index(msg, 12, ygyro); // Angular speed around Y axis (millirad /sec)
+	put_int16_t_by_index(msg, 14, zgyro); // Angular speed around Z axis (millirad /sec)
+	put_int16_t_by_index(msg, 16, xmag); // X Magnetic field (milli tesla)
+	put_int16_t_by_index(msg, 18, ymag); // Y Magnetic field (milli tesla)
+	put_int16_t_by_index(msg, 20, zmag); // Z Magnetic field (milli tesla)
 
-	return mavlink_finalize_message(msg, system_id, component_id, 26, 222);
+	return mavlink_finalize_message(msg, system_id, component_id, 22, 170);
 }
 
 /**
@@ -81,7 +81,7 @@ static inline uint16_t mavlink_msg_scaled_imu_pack(uint8_t system_id, uint8_t co
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
  * @param msg The MAVLink message to compress the data into
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @param time_boot_ms Timestamp (milliseconds since system boot)
  * @param xacc X acceleration (mg)
  * @param yacc Y acceleration (mg)
  * @param zacc Z acceleration (mg)
@@ -95,22 +95,22 @@ static inline uint16_t mavlink_msg_scaled_imu_pack(uint8_t system_id, uint8_t co
  */
 static inline uint16_t mavlink_msg_scaled_imu_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
 							   mavlink_message_t* msg,
-						           uint64_t usec,int16_t xacc,int16_t yacc,int16_t zacc,int16_t xgyro,int16_t ygyro,int16_t zgyro,int16_t xmag,int16_t ymag,int16_t zmag)
+						           uint32_t time_boot_ms,int16_t xacc,int16_t yacc,int16_t zacc,int16_t xgyro,int16_t ygyro,int16_t zgyro,int16_t xmag,int16_t ymag,int16_t zmag)
 {
 	msg->msgid = MAVLINK_MSG_ID_SCALED_IMU;
 
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	put_int16_t_by_index(msg, 8, xacc); // X acceleration (mg)
-	put_int16_t_by_index(msg, 10, yacc); // Y acceleration (mg)
-	put_int16_t_by_index(msg, 12, zacc); // Z acceleration (mg)
-	put_int16_t_by_index(msg, 14, xgyro); // Angular speed around X axis (millirad /sec)
-	put_int16_t_by_index(msg, 16, ygyro); // Angular speed around Y axis (millirad /sec)
-	put_int16_t_by_index(msg, 18, zgyro); // Angular speed around Z axis (millirad /sec)
-	put_int16_t_by_index(msg, 20, xmag); // X Magnetic field (milli tesla)
-	put_int16_t_by_index(msg, 22, ymag); // Y Magnetic field (milli tesla)
-	put_int16_t_by_index(msg, 24, zmag); // Z Magnetic field (milli tesla)
+	put_uint32_t_by_index(msg, 0, time_boot_ms); // Timestamp (milliseconds since system boot)
+	put_int16_t_by_index(msg, 4, xacc); // X acceleration (mg)
+	put_int16_t_by_index(msg, 6, yacc); // Y acceleration (mg)
+	put_int16_t_by_index(msg, 8, zacc); // Z acceleration (mg)
+	put_int16_t_by_index(msg, 10, xgyro); // Angular speed around X axis (millirad /sec)
+	put_int16_t_by_index(msg, 12, ygyro); // Angular speed around Y axis (millirad /sec)
+	put_int16_t_by_index(msg, 14, zgyro); // Angular speed around Z axis (millirad /sec)
+	put_int16_t_by_index(msg, 16, xmag); // X Magnetic field (milli tesla)
+	put_int16_t_by_index(msg, 18, ymag); // Y Magnetic field (milli tesla)
+	put_int16_t_by_index(msg, 20, zmag); // Z Magnetic field (milli tesla)
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 26, 222);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 22, 170);
 }
 
 /**
@@ -123,14 +123,14 @@ static inline uint16_t mavlink_msg_scaled_imu_pack_chan(uint8_t system_id, uint8
  */
 static inline uint16_t mavlink_msg_scaled_imu_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_scaled_imu_t* scaled_imu)
 {
-	return mavlink_msg_scaled_imu_pack(system_id, component_id, msg, scaled_imu->usec, scaled_imu->xacc, scaled_imu->yacc, scaled_imu->zacc, scaled_imu->xgyro, scaled_imu->ygyro, scaled_imu->zgyro, scaled_imu->xmag, scaled_imu->ymag, scaled_imu->zmag);
+	return mavlink_msg_scaled_imu_pack(system_id, component_id, msg, scaled_imu->time_boot_ms, scaled_imu->xacc, scaled_imu->yacc, scaled_imu->zacc, scaled_imu->xgyro, scaled_imu->ygyro, scaled_imu->zgyro, scaled_imu->xmag, scaled_imu->ymag, scaled_imu->zmag);
 }
 
 /**
  * @brief Send a scaled_imu message
  * @param chan MAVLink channel to send the message
  *
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @param time_boot_ms Timestamp (milliseconds since system boot)
  * @param xacc X acceleration (mg)
  * @param yacc Y acceleration (mg)
  * @param zacc Z acceleration (mg)
@@ -143,23 +143,23 @@ static inline uint16_t mavlink_msg_scaled_imu_encode(uint8_t system_id, uint8_t 
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_scaled_imu_send(mavlink_channel_t chan, uint64_t usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
+static inline void mavlink_msg_scaled_imu_send(mavlink_channel_t chan, uint32_t time_boot_ms, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 26);
+	MAVLINK_ALIGNED_MESSAGE(msg, 22);
 	msg->msgid = MAVLINK_MSG_ID_SCALED_IMU;
 
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	put_int16_t_by_index(msg, 8, xacc); // X acceleration (mg)
-	put_int16_t_by_index(msg, 10, yacc); // Y acceleration (mg)
-	put_int16_t_by_index(msg, 12, zacc); // Z acceleration (mg)
-	put_int16_t_by_index(msg, 14, xgyro); // Angular speed around X axis (millirad /sec)
-	put_int16_t_by_index(msg, 16, ygyro); // Angular speed around Y axis (millirad /sec)
-	put_int16_t_by_index(msg, 18, zgyro); // Angular speed around Z axis (millirad /sec)
-	put_int16_t_by_index(msg, 20, xmag); // X Magnetic field (milli tesla)
-	put_int16_t_by_index(msg, 22, ymag); // Y Magnetic field (milli tesla)
-	put_int16_t_by_index(msg, 24, zmag); // Z Magnetic field (milli tesla)
+	put_uint32_t_by_index(msg, 0, time_boot_ms); // Timestamp (milliseconds since system boot)
+	put_int16_t_by_index(msg, 4, xacc); // X acceleration (mg)
+	put_int16_t_by_index(msg, 6, yacc); // Y acceleration (mg)
+	put_int16_t_by_index(msg, 8, zacc); // Z acceleration (mg)
+	put_int16_t_by_index(msg, 10, xgyro); // Angular speed around X axis (millirad /sec)
+	put_int16_t_by_index(msg, 12, ygyro); // Angular speed around Y axis (millirad /sec)
+	put_int16_t_by_index(msg, 14, zgyro); // Angular speed around Z axis (millirad /sec)
+	put_int16_t_by_index(msg, 16, xmag); // X Magnetic field (milli tesla)
+	put_int16_t_by_index(msg, 18, ymag); // Y Magnetic field (milli tesla)
+	put_int16_t_by_index(msg, 20, zmag); // Z Magnetic field (milli tesla)
 
-	mavlink_finalize_message_chan_send(msg, chan, 26, 222);
+	mavlink_finalize_message_chan_send(msg, chan, 22, 170);
 }
 
 #endif
@@ -168,13 +168,13 @@ static inline void mavlink_msg_scaled_imu_send(mavlink_channel_t chan, uint64_t 
 
 
 /**
- * @brief Get field usec from scaled_imu message
+ * @brief Get field time_boot_ms from scaled_imu message
  *
- * @return Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @return Timestamp (milliseconds since system boot)
  */
-static inline uint64_t mavlink_msg_scaled_imu_get_usec(const mavlink_message_t* msg)
+static inline uint32_t mavlink_msg_scaled_imu_get_time_boot_ms(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint64_t(msg,  0);
+	return MAVLINK_MSG_RETURN_uint32_t(msg,  0);
 }
 
 /**
@@ -184,7 +184,7 @@ static inline uint64_t mavlink_msg_scaled_imu_get_usec(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_scaled_imu_get_xacc(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int16_t(msg,  8);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  4);
 }
 
 /**
@@ -194,7 +194,7 @@ static inline int16_t mavlink_msg_scaled_imu_get_xacc(const mavlink_message_t* m
  */
 static inline int16_t mavlink_msg_scaled_imu_get_yacc(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int16_t(msg,  10);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  6);
 }
 
 /**
@@ -204,7 +204,7 @@ static inline int16_t mavlink_msg_scaled_imu_get_yacc(const mavlink_message_t* m
  */
 static inline int16_t mavlink_msg_scaled_imu_get_zacc(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int16_t(msg,  12);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  8);
 }
 
 /**
@@ -214,7 +214,7 @@ static inline int16_t mavlink_msg_scaled_imu_get_zacc(const mavlink_message_t* m
  */
 static inline int16_t mavlink_msg_scaled_imu_get_xgyro(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int16_t(msg,  14);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  10);
 }
 
 /**
@@ -224,7 +224,7 @@ static inline int16_t mavlink_msg_scaled_imu_get_xgyro(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_scaled_imu_get_ygyro(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int16_t(msg,  16);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  12);
 }
 
 /**
@@ -234,7 +234,7 @@ static inline int16_t mavlink_msg_scaled_imu_get_ygyro(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_scaled_imu_get_zgyro(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int16_t(msg,  18);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  14);
 }
 
 /**
@@ -244,7 +244,7 @@ static inline int16_t mavlink_msg_scaled_imu_get_zgyro(const mavlink_message_t* 
  */
 static inline int16_t mavlink_msg_scaled_imu_get_xmag(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int16_t(msg,  20);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  16);
 }
 
 /**
@@ -254,7 +254,7 @@ static inline int16_t mavlink_msg_scaled_imu_get_xmag(const mavlink_message_t* m
  */
 static inline int16_t mavlink_msg_scaled_imu_get_ymag(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int16_t(msg,  22);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  18);
 }
 
 /**
@@ -264,7 +264,7 @@ static inline int16_t mavlink_msg_scaled_imu_get_ymag(const mavlink_message_t* m
  */
 static inline int16_t mavlink_msg_scaled_imu_get_zmag(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int16_t(msg,  24);
+	return MAVLINK_MSG_RETURN_int16_t(msg,  20);
 }
 
 /**
@@ -276,7 +276,7 @@ static inline int16_t mavlink_msg_scaled_imu_get_zmag(const mavlink_message_t* m
 static inline void mavlink_msg_scaled_imu_decode(const mavlink_message_t* msg, mavlink_scaled_imu_t* scaled_imu)
 {
 #if MAVLINK_NEED_BYTE_SWAP
-	scaled_imu->usec = mavlink_msg_scaled_imu_get_usec(msg);
+	scaled_imu->time_boot_ms = mavlink_msg_scaled_imu_get_time_boot_ms(msg);
 	scaled_imu->xacc = mavlink_msg_scaled_imu_get_xacc(msg);
 	scaled_imu->yacc = mavlink_msg_scaled_imu_get_yacc(msg);
 	scaled_imu->zacc = mavlink_msg_scaled_imu_get_zacc(msg);
@@ -287,6 +287,6 @@ static inline void mavlink_msg_scaled_imu_decode(const mavlink_message_t* msg, m
 	scaled_imu->ymag = mavlink_msg_scaled_imu_get_ymag(msg);
 	scaled_imu->zmag = mavlink_msg_scaled_imu_get_zmag(msg);
 #else
-	memcpy(scaled_imu, MAVLINK_PAYLOAD(msg), 26);
+	memcpy(scaled_imu, MAVLINK_PAYLOAD(msg), 22);
 #endif
 }

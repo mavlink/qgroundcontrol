@@ -1,6 +1,6 @@
 // MESSAGE STATUSTEXT PACKING
 
-#define MAVLINK_MSG_ID_STATUSTEXT 254
+#define MAVLINK_MSG_ID_STATUSTEXT 253
 
 typedef struct __mavlink_statustext_t
 {
@@ -9,7 +9,7 @@ typedef struct __mavlink_statustext_t
 } mavlink_statustext_t;
 
 #define MAVLINK_MSG_ID_STATUSTEXT_LEN 51
-#define MAVLINK_MSG_ID_254_LEN 51
+#define MAVLINK_MSG_ID_253_LEN 51
 
 #define MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN 50
 

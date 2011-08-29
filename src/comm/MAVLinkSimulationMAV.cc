@@ -40,7 +40,7 @@ MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int sy
     nextSPYaw(0.0),
     sys_mode(MAV_MODE_PREFLIGHT),
     sys_state(MAV_STATE_STANDBY),
-    nav_mode(MAV_FLIGHT_MODE_PREFLIGHT),
+    nav_mode(MAV_AUTOPILOT_CUSTOM_MODE_PREFLIGHT),
     flying(false),
     mavlink_version(version)
 {
@@ -62,13 +62,13 @@ void MAVLinkSimulationMAV::mainloop()
     if (flying) {
         sys_state = MAV_STATE_ACTIVE;
         sys_mode = MAV_MODE_AUTO;
-        nav_mode = MAV_FLIGHT_MODE_AUTO_MISSION;
+        nav_mode = MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION;
     }
 
     // 1 Hz execution
     if (timer1Hz <= 0) {
         mavlink_message_t msg;
-        mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_TYPE_FIXED_WING, MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_MODE_GUIDED, MAV_FLIGHT_MODE_AUTO_MISSION, MAV_STATE_ACTIVE, MAV_SAFETY_ARMED, 0xFF);
+        mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_TYPE_FIXED_WING, MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_MODE_GUIDED, MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION, MAV_STATE_ACTIVE);
         link->sendMAVLinkMessage(&msg);
         planner.handleMessage(msg);
 
@@ -142,7 +142,7 @@ void MAVLinkSimulationMAV::mainloop()
 
         // ATTITUDE
         mavlink_attitude_t attitude;
-        attitude.usec = 0;
+        attitude.time_boot_ms = 0;
         attitude.roll = 0.0f;
         attitude.pitch = 0.0f;
         attitude.yaw = yaw;
@@ -158,10 +158,10 @@ void MAVLinkSimulationMAV::mainloop()
         status.load = 300;
 //        status.mode = sys_mode;
 //        status.nav_mode = nav_mode;
-        status.errors_uart = 0;
+        status.errors_comm = 0;
         status.voltage_battery = 10500;
 //        status.status = sys_state;
-        status.battery_percent = 230;
+        status.battery_remaining = 90;
         mavlink_msg_sys_status_encode(systemid, MAV_COMP_ID_IMU, &msg, &status);
         link->sendMAVLinkMessage(&msg);
         timer10Hz = 5;
@@ -196,7 +196,7 @@ void MAVLinkSimulationMAV::mainloop()
         pressure.press_diff1 = 2000;
         pressure.press_diff2 = 5000;
         pressure.temperature = 18150; // 18.15 deg Celsius
-        pressure.usec = 0; // Works also with zero timestamp
+        pressure.time_usec = 0; // Works also with zero timestamp
         mavlink_msg_raw_pressure_encode(systemid, MAV_COMP_ID_IMU, &msg, &pressure);
         link->sendMAVLinkMessage(&msg);
     }
@@ -288,7 +288,7 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
     case MAVLINK_MSG_ID_SET_MODE: {
         mavlink_set_mode_t mode;
         mavlink_msg_set_mode_decode(&msg, &mode);
-        if (systemid == mode.target) sys_mode = mode.mode;
+        if (systemid == mode.target_system) sys_mode = mode.base_mode;
     }
     break;
     // FIXME MAVLINKV10PORTINGNEEDED
@@ -317,11 +317,11 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
 //        }
 //    }
     break;
-    case MAVLINK_MSG_ID_LOCAL_POSITION_SETPOINT_SET: {
-        mavlink_local_position_setpoint_set_t sp;
-        mavlink_msg_local_position_setpoint_set_decode(&msg, &sp);
+    case MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT: {
+        mavlink_set_local_position_setpoint_t sp;
+        mavlink_msg_set_local_position_setpoint_decode(&msg, &sp);
         if (sp.target_system == this->systemid) {
-            nav_mode = MAV_FLIGHT_MODE_AUTO_MISSION;
+            nav_mode = MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION;
             previousSPX = nextSPX;
             previousSPY = nextSPY;
             previousSPZ = nextSPZ;

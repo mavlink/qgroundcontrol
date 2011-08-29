@@ -73,7 +73,7 @@ protected:
 #ifdef MAVLINK_ENABLED_SLUGS
     mavlink_air_data_t tmpAirData;
 #endif
-    mavlink_gps_raw_t tmpGpsData;
+    mavlink_gps_raw_int_t tmpGpsData;
 #ifdef MAVLINK_ENABLED_SLUGS
     mavlink_gps_date_time_t tmpGpsTime;
 #endif

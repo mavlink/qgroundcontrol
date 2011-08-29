@@ -523,8 +523,10 @@ signals:
     void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
 
 protected:
-    /** @brief Get the UNIX timestamp in milliseconds */
+    /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
     quint64 getUnixTime(quint64 time=0);
+    /** @brief Get the UNIX timestamp in milliseconds, enter milliseconds */
+    quint64 getUnixTimeFromMs(quint64 time);
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
 

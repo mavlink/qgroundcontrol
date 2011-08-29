@@ -2,31 +2,6 @@
 <mavlink>
      <version>3</version>
      <enums>
-     	  <enum name="MAV_DATA_TYPE">
-     	  	   <description>Valid data types for parameter interface</description>
-               <entry name="MAV_DATA_TYPE_FLOAT">
-                    <description>IEEE-754 floating point number</description>
-               </entry>
-               <entry name="MAV_DATA_TYPE_UINT32">
-                    <description>32 bit unsigned integer (C99: uint32_t)</description>
-               </entry>
-               <entry name="MAV_DATA_TYPE_INT32">
-                    <description>32 bit signed integer (C99: int32_t)</description>
-               </entry>
-                              <!--
-               <entry name="MAV_DATA_TYPE_UINT8">
-                    <description>8 bit unsigned integer (C99: uint8_t)</description>
-               </entry>
-               <entry name="MAV_DATA_TYPE_INT8">
-                    <description>8 bit signed integer (C99: int8_t)</description>
-               </entry>
-               <entry name="MAV_DATA_TYPE_UINT16">
-                    <description>16 bit unsigned integer (C99: uint16_t)</description>
-               </entry>
-               <entry name="MAV_DATA_TYPE_INT16">
-                    <description>16 bit signed integer (C99: int16_t)</description>
-               </entry>-->
-          </enum>
           <enum name="MAV_AUTOPILOT">
                <description>Micro air vehicle / autopilot classes. This identifies the individual model.</description>
                <entry value="0" name="MAV_AUTOPILOT_GENERIC">
@@ -67,16 +42,38 @@
                </entry>
           </enum>
           <!-- WARNING: MAV_ACTION Enum is no longer supported - has been removed. Please use MAV_CMD -->
-          <enum name="MAV_SAFETY">
-          		<description>MAV safety override. This is a top-level safety override. Independent of the general state machine this mode shall ensure the safe operation. the MAV_SAFETY state should ONLY be switchable in the MAV_STATE_STANDBY state and NOT in flight.</description>
-          		<entry value="0" name="MAV_SAFETY_HIL">
-          			<description>MAV safety lock set to hardware in the loop simulation. All motors / actuators are blocked, but internal software is full operational.</description>
+          <enum name="MAV_MODE_FLAG">
+          		<description>These flags encode the MAV mode.</description>
+          		<entry value="64" name="MAV_MODE_FLAG_SAFETY_ARMED">
+          			<description>0b10000000 MAV safety set to armed. Motors are enabled / running / can start. Ready to fly.</description>
           		</entry>
-          		<entry value="1" name="MAV_SAFETY_DISARMED">
+                <entry value="0" name="MAV_MODE_FLAG_SAFETY_DISARMED">
           			<description>MAV safety set to disarmed. Motors are BLOCKED. Independent of the system mode and navigation mode all actuators are blocked.</description>
           		</entry>
-          		<entry value="2" name="MAV_SAFETY_ARMED">
-          			<description>MAV safety set to armed. Motors are ready / could be started. All actuators are active.</description>
+                <entry value="32" name="MAV_MODE_FLAG_MANUAL_INPUT_ENABLED">
+          			<description>0b01000000 Remote control input is enabled.</description>
+          		</entry>
+          		<entry value="0" name="MAV_MODE_FLAG_MANUAL_INPUT_DISABLED">
+          			<description>Remote control input is disabled</description>
+          		</entry>
+          		<entry value="16" name="MAV_MODE_FLAG_HIL_ENABLED">
+          			<description>0b00100000 MAV safety lock set to hardware in the loop simulation. All motors / actuators are blocked, but internal software is full operational.</description>
+          		</entry>
+          		<entry value="0" name="MAV_MODE_FLAG_HIL_DISABLED">
+          			<description>Hardware in the loop simulation is not enabled, actuators behave normal.</description>
+          		</entry>
+          </enum>
+          
+          <enum name="MAV_MODE_FLAG_DECODE_POSITION">
+          		<description>These values encode the bit positions of the decode position</description>
+                <entry value="64" name="MAV_MODE_FLAG_DECODE_POSITION_SAFETY">
+          			<description>First bit: 10000000</description>
+          		</entry>
+                <entry value="32" name="MAV_MODE_FLAG_DECODE_POSITION_MANUAL">
+          			<description>Second bit: 01000000</description>
+          		</entry>
+          		<entry value="16" name="MAV_MODE_FLAG_DECODE_POSITION_HIL">
+          			<description>Third bit: 00100000</description>
           		</entry>
           </enum>
           
@@ -100,59 +97,59 @@
                     <description>UNDEFINED mode. This solely depends on the autopilot - use with caution, intended for developers only.</description>
                </entry>
           </enum>
-          <enum name="MAV_FLIGHT_MODE">
-               <entry value="0" name="MAV_FLIGHT_MODE_PREFLIGHT">
+          <enum name="MAV_AUTOPILOT_CUSTOM_MODE">
+               <entry value="0" name="MAV_AUTOPILOT_CUSTOM_MODE_PREFLIGHT">
                     <description>System is currently on ground.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_MANUAL">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_MANUAL">
                     <description>No interaction of the autopilot with the actuator outputs, pure manual flight.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_AUTO_TAKEOFF">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_TAKEOFF">
                     <description>System is during takeoff, not in normal navigation mode yet. Once the plane is moving faster than a few m/s it will lock onto a heading and hold that heading until the desired altitude is reached. Throttle is limited by the RC throttle setting.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_AUTO_HOLD">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_HOLD">
                     <description>System is holding its current position and disabled the mission management. Loitering in mission mode is NOT the hold type, but still mission mode.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_AUTO_MISSION">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION">
                     <description>System is navigating towards the next waypoint and following a mission script.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_AUTO_VECTOR">
-                    <description>System is flying at a defined course and speed. If the vector is not defined by an autonomous approach but constantly by a user, please use MAV_FLIGHT_MODE_FBW_CURSOR_CONTROL</description>
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_VECTOR">
+                    <description>System is flying at a defined course and speed. If the vector is not defined by an autonomous approach but constantly by a user, please use MAV_AUTOPILOT_CUSTOM_MODE_FBW_CURSOR_CONTROL</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_AUTO_RETURNING">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_RETURNING">
                     <description>System is returning straight to home position. Once it reaches there it will hover or loiter at the autopilot's default holding settings.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_AUTO_LANDING">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_LANDING">
                     <description>System is landing. Throttle is controlled by the autopilot. After getting closer than 30 meters, the course will lock to the current heading. Flare, throttle, flaps, gear, and other events can be scripted based on distance to landing point.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_AUTO_LOST">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_LOST">
                     <description>System lost its position input and is in attitude / flight stabilization only.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_STABILIZE_RATES_ACRO">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_RATES_ACRO">
                     <description>The stick inputs commands angular rates. Only recommended for experienced pilots / acrobatic flight.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_STABILIZE_LEVELING">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_LEVELING">
                     <description>RC control with stabilization; let go of the sticks and it will level.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_STABILIZE_ROLL_PITCH_ABSOLUTE">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_PITCH_ABSOLUTE">
                     <description>The autopilot will hold the roll and pitch specified by the control sticks. Throttle is manual. The plane / quadrotor will not roll past the limits set in the configuration of the autopilot. Great for new pilots learning to fly.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_STABILIZE_ROLL_YAW_ALTITUDE">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_YAW_ALTITUDE">
                     <description>Requires airspeed sensor. The autopilot will hold the roll specified by the control sticks. Pitch input from the radio is converted to altitude error, which the autopilot will try and adjust to. Throttle is controlled by autopilot. This is the perfect mode to test your autopilot as your radio inout is substituted for the navigation controls.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_STABILIZE_ROLL_PITCH_YAW_ALTITUDE">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_PITCH_YAW_ALTITUDE">
                     <description>Fly by wire mode, stabilizing roll, pitch, yaw and altitude. Typical altitude hold for quadrotors where the X / Y position is commanded with the roll / pitch stick.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_STABILIZE_CURSOR_CONTROL">
-                    <description>Fly by wire mode, user is only directing the movement, but all flight control is autonomous (similar to MAV_FLIGHT_MODE_AUTO_VECTOR with user input)</description>
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_CURSOR_CONTROL">
+                    <description>Fly by wire mode, user is only directing the movement, but all flight control is autonomous (similar to MAV_AUTOPILOT_CUSTOM_MODE_AUTO_VECTOR with user input)</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_TEST1">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_TEST1">
                     <description>Custom test mode, depends on individual autopilot.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_TEST2">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_TEST2">
                     <description>Custom test mode, depends on individual autopilot.</description>
                </entry>
-               <entry name="MAV_FLIGHT_MODE_TEST3">
+               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_TEST3">
                     <description>Custom test mode, depends on individual autopilot.</description>
                </entry>
           </enum>
@@ -699,47 +696,41 @@
                <description>The heartbeat message shows that a system is present and responding. The type of the MAV and Autopilot hardware allow the receiving system to treat further messages from this system appropriate (e.g. by laying out the user interface based on the autopilot).</description>
                <field type="uint8_t" name="type">Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)</field>
                <field type="uint8_t" name="autopilot">Autopilot type / class. defined in MAV_CLASS ENUM</field>
-               <field type="uint8_t" name="system_mode">System mode, see MAV_MODE ENUM in mavlink/include/mavlink_types.h</field>
-               <field type="uint8_t" name="flight_mode">Navigation mode, see MAV_FLIGHT_MODE ENUM</field>
+               <field type="uint8_t" name="base_mode">System mode bitfield, see MAV_MODE_FLAGS ENUM in mavlink/include/mavlink_types.h</field>
+               <field type="uint16_t" name="custom_mode">Navigation mode bitfield, see MAV_AUTOPILOT_CUSTOM_MODE ENUM for some examples. This field is autopilot-specific.</field>
                <field type="uint8_t" name="system_status">System status flag, see MAV_STATUS ENUM</field>
-               <field type="uint8_t" name="safety_status">System safety lock state, see MAV_SAFETY enum. Also indicates HIL operation</field>
-               <field type="uint8_t" name="link_status">Bitmask showing which links are ok / enabled. 0 for disabled/non functional, 1: enabled Indices: 0: RC, 1: UART1, 2: UART2, 3: UART3, 4: UART4, 5: UART5, 6: I2C, 7: CAN</field>
                <field type="uint8_t_mavlink_version" name="mavlink_version">MAVLink version</field>
           </message>
           
           <message id="1" name="SYS_STATUS">
                <description>The general system state. If the system is following the MAVLink standard, the system state is mainly defined by three orthogonal states/modes: The system mode, which is either LOCKED (motors shut down and locked), MANUAL (system under RC control), GUIDED (system with autonomous position control, position setpoint controlled manually) or AUTO (system guided by path/waypoint planner). The NAV_MODE defined the current flight state: LIFTOFF (often an open-loop maneuver), LANDING, WAYPOINTS or VECTOR. This represents the internal navigation state machine. The system status shows wether the system is currently active or not and if an emergency occured. During the CRITICAL and EMERGENCY states the MAV is still considered to be active, but should start emergency procedures autonomously. After a failure occured it should first move from active to critical to allow manual intervention and then move to emergency after a certain timeout.</description>
-               <field type="uint16_t" name="onboard_control_sensors_present">Bitmask showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
-               <field type="uint16_t" name="onboard_control_sensors_enabled">Bitmask showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
-               <field type="uint16_t" name="onboard_control_sensors_health">Bitmask showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
-               <field type="uint16_t" name="load">Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000</field>
+               <field type="uint32_t" name="onboard_control_sensors_present">Bitmask showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
+               <field type="uint32_t" name="onboard_control_sensors_enabled">Bitmask showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
+               <field type="uint32_t" name="onboard_control_sensors_health">Bitmask showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
+               <field type="uint16_t" name="load">Maximum usage in percent of the mainloop time, (0%: 0, 100%: 10'000) should be always below 10'000</field>
                <field type="uint16_t" name="voltage_battery">Battery voltage, in millivolts (1 = 1 millivolt)</field>
-               <field type="uint16_t" name="current_battery">Battery current, in milliamperes (1 = 1 milliampere)</field>
+               <field type="int16_t" name="current_battery">Battery current, in 10*milliamperes (1 = 10 milliampere), -1: autopilot does not measure the current</field>
                <field type="uint16_t" name="watt">Watts consumed from this battery since startup</field>
-               <field type="uint8_t" name="battery_percent">Remaining battery energy: (0%: 0, 100%: 255)</field>
-               <field type="uint16_t" name="errors_uart">Dropped packets on all links (packets that were corrupted on reception on the MAV)</field>
-               <field type="uint16_t" name="errors_i2c">Dropped packets on all links (packets that were corrupted on reception)</field>
-               <field type="uint16_t" name="errors_spi">Dropped packets on all links (packets that were corrupted on reception)</field>
-               <field type="uint16_t" name="errors_can">Dropped packets on all links (packets that were corrupted on reception)</field>
+               <field type="int8_t" name="battery_remaining">Remaining battery energy: (0%: 0, 100%: 200%), -1: autopilot estimate the remaining battery</field>
+               <field type="uint16_t" name="errors_comm">Communication errors (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)</field>
+               <field type="uint16_t" name="errors_count1">Autopilot-specific errors</field>
+               <field type="uint16_t" name="errors_count2">Autopilot-specific errors</field>
+               <field type="uint16_t" name="errors_count3">Autopilot-specific errors</field>
+               <field type="uint16_t" name="errors_count4">Autopilot-specific errors</field>
           </message>
           
           <message id="2" name="SYSTEM_TIME">
                <description>The system time is the time of the master clock, typically the computer clock of the main onboard computer.</description>
-               <field type="uint64_t" name="time_usec">Timestamp of the master clock in microseconds since UNIX epoch.</field>
+               <field type="uint64_t" name="time_unix_usec">Timestamp of the master clock in microseconds since UNIX epoch.</field>
                <field type="uint32_t" name="time_boot_ms">Timestamp of the component clock since boot time in milliseconds.</field>
           </message>
           <!-- FIXME to be removed / merged with SYSTEM_TIME -->
-          <message id="3" name="SYSTEM_TIME_UTC">
-               <description>UTC date and time from GPS module</description>
-               <field type="uint32_t" name="utc_date">GPS UTC date ddmmyy</field>
-               <field type="uint32_t" name="utc_time">GPS UTC time hhmmss</field>
-          </message>
           <message id="4" name="PING">
                <description>A ping message either requesting or responding to a ping. This allows to measure the system latencies, including serial port, radio modem and UDP connections.</description>
+               <field type="uint64_t" name="time_usec">Unix timestamp in microseconds</field>
                <field type="uint32_t" name="seq">PING sequence</field>
                <field type="uint8_t" name="target_system">0: request ping from all receiving systems, if greater than 0: message is a ping response and number is the system id of the requesting system</field>
                <field type="uint8_t" name="target_component">0: request ping from all receiving components, if greater than 0: message is a ping response and number is the system id of the requesting system</field>
-               <field type="uint64_t" name="time">Unix timestamp in microseconds</field>
           </message>
           <message id="5" name="CHANGE_OPERATOR_CONTROL">
                <description>Request to control this MAV</description>
@@ -760,18 +751,9 @@
           </message>
           <message id="11" name="SET_MODE">
                <description>Set the system mode, as defined by enum MAV_MODE. There is no target component id as the mode is by definition for the overall aircraft, not only for one component.</description>
-               <field type="uint8_t" name="target">The system setting the mode</field>
-               <field type="uint8_t" name="mode">The new mode</field>
-          </message>
-          <message id="12" name="SET_FLIGHT_MODE">
-               <description>Set the system navigation mode, as defined by enum MAV_FLIGHT_MODE. The navigation mode applies to the whole aircraft and thus all components.</description>
-               <field type="uint8_t" name="target">The system setting the mode</field>
-               <field type="uint8_t" name="flight_mode">The new navigation mode</field>
-          </message>
-          <message id="13" name="SET_SAFETY_MODE">
-               <description>Set the system safety mode, as defined by enum MAV_SAFETY. The navigation mode applies to the whole aircraft and thus all components.</description>
-               <field type="uint8_t" name="target">The system setting the mode</field>
-               <field type="uint8_t" name="safety_mode">The new safety mode. The MAV will reject some mode changes during flight.</field>
+               <field type="uint8_t" name="target_system">The system setting the mode</field>
+               <field type="uint8_t" name="base_mode">The new base mode</field>
+               <field type="uint16_t" name="custom_mode">The new autopilot-specific mode. This field can be ignored by an autopilot.</field>
           </message>
           <message id="20" name="PARAM_REQUEST_READ">
                <description>Request to read the onboard parameter with the param_id string id. Onboard parameters are stored as key[const char*] -> value[float]. This allows to send a parameter to any other component (such as the GCS) without the need of previous knowledge of possible parameter names. Thus the same GCS can store different parameters for different autopilots. See also http://qgroundcontrol.org/parameter_interface for a full documentation of QGroundControl and IMU code.</description>
@@ -805,7 +787,7 @@
                <description>The global position, as returned by the Global Positioning System (GPS). This is
                 NOT the global position estimate of the sytem, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate. Coordinate frame is right-handed, Z-axis up (GPS frame)
             </description>
-               <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+               <field type="uint64_t" name="time_usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="uint8_t" name="fix_type">0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.</field>
                <field type="int32_t" name="lat">Latitude in 1E7 degrees</field>
                <field type="int32_t" name="lon">Longitude in 1E7 degrees</field>
@@ -813,12 +795,21 @@
                <field type="uint16_t" name="eph">GPS HDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535</field>
                <field type="uint16_t" name="epv">GPS VDOP horizontal dilution of position in cm (m*100). If unknown, set to: 65535</field>
                <field type="uint16_t" name="vel">GPS ground speed (m/s * 100). If unknown, set to: 65535</field>
-               <field type="uint16_t" name="hdg">Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535</field>
+               <field type="uint16_t" name="cog">Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535</field>
                <field type="uint8_t" name="satellites_visible">Number of satellites visible. If unknown, set to 255</field>
           </message>
-          <message id="26" name="SCALED_IMU">
+          <message id="26" name="GPS_STATUS">
+               <description>The positioning status, as reported by GPS. This message is intended to display status information about each satellite visible to the receiver. See message GLOBAL_POSITION for the global position estimate. This message can contain information for up to 20 satellites.</description>
+               <field type="uint8_t" name="satellites_visible">Number of satellites visible</field>
+               <field type="uint8_t[20]" name="satellite_prn">Global satellite ID</field>
+               <field type="uint8_t[20]" name="satellite_used">0: Satellite not used, 1: used for localization</field>
+               <field type="uint8_t[20]" name="satellite_elevation">Elevation (0: right on top of receiver, 90: on the horizon) of satellite</field>
+               <field type="uint8_t[20]" name="satellite_azimuth">Direction of satellite, 0: 0 deg, 255: 360 deg.</field>
+               <field type="uint8_t[20]" name="satellite_snr">Signal to noise ratio of satellite</field>
+          </message>
+          <message id="27" name="SCALED_IMU">
                <description>The RAW IMU readings for the usual 9DOF sensor setup. This message should contain the scaled values to the described units</description>
-               <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="int16_t" name="xacc">X acceleration (mg)</field>
                <field type="int16_t" name="yacc">Y acceleration (mg)</field>
                <field type="int16_t" name="zacc">Z acceleration (mg)</field>
@@ -829,18 +820,9 @@
                <field type="int16_t" name="ymag">Y Magnetic field (milli tesla)</field>
                <field type="int16_t" name="zmag">Z Magnetic field (milli tesla)</field>
           </message>
-          <message id="27" name="GPS_STATUS">
-               <description>The positioning status, as reported by GPS. This message is intended to display status information about each satellite visible to the receiver. See message GLOBAL_POSITION for the global position estimate. This message can contain information for up to 20 satellites.</description>
-               <field type="uint8_t" name="satellites_visible">Number of satellites visible</field>
-               <field type="uint8_t[20]" name="satellite_prn">Global satellite ID</field>
-               <field type="uint8_t[20]" name="satellite_used">0: Satellite not used, 1: used for localization</field>
-               <field type="uint8_t[20]" name="satellite_elevation">Elevation (0: right on top of receiver, 90: on the horizon) of satellite</field>
-               <field type="uint8_t[20]" name="satellite_azimuth">Direction of satellite, 0: 0 deg, 255: 360 deg.</field>
-               <field type="uint8_t[20]" name="satellite_snr">Signal to noise ratio of satellite</field>
-          </message>
           <message id="28" name="RAW_IMU">
                <description>The RAW IMU readings for the usual 9DOF sensor setup. This message should always contain the true raw values without any scaling to allow data capture and system debugging.</description>
-               <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+               <field type="uint64_t" name="time_usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="int16_t" name="xacc">X acceleration (raw)</field>
                <field type="int16_t" name="yacc">Y acceleration (raw)</field>
                <field type="int16_t" name="zacc">Z acceleration (raw)</field>
@@ -853,22 +835,22 @@
           </message>
           <message id="29" name="RAW_PRESSURE">
                <description>The RAW pressure readings for the typical setup of one absolute pressure and one differential pressure sensor. The sensor values should be the raw, UNSCALED ADC values.</description>
-               <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+               <field type="uint64_t" name="time_usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="int16_t" name="press_abs">Absolute pressure (raw)</field>
                <field type="int16_t" name="press_diff1">Differential pressure 1 (raw)</field>
                <field type="int16_t" name="press_diff2">Differential pressure 2 (raw)</field>
                <field type="int16_t" name="temperature">Raw Temperature measurement (raw)</field>
           </message>
-          <message id="38" name="SCALED_PRESSURE">
+          <message id="30" name="SCALED_PRESSURE">
                <description>The pressure readings for the typical setup of one absolute and differential pressure sensor. The units are as specified in each field.</description>
-               <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="float" name="press_abs">Absolute pressure (hectopascal)</field>
                <field type="float" name="press_diff">Differential pressure 1 (hectopascal)</field>
                <field type="int16_t" name="temperature">Temperature measurement (0.01 degrees celsius)</field>
           </message>
-          <message id="30" name="ATTITUDE">
+          <message id="31" name="ATTITUDE">
                <description>The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right).</description>
-               <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="float" name="roll">Roll angle (rad)</field>
                <field type="float" name="pitch">Pitch angle (rad)</field>
                <field type="float" name="yaw">Yaw angle (rad)</field>
@@ -876,9 +858,9 @@
                <field type="float" name="pitchspeed">Pitch angular speed (rad/s)</field>
                <field type="float" name="yawspeed">Yaw angular speed (rad/s)</field>
           </message>
-          <message id="31" name="LOCAL_POSITION">
+          <message id="32" name="LOCAL_POSITION">
                <description>The filtered local position (e.g. fused computer vision and accelerometers). Coordinate frame is right-handed, Z-axis down (aeronautical frame)</description>
-               <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="float" name="x">X Position</field>
                <field type="float" name="y">Y Position</field>
                <field type="float" name="z">Z Position</field>
@@ -886,33 +868,21 @@
                <field type="float" name="vy">Y Speed</field>
                <field type="float" name="vz">Z Speed</field>
           </message>
-          <message id="33" name="GLOBAL_POSITION">
-               <description>The filtered global position (e.g. fused GPS and accelerometers). Coordinate frame is right-handed, Z-axis up (GPS frame)</description>
-               <field type="uint64_t" name="usec">Timestamp (microseconds since unix epoch)</field>
-               <field type="float" name="lat">Latitude, in degrees</field>
-               <field type="float" name="lon">Longitude, in degrees</field>
-               <field type="float" name="alt">Absolute altitude, in meters</field>
-               <field type="float" name="vx">X Speed (in Latitude direction, positive: going north)</field>
-               <field type="float" name="vy">Y Speed (in Longitude direction, positive: going east)</field>
-               <field type="float" name="vz">Z Speed (in Altitude direction, positive: going up)</field>
-          </message>
-          <message id="32" name="GPS_RAW">
-               <description>IMPORTANT: Please use GPS_RAW_INT for maximum precision. The max FLOAT resolution limits the resolution to about 1.8 m on some places on the earth. The global position, as returned by the Global Positioning System (GPS). This is
-                NOT the global position estimate of the sytem, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate. Coordinate frame is right-handed, Z-axis up (GPS frame)
-            </description>
-               <field type="uint64_t" name="usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
-               <field type="uint8_t" name="fix_type">0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.</field>
-               <field type="float" name="lat">Latitude in degrees</field>
-               <field type="float" name="lon">Longitude in degrees</field>
-               <field type="float" name="alt">Altitude in meters</field>
-               <field type="float" name="eph">GPS HDOP</field>
-               <field type="float" name="epv">GPS VDOP</field>
-               <field type="float" name="v">GPS ground speed</field>
-               <field type="float" name="hdg">Compass heading in degrees, 0..360 degrees</field>
-               <field type="uint8_t" name="satellites_visible">Number of satellites visible</field>
-          </message>
-          <message id="35" name="RC_CHANNELS_RAW">
+          <message id="33" name="GLOBAL_POSITION_INT">
+               <description>The filtered global position (e.g. fused GPS and accelerometers). The position is in GPS-frame (right-handed, Z-up). It
+               is designed as scaled integer message since the resolution of float is not sufficient.</description>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
+               <field type="int32_t" name="lat">Latitude, expressed as * 1E7</field>
+               <field type="int32_t" name="lon">Longitude, expressed as * 1E7</field>
+               <field type="int32_t" name="alt">Altitude in meters, expressed as * 1000 (millimeters), above MSL</field>
+               <field type="int16_t" name="vx">Ground X Speed (Latitude), expressed as m/s * 100</field>
+               <field type="int16_t" name="vy">Ground Y Speed (Longitude), expressed as m/s * 100</field>
+               <field type="int16_t" name="vz">Ground Z Speed (Altitude), expressed as m/s * 100</field>
+               <field type="uint16_t" name="hdg">Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535</field>
+          </message><message id="35" name="RC_CHANNELS_RAW">
                <description>The RAW values of the RC channels received. The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%. Individual receivers/transmitters might violate this specification.</description>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
+               <field type="uint8_t" name="port">Servo output port (set of 8 outputs = 1 port). Most MAVs will just use one, but this allows to encode more than 8 servos.</field>
                <field type="uint16_t" name="chan1_raw">RC channel 1 value, in microseconds</field>
                <field type="uint16_t" name="chan2_raw">RC channel 2 value, in microseconds</field>
                <field type="uint16_t" name="chan3_raw">RC channel 3 value, in microseconds</field>
@@ -925,6 +895,8 @@
           </message>
           <message id="36" name="RC_CHANNELS_SCALED">
                <description>The scaled values of the RC channels received. (-100%) -10000, (0%) 0, (100%) 10000</description>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
+               <field type="uint8_t" name="port">Servo output port (set of 8 outputs = 1 port). Most MAVs will just use one, but this allows to encode more than 8 servos.</field>
                <field type="int16_t" name="chan1_scaled">RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000</field>
                <field type="int16_t" name="chan2_scaled">RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000</field>
                <field type="int16_t" name="chan3_scaled">RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000</field>
@@ -937,6 +909,8 @@
           </message>
           <message id="37" name="SERVO_OUTPUT_RAW">
                <description>The RAW values of the servo outputs (for RC input from the remote, use the RC_CHANNELS messages). The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%.</description>
+               <field type="uint32_t" name="time_usec">Timestamp (since UNIX epoch or microseconds since system boot)</field>
+               <field type="uint8_t" name="port">Servo output port (set of 8 outputs = 1 port). Most MAVs will just use one, but this allows to encode more than 8 servos.</field>
                <field type="uint16_t" name="servo1_raw">Servo output 1 value, in microseconds</field>
                <field type="uint16_t" name="servo2_raw">Servo output 2 value, in microseconds</field>
                <field type="uint16_t" name="servo3_raw">Servo output 3 value, in microseconds</field>
@@ -1007,21 +981,20 @@
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="uint8_t" name="type">0: OK, 1: Error</field>
           </message>
-          <message id="48" name="GPS_SET_GLOBAL_ORIGIN">
+          <message id="48" name="SET_GPS_GLOBAL_ORIGIN">
                <description>As local waypoints exist, the global waypoint reference allows to transform between the local coordinate frame and the global (GPS) coordinate frame. This can be necessary when e.g. in- and outdoor settings are connected and the MAV should move from in- to outdoor.</description>
                <field type="uint8_t" name="target_system">System ID</field>
-               <field type="uint8_t" name="target_component">Component ID</field>
                <field type="int32_t" name="latitude">global position * 1E7</field>
                <field type="int32_t" name="longitude">global position * 1E7</field>
                <field type="int32_t" name="altitude">global position * 1000</field>
           </message>
-          <message id="49" name="GPS_LOCAL_ORIGIN_SET">
+          <message id="49" name="GPS_GLOBAL_ORIGIN">
                <description>Once the MAV sets a new GPS-Local correspondence, this message announces the origin (0,0,0) position</description>
                <field type="int32_t" name="latitude">Latitude (WGS84), expressed as * 1E7</field>
                <field type="int32_t" name="longitude">Longitude (WGS84), expressed as * 1E7</field>
                <field type="int32_t" name="altitude">Altitude(WGS84), expressed as * 1000</field>
           </message>
-          <message id="50" name="LOCAL_POSITION_SETPOINT_SET">
+          <message id="50" name="SET_LOCAL_POSITION_SETPOINT">
                <description>Set the setpoint for a local position controller. This is the position in local coordinates the MAV should fly to. This message is sent by the path/waypoint planner to the onboard position controller. As some MAVs have a degree of freedom in yaw (e.g. all helicopters/quadrotors), the desired yaw angle is part of the message.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
@@ -1044,7 +1017,14 @@
                <field type="int32_t" name="altitude">WGS84 Altitude in meters * 1000 (positive for up)</field>
                <field type="int16_t" name="yaw">Desired yaw angle in degrees * 100</field>
           </message>
-          <message id="53" name="SAFETY_SET_ALLOWED_AREA">
+          <message id="53" name="SET_GLOBAL_POSITION_SETPOINT_INT">
+               <description>Set the current global position setpoint.</description>
+               <field type="int32_t" name="latitude">WGS84 Latitude position in degrees * 1E7</field>
+               <field type="int32_t" name="longitude">WGS84 Longitude position in degrees * 1E7</field>
+               <field type="int32_t" name="altitude">WGS84 Altitude in meters * 1000 (positive for up)</field>
+               <field type="int16_t" name="yaw">Desired yaw angle in degrees * 100</field>
+          </message>
+          <message id="54" name="SAFETY_SET_ALLOWED_AREA">
                <description>Set a safety zone (volume), which is defined by two corners of a cube. This message can be used to tell the MAV which setpoints/waypoints to accept and which to reject. Safety areas are often enforced by national or competition regulations.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
@@ -1056,7 +1036,7 @@
                <field type="float" name="p2y">y position 2 / Longitude 2</field>
                <field type="float" name="p2z">z position 2 / Altitude 2</field>
           </message>
-          <message id="54" name="SAFETY_ALLOWED_AREA">
+          <message id="55" name="SAFETY_ALLOWED_AREA">
                <description>Read out the safety zone the MAV currently assumes.</description>
                <field type="uint8_t" name="frame">Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.</field>
                <field type="float" name="p1x">x position 1 / Latitude 1</field>
@@ -1066,7 +1046,7 @@
                <field type="float" name="p2y">y position 2 / Longitude 2</field>
                <field type="float" name="p2z">z position 2 / Altitude 2</field>
           </message>
-          <message id="55" name="SET_ROLL_PITCH_YAW_THRUST">
+          <message id="56" name="SET_ROLL_PITCH_YAW_THRUST">
                <description>Set roll, pitch and yaw.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
@@ -1075,7 +1055,7 @@
                <field type="float" name="yaw">Desired yaw angle in radians</field>
                <field type="float" name="thrust">Collective thrust, normalized to 0 .. 1</field>
           </message>
-          <message id="56" name="SET_ROLL_PITCH_YAW_SPEED_THRUST">
+          <message id="57" name="SET_ROLL_PITCH_YAW_SPEED_THRUST">
                <description>Set roll, pitch and yaw.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
@@ -1084,17 +1064,17 @@
                <field type="float" name="yaw_speed">Desired yaw angular speed in rad/s</field>
                <field type="float" name="thrust">Collective thrust, normalized to 0 .. 1</field>
           </message>
-          <message id="57" name="ROLL_PITCH_YAW_THRUST_SETPOINT">
+          <message id="58" name="ROLL_PITCH_YAW_THRUST_SETPOINT">
                <description>Setpoint in roll, pitch, yaw currently active on the system.</description>
-               <field type="uint32_t" name="time_ms">Timestamp in milliseconds since system boot</field>
+               <field type="uint32_t" name="time_boot_ms">Timestamp in milliseconds since system boot</field>
                <field type="float" name="roll">Desired roll angle in radians</field>
                <field type="float" name="pitch">Desired pitch angle in radians</field>
                <field type="float" name="yaw">Desired yaw angle in radians</field>
                <field type="float" name="thrust">Collective thrust, normalized to 0 .. 1</field>
           </message>
-          <message id="58" name="ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT">
+          <message id="59" name="ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT">
                <description>Setpoint in rollspeed, pitchspeed, yawspeed currently active on the system.</description>
-               <field type="uint32_t" name="time_ms">Timestamp in milliseconds since system boot</field>
+               <field type="uint32_t" name="time_boot_ms">Timestamp in milliseconds since system boot</field>
                <field type="float" name="roll_speed">Desired roll angular speed in rad/s</field>
                <field type="float" name="pitch_speed">Desired pitch angular speed in rad/s</field>
                <field type="float" name="yaw_speed">Desired yaw angular speed in rad/s</field>
@@ -1112,13 +1092,6 @@
                <field type="float" name="alt_error">Current altitude error in meters</field>
                <field type="float" name="aspd_error">Current airspeed error in meters/second</field>
                <field type="float" name="xtrack_error">Current crosstrack error on x-y plane in meters</field>
-          </message>
-          <message id="63" name="POSITION_TARGET">
-               <description>The goal position of the system. This position is the input to any navigation or path planning algorithm and does NOT represent the current controller setpoint.</description>
-               <field type="float" name="x">x position</field>
-               <field type="float" name="y">y position</field>
-               <field type="float" name="z">z position</field>
-               <field type="float" name="yaw">yaw orientation in radians, 0 = NORTH</field>
           </message>
           <message id="64" name="STATE_CORRECTION">
                <description>Corrects the systems state by adding an error correction term to the position and velocity, and by rotating the attitude by a correction angle.</description>
@@ -1167,16 +1140,6 @@
                <field type="uint16_t" name="chan6_raw">RC channel 6 value, in microseconds</field>
                <field type="uint16_t" name="chan7_raw">RC channel 7 value, in microseconds</field>
                <field type="uint16_t" name="chan8_raw">RC channel 8 value, in microseconds</field>
-          </message>
-          <message id="73" name="GLOBAL_POSITION_INT">
-               <description>The filtered global position (e.g. fused GPS and accelerometers). The position is in GPS-frame (right-handed, Z-up)</description>
-               <field type="int32_t" name="lat">Latitude, expressed as * 1E7</field>
-               <field type="int32_t" name="lon">Longitude, expressed as * 1E7</field>
-               <field type="int32_t" name="alt">Altitude in meters, expressed as * 1000 (millimeters), above MSL</field>
-               <field type="int16_t" name="vx">Ground X Speed (Latitude), expressed as m/s * 100</field>
-               <field type="int16_t" name="vy">Ground Y Speed (Longitude), expressed as m/s * 100</field>
-               <field type="int16_t" name="vz">Ground Z Speed (Altitude), expressed as m/s * 100</field>
-               <field type="uint16_t" name="hdg">Compass heading in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535</field>
           </message>
           <message id="74" name="VFR_HUD">
                <description>Metrics typically displayed on a HUD for fixed wing aircraft</description>
@@ -1258,7 +1221,7 @@
             <description>Sent from simulation to autopilot. This packet is useful for high throughput
                 applications such as hardware in the loop simulations.
             </description>
-            <field type="uint64_t" name="time_us">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+            <field type="uint64_t" name="time_usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
             <field type="float" name="roll">Roll angle (rad)</field>
             <field type="float" name="pitch">Pitch angle (rad)</field>
             <field type="float" name="yaw">Yaw angle (rad)</field>
@@ -1277,7 +1240,7 @@
         </message>
         <message id="91" name="HIL_CONTROLS">
             <description>Sent from autopilot to simulation. Hardware in the loop control outputs</description>
-            <field name="time_us" type="uint64_t">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+            <field name="time_usec" type="uint64_t">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
             <field name="roll_ailerons" type="float">Control output -1 .. 1</field>
             <field name="pitch_elevator" type="float">Control output -1 .. 1</field>
             <field name="yaw_rudder" type="float">Control output -1 .. 1</field>
@@ -1291,7 +1254,7 @@
         </message>
         <message id="92" name="HIL_RC_INPUTS_RAW">
                <description>Sent from simulation to autopilot. The RAW values of the RC channels received. The standard PPM modulation is as follows: 1000 microseconds: 0%, 2000 microseconds: 100%. Individual receivers/transmitters might violate this specification.</description>
-               <field type="uint64_t" name="time_us">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
+               <field type="uint64_t" name="time_usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="uint16_t" name="chan1_raw">RC channel 1 value, in microseconds</field>
                <field type="uint16_t" name="chan2_raw">RC channel 2 value, in microseconds</field>
                <field type="uint16_t" name="chan3_raw">RC channel 3 value, in microseconds</field>
@@ -1308,7 +1271,7 @@
           </message>
           <message id="100" name="OPTICAL_FLOW">
                <description>Optical flow from a flow sensor (e.g. optical mouse sensor)</description>
-               <field type="uint64_t" name="time">Timestamp (UNIX)</field>
+               <field type="uint64_t" name="time_usec">Timestamp (UNIX)</field>
                <field type="uint8_t" name="sensor_id">Sensor ID</field>
                <field type="int16_t" name="flow_x">Flow in pixels in x-sensor direction</field>
                <field type="int16_t" name="flow_y">Flow in pixels in y-sensor direction</field>
@@ -1316,39 +1279,48 @@
                <field type="float" name="ground_distance">Ground distance in meters</field>
           </message>
           <!-- MESSAGE IDs 150 - 240: Space for custom messages in individual projectname_messages.xml files -->
-          <message id="250" name="MEMORY_VECT">
+          <message id="249" name="MEMORY_VECT">
                <description>Send raw controller memory. The use of this message is discouraged for normal packets, but a quite efficient way for testing new messages and getting experimental debug output.</description>
                <field type="uint16_t" name="address">Starting address of the debug variables</field>
                <field type="uint8_t" name="ver">Version code of the type variable. 0=unknown, type ignored and assumed int16_t. 1=as below</field>
                <field type="uint8_t" name="type">Type code of the memory variables. for ver = 1: 0=16 x int16_t, 1=16 x uint16_t, 2=16 x Q15, 3=16 x 1Q14</field>
                <field type="int8_t[32]" name="value">Memory contents at specified address</field>
           </message>
-          <message id="251" name="DEBUG_VECT">
+          <message id="250" name="DEBUG_VECT">
                <field type="char[10]" name="name">Name</field>
-               <field type="uint64_t" name="usec">Timestamp</field>
+               <field type="uint64_t" name="time_usec">Timestamp</field>
                <field type="float" name="x">x</field>
                <field type="float" name="y">y</field>
                <field type="float" name="z">z</field>
           </message>
-          <message id="252" name="NAMED_VALUE_FLOAT">
+          <message id="251" name="NAMED_VALUE_FLOAT">
                <description>Send a key-value pair as float. The use of this message is discouraged for normal packets, but a quite efficient way for testing new messages and getting experimental debug output.</description>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="char[10]" name="name">Name of the debug variable</field>
                <field type="float" name="value">Floating point value</field>
           </message>
-          <message id="253" name="NAMED_VALUE_INT">
+          <message id="252" name="NAMED_VALUE_INT">
                <description>Send a key-value pair as integer. The use of this message is discouraged for normal packets, but a quite efficient way for testing new messages and getting experimental debug output.</description>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="char[10]" name="name">Name of the debug variable</field>
                <field type="int32_t" name="value">Signed integer value</field>
           </message>
-          <message id="254" name="STATUSTEXT">
+          <message id="253" name="STATUSTEXT">
                <description>Status text message. These messages are printed in yellow in the COMM console of QGroundControl. WARNING: They consume quite some bandwidth, so use only for important status and error messages. If implemented wisely, these messages are buffered on the MCU and sent only at a limited rate (e.g. 10 Hz).</description>
                <field type="uint8_t" name="severity">Severity of status, 0 = info message, 255 = critical fault</field>
                <field type="char[50]" name="text">Status text message, without null termination character</field>
           </message>
-          <message id="255" name="DEBUG">
+          <message id="254" name="DEBUG">
                <description>Send a debug value. The index is used to discriminate between values. These values show up in the plot of QGroundControl as DEBUG N.</description>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="uint8_t" name="ind">index of debug variable</field>
                <field type="float" name="value">DEBUG value</field>
+          </message>
+          <message id="255" name="EXTENDED_MESSAGE">
+               <description>Extended message spacer.</description>
+               <field type="uint8_t" name="target_system">System which should execute the command</field>
+               <field type="uint8_t" name="target_component">Component which should execute the command, 0 for all components</field>
+               <field type="uint8_t" name="protocol_flags">Retransmission / ACK flags</field>
           </message>
      </messages>
 </mavlink>

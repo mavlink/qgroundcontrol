@@ -1,6 +1,6 @@
 // MESSAGE MEMORY_VECT PACKING
 
-#define MAVLINK_MSG_ID_MEMORY_VECT 250
+#define MAVLINK_MSG_ID_MEMORY_VECT 249
 
 typedef struct __mavlink_memory_vect_t
 {
@@ -11,7 +11,7 @@ typedef struct __mavlink_memory_vect_t
 } mavlink_memory_vect_t;
 
 #define MAVLINK_MSG_ID_MEMORY_VECT_LEN 36
-#define MAVLINK_MSG_ID_250_LEN 36
+#define MAVLINK_MSG_ID_249_LEN 36
 
 #define MAVLINK_MSG_MEMORY_VECT_FIELD_VALUE_LEN 32
 

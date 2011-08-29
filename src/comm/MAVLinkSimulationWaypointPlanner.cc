@@ -524,7 +524,7 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
         mavlink_waypoint_t *cur = waypoints->at(seq);
 
         mavlink_message_t msg;
-        mavlink_local_position_setpoint_set_t PControlSetPoint;
+        mavlink_set_local_position_setpoint_t PControlSetPoint;
 
         // send new set point to local IMU
         if (cur->frame == 1) {
@@ -535,7 +535,7 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
             PControlSetPoint.z = cur->z;
             PControlSetPoint.yaw = cur->param4;
 
-            mavlink_msg_local_position_setpoint_set_encode(systemid, compid, &msg, &PControlSetPoint);
+            mavlink_msg_set_local_position_setpoint_encode(systemid, compid, &msg, &PControlSetPoint);
             link->sendMAVLinkMessage(&msg);
 
 
@@ -548,7 +548,7 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
             PControlSetPoint.z = cur->z;
             PControlSetPoint.yaw = cur->param4;
 
-            mavlink_msg_local_position_setpoint_set_encode(systemid, compid, &msg, &PControlSetPoint);
+            mavlink_msg_set_local_position_setpoint_encode(systemid, compid, &msg, &PControlSetPoint);
             link->sendMAVLinkMessage(&msg);
             emit messageSent(msg);
         }

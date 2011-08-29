@@ -394,7 +394,7 @@ void MAVLinkProtocol::sendHeartbeat()
 {
     if (m_heartbeatsEnabled) {
         mavlink_message_t beat;
-        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, MAV_MODE_MANUAL, MAV_FLIGHT_MODE_MANUAL, MAV_STATE_ACTIVE, MAV_SAFETY_ARMED, 0xFF);
+        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, MAV_MODE_MANUAL, 0, MAV_STATE_ACTIVE);
         sendMessage(beat);
     }
     if (m_authEnabled) {
