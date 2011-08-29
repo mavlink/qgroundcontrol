@@ -125,49 +125,6 @@ static inline uint16_t mavlink_msg_sensor_offsets_pack_chan(uint8_t system_id, u
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 42, 134);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a sensor_offsets message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param mag_ofs_x magnetometer X offset
- * @param mag_ofs_y magnetometer Y offset
- * @param mag_ofs_z magnetometer Z offset
- * @param mag_declination magnetic declination (radians)
- * @param raw_press raw pressure from barometer
- * @param raw_temp raw temperature from barometer
- * @param gyro_cal_x gyro X calibration
- * @param gyro_cal_y gyro Y calibration
- * @param gyro_cal_z gyro Z calibration
- * @param accel_cal_x accel X calibration
- * @param accel_cal_y accel Y calibration
- * @param accel_cal_z accel Z calibration
- */
-static inline void mavlink_msg_sensor_offsets_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           int16_t mag_ofs_x,int16_t mag_ofs_y,int16_t mag_ofs_z,float mag_declination,int32_t raw_press,int32_t raw_temp,float gyro_cal_x,float gyro_cal_y,float gyro_cal_z,float accel_cal_x,float accel_cal_y,float accel_cal_z)
-{
-	msg->msgid = MAVLINK_MSG_ID_SENSOR_OFFSETS;
-
-	put_float_by_index(msg, 0, mag_declination); // magnetic declination (radians)
-	put_int32_t_by_index(msg, 4, raw_press); // raw pressure from barometer
-	put_int32_t_by_index(msg, 8, raw_temp); // raw temperature from barometer
-	put_float_by_index(msg, 12, gyro_cal_x); // gyro X calibration
-	put_float_by_index(msg, 16, gyro_cal_y); // gyro Y calibration
-	put_float_by_index(msg, 20, gyro_cal_z); // gyro Z calibration
-	put_float_by_index(msg, 24, accel_cal_x); // accel X calibration
-	put_float_by_index(msg, 28, accel_cal_y); // accel Y calibration
-	put_float_by_index(msg, 32, accel_cal_z); // accel Z calibration
-	put_int16_t_by_index(msg, 36, mag_ofs_x); // magnetometer X offset
-	put_int16_t_by_index(msg, 38, mag_ofs_y); // magnetometer Y offset
-	put_int16_t_by_index(msg, 40, mag_ofs_z); // magnetometer Z offset
-
-	mavlink_finalize_message_chan_send(msg, chan, 42, 134);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a sensor_offsets struct into a message
  *
@@ -203,7 +160,22 @@ static inline uint16_t mavlink_msg_sensor_offsets_encode(uint8_t system_id, uint
 static inline void mavlink_msg_sensor_offsets_send(mavlink_channel_t chan, int16_t mag_ofs_x, int16_t mag_ofs_y, int16_t mag_ofs_z, float mag_declination, int32_t raw_press, int32_t raw_temp, float gyro_cal_x, float gyro_cal_y, float gyro_cal_z, float accel_cal_x, float accel_cal_y, float accel_cal_z)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 42);
-	mavlink_msg_sensor_offsets_pack_chan_send(chan, msg, mag_ofs_x, mag_ofs_y, mag_ofs_z, mag_declination, raw_press, raw_temp, gyro_cal_x, gyro_cal_y, gyro_cal_z, accel_cal_x, accel_cal_y, accel_cal_z);
+	msg->msgid = MAVLINK_MSG_ID_SENSOR_OFFSETS;
+
+	put_float_by_index(msg, 0, mag_declination); // magnetic declination (radians)
+	put_int32_t_by_index(msg, 4, raw_press); // raw pressure from barometer
+	put_int32_t_by_index(msg, 8, raw_temp); // raw temperature from barometer
+	put_float_by_index(msg, 12, gyro_cal_x); // gyro X calibration
+	put_float_by_index(msg, 16, gyro_cal_y); // gyro Y calibration
+	put_float_by_index(msg, 20, gyro_cal_z); // gyro Z calibration
+	put_float_by_index(msg, 24, accel_cal_x); // accel X calibration
+	put_float_by_index(msg, 28, accel_cal_y); // accel Y calibration
+	put_float_by_index(msg, 32, accel_cal_z); // accel Z calibration
+	put_int16_t_by_index(msg, 36, mag_ofs_x); // magnetometer X offset
+	put_int16_t_by_index(msg, 38, mag_ofs_y); // magnetometer Y offset
+	put_int16_t_by_index(msg, 40, mag_ofs_z); // magnetometer Z offset
+
+	mavlink_finalize_message_chan_send(msg, chan, 42, 134);
 }
 
 #endif

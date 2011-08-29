@@ -65,29 +65,6 @@ static inline uint16_t mavlink_msg_set_mode_pack_chan(uint8_t system_id, uint8_t
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 2, 186);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a set_mode message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target The system setting the mode
- * @param mode The new mode
- */
-static inline void mavlink_msg_set_mode_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target,uint8_t mode)
-{
-	msg->msgid = MAVLINK_MSG_ID_SET_MODE;
-
-	put_uint8_t_by_index(msg, 0, target); // The system setting the mode
-	put_uint8_t_by_index(msg, 1, mode); // The new mode
-
-	mavlink_finalize_message_chan_send(msg, chan, 2, 186);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a set_mode struct into a message
  *
@@ -113,7 +90,12 @@ static inline uint16_t mavlink_msg_set_mode_encode(uint8_t system_id, uint8_t co
 static inline void mavlink_msg_set_mode_send(mavlink_channel_t chan, uint8_t target, uint8_t mode)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 2);
-	mavlink_msg_set_mode_pack_chan_send(chan, msg, target, mode);
+	msg->msgid = MAVLINK_MSG_ID_SET_MODE;
+
+	put_uint8_t_by_index(msg, 0, target); // The system setting the mode
+	put_uint8_t_by_index(msg, 1, mode); // The new mode
+
+	mavlink_finalize_message_chan_send(msg, chan, 2, 186);
 }
 
 #endif

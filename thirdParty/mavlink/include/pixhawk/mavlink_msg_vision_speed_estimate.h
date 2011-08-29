@@ -77,33 +77,6 @@ static inline uint16_t mavlink_msg_vision_speed_estimate_pack_chan(uint8_t syste
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 20, 208);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a vision_speed_estimate message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param usec Timestamp (milliseconds)
- * @param x Global X speed
- * @param y Global Y speed
- * @param z Global Z speed
- */
-static inline void mavlink_msg_vision_speed_estimate_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint64_t usec,float x,float y,float z)
-{
-	msg->msgid = MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE;
-
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (milliseconds)
-	put_float_by_index(msg, 8, x); // Global X speed
-	put_float_by_index(msg, 12, y); // Global Y speed
-	put_float_by_index(msg, 16, z); // Global Z speed
-
-	mavlink_finalize_message_chan_send(msg, chan, 20, 208);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a vision_speed_estimate struct into a message
  *
@@ -131,7 +104,14 @@ static inline uint16_t mavlink_msg_vision_speed_estimate_encode(uint8_t system_i
 static inline void mavlink_msg_vision_speed_estimate_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 20);
-	mavlink_msg_vision_speed_estimate_pack_chan_send(chan, msg, usec, x, y, z);
+	msg->msgid = MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE;
+
+	put_uint64_t_by_index(msg, 0, usec); // Timestamp (milliseconds)
+	put_float_by_index(msg, 8, x); // Global X speed
+	put_float_by_index(msg, 12, y); // Global Y speed
+	put_float_by_index(msg, 16, z); // Global Z speed
+
+	mavlink_finalize_message_chan_send(msg, chan, 20, 208);
 }
 
 #endif

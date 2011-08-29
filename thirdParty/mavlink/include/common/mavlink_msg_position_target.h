@@ -77,33 +77,6 @@ static inline uint16_t mavlink_msg_position_target_pack_chan(uint8_t system_id, 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 16, 126);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a position_target message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param x x position
- * @param y y position
- * @param z z position
- * @param yaw yaw orientation in radians, 0 = NORTH
- */
-static inline void mavlink_msg_position_target_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           float x,float y,float z,float yaw)
-{
-	msg->msgid = MAVLINK_MSG_ID_POSITION_TARGET;
-
-	put_float_by_index(msg, 0, x); // x position
-	put_float_by_index(msg, 4, y); // y position
-	put_float_by_index(msg, 8, z); // z position
-	put_float_by_index(msg, 12, yaw); // yaw orientation in radians, 0 = NORTH
-
-	mavlink_finalize_message_chan_send(msg, chan, 16, 126);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a position_target struct into a message
  *
@@ -131,7 +104,14 @@ static inline uint16_t mavlink_msg_position_target_encode(uint8_t system_id, uin
 static inline void mavlink_msg_position_target_send(mavlink_channel_t chan, float x, float y, float z, float yaw)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 16);
-	mavlink_msg_position_target_pack_chan_send(chan, msg, x, y, z, yaw);
+	msg->msgid = MAVLINK_MSG_ID_POSITION_TARGET;
+
+	put_float_by_index(msg, 0, x); // x position
+	put_float_by_index(msg, 4, y); // y position
+	put_float_by_index(msg, 8, z); // z position
+	put_float_by_index(msg, 12, yaw); // yaw orientation in radians, 0 = NORTH
+
+	mavlink_finalize_message_chan_send(msg, chan, 16, 126);
 }
 
 #endif

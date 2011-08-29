@@ -71,31 +71,6 @@ static inline uint16_t mavlink_msg_ualberta_sys_status_pack_chan(uint8_t system_
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 3, 15);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a ualberta_sys_status message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param mode System mode, see UALBERTA_AUTOPILOT_MODE ENUM
- * @param nav_mode Navigation mode, see UALBERTA_NAV_MODE ENUM
- * @param pilot Pilot mode, see UALBERTA_PILOT_MODE
- */
-static inline void mavlink_msg_ualberta_sys_status_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t mode,uint8_t nav_mode,uint8_t pilot)
-{
-	msg->msgid = MAVLINK_MSG_ID_UALBERTA_SYS_STATUS;
-
-	put_uint8_t_by_index(msg, 0, mode); // System mode, see UALBERTA_AUTOPILOT_MODE ENUM
-	put_uint8_t_by_index(msg, 1, nav_mode); // Navigation mode, see UALBERTA_NAV_MODE ENUM
-	put_uint8_t_by_index(msg, 2, pilot); // Pilot mode, see UALBERTA_PILOT_MODE
-
-	mavlink_finalize_message_chan_send(msg, chan, 3, 15);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a ualberta_sys_status struct into a message
  *
@@ -122,7 +97,13 @@ static inline uint16_t mavlink_msg_ualberta_sys_status_encode(uint8_t system_id,
 static inline void mavlink_msg_ualberta_sys_status_send(mavlink_channel_t chan, uint8_t mode, uint8_t nav_mode, uint8_t pilot)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 3);
-	mavlink_msg_ualberta_sys_status_pack_chan_send(chan, msg, mode, nav_mode, pilot);
+	msg->msgid = MAVLINK_MSG_ID_UALBERTA_SYS_STATUS;
+
+	put_uint8_t_by_index(msg, 0, mode); // System mode, see UALBERTA_AUTOPILOT_MODE ENUM
+	put_uint8_t_by_index(msg, 1, nav_mode); // Navigation mode, see UALBERTA_NAV_MODE ENUM
+	put_uint8_t_by_index(msg, 2, pilot); // Pilot mode, see UALBERTA_PILOT_MODE
+
+	mavlink_finalize_message_chan_send(msg, chan, 3, 15);
 }
 
 #endif

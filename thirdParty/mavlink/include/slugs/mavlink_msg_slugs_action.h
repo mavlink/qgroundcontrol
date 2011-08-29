@@ -71,31 +71,6 @@ static inline uint16_t mavlink_msg_slugs_action_pack_chan(uint8_t system_id, uin
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 4, 65);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a slugs_action message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target The system reporting the action
- * @param actionId Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
- * @param actionVal Value associated with the action
- */
-static inline void mavlink_msg_slugs_action_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target,uint8_t actionId,uint16_t actionVal)
-{
-	msg->msgid = MAVLINK_MSG_ID_SLUGS_ACTION;
-
-	put_uint16_t_by_index(msg, 0, actionVal); // Value associated with the action
-	put_uint8_t_by_index(msg, 2, target); // The system reporting the action
-	put_uint8_t_by_index(msg, 3, actionId); // Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
-
-	mavlink_finalize_message_chan_send(msg, chan, 4, 65);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a slugs_action struct into a message
  *
@@ -122,7 +97,13 @@ static inline uint16_t mavlink_msg_slugs_action_encode(uint8_t system_id, uint8_
 static inline void mavlink_msg_slugs_action_send(mavlink_channel_t chan, uint8_t target, uint8_t actionId, uint16_t actionVal)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 4);
-	mavlink_msg_slugs_action_pack_chan_send(chan, msg, target, actionId, actionVal);
+	msg->msgid = MAVLINK_MSG_ID_SLUGS_ACTION;
+
+	put_uint16_t_by_index(msg, 0, actionVal); // Value associated with the action
+	put_uint8_t_by_index(msg, 2, target); // The system reporting the action
+	put_uint8_t_by_index(msg, 3, actionId); // Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
+
+	mavlink_finalize_message_chan_send(msg, chan, 4, 65);
 }
 
 #endif

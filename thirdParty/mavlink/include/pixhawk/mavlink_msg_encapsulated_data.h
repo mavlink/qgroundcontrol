@@ -65,29 +65,6 @@ static inline uint16_t mavlink_msg_encapsulated_data_pack_chan(uint8_t system_id
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 255, 223);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a encapsulated_data message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param seqnr sequence number (starting with 0 on every transmission)
- * @param data image data bytes
- */
-static inline void mavlink_msg_encapsulated_data_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint16_t seqnr,const uint8_t *data)
-{
-	msg->msgid = MAVLINK_MSG_ID_ENCAPSULATED_DATA;
-
-	put_uint16_t_by_index(msg, 0, seqnr); // sequence number (starting with 0 on every transmission)
-	put_uint8_t_array_by_index(msg, 2, data, 253); // image data bytes
-
-	mavlink_finalize_message_chan_send(msg, chan, 255, 223);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a encapsulated_data struct into a message
  *
@@ -113,7 +90,12 @@ static inline uint16_t mavlink_msg_encapsulated_data_encode(uint8_t system_id, u
 static inline void mavlink_msg_encapsulated_data_send(mavlink_channel_t chan, uint16_t seqnr, const uint8_t *data)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 255);
-	mavlink_msg_encapsulated_data_pack_chan_send(chan, msg, seqnr, data);
+	msg->msgid = MAVLINK_MSG_ID_ENCAPSULATED_DATA;
+
+	put_uint16_t_by_index(msg, 0, seqnr); // sequence number (starting with 0 on every transmission)
+	put_uint8_t_array_by_index(msg, 2, data, 253); // image data bytes
+
+	mavlink_finalize_message_chan_send(msg, chan, 255, 223);
 }
 
 #endif

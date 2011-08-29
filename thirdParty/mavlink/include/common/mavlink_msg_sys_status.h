@@ -125,49 +125,6 @@ static inline uint16_t mavlink_msg_sys_status_pack_chan(uint8_t system_id, uint8
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 23, 114);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a sys_status message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param onboard_control_sensors_present Bitmask showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control
- * @param onboard_control_sensors_enabled Bitmask showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control
- * @param onboard_control_sensors_health Bitmask showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control
- * @param load Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
- * @param voltage_battery Battery voltage, in millivolts (1 = 1 millivolt)
- * @param current_battery Battery current, in milliamperes (1 = 1 milliampere)
- * @param watt Watts consumed from this battery since startup
- * @param battery_percent Remaining battery energy: (0%: 0, 100%: 255)
- * @param errors_uart Dropped packets on all links (packets that were corrupted on reception on the MAV)
- * @param errors_i2c Dropped packets on all links (packets that were corrupted on reception)
- * @param errors_spi Dropped packets on all links (packets that were corrupted on reception)
- * @param errors_can Dropped packets on all links (packets that were corrupted on reception)
- */
-static inline void mavlink_msg_sys_status_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint16_t onboard_control_sensors_present,uint16_t onboard_control_sensors_enabled,uint16_t onboard_control_sensors_health,uint16_t load,uint16_t voltage_battery,uint16_t current_battery,uint16_t watt,uint8_t battery_percent,uint16_t errors_uart,uint16_t errors_i2c,uint16_t errors_spi,uint16_t errors_can)
-{
-	msg->msgid = MAVLINK_MSG_ID_SYS_STATUS;
-
-	put_uint16_t_by_index(msg, 0, onboard_control_sensors_present); // Bitmask showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control
-	put_uint16_t_by_index(msg, 2, onboard_control_sensors_enabled); // Bitmask showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control
-	put_uint16_t_by_index(msg, 4, onboard_control_sensors_health); // Bitmask showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control
-	put_uint16_t_by_index(msg, 6, load); // Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
-	put_uint16_t_by_index(msg, 8, voltage_battery); // Battery voltage, in millivolts (1 = 1 millivolt)
-	put_uint16_t_by_index(msg, 10, current_battery); // Battery current, in milliamperes (1 = 1 milliampere)
-	put_uint16_t_by_index(msg, 12, watt); // Watts consumed from this battery since startup
-	put_uint16_t_by_index(msg, 14, errors_uart); // Dropped packets on all links (packets that were corrupted on reception on the MAV)
-	put_uint16_t_by_index(msg, 16, errors_i2c); // Dropped packets on all links (packets that were corrupted on reception)
-	put_uint16_t_by_index(msg, 18, errors_spi); // Dropped packets on all links (packets that were corrupted on reception)
-	put_uint16_t_by_index(msg, 20, errors_can); // Dropped packets on all links (packets that were corrupted on reception)
-	put_uint8_t_by_index(msg, 22, battery_percent); // Remaining battery energy: (0%: 0, 100%: 255)
-
-	mavlink_finalize_message_chan_send(msg, chan, 23, 114);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a sys_status struct into a message
  *
@@ -203,7 +160,22 @@ static inline uint16_t mavlink_msg_sys_status_encode(uint8_t system_id, uint8_t 
 static inline void mavlink_msg_sys_status_send(mavlink_channel_t chan, uint16_t onboard_control_sensors_present, uint16_t onboard_control_sensors_enabled, uint16_t onboard_control_sensors_health, uint16_t load, uint16_t voltage_battery, uint16_t current_battery, uint16_t watt, uint8_t battery_percent, uint16_t errors_uart, uint16_t errors_i2c, uint16_t errors_spi, uint16_t errors_can)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 23);
-	mavlink_msg_sys_status_pack_chan_send(chan, msg, onboard_control_sensors_present, onboard_control_sensors_enabled, onboard_control_sensors_health, load, voltage_battery, current_battery, watt, battery_percent, errors_uart, errors_i2c, errors_spi, errors_can);
+	msg->msgid = MAVLINK_MSG_ID_SYS_STATUS;
+
+	put_uint16_t_by_index(msg, 0, onboard_control_sensors_present); // Bitmask showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control
+	put_uint16_t_by_index(msg, 2, onboard_control_sensors_enabled); // Bitmask showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control
+	put_uint16_t_by_index(msg, 4, onboard_control_sensors_health); // Bitmask showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control
+	put_uint16_t_by_index(msg, 6, load); // Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
+	put_uint16_t_by_index(msg, 8, voltage_battery); // Battery voltage, in millivolts (1 = 1 millivolt)
+	put_uint16_t_by_index(msg, 10, current_battery); // Battery current, in milliamperes (1 = 1 milliampere)
+	put_uint16_t_by_index(msg, 12, watt); // Watts consumed from this battery since startup
+	put_uint16_t_by_index(msg, 14, errors_uart); // Dropped packets on all links (packets that were corrupted on reception on the MAV)
+	put_uint16_t_by_index(msg, 16, errors_i2c); // Dropped packets on all links (packets that were corrupted on reception)
+	put_uint16_t_by_index(msg, 18, errors_spi); // Dropped packets on all links (packets that were corrupted on reception)
+	put_uint16_t_by_index(msg, 20, errors_can); // Dropped packets on all links (packets that were corrupted on reception)
+	put_uint8_t_by_index(msg, 22, battery_percent); // Remaining battery energy: (0%: 0, 100%: 255)
+
+	mavlink_finalize_message_chan_send(msg, chan, 23, 114);
 }
 
 #endif

@@ -71,31 +71,6 @@ static inline uint16_t mavlink_msg_waypoint_ack_pack_chan(uint8_t system_id, uin
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 3, 214);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a waypoint_ack message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target_system System ID
- * @param target_component Component ID
- * @param type 0: OK, 1: Error
- */
-static inline void mavlink_msg_waypoint_ack_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target_system,uint8_t target_component,uint8_t type)
-{
-	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_ACK;
-
-	put_uint8_t_by_index(msg, 0, target_system); // System ID
-	put_uint8_t_by_index(msg, 1, target_component); // Component ID
-	put_uint8_t_by_index(msg, 2, type); // 0: OK, 1: Error
-
-	mavlink_finalize_message_chan_send(msg, chan, 3, 214);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a waypoint_ack struct into a message
  *
@@ -122,7 +97,13 @@ static inline uint16_t mavlink_msg_waypoint_ack_encode(uint8_t system_id, uint8_
 static inline void mavlink_msg_waypoint_ack_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t type)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 3);
-	mavlink_msg_waypoint_ack_pack_chan_send(chan, msg, target_system, target_component, type);
+	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_ACK;
+
+	put_uint8_t_by_index(msg, 0, target_system); // System ID
+	put_uint8_t_by_index(msg, 1, target_component); // Component ID
+	put_uint8_t_by_index(msg, 2, type); // 0: OK, 1: Error
+
+	mavlink_finalize_message_chan_send(msg, chan, 3, 214);
 }
 
 #endif

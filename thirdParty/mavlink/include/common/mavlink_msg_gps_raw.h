@@ -113,45 +113,6 @@ static inline uint16_t mavlink_msg_gps_raw_pack_chan(uint8_t system_id, uint8_t 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 38, 198);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a gps_raw message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
- * @param fix_type 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
- * @param lat Latitude in degrees
- * @param lon Longitude in degrees
- * @param alt Altitude in meters
- * @param eph GPS HDOP
- * @param epv GPS VDOP
- * @param v GPS ground speed
- * @param hdg Compass heading in degrees, 0..360 degrees
- * @param satellites_visible Number of satellites visible
- */
-static inline void mavlink_msg_gps_raw_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint64_t usec,uint8_t fix_type,float lat,float lon,float alt,float eph,float epv,float v,float hdg,uint8_t satellites_visible)
-{
-	msg->msgid = MAVLINK_MSG_ID_GPS_RAW;
-
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	put_float_by_index(msg, 8, lat); // Latitude in degrees
-	put_float_by_index(msg, 12, lon); // Longitude in degrees
-	put_float_by_index(msg, 16, alt); // Altitude in meters
-	put_float_by_index(msg, 20, eph); // GPS HDOP
-	put_float_by_index(msg, 24, epv); // GPS VDOP
-	put_float_by_index(msg, 28, v); // GPS ground speed
-	put_float_by_index(msg, 32, hdg); // Compass heading in degrees, 0..360 degrees
-	put_uint8_t_by_index(msg, 36, fix_type); // 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
-	put_uint8_t_by_index(msg, 37, satellites_visible); // Number of satellites visible
-
-	mavlink_finalize_message_chan_send(msg, chan, 38, 198);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a gps_raw struct into a message
  *
@@ -185,7 +146,20 @@ static inline uint16_t mavlink_msg_gps_raw_encode(uint8_t system_id, uint8_t com
 static inline void mavlink_msg_gps_raw_send(mavlink_channel_t chan, uint64_t usec, uint8_t fix_type, float lat, float lon, float alt, float eph, float epv, float v, float hdg, uint8_t satellites_visible)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 38);
-	mavlink_msg_gps_raw_pack_chan_send(chan, msg, usec, fix_type, lat, lon, alt, eph, epv, v, hdg, satellites_visible);
+	msg->msgid = MAVLINK_MSG_ID_GPS_RAW;
+
+	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_float_by_index(msg, 8, lat); // Latitude in degrees
+	put_float_by_index(msg, 12, lon); // Longitude in degrees
+	put_float_by_index(msg, 16, alt); // Altitude in meters
+	put_float_by_index(msg, 20, eph); // GPS HDOP
+	put_float_by_index(msg, 24, epv); // GPS VDOP
+	put_float_by_index(msg, 28, v); // GPS ground speed
+	put_float_by_index(msg, 32, hdg); // Compass heading in degrees, 0..360 degrees
+	put_uint8_t_by_index(msg, 36, fix_type); // 0-1: no fix, 2: 2D fix, 3: 3D fix. Some applications will not use the value of this field unless it is at least two, so always correctly fill in the fix.
+	put_uint8_t_by_index(msg, 37, satellites_visible); // Number of satellites visible
+
+	mavlink_finalize_message_chan_send(msg, chan, 38, 198);
 }
 
 #endif

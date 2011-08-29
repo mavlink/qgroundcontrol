@@ -77,33 +77,6 @@ static inline uint16_t mavlink_msg_mid_lvl_cmds_pack_chan(uint8_t system_id, uin
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 13, 146);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a mid_lvl_cmds message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target The system setting the commands
- * @param hCommand Commanded Airspeed
- * @param uCommand Log value 2 
- * @param rCommand Log value 3 
- */
-static inline void mavlink_msg_mid_lvl_cmds_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target,float hCommand,float uCommand,float rCommand)
-{
-	msg->msgid = MAVLINK_MSG_ID_MID_LVL_CMDS;
-
-	put_float_by_index(msg, 0, hCommand); // Commanded Airspeed
-	put_float_by_index(msg, 4, uCommand); // Log value 2 
-	put_float_by_index(msg, 8, rCommand); // Log value 3 
-	put_uint8_t_by_index(msg, 12, target); // The system setting the commands
-
-	mavlink_finalize_message_chan_send(msg, chan, 13, 146);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a mid_lvl_cmds struct into a message
  *
@@ -131,7 +104,14 @@ static inline uint16_t mavlink_msg_mid_lvl_cmds_encode(uint8_t system_id, uint8_
 static inline void mavlink_msg_mid_lvl_cmds_send(mavlink_channel_t chan, uint8_t target, float hCommand, float uCommand, float rCommand)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 13);
-	mavlink_msg_mid_lvl_cmds_pack_chan_send(chan, msg, target, hCommand, uCommand, rCommand);
+	msg->msgid = MAVLINK_MSG_ID_MID_LVL_CMDS;
+
+	put_float_by_index(msg, 0, hCommand); // Commanded Airspeed
+	put_float_by_index(msg, 4, uCommand); // Log value 2 
+	put_float_by_index(msg, 8, rCommand); // Log value 3 
+	put_uint8_t_by_index(msg, 12, target); // The system setting the commands
+
+	mavlink_finalize_message_chan_send(msg, chan, 13, 146);
 }
 
 #endif

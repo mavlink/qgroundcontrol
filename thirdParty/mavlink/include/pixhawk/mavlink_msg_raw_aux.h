@@ -95,39 +95,6 @@ static inline uint16_t mavlink_msg_raw_aux_pack_chan(uint8_t system_id, uint8_t 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 16, 182);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a raw_aux message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param adc1 ADC1 (J405 ADC3, LPC2148 AD0.6)
- * @param adc2 ADC2 (J405 ADC5, LPC2148 AD0.2)
- * @param adc3 ADC3 (J405 ADC6, LPC2148 AD0.1)
- * @param adc4 ADC4 (J405 ADC7, LPC2148 AD1.3)
- * @param vbat Battery voltage
- * @param temp Temperature (degrees celcius)
- * @param baro Barometric pressure (hecto Pascal)
- */
-static inline void mavlink_msg_raw_aux_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint16_t adc1,uint16_t adc2,uint16_t adc3,uint16_t adc4,uint16_t vbat,int16_t temp,int32_t baro)
-{
-	msg->msgid = MAVLINK_MSG_ID_RAW_AUX;
-
-	put_int32_t_by_index(msg, 0, baro); // Barometric pressure (hecto Pascal)
-	put_uint16_t_by_index(msg, 4, adc1); // ADC1 (J405 ADC3, LPC2148 AD0.6)
-	put_uint16_t_by_index(msg, 6, adc2); // ADC2 (J405 ADC5, LPC2148 AD0.2)
-	put_uint16_t_by_index(msg, 8, adc3); // ADC3 (J405 ADC6, LPC2148 AD0.1)
-	put_uint16_t_by_index(msg, 10, adc4); // ADC4 (J405 ADC7, LPC2148 AD1.3)
-	put_uint16_t_by_index(msg, 12, vbat); // Battery voltage
-	put_int16_t_by_index(msg, 14, temp); // Temperature (degrees celcius)
-
-	mavlink_finalize_message_chan_send(msg, chan, 16, 182);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a raw_aux struct into a message
  *
@@ -158,7 +125,17 @@ static inline uint16_t mavlink_msg_raw_aux_encode(uint8_t system_id, uint8_t com
 static inline void mavlink_msg_raw_aux_send(mavlink_channel_t chan, uint16_t adc1, uint16_t adc2, uint16_t adc3, uint16_t adc4, uint16_t vbat, int16_t temp, int32_t baro)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 16);
-	mavlink_msg_raw_aux_pack_chan_send(chan, msg, adc1, adc2, adc3, adc4, vbat, temp, baro);
+	msg->msgid = MAVLINK_MSG_ID_RAW_AUX;
+
+	put_int32_t_by_index(msg, 0, baro); // Barometric pressure (hecto Pascal)
+	put_uint16_t_by_index(msg, 4, adc1); // ADC1 (J405 ADC3, LPC2148 AD0.6)
+	put_uint16_t_by_index(msg, 6, adc2); // ADC2 (J405 ADC5, LPC2148 AD0.2)
+	put_uint16_t_by_index(msg, 8, adc3); // ADC3 (J405 ADC6, LPC2148 AD0.1)
+	put_uint16_t_by_index(msg, 10, adc4); // ADC4 (J405 ADC7, LPC2148 AD1.3)
+	put_uint16_t_by_index(msg, 12, vbat); // Battery voltage
+	put_int16_t_by_index(msg, 14, temp); // Temperature (degrees celcius)
+
+	mavlink_finalize_message_chan_send(msg, chan, 16, 182);
 }
 
 #endif

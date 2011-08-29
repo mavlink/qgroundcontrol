@@ -71,31 +71,6 @@ static inline uint16_t mavlink_msg_air_data_pack_chan(uint8_t system_id, uint8_t
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 10, 232);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a air_data message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param dynamicPressure Dynamic pressure (Pa)
- * @param staticPressure Static pressure (Pa)
- * @param temperature Board temperature
- */
-static inline void mavlink_msg_air_data_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           float dynamicPressure,float staticPressure,uint16_t temperature)
-{
-	msg->msgid = MAVLINK_MSG_ID_AIR_DATA;
-
-	put_float_by_index(msg, 0, dynamicPressure); // Dynamic pressure (Pa)
-	put_float_by_index(msg, 4, staticPressure); // Static pressure (Pa)
-	put_uint16_t_by_index(msg, 8, temperature); // Board temperature
-
-	mavlink_finalize_message_chan_send(msg, chan, 10, 232);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a air_data struct into a message
  *
@@ -122,7 +97,13 @@ static inline uint16_t mavlink_msg_air_data_encode(uint8_t system_id, uint8_t co
 static inline void mavlink_msg_air_data_send(mavlink_channel_t chan, float dynamicPressure, float staticPressure, uint16_t temperature)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 10);
-	mavlink_msg_air_data_pack_chan_send(chan, msg, dynamicPressure, staticPressure, temperature);
+	msg->msgid = MAVLINK_MSG_ID_AIR_DATA;
+
+	put_float_by_index(msg, 0, dynamicPressure); // Dynamic pressure (Pa)
+	put_float_by_index(msg, 4, staticPressure); // Static pressure (Pa)
+	put_uint16_t_by_index(msg, 8, temperature); // Board temperature
+
+	mavlink_finalize_message_chan_send(msg, chan, 10, 232);
 }
 
 #endif

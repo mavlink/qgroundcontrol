@@ -195,69 +195,6 @@ static inline uint16_t mavlink_msg_test_types_pack_chan(uint8_t system_id, uint8
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 179, 103);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a test_types message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param c char
- * @param s string
- * @param u8 uint8_t
- * @param u16 uint16_t
- * @param u32 uint32_t
- * @param u64 uint64_t
- * @param s8 int8_t
- * @param s16 int16_t
- * @param s32 int32_t
- * @param s64 int64_t
- * @param f float
- * @param d double
- * @param u8_array uint8_t_array
- * @param u16_array uint16_t_array
- * @param u32_array uint32_t_array
- * @param u64_array uint64_t_array
- * @param s8_array int8_t_array
- * @param s16_array int16_t_array
- * @param s32_array int32_t_array
- * @param s64_array int64_t_array
- * @param f_array float_array
- * @param d_array double_array
- */
-static inline void mavlink_msg_test_types_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           char c,const char *s,uint8_t u8,uint16_t u16,uint32_t u32,uint64_t u64,int8_t s8,int16_t s16,int32_t s32,int64_t s64,float f,double d,const uint8_t *u8_array,const uint16_t *u16_array,const uint32_t *u32_array,const uint64_t *u64_array,const int8_t *s8_array,const int16_t *s16_array,const int32_t *s32_array,const int64_t *s64_array,const float *f_array,const double *d_array)
-{
-	msg->msgid = MAVLINK_MSG_ID_TEST_TYPES;
-
-	put_uint64_t_by_index(msg, 0, u64); // uint64_t
-	put_int64_t_by_index(msg, 8, s64); // int64_t
-	put_double_by_index(msg, 16, d); // double
-	put_uint64_t_array_by_index(msg, 24, u64_array, 3); // uint64_t_array
-	put_int64_t_array_by_index(msg, 48, s64_array, 3); // int64_t_array
-	put_double_array_by_index(msg, 72, d_array, 3); // double_array
-	put_uint32_t_by_index(msg, 96, u32); // uint32_t
-	put_int32_t_by_index(msg, 100, s32); // int32_t
-	put_float_by_index(msg, 104, f); // float
-	put_uint32_t_array_by_index(msg, 108, u32_array, 3); // uint32_t_array
-	put_int32_t_array_by_index(msg, 120, s32_array, 3); // int32_t_array
-	put_float_array_by_index(msg, 132, f_array, 3); // float_array
-	put_uint16_t_by_index(msg, 144, u16); // uint16_t
-	put_int16_t_by_index(msg, 146, s16); // int16_t
-	put_uint16_t_array_by_index(msg, 148, u16_array, 3); // uint16_t_array
-	put_int16_t_array_by_index(msg, 154, s16_array, 3); // int16_t_array
-	put_char_by_index(msg, 160, c); // char
-	put_char_array_by_index(msg, 161, s, 10); // string
-	put_uint8_t_by_index(msg, 171, u8); // uint8_t
-	put_int8_t_by_index(msg, 172, s8); // int8_t
-	put_uint8_t_array_by_index(msg, 173, u8_array, 3); // uint8_t_array
-	put_int8_t_array_by_index(msg, 176, s8_array, 3); // int8_t_array
-
-	mavlink_finalize_message_chan_send(msg, chan, 179, 103);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a test_types struct into a message
  *
@@ -303,7 +240,32 @@ static inline uint16_t mavlink_msg_test_types_encode(uint8_t system_id, uint8_t 
 static inline void mavlink_msg_test_types_send(mavlink_channel_t chan, char c, const char *s, uint8_t u8, uint16_t u16, uint32_t u32, uint64_t u64, int8_t s8, int16_t s16, int32_t s32, int64_t s64, float f, double d, const uint8_t *u8_array, const uint16_t *u16_array, const uint32_t *u32_array, const uint64_t *u64_array, const int8_t *s8_array, const int16_t *s16_array, const int32_t *s32_array, const int64_t *s64_array, const float *f_array, const double *d_array)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 179);
-	mavlink_msg_test_types_pack_chan_send(chan, msg, c, s, u8, u16, u32, u64, s8, s16, s32, s64, f, d, u8_array, u16_array, u32_array, u64_array, s8_array, s16_array, s32_array, s64_array, f_array, d_array);
+	msg->msgid = MAVLINK_MSG_ID_TEST_TYPES;
+
+	put_uint64_t_by_index(msg, 0, u64); // uint64_t
+	put_int64_t_by_index(msg, 8, s64); // int64_t
+	put_double_by_index(msg, 16, d); // double
+	put_uint64_t_array_by_index(msg, 24, u64_array, 3); // uint64_t_array
+	put_int64_t_array_by_index(msg, 48, s64_array, 3); // int64_t_array
+	put_double_array_by_index(msg, 72, d_array, 3); // double_array
+	put_uint32_t_by_index(msg, 96, u32); // uint32_t
+	put_int32_t_by_index(msg, 100, s32); // int32_t
+	put_float_by_index(msg, 104, f); // float
+	put_uint32_t_array_by_index(msg, 108, u32_array, 3); // uint32_t_array
+	put_int32_t_array_by_index(msg, 120, s32_array, 3); // int32_t_array
+	put_float_array_by_index(msg, 132, f_array, 3); // float_array
+	put_uint16_t_by_index(msg, 144, u16); // uint16_t
+	put_int16_t_by_index(msg, 146, s16); // int16_t
+	put_uint16_t_array_by_index(msg, 148, u16_array, 3); // uint16_t_array
+	put_int16_t_array_by_index(msg, 154, s16_array, 3); // int16_t_array
+	put_char_by_index(msg, 160, c); // char
+	put_char_array_by_index(msg, 161, s, 10); // string
+	put_uint8_t_by_index(msg, 171, u8); // uint8_t
+	put_int8_t_by_index(msg, 172, s8); // int8_t
+	put_uint8_t_array_by_index(msg, 173, u8_array, 3); // uint8_t_array
+	put_int8_t_array_by_index(msg, 176, s8_array, 3); // int8_t_array
+
+	mavlink_finalize_message_chan_send(msg, chan, 179, 103);
 }
 
 #endif

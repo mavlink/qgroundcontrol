@@ -83,35 +83,6 @@ static inline uint16_t mavlink_msg_raw_pressure_pack_chan(uint8_t system_id, uin
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 16, 136);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a raw_pressure message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
- * @param press_abs Absolute pressure (raw)
- * @param press_diff1 Differential pressure 1 (raw)
- * @param press_diff2 Differential pressure 2 (raw)
- * @param temperature Raw Temperature measurement (raw)
- */
-static inline void mavlink_msg_raw_pressure_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint64_t usec,int16_t press_abs,int16_t press_diff1,int16_t press_diff2,int16_t temperature)
-{
-	msg->msgid = MAVLINK_MSG_ID_RAW_PRESSURE;
-
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	put_int16_t_by_index(msg, 8, press_abs); // Absolute pressure (raw)
-	put_int16_t_by_index(msg, 10, press_diff1); // Differential pressure 1 (raw)
-	put_int16_t_by_index(msg, 12, press_diff2); // Differential pressure 2 (raw)
-	put_int16_t_by_index(msg, 14, temperature); // Raw Temperature measurement (raw)
-
-	mavlink_finalize_message_chan_send(msg, chan, 16, 136);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a raw_pressure struct into a message
  *
@@ -140,7 +111,15 @@ static inline uint16_t mavlink_msg_raw_pressure_encode(uint8_t system_id, uint8_
 static inline void mavlink_msg_raw_pressure_send(mavlink_channel_t chan, uint64_t usec, int16_t press_abs, int16_t press_diff1, int16_t press_diff2, int16_t temperature)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 16);
-	mavlink_msg_raw_pressure_pack_chan_send(chan, msg, usec, press_abs, press_diff1, press_diff2, temperature);
+	msg->msgid = MAVLINK_MSG_ID_RAW_PRESSURE;
+
+	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_int16_t_by_index(msg, 8, press_abs); // Absolute pressure (raw)
+	put_int16_t_by_index(msg, 10, press_diff1); // Differential pressure 1 (raw)
+	put_int16_t_by_index(msg, 12, press_diff2); // Differential pressure 2 (raw)
+	put_int16_t_by_index(msg, 14, temperature); // Raw Temperature measurement (raw)
+
+	mavlink_finalize_message_chan_send(msg, chan, 16, 136);
 }
 
 #endif

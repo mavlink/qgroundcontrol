@@ -89,37 +89,6 @@ static inline uint16_t mavlink_msg_diagnostic_pack_chan(uint8_t system_id, uint8
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 18, 2);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a diagnostic message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param diagFl1 Diagnostic float 1
- * @param diagFl2 Diagnostic float 2
- * @param diagFl3 Diagnostic float 3
- * @param diagSh1 Diagnostic short 1
- * @param diagSh2 Diagnostic short 2
- * @param diagSh3 Diagnostic short 3
- */
-static inline void mavlink_msg_diagnostic_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           float diagFl1,float diagFl2,float diagFl3,int16_t diagSh1,int16_t diagSh2,int16_t diagSh3)
-{
-	msg->msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
-
-	put_float_by_index(msg, 0, diagFl1); // Diagnostic float 1
-	put_float_by_index(msg, 4, diagFl2); // Diagnostic float 2
-	put_float_by_index(msg, 8, diagFl3); // Diagnostic float 3
-	put_int16_t_by_index(msg, 12, diagSh1); // Diagnostic short 1
-	put_int16_t_by_index(msg, 14, diagSh2); // Diagnostic short 2
-	put_int16_t_by_index(msg, 16, diagSh3); // Diagnostic short 3
-
-	mavlink_finalize_message_chan_send(msg, chan, 18, 2);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a diagnostic struct into a message
  *
@@ -149,7 +118,16 @@ static inline uint16_t mavlink_msg_diagnostic_encode(uint8_t system_id, uint8_t 
 static inline void mavlink_msg_diagnostic_send(mavlink_channel_t chan, float diagFl1, float diagFl2, float diagFl3, int16_t diagSh1, int16_t diagSh2, int16_t diagSh3)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 18);
-	mavlink_msg_diagnostic_pack_chan_send(chan, msg, diagFl1, diagFl2, diagFl3, diagSh1, diagSh2, diagSh3);
+	msg->msgid = MAVLINK_MSG_ID_DIAGNOSTIC;
+
+	put_float_by_index(msg, 0, diagFl1); // Diagnostic float 1
+	put_float_by_index(msg, 4, diagFl2); // Diagnostic float 2
+	put_float_by_index(msg, 8, diagFl3); // Diagnostic float 3
+	put_int16_t_by_index(msg, 12, diagSh1); // Diagnostic short 1
+	put_int16_t_by_index(msg, 14, diagSh2); // Diagnostic short 2
+	put_int16_t_by_index(msg, 16, diagSh3); // Diagnostic short 3
+
+	mavlink_finalize_message_chan_send(msg, chan, 18, 2);
 }
 
 #endif

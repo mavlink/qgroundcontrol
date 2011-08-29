@@ -71,31 +71,6 @@ static inline uint16_t mavlink_msg_gps_local_origin_set_pack_chan(uint8_t system
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 12, 14);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a gps_local_origin_set message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param latitude Latitude (WGS84), expressed as * 1E7
- * @param longitude Longitude (WGS84), expressed as * 1E7
- * @param altitude Altitude(WGS84), expressed as * 1000
- */
-static inline void mavlink_msg_gps_local_origin_set_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           int32_t latitude,int32_t longitude,int32_t altitude)
-{
-	msg->msgid = MAVLINK_MSG_ID_GPS_LOCAL_ORIGIN_SET;
-
-	put_int32_t_by_index(msg, 0, latitude); // Latitude (WGS84), expressed as * 1E7
-	put_int32_t_by_index(msg, 4, longitude); // Longitude (WGS84), expressed as * 1E7
-	put_int32_t_by_index(msg, 8, altitude); // Altitude(WGS84), expressed as * 1000
-
-	mavlink_finalize_message_chan_send(msg, chan, 12, 14);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a gps_local_origin_set struct into a message
  *
@@ -122,7 +97,13 @@ static inline uint16_t mavlink_msg_gps_local_origin_set_encode(uint8_t system_id
 static inline void mavlink_msg_gps_local_origin_set_send(mavlink_channel_t chan, int32_t latitude, int32_t longitude, int32_t altitude)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 12);
-	mavlink_msg_gps_local_origin_set_pack_chan_send(chan, msg, latitude, longitude, altitude);
+	msg->msgid = MAVLINK_MSG_ID_GPS_LOCAL_ORIGIN_SET;
+
+	put_int32_t_by_index(msg, 0, latitude); // Latitude (WGS84), expressed as * 1E7
+	put_int32_t_by_index(msg, 4, longitude); // Longitude (WGS84), expressed as * 1E7
+	put_int32_t_by_index(msg, 8, altitude); // Altitude(WGS84), expressed as * 1000
+
+	mavlink_finalize_message_chan_send(msg, chan, 12, 14);
 }
 
 #endif

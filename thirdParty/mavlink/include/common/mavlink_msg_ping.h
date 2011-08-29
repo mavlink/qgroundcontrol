@@ -77,33 +77,6 @@ static inline uint16_t mavlink_msg_ping_pack_chan(uint8_t system_id, uint8_t com
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 14, 105);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a ping message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param seq PING sequence
- * @param target_system 0: request ping from all receiving systems, if greater than 0: message is a ping response and number is the system id of the requesting system
- * @param target_component 0: request ping from all receiving components, if greater than 0: message is a ping response and number is the system id of the requesting system
- * @param time Unix timestamp in microseconds
- */
-static inline void mavlink_msg_ping_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint32_t seq,uint8_t target_system,uint8_t target_component,uint64_t time)
-{
-	msg->msgid = MAVLINK_MSG_ID_PING;
-
-	put_uint64_t_by_index(msg, 0, time); // Unix timestamp in microseconds
-	put_uint32_t_by_index(msg, 8, seq); // PING sequence
-	put_uint8_t_by_index(msg, 12, target_system); // 0: request ping from all receiving systems, if greater than 0: message is a ping response and number is the system id of the requesting system
-	put_uint8_t_by_index(msg, 13, target_component); // 0: request ping from all receiving components, if greater than 0: message is a ping response and number is the system id of the requesting system
-
-	mavlink_finalize_message_chan_send(msg, chan, 14, 105);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a ping struct into a message
  *
@@ -131,7 +104,14 @@ static inline uint16_t mavlink_msg_ping_encode(uint8_t system_id, uint8_t compon
 static inline void mavlink_msg_ping_send(mavlink_channel_t chan, uint32_t seq, uint8_t target_system, uint8_t target_component, uint64_t time)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 14);
-	mavlink_msg_ping_pack_chan_send(chan, msg, seq, target_system, target_component, time);
+	msg->msgid = MAVLINK_MSG_ID_PING;
+
+	put_uint64_t_by_index(msg, 0, time); // Unix timestamp in microseconds
+	put_uint32_t_by_index(msg, 8, seq); // PING sequence
+	put_uint8_t_by_index(msg, 12, target_system); // 0: request ping from all receiving systems, if greater than 0: message is a ping response and number is the system id of the requesting system
+	put_uint8_t_by_index(msg, 13, target_component); // 0: request ping from all receiving components, if greater than 0: message is a ping response and number is the system id of the requesting system
+
+	mavlink_finalize_message_chan_send(msg, chan, 14, 105);
 }
 
 #endif

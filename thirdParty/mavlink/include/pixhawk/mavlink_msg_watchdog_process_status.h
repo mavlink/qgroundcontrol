@@ -89,37 +89,6 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack_chan(uint8_t sys
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 12, 29);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a watchdog_process_status message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param watchdog_id Watchdog ID
- * @param process_id Process ID
- * @param state Is running / finished / suspended / crashed
- * @param muted Is muted
- * @param pid PID
- * @param crashes Number of crashes
- */
-static inline void mavlink_msg_watchdog_process_status_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint16_t watchdog_id,uint16_t process_id,uint8_t state,uint8_t muted,int32_t pid,uint16_t crashes)
-{
-	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS;
-
-	put_int32_t_by_index(msg, 0, pid); // PID
-	put_uint16_t_by_index(msg, 4, watchdog_id); // Watchdog ID
-	put_uint16_t_by_index(msg, 6, process_id); // Process ID
-	put_uint16_t_by_index(msg, 8, crashes); // Number of crashes
-	put_uint8_t_by_index(msg, 10, state); // Is running / finished / suspended / crashed
-	put_uint8_t_by_index(msg, 11, muted); // Is muted
-
-	mavlink_finalize_message_chan_send(msg, chan, 12, 29);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a watchdog_process_status struct into a message
  *
@@ -149,7 +118,16 @@ static inline uint16_t mavlink_msg_watchdog_process_status_encode(uint8_t system
 static inline void mavlink_msg_watchdog_process_status_send(mavlink_channel_t chan, uint16_t watchdog_id, uint16_t process_id, uint8_t state, uint8_t muted, int32_t pid, uint16_t crashes)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 12);
-	mavlink_msg_watchdog_process_status_pack_chan_send(chan, msg, watchdog_id, process_id, state, muted, pid, crashes);
+	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS;
+
+	put_int32_t_by_index(msg, 0, pid); // PID
+	put_uint16_t_by_index(msg, 4, watchdog_id); // Watchdog ID
+	put_uint16_t_by_index(msg, 6, process_id); // Process ID
+	put_uint16_t_by_index(msg, 8, crashes); // Number of crashes
+	put_uint8_t_by_index(msg, 10, state); // Is running / finished / suspended / crashed
+	put_uint8_t_by_index(msg, 11, muted); // Is muted
+
+	mavlink_finalize_message_chan_send(msg, chan, 12, 29);
 }
 
 #endif

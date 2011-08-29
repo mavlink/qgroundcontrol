@@ -46,8 +46,7 @@ static void mavlink_test_cpu_load(uint8_t system_id, uint8_t component_id)
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_cpu_load_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.sensLoad , packet1.ctrlLoad , packet1.batVolt );
-	mavlink_msg_cpu_load_send(MAVLINK_COMM_2 , packet1.sensLoad , packet1.ctrlLoad , packet1.batVolt );
+	mavlink_msg_cpu_load_send(MAVLINK_COMM_1 , packet1.sensLoad , packet1.ctrlLoad , packet1.batVolt );
 }
 
 static void mavlink_test_air_data(uint8_t system_id, uint8_t component_id)
@@ -72,8 +71,7 @@ static void mavlink_test_air_data(uint8_t system_id, uint8_t component_id)
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_air_data_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.dynamicPressure , packet1.staticPressure , packet1.temperature );
-	mavlink_msg_air_data_send(MAVLINK_COMM_2 , packet1.dynamicPressure , packet1.staticPressure , packet1.temperature );
+	mavlink_msg_air_data_send(MAVLINK_COMM_1 , packet1.dynamicPressure , packet1.staticPressure , packet1.temperature );
 }
 
 static void mavlink_test_sensor_bias(uint8_t system_id, uint8_t component_id)
@@ -101,8 +99,7 @@ static void mavlink_test_sensor_bias(uint8_t system_id, uint8_t component_id)
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_sensor_bias_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.axBias , packet1.ayBias , packet1.azBias , packet1.gxBias , packet1.gyBias , packet1.gzBias );
-	mavlink_msg_sensor_bias_send(MAVLINK_COMM_2 , packet1.axBias , packet1.ayBias , packet1.azBias , packet1.gxBias , packet1.gyBias , packet1.gzBias );
+	mavlink_msg_sensor_bias_send(MAVLINK_COMM_1 , packet1.axBias , packet1.ayBias , packet1.azBias , packet1.gxBias , packet1.gyBias , packet1.gzBias );
 }
 
 static void mavlink_test_diagnostic(uint8_t system_id, uint8_t component_id)
@@ -130,8 +127,7 @@ static void mavlink_test_diagnostic(uint8_t system_id, uint8_t component_id)
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_diagnostic_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.diagFl1 , packet1.diagFl2 , packet1.diagFl3 , packet1.diagSh1 , packet1.diagSh2 , packet1.diagSh3 );
-	mavlink_msg_diagnostic_send(MAVLINK_COMM_2 , packet1.diagFl1 , packet1.diagFl2 , packet1.diagFl3 , packet1.diagSh1 , packet1.diagSh2 , packet1.diagSh3 );
+	mavlink_msg_diagnostic_send(MAVLINK_COMM_1 , packet1.diagFl1 , packet1.diagFl2 , packet1.diagFl3 , packet1.diagSh1 , packet1.diagSh2 , packet1.diagSh3 );
 }
 
 static void mavlink_test_slugs_navigation(uint8_t system_id, uint8_t component_id)
@@ -162,8 +158,7 @@ static void mavlink_test_slugs_navigation(uint8_t system_id, uint8_t component_i
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_slugs_navigation_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.u_m , packet1.phi_c , packet1.theta_c , packet1.psiDot_c , packet1.ay_body , packet1.totalDist , packet1.dist2Go , packet1.fromWP , packet1.toWP );
-	mavlink_msg_slugs_navigation_send(MAVLINK_COMM_2 , packet1.u_m , packet1.phi_c , packet1.theta_c , packet1.psiDot_c , packet1.ay_body , packet1.totalDist , packet1.dist2Go , packet1.fromWP , packet1.toWP );
+	mavlink_msg_slugs_navigation_send(MAVLINK_COMM_1 , packet1.u_m , packet1.phi_c , packet1.theta_c , packet1.psiDot_c , packet1.ay_body , packet1.totalDist , packet1.dist2Go , packet1.fromWP , packet1.toWP );
 }
 
 static void mavlink_test_data_log(uint8_t system_id, uint8_t component_id)
@@ -191,8 +186,7 @@ static void mavlink_test_data_log(uint8_t system_id, uint8_t component_id)
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_data_log_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.fl_1 , packet1.fl_2 , packet1.fl_3 , packet1.fl_4 , packet1.fl_5 , packet1.fl_6 );
-	mavlink_msg_data_log_send(MAVLINK_COMM_2 , packet1.fl_1 , packet1.fl_2 , packet1.fl_3 , packet1.fl_4 , packet1.fl_5 , packet1.fl_6 );
+	mavlink_msg_data_log_send(MAVLINK_COMM_1 , packet1.fl_1 , packet1.fl_2 , packet1.fl_3 , packet1.fl_4 , packet1.fl_5 , packet1.fl_6 );
 }
 
 static void mavlink_test_gps_date_time(uint8_t system_id, uint8_t component_id)
@@ -221,8 +215,7 @@ static void mavlink_test_gps_date_time(uint8_t system_id, uint8_t component_id)
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_gps_date_time_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.year , packet1.month , packet1.day , packet1.hour , packet1.min , packet1.sec , packet1.visSat );
-	mavlink_msg_gps_date_time_send(MAVLINK_COMM_2 , packet1.year , packet1.month , packet1.day , packet1.hour , packet1.min , packet1.sec , packet1.visSat );
+	mavlink_msg_gps_date_time_send(MAVLINK_COMM_1 , packet1.year , packet1.month , packet1.day , packet1.hour , packet1.min , packet1.sec , packet1.visSat );
 }
 
 static void mavlink_test_mid_lvl_cmds(uint8_t system_id, uint8_t component_id)
@@ -248,8 +241,7 @@ static void mavlink_test_mid_lvl_cmds(uint8_t system_id, uint8_t component_id)
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_mid_lvl_cmds_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.target , packet1.hCommand , packet1.uCommand , packet1.rCommand );
-	mavlink_msg_mid_lvl_cmds_send(MAVLINK_COMM_2 , packet1.target , packet1.hCommand , packet1.uCommand , packet1.rCommand );
+	mavlink_msg_mid_lvl_cmds_send(MAVLINK_COMM_1 , packet1.target , packet1.hCommand , packet1.uCommand , packet1.rCommand );
 }
 
 static void mavlink_test_ctrl_srfc_pt(uint8_t system_id, uint8_t component_id)
@@ -273,8 +265,7 @@ static void mavlink_test_ctrl_srfc_pt(uint8_t system_id, uint8_t component_id)
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_ctrl_srfc_pt_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.target , packet1.bitfieldPt );
-	mavlink_msg_ctrl_srfc_pt_send(MAVLINK_COMM_2 , packet1.target , packet1.bitfieldPt );
+	mavlink_msg_ctrl_srfc_pt_send(MAVLINK_COMM_1 , packet1.target , packet1.bitfieldPt );
 }
 
 static void mavlink_test_slugs_action(uint8_t system_id, uint8_t component_id)
@@ -299,8 +290,7 @@ static void mavlink_test_slugs_action(uint8_t system_id, uint8_t component_id)
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_slugs_action_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.target , packet1.actionId , packet1.actionVal );
-	mavlink_msg_slugs_action_send(MAVLINK_COMM_2 , packet1.target , packet1.actionId , packet1.actionVal );
+	mavlink_msg_slugs_action_send(MAVLINK_COMM_1 , packet1.target , packet1.actionId , packet1.actionVal );
 }
 
 static void mavlink_test_slugs(uint8_t system_id, uint8_t component_id)

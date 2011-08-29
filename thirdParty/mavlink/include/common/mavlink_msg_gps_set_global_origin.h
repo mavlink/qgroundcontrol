@@ -83,35 +83,6 @@ static inline uint16_t mavlink_msg_gps_set_global_origin_pack_chan(uint8_t syste
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 14, 170);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a gps_set_global_origin message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target_system System ID
- * @param target_component Component ID
- * @param latitude global position * 1E7
- * @param longitude global position * 1E7
- * @param altitude global position * 1000
- */
-static inline void mavlink_msg_gps_set_global_origin_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target_system,uint8_t target_component,int32_t latitude,int32_t longitude,int32_t altitude)
-{
-	msg->msgid = MAVLINK_MSG_ID_GPS_SET_GLOBAL_ORIGIN;
-
-	put_int32_t_by_index(msg, 0, latitude); // global position * 1E7
-	put_int32_t_by_index(msg, 4, longitude); // global position * 1E7
-	put_int32_t_by_index(msg, 8, altitude); // global position * 1000
-	put_uint8_t_by_index(msg, 12, target_system); // System ID
-	put_uint8_t_by_index(msg, 13, target_component); // Component ID
-
-	mavlink_finalize_message_chan_send(msg, chan, 14, 170);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a gps_set_global_origin struct into a message
  *
@@ -140,7 +111,15 @@ static inline uint16_t mavlink_msg_gps_set_global_origin_encode(uint8_t system_i
 static inline void mavlink_msg_gps_set_global_origin_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, int32_t latitude, int32_t longitude, int32_t altitude)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 14);
-	mavlink_msg_gps_set_global_origin_pack_chan_send(chan, msg, target_system, target_component, latitude, longitude, altitude);
+	msg->msgid = MAVLINK_MSG_ID_GPS_SET_GLOBAL_ORIGIN;
+
+	put_int32_t_by_index(msg, 0, latitude); // global position * 1E7
+	put_int32_t_by_index(msg, 4, longitude); // global position * 1E7
+	put_int32_t_by_index(msg, 8, altitude); // global position * 1000
+	put_uint8_t_by_index(msg, 12, target_system); // System ID
+	put_uint8_t_by_index(msg, 13, target_component); // Component ID
+
+	mavlink_finalize_message_chan_send(msg, chan, 14, 170);
 }
 
 #endif

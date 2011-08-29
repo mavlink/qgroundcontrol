@@ -77,33 +77,6 @@ static inline uint16_t mavlink_msg_global_position_setpoint_int_pack_chan(uint8_
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 14, 142);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a global_position_setpoint_int message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param latitude WGS84 Latitude position in degrees * 1E7
- * @param longitude WGS84 Longitude position in degrees * 1E7
- * @param altitude WGS84 Altitude in meters * 1000 (positive for up)
- * @param yaw Desired yaw angle in degrees * 100
- */
-static inline void mavlink_msg_global_position_setpoint_int_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           int32_t latitude,int32_t longitude,int32_t altitude,int16_t yaw)
-{
-	msg->msgid = MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT;
-
-	put_int32_t_by_index(msg, 0, latitude); // WGS84 Latitude position in degrees * 1E7
-	put_int32_t_by_index(msg, 4, longitude); // WGS84 Longitude position in degrees * 1E7
-	put_int32_t_by_index(msg, 8, altitude); // WGS84 Altitude in meters * 1000 (positive for up)
-	put_int16_t_by_index(msg, 12, yaw); // Desired yaw angle in degrees * 100
-
-	mavlink_finalize_message_chan_send(msg, chan, 14, 142);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a global_position_setpoint_int struct into a message
  *
@@ -131,7 +104,14 @@ static inline uint16_t mavlink_msg_global_position_setpoint_int_encode(uint8_t s
 static inline void mavlink_msg_global_position_setpoint_int_send(mavlink_channel_t chan, int32_t latitude, int32_t longitude, int32_t altitude, int16_t yaw)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 14);
-	mavlink_msg_global_position_setpoint_int_pack_chan_send(chan, msg, latitude, longitude, altitude, yaw);
+	msg->msgid = MAVLINK_MSG_ID_GLOBAL_POSITION_SETPOINT_INT;
+
+	put_int32_t_by_index(msg, 0, latitude); // WGS84 Latitude position in degrees * 1E7
+	put_int32_t_by_index(msg, 4, longitude); // WGS84 Longitude position in degrees * 1E7
+	put_int32_t_by_index(msg, 8, altitude); // WGS84 Altitude in meters * 1000 (positive for up)
+	put_int16_t_by_index(msg, 12, yaw); // Desired yaw angle in degrees * 100
+
+	mavlink_finalize_message_chan_send(msg, chan, 14, 142);
 }
 
 #endif

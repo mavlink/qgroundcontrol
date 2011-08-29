@@ -107,43 +107,6 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_pack_chan(uint8_t sys
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 27, 15);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a safety_set_allowed_area message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target_system System ID
- * @param target_component Component ID
- * @param frame Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
- * @param p1x x position 1 / Latitude 1
- * @param p1y y position 1 / Longitude 1
- * @param p1z z position 1 / Altitude 1
- * @param p2x x position 2 / Latitude 2
- * @param p2y y position 2 / Longitude 2
- * @param p2z z position 2 / Altitude 2
- */
-static inline void mavlink_msg_safety_set_allowed_area_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target_system,uint8_t target_component,uint8_t frame,float p1x,float p1y,float p1z,float p2x,float p2y,float p2z)
-{
-	msg->msgid = MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA;
-
-	put_float_by_index(msg, 0, p1x); // x position 1 / Latitude 1
-	put_float_by_index(msg, 4, p1y); // y position 1 / Longitude 1
-	put_float_by_index(msg, 8, p1z); // z position 1 / Altitude 1
-	put_float_by_index(msg, 12, p2x); // x position 2 / Latitude 2
-	put_float_by_index(msg, 16, p2y); // y position 2 / Longitude 2
-	put_float_by_index(msg, 20, p2z); // z position 2 / Altitude 2
-	put_uint8_t_by_index(msg, 24, target_system); // System ID
-	put_uint8_t_by_index(msg, 25, target_component); // Component ID
-	put_uint8_t_by_index(msg, 26, frame); // Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
-
-	mavlink_finalize_message_chan_send(msg, chan, 27, 15);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a safety_set_allowed_area struct into a message
  *
@@ -176,7 +139,19 @@ static inline uint16_t mavlink_msg_safety_set_allowed_area_encode(uint8_t system
 static inline void mavlink_msg_safety_set_allowed_area_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t frame, float p1x, float p1y, float p1z, float p2x, float p2y, float p2z)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 27);
-	mavlink_msg_safety_set_allowed_area_pack_chan_send(chan, msg, target_system, target_component, frame, p1x, p1y, p1z, p2x, p2y, p2z);
+	msg->msgid = MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA;
+
+	put_float_by_index(msg, 0, p1x); // x position 1 / Latitude 1
+	put_float_by_index(msg, 4, p1y); // y position 1 / Longitude 1
+	put_float_by_index(msg, 8, p1z); // z position 1 / Altitude 1
+	put_float_by_index(msg, 12, p2x); // x position 2 / Latitude 2
+	put_float_by_index(msg, 16, p2y); // y position 2 / Longitude 2
+	put_float_by_index(msg, 20, p2z); // z position 2 / Altitude 2
+	put_uint8_t_by_index(msg, 24, target_system); // System ID
+	put_uint8_t_by_index(msg, 25, target_component); // Component ID
+	put_uint8_t_by_index(msg, 26, frame); // Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.
+
+	mavlink_finalize_message_chan_send(msg, chan, 27, 15);
 }
 
 #endif

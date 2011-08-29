@@ -93,37 +93,6 @@ static inline uint16_t mavlink_msg_gps_status_pack_chan(uint8_t system_id, uint8
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 101, 23);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a gps_status message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param satellites_visible Number of satellites visible
- * @param satellite_prn Global satellite ID
- * @param satellite_used 0: Satellite not used, 1: used for localization
- * @param satellite_elevation Elevation (0: right on top of receiver, 90: on the horizon) of satellite
- * @param satellite_azimuth Direction of satellite, 0: 0 deg, 255: 360 deg.
- * @param satellite_snr Signal to noise ratio of satellite
- */
-static inline void mavlink_msg_gps_status_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t satellites_visible,const uint8_t *satellite_prn,const uint8_t *satellite_used,const uint8_t *satellite_elevation,const uint8_t *satellite_azimuth,const uint8_t *satellite_snr)
-{
-	msg->msgid = MAVLINK_MSG_ID_GPS_STATUS;
-
-	put_uint8_t_by_index(msg, 0, satellites_visible); // Number of satellites visible
-	put_uint8_t_array_by_index(msg, 1, satellite_prn, 20); // Global satellite ID
-	put_uint8_t_array_by_index(msg, 21, satellite_used, 20); // 0: Satellite not used, 1: used for localization
-	put_uint8_t_array_by_index(msg, 41, satellite_elevation, 20); // Elevation (0: right on top of receiver, 90: on the horizon) of satellite
-	put_uint8_t_array_by_index(msg, 61, satellite_azimuth, 20); // Direction of satellite, 0: 0 deg, 255: 360 deg.
-	put_uint8_t_array_by_index(msg, 81, satellite_snr, 20); // Signal to noise ratio of satellite
-
-	mavlink_finalize_message_chan_send(msg, chan, 101, 23);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a gps_status struct into a message
  *
@@ -153,7 +122,16 @@ static inline uint16_t mavlink_msg_gps_status_encode(uint8_t system_id, uint8_t 
 static inline void mavlink_msg_gps_status_send(mavlink_channel_t chan, uint8_t satellites_visible, const uint8_t *satellite_prn, const uint8_t *satellite_used, const uint8_t *satellite_elevation, const uint8_t *satellite_azimuth, const uint8_t *satellite_snr)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 101);
-	mavlink_msg_gps_status_pack_chan_send(chan, msg, satellites_visible, satellite_prn, satellite_used, satellite_elevation, satellite_azimuth, satellite_snr);
+	msg->msgid = MAVLINK_MSG_ID_GPS_STATUS;
+
+	put_uint8_t_by_index(msg, 0, satellites_visible); // Number of satellites visible
+	put_uint8_t_array_by_index(msg, 1, satellite_prn, 20); // Global satellite ID
+	put_uint8_t_array_by_index(msg, 21, satellite_used, 20); // 0: Satellite not used, 1: used for localization
+	put_uint8_t_array_by_index(msg, 41, satellite_elevation, 20); // Elevation (0: right on top of receiver, 90: on the horizon) of satellite
+	put_uint8_t_array_by_index(msg, 61, satellite_azimuth, 20); // Direction of satellite, 0: 0 deg, 255: 360 deg.
+	put_uint8_t_array_by_index(msg, 81, satellite_snr, 20); // Signal to noise ratio of satellite
+
+	mavlink_finalize_message_chan_send(msg, chan, 101, 23);
 }
 
 #endif

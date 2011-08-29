@@ -65,29 +65,6 @@ static inline uint16_t mavlink_msg_command_ack_pack_chan(uint8_t system_id, uint
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 8, 8);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a command_ack message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param command Current airspeed in m/s
- * @param result 1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION
- */
-static inline void mavlink_msg_command_ack_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           float command,float result)
-{
-	msg->msgid = MAVLINK_MSG_ID_COMMAND_ACK;
-
-	put_float_by_index(msg, 0, command); // Current airspeed in m/s
-	put_float_by_index(msg, 4, result); // 1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION
-
-	mavlink_finalize_message_chan_send(msg, chan, 8, 8);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a command_ack struct into a message
  *
@@ -113,7 +90,12 @@ static inline uint16_t mavlink_msg_command_ack_encode(uint8_t system_id, uint8_t
 static inline void mavlink_msg_command_ack_send(mavlink_channel_t chan, float command, float result)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 8);
-	mavlink_msg_command_ack_pack_chan_send(chan, msg, command, result);
+	msg->msgid = MAVLINK_MSG_ID_COMMAND_ACK;
+
+	put_float_by_index(msg, 0, command); // Current airspeed in m/s
+	put_float_by_index(msg, 4, result); // 1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION
+
+	mavlink_finalize_message_chan_send(msg, chan, 8, 8);
 }
 
 #endif

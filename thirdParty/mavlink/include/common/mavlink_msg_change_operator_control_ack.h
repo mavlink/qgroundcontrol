@@ -71,31 +71,6 @@ static inline uint16_t mavlink_msg_change_operator_control_ack_pack_chan(uint8_t
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 3, 104);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a change_operator_control_ack message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param gcs_system_id ID of the GCS this message 
- * @param control_request 0: request control of this MAV, 1: Release control of this MAV
- * @param ack 0: ACK, 1: NACK: Wrong passkey, 2: NACK: Unsupported passkey encryption method, 3: NACK: Already under control
- */
-static inline void mavlink_msg_change_operator_control_ack_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t gcs_system_id,uint8_t control_request,uint8_t ack)
-{
-	msg->msgid = MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK;
-
-	put_uint8_t_by_index(msg, 0, gcs_system_id); // ID of the GCS this message 
-	put_uint8_t_by_index(msg, 1, control_request); // 0: request control of this MAV, 1: Release control of this MAV
-	put_uint8_t_by_index(msg, 2, ack); // 0: ACK, 1: NACK: Wrong passkey, 2: NACK: Unsupported passkey encryption method, 3: NACK: Already under control
-
-	mavlink_finalize_message_chan_send(msg, chan, 3, 104);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a change_operator_control_ack struct into a message
  *
@@ -122,7 +97,13 @@ static inline uint16_t mavlink_msg_change_operator_control_ack_encode(uint8_t sy
 static inline void mavlink_msg_change_operator_control_ack_send(mavlink_channel_t chan, uint8_t gcs_system_id, uint8_t control_request, uint8_t ack)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 3);
-	mavlink_msg_change_operator_control_ack_pack_chan_send(chan, msg, gcs_system_id, control_request, ack);
+	msg->msgid = MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK;
+
+	put_uint8_t_by_index(msg, 0, gcs_system_id); // ID of the GCS this message 
+	put_uint8_t_by_index(msg, 1, control_request); // 0: request control of this MAV, 1: Release control of this MAV
+	put_uint8_t_by_index(msg, 2, ack); // 0: ACK, 1: NACK: Wrong passkey, 2: NACK: Unsupported passkey encryption method, 3: NACK: Already under control
+
+	mavlink_finalize_message_chan_send(msg, chan, 3, 104);
 }
 
 #endif

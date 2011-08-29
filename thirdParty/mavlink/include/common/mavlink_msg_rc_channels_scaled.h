@@ -107,43 +107,6 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_pack_chan(uint8_t system_i
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 17, 162);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a rc_channels_scaled message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param chan1_scaled RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
- * @param chan2_scaled RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
- * @param chan3_scaled RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
- * @param chan4_scaled RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
- * @param chan5_scaled RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
- * @param chan6_scaled RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
- * @param chan7_scaled RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
- * @param chan8_scaled RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
- * @param rssi Receive signal strength indicator, 0: 0%, 255: 100%
- */
-static inline void mavlink_msg_rc_channels_scaled_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           int16_t chan1_scaled,int16_t chan2_scaled,int16_t chan3_scaled,int16_t chan4_scaled,int16_t chan5_scaled,int16_t chan6_scaled,int16_t chan7_scaled,int16_t chan8_scaled,uint8_t rssi)
-{
-	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_SCALED;
-
-	put_int16_t_by_index(msg, 0, chan1_scaled); // RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	put_int16_t_by_index(msg, 2, chan2_scaled); // RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	put_int16_t_by_index(msg, 4, chan3_scaled); // RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	put_int16_t_by_index(msg, 6, chan4_scaled); // RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	put_int16_t_by_index(msg, 8, chan5_scaled); // RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	put_int16_t_by_index(msg, 10, chan6_scaled); // RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	put_int16_t_by_index(msg, 12, chan7_scaled); // RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	put_int16_t_by_index(msg, 14, chan8_scaled); // RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
-	put_uint8_t_by_index(msg, 16, rssi); // Receive signal strength indicator, 0: 0%, 255: 100%
-
-	mavlink_finalize_message_chan_send(msg, chan, 17, 162);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a rc_channels_scaled struct into a message
  *
@@ -176,7 +139,19 @@ static inline uint16_t mavlink_msg_rc_channels_scaled_encode(uint8_t system_id, 
 static inline void mavlink_msg_rc_channels_scaled_send(mavlink_channel_t chan, int16_t chan1_scaled, int16_t chan2_scaled, int16_t chan3_scaled, int16_t chan4_scaled, int16_t chan5_scaled, int16_t chan6_scaled, int16_t chan7_scaled, int16_t chan8_scaled, uint8_t rssi)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 17);
-	mavlink_msg_rc_channels_scaled_pack_chan_send(chan, msg, chan1_scaled, chan2_scaled, chan3_scaled, chan4_scaled, chan5_scaled, chan6_scaled, chan7_scaled, chan8_scaled, rssi);
+	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_SCALED;
+
+	put_int16_t_by_index(msg, 0, chan1_scaled); // RC channel 1 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	put_int16_t_by_index(msg, 2, chan2_scaled); // RC channel 2 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	put_int16_t_by_index(msg, 4, chan3_scaled); // RC channel 3 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	put_int16_t_by_index(msg, 6, chan4_scaled); // RC channel 4 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	put_int16_t_by_index(msg, 8, chan5_scaled); // RC channel 5 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	put_int16_t_by_index(msg, 10, chan6_scaled); // RC channel 6 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	put_int16_t_by_index(msg, 12, chan7_scaled); // RC channel 7 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	put_int16_t_by_index(msg, 14, chan8_scaled); // RC channel 8 value scaled, (-100%) -10000, (0%) 0, (100%) 10000
+	put_uint8_t_by_index(msg, 16, rssi); // Receive signal strength indicator, 0: 0%, 255: 100%
+
+	mavlink_finalize_message_chan_send(msg, chan, 17, 162);
 }
 
 #endif

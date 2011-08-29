@@ -77,33 +77,6 @@ static inline uint16_t mavlink_msg_watchdog_command_pack_chan(uint8_t system_id,
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 6, 162);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a watchdog_command message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target_system_id Target system ID
- * @param watchdog_id Watchdog ID
- * @param process_id Process ID
- * @param command_id Command ID
- */
-static inline void mavlink_msg_watchdog_command_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target_system_id,uint16_t watchdog_id,uint16_t process_id,uint8_t command_id)
-{
-	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;
-
-	put_uint16_t_by_index(msg, 0, watchdog_id); // Watchdog ID
-	put_uint16_t_by_index(msg, 2, process_id); // Process ID
-	put_uint8_t_by_index(msg, 4, target_system_id); // Target system ID
-	put_uint8_t_by_index(msg, 5, command_id); // Command ID
-
-	mavlink_finalize_message_chan_send(msg, chan, 6, 162);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a watchdog_command struct into a message
  *
@@ -131,7 +104,14 @@ static inline uint16_t mavlink_msg_watchdog_command_encode(uint8_t system_id, ui
 static inline void mavlink_msg_watchdog_command_send(mavlink_channel_t chan, uint8_t target_system_id, uint16_t watchdog_id, uint16_t process_id, uint8_t command_id)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 6);
-	mavlink_msg_watchdog_command_pack_chan_send(chan, msg, target_system_id, watchdog_id, process_id, command_id);
+	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_COMMAND;
+
+	put_uint16_t_by_index(msg, 0, watchdog_id); // Watchdog ID
+	put_uint16_t_by_index(msg, 2, process_id); // Process ID
+	put_uint8_t_by_index(msg, 4, target_system_id); // Target system ID
+	put_uint8_t_by_index(msg, 5, command_id); // Command ID
+
+	mavlink_finalize_message_chan_send(msg, chan, 6, 162);
 }
 
 #endif
