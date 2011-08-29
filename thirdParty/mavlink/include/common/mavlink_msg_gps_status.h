@@ -1,6 +1,6 @@
 // MESSAGE GPS_STATUS PACKING
 
-#define MAVLINK_MSG_ID_GPS_STATUS 27
+#define MAVLINK_MSG_ID_GPS_STATUS 26
 
 typedef struct __mavlink_gps_status_t
 {
@@ -13,7 +13,7 @@ typedef struct __mavlink_gps_status_t
 } mavlink_gps_status_t;
 
 #define MAVLINK_MSG_ID_GPS_STATUS_LEN 101
-#define MAVLINK_MSG_ID_27_LEN 101
+#define MAVLINK_MSG_ID_26_LEN 101
 
 #define MAVLINK_MSG_GPS_STATUS_FIELD_SATELLITE_PRN_LEN 20
 #define MAVLINK_MSG_GPS_STATUS_FIELD_SATELLITE_USED_LEN 20

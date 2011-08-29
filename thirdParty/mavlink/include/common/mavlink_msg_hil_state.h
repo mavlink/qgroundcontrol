@@ -4,7 +4,7 @@
 
 typedef struct __mavlink_hil_state_t
 {
- uint64_t time_us; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ uint64_t time_usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  float roll; ///< Roll angle (rad)
  float pitch; ///< Pitch angle (rad)
  float yaw; ///< Yaw angle (rad)
@@ -30,7 +30,7 @@ typedef struct __mavlink_hil_state_t
 #define MAVLINK_MESSAGE_INFO_HIL_STATE { \
 	"HIL_STATE", \
 	16, \
-	{  { "time_us", MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_hil_state_t, time_us) }, \
+	{  { "time_usec", MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_hil_state_t, time_usec) }, \
          { "roll", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_hil_state_t, roll) }, \
          { "pitch", MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_hil_state_t, pitch) }, \
          { "yaw", MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_hil_state_t, yaw) }, \
@@ -56,7 +56,7 @@ typedef struct __mavlink_hil_state_t
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param msg The MAVLink message to compress the data into
  *
- * @param time_us Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @param time_usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  * @param roll Roll angle (rad)
  * @param pitch Pitch angle (rad)
  * @param yaw Yaw angle (rad)
@@ -75,11 +75,11 @@ typedef struct __mavlink_hil_state_t
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_hil_state_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-						       uint64_t time_us, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt, int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
+						       uint64_t time_usec, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt, int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
 {
 	msg->msgid = MAVLINK_MSG_ID_HIL_STATE;
 
-	put_uint64_t_by_index(msg, 0, time_us); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_uint64_t_by_index(msg, 0, time_usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
 	put_float_by_index(msg, 8, roll); // Roll angle (rad)
 	put_float_by_index(msg, 12, pitch); // Pitch angle (rad)
 	put_float_by_index(msg, 16, yaw); // Yaw angle (rad)
@@ -96,7 +96,7 @@ static inline uint16_t mavlink_msg_hil_state_pack(uint8_t system_id, uint8_t com
 	put_int16_t_by_index(msg, 52, yacc); // Y acceleration (mg)
 	put_int16_t_by_index(msg, 54, zacc); // Z acceleration (mg)
 
-	return mavlink_finalize_message(msg, system_id, component_id, 56, 12);
+	return mavlink_finalize_message(msg, system_id, component_id, 56, 183);
 }
 
 /**
@@ -105,7 +105,7 @@ static inline uint16_t mavlink_msg_hil_state_pack(uint8_t system_id, uint8_t com
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
  * @param msg The MAVLink message to compress the data into
- * @param time_us Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @param time_usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  * @param roll Roll angle (rad)
  * @param pitch Pitch angle (rad)
  * @param yaw Yaw angle (rad)
@@ -125,11 +125,11 @@ static inline uint16_t mavlink_msg_hil_state_pack(uint8_t system_id, uint8_t com
  */
 static inline uint16_t mavlink_msg_hil_state_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
 							   mavlink_message_t* msg,
-						           uint64_t time_us,float roll,float pitch,float yaw,float rollspeed,float pitchspeed,float yawspeed,int32_t lat,int32_t lon,int32_t alt,int16_t vx,int16_t vy,int16_t vz,int16_t xacc,int16_t yacc,int16_t zacc)
+						           uint64_t time_usec,float roll,float pitch,float yaw,float rollspeed,float pitchspeed,float yawspeed,int32_t lat,int32_t lon,int32_t alt,int16_t vx,int16_t vy,int16_t vz,int16_t xacc,int16_t yacc,int16_t zacc)
 {
 	msg->msgid = MAVLINK_MSG_ID_HIL_STATE;
 
-	put_uint64_t_by_index(msg, 0, time_us); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_uint64_t_by_index(msg, 0, time_usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
 	put_float_by_index(msg, 8, roll); // Roll angle (rad)
 	put_float_by_index(msg, 12, pitch); // Pitch angle (rad)
 	put_float_by_index(msg, 16, yaw); // Yaw angle (rad)
@@ -146,7 +146,7 @@ static inline uint16_t mavlink_msg_hil_state_pack_chan(uint8_t system_id, uint8_
 	put_int16_t_by_index(msg, 52, yacc); // Y acceleration (mg)
 	put_int16_t_by_index(msg, 54, zacc); // Z acceleration (mg)
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 56, 12);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 56, 183);
 }
 
 /**
@@ -159,14 +159,14 @@ static inline uint16_t mavlink_msg_hil_state_pack_chan(uint8_t system_id, uint8_
  */
 static inline uint16_t mavlink_msg_hil_state_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_hil_state_t* hil_state)
 {
-	return mavlink_msg_hil_state_pack(system_id, component_id, msg, hil_state->time_us, hil_state->roll, hil_state->pitch, hil_state->yaw, hil_state->rollspeed, hil_state->pitchspeed, hil_state->yawspeed, hil_state->lat, hil_state->lon, hil_state->alt, hil_state->vx, hil_state->vy, hil_state->vz, hil_state->xacc, hil_state->yacc, hil_state->zacc);
+	return mavlink_msg_hil_state_pack(system_id, component_id, msg, hil_state->time_usec, hil_state->roll, hil_state->pitch, hil_state->yaw, hil_state->rollspeed, hil_state->pitchspeed, hil_state->yawspeed, hil_state->lat, hil_state->lon, hil_state->alt, hil_state->vx, hil_state->vy, hil_state->vz, hil_state->xacc, hil_state->yacc, hil_state->zacc);
 }
 
 /**
  * @brief Send a hil_state message
  * @param chan MAVLink channel to send the message
  *
- * @param time_us Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @param time_usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  * @param roll Roll angle (rad)
  * @param pitch Pitch angle (rad)
  * @param yaw Yaw angle (rad)
@@ -185,12 +185,12 @@ static inline uint16_t mavlink_msg_hil_state_encode(uint8_t system_id, uint8_t c
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_hil_state_send(mavlink_channel_t chan, uint64_t time_us, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt, int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
+static inline void mavlink_msg_hil_state_send(mavlink_channel_t chan, uint64_t time_usec, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt, int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 56);
 	msg->msgid = MAVLINK_MSG_ID_HIL_STATE;
 
-	put_uint64_t_by_index(msg, 0, time_us); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_uint64_t_by_index(msg, 0, time_usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
 	put_float_by_index(msg, 8, roll); // Roll angle (rad)
 	put_float_by_index(msg, 12, pitch); // Pitch angle (rad)
 	put_float_by_index(msg, 16, yaw); // Yaw angle (rad)
@@ -207,7 +207,7 @@ static inline void mavlink_msg_hil_state_send(mavlink_channel_t chan, uint64_t t
 	put_int16_t_by_index(msg, 52, yacc); // Y acceleration (mg)
 	put_int16_t_by_index(msg, 54, zacc); // Z acceleration (mg)
 
-	mavlink_finalize_message_chan_send(msg, chan, 56, 12);
+	mavlink_finalize_message_chan_send(msg, chan, 56, 183);
 }
 
 #endif
@@ -216,11 +216,11 @@ static inline void mavlink_msg_hil_state_send(mavlink_channel_t chan, uint64_t t
 
 
 /**
- * @brief Get field time_us from hil_state message
+ * @brief Get field time_usec from hil_state message
  *
  * @return Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  */
-static inline uint64_t mavlink_msg_hil_state_get_time_us(const mavlink_message_t* msg)
+static inline uint64_t mavlink_msg_hil_state_get_time_usec(const mavlink_message_t* msg)
 {
 	return MAVLINK_MSG_RETURN_uint64_t(msg,  0);
 }
@@ -384,7 +384,7 @@ static inline int16_t mavlink_msg_hil_state_get_zacc(const mavlink_message_t* ms
 static inline void mavlink_msg_hil_state_decode(const mavlink_message_t* msg, mavlink_hil_state_t* hil_state)
 {
 #if MAVLINK_NEED_BYTE_SWAP
-	hil_state->time_us = mavlink_msg_hil_state_get_time_us(msg);
+	hil_state->time_usec = mavlink_msg_hil_state_get_time_usec(msg);
 	hil_state->roll = mavlink_msg_hil_state_get_roll(msg);
 	hil_state->pitch = mavlink_msg_hil_state_get_pitch(msg);
 	hil_state->yaw = mavlink_msg_hil_state_get_yaw(msg);

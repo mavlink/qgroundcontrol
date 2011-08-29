@@ -4,7 +4,7 @@
 
 typedef struct __mavlink_raw_imu_t
 {
- uint64_t usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ uint64_t time_usec; ///< Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  int16_t xacc; ///< X acceleration (raw)
  int16_t yacc; ///< Y acceleration (raw)
  int16_t zacc; ///< Z acceleration (raw)
@@ -24,7 +24,7 @@ typedef struct __mavlink_raw_imu_t
 #define MAVLINK_MESSAGE_INFO_RAW_IMU { \
 	"RAW_IMU", \
 	10, \
-	{  { "usec", MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_raw_imu_t, usec) }, \
+	{  { "time_usec", MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_raw_imu_t, time_usec) }, \
          { "xacc", MAVLINK_TYPE_INT16_T, 0, 8, offsetof(mavlink_raw_imu_t, xacc) }, \
          { "yacc", MAVLINK_TYPE_INT16_T, 0, 10, offsetof(mavlink_raw_imu_t, yacc) }, \
          { "zacc", MAVLINK_TYPE_INT16_T, 0, 12, offsetof(mavlink_raw_imu_t, zacc) }, \
@@ -44,7 +44,7 @@ typedef struct __mavlink_raw_imu_t
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param msg The MAVLink message to compress the data into
  *
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @param time_usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  * @param xacc X acceleration (raw)
  * @param yacc Y acceleration (raw)
  * @param zacc Z acceleration (raw)
@@ -57,11 +57,11 @@ typedef struct __mavlink_raw_imu_t
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_raw_imu_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-						       uint64_t usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
+						       uint64_t time_usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
 	msg->msgid = MAVLINK_MSG_ID_RAW_IMU;
 
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_uint64_t_by_index(msg, 0, time_usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
 	put_int16_t_by_index(msg, 8, xacc); // X acceleration (raw)
 	put_int16_t_by_index(msg, 10, yacc); // Y acceleration (raw)
 	put_int16_t_by_index(msg, 12, zacc); // Z acceleration (raw)
@@ -72,7 +72,7 @@ static inline uint16_t mavlink_msg_raw_imu_pack(uint8_t system_id, uint8_t compo
 	put_int16_t_by_index(msg, 22, ymag); // Y Magnetic field (raw)
 	put_int16_t_by_index(msg, 24, zmag); // Z Magnetic field (raw)
 
-	return mavlink_finalize_message(msg, system_id, component_id, 26, 179);
+	return mavlink_finalize_message(msg, system_id, component_id, 26, 144);
 }
 
 /**
@@ -81,7 +81,7 @@ static inline uint16_t mavlink_msg_raw_imu_pack(uint8_t system_id, uint8_t compo
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
  * @param msg The MAVLink message to compress the data into
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @param time_usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  * @param xacc X acceleration (raw)
  * @param yacc Y acceleration (raw)
  * @param zacc Z acceleration (raw)
@@ -95,11 +95,11 @@ static inline uint16_t mavlink_msg_raw_imu_pack(uint8_t system_id, uint8_t compo
  */
 static inline uint16_t mavlink_msg_raw_imu_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
 							   mavlink_message_t* msg,
-						           uint64_t usec,int16_t xacc,int16_t yacc,int16_t zacc,int16_t xgyro,int16_t ygyro,int16_t zgyro,int16_t xmag,int16_t ymag,int16_t zmag)
+						           uint64_t time_usec,int16_t xacc,int16_t yacc,int16_t zacc,int16_t xgyro,int16_t ygyro,int16_t zgyro,int16_t xmag,int16_t ymag,int16_t zmag)
 {
 	msg->msgid = MAVLINK_MSG_ID_RAW_IMU;
 
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_uint64_t_by_index(msg, 0, time_usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
 	put_int16_t_by_index(msg, 8, xacc); // X acceleration (raw)
 	put_int16_t_by_index(msg, 10, yacc); // Y acceleration (raw)
 	put_int16_t_by_index(msg, 12, zacc); // Z acceleration (raw)
@@ -110,7 +110,7 @@ static inline uint16_t mavlink_msg_raw_imu_pack_chan(uint8_t system_id, uint8_t 
 	put_int16_t_by_index(msg, 22, ymag); // Y Magnetic field (raw)
 	put_int16_t_by_index(msg, 24, zmag); // Z Magnetic field (raw)
 
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 26, 179);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 26, 144);
 }
 
 /**
@@ -123,14 +123,14 @@ static inline uint16_t mavlink_msg_raw_imu_pack_chan(uint8_t system_id, uint8_t 
  */
 static inline uint16_t mavlink_msg_raw_imu_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_raw_imu_t* raw_imu)
 {
-	return mavlink_msg_raw_imu_pack(system_id, component_id, msg, raw_imu->usec, raw_imu->xacc, raw_imu->yacc, raw_imu->zacc, raw_imu->xgyro, raw_imu->ygyro, raw_imu->zgyro, raw_imu->xmag, raw_imu->ymag, raw_imu->zmag);
+	return mavlink_msg_raw_imu_pack(system_id, component_id, msg, raw_imu->time_usec, raw_imu->xacc, raw_imu->yacc, raw_imu->zacc, raw_imu->xgyro, raw_imu->ygyro, raw_imu->zgyro, raw_imu->xmag, raw_imu->ymag, raw_imu->zmag);
 }
 
 /**
  * @brief Send a raw_imu message
  * @param chan MAVLink channel to send the message
  *
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+ * @param time_usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  * @param xacc X acceleration (raw)
  * @param yacc Y acceleration (raw)
  * @param zacc Z acceleration (raw)
@@ -143,12 +143,12 @@ static inline uint16_t mavlink_msg_raw_imu_encode(uint8_t system_id, uint8_t com
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_raw_imu_send(mavlink_channel_t chan, uint64_t usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
+static inline void mavlink_msg_raw_imu_send(mavlink_channel_t chan, uint64_t time_usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 26);
 	msg->msgid = MAVLINK_MSG_ID_RAW_IMU;
 
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_uint64_t_by_index(msg, 0, time_usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
 	put_int16_t_by_index(msg, 8, xacc); // X acceleration (raw)
 	put_int16_t_by_index(msg, 10, yacc); // Y acceleration (raw)
 	put_int16_t_by_index(msg, 12, zacc); // Z acceleration (raw)
@@ -159,7 +159,7 @@ static inline void mavlink_msg_raw_imu_send(mavlink_channel_t chan, uint64_t use
 	put_int16_t_by_index(msg, 22, ymag); // Y Magnetic field (raw)
 	put_int16_t_by_index(msg, 24, zmag); // Z Magnetic field (raw)
 
-	mavlink_finalize_message_chan_send(msg, chan, 26, 179);
+	mavlink_finalize_message_chan_send(msg, chan, 26, 144);
 }
 
 #endif
@@ -168,11 +168,11 @@ static inline void mavlink_msg_raw_imu_send(mavlink_channel_t chan, uint64_t use
 
 
 /**
- * @brief Get field usec from raw_imu message
+ * @brief Get field time_usec from raw_imu message
  *
  * @return Timestamp (microseconds since UNIX epoch or microseconds since system boot)
  */
-static inline uint64_t mavlink_msg_raw_imu_get_usec(const mavlink_message_t* msg)
+static inline uint64_t mavlink_msg_raw_imu_get_time_usec(const mavlink_message_t* msg)
 {
 	return MAVLINK_MSG_RETURN_uint64_t(msg,  0);
 }
@@ -276,7 +276,7 @@ static inline int16_t mavlink_msg_raw_imu_get_zmag(const mavlink_message_t* msg)
 static inline void mavlink_msg_raw_imu_decode(const mavlink_message_t* msg, mavlink_raw_imu_t* raw_imu)
 {
 #if MAVLINK_NEED_BYTE_SWAP
-	raw_imu->usec = mavlink_msg_raw_imu_get_usec(msg);
+	raw_imu->time_usec = mavlink_msg_raw_imu_get_time_usec(msg);
 	raw_imu->xacc = mavlink_msg_raw_imu_get_xacc(msg);
 	raw_imu->yacc = mavlink_msg_raw_imu_get_yacc(msg);
 	raw_imu->zacc = mavlink_msg_raw_imu_get_zacc(msg);

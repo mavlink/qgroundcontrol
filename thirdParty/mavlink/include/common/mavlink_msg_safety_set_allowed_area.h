@@ -1,6 +1,6 @@
 // MESSAGE SAFETY_SET_ALLOWED_AREA PACKING
 
-#define MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA 53
+#define MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA 54
 
 typedef struct __mavlink_safety_set_allowed_area_t
 {
@@ -16,7 +16,7 @@ typedef struct __mavlink_safety_set_allowed_area_t
 } mavlink_safety_set_allowed_area_t;
 
 #define MAVLINK_MSG_ID_SAFETY_SET_ALLOWED_AREA_LEN 27
-#define MAVLINK_MSG_ID_53_LEN 27
+#define MAVLINK_MSG_ID_54_LEN 27
 
 
 

@@ -12,15 +12,15 @@ extern "C" {
 // MESSAGE LENGTHS AND CRCS
 
 #ifndef MAVLINK_MESSAGE_LENGTHS
-#define MAVLINK_MESSAGE_LENGTHS {8, 23, 12, 8, 14, 28, 3, 32, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 20, 2, 25, 23, 0, 30, 26, 101, 26, 16, 32, 32, 38, 32, 0, 17, 17, 16, 18, 36, 4, 4, 2, 2, 4, 2, 2, 3, 14, 12, 18, 16, 14, 27, 25, 18, 18, 20, 20, 0, 0, 0, 26, 16, 36, 0, 6, 4, 0, 21, 18, 0, 0, 20, 20, 20, 32, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 56, 42, 33, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 30, 14, 14, 51, 5}
+#define MAVLINK_MESSAGE_LENGTHS {7, 31, 12, 0, 14, 28, 3, 32, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 20, 2, 25, 23, 0, 30, 101, 22, 26, 16, 14, 28, 28, 24, 0, 22, 22, 21, 0, 36, 4, 4, 2, 2, 4, 2, 2, 3, 13, 12, 18, 16, 14, 14, 27, 25, 18, 18, 20, 20, 0, 0, 26, 0, 36, 0, 6, 4, 0, 21, 18, 0, 0, 0, 20, 20, 32, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 56, 42, 33, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 30, 18, 18, 51, 9, 3}
 #endif
 
 #ifndef MAVLINK_MESSAGE_CRCS
-#define MAVLINK_MESSAGE_CRCS {153, 114, 143, 191, 105, 217, 104, 119, 0, 0, 0, 186, 194, 8, 0, 0, 0, 0, 0, 0, 214, 159, 220, 168, 0, 185, 222, 23, 179, 136, 66, 126, 198, 147, 0, 252, 162, 215, 229, 205, 51, 80, 101, 213, 8, 229, 21, 214, 170, 14, 73, 50, 142, 15, 3, 100, 24, 141, 148, 0, 0, 0, 183, 126, 130, 0, 148, 21, 0, 52, 124, 0, 0, 241, 20, 160, 168, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 250, 156, 0, 0, 0, 0, 0, 0, 0, 146, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 204, 15, 248, 63, 83, 127}
+#define MAVLINK_MESSAGE_CRCS {88, 236, 137, 0, 237, 217, 104, 119, 0, 0, 0, 197, 0, 0, 0, 0, 0, 0, 0, 0, 214, 159, 220, 168, 0, 24, 23, 170, 144, 67, 115, 39, 231, 102, 0, 244, 237, 222, 0, 205, 51, 80, 101, 213, 8, 229, 21, 214, 41, 39, 131, 50, 142, 53, 15, 3, 100, 24, 239, 238, 0, 0, 183, 0, 130, 0, 148, 21, 0, 52, 124, 0, 0, 0, 20, 160, 168, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 183, 63, 54, 0, 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 204, 49, 170, 44, 83, 46, 247}
 #endif
 
 #ifndef MAVLINK_MESSAGE_INFO
-#define MAVLINK_MESSAGE_INFO {MAVLINK_MESSAGE_INFO_HEARTBEAT, MAVLINK_MESSAGE_INFO_SYS_STATUS, MAVLINK_MESSAGE_INFO_SYSTEM_TIME, MAVLINK_MESSAGE_INFO_SYSTEM_TIME_UTC, MAVLINK_MESSAGE_INFO_PING, MAVLINK_MESSAGE_INFO_CHANGE_OPERATOR_CONTROL, MAVLINK_MESSAGE_INFO_CHANGE_OPERATOR_CONTROL_ACK, MAVLINK_MESSAGE_INFO_AUTH_KEY, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_SET_MODE, MAVLINK_MESSAGE_INFO_SET_FLIGHT_MODE, MAVLINK_MESSAGE_INFO_SET_SAFETY_MODE, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_PARAM_REQUEST_READ, MAVLINK_MESSAGE_INFO_PARAM_REQUEST_LIST, MAVLINK_MESSAGE_INFO_PARAM_VALUE, MAVLINK_MESSAGE_INFO_PARAM_SET, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_GPS_RAW_INT, MAVLINK_MESSAGE_INFO_SCALED_IMU, MAVLINK_MESSAGE_INFO_GPS_STATUS, MAVLINK_MESSAGE_INFO_RAW_IMU, MAVLINK_MESSAGE_INFO_RAW_PRESSURE, MAVLINK_MESSAGE_INFO_ATTITUDE, MAVLINK_MESSAGE_INFO_LOCAL_POSITION, MAVLINK_MESSAGE_INFO_GPS_RAW, MAVLINK_MESSAGE_INFO_GLOBAL_POSITION, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_RC_CHANNELS_RAW, MAVLINK_MESSAGE_INFO_RC_CHANNELS_SCALED, MAVLINK_MESSAGE_INFO_SERVO_OUTPUT_RAW, MAVLINK_MESSAGE_INFO_SCALED_PRESSURE, MAVLINK_MESSAGE_INFO_WAYPOINT, MAVLINK_MESSAGE_INFO_WAYPOINT_REQUEST, MAVLINK_MESSAGE_INFO_WAYPOINT_SET_CURRENT, MAVLINK_MESSAGE_INFO_WAYPOINT_CURRENT, MAVLINK_MESSAGE_INFO_WAYPOINT_REQUEST_LIST, MAVLINK_MESSAGE_INFO_WAYPOINT_COUNT, MAVLINK_MESSAGE_INFO_WAYPOINT_CLEAR_ALL, MAVLINK_MESSAGE_INFO_WAYPOINT_REACHED, MAVLINK_MESSAGE_INFO_WAYPOINT_ACK, MAVLINK_MESSAGE_INFO_GPS_SET_GLOBAL_ORIGIN, MAVLINK_MESSAGE_INFO_GPS_LOCAL_ORIGIN_SET, MAVLINK_MESSAGE_INFO_LOCAL_POSITION_SETPOINT_SET, MAVLINK_MESSAGE_INFO_LOCAL_POSITION_SETPOINT, MAVLINK_MESSAGE_INFO_GLOBAL_POSITION_SETPOINT_INT, MAVLINK_MESSAGE_INFO_SAFETY_SET_ALLOWED_AREA, MAVLINK_MESSAGE_INFO_SAFETY_ALLOWED_AREA, MAVLINK_MESSAGE_INFO_SET_ROLL_PITCH_YAW_THRUST, MAVLINK_MESSAGE_INFO_SET_ROLL_PITCH_YAW_SPEED_THRUST, MAVLINK_MESSAGE_INFO_ROLL_PITCH_YAW_THRUST_SETPOINT, MAVLINK_MESSAGE_INFO_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_NAV_CONTROLLER_OUTPUT, MAVLINK_MESSAGE_INFO_POSITION_TARGET, MAVLINK_MESSAGE_INFO_STATE_CORRECTION, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_REQUEST_DATA_STREAM, MAVLINK_MESSAGE_INFO_DATA_STREAM, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_MANUAL_CONTROL, MAVLINK_MESSAGE_INFO_RC_CHANNELS_OVERRIDE, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_GLOBAL_POSITION_INT, MAVLINK_MESSAGE_INFO_VFR_HUD, MAVLINK_MESSAGE_INFO_COMMAND_SHORT, MAVLINK_MESSAGE_INFO_COMMAND_LONG, MAVLINK_MESSAGE_INFO_COMMAND_ACK, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_HIL_STATE, MAVLINK_MESSAGE_INFO_HIL_CONTROLS, MAVLINK_MESSAGE_INFO_HIL_RC_INPUTS_RAW, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_OPTICAL_FLOW, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_MEMORY_VECT, MAVLINK_MESSAGE_INFO_DEBUG_VECT, MAVLINK_MESSAGE_INFO_NAMED_VALUE_FLOAT, MAVLINK_MESSAGE_INFO_NAMED_VALUE_INT, MAVLINK_MESSAGE_INFO_STATUSTEXT, MAVLINK_MESSAGE_INFO_DEBUG}
+#define MAVLINK_MESSAGE_INFO {MAVLINK_MESSAGE_INFO_HEARTBEAT, MAVLINK_MESSAGE_INFO_SYS_STATUS, MAVLINK_MESSAGE_INFO_SYSTEM_TIME, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_PING, MAVLINK_MESSAGE_INFO_CHANGE_OPERATOR_CONTROL, MAVLINK_MESSAGE_INFO_CHANGE_OPERATOR_CONTROL_ACK, MAVLINK_MESSAGE_INFO_AUTH_KEY, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_SET_MODE, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_PARAM_REQUEST_READ, MAVLINK_MESSAGE_INFO_PARAM_REQUEST_LIST, MAVLINK_MESSAGE_INFO_PARAM_VALUE, MAVLINK_MESSAGE_INFO_PARAM_SET, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_GPS_RAW_INT, MAVLINK_MESSAGE_INFO_GPS_STATUS, MAVLINK_MESSAGE_INFO_SCALED_IMU, MAVLINK_MESSAGE_INFO_RAW_IMU, MAVLINK_MESSAGE_INFO_RAW_PRESSURE, MAVLINK_MESSAGE_INFO_SCALED_PRESSURE, MAVLINK_MESSAGE_INFO_ATTITUDE, MAVLINK_MESSAGE_INFO_LOCAL_POSITION, MAVLINK_MESSAGE_INFO_GLOBAL_POSITION_INT, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_RC_CHANNELS_RAW, MAVLINK_MESSAGE_INFO_RC_CHANNELS_SCALED, MAVLINK_MESSAGE_INFO_SERVO_OUTPUT_RAW, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_WAYPOINT, MAVLINK_MESSAGE_INFO_WAYPOINT_REQUEST, MAVLINK_MESSAGE_INFO_WAYPOINT_SET_CURRENT, MAVLINK_MESSAGE_INFO_WAYPOINT_CURRENT, MAVLINK_MESSAGE_INFO_WAYPOINT_REQUEST_LIST, MAVLINK_MESSAGE_INFO_WAYPOINT_COUNT, MAVLINK_MESSAGE_INFO_WAYPOINT_CLEAR_ALL, MAVLINK_MESSAGE_INFO_WAYPOINT_REACHED, MAVLINK_MESSAGE_INFO_WAYPOINT_ACK, MAVLINK_MESSAGE_INFO_SET_GPS_GLOBAL_ORIGIN, MAVLINK_MESSAGE_INFO_GPS_GLOBAL_ORIGIN, MAVLINK_MESSAGE_INFO_SET_LOCAL_POSITION_SETPOINT, MAVLINK_MESSAGE_INFO_LOCAL_POSITION_SETPOINT, MAVLINK_MESSAGE_INFO_GLOBAL_POSITION_SETPOINT_INT, MAVLINK_MESSAGE_INFO_SET_GLOBAL_POSITION_SETPOINT_INT, MAVLINK_MESSAGE_INFO_SAFETY_SET_ALLOWED_AREA, MAVLINK_MESSAGE_INFO_SAFETY_ALLOWED_AREA, MAVLINK_MESSAGE_INFO_SET_ROLL_PITCH_YAW_THRUST, MAVLINK_MESSAGE_INFO_SET_ROLL_PITCH_YAW_SPEED_THRUST, MAVLINK_MESSAGE_INFO_ROLL_PITCH_YAW_THRUST_SETPOINT, MAVLINK_MESSAGE_INFO_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_NAV_CONTROLLER_OUTPUT, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_STATE_CORRECTION, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_REQUEST_DATA_STREAM, MAVLINK_MESSAGE_INFO_DATA_STREAM, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_MANUAL_CONTROL, MAVLINK_MESSAGE_INFO_RC_CHANNELS_OVERRIDE, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_VFR_HUD, MAVLINK_MESSAGE_INFO_COMMAND_SHORT, MAVLINK_MESSAGE_INFO_COMMAND_LONG, MAVLINK_MESSAGE_INFO_COMMAND_ACK, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_HIL_STATE, MAVLINK_MESSAGE_INFO_HIL_CONTROLS, MAVLINK_MESSAGE_INFO_HIL_RC_INPUTS_RAW, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_OPTICAL_FLOW, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, {"EMPTY",0,{}}, MAVLINK_MESSAGE_INFO_MEMORY_VECT, MAVLINK_MESSAGE_INFO_DEBUG_VECT, MAVLINK_MESSAGE_INFO_NAMED_VALUE_FLOAT, MAVLINK_MESSAGE_INFO_NAMED_VALUE_INT, MAVLINK_MESSAGE_INFO_STATUSTEXT, MAVLINK_MESSAGE_INFO_DEBUG, MAVLINK_MESSAGE_INFO_EXTENDED_MESSAGE}
 #endif
 
 #include "../protocol.h"
@@ -43,15 +43,6 @@ extern "C" {
 // ENUM DEFINITIONS
 
 
-/** @brief Valid data types for parameter interface */
-enum MAV_DATA_TYPE
-{
-	MAV_DATA_TYPE_FLOAT=0, /* IEEE-754 floating point number | */
-	MAV_DATA_TYPE_UINT32=1, /* 32 bit unsigned integer (C99: uint32_t) | */
-	MAV_DATA_TYPE_INT32=2, /* 32 bit signed integer (C99: int32_t) | */
-	MAV_DATA_TYPE_ENUM_END=3, /*  | */
-};
-
 /** @brief Micro air vehicle / autopilot classes. This identifies the individual model. */
 enum MAV_AUTOPILOT
 {
@@ -70,13 +61,25 @@ enum MAV_AUTOPILOT
 	MAV_AUTOPILOT_ENUM_END=12, /*  | */
 };
 
-/** @brief MAV safety override. This is a top-level safety override. Independent of the general state machine this mode shall ensure the safe operation. the MAV_SAFETY state should ONLY be switchable in the MAV_STATE_STANDBY state and NOT in flight. */
-enum MAV_SAFETY
+/** @brief These flags encode the MAV mode. */
+enum MAV_MODE_FLAG
 {
-	MAV_SAFETY_HIL=0, /* MAV safety lock set to hardware in the loop simulation. All motors / actuators are blocked, but internal software is full operational. | */
-	MAV_SAFETY_DISARMED=1, /* MAV safety set to disarmed. Motors are BLOCKED. Independent of the system mode and navigation mode all actuators are blocked. | */
-	MAV_SAFETY_ARMED=2, /* MAV safety set to armed. Motors are ready / could be started. All actuators are active. | */
-	MAV_SAFETY_ENUM_END=3, /*  | */
+	MAV_MODE_FLAG_SAFETY_ARMED=64, /* 0b10000000 MAV safety set to armed. Motors are enabled / running / can start. Ready to fly. | */
+	MAV_MODE_FLAG_SAFETY_DISARMED=0, /* MAV safety set to disarmed. Motors are BLOCKED. Independent of the system mode and navigation mode all actuators are blocked. | */
+	MAV_MODE_FLAG_MANUAL_INPUT_ENABLED=32, /* 0b01000000 Remote control input is enabled. | */
+	MAV_MODE_FLAG_MANUAL_INPUT_DISABLED=0, /* Remote control input is disabled | */
+	MAV_MODE_FLAG_HIL_ENABLED=16, /* 0b00100000 MAV safety lock set to hardware in the loop simulation. All motors / actuators are blocked, but internal software is full operational. | */
+	MAV_MODE_FLAG_HIL_DISABLED=0, /* Hardware in the loop simulation is not enabled, actuators behave normal. | */
+	MAV_MODE_FLAG_ENUM_END=1, /*  | */
+};
+
+/** @brief These values encode the bit positions of the decode position */
+enum MAV_MODE_FLAG_DECODE_POSITION
+{
+	MAV_MODE_FLAG_DECODE_POSITION_SAFETY=64, /* First bit: 10000000 | */
+	MAV_MODE_FLAG_DECODE_POSITION_MANUAL=32, /* Second bit: 01000000 | */
+	MAV_MODE_FLAG_DECODE_POSITION_HIL=16, /* Third bit: 00100000 | */
+	MAV_MODE_FLAG_DECODE_POSITION_ENUM_END=17, /*  | */
 };
 
 /** @brief  */
@@ -92,27 +95,27 @@ enum MAV_MODE
 };
 
 /** @brief  */
-enum MAV_FLIGHT_MODE
+enum MAV_AUTOPILOT_CUSTOM_MODE
 {
-	MAV_FLIGHT_MODE_PREFLIGHT=0, /* System is currently on ground. | */
-	MAV_FLIGHT_MODE_MANUAL=1, /* No interaction of the autopilot with the actuator outputs, pure manual flight. | */
-	MAV_FLIGHT_MODE_AUTO_TAKEOFF=2, /* System is during takeoff, not in normal navigation mode yet. Once the plane is moving faster than a few m/s it will lock onto a heading and hold that heading until the desired altitude is reached. Throttle is limited by the RC throttle setting. | */
-	MAV_FLIGHT_MODE_AUTO_HOLD=3, /* System is holding its current position and disabled the mission management. Loitering in mission mode is NOT the hold type, but still mission mode. | */
-	MAV_FLIGHT_MODE_AUTO_MISSION=4, /* System is navigating towards the next waypoint and following a mission script. | */
-	MAV_FLIGHT_MODE_AUTO_VECTOR=5, /* System is flying at a defined course and speed. If the vector is not defined by an autonomous approach but constantly by a user, please use MAV_FLIGHT_MODE_FBW_CURSOR_CONTROL | */
-	MAV_FLIGHT_MODE_AUTO_RETURNING=6, /* System is returning straight to home position. Once it reaches there it will hover or loiter at the autopilot's default holding settings. | */
-	MAV_FLIGHT_MODE_AUTO_LANDING=7, /* System is landing. Throttle is controlled by the autopilot. After getting closer than 30 meters, the course will lock to the current heading. Flare, throttle, flaps, gear, and other events can be scripted based on distance to landing point. | */
-	MAV_FLIGHT_MODE_AUTO_LOST=8, /* System lost its position input and is in attitude / flight stabilization only. | */
-	MAV_FLIGHT_MODE_STABILIZE_RATES_ACRO=9, /* The stick inputs commands angular rates. Only recommended for experienced pilots / acrobatic flight. | */
-	MAV_FLIGHT_MODE_STABILIZE_LEVELING=10, /* RC control with stabilization; let go of the sticks and it will level. | */
-	MAV_FLIGHT_MODE_STABILIZE_ROLL_PITCH_ABSOLUTE=11, /* The autopilot will hold the roll and pitch specified by the control sticks. Throttle is manual. The plane / quadrotor will not roll past the limits set in the configuration of the autopilot. Great for new pilots learning to fly. | */
-	MAV_FLIGHT_MODE_STABILIZE_ROLL_YAW_ALTITUDE=12, /* Requires airspeed sensor. The autopilot will hold the roll specified by the control sticks. Pitch input from the radio is converted to altitude error, which the autopilot will try and adjust to. Throttle is controlled by autopilot. This is the perfect mode to test your autopilot as your radio inout is substituted for the navigation controls. | */
-	MAV_FLIGHT_MODE_STABILIZE_ROLL_PITCH_YAW_ALTITUDE=13, /* Fly by wire mode, stabilizing roll, pitch, yaw and altitude. Typical altitude hold for quadrotors where the X / Y position is commanded with the roll / pitch stick. | */
-	MAV_FLIGHT_MODE_STABILIZE_CURSOR_CONTROL=14, /* Fly by wire mode, user is only directing the movement, but all flight control is autonomous (similar to MAV_FLIGHT_MODE_AUTO_VECTOR with user input) | */
-	MAV_FLIGHT_MODE_TEST1=15, /* Custom test mode, depends on individual autopilot. | */
-	MAV_FLIGHT_MODE_TEST2=16, /* Custom test mode, depends on individual autopilot. | */
-	MAV_FLIGHT_MODE_TEST3=17, /* Custom test mode, depends on individual autopilot. | */
-	MAV_FLIGHT_MODE_ENUM_END=18, /*  | */
+	MAV_AUTOPILOT_CUSTOM_MODE_PREFLIGHT=0, /* System is currently on ground. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_MANUAL=1, /* No interaction of the autopilot with the actuator outputs, pure manual flight. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_AUTO_TAKEOFF=2, /* System is during takeoff, not in normal navigation mode yet. Once the plane is moving faster than a few m/s it will lock onto a heading and hold that heading until the desired altitude is reached. Throttle is limited by the RC throttle setting. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_AUTO_HOLD=3, /* System is holding its current position and disabled the mission management. Loitering in mission mode is NOT the hold type, but still mission mode. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION=4, /* System is navigating towards the next waypoint and following a mission script. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_AUTO_VECTOR=5, /* System is flying at a defined course and speed. If the vector is not defined by an autonomous approach but constantly by a user, please use MAV_AUTOPILOT_CUSTOM_MODE_FBW_CURSOR_CONTROL | */
+	MAV_AUTOPILOT_CUSTOM_MODE_AUTO_RETURNING=6, /* System is returning straight to home position. Once it reaches there it will hover or loiter at the autopilot's default holding settings. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_AUTO_LANDING=7, /* System is landing. Throttle is controlled by the autopilot. After getting closer than 30 meters, the course will lock to the current heading. Flare, throttle, flaps, gear, and other events can be scripted based on distance to landing point. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_AUTO_LOST=8, /* System lost its position input and is in attitude / flight stabilization only. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_RATES_ACRO=9, /* The stick inputs commands angular rates. Only recommended for experienced pilots / acrobatic flight. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_LEVELING=10, /* RC control with stabilization; let go of the sticks and it will level. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_PITCH_ABSOLUTE=11, /* The autopilot will hold the roll and pitch specified by the control sticks. Throttle is manual. The plane / quadrotor will not roll past the limits set in the configuration of the autopilot. Great for new pilots learning to fly. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_YAW_ALTITUDE=12, /* Requires airspeed sensor. The autopilot will hold the roll specified by the control sticks. Pitch input from the radio is converted to altitude error, which the autopilot will try and adjust to. Throttle is controlled by autopilot. This is the perfect mode to test your autopilot as your radio inout is substituted for the navigation controls. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_PITCH_YAW_ALTITUDE=13, /* Fly by wire mode, stabilizing roll, pitch, yaw and altitude. Typical altitude hold for quadrotors where the X / Y position is commanded with the roll / pitch stick. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_CURSOR_CONTROL=14, /* Fly by wire mode, user is only directing the movement, but all flight control is autonomous (similar to MAV_AUTOPILOT_CUSTOM_MODE_AUTO_VECTOR with user input) | */
+	MAV_AUTOPILOT_CUSTOM_MODE_TEST1=15, /* Custom test mode, depends on individual autopilot. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_TEST2=16, /* Custom test mode, depends on individual autopilot. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_TEST3=17, /* Custom test mode, depends on individual autopilot. | */
+	MAV_AUTOPILOT_CUSTOM_MODE_ENUM_END=18, /*  | */
 };
 
 /** @brief  */
@@ -283,28 +286,24 @@ enum MAV_ROI
 #include "./mavlink_msg_heartbeat.h"
 #include "./mavlink_msg_sys_status.h"
 #include "./mavlink_msg_system_time.h"
-#include "./mavlink_msg_system_time_utc.h"
 #include "./mavlink_msg_ping.h"
 #include "./mavlink_msg_change_operator_control.h"
 #include "./mavlink_msg_change_operator_control_ack.h"
 #include "./mavlink_msg_auth_key.h"
 #include "./mavlink_msg_set_mode.h"
-#include "./mavlink_msg_set_flight_mode.h"
-#include "./mavlink_msg_set_safety_mode.h"
 #include "./mavlink_msg_param_request_read.h"
 #include "./mavlink_msg_param_request_list.h"
 #include "./mavlink_msg_param_value.h"
 #include "./mavlink_msg_param_set.h"
 #include "./mavlink_msg_gps_raw_int.h"
-#include "./mavlink_msg_scaled_imu.h"
 #include "./mavlink_msg_gps_status.h"
+#include "./mavlink_msg_scaled_imu.h"
 #include "./mavlink_msg_raw_imu.h"
 #include "./mavlink_msg_raw_pressure.h"
 #include "./mavlink_msg_scaled_pressure.h"
 #include "./mavlink_msg_attitude.h"
 #include "./mavlink_msg_local_position.h"
-#include "./mavlink_msg_global_position.h"
-#include "./mavlink_msg_gps_raw.h"
+#include "./mavlink_msg_global_position_int.h"
 #include "./mavlink_msg_rc_channels_raw.h"
 #include "./mavlink_msg_rc_channels_scaled.h"
 #include "./mavlink_msg_servo_output_raw.h"
@@ -317,11 +316,12 @@ enum MAV_ROI
 #include "./mavlink_msg_waypoint_clear_all.h"
 #include "./mavlink_msg_waypoint_reached.h"
 #include "./mavlink_msg_waypoint_ack.h"
-#include "./mavlink_msg_gps_set_global_origin.h"
-#include "./mavlink_msg_gps_local_origin_set.h"
-#include "./mavlink_msg_local_position_setpoint_set.h"
+#include "./mavlink_msg_set_gps_global_origin.h"
+#include "./mavlink_msg_gps_global_origin.h"
+#include "./mavlink_msg_set_local_position_setpoint.h"
 #include "./mavlink_msg_local_position_setpoint.h"
 #include "./mavlink_msg_global_position_setpoint_int.h"
+#include "./mavlink_msg_set_global_position_setpoint_int.h"
 #include "./mavlink_msg_safety_set_allowed_area.h"
 #include "./mavlink_msg_safety_allowed_area.h"
 #include "./mavlink_msg_set_roll_pitch_yaw_thrust.h"
@@ -329,13 +329,11 @@ enum MAV_ROI
 #include "./mavlink_msg_roll_pitch_yaw_thrust_setpoint.h"
 #include "./mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint.h"
 #include "./mavlink_msg_nav_controller_output.h"
-#include "./mavlink_msg_position_target.h"
 #include "./mavlink_msg_state_correction.h"
 #include "./mavlink_msg_request_data_stream.h"
 #include "./mavlink_msg_data_stream.h"
 #include "./mavlink_msg_manual_control.h"
 #include "./mavlink_msg_rc_channels_override.h"
-#include "./mavlink_msg_global_position_int.h"
 #include "./mavlink_msg_vfr_hud.h"
 #include "./mavlink_msg_command_short.h"
 #include "./mavlink_msg_command_long.h"
@@ -350,6 +348,7 @@ enum MAV_ROI
 #include "./mavlink_msg_named_value_int.h"
 #include "./mavlink_msg_statustext.h"
 #include "./mavlink_msg_debug.h"
+#include "./mavlink_msg_extended_message.h"
 
 #ifdef __cplusplus
 }
