@@ -95,39 +95,6 @@ static inline uint16_t mavlink_msg_attitude_pack_chan(uint8_t system_id, uint8_t
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 32, 66);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a attitude message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
- * @param roll Roll angle (rad)
- * @param pitch Pitch angle (rad)
- * @param yaw Yaw angle (rad)
- * @param rollspeed Roll angular speed (rad/s)
- * @param pitchspeed Pitch angular speed (rad/s)
- * @param yawspeed Yaw angular speed (rad/s)
- */
-static inline void mavlink_msg_attitude_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint64_t usec,float roll,float pitch,float yaw,float rollspeed,float pitchspeed,float yawspeed)
-{
-	msg->msgid = MAVLINK_MSG_ID_ATTITUDE;
-
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	put_float_by_index(msg, 8, roll); // Roll angle (rad)
-	put_float_by_index(msg, 12, pitch); // Pitch angle (rad)
-	put_float_by_index(msg, 16, yaw); // Yaw angle (rad)
-	put_float_by_index(msg, 20, rollspeed); // Roll angular speed (rad/s)
-	put_float_by_index(msg, 24, pitchspeed); // Pitch angular speed (rad/s)
-	put_float_by_index(msg, 28, yawspeed); // Yaw angular speed (rad/s)
-
-	mavlink_finalize_message_chan_send(msg, chan, 32, 66);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a attitude struct into a message
  *
@@ -158,7 +125,17 @@ static inline uint16_t mavlink_msg_attitude_encode(uint8_t system_id, uint8_t co
 static inline void mavlink_msg_attitude_send(mavlink_channel_t chan, uint64_t usec, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 32);
-	mavlink_msg_attitude_pack_chan_send(chan, msg, usec, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed);
+	msg->msgid = MAVLINK_MSG_ID_ATTITUDE;
+
+	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_float_by_index(msg, 8, roll); // Roll angle (rad)
+	put_float_by_index(msg, 12, pitch); // Pitch angle (rad)
+	put_float_by_index(msg, 16, yaw); // Yaw angle (rad)
+	put_float_by_index(msg, 20, rollspeed); // Roll angular speed (rad/s)
+	put_float_by_index(msg, 24, pitchspeed); // Pitch angular speed (rad/s)
+	put_float_by_index(msg, 28, yawspeed); // Yaw angular speed (rad/s)
+
+	mavlink_finalize_message_chan_send(msg, chan, 32, 66);
 }
 
 #endif

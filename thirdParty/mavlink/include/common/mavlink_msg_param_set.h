@@ -83,35 +83,6 @@ static inline uint16_t mavlink_msg_param_set_pack_chan(uint8_t system_id, uint8_
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 23, 168);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a param_set message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target_system System ID
- * @param target_component Component ID
- * @param param_id Onboard parameter id
- * @param param_value Onboard parameter value
- * @param param_type Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
- */
-static inline void mavlink_msg_param_set_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target_system,uint8_t target_component,const char *param_id,float param_value,uint8_t param_type)
-{
-	msg->msgid = MAVLINK_MSG_ID_PARAM_SET;
-
-	put_float_by_index(msg, 0, param_value); // Onboard parameter value
-	put_uint8_t_by_index(msg, 4, target_system); // System ID
-	put_uint8_t_by_index(msg, 5, target_component); // Component ID
-	put_char_array_by_index(msg, 6, param_id, 16); // Onboard parameter id
-	put_uint8_t_by_index(msg, 22, param_type); // Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
-
-	mavlink_finalize_message_chan_send(msg, chan, 23, 168);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a param_set struct into a message
  *
@@ -140,7 +111,15 @@ static inline uint16_t mavlink_msg_param_set_encode(uint8_t system_id, uint8_t c
 static inline void mavlink_msg_param_set_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, const char *param_id, float param_value, uint8_t param_type)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 23);
-	mavlink_msg_param_set_pack_chan_send(chan, msg, target_system, target_component, param_id, param_value, param_type);
+	msg->msgid = MAVLINK_MSG_ID_PARAM_SET;
+
+	put_float_by_index(msg, 0, param_value); // Onboard parameter value
+	put_uint8_t_by_index(msg, 4, target_system); // System ID
+	put_uint8_t_by_index(msg, 5, target_component); // Component ID
+	put_char_array_by_index(msg, 6, param_id, 16); // Onboard parameter id
+	put_uint8_t_by_index(msg, 22, param_type); // Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
+
+	mavlink_finalize_message_chan_send(msg, chan, 23, 168);
 }
 
 #endif

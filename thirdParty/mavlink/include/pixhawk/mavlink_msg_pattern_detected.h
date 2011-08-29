@@ -77,33 +77,6 @@ static inline uint16_t mavlink_msg_pattern_detected_pack_chan(uint8_t system_id,
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 106, 90);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a pattern_detected message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param type 0: Pattern, 1: Letter
- * @param confidence Confidence of detection
- * @param file Pattern file name
- * @param detected Accepted as true detection, 0 no, 1 yes
- */
-static inline void mavlink_msg_pattern_detected_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t type,float confidence,const char *file,uint8_t detected)
-{
-	msg->msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
-
-	put_float_by_index(msg, 0, confidence); // Confidence of detection
-	put_uint8_t_by_index(msg, 4, type); // 0: Pattern, 1: Letter
-	put_char_array_by_index(msg, 5, file, 100); // Pattern file name
-	put_uint8_t_by_index(msg, 105, detected); // Accepted as true detection, 0 no, 1 yes
-
-	mavlink_finalize_message_chan_send(msg, chan, 106, 90);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a pattern_detected struct into a message
  *
@@ -131,7 +104,14 @@ static inline uint16_t mavlink_msg_pattern_detected_encode(uint8_t system_id, ui
 static inline void mavlink_msg_pattern_detected_send(mavlink_channel_t chan, uint8_t type, float confidence, const char *file, uint8_t detected)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 106);
-	mavlink_msg_pattern_detected_pack_chan_send(chan, msg, type, confidence, file, detected);
+	msg->msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
+
+	put_float_by_index(msg, 0, confidence); // Confidence of detection
+	put_uint8_t_by_index(msg, 4, type); // 0: Pattern, 1: Letter
+	put_char_array_by_index(msg, 5, file, 100); // Pattern file name
+	put_uint8_t_by_index(msg, 105, detected); // Accepted as true detection, 0 no, 1 yes
+
+	mavlink_finalize_message_chan_send(msg, chan, 106, 90);
 }
 
 #endif

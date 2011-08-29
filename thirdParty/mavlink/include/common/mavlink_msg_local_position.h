@@ -95,39 +95,6 @@ static inline uint16_t mavlink_msg_local_position_pack_chan(uint8_t system_id, u
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 32, 126);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a local_position message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
- * @param x X Position
- * @param y Y Position
- * @param z Z Position
- * @param vx X Speed
- * @param vy Y Speed
- * @param vz Z Speed
- */
-static inline void mavlink_msg_local_position_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint64_t usec,float x,float y,float z,float vx,float vy,float vz)
-{
-	msg->msgid = MAVLINK_MSG_ID_LOCAL_POSITION;
-
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	put_float_by_index(msg, 8, x); // X Position
-	put_float_by_index(msg, 12, y); // Y Position
-	put_float_by_index(msg, 16, z); // Z Position
-	put_float_by_index(msg, 20, vx); // X Speed
-	put_float_by_index(msg, 24, vy); // Y Speed
-	put_float_by_index(msg, 28, vz); // Z Speed
-
-	mavlink_finalize_message_chan_send(msg, chan, 32, 126);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a local_position struct into a message
  *
@@ -158,7 +125,17 @@ static inline uint16_t mavlink_msg_local_position_encode(uint8_t system_id, uint
 static inline void mavlink_msg_local_position_send(mavlink_channel_t chan, uint64_t usec, float x, float y, float z, float vx, float vy, float vz)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 32);
-	mavlink_msg_local_position_pack_chan_send(chan, msg, usec, x, y, z, vx, vy, vz);
+	msg->msgid = MAVLINK_MSG_ID_LOCAL_POSITION;
+
+	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_float_by_index(msg, 8, x); // X Position
+	put_float_by_index(msg, 12, y); // Y Position
+	put_float_by_index(msg, 16, z); // Z Position
+	put_float_by_index(msg, 20, vx); // X Speed
+	put_float_by_index(msg, 24, vy); // Y Speed
+	put_float_by_index(msg, 28, vz); // Z Speed
+
+	mavlink_finalize_message_chan_send(msg, chan, 32, 126);
 }
 
 #endif

@@ -65,29 +65,6 @@ static inline uint16_t mavlink_msg_param_request_list_pack_chan(uint8_t system_i
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 2, 159);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a param_request_list message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target_system System ID
- * @param target_component Component ID
- */
-static inline void mavlink_msg_param_request_list_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target_system,uint8_t target_component)
-{
-	msg->msgid = MAVLINK_MSG_ID_PARAM_REQUEST_LIST;
-
-	put_uint8_t_by_index(msg, 0, target_system); // System ID
-	put_uint8_t_by_index(msg, 1, target_component); // Component ID
-
-	mavlink_finalize_message_chan_send(msg, chan, 2, 159);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a param_request_list struct into a message
  *
@@ -113,7 +90,12 @@ static inline uint16_t mavlink_msg_param_request_list_encode(uint8_t system_id, 
 static inline void mavlink_msg_param_request_list_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 2);
-	mavlink_msg_param_request_list_pack_chan_send(chan, msg, target_system, target_component);
+	msg->msgid = MAVLINK_MSG_ID_PARAM_REQUEST_LIST;
+
+	put_uint8_t_by_index(msg, 0, target_system); // System ID
+	put_uint8_t_by_index(msg, 1, target_component); // Component ID
+
+	mavlink_finalize_message_chan_send(msg, chan, 2, 159);
 }
 
 #endif

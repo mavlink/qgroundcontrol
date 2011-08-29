@@ -50,8 +50,7 @@ static void mavlink_test_nav_filter_bias(uint8_t system_id, uint8_t component_id
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_nav_filter_bias_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.usec , packet1.accel_0 , packet1.accel_1 , packet1.accel_2 , packet1.gyro_0 , packet1.gyro_1 , packet1.gyro_2 );
-	mavlink_msg_nav_filter_bias_send(MAVLINK_COMM_2 , packet1.usec , packet1.accel_0 , packet1.accel_1 , packet1.accel_2 , packet1.gyro_0 , packet1.gyro_1 , packet1.gyro_2 );
+	mavlink_msg_nav_filter_bias_send(MAVLINK_COMM_1 , packet1.usec , packet1.accel_0 , packet1.accel_1 , packet1.accel_2 , packet1.gyro_0 , packet1.gyro_1 , packet1.gyro_2 );
 }
 
 static void mavlink_test_radio_calibration(uint8_t system_id, uint8_t component_id)
@@ -79,8 +78,7 @@ static void mavlink_test_radio_calibration(uint8_t system_id, uint8_t component_
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_radio_calibration_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.aileron , packet1.elevator , packet1.rudder , packet1.gyro , packet1.pitch , packet1.throttle );
-	mavlink_msg_radio_calibration_send(MAVLINK_COMM_2 , packet1.aileron , packet1.elevator , packet1.rudder , packet1.gyro , packet1.pitch , packet1.throttle );
+	mavlink_msg_radio_calibration_send(MAVLINK_COMM_1 , packet1.aileron , packet1.elevator , packet1.rudder , packet1.gyro , packet1.pitch , packet1.throttle );
 }
 
 static void mavlink_test_ualberta_sys_status(uint8_t system_id, uint8_t component_id)
@@ -105,8 +103,7 @@ static void mavlink_test_ualberta_sys_status(uint8_t system_id, uint8_t componen
         for (i=0; i<mavlink_msg_get_send_buffer_length(&msg); i++) {
         	comm_send_ch(MAVLINK_COMM_0, buffer[i]);
         }
-	mavlink_msg_ualberta_sys_status_pack_chan_send(MAVLINK_COMM_1, &msg , packet1.mode , packet1.nav_mode , packet1.pilot );
-	mavlink_msg_ualberta_sys_status_send(MAVLINK_COMM_2 , packet1.mode , packet1.nav_mode , packet1.pilot );
+	mavlink_msg_ualberta_sys_status_send(MAVLINK_COMM_1 , packet1.mode , packet1.nav_mode , packet1.pilot );
 }
 
 static void mavlink_test_ualberta(uint8_t system_id, uint8_t component_id)

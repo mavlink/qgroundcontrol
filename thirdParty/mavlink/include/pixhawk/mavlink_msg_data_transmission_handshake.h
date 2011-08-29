@@ -83,35 +83,6 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_pack_chan(uint8_t
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 8, 148);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a data_transmission_handshake message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param type type of requested/acknowledged data (as defined in ENUM DATA_TYPES in mavlink/include/mavlink_types.h)
- * @param size total data size in bytes (set on ACK only)
- * @param packets number of packets beeing sent (set on ACK only)
- * @param payload payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only)
- * @param jpg_quality JPEG quality out of [1,100]
- */
-static inline void mavlink_msg_data_transmission_handshake_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t type,uint32_t size,uint8_t packets,uint8_t payload,uint8_t jpg_quality)
-{
-	msg->msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
-
-	put_uint32_t_by_index(msg, 0, size); // total data size in bytes (set on ACK only)
-	put_uint8_t_by_index(msg, 4, type); // type of requested/acknowledged data (as defined in ENUM DATA_TYPES in mavlink/include/mavlink_types.h)
-	put_uint8_t_by_index(msg, 5, packets); // number of packets beeing sent (set on ACK only)
-	put_uint8_t_by_index(msg, 6, payload); // payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only)
-	put_uint8_t_by_index(msg, 7, jpg_quality); // JPEG quality out of [1,100]
-
-	mavlink_finalize_message_chan_send(msg, chan, 8, 148);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a data_transmission_handshake struct into a message
  *
@@ -140,7 +111,15 @@ static inline uint16_t mavlink_msg_data_transmission_handshake_encode(uint8_t sy
 static inline void mavlink_msg_data_transmission_handshake_send(mavlink_channel_t chan, uint8_t type, uint32_t size, uint8_t packets, uint8_t payload, uint8_t jpg_quality)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 8);
-	mavlink_msg_data_transmission_handshake_pack_chan_send(chan, msg, type, size, packets, payload, jpg_quality);
+	msg->msgid = MAVLINK_MSG_ID_DATA_TRANSMISSION_HANDSHAKE;
+
+	put_uint32_t_by_index(msg, 0, size); // total data size in bytes (set on ACK only)
+	put_uint8_t_by_index(msg, 4, type); // type of requested/acknowledged data (as defined in ENUM DATA_TYPES in mavlink/include/mavlink_types.h)
+	put_uint8_t_by_index(msg, 5, packets); // number of packets beeing sent (set on ACK only)
+	put_uint8_t_by_index(msg, 6, payload); // payload size per packet (normally 253 byte, see DATA field size in message ENCAPSULATED_DATA) (set on ACK only)
+	put_uint8_t_by_index(msg, 7, jpg_quality); // JPEG quality out of [1,100]
+
+	mavlink_finalize_message_chan_send(msg, chan, 8, 148);
 }
 
 #endif

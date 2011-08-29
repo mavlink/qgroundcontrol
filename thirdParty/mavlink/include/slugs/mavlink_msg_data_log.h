@@ -89,37 +89,6 @@ static inline uint16_t mavlink_msg_data_log_pack_chan(uint8_t system_id, uint8_t
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 24, 167);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a data_log message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param fl_1 Log value 1 
- * @param fl_2 Log value 2 
- * @param fl_3 Log value 3 
- * @param fl_4 Log value 4 
- * @param fl_5 Log value 5 
- * @param fl_6 Log value 6 
- */
-static inline void mavlink_msg_data_log_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           float fl_1,float fl_2,float fl_3,float fl_4,float fl_5,float fl_6)
-{
-	msg->msgid = MAVLINK_MSG_ID_DATA_LOG;
-
-	put_float_by_index(msg, 0, fl_1); // Log value 1 
-	put_float_by_index(msg, 4, fl_2); // Log value 2 
-	put_float_by_index(msg, 8, fl_3); // Log value 3 
-	put_float_by_index(msg, 12, fl_4); // Log value 4 
-	put_float_by_index(msg, 16, fl_5); // Log value 5 
-	put_float_by_index(msg, 20, fl_6); // Log value 6 
-
-	mavlink_finalize_message_chan_send(msg, chan, 24, 167);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a data_log struct into a message
  *
@@ -149,7 +118,16 @@ static inline uint16_t mavlink_msg_data_log_encode(uint8_t system_id, uint8_t co
 static inline void mavlink_msg_data_log_send(mavlink_channel_t chan, float fl_1, float fl_2, float fl_3, float fl_4, float fl_5, float fl_6)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 24);
-	mavlink_msg_data_log_pack_chan_send(chan, msg, fl_1, fl_2, fl_3, fl_4, fl_5, fl_6);
+	msg->msgid = MAVLINK_MSG_ID_DATA_LOG;
+
+	put_float_by_index(msg, 0, fl_1); // Log value 1 
+	put_float_by_index(msg, 4, fl_2); // Log value 2 
+	put_float_by_index(msg, 8, fl_3); // Log value 3 
+	put_float_by_index(msg, 12, fl_4); // Log value 4 
+	put_float_by_index(msg, 16, fl_5); // Log value 5 
+	put_float_by_index(msg, 20, fl_6); // Log value 6 
+
+	mavlink_finalize_message_chan_send(msg, chan, 24, 167);
 }
 
 #endif

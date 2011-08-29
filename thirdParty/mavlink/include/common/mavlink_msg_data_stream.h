@@ -71,31 +71,6 @@ static inline uint16_t mavlink_msg_data_stream_pack_chan(uint8_t system_id, uint
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 4, 21);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a data_stream message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param stream_id The ID of the requested data stream
- * @param message_rate The requested interval between two messages of this type
- * @param on_off 1 stream is enabled, 0 stream is stopped.
- */
-static inline void mavlink_msg_data_stream_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t stream_id,uint16_t message_rate,uint8_t on_off)
-{
-	msg->msgid = MAVLINK_MSG_ID_DATA_STREAM;
-
-	put_uint16_t_by_index(msg, 0, message_rate); // The requested interval between two messages of this type
-	put_uint8_t_by_index(msg, 2, stream_id); // The ID of the requested data stream
-	put_uint8_t_by_index(msg, 3, on_off); // 1 stream is enabled, 0 stream is stopped.
-
-	mavlink_finalize_message_chan_send(msg, chan, 4, 21);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a data_stream struct into a message
  *
@@ -122,7 +97,13 @@ static inline uint16_t mavlink_msg_data_stream_encode(uint8_t system_id, uint8_t
 static inline void mavlink_msg_data_stream_send(mavlink_channel_t chan, uint8_t stream_id, uint16_t message_rate, uint8_t on_off)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 4);
-	mavlink_msg_data_stream_pack_chan_send(chan, msg, stream_id, message_rate, on_off);
+	msg->msgid = MAVLINK_MSG_ID_DATA_STREAM;
+
+	put_uint16_t_by_index(msg, 0, message_rate); // The requested interval between two messages of this type
+	put_uint8_t_by_index(msg, 2, stream_id); // The ID of the requested data stream
+	put_uint8_t_by_index(msg, 3, on_off); // 1 stream is enabled, 0 stream is stopped.
+
+	mavlink_finalize_message_chan_send(msg, chan, 4, 21);
 }
 
 #endif

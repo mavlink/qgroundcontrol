@@ -95,39 +95,6 @@ static inline uint16_t mavlink_msg_nav_filter_bias_pack_chan(uint8_t system_id, 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 32, 34);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a nav_filter_bias message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param usec Timestamp (microseconds)
- * @param accel_0 b_f[0]
- * @param accel_1 b_f[1]
- * @param accel_2 b_f[2]
- * @param gyro_0 b_f[0]
- * @param gyro_1 b_f[1]
- * @param gyro_2 b_f[2]
- */
-static inline void mavlink_msg_nav_filter_bias_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint64_t usec,float accel_0,float accel_1,float accel_2,float gyro_0,float gyro_1,float gyro_2)
-{
-	msg->msgid = MAVLINK_MSG_ID_NAV_FILTER_BIAS;
-
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds)
-	put_float_by_index(msg, 8, accel_0); // b_f[0]
-	put_float_by_index(msg, 12, accel_1); // b_f[1]
-	put_float_by_index(msg, 16, accel_2); // b_f[2]
-	put_float_by_index(msg, 20, gyro_0); // b_f[0]
-	put_float_by_index(msg, 24, gyro_1); // b_f[1]
-	put_float_by_index(msg, 28, gyro_2); // b_f[2]
-
-	mavlink_finalize_message_chan_send(msg, chan, 32, 34);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a nav_filter_bias struct into a message
  *
@@ -158,7 +125,17 @@ static inline uint16_t mavlink_msg_nav_filter_bias_encode(uint8_t system_id, uin
 static inline void mavlink_msg_nav_filter_bias_send(mavlink_channel_t chan, uint64_t usec, float accel_0, float accel_1, float accel_2, float gyro_0, float gyro_1, float gyro_2)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 32);
-	mavlink_msg_nav_filter_bias_pack_chan_send(chan, msg, usec, accel_0, accel_1, accel_2, gyro_0, gyro_1, gyro_2);
+	msg->msgid = MAVLINK_MSG_ID_NAV_FILTER_BIAS;
+
+	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds)
+	put_float_by_index(msg, 8, accel_0); // b_f[0]
+	put_float_by_index(msg, 12, accel_1); // b_f[1]
+	put_float_by_index(msg, 16, accel_2); // b_f[2]
+	put_float_by_index(msg, 20, gyro_0); // b_f[0]
+	put_float_by_index(msg, 24, gyro_1); // b_f[1]
+	put_float_by_index(msg, 28, gyro_2); // b_f[2]
+
+	mavlink_finalize_message_chan_send(msg, chan, 32, 34);
 }
 
 #endif

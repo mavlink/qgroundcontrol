@@ -83,35 +83,6 @@ static inline uint16_t mavlink_msg_position_control_setpoint_pack_chan(uint8_t s
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 18, 28);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a position_control_setpoint message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param id ID of waypoint, 0 for plain position
- * @param x x position
- * @param y y position
- * @param z z position
- * @param yaw yaw orientation in radians, 0 = NORTH
- */
-static inline void mavlink_msg_position_control_setpoint_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint16_t id,float x,float y,float z,float yaw)
-{
-	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT;
-
-	put_float_by_index(msg, 0, x); // x position
-	put_float_by_index(msg, 4, y); // y position
-	put_float_by_index(msg, 8, z); // z position
-	put_float_by_index(msg, 12, yaw); // yaw orientation in radians, 0 = NORTH
-	put_uint16_t_by_index(msg, 16, id); // ID of waypoint, 0 for plain position
-
-	mavlink_finalize_message_chan_send(msg, chan, 18, 28);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a position_control_setpoint struct into a message
  *
@@ -140,7 +111,15 @@ static inline uint16_t mavlink_msg_position_control_setpoint_encode(uint8_t syst
 static inline void mavlink_msg_position_control_setpoint_send(mavlink_channel_t chan, uint16_t id, float x, float y, float z, float yaw)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 18);
-	mavlink_msg_position_control_setpoint_pack_chan_send(chan, msg, id, x, y, z, yaw);
+	msg->msgid = MAVLINK_MSG_ID_POSITION_CONTROL_SETPOINT;
+
+	put_float_by_index(msg, 0, x); // x position
+	put_float_by_index(msg, 4, y); // y position
+	put_float_by_index(msg, 8, z); // z position
+	put_float_by_index(msg, 12, yaw); // yaw orientation in radians, 0 = NORTH
+	put_uint16_t_by_index(msg, 16, id); // ID of waypoint, 0 for plain position
+
+	mavlink_finalize_message_chan_send(msg, chan, 18, 28);
 }
 
 #endif

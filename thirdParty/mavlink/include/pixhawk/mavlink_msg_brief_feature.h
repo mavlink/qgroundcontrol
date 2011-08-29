@@ -101,41 +101,6 @@ static inline uint16_t mavlink_msg_brief_feature_pack_chan(uint8_t system_id, ui
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 53, 88);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a brief_feature message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param x x position in m
- * @param y y position in m
- * @param z z position in m
- * @param orientation_assignment Orientation assignment 0: false, 1:true
- * @param size Size in pixels
- * @param orientation Orientation
- * @param descriptor Descriptor
- * @param response Harris operator response at this location
- */
-static inline void mavlink_msg_brief_feature_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           float x,float y,float z,uint8_t orientation_assignment,uint16_t size,uint16_t orientation,const uint8_t *descriptor,float response)
-{
-	msg->msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
-
-	put_float_by_index(msg, 0, x); // x position in m
-	put_float_by_index(msg, 4, y); // y position in m
-	put_float_by_index(msg, 8, z); // z position in m
-	put_float_by_index(msg, 12, response); // Harris operator response at this location
-	put_uint16_t_by_index(msg, 16, size); // Size in pixels
-	put_uint16_t_by_index(msg, 18, orientation); // Orientation
-	put_uint8_t_by_index(msg, 20, orientation_assignment); // Orientation assignment 0: false, 1:true
-	put_uint8_t_array_by_index(msg, 21, descriptor, 32); // Descriptor
-
-	mavlink_finalize_message_chan_send(msg, chan, 53, 88);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a brief_feature struct into a message
  *
@@ -167,7 +132,18 @@ static inline uint16_t mavlink_msg_brief_feature_encode(uint8_t system_id, uint8
 static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const uint8_t *descriptor, float response)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 53);
-	mavlink_msg_brief_feature_pack_chan_send(chan, msg, x, y, z, orientation_assignment, size, orientation, descriptor, response);
+	msg->msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
+
+	put_float_by_index(msg, 0, x); // x position in m
+	put_float_by_index(msg, 4, y); // y position in m
+	put_float_by_index(msg, 8, z); // z position in m
+	put_float_by_index(msg, 12, response); // Harris operator response at this location
+	put_uint16_t_by_index(msg, 16, size); // Size in pixels
+	put_uint16_t_by_index(msg, 18, orientation); // Orientation
+	put_uint8_t_by_index(msg, 20, orientation_assignment); // Orientation assignment 0: false, 1:true
+	put_uint8_t_array_by_index(msg, 21, descriptor, 32); // Descriptor
+
+	mavlink_finalize_message_chan_send(msg, chan, 53, 88);
 }
 
 #endif

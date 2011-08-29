@@ -94,37 +94,6 @@ static inline uint16_t mavlink_msg_radio_calibration_pack_chan(uint8_t system_id
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 42, 71);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a radio_calibration message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param aileron Aileron setpoints: left, center, right
- * @param elevator Elevator setpoints: nose down, center, nose up
- * @param rudder Rudder setpoints: nose left, center, nose right
- * @param gyro Tail gyro mode/gain setpoints: heading hold, rate mode
- * @param pitch Pitch curve setpoints (every 25%)
- * @param throttle Throttle curve setpoints (every 25%)
- */
-static inline void mavlink_msg_radio_calibration_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           const uint16_t *aileron,const uint16_t *elevator,const uint16_t *rudder,const uint16_t *gyro,const uint16_t *pitch,const uint16_t *throttle)
-{
-	msg->msgid = MAVLINK_MSG_ID_RADIO_CALIBRATION;
-
-	put_uint16_t_array_by_index(msg, 0, aileron, 3); // Aileron setpoints: left, center, right
-	put_uint16_t_array_by_index(msg, 6, elevator, 3); // Elevator setpoints: nose down, center, nose up
-	put_uint16_t_array_by_index(msg, 12, rudder, 3); // Rudder setpoints: nose left, center, nose right
-	put_uint16_t_array_by_index(msg, 18, gyro, 2); // Tail gyro mode/gain setpoints: heading hold, rate mode
-	put_uint16_t_array_by_index(msg, 22, pitch, 5); // Pitch curve setpoints (every 25%)
-	put_uint16_t_array_by_index(msg, 32, throttle, 5); // Throttle curve setpoints (every 25%)
-
-	mavlink_finalize_message_chan_send(msg, chan, 42, 71);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a radio_calibration struct into a message
  *
@@ -154,7 +123,16 @@ static inline uint16_t mavlink_msg_radio_calibration_encode(uint8_t system_id, u
 static inline void mavlink_msg_radio_calibration_send(mavlink_channel_t chan, const uint16_t *aileron, const uint16_t *elevator, const uint16_t *rudder, const uint16_t *gyro, const uint16_t *pitch, const uint16_t *throttle)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 42);
-	mavlink_msg_radio_calibration_pack_chan_send(chan, msg, aileron, elevator, rudder, gyro, pitch, throttle);
+	msg->msgid = MAVLINK_MSG_ID_RADIO_CALIBRATION;
+
+	put_uint16_t_array_by_index(msg, 0, aileron, 3); // Aileron setpoints: left, center, right
+	put_uint16_t_array_by_index(msg, 6, elevator, 3); // Elevator setpoints: nose down, center, nose up
+	put_uint16_t_array_by_index(msg, 12, rudder, 3); // Rudder setpoints: nose left, center, nose right
+	put_uint16_t_array_by_index(msg, 18, gyro, 2); // Tail gyro mode/gain setpoints: heading hold, rate mode
+	put_uint16_t_array_by_index(msg, 22, pitch, 5); // Pitch curve setpoints (every 25%)
+	put_uint16_t_array_by_index(msg, 32, throttle, 5); // Throttle curve setpoints (every 25%)
+
+	mavlink_finalize_message_chan_send(msg, chan, 42, 71);
 }
 
 #endif

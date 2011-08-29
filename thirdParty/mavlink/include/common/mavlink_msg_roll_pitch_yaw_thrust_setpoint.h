@@ -83,35 +83,6 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_thrust_setpoint_pack_chan(uint
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 20, 141);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a roll_pitch_yaw_thrust_setpoint message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param time_ms Timestamp in milliseconds since system boot
- * @param roll Desired roll angle in radians
- * @param pitch Desired pitch angle in radians
- * @param yaw Desired yaw angle in radians
- * @param thrust Collective thrust, normalized to 0 .. 1
- */
-static inline void mavlink_msg_roll_pitch_yaw_thrust_setpoint_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint32_t time_ms,float roll,float pitch,float yaw,float thrust)
-{
-	msg->msgid = MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT;
-
-	put_uint32_t_by_index(msg, 0, time_ms); // Timestamp in milliseconds since system boot
-	put_float_by_index(msg, 4, roll); // Desired roll angle in radians
-	put_float_by_index(msg, 8, pitch); // Desired pitch angle in radians
-	put_float_by_index(msg, 12, yaw); // Desired yaw angle in radians
-	put_float_by_index(msg, 16, thrust); // Collective thrust, normalized to 0 .. 1
-
-	mavlink_finalize_message_chan_send(msg, chan, 20, 141);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a roll_pitch_yaw_thrust_setpoint struct into a message
  *
@@ -140,7 +111,15 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_thrust_setpoint_encode(uint8_t
 static inline void mavlink_msg_roll_pitch_yaw_thrust_setpoint_send(mavlink_channel_t chan, uint32_t time_ms, float roll, float pitch, float yaw, float thrust)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 20);
-	mavlink_msg_roll_pitch_yaw_thrust_setpoint_pack_chan_send(chan, msg, time_ms, roll, pitch, yaw, thrust);
+	msg->msgid = MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT;
+
+	put_uint32_t_by_index(msg, 0, time_ms); // Timestamp in milliseconds since system boot
+	put_float_by_index(msg, 4, roll); // Desired roll angle in radians
+	put_float_by_index(msg, 8, pitch); // Desired pitch angle in radians
+	put_float_by_index(msg, 12, yaw); // Desired yaw angle in radians
+	put_float_by_index(msg, 16, thrust); // Collective thrust, normalized to 0 .. 1
+
+	mavlink_finalize_message_chan_send(msg, chan, 20, 141);
 }
 
 #endif

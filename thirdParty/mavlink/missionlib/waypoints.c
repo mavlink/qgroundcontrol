@@ -303,12 +303,8 @@ float mavlink_wpm_distance_to_point(uint16_t seq, float x, float y, float z)
     return -1.f;
 }
 
-
-void mavlink_wpm_message_handler(const mavlink_message_t* msg)
+void mavlink_wpm_loop()
 {
-    // Handle param messages
-    //paramClient->handleMAVLinkPacket(msg);
-	
     //check for timed-out operations
     uint64_t now = mavlink_missionlib_get_system_timestamp();
     if (now-wpm.timestamp_lastaction > wpm.timeout && wpm.current_state != MAVLINK_WPM_STATE_IDLE)
@@ -334,7 +330,11 @@ void mavlink_wpm_message_handler(const mavlink_message_t* msg)
     {
         mavlink_wpm_send_setpoint(wpm.current_active_wp_id);
     }
-	
+}
+
+void mavlink_wpm_message_handler(const mavlink_message_t* msg)
+{
+	uint64_t now = mavlink_missionlib_get_system_timestamp();
     switch(msg->msgid)
     {
 		case MAVLINK_MSG_ID_ATTITUDE:
@@ -388,15 +388,15 @@ void mavlink_wpm_message_handler(const mavlink_message_t* msg)
                     float orbit = wp->param1;
 					
                     float dist;
-                    if (wp->param2 == 0)
-                    {
-						// FIXME segment distance
-                        //dist = mavlink_wpm_distance_to_segment(current_active_wp_id, pos.x, pos.y, pos.z);
-                    }
-                    else
-                    {
+//                    if (wp->param2 == 0)
+//                    {
+//						// FIXME segment distance
+//                        //dist = mavlink_wpm_distance_to_segment(current_active_wp_id, pos.x, pos.y, pos.z);
+//                    }
+//                    else
+//                    {
                         dist = mavlink_wpm_distance_to_point(wpm.current_active_wp_id, pos.x, pos.y, pos.z);
-                    }
+//                    }
 					
                     if (dist >= 0.f && dist <= orbit && wpm.yaw_reached)
                     {

@@ -125,49 +125,6 @@ static inline uint16_t mavlink_msg_image_triggered_pack_chan(uint8_t system_id, 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 52, 86);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a image_triggered message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param timestamp Timestamp
- * @param seq IMU seq
- * @param roll Roll angle in rad
- * @param pitch Pitch angle in rad
- * @param yaw Yaw angle in rad
- * @param local_z Local frame Z coordinate (height over ground)
- * @param lat GPS X coordinate
- * @param lon GPS Y coordinate
- * @param alt Global frame altitude
- * @param ground_x Ground truth X
- * @param ground_y Ground truth Y
- * @param ground_z Ground truth Z
- */
-static inline void mavlink_msg_image_triggered_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint64_t timestamp,uint32_t seq,float roll,float pitch,float yaw,float local_z,float lat,float lon,float alt,float ground_x,float ground_y,float ground_z)
-{
-	msg->msgid = MAVLINK_MSG_ID_IMAGE_TRIGGERED;
-
-	put_uint64_t_by_index(msg, 0, timestamp); // Timestamp
-	put_uint32_t_by_index(msg, 8, seq); // IMU seq
-	put_float_by_index(msg, 12, roll); // Roll angle in rad
-	put_float_by_index(msg, 16, pitch); // Pitch angle in rad
-	put_float_by_index(msg, 20, yaw); // Yaw angle in rad
-	put_float_by_index(msg, 24, local_z); // Local frame Z coordinate (height over ground)
-	put_float_by_index(msg, 28, lat); // GPS X coordinate
-	put_float_by_index(msg, 32, lon); // GPS Y coordinate
-	put_float_by_index(msg, 36, alt); // Global frame altitude
-	put_float_by_index(msg, 40, ground_x); // Ground truth X
-	put_float_by_index(msg, 44, ground_y); // Ground truth Y
-	put_float_by_index(msg, 48, ground_z); // Ground truth Z
-
-	mavlink_finalize_message_chan_send(msg, chan, 52, 86);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a image_triggered struct into a message
  *
@@ -203,7 +160,22 @@ static inline uint16_t mavlink_msg_image_triggered_encode(uint8_t system_id, uin
 static inline void mavlink_msg_image_triggered_send(mavlink_channel_t chan, uint64_t timestamp, uint32_t seq, float roll, float pitch, float yaw, float local_z, float lat, float lon, float alt, float ground_x, float ground_y, float ground_z)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 52);
-	mavlink_msg_image_triggered_pack_chan_send(chan, msg, timestamp, seq, roll, pitch, yaw, local_z, lat, lon, alt, ground_x, ground_y, ground_z);
+	msg->msgid = MAVLINK_MSG_ID_IMAGE_TRIGGERED;
+
+	put_uint64_t_by_index(msg, 0, timestamp); // Timestamp
+	put_uint32_t_by_index(msg, 8, seq); // IMU seq
+	put_float_by_index(msg, 12, roll); // Roll angle in rad
+	put_float_by_index(msg, 16, pitch); // Pitch angle in rad
+	put_float_by_index(msg, 20, yaw); // Yaw angle in rad
+	put_float_by_index(msg, 24, local_z); // Local frame Z coordinate (height over ground)
+	put_float_by_index(msg, 28, lat); // GPS X coordinate
+	put_float_by_index(msg, 32, lon); // GPS Y coordinate
+	put_float_by_index(msg, 36, alt); // Global frame altitude
+	put_float_by_index(msg, 40, ground_x); // Ground truth X
+	put_float_by_index(msg, 44, ground_y); // Ground truth Y
+	put_float_by_index(msg, 48, ground_z); // Ground truth Z
+
+	mavlink_finalize_message_chan_send(msg, chan, 52, 86);
 }
 
 #endif

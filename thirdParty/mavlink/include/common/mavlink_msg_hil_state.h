@@ -149,57 +149,6 @@ static inline uint16_t mavlink_msg_hil_state_pack_chan(uint8_t system_id, uint8_
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 56, 12);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a hil_state message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param time_us Timestamp (microseconds since UNIX epoch or microseconds since system boot)
- * @param roll Roll angle (rad)
- * @param pitch Pitch angle (rad)
- * @param yaw Yaw angle (rad)
- * @param rollspeed Roll angular speed (rad/s)
- * @param pitchspeed Pitch angular speed (rad/s)
- * @param yawspeed Yaw angular speed (rad/s)
- * @param lat Latitude, expressed as * 1E7
- * @param lon Longitude, expressed as * 1E7
- * @param alt Altitude in meters, expressed as * 1000 (millimeters)
- * @param vx Ground X Speed (Latitude), expressed as m/s * 100
- * @param vy Ground Y Speed (Longitude), expressed as m/s * 100
- * @param vz Ground Z Speed (Altitude), expressed as m/s * 100
- * @param xacc X acceleration (mg)
- * @param yacc Y acceleration (mg)
- * @param zacc Z acceleration (mg)
- */
-static inline void mavlink_msg_hil_state_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint64_t time_us,float roll,float pitch,float yaw,float rollspeed,float pitchspeed,float yawspeed,int32_t lat,int32_t lon,int32_t alt,int16_t vx,int16_t vy,int16_t vz,int16_t xacc,int16_t yacc,int16_t zacc)
-{
-	msg->msgid = MAVLINK_MSG_ID_HIL_STATE;
-
-	put_uint64_t_by_index(msg, 0, time_us); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	put_float_by_index(msg, 8, roll); // Roll angle (rad)
-	put_float_by_index(msg, 12, pitch); // Pitch angle (rad)
-	put_float_by_index(msg, 16, yaw); // Yaw angle (rad)
-	put_float_by_index(msg, 20, rollspeed); // Roll angular speed (rad/s)
-	put_float_by_index(msg, 24, pitchspeed); // Pitch angular speed (rad/s)
-	put_float_by_index(msg, 28, yawspeed); // Yaw angular speed (rad/s)
-	put_int32_t_by_index(msg, 32, lat); // Latitude, expressed as * 1E7
-	put_int32_t_by_index(msg, 36, lon); // Longitude, expressed as * 1E7
-	put_int32_t_by_index(msg, 40, alt); // Altitude in meters, expressed as * 1000 (millimeters)
-	put_int16_t_by_index(msg, 44, vx); // Ground X Speed (Latitude), expressed as m/s * 100
-	put_int16_t_by_index(msg, 46, vy); // Ground Y Speed (Longitude), expressed as m/s * 100
-	put_int16_t_by_index(msg, 48, vz); // Ground Z Speed (Altitude), expressed as m/s * 100
-	put_int16_t_by_index(msg, 50, xacc); // X acceleration (mg)
-	put_int16_t_by_index(msg, 52, yacc); // Y acceleration (mg)
-	put_int16_t_by_index(msg, 54, zacc); // Z acceleration (mg)
-
-	mavlink_finalize_message_chan_send(msg, chan, 56, 12);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a hil_state struct into a message
  *
@@ -239,7 +188,26 @@ static inline uint16_t mavlink_msg_hil_state_encode(uint8_t system_id, uint8_t c
 static inline void mavlink_msg_hil_state_send(mavlink_channel_t chan, uint64_t time_us, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt, int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 56);
-	mavlink_msg_hil_state_pack_chan_send(chan, msg, time_us, roll, pitch, yaw, rollspeed, pitchspeed, yawspeed, lat, lon, alt, vx, vy, vz, xacc, yacc, zacc);
+	msg->msgid = MAVLINK_MSG_ID_HIL_STATE;
+
+	put_uint64_t_by_index(msg, 0, time_us); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_float_by_index(msg, 8, roll); // Roll angle (rad)
+	put_float_by_index(msg, 12, pitch); // Pitch angle (rad)
+	put_float_by_index(msg, 16, yaw); // Yaw angle (rad)
+	put_float_by_index(msg, 20, rollspeed); // Roll angular speed (rad/s)
+	put_float_by_index(msg, 24, pitchspeed); // Pitch angular speed (rad/s)
+	put_float_by_index(msg, 28, yawspeed); // Yaw angular speed (rad/s)
+	put_int32_t_by_index(msg, 32, lat); // Latitude, expressed as * 1E7
+	put_int32_t_by_index(msg, 36, lon); // Longitude, expressed as * 1E7
+	put_int32_t_by_index(msg, 40, alt); // Altitude in meters, expressed as * 1000 (millimeters)
+	put_int16_t_by_index(msg, 44, vx); // Ground X Speed (Latitude), expressed as m/s * 100
+	put_int16_t_by_index(msg, 46, vy); // Ground Y Speed (Longitude), expressed as m/s * 100
+	put_int16_t_by_index(msg, 48, vz); // Ground Z Speed (Altitude), expressed as m/s * 100
+	put_int16_t_by_index(msg, 50, xacc); // X acceleration (mg)
+	put_int16_t_by_index(msg, 52, yacc); // Y acceleration (mg)
+	put_int16_t_by_index(msg, 54, zacc); // Z acceleration (mg)
+
+	mavlink_finalize_message_chan_send(msg, chan, 56, 12);
 }
 
 #endif

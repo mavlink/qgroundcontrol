@@ -107,43 +107,6 @@ static inline uint16_t mavlink_msg_rc_channels_raw_pack_chan(uint8_t system_id, 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 17, 252);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a rc_channels_raw message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param chan1_raw RC channel 1 value, in microseconds
- * @param chan2_raw RC channel 2 value, in microseconds
- * @param chan3_raw RC channel 3 value, in microseconds
- * @param chan4_raw RC channel 4 value, in microseconds
- * @param chan5_raw RC channel 5 value, in microseconds
- * @param chan6_raw RC channel 6 value, in microseconds
- * @param chan7_raw RC channel 7 value, in microseconds
- * @param chan8_raw RC channel 8 value, in microseconds
- * @param rssi Receive signal strength indicator, 0: 0%, 255: 100%
- */
-static inline void mavlink_msg_rc_channels_raw_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint16_t chan1_raw,uint16_t chan2_raw,uint16_t chan3_raw,uint16_t chan4_raw,uint16_t chan5_raw,uint16_t chan6_raw,uint16_t chan7_raw,uint16_t chan8_raw,uint8_t rssi)
-{
-	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_RAW;
-
-	put_uint16_t_by_index(msg, 0, chan1_raw); // RC channel 1 value, in microseconds
-	put_uint16_t_by_index(msg, 2, chan2_raw); // RC channel 2 value, in microseconds
-	put_uint16_t_by_index(msg, 4, chan3_raw); // RC channel 3 value, in microseconds
-	put_uint16_t_by_index(msg, 6, chan4_raw); // RC channel 4 value, in microseconds
-	put_uint16_t_by_index(msg, 8, chan5_raw); // RC channel 5 value, in microseconds
-	put_uint16_t_by_index(msg, 10, chan6_raw); // RC channel 6 value, in microseconds
-	put_uint16_t_by_index(msg, 12, chan7_raw); // RC channel 7 value, in microseconds
-	put_uint16_t_by_index(msg, 14, chan8_raw); // RC channel 8 value, in microseconds
-	put_uint8_t_by_index(msg, 16, rssi); // Receive signal strength indicator, 0: 0%, 255: 100%
-
-	mavlink_finalize_message_chan_send(msg, chan, 17, 252);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a rc_channels_raw struct into a message
  *
@@ -176,7 +139,19 @@ static inline uint16_t mavlink_msg_rc_channels_raw_encode(uint8_t system_id, uin
 static inline void mavlink_msg_rc_channels_raw_send(mavlink_channel_t chan, uint16_t chan1_raw, uint16_t chan2_raw, uint16_t chan3_raw, uint16_t chan4_raw, uint16_t chan5_raw, uint16_t chan6_raw, uint16_t chan7_raw, uint16_t chan8_raw, uint8_t rssi)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 17);
-	mavlink_msg_rc_channels_raw_pack_chan_send(chan, msg, chan1_raw, chan2_raw, chan3_raw, chan4_raw, chan5_raw, chan6_raw, chan7_raw, chan8_raw, rssi);
+	msg->msgid = MAVLINK_MSG_ID_RC_CHANNELS_RAW;
+
+	put_uint16_t_by_index(msg, 0, chan1_raw); // RC channel 1 value, in microseconds
+	put_uint16_t_by_index(msg, 2, chan2_raw); // RC channel 2 value, in microseconds
+	put_uint16_t_by_index(msg, 4, chan3_raw); // RC channel 3 value, in microseconds
+	put_uint16_t_by_index(msg, 6, chan4_raw); // RC channel 4 value, in microseconds
+	put_uint16_t_by_index(msg, 8, chan5_raw); // RC channel 5 value, in microseconds
+	put_uint16_t_by_index(msg, 10, chan6_raw); // RC channel 6 value, in microseconds
+	put_uint16_t_by_index(msg, 12, chan7_raw); // RC channel 7 value, in microseconds
+	put_uint16_t_by_index(msg, 14, chan8_raw); // RC channel 8 value, in microseconds
+	put_uint8_t_by_index(msg, 16, rssi); // Receive signal strength indicator, 0: 0%, 255: 100%
+
+	mavlink_finalize_message_chan_send(msg, chan, 17, 252);
 }
 
 #endif

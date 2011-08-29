@@ -95,39 +95,6 @@ static inline uint16_t mavlink_msg_gps_date_time_pack_chan(uint8_t system_id, ui
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 7, 16);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a gps_date_time message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param year Year reported by Gps 
- * @param month Month reported by Gps 
- * @param day Day reported by Gps 
- * @param hour Hour reported by Gps 
- * @param min Min reported by Gps 
- * @param sec Sec reported by Gps  
- * @param visSat Visible sattelites reported by Gps  
- */
-static inline void mavlink_msg_gps_date_time_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t year,uint8_t month,uint8_t day,uint8_t hour,uint8_t min,uint8_t sec,uint8_t visSat)
-{
-	msg->msgid = MAVLINK_MSG_ID_GPS_DATE_TIME;
-
-	put_uint8_t_by_index(msg, 0, year); // Year reported by Gps 
-	put_uint8_t_by_index(msg, 1, month); // Month reported by Gps 
-	put_uint8_t_by_index(msg, 2, day); // Day reported by Gps 
-	put_uint8_t_by_index(msg, 3, hour); // Hour reported by Gps 
-	put_uint8_t_by_index(msg, 4, min); // Min reported by Gps 
-	put_uint8_t_by_index(msg, 5, sec); // Sec reported by Gps  
-	put_uint8_t_by_index(msg, 6, visSat); // Visible sattelites reported by Gps  
-
-	mavlink_finalize_message_chan_send(msg, chan, 7, 16);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a gps_date_time struct into a message
  *
@@ -158,7 +125,17 @@ static inline uint16_t mavlink_msg_gps_date_time_encode(uint8_t system_id, uint8
 static inline void mavlink_msg_gps_date_time_send(mavlink_channel_t chan, uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec, uint8_t visSat)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 7);
-	mavlink_msg_gps_date_time_pack_chan_send(chan, msg, year, month, day, hour, min, sec, visSat);
+	msg->msgid = MAVLINK_MSG_ID_GPS_DATE_TIME;
+
+	put_uint8_t_by_index(msg, 0, year); // Year reported by Gps 
+	put_uint8_t_by_index(msg, 1, month); // Month reported by Gps 
+	put_uint8_t_by_index(msg, 2, day); // Day reported by Gps 
+	put_uint8_t_by_index(msg, 3, hour); // Hour reported by Gps 
+	put_uint8_t_by_index(msg, 4, min); // Min reported by Gps 
+	put_uint8_t_by_index(msg, 5, sec); // Sec reported by Gps  
+	put_uint8_t_by_index(msg, 6, visSat); // Visible sattelites reported by Gps  
+
+	mavlink_finalize_message_chan_send(msg, chan, 7, 16);
 }
 
 #endif

@@ -65,29 +65,6 @@ static inline uint16_t mavlink_msg_statustext_pack_chan(uint8_t system_id, uint8
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 51, 83);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a statustext message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param severity Severity of status, 0 = info message, 255 = critical fault
- * @param text Status text message, without null termination character
- */
-static inline void mavlink_msg_statustext_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t severity,const char *text)
-{
-	msg->msgid = MAVLINK_MSG_ID_STATUSTEXT;
-
-	put_uint8_t_by_index(msg, 0, severity); // Severity of status, 0 = info message, 255 = critical fault
-	put_char_array_by_index(msg, 1, text, 50); // Status text message, without null termination character
-
-	mavlink_finalize_message_chan_send(msg, chan, 51, 83);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a statustext struct into a message
  *
@@ -113,7 +90,12 @@ static inline uint16_t mavlink_msg_statustext_encode(uint8_t system_id, uint8_t 
 static inline void mavlink_msg_statustext_send(mavlink_channel_t chan, uint8_t severity, const char *text)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 51);
-	mavlink_msg_statustext_pack_chan_send(chan, msg, severity, text);
+	msg->msgid = MAVLINK_MSG_ID_STATUSTEXT;
+
+	put_uint8_t_by_index(msg, 0, severity); // Severity of status, 0 = info message, 255 = critical fault
+	put_char_array_by_index(msg, 1, text, 50); // Status text message, without null termination character
+
+	mavlink_finalize_message_chan_send(msg, chan, 51, 83);
 }
 
 #endif

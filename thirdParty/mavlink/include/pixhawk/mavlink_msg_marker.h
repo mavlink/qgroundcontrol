@@ -95,39 +95,6 @@ static inline uint16_t mavlink_msg_marker_pack_chan(uint8_t system_id, uint8_t c
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 26, 249);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a marker message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param id ID
- * @param x x position
- * @param y y position
- * @param z z position
- * @param roll roll orientation
- * @param pitch pitch orientation
- * @param yaw yaw orientation
- */
-static inline void mavlink_msg_marker_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint16_t id,float x,float y,float z,float roll,float pitch,float yaw)
-{
-	msg->msgid = MAVLINK_MSG_ID_MARKER;
-
-	put_float_by_index(msg, 0, x); // x position
-	put_float_by_index(msg, 4, y); // y position
-	put_float_by_index(msg, 8, z); // z position
-	put_float_by_index(msg, 12, roll); // roll orientation
-	put_float_by_index(msg, 16, pitch); // pitch orientation
-	put_float_by_index(msg, 20, yaw); // yaw orientation
-	put_uint16_t_by_index(msg, 24, id); // ID
-
-	mavlink_finalize_message_chan_send(msg, chan, 26, 249);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a marker struct into a message
  *
@@ -158,7 +125,17 @@ static inline uint16_t mavlink_msg_marker_encode(uint8_t system_id, uint8_t comp
 static inline void mavlink_msg_marker_send(mavlink_channel_t chan, uint16_t id, float x, float y, float z, float roll, float pitch, float yaw)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 26);
-	mavlink_msg_marker_pack_chan_send(chan, msg, id, x, y, z, roll, pitch, yaw);
+	msg->msgid = MAVLINK_MSG_ID_MARKER;
+
+	put_float_by_index(msg, 0, x); // x position
+	put_float_by_index(msg, 4, y); // y position
+	put_float_by_index(msg, 8, z); // z position
+	put_float_by_index(msg, 12, roll); // roll orientation
+	put_float_by_index(msg, 16, pitch); // pitch orientation
+	put_float_by_index(msg, 20, yaw); // yaw orientation
+	put_uint16_t_by_index(msg, 24, id); // ID
+
+	mavlink_finalize_message_chan_send(msg, chan, 26, 249);
 }
 
 #endif

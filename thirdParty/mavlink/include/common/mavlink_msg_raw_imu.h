@@ -113,45 +113,6 @@ static inline uint16_t mavlink_msg_raw_imu_pack_chan(uint8_t system_id, uint8_t 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 26, 179);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a raw_imu message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param usec Timestamp (microseconds since UNIX epoch or microseconds since system boot)
- * @param xacc X acceleration (raw)
- * @param yacc Y acceleration (raw)
- * @param zacc Z acceleration (raw)
- * @param xgyro Angular speed around X axis (raw)
- * @param ygyro Angular speed around Y axis (raw)
- * @param zgyro Angular speed around Z axis (raw)
- * @param xmag X Magnetic field (raw)
- * @param ymag Y Magnetic field (raw)
- * @param zmag Z Magnetic field (raw)
- */
-static inline void mavlink_msg_raw_imu_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint64_t usec,int16_t xacc,int16_t yacc,int16_t zacc,int16_t xgyro,int16_t ygyro,int16_t zgyro,int16_t xmag,int16_t ymag,int16_t zmag)
-{
-	msg->msgid = MAVLINK_MSG_ID_RAW_IMU;
-
-	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
-	put_int16_t_by_index(msg, 8, xacc); // X acceleration (raw)
-	put_int16_t_by_index(msg, 10, yacc); // Y acceleration (raw)
-	put_int16_t_by_index(msg, 12, zacc); // Z acceleration (raw)
-	put_int16_t_by_index(msg, 14, xgyro); // Angular speed around X axis (raw)
-	put_int16_t_by_index(msg, 16, ygyro); // Angular speed around Y axis (raw)
-	put_int16_t_by_index(msg, 18, zgyro); // Angular speed around Z axis (raw)
-	put_int16_t_by_index(msg, 20, xmag); // X Magnetic field (raw)
-	put_int16_t_by_index(msg, 22, ymag); // Y Magnetic field (raw)
-	put_int16_t_by_index(msg, 24, zmag); // Z Magnetic field (raw)
-
-	mavlink_finalize_message_chan_send(msg, chan, 26, 179);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a raw_imu struct into a message
  *
@@ -185,7 +146,20 @@ static inline uint16_t mavlink_msg_raw_imu_encode(uint8_t system_id, uint8_t com
 static inline void mavlink_msg_raw_imu_send(mavlink_channel_t chan, uint64_t usec, int16_t xacc, int16_t yacc, int16_t zacc, int16_t xgyro, int16_t ygyro, int16_t zgyro, int16_t xmag, int16_t ymag, int16_t zmag)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 26);
-	mavlink_msg_raw_imu_pack_chan_send(chan, msg, usec, xacc, yacc, zacc, xgyro, ygyro, zgyro, xmag, ymag, zmag);
+	msg->msgid = MAVLINK_MSG_ID_RAW_IMU;
+
+	put_uint64_t_by_index(msg, 0, usec); // Timestamp (microseconds since UNIX epoch or microseconds since system boot)
+	put_int16_t_by_index(msg, 8, xacc); // X acceleration (raw)
+	put_int16_t_by_index(msg, 10, yacc); // Y acceleration (raw)
+	put_int16_t_by_index(msg, 12, zacc); // Z acceleration (raw)
+	put_int16_t_by_index(msg, 14, xgyro); // Angular speed around X axis (raw)
+	put_int16_t_by_index(msg, 16, ygyro); // Angular speed around Y axis (raw)
+	put_int16_t_by_index(msg, 18, zgyro); // Angular speed around Z axis (raw)
+	put_int16_t_by_index(msg, 20, xmag); // X Magnetic field (raw)
+	put_int16_t_by_index(msg, 22, ymag); // Y Magnetic field (raw)
+	put_int16_t_by_index(msg, 24, zmag); // Z Magnetic field (raw)
+
+	mavlink_finalize_message_chan_send(msg, chan, 26, 179);
 }
 
 #endif

@@ -89,37 +89,6 @@ static inline uint16_t mavlink_msg_sensor_bias_pack_chan(uint8_t system_id, uint
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 24, 168);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a sensor_bias message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param axBias Accelerometer X bias (m/s)
- * @param ayBias Accelerometer Y bias (m/s)
- * @param azBias Accelerometer Z bias (m/s)
- * @param gxBias Gyro X bias (rad/s)
- * @param gyBias Gyro Y bias (rad/s)
- * @param gzBias Gyro Z bias (rad/s)
- */
-static inline void mavlink_msg_sensor_bias_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           float axBias,float ayBias,float azBias,float gxBias,float gyBias,float gzBias)
-{
-	msg->msgid = MAVLINK_MSG_ID_SENSOR_BIAS;
-
-	put_float_by_index(msg, 0, axBias); // Accelerometer X bias (m/s)
-	put_float_by_index(msg, 4, ayBias); // Accelerometer Y bias (m/s)
-	put_float_by_index(msg, 8, azBias); // Accelerometer Z bias (m/s)
-	put_float_by_index(msg, 12, gxBias); // Gyro X bias (rad/s)
-	put_float_by_index(msg, 16, gyBias); // Gyro Y bias (rad/s)
-	put_float_by_index(msg, 20, gzBias); // Gyro Z bias (rad/s)
-
-	mavlink_finalize_message_chan_send(msg, chan, 24, 168);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a sensor_bias struct into a message
  *
@@ -149,7 +118,16 @@ static inline uint16_t mavlink_msg_sensor_bias_encode(uint8_t system_id, uint8_t
 static inline void mavlink_msg_sensor_bias_send(mavlink_channel_t chan, float axBias, float ayBias, float azBias, float gxBias, float gyBias, float gzBias)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 24);
-	mavlink_msg_sensor_bias_pack_chan_send(chan, msg, axBias, ayBias, azBias, gxBias, gyBias, gzBias);
+	msg->msgid = MAVLINK_MSG_ID_SENSOR_BIAS;
+
+	put_float_by_index(msg, 0, axBias); // Accelerometer X bias (m/s)
+	put_float_by_index(msg, 4, ayBias); // Accelerometer Y bias (m/s)
+	put_float_by_index(msg, 8, azBias); // Accelerometer Z bias (m/s)
+	put_float_by_index(msg, 12, gxBias); // Gyro X bias (rad/s)
+	put_float_by_index(msg, 16, gyBias); // Gyro Y bias (rad/s)
+	put_float_by_index(msg, 20, gzBias); // Gyro Z bias (rad/s)
+
+	mavlink_finalize_message_chan_send(msg, chan, 24, 168);
 }
 
 #endif

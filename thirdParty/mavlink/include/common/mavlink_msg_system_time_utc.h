@@ -65,29 +65,6 @@ static inline uint16_t mavlink_msg_system_time_utc_pack_chan(uint8_t system_id, 
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 8, 191);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a system_time_utc message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param utc_date GPS UTC date ddmmyy
- * @param utc_time GPS UTC time hhmmss
- */
-static inline void mavlink_msg_system_time_utc_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint32_t utc_date,uint32_t utc_time)
-{
-	msg->msgid = MAVLINK_MSG_ID_SYSTEM_TIME_UTC;
-
-	put_uint32_t_by_index(msg, 0, utc_date); // GPS UTC date ddmmyy
-	put_uint32_t_by_index(msg, 4, utc_time); // GPS UTC time hhmmss
-
-	mavlink_finalize_message_chan_send(msg, chan, 8, 191);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a system_time_utc struct into a message
  *
@@ -113,7 +90,12 @@ static inline uint16_t mavlink_msg_system_time_utc_encode(uint8_t system_id, uin
 static inline void mavlink_msg_system_time_utc_send(mavlink_channel_t chan, uint32_t utc_date, uint32_t utc_time)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 8);
-	mavlink_msg_system_time_utc_pack_chan_send(chan, msg, utc_date, utc_time);
+	msg->msgid = MAVLINK_MSG_ID_SYSTEM_TIME_UTC;
+
+	put_uint32_t_by_index(msg, 0, utc_date); // GPS UTC date ddmmyy
+	put_uint32_t_by_index(msg, 4, utc_time); // GPS UTC time hhmmss
+
+	mavlink_finalize_message_chan_send(msg, chan, 8, 191);
 }
 
 #endif

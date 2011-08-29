@@ -65,29 +65,6 @@ static inline uint16_t mavlink_msg_ctrl_srfc_pt_pack_chan(uint8_t system_id, uin
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 3, 104);
 }
 
-#ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-/**
- * @brief Pack a ctrl_srfc_pt message on a channel and send
- * @param chan The MAVLink channel this message was sent over
- * @param msg The MAVLink message to compress the data into
- * @param target The system setting the commands
- * @param bitfieldPt Bitfield containing the PT configuration
- */
-static inline void mavlink_msg_ctrl_srfc_pt_pack_chan_send(mavlink_channel_t chan,
-							   mavlink_message_t* msg,
-						           uint8_t target,uint16_t bitfieldPt)
-{
-	msg->msgid = MAVLINK_MSG_ID_CTRL_SRFC_PT;
-
-	put_uint16_t_by_index(msg, 0, bitfieldPt); // Bitfield containing the PT configuration
-	put_uint8_t_by_index(msg, 2, target); // The system setting the commands
-
-	mavlink_finalize_message_chan_send(msg, chan, 3, 104);
-}
-#endif // MAVLINK_USE_CONVENIENCE_FUNCTIONS
-
-
 /**
  * @brief Encode a ctrl_srfc_pt struct into a message
  *
@@ -113,7 +90,12 @@ static inline uint16_t mavlink_msg_ctrl_srfc_pt_encode(uint8_t system_id, uint8_
 static inline void mavlink_msg_ctrl_srfc_pt_send(mavlink_channel_t chan, uint8_t target, uint16_t bitfieldPt)
 {
 	MAVLINK_ALIGNED_MESSAGE(msg, 3);
-	mavlink_msg_ctrl_srfc_pt_pack_chan_send(chan, msg, target, bitfieldPt);
+	msg->msgid = MAVLINK_MSG_ID_CTRL_SRFC_PT;
+
+	put_uint16_t_by_index(msg, 0, bitfieldPt); // Bitfield containing the PT configuration
+	put_uint8_t_by_index(msg, 2, target); // The system setting the commands
+
+	mavlink_finalize_message_chan_send(msg, chan, 3, 104);
 }
 
 #endif
