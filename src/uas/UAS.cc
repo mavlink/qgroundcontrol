@@ -664,6 +664,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 int component = message.compid;
                 mavlink_param_union_t val;
                 val.param_float = value.param_value;
+                val.type = value.param_type;
 
                 // Convert to machine order if necessary
 //#if MAVLINK_NEED_BYTE_SWAP
@@ -686,22 +687,37 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 switch (value.param_type)
                 {
                 case MAVLINK_TYPE_FLOAT:
-                    parameters.value(component)->insert(parameterName, val.param_float);
+                    {
+                    // Variant
+                    QVariant param(val.param_float);
+                    parameters.value(component)->insert(parameterName, param);
                     // Emit change
-                    emit parameterChanged(uasId, message.compid, parameterName, val.param_float);
-                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_float);
+                    emit parameterChanged(uasId, message.compid, parameterName, param);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
+                    qDebug() << "RECEIVED PARAM:" << param;
+                }
                     break;
                 case MAVLINK_TYPE_UINT32_T:
-                    parameters.value(component)->insert(parameterName, val.param_uint32);
+                    {
+                    // Variant
+                    QVariant param(val.param_uint32);
+                    parameters.value(component)->insert(parameterName, param);
                     // Emit change
-                    emit parameterChanged(uasId, message.compid, parameterName, val.param_uint32);
-                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_uint32);
+                    emit parameterChanged(uasId, message.compid, parameterName, param);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
+                    qDebug() << "RECEIVED PARAM:" << param;
+                }
                     break;
                 case MAVLINK_TYPE_INT32_T:
-                    parameters.value(component)->insert(parameterName, val.param_int32);
+                    {
+                    // Variant
+                    QVariant param(val.param_int32);
+                    parameters.value(component)->insert(parameterName, param);
                     // Emit change
-                    emit parameterChanged(uasId, message.compid, parameterName, val.param_int32);
-                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, val.param_int32);
+                    emit parameterChanged(uasId, message.compid, parameterName, param);
+                    emit parameterChanged(uasId, message.compid, value.param_count, value.param_index, parameterName, param);
+                    qDebug() << "RECEIVED PARAM:" << param;
+                }
                     break;
                 default:
                     qCritical() << "INVALID DATA TYPE USED AS PARAMETER VALUE: " << value.param_type;
@@ -1860,6 +1876,8 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
         p.param_value = union_value.param_float;
         p.target_system = (uint8_t)uasId;
         p.target_component = (uint8_t)component;
+
+        qDebug() << "SENT PARAM:" << value;
 
         // Copy string into buffer, ensuring not to exceed the buffer size
         for (unsigned int i = 0; i < sizeof(p.param_id); i++)
