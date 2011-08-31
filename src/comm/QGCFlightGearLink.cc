@@ -350,8 +350,8 @@ fgScenery = "--fg-scenery=/Applications/FlightGear.app/Contents/Resources/data/S
 #endif
 
 #ifdef Q_OS_WIN32
-processFgfs = "C:\Program Files (x86)\FlightGear\bin\Win32\fgfs";
-fgRoot = "--fg-root=C:\Program Files (x86)\FlightGear\data";
+processFgfs = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32\\fgfs";
+fgRoot = "--fg-root=C:\\Program Files (x86)\\FlightGear\\data";
 #endif
 
 #ifdef Q_OS_LINUX

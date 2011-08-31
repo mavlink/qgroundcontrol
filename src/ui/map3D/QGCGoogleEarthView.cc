@@ -461,7 +461,7 @@ QVariant QGCGoogleEarthView::documentElement(QString name)
             name.prepend("JScript_");
             HRESULT res = doc->getElementById(QStringToBSTR(name), &element);
             //BSTR elemString;
-            if (element) {
+            if (SUCCEEDED(res) && element) {
                 //element->get_innerHTML(&elemString);
                 VARIANT var;
                 var.vt = VT_BSTR;
