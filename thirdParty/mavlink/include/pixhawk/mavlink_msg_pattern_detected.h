@@ -41,13 +41,23 @@ typedef struct __mavlink_pattern_detected_t
 static inline uint16_t mavlink_msg_pattern_detected_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint8_t type, float confidence, const char *file, uint8_t detected)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[106];
+	_mav_put_float(buf, 0, confidence);
+	_mav_put_uint8_t(buf, 4, type);
+	_mav_put_uint8_t(buf, 105, detected);
+	_mav_put_char_array(buf, 5, file, 100);
+        memcpy(_MAV_PAYLOAD(msg), buf, 106);
+#else
+	mavlink_pattern_detected_t packet;
+	packet.confidence = confidence;
+	packet.type = type;
+	packet.detected = detected;
+	memcpy(packet.file, file, sizeof(char)*100);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 106);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
-
-	put_float_by_index(msg, 0, confidence); // Confidence of detection
-	put_uint8_t_by_index(msg, 4, type); // 0: Pattern, 1: Letter
-	put_char_array_by_index(msg, 5, file, 100); // Pattern file name
-	put_uint8_t_by_index(msg, 105, detected); // Accepted as true detection, 0 no, 1 yes
-
 	return mavlink_finalize_message(msg, system_id, component_id, 106, 90);
 }
 
@@ -67,13 +77,23 @@ static inline uint16_t mavlink_msg_pattern_detected_pack_chan(uint8_t system_id,
 							   mavlink_message_t* msg,
 						           uint8_t type,float confidence,const char *file,uint8_t detected)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[106];
+	_mav_put_float(buf, 0, confidence);
+	_mav_put_uint8_t(buf, 4, type);
+	_mav_put_uint8_t(buf, 105, detected);
+	_mav_put_char_array(buf, 5, file, 100);
+        memcpy(_MAV_PAYLOAD(msg), buf, 106);
+#else
+	mavlink_pattern_detected_t packet;
+	packet.confidence = confidence;
+	packet.type = type;
+	packet.detected = detected;
+	memcpy(packet.file, file, sizeof(char)*100);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 106);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
-
-	put_float_by_index(msg, 0, confidence); // Confidence of detection
-	put_uint8_t_by_index(msg, 4, type); // 0: Pattern, 1: Letter
-	put_char_array_by_index(msg, 5, file, 100); // Pattern file name
-	put_uint8_t_by_index(msg, 105, detected); // Accepted as true detection, 0 no, 1 yes
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 106, 90);
 }
 
@@ -103,15 +123,21 @@ static inline uint16_t mavlink_msg_pattern_detected_encode(uint8_t system_id, ui
 
 static inline void mavlink_msg_pattern_detected_send(mavlink_channel_t chan, uint8_t type, float confidence, const char *file, uint8_t detected)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 106);
-	msg->msgid = MAVLINK_MSG_ID_PATTERN_DETECTED;
-
-	put_float_by_index(msg, 0, confidence); // Confidence of detection
-	put_uint8_t_by_index(msg, 4, type); // 0: Pattern, 1: Letter
-	put_char_array_by_index(msg, 5, file, 100); // Pattern file name
-	put_uint8_t_by_index(msg, 105, detected); // Accepted as true detection, 0 no, 1 yes
-
-	mavlink_finalize_message_chan_send(msg, chan, 106, 90);
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[106];
+	_mav_put_float(buf, 0, confidence);
+	_mav_put_uint8_t(buf, 4, type);
+	_mav_put_uint8_t(buf, 105, detected);
+	_mav_put_char_array(buf, 5, file, 100);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PATTERN_DETECTED, buf, 106, 90);
+#else
+	mavlink_pattern_detected_t packet;
+	packet.confidence = confidence;
+	packet.type = type;
+	packet.detected = detected;
+	memcpy(packet.file, file, sizeof(char)*100);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PATTERN_DETECTED, (const char *)&packet, 106, 90);
+#endif
 }
 
 #endif
@@ -126,7 +152,7 @@ static inline void mavlink_msg_pattern_detected_send(mavlink_channel_t chan, uin
  */
 static inline uint8_t mavlink_msg_pattern_detected_get_type(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  4);
+	return _MAV_RETURN_uint8_t(msg,  4);
 }
 
 /**
@@ -136,7 +162,7 @@ static inline uint8_t mavlink_msg_pattern_detected_get_type(const mavlink_messag
  */
 static inline float mavlink_msg_pattern_detected_get_confidence(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  0);
+	return _MAV_RETURN_float(msg,  0);
 }
 
 /**
@@ -146,7 +172,7 @@ static inline float mavlink_msg_pattern_detected_get_confidence(const mavlink_me
  */
 static inline uint16_t mavlink_msg_pattern_detected_get_file(const mavlink_message_t* msg, char *file)
 {
-	return MAVLINK_MSG_RETURN_char_array(msg, file, 100,  5);
+	return _MAV_RETURN_char_array(msg, file, 100,  5);
 }
 
 /**
@@ -156,7 +182,7 @@ static inline uint16_t mavlink_msg_pattern_detected_get_file(const mavlink_messa
  */
 static inline uint8_t mavlink_msg_pattern_detected_get_detected(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  105);
+	return _MAV_RETURN_uint8_t(msg,  105);
 }
 
 /**
@@ -173,6 +199,6 @@ static inline void mavlink_msg_pattern_detected_decode(const mavlink_message_t* 
 	mavlink_msg_pattern_detected_get_file(msg, pattern_detected->file);
 	pattern_detected->detected = mavlink_msg_pattern_detected_get_detected(msg);
 #else
-	memcpy(pattern_detected, MAVLINK_PAYLOAD(msg), 106);
+	memcpy(pattern_detected, _MAV_PAYLOAD(msg), 106);
 #endif
 }

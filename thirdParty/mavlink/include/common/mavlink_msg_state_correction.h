@@ -56,18 +56,35 @@ typedef struct __mavlink_state_correction_t
 static inline uint16_t mavlink_msg_state_correction_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       float xErr, float yErr, float zErr, float rollErr, float pitchErr, float yawErr, float vxErr, float vyErr, float vzErr)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[36];
+	_mav_put_float(buf, 0, xErr);
+	_mav_put_float(buf, 4, yErr);
+	_mav_put_float(buf, 8, zErr);
+	_mav_put_float(buf, 12, rollErr);
+	_mav_put_float(buf, 16, pitchErr);
+	_mav_put_float(buf, 20, yawErr);
+	_mav_put_float(buf, 24, vxErr);
+	_mav_put_float(buf, 28, vyErr);
+	_mav_put_float(buf, 32, vzErr);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 36);
+#else
+	mavlink_state_correction_t packet;
+	packet.xErr = xErr;
+	packet.yErr = yErr;
+	packet.zErr = zErr;
+	packet.rollErr = rollErr;
+	packet.pitchErr = pitchErr;
+	packet.yawErr = yawErr;
+	packet.vxErr = vxErr;
+	packet.vyErr = vyErr;
+	packet.vzErr = vzErr;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 36);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_STATE_CORRECTION;
-
-	put_float_by_index(msg, 0, xErr); // x position error
-	put_float_by_index(msg, 4, yErr); // y position error
-	put_float_by_index(msg, 8, zErr); // z position error
-	put_float_by_index(msg, 12, rollErr); // roll error (radians)
-	put_float_by_index(msg, 16, pitchErr); // pitch error (radians)
-	put_float_by_index(msg, 20, yawErr); // yaw error (radians)
-	put_float_by_index(msg, 24, vxErr); // x velocity
-	put_float_by_index(msg, 28, vyErr); // y velocity
-	put_float_by_index(msg, 32, vzErr); // z velocity
-
 	return mavlink_finalize_message(msg, system_id, component_id, 36, 130);
 }
 
@@ -92,18 +109,35 @@ static inline uint16_t mavlink_msg_state_correction_pack_chan(uint8_t system_id,
 							   mavlink_message_t* msg,
 						           float xErr,float yErr,float zErr,float rollErr,float pitchErr,float yawErr,float vxErr,float vyErr,float vzErr)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[36];
+	_mav_put_float(buf, 0, xErr);
+	_mav_put_float(buf, 4, yErr);
+	_mav_put_float(buf, 8, zErr);
+	_mav_put_float(buf, 12, rollErr);
+	_mav_put_float(buf, 16, pitchErr);
+	_mav_put_float(buf, 20, yawErr);
+	_mav_put_float(buf, 24, vxErr);
+	_mav_put_float(buf, 28, vyErr);
+	_mav_put_float(buf, 32, vzErr);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 36);
+#else
+	mavlink_state_correction_t packet;
+	packet.xErr = xErr;
+	packet.yErr = yErr;
+	packet.zErr = zErr;
+	packet.rollErr = rollErr;
+	packet.pitchErr = pitchErr;
+	packet.yawErr = yawErr;
+	packet.vxErr = vxErr;
+	packet.vyErr = vyErr;
+	packet.vzErr = vzErr;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 36);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_STATE_CORRECTION;
-
-	put_float_by_index(msg, 0, xErr); // x position error
-	put_float_by_index(msg, 4, yErr); // y position error
-	put_float_by_index(msg, 8, zErr); // z position error
-	put_float_by_index(msg, 12, rollErr); // roll error (radians)
-	put_float_by_index(msg, 16, pitchErr); // pitch error (radians)
-	put_float_by_index(msg, 20, yawErr); // yaw error (radians)
-	put_float_by_index(msg, 24, vxErr); // x velocity
-	put_float_by_index(msg, 28, vyErr); // y velocity
-	put_float_by_index(msg, 32, vzErr); // z velocity
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 36, 130);
 }
 
@@ -138,20 +172,33 @@ static inline uint16_t mavlink_msg_state_correction_encode(uint8_t system_id, ui
 
 static inline void mavlink_msg_state_correction_send(mavlink_channel_t chan, float xErr, float yErr, float zErr, float rollErr, float pitchErr, float yawErr, float vxErr, float vyErr, float vzErr)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 36);
-	msg->msgid = MAVLINK_MSG_ID_STATE_CORRECTION;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[36];
+	_mav_put_float(buf, 0, xErr);
+	_mav_put_float(buf, 4, yErr);
+	_mav_put_float(buf, 8, zErr);
+	_mav_put_float(buf, 12, rollErr);
+	_mav_put_float(buf, 16, pitchErr);
+	_mav_put_float(buf, 20, yawErr);
+	_mav_put_float(buf, 24, vxErr);
+	_mav_put_float(buf, 28, vyErr);
+	_mav_put_float(buf, 32, vzErr);
 
-	put_float_by_index(msg, 0, xErr); // x position error
-	put_float_by_index(msg, 4, yErr); // y position error
-	put_float_by_index(msg, 8, zErr); // z position error
-	put_float_by_index(msg, 12, rollErr); // roll error (radians)
-	put_float_by_index(msg, 16, pitchErr); // pitch error (radians)
-	put_float_by_index(msg, 20, yawErr); // yaw error (radians)
-	put_float_by_index(msg, 24, vxErr); // x velocity
-	put_float_by_index(msg, 28, vyErr); // y velocity
-	put_float_by_index(msg, 32, vzErr); // z velocity
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_STATE_CORRECTION, buf, 36, 130);
+#else
+	mavlink_state_correction_t packet;
+	packet.xErr = xErr;
+	packet.yErr = yErr;
+	packet.zErr = zErr;
+	packet.rollErr = rollErr;
+	packet.pitchErr = pitchErr;
+	packet.yawErr = yawErr;
+	packet.vxErr = vxErr;
+	packet.vyErr = vyErr;
+	packet.vzErr = vzErr;
 
-	mavlink_finalize_message_chan_send(msg, chan, 36, 130);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_STATE_CORRECTION, (const char *)&packet, 36, 130);
+#endif
 }
 
 #endif
@@ -166,7 +213,7 @@ static inline void mavlink_msg_state_correction_send(mavlink_channel_t chan, flo
  */
 static inline float mavlink_msg_state_correction_get_xErr(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  0);
+	return _MAV_RETURN_float(msg,  0);
 }
 
 /**
@@ -176,7 +223,7 @@ static inline float mavlink_msg_state_correction_get_xErr(const mavlink_message_
  */
 static inline float mavlink_msg_state_correction_get_yErr(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  4);
+	return _MAV_RETURN_float(msg,  4);
 }
 
 /**
@@ -186,7 +233,7 @@ static inline float mavlink_msg_state_correction_get_yErr(const mavlink_message_
  */
 static inline float mavlink_msg_state_correction_get_zErr(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  8);
+	return _MAV_RETURN_float(msg,  8);
 }
 
 /**
@@ -196,7 +243,7 @@ static inline float mavlink_msg_state_correction_get_zErr(const mavlink_message_
  */
 static inline float mavlink_msg_state_correction_get_rollErr(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  12);
+	return _MAV_RETURN_float(msg,  12);
 }
 
 /**
@@ -206,7 +253,7 @@ static inline float mavlink_msg_state_correction_get_rollErr(const mavlink_messa
  */
 static inline float mavlink_msg_state_correction_get_pitchErr(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  16);
+	return _MAV_RETURN_float(msg,  16);
 }
 
 /**
@@ -216,7 +263,7 @@ static inline float mavlink_msg_state_correction_get_pitchErr(const mavlink_mess
  */
 static inline float mavlink_msg_state_correction_get_yawErr(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  20);
+	return _MAV_RETURN_float(msg,  20);
 }
 
 /**
@@ -226,7 +273,7 @@ static inline float mavlink_msg_state_correction_get_yawErr(const mavlink_messag
  */
 static inline float mavlink_msg_state_correction_get_vxErr(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  24);
+	return _MAV_RETURN_float(msg,  24);
 }
 
 /**
@@ -236,7 +283,7 @@ static inline float mavlink_msg_state_correction_get_vxErr(const mavlink_message
  */
 static inline float mavlink_msg_state_correction_get_vyErr(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  28);
+	return _MAV_RETURN_float(msg,  28);
 }
 
 /**
@@ -246,7 +293,7 @@ static inline float mavlink_msg_state_correction_get_vyErr(const mavlink_message
  */
 static inline float mavlink_msg_state_correction_get_vzErr(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  32);
+	return _MAV_RETURN_float(msg,  32);
 }
 
 /**
@@ -268,6 +315,6 @@ static inline void mavlink_msg_state_correction_decode(const mavlink_message_t* 
 	state_correction->vyErr = mavlink_msg_state_correction_get_vyErr(msg);
 	state_correction->vzErr = mavlink_msg_state_correction_get_vzErr(msg);
 #else
-	memcpy(state_correction, MAVLINK_PAYLOAD(msg), 36);
+	memcpy(state_correction, _MAV_PAYLOAD(msg), 36);
 #endif
 }
