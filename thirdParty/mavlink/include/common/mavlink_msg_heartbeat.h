@@ -46,15 +46,29 @@ typedef struct __mavlink_heartbeat_t
 static inline uint16_t mavlink_msg_heartbeat_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint8_t type, uint8_t autopilot, uint8_t base_mode, uint16_t custom_mode, uint8_t system_status)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[7];
+	_mav_put_uint16_t(buf, 0, custom_mode);
+	_mav_put_uint8_t(buf, 2, type);
+	_mav_put_uint8_t(buf, 3, autopilot);
+	_mav_put_uint8_t(buf, 4, base_mode);
+	_mav_put_uint8_t(buf, 5, system_status);
+	_mav_put_uint8_t(buf, 6, 3);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 7);
+#else
+	mavlink_heartbeat_t packet;
+	packet.custom_mode = custom_mode;
+	packet.type = type;
+	packet.autopilot = autopilot;
+	packet.base_mode = base_mode;
+	packet.system_status = system_status;
+	packet.mavlink_version = 3;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 7);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_HEARTBEAT;
-
-	put_uint16_t_by_index(msg, 0, custom_mode); // Navigation mode bitfield, see MAV_AUTOPILOT_CUSTOM_MODE ENUM for some examples. This field is autopilot-specific.
-	put_uint8_t_by_index(msg, 2, type); // Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
-	put_uint8_t_by_index(msg, 3, autopilot); // Autopilot type / class. defined in MAV_CLASS ENUM
-	put_uint8_t_by_index(msg, 4, base_mode); // System mode bitfield, see MAV_MODE_FLAGS ENUM in mavlink/include/mavlink_types.h
-	put_uint8_t_by_index(msg, 5, system_status); // System status flag, see MAV_STATUS ENUM
-	put_uint8_t_by_index(msg, 6, 3); // MAVLink version
-
 	return mavlink_finalize_message(msg, system_id, component_id, 7, 88);
 }
 
@@ -75,15 +89,29 @@ static inline uint16_t mavlink_msg_heartbeat_pack_chan(uint8_t system_id, uint8_
 							   mavlink_message_t* msg,
 						           uint8_t type,uint8_t autopilot,uint8_t base_mode,uint16_t custom_mode,uint8_t system_status)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[7];
+	_mav_put_uint16_t(buf, 0, custom_mode);
+	_mav_put_uint8_t(buf, 2, type);
+	_mav_put_uint8_t(buf, 3, autopilot);
+	_mav_put_uint8_t(buf, 4, base_mode);
+	_mav_put_uint8_t(buf, 5, system_status);
+	_mav_put_uint8_t(buf, 6, 3);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 7);
+#else
+	mavlink_heartbeat_t packet;
+	packet.custom_mode = custom_mode;
+	packet.type = type;
+	packet.autopilot = autopilot;
+	packet.base_mode = base_mode;
+	packet.system_status = system_status;
+	packet.mavlink_version = 3;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 7);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_HEARTBEAT;
-
-	put_uint16_t_by_index(msg, 0, custom_mode); // Navigation mode bitfield, see MAV_AUTOPILOT_CUSTOM_MODE ENUM for some examples. This field is autopilot-specific.
-	put_uint8_t_by_index(msg, 2, type); // Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
-	put_uint8_t_by_index(msg, 3, autopilot); // Autopilot type / class. defined in MAV_CLASS ENUM
-	put_uint8_t_by_index(msg, 4, base_mode); // System mode bitfield, see MAV_MODE_FLAGS ENUM in mavlink/include/mavlink_types.h
-	put_uint8_t_by_index(msg, 5, system_status); // System status flag, see MAV_STATUS ENUM
-	put_uint8_t_by_index(msg, 6, 3); // MAVLink version
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 7, 88);
 }
 
@@ -114,17 +142,27 @@ static inline uint16_t mavlink_msg_heartbeat_encode(uint8_t system_id, uint8_t c
 
 static inline void mavlink_msg_heartbeat_send(mavlink_channel_t chan, uint8_t type, uint8_t autopilot, uint8_t base_mode, uint16_t custom_mode, uint8_t system_status)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 7);
-	msg->msgid = MAVLINK_MSG_ID_HEARTBEAT;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[7];
+	_mav_put_uint16_t(buf, 0, custom_mode);
+	_mav_put_uint8_t(buf, 2, type);
+	_mav_put_uint8_t(buf, 3, autopilot);
+	_mav_put_uint8_t(buf, 4, base_mode);
+	_mav_put_uint8_t(buf, 5, system_status);
+	_mav_put_uint8_t(buf, 6, 3);
 
-	put_uint16_t_by_index(msg, 0, custom_mode); // Navigation mode bitfield, see MAV_AUTOPILOT_CUSTOM_MODE ENUM for some examples. This field is autopilot-specific.
-	put_uint8_t_by_index(msg, 2, type); // Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)
-	put_uint8_t_by_index(msg, 3, autopilot); // Autopilot type / class. defined in MAV_CLASS ENUM
-	put_uint8_t_by_index(msg, 4, base_mode); // System mode bitfield, see MAV_MODE_FLAGS ENUM in mavlink/include/mavlink_types.h
-	put_uint8_t_by_index(msg, 5, system_status); // System status flag, see MAV_STATUS ENUM
-	put_uint8_t_by_index(msg, 6, 3); // MAVLink version
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_HEARTBEAT, buf, 7, 88);
+#else
+	mavlink_heartbeat_t packet;
+	packet.custom_mode = custom_mode;
+	packet.type = type;
+	packet.autopilot = autopilot;
+	packet.base_mode = base_mode;
+	packet.system_status = system_status;
+	packet.mavlink_version = 3;
 
-	mavlink_finalize_message_chan_send(msg, chan, 7, 88);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_HEARTBEAT, (const char *)&packet, 7, 88);
+#endif
 }
 
 #endif
@@ -139,7 +177,7 @@ static inline void mavlink_msg_heartbeat_send(mavlink_channel_t chan, uint8_t ty
  */
 static inline uint8_t mavlink_msg_heartbeat_get_type(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  2);
+	return _MAV_RETURN_uint8_t(msg,  2);
 }
 
 /**
@@ -149,7 +187,7 @@ static inline uint8_t mavlink_msg_heartbeat_get_type(const mavlink_message_t* ms
  */
 static inline uint8_t mavlink_msg_heartbeat_get_autopilot(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  3);
+	return _MAV_RETURN_uint8_t(msg,  3);
 }
 
 /**
@@ -159,7 +197,7 @@ static inline uint8_t mavlink_msg_heartbeat_get_autopilot(const mavlink_message_
  */
 static inline uint8_t mavlink_msg_heartbeat_get_base_mode(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  4);
+	return _MAV_RETURN_uint8_t(msg,  4);
 }
 
 /**
@@ -169,7 +207,7 @@ static inline uint8_t mavlink_msg_heartbeat_get_base_mode(const mavlink_message_
  */
 static inline uint16_t mavlink_msg_heartbeat_get_custom_mode(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint16_t(msg,  0);
+	return _MAV_RETURN_uint16_t(msg,  0);
 }
 
 /**
@@ -179,7 +217,7 @@ static inline uint16_t mavlink_msg_heartbeat_get_custom_mode(const mavlink_messa
  */
 static inline uint8_t mavlink_msg_heartbeat_get_system_status(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  5);
+	return _MAV_RETURN_uint8_t(msg,  5);
 }
 
 /**
@@ -189,7 +227,7 @@ static inline uint8_t mavlink_msg_heartbeat_get_system_status(const mavlink_mess
  */
 static inline uint8_t mavlink_msg_heartbeat_get_mavlink_version(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  6);
+	return _MAV_RETURN_uint8_t(msg,  6);
 }
 
 /**
@@ -208,6 +246,6 @@ static inline void mavlink_msg_heartbeat_decode(const mavlink_message_t* msg, ma
 	heartbeat->system_status = mavlink_msg_heartbeat_get_system_status(msg);
 	heartbeat->mavlink_version = mavlink_msg_heartbeat_get_mavlink_version(msg);
 #else
-	memcpy(heartbeat, MAVLINK_PAYLOAD(msg), 7);
+	memcpy(heartbeat, _MAV_PAYLOAD(msg), 7);
 #endif
 }

@@ -38,12 +38,23 @@ typedef struct __mavlink_change_operator_control_ack_t
 static inline uint16_t mavlink_msg_change_operator_control_ack_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint8_t gcs_system_id, uint8_t control_request, uint8_t ack)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[3];
+	_mav_put_uint8_t(buf, 0, gcs_system_id);
+	_mav_put_uint8_t(buf, 1, control_request);
+	_mav_put_uint8_t(buf, 2, ack);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 3);
+#else
+	mavlink_change_operator_control_ack_t packet;
+	packet.gcs_system_id = gcs_system_id;
+	packet.control_request = control_request;
+	packet.ack = ack;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 3);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK;
-
-	put_uint8_t_by_index(msg, 0, gcs_system_id); // ID of the GCS this message 
-	put_uint8_t_by_index(msg, 1, control_request); // 0: request control of this MAV, 1: Release control of this MAV
-	put_uint8_t_by_index(msg, 2, ack); // 0: ACK, 1: NACK: Wrong passkey, 2: NACK: Unsupported passkey encryption method, 3: NACK: Already under control
-
 	return mavlink_finalize_message(msg, system_id, component_id, 3, 104);
 }
 
@@ -62,12 +73,23 @@ static inline uint16_t mavlink_msg_change_operator_control_ack_pack_chan(uint8_t
 							   mavlink_message_t* msg,
 						           uint8_t gcs_system_id,uint8_t control_request,uint8_t ack)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[3];
+	_mav_put_uint8_t(buf, 0, gcs_system_id);
+	_mav_put_uint8_t(buf, 1, control_request);
+	_mav_put_uint8_t(buf, 2, ack);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 3);
+#else
+	mavlink_change_operator_control_ack_t packet;
+	packet.gcs_system_id = gcs_system_id;
+	packet.control_request = control_request;
+	packet.ack = ack;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 3);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK;
-
-	put_uint8_t_by_index(msg, 0, gcs_system_id); // ID of the GCS this message 
-	put_uint8_t_by_index(msg, 1, control_request); // 0: request control of this MAV, 1: Release control of this MAV
-	put_uint8_t_by_index(msg, 2, ack); // 0: ACK, 1: NACK: Wrong passkey, 2: NACK: Unsupported passkey encryption method, 3: NACK: Already under control
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 3, 104);
 }
 
@@ -96,14 +118,21 @@ static inline uint16_t mavlink_msg_change_operator_control_ack_encode(uint8_t sy
 
 static inline void mavlink_msg_change_operator_control_ack_send(mavlink_channel_t chan, uint8_t gcs_system_id, uint8_t control_request, uint8_t ack)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 3);
-	msg->msgid = MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[3];
+	_mav_put_uint8_t(buf, 0, gcs_system_id);
+	_mav_put_uint8_t(buf, 1, control_request);
+	_mav_put_uint8_t(buf, 2, ack);
 
-	put_uint8_t_by_index(msg, 0, gcs_system_id); // ID of the GCS this message 
-	put_uint8_t_by_index(msg, 1, control_request); // 0: request control of this MAV, 1: Release control of this MAV
-	put_uint8_t_by_index(msg, 2, ack); // 0: ACK, 1: NACK: Wrong passkey, 2: NACK: Unsupported passkey encryption method, 3: NACK: Already under control
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK, buf, 3, 104);
+#else
+	mavlink_change_operator_control_ack_t packet;
+	packet.gcs_system_id = gcs_system_id;
+	packet.control_request = control_request;
+	packet.ack = ack;
 
-	mavlink_finalize_message_chan_send(msg, chan, 3, 104);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_CHANGE_OPERATOR_CONTROL_ACK, (const char *)&packet, 3, 104);
+#endif
 }
 
 #endif
@@ -118,7 +147,7 @@ static inline void mavlink_msg_change_operator_control_ack_send(mavlink_channel_
  */
 static inline uint8_t mavlink_msg_change_operator_control_ack_get_gcs_system_id(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  0);
+	return _MAV_RETURN_uint8_t(msg,  0);
 }
 
 /**
@@ -128,7 +157,7 @@ static inline uint8_t mavlink_msg_change_operator_control_ack_get_gcs_system_id(
  */
 static inline uint8_t mavlink_msg_change_operator_control_ack_get_control_request(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  1);
+	return _MAV_RETURN_uint8_t(msg,  1);
 }
 
 /**
@@ -138,7 +167,7 @@ static inline uint8_t mavlink_msg_change_operator_control_ack_get_control_reques
  */
 static inline uint8_t mavlink_msg_change_operator_control_ack_get_ack(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  2);
+	return _MAV_RETURN_uint8_t(msg,  2);
 }
 
 /**
@@ -154,6 +183,6 @@ static inline void mavlink_msg_change_operator_control_ack_decode(const mavlink_
 	change_operator_control_ack->control_request = mavlink_msg_change_operator_control_ack_get_control_request(msg);
 	change_operator_control_ack->ack = mavlink_msg_change_operator_control_ack_get_ack(msg);
 #else
-	memcpy(change_operator_control_ack, MAVLINK_PAYLOAD(msg), 3);
+	memcpy(change_operator_control_ack, _MAV_PAYLOAD(msg), 3);
 #endif
 }

@@ -53,17 +53,31 @@ typedef struct __mavlink_brief_feature_t
 static inline uint16_t mavlink_msg_brief_feature_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const uint8_t *descriptor, float response)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[53];
+	_mav_put_float(buf, 0, x);
+	_mav_put_float(buf, 4, y);
+	_mav_put_float(buf, 8, z);
+	_mav_put_float(buf, 12, response);
+	_mav_put_uint16_t(buf, 16, size);
+	_mav_put_uint16_t(buf, 18, orientation);
+	_mav_put_uint8_t(buf, 20, orientation_assignment);
+	_mav_put_uint8_t_array(buf, 21, descriptor, 32);
+        memcpy(_MAV_PAYLOAD(msg), buf, 53);
+#else
+	mavlink_brief_feature_t packet;
+	packet.x = x;
+	packet.y = y;
+	packet.z = z;
+	packet.response = response;
+	packet.size = size;
+	packet.orientation = orientation;
+	packet.orientation_assignment = orientation_assignment;
+	memcpy(packet.descriptor, descriptor, sizeof(uint8_t)*32);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 53);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
-
-	put_float_by_index(msg, 0, x); // x position in m
-	put_float_by_index(msg, 4, y); // y position in m
-	put_float_by_index(msg, 8, z); // z position in m
-	put_float_by_index(msg, 12, response); // Harris operator response at this location
-	put_uint16_t_by_index(msg, 16, size); // Size in pixels
-	put_uint16_t_by_index(msg, 18, orientation); // Orientation
-	put_uint8_t_by_index(msg, 20, orientation_assignment); // Orientation assignment 0: false, 1:true
-	put_uint8_t_array_by_index(msg, 21, descriptor, 32); // Descriptor
-
 	return mavlink_finalize_message(msg, system_id, component_id, 53, 88);
 }
 
@@ -87,17 +101,31 @@ static inline uint16_t mavlink_msg_brief_feature_pack_chan(uint8_t system_id, ui
 							   mavlink_message_t* msg,
 						           float x,float y,float z,uint8_t orientation_assignment,uint16_t size,uint16_t orientation,const uint8_t *descriptor,float response)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[53];
+	_mav_put_float(buf, 0, x);
+	_mav_put_float(buf, 4, y);
+	_mav_put_float(buf, 8, z);
+	_mav_put_float(buf, 12, response);
+	_mav_put_uint16_t(buf, 16, size);
+	_mav_put_uint16_t(buf, 18, orientation);
+	_mav_put_uint8_t(buf, 20, orientation_assignment);
+	_mav_put_uint8_t_array(buf, 21, descriptor, 32);
+        memcpy(_MAV_PAYLOAD(msg), buf, 53);
+#else
+	mavlink_brief_feature_t packet;
+	packet.x = x;
+	packet.y = y;
+	packet.z = z;
+	packet.response = response;
+	packet.size = size;
+	packet.orientation = orientation;
+	packet.orientation_assignment = orientation_assignment;
+	memcpy(packet.descriptor, descriptor, sizeof(uint8_t)*32);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 53);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
-
-	put_float_by_index(msg, 0, x); // x position in m
-	put_float_by_index(msg, 4, y); // y position in m
-	put_float_by_index(msg, 8, z); // z position in m
-	put_float_by_index(msg, 12, response); // Harris operator response at this location
-	put_uint16_t_by_index(msg, 16, size); // Size in pixels
-	put_uint16_t_by_index(msg, 18, orientation); // Orientation
-	put_uint8_t_by_index(msg, 20, orientation_assignment); // Orientation assignment 0: false, 1:true
-	put_uint8_t_array_by_index(msg, 21, descriptor, 32); // Descriptor
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 53, 88);
 }
 
@@ -131,19 +159,29 @@ static inline uint16_t mavlink_msg_brief_feature_encode(uint8_t system_id, uint8
 
 static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float x, float y, float z, uint8_t orientation_assignment, uint16_t size, uint16_t orientation, const uint8_t *descriptor, float response)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 53);
-	msg->msgid = MAVLINK_MSG_ID_BRIEF_FEATURE;
-
-	put_float_by_index(msg, 0, x); // x position in m
-	put_float_by_index(msg, 4, y); // y position in m
-	put_float_by_index(msg, 8, z); // z position in m
-	put_float_by_index(msg, 12, response); // Harris operator response at this location
-	put_uint16_t_by_index(msg, 16, size); // Size in pixels
-	put_uint16_t_by_index(msg, 18, orientation); // Orientation
-	put_uint8_t_by_index(msg, 20, orientation_assignment); // Orientation assignment 0: false, 1:true
-	put_uint8_t_array_by_index(msg, 21, descriptor, 32); // Descriptor
-
-	mavlink_finalize_message_chan_send(msg, chan, 53, 88);
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[53];
+	_mav_put_float(buf, 0, x);
+	_mav_put_float(buf, 4, y);
+	_mav_put_float(buf, 8, z);
+	_mav_put_float(buf, 12, response);
+	_mav_put_uint16_t(buf, 16, size);
+	_mav_put_uint16_t(buf, 18, orientation);
+	_mav_put_uint8_t(buf, 20, orientation_assignment);
+	_mav_put_uint8_t_array(buf, 21, descriptor, 32);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_BRIEF_FEATURE, buf, 53, 88);
+#else
+	mavlink_brief_feature_t packet;
+	packet.x = x;
+	packet.y = y;
+	packet.z = z;
+	packet.response = response;
+	packet.size = size;
+	packet.orientation = orientation;
+	packet.orientation_assignment = orientation_assignment;
+	memcpy(packet.descriptor, descriptor, sizeof(uint8_t)*32);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_BRIEF_FEATURE, (const char *)&packet, 53, 88);
+#endif
 }
 
 #endif
@@ -158,7 +196,7 @@ static inline void mavlink_msg_brief_feature_send(mavlink_channel_t chan, float 
  */
 static inline float mavlink_msg_brief_feature_get_x(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  0);
+	return _MAV_RETURN_float(msg,  0);
 }
 
 /**
@@ -168,7 +206,7 @@ static inline float mavlink_msg_brief_feature_get_x(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_brief_feature_get_y(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  4);
+	return _MAV_RETURN_float(msg,  4);
 }
 
 /**
@@ -178,7 +216,7 @@ static inline float mavlink_msg_brief_feature_get_y(const mavlink_message_t* msg
  */
 static inline float mavlink_msg_brief_feature_get_z(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  8);
+	return _MAV_RETURN_float(msg,  8);
 }
 
 /**
@@ -188,7 +226,7 @@ static inline float mavlink_msg_brief_feature_get_z(const mavlink_message_t* msg
  */
 static inline uint8_t mavlink_msg_brief_feature_get_orientation_assignment(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  20);
+	return _MAV_RETURN_uint8_t(msg,  20);
 }
 
 /**
@@ -198,7 +236,7 @@ static inline uint8_t mavlink_msg_brief_feature_get_orientation_assignment(const
  */
 static inline uint16_t mavlink_msg_brief_feature_get_size(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint16_t(msg,  16);
+	return _MAV_RETURN_uint16_t(msg,  16);
 }
 
 /**
@@ -208,7 +246,7 @@ static inline uint16_t mavlink_msg_brief_feature_get_size(const mavlink_message_
  */
 static inline uint16_t mavlink_msg_brief_feature_get_orientation(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint16_t(msg,  18);
+	return _MAV_RETURN_uint16_t(msg,  18);
 }
 
 /**
@@ -218,7 +256,7 @@ static inline uint16_t mavlink_msg_brief_feature_get_orientation(const mavlink_m
  */
 static inline uint16_t mavlink_msg_brief_feature_get_descriptor(const mavlink_message_t* msg, uint8_t *descriptor)
 {
-	return MAVLINK_MSG_RETURN_uint8_t_array(msg, descriptor, 32,  21);
+	return _MAV_RETURN_uint8_t_array(msg, descriptor, 32,  21);
 }
 
 /**
@@ -228,7 +266,7 @@ static inline uint16_t mavlink_msg_brief_feature_get_descriptor(const mavlink_me
  */
 static inline float mavlink_msg_brief_feature_get_response(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  12);
+	return _MAV_RETURN_float(msg,  12);
 }
 
 /**
@@ -249,6 +287,6 @@ static inline void mavlink_msg_brief_feature_decode(const mavlink_message_t* msg
 	brief_feature->orientation_assignment = mavlink_msg_brief_feature_get_orientation_assignment(msg);
 	mavlink_msg_brief_feature_get_descriptor(msg, brief_feature->descriptor);
 #else
-	memcpy(brief_feature, MAVLINK_PAYLOAD(msg), 53);
+	memcpy(brief_feature, _MAV_PAYLOAD(msg), 53);
 #endif
 }

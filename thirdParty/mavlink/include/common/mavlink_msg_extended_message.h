@@ -38,12 +38,23 @@ typedef struct __mavlink_extended_message_t
 static inline uint16_t mavlink_msg_extended_message_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint8_t target_system, uint8_t target_component, uint8_t protocol_flags)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[3];
+	_mav_put_uint8_t(buf, 0, target_system);
+	_mav_put_uint8_t(buf, 1, target_component);
+	_mav_put_uint8_t(buf, 2, protocol_flags);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 3);
+#else
+	mavlink_extended_message_t packet;
+	packet.target_system = target_system;
+	packet.target_component = target_component;
+	packet.protocol_flags = protocol_flags;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 3);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_EXTENDED_MESSAGE;
-
-	put_uint8_t_by_index(msg, 0, target_system); // System which should execute the command
-	put_uint8_t_by_index(msg, 1, target_component); // Component which should execute the command, 0 for all components
-	put_uint8_t_by_index(msg, 2, protocol_flags); // Retransmission / ACK flags
-
 	return mavlink_finalize_message(msg, system_id, component_id, 3, 247);
 }
 
@@ -62,12 +73,23 @@ static inline uint16_t mavlink_msg_extended_message_pack_chan(uint8_t system_id,
 							   mavlink_message_t* msg,
 						           uint8_t target_system,uint8_t target_component,uint8_t protocol_flags)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[3];
+	_mav_put_uint8_t(buf, 0, target_system);
+	_mav_put_uint8_t(buf, 1, target_component);
+	_mav_put_uint8_t(buf, 2, protocol_flags);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 3);
+#else
+	mavlink_extended_message_t packet;
+	packet.target_system = target_system;
+	packet.target_component = target_component;
+	packet.protocol_flags = protocol_flags;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 3);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_EXTENDED_MESSAGE;
-
-	put_uint8_t_by_index(msg, 0, target_system); // System which should execute the command
-	put_uint8_t_by_index(msg, 1, target_component); // Component which should execute the command, 0 for all components
-	put_uint8_t_by_index(msg, 2, protocol_flags); // Retransmission / ACK flags
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 3, 247);
 }
 
@@ -96,14 +118,21 @@ static inline uint16_t mavlink_msg_extended_message_encode(uint8_t system_id, ui
 
 static inline void mavlink_msg_extended_message_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t protocol_flags)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 3);
-	msg->msgid = MAVLINK_MSG_ID_EXTENDED_MESSAGE;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[3];
+	_mav_put_uint8_t(buf, 0, target_system);
+	_mav_put_uint8_t(buf, 1, target_component);
+	_mav_put_uint8_t(buf, 2, protocol_flags);
 
-	put_uint8_t_by_index(msg, 0, target_system); // System which should execute the command
-	put_uint8_t_by_index(msg, 1, target_component); // Component which should execute the command, 0 for all components
-	put_uint8_t_by_index(msg, 2, protocol_flags); // Retransmission / ACK flags
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_EXTENDED_MESSAGE, buf, 3, 247);
+#else
+	mavlink_extended_message_t packet;
+	packet.target_system = target_system;
+	packet.target_component = target_component;
+	packet.protocol_flags = protocol_flags;
 
-	mavlink_finalize_message_chan_send(msg, chan, 3, 247);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_EXTENDED_MESSAGE, (const char *)&packet, 3, 247);
+#endif
 }
 
 #endif
@@ -118,7 +147,7 @@ static inline void mavlink_msg_extended_message_send(mavlink_channel_t chan, uin
  */
 static inline uint8_t mavlink_msg_extended_message_get_target_system(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  0);
+	return _MAV_RETURN_uint8_t(msg,  0);
 }
 
 /**
@@ -128,7 +157,7 @@ static inline uint8_t mavlink_msg_extended_message_get_target_system(const mavli
  */
 static inline uint8_t mavlink_msg_extended_message_get_target_component(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  1);
+	return _MAV_RETURN_uint8_t(msg,  1);
 }
 
 /**
@@ -138,7 +167,7 @@ static inline uint8_t mavlink_msg_extended_message_get_target_component(const ma
  */
 static inline uint8_t mavlink_msg_extended_message_get_protocol_flags(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  2);
+	return _MAV_RETURN_uint8_t(msg,  2);
 }
 
 /**
@@ -154,6 +183,6 @@ static inline void mavlink_msg_extended_message_decode(const mavlink_message_t* 
 	extended_message->target_component = mavlink_msg_extended_message_get_target_component(msg);
 	extended_message->protocol_flags = mavlink_msg_extended_message_get_protocol_flags(msg);
 #else
-	memcpy(extended_message, MAVLINK_PAYLOAD(msg), 3);
+	memcpy(extended_message, _MAV_PAYLOAD(msg), 3);
 #endif
 }

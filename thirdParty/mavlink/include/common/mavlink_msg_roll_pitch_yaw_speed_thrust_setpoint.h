@@ -44,14 +44,27 @@ typedef struct __mavlink_roll_pitch_yaw_speed_thrust_setpoint_t
 static inline uint16_t mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint32_t time_boot_ms, float roll_speed, float pitch_speed, float yaw_speed, float thrust)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[20];
+	_mav_put_uint32_t(buf, 0, time_boot_ms);
+	_mav_put_float(buf, 4, roll_speed);
+	_mav_put_float(buf, 8, pitch_speed);
+	_mav_put_float(buf, 12, yaw_speed);
+	_mav_put_float(buf, 16, thrust);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+#else
+	mavlink_roll_pitch_yaw_speed_thrust_setpoint_t packet;
+	packet.time_boot_ms = time_boot_ms;
+	packet.roll_speed = roll_speed;
+	packet.pitch_speed = pitch_speed;
+	packet.yaw_speed = yaw_speed;
+	packet.thrust = thrust;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT;
-
-	put_uint32_t_by_index(msg, 0, time_boot_ms); // Timestamp in milliseconds since system boot
-	put_float_by_index(msg, 4, roll_speed); // Desired roll angular speed in rad/s
-	put_float_by_index(msg, 8, pitch_speed); // Desired pitch angular speed in rad/s
-	put_float_by_index(msg, 12, yaw_speed); // Desired yaw angular speed in rad/s
-	put_float_by_index(msg, 16, thrust); // Collective thrust, normalized to 0 .. 1
-
 	return mavlink_finalize_message(msg, system_id, component_id, 20, 238);
 }
 
@@ -72,14 +85,27 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_pack_cha
 							   mavlink_message_t* msg,
 						           uint32_t time_boot_ms,float roll_speed,float pitch_speed,float yaw_speed,float thrust)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[20];
+	_mav_put_uint32_t(buf, 0, time_boot_ms);
+	_mav_put_float(buf, 4, roll_speed);
+	_mav_put_float(buf, 8, pitch_speed);
+	_mav_put_float(buf, 12, yaw_speed);
+	_mav_put_float(buf, 16, thrust);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 20);
+#else
+	mavlink_roll_pitch_yaw_speed_thrust_setpoint_t packet;
+	packet.time_boot_ms = time_boot_ms;
+	packet.roll_speed = roll_speed;
+	packet.pitch_speed = pitch_speed;
+	packet.yaw_speed = yaw_speed;
+	packet.thrust = thrust;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 20);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT;
-
-	put_uint32_t_by_index(msg, 0, time_boot_ms); // Timestamp in milliseconds since system boot
-	put_float_by_index(msg, 4, roll_speed); // Desired roll angular speed in rad/s
-	put_float_by_index(msg, 8, pitch_speed); // Desired pitch angular speed in rad/s
-	put_float_by_index(msg, 12, yaw_speed); // Desired yaw angular speed in rad/s
-	put_float_by_index(msg, 16, thrust); // Collective thrust, normalized to 0 .. 1
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 20, 238);
 }
 
@@ -110,16 +136,25 @@ static inline uint16_t mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_encode(u
 
 static inline void mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_send(mavlink_channel_t chan, uint32_t time_boot_ms, float roll_speed, float pitch_speed, float yaw_speed, float thrust)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 20);
-	msg->msgid = MAVLINK_MSG_ID_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[20];
+	_mav_put_uint32_t(buf, 0, time_boot_ms);
+	_mav_put_float(buf, 4, roll_speed);
+	_mav_put_float(buf, 8, pitch_speed);
+	_mav_put_float(buf, 12, yaw_speed);
+	_mav_put_float(buf, 16, thrust);
 
-	put_uint32_t_by_index(msg, 0, time_boot_ms); // Timestamp in milliseconds since system boot
-	put_float_by_index(msg, 4, roll_speed); // Desired roll angular speed in rad/s
-	put_float_by_index(msg, 8, pitch_speed); // Desired pitch angular speed in rad/s
-	put_float_by_index(msg, 12, yaw_speed); // Desired yaw angular speed in rad/s
-	put_float_by_index(msg, 16, thrust); // Collective thrust, normalized to 0 .. 1
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT, buf, 20, 238);
+#else
+	mavlink_roll_pitch_yaw_speed_thrust_setpoint_t packet;
+	packet.time_boot_ms = time_boot_ms;
+	packet.roll_speed = roll_speed;
+	packet.pitch_speed = pitch_speed;
+	packet.yaw_speed = yaw_speed;
+	packet.thrust = thrust;
 
-	mavlink_finalize_message_chan_send(msg, chan, 20, 238);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ROLL_PITCH_YAW_SPEED_THRUST_SETPOINT, (const char *)&packet, 20, 238);
+#endif
 }
 
 #endif
@@ -134,7 +169,7 @@ static inline void mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_send(mavlink
  */
 static inline uint32_t mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_time_boot_ms(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint32_t(msg,  0);
+	return _MAV_RETURN_uint32_t(msg,  0);
 }
 
 /**
@@ -144,7 +179,7 @@ static inline uint32_t mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_time
  */
 static inline float mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_roll_speed(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  4);
+	return _MAV_RETURN_float(msg,  4);
 }
 
 /**
@@ -154,7 +189,7 @@ static inline float mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_roll_sp
  */
 static inline float mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_pitch_speed(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  8);
+	return _MAV_RETURN_float(msg,  8);
 }
 
 /**
@@ -164,7 +199,7 @@ static inline float mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_pitch_s
  */
 static inline float mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_yaw_speed(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  12);
+	return _MAV_RETURN_float(msg,  12);
 }
 
 /**
@@ -174,7 +209,7 @@ static inline float mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_yaw_spe
  */
 static inline float mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_thrust(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  16);
+	return _MAV_RETURN_float(msg,  16);
 }
 
 /**
@@ -192,6 +227,6 @@ static inline void mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_decode(const
 	roll_pitch_yaw_speed_thrust_setpoint->yaw_speed = mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_yaw_speed(msg);
 	roll_pitch_yaw_speed_thrust_setpoint->thrust = mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint_get_thrust(msg);
 #else
-	memcpy(roll_pitch_yaw_speed_thrust_setpoint, MAVLINK_PAYLOAD(msg), 20);
+	memcpy(roll_pitch_yaw_speed_thrust_setpoint, _MAV_PAYLOAD(msg), 20);
 #endif
 }
