@@ -2,7 +2,7 @@
 #include <qmath.h>
 
 senseSoarMAV::senseSoarMAV(MAVLinkProtocol* mavlink, int id)
-	: UAS(mavlink, id)
+	: UAS(mavlink, id), senseSoarState(0)
 {
 }
 
@@ -160,21 +160,30 @@ void senseSoarMAV::receiveMessage(LinkInterface *link, mavlink_message_t message
 			}
 		case MAVLINK_MSG_ID_SYS_STAT:
 			{
+#define STATE_WAKING_UP            0x0  // TO DO: not important here, only for the visualisation needed
+#define STATE_ON_GROUND            0x1
+#define STATE_MANUAL_FLIGHT        0x2
+#define STATE_AUTONOMOUS_FLIGHT    0x3
+#define STATE_AUTONOMOUS_LAUNCH    0x4
 				mavlink_sys_stat_t statMsg;
 				mavlink_msg_sys_stat_decode(&message,&statMsg);
 				quint64 time = getUnixTime();
+				// check actuator states
 				emit valueChanged(uasId, "Motor1 status", "on/off", (statMsg.act & 0x01), time);
-				emit valueChanged(uasId, "Motor2 status", "on/off", (statMsg.act & 0x02), time);
-				emit valueChanged(uasId, "Servo1 status", "on/off", (statMsg.act & 0x04), time);
-				emit valueChanged(uasId, "Servo2 status", "on/off", (statMsg.act & 0x08), time);
-				emit valueChanged(uasId, "Servo3 status", "on/off", (statMsg.act & 0x10), time);
-				emit valueChanged(uasId, "Servo4 status", "on/off", (statMsg.act & 0x20), time);
-				emit valueChanged(uasId, "WiFI status", "on/off", (statMsg.mod & 0x01), time);
-				emit valueChanged(uasId, "RC status", "on/off", (statMsg.mod & 0x02), time);
-				emit valueChanged(uasId, "Magnetometer status", "on/off", (statMsg.mod & 0x04), time);
-				emit valueChanged(uasId, "Pressure status", "on/off", (statMsg.mod & 0x08), time);
-				emit valueChanged(uasId, "IMU acc status", "on/off", (statMsg.mod & 0x10), time);
-				emit valueChanged(uasId, "IMU gyro status", "on/off", (statMsg.mod & 0x20), time);
+				emit valueChanged(uasId, "Motor2 status", "on/off", (statMsg.act & 0x02)>>1, time);
+				emit valueChanged(uasId, "Servo1 status", "on/off", (statMsg.act & 0x04)>>2, time);
+				emit valueChanged(uasId, "Servo2 status", "on/off", (statMsg.act & 0x08)>>3, time);
+				emit valueChanged(uasId, "Servo3 status", "on/off", (statMsg.act & 0x10)>>4, time);
+				emit valueChanged(uasId, "Servo4 status", "on/off", (statMsg.act & 0x20)>>5, time);
+				// check the current state of the sensesoar
+				this->senseSoarState = statMsg.mod;
+				emit valueChanged(uasId,"senseSoar status","-",this->senseSoarState,time);
+				// check the gps fixes
+				emit valueChanged(uasId,"Lat Long fix","true/false", (statMsg.gps & 0x01), time);
+				emit valueChanged(uasId,"Altitude fix","true/false", (statMsg.gps & 0x02), time);
+				emit valueChanged(uasId,"GPS horizontal accuracy","m",((statMsg.gps & 0x1C)>>2), time);
+				emit valueChanged(uasId,"GPS vertiacl accuracy","m",((statMsg.gps & 0xE0)>>5),time);
+				// Xbee RSSI
 				emit valueChanged(uasId, "Xbee strength", "%", statMsg.commRssi, time);
 				//emit valueChanged(uasId, "Xbee strength", "%", statMsg.gps, time);  // TO DO: define gps bits
 

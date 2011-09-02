@@ -21,6 +21,7 @@ public slots:
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
 protected:
 	float m_rotVel[3]; // Rotational velocity in the body frame
+	uint8_t senseSoarState;
 private:
 	void quat2euler(const double *quat, double &roll, double &pitch, double &yaw); 
 };
