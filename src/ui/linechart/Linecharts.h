@@ -3,6 +3,7 @@
 
 #include <QStackedWidget>
 #include <QMap>
+#include <QVector>
 
 #include "LinechartWidget.h"
 #include "UASInterface.h"
@@ -22,9 +23,12 @@ public slots:
     void selectSystem(int systemid);
     /** @brief Add a new system to the list of plots */
     void addSystem(UASInterface* uas);
+    /** @brief Add a new generic message source (not a system) */
+    void addSource(QObject* obj);
 
 protected:
     QMap<int, LinechartWidget*> plots;
+    QVector<QObject*> genericSources;
     bool active;
     /** @brief Start updating widget */
     void showEvent(QShowEvent* event);

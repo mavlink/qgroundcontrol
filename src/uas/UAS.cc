@@ -314,7 +314,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_sys_status_decode(&message, &state);
 
                 emit loadChanged(this,state.load/10.0f);
-                emit valueChanged(uasId, "Load", "%", ((float)state.load)/10.0f, getUnixTime());
+                // FIXME REMOVE LATER emit valueChanged(uasId, "Load", "%", ((float)state.load)/10.0f, getUnixTime());
 
                 currentVoltage = state.voltage_battery/1000.0f;
                 lpVoltage = filterVoltage(currentVoltage);
@@ -349,15 +349,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_raw_imu_decode(&message, &raw);
                 quint64 time = getUnixTime(raw.time_usec);
 
-                emit valueChanged(uasId, "accel x", "raw", static_cast<double>(raw.xacc), time);
-                emit valueChanged(uasId, "accel y", "raw", static_cast<double>(raw.yacc), time);
-                emit valueChanged(uasId, "accel z", "raw", static_cast<double>(raw.zacc), time);
-                emit valueChanged(uasId, "gyro roll", "raw", static_cast<double>(raw.xgyro), time);
-                emit valueChanged(uasId, "gyro pitch", "raw", static_cast<double>(raw.ygyro), time);
-                emit valueChanged(uasId, "gyro yaw", "raw", static_cast<double>(raw.zgyro), time);
-                emit valueChanged(uasId, "mag x", "raw", static_cast<double>(raw.xmag), time);
-                emit valueChanged(uasId, "mag y", "raw", static_cast<double>(raw.ymag), time);
-                emit valueChanged(uasId, "mag z", "raw", static_cast<double>(raw.zmag), time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "accel x", "raw", static_cast<double>(raw.xacc), time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "accel y", "raw", static_cast<double>(raw.yacc), time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "accel z", "raw", static_cast<double>(raw.zacc), time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gyro roll", "raw", static_cast<double>(raw.xgyro), time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gyro pitch", "raw", static_cast<double>(raw.ygyro), time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gyro yaw", "raw", static_cast<double>(raw.zgyro), time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "mag x", "raw", static_cast<double>(raw.xmag), time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "mag y", "raw", static_cast<double>(raw.ymag), time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "mag z", "raw", static_cast<double>(raw.zmag), time);
             }
             break;
         case MAVLINK_MSG_ID_SCALED_IMU:
@@ -366,15 +366,15 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_scaled_imu_decode(&message, &scaled);
                 quint64 time = getUnixTime(scaled.time_boot_ms);
 
-                emit valueChanged(uasId, "accel x", "g", scaled.xacc/1000.0f, time);
-                emit valueChanged(uasId, "accel y", "g", scaled.yacc/1000.0f, time);
-                emit valueChanged(uasId, "accel z", "g", scaled.zacc/1000.0f, time);
-                emit valueChanged(uasId, "gyro roll", "rad/s", scaled.xgyro/1000.0f, time);
-                emit valueChanged(uasId, "gyro pitch", "rad/s", scaled.ygyro/1000.0f, time);
-                emit valueChanged(uasId, "gyro yaw", "rad/s", scaled.zgyro/1000.0f, time);
-                emit valueChanged(uasId, "mag x", "uTesla", scaled.xmag/100.0f, time);
-                emit valueChanged(uasId, "mag y", "uTesla", scaled.ymag/100.0f, time);
-                emit valueChanged(uasId, "mag z", "uTesla", scaled.zmag/100.0f, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "accel x", "g", scaled.xacc/1000.0f, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "accel y", "g", scaled.yacc/1000.0f, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "accel z", "g", scaled.zacc/1000.0f, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gyro roll", "rad/s", scaled.xgyro/1000.0f, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gyro pitch", "rad/s", scaled.ygyro/1000.0f, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gyro yaw", "rad/s", scaled.zgyro/1000.0f, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "mag x", "uTesla", scaled.xmag/100.0f, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "mag y", "uTesla", scaled.ymag/100.0f, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "mag z", "uTesla", scaled.zmag/100.0f, time);
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
@@ -386,12 +386,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 roll = QGC::limitAngleToPMPIf(attitude.roll);
                 pitch = QGC::limitAngleToPMPIf(attitude.pitch);
                 yaw = QGC::limitAngleToPMPIf(attitude.yaw);
-                emit valueChanged(uasId, "roll", "rad", roll, time);
-                emit valueChanged(uasId, "pitch", "rad", pitch, time);
-                emit valueChanged(uasId, "yaw", "rad", yaw, time);
-                emit valueChanged(uasId, "rollspeed", "rad/s", attitude.rollspeed, time);
-                emit valueChanged(uasId, "pitchspeed", "rad/s", attitude.pitchspeed, time);
-                emit valueChanged(uasId, "yawspeed", "rad/s", attitude.yawspeed, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "roll", "rad", roll, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "pitch", "rad", pitch, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "yaw", "rad", yaw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rollspeed", "rad/s", attitude.rollspeed, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "pitchspeed", "rad/s", attitude.pitchspeed, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "yawspeed", "rad/s", attitude.yawspeed, time);
 
                 // Emit in angles
 
@@ -404,12 +404,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 attitudeKnown = true;
 
-                emit valueChanged(uasId, "roll deg", "deg", (roll/M_PI)*180.0, time);
-                emit valueChanged(uasId, "pitch deg", "deg", (pitch/M_PI)*180.0, time);
-                emit valueChanged(uasId, "heading deg", "deg", compass, time);
-                emit valueChanged(uasId, "rollspeed d/s", "deg/s", (attitude.rollspeed/M_PI)*180.0, time);
-                emit valueChanged(uasId, "pitchspeed d/s", "deg/s", (attitude.pitchspeed/M_PI)*180.0, time);
-                emit valueChanged(uasId, "yawspeed d/s", "deg/s", (attitude.yawspeed/M_PI)*180.0, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "roll deg", "deg", (roll/M_PI)*180.0, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "pitch deg", "deg", (pitch/M_PI)*180.0, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "heading deg", "deg", compass, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rollspeed d/s", "deg/s", (attitude.rollspeed/M_PI)*180.0, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "pitchspeed d/s", "deg/s", (attitude.pitchspeed/M_PI)*180.0, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "yawspeed d/s", "deg/s", (attitude.yawspeed/M_PI)*180.0, time);
 
                 emit attitudeChanged(this, roll, pitch, yaw, time);
                 emit attitudeSpeedChanged(uasId, attitude.rollspeed, attitude.pitchspeed, attitude.yawspeed, time);
@@ -428,12 +428,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_vfr_hud_decode(&message, &hud);
                 quint64 time = getUnixTime();
                 // Display updated values
-                emit valueChanged(uasId, "airspeed", "m/s", hud.airspeed, time);
-                emit valueChanged(uasId, "groundspeed", "m/s", hud.groundspeed, time);
-                emit valueChanged(uasId, "altitude", "m", hud.alt, time);
-                emit valueChanged(uasId, "heading", "deg", hud.heading, time);
-                emit valueChanged(uasId, "climbrate", "m/s", hud.climb, time);
-                emit valueChanged(uasId, "throttle", "%", hud.throttle, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "airspeed", "m/s", hud.airspeed, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "groundspeed", "m/s", hud.groundspeed, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "altitude", "m", hud.alt, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "heading", "deg", hud.heading, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "climbrate", "m/s", hud.climb, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "throttle", "%", hud.throttle, time);
                 emit thrustChanged(this, hud.throttle/100.0);
 
                 if (!attitudeKnown)
@@ -453,14 +453,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_nav_controller_output_decode(&message, &nav);
                 quint64 time = getUnixTime();
                 // Update UI
-                emit valueChanged(uasId, "nav roll", "deg", nav.nav_roll, time);
-                emit valueChanged(uasId, "nav pitch", "deg", nav.nav_pitch, time);
-                emit valueChanged(uasId, "nav bearing", "deg", nav.nav_bearing, time);
-                emit valueChanged(uasId, "target bearing", "deg", nav.target_bearing, time);
-                emit valueChanged(uasId, "wp dist", "m", nav.wp_dist, time);
-                emit valueChanged(uasId, "alt err", "m", nav.alt_error, time);
-                emit valueChanged(uasId, "airspeed err", "m/s", nav.alt_error, time);
-                emit valueChanged(uasId, "xtrack err", "m", nav.xtrack_error, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "nav roll", "deg", nav.nav_roll, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "nav pitch", "deg", nav.nav_pitch, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "nav bearing", "deg", nav.nav_bearing, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "target bearing", "deg", nav.target_bearing, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "wp dist", "m", nav.wp_dist, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "alt err", "m", nav.alt_error, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "airspeed err", "m/s", nav.alt_error, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "xtrack err", "m", nav.xtrack_error, time);
             }
             break;
         case MAVLINK_MSG_ID_LOCAL_POSITION:
@@ -473,12 +473,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 localX = pos.x;
                 localY = pos.y;
                 localZ = pos.z;
-                emit valueChanged(uasId, "x", "m", pos.x, time);
-                emit valueChanged(uasId, "y", "m", pos.y, time);
-                emit valueChanged(uasId, "z", "m", pos.z, time);
-                emit valueChanged(uasId, "x speed", "m/s", pos.vx, time);
-                emit valueChanged(uasId, "y speed", "m/s", pos.vy, time);
-                emit valueChanged(uasId, "z speed", "m/s", pos.vz, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "x", "m", pos.x, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "y", "m", pos.y, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "z", "m", pos.z, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "x speed", "m/s", pos.vx, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "y speed", "m/s", pos.vy, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "z speed", "m/s", pos.vz, time);
                 emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
                 emit speedChanged(this, pos.vx, pos.vy, pos.vz, time);
 
@@ -507,11 +507,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 speedX = pos.vx/100.0;
                 speedY = pos.vy/100.0;
                 speedZ = pos.vz/100.0;
-                emit valueChanged(uasId, "latitude", "deg", latitude, time);
-                emit valueChanged(uasId, "longitude", "deg", longitude, time);
-                emit valueChanged(uasId, "altitude", "m", altitude, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "latitude", "deg", latitude, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "longitude", "deg", longitude, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "altitude", "m", altitude, time);
                 double totalSpeed = sqrt(speedX*speedX + speedY*speedY + speedZ*speedZ);
-                emit valueChanged(uasId, "gps speed", "m/s", totalSpeed, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gps speed", "m/s", totalSpeed, time);
                 emit globalPositionChanged(this, latitude, longitude, altitude, time);
                 emit speedChanged(this, speedX, speedY, speedZ, time);
                 // Set internal state
@@ -534,13 +534,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // quint64 time = getUnixTime(pos.time_usec);
                 quint64 time = getUnixTime(pos.time_usec);
 
-                emit valueChanged(uasId, "gps latitude", "deg", pos.lat/(double)1E7, time);
-                emit valueChanged(uasId, "gps longitude", "deg", pos.lon/(double)1E7, time);
-                emit valueChanged(uasId, "gps speed", "m/s", pos.vel, time);
-                emit valueChanged(uasId, "gps eph", "m", pos.eph/(double)1E2, time);
-                emit valueChanged(uasId, "gps epv", "m", pos.eph/(double)1E2, time);
-                emit valueChanged(uasId, "gps fix", "raw", pos.fix_type, time);
-                emit valueChanged(uasId, "gps course", "raw", pos.cog, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gps latitude", "deg", pos.lat/(double)1E7, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gps longitude", "deg", pos.lon/(double)1E7, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gps speed", "m/s", pos.vel, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gps eph", "m", pos.eph/(double)1E2, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gps epv", "m", pos.eph/(double)1E2, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gps fix", "raw", pos.fix_type, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "gps course", "raw", pos.cog, time);
 
                 if (pos.fix_type > 2) {
                     emit globalPositionChanged(this, pos.lat/(double)1E7, pos.lon/(double)1E7, pos.alt/1000.0, time);
@@ -555,13 +555,13 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                         alt = 0;
                         emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
                     }
-                    emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E3, time);
+                    // FIXME REMOVE LATER emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E3, time);
                     // Smaller than threshold and not NaN
 
                     float vel = pos.vel/100.0f;
 
                     if (vel < 1000000 && !isnan(vel) && !isinf(vel)) {
-                        emit valueChanged(uasId, "speed", "m/s", vel, time);
+                        // FIXME REMOVE LATER emit valueChanged(uasId, "speed", "m/s", vel, time);
                         //qDebug() << "GOT GPS RAW";
                         // emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
                     } else {
@@ -592,10 +592,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_raw_pressure_t pressure;
                 mavlink_msg_raw_pressure_decode(&message, &pressure);
                 quint64 time = this->getUnixTime(pressure.time_usec);
-                emit valueChanged(uasId, "abs pressure", "raw", pressure.press_abs, time);
-                emit valueChanged(uasId, "diff pressure 1", "raw", pressure.press_diff1, time);
-                emit valueChanged(uasId, "diff pressure 2", "raw", pressure.press_diff2, time);
-                emit valueChanged(uasId, "temperature", "raw", pressure.temperature, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "abs pressure", "raw", pressure.press_abs, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "diff pressure 1", "raw", pressure.press_diff1, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "diff pressure 2", "raw", pressure.press_diff2, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "temperature", "raw", pressure.temperature, time);
             }
             break;
 
@@ -604,9 +604,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_scaled_pressure_t pressure;
                 mavlink_msg_scaled_pressure_decode(&message, &pressure);
                 quint64 time = this->getUnixTime(pressure.time_boot_ms);
-                emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
-                emit valueChanged(uasId, "diff pressure", "hPa", pressure.press_diff, time);
-                emit valueChanged(uasId, "temperature", "C", pressure.temperature/100.0, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "abs pressure", "hPa", pressure.press_abs, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "diff pressure", "hPa", pressure.press_diff, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "temperature", "C", pressure.temperature/100.0, time);
             }
             break;
 
@@ -624,14 +624,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit remoteControlChannelRawChanged(6, channels.chan7_raw);
                 emit remoteControlChannelRawChanged(7, channels.chan8_raw);
                 quint64 time = getUnixTime();
-                emit valueChanged(uasId, "rc in #1", "us", channels.chan1_raw, time);
-                emit valueChanged(uasId, "rc in #2", "us", channels.chan2_raw, time);
-                emit valueChanged(uasId, "rc in #3", "us", channels.chan3_raw, time);
-                emit valueChanged(uasId, "rc in #4", "us", channels.chan4_raw, time);
-                emit valueChanged(uasId, "rc in #5", "us", channels.chan5_raw, time);
-                emit valueChanged(uasId, "rc in #6", "us", channels.chan6_raw, time);
-                emit valueChanged(uasId, "rc in #7", "us", channels.chan7_raw, time);
-                emit valueChanged(uasId, "rc in #8", "us", channels.chan8_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rc in #1", "us", channels.chan1_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rc in #2", "us", channels.chan2_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rc in #3", "us", channels.chan3_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rc in #4", "us", channels.chan4_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rc in #5", "us", channels.chan5_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rc in #6", "us", channels.chan6_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rc in #7", "us", channels.chan7_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "rc in #8", "us", channels.chan8_raw, time);
             }
             break;
         case MAVLINK_MSG_ID_RC_CHANNELS_SCALED:
@@ -715,7 +715,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
         case MAVLINK_MSG_ID_DEBUG:
-            emit valueChanged(uasId, QString("debug ") + QString::number(mavlink_msg_debug_get_ind(&message)), "raw", mavlink_msg_debug_get_value(&message), MG::TIME::getGroundTimeNow());
+            // FIXME REMOVE LATER emit valueChanged(uasId, QString("debug ") + QString::number(mavlink_msg_debug_get_ind(&message)), "raw", mavlink_msg_debug_get_value(&message), MG::TIME::getGroundTimeNow());
             break;
         case MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT:
             {
@@ -723,10 +723,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(&message, &out);
                 quint64 time = getUnixTimeFromMs(out.time_boot_ms);
                 emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
-                emit valueChanged(uasId, "att control roll", "rad", out.roll, time);
-                emit valueChanged(uasId, "att control pitch", "rad", out.pitch, time);
-                emit valueChanged(uasId, "att control yaw", "rad", out.yaw, time);
-                emit valueChanged(uasId, "att control thrust", "0-1", out.thrust, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "att control roll", "rad", out.roll, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "att control pitch", "rad", out.pitch, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "att control yaw", "rad", out.yaw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "att control thrust", "0-1", out.thrust, time);
             }
             break;
         case MAVLINK_MSG_ID_WAYPOINT_COUNT:
@@ -817,14 +817,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_servo_output_raw_t servos;
                 mavlink_msg_servo_output_raw_decode(&message, &servos);
                 quint64 time = getUnixTime();
-                emit valueChanged(uasId, "servo #1", "us", servos.servo1_raw, time);
-                emit valueChanged(uasId, "servo #2", "us", servos.servo2_raw, time);
-                emit valueChanged(uasId, "servo #3", "us", servos.servo3_raw, time);
-                emit valueChanged(uasId, "servo #4", "us", servos.servo4_raw, time);
-                emit valueChanged(uasId, "servo #5", "us", servos.servo5_raw, time);
-                emit valueChanged(uasId, "servo #6", "us", servos.servo6_raw, time);
-                emit valueChanged(uasId, "servo #7", "us", servos.servo7_raw, time);
-                emit valueChanged(uasId, "servo #8", "us", servos.servo8_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "servo #1", "us", servos.servo1_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "servo #2", "us", servos.servo2_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "servo #3", "us", servos.servo3_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "servo #4", "us", servos.servo4_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "servo #5", "us", servos.servo5_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "servo #6", "us", servos.servo6_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "servo #7", "us", servos.servo7_raw, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "servo #8", "us", servos.servo8_raw, time);
             }
             break;
 
@@ -832,12 +832,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_optical_flow_t flow;
                 mavlink_msg_optical_flow_decode(&message, &flow);
-                quint64 time = getUnixTime(flow.time);
+                quint64 time = getUnixTime(flow.time_usec);
 
-                emit valueChanged(uasId, QString("opt_flow_%1.x").arg(flow.sensor_id), "Pixel", flow.flow_x, time);
-                emit valueChanged(uasId, QString("opt_flow_%1.y").arg(flow.sensor_id), "Pixel", flow.flow_y, time);
-                emit valueChanged(uasId, QString("opt_flow_%1.qual").arg(flow.sensor_id), "0-255", flow.quality, time);
-                emit valueChanged(uasId, QString("opt_flow_%1.dist").arg(flow.sensor_id), "m", flow.ground_distance, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, QString("opt_flow_%1.x").arg(flow.sensor_id), "Pixel", flow.flow_x, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, QString("opt_flow_%1.y").arg(flow.sensor_id), "Pixel", flow.flow_y, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, QString("opt_flow_%1.qual").arg(flow.sensor_id), "0-255", flow.quality, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, QString("opt_flow_%1.dist").arg(flow.sensor_id), "m", flow.ground_distance, time);
             }
             break;
         case MAVLINK_MSG_ID_STATUSTEXT:
@@ -910,19 +910,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             mavlink_msg_debug_vect_decode(&message, &vect);
             QString str((const char*)vect.name);
             quint64 time = getUnixTime(vect.time_usec);
-            emit valueChanged(uasId, str+".x", "raw", vect.x, time);
-            emit valueChanged(uasId, str+".y", "raw", vect.y, time);
-            emit valueChanged(uasId, str+".z", "raw", vect.z, time);
+            // FIXME REMOVE LATER emit valueChanged(uasId, str+".x", "raw", vect.x, time);
+            // FIXME REMOVE LATER emit valueChanged(uasId, str+".y", "raw", vect.y, time);
+            // FIXME REMOVE LATER emit valueChanged(uasId, str+".z", "raw", vect.z, time);
         }
         break;
-        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
-        {
-            mavlink_object_detection_event_t event;
-            mavlink_msg_object_detection_event_decode(&message, &event);
-            QString str(event.name);
-            emit objectDetected(event.time, event.object_id, event.type, str, event.quality, event.bearing, event.distance);
-        }
-        break;
+//        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
+//        {
+//            mavlink_object_detection_event_t event;
+//            mavlink_msg_object_detection_event_decode(&message, &event);
+//            QString str(event.name);
+//            emit objectDetected(event.time, event.object_id, event.type, str, event.quality, event.bearing, event.distance);
+//        }
+//        break;
         // WILL BE ENABLED ONCE MESSAGE IS IN COMMON MESSAGE SET
 //        case MAVLINK_MSG_ID_MEMORY_VECT:
 //        {
@@ -942,31 +942,31 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //                default:
 //                case 0:
 //                    for (int i = 0; i < 16; i++)
-//                        emit valueChanged(uasId, str.arg(vect.address+(i*2)), "i16", mem0[i], time);
+//                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*2)), "i16", mem0[i], time);
 //                    break;
 //                case 1:
 //                    for (int i = 0; i < 16; i++)
-//                        emit valueChanged(uasId, str.arg(vect.address+(i*2)), "ui16", mem1[i], time);
+//                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*2)), "ui16", mem1[i], time);
 //                    break;
 //                case 2:
 //                    for (int i = 0; i < 16; i++)
-//                        emit valueChanged(uasId, str.arg(vect.address+(i*2)), "Q15", (float)mem0[i]/32767.0, time);
+//                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*2)), "Q15", (float)mem0[i]/32767.0, time);
 //                    break;
 //                case 3:
 //                    for (int i = 0; i < 16; i++)
-//                        emit valueChanged(uasId, str.arg(vect.address+(i*2)), "1Q14", (float)mem0[i]/16383.0, time);
+//                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*2)), "1Q14", (float)mem0[i]/16383.0, time);
 //                    break;
 //                case 4:
 //                    for (int i = 0; i < 8; i++)
-//                        emit valueChanged(uasId, str.arg(vect.address+(i*4)), "i32", mem2[i], time);
+//                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*4)), "i32", mem2[i], time);
 //                    break;
 //                case 5:
 //                    for (int i = 0; i < 8; i++)
-//                        emit valueChanged(uasId, str.arg(vect.address+(i*4)), "i32", mem2[i], time);
+//                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*4)), "i32", mem2[i], time);
 //                    break;
 //                case 6:
 //                    for (int i = 0; i < 8; i++)
-//                        emit valueChanged(uasId, str.arg(vect.address+(i*4)), "float", mem4[i], time);
+//                        // FIXME REMOVE LATER emit valueChanged(uasId, str.arg(vect.address+(i*4)), "float", mem4[i], time);
 //                    break;
 //                }
 //            }
@@ -978,12 +978,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_nav_filter_bias_t bias;
                 mavlink_msg_nav_filter_bias_decode(&message, &bias);
                 quint64 time = getUnixTime();
-                emit valueChanged(uasId, "b_f[0]", "raw", bias.accel_0, time);
-                emit valueChanged(uasId, "b_f[1]", "raw", bias.accel_1, time);
-                emit valueChanged(uasId, "b_f[2]", "raw", bias.accel_2, time);
-                emit valueChanged(uasId, "b_w[0]", "raw", bias.gyro_0, time);
-                emit valueChanged(uasId, "b_w[1]", "raw", bias.gyro_1, time);
-                emit valueChanged(uasId, "b_w[2]", "raw", bias.gyro_2, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "b_f[0]", "raw", bias.accel_0, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "b_f[1]", "raw", bias.accel_1, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "b_f[2]", "raw", bias.accel_2, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "b_w[0]", "raw", bias.gyro_0, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "b_w[1]", "raw", bias.gyro_1, time);
+                // FIXME REMOVE LATER emit valueChanged(uasId, "b_w[2]", "raw", bias.gyro_2, time);
             }
             break;
         case MAVLINK_MSG_ID_RADIO_CALIBRATION:
