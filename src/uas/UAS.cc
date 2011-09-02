@@ -75,7 +75,7 @@ paramsOnceRequested(false),
 airframe(0),
 attitudeKnown(false),
 paramManager(NULL),
-attitudeStamped(true),
+attitudeStamped(false),
 lastAttitude(0)
 {
     color = UASInterface::getNextColor();
@@ -403,35 +403,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
             }
             break;
-
-#ifdef MAVLINK_ENABLED_PIXHAWK
-        case MAVLINK_MSG_ID_CONTROL_STATUS:
-            {
-                mavlink_control_status_t status;
-                mavlink_msg_control_status_decode(&message, &status);
-                // Emit control status vector
-                emit attitudeControlEnabled(static_cast<bool>(status.control_att));
-                emit positionXYControlEnabled(static_cast<bool>(status.control_pos_xy));
-                emit positionZControlEnabled(static_cast<bool>(status.control_pos_z));
-                emit positionYawControlEnabled(static_cast<bool>(status.control_pos_yaw));
-
-                // Emit localization status vector
-                emit localizationChanged(this, status.position_fix);
-                emit visionLocalizationChanged(this, status.vision_fix);
-                emit gpsLocalizationChanged(this, status.gps_fix);
-            }
-            break;
-        case MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE:
-            {
-                mavlink_vision_speed_estimate_t speed;
-                mavlink_msg_vision_speed_estimate_decode(&message, &speed);
-                quint64 time = getUnixTime(speed.usec);
-                emit valueChanged(uasId, "vis.speed x", "m/s", static_cast<double>(speed.x), time);
-                emit valueChanged(uasId, "vis.speed y", "m/s", static_cast<double>(speed.y), time);
-                emit valueChanged(uasId, "vis.speed z", "m/s", static_cast<double>(speed.z), time);
-            }
-            break;
-#endif // PIXHAWK
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 mavlink_raw_imu_t raw;
