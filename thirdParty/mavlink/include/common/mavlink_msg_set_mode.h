@@ -38,12 +38,23 @@ typedef struct __mavlink_set_mode_t
 static inline uint16_t mavlink_msg_set_mode_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint8_t target_system, uint8_t base_mode, uint16_t custom_mode)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_uint16_t(buf, 0, custom_mode);
+	_mav_put_uint8_t(buf, 2, target_system);
+	_mav_put_uint8_t(buf, 3, base_mode);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+#else
+	mavlink_set_mode_t packet;
+	packet.custom_mode = custom_mode;
+	packet.target_system = target_system;
+	packet.base_mode = base_mode;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_SET_MODE;
-
-	put_uint16_t_by_index(msg, 0, custom_mode); // The new autopilot-specific mode. This field can be ignored by an autopilot.
-	put_uint8_t_by_index(msg, 2, target_system); // The system setting the mode
-	put_uint8_t_by_index(msg, 3, base_mode); // The new base mode
-
 	return mavlink_finalize_message(msg, system_id, component_id, 4, 197);
 }
 
@@ -62,12 +73,23 @@ static inline uint16_t mavlink_msg_set_mode_pack_chan(uint8_t system_id, uint8_t
 							   mavlink_message_t* msg,
 						           uint8_t target_system,uint8_t base_mode,uint16_t custom_mode)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_uint16_t(buf, 0, custom_mode);
+	_mav_put_uint8_t(buf, 2, target_system);
+	_mav_put_uint8_t(buf, 3, base_mode);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+#else
+	mavlink_set_mode_t packet;
+	packet.custom_mode = custom_mode;
+	packet.target_system = target_system;
+	packet.base_mode = base_mode;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_SET_MODE;
-
-	put_uint16_t_by_index(msg, 0, custom_mode); // The new autopilot-specific mode. This field can be ignored by an autopilot.
-	put_uint8_t_by_index(msg, 2, target_system); // The system setting the mode
-	put_uint8_t_by_index(msg, 3, base_mode); // The new base mode
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 4, 197);
 }
 
@@ -96,14 +118,21 @@ static inline uint16_t mavlink_msg_set_mode_encode(uint8_t system_id, uint8_t co
 
 static inline void mavlink_msg_set_mode_send(mavlink_channel_t chan, uint8_t target_system, uint8_t base_mode, uint16_t custom_mode)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 4);
-	msg->msgid = MAVLINK_MSG_ID_SET_MODE;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_uint16_t(buf, 0, custom_mode);
+	_mav_put_uint8_t(buf, 2, target_system);
+	_mav_put_uint8_t(buf, 3, base_mode);
 
-	put_uint16_t_by_index(msg, 0, custom_mode); // The new autopilot-specific mode. This field can be ignored by an autopilot.
-	put_uint8_t_by_index(msg, 2, target_system); // The system setting the mode
-	put_uint8_t_by_index(msg, 3, base_mode); // The new base mode
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_MODE, buf, 4, 197);
+#else
+	mavlink_set_mode_t packet;
+	packet.custom_mode = custom_mode;
+	packet.target_system = target_system;
+	packet.base_mode = base_mode;
 
-	mavlink_finalize_message_chan_send(msg, chan, 4, 197);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_MODE, (const char *)&packet, 4, 197);
+#endif
 }
 
 #endif
@@ -118,7 +147,7 @@ static inline void mavlink_msg_set_mode_send(mavlink_channel_t chan, uint8_t tar
  */
 static inline uint8_t mavlink_msg_set_mode_get_target_system(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  2);
+	return _MAV_RETURN_uint8_t(msg,  2);
 }
 
 /**
@@ -128,7 +157,7 @@ static inline uint8_t mavlink_msg_set_mode_get_target_system(const mavlink_messa
  */
 static inline uint8_t mavlink_msg_set_mode_get_base_mode(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  3);
+	return _MAV_RETURN_uint8_t(msg,  3);
 }
 
 /**
@@ -138,7 +167,7 @@ static inline uint8_t mavlink_msg_set_mode_get_base_mode(const mavlink_message_t
  */
 static inline uint16_t mavlink_msg_set_mode_get_custom_mode(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint16_t(msg,  0);
+	return _MAV_RETURN_uint16_t(msg,  0);
 }
 
 /**
@@ -154,6 +183,6 @@ static inline void mavlink_msg_set_mode_decode(const mavlink_message_t* msg, mav
 	set_mode->target_system = mavlink_msg_set_mode_get_target_system(msg);
 	set_mode->base_mode = mavlink_msg_set_mode_get_base_mode(msg);
 #else
-	memcpy(set_mode, MAVLINK_PAYLOAD(msg), 4);
+	memcpy(set_mode, _MAV_PAYLOAD(msg), 4);
 #endif
 }

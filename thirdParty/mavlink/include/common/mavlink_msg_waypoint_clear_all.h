@@ -35,11 +35,21 @@ typedef struct __mavlink_waypoint_clear_all_t
 static inline uint16_t mavlink_msg_waypoint_clear_all_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint8_t target_system, uint8_t target_component)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[2];
+	_mav_put_uint8_t(buf, 0, target_system);
+	_mav_put_uint8_t(buf, 1, target_component);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 2);
+#else
+	mavlink_waypoint_clear_all_t packet;
+	packet.target_system = target_system;
+	packet.target_component = target_component;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 2);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_CLEAR_ALL;
-
-	put_uint8_t_by_index(msg, 0, target_system); // System ID
-	put_uint8_t_by_index(msg, 1, target_component); // Component ID
-
 	return mavlink_finalize_message(msg, system_id, component_id, 2, 229);
 }
 
@@ -57,11 +67,21 @@ static inline uint16_t mavlink_msg_waypoint_clear_all_pack_chan(uint8_t system_i
 							   mavlink_message_t* msg,
 						           uint8_t target_system,uint8_t target_component)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[2];
+	_mav_put_uint8_t(buf, 0, target_system);
+	_mav_put_uint8_t(buf, 1, target_component);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 2);
+#else
+	mavlink_waypoint_clear_all_t packet;
+	packet.target_system = target_system;
+	packet.target_component = target_component;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 2);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_CLEAR_ALL;
-
-	put_uint8_t_by_index(msg, 0, target_system); // System ID
-	put_uint8_t_by_index(msg, 1, target_component); // Component ID
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 2, 229);
 }
 
@@ -89,13 +109,19 @@ static inline uint16_t mavlink_msg_waypoint_clear_all_encode(uint8_t system_id, 
 
 static inline void mavlink_msg_waypoint_clear_all_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 2);
-	msg->msgid = MAVLINK_MSG_ID_WAYPOINT_CLEAR_ALL;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[2];
+	_mav_put_uint8_t(buf, 0, target_system);
+	_mav_put_uint8_t(buf, 1, target_component);
 
-	put_uint8_t_by_index(msg, 0, target_system); // System ID
-	put_uint8_t_by_index(msg, 1, target_component); // Component ID
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WAYPOINT_CLEAR_ALL, buf, 2, 229);
+#else
+	mavlink_waypoint_clear_all_t packet;
+	packet.target_system = target_system;
+	packet.target_component = target_component;
 
-	mavlink_finalize_message_chan_send(msg, chan, 2, 229);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WAYPOINT_CLEAR_ALL, (const char *)&packet, 2, 229);
+#endif
 }
 
 #endif
@@ -110,7 +136,7 @@ static inline void mavlink_msg_waypoint_clear_all_send(mavlink_channel_t chan, u
  */
 static inline uint8_t mavlink_msg_waypoint_clear_all_get_target_system(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  0);
+	return _MAV_RETURN_uint8_t(msg,  0);
 }
 
 /**
@@ -120,7 +146,7 @@ static inline uint8_t mavlink_msg_waypoint_clear_all_get_target_system(const mav
  */
 static inline uint8_t mavlink_msg_waypoint_clear_all_get_target_component(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  1);
+	return _MAV_RETURN_uint8_t(msg,  1);
 }
 
 /**
@@ -135,6 +161,6 @@ static inline void mavlink_msg_waypoint_clear_all_decode(const mavlink_message_t
 	waypoint_clear_all->target_system = mavlink_msg_waypoint_clear_all_get_target_system(msg);
 	waypoint_clear_all->target_component = mavlink_msg_waypoint_clear_all_get_target_component(msg);
 #else
-	memcpy(waypoint_clear_all, MAVLINK_PAYLOAD(msg), 2);
+	memcpy(waypoint_clear_all, _MAV_PAYLOAD(msg), 2);
 #endif
 }

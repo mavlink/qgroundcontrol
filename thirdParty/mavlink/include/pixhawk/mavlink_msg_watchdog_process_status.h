@@ -47,15 +47,29 @@ typedef struct __mavlink_watchdog_process_status_t
 static inline uint16_t mavlink_msg_watchdog_process_status_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint16_t watchdog_id, uint16_t process_id, uint8_t state, uint8_t muted, int32_t pid, uint16_t crashes)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[12];
+	_mav_put_int32_t(buf, 0, pid);
+	_mav_put_uint16_t(buf, 4, watchdog_id);
+	_mav_put_uint16_t(buf, 6, process_id);
+	_mav_put_uint16_t(buf, 8, crashes);
+	_mav_put_uint8_t(buf, 10, state);
+	_mav_put_uint8_t(buf, 11, muted);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+#else
+	mavlink_watchdog_process_status_t packet;
+	packet.pid = pid;
+	packet.watchdog_id = watchdog_id;
+	packet.process_id = process_id;
+	packet.crashes = crashes;
+	packet.state = state;
+	packet.muted = muted;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS;
-
-	put_int32_t_by_index(msg, 0, pid); // PID
-	put_uint16_t_by_index(msg, 4, watchdog_id); // Watchdog ID
-	put_uint16_t_by_index(msg, 6, process_id); // Process ID
-	put_uint16_t_by_index(msg, 8, crashes); // Number of crashes
-	put_uint8_t_by_index(msg, 10, state); // Is running / finished / suspended / crashed
-	put_uint8_t_by_index(msg, 11, muted); // Is muted
-
 	return mavlink_finalize_message(msg, system_id, component_id, 12, 29);
 }
 
@@ -77,15 +91,29 @@ static inline uint16_t mavlink_msg_watchdog_process_status_pack_chan(uint8_t sys
 							   mavlink_message_t* msg,
 						           uint16_t watchdog_id,uint16_t process_id,uint8_t state,uint8_t muted,int32_t pid,uint16_t crashes)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[12];
+	_mav_put_int32_t(buf, 0, pid);
+	_mav_put_uint16_t(buf, 4, watchdog_id);
+	_mav_put_uint16_t(buf, 6, process_id);
+	_mav_put_uint16_t(buf, 8, crashes);
+	_mav_put_uint8_t(buf, 10, state);
+	_mav_put_uint8_t(buf, 11, muted);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 12);
+#else
+	mavlink_watchdog_process_status_t packet;
+	packet.pid = pid;
+	packet.watchdog_id = watchdog_id;
+	packet.process_id = process_id;
+	packet.crashes = crashes;
+	packet.state = state;
+	packet.muted = muted;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 12);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS;
-
-	put_int32_t_by_index(msg, 0, pid); // PID
-	put_uint16_t_by_index(msg, 4, watchdog_id); // Watchdog ID
-	put_uint16_t_by_index(msg, 6, process_id); // Process ID
-	put_uint16_t_by_index(msg, 8, crashes); // Number of crashes
-	put_uint8_t_by_index(msg, 10, state); // Is running / finished / suspended / crashed
-	put_uint8_t_by_index(msg, 11, muted); // Is muted
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 12, 29);
 }
 
@@ -117,17 +145,27 @@ static inline uint16_t mavlink_msg_watchdog_process_status_encode(uint8_t system
 
 static inline void mavlink_msg_watchdog_process_status_send(mavlink_channel_t chan, uint16_t watchdog_id, uint16_t process_id, uint8_t state, uint8_t muted, int32_t pid, uint16_t crashes)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 12);
-	msg->msgid = MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[12];
+	_mav_put_int32_t(buf, 0, pid);
+	_mav_put_uint16_t(buf, 4, watchdog_id);
+	_mav_put_uint16_t(buf, 6, process_id);
+	_mav_put_uint16_t(buf, 8, crashes);
+	_mav_put_uint8_t(buf, 10, state);
+	_mav_put_uint8_t(buf, 11, muted);
 
-	put_int32_t_by_index(msg, 0, pid); // PID
-	put_uint16_t_by_index(msg, 4, watchdog_id); // Watchdog ID
-	put_uint16_t_by_index(msg, 6, process_id); // Process ID
-	put_uint16_t_by_index(msg, 8, crashes); // Number of crashes
-	put_uint8_t_by_index(msg, 10, state); // Is running / finished / suspended / crashed
-	put_uint8_t_by_index(msg, 11, muted); // Is muted
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS, buf, 12, 29);
+#else
+	mavlink_watchdog_process_status_t packet;
+	packet.pid = pid;
+	packet.watchdog_id = watchdog_id;
+	packet.process_id = process_id;
+	packet.crashes = crashes;
+	packet.state = state;
+	packet.muted = muted;
 
-	mavlink_finalize_message_chan_send(msg, chan, 12, 29);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_WATCHDOG_PROCESS_STATUS, (const char *)&packet, 12, 29);
+#endif
 }
 
 #endif
@@ -142,7 +180,7 @@ static inline void mavlink_msg_watchdog_process_status_send(mavlink_channel_t ch
  */
 static inline uint16_t mavlink_msg_watchdog_process_status_get_watchdog_id(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint16_t(msg,  4);
+	return _MAV_RETURN_uint16_t(msg,  4);
 }
 
 /**
@@ -152,7 +190,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_get_watchdog_id(const
  */
 static inline uint16_t mavlink_msg_watchdog_process_status_get_process_id(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint16_t(msg,  6);
+	return _MAV_RETURN_uint16_t(msg,  6);
 }
 
 /**
@@ -162,7 +200,7 @@ static inline uint16_t mavlink_msg_watchdog_process_status_get_process_id(const 
  */
 static inline uint8_t mavlink_msg_watchdog_process_status_get_state(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  10);
+	return _MAV_RETURN_uint8_t(msg,  10);
 }
 
 /**
@@ -172,7 +210,7 @@ static inline uint8_t mavlink_msg_watchdog_process_status_get_state(const mavlin
  */
 static inline uint8_t mavlink_msg_watchdog_process_status_get_muted(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  11);
+	return _MAV_RETURN_uint8_t(msg,  11);
 }
 
 /**
@@ -182,7 +220,7 @@ static inline uint8_t mavlink_msg_watchdog_process_status_get_muted(const mavlin
  */
 static inline int32_t mavlink_msg_watchdog_process_status_get_pid(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_int32_t(msg,  0);
+	return _MAV_RETURN_int32_t(msg,  0);
 }
 
 /**
@@ -192,7 +230,7 @@ static inline int32_t mavlink_msg_watchdog_process_status_get_pid(const mavlink_
  */
 static inline uint16_t mavlink_msg_watchdog_process_status_get_crashes(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint16_t(msg,  8);
+	return _MAV_RETURN_uint16_t(msg,  8);
 }
 
 /**
@@ -211,6 +249,6 @@ static inline void mavlink_msg_watchdog_process_status_decode(const mavlink_mess
 	watchdog_process_status->state = mavlink_msg_watchdog_process_status_get_state(msg);
 	watchdog_process_status->muted = mavlink_msg_watchdog_process_status_get_muted(msg);
 #else
-	memcpy(watchdog_process_status, MAVLINK_PAYLOAD(msg), 12);
+	memcpy(watchdog_process_status, _MAV_PAYLOAD(msg), 12);
 #endif
 }

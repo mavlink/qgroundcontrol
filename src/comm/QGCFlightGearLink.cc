@@ -350,8 +350,8 @@ fgScenery = "--fg-scenery=/Applications/FlightGear.app/Contents/Resources/data/S
 #endif
 
 #ifdef Q_OS_WIN32
-processFgfs = "C:\Program Files (x86)\FlightGear\bin\Win32\fgfs";
-fgRoot = "--fg-root=C:\Program Files (x86)\FlightGear\data";
+processFgfs = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32\\fgfs";
+fgRoot = "--fg-root=C:\\Program Files (x86)\\FlightGear\\data";
 #endif
 
 #ifdef Q_OS_LINUX
@@ -361,10 +361,9 @@ fgRoot = "--fg-root=/usr/share/flightgear/data";
 
 processCall << fgRoot;
 processCall << fgScenery;
-processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,ardupilot";
-processCall << "--generic=socket,in,50,127.0.0.1,49000,udp,ardupilot";
+processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,qgroundcontrol";
+processCall << "--generic=socket,in,50,127.0.0.1,49000,udp,qgroundcontrol";
 processCall << "--in-air";
-processCall << "--altitude=10";
 processCall << "--vc=90";
 processCall << "--heading=300";
 processCall << "--timeofday=noon";
@@ -386,8 +385,9 @@ if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
     processCall << "--prop:/engines/engine[2]/running=true";
     processCall << "--prop:/engines/engine[3]/running=true";
 }
-processCall << QString("--lat=%1").arg(mav->getLatitude());
-processCall << QString("--lon=%1").arg(mav->getLongitude());
+processCall << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
+processCall << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
+processCall << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
 // Add new argument with this: processCall << "";
 processCall << QString("--aircraft=%2").arg(aircraft);
 

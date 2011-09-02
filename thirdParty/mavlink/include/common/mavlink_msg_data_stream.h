@@ -38,12 +38,23 @@ typedef struct __mavlink_data_stream_t
 static inline uint16_t mavlink_msg_data_stream_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint8_t stream_id, uint16_t message_rate, uint8_t on_off)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_uint16_t(buf, 0, message_rate);
+	_mav_put_uint8_t(buf, 2, stream_id);
+	_mav_put_uint8_t(buf, 3, on_off);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+#else
+	mavlink_data_stream_t packet;
+	packet.message_rate = message_rate;
+	packet.stream_id = stream_id;
+	packet.on_off = on_off;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_DATA_STREAM;
-
-	put_uint16_t_by_index(msg, 0, message_rate); // The requested interval between two messages of this type
-	put_uint8_t_by_index(msg, 2, stream_id); // The ID of the requested data stream
-	put_uint8_t_by_index(msg, 3, on_off); // 1 stream is enabled, 0 stream is stopped.
-
 	return mavlink_finalize_message(msg, system_id, component_id, 4, 21);
 }
 
@@ -62,12 +73,23 @@ static inline uint16_t mavlink_msg_data_stream_pack_chan(uint8_t system_id, uint
 							   mavlink_message_t* msg,
 						           uint8_t stream_id,uint16_t message_rate,uint8_t on_off)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_uint16_t(buf, 0, message_rate);
+	_mav_put_uint8_t(buf, 2, stream_id);
+	_mav_put_uint8_t(buf, 3, on_off);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+#else
+	mavlink_data_stream_t packet;
+	packet.message_rate = message_rate;
+	packet.stream_id = stream_id;
+	packet.on_off = on_off;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_DATA_STREAM;
-
-	put_uint16_t_by_index(msg, 0, message_rate); // The requested interval between two messages of this type
-	put_uint8_t_by_index(msg, 2, stream_id); // The ID of the requested data stream
-	put_uint8_t_by_index(msg, 3, on_off); // 1 stream is enabled, 0 stream is stopped.
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 4, 21);
 }
 
@@ -96,14 +118,21 @@ static inline uint16_t mavlink_msg_data_stream_encode(uint8_t system_id, uint8_t
 
 static inline void mavlink_msg_data_stream_send(mavlink_channel_t chan, uint8_t stream_id, uint16_t message_rate, uint8_t on_off)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 4);
-	msg->msgid = MAVLINK_MSG_ID_DATA_STREAM;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_uint16_t(buf, 0, message_rate);
+	_mav_put_uint8_t(buf, 2, stream_id);
+	_mav_put_uint8_t(buf, 3, on_off);
 
-	put_uint16_t_by_index(msg, 0, message_rate); // The requested interval between two messages of this type
-	put_uint8_t_by_index(msg, 2, stream_id); // The ID of the requested data stream
-	put_uint8_t_by_index(msg, 3, on_off); // 1 stream is enabled, 0 stream is stopped.
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_DATA_STREAM, buf, 4, 21);
+#else
+	mavlink_data_stream_t packet;
+	packet.message_rate = message_rate;
+	packet.stream_id = stream_id;
+	packet.on_off = on_off;
 
-	mavlink_finalize_message_chan_send(msg, chan, 4, 21);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_DATA_STREAM, (const char *)&packet, 4, 21);
+#endif
 }
 
 #endif
@@ -118,7 +147,7 @@ static inline void mavlink_msg_data_stream_send(mavlink_channel_t chan, uint8_t 
  */
 static inline uint8_t mavlink_msg_data_stream_get_stream_id(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  2);
+	return _MAV_RETURN_uint8_t(msg,  2);
 }
 
 /**
@@ -128,7 +157,7 @@ static inline uint8_t mavlink_msg_data_stream_get_stream_id(const mavlink_messag
  */
 static inline uint16_t mavlink_msg_data_stream_get_message_rate(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint16_t(msg,  0);
+	return _MAV_RETURN_uint16_t(msg,  0);
 }
 
 /**
@@ -138,7 +167,7 @@ static inline uint16_t mavlink_msg_data_stream_get_message_rate(const mavlink_me
  */
 static inline uint8_t mavlink_msg_data_stream_get_on_off(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  3);
+	return _MAV_RETURN_uint8_t(msg,  3);
 }
 
 /**
@@ -154,6 +183,6 @@ static inline void mavlink_msg_data_stream_decode(const mavlink_message_t* msg, 
 	data_stream->stream_id = mavlink_msg_data_stream_get_stream_id(msg);
 	data_stream->on_off = mavlink_msg_data_stream_get_on_off(msg);
 #else
-	memcpy(data_stream, MAVLINK_PAYLOAD(msg), 4);
+	memcpy(data_stream, _MAV_PAYLOAD(msg), 4);
 #endif
 }

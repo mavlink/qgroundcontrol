@@ -711,7 +711,8 @@
                <field type="uint16_t" name="voltage_battery">Battery voltage, in millivolts (1 = 1 millivolt)</field>
                <field type="int16_t" name="current_battery">Battery current, in 10*milliamperes (1 = 10 milliampere), -1: autopilot does not measure the current</field>
                <field type="uint16_t" name="watt">Watts consumed from this battery since startup</field>
-               <field type="int8_t" name="battery_remaining">Remaining battery energy: (0%: 0, 100%: 200%), -1: autopilot estimate the remaining battery</field>
+               <field type="int8_t" name="battery_remaining">Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot estimate the remaining battery</field>
+               <field type="uint16_t" name="drop_rate_comm">Communication drops in percent, (0%: 0, 100%: 10'000), (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)</field>
                <field type="uint16_t" name="errors_comm">Communication errors (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)</field>
                <field type="uint16_t" name="errors_count1">Autopilot-specific errors</field>
                <field type="uint16_t" name="errors_count2">Autopilot-specific errors</field>
