@@ -806,7 +806,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_roll_pitch_yaw_thrust_setpoint_t out;
                 mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(&message, &out);
-                quint64 time = getUnixTime(out.time_us*1000);
+                quint64 time = getUnixTime(out.time_us);
                 emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
                 emit valueChanged(uasId, "att control roll", "rad", out.roll, time);
                 emit valueChanged(uasId, "att control pitch", "rad", out.pitch, time);
@@ -1286,14 +1286,14 @@ quint64 UAS::getUnixReferenceTime(quint64 time)
  */
 quint64 UAS::getUnixTime(quint64 time)
 {
+    quint64 ret = 0;
     if (attitudeStamped)
     {
-        return lastAttitude;
+        ret = lastAttitude;
     }
     if (time == 0)
     {
-        //        qDebug() << "XNEW time:" <<QGC::groundTimeMilliseconds();
-        return QGC::groundTimeMilliseconds();
+        ret = QGC::groundTimeMilliseconds();
     }
     // Check if time is smaller than 40 years,
     // assuming no system without Unix timestamp
@@ -1322,14 +1322,15 @@ quint64 UAS::getUnixTime(quint64 time)
         {
             onboardTimeOffset = QGC::groundTimeMilliseconds() - time/1000;
         }
-        return time/1000 + onboardTimeOffset;
+        ret = time/1000 + onboardTimeOffset;
     }
     else
     {
         // Time is not zero and larger than 40 years -> has to be
         // a Unix epoch timestamp. Do nothing.
-        return time/1000;
+        ret = time/1000;
     }
+    return ret;
 }
 
 QList<QString> UAS::getParameterNames(int component)
