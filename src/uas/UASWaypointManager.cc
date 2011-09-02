@@ -114,7 +114,7 @@ void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, qui
     }
 }
 
-void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_waypoint_t *wp)
+void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_mission_item_t *wp)
 {
     if (systemId == current_partner_systemid && compId == current_partner_compid && current_state == WP_GETLIST_GETWPS && wp->seq == current_wp_id) {
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
@@ -154,7 +154,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
     }
 }
 
-void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavlink_waypoint_ack_t *wpa)
+void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavlink_mission_ack_t *wpa)
 {
     if (systemId == current_partner_systemid && compId == current_partner_compid) {
         if((current_state == WP_SENDLIST || current_state == WP_SENDLIST_SENDWPS) && (current_wp_id == waypoint_buffer.count()-1 && wpa->type == 0)) {
@@ -172,7 +172,7 @@ void UASWaypointManager::handleWaypointAck(quint8 systemId, quint8 compId, mavli
     }
 }
 
-void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_waypoint_request_t *wpr)
+void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_mission_request_t *wpr)
 {
     if (systemId == current_partner_systemid && compId == current_partner_compid && ((current_state == WP_SENDLIST && wpr->seq == 0) || (current_state == WP_SENDLIST_SENDWPS && (wpr->seq == current_wp_id || wpr->seq == current_wp_id + 1)))) {
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
@@ -190,16 +190,16 @@ void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, m
     }
 }
 
-void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, mavlink_waypoint_reached_t *wpr)
+void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, mavlink_mission_item_reached_t *wpr)
 {
-    if (systemId == uas.getUASID() && compId == MAV_COMP_ID_WAYPOINTPLANNER) {
+    if (systemId == uas.getUASID()) {
         emit updateStatusString(QString("Reached waypoint %1").arg(wpr->seq));
     }
 }
 
-void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_waypoint_current_t *wpc)
+void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_mission_current_t *wpc)
 {
-    if (systemId == uas.getUASID() && compId == MAV_COMP_ID_WAYPOINTPLANNER) {
+    if (systemId == uas.getUASID()) {
         // FIXME Petri
         if (current_state == WP_SETCURRENT) {
             protocol_timer.stop();
@@ -259,7 +259,7 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
             current_state = WP_SETCURRENT;
             current_wp_id = seq;
             current_partner_systemid = uas.getUASID();
-            current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
+            current_partner_compid = MAV_COMP_ID_MISSIONPLANNER;
 
             sendWaypointSetCurrent(current_wp_id);
 
@@ -434,7 +434,7 @@ void UASWaypointManager::clearWaypointList()
         current_state = WP_CLEARLIST;
         current_wp_id = 0;
         current_partner_systemid = uas.getUASID();
-        current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
+        current_partner_compid = MAV_COMP_ID_MISSIONPLANNER;
 
         sendWaypointClearAll();
     }
@@ -649,7 +649,7 @@ void UASWaypointManager::readWaypoints()
         current_state = WP_GETLIST;
         current_wp_id = 0;
         current_partner_systemid = uas.getUASID();
-        current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
+        current_partner_compid = MAV_COMP_ID_MISSIONPLANNER;
 
         sendWaypointRequestList();
 
@@ -668,7 +668,7 @@ void UASWaypointManager::writeWaypoints()
             current_state = WP_SENDLIST;
             current_wp_id = 0;
             current_partner_systemid = uas.getUASID();
-            current_partner_compid = MAV_COMP_ID_WAYPOINTPLANNER;
+            current_partner_compid = MAV_COMP_ID_MISSIONPLANNER;
 
             //clear local buffer
             // Why not replace with waypoint_buffer.clear() ?
@@ -683,9 +683,9 @@ void UASWaypointManager::writeWaypoints()
 
             //copy waypoint data to local buffer
             for (int i=0; i < current_count; i++) {
-                waypoint_buffer.push_back(new mavlink_waypoint_t);
-                mavlink_waypoint_t *cur_d = waypoint_buffer.back();
-                memset(cur_d, 0, sizeof(mavlink_waypoint_t));   //initialize with zeros
+                waypoint_buffer.push_back(new mavlink_mission_item_t);
+                mavlink_mission_item_t *cur_d = waypoint_buffer.back();
+                memset(cur_d, 0, sizeof(mavlink_mission_item_t));   //initialize with zeros
                 const Waypoint *cur_s = waypoints.at(i);
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
@@ -724,14 +724,14 @@ void UASWaypointManager::writeWaypoints()
 void UASWaypointManager::sendWaypointClearAll()
 {
     mavlink_message_t message;
-    mavlink_waypoint_clear_all_t wpca;
+    mavlink_mission_clear_all_t wpca;
 
     wpca.target_system = uas.getUASID();
-    wpca.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+    wpca.target_component = MAV_COMP_ID_MISSIONPLANNER;
 
     emit updateStatusString(QString("Clearing waypoint list..."));
 
-    mavlink_msg_waypoint_clear_all_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpca);
+    mavlink_msg_mission_clear_all_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpca);
     uas.sendMessage(message);
     MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
 
@@ -741,15 +741,15 @@ void UASWaypointManager::sendWaypointClearAll()
 void UASWaypointManager::sendWaypointSetCurrent(quint16 seq)
 {
     mavlink_message_t message;
-    mavlink_waypoint_set_current_t wpsc;
+    mavlink_mission_set_current_t wpsc;
 
     wpsc.target_system = uas.getUASID();
-    wpsc.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+    wpsc.target_component = MAV_COMP_ID_MISSIONPLANNER;
     wpsc.seq = seq;
 
     emit updateStatusString(QString("Updating target waypoint..."));
 
-    mavlink_msg_waypoint_set_current_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpsc);
+    mavlink_msg_mission_set_current_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpsc);
     uas.sendMessage(message);
     MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
 
@@ -759,16 +759,16 @@ void UASWaypointManager::sendWaypointSetCurrent(quint16 seq)
 void UASWaypointManager::sendWaypointCount()
 {
     mavlink_message_t message;
-    mavlink_waypoint_count_t wpc;
+    mavlink_mission_count_t wpc;
 
     wpc.target_system = uas.getUASID();
-    wpc.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+    wpc.target_component = MAV_COMP_ID_MISSIONPLANNER;
     wpc.count = current_count;
 
     // qDebug() << "sent waypoint count (" << wpc.count << ") to ID " << wpc.target_system;
     emit updateStatusString(QString("Starting to transmit waypoints..."));
 
-    mavlink_msg_waypoint_count_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpc);
+    mavlink_msg_mission_count_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpc);
     uas.sendMessage(message);
     MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
 
@@ -778,14 +778,14 @@ void UASWaypointManager::sendWaypointCount()
 void UASWaypointManager::sendWaypointRequestList()
 {
     mavlink_message_t message;
-    mavlink_waypoint_request_list_t wprl;
+    mavlink_mission_request_list_t wprl;
 
     wprl.target_system = uas.getUASID();
-    wprl.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+    wprl.target_component = MAV_COMP_ID_MISSIONPLANNER;
 
     emit updateStatusString(QString("Requesting waypoint list..."));
 
-    mavlink_msg_waypoint_request_list_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wprl);
+    mavlink_msg_mission_request_list_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wprl);
     uas.sendMessage(message);
     MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
 
@@ -797,15 +797,15 @@ void UASWaypointManager::sendWaypointRequestList()
 void UASWaypointManager::sendWaypointRequest(quint16 seq)
 {
     mavlink_message_t message;
-    mavlink_waypoint_request_t wpr;
+    mavlink_mission_request_t wpr;
 
     wpr.target_system = uas.getUASID();
-    wpr.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+    wpr.target_component = MAV_COMP_ID_MISSIONPLANNER;
     wpr.seq = seq;
 
     emit updateStatusString(QString("Retrieving waypoint ID %1 of %2 total").arg(wpr.seq).arg(current_count));
 
-    mavlink_msg_waypoint_request_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpr);
+    mavlink_msg_mission_request_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpr);
     uas.sendMessage(message);
     MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
 
@@ -819,18 +819,18 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
 
     if (seq < waypoint_buffer.count()) {
 
-        mavlink_waypoint_t *wp;
+        mavlink_mission_item_t *wp;
 
 
         wp = waypoint_buffer.at(seq);
         wp->target_system = uas.getUASID();
-        wp->target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+        wp->target_component = MAV_COMP_ID_MISSIONPLANNER;
 
         emit updateStatusString(QString("Sending waypoint ID %1 of %2 total").arg(wp->seq).arg(current_count));
 
         // qDebug() << "sent waypoint (" << wp->seq << ") to ID " << wp->target_system<<" WP Buffer count: "<<waypoint_buffer.count();
 
-        mavlink_msg_waypoint_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, wp);
+        mavlink_msg_mission_item_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, wp);
         uas.sendMessage(message);
         MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
 
@@ -840,13 +840,13 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
 void UASWaypointManager::sendWaypointAck(quint8 type)
 {
     mavlink_message_t message;
-    mavlink_waypoint_ack_t wpa;
+    mavlink_mission_ack_t wpa;
 
     wpa.target_system = uas.getUASID();
-    wpa.target_component = MAV_COMP_ID_WAYPOINTPLANNER;
+    wpa.target_component = MAV_COMP_ID_MISSIONPLANNER;
     wpa.type = type;
 
-    mavlink_msg_waypoint_ack_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpa);
+    mavlink_msg_mission_ack_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpa);
     uas.sendMessage(message);
     MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
 

@@ -22,14 +22,14 @@ typedef struct __mavlink_command_short_t
 #define MAVLINK_MESSAGE_INFO_COMMAND_SHORT { \
 	"COMMAND_SHORT", \
 	8, \
-	{  { "param1", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_command_short_t, param1) }, \
-         { "param2", MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_command_short_t, param2) }, \
-         { "param3", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_command_short_t, param3) }, \
-         { "param4", MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_command_short_t, param4) }, \
-         { "target_system", MAVLINK_TYPE_UINT8_T, 0, 16, offsetof(mavlink_command_short_t, target_system) }, \
-         { "target_component", MAVLINK_TYPE_UINT8_T, 0, 17, offsetof(mavlink_command_short_t, target_component) }, \
-         { "command", MAVLINK_TYPE_UINT8_T, 0, 18, offsetof(mavlink_command_short_t, command) }, \
-         { "confirmation", MAVLINK_TYPE_UINT8_T, 0, 19, offsetof(mavlink_command_short_t, confirmation) }, \
+	{  { "param1", NULL, MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_command_short_t, param1) }, \
+         { "param2", NULL, MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_command_short_t, param2) }, \
+         { "param3", NULL, MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_command_short_t, param3) }, \
+         { "param4", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_command_short_t, param4) }, \
+         { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 16, offsetof(mavlink_command_short_t, target_system) }, \
+         { "target_component", NULL, MAVLINK_TYPE_UINT8_T, 0, 17, offsetof(mavlink_command_short_t, target_component) }, \
+         { "command", NULL, MAVLINK_TYPE_UINT8_T, 0, 18, offsetof(mavlink_command_short_t, command) }, \
+         { "confirmation", NULL, MAVLINK_TYPE_UINT8_T, 0, 19, offsetof(mavlink_command_short_t, confirmation) }, \
          } \
 }
 

@@ -19,11 +19,11 @@ typedef struct __mavlink_data_transmission_handshake_t
 #define MAVLINK_MESSAGE_INFO_DATA_TRANSMISSION_HANDSHAKE { \
 	"DATA_TRANSMISSION_HANDSHAKE", \
 	5, \
-	{  { "size", MAVLINK_TYPE_UINT32_T, 0, 0, offsetof(mavlink_data_transmission_handshake_t, size) }, \
-         { "type", MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_data_transmission_handshake_t, type) }, \
-         { "packets", MAVLINK_TYPE_UINT8_T, 0, 5, offsetof(mavlink_data_transmission_handshake_t, packets) }, \
-         { "payload", MAVLINK_TYPE_UINT8_T, 0, 6, offsetof(mavlink_data_transmission_handshake_t, payload) }, \
-         { "jpg_quality", MAVLINK_TYPE_UINT8_T, 0, 7, offsetof(mavlink_data_transmission_handshake_t, jpg_quality) }, \
+	{  { "size", NULL, MAVLINK_TYPE_UINT32_T, 0, 0, offsetof(mavlink_data_transmission_handshake_t, size) }, \
+         { "type", NULL, MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_data_transmission_handshake_t, type) }, \
+         { "packets", NULL, MAVLINK_TYPE_UINT8_T, 0, 5, offsetof(mavlink_data_transmission_handshake_t, packets) }, \
+         { "payload", NULL, MAVLINK_TYPE_UINT8_T, 0, 6, offsetof(mavlink_data_transmission_handshake_t, payload) }, \
+         { "jpg_quality", NULL, MAVLINK_TYPE_UINT8_T, 0, 7, offsetof(mavlink_data_transmission_handshake_t, jpg_quality) }, \
          } \
 }
 

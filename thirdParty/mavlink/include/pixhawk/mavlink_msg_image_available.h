@@ -37,29 +37,29 @@ typedef struct __mavlink_image_available_t
 #define MAVLINK_MESSAGE_INFO_IMAGE_AVAILABLE { \
 	"IMAGE_AVAILABLE", \
 	23, \
-	{  { "cam_id", MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_image_available_t, cam_id) }, \
-         { "timestamp", MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_image_available_t, timestamp) }, \
-         { "valid_until", MAVLINK_TYPE_UINT64_T, 0, 16, offsetof(mavlink_image_available_t, valid_until) }, \
-         { "img_seq", MAVLINK_TYPE_UINT32_T, 0, 24, offsetof(mavlink_image_available_t, img_seq) }, \
-         { "img_buf_index", MAVLINK_TYPE_UINT32_T, 0, 28, offsetof(mavlink_image_available_t, img_buf_index) }, \
-         { "key", MAVLINK_TYPE_UINT32_T, 0, 32, offsetof(mavlink_image_available_t, key) }, \
-         { "exposure", MAVLINK_TYPE_UINT32_T, 0, 36, offsetof(mavlink_image_available_t, exposure) }, \
-         { "gain", MAVLINK_TYPE_FLOAT, 0, 40, offsetof(mavlink_image_available_t, gain) }, \
-         { "roll", MAVLINK_TYPE_FLOAT, 0, 44, offsetof(mavlink_image_available_t, roll) }, \
-         { "pitch", MAVLINK_TYPE_FLOAT, 0, 48, offsetof(mavlink_image_available_t, pitch) }, \
-         { "yaw", MAVLINK_TYPE_FLOAT, 0, 52, offsetof(mavlink_image_available_t, yaw) }, \
-         { "local_z", MAVLINK_TYPE_FLOAT, 0, 56, offsetof(mavlink_image_available_t, local_z) }, \
-         { "lat", MAVLINK_TYPE_FLOAT, 0, 60, offsetof(mavlink_image_available_t, lat) }, \
-         { "lon", MAVLINK_TYPE_FLOAT, 0, 64, offsetof(mavlink_image_available_t, lon) }, \
-         { "alt", MAVLINK_TYPE_FLOAT, 0, 68, offsetof(mavlink_image_available_t, alt) }, \
-         { "ground_x", MAVLINK_TYPE_FLOAT, 0, 72, offsetof(mavlink_image_available_t, ground_x) }, \
-         { "ground_y", MAVLINK_TYPE_FLOAT, 0, 76, offsetof(mavlink_image_available_t, ground_y) }, \
-         { "ground_z", MAVLINK_TYPE_FLOAT, 0, 80, offsetof(mavlink_image_available_t, ground_z) }, \
-         { "width", MAVLINK_TYPE_UINT16_T, 0, 84, offsetof(mavlink_image_available_t, width) }, \
-         { "height", MAVLINK_TYPE_UINT16_T, 0, 86, offsetof(mavlink_image_available_t, height) }, \
-         { "depth", MAVLINK_TYPE_UINT16_T, 0, 88, offsetof(mavlink_image_available_t, depth) }, \
-         { "cam_no", MAVLINK_TYPE_UINT8_T, 0, 90, offsetof(mavlink_image_available_t, cam_no) }, \
-         { "channels", MAVLINK_TYPE_UINT8_T, 0, 91, offsetof(mavlink_image_available_t, channels) }, \
+	{  { "cam_id", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_image_available_t, cam_id) }, \
+         { "timestamp", NULL, MAVLINK_TYPE_UINT64_T, 0, 8, offsetof(mavlink_image_available_t, timestamp) }, \
+         { "valid_until", NULL, MAVLINK_TYPE_UINT64_T, 0, 16, offsetof(mavlink_image_available_t, valid_until) }, \
+         { "img_seq", NULL, MAVLINK_TYPE_UINT32_T, 0, 24, offsetof(mavlink_image_available_t, img_seq) }, \
+         { "img_buf_index", NULL, MAVLINK_TYPE_UINT32_T, 0, 28, offsetof(mavlink_image_available_t, img_buf_index) }, \
+         { "key", NULL, MAVLINK_TYPE_UINT32_T, 0, 32, offsetof(mavlink_image_available_t, key) }, \
+         { "exposure", NULL, MAVLINK_TYPE_UINT32_T, 0, 36, offsetof(mavlink_image_available_t, exposure) }, \
+         { "gain", NULL, MAVLINK_TYPE_FLOAT, 0, 40, offsetof(mavlink_image_available_t, gain) }, \
+         { "roll", NULL, MAVLINK_TYPE_FLOAT, 0, 44, offsetof(mavlink_image_available_t, roll) }, \
+         { "pitch", NULL, MAVLINK_TYPE_FLOAT, 0, 48, offsetof(mavlink_image_available_t, pitch) }, \
+         { "yaw", NULL, MAVLINK_TYPE_FLOAT, 0, 52, offsetof(mavlink_image_available_t, yaw) }, \
+         { "local_z", NULL, MAVLINK_TYPE_FLOAT, 0, 56, offsetof(mavlink_image_available_t, local_z) }, \
+         { "lat", NULL, MAVLINK_TYPE_FLOAT, 0, 60, offsetof(mavlink_image_available_t, lat) }, \
+         { "lon", NULL, MAVLINK_TYPE_FLOAT, 0, 64, offsetof(mavlink_image_available_t, lon) }, \
+         { "alt", NULL, MAVLINK_TYPE_FLOAT, 0, 68, offsetof(mavlink_image_available_t, alt) }, \
+         { "ground_x", NULL, MAVLINK_TYPE_FLOAT, 0, 72, offsetof(mavlink_image_available_t, ground_x) }, \
+         { "ground_y", NULL, MAVLINK_TYPE_FLOAT, 0, 76, offsetof(mavlink_image_available_t, ground_y) }, \
+         { "ground_z", NULL, MAVLINK_TYPE_FLOAT, 0, 80, offsetof(mavlink_image_available_t, ground_z) }, \
+         { "width", NULL, MAVLINK_TYPE_UINT16_T, 0, 84, offsetof(mavlink_image_available_t, width) }, \
+         { "height", NULL, MAVLINK_TYPE_UINT16_T, 0, 86, offsetof(mavlink_image_available_t, height) }, \
+         { "depth", NULL, MAVLINK_TYPE_UINT16_T, 0, 88, offsetof(mavlink_image_available_t, depth) }, \
+         { "cam_no", NULL, MAVLINK_TYPE_UINT8_T, 0, 90, offsetof(mavlink_image_available_t, cam_no) }, \
+         { "channels", NULL, MAVLINK_TYPE_UINT8_T, 0, 91, offsetof(mavlink_image_available_t, channels) }, \
          } \
 }
 

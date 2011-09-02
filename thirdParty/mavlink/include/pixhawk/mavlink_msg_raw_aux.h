@@ -21,13 +21,13 @@ typedef struct __mavlink_raw_aux_t
 #define MAVLINK_MESSAGE_INFO_RAW_AUX { \
 	"RAW_AUX", \
 	7, \
-	{  { "baro", MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_raw_aux_t, baro) }, \
-         { "adc1", MAVLINK_TYPE_UINT16_T, 0, 4, offsetof(mavlink_raw_aux_t, adc1) }, \
-         { "adc2", MAVLINK_TYPE_UINT16_T, 0, 6, offsetof(mavlink_raw_aux_t, adc2) }, \
-         { "adc3", MAVLINK_TYPE_UINT16_T, 0, 8, offsetof(mavlink_raw_aux_t, adc3) }, \
-         { "adc4", MAVLINK_TYPE_UINT16_T, 0, 10, offsetof(mavlink_raw_aux_t, adc4) }, \
-         { "vbat", MAVLINK_TYPE_UINT16_T, 0, 12, offsetof(mavlink_raw_aux_t, vbat) }, \
-         { "temp", MAVLINK_TYPE_INT16_T, 0, 14, offsetof(mavlink_raw_aux_t, temp) }, \
+	{  { "baro", NULL, MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_raw_aux_t, baro) }, \
+         { "adc1", NULL, MAVLINK_TYPE_UINT16_T, 0, 4, offsetof(mavlink_raw_aux_t, adc1) }, \
+         { "adc2", NULL, MAVLINK_TYPE_UINT16_T, 0, 6, offsetof(mavlink_raw_aux_t, adc2) }, \
+         { "adc3", NULL, MAVLINK_TYPE_UINT16_T, 0, 8, offsetof(mavlink_raw_aux_t, adc3) }, \
+         { "adc4", NULL, MAVLINK_TYPE_UINT16_T, 0, 10, offsetof(mavlink_raw_aux_t, adc4) }, \
+         { "vbat", NULL, MAVLINK_TYPE_UINT16_T, 0, 12, offsetof(mavlink_raw_aux_t, vbat) }, \
+         { "temp", NULL, MAVLINK_TYPE_INT16_T, 0, 14, offsetof(mavlink_raw_aux_t, temp) }, \
          } \
 }
 

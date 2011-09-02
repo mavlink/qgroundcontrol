@@ -20,11 +20,11 @@ typedef struct __mavlink_watchdog_process_info_t
 #define MAVLINK_MESSAGE_INFO_WATCHDOG_PROCESS_INFO { \
 	"WATCHDOG_PROCESS_INFO", \
 	5, \
-	{  { "timeout", MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_watchdog_process_info_t, timeout) }, \
-         { "watchdog_id", MAVLINK_TYPE_UINT16_T, 0, 4, offsetof(mavlink_watchdog_process_info_t, watchdog_id) }, \
-         { "process_id", MAVLINK_TYPE_UINT16_T, 0, 6, offsetof(mavlink_watchdog_process_info_t, process_id) }, \
-         { "name", MAVLINK_TYPE_CHAR, 100, 8, offsetof(mavlink_watchdog_process_info_t, name) }, \
-         { "arguments", MAVLINK_TYPE_CHAR, 147, 108, offsetof(mavlink_watchdog_process_info_t, arguments) }, \
+	{  { "timeout", NULL, MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_watchdog_process_info_t, timeout) }, \
+         { "watchdog_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 4, offsetof(mavlink_watchdog_process_info_t, watchdog_id) }, \
+         { "process_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 6, offsetof(mavlink_watchdog_process_info_t, process_id) }, \
+         { "name", NULL, MAVLINK_TYPE_CHAR, 100, 8, offsetof(mavlink_watchdog_process_info_t, name) }, \
+         { "arguments", NULL, MAVLINK_TYPE_CHAR, 147, 108, offsetof(mavlink_watchdog_process_info_t, arguments) }, \
          } \
 }
 

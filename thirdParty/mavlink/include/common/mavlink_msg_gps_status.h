@@ -1,6 +1,6 @@
 // MESSAGE GPS_STATUS PACKING
 
-#define MAVLINK_MSG_ID_GPS_STATUS 26
+#define MAVLINK_MSG_ID_GPS_STATUS 25
 
 typedef struct __mavlink_gps_status_t
 {
@@ -13,7 +13,7 @@ typedef struct __mavlink_gps_status_t
 } mavlink_gps_status_t;
 
 #define MAVLINK_MSG_ID_GPS_STATUS_LEN 101
-#define MAVLINK_MSG_ID_26_LEN 101
+#define MAVLINK_MSG_ID_25_LEN 101
 
 #define MAVLINK_MSG_GPS_STATUS_FIELD_SATELLITE_PRN_LEN 20
 #define MAVLINK_MSG_GPS_STATUS_FIELD_SATELLITE_USED_LEN 20
@@ -24,12 +24,12 @@ typedef struct __mavlink_gps_status_t
 #define MAVLINK_MESSAGE_INFO_GPS_STATUS { \
 	"GPS_STATUS", \
 	6, \
-	{  { "satellites_visible", MAVLINK_TYPE_UINT8_T, 0, 0, offsetof(mavlink_gps_status_t, satellites_visible) }, \
-         { "satellite_prn", MAVLINK_TYPE_UINT8_T, 20, 1, offsetof(mavlink_gps_status_t, satellite_prn) }, \
-         { "satellite_used", MAVLINK_TYPE_UINT8_T, 20, 21, offsetof(mavlink_gps_status_t, satellite_used) }, \
-         { "satellite_elevation", MAVLINK_TYPE_UINT8_T, 20, 41, offsetof(mavlink_gps_status_t, satellite_elevation) }, \
-         { "satellite_azimuth", MAVLINK_TYPE_UINT8_T, 20, 61, offsetof(mavlink_gps_status_t, satellite_azimuth) }, \
-         { "satellite_snr", MAVLINK_TYPE_UINT8_T, 20, 81, offsetof(mavlink_gps_status_t, satellite_snr) }, \
+	{  { "satellites_visible", NULL, MAVLINK_TYPE_UINT8_T, 0, 0, offsetof(mavlink_gps_status_t, satellites_visible) }, \
+         { "satellite_prn", NULL, MAVLINK_TYPE_UINT8_T, 20, 1, offsetof(mavlink_gps_status_t, satellite_prn) }, \
+         { "satellite_used", NULL, MAVLINK_TYPE_UINT8_T, 20, 21, offsetof(mavlink_gps_status_t, satellite_used) }, \
+         { "satellite_elevation", NULL, MAVLINK_TYPE_UINT8_T, 20, 41, offsetof(mavlink_gps_status_t, satellite_elevation) }, \
+         { "satellite_azimuth", NULL, MAVLINK_TYPE_UINT8_T, 20, 61, offsetof(mavlink_gps_status_t, satellite_azimuth) }, \
+         { "satellite_snr", NULL, MAVLINK_TYPE_UINT8_T, 20, 81, offsetof(mavlink_gps_status_t, satellite_snr) }, \
          } \
 }
 

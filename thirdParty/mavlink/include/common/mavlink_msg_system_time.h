@@ -16,8 +16,8 @@ typedef struct __mavlink_system_time_t
 #define MAVLINK_MESSAGE_INFO_SYSTEM_TIME { \
 	"SYSTEM_TIME", \
 	2, \
-	{  { "time_unix_usec", MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_system_time_t, time_unix_usec) }, \
-         { "time_boot_ms", MAVLINK_TYPE_UINT32_T, 0, 8, offsetof(mavlink_system_time_t, time_boot_ms) }, \
+	{  { "time_unix_usec", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_system_time_t, time_unix_usec) }, \
+         { "time_boot_ms", NULL, MAVLINK_TYPE_UINT32_T, 0, 8, offsetof(mavlink_system_time_t, time_boot_ms) }, \
          } \
 }
 

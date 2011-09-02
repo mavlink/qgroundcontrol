@@ -142,7 +142,7 @@ void UAS::updateState()
     }
     else
     {
-        if ((mode == (int)MAV_MODE_AUTO || mode == (int)MAV_MODE_GUIDED) && positionLock)
+        if (((mode&MAV_MODE_FLAG_DECODE_POSITION_AUTO) || (mode&MAV_MODE_FLAG_DECODE_POSITION_GUIDED)) && positionLock)
         {
             GAudioOutput::instance()->notifyNegative();
         }
@@ -463,12 +463,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // FIXME REMOVE LATER emit valueChanged(uasId, "xtrack err", "m", nav.xtrack_error, time);
             }
             break;
-        case MAVLINK_MSG_ID_LOCAL_POSITION:
+        case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
             //std::cerr << std::endl;
             //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
             {
-                mavlink_local_position_t pos;
-                mavlink_msg_local_position_decode(&message, &pos);
+                mavlink_local_position_ned_t pos;
+                mavlink_msg_local_position_ned_decode(&message, &pos);
                 quint64 time = getUnixTime(pos.time_boot_ms);
                 localX = pos.x;
                 localY = pos.y;
@@ -745,10 +745,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // FIXME REMOVE LATER emit valueChanged(uasId, "att control thrust", "0-1", out.thrust, time);
             }
             break;
-        case MAVLINK_MSG_ID_WAYPOINT_COUNT:
+        case MAVLINK_MSG_ID_MISSION_COUNT:
             {
-                mavlink_waypoint_count_t wpc;
-                mavlink_msg_waypoint_count_decode(&message, &wpc);
+                mavlink_mission_count_t wpc;
+                mavlink_msg_mission_count_decode(&message, &wpc);
                 if (wpc.target_system == mavlink->getSystemId() && wpc.target_component == mavlink->getComponentId())
                 {
                     waypointManager.handleWaypointCount(message.sysid, message.compid, wpc.count);
@@ -760,10 +760,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
-        case MAVLINK_MSG_ID_WAYPOINT:
+        case MAVLINK_MSG_ID_MISSION_ITEM:
             {
-                mavlink_waypoint_t wp;
-                mavlink_msg_waypoint_decode(&message, &wp);
+                mavlink_mission_item_t wp;
+                mavlink_msg_mission_item_decode(&message, &wp);
                 //qDebug() << "got waypoint (" << wp.seq << ") from ID " << message.sysid << " x=" << wp.x << " y=" << wp.y << " z=" << wp.z;
                 if(wp.target_system == mavlink->getSystemId() && wp.target_component == mavlink->getComponentId())
                 {
@@ -776,10 +776,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
-        case MAVLINK_MSG_ID_WAYPOINT_ACK:
+        case MAVLINK_MSG_ID_MISSION_ACK:
             {
-                mavlink_waypoint_ack_t wpa;
-                mavlink_msg_waypoint_ack_decode(&message, &wpa);
+                mavlink_mission_ack_t wpa;
+                mavlink_msg_mission_ack_decode(&message, &wpa);
                 if(wpa.target_system == mavlink->getSystemId() && wpa.target_component == mavlink->getComponentId())
                 {
                     waypointManager.handleWaypointAck(message.sysid, message.compid, &wpa);
@@ -787,10 +787,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
-        case MAVLINK_MSG_ID_WAYPOINT_REQUEST:
+        case MAVLINK_MSG_ID_MISSION_REQUEST:
             {
-                mavlink_waypoint_request_t wpr;
-                mavlink_msg_waypoint_request_decode(&message, &wpr);
+                mavlink_mission_request_t wpr;
+                mavlink_msg_mission_request_decode(&message, &wpr);
                 if(wpr.target_system == mavlink->getSystemId() && wpr.target_component == mavlink->getComponentId())
                 {
                     waypointManager.handleWaypointRequest(message.sysid, message.compid, &wpr);
@@ -802,10 +802,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
-        case MAVLINK_MSG_ID_WAYPOINT_REACHED:
+        case MAVLINK_MSG_ID_MISSION_ITEM_REACHED:
             {
-                mavlink_waypoint_reached_t wpr;
-                mavlink_msg_waypoint_reached_decode(&message, &wpr);
+                mavlink_mission_item_reached_t wpr;
+                mavlink_msg_mission_item_reached_decode(&message, &wpr);
                 waypointManager.handleWaypointReached(message.sysid, message.compid, &wpr);
                 QString text = QString("System %1 reached waypoint %2").arg(getUASName()).arg(wpr.seq);
                 GAudioOutput::instance()->say(text);
@@ -813,10 +813,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
 
-        case MAVLINK_MSG_ID_WAYPOINT_CURRENT:
+        case MAVLINK_MSG_ID_MISSION_CURRENT:
             {
-                mavlink_waypoint_current_t wpc;
-                mavlink_msg_waypoint_current_decode(&message, &wpc);
+                mavlink_mission_current_t wpc;
+                mavlink_msg_mission_current_decode(&message, &wpc);
                 waypointManager.handleWaypointCurrent(message.sysid, message.compid, &wpc);
             }
             break;
@@ -1387,54 +1387,23 @@ float UAS::filterVoltage(float value) const
 
 QString UAS::getNavModeText(int mode)
 {
+    if (autopilot == MAV_AUTOPILOT_PIXHAWK)
+    {
     switch (mode)
     {
-    case MAV_AUTOPILOT_CUSTOM_MODE_PREFLIGHT:
+    case 0:
         return QString("PREFLIGHT");
         break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_MANUAL:
-        return QString("MANUAL");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_AUTO_TAKEOFF:
-        return QString("TAKEOFF");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_AUTO_HOLD:
-        return QString("HOLDING");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION:
-        return QString("MISSION");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_AUTO_VECTOR:
-        return QString("VECTOR");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_AUTO_RETURNING:
-        return QString("RETURNING");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_AUTO_LANDING:
-        return QString("LANDING");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_AUTO_LOST:
-        return QString("LOST");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_RATES_ACRO:
-        return QString("S: RATE/ACRO");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_LEVELING:
-        return QString("S: LEVELING");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_PITCH_ABSOLUTE:
-        return QString("S: R/P ABS");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_YAW_ALTITUDE:
-        return QString("S: R/Y ALT");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_PITCH_YAW_ALTITUDE:
-        return QString("S: R/P/Y ALT");
-        break;
-    case MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_CURSOR_CONTROL:
-        return QString("S: CURSOR");
-        break;
     default:
+        return QString("UNKNOWN");
+    }
+    }
+    else if (autopilot == MAV_AUTOPILOT_ARDUPILOTMEGA)
+    {
+        return QString("UNKNOWN");
+    }
+    else if (autopilot == MAV_AUTOPILOT_OPENPILOT)
+    {
         return QString("UNKNOWN");
     }
 }
@@ -2041,7 +2010,7 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     manualYawAngle = yaw * yawScaling;
     manualThrust = thrust * thrustScaling;
 
-    if(mode == (int)MAV_MODE_MANUAL)
+    if(mode == (int)MAV_MODE_MANUAL_ARMED)
     {
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
@@ -2258,7 +2227,7 @@ void UAS::shutdown()
 void UAS::setTargetPosition(float x, float y, float z, float yaw)
 {
     mavlink_message_t msg;
-    mavlink_msg_set_local_position_setpoint_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw);
+    mavlink_msg_set_local_position_setpoint_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_FRAME_LOCAL_NED, x, y, z, yaw);
 
     // Send message twice to increase chance of reception
     sendMessage(msg);
@@ -2295,20 +2264,35 @@ QString UAS::getShortModeTextFor(int id)
     case (uint8_t)MAV_MODE_PREFLIGHT:
         mode = "PREFLIGHT";
         break;
-    case (uint8_t)MAV_MODE_MANUAL:
-        mode = "MANUAL";
+    case (uint8_t)MAV_MODE_MANUAL_ARMED:
+        mode = "A|MANUAL";
         break;
-    case (uint8_t)MAV_MODE_AUTO:
-        mode = "AUTO";
+    case (uint8_t)MAV_MODE_MANUAL_DISARMED:
+        mode = "D|MANUAL";
         break;
-    case (uint8_t)MAV_MODE_GUIDED:
-        mode = "GUIDED";
+    case (uint8_t)MAV_MODE_AUTO_ARMED:
+        mode = "A|AUTO";
         break;
-    case (uint8_t)MAV_MODE_STABILIZE:
-        mode = "STABILIZED";
+    case (uint8_t)MAV_MODE_AUTO_DISARMED:
+        mode = "D|AUTO";
         break;
-    case (uint8_t)MAV_MODE_TEST:
-        mode = "TEST";
+    case (uint8_t)MAV_MODE_GUIDED_ARMED:
+        mode = "A|GUIDED";
+        break;
+    case (uint8_t)MAV_MODE_GUIDED_DISARMED:
+        mode = "D|GUIDED";
+        break;
+    case (uint8_t)MAV_MODE_STABILIZE_ARMED:
+        mode = "A|STABILIZED";
+        break;
+    case (uint8_t)MAV_MODE_STABILIZE_DISARMED:
+        mode = "D|STABILIZED";
+        break;
+    case (uint8_t)MAV_MODE_TEST_ARMED:
+        mode = "A|TEST";
+        break;
+    case (uint8_t)MAV_MODE_TEST_DISARMED:
+        mode = "D|TEST";
         break;
     default:
         mode = "UNKNOWN";

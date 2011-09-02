@@ -10,22 +10,24 @@ typedef struct __mavlink_set_local_position_setpoint_t
  float yaw; ///< Desired yaw angle
  uint8_t target_system; ///< System ID
  uint8_t target_component; ///< Component ID
+ uint8_t coordinate_frame; ///< Coordinate frame - valid values are only MAV_FRAME_LOCAL_NED or MAV_FRAME_LOCAL_ENU
 } mavlink_set_local_position_setpoint_t;
 
-#define MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT_LEN 18
-#define MAVLINK_MSG_ID_50_LEN 18
+#define MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT_LEN 19
+#define MAVLINK_MSG_ID_50_LEN 19
 
 
 
 #define MAVLINK_MESSAGE_INFO_SET_LOCAL_POSITION_SETPOINT { \
 	"SET_LOCAL_POSITION_SETPOINT", \
-	6, \
-	{  { "x", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_set_local_position_setpoint_t, x) }, \
-         { "y", MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_set_local_position_setpoint_t, y) }, \
-         { "z", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_set_local_position_setpoint_t, z) }, \
-         { "yaw", MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_set_local_position_setpoint_t, yaw) }, \
-         { "target_system", MAVLINK_TYPE_UINT8_T, 0, 16, offsetof(mavlink_set_local_position_setpoint_t, target_system) }, \
-         { "target_component", MAVLINK_TYPE_UINT8_T, 0, 17, offsetof(mavlink_set_local_position_setpoint_t, target_component) }, \
+	7, \
+	{  { "x", NULL, MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_set_local_position_setpoint_t, x) }, \
+         { "y", NULL, MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_set_local_position_setpoint_t, y) }, \
+         { "z", NULL, MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_set_local_position_setpoint_t, z) }, \
+         { "yaw", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_set_local_position_setpoint_t, yaw) }, \
+         { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 16, offsetof(mavlink_set_local_position_setpoint_t, target_system) }, \
+         { "target_component", NULL, MAVLINK_TYPE_UINT8_T, 0, 17, offsetof(mavlink_set_local_position_setpoint_t, target_component) }, \
+         { "coordinate_frame", NULL, MAVLINK_TYPE_UINT8_T, 0, 18, offsetof(mavlink_set_local_position_setpoint_t, coordinate_frame) }, \
          } \
 }
 
@@ -38,6 +40,7 @@ typedef struct __mavlink_set_local_position_setpoint_t
  *
  * @param target_system System ID
  * @param target_component Component ID
+ * @param coordinate_frame Coordinate frame - valid values are only MAV_FRAME_LOCAL_NED or MAV_FRAME_LOCAL_ENU
  * @param x x position
  * @param y y position
  * @param z z position
@@ -45,18 +48,19 @@ typedef struct __mavlink_set_local_position_setpoint_t
  * @return length of the message in bytes (excluding serial stream start sign)
  */
 static inline uint16_t mavlink_msg_set_local_position_setpoint_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
-						       uint8_t target_system, uint8_t target_component, float x, float y, float z, float yaw)
+						       uint8_t target_system, uint8_t target_component, uint8_t coordinate_frame, float x, float y, float z, float yaw)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[18];
+	char buf[19];
 	_mav_put_float(buf, 0, x);
 	_mav_put_float(buf, 4, y);
 	_mav_put_float(buf, 8, z);
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_uint8_t(buf, 16, target_system);
 	_mav_put_uint8_t(buf, 17, target_component);
+	_mav_put_uint8_t(buf, 18, coordinate_frame);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD(msg), buf, 19);
 #else
 	mavlink_set_local_position_setpoint_t packet;
 	packet.x = x;
@@ -65,12 +69,13 @@ static inline uint16_t mavlink_msg_set_local_position_setpoint_pack(uint8_t syst
 	packet.yaw = yaw;
 	packet.target_system = target_system;
 	packet.target_component = target_component;
+	packet.coordinate_frame = coordinate_frame;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 19);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT;
-	return mavlink_finalize_message(msg, system_id, component_id, 18, 131);
+	return mavlink_finalize_message(msg, system_id, component_id, 19, 214);
 }
 
 /**
@@ -81,6 +86,7 @@ static inline uint16_t mavlink_msg_set_local_position_setpoint_pack(uint8_t syst
  * @param msg The MAVLink message to compress the data into
  * @param target_system System ID
  * @param target_component Component ID
+ * @param coordinate_frame Coordinate frame - valid values are only MAV_FRAME_LOCAL_NED or MAV_FRAME_LOCAL_ENU
  * @param x x position
  * @param y y position
  * @param z z position
@@ -89,18 +95,19 @@ static inline uint16_t mavlink_msg_set_local_position_setpoint_pack(uint8_t syst
  */
 static inline uint16_t mavlink_msg_set_local_position_setpoint_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
 							   mavlink_message_t* msg,
-						           uint8_t target_system,uint8_t target_component,float x,float y,float z,float yaw)
+						           uint8_t target_system,uint8_t target_component,uint8_t coordinate_frame,float x,float y,float z,float yaw)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[18];
+	char buf[19];
 	_mav_put_float(buf, 0, x);
 	_mav_put_float(buf, 4, y);
 	_mav_put_float(buf, 8, z);
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_uint8_t(buf, 16, target_system);
 	_mav_put_uint8_t(buf, 17, target_component);
+	_mav_put_uint8_t(buf, 18, coordinate_frame);
 
-        memcpy(_MAV_PAYLOAD(msg), buf, 18);
+        memcpy(_MAV_PAYLOAD(msg), buf, 19);
 #else
 	mavlink_set_local_position_setpoint_t packet;
 	packet.x = x;
@@ -109,12 +116,13 @@ static inline uint16_t mavlink_msg_set_local_position_setpoint_pack_chan(uint8_t
 	packet.yaw = yaw;
 	packet.target_system = target_system;
 	packet.target_component = target_component;
+	packet.coordinate_frame = coordinate_frame;
 
-        memcpy(_MAV_PAYLOAD(msg), &packet, 18);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 19);
 #endif
 
 	msg->msgid = MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT;
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 18, 131);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 19, 214);
 }
 
 /**
@@ -127,7 +135,7 @@ static inline uint16_t mavlink_msg_set_local_position_setpoint_pack_chan(uint8_t
  */
 static inline uint16_t mavlink_msg_set_local_position_setpoint_encode(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, const mavlink_set_local_position_setpoint_t* set_local_position_setpoint)
 {
-	return mavlink_msg_set_local_position_setpoint_pack(system_id, component_id, msg, set_local_position_setpoint->target_system, set_local_position_setpoint->target_component, set_local_position_setpoint->x, set_local_position_setpoint->y, set_local_position_setpoint->z, set_local_position_setpoint->yaw);
+	return mavlink_msg_set_local_position_setpoint_pack(system_id, component_id, msg, set_local_position_setpoint->target_system, set_local_position_setpoint->target_component, set_local_position_setpoint->coordinate_frame, set_local_position_setpoint->x, set_local_position_setpoint->y, set_local_position_setpoint->z, set_local_position_setpoint->yaw);
 }
 
 /**
@@ -136,6 +144,7 @@ static inline uint16_t mavlink_msg_set_local_position_setpoint_encode(uint8_t sy
  *
  * @param target_system System ID
  * @param target_component Component ID
+ * @param coordinate_frame Coordinate frame - valid values are only MAV_FRAME_LOCAL_NED or MAV_FRAME_LOCAL_ENU
  * @param x x position
  * @param y y position
  * @param z z position
@@ -143,18 +152,19 @@ static inline uint16_t mavlink_msg_set_local_position_setpoint_encode(uint8_t sy
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_set_local_position_setpoint_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, float x, float y, float z, float yaw)
+static inline void mavlink_msg_set_local_position_setpoint_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, uint8_t coordinate_frame, float x, float y, float z, float yaw)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
-	char buf[18];
+	char buf[19];
 	_mav_put_float(buf, 0, x);
 	_mav_put_float(buf, 4, y);
 	_mav_put_float(buf, 8, z);
 	_mav_put_float(buf, 12, yaw);
 	_mav_put_uint8_t(buf, 16, target_system);
 	_mav_put_uint8_t(buf, 17, target_component);
+	_mav_put_uint8_t(buf, 18, coordinate_frame);
 
-	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT, buf, 18, 131);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT, buf, 19, 214);
 #else
 	mavlink_set_local_position_setpoint_t packet;
 	packet.x = x;
@@ -163,8 +173,9 @@ static inline void mavlink_msg_set_local_position_setpoint_send(mavlink_channel_
 	packet.yaw = yaw;
 	packet.target_system = target_system;
 	packet.target_component = target_component;
+	packet.coordinate_frame = coordinate_frame;
 
-	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT, (const char *)&packet, 18, 131);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT, (const char *)&packet, 19, 214);
 #endif
 }
 
@@ -191,6 +202,16 @@ static inline uint8_t mavlink_msg_set_local_position_setpoint_get_target_system(
 static inline uint8_t mavlink_msg_set_local_position_setpoint_get_target_component(const mavlink_message_t* msg)
 {
 	return _MAV_RETURN_uint8_t(msg,  17);
+}
+
+/**
+ * @brief Get field coordinate_frame from set_local_position_setpoint message
+ *
+ * @return Coordinate frame - valid values are only MAV_FRAME_LOCAL_NED or MAV_FRAME_LOCAL_ENU
+ */
+static inline uint8_t mavlink_msg_set_local_position_setpoint_get_coordinate_frame(const mavlink_message_t* msg)
+{
+	return _MAV_RETURN_uint8_t(msg,  18);
 }
 
 /**
@@ -248,7 +269,8 @@ static inline void mavlink_msg_set_local_position_setpoint_decode(const mavlink_
 	set_local_position_setpoint->yaw = mavlink_msg_set_local_position_setpoint_get_yaw(msg);
 	set_local_position_setpoint->target_system = mavlink_msg_set_local_position_setpoint_get_target_system(msg);
 	set_local_position_setpoint->target_component = mavlink_msg_set_local_position_setpoint_get_target_component(msg);
+	set_local_position_setpoint->coordinate_frame = mavlink_msg_set_local_position_setpoint_get_coordinate_frame(msg);
 #else
-	memcpy(set_local_position_setpoint, _MAV_PAYLOAD(msg), 18);
+	memcpy(set_local_position_setpoint, _MAV_PAYLOAD(msg), 19);
 #endif
 }

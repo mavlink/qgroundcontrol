@@ -68,11 +68,11 @@ public:
     /** @name Received message handlers */
     /*@{*/
     void handleWaypointCount(quint8 systemId, quint8 compId, quint16 count);                            ///< Handles received waypoint count messages
-    void handleWaypoint(quint8 systemId, quint8 compId, mavlink_waypoint_t *wp);                        ///< Handles received waypoint messages
-    void handleWaypointAck(quint8 systemId, quint8 compId, mavlink_waypoint_ack_t *wpa);                ///< Handles received waypoint ack messages
-    void handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_waypoint_request_t *wpr);        ///< Handles received waypoint request messages
-    void handleWaypointReached(quint8 systemId, quint8 compId, mavlink_waypoint_reached_t *wpr);        ///< Handles received waypoint reached messages
-    void handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_waypoint_current_t *wpc);        ///< Handles received set current waypoint messages
+    void handleWaypoint(quint8 systemId, quint8 compId, mavlink_mission_item_t *wp);                        ///< Handles received waypoint messages
+    void handleWaypointAck(quint8 systemId, quint8 compId, mavlink_mission_ack_t *wpa);                ///< Handles received waypoint ack messages
+    void handleWaypointRequest(quint8 systemId, quint8 compId, mavlink_mission_request_t *wpr);        ///< Handles received waypoint request messages
+    void handleWaypointReached(quint8 systemId, quint8 compId, mavlink_mission_item_reached_t *wpr);        ///< Handles received waypoint reached messages
+    void handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_mission_current_t *wpc);        ///< Handles received set current waypoint messages
     /*@}*/
 
     /** @name Remote operations */
@@ -159,7 +159,7 @@ private:
     quint8 current_partner_compid;                  ///< The current protocol communication target component
 
     QVector<Waypoint *> waypoints;                  ///< local waypoint list (main storage)
-    QVector<mavlink_waypoint_t *> waypoint_buffer;  ///< buffer for waypoints during communication
+    QVector<mavlink_mission_item_t *> waypoint_buffer;  ///< buffer for waypoints during communication
     QTimer protocol_timer;                          ///< Timer to catch timeouts
 };
 

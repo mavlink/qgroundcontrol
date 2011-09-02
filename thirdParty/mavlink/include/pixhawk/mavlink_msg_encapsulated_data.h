@@ -16,8 +16,8 @@ typedef struct __mavlink_encapsulated_data_t
 #define MAVLINK_MESSAGE_INFO_ENCAPSULATED_DATA { \
 	"ENCAPSULATED_DATA", \
 	2, \
-	{  { "seqnr", MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_encapsulated_data_t, seqnr) }, \
-         { "data", MAVLINK_TYPE_UINT8_T, 253, 2, offsetof(mavlink_encapsulated_data_t, data) }, \
+	{  { "seqnr", NULL, MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_encapsulated_data_t, seqnr) }, \
+         { "data", NULL, MAVLINK_TYPE_UINT8_T, 253, 2, offsetof(mavlink_encapsulated_data_t, data) }, \
          } \
 }
 

@@ -67,7 +67,7 @@ protected:
     QUdpSocket* rxSocket;
     UAS* activeUas;
 
-    mavlink_local_position_t tmpLocalPositionData;
+    mavlink_local_position_ned_t tmpLocalPositionData;
     mavlink_attitude_t tmpAttitudeData;
     mavlink_raw_imu_t tmpRawImuData;
 #ifdef MAVLINK_ENABLED_SLUGS

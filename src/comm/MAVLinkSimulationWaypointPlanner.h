@@ -37,11 +37,11 @@ protected:
     uint64_t timestamp_lastoutside_orbit;///< timestamp when the MAV was last outside the orbit or had the wrong yaw value
     uint64_t timestamp_firstinside_orbit;///< timestamp when the MAV was the first time after a waypoint change inside the orbit and had the correct yaw value
 
-    std::vector<mavlink_waypoint_t*> waypoints1;	///< vector1 that holds the waypoints
-    std::vector<mavlink_waypoint_t*> waypoints2;	///< vector2 that holds the waypoints
+    std::vector<mavlink_mission_item_t*> waypoints1;	///< vector1 that holds the waypoints
+    std::vector<mavlink_mission_item_t*> waypoints2;	///< vector2 that holds the waypoints
 
-    std::vector<mavlink_waypoint_t*>* waypoints;		///< pointer to the currently active waypoint vector
-    std::vector<mavlink_waypoint_t*>* waypoints_receive_buffer;	///< pointer to the receive buffer waypoint vector
+    std::vector<mavlink_mission_item_t*>* waypoints;		///< pointer to the currently active waypoint vector
+    std::vector<mavlink_mission_item_t*>* waypoints_receive_buffer;	///< pointer to the receive buffer waypoint vector
     PX_WAYPOINTPLANNER_STATES current_state;
     uint16_t protocol_current_wp_id;
     uint16_t protocol_current_count;

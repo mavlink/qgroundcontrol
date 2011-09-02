@@ -40,7 +40,7 @@ MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int sy
     nextSPYaw(0.0),
     sys_mode(MAV_MODE_PREFLIGHT),
     sys_state(MAV_STATE_STANDBY),
-    nav_mode(MAV_AUTOPILOT_CUSTOM_MODE_PREFLIGHT),
+    nav_mode(0),
     flying(false),
     mavlink_version(version)
 {
@@ -61,14 +61,14 @@ void MAVLinkSimulationMAV::mainloop()
 
     if (flying) {
         sys_state = MAV_STATE_ACTIVE;
-        sys_mode = MAV_MODE_AUTO;
-        nav_mode = MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION;
+        sys_mode = MAV_MODE_AUTO_ARMED;
+        nav_mode = 0;
     }
 
     // 1 Hz execution
     if (timer1Hz <= 0) {
         mavlink_message_t msg;
-        mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_TYPE_FIXED_WING, MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_MODE_GUIDED, MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION, MAV_STATE_ACTIVE);
+        mavlink_msg_heartbeat_pack(systemid, MAV_COMP_ID_IMU, &msg, MAV_TYPE_FIXED_WING, MAV_AUTOPILOT_ARDUPILOTMEGA, MAV_MODE_GUIDED_ARMED, 0, MAV_STATE_ACTIVE);
         link->sendMAVLinkMessage(&msg);
         planner.handleMessage(msg);
 
@@ -322,7 +322,7 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
         mavlink_set_local_position_setpoint_t sp;
         mavlink_msg_set_local_position_setpoint_decode(&msg, &sp);
         if (sp.target_system == this->systemid) {
-            nav_mode = MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION;
+            nav_mode = 0;
             previousSPX = nextSPX;
             previousSPY = nextSPY;
             previousSPZ = nextSPZ;
