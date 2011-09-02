@@ -51,11 +51,11 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
     ui.modeComboBox->clear();
     ui.modeComboBox->insertItem(MAV_MODE_PREFLIGHT, UAS::getShortModeTextFor(MAV_MODE_PREFLIGHT));
-    ui.modeComboBox->insertItem(MAV_MODE_STABILIZE, UAS::getShortModeTextFor(MAV_MODE_STABILIZE));
-    ui.modeComboBox->insertItem(MAV_MODE_MANUAL, UAS::getShortModeTextFor(MAV_MODE_MANUAL));
-    ui.modeComboBox->insertItem(MAV_MODE_GUIDED, UAS::getShortModeTextFor(MAV_MODE_GUIDED));
-    ui.modeComboBox->insertItem(MAV_MODE_AUTO, UAS::getShortModeTextFor(MAV_MODE_AUTO));
-    ui.modeComboBox->insertItem(MAV_MODE_TEST, UAS::getShortModeTextFor(MAV_MODE_TEST));
+    ui.modeComboBox->insertItem(MAV_MODE_STABILIZE_ARMED, UAS::getShortModeTextFor(MAV_MODE_STABILIZE_ARMED));
+    ui.modeComboBox->insertItem(MAV_MODE_MANUAL_ARMED, UAS::getShortModeTextFor(MAV_MODE_MANUAL_ARMED));
+    ui.modeComboBox->insertItem(MAV_MODE_GUIDED_DISARMED, UAS::getShortModeTextFor(MAV_MODE_GUIDED_ARMED));
+    ui.modeComboBox->insertItem(MAV_MODE_AUTO_ARMED, UAS::getShortModeTextFor(MAV_MODE_AUTO_ARMED));
+    ui.modeComboBox->insertItem(MAV_MODE_TEST_ARMED, UAS::getShortModeTextFor(MAV_MODE_TEST_ARMED));
     connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 

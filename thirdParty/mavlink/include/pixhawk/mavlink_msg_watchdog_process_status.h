@@ -20,12 +20,12 @@ typedef struct __mavlink_watchdog_process_status_t
 #define MAVLINK_MESSAGE_INFO_WATCHDOG_PROCESS_STATUS { \
 	"WATCHDOG_PROCESS_STATUS", \
 	6, \
-	{  { "pid", MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_watchdog_process_status_t, pid) }, \
-         { "watchdog_id", MAVLINK_TYPE_UINT16_T, 0, 4, offsetof(mavlink_watchdog_process_status_t, watchdog_id) }, \
-         { "process_id", MAVLINK_TYPE_UINT16_T, 0, 6, offsetof(mavlink_watchdog_process_status_t, process_id) }, \
-         { "crashes", MAVLINK_TYPE_UINT16_T, 0, 8, offsetof(mavlink_watchdog_process_status_t, crashes) }, \
-         { "state", MAVLINK_TYPE_UINT8_T, 0, 10, offsetof(mavlink_watchdog_process_status_t, state) }, \
-         { "muted", MAVLINK_TYPE_UINT8_T, 0, 11, offsetof(mavlink_watchdog_process_status_t, muted) }, \
+	{  { "pid", NULL, MAVLINK_TYPE_INT32_T, 0, 0, offsetof(mavlink_watchdog_process_status_t, pid) }, \
+         { "watchdog_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 4, offsetof(mavlink_watchdog_process_status_t, watchdog_id) }, \
+         { "process_id", NULL, MAVLINK_TYPE_UINT16_T, 0, 6, offsetof(mavlink_watchdog_process_status_t, process_id) }, \
+         { "crashes", NULL, MAVLINK_TYPE_UINT16_T, 0, 8, offsetof(mavlink_watchdog_process_status_t, crashes) }, \
+         { "state", NULL, MAVLINK_TYPE_UINT8_T, 0, 10, offsetof(mavlink_watchdog_process_status_t, state) }, \
+         { "muted", NULL, MAVLINK_TYPE_UINT8_T, 0, 11, offsetof(mavlink_watchdog_process_status_t, muted) }, \
          } \
 }
 

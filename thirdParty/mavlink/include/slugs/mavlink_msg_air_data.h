@@ -17,9 +17,9 @@ typedef struct __mavlink_air_data_t
 #define MAVLINK_MESSAGE_INFO_AIR_DATA { \
 	"AIR_DATA", \
 	3, \
-	{  { "dynamicPressure", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_air_data_t, dynamicPressure) }, \
-         { "staticPressure", MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_air_data_t, staticPressure) }, \
-         { "temperature", MAVLINK_TYPE_UINT16_T, 0, 8, offsetof(mavlink_air_data_t, temperature) }, \
+	{  { "dynamicPressure", NULL, MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_air_data_t, dynamicPressure) }, \
+         { "staticPressure", NULL, MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_air_data_t, staticPressure) }, \
+         { "temperature", NULL, MAVLINK_TYPE_UINT16_T, 0, 8, offsetof(mavlink_air_data_t, temperature) }, \
          } \
 }
 

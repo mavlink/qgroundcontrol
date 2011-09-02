@@ -269,8 +269,8 @@ void DebugConsole::receiveTextMessage(int id, int component, int severity, QStri
         case MAV_COMP_ID_MAPPER:
             comp = tr("MAPPER");
             break;
-        case MAV_COMP_ID_WAYPOINTPLANNER:
-            comp = tr("WP-PLANNER");
+        case MAV_COMP_ID_MISSIONPLANNER:
+            comp = tr("MISSION");
             break;
         case MAV_COMP_ID_SYSTEM_CONTROL:
             comp = tr("SYS-CONTROL");

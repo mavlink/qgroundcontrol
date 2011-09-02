@@ -21,13 +21,13 @@ typedef struct __mavlink_gps_date_time_t
 #define MAVLINK_MESSAGE_INFO_GPS_DATE_TIME { \
 	"GPS_DATE_TIME", \
 	7, \
-	{  { "year", MAVLINK_TYPE_UINT8_T, 0, 0, offsetof(mavlink_gps_date_time_t, year) }, \
-         { "month", MAVLINK_TYPE_UINT8_T, 0, 1, offsetof(mavlink_gps_date_time_t, month) }, \
-         { "day", MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_gps_date_time_t, day) }, \
-         { "hour", MAVLINK_TYPE_UINT8_T, 0, 3, offsetof(mavlink_gps_date_time_t, hour) }, \
-         { "min", MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_gps_date_time_t, min) }, \
-         { "sec", MAVLINK_TYPE_UINT8_T, 0, 5, offsetof(mavlink_gps_date_time_t, sec) }, \
-         { "visSat", MAVLINK_TYPE_UINT8_T, 0, 6, offsetof(mavlink_gps_date_time_t, visSat) }, \
+	{  { "year", NULL, MAVLINK_TYPE_UINT8_T, 0, 0, offsetof(mavlink_gps_date_time_t, year) }, \
+         { "month", NULL, MAVLINK_TYPE_UINT8_T, 0, 1, offsetof(mavlink_gps_date_time_t, month) }, \
+         { "day", NULL, MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_gps_date_time_t, day) }, \
+         { "hour", NULL, MAVLINK_TYPE_UINT8_T, 0, 3, offsetof(mavlink_gps_date_time_t, hour) }, \
+         { "min", NULL, MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_gps_date_time_t, min) }, \
+         { "sec", NULL, MAVLINK_TYPE_UINT8_T, 0, 5, offsetof(mavlink_gps_date_time_t, sec) }, \
+         { "visSat", NULL, MAVLINK_TYPE_UINT8_T, 0, 6, offsetof(mavlink_gps_date_time_t, visSat) }, \
          } \
 }
 

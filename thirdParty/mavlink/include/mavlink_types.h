@@ -1,8 +1,6 @@
 #ifndef MAVLINK_TYPES_H_
 #define MAVLINK_TYPES_H_
 
-#include "inttypes.h"
-
 enum MAV_ACTION
 {
     MAV_ACTION_HOLD = 0,
@@ -107,6 +105,7 @@ typedef enum {
 
 typedef struct __mavlink_field_info {
 	const char *name;             // name of this field
+	const char *print_format;     // printing format hint, or NULL
 	mavlink_message_type_t type;  // type of this field
 	unsigned array_length;        // if non-zero, field is an array
 	unsigned wire_offset;         // offset of each field in the payload
@@ -118,7 +117,7 @@ typedef struct __mavlink_field_info {
 typedef struct __mavlink_message_info {
 	const char *name;                                      // name of the message
 	unsigned num_fields;                                   // how many fields in this message
-        mavlink_field_info_t fields[MAVLINK_MAX_FIELDS]; // field information
+	mavlink_field_info_t fields[MAVLINK_MAX_FIELDS];       // field information
 } mavlink_message_info_t;
 
 #define _MAV_PAYLOAD(msg) ((char *)(&(msg)->payload64[0]))

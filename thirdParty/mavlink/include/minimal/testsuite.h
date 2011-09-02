@@ -30,24 +30,20 @@ static void mavlink_test_heartbeat(uint8_t system_id, uint8_t component_id, mavl
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         uint16_t i;
 	mavlink_heartbeat_t packet_in = {
-		5,
-	72,
-	139,
-	206,
+		963497464,
 	17,
 	84,
 	151,
+	218,
 	2,
 	};
 	mavlink_heartbeat_t packet1, packet2;
         memset(&packet1, 0, sizeof(packet1));
+        	packet1.custom_mode = packet_in.custom_mode;
         	packet1.type = packet_in.type;
         	packet1.autopilot = packet_in.autopilot;
-        	packet1.mode = packet_in.mode;
-        	packet1.nav_mode = packet_in.nav_mode;
-        	packet1.status = packet_in.status;
-        	packet1.safety_status = packet_in.safety_status;
-        	packet1.link_status = packet_in.link_status;
+        	packet1.base_mode = packet_in.base_mode;
+        	packet1.system_status = packet_in.system_status;
         	packet1.mavlink_version = packet_in.mavlink_version;
         
         
@@ -58,12 +54,12 @@ static void mavlink_test_heartbeat(uint8_t system_id, uint8_t component_id, mavl
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_heartbeat_pack(system_id, component_id, &msg , packet1.type , packet1.autopilot , packet1.mode , packet1.nav_mode , packet1.status , packet1.safety_status , packet1.link_status );
+	mavlink_msg_heartbeat_pack(system_id, component_id, &msg , packet1.type , packet1.autopilot , packet1.base_mode , packet1.custom_mode , packet1.system_status );
 	mavlink_msg_heartbeat_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_heartbeat_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.type , packet1.autopilot , packet1.mode , packet1.nav_mode , packet1.status , packet1.safety_status , packet1.link_status );
+	mavlink_msg_heartbeat_pack_chan(system_id, component_id, MAVLINK_COMM_0, &msg , packet1.type , packet1.autopilot , packet1.base_mode , packet1.custom_mode , packet1.system_status );
 	mavlink_msg_heartbeat_decode(&msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 
@@ -76,7 +72,7 @@ static void mavlink_test_heartbeat(uint8_t system_id, uint8_t component_id, mavl
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
         
         memset(&packet2, 0, sizeof(packet2));
-	mavlink_msg_heartbeat_send(MAVLINK_COMM_1 , packet1.type , packet1.autopilot , packet1.mode , packet1.nav_mode , packet1.status , packet1.safety_status , packet1.link_status );
+	mavlink_msg_heartbeat_send(MAVLINK_COMM_1 , packet1.type , packet1.autopilot , packet1.base_mode , packet1.custom_mode , packet1.system_status );
 	mavlink_msg_heartbeat_decode(last_msg, &packet2);
         MAVLINK_ASSERT(memcmp(&packet1, &packet2, sizeof(packet1)) == 0);
 }

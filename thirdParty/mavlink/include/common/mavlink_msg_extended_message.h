@@ -17,9 +17,9 @@ typedef struct __mavlink_extended_message_t
 #define MAVLINK_MESSAGE_INFO_EXTENDED_MESSAGE { \
 	"EXTENDED_MESSAGE", \
 	3, \
-	{  { "target_system", MAVLINK_TYPE_UINT8_T, 0, 0, offsetof(mavlink_extended_message_t, target_system) }, \
-         { "target_component", MAVLINK_TYPE_UINT8_T, 0, 1, offsetof(mavlink_extended_message_t, target_component) }, \
-         { "protocol_flags", MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_extended_message_t, protocol_flags) }, \
+	{  { "target_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 0, offsetof(mavlink_extended_message_t, target_system) }, \
+         { "target_component", NULL, MAVLINK_TYPE_UINT8_T, 0, 1, offsetof(mavlink_extended_message_t, target_component) }, \
+         { "protocol_flags", NULL, MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_extended_message_t, protocol_flags) }, \
          } \
 }
 

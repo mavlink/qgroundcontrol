@@ -19,10 +19,10 @@
                <entry value="4" name="MAV_AUTOPILOT_OPENPILOT">
                     <description>OpenPilot, http://openpilot.org</description>
                </entry>
-               <entry value="5" name="MAV_AUTOPILOT_GENERIC_MISSION_WAYPOINTS_ONLY">
+               <entry value="5" name="MAV_AUTOPILOT_GENERIC_WAYPOINTS_ONLY">
                     <description>Generic autopilot only supporting simple waypoints</description>
                </entry>
-               <entry value="6" name="MAV_AUTOPILOT_GENERIC_MISSION_NAVIGATION_ONLY">
+               <entry value="6" name="MAV_AUTOPILOT_GENERIC_WAYPOINTS_AND_SIMPLE_NAVIGATION_ONLY">
                     <description>Generic autopilot supporting waypoints and other simple navigation commands</description>
                </entry>
                <entry value="7" name="MAV_AUTOPILOT_GENERIC_MISSION_FULL">
@@ -44,113 +44,95 @@
           <!-- WARNING: MAV_ACTION Enum is no longer supported - has been removed. Please use MAV_CMD -->
           <enum name="MAV_MODE_FLAG">
           		<description>These flags encode the MAV mode.</description>
-          		<entry value="64" name="MAV_MODE_FLAG_SAFETY_ARMED">
+          		<entry value="128" name="MAV_MODE_FLAG_SAFETY_ARMED">
           			<description>0b10000000 MAV safety set to armed. Motors are enabled / running / can start. Ready to fly.</description>
           		</entry>
-                <entry value="0" name="MAV_MODE_FLAG_SAFETY_DISARMED">
-          			<description>MAV safety set to disarmed. Motors are BLOCKED. Independent of the system mode and navigation mode all actuators are blocked.</description>
+                <entry value="64" name="MAV_MODE_FLAG_MANUAL_INPUT_ENABLED">
+          			<description>0b01000000 remote control input is enabled.</description>
           		</entry>
-                <entry value="32" name="MAV_MODE_FLAG_MANUAL_INPUT_ENABLED">
-          			<description>0b01000000 Remote control input is enabled.</description>
+          		<entry value="32" name="MAV_MODE_FLAG_HIL_ENABLED">
+          			<description>0b00100000 hardware in the loop simulation. All motors / actuators are blocked, but internal software is full operational.</description>
           		</entry>
-          		<entry value="0" name="MAV_MODE_FLAG_MANUAL_INPUT_DISABLED">
-          			<description>Remote control input is disabled</description>
+                <entry value="16" name="MAV_MODE_FLAG_STABILIZE_ENABLED">
+          			<description>0b00010000 system stabilizes electronically its attitude (and optionally position). It needs however further control inputs to move around.</description>
           		</entry>
-          		<entry value="16" name="MAV_MODE_FLAG_HIL_ENABLED">
-          			<description>0b00100000 MAV safety lock set to hardware in the loop simulation. All motors / actuators are blocked, but internal software is full operational.</description>
+                <entry value="8" name="MAV_MODE_FLAG_GUIDED_ENABLED">
+          			<description>0b00001000 guided mode enabled, system flies MISSIONs / mission items.</description>
           		</entry>
-          		<entry value="0" name="MAV_MODE_FLAG_HIL_DISABLED">
-          			<description>Hardware in the loop simulation is not enabled, actuators behave normal.</description>
+                <entry value="4" name="MAV_MODE_FLAG_AUTO_ENABLED">
+          			<description>0b00000100 autonomous mode enabled, system finds its own goal positions. Guided flag can be set or not, depends on the actual implementation.</description>
+          		</entry>
+                <entry value="2" name="MAV_MODE_FLAG_TEST_ENABLED">
+          			<description>0b00000010 system has a test mode enabled. This flag is intended for temporary system tests and should not be used for stable implementations.</description>
+          		</entry>
+                <entry value="1" name="MAV_MODE_FLAG_RESERVED_ENABLED">
+          			<description>0b00000001 Reserved for future use.</description>
           		</entry>
           </enum>
           
           <enum name="MAV_MODE_FLAG_DECODE_POSITION">
-          		<description>These values encode the bit positions of the decode position</description>
-                <entry value="64" name="MAV_MODE_FLAG_DECODE_POSITION_SAFETY">
-          			<description>First bit: 10000000</description>
+          		<description>These values encode the bit positions of the decode position. These values can be used to read the value of a flag bit by combining the base_mode variable with AND with the flag position value. The result will be either 0 or 1, depending on if the flag is set or not.</description>
+                <entry value="128" name="MAV_MODE_FLAG_DECODE_POSITION_SAFETY">
+          			<description>First bit:  10000000</description>
           		</entry>
-                <entry value="32" name="MAV_MODE_FLAG_DECODE_POSITION_MANUAL">
+                <entry value="64" name="MAV_MODE_FLAG_DECODE_POSITION_MANUAL">
           			<description>Second bit: 01000000</description>
           		</entry>
-          		<entry value="16" name="MAV_MODE_FLAG_DECODE_POSITION_HIL">
-          			<description>Third bit: 00100000</description>
+          		<entry value="32" name="MAV_MODE_FLAG_DECODE_POSITION_HIL">
+          			<description>Third bit:  00100000</description>
+          		</entry>
+                <entry value="16" name="MAV_MODE_FLAG_DECODE_POSITION_STABILIZE">
+          			<description>Fourth bit: 00010000</description>
+          		</entry>
+                <entry value="8" name="MAV_MODE_FLAG_DECODE_POSITION_GUIDED">
+          			<description>Fifth bit:  00001000</description>
+          		</entry>
+                <entry value="4" name="MAV_MODE_FLAG_DECODE_POSITION_AUTO">
+          			<description>Sixt bit:   00000100</description>
+          		</entry>
+                <entry value="2" name="MAV_MODE_FLAG_DECODE_POSITION_TEST">
+          			<description>Seventh bit: 00000010</description>
+          		</entry>
+                <entry value="1" name="MAV_MODE_FLAG_DECODE_POSITION_RESERVED">
+          			<description>Eighth bit: 00000001</description>
           		</entry>
           </enum>
           
           <enum name="MAV_MODE">
+               <description>These defines are predefined OR-combined mode flags. There is no need to use values from this enum, but it
+               simplifies the use of the mode flags. Note that manual input is enabled in all modes as a safety override.</description>
                <entry value="0" name="MAV_MODE_PREFLIGHT">
-                    <description>System is not ready to fly, booting, calibrating, etc.</description>
+                    <description>System is not ready to fly, booting, calibrating, etc. No flag is set.</description>
                </entry>
-               <entry value="1" name="MAV_MODE_STABILIZE">
-                    <description>System is allowed to be active, under assisted RC control. Level of stabilization depends on MAV_FLIGTH_MODE</description>
+               <entry value="80" name="MAV_MODE_STABILIZE_DISARMED">
+                    <description>System is allowed to be active, under assisted RC control.</description>
                </entry>
-               <entry value="2" name="MAV_MODE_MANUAL">
+               <entry value="208" name="MAV_MODE_STABILIZE_ARMED">
+                    <description>System is allowed to be active, under assisted RC control.</description>
+               </entry>
+               <entry value="64" name="MAV_MODE_MANUAL_DISARMED">
                     <description>System is allowed to be active, under manual (RC) control, no stabilization</description>
                </entry>
-               <entry value="3" name="MAV_MODE_GUIDED">
+               <entry value="192" name="MAV_MODE_MANUAL_ARMED">
+                    <description>System is allowed to be active, under manual (RC) control, no stabilization</description>
+               </entry>
+               <entry value="88" name="MAV_MODE_GUIDED_DISARMED">
                     <description>System is allowed to be active, under autonomous control, manual setpoint</description>
                </entry>
-               <entry value="4" name="MAV_MODE_AUTO">
-                    <description>System is allowed to be active, under autonomous control and navigation (the trajectory is decided onboard and not pre-programmed by waypoints)</description>
+               <entry value="216" name="MAV_MODE_GUIDED_ARMED">
+                    <description>System is allowed to be active, under autonomous control, manual setpoint</description>
                </entry>
-               <entry value="5" name="MAV_MODE_TEST">
+               <entry value="92" name="MAV_MODE_AUTO_DISARMED">
+                    <description>System is allowed to be active, under autonomous control and navigation (the trajectory is decided onboard and not pre-programmed by MISSIONs)</description>
+               </entry>
+               <entry value="220" name="MAV_MODE_AUTO_ARMED">
+                    <description>System is allowed to be active, under autonomous control and navigation (the trajectory is decided onboard and not pre-programmed by MISSIONs)</description>
+               </entry>
+               <entry value="66" name="MAV_MODE_TEST_DISARMED">
                     <description>UNDEFINED mode. This solely depends on the autopilot - use with caution, intended for developers only.</description>
                </entry>
-          </enum>
-          <enum name="MAV_AUTOPILOT_CUSTOM_MODE">
-               <entry value="0" name="MAV_AUTOPILOT_CUSTOM_MODE_PREFLIGHT">
-                    <description>System is currently on ground.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_MANUAL">
-                    <description>No interaction of the autopilot with the actuator outputs, pure manual flight.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_TAKEOFF">
-                    <description>System is during takeoff, not in normal navigation mode yet. Once the plane is moving faster than a few m/s it will lock onto a heading and hold that heading until the desired altitude is reached. Throttle is limited by the RC throttle setting.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_HOLD">
-                    <description>System is holding its current position and disabled the mission management. Loitering in mission mode is NOT the hold type, but still mission mode.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_MISSION">
-                    <description>System is navigating towards the next waypoint and following a mission script.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_VECTOR">
-                    <description>System is flying at a defined course and speed. If the vector is not defined by an autonomous approach but constantly by a user, please use MAV_AUTOPILOT_CUSTOM_MODE_FBW_CURSOR_CONTROL</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_RETURNING">
-                    <description>System is returning straight to home position. Once it reaches there it will hover or loiter at the autopilot's default holding settings.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_LANDING">
-                    <description>System is landing. Throttle is controlled by the autopilot. After getting closer than 30 meters, the course will lock to the current heading. Flare, throttle, flaps, gear, and other events can be scripted based on distance to landing point.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_AUTO_LOST">
-                    <description>System lost its position input and is in attitude / flight stabilization only.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_RATES_ACRO">
-                    <description>The stick inputs commands angular rates. Only recommended for experienced pilots / acrobatic flight.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_LEVELING">
-                    <description>RC control with stabilization; let go of the sticks and it will level.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_PITCH_ABSOLUTE">
-                    <description>The autopilot will hold the roll and pitch specified by the control sticks. Throttle is manual. The plane / quadrotor will not roll past the limits set in the configuration of the autopilot. Great for new pilots learning to fly.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_YAW_ALTITUDE">
-                    <description>Requires airspeed sensor. The autopilot will hold the roll specified by the control sticks. Pitch input from the radio is converted to altitude error, which the autopilot will try and adjust to. Throttle is controlled by autopilot. This is the perfect mode to test your autopilot as your radio inout is substituted for the navigation controls.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_ROLL_PITCH_YAW_ALTITUDE">
-                    <description>Fly by wire mode, stabilizing roll, pitch, yaw and altitude. Typical altitude hold for quadrotors where the X / Y position is commanded with the roll / pitch stick.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_STABILIZE_CURSOR_CONTROL">
-                    <description>Fly by wire mode, user is only directing the movement, but all flight control is autonomous (similar to MAV_AUTOPILOT_CUSTOM_MODE_AUTO_VECTOR with user input)</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_TEST1">
-                    <description>Custom test mode, depends on individual autopilot.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_TEST2">
-                    <description>Custom test mode, depends on individual autopilot.</description>
-               </entry>
-               <entry name="MAV_AUTOPILOT_CUSTOM_MODE_TEST3">
-                    <description>Custom test mode, depends on individual autopilot.</description>
+               <entry value="194" name="MAV_MODE_TEST_ARMED">
+                    <description>UNDEFINED mode. This solely depends on the autopilot - use with caution, intended for developers only.</description>
                </entry>
           </enum>
           <enum name="MAV_STATE">
@@ -236,7 +218,7 @@
                <entry value="220" name="MAV_COMP_ID_GPS">
                     <description/>
                </entry>
-               <entry value="190" name="MAV_COMP_ID_WAYPOINTPLANNER">
+               <entry value="190" name="MAV_COMP_ID_MISSIONPLANNER">
                     <description/>
                </entry>
                <entry value="195" name="MAV_COMP_ID_PATHPLANNER">
@@ -353,40 +335,40 @@
       Param 1, Param 2, Param 3, Param 4, X: Param 5, Y:Param 6, Z:Param 7. This command list is similar what
       ARINC 424 is for commercial aircraft: A data format how to interpret waypoint/mission data.</description>
                <entry value="16" name="MAV_CMD_NAV_WAYPOINT">
-                    <description>Navigate to waypoint.</description>
-                    <param index="1">Hold time in decimal seconds. (ignored by fixed wing, time to stay at waypoint for rotary wing)</param>
-                    <param index="2">Acceptance radius in meters (if the sphere with this radius is hit, the waypoint counts as reached)</param>
+                    <description>Navigate to MISSION.</description>
+                    <param index="1">Hold time in decimal seconds. (ignored by fixed wing, time to stay at MISSION for rotary wing)</param>
+                    <param index="2">Acceptance radius in meters (if the sphere with this radius is hit, the MISSION counts as reached)</param>
                     <param index="3">0 to pass through the WP, if > 0 radius in meters to pass by WP. Positive value for clockwise orbit, negative value for counter-clockwise orbit. Allows trajectory control.</param>
-                    <param index="4">Desired yaw angle at waypoint (rotary wing)</param>
+                    <param index="4">Desired yaw angle at MISSION (rotary wing)</param>
                     <param index="5">Latitude</param>
                     <param index="6">Longitude</param>
                     <param index="7">Altitude</param>
                </entry>
                <entry value="17" name="MAV_CMD_NAV_LOITER_UNLIM">
-                    <description>Loiter around this waypoint an unlimited amount of time</description>
+                    <description>Loiter around this MISSION an unlimited amount of time</description>
                     <param index="1">Empty</param>
                     <param index="2">Empty</param>
-                    <param index="3">Radius around waypoint, in meters. If positive loiter clockwise, else counter-clockwise</param>
+                    <param index="3">Radius around MISSION, in meters. If positive loiter clockwise, else counter-clockwise</param>
                     <param index="4">Desired yaw angle.</param>
                     <param index="5">Latitude</param>
                     <param index="6">Longitude</param>
                     <param index="7">Altitude</param>
                </entry>
                <entry value="18" name="MAV_CMD_NAV_LOITER_TURNS">
-                    <description>Loiter around this waypoint for X turns</description>
+                    <description>Loiter around this MISSION for X turns</description>
                     <param index="1">Turns</param>
                     <param index="2">Empty</param>
-                    <param index="3">Radius around waypoint, in meters. If positive loiter clockwise, else counter-clockwise</param>
+                    <param index="3">Radius around MISSION, in meters. If positive loiter clockwise, else counter-clockwise</param>
                     <param index="4">Desired yaw angle.</param>
                     <param index="5">Latitude</param>
                     <param index="6">Longitude</param>
                     <param index="7">Altitude</param>
                </entry>
                <entry value="19" name="MAV_CMD_NAV_LOITER_TIME">
-                    <description>Loiter around this waypoint for X seconds</description>
+                    <description>Loiter around this MISSION for X seconds</description>
                     <param index="1">Seconds (decimal)</param>
                     <param index="2">Empty</param>
-                    <param index="3">Radius around waypoint, in meters. If positive loiter clockwise, else counter-clockwise</param>
+                    <param index="3">Radius around MISSION, in meters. If positive loiter clockwise, else counter-clockwise</param>
                     <param index="4">Desired yaw angle.</param>
                     <param index="5">Latitude</param>
                     <param index="6">Longitude</param>
@@ -428,7 +410,7 @@
             system to control the vehicle attitude and the attitude of various
             sensors such as cameras.</description>
                     <param index="1">Region of intereset mode. (see MAV_ROI enum)</param>
-                    <param index="2">Waypoint index/ target ID. (see MAV_ROI enum)</param>
+                    <param index="2">MISSION index/ target ID. (see MAV_ROI enum)</param>
                     <param index="3">ROI index (allows a vehicle to manage multiple ROI's)</param>
                     <param index="4">Empty</param>
                     <param index="5">x the location of the fixed ROI (see MAV_FRAME)</param>
@@ -625,6 +607,16 @@
                     <param index="6">Empty</param>
                     <param index="7">Empty</param>
                </entry>
+               <entry value="242" name="MAV_CMD_PREFLIGHT_SET_SENSOR_OFFSETS">
+                    <description>Set sensor offsets. This command will be only accepted if in pre-flight mode.</description>
+                    <param index="1">Sensor to adjust the offsets for: 0: gyros, 1: accelerometer, 2: magnetometer, 3: barometer, 4: optical flow</param>
+                    <param index="2">X axis offset (or generic dimension 1), in the sensor's raw units</param>
+                    <param index="3">Y axis offset (or generic dimension 2), in the sensor's raw units</param>
+                    <param index="4">Z axis offset (or generic dimension 3), in the sensor's raw units</param>
+                    <param index="5">Generic dimension 4, in the sensor's raw units</param>
+                    <param index="6">Generic dimension 5, in the sensor's raw units</param>
+                    <param index="7">Generic dimension 6, in the sensor's raw units</param>
+               </entry>
                <entry value="245" name="MAV_CMD_PREFLIGHT_STORAGE">
                     <description>Request storage of different parameter values and logs. This command will be only accepted if in pre-flight mode.</description>
                     <param index="1">Parameter storage: 0: READ FROM FLASH/EEPROM, 1: WRITE CURRENT TO FLASH/EEPROM</param>
@@ -678,10 +670,10 @@
                     <description>No region of interest.</description>
                </entry>
                <entry value="1" name="MAV_ROI_WPNEXT">
-                    <description>Point toward next waypoint.</description>
+                    <description>Point toward next MISSION.</description>
                </entry>
                <entry value="2" name="MAV_ROI_WPINDEX">
-                    <description>Point toward given waypoint.</description>
+                    <description>Point toward given MISSION.</description>
                </entry>
                <entry value="3" name="MAV_ROI_LOCATION">
                     <description>Point toward fixed location.</description>
@@ -690,6 +682,36 @@
                     <description>Point toward of given id.</description>
                </entry>
           </enum>
+          <enum name="MAV_CMD_ACK">
+               <description>ACK / NACK / ERROR values as a result of MAV_CMDs and for mission item transmission.</description>
+               <entry name="MAV_CMD_ACK_OK">
+                    <description>Command / mission item is ok.</description>
+               </entry>
+               <entry name="MAV_CMD_ACK_ERR_FAIL">
+                    <description>Generic error message if none of the other reasons fails or if no detailed error reporting is implemented.</description>
+               </entry>
+               <entry name="MAV_CMD_ACK_ERR_ACCESS_DENIED">
+                    <description>The system is refusing to accept this command from this source / communication partner.</description>
+               </entry>
+               <entry name="MAV_CMD_ACK_ERR_NOT_SUPPORTED">
+                    <description>Command or mission item is not supported, other commands would be accepted.</description>
+               </entry>
+               <entry name="MAV_CMD_ACK_ERR_COORDINATE_FRAME_NOT_SUPPORTED">
+                    <description>The coordinate frame of this command / mission item is not supported.</description>
+               </entry>
+               <entry name="MAV_CMD_ACK_ERR_COORDINATES_OUT_OF_RANGE">
+                    <description>The coordinate frame of this command is ok, but he coordinate values exceed the safety limits of this system. This is a generic error, please use the more specific error messages below if possible.</description>
+               </entry>
+               <entry name="MAV_CMD_ACK_ERR_X_LAT_OUT_OF_RANGE">
+                    <description>The X or latitude value is out of range.</description>
+               </entry>
+               <entry name="MAV_CMD_ACK_ERR_Y_LON_OUT_OF_RANGE">
+                    <description>The Y or longitude value is out of range.</description>
+               </entry>
+               <entry name="MAV_CMD_ACK_ERR_Z_ALT_OUT_OF_RANGE">
+                    <description>The Z or altitude value is out of range.</description>
+               </entry>
+        </enum>
      </enums>
      <messages>
           <message id="0" name="HEARTBEAT">
@@ -697,20 +719,18 @@
                <field type="uint8_t" name="type">Type of the MAV (quadrotor, helicopter, etc., up to 15 types, defined in MAV_TYPE ENUM)</field>
                <field type="uint8_t" name="autopilot">Autopilot type / class. defined in MAV_CLASS ENUM</field>
                <field type="uint8_t" name="base_mode">System mode bitfield, see MAV_MODE_FLAGS ENUM in mavlink/include/mavlink_types.h</field>
-               <field type="uint16_t" name="custom_mode">Navigation mode bitfield, see MAV_AUTOPILOT_CUSTOM_MODE ENUM for some examples. This field is autopilot-specific.</field>
+               <field type="uint32_t" name="custom_mode">Navigation mode bitfield, see MAV_AUTOPILOT_CUSTOM_MODE ENUM for some examples. This field is autopilot-specific.</field>
                <field type="uint8_t" name="system_status">System status flag, see MAV_STATUS ENUM</field>
                <field type="uint8_t_mavlink_version" name="mavlink_version">MAVLink version</field>
           </message>
-          
           <message id="1" name="SYS_STATUS">
                <description>The general system state. If the system is following the MAVLink standard, the system state is mainly defined by three orthogonal states/modes: The system mode, which is either LOCKED (motors shut down and locked), MANUAL (system under RC control), GUIDED (system with autonomous position control, position setpoint controlled manually) or AUTO (system guided by path/waypoint planner). The NAV_MODE defined the current flight state: LIFTOFF (often an open-loop maneuver), LANDING, WAYPOINTS or VECTOR. This represents the internal navigation state machine. The system status shows wether the system is currently active or not and if an emergency occured. During the CRITICAL and EMERGENCY states the MAV is still considered to be active, but should start emergency procedures autonomously. After a failure occured it should first move from active to critical to allow manual intervention and then move to emergency after a certain timeout.</description>
-               <field type="uint32_t" name="onboard_control_sensors_present">Bitmask showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
-               <field type="uint32_t" name="onboard_control_sensors_enabled">Bitmask showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
-               <field type="uint32_t" name="onboard_control_sensors_health">Bitmask showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
-               <field type="uint16_t" name="load">Maximum usage in percent of the mainloop time, (0%: 0, 100%: 10'000) should be always below 10'000</field>
+               <field type="uint32_t" name="onboard_control_sensors_present" print_format="0x%04x">Bitmask showing which onboard controllers and sensors are present. Value of 0: not present. Value of 1: present. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
+               <field type="uint32_t" name="onboard_control_sensors_enabled" print_format="0x%04x">Bitmask showing which onboard controllers and sensors are enabled:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
+               <field type="uint32_t" name="onboard_control_sensors_health" print_format="0x%04x">Bitmask showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled. Indices: 0: 3D gyro, 1: 3D acc, 2: 3D mag, 3: absolute pressure, 4: differential pressure, 5: GPS, 6: optical flow, 7: computer vision position, 8: laser based position, 9: external ground-truth (Vicon or Leica). Controllers: 10: 3D angular rate control 11: attitude stabilization, 12: yaw position, 13: z/altitude control, 14: x/y position control, 15: motor outputs / control</field>
+               <field type="uint16_t" name="load">Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000</field>
                <field type="uint16_t" name="voltage_battery">Battery voltage, in millivolts (1 = 1 millivolt)</field>
                <field type="int16_t" name="current_battery">Battery current, in 10*milliamperes (1 = 10 milliampere), -1: autopilot does not measure the current</field>
-               <field type="uint16_t" name="watt">Watts consumed from this battery since startup</field>
                <field type="int8_t" name="battery_remaining">Remaining battery energy: (0%: 0, 100%: 100), -1: autopilot estimate the remaining battery</field>
                <field type="uint16_t" name="drop_rate_comm">Communication drops in percent, (0%: 0, 100%: 10'000), (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)</field>
                <field type="uint16_t" name="errors_comm">Communication errors (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)</field>
@@ -784,7 +804,7 @@
                <field type="float" name="param_value">Onboard parameter value</field>
                <field type="uint8_t" name="param_type">Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t</field>
           </message>
-          <message id="25" name="GPS_RAW_INT">
+          <message id="24" name="GPS_RAW_INT">
                <description>The global position, as returned by the Global Positioning System (GPS). This is
                 NOT the global position estimate of the sytem, but rather a RAW sensor value. See message GLOBAL_POSITION for the global position estimate. Coordinate frame is right-handed, Z-axis up (GPS frame)
             </description>
@@ -799,7 +819,7 @@
                <field type="uint16_t" name="cog">Course over ground (NOT heading, but direction of movement) in degrees * 100, 0.0..359.99 degrees. If unknown, set to: 65535</field>
                <field type="uint8_t" name="satellites_visible">Number of satellites visible. If unknown, set to 255</field>
           </message>
-          <message id="26" name="GPS_STATUS">
+          <message id="25" name="GPS_STATUS">
                <description>The positioning status, as reported by GPS. This message is intended to display status information about each satellite visible to the receiver. See message GLOBAL_POSITION for the global position estimate. This message can contain information for up to 20 satellites.</description>
                <field type="uint8_t" name="satellites_visible">Number of satellites visible</field>
                <field type="uint8_t[20]" name="satellite_prn">Global satellite ID</field>
@@ -808,7 +828,7 @@
                <field type="uint8_t[20]" name="satellite_azimuth">Direction of satellite, 0: 0 deg, 255: 360 deg.</field>
                <field type="uint8_t[20]" name="satellite_snr">Signal to noise ratio of satellite</field>
           </message>
-          <message id="27" name="SCALED_IMU">
+          <message id="26" name="SCALED_IMU">
                <description>The RAW IMU readings for the usual 9DOF sensor setup. This message should contain the scaled values to the described units</description>
                <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="int16_t" name="xacc">X acceleration (mg)</field>
@@ -821,7 +841,7 @@
                <field type="int16_t" name="ymag">Y Magnetic field (milli tesla)</field>
                <field type="int16_t" name="zmag">Z Magnetic field (milli tesla)</field>
           </message>
-          <message id="28" name="RAW_IMU">
+          <message id="27" name="RAW_IMU">
                <description>The RAW IMU readings for the usual 9DOF sensor setup. This message should always contain the true raw values without any scaling to allow data capture and system debugging.</description>
                <field type="uint64_t" name="time_usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="int16_t" name="xacc">X acceleration (raw)</field>
@@ -834,7 +854,7 @@
                <field type="int16_t" name="ymag">Y Magnetic field (raw)</field>
                <field type="int16_t" name="zmag">Z Magnetic field (raw)</field>
           </message>
-          <message id="29" name="RAW_PRESSURE">
+          <message id="28" name="RAW_PRESSURE">
                <description>The RAW pressure readings for the typical setup of one absolute pressure and one differential pressure sensor. The sensor values should be the raw, UNSCALED ADC values.</description>
                <field type="uint64_t" name="time_usec">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="int16_t" name="press_abs">Absolute pressure (raw)</field>
@@ -842,14 +862,14 @@
                <field type="int16_t" name="press_diff2">Differential pressure 2 (raw)</field>
                <field type="int16_t" name="temperature">Raw Temperature measurement (raw)</field>
           </message>
-          <message id="30" name="SCALED_PRESSURE">
+          <message id="29" name="SCALED_PRESSURE">
                <description>The pressure readings for the typical setup of one absolute and differential pressure sensor. The units are as specified in each field.</description>
                <field type="uint32_t" name="time_boot_ms">Timestamp (microseconds since UNIX epoch or microseconds since system boot)</field>
                <field type="float" name="press_abs">Absolute pressure (hectopascal)</field>
                <field type="float" name="press_diff">Differential pressure 1 (hectopascal)</field>
                <field type="int16_t" name="temperature">Temperature measurement (0.01 degrees celsius)</field>
           </message>
-          <message id="31" name="ATTITUDE">
+          <message id="30" name="ATTITUDE">
                <description>The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right).</description>
                <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="float" name="roll">Roll angle (rad)</field>
@@ -859,8 +879,19 @@
                <field type="float" name="pitchspeed">Pitch angular speed (rad/s)</field>
                <field type="float" name="yawspeed">Yaw angular speed (rad/s)</field>
           </message>
-          <message id="32" name="LOCAL_POSITION">
-               <description>The filtered local position (e.g. fused computer vision and accelerometers). Coordinate frame is right-handed, Z-axis down (aeronautical frame)</description>
+          <message id="31" name="ATTITUDE_QUATERNION">
+               <description>The attitude in the aeronautical frame (right-handed, Z-down, X-front, Y-right), expressed as quaternion.</description>
+               <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
+               <field type="float" name="q1">Quaternion component 1</field>
+               <field type="float" name="q2">Quaternion component 2</field>
+               <field type="float" name="q3">Quaternion component 3</field>
+               <field type="float" name="q4">Quaternion component 4</field>
+               <field type="float" name="rollspeed">Roll angular speed (rad/s)</field>
+               <field type="float" name="pitchspeed">Pitch angular speed (rad/s)</field>
+               <field type="float" name="yawspeed">Yaw angular speed (rad/s)</field>
+          </message>
+          <message id="32" name="LOCAL_POSITION_NED">
+               <description>The filtered local position (e.g. fused computer vision and accelerometers). Coordinate frame is right-handed, Z-axis down (aeronautical frame, NED / north-east-down convention)</description>
                <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="float" name="x">X Position</field>
                <field type="float" name="y">Y Position</field>
@@ -869,13 +900,14 @@
                <field type="float" name="vy">Y Speed</field>
                <field type="float" name="vz">Z Speed</field>
           </message>
-          <message id="33" name="GLOBAL_POSITION_INT">
+          <message id="34" name="GLOBAL_POSITION_INT">
                <description>The filtered global position (e.g. fused GPS and accelerometers). The position is in GPS-frame (right-handed, Z-up). It
                is designed as scaled integer message since the resolution of float is not sufficient.</description>
                <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
                <field type="int32_t" name="lat">Latitude, expressed as * 1E7</field>
                <field type="int32_t" name="lon">Longitude, expressed as * 1E7</field>
                <field type="int32_t" name="alt">Altitude in meters, expressed as * 1000 (millimeters), above MSL</field>
+               <field type="int32_t" name="relative_alt">Altitude above ground in meters, expressed as * 1000 (millimeters)</field>
                <field type="int16_t" name="vx">Ground X Speed (Latitude), expressed as m/s * 100</field>
                <field type="int16_t" name="vy">Ground Y Speed (Longitude), expressed as m/s * 100</field>
                <field type="int16_t" name="vz">Ground Z Speed (Altitude), expressed as m/s * 100</field>
@@ -921,69 +953,69 @@
                <field type="uint16_t" name="servo7_raw">Servo output 7 value, in microseconds</field>
                <field type="uint16_t" name="servo8_raw">Servo output 8 value, in microseconds</field>
           </message>
-          <message id="39" name="WAYPOINT">
-               <description>Message encoding a waypoint. This message is emitted to announce
-                the presence of a waypoint and to set a waypoint on the system. The waypoint can be either in x, y, z meters (type: LOCAL) or x:lat, y:lon, z:altitude. Local frame is Z-down, right handed, global frame is Z-up, right handed
+          <message id="39" name="MISSION_ITEM">
+               <description>Message encoding a MISSION. This message is emitted to announce
+                the presence of a MISSION and to set a MISSION on the system. The MISSION can be either in x, y, z meters (type: LOCAL) or x:lat, y:lon, z:altitude. Local frame is Z-down, right handed, global frame is Z-up, right handed
             </description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="uint16_t" name="seq">Sequence</field>
-               <field type="uint8_t" name="frame">The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h</field>
-               <field type="uint8_t" name="command">The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs</field>
+               <field type="uint8_t" name="frame">The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h</field>
+               <field type="uint8_t" name="command">The scheduled action for the MISSION. see MAV_CMD in common.xml MAVLink specs</field>
                <field type="uint8_t" name="current">false:0, true:1</field>
                <field type="uint8_t" name="autocontinue">autocontinue to next wp</field>
-               <field type="float" name="param1">PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters</field>
-               <field type="float" name="param2">PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds</field>
-               <field type="float" name="param3">PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.</field>
-               <field type="float" name="param4">PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH</field>
+               <field type="float" name="param1">PARAM1 / For NAV command MISSIONs: Radius in which the MISSION is accepted as reached, in meters</field>
+               <field type="float" name="param2">PARAM2 / For NAV command MISSIONs: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds</field>
+               <field type="float" name="param3">PARAM3 / For LOITER command MISSIONs: Orbit to circle around the MISSION, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.</field>
+               <field type="float" name="param4">PARAM4 / For NAV and LOITER command MISSIONs: Yaw orientation in degrees, [0..360] 0 = NORTH</field>
                <field type="float" name="x">PARAM5 / local: x position, global: latitude</field>
                <field type="float" name="y">PARAM6 / y position: global: longitude</field>
                <field type="float" name="z">PARAM7 / z position: global: altitude</field>
           </message>
-          <message id="40" name="WAYPOINT_REQUEST">
-               <description>Request the information of the waypoint with the sequence number seq. The response of the system to this message should be a WAYPOINT message.</description>
+          <message id="40" name="MISSION_REQUEST">
+               <description>Request the information of the MISSION with the sequence number seq. The response of the system to this message should be a MISSION message.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="uint16_t" name="seq">Sequence</field>
           </message>
-          <message id="41" name="WAYPOINT_SET_CURRENT">
-               <description>Set the waypoint with sequence number seq as current waypoint. This means that the MAV will continue to this waypoint on the shortest path (not following the waypoints in-between).</description>
+          <message id="41" name="MISSION_SET_CURRENT">
+               <description>Set the MISSION with sequence number seq as current MISSION. This means that the MAV will continue to this MISSION on the shortest path (not following the MISSIONs in-between).</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="uint16_t" name="seq">Sequence</field>
           </message>
-          <message id="42" name="WAYPOINT_CURRENT">
-               <description>Message that announces the sequence number of the current active waypoint. The MAV will fly towards this waypoint.</description>
+          <message id="42" name="MISSION_CURRENT">
+               <description>Message that announces the sequence number of the current active MISSION. The MAV will fly towards this MISSION.</description>
                <field type="uint16_t" name="seq">Sequence</field>
           </message>
-          <message id="43" name="WAYPOINT_REQUEST_LIST">
-               <description>Request the overall list of waypoints from the system/component.</description>
+          <message id="43" name="MISSION_REQUEST_LIST">
+               <description>Request the overall list of MISSIONs from the system/component.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
           </message>
-          <message id="44" name="WAYPOINT_COUNT">
-               <description>This message is emitted as response to WAYPOINT_REQUEST_LIST by the MAV. The GCS can then request the individual waypoints based on the knowledge of the total number of waypoints.</description>
+          <message id="44" name="MISSION_COUNT">
+               <description>This message is emitted as response to MISSION_REQUEST_LIST by the MAV. The GCS can then request the individual MISSIONs based on the knowledge of the total number of MISSIONs.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="uint16_t" name="count">Number of Waypoints in the Sequence</field>
+               <field type="uint16_t" name="count">Number of MISSIONs in the Sequence</field>
           </message>
-          <message id="45" name="WAYPOINT_CLEAR_ALL">
-               <description>Delete all waypoints at once.</description>
+          <message id="45" name="MISSION_CLEAR_ALL">
+               <description>Delete all mission items at once.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
           </message>
-          <message id="46" name="WAYPOINT_REACHED">
-               <description>A certain waypoint has been reached. The system will either hold this position (or circle on the orbit) or (if the autocontinue on the WP was set) continue to the next waypoint.</description>
+          <message id="46" name="MISSION_ITEM_REACHED">
+               <description>A certain mission item has been reached. The system will either hold this position (or circle on the orbit) or (if the autocontinue on the WP was set) continue to the next MISSION.</description>
                <field type="uint16_t" name="seq">Sequence</field>
           </message>
-          <message id="47" name="WAYPOINT_ACK">
-               <description>Ack message during waypoint handling. The type field states if this message is a positive ack (type=0) or if an error happened (type=non-zero).</description>
+          <message id="47" name="MISSION_ACK">
+               <description>Ack message during MISSION handling. The type field states if this message is a positive ack (type=0) or if an error happened (type=non-zero).</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
-               <field type="uint8_t" name="type">0: OK, 1: Error</field>
+               <field type="uint8_t" name="type">0: OK, 1: generic error / not accepting mission commands at all right now, 2: coordinate frame is not supported, 3: command is not supported, 4: mission item exceeds storage space, 5: one of the parameters has an invalid value, 6: param1 has an invalid value, 7: param2 has an invalid value, 8: param3 has an invalid value, 9: param4 has an invalid value, 10: x/param5 has an invalid value, 11: y:param6 has an invalid value, 12: z:param7 has an invalid value, 13: received waypoint out of sequence, 14: not accepting any mission commands from this communication partner</field>
           </message>
           <message id="48" name="SET_GPS_GLOBAL_ORIGIN">
-               <description>As local waypoints exist, the global waypoint reference allows to transform between the local coordinate frame and the global (GPS) coordinate frame. This can be necessary when e.g. in- and outdoor settings are connected and the MAV should move from in- to outdoor.</description>
+               <description>As local MISSIONs exist, the global MISSION reference allows to transform between the local coordinate frame and the global (GPS) coordinate frame. This can be necessary when e.g. in- and outdoor settings are connected and the MAV should move from in- to outdoor.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="int32_t" name="latitude">global position * 1E7</field>
                <field type="int32_t" name="longitude">global position * 1E7</field>
@@ -996,9 +1028,10 @@
                <field type="int32_t" name="altitude">Altitude(WGS84), expressed as * 1000</field>
           </message>
           <message id="50" name="SET_LOCAL_POSITION_SETPOINT">
-               <description>Set the setpoint for a local position controller. This is the position in local coordinates the MAV should fly to. This message is sent by the path/waypoint planner to the onboard position controller. As some MAVs have a degree of freedom in yaw (e.g. all helicopters/quadrotors), the desired yaw angle is part of the message.</description>
+               <description>Set the setpoint for a local position controller. This is the position in local coordinates the MAV should fly to. This message is sent by the path/MISSION planner to the onboard position controller. As some MAVs have a degree of freedom in yaw (e.g. all helicopters/quadrotors), the desired yaw angle is part of the message.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
+               <field type="uint8_t" name="coordinate_frame">Coordinate frame - valid values are only MAV_FRAME_LOCAL_NED or MAV_FRAME_LOCAL_ENU</field>
                <field type="float" name="x">x position</field>
                <field type="float" name="y">y position</field>
                <field type="float" name="z">z position</field>
@@ -1006,6 +1039,7 @@
           </message>
           <message id="51" name="LOCAL_POSITION_SETPOINT">
                <description>Transmit the current local setpoint of the controller to other MAVs (collision avoidance) and to the GCS.</description>
+               <field type="uint8_t" name="coordinate_frame">Coordinate frame - valid values are only MAV_FRAME_LOCAL_NED or MAV_FRAME_LOCAL_ENU</field>
                <field type="float" name="x">x position</field>
                <field type="float" name="y">y position</field>
                <field type="float" name="z">z position</field>
@@ -1013,6 +1047,7 @@
           </message>
           <message id="52" name="GLOBAL_POSITION_SETPOINT_INT">
                <description>Transmit the current local setpoint of the controller to other MAVs (collision avoidance) and to the GCS.</description>
+               <field type="uint8_t" name="coordinate_frame">Coordinate frame - valid values are only MAV_FRAME_GLOBAL or MAV_FRAME_GLOBAL_RELATIVE_ALT</field>
                <field type="int32_t" name="latitude">WGS84 Latitude position in degrees * 1E7</field>
                <field type="int32_t" name="longitude">WGS84 Longitude position in degrees * 1E7</field>
                <field type="int32_t" name="altitude">WGS84 Altitude in meters * 1000 (positive for up)</field>
@@ -1020,13 +1055,14 @@
           </message>
           <message id="53" name="SET_GLOBAL_POSITION_SETPOINT_INT">
                <description>Set the current global position setpoint.</description>
+               <field type="uint8_t" name="coordinate_frame">Coordinate frame - valid values are only MAV_FRAME_GLOBAL or MAV_FRAME_GLOBAL_RELATIVE_ALT</field>
                <field type="int32_t" name="latitude">WGS84 Latitude position in degrees * 1E7</field>
                <field type="int32_t" name="longitude">WGS84 Longitude position in degrees * 1E7</field>
                <field type="int32_t" name="altitude">WGS84 Altitude in meters * 1000 (positive for up)</field>
                <field type="int16_t" name="yaw">Desired yaw angle in degrees * 100</field>
           </message>
           <message id="54" name="SAFETY_SET_ALLOWED_AREA">
-               <description>Set a safety zone (volume), which is defined by two corners of a cube. This message can be used to tell the MAV which setpoints/waypoints to accept and which to reject. Safety areas are often enforced by national or competition regulations.</description>
+               <description>Set a safety zone (volume), which is defined by two corners of a cube. This message can be used to tell the MAV which setpoints/MISSIONs to accept and which to reject. Safety areas are often enforced by national or competition regulations.</description>
                <field type="uint8_t" name="target_system">System ID</field>
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="uint8_t" name="frame">Coordinate frame, as defined by MAV_FRAME enum in mavlink_types.h. Can be either global, GPS, right-handed with Z axis up or local, right handed, Z axis down.</field>
@@ -1088,8 +1124,8 @@
                <field type="float" name="nav_roll">Current desired roll in degrees</field>
                <field type="float" name="nav_pitch">Current desired pitch in degrees</field>
                <field type="int16_t" name="nav_bearing">Current desired heading in degrees</field>
-               <field type="int16_t" name="target_bearing">Bearing to current waypoint/target in degrees</field>
-               <field type="uint16_t" name="wp_dist">Distance to active waypoint in meters</field>
+               <field type="int16_t" name="target_bearing">Bearing to current MISSION/target in degrees</field>
+               <field type="uint16_t" name="wp_dist">Distance to active MISSION in meters</field>
                <field type="float" name="alt_error">Current altitude error in meters</field>
                <field type="float" name="aspd_error">Current airspeed error in meters/second</field>
                <field type="float" name="xtrack_error">Current crosstrack error on x-y plane in meters</field>
@@ -1189,14 +1225,14 @@
                <field type="uint8_t" name="target_component">Component ID</field>
                <field type="uint16_t" name="id">ID</field>
                <field type="uint16_t" name="id">Total count (size of total mission)</field>
-               <field type="uint8_t" name="frame">The coordinate system of the waypoint. see MAV_FRAME in mavlink_types.h</field>
-               <field type="uint8_t" name="command">The scheduled action for the waypoint. see MAV_COMMAND in common.xml MAVLink specs</field>
+               <field type="uint8_t" name="frame">The coordinate system of the MISSION. see MAV_FRAME in mavlink_types.h</field>
+               <field type="uint8_t" name="command">The scheduled action for the MISSION. see MAV_COMMAND in common.xml MAVLink specs</field>
                <field type="uint8_t" name="current">false:0, true:1</field>
                <field type="uint8_t" name="autocontinue">autocontinue to next wp</field>
-               <field type="float" name="param1">PARAM1 / For NAV command waypoints: Radius in which the waypoint is accepted as reached, in meters</field>
-               <field type="float" name="param2">PARAM2 / For NAV command waypoints: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds</field>
-               <field type="float" name="param3">PARAM3 / For LOITER command waypoints: Orbit to circle around the waypoint, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.</field>
-               <field type="float" name="param4">PARAM4 / For NAV and LOITER command waypoints: Yaw orientation in degrees, [0..360] 0 = NORTH</field>
+               <field type="float" name="param1">PARAM1 / For NAV command MISSIONs: Radius in which the MISSION is accepted as reached, in meters</field>
+               <field type="float" name="param2">PARAM2 / For NAV command MISSIONs: Time that the MAV should stay inside the PARAM1 radius before advancing, in milliseconds</field>
+               <field type="float" name="param3">PARAM3 / For LOITER command MISSIONs: Orbit to circle around the MISSION, in meters. If positive the orbit direction should be clockwise, if negative the orbit direction should be counter-clockwise.</field>
+               <field type="float" name="param4">PARAM4 / For NAV and LOITER command MISSIONs: Yaw orientation in degrees, [0..360] 0 = NORTH</field>
                <field type="float" name="x">PARAM5 / local: x position, global: latitude</field>
                <field type="float" name="y">PARAM6 / y position: global: longitude</field>
                <field type="float" name="z">PARAM7 / z position: global: altitude</field>

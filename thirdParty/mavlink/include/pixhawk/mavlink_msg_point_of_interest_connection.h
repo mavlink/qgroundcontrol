@@ -25,17 +25,17 @@ typedef struct __mavlink_point_of_interest_connection_t
 #define MAVLINK_MESSAGE_INFO_POINT_OF_INTEREST_CONNECTION { \
 	"POINT_OF_INTEREST_CONNECTION", \
 	11, \
-	{  { "xp1", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_point_of_interest_connection_t, xp1) }, \
-         { "yp1", MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_point_of_interest_connection_t, yp1) }, \
-         { "zp1", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_point_of_interest_connection_t, zp1) }, \
-         { "xp2", MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_point_of_interest_connection_t, xp2) }, \
-         { "yp2", MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_point_of_interest_connection_t, yp2) }, \
-         { "zp2", MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_point_of_interest_connection_t, zp2) }, \
-         { "timeout", MAVLINK_TYPE_UINT16_T, 0, 24, offsetof(mavlink_point_of_interest_connection_t, timeout) }, \
-         { "type", MAVLINK_TYPE_UINT8_T, 0, 26, offsetof(mavlink_point_of_interest_connection_t, type) }, \
-         { "color", MAVLINK_TYPE_UINT8_T, 0, 27, offsetof(mavlink_point_of_interest_connection_t, color) }, \
-         { "coordinate_system", MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_point_of_interest_connection_t, coordinate_system) }, \
-         { "name", MAVLINK_TYPE_CHAR, 26, 29, offsetof(mavlink_point_of_interest_connection_t, name) }, \
+	{  { "xp1", NULL, MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_point_of_interest_connection_t, xp1) }, \
+         { "yp1", NULL, MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_point_of_interest_connection_t, yp1) }, \
+         { "zp1", NULL, MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_point_of_interest_connection_t, zp1) }, \
+         { "xp2", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_point_of_interest_connection_t, xp2) }, \
+         { "yp2", NULL, MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_point_of_interest_connection_t, yp2) }, \
+         { "zp2", NULL, MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_point_of_interest_connection_t, zp2) }, \
+         { "timeout", NULL, MAVLINK_TYPE_UINT16_T, 0, 24, offsetof(mavlink_point_of_interest_connection_t, timeout) }, \
+         { "type", NULL, MAVLINK_TYPE_UINT8_T, 0, 26, offsetof(mavlink_point_of_interest_connection_t, type) }, \
+         { "color", NULL, MAVLINK_TYPE_UINT8_T, 0, 27, offsetof(mavlink_point_of_interest_connection_t, color) }, \
+         { "coordinate_system", NULL, MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_point_of_interest_connection_t, coordinate_system) }, \
+         { "name", NULL, MAVLINK_TYPE_CHAR, 26, 29, offsetof(mavlink_point_of_interest_connection_t, name) }, \
          } \
 }
 

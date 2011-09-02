@@ -16,8 +16,8 @@ typedef struct __mavlink_ctrl_srfc_pt_t
 #define MAVLINK_MESSAGE_INFO_CTRL_SRFC_PT { \
 	"CTRL_SRFC_PT", \
 	2, \
-	{  { "bitfieldPt", MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_ctrl_srfc_pt_t, bitfieldPt) }, \
-         { "target", MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_ctrl_srfc_pt_t, target) }, \
+	{  { "bitfieldPt", NULL, MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_ctrl_srfc_pt_t, bitfieldPt) }, \
+         { "target", NULL, MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_ctrl_srfc_pt_t, target) }, \
          } \
 }
 

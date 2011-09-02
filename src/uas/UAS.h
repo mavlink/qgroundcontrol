@@ -323,10 +323,10 @@ public:
         case MAV_AUTOPILOT_OPENPILOT:
             return "OPENPILOT";
             break;
-        case MAV_AUTOPILOT_GENERIC_MISSION_WAYPOINTS_ONLY:
-            return "GENERIC_MISSION_WAYPOINTS_ONLY";
+        case MAV_AUTOPILOT_GENERIC_WAYPOINTS_ONLY:
+            return "GENERIC_WAYPOINTS_ONLY";
             break;
-        case MAV_AUTOPILOT_GENERIC_MISSION_NAVIGATION_ONLY:
+        case MAV_AUTOPILOT_GENERIC_WAYPOINTS_AND_SIMPLE_NAVIGATION_ONLY:
             return "GENERIC_MISSION_NAVIGATION_ONLY";
             break;
         case MAV_AUTOPILOT_GENERIC_MISSION_FULL:

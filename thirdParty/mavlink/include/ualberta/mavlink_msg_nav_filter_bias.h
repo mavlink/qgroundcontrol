@@ -21,13 +21,13 @@ typedef struct __mavlink_nav_filter_bias_t
 #define MAVLINK_MESSAGE_INFO_NAV_FILTER_BIAS { \
 	"NAV_FILTER_BIAS", \
 	7, \
-	{  { "usec", MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_nav_filter_bias_t, usec) }, \
-         { "accel_0", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_nav_filter_bias_t, accel_0) }, \
-         { "accel_1", MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_nav_filter_bias_t, accel_1) }, \
-         { "accel_2", MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_nav_filter_bias_t, accel_2) }, \
-         { "gyro_0", MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_nav_filter_bias_t, gyro_0) }, \
-         { "gyro_1", MAVLINK_TYPE_FLOAT, 0, 24, offsetof(mavlink_nav_filter_bias_t, gyro_1) }, \
-         { "gyro_2", MAVLINK_TYPE_FLOAT, 0, 28, offsetof(mavlink_nav_filter_bias_t, gyro_2) }, \
+	{  { "usec", NULL, MAVLINK_TYPE_UINT64_T, 0, 0, offsetof(mavlink_nav_filter_bias_t, usec) }, \
+         { "accel_0", NULL, MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_nav_filter_bias_t, accel_0) }, \
+         { "accel_1", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_nav_filter_bias_t, accel_1) }, \
+         { "accel_2", NULL, MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_nav_filter_bias_t, accel_2) }, \
+         { "gyro_0", NULL, MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_nav_filter_bias_t, gyro_0) }, \
+         { "gyro_1", NULL, MAVLINK_TYPE_FLOAT, 0, 24, offsetof(mavlink_nav_filter_bias_t, gyro_1) }, \
+         { "gyro_2", NULL, MAVLINK_TYPE_FLOAT, 0, 28, offsetof(mavlink_nav_filter_bias_t, gyro_2) }, \
          } \
 }
 

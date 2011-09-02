@@ -382,14 +382,14 @@ void MAVLinkSimulationLink::mainloop()
 
         // Send back new setpoint
         mavlink_message_t ret;
-        mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, spX, spY, spZ, spYaw);
+        mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, MAV_FRAME_LOCAL_NED, spX, spY, spZ, spYaw);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
         // Send back new position
-        mavlink_msg_local_position_pack(systemId, componentId, &ret, 0, x, y, -fabs(z), xSpeed, ySpeed, zSpeed);
+        mavlink_msg_local_position_ned_pack(systemId, componentId, &ret, 0, x, y, -fabs(z), xSpeed, ySpeed, zSpeed);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
@@ -403,7 +403,7 @@ void MAVLinkSimulationLink::mainloop()
 //        streampointer += bufferlength;
 
         // GLOBAL POSITION
-        mavlink_msg_global_position_int_pack(systemId, componentId, &ret, 0, (473780.28137103+(x))*1E3, (85489.9892510421+(y))*1E3, (z+550.0)*1000.0, xSpeed, ySpeed, zSpeed, yaw);
+        mavlink_msg_global_position_int_pack(systemId, componentId, &ret, 0, (473780.28137103+(x))*1E3, (85489.9892510421+(y))*1E3, (z+550.0)*1000.0, (z+550.0)*1000.0-1, xSpeed, ySpeed, zSpeed, yaw);
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
@@ -432,6 +432,7 @@ void MAVLinkSimulationLink::mainloop()
         if (rcCounter == 2) {
             mavlink_rc_channels_raw_t chan;
             chan.time_boot_ms = 0;
+            chan.port = 0;
             chan.chan1_raw = 1000 + ((int)(fabs(x) * 1000) % 2000);
             chan.chan2_raw = 1000 + ((int)(fabs(y) * 1000) % 2000);
             chan.chan3_raw = 1000 + ((int)(fabs(z) * 1000) % 2000);
@@ -694,7 +695,7 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 
                 // Send back new setpoint
                 mavlink_message_t ret;
-                mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, spX, spY, spZ, spYaw);
+                mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, MAV_FRAME_LOCAL_NED, spX, spY, spZ, spYaw);
                 bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
                 //add data into datastream
                 memcpy(stream+streampointer,buffer, bufferlength);

@@ -18,10 +18,10 @@ typedef struct __mavlink_pattern_detected_t
 #define MAVLINK_MESSAGE_INFO_PATTERN_DETECTED { \
 	"PATTERN_DETECTED", \
 	4, \
-	{  { "confidence", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_pattern_detected_t, confidence) }, \
-         { "type", MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_pattern_detected_t, type) }, \
-         { "file", MAVLINK_TYPE_CHAR, 100, 5, offsetof(mavlink_pattern_detected_t, file) }, \
-         { "detected", MAVLINK_TYPE_UINT8_T, 0, 105, offsetof(mavlink_pattern_detected_t, detected) }, \
+	{  { "confidence", NULL, MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_pattern_detected_t, confidence) }, \
+         { "type", NULL, MAVLINK_TYPE_UINT8_T, 0, 4, offsetof(mavlink_pattern_detected_t, type) }, \
+         { "file", NULL, MAVLINK_TYPE_CHAR, 100, 5, offsetof(mavlink_pattern_detected_t, file) }, \
+         { "detected", NULL, MAVLINK_TYPE_UINT8_T, 0, 105, offsetof(mavlink_pattern_detected_t, detected) }, \
          } \
 }
 

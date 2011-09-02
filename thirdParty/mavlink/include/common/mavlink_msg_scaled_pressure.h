@@ -1,6 +1,6 @@
 // MESSAGE SCALED_PRESSURE PACKING
 
-#define MAVLINK_MSG_ID_SCALED_PRESSURE 30
+#define MAVLINK_MSG_ID_SCALED_PRESSURE 29
 
 typedef struct __mavlink_scaled_pressure_t
 {
@@ -11,17 +11,17 @@ typedef struct __mavlink_scaled_pressure_t
 } mavlink_scaled_pressure_t;
 
 #define MAVLINK_MSG_ID_SCALED_PRESSURE_LEN 14
-#define MAVLINK_MSG_ID_30_LEN 14
+#define MAVLINK_MSG_ID_29_LEN 14
 
 
 
 #define MAVLINK_MESSAGE_INFO_SCALED_PRESSURE { \
 	"SCALED_PRESSURE", \
 	4, \
-	{  { "time_boot_ms", MAVLINK_TYPE_UINT32_T, 0, 0, offsetof(mavlink_scaled_pressure_t, time_boot_ms) }, \
-         { "press_abs", MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_scaled_pressure_t, press_abs) }, \
-         { "press_diff", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_scaled_pressure_t, press_diff) }, \
-         { "temperature", MAVLINK_TYPE_INT16_T, 0, 12, offsetof(mavlink_scaled_pressure_t, temperature) }, \
+	{  { "time_boot_ms", NULL, MAVLINK_TYPE_UINT32_T, 0, 0, offsetof(mavlink_scaled_pressure_t, time_boot_ms) }, \
+         { "press_abs", NULL, MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_scaled_pressure_t, press_abs) }, \
+         { "press_diff", NULL, MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_scaled_pressure_t, press_diff) }, \
+         { "temperature", NULL, MAVLINK_TYPE_INT16_T, 0, 12, offsetof(mavlink_scaled_pressure_t, temperature) }, \
          } \
 }
 

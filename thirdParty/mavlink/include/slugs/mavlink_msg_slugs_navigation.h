@@ -23,15 +23,15 @@ typedef struct __mavlink_slugs_navigation_t
 #define MAVLINK_MESSAGE_INFO_SLUGS_NAVIGATION { \
 	"SLUGS_NAVIGATION", \
 	9, \
-	{  { "u_m", MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_slugs_navigation_t, u_m) }, \
-         { "phi_c", MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_slugs_navigation_t, phi_c) }, \
-         { "theta_c", MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_slugs_navigation_t, theta_c) }, \
-         { "psiDot_c", MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_slugs_navigation_t, psiDot_c) }, \
-         { "ay_body", MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_slugs_navigation_t, ay_body) }, \
-         { "totalDist", MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_slugs_navigation_t, totalDist) }, \
-         { "dist2Go", MAVLINK_TYPE_FLOAT, 0, 24, offsetof(mavlink_slugs_navigation_t, dist2Go) }, \
-         { "fromWP", MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_slugs_navigation_t, fromWP) }, \
-         { "toWP", MAVLINK_TYPE_UINT8_T, 0, 29, offsetof(mavlink_slugs_navigation_t, toWP) }, \
+	{  { "u_m", NULL, MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_slugs_navigation_t, u_m) }, \
+         { "phi_c", NULL, MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_slugs_navigation_t, phi_c) }, \
+         { "theta_c", NULL, MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_slugs_navigation_t, theta_c) }, \
+         { "psiDot_c", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_slugs_navigation_t, psiDot_c) }, \
+         { "ay_body", NULL, MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_slugs_navigation_t, ay_body) }, \
+         { "totalDist", NULL, MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_slugs_navigation_t, totalDist) }, \
+         { "dist2Go", NULL, MAVLINK_TYPE_FLOAT, 0, 24, offsetof(mavlink_slugs_navigation_t, dist2Go) }, \
+         { "fromWP", NULL, MAVLINK_TYPE_UINT8_T, 0, 28, offsetof(mavlink_slugs_navigation_t, fromWP) }, \
+         { "toWP", NULL, MAVLINK_TYPE_UINT8_T, 0, 29, offsetof(mavlink_slugs_navigation_t, toWP) }, \
          } \
 }
 

@@ -25,12 +25,12 @@ typedef struct __mavlink_radio_calibration_t
 #define MAVLINK_MESSAGE_INFO_RADIO_CALIBRATION { \
 	"RADIO_CALIBRATION", \
 	6, \
-	{  { "aileron", MAVLINK_TYPE_UINT16_T, 3, 0, offsetof(mavlink_radio_calibration_t, aileron) }, \
-         { "elevator", MAVLINK_TYPE_UINT16_T, 3, 6, offsetof(mavlink_radio_calibration_t, elevator) }, \
-         { "rudder", MAVLINK_TYPE_UINT16_T, 3, 12, offsetof(mavlink_radio_calibration_t, rudder) }, \
-         { "gyro", MAVLINK_TYPE_UINT16_T, 2, 18, offsetof(mavlink_radio_calibration_t, gyro) }, \
-         { "pitch", MAVLINK_TYPE_UINT16_T, 5, 22, offsetof(mavlink_radio_calibration_t, pitch) }, \
-         { "throttle", MAVLINK_TYPE_UINT16_T, 5, 32, offsetof(mavlink_radio_calibration_t, throttle) }, \
+	{  { "aileron", NULL, MAVLINK_TYPE_UINT16_T, 3, 0, offsetof(mavlink_radio_calibration_t, aileron) }, \
+         { "elevator", NULL, MAVLINK_TYPE_UINT16_T, 3, 6, offsetof(mavlink_radio_calibration_t, elevator) }, \
+         { "rudder", NULL, MAVLINK_TYPE_UINT16_T, 3, 12, offsetof(mavlink_radio_calibration_t, rudder) }, \
+         { "gyro", NULL, MAVLINK_TYPE_UINT16_T, 2, 18, offsetof(mavlink_radio_calibration_t, gyro) }, \
+         { "pitch", NULL, MAVLINK_TYPE_UINT16_T, 5, 22, offsetof(mavlink_radio_calibration_t, pitch) }, \
+         { "throttle", NULL, MAVLINK_TYPE_UINT16_T, 5, 32, offsetof(mavlink_radio_calibration_t, throttle) }, \
          } \
 }
 
