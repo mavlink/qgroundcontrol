@@ -120,7 +120,16 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit valueChanged(uasId, "vicon x", "m", pos.x, time);
             emit valueChanged(uasId, "vicon y", "m", pos.y, time);
             emit valueChanged(uasId, "vicon z", "m", pos.z, time);
-            emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+            //emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+        }
+        break;
+        case MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE: {
+            mavlink_vision_speed_estimate_t speed;
+            mavlink_msg_vision_speed_estimate_decode(&message, &speed);
+            quint64 time = getUnixTime(speed.usec);
+            emit valueChanged(uasId, "vis. speed x", "m/s", speed.x, time);
+            emit valueChanged(uasId, "vis. speed y", "m/s", speed.y, time);
+            emit valueChanged(uasId, "vis. speed z", "m/s", speed.z, time);
         }
         break;
         default:
