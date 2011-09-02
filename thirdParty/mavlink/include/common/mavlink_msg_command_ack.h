@@ -35,11 +35,21 @@ typedef struct __mavlink_command_ack_t
 static inline uint16_t mavlink_msg_command_ack_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       float command, float result)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[8];
+	_mav_put_float(buf, 0, command);
+	_mav_put_float(buf, 4, result);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 8);
+#else
+	mavlink_command_ack_t packet;
+	packet.command = command;
+	packet.result = result;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 8);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_COMMAND_ACK;
-
-	put_float_by_index(msg, 0, command); // Current airspeed in m/s
-	put_float_by_index(msg, 4, result); // 1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION
-
 	return mavlink_finalize_message(msg, system_id, component_id, 8, 8);
 }
 
@@ -57,11 +67,21 @@ static inline uint16_t mavlink_msg_command_ack_pack_chan(uint8_t system_id, uint
 							   mavlink_message_t* msg,
 						           float command,float result)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[8];
+	_mav_put_float(buf, 0, command);
+	_mav_put_float(buf, 4, result);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 8);
+#else
+	mavlink_command_ack_t packet;
+	packet.command = command;
+	packet.result = result;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 8);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_COMMAND_ACK;
-
-	put_float_by_index(msg, 0, command); // Current airspeed in m/s
-	put_float_by_index(msg, 4, result); // 1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 8, 8);
 }
 
@@ -89,13 +109,19 @@ static inline uint16_t mavlink_msg_command_ack_encode(uint8_t system_id, uint8_t
 
 static inline void mavlink_msg_command_ack_send(mavlink_channel_t chan, float command, float result)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 8);
-	msg->msgid = MAVLINK_MSG_ID_COMMAND_ACK;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[8];
+	_mav_put_float(buf, 0, command);
+	_mav_put_float(buf, 4, result);
 
-	put_float_by_index(msg, 0, command); // Current airspeed in m/s
-	put_float_by_index(msg, 4, result); // 1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_COMMAND_ACK, buf, 8, 8);
+#else
+	mavlink_command_ack_t packet;
+	packet.command = command;
+	packet.result = result;
 
-	mavlink_finalize_message_chan_send(msg, chan, 8, 8);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_COMMAND_ACK, (const char *)&packet, 8, 8);
+#endif
 }
 
 #endif
@@ -110,7 +136,7 @@ static inline void mavlink_msg_command_ack_send(mavlink_channel_t chan, float co
  */
 static inline float mavlink_msg_command_ack_get_command(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  0);
+	return _MAV_RETURN_float(msg,  0);
 }
 
 /**
@@ -120,7 +146,7 @@ static inline float mavlink_msg_command_ack_get_command(const mavlink_message_t*
  */
 static inline float mavlink_msg_command_ack_get_result(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  4);
+	return _MAV_RETURN_float(msg,  4);
 }
 
 /**
@@ -135,6 +161,6 @@ static inline void mavlink_msg_command_ack_decode(const mavlink_message_t* msg, 
 	command_ack->command = mavlink_msg_command_ack_get_command(msg);
 	command_ack->result = mavlink_msg_command_ack_get_result(msg);
 #else
-	memcpy(command_ack, MAVLINK_PAYLOAD(msg), 8);
+	memcpy(command_ack, _MAV_PAYLOAD(msg), 8);
 #endif
 }

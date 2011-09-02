@@ -44,14 +44,25 @@ typedef struct __mavlink_param_set_t
 static inline uint16_t mavlink_msg_param_set_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       uint8_t target_system, uint8_t target_component, const char *param_id, float param_value, uint8_t param_type)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[23];
+	_mav_put_float(buf, 0, param_value);
+	_mav_put_uint8_t(buf, 4, target_system);
+	_mav_put_uint8_t(buf, 5, target_component);
+	_mav_put_uint8_t(buf, 22, param_type);
+	_mav_put_char_array(buf, 6, param_id, 16);
+        memcpy(_MAV_PAYLOAD(msg), buf, 23);
+#else
+	mavlink_param_set_t packet;
+	packet.param_value = param_value;
+	packet.target_system = target_system;
+	packet.target_component = target_component;
+	packet.param_type = param_type;
+	memcpy(packet.param_id, param_id, sizeof(char)*16);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 23);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_PARAM_SET;
-
-	put_float_by_index(msg, 0, param_value); // Onboard parameter value
-	put_uint8_t_by_index(msg, 4, target_system); // System ID
-	put_uint8_t_by_index(msg, 5, target_component); // Component ID
-	put_char_array_by_index(msg, 6, param_id, 16); // Onboard parameter id
-	put_uint8_t_by_index(msg, 22, param_type); // Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
-
 	return mavlink_finalize_message(msg, system_id, component_id, 23, 168);
 }
 
@@ -72,14 +83,25 @@ static inline uint16_t mavlink_msg_param_set_pack_chan(uint8_t system_id, uint8_
 							   mavlink_message_t* msg,
 						           uint8_t target_system,uint8_t target_component,const char *param_id,float param_value,uint8_t param_type)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[23];
+	_mav_put_float(buf, 0, param_value);
+	_mav_put_uint8_t(buf, 4, target_system);
+	_mav_put_uint8_t(buf, 5, target_component);
+	_mav_put_uint8_t(buf, 22, param_type);
+	_mav_put_char_array(buf, 6, param_id, 16);
+        memcpy(_MAV_PAYLOAD(msg), buf, 23);
+#else
+	mavlink_param_set_t packet;
+	packet.param_value = param_value;
+	packet.target_system = target_system;
+	packet.target_component = target_component;
+	packet.param_type = param_type;
+	memcpy(packet.param_id, param_id, sizeof(char)*16);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 23);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_PARAM_SET;
-
-	put_float_by_index(msg, 0, param_value); // Onboard parameter value
-	put_uint8_t_by_index(msg, 4, target_system); // System ID
-	put_uint8_t_by_index(msg, 5, target_component); // Component ID
-	put_char_array_by_index(msg, 6, param_id, 16); // Onboard parameter id
-	put_uint8_t_by_index(msg, 22, param_type); // Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 23, 168);
 }
 
@@ -110,16 +132,23 @@ static inline uint16_t mavlink_msg_param_set_encode(uint8_t system_id, uint8_t c
 
 static inline void mavlink_msg_param_set_send(mavlink_channel_t chan, uint8_t target_system, uint8_t target_component, const char *param_id, float param_value, uint8_t param_type)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 23);
-	msg->msgid = MAVLINK_MSG_ID_PARAM_SET;
-
-	put_float_by_index(msg, 0, param_value); // Onboard parameter value
-	put_uint8_t_by_index(msg, 4, target_system); // System ID
-	put_uint8_t_by_index(msg, 5, target_component); // Component ID
-	put_char_array_by_index(msg, 6, param_id, 16); // Onboard parameter id
-	put_uint8_t_by_index(msg, 22, param_type); // Onboard parameter type: 0: float, 1: uint8_t, 2: int8_t, 3: uint16_t, 4: int16_t, 5: uint32_t, 6: int32_t
-
-	mavlink_finalize_message_chan_send(msg, chan, 23, 168);
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[23];
+	_mav_put_float(buf, 0, param_value);
+	_mav_put_uint8_t(buf, 4, target_system);
+	_mav_put_uint8_t(buf, 5, target_component);
+	_mav_put_uint8_t(buf, 22, param_type);
+	_mav_put_char_array(buf, 6, param_id, 16);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PARAM_SET, buf, 23, 168);
+#else
+	mavlink_param_set_t packet;
+	packet.param_value = param_value;
+	packet.target_system = target_system;
+	packet.target_component = target_component;
+	packet.param_type = param_type;
+	memcpy(packet.param_id, param_id, sizeof(char)*16);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_PARAM_SET, (const char *)&packet, 23, 168);
+#endif
 }
 
 #endif
@@ -134,7 +163,7 @@ static inline void mavlink_msg_param_set_send(mavlink_channel_t chan, uint8_t ta
  */
 static inline uint8_t mavlink_msg_param_set_get_target_system(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  4);
+	return _MAV_RETURN_uint8_t(msg,  4);
 }
 
 /**
@@ -144,7 +173,7 @@ static inline uint8_t mavlink_msg_param_set_get_target_system(const mavlink_mess
  */
 static inline uint8_t mavlink_msg_param_set_get_target_component(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  5);
+	return _MAV_RETURN_uint8_t(msg,  5);
 }
 
 /**
@@ -154,7 +183,7 @@ static inline uint8_t mavlink_msg_param_set_get_target_component(const mavlink_m
  */
 static inline uint16_t mavlink_msg_param_set_get_param_id(const mavlink_message_t* msg, char *param_id)
 {
-	return MAVLINK_MSG_RETURN_char_array(msg, param_id, 16,  6);
+	return _MAV_RETURN_char_array(msg, param_id, 16,  6);
 }
 
 /**
@@ -164,7 +193,7 @@ static inline uint16_t mavlink_msg_param_set_get_param_id(const mavlink_message_
  */
 static inline float mavlink_msg_param_set_get_param_value(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  0);
+	return _MAV_RETURN_float(msg,  0);
 }
 
 /**
@@ -174,7 +203,7 @@ static inline float mavlink_msg_param_set_get_param_value(const mavlink_message_
  */
 static inline uint8_t mavlink_msg_param_set_get_param_type(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_uint8_t(msg,  22);
+	return _MAV_RETURN_uint8_t(msg,  22);
 }
 
 /**
@@ -192,6 +221,6 @@ static inline void mavlink_msg_param_set_decode(const mavlink_message_t* msg, ma
 	mavlink_msg_param_set_get_param_id(msg, param_set->param_id);
 	param_set->param_type = mavlink_msg_param_set_get_param_type(msg);
 #else
-	memcpy(param_set, MAVLINK_PAYLOAD(msg), 23);
+	memcpy(param_set, _MAV_PAYLOAD(msg), 23);
 #endif
 }

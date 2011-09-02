@@ -47,15 +47,29 @@ typedef struct __mavlink_data_log_t
 static inline uint16_t mavlink_msg_data_log_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       float fl_1, float fl_2, float fl_3, float fl_4, float fl_5, float fl_6)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[24];
+	_mav_put_float(buf, 0, fl_1);
+	_mav_put_float(buf, 4, fl_2);
+	_mav_put_float(buf, 8, fl_3);
+	_mav_put_float(buf, 12, fl_4);
+	_mav_put_float(buf, 16, fl_5);
+	_mav_put_float(buf, 20, fl_6);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 24);
+#else
+	mavlink_data_log_t packet;
+	packet.fl_1 = fl_1;
+	packet.fl_2 = fl_2;
+	packet.fl_3 = fl_3;
+	packet.fl_4 = fl_4;
+	packet.fl_5 = fl_5;
+	packet.fl_6 = fl_6;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 24);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_DATA_LOG;
-
-	put_float_by_index(msg, 0, fl_1); // Log value 1 
-	put_float_by_index(msg, 4, fl_2); // Log value 2 
-	put_float_by_index(msg, 8, fl_3); // Log value 3 
-	put_float_by_index(msg, 12, fl_4); // Log value 4 
-	put_float_by_index(msg, 16, fl_5); // Log value 5 
-	put_float_by_index(msg, 20, fl_6); // Log value 6 
-
 	return mavlink_finalize_message(msg, system_id, component_id, 24, 167);
 }
 
@@ -77,15 +91,29 @@ static inline uint16_t mavlink_msg_data_log_pack_chan(uint8_t system_id, uint8_t
 							   mavlink_message_t* msg,
 						           float fl_1,float fl_2,float fl_3,float fl_4,float fl_5,float fl_6)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[24];
+	_mav_put_float(buf, 0, fl_1);
+	_mav_put_float(buf, 4, fl_2);
+	_mav_put_float(buf, 8, fl_3);
+	_mav_put_float(buf, 12, fl_4);
+	_mav_put_float(buf, 16, fl_5);
+	_mav_put_float(buf, 20, fl_6);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 24);
+#else
+	mavlink_data_log_t packet;
+	packet.fl_1 = fl_1;
+	packet.fl_2 = fl_2;
+	packet.fl_3 = fl_3;
+	packet.fl_4 = fl_4;
+	packet.fl_5 = fl_5;
+	packet.fl_6 = fl_6;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 24);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_DATA_LOG;
-
-	put_float_by_index(msg, 0, fl_1); // Log value 1 
-	put_float_by_index(msg, 4, fl_2); // Log value 2 
-	put_float_by_index(msg, 8, fl_3); // Log value 3 
-	put_float_by_index(msg, 12, fl_4); // Log value 4 
-	put_float_by_index(msg, 16, fl_5); // Log value 5 
-	put_float_by_index(msg, 20, fl_6); // Log value 6 
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 24, 167);
 }
 
@@ -117,17 +145,27 @@ static inline uint16_t mavlink_msg_data_log_encode(uint8_t system_id, uint8_t co
 
 static inline void mavlink_msg_data_log_send(mavlink_channel_t chan, float fl_1, float fl_2, float fl_3, float fl_4, float fl_5, float fl_6)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 24);
-	msg->msgid = MAVLINK_MSG_ID_DATA_LOG;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[24];
+	_mav_put_float(buf, 0, fl_1);
+	_mav_put_float(buf, 4, fl_2);
+	_mav_put_float(buf, 8, fl_3);
+	_mav_put_float(buf, 12, fl_4);
+	_mav_put_float(buf, 16, fl_5);
+	_mav_put_float(buf, 20, fl_6);
 
-	put_float_by_index(msg, 0, fl_1); // Log value 1 
-	put_float_by_index(msg, 4, fl_2); // Log value 2 
-	put_float_by_index(msg, 8, fl_3); // Log value 3 
-	put_float_by_index(msg, 12, fl_4); // Log value 4 
-	put_float_by_index(msg, 16, fl_5); // Log value 5 
-	put_float_by_index(msg, 20, fl_6); // Log value 6 
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_DATA_LOG, buf, 24, 167);
+#else
+	mavlink_data_log_t packet;
+	packet.fl_1 = fl_1;
+	packet.fl_2 = fl_2;
+	packet.fl_3 = fl_3;
+	packet.fl_4 = fl_4;
+	packet.fl_5 = fl_5;
+	packet.fl_6 = fl_6;
 
-	mavlink_finalize_message_chan_send(msg, chan, 24, 167);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_DATA_LOG, (const char *)&packet, 24, 167);
+#endif
 }
 
 #endif
@@ -142,7 +180,7 @@ static inline void mavlink_msg_data_log_send(mavlink_channel_t chan, float fl_1,
  */
 static inline float mavlink_msg_data_log_get_fl_1(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  0);
+	return _MAV_RETURN_float(msg,  0);
 }
 
 /**
@@ -152,7 +190,7 @@ static inline float mavlink_msg_data_log_get_fl_1(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_data_log_get_fl_2(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  4);
+	return _MAV_RETURN_float(msg,  4);
 }
 
 /**
@@ -162,7 +200,7 @@ static inline float mavlink_msg_data_log_get_fl_2(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_data_log_get_fl_3(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  8);
+	return _MAV_RETURN_float(msg,  8);
 }
 
 /**
@@ -172,7 +210,7 @@ static inline float mavlink_msg_data_log_get_fl_3(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_data_log_get_fl_4(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  12);
+	return _MAV_RETURN_float(msg,  12);
 }
 
 /**
@@ -182,7 +220,7 @@ static inline float mavlink_msg_data_log_get_fl_4(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_data_log_get_fl_5(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  16);
+	return _MAV_RETURN_float(msg,  16);
 }
 
 /**
@@ -192,7 +230,7 @@ static inline float mavlink_msg_data_log_get_fl_5(const mavlink_message_t* msg)
  */
 static inline float mavlink_msg_data_log_get_fl_6(const mavlink_message_t* msg)
 {
-	return MAVLINK_MSG_RETURN_float(msg,  20);
+	return _MAV_RETURN_float(msg,  20);
 }
 
 /**
@@ -211,6 +249,6 @@ static inline void mavlink_msg_data_log_decode(const mavlink_message_t* msg, mav
 	data_log->fl_5 = mavlink_msg_data_log_get_fl_5(msg);
 	data_log->fl_6 = mavlink_msg_data_log_get_fl_6(msg);
 #else
-	memcpy(data_log, MAVLINK_PAYLOAD(msg), 24);
+	memcpy(data_log, _MAV_PAYLOAD(msg), 24);
 #endif
 }

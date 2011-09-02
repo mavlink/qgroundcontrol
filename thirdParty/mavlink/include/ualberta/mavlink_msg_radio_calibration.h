@@ -52,15 +52,29 @@ typedef struct __mavlink_radio_calibration_t
 static inline uint16_t mavlink_msg_radio_calibration_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
 						       const uint16_t *aileron, const uint16_t *elevator, const uint16_t *rudder, const uint16_t *gyro, const uint16_t *pitch, const uint16_t *throttle)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[42];
+
+	_mav_put_uint16_t_array(buf, 0, aileron, 3);
+	_mav_put_uint16_t_array(buf, 6, elevator, 3);
+	_mav_put_uint16_t_array(buf, 12, rudder, 3);
+	_mav_put_uint16_t_array(buf, 18, gyro, 2);
+	_mav_put_uint16_t_array(buf, 22, pitch, 5);
+	_mav_put_uint16_t_array(buf, 32, throttle, 5);
+        memcpy(_MAV_PAYLOAD(msg), buf, 42);
+#else
+	mavlink_radio_calibration_t packet;
+
+	memcpy(packet.aileron, aileron, sizeof(uint16_t)*3);
+	memcpy(packet.elevator, elevator, sizeof(uint16_t)*3);
+	memcpy(packet.rudder, rudder, sizeof(uint16_t)*3);
+	memcpy(packet.gyro, gyro, sizeof(uint16_t)*2);
+	memcpy(packet.pitch, pitch, sizeof(uint16_t)*5);
+	memcpy(packet.throttle, throttle, sizeof(uint16_t)*5);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 42);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_RADIO_CALIBRATION;
-
-	put_uint16_t_array_by_index(msg, 0, aileron, 3); // Aileron setpoints: left, center, right
-	put_uint16_t_array_by_index(msg, 6, elevator, 3); // Elevator setpoints: nose down, center, nose up
-	put_uint16_t_array_by_index(msg, 12, rudder, 3); // Rudder setpoints: nose left, center, nose right
-	put_uint16_t_array_by_index(msg, 18, gyro, 2); // Tail gyro mode/gain setpoints: heading hold, rate mode
-	put_uint16_t_array_by_index(msg, 22, pitch, 5); // Pitch curve setpoints (every 25%)
-	put_uint16_t_array_by_index(msg, 32, throttle, 5); // Throttle curve setpoints (every 25%)
-
 	return mavlink_finalize_message(msg, system_id, component_id, 42, 71);
 }
 
@@ -82,15 +96,29 @@ static inline uint16_t mavlink_msg_radio_calibration_pack_chan(uint8_t system_id
 							   mavlink_message_t* msg,
 						           const uint16_t *aileron,const uint16_t *elevator,const uint16_t *rudder,const uint16_t *gyro,const uint16_t *pitch,const uint16_t *throttle)
 {
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[42];
+
+	_mav_put_uint16_t_array(buf, 0, aileron, 3);
+	_mav_put_uint16_t_array(buf, 6, elevator, 3);
+	_mav_put_uint16_t_array(buf, 12, rudder, 3);
+	_mav_put_uint16_t_array(buf, 18, gyro, 2);
+	_mav_put_uint16_t_array(buf, 22, pitch, 5);
+	_mav_put_uint16_t_array(buf, 32, throttle, 5);
+        memcpy(_MAV_PAYLOAD(msg), buf, 42);
+#else
+	mavlink_radio_calibration_t packet;
+
+	memcpy(packet.aileron, aileron, sizeof(uint16_t)*3);
+	memcpy(packet.elevator, elevator, sizeof(uint16_t)*3);
+	memcpy(packet.rudder, rudder, sizeof(uint16_t)*3);
+	memcpy(packet.gyro, gyro, sizeof(uint16_t)*2);
+	memcpy(packet.pitch, pitch, sizeof(uint16_t)*5);
+	memcpy(packet.throttle, throttle, sizeof(uint16_t)*5);
+        memcpy(_MAV_PAYLOAD(msg), &packet, 42);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_RADIO_CALIBRATION;
-
-	put_uint16_t_array_by_index(msg, 0, aileron, 3); // Aileron setpoints: left, center, right
-	put_uint16_t_array_by_index(msg, 6, elevator, 3); // Elevator setpoints: nose down, center, nose up
-	put_uint16_t_array_by_index(msg, 12, rudder, 3); // Rudder setpoints: nose left, center, nose right
-	put_uint16_t_array_by_index(msg, 18, gyro, 2); // Tail gyro mode/gain setpoints: heading hold, rate mode
-	put_uint16_t_array_by_index(msg, 22, pitch, 5); // Pitch curve setpoints (every 25%)
-	put_uint16_t_array_by_index(msg, 32, throttle, 5); // Throttle curve setpoints (every 25%)
-
 	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 42, 71);
 }
 
@@ -122,17 +150,27 @@ static inline uint16_t mavlink_msg_radio_calibration_encode(uint8_t system_id, u
 
 static inline void mavlink_msg_radio_calibration_send(mavlink_channel_t chan, const uint16_t *aileron, const uint16_t *elevator, const uint16_t *rudder, const uint16_t *gyro, const uint16_t *pitch, const uint16_t *throttle)
 {
-	MAVLINK_ALIGNED_MESSAGE(msg, 42);
-	msg->msgid = MAVLINK_MSG_ID_RADIO_CALIBRATION;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[42];
 
-	put_uint16_t_array_by_index(msg, 0, aileron, 3); // Aileron setpoints: left, center, right
-	put_uint16_t_array_by_index(msg, 6, elevator, 3); // Elevator setpoints: nose down, center, nose up
-	put_uint16_t_array_by_index(msg, 12, rudder, 3); // Rudder setpoints: nose left, center, nose right
-	put_uint16_t_array_by_index(msg, 18, gyro, 2); // Tail gyro mode/gain setpoints: heading hold, rate mode
-	put_uint16_t_array_by_index(msg, 22, pitch, 5); // Pitch curve setpoints (every 25%)
-	put_uint16_t_array_by_index(msg, 32, throttle, 5); // Throttle curve setpoints (every 25%)
+	_mav_put_uint16_t_array(buf, 0, aileron, 3);
+	_mav_put_uint16_t_array(buf, 6, elevator, 3);
+	_mav_put_uint16_t_array(buf, 12, rudder, 3);
+	_mav_put_uint16_t_array(buf, 18, gyro, 2);
+	_mav_put_uint16_t_array(buf, 22, pitch, 5);
+	_mav_put_uint16_t_array(buf, 32, throttle, 5);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_RADIO_CALIBRATION, buf, 42, 71);
+#else
+	mavlink_radio_calibration_t packet;
 
-	mavlink_finalize_message_chan_send(msg, chan, 42, 71);
+	memcpy(packet.aileron, aileron, sizeof(uint16_t)*3);
+	memcpy(packet.elevator, elevator, sizeof(uint16_t)*3);
+	memcpy(packet.rudder, rudder, sizeof(uint16_t)*3);
+	memcpy(packet.gyro, gyro, sizeof(uint16_t)*2);
+	memcpy(packet.pitch, pitch, sizeof(uint16_t)*5);
+	memcpy(packet.throttle, throttle, sizeof(uint16_t)*5);
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_RADIO_CALIBRATION, (const char *)&packet, 42, 71);
+#endif
 }
 
 #endif
@@ -147,7 +185,7 @@ static inline void mavlink_msg_radio_calibration_send(mavlink_channel_t chan, co
  */
 static inline uint16_t mavlink_msg_radio_calibration_get_aileron(const mavlink_message_t* msg, uint16_t *aileron)
 {
-	return MAVLINK_MSG_RETURN_uint16_t_array(msg, aileron, 3,  0);
+	return _MAV_RETURN_uint16_t_array(msg, aileron, 3,  0);
 }
 
 /**
@@ -157,7 +195,7 @@ static inline uint16_t mavlink_msg_radio_calibration_get_aileron(const mavlink_m
  */
 static inline uint16_t mavlink_msg_radio_calibration_get_elevator(const mavlink_message_t* msg, uint16_t *elevator)
 {
-	return MAVLINK_MSG_RETURN_uint16_t_array(msg, elevator, 3,  6);
+	return _MAV_RETURN_uint16_t_array(msg, elevator, 3,  6);
 }
 
 /**
@@ -167,7 +205,7 @@ static inline uint16_t mavlink_msg_radio_calibration_get_elevator(const mavlink_
  */
 static inline uint16_t mavlink_msg_radio_calibration_get_rudder(const mavlink_message_t* msg, uint16_t *rudder)
 {
-	return MAVLINK_MSG_RETURN_uint16_t_array(msg, rudder, 3,  12);
+	return _MAV_RETURN_uint16_t_array(msg, rudder, 3,  12);
 }
 
 /**
@@ -177,7 +215,7 @@ static inline uint16_t mavlink_msg_radio_calibration_get_rudder(const mavlink_me
  */
 static inline uint16_t mavlink_msg_radio_calibration_get_gyro(const mavlink_message_t* msg, uint16_t *gyro)
 {
-	return MAVLINK_MSG_RETURN_uint16_t_array(msg, gyro, 2,  18);
+	return _MAV_RETURN_uint16_t_array(msg, gyro, 2,  18);
 }
 
 /**
@@ -187,7 +225,7 @@ static inline uint16_t mavlink_msg_radio_calibration_get_gyro(const mavlink_mess
  */
 static inline uint16_t mavlink_msg_radio_calibration_get_pitch(const mavlink_message_t* msg, uint16_t *pitch)
 {
-	return MAVLINK_MSG_RETURN_uint16_t_array(msg, pitch, 5,  22);
+	return _MAV_RETURN_uint16_t_array(msg, pitch, 5,  22);
 }
 
 /**
@@ -197,7 +235,7 @@ static inline uint16_t mavlink_msg_radio_calibration_get_pitch(const mavlink_mes
  */
 static inline uint16_t mavlink_msg_radio_calibration_get_throttle(const mavlink_message_t* msg, uint16_t *throttle)
 {
-	return MAVLINK_MSG_RETURN_uint16_t_array(msg, throttle, 5,  32);
+	return _MAV_RETURN_uint16_t_array(msg, throttle, 5,  32);
 }
 
 /**
@@ -216,6 +254,6 @@ static inline void mavlink_msg_radio_calibration_decode(const mavlink_message_t*
 	mavlink_msg_radio_calibration_get_pitch(msg, radio_calibration->pitch);
 	mavlink_msg_radio_calibration_get_throttle(msg, radio_calibration->throttle);
 #else
-	memcpy(radio_calibration, MAVLINK_PAYLOAD(msg), 42);
+	memcpy(radio_calibration, _MAV_PAYLOAD(msg), 42);
 #endif
 }
