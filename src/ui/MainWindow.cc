@@ -153,6 +153,9 @@ MainWindow::MainWindow(QWidget *parent):
 
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
 
+    // Add generic MAVLink decoder
+    mavlinkDecoder = new MAVLinkDecoder(mavlink, this);
+
     // Connect user interface devices
     joystickWidget = 0;
     joystick = new JoystickInput();
@@ -439,6 +442,7 @@ void MainWindow::buildPxWidgets()
     if (!linechartWidget) {
         // Center widgets
         linechartWidget   = new Linecharts(this);
+        linechartWidget->addSource(mavlinkDecoder);
         addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
     }
 

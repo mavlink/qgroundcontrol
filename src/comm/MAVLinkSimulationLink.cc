@@ -431,6 +431,7 @@ void MAVLinkSimulationLink::mainloop()
         static int rcCounter = 0;
         if (rcCounter == 2) {
             mavlink_rc_channels_raw_t chan;
+            chan.time_boot_ms = 0;
             chan.chan1_raw = 1000 + ((int)(fabs(x) * 1000) % 2000);
             chan.chan2_raw = 1000 + ((int)(fabs(y) * 1000) % 2000);
             chan.chan3_raw = 1000 + ((int)(fabs(z) * 1000) % 2000);

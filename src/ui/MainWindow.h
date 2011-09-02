@@ -77,6 +77,8 @@ This file is part of the QGROUNDCONTROL project
 #include "UASControlParameters.h"
 #include "QGCMAVLinkInspector.h"
 
+#include "MAVLinkDecoder.h"
+
 class QGCMapTool;
 
 /**
@@ -426,6 +428,7 @@ protected:
     QPointer<QGCToolBar> toolBar;
 
     QPointer<QDockWidget> mavlinkInspectorWidget;
+    QPointer<MAVLinkDecoder> mavlinkDecoder;
 
 
     // Popup widgets
