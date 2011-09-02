@@ -13,7 +13,7 @@ QGCMAVLinkInspector::QGCMAVLinkInspector(MAVLinkProtocol* protocol, QWidget *par
     ui->setupUi(this);
 
     /* Insert system */
-    //ui->systemComboBox();
+    ui->systemComboBox->addItem(tr("All Systems"), -1);
 
     mavlink_message_info_t msg[256] = MAVLINK_MESSAGE_INFO;
     memcpy(messageInfo, msg, sizeof(mavlink_message_info_t)*256);

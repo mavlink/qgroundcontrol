@@ -259,8 +259,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 modechanged = true;
                 this->mode = static_cast<int>(state.base_mode);
-
-
                 shortModeText = getShortModeTextFor(this->mode);
 
                 emit modeChanged(this->getUASID(), shortModeText, "");
@@ -345,7 +343,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit dropRateChanged(this->getUASID(), state.drop_rate_comm/10000.0f);
             }
             break;
-
         case MAVLINK_MSG_ID_RAW_IMU:
             {
                 mavlink_raw_imu_t raw;
@@ -381,8 +378,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             }
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
-            //std::cerr << std::endl;
-            //std::cerr << "Decoded attitude message:" << " roll: " << std::dec << mavlink_msg_attitude_get_roll(message.payload) << " pitch: " << mavlink_msg_attitude_get_pitch(message.payload) << " yaw: " << mavlink_msg_attitude_get_yaw(message.payload) << std::endl;
             {
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
@@ -449,8 +444,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 
                 emit altitudeChanged(uasId, hud.alt);
                 //yaw = (hud.heading-180.0f/360.0f)*M_PI;
-                //emit attitudeChanged(this, roll, pitch, yaw, getUnixTime());
-                emit speedChanged(this, hud.airspeed, 0.0f, hud.climb, getUnixTime());
+                emit speedChanged(this, hud.airspeed, 0.0f, hud.climb, time);
             }
             break;
         case MAVLINK_MSG_ID_NAV_CONTROLLER_OUTPUT:
@@ -833,6 +827,19 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit valueChanged(uasId, "servo #8", "us", servos.servo8_raw, time);
             }
             break;
+
+        case MAVLINK_MSG_ID_OPTICAL_FLOW:
+            {
+                mavlink_optical_flow_t flow;
+                mavlink_msg_optical_flow_decode(&message, &flow);
+                quint64 time = getUnixTime(flow.time);
+
+                emit valueChanged(uasId, QString("opt_flow_%1.x").arg(flow.sensor_id), "Pixel", flow.flow_x, time);
+                emit valueChanged(uasId, QString("opt_flow_%1.y").arg(flow.sensor_id), "Pixel", flow.flow_y, time);
+                emit valueChanged(uasId, QString("opt_flow_%1.qual").arg(flow.sensor_id), "0-255", flow.quality, time);
+                emit valueChanged(uasId, QString("opt_flow_%1.dist").arg(flow.sensor_id), "m", flow.ground_distance, time);
+            }
+            break;
         case MAVLINK_MSG_ID_STATUSTEXT:
             {
                 QByteArray b;
@@ -908,6 +915,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit valueChanged(uasId, str+".z", "raw", vect.z, time);
         }
         break;
+        case MAVLINK_MSG_ID_OBJECT_DETECTION_EVENT:
+        {
+            mavlink_object_detection_event_t event;
+            mavlink_msg_object_detection_event_decode(&message, &event);
+            QString str(event.name);
+            emit objectDetected(event.time, event.object_id, event.type, str, event.quality, event.bearing, event.distance);
+        }
+        break;
         // WILL BE ENABLED ONCE MESSAGE IS IN COMMON MESSAGE SET
 //        case MAVLINK_MSG_ID_MEMORY_VECT:
 //        {
@@ -957,22 +972,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
 //            }
 //        }
 //        break;
-				//#ifdef MAVLINK_ENABLED_PIXHAWK
-				//            case MAVLINK_MSG_ID_POINT_OF_INTEREST:
-				//            {
-				//                mavlink_point_of_interest_t poi;
-				//                mavlink_msg_point_of_interest_decode(&message, &poi);
-				//                emit poiFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_FIELD_NAME_LEN), poi.x, poi.y, poi.z);
-				//            }
-				//            break;
-				//            case MAVLINK_MSG_ID_POINT_OF_INTEREST_CONNECTION:
-				//            {
-				//                mavlink_point_of_interest_connection_t poi;
-				//                mavlink_msg_point_of_interest_connection_decode(&message, &poi);
-				//                emit poiConnectionFound(this, poi.type, poi.color, QString((QChar*)poi.name, MAVLINK_MSG_POINT_OF_INTEREST_CONNECTION_FIELD_NAME_LEN), poi.x1, poi.y1, poi.z1, poi.x2, poi.y2, poi.z2);
-				//            }
-				//            break;
-				//#endif
 #ifdef MAVLINK_ENABLED_UALBERTA
         case MAVLINK_MSG_ID_NAV_FILTER_BIAS:
             {

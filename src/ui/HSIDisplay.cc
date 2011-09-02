@@ -119,8 +119,8 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
 
     // Add interaction elements
     QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setMargin(2);
-    layout->setSpacing(0);
+    layout->setMargin(0);
+    layout->setSpacing(12);
     QDoubleSpinBox* spinBox = new QDoubleSpinBox(this);
     spinBox->setMinimum(0.1);
     spinBox->setMaximum(9999);
@@ -453,6 +453,23 @@ void HSIDisplay::updatePositionZControllerEnabled(bool enabled)
     zControlKnown = true;
 }
 
+void HSIDisplay::updateObjectPosition(unsigned int time, int id, int type, const QString& name, int quality, float bearing, float distance)
+{
+    // FIXME add multi-object support
+    QPainter painter(this);
+    QColor color(Qt::yellow);
+    float radius = vwidth / 20.0f;
+    QPen pen(color);
+    pen.setWidthF(refLineWidthToPen(0.4f));
+    pen.setColor(color);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+    QPointF in(cos(bearing)-sin(bearing)*distance, sin(bearing)+cos(bearing)*distance);
+    // Scale from metric to screen reference coordinates
+    QPointF p = metricBodyToRef(in);
+    drawCircle(p.x(), p.y(), radius, 0.4f, color, &painter);
+}
+
 QPointF HSIDisplay::metricWorldToBody(QPointF world)
 {
     // First translate to body-centered coordinates
@@ -554,6 +571,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
         disconnect(this->uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)), this, SLOT(updateVisionLocalization(UASInterface*,int)));
         disconnect(this->uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
         disconnect(this->uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
+        disconnect(this->uas, SIGNAL(objectDetected(uint,int,int,QString,int,float,float)), this, SLOT(updateObjectPosition(uint,int,int,QString,int,float,float)));
     }
 
     connect(uas, SIGNAL(gpsSatelliteStatusChanged(int,int,float,float,float,bool)), this, SLOT(updateSatellite(int,int,float,float,float,bool)));
@@ -573,6 +591,7 @@ void HSIDisplay::setActiveUAS(UASInterface* uas)
     connect(uas, SIGNAL(visionLocalizationChanged(UASInterface*,int)), this, SLOT(updateVisionLocalization(UASInterface*,int)));
     connect(uas, SIGNAL(gpsLocalizationChanged(UASInterface*,int)), this, SLOT(updateGpsLocalization(UASInterface*,int)));
     connect(uas, SIGNAL(irUltraSoundLocalizationChanged(UASInterface*,int)), this, SLOT(updateInfraredUltrasoundLocalization(UASInterface*,int)));
+    connect(uas, SIGNAL(objectDetected(uint,int,int,QString,int,float,float)), this, SLOT(updateObjectPosition(uint,int,int,QString,int,float,float)));
 
     this->uas = uas;
 
