@@ -159,7 +159,7 @@ protected: //COMMENTS FOR TEST UNIT
     int timeRemaining;          ///< Remaining time calculated based on previous and current
     int mode;                   ///< The current mode of the MAV
     int status;                 ///< The current status of the MAV
-    int navMode;                ///< The current navigation mode of the MAV
+    uint32_t navMode;                ///< The current navigation mode of the MAV
     quint64 onboardTimeOffset;
 
     bool controlRollManual;     ///< status flag, true if roll is controlled manually

@@ -52,6 +52,50 @@
    </chunk>
 
    <!-- Velocities -->
+   
+   <chunk>
+    <name>v_n</name>
+    <type>float</type>
+    <format>%2.3f</format>
+    <node>/velocities/speed-north-fps</node>
+   </chunk>
+   
+   <chunk>
+    <name>v_e</name>
+    <type>float</type>
+    <format>%2.3f</format>
+    <node>/velocities/speed-east-fps</node>
+   </chunk>
+
+   <chunk>
+    <name>v_d</name>
+    <type>float</type>
+    <format>%2.3f</format>
+    <node>/velocities/speed-down-fps</node>
+   </chunk>
+
+
+   <chunk>
+    <name>rate_roll</name>
+    <type>float</type>
+    <format>%2.3f</format>
+    <node>/orientation/roll-rate-degps</node>
+   </chunk>
+
+   <chunk>
+    <name>rate_pitch</name>
+    <type>float</type>
+    <format>%2.3f</format>
+    <node>/orientation/pitch-rate-degps</node>
+   </chunk>
+
+   <chunk>
+    <name>rate_yaw</name>
+    <type>float</type>
+    <format>%2.3f</format>
+    <node>/orientation/yaw-rate-degps</node>
+   </chunk>
+   
    <chunk>
      <name>airspeed-kt</name>
      <type>float</type>
