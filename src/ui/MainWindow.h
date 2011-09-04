@@ -273,7 +273,7 @@ protected:
     typedef enum _SETTINGS_SECTIONS {
         SECTION_MENU,
         SUB_SECTION_CHECKED,
-        SUB_SECTION_LOCATION,
+        SUB_SECTION_LOCATION
     } SETTINGS_SECTIONS;
 
     typedef enum _VIEW_SECTIONS {
@@ -282,6 +282,7 @@ protected:
         VIEW_PILOT,
         VIEW_MAVLINK,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
+        VIEW_FULL            ///< All widgets, mostly intended for multi-screen setups
     } VIEW_SECTIONS;
 
 

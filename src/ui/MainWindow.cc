@@ -316,7 +316,7 @@ void MainWindow::buildCustomWidget()
                 ui.menuTools->addAction(showAction);
 
                 // Load visibility for view (default is off)
-                dock->setVisible(tool->isVisible(currentView));
+                //dock->setVisible(tool->isVisible(currentView));
 
                 // Load dock widget location (default is bottom)
                 Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
@@ -400,14 +400,6 @@ void MainWindow::buildCommonWidgets()
         dataplotWidget    = new QGCDataPlot2D(this);
         addToCentralWidgetsMenu (dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
     }
-
-//    if (!linechartWidget) {
-//        // Center widgets
-//        linechartWidget   = new Linecharts(this);
-//        linechartWidget->addSource(mavlinkDecoder);
-//        addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
-//    }
-
 
     if (!hudWidget) {
         hudWidget         = new HUD(320, 240, this);
@@ -1390,7 +1382,7 @@ void MainWindow::connectSlugsActions()
 
 void MainWindow::showHelp()
 {
-    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/users/"))) {
+    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/users/start"))) {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not open help in browser");
@@ -1416,7 +1408,7 @@ void MainWindow::showCredits()
 
 void MainWindow::showRoadMap()
 {
-    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/roadmap/"))) {
+    if(!QDesktopServices::openUrl(QUrl("http://qgroundcontrol.org/dev/roadmap"))) {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
         msgBox.setText("Could not open roadmap in browser");
@@ -1523,7 +1515,15 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     // Connect the UAS to the full user interface
 
-    if (uas != NULL) {
+    if (uas != NULL)
+    {
+        if (!linechartWidget) {
+            // Center widgets
+            linechartWidget   = new Linecharts(this);
+            linechartWidget->addSource(mavlinkDecoder);
+            addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
+        }
+
         // Set default settings
         setDefaultSettingsForAp();
 
@@ -1639,7 +1639,9 @@ void MainWindow::UASCreated(UASInterface* uas)
         break;
         default:
         case (MAV_AUTOPILOT_GENERIC):
+            break;
         case (MAV_AUTOPILOT_ARDUPILOTMEGA):
+            break;
         case (MAV_AUTOPILOT_PIXHAWK): {
             // Build Pixhawk Widgets
             buildPxWidgets();
@@ -1716,7 +1718,8 @@ void MainWindow::clearView()
     QAction* temp;
 
     // Set tool widget visibility settings for this view
-    foreach (int key, toolsMenuActions.keys()) {
+    foreach (int key, toolsMenuActions.keys())
+    {
         temp = toolsMenuActions[key];
         QString chKey = buildMenuKey (SUB_SECTION_CHECKED,static_cast<TOOLS_WIDGET_NAMES>(key), currentView);
 
@@ -1923,7 +1926,7 @@ void MainWindow::presentView()
         }
     }
 
-    this->setWindowState(windowStateVal);
+    //this->setWindowState(windowStateVal);
     this->show();
 }
 
