@@ -37,7 +37,6 @@ MAV2DIcon::MAV2DIcon(mapcontrol::MapGraphicItem* map, mapcontrol::OPMapWidget* p
 
 MAV2DIcon::~MAV2DIcon()
 {
-    //delete pic;
 }
 
 void MAV2DIcon::setSelectedUAS(bool selected)
@@ -53,7 +52,6 @@ void MAV2DIcon::setSelectedUAS(bool selected)
  */
 void MAV2DIcon::setYaw(float yaw)
 {
-    //// qDebug() << "MAV2Icon" << yaw;
     float diff = fabs(yaw - this->yaw);
     while (diff > (float)M_PI) {
         diff -= (float)M_PI;
