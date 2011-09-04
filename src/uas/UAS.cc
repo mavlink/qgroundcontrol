@@ -76,8 +76,12 @@ airframe(0),
 attitudeKnown(false),
 paramManager(NULL),
 attitudeStamped(false),
+<<<<<<< HEAD
 lastAttitude(0),
     simulation(new QGCFlightGearLink(this))
+=======
+lastAttitude(0)
+>>>>>>> master
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
@@ -339,8 +343,50 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 }
 
                 // COMMUNICATIONS DROP RATE
+<<<<<<< HEAD
                 // FIXME
                 emit dropRateChanged(this->getUASID(), state.drop_rate_comm/10000.0f);
+=======
+                emit dropRateChanged(this->getUASID(), state.packet_drop/1000.0f);
+
+
+                //add for development
+                //emit remoteControlRSSIChanged(state.packet_drop/1000.0f);
+
+                //float en = state.packet_drop/1000.0f;
+                //emit remoteControlChannelRawChanged(0, en);//MAVLINK_MSG_ID_RC_CHANNELS_RAW
+                //emit remoteControlChannelScaledChanged(0, en/100.0f);//MAVLINK_MSG_ID_RC_CHANNELS_SCALED
+
+
+                //qDebug() << __FILE__ << __LINE__ << "RCV LOSS: " << state.packet_drop;
+
+                // AUDIO
+                if (modechanged && statechanged)
+                {
+                    // Output both messages
+                    audiostring += modeAudio + " and " + stateAudio;
+                }
+                else
+                {
+                    // Output the one message
+                    audiostring += modeAudio + stateAudio;
+                }
+                if ((int)state.status == (int)MAV_STATE_CRITICAL || state.status == (int)MAV_STATE_EMERGENCY)
+                {
+                    GAudioOutput::instance()->startEmergency();
+                }
+                else if (modechanged || statechanged)
+                {
+                    GAudioOutput::instance()->stopEmergency();
+                    GAudioOutput::instance()->say(audiostring);
+                }
+
+                if (state.status == MAV_STATE_POWEROFF)
+                {
+                    emit systemRemoved(this);
+                    emit systemRemoved();
+                }
+>>>>>>> master
             }
             break;
         case MAVLINK_MSG_ID_RAW_IMU:
@@ -737,7 +783,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_roll_pitch_yaw_thrust_setpoint_t out;
                 mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(&message, &out);
+<<<<<<< HEAD
                 quint64 time = getUnixTimeFromMs(out.time_boot_ms);
+=======
+                quint64 time = getUnixTime(out.time_us);
+>>>>>>> master
                 emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
                 // FIXME REMOVE LATER emit valueChanged(uasId, "att control roll", "rad", out.roll, time);
                 // FIXME REMOVE LATER emit valueChanged(uasId, "att control pitch", "rad", out.pitch, time);
@@ -1239,14 +1289,14 @@ quint64 UAS::getUnixTimeFromMs(quint64 time)
  */
 quint64 UAS::getUnixTime(quint64 time)
 {
+    quint64 ret = 0;
     if (attitudeStamped)
     {
-        return lastAttitude;
+        ret = lastAttitude;
     }
     if (time == 0)
     {
-        //        qDebug() << "XNEW time:" <<QGC::groundTimeMilliseconds();
-        return QGC::groundTimeMilliseconds();
+        ret = QGC::groundTimeMilliseconds();
     }
     // Check if time is smaller than 40 years,
     // assuming no system without Unix timestamp
@@ -1275,14 +1325,15 @@ quint64 UAS::getUnixTime(quint64 time)
         {
             onboardTimeOffset = QGC::groundTimeMilliseconds() - time/1000;
         }
-        return time/1000 + onboardTimeOffset;
+        ret = time/1000 + onboardTimeOffset;
     }
     else
     {
         // Time is not zero and larger than 40 years -> has to be
         // a Unix epoch timestamp. Do nothing.
-        return time/1000;
+        ret = time/1000;
     }
+    return ret;
 }
 
 QList<QString> UAS::getParameterNames(int component)
