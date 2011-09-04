@@ -36,7 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QTime>
 #include <QImage>
 #include <QDebug>
-#include "MG.h"
+#include <QFileInfo>
 #include "LinkManager.h"
 #include "MAVLinkProtocol.h"
 #include "MAVLinkSimulationLink.h"
@@ -78,7 +78,7 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
         simulationHeader = simulationFile->readLine();
     }
     receiveFile = new QFile(writeFile, this);
-    lastSent = MG::TIME::getGroundTimeNow() * 1000;
+    lastSent = QGC::groundTimeMilliseconds();
 
     if (simulationFile->exists()) {
         this->name = "Simulation: " + QFileInfo(simulationFile->fileName()).fileName();
@@ -118,7 +118,7 @@ void MAVLinkSimulationLink::run()
 
         static quint64 last = 0;
 
-        if (MG::TIME::getGroundTimeNow() - last >= rate) {
+        if (QGC::groundTimeMilliseconds() - last >= rate) {
             if (_isConnected) {
                 mainloop();
 
@@ -132,7 +132,7 @@ void MAVLinkSimulationLink::run()
 
                 readBytes();
             }
-            last = MG::TIME::getGroundTimeNow();
+            last = QGC::groundTimeMilliseconds();
         }
         QGC::SLEEP::msleep(3);
 
@@ -265,9 +265,6 @@ void MAVLinkSimulationLink::mainloop()
                     double d = QString(parts.at(i)).toDouble(&res);
                     if (!res) d = 0;
 
-                    //qDebug() << "TIME" << time << "VALUE" << d;
-                    //emit valueChanged(220, keys.at(i), d, MG::TIME::getGroundTimeNow());
-
                     if (keys.value(i, "") == "Accel._X") {
                         rawImuValues.xacc = d;
                     }
@@ -345,7 +342,7 @@ void MAVLinkSimulationLink::mainloop()
 
                 //qDebug() << "ATTITUDE" << "BUF LEN" << bufferlength << "POINTER" << streampointer;
 
-                //qDebug() << "REALTIME" << MG::TIME::getGroundTimeNow() << "ONBOARDTIME" << attitude.msec << "ROLL" << attitude.roll;
+                //qDebug() << "REALTIME" << QGC::groundTimeMilliseconds() << "ONBOARDTIME" << attitude.msec << "ROLL" << attitude.roll;
 
             }
 
@@ -667,11 +664,6 @@ qint64 MAVLinkSimulationLink::bytesAvailable()
 
 void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
 {
-    //qDebug() << "Simulation received " << size << " bytes from groundstation: ";
-
-    // Increase write counter
-    //bitsSentTotal += size * 8;
-
     // Parse bytes
     mavlink_message_t msg;
     mavlink_status_t comm;

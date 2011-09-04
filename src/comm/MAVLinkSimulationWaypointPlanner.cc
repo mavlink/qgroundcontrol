@@ -450,7 +450,7 @@ MAVLinkSimulationWaypointPlanner::MAVLinkSimulationWaypointPlanner(MAVLinkSimula
     timestamp_last_send_setpoint(0),
     systemid(sysid),
     compid(MAV_COMP_ID_WAYPOINTPLANNER),
-    setpointDelay(10),
+    setpointDelay(1000),
     yawTolerance(0.4f),
     verbose(true),
     debug(false),
@@ -553,7 +553,7 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
             emit messageSent(msg);
         }
 
-        uint64_t now = QGC::groundTimeUsecs()/1000;
+        uint64_t now = QGC::groundTimeMilliseconds();
         timestamp_last_send_setpoint = now;
     }
 }
@@ -699,7 +699,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
 
     //qDebug() << "MAV: %d WAYPOINTPLANNER GOT MESSAGE" << systemid;
 
-    uint64_t now = QGC::groundTimeUsecs()/1000;
+    uint64_t now = QGC::groundTimeMilliseconds();
     if (now-protocol_timestamp_lastaction > protocol_timeout && current_state != PX_WPP_IDLE) {
         if (verbose) qDebug() << "Last operation (state=%u) timed out, changing state to PX_WPP_IDLE" << current_state;
         current_state = PX_WPP_IDLE;
