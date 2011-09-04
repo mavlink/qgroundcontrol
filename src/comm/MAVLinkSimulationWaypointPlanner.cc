@@ -449,13 +449,8 @@ MAVLinkSimulationWaypointPlanner::MAVLinkSimulationWaypointPlanner(MAVLinkSimula
     protocol_timeout(1000),
     timestamp_last_send_setpoint(0),
     systemid(sysid),
-<<<<<<< HEAD
     compid(MAV_COMP_ID_MISSIONPLANNER),
     setpointDelay(10),
-=======
-    compid(MAV_COMP_ID_WAYPOINTPLANNER),
-    setpointDelay(1000),
->>>>>>> master
     yawTolerance(0.4f),
     verbose(true),
     debug(false),

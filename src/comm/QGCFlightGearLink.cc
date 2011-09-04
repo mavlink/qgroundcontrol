@@ -217,6 +217,11 @@ void QGCFlightGearLink::readBytes()
     roll = values.at(3).toDouble();
     pitch = values.at(4).toDouble();
     yaw = values.at(5).toDouble();
+    vx = values.at(6).toDouble();
+    vy = values.at(6).toDouble();
+    vz = values.at(6).toDouble();
+
+    // FIXME Accelerations missing
 
 
 
