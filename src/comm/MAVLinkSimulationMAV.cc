@@ -279,9 +279,99 @@ void MAVLinkSimulationMAV::mainloop()
     timer25Hz--;
 }
 
+static unsigned chan_counts[MAVLINK_COMM_NUM_BUFFERS];
+
+static const unsigned message_lengths[] = MAVLINK_MESSAGE_LENGTHS;
+static unsigned error_count;
+
+static const mavlink_message_info_t message_info[256] = MAVLINK_MESSAGE_INFO;
+
+static void print_one_field(const mavlink_message_t *msg, const mavlink_field_info_t *f, int idx)
+{
+#define PRINT_FORMAT(f, def) (f->print_format?f->print_format:def)
+        switch (f->type) {
+        case MAVLINK_TYPE_CHAR:
+                qDebug(PRINT_FORMAT(f, "%c"), _MAV_RETURN_char(msg, f->wire_offset+idx*1));
+                break;
+        case MAVLINK_TYPE_UINT8_T:
+                qDebug(PRINT_FORMAT(f, "%u"), _MAV_RETURN_uint8_t(msg, f->wire_offset+idx*1));
+                break;
+        case MAVLINK_TYPE_INT8_T:
+                qDebug(PRINT_FORMAT(f, "%d"), _MAV_RETURN_int8_t(msg, f->wire_offset+idx*1));
+                break;
+        case MAVLINK_TYPE_UINT16_T:
+                qDebug(PRINT_FORMAT(f, "%u"), _MAV_RETURN_uint16_t(msg, f->wire_offset+idx*2));
+                break;
+        case MAVLINK_TYPE_INT16_T:
+                qDebug(PRINT_FORMAT(f, "%d"), _MAV_RETURN_int16_t(msg, f->wire_offset+idx*2));
+                break;
+        case MAVLINK_TYPE_UINT32_T:
+                qDebug(PRINT_FORMAT(f, "%lu"), (unsigned long)_MAV_RETURN_uint32_t(msg, f->wire_offset+idx*4));
+                break;
+        case MAVLINK_TYPE_INT32_T:
+                qDebug(PRINT_FORMAT(f, "%ld"), (long)_MAV_RETURN_int32_t(msg, f->wire_offset+idx*4));
+                break;
+        case MAVLINK_TYPE_UINT64_T:
+                qDebug(PRINT_FORMAT(f, "%llu"), (unsigned long long)_MAV_RETURN_uint64_t(msg, f->wire_offset+idx*8));
+                break;
+        case MAVLINK_TYPE_INT64_T:
+                qDebug(PRINT_FORMAT(f, "%lld"), (long long)_MAV_RETURN_int64_t(msg, f->wire_offset+idx*8));
+                break;
+        case MAVLINK_TYPE_FLOAT:
+                qDebug(PRINT_FORMAT(f, "%f"), (double)_MAV_RETURN_float(msg, f->wire_offset+idx*4));
+                break;
+        case MAVLINK_TYPE_DOUBLE:
+                qDebug(PRINT_FORMAT(f, "%f"), _MAV_RETURN_double(msg, f->wire_offset+idx*8));
+                break;
+        }
+}
+
+static void print_field(const mavlink_message_t *msg, const mavlink_field_info_t *f)
+{
+        qDebug("%s: ", f->name);
+        if (f->array_length == 0) {
+                print_one_field(msg, f, 0);
+                qDebug(" ");
+        } else {
+                unsigned i;
+                /* print an array */
+                if (f->type == MAVLINK_TYPE_CHAR) {
+                        qDebug("'%.*s'", f->array_length,
+                               f->wire_offset+(const char *)_MAV_PAYLOAD(msg));
+
+                } else {
+                        qDebug("[ ");
+                        for (i=0; i<f->array_length; i++) {
+                                print_one_field(msg, f, i);
+                                if (i < f->array_length) {
+                                        qDebug(", ");
+                                }
+                        }
+                        qDebug("]");
+                }
+        }
+        qDebug(" ");
+}
+
+static void print_message(const mavlink_message_t *msg)
+{
+        const mavlink_message_info_t *m = &message_info[msg->msgid];
+        const mavlink_field_info_t *f = m->fields;
+        unsigned i;
+        qDebug("%s { ", m->name);
+        for (i=0; i<m->num_fields; i++) {
+                print_field(msg, &f[i]);
+        }
+        qDebug("}\n");
+}
+
 void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
 {
-    //qDebug() << "MAV:" << systemid << "RECEIVED MESSAGE FROM" << msg.sysid << "COMP" << msg.compid;
+    if (msg.sysid != systemid)
+    {
+        print_message(&msg);
+        qDebug() << "MAV:" << systemid << "RECEIVED MESSAGE FROM" << msg.sysid << "COMP" << msg.compid;
+    }
 
     switch(msg.msgid) {
     case MAVLINK_MSG_ID_ATTITUDE:

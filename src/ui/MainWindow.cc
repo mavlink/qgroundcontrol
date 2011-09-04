@@ -131,9 +131,6 @@ MainWindow::MainWindow(QWidget *parent):
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
 
-    // Load mavlink view as default widget set
-    //loadMAVLinkView();
-
     statusBar()->setSizeGripEnabled(true);
 
     // Restore the window position and size
@@ -404,12 +401,26 @@ void MainWindow::buildCommonWidgets()
         addToCentralWidgetsMenu (dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()),CENTRAL_DATA_PLOT);
     }
 
+//    if (!linechartWidget) {
+//        // Center widgets
+//        linechartWidget   = new Linecharts(this);
+//        linechartWidget->addSource(mavlinkDecoder);
+//        addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
+//    }
 
-}
 
+    if (!hudWidget) {
+        hudWidget         = new HUD(320, 240, this);
+        addToCentralWidgetsMenu(hudWidget, tr("Head Up Display"), SLOT(showCentralWidget()), CENTRAL_HUD);
+    }
 
-void MainWindow::buildPxWidgets()
-{
+    if (!hsiDockWidget) {
+        hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+        hsiDockWidget->setWidget( new HSIDisplay(this) );
+        hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
+        addToToolsMenu (hsiDockWidget, tr("Horizontal Situation"), SLOT(showToolWidget(bool)), MENU_HSI, Qt::BottomDockWidgetArea);
+    }
+
     //FIXME: memory of acceptList will never be freed again
     QStringList* acceptList = new QStringList();
     acceptList->append("-105,roll deg,deg,+105,s");
@@ -426,98 +437,20 @@ void MainWindow::buildPxWidgets()
 
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
-    acceptList2->append("900,servo #1,us,2100,s");
-    acceptList2->append("900,servo #2,us,2100,s");
-    acceptList2->append("900,servo #3,us,2100,s");
-    acceptList2->append("900,servo #4,us,2100,s");
-    acceptList2->append("900,servo #5,us,2100,s");
     acceptList2->append("900,servo #6,us,2100,s");
     acceptList2->append("900,servo #7,us,2100,s");
     acceptList2->append("900,servo #8,us,2100,s");
     acceptList2->append("0,abs pressure,hPa,65500");
-    //acceptList2->append("-2048,accel. x,raw,2048,s");
-    //acceptList2->append("-2048,accel. y,raw,2048,s");
-    //acceptList2->append("-2048,accel. z,raw,2048,s");
-
-    if (!linechartWidget) {
-        // Center widgets
-        linechartWidget   = new Linecharts(this);
-        linechartWidget->addSource(mavlinkDecoder);
-        addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
-    }
-
-
-    if (!hudWidget) {
-        hudWidget         = new HUD(320, 240, this);
-        addToCentralWidgetsMenu(hudWidget, tr("Head Up Display"), SLOT(showCentralWidget()), CENTRAL_HUD);
-    }
-
-    if (!dataplotWidget) {
-        dataplotWidget    = new QGCDataPlot2D(this);
-        addToCentralWidgetsMenu(dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()), CENTRAL_DATA_PLOT);
-    }
-
-#ifdef QGC_OSG_ENABLED
-    if (!_3DWidget) {
-        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-        addToCentralWidgetsMenu(_3DWidget, tr("Local 3D"), SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
-    }
-#endif
-
-#ifdef QGC_OSGEARTH_ENABLED
-    if (!_3DMapWidget) {
-        _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
-        addToCentralWidgetsMenu(_3DMapWidget, tr("OSG Earth 3D"), SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
-    }
-#endif
-
-#if (defined _MSC_VER) | (defined Q_OS_MAC)
-    if (!gEarthWidget) {
-        gEarthWidget = new QGCGoogleEarthView(this);
-        addToCentralWidgetsMenu(gEarthWidget, tr("Google Earth"), SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
-    }
-
-#endif
-
-    // Dock widgets
-
-    if (!detectionDockWidget) {
-        detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
-        detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
-        detectionDockWidget->setObjectName("OBJECT_DETECTION_DOCK_WIDGET");
-        addToToolsMenu (detectionDockWidget, tr("Object Recognition"), SLOT(showToolWidget(bool)), MENU_DETECTION, Qt::RightDockWidgetArea);
-    }
-
-    if (!parametersDockWidget) {
-        parametersDockWidget = new QDockWidget(tr("Calibration and Onboard Parameters"), this);
-        parametersDockWidget->setWidget( new ParameterInterface(this) );
-        parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
-        addToToolsMenu (parametersDockWidget, tr("Calibration and Parameters"), SLOT(showToolWidget(bool)), MENU_PARAMETERS, Qt::RightDockWidgetArea);
-    }
-
-    if (!watchdogControlDockWidget) {
-        watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
-        watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
-        watchdogControlDockWidget->setObjectName("WATCHDOG_CONTROL_DOCKWIDGET");
-        addToToolsMenu (watchdogControlDockWidget, tr("Process Control"), SLOT(showToolWidget(bool)), MENU_WATCHDOG, Qt::BottomDockWidgetArea);
-    }
-
-    if (!hsiDockWidget) {
-        hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
-        hsiDockWidget->setWidget( new HSIDisplay(this) );
-        hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
-        addToToolsMenu (hsiDockWidget, tr("Horizontal Situation"), SLOT(showToolWidget(bool)), MENU_HSI, Qt::BottomDockWidgetArea);
-    }
 
     if (!headDown1DockWidget) {
-        headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
+        headDown1DockWidget = new QDockWidget(tr("Flight Instruments"), this);
         headDown1DockWidget->setWidget( new HDDisplay(acceptList, "Flight Display", this) );
         headDown1DockWidget->setObjectName("HEAD_DOWN_DISPLAY_1_DOCK_WIDGET");
         addToToolsMenu (headDown1DockWidget, tr("Flight Display"), SLOT(showToolWidget(bool)), MENU_HDD_1, Qt::RightDockWidgetArea);
     }
 
     if (!headDown2DockWidget) {
-        headDown2DockWidget = new QDockWidget(tr("Actuator Status"), this);
+        headDown2DockWidget = new QDockWidget(tr("Payload Instruments"), this);
         headDown2DockWidget->setWidget( new HDDisplay(acceptList2, "Actuator Status", this) );
         headDown2DockWidget->setObjectName("HEAD_DOWN_DISPLAY_2_DOCK_WIDGET");
         addToToolsMenu (headDown2DockWidget, tr("Actuator Status"), SLOT(showToolWidget(bool)), MENU_HDD_2, Qt::RightDockWidgetArea);
@@ -537,7 +470,50 @@ void MainWindow::buildPxWidgets()
         addToToolsMenu (headUpDockWidget, tr("Head Up Display"), SLOT(showToolWidget(bool)), MENU_HUD, Qt::RightDockWidgetArea);
     }
 
-    if (!video1DockWidget) {
+    if (!parametersDockWidget) {
+        parametersDockWidget = new QDockWidget(tr("Onboard Parameters"), this);
+        parametersDockWidget->setWidget( new ParameterInterface(this) );
+        parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
+        addToToolsMenu (parametersDockWidget, tr("Calibration and Parameters"), SLOT(showToolWidget(bool)), MENU_PARAMETERS, Qt::RightDockWidgetArea);
+    }
+
+#ifdef QGC_OSG_ENABLED
+    if (!_3DWidget) {
+        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
+        addToCentralWidgetsMenu(_3DWidget, tr("Local 3D"), SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
+    }
+#endif
+
+#if (defined _MSC_VER) | (defined Q_OS_MAC)
+    if (!gEarthWidget) {
+        gEarthWidget = new QGCGoogleEarthView(this);
+        addToCentralWidgetsMenu(gEarthWidget, tr("Google Earth"), SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
+    }
+#endif
+}
+
+
+void MainWindow::buildPxWidgets()
+{
+    // Dock widgets
+    if (!detectionDockWidget)
+    {
+        detectionDockWidget = new QDockWidget(tr("Object Recognition"), this);
+        detectionDockWidget->setWidget( new ObjectDetectionView("images/patterns", this) );
+        detectionDockWidget->setObjectName("OBJECT_DETECTION_DOCK_WIDGET");
+        addToToolsMenu (detectionDockWidget, tr("Object Recognition"), SLOT(showToolWidget(bool)), MENU_DETECTION, Qt::RightDockWidgetArea);
+    }
+
+    if (!watchdogControlDockWidget)
+    {
+        watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
+        watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
+        watchdogControlDockWidget->setObjectName("WATCHDOG_CONTROL_DOCKWIDGET");
+        addToToolsMenu (watchdogControlDockWidget, tr("Process Control"), SLOT(showToolWidget(bool)), MENU_WATCHDOG, Qt::BottomDockWidgetArea);
+    }
+
+    if (!video1DockWidget)
+    {
         video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
         HUD* video1 =  new HUD(160, 120, this);
         video1->enableHUDInstruments(false);
@@ -548,7 +524,8 @@ void MainWindow::buildPxWidgets()
         addToToolsMenu (video1DockWidget, tr("Video Stream 1"), SLOT(showToolWidget(bool)), MENU_VIDEO_STREAM_1, Qt::LeftDockWidgetArea);
     }
 
-    if (!video2DockWidget) {
+    if (!video2DockWidget)
+    {
         video2DockWidget = new QDockWidget(tr("Video Stream 2"), this);
         HUD* video2 =  new HUD(160, 120, this);
         video2->enableHUDInstruments(false);
@@ -641,17 +618,6 @@ void MainWindow::addToCentralWidgetsMenu ( QWidget* widget,
 {
     QAction* tempAction;
 
-
-// Not needed any more - separate menu now available
-
-//    // Add the separator that will separate tools from central Widgets
-//    if (!toolsMenuActions[CENTRAL_SEPARATOR])
-//    {
-//        tempAction = ui.menuTools->addSeparator();
-//        toolsMenuActions[CENTRAL_SEPARATOR] = tempAction;
-//        tempAction->setData(CENTRAL_SEPARATOR);
-//    }
-
     tempAction = ui.menuMain->addAction(title);
 
     tempAction->setCheckable(true);
@@ -663,10 +629,13 @@ void MainWindow::addToCentralWidgetsMenu ( QWidget* widget,
 
     QString chKey = buildMenuKey(SUB_SECTION_CHECKED, centralWidget, currentView);
 
-    if (!settings.contains(chKey)) {
+    if (!settings.contains(chKey))
+    {
         settings.setValue(chKey,false);
         tempAction->setChecked(false);
-    } else {
+    }
+    else
+    {
         tempAction->setChecked(settings.value(chKey).toBool());
     }
 
@@ -687,13 +656,15 @@ void MainWindow::showCentralWidget()
 
     // check the current action
 
-    if (senderAction && dockWidgets[tool]) {
+    if (senderAction && dockWidgets[tool])
+    {
         // uncheck all central widget actions
         QHashIterator<int, QAction*> i(toolsMenuActions);
         while (i.hasNext()) {
             i.next();
             //qDebug() << "shCW" << i.key() << "read";
-            if (i.value() && i.value()->data().toInt() > 255) {
+            if (i.value() && i.value()->data().toInt() > 255)
+            {
                 // Block signals and uncheck action
                 // firing would be unneccesary
                 i.value()->blockSignals(true);
@@ -823,7 +794,8 @@ void MainWindow::showToolWidget(bool visible)
 
         //qDebug() << "Trying to cast dockwidget" << dockWidget << "isvisible" << visible;
 
-        if (dockWidget) {
+        if (dockWidget)
+        {
             // Get action
             int tool = dockWidgets.key(dockWidget);
 
@@ -868,8 +840,10 @@ void MainWindow::showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view)
 
     tempLocation = static_cast <Qt::DockWidgetArea>(settings.value(buildMenuKey (SUB_SECTION_LOCATION,widget, view), QVariant(Qt::RightDockWidgetArea)).toInt());
 
-    if (tempWidget != NULL) {
-        if (tempVisible) {
+    if (tempWidget != NULL)
+    {
+        if (tempVisible)
+        {
             addDockWidget(tempLocation, tempWidget);
             tempWidget->show();
         }
@@ -879,13 +853,7 @@ void MainWindow::showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view)
 QString MainWindow::buildMenuKey(SETTINGS_SECTIONS section, TOOLS_WIDGET_NAMES tool, VIEW_SECTIONS view)
 {
     // Key is built as follows: autopilot_type/section_menu/view/tool/section
-    int apType;
-
-//    apType = (UASManager::instance() && UASManager::instance()->silentGetActiveUAS())?
-//             UASManager::instance()->getActiveUAS()->getAutopilotType():
-//             -1;
-
-    apType = 1;
+    int apType = 1;
 
     return (QString::number(apType) + "_" +
             QString::number(SECTION_MENU) + "_" +
@@ -968,11 +936,6 @@ void MainWindow::connectCommonWidgets()
         connect(mavlink, SIGNAL(receiveLossChanged(int, float)),
                 infoDockWidget->widget(), SLOT(updateSendLoss(int, float)));
     }
-//    //TODO temporaly debug
-//    if (slugsHilSimWidget && slugsHilSimWidget->widget()) {
-//        connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)),
-//                slugsHilSimWidget->widget(), SLOT(activeUasSet(UASInterface*)));
-//    }
 }
 
 void MainWindow::createCustomWidget()
@@ -1070,49 +1033,35 @@ void MainWindow::arrangeCommonCenterStack()
     if (mapWidget && (centerStack->indexOf(mapWidget) == -1)) centerStack->addWidget(mapWidget);
     if (dataplotWidget && (centerStack->indexOf(dataplotWidget) == -1)) centerStack->addWidget(dataplotWidget);
     if (protocolWidget && (centerStack->indexOf(protocolWidget) == -1)) centerStack->addWidget(protocolWidget);
-
-    setCentralWidget(centerStack);
-}
-
-void MainWindow::arrangePxCenterStack()
-{
-
-    if (!centerStack) {
-        qDebug() << "Center Stack not Created!";
-        return;
-    }
-
-
     if (linechartWidget && (centerStack->indexOf(linechartWidget) == -1)) centerStack->addWidget(linechartWidget);
 
 #ifdef QGC_OSG_ENABLED
     if (_3DWidget && (centerStack->indexOf(_3DWidget) == -1)) centerStack->addWidget(_3DWidget);
-#endif
-#ifdef QGC_OSGEARTH_ENABLED
-    if (_3DMapWidget && (centerStack->indexOf(_3DMapWidget) == -1)) centerStack->addWidget(_3DMapWidget);
 #endif
 #if (defined _MSC_VER) | (defined Q_OS_MAC)
     if (gEarthWidget && (centerStack->indexOf(gEarthWidget) == -1)) centerStack->addWidget(gEarthWidget);
 #endif
     if (hudWidget && (centerStack->indexOf(hudWidget) == -1)) centerStack->addWidget(hudWidget);
     if (dataplotWidget && (centerStack->indexOf(dataplotWidget) == -1)) centerStack->addWidget(dataplotWidget);
+
+    setCentralWidget(centerStack);
 }
 
-void MainWindow::arrangeSlugsCenterStack()
+void MainWindow::arrangePxCenterStack()
 {
-
     if (!centerStack) {
         qDebug() << "Center Stack not Created!";
         return;
     }
+}
 
-    if (linechartWidget && (centerStack->indexOf(linechartWidget) == -1)) centerStack->addWidget(linechartWidget);
-    if (hudWidget && (centerStack->indexOf(hudWidget) == -1)) centerStack->addWidget(hudWidget);
-
-#if (defined _MSC_VER) | (defined Q_OS_MAC)
-    if (gEarthWidget && (centerStack->indexOf(gEarthWidget) == -1)) centerStack->addWidget(gEarthWidget);
-#endif
-
+void MainWindow::arrangeSlugsCenterStack()
+{
+    if (!centerStack)
+    {
+        qDebug() << "Center Stack not Created!";
+        return;
+    }
 }
 
 void MainWindow::loadSettings()
