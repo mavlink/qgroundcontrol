@@ -41,11 +41,10 @@ This file is part of the QGROUNDCONTROL project
 QGCFlightGearLink::QGCFlightGearLink(UASInterface* mav, QString remoteHost, QHostAddress host, quint16 port)
 {
     this->host = host;
-    this->port = port;
+    this->port = port+mav->getUASID();
     this->connectState = false;
-    this->currentPort = 49000;
+    this->currentPort = 49000+mav->getUASID();
     this->mav = mav;
-    // Set unique ID and add link to the list of links
     this->name = tr("FlightGear Link (port:%1)").arg(port);
     setRemoteHost(remoteHost);
 }
@@ -91,8 +90,6 @@ void QGCFlightGearLink::processError(QProcess::ProcessError err)
         MainWindow::instance()->showCriticalMessage(tr("Could not Communicate with FlightGear"), tr("Please check if the path and command is correct"));
         break;
     case QProcess::UnknownError:
-        MainWindow::instance()->showCriticalMessage(tr("FlightGear Error"), tr("Please check if the path and command is correct"));
-        break;
     default:
         MainWindow::instance()->showCriticalMessage(tr("FlightGear Error"), tr("Please check if the path and command is correct."));
         break;
@@ -104,7 +101,6 @@ void QGCFlightGearLink::processError(QProcess::ProcessError err)
  */
 void QGCFlightGearLink::setRemoteHost(const QString& host)
 {
-    //qDebug() << "UDP:" << "ADDING HOST:" << host;
     if (host.contains(":"))
     {
         //qDebug() << "HOST: " << host.split(":").first();
@@ -141,7 +137,6 @@ void QGCFlightGearLink::setRemoteHost(const QString& host)
 
 void QGCFlightGearLink::updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode)
 {
-    // 37.613548,-122.357246,-9999.000000,0.000000,0.424000,297.899994,0.000000\n
     // magnetos,aileron,elevator,rudder,throttle\n
 
     float magnetos = 3.0f;
@@ -218,10 +213,13 @@ void QGCFlightGearLink::readBytes()
     pitch = values.at(4).toDouble();
     yaw = values.at(5).toDouble();
     vx = values.at(6).toDouble();
-    vy = values.at(6).toDouble();
-    vz = values.at(6).toDouble();
+    vy = values.at(7).toDouble();
+    vz = values.at(8).toDouble();
 
     // FIXME Accelerations missing
+    xacc = 0;
+    yacc = 0;
+    zacc = 1.0;
 
 
 
@@ -260,7 +258,7 @@ qint64 QGCFlightGearLink::bytesAvailable()
 bool QGCFlightGearLink::disconnectSimulation()
 {
     disconnect(process, SIGNAL(error(QProcess::ProcessError)),
-                          this, SLOT(processError(QProcess::ProcessError)));
+               this, SLOT(processError(QProcess::ProcessError)));
     disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
     disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
 
@@ -286,124 +284,77 @@ bool QGCFlightGearLink::connectSimulation()
 {
     if (!mav) return false;
     socket = new QUdpSocket(this);
-
-    //Check if we are using a multicast-address
-    //    bool multicast = false;
-    //    if (host.isInSubnet(QHostAddress("224.0.0.0"),4))
-    //    {
-    //        multicast = true;
-    //        connectState = socket->bind(port, QUdpSocket::ShareAddress);
-    //    }
-    //    else
-    //    {
     connectState = socket->bind(host, port);
-    //    }
 
-    //Provides Multicast functionality to UdpSocket
-    /* not working yet
-    if (multicast)
-    {
-        int sendingFd = socket->socketDescriptor();
-
-        if (sendingFd != -1)
-        {
-            // set up destination address
-            struct sockaddr_in sendAddr;
-            memset(&sendAddr,0,sizeof(sendAddr));
-            sendAddr.sin_family=AF_INET;
-            sendAddr.sin_addr.s_addr=inet_addr(HELLO_GROUP);
-            sendAddr.sin_port=htons(port);
-
-            // set TTL
-            unsigned int ttl = 1; // restricted to the same subnet
-            if (setsockopt(sendingFd, IPPROTO_IP, IP_MULTICAST_TTL, (unsigned int*)&ttl, sizeof(ttl) ) < 0)
-            {
-                std::cout << "TTL failed\n";
-            }
-        }
-    }
-    */
-
-    //QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readPendingDatagrams()));
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
     process = new QProcess(this);
 
-//    forever
-//    {
-//        QGC::SLEEP::msleep(5000);
-//    }
-//refreshTimer.start(5); // 200 Hz UAV -> Simulation update rate
-connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+    connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
 
-//connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
-// Catch process error
-QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
+    //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
+    // Catch process error
+    QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
                       this, SLOT(processError(QProcess::ProcessError)));
-// Start Flightgear
-QStringList processCall;
-QString processFgfs;
-QString fgRoot;
-QString fgScenery;
-QString aircraft("Rascal110-JSBSim");
+    // Start Flightgear
+    QStringList processCall;
+    QString processFgfs;
+    QString fgRoot;
+    QString fgScenery;
+    QString aircraft("Rascal110-JSBSim");
 
 #ifdef Q_OS_MACX
-processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
-fgRoot = "--fg-root=/Applications/FlightGear.app/Contents/Resources/data";
-fgScenery = "--fg-scenery=/Applications/FlightGear.app/Contents/Resources/data/Scenery";
+    processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
+    fgRoot = "--fg-root=/Applications/FlightGear.app/Contents/Resources/data";
+    fgScenery = "--fg-scenery=/Applications/FlightGear.app/Contents/Resources/data/Scenery";
 #endif
 
 #ifdef Q_OS_WIN32
-processFgfs = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32\\fgfs";
-fgRoot = "--fg-root=C:\\Program Files (x86)\\FlightGear\\data";
+    processFgfs = "C:\\Program Files (x86)\\FlightGear\\bin\\Win32\\fgfs";
+    fgRoot = "--fg-root=C:\\Program Files (x86)\\FlightGear\\data";
 #endif
 
 #ifdef Q_OS_LINUX
-processFgfs = "fgfs";
-fgRoot = "--fg-root=/usr/share/flightgear/data";
+    processFgfs = "fgfs";
+    fgRoot = "--fg-root=/usr/share/flightgear/data";
 #endif
 
-processCall << fgRoot;
-processCall << fgScenery;
-processCall << "--generic=socket,out,50,127.0.0.1,49005,udp,qgroundcontrol";
-processCall << "--generic=socket,in,50,127.0.0.1,49000,udp,qgroundcontrol";
-processCall << "--in-air";
-processCall << "--vc=90";
-processCall << "--heading=300";
-processCall << "--timeofday=noon";
-processCall << "--disable-hud-3d";
-processCall << "--control=mouse";
-processCall << "--disable-intro-music";
-processCall << "--disable-sound";
-processCall << "--disable-anti-alias-hud";
-processCall << "--disable-fullscreen";
-processCall << "--disable-random-objects";
-processCall << "--disable-ai-models";
-processCall << "--wind=0@0";
-processCall << "--fdm=jsb";
-processCall << "--prop:/engines/engine[0]/running=true";
-if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
-{
-    // Start the remaining three motors of the quad
-    processCall << "--prop:/engines/engine[1]/running=true";
-    processCall << "--prop:/engines/engine[2]/running=true";
-    processCall << "--prop:/engines/engine[3]/running=true";
-}
-processCall << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
-processCall << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
-processCall << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
-// Add new argument with this: processCall << "";
-processCall << QString("--aircraft=%2").arg(aircraft);
+    processCall << fgRoot;
+    processCall << fgScenery;
+    processCall << QString("--generic=socket,out,50,127.0.0.1,%1,udp,qgroundcontrol").arg(port);
+    processCall << QString("--generic=socket,in,50,127.0.0.1,%1,udp,qgroundcontrol").arg(currentPort);
+    processCall << "--in-air";
+    processCall << "--vc=90";
+    processCall << "--heading=300";
+    processCall << "--timeofday=noon";
+    processCall << "--disable-hud-3d";
+    processCall << "--control=mouse";
+    processCall << "--disable-intro-music";
+    processCall << "--disable-sound";
+    processCall << "--disable-anti-alias-hud";
+    processCall << "--disable-fullscreen";
+    processCall << "--disable-random-objects";
+    processCall << "--disable-ai-models";
+    processCall << "--wind=0@0";
+    processCall << "--fdm=jsb";
+    processCall << "--prop:/engines/engine[0]/running=true";
+    if (mav->getSystemType() == MAV_TYPE_QUADROTOR)
+    {
+        // Start the remaining three motors of the quad
+        processCall << "--prop:/engines/engine[1]/running=true";
+        processCall << "--prop:/engines/engine[2]/running=true";
+        processCall << "--prop:/engines/engine[3]/running=true";
+    }
+    processCall << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
+    processCall << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
+    processCall << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
+    // Add new argument with this: processCall << "";
+    processCall << QString("--aircraft=%2").arg(aircraft);
 
-process->start(processFgfs, processCall);
+    process->start(processFgfs, processCall);
 
-qDebug() << "STARTING: " << processFgfs << processCall;
-
-//if (!process->waitForStarted())
-//{
-//    qDebug() << "PROCESS START FAILED!";
-//}
+    qDebug() << "STARTING: " << processFgfs << processCall;
 
     emit flightGearConnected(connectState);
     if (connectState) {
