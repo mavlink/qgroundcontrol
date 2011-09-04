@@ -1,7 +1,7 @@
 /** @file
  *	@brief MAVLink comm protocol.
  *	@see http://qgroundcontrol.org/mavlink/
- *	 Generated on Wednesday, July 27 2011, 14:17 UTC
+ *	 Generated on Monday, August 22 2011, 15:48 UTC
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -55,7 +55,8 @@ enum MAV_CMD
 	MAV_CMD_DO_REPEAT_RELAY=182, /* Cycle a relay on and off for a desired number of cyles with a desired period. | Relay number | Cycle count | Cycle time (seconds, decimal) | Empty | Empty | Empty | Empty | */
 	MAV_CMD_DO_SET_SERVO=183, /* Set a servo to a desired PWM value. | Servo number | PWM (microseconds, 1000 to 2000 typical) | Empty | Empty | Empty | Empty | Empty | */
 	MAV_CMD_DO_REPEAT_SERVO=184, /* Cycle a between its nominal setting and a desired PWM for a desired number of cycles with a desired period. | Servo number | PWM (microseconds, 1000 to 2000 typical) | Cycle count | Cycle time (seconds) | Empty | Empty | Empty | */
-	MAV_CMD_DO_CONTROL_VIDEO=200, /* Control onboard camera system. | Camera ID (-1 for all) | Transmission: 0: disabled, 1: enabled compressed, 2: enabled raw | Transmission mode: 0: video stream, >0: single images every n seconds (decimal) | Recording: 0: disabled, 1: enabled compressed, 2: enabled raw | Empty | Empty | Empty | */
+	MAV_CMD_DO_CONTROL_VIDEO=200, /* Control onboard camera capturing. | Camera ID (-1 for all) | Transmission: 0: disabled, 1: enabled compressed, 2: enabled raw | Transmission mode: 0: video stream, >0: single images every n seconds (decimal) | Recording: 0: disabled, 1: enabled compressed, 2: enabled raw | Empty | Empty | Empty | */
+	MAV_CMD_DO_SET_ROI=201, /* Sets the region of interest (ROI) for a sensor set or the vehicle itself. This can then be used by the vehicles control system to control the vehicle attitude and the attitude of various devices such as cameras. | Region of interest mode. (see MAV_ROI enum) | Waypoint index/ target ID. (see MAV_ROI enum) | ROI index (allows a vehicle to manage multiple cameras etc.) | Empty | x the location of the fixed ROI (see MAV_FRAME) | y | z | */
 	MAV_CMD_DO_LAST=240, /* NOP - This command is only used to mark the upper limit of the DO commands in the enumeration | Empty | Empty | Empty | Empty | Empty | Empty | Empty | */
 	MAV_CMD_PREFLIGHT_CALIBRATION=241, /* Trigger calibration. This command will be only accepted if in pre-flight mode. | Gyro calibration: 0: no, 1: yes | Magnetometer calibration: 0: no, 1: yes | Ground pressure: 0: no, 1: yes | Radio calibration: 0: no, 1: yes | Empty | Empty | Empty | */
 	MAV_CMD_PREFLIGHT_STORAGE=245, /* Request storage of different parameter values and logs. This command will be only accepted if in pre-flight mode. | Parameter storage: 0: READ FROM FLASH/EEPROM, 1: WRITE CURRENT TO FLASH/EEPROM | Mission storage: 0: READ FROM FLASH/EEPROM, 1: WRITE CURRENT TO FLASH/EEPROM | Reserved | Reserved | Empty | Empty | Empty | */
@@ -77,13 +78,14 @@ enum MAV_DATA_STREAM
 	MAV_DATA_STREAM_ENUM_END
 };
 
-/** @brief   The ROI (region of interest) for the vehicle. This can be       be used by the vehicle for camera/vehicle attitude alignment (see 	  MAV_CMD_NAV_ROI).       */
+/** @brief   The ROI (region of interest) for the vehicle. This can be                 be used by the vehicle for camera/vehicle attitude alignment (see                 MAV_CMD_NAV_ROI).              */
 enum MAV_ROI
 {
-	MAV_ROI_WPNEXT=0, /* Point toward next waypoint. | */
-	MAV_ROI_WPINDEX=1, /* Point toward given waypoint. | */
-	MAV_ROI_LOCATION=2, /* Point toward fixed location. | */
-	MAV_ROI_TARGET=3, /* Point toward of given id. | */
+	MAV_ROI_NONE=0, /* No region of interest. | */
+	MAV_ROI_WPNEXT=1, /* Point toward next waypoint. | */
+	MAV_ROI_WPINDEX=2, /* Point toward given waypoint. | */
+	MAV_ROI_LOCATION=3, /* Point toward fixed location. | */
+	MAV_ROI_TARGET=4, /* Point toward of given id. | */
 	MAV_ROI_ENUM_END
 };
 
@@ -136,18 +138,25 @@ enum MAV_ROI
 #include "./mavlink_msg_control_status.h"
 #include "./mavlink_msg_safety_set_allowed_area.h"
 #include "./mavlink_msg_safety_allowed_area.h"
-#include "./mavlink_msg_attitude_controller_output.h"
-#include "./mavlink_msg_position_controller_output.h"
+#include "./mavlink_msg_set_roll_pitch_yaw_thrust.h"
+#include "./mavlink_msg_set_roll_pitch_yaw_speed_thrust.h"
+#include "./mavlink_msg_roll_pitch_yaw_thrust_setpoint.h"
+#include "./mavlink_msg_roll_pitch_yaw_speed_thrust_setpoint.h"
 #include "./mavlink_msg_nav_controller_output.h"
 #include "./mavlink_msg_position_target.h"
 #include "./mavlink_msg_state_correction.h"
 #include "./mavlink_msg_set_altitude.h"
 #include "./mavlink_msg_request_data_stream.h"
+#include "./mavlink_msg_hil_state.h"
+#include "./mavlink_msg_hil_controls.h"
 #include "./mavlink_msg_manual_control.h"
+#include "./mavlink_msg_rc_channels_override.h"
 #include "./mavlink_msg_global_position_int.h"
 #include "./mavlink_msg_vfr_hud.h"
 #include "./mavlink_msg_command.h"
 #include "./mavlink_msg_command_ack.h"
+#include "./mavlink_msg_optical_flow.h"
+#include "./mavlink_msg_object_detection_event.h"
 #include "./mavlink_msg_debug_vect.h"
 #include "./mavlink_msg_named_value_float.h"
 #include "./mavlink_msg_named_value_int.h"
@@ -158,7 +167,7 @@ enum MAV_ROI
 // MESSAGE LENGTHS
 
 #undef MAVLINK_MESSAGE_LENGTHS
-#define MAVLINK_MESSAGE_LENGTHS { 3, 4, 8, 14, 8, 28, 3, 32, 0, 2, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 19, 2, 23, 21, 0, 37, 26, 101, 26, 16, 32, 32, 37, 32, 11, 17, 17, 16, 18, 36, 4, 4, 2, 2, 4, 2, 2, 3, 14, 12, 18, 16, 8, 27, 25, 0, 0, 0, 0, 0, 5, 5, 26, 16, 36, 5, 6, 0, 0, 21, 0, 0, 0, 18, 20, 20, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 14, 14, 51 }
+#define MAVLINK_MESSAGE_LENGTHS { 3, 4, 8, 14, 8, 28, 3, 32, 0, 2, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0, 19, 2, 23, 21, 0, 37, 26, 101, 26, 16, 32, 32, 37, 32, 11, 17, 17, 16, 18, 36, 4, 4, 2, 2, 4, 2, 2, 3, 14, 12, 18, 16, 8, 27, 25, 18, 18, 24, 24, 0, 0, 0, 26, 16, 36, 5, 6, 56, 26, 21, 18, 0, 0, 18, 20, 20, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 14, 14, 51 }
 
 #ifdef __cplusplus
 }
