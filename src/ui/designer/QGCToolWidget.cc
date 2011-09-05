@@ -42,6 +42,7 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
     }
 
     this->setWindowTitle(title);
+    setObjectName(title+"WIDGET");
 
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
     foreach (UASInterface* uas, systems) {
