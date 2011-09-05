@@ -120,9 +120,48 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit valueChanged(uasId, "vicon x", "m", pos.x, time);
             emit valueChanged(uasId, "vicon y", "m", pos.y, time);
             emit valueChanged(uasId, "vicon z", "m", pos.z, time);
-            emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
+            //emit localPositionChanged(this, pos.x, pos.y, pos.z, time);
         }
         break;
+        case MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE: {
+            mavlink_vision_speed_estimate_t speed;
+            mavlink_msg_vision_speed_estimate_decode(&message, &speed);
+            quint64 time = getUnixTime(speed.usec);
+            emit valueChanged(uasId, "vis. speed x", "m/s", speed.x, time);
+            emit valueChanged(uasId, "vis. speed y", "m/s", speed.y, time);
+            emit valueChanged(uasId, "vis. speed z", "m/s", speed.z, time);
+        }
+        break;
+        case MAVLINK_MSG_ID_CONTROL_STATUS:
+            {
+                mavlink_control_status_t status;
+                mavlink_msg_control_status_decode(&message, &status);
+                // Emit control status vector
+                emit attitudeControlEnabled(static_cast<bool>(status.control_att));
+                emit positionXYControlEnabled(static_cast<bool>(status.control_pos_xy));
+                emit positionZControlEnabled(static_cast<bool>(status.control_pos_z));
+                emit positionYawControlEnabled(static_cast<bool>(status.control_pos_yaw));
+
+                // Emit localization status vector
+                emit localizationChanged(this, status.position_fix);
+                emit visionLocalizationChanged(this, status.vision_fix);
+                emit gpsLocalizationChanged(this, status.gps_fix);
+            }
+            break;
+        case MAVLINK_MSG_ID_VISUAL_ODOMETRY:
+            {
+                mavlink_visual_odometry_t pos;
+                mavlink_msg_visual_odometry_decode(&message, &pos);
+                quint64 time = getUnixTime(pos.frame1_time_us);
+                //emit valueChanged(uasId, "vis. time", pos.usec, time);
+                emit valueChanged(uasId, "vis-o. roll", "rad", pos.roll, time);
+                emit valueChanged(uasId, "vis-o. pitch", "rad", pos.pitch, time);
+                emit valueChanged(uasId, "vis-o. yaw", "rad", pos.yaw, time);
+                emit valueChanged(uasId, "vis-o. x", "m", pos.x, time);
+                emit valueChanged(uasId, "vis-o. y", "m", pos.y, time);
+                emit valueChanged(uasId, "vis-o. z", "m", pos.z, time);
+            }
+            break;
         case MAVLINK_MSG_ID_AUX_STATUS: {
             mavlink_aux_status_t status;
             mavlink_msg_aux_status_decode(&message, &status);
