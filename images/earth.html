@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html>
   <head>
@@ -415,9 +415,9 @@ function createAircraft(id, type, color)
 	planeModel.setLocation(planeLoc);
 	planeLink = ge.createLink('');
 	planeOrient = ge.createOrientation(''); 
-	planeModel.setOrientation(planeOrient); 
+	planeModel.setOrientation(planeOrient);
 
-	planeLink.setHref('http://qgroundcontrol.org/_media/users/models/ascent-park-glider.dae');
+	planeLink.setHref('http://qgroundcontrol.org/_media/users/models/ascent-park-glider.dae'); 
 	planeModel.setLink(planeLink);
 	planeModel.setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
 
@@ -589,10 +589,10 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 		//currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
 	
 	
-		// FIXME Currently invalid conversion from right-handed z-down to z-up frame
-		planeOrient.setRoll(((roll/M_PI))*180.0+180.0);
-		planeOrient.setTilt(((pitch/M_PI))*180.0+180.0);
-		planeOrient.setHeading(((yaw/M_PI))*180.0-90.0);
+		planeOrient.setRoll(((pitch / M_PI)) * 180.0);  
+		planeOrient.setTilt(-((roll / M_PI)) * 180.0);  
+		planeOrient.setHeading(((yaw / M_PI)) * 180.0 + 90.0); 
+		planeModel.setOrientation(planeOrient);
 	
 		currFollowHeading = ((yaw/M_PI))*180.0;
     
