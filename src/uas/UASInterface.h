@@ -472,6 +472,9 @@ signals:
     /** @brief Core specifications have changed */
     void systemSpecsChanged(int uasId);
 
+    /** @brief Object detected */
+    void objectDetected(unsigned int time, int id, int type, const QString& name, int quality, float bearing, float distance);
+
 
     // HOME POSITION / ORIGIN CHANGES
     void homePositionChanged(int uas, double lat, double lon, double alt);

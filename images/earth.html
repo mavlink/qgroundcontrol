@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html>
   <head>
@@ -16,6 +16,7 @@ var ge = null;
 var initialized = false;
 var currAircraft = 0;
 var followEnabled = false;
+var lineAltitudeOffset = 0.5; ///< 0.5 m higher than waypoint, prevents the line from entering the ground
 
 var lastLat = 0;
 var lastLon = 0;
@@ -211,23 +212,24 @@ google.earth.addEventListener(ge.getGlobe(), 'mousemove', function(event)
 {
   if (draggingAllowed && (clickMode == 0))
   {
-  if (dragInfo) {
-    event.preventDefault();
-    var point = dragInfo.placemark.getGeometry();
-    point.setLatitude(event.getLatitude());
-    point.setLongitude(event.getLongitude());
-    dragInfo.dragged = true;
-    dragWaypointIndex = dragInfo.placemark.getDescription();
-	document.getElementById('JScript_dragWaypointIndex').setAttribute('value',dragWaypointIndex);
-	dragWaypointLatitude = event.getLatitude();
-	dragWaypointLongitude = event.getLongitude();
-	dragWaypointAltitude = point.getAltitude();
-	dragWaypointPending = true;
-	document.getElementById('JScript_dragWaypointLatitude').setAttribute('value',dragWaypointLatitude);
-	   document.getElementById('JScript_dragWaypointLongitude').setAttribute('value',dragWaypointLongitude);
-	   document.getElementById('JScript_dragWaypointAltitude').setAttribute('value',dragWaypointAltitude);
-	   document.getElementById('JScript_dragWaypointPending').setAttribute('value',true);
-  }
+  	if (dragInfo)
+  	{
+    	event.preventDefault();
+    	var point = dragInfo.placemark.getGeometry();
+    	point.setLatitude(event.getLatitude());
+    	point.setLongitude(event.getLongitude());
+    	dragInfo.dragged = true;
+    	dragWaypointIndex = dragInfo.placemark.getDescription();
+		document.getElementById('JScript_dragWaypointIndex').setAttribute('value',dragWaypointIndex);
+		dragWaypointLatitude = event.getLatitude();
+		dragWaypointLongitude = event.getLongitude();
+		dragWaypointAltitude = point.getAltitude();
+		dragWaypointPending = true;
+		document.getElementById('JScript_dragWaypointLatitude').setAttribute('value',dragWaypointLatitude);
+	    document.getElementById('JScript_dragWaypointLongitude').setAttribute('value',dragWaypointLongitude);
+	    document.getElementById('JScript_dragWaypointAltitude').setAttribute('value',dragWaypointAltitude);
+	    document.getElementById('JScript_dragWaypointPending').setAttribute('value',true);
+  	}
   }
 });
 
@@ -298,7 +300,7 @@ function setGCSHome(lat, lon, alt)
 	
 	if (homePlacemark == null)
 	{
-	var placemark = ge.createPlacemark(''); 
+		var placemark = ge.createPlacemark(''); 
 	    var icon = ge.createIcon(''); 
 	    icon.setHref('http://google-maps-icons.googlecode.com/files/blackH.png'); 
 	    var style = ge.createStyle(''); 
@@ -349,6 +351,8 @@ function updateWaypointListLength(id, len)
 		{
 			var placemark = waypoints.pop();
 		    ge.getFeatures().removeChild(placemark);
+		    var line = waypointLines[id].pop();
+		    ge.getFeatures().removeChild(line);
 		}
 	}
 }
@@ -366,6 +370,9 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    location.setAltitude(alt); 
 	    waypoints[index].setGeometry(location);
 	    waypoints[index].setDescription(index+"");
+	    
+	    // Set the WP line location
+	    waypointLines[id].getCoordinates().setLatLngAlt(index, lat, lon, alt);
 	}
 	else
 	{
@@ -386,122 +393,108 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 	    var location = ge.createPoint(''); 
 	    location.setLatitude(lat); 
 	    location.setLongitude(lon);
-	    location.setAltitude(alt); 
+	    location.setAltitude(alt+lineAltitudeOffset); 
 	    placemark.setGeometry(location);  
 
 	    // Add the placemark to Earth. 
 	    ge.getFeatures().appendChild(placemark); 
 		waypoints[index] = placemark;
-	}
-		
-		// Add waypoint line
-	    waypointLines[id].setExtrude(false);
-        waypointLines[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
-
+        
         // Add LineString points
 	    waypointLines[id].getCoordinates().pushLatLngAlt(lat, lon, alt);
-
-        // Create a style and set width and color of line
-        waypointLinePlacemarks[id].setStyleSelector(ge.createStyle(''));
-        lineStyle = waypointLinePlacemarks[id].getStyleSelector().getLineStyle();
-        lineStyle.setWidth(5);
-        lineStyle.getColor().set(waypointLineColors[id]);  // aabbggrr format
-        //lineStyle.getColor().set(color);  // aabbggrr format
-
-        // Add the feature to Earth
-        //if (waypointLinesVisible[id] == true) 
-        //ge.getFeatures().replaceChild(waypointLinePlacemarks[id], waypointLinePlacemarks[id]);  // does not work
-	
-	// Add connecting line
-	
+	}
 }
 
 function createAircraft(id, type, color)
 {
-	      planePlacemark = ge.createPlacemark('');
-          planePlacemark.setName('aircraft');
-          planeModel = ge.createModel('');
-          ge.getFeatures().appendChild(planePlacemark);
-          planeLoc = ge.createLocation('');
-          planeModel.setLocation(planeLoc);
-          planeLink = ge.createLink('');
-          planeOrient = ge.createOrientation(''); 
-          planeModel.setOrientation(planeOrient); 
+	planePlacemark = ge.createPlacemark('');
+	planePlacemark.setName('aircraft');
+	planeModel = ge.createModel('');
+	ge.getFeatures().appendChild(planePlacemark);
+	planeLoc = ge.createLocation('');
+	planeModel.setLocation(planeLoc);
+	planeLink = ge.createLink('');
+	planeOrient = ge.createOrientation(''); 
+	planeModel.setOrientation(planeOrient); 
 
-          planeLink.setHref('http://qgroundcontrol.org/_media/users/models/multiplex-twinstar.dae');
-          planeModel.setLink(planeLink);
-          planeModel.setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
+	planeLink.setHref('http://qgroundcontrol.org/_media/users/models/ascent-park-glider.dae');
+	planeModel.setLink(planeLink);
+	planeModel.setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
 
-          planeLoc.setLatitude(currLat);
-          planeLoc.setLongitude(currLon);
-          planeLoc.setAltitude(currAlt);
+	planeLoc.setLatitude(currLat);
+	planeLoc.setLongitude(currLon);
+	planeLoc.setAltitude(currAlt);
 
-          planePlacemark.setGeometry(planeModel);
+	planePlacemark.setGeometry(planeModel);
           
-          // Write into global structure
-          aircraft[id] = planePlacemark;
-          attitudes[id] = planeOrient;
-          aircraftLocations[id] = planeLoc;
-		  aircraftLastLocations[id] = ge.createLocation('');
-          //planeColor = color;
+	// Write into global structure
+	aircraft[id] = planePlacemark;
+	attitudes[id] = planeOrient;
+	aircraftLocations[id] = planeLoc;
+	aircraftLastLocations[id] = ge.createLocation('');
           
-          createTrail(id, color);
-          createWaypointLine(id, color);
-          //console.log(color);
+	createTrail(id, color);
+	createWaypointLine(id, color);
 }
 
 function createTrail(id, color)
 {
-          trailPlacemarks[id] = ge.createPlacemark('');
-          // Create the placemark
-// Create the LineString; set it to extend down to the ground
-// and set the altitude mode
-trails[id] = ge.createLineString('');
-trailPlacemarks[id].setGeometry(trails[id]);
-trails[id].setExtrude(false);
-trails[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+	trailPlacemarks[id] = ge.createPlacemark('');
+	// Create the placemark
+	// Create the LineString; set it to extend down to the ground
+	// and set the altitude mode
+	trails[id] = ge.createLineString('');
+	trailPlacemarks[id].setGeometry(trails[id]);
+	trails[id].setExtrude(false);
+	trails[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 
-// Add LineString points
-//lineString.getCoordinates().pushLatLngAlt(48.754, -121.835, 700);
+	// Create a style and set width and color of line
+	trailPlacemarks[id].setStyleSelector(ge.createStyle(''));
+	lineStyle = trailPlacemarks[id].getStyleSelector().getLineStyle();
+	lineStyle.setWidth(5);
+	trailColors[id] = color;
+	lineStyle.getColor().set('00000000');  // aabbggrr format
 
-// Create a style and set width and color of line
-trailPlacemarks[id].setStyleSelector(ge.createStyle(''));
-lineStyle = trailPlacemarks[id].getStyleSelector().getLineStyle();
-lineStyle.setWidth(5);
-trailColors[id] = color;
-lineStyle.getColor().set('00000000');  // aabbggrr format
-
-trailsVisible[id] = false;
-
-// Add the feature to Earth
-//ge.getFeatures().appendChild(trailPlacemarks[id]);
-
+	trailsVisible[id] = false;
 }
 
 function createWaypointLine(id, color)
 {
-          waypointLinePlacemarks[id] = ge.createPlacemark('');
-          // Create the placemark
-// Create the LineString; set it to extend down to the ground
-// and set the altitude mode
-waypointLines[id] = ge.createLineString('');
-waypointLinePlacemarks[id].setGeometry(waypointLines[id]);
-waypointLines[id].setExtrude(false);
-waypointLines[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+	// Create the placemark
+	waypointLinePlacemarks[id] = ge.createPlacemark('');
+	// Create the LineString; set it to extend down to the ground
+	// and set the altitude mode
+	waypointLines[id] = ge.createLineString('');
+	waypointLinePlacemarks[id].setGeometry(waypointLines[id]);
+	waypointLines[id].setExtrude(false);
+	waypointLines[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 
-// Add LineString points
-//lineString.getCoordinates().pushLatLngAlt(48.754, -121.835, 700);
+	// Add LineString points
+	//lineString.getCoordinates().pushLatLngAlt(48.754, -121.835, 700);
 
-// Create a style and set width and color of line
-waypointLinePlacemarks[id].setStyleSelector(ge.createStyle(''));
-lineStyle = waypointLinePlacemarks[id].getStyleSelector().getLineStyle();
-lineStyle.setWidth(10);
-waypointLineColors[id] = color;
-lineStyle.getColor().set('00000000');  // aabbggrr format
+	// Create a style and set width and color of line
+	waypointLinePlacemarks[id].setStyleSelector(ge.createStyle(''));
+	lineStyle = waypointLinePlacemarks[id].getStyleSelector().getLineStyle();
+	lineStyle.setWidth(15);
+	waypointLineColors[id] = color;
+	lineStyle.getColor().set(color);  // aabbggrr format
+	
+	
+	// Add waypoint line
+	//waypointLines[id].setExtrude(false);
+    //waypointLines[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 
-// Add the feature to Earth
-//ge.getFeatures().appendChild(trailPlacemarks[id]);
+        
 
+        // Create a style and set width and color of line
+        //waypointLinePlacemarks[id].setStyleSelector(ge.createStyle(''));
+        //lineStyle = waypointLinePlacemarks[id].getStyleSelector().getLineStyle();
+        //lineStyle.setWidth(15);
+        //lineStyle.getColor().set(waypointLineColors[id]);  // aabbggrr format
+        //lineStyle.getColor().set(color);  // aabbggrr format
+
+	// Add the feature to Earth
+	ge.getFeatures().appendChild(waypointLinePlacemarks[id]);
 }
 
 function clearTrail(id)
@@ -535,8 +528,8 @@ function setViewRange(dist)
 
 function addTrailPosition(id, lat, lon, alt)
 {
-	trails[id].setExtrude(false);
-    trails[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
+	//trails[id].setExtrude(false);
+    //trails[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 
     // Add LineString points
 	trails[id].getCoordinates().pushLatLngAlt(lat, lon, alt);
@@ -546,10 +539,6 @@ function addTrailPosition(id, lat, lon, alt)
     lineStyle = trailPlacemarks[id].getStyleSelector().getLineStyle();
     lineStyle.setWidth(5);
     lineStyle.getColor().set(trailColors[id]);  // aabbggrr format
-    //lineStyle.getColor().set(color);  // aabbggrr format
-
-    // Add the feature to Earth
-    if (trailsVisible[id] == true) ge.getFeatures().replaceChild(trailPlacemarks[id], trailPlacemarks[id]);
 }
 
 function initCallback(object)
@@ -581,6 +570,7 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 			lastLat = currLat;
 			lastLon = currLon;
 		}
+		
 		currLat = lat;
 		currLon = lon;
 		var trueGroundAlt = ge.getGlobe().getGroundAltitude(lat, lon);
@@ -599,19 +589,19 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 		//currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
 	
 	
-	// FIXME Currently invalid conversion from right-handed z-down to z-up frame
-	planeOrient.setRoll(((roll/M_PI))*180.0+180.0);
-	planeOrient.setTilt(((pitch/M_PI))*180.0+180.0);
-	planeOrient.setHeading(((yaw/M_PI))*180.0-90.0);
+		// FIXME Currently invalid conversion from right-handed z-down to z-up frame
+		planeOrient.setRoll(((roll/M_PI))*180.0+180.0);
+		planeOrient.setTilt(((pitch/M_PI))*180.0+180.0);
+		planeOrient.setHeading(((yaw/M_PI))*180.0-90.0);
 	
-	currFollowHeading = ((yaw/M_PI))*180.0;
+		currFollowHeading = ((yaw/M_PI))*180.0;
     
-    planeLoc.setLatitude(lastLat);
-    planeLoc.setLongitude(lastLon);
-    planeLoc.setAltitude(lastAlt);
-    planeModel.setLocation(planeLoc);
+    	planeLoc.setLatitude(lastLat);
+    	planeLoc.setLongitude(lastLon);
+    	planeLoc.setAltitude(lastAlt);
+    	planeModel.setLocation(planeLoc);
     
-    if (followEnabled) updateFollowAircraft();
+    	if (followEnabled) updateFollowAircraft();
     }
 }
 
@@ -661,6 +651,7 @@ function setViewMode(mode)
 		currView.setTilt(lastTilt);
 		currView.setHeading(lastHeading);
 	}
+	
 	if (mode == 1 && viewMode != mode)
 	{
 		lastTilt = currView.getTilt();

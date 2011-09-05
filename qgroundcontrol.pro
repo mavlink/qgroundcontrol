@@ -246,6 +246,7 @@ HEADERS += src/MG.h \
     src/comm/ProtocolInterface.h \
     src/comm/MAVLinkProtocol.h \
     src/comm/AS4Protocol.h \
+    src/comm/QGCFlightGearLink.h \
     src/ui/CommConfigurationWindow.h \
     src/ui/SerialConfigurationWindow.h \
     src/ui/MainWindow.h \
@@ -376,6 +377,7 @@ SOURCES += src/main.cc \
     src/comm/SerialSimulationLink.cc \
     src/comm/MAVLinkProtocol.cc \
     src/comm/AS4Protocol.cc \
+    src/comm/QGCFlightGearLink.cc \
     src/ui/CommConfigurationWindow.cc \
     src/ui/SerialConfigurationWindow.cc \
     src/ui/MainWindow.cc \
