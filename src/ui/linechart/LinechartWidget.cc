@@ -453,11 +453,6 @@ void LinechartWidget::startLogging()
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
     QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.csv *.txt);;"));
 
-    if (!fileName.contains(".")) {
-        // .csv is default extension
-        fileName.append(".csv");
-    }
-
     while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort && fileName != "") {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
@@ -465,13 +460,15 @@ void LinechartWidget::startLogging()
         msgBox.setInformativeText("Please choose .txt or .csv as file extension. Click OK to change the file extension, cancel to not start logging.");
         msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        if(msgBox.exec() == QMessageBox::Cancel) {
+        if(msgBox.exec() != QMessageBox::Ok)
+        {
             abort = true;
             break;
         }
-        fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.txt, *.csv);;"));
-
+        fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.txt *.csv);;"));
     }
+
+    qDebug() << "SAVE FILE" << fileName;
 
     // Check if the user did not abort the file save dialog
     if (!abort && fileName != "") {
