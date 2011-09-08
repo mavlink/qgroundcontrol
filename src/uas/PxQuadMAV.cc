@@ -56,7 +56,6 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             // FIXME Kind of a hack to load data from disk
             mavlink_image_triggered_t img;
             mavlink_msg_image_triggered_decode(&message, &img);
-            qDebug() << "IMAGE AVAILABLE:" << img.timestamp;
             emit imageStarted(img.timestamp);
         }
         break;
