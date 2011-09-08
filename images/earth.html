@@ -417,7 +417,7 @@ function createAircraft(id, type, color)
 	planeOrient = ge.createOrientation(''); 
 	planeModel.setOrientation(planeOrient);
 
-	planeLink.setHref('http://qgroundcontrol.org/_media/users/models/ascent-park-glider.dae'); 
+	planeLink.setHref('http://www.asl.ethz.ch/people/rudink/senseSoarDummy.dae'); 
 	planeModel.setLink(planeLink);
 	planeModel.setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
 
@@ -589,9 +589,9 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 		//currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
 	
 	
-		planeOrient.setRoll(((pitch / M_PI)) * 180.0);  
+		planeOrient.setRoll(+((pitch / M_PI)) * 180.0);  
 		planeOrient.setTilt(-((roll / M_PI)) * 180.0);  
-		planeOrient.setHeading(((yaw / M_PI)) * 180.0 + 90.0); 
+		planeOrient.setHeading(((yaw / M_PI)) * 180.0 - 90.0); 
 		planeModel.setOrientation(planeOrient);
 	
 		currFollowHeading = ((yaw/M_PI))*180.0;
