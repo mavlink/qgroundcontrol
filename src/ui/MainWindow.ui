@@ -51,7 +51,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuMGround">
@@ -152,7 +152,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionExit">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
    </property>
    <property name="text">
@@ -167,7 +167,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/control/launch.svg</normaloff>
      <normalon>:/images/control/launch.svg</normalon>:/images/control/launch.svg</iconset>
    </property>
@@ -177,7 +177,7 @@
   </action>
   <action name="actionLand">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/control/land.svg</normaloff>:/images/control/land.svg</iconset>
    </property>
    <property name="text">
@@ -186,7 +186,7 @@
   </action>
   <action name="actionEmergency_Land">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
    </property>
    <property name="text">
@@ -198,7 +198,7 @@
   </action>
   <action name="actionEmergency_Kill">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
    </property>
    <property name="text">
@@ -210,7 +210,7 @@
   </action>
   <action name="actionAdd_Link">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
    </property>
    <property name="text">
@@ -219,7 +219,7 @@
   </action>
   <action name="actionConfiguration">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/categories/applications-system.svg</normaloff>:/images/categories/applications-system.svg</iconset>
    </property>
    <property name="text">
@@ -231,7 +231,7 @@
   </action>
   <action name="actionJoystickSettings">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/devices/input-gaming.svg</normaloff>:/images/devices/input-gaming.svg</iconset>
    </property>
    <property name="text">
@@ -246,7 +246,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/control/launch.svg</normaloff>:/images/control/launch.svg</iconset>
    </property>
    <property name="text">
@@ -258,7 +258,7 @@
   </action>
   <action name="actionShow_Slugs_View">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/contrib/slugs.png</normaloff>:/images/contrib/slugs.png</iconset>
    </property>
    <property name="text">
@@ -267,7 +267,7 @@
   </action>
   <action name="actionJoystick_Settings">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/devices/input-gaming.svg</normaloff>:/images/devices/input-gaming.svg</iconset>
    </property>
    <property name="text">
@@ -279,7 +279,7 @@
   </action>
   <action name="actionOnline_Documentation">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
@@ -288,7 +288,7 @@
   </action>
   <action name="actionProject_Roadmap_2">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
    </property>
    <property name="text">
@@ -297,7 +297,7 @@
   </action>
   <action name="actionDeveloper_Credits">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/categories/preferences-system.svg</normaloff>:/images/categories/preferences-system.svg</iconset>
    </property>
    <property name="text">
@@ -309,7 +309,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/status/weather-overcast.svg</normaloff>:/images/status/weather-overcast.svg</iconset>
    </property>
    <property name="text">
@@ -324,7 +324,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
@@ -339,7 +339,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/devices/network-wired.svg</normaloff>:/images/devices/network-wired.svg</iconset>
    </property>
    <property name="text">
@@ -351,7 +351,7 @@
   </action>
   <action name="actionSelectStylesheet">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/categories/applications-internet.svg</normaloff>:/images/categories/applications-internet.svg</iconset>
    </property>
    <property name="text">
@@ -363,7 +363,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/status/network-wireless-encrypted.svg</normaloff>:/images/status/network-wireless-encrypted.svg</iconset>
    </property>
    <property name="text">
@@ -375,7 +375,7 @@
   </action>
   <action name="actionNewCustomWidget">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/apps/utilities-system-monitor.svg</normaloff>:/images/apps/utilities-system-monitor.svg</iconset>
    </property>
    <property name="text">
@@ -387,7 +387,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/status/audio-volume-high.svg</normaloff>
      <normalon>:/images/status/audio-volume-muted.svg</normalon>
      <activeon>:/images/status/audio-volume-muted.svg</activeon>
@@ -403,7 +403,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
    </property>
    <property name="text">
@@ -415,7 +415,7 @@
   </action>
   <action name="actionShutdownMAV">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/actions/system-log-out.svg</normaloff>:/images/actions/system-log-out.svg</iconset>
    </property>
    <property name="text">
@@ -459,7 +459,7 @@
   </action>
   <action name="actionLoadCustomWidgetFile">
    <property name="icon">
-    <iconset resource="../../mavground.qrc">
+    <iconset resource="../../qgroundcontrol.qrc">
      <normaloff>:/images/status/folder-drag-accept.svg</normaloff>:/images/status/folder-drag-accept.svg</iconset>
    </property>
    <property name="text">
@@ -469,7 +469,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../../mavground.qrc"/>
+  <include location="../../qgroundcontrol.qrc"/>
  </resources>
  <connections>
   <connection>
