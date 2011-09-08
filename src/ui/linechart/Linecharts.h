@@ -16,6 +16,7 @@ public:
 signals:
     /** @brief This signal is emitted once a logfile has been finished writing */
     void logfileWritten(QString fileName);
+    void visibilityChanged(bool visible);
 
 public slots:
     /** @brief Select plot for one system */
@@ -24,6 +25,7 @@ public slots:
     void addSystem(UASInterface* uas);
 
 protected:
+
     QMap<int, LinechartWidget*> plots;
     bool active;
     /** @brief Start updating widget */

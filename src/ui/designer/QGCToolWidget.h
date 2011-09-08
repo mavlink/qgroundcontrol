@@ -47,7 +47,7 @@ public slots:
     /** @brief Load this widget from a QSettings object */
     void loadSettings(QSettings& settings);
     /** @brief Load this widget from a settings file */
-    void loadSettings(const QString& settings);
+    bool loadSettings(const QString& settings, bool singleinstance=false);
     /** @brief Store this widget to a QSettings object */
     void storeSettings(QSettings& settings);
     /** @brief Store this widget to a settings file */

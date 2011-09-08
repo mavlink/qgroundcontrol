@@ -200,14 +200,16 @@ void HUD::showEvent(QShowEvent* event)
     // events
     QGLWidget::showEvent(event);
     refreshTimer->start(updateInterval);
+    emit visibilityChanged(true);
 }
 
 void HUD::hideEvent(QHideEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    QGLWidget::hideEvent(event);
     refreshTimer->stop();
+    QGLWidget::hideEvent(event);
+    emit visibilityChanged(false);
 }
 
 void HUD::contextMenuEvent (QContextMenuEvent* event)

@@ -30,32 +30,35 @@ void Linecharts::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    Q_UNUSED(event) {
-        QWidget* prevWidget = currentWidget();
-        if (prevWidget) {
-            LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
-            if (chart) {
-                this->active = true;
-                chart->setActive(true);
-            }
+    Q_UNUSED(event)
+    QWidget* prevWidget = currentWidget();
+    if (prevWidget)
+    {
+        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
+        if (chart) {
+            this->active = true;
+            chart->setActive(true);
         }
     }
+    QWidget::showEvent(event);
+    emit visibilityChanged(true);
 }
 
 void Linecharts::hideEvent(QHideEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    Q_UNUSED(event) {
-        QWidget* prevWidget = currentWidget();
-        if (prevWidget) {
-            LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
-            if (chart) {
-                this->active = false;
-                chart->setActive(false);
-            }
+    Q_UNUSED(event)
+    QWidget* prevWidget = currentWidget();
+    if (prevWidget) {
+        LinechartWidget* chart = dynamic_cast<LinechartWidget*>(prevWidget);
+        if (chart) {
+            this->active = false;
+            chart->setActive(false);
         }
     }
+    QWidget::hideEvent(event);
+    emit visibilityChanged(false);
 }
 
 void Linecharts::selectSystem(int systemid)
