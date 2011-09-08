@@ -128,10 +128,7 @@ MainWindow::MainWindow(QWidget *parent):
     setCentralWidget(centerStack);
 
     buildCommonWidgets();
-
     connectCommonWidgets();
-
-    arrangeCommonCenterStack();
 
     configureWindowName();
 
@@ -235,7 +232,13 @@ MainWindow::~MainWindow()
             delete dockWidget->widget();
             delete dockWidget;
         }
+        else
+        {
+            delete dynamic_cast<QObject*>(*i);
+        }
     }
+
+    // Delete all UAS objects
 }
 
 /**
@@ -243,10 +246,8 @@ MainWindow::~MainWindow()
  */
 void MainWindow::setDefaultSettingsForAp()
 {
+    // Check if the settings exist, instantiate defaults if necessary
 
-
-
-//    // Check if the settings exist, instantiate defaults if necessary
 
 //    // UNCONNECTED VIEW DEFAULT
 ////    QString centralKey = buildMenuKey(SUB_SECTION_CHECKED, CENTRAL_MAP, VIEW_UNCONNECTED);
@@ -574,6 +575,9 @@ void MainWindow::buildCommonWidgets()
         addTool(video2DockWidget, tr("Video Stream 2"), Qt::LeftDockWidgetArea);
     }
 
+    // Custom widgets, added last to all menus and layouts
+    buildCustomWidget();
+
     // Dialogue widgets
     //FIXME: free memory in destructor
 
@@ -588,6 +592,8 @@ void MainWindow::addTool(QDockWidget* widget, const QString& title, Qt::DockWidg
     var.setValue((QWidget*)widget);
     tempAction->setData(var);
     connect(tempAction,SIGNAL(triggered(bool)),this, SLOT(showTool(bool)));
+    connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
+    tempAction->setChecked(widget->isVisible());
     addDockWidget(area, widget);
 }
 
@@ -614,6 +620,8 @@ void MainWindow::addCentralWidget(QWidget* widget, const QString& title)
         tempAction->setData(var);
         centerStackActionGroup.addAction(tempAction);
         connect(tempAction,SIGNAL(triggered()),this, SLOT(showCentralWidget()));
+        connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
+        tempAction->setChecked(widget->isVisible());
     }
 }
 
@@ -677,34 +685,58 @@ void MainWindow::loadCustomWidget()
 {
     QString widgetFileExtension(".qgw");
     QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
-    QGCToolWidget* tool = new QGCToolWidget("", this);
-    tool->loadSettings(fileName);
-
-    if (QGCToolWidget::instances()->size() < 2)
-    {
-        // This is the first widget
-        ui.menuTools->addSeparator();
-    }
-
-    // Add widget to UI
-    QDockWidget* dock = new QDockWidget(tool->getTitle(), this);
-    connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
-    dock->setWidget(tool);
-    tool->setParent(dock);
-
-    QAction* showAction = new QAction("Show Unnamed Tool", this);
-    showAction->setCheckable(true);
-    connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
-    connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
-    tool->setMainMenuAction(showAction);
-    ui.menuTools->addAction(showAction);
-    this->addDockWidget(Qt::BottomDockWidgetArea, dock);
-    dock->setVisible(true);
+    loadCustomWidget(fileName);
 }
 
-void MainWindow::arrangeCommonCenterStack()
+void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
 {
+    QGCToolWidget* tool = new QGCToolWidget("", this);
+    if (tool->loadSettings(fileName, true) || !singleinstance)
+    {
+        // Add widget to UI
+        QDockWidget* dock = new QDockWidget(tool->getTitle(), this);
+        connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
+        dock->setWidget(tool);
+        tool->setParent(dock);
 
+        QAction* showAction = new QAction("Show Unnamed Tool", this);
+        showAction->setCheckable(true);
+        connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
+        connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
+        tool->setMainMenuAction(showAction);
+        ui.menuTools->addAction(showAction);
+        this->addDockWidget(Qt::BottomDockWidgetArea, dock);
+        dock->setVisible(true);
+    }
+    else
+    {
+        return;
+    }
+}
+
+void MainWindow::loadCustomWidgetsFromDefaults(const QString& systemType, const QString& autopilotType)
+{
+    QString defaultsDir = qApp->applicationDirPath() + "/files/" + systemType.toLower() + "/" + autopilotType.toLower() + "/widgets/";
+
+    QDir widgets(defaultsDir);
+    QStringList files = widgets.entryList();
+    if (files.count() == 0)
+    {
+        qDebug() << "No default custom widgets for system " << systemType << "autopilot" << autopilotType << " found";
+        qDebug() << "Tried with path: " << defaultsDir;
+    }
+
+    // Load all custom widgets found in the AP folder
+    for(int i = 0; i < files.count(); ++i)
+    {
+        QString file = files[i];
+        if (file.endsWith(".qgw"))
+        {
+            // Will only be loaded if not already a custom widget with
+            // the same name is present
+            loadCustomWidget(file, true);
+        }
+    }
 }
 
 void MainWindow::loadSettings()
@@ -1155,10 +1187,8 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     // Connect the UAS to the full user interface
 
-    if (uas != NULL) {
-        // Set default settings
-        setDefaultSettingsForAp();
-
+    if (uas != NULL)
+    {
         // The pilot, operator and engineer views were not available on startup, enable them now
         ui.actionPilotsView->setEnabled(true);
         ui.actionOperatorsView->setEnabled(true);
@@ -1236,6 +1266,11 @@ void MainWindow::UASCreated(UASInterface* uas)
             addCentralWidget(linechartWidget, tr("Realtime Plot"));
         }
 
+        // Load default custom widgets for this autopilot type
+        loadCustomWidgetsFromDefaults(uas->getSystemTypeString(uas->getSystemType()), uas->getAutopilotTypeString(uas->getAutopilotType()));
+
+
+
         // Change the view only if this is the first UAS
 
         // If this is the first connected UAS, it is both created as well as
@@ -1275,10 +1310,9 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
 
-    // Custom widgets, added last to all menus and layouts
-    buildCustomWidget();
     // Restore the mainwindow size
-    if (settings.contains(getWindowGeometryKey())) {
+    if (settings.contains(getWindowGeometryKey()))
+    {
         restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
     }
 }
@@ -1302,7 +1336,13 @@ void MainWindow::loadViewState()
 {
     // Restore center stack state
     int index = settings.value(getWindowStateKey()+"CENTER_WIDGET", centerStack->currentIndex()).toInt();
-    centerStack->setCurrentIndex(index);
+    // The offline plot view is usually the consequence of a logging run, always show the realtime view first
+    if (centerStack->indexOf(dataplotWidget) == index)
+    {
+        // Rewrite to realtime plot
+        index = centerStack->indexOf(linechartWidget);
+    }
+    if (index != -1) centerStack->setCurrentIndex(index);
 
     // Restore the widget positions and size
     if (settings.contains(getWindowStateKey()))
