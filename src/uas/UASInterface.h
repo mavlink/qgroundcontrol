@@ -74,10 +74,12 @@ public:
     virtual double getLocalX() const = 0;
     virtual double getLocalY() const = 0;
     virtual double getLocalZ() const = 0;
+    virtual bool localPositionKnown() const = 0;
 
     virtual double getLatitude() const = 0;
     virtual double getLongitude() const = 0;
     virtual double getAltitude() const = 0;
+    virtual bool globalPositionKnown() const = 0;
 
     virtual double getRoll() const = 0;
     virtual double getPitch() const = 0;
