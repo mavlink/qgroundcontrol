@@ -76,7 +76,9 @@ airframe(0),
 attitudeKnown(false),
 paramManager(NULL),
 attitudeStamped(false),
-lastAttitude(0)
+lastAttitude(0),
+isLocalPositionKnown(false),
+isGlobalPositionKnown(false)
 {
     color = UASInterface::getNextColor();
     setBattery(LIPOLY, 3);
@@ -545,6 +547,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     GAudioOutput::instance()->notifyPositive();
                 }
                 positionLock = true;
+                isLocalPositionKnown = true;
             }
             break;
         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
@@ -573,6 +576,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     GAudioOutput::instance()->notifyPositive();
                 }
                 positionLock = true;
+                isGlobalPositionKnown = true;
                 //TODO fix this hack for forwarding of global position for patch antenna tracking
                 forwardMessage(message);
             }
