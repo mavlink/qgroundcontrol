@@ -19,6 +19,7 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
         QWidget(parent),
         mav(NULL),
         mainMenuAction(NULL),
+        widgetTitle(title),
         ui(new Ui::QGCToolWidget)
 {
     ui->setupUi(this);
@@ -58,6 +59,18 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
 QGCToolWidget::~QGCToolWidget()
 {
     delete ui;
+}
+
+void QGCToolWidget::setParent(QWidget *parent)
+{
+    QWidget::setParent(parent);
+    // Try with parent
+    QDockWidget* dock = dynamic_cast<QDockWidget*>(parent);
+    if (dock)
+    {
+        dock->setWindowTitle(getTitle());
+        dock->setObjectName(getTitle()+"DOCK");
+    }
 }
 
 /**
@@ -367,14 +380,8 @@ void QGCToolWidget::importWidget()
 
 const QString QGCToolWidget::getTitle()
 {
-    QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
-    if (parent) {
-        return parent->windowTitle();
-    } else {
-        return this->windowTitle();
-    }
+    return widgetTitle;
 }
-
 
 void QGCToolWidget::setTitle()
 {
@@ -401,6 +408,7 @@ void QGCToolWidget::setTitle()
 
 void QGCToolWidget::setTitle(QString title)
 {
+    widgetTitle = title;
     QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
     if (parent) {
         QSettings settings;

@@ -691,6 +691,7 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
         QDockWidget* dock = new QDockWidget(tool->getTitle(), this);
         connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
         dock->setWidget(tool);
+//        dock->setObjectName();
         tool->setParent(dock);
 
         QAction* showAction = new QAction(tool->getTitle(), this);
