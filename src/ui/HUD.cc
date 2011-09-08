@@ -1047,10 +1047,10 @@ void HUD::paintPitchLines(float pitch, QPainter* painter)
     float offset = pitch;
     if (offset < 0) offset = -offset;
     int offsetCount = 0;
-    while (offset > lineDistance) {
-        offset -= lineDistance;
-        offsetCount++;
-    }
+//    while (offset > lineDistance) {
+//        offset -= lineDistance;
+//        offsetCount++;
+//    }
 
     int iPos = (int)(0.5f + lineDistance); ///< The first line
     int iNeg = (int)(-0.5f - lineDistance); ///< The first line
