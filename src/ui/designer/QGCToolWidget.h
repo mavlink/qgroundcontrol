@@ -33,6 +33,7 @@ public:
 
     int isVisible(int view) { return viewVisible.value(view, false); }
     Qt::DockWidgetArea getDockWidgetArea(int view) { return dockWidgetArea.value(view, Qt::BottomDockWidgetArea); }
+    void setParent(QWidget *parent);
 
 public slots:
     void addUAS(UASInterface* uas);
@@ -71,6 +72,7 @@ protected:
     QAction* mainMenuAction;             ///< Main menu action
     QMap<int, Qt::DockWidgetArea> dockWidgetArea;   ///< Dock widget area desired by this widget
     QMap<int, bool> viewVisible;  ///< Visibility in one view
+    QString widgetTitle;
 
     void contextMenuEvent(QContextMenuEvent* event);
     void createActions();

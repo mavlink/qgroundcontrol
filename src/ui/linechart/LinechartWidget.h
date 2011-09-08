@@ -123,6 +123,7 @@ protected:
     QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
     QMap<QString, QLabel*>* curveVariances; ///< References to the curve variances
     QMap<QString, int> intData;           ///< Current values for integer-valued curves
+    QMap<QString, QWidget*> colorIcons;    ///< Reference to color icons
 
     QWidget* curvesWidget;                ///< The QWidget containing the curve selection button
     QGridLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget

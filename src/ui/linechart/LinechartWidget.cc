@@ -566,6 +566,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     curvesWidgetLayout->addWidget(checkBox, labelRow, 0);
 
     QWidget* colorIcon = new QWidget(this);
+    colorIcons.insert(curve+unit, colorIcon);
     colorIcon->setMinimumSize(QSize(5, 14));
     colorIcon->setMaximumSize(4, 14);
 
@@ -576,13 +577,11 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 
     //checkBox->setText(QString());
     label->setText(curve);
-    QColor color = plot->getColorForCurve(curve+unit);
-    if(color.isValid()) {
-        QString colorstyle;
-        colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
-        colorIcon->setStyleSheet(colorstyle);
-        colorIcon->setAutoFillBackground(true);
-    }
+    QColor color(Qt::gray);// = plot->getColorForCurve(curve+unit);
+    QString colorstyle;
+    colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
+    colorIcon->setStyleSheet(colorstyle);
+    colorIcon->setAutoFillBackground(true);
 
     // Value
     value = new QLabel(this);
@@ -794,8 +793,22 @@ void LinechartWidget::takeButtonClick(bool checked)
 
     QCheckBox* button = qobject_cast<QCheckBox*>(QObject::sender());
 
-    if(button != NULL) {
+    if(button != NULL)
+    {
         activePlot->setVisible(button->objectName(), checked);
+
+        QColor color = activePlot->getColorForCurve(button->objectName());
+        if(color.isValid())
+        {
+            QString colorstyle;
+            colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
+            QWidget* colorIcon = colorIcons.value(button->objectName(), 0);
+            if (colorIcon)
+            {
+                colorIcon->setStyleSheet(colorstyle);
+                colorIcon->setAutoFillBackground(true);
+            }
+        }
     }
 }
 
