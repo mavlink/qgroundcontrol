@@ -376,18 +376,20 @@ void QGCGoogleEarthView::moveToPosition()
 
 void QGCGoogleEarthView::hideEvent(QHideEvent* event)
 {
-    Q_UNUSED(event);
     updateTimer->stop();
+    QWidget::hideEvent(event);
+    emit visibilityChanged(false);
 }
 
 void QGCGoogleEarthView::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    Q_UNUSED(event)
+    QWidget::showEvent(event);
     // Enable widget, initialize on first run
 
-    if (!webViewInitialized) {
+    if (!webViewInitialized)
+    {
 #if (defined Q_OS_MAC)
         webViewMac->setPage(new QGCWebPage(webViewMac));
         webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
@@ -404,9 +406,12 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
         gEarthInitialized = false;
 
         QTimer::singleShot(3000, this, SLOT(initializeGoogleEarth()));
-    } else {
+    }
+    else
+    {
         updateTimer->start(refreshRateMs);
     }
+    emit visibilityChanged(true);
 }
 
 void QGCGoogleEarthView::printWinException(int no, QString str1, QString str2, QString str3)

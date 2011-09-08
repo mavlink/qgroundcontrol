@@ -109,14 +109,19 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
     return instances()->values();
 }
 
-void QGCToolWidget::loadSettings(const QString& settings)
+/**
+ * @param singleinstance If this is set to true, the widget settings will only be loaded if not another widget with the same title exists
+ */
+bool QGCToolWidget::loadSettings(const QString& settings, bool singleinstance)
 {
     QSettings set(settings, QSettings::IniFormat);
     QStringList groups = set.childGroups();
     QString widgetName = groups.first();
+    if (singleinstance && QGCToolWidget::instances()->keys().contains(widgetName)) return false;
     setTitle(widgetName);
     qDebug() << "WIDGET TITLE LOADED: " << widgetName;
     loadSettings(set);
+    return true;
 }
 
 void QGCToolWidget::loadSettings(QSettings& settings)

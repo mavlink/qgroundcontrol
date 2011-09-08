@@ -178,8 +178,14 @@ public slots:
     /** @brief Add a custom tool widget */
     void createCustomWidget();
 
-    /** @brief Load a custom tool widget from a file */
+    /** @brief Load a custom tool widget from a file chosen by user (QFileDialog) */
     void loadCustomWidget();
+
+    /** @brief Load a custom tool widget from a file */
+    void loadCustomWidget(const QString& fileName, bool singleinstance=false);
+
+    /** @brief Load custom widgets from default file */
+    void loadCustomWidgetsFromDefaults(const QString& systemType, const QString& autopilotType);
 
     void closeEvent(QCloseEvent* event);
 
@@ -275,21 +281,8 @@ protected:
 
     void buildCustomWidget();
     void buildCommonWidgets();
-//    void buildPxWidgets();
-//    void buildSlugsWidgets();
-
     void connectCommonWidgets();
-//    void connectPxWidgets();
-//    void connectSlugsWidgets();
-
-    void arrangeCommonCenterStack();
-//    void arrangePxCenterStack();
-//    void arrangeSlugsCenterStack();
-
     void connectCommonActions();
-//    void connectPxActions();
-//    void connectSlugsActions();
-
 
     void configureWindowName();
     void loadSettings();
@@ -307,9 +300,7 @@ protected:
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
-
     QPointer<HUD> hudWidget;
-
     QPointer<QGCMapTool> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
@@ -322,6 +313,7 @@ protected:
 #if (defined _MSC_VER) || (defined Q_OS_MAC)
     QPointer<QGCGoogleEarthView> gEarthWidget;
 #endif
+
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
     QPointer<QDockWidget> controlParameterWidget;
