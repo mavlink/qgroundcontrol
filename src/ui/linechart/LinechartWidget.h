@@ -150,7 +150,7 @@ protected:
     QTimer* updateTimer;
     LogCompressor* compressor;
     QCheckBox* selectAllCheckBox;
-    static const int updateInterval = 400; ///< Time between number updates, in milliseconds
+    static const int updateInterval = 1000; ///< Time between number updates, in milliseconds
 
     static const int MAX_CURVE_MENUITEM_NUMBER = 8;
     static const int PAGESTEP_TIME_SCROLLBAR_VALUE = (MAX_TIME_SCROLLBAR_VALUE - MIN_TIME_SCROLLBAR_VALUE) / 10;

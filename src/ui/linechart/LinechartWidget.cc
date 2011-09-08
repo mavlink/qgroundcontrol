@@ -142,7 +142,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     //connect(this, SIGNAL(plotWindowPositionUpdated(int)), scrollbar, SLOT(setValue(int)));
     //connect(scrollbar, SIGNAL(sliderMoved(int)), this, SLOT(setPlotWindowPosition(int)));
 
-    updateTimer->setInterval(300);
+    updateTimer->setInterval(updateInterval);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
     readSettings();
 }
@@ -376,6 +376,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
 
 void LinechartWidget::refresh()
 {
+    setUpdatesEnabled(false);
     QString str;
     // Value
     QMap<QString, QLabel*>::iterator i;
@@ -427,6 +428,7 @@ void LinechartWidget::refresh()
         str.sprintf("% 8.3e", activePlot->getVariance(l.key()));
         l.value()->setText(str);
     }
+    setUpdatesEnabled(true);
 }
 
 
