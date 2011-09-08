@@ -326,9 +326,6 @@ void MainWindow::buildCustomWidget()
     // Show custom widgets only if UAS is connected
     if (UASManager::instance()->getActiveUAS() != NULL)
     {
-        // Enable custom widgets
-        ui.actionNewCustomWidget->setEnabled(true);
-
         // Create custom widgets
         QList<QGCToolWidget*> widgets = QGCToolWidget::createWidgetsFromSettings(this);
 
@@ -354,9 +351,6 @@ void MainWindow::buildCustomWidget()
                 connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
                 widgets.at(i)->setMainMenuAction(showAction);
                 ui.menuTools->addAction(showAction);
-
-//                // Load visibility for view (default is off)
-//                dock->setVisible(tool->isVisible(currentView));
 
                 // Load dock widget location (default is bottom)
                 Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
@@ -685,7 +679,7 @@ void MainWindow::loadCustomWidget()
 {
     QString widgetFileExtension(".qgw");
     QString fileName = QFileDialog::getOpenFileName(this, tr("Specify Widget File Name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("QGroundControl Widget (*%1);;").arg(widgetFileExtension));
-    loadCustomWidget(fileName);
+    if (fileName != "") loadCustomWidget(fileName);
 }
 
 void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
@@ -699,7 +693,7 @@ void MainWindow::loadCustomWidget(const QString& fileName, bool singleinstance)
         dock->setWidget(tool);
         tool->setParent(dock);
 
-        QAction* showAction = new QAction("Show Unnamed Tool", this);
+        QAction* showAction = new QAction(tool->getTitle(), this);
         showAction->setCheckable(true);
         connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
         connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
@@ -734,7 +728,8 @@ void MainWindow::loadCustomWidgetsFromDefaults(const QString& systemType, const 
         {
             // Will only be loaded if not already a custom widget with
             // the same name is present
-            loadCustomWidget(file, true);
+            qDebug() << "Tried to load file: " << file;
+            loadCustomWidget(defaultsDir+"/"+file, true);
         }
     }
 }
@@ -776,9 +771,11 @@ void MainWindow::configureWindowName()
 
     windowname.append(" (" + QHostInfo::localHostName() + ": ");
 
-    for (int i = 0; i < hostAddresses.size(); i++) {
+    for (int i = 0; i < hostAddresses.size(); i++)
+    {
         // Exclude loopback IPv4 and all IPv6 addresses
-        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":")) {
+        if (hostAddresses.at(i) != QHostAddress("127.0.0.1") && !hostAddresses.at(i).toString().contains(":"))
+        {
             if(prevAddr) windowname.append("/");
             windowname.append(hostAddresses.at(i).toString());
             prevAddr = true;
@@ -823,7 +820,8 @@ void MainWindow::saveScreen()
     QPixmap window = QPixmap::grabWindow(this->winId());
     QString format = "bmp";
 
-    if (!screenFileName.isEmpty()) {
+    if (!screenFileName.isEmpty())
+    {
         window.save(screenFileName, format.toAscii());
     }
 }
@@ -969,8 +967,6 @@ void MainWindow::showInfoMessage(const QString& title, const QString& message)
 **/
 void MainWindow::connectCommonActions()
 {
-    ui.actionNewCustomWidget->setEnabled(false);
-
     // Bind together the perspective actions
     QActionGroup* perspectives = new QActionGroup(ui.menuPerspectives);
     perspectives->addAction(ui.actionEngineersView);
@@ -987,11 +983,6 @@ void MainWindow::connectCommonActions()
     if (currentView == VIEW_OPERATOR) ui.actionOperatorsView->setChecked(true);
     if (currentView == VIEW_UNCONNECTED) ui.actionUnconnectedView->setChecked(true);
 
-    // The pilot, engineer and operator view are not available on startup
-    // since they only make sense with a system connected.
-    ui.actionPilotsView->setEnabled(false);
-    ui.actionOperatorsView->setEnabled(false);
-    ui.actionEngineersView->setEnabled(false);
     // The UAS actions are not enabled without connection to system
     ui.actionLiftoff->setEnabled(false);
     ui.actionLand->setEnabled(false);

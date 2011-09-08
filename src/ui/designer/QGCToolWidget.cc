@@ -116,12 +116,19 @@ bool QGCToolWidget::loadSettings(const QString& settings, bool singleinstance)
 {
     QSettings set(settings, QSettings::IniFormat);
     QStringList groups = set.childGroups();
-    QString widgetName = groups.first();
-    if (singleinstance && QGCToolWidget::instances()->keys().contains(widgetName)) return false;
-    setTitle(widgetName);
-    qDebug() << "WIDGET TITLE LOADED: " << widgetName;
-    loadSettings(set);
-    return true;
+    if (groups.length() > 0)
+    {
+        QString widgetName = groups.first();
+        if (singleinstance && QGCToolWidget::instances()->keys().contains(widgetName)) return false;
+        setTitle(widgetName);
+        qDebug() << "WIDGET TITLE LOADED: " << widgetName;
+        loadSettings(set);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void QGCToolWidget::loadSettings(QSettings& settings)
