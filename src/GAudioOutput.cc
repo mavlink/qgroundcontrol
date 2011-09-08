@@ -137,12 +137,12 @@ GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
     }
 }
 
-GAudioOutput::~GAudioOutput()
-{
-#ifdef _MSC_VER2
-    ::CoUninitialize();
-#endif
-}
+//GAudioOutput::~GAudioOutput()
+//{
+//#ifdef _MSC_VER2
+//    ::CoUninitialize();
+//#endif
+//}
 
 void GAudioOutput::mute(bool mute)
 {
