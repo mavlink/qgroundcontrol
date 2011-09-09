@@ -58,8 +58,8 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     posXSet(0.0f),
     posYSet(0.0f),
     posZSet(0.0f),
-    attXSaturation(0.5f),
-    attYSaturation(0.5f),
+    attXSaturation(0.2f),
+    attYSaturation(0.2f),
     attYawSaturation(0.5f),
     posXSaturation(0.05f),
     posYSaturation(0.05f),
@@ -474,7 +474,7 @@ QPointF HSIDisplay::metricWorldToBody(QPointF world)
 {
     // First translate to body-centered coordinates
     // Rotate around -yaw
-    float angle = yaw + M_PI;
+    float angle = -yaw - M_PI;
     QPointF result(cos(angle) * (x - world.x()) - sin(angle) * (y - world.y()), sin(angle) * (x - world.x()) + cos(angle) * (y - world.y()));
     return result;
 }
@@ -944,7 +944,7 @@ void HSIDisplay::drawPositionDirection(float xRef, float yRef, float radius, con
 {
     if (xyControlKnown && xyControlEnabled) {
         // Draw the needle
-        const float maxWidth = radius / 10.0f;
+        const float maxWidth = radius / 5.0f;
         const float minWidth = maxWidth * 0.3f;
 
         float angle = atan2(posXSet, -posYSet);
@@ -984,10 +984,9 @@ void HSIDisplay::drawAttitudeDirection(float xRef, float yRef, float radius, con
         const float maxWidth = radius / 10.0f;
         const float minWidth = maxWidth * 0.3f;
 
-        float angle = atan2(attXSet, attYSet);
-        angle -= (float)M_PI/2.0f;
+        float angle = atan2(attYSet, -attXSet);
 
-        radius *= sqrt(pow(attXSet, 2) + pow(attYSet, 2)) / sqrt(attXSaturation + attYSaturation);
+        radius *= sqrt(attXSet*attXSet + attYSet*attYSet) / sqrt(attXSaturation*attXSaturation + attYSaturation*attYSaturation);
 
         QPolygonF p(6);
 
