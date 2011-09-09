@@ -12,7 +12,7 @@
 #define WITH_TEXT_TO_SPEECH 1
 
 #define QGC_APPLICATION_NAME "QGroundControl"
-#define QGC_APPLICATION_VERSION "v. 0.9.2 (Alpha RC1)"
+#define QGC_APPLICATION_VERSION "v. 0.9.0 (Alpha RC4)"
 
 namespace QGC
 
