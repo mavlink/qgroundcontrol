@@ -210,9 +210,6 @@ MainWindow::MainWindow(QWidget *parent):
 
 MainWindow::~MainWindow()
 {
-    // Store settings
-    storeSettings();
-
     delete mavlink;
     delete joystick;
 
@@ -629,6 +626,7 @@ void MainWindow::showCentralWidget()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    if (isVisible()) storeViewState();
     storeSettings();
     aboutToCloseFlag = true;
     mavlink->storeSettings();
@@ -752,14 +750,17 @@ void MainWindow::storeSettings()
     settings.setValue("AUTO_RECONNECT", autoReconnect);
     settings.setValue("CURRENT_STYLE", currentStyle);
     settings.endGroup();
-    settings.setValue(getWindowGeometryKey(), saveGeometry());
-    // Save the last current view in any case
-    settings.setValue("CURRENT_VIEW", currentView);
-    // Save the current window state, but only if a system is connected (else no real number of widgets would be present)
-    if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
-    // Save the current view only if a UAS is connected
-    if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
-    // Save the current power mode
+    if (!aboutToCloseFlag && isVisible())
+    {
+        settings.setValue(getWindowGeometryKey(), saveGeometry());
+        // Save the last current view in any case
+        settings.setValue("CURRENT_VIEW", currentView);
+        // Save the current window state, but only if a system is connected (else no real number of widgets would be present)
+        if (UASManager::instance()->getUASList().length() > 0) settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
+        // Save the current view only if a UAS is connected
+        if (UASManager::instance()->getUASList().length() > 0) settings.setValue("CURRENT_VIEW_WITH_UAS_CONNECTED", currentView);
+        // Save the current power mode
+    }
     settings.setValue("LOW_POWER_MODE", lowPowerMode);
     settings.sync();
 }
@@ -1314,14 +1315,17 @@ void MainWindow::UASCreated(UASInterface* uas)
  */
 void MainWindow::storeViewState()
 {
-    // Save current state
-    settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
-    settings.setValue(getWindowStateKey()+"CENTER_WIDGET", centerStack->currentIndex());
-    // Although we want save the state of the window, we do not want to change the top-leve state (minimized, maximized, etc)
-    // therefore this state is stored here and restored after applying the rest of the settings in the new
-    // perspective.
-    windowStateVal = this->windowState();
-    settings.setValue(getWindowGeometryKey(), saveGeometry());
+    if (!aboutToCloseFlag)
+    {
+        // Save current state
+        settings.setValue(getWindowStateKey(), saveState(QGC::applicationVersion()));
+        settings.setValue(getWindowStateKey()+"CENTER_WIDGET", centerStack->currentIndex());
+        // Although we want save the state of the window, we do not want to change the top-leve state (minimized, maximized, etc)
+        // therefore this state is stored here and restored after applying the rest of the settings in the new
+        // perspective.
+        windowStateVal = this->windowState();
+        settings.setValue(getWindowGeometryKey(), saveGeometry());
+    }
 }
 
 void MainWindow::loadViewState()
