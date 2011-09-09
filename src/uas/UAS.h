@@ -105,6 +105,14 @@ public:
     double getAltitude() const {
         return altitude;
     }
+    virtual bool localPositionKnown() const
+    {
+        return isLocalPositionKnown;
+    }
+    virtual bool globalPositionKnown() const
+    {
+        return isGlobalPositionKnown;
+    }
 
     double getRoll() const {
         return roll;
@@ -198,14 +206,16 @@ protected: //COMMENTS FOR TEST UNIT
     quint64 imageStart;
 
     QMap<int, QMap<QString, float>* > parameters; ///< All parameters
-    bool paramsOnceRequested;   ///< If the parameter list has been read at least once
-    int airframe;               ///< The airframe type
-    bool attitudeKnown;         ///< True if attitude was received, false else
+    bool paramsOnceRequested;     ///< If the parameter list has been read at least once
+    int airframe;                 ///< The airframe type
+    bool attitudeKnown;           ///< True if attitude was received, false else
     QGCUASParamManager* paramManager; ///< Parameter manager class
-    QString shortStateText;     ///< Short textual state description
-    QString shortModeText;      ///< Short textual mode description
-    bool attitudeStamped;       ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
-    quint64 lastAttitude;       ///< Timestamp of last attitude measurement
+    QString shortStateText;       ///< Short textual state description
+    QString shortModeText;        ///< Short textual mode description
+    bool attitudeStamped;         ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
+    quint64 lastAttitude;         ///< Timestamp of last attitude measurement
+    bool isLocalPositionKnown;    ///< If the local position has been received for this MAV
+    bool isGlobalPositionKnown;   ///< If the global position has been received for this MAV
 
 public:
     /** @brief Set the current battery type */

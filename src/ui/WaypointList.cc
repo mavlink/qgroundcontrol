@@ -166,54 +166,72 @@ void WaypointList::read()
 
 void WaypointList::add()
 {
-    if (uas) {
+    if (uas)
+    {
         const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
         Waypoint *wp;
-
-
-        if (waypoints.size() > 0) {
+        if (waypoints.size() > 0)
+        {
             // Create waypoint with last frame
             Waypoint *last = waypoints.at(waypoints.size()-1);
             wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getParam1(), last->getParam2(), last->getParam3(), last->getParam4(),
                               last->getAutoContinue(), false, last->getFrame(), last->getAction());
             uas->getWaypointManager()->addWaypoint(wp);
-        } else {
-            // Create global frame waypoint per default
-            wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0.0, 0.0, 0.0, 0.0, true, true, MAV_FRAME_GLOBAL, MAV_CMD_NAV_WAYPOINT);
-            uas->getWaypointManager()->addWaypoint(wp);
+        }
+        else
+        {
+            // Create first waypoint at current MAV position
+            addCurrentPositonWaypoint();
         }
     }
 }
 
 void WaypointList::addCurrentPositonWaypoint()
 {
-    /* TODO: implement with new waypoint structure
     if (uas)
     {
-        // For Global Waypoints
-        //if(isGlobalWP)
-        //{
-            //isLocalWP = false;
-        //}
-        //else
+        const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
+        Waypoint *wp;
+        Waypoint *last = 0;
+        if (waypoints.size() > 0)
         {
-            const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
-            if (waypoints.size() > 0)
-            {
-                Waypoint *last = waypoints.at(waypoints.size()-1);
-                Waypoint *wp = new Waypoint(0, (qRound(mavX*100))/100., (qRound(mavY*100))/100., (qRound(mavZ*100))/100., (qRound(mavYaw*100))/100., last->getAutoContinue(), false, last->getOrbit(), last->getHoldTime());
-                uas->getWaypointManager()->addWaypoint(wp);
-            }
-            else
-            {
-                Waypoint *wp = new Waypoint(0, (qRound(mavX*100))/100., (qRound(mavY*100))/100., (qRound(mavZ*100))/100., (qRound(mavYaw*100))/100., true, true, 0.15, 2000);
-                uas->getWaypointManager()->addWaypoint(wp);
-            }
+            last = waypoints.at(waypoints.size()-1);
+        }
 
-             //isLocalWP = true;
+        if (uas->globalPositionKnown())
+        {
+            float acceptanceRadiusGlobal = 10.0f;
+            float holdTime = 0.0f;
+            float yawGlobal = 0.0f;
+            if (last)
+            {
+                acceptanceRadiusGlobal = last->getAcceptanceRadius();
+                holdTime = last->getHoldTime();
+                yawGlobal = last->getYaw();
+            }
+            // Create global frame waypoint per default
+            wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), yawGlobal, acceptanceRadiusGlobal, holdTime, 0.0, true, true, MAV_FRAME_GLOBAL_RELATIVE_ALT, MAV_CMD_NAV_WAYPOINT);
+            uas->getWaypointManager()->addWaypoint(wp);
+        }
+        else if (uas->localPositionKnown())
+        {
+            float acceptanceRadiusLocal = 0.2f;
+            float holdTime = 0.5f;
+            if (last)
+            {
+                acceptanceRadiusLocal = last->getAcceptanceRadius();
+                holdTime = last->getHoldTime();
+            }
+            // Create local frame waypoint as second option
+            wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), uas->getYaw(), acceptanceRadiusLocal, holdTime, 0.0, true, true, MAV_FRAME_LOCAL, MAV_CMD_NAV_WAYPOINT);
+            uas->getWaypointManager()->addWaypoint(wp);
+        }
+        else
+        {
+            // Do nothing
+            updateStatusLabel(tr("Not adding waypoint, no position known of MAV known yet."));
         }
     }
-    */
 }
 
 void WaypointList::updateStatusLabel(const QString &string)
@@ -223,23 +241,30 @@ void WaypointList::updateStatusLabel(const QString &string)
 
 void WaypointList::changeCurrentWaypoint(quint16 seq)
 {
-    if (uas) {
+    if (uas)
+    {
         uas->getWaypointManager()->setCurrentWaypoint(seq);
     }
 }
 
 void WaypointList::currentWaypointChanged(quint16 seq)
 {
-    if (uas) {
+    if (uas)
+    {
         const QVector<Waypoint *> &waypoints = uas->getWaypointManager()->getWaypointList();
 
-        if (seq < waypoints.size()) {
-            for(int i = 0; i < waypoints.size(); i++) {
+        if (seq < waypoints.size())
+        {
+            for(int i = 0; i < waypoints.size(); i++)
+            {
                 WaypointView* widget = wpViews.find(waypoints[i]).value();
 
-                if (waypoints[i]->getId() == seq) {
+                if (waypoints[i]->getId() == seq)
+                {
                     widget->setCurrent(true);
-                } else {
+                }
+                else
+                {
                     widget->setCurrent(false);
                 }
             }
