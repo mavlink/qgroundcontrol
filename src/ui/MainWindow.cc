@@ -357,25 +357,6 @@ void MainWindow::buildCommonWidgets()
         addTool(mavlinkInspectorWidget, tr("MAVLink Inspector"), Qt::RightDockWidgetArea);
     }
 
-    // Center widgets
-    if (!mapWidget)
-    {
-        mapWidget = new QGCMapTool(this);
-        addCentralWidget(mapWidget, "Maps");
-    }
-
-    if (!protocolWidget)
-    {
-        protocolWidget    = new XMLCommProtocolWidget(this);
-        addCentralWidget(protocolWidget, "Mavlink Generator");
-    }
-
-    if (!dataplotWidget)
-    {
-        dataplotWidget    = new QGCDataPlot2D(this);
-        addCentralWidget(dataplotWidget, "Logfile Plot");
-    }
-
     //FIXME: memory of acceptList will never be freed again
     QStringList* acceptList = new QStringList();
     acceptList->append("-105,roll deg,deg,+105,s");
@@ -396,6 +377,86 @@ void MainWindow::buildCommonWidgets()
     acceptList2->append("900,servo #7,us,2100,s");
     acceptList2->append("900,servo #8,us,2100,s");
     acceptList2->append("0,abs pressure,hPa,65500");
+
+    if (!parametersDockWidget) {
+        parametersDockWidget = new QDockWidget(tr("Calibration and Onboard Parameters"), this);
+        parametersDockWidget->setWidget( new ParameterInterface(this) );
+        parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
+        addTool(parametersDockWidget, tr("Calibration and Parameters"), Qt::RightDockWidgetArea);
+    }
+
+    if (!hsiDockWidget) {
+        hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
+        hsiDockWidget->setWidget( new HSIDisplay(this) );
+        hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
+        addTool(hsiDockWidget, tr("Horizontal Situation"), Qt::BottomDockWidgetArea);
+    }
+
+    if (!headDown1DockWidget) {
+        headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
+        headDown1DockWidget->setWidget( new HDDisplay(acceptList, "Flight Display", this) );
+        headDown1DockWidget->setObjectName("HEAD_DOWN_DISPLAY_1_DOCK_WIDGET");
+        addTool(headDown1DockWidget, tr("Flight Display"), Qt::RightDockWidgetArea);
+    }
+
+    if (!headDown2DockWidget) {
+        headDown2DockWidget = new QDockWidget(tr("Actuator Status"), this);
+        headDown2DockWidget->setWidget( new HDDisplay(acceptList2, "Actuator Status", this) );
+        headDown2DockWidget->setObjectName("HEAD_DOWN_DISPLAY_2_DOCK_WIDGET");
+        addTool(headDown2DockWidget, tr("Actuator Status"), Qt::RightDockWidgetArea);
+    }
+
+    if (!rcViewDockWidget) {
+        rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
+        rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
+        rcViewDockWidget->setObjectName("RADIO_CONTROL_CHANNELS_DOCK_WIDGET");
+        addTool(rcViewDockWidget, tr("Radio Control"), Qt::BottomDockWidgetArea);
+    }
+
+    if (!headUpDockWidget) {
+        headUpDockWidget = new QDockWidget(tr("HUD"), this);
+        headUpDockWidget->setWidget( new HUD(320, 240, this));
+        headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
+        addTool(headUpDockWidget, tr("Head Up Display"), Qt::RightDockWidgetArea);
+    }
+
+    if (!video1DockWidget) {
+        video1DockWidget = new QDockWidget(tr("Video Stream 1"), this);
+        HUD* video1 =  new HUD(160, 120, this);
+        video1->enableHUDInstruments(false);
+        video1->enableVideo(true);
+        // FIXME select video stream as well
+        video1DockWidget->setWidget(video1);
+        video1DockWidget->setObjectName("VIDEO_STREAM_1_DOCK_WIDGET");
+        addTool(video1DockWidget, tr("Video Stream 1"), Qt::LeftDockWidgetArea);
+    }
+
+    if (!video2DockWidget) {
+        video2DockWidget = new QDockWidget(tr("Video Stream 2"), this);
+        HUD* video2 =  new HUD(160, 120, this);
+        video2->enableHUDInstruments(false);
+        video2->enableVideo(true);
+        // FIXME select video stream as well
+        video2DockWidget->setWidget(video2);
+        video2DockWidget->setObjectName("VIDEO_STREAM_2_DOCK_WIDGET");
+        addTool(video2DockWidget, tr("Video Stream 2"), Qt::LeftDockWidgetArea);
+    }
+
+    // Custom widgets, added last to all menus and layouts
+    buildCustomWidget();
+
+    // Center widgets
+    if (!mapWidget)
+    {
+        mapWidget = new QGCMapTool(this);
+        addCentralWidget(mapWidget, "Maps");
+    }
+
+    if (!protocolWidget)
+    {
+        protocolWidget    = new XMLCommProtocolWidget(this);
+        addCentralWidget(protocolWidget, "Mavlink Generator");
+    }
 
     if (!hudWidget) {
         hudWidget         = new HUD(320, 240, this);
@@ -643,10 +704,10 @@ void MainWindow::startVideoCapture()
     QString initialPath = QDir::currentPath() + tr("/untitled.") + format;
 
     QString screenFileName = QFileDialog::getSaveFileName(this, tr("Save As"),
-                             initialPath,
-                             tr("%1 Files (*.%2);;All Files (*)")
-                             .arg(format.toUpper())
-                             .arg(format));
+                                                          initialPath,
+                                                          tr("%1 Files (*.%2);;All Files (*)")
+                                                          .arg(format.toUpper())
+                                                          .arg(format));
     delete videoTimer;
     videoTimer = new QTimer(this);
     //videoTimer->setInterval(40);
@@ -1216,18 +1277,78 @@ void MainWindow::loadViewState()
         {
         case VIEW_ENGINEER:
             centerStack->setCurrentWidget(linechartWidget);
+            controlDockWidget->hide();
+            listDockWidget->hide();
+            waypointsDockWidget->hide();
+            infoDockWidget->hide();
+            debugConsoleDockWidget->show();
+            logPlayerDockWidget->show();
+            mavlinkInspectorWidget->show();
+            parametersDockWidget->show();
+            hsiDockWidget->hide();
+            headDown1DockWidget->hide();
+            headDown2DockWidget->hide();
+            rcViewDockWidget->hide();
+            headUpDockWidget->hide();
+            video1DockWidget->hide();
+            video2DockWidget->hide();
             break;
         case VIEW_PILOT:
             centerStack->setCurrentWidget(hudWidget);
+            controlDockWidget->hide();
+            listDockWidget->hide();
+            waypointsDockWidget->hide();
+            infoDockWidget->hide();
+            debugConsoleDockWidget->hide();
+            logPlayerDockWidget->hide();
+            mavlinkInspectorWidget->hide();
+            parametersDockWidget->hide();
+            hsiDockWidget->show();
+            headDown1DockWidget->show();
+            headDown2DockWidget->show();
+            rcViewDockWidget->hide();
+            headUpDockWidget->hide();
+            video1DockWidget->show();
+            video2DockWidget->hide();
             break;
         case VIEW_MAVLINK:
             centerStack->setCurrentWidget(protocolWidget);
+            controlDockWidget->hide();
+            listDockWidget->hide();
+            waypointsDockWidget->hide();
+            infoDockWidget->hide();
+            debugConsoleDockWidget->hide();
+            logPlayerDockWidget->hide();
+            mavlinkInspectorWidget->hide();
+            parametersDockWidget->hide();
+            hsiDockWidget->hide();
+            headDown1DockWidget->hide();
+            headDown2DockWidget->hide();
+            rcViewDockWidget->hide();
+            headUpDockWidget->hide();
+            video1DockWidget->hide();
+            video2DockWidget->hide();
             break;
         case VIEW_OPERATOR:
         case VIEW_UNCONNECTED:
         case VIEW_FULL:
         default:
             centerStack->setCurrentWidget(mapWidget);
+            controlDockWidget->show();
+            listDockWidget->show();
+            waypointsDockWidget->show();
+            infoDockWidget->show();
+            debugConsoleDockWidget->show();
+            logPlayerDockWidget->show();
+            mavlinkInspectorWidget->show();
+            parametersDockWidget->hide();
+            hsiDockWidget->show();
+            headDown1DockWidget->hide();
+            headDown2DockWidget->hide();
+            rcViewDockWidget->hide();
+            headUpDockWidget->show();
+            video1DockWidget->hide();
+            video2DockWidget->hide();
             break;
         }
     }
@@ -1310,5 +1431,5 @@ void MainWindow::loadDataView(QString fileName)
 
 QList<QAction*> MainWindow::listLinkMenuActions(void)
 {
-	return ui.menuNetwork->actions();
+    return ui.menuNetwork->actions();
 }
