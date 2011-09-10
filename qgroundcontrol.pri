@@ -84,6 +84,8 @@ macx {
 
     # Copy audio files if needed
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+    # Copy contributed files
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy google earth starter file
     QMAKE_POST_LINK += && cp -f $$BASEDIR/images/earth.html $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy CSS stylesheets
@@ -221,7 +223,10 @@ message("Compiling for linux 32")
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
 
+    # Validated copy commands
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$DESTDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$DESTDIR
+
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/images/Vera.ttf $$DESTDIR/images/Vera.ttf
@@ -295,6 +300,8 @@ linux-g++-64 {
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
 
+    # Validated copy commands
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/audio $$DESTDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$DESTDIR
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/data $$DESTDIR
     QMAKE_POST_LINK += && mkdir -p $$DESTDIR/images
@@ -371,6 +378,7 @@ DEFINES += QGC_OSG_ENABLED
     exists($$TARGETDIR/debug) {
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\audio" "$$TARGETDIR_WIN\\debug\\audio" /E /I $$escape_expand(\\n))
+        QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\debug\\files" /E /I $$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\debug\\models" /E /I $$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\images\\earth.html" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\debug"$$escape_expand(\\n))
@@ -391,6 +399,7 @@ DEFINES += QGC_OSG_ENABLED
     exists($$TARGETDIR/release) {
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\lib\\sdl\\win32\\SDL.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\audio" "$$TARGETDIR_WIN\\release\\audio" /E /I $$escape_expand(\\n))
+        QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\files" "$$TARGETDIR_WIN\\release\\files" /E /I $$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(xcopy /Y "$$BASEDIR_WIN\\models" "$$TARGETDIR_WIN\\release\\models" /E /I $$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\images\\earth.html" "$$TARGETDIR_WIN\\release\\earth.html" $$escape_expand(\\n))
 	QMAKE_POST_LINK += $$quote(copy /Y "$$BASEDIR_WIN\\thirdParty\\libxbee\\lib\\libxbee.dll" "$$TARGETDIR_WIN\\release"$$escape_expand(\\n))

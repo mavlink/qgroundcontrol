@@ -134,6 +134,7 @@ protected:
     QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
     QMap<QString, QLabel*>* curveVariances; ///< References to the curve variances
     QMap<QString, int> intData;           ///< Current values for integer-valued curves
+    QMap<QString, QWidget*> colorIcons;    ///< Reference to color icons
 
     QWidget* curvesWidget;                ///< The QWidget containing the curve selection button
     QGridLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
@@ -161,7 +162,7 @@ protected:
     LogCompressor* compressor;
     QCheckBox* selectAllCheckBox;
     int selectedMAV; ///< The MAV for which plot items are accepted, -1 for all systems
-    static const int updateInterval = 400; ///< Time between number updates, in milliseconds
+    static const int updateInterval = 1000; ///< Time between number updates, in milliseconds
 
     static const int MAX_CURVE_MENUITEM_NUMBER = 8;
     static const int PAGESTEP_TIME_SCROLLBAR_VALUE = (MAX_TIME_SCROLLBAR_VALUE - MIN_TIME_SCROLLBAR_VALUE) / 10;

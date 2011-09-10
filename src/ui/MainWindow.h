@@ -113,9 +113,9 @@ public:
         return lowPowerMode;
     }
 
+    QList<QAction*> listLinkMenuActions(void);
+
 public slots:
-//    /** @brief Store the mainwindow settings */
-//    void storeSettings();
 
     /** @brief Shows a status message on the bottom status bar */
     void showStatusMessage(const QString& status, int timeout);
@@ -161,9 +161,6 @@ public slots:
     /** @brief Show the project roadmap */
     void showRoadMap();
 
-    /** @brief Shows the widgets based on configuration and current view and autopilot */
-    void presentView();
-
     /** @brief Reload the CSS style sheet */
     void reloadStylesheet();
     /** @brief Let the user select the CSS style sheet */
@@ -184,8 +181,14 @@ public slots:
     /** @brief Add a custom tool widget */
     void createCustomWidget();
 
-    /** @brief Load a custom tool widget from a file */
+    /** @brief Load a custom tool widget from a file chosen by user (QFileDialog) */
     void loadCustomWidget();
+
+    /** @brief Load a custom tool widget from a file */
+    void loadCustomWidget(const QString& fileName, bool singleinstance=false);
+
+    /** @brief Load custom widgets from default file */
+    void loadCustomWidgetsFromDefaults(const QString& systemType, const QString& autopilotType);
 
     void closeEvent(QCloseEvent* event);
 
@@ -195,100 +198,37 @@ public slots:
     /**
      * @brief Shows a Docked Widget based on the action sender
      *
-     * This slot is written to be used in conjunction with the addToToolsMenu function
+     * This slot is written to be used in conjunction with the addTool() function
      * It shows the QDockedWidget based on the action sender
      *
      */
-    void showToolWidget(bool visible);
+    void showTool(bool visible);
 
     /**
      * @brief Shows a Widget from the center stack based on the action sender
      *
-     * This slot is written to be used in conjunction with the addToCentralWidgetsMenu function
+     * This slot is written to be used in conjunction with the addCentralWidget() function
      * It shows the Widget based on the action sender
      *
      */
     void showCentralWidget();
 
-    /** @brief Change actively a QDockWidgets visibility by an action */
-    void showDockWidget(bool vis);
-    /** @brief Updates a QDockWidget's checked status based on its visibility */
-    void updateVisibilitySettings(bool vis);
-
-    /** @brief Updates a QDockWidget's location */
-    void updateLocationSettings (Qt::DockWidgetArea location);
-
-public:
-	QList<QAction*> listLinkMenuActions(void);
-
 protected:
 
     MainWindow(QWidget *parent = 0);
 
-    /** @brief Set default window settings for the current autopilot type */
-    void setDefaultSettingsForAp();
-
-    // These defines are used to save the settings when selecting with
-    // which widgets populate the views
-    // FIXME: DO NOT PUT CUSTOM VALUES IN THIS ENUM since it is iterated over
-    // this will be fixed in a future release.
-    typedef enum _TOOLS_WIDGET_NAMES {
-        MENU_UAS_CONTROL_PARAM,
-        MENU_UAS_CONTROL,
-        MENU_UAS_INFO,
-        MENU_CAMERA,
-        MENU_UAS_LIST,
-        MENU_WAYPOINTS,
-        MENU_STATUS,
-        MENU_DETECTION,
-        MENU_DEBUG_CONSOLE,
-        MENU_PARAMETERS,
-        MENU_HDD_1,
-        MENU_HDD_2,
-        MENU_WATCHDOG,
-        MENU_HUD,
-        MENU_HSI,
-        MENU_RC_VIEW,
-        MENU_SLUGS_DATA,
-        MENU_SLUGS_PID,
-        MENU_SLUGS_HIL,
-        MENU_SLUGS_CAMERA,
-        MENU_MAVLINK_LOG_PLAYER,
-        MENU_VIDEO_STREAM_1,
-        MENU_VIDEO_STREAM_2,
-        MENU_MAVLINK_INSPECTOR,
-        CENTRAL_SEPARATOR= 255, // do not change
-        CENTRAL_LINECHART,
-        CENTRAL_PROTOCOL,
-        CENTRAL_MAP,
-        CENTRAL_3D_LOCAL,
-        CENTRAL_3D_MAP,
-        CENTRAL_OSGEARTH,
-        CENTRAL_GOOGLE_EARTH,
-        CENTRAL_HUD,
-        CENTRAL_DATA_PLOT,
-
-    } TOOLS_WIDGET_NAMES;
-
-    typedef enum _SETTINGS_SECTIONS {
-        SECTION_MENU,
-        SUB_SECTION_CHECKED,
-        SUB_SECTION_LOCATION
-    } SETTINGS_SECTIONS;
-
-    typedef enum _VIEW_SECTIONS {
+    typedef enum _VIEW_SECTIONS
+    {
         VIEW_ENGINEER,
         VIEW_OPERATOR,
         VIEW_PILOT,
         VIEW_MAVLINK,
         VIEW_UNCONNECTED,    ///< View in unconnected mode, when no UAS is available
-        VIEW_FULL            ///< All widgets, mostly intended for multi-screen setups
+        VIEW_FULL            ///< All widgets shown at once
     } VIEW_SECTIONS;
 
-
-    QHash<int, QAction*> toolsMenuActions; // Holds ptr to the Menu Actions
-    QHash<int, QWidget*> dockWidgets;  // Holds ptr to the Actual Dock widget
-    QHash<int, Qt::DockWidgetArea> dockWidgetLocations; // Holds the location
+//    QHash<int, QAction*> toolsMenuActions; // Holds ptr to the Menu Actions
+//    QHash<int, QWidget*> dockWidgets;  // Holds ptr to the Actual Dock widget
 
     /**
      * @brief Adds an already instantiated QDockedWidget to the Tools Menu
@@ -297,24 +237,11 @@ protected:
      * tools menu and connects the QMenuAction to a slot that shows the widget and
      * checks/unchecks the tools menu item
      *
-     * @param widget    The QDockedWidget being added
+     * @param widget    The QDockWidget being added
      * @param title     The entry that will appear in the Menu and in the QDockedWidget title bar
-     * @param slotName  The slot to which the triggered() signal of the menu action will be connected.
-     * @param tool      The ENUM defined in MainWindow.h that is associated to the widget
      * @param location  The default location for the QDockedWidget in case there is no previous key in the settings
      */
-    void addToToolsMenu (QWidget* widget, const QString title, const char * slotName, TOOLS_WIDGET_NAMES tool, Qt::DockWidgetArea location=Qt::RightDockWidgetArea);
-
-    /**
-     * @brief Determines if a QDockWidget needs to be show and if so, shows it
-     *
-     *  Based on the the autopilot and the current view it queries the settings and shows the
-     *  widget if necessary
-     *
-     * @param widget    The QDockWidget requested to be shown
-     * @param view      The view for which the QDockWidget is requested
-     */
-    void showTheWidget (TOOLS_WIDGET_NAMES widget, VIEW_SECTIONS view = VIEW_MAVLINK);
+    void addTool(QDockWidget* widget, const QString& title, Qt::DockWidgetArea location=Qt::RightDockWidgetArea);
 
     /**
      * @brief Adds an already instantiated QWidget to the center stack
@@ -326,21 +253,8 @@ protected:
      *
      * @param widget        The QWidget being added
      * @param title         The entry that will appear in the Menu
-     * @param slotName      The slot to which the triggered() signal of the menu action will be connected.
-     * @param centralWidget The ENUM defined in MainWindow.h that is associated to the widget
      */
-    void addToCentralWidgetsMenu ( QWidget* widget, const QString title,const char * slotName, TOOLS_WIDGET_NAMES centralWidget);
-
-    /**
-     * @brief Determines if a QWidget needs to be show and if so, shows it
-     *
-     *  Based on the the autopilot and the current view it queries the settings and shows the
-     *  widget if necessary
-     *
-     * @param centralWidget    The QWidget requested to be shown
-     * @param view             The view for which the QWidget is requested
-     */
-    void showTheCentralWidget (TOOLS_WIDGET_NAMES centralWidget, VIEW_SECTIONS view);
+    void addCentralWidget(QWidget* widget, const QString& title);
 
     /** @brief Catch window resize events */
     void resizeEvent(QResizeEvent * event);
@@ -350,25 +264,13 @@ protected:
     bool aboutToCloseFlag;
     bool changingViewsFlag;
 
-    void clearView();
+    void storeViewState();
+    void loadViewState();
 
     void buildCustomWidget();
     void buildCommonWidgets();
-    void buildPxWidgets();
-    void buildSlugsWidgets();
-
     void connectCommonWidgets();
-    void connectPxWidgets();
-    void connectSlugsWidgets();
-
-    void arrangeCommonCenterStack();
-    void arrangePxCenterStack();
-    void arrangeSlugsCenterStack();
-
     void connectCommonActions();
-    void connectPxActions();
-    void connectSlugsActions();
-
 
     void configureWindowName();
     void loadSettings();
@@ -382,12 +284,11 @@ protected:
 
     QSettings settings;
     QStackedWidget *centerStack;
+    QActionGroup centerStackActionGroup;
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
-
     QPointer<HUD> hudWidget;
-
     QPointer<QGCMapTool> mapWidget;
     QPointer<XMLCommProtocolWidget> protocolWidget;
     QPointer<QGCDataPlot2D> dataplotWidget;
@@ -400,6 +301,7 @@ protected:
 #if (defined _MSC_VER) || (defined Q_OS_MAC)
     QPointer<QGCGoogleEarthView> gEarthWidget;
 #endif
+
     // Dock widgets
     QPointer<QDockWidget> controlDockWidget;
     QPointer<QDockWidget> controlParameterWidget;
@@ -460,7 +362,6 @@ protected:
 private:
     Ui::MainWindow ui;
 
-    QString buildMenuKey (SETTINGS_SECTIONS section , TOOLS_WIDGET_NAMES tool, VIEW_SECTIONS view);
     QString getWindowStateKey();
     QString getWindowGeometryKey();
 

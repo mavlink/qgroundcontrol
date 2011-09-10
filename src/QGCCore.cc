@@ -203,7 +203,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 QGCCore::~QGCCore()
 {
     //mainWindow->storeSettings();
-    mainWindow->hide();
+    mainWindow->close();
     mainWindow->deleteLater();
     // Delete singletons
     delete LinkManager::instance();

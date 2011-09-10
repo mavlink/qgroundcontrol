@@ -18,6 +18,7 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
         QWidget(parent),
         mav(NULL),
         mainMenuAction(NULL),
+        widgetTitle(title),
         ui(new Ui::QGCToolWidget)
 {
     ui->setupUi(this);
@@ -41,6 +42,7 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
     }
 
     this->setWindowTitle(title);
+    setObjectName(title+"WIDGET");
 
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
     foreach (UASInterface* uas, systems) {
@@ -56,6 +58,18 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
 QGCToolWidget::~QGCToolWidget()
 {
     delete ui;
+}
+
+void QGCToolWidget::setParent(QWidget *parent)
+{
+    QWidget::setParent(parent);
+    // Try with parent
+    QDockWidget* dock = dynamic_cast<QDockWidget*>(parent);
+    if (dock)
+    {
+        dock->setWindowTitle(getTitle());
+        dock->setObjectName(getTitle()+"DOCK");
+    }
 }
 
 /**
@@ -107,14 +121,26 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
     return instances()->values();
 }
 
-void QGCToolWidget::loadSettings(const QString& settings)
+/**
+ * @param singleinstance If this is set to true, the widget settings will only be loaded if not another widget with the same title exists
+ */
+bool QGCToolWidget::loadSettings(const QString& settings, bool singleinstance)
 {
     QSettings set(settings, QSettings::IniFormat);
     QStringList groups = set.childGroups();
-    QString widgetName = groups.first();
-    setTitle(widgetName);
-    qDebug() << "WIDGET TITLE LOADED: " << widgetName;
-    loadSettings(set);
+    if (groups.length() > 0)
+    {
+        QString widgetName = groups.first();
+        if (singleinstance && QGCToolWidget::instances()->keys().contains(widgetName)) return false;
+        setTitle(widgetName);
+        qDebug() << "WIDGET TITLE LOADED: " << widgetName;
+        loadSettings(set);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void QGCToolWidget::loadSettings(QSettings& settings)
@@ -339,14 +365,8 @@ void QGCToolWidget::importWidget()
 
 const QString QGCToolWidget::getTitle()
 {
-    QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
-    if (parent) {
-        return parent->windowTitle();
-    } else {
-        return this->windowTitle();
-    }
+    return widgetTitle;
 }
-
 
 void QGCToolWidget::setTitle()
 {
@@ -373,6 +393,7 @@ void QGCToolWidget::setTitle()
 
 void QGCToolWidget::setTitle(QString title)
 {
+    widgetTitle = title;
     QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
     if (parent) {
         QSettings settings;
