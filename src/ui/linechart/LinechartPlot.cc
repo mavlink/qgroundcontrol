@@ -417,9 +417,12 @@ void LinechartPlot::setVisible(QString id, bool visible)
 {
     if(curves.contains(id)) {
         curves.value(id)->setVisible(visible);
-        if(visible) {
+        if(visible)
+        {
             curves.value(id)->attach(this);
-        } else {
+        }
+        else
+        {
             curves.value(id)->detach();
         }
     }
@@ -639,7 +642,7 @@ void LinechartPlot::paintRealtime()
         windowLock.unlock();
 
         // Defined both on windows 32- and 64 bit
-#ifndef _WIN32
+#if !(defined Q_OS_WIN)
 
         //    const bool cacheMode =
         //            canvas()->testPaintAttribute(QwtPlotCanvas::PaintCached);
@@ -648,11 +651,11 @@ void LinechartPlot::paintRealtime()
 
         const QPaintEngine *pe = canvas()->paintEngine();
         bool directPaint = pe->hasFeature(QPaintEngine::PaintOutsidePaintEvent);
-        if ( pe->type() == QPaintEngine::X11 ) {
+        //if ( pe->type() == QPaintEngine::X11 ) {
             // Even if not recommended by TrollTech, Qt::WA_PaintOutsidePaintEvent
             // works on X11. This has an tremendous effect on the performance..
             directPaint = true;
-        }
+        //}
         canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, directPaint);
 #endif
 
@@ -665,7 +668,7 @@ void LinechartPlot::paintRealtime()
             replot();
         }
 
-#ifndef _WIN32
+#if !(defined Q_OS_WIN)
         canvas()->setAttribute(Qt::WA_PaintOutsidePaintEvent, oldDirectPaint);
 #endif
 

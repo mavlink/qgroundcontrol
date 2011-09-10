@@ -76,10 +76,12 @@ public:
     virtual double getLocalX() const = 0;
     virtual double getLocalY() const = 0;
     virtual double getLocalZ() const = 0;
+    virtual bool localPositionKnown() const = 0;
 
     virtual double getLatitude() const = 0;
     virtual double getLongitude() const = 0;
     virtual double getAltitude() const = 0;
+    virtual bool globalPositionKnown() const = 0;
 
     virtual double getRoll() const = 0;
     virtual double getPitch() const = 0;
@@ -181,14 +183,14 @@ public:
     /** @brief Get the type of the system (airplane, quadrotor, helicopter,..)*/
     virtual int getSystemType() = 0;
     virtual QString getSystemTypeName() = 0;
+    /** @brief Get the type of the autopilot (PIXHAWK, APM, UDB, PPZ,..) */
+    virtual int getAutopilotType() = 0;
+    virtual QString getAutopilotTypeName() = 0;
+    virtual void setAutopilotType(int apType)= 0;
 
     QColor getColor() {
         return color;
     }
-
-    virtual int getAutopilotType() = 0;
-    virtual QString getAutopilotTypeName() = 0;
-    virtual void setAutopilotType(int apType)= 0;
 
 public slots:
 
@@ -490,6 +492,6 @@ protected:
 
 };
 
-Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0");
+Q_DECLARE_INTERFACE(UASInterface, "org.qgroundcontrol/1.0")
 
 #endif // _UASINTERFACE_H_

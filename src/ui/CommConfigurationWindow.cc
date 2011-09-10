@@ -267,7 +267,7 @@ void CommConfigurationWindow::setLinkType(int linktype)
 	foreach (QAction* act, actions) 
 	{
         if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(tmpLink)) 
-		{
+        {
             act->trigger();
             break;
         }

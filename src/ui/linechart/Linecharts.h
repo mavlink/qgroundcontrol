@@ -17,6 +17,7 @@ public:
 signals:
     /** @brief This signal is emitted once a logfile has been finished writing */
     void logfileWritten(QString fileName);
+    void visibilityChanged(bool visible);
 
 public slots:
     /** @brief Select plot for one system */
@@ -27,6 +28,7 @@ public slots:
     void addSource(QObject* obj);
 
 protected:
+
     QMap<int, LinechartWidget*> plots;
     QVector<QObject*> genericSources;
     bool active;

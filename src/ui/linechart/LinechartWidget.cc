@@ -143,7 +143,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     //connect(this, SIGNAL(plotWindowPositionUpdated(int)), scrollbar, SLOT(setValue(int)));
     //connect(scrollbar, SIGNAL(sliderMoved(int)), this, SLOT(setPlotWindowPosition(int)));
 
-    updateTimer->setInterval(300);
+    updateTimer->setInterval(updateInterval);
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(refresh()));
     readSettings();
 }
@@ -433,6 +433,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
 
 void LinechartWidget::refresh()
 {
+    setUpdatesEnabled(false);
     QString str;
     // Value
     QMap<QString, QLabel*>::iterator i;
@@ -484,6 +485,7 @@ void LinechartWidget::refresh()
         str.sprintf("% 8.3e", activePlot->getVariance(l.key()));
         l.value()->setText(str);
     }
+    setUpdatesEnabled(true);
 }
 
 
@@ -510,11 +512,6 @@ void LinechartWidget::startLogging()
     // QString("./pixhawk-log-" + date.toString("yyyy-MM-dd") + "-" + QString::number(logindex) + ".log")
     QString fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.csv *.txt);;"));
 
-    if (!fileName.contains(".")) {
-        // .csv is default extension
-        fileName.append(".csv");
-    }
-
     while (!(fileName.endsWith(".txt") || fileName.endsWith(".csv")) && !abort && fileName != "") {
         QMessageBox msgBox;
         msgBox.setIcon(QMessageBox::Critical);
@@ -522,13 +519,15 @@ void LinechartWidget::startLogging()
         msgBox.setInformativeText("Please choose .txt or .csv as file extension. Click OK to change the file extension, cancel to not start logging.");
         msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
         msgBox.setDefaultButton(QMessageBox::Ok);
-        if(msgBox.exec() == QMessageBox::Cancel) {
+        if(msgBox.exec() != QMessageBox::Ok)
+        {
             abort = true;
             break;
         }
-        fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.txt, *.csv);;"));
-
+        fileName = QFileDialog::getSaveFileName(this, tr("Specify log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("Logfile (*.txt *.csv);;"));
     }
+
+    qDebug() << "SAVE FILE" << fileName;
 
     // Check if the user did not abort the file save dialog
     if (!abort && fileName != "") {
@@ -626,6 +625,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     curvesWidgetLayout->addWidget(checkBox, labelRow, 0);
 
     QWidget* colorIcon = new QWidget(this);
+    colorIcons.insert(curve+unit, colorIcon);
     colorIcon->setMinimumSize(QSize(5, 14));
     colorIcon->setMaximumSize(4, 14);
 
@@ -636,13 +636,11 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 
     //checkBox->setText(QString());
     label->setText(curve);
-    QColor color = plot->getColorForCurve(curve+unit);
-    if(color.isValid()) {
-        QString colorstyle;
-        colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
-        colorIcon->setStyleSheet(colorstyle);
-        colorIcon->setAutoFillBackground(true);
-    }
+    QColor color(Qt::gray);// = plot->getColorForCurve(curve+unit);
+    QString colorstyle;
+    colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
+    colorIcon->setStyleSheet(colorstyle);
+    colorIcon->setAutoFillBackground(true);
 
     // Value
     value = new QLabel(this);
@@ -854,8 +852,22 @@ void LinechartWidget::takeButtonClick(bool checked)
 
     QCheckBox* button = qobject_cast<QCheckBox*>(QObject::sender());
 
-    if(button != NULL) {
+    if(button != NULL)
+    {
         activePlot->setVisible(button->objectName(), checked);
+
+        QColor color = activePlot->getColorForCurve(button->objectName());
+        if(color.isValid())
+        {
+            QString colorstyle;
+            colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
+            QWidget* colorIcon = colorIcons.value(button->objectName(), 0);
+            if (colorIcon)
+            {
+                colorIcon->setStyleSheet(colorstyle);
+                colorIcon->setAutoFillBackground(true);
+            }
+        }
     }
 }
 

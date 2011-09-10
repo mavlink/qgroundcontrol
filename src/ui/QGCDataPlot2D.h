@@ -46,7 +46,22 @@ public slots:
     /** @brief Calculate and display regression function*/
     bool calculateRegression();
 
+signals:
+    void visibilityChanged(bool visible);
+
 protected:
+    void showEvent(QShowEvent* event)
+    {
+        QWidget::showEvent(event);
+        emit visibilityChanged(true);
+    }
+
+    void hideEvent(QHideEvent* event)
+    {
+        QWidget::hideEvent(event);
+        emit visibilityChanged(false);
+    }
+
     void changeEvent(QEvent *e);
     IncrementalPlot* plot;
     LogCompressor* compressor;
