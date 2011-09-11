@@ -127,6 +127,15 @@ MainWindow::MainWindow(QWidget *parent):
     centerStack = new QStackedWidget(this);
     setCentralWidget(centerStack);
 
+    // Load Toolbar
+    toolBar = new QGCToolBar(this);
+    this->addToolBar(toolBar);
+    // Add actions
+    toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
+    toolBar->addPerspectiveChangeAction(ui.actionEngineersView);
+    toolBar->addPerspectiveChangeAction(ui.actionPilotsView);
+    toolBar->addPerspectiveChangeAction(ui.actionUnconnectedView);
+
     buildCommonWidgets();
     connectCommonWidgets();
 
@@ -180,14 +189,6 @@ MainWindow::MainWindow(QWidget *parent):
     // FIXME MOVE INTO UAV OBJECT
     fgLink = new QGCFlightGearLink();
     fgLink->connectSimulation();
-
-    // Load Toolbar
-    toolBar = new QGCToolBar(this);
-    this->addToolBar(toolBar);
-    // Add actions
-    toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
-    toolBar->addPerspectiveChangeAction(ui.actionEngineersView);
-    toolBar->addPerspectiveChangeAction(ui.actionPilotsView);
 
     // Connect link
     if (autoReconnect)
@@ -408,7 +409,9 @@ void MainWindow::buildCommonWidgets()
     if (!logPlayerDockWidget)
     {
         logPlayerDockWidget = new QDockWidget(tr("MAVLink Log Player"), this);
-        logPlayerDockWidget->setWidget( new QGCMAVLinkLogPlayer(mavlink, this) );
+        logPlayer = new QGCMAVLinkLogPlayer(mavlink, this);
+        toolBar->setLogPlayer(logPlayer);
+        logPlayerDockWidget->setWidget(logPlayer);
         logPlayerDockWidget->setObjectName("MAVLINK_LOG_PLAYER_DOCKWIDGET");
         addTool(logPlayerDockWidget, tr("MAVLink Log Replay"), Qt::RightDockWidgetArea);
     }

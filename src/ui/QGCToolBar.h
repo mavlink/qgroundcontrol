@@ -29,13 +29,14 @@ This file is part of the QGROUNDCONTROL project
 #include <QToolButton>
 #include <QLabel>
 #include "UASInterface.h"
+#include "QGCMAVLinkLogPlayer.h"
 
 class QGCToolBar : public QToolBar
 {
     Q_OBJECT
 
 public:
-    explicit QGCToolBar(QWidget *parent = 0);
+    explicit QGCToolBar(QWidget* parent = 0);
     void addPerspectiveChangeAction(QAction* action);
     ~QGCToolBar();
 
@@ -52,6 +53,10 @@ public slots:
     void setSystemType(UASInterface* uas, unsigned int systemType);
     /** @brief Received system text message */
     void receiveTextMessage(int uasid, int componentid, int severity, QString text);
+    /** @brief Start / stop logging */
+    void logging(bool enabled);
+    /** @brief Set log playing component */
+    void setLogPlayer(QGCMAVLinkLogPlayer* player);
 
 protected:
     void createCustomWidgets();
