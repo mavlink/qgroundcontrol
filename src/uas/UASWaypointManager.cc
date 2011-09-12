@@ -49,6 +49,8 @@ UASWaypointManager::UASWaypointManager(UAS &_uas)
       protocol_timer(this)
 {
     connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
+    connect(&uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleLocalPositionChanged(UASInterface*,double,double,double,quint64)));
+    connect(&uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,quint64)));
 }
 
 void UASWaypointManager::timeout()
@@ -84,6 +86,25 @@ void UASWaypointManager::timeout()
         current_partner_systemid = 0;
         current_partner_compid = 0;
     }
+}
+
+void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x, double y, double z, quint64 time)
+{
+    Q_UNUSED(mav);
+    Q_UNUSED(time);
+    if (waypoints.count() > 0 && (waypoints[current_wp_id]->getFrame() == MAV_FRAME_LOCAL || waypoints[current_wp_id]->getFrame() == MAV_FRAME_LOCAL_ENU))
+    {
+        double xdiff = x-waypoints[current_wp_id]->getX();
+        double ydiff = y-waypoints[current_wp_id]->getY();
+        double zdiff = z-waypoints[current_wp_id]->getZ();
+        double dist = sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
+        emit waypointDistanceChanged(dist);
+    }
+}
+
+void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double alt, quint64 time)
+{
+
 }
 
 void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, quint16 count)

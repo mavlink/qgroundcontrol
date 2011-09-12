@@ -51,17 +51,21 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     symbolButton = new QToolButton(this);
     toolBarNameLabel = new QLabel("------", this);
     toolBarModeLabel = new QLabel("------", this);
-    toolBarModeLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 16px; color: #3C7B9E; }");
+    toolBarModeLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 14px; color: #3C7B9E; }");
     toolBarStateLabel = new QLabel("------", this);
-    toolBarStateLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 16px; color: #FEC654; }");
-    toolBarWpLabel = new QLabel("---", this);
+    toolBarStateLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 14px; color: #FEC654; }");
+    toolBarWpLabel = new QLabel("WP--", this);
+    toolBarWpLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 18px; color: #3C7B9E; }");
     toolBarDistLabel = new QLabel("--- ---- m", this);
     toolBarMessageLabel = new QLabel("No system messages.", this);
+    toolBarMessageLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 12px; font-style: italic; color: #3C7B9E; }");
     toolBarBatteryBar = new QProgressBar(this);
-    toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 8px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 10px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
+    toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 10px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
     toolBarBatteryBar->setMinimum(0);
     toolBarBatteryBar->setMaximum(100);
     toolBarBatteryBar->setMaximumWidth(200);
+    toolBarBatteryVoltageLabel = new QLabel("xx.x V");
+    toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 2px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
     //symbolButton->setIcon(":");
     symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 0px 0px 20px; background-color: none; }");
     addWidget(symbolButton);
@@ -69,6 +73,7 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     addWidget(toolBarModeLabel);
     addWidget(toolBarStateLabel);
     addWidget(toolBarBatteryBar);
+    addWidget(toolBarBatteryVoltageLabel);
     addWidget(toolBarWpLabel);
     addWidget(toolBarDistLabel);
     addWidget(toolBarMessageLabel);
@@ -137,6 +142,11 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
         disconnect(mav, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
         disconnect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+        if (mav->getWaypointManager())
+        {
+            disconnect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(int)), this, SLOT(updateCurrentWaypoint(int)));
+            disconnect(mav->getWaypointManager(), SIGNAL(waypointDistanceChanged(double)), this, SLOT(updateWaypointDistance(double)));
+        }
     }
 
     // Connect new system
@@ -147,6 +157,11 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     connect(active, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
     connect(active, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
     connect(active, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+    if (active->getWaypointManager())
+    {
+        connect(active->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
+        connect(active->getWaypointManager(), SIGNAL(waypointDistanceChanged(double)), this, SLOT(updateWaypointDistance(double)));
+    }
 
     // Update all values once
     toolBarNameLabel->setText(mav->getUASName());
@@ -164,9 +179,22 @@ void QGCToolBar::createCustomWidgets()
 
 }
 
+void QGCToolBar::updateWaypointDistance(double distance)
+{
+    toolBarDistLabel->setText(tr("%1 m").arg(distance, 6, 'f', 2, '0'));
+}
+
+void QGCToolBar::updateCurrentWaypoint(quint16 id)
+{
+    toolBarWpLabel->setText(tr("WP%1").arg(id));
+}
+
 void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, double percent, int seconds)
 {
+    Q_UNUSED(uas);
+    Q_UNUSED(seconds);
     toolBarBatteryBar->setValue(percent);
+    toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(voltage, 4, 'f', 1, ' '));
 }
 
 void QGCToolBar::updateState(UASInterface* system, QString name, QString description)

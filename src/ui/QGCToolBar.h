@@ -60,6 +60,10 @@ public slots:
     void setLogPlayer(QGCMAVLinkLogPlayer* player);
     /** @brief Update battery charge state */
     void updateBatteryRemaining(UASInterface* uas, double voltage, double percent, int seconds);
+    /** @brief Update current waypoint */
+    void updateCurrentWaypoint(quint16 id);
+    /** @brief Update distance to current waypoint */
+    void updateWaypointDistance(double distance);
 
 protected:
     void createCustomWidgets();
@@ -75,6 +79,7 @@ protected:
     QLabel* toolBarDistLabel;
     QLabel* toolBarMessageLabel;
     QProgressBar* toolBarBatteryBar;
+    QLabel* toolBarBatteryVoltageLabel;
 };
 
 #endif // QGCTOOLBAR_H
