@@ -41,10 +41,9 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     logReplayAction = new QAction(QIcon(":"), "Replay", this);
     logReplayAction->setCheckable(true);
 
-    addSeparator();
-
     addAction(toggleLoggingAction);
     addAction(logReplayAction);
+//    addSeparator();
 
     // CREATE TOOLBAR ITEMS
     // Add internal actions
@@ -64,11 +63,10 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 10px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
     toolBarBatteryBar->setMinimum(0);
     toolBarBatteryBar->setMaximum(100);
-    toolBarBatteryBar->setMinimumWidth(200);
+    toolBarBatteryBar->setMinimumWidth(20);
     toolBarBatteryBar->setMaximumWidth(200);
     toolBarBatteryVoltageLabel = new QLabel("xx.x V");
     toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 0px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
-    //symbolButton->setIcon(":");
     symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 0px 0px 20px; background-color: none; }");
     addWidget(symbolButton);
     addWidget(toolBarNameLabel);

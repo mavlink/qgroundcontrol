@@ -126,10 +126,7 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): Qwt
     connect(updateTimer, SIGNAL(timeout()), this, SLOT(paintRealtime()));
     //updateTimer->start(DEFAULT_REFRESH_RATE);
 
-    //    QwtPlot::setAutoReplot();
-
-    //    canvas()->setPaintAttribute(QwtPlotCanvas::PaintCached, false);
-    //    canvas()->setPaintAttribute(QwtPlotCanvas::PaintPacked, false);
+    connect(&timeoutTimer, SIGNAL(timeout()), this, SLOT(removeTimedOutCurves()));
 }
 
 LinechartPlot::~LinechartPlot()
@@ -206,6 +203,34 @@ void LinechartPlot::setActive(bool active)
     m_active = active;
 }
 
+void LinechartPlot::removeTimedOutCurves()
+{
+    foreach(QString key, lastUpdate.keys())
+    {
+        quint64 time = lastUpdate.value(key);
+        if (QGC::groundTimeMilliseconds() - time > 20000)
+        {
+            // Remove this curve
+            // Delete curves
+            QwtPlotCurve* curve = curves.take(key);
+            // Delete the object
+            delete curve;
+            // Set the pointer null
+            curve = NULL;
+
+            // Notify connected components about the removal
+            emit curveRemoved(key);
+
+            // Remove from data list
+            TimeSeriesData* d = data.take(key);
+            // Delete the object
+            delete d;
+            // Set the pointer null
+            d = NULL;
+        }
+    }
+}
+
 /**
  * @brief Set the zero (center line) value
  * The zero value defines the centerline of the plot.
@@ -235,17 +260,17 @@ void LinechartPlot::appendData(QString dataname, quint64 ms, double value)
     // Add new value
     TimeSeriesData* dataset = data.value(dataname);
 
-    quint64 time;
+    quint64 time = QGC::groundTimeMilliseconds();
 
     // Append data
-    if (m_groundTime) {
-        // Use the current (receive) time
-        time = QGC::groundTimeUsecs()/1000;
-    } else {
+    if (!m_groundTime)
+    {
         // Use timestamp from dataset
         time = ms;
     }
     dataset->append(time, value);
+
+    lastUpdate.insert(dataname, time);
 
     // Scaling values
     if(ms < minTime) minTime = ms;
