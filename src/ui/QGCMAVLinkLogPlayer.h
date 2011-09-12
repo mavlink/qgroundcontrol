@@ -29,6 +29,10 @@ public:
     ~QGCMAVLinkLogPlayer();
 
 public slots:
+    /** @brief Toggle between play and pause */
+    void playPauseToggle();
+    /** @brief Play / pause the log */
+    void playPause(bool play);
     /** @brief Replay the logfile */
     void play();
     /** @brief Pause the logfile */
@@ -64,6 +68,7 @@ protected:
     int loopCounter;
     bool mavlinkLogFormat;
     int binaryBaudRate;
+    bool isPlaying;
     static const int packetLen = MAVLINK_MAX_PACKET_LEN;
     static const int timeLen = sizeof(quint64);
     void changeEvent(QEvent *e);
