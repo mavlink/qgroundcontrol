@@ -163,6 +163,7 @@ private:
     quint8 current_partner_compid;                  ///< The current protocol communication target component
 
     QVector<Waypoint *> waypoints;                  ///< local waypoint list (main storage)
+    Waypoint* currentWaypoint;                      ///< The currently used waypoint
     QVector<mavlink_waypoint_t *> waypoint_buffer;  ///< buffer for waypoints during communication
     QTimer protocol_timer;                          ///< Timer to catch timeouts
 };

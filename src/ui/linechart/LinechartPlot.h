@@ -39,6 +39,7 @@ This file is part of the PIXHAWK project
 #include <QList>
 #include <QMutex>
 #include <QTime>
+#include <QTimer>
 #include <qwt_plot_panner.h>
 #include <qwt_plot_curve.h>
 #include <qwt_scale_draw.h>
@@ -47,7 +48,7 @@ This file is part of the PIXHAWK project
 #include <qwt_array.h>
 #include <qwt_plot.h>
 #include <ScrollZoomer.h>
-#include <MG.h>
+#include "MG.h"
 
 class TimeScaleDraw: public QwtScaleDraw
 {
@@ -266,13 +267,16 @@ public slots:
 
     /** @brief Set the number of values to average over */
     void setAverageWindow(int windowSize);
+    void removeTimedOutCurves();
 
+    public:
     QColor getColorForCurve(QString id);
 
 protected:
     QMap<QString, QwtPlotCurve*> curves;
     QMap<QString, TimeSeriesData*> data;
     QMap<QString, QwtScaleMap*> scaleMaps;
+    QMap<QString, quint64> lastUpdate;
     ScrollZoomer* zoomer;
 
     QList<QColor> colors;
@@ -306,6 +310,7 @@ protected:
     int plotid;
     bool m_active; ///< Decides wether the plot is active or not
     bool m_groundTime; ///< Enforce the use of the receive timestamp instead of the data timestamp
+    QTimer timeoutTimer;
 
     // Methods
     void addCurve(QString id);

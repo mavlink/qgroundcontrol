@@ -134,7 +134,7 @@ MainWindow::MainWindow(QWidget *parent):
     toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
     toolBar->addPerspectiveChangeAction(ui.actionEngineersView);
     toolBar->addPerspectiveChangeAction(ui.actionPilotsView);
-    toolBar->addPerspectiveChangeAction(ui.actionUnconnectedView);
+//    toolBar->addPerspectiveChangeAction(ui.actionUnconnectedView);
 
     buildCommonWidgets();
     connectCommonWidgets();
@@ -296,7 +296,6 @@ void MainWindow::setDefaultSettingsForAp()
 
 void MainWindow::resizeEvent(QResizeEvent * event)
 {
-    Q_UNUSED(event);
     if (height() < 800)
     {
         ui.statusBar->setVisible(false);
@@ -306,6 +305,17 @@ void MainWindow::resizeEvent(QResizeEvent * event)
         ui.statusBar->setVisible(true);
         ui.statusBar->setSizeGripEnabled(true);
     }
+
+    if (width() > 1200)
+    {
+        toolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    }
+    else
+    {
+        toolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    }
+
+    QMainWindow::resizeEvent(event);
 }
 
 QString MainWindow::getWindowStateKey()
@@ -730,8 +740,8 @@ void MainWindow::loadCustomWidgetsFromDefaults(const QString& systemType, const 
         {
             // Will only be loaded if not already a custom widget with
             // the same name is present
-            qDebug() << "Tried to load file: " << file;
-            loadCustomWidget(defaultsDir+"/"+file, true);
+            qDebug() << "Tried to load file: " << defaultsDir+file;
+            loadCustomWidget(defaultsDir+file, true);
         }
     }
 }

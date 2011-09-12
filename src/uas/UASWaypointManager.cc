@@ -46,7 +46,8 @@ UASWaypointManager::UASWaypointManager(UAS &_uas)
       current_state(WP_IDLE),
       current_partner_systemid(0),
       current_partner_compid(0),
-      protocol_timer(this)
+      protocol_timer(this),
+      currentWaypoint(NULL)
 {
     connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
     connect(&uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleLocalPositionChanged(UASInterface*,double,double,double,quint64)));
@@ -92,11 +93,11 @@ void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x,
 {
     Q_UNUSED(mav);
     Q_UNUSED(time);
-    if (waypoints.count() > 0 && (waypoints[current_wp_id]->getFrame() == MAV_FRAME_LOCAL || waypoints[current_wp_id]->getFrame() == MAV_FRAME_LOCAL_ENU))
+    if (waypoints.count() > 0 && currentWaypoint && (currentWaypoint->getFrame() == MAV_FRAME_LOCAL || currentWaypoint->getFrame() == MAV_FRAME_LOCAL_ENU))
     {
-        double xdiff = x-waypoints[current_wp_id]->getX();
-        double ydiff = y-waypoints[current_wp_id]->getY();
-        double zdiff = z-waypoints[current_wp_id]->getZ();
+        double xdiff = x-currentWaypoint->getX();
+        double ydiff = y-currentWaypoint->getY();
+        double zdiff = z-currentWaypoint->getZ();
         double dist = sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
         emit waypointDistanceChanged(dist);
     }
@@ -146,6 +147,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
             //// qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << "Frame:"<< (MAV_FRAME) wp->frame << "Command:" << (MAV_CMD) wp->command;
             Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
             addWaypoint(lwp, false);
+            if (wp->current == 1) currentWaypoint = lwp;
 
             //get next waypoint
             current_wp_id++;
@@ -164,6 +166,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
                 protocol_timer.stop();
                 emit readGlobalWPFromUAS(false);
+                if (currentWaypoint) emit currentWaypointChanged(currentWaypoint->getId());
                 emit updateStatusString("done.");
 
                 // qDebug() << "got all waypoints from ID " << systemId;
@@ -232,6 +235,8 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
                 for(int i = 0; i < waypoints.size(); i++) {
                     if (waypoints[i]->getId() == wpc->seq) {
                         waypoints[i]->setCurrent(true);
+                        currentWaypoint = waypoints[i];
+
                     } else {
                         waypoints[i]->setCurrent(false);
                     }
@@ -267,6 +272,7 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
             for(int i = 0; i < waypoints.size(); i++) {
                 if (waypoints[i]->getId() == seq) {
                     waypoints[i]->setCurrent(true);
+                    currentWaypoint = waypoints[i];
                 } else {
                     waypoints[i]->setCurrent(false);
                 }
@@ -302,7 +308,11 @@ void UASWaypointManager::addWaypoint(Waypoint *wp, bool enforceFirstActive)
 {
     if (wp) {
         wp->setId(waypoints.size());
-        if (enforceFirstActive && waypoints.size() == 0) wp->setCurrent(true);
+        if (enforceFirstActive && waypoints.size() == 0)
+        {
+            wp->setCurrent(true);
+            currentWaypoint = wp;
+        }
         waypoints.insert(waypoints.size(), wp);
         connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChange(Waypoint*)));
 
@@ -318,7 +328,11 @@ Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 {
     Waypoint* wp = new Waypoint();
     wp->setId(waypoints.size());
-    if (enforceFirstActive && waypoints.size() == 0) wp->setCurrent(true);
+    if (enforceFirstActive && waypoints.size() == 0)
+    {
+        wp->setCurrent(true);
+        currentWaypoint = wp;
+    }
     waypoints.insert(waypoints.size(), wp);
     connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChange(Waypoint*)));
 
