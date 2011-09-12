@@ -75,6 +75,7 @@ This file is part of the QGROUNDCONTROL project
 #include "SlugsPadCameraControl.h"
 #include "UASControlParameters.h"
 #include "QGCFlightGearLink.h"
+#include "QGCMAVLinkLogPlayer.h"
 
 class QGCMapTool;
 
@@ -210,6 +211,17 @@ public slots:
      */
     void showCentralWidget();
 
+public:
+    QGCMAVLinkLogPlayer* getLogPlayer()
+    {
+        return logPlayer;
+    }
+
+    MAVLinkProtocol* getMAVLink()
+    {
+        return mavlink;
+    }
+
 protected:
 
     MainWindow(QWidget *parent = 0);
@@ -342,6 +354,7 @@ protected:
 
     QPointer<QGCToolBar> toolBar;
 
+    QGCMAVLinkLogPlayer* logPlayer;
 
     // Popup widgets
     JoystickWidget* joystickWidget;

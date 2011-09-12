@@ -25,6 +25,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QLabel>
 #include "QGCToolBar.h"
 #include "UASManager.h"
+#include "MainWindow.h"
 
 QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
@@ -33,14 +34,93 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     mav(NULL)
 {
     setObjectName("QGC_TOOLBAR");
-    createCustomWidgets();
+
+    toggleLoggingAction = new QAction(QIcon(":"), "Logging", this);
+    toggleLoggingAction->setCheckable(true);
+    logReplayAction = new QAction(QIcon(":"), "Replay", this);
+    logReplayAction->setCheckable(true);
+
+    addSeparator();
+
+    addAction(toggleLoggingAction);
+    addAction(logReplayAction);
+
+    // CREATE TOOLBAR ITEMS
+    // Add internal actions
+    // Add MAV widget
+    symbolButton = new QToolButton(this);
+    toolBarNameLabel = new QLabel("------", this);
+    toolBarModeLabel = new QLabel("------", this);
+    toolBarModeLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 16px; color: #3C7B9E; }");
+    toolBarStateLabel = new QLabel("------", this);
+    toolBarStateLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 16px; color: #FEC654; }");
+    toolBarWpLabel = new QLabel("---", this);
+    toolBarDistLabel = new QLabel("--- ---- m", this);
+    toolBarMessageLabel = new QLabel("No system messages.", this);
+    toolBarBatteryBar = new QProgressBar(this);
+    toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 8px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 10px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
+    toolBarBatteryBar->setMinimum(0);
+    toolBarBatteryBar->setMaximum(100);
+    toolBarBatteryBar->setMaximumWidth(200);
+    //symbolButton->setIcon(":");
+    symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 0px 0px 20px; background-color: none; }");
+    addWidget(symbolButton);
+    addWidget(toolBarNameLabel);
+    addWidget(toolBarModeLabel);
+    addWidget(toolBarStateLabel);
+    addWidget(toolBarBatteryBar);
+    addWidget(toolBarWpLabel);
+    addWidget(toolBarDistLabel);
+    addWidget(toolBarMessageLabel);
+    //addWidget(new QSpacerItem(20, 0, QSizePolicy::Expanding));
+
+    // DONE INITIALIZING BUTTONS
+
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
 }
 
+void QGCToolBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
+{
+    connect(toggleLoggingAction, SIGNAL(triggered(bool)), player, SLOT(playPause(bool)));
+    connect(logReplayAction, SIGNAL(triggered(bool)), this, SLOT(logging(bool)));
+}
+
+void QGCToolBar::logging(bool enabled)
+{
+    // Stop logging in any case
+    MainWindow::instance()->getMAVLink()->enableLogging(false);
+    if (enabled)
+    {
+        QString fileName = QFileDialog::getSaveFileName(this, tr("Specify MAVLink log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink Logfile (*.mavlink *.log *.bin);;"));
+
+        if (!fileName.endsWith(".mavlink"))
+        {
+            fileName.append(".mavlink");
+        }
+
+        QFileInfo file(fileName);
+        if (file.exists() && !file.isWritable())
+        {
+            QMessageBox msgBox;
+            msgBox.setIcon(QMessageBox::Critical);
+            msgBox.setText(tr("The selected logfile is not writable"));
+            msgBox.setInformativeText(tr("Please make sure that the file %1 is writable or select a different file").arg(fileName));
+            msgBox.setStandardButtons(QMessageBox::Ok);
+            msgBox.setDefaultButton(QMessageBox::Ok);
+            msgBox.exec();
+        }
+        else
+        {
+            MainWindow::instance()->getMAVLink()->setLogfileName(fileName);
+            MainWindow::instance()->getMAVLink()->enableLogging(true);
+        }
+    }
+}
+
 void QGCToolBar::addPerspectiveChangeAction(QAction* action)
 {
-    addAction(action);
+    insertAction(toggleLoggingAction, action);
 }
 
 void QGCToolBar::setActiveUAS(UASInterface* active)
@@ -56,6 +136,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
         disconnect(mav, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
         disconnect(mav, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
+        disconnect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
     }
 
     // Connect new system
@@ -65,61 +146,46 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     connect(active, SIGNAL(nameChanged(QString)), this, SLOT(updateName(QString)));
     connect(active, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
     connect(active, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
+    connect(active, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
 
     // Update all values once
-    nameLabel->setText(mav->getUASName());
-    modeLabel->setText(mav->getShortMode());
-    stateLabel->setText(mav->getShortState());
+    toolBarNameLabel->setText(mav->getUASName());
+    toolBarNameLabel->setStyleSheet(QString("QLabel { font: bold 16px; color: %1; }").arg(mav->getColor().name()));
+    symbolButton->setStyleSheet(QString("QWidget { background-color: %1; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 4px 0px 20px; background-color: none; }").arg(mav->getColor().name()));
+//    toolBarModeLabel->setStyleSheet("QLabel { font: 16px; color: #3C7B9E; }");
+//    toolBarStateLabel->setStyleSheet("QLabel { font: 16px; color: #FEC654; }");
+    toolBarModeLabel->setText(mav->getShortMode());
+    toolBarStateLabel->setText(mav->getShortState());
     setSystemType(mav, mav->getSystemType());
 }
 
 void QGCToolBar::createCustomWidgets()
 {
-    // Add internal actions
-    // Add MAV widget
-    symbolButton = new QToolButton(this);
-    nameLabel = new QLabel("------", this);
-    modeLabel = new QLabel("------", this);
-    stateLabel = new QLabel("------", this);
-    wpLabel = new QLabel("---", this);
-    distlabel = new QLabel("--- ---- m", this);
-    messageLabel = new QLabel("No system messages.", this);
-    //symbolButton->setIcon(":");
-    symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px; background-color: none; }");
-    addWidget(symbolButton);
-    addWidget(nameLabel);
-    addWidget(modeLabel);
-    addWidget(stateLabel);
-    addWidget(wpLabel);
-    addWidget(distlabel);
-    addWidget(messageLabel);
 
-    toggleLoggingAction = new QAction(QIcon(":"), "Start Logging", this);
-    logReplayAction = new QAction(QIcon(":"), "Start Replay", this);
+}
 
-    //addAction(toggleLoggingAction);
-    //addAction(logReplayAction);
-
-    addSeparator();
+void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, double percent, int seconds)
+{
+    toolBarBatteryBar->setValue(percent);
 }
 
 void QGCToolBar::updateState(UASInterface* system, QString name, QString description)
 {
     Q_UNUSED(system);
     Q_UNUSED(description);
-    stateLabel->setText(tr(" State: %1").arg(name));
+    toolBarStateLabel->setText(tr("%1").arg(name));
 }
 
 void QGCToolBar::updateMode(int system, QString name, QString description)
 {
     Q_UNUSED(system);
     Q_UNUSED(description);
-    modeLabel->setText(tr(" Mode: %1").arg(name));
+    toolBarModeLabel->setText(tr("%1").arg(name));
 }
 
 void QGCToolBar::updateName(const QString& name)
 {
-    nameLabel->setText(name);
+    toolBarNameLabel->setText(name);
 }
 
 /**
@@ -163,7 +229,7 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
     Q_UNUSED(uasid);
     Q_UNUSED(componentid);
     Q_UNUSED(severity);
-    messageLabel->setText(text);
+    toolBarMessageLabel->setText(text);
 }
 
 QGCToolBar::~QGCToolBar()
