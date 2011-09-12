@@ -19,6 +19,8 @@
 
 
 # Qt configuration
+CONFIG += qt \
+	thread
 QT += network \
     opengl \
     svg \
@@ -29,15 +31,23 @@ QT += network \
 
 TEMPLATE = app
 TARGET = qgroundcontrol
-BASEDIR = $$IN_PWD
-TARGETDIR = $$OUT_PWD
-BUILDDIR = $$TARGETDIR/build
+BASEDIR = $${IN_PWD}
+TARGETDIR = $${OUT_PWD}
+BUILDDIR = $${TARGETDIR}/build
 LANGUAGE = C++
-OBJECTS_DIR = $$BUILDDIR/obj
-MOC_DIR = $$BUILDDIR/moc
-UI_HEADERS_DIR = $$BUILDDIR/ui
-RCC_DIR = $$BUILDDIR/rcc
+OBJECTS_DIR = $${BUILDDIR}/obj
+MOC_DIR = $${BUILDDIR}/moc
+UI_DIR = $${BUILDDIR}/ui
+RCC_DIR = $${BUILDDIR}/rcc
 MAVLINK_CONF = ""
+
+QMAKE_INCDIR_QT = $$(QTDIR)/include
+QMAKE_LIBDIR_QT = $$(QTDIR)/lib
+QMAKE_UIC = "$$(QTDIR)/bin/uic.exe"
+QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
+QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
+QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
+
 
 
 #################################################################
