@@ -812,10 +812,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(&message, &out);
                 quint64 time = getUnixTime(out.time_us);
                 emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
-                emit valueChanged(uasId, "att control roll", "rad", out.roll, time);
-                emit valueChanged(uasId, "att control pitch", "rad", out.pitch, time);
-                emit valueChanged(uasId, "att control yaw", "rad", out.yaw, time);
-                emit valueChanged(uasId, "att control thrust", "0-1", out.thrust, time);
+                emit valueChanged(uasId, "pos att sp roll", "rad", out.roll, time);
+                emit valueChanged(uasId, "pos att sp pitch", "rad", out.pitch, time);
+                emit valueChanged(uasId, "pos att sp yaw", "rad", out.yaw, time);
+                emit valueChanged(uasId, "pos sp thrust", "0-1", out.thrust, time);
             }
             break;
         case MAVLINK_MSG_ID_WAYPOINT_COUNT:
