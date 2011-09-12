@@ -31,7 +31,8 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     QToolBar(parent),
     toggleLoggingAction(NULL),
     logReplayAction(NULL),
-    mav(NULL)
+    mav(NULL),
+    player(NULL)
 {
     setObjectName("QGC_TOOLBAR");
 
@@ -51,11 +52,11 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     symbolButton = new QToolButton(this);
     toolBarNameLabel = new QLabel("------", this);
     toolBarModeLabel = new QLabel("------", this);
-    toolBarModeLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 14px; color: #3C7B9E; }");
+    toolBarModeLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #3C7B9E; }");
     toolBarStateLabel = new QLabel("------", this);
-    toolBarStateLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 14px; color: #FEC654; }");
+    toolBarStateLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #FEC654; }");
     toolBarWpLabel = new QLabel("WP--", this);
-    toolBarWpLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 18px; color: #3C7B9E; }");
+    toolBarWpLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 18px; color: #3C7B9E; }");
     toolBarDistLabel = new QLabel("--- ---- m", this);
     toolBarMessageLabel = new QLabel("No system messages.", this);
     toolBarMessageLabel->setStyleSheet("QLabel { margin: 0px 4px; font: 12px; font-style: italic; color: #3C7B9E; }");
@@ -63,9 +64,10 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     toolBarBatteryBar->setStyleSheet("QProgressBar:horizontal { margin: 0px 4px 0px 0px; border: 1px solid #4A4A4F; border-radius: 4px; text-align: center; padding: 2px; color: #111111; background-color: #111118; height: 10px; } QProgressBar:horizontal QLabel { font-size: 9px; color: #111111; } QProgressBar::chunk { background-color: green; }");
     toolBarBatteryBar->setMinimum(0);
     toolBarBatteryBar->setMaximum(100);
+    toolBarBatteryBar->setMinimumWidth(200);
     toolBarBatteryBar->setMaximumWidth(200);
     toolBarBatteryVoltageLabel = new QLabel("xx.x V");
-    toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 2px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
+    toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 0px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
     //symbolButton->setIcon(":");
     symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 0px 0px 20px; background-color: none; }");
     addWidget(symbolButton);
@@ -87,8 +89,33 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
 
 void QGCToolBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
 {
-    connect(toggleLoggingAction, SIGNAL(triggered(bool)), player, SLOT(playPause(bool)));
+    this->player = player;
+    connect(toggleLoggingAction, SIGNAL(triggered(bool)), this, SLOT(playLogFile(bool)));
     connect(logReplayAction, SIGNAL(triggered(bool)), this, SLOT(logging(bool)));
+}
+
+void QGCToolBar::playLogFile(bool enabled)
+{
+    // Check if player exists
+    if (player)
+    {
+        // If a logfile is already replayed, stop the replay
+        // and select a new logfile
+        if (player->isPlayingLogFile())
+        {
+            player->playPause(false);
+            if (enabled)
+            {
+                if (!player->selectLogFile()) return;
+            }
+        }
+        // If no replaying happens already, start it
+        else
+        {
+            if (!player->selectLogFile()) return;
+        }
+        player->playPause(enabled);
+    }
 }
 
 void QGCToolBar::logging(bool enabled)
@@ -97,7 +124,7 @@ void QGCToolBar::logging(bool enabled)
     MainWindow::instance()->getMAVLink()->enableLogging(false);
     if (enabled)
     {
-        QString fileName = QFileDialog::getSaveFileName(this, tr("Specify MAVLink log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink Logfile (*.mavlink *.log *.bin);;"));
+        QString fileName = QFileDialog::getSaveFileName(this, tr("Specify MAVLink log file to save to"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink Logfile (*.mavlink *.log *.bin);;"));
 
         if (!fileName.endsWith(".mavlink"))
         {
@@ -167,8 +194,6 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     toolBarNameLabel->setText(mav->getUASName());
     toolBarNameLabel->setStyleSheet(QString("QLabel { font: bold 16px; color: %1; }").arg(mav->getColor().name()));
     symbolButton->setStyleSheet(QString("QWidget { background-color: %1; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 4px 0px 20px; background-color: none; }").arg(mav->getColor().name()));
-//    toolBarModeLabel->setStyleSheet("QLabel { font: 16px; color: #3C7B9E; }");
-//    toolBarStateLabel->setStyleSheet("QLabel { font: 16px; color: #FEC654; }");
     toolBarModeLabel->setText(mav->getShortMode());
     toolBarStateLabel->setText(mav->getShortState());
     setSystemType(mav, mav->getSystemType());

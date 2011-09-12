@@ -56,6 +56,8 @@ public slots:
     void receiveTextMessage(int uasid, int componentid, int severity, QString text);
     /** @brief Start / stop logging */
     void logging(bool enabled);
+    /** @brief Start playing logfile */
+    void playLogFile(bool enabled);
     /** @brief Set log playing component */
     void setLogPlayer(QGCMAVLinkLogPlayer* player);
     /** @brief Update battery charge state */
@@ -80,6 +82,7 @@ protected:
     QLabel* toolBarMessageLabel;
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
+    QGCMAVLinkLogPlayer* player;
 };
 
 #endif // QGCTOOLBAR_H

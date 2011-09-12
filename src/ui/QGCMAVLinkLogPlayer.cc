@@ -165,11 +165,18 @@ bool QGCMAVLinkLogPlayer::reset(int packetIndex)
     }
 }
 
-void QGCMAVLinkLogPlayer::selectLogFile()
+bool QGCMAVLinkLogPlayer::selectLogFile()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify MAVLink log file name"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink or Binary Logfile (*.mavlink *.bin *.log)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Specify MAVLink log file name to replay"), QDesktopServices::storageLocation(QDesktopServices::DesktopLocation), tr("MAVLink or Binary Logfile (*.mavlink *.bin *.log)"));
 
-    loadLogFile(fileName);
+    if (fileName == "")
+    {
+        return false;
+    }
+    else
+    {
+        return loadLogFile(fileName);
+    }
 }
 
 /**
@@ -207,7 +214,7 @@ void QGCMAVLinkLogPlayer::setAccelerationFactorInt(int factor)
     ui->speedLabel->setText(tr("Speed: %1X").arg(accelerationFactor, 5, 'f', 2, '0'));
 }
 
-void QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
+bool QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
 {
     // Check if logging is still enabled
     if (mavlink->loggingEnabled())
@@ -228,6 +235,7 @@ void QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
     {
         MainWindow::instance()->showCriticalMessage(tr("The selected logfile is unreadable"), tr("Please make sure that the file %1 is readable or select a different file").arg(file));
         logFile.setFileName("");
+        return false;
     }
     else
     {
@@ -294,6 +302,7 @@ void QGCMAVLinkLogPlayer::loadLogFile(const QString& file)
             QString timelabel = tr("%1h:%2m:%3s").arg(hours, 2).arg(minutes, 2).arg(seconds, 2);
             ui->logStatsLabel->setText(tr("%2 MB, %4 at %5 KB/s").arg(logFileInfo.size()/1000000.0f, 0, 'f', 2).arg(timelabel).arg(binaryBaudRate/10.0f/1024.0f, 0, 'f', 2));
         }
+        return true;
     }
 }
 
