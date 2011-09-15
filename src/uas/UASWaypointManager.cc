@@ -92,7 +92,7 @@ void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x,
 {
     Q_UNUSED(mav);
     Q_UNUSED(time);
-    if (waypoints.count() > 0 && currentWaypoint && (currentWaypoint->getFrame() == MAV_FRAME_LOCAL || currentWaypoint->getFrame() == MAV_FRAME_LOCAL_ENU))
+    if (waypoints.count() > 0 && currentWaypoint && (currentWaypoint->getFrame() == MAV_FRAME_LOCAL_NED || currentWaypoint->getFrame() == MAV_FRAME_LOCAL_ENU))
     {
         double xdiff = x-currentWaypoint->getX();
         double ydiff = y-currentWaypoint->getY();

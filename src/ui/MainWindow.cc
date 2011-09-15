@@ -1190,7 +1190,7 @@ void MainWindow::UASCreated(UASInterface* uas)
         {
             // Center widgets
             linechartWidget = new Linecharts(this);
-            //linechartWidget FIXME
+            linechartWidget->addSource(mavlinkDecoder);
             addCentralWidget(linechartWidget, tr("Realtime Plot"));
         }
 
