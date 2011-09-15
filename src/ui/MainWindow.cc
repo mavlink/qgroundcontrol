@@ -131,7 +131,7 @@ MainWindow::MainWindow(QWidget *parent):
     toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
     toolBar->addPerspectiveChangeAction(ui.actionEngineersView);
     toolBar->addPerspectiveChangeAction(ui.actionPilotsView);
-    toolBar->addPerspectiveChangeAction(ui.actionUnconnectedView);
+//    toolBar->addPerspectiveChangeAction(ui.actionUnconnectedView);
 
     buildCommonWidgets();
     connectCommonWidgets();
@@ -238,7 +238,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::resizeEvent(QResizeEvent * event)
 {
-    Q_UNUSED(event);
     if (height() < 800)
     {
         ui.statusBar->setVisible(false);
@@ -248,6 +247,17 @@ void MainWindow::resizeEvent(QResizeEvent * event)
         ui.statusBar->setVisible(true);
         ui.statusBar->setSizeGripEnabled(true);
     }
+
+    if (width() > 1200)
+    {
+        toolBar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    }
+    else
+    {
+        toolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    }
+
+    QMainWindow::resizeEvent(event);
 }
 
 QString MainWindow::getWindowStateKey()
