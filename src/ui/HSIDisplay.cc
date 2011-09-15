@@ -42,7 +42,7 @@ This file is part of the QGROUNDCONTROL project
 #include "UASWaypointManager.h"
 #include <qmath.h>
 //#include "Waypoint2DIcon.h"
-//#include "MAV2DIcon.h"
+#include "MAV2DIcon.h"
 
 #include <QDebug>
 
@@ -115,24 +115,6 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
 
     xCenterPos = vwidth/2.0f;
     yCenterPos = vheight/2.0f + topMargin - bottomMargin;
-    //qDebug() << "CENTER" << xCenterPos << yCenterPos;
-
-    // Add interaction elements
-    QHBoxLayout* layout = new QHBoxLayout(this);
-    layout->setMargin(0);
-    layout->setSpacing(12);
-    QDoubleSpinBox* spinBox = new QDoubleSpinBox(this);
-    spinBox->setMinimum(0.1);
-    spinBox->setMaximum(9999);
-    spinBox->setMaximumWidth(50);
-    spinBox->setValue(metricWidth);
-    spinBox->setToolTip(tr("Ground width in meters shown on instrument"));
-    spinBox->setStatusTip(tr("Ground width in meters shown on instrument"));
-    connect(spinBox, SIGNAL(valueChanged(double)), this, SLOT(setMetricWidth(double)));
-    connect(this, SIGNAL(metricWidthChanged(double)), spinBox, SLOT(setValue(double)));
-    layout->addWidget(spinBox);
-    layout->setAlignment(spinBox, Qt::AlignBottom | Qt::AlignRight);
-    this->setLayout(layout);
 
     uas = NULL;
     resetMAVState();
@@ -246,6 +228,7 @@ void HSIDisplay::renderOverlay()
         // Translate to center
         painter.translate((xCenterPos)*scalingFactor, (yCenterPos)*scalingFactor);
         QColor uasColor = uas->getColor();
+        MAV2DIcon::drawAirframePolygon(uas->getAirframe(), painter, static_cast<int>((vwidth/4.0f)*scalingFactor*1.1f), uasColor, 0.0f);
         //MAV2DIcon::drawAirframePolygon(uas->getAirframe(), painter, static_cast<int>((vwidth/4.0f)*scalingFactor*1.1f), uasColor, 0.0f);
         // Translate back
         painter.translate(-(xCenterPos)*scalingFactor, -(yCenterPos)*scalingFactor);
@@ -309,8 +292,8 @@ void HSIDisplay::renderOverlay()
 
     // Draw crosstrack error to top right
     float crossTrackError = 0;
-    paintText(tr("XTRACK"), QGC::colorCyan, 2.2f, 57, 11, &painter);
-    paintText(tr("%1 m").arg(crossTrackError, 5, 'f', 2, '0'), Qt::white, 2.2f, 70, 11, &painter);
+    paintText(tr("XTRACK"), QGC::colorCyan, 2.2f, 54, 11, &painter);
+    paintText(tr("%1 m").arg(crossTrackError, 5, 'f', 2, '0'), Qt::white, 2.2f, 67, 11, &painter);
 
     // Draw position to bottom left
     if (localAvailable > 0 && globalAvailable == 0) {
@@ -330,7 +313,7 @@ void HSIDisplay::renderOverlay()
     }
 
     // Draw Field of view to bottom right
-    paintText(tr("FOV"), QGC::colorCyan, 2.6f, 62, vheight- 5.0f, &painter);
+    paintText(tr("FOV %1 m").arg(metricWidth, 5, 'f', 1, ' '), QGC::colorCyan, 2.6f, 55, vheight- 5.0f, &painter);
 }
 
 void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bool known, QPainter& painter)
