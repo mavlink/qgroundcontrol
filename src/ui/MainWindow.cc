@@ -49,6 +49,7 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCMAVLinkLogPlayer.h"
 #include "QGCSettingsWidget.h"
 #include "QGCMapTool.h"
+#include "MAVLinkDecoder.h"
 
 #ifdef QGC_OSG_ENABLED
 #include "Q3DWidgetFactory.h"
@@ -164,9 +165,6 @@ MainWindow::MainWindow(QWidget *parent):
     }
 
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
-
-    // Add generic MAVLink decoder
-    mavlinkDecoder = new MAVLinkDecoder(mavlink, this);
 
     // Connect user interface devices
     joystickWidget = 0;
@@ -299,6 +297,8 @@ void MainWindow::buildCommonWidgets()
     //TODO:  move protocol outside UI
     mavlink     = new MAVLinkProtocol();
     connect(mavlink, SIGNAL(protocolStatusMessage(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
+    // Add generic MAVLink decoder
+    mavlinkDecoder = new MAVLinkDecoder(mavlink, this);
 
     // Dock widgets
     if (!controlDockWidget)
@@ -338,6 +338,10 @@ void MainWindow::buildCommonWidgets()
         debugConsoleDockWidget = new QDockWidget(tr("Communication Console"), this);
         debugConsoleDockWidget->setWidget( new DebugConsole(this) );
         debugConsoleDockWidget->setObjectName("COMMUNICATION_DEBUG_CONSOLE_DOCKWIDGET");
+
+        DebugConsole *debugConsole = dynamic_cast<DebugConsole*>(debugConsoleDockWidget->widget());
+        connect(mavlinkDecoder, SIGNAL(textMessageReceived(int, int, int, const QString)), debugConsole, SLOT(receiveTextMessage(int, int, int, const QString)));
+
         addTool(debugConsoleDockWidget, tr("Communication Console"), Qt::BottomDockWidgetArea);
     }
 
@@ -1103,7 +1107,8 @@ void MainWindow::UASCreated(UASInterface* uas)
         if (!linechartWidget)
         {
             // Center widgets
-            linechartWidget   = new Linecharts(this);
+            linechartWidget = new Linecharts(this);
+            //linechartWidget FIXME
             addCentralWidget(linechartWidget, tr("Realtime Plot"));
         }
 
