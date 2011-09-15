@@ -73,6 +73,10 @@ public:
 public slots:
     void addCurve(const QString& curve, const QString& unit);
     void removeCurve(QString curve);
+    /** @brief Recolor all curves */
+    void recolor();
+    /** @brief Set short names for curves */
+    void setShortNames(bool enable);
     /** @brief Append data without unit */
     void appendData(int uasId, QString curve, double data, quint64 usec);
     /** @brief Append data with unit */
@@ -119,6 +123,8 @@ protected:
     int curveListCounter;                 ///< Counter of curves in curve list
     QList<QString>* listedCurves;         ///< Curves listed
     QMap<QString, QLabel*>* curveLabels;  ///< References to the curve labels
+    QMap<QString, QLabel*> curveNameLabels;  ///< References to the curve labels
+    QMap<QString, QString> curveNames;    ///< Full curve names
     QMap<QString, QLabel*>* curveMeans;   ///< References to the curve means
     QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
     QMap<QString, QLabel*>* curveVariances; ///< References to the curve variances

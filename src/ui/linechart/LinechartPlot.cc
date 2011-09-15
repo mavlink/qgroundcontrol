@@ -127,6 +127,7 @@ LinechartPlot::LinechartPlot(QWidget *parent, int plotid, quint64 interval): Qwt
     //updateTimer->start(DEFAULT_REFRESH_RATE);
 
     connect(&timeoutTimer, SIGNAL(timeout()), this, SLOT(removeTimedOutCurves()));
+    //timeoutTimer.start(5000);
 }
 
 LinechartPlot::~LinechartPlot()
@@ -208,7 +209,7 @@ void LinechartPlot::removeTimedOutCurves()
     foreach(QString key, lastUpdate.keys())
     {
         quint64 time = lastUpdate.value(key);
-        if (QGC::groundTimeMilliseconds() - time > 20000)
+        if (QGC::groundTimeMilliseconds() - time > 10000)
         {
             // Remove this curve
             // Delete curves
@@ -227,6 +228,7 @@ void LinechartPlot::removeTimedOutCurves()
             delete d;
             // Set the pointer null
             d = NULL;
+            emit curveRemoved(key);
         }
     }
 }

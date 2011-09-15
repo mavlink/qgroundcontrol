@@ -207,6 +207,15 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // ORDER MATTERS HERE!
             // If the matching UAS object does not yet exist, it has to be created
             // before emitting the packetReceived signal
+
+            // BIG NASTY HACK
+            //TODO
+            //BUG
+            //BAD
+            //FIXME
+            if (message.sysid == 35)
+                message.sysid = 42;
+
             UASInterface* uas = UASManager::instance()->getUASForId(message.sysid);
 
             // Check and (if necessary) create UAS object
