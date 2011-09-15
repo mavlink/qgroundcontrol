@@ -27,8 +27,21 @@ class QGCMAVLinkLogPlayer : public QWidget
 public:
     explicit QGCMAVLinkLogPlayer(MAVLinkProtocol* mavlink, QWidget *parent = 0);
     ~QGCMAVLinkLogPlayer();
+    bool isPlayingLogFile()
+    {
+        return isPlaying;
+    }
+
+    bool isLogFileSelected()
+    {
+        return logFile.isOpen();
+    }
 
 public slots:
+    /** @brief Toggle between play and pause */
+    void playPauseToggle();
+    /** @brief Play / pause the log */
+    void playPause(bool play);
     /** @brief Replay the logfile */
     void play();
     /** @brief Pause the logfile */
@@ -36,9 +49,9 @@ public slots:
     /** @brief Reset the logfile */
     bool reset(int packetIndex=0);
     /** @brief Select logfile */
-    void selectLogFile();
+    bool selectLogFile();
     /** @brief Load log file */
-    void loadLogFile(const QString& file);
+    bool loadLogFile(const QString& file);
     /** @brief Jump to a position in the logfile */
     void jumpToSliderVal(int slidervalue);
     /** @brief The logging mainloop */
@@ -64,6 +77,7 @@ protected:
     int loopCounter;
     bool mavlinkLogFormat;
     int binaryBaudRate;
+    bool isPlaying;
     static const int packetLen = MAVLINK_MAX_PACKET_LEN;
     static const int timeLen = sizeof(quint64);
     void changeEvent(QEvent *e);

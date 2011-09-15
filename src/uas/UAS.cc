@@ -44,7 +44,7 @@ warnVoltage(9.5f),
 warnLevelPercent(20.0f),
 currentVoltage(12.0f),
 lpVoltage(12.0f),
-batteryRemainingEstimateEnabled(false),
+batteryRemainingEstimateEnabled(true),
 mode(-1),
 status(-1),
 navMode(-1),
@@ -603,19 +603,12 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit textMessageReceived(uasId, message.compid, 0, tr("FAILURE: Rejected CMD: %1").arg(ack.command));
             }
             break;
-        case MAVLINK_MSG_ID_DEBUG:
-            // FIXME REMOVE LATER emit valueChanged(uasId, QString("debug ") + QString::number(mavlink_msg_debug_get_ind(&message)), "raw", mavlink_msg_debug_get_value(&message), MG::TIME::getGroundTimeNow());
-            break;
         case MAVLINK_MSG_ID_ROLL_PITCH_YAW_THRUST_SETPOINT:
             {
                 mavlink_roll_pitch_yaw_thrust_setpoint_t out;
                 mavlink_msg_roll_pitch_yaw_thrust_setpoint_decode(&message, &out);
                 quint64 time = getUnixTimeFromMs(out.time_boot_ms);
                 emit attitudeThrustSetPointChanged(this, out.roll, out.pitch, out.yaw, out.thrust, time);
-                // FIXME REMOVE LATER emit valueChanged(uasId, "att control roll", "rad", out.roll, time);
-                // FIXME REMOVE LATER emit valueChanged(uasId, "att control pitch", "rad", out.pitch, time);
-                // FIXME REMOVE LATER emit valueChanged(uasId, "att control yaw", "rad", out.yaw, time);
-                // FIXME REMOVE LATER emit valueChanged(uasId, "att control thrust", "0-1", out.thrust, time);
             }
             break;
         case MAVLINK_MSG_ID_MISSION_COUNT:
@@ -877,6 +870,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
         case MAVLINK_MSG_ID_OPTICAL_FLOW:
         case MAVLINK_MSG_ID_DEBUG_VECT:
+        case MAVLINK_MSG_ID_DEBUG:
             break;
         default:
             {
@@ -1912,7 +1906,6 @@ void UAS::receiveButton(int buttonIndex)
     //    qDebug() << __FILE__ << __LINE__ << ": Received button clicked signal (button # is: " << buttonIndex << "), UNIMPLEMENTED IN MAVLINK!";
 
 }
-
 
 
 void UAS::halt()

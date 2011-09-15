@@ -75,32 +75,6 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="5">
-    <widget class="QToolButton" name="pauseButton">
-     <property name="toolTip">
-      <string>Pause the logfile</string>
-     </property>
-     <property name="statusTip">
-      <string>Pause the logfile</string>
-     </property>
-     <property name="whatsThis">
-      <string>Pause the logfile</string>
-     </property>
-     <property name="text">
-      <string>...</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/actions/media-playback-pause.svg</normaloff>:/images/actions/media-playback-pause.svg</iconset>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0">
     <widget class="QLabel" name="speedLabel">
      <property name="toolTip">
@@ -114,29 +88,6 @@
      </property>
      <property name="text">
       <string>Speed</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="4">
-    <widget class="QToolButton" name="playButton">
-     <property name="toolTip">
-      <string>Start to replay the logfile</string>
-     </property>
-     <property name="statusTip">
-      <string>Start to replay the logfile</string>
-     </property>
-     <property name="whatsThis">
-      <string>Start to replay the logfile</string>
-     </property>
-     <property name="text">
-      <string>...</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../mavground.qrc">
-       <normaloff>:/images/actions/media-playback-start.svg</normaloff>:/images/actions/media-playback-start.svg</iconset>
-     </property>
-     <property name="checkable">
-      <bool>true</bool>
      </property>
     </widget>
    </item>
@@ -156,10 +107,33 @@
      </property>
     </widget>
    </item>
+   <item row="3" column="5">
+    <widget class="QToolButton" name="playButton">
+     <property name="toolTip">
+      <string>Start to replay the logfile</string>
+     </property>
+     <property name="statusTip">
+      <string>Start to replay the logfile</string>
+     </property>
+     <property name="whatsThis">
+      <string>Start to replay the logfile</string>
+     </property>
+     <property name="text">
+      <string>...</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../qgroundcontrol.qrc">
+       <normaloff>:/images/actions/media-playback-start.svg</normaloff>:/images/actions/media-playback-start.svg</iconset>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources>
-  <include location="../../mavground.qrc"/>
+  <include location="../../qgroundcontrol.qrc"/>
  </resources>
  <connections/>
 </ui>
