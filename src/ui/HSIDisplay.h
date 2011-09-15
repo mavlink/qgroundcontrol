@@ -101,6 +101,7 @@ protected slots:
     /** @brief Draw a position lock indicator */
     void drawPositionLock(float x, float y, QString label, int status, bool known, QPainter& painter);
     void setBodySetpointCoordinateXY(double x, double y);
+    void setBodySetpointCoordinateYaw(double yaw);
     void setBodySetpointCoordinateZ(double z);
     /** @brief Send the current ui setpoint coordinates as new setpoint to the MAV */
     void sendBodySetPointCoordinates();
@@ -112,8 +113,13 @@ protected slots:
     void drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRight,  const QColor &color, QPainter &painter);
     /** @brief Receive mouse clicks */
     void mouseDoubleClickEvent(QMouseEvent* event);
+    void mousePressEvent(QMouseEvent * event);
+    void mouseReleaseEvent(QMouseEvent * event);
+    void mouseMoveEvent(QMouseEvent * event);
     /** @brief Receive mouse wheel events */
     void wheelEvent(QWheelEvent* event);
+    /** @brief Ignore context menu event */
+    void contextMenuEvent (QContextMenuEvent* event);
 
 protected:
 
@@ -131,6 +137,10 @@ protected:
     QPointF refToMetricBody(QPointF &ref);
     /** @brief Metric coordinates to reference coordinates */
     QPointF metricBodyToRef(QPointF &metric);
+    /** @brief Metric length to reference coordinates */
+    double metricToRef(double metric);
+    /** @bried Reference coordinates to metric length */
+    double refToMetric(double ref);
     /** @brief Metric body coordinates to screen coordinates */
     QPointF metricBodyToScreen(QPointF metric);
     QMap<int, QString> objectNames;
@@ -138,6 +148,8 @@ protected:
     QMap<int, float> objectQualities;
     QMap<int, float> objectBearings;
     QMap<int, float> objectDistances;
+    bool dragStarted;
+    float startX;
 
     /**
      * @brief Private data container class to be used within the HSI widget

@@ -53,6 +53,7 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
     ui->editCommandComboBox->addItem("CUSTOM 13", 13);
     ui->editCommandComboBox->addItem("CUSTOM 14", 14);
     ui->editCommandComboBox->addItem("CUSTOM 15", 15);
+    ui->editCommandComboBox->addItem("NAV_WAYPOINT", 16);
     ui->editCommandComboBox->setEditable(true);
 }
 
@@ -75,6 +76,7 @@ void QGCCommandButton::sendCommand()
         int component = ui->editComponentSpinBox->value();
 
         QGCToolWidgetItem::uas->executeCommand(command, confirm, param1, param2, param3, param4, component);
+        qDebug() << __FILE__ << __LINE__ << "SENDING COMMAND" << index;
     } else {
         qDebug() << __FILE__ << __LINE__ << "NO UAS SET, DOING NOTHING";
     }

@@ -269,6 +269,17 @@ public slots:
     void setAverageWindow(int windowSize);
     void removeTimedOutCurves();
 
+    /** @brief Reset color map */
+    void shuffleColors()
+    {
+        foreach (QwtPlotCurve* curve, curves)
+        {
+            QPen pen(curve->pen());
+            pen.setColor(getNextColor());
+            curve->setPen(pen);
+        }
+    }
+
     public:
     QColor getColorForCurve(QString id);
 
