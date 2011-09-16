@@ -106,7 +106,7 @@ protected slots:
     /** @brief Send the current ui setpoint coordinates as new setpoint to the MAV */
     void sendBodySetPointCoordinates();
     /** @brief Draw one setpoint */
-    void drawSetpointXY(float x, float y, float yaw, const QColor &color, QPainter &painter);
+    void drawSetpointXYZYaw(float x, float y, float z, float yaw, const QColor &color, QPainter &painter);
     /** @brief Draw waypoints of this system */
     void drawWaypoints(QPainter& painter);
     /** @brief Draw the limiting safety area */
