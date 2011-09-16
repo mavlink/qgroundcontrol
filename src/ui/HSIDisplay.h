@@ -89,6 +89,7 @@ public slots:
     void clearStatusMessage()
     {
         statusMessage = "";
+        actionPending = false;
     }
 
 signals:
@@ -123,6 +124,8 @@ protected slots:
     void mouseMoveEvent(QMouseEvent * event);
     /** @brief Receive mouse wheel events */
     void wheelEvent(QWheelEvent* event);
+    /** @brief Read out send keys */
+    void keyPressEvent(QKeyEvent* event);
     /** @brief Ignore context menu event */
     void contextMenuEvent (QContextMenuEvent* event);
     /** @brief Set status message on screen */
@@ -166,6 +169,7 @@ protected:
     float startY;
     QTimer statusClearTimer;
     QString statusMessage;
+    bool actionPending;
 
     /**
      * @brief Private data container class to be used within the HSI widget
