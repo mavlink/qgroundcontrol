@@ -207,6 +207,8 @@ UASManager::~UASManager()
     foreach (UASInterface* mav, systems) {
         delete mav;
     }
+	this->quit();
+	this->wait();
 }
 
 
