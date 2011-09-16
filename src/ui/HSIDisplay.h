@@ -160,7 +160,10 @@ protected:
     QMap<int, float> objectBearings;
     QMap<int, float> objectDistances;
     bool dragStarted;
+    bool leftDragStarted;
+    bool mouseHasMoved;
     float startX;
+    float startY;
     QTimer statusClearTimer;
     QString statusMessage;
 
