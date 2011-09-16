@@ -2095,7 +2095,7 @@ void UAS::halt()
 {
     mavlink_message_t msg;
     // TODO Replace MG System ID with static function call and allow to change ID in GUI
-    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_HALT);
+    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_HOLD);
     // Send message twice to increase chance of reception
     sendMessage(msg);
     sendMessage(msg);

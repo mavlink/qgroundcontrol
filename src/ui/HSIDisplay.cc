@@ -103,7 +103,8 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     userSetPointSet(false),
     dragStarted(false),
     leftDragStarted(false),
-    mouseHasMoved(false)
+    mouseHasMoved(false),
+    actionPending(false)
 {
     refreshTimer->setInterval(updateInterval);
 
@@ -568,10 +569,10 @@ void HSIDisplay::mouseReleaseEvent(QMouseEvent * event)
         {
             if (leftDragStarted)
             {
-                qDebug() << "Z CHANGED" << uiZSetCoordinate;
-                setStatusMessage(QString("SENT NEW Z: %1").arg(uiZSetCoordinate));
-                setBodySetpointCoordinateZ(uiZSetCoordinate);
-                leftDragStarted = false;
+//                qDebug() << "Z CHANGED" << uiZSetCoordinate;
+//                setStatusMessage(QString("SENT NEW Z: %1").arg(uiZSetCoordinate));
+//                setBodySetpointCoordinateZ(uiZSetCoordinate);
+//                leftDragStarted = false;
             }
         }
     }
@@ -606,11 +607,26 @@ void HSIDisplay::mouseMoveEvent(QMouseEvent * event)
 
         if (leftDragStarted)
         {
-            uiZSetCoordinate -= 0.06f*(startY - event->y()) / this->frameSize().height();
-            setStatusMessage(QString("NEW Z: %1").arg(uiZSetCoordinate));
+//            uiZSetCoordinate -= 0.06f*(startY - event->y()) / this->frameSize().height();
+//            setStatusMessage(QString("NEW Z: %1").arg(uiZSetCoordinate));
         }
 
         if (leftDragStarted || dragStarted) mouseHasMoved = true;
+    }
+}
+
+void HSIDisplay::keyPressEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_S)
+    {
+        actionPending = false;
+        statusMessage = "SETPOINT SENT";
+        statusClearTimer.start();
+        sendBodySetPointCoordinates();
+    }
+    else
+    {
+        HDDisplay::keyPressEvent(event);
     }
 }
 
@@ -703,7 +719,10 @@ void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
 
     if (uas && mavInitialized)
     {
-        sendBodySetPointCoordinates();
+        //sendBodySetPointCoordinates();
+        statusMessage = "POSITION SET, PRESS <ENTER> TO SEND";
+        actionPending = true;
+        statusClearTimer.start();
         qDebug() << "Setting new setpoint at x: " << x << "metric y:" << y;
     }
 }
@@ -713,7 +732,10 @@ void HSIDisplay::setBodySetpointCoordinateZ(double z)
     userSetPointSet = true;
     // Set coordinates and send them out to MAV
     uiZSetCoordinate = z;
-    sendBodySetPointCoordinates();
+    statusMessage = "Z SET, PRESS <ENTER> TO SEND";
+    actionPending = true;
+    statusClearTimer.start();
+    //sendBodySetPointCoordinates();
 }
 
 void HSIDisplay::setBodySetpointCoordinateYaw(double yaw)
@@ -733,7 +755,10 @@ void HSIDisplay::setBodySetpointCoordinateYaw(double yaw)
     // Set coordinates and send them out to MAV
     uiYawSet = atan2(sin(yaw), cos(yaw));
     qDebug() << "YAW IN" << yaw << "YAW OUT" << uiYawSet;
-    sendBodySetPointCoordinates();
+    statusMessage = "YAW SET, PRESS <ENTER> TO SEND";
+    statusClearTimer.start();
+    actionPending = true;
+    //sendBodySetPointCoordinates();
 }
 
 void HSIDisplay::sendBodySetPointCoordinates()
@@ -791,7 +816,7 @@ void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesir
     {
         uiXSetCoordinate = bodyXSetCoordinate;
         uiYSetCoordinate = bodyYSetCoordinate;
-        uiZSetCoordinate = bodyZSetCoordinate;
+//        uiZSetCoordinate = bodyZSetCoordinate;
         uiYawSet= bodyYawSet;
     }
 }
