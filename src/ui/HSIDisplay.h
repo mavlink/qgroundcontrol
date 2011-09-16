@@ -85,6 +85,11 @@ public slots:
     void pressKey(int key);
     /** @brief Reset the state of the view */
     void resetMAVState();
+    /** @brief Clear the status message */
+    void clearStatusMessage()
+    {
+        statusMessage = "";
+    }
 
 signals:
     void metricWidthChanged(double width);
@@ -120,6 +125,12 @@ protected slots:
     void wheelEvent(QWheelEvent* event);
     /** @brief Ignore context menu event */
     void contextMenuEvent (QContextMenuEvent* event);
+    /** @brief Set status message on screen */
+    void setStatusMessage(const QString& message)
+    {
+        statusMessage = message;
+        statusClearTimer.start();
+    }
 
 protected:
 
@@ -150,6 +161,8 @@ protected:
     QMap<int, float> objectDistances;
     bool dragStarted;
     float startX;
+    QTimer statusClearTimer;
+    QString statusMessage;
 
     /**
      * @brief Private data container class to be used within the HSI widget
@@ -266,7 +279,8 @@ protected:
     // Data indicators
     bool setPointKnown;       ///< Controller setpoint known status flag
     bool positionSetPointKnown; ///< Position setpoint known status flag
-    bool userSetPointSet;
+    bool userSetPointSet;     ///< User set X, Y and Z
+    bool userXYSetPointSet;   ///< User set the X/Y position already
 
 private:
 };

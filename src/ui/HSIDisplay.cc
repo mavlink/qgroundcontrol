@@ -125,6 +125,9 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     // Set tooltip
     setToolTip(tr("View from top in body frame. Scroll with mouse wheel to change the horizontal field of view of the widget."));
     setStatusTip(tr("View from top in body frame. Scroll with mouse wheel to change the horizontal field of view of the widget."));
+
+    connect(&statusClearTimer, SIGNAL(timeout()), this, SLOT(clearStatusMessage()));
+    statusClearTimer.start(5000);
 }
 
 void HSIDisplay::resetMAVState()
@@ -272,7 +275,7 @@ void HSIDisplay::renderOverlay()
 
     float setPointDist = sqrt(xSpDiff*xSpDiff + ySpDiff*ySpDiff + zSpDiff*zSpDiff);
 
-    if (userSetPointSet && setPointDist > 0.1f || dragStarted)
+    if (userSetPointSet && setPointDist > 0.05f || dragStarted)
     {
         QColor spColor(150, 150, 150);
         drawSetpointXYZYaw(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet, spColor, painter);
@@ -335,8 +338,13 @@ void HSIDisplay::renderOverlay()
         paintText(str, Qt::white, 2.6f, 10, vheight - 4.0f, &painter);
     }
 
-    // Draw Field of view to bottom right
-    //paintText(tr("FOV %1 m").arg(metricWidth, 5, 'f', 1, ' '), QGC::colorCyan, 2.6f, 55, vheight- 5.0f, &painter);
+    // Draw Safety
+    double x1, y1, z1, x2, y2, z2;
+    UASManager::instance()->getLocalNEDSafetyLimits(&x1, &y1, &z1, &x2, &y2, &z2);
+//    drawSafetyArea(QPointF(x1, y1), QPointF(x2, y2), QGC::colorYellow, painter);
+
+    // Draw status message
+    paintText(statusMessage, QGC::colorOrange, 2.4f, 8, 15, &painter);
 }
 
 void HSIDisplay::drawStatusFlag(float x, float y, QString label, bool status, bool known, QPainter& painter)
@@ -653,6 +661,7 @@ void HSIDisplay::updateSpeed(UASInterface* uas, double vx, double vy, double vz,
 void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
 {
     userSetPointSet = true;
+    userXYSetPointSet = true;
     // Set coordinates and send them out to MAV
 
     QPointF sp(x, y);
@@ -680,6 +689,19 @@ void HSIDisplay::setBodySetpointCoordinateZ(double z)
 
 void HSIDisplay::setBodySetpointCoordinateYaw(double yaw)
 {
+    if (!userXYSetPointSet && setPointKnown)
+    {
+        uiXSetCoordinate = bodyXSetCoordinate;
+        uiYSetCoordinate = bodyYSetCoordinate;
+        uiZSetCoordinate = -0.65f;
+    }
+    else if (!userXYSetPointSet && mavInitialized)
+    {
+        QPointF coord = metricBodyToWorld(QPointF(0.0, 0.0));
+        uiXSetCoordinate = coord.x();
+        uiYSetCoordinate = coord.y();
+        uiZSetCoordinate = -0.65f;
+    }
     userSetPointSet = true;
     // Set coordinates and send them out to MAV
     uiYawSet = atan2(sin(yaw), cos(yaw));
@@ -690,7 +712,21 @@ void HSIDisplay::setBodySetpointCoordinateYaw(double yaw)
 void HSIDisplay::sendBodySetPointCoordinates()
 {
     // Send the coordinates to the MAV
-    if (uas && mavInitialized) uas->setLocalPositionSetpoint(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet);
+    if (uas && mavInitialized)
+    {
+        double dx = uiXSetCoordinate - uas->getLocalX();
+        double dy = uiYSetCoordinate - uas->getLocalY();
+        double dz = uiZSetCoordinate - uas->getLocalZ();
+        bool valid = (sqrt(dx*dx + dy*dy + dz*dz) < 1.0);//UASManager::instance()->isInLocalNEDSafetyLimits(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate);
+        if (valid)
+        {
+            uas->setLocalPositionSetpoint(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet);
+        }
+        else
+        {
+            setStatusMessage("REJECTED NEW SETPOINT: OUT OF BOUNDS");
+        }
+    }
 }
 
 void HSIDisplay::updateAttitudeSetpoints(UASInterface* uas, double rollDesired, double pitchDesired, double yawDesired, double thrustDesired, quint64 usec)
@@ -723,6 +759,14 @@ void HSIDisplay::updatePositionSetpoints(int uasid, float xDesired, float yDesir
     mavInitialized = true;
     setPointKnown = true;
     positionSetPointKnown = true;
+
+    if (!userSetPointSet && !dragStarted)
+    {
+        uiXSetCoordinate = bodyXSetCoordinate;
+        uiYSetCoordinate = bodyYSetCoordinate;
+        uiZSetCoordinate = bodyZSetCoordinate;
+        uiYawSet= bodyYawSet;
+    }
 }
 
 void HSIDisplay::updateLocalPosition(UASInterface*, double x, double y, double z, quint64 usec)
@@ -932,6 +976,7 @@ void HSIDisplay::drawSafetyArea(const QPointF &topLeft, const QPointF &bottomRig
     QPen pen(color);
     pen.setWidthF(refLineWidthToPen(0.1f));
     pen.setColor(color);
+    pen.setBrush(Qt::NoBrush);
     painter.setPen(pen);
     painter.drawRect(QRectF(metricBodyToScreen(metricWorldToBody(topLeft)), metricBodyToScreen(metricWorldToBody(bottomRight))));
 }
@@ -1100,7 +1145,7 @@ void HSIDisplay::wheelEvent(QWheelEvent* event)
         // Increase width -> Zoom out
         metricWidth -= event->delta() * zoomScale;
     }
-    metricWidth = qBound(0.1, metricWidth, 9999.0);
+    metricWidth = qBound(0.5, metricWidth, 9999.0);
     emit metricWidthChanged(metricWidth);
 }
 
