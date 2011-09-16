@@ -232,13 +232,6 @@ void CommConfigurationWindow::setLinkType(int linktype)
 				break;
 			}
 #endif // XBEELINK
-		case 0:
-			{
-				SerialLink *serial = new SerialLink();
-				tmpLink = serial;
-				MainWindow::instance()->addLink(tmpLink);
-				break;
-			}
 /*		case 1:
 			{
 				UDPLink *udp = new UDPLink();
@@ -258,7 +251,12 @@ void CommConfigurationWindow::setLinkType(int linktype)
 #endif // OPAL_RT
 		default:
 			{
-				MainWindow::instance()->addLink();
+			}
+		case 0:
+			{
+				SerialLink *serial = new SerialLink();
+				tmpLink = serial;
+				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
 	}
