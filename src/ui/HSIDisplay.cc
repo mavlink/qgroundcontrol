@@ -85,7 +85,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     bodyYawSet(0.0f),
     uiXSetCoordinate(0.0f),
     uiYSetCoordinate(0.0f),
-    uiZSetCoordinate(0.0f),
+    uiZSetCoordinate(-0.65f),
     uiYawSet(0.0f),
     metricWidth(4.0),
     positionLock(false),
@@ -101,7 +101,9 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     bottomMargin(10.0f),
     topMargin(12.0f),
     userSetPointSet(false),
-    dragStarted(false)
+    dragStarted(false),
+    leftDragStarted(false),
+    mouseHasMoved(false)
 {
     refreshTimer->setInterval(updateInterval);
 
@@ -550,12 +552,30 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
 
 void HSIDisplay::mouseReleaseEvent(QMouseEvent * event)
 {
-    if (event->type() == QMouseEvent::MouseButtonRelease && event->button() == Qt::RightButton)
+    if (mouseHasMoved)
     {
-        qDebug() << "YAW CHANGED" << uiYawSet;
-        setBodySetpointCoordinateYaw(uiYawSet);
-        dragStarted = false;
+        if (event->type() == QMouseEvent::MouseButtonRelease && event->button() == Qt::RightButton)
+        {
+            if (dragStarted)
+            {
+                qDebug() << "YAW CHANGED" << uiYawSet;
+                setBodySetpointCoordinateYaw(uiYawSet);
+                setStatusMessage(QString("SENT NEW YAW: %1").arg(uiYawSet));
+                dragStarted = false;
+            }
+        }
+        if (event->type() == QMouseEvent::MouseButtonRelease && event->button() == Qt::LeftButton)
+        {
+            if (leftDragStarted)
+            {
+                qDebug() << "Z CHANGED" << uiZSetCoordinate;
+                setStatusMessage(QString("SENT NEW Z: %1").arg(uiZSetCoordinate));
+                setBodySetpointCoordinateZ(uiZSetCoordinate);
+                leftDragStarted = false;
+            }
+        }
     }
+    mouseHasMoved = false;
 }
 
 void HSIDisplay::mousePressEvent(QMouseEvent * event)
@@ -571,9 +591,11 @@ void HSIDisplay::mousePressEvent(QMouseEvent * event)
         }
         else if (event->button() == Qt::LeftButton)
         {
-
+            startY = event->y();
+            leftDragStarted = true;
         }
     }
+    mouseHasMoved = false;
 }
 
 void HSIDisplay::mouseMoveEvent(QMouseEvent * event)
@@ -581,6 +603,14 @@ void HSIDisplay::mouseMoveEvent(QMouseEvent * event)
     if (event->type() == QMouseEvent::MouseMove)
     {
         if (dragStarted) uiYawSet -= 0.06f*(startX - event->x()) / this->frameSize().width();
+
+        if (leftDragStarted)
+        {
+            uiZSetCoordinate -= 0.06f*(startY - event->y()) / this->frameSize().height();
+            setStatusMessage(QString("NEW Z: %1").arg(uiZSetCoordinate));
+        }
+
+        if (leftDragStarted || dragStarted) mouseHasMoved = true;
     }
 }
 
@@ -673,7 +703,6 @@ void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
 
     if (uas && mavInitialized)
     {
-        uiZSetCoordinate = -0.65;
         sendBodySetPointCoordinates();
         qDebug() << "Setting new setpoint at x: " << x << "metric y:" << y;
     }
@@ -693,14 +722,12 @@ void HSIDisplay::setBodySetpointCoordinateYaw(double yaw)
     {
         uiXSetCoordinate = bodyXSetCoordinate;
         uiYSetCoordinate = bodyYSetCoordinate;
-        uiZSetCoordinate = -0.65f;
     }
     else if (!userXYSetPointSet && mavInitialized)
     {
         QPointF coord = metricBodyToWorld(QPointF(0.0, 0.0));
         uiXSetCoordinate = coord.x();
         uiYSetCoordinate = coord.y();
-        uiZSetCoordinate = -0.65f;
     }
     userSetPointSet = true;
     // Set coordinates and send them out to MAV
