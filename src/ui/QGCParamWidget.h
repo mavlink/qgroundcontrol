@@ -52,7 +52,7 @@ public:
     UASInterface* getUAS();
 signals:
     /** @brief A parameter was changed in the widget, NOT onboard */
-    void parameterChanged(int component, QString parametername, float value);
+    //void parameterChanged(int component, QString parametername, float value); // defined in QGCUASParamManager already
     /** @brief Request a single parameter */
     void requestParameter(int component, int parameter);
 public slots:

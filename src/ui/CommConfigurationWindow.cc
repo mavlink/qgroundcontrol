@@ -81,7 +81,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // Connect the current UAS
     action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", this);
     LinkManager::instance()->add(link);
-    action->setData(LinkManager::instance()->getLinks().indexOf(link));
+	action->setData(link->getId());
     action->setEnabled(true);
     action->setVisible(true);
     setLinkName(link->getName());
@@ -264,7 +264,9 @@ void CommConfigurationWindow::setLinkType(int linktype)
 	QList<QAction*> actions = MainWindow::instance()->listLinkMenuActions();
 	foreach (QAction* act, actions) 
 	{
-        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(tmpLink)) 
+		const int& linkIndex(LinkManager::instance()->getLinks().indexOf(tmpLink));
+		const int& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+        if (act->data().toInt() == linkID) 
 		{
             act->trigger();
             break;

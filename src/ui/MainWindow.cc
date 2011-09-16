@@ -1492,8 +1492,11 @@ void MainWindow::addLink()
     // Go fishing for this link's configuration window
     QList<QAction*> actions = ui.menuNetwork->actions();
 
+	const int& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
+	const int& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+
     foreach (QAction* act, actions) {
-        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(link)) {
+        if (act->data().toInt() == linkID) { // LinkManager::instance()->getLinks().indexOf(link)
             act->trigger();
             break;
         }
@@ -1512,17 +1515,20 @@ void MainWindow::addLink(LinkInterface *link)
     // Go fishing for this link's configuration window
     QList<QAction*> actions = ui.menuNetwork->actions();
 
-    bool found = false;
+    bool found(false);
+
+	const int& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
+	const int& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
 
     foreach (QAction* act, actions) {
-        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(link)) {
+        if (act->data().toInt() == linkID) { // LinkManager::instance()->getLinks().indexOf(link)
             found = true;
         }
     }
 
-    UDPLink* udp = dynamic_cast<UDPLink*>(link);
+    //UDPLink* udp = dynamic_cast<UDPLink*>(link);
 
-    if (!found || udp) {
+    if (!found) {  //  || udp
         CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
         QAction* action = commWidget->getAction();
         ui.menuNetwork->addAction(action);
