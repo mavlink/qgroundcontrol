@@ -96,6 +96,26 @@ bool UASManager::setHomePosition(double lat, double lon, double alt)
     return changed;
 }
 
+/**
+ * @param x1 Point 1 coordinate in x dimension
+ * @param y1 Point 1 coordinate in y dimension
+ * @param z1 Point 1 coordinate in z dimension
+ *
+ * @param x2 Point 2 coordinate in x dimension
+ * @param y2 Point 2 coordinate in y dimension
+ * @param z2 Point 2 coordinate in z dimension
+ */
+void UASManager::setLocalNEDSafetyBorders(double x1, double y1, double z1, double x2, double y2, double z2)
+{
+    nedSafetyLimitPosition1.x() = x1;
+    nedSafetyLimitPosition1.y() = y1;
+    nedSafetyLimitPosition1.z() = z1;
+
+    nedSafetyLimitPosition2.x() = x2;
+    nedSafetyLimitPosition2.y() = y2;
+    nedSafetyLimitPosition2.z() = z2;
+}
+
 
 void UASManager::initReference(const double & latitude, const double & longitude, const double & altitude)
 {
@@ -198,6 +218,7 @@ UASManager::UASManager() :
 {
     start(QThread::LowPriority);
     loadSettings();
+    setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);
 }
 
 UASManager::~UASManager()

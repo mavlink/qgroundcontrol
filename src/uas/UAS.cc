@@ -72,7 +72,7 @@ pitch(0.0),
 yaw(0.0),
 statusTimeout(new QTimer(this)),
 paramsOnceRequested(false),
-airframe(0),
+airframe(QGC_AIRFRAME_EASYSTAR),
 attitudeKnown(false),
 paramManager(NULL),
 attitudeStamped(false),
@@ -957,7 +957,7 @@ void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 {
 #ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_message_t msg;
-    mavlink_msg_position_control_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, 0, x, y, z, yaw);
+    mavlink_msg_local_position_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw/M_PI*180.0);
     sendMessage(msg);
 #else
     Q_UNUSED(x);
