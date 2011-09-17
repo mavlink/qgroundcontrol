@@ -89,6 +89,8 @@ public slots:
     void clearStatusMessage()
     {
         statusMessage = "";
+        if (actionPending) statusMessage = "TIMED OUT, NO ACTION";
+        statusClearTimer.start();
         actionPending = false;
     }
 
