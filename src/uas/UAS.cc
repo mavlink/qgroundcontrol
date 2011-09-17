@@ -957,7 +957,7 @@ void UAS::setLocalPositionSetpoint(float x, float y, float z, float yaw)
 {
 #ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_message_t msg;
-    mavlink_msg_local_position_setpoint_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw/M_PI*180.0);
+    mavlink_msg_set_local_position_setpoint_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_FRAME_LOCAL_NED, x, y, z, yaw/M_PI*180.0);
     sendMessage(msg);
 #else
     Q_UNUSED(x);

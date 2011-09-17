@@ -380,7 +380,6 @@ void MAVLinkSimulationLink::mainloop()
         // Send back new setpoint
         mavlink_message_t ret;
         mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, MAV_FRAME_LOCAL_NED, spX, spY, spZ, spYaw); // spYaw/180.0*M_PI);
-        mavlink_msg_local_position_setpoint_pack(systemId, componentId, &ret, spX, spY, spZ,
         bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
         //add data into datastream
         memcpy(stream+streampointer,buffer, bufferlength);
