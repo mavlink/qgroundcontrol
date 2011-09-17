@@ -64,7 +64,7 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     toolBarBatteryBar->setMinimum(0);
     toolBarBatteryBar->setMaximum(100);
     toolBarBatteryBar->setMinimumWidth(20);
-    toolBarBatteryBar->setMaximumWidth(200);
+    toolBarBatteryBar->setMaximumWidth(100);
     toolBarBatteryVoltageLabel = new QLabel("xx.x V");
     toolBarBatteryVoltageLabel->setStyleSheet(QString("QLabel { margin: 0px 0px 0px 4px; font: 14px; color: %1; }").arg(QColor(Qt::green).name()));
     symbolButton->setStyleSheet("QWidget { background-color: #050508; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 0px 0px 20px; background-color: none; }");

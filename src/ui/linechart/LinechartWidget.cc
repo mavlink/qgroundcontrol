@@ -76,7 +76,7 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
 {
     // Add elements defined in Qt Designer
     ui.setupUi(this);
-    this->setMinimumSize(300, 200);
+    this->setMinimumSize(200, 150);
 
     // Add and customize curve list elements (left side)
     curvesWidget = new QWidget(ui.curveListWidget);
@@ -104,7 +104,8 @@ LinechartWidget::LinechartWidget(int systemid, QWidget *parent) : QWidget(parent
     QLabel* mean;
     QLabel* variance;
 
-    //horizontalLayout->addWidget(checkBox);
+    connect(ui.recolorButton, SIGNAL(clicked()), this, SLOT(recolor()));
+    connect(ui.shortNameCheckBox, SIGNAL(clicked(bool)), this, SLOT(setShortNames(bool)));
 
     int labelRow = curvesWidgetLayout->rowCount();
 
@@ -170,6 +171,7 @@ void LinechartWidget::writeSettings()
     settings.beginGroup("LINECHART");
     if (timeButton) settings.setValue("ENFORCE_GROUNDTIME", timeButton->isChecked());
     if (unitsCheckBox) settings.setValue("SHOW_UNITS", unitsCheckBox->isChecked());
+    if (ui.shortNameCheckBox) settings.setValue("SHORT_NAMES", ui.shortNameCheckBox->isChecked());
     settings.endGroup();
     settings.sync();
 }
@@ -183,7 +185,8 @@ void LinechartWidget::readSettings()
         timeButton->setChecked(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
         activePlot->enforceGroundTime(settings.value("ENFORCE_GROUNDTIME", timeButton->isChecked()).toBool());
     }
-    if (unitsCheckBox) unitsCheckBox->setChecked(settings.value("SHOW_UNITS").toBool());
+    if (unitsCheckBox) unitsCheckBox->setChecked(settings.value("SHOW_UNITS", unitsCheckBox->isChecked()).toBool());
+    if (ui.shortNameCheckBox) ui.shortNameCheckBox->setChecked(settings.value("SHORT_NAMES", ui.shortNameCheckBox->isChecked()).toBool());
     settings.endGroup();
 }
 
@@ -280,7 +283,8 @@ void LinechartWidget::createLayout()
     connect(this, SIGNAL(curveRemoved(QString)), activePlot, SLOT(hideCurve(QString)));
 
     // Update scrollbar when plot window changes (via translator method setPlotWindowPosition()
-    connect(activePlot, SIGNAL(windowPositionChanged(quint64)), this, SLOT(setPlotWindowPosition(quint64)));
+//    connect(activePlot, SIGNAL(windowPositionChanged(quint64)), this, SLOT(setPlotWindowPosition(quint64)));
+    connect(activePlot, SIGNAL(curveRemoved(QString)), this, SLOT(removeCurve(QString)));
 
     // Update plot when scrollbar is moved (via translator method setPlotWindowPosition()
     connect(this, SIGNAL(plotWindowPositionUpdated(quint64)), activePlot, SLOT(setWindowPosition(quint64)));
@@ -614,6 +618,8 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     QLabel* mean;
     QLabel* variance;
 
+    curveNames.insert(curve+unit, curve);
+
     int labelRow = curvesWidgetLayout->rowCount();
 
     checkBox = new QCheckBox(this);
@@ -641,6 +647,9 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
     colorIcon->setStyleSheet(colorstyle);
     colorIcon->setAutoFillBackground(true);
+
+    // Label
+    curveNameLabels.insert(curve+unit, label);
 
     // Value
     value = new QLabel(this);
@@ -720,8 +729,96 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
 void LinechartWidget::removeCurve(QString curve)
 {
     Q_UNUSED(curve)
-    //TODO @todo Ensure that the button for a curve gets deleted when the original curve is deleted
-    // Remove name
+
+    QWidget* widget = NULL;
+    widget = curveLabels->take(curve);
+    curvesWidgetLayout->removeWidget(widget);
+    widget->deleteLater();
+    widget = curveMeans->take(curve);
+    curvesWidgetLayout->removeWidget(widget);
+    widget->deleteLater();
+    widget = curveMedians->take(curve);
+    curvesWidgetLayout->removeWidget(widget);
+    widget->deleteLater();
+    widget = curveVariances->take(curve);
+    curvesWidgetLayout->removeWidget(widget);
+    widget->deleteLater();
+//    widget = colorIcons->take(curve);
+//    curvesWidgetLayout->removeWidget(colorIcons->take(curve));
+    widget->deleteLater();
+//    intData->remove(curve);
+}
+
+void LinechartWidget::recolor()
+{
+    activePlot->shuffleColors();
+
+    foreach (QString key, colorIcons.keys())
+    {
+
+        // FIXME
+//        if (activePlot)
+        QString colorstyle;
+        QColor color = activePlot->getColorForCurve(key);
+        colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
+        QWidget* colorIcon = colorIcons.value(key, 0);
+        if (colorIcon)
+        {
+            colorIcon->setStyleSheet(colorstyle);
+            colorIcon->setAutoFillBackground(true);
+        }
+    }
+}
+
+void LinechartWidget::setShortNames(bool enable)
+{
+    foreach (QString key, curveNames.keys())
+    {
+        QString name;
+        if (enable)
+        {
+            QStringList parts = curveNames.value(key).split(".");
+            if (parts.length() > 1)
+            {
+                name = parts.at(1);
+            }
+            else
+            {
+                name = parts.at(0);
+            }
+
+            const unsigned int sizeLimit = 10;
+
+            // Replace known words with abbreviations
+            if (name.length() > sizeLimit)
+            {
+                name.replace("gyroscope", "gyro");
+                name.replace("accelerometer", "acc");
+                name.replace("magnetometer", "mag");
+                name.replace("distance", "dist");
+                name.replace("altitude", "alt");
+                name.replace("waypoint", "wp");
+                name.replace("error", "err");
+                name.replace("message", "msg");
+                name.replace("source", "src");
+            }
+
+            // Check if sub-part is still exceeding N chars
+            if (name.length() > sizeLimit)
+            {
+                name.replace("a", "");
+                name.replace("e", "");
+                name.replace("i", "");
+                name.replace("o", "");
+                name.replace("u", "");
+            }
+        }
+        else
+        {
+            name = curveNames.value(key);
+        }
+        curveNameLabels.value(key)->setText(name);
+    }
 }
 
 void LinechartWidget::showEvent(QShowEvent* event)
