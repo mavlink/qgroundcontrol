@@ -284,7 +284,7 @@ void HSIDisplay::renderOverlay()
 
     float normAngleDiff = fabs(atan2(sin(angleDiff), cos(angleDiff)));
 
-    if (userSetPointSet && setPointDist > 0.05f || normAngleDiff > 0.01f || dragStarted)
+    if (userSetPointSet && setPointDist > 0.08f || normAngleDiff > 0.05f || dragStarted)
     {
         QColor spColor(150, 150, 150);
         drawSetpointXYZYaw(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet, spColor, painter);
