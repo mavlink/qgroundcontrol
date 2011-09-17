@@ -85,7 +85,7 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     bodyYawSet(0.0f),
     uiXSetCoordinate(0.0f),
     uiYSetCoordinate(0.0f),
-    uiZSetCoordinate(-0.65f),
+    uiZSetCoordinate(-0.51f),
     uiYawSet(0.0f),
     metricWidth(4.0),
     positionLock(false),
@@ -130,7 +130,9 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     setStatusTip(tr("View from top in body frame. Scroll with mouse wheel to change the horizontal field of view of the widget."));
 
     connect(&statusClearTimer, SIGNAL(timeout()), this, SLOT(clearStatusMessage()));
-    statusClearTimer.start(5000);
+    statusClearTimer.start(3000);
+
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 void HSIDisplay::resetMAVState()
@@ -278,7 +280,11 @@ void HSIDisplay::renderOverlay()
 
     float setPointDist = sqrt(xSpDiff*xSpDiff + ySpDiff*ySpDiff + zSpDiff*zSpDiff);
 
-    if (userSetPointSet && setPointDist > 0.05f || dragStarted)
+    float angleDiff = uiYawSet - bodyYawSet;
+
+    float normAngleDiff = fabs(atan2(sin(angleDiff), cos(angleDiff)));
+
+    if (userSetPointSet && setPointDist > 0.05f || normAngleDiff > 0.01f || dragStarted)
     {
         QColor spColor(150, 150, 150);
         drawSetpointXYZYaw(uiXSetCoordinate, uiYSetCoordinate, uiZSetCoordinate, uiYawSet, spColor, painter);
@@ -547,7 +553,7 @@ void HSIDisplay::mouseDoubleClickEvent(QMouseEvent * event)
     {
         QPointF p = screenToMetricBody(event->posF());
         setBodySetpointCoordinateXY(p.x(), p.y());
-        qDebug() << "Double click at x: " << screenToRefX(event->x()) - xCenterPos << "y:" << screenToRefY(event->y()) - yCenterPos;
+//        qDebug() << "Double click at x: " << screenToRefX(event->x()) - xCenterPos << "y:" << screenToRefY(event->y()) - yCenterPos;
     }
 }
 
@@ -559,9 +565,7 @@ void HSIDisplay::mouseReleaseEvent(QMouseEvent * event)
         {
             if (dragStarted)
             {
-                qDebug() << "YAW CHANGED" << uiYawSet;
                 setBodySetpointCoordinateYaw(uiYawSet);
-                setStatusMessage(QString("SENT NEW YAW: %1").arg(uiYawSet));
                 dragStarted = false;
             }
         }
@@ -569,10 +573,8 @@ void HSIDisplay::mouseReleaseEvent(QMouseEvent * event)
         {
             if (leftDragStarted)
             {
-//                qDebug() << "Z CHANGED" << uiZSetCoordinate;
-//                setStatusMessage(QString("SENT NEW Z: %1").arg(uiZSetCoordinate));
-//                setBodySetpointCoordinateZ(uiZSetCoordinate);
-//                leftDragStarted = false;
+                setBodySetpointCoordinateZ(uiZSetCoordinate);
+                leftDragStarted = false;
             }
         }
     }
@@ -588,7 +590,6 @@ void HSIDisplay::mousePressEvent(QMouseEvent * event)
             startX = event->x();
             // Start tracking mouse move
             dragStarted = true;
-            qDebug() << "DRAG STARTED";
         }
         else if (event->button() == Qt::LeftButton)
         {
@@ -608,7 +609,7 @@ void HSIDisplay::mouseMoveEvent(QMouseEvent * event)
         if (leftDragStarted)
         {
 //            uiZSetCoordinate -= 0.06f*(startY - event->y()) / this->frameSize().height();
-//            setStatusMessage(QString("NEW Z: %1").arg(uiZSetCoordinate));
+//            setBodySetpointCoordinateZ(uiZSetCoordinate);
         }
 
         if (leftDragStarted || dragStarted) mouseHasMoved = true;
@@ -617,7 +618,7 @@ void HSIDisplay::mouseMoveEvent(QMouseEvent * event)
 
 void HSIDisplay::keyPressEvent(QKeyEvent* event)
 {
-    if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_S)
+    if ((event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) && actionPending)
     {
         actionPending = false;
         statusMessage = "SETPOINT SENT";
@@ -723,7 +724,6 @@ void HSIDisplay::setBodySetpointCoordinateXY(double x, double y)
         statusMessage = "POSITION SET, PRESS <ENTER> TO SEND";
         actionPending = true;
         statusClearTimer.start();
-        qDebug() << "Setting new setpoint at x: " << x << "metric y:" << y;
     }
 }
 
@@ -754,7 +754,6 @@ void HSIDisplay::setBodySetpointCoordinateYaw(double yaw)
     userSetPointSet = true;
     // Set coordinates and send them out to MAV
     uiYawSet = atan2(sin(yaw), cos(yaw));
-    qDebug() << "YAW IN" << yaw << "YAW OUT" << uiYawSet;
     statusMessage = "YAW SET, PRESS <ENTER> TO SEND";
     statusClearTimer.start();
     actionPending = true;
