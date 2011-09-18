@@ -150,8 +150,8 @@ void QGCParamWidget::loadSettings()
 void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QString& airframe)
 {
     QDir appDir = QDir::current();
-    appDir.cd("files/parameter_tooltips");
-    QString fileName = QString("MAV_AUTOPILOT_%1-MAV_TYPE_%2.txt").arg(autopilot).arg(airframe);
+    appDir.cd("files");
+    QString fileName = QString("/%1/%2/parameter_tooltips/tooltips.txt").arg(autopilot.toLower()).arg(airframe.toLower());
     QString filePath = appDir.filePath(fileName);
     QFile paramMetaFile(filePath);
 

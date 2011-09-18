@@ -236,6 +236,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit systemTypeSet(this, type);
             }
 
+            // FIXME update
+            //emit armingChanged(uasId, );
+
             QString audiostring = "System " + getUASName();
             QString stateAudio = "";
             QString modeAudio = "";
@@ -297,11 +300,11 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 GAudioOutput::instance()->say(audiostring.toLower());
             }
 
-            if (state.system_status == MAV_STATE_POWEROFF)
-            {
-                emit systemRemoved(this);
-                emit systemRemoved();
-            }
+//            if (state.system_status == MAV_STATE_POWEROFF)
+//            {
+//                emit systemRemoved(this);
+//                emit systemRemoved();
+//            }
 }
 
             break;
