@@ -232,14 +232,14 @@ void CommConfigurationWindow::setLinkType(int linktype)
 				break;
 			}
 #endif // XBEELINK
-/*		case 1:
+		case 1:
 			{
 				UDPLink *udp = new UDPLink();
 				tmpLink = udp;
 				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
-			*/
+			
 #ifdef OPAL_RT
 		case 3:
 			{
@@ -261,11 +261,13 @@ void CommConfigurationWindow::setLinkType(int linktype)
 			}
 	}
 	// trigger new window
+
+	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(tmpLink));
+	const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+
 	QList<QAction*> actions = MainWindow::instance()->listLinkMenuActions();
 	foreach (QAction* act, actions) 
 	{
-		const int& linkIndex(LinkManager::instance()->getLinks().indexOf(tmpLink));
-		const int& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
         if (act->data().toInt() == linkID) 
 		{
             act->trigger();

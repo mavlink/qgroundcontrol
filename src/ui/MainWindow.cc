@@ -1492,8 +1492,8 @@ void MainWindow::addLink()
     // Go fishing for this link's configuration window
     QList<QAction*> actions = ui.menuNetwork->actions();
 
-	const int& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-	const int& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
+	const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
 
     foreach (QAction* act, actions) {
         if (act->data().toInt() == linkID) { // LinkManager::instance()->getLinks().indexOf(link)
@@ -1517,8 +1517,8 @@ void MainWindow::addLink(LinkInterface *link)
 
     bool found(false);
 
-	const int& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
-	const int& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(link));
+	const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
 
     foreach (QAction* act, actions) {
         if (act->data().toInt() == linkID) { // LinkManager::instance()->getLinks().indexOf(link)
