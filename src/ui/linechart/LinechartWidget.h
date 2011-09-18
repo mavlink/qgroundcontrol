@@ -124,6 +124,8 @@ protected:
     QToolButton* createButton(QWidget* parent);
     void createCurveItem(QString curve);
     void createLayout();
+    /** @brief Get the name for a curve key */
+    QString getCurveName(const QString& key, bool shortEnabled);
 
     int sysid;                            ///< ID of the unmanned system this plot belongs to
     LinechartPlot* activePlot;            ///< Plot for this system

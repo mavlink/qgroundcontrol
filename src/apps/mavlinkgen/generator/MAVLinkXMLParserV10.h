@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QObject>
 #include <QDomDocument>
 #include <QString>
+#include <QProcess>
 
 #include <inttypes.h>
 
@@ -55,20 +56,24 @@ public slots:
     /** @brief Parse XML and generate C files */
     bool generate();
 
+    /** @brief Handle process errors */
+    void processError(QProcess::ProcessError err);
+
 signals:
     /** @brief Status message on the parsing */
     void parseState(QString message);
 
 protected:
-    /** @brief Accumulate the X.25 CRC by adding one char at a time. */
-    void crcAccumulate(uint8_t data, uint16_t *crcAccum);
+//    /** @brief Accumulate the X.25 CRC by adding one char at a time. */
+//    void crcAccumulate(uint8_t data, uint16_t *crcAccum);
 
-    /** @brief Initialize the buffer for the X.25 CRC */
-    void crcInit(uint16_t* crcAccum);
+//    /** @brief Initialize the buffer for the X.25 CRC */
+//    void crcInit(uint16_t* crcAccum);
 
     QDomDocument* doc;
     QString outputDirName;
     QString fileName;
+    QProcess* process;
 };
 
 #endif // MAVLINKXMLPARSERV10_H

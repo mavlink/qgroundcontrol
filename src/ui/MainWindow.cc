@@ -91,8 +91,8 @@ MainWindow::MainWindow(QWidget *parent):
     styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
     autoReconnect(false),
     currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
-    lowPowerMode(false),
-    centerStackActionGroup(this)
+    centerStackActionGroup(this),
+    lowPowerMode(false)
 {
     loadSettings();
     if (!settings.contains("CURRENT_VIEW"))
@@ -115,11 +115,19 @@ MainWindow::MainWindow(QWidget *parent):
 
     settings.sync();
 
-    // Setup UI state machines
-    centerStackActionGroup.setExclusive(true);
+    loadStyle(currentStyle);
 
     // Setup user interface
     ui.setupUi(this);
+
+    // Set dock options
+    setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
+    statusBar()->setSizeGripEnabled(true);
+
+    configureWindowName();
+
+    // Setup UI state machines
+    centerStackActionGroup.setExclusive(true);
 
     centerStack = new QStackedWidget(this);
     setCentralWidget(centerStack);
@@ -131,22 +139,14 @@ MainWindow::MainWindow(QWidget *parent):
     toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
     toolBar->addPerspectiveChangeAction(ui.actionEngineersView);
     toolBar->addPerspectiveChangeAction(ui.actionPilotsView);
-//    toolBar->addPerspectiveChangeAction(ui.actionUnconnectedView);
 
     buildCommonWidgets();
     connectCommonWidgets();
 
-    configureWindowName();
-
-    loadStyle(currentStyle);
-
     // Create actions
     connectCommonActions();
 
-    // Set dock options
-    setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
 
-    statusBar()->setSizeGripEnabled(true);
 
     // Restore the window setup
     if (settings.contains(getWindowStateKey()))
@@ -179,14 +179,6 @@ MainWindow::MainWindow(QWidget *parent):
     joystickWidget = 0;
     joystick = new JoystickInput();
 
-    // Load Toolbar
-    toolBar = new QGCToolBar(this);
-    this->addToolBar(toolBar);
-    // Add actions
-    toolBar->addPerspectiveChangeAction(ui.actionOperatorsView);
-    toolBar->addPerspectiveChangeAction(ui.actionEngineersView);
-    toolBar->addPerspectiveChangeAction(ui.actionPilotsView);
-
     // Connect link
     if (autoReconnect)
     {
@@ -204,6 +196,9 @@ MainWindow::MainWindow(QWidget *parent):
     windowStateVal = windowState();
 
     show();
+
+    connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
+    windowNameUpdateTimer.start(15000);
 }
 
 MainWindow::~MainWindow()

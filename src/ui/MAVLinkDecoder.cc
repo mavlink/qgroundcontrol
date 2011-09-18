@@ -8,6 +8,18 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     memcpy(messageInfo, msg, sizeof(mavlink_message_info_t)*256);
     memset(receivedMessages, 0, sizeof(mavlink_message_t)*256);
 
+    // Fill filter
+    messageFilter.insert(MAVLINK_MSG_ID_HEARTBEAT, false);
+    messageFilter.insert(MAVLINK_MSG_ID_SYS_STATUS, false);
+    messageFilter.insert(MAVLINK_MSG_ID_STATUSTEXT, false);
+    messageFilter.insert(MAVLINK_MSG_ID_COMMAND, false);
+    messageFilter.insert(MAVLINK_MSG_ID_COMMAND_ACK, false);
+    messageFilter.insert(MAVLINK_MSG_ID_PARAM_SET, false);
+    messageFilter.insert(MAVLINK_MSG_ID_PARAM_VALUE, false);
+    messageFilter.insert(MAVLINK_MSG_ID_MISSION_ITEM, false);
+    messageFilter.insert(MAVLINK_MSG_ID_MISSION_COUNT, false);
+    messageFilter.insert(MAVLINK_MSG_ID_MISSION_ACK, false);
+
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 }
 
@@ -24,20 +36,21 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
     quint64 time = 0;
     uint8_t fieldid = 0;
     uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
-    if (messageInfo[msgid].fields[fieldid].name == "time_boot_ms" && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT32_T)
+    if (QString(messageInfo[msgid].fields[fieldid].name) == QString("time_boot_ms") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT32_T)
     {
         time = *((quint32*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
     }
-    else if (messageInfo[msgid].fields[fieldid].name == "time_usec" && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT64_T)
+    else if (QString(messageInfo[msgid].fields[fieldid].name) == QString("time_usec") && messageInfo[msgid].fields[fieldid].type == MAVLINK_TYPE_UINT64_T)
     {
         time = *((quint64*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
     }
     else
     {
+        // First value is not time, send out value 0
         emitFieldValue(&message, fieldid, time);
     }
 
-    // Send out field values
+    // Send out field values from 1..n
     for (unsigned int i = 1; i < messageInfo[msgid].num_fields; ++i)
     {
         emitFieldValue(&message, i, time);
@@ -51,6 +64,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
 {
     // Add field tree widget item
     uint8_t msgid = msg->msgid;
+    if (messageFilter.contains(msgid)) return;
     QString fieldName(messageInfo[msgid].fields[fieldid].name);
     QString fieldType;
     uint8_t* m = ((uint8_t*)(receivedMessages+msgid))+8;
