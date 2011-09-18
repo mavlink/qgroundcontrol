@@ -27,7 +27,8 @@ protected:
     void emitFieldValue(mavlink_message_t* msg, int fieldid, quint64 time);
 
     mavlink_message_t receivedMessages[256]; ///< Available / known messages
-    mavlink_message_info_t messageInfo[256];
+    mavlink_message_info_t messageInfo[256]; ///< Message information
+    QMap<uint16_t, bool> messageFilter;               ///< Message/field names not to emit
 
 };
 

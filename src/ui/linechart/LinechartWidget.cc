@@ -641,7 +641,7 @@ void LinechartWidget::addCurve(const QString& curve, const QString& unit)
     curvesWidgetLayout->addWidget(label, labelRow, 2);
 
     //checkBox->setText(QString());
-    label->setText(curve);
+    label->setText(getCurveName(curve+unit, ui.shortNameCheckBox->isChecked()));
     QColor color(Qt::gray);// = plot->getColorForCurve(curve+unit);
     QString colorstyle;
     colorstyle = colorstyle.sprintf("QWidget { background-color: #%X%X%X; }", color.red(), color.green(), color.blue());
@@ -770,54 +770,70 @@ void LinechartWidget::recolor()
     }
 }
 
+QString LinechartWidget::getCurveName(const QString& key, bool shortEnabled)
+{
+    if (shortEnabled)
+    {
+        QString name;
+        QStringList parts = curveNames.value(key).split(".");
+        if (parts.length() > 1)
+        {
+            name = parts.at(1);
+        }
+        else
+        {
+            name = parts.at(0);
+        }
+
+        const int sizeLimit = 20;
+
+        // Replace known words with abbreviations
+        if (name.length() > sizeLimit)
+        {
+            name.replace("gyroscope", "gyro");
+            name.replace("accelerometer", "acc");
+            name.replace("magnetometer", "mag");
+            name.replace("distance", "dist");
+            name.replace("ailerons", "ail");
+            name.replace("altitude", "alt");
+            name.replace("waypoint", "wp");
+            name.replace("throttle", "thr");
+            name.replace("elevator", "elev");
+            name.replace("rudder", "rud");
+            name.replace("error", "err");
+            name.replace("version", "ver");
+            name.replace("message", "msg");
+            name.replace("count", "cnt");
+            name.replace("value", "val");
+            name.replace("source", "src");
+            name.replace("index", "idx");
+            name.replace("type", "typ");
+            name.replace("mode", "mod");
+        }
+
+        // Check if sub-part is still exceeding N chars
+        if (name.length() > sizeLimit)
+        {
+            name.replace("a", "");
+            name.replace("e", "");
+            name.replace("i", "");
+            name.replace("o", "");
+            name.replace("u", "");
+        }
+
+        return name;
+    }
+    else
+    {
+        return curveNames.value(key);
+    }
+}
+
 void LinechartWidget::setShortNames(bool enable)
 {
     foreach (QString key, curveNames.keys())
     {
-        QString name;
-        if (enable)
-        {
-            QStringList parts = curveNames.value(key).split(".");
-            if (parts.length() > 1)
-            {
-                name = parts.at(1);
-            }
-            else
-            {
-                name = parts.at(0);
-            }
-
-            const unsigned int sizeLimit = 10;
-
-            // Replace known words with abbreviations
-            if (name.length() > sizeLimit)
-            {
-                name.replace("gyroscope", "gyro");
-                name.replace("accelerometer", "acc");
-                name.replace("magnetometer", "mag");
-                name.replace("distance", "dist");
-                name.replace("altitude", "alt");
-                name.replace("waypoint", "wp");
-                name.replace("error", "err");
-                name.replace("message", "msg");
-                name.replace("source", "src");
-            }
-
-            // Check if sub-part is still exceeding N chars
-            if (name.length() > sizeLimit)
-            {
-                name.replace("a", "");
-                name.replace("e", "");
-                name.replace("i", "");
-                name.replace("o", "");
-                name.replace("u", "");
-            }
-        }
-        else
-        {
-            name = curveNames.value(key);
-        }
-        curveNameLabels.value(key)->setText(name);
+        curveNameLabels.value(key)->setText(getCurveName(key, enable));
     }
 }
 

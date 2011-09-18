@@ -213,6 +213,9 @@ public slots:
      */
     void showCentralWidget();
 
+    /** @brief Update the window name */
+    void configureWindowName();
+
 public:
     QGCMAVLinkLogPlayer* getLogPlayer()
     {
@@ -283,7 +286,6 @@ protected:
     void connectCommonWidgets();
     void connectCommonActions();
 
-    void configureWindowName();
     void loadSettings();
     void storeSettings();
 
@@ -369,6 +371,7 @@ protected:
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;
+    QTimer windowNameUpdateTimer;
 
 private:
     Ui::MainWindow ui;
