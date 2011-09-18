@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QSettings>
 #include <QFileInfoList>
+#include <qdatastream.h>
 
 #ifdef _WIN32
 #include <QextSerialEnumerator.h>
@@ -213,11 +214,23 @@ XbeeConfigurationWindow::XbeeConfigurationWindow(LinkInterface* link, QWidget *p
 		portBox = new QComboBox;
 		portBox->setEditable(true);
 		portLabel->setBuddy(portBox);
+		highAddrLabel = new QLabel;
+		highAddrLabel->setText(tr("Remote hex Address &High"));
+		highAddr = new HexSpinBox(this);
+		highAddrLabel->setBuddy(highAddr);
+		lowAddrLabel = new QLabel;
+		lowAddrLabel->setText(tr("Remote hex Address &Low"));
+		lowAddr = new HexSpinBox(this);
+		lowAddrLabel->setBuddy(lowAddr);
 		actionLayout = new QGridLayout;
 		actionLayout->addWidget(baudLabel,1,1);
 		actionLayout->addWidget(baudBox,1,2);
 		actionLayout->addWidget(portLabel,2,1);
 		actionLayout->addWidget(portBox,2,2);
+		actionLayout->addWidget(highAddrLabel,3,1);
+		actionLayout->addWidget(highAddr,3,2);
+		actionLayout->addWidget(lowAddrLabel,4,1);
+		actionLayout->addWidget(lowAddr,4,2);
 		tmpLayout = new QVBoxLayout;
 		tmpLayout->addStretch();
 		tmpLayout->addLayout(actionLayout);
@@ -231,6 +244,10 @@ XbeeConfigurationWindow::XbeeConfigurationWindow(LinkInterface* link, QWidget *p
 		connect(portBox,SIGNAL(currentIndexChanged(QString)),this,SLOT(setPortName(QString)));
 		connect(portBox,SIGNAL(editTextChanged(QString)),this,SLOT(setPortName(QString)));
 		connect(baudBox,SIGNAL(currentIndexChanged(QString)),this,SLOT(setBaudRateString(QString)));
+		connect(highAddr,SIGNAL(valueChanged(int)),this,SLOT(addrChangedHigh(int)));
+		connect(lowAddr,SIGNAL(valueChanged(int)),this,SLOT(addrChangedLow(int)));
+		connect(this,SIGNAL(addrHighChanged(quint32)),xbeeLink,SLOT(setRemoteAddressHigh(quint32)));
+		connect(this,SIGNAL(addrLowChanged(quint32)),xbeeLink,SLOT(setRemoteAddressLow(quint32)));
 
 		baudBox->addItem("1200",1200);
 		baudBox->addItem("2400",2400);
@@ -240,6 +257,27 @@ XbeeConfigurationWindow::XbeeConfigurationWindow(LinkInterface* link, QWidget *p
 		baudBox->addItem("38400",38400);
 		baudBox->addItem("57600",57600);
 		baudBox->setCurrentIndex(6);
+
+		// try to open xbeeConf file for last remote address
+		QFile in("Xbeeconf.txt");
+		if(in.open(QIODevice::ReadOnly))
+		{
+			QDataStream inStr(&in);
+			int tmpaddrHigh;
+			int tmpaddrLow;
+			inStr >> tmpaddrHigh;
+			inStr >> tmpaddrLow;
+			highAddr->setValue(tmpaddrHigh);
+			lowAddr->setValue(tmpaddrLow);
+		}
+		else
+		{
+			highAddr->setValue(0x13A200);
+			lowAddr->setValue(0x40DDDDDD);
+		}
+
+
+
 		this->setupPortList();
 
 		portCheckTimer = new QTimer(this);
@@ -382,4 +420,30 @@ void XbeeConfigurationWindow::setBaudRateString(QString baud)
 {
 	int rate = baud.toInt();
 	this->link->setBaudRate(rate);
+}
+
+void XbeeConfigurationWindow::addrChangedHigh(int addr)
+{
+	quint32 uaddr = static_cast<quint32>(addr);
+	QFile out("Xbeeconf.txt");
+	if(out.open(QIODevice::WriteOnly))
+	{
+		QDataStream outStr(&out);
+		outStr << this->highAddr->value();
+		outStr << this->lowAddr->value();
+	}
+	emit addrHighChanged(uaddr);
+}
+
+void XbeeConfigurationWindow::addrChangedLow(int addr)
+{
+	quint32 uaddr = static_cast<quint32>(addr);
+	QFile out("Xbeeconf.txt");
+	if(out.open(QIODevice::WriteOnly))
+	{
+		QDataStream outStr(&out);
+		outStr << this->highAddr->value();
+		outStr << this->lowAddr->value();
+	}
+	emit addrLowChanged(uaddr);
 }

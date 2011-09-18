@@ -159,6 +159,8 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 		ui.linkScrollArea->setWidget(conf);
 		ui.linkGroupBox->setTitle(tr("Xbee Link"));
 		ui.linkType->setCurrentIndex(4);
+		connect(xbee,SIGNAL(tryConnectBegin(bool)),ui.actionConnect,SLOT(setDisabled(bool)));
+		connect(xbee,SIGNAL(tryConnectEnd(bool)),ui.actionConnect,SLOT(setEnabled(bool)));
 	}
 #endif // XBEELINK
     if (serial == 0 && udp == 0 && sim == 0

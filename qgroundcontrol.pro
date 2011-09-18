@@ -539,9 +539,11 @@ TRANSLATIONS += es-MX.ts \
 win32-msvc2008|win32-msvc2010|linux{
     HEADERS += src/comm/XbeeLinkInterface.h \
 	src/comm/XbeeLink.h \
+	src/comm/HexSpinBox.h \
 	src/ui/XbeeConfigurationWindow.h \
 	src/comm/CallConv.h
     SOURCES += src/comm/XbeeLink.cpp \
+	src/comm/HexSpinBox.cpp \
 	src/ui/XbeeConfigurationWindow.cpp
     DEFINES += XBEELINK
     INCLUDEPATH += thirdParty/libxbee

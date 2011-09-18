@@ -26,6 +26,8 @@ public: // virtual functions from XbeeLinkInterface
 public slots: // virtual functions from XbeeLinkInterface
 	bool setPortName(QString portName);
 	bool setBaudRate(int rate);
+	bool setRemoteAddressHigh(quint32 high);
+	bool setRemoteAddressLow(quint32 low);
 
 public: // virtual functions from LinkInterface
 	int getId();
@@ -60,6 +62,8 @@ protected:
 	int m_baudRate;
 	bool m_connected;
 	QString m_name;
+	quint32 m_addrHigh;
+	quint32 m_addrLow;
 
 private:
 	bool hardwareConnect();

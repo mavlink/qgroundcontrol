@@ -7,7 +7,8 @@
 #include "XbeeLink.h"
 
 XbeeLink::XbeeLink(QString portName, int baudRate) : 
-	m_xbeeCon(NULL), m_portName(NULL), m_portNameLength(0), m_baudRate(baudRate), m_connected(false), m_id(-1)
+	m_xbeeCon(NULL), m_portName(NULL), m_portNameLength(0), m_baudRate(baudRate), m_connected(false), m_id(-1),
+	m_addrHigh(0), m_addrLow(0)
 {
 
 	/* setup the xbee */
@@ -160,6 +161,7 @@ qint64 XbeeLink::getBitsReceived()
 
 bool XbeeLink::hardwareConnect()
 {
+	emit tryConnectBegin(true);
 	if(this->isConnected())
 	{
 		this->disconnect();
@@ -172,9 +174,11 @@ bool XbeeLink::hardwareConnect()
 		{
 		  /* oh no... it failed */
 			qDebug() <<"xbee_setup() failed...\n";
+			emit tryConnectEnd(true);
 			return false;
 		}
 	this->m_xbeeCon = xbee_newcon('A',xbee2_data,0x13A200,0x403D0935);
+	emit tryConnectEnd(true);
 	this->m_connected = true;
 	emit connected();
 	emit connected(true);
@@ -254,6 +258,18 @@ void XbeeLink::run()
 			this->readBytes();
 	    }
 	}
+}
+
+bool XbeeLink::setRemoteAddressHigh(quint32 high)
+{
+	this->m_addrHigh = high;
+	return true;
+}
+
+bool XbeeLink::setRemoteAddressLow(quint32 low)
+{
+	this->m_addrLow = low;
+	return true;
 }
 
 /*
