@@ -96,24 +96,32 @@ void MAVLinkXMLParserV10::processError(QProcess::ProcessError err)
 bool MAVLinkXMLParserV10::generate()
 {
 #ifdef Q_OS_WIN
-    QString python("python.exe");
+    QString generatorCall("%1/files/mavlink_generator/generator/mavgen.exe");
 #endif
 #if (defined Q_OS_MAC) || (defined Q_OS_LINUX)
-    QString python("python");
+    QString generatorCall("python");
 #endif
     QString lang("C");
     QString version("1.0");
 
-
     QStringList arguments;
+#if (defined Q_OS_MAC) || (defined Q_OS_LINUX)
+    // Script is only needed as argument if Python is used, the Py2Exe implicitely knows the script
+    arguments << QString("%1/files/mavlink_generator/generator/mavgen.py").arg(QApplication::applicationDirPath());
+#endif
     arguments << QString("--lang=%1").arg(lang);
     arguments << QString("--output=%2").arg(outputDirName);
     arguments << QString("%3").arg(fileName);
     arguments << QString("--wire-protocol=%4").arg(version);
 
-    QString generatorCall(QString("%1 %2/files/pymavlink/generator/mavgen.py %3").arg(python).arg(QApplication::applicationDirPath()));
     qDebug() << "Attempted to start" << generatorCall << arguments;
-    return (process->execute(generatorCall, arguments) == 0);
+    process = new QProcess(this);
+    connect(process, SIGNAL(error(QProcess::ProcessError)), this, SLOT(processError(QProcess::ProcessError)));
+    bool result = (process->execute(generatorCall, arguments) == 0);
+    // Print process status
+    emit parseState(QString("<font color=\"red\">%1</font>").arg(QString(process->readAllStandardError())));
+    emit parseState(QString(process->readAllStandardOutput()));
+    return result;
 }
 
 ///**
