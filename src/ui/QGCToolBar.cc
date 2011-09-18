@@ -32,7 +32,12 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     toggleLoggingAction(NULL),
     logReplayAction(NULL),
     mav(NULL),
-    player(NULL)
+    player(NULL),
+    changed(true),
+    batteryPercent(0),
+    batteryVoltage(0),
+    wpId(0),
+    wpDistance(0)
 {
     setObjectName("QGC_TOOLBAR");
 
@@ -87,6 +92,9 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
 
     setActiveUAS(UASManager::instance()->getActiveUAS());
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
+
+    connect(&updateViewTimer, SIGNAL(timeout()), this, SLOT(updateView()));
+    updateViewTimer.start(2000);
 }
 
 void QGCToolBar::setLogPlayer(QGCMAVLinkLogPlayer* player)
@@ -239,41 +247,55 @@ void QGCToolBar::createCustomWidgets()
 
 }
 
+void QGCToolBar::updateView()
+{
+    if (!changed) return;
+    toolBarDistLabel->setText(tr("%1 m").arg(wpDistance, 6, 'f', 2, '0'));
+    toolBarWpLabel->setText(tr("WP%1").arg(wpId));
+    toolBarBatteryBar->setValue(batteryPercent);
+    toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(batteryVoltage, 4, 'f', 1, ' '));
+    toolBarStateLabel->setText(tr("%1").arg(state));
+    toolBarModeLabel->setText(tr("%1").arg(mode));
+    toolBarNameLabel->setText(systemName);
+    toolBarMessageLabel->setText(lastSystemMessage);
+}
+
 void QGCToolBar::updateWaypointDistance(double distance)
 {
-    toolBarDistLabel->setText(tr("%1 m").arg(distance, 6, 'f', 2, '0'));
+    if (wpDistance != distance) changed = true;
+    wpDistance = distance;
 }
 
 void QGCToolBar::updateCurrentWaypoint(quint16 id)
 {
-    toolBarWpLabel->setText(tr("WP%1").arg(id));
+    wpId = id;
 }
 
 void QGCToolBar::updateBatteryRemaining(UASInterface* uas, double voltage, double percent, int seconds)
 {
     Q_UNUSED(uas);
     Q_UNUSED(seconds);
-    toolBarBatteryBar->setValue(percent);
-    toolBarBatteryVoltageLabel->setText(tr("%1 V").arg(voltage, 4, 'f', 1, ' '));
+    batteryPercent = percent;
+    batteryVoltage = voltage;
 }
 
 void QGCToolBar::updateState(UASInterface* system, QString name, QString description)
 {
     Q_UNUSED(system);
     Q_UNUSED(description);
-    toolBarStateLabel->setText(tr("%1").arg(name));
+    state = name;
 }
 
 void QGCToolBar::updateMode(int system, QString name, QString description)
 {
     Q_UNUSED(system);
     Q_UNUSED(description);
-    toolBarModeLabel->setText(tr("%1").arg(name));
+    mode = state;
 }
 
 void QGCToolBar::updateName(const QString& name)
 {
-    toolBarNameLabel->setText(name);
+    systemName = name;
 }
 
 /**
@@ -317,7 +339,7 @@ void QGCToolBar::receiveTextMessage(int uasid, int componentid, int severity, QS
     Q_UNUSED(uasid);
     Q_UNUSED(componentid);
     Q_UNUSED(severity);
-    toolBarMessageLabel->setText(text);
+    lastSystemMessage = text;
 }
 
 QGCToolBar::~QGCToolBar()

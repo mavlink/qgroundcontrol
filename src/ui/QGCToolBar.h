@@ -66,6 +66,8 @@ public slots:
     void updateCurrentWaypoint(quint16 id);
     /** @brief Update distance to current waypoint */
     void updateWaypointDistance(double distance);
+    /** @brief Repaint widgets */
+    void updateView();
 
 protected:
     void createCustomWidgets();
@@ -84,6 +86,16 @@ protected:
     QProgressBar* toolBarBatteryBar;
     QLabel* toolBarBatteryVoltageLabel;
     QGCMAVLinkLogPlayer* player;
+    bool changed;
+    float batteryPercent;
+    float batteryVoltage;
+    int wpId;
+    double wpDistance;
+    QString state;
+    QString mode;
+    QString systemName;
+    QString lastSystemMessage;
+    QTimer updateViewTimer;
 };
 
 #endif // QGCTOOLBAR_H
