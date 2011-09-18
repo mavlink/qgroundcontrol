@@ -75,6 +75,7 @@ protected:
     UASInterface* mav;
     QToolButton* symbolButton;
     QLabel* toolBarNameLabel;
+    QLabel* toolBarSafetyLabel;
     QLabel* toolBarModeLabel;
     QLabel* toolBarStateLabel;
     QLabel* toolBarWpLabel;
