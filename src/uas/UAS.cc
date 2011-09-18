@@ -82,7 +82,7 @@ isLocalPositionKnown(false),
 isGlobalPositionKnown(false)
 {
     color = UASInterface::getNextColor();
-    setBattery(LIPOLY, 3);
+    setBatterySpecs(QString("9V,9.5V,12.6V"));
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);

@@ -2,6 +2,7 @@
 #include <QTextBrowser>
 #include <QMessageBox>
 #include <QSettings>
+#include <QDesktopServices>
 
 #include "XMLCommProtocolWidget.h"
 #include "ui_XMLCommProtocolWidget.h"
@@ -39,21 +40,26 @@ void XMLCommProtocolWidget::selectXMLFile()
     dialog.setFilter(tr("MAVLink XML (*.xml)"));
     dialog.setViewMode(QFileDialog::Detail);
     QStringList fileNames;
-    if (dialog.exec()) {
+    if (dialog.exec())
+    {
         fileNames = dialog.selectedFiles();
     }
 	
-    if (fileNames.size() > 0) {
-        m_ui->fileNameLabel->setText(fileNames.first());
+    if (fileNames.size() > 0)
+    {
         QFile file(fileNames.first());
+        m_ui->fileNameLabel->setText(file.fileName());
 		
-        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
             const QString instanceText(QString::fromUtf8(file.readAll()));
             setXML(instanceText);
             // Store filename for next time
             settings.setValue(mavlinkXML, QFileInfo(file).absoluteFilePath());
             settings.sync();
-        } else {
+        }
+        else
+        {
             QMessageBox msgBox;
             msgBox.setText("Could not read XML file. Permission denied");
             msgBox.exec();
@@ -77,7 +83,7 @@ void XMLCommProtocolWidget::selectOutputDirectory()
 {
     QSettings settings("MAVLink Consortium", "MAVLink Generator");
     const QString mavlinkOutputDir = "MAVLINK_OUTPUT_DIR";
-    QString dirPath = settings.value(mavlinkOutputDir, QCoreApplication::applicationDirPath() + "../").toString();
+    QString dirPath = settings.value(mavlinkOutputDir, QDesktopServices::DesktopLocation).toString();
     QFileDialog dialog;
     dialog.setDirectory(dirPath);
     dialog.setFileMode(QFileDialog::Directory);
