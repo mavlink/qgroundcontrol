@@ -1766,10 +1766,13 @@ void UAS::setSystemType(int systemType)
 
 void UAS::setUASName(const QString& name)
 {
-    this->name = name;
-    writeSettings();
-    emit nameChanged(name);
-    emit systemSpecsChanged(uasId);
+    if (name != "")
+    {
+        this->name = name;
+        writeSettings();
+        emit nameChanged(name);
+        emit systemSpecsChanged(uasId);
+    }
 }
 
 void UAS::executeCommand(MAV_CMD command)

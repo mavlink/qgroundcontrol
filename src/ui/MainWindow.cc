@@ -146,6 +146,8 @@ MainWindow::MainWindow(QWidget *parent):
     // Create actions
     connectCommonActions();
 
+    buildCustomWidget();
+
 
 
     // Restore the window setup
@@ -268,40 +270,36 @@ QString MainWindow::getWindowGeometryKey()
 
 void MainWindow::buildCustomWidget()
 {
-    // Show custom widgets only if UAS is connected
-    if (UASManager::instance()->getActiveUAS() != NULL)
+    // Create custom widgets
+    QList<QGCToolWidget*> widgets = QGCToolWidget::createWidgetsFromSettings(this);
+
+    if (widgets.size() > 0)
     {
-        // Create custom widgets
-        QList<QGCToolWidget*> widgets = QGCToolWidget::createWidgetsFromSettings(this);
+        ui.menuTools->addSeparator();
+    }
 
-        if (widgets.size() > 0)
+    for(int i = 0; i < widgets.size(); ++i)
+    {
+        // Check if this widget already has a parent, do not create it in this case
+        QGCToolWidget* tool = widgets.at(i);
+        QDockWidget* dock = dynamic_cast<QDockWidget*>(tool->parentWidget());
+        if (!dock)
         {
-            ui.menuTools->addSeparator();
-        }
+            QDockWidget* dock = new QDockWidget(tool->windowTitle(), this);
+            dock->setObjectName(tool->objectName()+"_DOCK");
+            dock->setWidget(tool);
+            connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
+            QAction* showAction = new QAction(widgets.at(i)->windowTitle(), this);
+            showAction->setCheckable(true);
+            connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
+            connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
+            widgets.at(i)->setMainMenuAction(showAction);
+            ui.menuTools->addAction(showAction);
 
-        for(int i = 0; i < widgets.size(); ++i)
-        {
-            // Check if this widget already has a parent, do not create it in this case
-            QGCToolWidget* tool = widgets.at(i);
-            QDockWidget* dock = dynamic_cast<QDockWidget*>(tool->parentWidget());
-            if (!dock)
-            {
-                QDockWidget* dock = new QDockWidget(tool->windowTitle(), this);
-                dock->setObjectName(tool->objectName()+"_DOCK");
-                dock->setWidget(tool);
-                connect(tool, SIGNAL(destroyed()), dock, SLOT(deleteLater()));
-                QAction* showAction = new QAction(widgets.at(i)->windowTitle(), this);
-                showAction->setCheckable(true);
-                connect(showAction, SIGNAL(triggered(bool)), dock, SLOT(setVisible(bool)));
-                connect(dock, SIGNAL(visibilityChanged(bool)), showAction, SLOT(setChecked(bool)));
-                widgets.at(i)->setMainMenuAction(showAction);
-                ui.menuTools->addAction(showAction);
+            // Load dock widget location (default is bottom)
+            Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
 
-                // Load dock widget location (default is bottom)
-                Qt::DockWidgetArea location = static_cast <Qt::DockWidgetArea>(tool->getDockWidgetArea(currentView));
-
-                addDockWidget(location, dock);
-            }
+            addDockWidget(location, dock);
         }
     }
 }
@@ -1251,11 +1249,11 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
 
-    // Restore the mainwindow size
-    if (settings.contains(getWindowGeometryKey()))
-    {
-        restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
-    }
+//    // Restore the mainwindow size
+//    if (settings.contains(getWindowGeometryKey()))
+//    {
+//        restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
+//    }
 }
 
 /**
