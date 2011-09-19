@@ -48,7 +48,6 @@ protected:
     float parameterMin;
     float parameterMax;
     int component;                 ///< ID of the MAV component to address
-    int parameterIndex;
     double scaledInt;
     void changeEvent(QEvent *e);
 

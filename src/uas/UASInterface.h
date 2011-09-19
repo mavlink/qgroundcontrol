@@ -246,7 +246,7 @@ public slots:
     /** @brief Request all onboard parameters of all components */
     virtual void requestParameters() = 0;
     /** @brief Request one specific onboard parameter */
-    virtual void requestParameter(int component, int parameter) = 0;
+    virtual void requestParameter(int component, const QString& parameter) = 0;
     /** @brief Write parameter to permanent storage */
     virtual void writeParametersToStorage() = 0;
     /** @brief Read parameter from permanent storage */

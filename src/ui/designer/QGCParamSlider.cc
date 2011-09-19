@@ -17,7 +17,6 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     parameterMin(0.0f),
     parameterMax(0.0f),
     component(0),
-    parameterIndex(-1),
     ui(new Ui::QGCParamSlider)
 {
     ui->setupUi(this);
@@ -87,8 +86,9 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
 
 void QGCParamSlider::requestParameter()
 {
-    if (parameterIndex != -1 && uas) {
-        uas->requestParameter(this->component, this->parameterIndex);
+    if (!parameterName.isEmpty() && uas)
+    {
+        uas->requestParameter(this->component, this->parameterName);
     }
 }
 
@@ -106,7 +106,6 @@ void QGCParamSlider::selectComponent(int componentIndex)
 void QGCParamSlider::selectParameter(int paramIndex)
 {
     parameterName = ui->editSelectParamComboBox->itemText(paramIndex);
-    parameterIndex = ui->editSelectParamComboBox->itemData(paramIndex).toInt();
 }
 
 void QGCParamSlider::startEditMode()
@@ -254,7 +253,6 @@ void QGCParamSlider::writeSettings(QSettings& settings)
     settings.setValue("QGC_PARAM_SLIDER_DESCRIPTION", ui->nameLabel->text());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
     settings.setValue("QGC_PARAM_SLIDER_PARAMID", parameterName);
-    settings.setValue("QGC_PARAM_SLIDER_PARAMINDEX", parameterIndex);
     settings.setValue("QGC_PARAM_SLIDER_COMPONENTID", component);
     settings.setValue("QGC_PARAM_SLIDER_MIN", ui->editMinSpinBox->value());
     settings.setValue("QGC_PARAM_SLIDER_MAX", ui->editMaxSpinBox->value());
@@ -263,11 +261,13 @@ void QGCParamSlider::writeSettings(QSettings& settings)
 
 void QGCParamSlider::readSettings(const QSettings& settings)
 {
+    parameterName = settings.value("QGC_PARAM_SLIDER_PARAMID").toString();
+    component = settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt();
     ui->nameLabel->setText(settings.value("QGC_PARAM_SLIDER_DESCRIPTION").toString());
     ui->editNameLabel->setText(settings.value("QGC_PARAM_SLIDER_DESCRIPTION").toString());
     //settings.setValue("QGC_PARAM_SLIDER_BUTTONTEXT", ui->actionButton->text());
-    parameterIndex = settings.value("QGC_PARAM_SLIDER_PARAMINDEX", parameterIndex).toInt();
-    ui->editSelectParamComboBox->addItem(settings.value("QGC_PARAM_SLIDER_PARAMID").toString(), parameterIndex);
+    ui->editSelectParamComboBox->addItem(settings.value("QGC_PARAM_SLIDER_PARAMID").toString());
+    ui->editSelectParamComboBox->setCurrentIndex(ui->editSelectParamComboBox->count()-1);
     ui->editSelectComponentComboBox->addItem(tr("Component #%1").arg(settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt()), settings.value("QGC_PARAM_SLIDER_COMPONENTID").toInt());
     ui->editMinSpinBox->setValue(settings.value("QGC_PARAM_SLIDER_MIN").toFloat());
     ui->editMaxSpinBox->setValue(settings.value("QGC_PARAM_SLIDER_MAX").toFloat());

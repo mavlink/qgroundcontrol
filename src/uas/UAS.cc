@@ -1733,11 +1733,19 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
     }
 }
 
-void UAS::requestParameter(int component, int parameter)
+void UAS::requestParameter(int component, const QString& parameter)
 {
+    // Request parameter, use parameter name to request it
     mavlink_message_t msg;
     mavlink_param_request_read_t read;
-    read.param_index = parameter;
+    read.param_index = -1;
+    // Copy full param name or maximum max field size
+    if (parameter.length() > MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN)
+    {
+        emit textMessageReceived(uasId, 0, 255, QString("QGC WARNING: Parameter name %1 is more than %2 bytes long. This might lead to errors and mishaps!").arg(parameter).arg(MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN-1));
+    }
+    memcpy(read.param_id, parameter.toStdString().c_str(), qMax(parameter.length(), MAVLINK_MSG_PARAM_REQUEST_READ_FIELD_PARAM_ID_LEN));
+    read.param_id[15] = '\0'; // Enforce null termination
     read.target_system = uasId;
     read.target_component = component;
     mavlink_msg_param_request_read_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &read);

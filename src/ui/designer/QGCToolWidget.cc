@@ -21,6 +21,11 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
         widgetTitle(title),
         ui(new Ui::QGCToolWidget)
 {
+    if (title == "Unnamed Tool")
+    {
+        widgetTitle = QString("%1 %2").arg(title).arg(QGCToolWidget::instances()->count());
+    }
+    qDebug() << "WidgetTitle" << widgetTitle;
     ui->setupUi(this);
     setObjectName(title);
     createActions();
@@ -42,12 +47,14 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
     }
 
     this->setWindowTitle(title);
-    setObjectName(title+"WIDGET");
+    //setObjectName(title+"WIDGET");
 
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
-    foreach (UASInterface* uas, systems) {
+    foreach (UASInterface* uas, systems)
+    {
         UAS* newMav = dynamic_cast<UAS*>(uas);
-        if (newMav) {
+        if (newMav)
+        {
             addUAS(uas);
         }
     }
@@ -57,6 +64,8 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
 
 QGCToolWidget::~QGCToolWidget()
 {
+    if (mainMenuAction) delete mainMenuAction;
+    QGCToolWidget::instances()->remove(widgetTitle);
     delete ui;
 }
 
@@ -94,11 +103,14 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
 
     QList<QGCToolWidget*> newWidgets;
     int size = settings->beginReadArray("QGC_TOOL_WIDGET_NAMES");
-    for (int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++)
+    {
         settings->setArrayIndex(i);
         QString name = settings->value("TITLE", tr("UNKNOWN WIDGET %1").arg(i)).toString();
 
-        if (!instances()->contains(name)) {
+        if (!instances()->contains(name))
+        {
+            qDebug() << "CREATED WIDGET:" << name;
             QGCToolWidget* tool = new QGCToolWidget(name, parent);
             instances()->insert(name, tool);
             newWidgets.append(tool);
@@ -113,7 +125,8 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
     qDebug() << "NEW WIDGETS: " << newWidgets.size();
 
     // Load individual widget items
-    for (int i = 0; i < newWidgets.size(); i++) {
+    for (int i = 0; i < newWidgets.size(); i++)
+    {
         newWidgets.at(i)->loadSettings(*settings);
     }
     delete settings;
@@ -147,29 +160,38 @@ void QGCToolWidget::loadSettings(QSettings& settings)
 {
     QString widgetName = getTitle();
     settings.beginGroup(widgetName);
+    qDebug() << "LOADING FOR" << widgetName;
     int size = settings.beginReadArray("QGC_TOOL_WIDGET_ITEMS");
     qDebug() << "CHILDREN SIZE:" << size;
-    for (int j = 0; j < size; j++) {
+    for (int j = 0; j < size; j++)
+    {
         settings.setArrayIndex(j);
         QString type = settings.value("TYPE", "UNKNOWN").toString();
-        if (type != "UNKNOWN") {
+        if (type != "UNKNOWN")
+        {
             QGCToolWidgetItem* item = NULL;
-            if (type == "COMMANDBUTTON") {
+            if (type == "COMMANDBUTTON")
+            {
                 item = new QGCCommandButton(this);
                 qDebug() << "CREATED COMMANDBUTTON";
-            } else if (type == "SLIDER") {
+            }
+            else if (type == "SLIDER")
+            {
                 item = new QGCParamSlider(this);
                 qDebug() << "CREATED PARAM SLIDER";
             }
 
-            if (item) {
+            if (item)
+            {
                 // Configure and add to layout
                 addToolWidget(item);
                 item->readSettings(settings);
 
                 qDebug() << "Created tool widget";
             }
-        } else {
+        }
+        else
+        {
             qDebug() << "UNKNOWN TOOL WIDGET TYPE";
         }
     }
@@ -191,14 +213,16 @@ void QGCToolWidget::storeWidgetsToSettings(QString settingsFile)
     }
 
     settings->beginWriteArray("QGC_TOOL_WIDGET_NAMES");
-    for (int i = 0; i < instances()->size(); ++i) {
+    for (int i = 0; i < instances()->size(); ++i)
+    {
         settings->setArrayIndex(i);
         settings->setValue("TITLE", instances()->values().at(i)->getTitle());
     }
     settings->endArray();
 
     // Store individual widget items
-    for (int i = 0; i < instances()->size(); ++i) {
+    for (int i = 0; i < instances()->size(); ++i)
+    {
         instances()->values().at(i)->storeSettings(*settings);
     }
     delete settings;
@@ -216,15 +240,18 @@ void QGCToolWidget::storeSettings(QSettings& settings)
     settings.beginGroup(widgetName);
     settings.beginWriteArray("QGC_TOOL_WIDGET_ITEMS");
     int k = 0; // QGCToolItem counter
-    for (int j = 0; j  < children().size(); ++j) {
+    for (int j = 0; j  < children().size(); ++j)
+    {
         // Store only QGCToolWidgetItems
         QGCToolWidgetItem* item = dynamic_cast<QGCToolWidgetItem*>(children().at(j));
-        if (item) {
+        if (item)
+        {
             settings.setArrayIndex(k++);
             // Store the ToolWidgetItem
             item->writeSettings(settings);
         }
     }
+    qDebug() << "WROTE" << k << "SUB-WIDGETS TO SETTINGS";
     settings.endArray();
     settings.endGroup();
 }
@@ -232,7 +259,8 @@ void QGCToolWidget::storeSettings(QSettings& settings)
 void QGCToolWidget::addUAS(UASInterface* uas)
 {
     UAS* newMav = dynamic_cast<UAS*>(uas);
-    if (newMav) {
+    if (newMav)
+    {
         // FIXME Convert to list
         if (mav == NULL) mav = newMav;
     }
@@ -245,9 +273,8 @@ void QGCToolWidget::contextMenuEvent (QContextMenuEvent* event)
     menu.addAction(addCommandAction);
     menu.addAction(setTitleAction);
     menu.addAction(exportAction);
+    menu.addAction(importAction);
     menu.addAction(deleteAction);
-    menu.addSeparator();
-    menu.addAction(addButtonAction);
     menu.exec(event->globalPos());
 }
 
@@ -293,11 +320,7 @@ void QGCToolWidget::createActions()
 
     importAction = new QAction(tr("Import widget"), this);
     importAction->setStatusTip(tr("Import this widget from a file (current content will be removed)"));
-    connect(exportAction, SIGNAL(triggered()), this, SLOT(importWidget()));
-
-    addButtonAction = new QAction(tr("New MAV Action Button (Deprecated)"), this);
-    addButtonAction->setStatusTip(tr("Add a new action button to the tool"));
-    connect(addButtonAction, SIGNAL(triggered()), this, SLOT(addAction()));
+    connect(importAction, SIGNAL(triggered()), this, SLOT(importWidget()));
 }
 
 QMap<QString, QGCToolWidget*>* QGCToolWidget::instances()
@@ -317,7 +340,8 @@ QList<QGCToolWidgetItem*>* QGCToolWidget::itemList()
 void QGCToolWidget::addParam()
 {
     QGCParamSlider* slider = new QGCParamSlider(this);
-    if (ui->hintLabel) {
+    if (ui->hintLabel)
+    {
         ui->hintLabel->deleteLater();
         ui->hintLabel = NULL;
     }
@@ -328,7 +352,8 @@ void QGCToolWidget::addParam()
 void QGCToolWidget::addCommand()
 {
     QGCCommandButton* button = new QGCCommandButton(this);
-    if (ui->hintLabel) {
+    if (ui->hintLabel)
+    {
         ui->hintLabel->deleteLater();
         ui->hintLabel = NULL;
     }
@@ -338,7 +363,8 @@ void QGCToolWidget::addCommand()
 
 void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
 {
-    if (ui->hintLabel) {
+    if (ui->hintLabel)
+    {
         ui->hintLabel->deleteLater();
         ui->hintLabel = NULL;
     }
@@ -371,38 +397,44 @@ const QString QGCToolWidget::getTitle()
 void QGCToolWidget::setTitle()
 {
     QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
-    if (parent) {
+    if (parent)
+    {
         bool ok;
-        QString text = QInputDialog::getText(this, tr("QInputDialog::getText()"),
+        QString text = QInputDialog::getText(this, tr("Enter Widget Title"),
                                              tr("Widget title:"), QLineEdit::Normal,
                                              parent->windowTitle(), &ok);
-        if (ok && !text.isEmpty()) {
-            QSettings settings;
-            settings.beginGroup(parent->windowTitle());
-            settings.remove("");
-            settings.endGroup();
-            parent->setWindowTitle(text);
-            setWindowTitle(text);
-
-            storeWidgetsToSettings();
-            emit titleChanged(text);
-            if (mainMenuAction) mainMenuAction->setText(text);
+        if (ok && !text.isEmpty())
+        {
+            setTitle(text);
         }
     }
 }
 
+void QGCToolWidget::setWindowTitle(const QString& title)
+{
+    // Sets title and calls setWindowTitle on QWidget
+    setTitle(title);
+}
+
 void QGCToolWidget::setTitle(QString title)
 {
-    widgetTitle = title;
+    // Remove references to old title
     QDockWidget* parent = dynamic_cast<QDockWidget*>(this->parentWidget());
-    if (parent) {
+    if (parent)
+    {
         QSettings settings;
-        settings.beginGroup(parent->windowTitle());
+        settings.beginGroup(widgetTitle);
         settings.remove("");
         settings.endGroup();
-        parent->setWindowTitle(title);
     }
-    setWindowTitle(title);
+    if (instances()->contains(widgetTitle)) instances()->remove(widgetTitle);
+
+    // Switch to new title
+    widgetTitle = title;
+
+    if (!instances()->contains(title)) instances()->insert(title, this);
+    QWidget::setWindowTitle(title);
+    if (parent) parent->setWindowTitle(title);
 
     storeWidgetsToSettings();
     emit titleChanged(title);
