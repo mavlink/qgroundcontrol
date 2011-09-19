@@ -212,7 +212,7 @@
                <field type="uint8_t[32]" name="descriptor">Descriptor</field>
                <field type="float" name="response">Harris operator response at this location</field>
           </message>
-                    <message id="200" name="ATTITUDE_CONTROL">
+          <message id="200" name="ATTITUDE_CONTROL">
                <field type="uint8_t" name="target">The system to be controlled</field>
                <field type="float" name="roll">roll</field>
                <field type="float" name="pitch">pitch</field>

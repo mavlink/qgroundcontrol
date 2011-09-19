@@ -244,8 +244,6 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         setupPortList();
 
         // Set up baud rates
-        ui.baudRate->addItem("115200", 115200);
-
         ui.baudRate->clear();
         ui.baudRate->addItem("50", 50);
         ui.baudRate->addItem("70", 70);

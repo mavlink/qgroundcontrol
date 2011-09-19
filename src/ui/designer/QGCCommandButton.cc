@@ -139,10 +139,11 @@ void QGCCommandButton::endEditMode()
 
 void QGCCommandButton::writeSettings(QSettings& settings)
 {
+    qDebug() << "COMMAND BUTTON WRITING SETTINGS";
     settings.setValue("TYPE", "COMMANDBUTTON");
     settings.setValue("QGC_ACTION_BUTTON_DESCRIPTION", ui->nameLabel->text());
     settings.setValue("QGC_ACTION_BUTTON_BUTTONTEXT", ui->commandButton->text());
-    settings.setValue("QGC_ACTION_BUTTON_ACTIONID", ui->editCommandComboBox->currentIndex());
+    settings.setValue("QGC_ACTION_BUTTON_ACTIONID", ui->editCommandComboBox->itemData(ui->editCommandComboBox->currentIndex()).toInt());
     settings.setValue("QGC_COMMAND_BUTTON_PARAMS_VISIBLE", ui->editParamsVisibleCheckBox->isChecked());
     settings.sync();
 }
@@ -155,7 +156,19 @@ void QGCCommandButton::readSettings(const QSettings& settings)
 
     ui->nameLabel->setText(settings.value("QGC_ACTION_BUTTON_DESCRIPTION", "ERROR LOADING BUTTON").toString());
     ui->commandButton->setText(settings.value("QGC_ACTION_BUTTON_BUTTONTEXT", "UNKNOWN").toString());
-    ui->editCommandComboBox->setCurrentIndex(settings.value("QGC_ACTION_BUTTON_ACTIONID", 0).toInt());
+
+    int commandId = settings.value("QGC_ACTION_BUTTON_ACTIONID", 0).toInt();
+    ui->editCommandComboBox->setCurrentIndex(0);
+
+    // Find combobox entry for this data
+    for (int i = 0; i < ui->editCommandComboBox->count(); ++i)
+    {
+        if (commandId == ui->editCommandComboBox->itemData(i).toInt())
+        {
+            ui->editCommandComboBox->setCurrentIndex(i);
+        }
+    }
+
     ui->editParamsVisibleCheckBox->setChecked(settings.value("QGC_COMMAND_BUTTON_PARAMS_VISIBLE").toBool());
     if (ui->editParamsVisibleCheckBox->isChecked()) {
         ui->editParam1SpinBox->show();

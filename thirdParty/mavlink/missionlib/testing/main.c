@@ -67,9 +67,6 @@ mavlink_system_t mavlink_system;
 /* 2: Include actual protocol, REQUIRES mavlink_system */
 #include "mavlink.h"
 
-/* 3: Include MAVLink data structures */
-#include "mavlink_data.h"
-
 /* 3: Define waypoint helper functions */
 void mavlink_wpm_send_message(mavlink_message_t* msg);
 void mavlink_wpm_send_gcs_string(const char* string);
@@ -184,6 +181,9 @@ int main(int argc, char* argv[])
 	mavlink_system.compid = 20;
 	mavlink_pm_reset_params(&pm);
 	
+	int32_t ground_distance;
+	uint32_t time_ms;
+	
 	
 	
 	// Create socket
@@ -246,17 +246,17 @@ int main(int argc, char* argv[])
 		bytes_sent = 0;
 		
 		/* Send Heartbeat */
-		mavlink_msg_heartbeat_pack(mavlink_system.sysid, 200, &msg, MAV_TYPE_HELICOPTER, MAV_AUTOPILOT_GENERIC, 0, 0, 0, 0, 0);
+		mavlink_msg_heartbeat_pack(mavlink_system.sysid, 200, &msg, MAV_TYPE_HELICOPTER, MAV_AUTOPILOT_GENERIC, 0, 0, 0);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
 		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		
 		/* Send Status */
-		mavlink_msg_sys_status_pack(1, 200, &msg, MAV_MODE_GUIDED, 0, MAV_STATE_ACTIVE, 500, 7500, 0, 0, 0, 0, 0, 0, 0);
+		mavlink_msg_sys_status_pack(1, 200, &msg, MAV_MODE_GUIDED_ARMED, 0, MAV_STATE_ACTIVE, 500, 7500, 0, 0, 0, 0, 0, 0, 0, 0);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
 		bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof (struct sockaddr_in));
 		
 		/* Send Local Position */
-		mavlink_msg_local_position_pack(mavlink_system.sysid, 200, &msg, microsSinceEpoch(), 
+		mavlink_msg_local_position_ned_pack(mavlink_system.sysid, 200, &msg, microsSinceEpoch(), 
 										position[0], position[1], position[2],
 										position[3], position[4], position[5]);
 		len = mavlink_msg_to_send_buffer(buf, &msg);
@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
 		/* Send global position */
 		if (hilEnabled)
 		{
-			mavlink_msg_global_position_int_pack(mavlink_system.sysid, 200, &msg, latitude, longitude, altitude, speedx, speedy, speedz, (yaw/M_PI)*180*100);
+			mavlink_msg_global_position_int_pack(mavlink_system.sysid, 200, &msg, time_ms, latitude, longitude, altitude, ground_distance, speedx, speedy, speedz, (yaw/M_PI)*180*100);
 			len = mavlink_msg_to_send_buffer(buf, &msg);
 			bytes_sent += sendto(sock, buf, len, 0, (struct sockaddr*)&gcAddr, sizeof(struct sockaddr_in));
 		}

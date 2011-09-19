@@ -19,7 +19,7 @@ class QGCToolWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit QGCToolWidget(const QString& title, QWidget *parent = 0);
+    explicit QGCToolWidget(const QString& title=QString("Unnamed Tool"), QWidget *parent = 0);
     ~QGCToolWidget();
 
     /** @brief Factory method to instantiate all tool widgets */
@@ -61,7 +61,6 @@ signals:
 
 protected:
     QAction* addParamAction;
-    QAction* addButtonAction;
     QAction* addCommandAction;
     QAction* setTitleAction;
     QAction* deleteAction;
@@ -73,6 +72,7 @@ protected:
     QMap<int, Qt::DockWidgetArea> dockWidgetArea;   ///< Dock widget area desired by this widget
     QMap<int, bool> viewVisible;  ///< Visibility in one view
     QString widgetTitle;
+    static int instanceCount;     ///< Number of instances around
 
     void contextMenuEvent(QContextMenuEvent* event);
     void createActions();
@@ -87,6 +87,7 @@ protected slots:
     void addCommand();
     void setTitle();
     void setTitle(QString title);
+    void setWindowTitle(const QString& title);
 
 
 private:

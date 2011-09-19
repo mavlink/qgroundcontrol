@@ -86,7 +86,7 @@ void mavlink_pm_message_handler(const mavlink_channel_t chan, const mavlink_mess
 															  &tx_msg,
 															  pm.param_names[i],
 															  pm.param_values[i],
-															  MAV_DATA_TYPE_FLOAT,
+															  MAVLINK_TYPE_FLOAT,
 															  pm.size,
 															  i);
 							mavlink_missionlib_send_message(&tx_msg);
@@ -94,7 +94,7 @@ void mavlink_pm_message_handler(const mavlink_channel_t chan, const mavlink_mess
 							mavlink_msg_param_value_send(MAVLINK_COMM_0,
 														 pm.param_names[i],
 														 pm.param_values[i],
-														 MAV_DATA_TYPE_FLOAT,
+														 MAVLINK_TYPE_FLOAT,
 														 pm.size,
 														 i);
 #endif
@@ -133,7 +133,7 @@ void mavlink_pm_message_handler(const mavlink_channel_t chan, const mavlink_mess
 											  &tx_msg,
 											  pm.param_names[pm.next_param],
 											  pm.param_values[pm.next_param],
-											  MAV_DATA_TYPE_FLOAT,
+											  MAVLINK_TYPE_FLOAT,
 											  pm.size,
 											  pm.next_param);
 			mavlink_missionlib_send_message(&tx_msg);

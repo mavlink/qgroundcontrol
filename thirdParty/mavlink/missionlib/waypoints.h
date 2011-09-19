@@ -64,9 +64,9 @@ enum MAVLINK_WPM_CODES
 
 
 struct mavlink_wpm_storage {
-	mavlink_waypoint_t waypoints[MAVLINK_WPM_MAX_WP_COUNT];      ///< Currently active waypoints
+	mavlink_mission_item_t waypoints[MAVLINK_WPM_MAX_WP_COUNT];      ///< Currently active waypoints
 #ifdef MAVLINK_WPM_CONFIG_IN_FLIGHT_UPDATE
-	mavlink_waypoint_t rcv_waypoints[MAVLINK_WPM_MAX_WP_COUNT];  ///< Receive buffer for next waypoints
+	mavlink_mission_item_t rcv_waypoints[MAVLINK_WPM_MAX_WP_COUNT];  ///< Receive buffer for next waypoints
 #endif
 	uint16_t size;
 	uint16_t max_size;
