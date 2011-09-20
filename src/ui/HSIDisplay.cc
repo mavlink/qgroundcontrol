@@ -179,6 +179,7 @@ void HSIDisplay::paintEvent(QPaintEvent * event)
 
 void HSIDisplay::renderOverlay()
 {
+    if (!isVisible()) return;
 #if (QGC_EVENTLOOP_DEBUG)
     qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
 #endif

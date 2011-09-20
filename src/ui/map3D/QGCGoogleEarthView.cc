@@ -610,7 +610,8 @@ void QGCGoogleEarthView::updateState()
 
         // Update all MAVs
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-        foreach (UASInterface* currMav, mavs) {
+        foreach (UASInterface* currMav, mavs)
+        {
             uasId = currMav->getUASID();
             lat = currMav->getLatitude();
             lon = currMav->getLongitude();
@@ -637,9 +638,9 @@ void QGCGoogleEarthView::updateState()
         // Microsoft API available in Qt - improvements wanted
 
         // First check if a new WP should be created
-//        bool newWaypointPending = .to
         bool newWaypointPending = documentElement("newWaypointPending").toBool();
-        if (newWaypointPending) {
+        if (newWaypointPending)
+        {
             bool coordsOk = true;
             bool ok;
             double latitude = documentElement("newWaypointLatitude").toDouble(&ok);
@@ -648,15 +649,14 @@ void QGCGoogleEarthView::updateState()
             coordsOk &= ok;
             double altitude = documentElement("newWaypointAltitude").toDouble(&ok);
             coordsOk &= ok;
-            if (coordsOk) {
+            if (coordsOk)
+            {
                 // Add new waypoint
-                if (mav) {
+                if (mav)
+                {
                     int nextIndex = mav->getWaypointManager()->getWaypointList().count();
                     Waypoint* wp = new Waypoint(nextIndex, latitude, longitude, altitude, true);
                     wp->setFrame(MAV_FRAME_GLOBAL);
-//                    wp.setLatitude(latitude);
-//                    wp.setLongitude(longitude);
-//                    wp.setAltitude(altitude);
                     mav->getWaypointManager()->addWaypoint(wp);
                 }
             }
@@ -666,7 +666,8 @@ void QGCGoogleEarthView::updateState()
         // Check if a waypoint should be moved
         bool dragWaypointPending = documentElement("dragWaypointPending").toBool();
 
-        if (dragWaypointPending) {
+        if (dragWaypointPending)
+        {
             bool coordsOk = true;
             bool ok;
             double latitude = documentElement("dragWaypointLatitude").toDouble(&ok);
@@ -677,21 +678,27 @@ void QGCGoogleEarthView::updateState()
             coordsOk &= ok;
 
             // UPDATE WAYPOINTS, HOME LOCATION AND OTHER LOCATIONS
-            if (coordsOk) {
+            if (coordsOk)
+            {
                 QString idText = documentElement("dragWaypointIndex").toString();
-                if (idText == "HOME") {
+                if (idText == "HOME")
+                {
                     qDebug() << "HOME UPDATED!";
                     UASManager::instance()->setHomePosition(latitude, longitude, altitude);
                     ui->setHomeButton->setChecked(false);
-                } else {
+                }
+                else
+                {
                     // Update waypoint or symbol
-                    if (mav) {
+                    if (mav)
+                    {
                         QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameAndNavTypeWaypointList();
 
                         bool ok;
                         int index = idText.toInt(&ok);
 
-                        if (ok && index >= 0 && index < wps.count()) {
+                        if (ok && index >= 0 && index < wps.count())
+                        {
                             Waypoint* wp = wps.at(index);
                             wp->setLatitude(latitude);
                             wp->setLongitude(longitude);
@@ -700,7 +707,9 @@ void QGCGoogleEarthView::updateState()
                         }
                     }
                 }
-            } else {
+            }
+            else
+            {
                 // If coords were not ok, move the view in google earth back
                 // to last acceptable location
                 updateWaypointList(mav->getUASID());

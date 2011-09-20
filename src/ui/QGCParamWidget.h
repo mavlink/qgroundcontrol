@@ -53,8 +53,10 @@ public:
 signals:
     /** @brief A parameter was changed in the widget, NOT onboard */
     void parameterChanged(int component, QString parametername, QVariant value);
-    /** @brief Request a single parameter */
+    /** @brief Request a single parameter by index */
     void requestParameter(int component, int parameter);
+    /** @brief Request a single parameter by name */
+    void requestParameter(int component, const QString& parameter);
 public slots:
     /** @brief Add a component to the list */
     void addComponent(int uas, int component, QString componentName);

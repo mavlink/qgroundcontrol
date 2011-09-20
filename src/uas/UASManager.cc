@@ -216,7 +216,6 @@ UASManager::UASManager() :
         homeLon(8.549444),
         homeAlt(470.0)
 {
-    start(QThread::LowPriority);
     loadSettings();
     setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);
 }
@@ -228,16 +227,6 @@ UASManager::~UASManager()
     foreach (UASInterface* mav, systems) {
         delete mav;
     }
-}
-
-
-void UASManager::run()
-{
-    //    forever
-    //    {
-    //        QGC::SLEEP::msleep(5000);
-    //    }
-    exec();
 }
 
 void UASManager::addUAS(UASInterface* uas)

@@ -139,7 +139,7 @@ protected:
 //     virtual void resizeEvent(QResizeEvent* event);
 
     UASInterface* uas;                 ///< The uas currently monitored
-    QMap<QString, float> values;       ///< The variables this HUD displays
+    QMap<QString, double> values;       ///< The variables this HUD displays
     QMap<QString, QString> units;      ///< The units
     QMap<QString, float> valuesDot;    ///< First derivative of the variable
     QMap<QString, float> valuesMean;   ///< Mean since system startup for this variable
@@ -172,7 +172,7 @@ protected:
     int warningBlinkRate;      ///< Blink rate of warning messages, will be rounded to the refresh rate
 
     QTimer* refreshTimer;      ///< The main timer, controls the update rate
-    static const int updateInterval = 120; ///< Update interval in milliseconds
+    static const int updateInterval = 300; ///< Update interval in milliseconds
     QPainter* hudPainter;
     QFont font;                ///< The HUD font, per default the free Bitstream Vera SANS, which is very close to actual HUD fonts
     QFontDatabase fontDatabase;///< Font database, only used to load the TrueType font file (the HUD font is directly loaded from file rather than from the system)
@@ -191,6 +191,7 @@ protected:
     QAction* addGaugeAction;   ///< Action adding a gauge
     QAction* setTitleAction;   ///< Action setting the title
     QAction* setColumnsAction; ///< Action setting the number of columns
+    bool valuesChanged;
 
 private:
     Ui::HDDisplay *m_ui;

@@ -79,6 +79,7 @@ public slots:
     /** @brief Ultrasound/Infrared localization changed */
     void updateInfraredUltrasoundLocalization(UASInterface* uas, int fix);
 
+    /** @brief Repaint the widget */
     void paintEvent(QPaintEvent * event);
     /** @brief Update state from joystick */
     void updateJoystick(double roll, double pitch, double yaw, double thrust, int xHat, int yHat);

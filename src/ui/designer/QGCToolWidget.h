@@ -53,6 +53,8 @@ public slots:
     void storeSettings(QSettings& settings);
     /** @brief Store this widget to a settings file */
     void storeSettings(const QString& settingsFile);
+    /** @brief Store this widget to a settings file */
+    void storeSettings();
     /** @brief Store the view id and dock widget area */
     void setViewVisibilityAndDockWidgetArea(int view, bool visible, Qt::DockWidgetArea area);
 

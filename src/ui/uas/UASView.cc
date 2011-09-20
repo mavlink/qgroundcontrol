@@ -71,7 +71,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
         hilAction(new QAction("Enable Hardware-in-the-Loop Simulation", this )),
         selectAirframeAction(new QAction("Choose Airframe", this)),
         setBatterySpecsAction(new QAction("Set Battery Options", this)),
-        lowPowerModeEnabled(false),
+        lowPowerModeEnabled(true),
         m_ui(new Ui::UASView)
 {
     // FIXME XXX
@@ -140,7 +140,7 @@ UASView::UASView(UASInterface* uas, QWidget *parent) :
     connect(refreshTimer, SIGNAL(timeout()), this, SLOT(refresh()));
     if (lowPowerModeEnabled)
     {
-        refreshTimer->start(updateInterval*10);
+        refreshTimer->start(updateInterval*3);
     } else {
         refreshTimer->start(updateInterval);
     }

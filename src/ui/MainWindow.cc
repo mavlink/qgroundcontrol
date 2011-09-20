@@ -1249,11 +1249,8 @@ void MainWindow::UASCreated(UASInterface* uas)
 
     if (!ui.menuConnected_Systems->isEnabled()) ui.menuConnected_Systems->setEnabled(true);
 
-//    // Restore the mainwindow size
-//    if (settings.contains(getWindowGeometryKey()))
-//    {
-//        restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
-//    }
+    // Reload view state in case new widgets were added
+    loadViewState();
 }
 
 /**
