@@ -220,6 +220,7 @@ protected: //COMMENTS FOR TEST UNIT
     QGCFlightGearLink* simulation;  ///< Hardware in the loop simulation link
     bool isLocalPositionKnown;      ///< If the local position has been received for this MAV
     bool isGlobalPositionKnown;     ///< If the global position has been received for this MAV
+    bool systemIsArmed;             ///< If the system is armed
 
 public:
     /** @brief Set the current battery type */
@@ -234,6 +235,8 @@ public:
     QString getNavModeText(int mode);
     /** @brief Check if vehicle is in autonomous mode */
     bool isAuto();
+    /** @brief Check if vehicle is armed */
+    bool isArmed() const { return systemIsArmed; }
 
     UASWaypointManager* getWaypointManager() {
         return &waypointManager;

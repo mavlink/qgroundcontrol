@@ -89,6 +89,8 @@ public:
 
     virtual bool getSelected() const = 0;
 
+    virtual bool isArmed() const = 0;
+
     /** @brief Set the airframe of this MAV */
     virtual int getAirframe() const = 0;
 
@@ -333,6 +335,13 @@ signals:
     void textMessageReceived(int uasid, int componentid, int severity, QString text);
 
     void navModeChanged(int uasid, int mode, const QString& text);
+
+    /** @brief System is now armed */
+    void armed();
+    /** @brief System is now disarmed */
+    void disarmed();
+    /** @brief Arming mode changed */
+    void armingChanged(bool armed);
 
     /**
      * @brief Update the error count of a device

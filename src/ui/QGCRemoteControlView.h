@@ -76,6 +76,7 @@ protected:
     QLabel* nameLabel;
     QPushButton *calibrate;
     RadioCalibrationWindow *calibrationWindow;
+    QTimer updateTimer;
 
 private:
     Ui::QGCRemoteControlView *ui;

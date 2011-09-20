@@ -79,7 +79,8 @@ attitudeStamped(false),
 lastAttitude(0),
 simulation(new QGCFlightGearLink(this)),
 isLocalPositionKnown(false),
-isGlobalPositionKnown(false)
+isGlobalPositionKnown(false),
+systemIsArmed(false)
 {
     color = UASInterface::getNextColor();
     setBatterySpecs(QString("9V,9.5V,12.6V"));
@@ -87,6 +88,10 @@ isGlobalPositionKnown(false)
     connect(this, SIGNAL(systemSpecsChanged(int)), this, SLOT(writeSettings()));
     statusTimeout->start(500);
     readSettings();
+
+    // Initial signals
+    emit disarmed();
+    emit armingChanged(false);
 }
 
 UAS::~UAS()
@@ -236,8 +241,21 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit systemTypeSet(this, type);
             }
 
-            // FIXME update
-            //emit armingChanged(uasId, );
+            bool currentlyArmed = state.base_mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY;
+
+            if (systemIsArmed != currentlyArmed)
+            {
+                systemIsArmed = currentlyArmed;
+                emit armingChanged(systemIsArmed);
+                if (systemIsArmed)
+                {
+                    emit armed();
+                }
+                else
+                {
+                    emit disarmed();
+                }
+            }
 
             QString audiostring = "System " + getUASName();
             QString stateAudio = "";
@@ -618,7 +636,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_mission_count_t wpc;
                 mavlink_msg_mission_count_decode(&message, &wpc);
-                if (wpc.target_system == mavlink->getSystemId() && wpc.target_component == mavlink->getComponentId())
+                if (wpc.target_system == mavlink->getSystemId())
                 {
                     waypointManager.handleWaypointCount(message.sysid, message.compid, wpc.count);
                 }
@@ -634,7 +652,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_mission_item_t wp;
                 mavlink_msg_mission_item_decode(&message, &wp);
                 //qDebug() << "got waypoint (" << wp.seq << ") from ID " << message.sysid << " x=" << wp.x << " y=" << wp.y << " z=" << wp.z;
-                if(wp.target_system == mavlink->getSystemId() && wp.target_component == mavlink->getComponentId())
+                if(wp.target_system == mavlink->getSystemId())
                 {
                     waypointManager.handleWaypoint(message.sysid, message.compid, &wp);
                 }
@@ -660,7 +678,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_mission_request_t wpr;
                 mavlink_msg_mission_request_decode(&message, &wpr);
-                if(wpr.target_system == mavlink->getSystemId() && wpr.target_component == mavlink->getComponentId())
+                if(wpr.target_system == mavlink->getSystemId())
                 {
                     waypointManager.handleWaypointRequest(message.sysid, message.compid, &wpr);
                 }
