@@ -50,6 +50,14 @@ public:
     QGCParamWidget(UASInterface* uas, QWidget *parent = 0);
     /** @brief Get the UAS of this widget */
     UASInterface* getUAS();
+
+    bool isParamMinKnown(const QString& param) { return paramMin.contains(param); }
+    bool isParamMaxKnown(const QString& param) { return paramMax.contains(param); }
+    bool isParamDefaultKnown(const QString& param) { return paramDefault.contains(param); }
+    double getParamMin(const QString& param) { return paramMin.value(param, 0.0f); }
+    double getParamMax(const QString& param) { return paramMax.value(param, 0.0f); }
+    double getParamDefault(const QString& param) { return paramDefault.value(param, 0.0f); }
+
 signals:
     /** @brief A parameter was changed in the widget, NOT onboard */
     void parameterChanged(int component, QString parametername, QVariant value);

@@ -24,6 +24,13 @@ public:
         return parameters.value(component)->value(parameter);
     }
 
+    virtual bool isParamMinKnown(const QString& param) = 0;
+    virtual bool isParamMaxKnown(const QString& param) = 0;
+    virtual bool isParamDefaultKnown(const QString& param) = 0;
+    virtual double getParamMin(const QString& param) = 0;
+    virtual double getParamMax(const QString& param) = 0;
+    virtual double getParamDefault(const QString& param) = 0;
+
     /** @brief Request an update for the parameter list */
     void requestParameterListUpdate(int component = 0);
     /** @brief Request an update for this specific parameter */
