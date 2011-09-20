@@ -44,7 +44,7 @@ This file is part of the QGROUNDCONTROL project
  * This class keeps a list of all connected / configured UASs. It also stores which
  * UAS is currently select with respect to user input or manual controls.
  **/
-class UASManager : public QThread
+class UASManager : public QObject
 {
     Q_OBJECT
 
@@ -52,7 +52,6 @@ public:
     static UASManager* instance();
     ~UASManager();
 
-    void run();
     /**
      * @brief Get the currently selected UAS
      *

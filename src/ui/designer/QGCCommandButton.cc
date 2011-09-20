@@ -170,12 +170,15 @@ void QGCCommandButton::readSettings(const QSettings& settings)
     }
 
     ui->editParamsVisibleCheckBox->setChecked(settings.value("QGC_COMMAND_BUTTON_PARAMS_VISIBLE").toBool());
-    if (ui->editParamsVisibleCheckBox->isChecked()) {
+    if (ui->editParamsVisibleCheckBox->isChecked())
+    {
         ui->editParam1SpinBox->show();
         ui->editParam2SpinBox->show();
         ui->editParam3SpinBox->show();
         ui->editParam4SpinBox->show();
-    } else {
+    }
+    else
+    {
         ui->editParam1SpinBox->hide();
         ui->editParam2SpinBox->hide();
         ui->editParam3SpinBox->hide();

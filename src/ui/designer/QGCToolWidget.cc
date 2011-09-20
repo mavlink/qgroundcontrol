@@ -47,7 +47,6 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
     }
 
     this->setWindowTitle(title);
-    //setObjectName(title+"WIDGET");
 
     QList<UASInterface*> systems = UASManager::instance()->getUASList();
     foreach (UASInterface* uas, systems)
@@ -64,8 +63,8 @@ QGCToolWidget::QGCToolWidget(const QString& title, QWidget *parent) :
 
 QGCToolWidget::~QGCToolWidget()
 {
-    if (mainMenuAction) delete mainMenuAction;
-    QGCToolWidget::instances()->remove(widgetTitle);
+    if (mainMenuAction) mainMenuAction->deleteLater();
+    if (QGCToolWidget::instances()) QGCToolWidget::instances()->remove(widgetTitle);
     delete ui;
 }
 
@@ -99,6 +98,7 @@ QList<QGCToolWidget*> QGCToolWidget::createWidgetsFromSettings(QWidget* parent, 
     else
     {
         settings = new QSettings();
+        qDebug() << "LOADING SETTINGS FROM DEFAULT" << settings->fileName();
     }
 
     QList<QGCToolWidget*> newWidgets;
@@ -206,10 +206,12 @@ void QGCToolWidget::storeWidgetsToSettings(QString settingsFile)
     if (!settingsFile.isEmpty())
     {
         settings = new QSettings(settingsFile, QSettings::IniFormat);
+        qDebug() << "STORING SETTINGS TO" << settings->fileName();
     }
     else
     {
         settings = new QSettings();
+        qDebug() << "STORING SETTINGS TO DEFAULT" << settings->fileName();
     }
 
     settings->beginWriteArray("QGC_TOOL_WIDGET_NAMES");
@@ -226,6 +228,12 @@ void QGCToolWidget::storeWidgetsToSettings(QString settingsFile)
         instances()->values().at(i)->storeSettings(*settings);
     }
     delete settings;
+}
+
+void QGCToolWidget::storeSettings()
+{
+    QSettings settings;
+    storeSettings(settings);
 }
 
 void QGCToolWidget::storeSettings(const QString& settingsFile)
@@ -271,6 +279,7 @@ void QGCToolWidget::contextMenuEvent (QContextMenuEvent* event)
     QMenu menu(this);
     menu.addAction(addParamAction);
     menu.addAction(addCommandAction);
+    menu.addSeparator();
     menu.addAction(setTitleAction);
     menu.addAction(exportAction);
     menu.addAction(importAction);
@@ -281,7 +290,6 @@ void QGCToolWidget::contextMenuEvent (QContextMenuEvent* event)
 void QGCToolWidget::hideEvent(QHideEvent* event)
 {
     // Store settings
-    storeWidgetsToSettings();
     QWidget::hideEvent(event);
 }
 
@@ -340,6 +348,7 @@ QList<QGCToolWidgetItem*>* QGCToolWidget::itemList()
 void QGCToolWidget::addParam()
 {
     QGCParamSlider* slider = new QGCParamSlider(this);
+    connect(slider, SIGNAL(destroyed()), this, SLOT(storeSettings()));
     if (ui->hintLabel)
     {
         ui->hintLabel->deleteLater();
@@ -352,6 +361,7 @@ void QGCToolWidget::addParam()
 void QGCToolWidget::addCommand()
 {
     QGCCommandButton* button = new QGCCommandButton(this);
+    connect(button, SIGNAL(destroyed()), this, SLOT(storeSettings()));
     if (ui->hintLabel)
     {
         ui->hintLabel->deleteLater();
@@ -368,6 +378,7 @@ void QGCToolWidget::addToolWidget(QGCToolWidgetItem* widget)
         ui->hintLabel->deleteLater();
         ui->hintLabel = NULL;
     }
+    connect(widget, SIGNAL(destroyed()), this, SLOT(storeSettings()));
     toolLayout->addWidget(widget);
 }
 
@@ -436,7 +447,6 @@ void QGCToolWidget::setTitle(QString title)
     QWidget::setWindowTitle(title);
     if (parent) parent->setWindowTitle(title);
 
-    storeWidgetsToSettings();
     emit titleChanged(title);
     if (mainMenuAction) mainMenuAction->setText(title);
 }

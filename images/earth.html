@@ -683,11 +683,17 @@ function updateFollowAircraft()
 	
 	if (viewMode != 3) // VIEW_MODE_CHASE_FREE
 	{
-		currView.setTilt(currFollowTilt);
-		currView.setHeading(currFollowHeading);
+		ge.getView().setAbstractView(currView);
+		var camera = ge.getView().copyAsCamera(ge.ALTITUDE_ABSOLUTE);
+		camera.setTilt(currFollowTilt);
+		camera.setRoll(0);
+		camera.setHeading(currFollowHeading);
+		ge.getView().setAbstractView(camera);
 	}
-	
-	ge.getView().setAbstractView(currView);
+	else
+	{
+		ge.getView().setAbstractView(currView);
+	}
 }
 
 function failureCallback(object)

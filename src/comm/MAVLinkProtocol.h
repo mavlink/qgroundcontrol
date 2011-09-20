@@ -57,7 +57,6 @@ public:
     MAVLinkProtocol();
     ~MAVLinkProtocol();
 
-    void run();
     /** @brief Get the human-friendly name of this protocol */
     QString getName();
     /** @brief Get the system id of this application */

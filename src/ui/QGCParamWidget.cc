@@ -131,6 +131,7 @@ QGCParamWidget::QGCParamWidget(UASInterface* uas, QWidget *parent) :
     connect(uas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(addParameter(int,int,int,int,QString,QVariant)));
 
     // Connect retransmission guard
+    connect(this, SIGNAL(requestParameter(int,QString)), uas, SLOT(requestParameter(int,QString)));
     connect(this, SIGNAL(requestParameter(int,int)), uas, SLOT(requestParameter(int,int)));
     connect(&retransmissionTimer, SIGNAL(timeout()), this, SLOT(retransmissionGuardTick()));
 }
@@ -474,7 +475,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
 //            componentName = tr("Component #").arg(component);
 //            break;
 //        }
-        QString componentName = tr("Component #").arg(component);
+        QString componentName = tr("Component #%1").arg(component);
         addComponent(uas, component, componentName);
     }
 

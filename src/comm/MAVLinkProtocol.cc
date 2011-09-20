@@ -147,13 +147,6 @@ MAVLinkProtocol::~MAVLinkProtocol()
     }
 }
 
-
-
-void MAVLinkProtocol::run()
-{
-    exec();
-}
-
 QString MAVLinkProtocol::getLogfileName()
 {
     if (m_logfile) {
@@ -173,7 +166,7 @@ QString MAVLinkProtocol::getLogfileName()
  **/
 void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 {
-    receiveMutex.lock();
+//    receiveMutex.lock();
     mavlink_message_t message;
     mavlink_status_t status;
     for (int position = 0; position < b.size(); position++) {
@@ -330,7 +323,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             }
         }
     }
-    receiveMutex.unlock();
+//    receiveMutex.unlock();
 }
 
 /**

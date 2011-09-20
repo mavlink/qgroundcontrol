@@ -214,7 +214,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
         if (mav->getWaypointManager())
         {
-            disconnect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(int)), this, SLOT(updateCurrentWaypoint(int)));
+            disconnect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
             disconnect(mav->getWaypointManager(), SIGNAL(waypointDistanceChanged(double)), this, SLOT(updateWaypointDistance(double)));
         }
     }
@@ -234,6 +234,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     }
 
     // Update all values once
+    systemName = mav->getUASName();
     toolBarNameLabel->setText(mav->getUASName());
     toolBarNameLabel->setStyleSheet(QString("QLabel { font: bold 16px; color: %1; }").arg(mav->getColor().name()));
     symbolButton->setStyleSheet(QString("QWidget { background-color: %1; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 4px 0px 20px; background-color: none; }").arg(mav->getColor().name()));

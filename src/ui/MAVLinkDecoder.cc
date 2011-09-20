@@ -21,6 +21,11 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_COUNT, false);
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_ACK, false);
 
+    textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG, false);
+    textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG_VECT, false);
+    textMessageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, false);
+    textMessageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_INT, false);
+
     connect(protocol, SIGNAL(messageReceived(LinkInterface*,mavlink_message_t)), this, SLOT(receiveMessage(LinkInterface*,mavlink_message_t)));
 }
 
@@ -81,7 +86,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
             // Enforce null termination
             str[messageInfo[msgid].fields[fieldid].array_length-1] = '\0';
             QString string(name + ": " + str);
-            emit textMessageReceived(msg->sysid, msg->compid, 0, string);
+            if (!textMessageFilter.contains(msgid)) emit textMessageReceived(msg->sysid, msg->compid, 0, string);
         }
         else
         {

@@ -1733,6 +1733,20 @@ void UAS::setParameter(const int component, const QString& id, const QVariant& v
     }
 }
 
+void UAS::requestParameter(int component, int id)
+{
+    // Request parameter, use parameter name to request it
+    mavlink_message_t msg;
+    mavlink_param_request_read_t read;
+    read.param_index = id;
+    read.param_id[0] = '\0'; // Enforce null termination
+    read.target_system = uasId;
+    read.target_component = component;
+    mavlink_msg_param_request_read_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &read);
+    sendMessage(msg);
+    qDebug() << __FILE__ << __LINE__ << "REQUESTING PARAM RETRANSMISSION FROM COMPONENT" << component << "FOR PARAM ID" << id;
+}
+
 void UAS::requestParameter(int component, const QString& parameter)
 {
     // Request parameter, use parameter name to request it
@@ -1750,7 +1764,7 @@ void UAS::requestParameter(int component, const QString& parameter)
     read.target_component = component;
     mavlink_msg_param_request_read_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &read);
     sendMessage(msg);
-    qDebug() << __FILE__ << __LINE__ << "REQUESTING PARAM RETRANSMISSION FROM COMPONENT" << component << "FOR PARAM ID" << parameter;
+    qDebug() << __FILE__ << __LINE__ << "REQUESTING PARAM RETRANSMISSION FROM COMPONENT" << component << "FOR PARAM NAME" << parameter;
 }
 
 void UAS::setSystemType(int systemType)
@@ -1840,13 +1854,9 @@ void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float 
  **/
 void UAS::launch()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-//    mavlink_msg_action_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), MAV_COMP_ID_IMU, (uint8_t)MAV_ACTION_TAKEOFF);
-//    // Send message twice to increase chance of reception
-//    sendMessage(msg);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_CMD_NAV_TAKEOFF, 1, 0, 0, 0, 0);
+    sendMessage(msg);
 }
 
 /**
