@@ -37,7 +37,8 @@ QGCToolBar::QGCToolBar(QWidget *parent) :
     batteryPercent(0),
     batteryVoltage(0),
     wpId(0),
-    wpDistance(0)
+    wpDistance(0),
+    systemArmed(false)
 {
     setObjectName("QGC_TOOLBAR");
 
@@ -212,6 +213,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
         disconnect(mav, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
         disconnect(mav, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
         disconnect(mav, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+        disconnect(mav, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
         if (mav->getWaypointManager())
         {
             disconnect(mav->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
@@ -227,6 +229,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
     connect(active, SIGNAL(systemTypeSet(UASInterface*,uint)), this, SLOT(setSystemType(UASInterface*,uint)));
     connect(active, SIGNAL(textMessageReceived(int,int,int,QString)), this, SLOT(receiveTextMessage(int,int,int,QString)));
     connect(active, SIGNAL(batteryChanged(UASInterface*,double,double,int)), this, SLOT(updateBatteryRemaining(UASInterface*,double,double,int)));
+    connect(active, SIGNAL(armingChanged(bool)), this, SLOT(updateArmingState(bool)));
     if (active->getWaypointManager())
     {
         connect(active->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)), this, SLOT(updateCurrentWaypoint(quint16)));
@@ -235,6 +238,7 @@ void QGCToolBar::setActiveUAS(UASInterface* active)
 
     // Update all values once
     systemName = mav->getUASName();
+    systemArmed = mav->isArmed();
     toolBarNameLabel->setText(mav->getUASName());
     toolBarNameLabel->setStyleSheet(QString("QLabel { font: bold 16px; color: %1; }").arg(mav->getColor().name()));
     symbolButton->setStyleSheet(QString("QWidget { background-color: %1; color: #DDDDDF; background-clip: border; } QToolButton { font-weight: bold; font-size: 12px; border: 0px solid #999999; border-radius: 5px; min-width:22px; max-width: 22px; min-height: 22px; max-height: 22px; padding: 0px; margin: 0px 4px 0px 20px; background-color: none; }").arg(mav->getColor().name()));
@@ -248,6 +252,12 @@ void QGCToolBar::createCustomWidgets()
 
 }
 
+void QGCToolBar::updateArmingState(bool armed)
+{
+    systemArmed = armed;
+    changed = true;
+}
+
 void QGCToolBar::updateView()
 {
     if (!changed) return;
@@ -259,6 +269,18 @@ void QGCToolBar::updateView()
     toolBarModeLabel->setText(tr("%1").arg(mode));
     toolBarNameLabel->setText(systemName);
     toolBarMessageLabel->setText(lastSystemMessage);
+
+    if (systemArmed)
+    {
+        toolBarSafetyLabel->setStyleSheet(QString("QLabel { margin: 0px 2px; font: 14px; color: %1; background-color: %2; }").arg(QGC::colorRed.name()).arg(QGC::colorYellow.name()));
+        toolBarSafetyLabel->setText(tr("ARMED"));
+    }
+    else
+    {
+        toolBarSafetyLabel->setStyleSheet("QLabel { margin: 0px 2px; font: 14px; color: #14C814; }");
+        toolBarSafetyLabel->setText(tr("SAFE"));
+    }
+
     changed = false;
 }
 

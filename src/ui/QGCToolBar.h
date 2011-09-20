@@ -66,6 +66,8 @@ public slots:
     void updateCurrentWaypoint(quint16 id);
     /** @brief Update distance to current waypoint */
     void updateWaypointDistance(double distance);
+    /** @brief Update arming state */
+    void updateArmingState(bool armed);
     /** @brief Repaint widgets */
     void updateView();
 
@@ -96,6 +98,7 @@ protected:
     QString systemName;
     QString lastSystemMessage;
     QTimer updateViewTimer;
+    bool systemArmed;
 };
 
 #endif // QGCTOOLBAR_H
