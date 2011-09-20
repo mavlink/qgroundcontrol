@@ -56,8 +56,8 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setActiveUAS(UASInterface*)));
     setActiveUAS(UASManager::instance()->getActiveUAS());
 
-    // Get param value
-    QTimer::singleShot(100, this, SLOT(requestParameter()));
+    // Get param value after settings have been loaded
+    QTimer::singleShot(300, this, SLOT(requestParameter()));
 }
 
 QGCParamSlider::~QGCParamSlider()
@@ -88,7 +88,14 @@ void QGCParamSlider::setActiveUAS(UASInterface* activeUas)
         connect(activeUas, SIGNAL(parameterChanged(int,int,int,int,QString,QVariant)), this, SLOT(setParameterValue(int,int,int,int,QString,QVariant)), Qt::UniqueConnection);
         uas = activeUas;
         // Update current param value
-        requestParameter();
+        if (parameterName == "")
+        {
+            refreshParamList();
+        }
+        else
+        {
+            requestParameter();
+        }
     }
 }
 
@@ -96,13 +103,13 @@ void QGCParamSlider::requestParameter()
 {
     if (!parameterName.isEmpty() && uas)
     {
-        uas->requestParameter(this->component, this->parameterName);
+        uas->getParamManager()->requestParameterUpdate(this->component, this->parameterName);
     }
 }
 
 void QGCParamSlider::setParamValue(double value)
 {
-    parameterValue = value;
+    parameterValue = (float)value;
     ui->valueSlider->setValue(floatToScaledInt(value));
 }
 
@@ -238,16 +245,18 @@ void QGCParamSlider::sendParameter()
 
 void QGCParamSlider::setSliderValue(int sliderValue)
 {
-    parameterValue = scaledIntToFloat(sliderValue);
     switch (parameterValue.type())
     {
     case QVariant::Int:
+        parameterValue = (int)scaledIntToFloat(sliderValue);
         ui->intValueSpinBox->setValue(parameterValue.toInt());
         break;
     case QVariant::UInt:
+        parameterValue = (unsigned int)scaledIntToFloat(sliderValue);
         ui->intValueSpinBox->setValue(parameterValue.toUInt());
         break;
     case QMetaType::Float:
+        parameterValue = scaledIntToFloat(sliderValue);
         ui->doubleValueSpinBox->setValue(parameterValue.toFloat());
         break;
     default:
