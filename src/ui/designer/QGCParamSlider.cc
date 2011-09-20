@@ -57,7 +57,7 @@ QGCParamSlider::QGCParamSlider(QWidget *parent) :
     setActiveUAS(UASManager::instance()->getActiveUAS());
 
     // Get param value
-    QTimer::singleShot(1000, this, SLOT(requestParameter()));
+    QTimer::singleShot(100, this, SLOT(requestParameter()));
 }
 
 QGCParamSlider::~QGCParamSlider()
@@ -119,7 +119,32 @@ void QGCParamSlider::selectComponent(int componentIndex)
 
 void QGCParamSlider::selectParameter(int paramIndex)
 {
+    // Set name
     parameterName = ui->editSelectParamComboBox->itemText(paramIndex);
+
+    // Update min and max values if available
+    if (uas)
+    {
+        if (uas->getParamManager())
+        {
+            // Current value
+            uas->getParamManager()->requestParameterUpdate(component, parameterName);
+
+            // Minimum
+            if (uas->getParamManager()->isParamMinKnown(parameterName))
+            {
+                parameterMin = uas->getParamManager()->getParamMin(parameterName);
+                ui->editMinSpinBox->setValue(parameterMin);
+            }
+
+            // Maximum
+            if (uas->getParamManager()->isParamMaxKnown(parameterName))
+            {
+                parameterMax = uas->getParamManager()->getParamMax(parameterName);
+                ui->editMaxSpinBox->setValue(parameterMax);
+            }
+        }
+    }
 }
 
 void QGCParamSlider::startEditMode()

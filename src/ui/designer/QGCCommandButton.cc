@@ -54,6 +54,20 @@ QGCCommandButton::QGCCommandButton(QWidget *parent) :
     ui->editCommandComboBox->addItem("CUSTOM 14", 14);
     ui->editCommandComboBox->addItem("CUSTOM 15", 15);
     ui->editCommandComboBox->addItem("NAV_WAYPOINT", 16);
+    ui->editCommandComboBox->addItem("MAV_CMD_NAV_LOITER_UNLIM", 17);
+    ui->editCommandComboBox->addItem("MAV_CMD_NAV_LOITER_TURNS", 18);
+    ui->editCommandComboBox->addItem("MAV_CMD_NAV_LOITER_TIME", 19);
+    ui->editCommandComboBox->addItem("MAV_CMD_NAV_RETURN_TO_LAUNCH", 20);
+    ui->editCommandComboBox->addItem("MAV_CMD_NAV_LAND", 21);
+    ui->editCommandComboBox->addItem("MAV_CMD_NAV_TAKEOFF", 22);
+    ui->editCommandComboBox->addItem("MAV_CMD_NAV_ROI", 80);
+    ui->editCommandComboBox->addItem("MAV_CMD_NAV_PATHPLANNING", 81);
+    ui->editCommandComboBox->addItem("MAV_CMD_DO_SET_MODE", 176);
+    ui->editCommandComboBox->addItem("MAV_CMD_DO_CHANGE_SPEED", 178);
+    ui->editCommandComboBox->addItem("MAV_CMD_DO_SET_HOME", 179);
+    ui->editCommandComboBox->addItem("MAV_CMD_DO_SET_RELAY", 181);
+    ui->editCommandComboBox->addItem("MAV_CMD_DO_REPEAT_RELAY", 182);
+    ui->editCommandComboBox->addItem("MAV_CMD_DO_SET_SERVO", 183);
     ui->editCommandComboBox->setEditable(true);
 }
 

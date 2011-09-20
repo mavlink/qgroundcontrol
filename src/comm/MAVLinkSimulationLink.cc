@@ -72,6 +72,14 @@ MAVLinkSimulationLink::MAVLinkSimulationLink(QString readFile, QString writeFile
     onboardParams.insert("SYS_ID", systemId);
     onboardParams.insert("RC4_REV", 0);
     onboardParams.insert("RC5_REV", 1);
+    onboardParams.insert("HDNG2RLL_P", 0.7f);
+    onboardParams.insert("HDNG2RLL_I", 0.01f);
+    onboardParams.insert("HDNG2RLL_D", 0.02f);
+    onboardParams.insert("HDNG2RLL_IMAX", 500.0f);
+    onboardParams.insert("RLL2SRV_P", 0.4f);
+    onboardParams.insert("RLL2SRV_I", 0.0f);
+    onboardParams.insert("RLL2SRV_D", 0.0f);
+    onboardParams.insert("RLL2SRV_IMAX", 500.0f);
 
     // Comments on the variables can be found in the header file
 

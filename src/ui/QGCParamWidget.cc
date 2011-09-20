@@ -33,6 +33,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QList>
 #include <QSettings>
 #include <QMessageBox>
+#include <QApplication>
 
 #include "QGCParamWidget.h"
 #include "UASInterface.h"
@@ -150,16 +151,15 @@ void QGCParamWidget::loadSettings()
 
 void QGCParamWidget::loadParameterInfoCSV(const QString& autopilot, const QString& airframe)
 {
-    QDir appDir = QDir::current();
+    QDir appDir = QApplication::applicationDirPath();
     appDir.cd("files");
-    QString fileName = QString("/%1/%2/parameter_tooltips/tooltips.txt").arg(autopilot.toLower()).arg(airframe.toLower());
-    QString filePath = appDir.filePath(fileName);
-    QFile paramMetaFile(filePath);
+    QString fileName = QString("%1/%2/%3/parameter_tooltips/tooltips.txt").arg(appDir.canonicalPath()).arg(autopilot.toLower()).arg(airframe.toLower());
+    QFile paramMetaFile(fileName);
 
     // Load CSV data
     if (!paramMetaFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        qDebug() << "COULD NOT OPEN PARAM META INFO FILE:" << filePath;
+        qDebug() << "COULD NOT OPEN PARAM META INFO FILE:" << fileName;
         return;
     }
 
@@ -571,7 +571,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
     if (paramDefault.contains(parameterName))
     {
         tooltipFormat = tr("Default: %1, %2");
-        tooltipFormat = tooltipFormat.arg(paramToolTips.value(parameterName, ""), paramDefault.value(parameterName));
+        tooltipFormat = tooltipFormat.arg(paramDefault.value(parameterName, 0.0f)).arg(paramToolTips.value(parameterName, ""));
     }
     else
     {
@@ -590,6 +590,7 @@ void QGCParamWidget::addParameter(int uas, int component, QString parameterName,
  */
 void QGCParamWidget::requestParameterList()
 {
+    qDebug() << "LOADING PARAM LIST";
     if (!mav) return;
     // FIXME This call does not belong here
     // Once the comm handling is moved to a new
@@ -615,7 +616,7 @@ void QGCParamWidget::requestParameterList()
 
     // Request twice as mean of forward error correction
     mav->requestParameters();
-    QGC::SLEEP::msleep(10);
+    QGC::SLEEP::msleep(15);
     mav->requestParameters();
 }
 
