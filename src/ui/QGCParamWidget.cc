@@ -922,7 +922,7 @@ void QGCParamWidget::retransmissionGuardTick()
  */
 void QGCParamWidget::requestParameterUpdate(int component, const QString& parameter)
 {
-    // FIXME - IMPLEMENT THIS!
+    if (mav) mav->requestParameter(component, parameter);
 }
 
 
