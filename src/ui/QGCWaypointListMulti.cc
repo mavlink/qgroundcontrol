@@ -7,6 +7,7 @@ QGCWaypointListMulti::QGCWaypointListMulti(QWidget *parent) :
     ui(new Ui::QGCWaypointListMulti)
 {
     ui->setupUi(this);
+    setMinimumSize(600, 80);
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(systemCreated(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(systemSetActive(int)));
 }

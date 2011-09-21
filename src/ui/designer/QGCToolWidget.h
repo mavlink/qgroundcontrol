@@ -19,7 +19,7 @@ class QGCToolWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit QGCToolWidget(const QString& title=QString("Unnamed Tool"), QWidget *parent = 0);
+    explicit QGCToolWidget(const QString& title=QString("Unnamed Tool"), QWidget *parent = 0, QSettings* settings = 0);
     ~QGCToolWidget();
 
     /** @brief Factory method to instantiate all tool widgets */
