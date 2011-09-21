@@ -18,7 +18,6 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
 {
     // Widget is inactive until shown
     loadSettings(false);
-    // Set cache mode
 }
 
 QGCMapWidget::~QGCMapWidget()
@@ -167,23 +166,22 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
 
 /**
  *
- * @param uas the UAS/MAV to monitor/display with the HUD
+ * @param uas the UAS/MAV to monitor/display with the map widget
  */
 void QGCMapWidget::addUAS(UASInterface* uas)
 {
-    // // qDebug() << "ADDING UAS";
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
-    //connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
     connect(uas, SIGNAL(systemSpecsChanged(int)), this, SLOT(updateSystemSpecs(int)));
 }
 
 void QGCMapWidget::activeUASSet(UASInterface* uas)
 {
     // Only execute if proper UAS is set
-    if (!uas || !dynamic_cast<UASInterface*>(uas)) return;
+    if (!uas) return;
 
     // Disconnect old MAV manager
-    if (currWPManager) {
+    if (currWPManager)
+    {
         // Disconnect the waypoint manager / data storage from the UI
         disconnect(currWPManager, SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
         disconnect(currWPManager, SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
@@ -191,11 +189,9 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         disconnect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChange(Waypoint*)));
     }
 
-    if (uas) {
+    if (uas)
+    {
         currWPManager = uas->getWaypointManager();
-
-        // Delete all waypoints and add waypoint from new system
-        updateWaypointList(uas->getUASID());
 
         // Connect the waypoint manager / data storage to the UI
         connect(currWPManager, SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
@@ -204,6 +200,9 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChange(Waypoint*)));
         updateSelectedSystem(uas->getUASID());
         followUAVID = uas->getUASID();
+
+        // Delete all waypoints and add waypoint from new system
+        updateWaypointList(uas->getUASID());
     }
 }
 
@@ -317,16 +316,19 @@ void QGCMapWidget::showGoToDialog()
     QString text = QInputDialog::getText(this, tr("Please enter coordinates"),
                                          tr("Coordinates (Lat,Lon):"), QLineEdit::Normal,
                                          QString("%1,%2").arg(CurrentPosition().Lat(), 0, 'g', 6).arg(CurrentPosition().Lng(), 0, 'g', 6), &ok);
-    if (ok && !text.isEmpty()) {
+    if (ok && !text.isEmpty())
+    {
         QStringList split = text.split(",");
-        if (split.length() == 2) {
+        if (split.length() == 2)
+        {
             bool convert;
             double latitude = split.first().toDouble(&convert);
             ok &= convert;
             double longitude = split.last().toDouble(&convert);
             ok &= convert;
 
-            if (ok) {
+            if (ok)
+            {
                 internals::PointLatLng pos_lat_lon = internals::PointLatLng(latitude, longitude);
                 SetCurrentPosition(pos_lat_lon);        // set the map position
             }
@@ -422,6 +424,7 @@ void QGCMapWidget::handleMapWaypointEdit(mapcontrol::WayPointItem* waypoint)
  */
 void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
 {
+    qDebug() << "UPDATING WP FUNCTION CALLED";
     // Source of the event was in this widget, do nothing
     if (firingWaypointChange == wp) return;
     // Currently only accept waypoint updates from the UAS in focus
@@ -442,6 +445,8 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
             if (wpindex == -1) return;
             // Mark this wp as currently edited
             firingWaypointChange = wp;
+
+            qDebug() << "UPDATING WAYPOINT" << wpindex << "IN 2D MAP";
 
             // Check if wp exists yet in map
             if (!waypointsToIcons.contains(wp))
@@ -531,6 +536,7 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
  */
 void QGCMapWidget::updateWaypointList(int uas)
 {
+    qDebug() << "UPDATE WP LIST IN 2D MAP CALLED FOR UAS" << uas;
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
     UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
@@ -538,6 +544,8 @@ void QGCMapWidget::updateWaypointList(int uas)
     {
         // ORDER MATTERS HERE!
         // TWO LOOPS ARE NEEDED - INFINITY LOOP ELSE
+
+        qDebug() << "DELETING NOW OLD WPS";
 
         // Delete first all old waypoints
         // this is suboptimal (quadratic, but wps should stay in the sub-100 range anyway)
@@ -564,6 +572,7 @@ void QGCMapWidget::updateWaypointList(int uas)
         // Update all potentially new waypoints
         foreach (Waypoint* wp, wps)
         {
+            qDebug() << "UPDATING NEW WP" << wp->getId();
             // Update / add only if new
             if (!waypointsToIcons.contains(wp)) updateWaypoint(uas, wp);
         }

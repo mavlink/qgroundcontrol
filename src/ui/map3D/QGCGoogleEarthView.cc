@@ -217,7 +217,8 @@ void QGCGoogleEarthView::addUAS(UASInterface* uas)
 
 void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
 {
-    if (uas) {
+    if (uas)
+    {
         mav = uas;
         javaScript(QString("setCurrAircraft(%1);").arg(uas->getUASID()));
         updateWaypointList(uas->getUASID());
@@ -231,7 +232,8 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
 void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
 {
     // Only accept waypoints in global coordinate frame
-    if (wp->getFrame() == MAV_FRAME_GLOBAL && wp->isNavigationType()) {
+    if (wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT && wp->isNavigationType())
+    {
         // We're good, this is a global waypoint
 
         // Get the index of this waypoint
@@ -239,9 +241,12 @@ void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
         // as we're only handling global waypoints
         int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
         // If not found, return (this should never happen, but helps safety)
-        if (wpindex == -1) {
+        if (wpindex == -1)
+        {
             return;
-        } else {
+        }
+        else
+        {
             javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction()));
             //qDebug() << QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction());
         }
@@ -257,7 +262,8 @@ void QGCGoogleEarthView::updateWaypointList(int uas)
 {
     // Get already existing waypoints
     UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
-    if (uasInstance) {
+    if (uasInstance)
+    {
         // Get all waypoints, including non-global waypoints
         QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getGlobalFrameAndNavTypeWaypointList();
 
@@ -267,7 +273,8 @@ void QGCGoogleEarthView::updateWaypointList(int uas)
         qDebug() << QString("updateWaypointListLength(%1,%2);").arg(uas).arg(wpList.count());
 
         // Load all existing waypoints into map view
-        foreach (Waypoint* wp, wpList) {
+        foreach (Waypoint* wp, wpList)
+        {
             updateWaypoint(uas, wp);
         }
     }
@@ -284,7 +291,8 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, dou
 void QGCGoogleEarthView::clearTrails()
 {
     QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-    foreach (UASInterface* currMav, mavs) {
+    foreach (UASInterface* currMav, mavs)
+    {
         javaScript(QString("clearTrail(%1);").arg(currMav->getUASID()));
     }
 }
@@ -292,9 +300,11 @@ void QGCGoogleEarthView::clearTrails()
 void QGCGoogleEarthView::showTrail(bool state)
 {
     // Check if the current trail has to be hidden
-    if (trailEnabled && !state) {
+    if (trailEnabled && !state)
+    {
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-        foreach (UASInterface* currMav, mavs) {
+        foreach (UASInterface* currMav, mavs)
+        {
             javaScript(QString("hideTrail(%1);").arg(currMav->getUASID()));
         }
     }
