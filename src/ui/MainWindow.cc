@@ -126,6 +126,9 @@ MainWindow::MainWindow(QWidget *parent):
 
     configureWindowName();
 
+    // Setup corners
+    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+
     // Setup UI state machines
     centerStackActionGroup.setExclusive(true);
 
@@ -145,28 +148,6 @@ MainWindow::MainWindow(QWidget *parent):
 
     // Create actions
     connectCommonActions();
-
-    buildCustomWidget();
-
-
-
-    // Restore the window setup
-    if (settings.contains(getWindowStateKey()))
-    {
-        loadViewState();
-    }
-
-    // Restore the window position and size
-    if (settings.contains(getWindowGeometryKey()))
-    {
-        // Restore the window geometry
-        restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
-    }
-    else
-    {
-        // Adjust the size
-        adjustSize();
-    }
 
     // Populate link menu
     QList<LinkInterface*> links = LinkManager::instance()->getLinks();
@@ -197,7 +178,33 @@ MainWindow::MainWindow(QWidget *parent):
     // Initialize window state
     windowStateVal = windowState();
 
-    show();
+    // Restore the window setup
+    loadViewState();
+
+    // Restore the window position and size
+    if (settings.contains(getWindowGeometryKey()))
+    {
+        // Restore the window geometry
+        restoreGeometry(settings.value(getWindowGeometryKey()).toByteArray());
+        show();
+    }
+    else
+    {
+        // Adjust the size
+        const int screenWidth = QApplication::desktop()->width();
+        const int screenHeight = QApplication::desktop()->height();
+
+        if (screenWidth < 1200)
+        {
+            showFullScreen();
+        }
+        else
+        {
+            resize(screenWidth*0.67f, qMin(screenHeight, (int)(screenWidth*0.67f*0.67f)));
+            show();
+        }
+
+    }
 
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
@@ -381,19 +388,8 @@ void MainWindow::buildCommonWidgets()
     acceptList->append("-105,pitch deg,deg,+105,s");
     acceptList->append("-105,heading deg,deg,+105,s");
 
-    acceptList->append("-60,rollspeed d/s,deg/s,+60,s");
-    acceptList->append("-60,pitchspeed d/s,deg/s,+60,s");
-    acceptList->append("-60,yawspeed d/s,deg/s,+60,s");
-    acceptList->append("0,airspeed,m/s,30");
-    acceptList->append("0,groundspeed,m/s,30");
-    acceptList->append("0,climbrate,m/s,30");
-    acceptList->append("0,throttle,%,100");
-
     //FIXME: memory of acceptList2 will never be freed again
     QStringList* acceptList2 = new QStringList();
-    acceptList2->append("900,servo #6,us,2100,s");
-    acceptList2->append("900,servo #7,us,2100,s");
-    acceptList2->append("900,servo #8,us,2100,s");
     acceptList2->append("0,abs pressure,hPa,65500");
 
     if (!parametersDockWidget) {
@@ -1059,15 +1055,18 @@ void MainWindow::addLink(LinkInterface *link)
 
     bool found = false;
 
-    foreach (QAction* act, actions) {
-        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(link)) {
+    foreach (QAction* act, actions)
+    {
+        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(link))
+        {
             found = true;
         }
     }
 
     UDPLink* udp = dynamic_cast<UDPLink*>(link);
 
-    if (!found || udp) {
+    if (!found || udp)
+    {
         CommConfigurationWindow* commWidget = new CommConfigurationWindow(link, mavlink, this);
         QAction* action = commWidget->getAction();
         ui.menuNetwork->addAction(action);
@@ -1076,7 +1075,8 @@ void MainWindow::addLink(LinkInterface *link)
         connect(link, SIGNAL(communicationError(QString,QString)), this, SLOT(showCriticalMessage(QString,QString)), Qt::QueuedConnection);
         // Special case for simulationlink
         MAVLinkSimulationLink* sim = dynamic_cast<MAVLinkSimulationLink*>(link);
-        if (sim) {
+        if (sim)
+        {
             //connect(sim, SIGNAL(valueChanged(int,QString,double,quint64)), linechart, SLOT(appendData(int,QString,double,quint64)));
             connect(ui.actionSimulate, SIGNAL(triggered(bool)), sim, SLOT(connectLink(bool)));
         }
@@ -1093,8 +1093,10 @@ void MainWindow::setActiveUAS(UASInterface* uas)
 void MainWindow::UASSpecsChanged(int uas)
 {
     UASInterface* activeUAS = UASManager::instance()->getActiveUAS();
-    if (activeUAS) {
-        if (activeUAS->getUASID() == uas) {
+    if (activeUAS)
+    {
+        if (activeUAS->getUASID() == uas)
+        {
             ui.menuUnmanned_System->setTitle(activeUAS->getUASName());
         }
     }
@@ -1152,18 +1154,22 @@ void MainWindow::UASCreated(UASInterface* uas)
         ui.menuConnected_Systems->addAction(uasAction);
 
         // FIXME Should be not inside the mainwindow
-        if (debugConsoleDockWidget) {
+        if (debugConsoleDockWidget)
+        {
             DebugConsole *debugConsole = dynamic_cast<DebugConsole*>(debugConsoleDockWidget->widget());
-            if (debugConsole) {
+            if (debugConsole)
+            {
                 connect(uas, SIGNAL(textMessageReceived(int,int,int,QString)),
                         debugConsole, SLOT(receiveTextMessage(int,int,int,QString)));
             }
         }
 
         // Health / System status indicator
-        if (infoDockWidget) {
+        if (infoDockWidget)
+        {
             UASInfoWidget *infoWidget = dynamic_cast<UASInfoWidget*>(infoDockWidget->widget());
-            if (infoWidget) {
+            if (infoWidget)
+            {
                 infoWidget->addUAS(uas);
             }
         }
@@ -1202,7 +1208,8 @@ void MainWindow::UASCreated(UASInterface* uas)
                 addTool(detectionDockWidget, tr("Object Recognition"), Qt::RightDockWidgetArea);
             }
 
-            if (!watchdogControlDockWidget) {
+            if (!watchdogControlDockWidget)
+            {
                 watchdogControlDockWidget = new QDockWidget(tr("Process Control"), this);
                 watchdogControlDockWidget->setWidget( new WatchdogControl(this) );
                 watchdogControlDockWidget->setObjectName("WATCHDOG_CONTROL_DOCKWIDGET");
@@ -1288,6 +1295,10 @@ void MainWindow::loadViewState()
     }
     else
     {
+        // Hide custom widgets
+        if (detectionDockWidget) detectionDockWidget->hide();
+        if (watchdogControlDockWidget) watchdogControlDockWidget->hide();
+
         // Load defaults
         switch (currentView)
         {
@@ -1324,7 +1335,7 @@ void MainWindow::loadViewState()
             headDown2DockWidget->show();
             rcViewDockWidget->hide();
             headUpDockWidget->hide();
-            video1DockWidget->show();
+            video1DockWidget->hide();
             video2DockWidget->hide();
             break;
         case VIEW_MAVLINK:
@@ -1346,17 +1357,13 @@ void MainWindow::loadViewState()
             video2DockWidget->hide();
             break;
         case VIEW_OPERATOR:
-        case VIEW_UNCONNECTED:
-        case VIEW_FULL:
-        default:
             centerStack->setCurrentWidget(mapWidget);
-            controlDockWidget->show();
+            controlDockWidget->hide();
             listDockWidget->show();
             waypointsDockWidget->show();
-            infoDockWidget->show();
+            infoDockWidget->hide();
             debugConsoleDockWidget->show();
             logPlayerDockWidget->show();
-            mavlinkInspectorWidget->show();
             parametersDockWidget->hide();
             hsiDockWidget->show();
             headDown1DockWidget->hide();
@@ -1365,6 +1372,27 @@ void MainWindow::loadViewState()
             headUpDockWidget->show();
             video1DockWidget->hide();
             video2DockWidget->hide();
+            mavlinkInspectorWidget->hide();
+            break;
+        case VIEW_UNCONNECTED:
+        case VIEW_FULL:
+        default:
+            centerStack->setCurrentWidget(mapWidget);
+            controlDockWidget->hide();
+            listDockWidget->show();
+            waypointsDockWidget->hide();
+            infoDockWidget->hide();
+            debugConsoleDockWidget->show();
+            logPlayerDockWidget->show();
+            parametersDockWidget->hide();
+            hsiDockWidget->hide();
+            headDown1DockWidget->hide();
+            headDown2DockWidget->hide();
+            rcViewDockWidget->hide();
+            headUpDockWidget->show();
+            video1DockWidget->hide();
+            video2DockWidget->hide();
+            mavlinkInspectorWidget->show();
             break;
         }
     }
@@ -1378,7 +1406,8 @@ void MainWindow::loadViewState()
 
 void MainWindow::loadEngineerView()
 {
-    if (currentView != VIEW_ENGINEER) {
+    if (currentView != VIEW_ENGINEER)
+    {
         storeViewState();
         currentView = VIEW_ENGINEER;
         ui.actionEngineersView->setChecked(true);
@@ -1388,7 +1417,8 @@ void MainWindow::loadEngineerView()
 
 void MainWindow::loadOperatorView()
 {
-    if (currentView != VIEW_OPERATOR) {
+    if (currentView != VIEW_OPERATOR)
+    {
         storeViewState();
         currentView = VIEW_OPERATOR;
         ui.actionOperatorsView->setChecked(true);
