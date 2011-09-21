@@ -74,7 +74,7 @@ public slots:
     /** @brief Add a waypoint */
     void add();
     /** @brief Add a waypoint at the current MAV position */
-    void addCurrentPositonWaypoint();
+    void addCurrentPositionWaypoint();
     /** @brief Add a waypoint by mouse click over the map */
 
     //Update events

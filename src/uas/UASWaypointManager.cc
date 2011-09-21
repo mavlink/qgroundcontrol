@@ -241,13 +241,10 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
                     }
                 }
             }
-
-            //// // qDebug() << "Updated waypoints list";
         }
         emit updateStatusString(QString("New current waypoint %1").arg(wpc->seq));
         //emit update to UI widgets
         emit currentWaypointChanged(wpc->seq);
-        //// // qDebug() << "new current waypoint" << wpc->seq;
     }
 }
 
@@ -343,13 +340,15 @@ Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 
 int UASWaypointManager::removeWaypoint(quint16 seq)
 {
-    if (seq < waypoints.size()) {
+    if (seq < waypoints.size())
+    {
         Waypoint *t = waypoints[seq];
         waypoints.remove(seq);
         delete t;
         t = NULL;
 
-        for(int i = seq; i < waypoints.size(); i++) {
+        for(int i = seq; i < waypoints.size(); i++)
+        {
             waypoints[i]->setId(i);
         }
 
@@ -362,21 +361,23 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
 
 void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
 {
-    if (cur_seq != new_seq && cur_seq < waypoints.size() && new_seq < waypoints.size()) {
+    if (cur_seq != new_seq && cur_seq < waypoints.size() && new_seq < waypoints.size())
+    {
         Waypoint *t = waypoints[cur_seq];
         if (cur_seq < new_seq) {
-            for (int i = cur_seq; i < new_seq; i++) {
+            for (int i = cur_seq; i < new_seq; i++)
+            {
                 waypoints[i] = waypoints[i+1];
-                //waypoints[i]->setId(i);       // let the local IDs stay the same so that they can be found more easily by the user
             }
-        } else {
-            for (int i = cur_seq; i > new_seq; i--) {
+        }
+        else
+        {
+            for (int i = cur_seq; i > new_seq; i--)
+            {
                 waypoints[i] = waypoints[i-1];
-                // waypoints[i]->setId(i);
             }
         }
         waypoints[new_seq] = t;
-        //waypoints[new_seq]->setId(new_seq);
 
         emit waypointListChanged();
         emit waypointListChanged(uas.getUASID());
@@ -394,7 +395,8 @@ void UASWaypointManager::saveWaypoints(const QString &saveFile)
     //write the waypoint list version to the first line for compatibility check
     out << "QGC WPL 110\r\n";
 
-    for (int i = 0; i < waypoints.size(); i++) {
+    for (int i = 0; i < waypoints.size(); i++)
+    {
         waypoints[i]->setId(i);
         waypoints[i]->save(out);
     }
@@ -417,16 +419,22 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
 
     const QStringList &version = in.readLine().split(" ");
 
-    if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "110")) {
+    if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "110"))
+    {
         emit updateStatusString(tr("The waypoint file is not compatible with the current version of QGroundControl."));
-        //MainWindow::instance()->showCriticalMessage(tr("Error loading waypoint file"),tr("The waypoint file is not compatible with the current version of QGroundControl."));
-    } else {
-        while (!in.atEnd()) {
+    }
+    else
+    {
+        while (!in.atEnd())
+        {
             Waypoint *t = new Waypoint();
-            if(t->load(in)) {
+            if(t->load(in))
+            {
                 t->setId(waypoints.size());
                 waypoints.insert(waypoints.size(), t);
-            } else {
+            }
+            else
+            {
                 emit updateStatusString(tr("The waypoint file is corrupted. Load operation only partly succesful."));
                 //MainWindow::instance()->showCriticalMessage(tr("Error loading waypoint file"),);
                 break;
@@ -441,29 +449,10 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
     emit waypointListChanged(uas.getUASID());
 }
 
-
-//void UASWaypointManager::globalAddWaypoint(Waypoint *wp)
-//{
-//    // FIXME Will be removed
-//    Q_UNUSED(wp);
-//}
-
-//int UASWaypointManager::globalRemoveWaypoint(quint16 seq)
-//{
-//    // FIXME Will be removed
-//    Q_UNUSED(seq);
-//    return 0;
-//}
-
-//void UASWaypointManager::waypointUpdated(Waypoint*)
-//{
-//    // FIXME Add rate limiter
-//    emit waypointListChanged(uas.getUASID());
-//}
-
 void UASWaypointManager::clearWaypointList()
 {
-    if(current_state == WP_IDLE) {
+    if(current_state == WP_IDLE)
+    {
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
         current_retries = PROTOCOL_MAX_RETRIES;
 
@@ -482,8 +471,10 @@ const QVector<Waypoint *> UASWaypointManager::getGlobalFrameWaypointList()
     // with complete waypoint list
     // instead of filtering on each request
     QVector<Waypoint*> wps;
-    foreach (Waypoint* wp, waypoints) {
-        if (wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) {
+    foreach (Waypoint* wp, waypoints)
+    {
+        if (wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
+        {
             wps.append(wp);
         }
     }
@@ -496,8 +487,10 @@ const QVector<Waypoint *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointLi
     // with complete waypoint list
     // instead of filtering on each request
     QVector<Waypoint*> wps;
-    foreach (Waypoint* wp, waypoints) {
-        if (wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT && wp->isNavigationType()) {
+    foreach (Waypoint* wp, waypoints)
+    {
+        if ((wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && wp->isNavigationType())
+        {
             wps.append(wp);
         }
     }
@@ -510,8 +503,10 @@ const QVector<Waypoint *> UASWaypointManager::getNavTypeWaypointList()
     // with complete waypoint list
     // instead of filtering on each request
     QVector<Waypoint*> wps;
-    foreach (Waypoint* wp, waypoints) {
-        if (wp->isNavigationType()) {
+    foreach (Waypoint* wp, waypoints)
+    {
+        if (wp->isNavigationType())
+        {
             wps.append(wp);
         }
     }
@@ -548,7 +543,7 @@ int UASWaypointManager::getGlobalFrameAndNavTypeIndexOf(Waypoint* wp)
     // counting only those in global frame
     int i = 0;
     foreach (Waypoint* p, waypoints) {
-        if (p->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT && p->isNavigationType())
+        if ((p->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
         {
             if (p == wp)
             {
@@ -566,9 +561,12 @@ int UASWaypointManager::getNavTypeIndexOf(Waypoint* wp)
     // Search through all waypoints,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints) {
-        if (p->isNavigationType()) {
-            if (p == wp) {
+    foreach (Waypoint* p, waypoints)
+    {
+        if (p->isNavigationType())
+        {
+            if (p == wp)
+            {
                 return i;
             }
             i++;
@@ -583,7 +581,8 @@ int UASWaypointManager::getGlobalFrameCount()
     // Search through all waypoints,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints) {
+    foreach (Waypoint* p, waypoints)
+    {
         if (p->getFrame() == MAV_FRAME_GLOBAL || p->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
             i++;
@@ -599,7 +598,7 @@ int UASWaypointManager::getGlobalFrameAndNavTypeCount()
     // counting only those in global frame
     int i = 0;
     foreach (Waypoint* p, waypoints) {
-        if (p->getFrame() == MAV_FRAME_GLOBAL || p->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT && p->isNavigationType())
+        if ((p->getFrame() == MAV_FRAME_GLOBAL || p->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
         {
             i++;
         }
@@ -647,7 +646,8 @@ int UASWaypointManager::getLocalFrameIndexOf(Waypoint* wp)
     {
         if (p->getFrame() == MAV_FRAME_LOCAL_NED || p->getFrame() == MAV_FRAME_LOCAL_ENU)
         {
-            if (p == wp) {
+            if (p == wp)
+            {
                 return i;
             }
             i++;
