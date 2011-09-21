@@ -63,7 +63,7 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
     connect(m_ui->actionAddWaypoint, SIGNAL(triggered()), this, SLOT(add()));
 
     // ADD WAYPOINT AT CURRENT POSITION
-    connect(m_ui->positionAddButton, SIGNAL(clicked()), this, SLOT(addCurrentPositonWaypoint()));
+    connect(m_ui->positionAddButton, SIGNAL(clicked()), this, SLOT(addCurrentPositionWaypoint()));
 
     // SEND WAYPOINTS
     connect(m_ui->transmitButton, SIGNAL(clicked()), this, SLOT(transmit()));
@@ -185,12 +185,12 @@ void WaypointList::add()
         else
         {
             // Create first waypoint at current MAV position
-            addCurrentPositonWaypoint();
+            addCurrentPositionWaypoint();
         }
     }
 }
 
-void WaypointList::addCurrentPositonWaypoint()
+void WaypointList::addCurrentPositionWaypoint()
 {
     if (uas)
     {

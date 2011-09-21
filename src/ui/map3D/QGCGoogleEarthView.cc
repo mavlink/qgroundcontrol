@@ -232,7 +232,7 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
 void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
 {
     // Only accept waypoints in global coordinate frame
-    if (wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT && wp->isNavigationType())
+    if ((wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && wp->isNavigationType())
     {
         // We're good, this is a global waypoint
 
@@ -664,10 +664,12 @@ void QGCGoogleEarthView::updateState()
                 // Add new waypoint
                 if (mav)
                 {
-                    int nextIndex = mav->getWaypointManager()->getWaypointList().count();
-                    Waypoint* wp = new Waypoint(nextIndex, latitude, longitude, altitude, true);
+                    Waypoint* wp = mav->getWaypointManager()->createWaypoint();
                     wp->setFrame(MAV_FRAME_GLOBAL);
-                    mav->getWaypointManager()->addWaypoint(wp);
+                    wp->setAction(MAV_CMD_NAV_WAYPOINT);
+                    wp->setLatitude(latitude);
+                    wp->setLongitude(longitude);
+                    wp->setAltitude(altitude);
                 }
             }
             javaScript("setNewWaypointPending(false);");
