@@ -305,7 +305,8 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
  */
 void UASWaypointManager::addWaypoint(Waypoint *wp, bool enforceFirstActive)
 {
-    if (wp) {
+    if (wp)
+    {
         wp->setId(waypoints.size());
         if (enforceFirstActive && waypoints.size() == 0)
         {
@@ -315,8 +316,8 @@ void UASWaypointManager::addWaypoint(Waypoint *wp, bool enforceFirstActive)
         waypoints.insert(waypoints.size(), wp);
         connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChange(Waypoint*)));
 
-        emit waypointListChanged();
         emit waypointListChanged(uas.getUASID());
+        emit waypointListChanged();
     }
 }
 

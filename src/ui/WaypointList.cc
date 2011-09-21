@@ -118,7 +118,8 @@ void WaypointList::updateAttitude(UASInterface* uas, double roll, double pitch, 
 
 void WaypointList::setUAS(UASInterface* uas)
 {
-    if (this->uas == NULL && uas != NULL) {
+    if (this->uas == NULL && uas != NULL)
+    {
         this->uas = uas;
 
         connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)),  this, SLOT(updatePosition(UASInterface*,double,double,double,quint64)));
@@ -136,7 +137,8 @@ void WaypointList::setUAS(UASInterface* uas)
 
 void WaypointList::saveWaypoints()
 {
-    if (uas) {
+    if (uas)
+    {
         QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"), "./waypoints.txt", tr("Waypoint File (*.txt)"));
         uas->getWaypointManager()->saveWaypoints(fileName);
     }
@@ -144,7 +146,8 @@ void WaypointList::saveWaypoints()
 
 void WaypointList::loadWaypoints()
 {
-    if (uas) {
+    if (uas)
+    {
         QString fileName = QFileDialog::getOpenFileName(this, tr("Load File"), ".", tr("Waypoint File (*.txt)"));
         uas->getWaypointManager()->loadWaypoints(fileName);
     }
@@ -152,14 +155,16 @@ void WaypointList::loadWaypoints()
 
 void WaypointList::transmit()
 {
-    if (uas) {
+    if (uas)
+    {
         uas->getWaypointManager()->writeWaypoints();
     }
 }
 
 void WaypointList::read()
 {
-    if (uas) {
+    if (uas)
+    {
         uas->getWaypointManager()->readWaypoints();
     }
 }

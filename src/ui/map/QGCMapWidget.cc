@@ -427,9 +427,11 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
     UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
-    if (uasInstance->getWaypointManager() == currWPManager || uas == -1) {
+    if (uasInstance->getWaypointManager() == currWPManager || uas == -1)
+    {
         // Only accept waypoints in global coordinate frame
-        if (((wp->getFrame() == MAV_FRAME_GLOBAL) || (wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)) && wp->isNavigationType()) {
+        if (((wp->getFrame() == MAV_FRAME_GLOBAL) || (wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)) && wp->isNavigationType())
+        {
             // We're good, this is a global waypoint
 
             // Get the index of this waypoint
@@ -442,7 +444,8 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
             firingWaypointChange = wp;
 
             // Check if wp exists yet in map
-            if (!waypointsToIcons.contains(wp)) {
+            if (!waypointsToIcons.contains(wp))
+            {
                 // Create icon for new WP
                 QColor wpColor(Qt::red);
                 if (uasInstance) wpColor = uasInstance->getColor();
@@ -473,7 +476,9 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
                         }
                     }
                 }
-            } else {
+            }
+            else
+            {
                 // Waypoint exists, block it's signals and update it
                 mapcontrol::WayPointItem* icon = waypointsToIcons.value(wp);
                 // Make sure we don't die on a null pointer
@@ -504,12 +509,15 @@ void QGCMapWidget::updateWaypoint(int uas, Waypoint* wp)
 
             firingWaypointChange = NULL;
 
-        } else {
+        }
+        else
+        {
             // Check if the index of this waypoint is larger than the global
             // waypoint list. This implies that the coordinate frame of this
             // waypoint was changed and the list containing only global
             // waypoints was shortened. Thus update the whole list
-            if (waypointsToIcons.size() > currWPManager->getGlobalFrameAndNavTypeCount()) {
+            if (waypointsToIcons.size() > currWPManager->getGlobalFrameAndNavTypeCount())
+            {
                 updateWaypointList(uas);
             }
         }
@@ -526,7 +534,8 @@ void QGCMapWidget::updateWaypointList(int uas)
     // Currently only accept waypoint updates from the UAS in focus
     // this has to be changed to accept read-only updates from other systems as well.
     UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
-    if ((uasInstance && (uasInstance->getWaypointManager() == currWPManager)) || uas == -1) {
+    if ((uasInstance && (uasInstance->getWaypointManager() == currWPManager)) || uas == -1)
+    {
         // ORDER MATTERS HERE!
         // TWO LOOPS ARE NEEDED - INFINITY LOOP ELSE
 
@@ -535,10 +544,10 @@ void QGCMapWidget::updateWaypointList(int uas)
         QVector<Waypoint* > wps = currWPManager->getGlobalFrameAndNavTypeWaypointList();
         foreach (Waypoint* wp, waypointsToIcons.keys())
         {
-            // Get icon to work on
-            mapcontrol::WayPointItem* icon = waypointsToIcons.value(wp);
             if (!wps.contains(wp))
             {
+                // Get icon to work on
+                mapcontrol::WayPointItem* icon = waypointsToIcons.value(wp);
                 waypointsToIcons.remove(wp);
                 iconsToWaypoints.remove(icon);
                 WPDelete(icon);
