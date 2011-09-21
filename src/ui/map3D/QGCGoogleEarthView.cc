@@ -247,7 +247,7 @@ void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
         }
         else
         {
-            javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction()));
+            javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 22).arg(wp->getLongitude(), 0, 'f', 22).arg(wp->getAltitude(), 0, 'f', 22).arg(wp->getAction()));
             //qDebug() << QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction());
         }
     }
@@ -283,7 +283,7 @@ void QGCGoogleEarthView::updateWaypointList(int uas)
 void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
-    javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 18).arg(lon, 0, 'f', 18).arg(alt, 0, 'f', 15));
+    javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 22).arg(lon, 0, 'f', 22).arg(alt, 0, 'f', 22));
 
     //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }
@@ -310,9 +310,11 @@ void QGCGoogleEarthView::showTrail(bool state)
     }
 
     // Check if the current trail has to be shown
-    if (!trailEnabled && state) {
+    if (!trailEnabled && state)
+    {
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-        foreach (UASInterface* currMav, mavs) {
+        foreach (UASInterface* currMav, mavs)
+        {
             javaScript(QString("showTrail(%1);").arg(currMav->getUASID()));
         }
     }
@@ -328,10 +330,14 @@ void QGCGoogleEarthView::showWaypoints(bool state)
 void QGCGoogleEarthView::follow(bool follow)
 {
     ui->followAirplaneCheckbox->setChecked(follow);
-    if (follow != followCamera) {
-        if (follow) {
+    if (follow != followCamera)
+    {
+        if (follow)
+        {
             setViewMode(VIEW_MODE_CHASE_LOCKED);
-        } else {
+        }
+        else
+        {
             setViewMode(VIEW_MODE_SIDE);
         }
     }
