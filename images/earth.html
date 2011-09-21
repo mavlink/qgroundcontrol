@@ -347,12 +347,12 @@ function updateWaypointListLength(id, len)
 	// Delete any non-needed waypoints
 	if (waypoints.length > len)
 	{
-		for (var i=len; i<waypoints.length; i++)
+		var initialLength = waypoints.length;
+		for (var i=len; i<initialLength; i++)
 		{
 			var placemark = waypoints.pop();
 		    ge.getFeatures().removeChild(placemark);
-		    var line = waypointLines[id].pop();
-		    ge.getFeatures().removeChild(line);
+		    waypointLines[id].getCoordinates().pop();
 		}
 	}
 }
@@ -478,11 +478,6 @@ function createWaypointLine(id, color)
 	lineStyle.setWidth(15);
 	waypointLineColors[id] = color;
 	lineStyle.getColor().set(color);  // aabbggrr format
-	
-	
-	// Add waypoint line
-	//waypointLines[id].setExtrude(false);
-    //waypointLines[id].setAltitudeMode(ge.ALTITUDE_ABSOLUTE);
 
         
 
