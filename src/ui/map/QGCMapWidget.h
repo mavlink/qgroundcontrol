@@ -144,6 +144,7 @@ protected:
     mapcontrol::UAVTrailType::Types trailType; ///< Time or distance based trail dots
     float trailInterval;                ///< Time or distance between trail items
     int followUAVID;                    ///< Which UAV should be tracked?
+    bool mapInitialized;                ///< Map initialized?
 
 
 };
