@@ -14,7 +14,8 @@ QGCMapWidget::QGCMapWidget(QWidget *parent) :
     followUAVEnabled(false),
     trailType(mapcontrol::UAVTrailType::ByTimeElapsed),
     trailInterval(2.0f),
-    followUAVID(0)
+    followUAVID(0),
+    mapInitialized(false)
 {
     // Widget is inactive until shown
     loadSettings(false);
@@ -24,6 +25,7 @@ QGCMapWidget::~QGCMapWidget()
 {
     SetShowHome(false);	// doing this appears to stop the map lib crashing on exit
     SetShowUAV(false);	//   "          "
+    storeSettings();
 }
 
 void QGCMapWidget::showEvent(QShowEvent* event)
@@ -34,49 +36,54 @@ void QGCMapWidget::showEvent(QShowEvent* event)
     // Pass on to parent widget
     OPMapWidget::showEvent(event);
 
-    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)));
-    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)));
+    connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(addUAS(UASInterface*)), Qt::UniqueConnection);
+    connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(activeUASSet(UASInterface*)), Qt::UniqueConnection);
     foreach (UASInterface* uas, UASManager::instance()->getUASList())
     {
         addUAS(uas);
     }
 
 
-    internals::PointLatLng pos_lat_lon = internals::PointLatLng(0, 0);
+    if (!mapInitialized)
+    {
+        internals::PointLatLng pos_lat_lon = internals::PointLatLng(0, 0);
 
-    SetMouseWheelZoomType(internals::MouseWheelZoomType::MousePositionWithoutCenter);	    // set how the mouse wheel zoom functions
-    SetFollowMouse(true);				    // we want a contiuous mouse position reading
+        SetMouseWheelZoomType(internals::MouseWheelZoomType::MousePositionWithoutCenter);	    // set how the mouse wheel zoom functions
+        SetFollowMouse(true);				    // we want a contiuous mouse position reading
 
-    SetShowHome(true);					    // display the HOME position on the map
-    Home->SetSafeArea(30);                         // set radius (meters)
-    Home->SetShowSafeArea(true);                                         // show the safe area
-    Home->SetCoord(pos_lat_lon);             // set the HOME position
+        SetShowHome(true);					    // display the HOME position on the map
+        Home->SetSafeArea(30);                         // set radius (meters)
+        Home->SetShowSafeArea(true);                                         // show the safe area
+        Home->SetCoord(pos_lat_lon);             // set the HOME position
 
-    setFrameStyle(QFrame::NoFrame);      // no border frame
-    setBackgroundBrush(QBrush(Qt::black)); // tile background
+        setFrameStyle(QFrame::NoFrame);      // no border frame
+        setBackgroundBrush(QBrush(Qt::black)); // tile background
 
-    // Set current home position
-    updateHomePosition(UASManager::instance()->getHomeLatitude(), UASManager::instance()->getHomeLongitude(), UASManager::instance()->getHomeAltitude());
+        // Set current home position
+        updateHomePosition(UASManager::instance()->getHomeLatitude(), UASManager::instance()->getHomeLongitude(), UASManager::instance()->getHomeAltitude());
 
-    // Set currently selected system
-    activeUASSet(UASManager::instance()->getActiveUAS());
+        // Set currently selected system
+        activeUASSet(UASManager::instance()->getActiveUAS());
 
-    // Connect map updates to the adapter slots
-    connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)));
+        // Connect map updates to the adapter slots
+        connect(this, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(handleMapWaypointEdit(WayPointItem*)));
 
-    SetCurrentPosition(pos_lat_lon);         // set the map position
-    setFocus();
+        SetCurrentPosition(pos_lat_lon);         // set the map position
+        setFocus();
 
-    // Start timer
-    connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateGlobalPosition()));
+        // Start timer
+        connect(&updateTimer, SIGNAL(timeout()), this, SLOT(updateGlobalPosition()));
+        mapInitialized = true;
+        QTimer::singleShot(800, this, SLOT(loadSettings()));
+    }
     updateTimer.start(maxUpdateInterval*1000);
     // Update all UAV positions
     updateGlobalPosition();
-    //QTimer::singleShot(800, this, SLOT(loadSettings()));
 }
 
 void QGCMapWidget::hideEvent(QHideEvent* event)
 {
+    updateTimer.stop();
     storeSettings();
     OPMapWidget::hideEvent(event);
 }

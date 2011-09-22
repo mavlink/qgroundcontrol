@@ -376,8 +376,73 @@ void WaypointView::updateValues()
         deleteLater();
         return;
     }
-    // Deactivate signals from the WP
-    wp->blockSignals(true);
+
+    //wp->blockSignals(true);
+
+    // Deactivate all QDoubleSpinBox signals due to
+    // unwanted rounding effects
+    for (int j = 0; j  < children().size(); ++j)
+    {
+        // Store only QGCToolWidgetItems
+        QDoubleSpinBox* spin = dynamic_cast<QDoubleSpinBox*>(children().at(j));
+        if (spin)
+        {
+            //qDebug() << "DEACTIVATED SPINBOX #" << j;
+            spin->blockSignals(true);
+        }
+        else
+        {
+            // Store only QGCToolWidgetItems
+            QWidget* item = dynamic_cast<QWidget*>(children().at(j));
+            if (item)
+            {
+                //qDebug() << "FOUND WIDGET BOX";
+                for (int k = 0; k  < item->children().size(); ++k)
+                {
+                    // Store only QGCToolWidgetItems
+                    QDoubleSpinBox* spin = dynamic_cast<QDoubleSpinBox*>(item->children().at(k));
+                    if (spin)
+                    {
+                        //qDebug() << "DEACTIVATED SPINBOX #" << k;
+                        spin->blockSignals(true);
+                    }
+                }
+            }
+        }
+    }
+
+    // Block all custom action widget actions
+    for (int j = 0; j  < m_ui->customActionWidget->children().size(); ++j)
+    {
+        // Store only QGCToolWidgetItems
+        QDoubleSpinBox* spin = dynamic_cast<QDoubleSpinBox*>(m_ui->customActionWidget->children().at(j));
+        if (spin)
+        {
+            //qDebug() << "DEACTIVATED SPINBOX #" << j;
+            spin->blockSignals(true);
+        }
+        else
+        {
+            // Store only QGCToolWidgetItems
+            QWidget* item = dynamic_cast<QWidget*>(m_ui->customActionWidget->children().at(j));
+            if (item)
+            {
+                //qDebug() << "CUSTOM ACTIONS FOUND WIDGET BOX";
+                for (int k = 0; k  < item->children().size(); ++k)
+                {
+                    // Store only QGCToolWidgetItems
+                    QDoubleSpinBox* spin = dynamic_cast<QDoubleSpinBox*>(item->children().at(k));
+                    if (spin)
+                    {
+                        //qDebug() << "DEACTIVATED SPINBOX #" << k;
+                        spin->blockSignals(true);
+                    }
+                }
+            }
+        }
+    }
+
+
     // update frame
     MAV_FRAME frame = wp->getFrame();
     int frame_index = m_ui->comboBox_frame->findData(frame);
@@ -403,23 +468,17 @@ void WaypointView::updateValues()
         if (m_ui->latSpinBox->value() != wp->getLatitude()) {
             // Rounding might occur, prevent spin box from
             // firing back changes
-            m_ui->latSpinBox->blockSignals(true);
             m_ui->latSpinBox->setValue(wp->getLatitude());
-            m_ui->latSpinBox->blockSignals(false);
         }
         if (m_ui->lonSpinBox->value() != wp->getLongitude()) {
             // Rounding might occur, prevent spin box from
             // firing back changes
-            m_ui->lonSpinBox->blockSignals(true);
             m_ui->lonSpinBox->setValue(wp->getLongitude());
-            m_ui->lonSpinBox->blockSignals(false);
         }
         if (m_ui->altSpinBox->value() != wp->getAltitude()) {
             // Rounding might occur, prevent spin box from
             // firing back changes
-            m_ui->altSpinBox->blockSignals(true);
             m_ui->altSpinBox->setValue(wp->getAltitude());
-            m_ui->altSpinBox->blockSignals(false);
         }
     }
     break;
@@ -432,77 +491,81 @@ void WaypointView::updateValues()
     MAV_CMD action = wp->getAction();
     int action_index = m_ui->comboBox_action->findData(action);
     // Set to "Other" action if it was -1
-    if (action_index == -1) {
+    if (action_index == -1)
+    {
         action_index = m_ui->comboBox_action->findData(MAV_CMD_ENUM_END);
     }
     // Only update if changed
-    if (m_ui->comboBox_action->currentIndex() != action_index) {
+    if (m_ui->comboBox_action->currentIndex() != action_index)
+    {
         // If action is unknown, set direct editing mode
-        if (wp->getAction() < 0 || wp->getAction() > MAV_CMD_NAV_TAKEOFF) {
+        if (wp->getAction() < 0 || wp->getAction() > MAV_CMD_NAV_TAKEOFF)
+        {
             changeViewMode(QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING);
-        } else {
-            if (viewMode != QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING) {
+        }
+        else
+        {
+            if (viewMode != QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING)
+            {
                 // Action ID known, update
                 m_ui->comboBox_action->setCurrentIndex(action_index);
                 updateActionView(action);
             }
         }
     }
-    // Do something on actions - currently unused
-//    switch(action) {
-//    case MAV_CMD_NAV_TAKEOFF:
-//        break;
-//    case MAV_CMD_NAV_LAND:
-//        break;
-//    case MAV_CMD_NAV_WAYPOINT:
-//        break;
-//    case MAV_CMD_NAV_LOITER_UNLIM:
-//        break;
-//    default:
-//        std::cerr << "unknown action" << std::endl;
-//    }
 
-    if (m_ui->yawSpinBox->value() != wp->getYaw()) {
-        if (!m_ui->yawSpinBox->isVisible()) m_ui->yawSpinBox->blockSignals(true);
+//    // Do something on actions - currently unused
+////    switch(action) {
+////    case MAV_CMD_NAV_TAKEOFF:
+////        break;
+////    case MAV_CMD_NAV_LAND:
+////        break;
+////    case MAV_CMD_NAV_WAYPOINT:
+////        break;
+////    case MAV_CMD_NAV_LOITER_UNLIM:
+////        break;
+////    default:
+////        std::cerr << "unknown action" << std::endl;
+////    }
+
+    if (m_ui->yawSpinBox->value() != wp->getYaw())
+    {
         m_ui->yawSpinBox->setValue(wp->getYaw());
-        if (!m_ui->yawSpinBox->isVisible()) m_ui->yawSpinBox->blockSignals(false);
     }
-    if (m_ui->selectedBox->isChecked() != wp->getCurrent()) {
+    if (m_ui->selectedBox->isChecked() != wp->getCurrent())
+    {
         m_ui->selectedBox->setChecked(wp->getCurrent());
     }
-    if (m_ui->autoContinue->isChecked() != wp->getAutoContinue()) {
+    if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
+    {
         m_ui->autoContinue->setChecked(wp->getAutoContinue());
     }
     m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
-    if (m_ui->orbitSpinBox->value() != wp->getLoiterOrbit()) {
-        if (!m_ui->orbitSpinBox->isVisible()) m_ui->orbitSpinBox->blockSignals(true);
+    if (m_ui->orbitSpinBox->value() != wp->getLoiterOrbit())
+    {
         m_ui->orbitSpinBox->setValue(wp->getLoiterOrbit());
-        if (!m_ui->orbitSpinBox->isVisible()) m_ui->orbitSpinBox->blockSignals(false);
     }
-    if (m_ui->acceptanceSpinBox->value() != wp->getAcceptanceRadius()) {
-        if (!m_ui->acceptanceSpinBox->isVisible()) m_ui->acceptanceSpinBox->blockSignals(true);
+    if (m_ui->acceptanceSpinBox->value() != wp->getAcceptanceRadius())
+    {
         m_ui->acceptanceSpinBox->setValue(wp->getAcceptanceRadius());
-        if (!m_ui->acceptanceSpinBox->isVisible()) m_ui->acceptanceSpinBox->blockSignals(false);
     }
-    if (m_ui->holdTimeSpinBox->value() != wp->getHoldTime()) {
-        if (!m_ui->holdTimeSpinBox->isVisible()) m_ui->holdTimeSpinBox->blockSignals(true);
+    if (m_ui->holdTimeSpinBox->value() != wp->getHoldTime())
+    {
         m_ui->holdTimeSpinBox->setValue(wp->getHoldTime());
-        if (!m_ui->holdTimeSpinBox->isVisible()) m_ui->holdTimeSpinBox->blockSignals(false);
     }
-    if (m_ui->turnsSpinBox->value() != wp->getTurns()) {
-        if (!m_ui->turnsSpinBox->isVisible()) m_ui->turnsSpinBox->blockSignals(true);
+    if (m_ui->turnsSpinBox->value() != wp->getTurns())
+    {
         m_ui->turnsSpinBox->setValue(wp->getTurns());
-        if (!m_ui->turnsSpinBox->isVisible()) m_ui->turnsSpinBox->blockSignals(false);
     }
-    if (m_ui->takeOffAngleSpinBox->value() != wp->getParam1()) {
-        if (!m_ui->takeOffAngleSpinBox->isVisible()) m_ui->takeOffAngleSpinBox->blockSignals(true);
+    if (m_ui->takeOffAngleSpinBox->value() != wp->getParam1())
+    {
         m_ui->takeOffAngleSpinBox->setValue(wp->getParam1());
-        if (!m_ui->takeOffAngleSpinBox->isVisible()) m_ui->takeOffAngleSpinBox->blockSignals(false);
     }
 
-    // UPDATE CUSTOM ACTION WIDGET
+//    // UPDATE CUSTOM ACTION WIDGET
 
-    if (customCommand->commandSpinBox->value() != wp->getAction()) {
+    if (customCommand->commandSpinBox->value() != wp->getAction())
+    {
         customCommand->commandSpinBox->setValue(wp->getAction());
         // qDebug() << "Changed action";
     }
@@ -535,8 +598,6 @@ void WaypointView::updateValues()
         customCommand->param7SpinBox->setValue(wp->getParam7());
     }
 
-    wp->blockSignals(false);
-
     QColor backGroundColor = QGC::colorBackground;
 
     static int lastId = -1;
@@ -568,6 +629,71 @@ void WaypointView::updateValues()
         m_ui->groupBox->setStyleSheet(groupBoxStyle);
         lastId = currId;
     }
+
+    // Activate all QDoubleSpinBox signals due to
+    // unwanted rounding effects
+    for (int j = 0; j  < children().size(); ++j)
+    {
+        // Store only QGCToolWidgetItems
+        QDoubleSpinBox* spin = dynamic_cast<QDoubleSpinBox*>(children().at(j));
+        if (spin)
+        {
+            //qDebug() << "ACTIVATED SPINBOX #" << j;
+            spin->blockSignals(false);
+        }
+        else
+        {
+            // Store only QGCToolWidgetItems
+            QGroupBox* item = dynamic_cast<QGroupBox*>(children().at(j));
+            if (item)
+            {
+                //qDebug() << "FOUND GROUP BOX";
+                for (int k = 0; k  < item->children().size(); ++k)
+                {
+                    // Store only QGCToolWidgetItems
+                    QDoubleSpinBox* spin = dynamic_cast<QDoubleSpinBox*>(item->children().at(k));
+                    if (spin)
+                    {
+                        //qDebug() << "ACTIVATED SPINBOX #" << k;
+                        spin->blockSignals(false);
+                    }
+                }
+            }
+        }
+    }
+
+    // Unblock all custom action widget actions
+    for (int j = 0; j  < m_ui->customActionWidget->children().size(); ++j)
+    {
+        // Store only QGCToolWidgetItems
+        QDoubleSpinBox* spin = dynamic_cast<QDoubleSpinBox*>(m_ui->customActionWidget->children().at(j));
+        if (spin)
+        {
+            //qDebug() << "ACTIVATED SPINBOX #" << j;
+            spin->blockSignals(false);
+        }
+        else
+        {
+            // Store only QGCToolWidgetItems
+            QWidget* item = dynamic_cast<QWidget*>(m_ui->customActionWidget->children().at(j));
+            if (item)
+            {
+                //qDebug() << "FOUND WIDGET BOX";
+                for (int k = 0; k  < item->children().size(); ++k)
+                {
+                    // Store only QGCToolWidgetItems
+                    QDoubleSpinBox* spin = dynamic_cast<QDoubleSpinBox*>(item->children().at(k));
+                    if (spin)
+                    {
+                       //qDebug() << "ACTIVATED SPINBOX #" << k;
+                        spin->blockSignals(false);
+                    }
+                }
+            }
+        }
+    }
+
+//    wp->blockSignals(false);
 }
 
 void WaypointView::setCurrent(bool state)

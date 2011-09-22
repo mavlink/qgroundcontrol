@@ -676,6 +676,7 @@ void QGCGoogleEarthView::updateState()
                     wp->setLatitude(latitude);
                     wp->setLongitude(longitude);
                     wp->setAltitude(altitude);
+                    wp->setAcceptanceRadius(10.0); // 10 m
                 }
             }
             javaScript("setNewWaypointPending(false);");
