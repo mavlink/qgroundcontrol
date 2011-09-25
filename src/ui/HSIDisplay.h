@@ -92,6 +92,7 @@ public slots:
         statusMessage = "";
         if (actionPending) statusMessage = "TIMED OUT, NO ACTION";
         statusClearTimer.start();
+        userSetPointSet = false;
         actionPending = false;
     }
 
