@@ -110,6 +110,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Delete splash screen after mainWindow was displayed
     splashScreen->setAttribute(Qt::WA_DeleteOnClose);
     splashScreen->show();
+    processEvents();
     splashScreen->showMessage(tr("Loading application fonts"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // Exit main application when last window is closed
@@ -159,7 +160,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     simulationLink->disconnect();
     //mainWindow->addLink(simulationLink);
 
-    mainWindow = MainWindow::instance();
+    mainWindow = MainWindow::instance(splashScreen);
 
     // Remove splash screen
     splashScreen->finish(mainWindow);

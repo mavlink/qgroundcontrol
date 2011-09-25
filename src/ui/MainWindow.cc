@@ -34,6 +34,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QDebug>
 #include <QTimer>
 #include <QHostInfo>
+#include <QSplashScreen>
 
 #include "QGC.h"
 #include "MAVLinkSimulationLink.h"
@@ -62,12 +63,13 @@ This file is part of the QGROUNDCONTROL project
 
 #include "LogCompressor.h"
 
-MainWindow* MainWindow::instance()
+MainWindow* MainWindow::instance(QSplashScreen* screen)
 {
     static MainWindow* _instance = 0;
     if(_instance == 0)
     {
         _instance = new MainWindow();
+        if (screen) connect(_instance, SIGNAL(initStatusChanged(QString)), screen, SLOT(showMessage(QString)));
 
         /* Set the application as parent to ensure that this object
                  * will be destroyed when the main application exits */
@@ -94,6 +96,8 @@ MainWindow::MainWindow(QWidget *parent):
     centerStackActionGroup(this),
     lowPowerMode(false)
 {
+    hide();
+    emit initStatusChanged("Loading UI Settings..");
     loadSettings();
     if (!settings.contains("CURRENT_VIEW"))
     {
@@ -115,10 +119,14 @@ MainWindow::MainWindow(QWidget *parent):
 
     settings.sync();
 
+    emit initStatusChanged("Loading Style.");
     loadStyle(currentStyle);
+
+    emit initStatusChanged("Setting up user interface.");
 
     // Setup user interface
     ui.setupUi(this);
+    hide();
 
     // Set dock options
     setDockOptions(AnimatedDocks | AllowTabbedDocks | AllowNestedDocks);
@@ -143,13 +151,18 @@ MainWindow::MainWindow(QWidget *parent):
     toolBar->addPerspectiveChangeAction(ui.actionEngineersView);
     toolBar->addPerspectiveChangeAction(ui.actionPilotsView);
 
+    emit initStatusChanged("Building common widgets.");
+
     buildCommonWidgets();
     connectCommonWidgets();
+
+    emit initStatusChanged("Building common actions.");
 
     // Create actions
     connectCommonActions();
 
     // Populate link menu
+    emit initStatusChanged("Populating link menu");
     QList<LinkInterface*> links = LinkManager::instance()->getLinks();
     foreach(LinkInterface* link, links)
     {
@@ -159,6 +172,7 @@ MainWindow::MainWindow(QWidget *parent):
     connect(LinkManager::instance(), SIGNAL(newLink(LinkInterface*)), this, SLOT(addLink(LinkInterface*)));
 
     // Connect user interface devices
+    emit initStatusChanged("Initializing joystick interface.");
     joystickWidget = 0;
     joystick = new JoystickInput();
 
@@ -178,9 +192,12 @@ MainWindow::MainWindow(QWidget *parent):
     // Initialize window state
     windowStateVal = windowState();
 
+    emit initStatusChanged("Restoring last view state.");
+
     // Restore the window setup
     loadViewState();
 
+    emit initStatusChanged("Restoring last window size.");
     // Restore the window position and size
     if (settings.contains(getWindowGeometryKey()))
     {
@@ -208,6 +225,8 @@ MainWindow::MainWindow(QWidget *parent):
 
     connect(&windowNameUpdateTimer, SIGNAL(timeout()), this, SLOT(configureWindowName()));
     windowNameUpdateTimer.start(15000);
+    emit initStatusChanged("Done.");
+    show();
 }
 
 MainWindow::~MainWindow()

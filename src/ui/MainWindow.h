@@ -80,6 +80,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MAVLinkDecoder.h"
 
 class QGCMapTool;
+class QSplashScreen;
 
 /**
  * @brief Main Application Window
@@ -90,7 +91,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    static MainWindow* instance();
+    static MainWindow* instance(QSplashScreen* screen = 0);
     ~MainWindow();
 
     enum QGC_MAINWINDOW_STYLE {
@@ -215,6 +216,9 @@ public slots:
 
     /** @brief Update the window name */
     void configureWindowName();
+
+signals:
+    void initStatusChanged(const QString& message);
 
 public:
     QGCMAVLinkLogPlayer* getLogPlayer()
