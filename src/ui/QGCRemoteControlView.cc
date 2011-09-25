@@ -79,20 +79,7 @@ void QGCRemoteControlView::setUASId(int id)
 {
     // Clear channel count
     raw.clear();
-    raw.resize(0);
-
     normalized.clear();
-    normalized.resize(0);
-
-    foreach (QLabel* label, rawLabels)
-    {
-        label->deleteLater();
-    }
-
-    foreach(QProgressBar* bar, progressBars)
-    {
-        bar->deleteLater();
-    }
 
     if (uasId != -1) {
         UASInterface* uas = UASManager::instance()->getUASForId(id);
@@ -104,6 +91,19 @@ void QGCRemoteControlView::setUASId(int id)
             disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannel(int,float)));
         }
     }
+
+    foreach (QLabel* label, rawLabels)
+    {
+        label->deleteLater();
+    }
+
+    foreach(QProgressBar* bar, progressBars)
+    {
+        bar->deleteLater();
+    }
+
+    rawLabels.clear();
+    progressBars.clear();
 
     // Connect the new UAS
     UASInterface* newUAS = UASManager::instance()->getUASForId(id);
