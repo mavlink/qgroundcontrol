@@ -67,8 +67,6 @@ This file is part of the QGROUNDCONTROL project
 
 QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 {
-
-
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
