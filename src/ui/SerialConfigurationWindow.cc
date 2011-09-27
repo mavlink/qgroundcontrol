@@ -262,7 +262,7 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
         ui.baudRate->addItem("14400", 14400);
 #endif
         ui.baudRate->addItem("19200", 19200);
-        ui.baudRate->addItem("34800", 34800);
+        ui.baudRate->addItem("38400", 38400);
 #ifdef Q_OS_WIN
         ui.baudRate->addItem("56000", 56000);
 #endif
