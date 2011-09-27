@@ -247,7 +247,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
             fieldType = QString("uint64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
             for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
             {
-                emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, nums[j], time);
+                emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, (quint64) nums[j], time);
             }
         }
         else
@@ -255,7 +255,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
             // Single value
             uint64_t n = *((uint64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
             fieldType = "uint64_t";
-            emit valueChanged(msg->sysid, name, fieldType, n, time);
+            emit valueChanged(msg->sysid, name, fieldType, (quint64) n, time);
         }
         break;
     case MAVLINK_TYPE_INT64_T:
@@ -265,7 +265,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
             fieldType = QString("int64_t[%1]").arg(messageInfo[msgid].fields[fieldid].array_length);
             for (unsigned int j = 0; j < messageInfo[msgid].fields[j].array_length; ++j)
             {
-                emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, nums[j], time);
+                emit valueChanged(msg->sysid, QString("%1.%2").arg(name).arg(j), fieldType, (qint64) nums[j], time);
             }
         }
         else
@@ -273,7 +273,7 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
             // Single value
             int64_t n = *((int64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
             fieldType = "int64_t";
-            emit valueChanged(msg->sysid, name, fieldType, n, time);
+            emit valueChanged(msg->sysid, name, fieldType, (qint64) n, time);
         }
         break;
     }

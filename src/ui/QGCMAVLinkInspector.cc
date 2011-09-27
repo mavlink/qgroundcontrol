@@ -298,7 +298,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Single value
             uint64_t n = *((uint64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "uint64_t");
-            item->setData(1, Qt::DisplayRole, n);
+            item->setData(1, Qt::DisplayRole, (quint64) n);
         }
         break;
     case MAVLINK_TYPE_INT64_T:
@@ -320,7 +320,7 @@ void QGCMAVLinkInspector::updateField(int msgid, int fieldid, QTreeWidgetItem* i
             // Single value
             int64_t n = *((int64_t*)(m+messageInfo[msgid].fields[fieldid].wire_offset));
             item->setData(2, Qt::DisplayRole, "int64_t");
-            item->setData(1, Qt::DisplayRole, n);
+            item->setData(1, Qt::DisplayRole, (qint64) n);
         }
         break;
     }
