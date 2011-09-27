@@ -246,6 +246,7 @@ protected:
     void initReference(const double & latitude, const double & longitude, const double & altitude);
 
 signals:
+
     void UASCreated(UASInterface* UAS);
     /** @brief The UAS currently under main operator control changed */
     void activeUASSet(UASInterface* UAS);
