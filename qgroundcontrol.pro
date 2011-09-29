@@ -209,7 +209,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/mission/QGCMissionConditionWidget.ui \
     src/ui/map/QGCMapTool.ui \
     src/ui/map/QGCMapToolBar.ui \
-    src/ui/QGCMAVLinkInspector.ui
+    src/ui/QGCMAVLinkInspector.ui \
+    src/ui/WaypointViewViewOnly.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -323,7 +324,8 @@ HEADERS += src/MG.h \
     src/QGCGeo.h \
     src/ui/QGCToolBar.h \
     src/ui/QGCMAVLinkInspector.h \
-    src/ui/MAVLinkDecoder.h
+    src/ui/MAVLinkDecoder.h \
+    src/ui/WaypointViewViewOnly.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -449,7 +451,8 @@ SOURCES += src/main.cc \
     src/ui/map/QGCMapToolBar.cc \
     src/ui/QGCToolBar.cc \
     src/ui/QGCMAVLinkInspector.cc \
-    src/ui/MAVLinkDecoder.cc
+    src/ui/MAVLinkDecoder.cc \
+    src/ui/WaypointViewViewOnly.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

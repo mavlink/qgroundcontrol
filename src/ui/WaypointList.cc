@@ -51,11 +51,11 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
 {
     m_ui->setupUi(this);
 
-    listLayout = new QVBoxLayout(m_ui->listWidget);
+    listLayout = new QVBoxLayout(m_ui->editableListWidget);
     listLayout->setSpacing(0);
     listLayout->setMargin(0);
     listLayout->setAlignment(Qt::AlignTop);
-    m_ui->listWidget->setLayout(listLayout);
+    m_ui->editableListWidget->setLayout(listLayout);
 
     // ADD WAYPOINT
     // Connect add action, set right button icon and connect action to this class
