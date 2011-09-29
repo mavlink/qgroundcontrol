@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>798</width>
-    <height>218</height>
+    <width>854</width>
+    <height>398</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,44 +19,266 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="100,0,0,0" columnstretch="1,1,5,5,100,10,5,5,5,5,5">
-   <property name="margin">
-    <number>4</number>
-   </property>
-   <property name="spacing">
-    <number>4</number>
-   </property>
-   <item row="0" column="0" colspan="11">
-    <widget class="QScrollArea" name="scrollArea">
-     <property name="widgetResizable">
-      <bool>true</bool>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
      </property>
-     <widget class="QWidget" name="scrollAreaWidgetContents">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>786</width>
-        <height>174</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="margin">
-        <number>4</number>
-       </property>
-       <item>
-        <widget class="QWidget" name="listWidget" native="true">
+     <widget class="QWidget" name="editTab">
+      <attribute name="title">
+       <string>Tab 1</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0" colspan="9">
+        <widget class="QScrollArea" name="scrollArea">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>812</width>
+            <height>271</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="margin">
+            <number>4</number>
+           </property>
+           <item>
+            <widget class="QWidget" name="editableListWidget" native="true">
+             <property name="toolTip">
+              <string>Waypoint list. The list is empty until you issue a read command or add waypoints.</string>
+             </property>
+             <property name="statusTip">
+              <string>Waypoint list. The list is empty until you issue a read command or add waypoints.</string>
+             </property>
+             <property name="whatsThis">
+              <string>Waypoint list. The list is empty until you issue a read command or add waypoints.</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="saveButton">
          <property name="toolTip">
-          <string>Waypoint list. The list is empty until you issue a read command or add waypoints.</string>
+          <string>Save waypoints to a file on the local harddisk. Does not save them on the MAV.</string>
          </property>
          <property name="statusTip">
-          <string>Waypoint list. The list is empty until you issue a read command or add waypoints.</string>
+          <string>Save waypoints to a file on the local harddisk. Does not save them on the MAV.</string>
          </property>
          <property name="whatsThis">
-          <string>Waypoint list. The list is empty until you issue a read command or add waypoints.</string>
+          <string>Save waypoints to a file on the local harddisk. Does not save them on the MAV.</string>
+         </property>
+         <property name="text">
+          <string>Save WPs</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="loadButton">
+         <property name="toolTip">
+          <string>Load waypoints from a file on the local harddisk. Does not load the waypoints on the MAV.</string>
+         </property>
+         <property name="statusTip">
+          <string>Load waypoints from a file on the local harddisk. Does not load the waypoints on the MAV.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Load waypoints from a file on the local harddisk. Does not load the waypoints on the MAV.</string>
+         </property>
+         <property name="text">
+          <string>Load WPs</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>127</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="4">
+        <widget class="QToolButton" name="positionAddButton">
+         <property name="toolTip">
+          <string>Set the current vehicle position as new waypoint</string>
+         </property>
+         <property name="statusTip">
+          <string>Set the current vehicle position as new waypoint</string>
+         </property>
+         <property name="whatsThis">
+          <string>Set the current vehicle position as new waypoint</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../../qgroundcontrol.qrc">
+           <normaloff>:/images/actions/go-bottom.svg</normaloff>:/images/actions/go-bottom.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="5">
+        <widget class="QToolButton" name="addButton">
+         <property name="toolTip">
+          <string>Add a new waypoint to this list. Transmit via write to the MAV.</string>
+         </property>
+         <property name="statusTip">
+          <string>Add a new waypoint to this list. Transmit via write to the MAV.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Add a new waypoint to this list. Transmit via write to the MAV.</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../../qgroundcontrol.qrc">
+           <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="6">
+        <widget class="QToolButton" name="clearWPListButton">
+         <property name="toolTip">
+          <string>Delete all waypoints from this list. You have to click write to clear the list on the MAV as well.</string>
+         </property>
+         <property name="statusTip">
+          <string>Delete all waypoints from this list. You have to click write to clear the list on the MAV as well.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Delete all waypoints from this list. You have to click write to clear the list on the MAV as well.</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../../qgroundcontrol.qrc">
+           <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="7">
+        <widget class="QPushButton" name="readButton">
+         <property name="toolTip">
+          <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
+         </property>
+         <property name="statusTip">
+          <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
+         </property>
+         <property name="text">
+          <string>Read</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../../qgroundcontrol.qrc">
+           <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="8">
+        <widget class="QPushButton" name="transmitButton">
+         <property name="toolTip">
+          <string>Transmit all waypoints on this list to the MAV.</string>
+         </property>
+         <property name="statusTip">
+          <string>Transmit all waypoints on this list to the MAV.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Transmit all waypoints on this list to the MAV.</string>
+         </property>
+         <property name="text">
+          <string>Write</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../../qgroundcontrol.qrc">
+           <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="viewTab">
+      <attribute name="title">
+       <string>Tab 2</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0" colspan="2">
+        <widget class="QScrollArea" name="readOnlyScrollArea">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="scrollAreaWidgetContents_2">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>812</width>
+            <height>271</height>
+           </rect>
+          </property>
+          <property name="autoFillBackground">
+           <bool>true</bool>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QWidget" name="viewOnlyListWidget" native="true">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>714</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="refreshButton">
+         <property name="toolTip">
+          <string>Read all waypoints from the MAV and display in View tab..</string>
+         </property>
+         <property name="statusTip">
+          <string>Read all waypoints from the MAV and display in View tab..</string>
+         </property>
+         <property name="whatsThis">
+          <string>Read all waypoints from the MAV and display in View tab.</string>
+         </property>
+         <property name="text">
+          <string>Refresh</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../../qgroundcontrol.qrc">
+           <normaloff>:/images/actions/go-jump.svg</normaloff>:/images/actions/go-jump.svg</iconset>
          </property>
         </widget>
        </item>
@@ -64,152 +286,7 @@
      </widget>
     </widget>
    </item>
-   <item row="2" column="9">
-    <widget class="QPushButton" name="readButton">
-     <property name="toolTip">
-      <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
-     </property>
-     <property name="statusTip">
-      <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
-     </property>
-     <property name="whatsThis">
-      <string>Read all waypoints from the MAV. Clears the list on this computer.</string>
-     </property>
-     <property name="text">
-      <string>Read</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/images/status/software-update-available.svg</normaloff>:/images/status/software-update-available.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="10">
-    <widget class="QPushButton" name="transmitButton">
-     <property name="toolTip">
-      <string>Transmit all waypoints on this list to the MAV.</string>
-     </property>
-     <property name="statusTip">
-      <string>Transmit all waypoints on this list to the MAV.</string>
-     </property>
-     <property name="whatsThis">
-      <string>Transmit all waypoints on this list to the MAV.</string>
-     </property>
-     <property name="text">
-      <string>Write</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/images/devices/network-wireless.svg</normaloff>:/images/devices/network-wireless.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="7">
-    <widget class="QToolButton" name="addButton">
-     <property name="toolTip">
-      <string>Add a new waypoint to this list. Transmit via write to the MAV.</string>
-     </property>
-     <property name="statusTip">
-      <string>Add a new waypoint to this list. Transmit via write to the MAV.</string>
-     </property>
-     <property name="whatsThis">
-      <string>Add a new waypoint to this list. Transmit via write to the MAV.</string>
-     </property>
-     <property name="text">
-      <string>...</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/images/actions/list-add.svg</normaloff>:/images/actions/list-add.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="3">
-    <widget class="QPushButton" name="loadButton">
-     <property name="toolTip">
-      <string>Load waypoints from a file on the local harddisk. Does not load the waypoints on the MAV.</string>
-     </property>
-     <property name="statusTip">
-      <string>Load waypoints from a file on the local harddisk. Does not load the waypoints on the MAV.</string>
-     </property>
-     <property name="whatsThis">
-      <string>Load waypoints from a file on the local harddisk. Does not load the waypoints on the MAV.</string>
-     </property>
-     <property name="text">
-      <string>Load WPs</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="2">
-    <widget class="QPushButton" name="saveButton">
-     <property name="toolTip">
-      <string>Save waypoints to a file on the local harddisk. Does not save them on the MAV.</string>
-     </property>
-     <property name="statusTip">
-      <string>Save waypoints to a file on the local harddisk. Does not save them on the MAV.</string>
-     </property>
-     <property name="whatsThis">
-      <string>Save waypoints to a file on the local harddisk. Does not save them on the MAV.</string>
-     </property>
-     <property name="text">
-      <string>Save WPs</string>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="5">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>127</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="2" column="6">
-    <widget class="QToolButton" name="positionAddButton">
-     <property name="toolTip">
-      <string>Set the current vehicle position as new waypoint</string>
-     </property>
-     <property name="statusTip">
-      <string>Set the current vehicle position as new waypoint</string>
-     </property>
-     <property name="whatsThis">
-      <string>Set the current vehicle position as new waypoint</string>
-     </property>
-     <property name="text">
-      <string>...</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/images/actions/go-bottom.svg</normaloff>:/images/actions/go-bottom.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="8">
-    <widget class="QToolButton" name="clearWPListButton">
-     <property name="toolTip">
-      <string>Delete all waypoints from this list. You have to click write to clear the list on the MAV as well.</string>
-     </property>
-     <property name="statusTip">
-      <string>Delete all waypoints from this list. You have to click write to clear the list on the MAV as well.</string>
-     </property>
-     <property name="whatsThis">
-      <string>Delete all waypoints from this list. You have to click write to clear the list on the MAV as well.</string>
-     </property>
-     <property name="text">
-      <string>...</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../qgroundcontrol.qrc">
-       <normaloff>:/images/actions/process-stop.svg</normaloff>:/images/actions/process-stop.svg</iconset>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="4">
+   <item row="1" column="0">
     <widget class="QLabel" name="statusLabel">
      <property name="toolTip">
       <string>The current waypoint transmission status</string>
