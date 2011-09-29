@@ -40,8 +40,8 @@ This file is part of the QGROUNDCONTROL project
 #include <QTimer>
 #include "Waypoint.h"
 #include "UASInterface.h"
-#include "WaypointView.h"
-
+#include "WaypointEditableView.h"
+#include "WaypointViewOnlyView.h"
 
 namespace Ui
 {
@@ -115,7 +115,7 @@ protected:
     virtual void changeEvent(QEvent *e);
 
 protected:
-    QMap<Waypoint*, WaypointView*> wpViews;
+    QMap<Waypoint*, WaypointEditableView*> wpViews;
     QVBoxLayout* listLayout;
     UASInterface* uas;
     double mavX;

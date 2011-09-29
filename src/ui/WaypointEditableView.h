@@ -30,33 +30,33 @@ This file is part of the QGROUNDCONTROL project
  *
  */
 
-#ifndef WAYPOINTVIEW_H
-#define WAYPOINTVIEW_H
+#ifndef WAYPOINTEDITABLEVIEW_H
+#define WAYPOINTEDITABLEVIEW_H
 
 #include <QtGui/QWidget>
 #include "Waypoint.h"
 #include <iostream>
 
-enum QGC_WAYPOINTVIEW_MODE {
-    QGC_WAYPOINTVIEW_MODE_NAV,
-    QGC_WAYPOINTVIEW_MODE_CONDITION,
-    QGC_WAYPOINTVIEW_MODE_DO,
-    QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING
+enum QGC_WAYPOINTEDITABLEVIEW_MODE {
+    QGC_WAYPOINTEDITABLEVIEW_MODE_NAV,
+    QGC_WAYPOINTEDITABLEVIEW_MODE_CONDITION,
+    QGC_WAYPOINTEDITABLEVIEW_MODE_DO,
+    QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING
 };
 
 namespace Ui
 {
-class WaypointView;
+class WaypointEditableView;
 }
 class Ui_QGCCustomWaypointAction;
 
-class WaypointView : public QWidget
+class WaypointEditableView : public QWidget
 {
     Q_OBJECT
-    Q_DISABLE_COPY(WaypointView)
+    Q_DISABLE_COPY(WaypointEditableView)
 public:
-    explicit WaypointView(Waypoint* wp, QWidget* parent);
-    virtual ~WaypointView();
+    explicit WaypointEditableView(Waypoint* wp, QWidget* parent);
+    virtual ~WaypointEditableView();
 
 public:
     void setCurrent(bool state);
@@ -76,7 +76,7 @@ public slots:
     void updateValues(void);
 
 protected slots:
-    void changeViewMode(QGC_WAYPOINTVIEW_MODE mode);
+    void changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE mode);
 
 protected:
     virtual void changeEvent(QEvent *e);
@@ -84,10 +84,10 @@ protected:
     // Special widgets extendending the
     // waypoint view to mission capabilities
     Ui_QGCCustomWaypointAction* customCommand;
-    QGC_WAYPOINTVIEW_MODE viewMode;
+    QGC_WAYPOINTEDITABLEVIEW_MODE viewMode;
 
 private:
-    Ui::WaypointView *m_ui;
+    Ui::WaypointEditableView *m_ui;
 
 signals:
     void moveUpWaypoint(Waypoint*);
@@ -98,4 +98,4 @@ signals:
     void setYaw(double);
 };
 
-#endif // WAYPOINTVIEW_H
+#endif // WAYPOINTEDITABLEVIEW_H
