@@ -46,7 +46,7 @@ UASWaypointManager::UASWaypointManager(UAS &_uas)
       current_partner_systemid(0),
       current_partner_compid(0),
       protocol_timer(this),
-      currentWaypoint(NULL)
+      currentWaypointEditable(NULL)
 {
     connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
     connect(&uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleLocalPositionChanged(UASInterface*,double,double,double,quint64)));
@@ -92,11 +92,11 @@ void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x,
 {
     Q_UNUSED(mav);
     Q_UNUSED(time);
-    if (waypoints.count() > 0 && currentWaypoint && (currentWaypoint->getFrame() == MAV_FRAME_LOCAL_NED || currentWaypoint->getFrame() == MAV_FRAME_LOCAL_ENU))
+    if (waypointsEditable.count() > 0 && currentWaypointEditable && (currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_NED || currentWaypointEditable->getFrame() == MAV_FRAME_LOCAL_ENU))
     {
-        double xdiff = x-currentWaypoint->getX();
-        double ydiff = y-currentWaypoint->getY();
-        double zdiff = z-currentWaypoint->getZ();
+        double xdiff = x-currentWaypointEditable->getX();
+        double ydiff = y-currentWaypointEditable->getY();
+        double zdiff = z-currentWaypointEditable->getZ();
         double dist = sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
         emit waypointDistanceChanged(dist);
     }
@@ -144,9 +144,17 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
         if(wp->seq == current_wp_id) {
             //// // qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << "Frame:"<< (MAV_FRAME) wp->frame << "Command:" << (MAV_CMD) wp->command;
-            Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
-            addWaypointEditable(lwp, false);
-            if (wp->current == 1) currentWaypoint = lwp;
+
+            Waypoint *lwp_vo = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
+            addWaypointViewOnly(lwp_vo);
+
+
+            if (read_to_edit == true) {
+                Waypoint *lwp_ed = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
+                addWaypointEditable(lwp_ed, false);
+                if (wp->current == 1) currentWaypointEditable = lwp_ed;
+            }
+
 
             //get next waypoint
             current_wp_id++;
@@ -165,7 +173,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
                 protocol_timer.stop();
                 emit readGlobalWPFromUAS(false);
-                if (currentWaypoint) emit currentWaypointChanged(currentWaypoint->getId());
+                if (currentWaypointEditable) emit currentWaypointChanged(currentWaypointEditable->getId());
                 emit updateStatusString("done.");
 
                 // // qDebug() << "got all waypoints from ID " << systemId;
@@ -230,14 +238,13 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
             current_state = WP_IDLE;
 
             // update the local main storage
-            if (wpc->seq < waypoints.size()) {
-                for(int i = 0; i < waypoints.size(); i++) {
-                    if (waypoints[i]->getId() == wpc->seq) {
-                        waypoints[i]->setCurrent(true);
-                        currentWaypoint = waypoints[i];
-
+            if (wpc->seq < waypointsViewOnly.size()) {
+                for(int i = 0; i < waypointsViewOnly.size(); i++) {
+                    if (waypointsViewOnly[i]->getId() == wpc->seq) {
+                        waypointsViewOnly[i]->setCurrent(true);
+                        //currentWaypointEditable = waypoints[i];
                     } else {
-                        waypoints[i]->setCurrent(false);
+                        waypointsViewOnly[i]->setCurrent(false);
                     }
                 }
             }
@@ -268,15 +275,15 @@ void UASWaypointManager::notifyOfChangeEditable(Waypoint* wp)
 
 int UASWaypointManager::setCurrentWaypoint(quint16 seq)
 {
-    if (seq < waypoints.size()) {
+    if (seq < waypointsViewOnly.size()) {
         if(current_state == WP_IDLE) {
             //update local main storage
-            for(int i = 0; i < waypoints.size(); i++) {
-                if (waypoints[i]->getId() == seq) {
-                    waypoints[i]->setCurrent(true);
-                    currentWaypoint = waypoints[i];
+            for(int i = 0; i < waypointsViewOnly.size(); i++) {
+                if (waypointsViewOnly[i]->getId() == seq) {
+                    waypointsViewOnly[i]->setCurrent(true);
+                    //currentWaypointEditable = waypoints[i];
                 } else {
-                    waypoints[i]->setCurrent(false);
+                    waypointsViewOnly[i]->setCurrent(false);
                 }
             }
 
@@ -301,6 +308,26 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
     return -1;
 }
 
+
+void UASWaypointManager::addWaypointViewOnly(Waypoint *wp)
+{
+    if (wp)
+    {
+        wp->setId(waypointsViewOnly.size());
+        if (waypointsEditable.size() == 0)
+        {
+            wp->setCurrent(true);
+            //currentWaypointEditable = wp;
+        }
+        waypointsViewOnly.insert(waypointsViewOnly.size(), wp);
+        connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeViewOnly(Waypoint*)));
+
+        emit waypointViewOnlyListChanged();
+        emit waypointViewOnlyListChanged(uas.getUASID());
+    }
+}
+
+
 /**
  * @warning Make sure the waypoint stays valid for the whole application lifecycle!
  * @param enforceFirstActive Enforces that the first waypoint is set as active
@@ -310,13 +337,13 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
 {
     if (wp)
     {
-        wp->setId(waypoints.size());
-        if (enforceFirstActive && waypoints.size() == 0)
+        wp->setId(waypointsEditable.size());
+        if (enforceFirstActive && waypointsEditable.size() == 0)
         {
             wp->setCurrent(true);
-            currentWaypoint = wp;
+            currentWaypointEditable = wp;
         }
-        waypoints.insert(waypoints.size(), wp);
+        waypointsEditable.insert(waypointsEditable.size(), wp);
         connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeEditable(Waypoint*)));
 
         emit waypointEditableListChanged();
@@ -330,13 +357,13 @@ void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActi
 Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 {
     Waypoint* wp = new Waypoint();
-    wp->setId(waypoints.size());
-    if (enforceFirstActive && waypoints.size() == 0)
+    wp->setId(waypointsEditable.size());
+    if (enforceFirstActive && waypointsEditable.size() == 0)
     {
         wp->setCurrent(true);
-        currentWaypoint = wp;
+        currentWaypointEditable = wp;
     }
-    waypoints.insert(waypoints.size(), wp);
+    waypointsEditable.insert(waypointsEditable.size(), wp);
     connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeEditable(Waypoint*)));
 
     emit waypointEditableListChanged();
@@ -346,16 +373,16 @@ Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
 
 int UASWaypointManager::removeWaypoint(quint16 seq)
 {
-    if (seq < waypoints.size())
+    if (seq < waypointsEditable.size())
     {
-        Waypoint *t = waypoints[seq];
-        waypoints.remove(seq);
+        Waypoint *t = waypointsEditable[seq];
+        waypointsEditable.remove(seq);
         delete t;
         t = NULL;
 
-        for(int i = seq; i < waypoints.size(); i++)
+        for(int i = seq; i < waypointsEditable.size(); i++)
         {
-            waypoints[i]->setId(i);
+            waypointsEditable[i]->setId(i);
         }
 
         emit waypointEditableListChanged();
@@ -367,23 +394,23 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
 
 void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
 {
-    if (cur_seq != new_seq && cur_seq < waypoints.size() && new_seq < waypoints.size())
+    if (cur_seq != new_seq && cur_seq < waypointsEditable.size() && new_seq < waypointsEditable.size())
     {
-        Waypoint *t = waypoints[cur_seq];
+        Waypoint *t = waypointsEditable[cur_seq];
         if (cur_seq < new_seq) {
             for (int i = cur_seq; i < new_seq; i++)
             {
-                waypoints[i] = waypoints[i+1];
+                waypointsEditable[i] = waypointsEditable[i+1];
             }
         }
         else
         {
             for (int i = cur_seq; i > new_seq; i--)
             {
-                waypoints[i] = waypoints[i-1];
+                waypointsEditable[i] = waypointsEditable[i-1];
             }
         }
-        waypoints[new_seq] = t;
+        waypointsEditable[new_seq] = t;
 
         emit waypointEditableListChanged();
         emit waypointEditableListChanged(uas.getUASID());
@@ -401,10 +428,10 @@ void UASWaypointManager::saveWaypoints(const QString &saveFile)
     //write the waypoint list version to the first line for compatibility check
     out << "QGC WPL 110\r\n";
 
-    for (int i = 0; i < waypoints.size(); i++)
+    for (int i = 0; i < waypointsEditable.size(); i++)
     {
-        waypoints[i]->setId(i);
-        waypoints[i]->save(out);
+        waypointsEditable[i]->setId(i);
+        waypointsEditable[i]->save(out);
     }
     file.close();
 }
@@ -415,9 +442,9 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         return;
 
-    while(waypoints.size()>0) {
-        Waypoint *t = waypoints[0];
-        waypoints.remove(0);
+    while(waypointsEditable.size()>0) {
+        Waypoint *t = waypointsEditable[0];
+        waypointsEditable.remove(0);
         delete t;
     }
 
@@ -436,8 +463,8 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
             Waypoint *t = new Waypoint();
             if(t->load(in))
             {
-                t->setId(waypoints.size());
-                waypoints.insert(waypoints.size(), t);
+                t->setId(waypointsEditable.size());
+                waypointsEditable.insert(waypointsEditable.size(), t);
             }
             else
             {
@@ -477,7 +504,7 @@ const QVector<Waypoint *> UASWaypointManager::getGlobalFrameWaypointList()
     // with complete waypoint list
     // instead of filtering on each request
     QVector<Waypoint*> wps;
-    foreach (Waypoint* wp, waypoints)
+    foreach (Waypoint* wp, waypointsEditable)
     {
         if (wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
@@ -493,7 +520,7 @@ const QVector<Waypoint *> UASWaypointManager::getGlobalFrameAndNavTypeWaypointLi
     // with complete waypoint list
     // instead of filtering on each request
     QVector<Waypoint*> wps;
-    foreach (Waypoint* wp, waypoints)
+    foreach (Waypoint* wp, waypointsEditable)
     {
         if ((wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && wp->isNavigationType())
         {
@@ -509,7 +536,7 @@ const QVector<Waypoint *> UASWaypointManager::getNavTypeWaypointList()
     // with complete waypoint list
     // instead of filtering on each request
     QVector<Waypoint*> wps;
-    foreach (Waypoint* wp, waypoints)
+    foreach (Waypoint* wp, waypointsEditable)
     {
         if (wp->isNavigationType())
         {
@@ -521,15 +548,15 @@ const QVector<Waypoint *> UASWaypointManager::getNavTypeWaypointList()
 
 int UASWaypointManager::getIndexOf(Waypoint* wp)
 {
-    return waypoints.indexOf(wp);
+    return waypointsEditable.indexOf(wp);
 }
 
 int UASWaypointManager::getGlobalFrameIndexOf(Waypoint* wp)
 {
-    // Search through all waypoints,
+    // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints) {
+    foreach (Waypoint* p, waypointsEditable) {
         if (p->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
             if (p == wp)
@@ -545,10 +572,10 @@ int UASWaypointManager::getGlobalFrameIndexOf(Waypoint* wp)
 
 int UASWaypointManager::getGlobalFrameAndNavTypeIndexOf(Waypoint* wp)
 {
-    // Search through all waypoints,
+    // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints) {
+    foreach (Waypoint* p, waypointsEditable) {
         if ((p->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
         {
             if (p == wp)
@@ -564,10 +591,10 @@ int UASWaypointManager::getGlobalFrameAndNavTypeIndexOf(Waypoint* wp)
 
 int UASWaypointManager::getNavTypeIndexOf(Waypoint* wp)
 {
-    // Search through all waypoints,
+    // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints)
+    foreach (Waypoint* p, waypointsEditable)
     {
         if (p->isNavigationType())
         {
@@ -584,10 +611,10 @@ int UASWaypointManager::getNavTypeIndexOf(Waypoint* wp)
 
 int UASWaypointManager::getGlobalFrameCount()
 {
-    // Search through all waypoints,
+    // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints)
+    foreach (Waypoint* p, waypointsEditable)
     {
         if (p->getFrame() == MAV_FRAME_GLOBAL || p->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT)
         {
@@ -600,10 +627,10 @@ int UASWaypointManager::getGlobalFrameCount()
 
 int UASWaypointManager::getGlobalFrameAndNavTypeCount()
 {
-    // Search through all waypoints,
+    // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints) {
+    foreach (Waypoint* p, waypointsEditable) {
         if ((p->getFrame() == MAV_FRAME_GLOBAL || p->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && p->isNavigationType())
         {
             i++;
@@ -615,10 +642,10 @@ int UASWaypointManager::getGlobalFrameAndNavTypeCount()
 
 int UASWaypointManager::getNavTypeCount()
 {
-    // Search through all waypoints,
+    // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints) {
+    foreach (Waypoint* p, waypointsEditable) {
         if (p->isNavigationType()) {
             i++;
         }
@@ -629,10 +656,10 @@ int UASWaypointManager::getNavTypeCount()
 
 int UASWaypointManager::getLocalFrameCount()
 {
-    // Search through all waypoints,
+    // Search through all waypointsEditable,
     // counting only those in global frame
     int i = 0;
-    foreach (Waypoint* p, waypoints)
+    foreach (Waypoint* p, waypointsEditable)
     {
         if (p->getFrame() == MAV_FRAME_LOCAL_NED || p->getFrame() == MAV_FRAME_LOCAL_ENU)
         {
@@ -645,10 +672,10 @@ int UASWaypointManager::getLocalFrameCount()
 
 int UASWaypointManager::getLocalFrameIndexOf(Waypoint* wp)
 {
-    // Search through all waypoints,
+    // Search through all waypointsEditable,
     // counting only those in local frame
     int i = 0;
-    foreach (Waypoint* p, waypoints)
+    foreach (Waypoint* p, waypointsEditable)
     {
         if (p->getFrame() == MAV_FRAME_LOCAL_NED || p->getFrame() == MAV_FRAME_LOCAL_ENU)
         {
@@ -665,10 +692,10 @@ int UASWaypointManager::getLocalFrameIndexOf(Waypoint* wp)
 
 int UASWaypointManager::getMissionFrameIndexOf(Waypoint* wp)
 {
-    // Search through all waypoints,
+    // Search through all waypointsEditable,
     // counting only those in mission frame
     int i = 0;
-    foreach (Waypoint* p, waypoints)
+    foreach (Waypoint* p, waypointsEditable)
     {
         if (p->getFrame() == MAV_FRAME_MISSION)
         {
@@ -683,13 +710,18 @@ int UASWaypointManager::getMissionFrameIndexOf(Waypoint* wp)
     return -1;
 }
 
-void UASWaypointManager::readWaypoints()
+
+/**
+ * @param readToEdit If true, incoming waypoints will be copied both to "edit"-tab and "view"-tab. Otherwise, only to "view"-tab.
+ */
+void UASWaypointManager::readWaypoints(bool readToEdit)
 {
+    read_to_edit = readToEdit;
     emit readGlobalWPFromUAS(true);
     if(current_state == WP_IDLE) {
-        while(waypoints.size()>0) {
-            delete waypoints.back();
-            waypoints.pop_back();
+        while(waypointsEditable.size()>0) {
+            delete waypointsEditable.back();
+            waypointsEditable.pop_back();
 
         }
 
@@ -710,11 +742,11 @@ void UASWaypointManager::writeWaypoints()
 {
     if (current_state == WP_IDLE) {
         // Send clear all if count == 0
-        if (waypoints.count() > 0) {
+        if (waypointsEditable.count() > 0) {
             protocol_timer.start(PROTOCOL_TIMEOUT_MS);
             current_retries = PROTOCOL_MAX_RETRIES;
 
-            current_count = waypoints.count();
+            current_count = waypointsEditable.count();
             current_state = WP_SENDLIST;
             current_wp_id = 0;
             current_partner_systemid = uas.getUASID();
@@ -736,7 +768,7 @@ void UASWaypointManager::writeWaypoints()
                 waypoint_buffer.push_back(new mavlink_mission_item_t);
                 mavlink_mission_item_t *cur_d = waypoint_buffer.back();
                 memset(cur_d, 0, sizeof(mavlink_mission_item_t));   //initialize with zeros
-                const Waypoint *cur_s = waypoints.at(i);
+                const Waypoint *cur_s = waypointsEditable.at(i);
 
                 cur_d->autocontinue = cur_s->getAutoContinue();
                 cur_d->current = cur_s->getCurrent() & noCurrent;   //make sure only one current waypoint is selected, the first selected will be chosen
@@ -763,7 +795,7 @@ void UASWaypointManager::writeWaypoints()
             //send the waypoint count to UAS (this starts the send transaction)
             sendWaypointCount();
         }
-    } else if (waypoints.count() == 0) {
+    } else if (waypointsEditable.count() == 0) {
         sendWaypointClearAll();
     } else {
         //we're in another transaction, ignore command
