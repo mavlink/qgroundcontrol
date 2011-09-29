@@ -126,8 +126,8 @@ void WaypointList::setUAS(UASInterface* uas)
         connect(uas, SIGNAL(attitudeChanged(UASInterface*,double,double,double,quint64)),       this, SLOT(updateAttitude(UASInterface*,double,double,double,quint64)));
 
         connect(uas->getWaypointManager(), SIGNAL(updateStatusString(const QString &)),        this, SLOT(updateStatusLabel(const QString &)));
-        connect(uas->getWaypointManager(), SIGNAL(waypointListChanged(void)),                  this, SLOT(waypointListChanged(void)));
-        connect(uas->getWaypointManager(), SIGNAL(waypointChanged(int,Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+        connect(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged(void)),                  this, SLOT(waypointEditableListChanged(void)));
+        connect(uas->getWaypointManager(), SIGNAL(waypointEditableChanged(int,Waypoint*)), this, SLOT(updateWaypointEditable(int,Waypoint*)));
         connect(uas->getWaypointManager(), SIGNAL(currentWaypointChanged(quint16)),            this, SLOT(currentWaypointChanged(quint16)));
         //connect(uas->getWaypointManager(),SIGNAL(loadWPFile()),this,SLOT(setIsLoadFileWP()));
         //connect(uas->getWaypointManager(),SIGNAL(readGlobalWPFromUAS(bool)),this,SLOT(setIsReadGlobalWP(bool)));
@@ -180,7 +180,7 @@ void WaypointList::add()
             Waypoint *last = waypoints.at(waypoints.size()-1);
             wp = new Waypoint(0, last->getX(), last->getY(), last->getZ(), last->getParam1(), last->getParam2(), last->getParam3(), last->getParam4(),
                               last->getAutoContinue(), false, last->getFrame(), last->getAction());
-            uas->getWaypointManager()->addWaypoint(wp);
+            uas->getWaypointManager()->addWaypointEditable(wp);
         }
         else
         {
@@ -215,7 +215,7 @@ void WaypointList::addCurrentPositionWaypoint()
             }
             // Create global frame waypoint per default
             wp = new Waypoint(0, uas->getLatitude(), uas->getLongitude(), uas->getAltitude(), 0, acceptanceRadiusGlobal, holdTime, yawGlobal, true, true, MAV_FRAME_GLOBAL_RELATIVE_ALT, MAV_CMD_NAV_WAYPOINT);
-            uas->getWaypointManager()->addWaypoint(wp);
+            uas->getWaypointManager()->addWaypointEditable(wp);
             updateStatusLabel(tr("Added GLOBAL, ALTITUDE OVER GROUND waypoint"));
         }
         else if (uas->localPositionKnown())
@@ -229,7 +229,7 @@ void WaypointList::addCurrentPositionWaypoint()
             }
             // Create local frame waypoint as second option
             wp = new Waypoint(0, uas->getLocalX(), uas->getLocalY(), uas->getLocalZ(), uas->getYaw(), acceptanceRadiusLocal, holdTime, 0.0, true, true, MAV_FRAME_LOCAL_NED, MAV_CMD_NAV_WAYPOINT);
-            uas->getWaypointManager()->addWaypoint(wp);
+            uas->getWaypointManager()->addWaypointEditable(wp);
             updateStatusLabel(tr("Added LOCAL (NED) waypoint"));
         }
         else
@@ -285,7 +285,7 @@ void WaypointList::updateWaypoint(int uas, Waypoint* wp)
     wpv->updateValues();
 }
 
-void WaypointList::waypointListChanged()
+void WaypointList::waypointEditableListChanged()
 {
     if (uas) {
         // Prevent updates to prevent visual flicker
@@ -341,7 +341,7 @@ void WaypointList::waypointListChanged()
     }
 }
 
-//void WaypointList::waypointListChanged()
+//void WaypointList::waypointEditableListChanged()
 //{
 //    if (uas)
 //    {

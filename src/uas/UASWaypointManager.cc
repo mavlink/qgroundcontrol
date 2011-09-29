@@ -145,7 +145,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
         if(wp->seq == current_wp_id) {
             //// // qDebug() << "Got WP: " << wp->seq << wp->x <<  wp->y << wp->z << wp->param4 << "auto:" << wp->autocontinue << "curr:" << wp->current << wp->param1 << wp->param2 << "Frame:"<< (MAV_FRAME) wp->frame << "Command:" << (MAV_CMD) wp->command;
             Waypoint *lwp = new Waypoint(wp->seq, wp->x, wp->y, wp->z, wp->param1, wp->param2, wp->param3, wp->param4, wp->autocontinue, wp->current, (MAV_FRAME) wp->frame, (MAV_CMD) wp->command);
-            addWaypoint(lwp, false);
+            addWaypointEditable(lwp, false);
             if (wp->current == 1) currentWaypoint = lwp;
 
             //get next waypoint
@@ -248,17 +248,23 @@ void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, m
     }
 }
 
-void UASWaypointManager::notifyOfChange(Waypoint* wp)
+void UASWaypointManager::notifyOfChangeEditable(Waypoint* wp)
 {
     // // qDebug() << "WAYPOINT CHANGED: ID:" << wp->getId();
     // If only one waypoint was changed, emit only WP signal
     if (wp != NULL) {
-        emit waypointChanged(uas.getUASID(), wp);
+        emit waypointEditableChanged(uas.getUASID(), wp);
     } else {
-        emit waypointListChanged();
-        emit waypointListChanged(uas.getUASID());
+        emit waypointEditableListChanged();
+        emit waypointEditableListChanged(uas.getUASID());
     }
 }
+
+//void notifyOfChangeViewOnly(Waypoint* wp)
+//{
+
+//}
+
 
 int UASWaypointManager::setCurrentWaypoint(quint16 seq)
 {
@@ -300,7 +306,7 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
  * @param enforceFirstActive Enforces that the first waypoint is set as active
  * @see createWaypoint() is more suitable for most use cases
  */
-void UASWaypointManager::addWaypoint(Waypoint *wp, bool enforceFirstActive)
+void UASWaypointManager::addWaypointEditable(Waypoint *wp, bool enforceFirstActive)
 {
     if (wp)
     {
@@ -311,10 +317,10 @@ void UASWaypointManager::addWaypoint(Waypoint *wp, bool enforceFirstActive)
             currentWaypoint = wp;
         }
         waypoints.insert(waypoints.size(), wp);
-        connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChange(Waypoint*)));
+        connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeEditable(Waypoint*)));
 
-        emit waypointListChanged();
-        emit waypointListChanged(uas.getUASID());
+        emit waypointEditableListChanged();
+        emit waypointEditableListChanged(uas.getUASID());
     }
 }
 
@@ -331,10 +337,10 @@ Waypoint* UASWaypointManager::createWaypoint(bool enforceFirstActive)
         currentWaypoint = wp;
     }
     waypoints.insert(waypoints.size(), wp);
-    connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChange(Waypoint*)));
+    connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeEditable(Waypoint*)));
 
-    emit waypointListChanged();
-    emit waypointListChanged(uas.getUASID());
+    emit waypointEditableListChanged();
+    emit waypointEditableListChanged(uas.getUASID());
     return wp;
 }
 
@@ -352,8 +358,8 @@ int UASWaypointManager::removeWaypoint(quint16 seq)
             waypoints[i]->setId(i);
         }
 
-        emit waypointListChanged();
-        emit waypointListChanged(uas.getUASID());
+        emit waypointEditableListChanged();
+        emit waypointEditableListChanged(uas.getUASID());
         return 0;
     }
     return -1;
@@ -379,8 +385,8 @@ void UASWaypointManager::moveWaypoint(quint16 cur_seq, quint16 new_seq)
         }
         waypoints[new_seq] = t;
 
-        emit waypointListChanged();
-        emit waypointListChanged(uas.getUASID());
+        emit waypointEditableListChanged();
+        emit waypointEditableListChanged(uas.getUASID());
     }
 }
 
@@ -445,8 +451,8 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
     file.close();
 
     emit loadWPFile();
-    emit waypointListChanged();
-    emit waypointListChanged(uas.getUASID());
+    emit waypointEditableListChanged();
+    emit waypointEditableListChanged(uas.getUASID());
 }
 
 void UASWaypointManager::clearWaypointList()

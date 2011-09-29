@@ -278,7 +278,7 @@ Pixhawk3DWidget::insertWaypoint(void)
 
         if (wp) {
             wp->setFrame(frame);
-            uas->getWaypointManager()->addWaypoint(wp);
+            uas->getWaypointManager()->addWaypointEditable(wp);
         }
     }
 }

@@ -87,7 +87,7 @@ public slots:
     /** @brief The waypoint manager informs that one waypoint was changed */
     void updateWaypoint(int uas, Waypoint* wp);
     /** @brief The waypoint manager informs that the waypoint list was changed */
-    void waypointListChanged(void);
+    void waypointEditableListChanged(void);
 
 //    /** @brief The MapWidget informs that a waypoint global was changed on the map */
 //    void waypointGlobalChanged(const QPointF coordinate, const int indexWP);
