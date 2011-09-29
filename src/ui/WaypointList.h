@@ -69,10 +69,14 @@ public slots:
     void loadWaypoints();
     /** @brief Transmit the local waypoint list to the UAS */
     void transmit();
-    /** @brief Read the remote waypoint list */
+    /** @brief Read the remote waypoint list to both tabs */
     void read();
-    /** @brief Add a waypoint */
-    void add();
+    /** @brief Read the remote waypoint list to "view"-tab only*/
+    void refresh();
+    /** @brief Add a waypoint to "edit"-tab */
+    void addEditable();
+    /** @brief Add a waypoint to "view"-tab */
+    void addViewOnly();
     /** @brief Add a waypoint at the current MAV position */
     void addCurrentPositionWaypoint();
     /** @brief Add a waypoint by mouse click over the map */
@@ -86,8 +90,10 @@ public slots:
     void currentWaypointChanged(quint16 seq);
     /** @brief The waypoint manager informs that one waypoint was changed */
     void updateWaypoint(int uas, Waypoint* wp);
-    /** @brief The waypoint manager informs that the waypoint list was changed */
+    /** @brief The waypoint manager informs that the editable waypoint list was changed */
     void waypointEditableListChanged(void);
+    /** @brief The waypoint manager informs that the waypoint list on the MAV was changed */
+    void waypointViewOnlyListChanged(void);
 
 //    /** @brief The MapWidget informs that a waypoint global was changed on the map */
 //    void waypointGlobalChanged(const QPointF coordinate, const int indexWP);
@@ -115,8 +121,10 @@ protected:
     virtual void changeEvent(QEvent *e);
 
 protected:
-    QMap<Waypoint*, WaypointEditableView*> wpViews;
-    QVBoxLayout* listLayout;
+    QMap<Waypoint*, WaypointEditableView*> wpEditableViews;
+    QMap<Waypoint*, WaypointViewOnlyView*> wpViewOnlyViews;
+    QVBoxLayout* viewOnlyListLayout;
+    QVBoxLayout* editableListLayout;
     UASInterface* uas;
     double mavX;
     double mavY;
