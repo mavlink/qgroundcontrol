@@ -172,8 +172,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/Linechart.ui \
     src/ui/UASView.ui \
     src/ui/ParameterInterface.ui \
-    src/ui/WaypointList.ui \
-    src/ui/WaypointView.ui \
+    src/ui/WaypointList.ui \    
     src/ui/ObjectDetectionView.ui \
     src/ui/JoystickWidget.ui \
     src/ui/DebugConsole.ui \
@@ -210,8 +209,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/map/QGCMapTool.ui \
     src/ui/map/QGCMapToolBar.ui \
     src/ui/QGCMAVLinkInspector.ui \
-    src/ui/WaypointViewOnlyView.ui \
-    src/ui/WaypointViewOnlyView.ui
+    src/ui/WaypointViewOnlyView.ui \    
+    src/ui/WaypointEditableView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -258,8 +257,7 @@ HEADERS += src/MG.h \
     src/comm/UDPLink.h \
     src/ui/ParameterInterface.h \
     src/ui/WaypointList.h \
-    src/Waypoint.h \
-    src/ui/WaypointView.h \
+    src/Waypoint.h \   
     src/ui/ObjectDetectionView.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
@@ -327,7 +325,8 @@ HEADERS += src/MG.h \
     src/ui/QGCMAVLinkInspector.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/WaypointViewOnlyView.h \
-    src/ui/WaypointViewOnlyView.h
+    src/ui/WaypointViewOnlyView.h \
+    src/ui/WaypointEditableView.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -390,7 +389,6 @@ SOURCES += src/main.cc \
     src/ui/ParameterInterface.cc \
     src/ui/WaypointList.cc \
     src/Waypoint.cc \
-    src/ui/WaypointView.cc \
     src/ui/ObjectDetectionView.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
@@ -454,7 +452,8 @@ SOURCES += src/main.cc \
     src/ui/QGCToolBar.cc \
     src/ui/QGCMAVLinkInspector.cc \
     src/ui/MAVLinkDecoder.cc \
-    src/ui/WaypointViewOnlyView.cc
+    src/ui/WaypointViewOnlyView.cc \
+    src/ui/WaypointEditableView.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
