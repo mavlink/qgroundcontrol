@@ -124,21 +124,22 @@ public slots:
     void timeout();                                 ///< Called by the timer if a response times out. Handles send retries.
     /** @name Waypoint list operations */
     /*@{*/
-    void addWaypoint(Waypoint *wp, bool enforceFirstActive=true);                 ///< adds a new waypoint to the end of the list and changes its sequence number accordingly
+    void addWaypointEditable(Waypoint *wp, bool enforceFirstActive=true);                 ///< adds a new waypoint to the end of the editable list and changes its sequence number accordingly
     Waypoint* createWaypoint(bool enforceFirstActive=true);     ///< Creates a waypoint
     int removeWaypoint(quint16 seq);                       ///< locally remove the specified waypoint from the storage
     void moveWaypoint(quint16 cur_seq, quint16 new_seq);   ///< locally move a waypoint from its current position cur_seq to a new position new_seq
     void saveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
     void loadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
-    void notifyOfChange(Waypoint* wp);                     ///< Notifies manager to changes to a waypoint
+    void notifyOfChangeEditable(Waypoint* wp);             ///< Notifies manager to changes to an editable waypoint
+    //void notifyOfChangeViewOnly(Waypoint* wp);             ///< Notifies manager to changes to a viewonly waypoint
     /*@}*/
     void handleLocalPositionChanged(UASInterface* mav, double x, double y, double z, quint64 time);
     void handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double alt, quint64 time);
 
 signals:
-    void waypointListChanged(void);                 ///< emits signal that the waypoint list has been changed
-    void waypointListChanged(int uasid);            ///< Emits signal that list has been changed
-    void waypointChanged(int uasid, Waypoint* wp);  ///< emits signal that waypoint has been changed
+    void waypointEditableListChanged(void);                 ///< emits signal that the list of editable waypoints has been changed
+    void waypointEditableListChanged(int uasid);            ///< emits signal that the list of editable waypoints has been changed
+    void waypointEditableChanged(int uasid, Waypoint* wp);  ///< emits signal that a single editable waypoint has been changed
     void currentWaypointChanged(quint16);           ///< emits the new current waypoint sequence number
     void updateStatusString(const QString &);       ///< emits the current status string
     void waypointDistanceChanged(double distance);   ///< Distance to next waypoint changed (in meters)
