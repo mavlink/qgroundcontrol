@@ -361,7 +361,7 @@ void WaypointView::changedCurrent(int state)
     if (state == 0) {
         m_ui->selectedBox->setChecked(true);
         m_ui->selectedBox->setCheckState(Qt::Checked);
-        wp->setCurrent(false);
+        //wp->setCurrent(false); //FIXME: Is this line needed?
     } else {
         wp->setCurrent(true);
         emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
