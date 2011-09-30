@@ -76,7 +76,7 @@ public slots:
     /** @brief Add a waypoint to "edit"-tab */
     void addEditable();
     /** @brief Add a waypoint to "view"-tab */
-    void addViewOnly();
+   // void addViewOnly();
     /** @brief Add a waypoint at the current MAV position */
     void addCurrentPositionWaypoint();
     /** @brief Add a waypoint by mouse click over the map */
@@ -86,10 +86,14 @@ public slots:
     void updateStatusLabel(const QString &string);
     /** @brief The user wants to change the current waypoint */
     void changeCurrentWaypoint(quint16 seq);
-    /** @brief The waypoint planner changed the current waypoint */
-    void currentWaypointChanged(quint16 seq);
-    /** @brief The waypoint manager informs that one waypoint was changed */
-    void updateWaypoint(int uas, Waypoint* wp);
+    /** @brief Current waypoint in edit-tab was changed, so the list must be updated (to contain only one waypoint checked as "current")  */
+    void currentWaypointEditableChanged(quint16 seq);
+    /** @brief Current waypoint on UAV was changed, update view-tab  */
+    void currentWaypointViewOnlyChanged(quint16 seq);
+    /** @brief The waypoint manager informs that one editable waypoint was changed */
+    void updateWaypointEditable(int uas, Waypoint* wp);
+    /** @brief The waypoint manager informs that one viewonly waypoint was changed */
+    void updateWaypointViewOnly(int uas, Waypoint* wp);
     /** @brief The waypoint manager informs that the editable waypoint list was changed */
     void waypointEditableListChanged(void);
     /** @brief The waypoint manager informs that the waypoint list on the MAV was changed */
