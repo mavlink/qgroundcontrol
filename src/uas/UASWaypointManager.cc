@@ -267,16 +267,23 @@ void UASWaypointManager::notifyOfChangeEditable(Waypoint* wp)
     }
 }
 
-//void notifyOfChangeViewOnly(Waypoint* wp)
-//{
-
-//}
+void UASWaypointManager::notifyOfChangeViewOnly(Waypoint* wp)
+{
+    if (wp != NULL) {
+        emit waypointViewOnlyChanged(uas.getUASID(), wp);
+    } else {
+        emit waypointViewOnlyListChanged();
+        emit waypointViewOnlyListChanged(uas.getUASID());
+    }
+}
 
 
 int UASWaypointManager::setCurrentWaypoint(quint16 seq)
 {
     if (seq < waypointsViewOnly.size()) {
         if(current_state == WP_IDLE) {
+
+            /*
             //update local main storage
             for(int i = 0; i < waypointsViewOnly.size(); i++) {
                 if (waypointsViewOnly[i]->getId() == seq) {
@@ -286,8 +293,8 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
                     waypointsViewOnly[i]->setCurrent(false);
                 }
             }
+            */
 
-            //TODO: signal changed waypoint list
 
             //send change to UAS - important to note: if the transmission fails, we have inconsistencies
             protocol_timer.start(PROTOCOL_TIMEOUT_MS);
@@ -308,17 +315,30 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
     return -1;
 }
 
+int UASWaypointManager::setCurrentEditable(quint16 seq)
+{
+    if (seq < waypointsEditable.size()) {
+        if(current_state == WP_IDLE) {
+            //update local main storage
+            for(int i = 0; i < waypointsEditable.size(); i++) {
+                if (waypointsEditable[i]->getId() == seq) {
+                    waypointsEditable[i]->setCurrent(true);
+                    //currentWaypointEditable = waypoints[i];
+                } else {
+                    waypointsEditable[i]->setCurrent(false);
+                }
+            }
+
+            return 0;
+        }
+    }
+    return -1;
+}
 
 void UASWaypointManager::addWaypointViewOnly(Waypoint *wp)
 {
     if (wp)
-    {
-        wp->setId(waypointsViewOnly.size());
-        if (waypointsEditable.size() == 0)
-        {
-            wp->setCurrent(true);
-            //currentWaypointEditable = wp;
-        }
+    {        
         waypointsViewOnly.insert(waypointsViewOnly.size(), wp);
         connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeViewOnly(Waypoint*)));
 
@@ -719,10 +739,19 @@ void UASWaypointManager::readWaypoints(bool readToEdit)
     read_to_edit = readToEdit;
     emit readGlobalWPFromUAS(true);
     if(current_state == WP_IDLE) {
-        while(waypointsEditable.size()>0) {
-            delete waypointsEditable.back();
-            waypointsEditable.pop_back();
 
+        //Clear the old view-list before receiving the new one
+        while(waypointsViewOnly.size()>0) {
+            delete waypointsViewOnly.back();
+            waypointsViewOnly.pop_back();
+        }
+
+        //Clear the old edit-list before receiving the new one
+        if (read_to_edit == true){
+            while(waypointsEditable.size()>0) {
+                delete waypointsEditable.back();
+                waypointsEditable.pop_back();
+            }
         }
 
         protocol_timer.start(PROTOCOL_TIMEOUT_MS);
@@ -799,7 +828,7 @@ void UASWaypointManager::writeWaypoints()
         sendWaypointClearAll();
     } else {
         //we're in another transaction, ignore command
-        // // qDebug() << "UASWaypointManager::sendWaypoints() doing something else ignoring command";
+        qDebug() << "UASWaypointManager::sendWaypoints() doing something else ignoring command";
     }
 }
 

@@ -82,7 +82,8 @@ public:
 
     void readWaypoints(bool read_to_edit=false);    ///< Requests the MAV's current waypoint list.
     void writeWaypoints();                          ///< Sends the waypoint list to the MAV
-    int setCurrentWaypoint(quint16 seq);            ///< Changes the current waypoint and sends the sequence number of the waypoint that should get the new target waypoint to the UAS
+    int setCurrentWaypoint(quint16 seq);            ///< Sends the sequence number of the waypoint that should get the new target waypoint to the UAS
+    int setCurrentEditable(quint16 seq);          ///< Changes the current waypoint in edit tab
     /*@}*/
 
     /** @name Waypoint list operations */
@@ -136,7 +137,7 @@ public slots:
     void saveWaypoints(const QString &saveFile);           ///< saves the local waypoint list to saveFile
     void loadWaypoints(const QString &loadFile);           ///< loads a waypoint list from loadFile
     void notifyOfChangeEditable(Waypoint* wp);             ///< Notifies manager to changes to an editable waypoint
-    //void notifyOfChangeViewOnly(Waypoint* wp);             ///< Notifies manager to changes to a viewonly waypoint
+    void notifyOfChangeViewOnly(Waypoint* wp);             ///< Notifies manager to changes to a viewonly waypoint, e.g. some widget wants to change "current"
     /*@}*/
     void handleLocalPositionChanged(UASInterface* mav, double x, double y, double z, quint64 time);
     void handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double alt, quint64 time);

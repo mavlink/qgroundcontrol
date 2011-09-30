@@ -31,9 +31,14 @@ void WaypointViewOnlyView::changedAutoContinue(int state)
 void WaypointViewOnlyView::changedCurrent(int state)
 {
     qDebug() << "Trof: WaypointViewOnlyView::changedCurrent(" << state << ") ID:" << wp->getId();
-
+    m_ui->current->blockSignals(true);
     if (state == 0)
     {
+        /*
+
+        m_ui->current->setStyleSheet("");
+
+        */
         if (wp->getCurrent() == true) //User clicked on the waypoint, that is already current
         {
             m_ui->current->setChecked(true);
@@ -42,15 +47,27 @@ void WaypointViewOnlyView::changedCurrent(int state)
         else
         {
             m_ui->current->setChecked(false);
-            m_ui->current->setCheckState(Qt::Unchecked);
+            m_ui->current->setCheckState(Qt::Unchecked);            
             wp->setCurrent(false);
         }
     }
     else
-    {
+    {        
+        /*
+        FIXME: The checkbox should turn gray to indicate, that set_current request has been sent to UAV. It should become blue (checked) after receiving set_current_ack from waypointplanner.
+
+        m_ui->current->setStyleSheet("*::indicator { \
+            border: 1px solid #777777; \
+            border-radius: 2px; \
+            color: #999999; \
+                 width: 10px; \
+             height: 10px; \
+        }");
+        */
         wp->setCurrent(true);
         emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
     }
+    m_ui->current->blockSignals(false);
 }
 
 void WaypointViewOnlyView::setCurrent(bool state)
