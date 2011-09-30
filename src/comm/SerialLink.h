@@ -68,6 +68,9 @@ public:
 
     static const int poll_interval = SERIAL_POLL_INTERVAL; ///< Polling interval, defined in configuration.h
 
+    /** @brief Get a list of the currently available ports */
+    QVector<QString>* getCurrentPorts();
+
     bool isConnected();
     qint64 bytesAvailable();
 
@@ -163,6 +166,7 @@ protected:
     quint64 connectionStartTime;
     QMutex statisticsMutex;
     QMutex dataMutex;
+    QVector<QString>* ports;
 
     void setName(QString name);
     bool hardwareConnect();

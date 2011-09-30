@@ -234,7 +234,6 @@ HEADERS += src/MG.h \
     src/comm/LinkInterface.h \
     src/comm/SerialLinkInterface.h \
     src/comm/SerialLink.h \
-    src/comm/SerialSimulationLink.h \
     src/comm/ProtocolInterface.h \
     src/comm/MAVLinkProtocol.h \
     src/comm/QGCFlightGearLink.h \
@@ -365,7 +364,6 @@ SOURCES += src/main.cc \
     src/comm/LinkManager.cc \
     src/comm/LinkInterface.cpp \
     src/comm/SerialLink.cc \
-    src/comm/SerialSimulationLink.cc \
     src/comm/MAVLinkProtocol.cc \
     src/comm/QGCFlightGearLink.cc \
     src/ui/CommConfigurationWindow.cc \
