@@ -89,7 +89,7 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
 
     // REFRESH VIEW TAB
 
-     connect(m_ui->refreshButton, SIGNAL(clicked()), this, SLOT(refresh()));
+    connect(m_ui->refreshButton, SIGNAL(clicked()), this, SLOT(refresh()));
 
 
     // SET UAS AFTER ALL SIGNALS/SLOTS ARE CONNECTED
@@ -289,7 +289,10 @@ void WaypointList::addCurrentPositionWaypoint()
 
 void WaypointList::updateStatusLabel(const QString &string)
 {
+    // Status label in write widget
     m_ui->statusLabel->setText(string);
+    // Status label in read only widget
+    m_ui->viewStatusLabel->setText(string);
 }
 
 void WaypointList::changeCurrentWaypoint(quint16 seq)

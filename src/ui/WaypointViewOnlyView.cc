@@ -26,7 +26,7 @@ void WaypointViewOnlyView::changedAutoContinue(int state)
     m_ui->autoContinue->blockSignals(false);
     wp->setAutocontinue(new_value);
     emit changeAutoContinue(wp->getId(),new_value);
- }
+}
 
 void WaypointViewOnlyView::changedCurrent(int state)
 {
@@ -87,24 +87,61 @@ void WaypointViewOnlyView::updateValues()
         deleteLater();
         return;
     }
-    // Deactivate signals from the WP
-    wp->blockSignals(true);
+
+    // Update style
+
+    QColor backGroundColor = QGC::colorBackground;
+
+    static int lastId = -1;
+    int currId = wp->getId() % 2;
+
+    if (currId != lastId)
+    {
+
+        // qDebug() << "COLOR ID: " << currId;
+        if (currId == 1)
+        {
+            backGroundColor = QColor("#252528").lighter(150);
+        }
+        else
+        {
+            backGroundColor = QColor("#252528").lighter(250);
+        }
+
+        // Update color based on id
+        QString groupBoxStyle = QString("QGroupBox {padding: 0px; margin: 0px; border: 0px; background-color: %1; min-height: 12px; }").arg(backGroundColor.name());
+        QString labelStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border-color: #EEEEEE; }").arg(backGroundColor.name());
+        QString displayBarStyle = QString("QWidget {background-color: %1; color: #DDDDDF; border: none; }").arg(backGroundColor.name());
+        QString checkBoxStyle = QString("QCheckBox {background-color: %1; color: #454545; border-color: #EEEEEE; }").arg(backGroundColor.name());
+
+        m_ui->autoContinue->setStyleSheet(checkBoxStyle);
+        m_ui->current->setStyleSheet(checkBoxStyle);
+        m_ui->idLabel->setStyleSheet(labelStyle);
+        m_ui->displayBar->setStyleSheet(displayBarStyle);
+        m_ui->groupBox->setStyleSheet(groupBoxStyle);
+        lastId = currId;
+    }
+
     // update frame
 
     m_ui->idLabel->setText(QString("%1").arg(wp->getId()));
 
     if (m_ui->current->isChecked() != wp->getCurrent())
     {
+        m_ui->current->blockSignals(true);
         m_ui->current->setChecked(wp->getCurrent());
+        m_ui->current->blockSignals(false);
     }
     if (m_ui->autoContinue->isChecked() != wp->getAutoContinue())
     {
+        m_ui->autoContinue->blockSignals(true);
         m_ui->autoContinue->setChecked(wp->getAutoContinue());
+        m_ui->autoContinue->blockSignals(false);
     }
 
-switch (wp->getAction())
-{
-case MAV_CMD_NAV_WAYPOINT:
+    switch (wp->getAction())
+    {
+    case MAV_CMD_NAV_WAYPOINT:
     {
         if (wp->getParam1()>0)
         {
@@ -116,17 +153,17 @@ case MAV_CMD_NAV_WAYPOINT:
         }
         break;
     }
-case MAV_CMD_NAV_LAND:
+    case MAV_CMD_NAV_LAND:
     {
         m_ui->displayBar->setText(QString("LAND. Go to (%1, %2, %3) and descent; yaw: %4").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()));
         break;
     }
-case MAV_CMD_NAV_TAKEOFF:
+    case MAV_CMD_NAV_TAKEOFF:
     {
         m_ui->displayBar->setText(QString("TAKEOFF. Go to (%1, %2, %3); yaw: %4").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()));
         break;
     }
-case MAV_CMD_DO_JUMP:
+    case MAV_CMD_DO_JUMP:
     {
         if (wp->getParam2()>0)
         {
@@ -138,35 +175,32 @@ case MAV_CMD_DO_JUMP:
         }
         break;
     }
-case MAV_CMD_CONDITION_DELAY:
+    case MAV_CMD_CONDITION_DELAY:
     {
         m_ui->displayBar->setText(QString("Delay: %1 sec").arg(wp->getParam1()));
         break;
     }
-case 237: //MAV_CMD_DO_START_SEARCH
+    case 237: //MAV_CMD_DO_START_SEARCH
     {
         m_ui->displayBar->setText(QString("Start searching for pattern. Success when got more than %2 detections with confidence %1").arg(wp->getParam1()).arg(wp->getParam2()));
         break;
     }
-case 238: //MAV_CMD_DO_FINISH_SEARCH
+    case 238: //MAV_CMD_DO_FINISH_SEARCH
     {
         m_ui->displayBar->setText(QString("Check if search was successful. yes -> jump to %1, no -> jump to %2.  Jumps left: %3").arg(wp->getParam1()).arg(wp->getParam2()).arg(wp->getParam3()));
         break;
     }
-case 240: //MAV_CMD_DO_SWEEP
+    case 240: //MAV_CMD_DO_SWEEP
     {
         m_ui->displayBar->setText(QString("Sweep. Corners: (%1,%2) and (%3,%4); z: %5; scan radius: %6").arg(wp->getParam3()).arg(wp->getParam4()).arg(wp->getParam5()).arg(wp->getParam6()).arg(wp->getParam7()).arg(wp->getParam1()));
         break;
     }
-default:
+    default:
     {
         m_ui->displayBar->setText(QString("Unknown Command ID (%1) : %2, %3, %4, %5, %6, %7, %8").arg(wp->getAction()).arg(wp->getParam1()).arg(wp->getParam2()).arg(wp->getParam3()).arg(wp->getParam4()).arg(wp->getParam5()).arg(wp->getParam6()).arg(wp->getParam7()));
         break;
     }
-}
-
-
-    wp->blockSignals(false);
+    }
 }
 
 WaypointViewOnlyView::~WaypointViewOnlyView()
