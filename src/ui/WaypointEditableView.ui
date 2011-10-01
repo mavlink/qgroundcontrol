@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>WaypointView</class>
- <widget class="QWidget" name="WaypointView">
+ <class>WaypointEditableView</class>
+ <widget class="QWidget" name="WaypointEditableView">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -604,7 +604,7 @@ Time to stay at this position before advancing</string>
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../mavground.qrc">
+         <iconset resource="../../qgroundcontrol.qrc">
           <normaloff>:/images/actions/go-up.svg</normaloff>:/images/actions/go-up.svg</iconset>
         </property>
        </widget>
@@ -630,7 +630,7 @@ Time to stay at this position before advancing</string>
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../mavground.qrc">
+         <iconset resource="../../qgroundcontrol.qrc">
           <normaloff>:/images/actions/go-down.svg</normaloff>:/images/actions/go-down.svg</iconset>
         </property>
        </widget>
@@ -653,7 +653,7 @@ Time to stay at this position before advancing</string>
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="../../mavground.qrc">
+         <iconset resource="../../qgroundcontrol.qrc">
           <normaloff>:/images/actions/list-remove.svg</normaloff>:/images/actions/list-remove.svg</iconset>
         </property>
        </widget>
@@ -664,7 +664,7 @@ Time to stay at this position before advancing</string>
   </layout>
  </widget>
  <resources>
-  <include location="../../mavground.qrc"/>
+  <include location="../../qgroundcontrol.qrc"/>
  </resources>
  <connections/>
 </ui>
