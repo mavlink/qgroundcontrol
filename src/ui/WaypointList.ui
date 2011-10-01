@@ -20,16 +20,46 @@
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
+   <property name="topMargin">
+    <number>8</number>
+   </property>
+   <property name="rightMargin">
+    <number>0</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="editTab">
       <attribute name="title">
-       <string>Tab 1</string>
+       <string>Edit Waypoints</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
+       <property name="leftMargin">
+        <number>6</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>6</number>
+       </property>
+       <property name="bottomMargin">
+        <number>6</number>
+       </property>
+       <property name="horizontalSpacing">
+        <number>12</number>
+       </property>
+       <property name="verticalSpacing">
+        <number>6</number>
+       </property>
        <item row="0" column="0" colspan="9">
         <widget class="QScrollArea" name="scrollArea">
          <property name="widgetResizable">
@@ -40,15 +70,24 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>812</width>
-            <height>271</height>
+            <width>834</width>
+            <height>325</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout">
            <property name="spacing">
             <number>0</number>
            </property>
-           <property name="margin">
+           <property name="leftMargin">
+            <number>4</number>
+           </property>
+           <property name="topMargin">
+            <number>8</number>
+           </property>
+           <property name="rightMargin">
+            <number>4</number>
+           </property>
+           <property name="bottomMargin">
             <number>4</number>
            </property>
            <item>
@@ -213,14 +252,48 @@
          </property>
         </widget>
        </item>
+       <item row="1" column="2">
+        <widget class="QLabel" name="statusLabel">
+         <property name="toolTip">
+          <string>The current waypoint transmission status</string>
+         </property>
+         <property name="statusTip">
+          <string>The current waypoint transmission status</string>
+         </property>
+         <property name="whatsThis">
+          <string>The current waypoint transmission status</string>
+         </property>
+         <property name="text">
+          <string>Please add first waypoint.</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="viewTab">
       <attribute name="title">
-       <string>Tab 2</string>
+       <string>Onboard Waypoints</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0" colspan="2">
+       <property name="leftMargin">
+        <number>6</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>6</number>
+       </property>
+       <property name="bottomMargin">
+        <number>6</number>
+       </property>
+       <property name="horizontalSpacing">
+        <number>12</number>
+       </property>
+       <property name="verticalSpacing">
+        <number>6</number>
+       </property>
+       <item row="0" column="0" colspan="3">
         <widget class="QScrollArea" name="readOnlyScrollArea">
          <property name="widgetResizable">
           <bool>true</bool>
@@ -230,14 +303,26 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>812</width>
-            <height>271</height>
+            <width>834</width>
+            <height>331</height>
            </rect>
           </property>
           <property name="autoFillBackground">
            <bool>true</bool>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <property name="leftMargin">
+            <number>4</number>
+           </property>
+           <property name="topMargin">
+            <number>8</number>
+           </property>
+           <property name="rightMargin">
+            <number>4</number>
+           </property>
+           <property name="bottomMargin">
+            <number>4</number>
+           </property>
            <item>
             <widget class="QWidget" name="viewOnlyListWidget" native="true">
              <property name="enabled">
@@ -249,7 +334,7 @@
          </widget>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item row="1" column="1">
         <spacer name="horizontalSpacer_2">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -262,7 +347,7 @@
          </property>
         </spacer>
        </item>
-       <item row="1" column="1">
+       <item row="1" column="2">
         <widget class="QPushButton" name="refreshButton">
          <property name="toolTip">
           <string>Read all waypoints from the MAV and display in View tab..</string>
@@ -282,24 +367,15 @@
          </property>
         </widget>
        </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="viewStatusLabel">
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="statusLabel">
-     <property name="toolTip">
-      <string>The current waypoint transmission status</string>
-     </property>
-     <property name="statusTip">
-      <string>The current waypoint transmission status</string>
-     </property>
-     <property name="whatsThis">
-      <string>The current waypoint transmission status</string>
-     </property>
-     <property name="text">
-      <string>Please add first waypoint.</string>
-     </property>
     </widget>
    </item>
   </layout>

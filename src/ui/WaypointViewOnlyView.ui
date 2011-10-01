@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>381</width>
-    <height>55</height>
+    <height>40</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,124 +20,12 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#colorIcon {}
-
-QWidget {
-background-color: #252528;
-color: #DDDDDF;
-border-color: #EEEEEE;
-background-clip: border;
-}
-
-QCheckBox {
-background-color: #252528;
-color: #454545;
-}
-
-QGroupBox {
-	border: 1px solid #EEEEEE;
-	border-radius: 5px;
-	padding: 0px 0px 0px 0px;
-margin-top: 1ex; /* leave space at the top for the title */
-	margin: 0px;
-}
-
- QGroupBox::title {
-     subcontrol-origin: margin;
-     subcontrol-position: top center; /* position at the top center */
-     margin: 0 3px 0px 3px;
-     padding: 0 3px 0px 0px;
-     font: bold 8px;
- }
-
-QGroupBox#heartbeatIcon {
-	background-color: red;
-}
-
- QDockWidget {
-	font: bold;
-    border: 1px solid #32345E;
-}
-
-QPushButton {
-	font-weight: bold;
-	font-size: 12px;
-	border: 1px solid #999999;
-	border-radius: 10px;
-	min-width:22px;
-	max-width: 36px;
-	min-height: 16px;
-	max-height: 16px;
-	padding: 2px;
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #777777, stop: 1 #555555);
-}
-
-QPushButton:pressed {
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #444444, stop: 1 #555555);
-}
-
-QPushButton#landButton {
-	color: #000000;
-	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffee01, stop:1 #ae8f00) url(&quot;ICONDIR/control/emergency-button.png&quot;);
-}
-
-QPushButton:pressed#landButton {
-	color: #000000;
-	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bbaa00, stop:1 #a05b00) url(&quot;ICONDIR/control/emergency-button.png&quot;);
-}
-
-QPushButton#killButton {
-	color: #000000;
-	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #ffb917, stop:1 #b37300) url(&quot;ICONDIR/control/emergency-button.png&quot;);
-}
-
-QPushButton:pressed#killButton {
-	color: #000000;
-	background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                             stop:0 #bb8500, stop:1 #903000) url(&quot;ICONDIR/control/emergency-button.png&quot;);
-}
-
-QProgressBar {
-	border: 1px solid white;
-	border-radius: 4px;
-	text-align: center;
-	padding: 2px;
-	color: white;
-	background-color: #111111;
-}
-
-QProgressBar:horizontal {
-	height: 12px;
-}
-
-QProgressBar QLabel {
-	font-size: 8px;
-}
-
-QProgressBar:vertical {
-	width: 12px;
-}
-
-QProgressBar::chunk {
-	background-color: #656565;
-}
-
-QProgressBar::chunk#batteryBar {
-	background-color: green;
-}
-
-QProgressBar::chunk#speedBar {
-	background-color: yellow;
-}
-
-QProgressBar::chunk#thrustBar {
-	background-color: orange;
-}</string>
+   <string notr="true"/>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <property name="leftMargin">
     <number>2</number>
    </property>
@@ -167,12 +55,21 @@ QProgressBar::chunk#thrustBar {
      <property name="checkable">
       <bool>false</bool>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,100,1">
       <property name="spacing">
+       <number>6</number>
+      </property>
+      <property name="leftMargin">
        <number>2</number>
       </property>
-      <property name="margin">
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
        <number>2</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
       </property>
       <item>
        <widget class="QCheckBox" name="current">

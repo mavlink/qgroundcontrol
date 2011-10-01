@@ -63,7 +63,8 @@ WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     updateValues();
 
     // Check for mission frame
-    if (wp->getFrame() == MAV_FRAME_MISSION) {
+    if (wp->getFrame() == MAV_FRAME_MISSION)
+    {
         m_ui->comboBox_action->setCurrentIndex(m_ui->comboBox_action->count()-1);
     }
 
