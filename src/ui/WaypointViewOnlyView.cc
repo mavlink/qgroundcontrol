@@ -145,11 +145,11 @@ void WaypointViewOnlyView::updateValues()
     {
         if (wp->getParam1()>0)
         {
-            m_ui->displayBar->setText(QString("Go to (%1, %2, %3) and wait there for %4 sec; yaw: %5; rad: %6").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam1()).arg(wp->getParam4()).arg(wp->getParam2()));
+            m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b> and wait there for %4 sec; yaw: %5; rad: %6").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam1()).arg(wp->getParam4()).arg(wp->getParam2()));
         }
         else
         {
-            m_ui->displayBar->setText(QString("Go to (%1, %2, %3); yaw: %4; rad: %5").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()).arg(wp->getParam2()));
+            m_ui->displayBar->setText(QString("Go to <b>(%1, %2, %3)</b>; yaw: %4; rad: %5").arg(wp->getX()).arg(wp->getY()).arg(wp->getZ()).arg(wp->getParam4()).arg(wp->getParam2()));
         }
         break;
     }
