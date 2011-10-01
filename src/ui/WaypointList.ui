@@ -32,6 +32,9 @@
    <property name="bottomMargin">
     <number>0</number>
    </property>
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
@@ -54,10 +57,7 @@
        <property name="bottomMargin">
         <number>6</number>
        </property>
-       <property name="horizontalSpacing">
-        <number>12</number>
-       </property>
-       <property name="verticalSpacing">
+       <property name="spacing">
         <number>6</number>
        </property>
        <item row="0" column="0" colspan="9">
@@ -287,10 +287,7 @@
        <property name="bottomMargin">
         <number>6</number>
        </property>
-       <property name="horizontalSpacing">
-        <number>12</number>
-       </property>
-       <property name="verticalSpacing">
+       <property name="spacing">
         <number>6</number>
        </property>
        <item row="0" column="0" colspan="3">
