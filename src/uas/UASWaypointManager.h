@@ -64,7 +64,8 @@ private:
     }; ///< The possible states for the waypoint protocol
 
 public:
-    UASWaypointManager(UAS&);   ///< Standard constructor.
+    UASWaypointManager(UAS&);   ///< Standard constructor
+    UASWaypointManager();       ///< Standalone mode
 
     /** @name Received message handlers */
     /*@{*/
@@ -171,6 +172,8 @@ private:
     Waypoint* currentWaypointEditable;                      ///< The currently used waypoint
     QVector<mavlink_mission_item_t *> waypoint_buffer;  ///< buffer for waypoints during communication
     QTimer protocol_timer;                          ///< Timer to catch timeouts
+    bool standalone;                                ///< If standalone is set, do not write to UAS
+    int uasid;
 };
 
 #endif // UASWAYPOINTMANAGER_H
