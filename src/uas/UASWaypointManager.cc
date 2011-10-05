@@ -173,7 +173,7 @@ void UASWaypointManager::handleWaypoint(quint8 systemId, quint8 compId, mavlink_
 
                 protocol_timer.stop();
                 emit readGlobalWPFromUAS(false);
-                if (currentWaypointEditable) emit currentWaypointChanged(currentWaypointEditable->getId());
+                //if (currentWaypointEditable) emit currentWaypointChanged(currentWaypointEditable->getId());
                 emit updateStatusString("done.");
 
                 // // qDebug() << "got all waypoints from ID " << systemId;
@@ -282,19 +282,6 @@ int UASWaypointManager::setCurrentWaypoint(quint16 seq)
 {
     if (seq < waypointsViewOnly.size()) {
         if(current_state == WP_IDLE) {
-
-            /*
-            //update local main storage
-            for(int i = 0; i < waypointsViewOnly.size(); i++) {
-                if (waypointsViewOnly[i]->getId() == seq) {
-                    waypointsViewOnly[i]->setCurrent(true);
-                    //currentWaypointEditable = waypoints[i];
-                } else {
-                    waypointsViewOnly[i]->setCurrent(false);
-                }
-            }
-            */
-
 
             //send change to UAS - important to note: if the transmission fails, we have inconsistencies
             protocol_timer.start(PROTOCOL_TIMEOUT_MS);

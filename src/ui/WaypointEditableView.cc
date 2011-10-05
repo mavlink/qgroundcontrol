@@ -359,27 +359,30 @@ void WaypointEditableView::changedFrame(int index)
 
 void WaypointEditableView::changedCurrent(int state)
 {
-    m_ui->selectedBox->blockSignals(true);
+    //m_ui->selectedBox->blockSignals(true);
     if (state == 0)
     {
         if (wp->getCurrent() == true) //User clicked on the waypoint, that is already current
         {
+            qDebug() << "Editable " << wp->getId() << " changedCurrent: State 0, current true" ;
             m_ui->selectedBox->setChecked(true);
             m_ui->selectedBox->setCheckState(Qt::Checked);
         }
         else
         {
+            qDebug() << "Editable " << wp->getId() << " changedCurrent: State 0, current false";
             m_ui->selectedBox->setChecked(false);
             m_ui->selectedBox->setCheckState(Qt::Unchecked);
-            wp->setCurrent(false);
+            //wp->setCurrent(false);
         }
     }
     else
     {
+        qDebug() << "Editable " << wp->getId() << " changedCurrent: State 2";
         wp->setCurrent(true);
-        //emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
+        emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
     }
-    m_ui->selectedBox->blockSignals(false);
+    //m_ui->selectedBox->blockSignals(false);
 }
 
 void WaypointEditableView::updateValues()
