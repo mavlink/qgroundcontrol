@@ -64,8 +64,7 @@ private:
     }; ///< The possible states for the waypoint protocol
 
 public:
-    UASWaypointManager(UAS&);   ///< Standard constructor
-    UASWaypointManager();       ///< Standalone mode
+    UASWaypointManager(UAS* uas=NULL);   ///< Standard constructor
 
     /** @name Received message handlers */
     /*@{*/
@@ -110,7 +109,7 @@ public:
     int getLocalFrameCount();   ///< Get the count of local waypoints in the list
     /*@}*/
 
-    UAS& getUAS() {
+    UAS* getUAS() {
         return this->uas;    ///< Returns the owning UAS
     }
 
@@ -158,7 +157,7 @@ signals:
     void readGlobalWPFromUAS(bool value);           ///< emits signal when finish to read Global WP from UAS
 
 private:
-    UAS &uas;                                       ///< Reference to the corresponding UAS
+    UAS* uas;                                       ///< Reference to the corresponding UAS
     quint32 current_retries;                        ///< The current number of retries left
     quint16 current_wp_id;                          ///< The last used waypoint ID in the current protocol transaction
     quint16 current_count;                          ///< The number of waypoints in the current protocol transaction

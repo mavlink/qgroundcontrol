@@ -30,14 +30,14 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include "UASWaypointManager.h"
-#include "UAS.h"
+#include "uas.h"
 #include "mavlink_types.h"
 
 #define PROTOCOL_TIMEOUT_MS 2000    ///< maximum time to wait for pending messages until timeout
-#define PROTOCOL_DELAY_MS 40        ///< minimum delay between sent messages
-#define PROTOCOL_MAX_RETRIES 3      ///< maximum number of send retries (after timeout)
+#define PROTOCOL_DELAY_MS 20        ///< minimum delay between sent messages
+#define PROTOCOL_MAX_RETRIES 5      ///< maximum number of send retries (after timeout)
 
-UASWaypointManager::UASWaypointManager(UAS &_uas)
+UASWaypointManager::UASWaypointManager(UAS* _uas)
     : uas(_uas),
       current_retries(0),
       current_wp_id(0),
@@ -46,28 +46,19 @@ UASWaypointManager::UASWaypointManager(UAS &_uas)
       current_partner_systemid(0),
       current_partner_compid(0),
       protocol_timer(this),
-      currentWaypointEditable(NULL),
-      standalone(false),
-      uasid(_uasid)
+      currentWaypointEditable(NULL)
 {
-    connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
-    connect(&uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleLocalPositionChanged(UASInterface*,double,double,double,quint64)));
-    connect(&uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,quint64)));
-}
-
-UASWaypointManager::UASWaypointManager()
-    : current_retries(0),
-      current_wp_id(0),
-      current_count(0),
-      current_state(WP_IDLE),
-      current_partner_systemid(0),
-      current_partner_compid(0),
-      protocol_timer(this),
-      currentWaypointEditable(NULL),
-      standalone(true),
-      uasid(0)
-{
-    connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
+    if (uas)
+    {
+        uasid = uas->getUASID();
+        connect(&protocol_timer, SIGNAL(timeout()), this, SLOT(timeout()));
+        connect(uas, SIGNAL(localPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleLocalPositionChanged(UASInterface*,double,double,double,quint64)));
+        connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(handleGlobalPositionChanged(UASInterface*,double,double,double,quint64)));
+    }
+    else
+    {
+        uasid = 0;
+    }
 }
 
 void UASWaypointManager::timeout()
@@ -241,7 +232,7 @@ void UASWaypointManager::handleWaypointRequest(quint8 systemId, quint8 compId, m
 
 void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, mavlink_mission_item_reached_t *wpr)
 {
-    if (standalone) return;
+    if (!uas) return;
     if (systemId == uasid) {
         emit updateStatusString(QString("Reached waypoint %1").arg(wpr->seq));
     }
@@ -249,7 +240,7 @@ void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, m
 
 void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_mission_current_t *wpc)
 {
-    if (standalone) return;
+    if (!uas) return;
     if (systemId == uasid) {
         // FIXME Petri
         if (current_state == WP_SETCURRENT) {
@@ -840,7 +831,7 @@ void UASWaypointManager::writeWaypoints()
 
 void UASWaypointManager::sendWaypointClearAll()
 {
-    if (standalone) return;
+    if (!uas) return;
     mavlink_message_t message;
     mavlink_mission_clear_all_t wpca;
 
@@ -849,16 +840,16 @@ void UASWaypointManager::sendWaypointClearAll()
 
     emit updateStatusString(QString("Clearing waypoint list..."));
 
-    mavlink_msg_mission_clear_all_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpca);
-    if (!standalone) uas.sendMessage(message);
-    MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
+    mavlink_msg_mission_clear_all_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpca);
+    if (uas) uas->sendMessage(message);
+    QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 
     // // qDebug() << "sent waypoint clear all to ID " << wpca.target_system;
 }
 
 void UASWaypointManager::sendWaypointSetCurrent(quint16 seq)
 {
-    if (standalone) return;
+    if (!uas) return;
     mavlink_message_t message;
     mavlink_mission_set_current_t wpsc;
 
@@ -868,16 +859,16 @@ void UASWaypointManager::sendWaypointSetCurrent(quint16 seq)
 
     emit updateStatusString(QString("Updating target waypoint..."));
 
-    mavlink_msg_mission_set_current_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpsc);
-    if (!standalone) uas.sendMessage(message);
-    MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
+    mavlink_msg_mission_set_current_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpsc);
+    if (uas) uas->sendMessage(message);
+    QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 
     // // qDebug() << "sent waypoint set current (" << wpsc.seq << ") to ID " << wpsc.target_system;
 }
 
 void UASWaypointManager::sendWaypointCount()
 {
-    if (standalone) return;
+    if (!uas) return;
     mavlink_message_t message;
     mavlink_mission_count_t wpc;
 
@@ -888,16 +879,16 @@ void UASWaypointManager::sendWaypointCount()
     // // qDebug() << "sent waypoint count (" << wpc.count << ") to ID " << wpc.target_system;
     emit updateStatusString(QString("Starting to transmit waypoints..."));
 
-    mavlink_msg_mission_count_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpc);
-    if (!standalone) uas.sendMessage(message);
-    MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
+    mavlink_msg_mission_count_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpc);
+    if (uas) uas->sendMessage(message);
+    QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 
     // // qDebug() << "sent waypoint count (" << wpc.count << ") to ID " << wpc.target_system;
 }
 
 void UASWaypointManager::sendWaypointRequestList()
 {
-    if (standalone) return;
+    if (!uas) return;
     mavlink_message_t message;
     mavlink_mission_request_list_t wprl;
 
@@ -906,9 +897,9 @@ void UASWaypointManager::sendWaypointRequestList()
 
     emit updateStatusString(QString("Requesting waypoint list..."));
 
-    mavlink_msg_mission_request_list_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wprl);
-    if (!standalone) uas.sendMessage(message);
-    MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
+    mavlink_msg_mission_request_list_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wprl);
+    if (uas) uas->sendMessage(message);
+    QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 
     // // qDebug() << "sent waypoint list request to ID " << wprl.target_system;
 
@@ -917,7 +908,7 @@ void UASWaypointManager::sendWaypointRequestList()
 
 void UASWaypointManager::sendWaypointRequest(quint16 seq)
 {
-    if (standalone) return;
+    if (!uas) return;
     mavlink_message_t message;
     mavlink_mission_request_t wpr;
 
@@ -927,16 +918,16 @@ void UASWaypointManager::sendWaypointRequest(quint16 seq)
 
     emit updateStatusString(QString("Retrieving waypoint ID %1 of %2 total").arg(wpr.seq).arg(current_count));
 
-    mavlink_msg_mission_request_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpr);
-    if (!standalone) uas.sendMessage(message);
-    MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
+    mavlink_msg_mission_request_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpr);
+    if (uas) uas->sendMessage(message);
+    QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 
     // // qDebug() << "sent waypoint request (" << wpr.seq << ") to ID " << wpr.target_system;
 }
 
 void UASWaypointManager::sendWaypoint(quint16 seq)
 {
-    if (standalone) return;
+    if (!uas) return;
     mavlink_message_t message;
     // // qDebug() <<" WP Buffer count: "<<waypoint_buffer.count();
 
@@ -953,16 +944,15 @@ void UASWaypointManager::sendWaypoint(quint16 seq)
 
         // // qDebug() << "sent waypoint (" << wp->seq << ") to ID " << wp->target_system<<" WP Buffer count: "<<waypoint_buffer.count();
 
-        mavlink_msg_mission_item_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, wp);
-        if (!standalone) uas.sendMessage(message);
-        MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
-
+        mavlink_msg_mission_item_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, wp);
+        if (uas) uas->sendMessage(message);
+        QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
     }
 }
 
 void UASWaypointManager::sendWaypointAck(quint8 type)
 {
-    if (standalone) return;
+    if (!uas) return;
     mavlink_message_t message;
     mavlink_mission_ack_t wpa;
 
@@ -970,9 +960,9 @@ void UASWaypointManager::sendWaypointAck(quint8 type)
     wpa.target_component = MAV_COMP_ID_MISSIONPLANNER;
     wpa.type = type;
 
-    mavlink_msg_mission_ack_encode(uas.mavlink->getSystemId(), uas.mavlink->getComponentId(), &message, &wpa);
-    if (!standalone) uas.sendMessage(message);
-    MG::SLEEP::usleep(PROTOCOL_DELAY_MS * 1000);
+    mavlink_msg_mission_ack_encode(uas->mavlink->getSystemId(), uas->mavlink->getComponentId(), &message, &wpa);
+    if (uas) uas->sendMessage(message);
+    QGC::SLEEP::msleep(PROTOCOL_DELAY_MS);
 
     // // qDebug() << "sent waypoint ack (" << wpa.type << ") to ID " << wpa.target_system;
 }
