@@ -42,6 +42,8 @@ This file is part of the QGROUNDCONTROL project
 #include "UASInterface.h"
 #include "WaypointEditableView.h"
 #include "WaypointViewOnlyView.h"
+#include "UnconnectedUASInfoWidget.h"
+
 
 namespace Ui
 {
@@ -130,6 +132,7 @@ protected:
     QVBoxLayout* viewOnlyListLayout;
     QVBoxLayout* editableListLayout;
     UASInterface* uas;
+    UASWaypointManager* WPM;
     double mavX;
     double mavY;
     double mavZ;
