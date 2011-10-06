@@ -4,19 +4,17 @@
 
 QGCWaypointListMulti::QGCWaypointListMulti(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::QGCWaypointListMulti)
+    ui(new Ui::QGCWaypointListMulti),
+    offline_uas_id(0)
 {
     ui->setupUi(this);
     setMinimumSize(600, 80);
     connect(UASManager::instance(), SIGNAL(UASCreated(UASInterface*)), this, SLOT(systemCreated(UASInterface*)));
     connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(systemSetActive(int)));
 
-    WaypointList* list = new WaypointList(ui->stackedWidget, uas);
-    lists.insert(uas->getUASID(), list);
+    WaypointList* list = new WaypointList(ui->stackedWidget, NULL);
+    lists.insert(offline_uas_id, list);
     ui->stackedWidget->addWidget(list);
-    // Ensure widget is deleted when system is deleted
-    connect(uas, SIGNAL(destroyed(QObject*)), this, SLOT(systemDeleted(QObject*)));
-
 }
 
 void QGCWaypointListMulti::systemDeleted(QObject* uas)
