@@ -93,7 +93,10 @@ WaypointList::WaypointList(QWidget *parent, UASInterface* uas) :
 
 
     // SET UAS AFTER ALL SIGNALS/SLOTS ARE CONNECTED
-    setUAS(uas);
+    if (uas)
+    {
+        setUAS(uas);
+    }
 
     // STATUS LABEL
     updateStatusLabel("");
@@ -295,6 +298,7 @@ void WaypointList::updateStatusLabel(const QString &string)
     m_ui->viewStatusLabel->setText(string);
 }
 
+// Request UASWaypointManager to send the SET_CURRENT message to UAV
 void WaypointList::changeCurrentWaypoint(quint16 seq)
 {
     if (uas)
@@ -303,11 +307,9 @@ void WaypointList::changeCurrentWaypoint(quint16 seq)
     }
 }
 
-
+// Request UASWaypointManager to set the new "current" and make sure all other waypoints are not "current"
 void WaypointList::currentWaypointEditableChanged(quint16 seq)
 {
-    qDebug() << "WaypointList::currentWaypointEditableChanged";
-
     if (uas)
     {
         uas->getWaypointManager()->setCurrentEditable(seq);
@@ -335,6 +337,7 @@ void WaypointList::currentWaypointEditableChanged(quint16 seq)
 
 }
 
+// Update waypointViews to correctly indicate the new current waypoint
 void WaypointList::currentWaypointViewOnlyChanged(quint16 seq)
 {
     if (uas)
