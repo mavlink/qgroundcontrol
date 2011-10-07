@@ -41,14 +41,13 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
 {
     SerialLinkInterface* serialLink = dynamic_cast<SerialLinkInterface*>(link);
 
-    if(serialLink != 0) {
+    if(serialLink != 0)
+    {
         serialLink->loadSettings();
         this->link = serialLink;
 
         // Setup the user interface according to link type
         ui.setupUi(this);
-        //this->setVisible(false);
-        //this->hide();
 
         // Create action to open this menu
         // Create configuration action for this link
@@ -154,10 +153,10 @@ SerialConfigurationWindow::SerialConfigurationWindow(LinkInterface* link, QWidge
 
         // Display the widget
         this->window()->setWindowTitle(tr("Serial Communication Settings"));
-        //this->show();
-    } else {
+    }
+    else
+    {
         qDebug() << "Link is NOT a serial link, can't open configuration window";
-
     }
 }
 
@@ -220,9 +219,12 @@ void SerialConfigurationWindow::setupPortList()
 
 void SerialConfigurationWindow::enableFlowControl(bool flow)
 {
-    if(flow) {
+    if(flow)
+    {
         link->setFlowType(1);
-    } else {
+    }
+    else
+    {
         link->setFlowType(0);
     }
 }

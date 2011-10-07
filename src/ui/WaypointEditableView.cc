@@ -17,15 +17,15 @@
 #include <cmath>
 #include <qmath.h>
 
-#include "WaypointView.h"
-#include "ui_WaypointView.h"
+#include "WaypointEditableView.h"
+#include "ui_WaypointEditableView.h"
 #include "ui_QGCCustomWaypointAction.h"
 
-WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
+WaypointEditableView::WaypointEditableView(Waypoint* wp, QWidget* parent) :
     QWidget(parent),
     customCommand(new Ui_QGCCustomWaypointAction),
-    viewMode(QGC_WAYPOINTVIEW_MODE_NAV),
-    m_ui(new Ui::WaypointView)
+    viewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_NAV),
+    m_ui(new Ui::WaypointEditableView)
 {
     m_ui->setupUi(this);
 
@@ -63,7 +63,8 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     updateValues();
 
     // Check for mission frame
-    if (wp->getFrame() == MAV_FRAME_MISSION) {
+    if (wp->getFrame() == MAV_FRAME_MISSION)
+    {
         m_ui->comboBox_action->setCurrentIndex(m_ui->comboBox_action->count()-1);
     }
 
@@ -102,24 +103,24 @@ WaypointView::WaypointView(Waypoint* wp, QWidget* parent) :
     connect(customCommand->param7SpinBox, SIGNAL(valueChanged(double)), wp, SLOT(setParam7(double)));
 }
 
-void WaypointView::moveUp()
+void WaypointEditableView::moveUp()
 {
     emit moveUpWaypoint(wp);
 }
 
-void WaypointView::moveDown()
+void WaypointEditableView::moveDown()
 {
     emit moveDownWaypoint(wp);
 }
 
 
-void WaypointView::remove()
+void WaypointEditableView::remove()
 {
     emit removeWaypoint(wp);
     deleteLater();
 }
 
-void WaypointView::changedAutoContinue(int state)
+void WaypointEditableView::changedAutoContinue(int state)
 {
     if (state == 0)
         wp->setAutocontinue(false);
@@ -127,7 +128,7 @@ void WaypointView::changedAutoContinue(int state)
         wp->setAutocontinue(true);
 }
 
-void WaypointView::updateActionView(int action)
+void WaypointEditableView::updateActionView(int action)
 {
     // Remove stretch item at index 17 (m_ui->removeSpacer)
     m_ui->horizontalLayout->takeAt(17);
@@ -231,7 +232,7 @@ void WaypointView::updateActionView(int action)
 /**
  * @param index The index of the combo box of the action entry, NOT the action ID
  */
-void WaypointView::changedAction(int index)
+void WaypointEditableView::changedAction(int index)
 {
     // set waypoint action
     int actionIndex = m_ui->comboBox_action->itemData(index).toUInt();
@@ -252,7 +253,7 @@ void WaypointView::changedAction(int index)
     case MAV_CMD_NAV_LOITER_UNLIM:
     case MAV_CMD_NAV_LOITER_TURNS:
     case MAV_CMD_NAV_LOITER_TIME:
-        changeViewMode(QGC_WAYPOINTVIEW_MODE_NAV);
+        changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_NAV);
         // Update frame view
         updateFrameView(m_ui->comboBox_frame->currentIndex());
         // Update view
@@ -261,23 +262,23 @@ void WaypointView::changedAction(int index)
     case MAV_CMD_ENUM_END:
     default:
         // Switch to mission frame
-        changeViewMode(QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING);
+        changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING);
         break;
     }
 }
 
-void WaypointView::changeViewMode(QGC_WAYPOINTVIEW_MODE mode)
+void WaypointEditableView::changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE mode)
 {
     viewMode = mode;
     switch (mode) {
-    case QGC_WAYPOINTVIEW_MODE_NAV:
-    case QGC_WAYPOINTVIEW_MODE_CONDITION:
+    case QGC_WAYPOINTEDITABLEVIEW_MODE_NAV:
+    case QGC_WAYPOINTEDITABLEVIEW_MODE_CONDITION:
         // Hide everything, show condition widget
         // TODO
-    case QGC_WAYPOINTVIEW_MODE_DO:
+    case QGC_WAYPOINTEDITABLEVIEW_MODE_DO:
 
         break;
-    case QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING:
+    case QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING:
         // Hide almost everything
         m_ui->orbitSpinBox->hide();
         m_ui->takeOffAngleSpinBox->hide();
@@ -307,7 +308,7 @@ void WaypointView::changeViewMode(QGC_WAYPOINTVIEW_MODE mode)
 
 }
 
-void WaypointView::updateFrameView(int frame)
+void WaypointEditableView::updateFrameView(int frame)
 {
     switch(frame) {
     case MAV_FRAME_GLOBAL:
@@ -338,7 +339,7 @@ void WaypointView::updateFrameView(int frame)
     }
 }
 
-void WaypointView::deleted(QObject* waypoint)
+void WaypointEditableView::deleted(QObject* waypoint)
 {
     Q_UNUSED(waypoint);
 //    if (waypoint == this->wp)
@@ -347,7 +348,7 @@ void WaypointView::deleted(QObject* waypoint)
 //    }
 }
 
-void WaypointView::changedFrame(int index)
+void WaypointEditableView::changedFrame(int index)
 {
     // set waypoint action
     MAV_FRAME frame = (MAV_FRAME)m_ui->comboBox_frame->itemData(index).toUInt();
@@ -356,19 +357,35 @@ void WaypointView::changedFrame(int index)
     updateFrameView(frame);
 }
 
-void WaypointView::changedCurrent(int state)
+void WaypointEditableView::changedCurrent(int state)
 {
-    if (state == 0) {
-        m_ui->selectedBox->setChecked(true);
-        m_ui->selectedBox->setCheckState(Qt::Checked);
-        wp->setCurrent(false);
-    } else {
+    //m_ui->selectedBox->blockSignals(true);
+    if (state == 0)
+    {
+        if (wp->getCurrent() == true) //User clicked on the waypoint, that is already current
+        {
+            qDebug() << "Editable " << wp->getId() << " changedCurrent: State 0, current true" ;
+            m_ui->selectedBox->setChecked(true);
+            m_ui->selectedBox->setCheckState(Qt::Checked);
+        }
+        else
+        {
+            qDebug() << "Editable " << wp->getId() << " changedCurrent: State 0, current false";
+            m_ui->selectedBox->setChecked(false);
+            m_ui->selectedBox->setCheckState(Qt::Unchecked);
+            //wp->setCurrent(false);
+        }
+    }
+    else
+    {
+        qDebug() << "Editable " << wp->getId() << " changedCurrent: State 2";
         wp->setCurrent(true);
         emit changeCurrentWaypoint(wp->getId());   //the slot changeCurrentWaypoint() in WaypointList sets all other current flags to false
     }
+    //m_ui->selectedBox->blockSignals(false);
 }
 
-void WaypointView::updateValues()
+void WaypointEditableView::updateValues()
 {
     // Check if we just lost the wp, delete the widget
     // accordingly
@@ -501,11 +518,11 @@ void WaypointView::updateValues()
         // If action is unknown, set direct editing mode
         if (wp->getAction() < 0 || wp->getAction() > MAV_CMD_NAV_TAKEOFF)
         {
-            changeViewMode(QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING);
+            changeViewMode(QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING);
         }
         else
         {
-            if (viewMode != QGC_WAYPOINTVIEW_MODE_DIRECT_EDITING)
+            if (viewMode != QGC_WAYPOINTEDITABLEVIEW_MODE_DIRECT_EDITING)
             {
                 // Action ID known, update
                 m_ui->comboBox_action->setCurrentIndex(action_index);
@@ -696,19 +713,19 @@ void WaypointView::updateValues()
 //    wp->blockSignals(false);
 }
 
-void WaypointView::setCurrent(bool state)
+void WaypointEditableView::setCurrent(bool state)
 {
     m_ui->selectedBox->blockSignals(true);
     m_ui->selectedBox->setChecked(state);
     m_ui->selectedBox->blockSignals(false);
 }
 
-WaypointView::~WaypointView()
+WaypointEditableView::~WaypointEditableView()
 {
     delete m_ui;
 }
 
-void WaypointView::changeEvent(QEvent *e)
+void WaypointEditableView::changeEvent(QEvent *e)
 {
     switch (e->type()) {
     case QEvent::LanguageChange:
