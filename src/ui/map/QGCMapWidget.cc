@@ -164,7 +164,7 @@ void QGCMapWidget::mouseDoubleClickEvent(QMouseEvent* event)
             wp->setLongitude(pos.Lng());
             wp->setAltitude(0);
             //            wp->blockSignals(false);
-            //            currWPManager->notifyOfChange(wp);
+            //            currWPManager->notifyOfChangeEditable(wp);
         }
     }
     OPMapWidget::mouseDoubleClickEvent(event);
@@ -190,10 +190,10 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
     if (currWPManager)
     {
         // Disconnect the waypoint manager / data storage from the UI
-        disconnect(currWPManager, SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
-        disconnect(currWPManager, SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
-        disconnect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypoint(Waypoint*)));
-        disconnect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChange(Waypoint*)));
+        disconnect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
+        disconnect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+        disconnect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
+        disconnect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
     }
 
     if (uas)
@@ -201,10 +201,10 @@ void QGCMapWidget::activeUASSet(UASInterface* uas)
         currWPManager = uas->getWaypointManager();
 
         // Connect the waypoint manager / data storage to the UI
-        connect(currWPManager, SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
-        connect(currWPManager, SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
-        connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypoint(Waypoint*)));
-        connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChange(Waypoint*)));
+        connect(currWPManager, SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
+        connect(currWPManager, SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+        connect(this, SIGNAL(waypointCreated(Waypoint*)), currWPManager, SLOT(addWaypointEditable(Waypoint*)));
+        connect(this, SIGNAL(waypointChanged(Waypoint*)), currWPManager, SLOT(notifyOfChangeEditable(Waypoint*)));
         updateSelectedSystem(uas->getUASID());
         followUAVID = uas->getUASID();
 

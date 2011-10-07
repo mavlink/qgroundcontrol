@@ -278,7 +278,7 @@ Pixhawk3DWidget::insertWaypoint(void)
 
         if (wp) {
             wp->setFrame(frame);
-            uas->getWaypointManager()->addWaypoint(wp);
+            uas->getWaypointManager()->addWaypointEditable(wp);
         }
     }
 }
@@ -294,7 +294,7 @@ Pixhawk3DWidget::setWaypoint(void)
 {
     if (uas) {
         const QVector<Waypoint *> waypoints =
-            uas->getWaypointManager()->getWaypointList();
+            uas->getWaypointManager()->getWaypointEditableList();
         Waypoint* waypoint = waypoints.at(selectedWpIndex);
 
         if (frame == MAV_FRAME_GLOBAL) {
@@ -341,7 +341,7 @@ Pixhawk3DWidget::setWaypointAltitude(void)
     if (uas) {
         bool ok;
         const QVector<Waypoint *> waypoints =
-            uas->getWaypointManager()->getWaypointList();
+            uas->getWaypointManager()->getWaypointEditableList();
         Waypoint* waypoint = waypoints.at(selectedWpIndex);
 
         double altitude = waypoint->getZ();
@@ -367,7 +367,7 @@ Pixhawk3DWidget::clearAllWaypoints(void)
 {
     if (uas) {
         const QVector<Waypoint *> waypoints =
-            uas->getWaypointManager()->getWaypointList();
+            uas->getWaypointManager()->getWaypointEditableList();
         for (int i = waypoints.size() - 1; i >= 0; --i) {
             uas->getWaypointManager()->removeWaypoint(i);
         }

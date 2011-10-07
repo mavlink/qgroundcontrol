@@ -954,7 +954,7 @@ void HSIDisplay::drawWaypoints(QPainter& painter)
 {
     if (uas)
     {
-        const QVector<Waypoint*>& list = uas->getWaypointManager()->getWaypointList();
+        const QVector<Waypoint*>& list = uas->getWaypointManager()->getWaypointEditableList();
 
         QColor color;
         painter.setBrush(Qt::NoBrush);
