@@ -616,8 +616,6 @@ void QGCParamWidget::requestParameterList()
 
     // Request twice as mean of forward error correction
     mav->requestParameters();
-    QGC::SLEEP::msleep(15);
-    mav->requestParameters();
 }
 
 void QGCParamWidget::parameterItemChanged(QTreeWidgetItem* current, int column)

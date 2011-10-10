@@ -555,7 +555,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             {
                 mavlink_param_value_t value;
                 mavlink_msg_param_value_decode(&message, &value);
-                QByteArray bytes((char*)value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
+                QByteArray bytes(value.param_id, MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN);
                 QString parameterName = QString(bytes);
                 int component = message.compid;
                 mavlink_param_union_t val;
@@ -1964,36 +1964,30 @@ void UAS::receiveButton(int buttonIndex)
 
 void UAS::halt()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_HALT);
-//    // Send message twice to increase chance of reception
-//    sendMessage(msg);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_HOLD, MAV_GOTO_HOLD_AT_CURRENT_POSITION, 0, 0, 0, 0, 0);
+    sendMessage(msg);
 }
 
 void UAS::go()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,  (int)MAV_ACTION_CONTINUE);
-//    // Send message twice to increase chance of reception
-//    sendMessage(msg);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_CONTINUE, MAV_GOTO_HOLD_AT_CURRENT_POSITION, 0, 0, 0, 0, 0);
+    sendMessage(msg);
 }
 
 /** Order the robot to return home / to land on the runway **/
 void UAS::home()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    mavlink_message_t msg;
-//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-//    mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,  (int)MAV_ACTION_RETURN);
-//    // Send message twice to increase chance of reception
-//    sendMessage(msg);
-//    sendMessage(msg);
+    mavlink_message_t msg;
+
+    double latitude = UASManager::instance()->getHomeLatitude();
+    double longitude = UASManager::instance()->getHomeLongitude();
+    double altitude = UASManager::instance()->getHomeAltitude();
+    int frame = UASManager::instance()->getHomeFrame();
+
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_OVERRIDE_GOTO, 1, MAV_GOTO_DO_CONTINUE, MAV_GOTO_HOLD_AT_CURRENT_POSITION, frame, 0, latitude, longitude, altitude);
+    sendMessage(msg);
 }
 
 /**
@@ -2002,13 +1996,8 @@ void UAS::home()
  */
 void UAS::emergencySTOP()
 {
-//    mavlink_message_t msg;
-//    // TODO Replace MG System ID with static function call and allow to change ID in GUI
-//    // FIXME MAVLINKV10PORTINGNEEDED
-//    //mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU, (int)MAV_ACTION_EMCY_LAND);
-//    // Send message twice to increase chance of reception
-//    sendMessage(msg);
-//    sendMessage(msg);
+    // FIXME MAVLINKV10PORTINGNEEDED
+    halt();
 }
 
 /**
@@ -2019,6 +2008,7 @@ void UAS::emergencySTOP()
  */
 bool UAS::emergencyKILL()
 {
+    halt();
     // FIXME MAVLINKV10PORTINGNEEDED
 //    bool result = false;
 //    QMessageBox msgBox;
@@ -2108,41 +2098,33 @@ void UAS::stopHil()
 
 void UAS::shutdown()
 {
-    // FIXME MAVLINKV10PORTINGNEEDED
-//    bool result = false;
-//    QMessageBox msgBox;
-//    msgBox.setIcon(QMessageBox::Critical);
-//    msgBox.setText("Shutting down the UAS");
-//    msgBox.setInformativeText("Do you want to shut down the onboard computer?");
+    bool result = false;
+    QMessageBox msgBox;
+    msgBox.setIcon(QMessageBox::Critical);
+    msgBox.setText("Shutting down the UAS");
+    msgBox.setInformativeText("Do you want to shut down the onboard computer?");
 
-//    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
-//    msgBox.setDefaultButton(QMessageBox::Cancel);
-//    int ret = msgBox.exec();
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Cancel);
+    int ret = msgBox.exec();
 
-//    // Close the message box shortly after the click to prevent accidental clicks
-//    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
+    // Close the message box shortly after the click to prevent accidental clicks
+    QTimer::singleShot(5000, &msgBox, SLOT(reject()));
 
-//    if (ret == QMessageBox::Yes)
-//    {
-//        // If the active UAS is set, execute command
-//        mavlink_message_t msg;
-//        // TODO Replace MG System ID with static function call and allow to change ID in GUI
-//        mavlink_msg_action_pack(MG::SYSTEM::ID, MG::SYSTEM::COMPID, &msg, this->getUASID(), MAV_COMP_ID_IMU,(int)MAV_ACTION_SHUTDOWN);
-//        // Send message twice to increase chance of reception
-//        sendMessage(msg);
-//        sendMessage(msg);
-
-//        result = true;
-//    }
+    if (ret == QMessageBox::Yes)
+    {
+        // If the active UAS is set, execute command
+        mavlink_message_t msg;
+        mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0, 2, 0, 0, 0);
+        sendMessage(msg);
+        result = true;
+    }
 }
 
 void UAS::setTargetPosition(float x, float y, float z, float yaw)
 {
     mavlink_message_t msg;
     mavlink_msg_set_local_position_setpoint_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_FRAME_LOCAL_NED, x, y, z, yaw);
-
-    // Send message twice to increase chance of reception
-    sendMessage(msg);
     sendMessage(msg);
 }
 

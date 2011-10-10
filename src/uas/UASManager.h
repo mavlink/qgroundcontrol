@@ -84,6 +84,12 @@ public:
         return homeAlt;
     }
 
+    /** @brief Get the home position coordinate frame */
+    int getHomeFrame() const
+    {
+        return homeFrame;
+    }
+
     /** @brief Convert WGS84 coordinates to earth centric frame */
     Eigen::Vector3d wgs84ToEcef(const double & latitude, const double & longitude, const double & altitude);
     /** @brief Convert earth centric frame to EAST-NORTH-UP frame (x-y-z directions */
@@ -238,6 +244,7 @@ protected:
     double homeLat;
     double homeLon;
     double homeAlt;
+    int homeFrame;
     Eigen::Quaterniond ecef_ref_orientation_;
     Eigen::Vector3d ecef_ref_point_;
     Eigen::Vector3d nedSafetyLimitPosition1;
