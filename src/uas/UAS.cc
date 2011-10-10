@@ -891,6 +891,16 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         case MAVLINK_MSG_ID_SERVO_OUTPUT_RAW:
         case MAVLINK_MSG_ID_OPTICAL_FLOW:
         case MAVLINK_MSG_ID_DEBUG_VECT:
+            {
+                mavlink_debug_vect_t debug;
+                mavlink_msg_debug_vect_decode(&message, &debug);
+                QString name(debug.name);
+                quint64 time = getUnixTime(debug.time_usec);
+                emit valueChanged(uasId, name+".x", "raw", debug.x, time);
+                emit valueChanged(uasId, name+".y", "raw", debug.y, time);
+                emit valueChanged(uasId, name+".z", "raw", debug.z, time);
+            }
+            break;
         case MAVLINK_MSG_ID_DEBUG:
             break;
         default:
