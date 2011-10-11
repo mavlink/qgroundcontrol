@@ -97,7 +97,21 @@
           			<description>Eighth bit: 00000001</description>
           		</entry>
           </enum>
-          
+          <enum name="MAV_GOTO">
+               <description>Override command, pauses current mission execution and moves immediately to a position</description>
+               <entry value="0" name="MAV_GOTO_DO_HOLD">
+                    <description>Hold at the current position.</description>
+               </entry>
+               <entry value="0" name="MAV_GOTO_DO_CONTINUE">
+                    <description>Continue with the mission execution.</description>
+               </entry>
+               <entry value="0" name="MAV_GOTO_HOLD_AT_CURRENT_POSITION">
+                    <description>Hold at the current position of the system</description>
+               </entry>
+               <entry value="0" name="MAV_GOTO_HOLD_AT_SPECIFIED_POSITION">
+                    <description>Hold at the position specified in the parameters of the DO_HOLD action</description>
+               </entry>
+          </enum>
           <enum name="MAV_MODE">
                <description>These defines are predefined OR-combined mode flags. There is no need to use values from this enum, but it
                simplifies the use of the mode flags. Note that manual input is enabled in all modes as a safety override.</description>
@@ -215,6 +229,9 @@
                </entry>
           </enum>
           <enum name="MAV_COMPONENT">
+               <entry value="0" name="MAV_COMP_ID_ALL">
+                    <description/>
+               </entry>
                <entry value="220" name="MAV_COMP_ID_GPS">
                     <description/>
                </entry>
@@ -626,6 +643,26 @@
                     <param index="5">Empty</param>
                     <param index="6">Empty</param>
                     <param index="7">Empty</param>
+               </entry>
+               <entry value="246" name="MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN">
+                    <description>Request the reboot or shutdown of system components.</description>
+                    <param index="1">0: Do nothing for autopilot, 1: Reboot autopilot, 2: Shutdown autopilot.</param>
+                    <param index="2">0: Do nothing for onboard computer, 1: Reboot onboard computer, 2: Shutdown onboard computer.</param>
+                    <param index="3">Reserved</param>
+                    <param index="4">Reserved</param>
+                    <param index="5">Empty</param>
+                    <param index="6">Empty</param>
+                    <param index="7">Empty</param>
+               </entry>
+               <entry value="252" name="MAV_CMD_OVERRIDE_GOTO">
+                    <description>Hold / continue the current action</description>
+                    <param index="1">MAV_GOTO_DO_HOLD: hold MAV_GOTO_DO_CONTINUE: continue with mission plan</param>
+                    <param index="2">MAV_GOTO_HOLD_AT_CURRENT_POSITION: Hold at current position MAV_GOTO_HOLD_AT_SPECIFIED_POSITION: hold at specified position</param>
+                    <param index="3">MAV_FRAME coordinate frame of hold point</param>
+                    <param index="4">Desired yaw angle in degrees</param>
+                    <param index="5">Latitude / X position</param>
+                    <param index="6">Longitude / Y position</param>
+                    <param index="7">Altitude / Z position</param>
                </entry>
           </enum>
           <enum name="MAV_DATA_STREAM">
@@ -1214,8 +1251,8 @@
           </message>
           <message id="77" name="COMMAND_ACK">
                <description>Report status of a command. Includes feedback wether the command was executed</description>
-               <field type="float" name="command">Current airspeed in m/s</field>
-               <field type="float" name="result">1: Action ACCEPTED and EXECUTED, 1: Action TEMPORARY REJECTED/DENIED, 2: Action PERMANENTLY DENIED, 3: Action UNKNOWN/UNSUPPORTED, 4: Requesting CONFIRMATION</field>
+               <field type="uint16_t" name="command">Command ID, as defined by MAV_CMD enum.</field>
+               <field type="uint8_t" name="result">1: Command ACCEPTED and EXECUTED, 1: Command TEMPORARY REJECTED/DENIED, 2: Command PERMANENTLY DENIED, 3: Command UNKNOWN/UNSUPPORTED, 4: Command executed, but failed</field>
           </message>
           
           <!--
@@ -1314,6 +1351,39 @@
                <field type="int16_t" name="flow_y">Flow in pixels in y-sensor direction</field>
                <field type="uint8_t" name="quality">Optical flow quality / confidence. 0: bad, 255: maximum quality</field>
                <field type="float" name="ground_distance">Ground distance in meters</field>
+          </message>
+          <message id="101" name="GLOBAL_VISION_POSITION_ESTIMATE">
+               <field type="uint64_t" name="usec">Timestamp (milliseconds)</field>
+               <field type="float" name="x">Global X position</field>
+               <field type="float" name="y">Global Y position</field>
+               <field type="float" name="z">Global Z position</field>
+               <field type="float" name="roll">Roll angle in rad</field>
+               <field type="float" name="pitch">Pitch angle in rad</field>
+               <field type="float" name="yaw">Yaw angle in rad</field>
+          </message>
+          <message id="102" name="VISION_POSITION_ESTIMATE">
+               <field type="uint64_t" name="usec">Timestamp (milliseconds)</field>
+               <field type="float" name="x">Global X position</field>
+               <field type="float" name="y">Global Y position</field>
+               <field type="float" name="z">Global Z position</field>
+               <field type="float" name="roll">Roll angle in rad</field>
+               <field type="float" name="pitch">Pitch angle in rad</field>
+               <field type="float" name="yaw">Yaw angle in rad</field>
+          </message>
+          <message id="103" name="VISION_SPEED_ESTIMATE">
+               <field type="uint64_t" name="usec">Timestamp (milliseconds)</field>
+               <field type="float" name="x">Global X speed</field>
+               <field type="float" name="y">Global Y speed</field>
+               <field type="float" name="z">Global Z speed</field>
+          </message>
+          <message id="104" name="VICON_POSITION_ESTIMATE">
+               <field type="uint64_t" name="usec">Timestamp (milliseconds)</field>
+               <field type="float" name="x">Global X position</field>
+               <field type="float" name="y">Global Y position</field>
+               <field type="float" name="z">Global Z position</field>
+               <field type="float" name="roll">Roll angle in rad</field>
+               <field type="float" name="pitch">Pitch angle in rad</field>
+               <field type="float" name="yaw">Yaw angle in rad</field>
           </message>
           <!-- MESSAGE IDs 150 - 240: Space for custom messages in individual projectname_messages.xml files -->
           <message id="249" name="MEMORY_VECT">
