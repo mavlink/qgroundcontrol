@@ -20,6 +20,8 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_ITEM, false);
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_COUNT, false);
     messageFilter.insert(MAVLINK_MSG_ID_MISSION_ACK, false);
+    messageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_FLOAT, false);
+    messageFilter.insert(MAVLINK_MSG_ID_NAMED_VALUE_INT, false);
 
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG, false);
     textMessageFilter.insert(MAVLINK_MSG_ID_DEBUG_VECT, false);

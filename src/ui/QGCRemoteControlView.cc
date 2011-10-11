@@ -77,20 +77,25 @@ QGCRemoteControlView::~QGCRemoteControlView()
 
 void QGCRemoteControlView::setUASId(int id)
 {
-    // Clear channel count
-    raw.clear();
-    normalized.clear();
-
-    if (uasId != -1) {
-        UASInterface* uas = UASManager::instance()->getUASForId(id);
-        if (uas) {
+    if (uasId != -1)
+    {
+        UASInterface* uas = UASManager::instance()->getUASForId(uasId);
+        if (uas)
+        {
             // The UAS exists, disconnect any existing connections
             disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
             disconnect(uas, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
             disconnect(uas, SIGNAL(radioCalibrationRawReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
             disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannel(int,float)));
+            disconnect(uas, SIGNAL(remoteControlChannelScaledChanged(int,float)), this, SLOT(setChannelScaled(int,float)));
         }
     }
+
+    // Clear channel count
+    raw.clear();
+    raw.resize(0);
+    normalized.clear();
+    normalized.resize(0);
 
     foreach (QLabel* label, rawLabels)
     {
@@ -103,11 +108,14 @@ void QGCRemoteControlView::setUASId(int id)
     }
 
     rawLabels.clear();
+    rawLabels.resize(0);
     progressBars.clear();
+    progressBars.resize(0);
 
     // Connect the new UAS
     UASInterface* newUAS = UASManager::instance()->getUASForId(id);
-    if (newUAS) {
+    if (newUAS)
+    {
         // New UAS exists, connect
         nameLabel->setText(QString("RC Input of %1").arg(newUAS->getUASName()));
         calibrationWindow->setUASId(id);
@@ -140,11 +148,10 @@ void QGCRemoteControlView::setChannelRaw(int channelId, float raw)
 
 void QGCRemoteControlView::setChannelScaled(int channelId, float normalized)
 {
-    if (this->raw.size() <= channelId) // using raw vector as size indicator
+    if (this->normalized.size() <= channelId) // using raw vector as size indicator
     {
         // This is a new channel, append it
         this->normalized.append(normalized);
-        this->raw.append(0);
         appendChannelWidget(channelId);
         updated = true;
     }
