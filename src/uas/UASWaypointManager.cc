@@ -30,7 +30,7 @@ This file is part of the QGROUNDCONTROL project
  */
 
 #include "UASWaypointManager.h"
-#include "uas.h"
+#include "UAS.h"
 #include "mavlink_types.h"
 
 #define PROTOCOL_TIMEOUT_MS 2000    ///< maximum time to wait for pending messages until timeout
