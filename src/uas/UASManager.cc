@@ -214,7 +214,8 @@ UASManager::UASManager() :
         activeUAS(NULL),
         homeLat(47.3769),
         homeLon(8.549444),
-        homeAlt(470.0)
+        homeAlt(470.0),
+        homeFrame(MAV_FRAME_GLOBAL)
 {
     loadSettings();
     setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);
