@@ -337,10 +337,14 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_sys_status_decode(&message, &state);
 
                 emit loadChanged(this,state.load/10.0f);
-                // FIXME REMOVE LATER emit valueChanged(uasId, "Load", "%", ((float)state.load)/10.0f, getUnixTime());
+
+
 
                 currentVoltage = state.voltage_battery/1000.0f;
                 lpVoltage = filterVoltage(currentVoltage);
+
+                qDebug() << "BATT VOLTAGE:" << currentVoltage << "RAW" << state.voltage_battery;
+
                 if (startVoltage == 0) startVoltage = currentVoltage;
                 timeRemaining = calculateTimeRemaining();
                 if (!batteryRemainingEstimateEnabled && chargeLevel != -1)
@@ -1194,18 +1198,11 @@ QList<int> UAS::getComponentIds()
 
 void UAS::setMode(int mode)
 {
-    if (mode >= (int)MAV_MODE_PREFLIGHT && mode < (int)MAV_MODE_ENUM_END)
-    {
-        //this->mode = mode; //no call assignament, update receive message from UAS
-        mavlink_message_t msg;
-        mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, (uint8_t)mode, (uint16_t)navMode);
-        sendMessage(msg);
-        qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << (uint8_t)mode;
-    }
-    else
-    {
-        qDebug() << "uas Mode not assign: " << mode;
-    }
+    //this->mode = mode; //no call assignament, update receive message from UAS
+    mavlink_message_t msg;
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, (uint8_t)uasId, (uint8_t)mode, (uint16_t)navMode);
+    sendMessage(msg);
+    qDebug() << "SENDING REQUEST TO SET MODE TO SYSTEM" << uasId << ", REQUEST TO SET MODE " << (uint8_t)mode;
 }
 
 void UAS::sendMessage(mavlink_message_t message)
@@ -1923,7 +1920,8 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     manualYawAngle = yaw * yawScaling;
     manualThrust = thrust * thrustScaling;
 
-    if(mode == (int)MAV_MODE_MANUAL_ARMED)
+    // If system has manual inputs enabled and is armed
+    if((mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY))
     {
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualRollAngle, (float)manualPitchAngle, (float)manualYawAngle, (float)manualThrust, controlRollManual, controlPitchManual, controlYawManual, controlThrustManual);
@@ -2083,7 +2081,7 @@ void UAS::startHil()
     // Connect Flight Gear Link
     simulation->connectSimulation();
     mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode, navMode | MAV_MODE_FLAG_HIL_ENABLED);
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode | MAV_MODE_FLAG_HIL_ENABLED, navMode);
     sendMessage(msg);
 }
 
@@ -2091,7 +2089,7 @@ void UAS::stopHil()
 {
     simulation->disconnectSimulation();
     mavlink_message_t msg;
-    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode, navMode & !MAV_MODE_FLAG_HIL_ENABLED);
+    mavlink_msg_set_mode_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), mode & !MAV_MODE_FLAG_HIL_ENABLED, navMode);
     sendMessage(msg);
 }
 
@@ -2153,44 +2151,50 @@ const QString& UAS::getShortState() const
 QString UAS::getShortModeTextFor(int id)
 {
     QString mode;
+    uint8_t modeid = id;
 
-    switch (id) {
-    case (uint8_t)MAV_MODE_PREFLIGHT:
+    qDebug() << "MODE:" << modeid;
+
+    // BASE MODE DECODING
+    if (modeid & MAV_MODE_FLAG_DECODE_POSITION_AUTO)
+    {
+        mode = "AUTO";
+    }
+    else if (modeid & MAV_MODE_FLAG_DECODE_POSITION_GUIDED)
+    {
+        mode = "GUIDED";
+    }
+    else if (modeid & MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
+    {
+        mode = "STABILIZED";
+    }
+    else if (modeid & MAV_MODE_FLAG_DECODE_POSITION_TEST)
+    {
+        mode = "TEST";
+    }
+    else if (modeid & MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
+    {
+        mode = "MANUAL";
+    }
+    else
+    {
         mode = "PREFLIGHT";
-        break;
-    case (uint8_t)MAV_MODE_MANUAL_ARMED:
-        mode = "A|MANUAL";
-        break;
-    case (uint8_t)MAV_MODE_MANUAL_DISARMED:
-        mode = "D|MANUAL";
-        break;
-    case (uint8_t)MAV_MODE_AUTO_ARMED:
-        mode = "A|AUTO";
-        break;
-    case (uint8_t)MAV_MODE_AUTO_DISARMED:
-        mode = "D|AUTO";
-        break;
-    case (uint8_t)MAV_MODE_GUIDED_ARMED:
-        mode = "A|GUIDED";
-        break;
-    case (uint8_t)MAV_MODE_GUIDED_DISARMED:
-        mode = "D|GUIDED";
-        break;
-    case (uint8_t)MAV_MODE_STABILIZE_ARMED:
-        mode = "A|STABILIZED";
-        break;
-    case (uint8_t)MAV_MODE_STABILIZE_DISARMED:
-        mode = "D|STABILIZED";
-        break;
-    case (uint8_t)MAV_MODE_TEST_ARMED:
-        mode = "A|TEST";
-        break;
-    case (uint8_t)MAV_MODE_TEST_DISARMED:
-        mode = "D|TEST";
-        break;
-    default:
-        mode = "UNKNOWN";
-        break;
+    }
+
+    // ARMED STATE DECODING
+    if (modeid & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)
+    {
+        mode.prepend("A|");
+    }
+    else
+    {
+        mode.prepend("D|");
+    }
+
+    // HARDWARE IN THE LOOP DECODING
+    if (modeid & MAV_MODE_FLAG_DECODE_POSITION_HIL)
+    {
+        mode.prepend("HIL:");
     }
 
     return mode;
