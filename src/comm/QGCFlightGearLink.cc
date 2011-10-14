@@ -262,11 +262,17 @@ bool QGCFlightGearLink::disconnectSimulation()
     disconnect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
     disconnect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
 
-    process->close();
-    delete process;
-    process = NULL;
-    delete socket;
-    socket = NULL;
+    if (process)
+    {
+        process->close();
+        delete process;
+        process = NULL;
+    }
+    if (socket)
+    {
+        delete socket;
+        socket = NULL;
+    }
 
     connectState = false;
 
@@ -288,15 +294,15 @@ bool QGCFlightGearLink::connectSimulation()
 
     QObject::connect(socket, SIGNAL(readyRead()), this, SLOT(readBytes()));
 
-    process = new QProcess(this);
+//    process = new QProcess(this);
 
-    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
-    connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
+//    connect(mav, SIGNAL(hilControlsChanged(uint64_t, float, float, float, float, uint8_t, uint8_t)), this, SLOT(updateControls(uint64_t,float,float,float,float,uint8_t,uint8_t)));
+//    connect(this, SIGNAL(hilStateChanged(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)), mav, SLOT(sendHilState(uint64_t,float,float,float,float,float,float,int32_t,int32_t,int32_t,int16_t,int16_t,int16_t,int16_t,int16_t,int16_t)));
 
-    //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
-    // Catch process error
-    QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
-                      this, SLOT(processError(QProcess::ProcessError)));
+//    //connect(&refreshTimer, SIGNAL(timeout()), this, SLOT(sendUAVUpdate()));
+//    // Catch process error
+//    QObject::connect( process, SIGNAL(error(QProcess::ProcessError)),
+//                      this, SLOT(processError(QProcess::ProcessError)));
     // Start Flightgear
     QStringList processCall;
     QString processFgfs;
@@ -352,16 +358,18 @@ bool QGCFlightGearLink::connectSimulation()
     // Add new argument with this: processCall << "";
     processCall << QString("--aircraft=%2").arg(aircraft);
 
-    process->start(processFgfs, processCall);
+//    process->start(processFgfs, processCall);
 
-    qDebug() << "STARTING: " << processFgfs << processCall;
 
-    emit flightGearConnected(connectState);
-    if (connectState) {
-        emit flightGearConnected();
-        connectionStartTime = QGC::groundTimeUsecs()/1000;
-    }
-    qDebug() << "STARTING SIM";
+
+//    emit flightGearConnected(connectState);
+//    if (connectState) {
+//        emit flightGearConnected();
+//        connectionStartTime = QGC::groundTimeUsecs()/1000;
+//    }
+//    qDebug() << "STARTING SIM";
+
+        qDebug() << "STARTING: " << processFgfs << processCall;
 
     start(LowPriority);
     return connectState;
