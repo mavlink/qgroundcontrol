@@ -36,6 +36,9 @@ protected:
     double roll;
     double pitch;
     double yaw;
+    double rollspeed;
+    double pitchspeed;
+    double yawspeed;
 
     bool globalNavigation;
     bool firstWP;
