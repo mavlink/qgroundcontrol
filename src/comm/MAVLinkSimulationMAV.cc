@@ -21,6 +21,9 @@ MAVLinkSimulationMAV::MAVLinkSimulationMAV(MAVLinkSimulationLink *parent, int sy
     roll(0.0),
     pitch(0.0),
     yaw(0.0),
+    rollspeed(0.0),
+    pitchspeed(0.0),
+    yawspeed(0.0),
     globalNavigation(true),
     firstWP(false),
     //    previousSPX(8.548056),
@@ -98,42 +101,50 @@ void MAVLinkSimulationMAV::mainloop()
 
         float zsign = (zm < 0) ? -1.0f : 1.0f;
 
-        if (!firstWP) {
-            //float trueyaw = atan2f(xm, ym);
+        if (!(sys_mode & MAV_MODE_FLAG_DECODE_POSITION_HIL))
+        {
+            if (!firstWP) {
+                //float trueyaw = atan2f(xm, ym);
 
-            float newYaw = atan2f(ym, xm);
+                float newYaw = atan2f(ym, xm);
 
-            if (fabs(yaw - newYaw) < 90) {
-                yaw = yaw*0.7 + 0.3*newYaw;
+                if (fabs(yaw - newYaw) < 90) {
+                    yaw = yaw*0.7 + 0.3*newYaw;
+                } else {
+                    yaw = newYaw;
+                }
+
+                //qDebug() << "SIMULATION MAV: x:" << xm << "y:" << ym << "z:" << zm << "yaw:" << yaw;
+
+                //if (sqrt(xm*xm+ym*ym) > 0.0000001)
+                if (flying) {
+                    x += cos(yaw)*radPer100ms;
+                    y += sin(yaw)*radPer100ms;
+                    z += altPer100ms*zsign;
+                }
+
+                //if (xm < 0.001) xm
             } else {
-                yaw = newYaw;
+                x = nextSPX;
+                y = nextSPY;
+                z = nextSPZ;
+                firstWP = false;
+                qDebug() << "INIT STEP";
             }
+        }
+        else
+        {
+            // FIXME Implement heading and altitude controller
 
-            //qDebug() << "SIMULATION MAV: x:" << xm << "y:" << ym << "z:" << zm << "yaw:" << yaw;
-
-            //if (sqrt(xm*xm+ym*ym) > 0.0000001)
-            if (flying) {
-                x += cos(yaw)*radPer100ms;
-                y += sin(yaw)*radPer100ms;
-                z += altPer100ms*zsign;
-            }
-
-            //if (xm < 0.001) xm
-        } else {
-            x = nextSPX;
-            y = nextSPY;
-            z = nextSPZ;
-            firstWP = false;
-            qDebug() << "INIT STEP";
         }
 
 
         // GLOBAL POSITION
         mavlink_message_t msg;
         mavlink_global_position_int_t pos;
-        pos.alt = z*1000.0;
-        pos.lat = x*1E7;
-        pos.lon = y*1E7;
+        pos.alt = altitude*1000.0;
+        pos.lat = longitude*1E7;
+        pos.lon = longitude*1E7;
         pos.vx = sin(yaw)*10.0f*100.0f;
         pos.vy = 0;
         pos.vz = altPer100ms*10.0f*100.0f*zsign*-1.0f;
@@ -144,12 +155,12 @@ void MAVLinkSimulationMAV::mainloop()
         // ATTITUDE
         mavlink_attitude_t attitude;
         attitude.time_boot_ms = 0;
-        attitude.roll = 0.0f;
-        attitude.pitch = 0.0f;
+        attitude.roll = roll;
+        attitude.pitch = pitch;
         attitude.yaw = yaw;
-        attitude.rollspeed = 0.0f;
-        attitude.pitchspeed = 0.0f;
-        attitude.yawspeed = 0.0f;
+        attitude.rollspeed = rollspeed;
+        attitude.pitchspeed = pitchspeed;
+        attitude.yawspeed = yawspeed;
 
         mavlink_msg_attitude_encode(systemid, MAV_COMP_ID_IMU, &msg, &attitude);
         link->sendMAVLinkMessage(&msg);
@@ -157,11 +168,11 @@ void MAVLinkSimulationMAV::mainloop()
         // SYSTEM STATUS
         mavlink_sys_status_t status;
         status.load = 300;
-//        status.mode = sys_mode;
-//        status.nav_mode = nav_mode;
+        //        status.mode = sys_mode;
+        //        status.nav_mode = nav_mode;
         status.errors_comm = 0;
         status.voltage_battery = 10500;
-//        status.status = sys_state;
+        //        status.status = sys_state;
         status.battery_remaining = 90;
         mavlink_msg_sys_status_encode(systemid, MAV_COMP_ID_IMU, &msg, &status);
         link->sendMAVLinkMessage(&msg);
@@ -171,7 +182,7 @@ void MAVLinkSimulationMAV::mainloop()
         mavlink_vfr_hud_t hud;
         hud.airspeed = pos.vx/100.0f;
         hud.groundspeed = pos.vx/100.0f;
-        hud.alt = z;
+        hud.alt = altitude;
         hud.heading = static_cast<int>((yaw/M_PI)*180.0f+180.0f) % 360;
         hud.climb = pos.vz/100.0f;
         hud.throttle = 90;
@@ -211,7 +222,7 @@ void MAVLinkSimulationMAV::mainloop()
         {
             mavlink_hil_controls_t hil;
             hil.roll_ailerons = 0.0;
-            hil.pitch_elevator = 0.0;
+            hil.pitch_elevator = 0.05;
             hil.yaw_rudder = 0.05;
             hil.throttle = 0.6;
             // Encode the data (adding header and checksums, etc.)
@@ -223,12 +234,12 @@ void MAVLinkSimulationMAV::mainloop()
         // Send actual controller outputs
         // This message just shows the direction
         // and magnitude of the control output
-//        mavlink_position_controller_output_t pos;
-//        pos.x = sin(yaw)*127.0f;
-//        pos.y = cos(yaw)*127.0f;
-//        pos.z = 0;
-//        mavlink_msg_position_controller_output_encode(systemid, MAV_COMP_ID_IMU, &ret, &pos);
-//        link->sendMAVLinkMessage(&ret);
+        //        mavlink_position_controller_output_t pos;
+        //        pos.x = sin(yaw)*127.0f;
+        //        pos.y = cos(yaw)*127.0f;
+        //        pos.z = 0;
+        //        mavlink_msg_position_controller_output_encode(systemid, MAV_COMP_ID_IMU, &ret, &pos);
+        //        link->sendMAVLinkMessage(&ret);
 
         // Send a named value with name "FLOAT" and 0.5f as value
 
@@ -302,80 +313,80 @@ static const mavlink_message_info_t message_info[256] = MAVLINK_MESSAGE_INFO;
 static void print_one_field(const mavlink_message_t *msg, const mavlink_field_info_t *f, int idx)
 {
 #define PRINT_FORMAT(f, def) (f->print_format?f->print_format:def)
-        switch (f->type) {
-        case MAVLINK_TYPE_CHAR:
-                qDebug(PRINT_FORMAT(f, "%c"), _MAV_RETURN_char(msg, f->wire_offset+idx*1));
-                break;
-        case MAVLINK_TYPE_UINT8_T:
-                qDebug(PRINT_FORMAT(f, "%u"), _MAV_RETURN_uint8_t(msg, f->wire_offset+idx*1));
-                break;
-        case MAVLINK_TYPE_INT8_T:
-                qDebug(PRINT_FORMAT(f, "%d"), _MAV_RETURN_int8_t(msg, f->wire_offset+idx*1));
-                break;
-        case MAVLINK_TYPE_UINT16_T:
-                qDebug(PRINT_FORMAT(f, "%u"), _MAV_RETURN_uint16_t(msg, f->wire_offset+idx*2));
-                break;
-        case MAVLINK_TYPE_INT16_T:
-                qDebug(PRINT_FORMAT(f, "%d"), _MAV_RETURN_int16_t(msg, f->wire_offset+idx*2));
-                break;
-        case MAVLINK_TYPE_UINT32_T:
-                qDebug(PRINT_FORMAT(f, "%lu"), (unsigned long)_MAV_RETURN_uint32_t(msg, f->wire_offset+idx*4));
-                break;
-        case MAVLINK_TYPE_INT32_T:
-                qDebug(PRINT_FORMAT(f, "%ld"), (long)_MAV_RETURN_int32_t(msg, f->wire_offset+idx*4));
-                break;
-        case MAVLINK_TYPE_UINT64_T:
-                qDebug(PRINT_FORMAT(f, "%llu"), (unsigned long long)_MAV_RETURN_uint64_t(msg, f->wire_offset+idx*8));
-                break;
-        case MAVLINK_TYPE_INT64_T:
-                qDebug(PRINT_FORMAT(f, "%lld"), (long long)_MAV_RETURN_int64_t(msg, f->wire_offset+idx*8));
-                break;
-        case MAVLINK_TYPE_FLOAT:
-                qDebug(PRINT_FORMAT(f, "%f"), (double)_MAV_RETURN_float(msg, f->wire_offset+idx*4));
-                break;
-        case MAVLINK_TYPE_DOUBLE:
-                qDebug(PRINT_FORMAT(f, "%f"), _MAV_RETURN_double(msg, f->wire_offset+idx*8));
-                break;
-        }
+    switch (f->type) {
+    case MAVLINK_TYPE_CHAR:
+        qDebug(PRINT_FORMAT(f, "%c"), _MAV_RETURN_char(msg, f->wire_offset+idx*1));
+        break;
+    case MAVLINK_TYPE_UINT8_T:
+        qDebug(PRINT_FORMAT(f, "%u"), _MAV_RETURN_uint8_t(msg, f->wire_offset+idx*1));
+        break;
+    case MAVLINK_TYPE_INT8_T:
+        qDebug(PRINT_FORMAT(f, "%d"), _MAV_RETURN_int8_t(msg, f->wire_offset+idx*1));
+        break;
+    case MAVLINK_TYPE_UINT16_T:
+        qDebug(PRINT_FORMAT(f, "%u"), _MAV_RETURN_uint16_t(msg, f->wire_offset+idx*2));
+        break;
+    case MAVLINK_TYPE_INT16_T:
+        qDebug(PRINT_FORMAT(f, "%d"), _MAV_RETURN_int16_t(msg, f->wire_offset+idx*2));
+        break;
+    case MAVLINK_TYPE_UINT32_T:
+        qDebug(PRINT_FORMAT(f, "%lu"), (unsigned long)_MAV_RETURN_uint32_t(msg, f->wire_offset+idx*4));
+        break;
+    case MAVLINK_TYPE_INT32_T:
+        qDebug(PRINT_FORMAT(f, "%ld"), (long)_MAV_RETURN_int32_t(msg, f->wire_offset+idx*4));
+        break;
+    case MAVLINK_TYPE_UINT64_T:
+        qDebug(PRINT_FORMAT(f, "%llu"), (unsigned long long)_MAV_RETURN_uint64_t(msg, f->wire_offset+idx*8));
+        break;
+    case MAVLINK_TYPE_INT64_T:
+        qDebug(PRINT_FORMAT(f, "%lld"), (long long)_MAV_RETURN_int64_t(msg, f->wire_offset+idx*8));
+        break;
+    case MAVLINK_TYPE_FLOAT:
+        qDebug(PRINT_FORMAT(f, "%f"), (double)_MAV_RETURN_float(msg, f->wire_offset+idx*4));
+        break;
+    case MAVLINK_TYPE_DOUBLE:
+        qDebug(PRINT_FORMAT(f, "%f"), _MAV_RETURN_double(msg, f->wire_offset+idx*8));
+        break;
+    }
 }
 
 static void print_field(const mavlink_message_t *msg, const mavlink_field_info_t *f)
 {
-        qDebug("%s: ", f->name);
-        if (f->array_length == 0) {
-                print_one_field(msg, f, 0);
-                qDebug(" ");
-        } else {
-                unsigned i;
-                /* print an array */
-                if (f->type == MAVLINK_TYPE_CHAR) {
-                        qDebug("'%.*s'", f->array_length,
-                               f->wire_offset+(const char *)_MAV_PAYLOAD(msg));
-
-                } else {
-                        qDebug("[ ");
-                        for (i=0; i<f->array_length; i++) {
-                                print_one_field(msg, f, i);
-                                if (i < f->array_length) {
-                                        qDebug(", ");
-                                }
-                        }
-                        qDebug("]");
-                }
-        }
+    qDebug("%s: ", f->name);
+    if (f->array_length == 0) {
+        print_one_field(msg, f, 0);
         qDebug(" ");
+    } else {
+        unsigned i;
+        /* print an array */
+        if (f->type == MAVLINK_TYPE_CHAR) {
+            qDebug("'%.*s'", f->array_length,
+                   f->wire_offset+(const char *)_MAV_PAYLOAD(msg));
+
+        } else {
+            qDebug("[ ");
+            for (i=0; i<f->array_length; i++) {
+                print_one_field(msg, f, i);
+                if (i < f->array_length) {
+                    qDebug(", ");
+                }
+            }
+            qDebug("]");
+        }
+    }
+    qDebug(" ");
 }
 
 static void print_message(const mavlink_message_t *msg)
 {
-        const mavlink_message_info_t *m = &message_info[msg->msgid];
-        const mavlink_field_info_t *f = m->fields;
-        unsigned i;
-        qDebug("%s { ", m->name);
-        for (i=0; i<m->num_fields; i++) {
-                print_field(msg, &f[i]);
-        }
-        qDebug("}\n");
+    const mavlink_message_info_t *m = &message_info[msg->msgid];
+    const mavlink_field_info_t *f = m->fields;
+    unsigned i;
+    qDebug("%s { ", m->name);
+    for (i=0; i<m->num_fields; i++) {
+        print_field(msg, &f[i]);
+    }
+    qDebug("}\n");
 }
 
 void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
@@ -395,31 +406,46 @@ void MAVLinkSimulationMAV::handleMessage(const mavlink_message_t& msg)
         if (systemid == mode.target_system) sys_mode = mode.base_mode;
     }
     break;
+    case MAVLINK_MSG_ID_HIL_STATE:
+    {
+        mavlink_hil_state_t state;
+        mavlink_msg_hil_state_decode(&msg, &state);
+        roll = state.roll;
+        pitch = state.pitch;
+        yaw = state.yaw;
+        rollspeed = state.rollspeed;
+        pitchspeed = state.pitchspeed;
+        yawspeed = state.yawspeed;
+        latitude = state.lat;
+        longitude = state.lon;
+        altitude = state.alt;
+    }
+    break;
     // FIXME MAVLINKV10PORTINGNEEDED
-//    case MAVLINK_MSG_ID_ACTION: {
-//        mavlink_action_t action;
-//        mavlink_msg_action_decode(&msg, &action);
-//        if (systemid == action.target && (action.target_component == 0 || action.target_component == MAV_COMP_ID_IMU)) {
-//            mavlink_action_ack_t ack;
-//            ack.action = action.action;
-////            switch (action.action) {
-////            case MAV_ACTION_TAKEOFF:
-////                flying = true;
-////                nav_mode = MAV_NAV_LIFTOFF;
-////                ack.result = 1;
-////                break;
-////            default: {
-////                ack.result = 0;
-////            }
-////            break;
-////            }
+    //    case MAVLINK_MSG_ID_ACTION: {
+    //        mavlink_action_t action;
+    //        mavlink_msg_action_decode(&msg, &action);
+    //        if (systemid == action.target && (action.target_component == 0 || action.target_component == MAV_COMP_ID_IMU)) {
+    //            mavlink_action_ack_t ack;
+    //            ack.action = action.action;
+    ////            switch (action.action) {
+    ////            case MAV_ACTION_TAKEOFF:
+    ////                flying = true;
+    ////                nav_mode = MAV_NAV_LIFTOFF;
+    ////                ack.result = 1;
+    ////                break;
+    ////            default: {
+    ////                ack.result = 0;
+    ////            }
+    ////            break;
+    ////            }
 
-//            // Give feedback about action
-//            mavlink_message_t r_msg;
-//            mavlink_msg_action_ack_encode(systemid, MAV_COMP_ID_IMU, &r_msg, &ack);
-//            link->sendMAVLinkMessage(&r_msg);
-//        }
-//    }
+    //            // Give feedback about action
+    //            mavlink_message_t r_msg;
+    //            mavlink_msg_action_ack_encode(systemid, MAV_COMP_ID_IMU, &r_msg, &ack);
+    //            link->sendMAVLinkMessage(&r_msg);
+    //        }
+    //    }
     break;
     case MAVLINK_MSG_ID_SET_LOCAL_POSITION_SETPOINT: {
         mavlink_set_local_position_setpoint_t sp;
