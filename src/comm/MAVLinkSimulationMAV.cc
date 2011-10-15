@@ -207,6 +207,19 @@ void MAVLinkSimulationMAV::mainloop()
         // The message container to be used for sending
         mavlink_message_t ret;
 
+        if (sys_mode & MAV_MODE_FLAG_DECODE_POSITION_HIL)
+        {
+            mavlink_hil_controls_t hil;
+            hil.roll_ailerons = 0.0;
+            hil.pitch_elevator = 0.0;
+            hil.yaw_rudder = 0.05;
+            hil.throttle = 0.6;
+            // Encode the data (adding header and checksums, etc.)
+            mavlink_msg_hil_controls_encode(systemid, MAV_COMP_ID_IMU, &ret, &hil);
+            // And send it
+            link->sendMAVLinkMessage(&ret);
+        }
+
         // Send actual controller outputs
         // This message just shows the direction
         // and magnitude of the control output

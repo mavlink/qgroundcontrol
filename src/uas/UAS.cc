@@ -343,8 +343,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 currentVoltage = state.voltage_battery/1000.0f;
                 lpVoltage = filterVoltage(currentVoltage);
 
-                qDebug() << "BATT VOLTAGE:" << currentVoltage << "RAW" << state.voltage_battery;
-
                 if (startVoltage == 0) startVoltage = currentVoltage;
                 timeRemaining = calculateTimeRemaining();
                 if (!batteryRemainingEstimateEnabled && chargeLevel != -1)
