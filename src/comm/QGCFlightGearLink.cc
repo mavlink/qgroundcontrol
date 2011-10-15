@@ -327,7 +327,7 @@ bool QGCFlightGearLink::connectSimulation()
 #ifdef Q_OS_MACX
     processFgfs = "/Applications/FlightGear.app/Contents/Resources/fgfs";
     fgRoot = "--fg-root=/Applications/FlightGear.app/Contents/Resources/data";
-    fgScenery = "--fg-scenery=/Applications/FlightGear.app/Contents/Resources/data/Scenery";
+    fgScenery = "--fg-scenery=/Applications/FlightGear.app/Contents/Resources/data/Scenery:/Applications/FlightGear.app/Contents/Resources/data/Scenery-Terrasync";
 #endif
 
 #ifdef Q_OS_WIN32
@@ -349,11 +349,11 @@ bool QGCFlightGearLink::connectSimulation()
     processCall << "--heading=300";
     processCall << "--timeofday=noon";
     processCall << "--disable-hud-3d";
-    processCall << "--control=mouse";
-    processCall << "--disable-intro-music";
-    processCall << "--disable-sound";
-    processCall << "--disable-anti-alias-hud";
     processCall << "--disable-fullscreen";
+//    processCall << "--control=mouse";
+//    processCall << "--disable-intro-music";
+//    processCall << "--disable-sound";
+//    processCall << "--disable-anti-alias-hud";
 //    processCall << "--disable-random-objects";
 //    processCall << "--disable-ai-models";
 //    processCall << "--wind=0@0";
@@ -367,9 +367,9 @@ bool QGCFlightGearLink::connectSimulation()
         processCall << "--prop:/engines/engine[2]/running=true";
         processCall << "--prop:/engines/engine[3]/running=true";
     }
-//    processCall << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
-//    processCall << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
-//    processCall << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
+    processCall << QString("--lat=%1").arg(UASManager::instance()->getHomeLatitude());
+    processCall << QString("--lon=%1").arg(UASManager::instance()->getHomeLongitude());
+    processCall << QString("--altitude=%1").arg(UASManager::instance()->getHomeAltitude());
     // Add new argument with this: processCall << "";
     processCall << QString("--aircraft=%2").arg(aircraft);
 
