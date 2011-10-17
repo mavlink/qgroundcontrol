@@ -1,6 +1,6 @@
 // MESSAGE VISION_SPEED_ESTIMATE PACKING
 
-#define MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE 158
+#define MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE 103
 
 typedef struct __mavlink_vision_speed_estimate_t
 {
@@ -11,7 +11,7 @@ typedef struct __mavlink_vision_speed_estimate_t
 } mavlink_vision_speed_estimate_t;
 
 #define MAVLINK_MSG_ID_VISION_SPEED_ESTIMATE_LEN 20
-#define MAVLINK_MSG_ID_158_LEN 20
+#define MAVLINK_MSG_ID_103_LEN 20
 
 
 

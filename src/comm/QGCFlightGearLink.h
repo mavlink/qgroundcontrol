@@ -109,6 +109,7 @@ protected:
     QTimer refreshTimer;
     UASInterface* mav;
     QProcess* process;
+    QProcess* terraSync;
 
     void setName(QString name);
 

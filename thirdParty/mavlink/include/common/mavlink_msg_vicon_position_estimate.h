@@ -1,6 +1,6 @@
 // MESSAGE VICON_POSITION_ESTIMATE PACKING
 
-#define MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE 157
+#define MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE 104
 
 typedef struct __mavlink_vicon_position_estimate_t
 {
@@ -14,7 +14,7 @@ typedef struct __mavlink_vicon_position_estimate_t
 } mavlink_vicon_position_estimate_t;
 
 #define MAVLINK_MSG_ID_VICON_POSITION_ESTIMATE_LEN 32
-#define MAVLINK_MSG_ID_157_LEN 32
+#define MAVLINK_MSG_ID_104_LEN 32
 
 
 
