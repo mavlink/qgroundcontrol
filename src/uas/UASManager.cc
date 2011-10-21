@@ -18,6 +18,10 @@
 #include "UASManager.h"
 #include "QGC.h"
 
+#define PI 3.1415926535897932384626433832795
+#define MEAN_EARTH_DIAMETER	12756274.0
+#define UMR	0.017453292519943295769236907684886
+
 UASManager* UASManager::instance()
 {
     static UASManager* _instance = 0;
@@ -179,6 +183,22 @@ void UASManager::wgs84ToEnu(const double& lat, const double& lon, const double& 
 //{
 
 //}
+
+
+
+void UASManager::enuToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt)
+{
+    *lat=homeLat+y/MEAN_EARTH_DIAMETER*360./PI;
+    *lon=homeLon+x/MEAN_EARTH_DIAMETER*360./PI/cos(homeLat*UMR);
+    *alt=homeAlt+z;
+}
+
+void UASManager::nedToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt)
+{
+    *lat=homeLat+x/MEAN_EARTH_DIAMETER*360./PI;
+    *lon=homeLon+y/MEAN_EARTH_DIAMETER*360./PI/cos(homeLat*UMR);
+    *alt=homeAlt-z;
+}
 
 
 /**
