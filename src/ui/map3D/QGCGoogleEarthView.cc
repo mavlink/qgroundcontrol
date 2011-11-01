@@ -209,15 +209,16 @@ void QGCGoogleEarthView::addUAS(UASInterface* uas)
     connect(uas, SIGNAL(globalPositionChanged(UASInterface*,double,double,double,quint64)), this, SLOT(updateGlobalPosition(UASInterface*,double,double,double,quint64)));
     // Receive waypoint updates
     // Connect the waypoint manager / data storage to the UI
-    connect(uas->getWaypointManager(), SIGNAL(waypointListChanged(int)), this, SLOT(updateWaypointList(int)));
-    connect(uas->getWaypointManager(), SIGNAL(waypointChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
-    //connect(this, SIGNAL(waypointCreated(Waypoint*)), uas->getWaypointManager(), SLOT(addWaypoint(Waypoint*)));
+    connect(uas->getWaypointManager(), SIGNAL(waypointEditableListChanged(int)), this, SLOT(updateWaypointList(int)));
+    connect(uas->getWaypointManager(), SIGNAL(waypointEditableChanged(int, Waypoint*)), this, SLOT(updateWaypoint(int,Waypoint*)));
+    //connect(this, SIGNAL(waypointCreated(Waypoint*)), uas->getWaypointManager(), SLOT(addWaypointEditable(Waypoint*)));
     // TODO Update waypoint list on UI changes here
 }
 
 void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
 {
-    if (uas) {
+    if (uas)
+    {
         mav = uas;
         javaScript(QString("setCurrAircraft(%1);").arg(uas->getUASID()));
         updateWaypointList(uas->getUASID());
@@ -231,7 +232,8 @@ void QGCGoogleEarthView::setActiveUAS(UASInterface* uas)
 void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
 {
     // Only accept waypoints in global coordinate frame
-    if (wp->getFrame() == MAV_FRAME_GLOBAL && wp->isNavigationType()) {
+    if ((wp->getFrame() == MAV_FRAME_GLOBAL || wp->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT) && wp->isNavigationType())
+    {
         // We're good, this is a global waypoint
 
         // Get the index of this waypoint
@@ -239,10 +241,13 @@ void QGCGoogleEarthView::updateWaypoint(int uas, Waypoint* wp)
         // as we're only handling global waypoints
         int wpindex = UASManager::instance()->getUASForId(uas)->getWaypointManager()->getGlobalFrameAndNavTypeIndexOf(wp);
         // If not found, return (this should never happen, but helps safety)
-        if (wpindex == -1) {
+        if (wpindex == -1)
+        {
             return;
-        } else {
-            javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction()));
+        }
+        else
+        {
+            javaScript(QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 22).arg(wp->getLongitude(), 0, 'f', 22).arg(wp->getAltitude(), 0, 'f', 22).arg(wp->getAction()));
             //qDebug() << QString("updateWaypoint(%1,%2,%3,%4,%5,%6);").arg(uas).arg(wpindex).arg(wp->getLatitude(), 0, 'f', 18).arg(wp->getLongitude(), 0, 'f', 18).arg(wp->getAltitude(), 0, 'f', 18).arg(wp->getAction());
         }
     }
@@ -257,7 +262,8 @@ void QGCGoogleEarthView::updateWaypointList(int uas)
 {
     // Get already existing waypoints
     UASInterface* uasInstance = UASManager::instance()->getUASForId(uas);
-    if (uasInstance) {
+    if (uasInstance)
+    {
         // Get all waypoints, including non-global waypoints
         QVector<Waypoint*> wpList = uasInstance->getWaypointManager()->getGlobalFrameAndNavTypeWaypointList();
 
@@ -267,7 +273,8 @@ void QGCGoogleEarthView::updateWaypointList(int uas)
         qDebug() << QString("updateWaypointListLength(%1,%2);").arg(uas).arg(wpList.count());
 
         // Load all existing waypoints into map view
-        foreach (Waypoint* wp, wpList) {
+        foreach (Waypoint* wp, wpList)
+        {
             updateWaypoint(uas, wp);
         }
     }
@@ -276,7 +283,7 @@ void QGCGoogleEarthView::updateWaypointList(int uas)
 void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, double lon, double alt, quint64 usec)
 {
     Q_UNUSED(usec);
-    javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 18).arg(lon, 0, 'f', 18).arg(alt, 0, 'f', 15));
+    javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 22).arg(lon, 0, 'f', 22).arg(alt, 0, 'f', 22));
 
     //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }
@@ -284,7 +291,8 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, dou
 void QGCGoogleEarthView::clearTrails()
 {
     QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-    foreach (UASInterface* currMav, mavs) {
+    foreach (UASInterface* currMav, mavs)
+    {
         javaScript(QString("clearTrail(%1);").arg(currMav->getUASID()));
     }
 }
@@ -292,17 +300,21 @@ void QGCGoogleEarthView::clearTrails()
 void QGCGoogleEarthView::showTrail(bool state)
 {
     // Check if the current trail has to be hidden
-    if (trailEnabled && !state) {
+    if (trailEnabled && !state)
+    {
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-        foreach (UASInterface* currMav, mavs) {
+        foreach (UASInterface* currMav, mavs)
+        {
             javaScript(QString("hideTrail(%1);").arg(currMav->getUASID()));
         }
     }
 
     // Check if the current trail has to be shown
-    if (!trailEnabled && state) {
+    if (!trailEnabled && state)
+    {
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-        foreach (UASInterface* currMav, mavs) {
+        foreach (UASInterface* currMav, mavs)
+        {
             javaScript(QString("showTrail(%1);").arg(currMav->getUASID()));
         }
     }
@@ -318,10 +330,14 @@ void QGCGoogleEarthView::showWaypoints(bool state)
 void QGCGoogleEarthView::follow(bool follow)
 {
     ui->followAirplaneCheckbox->setChecked(follow);
-    if (follow != followCamera) {
-        if (follow) {
+    if (follow != followCamera)
+    {
+        if (follow)
+        {
             setViewMode(VIEW_MODE_CHASE_LOCKED);
-        } else {
+        }
+        else
+        {
             setViewMode(VIEW_MODE_SIDE);
         }
     }
@@ -376,18 +392,20 @@ void QGCGoogleEarthView::moveToPosition()
 
 void QGCGoogleEarthView::hideEvent(QHideEvent* event)
 {
-    Q_UNUSED(event);
     updateTimer->stop();
+    QWidget::hideEvent(event);
+    emit visibilityChanged(false);
 }
 
 void QGCGoogleEarthView::showEvent(QShowEvent* event)
 {
     // React only to internal (pre-display)
     // events
-    Q_UNUSED(event)
+    QWidget::showEvent(event);
     // Enable widget, initialize on first run
 
-    if (!webViewInitialized) {
+    if (!webViewInitialized)
+    {
 #if (defined Q_OS_MAC)
         webViewMac->setPage(new QGCWebPage(webViewMac));
         webViewMac->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
@@ -404,9 +422,12 @@ void QGCGoogleEarthView::showEvent(QShowEvent* event)
         gEarthInitialized = false;
 
         QTimer::singleShot(3000, this, SLOT(initializeGoogleEarth()));
-    } else {
+    }
+    else
+    {
         updateTimer->start(refreshRateMs);
     }
+    emit visibilityChanged(true);
 }
 
 void QGCGoogleEarthView::printWinException(int no, QString str1, QString str2, QString str3)
@@ -461,7 +482,7 @@ QVariant QGCGoogleEarthView::documentElement(QString name)
             name.prepend("JScript_");
             HRESULT res = doc->getElementById(QStringToBSTR(name), &element);
             //BSTR elemString;
-            if (element) {
+            if (SUCCEEDED(res) && element) {
                 //element->get_innerHTML(&elemString);
                 VARIANT var;
                 var.vt = VT_BSTR;
@@ -605,7 +626,8 @@ void QGCGoogleEarthView::updateState()
 
         // Update all MAVs
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
-        foreach (UASInterface* currMav, mavs) {
+        foreach (UASInterface* currMav, mavs)
+        {
             uasId = currMav->getUASID();
             lat = currMav->getLatitude();
             lon = currMav->getLongitude();
@@ -632,9 +654,9 @@ void QGCGoogleEarthView::updateState()
         // Microsoft API available in Qt - improvements wanted
 
         // First check if a new WP should be created
-//        bool newWaypointPending = .to
         bool newWaypointPending = documentElement("newWaypointPending").toBool();
-        if (newWaypointPending) {
+        if (newWaypointPending)
+        {
             bool coordsOk = true;
             bool ok;
             double latitude = documentElement("newWaypointLatitude").toDouble(&ok);
@@ -643,16 +665,18 @@ void QGCGoogleEarthView::updateState()
             coordsOk &= ok;
             double altitude = documentElement("newWaypointAltitude").toDouble(&ok);
             coordsOk &= ok;
-            if (coordsOk) {
+            if (coordsOk)
+            {
                 // Add new waypoint
-                if (mav) {
-                    int nextIndex = mav->getWaypointManager()->getWaypointList().count();
-                    Waypoint* wp = new Waypoint(nextIndex, latitude, longitude, altitude, true);
+                if (mav)
+                {
+                    Waypoint* wp = mav->getWaypointManager()->createWaypoint();
                     wp->setFrame(MAV_FRAME_GLOBAL);
-//                    wp.setLatitude(latitude);
-//                    wp.setLongitude(longitude);
-//                    wp.setAltitude(altitude);
-                    mav->getWaypointManager()->addWaypoint(wp);
+                    wp->setAction(MAV_CMD_NAV_WAYPOINT);
+                    wp->setLatitude(latitude);
+                    wp->setLongitude(longitude);
+                    wp->setAltitude(altitude);
+                    wp->setAcceptanceRadius(10.0); // 10 m
                 }
             }
             javaScript("setNewWaypointPending(false);");
@@ -661,7 +685,8 @@ void QGCGoogleEarthView::updateState()
         // Check if a waypoint should be moved
         bool dragWaypointPending = documentElement("dragWaypointPending").toBool();
 
-        if (dragWaypointPending) {
+        if (dragWaypointPending)
+        {
             bool coordsOk = true;
             bool ok;
             double latitude = documentElement("dragWaypointLatitude").toDouble(&ok);
@@ -672,30 +697,38 @@ void QGCGoogleEarthView::updateState()
             coordsOk &= ok;
 
             // UPDATE WAYPOINTS, HOME LOCATION AND OTHER LOCATIONS
-            if (coordsOk) {
+            if (coordsOk)
+            {
                 QString idText = documentElement("dragWaypointIndex").toString();
-                if (idText == "HOME") {
+                if (idText == "HOME")
+                {
                     qDebug() << "HOME UPDATED!";
                     UASManager::instance()->setHomePosition(latitude, longitude, altitude);
                     ui->setHomeButton->setChecked(false);
-                } else {
+                }
+                else
+                {
                     // Update waypoint or symbol
-                    if (mav) {
+                    if (mav)
+                    {
                         QVector<Waypoint*> wps = mav->getWaypointManager()->getGlobalFrameAndNavTypeWaypointList();
 
                         bool ok;
                         int index = idText.toInt(&ok);
 
-                        if (ok && index >= 0 && index < wps.count()) {
+                        if (ok && index >= 0 && index < wps.count())
+                        {
                             Waypoint* wp = wps.at(index);
                             wp->setLatitude(latitude);
                             wp->setLongitude(longitude);
                             wp->setAltitude(altitude);
-                            mav->getWaypointManager()->notifyOfChange(wp);
+                            mav->getWaypointManager()->notifyOfChangeEditable(wp);
                         }
                     }
                 }
-            } else {
+            }
+            else
+            {
                 // If coords were not ok, move the view in google earth back
                 // to last acceptable location
                 updateWaypointList(mav->getUASID());

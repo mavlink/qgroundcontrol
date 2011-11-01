@@ -18,6 +18,10 @@
 #include "UASManager.h"
 #include "QGC.h"
 
+#define PI 3.1415926535897932384626433832795
+#define MEAN_EARTH_DIAMETER	12756274.0
+#define UMR	0.017453292519943295769236907684886
+
 UASManager* UASManager::instance()
 {
     static UASManager* _instance = 0;
@@ -96,6 +100,26 @@ bool UASManager::setHomePosition(double lat, double lon, double alt)
     return changed;
 }
 
+/**
+ * @param x1 Point 1 coordinate in x dimension
+ * @param y1 Point 1 coordinate in y dimension
+ * @param z1 Point 1 coordinate in z dimension
+ *
+ * @param x2 Point 2 coordinate in x dimension
+ * @param y2 Point 2 coordinate in y dimension
+ * @param z2 Point 2 coordinate in z dimension
+ */
+void UASManager::setLocalNEDSafetyBorders(double x1, double y1, double z1, double x2, double y2, double z2)
+{
+    nedSafetyLimitPosition1.x() = x1;
+    nedSafetyLimitPosition1.y() = y1;
+    nedSafetyLimitPosition1.z() = z1;
+
+    nedSafetyLimitPosition2.x() = x2;
+    nedSafetyLimitPosition2.y() = y2;
+    nedSafetyLimitPosition2.z() = z2;
+}
+
 
 void UASManager::initReference(const double & latitude, const double & longitude, const double & altitude)
 {
@@ -161,6 +185,22 @@ void UASManager::wgs84ToEnu(const double& lat, const double& lon, const double& 
 //}
 
 
+
+void UASManager::enuToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt)
+{
+    *lat=homeLat+y/MEAN_EARTH_DIAMETER*360./PI;
+    *lon=homeLon+x/MEAN_EARTH_DIAMETER*360./PI/cos(homeLat*UMR);
+    *alt=homeAlt+z;
+}
+
+void UASManager::nedToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt)
+{
+    *lat=homeLat+x/MEAN_EARTH_DIAMETER*360./PI;
+    *lon=homeLon+y/MEAN_EARTH_DIAMETER*360./PI/cos(homeLat*UMR);
+    *alt=homeAlt-z;
+}
+
+
 /**
  * This function will change QGC's home position on a number of conditions only
  */
@@ -194,10 +234,11 @@ UASManager::UASManager() :
         activeUAS(NULL),
         homeLat(47.3769),
         homeLon(8.549444),
-        homeAlt(470.0)
+        homeAlt(470.0),
+        homeFrame(MAV_FRAME_GLOBAL)
 {
-    start(QThread::LowPriority);
     loadSettings();
+    setLocalNEDSafetyBorders(1, -1, 0, -1, 1, -1);
 }
 
 UASManager::~UASManager()
@@ -209,16 +250,6 @@ UASManager::~UASManager()
     }
 	this->quit();
 	this->wait();
-}
-
-
-void UASManager::run()
-{
-    //    forever
-    //    {
-    //        QGC::SLEEP::msleep(5000);
-    //    }
-    exec();
 }
 
 void UASManager::addUAS(UASInterface* uas)

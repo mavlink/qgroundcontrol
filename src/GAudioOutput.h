@@ -124,7 +124,7 @@ protected:
     bool muted;
 private:
     GAudioOutput(QObject* parent=NULL);
-    ~GAudioOutput();
+//    ~GAudioOutput();
 };
 
 #endif // AUDIOOUTPUT_H

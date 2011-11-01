@@ -13,18 +13,15 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout" rowstretch="1,1,100,1,1,1,0" columnstretch="1,1,1,100">
-   <property name="topMargin">
-    <number>6</number>
+  <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,1,100">
+   <property name="horizontalSpacing">
+    <number>8</number>
    </property>
-   <property name="rightMargin">
-    <number>6</number>
-   </property>
-   <property name="bottomMargin">
-    <number>6</number>
-   </property>
-   <property name="spacing">
+   <property name="verticalSpacing">
     <number>12</number>
+   </property>
+   <property name="margin">
+    <number>8</number>
    </property>
    <item row="0" column="0">
     <widget class="QLabel" name="fileNameLabel">
@@ -39,9 +36,6 @@
      </property>
      <property name="scaledContents">
       <bool>true</bool>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>
@@ -60,8 +54,8 @@
     <widget class="QGCMAVLinkTextEdit" name="xmlTextView">
      <property name="minimumSize">
       <size>
-       <width>400</width>
-       <height>300</height>
+       <width>200</width>
+       <height>100</height>
       </size>
      </property>
      <property name="baseSize">
@@ -75,7 +69,7 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="2">
+   <item row="1" column="0">
     <widget class="QLabel" name="outputDirNameLabel">
      <property name="maximumSize">
       <size>
@@ -102,10 +96,7 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0" colspan="3">
-    <widget class="QTreeView" name="xmlTreeView"/>
-   </item>
-   <item row="4" column="0" colspan="2">
+   <item row="4" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
       <string>Compile Output</string>
@@ -113,7 +104,11 @@
     </widget>
    </item>
    <item row="5" column="0" colspan="3">
-    <widget class="QPlainTextEdit" name="compileLog"/>
+    <widget class="QPlainTextEdit" name="compileLog">
+     <property name="tabStopWidth">
+      <number>40</number>
+     </property>
+    </widget>
    </item>
    <item row="6" column="0">
     <widget class="QLabel" name="validXMLLabel">
@@ -140,10 +135,13 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="2">
+   <item row="2" column="0">
     <widget class="QLabel" name="label_2">
      <property name="text">
       <string>Select MAVLink Version</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
      </property>
     </widget>
    </item>
@@ -151,12 +149,12 @@
     <widget class="QComboBox" name="versionComboBox">
      <item>
       <property name="text">
-       <string>MAVLink v0.9 (-Aug'10)</string>
+       <string>MAVLink v1.0 (Sept'10+)</string>
       </property>
      </item>
      <item>
       <property name="text">
-       <string>MAVLink v1.0 (Sept'10+)</string>
+       <string>MAVLink v0.9 (-Aug'10)</string>
       </property>
      </item>
     </widget>

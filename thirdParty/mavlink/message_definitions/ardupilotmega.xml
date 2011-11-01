@@ -25,7 +25,6 @@
                <field type="float" name="accel_cal_y">accel Y calibration</field>
                <field type="float" name="accel_cal_z">accel Z calibration</field>
           </message>
-
           <message id="151" name="SET_MAG_OFFSETS">
                <description>set the magnetometer offsets</description>
                <field type="uint8_t" name="target_system">System ID</field>
@@ -34,6 +33,5 @@
                <field type="int16_t" name="mag_ofs_y">magnetometer Y offset</field>
                <field type="int16_t" name="mag_ofs_z">magnetometer Z offset</field>
           </message>
-
      </messages>
 </mavlink>

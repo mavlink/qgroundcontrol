@@ -52,7 +52,15 @@ namespace mapcontrol
         RefreshToolTip();
         RefreshPos();
     }
-    WayPointItem::WayPointItem(const internals::PointLatLng &coord,double const& altitude, const QString &description, MapGraphicItem *map):coord(coord),reached(false),description(description),shownumber(true),isDragging(false),altitude(altitude),heading(0),map(map)
+    WayPointItem::WayPointItem(const internals::PointLatLng &coord,double const& altitude, const QString &description, MapGraphicItem *map) :
+        coord(coord),
+        reached(false),
+        description(description),
+        shownumber(true),
+        isDragging(false),
+        altitude(altitude),
+        map(map),
+        heading(0)
     {
         text=0;
         numberI=0;

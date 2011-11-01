@@ -37,8 +37,10 @@ This file is part of the QGROUNDCONTROL project
 #include <QMutex>
 #include <QUdpSocket>
 #include <QTimer>
+#include <QProcess>
 #include <LinkInterface.h>
 #include <configuration.h>
+#include "UASInterface.h"
 
 class QGCFlightGearLink : public QThread
 {
@@ -46,7 +48,7 @@ class QGCFlightGearLink : public QThread
     //Q_INTERFACES(QGCFlightGearLinkInterface:LinkInterface)
 
 public:
-    QGCFlightGearLink(QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
+    QGCFlightGearLink(UASInterface* mav, QString remoteHost=QString("127.0.0.1:49000"), QHostAddress host = QHostAddress::Any, quint16 port = 49005);
     ~QGCFlightGearLink();
 
     bool isConnected();
@@ -67,11 +69,12 @@ public slots:
     void setPort(int port);
     /** @brief Add a new host to broadcast messages to */
     void setRemoteHost(const QString& host);
-    void updateGlobalPosition(quint64 time, double lat, double lon, double alt);
-    void sendUAVUpdate();
+    /** @brief Send new control states to the simulation */
+    void updateControls(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
 //    /** @brief Remove a host from broadcasting messages to */
 //    void removeHost(const QString& host);
     //    void readPendingDatagrams();
+    void processError(QProcess::ProcessError err);
 
     void readBytes();
     /**
@@ -104,6 +107,9 @@ protected:
     QMutex statisticsMutex;
     QMutex dataMutex;
     QTimer refreshTimer;
+    UASInterface* mav;
+    QProcess* process;
+    QProcess* terraSync;
 
     void setName(QString name);
 
@@ -122,6 +128,11 @@ signals:
      * @brief This signal is emitted instantly when the link status changes
      **/
     void flightGearConnected(bool connected);
+
+    /** @brief State update from FlightGear */
+    void hilStateChanged(uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
+                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
+                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
 
 
 };

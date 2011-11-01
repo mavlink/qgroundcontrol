@@ -73,12 +73,22 @@ public:
 public slots:
     void addCurve(const QString& curve, const QString& unit);
     void removeCurve(QString curve);
+    /** @brief Recolor all curves */
+    void recolor();
+    /** @brief Set short names for curves */
+    void setShortNames(bool enable);
     /** @brief Append data without unit */
     void appendData(int uasId, QString curve, double data, quint64 usec);
     /** @brief Append data with unit */
     void appendData(int uasId, const QString& curve, const QString& unit, double value, quint64 usec);
     /** @brief Append data as int with unit */
     void appendData(int uasId, const QString& curve, const QString& unit, int value, quint64 usec);
+    /** @brief Append data as unsigned int with unit */
+    void appendData(int uasId, const QString& curve, const QString& unit, unsigned int value, quint64 usec);
+    /** @brief Append data as int64 with unit */
+    void appendData(int uasId, const QString& curve, const QString& unit, qint64 value, quint64 usec);
+    /** @brief Append data as uint64 with unit */
+    void appendData(int uasId, const QString& curve, const QString& unit, quint64 value, quint64 usec);
     void takeButtonClick(bool checked);
     void setPlotWindowPosition(int scrollBarValue);
     void setPlotWindowPosition(quint64 position);
@@ -88,6 +98,11 @@ public slots:
     /** @brief Stop automatic updates once hidden */
     void hideEvent(QHideEvent* event);
     void setActive(bool active);
+    void setActiveSystem(int systemid)
+    {
+        selectedMAV = systemid;
+    }
+
     /** @brief Set the number of values to average over */
     void setAverageWindow(int windowSize);
     /** @brief Start logging to file */
@@ -109,6 +124,8 @@ protected:
     QToolButton* createButton(QWidget* parent);
     void createCurveItem(QString curve);
     void createLayout();
+    /** @brief Get the name for a curve key */
+    QString getCurveName(const QString& key, bool shortEnabled);
 
     int sysid;                            ///< ID of the unmanned system this plot belongs to
     LinechartPlot* activePlot;            ///< Plot for this system
@@ -119,10 +136,13 @@ protected:
     int curveListCounter;                 ///< Counter of curves in curve list
     QList<QString>* listedCurves;         ///< Curves listed
     QMap<QString, QLabel*>* curveLabels;  ///< References to the curve labels
+    QMap<QString, QLabel*> curveNameLabels;  ///< References to the curve labels
+    QMap<QString, QString> curveNames;    ///< Full curve names
     QMap<QString, QLabel*>* curveMeans;   ///< References to the curve means
     QMap<QString, QLabel*>* curveMedians; ///< References to the curve medians
     QMap<QString, QLabel*>* curveVariances; ///< References to the curve variances
     QMap<QString, int> intData;           ///< Current values for integer-valued curves
+    QMap<QString, QWidget*> colorIcons;    ///< Reference to color icons
 
     QWidget* curvesWidget;                ///< The QWidget containing the curve selection button
     QGridLayout* curvesWidgetLayout;      ///< The layout for the curvesWidget QWidget
@@ -149,7 +169,8 @@ protected:
     QTimer* updateTimer;
     LogCompressor* compressor;
     QCheckBox* selectAllCheckBox;
-    static const int updateInterval = 400; ///< Time between number updates, in milliseconds
+    int selectedMAV; ///< The MAV for which plot items are accepted, -1 for all systems
+    static const int updateInterval = 1000; ///< Time between number updates, in milliseconds
 
     static const int MAX_CURVE_MENUITEM_NUMBER = 8;
     static const int PAGESTEP_TIME_SCROLLBAR_VALUE = (MAX_TIME_SCROLLBAR_VALUE - MIN_TIME_SCROLLBAR_VALUE) / 10;

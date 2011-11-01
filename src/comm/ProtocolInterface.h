@@ -46,7 +46,7 @@ This file is part of the PIXHAWK project
  * @see LinkManager.
  *
  **/
-class ProtocolInterface : public QThread
+class ProtocolInterface : public QObject
 {
     Q_OBJECT
 public:

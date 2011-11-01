@@ -45,4 +45,4 @@ SOURCES += \
 FORMS += \
     src/apps/qgcvideo/QGCVideoMainWindow.ui
 
-RESOURCES = mavground.qrc
+RESOURCES = qgroundcontrol.qrc
