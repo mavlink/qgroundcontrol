@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		348868D013F512010005F759 /* mavlink_parameters.c in Sources */ = {isa = PBXBuildFile; fileRef = 348868CF13F512010005F759 /* mavlink_parameters.c */; };
 		34E8AFDB13F5064C001100AA /* waypoints.c in Sources */ = {isa = PBXBuildFile; fileRef = 34E8AFDA13F5064C001100AA /* waypoints.c */; };
 		8DD76FAC0486AB0100D96B5E /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 08FB7796FE84155DC02AAC07 /* main.c */; settings = {ATTRIBUTES = (); }; };
-		8DD76FB00486AB0100D96B5E /* udptest.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6A0FF2C0290799A04C91782 /* udptest.1 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -19,7 +19,6 @@
 			dstPath = /usr/share/man/man1/;
 			dstSubfolderSpec = 0;
 			files = (
-				8DD76FB00486AB0100D96B5E /* udptest.1 in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -27,10 +26,11 @@
 
 /* Begin PBXFileReference section */
 		08FB7796FE84155DC02AAC07 /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		348868CF13F512010005F759 /* mavlink_parameters.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mavlink_parameters.c; path = ../mavlink_parameters.c; sourceTree = SOURCE_ROOT; };
+		348868D113F512080005F759 /* mavlink_parameters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mavlink_parameters.h; path = ../mavlink_parameters.h; sourceTree = SOURCE_ROOT; };
 		34E8AFDA13F5064C001100AA /* waypoints.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = waypoints.c; path = ../waypoints.c; sourceTree = SOURCE_ROOT; };
 		34E8AFDC13F50659001100AA /* waypoints.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = waypoints.h; path = ../waypoints.h; sourceTree = SOURCE_ROOT; };
 		8DD76FB20486AB0100D96B5E /* udptest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = udptest; sourceTree = BUILT_PRODUCTS_DIR; };
-		C6A0FF2C0290799A04C91782 /* udptest.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = udptest.1; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +58,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				348868D113F512080005F759 /* mavlink_parameters.h */,
+				348868CF13F512010005F759 /* mavlink_parameters.c */,
 				34E8AFDA13F5064C001100AA /* waypoints.c */,
 				08FB7796FE84155DC02AAC07 /* main.c */,
 			);
@@ -75,7 +77,6 @@
 		C6A0FF2B0290797F04C91782 /* Documentation */ = {
 			isa = PBXGroup;
 			children = (
-				C6A0FF2C0290799A04C91782 /* udptest.1 */,
 			);
 			name = Documentation;
 			sourceTree = "<group>";
@@ -132,6 +133,7 @@
 			files = (
 				8DD76FAC0486AB0100D96B5E /* main.c in Sources */,
 				34E8AFDB13F5064C001100AA /* waypoints.c in Sources */,
+				348868D013F512010005F759 /* mavlink_parameters.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,7 +173,10 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = ../../include/common/;
+				HEADER_SEARCH_PATHS = (
+					../../include/,
+					../../include/common/,
+				);
 				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
 				SDKROOT = macosx10.6;

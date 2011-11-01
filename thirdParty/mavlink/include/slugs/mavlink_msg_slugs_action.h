@@ -2,14 +2,26 @@
 
 #define MAVLINK_MSG_ID_SLUGS_ACTION 183
 
-typedef struct __mavlink_slugs_action_t 
+typedef struct __mavlink_slugs_action_t
 {
-	uint8_t target; ///< The system reporting the action
-	uint8_t actionId; ///< Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
-	uint16_t actionVal; ///< Value associated with the action
-
+ uint16_t actionVal; ///< Value associated with the action
+ uint8_t target; ///< The system reporting the action
+ uint8_t actionId; ///< Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
 } mavlink_slugs_action_t;
 
+#define MAVLINK_MSG_ID_SLUGS_ACTION_LEN 4
+#define MAVLINK_MSG_ID_183_LEN 4
+
+
+
+#define MAVLINK_MESSAGE_INFO_SLUGS_ACTION { \
+	"SLUGS_ACTION", \
+	3, \
+	{  { "actionVal", NULL, MAVLINK_TYPE_UINT16_T, 0, 0, offsetof(mavlink_slugs_action_t, actionVal) }, \
+         { "target", NULL, MAVLINK_TYPE_UINT8_T, 0, 2, offsetof(mavlink_slugs_action_t, target) }, \
+         { "actionId", NULL, MAVLINK_TYPE_UINT8_T, 0, 3, offsetof(mavlink_slugs_action_t, actionId) }, \
+         } \
+}
 
 
 /**
@@ -23,20 +35,31 @@ typedef struct __mavlink_slugs_action_t
  * @param actionVal Value associated with the action
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_slugs_action_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, uint8_t target, uint8_t actionId, uint16_t actionVal)
+static inline uint16_t mavlink_msg_slugs_action_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       uint8_t target, uint8_t actionId, uint16_t actionVal)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_uint16_t(buf, 0, actionVal);
+	_mav_put_uint8_t(buf, 2, target);
+	_mav_put_uint8_t(buf, 3, actionId);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+#else
+	mavlink_slugs_action_t packet;
+	packet.actionVal = actionVal;
+	packet.target = target;
+	packet.actionId = actionId;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_SLUGS_ACTION;
-
-	i += put_uint8_t_by_index(target, i, msg->payload); // The system reporting the action
-	i += put_uint8_t_by_index(actionId, i, msg->payload); // Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
-	i += put_uint16_t_by_index(actionVal, i, msg->payload); // Value associated with the action
-
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, 4, 65);
 }
 
 /**
- * @brief Pack a slugs_action message
+ * @brief Pack a slugs_action message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -46,16 +69,28 @@ static inline uint16_t mavlink_msg_slugs_action_pack(uint8_t system_id, uint8_t 
  * @param actionVal Value associated with the action
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_slugs_action_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, uint8_t target, uint8_t actionId, uint16_t actionVal)
+static inline uint16_t mavlink_msg_slugs_action_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           uint8_t target,uint8_t actionId,uint16_t actionVal)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_uint16_t(buf, 0, actionVal);
+	_mav_put_uint8_t(buf, 2, target);
+	_mav_put_uint8_t(buf, 3, actionId);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 4);
+#else
+	mavlink_slugs_action_t packet;
+	packet.actionVal = actionVal;
+	packet.target = target;
+	packet.actionId = actionId;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 4);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_SLUGS_ACTION;
-
-	i += put_uint8_t_by_index(target, i, msg->payload); // The system reporting the action
-	i += put_uint8_t_by_index(actionId, i, msg->payload); // Action ID. See apDefinitions.h in the SLUGS /clib directory for the ID names
-	i += put_uint16_t_by_index(actionVal, i, msg->payload); // Value associated with the action
-
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 4, 65);
 }
 
 /**
@@ -83,13 +118,27 @@ static inline uint16_t mavlink_msg_slugs_action_encode(uint8_t system_id, uint8_
 
 static inline void mavlink_msg_slugs_action_send(mavlink_channel_t chan, uint8_t target, uint8_t actionId, uint16_t actionVal)
 {
-	mavlink_message_t msg;
-	mavlink_msg_slugs_action_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, target, actionId, actionVal);
-	mavlink_send_uart(chan, &msg);
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[4];
+	_mav_put_uint16_t(buf, 0, actionVal);
+	_mav_put_uint8_t(buf, 2, target);
+	_mav_put_uint8_t(buf, 3, actionId);
+
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SLUGS_ACTION, buf, 4, 65);
+#else
+	mavlink_slugs_action_t packet;
+	packet.actionVal = actionVal;
+	packet.target = target;
+	packet.actionId = actionId;
+
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SLUGS_ACTION, (const char *)&packet, 4, 65);
+#endif
 }
 
 #endif
+
 // MESSAGE SLUGS_ACTION UNPACKING
+
 
 /**
  * @brief Get field target from slugs_action message
@@ -98,7 +147,7 @@ static inline void mavlink_msg_slugs_action_send(mavlink_channel_t chan, uint8_t
  */
 static inline uint8_t mavlink_msg_slugs_action_get_target(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload)[0];
+	return _MAV_RETURN_uint8_t(msg,  2);
 }
 
 /**
@@ -108,7 +157,7 @@ static inline uint8_t mavlink_msg_slugs_action_get_target(const mavlink_message_
  */
 static inline uint8_t mavlink_msg_slugs_action_get_actionId(const mavlink_message_t* msg)
 {
-	return (uint8_t)(msg->payload+sizeof(uint8_t))[0];
+	return _MAV_RETURN_uint8_t(msg,  3);
 }
 
 /**
@@ -118,10 +167,7 @@ static inline uint8_t mavlink_msg_slugs_action_get_actionId(const mavlink_messag
  */
 static inline uint16_t mavlink_msg_slugs_action_get_actionVal(const mavlink_message_t* msg)
 {
-	generic_16bit r;
-	r.b[1] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t))[0];
-	r.b[0] = (msg->payload+sizeof(uint8_t)+sizeof(uint8_t))[1];
-	return (uint16_t)r.s;
+	return _MAV_RETURN_uint16_t(msg,  0);
 }
 
 /**
@@ -132,7 +178,11 @@ static inline uint16_t mavlink_msg_slugs_action_get_actionVal(const mavlink_mess
  */
 static inline void mavlink_msg_slugs_action_decode(const mavlink_message_t* msg, mavlink_slugs_action_t* slugs_action)
 {
+#if MAVLINK_NEED_BYTE_SWAP
+	slugs_action->actionVal = mavlink_msg_slugs_action_get_actionVal(msg);
 	slugs_action->target = mavlink_msg_slugs_action_get_target(msg);
 	slugs_action->actionId = mavlink_msg_slugs_action_get_actionId(msg);
-	slugs_action->actionVal = mavlink_msg_slugs_action_get_actionVal(msg);
+#else
+	memcpy(slugs_action, _MAV_PAYLOAD(msg), 4);
+#endif
 }

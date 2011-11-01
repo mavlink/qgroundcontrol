@@ -338,6 +338,7 @@ QProgressBar {
 	padding: 2px;
 	color: #DDDDDF;
 	background-color: #111118;
+    height: 10px;
 }
 
 QProgressBar:horizontal {
@@ -398,3 +399,28 @@ QDialog {
  QTabBar::tab:selected {
      border: 2px solid #379AC3;
  }
+
+QLabel {
+    background-color: transparent;
+}
+
+QLabel#toolBarNameLabel {
+	font: bold 16px;
+	color: #3C7B9E;
+}
+
+QLabel#toolBarModeLabel {
+	font: 12px;
+}
+
+QLabel#toolBarStateLabel {
+	font: 12px;
+	color: #3C7B9E;
+}
+
+QLabel#toolBarMessageLabel {
+	font: 12px;
+    font-style: italic;
+	color: #3C7B9E;
+}
+

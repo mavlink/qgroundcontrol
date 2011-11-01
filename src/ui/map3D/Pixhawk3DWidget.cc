@@ -139,7 +139,7 @@ Pixhawk3DWidget::selectFrame(QString text)
     if (text.compare("Global") == 0) {
         frame = MAV_FRAME_GLOBAL;
     } else if (text.compare("Local") == 0) {
-        frame = MAV_FRAME_LOCAL;
+        frame = MAV_FRAME_LOCAL_NED;
     }
 
     getPosition(lastRobotX, lastRobotY, lastRobotZ);
@@ -231,7 +231,7 @@ Pixhawk3DWidget::selectTarget(void)
                 getGlobalCursorPosition(getMouseX(), getMouseY(), altitude);
 
             target.set(cursorWorldCoords.first, cursorWorldCoords.second);
-        } else if (frame == MAV_FRAME_LOCAL) {
+        } else if (frame == MAV_FRAME_LOCAL_NED) {
             double z = uas->getLocalZ();
 
             std::pair<double,double> cursorWorldCoords =
@@ -266,7 +266,7 @@ Pixhawk3DWidget::insertWaypoint(void)
                              latitude, longitude);
 
             wp = new Waypoint(0, longitude, latitude, altitude);
-        } else if (frame == MAV_FRAME_LOCAL) {
+        } else if (frame == MAV_FRAME_LOCAL_NED) {
             double z = uas->getLocalZ();
 
             std::pair<double,double> cursorWorldCoords =
@@ -278,7 +278,7 @@ Pixhawk3DWidget::insertWaypoint(void)
 
         if (wp) {
             wp->setFrame(frame);
-            uas->getWaypointManager()->addWaypoint(wp);
+            uas->getWaypointManager()->addWaypointEditable(wp);
         }
     }
 }
@@ -294,7 +294,7 @@ Pixhawk3DWidget::setWaypoint(void)
 {
     if (uas) {
         const QVector<Waypoint *> waypoints =
-            uas->getWaypointManager()->getWaypointList();
+            uas->getWaypointManager()->getWaypointEditableList();
         Waypoint* waypoint = waypoints.at(selectedWpIndex);
 
         if (frame == MAV_FRAME_GLOBAL) {
@@ -314,7 +314,7 @@ Pixhawk3DWidget::setWaypoint(void)
             waypoint->setX(longitude);
             waypoint->setY(latitude);
             waypoint->setZ(altitude);
-        } else if (frame == MAV_FRAME_LOCAL) {
+        } else if (frame == MAV_FRAME_LOCAL_NED) {
             double z = uas->getLocalZ();
 
             std::pair<double,double> cursorWorldCoords =
@@ -341,11 +341,11 @@ Pixhawk3DWidget::setWaypointAltitude(void)
     if (uas) {
         bool ok;
         const QVector<Waypoint *> waypoints =
-            uas->getWaypointManager()->getWaypointList();
+            uas->getWaypointManager()->getWaypointEditableList();
         Waypoint* waypoint = waypoints.at(selectedWpIndex);
 
         double altitude = waypoint->getZ();
-        if (frame == MAV_FRAME_LOCAL) {
+        if (frame == MAV_FRAME_LOCAL_NED) {
             altitude = -altitude;
         }
 
@@ -355,7 +355,7 @@ Pixhawk3DWidget::setWaypointAltitude(void)
         if (ok) {
             if (frame == MAV_FRAME_GLOBAL) {
                 waypoint->setZ(newAltitude);
-            } else if (frame == MAV_FRAME_LOCAL) {
+            } else if (frame == MAV_FRAME_LOCAL_NED) {
                 waypoint->setZ(-newAltitude);
             }
         }
@@ -367,7 +367,7 @@ Pixhawk3DWidget::clearAllWaypoints(void)
 {
     if (uas) {
         const QVector<Waypoint *> waypoints =
-            uas->getWaypointManager()->getWaypointList();
+            uas->getWaypointManager()->getWaypointEditableList();
         for (int i = waypoints.size() - 1; i >= 0; --i) {
             uas->getWaypointManager()->removeWaypoint(i);
         }
@@ -640,7 +640,7 @@ Pixhawk3DWidget::getPose(double& x, double& y, double& z,
 
             Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
             z = -altitude;
-        } else if (frame == MAV_FRAME_LOCAL) {
+        } else if (frame == MAV_FRAME_LOCAL_NED) {
             x = uas->getLocalX();
             y = uas->getLocalY();
             z = uas->getLocalZ();
@@ -673,7 +673,7 @@ Pixhawk3DWidget::getPosition(double& x, double& y, double& z,
 
             Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
             z = -altitude;
-        } else if (frame == MAV_FRAME_LOCAL) {
+        } else if (frame == MAV_FRAME_LOCAL_NED) {
             x = uas->getLocalX();
             y = uas->getLocalY();
             z = uas->getLocalZ();
@@ -941,7 +941,7 @@ Pixhawk3DWidget::updateHUD(double robotX, double robotY, double robotZ,
         oss.precision(6);
         oss << " Cursor [" << cursorLatitude <<
             " " << cursorLongitude << "]";
-    } else if (frame == MAV_FRAME_LOCAL) {
+    } else if (frame == MAV_FRAME_LOCAL_NED) {
         oss << " x = " << robotX <<
             " y = " << robotY <<
             " z = " << robotZ <<

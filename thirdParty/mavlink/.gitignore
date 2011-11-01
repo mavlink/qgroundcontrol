@@ -1,3 +1,4 @@
 *~
 doc/html
 doc/*.log
+missionlib/testing/*.xcodeproj/*

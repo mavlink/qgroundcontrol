@@ -36,6 +36,7 @@ This file is part of the QGROUNDCONTROL project
 #include "MG.h"
 #include <MAVLinkProtocol.h>
 #include "QGCMAVLink.h"
+#include "QGCFlightGearLink.h"
 
 /**
  * @brief A generic MAVLINK-connected MAV/UAV
@@ -72,6 +73,8 @@ public:
     const QString& getShortState() const;
     /** @brief Get short mode */
     const QString& getShortMode() const;
+    /** @brief Translate from mode id to text */
+    static QString getShortModeTextFor(int id);
     /** @brief Get the unique system id */
     int getUASID() const;
     /** @brief Get the airframe */
@@ -104,6 +107,14 @@ public:
     }
     double getAltitude() const {
         return altitude;
+    }
+    virtual bool localPositionKnown() const
+    {
+        return isLocalPositionKnown;
+    }
+    virtual bool globalPositionKnown() const
+    {
+        return isGlobalPositionKnown;
     }
 
     double getRoll() const {
@@ -154,9 +165,9 @@ protected: //COMMENTS FOR TEST UNIT
     bool batteryRemainingEstimateEnabled; ///< If the estimate is enabled, QGC will try to estimate the remaining battery life
     float chargeLevel;          ///< Charge level of battery, in percent
     int timeRemaining;          ///< Remaining time calculated based on previous and current
-    int mode;                   ///< The current mode of the MAV
+    uint8_t mode;                   ///< The current mode of the MAV
     int status;                 ///< The current status of the MAV
-    int navMode;                ///< The current navigation mode of the MAV
+    uint32_t navMode;                ///< The current navigation mode of the MAV
     quint64 onboardTimeOffset;
 
     bool controlRollManual;     ///< status flag, true if roll is controlled manually
@@ -197,15 +208,19 @@ protected: //COMMENTS FOR TEST UNIT
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
 
-    QMap<int, QMap<QString, float>* > parameters; ///< All parameters
-    bool paramsOnceRequested;   ///< If the parameter list has been read at least once
-    int airframe;               ///< The airframe type
-    bool attitudeKnown;         ///< True if attitude was received, false else
+    QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
+    bool paramsOnceRequested;       ///< If the parameter list has been read at least once
+    int airframe;                   ///< The airframe type
+    bool attitudeKnown;             ///< True if attitude was received, false else
     QGCUASParamManager* paramManager; ///< Parameter manager class
-    QString shortStateText;     ///< Short textual state description
-    QString shortModeText;      ///< Short textual mode description
-    bool attitudeStamped;       ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
-    quint64 lastAttitude;       ///< Timestamp of last attitude measurement
+    QString shortStateText;         ///< Short textual state description
+    QString shortModeText;          ///< Short textual mode description
+    bool attitudeStamped;           ///< Should arriving data be timestamped with the last attitude? This helps with broken system time clocks on the MAV
+    quint64 lastAttitude;           ///< Timestamp of last attitude measurement
+    QGCFlightGearLink* simulation;  ///< Hardware in the loop simulation link
+    bool isLocalPositionKnown;      ///< If the local position has been received for this MAV
+    bool isGlobalPositionKnown;     ///< If the global position has been received for this MAV
+    bool systemIsArmed;             ///< If the system is armed
 
 public:
     /** @brief Set the current battery type */
@@ -220,6 +235,8 @@ public:
     QString getNavModeText(int mode);
     /** @brief Check if vehicle is in autonomous mode */
     bool isAuto();
+    /** @brief Check if vehicle is armed */
+    bool isArmed() const { return systemIsArmed; }
 
     UASWaypointManager* getWaypointManager() {
         return &waypointManager;
@@ -234,33 +251,141 @@ public:
         paramManager = manager;
     }
     int getSystemType();
+    QString getSystemTypeName()
+    {
+        switch(type)
+        {
+        case MAV_TYPE_GENERIC:
+            return "GENERIC";
+            break;
+        case MAV_TYPE_FIXED_WING:
+            return "FIXED_WING";
+            break;
+        case MAV_TYPE_QUADROTOR:
+            return "QUADROTOR";
+            break;
+        case MAV_TYPE_COAXIAL:
+            return "COAXIAL";
+            break;
+        case MAV_TYPE_HELICOPTER:
+            return "HELICOPTER";
+            break;
+        case MAV_TYPE_ANTENNA_TRACKER:
+            return "ANTENNA_TRACKER";
+            break;
+        case MAV_TYPE_GCS:
+            return "GCS";
+            break;
+        case MAV_TYPE_AIRSHIP:
+            return "AIRSHIP";
+            break;
+        case MAV_TYPE_FREE_BALLOON:
+            return "FREE_BALLOON";
+            break;
+        case MAV_TYPE_ROCKET:
+            return "ROCKET";
+            break;
+        case MAV_TYPE_GROUND_ROVER:
+            return "GROUND_ROVER";
+            break;
+        case MAV_TYPE_SURFACE_BOAT:
+            return "BOAT";
+            break;
+        case MAV_TYPE_SUBMARINE:
+            return "SUBMARINE";
+            break;
+        case MAV_TYPE_HEXAROTOR:
+            return "HEXAROTOR";
+            break;
+        case MAV_TYPE_OCTOROTOR:
+            return "OCTOROTOR";
+            break;
+        case MAV_TYPE_TRICOPTER:
+            return "TRICOPTER";
+            break;
+        case MAV_TYPE_FLAPPING_WING:
+            return "FLAPPING_WING";
+            break;
+        default:
+            return "";
+            break;
+        }
+    }
+
     QImage getImage();
     void requestImage();
     int getAutopilotType() {
         return autopilot;
     }
+    QString getAutopilotTypeName()
+    {
+        switch (autopilot)
+        {
+        case MAV_AUTOPILOT_GENERIC:
+            return "GENERIC";
+            break;
+        case MAV_AUTOPILOT_PIXHAWK:
+            return "PIXHAWK";
+            break;
+        case MAV_AUTOPILOT_SLUGS:
+            return "SLUGS";
+            break;
+        case MAV_AUTOPILOT_ARDUPILOTMEGA:
+            return "ARDUPILOTMEGA";
+            break;
+        case MAV_AUTOPILOT_OPENPILOT:
+            return "OPENPILOT";
+            break;
+        case MAV_AUTOPILOT_GENERIC_WAYPOINTS_ONLY:
+            return "GENERIC_WAYPOINTS_ONLY";
+            break;
+        case MAV_AUTOPILOT_GENERIC_WAYPOINTS_AND_SIMPLE_NAVIGATION_ONLY:
+            return "GENERIC_MISSION_NAVIGATION_ONLY";
+            break;
+        case MAV_AUTOPILOT_GENERIC_MISSION_FULL:
+            return "GENERIC_MISSION_FULL";
+            break;
+        case MAV_AUTOPILOT_INVALID:
+            return "NO AP";
+            break;
+        case MAV_AUTOPILOT_PPZ:
+            return "PPZ";
+            break;
+        case MAV_AUTOPILOT_UDB:
+            return "UDB";
+            break;
+        case MAV_AUTOPILOT_FP:
+            return "FP";
+            break;
+        default:
+            return "";
+            break;
+        }
+    }
 
 public slots:
     /** @brief Set the autopilot type */
-    void setAutopilotType(int apType) {
+    void setAutopilotType(int apType)
+    {
         autopilot = apType;
         emit systemSpecsChanged(uasId);
     }
     /** @brief Set the type of airframe */
     void setSystemType(int systemType);
     /** @brief Set the specific airframe type */
-    void setAirframe(int airframe) {
+    void setAirframe(int airframe)
+    {
         this->airframe = airframe;
         emit systemSpecsChanged(uasId);
     }
     /** @brief Set a new name **/
     void setUASName(const QString& name);
-    /** @brief Executes an action **/
-    void setAction(MAV_ACTION action);
     /** @brief Executes a command **/
     void executeCommand(MAV_CMD command);
     /** @brief Executes a command **/
     void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component);
+    /** @brief Executes a command with 7 params */
+    void executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, float param5, float param6, float param7, int component);
     /** @brief Set the current battery type and voltages */
     void setBatterySpecs(const QString& specs);
     /** @brief Get the current battery type and specs */
@@ -276,6 +401,16 @@ public slots:
     void home();
     void halt();
     void go();
+
+    /** @brief Enable / disable HIL */
+    void enableHil(bool enable);
+
+    /** @brief Send the full HIL state to the MAV */
+
+    void sendHilState(	uint64_t time_us, float roll, float pitch, float yaw, float rollspeed,
+                        float pitchspeed, float yawspeed, int32_t lat, int32_t lon, int32_t alt,
+                        int16_t vx, int16_t vy, int16_t vz, int16_t xacc, int16_t yacc, int16_t zacc);
+
     /** @brief Places the UAV in Hardware-in-the-Loop simulation status **/
     void startHil();
 
@@ -298,13 +433,10 @@ public slots:
     void startLowBattAlarm();
     void stopLowBattAlarm();
 
-    //void requestWaypoints();  FIXME tbd
-    //void clearWaypointList();   FIXME tbd
-
-    /** @brief Enable the motors */
-    void enable_motors();
+    /** @brief Arm system */
+    void armSystem();
     /** @brief Disable the motors */
-    void disable_motors();
+    void disarmSystem();
 
     /** @brief Set the values for the manual control of the vehicle */
     void setManualControlCommands(double roll, double pitch, double yaw, double thrust);
@@ -336,11 +468,13 @@ public slots:
     /** @brief Request all parameters */
     void requestParameters();
 
+    /** @brief Request a single parameter by name */
+    void requestParameter(int component, const QString& parameter);
     /** @brief Request a single parameter by index */
-    void requestParameter(int component, int parameter);
+    void requestParameter(int component, int id);
 
     /** @brief Set a system parameter */
-    void setParameter(const int component, const QString& id, const float value);
+    void setParameter(const int component, const QString& id, const QVariant& value);
 
     /** @brief Write parameters to permanent storage */
     void writeParametersToStorage();
@@ -382,7 +516,6 @@ public slots:
     void startPressureCalibration();
 
     void startDataRecording();
-    void pauseDataRecording();
     void stopDataRecording();
 
 signals:
@@ -401,10 +534,14 @@ signals:
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);
+    /** @brief HIL controls have changed */
+    void hilControlsChanged(uint64_t time, float rollAilerons, float pitchElevator, float yawRudder, float throttle, uint8_t systemMode, uint8_t navMode);
 
 protected:
-    /** @brief Get the UNIX timestamp in milliseconds */
+    /** @brief Get the UNIX timestamp in milliseconds, enter microseconds */
     quint64 getUnixTime(quint64 time=0);
+    /** @brief Get the UNIX timestamp in milliseconds, enter milliseconds */
+    quint64 getUnixTimeFromMs(quint64 time);
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
 

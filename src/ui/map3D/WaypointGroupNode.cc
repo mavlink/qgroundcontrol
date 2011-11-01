@@ -63,7 +63,7 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             QString utmZone;
             Imagery::LLtoUTM(latitude, longitude, robotX, robotY, utmZone);
             robotZ = -altitude;
-        } else if (frame == MAV_FRAME_LOCAL) {
+        } else if (frame == MAV_FRAME_LOCAL_NED) {
             robotX = uas->getLocalX();
             robotY = uas->getLocalY();
             robotZ = uas->getLocalZ();
@@ -73,7 +73,7 @@ WaypointGroupNode::update(MAV_FRAME frame, UASInterface *uas)
             removeChild(0, getNumChildren());
         }
 
-        const QVector<Waypoint *>& list = uas->getWaypointManager()->getWaypointList();
+        const QVector<Waypoint *>& list = uas->getWaypointManager()->getWaypointEditableList();
 
         for (int i = 0; i < list.size(); i++) {
             Waypoint* wp = list.at(i);
@@ -154,7 +154,7 @@ WaypointGroupNode::getPosition(Waypoint* wp, double &x, double &y, double &z)
         QString utmZone;
         Imagery::LLtoUTM(latitude, longitude, x, y, utmZone);
         z = -altitude;
-    } else if (wp->getFrame() == MAV_FRAME_LOCAL) {
+    } else if (wp->getFrame() == MAV_FRAME_LOCAL_NED) {
         x = wp->getX();
         y = wp->getY();
         z = wp->getZ();

@@ -52,11 +52,14 @@ void UASControlParameters::changedMode(int mode)
     QString modeTemp;
 
     switch (mode) {
-    case (uint8_t)MAV_MODE_LOCKED:
+    case (uint8_t)MAV_MODE_PREFLIGHT:
         modeTemp = "LOCKED MODE";
         break;
-    case (uint8_t)MAV_MODE_MANUAL:
-        modeTemp = "MANUAL MODE";
+    case (uint8_t)MAV_MODE_MANUAL_ARMED:
+        modeTemp = "A/MANUAL MODE";
+        break;
+    case (uint8_t)MAV_MODE_MANUAL_DISARMED:
+        modeTemp = "D/MANUAL MODE";
         break;
 #ifdef MAVLINK_ENABLED_SLUGS
     case (uint8_t)MAV_MODE_AUTO:
@@ -72,33 +75,9 @@ void UASControlParameters::changedMode(int mode)
     case (uint8_t)MAV_MODE_TEST2:
         modeTemp = "SEL PT MODE";
         break;
-#else
-    case (uint8_t)MAV_MODE_AUTO:
-        modeTemp = "AUTO MODE";
-        break;
-    case (uint8_t)MAV_MODE_GUIDED:
-        modeTemp = "GUIDED MODE";
-        break;
-
-    case (uint8_t)MAV_MODE_TEST1:
-        modeTemp = "TEST1 MODE";
-        break;
-    case (uint8_t)MAV_MODE_TEST2:
-        modeTemp = "TEST2 MODE";
-        break;
 #endif
-    case (uint8_t)MAV_MODE_READY:
-        modeTemp = "READY MODE";
-        break;
-        break;
-    case (uint8_t)MAV_MODE_TEST3:
-        modeTemp = "TEST3 MODE";
-        break;
-    case (uint8_t)MAV_MODE_RC_TRAINING:
-        modeTemp = "RC TRAINING MODE";
-        break;
     default:
-        modeTemp = "UNINIT MODE";
+        modeTemp = "UNKNOWN MODE";
         break;
     }
 

@@ -50,7 +50,8 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     acceptUnitList(new QStringList()),
     lastPaintTime(0),
     columns(3),
-    m_ui(new Ui::HDDisplay)
+    valuesChanged(true)/*,
+    m_ui(new Ui::HDDisplay)*/
 {
     setWindowTitle(title);
     //m_ui->setupUi(this);
@@ -65,9 +66,6 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     }
 
     restoreState();
-
-    // Set minimum size
-    setMinimumSize(60, 60);
     // Set preferred size
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
@@ -109,6 +107,7 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     //    setCursor(Qt::OpenHandCursor);
 
 
+    // Set minimum size
     this->setMinimumHeight(125);
     this->setMinimumWidth(100);
 
@@ -230,6 +229,8 @@ void HDDisplay::restoreState()
 {
     QSettings settings;
     settings.sync();
+
+    acceptList->clear();
 
     QStringList instruments = settings.value(windowTitle()+"_gauges").toString().split('|');
     for (int i = 0; i < instruments.count(); i++) {
@@ -385,6 +386,8 @@ void HDDisplay::setTitle()
 
 void HDDisplay::renderOverlay()
 {
+    if (!valuesChanged || !isVisible()) return;
+
 #if (QGC_EVENTLOOP_DEBUG)
     qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
 #endif
@@ -666,7 +669,7 @@ void HDDisplay::drawSystemIndicator(float xRef, float yRef, int maxNum, float ma
         //   x speed: 2.54
 
         // One column per value
-        QMapIterator<QString, float> value(values);
+        QMapIterator<QString, double> value(values);
 
         float x = xRef;
         float y = yRef;
@@ -820,6 +823,7 @@ void HDDisplay::updateValue(const int uasId, const QString& name, const QString&
     valuesMean.insert(name, (oldMean * meanCount +  value) / (meanCount + 1));
     valuesCount.insert(name, meanCount + 1);
     valuesDot.insert(name, (value - values.value(name, 0.0f)) / ((msec - lastUpdate.value(name, 0))/1000.0f));
+    if (values.value(name, 0.0) != value) valuesChanged = true;
     values.insert(name, value);
     units.insert(name, unit);
     lastUpdate.insert(name, msec);

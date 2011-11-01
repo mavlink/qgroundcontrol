@@ -40,6 +40,7 @@ MOC_DIR = $${BUILDDIR}/moc
 UI_DIR = $${BUILDDIR}/ui
 RCC_DIR = $${BUILDDIR}/rcc
 MAVLINK_CONF = ""
+DEFINES += MAVLINK_NO_DATA
 
 QMAKE_INCDIR_QT = $$(QTDIR)/include
 QMAKE_LIBDIR_QT = $$(QTDIR)/lib
@@ -191,8 +192,7 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/Linechart.ui \
     src/ui/UASView.ui \
     src/ui/ParameterInterface.ui \
-    src/ui/WaypointList.ui \
-    src/ui/WaypointView.ui \
+    src/ui/WaypointList.ui \    
     src/ui/ObjectDetectionView.ui \
     src/ui/JoystickWidget.ui \
     src/ui/DebugConsole.ui \
@@ -227,7 +227,10 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/mission/QGCMissionDoWidget.ui \
     src/ui/mission/QGCMissionConditionWidget.ui \
     src/ui/map/QGCMapTool.ui \
-    src/ui/map/QGCMapToolBar.ui
+    src/ui/map/QGCMapToolBar.ui \
+    src/ui/QGCMAVLinkInspector.ui \
+    src/ui/WaypointViewOnlyView.ui \    
+    src/ui/WaypointEditableView.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -252,10 +255,8 @@ HEADERS += src/MG.h \
     src/comm/LinkInterface.h \
     src/comm/SerialLinkInterface.h \
     src/comm/SerialLink.h \
-    src/comm/SerialSimulationLink.h \
     src/comm/ProtocolInterface.h \
     src/comm/MAVLinkProtocol.h \
-    src/comm/AS4Protocol.h \
     src/comm/QGCFlightGearLink.h \
     src/ui/CommConfigurationWindow.h \
     src/ui/SerialConfigurationWindow.h \
@@ -275,8 +276,7 @@ HEADERS += src/MG.h \
     src/comm/UDPLink.h \
     src/ui/ParameterInterface.h \
     src/ui/WaypointList.h \
-    src/Waypoint.h \
-    src/ui/WaypointView.h \
+    src/Waypoint.h \   
     src/ui/ObjectDetectionView.h \
     src/input/JoystickInput.h \
     src/ui/JoystickWidget.h \
@@ -321,7 +321,6 @@ HEADERS += src/MG.h \
     src/ui/uas/QGCUnconnectedInfoWidget.h \
     src/ui/designer/QGCToolWidget.h \
     src/ui/designer/QGCParamSlider.h \
-    src/ui/designer/QGCActionButton.h \
     src/ui/designer/QGCCommandButton.h \
     src/ui/designer/QGCToolWidgetItem.h \
     src/ui/QGCMAVLinkLogPlayer.h \
@@ -342,7 +341,12 @@ HEADERS += src/MG.h \
     src/ui/map/QGCMapToolBar.h \
     src/libs/qextserialport/qextserialenumerator.h \
     src/QGCGeo.h \
-    src/ui/QGCToolBar.h
+    src/ui/QGCToolBar.h \
+    src/ui/QGCMAVLinkInspector.h \
+    src/ui/MAVLinkDecoder.h \
+    src/ui/WaypointViewOnlyView.h \
+    src/ui/WaypointViewOnlyView.h \
+    src/ui/WaypointEditableView.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -384,9 +388,7 @@ SOURCES += src/main.cc \
     src/comm/LinkManager.cc \
     src/comm/LinkInterface.cpp \
     src/comm/SerialLink.cc \
-    src/comm/SerialSimulationLink.cc \
     src/comm/MAVLinkProtocol.cc \
-    src/comm/AS4Protocol.cc \
     src/comm/QGCFlightGearLink.cc \
     src/ui/CommConfigurationWindow.cc \
     src/ui/SerialConfigurationWindow.cc \
@@ -406,7 +408,6 @@ SOURCES += src/main.cc \
     src/ui/ParameterInterface.cc \
     src/ui/WaypointList.cc \
     src/Waypoint.cc \
-    src/ui/WaypointView.cc \
     src/ui/ObjectDetectionView.cc \
     src/input/JoystickInput.cc \
     src/ui/JoystickWidget.cc \
@@ -450,7 +451,6 @@ SOURCES += src/main.cc \
     src/ui/uas/QGCUnconnectedInfoWidget.cc \
     src/ui/designer/QGCToolWidget.cc \
     src/ui/designer/QGCParamSlider.cc \
-    src/ui/designer/QGCActionButton.cc \
     src/ui/designer/QGCCommandButton.cc \
     src/ui/designer/QGCToolWidgetItem.cc \
     src/ui/QGCMAVLinkLogPlayer.cc \
@@ -469,7 +469,11 @@ SOURCES += src/main.cc \
     src/ui/map/Waypoint2DIcon.cc \
     src/ui/map/QGCMapTool.cc \
     src/ui/map/QGCMapToolBar.cc \
-    src/ui/QGCToolBar.cc
+    src/ui/QGCToolBar.cc \
+    src/ui/QGCMAVLinkInspector.cc \
+    src/ui/MAVLinkDecoder.cc \
+    src/ui/WaypointViewOnlyView.cc \
+    src/ui/WaypointEditableView.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

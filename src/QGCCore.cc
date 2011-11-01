@@ -44,7 +44,6 @@ This file is part of the QGROUNDCONTROL project
 #include "configuration.h"
 #include "QGC.h"
 #include "QGCCore.h"
-#include "MG.h"
 #include "MainWindow.h"
 #include "GAudioOutput.h"
 
@@ -68,8 +67,6 @@ This file is part of the QGROUNDCONTROL project
 
 QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 {
-
-
     // Set application name
     this->setApplicationName(QGC_APPLICATION_NAME);
     this->setApplicationVersion(QGC_APPLICATION_VERSION);
@@ -111,6 +108,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // Delete splash screen after mainWindow was displayed
     splashScreen->setAttribute(Qt::WA_DeleteOnClose);
     splashScreen->show();
+    processEvents();
     splashScreen->showMessage(tr("Loading application fonts"), Qt::AlignLeft | Qt::AlignBottom, QColor(62, 93, 141));
 
     // Exit main application when last window is closed
@@ -161,7 +159,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     simulationLink->disconnect();
     //mainWindow->addLink(simulationLink);
 
-    mainWindow = MainWindow::instance();
+    mainWindow = MainWindow::instance(splashScreen);
 
     // Remove splash screen
     splashScreen->finish(mainWindow);
@@ -205,7 +203,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
 QGCCore::~QGCCore()
 {
     //mainWindow->storeSettings();
-    mainWindow->hide();
+    mainWindow->close();
     mainWindow->deleteLater();
     // Delete singletons
     delete LinkManager::instance();

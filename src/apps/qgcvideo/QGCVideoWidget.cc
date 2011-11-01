@@ -129,11 +129,16 @@ QGCVideoWidget::QGCVideoWidget(QWidget* parent)
       load(0.0f),
       offlineDirectory(""),
       nextOfflineImage(""),
-      hudInstrumentsEnabled(true),
+      hudInstrumentsEnabled(false),
       videoEnabled(false),
+      flowEnabled(false),
       xImageFactor(1.0),
       yImageFactor(1.0),
-      imageRequested(false)
+      imageRequested(false),
+      flowFieldX(NULL),
+      flowFieldY(NULL),
+      flowWidth(0),
+      flowHeight(0)
 {
     // Set auto fill to false
     setAutoFillBackground(false);
@@ -219,6 +224,7 @@ void QGCVideoWidget::contextMenuEvent (QContextMenuEvent* event)
 //    enableVideoAction->setChecked(videoEnabled);
 
     menu.addAction(enableHUDAction);
+    menu.addAction(enableFlowFieldAction);
     //menu.addAction(selectQGCVideoWidgetColorAction);
 //    menu.addAction(enableVideoAction);
 //    menu.addAction(selectOfflineDirectoryAction);
@@ -238,6 +244,12 @@ void QGCVideoWidget::createActions()
     enableVideoAction->setStatusTip(tr("Show the video live feed"));
     enableVideoAction->setCheckable(true);
     enableVideoAction->setChecked(videoEnabled);
+
+    enableFlowFieldAction = new QAction(tr("Enable Optical Flow Field"), this);
+    enableFlowFieldAction->setCheckable(true);
+    enableFlowFieldAction->setChecked(flowEnabled);
+    connect(enableFlowFieldAction, SIGNAL(triggered(bool)), this, SLOT(enableFlow(bool)));
+
 //    connect(enableVideoAction, SIGNAL(triggered(bool)), this, SLOT(enableVideo(bool)));
 
     selectOfflineDirectoryAction = new QAction(tr("Select image log"), this);
@@ -430,6 +442,39 @@ void QGCVideoWidget::paintEvent(QPaintEvent *event)
     Q_UNUSED(event);
 }
 
+void QGCVideoWidget::copyFlow(const unsigned char* flowX, const unsigned char* flowY, int width, int height)
+{
+    flowWidth = width;
+    flowHeight = height;
+
+    delete flowFieldX;
+    delete flowFieldY;
+
+    flowFieldX = (unsigned char**) malloc(width*height);
+    flowFieldY = (unsigned char**) malloc(width*height);
+
+    memcpy(flowFieldX, flowX, width*height);
+    memcpy(flowFieldY, flowY, width*height);
+}
+
+void QGCVideoWidget::paintFlowField(QPainter* painter)
+{
+    if (width() > 0 && height() > 0)
+    {
+        unsigned int sX = (flowWidth+1)/width();
+        unsigned int sY = (flowHeight+1)/height();
+        for (unsigned int i = 0; i < flowWidth; ++i)
+        {
+            for (unsigned int j = 0; j < flowHeight; ++j)
+            {
+                // Paint vector
+                qDebug() << "X" << i << flowFieldX[i][j] << "Y" << j << flowFieldY[i][j];
+                //painter->drawLine(QPointF(sX*i, sY*j), QPointF(sX*i+(flowFieldX[i][j]), sY*j+(flowFieldY[i][j])));
+            }
+        }
+    }
+}
+
 void QGCVideoWidget::paintHUD()
 {
     if (isVisible()) {
@@ -520,6 +565,15 @@ void QGCVideoWidget::paintHUD()
         glPopMatrix();
 
         // END OF OPENGL PAINTING
+
+        if (flowEnabled) {
+            QPainter painter;
+            painter.begin(this);
+            painter.setRenderHint(QPainter::Antialiasing, true);
+            painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
+            painter.setPen(Qt::red);
+            paintFlowField(&painter);
+        }
 
         if (hudInstrumentsEnabled) {
 

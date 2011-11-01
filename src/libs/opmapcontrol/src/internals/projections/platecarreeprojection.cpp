@@ -91,6 +91,7 @@ Size PlateCarreeProjection::GetTileMatrixMaxXY(const int &zoom)
 
 Size PlateCarreeProjection::GetTileMatrixMinXY(const int &zoom)
 {
+    Q_UNUSED(zoom);
     return Size(0, 0);
 }
 }

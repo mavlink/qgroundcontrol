@@ -2,17 +2,32 @@
 
 #define MAVLINK_MSG_ID_SENSOR_BIAS 172
 
-typedef struct __mavlink_sensor_bias_t 
+typedef struct __mavlink_sensor_bias_t
 {
-	float axBias; ///< Accelerometer X bias (m/s)
-	float ayBias; ///< Accelerometer Y bias (m/s)
-	float azBias; ///< Accelerometer Z bias (m/s)
-	float gxBias; ///< Gyro X bias (rad/s)
-	float gyBias; ///< Gyro Y bias (rad/s)
-	float gzBias; ///< Gyro Z bias (rad/s)
-
+ float axBias; ///< Accelerometer X bias (m/s)
+ float ayBias; ///< Accelerometer Y bias (m/s)
+ float azBias; ///< Accelerometer Z bias (m/s)
+ float gxBias; ///< Gyro X bias (rad/s)
+ float gyBias; ///< Gyro Y bias (rad/s)
+ float gzBias; ///< Gyro Z bias (rad/s)
 } mavlink_sensor_bias_t;
 
+#define MAVLINK_MSG_ID_SENSOR_BIAS_LEN 24
+#define MAVLINK_MSG_ID_172_LEN 24
+
+
+
+#define MAVLINK_MESSAGE_INFO_SENSOR_BIAS { \
+	"SENSOR_BIAS", \
+	6, \
+	{  { "axBias", NULL, MAVLINK_TYPE_FLOAT, 0, 0, offsetof(mavlink_sensor_bias_t, axBias) }, \
+         { "ayBias", NULL, MAVLINK_TYPE_FLOAT, 0, 4, offsetof(mavlink_sensor_bias_t, ayBias) }, \
+         { "azBias", NULL, MAVLINK_TYPE_FLOAT, 0, 8, offsetof(mavlink_sensor_bias_t, azBias) }, \
+         { "gxBias", NULL, MAVLINK_TYPE_FLOAT, 0, 12, offsetof(mavlink_sensor_bias_t, gxBias) }, \
+         { "gyBias", NULL, MAVLINK_TYPE_FLOAT, 0, 16, offsetof(mavlink_sensor_bias_t, gyBias) }, \
+         { "gzBias", NULL, MAVLINK_TYPE_FLOAT, 0, 20, offsetof(mavlink_sensor_bias_t, gzBias) }, \
+         } \
+}
 
 
 /**
@@ -29,23 +44,37 @@ typedef struct __mavlink_sensor_bias_t
  * @param gzBias Gyro Z bias (rad/s)
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_sensor_bias_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg, float axBias, float ayBias, float azBias, float gxBias, float gyBias, float gzBias)
+static inline uint16_t mavlink_msg_sensor_bias_pack(uint8_t system_id, uint8_t component_id, mavlink_message_t* msg,
+						       float axBias, float ayBias, float azBias, float gxBias, float gyBias, float gzBias)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[24];
+	_mav_put_float(buf, 0, axBias);
+	_mav_put_float(buf, 4, ayBias);
+	_mav_put_float(buf, 8, azBias);
+	_mav_put_float(buf, 12, gxBias);
+	_mav_put_float(buf, 16, gyBias);
+	_mav_put_float(buf, 20, gzBias);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 24);
+#else
+	mavlink_sensor_bias_t packet;
+	packet.axBias = axBias;
+	packet.ayBias = ayBias;
+	packet.azBias = azBias;
+	packet.gxBias = gxBias;
+	packet.gyBias = gyBias;
+	packet.gzBias = gzBias;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 24);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_SENSOR_BIAS;
-
-	i += put_float_by_index(axBias, i, msg->payload); // Accelerometer X bias (m/s)
-	i += put_float_by_index(ayBias, i, msg->payload); // Accelerometer Y bias (m/s)
-	i += put_float_by_index(azBias, i, msg->payload); // Accelerometer Z bias (m/s)
-	i += put_float_by_index(gxBias, i, msg->payload); // Gyro X bias (rad/s)
-	i += put_float_by_index(gyBias, i, msg->payload); // Gyro Y bias (rad/s)
-	i += put_float_by_index(gzBias, i, msg->payload); // Gyro Z bias (rad/s)
-
-	return mavlink_finalize_message(msg, system_id, component_id, i);
+	return mavlink_finalize_message(msg, system_id, component_id, 24, 168);
 }
 
 /**
- * @brief Pack a sensor_bias message
+ * @brief Pack a sensor_bias message on a channel
  * @param system_id ID of this system
  * @param component_id ID of this component (e.g. 200 for IMU)
  * @param chan The MAVLink channel this message was sent over
@@ -58,19 +87,34 @@ static inline uint16_t mavlink_msg_sensor_bias_pack(uint8_t system_id, uint8_t c
  * @param gzBias Gyro Z bias (rad/s)
  * @return length of the message in bytes (excluding serial stream start sign)
  */
-static inline uint16_t mavlink_msg_sensor_bias_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan, mavlink_message_t* msg, float axBias, float ayBias, float azBias, float gxBias, float gyBias, float gzBias)
+static inline uint16_t mavlink_msg_sensor_bias_pack_chan(uint8_t system_id, uint8_t component_id, uint8_t chan,
+							   mavlink_message_t* msg,
+						           float axBias,float ayBias,float azBias,float gxBias,float gyBias,float gzBias)
 {
-	uint16_t i = 0;
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[24];
+	_mav_put_float(buf, 0, axBias);
+	_mav_put_float(buf, 4, ayBias);
+	_mav_put_float(buf, 8, azBias);
+	_mav_put_float(buf, 12, gxBias);
+	_mav_put_float(buf, 16, gyBias);
+	_mav_put_float(buf, 20, gzBias);
+
+        memcpy(_MAV_PAYLOAD(msg), buf, 24);
+#else
+	mavlink_sensor_bias_t packet;
+	packet.axBias = axBias;
+	packet.ayBias = ayBias;
+	packet.azBias = azBias;
+	packet.gxBias = gxBias;
+	packet.gyBias = gyBias;
+	packet.gzBias = gzBias;
+
+        memcpy(_MAV_PAYLOAD(msg), &packet, 24);
+#endif
+
 	msg->msgid = MAVLINK_MSG_ID_SENSOR_BIAS;
-
-	i += put_float_by_index(axBias, i, msg->payload); // Accelerometer X bias (m/s)
-	i += put_float_by_index(ayBias, i, msg->payload); // Accelerometer Y bias (m/s)
-	i += put_float_by_index(azBias, i, msg->payload); // Accelerometer Z bias (m/s)
-	i += put_float_by_index(gxBias, i, msg->payload); // Gyro X bias (rad/s)
-	i += put_float_by_index(gyBias, i, msg->payload); // Gyro Y bias (rad/s)
-	i += put_float_by_index(gzBias, i, msg->payload); // Gyro Z bias (rad/s)
-
-	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, i);
+	return mavlink_finalize_message_chan(msg, system_id, component_id, chan, 24, 168);
 }
 
 /**
@@ -101,13 +145,33 @@ static inline uint16_t mavlink_msg_sensor_bias_encode(uint8_t system_id, uint8_t
 
 static inline void mavlink_msg_sensor_bias_send(mavlink_channel_t chan, float axBias, float ayBias, float azBias, float gxBias, float gyBias, float gzBias)
 {
-	mavlink_message_t msg;
-	mavlink_msg_sensor_bias_pack_chan(mavlink_system.sysid, mavlink_system.compid, chan, &msg, axBias, ayBias, azBias, gxBias, gyBias, gzBias);
-	mavlink_send_uart(chan, &msg);
+#if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
+	char buf[24];
+	_mav_put_float(buf, 0, axBias);
+	_mav_put_float(buf, 4, ayBias);
+	_mav_put_float(buf, 8, azBias);
+	_mav_put_float(buf, 12, gxBias);
+	_mav_put_float(buf, 16, gyBias);
+	_mav_put_float(buf, 20, gzBias);
+
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SENSOR_BIAS, buf, 24, 168);
+#else
+	mavlink_sensor_bias_t packet;
+	packet.axBias = axBias;
+	packet.ayBias = ayBias;
+	packet.azBias = azBias;
+	packet.gxBias = gxBias;
+	packet.gyBias = gyBias;
+	packet.gzBias = gzBias;
+
+	_mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_SENSOR_BIAS, (const char *)&packet, 24, 168);
+#endif
 }
 
 #endif
+
 // MESSAGE SENSOR_BIAS UNPACKING
+
 
 /**
  * @brief Get field axBias from sensor_bias message
@@ -116,12 +180,7 @@ static inline void mavlink_msg_sensor_bias_send(mavlink_channel_t chan, float ax
  */
 static inline float mavlink_msg_sensor_bias_get_axBias(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload)[0];
-	r.b[2] = (msg->payload)[1];
-	r.b[1] = (msg->payload)[2];
-	r.b[0] = (msg->payload)[3];
-	return (float)r.f;
+	return _MAV_RETURN_float(msg,  0);
 }
 
 /**
@@ -131,12 +190,7 @@ static inline float mavlink_msg_sensor_bias_get_axBias(const mavlink_message_t* 
  */
 static inline float mavlink_msg_sensor_bias_get_ayBias(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float))[3];
-	return (float)r.f;
+	return _MAV_RETURN_float(msg,  4);
 }
 
 /**
@@ -146,12 +200,7 @@ static inline float mavlink_msg_sensor_bias_get_ayBias(const mavlink_message_t* 
  */
 static inline float mavlink_msg_sensor_bias_get_azBias(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	return _MAV_RETURN_float(msg,  8);
 }
 
 /**
@@ -161,12 +210,7 @@ static inline float mavlink_msg_sensor_bias_get_azBias(const mavlink_message_t* 
  */
 static inline float mavlink_msg_sensor_bias_get_gxBias(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	return _MAV_RETURN_float(msg,  12);
 }
 
 /**
@@ -176,12 +220,7 @@ static inline float mavlink_msg_sensor_bias_get_gxBias(const mavlink_message_t* 
  */
 static inline float mavlink_msg_sensor_bias_get_gyBias(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	return _MAV_RETURN_float(msg,  16);
 }
 
 /**
@@ -191,12 +230,7 @@ static inline float mavlink_msg_sensor_bias_get_gyBias(const mavlink_message_t* 
  */
 static inline float mavlink_msg_sensor_bias_get_gzBias(const mavlink_message_t* msg)
 {
-	generic_32bit r;
-	r.b[3] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[0];
-	r.b[2] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[1];
-	r.b[1] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[2];
-	r.b[0] = (msg->payload+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float)+sizeof(float))[3];
-	return (float)r.f;
+	return _MAV_RETURN_float(msg,  20);
 }
 
 /**
@@ -207,10 +241,14 @@ static inline float mavlink_msg_sensor_bias_get_gzBias(const mavlink_message_t* 
  */
 static inline void mavlink_msg_sensor_bias_decode(const mavlink_message_t* msg, mavlink_sensor_bias_t* sensor_bias)
 {
+#if MAVLINK_NEED_BYTE_SWAP
 	sensor_bias->axBias = mavlink_msg_sensor_bias_get_axBias(msg);
 	sensor_bias->ayBias = mavlink_msg_sensor_bias_get_ayBias(msg);
 	sensor_bias->azBias = mavlink_msg_sensor_bias_get_azBias(msg);
 	sensor_bias->gxBias = mavlink_msg_sensor_bias_get_gxBias(msg);
 	sensor_bias->gyBias = mavlink_msg_sensor_bias_get_gyBias(msg);
 	sensor_bias->gzBias = mavlink_msg_sensor_bias_get_gzBias(msg);
+#else
+	memcpy(sensor_bias, _MAV_PAYLOAD(msg), 24);
+#endif
 }

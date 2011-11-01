@@ -137,6 +137,9 @@ public:
     /** @brief Get a document element */
     QVariant documentElement(QString name);
 
+signals:
+    void visibilityChanged(bool visible);
+
 protected:
     void changeEvent(QEvent *e);
     QTimer* updateTimer;

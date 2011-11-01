@@ -64,6 +64,9 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
     connect(calibrate, SIGNAL(clicked()), calibrationWindow, SLOT(show()));
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(int)), this, SLOT(setUASId(int)));
+
+    connect(&updateTimer, SIGNAL(timeout()), this, SLOT(redraw()));
+    updateTimer.start(1500);
 }
 
 QGCRemoteControlView::~QGCRemoteControlView()
@@ -74,20 +77,45 @@ QGCRemoteControlView::~QGCRemoteControlView()
 
 void QGCRemoteControlView::setUASId(int id)
 {
-    if (uasId != -1) {
-        UASInterface* uas = UASManager::instance()->getUASForId(id);
-        if (uas) {
+    if (uasId != -1)
+    {
+        UASInterface* uas = UASManager::instance()->getUASForId(uasId);
+        if (uas)
+        {
             // The UAS exists, disconnect any existing connections
             disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float,float)), this, SLOT(setChannel(int,float,float)));
             disconnect(uas, SIGNAL(remoteControlRSSIChanged(float)), this, SLOT(setRemoteRSSI(float)));
             disconnect(uas, SIGNAL(radioCalibrationRawReceived(const QPointer<RadioCalibrationData>&)), calibrationWindow, SLOT(receive(const QPointer<RadioCalibrationData>&)));
             disconnect(uas, SIGNAL(remoteControlChannelRawChanged(int,float)), calibrationWindow, SLOT(setChannel(int,float)));
+            disconnect(uas, SIGNAL(remoteControlChannelScaledChanged(int,float)), this, SLOT(setChannelScaled(int,float)));
         }
     }
 
+    // Clear channel count
+    raw.clear();
+    raw.resize(0);
+    normalized.clear();
+    normalized.resize(0);
+
+    foreach (QLabel* label, rawLabels)
+    {
+        label->deleteLater();
+    }
+
+    foreach(QProgressBar* bar, progressBars)
+    {
+        bar->deleteLater();
+    }
+
+    rawLabels.clear();
+    rawLabels.resize(0);
+    progressBars.clear();
+    progressBars.resize(0);
+
     // Connect the new UAS
     UASInterface* newUAS = UASManager::instance()->getUASForId(id);
-    if (newUAS) {
+    if (newUAS)
+    {
         // New UAS exists, connect
         nameLabel->setText(QString("RC Input of %1").arg(newUAS->getUASName()));
         calibrationWindow->setUASId(id);
@@ -110,40 +138,35 @@ void QGCRemoteControlView::setChannelRaw(int channelId, float raw)
         this->raw.append(raw);
         //this->normalized.append(0);
         appendChannelWidget(channelId);
+        updated = true;
     } else {
         // This is an existing channel, aupdate it
+        if (this->raw[channelId] != raw) updated = true;
         this->raw[channelId] = raw;
     }
-    updated = true;
-
-    // FIXME Will be timer based in the future
-    redraw();
 }
 
 void QGCRemoteControlView::setChannelScaled(int channelId, float normalized)
 {
-    if (this->raw.size() <= channelId) // using raw vector as size indicator
+    if (this->normalized.size() <= channelId) // using raw vector as size indicator
     {
         // This is a new channel, append it
         this->normalized.append(normalized);
-        this->raw.append(0);
         appendChannelWidget(channelId);
+        updated = true;
     }
     else
     {
         // This is an existing channel, update it
+        if (this->normalized[channelId] != normalized) updated = true;
         this->normalized[channelId] = normalized;
     }
-//    updated = true;
-
-//    // FIXME Will be timer based in the future
-//    redraw();
 }
 
 void QGCRemoteControlView::setRemoteRSSI(float rssiNormalized)
 {
+    if (rssi != rssiNormalized) updated = true;
     rssi = rssiNormalized;
-    updated = true;
 }
 
 void QGCRemoteControlView::appendChannelWidget(int channelId)
@@ -169,7 +192,8 @@ void QGCRemoteControlView::appendChannelWidget(int channelId)
 
 void QGCRemoteControlView::redraw()
 {
-    if(isVisible() && updated) {
+    if(isVisible() && updated)
+    {
         // Update raw values
         //for(int i = 0; i < rawLabels.count(); i++)
         //{
@@ -177,7 +201,8 @@ void QGCRemoteControlView::redraw()
         //}
 
         // Update percent bars
-        for(int i = 0; i < progressBars.count(); i++) {
+        for(int i = 0; i < progressBars.count(); i++)
+        {
             rawLabels.at(i)->setText(QString("%1 us").arg(raw.at(i), 4, 10, QChar('0')));
             int vv = normalized.at(i)*100.0f;
             //progressBars.at(i)->setValue(vv);

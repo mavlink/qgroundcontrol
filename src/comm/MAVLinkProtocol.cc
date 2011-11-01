@@ -147,13 +147,6 @@ MAVLinkProtocol::~MAVLinkProtocol()
     }
 }
 
-
-
-void MAVLinkProtocol::run()
-{
-    exec();
-}
-
 QString MAVLinkProtocol::getLogfileName()
 {
     if (m_logfile) {
@@ -173,7 +166,7 @@ QString MAVLinkProtocol::getLogfileName()
  **/
 void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 {
-    receiveMutex.lock();
+//    receiveMutex.lock();
     mavlink_message_t message;
     mavlink_status_t status;
     for (int position = 0; position < b.size(); position++) {
@@ -207,6 +200,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             // ORDER MATTERS HERE!
             // If the matching UAS object does not yet exist, it has to be created
             // before emitting the packetReceived signal
+
             UASInterface* uas = UASManager::instance()->getUASForId(message.sysid);
 
             // Check and (if necessary) create UAS object
@@ -321,7 +315,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
             }
         }
     }
-    receiveMutex.unlock();
+//    receiveMutex.unlock();
 }
 
 /**
@@ -374,7 +368,8 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
     // Create buffer
     uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
     // Rewriting header to ensure correct link ID is set
-    if (link->getId() != 0) mavlink_finalize_message_chan(&message, this->getSystemId(), this->getComponentId(), link->getId(), message.len);
+    static uint8_t messageKeys[256] = MAVLINK_MESSAGE_CRCS;
+    if (link->getId() != 0) mavlink_finalize_message_chan(&message, this->getSystemId(), this->getComponentId(), link->getId(), message.len, messageKeys[message.msgid]);
     // Write message into buffer, prepending start sign
     int len = mavlink_msg_to_send_buffer(buffer, &message);
     // If link is connected
@@ -393,7 +388,7 @@ void MAVLinkProtocol::sendHeartbeat()
 {
     if (m_heartbeatsEnabled) {
         mavlink_message_t beat;
-        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, OCU, MAV_AUTOPILOT_GENERIC);
+        mavlink_msg_heartbeat_pack(getSystemId(), getComponentId(),&beat, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, MAV_MODE_MANUAL_ARMED, 0, MAV_STATE_ACTIVE);
         sendMessage(beat);
     }
     if (m_authEnabled) {

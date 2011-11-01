@@ -449,8 +449,8 @@ MAVLinkSimulationWaypointPlanner::MAVLinkSimulationWaypointPlanner(MAVLinkSimula
     protocol_timeout(1000),
     timestamp_last_send_setpoint(0),
     systemid(sysid),
-    compid(MAV_COMP_ID_WAYPOINTPLANNER),
-    setpointDelay(1000),
+    compid(MAV_COMP_ID_MISSIONPLANNER),
+    setpointDelay(10),
     yawTolerance(0.4f),
     verbose(true),
     debug(false),
@@ -468,13 +468,13 @@ MAVLinkSimulationWaypointPlanner::MAVLinkSimulationWaypointPlanner(MAVLinkSimula
 void MAVLinkSimulationWaypointPlanner::send_waypoint_ack(uint8_t target_systemid, uint8_t target_compid, uint8_t type)
 {
     mavlink_message_t msg;
-    mavlink_waypoint_ack_t wpa;
+    mavlink_mission_ack_t wpa;
 
     wpa.target_system = target_systemid;
     wpa.target_component = target_compid;
     wpa.type = type;
 
-    mavlink_msg_waypoint_ack_encode(systemid, compid, &msg, &wpa);
+    mavlink_msg_mission_ack_encode(systemid, compid, &msg, &wpa);
     link->sendMAVLinkMessage(&msg);
 
 
@@ -494,14 +494,14 @@ void MAVLinkSimulationWaypointPlanner::send_waypoint_ack(uint8_t target_systemid
 void MAVLinkSimulationWaypointPlanner::send_waypoint_current(uint16_t seq)
 {
     if(seq < waypoints->size()) {
-        mavlink_waypoint_t *cur = waypoints->at(seq);
+        mavlink_mission_item_t *cur = waypoints->at(seq);
 
         mavlink_message_t msg;
-        mavlink_waypoint_current_t wpc;
+        mavlink_mission_current_t wpc;
 
         wpc.seq = cur->seq;
 
-        mavlink_msg_waypoint_current_encode(systemid, compid, &msg, &wpc);
+        mavlink_msg_mission_current_encode(systemid, compid, &msg, &wpc);
         link->sendMAVLinkMessage(&msg);
 
 
@@ -521,10 +521,10 @@ void MAVLinkSimulationWaypointPlanner::send_waypoint_current(uint16_t seq)
 void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
 {
     if(seq < waypoints->size()) {
-        mavlink_waypoint_t *cur = waypoints->at(seq);
+        mavlink_mission_item_t *cur = waypoints->at(seq);
 
         mavlink_message_t msg;
-        mavlink_local_position_setpoint_set_t PControlSetPoint;
+        mavlink_set_local_position_setpoint_t PControlSetPoint;
 
         // send new set point to local IMU
         if (cur->frame == 1) {
@@ -535,7 +535,7 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
             PControlSetPoint.z = cur->z;
             PControlSetPoint.yaw = cur->param4;
 
-            mavlink_msg_local_position_setpoint_set_encode(systemid, compid, &msg, &PControlSetPoint);
+            mavlink_msg_set_local_position_setpoint_encode(systemid, compid, &msg, &PControlSetPoint);
             link->sendMAVLinkMessage(&msg);
 
 
@@ -548,7 +548,7 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
             PControlSetPoint.z = cur->z;
             PControlSetPoint.yaw = cur->param4;
 
-            mavlink_msg_local_position_setpoint_set_encode(systemid, compid, &msg, &PControlSetPoint);
+            mavlink_msg_set_local_position_setpoint_encode(systemid, compid, &msg, &PControlSetPoint);
             link->sendMAVLinkMessage(&msg);
             emit messageSent(msg);
         }
@@ -561,13 +561,13 @@ void MAVLinkSimulationWaypointPlanner::send_setpoint(uint16_t seq)
 void MAVLinkSimulationWaypointPlanner::send_waypoint_count(uint8_t target_systemid, uint8_t target_compid, uint16_t count)
 {
     mavlink_message_t msg;
-    mavlink_waypoint_count_t wpc;
+    mavlink_mission_count_t wpc;
 
     wpc.target_system = target_systemid;
     wpc.target_component = target_compid;
     wpc.count = count;
 
-    mavlink_msg_waypoint_count_encode(systemid, compid, &msg, &wpc);
+    mavlink_msg_mission_count_encode(systemid, compid, &msg, &wpc);
     link->sendMAVLinkMessage(&msg);
 
     if (verbose) qDebug("Sent waypoint count (%u) to ID %u\n", wpc.count, wpc.target_system);
@@ -579,13 +579,13 @@ void MAVLinkSimulationWaypointPlanner::send_waypoint(uint8_t target_systemid, ui
 {
     if (seq < waypoints->size()) {
         mavlink_message_t msg;
-        mavlink_waypoint_t *wp = waypoints->at(seq);
+        mavlink_mission_item_t *wp = waypoints->at(seq);
         wp->target_system = target_systemid;
         wp->target_component = target_compid;
 
         if (verbose) qDebug("Sent waypoint %u (%u / %u / %u / %u / %u / %f / %f / %f / %u / %f / %f / %f / %f / %u)\n", wp->seq, wp->target_system, wp->target_component, wp->seq, wp->frame, wp->command, wp->param3, wp->param1, wp->param2, wp->current, wp->x, wp->y, wp->z, wp->param4, wp->autocontinue);
 
-        mavlink_msg_waypoint_encode(systemid, compid, &msg, wp);
+        mavlink_msg_mission_item_encode(systemid, compid, &msg, wp);
         link->sendMAVLinkMessage(&msg);
         if (verbose) qDebug("Sent waypoint %u to ID %u\n", wp->seq, wp->target_system);
 
@@ -598,11 +598,11 @@ void MAVLinkSimulationWaypointPlanner::send_waypoint(uint8_t target_systemid, ui
 void MAVLinkSimulationWaypointPlanner::send_waypoint_request(uint8_t target_systemid, uint8_t target_compid, uint16_t seq)
 {
     mavlink_message_t msg;
-    mavlink_waypoint_request_t wpr;
+    mavlink_mission_request_t wpr;
     wpr.target_system = target_systemid;
     wpr.target_component = target_compid;
     wpr.seq = seq;
-    mavlink_msg_waypoint_request_encode(systemid, compid, &msg, &wpr);
+    mavlink_msg_mission_request_encode(systemid, compid, &msg, &wpr);
     link->sendMAVLinkMessage(&msg);
     if (verbose) qDebug("Sent waypoint request %u to ID %u\n", wpr.seq, wpr.target_system);
 
@@ -619,11 +619,11 @@ void MAVLinkSimulationWaypointPlanner::send_waypoint_request(uint8_t target_syst
 void MAVLinkSimulationWaypointPlanner::send_waypoint_reached(uint16_t seq)
 {
     mavlink_message_t msg;
-    mavlink_waypoint_reached_t wp_reached;
+    mavlink_mission_item_reached_t wp_reached;
 
     wp_reached.seq = seq;
 
-    mavlink_msg_waypoint_reached_encode(systemid, compid, &msg, &wp_reached);
+    mavlink_msg_mission_item_reached_encode(systemid, compid, &msg, &wp_reached);
     link->sendMAVLinkMessage(&msg);
 
     if (verbose) qDebug("Sent waypoint %u reached message\n", wp_reached.seq);
@@ -634,14 +634,14 @@ void MAVLinkSimulationWaypointPlanner::send_waypoint_reached(uint16_t seq)
 float MAVLinkSimulationWaypointPlanner::distanceToSegment(uint16_t seq, float x, float y, float z)
 {
     if (seq < waypoints->size()) {
-        mavlink_waypoint_t *cur = waypoints->at(seq);
+        mavlink_mission_item_t *cur = waypoints->at(seq);
 
         const PxVector3 A(cur->x, cur->y, cur->z);
         const PxVector3 C(x, y, z);
 
         // seq not the second last waypoint
         if ((uint16_t)(seq+1) < waypoints->size()) {
-            mavlink_waypoint_t *next = waypoints->at(seq+1);
+            mavlink_mission_item_t *next = waypoints->at(seq+1);
             const PxVector3 B(next->x, next->y, next->z);
             const float r = (B-A).dot(C-A) / (B-A).lengthSquared();
             if (r >= 0 && r <= 1) {
@@ -662,7 +662,7 @@ float MAVLinkSimulationWaypointPlanner::distanceToSegment(uint16_t seq, float x,
 float MAVLinkSimulationWaypointPlanner::distanceToPoint(uint16_t seq, float x, float y, float z)
 {
     if (seq < waypoints->size()) {
-        mavlink_waypoint_t *cur = waypoints->at(seq);
+        mavlink_mission_item_t *cur = waypoints->at(seq);
 
         const PxVector3 A(cur->x, cur->y, cur->z);
         const PxVector3 C(x, y, z);
@@ -675,7 +675,7 @@ float MAVLinkSimulationWaypointPlanner::distanceToPoint(uint16_t seq, float x, f
 float MAVLinkSimulationWaypointPlanner::distanceToPoint(uint16_t seq, float x, float y)
 {
     if (seq < waypoints->size()) {
-        mavlink_waypoint_t *cur = waypoints->at(seq);
+        mavlink_mission_item_t *cur = waypoints->at(seq);
 
         const PxVector3 A(cur->x, cur->y, 0);
         const PxVector3 C(x, y, 0);
@@ -720,7 +720,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
     switch(msg->msgid) {
     case MAVLINK_MSG_ID_ATTITUDE: {
         if(msg->sysid == systemid && current_active_wp_id < waypoints->size()) {
-            mavlink_waypoint_t *wp = waypoints->at(current_active_wp_id);
+            mavlink_mission_item_t *wp = waypoints->at(current_active_wp_id);
             if(wp->frame == 1) {
                 mavlink_attitude_t att;
                 mavlink_msg_attitude_decode(msg, &att);
@@ -747,13 +747,13 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
         break;
     }
 
-    case MAVLINK_MSG_ID_LOCAL_POSITION: {
+    case MAVLINK_MSG_ID_LOCAL_POSITION_NED: {
         if(msg->sysid == systemid && current_active_wp_id < waypoints->size()) {
-            mavlink_waypoint_t *wp = waypoints->at(current_active_wp_id);
+            mavlink_mission_item_t *wp = waypoints->at(current_active_wp_id);
 
             if(wp->frame == 1) {
-                mavlink_local_position_t pos;
-                mavlink_msg_local_position_decode(msg, &pos);
+                mavlink_local_position_ned_t pos;
+                mavlink_msg_local_position_ned_decode(msg, &pos);
                 //qDebug() << "Received new position: x:" << pos.x << "| y:" << pos.y << "| z:" << pos.z;
 
                 posReached = false;
@@ -778,7 +778,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
 
     case MAVLINK_MSG_ID_GLOBAL_POSITION_INT: {
         if(msg->sysid == systemid && current_active_wp_id < waypoints->size()) {
-            mavlink_waypoint_t *wp = waypoints->at(current_active_wp_id);
+            mavlink_mission_item_t *wp = waypoints->at(current_active_wp_id);
 
             if(wp->frame == 0) {
                 mavlink_global_position_int_t pos;
@@ -815,11 +815,12 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
         break;
     }
 
-    case MAVLINK_MSG_ID_ACTION: { // special action from ground station
-        mavlink_action_t action;
-        mavlink_msg_action_decode(msg, &action);
-        if(action.target == systemid) {
-            if (verbose) qDebug("Waypoint: received message with action %d\n", action.action);
+    case MAVLINK_MSG_ID_COMMAND_SHORT:
+    { // special action from ground station
+        mavlink_command_short_t action;
+        mavlink_msg_command_short_decode(msg, &action);
+        if(action.target_system == systemid) {
+            if (verbose) qDebug("Waypoint: received message with action %d\n", action.command);
 //            switch (action.action) {
 //				case MAV_ACTION_LAUNCH:
 //					if (verbose) std::cerr << "Launch received" << std::endl;
@@ -852,9 +853,9 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
         break;
 	}
 
-    case MAVLINK_MSG_ID_WAYPOINT_ACK: {
-        mavlink_waypoint_ack_t wpa;
-        mavlink_msg_waypoint_ack_decode(msg, &wpa);
+    case MAVLINK_MSG_ID_MISSION_ACK: {
+        mavlink_mission_ack_t wpa;
+        mavlink_msg_mission_ack_decode(msg, &wpa);
 
         if((msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && (wpa.target_system == systemid && wpa.target_component == compid)) {
             protocol_timestamp_lastaction = now;
@@ -870,16 +871,16 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
         break;
     }
 
-    case MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT: {
-        mavlink_waypoint_set_current_t wpc;
-        mavlink_msg_waypoint_set_current_decode(msg, &wpc);
+    case MAVLINK_MSG_ID_MISSION_SET_CURRENT: {
+        mavlink_mission_set_current_t wpc;
+        mavlink_msg_mission_set_current_decode(msg, &wpc);
 
         if(wpc.target_system == systemid && wpc.target_component == compid) {
             protocol_timestamp_lastaction = now;
 
             if (current_state == PX_WPP_IDLE) {
                 if (wpc.seq < waypoints->size()) {
-                    if (verbose) qDebug("Received MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT\n");
+                    if (verbose) qDebug("Received MAVLINK_MSG_ID_MISSION_ITEM_SET_CURRENT\n");
                     current_active_wp_id = wpc.seq;
                     uint32_t i;
                     for(i = 0; i < waypoints->size(); i++) {
@@ -896,7 +897,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                     send_setpoint(current_active_wp_id);
                     timestamp_firstinside_orbit = 0;
                 } else {
-                    if (verbose) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_SET_CURRENT: Index out of bounds\n");
+                    if (verbose) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_SET_CURRENT: Index out of bounds\n");
                 }
             }
         } else {
@@ -905,45 +906,45 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
         break;
     }
 
-    case MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST: {
-        mavlink_waypoint_request_list_t wprl;
-        mavlink_msg_waypoint_request_list_decode(msg, &wprl);
+    case MAVLINK_MSG_ID_MISSION_REQUEST_LIST: {
+        mavlink_mission_request_list_t wprl;
+        mavlink_msg_mission_request_list_decode(msg, &wprl);
         if(wprl.target_system == systemid && wprl.target_component == compid) {
             protocol_timestamp_lastaction = now;
 
             if (current_state == PX_WPP_IDLE || current_state == PX_WPP_SENDLIST) {
                 if (waypoints->size() > 0) {
-                    if (verbose && current_state == PX_WPP_IDLE) qDebug("Got MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST from %u changing state to PX_WPP_SENDLIST\n", msg->sysid);
-                    if (verbose && current_state == PX_WPP_SENDLIST) qDebug("Got MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST again from %u staying in state PX_WPP_SENDLIST\n", msg->sysid);
+                    if (verbose && current_state == PX_WPP_IDLE) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM_REQUEST_LIST from %u changing state to PX_WPP_SENDLIST\n", msg->sysid);
+                    if (verbose && current_state == PX_WPP_SENDLIST) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM_REQUEST_LIST again from %u staying in state PX_WPP_SENDLIST\n", msg->sysid);
                     current_state = PX_WPP_SENDLIST;
                     protocol_current_wp_id = 0;
                     protocol_current_partner_systemid = msg->sysid;
                     protocol_current_partner_compid = msg->compid;
                 } else {
-                    if (verbose) qDebug("Got MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST from %u but have no waypoints, staying in \n", msg->sysid);
+                    if (verbose) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM_REQUEST_LIST from %u but have no waypoints, staying in \n", msg->sysid);
                 }
                 protocol_current_count = waypoints->size();
                 send_waypoint_count(msg->sysid,msg->compid, protocol_current_count);
             } else {
-                if (verbose) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST because i'm doing something else already (state=%i).\n", current_state);
+                if (verbose) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_REQUEST_LIST because i'm doing something else already (state=%i).\n", current_state);
             }
         } else {
-            if (verbose) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_REQUEST_LIST because not my systemid or compid.\n");
+            if (verbose) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_REQUEST_LIST because not my systemid or compid.\n");
         }
         break;
     }
 
-    case MAVLINK_MSG_ID_WAYPOINT_REQUEST: {
-        mavlink_waypoint_request_t wpr;
-        mavlink_msg_waypoint_request_decode(msg, &wpr);
+    case MAVLINK_MSG_ID_MISSION_REQUEST: {
+        mavlink_mission_request_t wpr;
+        mavlink_msg_mission_request_decode(msg, &wpr);
         if(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid && wpr.target_system == systemid && wpr.target_component == compid) {
             protocol_timestamp_lastaction = now;
 
             //ensure that we are in the correct state and that the first request has id 0 and the following requests have either the last id (re-send last waypoint) or last_id+1 (next waypoint)
             if ((current_state == PX_WPP_SENDLIST && wpr.seq == 0) || (current_state == PX_WPP_SENDLIST_SENDWPS && (wpr.seq == protocol_current_wp_id || wpr.seq == protocol_current_wp_id + 1) && wpr.seq < waypoints->size())) {
-                if (verbose && current_state == PX_WPP_SENDLIST) qDebug("Got MAVLINK_MSG_ID_WAYPOINT_REQUEST of waypoint %u from %u changing state to PX_WPP_SENDLIST_SENDWPS\n", wpr.seq, msg->sysid);
-                if (verbose && current_state == PX_WPP_SENDLIST_SENDWPS && wpr.seq == protocol_current_wp_id + 1) qDebug("Got MAVLINK_MSG_ID_WAYPOINT_REQUEST of waypoint %u from %u staying in state PX_WPP_SENDLIST_SENDWPS\n", wpr.seq, msg->sysid);
-                if (verbose && current_state == PX_WPP_SENDLIST_SENDWPS && wpr.seq == protocol_current_wp_id) qDebug("Got MAVLINK_MSG_ID_WAYPOINT_REQUEST of waypoint %u (again) from %u staying in state PX_WPP_SENDLIST_SENDWPS\n", wpr.seq, msg->sysid);
+                if (verbose && current_state == PX_WPP_SENDLIST) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM_REQUEST of waypoint %u from %u changing state to PX_WPP_SENDLIST_SENDWPS\n", wpr.seq, msg->sysid);
+                if (verbose && current_state == PX_WPP_SENDLIST_SENDWPS && wpr.seq == protocol_current_wp_id + 1) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM_REQUEST of waypoint %u from %u staying in state PX_WPP_SENDLIST_SENDWPS\n", wpr.seq, msg->sysid);
+                if (verbose && current_state == PX_WPP_SENDLIST_SENDWPS && wpr.seq == protocol_current_wp_id) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM_REQUEST of waypoint %u (again) from %u staying in state PX_WPP_SENDLIST_SENDWPS\n", wpr.seq, msg->sysid);
 
                 current_state = PX_WPP_SENDLIST_SENDWPS;
                 protocol_current_wp_id = wpr.seq;
@@ -951,35 +952,35 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
             } else {
                 if (verbose) {
                     if (!(current_state == PX_WPP_SENDLIST || current_state == PX_WPP_SENDLIST_SENDWPS)) {
-                        qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_REQUEST because i'm doing something else already (state=%i).\n", current_state);
+                        qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_REQUEST because i'm doing something else already (state=%i).\n", current_state);
                         break;
                     } else if (current_state == PX_WPP_SENDLIST) {
-                        if (wpr.seq != 0) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_REQUEST because the first requested waypoint ID (%u) was not 0.\n", wpr.seq);
+                        if (wpr.seq != 0) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_REQUEST because the first requested waypoint ID (%u) was not 0.\n", wpr.seq);
                     } else if (current_state == PX_WPP_SENDLIST_SENDWPS) {
-                        if (wpr.seq != protocol_current_wp_id && wpr.seq != protocol_current_wp_id + 1) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_REQUEST because the requested waypoint ID (%u) was not the expected (%u or %u).\n", wpr.seq, protocol_current_wp_id, protocol_current_wp_id+1);
-                        else if (wpr.seq >= waypoints->size()) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_REQUEST because the requested waypoint ID (%u) was out of bounds.\n", wpr.seq);
-                    } else qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_REQUEST - FIXME: missed error description\n");
+                        if (wpr.seq != protocol_current_wp_id && wpr.seq != protocol_current_wp_id + 1) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_REQUEST because the requested waypoint ID (%u) was not the expected (%u or %u).\n", wpr.seq, protocol_current_wp_id, protocol_current_wp_id+1);
+                        else if (wpr.seq >= waypoints->size()) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_REQUEST because the requested waypoint ID (%u) was out of bounds.\n", wpr.seq);
+                    } else qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_REQUEST - FIXME: missed error description\n");
                 }
             }
         } else {
             //we we're target but already communicating with someone else
             if((wpr.target_system == systemid && wpr.target_component == compid) && !(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid)) {
-                if (verbose) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_REQUEST from ID %u because i'm already talking to ID %u.\n", msg->sysid, protocol_current_partner_systemid);
+                if (verbose) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_REQUEST from ID %u because i'm already talking to ID %u.\n", msg->sysid, protocol_current_partner_systemid);
             }
         }
         break;
     }
 
-    case MAVLINK_MSG_ID_WAYPOINT_COUNT: {
-        mavlink_waypoint_count_t wpc;
-        mavlink_msg_waypoint_count_decode(msg, &wpc);
+    case MAVLINK_MSG_ID_MISSION_COUNT: {
+        mavlink_mission_count_t wpc;
+        mavlink_msg_mission_count_decode(msg, &wpc);
         if(wpc.target_system == systemid && wpc.target_component == compid) {
             protocol_timestamp_lastaction = now;
 
             if (current_state == PX_WPP_IDLE || (current_state == PX_WPP_GETLIST && protocol_current_wp_id == 0)) {
                 if (wpc.count > 0) {
-                    if (verbose && current_state == PX_WPP_IDLE) qDebug("Got MAVLINK_MSG_ID_WAYPOINT_COUNT (%u) from %u changing state to PX_WPP_GETLIST\n", wpc.count, msg->sysid);
-                    if (verbose && current_state == PX_WPP_GETLIST) qDebug("Got MAVLINK_MSG_ID_WAYPOINT_COUNT (%u) again from %u\n", wpc.count, msg->sysid);
+                    if (verbose && current_state == PX_WPP_IDLE) qDebug("Got MAVLINK_MSG_ID_MISSION_COUNT (%u) from %u changing state to PX_WPP_GETLIST\n", wpc.count, msg->sysid);
+                    if (verbose && current_state == PX_WPP_GETLIST) qDebug("Got MAVLINK_MSG_ID_MISSION_COUNT (%u) again from %u\n", wpc.count, msg->sysid);
 
                     current_state = PX_WPP_GETLIST;
                     protocol_current_wp_id = 0;
@@ -995,34 +996,34 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
 
                     send_waypoint_request(protocol_current_partner_systemid, protocol_current_partner_compid, protocol_current_wp_id);
                 } else {
-                    if (verbose) qDebug("Ignoring MAVLINK_MSG_ID_WAYPOINT_COUNT from %u with count of %u\n", msg->sysid, wpc.count);
+                    if (verbose) qDebug("Ignoring MAVLINK_MSG_ID_MISSION_COUNT from %u with count of %u\n", msg->sysid, wpc.count);
                 }
             } else {
-                if (verbose && !(current_state == PX_WPP_IDLE || current_state == PX_WPP_GETLIST)) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_COUNT because i'm doing something else already (state=%i).\n", current_state);
-                else if (verbose && current_state == PX_WPP_GETLIST && protocol_current_wp_id != 0) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_COUNT because i'm already receiving waypoint %u.\n", protocol_current_wp_id);
-                else qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_COUNT - FIXME: missed error description\n");
+                if (verbose && !(current_state == PX_WPP_IDLE || current_state == PX_WPP_GETLIST)) qDebug("Ignored MAVLINK_MSG_ID_MISSION_COUNT because i'm doing something else already (state=%i).\n", current_state);
+                else if (verbose && current_state == PX_WPP_GETLIST && protocol_current_wp_id != 0) qDebug("Ignored MAVLINK_MSG_ID_MISSION_COUNT because i'm already receiving waypoint %u.\n", protocol_current_wp_id);
+                else qDebug("Ignored MAVLINK_MSG_ID_MISSION_COUNT - FIXME: missed error description\n");
             }
         }
         break;
     }
 
-    case MAVLINK_MSG_ID_WAYPOINT: {
-        mavlink_waypoint_t wp;
-        mavlink_msg_waypoint_decode(msg, &wp);
+    case MAVLINK_MSG_ID_MISSION_ITEM: {
+        mavlink_mission_item_t wp;
+        mavlink_msg_mission_item_decode(msg, &wp);
 
         if((msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && (wp.target_system == systemid && wp.target_component == compid)) {
             protocol_timestamp_lastaction = now;
 
             //ensure that we are in the correct state and that the first waypoint has id 0 and the following waypoints have the correct ids
             if ((current_state == PX_WPP_GETLIST && wp.seq == 0) || (current_state == PX_WPP_GETLIST_GETWPS && wp.seq == protocol_current_wp_id && wp.seq < protocol_current_count)) {
-                if (verbose && current_state == PX_WPP_GETLIST) qDebug("Got MAVLINK_MSG_ID_WAYPOINT %u from %u changing state to PX_WPP_GETLIST_GETWPS\n", wp.seq, msg->sysid);
-                if (verbose && current_state == PX_WPP_GETLIST_GETWPS && wp.seq == protocol_current_wp_id) qDebug("Got MAVLINK_MSG_ID_WAYPOINT %u from %u\n", wp.seq, msg->sysid);
-                if (verbose && current_state == PX_WPP_GETLIST_GETWPS && wp.seq-1 == protocol_current_wp_id) qDebug("Got MAVLINK_MSG_ID_WAYPOINT %u (again) from %u\n", wp.seq, msg->sysid);
+                if (verbose && current_state == PX_WPP_GETLIST) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM %u from %u changing state to PX_WPP_GETLIST_GETWPS\n", wp.seq, msg->sysid);
+                if (verbose && current_state == PX_WPP_GETLIST_GETWPS && wp.seq == protocol_current_wp_id) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM %u from %u\n", wp.seq, msg->sysid);
+                if (verbose && current_state == PX_WPP_GETLIST_GETWPS && wp.seq-1 == protocol_current_wp_id) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM %u (again) from %u\n", wp.seq, msg->sysid);
 
                 current_state = PX_WPP_GETLIST_GETWPS;
                 protocol_current_wp_id = wp.seq + 1;
-                mavlink_waypoint_t* newwp = new mavlink_waypoint_t;
-                memcpy(newwp, &wp, sizeof(mavlink_waypoint_t));
+                mavlink_mission_item_t* newwp = new mavlink_mission_item_t;
+                memcpy(newwp, &wp, sizeof(mavlink_mission_item_t));
                 waypoints_receive_buffer->push_back(newwp);
 
                 if(protocol_current_wp_id == protocol_current_count && current_state == PX_WPP_GETLIST_GETWPS) {
@@ -1035,7 +1036,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                     }
 
                     // switch the waypoints list
-                    std::vector<mavlink_waypoint_t*>* waypoints_temp = waypoints;
+                    std::vector<mavlink_mission_item_t*>* waypoints_temp = waypoints;
                     waypoints = waypoints_receive_buffer;
                     waypoints_receive_buffer = waypoints_temp;
 
@@ -1069,48 +1070,48 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
                 if (current_state == PX_WPP_IDLE) {
                     //we're done receiving waypoints, answer with ack.
                     send_waypoint_ack(protocol_current_partner_systemid, protocol_current_partner_compid, 0);
-                    qDebug("Received MAVLINK_MSG_ID_WAYPOINT while state=PX_WPP_IDLE, answered with WAYPOINT_ACK.\n");
+                    qDebug("Received MAVLINK_MSG_ID_MISSION_ITEM while state=PX_WPP_IDLE, answered with WAYPOINT_ACK.\n");
                 }
                 if (verbose) {
                     if (!(current_state == PX_WPP_GETLIST || current_state == PX_WPP_GETLIST_GETWPS)) {
-                        qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT %u because i'm doing something else already (state=%i).\n", wp.seq, current_state);
+                        qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM %u because i'm doing something else already (state=%i).\n", wp.seq, current_state);
                         break;
                     } else if (current_state == PX_WPP_GETLIST) {
-                        if(!(wp.seq == 0)) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT because the first waypoint ID (%u) was not 0.\n", wp.seq);
-                        else qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT %u - FIXME: missed error description\n", wp.seq);
+                        if(!(wp.seq == 0)) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM because the first waypoint ID (%u) was not 0.\n", wp.seq);
+                        else qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM %u - FIXME: missed error description\n", wp.seq);
                     } else if (current_state == PX_WPP_GETLIST_GETWPS) {
-                        if (!(wp.seq == protocol_current_wp_id)) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT because the waypoint ID (%u) was not the expected %u.\n", wp.seq, protocol_current_wp_id);
-                        else if (!(wp.seq < protocol_current_count)) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT because the waypoint ID (%u) was out of bounds.\n", wp.seq);
-                        else qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT %u - FIXME: missed error description\n", wp.seq);
-                    } else qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT %u - FIXME: missed error description\n", wp.seq);
+                        if (!(wp.seq == protocol_current_wp_id)) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM because the waypoint ID (%u) was not the expected %u.\n", wp.seq, protocol_current_wp_id);
+                        else if (!(wp.seq < protocol_current_count)) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM because the waypoint ID (%u) was out of bounds.\n", wp.seq);
+                        else qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM %u - FIXME: missed error description\n", wp.seq);
+                    } else qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM %u - FIXME: missed error description\n", wp.seq);
                 }
             }
         } else {
             // We're target but already communicating with someone else
             if((wp.target_system == systemid && wp.target_component == compid) && !(msg->sysid == protocol_current_partner_systemid && msg->compid == protocol_current_partner_compid) && current_state != PX_WPP_IDLE) {
-                if (verbose) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT %u from ID %u because i'm already talking to ID %u.\n", wp.seq, msg->sysid, protocol_current_partner_systemid);
+                if (verbose) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM %u from ID %u because i'm already talking to ID %u.\n", wp.seq, msg->sysid, protocol_current_partner_systemid);
             } else if(wp.target_system == systemid && wp.target_component == compid) {
-                if (verbose) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT %u from ID %u because i have no idea what to do with it\n", wp.seq, msg->sysid);
+                if (verbose) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM %u from ID %u because i have no idea what to do with it\n", wp.seq, msg->sysid);
             }
         }
         break;
     }
 
-    case MAVLINK_MSG_ID_WAYPOINT_CLEAR_ALL: {
-        mavlink_waypoint_clear_all_t wpca;
-        mavlink_msg_waypoint_clear_all_decode(msg, &wpca);
+    case MAVLINK_MSG_ID_MISSION_CLEAR_ALL: {
+        mavlink_mission_clear_all_t wpca;
+        mavlink_msg_mission_clear_all_decode(msg, &wpca);
 
         if(wpca.target_system == systemid && wpca.target_component == compid && current_state == PX_WPP_IDLE) {
             protocol_timestamp_lastaction = now;
 
-            if (verbose) qDebug("Got MAVLINK_MSG_ID_WAYPOINT_CLEAR_LIST from %u deleting all waypoints\n", msg->sysid);
+            if (verbose) qDebug("Got MAVLINK_MSG_ID_MISSION_ITEM_CLEAR_LIST from %u deleting all waypoints\n", msg->sysid);
             while(waypoints->size() > 0) {
                 delete waypoints->back();
                 waypoints->pop_back();
             }
             current_active_wp_id = -1;
         } else if (wpca.target_system == systemid && wpca.target_component == compid && current_state != PX_WPP_IDLE) {
-            if (verbose) qDebug("Ignored MAVLINK_MSG_ID_WAYPOINT_CLEAR_LIST from %u because i'm doing something else already (state=%i).\n", msg->sysid, current_state);
+            if (verbose) qDebug("Ignored MAVLINK_MSG_ID_MISSION_ITEM_CLEAR_LIST from %u because i'm doing something else already (state=%i).\n", msg->sysid, current_state);
         }
         break;
     }
@@ -1124,7 +1125,7 @@ void MAVLinkSimulationWaypointPlanner::mavlink_handler (const mavlink_message_t*
     //check if the current waypoint was reached
     if ((posReached && /*yawReached &&*/ !idle)) {
         if (current_active_wp_id < waypoints->size()) {
-            mavlink_waypoint_t *cur_wp = waypoints->at(current_active_wp_id);
+            mavlink_mission_item_t *cur_wp = waypoints->at(current_active_wp_id);
 
             if (timestamp_firstinside_orbit == 0) {
                 // Announce that last waypoint was reached

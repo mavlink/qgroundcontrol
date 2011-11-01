@@ -37,7 +37,10 @@
 
   QByteArray imageRecBuffer1 = QByteArray(376*240,255);
   QByteArray imageRecBuffer2 = QByteArray(376*240,255);
+  QByteArray imageRecBuffer3 = QByteArray(376*240,255);
+  QByteArray imageRecBuffer4 = QByteArray(376*240,255);
   static int part = 0;
+  unsigned char last_id = 0;
 
 QGCVideoMainWindow::QGCVideoMainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -57,6 +60,18 @@ QGCVideoMainWindow::QGCVideoMainWindow(QWidget *parent) :
 
     // Open port
     link.connect();
+
+    // Show flow // FIXME
+    int xCount = 16;
+    int yCount = 5;
+
+    unsigned char flowX[xCount][yCount];
+    unsigned char flowY[xCount][yCount];
+
+    flowX[3][3] = 10;
+    flowY[3][3] = 5;
+
+    ui->video4Widget->copyFlow((const unsigned char*)flowX, (const unsigned char*)flowY, xCount, yCount);
 }
 
 QGCVideoMainWindow::~QGCVideoMainWindow()
@@ -75,6 +90,7 @@ void QGCVideoMainWindow::receiveBytes(LinkInterface* link, QByteArray data)
 
     QString bytes;
     QString index;
+    QString imageid;
     QString ascii;
 
 
@@ -93,90 +109,147 @@ void QGCVideoMainWindow::receiveBytes(LinkInterface* link, QByteArray data)
     header = header.arg(imgWidth).arg(imgHeight).arg(imgColors);
 
     unsigned char i0 = data[0];
+    unsigned char id = data[1];
+
+    index.append(QString().sprintf("%02x", i0));
+    imageid.append(QString().sprintf("%02x", id));
+     qDebug() << "Received" << data.size() << "bytes"<< " part: " <<index<< " imageid: " <<imageid;
 
     switch (i0)
     {
     case 0x01:
         {
-            for (int i=4; i<data.size()/4; i++)
+            for (int i=0; i<data.size()/4-1; i++)
             {
-                imageRecBuffer1[i] = data[i*4];
-                imageRecBuffer2[i] = data[i*4+1];
+                imageRecBuffer1[i] = data[i*4+4];
+                imageRecBuffer2[i] = data[i*4+5]+127;
+                imageRecBuffer3[i] = data[i*4+6]+127;
+                imageRecBuffer4[i] = data[i*4+7];
+            }
+            if(id != last_id)
+            {
+                part = 0;
             }
             part = part | 1;
             break;
         }
     case 0x02:
         {
-            for (int i=4; i<data.size()/4; i++)
+            for (int i=0; i<data.size()/4-1; i++)
             {
-                imageRecBuffer1[i+45124/4] = data[i*4];
-                imageRecBuffer2[i+45124/4] = data[i*4+1];
+                imageRecBuffer1[i+45120/4] = data[i*4+4];
+                imageRecBuffer2[i+45120/4] = data[i*4+5]+127;
+                imageRecBuffer3[i+45120/4] = data[i*4+6]+127;
+                imageRecBuffer4[i+45120/4] = data[i*4+7];
+            }
+            if(id != last_id)
+            {
+                part = 0;
             }
             part = part | 2;
             break;
         }
     case 0x03:
         {
-            for (int i=4; i<data.size()/4; i++)
+            for (int i=0; i<data.size()/4-1; i++)
             {
-                imageRecBuffer1[i+45124/4*2] = data[i*4];
-                imageRecBuffer2[i+45124/4*2] = data[i*4+1];
+                imageRecBuffer1[i+45120/4*2] = data[i*4+4];
+                imageRecBuffer2[i+45120/4*2] = data[i*4+5]+127;
+                imageRecBuffer3[i+45120/4*2] = data[i*4+6]+127;
+                imageRecBuffer4[i+45120/4*2] = data[i*4+7];
+            }
+            if(id != last_id)
+            {
+                part = 0;
             }
             part = part | 4;
             break;
         }
     case 0x04:
         {
-            for (int i=4; i<data.size()/4; i++)
+            for (int i=0; i<data.size()/4-1; i++)
             {
-                imageRecBuffer1[i+45124/4*3] = data[i*4];
-                imageRecBuffer2[i+45124/4*3] = data[i*4+1];
+                imageRecBuffer1[i+45120/4*3] = data[i*4+4];
+                imageRecBuffer2[i+45120/4*3] = data[i*4+5]+127;
+                imageRecBuffer3[i+45120/4*3] = data[i*4+6]+127;
+                imageRecBuffer4[i+45120/4*3] = data[i*4+7];
+            }
+            if(id != last_id)
+            {
+                part = 0;
             }
             part = part | 8;
             break;
         }
     case 0x05:
         {
-            for (int i=4; i<data.size()/4; i++)
+            for (int i=0; i<data.size()/4-1; i++)
             {
-                imageRecBuffer1[i+45124/4*4] = data[i*4];
-                imageRecBuffer2[i+45124/4*4] = data[i*4+1];
+                imageRecBuffer1[i+45120/4*4] = data[i*4+4];
+                imageRecBuffer2[i+45120/4*4] = data[i*4+5]+127;
+                imageRecBuffer3[i+45120/4*4] = data[i*4+6]+127;
+                imageRecBuffer4[i+45120/4*4] = data[i*4+7];
+            }
+            if(id != last_id)
+            {
+                part = 0;
             }
             part = part | 16;
             break;
         }
     case 0x06:
         {
-            for (int i=4; i<data.size()/4; i++)
+            for (int i=0; i<data.size()/4-1; i++)
             {
-                imageRecBuffer1[i+45124/4*5] = data[i*4];
-                imageRecBuffer2[i+45124/4*5] = data[i*4+1];
+                imageRecBuffer1[i+45120/4*5] = data[i*4+4];
+                imageRecBuffer2[i+45120/4*5] = data[i*4+5]+127;
+                imageRecBuffer3[i+45120/4*5] = data[i*4+6]+127;
+                imageRecBuffer4[i+45120/4*5] = data[i*4+7];
+            }
+            if(id != last_id)
+            {
+                part = 0;
             }
             part = part | 32;
             break;
         }
     case 0x07:
         {
-            for (int i=4; i<data.size()/4; i++)
+            for (int i=0; i<data.size()/4-1; i++)
             {
-                imageRecBuffer1[i+45124/4*6] = data[i*4];
-                imageRecBuffer2[i+45124/4*6] = data[i*4+1];
+                imageRecBuffer1[i+45120/4*6] = data[i*4+4];
+                imageRecBuffer2[i+45120/4*6] = data[i*4+5]+127;
+                imageRecBuffer3[i+45120/4*6] = data[i*4+6]+127;
+                imageRecBuffer4[i+45120/4*6] = data[i*4+7];
+            }
+            if(id != last_id)
+            {
+                part = 0;
             }
             part = part | 64;
             break;
         }
     case 0x08:
         {
-            for (int i=4; i<data.size()/4; i++)
+            for (int i=0; i<data.size()/4-1; i++)
             {
-                imageRecBuffer1[i+45124/4*7] = data[i*4];
-                imageRecBuffer2[i+45124/4*7] = data[i*4+1];
+                imageRecBuffer1[i+45120/4*7] = data[i*4+4];
+                imageRecBuffer2[i+45120/4*7] = data[i*4+5]+127;
+                imageRecBuffer3[i+45120/4*7] = data[i*4+6]+127;
+                imageRecBuffer4[i+45120/4*7] = data[i*4+7];
+            }
+            if(id != last_id)
+            {
+                part = 0;
             }
             part = part | 128;
             break;
         }
     }
+
+    last_id = id;
+
+
     if(part==255)
     {
 
@@ -184,51 +257,94 @@ void QGCVideoMainWindow::receiveBytes(LinkInterface* link, QByteArray data)
         tmpImage1.append(imageRecBuffer1);
         QByteArray tmpImage2(header.toStdString().c_str(), header.toStdString().size());
         tmpImage2.append(imageRecBuffer2);
+        QByteArray tmpImage3(header.toStdString().c_str(), header.toStdString().size());
+        tmpImage3.append(imageRecBuffer3);
+        QByteArray tmpImage4(header.toStdString().c_str(), header.toStdString().size());
+        tmpImage4.append(imageRecBuffer4);
 
         // Load image into window
         //QImage test(":images/patterns/lenna.jpg");
         QImage image1;
         QImage image2;
+        QImage image3;
+        QImage image4;
 
 
         if (imageRecBuffer1.isNull())
-            {
-                qDebug()<< "could not convertToPGM()";
+        {
+            qDebug()<< "could not convertToPGM()";
 
-            }
+        }
 
-            if (!image1.loadFromData(tmpImage1, "PGM"))
-            {
-                qDebug()<< "could not create extracted image1";
+        if (!image1.loadFromData(tmpImage1, "PGM"))
+        {
+            qDebug()<< "could not create extracted image1";
 
-            }
-         if (imageRecBuffer2.isNull())
-            {
-                qDebug()<< "could not convertToPGM()";
+        }
+        if (imageRecBuffer2.isNull())
+        {
+            qDebug()<< "could not convertToPGM()";
 
-            }
+        }
 
-            if (!image2.loadFromData(tmpImage2, "PGM"))
-            {
-                 qDebug()<< "could not create extracted image2";
+        if (!image2.loadFromData(tmpImage2, "PGM"))
+        {
+            qDebug()<< "could not create extracted image2";
 
-            }
+        }
+        if (imageRecBuffer3.isNull())
+        {
+            qDebug()<< "could not convertToPGM()";
+
+        }
+
+        if (!image3.loadFromData(tmpImage3, "PGM"))
+        {
+            qDebug()<< "could not create extracted image3";
+
+        }
+        if (imageRecBuffer4.isNull())
+        {
+            qDebug()<< "could not convertToPGM()";
+
+        }
+
+        if (!image4.loadFromData(tmpImage4, "PGM"))
+        {
+            qDebug()<< "could not create extracted image3";
+
+        }
         tmpImage1.clear();
         tmpImage2.clear();
+        tmpImage3.clear();
+        tmpImage4.clear();
         //ui->video1Widget->copyImage(test);
-        ui->video2Widget->copyImage(image1);
-        ui->video3Widget->copyImage(image2);
-        //ui->video4Widget->copyImage(test);
+        ui->video1Widget->copyImage(image1);
+        ui->video2Widget->copyImage(image2);
+        ui->video3Widget->copyImage(image3);
+        ui->video4Widget->copyImage(image4);
         part = 0;
         imageRecBuffer1.clear();
         imageRecBuffer2.clear();
+        imageRecBuffer3.clear();
+        imageRecBuffer4.clear();
+
+        ui->video4Widget->enableFlow(true);
+
+        int xCount = 16;
+        int yCount = 5;
+
+        unsigned char flowX[xCount][yCount];
+        unsigned char flowY[xCount][yCount];
+
+        ui->video4Widget->copyFlow((const unsigned char*)flowX, (const unsigned char*)flowY, xCount, yCount);
     }
 
 
 
-    index.append(QString().sprintf("%02x ", i0));
 
-    for (int j=0; j<data.size(); j++) {
+
+   /* for (int j=0; j<data.size(); j++) {
         unsigned char v = data[j];
         bytes.append(QString().sprintf("%02x ", v));
         if (data.at(j) > 31 && data.at(j) < 127)
@@ -240,9 +356,8 @@ void QGCVideoMainWindow::receiveBytes(LinkInterface* link, QByteArray data)
             ascii.append(219);
         }
 
-    }
-     qDebug() << "Received" << data.size() << "bytes";
-     qDebug() << "index: " <<index;
+    }*/
+
     //qDebug() << bytes;
     //qDebug() << "ASCII:" << ascii;
 
