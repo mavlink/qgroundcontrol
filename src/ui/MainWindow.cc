@@ -1499,7 +1499,7 @@ QList<QAction*> MainWindow::listLinkMenuActions(void)
 {
     return ui.menuNetwork->actions();
 }
-
+/*
 void MainWindow::buildSenseSoarWidgets()
 {
 	if (!linechartWidget) 
@@ -1603,3 +1603,4 @@ void MainWindow::arrangeSenseSoarCenterStack()
 void MainWindow::connectSenseSoarActions()
 {
 }
+*/
