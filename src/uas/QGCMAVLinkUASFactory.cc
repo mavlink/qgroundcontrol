@@ -72,6 +72,7 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
         uas = mav;
     }
     break;
+#ifdef QGC_USE_SENSESOAR_MESSAGES
 	case MAV_AUTOPILOT_SENSESOAR:
 		{
 			senseSoarMAV* mav = new senseSoarMAV(mavlink,sysid);
@@ -80,6 +81,7 @@ UASInterface* QGCMAVLinkUASFactory::createUAS(MAVLinkProtocol* mavlink, LinkInte
 			uas = mav;
 			break;
 		}
+#endif
     default:
     {
         UAS* mav = new UAS(mavlink, sysid);

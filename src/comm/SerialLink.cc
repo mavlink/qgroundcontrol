@@ -340,7 +340,7 @@ QVector<QString>* SerialLink::getCurrentPorts()
         QextPortInfo portInfo = ports.at(i);
         QString portString = QString(portInfo.portName.toLocal8Bit().constData()) + " - " + QString(ports.at(i).friendName.toLocal8Bit().constData()).split("(").first();
         // Prepend newly found port to the list
-        ports.append(portString);
+        this->ports->append(portString);
     }
 
     //printf("port name: %s\n", ports.at(i).portName.toLocal8Bit().constData());
@@ -349,7 +349,7 @@ QVector<QString>* SerialLink::getCurrentPorts()
     //printf("enumerator name: %s\n", ports.at(i).enumName.toLocal8Bit().constData());
     //printf("===================================\n\n");
 #endif
-    return ports;
+    return this->ports;
 }
 
 void SerialLink::loadSettings()
