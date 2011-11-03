@@ -96,6 +96,10 @@ public:
     Eigen::Vector3d ecefToEnu(const Eigen::Vector3d & ecef);
     /** @brief Convert WGS84 lat/lon coordinates to carthesian coordinates with home position as origin */
     void wgs84ToEnu(const double& lat, const double& lon, const double& alt, double* east, double* north, double* up);
+    /** @brief Convert x,y,z coordinates to lat / lon / alt coordinates in east-north-up frame */
+    void enuToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt);
+    /** @brief Convert x,y,z coordinates to lat / lon / alt coordinates in north-east-down frame */
+    void nedToWgs84(const double& x, const double& y, const double& z, double* lat, double* lon, double* alt);
 
     void getLocalNEDSafetyLimits(double* x1, double* y1, double* z1, double* x2, double* y2, double* z2)
     {
