@@ -378,17 +378,22 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 pitch = QGC::limitAngleToPMPIf(attitude.pitch);
                 yaw = QGC::limitAngleToPMPIf(attitude.yaw);
 
-                // Emit in angles
+//                // Emit in angles
 
-                // Convert yaw angle to compass value
-                // in 0 - 360 deg range
-                float compass = (yaw/M_PI)*180.0+360.0f;
-                if (compass > -10000 && compass < 10000)
-                {
-                    while (compass > 360.0f) {
-                        compass -= 360.0f;
-                    }
-                }
+//                // Convert yaw angle to compass value
+//                // in 0 - 360 deg range
+//                float compass = (yaw/M_PI)*180.0+360.0f;
+//                if (compass > -10000 && compass < 10000)
+//                {
+//                    while (compass > 360.0f) {
+//                        compass -= 360.0f;
+//                    }
+//                }
+//                else
+//                {
+//                    // Set to 0, since it is an invalid value
+//                    compass = 0.0f;
+//                }
 
                 attitudeKnown = true;
                 emit attitudeChanged(this, roll, pitch, yaw, time);
@@ -1006,7 +1011,7 @@ void UAS::setLocalPositionOffset(float x, float y, float z, float yaw)
 {
 #ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_message_t msg;
-    mavlink_msg_position_control_offset_set_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw);
+    mavlink_msg_set_position_control_offset_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, x, y, z, yaw);
     sendMessage(msg);
 #else
     Q_UNUSED(x);
@@ -1020,21 +1025,21 @@ void UAS::startRadioControlCalibration()
 {
     mavlink_message_t msg;
     // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, 1);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 0, 1, 0, 0, 0);
     sendMessage(msg);
 }
 
 void UAS::startDataRecording()
 {
     mavlink_message_t msg;
-    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_DO_CONTROL_VIDEO, 1, -1, -1, -1, 2);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_DO_CONTROL_VIDEO, 1, -1, -1, -1, 2, 0, 0, 0);
     sendMessage(msg);
 }
 
 void UAS::stopDataRecording()
 {
     mavlink_message_t msg;
-    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_DO_CONTROL_VIDEO, 1, -1, -1, -1, 0);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_DO_CONTROL_VIDEO, 1, -1, -1, -1, 0, 0, 0, 0);
     sendMessage(msg);
 }
 
@@ -1042,7 +1047,7 @@ void UAS::startMagnetometerCalibration()
 {
     mavlink_message_t msg;
     // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 1, 0, 0);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 1, 0, 0, 0, 0, 0);
     sendMessage(msg);
 }
 
@@ -1050,7 +1055,7 @@ void UAS::startGyroscopeCalibration()
 {
     mavlink_message_t msg;
     // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 1, 0, 0, 0);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 1, 0, 0, 0, 0, 0, 0);
     sendMessage(msg);
 }
 
@@ -1058,7 +1063,7 @@ void UAS::startPressureCalibration()
 {
     mavlink_message_t msg;
     // Param 1: gyro cal, param 2: mag cal, param 3: pressure cal, Param 4: radio
-    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 1, 0);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_IMU, MAV_CMD_PREFLIGHT_CALIBRATION, 1, 0, 0, 1, 0, 0, 0, 0);
     sendMessage(msg);
 }
 
@@ -1453,14 +1458,14 @@ void UAS::requestParameters()
 void UAS::writeParametersToStorage()
 {
     mavlink_message_t msg;
-    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
     sendMessage(msg);
 }
 
 void UAS::readParametersFromStorage()
 {
     mavlink_message_t msg;
-    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 0, -1, -1, -1);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 0, -1, -1, -1, 0, 0, 0);
     sendMessage(msg);
 }
 
@@ -1825,32 +1830,38 @@ void UAS::setUASName(const QString& name)
 void UAS::executeCommand(MAV_CMD command)
 {
     mavlink_message_t msg;
-    mavlink_command_short_t cmd;
+    mavlink_command_long_t cmd;
     cmd.command = (uint8_t)command;
     cmd.confirmation = 0;
     cmd.param1 = 0.0f;
     cmd.param2 = 0.0f;
     cmd.param3 = 0.0f;
     cmd.param4 = 0.0f;
+    cmd.param5 = 0.0f;
+    cmd.param6 = 0.0f;
+    cmd.param7 = 0.0f;
     cmd.target_system = uasId;
     cmd.target_component = 0;
-    mavlink_msg_command_short_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
     sendMessage(msg);
 }
 
 void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float param2, float param3, float param4, int component)
 {
     mavlink_message_t msg;
-    mavlink_command_short_t cmd;
+    mavlink_command_long_t cmd;
     cmd.command = (uint8_t)command;
     cmd.confirmation = confirmation;
     cmd.param1 = param1;
     cmd.param2 = param2;
     cmd.param3 = param3;
     cmd.param4 = param4;
+    cmd.param5 = 0.0f;
+    cmd.param6 = 0.0f;
+    cmd.param7 = 0.0f;
     cmd.target_system = uasId;
     cmd.target_component = component;
-    mavlink_msg_command_short_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
+    mavlink_msg_command_long_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &cmd);
     sendMessage(msg);
 }
 
@@ -1880,7 +1891,7 @@ void UAS::executeCommand(MAV_CMD command, int confirmation, float param1, float 
 void UAS::launch()
 {
     mavlink_message_t msg;
-    mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_CMD_NAV_TAKEOFF, 1, 0, 0, 0, 0);
+    mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, this->getUASID(), 0, MAV_CMD_NAV_TAKEOFF, 1, 0, 0, 0, 0, 0, 0, 0);
     sendMessage(msg);
 }
 
@@ -2111,7 +2122,7 @@ void UAS::shutdown()
     {
         // If the active UAS is set, execute command
         mavlink_message_t msg;
-        mavlink_msg_command_short_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0, 2, 0, 0, 0);
+        mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0, 2, 0, 0, 0, 0, 0, 0);
         sendMessage(msg);
         result = true;
     }

@@ -705,9 +705,9 @@ void MAVLinkSimulationLink::writeBytes(const char* data, qint64 size)
             }
             break;
             // EXECUTE OPERATOR ACTIONS
-            case MAVLINK_MSG_ID_COMMAND_SHORT: {
-                mavlink_command_short_t action;
-                mavlink_msg_command_short_decode(&msg, &action);
+            case MAVLINK_MSG_ID_COMMAND_LONG: {
+                mavlink_command_long_t action;
+                mavlink_msg_command_long_decode(&msg, &action);
 
                 qDebug() << "SIM" << "received action" << action.command << "for system" << action.target_system;
 
