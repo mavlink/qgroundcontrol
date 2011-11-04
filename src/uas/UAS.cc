@@ -1459,6 +1459,7 @@ void UAS::writeParametersToStorage()
 {
     mavlink_message_t msg;
     mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, 0, MAV_CMD_PREFLIGHT_STORAGE, 1, 1, -1, -1, -1, 0, 0, 0);
+    qDebug() << "SENT COMMAND" << MAV_CMD_PREFLIGHT_STORAGE;
     sendMessage(msg);
 }
 
@@ -1492,7 +1493,6 @@ void UAS::enableAllDataTransmission(int rate)
     mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
     // Send message twice to increase chance of reception
     sendMessage(msg);
-    sendMessage(msg);
 }
 
 void UAS::enableRawSensorDataTransmission(int rate)
@@ -1514,7 +1514,6 @@ void UAS::enableRawSensorDataTransmission(int rate)
     mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
     // Send message twice to increase chance of reception
     sendMessage(msg);
-    sendMessage(msg);
 }
 
 void UAS::enableExtendedSystemStatusTransmission(int rate)
@@ -1535,7 +1534,6 @@ void UAS::enableExtendedSystemStatusTransmission(int rate)
     // Encode and send the message
     mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
     // Send message twice to increase chance of reception
-    sendMessage(msg);
     sendMessage(msg);
 }
 
@@ -1562,7 +1560,6 @@ void UAS::enableRCChannelDataTransmission(int rate)
     mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
     // Send message twice to increase chance of reception
     sendMessage(msg);
-    sendMessage(msg);
 #endif
 }
 
@@ -1584,7 +1581,6 @@ void UAS::enableRawControllerDataTransmission(int rate)
     // Encode and send the message
     mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
     // Send message twice to increase chance of reception
-    sendMessage(msg);
     sendMessage(msg);
 }
 
@@ -1628,7 +1624,6 @@ void UAS::enablePositionTransmission(int rate)
     // Encode and send the message
     mavlink_msg_request_data_stream_encode(mavlink->getSystemId(), mavlink->getComponentId(), &msg, &stream);
     // Send message twice to increase chance of reception
-    sendMessage(msg);
     sendMessage(msg);
 }
 
@@ -2122,7 +2117,7 @@ void UAS::shutdown()
     {
         // If the active UAS is set, execute command
         mavlink_message_t msg;
-        mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0, 2, 0, 0, 0, 0, 0, 0);
+        mavlink_msg_command_long_pack(mavlink->getSystemId(), mavlink->getComponentId(), &msg, uasId, MAV_COMP_ID_ALL, MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 1, 0, 2, 0, 0, 0, 0, 0);
         sendMessage(msg);
         result = true;
     }
@@ -2165,33 +2160,34 @@ QString UAS::getShortModeTextFor(int id)
     qDebug() << "MODE:" << modeid;
 
     // BASE MODE DECODING
-    if (modeid & MAV_MODE_FLAG_DECODE_POSITION_AUTO)
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_AUTO)
     {
-        mode = "AUTO";
+        mode += "AUTO";
     }
-    else if (modeid & MAV_MODE_FLAG_DECODE_POSITION_GUIDED)
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_GUIDED)
     {
-        mode = "GUIDED";
+        mode += "GUIDED";
     }
-    else if (modeid & MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_STABILIZE)
     {
-        mode = "STABILIZED";
+        mode += "STABILIZED";
     }
-    else if (modeid & MAV_MODE_FLAG_DECODE_POSITION_TEST)
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_TEST)
     {
-        mode = "TEST";
+        mode += "TEST";
     }
-    else if (modeid & MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_MANUAL)
     {
-        mode = "MANUAL";
+        mode += "MANUAL";
     }
-    else
+
+    if (modeid == 0)
     {
         mode = "PREFLIGHT";
     }
 
     // ARMED STATE DECODING
-    if (modeid & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_SAFETY)
     {
         mode.prepend("A|");
     }
@@ -2201,7 +2197,7 @@ QString UAS::getShortModeTextFor(int id)
     }
 
     // HARDWARE IN THE LOOP DECODING
-    if (modeid & MAV_MODE_FLAG_DECODE_POSITION_HIL)
+    if (modeid & (uint8_t)MAV_MODE_FLAG_DECODE_POSITION_HIL)
     {
         mode.prepend("HIL:");
     }
