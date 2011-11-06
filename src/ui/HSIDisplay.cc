@@ -100,11 +100,12 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     mavInitialized(false),
     bottomMargin(10.0f),
     topMargin(12.0f),
-    userSetPointSet(false),
     dragStarted(false),
     leftDragStarted(false),
     mouseHasMoved(false),
-    actionPending(false)
+    actionPending(false),
+    userSetPointSet(false),
+    userXYSetPointSet(false)
 {
     refreshTimer->setInterval(updateInterval);
 

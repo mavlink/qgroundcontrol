@@ -42,8 +42,8 @@ macx {
    # COMPILER_VERSION = $$system(gcc -v)
     #message(Using compiler $$COMPILER_VERSION)
 
-        CONFIG += x86 cocoa phonon
-        CONFIG -= x86_64
+        CONFIG += x86_64 cocoa phonon
+        CONFIG -= x86
 
     #HARDWARE_PLATFORM = $$system(uname -a)
     #contains( $$HARDWARE_PLATFORM, "9.6.0" ) || contains( $$HARDWARE_PLATFORM, "9.7.0" ) || contains( $$HARDWARE_PLATFORM, "9.8.0" ) || contains( $$HARDWARE_PLATFORM, "9.9.0" ) {
@@ -65,11 +65,10 @@ macx {
       #          debug {
                         #QMAKE_CXXFLAGS += -finstrument-functions
                         #LIBS += -lSaturn
-                        CONFIG += console
       #          }
     #}
 
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
 
     #DESTDIR = $$BASEDIR/bin/mac
     INCLUDEPATH += -framework SDL
@@ -103,7 +102,7 @@ macx {
     DEFINES += QGC_OSG_ENABLED
     # Include OpenSceneGraph libraries
     INCLUDEPATH += -framework GLUT \
-            -framework Carbon \
+            -framework Cocoa \
             -framework OpenThreads \
             -framework osg \
             -framework osgViewer \
@@ -113,7 +112,7 @@ macx {
             -framework osgWidget
 
     LIBS += -framework GLUT \
-            -framework Carbon \
+            -framework Cocoa \
             -framework OpenThreads \
             -framework osg \
             -framework osgViewer \
@@ -123,37 +122,13 @@ macx {
             -framework osgWidget
     }
 
-    exists(/usr/include/osgEarth) {
-    message("Building support for osgEarth")
-    DEPENDENCIES_PRESENT += osgearth
-    # Include osgEarth libraries
-    INCLUDEPATH += -framework GDAL \
-            $$IN_PWD/lib/mac32-gcc/include \
-            -framework GEOS \
-            -framework SQLite3 \
-            -framework osgFX \
-            -framework osgTerrain
-
-    LIBS += -framework GDAL \
-            -framework GEOS \
-            -framework SQLite3 \
-            -framework osgFX \
-            -framework osgTerrain
-    DEFINES += QGC_OSGEARTH_ENABLED
-    }
-
-
-    exists(/opt/local/include/libfreenect) {
+    exists(/opt/local/include/libfreenect)|exists(/usr/local/include/libfreenect) {
     message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
     # Include libfreenect libraries
     LIBS += -lfreenect
     DEFINES += QGC_LIBFREENECT_ENABLED
     }
-
-    # osg/osgEarth dynamic casts might fail without this compiler option.
-    # see http://osgearth.org/wiki/FAQ for details.
-    #QMAKE_CXXFLAGS += -Wl,-E
 }
 
 # GNU/Linux

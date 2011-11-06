@@ -88,11 +88,11 @@ MainWindow* MainWindow::instance(QSplashScreen* screen)
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent),
     currentView(VIEW_UNCONNECTED),
+    currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
     styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
     autoReconnect(false),
-    currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
     centerStackActionGroup(this),
     lowPowerMode(false)
 {

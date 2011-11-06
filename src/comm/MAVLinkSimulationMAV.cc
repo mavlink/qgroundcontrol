@@ -303,12 +303,12 @@ void MAVLinkSimulationMAV::mainloop()
     timer25Hz--;
 }
 
-static unsigned chan_counts[MAVLINK_COMM_NUM_BUFFERS];
+//static unsigned chan_counts[MAVLINK_COMM_NUM_BUFFERS];
 
 static const unsigned message_lengths[] = MAVLINK_MESSAGE_LENGTHS;
-static unsigned error_count;
+//static unsigned error_count;
 
-static const mavlink_message_info_t message_info[256] = MAVLINK_MESSAGE_INFO;
+mavlink_message_info_t message_info[256] = MAVLINK_MESSAGE_INFO;
 
 static void print_one_field(const mavlink_message_t *msg, const mavlink_field_info_t *f, int idx)
 {
