@@ -63,7 +63,7 @@ bool XmlConfig::readXmlFile(QIODevice &device, QSettings::SettingsMap &map)
                       .arg(errorLine)
                       .arg(errorColumn)
                       .arg(errorStr);
-        qFatal(err.toLatin1().data());
+        qFatal("%s", err.toLatin1().data());
         return false;
     }
     root = domDoc.documentElement();

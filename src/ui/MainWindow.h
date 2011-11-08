@@ -279,6 +279,7 @@ protected:
 
     /** @brief Keeps track of the current view */
     VIEW_SECTIONS currentView;
+    QGC_MAINWINDOW_STYLE currentStyle;
     bool aboutToCloseFlag;
     bool changingViewsFlag;
 
@@ -371,7 +372,6 @@ protected:
     QTimer* videoTimer;
     QString styleFileName;
     bool autoReconnect;
-    QGC_MAINWINDOW_STYLE currentStyle;
     Qt::WindowStates windowStateVal;
     bool lowPowerMode; ///< If enabled, QGC reduces the update rates of all widgets
     QGCFlightGearLink* fgLink;
