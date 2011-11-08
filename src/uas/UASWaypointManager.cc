@@ -45,8 +45,8 @@ UASWaypointManager::UASWaypointManager(UAS* _uas)
       current_state(WP_IDLE),
       current_partner_systemid(0),
       current_partner_compid(0),
-      protocol_timer(this),
-      currentWaypointEditable(NULL)
+      currentWaypointEditable(NULL),
+      protocol_timer(this)
 {
     if (uas)
     {
@@ -112,7 +112,14 @@ void UASWaypointManager::handleLocalPositionChanged(UASInterface* mav, double x,
 
 void UASWaypointManager::handleGlobalPositionChanged(UASInterface* mav, double lat, double lon, double alt, quint64 time)
 {
-
+    Q_UNUSED(mav);
+    Q_UNUSED(time);
+    if (waypointsEditable.count() > 0 && currentWaypointEditable && (currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL || currentWaypointEditable->getFrame() == MAV_FRAME_GLOBAL_RELATIVE_ALT))
+    {
+        // TODO FIXME Calculate distance
+        double dist = 0;
+        emit waypointDistanceChanged(dist);
+    }
 }
 
 void UASWaypointManager::handleWaypointCount(quint8 systemId, quint8 compId, quint16 count)
@@ -240,6 +247,7 @@ void UASWaypointManager::handleWaypointReached(quint8 systemId, quint8 compId, m
 
 void UASWaypointManager::handleWaypointCurrent(quint8 systemId, quint8 compId, mavlink_mission_current_t *wpc)
 {
+    Q_UNUSED(compId);
     if (!uas) return;
     if (systemId == uasid) {
         // FIXME Petri

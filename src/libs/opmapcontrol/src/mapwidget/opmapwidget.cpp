@@ -33,7 +33,18 @@
 namespace mapcontrol
 {
 
-    OPMapWidget::OPMapWidget(QWidget *parent, Configuration *config):QGraphicsView(parent),configuration(config),UAV(0),GPS(0),Home(0),followmouse(true),compass(0),showuav(false),showhome(false),showDiag(false),diagGraphItem(0),diagTimer(0)
+    OPMapWidget::OPMapWidget(QWidget *parent, Configuration *config) : QGraphicsView(parent),
+        configuration(config),
+        UAV(0),
+        GPS(0),
+        Home(0),
+        followmouse(true),
+        compass(0),
+        showuav(false),
+        showhome(false),
+        diagTimer(0),
+        showDiag(false),
+        diagGraphItem(0)
     {
         setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         core=new internals::Core;
@@ -277,6 +288,7 @@ namespace mapcontrol
     }
     void OPMapWidget::WPCreate(int id, WayPointItem* item)
     {
+        Q_UNUSED(id);
         static internals::PointLatLng lastPos;
 
         ConnectWP(item);
