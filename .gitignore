@@ -34,6 +34,10 @@ user_config.pri
 
 *.ncb
 *.vcproj
+*.vcxproj*
+*.sdf
+*.ipch
+*.pdb
 *.sln
 *.sln
 *.vcproj
