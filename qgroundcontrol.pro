@@ -42,12 +42,14 @@ RCC_DIR = $${BUILDDIR}/rcc
 MAVLINK_CONF = ""
 DEFINES += MAVLINK_NO_DATA
 
+win32 {
 QMAKE_INCDIR_QT = $$(QTDIR)/include
 QMAKE_LIBDIR_QT = $$(QTDIR)/lib
 QMAKE_UIC = "$$(QTDIR)/bin/uic.exe"
 QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
 QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
 QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
+}
 
 
 
