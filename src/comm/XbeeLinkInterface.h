@@ -16,6 +16,12 @@ public:
 public slots:
     virtual bool setPortName(QString portName) = 0;
     virtual bool setBaudRate(int rate) = 0;
+	virtual bool setRemoteAddressHigh(quint32 high) = 0;
+	virtual bool setRemoteAddressLow(quint32 low) = 0;
+
+signals:
+	void tryConnectBegin(bool toTrue);
+	void tryConnectEnd(bool toTrue);
 };
 
 #endif // XBEELINKINTERFACE_H_

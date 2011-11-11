@@ -143,6 +143,7 @@ QGCCore::QGCCore(int &argc, char* argv[]) : QApplication(argc, argv)
     // to make sure that all components are initialized when the
     // first messages arrive
     UDPLink* udpLink = new UDPLink(QHostAddress::Any, 14550);
+	MainWindow::instance()->addLink(udpLink);
     // Listen on Multicast-Address 239.255.77.77, Port 14550
     //QHostAddress * multicast_udp = new QHostAddress("239.255.77.77");
     //UDPLink* udpLink = new UDPLink(*multicast_udp, 14550);

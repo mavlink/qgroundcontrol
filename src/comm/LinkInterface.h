@@ -237,7 +237,7 @@ signals:
 
 protected:
     static int getNextLinkId() {
-        static int nextId = 0;
+        static int nextId = 1;
         return nextId++;
     }
 

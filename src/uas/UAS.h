@@ -521,16 +521,16 @@ public slots:
 signals:
 
     /** @brief The main/battery voltage has changed/was updated */
-    void voltageChanged(int uasId, double voltage);
+    //void voltageChanged(int uasId, double voltage); // Defined in UASInterface already
     /** @brief An actuator value has changed */
-    void actuatorChanged(UASInterface*, int actId, double value);
+    //void actuatorChanged(UASInterface*, int actId, double value); // Defined in UASInterface already
     /** @brief An actuator value has changed */
     void actuatorChanged(UASInterface* uas, QString actuatorName, double min, double max, double value);
     void motorChanged(UASInterface* uas, QString motorName, double min, double max, double value);
     /** @brief The system load (MCU/CPU usage) changed */
     void loadChanged(UASInterface* uas, double load);
     /** @brief Propagate a heartbeat received from the system */
-    void heartbeat(UASInterface* uas);
+    //void heartbeat(UASInterface* uas); // Defined in UASInterface already
     void imageStarted(quint64 timestamp);
     /** @brief A new camera image has arrived */
     void imageReady(UASInterface* uas);

@@ -219,9 +219,14 @@ void DebugConsole::linkSelected(int linkId)
  */
 void DebugConsole::updateLinkName(QString name)
 {
-    // Set name if signal came from a link
+	// Set name if signal came from a link
     LinkInterface* link = qobject_cast<LinkInterface*>(sender());
-    if (link != NULL) m_ui->linkComboBox->setItemText(link->getId(), name);
+	//if (link != NULL) m_ui->linkComboBox->setItemText(link->getId(), name);
+	if((link != NULL) && (links.contains(link)))
+	{
+		const qint16 &linkIndex(links.indexOf(link));
+		m_ui->linkComboBox->setItemText(linkIndex,name);
+	}
 }
 
 void DebugConsole::setAutoHold(bool hold)

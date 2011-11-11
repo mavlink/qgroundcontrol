@@ -12,6 +12,7 @@
 #include<QtGui\qlayout.h>
 #include <LinkInterface.h>
 #include"XbeeLinkInterface.h"
+#include "../comm/HexSpinBox.h"
 
 
 class XbeeConfigurationWindow : public QWidget
@@ -30,6 +31,10 @@ public slots:
 	void setBaudRateString(QString baud);
 	void setupPortList();
 
+private slots:
+	void addrChangedHigh(int addr);
+	void addrChangedLow(int addr);
+
 protected:
     void showEvent(QShowEvent* event);
     void hideEvent(QHideEvent* event);
@@ -46,6 +51,14 @@ private:
 	XbeeLinkInterface* link;
     QAction* action;
     QTimer* portCheckTimer;
+	HexSpinBox* highAddr;
+	HexSpinBox* lowAddr;
+	QLabel* highAddrLabel;
+	QLabel* lowAddrLabel;
+
+signals:
+	void addrHighChanged(quint32 addrHigh);
+	void addrLowChanged(quint32 addrLow);
 };
 
 
