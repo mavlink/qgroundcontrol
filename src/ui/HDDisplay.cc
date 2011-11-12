@@ -216,7 +216,7 @@ void HDDisplay::saveState()
     // Restore instrument settings
     for (int i = 0; i < acceptList->count(); i++) {
         QString key = acceptList->at(i);
-        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+acceptUnitList->at(i)+","+QString::number(maxValues.value(key, +1.0))+","+((symmetric.value(key, false)) ? "s" : "");
+        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+acceptUnitList->at(i)+","+QString::number(maxValues.value(key, +1.0))+","+customNames.value(key, "")+","+((symmetric.value(key, false)) ? "s" : "");
     }
 
     // qDebug() << "Saving" << instruments;
