@@ -38,6 +38,7 @@ This file is part of the QGROUNDCONTROL project
 #include <QQueue>
 #include <QMutex>
 #include <QMap>
+#include <qmath.h>
 #include <inttypes.h>
 #include "QGCMAVLink.h"
 

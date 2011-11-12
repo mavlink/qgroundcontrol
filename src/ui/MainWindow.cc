@@ -92,8 +92,8 @@ MainWindow::MainWindow(QWidget *parent):
     aboutToCloseFlag(false),
     changingViewsFlag(false),
     styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
-    autoReconnect(false),
     centerStackActionGroup(this),
+    autoReconnect(false),
     lowPowerMode(false)
 {
     hide();
