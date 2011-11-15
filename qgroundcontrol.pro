@@ -553,7 +553,7 @@ win32-msvc2008|win32-msvc2010|linux{
 	src/ui/XbeeConfigurationWindow.cpp
     DEFINES += XBEELINK
     INCLUDEPATH += thirdParty/libxbee
- TO DO: build library when it does not exists already
+# TO DO: build library when it does not exists already
     LIBS += -LthirdParty/libxbee/lib \
 	-llibxbee
 
