@@ -216,7 +216,7 @@ void HDDisplay::saveState()
     // Restore instrument settings
     for (int i = 0; i < acceptList->count(); i++) {
         QString key = acceptList->at(i);
-        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+acceptUnitList->at(i)+","+QString::number(maxValues.value(key, +1.0))+","+((symmetric.value(key, false)) ? "s" : "");
+        instruments += "|" + QString::number(minValues.value(key, -1.0))+","+key+","+acceptUnitList->at(i)+","+QString::number(maxValues.value(key, +1.0))+","+customNames.value(key, "")+","+((symmetric.value(key, false)) ? "s" : "");
     }
 
     // qDebug() << "Saving" << instruments;
@@ -271,16 +271,23 @@ void HDDisplay::addGauge()
     QStringList items;
     for (int i = 0; i < values.count(); ++i) {
         QString key = values.keys().at(i);
+        QString label = key;
+        QStringList keySplit = key.split(".");
+        if (keySplit.size() > 1)
+        {
+            keySplit.removeFirst();
+            label = keySplit.join(".");
+        }
         QString unit = units.value(key);
         if (unit.contains("deg") || unit.contains("rad")) {
-            items.append(QString("%1,%2,%3,%4,s").arg("-180").arg(key).arg(unit).arg("+180"));
+            items.append(QString("%1,%2,%3,%4,%5,s").arg("-180").arg(key).arg(unit).arg("+180").arg(label));
         } else {
-            items.append(QString("%1,%2,%3,%4").arg("0").arg(key).arg(unit).arg("+100"));
+            items.append(QString("%1,%2,%3,%4,%5").arg("0").arg(key).arg(unit).arg("+100").arg(label));
         }
     }
     bool ok;
     QString item = QInputDialog::getItem(this, tr("Add Gauge Instrument"),
-                                         tr("Format: min, curve name, unit, max[,s]"), items, 0, true, &ok);
+                                         tr("Format: min, data name, unit, max, label [,s]"), items, 0, true, &ok);
     if (ok && !item.isEmpty()) {
         addGauge(item);
     }
@@ -307,9 +314,19 @@ void HDDisplay::addGauge(const QString& gauge)
                 val = parts.at(3).toDouble(&ok);
                 success &= ok;
                 if (ok) maxValues.insert(key, val);
+                // Convert name
+                if (parts.length() >= 5)
+                {
+                    if (parts.at(4).length() > 0)
+                    {
+                        customNames.insert(key, parts.at(4));
+                    }
+                }
                 // Convert symmetric flag
-                if (parts.length() >= 5) {
-                    if (parts.at(4).contains("s")) {
+                if (parts.length() >= 6)
+                {
+                    if (parts.at(5).contains("s"))
+                    {
                         symmetric.insert(key, true);
                     }
                 }
@@ -425,12 +442,15 @@ void HDDisplay::renderOverlay()
     float topSpacing = leftSpacing;
     float yCoord = topSpacing + gaugeWidth/2.0f;
 
-    for (int i = 0; i < acceptList->size(); ++i) {
+    for (int i = 0; i < acceptList->size(); ++i)
+    {
         QString value = acceptList->at(i);
-        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), value, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, symmetric.value(value, false), goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
+        QString label = customNames.value(value);
+        drawGauge(xCoord, yCoord, gaugeWidth/2.0f, minValues.value(value, -1.0f), maxValues.value(value, 1.0f), label, values.value(value, minValues.value(value, 0.0f)), gaugeColor, &painter, symmetric.value(value, false), goodRanges.value(value, qMakePair(0.0f, 0.5f)), critRanges.value(value, qMakePair(0.7f, 1.0f)), true);
         xCoord += gaugeWidth + leftSpacing;
         // Move one row down if necessary
-        if (xCoord + gaugeWidth*0.9f > vwidth) {
+        if (xCoord + gaugeWidth*0.9f > vwidth)
+        {
             yCoord += topSpacing + gaugeWidth;
             xCoord = leftSpacing + gaugeWidth/2.0f;
         }
@@ -807,7 +827,40 @@ float HDDisplay::refLineWidthToPen(float line)
     return line * 2.50f;
 }
 
+void HDDisplay::addSource(QObject* obj)
+{
+    //genericSources.append(obj);
+    // FIXME XXX HACK
+//    if (plots.size() > 0)
+//    {
+        // Connect generic source
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,int,quint64)), this, SLOT(updateValue(int,QString,QString,int,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,unsigned int,quint64)), this, SLOT(updateValue(int,QString,QString,unsigned int,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,quint64,quint64)), this, SLOT(updateValue(int,QString,QString,quint64,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,qint64,quint64)), this, SLOT(updateValue(int,QString,QString,qint64,quint64)));
+        connect(obj, SIGNAL(valueChanged(int,QString,QString,double,quint64)), this, SLOT(updateValue(int,QString,QString,double,quint64)));
+//    }
+}
+
 void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const int value, const quint64 msec)
+{
+    if (!intValues.contains(name)) intValues.insert(name, true);
+    updateValue(uasId, name, unit, (double)value, msec);
+}
+
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const unsigned int value, const quint64 msec)
+{
+    if (!intValues.contains(name)) intValues.insert(name, true);
+    updateValue(uasId, name, unit, (double)value, msec);
+}
+
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec)
+{
+    if (!intValues.contains(name)) intValues.insert(name, true);
+    updateValue(uasId, name, unit, (double)value, msec);
+}
+
+void HDDisplay::updateValue(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec)
 {
     if (!intValues.contains(name)) intValues.insert(name, true);
     updateValue(uasId, name, unit, (double)value, msec);

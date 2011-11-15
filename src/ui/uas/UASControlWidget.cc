@@ -50,12 +50,12 @@ UASControlWidget::UASControlWidget(QWidget *parent) : QWidget(parent),
 
     connect(UASManager::instance(), SIGNAL(activeUASSet(UASInterface*)), this, SLOT(setUAS(UASInterface*)));
     ui.modeComboBox->clear();
-    ui.modeComboBox->insertItem(MAV_MODE_PREFLIGHT, UAS::getShortModeTextFor(MAV_MODE_PREFLIGHT));
-    ui.modeComboBox->insertItem(MAV_MODE_STABILIZE_ARMED, UAS::getShortModeTextFor(MAV_MODE_STABILIZE_ARMED));
-    ui.modeComboBox->insertItem(MAV_MODE_MANUAL_ARMED, UAS::getShortModeTextFor(MAV_MODE_MANUAL_ARMED));
-    ui.modeComboBox->insertItem(MAV_MODE_GUIDED_DISARMED, UAS::getShortModeTextFor(MAV_MODE_GUIDED_ARMED));
-    ui.modeComboBox->insertItem(MAV_MODE_AUTO_ARMED, UAS::getShortModeTextFor(MAV_MODE_AUTO_ARMED));
-    ui.modeComboBox->insertItem(MAV_MODE_TEST_ARMED, UAS::getShortModeTextFor(MAV_MODE_TEST_ARMED));
+    ui.modeComboBox->insertItem(0, UAS::getShortModeTextFor(MAV_MODE_PREFLIGHT), MAV_MODE_PREFLIGHT);
+    ui.modeComboBox->insertItem(1, UAS::getShortModeTextFor((MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED)), (MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED));
+    ui.modeComboBox->insertItem(2, UAS::getShortModeTextFor(MAV_MODE_FLAG_MANUAL_INPUT_ENABLED), MAV_MODE_FLAG_MANUAL_INPUT_ENABLED);
+    ui.modeComboBox->insertItem(3, UAS::getShortModeTextFor((MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED)), (MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED));
+    ui.modeComboBox->insertItem(4, UAS::getShortModeTextFor((MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED | MAV_MODE_FLAG_AUTO_ENABLED)), (MAV_MODE_FLAG_STABILIZE_ENABLED | MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_GUIDED_ENABLED | MAV_MODE_FLAG_AUTO_ENABLED));
+    ui.modeComboBox->insertItem(5, UAS::getShortModeTextFor((MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_TEST_ENABLED)), (MAV_MODE_FLAG_MANUAL_INPUT_ENABLED | MAV_MODE_FLAG_TEST_ENABLED));
     connect(ui.modeComboBox, SIGNAL(activated(int)), this, SLOT(setMode(int)));
     connect(ui.setModeButton, SIGNAL(clicked()), this, SLOT(transmitMode()));
 
@@ -157,7 +157,7 @@ void UASControlWidget::updateState(int state)
 void UASControlWidget::setMode(int mode)
 {
     // Adapt context button mode
-    uasMode = mode;
+    uasMode = ui.modeComboBox->itemData(mode).toInt();
     ui.modeComboBox->blockSignals(true);
     ui.modeComboBox->setCurrentIndex(mode);
     ui.modeComboBox->blockSignals(false);
