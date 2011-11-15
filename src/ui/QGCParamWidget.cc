@@ -707,15 +707,15 @@ void QGCParamWidget::saveParameters()
                 {
                 case QVariant::Int:
                     paramValue = paramValue.arg(j.value().toInt());
-                    paramType.arg(MAVLINK_TYPE_INT32_T);
+                    paramType = paramType.arg(MAVLINK_TYPE_INT32_T);
                     break;
                 case QVariant::UInt:
                     paramValue = paramValue.arg(j.value().toUInt());
-                    paramType.arg(MAVLINK_TYPE_UINT32_T);
+                    paramType = paramType.arg(MAVLINK_TYPE_UINT32_T);
                     break;
                 case QMetaType::Float:
                     paramValue = paramValue.arg(j.value().toDouble(), 25, 'g', 12);
-                    paramType.arg(MAVLINK_TYPE_FLOAT);
+                    paramType = paramType.arg(MAVLINK_TYPE_FLOAT);
                     break;
                 default:
                     qCritical() << "ABORTED PARAM WRITE TO FILE, NO VALID QVARIANT TYPE" << j.value();

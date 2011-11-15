@@ -211,8 +211,9 @@ using namespace TNX;
 
 SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl, bool parity,
                        int dataBits, int stopBits) :
-    port(NULL), m_stopp(false),
-    ports(new QVector<QString>())
+    port(NULL),
+    ports(new QVector<QString>()),
+          m_stopp(false)
 {
     // Setup settings
     this->porthandle = portname.trimmed();
