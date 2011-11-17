@@ -37,10 +37,11 @@ void QGCMAVLinkInspector::refreshView()
         // Ignore NULL values
         if (!msg) continue;
         // Update the tree view
+        QString messageName("%1 (%2 Hz, #%3)");
+        messageName = messageName.arg(messageInfo[msg->msgid].name).arg(messagesHz.value(msg->msgid, 0)).arg(msg->msgid);
         if (!treeWidgetItems.contains(msg->msgid))
         {
-            QString messageName("%1 (#%2)");
-            messageName = messageName.arg(messageInfo[msg->msgid].name).arg(msg->msgid);
+
             QStringList fields;
             fields << messageName;
             QTreeWidgetItem* widget = new QTreeWidgetItem(fields);
@@ -56,7 +57,10 @@ void QGCMAVLinkInspector::refreshView()
             ui->treeWidget->addTopLevelItem(widget);
         }
 
+        // Set Hz
         QTreeWidgetItem* message = treeWidgetItems.value(msg->msgid);
+        message->setFirstColumnSpanned(true);
+        message->setData(0, Qt::DisplayRole, QVariant(messageName));
         for (unsigned int i = 0; i < messageInfo[msg->msgid].num_fields; ++i)
         {
             updateField(msg->msgid, i, message->child(i));
@@ -71,6 +75,19 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
 //    int filterValue = ui->systemComboBox()->value().toInt();
 //    if (filterValue != )
     memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
+
+    float msgHz = 0.0f;
+    quint64 receiveTime = QGC::groundTimeMilliseconds();
+    if (lastMessageUpdate.contains(message.msgid))
+    {
+        msgHz = ((float)((float)receiveTime - (float)lastMessageUpdate.value(message.msgid)))/1000.0f;
+        qDebug() << "DIFF:" << receiveTime - lastMessageUpdate.value(message.msgid);
+        messagesHz.insert(message.msgid, 0.1f*msgHz+0.9f*messagesHz.value(message.msgid, 1));
+    }
+
+    qDebug() << "MSGHZ:" << messagesHz.value(message.msgid, 1000);
+
+    lastMessageUpdate.insert(message.msgid, receiveTime);
 }
 
 QGCMAVLinkInspector::~QGCMAVLinkInspector()

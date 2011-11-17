@@ -315,6 +315,7 @@ void LinechartWidget::appendData(int uasId, QString curve, double value, quint64
     {
         if (activePlot->isVisible(curve+unit))
         {
+            if (usec == 0) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
@@ -347,6 +348,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     {
         if (activePlot->isVisible(curve+unit))
         {
+            if (usec == 0) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
@@ -391,6 +393,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     {
         if (activePlot->isVisible(curve+unit))
         {
+            if (usec == 0) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
@@ -425,6 +428,7 @@ void LinechartWidget::appendData(int uasId, const QString& curve, const QString&
     {
         if (activePlot->isVisible(curve+unit))
         {
+            if (usec == 0) usec = QGC::groundTimeMilliseconds();
             if (logStartTime == 0) logStartTime = usec;
             qint64 time = usec - logStartTime;
             if (time < 0) time = 0;
