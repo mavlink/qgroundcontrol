@@ -27,7 +27,7 @@ public slots:
 
 protected:
     QMap<int, quint64> lastMessageUpdate; ///< Used to switch between highlight and non-highlighting color
-    QMap<int, quint64> messagesHz; ///< Used to store update rate in Hz
+    QMap<int, float> messagesHz; ///< Used to store update rate in Hz
     mavlink_message_t receivedMessages[256]; ///< Available / known messages
     QMap<int, QTreeWidgetItem*> treeWidgetItems;   ///< Available tree widget items
     QTimer updateTimer; ///< Only update at 1 Hz to not overload the GUI
