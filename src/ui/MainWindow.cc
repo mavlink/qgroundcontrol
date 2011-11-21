@@ -91,9 +91,9 @@ MainWindow::MainWindow(QWidget *parent):
     currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
+    centerStackActionGroup(this),
     styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
     autoReconnect(false),
-    centerStackActionGroup(this),
     lowPowerMode(false)
 {
     hide();
@@ -427,14 +427,18 @@ void MainWindow::buildCommonWidgets()
 
     if (!headDown1DockWidget) {
         headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
-        headDown1DockWidget->setWidget( new HDDisplay(acceptList, "Flight Display", this) );
+        HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
+        hdDisplay->addSource(mavlinkDecoder);
+        headDown1DockWidget->setWidget(hdDisplay);
         headDown1DockWidget->setObjectName("HEAD_DOWN_DISPLAY_1_DOCK_WIDGET");
         addTool(headDown1DockWidget, tr("Flight Display"), Qt::RightDockWidgetArea);
     }
 
     if (!headDown2DockWidget) {
         headDown2DockWidget = new QDockWidget(tr("Actuator Status"), this);
-        headDown2DockWidget->setWidget( new HDDisplay(acceptList2, "Actuator Status", this) );
+        HDDisplay* hdDisplay = new HDDisplay(acceptList2, "Actuator Status", this);
+        hdDisplay->addSource(mavlinkDecoder);
+        headDown2DockWidget->setWidget(hdDisplay);
         headDown2DockWidget->setObjectName("HEAD_DOWN_DISPLAY_2_DOCK_WIDGET");
         addTool(headDown2DockWidget, tr("Actuator Status"), Qt::RightDockWidgetArea);
     }
