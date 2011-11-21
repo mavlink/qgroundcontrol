@@ -54,15 +54,15 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 #ifdef _MSC_VER
     // Create layout and attach webViewWin
 
-    QFile file("doc.html");
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qDebug() << __FILE__ << __LINE__ << "Could not open log file";
+//    QFile file("doc.html");
+//    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+//        qDebug() << __FILE__ << __LINE__ << "Could not open log file";
 
-    QTextStream out(&file);
-    out << webViewWin->generateDocumentation();
-    out.flush();
-    file.flush();
-    file.close();
+//    QTextStream out(&file);
+//    out << webViewWin->generateDocumentation();
+//    out.flush();
+//    file.flush();
+//    file.close();
 
 
 #else
