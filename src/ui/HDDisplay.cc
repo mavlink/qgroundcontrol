@@ -186,9 +186,9 @@ void HDDisplay::triggerUpdate()
 void HDDisplay::paintEvent(QPaintEvent * event)
 {
     Q_UNUSED(event);
-    static quint64 interval = 0;
+    quint64 interval = 0;
     //qDebug() << "INTERVAL:" << MG::TIME::getGroundTimeNow() - interval << __FILE__ << __LINE__;
-    interval = MG::TIME::getGroundTimeNow();
+    interval = QGC::groundTimeMilliseconds();
     renderOverlay();
 }
 

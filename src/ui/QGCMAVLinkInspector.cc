@@ -41,7 +41,6 @@ void QGCMAVLinkInspector::refreshView()
         messageName = messageName.arg(messageInfo[msg->msgid].name).arg(messagesHz.value(msg->msgid, 0), 2, 'f', 0).arg(msg->msgid);
         if (!treeWidgetItems.contains(msg->msgid))
         {
-
             QStringList fields;
             fields << messageName;
             QTreeWidgetItem* widget = new QTreeWidgetItem(fields);
@@ -72,8 +71,6 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
 {
     Q_UNUSED(link);
     // Only overwrite if system filter is set
-//    int filterValue = ui->systemComboBox()->value().toInt();
-//    if (filterValue != )
     memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
 
     float msgHz = 0.0f;
@@ -85,13 +82,9 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
         {
             msgHz = 1;
         }
-        //qDebug() << "DIFF:" << receiveTime - lastMessageUpdate.value(message.msgid);
         float newHz = 0.001f*msgHz+0.999f*messagesHz.value(message.msgid, 1);
-        qDebug() << "HZ" << newHz;
         messagesHz.insert(message.msgid, newHz);
     }
-
-    //qDebug() << "MSGHZ:" << messagesHz.value(message.msgid, 1000);
 
     lastMessageUpdate.insert(message.msgid, receiveTime);
 }
