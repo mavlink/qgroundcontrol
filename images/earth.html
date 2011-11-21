@@ -417,7 +417,9 @@ function createAircraft(id, type, color)
 	planeOrient = ge.createOrientation(''); 
 	planeModel.setOrientation(planeOrient); 
 
-	planeLink.setHref('http://qgroundcontrol.org/_media/users/models/sfly-hex.dae');
+	//planeLink.setHref('http://www.asl.ethz.ch/people/rudink/senseSoarDummy.dae'); 
+	//planeLink.setHref('http://qgroundcontrol.org/_media/users/models/sfly-hex.dae');
+	planeLink.setHref('http://qgroundcontrol.org/_media/users/models/ascent-park-glider.dae');
 	planeModel.setLink(planeLink);
 	planeModel.setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
 
@@ -578,18 +580,16 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 	      currAlt = trueGroundAlt+0.1;
 	    }
 		// Interpolate between t-1 and t and set new states
-		lastLat = lastLat*0.8+currLat*0.2;
-		lastLon = lastLon*0.8+currLon*0.2;
-		lastAlt = lastAlt*0.8+currAlt*0.2;
-		//currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
+		lastLat = lastLat*0.5+currLat*0.5;
+		lastLon = lastLon*0.5+currLon*0.5;
+		lastAlt = lastAlt*0.5+currAlt*0.5;
 	
-	
-		// FIXME Currently invalid conversion from right-handed z-down to z-up frame
-		planeOrient.setRoll(((roll/M_PI))*180.0+180.0);
-		planeOrient.setTilt(((pitch/M_PI))*180.0+180.0);
+		planeOrient.setRoll(+((roll/M_PI))*180.0);
+		planeOrient.setTilt(-((pitch/M_PI))*180.0);
 		planeOrient.setHeading(((yaw/M_PI))*180.0-90.0);
+		planeModel.setOrientation(planeOrient);
 	
-		currFollowHeading = ((yaw/M_PI))*180.0;
+		currFollowHeading = currFollowHeading*0.95+0.05*(((yaw/M_PI))*180.0);
     
     	planeLoc.setLatitude(lastLat);
     	planeLoc.setLongitude(lastLon);
