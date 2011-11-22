@@ -87,7 +87,7 @@ public:
     int getId();
 
 public slots:
-    void setAddress(QString address);
+    void setAddress(QHostAddress host);
     void setPort(int port);
     /** @brief Add a new host to broadcast messages to */
     void addHost(const QString& host);
@@ -128,8 +128,11 @@ protected:
 
     void setName(QString name);
 
+private:
+	bool hardwareConnect(void);
+
 signals:
-    // Signals are defined by LinkInterface
+    //Signals are defined by LinkInterface
 
 };
 

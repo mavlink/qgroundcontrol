@@ -37,10 +37,10 @@ void QGCMAVLinkInspector::refreshView()
         // Ignore NULL values
         if (!msg) continue;
         // Update the tree view
+        QString messageName("%1 (%2 Hz, #%3)");
+        messageName = messageName.arg(messageInfo[msg->msgid].name).arg(messagesHz.value(msg->msgid, 0), 2, 'f', 0).arg(msg->msgid);
         if (!treeWidgetItems.contains(msg->msgid))
         {
-            QString messageName("%1 (#%2)");
-            messageName = messageName.arg(messageInfo[msg->msgid].name).arg(msg->msgid);
             QStringList fields;
             fields << messageName;
             QTreeWidgetItem* widget = new QTreeWidgetItem(fields);
@@ -56,7 +56,10 @@ void QGCMAVLinkInspector::refreshView()
             ui->treeWidget->addTopLevelItem(widget);
         }
 
+        // Set Hz
         QTreeWidgetItem* message = treeWidgetItems.value(msg->msgid);
+        message->setFirstColumnSpanned(true);
+        message->setData(0, Qt::DisplayRole, QVariant(messageName));
         for (unsigned int i = 0; i < messageInfo[msg->msgid].num_fields; ++i)
         {
             updateField(msg->msgid, i, message->child(i));
@@ -68,9 +71,22 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
 {
     Q_UNUSED(link);
     // Only overwrite if system filter is set
-//    int filterValue = ui->systemComboBox()->value().toInt();
-//    if (filterValue != )
     memcpy(receivedMessages+message.msgid, &message, sizeof(mavlink_message_t));
+
+    float msgHz = 0.0f;
+    quint64 receiveTime = QGC::groundTimeMilliseconds();
+    if (lastMessageUpdate.contains(message.msgid))
+    {
+        msgHz = 1000.0/(double)(receiveTime - lastMessageUpdate.value(message.msgid));
+        if (isinf(msgHz) || isnan(msgHz) || msgHz < 0.0f)
+        {
+            msgHz = 1;
+        }
+        float newHz = 0.001f*msgHz+0.999f*messagesHz.value(message.msgid, 1);
+        messagesHz.insert(message.msgid, newHz);
+    }
+
+    lastMessageUpdate.insert(message.msgid, receiveTime);
 }
 
 QGCMAVLinkInspector::~QGCMAVLinkInspector()

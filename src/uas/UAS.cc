@@ -232,6 +232,9 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     case MAV_TYPE_QUADROTOR:
                         setAirframe(UASInterface::QGC_AIRFRAME_CHEETAH);
                         break;
+                    case MAV_TYPE_HEXAROTOR:
+                        setAirframe(UASInterface::QGC_AIRFRAME_HEXCOPTER);
+                        break;
                     default:
                         // Do nothing
                         break;
@@ -337,8 +340,6 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 mavlink_msg_sys_status_decode(&message, &state);
 
                 emit loadChanged(this,state.load/10.0f);
-
-
 
                 currentVoltage = state.voltage_battery/1000.0f;
                 lpVoltage = filterVoltage(currentVoltage);
@@ -463,7 +464,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 emit globalPositionChanged(this, latitude, longitude, altitude, time);
                 emit speedChanged(this, speedX, speedY, speedZ, time);
                 // Set internal state
-                if (!positionLock) {
+                if (!positionLock)
+                {
                     // If position was not locked before, notify positive
                     GAudioOutput::instance()->notifyPositive();
                 }
@@ -483,29 +485,35 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                 // quint64 time = getUnixTime(pos.time_usec);
                 quint64 time = getUnixTime(pos.time_usec);
 
-                if (pos.fix_type > 2) {
+                if (pos.fix_type > 2)
+                {
                     emit globalPositionChanged(this, pos.lat/(double)1E7, pos.lon/(double)1E7, pos.alt/1000.0, time);
                     latitude = pos.lat/(double)1E7;
                     longitude = pos.lon/(double)1E7;
                     altitude = pos.alt/1000.0;
                     positionLock = true;
+                    isGlobalPositionKnown = true;
 
                     // Check for NaN
                     int alt = pos.alt;
-                    if (alt != alt) {
+                    if (!isnan(alt) && !isinf(alt))
+                    {
                         alt = 0;
-                        emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN FOR ALTITUDE");
+                        emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN or Inf FOR ALTITUDE");
                     }
                     // FIXME REMOVE LATER emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E3, time);
                     // Smaller than threshold and not NaN
 
                     float vel = pos.vel/100.0f;
 
-                    if (vel < 1000000 && !isnan(vel) && !isinf(vel)) {
+                    if (vel < 1000000 && !isnan(vel) && !isinf(vel))
+                    {
                         // FIXME REMOVE LATER emit valueChanged(uasId, "speed", "m/s", vel, time);
                         //qDebug() << "GOT GPS RAW";
                         // emit speedChanged(this, (double)pos.v, 0.0, 0.0, time);
-                    } else {
+                    }
+                    else
+                    {
                         emit textMessageReceived(uasId, message.compid, 255, QString("GCS ERROR: RECEIVED INVALID SPEED OF %1 m/s").arg(vel));
                     }
                 }

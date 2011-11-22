@@ -27,7 +27,6 @@ WaypointLineItem::WaypointLineItem(WayPointItem* wp1, WayPointItem* wp2, QColor 
     setLine(localPoint1.X(), localPoint1.Y(), localPoint2.X(), localPoint2.Y());
 
     // Connect updates
-
     // Update line from both waypoints
     connect(wp1, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(updateWPValues(WayPointItem*)));
     connect(wp2, SIGNAL(WPValuesChanged(WayPointItem*)), this, SLOT(updateWPValues(WayPointItem*)));

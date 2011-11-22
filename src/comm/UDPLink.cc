@@ -40,19 +40,22 @@ This file is part of the QGROUNDCONTROL project
 //#include <netinet/in.h>
 
 UDPLink::UDPLink(QHostAddress host, quint16 port)
+	: socket(NULL)
 {
     this->host = host;
     this->port = port;
     this->connectState = false;
     // Set unique ID and add link to the list of links
     this->id = getNextLinkId();
-    this->name = tr("UDP Link (port:%1)").arg(14550);
-    LinkManager::instance()->add(this);
+	this->name = tr("UDP Link (port:%1)").arg(this->port);
+	emit nameChanged(this->name);
+    // LinkManager::instance()->add(this);
 }
 
 UDPLink::~UDPLink()
 {
     disconnect();
+	this->deleteLater();
 }
 
 /**
@@ -61,23 +64,39 @@ UDPLink::~UDPLink()
  **/
 void UDPLink::run()
 {
-//    forever
-//    {
-//        QGC::SLEEP::msleep(5000);
-//    }
-    exec();
+	exec();
 }
 
-void UDPLink::setAddress(QString address)
+void UDPLink::setAddress(QHostAddress host)
 {
-    Q_UNUSED(address);
+    bool reconnect(false);
+	if(this->isConnected())
+	{
+		disconnect();
+		reconnect = true;
+	}
+	this->host = host;
+	if(reconnect)
+	{
+		connect();
+	}
 }
 
 void UDPLink::setPort(int port)
 {
+	bool reconnect(false);
+	if(this->isConnected())
+	{
+		disconnect();
+		reconnect = true;
+	}
     this->port = port;
-    disconnect();
-    connect();
+	this->name = tr("UDP Link (port:%1)").arg(this->port);
+	emit nameChanged(this->name);
+	if(reconnect)
+	{
+		connect();
+	}
 }
 
 /**
@@ -104,9 +123,11 @@ void UDPLink::addHost(const QString& host)
                 }
             }
             hosts.append(address);
+			this->setAddress(address);
             //qDebug() << "Address:" << address.toString();
             // Set port according to user input
             ports.append(host.split(":").last().toInt());
+			this->setPort(host.split(":").last().toInt());
         }
     }
     else
@@ -189,7 +210,7 @@ void UDPLink::writeBytes(const char* data, qint64 size)
 void UDPLink::readBytes()
 {
     const qint64 maxLength = 65536;
-    static char data[maxLength];
+    char data[maxLength];
     QHostAddress sender;
     quint16 senderPort;
 
@@ -245,8 +266,14 @@ qint64 UDPLink::bytesAvailable()
  **/
 bool UDPLink::disconnect()
 {
-    delete socket;
-    socket = NULL;
+	this->quit();
+	this->wait();
+
+	if(socket)
+	{
+		delete socket;
+		socket = NULL;
+	}
 
     connectState = false;
 
@@ -262,7 +289,19 @@ bool UDPLink::disconnect()
  **/
 bool UDPLink::connect()
 {
-    socket = new QUdpSocket(this);
+	if(this->isRunning())
+	{
+		this->quit();
+		this->wait();
+	}
+	this->hardwareConnect();
+    start(HighPriority);
+    return true;
+}
+
+bool UDPLink::hardwareConnect(void)
+{
+	socket = new QUdpSocket();
 
     //Check if we are using a multicast-address
 //    bool multicast = false;
@@ -309,10 +348,9 @@ bool UDPLink::connect()
         emit connected();
         connectionStartTime = QGC::groundTimeUsecs()/1000;
     }
-
-    start(HighPriority);
-    return connectState;
+	return connectState;
 }
+
 
 /**
  * @brief Check if connection is active.

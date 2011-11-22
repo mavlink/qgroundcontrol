@@ -212,7 +212,8 @@ using namespace TNX;
 SerialLink::SerialLink(QString portname, int baudRate, bool hardwareFlowControl, bool parity,
                        int dataBits, int stopBits) :
     port(NULL),
-    ports(new QVector<QString>())
+    ports(new QVector<QString>()),
+          m_stopp(false)
 {
     // Setup settings
     this->porthandle = portname.trimmed();
@@ -340,7 +341,7 @@ QVector<QString>* SerialLink::getCurrentPorts()
         QextPortInfo portInfo = ports.at(i);
         QString portString = QString(portInfo.portName.toLocal8Bit().constData()) + " - " + QString(ports.at(i).friendName.toLocal8Bit().constData()).split("(").first();
         // Prepend newly found port to the list
-        ports.append(portString);
+        this->ports->append(portString);
     }
 
     //printf("port name: %s\n", ports.at(i).portName.toLocal8Bit().constData());
@@ -349,7 +350,7 @@ QVector<QString>* SerialLink::getCurrentPorts()
     //printf("enumerator name: %s\n", ports.at(i).enumName.toLocal8Bit().constData());
     //printf("===================================\n\n");
 #endif
-    return ports;
+    return this->ports;
 }
 
 void SerialLink::loadSettings()
@@ -394,6 +395,14 @@ void SerialLink::run()
     // Qt way to make clear what a while(1) loop does
     forever
     {
+		{
+			QMutexLocker locker(&this->m_stoppMutex);
+			if(this->m_stopp)
+			{
+				this->m_stopp = false;
+				break;
+			}
+		}
         // Check if new bytes have arrived, if yes, emit the notification signal
         checkForBytes();
         /* Serial data isn't arriving that fast normally, this saves the thread
@@ -401,6 +410,13 @@ void SerialLink::run()
                  */
         MG::SLEEP::msleep(SerialLink::poll_interval);
     }
+	if (port) {
+        port->flushInBuffer();
+        port->flushOutBuffer();
+        port->close();
+        delete port;
+        port = NULL;
+	}
 }
 
 
@@ -512,25 +528,34 @@ qint64 SerialLink::bytesAvailable()
  **/
 bool SerialLink::disconnect()
 {
-    if (port) {
+	if(this->isRunning())
+	{
+		{
+			QMutexLocker locker(&this->m_stoppMutex);
+			this->m_stopp = true;
+		}
+		this->wait();
+	
+//    if (port) {
         //#if !defined _WIN32 || !defined _WIN64
         /* Block the thread until it returns from run() */
         //#endif
-        port->flushInBuffer();
-        port->flushOutBuffer();
-        port->close();
-        delete port;
-        port = NULL;
+//        port->flushInBuffer();
+//        port->flushOutBuffer();
+//        port->close();
+//        delete port;
+//        port = NULL;
 
-        if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
-
+//        if(this->isRunning()) this->terminate(); //stop running the thread, restart it upon connect
+		
         bool closed = true;
         //port->isOpen();
 
         emit disconnected();
         emit connected(false);
         return closed;
-    } else {
+	}
+    else {
         // No port, so we're disconnected
         return true;
     }
@@ -545,6 +570,10 @@ bool SerialLink::disconnect()
 bool SerialLink::connect()
 {
     if (this->isRunning()) this->disconnect();
+	{
+		QMutexLocker locker(&this->m_stoppMutex);
+		this->m_stopp = false;
+	}
     this->start(LowPriority);
     return true;
 }

@@ -60,8 +60,8 @@ public:
 
 signals:
     /** @brief A parameter was changed in the widget, NOT onboard */
-    void parameterChanged(int component, QString parametername, QVariant value);
-    /** @brief Request a single parameter by index */
+    //void parameterChanged(int component, QString parametername, float value); // defined in QGCUASParamManager already
+    /** @brief Request a single parameter */
     void requestParameter(int component, int parameter);
     /** @brief Request a single parameter by name */
     void requestParameter(int component, const QString& parameter);
