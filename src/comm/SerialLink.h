@@ -168,6 +168,10 @@ protected:
     QMutex dataMutex;
     QVector<QString>* ports;
 
+private:
+	volatile bool m_stopp;
+	QMutex m_stoppMutex;
+
     void setName(QString name);
     bool hardwareConnect();
 

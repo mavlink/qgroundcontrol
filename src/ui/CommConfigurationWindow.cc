@@ -81,7 +81,7 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
     // Connect the current UAS
     action = new QAction(QIcon(":/images/devices/network-wireless.svg"), "", this);
     LinkManager::instance()->add(link);
-    action->setData(LinkManager::instance()->getLinks().indexOf(link));
+	action->setData(link->getId());
     action->setEnabled(true);
     action->setVisible(true);
     setLinkName(link->getName());
@@ -159,6 +159,8 @@ CommConfigurationWindow::CommConfigurationWindow(LinkInterface* link, ProtocolIn
 		ui.linkScrollArea->setWidget(conf);
 		ui.linkGroupBox->setTitle(tr("Xbee Link"));
 		ui.linkType->setCurrentIndex(4);
+		connect(xbee,SIGNAL(tryConnectBegin(bool)),ui.actionConnect,SLOT(setDisabled(bool)));
+		connect(xbee,SIGNAL(tryConnectEnd(bool)),ui.actionConnect,SLOT(setEnabled(bool)));
 	}
 #endif // XBEELINK
     if (serial == 0 && udp == 0 && sim == 0
@@ -232,21 +234,14 @@ void CommConfigurationWindow::setLinkType(int linktype)
 				break;
 			}
 #endif // XBEELINK
-		case 0:
-			{
-				SerialLink *serial = new SerialLink();
-				tmpLink = serial;
-				MainWindow::instance()->addLink(tmpLink);
-				break;
-			}
-/*		case 1:
+		case 1:
 			{
 				UDPLink *udp = new UDPLink();
 				tmpLink = udp;
 				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
-			*/
+			
 #ifdef OPAL_RT
 		case 3:
 			{
@@ -258,15 +253,24 @@ void CommConfigurationWindow::setLinkType(int linktype)
 #endif // OPAL_RT
 		default:
 			{
-				MainWindow::instance()->addLink();
+			}
+		case 0:
+			{
+				SerialLink *serial = new SerialLink();
+				tmpLink = serial;
+				MainWindow::instance()->addLink(tmpLink);
 				break;
 			}
 	}
 	// trigger new window
+
+	const int32_t& linkIndex(LinkManager::instance()->getLinks().indexOf(tmpLink));
+	const int32_t& linkID(LinkManager::instance()->getLinks()[linkIndex]->getId());
+
 	QList<QAction*> actions = MainWindow::instance()->listLinkMenuActions();
 	foreach (QAction* act, actions) 
 	{
-        if (act->data().toInt() == LinkManager::instance()->getLinks().indexOf(tmpLink)) 
+        if (act->data().toInt() == linkID) 
         {
             act->trigger();
             break;

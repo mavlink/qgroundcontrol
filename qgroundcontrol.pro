@@ -19,6 +19,8 @@
 
 
 # Qt configuration
+CONFIG += qt \
+	thread
 QT += network \
     opengl \
     svg \
@@ -29,16 +31,26 @@ QT += network \
 
 TEMPLATE = app
 TARGET = qgroundcontrol
-BASEDIR = $$IN_PWD
-TARGETDIR = $$OUT_PWD
-BUILDDIR = $$TARGETDIR/build
+BASEDIR = $${IN_PWD}
+TARGETDIR = $${OUT_PWD}
+BUILDDIR = $${TARGETDIR}/build
 LANGUAGE = C++
-#OBJECTS_DIR = $$BUILDDIR/obj
-#MOC_DIR = $$BUILDDIR/moc
-#UI_HEADERS_DIR = $$BUILDDIR/ui
-#RCC_DIR = $$BUILDDIR/rcc
+OBJECTS_DIR = $${BUILDDIR}/obj
+MOC_DIR = $${BUILDDIR}/moc
+UI_DIR = $${BUILDDIR}/ui
+RCC_DIR = $${BUILDDIR}/rcc
 MAVLINK_CONF = ""
 DEFINES += MAVLINK_NO_DATA
+
+win32 {
+QMAKE_INCDIR_QT = $$(QTDIR)/include
+QMAKE_LIBDIR_QT = $$(QTDIR)/lib
+QMAKE_UIC = "$$(QTDIR)/bin/uic.exe"
+QMAKE_MOC = "$$(QTDIR)/bin/moc.exe"
+QMAKE_RCC = "$$(QTDIR)/bin/rcc.exe"
+QMAKE_QMAKE = "$$(QTDIR)/bin/qmake.exe"
+}
+
 
 
 #################################################################
@@ -118,6 +130,16 @@ contains(MAVLINK_CONF, ardupilotmega) {
     INCLUDEPATH += $$BASEDIR/../mavlink/include/ardupilotmega
     INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/ardupilotmega
     DEFINES += QGC_USE_ARDUPILOTMEGA_MESSAGES
+}
+contains(MAVLINK_CONF, senseSoar) { 
+    # Remove the default set - it is included anyway
+    INCLUDEPATH -= $$BASEDIR/../mavlink/include/common
+    INCLUDEPATH -= $$BASEDIR/thirdParty/mavlink/include/common
+    
+    # SENSESOAR SPECIAL MESSAGES
+    INCLUDEPATH += $$BASEDIR/../mavlink/include/SenseSoar
+    INCLUDEPATH += $$BASEDIR/thirdParty/mavlink/include/SenseSoar
+    DEFINES += QGC_USE_SENSESOAR_MESSAGES
 }
 
 
@@ -273,6 +295,7 @@ HEADERS += src/MG.h \
     src/uas/SlugsMAV.h \
     src/uas/PxQuadMAV.h \
     src/uas/ArduPilotMegaMAV.h \
+    src/uas/senseSoarMAV.h \
     src/ui/watchdog/WatchdogControl.h \
     src/ui/watchdog/WatchdogProcessView.h \
     src/ui/watchdog/WatchdogView.h \
@@ -404,6 +427,7 @@ SOURCES += src/main.cc \
     src/uas/SlugsMAV.cc \
     src/uas/PxQuadMAV.cc \
     src/uas/ArduPilotMegaMAV.cc \
+    src/uas/senseSoarMAV.cpp \
     src/ui/watchdog/WatchdogControl.cc \
     src/ui/watchdog/WatchdogProcessView.cc \
     src/ui/watchdog/WatchdogView.cc \
@@ -519,18 +543,20 @@ win32:exists(src/lib/opalrt/OpalApi.h):exists(C:/OPAL-RT/RT-LAB7.2.4/Common/bin)
 TRANSLATIONS += es-MX.ts \
     en-US.ts
 
-## xbee support
-## libxbee only supported by linux and windows systems
-##win32-msvc2008|win32-msvc2010|linux{
+# xbee support
+# libxbee only supported by linux and windows systems
+#win32-msvc2008|win32-msvc2010|linux{
 #    HEADERS += src/comm/XbeeLinkInterface.h \
 #	src/comm/XbeeLink.h \
+#	src/comm/HexSpinBox.h \
 #	src/ui/XbeeConfigurationWindow.h \
 #	src/comm/CallConv.h
 #    SOURCES += src/comm/XbeeLink.cpp \
+#	src/comm/HexSpinBox.cpp \
 #	src/ui/XbeeConfigurationWindow.cpp
 #    DEFINES += XBEELINK
 #    INCLUDEPATH += thirdParty/libxbee
-## TO DO: build library when it does not exists already
+# TO DO: build library when it does not exists already
 #    LIBS += -LthirdParty/libxbee/lib \
 #	-llibxbee
 #

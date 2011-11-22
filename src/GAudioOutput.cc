@@ -119,9 +119,9 @@ GAudioOutput::GAudioOutput(QObject* parent) : QObject(parent),
     }
 #endif
     // Initialize audio output
-    m_media = new Phonon::MediaObject(this);
-    Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
-    createPath(m_media, audioOutput);
+    //m_media = new Phonon::MediaObject(this);
+    //Phonon::AudioOutput *audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);
+    //createPath(m_media, audioOutput);
 
     // Prepare regular emergency signal, will be fired off on calling startEmergency()
     emergencyTimer = new QTimer();
@@ -184,8 +184,8 @@ bool GAudioOutput::say(QString text, int severity)
                 cst_wave* wav = flite_text_to_wave(text.toStdString().c_str(), v);
                 // file.fileName() returns the unique file name
                 cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
-                m_media->setCurrentSource(Phonon::MediaSource(file.fileName().toStdString().c_str()));
-                m_media->play();
+                //m_media->setCurrentSource(Phonon::MediaSource(file.fileName().toStdString().c_str()));
+                //m_media->play();
                 res = true;
             }
 #endif
@@ -228,8 +228,8 @@ void GAudioOutput::notifyPositive()
     if (!muted) {
         // Use QFile to transform path for all OS
         QFile f(QCoreApplication::applicationDirPath()+QString("/audio/double_notify.wav"));
-        m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
-        m_media->play();
+        //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
+        //m_media->play();
     }
 }
 
@@ -238,8 +238,8 @@ void GAudioOutput::notifyNegative()
     if (!muted) {
         // Use QFile to transform path for all OS
         QFile f(QCoreApplication::applicationDirPath()+QString("/audio/flat_notify.wav"));
-        m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
-        m_media->play();
+        //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
+        //m_media->play();
     }
 }
 
@@ -283,8 +283,8 @@ void GAudioOutput::beep()
         // Use QFile to transform path for all OS
         QFile f(QCoreApplication::applicationDirPath()+QString("/audio/alert.wav"));
         qDebug() << "FILE:" << f.fileName();
-        m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
-        m_media->play();
+        //m_media->setCurrentSource(Phonon::MediaSource(f.fileName().toStdString().c_str()));
+        //m_media->play();
     }
 }
 

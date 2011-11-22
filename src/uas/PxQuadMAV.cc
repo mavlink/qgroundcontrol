@@ -42,9 +42,12 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
 #ifdef MAVLINK_ENABLED_PIXHAWK
     mavlink_message_t* msg = &message;
 
-    if (message.sysid == uasId) {
-        switch (message.msgid) {
-        case MAVLINK_MSG_ID_RAW_AUX: {
+    if (message.sysid == uasId)
+    {
+        switch (message.msgid)
+        {
+        case MAVLINK_MSG_ID_RAW_AUX:
+            {
             mavlink_raw_aux_t raw;
             mavlink_msg_raw_aux_decode(&message, &raw);
             quint64 time = getUnixTime(0);
@@ -52,14 +55,16 @@ void PxQuadMAV::receiveMessage(LinkInterface* link, mavlink_message_t message)
             emit valueChanged(uasId, "Temperature", "raw", raw.temp, time);
         }
         break;
-        case MAVLINK_MSG_ID_IMAGE_TRIGGERED: {
+        case MAVLINK_MSG_ID_IMAGE_TRIGGERED:
+        {
             // FIXME Kind of a hack to load data from disk
             mavlink_image_triggered_t img;
             mavlink_msg_image_triggered_decode(&message, &img);
             emit imageStarted(img.timestamp);
         }
         break;
-        case MAVLINK_MSG_ID_PATTERN_DETECTED: {
+        case MAVLINK_MSG_ID_PATTERN_DETECTED:
+        {
             mavlink_pattern_detected_t detected;
             mavlink_msg_pattern_detected_decode(&message, &detected);
             QByteArray b;

@@ -54,15 +54,15 @@ QGCGoogleEarthView::QGCGoogleEarthView(QWidget *parent) :
 #ifdef _MSC_VER
     // Create layout and attach webViewWin
 
-    QFile file("doc.html");
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        qDebug() << __FILE__ << __LINE__ << "Could not open log file";
+//    QFile file("doc.html");
+//    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+//        qDebug() << __FILE__ << __LINE__ << "Could not open log file";
 
-    QTextStream out(&file);
-    out << webViewWin->generateDocumentation();
-    out.flush();
-    file.flush();
-    file.close();
+//    QTextStream out(&file);
+//    out << webViewWin->generateDocumentation();
+//    out.flush();
+//    file.flush();
+//    file.close();
 
 
 #else
@@ -284,8 +284,6 @@ void QGCGoogleEarthView::updateGlobalPosition(UASInterface* uas, double lat, dou
 {
     Q_UNUSED(usec);
     javaScript(QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 22).arg(lon, 0, 'f', 22).arg(alt, 0, 'f', 22));
-
-    //qDebug() << QString("addTrailPosition(%1, %2, %3, %4);").arg(uas->getUASID()).arg(lat, 0, 'f', 15).arg(lon, 0, 'f', 15).arg(alt, 0, 'f', 15);
 }
 
 void QGCGoogleEarthView::clearTrails()
@@ -614,7 +612,8 @@ void QGCGoogleEarthView::updateState()
 #if (QGC_EVENTLOOP_DEBUG)
     qDebug() << "EVENTLOOP:" << __FILE__ << __LINE__;
 #endif
-    if (gEarthInitialized) {
+    if (gEarthInitialized)
+    {
         int uasId = 0;
         double lat = 47.3769;
         double lon = 8.549444;
@@ -628,6 +627,8 @@ void QGCGoogleEarthView::updateState()
         QList<UASInterface*> mavs = UASManager::instance()->getUASList();
         foreach (UASInterface* currMav, mavs)
         {
+            // Only update if known
+            if (!currMav->globalPositionKnown()) continue;
             uasId = currMav->getUASID();
             lat = currMav->getLatitude();
             lon = currMav->getLongitude();
@@ -640,9 +641,9 @@ void QGCGoogleEarthView::updateState()
 
             javaScript(QString("setAircraftPositionAttitude(%1, %2, %3, %4, %6, %7, %8);")
                        .arg(uasId)
-                       .arg(lat, 0, 'f', 15)
-                       .arg(lon, 0, 'f', 15)
-                       .arg(alt, 0, 'f', 15)
+                       .arg(lat, 0, 'f', 22)
+                       .arg(lon, 0, 'f', 22)
+                       .arg(alt, 0, 'f', 22)
                        .arg(roll, 0, 'f', 9)
                        .arg(pitch, 0, 'f', 9)
                        .arg(yaw, 0, 'f', 9));

@@ -68,7 +68,14 @@ public slots:
     void updateValue(const int uasId, const QString& name, const QString& unit, const double value, const quint64 msec);
     /** @brief Update a HDD integer value */
     void updateValue(const int uasId, const QString& name, const QString& unit, const int value, const quint64 msec);
+    /** @brief Update a HDD integer value */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const unsigned int value, const quint64 msec);
+    /** @brief Update a HDD integer value */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const qint64 value, const quint64 msec);
+    /** @brief Update a HDD integer value */
+    void updateValue(const int uasId, const QString& name, const QString& unit, const quint64 value, const quint64 msec);
     virtual void setActiveUAS(UASInterface* uas);
+    void addSource(QObject* obj);
 
     /** @brief Removes a plot item by the action data */
     void removeItemByAction();
@@ -149,6 +156,7 @@ protected:
     QMap<QString, float> maxValues;    ///< The maximum value this variable is assumed to have
     QMap<QString, bool> symmetric;     ///< Draw the gauge / dial symmetric bool = yes
     QMap<QString, bool> intValues;     ///< Is the gauge value an integer?
+    QMap<QString, QString> customNames; ///< Custom names for the data names
     QMap<QString, QPair<float, float> > goodRanges; ///< The range of good values
     QMap<QString, QPair<float, float> > critRanges; ///< The range of critical values
     double scalingFactor;      ///< Factor used to scale all absolute values to screen coordinates
