@@ -18,9 +18,9 @@ var currAircraft = 0;
 var followEnabled = false;
 var lineAltitudeOffset = 0.5; ///< 0.5 m higher than waypoint, prevents the line from entering the ground
 
-var lastLat = 0;
-var lastLon = 0;
-var lastAlt = 0;
+var lastLat = [];
+var lastLon = [];
+var lastAlt = [];
 var currLat = 47.3769;
 var currLon = 8.549444;
 var currAlt = 470;
@@ -59,6 +59,9 @@ var planeLoc;
 var aircraft = [];
 var aircraftLocations = [];
 var aircraftLastLocations = [];
+var aircraftScaleFactors = [];
+var aircraftLinks = [];
+var aircraftModels = [];
 var attitudes = [];
 var locations = [];
 var trails = [];
@@ -103,7 +106,6 @@ var homePlacemark = null;
 // Data / heightmap
 var heightMapPlacemark = null;
 var heightMapModel = null;
-
 
 function getGlobal(variable)
 {
@@ -303,7 +305,6 @@ function setGCSHome(lat, lon, alt)
 	homeLon = lon;
 	homeAlt = alt;
 	
-	
 	if (homePlacemark == null)
 	{
 		var placemark = ge.createPlacemark(''); 
@@ -413,39 +414,39 @@ function updateWaypoint(id, index, lat, lon, alt, action)
 
 function createAircraft(id, type, color)
 {
-	planePlacemark = ge.createPlacemark('');
-	planePlacemark.setName('aircraft');
-	planeModel = ge.createModel('');
-	ge.getFeatures().appendChild(planePlacemark);
-	planeLoc = ge.createLocation('');
-	planeModel.setLocation(planeLoc);
-	planeLink = ge.createLink('');
-	planeOrient = ge.createOrientation(''); 
-	planeModel.setOrientation(planeOrient);
+	aircraft[id] = ge.createPlacemark('');
+	aircraft[id].setName('aircraft');
+	aircraftModels[id] = ge.createModel('');
+	ge.getFeatures().appendChild(aircraft[id]);
+	aircraftLocations[id] = ge.createLocation('');
+	aircraftModels[id].setLocation(aircraftLocations[id]);
+	aircraftLinks[id] = ge.createLink('');
+	attitudes[id] = ge.createOrientation(''); 
+	aircraftModels[id].setOrientation(attitudes[id]);
 	
-	var factor = 1.0;
+	aircraftScaleFactors[id] = 1.0;
 
 	//planeLink.setHref('http://www.asl.ethz.ch/people/rudink/senseSoarDummy.dae'); 
-	planeLink.setHref('http://qgroundcontrol.org/_media/users/models/sfly-hex.dae');
-	factor = 1.0/1000.0;
+	aircraftLinks[id].setHref('http://qgroundcontrol.org/_media/users/models/sfly-hex.dae');
+	aircraftScaleFactors[id] = 1.0/1000.0;
 	//planeLink.setHref('http://qgroundcontrol.org/_media/users/models/ascent-park-glider.dae');
-	planeModel.setLink(planeLink);
-	var scale = planeModel.getScale();
-	scale.set(scale.getX()*factor, scale.getY()*factor, scale.getZ()*factor)
-	planeModel.setScale(scale);
-	planeModel.setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
+	aircraftModels[id].setLink(aircraftLinks[id]);
+	var scale = aircraftModels[id].getScale();
+	scale.set(scale.getX()*aircraftScaleFactors[id], scale.getY()*aircraftScaleFactors[id], scale.getZ()*aircraftScaleFactors[id])
+	aircraftModels[id].setScale(scale);
+	aircraftModels[id].setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
 
-	planeLoc.setLatitude(currLat);
-	planeLoc.setLongitude(currLon);
-	planeLoc.setAltitude(currAlt);
+	aircraftLocations[id].setLatitude(currLat);
+	aircraftLocations[id].setLongitude(currLon);
+	aircraftLocations[id].setAltitude(currAlt);
 
-	planePlacemark.setGeometry(planeModel);
+	aircraft[id].setGeometry(aircraftModels[id]);
           
 	// Write into global structure
-	aircraft[id] = planePlacemark;
-	attitudes[id] = planeOrient;
-	aircraftLocations[id] = planeLoc;
-	aircraftLastLocations[id] = ge.createLocation('');
+	aircraftLastLocations[id] = aircraftLocations[id];
+	lastLat[id] = 0;
+	lastLon[id] = 0;
+	lastAlt[id] = 0;
           
 	createTrail(id, color);
 	createWaypointLine(id, color);
@@ -600,44 +601,48 @@ function initCallback(object)
 
 function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 {
+	if (lastLat[id] == 0)
+	{
+		lastLat[id] = lat;
+		lastLon[id] = lon;
+	}
+	
 	if (id == currAircraft)
 	{
-		if (lastLat == 0)
-		{
-			lastLat = currLat;
-			lastLon = currLon;
-		}
-		
+		currFollowHeading = currFollowHeading*0.95+0.05*(((yaw/M_PI))*180.0);
 		currLat = lat;
 		currLon = lon;
 		var trueGroundAlt = ge.getGlobe().getGroundAltitude(lat, lon);
 		if (trueGroundAlt < alt)
 		{
-		  currAlt = alt;
+		  	currAlt = alt;
 	    }
 	    else
 	    {
-	      currAlt = trueGroundAlt+0.1;
+	     	currAlt = trueGroundAlt+0.1;
 	    }
-		// Interpolate between t-1 and t and set new states
-		lastLat = lastLat*0.5+currLat*0.5;
-		lastLon = lastLon*0.5+currLon*0.5;
-		lastAlt = lastAlt*0.5+currAlt*0.5;
+	}
+	    
+	// Interpolate between t-1 and t and set new states
+	//lastLat[id] = lastLat[id]*0.5+lat*0.5;
+	//lastLon[id] = lastLon[id]*0.5+lon*0.5;
+	//lastAlt[id] = lastAlt[id]*0.5+alt*0.5;
 	
-		planeOrient.setRoll(+((roll/M_PI))*180.0);
-		planeOrient.setTilt(-((pitch/M_PI))*180.0);
-		planeOrient.setHeading(((yaw/M_PI))*180.0-90.0);
-		planeModel.setOrientation(planeOrient);
+	lastLat[id] = lastLat[id]*0.5+lat*0.5;
+	lastLon[id] = lastLon[id]*0.5+lon*0.5;
+	lastAlt[id] = lastAlt[id]*0.5+alt*0.5;
 	
-		currFollowHeading = currFollowHeading*0.95+0.05*(((yaw/M_PI))*180.0);
+	attitudes[id].setRoll(+((roll/M_PI))*180.0);
+	attitudes[id].setTilt(-((pitch/M_PI))*180.0);
+	attitudes[id].setHeading(((yaw/M_PI))*180.0-90.0);
+	aircraftModels[id].setOrientation(attitudes[id]);
     
-    	planeLoc.setLatitude(lastLat);
-    	planeLoc.setLongitude(lastLon);
-    	planeLoc.setAltitude(lastAlt);
-    	planeModel.setLocation(planeLoc);
+    aircraftLocations[id].setLatitude(lastLat[id]);
+    aircraftLocations[id].setLongitude(lastLon[id]);
+    aircraftLocations[id].setAltitude(lastAlt[id]);
+    aircraftModels[id].setLocation(aircraftLocations[id]);
     
-    	if (followEnabled) updateFollowAircraft();
-    }
+    if (followEnabled && id == currAircraft) updateFollowAircraft();
 }
 
 function enableDaylight(enabled)
@@ -703,16 +708,16 @@ function setViewMode(mode)
 function updateFollowAircraft()
 {
 	currView = ge.getView().copyAsLookAt(ge.ALTITUDE_ABSOLUTE);
-	currView.setLatitude(lastLat);
-	currView.setLongitude(lastLon);
+	currView.setLatitude(lastLat[currAircraft]);
+	currView.setLongitude(lastLon[currAircraft]);
 	
 	if (distanceMode == 1)
 	{
-		var groundAltitude = ge.getGlobe().getGroundAltitude(lastLat, lastLon);
+		var groundAltitude = ge.getGlobe().getGroundAltitude(lastLat[currAircraft], lastLon[currAircraft]);
 		currView.setAltitude(groundAltitude);
 	}
 	
-	if (distanceMode == 0) currView.setAltitude(lastAlt);
+	if (distanceMode == 0) currView.setAltitude(lastAlt[currAircraft]);
 
 	currView.setRange(currViewRange);
 	
