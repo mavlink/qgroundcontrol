@@ -451,7 +451,7 @@ void UASWaypointManager::saveWaypoints(const QString &saveFile)
     QTextStream out(&file);
 
     //write the waypoint list version to the first line for compatibility check
-    out << "QGC WPL 110\r\n";
+    out << "QGC WPL 120\r\n";
 
     for (int i = 0; i < waypointsEditable.size(); i++)
     {
@@ -477,7 +477,7 @@ void UASWaypointManager::loadWaypoints(const QString &loadFile)
 
     const QStringList &version = in.readLine().split(" ");
 
-    if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "110"))
+    if (!(version.size() == 3 && version[0] == "QGC" && version[1] == "WPL" && version[2] == "120"))
     {
         emit updateStatusString(tr("The waypoint file is not compatible with the current version of QGroundControl."));
     }

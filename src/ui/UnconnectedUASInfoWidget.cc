@@ -5,7 +5,7 @@ UnconnectedUASInfoWidget::UnconnectedUASInfoWidget(QWidget *parent) :
     QGroupBox(parent),
     ui(new Ui::UnconnectedUASInfoWidget)
 {
-    ui->setupUi(this);    
+    ui->setupUi(this);
 }
 
 UnconnectedUASInfoWidget::~UnconnectedUASInfoWidget()
