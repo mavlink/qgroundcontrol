@@ -117,6 +117,7 @@ protected:
     float alt;
     float groundDistance;
     bool localFrame;
+    bool globalFrameKnown;
     QAction* removeAction;
     QAction* renameAction;
     QAction* selectAction;
@@ -126,6 +127,8 @@ protected:
     static const int updateInterval = 800;
     static const int errorUpdateInterval = 200;
     bool lowPowerModeEnabled; ///< Low power mode reduces update rates
+    unsigned int generalUpdateCount; ///< Skip counter for updates
+    double filterTime; ///< Filter time estimate of battery
 
 
     void mouseDoubleClickEvent (QMouseEvent * event);

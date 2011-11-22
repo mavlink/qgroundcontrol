@@ -188,7 +188,7 @@ void QGCFlightGearLink::writeBytes(const char* data, qint64 size)
 void QGCFlightGearLink::readBytes()
 {
     const qint64 maxLength = 65536;
-    static char data[maxLength];
+    char data[maxLength];
     QHostAddress sender;
     quint16 senderPort;
 

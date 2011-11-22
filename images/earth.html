@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html>
   <head>
@@ -7,8 +7,8 @@
 <!-- QGroundControl -->
     <title>QGroundControl Google Earth View</title>
     <!-- *** Replace the key below below with your own API key, available at http://code.google.com/apis/maps/signup.html *** -->
-    <!--<script type="text/javascript" src="https://getfirebug.com/firebug-lite-beta.js"></script>-->
-    <script type="text/javascript" src="http://www.google.com/jsapi?key=ABQIAAAAwbkbZLyhsmTCWXbTcjbgbRSzHs7K5SvaUdm8ua-Xxy_-2dYwMxQMhnagaawTo7L1FE1-amhuQxIlXw"></script>
+    <script type="text/javascript" src="https://getfirebug.com/firebug-lite-beta.js"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi?key=ABQIAAAA5Q6wxQ6lxKS8haLVdUJaqhSjosg_0jiTTs2iXtkDVG0n0If1mBRHzhWw5VqBZX-j4NuzoVpU-UaHVg"></script>
     <script type="text/javascript">
 google.load("earth", "1", { 'language': 'en'});
 
@@ -98,6 +98,12 @@ var newWaypointPending = false;
 var clickMode = 0;
 
 var homePlacemark = null;
+
+
+// Data / heightmap
+var heightMapPlacemark = null;
+var heightMapModel = null;
+
 
 function getGlobal(variable)
 {
@@ -416,9 +422,17 @@ function createAircraft(id, type, color)
 	planeLink = ge.createLink('');
 	planeOrient = ge.createOrientation(''); 
 	planeModel.setOrientation(planeOrient);
+	
+	var factor = 1.0;
 
-	planeLink.setHref('http://www.asl.ethz.ch/people/rudink/senseSoarDummy.dae'); 
+	//planeLink.setHref('http://www.asl.ethz.ch/people/rudink/senseSoarDummy.dae'); 
+	planeLink.setHref('http://qgroundcontrol.org/_media/users/models/sfly-hex.dae');
+	factor = 1.0/1000.0;
+	//planeLink.setHref('http://qgroundcontrol.org/_media/users/models/ascent-park-glider.dae');
 	planeModel.setLink(planeLink);
+	var scale = planeModel.getScale();
+	scale.set(scale.getX()*factor, scale.getY()*factor, scale.getZ()*factor)
+	planeModel.setScale(scale);
 	planeModel.setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
 
 	planeLoc.setLatitude(currLat);
@@ -553,6 +567,34 @@ function initCallback(object)
     
     enableEventListener();
 	document.getElementById('JScript_initialized').setAttribute('value','true');
+	
+	// Load heightmap
+	// http://www.inf.ethz.ch/personal/lomeier/data/untex-environment.dae
+	
+	heightMapPlacemark = ge.createPlacemark('');
+	heightMapPlacemark.setName('aircraft');
+	heightMapModel = ge.createModel('');
+	ge.getFeatures().appendChild(heightMapPlacemark);
+	planeLoc = ge.createLocation('');
+	heightMapModel.setLocation(planeLoc);
+	planeLink = ge.createLink('');
+	planeOrient = ge.createOrientation(''); 
+	heightMapModel.setOrientation(planeOrient); 
+
+	planeLink.setHref('http://www.inf.ethz.ch/personal/lomeier/data/untex-environment.dae'); 
+	heightMapModel.setLink(planeLink);
+	var scale = heightMapModel.getScale();
+	var factor = 1.0;//1.0/1000.0;
+	scale.set(scale.getX()*factor, scale.getY()*factor, scale.getZ()*factor)
+	heightMapModel.setScale(scale);
+	heightMapModel.setAltitudeMode (ge.ALTITUDE_ABSOLUTE); 
+
+	planeLoc.setLatitude(currLat);
+	planeLoc.setLongitude(currLon);
+	planeLoc.setAltitude(currAlt);
+
+	heightMapPlacemark.setGeometry(heightMapModel);
+	
     initialized = true;
 }
 
@@ -578,18 +620,16 @@ function setAircraftPositionAttitude(id, lat, lon, alt, roll, pitch, yaw)
 	      currAlt = trueGroundAlt+0.1;
 	    }
 		// Interpolate between t-1 and t and set new states
-		lastLat = lastLat*0.8+currLat*0.2;
-		lastLon = lastLon*0.8+currLon*0.2;
-		lastAlt = lastAlt*0.8+currAlt*0.2;
-		//currFollowHeading = ((yaw/M_PI)+1.0)*360.0;
+		lastLat = lastLat*0.5+currLat*0.5;
+		lastLon = lastLon*0.5+currLon*0.5;
+		lastAlt = lastAlt*0.5+currAlt*0.5;
 	
-	
-		planeOrient.setRoll(+((pitch / M_PI)) * 180.0);  
-		planeOrient.setTilt(-((roll / M_PI)) * 180.0);  
-		planeOrient.setHeading(((yaw / M_PI)) * 180.0 - 90.0); 
+		planeOrient.setRoll(+((roll/M_PI))*180.0);
+		planeOrient.setTilt(-((pitch/M_PI))*180.0);
+		planeOrient.setHeading(((yaw/M_PI))*180.0-90.0);
 		planeModel.setOrientation(planeOrient);
 	
-		currFollowHeading = ((yaw/M_PI))*180.0;
+		currFollowHeading = currFollowHeading*0.95+0.05*(((yaw/M_PI))*180.0);
     
     	planeLoc.setLatitude(lastLat);
     	planeLoc.setLongitude(lastLon);
@@ -678,17 +718,10 @@ function updateFollowAircraft()
 	
 	if (viewMode != 3) // VIEW_MODE_CHASE_FREE
 	{
-		ge.getView().setAbstractView(currView);
-		var camera = ge.getView().copyAsCamera(ge.ALTITUDE_ABSOLUTE);
-		camera.setTilt(currFollowTilt);
-		camera.setRoll(0);
-		camera.setHeading(currFollowHeading);
-		ge.getView().setAbstractView(camera);
+		currView.setTilt(currFollowTilt);
+		currView.setHeading(currFollowHeading);
 	}
-	else
-	{
-		ge.getView().setAbstractView(currView);
-	}
+	ge.getView().setAbstractView(currView);
 }
 
 function failureCallback(object)

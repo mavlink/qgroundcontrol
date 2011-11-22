@@ -184,8 +184,8 @@ bool GAudioOutput::say(QString text, int severity)
                 cst_wave* wav = flite_text_to_wave(text.toStdString().c_str(), v);
                 // file.fileName() returns the unique file name
                 cst_wave_save(wav, file.fileName().toStdString().c_str(), "riff");
-                m_media->setCurrentSource(Phonon::MediaSource(file.fileName().toStdString().c_str()));
-                m_media->play();
+                //m_media->setCurrentSource(Phonon::MediaSource(file.fileName().toStdString().c_str()));
+                //m_media->play();
                 res = true;
             }
 #endif

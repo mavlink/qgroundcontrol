@@ -63,7 +63,7 @@ namespace core {
         /// Google Maps API generated using http://greatmaps.codeplex.com/
         /// from http://code.google.com/intl/en-us/apis/maps/signup.html
         /// </summary>
-        GoogleMapsAPIKey = "ABQIAAAAWaQgWiEBF3lW97ifKnAczhRAzBk5Igf8Z5n2W3hNnMT0j2TikxTLtVIGU7hCLLHMAuAMt-BO5UrEWA";
+        GoogleMapsAPIKey = "ABQIAAAA5Q6wxQ6lxKS8haLVdUJaqhSjosg_0jiTTs2iXtkDVG0n0If1mBRHzhWw5VqBZX-j4NuzoVpU-UaHVg";
 
         // Yahoo version strings
         VersionYahooMap = "4.3";
