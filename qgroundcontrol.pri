@@ -42,8 +42,8 @@ macx {
    # COMPILER_VERSION = $$system(gcc -v)
     #message(Using compiler $$COMPILER_VERSION)
 
-        CONFIG += x86_64 cocoa phonon
-        CONFIG -= x86
+        CONFIG += x86 cocoa phonon
+        CONFIG -= x86_64
 
     #HARDWARE_PLATFORM = $$system(uname -a)
     #contains( $$HARDWARE_PLATFORM, "9.6.0" ) || contains( $$HARDWARE_PLATFORM, "9.7.0" ) || contains( $$HARDWARE_PLATFORM, "9.8.0" ) || contains( $$HARDWARE_PLATFORM, "9.9.0" ) {
