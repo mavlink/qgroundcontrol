@@ -227,23 +227,25 @@ namespace core {
 #endif //DEBUG_PUREIMAGECACHE
 
             QString db=dir+"Data.qmdb";
-            QSqlDatabase cn;
+			{
+				QSqlDatabase cn;
+			
+				cn = QSqlDatabase::addDatabase("QSQLITE",QString::number(id));
 
-            cn = QSqlDatabase::addDatabase("QSQLITE",QString::number(id));
-
-            cn.setDatabaseName(db);
-            cn.setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
-            if(cn.open())
-            {
-				QSqlQuery query(cn);
-				query.exec(QString("SELECT Tile FROM TilesData WHERE id = (SELECT id FROM Tiles WHERE X=%1 AND Y=%2 AND Zoom=%3 AND Type=%4)").arg(pos.X()).arg(pos.Y()).arg(zoom).arg((int) type));
-				query.next();
-				if(query.isValid())
+	            cn.setDatabaseName(db);
+		        cn.setConnectOptions("QSQLITE_ENABLE_SHARED_CACHE");
+			    if(cn.open())
 				{
-					ar=query.value(0).toByteArray();
-                }
-                cn.close();
-             }
+					QSqlQuery query(cn);
+					query.exec(QString("SELECT Tile FROM TilesData WHERE id = (SELECT id FROM Tiles WHERE X=%1 AND Y=%2 AND Zoom=%3 AND Type=%4)").arg(pos.X()).arg(pos.Y()).arg(zoom).arg((int) type));
+					query.next();
+					if(query.isValid())
+					{
+						ar=query.value(0).toByteArray();
+					}
+					cn.close();
+				}
+			}
 			QSqlDatabase::removeDatabase(QString::number(id));
         lock.unlock();
         return ar;
