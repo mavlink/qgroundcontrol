@@ -82,6 +82,12 @@ UAS::UAS(MAVLinkProtocol* protocol, int id) : UASInterface(),
     isGlobalPositionKnown(false),
     systemIsArmed(false)
 {
+    for (unsigned int i = 0; i<255;++i)
+    {
+        componentID[i] = -1;
+        componentMulti[i] = false;
+    }
+
     color = UASInterface::getNextColor();
     setBatterySpecs(QString("9V,9.5V,12.6V"));
     connect(statusTimeout, SIGNAL(timeout()), this, SLOT(updateState()));
@@ -210,6 +216,27 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
         QString uasState;
         QString stateDescription;
 
+        bool multiComponentSourceDetected = false;
+        bool wrongComponent = false;
+
+        // Store component ID
+        if (componentID[message.msgid] == -1)
+        {
+            componentID[message.msgid] = message.compid;
+        }
+        else
+        {
+            // Got this message already
+            if (componentID[message.msgid] != message.compid)
+            {
+                componentMulti[message.msgid] = true;
+                wrongComponent = true;
+            }
+        }
+
+        if (componentMulti[message.msgid] == true) multiComponentSourceDetected = true;
+
+
         switch (message.msgid)
         {
         case MAVLINK_MSG_ID_HEARTBEAT:
@@ -336,6 +363,10 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_SYS_STATUS:
         {
+                if (multiComponentSourceDetected && message.compid != MAV_COMP_ID_IMU_2)
+                {
+                    break;
+                }
                 mavlink_sys_status_t state;
                 mavlink_msg_sys_status_decode(&message, &state);
 
@@ -371,6 +402,8 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
             break;
         case MAVLINK_MSG_ID_ATTITUDE:
             {
+                if (wrongComponent) break;
+
                 mavlink_attitude_t attitude;
                 mavlink_msg_attitude_decode(&message, &attitude);
                 quint64 time = getUnixReferenceTime(attitude.time_boot_ms);
@@ -499,7 +532,7 @@ void UAS::receiveMessage(LinkInterface* link, mavlink_message_t message)
                     if (!isnan(alt) && !isinf(alt))
                     {
                         alt = 0;
-                        emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN or Inf FOR ALTITUDE");
+                        //emit textMessageReceived(uasId, message.compid, 255, "GCS ERROR: RECEIVED NaN or Inf FOR ALTITUDE");
                     }
                     // FIXME REMOVE LATER emit valueChanged(uasId, "altitude", "m", pos.alt/(double)1E3, time);
                     // Smaller than threshold and not NaN
