@@ -43,8 +43,8 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
     uasId(-1),
     rssi(0.0f),
     updated(false),
-    channelLayout(new QVBoxLayout())//,
-    //ui(new Ui::QGCRemoteControlView)
+    channelLayout(new QVBoxLayout()),
+    ui(NULL)
 {
     ui->setupUi(this);
     QGridLayout* layout = new QGridLayout(this);
@@ -71,8 +71,14 @@ QGCRemoteControlView::QGCRemoteControlView(QWidget *parent) :
 
 QGCRemoteControlView::~QGCRemoteControlView()
 {
-    delete ui;
-    delete channelLayout;
+	if(this->ui)
+	{
+		delete ui;
+	}
+	if(this->channelLayout)
+	{
+		delete channelLayout;
+	}
 }
 
 void QGCRemoteControlView::setUASId(int id)
@@ -172,7 +178,7 @@ void QGCRemoteControlView::setRemoteRSSI(float rssiNormalized)
 void QGCRemoteControlView::appendChannelWidget(int channelId)
 {
     // Create new layout
-    QHBoxLayout* layout = new QHBoxLayout();
+    QHBoxLayout* layout = new QHBoxLayout(this);
     // Add content
     layout->addWidget(new QLabel(QString("Channel %1").arg(channelId + 1), this));
     QLabel* raw = new QLabel(this);

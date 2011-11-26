@@ -50,8 +50,8 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
     acceptUnitList(new QStringList()),
     lastPaintTime(0),
     columns(3),
-    valuesChanged(true)/*,
-    m_ui(new Ui::HDDisplay)*/
+    valuesChanged(true),
+    m_ui(NULL)
 {
     setWindowTitle(title);
     //m_ui->setupUi(this);
@@ -135,7 +135,22 @@ HDDisplay::HDDisplay(QStringList* plotList, QString title, QWidget *parent) :
 HDDisplay::~HDDisplay()
 {
     saveState();
-    delete m_ui;
+	if(this->refreshTimer)
+	{
+		delete this->refreshTimer;
+	}
+	if(this->acceptList)
+	{
+		delete this->acceptList;
+	}
+	if(this->acceptUnitList)
+	{
+		delete this->acceptUnitList;
+	}
+	if(this->m_ui)
+	{
+		delete m_ui;
+	}
 }
 
 QSize HDDisplay::sizeHint() const

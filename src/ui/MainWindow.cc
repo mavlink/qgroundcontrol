@@ -91,7 +91,7 @@ MainWindow::MainWindow(QWidget *parent):
     currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
-    centerStackActionGroup(this),
+    centerStackActionGroup(new QActionGroup(this)),
     styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
     autoReconnect(false),
     lowPowerMode(false)
@@ -138,7 +138,7 @@ MainWindow::MainWindow(QWidget *parent):
     setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
     // Setup UI state machines
-    centerStackActionGroup.setExclusive(true);
+	centerStackActionGroup->setExclusive(true);
 
     centerStack = new QStackedWidget(this);
     setCentralWidget(centerStack);
@@ -246,8 +246,8 @@ MainWindow::~MainWindow()
         if (dockWidget)
         {
             // Remove dock widget from main window
-            removeDockWidget(dockWidget);
-            delete dockWidget->widget();
+            // removeDockWidget(dockWidget);
+            // delete dockWidget->widget();
             delete dockWidget;
         }
         else
@@ -417,14 +417,14 @@ void MainWindow::buildCommonWidgets()
         parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
         addTool(parametersDockWidget, tr("Calibration and Parameters"), Qt::RightDockWidgetArea);
     }
-
+	
     if (!hsiDockWidget) {
         hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
         hsiDockWidget->setWidget( new HSIDisplay(this) );
         hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
         addTool(hsiDockWidget, tr("Horizontal Situation"), Qt::BottomDockWidgetArea);
     }
-
+	
     if (!headDown1DockWidget) {
         headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
         HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
@@ -442,7 +442,7 @@ void MainWindow::buildCommonWidgets()
         headDown2DockWidget->setObjectName("HEAD_DOWN_DISPLAY_2_DOCK_WIDGET");
         addTool(headDown2DockWidget, tr("Actuator Status"), Qt::RightDockWidgetArea);
     }
-
+	
     if (!rcViewDockWidget) {
         rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
         rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
@@ -555,7 +555,7 @@ void MainWindow::addCentralWidget(QWidget* widget, const QString& title)
         QVariant var;
         var.setValue((QWidget*)widget);
         tempAction->setData(var);
-        centerStackActionGroup.addAction(tempAction);
+        centerStackActionGroup->addAction(tempAction);
         connect(tempAction,SIGNAL(triggered()),this, SLOT(showCentralWidget()));
         connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
         tempAction->setChecked(widget->isVisible());

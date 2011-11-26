@@ -303,7 +303,7 @@ protected:
 
     QSettings settings;
     QStackedWidget *centerStack;
-    QActionGroup centerStackActionGroup;
+    QActionGroup* centerStackActionGroup;
 
     // Center widgets
     QPointer<Linecharts> linechartWidget;
