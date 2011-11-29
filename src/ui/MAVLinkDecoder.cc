@@ -7,6 +7,11 @@ MAVLinkDecoder::MAVLinkDecoder(MAVLinkProtocol* protocol, QObject *parent) :
     mavlink_message_info_t msg[256] = MAVLINK_MESSAGE_INFO;
     memcpy(messageInfo, msg, sizeof(mavlink_message_info_t)*256);
     memset(receivedMessages, 0, sizeof(mavlink_message_t)*256);
+    for (unsigned int i = 0; i<255;++i)
+    {
+        componentID[i] = -1;
+        componentMulti[i] = false;
+    }
 
     // Fill filter
     messageFilter.insert(MAVLINK_MSG_ID_HEARTBEAT, false);
@@ -69,6 +74,26 @@ void MAVLinkDecoder::receiveMessage(LinkInterface* link,mavlink_message_t messag
 
 void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64 time)
 {
+    bool multiComponentSourceDetected = false;
+    bool wrongComponent = false;
+
+    // Store component ID
+    if (componentID[msg->msgid] == -1)
+    {
+        componentID[msg->msgid] = msg->compid;
+    }
+    else
+    {
+        // Got this message already
+        if (componentID[msg->msgid] != msg->compid)
+        {
+            componentMulti[msg->msgid] = true;
+            wrongComponent = true;
+        }
+    }
+
+    if (componentMulti[msg->msgid] == true) multiComponentSourceDetected = true;
+
     // Add field tree widget item
     uint8_t msgid = msg->msgid;
     if (messageFilter.contains(msgid)) return;
@@ -78,6 +103,8 @@ void MAVLinkDecoder::emitFieldValue(mavlink_message_t* msg, int fieldid, quint64
     QString name("%1.%2");
     QString unit("");
     name = name.arg(messageInfo[msgid].name, fieldName);
+    if (multiComponentSourceDetected) name.prepend(QString("C%1:").arg(msg->compid));
+    name.prepend(QString("M%1:").arg(msg->sysid));
     switch (messageInfo[msgid].fields[fieldid].type)
     {
     case MAVLINK_TYPE_CHAR:
