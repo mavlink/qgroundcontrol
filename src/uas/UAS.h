@@ -544,6 +544,8 @@ protected:
     quint64 getUnixTimeFromMs(quint64 time);
     /** @brief Get the UNIX timestamp in milliseconds, ignore attitudeStamped mode */
     quint64 getUnixReferenceTime(quint64 time);
+    int componentID[256];
+    bool componentMulti[256];
 
 protected slots:
     /** @brief Write settings to disk */
