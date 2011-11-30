@@ -91,7 +91,7 @@ MainWindow::MainWindow(QWidget *parent):
     currentStyle(QGC_MAINWINDOW_STYLE_INDOOR),
     aboutToCloseFlag(false),
     changingViewsFlag(false),
-    centerStackActionGroup(this),
+    centerStackActionGroup(new QActionGroup(this)),
     styleFileName(QCoreApplication::applicationDirPath() + "/style-indoor.css"),
     autoReconnect(false),
     lowPowerMode(false)
@@ -138,7 +138,7 @@ MainWindow::MainWindow(QWidget *parent):
     setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
 
     // Setup UI state machines
-    centerStackActionGroup.setExclusive(true);
+	centerStackActionGroup->setExclusive(true);
 
     centerStack = new QStackedWidget(this);
     setCentralWidget(centerStack);
@@ -246,8 +246,8 @@ MainWindow::~MainWindow()
         if (dockWidget)
         {
             // Remove dock widget from main window
-            removeDockWidget(dockWidget);
-            delete dockWidget->widget();
+            // removeDockWidget(dockWidget);
+            // delete dockWidget->widget();
             delete dockWidget;
         }
         else
@@ -417,14 +417,14 @@ void MainWindow::buildCommonWidgets()
         parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
         addTool(parametersDockWidget, tr("Calibration and Parameters"), Qt::RightDockWidgetArea);
     }
-
+	
     if (!hsiDockWidget) {
         hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
         hsiDockWidget->setWidget( new HSIDisplay(this) );
         hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
         addTool(hsiDockWidget, tr("Horizontal Situation"), Qt::BottomDockWidgetArea);
     }
-
+	
     if (!headDown1DockWidget) {
         headDown1DockWidget = new QDockWidget(tr("Flight Display"), this);
         HDDisplay* hdDisplay = new HDDisplay(acceptList, "Flight Display", this);
@@ -442,7 +442,7 @@ void MainWindow::buildCommonWidgets()
         headDown2DockWidget->setObjectName("HEAD_DOWN_DISPLAY_2_DOCK_WIDGET");
         addTool(headDown2DockWidget, tr("Actuator Status"), Qt::RightDockWidgetArea);
     }
-
+	
     if (!rcViewDockWidget) {
         rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
         rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
@@ -555,7 +555,7 @@ void MainWindow::addCentralWidget(QWidget* widget, const QString& title)
         QVariant var;
         var.setValue((QWidget*)widget);
         tempAction->setData(var);
-        centerStackActionGroup.addAction(tempAction);
+        centerStackActionGroup->addAction(tempAction);
         connect(tempAction,SIGNAL(triggered()),this, SLOT(showCentralWidget()));
         connect(widget, SIGNAL(visibilityChanged(bool)), tempAction, SLOT(setChecked(bool)));
         tempAction->setChecked(widget->isVisible());
@@ -1503,108 +1503,3 @@ QList<QAction*> MainWindow::listLinkMenuActions(void)
 {
     return ui.menuNetwork->actions();
 }
-/*
-void MainWindow::buildSenseSoarWidgets()
-{
-	if (!linechartWidget) 
-	{
-        // Center widgets
-        linechartWidget   = new Linecharts(this);
-        addToCentralWidgetsMenu(linechartWidget, tr("Realtime Plot"), SLOT(showCentralWidget()), CENTRAL_LINECHART);
-    }
-
-    if (!hudWidget) 
-	{
-        hudWidget         = new HUD(320, 240, this);
-        addToCentralWidgetsMenu(hudWidget, tr("Head Up Display"), SLOT(showCentralWidget()), CENTRAL_HUD);
-    }
-
-    if (!dataplotWidget) {
-        dataplotWidget    = new QGCDataPlot2D(this);
-        addToCentralWidgetsMenu(dataplotWidget, "Logfile Plot", SLOT(showCentralWidget()), CENTRAL_DATA_PLOT);
-    }
-
-#ifdef QGC_OSG_ENABLED
-    if (!_3DWidget) {
-        _3DWidget         = Q3DWidgetFactory::get("PIXHAWK");
-        addToCentralWidgetsMenu(_3DWidget, tr("Local 3D"), SLOT(showCentralWidget()), CENTRAL_3D_LOCAL);
-    }
-#endif
-
-#ifdef QGC_OSGEARTH_ENABLED
-    if (!_3DMapWidget) {
-        _3DMapWidget = Q3DWidgetFactory::get("MAP3D");
-        addToCentralWidgetsMenu(_3DMapWidget, tr("OSG Earth 3D"), SLOT(showCentralWidget()), CENTRAL_OSGEARTH);
-    }
-#endif
-
-#if (defined _MSC_VER) | (defined Q_OS_MAC)
-    if (!gEarthWidget) {
-        gEarthWidget = new QGCGoogleEarthView(this);
-        addToCentralWidgetsMenu(gEarthWidget, tr("Google Earth"), SLOT(showCentralWidget()), CENTRAL_GOOGLE_EARTH);
-    }
-
-#endif
-
-    // Dock widgets
-
-    if (!parametersDockWidget) {
-        parametersDockWidget = new QDockWidget(tr("Calibration and Onboard Parameters"), this);
-        parametersDockWidget->setWidget( new ParameterInterface(this) );
-        parametersDockWidget->setObjectName("PARAMETER_INTERFACE_DOCKWIDGET");
-        addToToolsMenu (parametersDockWidget, tr("Calibration and Parameters"), SLOT(showToolWidget(bool)), MENU_PARAMETERS, Qt::RightDockWidgetArea);
-    }
-
-    if (!hsiDockWidget) {
-        hsiDockWidget = new QDockWidget(tr("Horizontal Situation Indicator"), this);
-        hsiDockWidget->setWidget( new HSIDisplay(this) );
-        hsiDockWidget->setObjectName("HORIZONTAL_SITUATION_INDICATOR_DOCK_WIDGET");
-        addToToolsMenu (hsiDockWidget, tr("Horizontal Situation"), SLOT(showToolWidget(bool)), MENU_HSI, Qt::BottomDockWidgetArea);
-    }
-	
-    if (!rcViewDockWidget) {
-        rcViewDockWidget = new QDockWidget(tr("Radio Control"), this);
-        rcViewDockWidget->setWidget( new QGCRemoteControlView(this) );
-        rcViewDockWidget->setObjectName("RADIO_CONTROL_CHANNELS_DOCK_WIDGET");
-        addToToolsMenu (rcViewDockWidget, tr("Radio Control"), SLOT(showToolWidget(bool)), MENU_RC_VIEW, Qt::BottomDockWidgetArea);
-    }
-
-    if (!headUpDockWidget) {
-        headUpDockWidget = new QDockWidget(tr("HUD"), this);
-        headUpDockWidget->setWidget( new HUD(320, 240, this));
-        headUpDockWidget->setObjectName("HEAD_UP_DISPLAY_DOCK_WIDGET");
-        addToToolsMenu (headUpDockWidget, tr("Head Up Display"), SLOT(showToolWidget(bool)), MENU_HUD, Qt::RightDockWidgetArea);
-    }
-}
-
-void MainWindow::connectSenseSoarWidgets()
-{
-}
-
-void MainWindow::arrangeSenseSoarCenterStack()
-{
-	if (!centerStack) {
-        qDebug() << "Center Stack not Created!";
-        return;
-    }
-
-
-    if (linechartWidget && (centerStack->indexOf(linechartWidget) == -1)) centerStack->addWidget(linechartWidget);
-
-#ifdef QGC_OSG_ENABLED
-    if (_3DWidget && (centerStack->indexOf(_3DWidget) == -1)) centerStack->addWidget(_3DWidget);
-#endif
-#ifdef QGC_OSGEARTH_ENABLED
-    if (_3DMapWidget && (centerStack->indexOf(_3DMapWidget) == -1)) centerStack->addWidget(_3DMapWidget);
-#endif
-#if (defined _MSC_VER) | (defined Q_OS_MAC)
-    if (gEarthWidget && (centerStack->indexOf(gEarthWidget) == -1)) centerStack->addWidget(gEarthWidget);
-#endif
-    if (hudWidget && (centerStack->indexOf(hudWidget) == -1)) centerStack->addWidget(hudWidget);
-    if (dataplotWidget && (centerStack->indexOf(dataplotWidget) == -1)) centerStack->addWidget(dataplotWidget);
-}
-
-void MainWindow::connectSenseSoarActions()
-{
-}
-*/

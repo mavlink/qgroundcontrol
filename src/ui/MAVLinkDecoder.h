@@ -30,6 +30,8 @@ protected:
     mavlink_message_info_t messageInfo[256]; ///< Message information
     QMap<uint16_t, bool> messageFilter;               ///< Message/field names not to emit
     QMap<uint16_t, bool> textMessageFilter;           ///< Message/field names not to emit in text mode
+    int componentID[256];                             ///< Multi component detection
+    bool componentMulti[256];                         ///< Multi components detected
 
 };
 
