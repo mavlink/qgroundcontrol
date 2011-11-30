@@ -358,19 +358,19 @@ void MAVLinkSimulationLink::mainloop()
     if (rate10hzCounter == 1000 / rate / 9) {
         rate10hzCounter = 1;
 
-        float lastX = x;
-        float lastY = y;
-        float lastZ = z;
-        float hackDt = 0.1f; // 100 ms
+        double lastX = x;
+        double lastY = y;
+        double lastZ = z;
+        double hackDt = 0.1f; // 100 ms
 
         // Move X Position
         x = 12.0*sin(((double)circleCounter)/200.0);
         y = 5.0*cos(((double)circleCounter)/200.0);
         z = 1.8 + 1.2*sin(((double)circleCounter)/200.0);
 
-        float xSpeed = (x - lastX)/hackDt;
-        float ySpeed = (y - lastY)/hackDt;
-        float zSpeed = (z - lastZ)/hackDt;
+        double xSpeed = (x - lastX)/hackDt;
+        double ySpeed = (y - lastY)/hackDt;
+        double zSpeed = (z - lastZ)/hackDt;
 
 
 
@@ -414,12 +414,12 @@ void MAVLinkSimulationLink::mainloop()
         memcpy(stream+streampointer,buffer, bufferlength);
         streampointer += bufferlength;
 
-//        // GLOBAL POSITION VEHICLE 2
-//        mavlink_msg_global_position_int_pack(54, componentId, &ret, (473780.28137103+(x+0.002))*1E3, (85489.9892510421+((y/2)+0.3))*1E3, (z+570.0)*1000.0, xSpeed, ySpeed, zSpeed);
-//        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
-//        //add data into datastream
-//        memcpy(stream+streampointer,buffer, bufferlength);
-//        streampointer += bufferlength;
+        // GLOBAL POSITION VEHICLE 2
+        mavlink_msg_global_position_int_pack(systemId+1, componentId+1, &ret, 0, (473780.28137103+(x+0.00001))*1E3, (85489.9892510421+((y/2)+0.00001))*1E3, (z+550.0)*1000.0, (z+550.0)*1000.0-1, xSpeed, ySpeed, zSpeed, yaw);
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
 
 //        // ATTITUDE VEHICLE 2
 //        mavlink_msg_attitude_pack(54, MAV_COMP_ID_IMU, &ret, 0, 0, 0, atan2((y/2)+0.3, (x+0.002)), 0, 0, 0);
@@ -427,7 +427,7 @@ void MAVLinkSimulationLink::mainloop()
 
 
 //        // GLOBAL POSITION VEHICLE 3
-//        mavlink_msg_global_position_int_pack(60, componentId, &ret, (473780.28137103+(x/2+0.002))*1E3, (85489.9892510421+((y*2)+0.3))*1E3, (z+590.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
+//        mavlink_msg_global_position_int_pack(60, componentId, &ret, 0, (473780.28137103+(x/2+0.002))*1E3, (85489.9892510421+((y*2)+0.3))*1E3, (z+590.0)*1000.0, 0*100.0, 0*100.0, 0*100.0);
 //        bufferlength = mavlink_msg_to_send_buffer(buffer, &ret);
 //        //add data into datastream
 //        memcpy(stream+streampointer,buffer, bufferlength);
@@ -558,6 +558,15 @@ void MAVLinkSimulationLink::mainloop()
 
         // Pack message and get size of encoded byte string
         messageSize = mavlink_msg_heartbeat_pack(systemId, componentId, &msg, mavType, MAV_AUTOPILOT_PIXHAWK, system.base_mode, system.custom_mode, system.system_status);
+        // Allocate buffer with packet data
+        bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
+        //qDebug() << "CRC:" << msg.ck_a << msg.ck_b;
+        //add data into datastream
+        memcpy(stream+streampointer,buffer, bufferlength);
+        streampointer += bufferlength;
+
+        // Pack message and get size of encoded byte string
+        messageSize = mavlink_msg_heartbeat_pack(systemId+1, componentId+1, &msg, mavType, MAV_AUTOPILOT_GENERIC, system.base_mode, system.custom_mode, system.system_status);
         // Allocate buffer with packet data
         bufferlength = mavlink_msg_to_send_buffer(buffer, &msg);
         //qDebug() << "CRC:" << msg.ck_a << msg.ck_b;
