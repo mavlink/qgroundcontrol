@@ -545,6 +545,15 @@ Time to stay at this position before advancing</string>
         <property name="decimals">
          <number>0</number>
         </property>
+        <property name="minimum">
+         <double>-180.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>180.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>10.000000000000000</double>
+        </property>
        </widget>
       </item>
       <item>
