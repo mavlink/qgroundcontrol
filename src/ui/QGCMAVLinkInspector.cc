@@ -82,7 +82,7 @@ void QGCMAVLinkInspector::receiveMessage(LinkInterface* link,mavlink_message_t m
         {
             msgHz = 1;
         }
-        float newHz = 0.001f*msgHz+0.999f*messagesHz.value(message.msgid, 1);
+        float newHz = 0.05f*msgHz+0.95f*messagesHz.value(message.msgid, 1);
         messagesHz.insert(message.msgid, newHz);
     }
 

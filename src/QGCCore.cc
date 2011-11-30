@@ -204,8 +204,9 @@ QGCCore::~QGCCore()
 {
     //mainWindow->storeSettings();
     mainWindow->close();
-    mainWindow->deleteLater();
+    //mainWindow->deleteLater();
     // Delete singletons
+	delete MainWindow::instance();
     delete LinkManager::instance();
     delete UASManager::instance();
 }

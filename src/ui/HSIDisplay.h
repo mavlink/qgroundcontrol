@@ -48,7 +48,7 @@ class HSIDisplay : public HDDisplay
     Q_OBJECT
 public:
     HSIDisplay(QWidget *parent = 0);
-    // ~HSIDisplay();
+    ~HSIDisplay();
 
 public slots:
     void setActiveUAS(UASInterface* uas);
