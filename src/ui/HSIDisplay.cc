@@ -136,6 +136,11 @@ HSIDisplay::HSIDisplay(QWidget *parent) :
     setFocusPolicy(Qt::StrongFocus);
 }
 
+HSIDisplay::~HSIDisplay()
+{
+
+}
+
 void HSIDisplay::resetMAVState()
 {
     mavInitialized = false;

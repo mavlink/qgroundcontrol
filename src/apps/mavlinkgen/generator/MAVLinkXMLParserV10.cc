@@ -96,7 +96,7 @@ void MAVLinkXMLParserV10::processError(QProcess::ProcessError err)
 bool MAVLinkXMLParserV10::generate()
 {
 #ifdef Q_OS_WIN
-    QString generatorCall("%1/files/mavlink_generator/generator/mavgen.exe");
+    QString generatorCall("files/mavlink_generator/generator/mavgen.exe");
 #endif
 #if (defined Q_OS_MAC) || (defined Q_OS_LINUX)
     QString generatorCall("python");
