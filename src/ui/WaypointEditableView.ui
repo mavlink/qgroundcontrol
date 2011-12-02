@@ -531,10 +531,10 @@ Time to stay at this position before advancing</string>
          <enum>Qt::StrongFocus</enum>
         </property>
         <property name="toolTip">
-         <string>Take off angle</string>
+         <string>Take off pitch angle</string>
         </property>
         <property name="statusTip">
-         <string>Take off angle</string>
+         <string>Take off pitch angle</string>
         </property>
         <property name="prefix">
          <string/>
@@ -544,6 +544,15 @@ Time to stay at this position before advancing</string>
         </property>
         <property name="decimals">
          <number>0</number>
+        </property>
+        <property name="minimum">
+         <double>-180.000000000000000</double>
+        </property>
+        <property name="maximum">
+         <double>180.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>10.000000000000000</double>
         </property>
        </widget>
       </item>
