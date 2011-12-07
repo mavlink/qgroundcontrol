@@ -343,7 +343,7 @@ int UASWaypointManager::setCurrentEditable(quint16 seq)
 void UASWaypointManager::addWaypointViewOnly(Waypoint *wp)
 {
     if (wp)
-    {        
+    {
         waypointsViewOnly.insert(waypointsViewOnly.size(), wp);
         connect(wp, SIGNAL(changed(Waypoint*)), this, SLOT(notifyOfChangeViewOnly(Waypoint*)));
 

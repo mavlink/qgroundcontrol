@@ -70,8 +70,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>834</width>
-            <height>325</height>
+            <width>836</width>
+            <height>316</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout">
@@ -300,8 +300,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>834</width>
-            <height>331</height>
+            <width>836</width>
+            <height>316</height>
            </rect>
           </property>
           <property name="autoFillBackground">
@@ -367,7 +367,7 @@
        <item row="1" column="0">
         <widget class="QLabel" name="viewStatusLabel">
          <property name="text">
-          <string>TextLabel</string>
+          <string/>
          </property>
         </widget>
        </item>

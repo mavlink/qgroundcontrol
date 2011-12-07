@@ -172,7 +172,7 @@ private:
     QVector<mavlink_mission_item_t *> waypoint_buffer;  ///< buffer for waypoints during communication
     QTimer protocol_timer;                          ///< Timer to catch timeouts
     bool standalone;                                ///< If standalone is set, do not write to UAS
-    int uasid;
+    quint16 uasid;
 };
 
 #endif // UASWAYPOINTMANAGER_H
