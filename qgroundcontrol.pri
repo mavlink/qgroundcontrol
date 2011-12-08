@@ -158,6 +158,7 @@ message("Compiling for linux 32")
 
     LIBS += \
         -L/usr/lib \
+        -L/usr/local/lib64 \
         -lm \
         -lflite_cmu_us_kal \
         -lflite_usenglish \
@@ -166,7 +167,7 @@ message("Compiling for linux 32")
         -lSDL \
         -lSDLmain
 
-    exists(/usr/include/osg) {
+    exists(/usr/include/osg) | exists(/usr/local/include/osg) {
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
     # Include OpenSceneGraph libraries
@@ -174,6 +175,7 @@ message("Compiling for linux 32")
             -losgViewer \
             -losgGA \
             -losgDB \
+            -losgQt \
             -losgText \
             -lOpenThreads
 
@@ -235,6 +237,7 @@ linux-g++-64 {
 
     LIBS += \
         -L/usr/lib \
+        -L/usr/local/lib64 \
         -lm \
         -lflite_cmu_us_kal \
         -lflite_usenglish \
@@ -243,7 +246,7 @@ linux-g++-64 {
         -lSDL \
         -lSDLmain
 
-    exists(/usr/include/osg) {
+    exists(/usr/include/osg) | exists(/usr/local/include/osg) {
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
     # Include OpenSceneGraph libraries
@@ -251,6 +254,7 @@ linux-g++-64 {
             -losgViewer \
             -losgGA \
             -losgDB \
+            -losgQt \
             -losgText \
             -lOpenThreads
 
