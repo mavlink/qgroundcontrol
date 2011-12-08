@@ -316,8 +316,17 @@ void CommDCBHelper::setBaudRate(QPortSettings::BaudRate baudRate)
     case QPortSettings::BAUDR_128000:
       baud = CBR_128000;
       break;
+    case QPortSettings::BAUDR_230400:
+      baud = 230400;
+      break;
     case QPortSettings::BAUDR_256000:
       baud = CBR_256000;
+      break;
+    case QPortSettings::BAUDR_460800:
+      baud = 460800;
+      break;
+    case QPortSettings::BAUDR_921600:
+      baud = 921600;
       break;
     default:
       qWarning() << "CommDCBHelper::setBaudRate(" << baudRate << "): " \
@@ -347,43 +356,50 @@ QPortSettings::BaudRate CommDCBHelper::baudRate() const
     baud = currentAttrs_->BaudRate;
   }
   else {
-    baud = dcb.BaudRate;
+      baud = dcb.BaudRate;
   }
 
   Q_ASSERT(currentAttrs_->BaudRate == baud);
 
   switch ( baud ) {
-    case CBR_110:
+  case CBR_110:
       return QPortSettings::BAUDR_110;
-    case CBR_300:
+  case CBR_300:
       return QPortSettings::BAUDR_300;
-    case CBR_600:
+  case CBR_600:
       return QPortSettings::BAUDR_600;
-    case CBR_1200:
+  case CBR_1200:
       return QPortSettings::BAUDR_1200;
-    case CBR_2400:
+  case CBR_2400:
       return QPortSettings::BAUDR_2400;
-    case CBR_4800:
+  case CBR_4800:
       return QPortSettings::BAUDR_4800;
-    case CBR_9600:
+  case CBR_9600:
       return QPortSettings::BAUDR_9600;
-    case CBR_14400:
+  case CBR_14400:
       return QPortSettings::BAUDR_14400;
-    case CBR_19200:
+  case CBR_19200:
       return QPortSettings::BAUDR_19200;
-    case CBR_38400:
+  case CBR_38400:
       return QPortSettings::BAUDR_38400;
-    case CBR_56000:
+  case CBR_56000:
       return QPortSettings::BAUDR_56000;
-    case CBR_57600:
+  case CBR_57600:
       return QPortSettings::BAUDR_57600;
-    case CBR_115200:
+  case CBR_115200:
       return QPortSettings::BAUDR_115200;
-    case CBR_128000:
+  case CBR_128000:
       return QPortSettings::BAUDR_128000;
-    case CBR_256000:
+  case 230400:
+      return QPortSettings::BAUDR_230400;
+  case CBR_256000:
       return QPortSettings::BAUDR_256000;
-    default:
+  case 460800:
+      return QPortSettings::BAUDR_460800;
+  case 921600:
+      return QPortSettings::BAUDR_921600;
+      break;
+  default:
       qWarning() << "CommDCBHelper::baudRate(): Unknown baud rate";
   }
 
