@@ -92,10 +92,12 @@ macx {
     QMAKE_POST_LINK += && cp -f $$BASEDIR/images/style-outdoor.css $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy parameter tooltip files
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+    # Copy libraries
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/lib/mac32-gcc40/lib/* $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy model files
     #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
 
-    exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
+    #exists(/Library/Frameworks/osg.framework):exists(/Library/Frameworks/OpenThreads.framework) {
     # No check for GLUT.framework since it's a MAC default
     message("Building support for OpenSceneGraph")
     DEPENDENCIES_PRESENT += osg
@@ -103,24 +105,19 @@ macx {
     # Include OpenSceneGraph libraries
     INCLUDEPATH += -framework GLUT \
             -framework Cocoa \
-            -framework OpenThreads \
-            -framework osg \
-            -framework osgViewer \
-            -framework osgGA \
-            -framework osgDB \
-            -framework osgText \
-            -framework osgWidget
+            $$BASEDIR/lib/mac32-gcc40/include
 
     LIBS += -framework GLUT \
             -framework Cocoa \
-            -framework OpenThreads \
-            -framework osg \
-            -framework osgViewer \
-            -framework osgGA \
-            -framework osgDB \
-            -framework osgText \
-            -framework osgWidget
-    }
+            -L$$BASEDIR/lib/mac32-gcc40/lib \
+            -lOpenThreads \
+            -losg \
+            -losgViewer \
+            -losgGA \
+            -losgDB \
+            -losgText \
+            -losgWidget
+    #}
 
     exists(/opt/local/include/libfreenect)|exists(/usr/local/include/libfreenect) {
     message("Building support for libfreenect")
@@ -178,15 +175,6 @@ message("Compiling for linux 32")
             -lOpenThreads
 
     DEFINES += QGC_OSG_ENABLED
-    }
-
-    exists(/usr/include/osgEarth):exists(/usr/include/osg) | exists(/usr/local/include/osgEarth):exists(/usr/include/osg) {
-    message("Building support for osgEarth")
-    DEPENDENCIES_PRESENT += osgearth
-    # Include osgEarth libraries
-    LIBS += -losgEarth \
-            -losgEarthUtil
-    DEFINES += QGC_OSGEARTH_ENABLED
     }
 
     exists(/usr/local/include/libfreenect/libfreenect.h) {
@@ -255,15 +243,6 @@ linux-g++-64 {
             -lOpenThreads
 
     DEFINES += QGC_OSG_ENABLED
-    }
-
-    exists(/usr/include/osgEarth) {
-    message("Building support for osgEarth")
-    DEPENDENCIES_PRESENT += osgearth
-    # Include osgEarth libraries
-    LIBS += -losgEarth \
-            -losgEarthUtil
-    DEFINES += QGC_OSGEARTH_ENABLED
     }
 
     exists(/usr/local/include/libfreenect) {
