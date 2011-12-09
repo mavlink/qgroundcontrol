@@ -26,6 +26,7 @@ public slots:
     void systemSetActive(int uas);
 
 protected:
+    quint16 offline_uas_id;
     void changeEvent(QEvent *e);
     QMap<int, WaypointList*> lists;
 
