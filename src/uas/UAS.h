@@ -128,6 +128,12 @@ public:
     }
     bool getSelected() const;
 
+#ifdef QGC_PROTOBUF_ENABLED
+    px::PointCloudXYZRGB getPointCloud() const {
+        return pointCloud;
+    }
+#endif
+
     friend class UASWaypointManager;
 
 protected: //COMMENTS FOR TEST UNIT
@@ -207,6 +213,10 @@ protected: //COMMENTS FOR TEST UNIT
     QByteArray imageRecBuffer;  ///< Buffer for the incoming bytestream
     QImage image;               ///< Image data of last completely transmitted image
     quint64 imageStart;
+
+#ifdef QGC_PROTOBUF_ENABLED
+    px::PointCloudXYZRGB pointCloud;
+#endif
 
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters
     bool paramsOnceRequested;       ///< If the parameter list has been read at least once
@@ -450,6 +460,11 @@ public slots:
 
     /** @brief Receive a message from one of the communication links. */
     virtual void receiveMessage(LinkInterface* link, mavlink_message_t message);
+
+#ifdef QGC_PROTOBUF_ENABLED
+    /** @brief Receive a message from one of the communication links. */
+    virtual void receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<google::protobuf::Message> message);
+#endif
 
     /** @brief Send a message over this link (to this or to all UAS on this link) */
     void sendMessage(LinkInterface* link, mavlink_message_t message);

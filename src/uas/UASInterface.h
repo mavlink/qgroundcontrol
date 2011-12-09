@@ -44,6 +44,11 @@ This file is part of the QGROUNDCONTROL project
 #include "QGCUASParamManager.h"
 #include "RadioCalibration/RadioCalibrationData.h"
 
+#ifdef QGC_PROTOBUF_ENABLED
+#include <tr1/memory>
+#include <pixhawk.pb.h>
+#endif
+
 /**
  * @brief Interface for all robots.
  *
@@ -88,6 +93,10 @@ public:
     virtual double getYaw() const = 0;
 
     virtual bool getSelected() const = 0;
+
+#ifdef QGC_PROTOBUF_ENABLED
+    virtual px::PointCloudXYZRGB getPointCloud() const = 0;
+#endif
 
     virtual bool isArmed() const = 0;
 
