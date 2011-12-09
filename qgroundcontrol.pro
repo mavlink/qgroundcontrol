@@ -232,7 +232,8 @@ FORMS += src/ui/MainWindow.ui \
     src/ui/map/QGCMapToolBar.ui \
     src/ui/QGCMAVLinkInspector.ui \
     src/ui/WaypointViewOnlyView.ui \    
-    src/ui/WaypointEditableView.ui
+    src/ui/WaypointEditableView.ui \    
+    src/ui/UnconnectedUASInfoWidget.ui
 INCLUDEPATH += src \
     src/ui \
     src/ui/linechart \
@@ -348,7 +349,8 @@ HEADERS += src/MG.h \
     src/ui/MAVLinkDecoder.h \
     src/ui/WaypointViewOnlyView.h \
     src/ui/WaypointViewOnlyView.h \
-    src/ui/WaypointEditableView.h
+    src/ui/WaypointEditableView.h \    
+    src/ui/UnconnectedUASInfoWidget.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -359,7 +361,6 @@ contains(DEPENDENCIES_PRESENT, osg) {
     HEADERS += src/ui/map3D/Q3DWidget.h \
         src/ui/map3D/GCManipulator.h \
         src/ui/map3D/ImageWindowGeode.h \
-        src/ui/map3D/QOSGWidget.h \
         src/ui/map3D/PixhawkCheetahGeode.h \
         src/ui/map3D/Pixhawk3DWidget.h \
         src/ui/map3D/Q3DWidgetFactory.h \
@@ -370,12 +371,6 @@ contains(DEPENDENCIES_PRESENT, osg) {
         src/ui/map3D/Imagery.h \
         src/ui/map3D/HUDScaleGeode.h \
         src/ui/map3D/WaypointGroupNode.h
-    contains(DEPENDENCIES_PRESENT, osgearth) { 
-        message("Including headers for OSGEARTH")
-        
-        # Enable only if OpenSceneGraph is available
-        HEADERS += src/ui/map3D/QMap3D.h
-    }
 }
 contains(DEPENDENCIES_PRESENT, libfreenect) { 
     message("Including headers for libfreenect")
@@ -475,7 +470,8 @@ SOURCES += src/main.cc \
     src/ui/QGCMAVLinkInspector.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/WaypointViewOnlyView.cc \
-    src/ui/WaypointEditableView.cc
+    src/ui/WaypointEditableView.cc \
+    src/ui/UnconnectedUASInfoWidget.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc
@@ -488,7 +484,6 @@ contains(DEPENDENCIES_PRESENT, osg) {
     SOURCES += src/ui/map3D/Q3DWidget.cc \
         src/ui/map3D/ImageWindowGeode.cc \
         src/ui/map3D/GCManipulator.cc \
-        src/ui/map3D/QOSGWidget.cc \
         src/ui/map3D/PixhawkCheetahGeode.cc \
         src/ui/map3D/Pixhawk3DWidget.cc \
         src/ui/map3D/Q3DWidgetFactory.cc \
