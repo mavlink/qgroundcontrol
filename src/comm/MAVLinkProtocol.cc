@@ -31,6 +31,10 @@
 #include "QGCMAVLinkUASFactory.h"
 #include "QGC.h"
 
+#ifdef QGC_PROTOBUF_ENABLED
+#include "mavlink_protobuf_manager.hpp"
+#endif
+
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
  * the MAVLINK_HEARTBEAT_DEFAULT_RATE to all connected links.
@@ -169,6 +173,7 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 //    receiveMutex.lock();
     mavlink_message_t message;
     mavlink_status_t status;
+
     for (int position = 0; position < b.size(); position++) {
         unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)(b.at(position)), &message, &status);
 
@@ -181,6 +186,13 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
 //		    continue;
 //	    }
 //#endif
+#ifdef QGC_PROTOBUF_ENABLED
+            if (message.msgid == MAVLINK_MSG_ID_EXTENDED_MESSAGE)
+            {
+                mavlink::ProtobufManager::instance();
+            }
+#endif
+
             // Log data
             if (m_loggingEnabled && m_logfile) {
                 const int len = MAVLINK_MAX_PACKET_LEN+sizeof(quint64);

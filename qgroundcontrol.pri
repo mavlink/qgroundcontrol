@@ -179,6 +179,17 @@ message("Compiling for linux 32")
     DEFINES += QGC_OSG_ENABLED
     }
 
+    exists(/usr/local/include/google/protobuf) {
+    message("Building support for Protocol Buffers")
+    DEPENDENCIES_PRESENT += protobuf
+    # Include Protocol Buffers libraries
+    LIBS += -lprotobuf \
+            -lprotobuf-lite \
+            -lprotoc
+
+    DEFINES += QGC_PROTOBUF_ENABLED
+    }
+
     exists(/usr/local/include/libfreenect/libfreenect.h) {
     message("Building support for libfreenect")
     DEPENDENCIES_PRESENT += libfreenect
@@ -247,6 +258,17 @@ linux-g++-64 {
             -lOpenThreads
 
     DEFINES += QGC_OSG_ENABLED
+    }
+
+    exists(/usr/local/include/google/protobuf) {
+    message("Building support for Protocol Buffers")
+    DEPENDENCIES_PRESENT += protobuf
+    # Include Protocol Buffers libraries
+    LIBS += -lprotobuf \
+            -lprotobuf-lite \
+            -lprotoc
+
+    DEFINES += QGC_PROTOBUF_ENABLED
     }
 
     exists(/usr/local/include/libfreenect) {
