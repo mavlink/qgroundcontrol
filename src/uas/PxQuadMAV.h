@@ -35,6 +35,10 @@ public:
 public slots:
     /** @brief Receive a MAVLink message from this MAV */
     void receiveMessage(LinkInterface* link, mavlink_message_t message);
+#ifdef QGC_PROTOBUF_ENABLED
+    /** @brief Receive a Protobuf message from this MAV */
+    void receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<google::protobuf::Message> message);
+#endif
     /** @brief Send a command to an onboard process */
     void sendProcessCommand(int watchdogId, int processId, unsigned int command);
 signals:
