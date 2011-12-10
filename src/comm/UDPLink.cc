@@ -209,43 +209,42 @@ void UDPLink::writeBytes(const char* data, qint64 size)
  **/
 void UDPLink::readBytes()
 {
-    const qint64 maxLength = 65536;
-    char data[maxLength];
-    QHostAddress sender;
-    quint16 senderPort;
-
-    unsigned int s = socket->pendingDatagramSize();
-    if (s > maxLength) std::cerr << __FILE__ << __LINE__ << " UDP datagram overflow, allowed to read less bytes than datagram size" << std::endl;
-    socket->readDatagram(data, maxLength, &sender, &senderPort);
-
-    // FIXME TODO Check if this method is better than retrieving the data by individual processes
-    QByteArray b(data, s);
-    emit bytesReceived(this, b);
-
-//    // Echo data for debugging purposes
-//    std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
-//    int i;
-//    for (i=0; i<s; i++)
-//    {
-//        unsigned int v=data[i];
-//        fprintf(stderr,"%02x ", v);
-//    }
-//    std::cerr << std::endl;
-
-
-    // Add host to broadcast list if not yet present
-    if (!hosts.contains(sender))
+    while (socket->hasPendingDatagrams())
     {
-        hosts.append(sender);
-        ports.append(senderPort);
-        //        ports->insert(sender, senderPort);
-    }
-    else
-    {
-        int index = hosts.indexOf(sender);
-        ports.replace(index, senderPort);
-    }
+        QByteArray datagram;
+        datagram.resize(socket->pendingDatagramSize());
 
+        QHostAddress sender;
+        quint16 senderPort;
+        socket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
+
+        // FIXME TODO Check if this method is better than retrieving the data by individual processes
+        emit bytesReceived(this, datagram);
+
+//        // Echo data for debugging purposes
+//        std::cerr << __FILE__ << __LINE__ << "Received datagram:" << std::endl;
+//        int i;
+//        for (i=0; i<s; i++)
+//        {
+//            unsigned int v=data[i];
+//            fprintf(stderr,"%02x ", v);
+//        }
+//        std::cerr << std::endl;
+
+
+        // Add host to broadcast list if not yet present
+        if (!hosts.contains(sender))
+        {
+            hosts.append(sender);
+            ports.append(senderPort);
+            //        ports->insert(sender, senderPort);
+        }
+        else
+        {
+            int index = hosts.indexOf(sender);
+            ports.replace(index, senderPort);
+        }
+    }
 }
 
 
@@ -269,7 +268,7 @@ bool UDPLink::disconnect()
 	this->quit();
 	this->wait();
 
-	if(socket)
+        if(socket)
 	{
 		delete socket;
 		socket = NULL;
