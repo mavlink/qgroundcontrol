@@ -1,0 +1,55 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGUTIL_SMOOTHINGVISITOR
+#define OSGUTIL_SMOOTHINGVISITOR 1
+
+#include <osg/NodeVisitor>
+#include <osg/Geode>
+#include <osg/Geometry>
+
+#include <osgUtil/Export>
+
+namespace osgUtil {
+
+/** A smoothing visitor for calculating smoothed normals for
+  * osg::GeoSet's which contains surface primitives.
+  */
+class OSGUTIL_EXPORT SmoothingVisitor : public osg::NodeVisitor
+{
+    public:
+
+        /// default to traversing all children.
+        SmoothingVisitor();
+        virtual ~SmoothingVisitor();
+        
+        /// smooth geoset by creating per vertex normals.
+        static void smooth(osg::Geometry& geoset, double creaseAngle=osg::PI);
+
+        /// apply smoothing method to all geode geosets.
+        virtual void apply(osg::Geode& geode);
+
+        /// set the maximum angle, in radians, at which angle between adjacent triangles that normals are smoothed
+        /// for edges that greater the shared vertices are duplicated
+        void setCreaseAngle(double angle) { _creaseAngle = angle; }
+        double getCreaseAngle() const { return _creaseAngle; }
+
+    protected:
+
+        double _creaseAngle;
+
+};
+
+}
+
+#endif

@@ -1,0 +1,48 @@
+/*  -*-c++-*- 
+ *  Copyright (C) 2009 Cedric Pinson <cedric.pinson@plopbyte.net>
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+ */
+
+
+#ifndef OSGANIMATION_UPDATE_MATRIX_TRANSFORM
+#define OSGANIMATION_UPDATE_MATRIX_TRANSFORM 1
+
+#include <osgAnimation/Export>
+#include <osgAnimation/AnimationUpdateCallback>
+#include <osgAnimation/StackedTransform>
+#include <osg/NodeCallback>
+
+namespace osgAnimation
+{
+
+    class OSGANIMATION_EXPORT UpdateMatrixTransform : public AnimationUpdateCallback<osg::NodeCallback>
+    {
+    public:
+        META_Object(osgAnimation, UpdateMatrixTransform);
+
+        UpdateMatrixTransform(const std::string& name = "");
+        UpdateMatrixTransform(const UpdateMatrixTransform& apc,const osg::CopyOp& copyop = osg::CopyOp::SHALLOW_COPY);
+
+        // Callback method called by the NodeVisitor when visiting a node.
+        virtual void operator()(osg::Node* node, osg::NodeVisitor* nv);
+        virtual bool link(osgAnimation::Channel* channel);
+
+        StackedTransform& getStackedTransforms() { return _transforms;}
+        const StackedTransform& getStackedTransforms() const { return _transforms;}
+
+    protected:
+        StackedTransform _transforms;
+    };
+
+}
+
+#endif

@@ -1,0 +1,78 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+// Code by: Jeremy Moles (cubicool) 2007-2008
+
+#ifndef OSGWIDGET_TABLE
+#define OSGWIDGET_TABLE
+
+#include <osgWidget/Window>
+
+namespace osgWidget {
+
+class OSGWIDGET_EXPORT Table: public Window
+{
+    public:
+
+        typedef std::vector<point_type> CellSizes;
+
+        META_Object   (osgWidget, Table);
+
+        Table (const std::string& = "", unsigned int = 0, unsigned int = 0);
+        Table (const Table&, const osg::CopyOp&);
+
+        virtual bool addWidget (Widget*);
+        virtual bool addWidget (Widget*, unsigned int, unsigned int);
+
+        void getRowHeights      (CellSizes&) const;
+        void getRowMinHeights   (CellSizes&) const;
+        void getColumnWidths    (CellSizes&) const;
+        void getColumnMinWidths (CellSizes&) const;
+
+        void addHeightToRow   (unsigned int, point_type);
+        void addWidthToColumn (unsigned int, point_type);
+
+        bool isRowVerticallyFillable      (unsigned int) const;
+        bool isColumnHorizontallyFillable (unsigned int) const;
+
+        Widget* getByRowCol(unsigned int row, unsigned int col)
+        {
+            return getObjects()[_calculateIndex(row, col)].get();
+        }
+
+        const Widget* getByRowCol(unsigned int row, unsigned int col) const
+        {
+            return getObjects()[_calculateIndex(row, col)].get();
+        }
+
+    protected:
+    
+        unsigned int _rows;
+        unsigned int _cols;
+        unsigned int _lastRowAdd;
+        unsigned int _lastColAdd;
+
+        unsigned int _calculateIndex(unsigned int, unsigned int) const;
+
+        void _getRows    (CellSizes&, Getter) const;
+        void _getColumns (CellSizes&, Getter) const;
+
+        virtual void _resizeImplementation(point_type, point_type);
+
+        virtual Sizes _getWidthImplementation  () const;
+        virtual Sizes _getHeightImplementation () const;
+};
+
+}
+
+#endif

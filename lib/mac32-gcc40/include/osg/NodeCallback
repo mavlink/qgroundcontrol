@@ -1,0 +1,98 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_NODECALLBACK
+#define OSG_NODECALLBACK 1
+
+#include <osg/Object>
+#include <osg/ref_ptr>
+
+namespace osg {
+
+class Node;
+class NodeVisitor;
+
+class OSG_EXPORT NodeCallback : public virtual Object {
+
+    public :
+    
+
+        NodeCallback(){}
+
+        NodeCallback(const NodeCallback& nc,const CopyOp&):
+            _nestedCallback(nc._nestedCallback) {}
+
+        
+        META_Object(osg,NodeCallback);
+        
+        
+        /** Callback method called by the NodeVisitor when visiting a node.*/
+        virtual void operator()(Node* node, NodeVisitor* nv)
+        { 
+            // note, callback is responsible for scenegraph traversal so
+            // they must call traverse(node,nv) to ensure that the
+            // scene graph subtree (and associated callbacks) are traversed.
+            traverse(node,nv);
+        }
+        
+        /** Call any nested callbacks and then traverse the scene graph. */
+        void traverse(Node* node,NodeVisitor* nv);
+        
+        void setNestedCallback(NodeCallback* nc) { _nestedCallback = nc; }
+        NodeCallback* getNestedCallback() { return _nestedCallback.get(); }
+        const NodeCallback* getNestedCallback() const { return _nestedCallback.get(); }
+        
+        inline void addNestedCallback(NodeCallback* nc)
+        {
+            if (nc)
+            {
+                if (_nestedCallback.valid())
+                {
+                    nc->addNestedCallback(_nestedCallback.get());
+                    _nestedCallback = nc;
+                }
+                else
+                {
+                    _nestedCallback = nc;
+                }
+            }
+        }
+        
+        inline void removeNestedCallback(NodeCallback* nc)
+        {
+            if (nc)
+            {
+                if (_nestedCallback==nc)
+                {
+                    _nestedCallback = _nestedCallback->getNestedCallback();
+                }
+                else if (_nestedCallback.valid())
+                {
+                    _nestedCallback->removeNestedCallback(nc);
+                }
+            }
+        }
+        
+    public:
+
+        ref_ptr<NodeCallback> _nestedCallback;
+        
+    protected:
+    
+        virtual ~NodeCallback() {}
+};
+
+} // namespace
+
+#endif
+

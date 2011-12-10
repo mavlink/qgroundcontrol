@@ -1,0 +1,60 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2009 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGVOLUME_RAYTRACEDTECHNIQUE
+#define OSGVOLUME_RAYTRACEDTECHNIQUE 1
+
+#include <osgVolume/VolumeTechnique>
+#include <osg/MatrixTransform>
+
+namespace osgVolume {
+
+class OSGVOLUME_EXPORT RayTracedTechnique : public VolumeTechnique
+{
+    public:
+
+        RayTracedTechnique();
+
+        RayTracedTechnique(const RayTracedTechnique&,const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+        
+        META_Object(osgVolume, RayTracedTechnique);
+
+        virtual void init();
+
+        virtual void update(osgUtil::UpdateVisitor* nv);
+
+        virtual void cull(osgUtil::CullVisitor* nv);
+
+        /** Clean scene graph from any terrain technique specific nodes.*/
+        virtual void cleanSceneGraph();
+
+        /** Traverse the terrain subgraph.*/
+        virtual void traverse(osg::NodeVisitor& nv);
+
+    protected:
+    
+        virtual ~RayTracedTechnique();
+
+        osg::ref_ptr<osg::MatrixTransform> _transform;
+
+        typedef std::map<osgUtil::CullVisitor::Identifier*, osg::Matrix> ModelViewMatrixMap;
+
+        OpenThreads::Mutex _mutex;
+        ModelViewMatrixMap _modelViewMatrixMap;
+
+        osg::ref_ptr<osg::StateSet> _whenMovingStateSet;
+};
+
+}
+
+#endif

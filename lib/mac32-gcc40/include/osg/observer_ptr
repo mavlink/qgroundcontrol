@@ -1,0 +1,159 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_OBSERVER_PTR
+#define OSG_OBSERVER_PTR
+
+#include <osg/Notify>
+#include <osg/ref_ptr>
+#include <osg/Observer>
+
+#include <OpenThreads/ScopedLock>
+#include <OpenThreads/Mutex>
+
+namespace osg {
+
+/** Smart pointer for observed objects, that automatically set pointers to them to null when they are deleted.
+  * To use the observer_ptr<> robustly in multi-threaded applications it is recommend to access the pointer via
+  * the lock() method that passes back a ref_ptr<> that safely takes a reference to the object to prevent deletion
+  * during usage of the object.  In certain conditions it may be safe to use the pointer directly without using lock(),
+  * which will confer a perfomance advantage, the conditions are:
+  *   1) The data structure is only accessed/deleted in single threaded/serial way.
+  *   2) The data strucutre is guarenteed by high level management of data strucutures and threads which avoid
+  *      possible situations where the observer_ptr<>'s object may be deleted by one thread whilst being accessed
+  *      by another.
+  * If you are in any doubt about whether it is safe to access the object safe then use the
+  * ref_ptr<> observer_ptr<>.lock() combination. */
+template<class T>
+class observer_ptr
+{
+public:
+    typedef T element_type;
+    observer_ptr() : _reference(0), _ptr(0) {}
+
+    /**
+     * Create a observer_ptr from a ref_ptr.
+     */
+    observer_ptr(const ref_ptr<T>& rp)
+    {
+        _reference = rp.valid() ? rp->getOrCreateObserverSet() : 0;
+        _ptr = (_reference.valid() && _reference->getObserverdObject()!=0) ? rp.get() : 0;
+    }
+
+    /**
+     * Create a observer_ptr from a raw pointer. For compatibility;
+     * the result might not be lockable.
+     */
+    observer_ptr(T* rp)
+    {
+        _reference = rp ? rp->getOrCreateObserverSet() : 0;
+        _ptr = (_reference.valid() && _reference->getObserverdObject()!=0) ? rp : 0;
+    }
+
+    observer_ptr(const observer_ptr& wp) :
+        _reference(wp._reference),
+        _ptr(wp._ptr)
+    {
+    }
+
+    ~observer_ptr()
+    {
+    }
+
+    observer_ptr& operator = (const observer_ptr& wp)
+    {
+        if (&wp==this) return *this;
+
+        _reference = wp._reference;
+        _ptr = wp._ptr;
+        return *this;
+    }
+
+    observer_ptr& operator = (const ref_ptr<T>& rp)
+    {
+        _reference = rp.valid() ? rp->getOrCreateObserverSet() : 0;
+        _ptr = (_reference.valid() && _reference->getObserverdObject()!=0) ? rp.get() : 0;
+        return *this;
+    }
+
+    observer_ptr& operator = (T* rp)
+    {
+        _reference = rp ? rp->getOrCreateObserverSet() : 0;
+        _ptr = (_reference.valid() && _reference->getObserverdObject()!=0) ? rp : 0;
+        return *this;
+    }
+
+    /**
+     * Assign the observer_ptr to a ref_ptr. The ref_ptr will be valid if the
+     * referenced object hasn't been deleted and has a ref count > 0.
+     */
+    bool lock(ref_ptr<T>& rptr) const
+    {
+        if (!_reference)
+        {
+            rptr = 0;
+            return false;
+        }
+
+        Referenced* obj = _reference->addRefLock();
+        if (!obj)
+        {
+            rptr = 0;
+            return false;
+        }
+
+        rptr = _ptr;
+        obj->unref_nodelete();
+        return rptr.valid();
+    }
+
+    /** Comparison operators. These continue to work even after the
+     * observed object has been deleted.
+     */
+    bool operator == (const observer_ptr& wp) const { return _reference == wp._reference; }
+    bool operator != (const observer_ptr& wp) const { return _reference != wp._reference; }
+    bool operator < (const observer_ptr& wp) const { return _reference < wp._reference; }
+    bool operator > (const observer_ptr& wp) const { return _reference > wp._reference; }
+
+    // Non-strict interface, for compatibility
+    // comparison operator for const T*.
+    inline bool operator == (const T* ptr) const { return _ptr == ptr; }
+    inline bool operator != (const T* ptr) const { return _ptr != ptr; }
+    inline bool operator < (const T* ptr) const { return _ptr < ptr; }
+    inline bool operator > (const T* ptr) const { return _ptr > ptr; }
+
+    // Convenience methods for operating on object, however, access is not automatically threadsafe.
+    // To make thread safe, one should either ensure at a high level
+    // that the object will not be deleted while operating on it, or
+    // by using the observer_ptr<>::lock() to get a ref_ptr<> that
+    // ensures the objects stay alive throughout all access to it.
+
+    // Throw an error if _reference is null?
+    inline T& operator*() const { return *_ptr; }
+    inline T* operator->() const { return _ptr; }
+
+    // get the raw C pointer
+    inline T* get() const { return (_reference.valid() && _reference->getObserverdObject()!=0) ? _ptr : 0; }
+
+    inline bool operator!() const   { return get() == 0; }
+    inline bool valid() const       { return get() != 0; }
+
+protected:
+
+    osg::ref_ptr<ObserverSet>   _reference;
+    T*                          _ptr;
+};
+
+}
+
+#endif

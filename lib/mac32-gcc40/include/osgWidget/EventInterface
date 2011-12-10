@@ -1,0 +1,412 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+// Code by: Jeremy Moles (cubicool) 2007-2008
+
+#ifndef OSGWIDGET_EVENT_INTERFACE
+#define OSGWIDGET_EVENT_INTERFACE
+
+#include <list>
+#include <osg/ref_ptr>
+#include <osg/observer_ptr>
+#include <osg/Referenced>
+
+#include <osgWidget/Export>
+
+namespace osgWidget {
+
+class WindowManager;
+class Window;
+class Widget;
+
+enum EventType
+{
+    EVENT_NONE          = 0x0000,
+    EVENT_FOCUS         = 0x0001,
+    EVENT_UNFOCUS       = 0x0002,
+    EVENT_MOUSE_ENTER   = 0x0004,
+    EVENT_MOUSE_OVER    = 0x0008,
+    EVENT_MOUSE_LEAVE   = 0x0010,
+    EVENT_MOUSE_DRAG    = 0x0020,
+    EVENT_MOUSE_PUSH    = 0x0040,
+    EVENT_MOUSE_RELEASE = 0x0080,
+    EVENT_MOUSE_SCROLL  = 0x0100,
+    EVENT_KEY_DOWN      = 0x0200,
+    EVENT_KEY_UP        = 0x0400,
+    EVENT_ALL           = 0xFFFF
+};
+
+// Helpful wrapper around using the raw types, since it often doesn't make sense to
+// use some without the others.
+enum EventMask
+{
+    EVENT_MASK_FOCUS        = EVENT_FOCUS | EVENT_UNFOCUS,
+    EVENT_MASK_MOUSE_MOVE   = EVENT_MOUSE_ENTER | EVENT_MOUSE_OVER | EVENT_MOUSE_LEAVE,
+    EVENT_MASK_MOUSE_CLICK  = EVENT_MOUSE_PUSH | EVENT_MOUSE_RELEASE,
+    EVENT_MASK_MOUSE_DRAG   = EVENT_MASK_MOUSE_MOVE | EVENT_MASK_MOUSE_CLICK | EVENT_MOUSE_DRAG,
+    EVENT_MASK_KEY          = EVENT_KEY_UP | EVENT_KEY_DOWN
+};
+
+class OSGWIDGET_EXPORT Event
+{
+    public:
+        EventType type;
+        double     x;
+        double     y;
+        int        key;
+        int        keyMask;
+
+        Event(WindowManager* wm, EventType _type = EVENT_NONE):
+        type    (_type),
+        x       (0.0f),
+        y       (0.0f),
+        key     (-1),
+        keyMask (-1),
+        _wm     (wm),
+        _window (0),
+        _widget (0),
+        _data   (0) {
+        }
+
+        Event& makeType(EventType _type) {
+            if(_type != EVENT_NONE) type = _type;
+
+            return *this;
+        }
+
+        Event& makeMouse(double _x, double _y, EventType _type = EVENT_NONE) {
+            x = _x;
+            y = _y;
+
+            if(_type != EVENT_NONE) type = _type;
+
+            return *this;
+        }
+
+        Event& makeKey(int _key, int _keyMask, EventType _type = EVENT_NONE) {
+            key     = _key;
+            keyMask = _keyMask;
+
+            if(_type != EVENT_NONE) type = _type;
+
+            return *this;
+        }
+
+        WindowManager* getWindowManager() { return _wm; }
+
+        const WindowManager* getWindowManager() const {
+            return _wm;
+        }
+
+        Window* getWindow() {
+            return _window;
+        }
+
+        const Window* getWindow() const {
+            return _window;
+        }
+
+        Widget* getWidget() {
+            return _widget;
+        }
+
+        const Widget* getWidget() const {
+            return _widget;
+        }
+
+        void* getData() {
+            return _data;
+        }
+
+        const void* getData() const {
+            return _data;
+        }
+
+        void setData(void* data) {
+            _data = data;
+        }
+
+    protected:
+
+        friend class WindowManager;
+        friend class Window;
+
+        WindowManager* _wm;
+        Window*        _window;
+        Widget*        _widget;
+        void*          _data;
+
+};
+
+// The Callback interface was inspired by the CEGUI project:
+//
+//     http://www.cegui.org.uk/wiki/index.php/Main_Page
+//
+// It's a great little way to cleanly implement callbacks for events, although
+// I did change the names a bit to make them more appropriate for OSG. MANY THANKS
+// to the CEGUI project!
+
+// The CallbackInterface, which the highest-level functor keeps a pointer to.
+struct CallbackInterface: public osg::Referenced
+{
+    virtual ~CallbackInterface() {}
+
+    virtual const char* className() const { return "osgWidget::CallbackInterface"; }
+
+    virtual bool operator()(Event&) = 0;
+};
+
+// The object that facilitates a class method as a callback.
+template<typename T>
+class ObjectCallback: public CallbackInterface
+{
+    public:
+        typedef bool (T::*ObjectCallbackType)(Event&);
+
+        ObjectCallback(ObjectCallbackType callback, T* obj):
+        _object   (obj),
+        _callback (callback) {}
+
+        virtual bool operator()(Event& ev) {
+            return (_object->*_callback)(ev);
+        }
+
+    private:
+        T*                 _object;
+        ObjectCallbackType _callback;
+};
+
+// The object that facilitates general functions as callbacks.
+template<typename T>
+class FunctionCallback: public CallbackInterface
+{
+    public:
+        FunctionCallback(T* callback):
+        _callback(callback) {
+        }
+
+        virtual bool operator()(Event& ev) {
+            return (*_callback)(ev);
+        }
+    protected:
+        T* _callback;
+};
+
+// The highlevel functor.
+class OSGWIDGET_EXPORT Callback: public osg::Referenced
+{
+    public:
+        Callback(): _type(EVENT_NONE), _data(0), _callback(0) {}
+        Callback(const Callback& rhs): osg::Referenced(rhs), _type(rhs._type), _data(rhs._data), _callback(rhs._callback) {}
+
+        virtual const char* className() const { return "osgWidget::Callback"; }
+
+        // The more traditional style of OSG Callbacks.
+        Callback(EventType type, void* data=0):
+        _type     (type),
+        _data     (data),
+        _callback (0) {
+        }
+
+        // Creates a Callback that is bound to a member function.
+        template<typename T>
+        Callback(bool (T::*function)(Event&), T* obj, EventType type, void* data=0):
+        _type     (type),
+        _data     (data),
+        _callback (new ObjectCallback<T>(function, obj)) {
+        }
+
+        // Creates a Callback that is bound to a functor pointer.
+        template<typename T>
+        Callback(T* functor, EventType type, void* data=0):
+        _type     (type),
+        _data     (data),
+        _callback (new FunctionCallback<T>(functor)) {
+        }
+
+        virtual ~Callback() {}
+
+        virtual bool operator()(Event& ev) {
+            if(!_callback) return false;
+
+            return (*_callback)(ev);
+        }
+
+        EventType getType() const {
+            return _type;
+        }
+
+        void* getData() {
+            return _data;
+        }
+
+        const void* getData() const {
+            return _data;
+        }
+
+    protected:
+        EventType _type;
+        void*     _data;
+
+        // We use a ref_ptr here so that we don't have to worry about memory.
+        osg::ref_ptr<CallbackInterface> _callback;
+
+};
+
+
+class OSGWIDGET_EXPORT EventInterface
+{
+    public:
+        EventInterface(): _eventMask(EVENT_NONE) {}
+
+        EventInterface(const EventInterface& ei):
+        _eventMask (ei._eventMask),
+        _callbacks (ei._callbacks) {}
+
+        virtual ~EventInterface() {}
+
+        // These functions take as their final argument the WindowManager which issued the
+        // request. This is sometimes useful to get information about key state, etc.
+
+        // Notify the EventInterface object that is has been focused or unfocused; since
+        // this isn't always bound to a mouse event (i.e., if you want to be able to use
+        // the TAB key to focus), we need seperate events here.
+        virtual bool focus   (const WindowManager*) { return false; }
+        virtual bool unfocus (const WindowManager*) { return false; }
+
+        // Mouse events, pretty self-explanatory.
+        virtual bool mouseEnter   (double, double, const WindowManager*) { return false; }
+        virtual bool mouseOver    (double, double, const WindowManager*) { return false; }
+        virtual bool mouseLeave   (double, double, const WindowManager*) { return false; }
+        virtual bool mouseDrag    (double, double, const WindowManager*) { return false; }
+        virtual bool mousePush    (double, double, const WindowManager*) { return false; }
+        virtual bool mouseRelease (double, double, const WindowManager*) { return false; }
+        virtual bool mouseScroll  (double, double, const WindowManager*) { return false; }
+
+        // These functions pass the osgGA::GUIEventAdapter::KeySymbol and KeyModMask and,
+        // as above, the WindowManager.
+        virtual bool keyDown (int, int, const WindowManager*) { return false; }
+        virtual bool keyUp   (int, int, const WindowManager*) { return false; }
+
+        void setEventMask(unsigned int mask) {
+            _eventMask = mask;
+        }
+
+        void addEventMask(unsigned int mask) {
+            _eventMask |= mask;
+        }
+
+        void removeEventMask(unsigned int mask) {
+            _eventMask ^= mask;
+        }
+
+        unsigned int getEventMask() const {
+            return _eventMask;
+        }
+
+        void addCallback(Callback* cb) {
+            _callbacks.push_back(cb);
+        }
+
+        bool callCallbacks(Event& ev) {
+            if(ev.type == EVENT_NONE || !(_eventMask & ev.type)) return false;
+
+            for(CallbackList::iterator i = _callbacks.begin(); i != _callbacks.end(); i++) {
+                // This is the OLD method; testing a new method below.
+                // if(i->getType() == ev.type && (*i)(ev)) return true;
+
+                if(i->get()->getType() & ev.type) {
+                    ev.setData(i->get()->getData());
+
+                    if((*i->get())(ev)) return true;
+                }
+            }
+
+            return false;
+        }
+
+        bool callMethodAndCallbacks(Event& ev) {
+            if(ev.type == EVENT_NONE || !(_eventMask & ev.type)) return false;
+
+            bool handled = false;
+
+            if(ev.type == EVENT_FOCUS) handled = focus(ev.getWindowManager());
+
+            else if(ev.type == EVENT_UNFOCUS) handled = unfocus(ev.getWindowManager());
+
+            else if(ev.type == EVENT_MOUSE_ENTER)
+                handled = mouseEnter(ev.x, ev.y, ev.getWindowManager())
+            ;
+
+            else if(ev.type == EVENT_MOUSE_OVER)
+                handled = mouseOver(ev.x, ev.y, ev.getWindowManager())
+            ;
+
+            else if(ev.type == EVENT_MOUSE_LEAVE)
+                handled = mouseLeave(ev.x, ev.y, ev.getWindowManager())
+            ;
+
+            else if(ev.type == EVENT_MOUSE_DRAG)
+                handled = mouseDrag(ev.x, ev.y, ev.getWindowManager())
+            ;
+
+            else if(ev.type == EVENT_MOUSE_PUSH)
+                handled = mousePush(ev.x, ev.y, ev.getWindowManager())
+            ;
+
+            else if(ev.type == EVENT_MOUSE_RELEASE)
+                handled = mouseRelease(ev.x, ev.y, ev.getWindowManager())
+            ;
+
+            else if(ev.type == EVENT_MOUSE_SCROLL)
+                handled = mouseScroll(ev.x, ev.y, ev.getWindowManager())
+            ;
+
+            else if(ev.type == EVENT_KEY_DOWN)
+                handled = keyDown(ev.key, ev.keyMask, ev.getWindowManager())
+            ;
+
+            else if(ev.type == EVENT_KEY_UP)
+                handled = keyUp(ev.key, ev.keyMask, ev.getWindowManager())
+            ;
+
+            else return false;
+
+            return callCallbacks(ev) || handled;
+        }
+
+        bool canFocus   () const { return (_eventMask & EVENT_FOCUS) != 0; }
+        bool canUnfocus () const { return (_eventMask & EVENT_UNFOCUS) != 0; }
+
+        bool canMouseEnter   () const { return (_eventMask & EVENT_MOUSE_ENTER) != 0; }
+        bool canMouseOver    () const { return (_eventMask & EVENT_MOUSE_OVER) != 0; }
+        bool canMouseLeave   () const { return (_eventMask & EVENT_MOUSE_LEAVE) != 0; }
+        bool canMouseDrag    () const { return (_eventMask & EVENT_MOUSE_DRAG) != 0; }
+        bool canMousePush    () const { return (_eventMask & EVENT_MOUSE_PUSH) != 0; }
+        bool canMouseRelease () const { return (_eventMask & EVENT_MOUSE_RELEASE) != 0; }
+        bool canMouseScroll  () const { return (_eventMask & EVENT_MOUSE_SCROLL) != 0; }
+
+        bool canKeyDown () const { return (_eventMask & EVENT_KEY_DOWN) != 0; }
+        bool canKeyUp   () const { return (_eventMask & EVENT_KEY_UP) != 0; }
+
+    private:
+        typedef std::list<osg::observer_ptr<Callback> > CallbackList;
+
+        unsigned int _eventMask;
+        CallbackList _callbacks;
+
+};
+
+}
+
+#endif
