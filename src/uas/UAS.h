@@ -132,6 +132,10 @@ public:
     px::PointCloudXYZRGB getPointCloud() const {
         return pointCloud;
     }
+
+    px::RGBDImage getRGBDImage() const {
+        return rgbdImage;
+    }
 #endif
 
     friend class UASWaypointManager;
@@ -216,6 +220,7 @@ protected: //COMMENTS FOR TEST UNIT
 
 #ifdef QGC_PROTOBUF_ENABLED
     px::PointCloudXYZRGB pointCloud;
+    px::RGBDImage rgbdImage;
 #endif
 
     QMap<int, QMap<QString, QVariant>* > parameters; ///< All parameters

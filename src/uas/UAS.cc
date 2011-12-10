@@ -983,6 +983,10 @@ void UAS::receiveExtendedMessage(LinkInterface* link, std::tr1::shared_ptr<googl
     {
         pointCloud.CopyFrom(*message);
     }
+    else if (message->GetTypeName() == rgbdImage.GetTypeName())
+    {
+        rgbdImage.CopyFrom(*message);
+    }
 }
 
 #endif
