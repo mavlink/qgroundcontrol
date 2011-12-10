@@ -1,0 +1,98 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_SWITCH
+#define OSG_SWITCH 1
+
+#include <osg/Group>
+
+namespace osg {
+
+/** Switch is a Group node that allows switching between children.
+  * Typical uses would be for objects which might need to be rendered
+  * differently at different times, for instance a switch could be used 
+  * to represent the different states of a traffic light.
+*/
+class OSG_EXPORT Switch : public Group
+{
+    public :
+        
+
+        Switch();
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        Switch(const Switch&,const CopyOp& copyop=CopyOp::SHALLOW_COPY);
+
+        virtual Switch* asSwitch() { return this; }
+        virtual const Switch* asSwitch() const { return this; }
+
+
+        META_Node(osg, Switch);
+
+        virtual void traverse(NodeVisitor& nv);
+        
+        void setNewChildDefaultValue(bool value) { _newChildDefaultValue = value; }
+        
+        bool getNewChildDefaultValue() const { return _newChildDefaultValue; }
+
+        virtual bool addChild( Node *child );
+
+        virtual bool addChild( Node *child, bool value );
+
+        virtual bool insertChild( unsigned int index, Node *child );
+
+        virtual bool insertChild( unsigned int index, Node *child, bool value );
+
+        virtual bool removeChildren(unsigned int pos,unsigned int numChildrenToRemove);
+
+
+        void setValue(unsigned int pos,bool value);
+
+        bool getValue(unsigned int pos) const;
+
+        void setChildValue(const Node* child,bool value);
+        
+        bool getChildValue(const Node* child) const;
+
+        /** Set all the children off (false), and set the new default child
+          * value to off (false). */
+        bool setAllChildrenOff();
+        
+        /** Set all the children on (true), and set the new default child
+          * value to on (true). */
+        bool setAllChildrenOn();
+        
+        /** Set a single child on, switch off all other children. */
+        bool setSingleChildOn(unsigned int pos);
+        
+
+        typedef std::vector<bool>   ValueList;
+        
+        void setValueList(const ValueList& values) { _values=values; }
+
+        const ValueList& getValueList() const { return _values; }
+
+        virtual BoundingSphere computeBound() const;
+
+    protected :
+    
+        virtual ~Switch() {}
+
+        // This is effectively a bit mask.
+        bool        _newChildDefaultValue;
+        ValueList   _values;
+};
+
+}
+
+#endif

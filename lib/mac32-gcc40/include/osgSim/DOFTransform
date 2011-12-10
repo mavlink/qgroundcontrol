@@ -1,0 +1,175 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGSIM_DOFTRANSFORM
+#define OSGSIM_DOFTRANSFORM 1
+
+//base class:
+#include <osg/Transform>
+
+#include <osgSim/Export>
+
+namespace osgSim {
+
+/** DOFTransform - encapsulates Multigen DOF behavior*/
+class OSGSIM_EXPORT DOFTransform : public osg::Transform
+{
+    public:
+        /** constructor*/
+        DOFTransform();
+
+        /**copy constructor*/
+        DOFTransform(const DOFTransform& dof, const osg::CopyOp& copyop=osg::CopyOp::SHALLOW_COPY);
+
+        META_Node(osgSim, DOFTransform);
+
+        virtual void traverse(osg::NodeVisitor& nv);
+
+
+        void setMinHPR(const osg::Vec3& hpr) { _minHPR = hpr;}
+        const osg::Vec3& getMinHPR() const { return _minHPR;}
+
+        void setMaxHPR(const osg::Vec3& hpr) {_maxHPR = hpr;}
+        const osg::Vec3& getMaxHPR() const { return _maxHPR;}
+
+        void setIncrementHPR(const osg::Vec3& hpr) {_incrementHPR = hpr;}
+        const osg::Vec3& getIncrementHPR() const { return _incrementHPR;}
+
+        void setCurrentHPR(const osg::Vec3& hpr) {_currentHPR = hpr; dirtyBound(); }
+        const osg::Vec3& getCurrentHPR() const {return _currentHPR;}
+
+        void updateCurrentHPR(const osg::Vec3& hpr);
+
+
+        void setMinTranslate(const osg::Vec3& translate) {_minTranslate = translate; }
+        const osg::Vec3& getMinTranslate() const { return _minTranslate;}
+
+        void setMaxTranslate(const osg::Vec3& translate) {_maxTranslate = translate; }
+        const osg::Vec3& getMaxTranslate() const { return _maxTranslate;}
+
+        void setIncrementTranslate(const osg::Vec3& translate) { _incrementTranslate = translate; }
+        const osg::Vec3& getIncrementTranslate() const { return _incrementTranslate;}
+
+        void setCurrentTranslate(const osg::Vec3& translate){ _currentTranslate = translate; dirtyBound(); }
+        inline const osg::Vec3& getCurrentTranslate() const { return _currentTranslate;}
+
+        void updateCurrentTranslate(const osg::Vec3& translate);
+
+
+        void setMinScale(const osg::Vec3& scale) { _minScale = scale;}
+        const osg::Vec3& getMinScale() const { return _minScale;}
+
+        void setMaxScale(const osg::Vec3& scale) { _maxScale = scale;}
+        const osg::Vec3& getMaxScale() const { return _maxScale;}
+
+        void setIncrementScale(const osg::Vec3& scale) { _incrementScale = scale;}
+        const osg::Vec3& getIncrementScale() const { return _incrementScale;}
+
+        void setCurrentScale(const osg::Vec3& scale) { _currentScale = scale; dirtyBound(); }
+        inline const osg::Vec3& getCurrentScale() const { return _currentScale;}
+
+        void updateCurrentScale(const osg::Vec3& scale);
+
+
+        void setPutMatrix(const osg::Matrix& put) { _Put = put; dirtyBound(); }
+        inline const osg::Matrix& getPutMatrix() const {return _Put;}
+
+        void setInversePutMatrix(const osg::Matrix& inversePut) { _inversePut = inversePut; dirtyBound(); }
+        inline const osg::Matrix& getInversePutMatrix() const {return _inversePut;}
+
+        void setLimitationFlags(unsigned long flags) { _limitationFlags = flags;}
+        inline unsigned long getLimitationFlags() const {return _limitationFlags;}
+
+        enum MultOrder
+        {
+            PRH,
+            PHR,
+            HPR,
+            HRP,
+            RPH,
+            RHP
+        };
+
+        void setHPRMultOrder(MultOrder order) { _multOrder = order; }
+        inline MultOrder getHPRMultOrder() const { return _multOrder;}
+
+        void setAnimationOn(bool do_animate);
+        inline bool getAnimationOn() const { return _animationOn; }
+
+        void animate(float deltaTime);
+
+        virtual bool computeLocalToWorldMatrix(osg::Matrix& matrix,osg::NodeVisitor* nv) const;
+
+        virtual bool computeWorldToLocalMatrix(osg::Matrix& matrix,osg::NodeVisitor* nv) const;
+
+    protected:
+
+        virtual ~DOFTransform() {}
+
+        unsigned int    _previousTraversalNumber;
+        double          _previousTime;
+
+        osg::Vec3 _minHPR;
+        osg::Vec3 _maxHPR;
+        osg::Vec3 _currentHPR;
+        osg::Vec3 _incrementHPR;
+
+        osg::Vec3 _minTranslate;
+        osg::Vec3 _maxTranslate;
+        osg::Vec3 _currentTranslate;
+        osg::Vec3 _incrementTranslate;
+
+        osg::Vec3 _minScale;
+        osg::Vec3 _maxScale;
+        osg::Vec3 _currentScale;
+        osg::Vec3 _incrementScale;
+
+        osg::Matrix _Put;
+        osg::Matrix _inversePut;
+
+        unsigned long _limitationFlags;
+        /* bits from left to right
+        0 = x translation limited (2^31)
+        1 = y translation limited (2^30)
+        2 = z translation limited (2^29)
+        3 = pitch limited (2^28)
+        4 = roll limited (2^27)
+        5 = yaw limited (2^26)
+        6 = x scale limited (2^25)
+        7 = y scale limited (2^24)
+        8 = z scale limited (2^23)
+
+        else reserved
+        */
+
+        bool _animationOn;
+        /** flags indicating whether value is incerasing or decreasing in animation
+        bits form right to left, 1 means increasing while 0 is decreasing
+        0 = x translation
+        1 = y translation
+        2 = z translation
+        3 = pitch
+        4 = roll
+        5 = yaw
+        6 = x scale
+        7 = y scale
+        8 = z scale
+        */
+        unsigned short _increasingFlags;
+
+        MultOrder _multOrder;
+
+    };
+
+}
+#endif
