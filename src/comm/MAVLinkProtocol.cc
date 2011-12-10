@@ -207,6 +207,10 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
                         emit extendedMessageReceived(link, protobuf_msg);
                     }
                 }
+
+                position += extended_message.extended_payload_len;
+
+                continue;
             }
 #endif
 
