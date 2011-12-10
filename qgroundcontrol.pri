@@ -132,14 +132,14 @@ macx {
 linux-g++ {
 
     debug {
-        DESTDIR = $$TARGETDIR/debug
-        CONFIG += debug console
+        #DESTDIR = $$TARGETDIR/debug
+        #CONFIG += debug console
     }
 
     release {
-        DESTDIR = $$TARGETDIR/release
+        #DESTDIR = $$TARGETDIR/release
         DEFINES += QT_NO_DEBUG
-        CONFIG -= console
+        #CONFIG -= console
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
@@ -215,14 +215,14 @@ message("Compiling for linux 32")
 linux-g++-64 {
 
     debug {
-        DESTDIR = $$TARGETDIR/debug
-        CONFIG += debug console
+        #DESTDIR = $$TARGETDIR/debug
+        #CONFIG += debug console
     }
 
     release {
-        DESTDIR = $$TARGETDIR/release
+        #DESTDIR = $$TARGETDIR/release
         DEFINES += QT_NO_DEBUG
-        CONFIG -= console
+        #CONFIG -= console
     }
 
     QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
