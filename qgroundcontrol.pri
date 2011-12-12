@@ -142,7 +142,7 @@ linux-g++ {
         #CONFIG -= console
     }
 
-    QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+    #QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
 
 message("Compiling for linux 32")
 
@@ -172,9 +172,10 @@ message("Compiling for linux 32")
             -losgViewer \
             -losgGA \
             -losgDB \
-            -losgQt \
             -losgText \
             -lOpenThreads
+
+            #-losgQt \
 
     DEFINES += QGC_OSG_ENABLED
     }
@@ -225,7 +226,7 @@ linux-g++-64 {
         #CONFIG -= console
     }
 
-    QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
+    #QMAKE_POST_LINK += cp -rf $$BASEDIR/audio $$DESTDIR/.
 
     INCLUDEPATH += /usr/include \
                    /usr/include/qt4/phonon
@@ -253,9 +254,10 @@ linux-g++-64 {
             -losgViewer \
             -losgGA \
             -losgDB \
-            -losgQt \
             -losgText \
             -lOpenThreads
+
+#            -losgQt \
 
     DEFINES += QGC_OSG_ENABLED
     }

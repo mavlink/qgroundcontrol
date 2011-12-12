@@ -661,6 +661,10 @@ void HUD::paintHUD()
                 nextOfflineImage = "";
             }
 
+        }
+
+        if (dataStreamEnabled || videoEnabled)
+        {
             glRasterPos2i(0, 0);
 
             xImageFactor = width() / (float)glImage.width();

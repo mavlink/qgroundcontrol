@@ -59,11 +59,11 @@ Pixhawk3DWidget::Pixhawk3DWidget(QWidget* parent)
     , displayImagery(true)
     , displayWaypoints(true)
     , displayRGBD2D(false)
-    , displayRGBD3D(false)
-    , enableRGBDColor(true)
+    , displayRGBD3D(true)
+    , enableRGBDColor(false)
     , enableTarget(false)
     , followCamera(true)
-    , frame(MAV_FRAME_GLOBAL)
+    , frame(MAV_FRAME_LOCAL_NED)
     , lastRobotX(0.0f)
     , lastRobotY(0.0f)
     , lastRobotZ(0.0f)
@@ -433,8 +433,8 @@ void
 Pixhawk3DWidget::buildLayout(void)
 {
     QComboBox* frameComboBox = new QComboBox(this);
-    frameComboBox->addItem("Global");
     frameComboBox->addItem("Local");
+    frameComboBox->addItem("Global");
     frameComboBox->setFixedWidth(70);
 
     QCheckBox* gridCheckBox = new QCheckBox(this);
@@ -642,7 +642,6 @@ Pixhawk3DWidget::getPose(double& x, double& y, double& z,
             y = uas->getLocalY();
             z = uas->getLocalZ();
         }
-
 
         roll = uas->getRoll();
         pitch = uas->getPitch();
@@ -1222,38 +1221,41 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
     px::RGBDImage rgbdImage = uas->getRGBDImage();
     px::PointCloudXYZRGB pointCloud = uas->getPointCloud();
 
-    rgbImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
-                       GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE,
-                       reinterpret_cast<unsigned char *>(&(*(rgbdImage.mutable_imagedata1()))[0]),
-                       osg::Image::NO_DELETE);
-    rgbImage->dirty();
-
-    QByteArray coloredDepth(rgbdImage.cols() * rgbdImage.rows() * 3, 0);
-    for (uint32_t r = 0; r < rgbdImage.rows(); ++r)
+    if (rgbdImage.rows() > 0 && rgbdImage.cols() > 0)
     {
-        const float* depth = reinterpret_cast<const float*>(rgbdImage.imagedata2().c_str() + r * rgbdImage.step2());
-        uint8_t* pixel = reinterpret_cast<uint8_t*>(coloredDepth.data()) + r * rgbdImage.cols() * 3;
-        for (uint32_t c = 0; c < rgbdImage.cols(); ++c)
+        rgbImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
+                           GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE,
+                           reinterpret_cast<unsigned char *>(&(*(rgbdImage.mutable_imagedata1()))[0]),
+                           osg::Image::NO_DELETE);
+        rgbImage->dirty();
+
+        QByteArray coloredDepth(rgbdImage.cols() * rgbdImage.rows() * 3, 0);
+        for (uint32_t r = 0; r < rgbdImage.rows(); ++r)
         {
-            if (depth[c] != 0)
+            const float* depth = reinterpret_cast<const float*>(rgbdImage.imagedata2().c_str() + r * rgbdImage.step2());
+            uint8_t* pixel = reinterpret_cast<uint8_t*>(coloredDepth.data()) + r * rgbdImage.cols() * 3;
+            for (uint32_t c = 0; c < rgbdImage.cols(); ++c)
             {
-                int idx = fminf(depth[c], 10.0f) / 10.0f * 127.0f;
-                idx = 127 - idx;
+                if (depth[c] != 0)
+                {
+                    int idx = fminf(depth[c], 10.0f) / 10.0f * 127.0f;
+                    idx = 127 - idx;
 
-                pixel[0] = colormap_jet[idx][2] * 255.0f;
-                pixel[1] = colormap_jet[idx][1] * 255.0f;
-                pixel[2] = colormap_jet[idx][0] * 255.0f;
+                    pixel[0] = colormap_jet[idx][2] * 255.0f;
+                    pixel[1] = colormap_jet[idx][1] * 255.0f;
+                    pixel[2] = colormap_jet[idx][0] * 255.0f;
+                }
+
+                pixel += 3;
             }
-
-            pixel += 3;
         }
-    }
 
-    depthImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
-                         GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
-                         reinterpret_cast<unsigned char *>(coloredDepth.data()),
-                         osg::Image::NO_DELETE);
-    depthImage->dirty();
+        depthImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
+                             GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
+                             reinterpret_cast<unsigned char *>(coloredDepth.data()),
+                             osg::Image::NO_DELETE);
+        depthImage->dirty();
+    }
 
     osg::Geometry* geometry = rgbd3DNode->getDrawable(0)->asGeometry();
 
@@ -1265,6 +1267,7 @@ Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
         double x = p.x() - robotX;
         double y = p.y() - robotY;
         double z = p.z() - robotZ;
+
 
         (*vertices)[i].set(y, x, -z);
 
