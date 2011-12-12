@@ -338,6 +338,8 @@ protected:
     QPointer<QDockWidget> headUpDockWidget;
     QPointer<QDockWidget> video1DockWidget;
     QPointer<QDockWidget> video2DockWidget;
+    QPointer<QDockWidget> rgbd1DockWidget;
+    QPointer<QDockWidget> rgbd2DockWidget;
     QPointer<QDockWidget> logPlayerDockWidget;
 
     QPointer<QDockWidget> hsiDockWidget;

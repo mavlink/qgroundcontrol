@@ -350,7 +350,8 @@ HEADERS += src/MG.h \
     src/ui/WaypointViewOnlyView.h \
     src/ui/WaypointViewOnlyView.h \
     src/ui/WaypointEditableView.h \    
-    src/ui/UnconnectedUASInfoWidget.h
+    src/ui/UnconnectedUASInfoWidget.h \
+    src/ui/QGCRGBDView.h
 
 # Google Earth is only supported on Mac OS and Windows with Visual Studio Compiler
 macx|win32-msvc2008|win32-msvc2010::HEADERS += src/ui/map3D/QGCGoogleEarthView.h
@@ -477,7 +478,8 @@ SOURCES += src/main.cc \
     src/ui/MAVLinkDecoder.cc \
     src/ui/WaypointViewOnlyView.cc \
     src/ui/WaypointEditableView.cc \
-    src/ui/UnconnectedUASInfoWidget.cc
+    src/ui/UnconnectedUASInfoWidget.cc \
+    src/ui/QGCRGBDView.cc
 
 # Enable Google Earth only on Mac OS and Windows with Visual Studio compiler
 macx|win32-msvc2008|win32-msvc2010::SOURCES += src/ui/map3D/QGCGoogleEarthView.cc

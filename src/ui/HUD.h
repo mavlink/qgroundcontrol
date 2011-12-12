@@ -214,6 +214,7 @@ protected:
     QString nextOfflineImage;
     bool hudInstrumentsEnabled;
     bool videoEnabled;
+    bool dataStreamEnabled;
     float xImageFactor;
     float yImageFactor;
     QAction* enableHUDAction;
