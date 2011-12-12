@@ -1219,25 +1219,41 @@ float colormap_jet[128][3] = {
 void
 Pixhawk3DWidget::updateRGBD(double robotX, double robotY, double robotZ)
 {
+    px::RGBDImage rgbdImage = uas->getRGBDImage();
     px::PointCloudXYZRGB pointCloud = uas->getPointCloud();
 
-//    QSharedPointer<QByteArray> rgb = freenect->getRgbData();
-//    if (!rgb.isNull()) {
-//        rgbImage->setImage(640, 480, 1,
-//                           GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
-//                           reinterpret_cast<unsigned char *>(rgb->data()),
-//                           osg::Image::NO_DELETE);
-//        rgbImage->dirty();
-//    }
+    rgbImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
+                       GL_LUMINANCE, GL_LUMINANCE, GL_UNSIGNED_BYTE,
+                       reinterpret_cast<unsigned char *>(&(*(rgbdImage.mutable_imagedata1()))[0]),
+                       osg::Image::NO_DELETE);
+    rgbImage->dirty();
 
-//    QSharedPointer<QByteArray> coloredDepth = freenect->getColoredDepthData();
-//    if (!coloredDepth.isNull()) {
-//        depthImage->setImage(640, 480, 1,
-//                             GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
-//                             reinterpret_cast<unsigned char *>(coloredDepth->data()),
-//                             osg::Image::NO_DELETE);
-//        depthImage->dirty();
-//    }
+    QByteArray coloredDepth(rgbdImage.cols() * rgbdImage.rows() * 3, 0);
+    for (uint32_t r = 0; r < rgbdImage.rows(); ++r)
+    {
+        const float* depth = reinterpret_cast<const float*>(rgbdImage.imagedata2().c_str() + r * rgbdImage.step2());
+        uint8_t* pixel = reinterpret_cast<uint8_t*>(coloredDepth.data()) + r * rgbdImage.cols() * 3;
+        for (uint32_t c = 0; c < rgbdImage.cols(); ++c)
+        {
+            if (depth[c] != 0)
+            {
+                int idx = fminf(depth[c], 10.0f) / 10.0f * 127.0f;
+                idx = 127 - idx;
+
+                pixel[0] = colormap_jet[idx][2] * 255.0f;
+                pixel[1] = colormap_jet[idx][1] * 255.0f;
+                pixel[2] = colormap_jet[idx][0] * 255.0f;
+            }
+
+            pixel += 3;
+        }
+    }
+
+    depthImage->setImage(rgbdImage.cols(), rgbdImage.rows(), 1,
+                         GL_RGB, GL_RGB, GL_UNSIGNED_BYTE,
+                         reinterpret_cast<unsigned char *>(coloredDepth.data()),
+                         osg::Image::NO_DELETE);
+    depthImage->dirty();
 
     osg::Geometry* geometry = rgbd3DNode->getDrawable(0)->asGeometry();
 
