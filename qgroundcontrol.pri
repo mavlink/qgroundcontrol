@@ -37,13 +37,13 @@ win32-msvc2008|win32-msvc2010 {
 DEFINES += _TTY_NOWARN_
 
 # MAC OS X
-macx {
+macx-g++42 {
 
    # COMPILER_VERSION = $$system(gcc -v)
     #message(Using compiler $$COMPILER_VERSION)
 
-        CONFIG += x86 cocoa phonon
-        CONFIG -= x86_64
+        CONFIG += x86_64 cocoa phonon
+        CONFIG -= x86
 
     #HARDWARE_PLATFORM = $$system(uname -a)
     #contains( $$HARDWARE_PLATFORM, "9.6.0" ) || contains( $$HARDWARE_PLATFORM, "9.7.0" ) || contains( $$HARDWARE_PLATFORM, "9.8.0" ) || contains( $$HARDWARE_PLATFORM, "9.9.0" ) {
@@ -93,7 +93,7 @@ macx {
     # Copy parameter tooltip files
     QMAKE_POST_LINK += && cp -rf $$BASEDIR/files $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy libraries
-    QMAKE_POST_LINK += && cp -rf $$BASEDIR/lib/mac32-gcc40/lib/* $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
+    QMAKE_POST_LINK += && cp -rf $$BASEDIR/lib/mac64/lib/* $$TARGETDIR/qgroundcontrol.app/Contents/MacOS
     # Copy model files
     #QMAKE_POST_LINK += && cp -f $$BASEDIR/models/*.dae $$TARGETDIR/qgroundcontrol.app/Contents/MacOs
 
@@ -105,11 +105,11 @@ macx {
     # Include OpenSceneGraph libraries
     INCLUDEPATH += -framework GLUT \
             -framework Cocoa \
-            $$BASEDIR/lib/mac32-gcc40/include
+            $$BASEDIR/lib/mac64/include
 
     LIBS += -framework GLUT \
             -framework Cocoa \
-            -L$$BASEDIR/lib/mac32-gcc40/lib \
+            -L$$BASEDIR/lib/mac64/lib \
             -lOpenThreads \
             -losg \
             -losgViewer \
