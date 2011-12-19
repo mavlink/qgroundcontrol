@@ -1,0 +1,70 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_TEXENVFILTER
+#define OSG_TEXENVFILTER 1
+
+#include <osg/GL>
+#include <osg/StateAttribute>
+
+#ifndef GL_EXT_texture_lod_bias
+#define GL_MAX_TEXTURE_LOD_BIAS_EXT       0x84FD
+#define GL_TEXTURE_FILTER_CONTROL_EXT     0x8500
+#define GL_TEXTURE_LOD_BIAS_EXT           0x8501
+#endif
+
+namespace osg {
+
+/** TexEnvFilter - encapsulates the OpenGL glTexEnv (GL_TEXTURE_FILTER_CONTROL) state.*/
+class OSG_EXPORT TexEnvFilter : public StateAttribute
+{
+  public:
+    TexEnvFilter(float lodBias = 0.0f);
+        
+    /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+    TexEnvFilter(const TexEnvFilter& texenv,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+            StateAttribute(texenv,copyop),
+            _lodBias(texenv._lodBias) {}
+
+    META_StateAttribute(osg, TexEnvFilter, TEXENVFILTER);
+
+    virtual bool isTextureAttribute() const { return true; }
+
+    /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+    virtual int compare(const StateAttribute& sa) const
+    {
+        // check the types are equal and then create the rhs variable
+        // used by the COMPARE_StateAttribute_Parameter macros below.
+        COMPARE_StateAttribute_Types(TexEnvFilter, sa)
+
+        // compare each parameter in turn against the rhs.
+        COMPARE_StateAttribute_Parameter(_lodBias)
+
+        return 0; // passed all the above comparison macros, must be equal.
+    }
+
+    void  setLodBias( float lodBias ) { _lodBias = lodBias; }
+        
+    float getLodBias() const { return _lodBias; }
+
+    virtual void apply(State& state) const;
+
+  protected:
+    virtual ~TexEnvFilter();
+
+    float   _lodBias;
+};
+
+}
+
+#endif

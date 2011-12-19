@@ -1,0 +1,520 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2008 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_STATESET
+#define OSG_STATESET 1
+
+#include <osg/Object>
+#include <osg/StateAttribute>
+#include <osg/ref_ptr>
+#include <osg/Uniform>
+
+#include <map>
+#include <vector>
+#include <string>
+
+#ifndef GL_RESCALE_NORMAL
+// allow compilation against GL1.1 headers.
+#define GL_RESCALE_NORMAL                 0x803A
+#endif
+
+namespace osg {
+
+// forward declare for the purposes of the UpdateCallback.
+class NodeVisitor;
+
+/** Stores a set of modes and attributes which represent a set of OpenGL state.
+  *  Notice that a \c StateSet contains just a subset of the whole OpenGL state.
+  * <p>In OSG, each \c Drawable and each \c Node has a reference to a
+  * \c StateSet. These <tt>StateSet</tt>s can be shared between
+  * different <tt>Drawable</tt>s and <tt>Node</tt>s (that is, several
+  * <tt>Drawable</tt>s and <tt>Node</tt>s can reference the same \c StateSet).
+  * Indeed, this practice is recommended whenever possible,
+  * as this minimizes expensive state changes in the graphics pipeline.
+*/
+class OSG_EXPORT StateSet : public Object
+{
+    public :
+
+
+        StateSet();
+        StateSet(const StateSet&,const CopyOp& copyop=CopyOp::SHALLOW_COPY);
+
+        virtual Object* cloneType() const { return new StateSet(); }
+        virtual Object* clone(const CopyOp& copyop) const { return new StateSet(*this,copyop); }
+        virtual bool isSameKindAs(const Object* obj) const { return dynamic_cast<const StateSet*>(obj)!=NULL; }
+        virtual const char* libraryName() const { return "osg"; }
+        virtual const char* className() const { return "StateSet"; }
+
+        /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+        int compare(const StateSet& rhs,bool compareAttributeContents=false) const;
+
+        bool operator <  (const StateSet& rhs) const { return compare(rhs)<0; }
+        bool operator == (const StateSet& rhs) const { return compare(rhs)==0; }
+        bool operator != (const StateSet& rhs) const { return compare(rhs)!=0; }
+
+
+        /** A vector of osg::Object pointers which is used to store the parent(s) of this Stateset, the parents could be osg::Node or osg::Drawable.*/
+        typedef std::vector<Object*> ParentList;
+
+        /** Get the parent list of this StateSet. */
+        inline const ParentList& getParents() const { return _parents; }
+
+        /** Get the a copy of parent list of node. A copy is returned to 
+          * prevent modification of the parent list.*/
+        inline ParentList getParents() { return _parents; }
+
+        inline Object* getParent(unsigned int i)  { return _parents[i]; }
+        /**
+         * Get a single const parent of this StateSet.
+         * @param i index of the parent to get.
+         * @return the parent i.
+         */
+        inline const Object* getParent(unsigned int i) const  { return _parents[i]; }
+
+        /**
+         * Get the number of parents of this StateSet.
+         * @return the number of parents of this StateSet.
+         */
+        inline unsigned int getNumParents() const { return static_cast<unsigned int>(_parents.size()); }
+
+
+        /** Compute the DataVariance based on an assessment of callback etc.*/
+        virtual void computeDataVariance();
+
+
+        /** Set all the modes to on or off so that it defines a
+            complete state, typically used for a default global state.*/
+        void setGlobalDefaults();
+
+        /** Clear the StateSet of all modes and attributes.*/
+        void clear();
+
+        /** Merge this \c StateSet with the \c StateSet passed as parameter.
+          * Every mode and attribute in this \c StateSet that is marked with
+          * \c StateAttribute::OVERRIDE is replaced with the
+          * equivalent mode or attribute from \c rhs.
+        */
+        void merge(const StateSet& rhs);
+
+        /** a container to map GLModes to their respective GLModeValues.*/
+        typedef std::map<StateAttribute::GLMode,StateAttribute::GLModeValue>  ModeList;
+
+        /** Set this \c StateSet to contain the specified \c GLMode with a given
+          * value.
+          * @note Don't use this method to set modes related to textures. For this
+          *       purpose, use \c setTextureMode(), that accepts an extra parameter
+          *       specifying which texture unit shall be affected by the call.
+        */
+        void setMode(StateAttribute::GLMode mode, StateAttribute::GLModeValue value);
+
+        /** Remove \c mode from this \c StateSet.
+          * @note Don't use this method to remove modes related to textures. For
+          *       this purpose, use \c removeTextureMode(), that accepts an extra
+          *       parameter specifying which texture unit shall be affected by
+          *       the call.
+        */
+        void removeMode(StateAttribute::GLMode mode);
+
+        /** Get the value for a given \c GLMode.
+          * @param mode The \c GLMode whose value is desired.
+          * @return If \c mode is contained within this \c StateSet, returns the
+          *         value associated with it. Otherwise, returns
+          *         \c StateAttribute::INHERIT.
+          * @note Don't use this method to get the value of modes related to
+          *       textures. For this purpose, use \c removeTextureMode(), that
+          *       accepts an extra parameter specifying which texture unit shall
+          *       be affected by the call.
+        */
+        StateAttribute::GLModeValue getMode(StateAttribute::GLMode mode) const;
+
+        /** Set the list of all <tt>GLMode</tt>s contained in this \c StateSet.*/
+        inline void setModeList(ModeList& ml) { _modeList=ml; }
+
+        /** Return the list of all <tt>GLMode</tt>s contained in this \c StateSet.*/
+        inline ModeList& getModeList() { return _modeList; }
+
+        /** Return the \c const list of all <tt>GLMode</tt>s contained in this
+          * <tt>const StateSet</tt>.
+        */
+        inline const ModeList& getModeList() const { return _modeList; }
+
+
+
+        /** Simple pairing between an attribute and its override flag.*/
+        typedef std::pair<ref_ptr<StateAttribute>,StateAttribute::OverrideValue>    RefAttributePair;
+
+        /** a container to map <StateAttribyte::Types,Member> to their respective RefAttributePair.*/
+        typedef std::map<StateAttribute::TypeMemberPair,RefAttributePair>           AttributeList;
+
+        /** Set this StateSet to contain specified attribute and override flag.*/
+        void setAttribute(StateAttribute *attribute, StateAttribute::OverrideValue value=StateAttribute::OFF);
+
+        /** Set this StateSet to contain specified attribute and set the associated GLMode's to specified value.*/
+        void setAttributeAndModes(StateAttribute *attribute, StateAttribute::GLModeValue value=StateAttribute::ON);
+
+        /** remove attribute of specified type from StateSet.*/
+        void removeAttribute(StateAttribute::Type type, unsigned int member=0);
+
+        /** remove attribute from StateSet.*/
+        void removeAttribute(StateAttribute *attribute);
+
+        /** Get specified StateAttribute for specified type.
+          * Returns NULL if no type is contained within StateSet.*/
+        StateAttribute* getAttribute(StateAttribute::Type type, unsigned int member = 0);
+
+        /** Get specified const StateAttribute for specified type.
+          * Returns NULL if no type is contained within const StateSet.*/
+        const StateAttribute* getAttribute(StateAttribute::Type type, unsigned int member = 0) const;
+
+        /** Get specified RefAttributePair for specified type.
+          * Returns NULL if no type is contained within StateSet.*/
+        const RefAttributePair* getAttributePair(StateAttribute::Type type, unsigned int member = 0) const;
+
+        /** set the list of all StateAttributes contained in this StateSet.*/
+        inline void setAttributeList(AttributeList& al) { _attributeList=al; }
+
+        /** return the list of all StateAttributes contained in this StateSet.*/
+        inline AttributeList& getAttributeList() { return _attributeList; }
+
+        /** return the const list of all StateAttributes contained in this const StateSet.*/
+        inline const AttributeList& getAttributeList() const { return _attributeList; }
+
+
+
+        typedef std::vector<ModeList>       TextureModeList;
+
+        /** Set this \c StateSet to contain specified \c GLMode with a given
+         *  value.
+         *  @param unit The texture unit to be affected (used with
+         *         multi-texturing).
+         *  @param mode The OpenGL mode to be added to the \c StateSet.
+         *  @param value The value to be assigned to \c mode.
+        */
+        void setTextureMode(unsigned int unit,StateAttribute::GLMode mode, StateAttribute::GLModeValue value);
+
+        /** Remove texture mode from StateSet.*/
+        void removeTextureMode(unsigned int unit,StateAttribute::GLMode mode);
+
+        /** Get specified GLModeValue for specified GLMode.
+          * returns INHERIT if no GLModeValue is contained within StateSet.*/
+        StateAttribute::GLModeValue getTextureMode(unsigned int unit,StateAttribute::GLMode mode) const;
+
+        /** set the list of all Texture related GLModes contained in this StateSet.*/
+        inline void setTextureModeList(TextureModeList& tml) { _textureModeList=tml; }
+
+        /** return the list of all Texture related GLModes contained in this StateSet.*/
+        inline TextureModeList& getTextureModeList() { return _textureModeList; }
+
+        /** return the const list of all Texture related GLModes contained in this const StateSet.*/
+        inline const TextureModeList& getTextureModeList() const  { return _textureModeList; }
+
+        /** Return the number texture units active in the TextureModeList.*/
+        inline unsigned int getNumTextureModeLists() const { return _textureModeList.size(); }
+
+        typedef std::vector<AttributeList>  TextureAttributeList;
+
+        /** Set this StateSet to contain specified attribute and override flag.*/
+        void setTextureAttribute(unsigned int unit,StateAttribute *attribute, StateAttribute::OverrideValue value=StateAttribute::OFF);
+        /** Set this StateSet to contain specified attribute and set the associated GLMode's to specified value.*/
+        void setTextureAttributeAndModes(unsigned int unit,StateAttribute *attribute, StateAttribute::GLModeValue value=StateAttribute::ON);
+
+        /** remove texture attribute of specified type from StateSet.*/
+        void removeTextureAttribute(unsigned int unit, StateAttribute::Type type);
+
+        /** remove texture attribute from StateSet.*/
+        void removeTextureAttribute(unsigned int unit, StateAttribute *attribute);
+
+        /** Get specified Texture related StateAttribute for specified type.
+          * Returns NULL if no type is contained within StateSet.*/
+        StateAttribute* getTextureAttribute(unsigned int unit,StateAttribute::Type type);
+
+        /** Get specified Texture related const StateAttribute for specified type.
+          * Returns NULL if no type is contained within const StateSet.*/
+        const StateAttribute* getTextureAttribute(unsigned int unit,StateAttribute::Type type) const;
+
+        /** Get specified Texture related RefAttributePair for specified type.
+          * Returns NULL if no type is contained within StateSet.*/
+        const RefAttributePair* getTextureAttributePair(unsigned int unit,StateAttribute::Type type) const;
+
+        /** Set the list of all Texture related StateAttributes contained in this StateSet.*/
+        inline void setTextureAttributeList(TextureAttributeList& tal) { _textureAttributeList=tal; }
+
+        /** Return the list of all Texture related StateAttributes contained in this StateSet.*/
+        inline TextureAttributeList& getTextureAttributeList() { return _textureAttributeList; }
+
+        /** Return the const list of all Texture related StateAttributes contained in this const StateSet.*/
+        inline const TextureAttributeList& getTextureAttributeList() const { return _textureAttributeList; }
+
+        /** Return the number of texture units active in the TextureAttributeList.*/
+        inline unsigned int getNumTextureAttributeLists() const { return _textureAttributeList.size(); }
+
+
+        void setAssociatedModes(const StateAttribute* attribute, StateAttribute::GLModeValue value);
+        void removeAssociatedModes(const StateAttribute* attribute);
+
+        void setAssociatedTextureModes(unsigned int unit,const StateAttribute* attribute, StateAttribute::GLModeValue value);
+        void removeAssociatedTextureModes(unsigned int unit,const StateAttribute* attribute);
+
+
+
+
+        /** Simple pairing between a Uniform and its override flag.*/
+        typedef std::pair<ref_ptr<Uniform>,StateAttribute::OverrideValue>  RefUniformPair;
+
+        /** a container to map Uniform name to its respective RefUniformPair.*/
+        typedef std::map<std::string,RefUniformPair> UniformList;
+
+        /** Set this StateSet to contain specified uniform and override flag.*/
+        void addUniform(Uniform* uniform, StateAttribute::OverrideValue value=StateAttribute::ON);
+        
+        /** remove uniform of specified name from StateSet.*/
+        void removeUniform(const std::string& name);
+
+        /** remove Uniform from StateSet.*/
+        void removeUniform(Uniform* uniform);
+
+        /** Get Uniform for specified name.
+          * Returns NULL if no matching Uniform is contained within StateSet.*/
+        Uniform* getUniform(const std::string& name);
+
+        /** Get Uniform for specified name, if one is not available create it, add it to this StateSet and return a pointer to it.*/
+        Uniform* getOrCreateUniform(const std::string& name, Uniform::Type type, unsigned int numElements=1);
+
+        /** Get const Uniform for specified name.
+          * Returns NULL if no matching Uniform is contained within StateSet.*/
+        const Uniform* getUniform(const std::string& name) const;
+
+        /** Get specified RefUniformPair for specified Uniform name.
+          * Returns NULL if no Uniform is contained within StateSet.*/
+        const RefUniformPair* getUniformPair(const std::string& name) const;
+
+        /** set the list of all Uniforms contained in this StateSet.*/
+        inline void setUniformList(UniformList& al) { _uniformList=al; }
+
+        /** return the list of all Uniforms contained in this StateSet.*/
+        inline UniformList& getUniformList() { return _uniformList; }
+
+        /** return the const list of all Uniforms contained in this const StateSet.*/
+        inline const UniformList& getUniformList() const { return _uniformList; }
+
+        enum RenderingHint
+        {
+            DEFAULT_BIN = 0,
+            OPAQUE_BIN = 1,
+            TRANSPARENT_BIN = 2
+        };
+
+        /** Set the \c RenderingHint of this \c StateSet. \c RenderingHint is
+          * used by the renderer to determine which draw bin to drop associated
+          * <tt>osg::Drawable</tt>s in. Typically, users will set this to either
+          * \c StateSet::OPAQUE_BIN or \c StateSet::TRANSPARENT_BIN.
+          * <tt>Drawable</tt>s in the opaque bin are sorted by their
+          * \c StateSet, so that the number of expensive changes in the OpenGL
+          * state is minimized. <tt>Drawable</tt>s in the transparent bin are
+          * sorted by depth, so that objects farther from the viewer are
+          * rendered first (and hence alpha blending works nicely for
+          * translucent objects).
+        */
+        void setRenderingHint(int hint);
+
+        /** Get the \c RenderingHint of this \c StateSet.*/
+        inline int getRenderingHint() const      { return _renderingHint; }
+
+        enum RenderBinMode
+        {
+            INHERIT_RENDERBIN_DETAILS,
+            USE_RENDERBIN_DETAILS,
+            OVERRIDE_RENDERBIN_DETAILS
+        };
+
+        /** Set the render bin details.*/
+        void setRenderBinDetails(int binNum,const std::string& binName,RenderBinMode mode=USE_RENDERBIN_DETAILS);
+
+        /** Set the render bin details to inherit.*/
+        void setRenderBinToInherit();
+
+        /** Get whether the render bin details are set and should be used.*/
+        inline bool useRenderBinDetails() const { return _binMode!=INHERIT_RENDERBIN_DETAILS; }
+
+        /** Set the render bin mode.*/
+        inline void setRenderBinMode(RenderBinMode mode) { _binMode=mode; }
+
+        /** Get the render bin mode.*/
+        inline RenderBinMode getRenderBinMode() const { return _binMode; }
+
+        /** Set the render bin number.*/
+        inline void setBinNumber(int num) { _binNum=num; }
+
+        /** Get the render bin number.*/
+        inline int getBinNumber() const { return _binNum; }
+
+        /** Set the render bin name.*/
+        inline void setBinName(const std::string& name) { _binName=name; }
+
+        /** Get the render bin name.*/
+        inline const std::string& getBinName() const { return _binName; }
+
+        /** By default render bins will be nested within each other dependent
+          * upon where they are set in the scene graph. This can be problematic
+          * if a transparent render bin is attached to an opaque render bin
+          * which is attached to another transparent render bin as these render
+          * bins will be sorted separately, giving the wrong draw ordering for
+          * back-to-front transparency. Therefore, to prevent render bins being
+          * nested, call setNestRenderBins(false). */
+        inline void setNestRenderBins(bool val) { _nestRenderBins = val; }
+
+        /** Get whether associated RenderBin should be nested within parents RenderBin.*/
+        inline bool getNestRenderBins() const { return _nestRenderBins; }
+
+
+        struct Callback : public virtual osg::Object
+        {
+            Callback() {}
+
+            Callback(const Callback&,const CopyOp&) {}
+
+            META_Object(osg,Callback);
+
+            /** do customized callback code.*/
+            virtual void operator() (StateSet*, NodeVisitor*) {}
+        };
+
+        /** Set the Update Callback which allows users to attach customize the updating of an object during the update traversal.*/
+        void setUpdateCallback(Callback* ac);
+
+        /** Get the non const Update Callback.*/
+        Callback* getUpdateCallback() { return _updateCallback.get(); }
+
+        /** Get the const Update Callback.*/
+        const Callback* getUpdateCallback() const { return _updateCallback.get(); }
+
+        /** Return whether this StateSet has update callbacks associated with it, and therefore must be traversed.*/
+        bool requiresUpdateTraversal() const { return _updateCallback.valid() || getNumChildrenRequiringUpdateTraversal()!=0; }
+
+        /** Get the number of Objects of this StateSet which require Update traversal,
+          * since they have an Update Callback attached to them or their children.*/
+        inline unsigned int getNumChildrenRequiringUpdateTraversal() const { return _numChildrenRequiringUpdateTraversal; }
+        
+        /** Run the update callbacks attached directly to this StateSet or to its children.*/
+        void runUpdateCallbacks(osg::NodeVisitor* nv);
+
+
+        /** Set the Event Callback which allows users to attach customize the updating of an object during the event traversal.*/
+        void setEventCallback(Callback* ac);
+
+        /** Get the non const Event Callback.*/
+        Callback* getEventCallback() { return _eventCallback.get(); }
+
+        /** Get the const Event Callback.*/
+        const Callback* getEventCallback() const { return _eventCallback.get(); }
+
+        /** Return whether this StateSet has event callbacks associated with it, and therefore must be traversed.*/
+        bool requiresEventTraversal() const { return _eventCallback.valid() || getNumChildrenRequiringEventTraversal()!=0; }
+
+        /** Get the number of Objects of this StateSet which require Event traversal,
+          * since they have an Eevnt Callback attached to them or their children.*/
+        inline unsigned int getNumChildrenRequiringEventTraversal() const { return _numChildrenRequiringEventTraversal; }
+        
+        /** Run the event callbacks attached directly to this StateSet or to its children.*/
+        void runEventCallbacks(osg::NodeVisitor* nv);
+
+        /** Check the modes associated with this StateSet are supported by current OpenGL drivers,
+          * and if not set the associated mode in osg::State to be black listed/invalid.
+          * Return true if all associated modes are valid.*/
+        bool checkValidityOfAssociatedModes(State& state) const;
+
+        /** Set whether to use a mutex to ensure ref() and unref() are thread safe.*/
+        virtual void setThreadSafeRefUnref(bool threadSafe);
+
+        /** call compile on all StateAttributes contained within this StateSet.*/
+        void compileGLObjects(State& state) const;
+
+        /** Resize any per context GLObject buffers to specified size. */
+        virtual void resizeGLObjectBuffers(unsigned int maxSize);
+
+        /** call release on all StateAttributes contained within this StateSet.*/
+        virtual void releaseGLObjects(State* state=0) const;
+
+    protected :
+
+
+        virtual ~StateSet();
+
+        StateSet& operator = (const StateSet&) { return *this; }
+
+        void addParent(osg::Object* object);
+        void removeParent(osg::Object* object);
+
+        ParentList _parents;
+        friend class osg::Node;
+        friend class osg::Drawable;
+        friend class osg::Uniform;
+        friend class osg::StateAttribute;
+    
+        ModeList                            _modeList;
+        AttributeList                       _attributeList;
+
+        TextureModeList                     _textureModeList;
+        TextureAttributeList                _textureAttributeList;
+
+        UniformList                         _uniformList;
+
+        inline ModeList& getOrCreateTextureModeList(unsigned int unit)
+        {
+            if (unit>=_textureModeList.size()) _textureModeList.resize(unit+1);
+            return _textureModeList[unit];
+        }
+
+        inline AttributeList& getOrCreateTextureAttributeList(unsigned int unit)
+        {
+            if (unit>=_textureAttributeList.size()) _textureAttributeList.resize(unit+1);
+            return _textureAttributeList[unit];
+        }
+
+        int compareModes(const ModeList& lhs,const ModeList& rhs);
+        int compareAttributePtrs(const AttributeList& lhs,const AttributeList& rhs);
+        int compareAttributeContents(const AttributeList& lhs,const AttributeList& rhs);
+
+        void setMode(ModeList& modeList,StateAttribute::GLMode mode, StateAttribute::GLModeValue value);
+        void setModeToInherit(ModeList& modeList,StateAttribute::GLMode mode);
+        StateAttribute::GLModeValue getMode(const ModeList& modeList,StateAttribute::GLMode mode) const;
+
+        void setAttribute(AttributeList& attributeList,StateAttribute *attribute, const StateAttribute::OverrideValue value=StateAttribute::OFF);
+
+        StateAttribute* getAttribute(AttributeList& attributeList,const StateAttribute::Type type, unsigned int member);
+        const StateAttribute* getAttribute(const AttributeList& attributeList,const StateAttribute::Type type, unsigned int member) const;
+        const RefAttributePair* getAttributePair(const AttributeList& attributeList,const StateAttribute::Type type, unsigned int member) const;
+
+        int                                 _renderingHint;
+
+        RenderBinMode                       _binMode;
+        int                                 _binNum;
+        std::string                         _binName;
+        bool                                _nestRenderBins;
+        
+        ref_ptr<Callback> _updateCallback;
+        unsigned int _numChildrenRequiringUpdateTraversal;
+        void setNumChildrenRequiringUpdateTraversal(unsigned int num);
+
+        ref_ptr<Callback> _eventCallback;
+        unsigned int _numChildrenRequiringEventTraversal;
+        void setNumChildrenRequiringEventTraversal(unsigned int num);
+
+};
+
+extern OSG_EXPORT bool isTextureMode(StateAttribute::GLMode mode);
+
+}
+
+#endif
