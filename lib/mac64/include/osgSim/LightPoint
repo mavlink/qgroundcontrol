@@ -1,0 +1,72 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSGSIM_LIGHTPOINT
+#define OSGSIM_LIGHTPOINT 1
+
+#include <osgSim/Export>
+#include <osgSim/Sector>
+#include <osgSim/BlinkSequence>
+
+#include <osg/Quat>
+#include <osg/Vec3>
+#include <osg/Vec4>
+
+namespace osgSim {
+
+
+class OSGSIM_EXPORT LightPoint
+{
+    public:
+
+        enum BlendingMode
+        {
+            ADDITIVE,
+            BLENDED
+        };
+        
+        LightPoint();
+        
+        LightPoint(const osg::Vec3& position,
+                   const osg::Vec4& color);
+       
+        LightPoint(bool                on,
+                   const osg::Vec3& position,
+                   const osg::Vec4& color,
+                   float            intensity=1.0f,
+                   float            radius=1.0f,
+                   Sector*          sector=0,
+                   BlinkSequence*   blinkSequence=0,
+                   BlendingMode     blendingMode=BLENDED);
+            
+
+        LightPoint(const LightPoint& lp);
+        
+        LightPoint& operator = (const LightPoint& lp);
+
+
+        bool                        _on;
+        osg::Vec3                   _position;
+        osg::Vec4                   _color;
+        float                       _intensity;
+        float                       _radius;
+
+        osg::ref_ptr<Sector>        _sector;
+        osg::ref_ptr<BlinkSequence> _blinkSequence;
+
+        BlendingMode                _blendingMode;
+};
+
+}
+
+#endif

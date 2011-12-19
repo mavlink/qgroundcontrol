@@ -1,0 +1,99 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_POLYGONOFFSET
+#define OSG_POLYGONOFFSET 1
+
+#include <osg/StateAttribute>
+
+#ifndef GL_POLYGON_OFFSET_LINE 
+    #define GL_POLYGON_OFFSET_LINE 0x2A02
+    #define GL_POLYGON_OFFSET_POINT 0x2A01
+#endif
+
+namespace osg {
+
+/** PolygonOffset - encapsulates the OpenGL glPolygonOffset state.*/
+class OSG_EXPORT PolygonOffset : public StateAttribute
+{
+    public :
+
+        PolygonOffset();
+
+        PolygonOffset(float factor, float units);
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy.*/
+        PolygonOffset(const PolygonOffset& po,const CopyOp& copyop=CopyOp::SHALLOW_COPY):
+            StateAttribute(po,copyop),
+            _factor(po._factor),
+            _units(po._units) {}
+
+        META_StateAttribute(osg, PolygonOffset, POLYGONOFFSET);
+
+        /** return -1 if *this < *rhs, 0 if *this==*rhs, 1 if *this>*rhs.*/
+        virtual int compare(const StateAttribute& sa) const
+        {
+            // check the types are equal and then create the rhs variable
+            // used by the COMPARE_StateAttribute_Parameter macros below.
+            COMPARE_StateAttribute_Types(PolygonOffset,sa)
+
+            // compare each parameter in turn against the rhs.
+            COMPARE_StateAttribute_Parameter(_factor)
+            COMPARE_StateAttribute_Parameter(_units)
+
+            return 0; // passed all the above comparison macros, must be equal.
+        }
+
+        virtual bool getModeUsage(StateAttribute::ModeUsage& usage) const
+        {
+            usage.usesMode(GL_POLYGON_OFFSET_FILL);
+#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
+            usage.usesMode(GL_POLYGON_OFFSET_LINE);
+            usage.usesMode(GL_POLYGON_OFFSET_POINT);
+#endif
+            return true;
+        }
+
+        inline void setFactor(float factor) { _factor = factor; }
+        inline float getFactor() const { return _factor; }
+        
+        inline void setUnits(float units) { _units = units; }
+        inline float getUnits() const { return _units; }
+
+        virtual void apply(State& state) const;
+
+
+        static void setFactorMultiplier(float multiplier);
+        static float getFactorMultiplier();
+
+        static void setUnitsMultiplier(float multiplier);
+        static float getUnitsMultiplier();
+        
+        static bool areFactorAndUnitsMultipliersSet();
+        
+        /** Checks with the OpenGL driver to try and pick multiplier appropriate for the hardware.
+            note, requires a valid graphics context to be current. */
+        static void setFactorAndUnitsMultipliersUsingBestGuessForDriver();
+
+    protected :
+
+        virtual ~PolygonOffset();
+
+        float       _factor;
+        float       _units;
+
+};
+
+}
+
+#endif

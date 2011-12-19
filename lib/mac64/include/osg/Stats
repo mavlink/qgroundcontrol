@@ -1,0 +1,125 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2007 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_STATS
+#define OSG_STATS 1
+
+#include <osg/Referenced>
+#include <OpenThreads/Mutex>
+#include <OpenThreads/ScopedLock>
+
+#include <string>
+#include <map>
+#include <vector>
+#include <ostream>
+
+namespace osg {
+
+class OSG_EXPORT Stats : public osg::Referenced
+{
+    public:
+
+        Stats(const std::string& name);
+
+        Stats(const std::string& name, unsigned int numberOfFrames);
+        
+        void setName(const std::string& name) { _name = name; }
+        const std::string& getName() const { return _name; }
+        
+        void allocate(unsigned int numberOfFrames);
+        
+        unsigned int getEarliestFrameNumber() const { return _latestFrameNumber < static_cast<unsigned int>(_attributeMapList.size()) ? 0 : _latestFrameNumber - static_cast<unsigned int>(_attributeMapList.size()) + 1; }
+        unsigned int getLatestFrameNumber() const { return _latestFrameNumber; }
+        
+        typedef std::map<std::string, double> AttributeMap;
+        typedef std::vector<AttributeMap> AttributeMapList;
+
+        bool setAttribute(unsigned int frameNumber, const std::string& attributeName, double value);
+        
+        inline bool getAttribute(unsigned int frameNumber, const std::string& attributeName, double& value) const
+        {
+            OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+            return getAttributeNoMutex(frameNumber, attributeName, value);
+        }
+
+        bool getAveragedAttribute(const std::string& attributeName, double& value, bool averageInInverseSpace=false) const;
+        
+        bool getAveragedAttribute(unsigned int startFrameNumber, unsigned int endFrameNumber, const std::string& attributeName, double& value, bool averageInInverseSpace=false) const;
+        
+        inline AttributeMap& getAttributeMap(unsigned int frameNumber)
+        {
+            OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+            return getAttributeMapNoMutex(frameNumber);
+        }
+        
+        inline const AttributeMap& getAttributeMap(unsigned int frameNumber) const
+        {
+            OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+            return getAttributeMapNoMutex(frameNumber);
+        }
+        
+        typedef std::map<std::string, bool> CollectMap;
+        
+        void collectStats(const std::string& str, bool flag) { _collectMap[str] = flag; }
+        
+        inline bool collectStats(const std::string& str) const
+        {
+            OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
+            
+            CollectMap::const_iterator itr = _collectMap.find(str); 
+            return (itr !=  _collectMap.end()) ? itr->second : false;
+        }
+
+        void report(std::ostream& out, const char* indent=0) const;
+        void report(std::ostream& out, unsigned int frameNumber, const char* indent=0) const;
+        
+    protected:
+    
+        virtual ~Stats() {}
+        
+        bool getAttributeNoMutex(unsigned int frameNumber, const std::string& attributeName, double& value) const;
+
+        AttributeMap& getAttributeMapNoMutex(unsigned int frameNumber);
+        const AttributeMap& getAttributeMapNoMutex(unsigned int frameNumber) const;
+
+
+        int getIndex(unsigned int frameNumber) const
+        {
+            // reject frame that are in the future
+            if (frameNumber > _latestFrameNumber) return -1;
+            
+            // reject frames that are too early
+            if (frameNumber < getEarliestFrameNumber()) return -1;
+            
+            if (frameNumber >= _baseFrameNumber) return frameNumber - _baseFrameNumber;
+            else return static_cast<int>(_attributeMapList.size()) - (_baseFrameNumber-frameNumber);
+        }
+
+        std::string         _name;
+        
+        mutable OpenThreads::Mutex  _mutex;
+        
+        unsigned int        _baseFrameNumber;
+        unsigned int        _latestFrameNumber;
+        
+        AttributeMapList    _attributeMapList;
+        AttributeMap        _invalidAttributeMap;
+        
+        CollectMap          _collectMap;
+        
+};
+
+
+}
+
+#endif

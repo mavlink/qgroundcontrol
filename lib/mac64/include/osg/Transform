@@ -1,0 +1,167 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield 
+ *
+ * This library is open source and may be redistributed and/or modified under  
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or 
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+ * OpenSceneGraph Public License for more details.
+*/
+
+#ifndef OSG_TRANSFORM
+#define OSG_TRANSFORM 1
+
+#include <osg/Group>
+#include <osg/Matrix>
+
+#ifndef GL_RESCALE_NORMAL
+#define GL_RESCALE_NORMAL       0x803A
+#endif
+
+#ifndef GL_NORMALIZE
+#define GL_NORMALIZE            0x0BA1
+#endif
+
+namespace osg {
+
+
+
+/** Compute the matrix which transforms objects in local coords to world coords,
+  * by accumulating the Transform local to world matrices along the specified node path.
+*/
+extern OSG_EXPORT Matrix computeLocalToWorld(const NodePath& nodePath, bool ignoreCameras = true);
+
+/** Compute the matrix which transforms objects in world coords to local coords,
+  * by accumulating the Transform world to local matrices along the specified node path.
+*/
+extern OSG_EXPORT Matrix computeWorldToLocal(const NodePath& nodePath, bool ignoreCameras = true);
+
+/** Compute the matrix which transforms objects in local coords to eye coords,
+  * by accumulating the Transform local to world matrices along the specified node path 
+  * and multiplying by the supplied initial camera modelview.
+*/
+extern OSG_EXPORT Matrix computeLocalToEye(const Matrix& modelview, const NodePath& nodePath, bool ignoreCameras = true);
+
+/** Compute the matrix which transforms objects in eye coords to local coords,
+  * by accumulating the Transform world to local matrices along the specified node path
+  * and multiplying by the inverse of the supplied initial camera modelview.
+*/
+extern OSG_EXPORT Matrix computeEyeToLocal(const Matrix& modelview, const NodePath& nodePath, bool ignoreCameras = true);
+
+
+/** A Transform is a group node for which all children are transformed by
+  * a 4x4 matrix. It is often used for positioning objects within a scene,
+  * producing trackball functionality or for animation.
+  *
+  * Transform itself does not provide set/get functions, only the interface
+  * for defining what the 4x4 transformation is.  Subclasses, such as
+  * MatrixTransform and PositionAttitudeTransform support the use of an
+  * osg::Matrix or a osg::Vec3/osg::Quat respectively.
+  *
+  * Note: If the transformation matrix scales the subgraph then the normals
+  * of the underlying geometry will need to be renormalized to be unit
+  * vectors once more.  This can be done transparently through OpenGL's 
+  * use of either GL_NORMALIZE and GL_RESCALE_NORMAL modes. For further
+  * background reading see the glNormalize documentation in the OpenGL
+  * Reference Guide (the blue book). To enable it in the OSG, you simply
+  * need to attach a local osg::StateSet to the osg::Transform, and set
+  * the appropriate mode to ON via
+  *   stateset->setMode(GL_NORMALIZE, osg::StateAttribute::ON);
+*/
+class OSG_EXPORT Transform : public Group
+{
+    public :
+
+        Transform();
+
+        /** Copy constructor using CopyOp to manage deep vs shallow copy. */
+        Transform(const Transform&,const CopyOp& copyop=CopyOp::SHALLOW_COPY);
+
+        META_Node(osg, Transform);
+
+        virtual Transform* asTransform() { return this; }
+        virtual const Transform* asTransform() const { return this; }
+
+        virtual MatrixTransform* asMatrixTransform() { return 0; }
+        virtual const MatrixTransform* asMatrixTransform() const { return 0; }
+
+        virtual PositionAttitudeTransform* asPositionAttitudeTransform() { return 0; }
+        virtual const PositionAttitudeTransform* asPositionAttitudeTransform() const { return 0; }
+
+        enum ReferenceFrame
+        {
+            RELATIVE_RF,
+            ABSOLUTE_RF,
+            ABSOLUTE_RF_INHERIT_VIEWPOINT
+        };
+        
+        /** Set the transform's ReferenceFrame, either to be relative to its
+          * parent reference frame, or relative to an absolute coordinate
+          * frame. RELATIVE_RF is the default.
+          * Note: Setting the ReferenceFrame to be ABSOLUTE_RF will
+          * also set the CullingActive flag on the transform, and hence all
+          * of its parents, to false, thereby disabling culling of it and
+          * all its parents.  This is necessary to prevent inappropriate
+          * culling, but may impact cull times if the absolute transform is
+          * deep in the scene graph.  It is therefore recommended to only use
+          * absolute Transforms at the top of the scene, for such things as
+          * heads up displays.
+          * ABSOLUTE_RF_INHERIT_VIEWPOINT is the same as ABSOLUTE_RF except it
+          * adds the ability to use the parents view points position in world coordinates
+          * as its local viewpoint in the new coordinates frame.  This is useful for
+          * Render to texture Cameras that wish to use the main views LOD range computation 
+          * (which uses the viewpoint rather than the eye point) rather than use the local
+          * eye point defined by the this Transforms' absolute view matrix.
+        */
+        void setReferenceFrame(ReferenceFrame rf);
+        
+        ReferenceFrame getReferenceFrame() const { return _referenceFrame; }
+
+        virtual bool computeLocalToWorldMatrix(Matrix& matrix,NodeVisitor*) const
+        {
+            if (_referenceFrame==RELATIVE_RF)
+            {
+                return false;
+            }
+            else // absolute
+            {
+                matrix.makeIdentity();
+                return true;
+            }
+        }
+        
+        virtual bool computeWorldToLocalMatrix(Matrix& matrix,NodeVisitor*) const
+        {
+            if (_referenceFrame==RELATIVE_RF)
+            {
+                return false;
+            }
+            else // absolute
+            {
+                matrix.makeIdentity();
+                return true;
+            }
+        }
+
+        /** Overrides Group's computeBound. 
+          * There is no need to override in subclasses from osg::Transform
+          * since this computeBound() uses the underlying matrix (calling
+          * computeMatrix if required).
+        */
+        virtual BoundingSphere computeBound() const;
+
+    protected :
+    
+        virtual ~Transform();
+        
+        
+        ReferenceFrame                      _referenceFrame;
+
+};
+
+}
+
+#endif
